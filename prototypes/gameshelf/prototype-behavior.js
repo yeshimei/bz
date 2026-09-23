@@ -1,5 +1,5 @@
-/* 源指纹 d5b4cc5ddee51bdc · 仓内输入 253 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 17290381c1609232 · 仓内输入 260 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -2936,7 +2936,7 @@ var BZW_gameshelf = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M10 = 10;
+    const M11 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -2963,7 +2963,7 @@ var BZW_gameshelf = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M10 || Math.abs(t.clientY - sy) > M10) {
+      if (Math.abs(t.clientX - sx) > M11 || Math.abs(t.clientY - sy) > M11) {
         moved = true;
         cancel();
       }
@@ -4170,15 +4170,15 @@ var BZW_gameshelf = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M10, s, ms) {
+        function createDate(y, m, d, h, M11, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M10, s, ms);
+            date = new Date(y + 400, m, d, h, M11, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M10, s, ms);
+            date = new Date(y, m, d, h, M11, s, ms);
           }
           return date;
         }
@@ -14345,8 +14345,8 @@ ${countsToText(s.missing)}
     const flat = flattenWs(src);
     const needle = flattenWs(text).text;
     if (!needle) return null;
-    const at2 = flat.text.indexOf(needle);
-    return at2 < 0 ? null : flat.map[at2];
+    const at3 = flat.text.indexOf(needle);
+    return at3 < 0 ? null : flat.map[at3];
   }
   function flattenWs(s) {
     const map = [];
@@ -15858,7 +15858,7 @@ ${sample}`
     for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
       if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
     }
-    for (let sweep2 = 0; sweep2 < n; sweep2++) {
+    for (let sweep3 = 0; sweep3 < n; sweep3++) {
       let moved = false;
       for (let j = 1; j < n; j++) {
         const B = nodes[j];
@@ -16019,14 +16019,14 @@ ${sample}`
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
   }
-  function exitCandidates(S2, sb, portPad) {
-    const ye = clamp(S2.y, sb.top + portPad, sb.bottom - portPad);
-    const xe = clamp(S2.x, sb.left + portPad, sb.right - portPad);
+  function exitCandidates(S3, sb, portPad) {
+    const ye = clamp(S3.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp(S3.x, sb.left + portPad, sb.right - portPad);
     const cands = [
-      { side: "L", d: S2.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
-      { side: "R", d: sb.right - S2.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
-      { side: "T", d: S2.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
-      { side: "B", d: sb.bottom - S2.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+      { side: "L", d: S3.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S3.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S3.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S3.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
     ];
     const order = ["L", "R", "T", "B"];
     return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
@@ -16389,8 +16389,8 @@ ${sample}`
       let entry = order[0];
       let clean = false;
       for (const side of order) {
-        const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-        if (rayCardDistance(T2, nOut, rects, 0) >= STUB) {
+        const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T3, nOut, rects, 0) >= STUB) {
           entry = side;
           clean = true;
           break;
@@ -16398,8 +16398,8 @@ ${sample}`
       }
       if (!clean) {
         for (const side of order) {
-          const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-          if (rayCardDistance(T2, nOut, rects, 0) >= 1) {
+          const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T3, nOut, rects, 0) >= 1) {
             entry = side;
             clean = true;
             break;
@@ -16467,8 +16467,8 @@ ${sample}`
     for (const j of jobs) {
       const e = j.edge;
       const sb = j.src.rect;
-      const S2 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
-      const cands = exitCandidates(S2, sb, PORT_PAD);
+      const S3 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S3, sb, PORT_PAD);
       let pick = null;
       let stub = STUB;
       for (const c of cands) {
@@ -16493,15 +16493,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E3 = pick.E;
+      const E4 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E3, nOut, stub);
-      const T2 = j.T;
+      const E1 = along(E4, nOut, stub);
+      const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T2, rects);
-      const items = [S2, E3, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E4, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E4, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -16524,7 +16524,7 @@ ${sample}`
       } else {
         items.push(T1);
       }
-      items.push(T2);
+      items.push(T3);
       out[j.idx] = {
         from: e.from,
         to: e.to,
@@ -16897,10 +16897,10 @@ ${sample}`
     if (flatWant) {
       const hit = flat.indexOf(flatWant);
       if (hit >= 0 && map[hit] !== void 0) {
-        const at2 = start + map[hit];
+        const at3 = start + map[hit];
         const endIdx = hit + flatWant.length - 1;
         const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
-        return { at: at2, len: Math.max(1, end - at2), level: 2 };
+        return { at: at3, len: Math.max(1, end - at3), level: 2 };
       }
     }
     const kws = keywordsOf(want);
@@ -16917,16 +16917,16 @@ ${sample}`
       for (const k of kws) if (flatBlock.includes(k)) score++;
       if (score < need) continue;
       const lead = raw.length - raw.trimStart().length;
-      const at2 = start + m.index + lead;
+      const at3 = start + m.index + lead;
       const len = raw.trimEnd().length - lead;
-      if (!best || score > best.score) best = { at: at2, len, score };
+      if (!best || score > best.score) best = { at: at3, len, score };
     }
     if (!best) return null;
     return { at: best.at, len: best.len, level: 3 };
   }
-  function expandBlock(text, at2, len) {
+  function expandBlock(text, at3, len) {
     const src = String(text != null ? text : "");
-    let s = Math.max(0, Math.min(Number(at2) || 0, src.length));
+    let s = Math.max(0, Math.min(Number(at3) || 0, src.length));
     let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
     const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
     s = lb >= 0 ? lb + 1 : 0;
@@ -17780,8 +17780,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (alreadyLinked(src, link)) return src;
     const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
     if (text) {
-      const at2 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
-      if (at2 !== null && at2 >= 0) return src.slice(0, at2 + text.length) + wiki + src.slice(at2 + text.length);
+      const at3 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at3 !== null && at3 >= 0) return src.slice(0, at3 + text.length) + wiki + src.slice(at3 + text.length);
       const compact = text.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
       for (const len of [10, 6, 4, 2]) {
@@ -17958,8 +17958,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
       } else if (act === "build-index") requestBuildIndex(st);
     });
-    const canvas = st.canvasEl;
-    canvas.addEventListener("pointerdown", (e) => {
+    const canvas2 = st.canvasEl;
+    canvas2.addEventListener("pointerdown", (e) => {
       var _a2, _b2, _c, _d;
       if (st.menu) closeMenu();
       st.longPressFired = false;
@@ -17967,7 +17967,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       st.downNode = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : null;
       st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
       try {
-        (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
+        (_d = canvas2.setPointerCapture) == null ? void 0 : _d.call(canvas2, e.pointerId);
       } catch (e2) {
       }
       if (isMobileEnv() && st.downNode) {
@@ -17981,7 +17981,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }, LONG_PRESS_MS);
       }
     });
-    canvas.addEventListener("pointermove", (e) => {
+    canvas2.addEventListener("pointermove", (e) => {
       if (!st.drag) return;
       const dx = num(e.clientX) - st.drag.x;
       const dy = num(e.clientY) - st.drag.y;
@@ -17994,9 +17994,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       cancelLongPress(st);
       st.drag = null;
     };
-    canvas.addEventListener("pointerup", endDrag);
-    canvas.addEventListener("pointercancel", endDrag);
-    canvas.addEventListener("click", (e) => {
+    canvas2.addEventListener("pointerup", endDrag);
+    canvas2.addEventListener("pointercancel", endDrag);
+    canvas2.addEventListener("click", (e) => {
       var _a2, _b2, _c;
       if (st.longPressFired) {
         st.longPressFired = false;
@@ -18009,17 +18009,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
       applySelection(st);
       renderTop(st);
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "wheel",
       (e) => {
         var _a2, _b2, _c, _d;
         (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
-        const rect = (_c = (_b2 = canvas.getBoundingClientRect) == null ? void 0 : _b2.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        const rect = (_c = (_b2 = canvas2.getBoundingClientRect) == null ? void 0 : _b2.call(canvas2)) != null ? _c : { left: 0, top: 0 };
         zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
       },
       { passive: false }
     );
-    canvas.addEventListener("contextmenu", (e) => {
+    canvas2.addEventListener("contextmenu", (e) => {
       var _a2, _b2, _c, _d, _e, _f;
       (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
       const nodeEl = (_d = (_c = (_b2 = e.target) == null ? void 0 : _b2.closest) == null ? void 0 : _c.call(_b2, ".bz-kb-mt-node")) != null ? _d : null;
@@ -18037,7 +18037,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       }
       if (st.menu) closeMenu();
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchstart",
       (e) => {
         var _a2;
@@ -18048,7 +18048,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: true }
     );
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchmove",
       (e) => {
         var _a2, _b2, _c, _d;
@@ -18056,7 +18056,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         (_b2 = e.preventDefault) == null ? void 0 : _b2.call(e);
         const d = touchDistance(e.touches);
         if (!st.pinch.d) return;
-        const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
+        const rect = (_d = (_c = canvas2.getBoundingClientRect) == null ? void 0 : _c.call(canvas2)) != null ? _d : { left: 0, top: 0 };
         const cx = (num(e.touches[0].clientX) + num(e.touches[1].clientX)) / 2 - num(rect.left);
         const cy = (num(e.touches[0].clientY) + num(e.touches[1].clientY)) / 2 - num(rect.top);
         const want = st.pinch.scale * (d / st.pinch.d);
@@ -18064,7 +18064,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: false }
     );
-    canvas.addEventListener("touchend", () => {
+    canvas2.addEventListener("touchend", () => {
       st.pinch = null;
     });
     st.win.addEventListener("mouseover", (e) => {
@@ -18730,10 +18730,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after3 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after3.data.length);
-    const tail = after3.splitText(len);
-    (_b2 = after3.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after4 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after4.data.length);
+    const tail = after4.splitText(len);
+    (_b2 = after4.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -19464,9 +19464,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.onChange(s, e);
         }
         _paint() {
-          const T2 = this.total || 1;
-          const sp = this.total > 0 ? this.start / T2 * 100 : 0;
-          const ep = this.total > 0 ? this.end / T2 * 100 : 100;
+          const T3 = this.total || 1;
+          const sp = this.total > 0 ? this.start / T3 * 100 : 0;
+          const ep = this.total > 0 ? this.end / T3 * 100 : 100;
           this.hStart.style.left = `${sp}%`;
           this.hEnd.style.left = `${ep}%`;
           this.fill.style.left = `${sp}%`;
@@ -24442,8 +24442,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         async restoreItem(item, idx) {
           return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
-            const at2 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
-            data.splice(at2, 0, item);
+            const at3 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
+            data.splice(at3, 0, item);
             await this.write(data);
           });
         },
@@ -24832,8 +24832,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (data === null) return;
         const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
         for (const r of removedSaved) {
-          const at2 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at2, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
         }
         data.savedArchive = list;
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -24847,8 +24847,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const marks = recordSectionOf(data, "marks");
         for (const r of removedMarks) {
           const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
-          const at2 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at2, 0, r.mark);
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, r.mark);
           marks[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -24862,8 +24862,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const pending2 = recordSectionOf(data, "pendingSource");
         for (const r of removedSrc) {
           const list = Array.isArray(pending2[r.articleKey]) ? pending2[r.articleKey] : [];
-          const at2 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at2, 0, r.notePath);
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, r.notePath);
           pending2[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -25033,9 +25033,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID;
     ov.className = "bz-panel-overlay";
-    const frame = document.createElement("div");
-    frame.id = FRAME_ID;
-    frame.className = "bz-panel-frame bz-checkup-popup";
+    const frame2 = document.createElement("div");
+    frame2.id = FRAME_ID;
+    frame2.className = "bz-panel-frame bz-checkup-popup";
     const head = document.createElement("div");
     head.className = "bz-panel-head";
     const brand = document.createElement("div");
@@ -25051,8 +25051,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     body.className = "bz-checkup-body";
     const foot = document.createElement("div");
     foot.className = "bz-checkup-foot";
-    frame.append(head, body, foot);
-    ov.appendChild(frame);
+    frame2.append(head, body, foot);
+    ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide();
     });
@@ -26684,7 +26684,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     if (opts.enter) {
       const n = (_c = opts.enter.n) != null ? _c : 12;
-      const stagger = (_d = opts.enter.stagger) != null ? _d : 26;
+      const stagger2 = (_d = opts.enter.stagger) != null ? _d : 26;
       const from = (_e = opts.enter.from) != null ? _e : "bottom";
       let idx = 0;
       nodes.forEach((el) => {
@@ -26694,7 +26694,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           el.style.opacity = "";
           return;
         }
-        const delay = idx * stagger;
+        const delay = idx * stagger2;
         idx++;
         const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
         const ea = safeAnimate(el, [
@@ -26808,11 +26808,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     let out = "";
     let cursor = 0;
     for (; ; ) {
-      const at2 = lower.indexOf(needle, cursor);
-      if (at2 < 0) break;
-      out += escapeHtml(t.slice(cursor, at2));
-      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at2, at2 + needle.length))}</mark>`;
-      cursor = at2 + needle.length;
+      const at3 = lower.indexOf(needle, cursor);
+      if (at3 < 0) break;
+      out += escapeHtml(t.slice(cursor, at3));
+      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at3, at3 + needle.length))}</mark>`;
+      cursor = at3 + needle.length;
     }
     return out + escapeHtml(t.slice(cursor));
   }
@@ -34745,20 +34745,20 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function motionPanelIn(overlay2, reopen) {
-    const frame = overlay2.querySelector(".bz-clip-frame");
-    if (!frame) return;
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) return;
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
     }
     panelAnim = null;
-    frame.style.opacity = "";
-    frame.style.transform = "";
-    frame.style.filter = "";
+    frame2.style.opacity = "";
+    frame2.style.transform = "";
+    frame2.style.filter = "";
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
     waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E.out });
     const a = waapi(
-      frame,
+      frame2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -34770,9 +34770,9 @@ ${bodyText.substring(0, 6e3)}`;
       a.finished.then(() => {
         if (panelAnim === a) panelAnim = null;
         overlay2.style.opacity = "";
-        frame.style.opacity = "";
-        frame.style.transform = "";
-        frame.style.filter = "";
+        frame2.style.opacity = "";
+        frame2.style.transform = "";
+        frame2.style.filter = "";
       }).catch(() => {
         overlay2.style.opacity = "";
       });
@@ -34781,8 +34781,8 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function motionPanelOut(overlay2, done) {
-    const frame = overlay2.querySelector(".bz-clip-frame");
-    if (!frame) {
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) {
       done();
       return;
     }
@@ -34799,7 +34799,7 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
     const a = waapi(
-      frame,
+      frame2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
@@ -35194,12 +35194,12 @@ ${bodyText.substring(0, 6e3)}`;
     else after(M7.impulse, remove);
   }
   function motionReportIn(overlay2) {
-    const frame = overlay2.querySelector(".bz-clip-report-frame");
-    if (!frame) return;
+    const frame2 = overlay2.querySelector(".bz-clip-report-frame");
+    if (!frame2) return;
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
     waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E.out });
     const a = waapi(
-      frame,
+      frame2,
       [
         { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37172,7 +37172,7 @@ ${bodyText.substring(0, 6e3)}`;
   function perfC16(scn, d) {
     const cv = q2(scn, '[data-cv="c16"]');
     const chars = qa(scn, '[data-r="end"] span');
-    const seal = q2(scn, '[data-r="seal"]');
+    const seal2 = q2(scn, '[data-r="seal"]');
     const inn = q2(scn, ".bz-rp-in");
     const nConf = Math.min(60, 14 + Math.round(d.sessions / 3));
     const rand = rng(66);
@@ -37240,7 +37240,7 @@ ${bodyText.substring(0, 6e3)}`;
           S(c, `opacity:${clamp01(p).toFixed(3)};transform:translateY(${((1 - p) * 26).toFixed(1)}px) rotate(${((1 - p) * 4).toFixed(2)}deg)`);
         });
         const sp = easeBack(at(t, 0.6, 1.9));
-        S(seal, `opacity:${clamp01(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
+        S(seal2, `opacity:${clamp01(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
       }
     };
   }
@@ -43618,9 +43618,9 @@ GitHub 仓库：${ghInfo.title}
       else target = state3.stage + 2;
       target = Math.max(0, Math.min(target, LADDER_MAX));
       if (target >= LADDER_MAX) {
-        const S3 = fsrs.initS(rating);
+        const S4 = fsrs.initS(rating);
         const D2 = fsrs.initD(rating);
-        const rS = Math.round(S3 * 100) / 100;
+        const rS = Math.round(S4 * 100) / 100;
         const rD = Math.round(D2 * 100) / 100;
         return {
           stage: target,
@@ -43648,12 +43648,12 @@ GitHub 仓库：${ghInfo.title}
         historyDifficulty: null
       };
     }
-    const S2 = state3.stability || 1;
+    const S3 = state3.stability || 1;
     const D = state3.difficulty || 0.3;
     const last = state3.lastReviewed || state3.reviewStart;
     const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
-    const R = fsrs.R(t, S2);
-    const result = fsrs.nextInterval(S2, D, rating, R);
+    const R = fsrs.R(t, S3);
+    const result = fsrs.nextInterval(S3, D, rating, R);
     return {
       stage: state3.stage,
       phase: "fsrs",
@@ -43684,8 +43684,8 @@ GitHub 仓库：${ghInfo.title}
           this.d = d;
         }
         /** 记忆保留度：R(t, S) = (1 + t/(S·d))^-d */
-        R(t, S2) {
-          return Math.pow(1 + t / (S2 * this.d), -this.d);
+        R(t, S3) {
+          return Math.pow(1 + t / (S3 * this.d), -this.d);
         }
         /** 初始稳定性 */
         initS(rating) {
@@ -43718,19 +43718,19 @@ GitHub 仓库：${ghInfo.title}
           return Math.max(Math.min(D, 1), Math.min(10, newD));
         }
         /** 下一稳定性 */
-        nextStab(S2, D, rating, R) {
+        nextStab(S3, D, rating, R) {
           if (rating === "again") {
-            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S2 + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
+            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S3 + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
           }
-          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S2, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
-          if (rating === "hard") return S2 * base;
-          if (rating === "good") return S2 * (base + 1);
-          return S2 * base * (Math.exp(this.w[17]) + 1);
+          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S3, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
+          if (rating === "hard") return S3 * base;
+          if (rating === "good") return S3 * (base + 1);
+          return S3 * base * (Math.exp(this.w[17]) + 1);
         }
         /** 下一间隔（天） */
-        nextInterval(S2, D, rating, R) {
+        nextInterval(S3, D, rating, R) {
           const newD = this.nextDiff(D, rating);
-          const newS = Math.max(0.01, this.nextStab(S2, newD, rating, R));
+          const newS = Math.max(0.01, this.nextStab(S3, newD, rating, R));
           return { S: newS, D: newD, days: newS };
         }
       };
@@ -43770,15 +43770,15 @@ GitHub 仓库：${ghInfo.title}
     const fsrs = new FSRS(w);
     let sum = 0;
     for (const s of series) {
-      let S2 = fsrs.initS(RATING_NAMES[s.initRating]);
+      let S3 = fsrs.initS(RATING_NAMES[s.initRating]);
       let D = fsrs.initD(RATING_NAMES[s.initRating]);
       for (const p of s.pairs) {
-        const R = fsrs.R(p.t, S2);
+        const R = fsrs.R(p.t, S3);
         const remember = p.rating >= 2;
         const prob = remember ? R : 1 - R;
         sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
-        const next = fsrs.nextInterval(S2, D, RATING_NAMES[p.rating], R);
-        S2 = next.S;
+        const next = fsrs.nextInterval(S3, D, RATING_NAMES[p.rating], R);
+        S3 = next.S;
         D = next.D;
       }
     }
@@ -44532,7 +44532,595 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/motion.ts
+  function reduced3() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi3(el, frames, opts) {
+    if (!el || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after3(ms, fn) {
+    const id = setTimeout(() => {
+      timers3.delete(id);
+      fn();
+    }, ms);
+    timers3.add(id);
+  }
+  function cancelPending2() {
+    timers3.forEach(clearTimeout);
+    timers3.clear();
+  }
+  function motionTeardown3() {
+    cancelPending2();
+  }
+  function ensureRelative(el) {
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  }
+  function seal(host, text, big = false) {
+    ensureRelative(host);
+    const s = document.createElement("span");
+    s.className = "bz-rv-seal" + (big ? " bz-rv-seal--big" : "");
+    s.setAttribute("aria-hidden", "true");
+    s.textContent = text;
+    host.appendChild(s);
+    waapi3(
+      s,
+      [
+        { opacity: 0, transform: "rotate(-26deg) scale(2.6)" },
+        { opacity: 1, transform: "rotate(-12deg) scale(1)" }
+      ],
+      { duration: big ? 260 : 210, easing: E3.land, fill: "both" }
+    );
+    after3(big ? 1500 : 1150, () => {
+      waapi3(s, [{ opacity: 1 }, { opacity: 0 }], { duration: 340, easing: E3.out, fill: "forwards" });
+      after3(360, () => s.remove());
+    });
+  }
+  function ringBurst(el) {
+    const parent = el.offsetParent instanceof HTMLElement ? el.offsetParent : el.parentElement;
+    if (!parent) return;
+    const pr = parent.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const ring = document.createElement("i");
+    ring.className = "bz-rv-ring";
+    ring.setAttribute("aria-hidden", "true");
+    ring.style.left = r.left - pr.left + r.width / 2 + "px";
+    ring.style.top = r.top - pr.top + r.height / 2 + "px";
+    ring.style.width = Math.max(r.width, r.height) * 1.15 + "px";
+    ring.style.height = Math.max(r.width, r.height) * 1.15 + "px";
+    parent.appendChild(ring);
+    const a = waapi3(
+      ring,
+      [
+        { opacity: 0.85, transform: "translate(-50%,-50%) scale(.45)" },
+        { opacity: 0, transform: "translate(-50%,-50%) scale(2.35)" }
+      ],
+      { duration: 640, easing: E3.out, fill: "forwards" }
+    );
+    const done = () => ring.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after3(680, done);
+  }
+  function sweep2(host) {
+    ensureRelative(host);
+    const layer = document.createElement("i");
+    layer.className = "bz-rv-sweep";
+    layer.setAttribute("aria-hidden", "true");
+    const band = document.createElement("u");
+    layer.appendChild(band);
+    host.appendChild(layer);
+    const a = waapi3(
+      band,
+      [
+        { transform: "translateX(-150%) skewX(-18deg)" },
+        { transform: "translateX(340%) skewX(-18deg)" }
+      ],
+      { duration: 840, easing: E3.move, fill: "forwards" }
+    );
+    const done = () => layer.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after3(880, done);
+  }
+  function drawStroke(svg, dur = 320) {
+    const parts = svg.querySelectorAll("path,line,polyline,circle,rect");
+    parts.forEach((p) => {
+      try {
+        const len = p.getTotalLength();
+        if (!isFinite(len) || len <= 0) return;
+        p.style.strokeDasharray = String(len);
+        p.style.strokeDashoffset = String(len);
+        const a = p.animate(
+          [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+          { duration: dur, easing: E3.out, fill: "forwards" }
+        );
+        a.finished.then(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        }).catch(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        });
+      } catch (e) {
+      }
+    });
+  }
+  function countUpNode(el, dur) {
+    const node = el.childNodes[0];
+    if (!node || node.nodeType !== Node.TEXT_NODE) return;
+    const raw = node.textContent || "";
+    const m = raw.match(/\d[\d,]*/);
+    if (!m) return;
+    const target = Number(m[0].replace(/,/g, ""));
+    if (!isFinite(target) || target === 0) return;
+    tween2(dur, (v) => {
+      node.textContent = raw.replace(m[0], String(Math.round(target * v)));
+    });
+  }
+  function popCnt(el) {
+    waapi3(
+      el,
+      [
+        { transform: "scale(.4)", opacity: 0 },
+        { transform: "scale(1.18)", opacity: 1, offset: 0.7 },
+        { transform: "scale(1)", opacity: 1 }
+      ],
+      { duration: 420, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionQueueBoot(container) {
+    cancelPending2();
+    if (reduced3()) return;
+    const popup = container.closest("#review-popup");
+    if (popup) sweep2(popup);
+    const strip = container.querySelector(".bz-q-strip");
+    if (strip) {
+      after3(80, () => waapi3(
+        strip,
+        [{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+      const dot = strip.querySelector(".bz-q-strip-dot.ok");
+      if (dot) after3(420, () => ringBurst(dot));
+    }
+    const cols = [...container.querySelectorAll(".bz-q-col")];
+    let t = 160;
+    const total = container.querySelectorAll(".bz-q-card").length;
+    const step = total > 26 ? 24 : 52;
+    let seals = 0;
+    cols.forEach((col, ci) => {
+      const cards = [...col.querySelectorAll(".bz-q-card")];
+      const danger = col.classList.contains("danger");
+      cards.forEach((card, cj) => {
+        const rot = (ci * 7 + cj * 13) % 5 - 2;
+        const fromX = ci === 0 ? 16 : ci === 1 ? 0 : -16;
+        const at3 = t;
+        after3(at3, () => waapi3(
+          card,
+          [
+            { opacity: 0, transform: `translate(${fromX}px,22px) rotate(${rot * 2}deg) scale(.9)` },
+            { opacity: 1, transform: "none" }
+          ],
+          { duration: 340, easing: E3.out, fill: "backwards" }
+        ));
+        if (danger && seals < 4) {
+          seals++;
+          after3(at3 + 300, () => seal(card, "急"));
+        }
+        t += step;
+      });
+      const cnt = col.querySelector(".bz-q-col-head .cnt");
+      if (cnt) after3(Math.max(120, t - 30), () => popCnt(cnt));
+      t += 120;
+    });
+    const footer = container.querySelector(".bz-q-footer");
+    if (footer) after3(t + 60, () => waapi3(
+      footer,
+      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E3.out, fill: "backwards" }
+    ));
+    const empty = container.querySelector("[data-empty-host]");
+    if (empty) after3(200, () => waapi3(
+      empty,
+      [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.impulse, easing: E3.out, fill: "backwards" }
+    ));
+  }
+  function motionChargeStrip(strip) {
+    if (reduced3()) return;
+    const btn = strip.querySelector('[data-act="begin"]');
+    const host = btn || strip;
+    ringBurst(host);
+    waapi3(
+      host,
+      [{ transform: "scale(1)" }, { transform: "scale(.96)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }],
+      { duration: 280, easing: E3.out }
+    );
+  }
+  function motionDrawCard(card) {
+    if (reduced3()) return;
+    waapi3(
+      card,
+      [
+        { transform: "none", boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { transform: "scale(.975) translateY(1px)", offset: 0.4 },
+        { transform: "scale(1.04) translateY(-3px)", boxShadow: "0 10px 24px rgba(0,0,0,.16)" }
+      ],
+      { duration: 260, easing: E3.out }
+    );
+  }
+  function motionSprintReset() {
+    lastQKey = "";
+    cancelPending2();
+  }
+  function motionSprintLoading(host) {
+    if (reduced3()) return;
+    const ld = host.querySelector(".bz-sprint-loading");
+    if (ld) waapi3(
+      ld,
+      [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionQuestion(host, sig) {
+    if (reduced3()) return;
+    const card = host.querySelector(".bz-sprint-qcard");
+    if (!card) return;
+    if (sig.text !== lastQKey) {
+      lastQKey = sig.text;
+      waapi3(
+        card,
+        [
+          { opacity: 0, transform: "perspective(900px) rotateY(-78deg) scale(.94)" },
+          { opacity: 1, transform: "perspective(900px) rotateY(0deg) scale(1)" }
+        ],
+        { duration: 430, easing: E3.out, fill: "backwards" }
+      );
+      const prog = host.querySelector(".bz-sprint-progress");
+      if (prog) after3(120, () => popCnt(prog));
+      host.querySelectorAll(".bz-sprint-opt").forEach((el, i) => {
+        after3(150 + i * STAG3, () => waapi3(
+          el,
+          [{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E3.out, fill: "backwards" }
+        ));
+      });
+      return;
+    }
+    if (!sig.answered) return;
+    if (sig.correct) {
+      sweep2(card);
+      const okSvg = card.querySelector(".bz-sprint-opt.is-correct .bz-mark svg");
+      if (okSvg) drawStroke(okSvg, 300);
+      const okOpt2 = card.querySelector(".bz-sprint-opt.is-correct");
+      if (okOpt2) waapi3(
+        okOpt2,
+        [{ transform: "scale(1)" }, { transform: "scale(1.02)" }, { transform: "scale(1)" }],
+        { duration: 260, easing: E3.out }
+      );
+      return;
+    }
+    waapi3(
+      card,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-8px)", offset: 0.15 },
+        { transform: "translateX(7px)", offset: 0.35 },
+        { transform: "translateX(-5px)", offset: 0.55 },
+        { transform: "translateX(3px)", offset: 0.75 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 420, easing: "ease-out" }
+    );
+    waapi3(
+      card,
+      [
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "inset 0 0 0 2px color-mix(in srgb, var(--bz-danger, #d64545) 55%, transparent)" },
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 760, easing: E3.out }
+    );
+    const bad = card.querySelector(".bz-sprint-opt.is-wrong");
+    if (bad) waapi3(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(3px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const okOpt = card.querySelector(".bz-sprint-opt.is-correct");
+    if (okOpt) waapi3(
+      okOpt,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E3.out }
+    );
+  }
+  function motionFailFlash(host) {
+    if (reduced3()) return;
+    const target = host.closest("#review-popup") || host;
+    ensureRelative(target);
+    const v = document.createElement("i");
+    v.className = "bz-rv-failflash";
+    v.setAttribute("aria-hidden", "true");
+    target.appendChild(v);
+    const a = waapi3(
+      v,
+      [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 0 }],
+      { duration: 620, easing: "ease-out", fill: "forwards" }
+    );
+    const done = () => v.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after3(660, done);
+  }
+  function motionResult(host) {
+    if (reduced3()) return;
+    const res = host.querySelector(".bz-result");
+    if (!res) return;
+    const ic2 = res.querySelector(".bz-result-ic");
+    const okSvg = ic2 == null ? void 0 : ic2.querySelector("svg");
+    if (okSvg) drawStroke(okSvg, 380);
+    if (ic2) after3(60, () => ringBurst(ic2));
+    const score = res.querySelector(".bz-result-score");
+    if (score) after3(140, () => countUpNode(score, 620));
+    const pill = res.querySelector(".bz-result-rating");
+    if (pill) after3(340, () => waapi3(
+      pill,
+      [{ opacity: 0, transform: "scale(1.8) rotate(-7deg)" }, { opacity: 1, transform: "none" }],
+      { duration: 280, easing: E3.land, fill: "backwards" }
+    ));
+    res.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after3(430 + i * 60, () => waapi3(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionSummary(host, grade) {
+    if (reduced3()) return;
+    const box = host.querySelector(".bz-summary");
+    if (!box) return;
+    const title = box.querySelector(".bz-summary-title");
+    if (title) waapi3(
+      title,
+      [
+        { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M10.base, easing: E3.out, fill: "backwards" }
+    );
+    box.querySelectorAll(".bz-summary-stats .st b").forEach((b, i) => {
+      after3(120 + i * 90, () => {
+        countUpNode(b, 560);
+        popCnt(b);
+      });
+    });
+    after3(460, () => seal(box, grade, true));
+    const tail = box.querySelector(".bz-summary-streak, .bz-qp-acc");
+    if (tail) after3(820, () => {
+      waapi3(
+        tail,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      );
+      const b = tail.querySelector("b");
+      if (b) waapi3(
+        b,
+        [
+          { filter: "drop-shadow(0 0 0 rgba(255,150,60,0))" },
+          { filter: "drop-shadow(0 0 9px rgba(255,150,60,.85))" },
+          { filter: "drop-shadow(0 0 2px rgba(255,150,60,.3))" }
+        ],
+        { duration: 900, easing: E3.out }
+      );
+    });
+    box.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after3(900 + i * 70, () => waapi3(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionStats(body) {
+    if (reduced3()) return;
+    sweep2(body);
+    body.querySelectorAll(".stat-card").forEach((card, i) => {
+      after3(60 + i * 60, () => {
+        waapi3(
+          card,
+          [{ opacity: 0, transform: "translateY(10px) scale(.97)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E3.out, fill: "backwards" }
+        );
+        const v = card.querySelector(".v");
+        if (v) countUpNode(v, 540);
+      });
+    });
+    body.querySelectorAll(".sec").forEach((sec, i) => {
+      after3(240 + i * 80, () => waapi3(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+    body.querySelectorAll(".soft-fill, .bar-fill").forEach((fill, i) => {
+      after3(380 + i * 45, () => {
+        fill.style.transformOrigin = "left center";
+        waapi3(
+          fill,
+          [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: 560, easing: "cubic-bezier(.3,.9,.35,1.12)", fill: "backwards" }
+        );
+      });
+    });
+    body.querySelectorAll(".top-row").forEach((row, i) => {
+      after3(460 + i * 55, () => waapi3(
+        row,
+        [{ opacity: 0, transform: "translateX(-12px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+    const first = body.querySelector(".top-row.is-top");
+    if (first) after3(760, () => ringBurst(first));
+    body.querySelectorAll(".kv-inline").forEach((kv, i) => {
+      after3(300 + i * 70, () => waapi3(
+        kv,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionHistory(body) {
+    if (reduced3()) return;
+    const status = body.querySelector(".bz-review-history-status");
+    if (status) waapi3(
+      status,
+      [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E3.out, fill: "backwards" }
+    );
+    body.querySelectorAll(".bz-review-history-item").forEach((item, i) => {
+      after3(110 + i * 110, () => {
+        const dot = item.querySelector(".bz-review-history-dot");
+        if (dot) waapi3(
+          dot,
+          [{ transform: "scale(0)" }, { transform: "scale(1.5)", offset: 0.7 }, { transform: "scale(1)" }],
+          { duration: 320, easing: E3.out, fill: "backwards" }
+        );
+        const line = item.querySelector(".bz-review-history-line");
+        if (line) {
+          line.style.transformOrigin = "top center";
+          waapi3(
+            line,
+            [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+            { duration: 230, easing: E3.out, fill: "backwards" }
+          );
+        }
+        const row = item.querySelector(".bz-review-history-row");
+        if (row) waapi3(
+          row,
+          [{ opacity: 0, transform: "translateX(8px)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E3.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionRatingBar(el) {
+    if (reduced3()) return;
+    waapi3(
+      el,
+      [
+        { opacity: 0, transform: "translateX(-50%) translateY(60px)" },
+        { opacity: 1, transform: "translateX(-50%) translateY(0)" }
+      ],
+      { duration: 420, easing: "cubic-bezier(.22,.9,.32,1.15)", fill: "backwards" }
+    );
+    el.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
+      after3(150 + i * STAG3, () => popCnt(b));
+    });
+  }
+  function motionQuizSetup(content) {
+    if (reduced3()) return;
+    content.querySelectorAll(".bz-qp-sec").forEach((sec, i) => {
+      after3(i * 90, () => waapi3(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+    const meta = content.querySelector(".bz-qp-meta");
+    if (meta) after3(300, () => waapi3(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" }));
+    const start = content.querySelector(".bz-qp-start");
+    if (start) after3(380, () => ringBurst(start));
+    const foot = content.querySelector(".bz-qp-foot");
+    if (foot) after3(460, () => waapi3(foot, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" }));
+  }
+  function motionQuizSummary(content, grade) {
+    motionSummary(content, grade);
+  }
+  function motionQuizCard(popup) {
+    if (reduced3()) return;
+    const q3 = popup.querySelector(".bz-quiz-question");
+    if (q3) waapi3(
+      q3,
+      [
+        { opacity: 0, transform: "perspective(800px) rotateX(24deg) translateY(6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 380, easing: E3.out, fill: "backwards" }
+    );
+    popup.querySelectorAll(".quiz-option-btn").forEach((el, i) => {
+      after3(120 + i * STAG3, () => waapi3(
+        el,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionQuizJudge(popup, correct) {
+    if (reduced3()) return;
+    if (correct) {
+      sweep2(popup);
+      const mark = popup.querySelector(".quiz-option-btn.correct .check-mark");
+      if (mark) popCnt(mark);
+      return;
+    }
+    const bad = popup.querySelector(".quiz-option-btn.wrong");
+    if (bad) waapi3(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-5px)" }, { transform: "translateX(4px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const ok = popup.querySelector(".quiz-option-btn.correct");
+    if (ok) waapi3(
+      ok,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E3.out }
+    );
+  }
+  var M10, E3, STAG3, timers3, lastQKey;
+  var init_motion3 = __esm({
+    "src/review/motion.ts"() {
+      M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E3 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)",
+        /** 落章/落定带轻微过冲 */
+        land: "cubic-bezier(.2,.8,.3,1.18)"
+      };
+      STAG3 = 30;
+      timers3 = /* @__PURE__ */ new Set();
+      lastQKey = "";
+    }
+  });
+
   // src/review/quiz-core/session.ts
+  function quizPopupEl() {
+    return document.getElementById("quiz-popup");
+  }
   function cleanOptionText(text) {
     if (!text) return "";
     const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
@@ -44558,6 +45146,7 @@ ${n.content.slice(0, 2e3)}
       init_manager();
       init_generator();
       init_utils();
+      init_motion3();
       CORRECT_JUMP_DELAY_MS = 800;
       _QuizMasterUI = class _QuizMasterUI {
         constructor() {
@@ -44731,6 +45320,7 @@ ${n.content.slice(0, 2e3)}
           mask.appendChild(popup);
           document.body.appendChild(mask);
           mountIcons(popup);
+          motionQuizCard(popup);
           this._escHandle = escManager.register("bz-review-quiz", {
             isVisible: () => !!(this.mask && this.mask.isConnected),
             close: () => this.finishQuiz()
@@ -44807,6 +45397,8 @@ ${n.content.slice(0, 2e3)}
                   optionElements.forEach((b, i) => {
                     if (i === q3.correctIndices[0]) b.classList.add("correct");
                   });
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, true);
                   this._answerCorrect(q3, app, () => {
                     answeredRef.value = false;
                     optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
@@ -44818,6 +45410,8 @@ ${n.content.slice(0, 2e3)}
                     if (i === q3.correctIndices[0]) b.classList.add("correct");
                     if (i === idx) b.classList.add("wrong");
                   });
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, false);
                   this.addNextButton(optionsContainer);
                 }
               } else {
@@ -44853,6 +45447,8 @@ ${n.content.slice(0, 2e3)}
                 else if (selectedIndices.has(i) && !isCorrect) b.classList.add("wrong");
               });
               if (isCorrect) {
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, true);
                 this._answerCorrect(q3, app, () => {
                   answeredRef.value = false;
                   submitBtn.disabled = false;
@@ -44861,6 +45457,8 @@ ${n.content.slice(0, 2e3)}
               } else {
                 this.wrongCount++;
                 this.currentQuestions.splice(this.currentIndex, 1);
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, false);
                 this.addNextButton(optionsContainer);
               }
             };
@@ -45430,8 +46028,8 @@ ${n.content.slice(0, 2e3)}
       <div class="bz-q-footer">
         ${archItem}
         <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${iconSpan("bar-chart-3", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="逐幕回放全馆记忆">
+          ${iconSpan("flame", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
     return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
@@ -45647,6 +46245,7 @@ ${n.content.slice(0, 2e3)}
       init_esc_manager();
       init_stats3();
       init_render12();
+      init_motion3();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -45873,6 +46472,7 @@ ${n.content.slice(0, 2e3)}
             entry.state = "passed";
             entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
+            motionFailFlash(this.opts.host);
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "failed";
@@ -46002,7 +46602,9 @@ ${n.content.slice(0, 2e3)}
         // ================= 视图构建（markup 单源：render.ts，issue 253） =================
         showLoading(entry) {
           this.view = "loading";
+          motionSprintReset();
           this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintLoadingHtml()}`;
+          motionSprintLoading(this.opts.host);
           this.bindTop();
         }
         asideStates() {
@@ -46038,6 +46640,7 @@ ${n.content.slice(0, 2e3)}
               }
             });
           });
+          motionQuestion(this.opts.host, { text: question.question, answered: q3.answered, correct: q3.lastCorrect });
           (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
         }
         renderResult(entry) {
@@ -46063,6 +46666,7 @@ ${n.content.slice(0, 2e3)}
           )}`;
           mountIcons(this.opts.host);
           this.bindTop();
+          motionResult(this.opts.host);
           (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
           (_b2 = this.opts.host.querySelector('[data-action="end"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.handleResult("end"));
           (_d = (_c = this.opts).onProgress) == null ? void 0 : _d.call(_c);
@@ -46082,6 +46686,7 @@ ${n.content.slice(0, 2e3)}
           mountIcons(this.opts.host);
           this.bindTop();
           (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
+          motionSummary(this.opts.host, failed === 0 ? "优" : "完成");
         }
         /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
         bindTop() {
@@ -46288,6 +46893,1955 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/analysis/data.ts
+  function deriveAnalysis(items, opts) {
+    var _a2, _b2, _c;
+    const w = (opts == null ? void 0 : opts.w) || DEFAULT_W;
+    const nowMs = (opts == null ? void 0 : opts.now) != null ? new Date(opts.now).getTime() : Date.now();
+    const embers = items.map((it) => {
+      const r = currentR(it, w, nowMs);
+      const nextMs = it.nextReviewDate ? new Date(it.nextReviewDate).getTime() : NaN;
+      const dueDays = Number.isFinite(nextMs) ? (nextMs - nowMs) / 864e5 : null;
+      const lastMs = it.lastReviewed ? new Date(it.lastReviewed).getTime() : NaN;
+      return {
+        name: it.name || it.filePath,
+        r,
+        s: Number(it.stability) || 0,
+        d: Number(it.difficulty) || 0,
+        stage: Math.max(0, Math.min(9, Number(it.stage) || 0)),
+        phase: it.phase === "fsrs" ? "fsrs" : "ladder",
+        overdue: !!it.isOverdue,
+        overdueDays: it.isOverdue && dueDays != null ? Math.max(0, -dueDays) : 0,
+        ageDays: Number.isFinite(lastMs) ? Math.max(0, (nowMs - lastMs) / 864e5) : null,
+        dueInDays: dueDays == null || !Number.isFinite(dueDays) ? null : dueDays,
+        done: !!(it.completed || it.isCompleted),
+        missing: !!it.isMissing,
+        redo: !!it.pendingRedo,
+        pinned: !!it.pinned,
+        reviews: Array.isArray(it.reviewHistory) ? it.reviewHistory.length : 0
+      };
+    });
+    const live2 = embers.filter((e) => !e.done && !e.missing);
+    const doneN = embers.filter((e) => e.done).length;
+    const missingN = embers.filter((e) => e.missing).length;
+    const ladderN = live2.filter((e) => e.phase === "ladder").length;
+    const fsrsN = live2.filter((e) => e.phase === "fsrs").length;
+    const stageDist = new Array(10).fill(0);
+    for (const e of live2) stageDist[e.phase === "fsrs" ? 9 : Math.min(8, e.stage)]++;
+    const stagePeak = stageDist.some((n) => n > 0) ? stageDist.indexOf(Math.max(...stageDist)) : -1;
+    const cols = partitionQueue(items, 0.9, w);
+    const rs = live2.map((e) => e.r).filter((v) => v != null);
+    const rHist = new Array(10).fill(0);
+    for (const v of rs) rHist[Math.max(0, Math.min(9, Math.floor(v * 10)))]++;
+    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    const fsrsList = live2.filter((e) => e.phase === "fsrs" && e.s > 0);
+    const sBuckets = sBucketsOf(fsrsList.map((e) => e.s));
+    const sMax = fsrsList.reduce((m, e) => Math.max(m, e.s), 0);
+    const dAvg = fsrsList.length ? fsrsList.reduce((a, e) => a + e.d, 0) / fsrsList.length : null;
+    const daily14 = [];
+    const dayIdx = /* @__PURE__ */ new Map();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(nowMs - i * 864e5);
+      const key = dateKey(d);
+      dayIdx.set(key, daily14.length);
+      daily14.push({ date: key, count: 0 });
+    }
+    let verdictTotal = 0;
+    const ratingDist = {};
+    const lastDiffDist = {};
+    const distinct = /* @__PURE__ */ new Set();
+    let firstMs = Infinity;
+    for (const it of items) {
+      const hist = Array.isArray(it.reviewHistory) ? it.reviewHistory : [];
+      for (const h of hist) {
+        verdictTotal++;
+        const rating = String((_a2 = h == null ? void 0 : h.rating) != null ? _a2 : "");
+        if (rating) ratingDist[rating] = (ratingDist[rating] || 0) + 1;
+        const ts = (h == null ? void 0 : h.timestamp) ? new Date(h.timestamp).getTime() : NaN;
+        if (Number.isFinite(ts)) {
+          distinct.add(dateKey(new Date(ts)));
+          if (ts < firstMs) firstMs = ts;
+          const slot = dayIdx.get(dateKey(new Date(ts)));
+          if (slot != null) daily14[slot].count++;
+        }
+      }
+      const ld = it.lastDifficulty ? String(it.lastDifficulty) : "";
+      if (ld) lastDiffDist[ld] = (lastDiffDist[ld] || 0) + 1;
+    }
+    const dailyPeak = daily14.reduce((m, d) => Math.max(m, d.count), 0);
+    const dailyTotal = daily14.reduce((a, d) => a + d.count, 0);
+    let streak = 0;
+    const cursor = new Date(nowMs);
+    cursor.setHours(0, 0, 0, 0);
+    if (!distinct.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (distinct.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    const bedrock = fsrsList.slice().sort((a, b) => b.s - a.s).slice(0, 5).map((e) => ({ name: e.name, s: e.s, r: e.r, reviews: e.reviews }));
+    const next8 = [];
+    const tideIdx = /* @__PURE__ */ new Map();
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(nowMs + i * 864e5);
+      const key = dateKey(d);
+      tideIdx.set(key, next8.length);
+      next8.push({ date: key, label: i === 0 ? "今" : `+${i}`, count: 0 });
+    }
+    for (const it of items) {
+      if (it.completed || it.isCompleted || it.isMissing || !it.nextReviewDate) continue;
+      const key = dateKey(new Date(it.nextReviewDate));
+      const slot = tideIdx.get(key);
+      if (slot != null) next8[slot].count++;
+    }
+    const tomorrowN = (_c = (_b2 = next8[1]) == null ? void 0 : _b2.count) != null ? _c : 0;
+    const againN = ratingDist["again"] || 0;
+    const redoN = live2.filter((e) => e.redo).length;
+    const confList = items.map((it) => Number(it.averageConfidence)).filter((v) => Number.isFinite(v) && v > 0);
+    return {
+      total: embers.length,
+      active: live2.length,
+      doneN,
+      missingN,
+      ladderN,
+      fsrsN,
+      stageDist,
+      stagePeak,
+      embers,
+      liveEmbers: live2,
+      overdueList: live2.filter((e) => e.overdue).sort((a, b) => b.overdueDays - a.overdueDays).map((e) => ({ name: e.name, days: e.overdueDays })),
+      overdueN: cols.overdue.length,
+      todayN: cols.today.length,
+      futureN: cols.future.length,
+      doneColN: cols.done.length,
+      avgR,
+      rHist,
+      rAbove90: rs.filter((v) => v > 0.9).length,
+      rBelow50: rs.filter((v) => v < 0.5).length,
+      sBuckets,
+      sMax,
+      dBuckets: dBucketsOf(fsrsList.map((e) => e.d)),
+      dAvg,
+      daily14,
+      dailyPeak,
+      dailyTotal,
+      streak,
+      distinctDays: distinct.size,
+      firstReviewAt: Number.isFinite(firstMs) ? new Date(firstMs).toISOString() : null,
+      ratingDist,
+      verdictTotal,
+      againRate: verdictTotal ? againN / verdictTotal : null,
+      bedrock,
+      next8,
+      tomorrowN,
+      redoN,
+      lastDiffDist,
+      confidenceAvg: confList.length ? confList.reduce((a, b) => a + b, 0) / confList.length : 0
+    };
+  }
+  var RA_RATING_ORDER, RA_RATING_NAMES, sBucketsOf, dBucketsOf;
+  var init_data11 = __esm({
+    "src/review/analysis/data.ts"() {
+      init_fsrs();
+      init_queue();
+      init_stats3();
+      RA_RATING_ORDER = ["again", "hard", "good", "easy"];
+      RA_RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+      sBucketsOf = (list) => {
+        const def = [
+          ["<7 天", (v) => v < 7],
+          ["7-30 天", (v) => v >= 7 && v < 30],
+          ["30-90 天", (v) => v >= 30 && v < 90],
+          ["≥90 天", (v) => v >= 90]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+      dBucketsOf = (list) => {
+        const def = [
+          ["<2", (v) => v < 2],
+          ["2-4", (v) => v >= 2 && v < 4],
+          ["4-6", (v) => v >= 4 && v < 6],
+          ["≥6", (v) => v >= 6]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+    }
+  });
+
+  // src/review/analysis/view.ts
+  function frame(no, main) {
+    const def = RA_SCENES[no - 1];
+    return `<section class="bz-ra-scn" data-s="${pad22(no)}" data-id="${def.id}" data-name="${escapeHtml2(def.name)}">
+  <div class="ra-sc"><div class="ra-main">${main}</div></div>
+</section>`;
+  }
+  function analysisHtml(data) {
+    const S3 = [];
+    S3.push(frame(1, `
+    <div class="ra-open"><canvas data-cv="open" aria-hidden="true"></canvas></div>`));
+    S3.push(frame(2, `
+    <div class="ra-field">
+      <canvas data-cv="field" aria-hidden="true"></canvas>
+      <div class="ra-field-side">
+        <div class="ra-kv big"><span class="ra-k">在炉</span><b>${data.active}<span class="ra-u">篇</span></b></div>
+        <div class="ra-legend">
+          <span><i class="dot tone-hi"></i>余温足（R&gt;70%）</span>
+          <span><i class="dot tone-mid"></i>渐凉（40-70%）</span>
+          <span><i class="dot tone-low"></i>将熄（&lt;40%）</span>
+          <span><i class="dot tone-off"></i>阶梯期（未入 FSRS）</span>
+        </div>
+      </div>
+    </div>`));
+    const slopePts = data.liveEmbers.filter((e) => e.r != null && e.ageDays != null && e.s > 0).slice(0, 90).map((e, i) => {
+      const x = Math.min(1, e.ageDays / Math.max(0.5, e.s));
+      return `<i class="ra-slope-dot tone-${emberTone(e.r)}" data-r="sdot" data-i="${i}"
+        style="--x:${x.toFixed(4)};--y:${e.r.toFixed(4)}"></i>`;
+    }).join("");
+    S3.push(frame(3, `
+    <div class="ra-slope">
+      <div class="ra-slope-plot" data-r="plot">
+        <canvas data-cv="slope" aria-hidden="true"></canvas>
+        <span class="ra-slope-cursor" data-r="cursor" aria-hidden="true"></span>
+        ${slopePts}
+      </div>
+      <div class="ra-slope-side">
+        <div class="ra-kv"><span class="ra-k">在崖上</span><b data-r="oncliff">—</b></div>
+        <div class="ra-kv"><span class="ra-k">已过半坡</span><b>${data.rBelow50}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">稳住 90% 以上</span><b>${data.rAbove90}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">每篇记忆都在往坡下滑——坡的缓急由稳定性决定，添一次柴坡就缓一截。</p>
+      </div>
+    </div>`));
+    const tidePct = data.avgR == null ? 0 : Math.round(data.avgR * 100);
+    S3.push(frame(4, `
+    <div class="ra-tide">
+      <div class="ra-tide-plot" data-r="tplot"><canvas data-cv="tide" aria-hidden="true"></canvas>
+        <span class="ra-tide-gauge" data-r="gauge"><b>0%</b></span>
+      </div>
+      <div class="ra-tide-side">
+        <div class="ra-kv big"><span class="ra-k">平均留存</span><b>${data.avgR == null ? "—" : tidePct + "%"}<span class="ra-u">R</span></b></div>
+        <div class="ra-kv"><span class="ra-k">满水位</span><b>${data.rHist[9]}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">浅滩</span><b>${data.rHist[0] + data.rHist[1]}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">按住池面可以把水压下去，松手它回到你的真实水位。</p>
+      </div>
+    </div>`));
+    const debtMaxDays = Math.max(1, ...data.overdueList.slice(0, 18).map((d) => Math.round(d.days)));
+    const debtTags = data.overdueList.slice(0, 18).map((d, i) => {
+      const x = 8 + i * 29 % 84;
+      const y = 14 + Math.round(d.days) / debtMaxDays * 44;
+      const rot = -9 + i * 53 % 19;
+      return `<span class="ra-debt" data-r="debt" data-i="${i}" data-tip="${escapeHtml2(d.name)} · 拖了 ${Math.round(d.days)} 天"
+      style="--x:${x.toFixed(1)}%;--y:${y.toFixed(1)}%;--rot:${rot}deg;--sw:${i * 17 % 10 / 10}"><b>${escapeHtml2(d.name)}</b><i>拖 ${Math.round(d.days)} 天</i></span>`;
+    }).join("");
+    S3.push(frame(5, `
+    <div class="ra-debts">
+      <div class="ra-debt-rope" data-r="rope"></div>
+      ${debtTags}
+      <div class="ra-debt-total"><b>${data.overdueList.length}</b><span>笔未还 · 最早一笔拖了 ${data.overdueList.length ? Math.round(data.overdueList[0].days) : 0} 天</span></div>
+    </div>`));
+    const stepMax = Math.max(1, ...data.stageDist);
+    const steps = data.stageDist.map((n, i) => {
+      const last = i === 9;
+      const label = last ? "FSRS" : `${i + 1}`;
+      const tip2 = `${last ? "自由排期" : `第 ${i + 1} 阶`} · ${n} 篇`;
+      return `<div class="ra-step${last ? " is-fsrs" : ""}${i === data.stagePeak ? " is-peak" : ""}" data-r="step" data-i="${i}" data-tip="${escapeHtml2(tip2)}">
+      <span class="ra-step-n" data-r="stepn">${n}</span>
+      <span class="ra-step-bar" data-r="stepbar" style="--ph:${(n / stepMax * 100).toFixed(1)}%"></span>
+      <span class="ra-step-lb">${label}</span></div>`;
+    }).join("");
+    S3.push(frame(6, `
+    <div class="ra-steps" data-r="steps">${steps}<i class="ra-steps-fly" data-r="fly" aria-hidden="true"></i></div>`));
+    const crystalMax = Math.max(1, ...data.sBuckets.map((b) => b.n));
+    const crystals = data.sBuckets.map((b, i) => {
+      const w = b.n / crystalMax;
+      return `<div class="ra-crystal${i === data.sBuckets.length - 1 ? " is-last" : ""}" data-r="crystal" data-i="${i}"
+      data-tip="稳定性 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--w:${w.toFixed(3)};--i:${i}">
+      <canvas data-cv="crystal${i}" aria-hidden="true"></canvas>
+      <div class="ra-crystal-meta"><b data-r="cn">${b.n}</b><span>${escapeHtml2(b.label)}</span></div>
+    </div>`;
+    }).join("");
+    S3.push(frame(7, `
+    <div class="ra-crystals">
+      <div class="ra-crystal-row" data-r="crow">${crystals}</div>
+      <div class="ra-crystal-side">
+        <div class="ra-kv"><span class="ra-k">最久一块</span><b>${sText(data.sMax)}</b></div>
+        <p class="ra-sline">稳定性是记忆的晶格：越久没忘，晶格越大，下一次遗忘就来得越慢。</p>
+      </div>
+    </div>`));
+    const strataMax = Math.max(1, ...data.dBuckets.map((b) => b.n));
+    const STRATA_C = ["var(--ra-jade)", "var(--ra-indigo)", "var(--ra-amber)", "var(--ra-ember)"];
+    const strata = data.dBuckets.map((b, i) => `<div class="ra-stratum" data-r="stratum" data-i="${i}" data-tip="难度 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--ph:${(b.n / strataMax * 100).toFixed(1)}%;--sc:${STRATA_C[i]}">
+      <span class="ra-st-name">${escapeHtml2(b.label)}</span><span class="ra-st-n" data-r="stn">${b.n}</span></div>`).join("");
+    S3.push(frame(8, `
+    <div class="ra-strata">
+      <div class="ra-strata-bed" data-r="bed">${strata}</div>
+      <div class="ra-strata-side">
+        <div class="ra-kv"><span class="ra-k">平均难度</span><b>${data.dAvg == null ? "—" : data.dAvg.toFixed(1)}</b></div>
+        <p class="ra-sline">难度是你与这些笔记的相处史：越常「忘了」，矿层越往下沉。</p>
+      </div>
+    </div>`));
+    const woodMax = Math.max(1, ...data.daily14.map((d) => d.count));
+    const woodRows = data.daily14.map((d, i) => `<div class="ra-wood${i === 13 ? " is-today" : ""}" data-r="wood" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 次" style="--ph:${(d.count / woodMax * 100).toFixed(1)}%">
+      <span class="ra-wood-flame" data-r="flame"></span>
+      <span class="ra-wood-bar" data-r="woodbar"></span>
+      <span class="ra-wood-lb">${slashDay(d.date)}</span></div>`).join("");
+    S3.push(frame(9, `
+    <div class="ra-woods">
+      <div class="ra-woods-row" data-r="wrow">${woodRows}</div>
+      <div class="ra-woods-side">
+        <div class="ra-kv big"><span class="ra-k">两周添柴</span><b data-r="woodTotal">0</b></div>
+        <div class="ra-kv"><span class="ra-k">最勤一天</span><b>${data.dailyPeak}<span class="ra-u">次</span></b></div>
+      </div>
+    </div>`));
+    const beadN = Math.min(31, Math.max(data.streak, 1));
+    const beads = Array.from({ length: beadN }, (_, i) => `<i class="ra-bead${i === beadN - 1 ? " is-now" : ""}" data-r="bead" style="--i:${i}"></i>`).join("");
+    S3.push(frame(10, `
+    <div class="ra-vigil">
+      <div class="ra-vigil-lamp"><canvas data-cv="vigil" aria-hidden="true"></canvas></div>
+      <div class="ra-vigil-wick" data-r="wick">${beads}</div>
+      <div class="ra-vigil-side">
+        <div class="ra-kv big"><span class="ra-k">连燃</span><b data-r="streakN">0</b><span class="ra-u">天</span></div>
+        <div class="ra-kv"><span class="ra-k">累计</span><b>${data.distinctDays}<span class="ra-u">天</span></b></div>
+        <div class="ra-kv"><span class="ra-k">起点</span><b>${data.firstReviewAt ? escapeHtml2(slashDay(data.firstReviewAt.slice(0, 10))) : "—"}</b></div>
+      </div>
+    </div>`));
+    S3.push(frame(11, `
+    <div class="ra-verdicts">
+      <div class="ra-verdicts-plot" data-r="vplot"><canvas data-cv="verdicts" aria-hidden="true"></canvas></div>
+      <div class="ra-verdicts-side">
+        ${RA_RATING_ORDER.map((k) => `<div class="ra-kv" data-r="vk" data-k="${k}"><span class="ra-k"><i class="dot is-${k}"></i>${RA_RATING_NAMES[k]}</span><b data-r="vn">${data.ratingDist[k] || 0}<span class="ra-u">次</span></b></div>`).join("")}
+        <div class="ra-kv"><span class="ra-k">批改总计</span><b>${data.verdictTotal}<span class="ra-u">次</span></b></div>
+        <div class="ra-kv"><span class="ra-k">忘了率</span><b>${data.againRate == null ? "—" : Math.round(data.againRate * 100) + "%"}</b></div>
+      </div>
+    </div>`));
+    const bedMax = Math.max(1, ...data.bedrock.map((b) => b.s));
+    const bedRows = data.bedrock.map((b, i) => {
+      const tone = emberTone(b.r);
+      return `<div class="ra-bed" data-r="bedrow" data-i="${i}" data-tip="${escapeHtml2(b.name)} · 稳 ${sText(b.s)}${b.r != null ? ` · R ${Math.round(b.r * 100)}%` : ""}" style="--ph:${(b.s / bedMax * 100).toFixed(1)}%">
+      <span class="ra-bed-rank">${i + 1}</span>
+      <span class="ra-bed-bar tone-${tone}" data-r="bedbar"><i class="ra-bed-shine" data-r="shine"></i></span>
+      <span class="ra-bed-name">${escapeHtml2(b.name)}</span>
+      <span class="ra-bed-val">${sText(b.s)}</span></div>`;
+    }).join("");
+    S3.push(frame(12, `
+    <div class="ra-bedrock">
+      <div class="ra-bedrock-rows" data-r="brows">${bedRows || '<p class="ra-sline">还没有进入 FSRS 的笔记——基岩要靠一次次「记得」垒起来。</p>'}</div>
+      <div class="ra-bedrock-side">
+        <div class="ra-kv big"><span class="ra-k">FSRS 在册</span><b>${data.fsrsN}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">阶梯爬坡</span><b>${data.ladderN}<span class="ra-u">篇</span></b></div>
+      </div>
+    </div>`));
+    const tideMax = Math.max(1, ...data.next8.map((d) => d.count));
+    const tideBars = data.next8.map((d, i) => `<div class="ra-tidebar${i === 0 ? " is-today" : i === 1 ? " is-tmr" : ""}" data-r="tidebar" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 篇" style="--ph:${(d.count / tideMax * 100).toFixed(1)}%">
+      <i class="ra-tidefly" data-r="tidefly"></i>
+      <span class="ra-tidebar-bar" data-r="tidebar"></span>
+      <span class="ra-tidebar-n" data-r="tidebarN">${d.count}</span>
+      <span class="ra-tidebar-lb">${d.label}</span></div>`).join("");
+    S3.push(frame(13, `
+    <div class="ra-portide">
+      <div class="ra-portide-row" data-r="prow">${tideBars}</div>
+      <div class="ra-portide-side">
+        <div class="ra-kv big"><span class="ra-k">明日来潮</span><b>${data.tomorrowN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">潮水把到期推到岸边——今晚多添一柴，明天的岸就干一分。</p>
+      </div>
+    </div>`));
+    const QCOLS = [
+      ["逾期", data.overdueN, "var(--ra-ember)"],
+      ["今日", data.todayN, "var(--ra-amber)"],
+      ["未来", data.futureN, "var(--ra-indigo)"],
+      ["已完成", data.doneColN, "var(--ra-jade)"]
+    ];
+    const qMax = Math.max(1, ...QCOLS.map(([, n]) => n));
+    const quarters = QCOLS.map(([label, n, color], i) => `<div class="ra-quarter" data-r="quarter" data-i="${i}" data-tip="${label} · ${n} 篇" style="--ph:${(n / qMax * 100).toFixed(1)}%;--qc:${color}">
+      <span class="ra-quarter-lamp" data-r="qlamp"></span>
+      <span class="ra-quarter-n" data-r="qn">0</span>
+      <span class="ra-quarter-lb">${label}</span></div>`).join("");
+    S3.push(frame(14, `
+    <div class="ra-quarters" data-r="qrow">${quarters}</div>`));
+    const markMax = Math.max(1, ...RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0));
+    const marks = RA_RATING_ORDER.map((k, i) => {
+      const n = data.lastDiffDist[k] || 0;
+      return `<div class="ra-mark tone-${k === "again" ? "low" : k === "hard" ? "mid" : "hi"}" data-r="mark" data-i="${i}" data-tip="末次「${RA_RATING_NAMES[k]}」· ${n} 篇" style="--ph:${(n / markMax * 100).toFixed(1)}%;--mi:${i}">
+      <span class="ra-mark-cut" data-r="cut"></span>
+      <span class="ra-mark-n" data-r="markn">${n}</span>
+      <span class="ra-mark-lb">${RA_RATING_NAMES[k]}</span></div>`;
+    }).join("");
+    S3.push(frame(15, `
+    <div class="ra-marks">
+      <div class="ra-marks-row" data-r="mrow">${marks}</div>
+      <div class="ra-marks-side">
+        <div class="ra-kv big"><span class="ra-k">待重做</span><b class="${data.redoN ? "is-hot" : ""}">${data.redoN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">末一次批改落在哪一档，就刻哪一道痕；「忘了」的痕最深，压着下次排期。</p>
+      </div>
+    </div>`));
+    S3.push(frame(16, `
+    <div class="ra-colo">
+      <canvas data-cv="colo" aria-hidden="true"></canvas>
+      <div class="ra-colo-grid">
+        <div class="ra-kv big"><b data-r="coloN">0</b><span>篇在册</span></div>
+        <div class="ra-kv big"><b data-r="coloA">0</b><span>篇在炉</span></div>
+        <div class="ra-kv big"><b data-r="coloD">0</b><span>篇完成</span></div>
+        <div class="ra-kv big"><b data-r="coloS">0</b><span>天连燃</span></div>
+      </div>
+      <p class="ra-colo-line">共 ${RA_SCENES.length} 幕 · 火不灭，账不清</p>
+    </div>`));
+    return `<div class="ra-film">${S3.join("")}</div>`;
+  }
+  function analysisFixedHtml() {
+    return `<div class="ra-fixed">
+    <div class="ra-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
+    <div class="ra-lampcol" data-r="rail">${RA_SCENES.map((s, i) => `<i class="ra-lamp" data-r="lamp" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
+  </div>`;
+  }
+  var RA_SCENES, pad22, slashDay, zhDay, sText, emberTone;
+  var init_view2 = __esm({
+    "src/review/analysis/view.ts"() {
+      init_utils();
+      init_data11();
+      RA_SCENES = [
+        { id: "open", name: "点炉" },
+        { id: "field", name: "忆炉全景" },
+        { id: "slope", name: "忘坡" },
+        { id: "tide", name: "水位" },
+        { id: "debts", name: "欠账" },
+        { id: "steppath", name: "阶石" },
+        { id: "crystal", name: "墨晶" },
+        { id: "strata", name: "矿层" },
+        { id: "dailies", name: "添柴志" },
+        { id: "vigil", name: "长明" },
+        { id: "verdicts", name: "批改环" },
+        { id: "bedrock", name: "基岩" },
+        { id: "portide", name: "来潮" },
+        { id: "quarters", name: "四驻" },
+        { id: "marks", name: "批痕" },
+        { id: "keeper", name: "守夜人" }
+      ];
+      pad22 = (n) => String(n).padStart(2, "0");
+      slashDay = (d) => d.slice(5).replace("-", "/");
+      zhDay = (d) => {
+        const [, m, dd] = d.split("-");
+        return `${Number(m)} 月 ${Number(dd)} 日`;
+      };
+      sText = (s) => s >= 365 ? `${(s / 365).toFixed(1)} 年` : `${Math.round(s)} 天`;
+      emberTone = (r) => r == null ? "off" : r >= 0.7 ? "hi" : r >= 0.4 ? "mid" : "low";
+    }
+  });
+
+  // src/review/analysis/kits.ts
+  function rng2(seed) {
+    let s = seed >>> 0 || 1;
+    return () => {
+      s ^= s << 13;
+      s >>>= 0;
+      s ^= s >> 17;
+      s ^= s << 5;
+      s >>>= 0;
+      return s / 4294967296;
+    };
+  }
+  function palette2(host) {
+    const inkRgb = cssVar(host, "--ra-ink-rgb", "222,228,236");
+    const jadeRgb = cssVar(host, "--ra-jade-rgb", "110,220,196");
+    const amberRgb = cssVar(host, "--ra-amber-rgb", "232,168,86");
+    const emberRgb = cssVar(host, "--ra-ember-rgb", "226,106,88");
+    const indigoRgb = cssVar(host, "--ra-indigo-rgb", "122,152,222");
+    const paper = cssVar(host, "--ra-paper", "#10161d");
+    const dark = luma(inkRgb) > 140;
+    return {
+      ink: `rgb(${inkRgb})`,
+      jade: `rgb(${jadeRgb})`,
+      amber: `rgb(${amberRgb})`,
+      ember: `rgb(${emberRgb})`,
+      indigo: `rgb(${indigoRgb})`,
+      paper,
+      dim: dark ? "rgba(190,200,214,.66)" : "rgba(52,64,80,.72)",
+      faint: dark ? "rgba(190,200,214,.34)" : "rgba(52,64,80,.4)",
+      inkRgb,
+      jadeRgb,
+      amberRgb,
+      emberRgb,
+      indigoRgb,
+      onStrong: dark ? "10,14,20" : "244,248,252",
+      dark
+    };
+  }
+  function canvas(host, key) {
+    const el = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el) return null;
+    const ctx = typeof el.getContext === "function" ? el.getContext("2d") : null;
+    if (!ctx) return null;
+    const cv = {
+      el,
+      ctx,
+      w: 0,
+      h: 0,
+      fit() {
+        const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+        const r = el.getBoundingClientRect();
+        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        if (w === cv.w && h === cv.h) return false;
+        cv.w = w;
+        cv.h = h;
+        el.width = Math.round(w * dpr);
+        el.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return true;
+      },
+      clear() {
+        ctx.clearRect(0, 0, cv.w, cv.h);
+      }
+    };
+    return cv;
+  }
+  function sampleText(text, fontPx, weight = 800, gap = 5) {
+    const c = document.createElement("canvas");
+    const pad = Math.round(fontPx * 0.3);
+    const ctx = c.getContext("2d");
+    if (!ctx) return [];
+    const font = `${weight} ${fontPx}px "Segoe UI", system-ui, -apple-system, sans-serif`;
+    ctx.font = font;
+    const w = Math.ceil(ctx.measureText(text).width) + pad * 2;
+    const h = Math.ceil(fontPx * 1.42);
+    c.width = w;
+    c.height = h;
+    const c2 = c.getContext("2d");
+    if (!c2) return [];
+    c2.font = font;
+    c2.fillStyle = "#fff";
+    c2.textBaseline = "middle";
+    c2.fillText(text, pad, h / 2);
+    const data = c2.getImageData(0, 0, w, h).data;
+    const pts = [];
+    for (let y = 0; y < h; y += gap) {
+      for (let x = 0; x < w; x += gap) {
+        if (data[(y * w + x) * 4 + 3] > 128) pts.push({ x, y });
+      }
+    }
+    return pts.map((p) => ({ x: p.x - w / 2, y: p.y - h / 2 }));
+  }
+  function nearest(spots, at22, radius = 0.06) {
+    if (!at22 || !spots.length) return -1;
+    let best = -1, bd = radius * radius;
+    for (let i = 0; i < spots.length; i++) {
+      const dx = spots[i].x - at22.x, dy = spots[i].y - at22.y;
+      const d = dx * dx + dy * dy;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+  function under(p, sel) {
+    if (typeof document === "undefined" || typeof document.elementFromPoint !== "function") return null;
+    try {
+      const hit = document.elementFromPoint(p.cx, p.cy);
+      return hit ? hit.closest(sel) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function tip(root, html, cx = 0, cy = 0) {
+    let el = tipNode.get(root);
+    if (!el) {
+      if (typeof document === "undefined") return;
+      el = document.createElement("span");
+      el.className = "ra-tip";
+      el.setAttribute("aria-hidden", "true");
+      root.appendChild(el);
+      tipNode.set(root, el);
+    }
+    if (!html) {
+      if (el.style.opacity !== "0") el.style.opacity = "0";
+      return;
+    }
+    if (el.dataset.h !== html) {
+      el.dataset.h = html;
+      el.innerHTML = html;
+    }
+    el.style.left = `${cx.toFixed(1)}px`;
+    el.style.top = `${cy.toFixed(1)}px`;
+    el.style.opacity = "1";
+  }
+  var clamp013, lerp2, at2, easeOut2, easeInOut2, easeBack2, spring, stagger, rollTo, cssVar, luma, rgba2, qsa, localAt, tipNode, toward;
+  var init_kits = __esm({
+    "src/review/analysis/kits.ts"() {
+      clamp013 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      lerp2 = (a, b, t) => a + (b - a) * t;
+      at2 = (t, dur, delay = 0) => clamp013((t - delay) / Math.max(dur, 1e-4));
+      easeOut2 = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut2 = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack2 = (x) => {
+        const c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      spring = (x, damp = 6, freq = 3) => x >= 1 ? 1 : 1 - Math.exp(-damp * x) * Math.cos(freq * Math.PI * x);
+      stagger = (t, i, step = 0.07, dur = 0.7) => at2(t, dur, i * step);
+      rollTo = (n, x, digits = 0, width = 0) => {
+        const v = n * clamp013(x);
+        const s = digits > 0 ? v.toFixed(digits) : String(Math.round(v));
+        return width > 0 ? s.padStart(width, "0") : s;
+      };
+      cssVar = (host, name, fallback) => {
+        const v = getComputedStyle(host).getPropertyValue(name).trim();
+        return v || fallback;
+      };
+      luma = (triplet) => {
+        var _a2, _b2, _c;
+        const n = triplet.split(",").map((x) => Number(x.trim()));
+        return 0.299 * ((_a2 = n[0]) != null ? _a2 : 0) + 0.587 * ((_b2 = n[1]) != null ? _b2 : 0) + 0.114 * ((_c = n[2]) != null ? _c : 0);
+      };
+      rgba2 = (triplet, a) => `rgba(${triplet},${a})`;
+      qsa = (host, sel) => Array.from(host.querySelectorAll(sel));
+      localAt = (host, p) => {
+        if (!host) return null;
+        const r = host.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return null;
+        const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+        return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+      };
+      tipNode = /* @__PURE__ */ new WeakMap();
+      toward = (cur, target, k = 0.18) => cur + (target - cur) * k;
+    }
+  });
+
+  // src/review/analysis/motions.ts
+  function S2(el, v) {
+    var _a2;
+    if (!el || lastStyle2.get(el) === v) return;
+    const prev = (_a2 = el.getAttribute("style")) != null ? _a2 : "";
+    if (prev) {
+      const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
+      if (vars) {
+        const keep = vars.filter((d) => !v.includes(`${d.split(":")[0].trim()}:`));
+        if (keep.length) v = `${keep.join(";")};${v}`;
+      }
+    }
+    lastStyle2.set(el, v);
+    el.setAttribute("style", v);
+  }
+  function T2(el, v) {
+    if (!el || lastText2.get(el) === v) return;
+    lastText2.set(el, v);
+    el.textContent = v;
+  }
+  function buildPerfs(root, data, host = root) {
+    const out = /* @__PURE__ */ new Map();
+    const scn = (id) => root.querySelector(`[data-id="${id}"]`);
+    if (!scn("open")) return out;
+    const vOf = (el, name, fallback = 0) => {
+      var _a2;
+      const v = parseFloat(String((_a2 = el == null ? void 0 : el.style.getPropertyValue(name)) != null ? _a2 : ""));
+      return Number.isFinite(v) ? v : fallback;
+    };
+    {
+      const s = scn("open");
+      const cv = canvas(s, "open");
+      let ps = [];
+      let builtFor = 0;
+      out.set("open", {
+        dur: 4.2,
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && ps.length === 0 && w > 8) {
+            builtFor = w;
+            const N = 60;
+            const fontPx = Math.max(120, Math.min(h * 0.5, w * 0.3));
+            const roll2 = rng2(20260922);
+            const resample = (text, fp) => {
+              const raw = sampleText(text, fp, 800, Math.max(3, Math.round(fp / 9)));
+              if (!raw.length) return [];
+              return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
+            };
+            const a = resample(String(data.active), fontPx);
+            const b = resample("忆", fontPx * 0.9);
+            ps = a.map((p, i) => {
+              var _a3, _b3;
+              const ang = i / Math.max(1, N) * Math.PI * 2 + roll2() * 0.6;
+              const rad = Math.max(w, h) * (0.5 + roll2() * 0.45);
+              return {
+                tx: p.x,
+                ty: p.y,
+                tx2: ((_a3 = b[i]) != null ? _a3 : p).x,
+                ty2: ((_b3 = b[i]) != null ? _b3 : p).y,
+                sx: Math.cos(ang) * rad,
+                sy: Math.sin(ang) * rad * 0.68,
+                d: roll2() * 0.5,
+                r: 2.2 + roll2() * 2.6,
+                jade: roll2() < 0.2
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            ps = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const cx = w / 2, cy = h / 2;
+            const morph = easeInOut2(at2(t, 1.2, 2.7));
+            const pxx = cx + px * w / 2, pyy = cy + py * h / 2;
+            for (const p of ps) {
+              const k = spring(clamp013((t - p.d) / 1.6), 5.2, 2.6);
+              const txx = lerp2(p.tx, p.tx2, morph), tyy = lerp2(p.ty, p.ty2, morph);
+              const jit = t > 2 ? 1.2 : 0;
+              let x = cx + lerp2(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * 0.05) * jit;
+              let y = cy + lerp2(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * 0.06) * jit;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.16;
+                if (dist < R && dist > 1e-3) {
+                  const f = (1 - dist / R) * 24 * (0.35 + 0.65 * (1 - clamp013(k) * 0.6));
+                  x += dx / dist * f;
+                  y += dy / dist * f;
+                }
+              }
+              ctx.globalAlpha = 0.16 + 0.84 * clamp013(k);
+              ctx.fillStyle = rgba2(p.jade ? pal.jadeRgb : pal.inkRgb, 0.8);
+              ctx.beginPath();
+              ctx.arc(x, y, p.r * (0.45 + 0.55 * clamp013(k)), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            const sweep3 = at2(t, 0.5, 1.7);
+            if (sweep3 > 0 && sweep3 < 1) {
+              const g = ctx.createLinearGradient(0, 0, w, 0);
+              g.addColorStop(0, rgba2(pal.jadeRgb, 0));
+              g.addColorStop(0.5, rgba2(pal.jadeRgb, 0.12 * Math.sin(sweep3 * Math.PI)));
+              g.addColorStop(1, rgba2(pal.jadeRgb, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, cy - h * 0.3, w * sweep3, h * 0.6);
+            }
+          }
+        }
+      });
+    }
+    {
+      const s = scn("field");
+      const cv = canvas(s, "field");
+      const embers = data.liveEmbers.slice(0, 60).map((e) => ({ name: e.name, r: e.r, s: e.s, overdue: e.overdue }));
+      let spots = [];
+      let builtFor = 0;
+      let hot = -1;
+      out.set("field", {
+        dur: 3.4,
+        move(p) {
+          hot = nearest(spots, localAt(cv == null ? void 0 : cv.el, p), 0.09);
+          if (hot >= 0) {
+            const e = embers[hot];
+            const rTxt = e.r == null ? "阶梯期" : `R ${Math.round(e.r * 100)}%`;
+            tip(host, `${e.name} · ${rTxt}`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && spots.length === 0 && w > 8 && embers.length) {
+            builtFor = w;
+            const roll2 = rng2(777);
+            spots = embers.map((e) => {
+              const depth = e.r == null ? 0.5 : 1 - e.r;
+              const a = roll2() * Math.PI * 2;
+              const rx = w * 0.34, ry = h * 0.32;
+              return {
+                x: w / 2 + Math.cos(a) * rx * (0.25 + 0.75 * roll2()),
+                y: h * (0.84 - 0.66 * (1 - depth)) + Math.sin(a) * ry * 0.3
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            spots = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const pxx = w / 2 + px * w / 2, pyy = h / 2 + py * h / 2;
+            embers.forEach((e, i) => {
+              var _a3;
+              const p = at2(t, 0.9, i * 0.045);
+              if (p <= 0) return;
+              const base = (_a3 = spots[i]) != null ? _a3 : { x: w / 2, y: h / 2 };
+              const amp = e.r == null ? 3 : 2 + e.r * 4;
+              const x = base.x + Math.sin(t * 0.9 + i * 1.7) * amp * 0.8;
+              const y0 = lerp2(h * 1.05, base.y, easeOut2(p));
+              const y = y0 + Math.cos(t * (0.7 + i % 5 * 0.1) + i) * amp;
+              let push = 0, pushA = 0;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.13;
+                if (dist < R && dist > 1e-3) {
+                  push = (1 - dist / R) * 22;
+                  pushA = Math.atan2(dy, dx);
+                }
+              }
+              const fx = x + Math.cos(pushA) * push, fy = y + Math.sin(pushA) * push;
+              const tone = e.overdue ? pal.emberRgb : e.r == null ? pal.indigoRgb : e.r >= 0.7 ? pal.jadeRgb : e.r >= 0.4 ? pal.amberRgb : pal.emberRgb;
+              const rad = (e.r == null ? 2.4 : 2 + e.r * 3.4) * (i === hot ? 1.9 : 1) * easeOut2(p);
+              const flick = 0.72 + 0.28 * Math.sin(t * (2.2 + i % 7 * 0.3) + i * 2.1);
+              const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, rad * 4.2);
+              g.addColorStop(0, rgba2(tone, 0.85 * flick));
+              g.addColorStop(0.35, rgba2(tone, 0.3 * flick));
+              g.addColorStop(1, rgba2(tone, 0));
+              ctx.fillStyle = g;
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 4.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = rgba2(tone, 0.95);
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 0.55, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          }
+        }
+      });
+    }
+    {
+      const s = scn("slope");
+      const cv = canvas(s, "slope");
+      const cursor = s.querySelector('[data-r="cursor"]');
+      const oncliff = s.querySelector('[data-r="oncliff"]');
+      const dots = qsa(s, ".ra-slope-dot");
+      const REF_S = [3, 14, 45, 150];
+      let hotI = -1;
+      out.set("slope", {
+        dur: 3.6,
+        move(p) {
+          var _a2, _b2;
+          const dot = under(p, ".ra-slope-dot");
+          hotI = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          const l = localAt((_b2 = cursor == null ? void 0 : cursor.offsetParent) != null ? _b2 : null, p);
+          if (hotI >= 0) {
+            const e = data.liveEmbers.filter((x) => x.r != null && x.ageDays != null && x.s > 0)[hotI];
+            if (e) tip(host, `${e.name} · 龄 ${Math.round(e.ageDays)} 天 / 稳 ${Math.round(e.s)} 天 · R ${Math.round(e.r * 100)}%`, p.cx, p.cy);
+          } else if (l) {
+            tip(host, `龄期 ${Math.round(l.x * 3 * 10) / 10}×S`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const padL = w * 0.07, padR = w * 0.05, padT = h * 0.12, padB = h * 0.14;
+            const X = (u) => padL + u * (w - padL - padR);
+            const Y = (r) => padT + (1 - r) * (h - padT - padB);
+            const d = 0.9;
+            const grow = easeInOut2(at2(t, 1.9, 0.2));
+            REF_S.forEach((sV, si) => {
+              const gp = clamp013(grow * 1.3 - si * 0.08);
+              if (gp <= 0) return;
+              ctx.beginPath();
+              const steps = 60;
+              for (let i = 0; i <= steps * gp; i++) {
+                const u = i / steps;
+                const r = Math.pow(1 + u * sV * 0 + u * sV / sV * 0 + u / 1 * sV / sV * 0 + u / (sV * d) * sV / sV * 0 + 0, 0);
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                if (i === 0) ctx.moveTo(X(u), Y(rr));
+                else ctx.lineTo(X(u), Y(rr));
+              }
+              ctx.strokeStyle = rgba2(pal.indigoRgb, 0.34 - si * 0.05);
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            });
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.1);
+            ctx.lineWidth = 1;
+            for (const gv of [0.25, 0.5, 0.75]) {
+              ctx.beginPath();
+              ctx.moveTo(X(0), Y(gv));
+              ctx.lineTo(X(1), Y(gv));
+              ctx.stroke();
+            }
+            const dashT = t * 0.35 % 1;
+            const mainS = 14;
+            ctx.setLineDash([10, 14]);
+            ctx.lineDashOffset = -t * 26;
+            ctx.beginPath();
+            for (let i = 0; i <= 60; i++) {
+              const u = i / 60;
+              const rr = Math.pow(1 + u * 3 / (mainS * d), -d);
+              if (i === 0) ctx.moveTo(X(u), Y(rr));
+              else ctx.lineTo(X(u), Y(rr));
+            }
+            ctx.strokeStyle = rgba2(pal.jadeRgb, 0.5 * at2(t, 0.6, 1.9));
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            if (px && t > 1.2) {
+              const u = clamp013((px + 1) / 2);
+              ctx.strokeStyle = rgba2(pal.inkRgb, 0.3);
+              ctx.beginPath();
+              ctx.moveTo(X(u), Y(1));
+              ctx.lineTo(X(u), Y(0));
+              ctx.stroke();
+              for (const sV of REF_S) {
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                ctx.fillStyle = rgba2(pal.indigoRgb, 0.8);
+                ctx.beginPath();
+                ctx.arc(X(u), Y(rr), 2.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+          dots.forEach((el, i) => {
+            const p = at2(t, 0.5, 1.4 + i * 0.028);
+            const on = i === hotI && t > 2;
+            S2(el, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack2(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+          if (oncliff) {
+            const p = at2(t, 0.6, 2.2);
+            S2(oncliff, `opacity:${p.toFixed(3)}`);
+            T2(oncliff, `${data.rBelow50 + data.rAbove90 === data.total ? 0 : Math.max(0, data.active - data.rBelow50 - data.rAbove90)} 篇`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("tide");
+      const cv = canvas(s, "tide");
+      const gauge = s.querySelector('[data-r="gauge"]');
+      const tplot = s.querySelector('[data-r="tplot"]');
+      const target = data.avgR == null ? 0 : data.avgR;
+      let shown = 0;
+      let pressAt = null;
+      out.set("tide", {
+        dur: 3.2,
+        move(p) {
+          if (pressAt) pressAt = localAt(tplot, p);
+        },
+        down(p) {
+          pressAt = localAt(tplot, p);
+        },
+        up() {
+          pressAt = null;
+        },
+        update({ t, pal }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          const want = pressAt ? clamp013(1 - pressAt.y) : target;
+          const ramp = easeInOut2(at2(t, 2.2, 0.2));
+          shown = t < 0.1 ? 0 : toward(shown, want * ramp, pressAt ? 0.09 : 0.05);
+          const pct = Math.round(shown * 100);
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const layers = [
+              [pal.jadeRgb, 0.18, 0],
+              [pal.jadeRgb, 0.26, 2.1],
+              [pal.indigoRgb, 0.3, 4.2]
+            ];
+            layers.forEach(([rgb3, alpha, ph], li) => {
+              ctx.beginPath();
+              ctx.moveTo(0, h);
+              const amp = h * (0.03 + li * 0.012);
+              const spd = 0.9 + li * 0.5;
+              for (let x = 0; x <= w; x += 8) {
+                const y = h * (1 - shown) + Math.sin(t * spd + ph + x / (w / (3 + li))) * amp + Math.sin(t * spd * 0.6 + x / (w / 1.7)) * amp * 0.5;
+                ctx.lineTo(x, y);
+              }
+              ctx.lineTo(w, h);
+              ctx.closePath();
+              ctx.fillStyle = rgba2(rgb3, alpha);
+              ctx.fill();
+            });
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.14);
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 7]);
+            for (const gv of [0.25, 0.5, 0.75, 1]) {
+              const y = h * (1 - gv);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            if (target > 0) {
+              const y = h * (1 - target);
+              ctx.strokeStyle = rgba2(pal.emberRgb, 0.5 * at2(t, 0.5, 1));
+              ctx.setLineDash([6, 6]);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+          if (gauge) {
+            S2(gauge, `transform:translateY(${((1 - shown) * 100).toFixed(2)}%);opacity:${at2(t, 0.4, 0.8).toFixed(3)}`);
+            T2(gauge.querySelector("b"), `${pct}%`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("debts");
+      const debts = qsa(s, ".ra-debt");
+      const rots = debts.map((el) => vOf(el, "--rot", 0));
+      const swings = debts.map((el) => vOf(el, "--sw", 0));
+      const total = s.querySelector(".ra-debt-total");
+      let hotDebt = -1;
+      out.set("debts", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-debt");
+          hotDebt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          debts.forEach((el, i) => {
+            const p = at2(t, 0.5, 0.2 + i * 0.09);
+            const on = i === hotDebt && t > 1.2;
+            const swing = Math.sin(t * 1.15 + i * 1.9 + swings[i] * 6.28) * (1.6 + swings[i]);
+            S2(el, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack2(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut2(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
+          });
+          if (total) {
+            const p = at2(t, 0.6, 1.2);
+            S2(total, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 10).toFixed(1)}px)`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("steppath");
+      const steps = qsa(s, ".ra-step");
+      const bars = steps.map((el) => el.querySelector('[data-r="stepbar"]'));
+      const nums = steps.map((el) => el.querySelector('[data-r="stepn"]'));
+      const fly = s.querySelector('[data-r="fly"]');
+      const phs = steps.map((el) => vOf(el.querySelector('[data-r="stepbar"]'), "--ph", 0));
+      const row = s.querySelector('[data-r="steps"]');
+      let hotStep = -1;
+      out.set("steppath", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-step");
+          hotStep = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          steps.forEach((el, i) => {
+            const p = stagger(t, i, 0.12, 0.8);
+            const on = i === hotStep && t > 1.6;
+            S2(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center`);
+            S2(el, `opacity:${(at2(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            T2(nums[i], String(Math.round((data.stageDist[i] || 0) * easeOut2(p))));
+          });
+          if (fly && row) {
+            const span = steps.length - 1;
+            const u = (Math.sin((t - 1.4) * 0.55) * 0.5 + 0.5) * span;
+            const i0 = Math.floor(u), i1 = Math.min(span, i0 + 1);
+            const f = u - i0;
+            const h0 = phs[i0] / 100, h1 = phs[i1] / 100;
+            const lift = lerp2(12 + h0, 12 + h1, easeInOut2(f));
+            const left = (u + 0.5) / steps.length * 100;
+            const glow = 0.5 + 0.5 * Math.sin(t * 3);
+            S2(fly, `--fx:${left.toFixed(2)}%;--fy:${lift.toFixed(2)}%;opacity:${(at2(t, 0.4, 1.4) * (0.55 + 0.45 * glow)).toFixed(3)}`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("crystal");
+      const blocks = qsa(s, ".ra-crystal");
+      const cvs = blocks.map((_, i) => canvas(s, `crystal${i}`));
+      const ns = data.sBuckets.map((b) => b.n);
+      const weights = blocks.map((el) => vOf(el, "--w", 0));
+      const crow = s.querySelector('[data-r="crow"]');
+      const numsEls = blocks.map((el) => el.querySelector('[data-r="cn"]'));
+      let hotC = -1;
+      out.set("crystal", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-crystal");
+          hotC = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          if (crow && t > 1.8) {
+            S2(crow, `transform:perspective(1100px) rotateX(${(-py * 2.6).toFixed(2)}deg) rotateY(${(px * 3).toFixed(2)}deg)`);
+          }
+          blocks.forEach((el, i) => {
+            const p = at2(t, 0.7, i * 0.16);
+            const on = i === hotC && t > 1.6;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            T2(numsEls[i], String(Math.round(ns[i] * easeOut2(p))));
+            const cv = cvs[i];
+            if (!cv) return;
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const weight = weights[i];
+            if (weight <= 0) {
+              ctx.strokeStyle = rgba2(pal.inkRgb, 0.12);
+              ctx.setLineDash([3, 5]);
+              hexPath(ctx, w / 2, h * 0.62, Math.min(w, h) * 0.16);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              return;
+            }
+            const base = Math.min(w, h) * (0.09 + 0.13 * weight);
+            const glowU = (t * 0.22 + i * 0.37) % 1;
+            ctx.lineWidth = 1.1;
+            const rowsN = 5;
+            let idx = 0;
+            for (let r = 0; r < rowsN; r++) {
+              const count = rowsN - r;
+              for (let c = 0; c < count; c++) {
+                const cx = w / 2 + (c - (count - 1) / 2) * base * 1.78;
+                const cy = h * 0.88 - r * base * 1.54;
+                const size = base * (0.8 + 0.3 * Math.sin(idx * 3.7));
+                const appear = clamp013(at2(t, 0.5, i * 0.16 + idx * 0.05));
+                const near = Math.exp(-Math.pow(glowU * (rowsN * rowsN) - idx, 2) / 3.2);
+                ctx.strokeStyle = rgba2(pal.jadeRgb, (0.24 + 0.6 * near) * appear);
+                ctx.fillStyle = rgba2(pal.jadeRgb, (0.06 + 0.16 * near + 0.1 * weight) * appear);
+                hexPath(ctx, cx, cy, size * easeBack2(appear));
+                ctx.fill();
+                ctx.stroke();
+                idx++;
+              }
+            }
+          });
+        }
+      });
+    }
+    {
+      const s = scn("strata");
+      const strata = qsa(s, ".ra-stratum");
+      const phs = strata.map((el) => vOf(el, "--ph", 0));
+      const nsEls = strata.map((el) => el.querySelector('[data-r="stn"]'));
+      const ns = data.dBuckets.map((b) => b.n);
+      const bed = s.querySelector('[data-r="bed"]');
+      let hotSt = -1;
+      out.set("strata", {
+        dur: 2.6,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-stratum");
+          hotSt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          strata.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.7);
+            const on = i === hotSt && t > 1.2;
+            S2(el, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut2(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at2(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
+            T2(nsEls[i], String(Math.round(ns[i] * easeOut2(p))));
+          });
+          if (bed) S2(bed, `transform:perspective(1100px) rotateY(${0 .toFixed(2)}deg)`);
+        }
+      });
+    }
+    {
+      const s = scn("dailies");
+      const woods = qsa(s, ".ra-wood");
+      const bars = woods.map((el) => el.querySelector('[data-r="woodbar"]'));
+      const flames = woods.map((el) => el.querySelector('[data-r="flame"]'));
+      const phs = woods.map((el) => vOf(el, "--ph", 0));
+      const wTotal = s.querySelector('[data-r="woodTotal"]');
+      let hotW = -1;
+      out.set("dailies", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-wood");
+          hotW = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          woods.forEach((el, i) => {
+            const p = stagger(t, i, 0.09, 0.6);
+            const on = i === hotW && t > 1.4;
+            S2(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center`);
+            const alive = phs[i] > 0 && p > 0.9 ? 1 : 0;
+            const breath = 0.45 + 0.55 * Math.sin(t * 2.3 + i * 1.4);
+            S2(flames[i], `opacity:${(alive * (0.35 + 0.65 * breath) * (on ? 1.4 : 1)).toFixed(3)};transform:translateX(-50%) scale(${(on ? 1.5 : 0.8 + 0.3 * breath).toFixed(3)})`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+          if (wTotal) {
+            const p = easeOut2(at2(t, 1.4, 0.6));
+            T2(wTotal, rollTo(data.dailyTotal, p));
+          }
+        }
+      });
+    }
+    {
+      const s = scn("vigil");
+      const cv = canvas(s, "vigil");
+      const beads = qsa(s, ".ra-bead");
+      const streakN = s.querySelector('[data-r="streakN"]');
+      out.set("vigil", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          beads.forEach((el, i) => {
+            const p = at2(t, 0.3, 0.4 + i * 0.075);
+            const lit = p > 0 ? 1 : 0;
+            const pulse = i === beads.length - 1 && p >= 1 ? 0.4 + 0.6 * Math.abs(Math.sin(t * 1.8)) : 1;
+            S2(el, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack2(p)).toFixed(3)})`);
+          });
+          if (streakN) {
+            const p = easeOut2(at2(t, 1.6, 0.8));
+            T2(streakN, rollTo(data.streak, p));
+          }
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, baseY = h * 0.92;
+            const lit = data.streak > 0 ? 1 : easeInOut2(at2(t, 0.8, 0.3));
+            const lean = -px * 10 * lit;
+            const sway = Math.sin(t * 2.1) * 4 + Math.sin(t * 3.7 + 1.2) * 2;
+            const flameH = h * (0.34 + 0.05 * Math.sin(t * 1.6)) * lit;
+            const tipX = cx + lean + sway;
+            const g = ctx.createLinearGradient(cx, baseY, tipX, baseY - flameH);
+            g.addColorStop(0, rgba2(pal.amberRgb, 0.85 * lit));
+            g.addColorStop(0.55, rgba2(pal.jadeRgb, 0.55 * lit));
+            g.addColorStop(1, rgba2(pal.jadeRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(cx - 7 * lit, baseY);
+            ctx.quadraticCurveTo(cx - 9 + lean * 0.4, baseY - flameH * 0.5, tipX, baseY - flameH);
+            ctx.quadraticCurveTo(cx + 9 + lean * 0.4, baseY - flameH * 0.5, cx + 7, baseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.5 * at2(t, 0.3, 0.1));
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, baseY + 4);
+            ctx.lineTo(cx, baseY - 6);
+            ctx.stroke();
+            ctx.fillStyle = rgba2(pal.inkRgb, 0.18);
+            ctx.beginPath();
+            ctx.ellipse(cx, baseY + 8, 22, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    {
+      const s = scn("verdicts");
+      const cv = canvas(s, "verdicts");
+      const vRows = qsa(s, '[data-r="vk"]');
+      const TOTAL = Math.max(1, RA_RATING_ORDER.reduce((a, k) => a + (data.ratingDist[k] || 0), 0));
+      let hotK = -1;
+      const toneOf = (k) => k === "again" ? "emberRgb" : k === "hard" ? "amberRgb" : k === "good" ? "jadeRgb" : "inkRgb";
+      out.set("verdicts", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const row = under(p, '[data-r="vk"]');
+          if (row) {
+            hotK = RA_RATING_ORDER.indexOf((_a2 = row.dataset.k) != null ? _a2 : "");
+            return;
+          }
+          const l = localAt(cv == null ? void 0 : cv.el, p);
+          if (!l) {
+            hotK = -1;
+            tip(host, "");
+            return;
+          }
+          const ang = (Math.atan2(l.y - 0.5, l.x - 0.5) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+          let acc = 0;
+          hotK = -1;
+          for (let i = 0; i < RA_RATING_ORDER.length; i++) {
+            const frac = (data.ratingDist[RA_RATING_ORDER[i]] || 0) / TOTAL;
+            if (frac <= 0) continue;
+            if (ang >= acc && ang < acc + frac * Math.PI * 2) {
+              hotK = i;
+              break;
+            }
+            acc += frac * Math.PI * 2;
+          }
+          if (hotK >= 0) {
+            const k = RA_RATING_ORDER[hotK];
+            tip(host, `${RA_RATING_NAMES[k]} · ${data.ratingDist[k] || 0} 次`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, cy = h / 2;
+            const R = Math.min(w, h) * 0.36, rIn = R * 0.58;
+            const spin = t > 2 ? (t - 2) * 0.12 : 0;
+            let a0 = -Math.PI / 2 + spin;
+            const grow = easeInOut2(at2(t, 2.2, 0.3));
+            RA_RATING_ORDER.forEach((k, i) => {
+              var _a2, _b2;
+              const frac = (data.ratingDist[k] || 0) / TOTAL;
+              if (frac <= 0) return;
+              const sweep3 = frac * Math.PI * 2 * grow;
+              const on = i === hotK;
+              const rOut = R * (on ? 1.07 : 1);
+              ctx.beginPath();
+              ctx.arc(cx, cy, rOut, a0, a0 + sweep3);
+              ctx.arc(cx, cy, rIn, a0 + sweep3, a0, true);
+              ctx.closePath();
+              const toneKey = toneOf(k);
+              const tone = (_a2 = pal[toneKey]) != null ? _a2 : pal.ink;
+              const rgb3 = (_b2 = pal[`${toneKey.replace("Rgb", "")}`]) != null ? _b2 : "";
+              ctx.fillStyle = tone.startsWith("rgb") ? tone : `rgba(${tone},.8)`;
+              ctx.globalAlpha = (on ? 1 : hotK >= 0 ? 0.42 : 0.88) * Math.min(1, grow * 1.4);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+              a0 += frac * Math.PI * 2;
+            });
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = rgba2(pal.inkRgb, at2(t, 0.5, 1));
+            ctx.font = `700 ${Math.round(Math.min(w, h) * 0.14)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillText(String(Math.round(data.verdictTotal * grow)), cx, cy);
+            ctx.font = `${Math.round(Math.min(w, h) * 0.07)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillStyle = rgba2(pal.inkRgb, 0.5 * at2(t, 0.5, 1.2));
+            ctx.fillText("次批改", cx, cy + Math.min(w, h) * 0.11);
+          }
+          vRows.forEach((row, i) => {
+            const on = i === hotK;
+            S2(row, `opacity:${(at2(t, 0.4, 0.6 + i * 0.1) * (hotK >= 0 && !on ? 0.45 : 1)).toFixed(3)};transform:translateX(${(on ? 6 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("bedrock");
+      const rows = qsa(s, ".ra-bed");
+      const bars = rows.map((el) => el.querySelector('[data-r="bedbar"]'));
+      const shines = rows.map((el) => el.querySelector('[data-r="shine"]'));
+      const phs = rows.map((el) => vOf(el, "--ph", 0));
+      let hotB = -1;
+      out.set("bedrock", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-bed");
+          hotB = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          rows.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.9);
+            const on = i === hotB && t > 1.5;
+            S2(bars[i], `width:${phs[i].toFixed(2)}%;transform:scaleX(${easeOut2(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.18)" : "none"}`);
+            S2(shines[i], `opacity:${(p >= 1 ? 0.4 + 0.5 * Math.max(0, Math.sin(t * 1.1 + i * 0.9)) : 0).toFixed(3)};transform:translateX(${((t * 22 + i * 60) % 160 - 30).toFixed(1)}px)`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("portide");
+      const bars = qsa(s, ".ra-tidebar");
+      const columns = bars.map((el) => el.querySelector('[data-r="tidebar"]'));
+      const numsEls = bars.map((el) => el.querySelector('[data-r="tidebarN"]'));
+      const flies = bars.map((el) => el.querySelector('[data-r="tidefly"]'));
+      const phs = bars.map((el) => vOf(el, "--ph", 0));
+      const counts = data.next8.map((d) => d.count);
+      let hotT = -1;
+      out.set("portide", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-tidebar");
+          hotT = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          bars.forEach((el, i) => {
+            const p = stagger(t, i, 0.11, 0.7);
+            const on = i === hotT && t > 1.4;
+            S2(columns[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center;filter:${on ? "brightness(1.2)" : "none"}`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+            const alive = (counts[i] || 0) > 0 && p >= 1 ? 1 : 0;
+            const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.7 + i * 1.1));
+            S2(flies[i], `opacity:${(alive * blink * (on ? 1 : 0.8)).toFixed(3)};transform:translate(-50%,${(-4 - 3 * Math.sin(t * 2 + i)).toFixed(1)}px) scale(${(on ? 1.5 : 1).toFixed(2)})`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("quarters");
+      const quarters = qsa(s, ".ra-quarter");
+      const lamps = quarters.map((el) => el.querySelector('[data-r="qlamp"]'));
+      const numsEls = quarters.map((el) => el.querySelector('[data-r="qn"]'));
+      const phs = quarters.map((el) => vOf(el, "--ph", 0));
+      const counts = [data.overdueN, data.todayN, data.futureN, data.doneColN];
+      let hotQ = -1;
+      out.set("quarters", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-quarter");
+          hotQ = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          quarters.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.8);
+            const on = i === hotQ && t > 1.5;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
+            S2(lamps[i], `transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center;filter:brightness(${(on ? 1.4 : 0.8 + 0.45 * Math.abs(Math.sin(t * 1.4 + i * 1.6))).toFixed(3)})`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("marks");
+      const marks = qsa(s, ".ra-mark");
+      const cuts = marks.map((el) => el.querySelector('[data-r="cut"]'));
+      const numsEls = marks.map((el) => el.querySelector('[data-r="markn"]'));
+      const phs = marks.map((el) => vOf(el, "--ph", 0));
+      const mrow = s.querySelector('[data-r="mrow"]');
+      const counts = RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0);
+      let hotM = -1;
+      out.set("marks", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-mark");
+          hotM = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, px, py }) {
+          if (mrow && t > 1.6) {
+            S2(mrow, `transform:perspective(1100px) rotateY(${(px * 2.4).toFixed(2)}deg) rotateX(${(-py * 1.8).toFixed(2)}deg)`);
+          }
+          marks.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.55);
+            const on = i === hotM && t > 1.4;
+            S2(cuts[i], `transform:scaleX(${easeBack2(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.3)" : "none"}`);
+            const sheen2 = p >= 1 ? Math.max(0, Math.sin(t * 0.9 + i * 1.3)) : 0;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("keeper");
+      const cv = canvas(s, "colo");
+      const coloN = s.querySelector('[data-r="coloN"]');
+      const coloA = s.querySelector('[data-r="coloA"]');
+      const coloD = s.querySelector('[data-r="coloD"]');
+      const coloS = s.querySelector('[data-r="coloS"]');
+      const roll2 = rng2(4242);
+      out.set("keeper", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          const dp = (delay) => easeOut2(at2(t, 1.2, delay));
+          T2(coloN, rollTo(data.total, dp(0.2)));
+          T2(coloA, rollTo(data.active, dp(0.45)));
+          T2(coloD, rollTo(data.doneN, dp(0.7)));
+          T2(coloS, rollTo(data.streak, dp(0.95)));
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2 + px * 8, cy = h / 2 + py * 6;
+            const appear = at2(t, 1.2, 0.4);
+            for (let i = 0; i < 18; i++) {
+              const a = roll2() * Math.PI * 2;
+              const rx = Math.min(w, h) * (0.28 + roll2() * 0.22);
+              const ry = rx * (0.5 + roll2() * 0.3);
+              const spd = 0.25 + roll2() * 0.4;
+              const ph = roll2() * Math.PI * 2;
+              const u = t * spd + ph;
+              const x = cx + Math.cos(u) * rx;
+              const y = cy + Math.sin(u * 0.92 + a) * ry;
+              const tw = 0.35 + 0.65 * Math.abs(Math.sin(t * 1.9 + i * 2.3));
+              ctx.fillStyle = rgba2(pal.jadeRgb, 0.5 * tw * appear);
+              ctx.beginPath();
+              ctx.arc(x, y, 1.6 + tw, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            const breathe = 0.5 + 0.5 * Math.sin(t * 1.1);
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30 + breathe * 12);
+            g.addColorStop(0, rgba2(pal.amberRgb, 0.3 * appear));
+            g.addColorStop(1, rgba2(pal.amberRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 42 + breathe * 12, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    return out;
+  }
+  function hexPath(ctx, cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 6 + i / 6 * Math.PI * 2;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+  var lastStyle2, lastText2;
+  var init_motions2 = __esm({
+    "src/review/analysis/motions.ts"() {
+      init_data11();
+      init_kits();
+      lastStyle2 = /* @__PURE__ */ new WeakMap();
+      lastText2 = /* @__PURE__ */ new WeakMap();
+    }
+  });
+
+  // src/review/analysis/engine.ts
+  function reduced4() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function qa3(root, sel) {
+    return [...root.querySelectorAll(sel)];
+  }
+  function bindAnalysis(root, data) {
+    const sc = root.querySelector(".bz-ra-scroll");
+    const film = root.querySelector(".ra-film");
+    const handle = { stop: () => void 0, goTo: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qa3(film, ".bz-ra-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPerfs(film, data, root);
+    const lamps = qa3(root, ".ra-lamp");
+    const shutter = root.querySelector('[data-r="shutter"]');
+    const barI = root.querySelector('[data-r="barI"]');
+    const barN = root.querySelector('[data-r="barN"]');
+    const barLine = root.querySelector('[data-r="barLine"]');
+    const pb = root.querySelector('[data-r="pb"]');
+    let pal = palette2(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let autoplay = false;
+    let autoAt = 0;
+    let navTarget = -1;
+    let navUntil = 0;
+    let px = 0, py = 0, cx = 0, cy = 0, pin = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const broken = /* @__PURE__ */ new Set();
+    let cutTimers = [];
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const fitHeight = () => filmEl.style.setProperty("--ra-h", `${unit()}px`);
+    fitHeight();
+    const indexAt = () => clamp3(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      var _a2;
+      lamps.forEach((lp, k) => {
+        if (k === i) lp.setAttribute("data-on", "1");
+        else lp.removeAttribute("data-on");
+      });
+      if (barI) barI.textContent = String(i + 1).padStart(2, "0");
+      if (barN) barN.textContent = (_a2 = scenes[i].dataset.name) != null ? _a2 : "";
+      if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+    }
+    function play(perf, scn, ctx) {
+      var _a2;
+      const id = (_a2 = scn.getAttribute("data-id")) != null ? _a2 : "";
+      if (broken.has(id)) return;
+      try {
+        perf.update(ctx);
+      } catch (e) {
+        broken.add(id);
+        scn.classList.add("is-err");
+        try {
+          console.error("[记忆分析] 幕表演异常，该幕转静版：", id, e);
+        } catch (e2) {
+        }
+      }
+    }
+    function activate(i, replay2 = true) {
+      var _a2, _b2;
+      if (dead || i === cur && !replay2) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+        if (prev && !settled.has(cur)) {
+          play(prev, scenes[cur], { t: prev.dur, pal, px, py, cx, cy, pin });
+          settled.add(cur);
+        }
+        tip(root, "");
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b2 = scenes[i].getAttribute("data-id")) != null ? _b2 : "");
+      if (replay2) t0 = performance.now();
+      if (perf) play(perf, scenes[i], { t: replay2 ? 0 : perf.dur, pal, px, py, cx, cy, pin });
+      const scn = scenes[i];
+      scn.classList.remove("is-in");
+      void scn.offsetWidth;
+      scn.classList.add("is-in");
+      hud(i, 0);
+      autoAt = performance.now();
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay2) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay2);
+    };
+    function goTo(i, opts) {
+      var _a2, _b2;
+      const target = clamp3(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a2 = opts == null ? void 0 : opts.replay) != null ? _a2 : true);
+        return;
+      }
+      if (!shutter) {
+        cutTo(target, (_b2 = opts == null ? void 0 : opts.replay) != null ? _b2 : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a3;
+        cutTo(target, (_a3 = opts == null ? void 0 : opts.replay) != null ? _a3 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), 240));
+      }, 160));
+    }
+    handle.goTo = goTo;
+    const goRel = (dN) => goTo(cur < 0 ? 0 : cur + dN, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
+      const now = performance.now();
+      const fresh = now - lastWheel > GESTURE_GAP2;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      setAuto(false);
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
+      }
+    }
+    function pump() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn2(() => {
+        clearTimeout(fallback);
+        pump();
+      });
+      fallback = setTimeout(() => {
+        rafStop2(raf);
+        pump();
+      }, 220);
+    }
+    function tick(now) {
+      var _a2;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
+      hud(cur, clamp014(t / perf.dur));
+      if (autoplay && now - autoAt > (perf.dur + 1.4) * 1e3) {
+        if (cur >= scenes.length - 1) setAuto(false);
+        else goRel(1);
+      }
+    }
+    function setAuto(on) {
+      if (autoplay === on) return;
+      autoplay = on;
+      if (pb) {
+        pb.textContent = on ? "停火" : "巡火";
+        pb.classList.toggle("is-on", on);
+      }
+      autoAt = performance.now();
+    }
+    const onOvlClick = (e) => {
+      var _a2;
+      const t = e.target;
+      if (t.closest('[data-r="pb"]')) {
+        setAuto(!autoplay);
+        return;
+      }
+      const lamp = t.closest(".ra-lamp");
+      if (lamp) {
+        setAuto(false);
+        goTo(Number((_a2 = lamp.getAttribute("data-i")) != null ? _a2 : 0), { cut: true });
+      }
+    };
+    const onPointerMove = (e) => {
+      const r = root.getBoundingClientRect();
+      cx = e.clientX;
+      cy = e.clientY;
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+    };
+    const onPointerLeave = () => {
+      pin = 0;
+      px = 0;
+      py = 0;
+      tip(root, "");
+    };
+    const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
+      pal = palette2(root);
+    }) : null;
+    mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      fitHeight();
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
+    filmEl.addEventListener("click", onOvlClick);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    root.addEventListener("pointermove", onPointerMove, { passive: true });
+    root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    document.addEventListener("keydown", onKey);
+    if (reduced4()) {
+      scenes.forEach((scn, i) => {
+        var _a2;
+        const perf = perfs.get((_a2 = scn.getAttribute("data-id")) != null ? _a2 : "");
+        if (perf) play(perf, scn, { t: perf.dur, pal, px: 0, py: 0, cx: 0, cy: 0, pin: 0 });
+      });
+      cur = scenes.length - 1;
+      hud(scenes.length - 1, 1);
+    } else {
+      activate(0, true);
+      pump();
+    }
+    handle.stop = () => {
+      dead = true;
+      rafStop2(raf);
+      clearTimeout(fallback);
+      mo == null ? void 0 : mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
+      clearCut();
+      tip(root, "");
+      filmEl.removeEventListener("click", onOvlClick);
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("keydown", onKey);
+    };
+    return handle;
+  }
+  var GESTURE_GAP2, rafFn2, rafStop2, clamp3, clamp014;
+  var init_engine2 = __esm({
+    "src/review/analysis/engine.ts"() {
+      init_motions2();
+      init_kits();
+      GESTURE_GAP2 = 340;
+      rafFn2 = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop2 = (id) => {
+        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+        else clearTimeout(id);
+      };
+      clamp3 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp014 = (x) => clamp3(x, 0, 1);
+    }
+  });
+
+  // src/review/analysis/index.ts
+  var analysis_exports = {};
+  __export(analysis_exports, {
+    closeReviewAnalysis: () => closeReviewAnalysis,
+    openReviewAnalysis: () => openReviewAnalysis,
+    unloadReviewAnalysis: () => unloadReviewAnalysis
+  });
+  function fitRaBox(box, panel2) {
+    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
+    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+      box.style.left = "16px";
+      box.style.top = "16px";
+      box.style.width = "calc(100vw - 32px)";
+      box.style.height = "calc(100vh - 32px)";
+      box.style.fontSize = "16px";
+      return;
+    }
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
+  }
+  async function openReviewAnalysis(app) {
+    const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
+    if (raOvl == null ? void 0 : raOvl.isConnected) {
+      const box2 = raOvl.querySelector(".bz-ra-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
+      return;
+    }
+    let data;
+    try {
+      ensureReview(app);
+      const dm = dataManager2;
+      if (!dm || noStage) throw new Error("no-stage");
+      const items = await dm.loadItems();
+      if (!items.length) throw new Error("empty");
+      let w;
+      try {
+        w = reviewApp.currentW();
+      } catch (e) {
+        w = void 0;
+      }
+      data = deriveAnalysis(items, { w });
+    } catch (e) {
+      const { openReviewReport: openReviewReport2 } = await Promise.resolve().then(() => (init_review(), review_exports));
+      await openReviewReport2(app);
+      return;
+    }
+    const panel2 = document.querySelector("#review-popup");
+    const ovl = document.createElement("div");
+    ovl.className = "bz-ra";
+    ovl.innerHTML = `
+    <div class="bz-ra-box">
+      ${analysisFixedHtml()}
+      <div class="bz-ra-scroll">${analysisHtml(data)}</div>
+    </div>`;
+    const isMobile = (() => {
+      try {
+        return window.matchMedia("(max-width: 768px)").matches;
+      } catch (e) {
+        return false;
+      }
+    })();
+    if (isMobile) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-ra-close";
+      close.setAttribute("data-ra-close", "");
+      close.title = "关闭";
+      close.setAttribute("aria-label", "关闭");
+      close.textContent = "✕";
+      ovl.appendChild(close);
+    }
+    document.body.appendChild(ovl);
+    topifyZ(ovl);
+    raOvl = ovl;
+    const box = ovl.querySelector(".bz-ra-box");
+    if (box) {
+      fitRaBox(box, panel2);
+      raSync = () => fitRaBox(box, panel2);
+      window.addEventListener("resize", raSync);
+      if (typeof ResizeObserver === "function" && panel2) {
+        raRo = new ResizeObserver(raSync);
+        raRo.observe(panel2);
+      }
+    }
+    ovl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-ra-close]")) {
+        closeReviewAnalysis();
+        return;
+      }
+      if (!t.closest(".bz-ra-box")) closeReviewAnalysis();
+    });
+    raEsc = escManager.register("bz-review-analysis", {
+      isVisible: () => !!(raOvl == null ? void 0 : raOvl.isConnected),
+      close: closeReviewAnalysis
+    });
+    raHandle = bindAnalysis(ovl, data);
+  }
+  function closeReviewAnalysis() {
+    raHandle == null ? void 0 : raHandle.stop();
+    raHandle = null;
+    if (raEsc) {
+      try {
+        raEsc.unregister();
+      } catch (e) {
+      }
+      raEsc = null;
+    }
+    if (raSync) {
+      window.removeEventListener("resize", raSync);
+      raSync = null;
+    }
+    raRo == null ? void 0 : raRo.disconnect();
+    raRo = null;
+    raOvl == null ? void 0 : raOvl.remove();
+    raOvl = null;
+  }
+  function unloadReviewAnalysis() {
+    closeReviewAnalysis();
+  }
+  var raOvl, raHandle, raEsc, raSync, raRo;
+  var init_analysis = __esm({
+    "src/review/analysis/index.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_review();
+      init_app3();
+      init_data11();
+      init_view2();
+      init_engine2();
+      raOvl = null;
+      raHandle = null;
+      raEsc = null;
+      raSync = null;
+      raRo = null;
+    }
+  });
+
   // src/review/stats-ui.ts
   var stats_ui_exports = {};
   __export(stats_ui_exports, {
@@ -46384,6 +48938,7 @@ ${n.content.slice(0, 2e3)}
     const stats = computeStats(items, { w });
     body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
     mountIcons(body);
+    motionStats(body);
     const openTimeline = (el) => {
       const idx = Number(el.dataset.idx);
       const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
@@ -46530,8 +49085,8 @@ ${n.content.slice(0, 2e3)}
       const ratingName = RATING_NAMES2[h.rating] || h.rating;
       const color = RATING_COLORS[h.rating] || "#888";
       const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
-      const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
-      const meta = [rText, sText].filter(Boolean).join(" · ");
+      const sText2 = h.stability !== void 0 ? `S=${h.stability}` : "";
+      const meta = [rText, sText2].filter(Boolean).join(" · ");
       const line = isLast ? "" : '<div class="bz-review-history-line"></div>';
       return `
       <div class="bz-review-history-item${isLast ? " is-last" : ""}">
@@ -46546,6 +49101,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     tl.innerHTML = itemsHTML;
     body.appendChild(tl);
+    motionHistory(body);
     histEsc = escManager.register("bz-review-history", {
       isVisible: () => !!histMask && histMask.style.display === "block",
       close: closeTimeline
@@ -46577,6 +49133,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_stats3();
       init_fsrs();
+      init_motion3();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;
@@ -46652,6 +49209,7 @@ ${n.content.slice(0, 2e3)}
       else el.blur();
     });
     document.body.appendChild(el);
+    motionRatingBar(el);
     el.focus({ preventScroll: true });
     return { close };
   }
@@ -46667,6 +49225,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_fsrs();
       init_render12();
+      init_motion3();
       init_queue();
       init_sprint();
       init_settings_schema2();
@@ -46685,6 +49244,8 @@ ${n.content.slice(0, 2e3)}
           this.sprintStarting = false;
           this.showArchived = false;
           this.escHandle = null;
+          /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
+          this.motionBootPending = false;
           this.app = app;
           this.dataManager = dataManager3;
           this.createMainUI();
@@ -46729,11 +49290,13 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionBootPending = true;
           trapPanelFocus(this.popup);
           await this.showQueue();
         }
         hideMain() {
           if (this.sprint) return;
+          motionTeardown3();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -46741,6 +49304,7 @@ ${n.content.slice(0, 2e3)}
           const sprint = this.sprint;
           this.sprint = null;
           sprint == null ? void 0 : sprint.destroy();
+          motionTeardown3();
           this.hideMain();
           if (this.escHandle) {
             this.escHandle.unregister();
@@ -46804,6 +49368,10 @@ ${n.content.slice(0, 2e3)}
           });
           if (focusKey) restoreFocusKey(container, focusKey);
           this.bindQueueEvents(container, items);
+          if (this.motionBootPending) {
+            this.motionBootPending = false;
+            motionQueueBoot(container);
+          }
         }
         /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
         async showQueue() {
@@ -46830,18 +49398,30 @@ ${n.content.slice(0, 2e3)}
         bindQueueEvents(container, items) {
           var _a2, _b2, _c, _d, _e, _f;
           (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
-          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.beginRound());
+          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => {
+            const strip = container.querySelector(".bz-q-strip");
+            if (strip) motionChargeStrip(strip);
+            void this.beginRound();
+          });
           (_c = container.querySelector('[data-act="arch"]')) == null ? void 0 : _c.addEventListener("click", () => {
             this.showArchived = !this.showArchived;
             void this.refreshPanel();
           });
-          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => void this.openStats());
+          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => {
+            void (async () => {
+              const { openReviewAnalysis: openReviewAnalysis3 } = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+              await openReviewAnalysis3(this.app);
+            })();
+          });
           (_e = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _e.addEventListener("click", () => void this.addCurrentNote());
           (_f = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _f.addEventListener("click", () => void this.showWatchHelp());
           container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
             const activate = () => {
               const it = items.find((x) => x.id === card.dataset.id);
-              if (it && isPlayable2(it)) void this.beginSingle(it);
+              if (it && isPlayable2(it)) {
+                motionDrawCard(card);
+                void this.beginSingle(it);
+              }
             };
             card.addEventListener("click", activate);
             card.addEventListener("keydown", (e) => {
@@ -46923,11 +49503,6 @@ ${n.content.slice(0, 2e3)}
           });
           return this.sprint.start();
         }
-        // ================= 归档 / 统计 =================
-        async openStats() {
-          const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-          await showStatsModal2(this.app, this.dataManager);
-        }
         // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
         /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
          *  （旧自绘 .difficulty-dialog 的 ESC 关错层、外点穿透、companion 残留随之消亡）。
@@ -46975,11 +49550,11 @@ ${n.content.slice(0, 2e3)}
           card.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            void this.openDrawer(item, card);
+            void this.openDrawer(item, e.clientX, e.clientY);
           });
         }
-        async openDrawer(item, anchor) {
-          const { attachItemActions: attachItemActions2, closeItemMenu: closeItemMenu2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
+        async openDrawer(item, x, y) {
+          const { openItemMenu: openItemMenu2, resetItemMenuClickGuard: resetItemMenuClickGuard2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
           const actions = [
             {
               icon: "file-text",
@@ -47026,7 +49601,8 @@ ${n.content.slice(0, 2e3)}
               }
             }
           ];
-          attachItemActions2(anchor, actions);
+          openItemMenu2(x, y, actions, true, "bz-rv-menu");
+          resetItemMenuClickGuard2();
         }
         async openItemFile(item) {
           const file = this.app.vault.getAbstractFileByPath(item.filePath);
@@ -47166,6 +49742,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_quiz_core();
       init_render12();
+      init_motion3();
       init_quiz_panel_data();
       MASK_ID2 = "bz-quiz-practice-mask";
       POPUP_ID = "bz-quiz-practice-popup";
@@ -47257,6 +49834,7 @@ ${n.content.slice(0, 2e3)}
           });
           mountIcons(this.content);
           this.bindSetup();
+          motionQuizSetup(this.content);
           if (focusKey) this.restoreFocus(focusKey);
         }
         /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
@@ -47431,6 +50009,7 @@ ${n.content.slice(0, 2e3)}
           });
           (_b2 = this.content.querySelector('[data-act="finish"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
           this.present();
+          motionQuizSummary(this.content, results.accuracy >= 90 ? "优" : "完成");
         }
       };
       panel = null;
@@ -47443,6 +50022,7 @@ ${n.content.slice(0, 2e3)}
     dataManager: () => dataManager2,
     ensureReview: () => ensureReview,
     openQuizPractice: () => openQuizPractice,
+    openReviewAnalysis: () => openReviewAnalysis2,
     openReviewPanel: () => openReviewPanel,
     openReviewReport: () => openReviewReport,
     reviewAddCurrent: () => reviewAddCurrent,
@@ -47517,6 +50097,11 @@ ${n.content.slice(0, 2e3)}
     ensureReview(app);
     const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
     await showStatsModal2(app, dataManager2);
+  }
+  async function openReviewAnalysis2(app) {
+    ensureReview(app);
+    const mod = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+    await mod.openReviewAnalysis(app);
   }
   function openQuizPractice(app) {
     void openQuizPanel(app);
@@ -47638,6 +50223,7 @@ ${n.content.slice(0, 2e3)}
     reviewApp._reviewNotice = null;
     reviewApp._notifiedOverdue.clear();
     unloadQuizPanel();
+    unloadReviewAnalysis();
     resetQuiz();
     for (const off of unsubscribers) {
       try {
@@ -47665,6 +50251,7 @@ ${n.content.slice(0, 2e3)}
       init_quiz_panel();
       init_quiz_core();
       init_stats_ui();
+      init_analysis();
       init_flow_dialog();
       initialized5 = false;
       dataManager2 = null;
@@ -49084,7 +51671,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/secondbrain/link-agent/data.ts
-  var init_data11 = __esm({
+  var init_data12 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
       init_utils();
       init_knowledge_boxes();
@@ -49121,7 +51708,7 @@ ${n.content.slice(0, 2e3)}
   var init_weekly = __esm({
     "src/secondbrain/weekly.ts"() {
       init_store_file();
-      init_data11();
+      init_data12();
       init_tfidf();
       init_chunk();
       init_config4();
@@ -50270,7 +52857,7 @@ ${n.content.slice(0, 2e3)}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data12 = __esm({
+  var init_data13 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -51450,12 +54037,12 @@ ${n.content.slice(0, 2e3)}
     const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
     const w = Math.max(1, Math.round(img.naturalWidth * scale));
     const h = Math.max(1, Math.round(img.naturalHeight * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(img, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   async function videoFrame(src, maxSize = PREVIEW_OMIT_SIZE, quality = PREVIEW_OMIT_QUALITY) {
@@ -51495,12 +54082,12 @@ ${n.content.slice(0, 2e3)}
     const scale = Math.min(1, maxSize / Math.max(vw, vh));
     const w = Math.max(1, Math.round(vw * scale));
     const h = Math.max(1, Math.round(vh * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   var PREVIEW_TIMEOUT_MS, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY;
@@ -51515,10 +54102,10 @@ ${n.content.slice(0, 2e3)}
 
   // src/password-vault/data.ts
   var PASSWORD_VAULT_CHANNEL, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
-  var init_data13 = __esm({
+  var init_data14 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
-      init_data12();
+      init_data13();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
@@ -51892,11 +54479,11 @@ ${n.content.slice(0, 2e3)}
     const box = document.createElement("div");
     box.className = "bz-lockscreen-box";
     box.dataset.ls = "box";
-    const seal = document.createElement("div");
-    seal.className = "bz-lockscreen-seal";
-    seal.dataset.ls = "seal";
-    seal.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
-    box.appendChild(seal);
+    const seal2 = document.createElement("div");
+    seal2.className = "bz-lockscreen-seal";
+    seal2.dataset.ls = "seal";
+    seal2.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
+    box.appendChild(seal2);
     const title = document.createElement("h4");
     title.className = "bz-lockscreen-title";
     title.dataset.ls = "title";
@@ -52391,10 +54978,10 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
-      init_data12();
+      init_data13();
       init_domain_bus();
       init_preview();
-      init_data13();
+      init_data14();
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
@@ -54584,11 +57171,11 @@ ${n.content.slice(0, 2e3)}
 
   // src/smartcat/character.ts
   function randomOceanSeed() {
-    const clamp3 = (v) => Math.min(0.9, Math.max(0.1, v));
+    const clamp4 = (v) => Math.min(0.9, Math.max(0.1, v));
     const g = () => {
       const r1 = Math.max(1e-9, Math.random());
       const r2 = Math.max(1e-9, Math.random());
-      return clamp3(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
+      return clamp4(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
     };
     return {
       openness: g(),
@@ -54856,7 +57443,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2;
-  var init_data14 = __esm({
+  var init_data15 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -55262,9 +57849,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after3 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after3 !== before) {
-        rec.secondBrainAllowPaths = after3;
+      const after4 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after4 !== before) {
+        rec.secondBrainAllowPaths = after4;
         migrated = true;
       }
     }
@@ -55274,7 +57861,7 @@ ${n.content.slice(0, 2e3)}
   var init_settings8 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
-      init_data13();
+      init_data14();
       init_keys();
       MEMO_KEY_MIGRATIONS = [
         ["todoPanelWidth", "memoPanelWidth"],
@@ -55699,12 +58286,12 @@ ${n.content.slice(0, 2e3)}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data14(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui12(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data14(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -56131,14 +58718,14 @@ ${n.content.slice(0, 2e3)}
             const lower = text.toLowerCase();
             let cursor = 0;
             for (; ; ) {
-              const at2 = lower.indexOf(needle, cursor);
-              if (at2 < 0) break;
-              if (at2 > cursor) el.append(document.createTextNode(text.slice(cursor, at2)));
+              const at3 = lower.indexOf(needle, cursor);
+              if (at3 < 0) break;
+              if (at3 > cursor) el.append(document.createTextNode(text.slice(cursor, at3)));
               const mark = document.createElement("mark");
               mark.className = "bz-sp-mark";
-              mark.textContent = text.slice(at2, at2 + needle.length);
+              mark.textContent = text.slice(at3, at3 + needle.length);
               el.append(mark);
-              cursor = at2 + needle.length;
+              cursor = at3 + needle.length;
             }
             if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
           });
@@ -56626,20 +59213,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after3 = classifyFilePath(newPath);
-    if (!after3) return;
+    const after4 = classifyFilePath(newPath);
+    if (!after4) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after3
+      movedOut: before !== after4
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after3 === "diary") {
+    if (after4 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after3}:file-renamed`, payload);
+    emitDomainEvent(`${after4}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;
@@ -57439,8 +60026,8 @@ ${n.content.slice(0, 2e3)}
       const cur = imgs.findIndex((im) => im.classList.contains("is-on"));
       if (cur < 0) return;
       for (let step = 1; step < imgs.length; step += 1) {
-        const at2 = (cur + step) % imgs.length;
-        const im = imgs[at2];
+        const at3 = (cur + step) % imgs.length;
+        const im = imgs[at3];
         if (im.complete && im.naturalWidth > 0) {
           imgs[cur].classList.remove("is-on");
           im.classList.add("is-on");
@@ -57840,10 +60427,10 @@ ${n.content.slice(0, 2e3)}
     mask.addEventListener("click", (e) => {
       if (e.target === mask) closePanel4();
     });
-    const frame = document.createElement("div");
-    frame.className = "bz-panel-frame bz-gs-panel bz-panel-mtop";
-    frame.setAttribute("role", "dialog");
-    frame.setAttribute("aria-label", "游戏库");
+    const frame2 = document.createElement("div");
+    frame2.className = "bz-panel-frame bz-gs-panel bz-panel-mtop";
+    frame2.setAttribute("role", "dialog");
+    frame2.setAttribute("aria-label", "游戏库");
     const heroz = document.createElement("div");
     heroz.className = "bz-gs-heroz";
     const hero = document.createElement("div");
@@ -57853,12 +60440,12 @@ ${n.content.slice(0, 2e3)}
     ops.id = "bz-gs-heroops";
     heroz.appendChild(hero);
     heroz.appendChild(ops);
-    frame.appendChild(heroz);
+    frame2.appendChild(heroz);
     heroEl = hero;
     const status = document.createElement("div");
     status.className = "bz-gs-status";
     status.id = "bz-gs-status";
-    frame.appendChild(status);
+    frame2.appendChild(status);
     const body = document.createElement("div");
     body.className = "bz-gs-body";
     body.id = "bz-gs-body";
@@ -57877,15 +60464,15 @@ ${n.content.slice(0, 2e3)}
     });
     bindMediaFallback(body);
     bindShotReel(app, body);
-    frame.appendChild(body);
-    mask.appendChild(frame);
+    frame2.appendChild(body);
+    mask.appendChild(frame2);
     document.body.appendChild(mask);
     topifyZ(mask);
     maskEl4 = mask;
-    popupEl2 = frame;
-    M.currentOverlay = frame;
+    popupEl2 = frame2;
+    M.currentOverlay = frame2;
     registerPanelEsc(ESC_ID3, () => !!M.currentOverlay, closePanel4);
-    trapPanelFocus(frame);
+    trapPanelFocus(frame2);
   }
   async function onSyncClick(app) {
     const { runSync: runSync2 } = await Promise.resolve().then(() => (init_sync(), sync_exports));
@@ -57969,17 +60556,17 @@ ${n.content.slice(0, 2e3)}
     }
   }
   function renderAll5(app) {
-    const frame = M.currentOverlay;
-    if (!frame || !document.body.contains(frame)) return;
+    const frame2 = M.currentOverlay;
+    if (!frame2 || !document.body.contains(frame2)) return;
     clearSoftRender();
     const snap = snapshotFocus();
     saveScrollMemo();
     const configured = isConfigured();
     mountOps(app);
     restReel();
-    const status = frame.querySelector("#bz-gs-status");
+    const status = frame2.querySelector("#bz-gs-status");
     if (status) status.textContent = M.statusMsg;
-    const body = frame.querySelector("#bz-gs-body");
+    const body = frame2.querySelector("#bz-gs-body");
     if (!body) return;
     body.innerHTML = "";
     body.removeAttribute("data-view");
@@ -57992,7 +60579,7 @@ ${n.content.slice(0, 2e3)}
         heroRestHtml = "";
       }
       body.appendChild(guidanceEl(app));
-      mountIcons(frame);
+      mountIcons(frame2);
       renderedView = null;
       return;
     }
@@ -58006,7 +60593,7 @@ ${n.content.slice(0, 2e3)}
       body.appendChild(shelfBody(app, rp));
       body.dataset.view = "shelf";
     }
-    mountIcons(frame);
+    mountIcons(frame2);
     restoreFocus(snap);
     renderedView = M.view;
     restoreScrollMemo();
@@ -58171,8 +60758,8 @@ ${n.content.slice(0, 2e3)}
     } else {
       gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, achOf });
     }
-    const frame = M.currentOverlay;
-    if (frame) mountIcons(frame);
+    const frame2 = M.currentOverlay;
+    if (frame2) mountIcons(frame2);
   }
   function emptyResult(app) {
     const actions = document.createElement("div");

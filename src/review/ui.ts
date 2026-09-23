@@ -288,7 +288,14 @@ export class UIManager {
       this.showArchived = !this.showArchived;
       void this.refreshPanel();
     });
-    container.querySelector('[data-act="stats"]')?.addEventListener('click', () => void this.openStats());
+    // 累计/连续 chip = 直开记忆分析特刊（2026-09-23 拍板：去掉中间统计弹窗与「记忆分析」
+    // 入口字样；analysis/ 动态 import 不拖主包，空库/无动画宿主在层内回落经典统计）
+    container.querySelector('[data-act="stats"]')?.addEventListener('click', () => {
+      void (async () => {
+        const { openReviewAnalysis } = await import('./analysis/index');
+        await openReviewAnalysis(this.app);
+      })();
+    });
     // item 10：空态两条路（把当前笔记加入复习 / 监听文件夹配置说明）
     container.querySelector('[data-act="add-current"]')?.addEventListener('click', () => void this.addCurrentNote());
     container.querySelector('[data-act="watch-help"]')?.addEventListener('click', () => void this.showWatchHelp());
@@ -401,13 +408,6 @@ export class UIManager {
     return this.sprint.start();
   }
 
-  // ================= 归档 / 统计 =================
-
-  private async openStats(): Promise<void> {
-    const { showStatsModal } = await import('./stats-ui');
-    await showStatsModal(this.app, this.dataManager);
-  }
-
   // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
 
   /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
@@ -462,12 +462,12 @@ export class UIManager {
     card.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      void this.openDrawer(item, card);
+      void this.openDrawer(item, e.clientX, e.clientY);
     });
   }
 
-  private async openDrawer(item: ReviewItem, anchor: HTMLElement): Promise<void> {
-    const { attachItemActions, closeItemMenu } = await import('../core/item-actions');
+  private async openDrawer(item: ReviewItem, x: number, y: number): Promise<void> {
+    const { openItemMenu, resetItemMenuClickGuard } = await import('../core/item-actions');
     const actions: ItemActionLite[] = [
       {
         icon: 'file-text',
@@ -516,7 +516,10 @@ export class UIManager {
         },
       },
     ];
-    attachItemActions(anchor, actions);
+    // 跟手菜单直开（2026-09-23 修复「要按两次右键」：原先误调 attachItemActions——那是给卡片
+    // 绑定监听的辅助，首按只挂监听不弹层，二按才真正开菜单）；bz-rv-menu = 面板同皮（styles.css）
+    openItemMenu(x, y, actions, true, 'bz-rv-menu');
+    resetItemMenuClickGuard();
   }
 
   private async openItemFile(item: ReviewItem): Promise<void> {

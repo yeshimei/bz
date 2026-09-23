@@ -1,5 +1,5 @@
-/* 源指纹 e035fff043f332d1 · 仓内输入 262 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 d992dd83fe468feb · 仓内输入 269 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M11, s, ms) {
+        function createDate(y, m, d, h, M12, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M11, s, ms);
+            date = new Date(y + 400, m, d, h, M12, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M11, s, ms);
+            date = new Date(y, m, d, h, M12, s, ms);
           }
           return date;
         }
@@ -6851,7 +6851,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M11 = 10;
+    const M12 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6878,7 +6878,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M11 || Math.abs(t.clientY - sy) > M11) {
+      if (Math.abs(t.clientX - sx) > M12 || Math.abs(t.clientY - sy) > M12) {
         moved = true;
         cancel();
       }
@@ -9118,11 +9118,11 @@ var BZW_home = (() => {
 
   // src/smartcat/character.ts
   function randomOceanSeed() {
-    const clamp3 = (v) => Math.min(0.9, Math.max(0.1, v));
+    const clamp4 = (v) => Math.min(0.9, Math.max(0.1, v));
     const g = () => {
       const r1 = Math.max(1e-9, Math.random());
       const r2 = Math.max(1e-9, Math.random());
-      return clamp3(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
+      return clamp4(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
     };
     return {
       openness: g(),
@@ -10247,9 +10247,9 @@ var BZW_home = (() => {
       else target = state3.stage + 2;
       target = Math.max(0, Math.min(target, LADDER_MAX));
       if (target >= LADDER_MAX) {
-        const S3 = fsrs.initS(rating);
+        const S4 = fsrs.initS(rating);
         const D2 = fsrs.initD(rating);
-        const rS = Math.round(S3 * 100) / 100;
+        const rS = Math.round(S4 * 100) / 100;
         const rD = Math.round(D2 * 100) / 100;
         return {
           stage: target,
@@ -10277,12 +10277,12 @@ var BZW_home = (() => {
         historyDifficulty: null
       };
     }
-    const S2 = state3.stability || 1;
+    const S3 = state3.stability || 1;
     const D = state3.difficulty || 0.3;
     const last = state3.lastReviewed || state3.reviewStart;
     const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
-    const R = fsrs.R(t, S2);
-    const result = fsrs.nextInterval(S2, D, rating, R);
+    const R = fsrs.R(t, S3);
+    const result = fsrs.nextInterval(S3, D, rating, R);
     return {
       stage: state3.stage,
       phase: "fsrs",
@@ -10313,8 +10313,8 @@ var BZW_home = (() => {
           this.d = d;
         }
         /** 记忆保留度：R(t, S) = (1 + t/(S·d))^-d */
-        R(t, S2) {
-          return Math.pow(1 + t / (S2 * this.d), -this.d);
+        R(t, S3) {
+          return Math.pow(1 + t / (S3 * this.d), -this.d);
         }
         /** 初始稳定性 */
         initS(rating) {
@@ -10347,19 +10347,19 @@ var BZW_home = (() => {
           return Math.max(Math.min(D, 1), Math.min(10, newD));
         }
         /** 下一稳定性 */
-        nextStab(S2, D, rating, R) {
+        nextStab(S3, D, rating, R) {
           if (rating === "again") {
-            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S2 + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
+            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S3 + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
           }
-          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S2, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
-          if (rating === "hard") return S2 * base;
-          if (rating === "good") return S2 * (base + 1);
-          return S2 * base * (Math.exp(this.w[17]) + 1);
+          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S3, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
+          if (rating === "hard") return S3 * base;
+          if (rating === "good") return S3 * (base + 1);
+          return S3 * base * (Math.exp(this.w[17]) + 1);
         }
         /** 下一间隔（天） */
-        nextInterval(S2, D, rating, R) {
+        nextInterval(S3, D, rating, R) {
           const newD = this.nextDiff(D, rating);
-          const newS = Math.max(0.01, this.nextStab(S2, newD, rating, R));
+          const newS = Math.max(0.01, this.nextStab(S3, newD, rating, R));
           return { S: newS, D: newD, days: newS };
         }
       };
@@ -10399,15 +10399,15 @@ var BZW_home = (() => {
     const fsrs = new FSRS(w);
     let sum = 0;
     for (const s of series) {
-      let S2 = fsrs.initS(RATING_NAMES[s.initRating]);
+      let S3 = fsrs.initS(RATING_NAMES[s.initRating]);
       let D = fsrs.initD(RATING_NAMES[s.initRating]);
       for (const p of s.pairs) {
-        const R = fsrs.R(p.t, S2);
+        const R = fsrs.R(p.t, S3);
         const remember = p.rating >= 2;
         const prob = remember ? R : 1 - R;
         sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
-        const next = fsrs.nextInterval(S2, D, RATING_NAMES[p.rating], R);
-        S2 = next.S;
+        const next = fsrs.nextInterval(S3, D, RATING_NAMES[p.rating], R);
+        S3 = next.S;
         D = next.D;
       }
     }
@@ -11197,7 +11197,595 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionTeardown() {
+    cancelPending();
+  }
+  function ensureRelative(el) {
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  }
+  function seal(host, text, big = false) {
+    ensureRelative(host);
+    const s = document.createElement("span");
+    s.className = "bz-rv-seal" + (big ? " bz-rv-seal--big" : "");
+    s.setAttribute("aria-hidden", "true");
+    s.textContent = text;
+    host.appendChild(s);
+    waapi(
+      s,
+      [
+        { opacity: 0, transform: "rotate(-26deg) scale(2.6)" },
+        { opacity: 1, transform: "rotate(-12deg) scale(1)" }
+      ],
+      { duration: big ? 260 : 210, easing: E.land, fill: "both" }
+    );
+    after(big ? 1500 : 1150, () => {
+      waapi(s, [{ opacity: 1 }, { opacity: 0 }], { duration: 340, easing: E.out, fill: "forwards" });
+      after(360, () => s.remove());
+    });
+  }
+  function ringBurst(el) {
+    const parent = el.offsetParent instanceof HTMLElement ? el.offsetParent : el.parentElement;
+    if (!parent) return;
+    const pr = parent.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const ring = document.createElement("i");
+    ring.className = "bz-rv-ring";
+    ring.setAttribute("aria-hidden", "true");
+    ring.style.left = r.left - pr.left + r.width / 2 + "px";
+    ring.style.top = r.top - pr.top + r.height / 2 + "px";
+    ring.style.width = Math.max(r.width, r.height) * 1.15 + "px";
+    ring.style.height = Math.max(r.width, r.height) * 1.15 + "px";
+    parent.appendChild(ring);
+    const a = waapi(
+      ring,
+      [
+        { opacity: 0.85, transform: "translate(-50%,-50%) scale(.45)" },
+        { opacity: 0, transform: "translate(-50%,-50%) scale(2.35)" }
+      ],
+      { duration: 640, easing: E.out, fill: "forwards" }
+    );
+    const done = () => ring.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after(680, done);
+  }
+  function sweep(host) {
+    ensureRelative(host);
+    const layer = document.createElement("i");
+    layer.className = "bz-rv-sweep";
+    layer.setAttribute("aria-hidden", "true");
+    const band = document.createElement("u");
+    layer.appendChild(band);
+    host.appendChild(layer);
+    const a = waapi(
+      band,
+      [
+        { transform: "translateX(-150%) skewX(-18deg)" },
+        { transform: "translateX(340%) skewX(-18deg)" }
+      ],
+      { duration: 840, easing: E.move, fill: "forwards" }
+    );
+    const done = () => layer.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after(880, done);
+  }
+  function drawStroke(svg, dur = 320) {
+    const parts = svg.querySelectorAll("path,line,polyline,circle,rect");
+    parts.forEach((p) => {
+      try {
+        const len = p.getTotalLength();
+        if (!isFinite(len) || len <= 0) return;
+        p.style.strokeDasharray = String(len);
+        p.style.strokeDashoffset = String(len);
+        const a = p.animate(
+          [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+          { duration: dur, easing: E.out, fill: "forwards" }
+        );
+        a.finished.then(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        }).catch(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        });
+      } catch (e) {
+      }
+    });
+  }
+  function countUpNode(el, dur) {
+    const node = el.childNodes[0];
+    if (!node || node.nodeType !== Node.TEXT_NODE) return;
+    const raw = node.textContent || "";
+    const m = raw.match(/\d[\d,]*/);
+    if (!m) return;
+    const target = Number(m[0].replace(/,/g, ""));
+    if (!isFinite(target) || target === 0) return;
+    tween(dur, (v) => {
+      node.textContent = raw.replace(m[0], String(Math.round(target * v)));
+    });
+  }
+  function popCnt(el) {
+    waapi(
+      el,
+      [
+        { transform: "scale(.4)", opacity: 0 },
+        { transform: "scale(1.18)", opacity: 1, offset: 0.7 },
+        { transform: "scale(1)", opacity: 1 }
+      ],
+      { duration: 420, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionQueueBoot(container) {
+    cancelPending();
+    if (reduced()) return;
+    const popup = container.closest("#review-popup");
+    if (popup) sweep(popup);
+    const strip = container.querySelector(".bz-q-strip");
+    if (strip) {
+      after(80, () => waapi(
+        strip,
+        [{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+      const dot = strip.querySelector(".bz-q-strip-dot.ok");
+      if (dot) after(420, () => ringBurst(dot));
+    }
+    const cols = [...container.querySelectorAll(".bz-q-col")];
+    let t = 160;
+    const total = container.querySelectorAll(".bz-q-card").length;
+    const step = total > 26 ? 24 : 52;
+    let seals = 0;
+    cols.forEach((col, ci) => {
+      const cards = [...col.querySelectorAll(".bz-q-card")];
+      const danger = col.classList.contains("danger");
+      cards.forEach((card, cj) => {
+        const rot = (ci * 7 + cj * 13) % 5 - 2;
+        const fromX = ci === 0 ? 16 : ci === 1 ? 0 : -16;
+        const at4 = t;
+        after(at4, () => waapi(
+          card,
+          [
+            { opacity: 0, transform: `translate(${fromX}px,22px) rotate(${rot * 2}deg) scale(.9)` },
+            { opacity: 1, transform: "none" }
+          ],
+          { duration: 340, easing: E.out, fill: "backwards" }
+        ));
+        if (danger && seals < 4) {
+          seals++;
+          after(at4 + 300, () => seal(card, "急"));
+        }
+        t += step;
+      });
+      const cnt = col.querySelector(".bz-q-col-head .cnt");
+      if (cnt) after(Math.max(120, t - 30), () => popCnt(cnt));
+      t += 120;
+    });
+    const footer = container.querySelector(".bz-q-footer");
+    if (footer) after(t + 60, () => waapi(
+      footer,
+      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.base, easing: E.out, fill: "backwards" }
+    ));
+    const empty = container.querySelector("[data-empty-host]");
+    if (empty) after(200, () => waapi(
+      empty,
+      [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.impulse, easing: E.out, fill: "backwards" }
+    ));
+  }
+  function motionChargeStrip(strip) {
+    if (reduced()) return;
+    const btn = strip.querySelector('[data-act="begin"]');
+    const host = btn || strip;
+    ringBurst(host);
+    waapi(
+      host,
+      [{ transform: "scale(1)" }, { transform: "scale(.96)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }],
+      { duration: 280, easing: E.out }
+    );
+  }
+  function motionDrawCard(card) {
+    if (reduced()) return;
+    waapi(
+      card,
+      [
+        { transform: "none", boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { transform: "scale(.975) translateY(1px)", offset: 0.4 },
+        { transform: "scale(1.04) translateY(-3px)", boxShadow: "0 10px 24px rgba(0,0,0,.16)" }
+      ],
+      { duration: 260, easing: E.out }
+    );
+  }
+  function motionSprintReset() {
+    lastQKey = "";
+    cancelPending();
+  }
+  function motionSprintLoading(host) {
+    if (reduced()) return;
+    const ld = host.querySelector(".bz-sprint-loading");
+    if (ld) waapi(
+      ld,
+      [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.base, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionQuestion(host, sig) {
+    if (reduced()) return;
+    const card = host.querySelector(".bz-sprint-qcard");
+    if (!card) return;
+    if (sig.text !== lastQKey) {
+      lastQKey = sig.text;
+      waapi(
+        card,
+        [
+          { opacity: 0, transform: "perspective(900px) rotateY(-78deg) scale(.94)" },
+          { opacity: 1, transform: "perspective(900px) rotateY(0deg) scale(1)" }
+        ],
+        { duration: 430, easing: E.out, fill: "backwards" }
+      );
+      const prog = host.querySelector(".bz-sprint-progress");
+      if (prog) after(120, () => popCnt(prog));
+      host.querySelectorAll(".bz-sprint-opt").forEach((el, i) => {
+        after(150 + i * STAG, () => waapi(
+          el,
+          [{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }],
+          { duration: M3.base, easing: E.out, fill: "backwards" }
+        ));
+      });
+      return;
+    }
+    if (!sig.answered) return;
+    if (sig.correct) {
+      sweep(card);
+      const okSvg = card.querySelector(".bz-sprint-opt.is-correct .bz-mark svg");
+      if (okSvg) drawStroke(okSvg, 300);
+      const okOpt2 = card.querySelector(".bz-sprint-opt.is-correct");
+      if (okOpt2) waapi(
+        okOpt2,
+        [{ transform: "scale(1)" }, { transform: "scale(1.02)" }, { transform: "scale(1)" }],
+        { duration: 260, easing: E.out }
+      );
+      return;
+    }
+    waapi(
+      card,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-8px)", offset: 0.15 },
+        { transform: "translateX(7px)", offset: 0.35 },
+        { transform: "translateX(-5px)", offset: 0.55 },
+        { transform: "translateX(3px)", offset: 0.75 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 420, easing: "ease-out" }
+    );
+    waapi(
+      card,
+      [
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "inset 0 0 0 2px color-mix(in srgb, var(--bz-danger, #d64545) 55%, transparent)" },
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 760, easing: E.out }
+    );
+    const bad = card.querySelector(".bz-sprint-opt.is-wrong");
+    if (bad) waapi(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(3px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const okOpt = card.querySelector(".bz-sprint-opt.is-correct");
+    if (okOpt) waapi(
+      okOpt,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E.out }
+    );
+  }
+  function motionFailFlash(host) {
+    if (reduced()) return;
+    const target = host.closest("#review-popup") || host;
+    ensureRelative(target);
+    const v = document.createElement("i");
+    v.className = "bz-rv-failflash";
+    v.setAttribute("aria-hidden", "true");
+    target.appendChild(v);
+    const a = waapi(
+      v,
+      [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 0 }],
+      { duration: 620, easing: "ease-out", fill: "forwards" }
+    );
+    const done = () => v.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after(660, done);
+  }
+  function motionResult(host) {
+    if (reduced()) return;
+    const res = host.querySelector(".bz-result");
+    if (!res) return;
+    const ic2 = res.querySelector(".bz-result-ic");
+    const okSvg = ic2 == null ? void 0 : ic2.querySelector("svg");
+    if (okSvg) drawStroke(okSvg, 380);
+    if (ic2) after(60, () => ringBurst(ic2));
+    const score = res.querySelector(".bz-result-score");
+    if (score) after(140, () => countUpNode(score, 620));
+    const pill = res.querySelector(".bz-result-rating");
+    if (pill) after(340, () => waapi(
+      pill,
+      [{ opacity: 0, transform: "scale(1.8) rotate(-7deg)" }, { opacity: 1, transform: "none" }],
+      { duration: 280, easing: E.land, fill: "backwards" }
+    ));
+    res.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after(430 + i * 60, () => waapi(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionSummary(host, grade) {
+    if (reduced()) return;
+    const box = host.querySelector(".bz-summary");
+    if (!box) return;
+    const title = box.querySelector(".bz-summary-title");
+    if (title) waapi(
+      title,
+      [
+        { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base, easing: E.out, fill: "backwards" }
+    );
+    box.querySelectorAll(".bz-summary-stats .st b").forEach((b, i) => {
+      after(120 + i * 90, () => {
+        countUpNode(b, 560);
+        popCnt(b);
+      });
+    });
+    after(460, () => seal(box, grade, true));
+    const tail = box.querySelector(".bz-summary-streak, .bz-qp-acc");
+    if (tail) after(820, () => {
+      waapi(
+        tail,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      );
+      const b = tail.querySelector("b");
+      if (b) waapi(
+        b,
+        [
+          { filter: "drop-shadow(0 0 0 rgba(255,150,60,0))" },
+          { filter: "drop-shadow(0 0 9px rgba(255,150,60,.85))" },
+          { filter: "drop-shadow(0 0 2px rgba(255,150,60,.3))" }
+        ],
+        { duration: 900, easing: E.out }
+      );
+    });
+    box.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after(900 + i * 70, () => waapi(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionStats(body) {
+    if (reduced()) return;
+    sweep(body);
+    body.querySelectorAll(".stat-card").forEach((card, i) => {
+      after(60 + i * 60, () => {
+        waapi(
+          card,
+          [{ opacity: 0, transform: "translateY(10px) scale(.97)" }, { opacity: 1, transform: "none" }],
+          { duration: M3.base, easing: E.out, fill: "backwards" }
+        );
+        const v = card.querySelector(".v");
+        if (v) countUpNode(v, 540);
+      });
+    });
+    body.querySelectorAll(".sec").forEach((sec, i) => {
+      after(240 + i * 80, () => waapi(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+    body.querySelectorAll(".soft-fill, .bar-fill").forEach((fill, i) => {
+      after(380 + i * 45, () => {
+        fill.style.transformOrigin = "left center";
+        waapi(
+          fill,
+          [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: 560, easing: "cubic-bezier(.3,.9,.35,1.12)", fill: "backwards" }
+        );
+      });
+    });
+    body.querySelectorAll(".top-row").forEach((row, i) => {
+      after(460 + i * 55, () => waapi(
+        row,
+        [{ opacity: 0, transform: "translateX(-12px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+    const first = body.querySelector(".top-row.is-top");
+    if (first) after(760, () => ringBurst(first));
+    body.querySelectorAll(".kv-inline").forEach((kv, i) => {
+      after(300 + i * 70, () => waapi(
+        kv,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionHistory(body) {
+    if (reduced()) return;
+    const status = body.querySelector(".bz-review-history-status");
+    if (status) waapi(
+      status,
+      [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.base, easing: E.out, fill: "backwards" }
+    );
+    body.querySelectorAll(".bz-review-history-item").forEach((item, i) => {
+      after(110 + i * 110, () => {
+        const dot = item.querySelector(".bz-review-history-dot");
+        if (dot) waapi(
+          dot,
+          [{ transform: "scale(0)" }, { transform: "scale(1.5)", offset: 0.7 }, { transform: "scale(1)" }],
+          { duration: 320, easing: E.out, fill: "backwards" }
+        );
+        const line = item.querySelector(".bz-review-history-line");
+        if (line) {
+          line.style.transformOrigin = "top center";
+          waapi(
+            line,
+            [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+            { duration: 230, easing: E.out, fill: "backwards" }
+          );
+        }
+        const row = item.querySelector(".bz-review-history-row");
+        if (row) waapi(
+          row,
+          [{ opacity: 0, transform: "translateX(8px)" }, { opacity: 1, transform: "none" }],
+          { duration: M3.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionRatingBar(el) {
+    if (reduced()) return;
+    waapi(
+      el,
+      [
+        { opacity: 0, transform: "translateX(-50%) translateY(60px)" },
+        { opacity: 1, transform: "translateX(-50%) translateY(0)" }
+      ],
+      { duration: 420, easing: "cubic-bezier(.22,.9,.32,1.15)", fill: "backwards" }
+    );
+    el.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
+      after(150 + i * STAG, () => popCnt(b));
+    });
+  }
+  function motionQuizSetup(content) {
+    if (reduced()) return;
+    content.querySelectorAll(".bz-qp-sec").forEach((sec, i) => {
+      after(i * 90, () => waapi(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+    const meta = content.querySelector(".bz-qp-meta");
+    if (meta) after(300, () => waapi(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.base, easing: E.out, fill: "backwards" }));
+    const start = content.querySelector(".bz-qp-start");
+    if (start) after(380, () => ringBurst(start));
+    const foot = content.querySelector(".bz-qp-foot");
+    if (foot) after(460, () => waapi(foot, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.base, easing: E.out, fill: "backwards" }));
+  }
+  function motionQuizSummary(content, grade) {
+    motionSummary(content, grade);
+  }
+  function motionQuizCard(popup) {
+    if (reduced()) return;
+    const q3 = popup.querySelector(".bz-quiz-question");
+    if (q3) waapi(
+      q3,
+      [
+        { opacity: 0, transform: "perspective(800px) rotateX(24deg) translateY(6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 380, easing: E.out, fill: "backwards" }
+    );
+    popup.querySelectorAll(".quiz-option-btn").forEach((el, i) => {
+      after(120 + i * STAG, () => waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionQuizJudge(popup, correct) {
+    if (reduced()) return;
+    if (correct) {
+      sweep(popup);
+      const mark = popup.querySelector(".quiz-option-btn.correct .check-mark");
+      if (mark) popCnt(mark);
+      return;
+    }
+    const bad = popup.querySelector(".quiz-option-btn.wrong");
+    if (bad) waapi(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-5px)" }, { transform: "translateX(4px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const ok = popup.querySelector(".quiz-option-btn.correct");
+    if (ok) waapi(
+      ok,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E.out }
+    );
+  }
+  var M3, E, STAG, timers, lastQKey;
+  var init_motion = __esm({
+    "src/review/motion.ts"() {
+      M3 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)",
+        /** 落章/落定带轻微过冲 */
+        land: "cubic-bezier(.2,.8,.3,1.18)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      lastQKey = "";
+    }
+  });
+
   // src/review/quiz-core/session.ts
+  function quizPopupEl() {
+    return document.getElementById("quiz-popup");
+  }
   function cleanOptionText(text) {
     if (!text) return "";
     const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
@@ -11223,6 +11811,7 @@ ${n.content.slice(0, 2e3)}
       init_manager();
       init_generator();
       init_utils();
+      init_motion();
       CORRECT_JUMP_DELAY_MS = 800;
       _QuizMasterUI = class _QuizMasterUI {
         constructor() {
@@ -11396,6 +11985,7 @@ ${n.content.slice(0, 2e3)}
           mask.appendChild(popup);
           document.body.appendChild(mask);
           mountIcons(popup);
+          motionQuizCard(popup);
           this._escHandle = escManager.register("bz-review-quiz", {
             isVisible: () => !!(this.mask && this.mask.isConnected),
             close: () => this.finishQuiz()
@@ -11472,6 +12062,8 @@ ${n.content.slice(0, 2e3)}
                   optionElements.forEach((b, i) => {
                     if (i === q3.correctIndices[0]) b.classList.add("correct");
                   });
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, true);
                   this._answerCorrect(q3, app, () => {
                     answeredRef.value = false;
                     optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
@@ -11483,6 +12075,8 @@ ${n.content.slice(0, 2e3)}
                     if (i === q3.correctIndices[0]) b.classList.add("correct");
                     if (i === idx) b.classList.add("wrong");
                   });
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, false);
                   this.addNextButton(optionsContainer);
                 }
               } else {
@@ -11518,6 +12112,8 @@ ${n.content.slice(0, 2e3)}
                 else if (selectedIndices.has(i) && !isCorrect) b.classList.add("wrong");
               });
               if (isCorrect) {
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, true);
                 this._answerCorrect(q3, app, () => {
                   answeredRef.value = false;
                   submitBtn.disabled = false;
@@ -11526,6 +12122,8 @@ ${n.content.slice(0, 2e3)}
               } else {
                 this.wrongCount++;
                 this.currentQuestions.splice(this.currentIndex, 1);
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, false);
                 this.addNextButton(optionsContainer);
               }
             };
@@ -12095,8 +12693,8 @@ ${n.content.slice(0, 2e3)}
       <div class="bz-q-footer">
         ${archItem}
         <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${iconSpan("bar-chart-3", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="逐幕回放全馆记忆">
+          ${iconSpan("flame", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
     return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
@@ -12312,6 +12910,7 @@ ${n.content.slice(0, 2e3)}
       init_esc_manager();
       init_stats();
       init_render();
+      init_motion();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -12538,6 +13137,7 @@ ${n.content.slice(0, 2e3)}
             entry.state = "passed";
             entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
+            motionFailFlash(this.opts.host);
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "failed";
@@ -12667,7 +13267,9 @@ ${n.content.slice(0, 2e3)}
         // ================= 视图构建（markup 单源：render.ts，issue 253） =================
         showLoading(entry) {
           this.view = "loading";
+          motionSprintReset();
           this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintLoadingHtml()}`;
+          motionSprintLoading(this.opts.host);
           this.bindTop();
         }
         asideStates() {
@@ -12703,6 +13305,7 @@ ${n.content.slice(0, 2e3)}
               }
             });
           });
+          motionQuestion(this.opts.host, { text: question.question, answered: q3.answered, correct: q3.lastCorrect });
           (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
         }
         renderResult(entry) {
@@ -12728,6 +13331,7 @@ ${n.content.slice(0, 2e3)}
           )}`;
           mountIcons(this.opts.host);
           this.bindTop();
+          motionResult(this.opts.host);
           (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
           (_b2 = this.opts.host.querySelector('[data-action="end"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.handleResult("end"));
           (_d = (_c = this.opts).onProgress) == null ? void 0 : _d.call(_c);
@@ -12747,6 +13351,7 @@ ${n.content.slice(0, 2e3)}
           mountIcons(this.opts.host);
           this.bindTop();
           (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
+          motionSummary(this.opts.host, failed === 0 ? "优" : "完成");
         }
         /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
         bindTop() {
@@ -12953,6 +13558,1955 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/analysis/data.ts
+  function deriveAnalysis(items, opts) {
+    var _a2, _b2, _c;
+    const w = (opts == null ? void 0 : opts.w) || DEFAULT_W;
+    const nowMs = (opts == null ? void 0 : opts.now) != null ? new Date(opts.now).getTime() : Date.now();
+    const embers = items.map((it) => {
+      const r = currentR(it, w, nowMs);
+      const nextMs = it.nextReviewDate ? new Date(it.nextReviewDate).getTime() : NaN;
+      const dueDays = Number.isFinite(nextMs) ? (nextMs - nowMs) / 864e5 : null;
+      const lastMs = it.lastReviewed ? new Date(it.lastReviewed).getTime() : NaN;
+      return {
+        name: it.name || it.filePath,
+        r,
+        s: Number(it.stability) || 0,
+        d: Number(it.difficulty) || 0,
+        stage: Math.max(0, Math.min(9, Number(it.stage) || 0)),
+        phase: it.phase === "fsrs" ? "fsrs" : "ladder",
+        overdue: !!it.isOverdue,
+        overdueDays: it.isOverdue && dueDays != null ? Math.max(0, -dueDays) : 0,
+        ageDays: Number.isFinite(lastMs) ? Math.max(0, (nowMs - lastMs) / 864e5) : null,
+        dueInDays: dueDays == null || !Number.isFinite(dueDays) ? null : dueDays,
+        done: !!(it.completed || it.isCompleted),
+        missing: !!it.isMissing,
+        redo: !!it.pendingRedo,
+        pinned: !!it.pinned,
+        reviews: Array.isArray(it.reviewHistory) ? it.reviewHistory.length : 0
+      };
+    });
+    const live2 = embers.filter((e) => !e.done && !e.missing);
+    const doneN = embers.filter((e) => e.done).length;
+    const missingN = embers.filter((e) => e.missing).length;
+    const ladderN = live2.filter((e) => e.phase === "ladder").length;
+    const fsrsN = live2.filter((e) => e.phase === "fsrs").length;
+    const stageDist = new Array(10).fill(0);
+    for (const e of live2) stageDist[e.phase === "fsrs" ? 9 : Math.min(8, e.stage)]++;
+    const stagePeak = stageDist.some((n) => n > 0) ? stageDist.indexOf(Math.max(...stageDist)) : -1;
+    const cols = partitionQueue(items, 0.9, w);
+    const rs = live2.map((e) => e.r).filter((v) => v != null);
+    const rHist = new Array(10).fill(0);
+    for (const v of rs) rHist[Math.max(0, Math.min(9, Math.floor(v * 10)))]++;
+    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    const fsrsList = live2.filter((e) => e.phase === "fsrs" && e.s > 0);
+    const sBuckets = sBucketsOf(fsrsList.map((e) => e.s));
+    const sMax = fsrsList.reduce((m, e) => Math.max(m, e.s), 0);
+    const dAvg = fsrsList.length ? fsrsList.reduce((a, e) => a + e.d, 0) / fsrsList.length : null;
+    const daily14 = [];
+    const dayIdx = /* @__PURE__ */ new Map();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(nowMs - i * 864e5);
+      const key = dateKey(d);
+      dayIdx.set(key, daily14.length);
+      daily14.push({ date: key, count: 0 });
+    }
+    let verdictTotal = 0;
+    const ratingDist = {};
+    const lastDiffDist = {};
+    const distinct = /* @__PURE__ */ new Set();
+    let firstMs = Infinity;
+    for (const it of items) {
+      const hist = Array.isArray(it.reviewHistory) ? it.reviewHistory : [];
+      for (const h of hist) {
+        verdictTotal++;
+        const rating = String((_a2 = h == null ? void 0 : h.rating) != null ? _a2 : "");
+        if (rating) ratingDist[rating] = (ratingDist[rating] || 0) + 1;
+        const ts = (h == null ? void 0 : h.timestamp) ? new Date(h.timestamp).getTime() : NaN;
+        if (Number.isFinite(ts)) {
+          distinct.add(dateKey(new Date(ts)));
+          if (ts < firstMs) firstMs = ts;
+          const slot = dayIdx.get(dateKey(new Date(ts)));
+          if (slot != null) daily14[slot].count++;
+        }
+      }
+      const ld = it.lastDifficulty ? String(it.lastDifficulty) : "";
+      if (ld) lastDiffDist[ld] = (lastDiffDist[ld] || 0) + 1;
+    }
+    const dailyPeak = daily14.reduce((m, d) => Math.max(m, d.count), 0);
+    const dailyTotal = daily14.reduce((a, d) => a + d.count, 0);
+    let streak = 0;
+    const cursor = new Date(nowMs);
+    cursor.setHours(0, 0, 0, 0);
+    if (!distinct.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (distinct.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    const bedrock = fsrsList.slice().sort((a, b) => b.s - a.s).slice(0, 5).map((e) => ({ name: e.name, s: e.s, r: e.r, reviews: e.reviews }));
+    const next8 = [];
+    const tideIdx = /* @__PURE__ */ new Map();
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(nowMs + i * 864e5);
+      const key = dateKey(d);
+      tideIdx.set(key, next8.length);
+      next8.push({ date: key, label: i === 0 ? "今" : `+${i}`, count: 0 });
+    }
+    for (const it of items) {
+      if (it.completed || it.isCompleted || it.isMissing || !it.nextReviewDate) continue;
+      const key = dateKey(new Date(it.nextReviewDate));
+      const slot = tideIdx.get(key);
+      if (slot != null) next8[slot].count++;
+    }
+    const tomorrowN = (_c = (_b2 = next8[1]) == null ? void 0 : _b2.count) != null ? _c : 0;
+    const againN = ratingDist["again"] || 0;
+    const redoN = live2.filter((e) => e.redo).length;
+    const confList = items.map((it) => Number(it.averageConfidence)).filter((v) => Number.isFinite(v) && v > 0);
+    return {
+      total: embers.length,
+      active: live2.length,
+      doneN,
+      missingN,
+      ladderN,
+      fsrsN,
+      stageDist,
+      stagePeak,
+      embers,
+      liveEmbers: live2,
+      overdueList: live2.filter((e) => e.overdue).sort((a, b) => b.overdueDays - a.overdueDays).map((e) => ({ name: e.name, days: e.overdueDays })),
+      overdueN: cols.overdue.length,
+      todayN: cols.today.length,
+      futureN: cols.future.length,
+      doneColN: cols.done.length,
+      avgR,
+      rHist,
+      rAbove90: rs.filter((v) => v > 0.9).length,
+      rBelow50: rs.filter((v) => v < 0.5).length,
+      sBuckets,
+      sMax,
+      dBuckets: dBucketsOf(fsrsList.map((e) => e.d)),
+      dAvg,
+      daily14,
+      dailyPeak,
+      dailyTotal,
+      streak,
+      distinctDays: distinct.size,
+      firstReviewAt: Number.isFinite(firstMs) ? new Date(firstMs).toISOString() : null,
+      ratingDist,
+      verdictTotal,
+      againRate: verdictTotal ? againN / verdictTotal : null,
+      bedrock,
+      next8,
+      tomorrowN,
+      redoN,
+      lastDiffDist,
+      confidenceAvg: confList.length ? confList.reduce((a, b) => a + b, 0) / confList.length : 0
+    };
+  }
+  var RA_RATING_ORDER, RA_RATING_NAMES, sBucketsOf, dBucketsOf;
+  var init_data5 = __esm({
+    "src/review/analysis/data.ts"() {
+      init_fsrs();
+      init_queue();
+      init_stats();
+      RA_RATING_ORDER = ["again", "hard", "good", "easy"];
+      RA_RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+      sBucketsOf = (list) => {
+        const def = [
+          ["<7 天", (v) => v < 7],
+          ["7-30 天", (v) => v >= 7 && v < 30],
+          ["30-90 天", (v) => v >= 30 && v < 90],
+          ["≥90 天", (v) => v >= 90]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+      dBucketsOf = (list) => {
+        const def = [
+          ["<2", (v) => v < 2],
+          ["2-4", (v) => v >= 2 && v < 4],
+          ["4-6", (v) => v >= 4 && v < 6],
+          ["≥6", (v) => v >= 6]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+    }
+  });
+
+  // src/review/analysis/view.ts
+  function frame(no, main) {
+    const def = RA_SCENES[no - 1];
+    return `<section class="bz-ra-scn" data-s="${pad22(no)}" data-id="${def.id}" data-name="${escapeHtml2(def.name)}">
+  <div class="ra-sc"><div class="ra-main">${main}</div></div>
+</section>`;
+  }
+  function analysisHtml(data) {
+    const S3 = [];
+    S3.push(frame(1, `
+    <div class="ra-open"><canvas data-cv="open" aria-hidden="true"></canvas></div>`));
+    S3.push(frame(2, `
+    <div class="ra-field">
+      <canvas data-cv="field" aria-hidden="true"></canvas>
+      <div class="ra-field-side">
+        <div class="ra-kv big"><span class="ra-k">在炉</span><b>${data.active}<span class="ra-u">篇</span></b></div>
+        <div class="ra-legend">
+          <span><i class="dot tone-hi"></i>余温足（R&gt;70%）</span>
+          <span><i class="dot tone-mid"></i>渐凉（40-70%）</span>
+          <span><i class="dot tone-low"></i>将熄（&lt;40%）</span>
+          <span><i class="dot tone-off"></i>阶梯期（未入 FSRS）</span>
+        </div>
+      </div>
+    </div>`));
+    const slopePts = data.liveEmbers.filter((e) => e.r != null && e.ageDays != null && e.s > 0).slice(0, 90).map((e, i) => {
+      const x = Math.min(1, e.ageDays / Math.max(0.5, e.s));
+      return `<i class="ra-slope-dot tone-${emberTone(e.r)}" data-r="sdot" data-i="${i}"
+        style="--x:${x.toFixed(4)};--y:${e.r.toFixed(4)}"></i>`;
+    }).join("");
+    S3.push(frame(3, `
+    <div class="ra-slope">
+      <div class="ra-slope-plot" data-r="plot">
+        <canvas data-cv="slope" aria-hidden="true"></canvas>
+        <span class="ra-slope-cursor" data-r="cursor" aria-hidden="true"></span>
+        ${slopePts}
+      </div>
+      <div class="ra-slope-side">
+        <div class="ra-kv"><span class="ra-k">在崖上</span><b data-r="oncliff">—</b></div>
+        <div class="ra-kv"><span class="ra-k">已过半坡</span><b>${data.rBelow50}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">稳住 90% 以上</span><b>${data.rAbove90}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">每篇记忆都在往坡下滑——坡的缓急由稳定性决定，添一次柴坡就缓一截。</p>
+      </div>
+    </div>`));
+    const tidePct = data.avgR == null ? 0 : Math.round(data.avgR * 100);
+    S3.push(frame(4, `
+    <div class="ra-tide">
+      <div class="ra-tide-plot" data-r="tplot"><canvas data-cv="tide" aria-hidden="true"></canvas>
+        <span class="ra-tide-gauge" data-r="gauge"><b>0%</b></span>
+      </div>
+      <div class="ra-tide-side">
+        <div class="ra-kv big"><span class="ra-k">平均留存</span><b>${data.avgR == null ? "—" : tidePct + "%"}<span class="ra-u">R</span></b></div>
+        <div class="ra-kv"><span class="ra-k">满水位</span><b>${data.rHist[9]}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">浅滩</span><b>${data.rHist[0] + data.rHist[1]}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">按住池面可以把水压下去，松手它回到你的真实水位。</p>
+      </div>
+    </div>`));
+    const debtMaxDays = Math.max(1, ...data.overdueList.slice(0, 18).map((d) => Math.round(d.days)));
+    const debtTags = data.overdueList.slice(0, 18).map((d, i) => {
+      const x = 8 + i * 29 % 84;
+      const y = 14 + Math.round(d.days) / debtMaxDays * 44;
+      const rot = -9 + i * 53 % 19;
+      return `<span class="ra-debt" data-r="debt" data-i="${i}" data-tip="${escapeHtml2(d.name)} · 拖了 ${Math.round(d.days)} 天"
+      style="--x:${x.toFixed(1)}%;--y:${y.toFixed(1)}%;--rot:${rot}deg;--sw:${i * 17 % 10 / 10}"><b>${escapeHtml2(d.name)}</b><i>拖 ${Math.round(d.days)} 天</i></span>`;
+    }).join("");
+    S3.push(frame(5, `
+    <div class="ra-debts">
+      <div class="ra-debt-rope" data-r="rope"></div>
+      ${debtTags}
+      <div class="ra-debt-total"><b>${data.overdueList.length}</b><span>笔未还 · 最早一笔拖了 ${data.overdueList.length ? Math.round(data.overdueList[0].days) : 0} 天</span></div>
+    </div>`));
+    const stepMax = Math.max(1, ...data.stageDist);
+    const steps = data.stageDist.map((n, i) => {
+      const last = i === 9;
+      const label = last ? "FSRS" : `${i + 1}`;
+      const tip2 = `${last ? "自由排期" : `第 ${i + 1} 阶`} · ${n} 篇`;
+      return `<div class="ra-step${last ? " is-fsrs" : ""}${i === data.stagePeak ? " is-peak" : ""}" data-r="step" data-i="${i}" data-tip="${escapeHtml2(tip2)}">
+      <span class="ra-step-n" data-r="stepn">${n}</span>
+      <span class="ra-step-bar" data-r="stepbar" style="--ph:${(n / stepMax * 100).toFixed(1)}%"></span>
+      <span class="ra-step-lb">${label}</span></div>`;
+    }).join("");
+    S3.push(frame(6, `
+    <div class="ra-steps" data-r="steps">${steps}<i class="ra-steps-fly" data-r="fly" aria-hidden="true"></i></div>`));
+    const crystalMax = Math.max(1, ...data.sBuckets.map((b) => b.n));
+    const crystals = data.sBuckets.map((b, i) => {
+      const w = b.n / crystalMax;
+      return `<div class="ra-crystal${i === data.sBuckets.length - 1 ? " is-last" : ""}" data-r="crystal" data-i="${i}"
+      data-tip="稳定性 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--w:${w.toFixed(3)};--i:${i}">
+      <canvas data-cv="crystal${i}" aria-hidden="true"></canvas>
+      <div class="ra-crystal-meta"><b data-r="cn">${b.n}</b><span>${escapeHtml2(b.label)}</span></div>
+    </div>`;
+    }).join("");
+    S3.push(frame(7, `
+    <div class="ra-crystals">
+      <div class="ra-crystal-row" data-r="crow">${crystals}</div>
+      <div class="ra-crystal-side">
+        <div class="ra-kv"><span class="ra-k">最久一块</span><b>${sText(data.sMax)}</b></div>
+        <p class="ra-sline">稳定性是记忆的晶格：越久没忘，晶格越大，下一次遗忘就来得越慢。</p>
+      </div>
+    </div>`));
+    const strataMax = Math.max(1, ...data.dBuckets.map((b) => b.n));
+    const STRATA_C = ["var(--ra-jade)", "var(--ra-indigo)", "var(--ra-amber)", "var(--ra-ember)"];
+    const strata = data.dBuckets.map((b, i) => `<div class="ra-stratum" data-r="stratum" data-i="${i}" data-tip="难度 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--ph:${(b.n / strataMax * 100).toFixed(1)}%;--sc:${STRATA_C[i]}">
+      <span class="ra-st-name">${escapeHtml2(b.label)}</span><span class="ra-st-n" data-r="stn">${b.n}</span></div>`).join("");
+    S3.push(frame(8, `
+    <div class="ra-strata">
+      <div class="ra-strata-bed" data-r="bed">${strata}</div>
+      <div class="ra-strata-side">
+        <div class="ra-kv"><span class="ra-k">平均难度</span><b>${data.dAvg == null ? "—" : data.dAvg.toFixed(1)}</b></div>
+        <p class="ra-sline">难度是你与这些笔记的相处史：越常「忘了」，矿层越往下沉。</p>
+      </div>
+    </div>`));
+    const woodMax = Math.max(1, ...data.daily14.map((d) => d.count));
+    const woodRows = data.daily14.map((d, i) => `<div class="ra-wood${i === 13 ? " is-today" : ""}" data-r="wood" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 次" style="--ph:${(d.count / woodMax * 100).toFixed(1)}%">
+      <span class="ra-wood-flame" data-r="flame"></span>
+      <span class="ra-wood-bar" data-r="woodbar"></span>
+      <span class="ra-wood-lb">${slashDay(d.date)}</span></div>`).join("");
+    S3.push(frame(9, `
+    <div class="ra-woods">
+      <div class="ra-woods-row" data-r="wrow">${woodRows}</div>
+      <div class="ra-woods-side">
+        <div class="ra-kv big"><span class="ra-k">两周添柴</span><b data-r="woodTotal">0</b></div>
+        <div class="ra-kv"><span class="ra-k">最勤一天</span><b>${data.dailyPeak}<span class="ra-u">次</span></b></div>
+      </div>
+    </div>`));
+    const beadN = Math.min(31, Math.max(data.streak, 1));
+    const beads = Array.from({ length: beadN }, (_, i) => `<i class="ra-bead${i === beadN - 1 ? " is-now" : ""}" data-r="bead" style="--i:${i}"></i>`).join("");
+    S3.push(frame(10, `
+    <div class="ra-vigil">
+      <div class="ra-vigil-lamp"><canvas data-cv="vigil" aria-hidden="true"></canvas></div>
+      <div class="ra-vigil-wick" data-r="wick">${beads}</div>
+      <div class="ra-vigil-side">
+        <div class="ra-kv big"><span class="ra-k">连燃</span><b data-r="streakN">0</b><span class="ra-u">天</span></div>
+        <div class="ra-kv"><span class="ra-k">累计</span><b>${data.distinctDays}<span class="ra-u">天</span></b></div>
+        <div class="ra-kv"><span class="ra-k">起点</span><b>${data.firstReviewAt ? escapeHtml2(slashDay(data.firstReviewAt.slice(0, 10))) : "—"}</b></div>
+      </div>
+    </div>`));
+    S3.push(frame(11, `
+    <div class="ra-verdicts">
+      <div class="ra-verdicts-plot" data-r="vplot"><canvas data-cv="verdicts" aria-hidden="true"></canvas></div>
+      <div class="ra-verdicts-side">
+        ${RA_RATING_ORDER.map((k) => `<div class="ra-kv" data-r="vk" data-k="${k}"><span class="ra-k"><i class="dot is-${k}"></i>${RA_RATING_NAMES[k]}</span><b data-r="vn">${data.ratingDist[k] || 0}<span class="ra-u">次</span></b></div>`).join("")}
+        <div class="ra-kv"><span class="ra-k">批改总计</span><b>${data.verdictTotal}<span class="ra-u">次</span></b></div>
+        <div class="ra-kv"><span class="ra-k">忘了率</span><b>${data.againRate == null ? "—" : Math.round(data.againRate * 100) + "%"}</b></div>
+      </div>
+    </div>`));
+    const bedMax = Math.max(1, ...data.bedrock.map((b) => b.s));
+    const bedRows = data.bedrock.map((b, i) => {
+      const tone = emberTone(b.r);
+      return `<div class="ra-bed" data-r="bedrow" data-i="${i}" data-tip="${escapeHtml2(b.name)} · 稳 ${sText(b.s)}${b.r != null ? ` · R ${Math.round(b.r * 100)}%` : ""}" style="--ph:${(b.s / bedMax * 100).toFixed(1)}%">
+      <span class="ra-bed-rank">${i + 1}</span>
+      <span class="ra-bed-bar tone-${tone}" data-r="bedbar"><i class="ra-bed-shine" data-r="shine"></i></span>
+      <span class="ra-bed-name">${escapeHtml2(b.name)}</span>
+      <span class="ra-bed-val">${sText(b.s)}</span></div>`;
+    }).join("");
+    S3.push(frame(12, `
+    <div class="ra-bedrock">
+      <div class="ra-bedrock-rows" data-r="brows">${bedRows || '<p class="ra-sline">还没有进入 FSRS 的笔记——基岩要靠一次次「记得」垒起来。</p>'}</div>
+      <div class="ra-bedrock-side">
+        <div class="ra-kv big"><span class="ra-k">FSRS 在册</span><b>${data.fsrsN}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">阶梯爬坡</span><b>${data.ladderN}<span class="ra-u">篇</span></b></div>
+      </div>
+    </div>`));
+    const tideMax = Math.max(1, ...data.next8.map((d) => d.count));
+    const tideBars = data.next8.map((d, i) => `<div class="ra-tidebar${i === 0 ? " is-today" : i === 1 ? " is-tmr" : ""}" data-r="tidebar" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 篇" style="--ph:${(d.count / tideMax * 100).toFixed(1)}%">
+      <i class="ra-tidefly" data-r="tidefly"></i>
+      <span class="ra-tidebar-bar" data-r="tidebar"></span>
+      <span class="ra-tidebar-n" data-r="tidebarN">${d.count}</span>
+      <span class="ra-tidebar-lb">${d.label}</span></div>`).join("");
+    S3.push(frame(13, `
+    <div class="ra-portide">
+      <div class="ra-portide-row" data-r="prow">${tideBars}</div>
+      <div class="ra-portide-side">
+        <div class="ra-kv big"><span class="ra-k">明日来潮</span><b>${data.tomorrowN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">潮水把到期推到岸边——今晚多添一柴，明天的岸就干一分。</p>
+      </div>
+    </div>`));
+    const QCOLS = [
+      ["逾期", data.overdueN, "var(--ra-ember)"],
+      ["今日", data.todayN, "var(--ra-amber)"],
+      ["未来", data.futureN, "var(--ra-indigo)"],
+      ["已完成", data.doneColN, "var(--ra-jade)"]
+    ];
+    const qMax = Math.max(1, ...QCOLS.map(([, n]) => n));
+    const quarters = QCOLS.map(([label, n, color], i) => `<div class="ra-quarter" data-r="quarter" data-i="${i}" data-tip="${label} · ${n} 篇" style="--ph:${(n / qMax * 100).toFixed(1)}%;--qc:${color}">
+      <span class="ra-quarter-lamp" data-r="qlamp"></span>
+      <span class="ra-quarter-n" data-r="qn">0</span>
+      <span class="ra-quarter-lb">${label}</span></div>`).join("");
+    S3.push(frame(14, `
+    <div class="ra-quarters" data-r="qrow">${quarters}</div>`));
+    const markMax = Math.max(1, ...RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0));
+    const marks = RA_RATING_ORDER.map((k, i) => {
+      const n = data.lastDiffDist[k] || 0;
+      return `<div class="ra-mark tone-${k === "again" ? "low" : k === "hard" ? "mid" : "hi"}" data-r="mark" data-i="${i}" data-tip="末次「${RA_RATING_NAMES[k]}」· ${n} 篇" style="--ph:${(n / markMax * 100).toFixed(1)}%;--mi:${i}">
+      <span class="ra-mark-cut" data-r="cut"></span>
+      <span class="ra-mark-n" data-r="markn">${n}</span>
+      <span class="ra-mark-lb">${RA_RATING_NAMES[k]}</span></div>`;
+    }).join("");
+    S3.push(frame(15, `
+    <div class="ra-marks">
+      <div class="ra-marks-row" data-r="mrow">${marks}</div>
+      <div class="ra-marks-side">
+        <div class="ra-kv big"><span class="ra-k">待重做</span><b class="${data.redoN ? "is-hot" : ""}">${data.redoN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">末一次批改落在哪一档，就刻哪一道痕；「忘了」的痕最深，压着下次排期。</p>
+      </div>
+    </div>`));
+    S3.push(frame(16, `
+    <div class="ra-colo">
+      <canvas data-cv="colo" aria-hidden="true"></canvas>
+      <div class="ra-colo-grid">
+        <div class="ra-kv big"><b data-r="coloN">0</b><span>篇在册</span></div>
+        <div class="ra-kv big"><b data-r="coloA">0</b><span>篇在炉</span></div>
+        <div class="ra-kv big"><b data-r="coloD">0</b><span>篇完成</span></div>
+        <div class="ra-kv big"><b data-r="coloS">0</b><span>天连燃</span></div>
+      </div>
+      <p class="ra-colo-line">共 ${RA_SCENES.length} 幕 · 火不灭，账不清</p>
+    </div>`));
+    return `<div class="ra-film">${S3.join("")}</div>`;
+  }
+  function analysisFixedHtml() {
+    return `<div class="ra-fixed">
+    <div class="ra-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
+    <div class="ra-lampcol" data-r="rail">${RA_SCENES.map((s, i) => `<i class="ra-lamp" data-r="lamp" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
+  </div>`;
+  }
+  var RA_SCENES, pad22, slashDay, zhDay, sText, emberTone;
+  var init_view = __esm({
+    "src/review/analysis/view.ts"() {
+      init_utils();
+      init_data5();
+      RA_SCENES = [
+        { id: "open", name: "点炉" },
+        { id: "field", name: "忆炉全景" },
+        { id: "slope", name: "忘坡" },
+        { id: "tide", name: "水位" },
+        { id: "debts", name: "欠账" },
+        { id: "steppath", name: "阶石" },
+        { id: "crystal", name: "墨晶" },
+        { id: "strata", name: "矿层" },
+        { id: "dailies", name: "添柴志" },
+        { id: "vigil", name: "长明" },
+        { id: "verdicts", name: "批改环" },
+        { id: "bedrock", name: "基岩" },
+        { id: "portide", name: "来潮" },
+        { id: "quarters", name: "四驻" },
+        { id: "marks", name: "批痕" },
+        { id: "keeper", name: "守夜人" }
+      ];
+      pad22 = (n) => String(n).padStart(2, "0");
+      slashDay = (d) => d.slice(5).replace("-", "/");
+      zhDay = (d) => {
+        const [, m, dd] = d.split("-");
+        return `${Number(m)} 月 ${Number(dd)} 日`;
+      };
+      sText = (s) => s >= 365 ? `${(s / 365).toFixed(1)} 年` : `${Math.round(s)} 天`;
+      emberTone = (r) => r == null ? "off" : r >= 0.7 ? "hi" : r >= 0.4 ? "mid" : "low";
+    }
+  });
+
+  // src/review/analysis/kits.ts
+  function rng(seed) {
+    let s = seed >>> 0 || 1;
+    return () => {
+      s ^= s << 13;
+      s >>>= 0;
+      s ^= s >> 17;
+      s ^= s << 5;
+      s >>>= 0;
+      return s / 4294967296;
+    };
+  }
+  function palette(host) {
+    const inkRgb = cssVar(host, "--ra-ink-rgb", "222,228,236");
+    const jadeRgb = cssVar(host, "--ra-jade-rgb", "110,220,196");
+    const amberRgb = cssVar(host, "--ra-amber-rgb", "232,168,86");
+    const emberRgb = cssVar(host, "--ra-ember-rgb", "226,106,88");
+    const indigoRgb = cssVar(host, "--ra-indigo-rgb", "122,152,222");
+    const paper = cssVar(host, "--ra-paper", "#10161d");
+    const dark = luma(inkRgb) > 140;
+    return {
+      ink: `rgb(${inkRgb})`,
+      jade: `rgb(${jadeRgb})`,
+      amber: `rgb(${amberRgb})`,
+      ember: `rgb(${emberRgb})`,
+      indigo: `rgb(${indigoRgb})`,
+      paper,
+      dim: dark ? "rgba(190,200,214,.66)" : "rgba(52,64,80,.72)",
+      faint: dark ? "rgba(190,200,214,.34)" : "rgba(52,64,80,.4)",
+      inkRgb,
+      jadeRgb,
+      amberRgb,
+      emberRgb,
+      indigoRgb,
+      onStrong: dark ? "10,14,20" : "244,248,252",
+      dark
+    };
+  }
+  function canvas(host, key) {
+    const el = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el) return null;
+    const ctx = typeof el.getContext === "function" ? el.getContext("2d") : null;
+    if (!ctx) return null;
+    const cv = {
+      el,
+      ctx,
+      w: 0,
+      h: 0,
+      fit() {
+        const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+        const r = el.getBoundingClientRect();
+        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        if (w === cv.w && h === cv.h) return false;
+        cv.w = w;
+        cv.h = h;
+        el.width = Math.round(w * dpr);
+        el.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return true;
+      },
+      clear() {
+        ctx.clearRect(0, 0, cv.w, cv.h);
+      }
+    };
+    return cv;
+  }
+  function sampleText(text, fontPx, weight = 800, gap = 5) {
+    const c = document.createElement("canvas");
+    const pad = Math.round(fontPx * 0.3);
+    const ctx = c.getContext("2d");
+    if (!ctx) return [];
+    const font = `${weight} ${fontPx}px "Segoe UI", system-ui, -apple-system, sans-serif`;
+    ctx.font = font;
+    const w = Math.ceil(ctx.measureText(text).width) + pad * 2;
+    const h = Math.ceil(fontPx * 1.42);
+    c.width = w;
+    c.height = h;
+    const c2 = c.getContext("2d");
+    if (!c2) return [];
+    c2.font = font;
+    c2.fillStyle = "#fff";
+    c2.textBaseline = "middle";
+    c2.fillText(text, pad, h / 2);
+    const data = c2.getImageData(0, 0, w, h).data;
+    const pts = [];
+    for (let y = 0; y < h; y += gap) {
+      for (let x = 0; x < w; x += gap) {
+        if (data[(y * w + x) * 4 + 3] > 128) pts.push({ x, y });
+      }
+    }
+    return pts.map((p) => ({ x: p.x - w / 2, y: p.y - h / 2 }));
+  }
+  function nearest(spots, at22, radius = 0.06) {
+    if (!at22 || !spots.length) return -1;
+    let best = -1, bd = radius * radius;
+    for (let i = 0; i < spots.length; i++) {
+      const dx = spots[i].x - at22.x, dy = spots[i].y - at22.y;
+      const d = dx * dx + dy * dy;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+  function under(p, sel) {
+    if (typeof document === "undefined" || typeof document.elementFromPoint !== "function") return null;
+    try {
+      const hit = document.elementFromPoint(p.cx, p.cy);
+      return hit ? hit.closest(sel) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function tip(root, html, cx = 0, cy = 0) {
+    let el = tipNode.get(root);
+    if (!el) {
+      if (typeof document === "undefined") return;
+      el = document.createElement("span");
+      el.className = "ra-tip";
+      el.setAttribute("aria-hidden", "true");
+      root.appendChild(el);
+      tipNode.set(root, el);
+    }
+    if (!html) {
+      if (el.style.opacity !== "0") el.style.opacity = "0";
+      return;
+    }
+    if (el.dataset.h !== html) {
+      el.dataset.h = html;
+      el.innerHTML = html;
+    }
+    el.style.left = `${cx.toFixed(1)}px`;
+    el.style.top = `${cy.toFixed(1)}px`;
+    el.style.opacity = "1";
+  }
+  var clamp01, lerp, at, easeOut, easeInOut, easeBack, spring, stagger, rollTo, cssVar, luma, rgba, qsa, localAt, tipNode, toward;
+  var init_kits = __esm({
+    "src/review/analysis/kits.ts"() {
+      clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      lerp = (a, b, t) => a + (b - a) * t;
+      at = (t, dur, delay = 0) => clamp01((t - delay) / Math.max(dur, 1e-4));
+      easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack = (x) => {
+        const c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      spring = (x, damp = 6, freq = 3) => x >= 1 ? 1 : 1 - Math.exp(-damp * x) * Math.cos(freq * Math.PI * x);
+      stagger = (t, i, step = 0.07, dur = 0.7) => at(t, dur, i * step);
+      rollTo = (n, x, digits = 0, width = 0) => {
+        const v = n * clamp01(x);
+        const s = digits > 0 ? v.toFixed(digits) : String(Math.round(v));
+        return width > 0 ? s.padStart(width, "0") : s;
+      };
+      cssVar = (host, name, fallback) => {
+        const v = getComputedStyle(host).getPropertyValue(name).trim();
+        return v || fallback;
+      };
+      luma = (triplet) => {
+        var _a2, _b2, _c;
+        const n = triplet.split(",").map((x) => Number(x.trim()));
+        return 0.299 * ((_a2 = n[0]) != null ? _a2 : 0) + 0.587 * ((_b2 = n[1]) != null ? _b2 : 0) + 0.114 * ((_c = n[2]) != null ? _c : 0);
+      };
+      rgba = (triplet, a) => `rgba(${triplet},${a})`;
+      qsa = (host, sel) => Array.from(host.querySelectorAll(sel));
+      localAt = (host, p) => {
+        if (!host) return null;
+        const r = host.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return null;
+        const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+        return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+      };
+      tipNode = /* @__PURE__ */ new WeakMap();
+      toward = (cur, target, k = 0.18) => cur + (target - cur) * k;
+    }
+  });
+
+  // src/review/analysis/motions.ts
+  function S(el, v) {
+    var _a2;
+    if (!el || lastStyle.get(el) === v) return;
+    const prev = (_a2 = el.getAttribute("style")) != null ? _a2 : "";
+    if (prev) {
+      const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
+      if (vars) {
+        const keep = vars.filter((d) => !v.includes(`${d.split(":")[0].trim()}:`));
+        if (keep.length) v = `${keep.join(";")};${v}`;
+      }
+    }
+    lastStyle.set(el, v);
+    el.setAttribute("style", v);
+  }
+  function T(el, v) {
+    if (!el || lastText.get(el) === v) return;
+    lastText.set(el, v);
+    el.textContent = v;
+  }
+  function buildPerfs(root, data, host = root) {
+    const out = /* @__PURE__ */ new Map();
+    const scn = (id) => root.querySelector(`[data-id="${id}"]`);
+    if (!scn("open")) return out;
+    const vOf = (el, name, fallback = 0) => {
+      var _a2;
+      const v = parseFloat(String((_a2 = el == null ? void 0 : el.style.getPropertyValue(name)) != null ? _a2 : ""));
+      return Number.isFinite(v) ? v : fallback;
+    };
+    {
+      const s = scn("open");
+      const cv = canvas(s, "open");
+      let ps = [];
+      let builtFor = 0;
+      out.set("open", {
+        dur: 4.2,
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && ps.length === 0 && w > 8) {
+            builtFor = w;
+            const N = 60;
+            const fontPx = Math.max(120, Math.min(h * 0.5, w * 0.3));
+            const roll2 = rng(20260922);
+            const resample = (text, fp) => {
+              const raw = sampleText(text, fp, 800, Math.max(3, Math.round(fp / 9)));
+              if (!raw.length) return [];
+              return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
+            };
+            const a = resample(String(data.active), fontPx);
+            const b = resample("忆", fontPx * 0.9);
+            ps = a.map((p, i) => {
+              var _a3, _b3;
+              const ang = i / Math.max(1, N) * Math.PI * 2 + roll2() * 0.6;
+              const rad = Math.max(w, h) * (0.5 + roll2() * 0.45);
+              return {
+                tx: p.x,
+                ty: p.y,
+                tx2: ((_a3 = b[i]) != null ? _a3 : p).x,
+                ty2: ((_b3 = b[i]) != null ? _b3 : p).y,
+                sx: Math.cos(ang) * rad,
+                sy: Math.sin(ang) * rad * 0.68,
+                d: roll2() * 0.5,
+                r: 2.2 + roll2() * 2.6,
+                jade: roll2() < 0.2
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            ps = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const cx = w / 2, cy = h / 2;
+            const morph = easeInOut(at(t, 1.2, 2.7));
+            const pxx = cx + px * w / 2, pyy = cy + py * h / 2;
+            for (const p of ps) {
+              const k = spring(clamp01((t - p.d) / 1.6), 5.2, 2.6);
+              const txx = lerp(p.tx, p.tx2, morph), tyy = lerp(p.ty, p.ty2, morph);
+              const jit = t > 2 ? 1.2 : 0;
+              let x = cx + lerp(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * 0.05) * jit;
+              let y = cy + lerp(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * 0.06) * jit;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.16;
+                if (dist < R && dist > 1e-3) {
+                  const f = (1 - dist / R) * 24 * (0.35 + 0.65 * (1 - clamp01(k) * 0.6));
+                  x += dx / dist * f;
+                  y += dy / dist * f;
+                }
+              }
+              ctx.globalAlpha = 0.16 + 0.84 * clamp01(k);
+              ctx.fillStyle = rgba(p.jade ? pal.jadeRgb : pal.inkRgb, 0.8);
+              ctx.beginPath();
+              ctx.arc(x, y, p.r * (0.45 + 0.55 * clamp01(k)), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            const sweep3 = at(t, 0.5, 1.7);
+            if (sweep3 > 0 && sweep3 < 1) {
+              const g = ctx.createLinearGradient(0, 0, w, 0);
+              g.addColorStop(0, rgba(pal.jadeRgb, 0));
+              g.addColorStop(0.5, rgba(pal.jadeRgb, 0.12 * Math.sin(sweep3 * Math.PI)));
+              g.addColorStop(1, rgba(pal.jadeRgb, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, cy - h * 0.3, w * sweep3, h * 0.6);
+            }
+          }
+        }
+      });
+    }
+    {
+      const s = scn("field");
+      const cv = canvas(s, "field");
+      const embers = data.liveEmbers.slice(0, 60).map((e) => ({ name: e.name, r: e.r, s: e.s, overdue: e.overdue }));
+      let spots = [];
+      let builtFor = 0;
+      let hot = -1;
+      out.set("field", {
+        dur: 3.4,
+        move(p) {
+          hot = nearest(spots, localAt(cv == null ? void 0 : cv.el, p), 0.09);
+          if (hot >= 0) {
+            const e = embers[hot];
+            const rTxt = e.r == null ? "阶梯期" : `R ${Math.round(e.r * 100)}%`;
+            tip(host, `${e.name} · ${rTxt}`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && spots.length === 0 && w > 8 && embers.length) {
+            builtFor = w;
+            const roll2 = rng(777);
+            spots = embers.map((e) => {
+              const depth = e.r == null ? 0.5 : 1 - e.r;
+              const a = roll2() * Math.PI * 2;
+              const rx = w * 0.34, ry = h * 0.32;
+              return {
+                x: w / 2 + Math.cos(a) * rx * (0.25 + 0.75 * roll2()),
+                y: h * (0.84 - 0.66 * (1 - depth)) + Math.sin(a) * ry * 0.3
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            spots = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const pxx = w / 2 + px * w / 2, pyy = h / 2 + py * h / 2;
+            embers.forEach((e, i) => {
+              var _a3;
+              const p = at(t, 0.9, i * 0.045);
+              if (p <= 0) return;
+              const base = (_a3 = spots[i]) != null ? _a3 : { x: w / 2, y: h / 2 };
+              const amp = e.r == null ? 3 : 2 + e.r * 4;
+              const x = base.x + Math.sin(t * 0.9 + i * 1.7) * amp * 0.8;
+              const y0 = lerp(h * 1.05, base.y, easeOut(p));
+              const y = y0 + Math.cos(t * (0.7 + i % 5 * 0.1) + i) * amp;
+              let push = 0, pushA = 0;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.13;
+                if (dist < R && dist > 1e-3) {
+                  push = (1 - dist / R) * 22;
+                  pushA = Math.atan2(dy, dx);
+                }
+              }
+              const fx = x + Math.cos(pushA) * push, fy = y + Math.sin(pushA) * push;
+              const tone = e.overdue ? pal.emberRgb : e.r == null ? pal.indigoRgb : e.r >= 0.7 ? pal.jadeRgb : e.r >= 0.4 ? pal.amberRgb : pal.emberRgb;
+              const rad = (e.r == null ? 2.4 : 2 + e.r * 3.4) * (i === hot ? 1.9 : 1) * easeOut(p);
+              const flick = 0.72 + 0.28 * Math.sin(t * (2.2 + i % 7 * 0.3) + i * 2.1);
+              const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, rad * 4.2);
+              g.addColorStop(0, rgba(tone, 0.85 * flick));
+              g.addColorStop(0.35, rgba(tone, 0.3 * flick));
+              g.addColorStop(1, rgba(tone, 0));
+              ctx.fillStyle = g;
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 4.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = rgba(tone, 0.95);
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 0.55, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          }
+        }
+      });
+    }
+    {
+      const s = scn("slope");
+      const cv = canvas(s, "slope");
+      const cursor = s.querySelector('[data-r="cursor"]');
+      const oncliff = s.querySelector('[data-r="oncliff"]');
+      const dots = qsa(s, ".ra-slope-dot");
+      const REF_S = [3, 14, 45, 150];
+      let hotI = -1;
+      out.set("slope", {
+        dur: 3.6,
+        move(p) {
+          var _a2, _b2;
+          const dot = under(p, ".ra-slope-dot");
+          hotI = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          const l = localAt((_b2 = cursor == null ? void 0 : cursor.offsetParent) != null ? _b2 : null, p);
+          if (hotI >= 0) {
+            const e = data.liveEmbers.filter((x) => x.r != null && x.ageDays != null && x.s > 0)[hotI];
+            if (e) tip(host, `${e.name} · 龄 ${Math.round(e.ageDays)} 天 / 稳 ${Math.round(e.s)} 天 · R ${Math.round(e.r * 100)}%`, p.cx, p.cy);
+          } else if (l) {
+            tip(host, `龄期 ${Math.round(l.x * 3 * 10) / 10}×S`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const padL = w * 0.07, padR = w * 0.05, padT = h * 0.12, padB = h * 0.14;
+            const X = (u) => padL + u * (w - padL - padR);
+            const Y = (r) => padT + (1 - r) * (h - padT - padB);
+            const d = 0.9;
+            const grow = easeInOut(at(t, 1.9, 0.2));
+            REF_S.forEach((sV, si) => {
+              const gp = clamp01(grow * 1.3 - si * 0.08);
+              if (gp <= 0) return;
+              ctx.beginPath();
+              const steps = 60;
+              for (let i = 0; i <= steps * gp; i++) {
+                const u = i / steps;
+                const r = Math.pow(1 + u * sV * 0 + u * sV / sV * 0 + u / 1 * sV / sV * 0 + u / (sV * d) * sV / sV * 0 + 0, 0);
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                if (i === 0) ctx.moveTo(X(u), Y(rr));
+                else ctx.lineTo(X(u), Y(rr));
+              }
+              ctx.strokeStyle = rgba(pal.indigoRgb, 0.34 - si * 0.05);
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            });
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.1);
+            ctx.lineWidth = 1;
+            for (const gv of [0.25, 0.5, 0.75]) {
+              ctx.beginPath();
+              ctx.moveTo(X(0), Y(gv));
+              ctx.lineTo(X(1), Y(gv));
+              ctx.stroke();
+            }
+            const dashT = t * 0.35 % 1;
+            const mainS = 14;
+            ctx.setLineDash([10, 14]);
+            ctx.lineDashOffset = -t * 26;
+            ctx.beginPath();
+            for (let i = 0; i <= 60; i++) {
+              const u = i / 60;
+              const rr = Math.pow(1 + u * 3 / (mainS * d), -d);
+              if (i === 0) ctx.moveTo(X(u), Y(rr));
+              else ctx.lineTo(X(u), Y(rr));
+            }
+            ctx.strokeStyle = rgba(pal.jadeRgb, 0.5 * at(t, 0.6, 1.9));
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            if (px && t > 1.2) {
+              const u = clamp01((px + 1) / 2);
+              ctx.strokeStyle = rgba(pal.inkRgb, 0.3);
+              ctx.beginPath();
+              ctx.moveTo(X(u), Y(1));
+              ctx.lineTo(X(u), Y(0));
+              ctx.stroke();
+              for (const sV of REF_S) {
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                ctx.fillStyle = rgba(pal.indigoRgb, 0.8);
+                ctx.beginPath();
+                ctx.arc(X(u), Y(rr), 2.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+          dots.forEach((el, i) => {
+            const p = at(t, 0.5, 1.4 + i * 0.028);
+            const on = i === hotI && t > 2;
+            S(el, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+          if (oncliff) {
+            const p = at(t, 0.6, 2.2);
+            S(oncliff, `opacity:${p.toFixed(3)}`);
+            T(oncliff, `${data.rBelow50 + data.rAbove90 === data.total ? 0 : Math.max(0, data.active - data.rBelow50 - data.rAbove90)} 篇`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("tide");
+      const cv = canvas(s, "tide");
+      const gauge = s.querySelector('[data-r="gauge"]');
+      const tplot = s.querySelector('[data-r="tplot"]');
+      const target = data.avgR == null ? 0 : data.avgR;
+      let shown = 0;
+      let pressAt = null;
+      out.set("tide", {
+        dur: 3.2,
+        move(p) {
+          if (pressAt) pressAt = localAt(tplot, p);
+        },
+        down(p) {
+          pressAt = localAt(tplot, p);
+        },
+        up() {
+          pressAt = null;
+        },
+        update({ t, pal }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          const want = pressAt ? clamp01(1 - pressAt.y) : target;
+          const ramp = easeInOut(at(t, 2.2, 0.2));
+          shown = t < 0.1 ? 0 : toward(shown, want * ramp, pressAt ? 0.09 : 0.05);
+          const pct = Math.round(shown * 100);
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const layers = [
+              [pal.jadeRgb, 0.18, 0],
+              [pal.jadeRgb, 0.26, 2.1],
+              [pal.indigoRgb, 0.3, 4.2]
+            ];
+            layers.forEach(([rgb3, alpha, ph], li) => {
+              ctx.beginPath();
+              ctx.moveTo(0, h);
+              const amp = h * (0.03 + li * 0.012);
+              const spd = 0.9 + li * 0.5;
+              for (let x = 0; x <= w; x += 8) {
+                const y = h * (1 - shown) + Math.sin(t * spd + ph + x / (w / (3 + li))) * amp + Math.sin(t * spd * 0.6 + x / (w / 1.7)) * amp * 0.5;
+                ctx.lineTo(x, y);
+              }
+              ctx.lineTo(w, h);
+              ctx.closePath();
+              ctx.fillStyle = rgba(rgb3, alpha);
+              ctx.fill();
+            });
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.14);
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 7]);
+            for (const gv of [0.25, 0.5, 0.75, 1]) {
+              const y = h * (1 - gv);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            if (target > 0) {
+              const y = h * (1 - target);
+              ctx.strokeStyle = rgba(pal.emberRgb, 0.5 * at(t, 0.5, 1));
+              ctx.setLineDash([6, 6]);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+          if (gauge) {
+            S(gauge, `transform:translateY(${((1 - shown) * 100).toFixed(2)}%);opacity:${at(t, 0.4, 0.8).toFixed(3)}`);
+            T(gauge.querySelector("b"), `${pct}%`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("debts");
+      const debts = qsa(s, ".ra-debt");
+      const rots = debts.map((el) => vOf(el, "--rot", 0));
+      const swings = debts.map((el) => vOf(el, "--sw", 0));
+      const total = s.querySelector(".ra-debt-total");
+      let hotDebt = -1;
+      out.set("debts", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-debt");
+          hotDebt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          debts.forEach((el, i) => {
+            const p = at(t, 0.5, 0.2 + i * 0.09);
+            const on = i === hotDebt && t > 1.2;
+            const swing = Math.sin(t * 1.15 + i * 1.9 + swings[i] * 6.28) * (1.6 + swings[i]);
+            S(el, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
+          });
+          if (total) {
+            const p = at(t, 0.6, 1.2);
+            S(total, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 10).toFixed(1)}px)`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("steppath");
+      const steps = qsa(s, ".ra-step");
+      const bars = steps.map((el) => el.querySelector('[data-r="stepbar"]'));
+      const nums = steps.map((el) => el.querySelector('[data-r="stepn"]'));
+      const fly = s.querySelector('[data-r="fly"]');
+      const phs = steps.map((el) => vOf(el.querySelector('[data-r="stepbar"]'), "--ph", 0));
+      const row = s.querySelector('[data-r="steps"]');
+      let hotStep = -1;
+      out.set("steppath", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-step");
+          hotStep = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          steps.forEach((el, i) => {
+            const p = stagger(t, i, 0.12, 0.8);
+            const on = i === hotStep && t > 1.6;
+            S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
+            S(el, `opacity:${(at(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            T(nums[i], String(Math.round((data.stageDist[i] || 0) * easeOut(p))));
+          });
+          if (fly && row) {
+            const span = steps.length - 1;
+            const u = (Math.sin((t - 1.4) * 0.55) * 0.5 + 0.5) * span;
+            const i0 = Math.floor(u), i1 = Math.min(span, i0 + 1);
+            const f = u - i0;
+            const h0 = phs[i0] / 100, h1 = phs[i1] / 100;
+            const lift = lerp(12 + h0, 12 + h1, easeInOut(f));
+            const left = (u + 0.5) / steps.length * 100;
+            const glow = 0.5 + 0.5 * Math.sin(t * 3);
+            S(fly, `--fx:${left.toFixed(2)}%;--fy:${lift.toFixed(2)}%;opacity:${(at(t, 0.4, 1.4) * (0.55 + 0.45 * glow)).toFixed(3)}`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("crystal");
+      const blocks = qsa(s, ".ra-crystal");
+      const cvs = blocks.map((_, i) => canvas(s, `crystal${i}`));
+      const ns = data.sBuckets.map((b) => b.n);
+      const weights = blocks.map((el) => vOf(el, "--w", 0));
+      const crow = s.querySelector('[data-r="crow"]');
+      const numsEls = blocks.map((el) => el.querySelector('[data-r="cn"]'));
+      let hotC = -1;
+      out.set("crystal", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-crystal");
+          hotC = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          if (crow && t > 1.8) {
+            S(crow, `transform:perspective(1100px) rotateX(${(-py * 2.6).toFixed(2)}deg) rotateY(${(px * 3).toFixed(2)}deg)`);
+          }
+          blocks.forEach((el, i) => {
+            const p = at(t, 0.7, i * 0.16);
+            const on = i === hotC && t > 1.6;
+            S(el, `opacity:${(at(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            T(numsEls[i], String(Math.round(ns[i] * easeOut(p))));
+            const cv = cvs[i];
+            if (!cv) return;
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const weight = weights[i];
+            if (weight <= 0) {
+              ctx.strokeStyle = rgba(pal.inkRgb, 0.12);
+              ctx.setLineDash([3, 5]);
+              hexPath(ctx, w / 2, h * 0.62, Math.min(w, h) * 0.16);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              return;
+            }
+            const base = Math.min(w, h) * (0.09 + 0.13 * weight);
+            const glowU = (t * 0.22 + i * 0.37) % 1;
+            ctx.lineWidth = 1.1;
+            const rowsN = 5;
+            let idx = 0;
+            for (let r = 0; r < rowsN; r++) {
+              const count = rowsN - r;
+              for (let c = 0; c < count; c++) {
+                const cx = w / 2 + (c - (count - 1) / 2) * base * 1.78;
+                const cy = h * 0.88 - r * base * 1.54;
+                const size = base * (0.8 + 0.3 * Math.sin(idx * 3.7));
+                const appear = clamp01(at(t, 0.5, i * 0.16 + idx * 0.05));
+                const near = Math.exp(-Math.pow(glowU * (rowsN * rowsN) - idx, 2) / 3.2);
+                ctx.strokeStyle = rgba(pal.jadeRgb, (0.24 + 0.6 * near) * appear);
+                ctx.fillStyle = rgba(pal.jadeRgb, (0.06 + 0.16 * near + 0.1 * weight) * appear);
+                hexPath(ctx, cx, cy, size * easeBack(appear));
+                ctx.fill();
+                ctx.stroke();
+                idx++;
+              }
+            }
+          });
+        }
+      });
+    }
+    {
+      const s = scn("strata");
+      const strata = qsa(s, ".ra-stratum");
+      const phs = strata.map((el) => vOf(el, "--ph", 0));
+      const nsEls = strata.map((el) => el.querySelector('[data-r="stn"]'));
+      const ns = data.dBuckets.map((b) => b.n);
+      const bed = s.querySelector('[data-r="bed"]');
+      let hotSt = -1;
+      out.set("strata", {
+        dur: 2.6,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-stratum");
+          hotSt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          strata.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.7);
+            const on = i === hotSt && t > 1.2;
+            S(el, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
+            T(nsEls[i], String(Math.round(ns[i] * easeOut(p))));
+          });
+          if (bed) S(bed, `transform:perspective(1100px) rotateY(${0 .toFixed(2)}deg)`);
+        }
+      });
+    }
+    {
+      const s = scn("dailies");
+      const woods = qsa(s, ".ra-wood");
+      const bars = woods.map((el) => el.querySelector('[data-r="woodbar"]'));
+      const flames = woods.map((el) => el.querySelector('[data-r="flame"]'));
+      const phs = woods.map((el) => vOf(el, "--ph", 0));
+      const wTotal = s.querySelector('[data-r="woodTotal"]');
+      let hotW = -1;
+      out.set("dailies", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-wood");
+          hotW = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          woods.forEach((el, i) => {
+            const p = stagger(t, i, 0.09, 0.6);
+            const on = i === hotW && t > 1.4;
+            S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
+            const alive = phs[i] > 0 && p > 0.9 ? 1 : 0;
+            const breath = 0.45 + 0.55 * Math.sin(t * 2.3 + i * 1.4);
+            S(flames[i], `opacity:${(alive * (0.35 + 0.65 * breath) * (on ? 1.4 : 1)).toFixed(3)};transform:translateX(-50%) scale(${(on ? 1.5 : 0.8 + 0.3 * breath).toFixed(3)})`);
+            S(el, `opacity:${(at(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+          if (wTotal) {
+            const p = easeOut(at(t, 1.4, 0.6));
+            T(wTotal, rollTo(data.dailyTotal, p));
+          }
+        }
+      });
+    }
+    {
+      const s = scn("vigil");
+      const cv = canvas(s, "vigil");
+      const beads = qsa(s, ".ra-bead");
+      const streakN = s.querySelector('[data-r="streakN"]');
+      out.set("vigil", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          beads.forEach((el, i) => {
+            const p = at(t, 0.3, 0.4 + i * 0.075);
+            const lit = p > 0 ? 1 : 0;
+            const pulse = i === beads.length - 1 && p >= 1 ? 0.4 + 0.6 * Math.abs(Math.sin(t * 1.8)) : 1;
+            S(el, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack(p)).toFixed(3)})`);
+          });
+          if (streakN) {
+            const p = easeOut(at(t, 1.6, 0.8));
+            T(streakN, rollTo(data.streak, p));
+          }
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, baseY = h * 0.92;
+            const lit = data.streak > 0 ? 1 : easeInOut(at(t, 0.8, 0.3));
+            const lean = -px * 10 * lit;
+            const sway = Math.sin(t * 2.1) * 4 + Math.sin(t * 3.7 + 1.2) * 2;
+            const flameH = h * (0.34 + 0.05 * Math.sin(t * 1.6)) * lit;
+            const tipX = cx + lean + sway;
+            const g = ctx.createLinearGradient(cx, baseY, tipX, baseY - flameH);
+            g.addColorStop(0, rgba(pal.amberRgb, 0.85 * lit));
+            g.addColorStop(0.55, rgba(pal.jadeRgb, 0.55 * lit));
+            g.addColorStop(1, rgba(pal.jadeRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(cx - 7 * lit, baseY);
+            ctx.quadraticCurveTo(cx - 9 + lean * 0.4, baseY - flameH * 0.5, tipX, baseY - flameH);
+            ctx.quadraticCurveTo(cx + 9 + lean * 0.4, baseY - flameH * 0.5, cx + 7, baseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.5 * at(t, 0.3, 0.1));
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, baseY + 4);
+            ctx.lineTo(cx, baseY - 6);
+            ctx.stroke();
+            ctx.fillStyle = rgba(pal.inkRgb, 0.18);
+            ctx.beginPath();
+            ctx.ellipse(cx, baseY + 8, 22, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    {
+      const s = scn("verdicts");
+      const cv = canvas(s, "verdicts");
+      const vRows = qsa(s, '[data-r="vk"]');
+      const TOTAL = Math.max(1, RA_RATING_ORDER.reduce((a, k) => a + (data.ratingDist[k] || 0), 0));
+      let hotK = -1;
+      const toneOf = (k) => k === "again" ? "emberRgb" : k === "hard" ? "amberRgb" : k === "good" ? "jadeRgb" : "inkRgb";
+      out.set("verdicts", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const row = under(p, '[data-r="vk"]');
+          if (row) {
+            hotK = RA_RATING_ORDER.indexOf((_a2 = row.dataset.k) != null ? _a2 : "");
+            return;
+          }
+          const l = localAt(cv == null ? void 0 : cv.el, p);
+          if (!l) {
+            hotK = -1;
+            tip(host, "");
+            return;
+          }
+          const ang = (Math.atan2(l.y - 0.5, l.x - 0.5) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+          let acc = 0;
+          hotK = -1;
+          for (let i = 0; i < RA_RATING_ORDER.length; i++) {
+            const frac = (data.ratingDist[RA_RATING_ORDER[i]] || 0) / TOTAL;
+            if (frac <= 0) continue;
+            if (ang >= acc && ang < acc + frac * Math.PI * 2) {
+              hotK = i;
+              break;
+            }
+            acc += frac * Math.PI * 2;
+          }
+          if (hotK >= 0) {
+            const k = RA_RATING_ORDER[hotK];
+            tip(host, `${RA_RATING_NAMES[k]} · ${data.ratingDist[k] || 0} 次`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, cy = h / 2;
+            const R = Math.min(w, h) * 0.36, rIn = R * 0.58;
+            const spin = t > 2 ? (t - 2) * 0.12 : 0;
+            let a0 = -Math.PI / 2 + spin;
+            const grow = easeInOut(at(t, 2.2, 0.3));
+            RA_RATING_ORDER.forEach((k, i) => {
+              var _a2, _b2;
+              const frac = (data.ratingDist[k] || 0) / TOTAL;
+              if (frac <= 0) return;
+              const sweep3 = frac * Math.PI * 2 * grow;
+              const on = i === hotK;
+              const rOut = R * (on ? 1.07 : 1);
+              ctx.beginPath();
+              ctx.arc(cx, cy, rOut, a0, a0 + sweep3);
+              ctx.arc(cx, cy, rIn, a0 + sweep3, a0, true);
+              ctx.closePath();
+              const toneKey = toneOf(k);
+              const tone = (_a2 = pal[toneKey]) != null ? _a2 : pal.ink;
+              const rgb3 = (_b2 = pal[`${toneKey.replace("Rgb", "")}`]) != null ? _b2 : "";
+              ctx.fillStyle = tone.startsWith("rgb") ? tone : `rgba(${tone},.8)`;
+              ctx.globalAlpha = (on ? 1 : hotK >= 0 ? 0.42 : 0.88) * Math.min(1, grow * 1.4);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+              a0 += frac * Math.PI * 2;
+            });
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = rgba(pal.inkRgb, at(t, 0.5, 1));
+            ctx.font = `700 ${Math.round(Math.min(w, h) * 0.14)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillText(String(Math.round(data.verdictTotal * grow)), cx, cy);
+            ctx.font = `${Math.round(Math.min(w, h) * 0.07)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillStyle = rgba(pal.inkRgb, 0.5 * at(t, 0.5, 1.2));
+            ctx.fillText("次批改", cx, cy + Math.min(w, h) * 0.11);
+          }
+          vRows.forEach((row, i) => {
+            const on = i === hotK;
+            S(row, `opacity:${(at(t, 0.4, 0.6 + i * 0.1) * (hotK >= 0 && !on ? 0.45 : 1)).toFixed(3)};transform:translateX(${(on ? 6 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("bedrock");
+      const rows = qsa(s, ".ra-bed");
+      const bars = rows.map((el) => el.querySelector('[data-r="bedbar"]'));
+      const shines = rows.map((el) => el.querySelector('[data-r="shine"]'));
+      const phs = rows.map((el) => vOf(el, "--ph", 0));
+      let hotB = -1;
+      out.set("bedrock", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-bed");
+          hotB = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          rows.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.9);
+            const on = i === hotB && t > 1.5;
+            S(bars[i], `width:${phs[i].toFixed(2)}%;transform:scaleX(${easeOut(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.18)" : "none"}`);
+            S(shines[i], `opacity:${(p >= 1 ? 0.4 + 0.5 * Math.max(0, Math.sin(t * 1.1 + i * 0.9)) : 0).toFixed(3)};transform:translateX(${((t * 22 + i * 60) % 160 - 30).toFixed(1)}px)`);
+            S(el, `opacity:${(at(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("portide");
+      const bars = qsa(s, ".ra-tidebar");
+      const columns = bars.map((el) => el.querySelector('[data-r="tidebar"]'));
+      const numsEls = bars.map((el) => el.querySelector('[data-r="tidebarN"]'));
+      const flies = bars.map((el) => el.querySelector('[data-r="tidefly"]'));
+      const phs = bars.map((el) => vOf(el, "--ph", 0));
+      const counts = data.next8.map((d) => d.count);
+      let hotT = -1;
+      out.set("portide", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-tidebar");
+          hotT = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          bars.forEach((el, i) => {
+            const p = stagger(t, i, 0.11, 0.7);
+            const on = i === hotT && t > 1.4;
+            S(columns[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:${on ? "brightness(1.2)" : "none"}`);
+            T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
+            const alive = (counts[i] || 0) > 0 && p >= 1 ? 1 : 0;
+            const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.7 + i * 1.1));
+            S(flies[i], `opacity:${(alive * blink * (on ? 1 : 0.8)).toFixed(3)};transform:translate(-50%,${(-4 - 3 * Math.sin(t * 2 + i)).toFixed(1)}px) scale(${(on ? 1.5 : 1).toFixed(2)})`);
+            S(el, `opacity:${(at(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("quarters");
+      const quarters = qsa(s, ".ra-quarter");
+      const lamps = quarters.map((el) => el.querySelector('[data-r="qlamp"]'));
+      const numsEls = quarters.map((el) => el.querySelector('[data-r="qn"]'));
+      const phs = quarters.map((el) => vOf(el, "--ph", 0));
+      const counts = [data.overdueN, data.todayN, data.futureN, data.doneColN];
+      let hotQ = -1;
+      out.set("quarters", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-quarter");
+          hotQ = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          quarters.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.8);
+            const on = i === hotQ && t > 1.5;
+            S(el, `opacity:${(at(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
+            S(lamps[i], `transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:brightness(${(on ? 1.4 : 0.8 + 0.45 * Math.abs(Math.sin(t * 1.4 + i * 1.6))).toFixed(3)})`);
+            T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("marks");
+      const marks = qsa(s, ".ra-mark");
+      const cuts = marks.map((el) => el.querySelector('[data-r="cut"]'));
+      const numsEls = marks.map((el) => el.querySelector('[data-r="markn"]'));
+      const phs = marks.map((el) => vOf(el, "--ph", 0));
+      const mrow = s.querySelector('[data-r="mrow"]');
+      const counts = RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0);
+      let hotM = -1;
+      out.set("marks", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-mark");
+          hotM = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, px, py }) {
+          if (mrow && t > 1.6) {
+            S(mrow, `transform:perspective(1100px) rotateY(${(px * 2.4).toFixed(2)}deg) rotateX(${(-py * 1.8).toFixed(2)}deg)`);
+          }
+          marks.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.55);
+            const on = i === hotM && t > 1.4;
+            S(cuts[i], `transform:scaleX(${easeBack(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.3)" : "none"}`);
+            const sheen2 = p >= 1 ? Math.max(0, Math.sin(t * 0.9 + i * 1.3)) : 0;
+            S(el, `opacity:${(at(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
+            T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("keeper");
+      const cv = canvas(s, "colo");
+      const coloN = s.querySelector('[data-r="coloN"]');
+      const coloA = s.querySelector('[data-r="coloA"]');
+      const coloD = s.querySelector('[data-r="coloD"]');
+      const coloS = s.querySelector('[data-r="coloS"]');
+      const roll2 = rng(4242);
+      out.set("keeper", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          const dp = (delay) => easeOut(at(t, 1.2, delay));
+          T(coloN, rollTo(data.total, dp(0.2)));
+          T(coloA, rollTo(data.active, dp(0.45)));
+          T(coloD, rollTo(data.doneN, dp(0.7)));
+          T(coloS, rollTo(data.streak, dp(0.95)));
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2 + px * 8, cy = h / 2 + py * 6;
+            const appear = at(t, 1.2, 0.4);
+            for (let i = 0; i < 18; i++) {
+              const a = roll2() * Math.PI * 2;
+              const rx = Math.min(w, h) * (0.28 + roll2() * 0.22);
+              const ry = rx * (0.5 + roll2() * 0.3);
+              const spd = 0.25 + roll2() * 0.4;
+              const ph = roll2() * Math.PI * 2;
+              const u = t * spd + ph;
+              const x = cx + Math.cos(u) * rx;
+              const y = cy + Math.sin(u * 0.92 + a) * ry;
+              const tw = 0.35 + 0.65 * Math.abs(Math.sin(t * 1.9 + i * 2.3));
+              ctx.fillStyle = rgba(pal.jadeRgb, 0.5 * tw * appear);
+              ctx.beginPath();
+              ctx.arc(x, y, 1.6 + tw, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            const breathe = 0.5 + 0.5 * Math.sin(t * 1.1);
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30 + breathe * 12);
+            g.addColorStop(0, rgba(pal.amberRgb, 0.3 * appear));
+            g.addColorStop(1, rgba(pal.amberRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 42 + breathe * 12, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    return out;
+  }
+  function hexPath(ctx, cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 6 + i / 6 * Math.PI * 2;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+  var lastStyle, lastText;
+  var init_motions = __esm({
+    "src/review/analysis/motions.ts"() {
+      init_data5();
+      init_kits();
+      lastStyle = /* @__PURE__ */ new WeakMap();
+      lastText = /* @__PURE__ */ new WeakMap();
+    }
+  });
+
+  // src/review/analysis/engine.ts
+  function reduced2() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function qa(root, sel) {
+    return [...root.querySelectorAll(sel)];
+  }
+  function bindAnalysis(root, data) {
+    const sc = root.querySelector(".bz-ra-scroll");
+    const film = root.querySelector(".ra-film");
+    const handle = { stop: () => void 0, goTo: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qa(film, ".bz-ra-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPerfs(film, data, root);
+    const lamps = qa(root, ".ra-lamp");
+    const shutter = root.querySelector('[data-r="shutter"]');
+    const barI = root.querySelector('[data-r="barI"]');
+    const barN = root.querySelector('[data-r="barN"]');
+    const barLine = root.querySelector('[data-r="barLine"]');
+    const pb = root.querySelector('[data-r="pb"]');
+    let pal = palette(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let autoplay = false;
+    let autoAt = 0;
+    let navTarget = -1;
+    let navUntil = 0;
+    let px = 0, py = 0, cx = 0, cy = 0, pin = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const broken = /* @__PURE__ */ new Set();
+    let cutTimers = [];
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const fitHeight = () => filmEl.style.setProperty("--ra-h", `${unit()}px`);
+    fitHeight();
+    const indexAt = () => clamp(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      var _a2;
+      lamps.forEach((lp, k) => {
+        if (k === i) lp.setAttribute("data-on", "1");
+        else lp.removeAttribute("data-on");
+      });
+      if (barI) barI.textContent = String(i + 1).padStart(2, "0");
+      if (barN) barN.textContent = (_a2 = scenes[i].dataset.name) != null ? _a2 : "";
+      if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+    }
+    function play(perf, scn, ctx) {
+      var _a2;
+      const id = (_a2 = scn.getAttribute("data-id")) != null ? _a2 : "";
+      if (broken.has(id)) return;
+      try {
+        perf.update(ctx);
+      } catch (e) {
+        broken.add(id);
+        scn.classList.add("is-err");
+        try {
+          console.error("[记忆分析] 幕表演异常，该幕转静版：", id, e);
+        } catch (e2) {
+        }
+      }
+    }
+    function activate(i, replay = true) {
+      var _a2, _b2;
+      if (dead || i === cur && !replay) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+        if (prev && !settled.has(cur)) {
+          play(prev, scenes[cur], { t: prev.dur, pal, px, py, cx, cy, pin });
+          settled.add(cur);
+        }
+        tip(root, "");
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b2 = scenes[i].getAttribute("data-id")) != null ? _b2 : "");
+      if (replay) t0 = performance.now();
+      if (perf) play(perf, scenes[i], { t: replay ? 0 : perf.dur, pal, px, py, cx, cy, pin });
+      const scn = scenes[i];
+      scn.classList.remove("is-in");
+      void scn.offsetWidth;
+      scn.classList.add("is-in");
+      hud(i, 0);
+      autoAt = performance.now();
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay);
+    };
+    function goTo(i, opts) {
+      var _a2, _b2;
+      const target = clamp(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a2 = opts == null ? void 0 : opts.replay) != null ? _a2 : true);
+        return;
+      }
+      if (!shutter) {
+        cutTo(target, (_b2 = opts == null ? void 0 : opts.replay) != null ? _b2 : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a3;
+        cutTo(target, (_a3 = opts == null ? void 0 : opts.replay) != null ? _a3 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), 240));
+      }, 160));
+    }
+    handle.goTo = goTo;
+    const goRel = (dN) => goTo(cur < 0 ? 0 : cur + dN, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
+      const now = performance.now();
+      const fresh = now - lastWheel > GESTURE_GAP;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      setAuto(false);
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
+      }
+    }
+    function pump() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn(() => {
+        clearTimeout(fallback);
+        pump();
+      });
+      fallback = setTimeout(() => {
+        rafStop(raf);
+        pump();
+      }, 220);
+    }
+    function tick(now) {
+      var _a2;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
+      hud(cur, clamp012(t / perf.dur));
+      if (autoplay && now - autoAt > (perf.dur + 1.4) * 1e3) {
+        if (cur >= scenes.length - 1) setAuto(false);
+        else goRel(1);
+      }
+    }
+    function setAuto(on) {
+      if (autoplay === on) return;
+      autoplay = on;
+      if (pb) {
+        pb.textContent = on ? "停火" : "巡火";
+        pb.classList.toggle("is-on", on);
+      }
+      autoAt = performance.now();
+    }
+    const onOvlClick = (e) => {
+      var _a2;
+      const t = e.target;
+      if (t.closest('[data-r="pb"]')) {
+        setAuto(!autoplay);
+        return;
+      }
+      const lamp = t.closest(".ra-lamp");
+      if (lamp) {
+        setAuto(false);
+        goTo(Number((_a2 = lamp.getAttribute("data-i")) != null ? _a2 : 0), { cut: true });
+      }
+    };
+    const onPointerMove = (e) => {
+      const r = root.getBoundingClientRect();
+      cx = e.clientX;
+      cy = e.clientY;
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+    };
+    const onPointerLeave = () => {
+      pin = 0;
+      px = 0;
+      py = 0;
+      tip(root, "");
+    };
+    const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
+      pal = palette(root);
+    }) : null;
+    mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      fitHeight();
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
+    filmEl.addEventListener("click", onOvlClick);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    root.addEventListener("pointermove", onPointerMove, { passive: true });
+    root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    document.addEventListener("keydown", onKey);
+    if (reduced2()) {
+      scenes.forEach((scn, i) => {
+        var _a2;
+        const perf = perfs.get((_a2 = scn.getAttribute("data-id")) != null ? _a2 : "");
+        if (perf) play(perf, scn, { t: perf.dur, pal, px: 0, py: 0, cx: 0, cy: 0, pin: 0 });
+      });
+      cur = scenes.length - 1;
+      hud(scenes.length - 1, 1);
+    } else {
+      activate(0, true);
+      pump();
+    }
+    handle.stop = () => {
+      dead = true;
+      rafStop(raf);
+      clearTimeout(fallback);
+      mo == null ? void 0 : mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
+      clearCut();
+      tip(root, "");
+      filmEl.removeEventListener("click", onOvlClick);
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("keydown", onKey);
+    };
+    return handle;
+  }
+  var GESTURE_GAP, rafFn, rafStop, clamp, clamp012;
+  var init_engine = __esm({
+    "src/review/analysis/engine.ts"() {
+      init_motions();
+      init_kits();
+      GESTURE_GAP = 340;
+      rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop = (id) => {
+        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+        else clearTimeout(id);
+      };
+      clamp = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp012 = (x) => clamp(x, 0, 1);
+    }
+  });
+
+  // src/review/analysis/index.ts
+  var analysis_exports = {};
+  __export(analysis_exports, {
+    closeReviewAnalysis: () => closeReviewAnalysis,
+    openReviewAnalysis: () => openReviewAnalysis,
+    unloadReviewAnalysis: () => unloadReviewAnalysis
+  });
+  function fitRaBox(box, panel2) {
+    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
+    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+      box.style.left = "16px";
+      box.style.top = "16px";
+      box.style.width = "calc(100vw - 32px)";
+      box.style.height = "calc(100vh - 32px)";
+      box.style.fontSize = "16px";
+      return;
+    }
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
+  }
+  async function openReviewAnalysis(app) {
+    const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
+    if (raOvl == null ? void 0 : raOvl.isConnected) {
+      const box2 = raOvl.querySelector(".bz-ra-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
+      return;
+    }
+    let data;
+    try {
+      ensureReview(app);
+      const dm = dataManager;
+      if (!dm || noStage) throw new Error("no-stage");
+      const items = await dm.loadItems();
+      if (!items.length) throw new Error("empty");
+      let w;
+      try {
+        w = reviewApp.currentW();
+      } catch (e) {
+        w = void 0;
+      }
+      data = deriveAnalysis(items, { w });
+    } catch (e) {
+      const { openReviewReport: openReviewReport2 } = await Promise.resolve().then(() => (init_review(), review_exports));
+      await openReviewReport2(app);
+      return;
+    }
+    const panel2 = document.querySelector("#review-popup");
+    const ovl = document.createElement("div");
+    ovl.className = "bz-ra";
+    ovl.innerHTML = `
+    <div class="bz-ra-box">
+      ${analysisFixedHtml()}
+      <div class="bz-ra-scroll">${analysisHtml(data)}</div>
+    </div>`;
+    const isMobile = (() => {
+      try {
+        return window.matchMedia("(max-width: 768px)").matches;
+      } catch (e) {
+        return false;
+      }
+    })();
+    if (isMobile) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-ra-close";
+      close.setAttribute("data-ra-close", "");
+      close.title = "关闭";
+      close.setAttribute("aria-label", "关闭");
+      close.textContent = "✕";
+      ovl.appendChild(close);
+    }
+    document.body.appendChild(ovl);
+    topifyZ(ovl);
+    raOvl = ovl;
+    const box = ovl.querySelector(".bz-ra-box");
+    if (box) {
+      fitRaBox(box, panel2);
+      raSync = () => fitRaBox(box, panel2);
+      window.addEventListener("resize", raSync);
+      if (typeof ResizeObserver === "function" && panel2) {
+        raRo = new ResizeObserver(raSync);
+        raRo.observe(panel2);
+      }
+    }
+    ovl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-ra-close]")) {
+        closeReviewAnalysis();
+        return;
+      }
+      if (!t.closest(".bz-ra-box")) closeReviewAnalysis();
+    });
+    raEsc = escManager.register("bz-review-analysis", {
+      isVisible: () => !!(raOvl == null ? void 0 : raOvl.isConnected),
+      close: closeReviewAnalysis
+    });
+    raHandle = bindAnalysis(ovl, data);
+  }
+  function closeReviewAnalysis() {
+    raHandle == null ? void 0 : raHandle.stop();
+    raHandle = null;
+    if (raEsc) {
+      try {
+        raEsc.unregister();
+      } catch (e) {
+      }
+      raEsc = null;
+    }
+    if (raSync) {
+      window.removeEventListener("resize", raSync);
+      raSync = null;
+    }
+    raRo == null ? void 0 : raRo.disconnect();
+    raRo = null;
+    raOvl == null ? void 0 : raOvl.remove();
+    raOvl = null;
+  }
+  function unloadReviewAnalysis() {
+    closeReviewAnalysis();
+  }
+  var raOvl, raHandle, raEsc, raSync, raRo;
+  var init_analysis = __esm({
+    "src/review/analysis/index.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_review();
+      init_app3();
+      init_data5();
+      init_view();
+      init_engine();
+      raOvl = null;
+      raHandle = null;
+      raEsc = null;
+      raSync = null;
+      raRo = null;
+    }
+  });
+
   // src/review/stats-ui.ts
   var stats_ui_exports = {};
   __export(stats_ui_exports, {
@@ -13049,6 +15603,7 @@ ${n.content.slice(0, 2e3)}
     const stats = computeStats(items, { w });
     body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
     mountIcons(body);
+    motionStats(body);
     const openTimeline = (el) => {
       const idx = Number(el.dataset.idx);
       const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
@@ -13195,8 +15750,8 @@ ${n.content.slice(0, 2e3)}
       const ratingName = RATING_NAMES2[h.rating] || h.rating;
       const color = RATING_COLORS[h.rating] || "#888";
       const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
-      const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
-      const meta = [rText, sText].filter(Boolean).join(" · ");
+      const sText2 = h.stability !== void 0 ? `S=${h.stability}` : "";
+      const meta = [rText, sText2].filter(Boolean).join(" · ");
       const line = isLast ? "" : '<div class="bz-review-history-line"></div>';
       return `
       <div class="bz-review-history-item${isLast ? " is-last" : ""}">
@@ -13211,6 +15766,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     tl.innerHTML = itemsHTML;
     body.appendChild(tl);
+    motionHistory(body);
     histEsc = escManager.register("bz-review-history", {
       isVisible: () => !!histMask && histMask.style.display === "block",
       close: closeTimeline
@@ -13242,6 +15798,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_stats();
       init_fsrs();
+      init_motion();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;
@@ -13317,6 +15874,7 @@ ${n.content.slice(0, 2e3)}
       else el.blur();
     });
     document.body.appendChild(el);
+    motionRatingBar(el);
     el.focus({ preventScroll: true });
     return { close };
   }
@@ -13332,6 +15890,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_fsrs();
       init_render();
+      init_motion();
       init_queue();
       init_sprint();
       init_settings_schema();
@@ -13350,6 +15909,8 @@ ${n.content.slice(0, 2e3)}
           this.sprintStarting = false;
           this.showArchived = false;
           this.escHandle = null;
+          /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
+          this.motionBootPending = false;
           this.app = app;
           this.dataManager = dataManager3;
           this.createMainUI();
@@ -13394,11 +15955,13 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionBootPending = true;
           trapPanelFocus(this.popup);
           await this.showQueue();
         }
         hideMain() {
           if (this.sprint) return;
+          motionTeardown();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -13406,6 +15969,7 @@ ${n.content.slice(0, 2e3)}
           const sprint = this.sprint;
           this.sprint = null;
           sprint == null ? void 0 : sprint.destroy();
+          motionTeardown();
           this.hideMain();
           if (this.escHandle) {
             this.escHandle.unregister();
@@ -13469,6 +16033,10 @@ ${n.content.slice(0, 2e3)}
           });
           if (focusKey) restoreFocusKey(container, focusKey);
           this.bindQueueEvents(container, items);
+          if (this.motionBootPending) {
+            this.motionBootPending = false;
+            motionQueueBoot(container);
+          }
         }
         /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
         async showQueue() {
@@ -13495,18 +16063,30 @@ ${n.content.slice(0, 2e3)}
         bindQueueEvents(container, items) {
           var _a2, _b2, _c, _d, _e, _f;
           (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
-          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.beginRound());
+          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => {
+            const strip = container.querySelector(".bz-q-strip");
+            if (strip) motionChargeStrip(strip);
+            void this.beginRound();
+          });
           (_c = container.querySelector('[data-act="arch"]')) == null ? void 0 : _c.addEventListener("click", () => {
             this.showArchived = !this.showArchived;
             void this.refreshPanel();
           });
-          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => void this.openStats());
+          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => {
+            void (async () => {
+              const { openReviewAnalysis: openReviewAnalysis3 } = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+              await openReviewAnalysis3(this.app);
+            })();
+          });
           (_e = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _e.addEventListener("click", () => void this.addCurrentNote());
           (_f = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _f.addEventListener("click", () => void this.showWatchHelp());
           container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
             const activate = () => {
               const it = items.find((x) => x.id === card.dataset.id);
-              if (it && isPlayable2(it)) void this.beginSingle(it);
+              if (it && isPlayable2(it)) {
+                motionDrawCard(card);
+                void this.beginSingle(it);
+              }
             };
             card.addEventListener("click", activate);
             card.addEventListener("keydown", (e) => {
@@ -13588,11 +16168,6 @@ ${n.content.slice(0, 2e3)}
           });
           return this.sprint.start();
         }
-        // ================= 归档 / 统计 =================
-        async openStats() {
-          const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-          await showStatsModal2(this.app, this.dataManager);
-        }
         // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
         /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
          *  （旧自绘 .difficulty-dialog 的 ESC 关错层、外点穿透、companion 残留随之消亡）。
@@ -13640,11 +16215,11 @@ ${n.content.slice(0, 2e3)}
           card.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            void this.openDrawer(item, card);
+            void this.openDrawer(item, e.clientX, e.clientY);
           });
         }
-        async openDrawer(item, anchor) {
-          const { attachItemActions: attachItemActions2, closeItemMenu: closeItemMenu2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
+        async openDrawer(item, x, y) {
+          const { openItemMenu: openItemMenu2, resetItemMenuClickGuard: resetItemMenuClickGuard2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
           const actions = [
             {
               icon: "file-text",
@@ -13691,7 +16266,8 @@ ${n.content.slice(0, 2e3)}
               }
             }
           ];
-          attachItemActions2(anchor, actions);
+          openItemMenu2(x, y, actions, true, "bz-rv-menu");
+          resetItemMenuClickGuard2();
         }
         async openItemFile(item) {
           const file = this.app.vault.getAbstractFileByPath(item.filePath);
@@ -16903,7 +19479,7 @@ ${countsToText(s.missing)}
     return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
   }
   var CLIPBOOK_JSON;
-  var init_data5 = __esm({
+  var init_data6 = __esm({
     "src/clipbook/data.ts"() {
       init_storage();
       CLIPBOOK_JSON = "clipbook.json";
@@ -17051,7 +19627,7 @@ ${countsToText(s.missing)}
   }
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
-      init_data5();
+      init_data6();
     }
   });
 
@@ -17460,7 +20036,7 @@ ${countsToText(s.missing)}
     return Math.round(parts[0]);
   }
   var import_moment3, TIME_RE, KnowledgeData;
-  var init_data6 = __esm({
+  var init_data7 = __esm({
     "src/knowledge/data.ts"() {
       import_moment3 = __toESM(require_moment());
       init_storage();
@@ -17883,8 +20459,8 @@ ${countsToText(s.missing)}
     const flat = flattenWs(src);
     const needle = flattenWs(text).text;
     if (!needle) return null;
-    const at3 = flat.text.indexOf(needle);
-    return at3 < 0 ? null : flat.map[at3];
+    const at4 = flat.text.indexOf(needle);
+    return at4 < 0 ? null : flat.map[at4];
   }
   function flattenWs(s) {
     const map = [];
@@ -18924,7 +21500,7 @@ ${sample}`
       init_domain_bus();
       init_settings_provider();
       init_app();
-      init_data6();
+      init_data7();
       init_note_gen();
       INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
       STEP_RE = /^\[bz-step\]\s*(.+)$/;
@@ -19396,7 +21972,7 @@ ${sample}`
     for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
       if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
     }
-    for (let sweep2 = 0; sweep2 < n; sweep2++) {
+    for (let sweep3 = 0; sweep3 < n; sweep3++) {
       let moved = false;
       for (let j = 1; j < n; j++) {
         const B = nodes[j];
@@ -19554,17 +22130,17 @@ ${sample}`
   });
 
   // src/knowledge/mount-route.ts
-  function clamp(v, a, b) {
+  function clamp2(v, a, b) {
     return v < a ? a : v > b ? b : v;
   }
-  function exitCandidates(S2, sb, portPad) {
-    const ye = clamp(S2.y, sb.top + portPad, sb.bottom - portPad);
-    const xe = clamp(S2.x, sb.left + portPad, sb.right - portPad);
+  function exitCandidates(S3, sb, portPad) {
+    const ye = clamp2(S3.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp2(S3.x, sb.left + portPad, sb.right - portPad);
     const cands = [
-      { side: "L", d: S2.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
-      { side: "R", d: sb.right - S2.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
-      { side: "T", d: S2.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
-      { side: "B", d: sb.bottom - S2.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+      { side: "L", d: S3.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S3.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S3.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S3.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
     ];
     const order = ["L", "R", "T", "B"];
     return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
@@ -19590,14 +22166,14 @@ ${sample}`
       const lo2 = b.top + portPad;
       const hi2 = b.bottom - portPad;
       return {
-        T: { x: side === "L" ? b.left : b.right, y: clamp((b.top + b.bottom) / 2, lo2, hi2) },
+        T: { x: side === "L" ? b.left : b.right, y: clamp2((b.top + b.bottom) / 2, lo2, hi2) },
         nOut: { x: side === "L" ? -1 : 1, y: 0 }
       };
     }
     const lo = b.left + portPad;
     const hi = b.right - portPad;
     return {
-      T: { x: clamp((b.left + b.right) / 2, lo, hi), y: side === "T" ? b.top : b.bottom },
+      T: { x: clamp2((b.left + b.right) / 2, lo, hi), y: side === "T" ? b.top : b.bottom },
       nOut: { x: 0, y: side === "T" ? -1 : 1 }
     };
   }
@@ -19661,7 +22237,7 @@ ${sample}`
       lo = mid;
       hi = mid;
     }
-    for (let i = 0; i < vals.length; i++) vals[i] = clamp(vals[i], lo, hi);
+    for (let i = 0; i < vals.length; i++) vals[i] = clamp2(vals[i], lo, hi);
     for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
     const over = vals.length > 0 ? vals[vals.length - 1] - hi : 0;
     if (over > 0) {
@@ -19774,8 +22350,8 @@ ${sample}`
       }
     }
     function openCell(p, dir) {
-      const cxi = clamp(colOf(p.x), 0, gcols - 1);
-      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      const cxi = clamp2(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp2(rowOf(p.y), 0, grows - 1);
       for (let y = cyi - 2; y <= cyi + 2; y++) {
         for (let x = cxi - 2; x <= cxi + 2; x++) free(y * gcols + x, x, y);
       }
@@ -19801,8 +22377,8 @@ ${sample}`
       return !cellInCard(ix, iy) && !blocked[iy * gcols + ix];
     }
     function snapCell(p) {
-      const cxi = clamp(colOf(p.x), 0, gcols - 1);
-      const cyi = clamp(rowOf(p.y), 0, grows - 1);
+      const cxi = clamp2(colOf(p.x), 0, gcols - 1);
+      const cyi = clamp2(rowOf(p.y), 0, grows - 1);
       if (walkable(cxi, cyi) && !segHitsAny(p, { x: cx(cxi), y: cy(cyi) }, rects, 0)) {
         return { x: cxi, y: cyi };
       }
@@ -19927,8 +22503,8 @@ ${sample}`
       let entry = order[0];
       let clean = false;
       for (const side of order) {
-        const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-        if (rayCardDistance(T2, nOut, rects, 0) >= STUB) {
+        const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T3, nOut, rects, 0) >= STUB) {
           entry = side;
           clean = true;
           break;
@@ -19936,8 +22512,8 @@ ${sample}`
       }
       if (!clean) {
         for (const side of order) {
-          const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-          if (rayCardDistance(T2, nOut, rects, 0) >= 1) {
+          const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T3, nOut, rects, 0) >= 1) {
             entry = side;
             clean = true;
             break;
@@ -20005,8 +22581,8 @@ ${sample}`
     for (const j of jobs) {
       const e = j.edge;
       const sb = j.src.rect;
-      const S2 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
-      const cands = exitCandidates(S2, sb, PORT_PAD);
+      const S3 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S3, sb, PORT_PAD);
       let pick = null;
       let stub = STUB;
       for (const c of cands) {
@@ -20031,15 +22607,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E4 = pick.E;
+      const E5 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E4, nOut, stub);
-      const T2 = j.T;
+      const E1 = along(E5, nOut, stub);
+      const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E4, E1, rects) || stubDirty(T1, T2, rects);
-      const items = [S2, E4, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E5, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E5, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -20062,7 +22638,7 @@ ${sample}`
       } else {
         items.push(T1);
       }
-      items.push(T2);
+      items.push(T3);
       out[j.idx] = {
         from: e.from,
         to: e.to,
@@ -20435,10 +23011,10 @@ ${sample}`
     if (flatWant) {
       const hit = flat.indexOf(flatWant);
       if (hit >= 0 && map[hit] !== void 0) {
-        const at3 = start + map[hit];
+        const at4 = start + map[hit];
         const endIdx = hit + flatWant.length - 1;
         const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
-        return { at: at3, len: Math.max(1, end - at3), level: 2 };
+        return { at: at4, len: Math.max(1, end - at4), level: 2 };
       }
     }
     const kws = keywordsOf(want);
@@ -20455,16 +23031,16 @@ ${sample}`
       for (const k of kws) if (flatBlock.includes(k)) score++;
       if (score < need) continue;
       const lead = raw.length - raw.trimStart().length;
-      const at3 = start + m.index + lead;
+      const at4 = start + m.index + lead;
       const len = raw.trimEnd().length - lead;
-      if (!best || score > best.score) best = { at: at3, len, score };
+      if (!best || score > best.score) best = { at: at4, len, score };
     }
     if (!best) return null;
     return { at: best.at, len: best.len, level: 3 };
   }
-  function expandBlock(text, at3, len) {
+  function expandBlock(text, at4, len) {
     const src = String(text != null ? text : "");
-    let s = Math.max(0, Math.min(Number(at3) || 0, src.length));
+    let s = Math.max(0, Math.min(Number(at4) || 0, src.length));
     let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
     const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
     s = lb >= 0 ? lb + 1 : 0;
@@ -21318,8 +23894,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (alreadyLinked(src, link)) return src;
     const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
     if (text) {
-      const at3 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
-      if (at3 !== null && at3 >= 0) return src.slice(0, at3 + text.length) + wiki + src.slice(at3 + text.length);
+      const at4 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at4 !== null && at4 >= 0) return src.slice(0, at4 + text.length) + wiki + src.slice(at4 + text.length);
       const compact = text.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
       for (const len of [10, 6, 4, 2]) {
@@ -21496,8 +24072,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
       } else if (act === "build-index") requestBuildIndex(st);
     });
-    const canvas = st.canvasEl;
-    canvas.addEventListener("pointerdown", (e) => {
+    const canvas2 = st.canvasEl;
+    canvas2.addEventListener("pointerdown", (e) => {
       var _a2, _b2, _c, _d;
       if (st.menu) closeMenu();
       st.longPressFired = false;
@@ -21505,7 +24081,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       st.downNode = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : null;
       st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
       try {
-        (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
+        (_d = canvas2.setPointerCapture) == null ? void 0 : _d.call(canvas2, e.pointerId);
       } catch (e2) {
       }
       if (isMobileEnv() && st.downNode) {
@@ -21519,7 +24095,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }, LONG_PRESS_MS);
       }
     });
-    canvas.addEventListener("pointermove", (e) => {
+    canvas2.addEventListener("pointermove", (e) => {
       if (!st.drag) return;
       const dx = num(e.clientX) - st.drag.x;
       const dy = num(e.clientY) - st.drag.y;
@@ -21532,9 +24108,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       cancelLongPress(st);
       st.drag = null;
     };
-    canvas.addEventListener("pointerup", endDrag);
-    canvas.addEventListener("pointercancel", endDrag);
-    canvas.addEventListener("click", (e) => {
+    canvas2.addEventListener("pointerup", endDrag);
+    canvas2.addEventListener("pointercancel", endDrag);
+    canvas2.addEventListener("click", (e) => {
       var _a2, _b2, _c;
       if (st.longPressFired) {
         st.longPressFired = false;
@@ -21547,17 +24123,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
       applySelection(st);
       renderTop(st);
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "wheel",
       (e) => {
         var _a2, _b2, _c, _d;
         (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
-        const rect = (_c = (_b2 = canvas.getBoundingClientRect) == null ? void 0 : _b2.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        const rect = (_c = (_b2 = canvas2.getBoundingClientRect) == null ? void 0 : _b2.call(canvas2)) != null ? _c : { left: 0, top: 0 };
         zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
       },
       { passive: false }
     );
-    canvas.addEventListener("contextmenu", (e) => {
+    canvas2.addEventListener("contextmenu", (e) => {
       var _a2, _b2, _c, _d, _e, _f;
       (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
       const nodeEl = (_d = (_c = (_b2 = e.target) == null ? void 0 : _b2.closest) == null ? void 0 : _c.call(_b2, ".bz-kb-mt-node")) != null ? _d : null;
@@ -21575,7 +24151,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       }
       if (st.menu) closeMenu();
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchstart",
       (e) => {
         var _a2;
@@ -21586,7 +24162,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: true }
     );
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchmove",
       (e) => {
         var _a2, _b2, _c, _d;
@@ -21594,7 +24170,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         (_b2 = e.preventDefault) == null ? void 0 : _b2.call(e);
         const d = touchDistance(e.touches);
         if (!st.pinch.d) return;
-        const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
+        const rect = (_d = (_c = canvas2.getBoundingClientRect) == null ? void 0 : _c.call(canvas2)) != null ? _d : { left: 0, top: 0 };
         const cx = (num(e.touches[0].clientX) + num(e.touches[1].clientX)) / 2 - num(rect.left);
         const cy = (num(e.touches[0].clientY) + num(e.touches[1].clientY)) / 2 - num(rect.top);
         const want = st.pinch.scale * (d / st.pinch.d);
@@ -21602,7 +24178,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: false }
     );
-    canvas.addEventListener("touchend", () => {
+    canvas2.addEventListener("touchend", () => {
       st.pinch = null;
     });
     st.win.addEventListener("mouseover", (e) => {
@@ -22268,10 +24844,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after4 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after4.data.length);
-    const tail = after4.splitText(len);
-    (_b2 = after4.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after5 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after5.data.length);
+    const tail = after5.splitText(len);
+    (_b2 = after5.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -23002,9 +25578,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.onChange(s, e);
         }
         _paint() {
-          const T2 = this.total || 1;
-          const sp = this.total > 0 ? this.start / T2 * 100 : 0;
-          const ep = this.total > 0 ? this.end / T2 * 100 : 100;
+          const T3 = this.total || 1;
+          const sp = this.total > 0 ? this.start / T3 * 100 : 0;
+          const ep = this.total > 0 ? this.end / T3 * 100 : 100;
           this.hStart.style.left = `${sp}%`;
           this.hEnd.style.left = `${ep}%`;
           this.fill.style.left = `${sp}%`;
@@ -23390,7 +25966,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_z_order();
       init_domain_bus();
       init_app();
-      init_data6();
+      init_data7();
       init_mount_data();
       init_processor();
       init_mount_canvas();
@@ -26746,7 +29322,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_settings_provider();
       init_storage();
       init_file_sync();
-      init_data6();
+      init_data7();
       init_source_retire();
       agent = createFileSync({
         logTag: "[knowledge-file-sync]",
@@ -26942,7 +29518,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_settings_provider();
       init_link_now();
       init_notice();
-      init_data6();
+      init_data7();
       init_ui3();
       init_note_gen();
       init_source_retire();
@@ -27419,12 +29995,12 @@ ${body}`;
       return DEFAULT_FOLDER2;
     }
   }
-  var DEFAULT_FOLDER2, M3;
+  var DEFAULT_FOLDER2, M4;
   var init_state3 = __esm({
     "src/gameshelf/state.ts"() {
       init_settings_provider();
       DEFAULT_FOLDER2 = "我的/游戏";
-      M3 = {
+      M4 = {
         currentOverlay: null,
         items: [],
         view: "shelf",
@@ -27820,7 +30396,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
   }
   var import_moment4, DEFAULT_SCENARIOS, MemoData;
-  var init_data7 = __esm({
+  var init_data8 = __esm({
     "src/memo/data.ts"() {
       import_moment4 = __toESM(require_moment());
       init_json_store();
@@ -27936,8 +30512,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         async restoreItem(item, idx) {
           return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
-            const at3 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
-            data.splice(at3, 0, item);
+            const at4 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
+            data.splice(at4, 0, item);
             await this.write(data);
           });
         },
@@ -28126,7 +30702,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   var init_checks_consistency = __esm({
     "src/checkup/checks-consistency.ts"() {
       init_files();
-      init_data7();
+      init_data8();
     }
   });
 
@@ -28326,8 +30902,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (data === null) return;
         const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
         for (const r of removedSaved) {
-          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at3, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+          const at4 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at4, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
         }
         data.savedArchive = list;
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -28341,8 +30917,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const marks = recordSectionOf(data, "marks");
         for (const r of removedMarks) {
           const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
-          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at3, 0, r.mark);
+          const at4 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at4, 0, r.mark);
           marks[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -28356,8 +30932,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const pending = recordSectionOf(data, "pendingSource");
         for (const r of removedSrc) {
           const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
-          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at3, 0, r.notePath);
+          const at4 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at4, 0, r.notePath);
           pending[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -28481,7 +31057,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_checks_drift();
       init_checks_orphans();
       init_checks_consistency();
-      init_data5();
+      init_data6();
       CHECKS = [
         { id: "json", label: "数据文件可解析", runner: checkJsonFiles },
         { id: "drift", label: "字段漂移", runner: checkFieldDrift },
@@ -28527,9 +31103,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID;
     ov.className = "bz-panel-overlay";
-    const frame = document.createElement("div");
-    frame.id = FRAME_ID;
-    frame.className = "bz-panel-frame bz-checkup-popup";
+    const frame2 = document.createElement("div");
+    frame2.id = FRAME_ID;
+    frame2.className = "bz-panel-frame bz-checkup-popup";
     const head = document.createElement("div");
     head.className = "bz-panel-head";
     const brand = document.createElement("div");
@@ -28545,8 +31121,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     body.className = "bz-checkup-body";
     const foot = document.createElement("div");
     foot.className = "bz-checkup-foot";
-    frame.append(head, body, foot);
-    ov.appendChild(frame);
+    frame2.append(head, body, foot);
+    ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide();
     });
@@ -29810,7 +32386,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     if (opts.enter) {
       const n = (_c = opts.enter.n) != null ? _c : 12;
-      const stagger = (_d = opts.enter.stagger) != null ? _d : 26;
+      const stagger2 = (_d = opts.enter.stagger) != null ? _d : 26;
       const from = (_e = opts.enter.from) != null ? _e : "bottom";
       let idx = 0;
       nodes.forEach((el) => {
@@ -29820,7 +32396,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           el.style.opacity = "";
           return;
         }
-        const delay = idx * stagger;
+        const delay = idx * stagger2;
         idx++;
         const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
         const ea = safeAnimate(el, [
@@ -29934,11 +32510,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     let out = "";
     let cursor = 0;
     for (; ; ) {
-      const at3 = lower.indexOf(needle, cursor);
-      if (at3 < 0) break;
-      out += escapeHtml(t.slice(cursor, at3));
-      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at3, at3 + needle.length))}</mark>`;
-      cursor = at3 + needle.length;
+      const at4 = lower.indexOf(needle, cursor);
+      if (at4 < 0) break;
+      out += escapeHtml(t.slice(cursor, at4));
+      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at4, at4 + needle.length))}</mark>`;
+      cursor = at4 + needle.length;
     }
     return out + escapeHtml(t.slice(cursor));
   }
@@ -30044,10 +32620,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/state.ts
-  var M4;
+  var M5;
   var init_state4 = __esm({
     "src/memo/state.ts"() {
-      M4 = {
+      M5 = {
         appRef: null,
         overlay: null,
         items: [],
@@ -30435,7 +33011,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   var PomodoroDataManager;
-  var init_data8 = __esm({
+  var init_data9 = __esm({
     "src/pomodoro/data.ts"() {
       init_settings_provider();
       init_storage();
@@ -31026,7 +33602,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function save() {
     const t = trimWithArchive(history, archived, Date.now());
     try {
-      if (dataManager) await dataManager.save({ version: 1, state: state2, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
+      if (dataManager2) await dataManager2.save({ version: 1, state: state2, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
     } catch (e) {
       console.error("番茄钟数据保存失败:", e);
       notifyActionError(e, "保存番茄钟数据", { onRetry: () => void save() });
@@ -31038,7 +33614,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function initData() {
     var _a2;
-    const data = await dataManager.load();
+    const data = await dataManager2.load();
     statMode = statModePref();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state2 = r.state;
@@ -31047,7 +33623,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     archived = t.archived;
     const mainChanged = data.state.endTime !== null && r.state.endTime === null;
     const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
-    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
+    if (mainChanged || archivedChanged) await dataManager2.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
     loaded = true;
   }
   function pomodoroSettingsSchema() {
@@ -31267,7 +33843,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPomodoro(app) {
     appRef = app;
     disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
     if (!maskEl) {
       openInflight != null ? openInflight : openInflight = (async () => {
         await initDataOnce();
@@ -31291,7 +33867,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function ensurePomodoro(app) {
     appRef = app;
     disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!dataManager2) dataManager2 = new PomodoroDataManager(app);
     registerVisibilityListener();
     if (!loaded) {
       try {
@@ -31411,11 +33987,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     archived = [];
     statMode = "week";
     lastStatsKey = "";
-    dataManager = null;
+    dataManager2 = null;
     appRef = null;
     loaded = false;
   }
-  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager2, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui5 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -31426,7 +34002,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_notice();
       init_flow_dialog();
       init_settings_common();
-      init_data8();
+      init_data9();
       init_render5();
       init_render5();
       init_sound();
@@ -31437,7 +34013,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_pomodoro_phase();
       init_utils();
       init_domain_bus();
-      dataManager = null;
+      dataManager2 = null;
       state2 = createInitialState();
       history = [];
       archived = [];
@@ -31480,16 +34056,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   // src/memo/ui.ts
   function syncSearchClear() {
     var _a2, _b2;
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
-    const btn = (_b2 = M4.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const btn = (_b2 = M5.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
     if (btn && input) btn.hidden = !input.value.trim();
   }
   function clearMemoSearch() {
     var _a2;
     searchDebounced.cancel();
-    M4.search = "";
+    M5.search = "";
     touchViewEpoch();
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
     if (input) input.value = "";
     syncSearchClear();
     renderAll();
@@ -31529,7 +34105,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function loadData() {
     try {
-      M4.items = await MemoData.loadItems();
+      M5.items = await MemoData.loadItems();
       loadFailed = false;
     } catch (e) {
       loadFailed = true;
@@ -31540,7 +34116,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function refresh() {
     var _a2, _b2;
     await loadData();
-    (_b2 = (_a2 = M4).renderFn) == null ? void 0 : _b2.call(_a2);
+    (_b2 = (_a2 = M5).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
     if (!it.due) return 3;
@@ -31548,27 +34124,27 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return st === "overdue" ? 0 : st === "today" ? 1 : 2;
   }
   function getVisibleItems() {
-    const kw = M4.search.trim().toLowerCase();
+    const kw = M5.search.trim().toLowerCase();
     const today = localDayKey();
-    let list = M4.items.filter((it) => {
-      if (M4.activeScene === "今日") {
+    let list = M5.items.filter((it) => {
+      if (M5.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
         } else if (!isTodayStr(it.completed, today)) {
           return false;
         }
-      } else if (M4.activeScene === "重要") {
+      } else if (M5.activeScene === "重要") {
         if (it.priority !== "important") return false;
-      } else if (M4.activeScene !== "全部" && it.scene !== M4.activeScene) return false;
+      } else if (M5.activeScene !== "全部" && it.scene !== M5.activeScene) return false;
       if (kw) {
         const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-    if (M4.pinnedNewId && M4.activeScene !== "全部") {
-      const pinned = M4.items.find((i) => i.id === M4.pinnedNewId);
+    if (M5.pinnedNewId && M5.activeScene !== "全部") {
+      const pinned = M5.items.find((i) => i.id === M5.pinnedNewId);
       if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
     }
     list.sort((a, b) => {
@@ -31576,12 +34152,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (ac !== bc) return ac ? 1 : -1;
       const dr = dueRank(a) - dueRank(b);
       if (dr !== 0) return dr;
-      if (M4.sortMode === "priority") {
+      if (M5.sortMode === "priority") {
         const pa = a.priority === "important" ? 0 : 1;
         const pb = b.priority === "important" ? 0 : 1;
         if (pa !== pb) return pa - pb;
       }
-      if (M4.sortMode === "created") {
+      if (M5.sortMode === "created") {
         return (b.created || "").localeCompare(a.created || "");
       }
       if (a.due && b.due) return a.due.localeCompare(b.due);
@@ -31592,11 +34168,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function sceneCounts() {
     const today = localDayKey();
     const counts = /* @__PURE__ */ new Map([
-      ["全部", M4.items.length],
+      ["全部", M5.items.length],
       ["今日", 0],
       ["重要", 0]
     ]);
-    for (const it of M4.items) {
+    for (const it of M5.items) {
       if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
       if (it.priority === "important") counts.set("重要", (counts.get("重要") || 0) + 1);
       const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
@@ -31608,8 +34184,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return counts;
   }
   function applyMemoSkin(skin) {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-memo-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "paper" ? "paper" : "editorial";
@@ -31633,8 +34209,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }, delay);
   }
   function playCardsEnter() {
-    if (!M4.overlay) return;
-    M4.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
+    if (!M5.overlay) return;
+    M5.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
       enterLayer(c, 20 + i * 34, 14);
     });
   }
@@ -31660,23 +34236,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     window.setTimeout(() => wrap2.remove(), PANEL_EXIT_MS);
   }
   function closeMemoPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.memoLastScene = M4.activeScene;
+        s.memoLastScene = M5.activeScene;
         void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
-      playPanelExit(M4.overlay);
-      M4.overlay.remove();
-      M4.overlay = null;
+      playPanelExit(M5.overlay);
+      M5.overlay.remove();
+      M5.overlay = null;
     }
     searchDebounced.cancel();
-    for (const [id, t] of M4.completeTimers) {
+    for (const [id, t] of M5.completeTimers) {
       clearTimeout(t);
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (it) void completeItem(it);
     }
-    M4.completeTimers.clear();
+    M5.completeTimers.clear();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -31689,19 +34265,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       panelFocusRelease();
       panelFocusRelease = null;
     }
-    M4.renderFn = null;
-    M4.pinnedNewId = null;
+    M5.renderFn = null;
+    M5.pinnedNewId = null;
     clipTitleHint = null;
   }
   function touchViewEpoch() {
     viewEpoch++;
   }
   function syncMemoPills() {
-    if (!M4.overlay) return;
-    syncSlidePills(M4.overlay, MEMO_PILL_TARGETS);
+    if (!M5.overlay) return;
+    syncSlidePills(M5.overlay, MEMO_PILL_TARGETS);
   }
   function renderAll() {
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     const items = getVisibleItems();
     renderNav();
     renderMobScenes();
@@ -31714,11 +34290,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function renderMainHead(items) {
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M4.activeScene);
+    titleEl.textContent = sceneLabel(M5.activeScene);
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
   }
@@ -31735,10 +34311,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
-    const nav = M4.overlay.querySelector("[data-memo-nav]");
+    const nav = M5.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
     const counts = sceneCounts();
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M5.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -31746,10 +34322,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function renderMobScenes() {
     if (!isMobileEnv()) return;
-    const wrap2 = M4.overlay.querySelector("[data-memo-mob-scenes]");
+    const wrap2 = M5.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap2) return;
     const keepLeft = wrap2.scrollLeft;
-    wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M4.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M5.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap2.scrollLeft = keepLeft;
     mountIcons(wrap2);
     wrap2.querySelectorAll("[data-memo-scene]").forEach((el) => {
@@ -31766,7 +34342,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
   function renderContent(items) {
-    const content = M4.overlay.querySelector("[data-memo-content]");
+    const content = M5.overlay.querySelector("[data-memo-content]");
     if (!content) return;
     const keepTop = content.scrollTop;
     const flipBefore = measureFlip(content, ".bz-memo-card", "memoId");
@@ -31788,8 +34364,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }));
         return;
       }
-      const emptyCopy = M4.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M4.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M4.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
-      const emptyActions = M4.search ? [
+      const emptyCopy = M5.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M5.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M5.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
+      const emptyActions = M5.search ? [
         uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearMemoSearch() }),
         uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })
       ] : [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
@@ -31805,7 +34381,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const done = items.filter((i) => i.completed);
     const urgent = active2.filter((i) => dueRank(i) <= 1);
     const normal = active2.filter((i) => dueRank(i) > 1);
-    const kw = M4.search.trim();
+    const kw = M5.search.trim();
     const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", kw);
     const sections = [];
     if (urgent.length) {
@@ -31817,16 +34393,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sections.push(...normal.map((it) => cardHtml4(it)));
     }
     if (done.length) {
-      const open = M4.showDone;
+      const open = M5.showDone;
       const win = doneWindowDays();
       const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
-      const listed = !open || M4.showEarlierDone ? done : recent2;
+      const listed = !open || M5.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(`<div class="bz-memo-donearea${doneJustOpened ? " bz-memo-areain" : ""}" data-memo-donearea><div>` + listed.map((it) => cardHtml4(it)).join("") + "</div></div>");
-        if (earlier > 0 && !M4.showEarlierDone) {
+        if (earlier > 0 && !M5.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
       }
@@ -31845,20 +34421,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M5.items.find((i) => i.id === el.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
     content.querySelectorAll("[data-memo-pos]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M5.items.find((i) => i.id === el.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
     content.querySelectorAll(".bz-memo-card").forEach((card) => {
       const id = card.dataset.memoId;
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (!it) return;
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -31899,7 +34475,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return head;
   }
   function openItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
       if (!file) {
@@ -31915,7 +34491,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function jumpToNote(it) {
     if (!it.notePath) return;
-    const app = M4.appRef;
+    const app = M5.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
@@ -31963,23 +34539,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void restoreItem(it);
       return;
     }
-    if (M4.completeTimers.has(it.id)) {
-      clearTimeout(M4.completeTimers.get(it.id));
-      M4.completeTimers.delete(it.id);
+    if (M5.completeTimers.has(it.id)) {
+      clearTimeout(M5.completeTimers.get(it.id));
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       return;
     }
     const timer = setTimeout(() => {
-      M4.completeTimers.delete(it.id);
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       void completeItem(it);
     }, 300);
-    M4.completeTimers.set(it.id, timer);
+    M5.completeTimers.set(it.id, timer);
     syncPendingCheck(it.id, true);
   }
   function bumpDoneBar() {
     var _a2;
-    const bar = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
+    const bar = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
     if (!bar) return;
     bar.classList.remove("bz-memo-donebar-bump");
     void bar.offsetWidth;
@@ -31992,14 +34568,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollTarget() {
     var _a2;
-    const cnt = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    const cnt = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
     if (!cnt) return null;
     const r = cnt.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
   function listLanding() {
     var _a2, _b2, _c;
-    const panel2 = (_b2 = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
+    const panel2 = (_b2 = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
     if (!panel2) return null;
     const first = panel2.querySelector(".bz-memo-card:not(.bz-memo-done)");
     if (first) {
@@ -32038,7 +34614,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const card = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
     if (!overlay2 || !card) return;
     const cr = card.getBoundingClientRect();
@@ -32158,7 +34734,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, true);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
     bumpDoneBar();
   }
@@ -32174,11 +34750,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, false);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
   }
   async function postponeItem(id, days) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it || !it.due) return;
     const keepHm = it.due.replace("T", " ").slice(11, 16) || "09:00";
     const next = (0, import_moment6.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format(`YYYY-MM-DD ${keepHm}`);
@@ -32193,7 +34769,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   async function togglePrio(id) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it) return;
     const to = it.priority === "important" ? "minor" : "important";
     try {
@@ -32208,7 +34784,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playDeleteExit(id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return Promise.resolve();
     card.classList.add("bz-memo-vanishing");
     return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
@@ -32243,7 +34819,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (!app) return;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
@@ -32326,7 +34902,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function playEditorShrink(popup, id) {
     var _a2;
     if (!id) return;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     const pr = popup.getBoundingClientRect();
     if (!card || pr.width < 4 || pr.height < 4) return;
     const cr = card.getBoundingClientRect();
@@ -32349,7 +34925,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playEditorGrow(popup, id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return;
     const cr = card.getBoundingClientRect();
     const pr = popup.getBoundingClientRect();
@@ -32471,8 +35047,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     prioField.appendChild(prioChoice.el);
     form.appendChild(prioField);
-    const knownScripts = [...new Set(M4.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M4.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    const knownScripts = [...new Set(M5.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M5.items.map((i) => i.courseName).filter((n) => !!n))].sort();
     function bindSug(input, list, onPick) {
       uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
     }
@@ -32647,7 +35223,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             };
             await MemoData.addItem(it);
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M4.pinnedNewId = it.id;
+            M5.pinnedNewId = it.id;
           }
           editorBusy = false;
           closeModal();
@@ -32711,7 +35287,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return actions;
   }
   function openMemoInSettings() {
-    const app = M4.appRef;
+    const app = M5.appRef;
     closeMemoPanel();
     if (!app) return;
     void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
@@ -32737,7 +35313,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const input = document.createElement("input");
     input.className = "bz-input";
     input.value = scene;
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
     hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
@@ -32771,7 +35347,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M4.activeScene === scene) M4.activeScene = name;
+          if (M5.activeScene === scene) M5.activeScene = name;
           renderAll();
           close();
         } catch (e) {
@@ -32807,7 +35383,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       notice("至少保留一个场景");
       return;
     }
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const ok = await openFlowDialog({
       title: "删除场景",
       message: count > 0 ? `确定删除场景「${scene}」吗？
@@ -32825,7 +35401,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     try {
       moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
       await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M4.activeScene === scene) M4.activeScene = "全部";
+      if (M5.activeScene === scene) M5.activeScene = "全部";
       renderAll();
     } catch (e) {
       if (moved > 0) {
@@ -32856,13 +35432,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_domain_bus();
       init_item_actions();
       init_utils();
-      init_data7();
+      init_data8();
       init_due();
       init_render4();
       init_state4();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
-        M4.search = v;
+        M5.search = v;
         touchViewEpoch();
         nextEnterSoft = true;
         renderAll();
@@ -33048,7 +35624,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   var init_settings3 = __esm({
     "src/memo/settings.ts"() {
       init_settings_provider();
-      init_data7();
+      init_data8();
       init_ui6();
     }
   });
@@ -33613,7 +36189,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const saveData = belongingsSaveShape(database);
     await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
   }
-  var init_data9 = __esm({
+  var init_data10 = __esm({
     "src/belongings/data.ts"() {
       init_notice();
       init_storage();
@@ -34806,13 +37382,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M5.overlay = null;
-    M5.db = null;
-    M5.status = null;
-    M5.year = "";
-    M5.q = "";
-    M5.sort = "recent";
-    M5.renderFn = null;
+    M6.overlay = null;
+    M6.db = null;
+    M6.status = null;
+    M6.year = "";
+    M6.q = "";
+    M6.sort = "recent";
+    M6.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -34907,11 +37483,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M5.db ? Object.values(M5.db.items) : [];
+    return M6.db ? Object.values(M6.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M6.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -34922,7 +37498,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M6.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -34945,7 +37521,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M5.overlay) {
+    if (M6.overlay) {
       closePanel();
       return;
     }
@@ -34962,18 +37538,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M6.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M5.year = "";
-    M5.db = await loadDatabase();
+    M6.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M6.year = "";
+    M6.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M5.overlay = overlay2;
-    M5.renderFn = () => renderAll2();
+    M6.overlay = overlay2;
+    M6.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
@@ -34988,8 +37564,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
-      else M5.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M6.year = v;
+      else M6.sort = v;
       renderAll2();
     };
     const onDocClick = (e) => {
@@ -35069,22 +37645,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M5.sort = segBtn.dataset.k;
+        M6.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
+        if (kind === "asset") M6.status = M6.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M5.overlay !== overlay2) return;
-        M5.q = inp.value.trim();
+        if (M6.overlay !== overlay2) return;
+        M6.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -35094,7 +37670,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M5.q = "";
+        M6.q = "";
         syncClear();
         renderAll2();
         if (refocus) inp.focus();
@@ -35174,13 +37750,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M5.overlay) {
-      M5.overlay.remove();
-      M5.overlay = null;
+    if (M6.overlay) {
+      M6.overlay.remove();
+      M6.overlay = null;
     }
-    M5.renderFn = null;
-    M5.db = null;
-    M5.q = "";
+    M6.renderFn = null;
+    M6.db = null;
+    M6.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -35201,16 +37777,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M5.db = await loadDatabase();
-          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+          M6.db = await loadDatabase();
+          (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M5.db = await loadDatabase();
-                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+                  M6.db = await loadDatabase();
+                  (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
                 } catch (e2) {
                 }
               })();
@@ -35245,37 +37821,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+        (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M5.db) return;
+    if (!M6.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M5.db);
+      await saveDatabase(M6.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
   }
   function renderAll2() {
-    if (!M5.overlay) return;
-    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
+    if (!M6.overlay) return;
+    const panel2 = M6.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M6, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M5.status = null;
-    else M5.status = M5.status === k ? null : k;
+    if (k === "__all") M6.status = null;
+    else M6.status = M6.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M5.db) {
+    if (M6.db) {
       items = itemList();
     } else {
       try {
@@ -35354,7 +37930,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
     const prevStatus = cur.current_status;
@@ -35370,8 +37946,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -35379,7 +37955,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -35394,8 +37970,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35440,22 +38016,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    if (!M5.db) return;
-    if (!M5.db.items[it.id]) {
+    if (!M6.db) return;
+    if (!M6.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
-    const snapshot2 = { ...M5.db.items[it.id] };
-    delete M5.db.items[it.id];
+    const snapshot2 = { ...M6.db.items[it.id] };
+    delete M6.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M5.db.items[snapshot2.id] = snapshot2;
+      M6.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -35463,18 +38039,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
-          if (M5.db.items[snapshot2.id]) {
+          if (!M6.db) M6.db = await loadDatabase();
+          if (M6.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M5.db.items[snapshot2.id] = snapshot2;
+          M6.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35517,9 +38093,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M5.db) {
+    if (!M6.db) {
       void loadDatabase().then((db) => {
-        M5.db = db;
+        M6.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -35566,13 +38142,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -35625,7 +38201,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -35692,7 +38268,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -35722,7 +38298,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M5.db) throw new Error("数据库未加载");
+            if (!M6.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -35738,7 +38314,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M5.db.items[newItem.id] = newItem;
+            M6.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -35755,7 +38331,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M6, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui7 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -35773,13 +38349,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_item_actions();
       init_domain_bus();
       init_belongings_source();
-      init_data9();
+      init_data10();
       init_report();
       init_render7();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M5 = {
+      M6 = {
         overlay: null,
         db: null,
         status: null,
@@ -37138,7 +39714,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_constants2();
       init_save();
       init_constants2();
-      init_data5();
+      init_data6();
       init_write_queue();
       curKey = "";
       curMeta = null;
@@ -37158,23 +39734,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M6.appRef = null;
-    M6.open = false;
-    M6.articles = [];
-    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M6.clipNotes = null;
-    M6.clipUrls = /* @__PURE__ */ new Set();
-    M6.sel = defaultSel();
-    M6.cur = null;
-    M6.list = [];
-    M6.upInfo = {};
-    M6.mobDetailOpen = false;
+    M7.appRef = null;
+    M7.open = false;
+    M7.articles = [];
+    M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M7.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M7.clipNotes = null;
+    M7.clipUrls = /* @__PURE__ */ new Set();
+    M7.sel = defaultSel();
+    M7.cur = null;
+    M7.list = [];
+    M7.upInfo = {};
+    M7.mobDetailOpen = false;
   }
-  var M6;
+  var M7;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M6 = {
+      M7 = {
         appRef: null,
         open: false,
         articles: [],
@@ -37766,7 +40342,7 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/motion.ts
-  function reduced() {
+  function reduced3() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -37774,10 +40350,10 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function canAnimate() {
-    return !reduced() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
+    return !reduced3() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
   }
-  function waapi(el, frames, opts) {
-    if (!el || reduced() || typeof el.animate !== "function") {
+  function waapi2(el, frames, opts) {
+    if (!el || reduced3() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -37794,7 +40370,7 @@ ${bodyText.substring(0, 6e3)}`;
       return null;
     }
   }
-  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+  function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
     if (typeof requestAnimationFrame !== "function") {
       step(1);
       return;
@@ -37807,26 +40383,26 @@ ${bodyText.substring(0, 6e3)}`;
     };
     requestAnimationFrame(tick);
   }
-  function after(ms, fn) {
+  function after2(ms, fn) {
     if (typeof setTimeout !== "function") return;
     const id = setTimeout(() => {
-      timers.delete(id);
+      timers2.delete(id);
       fn();
     }, ms);
-    timers.add(id);
+    timers2.add(id);
   }
-  function motionTeardown() {
-    timers.forEach(clearTimeout);
-    timers.clear();
+  function motionTeardown2() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
     }
     panelAnim = null;
   }
-  function sweep(el, from, to, opts = {}) {
+  function sweep2(el, from, to, opts = {}) {
     if (!el || !canAnimate()) return;
-    const { delay = 0, dur = M7.base, easing = E.out, origin } = opts;
+    const { delay = 0, dur = M8.base, easing = E2.out, origin } = opts;
     if (origin) el.style.transformOrigin = origin;
     el.style.willChange = "transform,opacity,filter";
     let a = null;
@@ -37862,34 +40438,34 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function motionPanelIn(overlay2, reopen) {
-    const frame = overlay2.querySelector(".bz-clip-frame");
-    if (!frame) return;
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) return;
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
     }
     panelAnim = null;
-    frame.style.opacity = "";
-    frame.style.transform = "";
-    frame.style.filter = "";
+    frame2.style.opacity = "";
+    frame2.style.transform = "";
+    frame2.style.filter = "";
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
-    waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E.out });
-    const a = waapi(
-      frame,
+    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? M7.base + 20 : 480, easing: E.out }
+      { duration: reopen ? M8.base + 20 : 480, easing: E2.out }
     );
     if (a) {
       panelAnim = a;
       a.finished.then(() => {
         if (panelAnim === a) panelAnim = null;
         overlay2.style.opacity = "";
-        frame.style.opacity = "";
-        frame.style.transform = "";
-        frame.style.filter = "";
+        frame2.style.opacity = "";
+        frame2.style.transform = "";
+        frame2.style.filter = "";
       }).catch(() => {
         overlay2.style.opacity = "";
       });
@@ -37898,8 +40474,8 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function motionPanelOut(overlay2, done) {
-    const frame = overlay2.querySelector(".bz-clip-frame");
-    if (!frame) {
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) {
       done();
       return;
     }
@@ -37915,15 +40491,15 @@ ${bodyText.substring(0, 6e3)}`;
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
     }
-    const a = waapi(
-      frame,
+    const a = waapi2(
+      frame2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M7.move + 40, easing: E.out, fill: "forwards" }
+      { duration: M8.move + 40, easing: E2.out, fill: "forwards" }
     );
-    waapi(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M7.move + 40, easing: E.out });
+    waapi2(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M8.move + 40, easing: E2.out });
     if (!a) {
       overlay2.style.opacity = "";
       finish();
@@ -37937,7 +40513,7 @@ ${bodyText.substring(0, 6e3)}`;
       overlay2.style.opacity = "";
       finish();
     });
-    after(M7.move + 200, finish);
+    after2(M8.move + 200, finish);
   }
   function motionHeadRevealed(overlay2) {
     var _a2, _b2, _c;
@@ -37953,7 +40529,7 @@ ${bodyText.substring(0, 6e3)}`;
       try {
         wire.animate(
           [{ opacity: 0, transform: "translateX(-70px)" }, { opacity: 1, transform: "none" }],
-          { duration: 360, easing: E.out, fill: "backwards" }
+          { duration: 360, easing: E2.out, fill: "backwards" }
         );
       } catch (e) {
       }
@@ -37977,14 +40553,14 @@ ${bodyText.substring(0, 6e3)}`;
           );
         } catch (e) {
         }
-        after(t, () => {
+        after2(t, () => {
           if (!cur.isConnected || cur.parentNode !== tape) return;
           const next = chars[i + 1];
           if (next) tape.insertBefore(cur, next);
           else tape.appendChild(cur);
         });
       });
-      after(430 + chars.length * 390 + 260, () => {
+      after2(430 + chars.length * 390 + 260, () => {
         lamp == null ? void 0 : lamp.classList.add("on");
         try {
           lamp == null ? void 0 : lamp.animate(
@@ -38011,12 +40587,12 @@ ${bodyText.substring(0, 6e3)}`;
           );
         } catch (e) {
         }
-        after(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
+        after2(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
       });
     } else {
-      sweep(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M7.base + 40 });
+      sweep2(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M8.base + 40 });
     }
-    sweep(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M7.base });
+    sweep2(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M8.base });
     if (!canAnimate() || head.querySelector(":scope > .bz-clm-ink-rule")) return;
     const prevStyle = head.getAttribute("style");
     const rule = document.createElement("span");
@@ -38024,40 +40600,40 @@ ${bodyText.substring(0, 6e3)}`;
     rule.setAttribute("aria-hidden", "true");
     head.appendChild(rule);
     if (getComputedStyle(head).position === "static") head.style.position = "relative";
-    tween(620, (v) => {
+    tween2(620, (v) => {
       rule.style.transform = `scaleX(${Math.max(1e-3, v).toFixed(3)})`;
     }, easeOutQuart);
-    after(700, () => {
-      const fade = waapi(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M7.base - 80, easing: E.out });
+    after2(700, () => {
+      const fade = waapi2(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M8.base - 80, easing: E2.out });
       const remove = () => {
         rule.remove();
         if (prevStyle === null) head.removeAttribute("style");
         else head.setAttribute("style", prevStyle);
       };
       if (fade) fade.finished.then(remove).catch(remove);
-      else after(M7.base, remove);
+      else after2(M8.base, remove);
     });
   }
   function motionRailRendered(railEl, mood) {
     if (mood === "boot") {
       const label = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-label") : null;
-      sweep(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M7.base - 60 });
+      sweep2(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M8.base - 60 });
       const rows = [...railEl.querySelectorAll(".bz-rail-item")];
       rows.slice(0, 12).forEach((row, i) => {
-        sweep(
+        sweep2(
           row,
           { opacity: 0, transform: "translateX(-8px)", clipPath: "inset(0 100% 0 0)" },
           { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
-          { delay: 220 + i * STAG, dur: M7.base + 60 }
+          { delay: 220 + i * STAG2, dur: M8.base + 60 }
         );
       });
       const foot = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-foot") : null;
-      sweep(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG + 40, dur: M7.base });
+      sweep2(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG2 + 40, dur: M8.base });
       return;
     }
     if (mood === "nav") {
       const on = railEl.querySelector(".bz-rail-item.on");
-      sweep(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M7.fast });
+      sweep2(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M8.fast });
     }
   }
   function motionListRendered(listEl2, mood, foldKind, pressed) {
@@ -38066,40 +40642,40 @@ ${bodyText.substring(0, 6e3)}`;
       const rows = [...listEl2.querySelectorAll(".bz-clip-item, .bz-clip-desk-fold")];
       const cap = boot ? 14 : 8;
       rows.slice(0, cap).forEach((row, i) => {
-        const delay = (boot ? 300 : 40) + i * STAG;
-        sweep(
+        const delay = (boot ? 300 : 40) + i * STAG2;
+        sweep2(
           row,
           { opacity: 0, transform: "translateY(9px)", filter: "blur(4px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" },
-          { delay, dur: M7.base + (boot ? 60 : 0) }
+          { delay, dur: M8.base + (boot ? 60 : 0) }
         );
         const no = row.classList.contains("bz-clip-item") ? row.querySelector(".bz-clip-no") : null;
-        if (no) sweep(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M7.fast + 70, easing: E.move });
+        if (no) sweep2(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M8.fast + 70, easing: E2.move });
       });
       if (boot) {
         listEl2.querySelectorAll(".bz-clip-desk-fold-body:not([hidden])").forEach((body, i) => {
-          sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M7.base + 80 });
+          sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M8.base + 80 });
         });
       }
       return;
     }
     if (mood === "search") {
-      sweep(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 60 });
+      sweep2(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M8.fast + 60 });
       return;
     }
     if (foldKind) {
       const row = listEl2.querySelector(`.bz-clip-desk-fold[data-desk-fold="${foldKind}"].on`);
       const body = row ? row.nextElementSibling : null;
       if (body && body.classList.contains("bz-clip-desk-fold-body") && !body.hidden) {
-        sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M7.move + 60 });
+        sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M8.move + 60 });
       }
     }
     if (pressed) {
       const on = listEl2.querySelector(".bz-clip-item.on");
-      sweep(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M7.fast });
+      sweep2(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M8.fast });
     }
     if (!listEl2.querySelector(".bz-clip-item") && !listEl2.querySelector(".bz-clip-desk-fold")) {
-      sweep(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M7.base - 40 });
+      sweep2(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M8.base - 40 });
     }
   }
   function motionReaderRendered(readerEl2, turn, mood) {
@@ -38109,7 +40685,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     readerAnim = null;
     if (!turn) {
-      if (mood === "boot") sweep(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M7.base - 40 });
+      if (mood === "boot") sweep2(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M8.base - 40 });
       return;
     }
     if (turn === "first") {
@@ -38117,7 +40693,7 @@ ${bodyText.substring(0, 6e3)}`;
       let a2 = null;
       if (canAnimate()) {
         readerEl2.style.transformOrigin = "50% 0";
-        a2 = waapi(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M7.base + 80, easing: E.out });
+        a2 = waapi2(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M8.base + 80, easing: E2.out });
         if (a2) {
           readerAnim = a2;
           const done = () => {
@@ -38133,23 +40709,23 @@ ${bodyText.substring(0, 6e3)}`;
         }
       }
       const title = readerEl2.querySelector(".bz-clip-art-title");
-      sweep(
+      sweep2(
         title,
         { opacity: 0, transform: "translateY(6px)", clipPath: "inset(0 100% 0 0)" },
         { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
-        { delay: 90, dur: M7.base + 60 }
+        { delay: 90, dur: M8.base + 60 }
       );
-      sweep(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M7.base - 40 });
+      sweep2(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M8.base - 40 });
       const tags = readerEl2.querySelector(".bz-clip-art-tags");
-      sweep(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M7.base - 60 });
-      sweep(
+      sweep2(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M8.base - 60 });
+      sweep2(
         readerEl2.querySelector(".bz-clip-art-sum"),
         { opacity: 0, clipPath: "inset(0 100% 0 0)" },
         { opacity: 1, clipPath: "inset(0 0 0 0)" },
-        { delay: 250, dur: M7.base + 40 }
+        { delay: 250, dur: M8.base + 40 }
       );
-      sweep(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M7.base + 60 });
-      sweep(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M7.base - 40 });
+      sweep2(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M8.base + 60 });
+      sweep2(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M8.base - 40 });
       return;
     }
     const rx = turn === "back" ? -5 : 5;
@@ -38157,13 +40733,13 @@ ${bodyText.substring(0, 6e3)}`;
     let a = null;
     if (canAnimate()) {
       readerEl2.style.transformOrigin = `50% ${oy}`;
-      a = waapi(
+      a = waapi2(
         readerEl2,
         [
           { opacity: 0.3, transform: `perspective(1100px) rotateX(${rx}deg) translateY(${turn === "back" ? -6 : 6}px)` },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M7.move + 60, easing: E.out }
+        { duration: M8.move + 60, easing: E2.out }
       );
       if (a) {
         readerAnim = a;
@@ -38183,27 +40759,27 @@ ${bodyText.substring(0, 6e3)}`;
   function motionMobTocRendered(mobListEl2, mood) {
     if (mood !== "boot") return;
     [...mobListEl2.querySelectorAll(".bz-clip-mob-ch")].slice(0, 8).forEach((ch, i) => {
-      sweep(
+      sweep2(
         ch,
         { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" },
-        { delay: 200 + i * 60, dur: M7.base + 40 }
+        { delay: 200 + i * 60, dur: M8.base + 40 }
       );
     });
   }
   function motionMobFoldOpen(archEl) {
-    sweep(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M7.move + 40 });
+    sweep2(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M8.move + 40 });
   }
   function motionMobDetailIn(detailEl) {
     let a = null;
     if (canAnimate()) {
-      a = waapi(
+      a = waapi2(
         detailEl,
         [
           { opacity: 0.4, transform: "translateX(36px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M7.move + 60, easing: E.move }
+        { duration: M8.move + 60, easing: E2.move }
       );
       if (a) {
         const done = () => {
@@ -38217,19 +40793,19 @@ ${bodyText.substring(0, 6e3)}`;
       }
     }
     [".bz-clip-mob-d-kicker", ".bz-clip-mob-d-title", ".bz-clip-mob-d-rule", ".bz-clip-mob-d-md", ".bz-clip-mob-d-foot"].forEach((sel, i) => {
-      sweep(
+      sweep2(
         detailEl.querySelector(sel),
         { opacity: 0, transform: "translateY(7px)" },
         { opacity: 1, transform: "none" },
-        { delay: 110 + i * 45, dur: M7.base - 20 }
+        { delay: 110 + i * 45, dur: M8.base - 20 }
       );
     });
   }
   function motionMobSearchbarIn(barEl) {
-    sweep(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 40 });
+    sweep2(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M8.fast + 40 });
   }
   function motionSelbarIn(barEl) {
-    sweep(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 20 });
+    sweep2(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M8.fast + 20 });
   }
   function motionArchStamp(host) {
     if (!host || !canAnimate() || host.querySelector(":scope > .bz-clm-stamp")) return;
@@ -38240,7 +40816,7 @@ ${bodyText.substring(0, 6e3)}`;
     stamp.setAttribute("aria-hidden", "true");
     stamp.textContent = "收";
     host.appendChild(stamp);
-    const a = waapi(
+    const a = waapi2(
       stamp,
       [
         { opacity: 0, transform: "rotate(-14deg) scale(2.1)" },
@@ -38248,7 +40824,7 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.74 },
         { opacity: 0, transform: "rotate(-11deg) scale(1.06)" }
       ],
-      { duration: M7.impulse + 260, easing: E.move }
+      { duration: M8.impulse + 260, easing: E2.move }
     );
     const remove = () => {
       stamp.remove();
@@ -38256,7 +40832,7 @@ ${bodyText.substring(0, 6e3)}`;
       else host.setAttribute("style", prevStyle);
     };
     if (a) a.finished.then(remove).catch(remove);
-    else after(M7.impulse + 280, remove);
+    else after2(M8.impulse + 280, remove);
   }
   function motionInkStrike(titleEl, delay = 0) {
     if (!titleEl || !canAnimate() || titleEl.querySelector(":scope > .bz-clm-strike")) return;
@@ -38266,7 +40842,7 @@ ${bodyText.substring(0, 6e3)}`;
     strike.className = "bz-clm-strike";
     strike.setAttribute("aria-hidden", "true");
     titleEl.appendChild(strike);
-    const a = waapi(
+    const a = waapi2(
       strike,
       [
         { opacity: 0.9, transform: "scaleX(0)" },
@@ -38274,7 +40850,7 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 0.9, transform: "scaleX(1)", offset: 0.68 },
         { opacity: 0, transform: "scaleX(1)" }
       ],
-      { duration: 980, delay, easing: E.out }
+      { duration: 980, delay, easing: E2.out }
     );
     const remove = () => {
       strike.remove();
@@ -38282,7 +40858,7 @@ ${bodyText.substring(0, 6e3)}`;
       else titleEl.setAttribute("style", prevStyle);
     };
     if (a) a.finished.then(remove).catch(remove);
-    else after(1e3 + delay, remove);
+    else after2(1e3 + delay, remove);
   }
   function motionSnipGhost(cardEl) {
     if (!cardEl || !canAnimate() || !cardEl.isConnected) return;
@@ -38297,31 +40873,31 @@ ${bodyText.substring(0, 6e3)}`;
     ghost.style.height = `${rect.height}px`;
     const host = cardEl.closest(".bz-clip-frame") || document.body;
     host.appendChild(ghost);
-    const a = waapi(
+    const a = waapi2(
       ghost,
       [
         { opacity: 1, transform: "none", filter: "none" },
         { opacity: 1, transform: "translate(-8px,-4px) rotate(-.6deg) scale(1.01)", offset: 0.28 },
         { opacity: 0, transform: "translate(-70px,-16px) rotate(-3deg) scale(.96)", filter: "blur(2px)" }
       ],
-      { duration: M7.impulse - 160, easing: E.move }
+      { duration: M8.impulse - 160, easing: E2.move }
     );
     const remove = () => ghost.remove();
     if (a) a.finished.then(remove).catch(remove);
-    else after(M7.impulse, remove);
+    else after2(M8.impulse, remove);
   }
   function motionReportIn(overlay2) {
-    const frame = overlay2.querySelector(".bz-clip-report-frame");
-    if (!frame) return;
+    const frame2 = overlay2.querySelector(".bz-clip-report-frame");
+    if (!frame2) return;
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
-    waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E.out });
-    const a = waapi(
-      frame,
+    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame2,
       [
         { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: M7.base + 60, easing: E.out }
+      { duration: M8.base + 60, easing: E2.out }
     );
     const clear = () => {
       overlay2.style.opacity = "";
@@ -38333,53 +40909,53 @@ ${bodyText.substring(0, 6e3)}`;
     const sec = secEl;
     if (!sec || !canAnimate()) return;
     const base = idx * 50;
-    sweep(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M7.base + 40 });
-    sweep(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M7.base - 40 });
+    sweep2(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M8.base + 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M8.base - 40 });
     sec.querySelectorAll(".bz-clp-rep-hero-card").forEach((card, i) => {
-      sweep(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M7.base - 20, easing: E.move });
+      sweep2(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M8.base - 20, easing: E2.move });
     });
     sec.querySelectorAll(".bz-clp-rep-top-row").forEach((row, i) => {
-      sweep(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG, dur: M7.base - 40 });
+      sweep2(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG2, dur: M8.base - 40 });
     });
     sec.querySelectorAll(".bz-clp-rep-bar-row").forEach((row, i) => {
       const bar = row.querySelector(".bz-clp-rep-bar-track i");
-      sweep(
+      sweep2(
         bar,
         { transform: "scaleX(0)" },
         { transform: "scaleX(1)" },
-        { delay: base + 200 + Math.min(i, 8) * 40, dur: M7.base + 80, easing: E.move, origin: "left center" }
+        { delay: base + 200 + Math.min(i, 8) * 40, dur: M8.base + 80, easing: E2.move, origin: "left center" }
       );
     });
     sec.querySelectorAll(".bz-clp-rep-hcol").forEach((col, i) => {
       const bar = col.querySelector(".bz-clp-rep-hbar");
-      sweep(
+      sweep2(
         bar,
         { transform: "scaleY(0)" },
         { transform: "scaleY(1)" },
-        { delay: base + 200 + Math.min(i, 24) * 18, dur: M7.base + 40, easing: E.move, origin: "center bottom" }
+        { delay: base + 200 + Math.min(i, 24) * 18, dur: M8.base + 40, easing: E2.move, origin: "center bottom" }
       );
     });
-    sweep(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M7.base - 40 });
-    sweep(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M7.base - 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M8.base - 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M8.base - 40 });
   }
   function motionLoadingPulse(el) {
-    if (!el || reduced() || typeof el.animate !== "function") return;
+    if (!el || reduced3() || typeof el.animate !== "function") return;
     try {
       el.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
     } catch (e) {
     }
   }
-  var M7, E, STAG, easeOutQuart, timers, CSS_PROP, panelAnim, readerAnim;
-  var init_motion = __esm({
+  var M8, E2, STAG2, easeOutQuart, timers2, CSS_PROP, panelAnim, readerAnim;
+  var init_motion2 = __esm({
     "src/clipbook/motion.ts"() {
-      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E = {
+      M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E2 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG = 30;
+      STAG2 = 30;
       easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-      timers = /* @__PURE__ */ new Set();
+      timers2 = /* @__PURE__ */ new Set();
       CSS_PROP = {
         opacity: "opacity",
         transform: "transform",
@@ -38399,8 +40975,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M6.articles || []) keys.add(a.id);
-    for (const n of M6.clipNotes || []) {
+    for (const a of M7.articles || []) keys.add(a.id);
+    for (const n of M7.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -38646,14 +41222,14 @@ ${bodyText.substring(0, 6e3)}`;
       init_utils();
       init_esc_manager();
       init_focus_trap();
-      init_data5();
+      init_data6();
       init_news_data();
       init_constants2();
       init_state6();
       init_flow();
       init_report_stats2();
       init_render8();
-      init_motion();
+      init_motion2();
       init_clipbook();
       init_ui8();
       overlayEl = null;
@@ -38852,7 +41428,7 @@ ${bodyText.substring(0, 6e3)}`;
     };
   }
   var CN_STOPWORDS;
-  var init_data10 = __esm({
+  var init_data11 = __esm({
     "src/clipbook/press/data.ts"() {
       init_report_stats2();
       init_str();
@@ -39154,7 +41730,7 @@ ${bodyText.substring(0, 6e3)}`;
     return "晚班";
   }
   var SCN_NAMES;
-  var init_view = __esm({
+  var init_view2 = __esm({
     "src/clipbook/press/view.ts"() {
       init_render8();
       init_report_stats2();
@@ -39180,7 +41756,7 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/press/motions.ts
-  function palette(root) {
+  function palette2(root) {
     const cs = getComputedStyle(root);
     const v = (n, fb) => (cs.getPropertyValue(n) || "").trim() || fb;
     return {
@@ -39194,16 +41770,16 @@ ${bodyText.substring(0, 6e3)}`;
       paper: v("--clip-paper", "#faf8f3")
     };
   }
-  function rng(seed) {
+  function rng2(seed) {
     let s = seed >>> 0;
     return () => {
       s = s * 1664525 + 1013904223 >>> 0;
       return s / 4294967296;
     };
   }
-  function S(el, v) {
+  function S2(el, v) {
     var _a2;
-    if (!el || lastStyle.get(el) === v) return;
+    if (!el || lastStyle2.get(el) === v) return;
     const he = el;
     const prev = (_a2 = he.getAttribute("style")) != null ? _a2 : "";
     if (prev) {
@@ -39215,12 +41791,12 @@ ${bodyText.substring(0, 6e3)}`;
       if (keep.length) v = `${keep.join(";")};${v}`;
     }
     he.setAttribute("style", v);
-    lastStyle.set(he, v);
+    lastStyle2.set(he, v);
   }
-  function T(el, v) {
-    if (!el || lastText.get(el) === v) return;
+  function T2(el, v) {
+    if (!el || lastText2.get(el) === v) return;
     el.textContent = v;
-    lastText.set(el, v);
+    lastText2.set(el, v);
   }
   function fit2(cv) {
     const ctx = cv.getContext("2d");
@@ -39235,7 +41811,7 @@ ${bodyText.substring(0, 6e3)}`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return { ctx, w, h };
   }
-  function rgba(hex, a) {
+  function rgba2(hex, a) {
     const m = hex.replace("#", "");
     const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
     const n = parseInt(full.slice(0, 6), 16);
@@ -39252,8 +41828,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function dolly(el, t, from, dur = 1.1, delay = 0) {
     if (!el) return;
-    const rest = 1 - easeOut(at(t, dur, delay));
-    S(el, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
+    const rest = 1 - easeOut2(at2(t, dur, delay));
+    S2(el, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
   }
   function drawTip(ctx, x, y, text, pal) {
     ctx.font = `12px ${HEI}`;
@@ -39284,13 +41860,13 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function perfC01(scn, d) {
     const cv = q2(scn, '[data-cv="c01"]');
-    const chars = qa(scn, '[data-r="mast"] span');
-    const eyeChars = qa(scn, '[data-r="eye"] span');
+    const chars = qa2(scn, '[data-r="mast"] span');
+    const eyeChars = qa2(scn, '[data-r="eye"] span');
     const sub = q2(scn, '[data-r="sub"]');
     const line = q2(scn, '[data-r="line"]');
     const issue = q2(scn, '[data-r="issue"]');
     const inn = q2(scn, ".bz-rp-in");
-    const rand = rng(20260923);
+    const rand = rng2(20260923);
     const nDrops = Math.min(110, 40 + Math.round(d.articles * 0.6));
     const drops = Array.from({ length: nDrops }, (_, i) => ({
       x: rand(),
@@ -39320,20 +41896,20 @@ ${bodyText.substring(0, 6e3)}`;
             const lx = rect ? cx - rect.left : -9999;
             const ly = rect ? cy - rect.top : -9999;
             for (const dr of drops) {
-              const p = at(t, dr.life, dr.t0);
+              const p = at2(t, dr.life, dr.t0);
               if (p <= 0 || p >= 1) {
                 if (dr.trail.length) dr.trail.length = 0;
                 continue;
               }
               const bx = dr.x * w + Math.sin(dr.ph + t * 1.3) * dr.wob;
-              const by = lerp(dr.y0, dr.y1, easeInOut(p)) * h;
+              const by = lerp2(dr.y0, dr.y1, easeInOut2(p)) * h;
               const off = repel(lx, ly, pin, bx, by, 120, 30);
               const x = bx + off.dx, y = by + off.dy;
               dr.trail.push([x, y]);
               if (dr.trail.length > 6) dr.trail.shift();
               if (dr.trail.length > 1) {
                 ctx.beginPath();
-                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, Math.sin(Math.PI * p) * 0.16);
+                ctx.strokeStyle = rgba2(dr.accent ? pal.accent : pal.ink, Math.sin(Math.PI * p) * 0.16);
                 ctx.lineWidth = dr.r * 0.9;
                 ctx.moveTo(dr.trail[0][0], dr.trail[0][1]);
                 for (let k = 1; k < dr.trail.length; k++) ctx.lineTo(dr.trail[k][0], dr.trail[k][1]);
@@ -39341,12 +41917,12 @@ ${bodyText.substring(0, 6e3)}`;
               }
               const a = Math.sin(Math.PI * p) * 0.5;
               ctx.beginPath();
-              ctx.fillStyle = rgba(dr.accent ? pal.accent : pal.ink, a);
+              ctx.fillStyle = rgba2(dr.accent ? pal.accent : pal.ink, a);
               ctx.arc(x, y, dr.r, 0, Math.PI * 2);
               ctx.fill();
               if (p > 0.55) {
                 const rp2 = (p - 0.55) / 0.45;
-                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, (1 - rp2) * 0.2);
+                ctx.strokeStyle = rgba2(dr.accent ? pal.accent : pal.ink, (1 - rp2) * 0.2);
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.arc(x, y, dr.r + rp2 * 10, 0, Math.PI * 2);
@@ -39360,24 +41936,24 @@ ${bodyText.substring(0, 6e3)}`;
         }
         chars.forEach((c, i) => {
           var _a2, _b2;
-          const p = easeBack(at(t, 0.55, 0.4 + ((_a2 = beat[i % 5]) != null ? _a2 : 0)));
-          S(c, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -34).toFixed(1)}px) rotate(${((1 - p) * ((_b2 = tilt[i % 5]) != null ? _b2 : -4)).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.28).toFixed(3)})`);
+          const p = easeBack2(at2(t, 0.55, 0.4 + ((_a2 = beat[i % 5]) != null ? _a2 : 0)));
+          S2(c, `opacity:${clamp013(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -34).toFixed(1)}px) rotate(${((1 - p) * ((_b2 = tilt[i % 5]) != null ? _b2 : -4)).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.28).toFixed(3)})`);
         });
         eyeChars.forEach((c, i) => {
-          const p = easeOut(at(t, 0.4, 1.7 + i * 0.14));
-          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * -14).toFixed(1)}px)`);
+          const p = easeOut2(at2(t, 0.4, 1.7 + i * 0.14));
+          S2(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * -14).toFixed(1)}px)`);
         });
-        const ps = at(t, 0.6, 2.3);
-        S(sub, `opacity:${ps.toFixed(3)};transform:translateY(${((1 - ps) * 10).toFixed(1)}px)`);
-        S(line, `transform:scaleX(${easeOutExpo(at(t, 0.9, 2.7)).toFixed(4)})`);
-        const pi = easeBack(at(t, 0.6, 2.9));
-        S(issue, `opacity:${clamp01(pi * 1.6).toFixed(3)};transform:translateY(${((1 - pi) * 16).toFixed(1)}px) rotate(${(-3 + (1 - pi) * -6).toFixed(2)}deg)`);
+        const ps = at2(t, 0.6, 2.3);
+        S2(sub, `opacity:${ps.toFixed(3)};transform:translateY(${((1 - ps) * 10).toFixed(1)}px)`);
+        S2(line, `transform:scaleX(${easeOutExpo(at2(t, 0.9, 2.7)).toFixed(4)})`);
+        const pi = easeBack2(at2(t, 0.6, 2.9));
+        S2(issue, `opacity:${clamp013(pi * 1.6).toFixed(3)};transform:translateY(${((1 - pi) * 16).toFixed(1)}px) rotate(${(-3 + (1 - pi) * -6).toFixed(2)}deg)`);
       }
     };
   }
   function perfC02(scn, d) {
-    const nums = qa(scn, '[data-r="num"]');
-    const cells = qa(scn, '[data-r="cell"]');
+    const nums = qa2(scn, '[data-r="num"]');
+    const cells = qa2(scn, '[data-r="cell"]');
     const line = q2(scn, '[data-r="inkline"]');
     const brow = q2(scn, '[data-r="brow"]');
     const blead = q2(scn, '[data-r="blead"]');
@@ -39403,40 +41979,40 @@ ${bodyText.substring(0, 6e3)}`;
       update({ t, px, py }) {
         dolly(inn, t, (r) => `translate(${(r * -2.2).toFixed(2)}%, ${(r * -1.2).toFixed(2)}%) rotate(${(r * -0.5).toFixed(2)}deg)`, 1);
         cells.forEach((c, i) => {
-          const p = easeOut(at(t, 0.6, 0.25 + beatOf(i)));
+          const p = easeOut2(at2(t, 0.6, 0.25 + beatOf(i)));
           const depth = i === 0 ? 0.4 : 0.8 + i * 0.35;
           const par = `translate(${(px * depth * 5).toFixed(1)}px, ${(py * depth * 3.4).toFixed(1)}px)`;
           const dir = i === 0 ? `translateY(${((1 - p) * -22).toFixed(1)}px)` : `translateX(${((1 - p) * 30).toFixed(1)}px)`;
-          S(c, `opacity:${clamp01(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
+          S2(c, `opacity:${clamp013(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
         });
         nums.forEach((el, i) => {
           const n = Number(el.dataset.n || 0);
-          const p = easeOutExpo(at(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
-          T(el, el.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
+          const p = easeOutExpo(at2(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
+          T2(el, el.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
         });
-        S(line, `transform:scaleX(${easeInOut(at(t, 1, 0.3)).toFixed(4)})`);
+        S2(line, `transform:scaleX(${easeInOut2(at2(t, 1, 0.3)).toFixed(4)})`);
         if (brow) {
-          S(brow, `opacity:${at(t, 0.7, 2.5).toFixed(3)}`);
-          if (blead) S(blead, `transform:scaleX(${easeOut(at(t, 0.9, 2.7)).toFixed(4)})`);
-          S(bday, `opacity:${at(t, 0.5, 3.1).toFixed(3)}`);
-          S(bmin, `opacity:${at(t, 0.5, 3.3).toFixed(3)}`);
+          S2(brow, `opacity:${at2(t, 0.7, 2.5).toFixed(3)}`);
+          if (blead) S2(blead, `transform:scaleX(${easeOut2(at2(t, 0.9, 2.7)).toFixed(4)})`);
+          S2(bday, `opacity:${at2(t, 0.5, 3.1).toFixed(3)}`);
+          S2(bmin, `opacity:${at2(t, 0.5, 3.3).toFixed(3)}`);
         }
         if (deeprow) {
-          S(deeprow, `opacity:${at(t, 0.7, 2.9).toFixed(3)}`);
-          if (deeplead) S(deeplead, `transform:scaleX(${easeOut(at(t, 0.9, 3.1)).toFixed(4)})`);
-          if (deepv) S(deepv, `opacity:${at(t, 0.5, 3.5).toFixed(3)}`);
+          S2(deeprow, `opacity:${at2(t, 0.7, 2.9).toFixed(3)}`);
+          if (deeplead) S2(deeplead, `transform:scaleX(${easeOut2(at2(t, 0.9, 3.1)).toFixed(4)})`);
+          if (deepv) S2(deepv, `opacity:${at2(t, 0.5, 3.5).toFixed(3)}`);
         }
       }
     };
   }
   function perfC03(scn, d) {
     const cv = q2(scn, '[data-cv="c03"]');
-    const rows = qa(scn, '[data-r="shift"]');
+    const rows = qa2(scn, '[data-r="shift"]');
     const dialc = q2(scn, '[data-r="dialc"]');
     const maxMin = Math.max(1, ...d.hours);
     let follow = -Math.PI / 2;
     let followA = 0;
-    const jit = rng(31);
+    const jit = rng2(31);
     const jits = Array.from({ length: 24 }, () => jit() * 0.16);
     const dur = 6 + (maxMin > 90 ? 0.5 : 0);
     return {
@@ -39452,10 +42028,10 @@ ${bodyText.substring(0, 6e3)}`;
             const rect = pin ? cv.getBoundingClientRect() : null;
             const lx = rect ? cx - rect.left : -9999;
             const ly = rect ? cy - rect.top : -9999;
-            ctx.strokeStyle = rgba(pal.muted, 0.85);
+            ctx.strokeStyle = rgba2(pal.muted, 0.85);
             ctx.lineWidth = 1;
             for (let i = 0; i < 24; i++) {
-              const p = easeOut(at(t, 0.06, 0.1 + i * 0.028 + jits[i]));
+              const p = easeOut2(at2(t, 0.06, 0.1 + i * 0.028 + jits[i]));
               if (p <= 0) continue;
               const ang = (-90 + i * 15) * Math.PI / 180;
               ctx.globalAlpha = p * 0.8;
@@ -39465,23 +42041,23 @@ ${bodyText.substring(0, 6e3)}`;
               ctx.stroke();
             }
             ctx.globalAlpha = 1;
-            const ringP = [at(t, 0.7, 0.3), at(t, 0.7, 0.45), at(t, 0.7, 0.6), at(t, 0.7, 0.75)];
+            const ringP = [at2(t, 0.7, 0.3), at2(t, 0.7, 0.45), at2(t, 0.7, 0.6), at2(t, 0.7, 0.75)];
             const ranges = [[0, 6], [6, 12], [12, 18], [18, 24]];
             ctx.lineWidth = 3;
             ctx.lineCap = "butt";
             ranges.forEach(([lo, hi], si) => {
-              const p = easeOut(ringP[si]);
+              const p = easeOut2(ringP[si]);
               if (p <= 0) return;
               const a0 = (-90 + lo * 15) * Math.PI / 180;
               const a1 = (-90 + lo * 15 + (hi - lo) * 15 * p) * Math.PI / 180;
               ctx.beginPath();
-              ctx.strokeStyle = rgba(pal.line, 0.55);
+              ctx.strokeStyle = rgba2(pal.line, 0.55);
               ctx.arc(cx0, cy0, R + 22, a0, a1);
               ctx.stroke();
             });
             let hoverText = "";
             for (let i = 0; i < 24; i++) {
-              const p = easeOut(at(t, 0.32, 0.7 + i * 0.09 + jits[i]));
+              const p = easeOut2(at2(t, 0.32, 0.7 + i * 0.09 + jits[i]));
               if (p <= 0) continue;
               const ang = (-90 + i * 15) * Math.PI / 180;
               const v = d.hours[i] / maxMin;
@@ -39490,9 +42066,9 @@ ${bodyText.substring(0, 6e3)}`;
               const hovered = pin && Math.hypot(lx - x, ly - y) < 26;
               const r = (2.2 + v * 9) * p * (hovered ? 1.5 : 1);
               ctx.beginPath();
-              ctx.fillStyle = rgba(isPeak || hovered ? pal.accent : pal.ink, (0.18 + 0.82 * p) * (0.3 + 0.7 * (0.35 + 0.65 * v)));
+              ctx.fillStyle = rgba2(isPeak || hovered ? pal.accent : pal.ink, (0.18 + 0.82 * p) * (0.3 + 0.7 * (0.35 + 0.65 * v)));
               if (isPeak || hovered) {
-                ctx.shadowColor = rgba(pal.accent, 0.55 * p);
+                ctx.shadowColor = rgba2(pal.accent, 0.55 * p);
                 ctx.shadowBlur = 12 * p;
               }
               ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -39501,7 +42077,7 @@ ${bodyText.substring(0, 6e3)}`;
               if (hovered) hoverText = `${i} 点 · ${humanish(d.hours[i])}（${shiftOfHour2(i)}）`;
             }
             if (d.peakHour >= 0) {
-              const sp = springUp(at(t, 1.7, 2.4));
+              const sp = springUp(at2(t, 1.7, 2.4));
               if (sp > 1e-3) {
                 const ang = (-90 + d.peakHour * 15 * sp) * Math.PI / 180;
                 ctx.beginPath();
@@ -39539,40 +42115,40 @@ ${bodyText.substring(0, 6e3)}`;
           }
         }
         rows.forEach((row, i) => {
-          const p = easeOut(at(t, 0.5, 1.1 + i * 0.2));
-          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 22).toFixed(1)}px)`);
+          const p = easeOut2(at2(t, 0.5, 1.1 + i * 0.2));
+          S2(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 22).toFixed(1)}px)`);
           const b = q2(row, '[data-r="shiftb"]');
-          if (b) S(b, `transform:scaleX(${easeOutExpo(at(t, 0.7, 1.35 + i * 0.2)).toFixed(4)})`);
+          if (b) S2(b, `transform:scaleX(${easeOutExpo(at2(t, 0.7, 1.35 + i * 0.2)).toFixed(4)})`);
           const v = q2(row, '[data-r="shiftv"]');
           if (v) {
             const n = Number(v.dataset.n || 0);
-            T(v, humanish(roll(n, easeOutExpo(at(t, 0.9, 1.3 + i * 0.2)))));
+            T2(v, humanish(roll(n, easeOutExpo(at2(t, 0.9, 1.3 + i * 0.2)))));
           }
         });
         if (dialc) {
-          const p = at(t, 0.6, 5);
-          S(dialc, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 8).toFixed(1)}px)`);
+          const p = at2(t, 0.6, 5);
+          S2(dialc, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 8).toFixed(1)}px)`);
         }
       }
     };
   }
   function perfC04(scn, d) {
     const cv = q2(scn, '[data-cv="c04"]');
-    const vt = qa(scn, '[data-r="vt"] span');
+    const vt = qa2(scn, '[data-r="vt"] span');
     const maxMin = Math.max(1, ...d.matrix.flatMap((m) => m.hours));
     let pk = { r: -1, c: -1, v: 0 };
     d.matrix.forEach((m, r) => m.hours.forEach((v, c) => {
       if (v > pk.v) pk = { r, c, v };
     }));
-    const jit = rng(47);
+    const jit = rng2(47);
     const jits = d.matrix.map(() => Array.from({ length: 24 }, () => jit() * 0.14));
     const dur = 5.6 + Math.min(0.8, d.matrix.length * 0.04);
     return {
       dur,
       update({ t, pal, cx, cy, pin }) {
         vt.forEach((c, i) => {
-          const p = easeOut(at(t, 0.5, 0.25 + i * 0.24));
-          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 18).toFixed(1)}px)`);
+          const p = easeOut2(at2(t, 0.5, 0.25 + i * 0.24));
+          S2(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 18).toFixed(1)}px)`);
         });
         if (!cv) return;
         const f = fit2(cv);
@@ -39591,15 +42167,15 @@ ${bodyText.substring(0, 6e3)}`;
         if (pin && lx >= gx && lx < gx + gw && ly >= gy && ly < gy + gh) {
           hcx = Math.floor((lx - gx) / cw);
           hry = Math.floor((ly - gy) / chh);
-          ctx.fillStyle = rgba(pal.accent, 0.06);
+          ctx.fillStyle = rgba2(pal.accent, 0.06);
           ctx.fillRect(gx + hcx * cw, gy, cw, gh);
           ctx.fillRect(gx, gy + hry * chh, gw, chh);
         }
         const per = 2 * (gw + gh);
-        const fp = easeInOut(at(t, 1.3, 0.15));
+        const fp = easeInOut2(at2(t, 1.3, 0.15));
         if (fp > 0) {
           ctx.setLineDash([per * fp, per]);
-          ctx.strokeStyle = rgba(pal.muted, 0.9);
+          ctx.strokeStyle = rgba2(pal.muted, 0.9);
           ctx.lineWidth = 1;
           ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
           ctx.setLineDash([]);
@@ -39608,12 +42184,12 @@ ${bodyText.substring(0, 6e3)}`;
         for (let r = 0; r < rowsN; r++) {
           const day = d.matrix[r];
           for (let c = 0; c < cols; c++) {
-            const p = easeOut(at(t, 0.4, 0.35 + (r + c) * 0.018 + jits[r][c]));
+            const p = easeOut2(at2(t, 0.4, 0.35 + (r + c) * 0.018 + jits[r][c]));
             if (p <= 0) continue;
             const v = day.hours[c] / maxMin;
             const x = gx + c * cw, y = gy + r * chh;
             const hot = r === hry && c === hcx;
-            ctx.fillStyle = v > 0 ? rgba(hot ? pal.accent : pal.accentSoft, (0.12 + 0.88 * p) * (0.25 + 0.75 * Math.min(1, v * 1.4))) : rgba(pal.line, 0.35 * p);
+            ctx.fillStyle = v > 0 ? rgba2(hot ? pal.accent : pal.accentSoft, (0.12 + 0.88 * p) * (0.25 + 0.75 * Math.min(1, v * 1.4))) : rgba2(pal.line, 0.35 * p);
             ctx.fillRect(x + 1, y + 1, cw - 2, chh - 2);
             if (hot && day.hours[c] > 0) {
               ctx.strokeStyle = pal.accent;
@@ -39622,10 +42198,10 @@ ${bodyText.substring(0, 6e3)}`;
             }
           }
         }
-        const gp = at(t, 0.5, 3.6);
+        const gp = at2(t, 0.5, 3.6);
         if (pk.r >= 0 && pk.v > 0 && gp > 0) {
           const x = gx + pk.c * cw, y = gy + pk.r * chh;
-          ctx.strokeStyle = rgba(pal.accent, gp);
+          ctx.strokeStyle = rgba2(pal.accent, gp);
           ctx.lineWidth = 1.6;
           ctx.strokeRect(x + 0.5, y + 0.5, cw - 2, chh - 2);
         }
@@ -39635,8 +42211,8 @@ ${bodyText.substring(0, 6e3)}`;
         [0, 6, 12, 18, 23].forEach((hc) => ctx.fillText(String(hc), gx + hc * cw + cw / 2, gy + gh + 18));
         ctx.textAlign = "right";
         d.matrix.forEach((day, r) => {
-          const p = at(t, 0.3, 0.4 + r * 0.05);
-          ctx.fillStyle = rgba(pal.muted, 0.4 + 0.6 * p);
+          const p = at2(t, 0.3, 0.4 + r * 0.05);
+          ctx.fillStyle = rgba2(pal.muted, 0.4 + 0.6 * p);
           ctx.fillText(day.label, gx - 8, gy + r * chh + chh / 2 + 4);
         });
         if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
@@ -39649,39 +42225,39 @@ ${bodyText.substring(0, 6e3)}`;
     const headRank = q2(scn, '[data-r="head"] [data-r="rank"]');
     const headS = q2(scn, '[data-r="heads"]');
     const headB = q2(scn, '[data-r="headb"]');
-    const rows = qa(scn, '[data-r="row"]');
+    const rows = qa2(scn, '[data-r="row"]');
     const dur = 5.2;
     const beat = [0, 0.16, 0.38, 0.66];
     return {
       dur,
       update({ t }) {
-        const hp = easeBack(at(t, 0.7, 0.3));
-        if (head) S(head, `opacity:${clamp01(hp * 2).toFixed(3)};transform:translateY(${((1 - hp) * -26).toFixed(1)}px)`);
-        if (headT) S(headT, `letter-spacing:${(0.5 - 0.44 * clamp01(hp)).toFixed(3)}em`);
+        const hp = easeBack2(at2(t, 0.7, 0.3));
+        if (head) S2(head, `opacity:${clamp013(hp * 2).toFixed(3)};transform:translateY(${((1 - hp) * -26).toFixed(1)}px)`);
+        if (headT) S2(headT, `letter-spacing:${(0.5 - 0.44 * clamp013(hp)).toFixed(3)}em`);
         if (headRank) {
-          const rp = easeBack(at(t, 0.45, 0.55));
-          S(headRank, `opacity:${clamp01(rp * 2).toFixed(3)};transform:scale(${(rp * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - rp) * -12).toFixed(2)}deg)`);
+          const rp = easeBack2(at2(t, 0.45, 0.55));
+          S2(headRank, `opacity:${clamp013(rp * 2).toFixed(3)};transform:scale(${(rp * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - rp) * -12).toFixed(2)}deg)`);
         }
-        if (headB) S(headB, `transform:scaleX(${easeOutExpo(at(t, 0.8, 0.9)).toFixed(4)})`);
-        if (headS) S(headS, `opacity:${at(t, 0.5, 1).toFixed(3)}`);
+        if (headB) S2(headB, `transform:scaleX(${easeOutExpo(at2(t, 0.8, 0.9)).toFixed(4)})`);
+        if (headS) S2(headS, `opacity:${at2(t, 0.5, 1).toFixed(3)}`);
         rows.forEach((row, i) => {
           var _a2;
           const b = (_a2 = beat[i % 4]) != null ? _a2 : 0;
-          const p = easeBack(at(t, 0.6, 0.9 + b));
-          S(row, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -44).toFixed(1)}px) rotate(${((1 - p) * (i % 2 ? 1.4 : -1.8)).toFixed(2)}deg)`);
+          const p = easeBack2(at2(t, 0.6, 0.9 + b));
+          S2(row, `opacity:${clamp013(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -44).toFixed(1)}px) rotate(${((1 - p) * (i % 2 ? 1.4 : -1.8)).toFixed(2)}deg)`);
           const rank = q2(row, '[data-r="rank"]');
           if (rank) {
-            const pr = easeBack(at(t, 0.4, 1.05 + b));
-            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -10).toFixed(2)}deg)`);
+            const pr = easeBack2(at2(t, 0.4, 1.05 + b));
+            S2(rank, `opacity:${clamp013(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -10).toFixed(2)}deg)`);
           }
           const bar = q2(row, '[data-r="minb"]');
-          if (bar) S(bar, `transform:scaleX(${easeOutExpo(at(t, 0.55, 1.25 + b)).toFixed(4)})`);
+          if (bar) S2(bar, `transform:scaleX(${easeOutExpo(at2(t, 0.55, 1.25 + b)).toFixed(4)})`);
         });
       }
     };
   }
   function perfC06(scn, d) {
-    const rows = qa(scn, '[data-r="row"]');
+    const rows = qa2(scn, '[data-r="row"]');
     const note = q2(scn, '[data-r="snote"]');
     const ace = q2(scn, '[data-r="ace"]');
     const roller = q2(scn, '[data-r="roller"]');
@@ -39691,32 +42267,32 @@ ${bodyText.substring(0, 6e3)}`;
       dur,
       update({ t }) {
         dolly(inn, t, (r) => `translateX(${(r * 2.6).toFixed(2)}%) rotate(${(r * 0.5).toFixed(2)}deg)`, 1.05);
-        const rp = easeInOut(at(t, 2.2, 0.45));
-        if (roller) S(roller, `opacity:${rp > 0 && rp < 1 ? 0.9 : 0};transform:translateX(${(rp * 1150).toFixed(1)}%)`);
+        const rp = easeInOut2(at2(t, 2.2, 0.45));
+        if (roller) S2(roller, `opacity:${rp > 0 && rp < 1 ? 0.9 : 0};transform:translateX(${(rp * 1150).toFixed(1)}%)`);
         rows.forEach((row, i) => {
-          const p = easeOut(at(t, 0.5, 0.4 + i * 0.24));
-          S(row, `opacity:${p.toFixed(3)}`);
+          const p = easeOut2(at2(t, 0.5, 0.4 + i * 0.24));
+          S2(row, `opacity:${p.toFixed(3)}`);
           const bar = q2(row, '[data-r="bar"]');
-          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.7 + i * 0.24)).toFixed(4)})`);
+          if (bar) S2(bar, `transform:scaleX(${easeInOut2(at2(t, 0.9, 0.7 + i * 0.24)).toFixed(4)})`);
           const sub = q2(row, '[data-r="subbar"]');
-          if (sub) S(sub, `transform:scaleX(${easeInOut(at(t, 0.8, 1 + i * 0.24)).toFixed(4)})`);
+          if (sub) S2(sub, `transform:scaleX(${easeInOut2(at2(t, 0.8, 1 + i * 0.24)).toFixed(4)})`);
           const cnt = q2(row, '[data-r="cnt"]');
           if (cnt) {
             const n = Number(cnt.dataset.n || 0);
             const x = Number(cnt.dataset.x || 0);
-            const cp = easeOutExpo(at(t, 1, 0.8 + i * 0.24));
-            T(cnt, `${humanish(roll(n, cp))} · ${roll(x, cp)} 篇`);
+            const cp = easeOutExpo(at2(t, 1, 0.8 + i * 0.24));
+            T2(cnt, `${humanish(roll(n, cp))} · ${roll(x, cp)} 篇`);
           }
         });
-        const ap = easeBack(at(t, 0.55, 3.1));
-        S(ace, `opacity:${clamp01(ap * 2).toFixed(3)};transform:scale(${(1 + (1 - ap) * 1.4).toFixed(3)}) rotate(${(-10 + (1 - ap) * -14).toFixed(2)}deg)`);
-        if (note) S(note, `opacity:${at(t, 0.6, 3.6).toFixed(3)}`);
+        const ap = easeBack2(at2(t, 0.55, 3.1));
+        S2(ace, `opacity:${clamp013(ap * 2).toFixed(3)};transform:scale(${(1 + (1 - ap) * 1.4).toFixed(3)}) rotate(${(-10 + (1 - ap) * -14).toFixed(2)}deg)`);
+        if (note) S2(note, `opacity:${at2(t, 0.6, 3.6).toFixed(3)}`);
       }
     };
   }
   function perfC07(scn, d) {
     const cv = q2(scn, '[data-cv="c07"]');
-    const rows = qa(scn, '[data-r="wire"]');
+    const rows = qa2(scn, '[data-r="wire"]');
     const today = q2(scn, '[data-r="today"]');
     const inn = q2(scn, ".bz-rp-in");
     const dur = 4.4 + Math.min(2.4, d.recent.length * 0.28);
@@ -39729,7 +42305,7 @@ ${bodyText.substring(0, 6e3)}`;
           if (f) {
             const { ctx, w, h } = f;
             ctx.clearRect(0, 0, w, h);
-            ctx.fillStyle = rgba(pal.muted, 0.3);
+            ctx.fillStyle = rgba2(pal.muted, 0.3);
             const holeGap = 26, roll2 = t * 12 % holeGap;
             for (let y = -holeGap; y < h + holeGap; y += holeGap) {
               const yy = y + roll2;
@@ -39742,7 +42318,7 @@ ${bodyText.substring(0, 6e3)}`;
             }
             ctx.setLineDash([7, 9]);
             ctx.lineDashOffset = -t * 26;
-            ctx.strokeStyle = rgba(pal.accent, 0.4);
+            ctx.strokeStyle = rgba2(pal.accent, 0.4);
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(w * 0.06, h * 0.16);
@@ -39760,28 +42336,28 @@ ${bodyText.substring(0, 6e3)}`;
         rows.forEach((row, i) => {
           var _a2;
           const b = (_a2 = beat[i % 8]) != null ? _a2 : 0;
-          const p = easeOut(at(t, 0.4, 0.35 + b));
-          S(row, `opacity:${p.toFixed(3)};clip-path:inset(0 ${((1 - p) * 100).toFixed(1)}% 0 0)`);
+          const p = easeOut2(at2(t, 0.4, 0.35 + b));
+          S2(row, `opacity:${p.toFixed(3)};clip-path:inset(0 ${((1 - p) * 100).toFixed(1)}% 0 0)`);
           const dot = q2(row, '[data-r="dot"]');
           if (dot) {
             const pulse = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
-            S(dot, `opacity:${(p * (0.45 + 0.55 * pulse)).toFixed(3)};transform:scale(${(p * (0.8 + 0.3 * pulse)).toFixed(3)})`);
+            S2(dot, `opacity:${(p * (0.45 + 0.55 * pulse)).toFixed(3)};transform:scale(${(p * (0.8 + 0.3 * pulse)).toFixed(3)})`);
           }
           const ago = q2(row, '[data-r="ago"]');
-          if (ago) S(ago, `opacity:${at(t, 0.4, 0.55 + b).toFixed(3)}`);
+          if (ago) S2(ago, `opacity:${at2(t, 0.4, 0.55 + b).toFixed(3)}`);
         });
-        if (today) S(today, `opacity:${at(t, 0.6, Math.max(2.2, dur - 1.2)).toFixed(3)}`);
+        if (today) S2(today, `opacity:${at2(t, 0.6, Math.max(2.2, dur - 1.2)).toFixed(3)}`);
       }
     };
   }
   function perfC08(scn, d) {
     const cv = q2(scn, '[data-cv="c08"]');
-    const labels = qa(scn, '[data-r="dl"]');
+    const labels = qa2(scn, '[data-r="dl"]');
     const note = q2(scn, '[data-r="note"]');
     const inn = q2(scn, ".bz-rp-in");
     const lib = d.lib;
     const nConf = Math.min(40, 8 + (lib ? lib.byDayPeak * 2 : 0));
-    const rand = rng(88);
+    const rand = rng2(88);
     const confetti = Array.from({ length: nConf }, () => ({
       ang: rand() * Math.PI * 2,
       sp: 30 + rand() * 70,
@@ -39805,25 +42381,25 @@ ${bodyText.substring(0, 6e3)}`;
             const step = w * 0.7 / n;
             const x0 = (w - step * n) / 2 + step / 2 + w * 0.05;
             const peak = Math.max(1, lib.byDayPeak);
-            const rollP = easeInOut(at(t, 2.1, 0.25));
-            const rollX = lerp(-w * 0.06, w * 1.06, rollP);
+            const rollP = easeInOut2(at2(t, 2.1, 0.25));
+            const rollX = lerp2(-w * 0.06, w * 1.06, rollP);
             if (rollP > 0 && rollP < 1) {
               const g = ctx.createLinearGradient(rollX - 46, 0, rollX + 46, 0);
-              g.addColorStop(0, rgba(pal.accent, 0));
-              g.addColorStop(0.5, rgba(pal.accent, 0.1));
-              g.addColorStop(1, rgba(pal.accent, 0));
+              g.addColorStop(0, rgba2(pal.accent, 0));
+              g.addColorStop(0.5, rgba2(pal.accent, 0.1));
+              g.addColorStop(1, rgba2(pal.accent, 0));
               ctx.fillStyle = g;
               ctx.fillRect(rollX - 46, top - 14, 92, base - top + 22);
             }
             lib.byDay.forEach((day, i) => {
-              const p = springUp(at(t, 0.8, 0.3 + (i + 1) / n * 1.8));
+              const p = springUp(at2(t, 0.8, 0.3 + (i + 1) / n * 1.8));
               if (p <= 0) return;
               const x = x0 + i * step;
               const hh = day.n / peak * (base - top) * p;
-              ctx.fillStyle = rgba(pal.accentSoft, 0.8);
+              ctx.fillStyle = rgba2(pal.accentSoft, 0.8);
               ctx.fillRect(x - bw / 2, base - hh, bw, hh);
               if (day.n > 0 && day.n === lib.byDayPeak) {
-                const gp = easeOut(at(t, 0.4, 3.2));
+                const gp = easeOut2(at2(t, 0.4, 3.2));
                 if (gp > 0) {
                   ctx.strokeStyle = pal.accent;
                   ctx.lineWidth = 2;
@@ -39832,38 +42408,38 @@ ${bodyText.substring(0, 6e3)}`;
                   ctx.font = `700 ${Math.max(11, w * 0.013)}px ${SERIF}`;
                   ctx.textAlign = "center";
                   ctx.fillText(String(day.n), x, base - hh - 10);
-                  const cp = at(t, 1.6, 3.3);
+                  const cp = at2(t, 1.6, 3.3);
                   if (cp > 0 && cp < 1) {
                     for (const c of confetti) {
-                      const fx = x + Math.cos(c.ang) * c.sp * easeOut(cp);
-                      const fy = base - hh - 6 + Math.sin(c.ang) * c.sp * easeOut(cp) + 90 * cp * cp;
+                      const fx = x + Math.cos(c.ang) * c.sp * easeOut2(cp);
+                      const fy = base - hh - 6 + Math.sin(c.ang) * c.sp * easeOut2(cp) + 90 * cp * cp;
                       ctx.save();
                       ctx.translate(fx, fy);
                       ctx.rotate(c.rot + c.vr * cp);
-                      ctx.fillStyle = rgba(pal.accent, Math.sin(Math.PI * cp) * 0.55);
+                      ctx.fillStyle = rgba2(pal.accent, Math.sin(Math.PI * cp) * 0.55);
                       ctx.fillRect(-c.sz / 2, -c.sz / 4, c.sz, c.sz / 2);
                       ctx.restore();
                     }
                   }
                 }
               }
-              ctx.fillStyle = rgba(pal.ink, 0.25);
+              ctx.fillStyle = rgba2(pal.ink, 0.25);
               ctx.fillRect(x - bw / 2, base, bw, 1.5);
             });
           }
         }
         labels.forEach((lb, i) => {
-          const p = at(t, 0.35, 0.45 + i * 0.09);
-          S(lb, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 6).toFixed(1)}px)`);
+          const p = at2(t, 0.35, 0.45 + i * 0.09);
+          S2(lb, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 6).toFixed(1)}px)`);
         });
-        if (note) S(note, `opacity:${at(t, 0.6, 3.7).toFixed(3)}`);
+        if (note) S2(note, `opacity:${at2(t, 0.6, 3.7).toFixed(3)}`);
       }
     };
   }
   function perfC09(scn, d) {
     const cv = q2(scn, '[data-cv="c09"]');
     const maxMin = Math.max(1, ...d.cal.map((c) => c.minutes));
-    const jit = rng(99);
+    const jit = rng2(99);
     const jits = d.cal.map(() => jit() * 0.12);
     const dur = 5.6;
     return {
@@ -39885,20 +42461,20 @@ ${bodyText.substring(0, 6e3)}`;
         let hoverText = "";
         d.cal.forEach((day, i) => {
           const col = Math.floor(i / rowsN), row = i % rowsN;
-          const p = easeOut(at(t, 0.3, 0.25 + (col + row) * 0.05 + jits[i]));
+          const p = easeOut2(at2(t, 0.3, 0.25 + (col + row) * 0.05 + jits[i]));
           if (p <= 0) return;
           const x = gx + col * size * 1.35, y = gy + row * size * 1.35;
           const v = day.minutes / maxMin;
           const hovered = pin && Math.hypot(lx - (x + size / 2), ly - (y + size / 2)) < size * 0.8;
           if (day.minutes > 0) {
-            ctx.fillStyle = rgba(hovered ? pal.accent : pal.accentSoft, (0.15 + 0.85 * p) * (0.3 + 0.7 * Math.min(1, v * 1.5)));
+            ctx.fillStyle = rgba2(hovered ? pal.accent : pal.accentSoft, (0.15 + 0.85 * p) * (0.3 + 0.7 * Math.min(1, v * 1.5)));
             ctx.fillRect(x, y, size, size);
           } else {
-            ctx.strokeStyle = rgba(pal.line, 0.7 * p);
+            ctx.strokeStyle = rgba2(pal.line, 0.7 * p);
             ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
           }
           if (i === n - 1) {
-            ctx.strokeStyle = rgba(pal.accent, p);
+            ctx.strokeStyle = rgba2(pal.accent, p);
             ctx.lineWidth = 1.6;
             ctx.strokeRect(x - 2.5, y - 2.5, size + 5, size + 5);
             ctx.lineWidth = 1;
@@ -39912,7 +42488,7 @@ ${bodyText.substring(0, 6e3)}`;
             const col = Math.floor(i / rowsN), row = i % rowsN;
             pts.push([gx + col * size * 1.35 + size / 2, gy + row * size * 1.35 + size / 2]);
           }
-          const sp = easeInOut(at(t, 1.3, 2.5));
+          const sp = easeInOut2(at2(t, 1.3, 2.5));
           const p0 = pts[0], p1 = pts[1];
           if (sp > 0 && p0 && p1) {
             const total = pts.length - 1;
@@ -39929,8 +42505,8 @@ ${bodyText.substring(0, 6e3)}`;
               const pm = pts[m];
               if (pm) ctx.lineTo(pm[0], pm[1]);
             }
-            const tipX = lerp(pk2[0], pk3[0], frac);
-            const tipY = lerp(pk2[1], pk3[1], frac);
+            const tipX = lerp2(pk2[0], pk3[0], frac);
+            const tipY = lerp2(pk2[1], pk3[1], frac);
             ctx.lineTo(tipX, tipY);
             ctx.stroke();
             ctx.beginPath();
@@ -39939,9 +42515,9 @@ ${bodyText.substring(0, 6e3)}`;
             ctx.fill();
           }
         }
-        const tp = springUp(at(t, 0.8, 3.2));
+        const tp = springUp(at2(t, 0.8, 3.2));
         if (tp > 0.01) {
-          ctx.globalAlpha = clamp01(tp * 1.4);
+          ctx.globalAlpha = clamp013(tp * 1.4);
           ctx.fillStyle = pal.accent;
           ctx.font = `700 ${Math.max(26, w * 0.035)}px ${SERIF}`;
           ctx.textAlign = "center";
@@ -39957,7 +42533,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function perfC10(scn, d) {
     const cv = q2(scn, '[data-cv="c10"]');
-    const lgs = qa(scn, '[data-r="lg"]');
+    const lgs = qa2(scn, '[data-r="lg"]');
     const inn = q2(scn, ".bz-rp-in");
     let hoverRow = -1;
     const dur = 5.6;
@@ -39974,7 +42550,7 @@ ${bodyText.substring(0, 6e3)}`;
           const gx = w * 0.17, gw = w * 0.6;
           const gy = h * 0.3, rowH = Math.min(34, h * 0.52 / rows.length);
           const maxTotal = Math.max(1, ...rows.map((r) => r.shifts.reduce((s, x) => s + x, 0)));
-          const segColors = [rgba(pal.line, 0.9), rgba(pal.accentSoft, 0.5), rgba(pal.accentSoft, 0.8), pal.accent];
+          const segColors = [rgba2(pal.line, 0.9), rgba2(pal.accentSoft, 0.5), rgba2(pal.accentSoft, 0.8), pal.accent];
           const rect = pin ? cv.getBoundingClientRect() : null;
           const lx = rect ? cx - rect.left : -9999;
           const ly = rect ? cy - rect.top : -9999;
@@ -39988,18 +42564,18 @@ ${bodyText.substring(0, 6e3)}`;
           rows.forEach((r, i) => {
             const y = gy + i * rowH * 1.5;
             const barH = rowH * 0.52;
-            const p = easeOut(at(t, 0.9, 0.35 + i * 0.22));
+            const p = easeOut2(at2(t, 0.9, 0.35 + i * 0.22));
             const total = r.shifts.reduce((s, x) => s + x, 0);
             const dimmed = hoverRow >= 0 && hoverRow !== i;
-            ctx.fillStyle = rgba(pal.ink2, clamp01(p * 2) * (dimmed ? 0.4 : 1));
+            ctx.fillStyle = rgba2(pal.ink2, clamp013(p * 2) * (dimmed ? 0.4 : 1));
             ctx.font = `600 ${Math.max(13, w * 0.012)}px ${SERIF}`;
             ctx.textAlign = "right";
             ctx.fillText(r.name.slice(0, 8), gx - 12, y + barH / 2 + 4);
             let acc = 0;
-            const segP = clamp01(p * 1.35 - 0.1);
+            const segP = clamp013(p * 1.35 - 0.1);
             r.shifts.forEach((min, j) => {
               const segW = min / maxTotal * gw;
-              const gp = clamp01(segP * 4 - j);
+              const gp = clamp013(segP * 4 - j);
               if (gp > 0) {
                 ctx.globalAlpha = dimmed ? 0.35 : 1;
                 ctx.fillStyle = segColors[j];
@@ -40009,7 +42585,7 @@ ${bodyText.substring(0, 6e3)}`;
               acc += min;
             });
             if (total > 0) {
-              ctx.fillStyle = rgba(pal.dim, dimmed ? 0.35 : 1);
+              ctx.fillStyle = rgba2(pal.dim, dimmed ? 0.35 : 1);
               ctx.textAlign = "left";
               ctx.font = `${Math.max(11, w * 0.0105)}px ${HEI}`;
               ctx.fillText(humanish(total), gx + gw + 10, y + barH / 2 + 4);
@@ -40024,7 +42600,7 @@ ${bodyText.substring(0, 6e3)}`;
           if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
         }
         lgs.forEach((lg, i) => {
-          S(lg, `opacity:${at(t, 0.5, 1.6 + i * 0.14).toFixed(3)}`);
+          S2(lg, `opacity:${at2(t, 0.5, 1.6 + i * 0.14).toFixed(3)}`);
         });
       }
     };
@@ -40033,7 +42609,7 @@ ${bodyText.substring(0, 6e3)}`;
     const cv = q2(scn, '[data-cv="c11"]');
     let laidW = 0, laidH = 0;
     let laid = [];
-    const rand = rng(7);
+    const rand = rng2(7);
     const maxN = Math.max(1, ...d.words.map((x) => x.n));
     const dur = 5.6;
     return {
@@ -40095,9 +42671,9 @@ ${bodyText.substring(0, 6e3)}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         laid.forEach((lw) => {
-          const p = easeBack(at(t, 0.5, 0.3 + lw.dl));
+          const p = easeBack2(at2(t, 0.5, 0.3 + lw.dl));
           if (p <= 0) return;
-          const fly = 1 - clamp01(p);
+          const fly = 1 - clamp013(p);
           const want = repel(lx, ly, pin, lw.x, lw.y, 130, 34);
           lw.vx += (want.dx - lw.ox) * 0.16;
           lw.vy += (want.dy - lw.oy) * 0.16;
@@ -40107,11 +42683,11 @@ ${bodyText.substring(0, 6e3)}`;
           lw.oy += lw.vy;
           const big = lw.n >= maxN - 1;
           ctx.font = `700 ${lw.size}px ${SERIF}`;
-          ctx.fillStyle = rgba(big ? pal.accent : pal.ink, (0.25 + 0.75 * clamp01(p)) * (big ? 1 : 0.82));
+          ctx.fillStyle = rgba2(big ? pal.accent : pal.ink, (0.25 + 0.75 * clamp013(p)) * (big ? 1 : 0.82));
           ctx.fillText(lw.w, lw.x + lw.ox + lw.dx * fly, lw.y + lw.oy + lw.dy * fly);
           if (big && p >= 1) {
             ctx.setLineDash([2, 4]);
-            ctx.strokeStyle = rgba(pal.accent, 0.7);
+            ctx.strokeStyle = rgba2(pal.accent, 0.7);
             ctx.lineWidth = 1.4;
             ctx.beginPath();
             ctx.moveTo(lw.x + lw.ox - lw.width / 2, lw.y + lw.oy + lw.size * 0.68);
@@ -40126,8 +42702,8 @@ ${bodyText.substring(0, 6e3)}`;
   function perfC12(scn, _d) {
     var _a2;
     const cv = q2(scn, '[data-cv="c12"]');
-    const nums = qa(scn, '[data-r="num"]');
-    const cells = qa(scn, '[data-r="cell"]');
+    const nums = qa2(scn, '[data-r="num"]');
+    const cells = qa2(scn, '[data-r="cell"]');
     const ringc = q2(scn, '[data-r="ringc"]');
     const ringv = q2(scn, '[data-r="ringv"]');
     const rate = Number(((_a2 = ringv == null ? void 0 : ringv.textContent) == null ? void 0 : _a2.replace("%", "")) || 0);
@@ -40144,14 +42720,14 @@ ${bodyText.substring(0, 6e3)}`;
             ctx.clearRect(0, 0, w, h);
             const cx0 = w * 0.26, cy0 = h * 0.55;
             const R = Math.min(w * 0.13, h * 0.21);
-            const p = springUp(at(t, 1.7, 0.5));
+            const p = springUp(at2(t, 1.7, 0.5));
             ctx.lineWidth = 3;
-            ctx.strokeStyle = rgba(pal.line, 0.9);
+            ctx.strokeStyle = rgba2(pal.line, 0.9);
             ctx.beginPath();
             ctx.arc(cx0, cy0, R + 12, 0, Math.PI * 2);
             ctx.stroke();
             ctx.lineWidth = 10;
-            ctx.strokeStyle = rgba(pal.line, 0.5);
+            ctx.strokeStyle = rgba2(pal.line, 0.5);
             ctx.beginPath();
             ctx.arc(cx0, cy0, R, 0, Math.PI * 2);
             ctx.stroke();
@@ -40169,23 +42745,23 @@ ${bodyText.substring(0, 6e3)}`;
           }
         }
         if (ringc) {
-          const p = springUp(at(t, 1.7, 0.5));
-          S(ringc, `opacity:${clamp01(p * 2).toFixed(3)};transform:translate(-50%, -50%) scale(${(0.9 + 0.1 * clamp01(p)).toFixed(3)})`);
-          if (ringv) T(ringv, `${Math.round(rate * clamp01(p))}%`);
+          const p = springUp(at2(t, 1.7, 0.5));
+          S2(ringc, `opacity:${clamp013(p * 2).toFixed(3)};transform:translate(-50%, -50%) scale(${(0.9 + 0.1 * clamp013(p)).toFixed(3)})`);
+          if (ringv) T2(ringv, `${Math.round(rate * clamp013(p))}%`);
         }
         cells.forEach((c, i) => {
           const el = q2(c, '[data-r="num"]');
           const n = Number((el == null ? void 0 : el.dataset.n) || 0);
-          const p = easeOutExpo(at(t, 1.1, 0.7 + i * 0.22));
-          T(el, comma(roll(n, p)));
+          const p = easeOutExpo(at2(t, 1.1, 0.7 + i * 0.22));
+          T2(el, comma(roll(n, p)));
           const depth = 0.6 + i * 0.4;
-          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
+          S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
         });
       }
     };
   }
   function perfC13(scn, _d) {
-    const rows = qa(scn, '[data-r="old3"]');
+    const rows = qa2(scn, '[data-r="old3"]');
     const inn = q2(scn, ".bz-rp-in");
     const dur = 5.6;
     return {
@@ -40193,26 +42769,26 @@ ${bodyText.substring(0, 6e3)}`;
       update({ t }) {
         dolly(inn, t, (r) => `perspective(900px) rotateY(${(r * 3).toFixed(2)}deg)`, 1.05);
         rows.forEach((row, i) => {
-          const p = easeOut(at(t, 0.7, 0.4 + i * 0.42));
-          S(row, `opacity:${p.toFixed(3)};transform:perspective(700px) rotateY(${((1 - p) * -16).toFixed(2)}deg) translateX(${((1 - p) * -18).toFixed(1)}px)`);
+          const p = easeOut2(at2(t, 0.7, 0.4 + i * 0.42));
+          S2(row, `opacity:${p.toFixed(3)};transform:perspective(700px) rotateY(${((1 - p) * -16).toFixed(2)}deg) translateX(${((1 - p) * -18).toFixed(1)}px)`);
           const rank = q2(row, '[data-r="o3rank"]');
           if (rank) {
-            const pr = easeBack(at(t, 0.45, 0.6 + i * 0.42));
-            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -12).toFixed(2)}deg)`);
+            const pr = easeBack2(at2(t, 0.45, 0.6 + i * 0.42));
+            S2(rank, `opacity:${clamp013(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -12).toFixed(2)}deg)`);
           }
           const on = q2(row, '[data-r="o3n"]');
-          if (on) T(on, String(roll(Number(on.dataset.n || 0), easeOutExpo(at(t, 1, 0.9 + i * 0.42)))));
+          if (on) T2(on, String(roll(Number(on.dataset.n || 0), easeOutExpo(at2(t, 1, 0.9 + i * 0.42)))));
           const tag = q2(row, '[data-r="o3tag"]');
           if (tag) {
-            const tp = easeBack(at(t, 0.5, 1.4 + i * 0.42));
-            S(tag, `opacity:${clamp01(tp * 2).toFixed(3)};transform:scale(${(1 + (1 - tp) * 1.3).toFixed(3)}) rotate(${(-2 + (1 - tp) * -14).toFixed(2)}deg)`);
+            const tp = easeBack2(at2(t, 0.5, 1.4 + i * 0.42));
+            S2(tag, `opacity:${clamp013(tp * 2).toFixed(3)};transform:scale(${(1 + (1 - tp) * 1.3).toFixed(3)}) rotate(${(-2 + (1 - tp) * -14).toFixed(2)}deg)`);
           }
         });
       }
     };
   }
   function perfC14(scn, _d) {
-    const rows = qa(scn, '[data-r="row"]');
+    const rows = qa2(scn, '[data-r="row"]');
     const ghost = q2(scn, '[data-r="ghost"]');
     const gN = Math.round(Number((ghost == null ? void 0 : ghost.textContent) || 0));
     const inn = q2(scn, ".bz-rp-in");
@@ -40222,25 +42798,25 @@ ${bodyText.substring(0, 6e3)}`;
       update({ t, px, py }) {
         dolly(inn, t, (r) => `translateX(${(r * 2.2).toFixed(2)}%)`, 0.95);
         rows.forEach((row, i) => {
-          const p = easeOut(at(t, 0.5, 0.3 + i * 0.24));
-          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 30).toFixed(1)}px)`);
+          const p = easeOut2(at2(t, 0.5, 0.3 + i * 0.24));
+          S2(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 30).toFixed(1)}px)`);
           const bar = q2(row, '[data-r="bar"]');
-          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.55 + i * 0.24)).toFixed(4)})`);
+          if (bar) S2(bar, `transform:scaleX(${easeInOut2(at2(t, 0.9, 0.55 + i * 0.24)).toFixed(4)})`);
           const cnt = q2(row, '[data-r="cnt"]');
-          if (cnt) T(cnt, `${roll(Number(cnt.dataset.n || 0), easeOutExpo(at(t, 0.9, 0.6 + i * 0.24)))} 篇`);
+          if (cnt) T2(cnt, `${roll(Number(cnt.dataset.n || 0), easeOutExpo(at2(t, 0.9, 0.6 + i * 0.24)))} 篇`);
         });
         if (ghost) {
-          const p = easeBack(at(t, 0.9, 1.6));
-          S(ghost, `opacity:${clamp01(p * 1.4).toFixed(3)};transform:translate(${(px * 7).toFixed(1)}px, ${(py * 5).toFixed(1)}px) rotate(${(-3 + (1 - p) * -5).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.3).toFixed(3)})`);
-          T(ghost, comma(roll(gN, easeOutExpo(at(t, 1.2, 1.7)))));
+          const p = easeBack2(at2(t, 0.9, 1.6));
+          S2(ghost, `opacity:${clamp013(p * 1.4).toFixed(3)};transform:translate(${(px * 7).toFixed(1)}px, ${(py * 5).toFixed(1)}px) rotate(${(-3 + (1 - p) * -5).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.3).toFixed(3)})`);
+          T2(ghost, comma(roll(gN, easeOutExpo(at2(t, 1.2, 1.7)))));
         }
       }
     };
   }
   function perfC15(scn, _d) {
     const cv = q2(scn, '[data-cv="c15"]');
-    const cells = qa(scn, '[data-r="tcell"]');
-    const nums = qa(scn, '[data-r="tnum"]');
+    const cells = qa2(scn, '[data-r="tcell"]');
+    const nums = qa2(scn, '[data-r="tnum"]');
     const avgrow = q2(scn, '[data-r="avgrow"]');
     const avglead = q2(scn, '[data-r="avglead"]');
     const avgv = q2(scn, '[data-r="avgv"]');
@@ -40252,19 +42828,19 @@ ${bodyText.substring(0, 6e3)}`;
       dur,
       update({ t, pal, px, py }) {
         dolly(inn, t, (r) => `scale(${(1 + r * 0.035).toFixed(4)})`, 1.5, 0.1);
-        if (h2) S(h2, `transform:translateX(${(px * -5).toFixed(1)}px)`);
+        if (h2) S2(h2, `transform:translateX(${(px * -5).toFixed(1)}px)`);
         if (cv) {
           const f = fit2(cv);
           if (f) {
             const { ctx, w, h } = f;
             ctx.clearRect(0, 0, w, h);
-            const p = easeInOut(at(t, 2.4, 0.2));
+            const p = easeInOut2(at2(t, 2.4, 0.2));
             if (p > 0 && p < 1) {
-              const x = lerp(-w * 0.3, w * 1.1, p);
+              const x = lerp2(-w * 0.3, w * 1.1, p);
               const g = ctx.createLinearGradient(x - 120, 0, x + 120, h);
-              g.addColorStop(0, rgba(pal.ink, 0));
-              g.addColorStop(0.5, rgba(pal.ink, 0.035));
-              g.addColorStop(1, rgba(pal.ink, 0));
+              g.addColorStop(0, rgba2(pal.ink, 0));
+              g.addColorStop(0.5, rgba2(pal.ink, 0.035));
+              g.addColorStop(1, rgba2(pal.ink, 0));
               ctx.fillStyle = g;
               ctx.fillRect(0, 0, w, h);
             }
@@ -40274,25 +42850,25 @@ ${bodyText.substring(0, 6e3)}`;
           var _a2, _b2;
           const el = (_a2 = nums[i]) != null ? _a2 : null;
           const n = Number((el == null ? void 0 : el.dataset.n) || 0);
-          const p = easeOutExpo(at(t, 1.3, 0.4 + i * 0.28));
-          T(el, comma(roll(n, p)));
+          const p = easeOutExpo(at2(t, 1.3, 0.4 + i * 0.28));
+          T2(el, comma(roll(n, p)));
           const depth = (_b2 = depths[i]) != null ? _b2 : 1;
           const dip = i === 1 ? 12 : 0;
-          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
+          S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
         });
-        if (avgrow) S(avgrow, `opacity:${at(t, 0.7, 2.4).toFixed(3)}`);
-        if (avglead) S(avglead, `transform:scaleX(${easeOut(at(t, 0.9, 2.6)).toFixed(4)})`);
-        if (avgv) S(avgv, `opacity:${at(t, 0.5, 2.9).toFixed(3)}`);
+        if (avgrow) S2(avgrow, `opacity:${at2(t, 0.7, 2.4).toFixed(3)}`);
+        if (avglead) S2(avglead, `transform:scaleX(${easeOut2(at2(t, 0.9, 2.6)).toFixed(4)})`);
+        if (avgv) S2(avgv, `opacity:${at2(t, 0.5, 2.9).toFixed(3)}`);
       }
     };
   }
   function perfC16(scn, d) {
     const cv = q2(scn, '[data-cv="c16"]');
-    const chars = qa(scn, '[data-r="end"] span');
-    const seal = q2(scn, '[data-r="seal"]');
+    const chars = qa2(scn, '[data-r="end"] span');
+    const seal2 = q2(scn, '[data-r="seal"]');
     const inn = q2(scn, ".bz-rp-in");
     const nConf = Math.min(60, 14 + Math.round(d.sessions / 3));
-    const rand = rng(66);
+    const rand = rng2(66);
     const flakes = Array.from({ length: nConf }, () => ({
       x: rand(),
       y0: -0.05 - rand() * 0.2,
@@ -40320,44 +42896,44 @@ ${bodyText.substring(0, 6e3)}`;
               { x: w * 0.62, y: h * 0.4, t0: 1, seed: 91 }
             ];
             for (const b of bursts) {
-              const rand2 = rng(b.seed);
+              const rand2 = rng2(b.seed);
               for (let i = 0; i < 26; i++) {
                 const ang = i / 26 * Math.PI * 2 + rand2() * 0.5;
                 const sp2 = 60 + rand2() * 130;
-                const p = at(t, 1.5, b.t0);
+                const p = at2(t, 1.5, b.t0);
                 if (p <= 0 || p >= 1) continue;
-                let x = b.x + Math.cos(ang) * sp2 * easeOut(p);
-                let y = b.y + Math.sin(ang) * sp2 * easeOut(p) + 130 * p * p;
+                let x = b.x + Math.cos(ang) * sp2 * easeOut2(p);
+                let y = b.y + Math.sin(ang) * sp2 * easeOut2(p) + 130 * p * p;
                 const off = repel(lx, ly, pin, x, y, 90, 40);
                 x += off.dx;
                 y += off.dy;
                 const a = Math.sin(Math.PI * p) * 0.6;
                 ctx.beginPath();
-                ctx.fillStyle = rgba(i % 7 === 0 ? pal.accent : pal.ink, a);
+                ctx.fillStyle = rgba2(i % 7 === 0 ? pal.accent : pal.ink, a);
                 ctx.arc(x, y, 1 + rand2() * 2.4, 0, Math.PI * 2);
                 ctx.fill();
               }
             }
             for (const fk of flakes) {
-              const p = at(t, 3.4, 0.4 + fk.sp * 2);
+              const p = at2(t, 3.4, 0.4 + fk.sp * 2);
               if (p <= 0 || p >= 1) continue;
               const fx = fk.x * w + Math.sin(fk.sw + t * 2) * 16;
               const fy = (fk.y0 + p * 1.1) * h;
               ctx.save();
               ctx.translate(fx, fy);
               ctx.rotate(fk.rot + t * fk.vr);
-              ctx.fillStyle = rgba(pal.muted, Math.sin(Math.PI * p) * 0.5);
+              ctx.fillStyle = rgba2(pal.muted, Math.sin(Math.PI * p) * 0.5);
               ctx.fillRect(-fk.sz / 2, -fk.sz / 4, fk.sz, fk.sz / 2);
               ctx.restore();
             }
           }
         }
         chars.forEach((c, i) => {
-          const p = easeBack(at(t, 0.6, 0.4 + i * 0.22));
-          S(c, `opacity:${clamp01(p).toFixed(3)};transform:translateY(${((1 - p) * 26).toFixed(1)}px) rotate(${((1 - p) * 4).toFixed(2)}deg)`);
+          const p = easeBack2(at2(t, 0.6, 0.4 + i * 0.22));
+          S2(c, `opacity:${clamp013(p).toFixed(3)};transform:translateY(${((1 - p) * 26).toFixed(1)}px) rotate(${((1 - p) * 4).toFixed(2)}deg)`);
         });
-        const sp = easeBack(at(t, 0.6, 1.9));
-        S(seal, `opacity:${clamp01(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
+        const sp = easeBack2(at2(t, 0.6, 1.9));
+        S2(seal2, `opacity:${clamp013(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
       }
     };
   }
@@ -40385,23 +42961,23 @@ ${bodyText.substring(0, 6e3)}`;
     bind("c16", perfC16);
     return m;
   }
-  var SERIF, HEI, clamp01, at, easeOut, easeInOut, easeBack, easeOutExpo, springUp, lerp, roll, comma, sdelta, lastStyle, lastText, q2, qa;
-  var init_motions = __esm({
+  var SERIF, HEI, clamp013, at2, easeOut2, easeInOut2, easeBack2, easeOutExpo, springUp, lerp2, roll, comma, sdelta, lastStyle2, lastText2, q2, qa2;
+  var init_motions2 = __esm({
     "src/clipbook/press/motions.ts"() {
       SERIF = 'Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif';
       HEI = `'Microsoft YaHei', sans-serif`;
-      clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
-      at = (t, dur, delay = 0) => clamp01((t - delay) / Math.max(dur, 1e-4));
-      easeOut = (x) => 1 - Math.pow(1 - x, 3);
-      easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-      easeBack = (x) => {
+      clamp013 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      at2 = (t, dur, delay = 0) => clamp013((t - delay) / Math.max(dur, 1e-4));
+      easeOut2 = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut2 = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack2 = (x) => {
         const c1 = 1.70158, c3 = c1 + 1;
         return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
       };
       easeOutExpo = (x) => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
       springUp = (x) => x >= 1 ? 1 : 1 - Math.exp(-5.2 * x) * Math.cos(3.1 * Math.PI * x);
-      lerp = (a, b, t) => a + (b - a) * t;
-      roll = (n, x) => Math.round(n * clamp01(x));
+      lerp2 = (a, b, t) => a + (b - a) * t;
+      roll = (n, x) => Math.round(n * clamp013(x));
       comma = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
       sdelta = (a, b) => {
         let d = a - b;
@@ -40409,15 +42985,15 @@ ${bodyText.substring(0, 6e3)}`;
         while (d < -Math.PI) d += Math.PI * 2;
         return d;
       };
-      lastStyle = /* @__PURE__ */ new WeakMap();
-      lastText = /* @__PURE__ */ new WeakMap();
+      lastStyle2 = /* @__PURE__ */ new WeakMap();
+      lastText2 = /* @__PURE__ */ new WeakMap();
       q2 = (root, sel) => root.querySelector(sel);
-      qa = (root, sel) => [...root.querySelectorAll(sel)];
+      qa2 = (root, sel) => [...root.querySelectorAll(sel)];
     }
   });
 
   // src/clipbook/press/engine.ts
-  function qa2(root, sel) {
+  function qa3(root, sel) {
     return [...root.querySelectorAll(sel)];
   }
   function bindPress(root, data) {
@@ -40428,13 +43004,13 @@ ${bodyText.substring(0, 6e3)}`;
     if (!sc || !film) return handle;
     const scEl = sc;
     const filmEl = film;
-    const scenes = qa2(film, ".bz-rp-scn");
+    const scenes = qa3(film, ".bz-rp-scn");
     if (!scenes.length) return handle;
     const perfs = buildPressPerfs(film, data);
     const box = (_a2 = filmEl.closest(".bz-rp-box")) != null ? _a2 : root;
-    const ticks = qa2(box, ".bz-rp-tick");
+    const ticks = qa3(box, ".bz-rp-tick");
     const shutter = box.querySelector('[data-r="shut"]');
-    let pal = palette(root);
+    let pal = palette2(root);
     let cur = -1;
     let t0 = performance.now();
     let raf = 0;
@@ -40449,7 +43025,7 @@ ${bodyText.substring(0, 6e3)}`;
     const unit = () => Math.max(1, scEl.clientHeight);
     const fitHeight = () => filmEl.style.setProperty("--rp-h", `${unit()}px`);
     fitHeight();
-    const indexAt = () => clamp2(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    const indexAt = () => clamp3(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
     function hud(i, p) {
       ticks.forEach((tk, k) => {
         if (k === i) tk.setAttribute("data-on", "1");
@@ -40504,7 +43080,7 @@ ${bodyText.substring(0, 6e3)}`;
     };
     function goTo(i, opts) {
       var _a3, _b2;
-      const target = clamp2(i, 0, scenes.length - 1);
+      const target = clamp3(i, 0, scenes.length - 1);
       navTarget = target;
       navUntil = performance.now() + 900;
       if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
@@ -40537,7 +43113,7 @@ ${bodyText.substring(0, 6e3)}`;
     function onWheel(e) {
       if (dead) return;
       const now = performance.now();
-      const fresh = now - lastWheel > GESTURE_GAP;
+      const fresh = now - lastWheel > GESTURE_GAP2;
       lastWheel = now;
       if (!fresh) {
         e.preventDefault();
@@ -40568,12 +43144,12 @@ ${bodyText.substring(0, 6e3)}`;
       if (dead) return;
       clearTimeout(fallback);
       tick(performance.now());
-      raf = rafFn(() => {
+      raf = rafFn2(() => {
         clearTimeout(fallback);
         pump();
       });
       fallback = setTimeout(() => {
-        rafStop(raf);
+        rafStop2(raf);
         pump();
       }, 220);
     }
@@ -40584,7 +43160,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (!perf) return;
       const t = (now - t0) / 1e3;
       play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
-      hud(cur, clamp012(t / perf.dur));
+      hud(cur, clamp014(t / perf.dur));
     }
     const onOvlClick = (e) => {
       var _a3;
@@ -40607,7 +43183,7 @@ ${bodyText.substring(0, 6e3)}`;
       py = 0;
     };
     const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
-      pal = palette(root);
+      pal = palette2(root);
     }) : null;
     mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
@@ -40627,7 +43203,7 @@ ${bodyText.substring(0, 6e3)}`;
     pump();
     handle.stop = () => {
       dead = true;
-      rafStop(raf);
+      rafStop2(raf);
       clearTimeout(fallback);
       mo == null ? void 0 : mo.disconnect();
       ro == null ? void 0 : ro.disconnect();
@@ -40641,18 +43217,18 @@ ${bodyText.substring(0, 6e3)}`;
     };
     return handle;
   }
-  var GESTURE_GAP, rafFn, rafStop, clamp2, clamp012;
-  var init_engine = __esm({
+  var GESTURE_GAP2, rafFn2, rafStop2, clamp3, clamp014;
+  var init_engine2 = __esm({
     "src/clipbook/press/engine.ts"() {
-      init_motions();
-      GESTURE_GAP = 340;
-      rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
-      rafStop = (id) => {
+      init_motions2();
+      GESTURE_GAP2 = 340;
+      rafFn2 = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop2 = (id) => {
         if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
         else clearTimeout(id);
       };
-      clamp2 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
-      clamp012 = (x) => clamp2(x, 0, 1);
+      clamp3 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp014 = (x) => clamp3(x, 0, 1);
     }
   });
 
@@ -40789,12 +43365,12 @@ ${bodyText.substring(0, 6e3)}`;
       init_dom();
       init_esc_manager();
       init_flow();
-      init_data5();
+      init_data6();
       init_news_data();
       init_report_ui();
-      init_data10();
-      init_view();
-      init_engine();
+      init_data11();
+      init_view2();
+      init_engine2();
       pressOvl = null;
       pressHandle = null;
       pressEsc = null;
@@ -40879,7 +43455,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_provider();
       init_file_sync();
       init_save();
-      init_data5();
+      init_data6();
       agent2 = createFileSync({
         logTag: "[clipbook-file-sync]",
         failNotice: "剪藏本同步失败，数据可能不一致",
@@ -42105,22 +44681,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -42157,18 +44733,18 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M6.articles = data.articles;
-    M6.stats = data.stats;
-    M6.sidecar = sidecar;
-    M6.clipNotes = clipNotes;
-    M6.clipUrls = clipUrls;
-    M6.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
+    M7.articles = data.articles;
+    M7.stats = data.stats;
+    M7.sidecar = sidecar;
+    M7.clipNotes = clipNotes;
+    M7.clipUrls = clipUrls;
+    M7.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M7.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
       init_news_data();
-      init_data5();
+      init_data6();
       init_anchor();
       init_scan();
       init_store();
@@ -42200,7 +44776,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M6.appRef = app;
+    M7.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -42208,13 +44784,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M6.appRef);
+      buildDom2(M7.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M6.open = true;
+    M7.open = true;
     beginSession();
     pendingBoot = true;
     lastReaderId = "";
@@ -42235,7 +44811,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M6.open && overlayEl2) return Promise.resolve();
+    if (!M7.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -42252,7 +44828,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M6.open) renderAll3();
+      if (M7.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -42265,7 +44841,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M6.open) return;
+    if (!M7.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -42288,11 +44864,11 @@ ${c.trim()}
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) motionPanelOut(overlayEl2, () => {
-      if (!M6.open && overlayEl2) overlayEl2.style.display = "none";
+      if (!M7.open && overlayEl2) overlayEl2.style.display = "none";
     });
   }
   function unloadPanel() {
@@ -42330,7 +44906,7 @@ ${c.trim()}
     }
     clipBodyCache.clear();
     clipBodyInflight.clear();
-    motionTeardown();
+    motionTeardown2();
     pendingBoot = false;
     renderMood = "mute";
     panelShownOnce = false;
@@ -42338,8 +44914,8 @@ ${c.trim()}
     lastListCurId = "";
     pendingFoldKind = null;
     setSearchKw("");
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -42438,14 +45014,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
+      if (t.closest("[data-clip-open-note]") && M7.cur) openNote(M7.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M6.cur) openNote(M6.cur);
+        if (M7.cur) openNote(M7.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -42492,8 +45068,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M6.cur);
+      if (((_a3 = M7.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M7.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -42515,9 +45091,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M6.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M7.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M7.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M7.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -42532,7 +45108,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M6.mobDetailOpen) {
+        if (M7.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -42578,13 +45154,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M6.sel = {
+    M7.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -42594,7 +45170,7 @@ ${c.trim()}
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M7.sel.kind && String(src.platform || "") === M7.sel.platform && (src.up ? String(src.up) : null) === M7.sel.up && String(src.site || "") === M7.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -42615,7 +45191,7 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     if (pendingBoot) {
       renderMood = "boot";
       pendingBoot = false;
@@ -42625,16 +45201,16 @@ ${c.trim()}
     renderMood = "mute";
   }
   function renderAllNow() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M6.mobDetailOpen) {
-      if (M6.cur) renderMobDetail();
+    if (M7.mobDetailOpen) {
+      if (M7.cur) renderMobDetail();
       else {
-        M6.mobDetailOpen = false;
+        M7.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -42642,25 +45218,25 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
   function renderHeadIssue() {
     if (!overlayEl2) return;
     overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
-      el.textContent = `第 ${M6.articles.length} 期`;
+      el.textContent = `第 ${M7.articles.length} 期`;
     });
   }
   function currentSrc() {
-    const s = M6.sel;
+    const s = M7.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], currentSrc(), M7.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -42676,7 +45252,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
+    const b = bucketByState(queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -42684,7 +45260,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -42729,39 +45305,39 @@ ${c.trim()}
   function renderRailNow() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, source2, M7.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
-      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M7.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M7.sidecar.savedArchive || []).map((x) => x.url)), M7.clipUrls)) {
+      const full = queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, { kind: "site", site: row.site }, M7.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
+      const active2 = M7.sel.kind === "site" && M7.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M7.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
+      const active2 = M7.sel.kind === "inbox" && M7.sel.platform === "B站" && M7.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M6.sel.kind === "clip";
+    const clipActive = M7.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M7.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -42786,9 +45362,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M7.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M6.open) showPanel();
+      if (!M7.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -42801,10 +45377,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -42845,7 +45421,7 @@ ${c.trim()}
     if (!listEl) return;
     const foldKind = pendingFoldKind;
     pendingFoldKind = null;
-    const curId = M6.cur ? M6.cur.id : "";
+    const curId = M7.cur ? M7.cur.id : "";
     const pressed = !!curId && curId !== lastListCurId && renderMood !== "boot";
     lastListCurId = curId;
     motionListRendered(listEl, renderMood, foldKind, pressed);
@@ -42859,26 +45435,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
-        M6.cur = list[0];
+      if (!list.some((a) => a.id === (M7.cur && M7.cur.id))) {
+        M7.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M6.list = list;
+      listEl.innerHTML = tocListHtml(list, M7.cur ? M7.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M7.list = list;
       bindItemMenus();
       return;
     }
@@ -42886,27 +45462,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
-      M6.cur = flat[0];
+    if (!flat.some((a) => a.id === (M7.cur && M7.cur.id))) {
+      M7.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M6.cur ? M6.cur.id : null;
+    const curId = M7.cur ? M7.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
-        M6.list = [];
+        M7.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M6.list = hit;
+      M7.list = hit;
       bindItemMenus();
       return;
     }
@@ -42924,7 +45500,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M6.list = flat;
+    M7.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -42947,10 +45523,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M6.list;
+    const all = M7.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M7.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -43026,8 +45602,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M7.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M7.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -43043,14 +45619,14 @@ ${c.trim()}
   function renderReader() {
     const prevId = lastReaderId;
     renderReaderNow();
-    const curId = M6.cur ? M6.cur.id : "";
+    const curId = M7.cur ? M7.cur.id : "";
     lastReaderId = curId;
     if (!readerEl || !curId || prevId === curId) return;
     motionReaderRendered(readerEl, prevId === "" ? "first" : readerDir, renderMood);
   }
   function renderReaderNow() {
     if (!readerEl) return;
-    const a = M6.cur;
+    const a = M7.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -43079,7 +45655,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -43090,13 +45666,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M7.cur && M7.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -43111,11 +45687,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M7.cur && M7.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
+    if (M7.mobDetailOpen && M7.cur && M7.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -43157,12 +45733,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M7.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
+    const idx = M7.cur ? list.findIndex((x) => x.id === M7.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M6.cur || next.id !== M6.cur.id)) {
+    if (next && (!M7.cur || next.id !== M7.cur.id)) {
       readerDir = delta >= 0 ? "fwd" : "back";
       selectArticle(next.id);
     }
@@ -43174,19 +45750,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M6.cur || M6.cur.id !== a.id;
+    const changed = !M7.cur || M7.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M6.cur) {
+    if (changed && M7.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M6.cur.id, sc.scrollTop);
+        readScrollMemo.set(M7.cur.id, sc.scrollTop);
       }
     }
-    M6.cur = a;
+    M7.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -43203,7 +45779,7 @@ ${c.trim()}
     const ok = await flowSave(a);
     if (!ok) return;
     await refreshAfterAction();
-    if (M6.mobDetailOpen && mobDetailEl) {
+    if (M7.mobDetailOpen && mobDetailEl) {
       motionArchStamp(mobDetailEl.querySelector("[data-clip-mob-detail-body]"));
     } else {
       motionArchStamp(readerEl ? readerEl.querySelector(".bz-clip-art-title") : null);
@@ -43331,25 +45907,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M7.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M7.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
+      M7.cur = flat.find((x) => x.id === prevId) || M7.cur;
     } else if (flat.length) {
-      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
+      M7.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M7.cur && M7.cur.id !== prevId;
     } else {
-      M6.cur = null;
+      M7.cur = null;
     }
-    if (advanced && M6.cur) markReadOnOpen(M6.cur);
+    if (advanced && M7.cur) markReadOnOpen(M7.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M7.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -43383,9 +45959,9 @@ ${c.trim()}
   }
   function renderMobTocNow() {
     if (!mobListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const savedUrls = new Set((M7.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -43496,8 +46072,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M6.cur = a;
-    M6.mobDetailOpen = true;
+    M7.cur = a;
+    M7.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) {
@@ -43511,12 +46087,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M7.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M6.stats = res.stats;
-      if (M6.open && !M6.mobDetailOpen) {
+      if (res && res.changed && res.stats) M7.stats = res.stats;
+      if (M7.open && !M7.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -43525,8 +46101,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M6.cur) return;
-    const a = M6.cur;
+    if (!mobDetailEl || !M7.cur) return;
+    const a = M7.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -43558,7 +46134,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -43631,7 +46207,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -43648,7 +46224,7 @@ ${c.trim()}
     motionSelbarIn(bar);
   }
   function showImageSelBar(imgEl) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -43667,7 +46243,7 @@ ${c.trim()}
     motionSelbarIn(bar);
   }
   function checkTextSelection() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -43730,7 +46306,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
+    return M7.cur && M7.cur.id === articleId ? M7.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -43788,10 +46364,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M6.mobDetailOpen) return;
+    if (!mobDetailEl || !M7.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -43818,12 +46394,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M6.cur || M6.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M6.cur);
-    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
+    if (!M7.cur || M7.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M7.cur);
+    if (M7.mobDetailOpen) refreshMobBodyInPlace(M7.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -43840,8 +46416,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -43870,7 +46446,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M6.sidecar = res.sidecar;
+      if (res.sidecar) M7.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -43928,7 +46504,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -44078,8 +46654,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M6.clipNotes = null;
-        M6.clipUrls = /* @__PURE__ */ new Set();
+        M7.clipNotes = null;
+        M7.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -44109,7 +46685,7 @@ ${c.trim()}
       init_store();
       init_render8();
       init_state6();
-      init_motion();
+      init_motion2();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
@@ -44569,7 +47145,7 @@ ${c.trim()}
     return legacyMigrateInFlight;
   }
   var FORM_SNAPSHOT_FIELDS, legacyMigrateInFlight, DataManager;
-  var init_data11 = __esm({
+  var init_data12 = __esm({
     "src/favorites/data.ts"() {
       init_json_store();
       init_storage();
@@ -44726,7 +47302,7 @@ ${c.trim()}
   });
 
   // src/favorites/motion.ts
-  function reduced2() {
+  function reduced4() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -44740,8 +47316,8 @@ ${c.trim()}
       return false;
     }
   }
-  function waapi2(el, frames, opts) {
-    if (!el || reduced2() || typeof el.animate !== "function") {
+  function waapi3(el, frames, opts) {
+    if (!el || reduced4() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -44758,16 +47334,16 @@ ${c.trim()}
       return null;
     }
   }
-  function after2(ms, fn) {
+  function after3(ms, fn) {
     const id = setTimeout(() => {
-      timers2.delete(id);
+      timers3.delete(id);
       fn();
     }, ms);
-    timers2.add(id);
+    timers3.add(id);
   }
-  function cancelPending() {
-    timers2.forEach(clearTimeout);
-    timers2.clear();
+  function cancelPending2() {
+    timers3.forEach(clearTimeout);
+    timers3.clear();
   }
   function findCard(board, id) {
     try {
@@ -44783,15 +47359,15 @@ ${c.trim()}
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.move + 40, easing: E2.out });
-    waapi2(
+    waapi3(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.move + 40, easing: E3.out });
+    waapi3(
       panel2,
       [
         { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
         { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 460, easing: E2.out }
+      { duration: 460, easing: E3.out }
     );
   }
   function motionPanelOut2(overlay2, done) {
@@ -44807,25 +47383,25 @@ ${c.trim()}
         done();
       }
     };
-    waapi2(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M8.fast + 40, easing: E2.out, fill: "forwards" });
-    const a = waapi2(
+    waapi3(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M9.fast + 40, easing: E3.out, fill: "forwards" });
+    const a = waapi3(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M8.fast + 40, easing: E2.out, fill: "forwards" }
+      { duration: M9.fast + 40, easing: E3.out, fill: "forwards" }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    setTimeout(finish, M8.fast + 120);
+    setTimeout(finish, M9.fast + 120);
   }
   function motionRendered(overlay2, boot) {
     var _a2, _b2;
-    cancelPending();
+    cancelPending2();
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
     const board = overlay2.querySelector("[data-fav-content]");
@@ -44833,48 +47409,48 @@ ${c.trim()}
       if (board) ensureEmptyFloat(board);
       return;
     }
-    if (reduced2()) return;
+    if (reduced4()) return;
     const h1 = panel2.querySelector(".bz-fav-head h1");
-    if (h1) waapi2(
+    if (h1) waapi3(
       h1,
       [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
-      { duration: M8.base, easing: E2.out, fill: "both" }
+      { duration: M9.base, easing: E3.out, fill: "both" }
     );
     const chips = [...panel2.querySelectorAll("[data-fav-tags] button")];
     chips.forEach((chip2, i) => {
-      waapi2(
+      waapi3(
         chip2,
         [
           { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
           { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M8.base + 60, delay: 60 + Math.min(i, 13) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M9.base + 60, delay: 60 + Math.min(i, 13) * STAG3, easing: E3.out, fill: "both" }
       );
     });
     if (board) {
       const cards = [...board.querySelectorAll(".bz-fav-card")];
       const cold = (_b2 = (_a2 = cards[0]) == null ? void 0 : _a2.classList.contains("bz-fav-arch")) != null ? _b2 : false;
       cards.forEach((card, i) => {
-        const delay = 200 + Math.min(i, 16) * STAG2;
+        const delay = 200 + Math.min(i, 16) * STAG3;
         if (cold) {
-          waapi2(
+          waapi3(
             card,
             [
               { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
               { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
             ],
-            { duration: M8.base + 100, delay, easing: E2.out, fill: "both" }
+            { duration: M9.base + 100, delay, easing: E3.out, fill: "both" }
           );
         } else {
-          waapi2(
+          waapi3(
             card,
             [
               { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
               { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: M8.base + 90, delay, easing: E2.out, fill: "both" }
+            { duration: M9.base + 90, delay, easing: E3.out, fill: "both" }
           );
           const tape = card.querySelector(".bz-fav-tape");
           if (tape) tapePress(tape, delay + 140);
@@ -44882,10 +47458,10 @@ ${c.trim()}
       });
       const empty = board.querySelector(".bz-fav-empty");
       if (empty && !cards.length) {
-        waapi2(
+        waapi3(
           empty,
           [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
-          { duration: M8.base + 80, delay: 240, easing: E2.out, fill: "both" }
+          { duration: M9.base + 80, delay: 240, easing: E3.out, fill: "both" }
         );
       }
       ensureEmptyFloat(board);
@@ -44893,27 +47469,27 @@ ${c.trim()}
   }
   function motionFilterSwitch(board, tagsRow, rewrite) {
     rewrite();
-    if (reduced2() || typeof board.animate !== "function") return;
-    waapi2(
+    if (reduced4() || typeof board.animate !== "function") return;
+    waapi3(
       board,
       [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-      { duration: M8.fast + 60, easing: E2.out }
+      { duration: M9.fast + 60, easing: E3.out }
     );
     const fresh = board.querySelectorAll(".bz-fav-card");
     const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
     fresh.forEach((card, i) => {
-      waapi2(
+      waapi3(
         card,
         // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
         cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
-        { duration: M8.base, delay: Math.min(i, 14) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M9.base, delay: Math.min(i, 14) * STAG3, easing: E3.out, fill: "both" }
       );
     });
     const ne = board.querySelector(".bz-fav-empty");
-    if (ne) waapi2(
+    if (ne) waapi3(
       ne,
       [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-      { duration: M8.base, easing: E2.out, fill: "both" }
+      { duration: M9.base, easing: E3.out, fill: "both" }
     );
     if (tagsRow) chipSnap(tagsRow);
     ensureEmptyFloat(board);
@@ -44921,10 +47497,10 @@ ${c.trim()}
   function chipSnap(row) {
     const on = row.querySelector("button.bz-fav-on");
     if (!on) return;
-    waapi2(
+    waapi3(
       on,
       [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
-      { duration: M8.base - 20, easing: E2.out }
+      { duration: M9.base - 20, easing: E3.out }
     );
   }
   function motionBindChipFeel(row) {
@@ -44933,12 +47509,12 @@ ${c.trim()}
     const pressed = /* @__PURE__ */ new WeakMap();
     row.addEventListener("pointerover", (e) => {
       var _a2, _b2, _c, _d;
-      if (!canHover() || reduced2()) return;
+      if (!canHover() || reduced4()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       pressed.delete(chip2);
-      waapi2(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M8.fast, easing: E2.out });
+      waapi3(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M9.fast, easing: E3.out });
     });
     row.addEventListener("pointerout", (e) => {
       var _a2, _b2, _c, _d;
@@ -44946,22 +47522,22 @@ ${c.trim()}
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       if (pressed.get(chip2)) return;
-      waapi2(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M8.fast, easing: E2.out });
+      waapi3(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M9.fast, easing: E3.out });
     });
     row.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced2()) return;
+      if (reduced4()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       pressed.set(chip2, Date.now());
-      waapi2(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      waapi3(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E3.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !pressed.get(chip2)) return;
       pressed.delete(chip2);
-      waapi2(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M8.base - 60, easing: E2.out });
+      waapi3(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M9.base - 60, easing: E3.out });
     };
     row.addEventListener("pointerup", release);
     row.addEventListener("pointercancel", release);
@@ -44973,11 +47549,11 @@ ${c.trim()}
     let held = null;
     content.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced2()) return;
+      if (reduced4()) return;
       const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
       if (!card) return;
       held = card;
-      waapi2(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      waapi3(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E3.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
@@ -44986,34 +47562,34 @@ ${c.trim()}
       if (!target) return;
       if (card && card !== held) return;
       held = null;
-      waapi2(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M8.move + 40, easing: E2.out });
+      waapi3(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M9.move + 40, easing: E3.out });
     };
     content.addEventListener("pointerup", release);
     content.addEventListener("pointercancel", release);
     content.addEventListener("pointerleave", release);
   }
   function motionCardPick(card) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced4()) return;
+    waapi3(
       card,
       [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
-      { duration: M8.move + 160, easing: E2.out }
+      { duration: M9.move + 160, easing: E3.out }
     );
   }
   function tapePress(tape, delay) {
     const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
-    waapi2(
+    waapi3(
       tape,
       [
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
       ],
-      { duration: M8.move + 80, delay, easing: E2.out }
+      { duration: M9.move + 80, delay, easing: E3.out }
     );
   }
   function sheen(card, delay) {
-    if (reduced2() || card.querySelector(".bz-favm-sheen")) return;
+    if (reduced4() || card.querySelector(".bz-favm-sheen")) return;
     const wrap2 = document.createElement("span");
     wrap2.className = "bz-favm-sheen";
     wrap2.setAttribute("aria-hidden", "true");
@@ -45021,62 +47597,62 @@ ${c.trim()}
     band.className = "bz-favm-sheen-band";
     wrap2.appendChild(band);
     card.appendChild(wrap2);
-    after2(delay, () => {
-      const a = waapi2(
+    after3(delay, () => {
+      const a = waapi3(
         band,
         [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
-        { duration: 620, easing: E2.out }
+        { duration: 620, easing: E3.out }
       );
-      after2(a ? 680 : 0, () => wrap2.remove());
+      after3(a ? 680 : 0, () => wrap2.remove());
     });
   }
   function motionCardLanded(board, id, kind) {
-    if (reduced2()) return;
+    if (reduced4()) return;
     const card = findCard(board, id);
     if (!card) return;
     if (kind === "add") {
-      waapi2(
+      waapi3(
         card,
         [
           { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
           { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
           { opacity: 1, transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M8.base + 160, easing: E2.out }
+        { duration: M9.base + 160, easing: E3.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 100);
       sheen(card, 140);
     } else if (kind === "edit") {
-      waapi2(
+      waapi3(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M8.base + 80, easing: E2.out }
+        { duration: M9.base + 80, easing: E3.out }
       );
     } else if (kind === "pin") {
-      waapi2(
+      waapi3(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M8.base + 140, easing: E2.out }
+        { duration: M9.base + 140, easing: E3.out }
       );
     } else {
-      waapi2(
+      waapi3(
         card,
         [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
-        { duration: M8.base + 100, easing: E2.out }
+        { duration: M9.base + 100, easing: E3.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 120);
     }
   }
   function motionCaptureRects(board) {
-    if (!board || reduced2() || typeof board.animate !== "function") return null;
+    if (!board || reduced4() || typeof board.animate !== "function") return null;
     const map = /* @__PURE__ */ new Map();
     board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
       const r = c.getBoundingClientRect();
@@ -45085,8 +47661,8 @@ ${c.trim()}
     return map;
   }
   function motionPinFlip(board, before, pinnedId) {
-    if (!before || before.size === 0 || reduced2()) {
-      if (!reduced2()) motionCardLanded(board, pinnedId, "pin");
+    if (!before || before.size === 0 || reduced4()) {
+      if (!reduced4()) motionCardLanded(board, pinnedId, "pin");
       return;
     }
     let played = false;
@@ -45098,20 +47674,20 @@ ${c.trim()}
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
       played = true;
       if (card.dataset.favId === pinnedId) {
-        waapi2(
+        waapi3(
           card,
           [
             { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
             { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
             { transform: "none", filter: "brightness(1)" }
           ],
-          { duration: M8.move + 140, easing: E2.move }
+          { duration: M9.move + 140, easing: E3.move }
         );
       } else {
-        waapi2(
+        waapi3(
           card,
           [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
-          { duration: M8.move + 60, delay: 30, easing: E2.move }
+          { duration: M9.move + 60, delay: 30, easing: E3.move }
         );
       }
     });
@@ -45119,7 +47695,7 @@ ${c.trim()}
   }
   function motionCardDepart(board, id, kind) {
     const card = board ? findCard(board, id) : null;
-    if (!card || reduced2() || typeof card.animate !== "function") return Promise.resolve();
+    if (!card || reduced4() || typeof card.animate !== "function") return Promise.resolve();
     return new Promise((res) => {
       let settled = false;
       const finish = () => {
@@ -45138,50 +47714,50 @@ ${c.trim()}
         { opacity: 1, transform: "none" },
         { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
       ];
-      const a = waapi2(card, frames, { duration: M8.move + (kind === "del" ? 0 : 40), easing: E2.out, fill: "forwards" });
+      const a = waapi3(card, frames, { duration: M9.move + (kind === "del" ? 0 : 40), easing: E3.out, fill: "forwards" });
       if (!a) {
         finish();
         return;
       }
       a.finished.then(finish).catch(finish);
-      setTimeout(finish, M8.move + 140);
+      setTimeout(finish, M9.move + 140);
     });
   }
   function motionFormIn(popup) {
-    if (reduced2()) return;
+    if (reduced4()) return;
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
     rows.forEach((el, i) => {
-      waapi2(
+      waapi3(
         el,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M8.base, delay: i * 24, easing: E2.out, fill: "both" }
+        { duration: M9.base, delay: i * 24, easing: E3.out, fill: "both" }
       );
     });
   }
   function motionSwitchPop(el) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced4()) return;
+    waapi3(
       el,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
-      { duration: M8.base - 40, easing: E2.out }
+      { duration: M9.base - 40, easing: E3.out }
     );
   }
   function motionPickPop(btn, on) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced4()) return;
+    waapi3(
       btn,
       on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
-      { duration: M8.base - 60, easing: E2.out }
+      { duration: M9.base - 60, easing: E3.out }
     );
   }
   function motionErrShake(errEl) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced4()) return;
+    waapi3(
       errEl,
       [
         { transform: "translateX(0)" },
@@ -45190,7 +47766,7 @@ ${c.trim()}
         { transform: "translateX(-2px)", offset: 0.72 },
         { transform: "translateX(0)" }
       ],
-      { duration: M8.base + 20, easing: E2.out }
+      { duration: M9.base + 20, easing: E3.out }
     );
   }
   function motionAiBusy(btn, on) {
@@ -45199,10 +47775,10 @@ ${c.trim()}
       prev.cancel();
       aiAnims.delete(btn);
     }
-    if (!on || reduced2()) return;
+    if (!on || reduced4()) return;
     const star = btn.querySelector("svg");
     const target = star != null ? star : btn;
-    const a = waapi2(
+    const a = waapi3(
       target,
       [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
       { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
@@ -45210,12 +47786,12 @@ ${c.trim()}
     if (a) aiAnims.set(btn, a);
   }
   function motionTagMgrRows(wrap2) {
-    if (reduced2()) return;
+    if (reduced4()) return;
     [...wrap2.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
-      waapi2(
+      waapi3(
         el,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
-        { duration: M8.base, delay: Math.min(i, 10) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M9.base, delay: Math.min(i, 10) * STAG3, easing: E3.out, fill: "both" }
       );
     });
   }
@@ -45223,15 +47799,15 @@ ${c.trim()}
     const ic2 = board.querySelector(".bz-empty .bz-empty-ic");
     if (!ic2 || ic2.dataset.favmFloat) return;
     ic2.dataset.favmFloat = "1";
-    const a = waapi2(
+    const a = waapi3(
       ic2,
       [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
       { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
     );
     if (a) floatAnims.set(ic2, a);
   }
-  function motionTeardown2() {
-    cancelPending();
+  function motionTeardown3() {
+    cancelPending2();
     for (const a of floatAnims.values()) {
       try {
         a.cancel();
@@ -45251,16 +47827,16 @@ ${c.trim()}
     } catch (e) {
     }
   }
-  var M8, E2, STAG2, timers2, aiAnims, floatAnims;
-  var init_motion2 = __esm({
+  var M9, E3, STAG3, timers3, aiAnims, floatAnims;
+  var init_motion3 = __esm({
     "src/favorites/motion.ts"() {
-      M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E2 = {
+      M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E3 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG2 = 30;
-      timers2 = /* @__PURE__ */ new Set();
+      STAG3 = 30;
+      timers3 = /* @__PURE__ */ new Set();
       aiAnims = /* @__PURE__ */ new Map();
       floatAnims = /* @__PURE__ */ new Map();
       if (typeof window !== "undefined") {
@@ -45290,7 +47866,7 @@ ${c.trim()}
     "src/favorites/app.ts"() {
       init_settings_provider();
       init_config4();
-      init_data11();
+      init_data12();
       init_ai3();
       init_ui9();
       _FavoritesApp = class _FavoritesApp {
@@ -45348,14 +47924,14 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M9.overlay = null;
-    M9.items = [];
-    M9.tag = null;
-    M9.archived = false;
-    M9.sort = "new";
-    M9.renderFn = null;
-    M9.stage = "idle";
-    motionTeardown2();
+    M10.overlay = null;
+    M10.items = [];
+    M10.tag = null;
+    M10.archived = false;
+    M10.sort = "new";
+    M10.renderFn = null;
+    M10.stage = "idle";
+    motionTeardown3();
   }
   function favoritesSettingsSchema() {
     return {
@@ -45426,7 +48002,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M9.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M10.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -45442,7 +48018,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M9.overlay) {
+    if (M10.overlay) {
       closePanel3();
       return;
     }
@@ -45451,22 +48027,22 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M9.overlay = overlay2;
-    M9.renderFn = (reveal) => renderAll4(reveal);
-    M9.stage = "placeholder";
-    motionTeardown2();
+    M10.overlay = overlay2;
+    M10.renderFn = (reveal) => renderAll4(reveal);
+    M10.stage = "placeholder";
+    motionTeardown3();
     const openFilter = resolveOpenFilter();
-    M9.tag = openFilter.tag;
-    M9.archived = openFilter.archived;
-    M9.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M10.tag = openFilter.tag;
+    M10.archived = openFilter.archived;
+    M10.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
     motionPanelIn2(overlay2);
     window.__bzFavReplay = () => {
-      if (M9.overlay !== overlay2) return;
+      if (M10.overlay !== overlay2) return;
       motionPanelIn2(overlay2);
-      M9.stage = "boot";
+      M10.stage = "boot";
       renderAll4();
     };
     overlay2.addEventListener("click", (e) => {
@@ -45547,21 +48123,21 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    const ov = M9.overlay;
+    const ov = M10.overlay;
     if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M9.archived ? "@archived" : M9.tag || "";
+        s.favoritesLastFilter = M10.archived ? "@archived" : M10.tag || "";
         void saveSettings();
       }
-      M9.overlay = null;
-      M9.renderFn = null;
-      M9.stage = "idle";
-      motionTeardown2();
+      M10.overlay = null;
+      M10.renderFn = null;
+      M10.stage = "idle";
+      motionTeardown3();
       motionPanelOut2(ov, () => ov.remove());
       return;
     }
-    M9.renderFn = null;
+    M10.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -45570,9 +48146,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M9.items = await dataManagerOf().getAll();
+      M10.items = await dataManagerOf().getAll();
     } catch (e) {
-      M9.items = [];
+      M10.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -45580,28 +48156,28 @@ ${c.trim()}
   async function reload2(reveal) {
     var _a2;
     await loadItems();
-    (_a2 = M9.renderFn) == null ? void 0 : _a2.call(M9, reveal);
+    (_a2 = M10.renderFn) == null ? void 0 : _a2.call(M10, reveal);
   }
   function boardEl() {
     var _a2, _b2;
-    return (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
+    return (_b2 = (_a2 = M10.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
   }
   function renderAll4(reveal) {
     var _a2;
-    if (!M9.overlay) return;
-    if (!M9.archived && M9.tag && !getTags().some((t) => t.label === M9.tag)) M9.tag = null;
-    const panel2 = M9.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M9.items, M9, { mountIcons, mobile: isMobileEnv() });
-    if (M9.stage === "placeholder") {
-      M9.stage = "boot";
+    if (!M10.overlay) return;
+    if (!M10.archived && M10.tag && !getTags().some((t) => t.label === M10.tag)) M10.tag = null;
+    const panel2 = M10.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M10.items, M10, { mountIcons, mobile: isMobileEnv() });
+    if (M10.stage === "placeholder") {
+      M10.stage = "boot";
       return;
     }
-    if (M9.stage === "boot") {
-      M9.stage = "idle";
-      motionRendered(M9.overlay, true);
+    if (M10.stage === "boot") {
+      M10.stage = "idle";
+      motionRendered(M10.overlay, true);
       return;
     }
-    motionRendered(M9.overlay, false);
+    motionRendered(M10.overlay, false);
     if (reveal == null ? void 0 : reveal.id) {
       const board = boardEl();
       if (!board) return;
@@ -45612,24 +48188,24 @@ ${c.trim()}
   function applyTagFilter(label) {
     var _a2, _b2;
     if (label === VIEW_ALL) {
-      M9.tag = null;
-      M9.archived = false;
+      M10.tag = null;
+      M10.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M9.tag = null;
-      M9.archived = !M9.archived;
+      M10.tag = null;
+      M10.archived = !M10.archived;
     } else {
-      M9.archived = false;
-      M9.tag = M9.tag === label ? null : label;
+      M10.archived = false;
+      M10.tag = M10.tag === label ? null : label;
     }
     const board = boardEl();
     if (board) {
-      motionFilterSwitch(board, (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
+      motionFilterSwitch(board, (_b2 = (_a2 = M10.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
     } else {
       renderAll4();
     }
   }
   function itemById2(id) {
-    return M9.items.find((i) => i.id === id);
+    return M10.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -46254,7 +48830,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M9, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M10, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -46275,10 +48851,10 @@ GitHub 仓库：${ghInfo.title}
       init_config4();
       init_render10();
       init_ai3();
-      init_data11();
-      init_motion2();
+      init_data12();
+      init_motion3();
       init_app2();
-      M9 = {
+      M10 = {
         overlay: null,
         items: [],
         tag: null,
@@ -47256,7 +49832,7 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/secondbrain/link-agent/data.ts
-  var init_data12 = __esm({
+  var init_data13 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
       init_utils();
       init_knowledge_boxes();
@@ -47293,7 +49869,7 @@ GitHub 仓库：${ghInfo.title}
   var init_weekly = __esm({
     "src/secondbrain/weekly.ts"() {
       init_store_file();
-      init_data12();
+      init_data13();
       init_tfidf();
       init_chunk();
       init_config3();
@@ -48442,7 +51018,7 @@ GitHub 仓库：${ghInfo.title}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data13 = __esm({
+  var init_data14 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -49622,12 +52198,12 @@ GitHub 仓库：${ghInfo.title}
     const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
     const w = Math.max(1, Math.round(img.naturalWidth * scale));
     const h = Math.max(1, Math.round(img.naturalHeight * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(img, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   async function videoFrame(src, maxSize = PREVIEW_OMIT_SIZE, quality = PREVIEW_OMIT_QUALITY) {
@@ -49667,12 +52243,12 @@ GitHub 仓库：${ghInfo.title}
     const scale = Math.min(1, maxSize / Math.max(vw, vh));
     const w = Math.max(1, Math.round(vw * scale));
     const h = Math.max(1, Math.round(vh * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   var PREVIEW_TIMEOUT_MS, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY;
@@ -49687,10 +52263,10 @@ GitHub 仓库：${ghInfo.title}
 
   // src/password-vault/data.ts
   var PASSWORD_VAULT_CHANNEL, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
-  var init_data14 = __esm({
+  var init_data15 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
-      init_data13();
+      init_data14();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
@@ -50064,11 +52640,11 @@ GitHub 仓库：${ghInfo.title}
     const box = document.createElement("div");
     box.className = "bz-lockscreen-box";
     box.dataset.ls = "box";
-    const seal = document.createElement("div");
-    seal.className = "bz-lockscreen-seal";
-    seal.dataset.ls = "seal";
-    seal.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
-    box.appendChild(seal);
+    const seal2 = document.createElement("div");
+    seal2.className = "bz-lockscreen-seal";
+    seal2.dataset.ls = "seal";
+    seal2.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
+    box.appendChild(seal2);
     const title = document.createElement("h4");
     title.className = "bz-lockscreen-title";
     title.dataset.ls = "title";
@@ -50563,10 +53139,10 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
-      init_data13();
+      init_data14();
       init_domain_bus();
       init_preview();
-      init_data14();
+      init_data15();
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
@@ -53092,9 +55668,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after4 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after4 !== before) {
-        rec.secondBrainAllowPaths = after4;
+      const after5 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after5 !== before) {
+        rec.secondBrainAllowPaths = after5;
         migrated = true;
       }
     }
@@ -53104,7 +55680,7 @@ GitHub 仓库：${ghInfo.title}
   var init_settings8 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
-      init_data14();
+      init_data15();
       init_keys();
       MEMO_KEY_MIGRATIONS = [
         ["todoPanelWidth", "memoPanelWidth"],
@@ -53961,14 +56537,14 @@ GitHub 仓库：${ghInfo.title}
             const lower = text.toLowerCase();
             let cursor = 0;
             for (; ; ) {
-              const at3 = lower.indexOf(needle, cursor);
-              if (at3 < 0) break;
-              if (at3 > cursor) el.append(document.createTextNode(text.slice(cursor, at3)));
+              const at4 = lower.indexOf(needle, cursor);
+              if (at4 < 0) break;
+              if (at4 > cursor) el.append(document.createTextNode(text.slice(cursor, at4)));
               const mark = document.createElement("mark");
               mark.className = "bz-sp-mark";
-              mark.textContent = text.slice(at3, at3 + needle.length);
+              mark.textContent = text.slice(at4, at4 + needle.length);
               el.append(mark);
-              cursor = at3 + needle.length;
+              cursor = at4 + needle.length;
             }
             if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
           });
@@ -54331,6 +56907,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_quiz_core();
       init_render();
+      init_motion();
       init_quiz_panel_data();
       MASK_ID2 = "bz-quiz-practice-mask";
       POPUP_ID = "bz-quiz-practice-popup";
@@ -54422,6 +56999,7 @@ GitHub 仓库：${ghInfo.title}
           });
           mountIcons(this.content);
           this.bindSetup();
+          motionQuizSetup(this.content);
           if (focusKey) this.restoreFocus(focusKey);
         }
         /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
@@ -54596,6 +57174,7 @@ GitHub 仓库：${ghInfo.title}
           });
           (_b2 = this.content.querySelector('[data-act="finish"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
           this.present();
+          motionQuizSummary(this.content, results.accuracy >= 90 ? "优" : "完成");
         }
       };
       panel = null;
@@ -54605,9 +57184,10 @@ GitHub 仓库：${ghInfo.title}
   // src/review/index.ts
   var review_exports = {};
   __export(review_exports, {
-    dataManager: () => dataManager2,
+    dataManager: () => dataManager,
     ensureReview: () => ensureReview,
     openQuizPractice: () => openQuizPractice,
+    openReviewAnalysis: () => openReviewAnalysis2,
     openReviewPanel: () => openReviewPanel,
     openReviewReport: () => openReviewReport,
     reviewAddCurrent: () => reviewAddCurrent,
@@ -54638,11 +57218,11 @@ GitHub 仓库：${ghInfo.title}
   function ensureReview(app) {
     if (initialized6) return;
     initialized6 = true;
-    dataManager2 = new ReviewDataManager(app);
-    reviewApp.dataManager = dataManager2;
-    uiManager2 = new UIManager(app, dataManager2);
+    dataManager = new ReviewDataManager(app);
+    reviewApp.dataManager = dataManager;
+    uiManager2 = new UIManager(app, dataManager);
     uiManager2.wSource = () => reviewApp.currentW();
-    reviewWatcher = new ReviewWatcher(app, dataManager2);
+    reviewWatcher = new ReviewWatcher(app, dataManager);
     void reviewApp.loadFitParams(app).catch(() => {
     });
     firstCheckTimer = setTimeout(() => {
@@ -54681,7 +57261,12 @@ GitHub 仓库：${ghInfo.title}
   async function openReviewReport(app) {
     ensureReview(app);
     const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-    await showStatsModal2(app, dataManager2);
+    await showStatsModal2(app, dataManager);
+  }
+  async function openReviewAnalysis2(app) {
+    ensureReview(app);
+    const mod = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+    await mod.openReviewAnalysis(app);
   }
   function openQuizPractice(app) {
     void openQuizPanel(app);
@@ -54708,19 +57293,19 @@ GitHub 仓库：${ghInfo.title}
       notice("请先打开一个笔记");
       return;
     }
-    const items = await dataManager2.loadItems();
+    const items = await dataManager.loadItems();
     const target = items.find((i) => i.filePath === file.path);
     if (!target) {
       notice("该笔记不在复习计划中");
       return;
     }
     try {
-      await dataManager2.removeItem(file.path);
+      await dataManager.removeItem(file.path);
       emitDomainEvent("review", { kind: "removed", title: file.basename });
       notifyUndo(`已移出「${file.basename}」`, () => {
         void (async () => {
           try {
-            await dataManager2.restoreItem(target);
+            await dataManager.restoreItem(target);
             await uiManager2.refreshPanel();
           } catch (e) {
             notifySaveError(e, "恢复复习条目");
@@ -54748,7 +57333,7 @@ GitHub 仓库：${ghInfo.title}
       notice("请先打开一个笔记");
       return;
     }
-    const items = await dataManager2.loadItems();
+    const items = await dataManager.loadItems();
     const item = items.find((i) => i.filePath === file.path);
     if (!item) {
       notice("该笔记不在复习计划中");
@@ -54770,7 +57355,7 @@ GitHub 仓库：${ghInfo.title}
       notice("请先打开一个笔记");
       return;
     }
-    const items = await dataManager2.loadItems();
+    const items = await dataManager.loadItems();
     const item = items.find((i) => i.filePath === file.path);
     if (!item) {
       notice("该笔记不在复习计划中");
@@ -54803,6 +57388,7 @@ GitHub 仓库：${ghInfo.title}
     reviewApp._reviewNotice = null;
     reviewApp._notifiedOverdue.clear();
     unloadQuizPanel();
+    unloadReviewAnalysis();
     resetQuiz();
     for (const off of unsubscribers) {
       try {
@@ -54813,11 +57399,11 @@ GitHub 仓库：${ghInfo.title}
     unsubscribers = [];
     uiManager2 == null ? void 0 : uiManager2.destroy();
     uiManager2 = null;
-    dataManager2 = null;
+    dataManager = null;
     reviewWatcher == null ? void 0 : reviewWatcher.destroy();
     reviewWatcher = null;
   }
-  var initialized6, dataManager2, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
+  var initialized6, dataManager, uiManager2, reviewWatcher, checkInterval, firstCheckTimer, unsubscribers;
   var init_review = __esm({
     "src/review/index.ts"() {
       init_utils();
@@ -54830,9 +57416,10 @@ GitHub 仓库：${ghInfo.title}
       init_quiz_panel();
       init_quiz_core();
       init_stats_ui();
+      init_analysis();
       init_flow_dialog();
       initialized6 = false;
-      dataManager2 = null;
+      dataManager = null;
       uiManager2 = null;
       reviewWatcher = null;
       checkInterval = null;
@@ -58501,8 +61088,8 @@ ${piece}` : piece;
   init_data2();
   init_constants();
   init_data();
-  init_data9();
-  init_data11();
+  init_data10();
+  init_data12();
   init_config4();
 
   // src/gameshelf/notes.ts
@@ -58545,7 +61132,7 @@ ${piece}` : piece;
     const folder = resolveGameshelfFolderPath();
     const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
     const prevByPath = /* @__PURE__ */ new Map();
-    for (const it of M3.items) {
+    for (const it of M4.items) {
       if (it.file) prevByPath.set(it.file.path, it);
     }
     const items = [];
@@ -58586,13 +61173,13 @@ ${piece}` : piece;
       const prev = prevByPath.get(file.path);
       items.push(prev && sameItem(prev, next) ? prev : next);
     }
-    M3.items = items;
+    M4.items = items;
     return items;
   }
 
   // src/home/river.ts
   init_knowledge_boxes();
-  init_data8();
+  init_data9();
   init_shared();
   init_shared();
   var DAY_MS4 = 864e5;
@@ -58801,13 +61388,13 @@ ${piece}` : piece;
   init_order();
 
   // src/home/motion.ts
-  var M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E3 = {
+  var M11 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E4 = {
     out: "cubic-bezier(.22,.82,.3,1)",
     move: "cubic-bezier(.34,.06,.16,1)"
   };
-  var STAG3 = 30;
-  function reduced3() {
+  var STAG4 = 30;
+  function reduced5() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -58821,8 +61408,8 @@ ${piece}` : piece;
       return false;
     }
   }
-  function waapi3(el, frames, opts) {
-    if (!el || reduced3() || typeof el.animate !== "function") {
+  function waapi4(el, frames, opts) {
+    if (!el || reduced5() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -58839,7 +61426,7 @@ ${piece}` : piece;
       return null;
     }
   }
-  function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+  function tween3(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
     const t0 = performance.now();
     const tick = (now) => {
       const p = Math.min(1, (now - t0) / dur);
@@ -58849,17 +61436,17 @@ ${piece}` : piece;
     requestAnimationFrame(tick);
   }
   var easeOutQuart2 = (t) => 1 - Math.pow(1 - t, 4);
-  var timers3 = /* @__PURE__ */ new Set();
-  function after3(ms, fn) {
+  var timers4 = /* @__PURE__ */ new Set();
+  function after4(ms, fn) {
     const id = setTimeout(() => {
-      timers3.delete(id);
+      timers4.delete(id);
       fn();
     }, ms);
-    timers3.add(id);
+    timers4.add(id);
   }
-  function cancelPending2() {
-    timers3.forEach(clearTimeout);
-    timers3.clear();
+  function cancelPending3() {
+    timers4.forEach(clearTimeout);
+    timers4.clear();
   }
   var EXIT_ANIM_ID = "bz-home-panel-exit";
   function motionPanelIn3(overlay2, reopen) {
@@ -58873,13 +61460,13 @@ ${piece}` : piece;
         if (a.id === EXIT_ANIM_ID) a.cancel();
       }
     }
-    waapi3(
+    waapi4(
       panel2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? 300 : 480, easing: E3.out }
+      { duration: reopen ? 300 : 480, easing: E4.out }
     );
     bindParallax(overlay2);
   }
@@ -58900,23 +61487,23 @@ ${piece}` : piece;
       }
       done();
     };
-    const a = waapi3(
+    const a = waapi4(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M10.move + 40, easing: E3.out, fill: "forwards", id: EXIT_ANIM_ID }
+      { duration: M11.move + 40, easing: E4.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    after3(M10.move + 200, finish);
+    after4(M11.move + 200, finish);
   }
   function motionRendered2(overlay2, boot) {
-    cancelPending2();
+    cancelPending3();
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
@@ -58931,18 +61518,18 @@ ${piece}` : piece;
       }
       return;
     }
-    if (reduced3()) return;
+    if (reduced5()) return;
     if (week) {
       [...week.querySelectorAll(".bz-home-wk")].forEach((el, i) => {
-        after3(140 + i * 40, () => {
+        after4(140 + i * 40, () => {
           const to = el.classList.contains("bz-home-wk--sel") ? "translateY(-4px)" : "none";
-          waapi3(
+          waapi4(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: to, filter: "blur(0px)" }
             ],
-            { duration: M10.base, easing: E3.out, fill: "backwards" }
+            { duration: M11.base, easing: E4.out, fill: "backwards" }
           );
         });
       });
@@ -58951,14 +61538,14 @@ ${piece}` : piece;
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
       rows.forEach((el, i) => {
         if (i >= 14) return;
-        after3(260 + i * STAG3, () => {
-          waapi3(
+        after4(260 + i * STAG4, () => {
+          waapi4(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M10.base, easing: E3.out, fill: "backwards" }
+            { duration: M11.base, easing: E4.out, fill: "backwards" }
           );
         });
       });
@@ -58966,28 +61553,28 @@ ${piece}` : piece;
     if (flow) {
       const tl = flow.querySelector(".bz-home-timeline");
       if (tl) {
-        after3(300, () => ensureRiver(tl, true));
+        after4(300, () => ensureRiver(tl, true));
         revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
       }
       const empty = flow.querySelector(".bz-home-flow-empty");
-      if (empty) waapi3(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" });
+      if (empty) waapi4(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M11.base, easing: E4.out, fill: "backwards" });
     }
     if (next) {
       const head = next.querySelector(".bz-home-sec-t");
-      if (head) waapi3(
+      if (head) waapi4(
         head,
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-        { duration: M10.base, easing: E3.out, fill: "backwards" }
+        { duration: M11.base, easing: E4.out, fill: "backwards" }
       );
       next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
-        after3(640 + i * 90, () => {
-          waapi3(
+        after4(640 + i * 90, () => {
+          waapi4(
             el,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
             ],
-            { duration: M10.base + 120, easing: E3.out, fill: "backwards" }
+            { duration: M11.base + 120, easing: E4.out, fill: "backwards" }
           );
         });
         if (!narrow && canHover2()) bindTilt(el);
@@ -58996,23 +61583,23 @@ ${piece}` : piece;
   }
   function motionDaySwitch(flow, rewrite) {
     const tl = flow.querySelector(".bz-home-timeline");
-    if (reduced3() || !tl) {
+    if (reduced5() || !tl) {
       rewrite();
       return;
     }
-    const out = waapi3(
+    const out = waapi4(
       tl,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
       ],
-      { duration: M10.fast + 20, easing: E3.out, fill: "forwards" }
+      { duration: M11.fast + 20, easing: E4.out, fill: "forwards" }
     );
     if (!out) {
       rewrite();
       return;
     }
-    after3(M10.fast + 30, () => {
+    after4(M11.fast + 30, () => {
       rewrite();
       const nt = flow.querySelector(".bz-home-timeline");
       if (nt) {
@@ -59020,7 +61607,7 @@ ${piece}` : piece;
         revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
       } else {
         const empty = flow.querySelector(".bz-home-flow-empty");
-        if (empty) waapi3(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" });
+        if (empty) waapi4(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M11.base, easing: E4.out, fill: "backwards" });
       }
     });
   }
@@ -59047,18 +61634,18 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
       li.style.willChange = "transform,filter,opacity";
-      after3(delay, () => {
-        waapi3(
+      after4(delay, () => {
+        waapi4(
           li,
           [
             { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M10.base + 140, easing: E3.out, fill: "backwards" }
+          { duration: M11.base + 140, easing: E4.out, fill: "backwards" }
         );
         li.classList.add("bz-hm-ign");
-        after3(620, () => li.classList.remove("bz-hm-ign"));
-        after3(120, () => {
+        after4(620, () => li.classList.remove("bz-hm-ign"));
+        after4(120, () => {
           const a = beforeAnchor(li);
           const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
           burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
@@ -59068,11 +61655,11 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const note = li.querySelector(".bz-home-ev-note");
       if (!note) return;
-      after3(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
-        waapi3(
+      after4(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi4(
           note,
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M10.base, easing: E3.out, fill: "backwards" }
+          { duration: M11.base, easing: E4.out, fill: "backwards" }
         );
       });
     });
@@ -59126,16 +61713,16 @@ ${piece}` : piece;
     }
     reveal.style.strokeDasharray = String(len);
     reveal.style.strokeDashoffset = String(len);
-    tween2(850, (v) => {
+    tween3(850, (v) => {
       reveal.style.strokeDashoffset = String(len * (1 - v));
     }, easeOutQuart2);
-    after3(870, () => base.classList.add("bz-hm-flowing"));
+    after4(870, () => base.classList.add("bz-hm-flowing"));
   }
   var sparkPools = /* @__PURE__ */ new Map();
   var fxRaf = 0;
   function burst(tl, x, y, color) {
     var _a2;
-    if (reduced3()) return;
+    if (reduced5()) return;
     let fx = tl.querySelector(":scope > .bz-hm-fx");
     if (!fx) {
       fx = document.createElement("canvas");
@@ -59199,7 +61786,7 @@ ${piece}` : piece;
   function bindParallax(overlay2) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2 || parallax.has(overlay2)) return;
-    if (reduced3() || !canHover2() || panel2.clientWidth <= 768) return;
+    if (reduced5() || !canHover2() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
       { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
@@ -59780,7 +62367,7 @@ ${piece}` : piece;
     d.setDate(d.getDate() - n);
     return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
   }
-  function at2(n, hm) {
+  function at3(n, hm) {
     const [h, m] = hm.split(":").map(Number);
     const d = /* @__PURE__ */ new Date();
     d.setDate(d.getDate() - n);
@@ -59788,7 +62375,7 @@ ${piece}` : piece;
     return d.getTime();
   }
   function isoFuture(n, hm = "09:00") {
-    return new Date(at2(-n, hm)).toISOString();
+    return new Date(at3(-n, hm)).toISOString();
   }
   function fm(fields) {
     const lines = Object.entries(fields).map(
@@ -59814,8 +62401,8 @@ type:
 
 记一笔。
 `,
-        ctime: at2(n, time),
-        mtime: at2(n, time)
+        ctime: at3(n, time),
+        mtime: at3(n, time)
       });
     };
     entryFile(1, "08:30");
@@ -59827,8 +62414,8 @@ type:
       out.push({
         path: `我的/日记/${d.slice(2, 4)}${d.slice(5, 7)}${d.slice(8, 10)}1200.md`,
         content: "",
-        ctime: at2(n, "12:00"),
-        mtime: at2(n, "12:00")
+        ctime: at3(n, "12:00"),
+        mtime: at3(n, "12:00")
       });
     }
   }
@@ -59838,8 +62425,8 @@ type:
         path: `我的/影视/${name}.md`,
         content: fm({ tags: ["电影"], ...fields }) + `观影短评：${name}。
 `,
-        ctime: at2(ctime[0], ctime[1]),
-        mtime: at2(mtime[0], mtime[1])
+        ctime: at3(ctime[0], ctime[1]),
+        mtime: at3(mtime[0], mtime[1])
       });
     };
     movie("《百年孤独》", { 评分: 4, 观影日期: dstr(0) }, [30, "12:00"], [0, "21:05"]);
@@ -59859,8 +62446,8 @@ type:
         path: `书库/${name}.md`,
         content: fm({ tags: ["book"], ...fields }) + `${name} 的书摘。
 `,
-        ctime: at2(ctime[0], ctime[1]),
-        mtime: at2(mtime[0], mtime[1])
+        ctime: at3(ctime[0], ctime[1]),
+        mtime: at3(mtime[0], mtime[1])
       });
     };
     book("三体", { author: "刘慈欣", category: "科幻", readingDate: dstr(20), readingProgress: 62 }, [30, "12:00"], [0, "07:42"]);
@@ -59883,7 +62470,7 @@ type:
               file: { vaultPath: "书库/EPUB/深入理解计算机系统.epub" },
               reading: {
                 position: { percent: 1 },
-                stats: { lastReadTime: at2(2, "09:40"), completedTime: at2(2, "09:40"), totalReadTime: 72e5 }
+                stats: { lastReadTime: at3(2, "09:40"), completedTime: at3(2, "09:40"), totalReadTime: 72e5 }
               },
               notes: { highlights: [1, 2, 3], excerpts: [] }
             }
@@ -59961,7 +62548,7 @@ type:
       url: `https://example.com/${i + 1}`,
       read: i >= 12,
       // 前 12 篇未读
-      created: new Date(at2(14 - i, "10:00")).toISOString()
+      created: new Date(at3(14 - i, "10:00")).toISOString()
     }));
     out.push({ path: "CONFIG/STORAGE/news.json", content: JSON.stringify({ articles }, null, 2) });
   }
@@ -59971,7 +62558,7 @@ type:
       title: `收藏条目 ${i + 1}`,
       url: `https://example.com/fav/${i + 1}`,
       tags: ["网站"],
-      created: new Date(at2(30 - i, "09:00")).toISOString(),
+      created: new Date(at3(30 - i, "09:00")).toISOString(),
       archived: i >= 18
     }));
     out.push({ path: "CONFIG/STORAGE/favorites.json", content: JSON.stringify(items, null, 2) });
@@ -59987,7 +62574,7 @@ type:
         price: 100 + i * 37,
         purchase_date: dstr(100 + i * 10),
         current_status: "在用",
-        last_updated: new Date(at2(30, "12:00")).toISOString()
+        last_updated: new Date(at3(30, "12:00")).toISOString()
       };
     });
     out.push({
@@ -60023,9 +62610,9 @@ type:
           version: 1,
           state: { phase: "focus", endTime: null, remaining: 900, paused: true, cycleFocusCount: 2, task: "周报" },
           history: [
-            { task: "周报", duration: 1500, ts: at2(0, "09:00") },
-            { task: "读书笔记", duration: 1500, ts: at2(0, "14:27") },
-            { task: "周报", duration: 1500, ts: at2(1, "14:27") }
+            { task: "周报", duration: 1500, ts: at3(0, "09:00") },
+            { task: "读书笔记", duration: 1500, ts: at3(0, "14:27") },
+            { task: "周报", duration: 1500, ts: at3(1, "14:27") }
           ]
         },
         null,
@@ -60036,7 +62623,7 @@ type:
   function seedBehavior(out) {
     const beh = (n, hm, source2, type, name = "", extra = {}) => ({
       id: `beh_seed_${n}_${hm.replace(":", "")}_${source2}_${type}`,
-      timestamp: new Date(at2(n, hm)).toISOString(),
+      timestamp: new Date(at3(n, hm)).toISOString(),
       type,
       source: source2,
       description: `${source2}:${type}${name ? ` ${name}` : ""}`,
@@ -60069,7 +62656,7 @@ type:
     ];
     out.push({
       path: "CONFIG/STORAGE/smartcat-behavior.json",
-      content: JSON.stringify({ version: 1, lastUpdated: new Date(at2(0, "21:05")).toISOString(), items }, null, 2)
+      content: JSON.stringify({ version: 1, lastUpdated: new Date(at3(0, "21:05")).toISOString(), items }, null, 2)
     });
   }
   function seedGameshelf(out) {
