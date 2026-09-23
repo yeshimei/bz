@@ -6251,6 +6251,60 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --ls-muted: var(--dw-muted);
   --ls-faint: var(--dw-faint);
 }
+
+/* ============ 动效层支持样式（src/diary/motion.ts 注入件与功能性指示；不参与排版） ============
+   注入件一律 absolute + pointer-events:none + aria-hidden（属性由 JS 挂），演出完自动移除——
+   终态 UI 与无动效版逐像素一致；时长/曲线台账见 motion.ts（token 不落 CSS，行为层单源）。 */
+
+/* 翻页纸面：筛选切换时扫过面板的一页纸（假透视由 JS 内联 transform 驱动，演完即撤） */
+.bz-dm-page {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--dw-surface) 16%,
+    var(--dw-bg) 50%,
+    var(--dw-surface) 84%,
+    transparent
+  );
+  box-shadow: 0 0 24px 6px color-mix(in srgb, var(--dw-ink) 8%, transparent);
+  will-change: transform, opacity;
+}
+
+/* 墨晕：台历戳落下时在日期下洇开的一小撮墨（演完即撤，墙上不留痕） */
+.bz-dm-ink {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--dw-ink) 42%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+/* 灯箱加密媒体解密等待占位：功能性加载指示（加载类循环不入台账，同影院口径；
+   系统 RM 下随既有通杀规则停摆） */
+.bz-diary-lb-pending {
+  animation: bz-dm-pulse 1.1s ease-in-out infinite;
+}
+@keyframes bz-dm-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
 /* ==================== 内容首页域样式（src/home/styles.css）——活动河全域入口版（issue 232） ====================
    p16-full 原型一比一移植：头行（今日活动河+日期）+ 三栏 grid（全部域|时间线|明天预告）。
    桌面/移动同一 DOM，≤768px 断点单列化（全部域单列瓦片 → 明天预告 → 时间线沉底）。
@@ -11269,6 +11323,39 @@ canvas { display: block; }
   #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dhead { padding: 0 0 var(--bz-space-md); border-bottom: 1px solid var(--bz-border); }
   #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dcontent { padding: 14px 0 0; }
 }
+/* ═══ 动效层注入件（src/encrypt/motion.ts；password-vault/motion.ts 复用其台账） ═══
+   全部 absolute/fixed + pointer-events:none + aria-hidden，由行为层挂点创建、演出完
+   自毁——终态 UI 与无动效层时逐像素一致；只动 transform/opacity/filter，不改几何。 */
+/* 光缝：门缝里漏进来的斜光（boot/预览/体检开场白），host = 面板/弹窗 */
+.bz-vlt-sweep {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.12) 50%, transparent 58%);
+}
+/* 铁门横档：上锁瞬间从上下缘合拢的门闩（中央金线即封条），host = #bz-encrypt-popup */
+.bz-vlt-gate { pointer-events: none; overflow: hidden; }
+.bz-vlt-gate-bar { position: absolute; left: -3%; width: 106%; height: 56%; background: linear-gradient(180deg, #23262c, #31353d 46%, #1c1f25); }
+.bz-vlt-gate-bar.is-top { top: 0; border-bottom: 2px solid var(--bz-brand, #b8862f); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45); }
+.bz-vlt-gate-bar.is-bot { bottom: 0; border-top: 2px solid var(--bz-brand, #b8862f); box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.45); }
+/* 开锁验讫余韵：印章处光环 + 金屑（body 自毁覆层的内部结构；覆层本体由 motion 层内联定位） */
+.bz-vlt-burst-ring {
+  position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid var(--bz-brand, #b8862f);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--bz-brand, #b8862f) 55%, transparent);
+  transform: translate(-50%, -50%) scale(0.55);
+}
+.bz-vlt-burst-bit {
+  position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--bz-brand, #b8862f); transform: translate(-50%, -50%);
+}
+/* 体检巡逻扫描线（长驻循环；句柄池管理，扫完 motionScanStop 必收） */
+.bz-encrypt-health-box { position: relative; }
+.bz-vlt-scanhost { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.bz-vlt-scanbeam {
+  position: absolute; left: 0; right: 0; top: 0; height: 34%;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bz-brand, #b8862f) 15%, transparent), transparent);
+  animation: bz-vlt-scan 1.5s linear infinite;
+}
+@keyframes bz-vlt-scan { from { transform: translateY(-120%); } to { transform: translateY(420%); } }
 /* ==================== 保险库域样式（src/password-vault/styles.css） ==================== */
 /* ==================== 保险库（password-vault，原型 v1 一比一） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀。
@@ -13153,6 +13240,35 @@ canvas { display: block; }
 .bz-password-vault-qp .bz-popover-item .pl { font-size: var(--bz-font-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bz-password-vault-qp .bz-popover-item .ac { font-size: var(--bz-font-meta); color: var(--bz-text-2, var(--text-muted)); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .bz-password-vault-qp .bz-popover-item .key { font-size: var(--bz-font-caption); color: var(--bz-text-3, var(--text-faint)); flex-shrink: 0; }
+
+/* ═══ 动效层注入件（src/password-vault/motion.ts；台账复用 encrypt/motion 同一块表） ═══
+   覆层挂 body、本体 fixed 内联定位；此处只有覆层内部结构与 CSS 循环类——
+   全部 pointer-events:none + aria-hidden，演出完自毁，终态 UI 与今天逐像素一致。 */
+/* 金印待机辉光：锁屏候场时金印呼吸（长驻循环；motionLockIdle 句柄池管理，closeLock 必收） */
+.bz-pwv-m-idle { animation: bz-pwv-m-breathe 2.6s ease-in-out infinite; }
+@keyframes bz-pwv-m-breathe {
+  0%, 100% { box-shadow: 0 10px 30px color-mix(in srgb, var(--interactive-accent, #c9a03c) 40%, transparent); }
+  50% { box-shadow: 0 10px 36px color-mix(in srgb, var(--interactive-accent, #c9a03c) 64%, transparent); }
+}
+/* 开锁/复制金屑（burst 覆层内部结构） */
+.bz-pwv-m-burst-ring {
+  position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid var(--pwv-gold, var(--interactive-accent, #c9a03c));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--interactive-accent, #c9a03c) 55%, transparent);
+  transform: translate(-50%, -50%) scale(0.55);
+}
+.bz-pwv-m-burst-bit {
+  position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--pwv-gold, var(--interactive-accent, #c9a03c)); transform: translate(-50%, -50%);
+}
+.bz-pwv-m-burst-bit.is-small { width: 4px; height: 4px; }
+/* 扫光（显影/封蜡/快取选中共用的斜光带；覆层 overflow:hidden 由 motion 层内联） */
+.bz-pwv-m-glint { overflow: hidden; border-radius: 10px; }
+.bz-pwv-m-glint-beam {
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--interactive-accent, #c9a03c) 22%, transparent), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+}
 /* ==================== 设置面板域样式（settings-panel，ADR-0080） ====================
  * 拍板重设计（2026-09-07，原型 .zcode/ui-prototypes/settings-5/p1-full.html 定稿）：
  * 布局 = P1 系统面板（顶栏面包屑+搜索 / 左侧四组域导航带项数徽标 / 右侧域页头 + 分组卡行式表单）；
@@ -17627,6 +17743,34 @@ canvas { display: block; }
   .bz-gs-achlist { max-height: 240px; }
   .bz-gs-shots { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
+
+/* ---------- 动效注入件（motion.ts 专用，2026-09-23）----------
+   全部 absolute + pointer-events:none + aria-hidden，演出完自毁——终态 UI 与无动效完全一致。
+   不参与布局：gridhost 只补 position:relative（无偏移，几何零变化），纸屑画布以它为定位基準。 */
+.bz-gs-gridhost { position: relative; }
+.bz-gs-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+/* CRT 扫描线（开机一道亮带掠过面板）：挂在 .bz-gs-panel（overflow:hidden 裁住出界段） */
+.bz-gs-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 24%;
+  pointer-events: none;
+  z-index: 9;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.10) 42%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.10) 58%, rgba(255, 255, 255, 0) 100%);
+}
+/* 封面扫光（详情卡带落位后一道斜向亮带）：宿主 .bz-gs-detail-cover 已 overflow:hidden */
+.bz-gs-shine {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 42%;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.20) 50%, rgba(255, 255, 255, 0) 100%);
+}
 /* ==================== 书库域样式（src/bookshelf/styles.css） ====================
    书脊墙 1:1 复刻（issue 218；原型 .zcode/ui-prototypes/bookshelf-10/p4-full.html）：
    小号木匾「书库 · LIBRARY」+ 纸质统计标签行（同行居左；issue 226 匾额复位+逐肤换脸）
@@ -20928,6 +21072,46 @@ canvas { display: block; }
 
 .bz-kb-mt-openbtn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
 }
+
+/* ============================================================
+ * 动效层（motion.ts 消费，2026-09-22 全量动效批）
+ * 只服务注入件与循环指示：全部 absolute 定位 / 不吃事件 / aria-hidden，
+ * 演出完自动移除——终态 UI 与静态版逐像素一致，不参与任何静态排版。
+ * ============================================================ */
+
+/* 头部双细线描线（主窗落纸）：与 .bz-kb-head 的 border-bottom 3px double 同位同色，
+   自中心向两侧 scaleX 描出后由 JS 移除，终态回落原生 border */
+.bz-kb-headline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-top: 1px solid var(--ink2);
+  border-bottom: 1px solid var(--ink2);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* 「笔还在写」呼吸墨滴（录入面板流式生成期）：内容卡角一枚墨点浮沉，
+   移除节点即收（句柄池管理，写完 / 中止 / 关窗 / 销毁都必收，禁永动孤儿） */
+.bz-kb-pen {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.75;
+  pointer-events: none;
+  animation: bzKbPenFloat 1.3s ease-in-out infinite;
+}
+@keyframes bzKbPenFloat {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.55; }
+  50% { transform: translateY(-4px) scale(0.82); opacity: 0.95; }
+}
 /* ============================================================
    第二大脑 · 定稿原型主题（issue 251 / ADR-0110）
    三界面：主面板 / AI 对话 / 灵感参考 —— 米白 #fbfaf7 × 红棕 #a33d2a。
@@ -22912,6 +23096,71 @@ canvas { display: block; }
   text-align: center;
   font-size: 13px;
 }
+
+/* ==================== 动效层注入件基座（src/secondbrain/motion.ts 配套） ====================
+   全部 position:absolute + pointer-events:none（aria-hidden 由 TS 设），只动
+   transform/opacity/filter，演出完自动移除——终态 UI 与无动效时逐像素一致。
+   色彩一律 var(--sb-acc)（跟随明暗主题），不硬编码色值。 */
+/* 检索涟漪环：从命中点/星点向外扩散的一圈 */
+.bz-sb-mo-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--sb-acc);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--sb-acc) 22%, transparent);
+}
+/* 检索扫描微光带：检索发起时掠过列表/消息区的一道竖向光带 */
+.bz-sb-mo-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bz-sb-mo-sweep i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 36%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--sb-acc) 6%, transparent) 42%,
+    color-mix(in srgb, var(--sb-acc) 13%, transparent) 50%,
+    color-mix(in srgb, var(--sb-acc) 6%, transparent) 58%,
+    transparent
+  );
+}
+/* 神经元点亮光晕：内容卡入列一瞬的一次性辉光 */
+.bz-sb-mo-flash {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(130% 130% at 28% 18%, color-mix(in srgb, var(--sb-acc) 15%, transparent), transparent 62%);
+}
+/* 联想连线：命中/撞车两端的发光细线（描线生长） */
+.bz-sb-mo-thread {
+  position: absolute;
+  height: 1.5px;
+  border-radius: 99px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--sb-acc), transparent);
+  opacity: 0.75;
+  transform-origin: left center;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sb-acc) 30%, transparent);
+}
+/* 边条唤起微光：窄窗从边条展开时右缘的一道退散光 */
+.bz-sb-mo-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 52px;
+  pointer-events: none;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--sb-acc) 14%, transparent), transparent);
+}
 /**
  * smartcat 域样式（小橘陪伴猫）
  * 用户拍板：css 文件放到域中——构建时由 esbuild.config.mjs 合并进产物 styles.css。
@@ -24314,6 +24563,44 @@ canvas { display: block; }
   margin-top: 2px;
   padding-left: var(--bz-space-sm);
   border-left: 2px solid var(--background-modifier-border);
+}
+/* ==================== 动效层注入件（motion.ts 专用） ====================
+   绝对定位 / 不吃事件 / aria-hidden / 演出完自移除——终态 UI 零增量。
+   基态透明：残渣即便滞留一帧也不可见（jsdom / 无 WAAPI 宿主根本不注入）。 */
+.bz-sc-paw {
+  position: absolute;
+  z-index: 4; /* 猫容器层叠上下文内小档（压过气泡容器 z2 / 思考点 z3） */
+  pointer-events: none;
+  color: var(--interactive-accent, #f39c4f);
+  opacity: 0;
+}
+.bz-sc-paw svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+.bz-sc-shine {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+.bz-sc-ping {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #4caf50;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
 }
 /* ============================================================
  * 数据体检面板（src/checkup，D4）
