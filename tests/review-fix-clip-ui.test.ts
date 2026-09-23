@@ -289,7 +289,7 @@ describe('F14/F15：favorites 打开兜底与表单单例', () => {
     document.body.innerHTML = '';
   });
 
-  it('F14：openUrl 与 electron 兜底都落空 → 先试 window.open，仍失败给人话提示', async () => {
+  it('F14：openUrl 与 electron 兜底都落空 → 先试 window.open，仍失败给人话提示（点卡退役后入口=右键「打开」）', async () => {
     const { vault } = favSetup();
     const app = getApp() as any;
     app.openUrl = vi.fn(() => { throw new Error('移动端无 openUrl'); });
@@ -301,7 +301,13 @@ describe('F14/F15：favorites 打开兜底与表单单例', () => {
       expect(c).toBeTruthy();
       return c!;
     });
-    card.click();
+    // 2026-09-23 拍板：点卡不再跳网站——兜底链从右键菜单「打开」进
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await tick(10);
+    const openBtn = ([...document.querySelectorAll('.bz-item-menu button')] as HTMLElement[])
+      .find((el) => { const sp = el.querySelectorAll('span'); return sp.length > 0 && sp[sp.length - 1].textContent === '打开'; });
+    expect(openBtn, '右键菜单含「打开」').toBeTruthy();
+    openBtn!.click();
     await tick(10);
     expect(winOpen).toHaveBeenCalledTimes(1);
     expect(String(winOpen.mock.calls[0][0])).toContain('example.com/page');
@@ -309,7 +315,7 @@ describe('F14/F15：favorites 打开兜底与表单单例', () => {
     void vault;
   });
 
-  it('F14：window.open 也失败（返回 null）→ 提示「无法打开链接」不再静默', async () => {
+  it('F14：window.open 也失败（返回 null）→ 提示「无法打开链接」不再静默（入口=右键「打开」）', async () => {
     favSetup();
     const app = getApp() as any;
     app.openUrl = vi.fn(() => { throw new Error('移动端无 openUrl'); });
@@ -320,7 +326,12 @@ describe('F14/F15：favorites 打开兜底与表单单例', () => {
       expect(c).toBeTruthy();
       return c!;
     });
-    card.click();
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await tick(10);
+    const openBtn = ([...document.querySelectorAll('.bz-item-menu button')] as HTMLElement[])
+      .find((el) => { const sp = el.querySelectorAll('span'); return sp.length > 0 && sp[sp.length - 1].textContent === '打开'; });
+    expect(openBtn, '右键菜单含「打开」').toBeTruthy();
+    openBtn!.click();
     await tick(10);
     expect(getNoticeMessages().some((m) => m.includes('无法打开链接'))).toBe(true); // 修复前全落空无任何提示
   });

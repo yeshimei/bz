@@ -62,19 +62,19 @@ export function flowFailedHtml(): string {
 
 /* ---------- 周历（7 格动静历，hit=当天有动静，sel=当前查看日） ---------- */
 
-/** 倒排：最新在前；今天显示「今」不写数字（原型拍板）。
+/** 倒排：最新在前；每格只出星期中文（2026-09-23 用户拍板：保留星期中文，去掉日期数字行）。
  *  aria-pressed 表达选中态（ui P3-3）：读屏用户 Tab 进周历能听出「当前在看哪天」；
  *  点选切换走 ui.ts 局部更新（周历 DOM 不重建），aria 属性在那边同步 */
 export function weekHtml(week: RiverWeekDay[], todayDateStr: string, selDate: string): string {
-  // 2026-09-23 用户拍板：头排改「台历卡」样式（星期色带 + 星期字 + 大数字 + 动静绿点 + 今日红带），
+  // 2026-09-23 用户拍板：回退「色块」版——每格一条圆角色块 + 星期中文（三/二/一…），不带日期数字。
+  // 今天不再靠「今」字（数字行已去），改红色星期字标（切到别的天也认得出哪天是今天）。
   // 类名契约不动（--hit/--sel/--today、data-home-weekday、bz-home-wk-n），样式见 styles.css 头排段
   return week.map((w) => {
     const isToday = w.dateStr === todayDateStr;
     const sel = w.dateStr === selDate;
     return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (isToday ? ' bz-home-wk--today' : '') + (sel ? ' bz-home-wk--sel' : '') + '"'
       + ' data-home-weekday="' + w.dateStr + '" aria-pressed="' + (sel ? 'true' : 'false') + '" aria-label="' + (isToday ? '今天' : w.label) + (w.hit ? '，有动静' : '') + '">'
-      + '<i class="bz-home-wk-band"></i><span class="bz-home-wk-wd">' + w.weekday + '</span>'
-      + '<span class="bz-home-wk-n">' + (isToday ? '今' : w.dayOfMonth) + '</span></div>';
+      + '<i></i><span class="bz-home-wk-n">' + w.weekday + '</span></div>';
   }).join('');
 }
 

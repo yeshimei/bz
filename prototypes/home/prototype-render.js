@@ -1,4 +1,4 @@
-/* 源指纹 a6d7fa96588e2bb0 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bd84111879e9cede · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -529,7 +529,7 @@ var BZR_home = (() => {
     return week.map((w) => {
       const isToday = w.dateStr === todayDateStr;
       const sel = w.dateStr === selDate;
-      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? " bz-home-wk--hit" : "") + (isToday ? " bz-home-wk--today" : "") + (sel ? " bz-home-wk--sel" : "") + '" data-home-weekday="' + w.dateStr + '" aria-pressed="' + (sel ? "true" : "false") + '" aria-label="' + (isToday ? "今天" : w.label) + (w.hit ? "，有动静" : "") + '"><i class="bz-home-wk-band"></i><span class="bz-home-wk-wd">' + w.weekday + '</span><span class="bz-home-wk-n">' + (isToday ? "今" : w.dayOfMonth) + "</span></div>";
+      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? " bz-home-wk--hit" : "") + (isToday ? " bz-home-wk--today" : "") + (sel ? " bz-home-wk--sel" : "") + '" data-home-weekday="' + w.dateStr + '" aria-pressed="' + (sel ? "true" : "false") + '" aria-label="' + (isToday ? "今天" : w.label) + (w.hit ? "，有动静" : "") + '"><i></i><span class="bz-home-wk-n">' + w.weekday + "</span></div>";
     }).join("");
   }
   function entriesHtml(data, order, hidden) {

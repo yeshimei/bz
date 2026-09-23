@@ -197,7 +197,7 @@
         t('预告首卡=逾期卡', dt('.bz-home-pr-h').textContent === '还有 1 张逾期卡');
         t('彩点 warn/hot/ok 各在其位', dt('.bz-home-erow .bz-home-dot--warn') && dt('.bz-home-erow .bz-home-dot--hot') && dt('.bz-home-erow .bz-home-dot--ok'));
         t('周历7格+hit4格', dd.querySelectorAll('.bz-home-wk').length === 7 && dd.querySelectorAll('.bz-home-wk--hit').length === 4);
-        t('今天显示今+选中格=今天', [...dd.querySelectorAll('.bz-home-wk-n')].some((n) => n.textContent === '今') && dt('.bz-home-wk--sel .bz-home-wk-n').textContent === '今');
+        t('周历格=星期中文（日期数字行退役）+选中格=今天', [...dd.querySelectorAll('.bz-home-wk-n')].every((n) => /^[日一二三四五六]$/.test(n.textContent || '')) && dt('.bz-home-wk--sel').classList.contains('bz-home-wk--today'));
         t('关闭钮图标已物化（真 setIcon）', !!dt('[data-home-close] svg'));
         t('移动瓦片在 DOM（15 枚：移动端没藏密码本）', dd.querySelectorAll('.bz-home-m-tile').length === 15);
         t('移动瓦片桌面隐藏', getComputedStyle(dt('.bz-home-tiles')).display === 'none');

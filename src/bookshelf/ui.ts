@@ -29,9 +29,19 @@ import {
   getDisplayItems as pipeDisplay,
 } from './render';
 import { closeBookNoteModals } from './notes-ui';
+import {
+  motionPanelIn, motionPanelOut, motionWallRendered, motionDetailOpen, motionReportEnter,
+  motionReportWatch, motionReportStop, motionHeatmapNav, motionYearToggle, motionTeardown,
+  motionBusy, type BsWallAction,
+} from './motion';
 
 /** 渲染钩子：render.ts 纯层产出的 `<i data-lucide>` 占位由 core setIcon 物化 */
 const HOOKS = { mountIcons };
+
+/** 最近一次墙渲染的原因（动效层分档消费；renderWall 读后复位 refresh=静默档）。
+ *  各交互点置位：筛选/排序=filter、搜索/清词=search、报告返回=reshelf、缩放重排=layout；
+ *  数据自动刷新与冷开默认走 refresh（静默）。首次渲染的 boot 由 motion 层 bootPending 覆盖。 */
+let wallAction: BsWallAction = 'refresh';
 
 // ---------- 封面（vault 资源；纯层不可入） ----------
 
@@ -88,11 +98,15 @@ function renderWall(): void {
   if (!shelf) return;
   const sig = displaySignature();
   const room = shelf.closest('.bz-bs-room') as HTMLElement | null;
+  const hint = overlay.querySelector('#bz-bs-hint') as HTMLElement | null;
   // 渲染前取用户实时滚位（innerHTML 重建会瞬时塌陷内容高度，浏览器把 scrollTop clamp 回 0）
   const prevScroll = room ? room.scrollTop : 0;
   const keepScroll = sig === lastWallSig;
+  // 动效层：墙编排进行中且展示签名未变（他侧 iframe 重灌种子/落盘触发的自动刷新）→
+  // 跳过本次换血，别把正在演的码墙打断；数据真变（签名变）照常渲染
+  if (keepScroll && motionBusy()) return;
   renderWallInto(shelf, {
-    hint: overlay.querySelector('#bz-bs-hint') as HTMLElement | null,
+    hint,
     all: M.items,
     list: getDisplayItems(),
     q: M.searchKeyword,
@@ -102,6 +116,9 @@ function renderWall(): void {
   });
   lastWallSig = sig;
   if (room && keepScroll) room.scrollTop = prevScroll;
+  // 动效层：按渲染原因分档编排（boot 消费 / 各档快排 / 静默 diff），读完即复位
+  motionWallRendered(overlay, shelf, hint, wallAction);
+  wallAction = 'refresh';
 }
 
 /** 头行标签 + 排序 seg（labels 只依赖 items/side/catFilter、seg 只依赖 sortMode——
@@ -138,6 +155,9 @@ function syncSearchInputs(): void {
 function startReportRender(app: App, extraOpts: ReportRenderOptions = {}): void {
   const container = M.currentOverlay?.querySelector('.bz-rr-content') as HTMLElement | null;
   if (!container) return;
+  // 动效层：分片渲染观察（silent 自动刷新档静默换血不播）；在途旧演出一并撤
+  motionReportStop();
+  motionReportWatch(container, extraOpts.silent);
   renderReadingReport(container, app, {
     onFilter: (kind, value) => applyReportFilter(app, kind, value),
     onBack: () => showView(app, 'shelf'),
@@ -171,9 +191,15 @@ function showView(app: App, view: BookshelfView): void {
   M.view = view;
   paintViewContainers();
   if (view === 'report') {
+    // 动效层：报告视图翻出一页（冷开报告在此消费 boot，回墙走快档不重播首屏）
+    motionReportEnter(M.currentOverlay?.querySelector('.bz-bs-view-report') as HTMLElement | null);
     startReportRender(app);
   } else {
-    if (changed) cancelReadingReport();
+    if (changed) {
+      cancelReadingReport();
+      motionReportStop();
+      wallAction = 'reshelf'; // 动效层：报告返回书库 → 墙快速码回
+    }
     renderAll();
   }
 }
@@ -230,8 +256,9 @@ function continueBook(app: App, it: BookshelfItem): void {
 /** 借书卡（issue 223 只读版：pull-note + 纸卡双栏 + 台账 + 静态进度条 + 批注密度条 + 印章；
  *  markup 走 render.ts detailBodyHtml，本层只负责封面资源与 uiModal 壳）。
  *  深审 ui F8（issue 223 拍板保留项补齐）：补「× 关闭」钮——移动端无 ESC、遮罩只剩
- *  16px 精确命中；同批传 title 给 uiModal，dialog 有可读名（aria-label 随 head 透出）。 */
-function openBookDetail(it: BookshelfItem, app: App): void {
+ *  16px 精确命中；同批传 title 给 uiModal，dialog 有可读名（aria-label 随 head 透出）。
+ *  动效层：spine = 被点的书脊（抽书演出用；非点击路径传 null 只演摊卡）。 */
+function openBookDetail(it: BookshelfItem, app: App, spine?: HTMLElement | null): void {
   const body = document.createElement('div');
   body.className = 'bz-bs-detail';
   body.innerHTML = detailBodyHtml(it, coverUrl(it, app));
@@ -250,6 +277,7 @@ function openBookDetail(it: BookshelfItem, app: App): void {
   });
   popup.querySelector('[data-bs-d-continue]')?.addEventListener('click', () => continueBook(app, it));
   bindCoverFallback(popup);
+  motionDetailOpen(popup, spine && spine.isConnected ? spine : null);
 }
 
 // ---------- 面板皮肤（五肤×亮暗双模式；类挂面板根与弹窗根） ----------
@@ -316,6 +344,7 @@ export function createOverlay(app: App): void {
       } else {
         M.side = M.side === id ? 'all' : id;
       }
+      wallAction = 'filter';
       renderAll();
       return;
     }
@@ -324,6 +353,7 @@ export function createOverlay(app: App): void {
     if (cat) {
       const name = cat.dataset.bsCat || 'all';
       M.catFilter = name !== 'all' && M.catFilter === name ? 'all' : name;
+      wallAction = 'filter';
       renderAll();
       return;
     }
@@ -331,13 +361,23 @@ export function createOverlay(app: App): void {
     const sortBtn = t.closest('[data-bs-sort]') as HTMLElement | null;
     if (sortBtn) {
       M.sortMode = (sortBtn.dataset.bsSort || 'recent') as SortKey;
+      wallAction = 'filter';
       renderAll();
       return;
     }
     // 报告视图内交互（reading-report 域）与返回/预填
     if (M.view === 'report') {
       const rrContent = overlay.querySelector('.bz-rr-content') as HTMLElement | null;
-      if (rrContent && handleReportInteraction(rrContent, t)) return;
+      if (rrContent && handleReportInteraction(rrContent, t)) {
+        // 动效层：翻月 = 新月格子波浪点亮；年卡展开 = 12 月柱次第长出（收起不演）
+        if (t.closest('[data-rr-hm-prev]') || t.closest('[data-rr-hm-next]')) {
+          motionHeatmapNav(rrContent.querySelector('[data-rr-hm-body]'));
+        } else {
+          const yc = t.closest('[data-rr-year]') as HTMLElement | null;
+          if (yc) motionYearToggle(rrContent.querySelector(`[data-rr-year-body="${yc.getAttribute('data-rr-year') || ''}"]`));
+        }
+        return;
+      }
       if (t.closest('[data-rr-goto-shelf]')) { showView(app, 'shelf'); return; }
       const rrAuthor = t.closest('[data-rr-author]') as HTMLElement | null;
       if (rrAuthor) { applyReportFilter(app, 'author', rrAuthor.getAttribute('data-rr-author') || ''); return; }
@@ -349,7 +389,7 @@ export function createOverlay(app: App): void {
     if (spine && M.view === 'shelf') {
       const epub = spine.dataset.bsEpub === '1';
       const it = M.items.find((x) => epub ? x.epubVaultPath === spine.dataset.bsId : x.file?.path === spine.dataset.bsId);
-      if (it) openBookDetail(it, app);
+      if (it) openBookDetail(it, app, spine);
       return;
     }
   });
@@ -371,6 +411,7 @@ export function createOverlay(app: App): void {
     searchInput.value = '';
     M.searchKeyword = '';
     syncSearchClear();
+    wallAction = 'filter'; // 动效层：清词回全墙 = 筛选复位快档
     renderWall();
   };
   searchInput.addEventListener('input', () => {
@@ -379,6 +420,7 @@ export function createOverlay(app: App): void {
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = setTimeout(() => {
       M.searchKeyword = searchInput.value.trim();
+      wallAction = 'search'; // 动效层：搜索 = 翻找一拍 + 命中极速码墙
       renderWall();
     }, 200);
   });
@@ -407,13 +449,17 @@ export function createOverlay(app: App): void {
     if (wallResizeTimer) clearTimeout(wallResizeTimer);
     wallResizeTimer = setTimeout(() => {
       wallResizeTimer = null;
-      if (M.currentOverlay && M.view === 'shelf') renderAll();
+      if (M.currentOverlay && M.view === 'shelf') {
+        wallAction = 'layout'; // 动效层：几何重排完全静默，不把缩放当筛选播
+        renderAll();
+      }
     }, 150);
   };
   window.addEventListener('resize', wallResizeHandler);
 
   mountIcons(overlay);
   paintViewContainers();
+  motionPanelIn(overlay); // 动效层：书房灯亮（置位 boot；首屏编排由 rebuild 后的 renderWall 消费）
   // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读 weave-data 空白闪烁
   const shelf0 = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (shelf0) shelf0.innerHTML = wallLoadingHTML();
@@ -427,6 +473,7 @@ export function createOverlay(app: App): void {
 }
 
 export function closeOverlay(): void {
+  const ov = M.currentOverlay;
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
   if (wallResizeTimer) { clearTimeout(wallResizeTimer); wallResizeTimer = null; }
   if (wallResizeHandler) {
@@ -435,9 +482,12 @@ export function closeOverlay(): void {
   }
   closeDomainModals();
   cancelReadingReport();
-  if (M.currentOverlay) {
-    M.currentOverlay.remove();
+  motionTeardown(); // 动效层：动画/循环/观察器/调度一把收（面板销毁前不留永动孤儿）
+  if (ov) {
     M.currentOverlay = null;
+    // 退场中挡掉指针（防灯灭动画期间再点出孤儿弹窗）；240ms 后由 done 销毁节点
+    ov.style.pointerEvents = 'none';
+    motionPanelOut(ov, () => ov.remove());
   }
   lastWallSig = '';
 }

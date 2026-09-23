@@ -1,5 +1,5 @@
-/* 源指纹 62d1e08f70a7bab4 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 18548dc4b5e4dcde · 仓内输入 75 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_diary = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -5368,7 +5368,7 @@ var BZW_diary = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M2 = 10;
+    const M3 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5395,7 +5395,7 @@ var BZW_diary = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
         moved = true;
         cancel();
       }
@@ -5789,10 +5789,33 @@ var BZW_diary = (() => {
       onInput: opts.onInput
     });
     el.appendChild(input);
+    let clearBtn = null;
+    if (opts.clearable !== false) {
+      clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "bz-search-clear";
+      clearBtn.title = "清除搜索";
+      clearBtn.setAttribute("aria-label", "清除搜索");
+      clearBtn.hidden = !input.value.trim();
+      clearBtn.appendChild(uiIcon("x"));
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      });
+      input.addEventListener("input", () => {
+        if (clearBtn) clearBtn.hidden = !input.value.trim();
+      });
+      el.appendChild(clearBtn);
+    }
+    const syncClear = () => {
+      if (clearBtn) clearBtn.hidden = !input.value.trim();
+    };
     const setValue = (v) => {
       input.value = v;
+      syncClear();
     };
-    return { el, input, setValue };
+    return { el, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -14458,6 +14481,584 @@ ${String(review).trim()}`;
     });
   }
 
+  // src/diary/motion.ts
+  var M2 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  var STAG = 30;
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function") {
+      step(1);
+      return;
+    }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  var easeInOut = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  var bootArmed = false;
+  function motionArmBoot() {
+    bootArmed = true;
+  }
+  function motionConsumeBoot() {
+    const was = bootArmed;
+    bootArmed = false;
+    return was;
+  }
+  function clearAnims(...els) {
+    for (const el of els) {
+      if (!el || typeof el.getAnimations !== "function") continue;
+      try {
+        el.getAnimations().forEach((a) => a.cancel());
+      } catch (e) {
+      }
+    }
+  }
+  function motionPanelIn(root, reopen) {
+    clearAnims(root);
+    root.style.opacity = "";
+    root.style.transform = "";
+    root.style.filter = "";
+    const card = visibleCard(root);
+    clearAnims(card);
+    if (card) {
+      card.style.opacity = "";
+      card.style.transform = "";
+      card.style.filter = "";
+    }
+    waapi(
+      root,
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: reopen ? M2.fast + 40 : M2.base + 120, easing: E.out }
+    );
+  }
+  function motionPanelOut(root, done) {
+    const card = visibleCard(root);
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      root.style.opacity = "";
+      if (card) {
+        card.style.opacity = "";
+        card.style.transform = "";
+        card.style.filter = "";
+      }
+      done();
+    };
+    const a = waapi(
+      root,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M2.move, easing: E.out, fill: "forwards" }
+    );
+    if (card) {
+      waapi(
+        card,
+        [
+          { opacity: 1, transform: "none", filter: "blur(0px)" },
+          { opacity: 0, transform: "translateY(9px) scale(.99)", filter: "blur(5px)" }
+        ],
+        { duration: M2.move + 40, easing: E.out, fill: "forwards" }
+      );
+    }
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(M2.move + 200, finish);
+  }
+  function visibleCard(root) {
+    var _a;
+    return (_a = [...root.querySelectorAll(".bz-diary-desk, .bz-diary-mob")].find((el) => el.clientWidth > 0)) != null ? _a : null;
+  }
+  function motionRendered(scope, mode) {
+    cancelPending();
+    if (mode === "none" || reduced()) return;
+    const boot = mode === "boot";
+    if (boot) {
+      const bookname = scope.querySelector(".bz-diary-bookname");
+      if (bookname) {
+        waapi(
+          bookname,
+          [
+            { opacity: 0, transform: "translateY(3px)", filter: "blur(6px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M2.base + 100, delay: 40, easing: E.out, fill: "backwards" }
+        );
+      }
+      const range = scope.querySelector(".bz-diary-range");
+      if (range) {
+        waapi(
+          range,
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: M2.base, delay: 180, easing: E.out, fill: "backwards" }
+        );
+      }
+    }
+    const chips = [...scope.querySelectorAll(".bz-diary-chip, .bz-diary-subchip")];
+    chips.forEach((el, i) => {
+      if (i >= (boot ? 12 : 10)) return;
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(5px) scale(.92)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: boot ? M2.base : M2.fast + 60, delay: boot ? 140 + i * STAG : 10 + i * 14, easing: E.out, fill: "backwards" }
+      );
+    });
+    if (boot) {
+      const rail = scope.querySelector(".bz-rail-scroll");
+      if (rail) {
+        [...rail.children].forEach((el, i) => {
+          if (i >= 16) return;
+          waapi(
+            el,
+            [
+              { opacity: 0, transform: "translateX(-9px)", filter: "blur(3px)" },
+              { opacity: 1, transform: "none", filter: "blur(0px)" }
+            ],
+            { duration: M2.base, delay: 200 + i * 24, easing: E.out, fill: "backwards" }
+          );
+        });
+      }
+    }
+    const wall = scope.querySelector(".bz-diary-wall");
+    if (!wall) return;
+    clearAnims(wall);
+    const mem = wall.querySelector(".bz-diary-memories");
+    if (mem && boot) {
+      const head = mem.querySelector(".bz-diary-memories-head");
+      if (head) {
+        waapi(
+          head,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: M2.base, delay: 240, easing: E.out, fill: "backwards" }
+        );
+      }
+      const row = mem.querySelector(".bz-diary-memories-row");
+      if (row) {
+        waapi(
+          row,
+          [{ opacity: 0, clipPath: "inset(0 100% 0 0)" }, { opacity: 1, clipPath: "inset(0 -2% 0 0)" }],
+          { duration: M2.base + 160, delay: 300, easing: E.out, fill: "backwards" }
+        );
+        row.querySelectorAll(".bz-diary-memory").forEach((el, i) => {
+          if (i >= 6) return;
+          waapi(
+            el,
+            [
+              { opacity: 0, transform: "translateX(-10px)", filter: "blur(3px)" },
+              { opacity: 1, transform: "none", filter: "blur(0px)" }
+            ],
+            { duration: M2.base, delay: 380 + i * 60, easing: E.out, fill: "backwards" }
+          );
+        });
+      }
+    } else if (mem) {
+      waapi(
+        mem,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M2.fast + 40, delay: 30, easing: E.out, fill: "backwards" }
+      );
+    }
+    const empty = wall.querySelector(".bz-empty");
+    if (empty) {
+      waapi(
+        empty,
+        [
+          { opacity: 0, transform: "translateY(8px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base, delay: boot ? 180 : 30, easing: E.out, fill: "backwards" }
+      );
+    }
+    [...wall.querySelectorAll(".bz-diary-day-head")].forEach((h, i) => {
+      if (i >= (boot ? 8 : 5)) return;
+      const delay = boot ? 300 + i * 70 : 40 + i * 40;
+      waapi(
+        h,
+        [
+          { opacity: 0, transform: "translateY(-7px) scale(1.04)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base, delay, easing: E.out, fill: "backwards" }
+      );
+      if (boot) after(delay + 150, () => inkBlot(h));
+    });
+    [...wall.querySelectorAll(".bz-diary-item")].forEach((el, i) => {
+      if (i >= (boot ? 20 : 12)) return;
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(11px)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base + 80, delay: boot ? 380 + i * 26 : 70 + i * 14, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionPageTurn(scope, wall, rewrite) {
+    if (reduced() || typeof wall.animate !== "function") {
+      rewrite();
+      return;
+    }
+    cancelPending();
+    activePage == null ? void 0 : activePage.remove();
+    const out = waapi(
+      wall,
+      [{ opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(5px)" }],
+      { duration: M2.fast + 20, easing: E.out, fill: "forwards" }
+    );
+    const page = document.createElement("i");
+    page.className = "bz-dm-page";
+    page.setAttribute("aria-hidden", "true");
+    scope.appendChild(page);
+    activePage = page;
+    let swapped = false;
+    tween(M2.impulse, (v) => {
+      if (!page.isConnected) return;
+      const p = v * 2 - 1;
+      page.style.opacity = String(Math.max(0, Math.sin(Math.min(1, v * 1.18) * Math.PI)));
+      page.style.transform = `perspective(1100px) rotateY(${(-p * 34).toFixed(1)}deg) translateX(${(p * 74).toFixed(1)}%)`;
+      if (!swapped && v >= 0.45) {
+        swapped = true;
+        if (out) out.cancel();
+        wall.style.opacity = "";
+        wall.style.filter = "";
+        rewrite();
+      }
+      if (v >= 1) {
+        page.remove();
+        if (activePage === page) activePage = null;
+      }
+    }, easeInOut);
+  }
+  var activePage = null;
+  function motionDateFilterIn(wrap, light) {
+    if (reduced()) return;
+    const card = wrap.querySelector(".bz-diary-datefilter-card");
+    if (!card) return;
+    waapi(
+      wrap,
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: light ? M2.fast : M2.base, easing: E.out }
+    );
+    if (light) {
+      flipMonths(card, 40);
+      return;
+    }
+    const title = card.querySelector(".bz-diary-datefilter-title");
+    if (title) {
+      waapi(
+        title,
+        [{ opacity: 0, filter: "blur(5px)" }, { opacity: 1, filter: "blur(0px)" }],
+        { duration: M2.base, delay: 30, easing: E.out, fill: "backwards" }
+      );
+    }
+    [...card.querySelectorAll(".bz-diary-datefilter-year")].forEach((el, i) => {
+      if (i >= 10) return;
+      waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(5px) scale(.92)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, delay: 90 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+    flipMonths(card, 200);
+  }
+  function flipMonths(card, base) {
+    [...card.querySelectorAll(".bz-diary-datefilter-month")].forEach((el, i) => {
+      if (i >= 12) return;
+      el.style.transformOrigin = "50% 0%";
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "perspective(700px) rotateX(-32deg) translateY(6px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M2.base + 60, delay: base + i * 24, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDateFilterOut(wrap, done) {
+    const card = wrap.querySelector(".bz-diary-datefilter-card");
+    if (!card) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      wrap.style.opacity = "";
+      card.style.opacity = "";
+      card.style.transform = "";
+      card.style.filter = "";
+      done();
+    };
+    const a = waapi(
+      wrap,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M2.fast, easing: E.out, fill: "forwards" }
+    );
+    waapi(
+      card,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.98)", filter: "blur(3px)" }
+      ],
+      { duration: M2.fast, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(M2.fast + 140, finish);
+  }
+  function motionChipPress(el) {
+    waapi(
+      el,
+      [{ transform: "scale(.94)" }, { transform: "none" }],
+      { duration: M2.fast + 20, easing: E.out }
+    );
+  }
+  function motionChipDeny(el) {
+    waapi(
+      el,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-3px)" },
+        { transform: "translateX(3px)" },
+        { transform: "translateX(-2px)" },
+        { transform: "translateX(0)" }
+      ],
+      { duration: M2.fast + 80, easing: E.out }
+    );
+  }
+  function motionMonthPress(el) {
+    motionChipPress(el);
+  }
+  function motionDayStamp(head) {
+    if (reduced()) return;
+    waapi(
+      head,
+      [{ transform: "scale(1.03)", filter: "blur(2px)" }, { transform: "none", filter: "blur(0px)" }],
+      { duration: M2.base, easing: E.out }
+    );
+    after(70, () => inkBlot(head));
+  }
+  function motionClearChip(el) {
+    waapi(
+      el,
+      [{ opacity: 0, transform: "scale(.85)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.fast + 40, easing: E.out }
+    );
+  }
+  function motionMarks(container) {
+    if (reduced()) return;
+    container.querySelectorAll("mark.bz-diary-mark").forEach((el, i) => {
+      if (i >= 6) return;
+      waapi(
+        el,
+        [{ opacity: 0.25 }, { opacity: 1 }],
+        { duration: M2.fast + 60, delay: i * 40, easing: E.out }
+      );
+    });
+  }
+  function motionSearchRow(row) {
+    waapi(
+      row,
+      [
+        { opacity: 0, transform: "translateY(-5px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.move, easing: E.out }
+    );
+  }
+  function motionDevelop(el) {
+    waapi(
+      el,
+      [
+        { opacity: 0, filter: "blur(9px) brightness(1.05)", transform: "scale(1.02)" },
+        { opacity: 1, filter: "blur(0px) brightness(1)", transform: "none" }
+      ],
+      { duration: M2.base + 160, easing: E.out }
+    );
+  }
+  function motionLightboxShow(lb, box, cap, sub, dir) {
+    clearAnims(lb);
+    lb.style.opacity = "";
+    lb.style.transform = "";
+    lb.style.filter = "";
+    const media = box.querySelector(".bz-diary-lb-media");
+    if (media) {
+      const enter = dir === 0 ? [
+        { opacity: 0, transform: "scale(.965)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ] : [
+        { opacity: 0, transform: `translateX(${dir * 26}px)`, filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ];
+      waapi(media, enter, { duration: dir === 0 ? M2.base + 140 : M2.move + 60, easing: E.out });
+    }
+    const pending = box.querySelector(".bz-diary-lb-pending");
+    if (pending) waapi(pending, [{ opacity: 0 }, { opacity: 1 }], { duration: M2.fast, easing: E.out });
+    [cap, sub].filter((x) => !!x).forEach((el, i) => {
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base, delay: 60 + i * 40, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionLightboxOut(lb, done) {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      lb.style.opacity = "";
+      lb.style.transform = "";
+      lb.style.filter = "";
+      done();
+    };
+    const a = waapi(
+      lb,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M2.move, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(M2.move + 160, finish);
+  }
+  function motionSheetDialog(popup) {
+    if (reduced()) return;
+    const form = popup.querySelector(".bz-diary-form");
+    if (!form) return;
+    [...form.children].forEach((el, i) => {
+      if (i >= 6) return;
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(7px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base, delay: 40 + i * 50, easing: E.out, fill: "backwards" }
+      );
+    });
+    popup.querySelectorAll(".diary-tag-selector-btn").forEach((el, i) => {
+      if (i >= 14) return;
+      waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(4px) scale(.94)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, delay: 150 + i * 18, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionSkeleton(box) {
+    waapi(
+      box,
+      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.fast + 40, easing: E.out }
+    );
+  }
+  function inkBlot(head) {
+    if (reduced() || !head.isConnected) return;
+    const date = head.querySelector(".bz-diary-day-date");
+    const dot = document.createElement("i");
+    dot.className = "bz-dm-ink";
+    dot.setAttribute("aria-hidden", "true");
+    dot.style.left = `${date ? date.offsetWidth / 2 : 20}px`;
+    dot.style.top = `${head.offsetHeight / 2}px`;
+    head.appendChild(dot);
+    waapi(
+      dot,
+      [
+        { opacity: 0, transform: "scale(.5)" },
+        { opacity: 0.5, transform: "scale(1)", offset: 0.45 },
+        { opacity: 0, transform: "scale(1.8)" }
+      ],
+      { duration: M2.base + 240, easing: E.out }
+    );
+    after(M2.base + 300, () => dot.remove());
+  }
+  function motionTeardown() {
+    cancelPending();
+    bootArmed = false;
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => {
+      if (location.hash !== "#replay") return;
+      location.hash = "";
+      const replay = window.__bzDiaryReplay;
+      if (typeof replay === "function") setTimeout(replay, 600);
+    });
+    if (location.hash === "#replay") {
+      const wait = () => {
+        const replay = window.__bzDiaryReplay;
+        if (typeof replay === "function") {
+          location.hash = "";
+          setTimeout(replay, 600);
+        } else setTimeout(wait, 120);
+      };
+      setTimeout(wait, 120);
+    }
+  }
+
   // src/diary/ui/dialogs.ts
   var DIARY_FLOW_SKIN = "bz-diary-flow-dialog";
   var tagUsageCount = /* @__PURE__ */ new Map();
@@ -14632,6 +15233,7 @@ ${String(review).trim()}`;
     mask.id = "diary-tag-selector-mask";
     popup.id = "diary-tag-selector-popup";
     tagPickerUi = { mask, popup, close };
+    motionSheetDialog(popup);
     bindFormSubmit(popup, () => void commitTagPickerSave());
   }
   async function handleTagPickerSave(loc, selTagNames, isEncryptedEntry) {
@@ -14761,6 +15363,7 @@ ${String(review).trim()}`;
     addDialogUi = { mask, popup, close };
     bindFormSubmit(popup, () => void saveNewEntry());
     renderTagOptions(typeContainer, sortTagsByUsage(getSortedTagsForAddDialog()), /* @__PURE__ */ new Set());
+    motionSheetDialog(popup);
     let defaultDateStr = localDayKey();
     let defaultTimeStr = (0, import_moment.default)().format("HH:mm");
     if (getUseFileDateTimeSetting()) {
@@ -14953,6 +15556,12 @@ ${String(review).trim()}`;
        *  （刷新/写后回刷/重试）恒先 invalidateWallCache 回源，保持「每次刷新即读盘」原语义。
        *  show 置真、loadAndRender 消费后复位 */
       this._allowCacheNext = false;
+      /** 动效层：用户筛选切换（chip/二级签/日期/清除）待走翻页编排的标志（renderWall 消费即熄） */
+      this._motionSwitchPend = false;
+      /** 动效层：面板退场演出进行中（hide 防重入；show 复位） */
+      this._hideMotion = false;
+      /** 动效层：是否开过面板（重开走短档入场） */
+      this._shownOnce = false;
     }
     static getInstance() {
       if (!_DiaryAppController.instance) {
@@ -14995,11 +15604,21 @@ ${String(review).trim()}`;
         };
         this._mql.addEventListener("change", this._onMqChange);
       }
+      window.__bzDiaryReplay = () => {
+        if (!this.root) return;
+        this.root.style.display = "flex";
+        this._hideMotion = false;
+        motionArmBoot();
+        motionPanelIn(this.root, false);
+        void this.loadAndRender();
+      };
     }
     /** 从实例 HTML 收集 DOM 引用 */
     bindRefs(scope) {
       const q = (sel) => scope.querySelector(sel);
       return {
+        el: scope,
+        // 动效层编排锚点：实例根元素（桌面卡 / 移动全屏）
         head: q(".bz-diary-head"),
         range: q(".bz-diary-range"),
         chipRow: q(".bz-diary-chiprow"),
@@ -15054,6 +15673,7 @@ ${String(review).trim()}`;
       ui.rail.addEventListener("click", (e) => {
         const item = e.target.closest(".bz-diary-month");
         if (!item) return;
+        motionMonthPress(item);
         this.scrollToMonth(item.dataset.month || "", ui.wall);
       });
       ui.searchBox.addEventListener("input", () => this._searchDebounced(ui.searchBox.value));
@@ -15062,6 +15682,8 @@ ${String(review).trim()}`;
           e.stopPropagation();
           this._searchDebounced.cancel();
           ui.searchBox.value = "";
+          ui.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
+          this._searchDebounced.cancel();
           this.searchKeyword = "";
           this.renderAll();
           ui.searchBox.blur();
@@ -15124,7 +15746,7 @@ ${String(review).trim()}`;
     /** 增强 #1：灯箱步进（dir=1 下一张 / -1 上一张；到头循环——相册式连看，与移动端滑动同口径） */
     stepLightbox(dir) {
       if (!this.lbVisible() || !this._lbSeq.length) return;
-      this.showLightboxAt(this._lbIdx + dir);
+      this.showLightboxAt(this._lbIdx + dir, dir);
     }
     /**
      * 效率#10：灯箱「⋯」动作菜单——复用 buildMenuActions 动作集（core openItemMenu 跟手菜单，
@@ -15156,6 +15778,17 @@ ${String(review).trim()}`;
       this.renderWall(this.mob, true, list);
     }
     /**
+     * 动效层：用户筛选切换（chip / 二级签 / 日期筛选 / 清除）走翻页编排——旧墙墨隐、
+     * 纸面扫过面板、过中线那一刻 renderAll 换血、新内容以 switch 档接力落纸。
+     * RM / 无 WAAPI 宿主：motionPageTurn 同步 rewrite，行为与直接 renderAll 等价。
+     * 后台刷新（写后回刷 / vault modify / 解锁）仍走静默 renderAll，不翻页。
+     */
+    renderAllMotioned() {
+      const ui = this._mql ? this._mql.matches ? this.mob : this.desk : this.desk;
+      this._motionSwitchPend = true;
+      motionPageTurn(ui.el, ui.wall, () => this.renderAll());
+    }
+    /**
      * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
      * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
      * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
@@ -15182,10 +15815,11 @@ ${String(review).trim()}`;
       b.title = "清除日期筛选";
       b.appendChild(uiIcon("x"));
       b.appendChild(document.createTextNode("清除"));
+      motionClearChip(b);
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         this.selDateFilter = null;
-        this.renderAll();
+        this.renderAllMotioned();
       });
       brand.appendChild(b);
     }
@@ -15284,18 +15918,19 @@ ${String(review).trim()}`;
           cnt.textContent = String(countFor(tag));
           b.appendChild(cnt);
           b.addEventListener("click", () => {
+            motionChipPress(b);
             if (tag === "加密") {
               if (locked) {
                 void this.unlockAndSelectEncrypt();
                 return;
               }
               this.selTag = this.selTag === "加密" ? null : "加密";
-              this.renderAll();
+              this.renderAllMotioned();
               return;
             }
             if (this.selTag !== tag) this.selSubTag = null;
             this.selTag = this.selTag === tag ? null : tag;
-            this.renderAll();
+            this.renderAllMotioned();
           });
           row.appendChild(b);
         });
@@ -15305,10 +15940,16 @@ ${String(review).trim()}`;
     }
     /** 加密 chip 锁定态点击：弹保险箱解锁 → 解锁后并入加密日记 → 选中「加密」筛选（对齐日记本） */
     async unlockAndSelectEncrypt() {
+      var _a;
       try {
         const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
         const ok = await ensureSafeUnlocked2("diary");
-        if (!ok) return;
+        if (!ok) {
+          const vis = ((_a = this._mql) == null ? void 0 : _a.matches) ? this.mob : this.desk;
+          const chip = vis.chipRow.querySelector('.bz-diary-chip[data-tag="加密"]');
+          if (chip) motionChipDeny(chip);
+          return;
+        }
         this.lockedVisible = true;
         this.selTag = "加密";
         await this.mergeEncryptedEntries();
@@ -15378,14 +16019,17 @@ ${String(review).trim()}`;
         b.dataset.tag = sub.tag;
         b.innerHTML = `${sub.emoji} ${sub.tag}`;
         b.addEventListener("click", () => {
+          motionChipPress(b);
           this.selSubTag = this.selSubTag === sub.tag ? null : sub.tag;
-          this.renderAll();
+          this.renderAllMotioned();
         });
         row.appendChild(b);
       });
     }
     /** 渲染章节栏 + 瀑布（桌面/移动各一份；list = 本次过滤结果，renderAll 一次计算共享） */
     renderWall(ui, mobile, list) {
+      const mode = this._motionSwitchPend ? "switch" : motionConsumeBoot() ? "boot" : "none";
+      this._motionSwitchPend = false;
       this.teardownScrollers(mobile ? "mob" : "desk");
       ui.wall.innerHTML = "";
       ui.rail.innerHTML = "";
@@ -15394,6 +16038,7 @@ ${String(review).trim()}`;
       }
       if (!list.length) {
         ui.wall.appendChild(this.mkEmpty());
+        motionRendered(ui.el, mode);
         return;
       }
       const memories = pickOnThisDay(list, this.todayStr());
@@ -15411,6 +16056,7 @@ ${String(review).trim()}`;
       if (!mobile && ui.rail.children.length > 0) {
         this.setupRailHighlight(ui.wall, ui.rail, "desk");
       }
+      motionRendered(ui.el, mode);
     }
     /**
      * 章节栏构建（仅桌面调用）：年份分组月份行（含胶卷缩略条）。
@@ -15551,7 +16197,10 @@ ${String(review).trim()}`;
         tx.textContent = "（已加密）";
       } else {
         void this.renderText(tx, text, e).then(() => {
-          if (tx.isConnected) this.highlightHits(tx);
+          if (tx.isConnected) {
+            this.highlightHits(tx);
+            motionMarks(tx);
+          }
         });
       }
       item.append(row, tx);
@@ -15897,7 +16546,9 @@ ${String(review).trim()}`;
       for (const ui of [this.desk, this.mob]) {
         if (ui.wall.querySelector(".bz-diary-item")) continue;
         ui.wall.innerHTML = "";
-        ui.wall.appendChild(this.mkSkeleton());
+        const skel = this.mkSkeleton();
+        ui.wall.appendChild(skel);
+        motionSkeleton(skel);
       }
     }
     mkSkeleton() {
@@ -15951,6 +16602,7 @@ ${String(review).trim()}`;
             img.onload = () => {
               ph.style.opacity = "0";
               img.style.opacity = "1";
+              motionDevelop(img);
             };
             img.onerror = () => {
               ph.style.opacity = "1";
@@ -16055,6 +16707,7 @@ ${String(review).trim()}`;
         img.onload = () => {
           if (ph) ph.style.opacity = "0";
           img.style.opacity = "1";
+          motionDevelop(img);
         };
         img.onerror = () => {
           if (ph) ph.style.opacity = "1";
@@ -16337,6 +16990,7 @@ ${String(review).trim()}`;
         if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
         const h = wall.querySelector(`.bz-diary-day-head[data-date^="${mk}"]`);
         if (!h) return;
+        motionDayStamp(h);
         const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
         if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
       }, SCROLL_FIX_DELAY_MS);
@@ -16433,9 +17087,10 @@ ${String(review).trim()}`;
     }
     /**
      * 展示连看序列第 idx 项（到头循环——与移动端滑动、桌面按钮、方向键同一口径）。
+     * dir：0 = 开箱（显影）；±1 = 步进（方向性滑入）——动效层 motionLightboxShow 消费。
      * P3 审查修复保留：只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载/播放）。
      */
-    showLightboxAt(idx) {
+    showLightboxAt(idx, dir = 0) {
       const seq = this._lbSeq;
       if (!seq.length) return;
       const n = seq.length;
@@ -16443,7 +17098,8 @@ ${String(review).trim()}`;
       const { entry, media: k } = seq[this._lbIdx];
       this.pauseLbMedia();
       const mobileNow = typeof matchMedia === "function" && matchMedia("(max-width: 768px)").matches;
-      this.fillLbMedia(mobileNow ? this.mob.lbMedia : this.desk.lbMedia, k, entry);
+      const target = mobileNow ? this.mob : this.desk;
+      this.fillLbMedia(target.lbMedia, k, entry);
       const cap = lbCaption(entry);
       const sub = lbSubText(entry);
       this.desk.lbCap.textContent = cap;
@@ -16452,6 +17108,7 @@ ${String(review).trim()}`;
       this.mob.lbSub.textContent = sub;
       if (mobileNow) this.mob.lb.classList.add("bz-diary-lb--show");
       else this.desk.lb.classList.add("bz-diary-lb--show");
+      motionLightboxShow(target.lb, target.lbMedia, target.lbCap, target.lbSub, dir);
     }
     /** 停掉双实例灯箱内正在播放的媒体（切换/关闭前调用） */
     pauseLbMedia() {
@@ -16516,7 +17173,9 @@ ${String(review).trim()}`;
             box.appendChild(this.mkLbErr(k));
             return;
           }
-          box.appendChild(this.mkLbMediaEl(k, url));
+          const el2 = this.mkLbMediaEl(k, url);
+          box.appendChild(el2);
+          motionDevelop(el2);
         });
         return;
       }
@@ -16535,9 +17194,14 @@ ${String(review).trim()}`;
     }
     closeLightbox() {
       this.pauseLbMedia();
+      const gen = ++this._lbGen;
       [this.desk, this.mob].forEach((ui) => {
-        ui.lb.classList.remove("bz-diary-lb--show");
-        ui.lbMedia.innerHTML = "";
+        if (!ui.lb.classList.contains("bz-diary-lb--show")) return;
+        motionLightboxOut(ui.lb, () => {
+          if (gen !== this._lbGen) return;
+          ui.lb.classList.remove("bz-diary-lb--show");
+          ui.lbMedia.innerHTML = "";
+        });
       });
       if (this._lbSeqMain) {
         this._lbSeq = this._lbSeqMain;
@@ -16826,28 +17490,39 @@ ${String(review).trim()}`;
     }
     show() {
       if (!this._initialized) this.ensureElements();
+      const reopen = this._shownOnce;
+      this._shownOnce = true;
+      this._hideMotion = false;
       this.root.style.display = "flex";
       topifyZ(this.root);
+      motionPanelIn(this.root, reopen);
       this.subscribeVaultModify();
       this.subscribeUnlockEvents();
       this.subscribeWriteEvents();
       this.subscribeRefSync();
       this._allowCacheNext = true;
+      motionArmBoot();
       void this.loadAndRender().then(() => this.applyRestore());
     }
     hide() {
       if (!this.root) return;
+      if (this._hideMotion) return;
+      this._hideMotion = true;
       this.closeDateFilter();
       this.closeLightbox();
       this.closeSheet();
       closeItemMenu();
       hideAddDialog();
       hideTagPicker();
-      this.root.style.display = "none";
       this.unsubscribeVaultModify();
       this.unsubscribeUnlockEvents();
       this.unsubscribeWriteEvents();
       this.unsubscribeRefSync();
+      motionPanelOut(this.root, () => {
+        this._hideMotion = false;
+        if (!this.root) return;
+        this.root.style.display = "none";
+      });
     }
     /**
      * 写链路域事件回刷（issue 256）：entry-added/tags-changed/entry-deleted/entry-decrypted/
@@ -17098,13 +17773,15 @@ ${String(review).trim()}`;
     }
     /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
      *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
-     *  只有点月份或「全部」才提交筛选。 */
-    showDateFilter(viewYear) {
+     *  只有点月份或「全部」才提交筛选。
+     *  light（动效层）：年内切年重开——只翻月份格，不重演题头与年份签。 */
+    showDateFilter(viewYear, light = false) {
       this.closeDateFilter();
       this._dateFilterEl = this.mkDateFilter(viewYear);
       document.body.appendChild(this._dateFilterEl);
       topifyZ(this._dateFilterEl);
       this._dateFilterEl.style.display = "flex";
+      motionDateFilterIn(this._dateFilterEl, light);
     }
     /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
     mkDateFilter(viewYear) {
@@ -17129,7 +17806,7 @@ ${String(review).trim()}`;
         resetBtn.addEventListener("click", () => {
           this.selDateFilter = null;
           this.closeDateFilter();
-          this.renderAll();
+          this.renderAllMotioned();
         });
         head.appendChild(resetBtn);
       }
@@ -17151,7 +17828,7 @@ ${String(review).trim()}`;
         b.dataset.year = y;
         b.innerHTML = `<span class="bz-diary-datefilter-year-name">${y}</span><span class="bz-diary-datefilter-year-cnt">${yearCount.get(y) || 0}</span>`;
         b.addEventListener("click", () => {
-          this.showDateFilter(y);
+          this.showDateFilter(y, true);
         });
         yearRow.appendChild(b);
       });
@@ -17177,9 +17854,10 @@ ${String(review).trim()}`;
           cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt || ""}</span>`;
           cardEl.addEventListener("click", () => {
             if (cnt === 0) return;
+            motionChipPress(cardEl);
             this.selDateFilter = { year: viewYear, month: ms };
             this.closeDateFilter();
-            this.renderAll();
+            this.renderAllMotioned();
           });
           monthRow.appendChild(cardEl);
         }
@@ -17197,10 +17875,12 @@ ${String(review).trim()}`;
       return wrap;
     }
     closeDateFilter() {
-      if (this._dateFilterEl) {
-        this._dateFilterEl.remove();
-        this._dateFilterEl = null;
-      }
+      const el = this._dateFilterEl;
+      if (!el) return;
+      this._dateFilterEl = null;
+      motionDateFilterOut(el, () => el.remove());
+      el.style.pointerEvents = "none";
+      el.setAttribute("aria-hidden", "true");
     }
     /** 搜索：toggle 搜索框（桌面/移动各一），输入过滤；打开/收起同步按钮高亮态 */
     toggleSearch(ui) {
@@ -17211,16 +17891,23 @@ ${String(review).trim()}`;
       const other = ui === this.desk ? this.mob : this.desk;
       if (row.style.display === "none") {
         row.style.display = "block";
+        motionSearchRow(row);
         box.value = this.searchKeyword;
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+        this._searchDebounced.cancel();
         box.focus();
         box.select();
         btn == null ? void 0 : btn.classList.add("bz-diary-icon-btn--on");
       } else {
-        this._searchDebounced.cancel();
         row.style.display = "none";
         box.value = "";
+        box.dispatchEvent(new Event("input", { bubbles: true }));
         this.searchKeyword = "";
-        if (other == null ? void 0 : other.searchBox) other.searchBox.value = "";
+        if (other == null ? void 0 : other.searchBox) {
+          other.searchBox.value = "";
+          other.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        this._searchDebounced.cancel();
         this.renderAll();
         btn == null ? void 0 : btn.classList.remove("bz-diary-icon-btn--on");
       }
@@ -17235,6 +17922,7 @@ ${String(review).trim()}`;
       var _a;
       this.closeDateFilter();
       closeItemMenu();
+      motionTeardown();
       this.teardownScrollers("desk");
       this.teardownScrollers("mob");
       this.unsubscribeVaultModify();

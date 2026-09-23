@@ -31,7 +31,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, markAllUnreadRead, openClipbookReport, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
+import { openClipbook, markAllUnreadRead, openReadingPress, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
@@ -48,7 +48,7 @@ import { openGameshelf, openGameshelfStats, syncGameshelf, unloadGameshelf } fro
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
 // 影视分析报告独立域已退役（ADR-0090：报告窗并入影院内嵌分析页，命令直达 bz-cinema-analysis）
-import { openReviewPanel, openReviewReport, openQuizPractice, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
+import { openReviewPanel, openReviewReport, openReviewAnalysis, openQuizPractice, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import {
   openSecondBrainPanel,
   openSecondBrainReference,
@@ -115,7 +115,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 剪藏阅读报告（issue 358「我读了什么」）：剪藏本自有阅读流水报告弹层（数据 = clipbook.json
   // 侧写 readLog），与书库「阅读分析报告」并列；图标弃 bar-chart-3（阅读分析报告独占）改
   // newspaper（剪藏本语义），与 pie-chart/calendar-check 继续错开
-  { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openClipbookReport(getApp()) },
+  { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openReadingPress(getApp()) },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },
@@ -151,6 +151,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）；图标弃 bar-chart-3（阅读分析报告独占，
   // enh-sweep-a 错开）改 calendar-check（呼应复习日程语义）
   { id: 'bz-review-report', name: '复习计划分析报告', icon: 'calendar-check', callback: () => openReviewReport(getApp()) },
+  // 记忆分析特刊（analysis/）：全屏逐幕分析层——滚轮/方向键一滚一幕；空库回落经典统计弹层
+  { id: 'bz-review-analysis', name: '记忆分析', icon: 'flame', callback: () => openReviewAnalysis(getApp()) },
   { id: 'bz-review-start', name: '开始复习', icon: 'play', callback: () => reviewStart(getApp()) },
   // 做题练习（issue 362）：做题家独立面板——不排期复习，选题范围 + 本轮题量直接开刷；
   // icon 与复习域设置分组「做题家」同款 graduation-cap（域语言一致，命令表内无重复）

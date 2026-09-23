@@ -205,6 +205,9 @@
 
 .bz-gs-search-clear:hover { color: var(--bz-text-1); }
 }
+/* hidden 属性显式守卫（clipbook 效率#12 / memo 同款坑）：上方 display:inline-flex 是
+   作者规则，UA 的 [hidden]{display:none} 同 origin 低序压不住，无词态必须显式钉死 */
+.bz-gs-search-clear[hidden] { display: none; }
 .bz-gs-sortseg .bz-segmented-btn { padding: 0 11px; }
 
 /* ---------- 封面网格 ---------- */

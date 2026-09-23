@@ -27,6 +27,7 @@ import { mountIcons, uiSuggest } from '../core/ui';
 import { ensureQuiz, quizUI } from './quiz-core';
 import type { QuizReviewResults } from './quiz-core/session';
 import { quizPracticeSetupHtml, quizPracticeSummaryHtml } from './render';
+import { motionQuizSetup, motionQuizSummary } from './motion';
 import {
   collectQuestionsForNotes,
   listVaultNotes,
@@ -172,6 +173,7 @@ class QuizPracticePanel {
     });
     mountIcons(this.content);
     this.bindSetup();
+    motionQuizSetup(this.content); // 段选接力浮起+开始钮蓄力
     if (focusKey) this.restoreFocus(focusKey);
   }
 
@@ -360,6 +362,7 @@ class QuizPracticePanel {
     });
     this.content.querySelector('[data-act="finish"]')?.addEventListener('click', () => this.hide());
     this.present();
+    motionQuizSummary(this.content, results.accuracy >= 90 ? '优' : '完成'); // 朱批大章
   }
 }
 
