@@ -177,6 +177,38 @@ describe('PasswordVaultUIManager', () => {
     expect(document.querySelector('.bz-password-vault-rows .bz-password-vault-empty')).toBeTruthy();
   });
 
+  it('搜索清除钮（效率#12 全域口径）：无词隐藏、有词显示；点 = 双框清词 + 刷新 + 钮即隐', async () => {
+    await sm.unlock('pw');
+    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x' });
+    await dm.addItem({ platform: '微信', account: 'wx', password: 'y' });
+    ui.show();
+    await new Promise((r) => setTimeout(r, 10));
+    const search = document.querySelector('.bz-password-vault-search input') as HTMLInputElement;
+    const btn = document.querySelector('.bz-password-vault-search [data-pwv-search-clear]') as HTMLElement;
+    expect(btn).toBeTruthy();
+    expect(btn.hidden).toBe(true); // 无词初始态
+    search.value = 'GitHub';
+    search.dispatchEvent(new Event('input'));
+    expect(btn.hidden).toBe(false); // 有词即显（不等防抖）
+    btn.click();
+    expect(search.value).toBe('');
+    expect(btn.hidden).toBe(true);
+    await new Promise((r) => setTimeout(r, 250)); // 清词立即重绘，防抖尾触已 cancel
+    const rows = document.querySelector('.bz-password-vault-rows')!;
+    // 清词回平台聚合视图（非展平行），两条平台都在场 = 全量恢复
+    expect(rows.textContent).toContain('GitHub');
+    expect(rows.textContent).toContain('微信');
+    // 移动端框同步：✕ 显隐各自按实值
+    const mobInput = document.querySelector('.bz-password-vault-mobsearch input') as HTMLInputElement;
+    const mobBtn = document.querySelector('.bz-password-vault-mobsearch [data-pwv-search-clear]') as HTMLElement;
+    mobInput.value = '微信';
+    mobInput.dispatchEvent(new Event('input'));
+    expect(mobBtn.hidden).toBe(false);
+    mobInput.value = '';
+    mobInput.dispatchEvent(new Event('input'));
+    expect(mobBtn.hidden).toBe(true);
+  });
+
   it('详情区账号卡：复制账号常驻 + 密码行 + 永不折叠 + 时间简写', async () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'p@ss', note: '主号' });
