@@ -1,4 +1,4 @@
-/* 源指纹 8aa886bb1eb74fba · 仓内输入 111 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2811960a8b8b4df7 · 仓内输入 111 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -22274,7 +22274,7 @@ ${bodyText.substring(0, 6e3)}`;
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -26041,7 +26041,7 @@ ${bodyText.substring(0, 6e3)}`;
     resetClipbookState();
   }
   function buildDom2(app) {
-    var _a;
+    var _a, _b;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -26063,6 +26063,7 @@ ${bodyText.substring(0, 6e3)}`;
     mobSearchbarEl = overlayEl2.querySelector("[data-clip-mob-searchbar]");
     const mobSearchbar = mobSearchbarEl;
     const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
+    mobSearchEl = mobInput;
     deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
     overlayEl2.addEventListener("click", (e) => {
       if (e.target === overlayEl2) closePanel();
@@ -26118,9 +26119,9 @@ ${bodyText.substring(0, 6e3)}`;
       if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
-      var _a2, _b;
+      var _a2, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if ((e.key === "Enter" || e.key === " ") && ((_b = (_a2 = e.target).closest) == null ? void 0 : _b.call(_a2, "[data-clip-open-note]"))) {
+      if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-clip-open-note]"))) {
         e.preventDefault();
         if (M.cur) openNote(M.cur);
         return;
@@ -26145,14 +26146,24 @@ ${bodyText.substring(0, 6e3)}`;
       } else {
         mobInput.value = "";
         setSearchKw("");
+        syncMobSearchClear();
         renderMobToc();
       }
     });
     mobInput.addEventListener("input", () => {
       searchKw = mobInput.value.trim();
+      syncMobSearchClear();
       renderMood = "search";
       renderMobToc();
       renderMood = "mute";
+    });
+    (_b = overlayEl2.querySelector("[data-clip-mob-search-clear]")) == null ? void 0 : _b.addEventListener("click", () => {
+      mobInput.value = "";
+      setSearchKw("");
+      syncMobSearchClear();
+      renderMobToc();
+      mobSearchbarEl.style.display = "none";
+      mobInput.blur();
     });
     mobCloseBtn.addEventListener("click", () => {
       const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === "block" : false;
@@ -26160,6 +26171,7 @@ ${bodyText.substring(0, 6e3)}`;
         searchKw = "";
         expandedMobArch.clear();
         if (mobInput) mobInput.value = "";
+        syncMobSearchClear();
         if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
         renderMobToc();
       } else {
@@ -26265,8 +26277,8 @@ ${bodyText.substring(0, 6e3)}`;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
-    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
-    if (mobInput) mobInput.value = "";
+    if (mobSearchEl) mobSearchEl.value = "";
+    syncMobSearchClear();
     renderMood = "nav";
     renderAll();
   }
@@ -26280,6 +26292,10 @@ ${bodyText.substring(0, 6e3)}`;
   function syncDeskSearchClear() {
     const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
     if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
+  }
+  function syncMobSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-search-clear]") : null;
+    if (btn) btn.hidden = !(mobSearchEl == null ? void 0 : mobSearchEl.value.trim());
   }
   function clearDeskSearch() {
     if (deskSearchEl) deskSearchEl.value = "";
@@ -27761,7 +27777,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle2, loading, dirty, loaded, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -27806,6 +27822,7 @@ ${bodyText.substring(0, 6e3)}`;
       mobSaveBtnEl = null;
       mobSearchbarEl = null;
       deskSearchEl = null;
+      mobSearchEl = null;
       escKey = "";
       escHandle2 = null;
       loading = false;
