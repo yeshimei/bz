@@ -1,5 +1,5 @@
-/* 源指纹 80e0a8ca5fc42058 · 仓内输入 255 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 224c6998a3d9b3e4 · 仓内输入 256 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M9, s, ms) {
+        function createDate(y, m, d, h, M10, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M9, s, ms);
+            date = new Date(y + 400, m, d, h, M10, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M9, s, ms);
+            date = new Date(y, m, d, h, M10, s, ms);
           }
           return date;
         }
@@ -6851,7 +6851,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M9 = 10;
+    const M10 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6878,7 +6878,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M9 || Math.abs(t.clientY - sy) > M9) {
+      if (Math.abs(t.clientX - sx) > M10 || Math.abs(t.clientY - sy) > M10) {
         moved = true;
         cancel();
       }
@@ -20031,15 +20031,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E2 = pick.E;
+      const E3 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E2, nOut, stub);
+      const E1 = along(E3, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E2, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E3, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -22268,10 +22268,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after2 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after2.data.length);
-    const tail = after2.splitText(len);
-    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after3 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after3.data.length);
+    const tail = after3.splitText(len);
+    (_b2 = after3.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -34060,6 +34060,527 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
+  // src/belongings/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function" || reduced()) return;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionTeardown() {
+    cancelPending();
+    flipBook = null;
+  }
+  function stageable(el) {
+    if (!el) return false;
+    try {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 2 || r.height <= 2) return false;
+      const vh = typeof window !== "undefined" && window.innerHeight || 900;
+      return r.top < vh + 120 && r.bottom > -120;
+    } catch (e) {
+      return false;
+    }
+  }
+  function deco(host, cls, css) {
+    const d = document.createElement("i");
+    d.className = cls;
+    d.setAttribute("aria-hidden", "true");
+    d.style.position = "absolute";
+    d.style.pointerEvents = "none";
+    Object.assign(d.style, css);
+    host.appendChild(d);
+    return d;
+  }
+  function motionPanelIn(overlay2) {
+    const panel2 = overlay2.querySelector(".bz-bel-panel");
+    if (!panel2) return;
+    panel2.style.opacity = "";
+    panel2.style.transform = "";
+    waapi(
+      panel2,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.982) rotate(.3deg)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M5.base + 140, easing: E.out }
+    );
+  }
+  function motionPanelOut(overlay2, done) {
+    const panel2 = overlay2.querySelector(".bz-bel-panel");
+    if (!panel2) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    const a = waapi(
+      panel2,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(-12px) scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M5.move + 40, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    setTimeout(finish, M5.move + 400);
+  }
+  function motionBeforePaint(panel2) {
+    var _a2, _b2;
+    flipBook = null;
+    try {
+      const grid = panel2.querySelector("[data-bel-content]");
+      if (!grid) return;
+      const rects = /* @__PURE__ */ new Map();
+      grid.querySelectorAll("[data-bel-id]").forEach((c) => {
+        const id = c.dataset.belId;
+        if (id) rects.set(id, c.getBoundingClientRect());
+      });
+      flipBook = { rects, title: (_b2 = (_a2 = panel2.querySelector("[data-bel-herotitle]")) == null ? void 0 : _a2.textContent) != null ? _b2 : "" };
+    } catch (e) {
+    }
+  }
+  function motionRendered(panel2, mode) {
+    cancelPending();
+    const book = flipBook;
+    flipBook = null;
+    if (mode === "silent" || reduced()) return;
+    if (mode === "boot") {
+      bootReveal(panel2);
+      return;
+    }
+    if (book) flipRepaint(panel2, book);
+  }
+  function rollText(el, dur) {
+    var _a2;
+    const finalText = (_a2 = el.textContent) != null ? _a2 : "";
+    const m = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/.exec(finalText);
+    if (!m) return;
+    const prefix = m[1], target = parseFloat(m[2].replace(/,/g, "")), suffix = m[3];
+    if (!Number.isFinite(target)) return;
+    const decimals = (m[2].split(".")[1] || "").length;
+    const fmt2 = (v) => (target * v).toLocaleString("zh-CN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    if (reduced() || typeof requestAnimationFrame !== "function") return;
+    el.textContent = prefix + fmt2(0) + suffix;
+    tween(dur, (v) => {
+      el.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
+    });
+  }
+  function bootReveal(panel2) {
+    const title = panel2.querySelector("[data-bel-herotitle]");
+    if (stageable(title)) {
+      waapi(
+        title,
+        [
+          { opacity: 0, transform: "scale(1.9) rotate(-4deg)", filter: "blur(10px)" },
+          { opacity: 1, transform: "scale(.965) rotate(.5deg)", filter: "blur(0px)", offset: 0.68 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M5.base + 120, easing: E.move, fill: "backwards" }
+      );
+    }
+    const sub = panel2.querySelector("[data-bel-herosub]");
+    if (stageable(sub)) {
+      waapi(
+        sub,
+        [
+          { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+          { opacity: 1, clipPath: "inset(0 -2% 0 0)" }
+        ],
+        { duration: M5.base, delay: M5.fast, easing: E.out, fill: "backwards" }
+      );
+    }
+    const stamp = panel2.querySelector(".bz-bel-stamp");
+    if (stageable(stamp)) {
+      waapi(
+        stamp,
+        [
+          { opacity: 0, transform: "scale(1.7) rotate(-6deg)" },
+          { opacity: 1, transform: "scale(.96) rotate(1deg)", offset: 0.66 },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.base + 80, easing: E.move, fill: "backwards" }
+      );
+    }
+    panel2.querySelectorAll("[data-bel-kpis] .bz-bel-kpi").forEach((kpi, i) => {
+      if (!stageable(kpi)) return;
+      waapi(
+        kpi,
+        [
+          { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M5.base, delay: 140 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+      const num2 = kpi.querySelector("b");
+      if (num2 && stageable(num2)) rollText(num2, M5.impulse);
+    });
+    const stampN = panel2.querySelector("[data-bel-stampn]");
+    if (stageable(stampN)) rollText(stampN, M5.impulse);
+    panel2.querySelectorAll("[data-bel-chips] .bz-chip").forEach((chip2, i) => {
+      if (!stageable(chip2)) return;
+      waapi(
+        chip2,
+        [
+          { opacity: 0, transform: "translateY(7px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.fast + 40, delay: 220 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+    const toolrow = panel2.querySelector(".bz-bel-toolrow");
+    if (stageable(toolrow)) {
+      waapi(
+        toolrow,
+        [
+          { opacity: 0, transform: "translateY(8px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.base, delay: 260, easing: E.out, fill: "backwards" }
+      );
+    }
+    const cells = panel2.querySelectorAll("[data-bel-content] [data-bel-id]");
+    cells.forEach((cell, i) => {
+      if (!stageable(cell)) return;
+      after(300 + Math.min(i, 14) * STAG, () => {
+        waapi(
+          cell,
+          [
+            { opacity: 0, transform: "translateY(14px) scale(.97) rotate(.35deg)", filter: "blur(4px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M5.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+    const empty = panel2.querySelector("[data-bel-content] .bz-empty");
+    if (stageable(empty)) {
+      waapi(
+        empty,
+        [
+          { opacity: 0, transform: "translateY(10px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.base, delay: 240, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function flipRepaint(panel2, book) {
+    var _a2, _b2;
+    const title = panel2.querySelector("[data-bel-herotitle]");
+    if (stageable(title) && ((_a2 = title.textContent) != null ? _a2 : "") !== book.title && book.title !== "") {
+      waapi(
+        title,
+        [
+          { opacity: 0.15, transform: "scale(1.14)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M5.move, easing: E.move, fill: "backwards" }
+      );
+    }
+    const cells = [...panel2.querySelectorAll("[data-bel-content] [data-bel-id]")];
+    let fresh = 0;
+    for (const cell of cells) {
+      const id = (_b2 = cell.dataset.belId) != null ? _b2 : "";
+      const old = book.rects.get(id);
+      if (!old) {
+        if (stageable(cell)) {
+          waapi(
+            cell,
+            [
+              { opacity: 0, transform: "translateY(12px) scale(.98)" },
+              { opacity: 1, transform: "none" }
+            ],
+            { duration: M5.base, delay: Math.min(fresh, 8) * STAG, easing: E.out, fill: "backwards" }
+          );
+        }
+        fresh++;
+        continue;
+      }
+      if (!stageable(cell)) continue;
+      const now = cell.getBoundingClientRect();
+      const dx = old.left - now.left, dy = old.top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      waapi(
+        cell,
+        [
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` },
+          { transform: "none" }
+        ],
+        { duration: M5.move, easing: E.out }
+      );
+    }
+  }
+  function motionCellStamp(cell) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const ring = deco(cell, "bz-bel-mstamp", {
+      inset: "6px",
+      border: "2.5px solid var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const a = waapi(
+      ring,
+      [
+        { opacity: 0, transform: "scale(1.6) rotate(-5deg)" },
+        { opacity: 0.95, transform: "scale(1) rotate(-1deg)", offset: 0.55 },
+        { opacity: 0, transform: "scale(1) rotate(0deg)" }
+      ],
+      { duration: M5.base + 140, easing: E.move }
+    );
+    if (a) a.finished.then(() => ring.remove()).catch(() => ring.remove());
+    else after(M5.base + 160, () => ring.remove());
+    const flash = deco(cell, "bz-bel-mink", {
+      inset: "0",
+      background: "var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const f = waapi(
+      flash,
+      [{ opacity: 0 }, { opacity: 0.12, offset: 0.3 }, { opacity: 0 }],
+      { duration: M5.base, easing: E.out }
+    );
+    if (f) f.finished.then(() => flash.remove()).catch(() => flash.remove());
+    else after(M5.base + 20, () => flash.remove());
+  }
+  function motionCellStrike(cell) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const box = deco(cell, "bz-bel-mstrike", { inset: "4px", overflow: "hidden" });
+    const line = document.createElement("i");
+    line.setAttribute("aria-hidden", "true");
+    line.style.cssText = "position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;background:var(--bz-bel-accent);transform:scaleX(0);transform-origin:0 50%;";
+    box.appendChild(line);
+    waapi(
+      line,
+      [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+      { duration: M5.fast + 60, easing: E.move, fill: "forwards" }
+    );
+    waapi(
+      cell,
+      [{ opacity: 1 }, { opacity: 0.12, transform: "scale(.985)" }],
+      { duration: M5.fast + 80, delay: M5.fast + 40, easing: "linear", fill: "forwards" }
+    );
+    after(M5.move + 200, () => box.remove());
+  }
+  function motionCellFlow(cell, toExited) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const wash = deco(cell, "bz-bel-mwash", {
+      inset: "0",
+      background: toExited ? "var(--bz-bel-line)" : "var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const a = waapi(
+      wash,
+      [{ opacity: 0 }, { opacity: toExited ? 0.55 : 0.2, offset: 0.35 }, { opacity: 0 }],
+      { duration: M5.base + 60, easing: E.out }
+    );
+    if (a) a.finished.then(() => wash.remove()).catch(() => wash.remove());
+    else after(M5.base + 80, () => wash.remove());
+    const tag = cell.querySelector(".bz-bel-tag");
+    if (stageable(tag)) {
+      waapi(
+        tag,
+        [
+          { opacity: 0, transform: "scale(1.55) rotate(-6deg)" },
+          { opacity: 1, transform: "scale(.97) rotate(1deg)", offset: 0.62 },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.base, easing: E.move, fill: "backwards" }
+      );
+    }
+  }
+  function motionDropOpen(wrap2) {
+    if (reduced()) return;
+    const menu = wrap2.querySelector(".bz-bel-dropmenu");
+    if (!stageable(menu)) return;
+    menu.style.transformOrigin = "50% 0";
+    waapi(
+      menu,
+      [
+        { opacity: 0, transform: "translateY(-5px) scaleY(.92)" },
+        { opacity: 1, transform: "none" }
+      ],
+      { duration: M5.fast, easing: E.out, fill: "backwards" }
+    );
+    menu.querySelectorAll(".bz-bel-dropopt").forEach((opt, i) => {
+      if (i >= 6 || !stageable(opt)) return;
+      waapi(
+        opt,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M5.fast, delay: M5.fast + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function popupIn(popup) {
+    if (!stageable(popup)) return;
+    waapi(
+      popup,
+      [
+        { opacity: 0, translate: "0 18px", scale: ".98" },
+        { opacity: 1, translate: "0 0px", scale: "1" }
+      ],
+      { duration: M5.base, easing: E.out, fill: "backwards" }
+    );
+  }
+  function relay(els, base, step = STAG) {
+    els.forEach((el, i) => {
+      if (!stageable(el)) return;
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(7px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.base, delay: base + i * step, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDetailIn(mask) {
+    if (reduced()) return;
+    popupIn(mask.querySelector(".bz-bel-detail"));
+    const detail = mask.querySelector(".bz-bel-detail");
+    if (!detail) return;
+    const seq = [
+      ...detail.querySelector(".bz-bel-detail-head") ? [detail.querySelector(".bz-bel-detail-head")] : [],
+      ...detail.querySelector(".bz-bel-detail-idrow") ? [detail.querySelector(".bz-bel-detail-idrow")] : [],
+      ...[...detail.querySelectorAll(".bz-bel-dfield")],
+      ...detail.querySelector(".bz-bel-detail-acts") ? [detail.querySelector(".bz-bel-detail-acts")] : [],
+      ...detail.querySelector(".bz-bel-detail-btns") ? [detail.querySelector(".bz-bel-detail-btns")] : []
+    ];
+    relay(seq, 60);
+    detail.querySelectorAll(".bz-bel-flowbtn").forEach((btn, i) => {
+      if (!stageable(btn)) return;
+      waapi(
+        btn,
+        [
+          { opacity: 0, transform: "translateY(5px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M5.fast + 40, delay: 60 + (seq.length - 1) * STAG + 60 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionFormIn(mask) {
+    if (reduced()) return;
+    popupIn(mask.querySelector(".bz-bel-form"));
+    const form = mask.querySelector(".bz-bel-form");
+    if (!form) return;
+    const seq = [];
+    const title = form.querySelector(".bz-bel-form-title");
+    if (title) seq.push(title);
+    seq.push(...[...form.querySelectorAll(".bz-bel-form-body > .bz-field")]);
+    const actions = form.querySelector(".bz-bel-form-actions");
+    if (actions) seq.push(actions);
+    relay(seq, 40);
+  }
+  function motionReportSection(sec) {
+    if (!sec || reduced()) return;
+    waapi(
+      sec,
+      [
+        { opacity: 0, transform: "translateY(12px)" },
+        { opacity: 1, transform: "none" }
+      ],
+      { duration: M5.base, easing: E.out, fill: "backwards" }
+    );
+    sec.querySelectorAll(".bz-belr-col-bar").forEach((bar, i) => {
+      if (!stageable(bar) || typeof bar.animate !== "function") return;
+      bar.style.transformOrigin = "50% 100%";
+      bar.style.transform = "scaleY(0)";
+      after(M5.base, () => {
+        const a = waapi(
+          bar,
+          [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+          { duration: M5.base, delay: Math.min(i, 12) * STAG, easing: E.out, fill: "forwards" }
+        );
+        const clear = () => {
+          bar.style.transform = "";
+        };
+        if (a) a.finished.then(clear).catch(clear);
+        else clear();
+      });
+    });
+    sec.querySelectorAll(".bz-belr-row-track i").forEach((bar, i) => {
+      if (!stageable(bar) || typeof bar.animate !== "function") return;
+      bar.style.transformOrigin = "0 50%";
+      bar.style.transform = "scaleX(0)";
+      after(M5.base, () => {
+        const a = waapi(
+          bar,
+          [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: M5.base, delay: Math.min(i, 8) * STAG, easing: E.out, fill: "forwards" }
+        );
+        const clear = () => {
+          bar.style.transform = "";
+        };
+        if (a) a.finished.then(clear).catch(clear);
+        else clear();
+      });
+    });
+    relay([...sec.querySelectorAll(".bz-belr-hero, .bz-belr-comp")], M5.fast, 40);
+  }
+  var M5, STAG, E, timers, flipBook;
+  var init_motion = __esm({
+    "src/belongings/motion.ts"() {
+      M5 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      STAG = 30;
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      timers = /* @__PURE__ */ new Set();
+      flipBook = null;
+    }
+  });
+
   // src/belongings/report.ts
   function yieldToMainThread2() {
     return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
@@ -34202,6 +34723,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         body.innerHTML = "";
         body.appendChild(buildLibraryEmpty());
         mountIcons(body);
+        motionReportSection(body.firstElementChild);
         return finishDone(true);
       }
       progress.setMessage("正在汇总购入与离场…");
@@ -34213,6 +34735,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (!stats.hasYearData) {
         body.innerHTML = emptyYearHtml(year);
         mountIcons(body);
+        motionReportSection(body.firstElementChild);
         return finishDone(true);
       }
       const sections = buildReportSections(stats);
@@ -34222,6 +34745,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         await yieldToMainThread2();
         if (!alive()) return finishAbort();
         body.insertAdjacentHTML("beforeend", section.generate());
+        motionReportSection(body.lastElementChild);
         progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
@@ -34419,6 +34943,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_shared3();
       init_report_stats();
       init_shared3();
+      init_motion();
       renderSeq = 0;
       progressToastSeq = 0;
       activeProgress = null;
@@ -34806,13 +35331,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M5.overlay = null;
-    M5.db = null;
-    M5.status = null;
-    M5.year = "";
-    M5.q = "";
-    M5.sort = "recent";
-    M5.renderFn = null;
+    M6.overlay = null;
+    M6.db = null;
+    M6.status = null;
+    M6.year = "";
+    M6.q = "";
+    M6.sort = "recent";
+    M6.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -34907,11 +35432,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M5.db ? Object.values(M5.db.items) : [];
+    return M6.db ? Object.values(M6.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M6.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -34922,7 +35447,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M6.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -34945,7 +35470,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M5.overlay) {
+    if (M6.overlay) {
       closePanel();
       return;
     }
@@ -34962,19 +35487,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M6.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M5.year = "";
-    M5.db = await loadDatabase();
+    M6.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M6.year = "";
+    M6.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M5.overlay = overlay2;
-    M5.renderFn = () => renderAll2();
+    M6.overlay = overlay2;
+    M6.renderFn = () => renderAll2();
     mountIcons(overlay2);
+    motionPanelIn(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
     const moveDropActive = (wrap2, delta) => {
@@ -34988,8 +35514,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
-      else M5.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M6.year = v;
+      else M6.sort = v;
       renderAll2();
     };
     const onDocClick = (e) => {
@@ -35003,6 +35529,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (!wasOpen) {
           wrap2.classList.add("is-open");
           (_a3 = wrap2.querySelector(".bz-bel-dropopt.is-cur")) == null ? void 0 : _a3.classList.add("is-active");
+          motionDropOpen(wrap2);
         }
         return;
       }
@@ -35069,22 +35596,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M5.sort = segBtn.dataset.k;
+        M6.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
+        if (kind === "asset") M6.status = M6.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M5.overlay !== overlay2) return;
-        M5.q = inp.value.trim();
+        if (M6.overlay !== overlay2) return;
+        M6.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -35094,7 +35621,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M5.q = "";
+        M6.q = "";
         syncClear();
         renderAll2();
         if (refocus) inp.focus();
@@ -35156,6 +35683,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         return isMobileEnv() && !!((_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-bel-id]"));
       }
     );
+    motionIntent = "boot";
     renderAll2();
     startAutoRefresh();
     observeTheme();
@@ -35174,13 +35702,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M5.overlay) {
-      M5.overlay.remove();
-      M5.overlay = null;
+    if (M6.overlay) {
+      const ov = M6.overlay;
+      M6.overlay = null;
+      motionPanelOut(ov, () => ov.remove());
     }
-    M5.renderFn = null;
-    M5.db = null;
-    M5.q = "";
+    M6.renderFn = null;
+    M6.db = null;
+    M6.q = "";
+    motionTeardown();
   }
   function cleanupBelongings() {
     closePanel();
@@ -35201,16 +35731,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M5.db = await loadDatabase();
-          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+          M6.db = await loadDatabase();
+          motionIntent = "silent";
+          (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M5.db = await loadDatabase();
-                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+                  M6.db = await loadDatabase();
+                  motionIntent = "silent";
+                  (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
                 } catch (e2) {
                 }
               })();
@@ -35245,37 +35777,41 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+        motionIntent = "silent";
+        (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M5.db) return;
+    if (!M6.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M5.db);
+      await saveDatabase(M6.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
   }
   function renderAll2() {
-    if (!M5.overlay) return;
-    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
+    if (!M6.overlay) return;
+    const panel2 = M6.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
+    motionBeforePaint(panel2);
+    renderPanelView(panel2, itemList(), M6, { mountIcons }, currencyUnit());
+    motionRendered(panel2, motionIntent);
+    motionIntent = "flip";
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M5.status = null;
-    else M5.status = M5.status === k ? null : k;
+    if (k === "__all") M6.status = null;
+    else M6.status = M6.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M5.db) {
+    if (M6.db) {
       items = itemList();
     } else {
       try {
@@ -35309,6 +35845,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     belDetailClose = close;
     mountIcons(mask);
+    motionDetailIn(mask);
     const acts = mask.querySelector("[data-bd-acts]");
     const drawActs = () => {
       const cur = itemById(it.id);
@@ -35350,11 +35887,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return holder.firstElementChild;
   }
   async function applyFlowWithUndo(it, s) {
-    var _a2, _b2;
+    var _a2, _b2, _c;
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
     const prevStatus = cur.current_status;
@@ -35370,16 +35907,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
+    const flowCell = (_c = M6.overlay) == null ? void 0 : _c.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+    if (flowCell) motionCellFlow(flowCell, exitedStatus(s));
     notifyUndo(`「${cur.name}」已标记为${s}`, () => {
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -35394,8 +35933,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35439,23 +35978,25 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
   }
   async function deleteItem(it) {
-    var _a2, _b2;
-    if (!M5.db) return;
-    if (!M5.db.items[it.id]) {
+    var _a2, _b2, _c;
+    if (!M6.db) return;
+    if (!M6.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
-    const snapshot2 = { ...M5.db.items[it.id] };
-    delete M5.db.items[it.id];
+    const snapshot2 = { ...M6.db.items[it.id] };
+    const strikeCell = (_b2 = M6.overlay) == null ? void 0 : _b2.querySelector(`[data-bel-id="${CSS.escape(it.id)}"]`);
+    if (strikeCell) motionCellStrike(strikeCell);
+    delete M6.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M5.db.items[snapshot2.id] = snapshot2;
+      M6.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_c = M6.renderFn) == null ? void 0 : _c.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -35463,18 +36004,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
-          if (M5.db.items[snapshot2.id]) {
+          if (!M6.db) M6.db = await loadDatabase();
+          if (M6.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M5.db.items[snapshot2.id] = snapshot2;
+          M6.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35517,9 +36058,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M5.db) {
+    if (!M6.db) {
       void loadDatabase().then((db) => {
-        M5.db = db;
+        M6.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -35543,6 +36084,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     belFormMask = mask;
     _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
     mountIcons(mask);
+    motionFormIn(mask);
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
@@ -35566,13 +36108,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -35625,7 +36167,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -35691,8 +36233,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.disabled = true;
       saveBtn.textContent = "保存中…";
       void (async () => {
+        var _a3, _b3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -35720,9 +36263,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               if (redrew) openBelDetail(redrew);
             }
             if (isBelReportOpen()) void openBelongingsReportView();
+            if (snapshot2.current_status !== curStatus) {
+              const editCell = (_a3 = M6.overlay) == null ? void 0 : _a3.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+              if (editCell) motionCellFlow(editCell, exitedStatus(curStatus));
+            }
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M5.db) throw new Error("数据库未加载");
+            if (!M6.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -35738,8 +36285,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M5.db.items[newItem.id] = newItem;
+            M6.db.items[newItem.id] = newItem;
             await saveAndRender();
+            const newCell = (_b3 = M6.overlay) == null ? void 0 : _b3.querySelector(`[data-bel-id="${CSS.escape(newItem.id)}"]`);
+            if (newCell) motionCellStamp(newCell);
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
           }
@@ -35755,7 +36304,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M6, dropDocClick, motionIntent, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui7 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -35777,9 +36326,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_report();
       init_render7();
       init_ai2();
+      init_motion();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M5 = {
+      M6 = {
         overlay: null,
         db: null,
         status: null,
@@ -35789,6 +36339,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         renderFn: null
       };
       dropDocClick = null;
+      motionIntent = "flip";
       DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
       autoRefreshOff = null;
       selfWritePending = 0;
@@ -37158,23 +37709,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M6.appRef = null;
-    M6.open = false;
-    M6.articles = [];
-    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M6.clipNotes = null;
-    M6.clipUrls = /* @__PURE__ */ new Set();
-    M6.sel = defaultSel();
-    M6.cur = null;
-    M6.list = [];
-    M6.upInfo = {};
-    M6.mobDetailOpen = false;
+    M7.appRef = null;
+    M7.open = false;
+    M7.articles = [];
+    M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M7.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M7.clipNotes = null;
+    M7.clipUrls = /* @__PURE__ */ new Set();
+    M7.sel = defaultSel();
+    M7.cur = null;
+    M7.list = [];
+    M7.upInfo = {};
+    M7.mobDetailOpen = false;
   }
-  var M6;
+  var M7;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M6 = {
+      M7 = {
         appRef: null,
         open: false,
         articles: [],
@@ -37607,8 +38158,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M6.articles || []) keys.add(a.id);
-    for (const n of M6.clipNotes || []) {
+    for (const a of M7.articles || []) keys.add(a.id);
+    for (const n of M7.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -39164,22 +39715,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -39216,13 +39767,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M6.articles = data.articles;
-    M6.stats = data.stats;
-    M6.sidecar = sidecar;
-    M6.clipNotes = clipNotes;
-    M6.clipUrls = clipUrls;
-    M6.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
+    M7.articles = data.articles;
+    M7.stats = data.stats;
+    M7.sidecar = sidecar;
+    M7.clipNotes = clipNotes;
+    M7.clipUrls = clipUrls;
+    M7.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M7.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -39259,7 +39810,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M6.appRef = app;
+    M7.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -39267,13 +39818,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M6.appRef);
+      buildDom2(M7.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M6.open = true;
+    M7.open = true;
     beginSession();
     if (dirty || !loaded2) {
       if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -39286,7 +39837,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M6.open && overlayEl2) return Promise.resolve();
+    if (!M7.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -39303,7 +39854,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M6.open) renderAll3();
+      if (M7.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -39316,7 +39867,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M6.open) return;
+    if (!M7.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -39339,8 +39890,8 @@ ${c.trim()}
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -39380,8 +39931,8 @@ ${c.trim()}
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -39480,14 +40031,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
+      if (t.closest("[data-clip-open-note]") && M7.cur) openNote(M7.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M6.cur) openNote(M6.cur);
+        if (M7.cur) openNote(M7.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -39530,8 +40081,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M6.cur);
+      if (((_a3 = M7.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M7.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -39553,9 +40104,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M6.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M7.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M7.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M7.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -39570,7 +40121,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M6.mobDetailOpen) {
+        if (M7.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -39616,13 +40167,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M6.sel = {
+    M7.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -39631,7 +40182,7 @@ ${c.trim()}
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M7.sel.kind && String(src.platform || "") === M7.sel.platform && (src.up ? String(src.up) : null) === M7.sel.up && String(src.site || "") === M7.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -39650,16 +40201,16 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M6.mobDetailOpen) {
-      if (M6.cur) renderMobDetail();
+    if (M7.mobDetailOpen) {
+      if (M7.cur) renderMobDetail();
       else {
-        M6.mobDetailOpen = false;
+        M7.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -39667,7 +40218,7 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
@@ -39675,17 +40226,17 @@ ${c.trim()}
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M7.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M6.sel;
+    const s = M7.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], currentSrc(), M7.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -39701,7 +40252,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
+    const b = bucketByState(queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -39709,7 +40260,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -39749,39 +40300,39 @@ ${c.trim()}
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, source2, M7.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
-      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M7.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M7.sidecar.savedArchive || []).map((x) => x.url)), M7.clipUrls)) {
+      const full = queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, { kind: "site", site: row.site }, M7.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
+      const active2 = M7.sel.kind === "site" && M7.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M7.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
+      const active2 = M7.sel.kind === "inbox" && M7.sel.platform === "B站" && M7.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M6.sel.kind === "clip";
+    const clipActive = M7.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M7.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -39806,9 +40357,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M7.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M6.open) showPanel();
+      if (!M7.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -39821,10 +40372,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -39866,26 +40417,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
-        M6.cur = list[0];
+      if (!list.some((a) => a.id === (M7.cur && M7.cur.id))) {
+        M7.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M6.list = list;
+      listEl.innerHTML = tocListHtml(list, M7.cur ? M7.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M7.list = list;
       bindItemMenus();
       return;
     }
@@ -39893,27 +40444,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
-      M6.cur = flat[0];
+    if (!flat.some((a) => a.id === (M7.cur && M7.cur.id))) {
+      M7.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M6.cur ? M6.cur.id : null;
+    const curId = M7.cur ? M7.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
-        M6.list = [];
+        M7.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M6.list = hit;
+      M7.list = hit;
       bindItemMenus();
       return;
     }
@@ -39931,7 +40482,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M6.list = flat;
+    M7.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -39944,10 +40495,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M6.list;
+    const all = M7.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M7.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -40023,8 +40574,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M7.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M7.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -40039,7 +40590,7 @@ ${c.trim()}
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M6.cur;
+    const a = M7.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -40068,7 +40619,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -40079,13 +40630,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M7.cur && M7.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -40100,11 +40651,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M7.cur && M7.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
+    if (M7.mobDetailOpen && M7.cur && M7.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -40146,12 +40697,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M7.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
+    const idx = M7.cur ? list.findIndex((x) => x.id === M7.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
+    if (next && (!M7.cur || next.id !== M7.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -40160,19 +40711,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M6.cur || M6.cur.id !== a.id;
+    const changed = !M7.cur || M7.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M6.cur) {
+    if (changed && M7.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M6.cur.id, sc.scrollTop);
+        readScrollMemo.set(M7.cur.id, sc.scrollTop);
       }
     }
-    M6.cur = a;
+    M7.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -40309,25 +40860,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M7.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M7.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
+      M7.cur = flat.find((x) => x.id === prevId) || M7.cur;
     } else if (flat.length) {
-      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
+      M7.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M7.cur && M7.cur.id !== prevId;
     } else {
-      M6.cur = null;
+      M7.cur = null;
     }
-    if (advanced && M6.cur) markReadOnOpen(M6.cur);
+    if (advanced && M7.cur) markReadOnOpen(M7.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M7.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -40357,9 +40908,9 @@ ${c.trim()}
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const savedUrls = new Set((M7.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -40469,8 +41020,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M6.cur = a;
-    M6.mobDetailOpen = true;
+    M7.cur = a;
+    M7.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -40481,12 +41032,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M7.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M6.stats = res.stats;
-      if (M6.open && !M6.mobDetailOpen) {
+      if (res && res.changed && res.stats) M7.stats = res.stats;
+      if (M7.open && !M7.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -40495,8 +41046,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M6.cur) return;
-    const a = M6.cur;
+    if (!mobDetailEl || !M7.cur) return;
+    const a = M7.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -40528,7 +41079,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -40601,7 +41152,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -40617,7 +41168,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -40635,7 +41186,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -40698,7 +41249,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
+    return M7.cur && M7.cur.id === articleId ? M7.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -40756,10 +41307,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M6.mobDetailOpen) return;
+    if (!mobDetailEl || !M7.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -40786,12 +41337,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M6.cur || M6.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M6.cur);
-    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
+    if (!M7.cur || M7.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M7.cur);
+    if (M7.mobDetailOpen) refreshMobBodyInPlace(M7.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -40808,8 +41359,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -40838,7 +41389,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M6.sidecar = res.sidecar;
+      if (res.sidecar) M7.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -40896,7 +41447,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -41046,8 +41597,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M6.clipNotes = null;
-        M6.clipUrls = /* @__PURE__ */ new Set();
+        M7.clipNotes = null;
+        M7.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -41746,12 +42297,12 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M7.overlay = null;
-    M7.items = [];
-    M7.tag = null;
-    M7.archived = false;
-    M7.sort = "new";
-    M7.renderFn = null;
+    M8.overlay = null;
+    M8.items = [];
+    M8.tag = null;
+    M8.archived = false;
+    M8.sort = "new";
+    M8.renderFn = null;
   }
   function favoritesSettingsSchema() {
     return {
@@ -41822,7 +42373,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M8.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -41838,7 +42389,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M7.overlay) {
+    if (M8.overlay) {
       closePanel3();
       return;
     }
@@ -41847,12 +42398,12 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M7.overlay = overlay2;
-    M7.renderFn = () => renderAll4();
+    M8.overlay = overlay2;
+    M8.renderFn = () => renderAll4();
     const openFilter = resolveOpenFilter();
-    M7.tag = openFilter.tag;
-    M7.archived = openFilter.archived;
-    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M8.tag = openFilter.tag;
+    M8.archived = openFilter.archived;
+    M8.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
@@ -41940,16 +42491,16 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    if (M7.overlay) {
+    if (M8.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
+        s.favoritesLastFilter = M8.archived ? "@archived" : M8.tag || "";
         void saveSettings();
       }
-      M7.overlay.remove();
-      M7.overlay = null;
+      M8.overlay.remove();
+      M8.overlay = null;
     }
-    M7.renderFn = null;
+    M8.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -41958,9 +42509,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M7.items = await dataManagerOf().getAll();
+      M8.items = await dataManagerOf().getAll();
     } catch (e) {
-      M7.items = [];
+      M8.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -41968,29 +42519,29 @@ ${c.trim()}
   async function reload2() {
     var _a2;
     await loadItems();
-    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+    (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
   }
   function renderAll4() {
-    if (!M7.overlay) return;
-    if (!M7.archived && M7.tag && !getTags().some((t) => t.label === M7.tag)) M7.tag = null;
-    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
+    if (!M8.overlay) return;
+    if (!M8.archived && M8.tag && !getTags().some((t) => t.label === M8.tag)) M8.tag = null;
+    const panel2 = M8.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M8.items, M8, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === VIEW_ALL) {
-      M7.tag = null;
-      M7.archived = false;
+      M8.tag = null;
+      M8.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M7.tag = null;
-      M7.archived = !M7.archived;
+      M8.tag = null;
+      M8.archived = !M8.archived;
     } else {
-      M7.archived = false;
-      M7.tag = M7.tag === label ? null : label;
+      M8.archived = false;
+      M8.tag = M8.tag === label ? null : label;
     }
     renderAll4();
   }
   function itemById2(id) {
-    return M7.items.find((i) => i.id === id);
+    return M8.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -42595,7 +43146,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M7, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M8, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -42618,7 +43169,7 @@ GitHub 仓库：${ghInfo.title}
       init_ai3();
       init_data10();
       init_app2();
-      M7 = {
+      M8 = {
         overlay: null,
         items: [],
         tag: null,
@@ -49431,9 +49982,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after2 !== before) {
-        rec.secondBrainAllowPaths = after2;
+      const after3 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after3 !== before) {
+        rec.secondBrainAllowPaths = after3;
         migrated = true;
       }
     }
@@ -55140,13 +55691,13 @@ ${piece}` : piece;
   init_order();
 
   // src/home/motion.ts
-  var M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E = {
+  var M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E2 = {
     out: "cubic-bezier(.22,.82,.3,1)",
     move: "cubic-bezier(.34,.06,.16,1)"
   };
-  var STAG = 30;
-  function reduced() {
+  var STAG2 = 30;
+  function reduced2() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -55160,8 +55711,8 @@ ${piece}` : piece;
       return false;
     }
   }
-  function waapi(el, frames, opts) {
-    if (!el || reduced() || typeof el.animate !== "function") {
+  function waapi2(el, frames, opts) {
+    if (!el || reduced2() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -55178,7 +55729,7 @@ ${piece}` : piece;
       return null;
     }
   }
-  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+  function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
     const t0 = performance.now();
     const tick = (now) => {
       const p = Math.min(1, (now - t0) / dur);
@@ -55188,35 +55739,35 @@ ${piece}` : piece;
     requestAnimationFrame(tick);
   }
   var easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-  var timers = /* @__PURE__ */ new Set();
-  function after(ms, fn) {
+  var timers2 = /* @__PURE__ */ new Set();
+  function after2(ms, fn) {
     const id = setTimeout(() => {
-      timers.delete(id);
+      timers2.delete(id);
       fn();
     }, ms);
-    timers.add(id);
+    timers2.add(id);
   }
-  function cancelPending() {
-    timers.forEach(clearTimeout);
-    timers.clear();
+  function cancelPending2() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
   }
-  function motionPanelIn(overlay2, reopen) {
+  function motionPanelIn2(overlay2, reopen) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi(
+    waapi2(
       panel2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? 300 : 480, easing: E.out }
+      { duration: reopen ? 300 : 480, easing: E2.out }
     );
     bindParallax(overlay2);
   }
-  function motionPanelOut(overlay2, done) {
+  function motionPanelOut2(overlay2, done) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     stopParallax(overlay2);
     if (!panel2) {
@@ -55230,23 +55781,23 @@ ${piece}` : piece;
         done();
       }
     };
-    const a = waapi(
+    const a = waapi2(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M8.move + 40, easing: E.out, fill: "forwards" }
+      { duration: M9.move + 40, easing: E2.out, fill: "forwards" }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    after(M8.move + 200, finish);
+    after2(M9.move + 200, finish);
   }
-  function motionRendered(overlay2, boot) {
-    cancelPending();
+  function motionRendered2(overlay2, boot) {
+    cancelPending2();
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
@@ -55261,18 +55812,18 @@ ${piece}` : piece;
       }
       return;
     }
-    if (reduced()) return;
+    if (reduced2()) return;
     if (week) {
       [...week.querySelectorAll(".bz-home-wk")].forEach((el, i) => {
-        after(140 + i * 40, () => {
+        after2(140 + i * 40, () => {
           const to = el.classList.contains("bz-home-wk--sel") ? "translateY(-4px)" : "none";
-          waapi(
+          waapi2(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: to, filter: "blur(0px)" }
             ],
-            { duration: M8.base, easing: E.out, fill: "backwards" }
+            { duration: M9.base, easing: E2.out, fill: "backwards" }
           );
         });
       });
@@ -55281,14 +55832,14 @@ ${piece}` : piece;
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
       rows.forEach((el, i) => {
         if (i >= 14) return;
-        after(260 + i * STAG, () => {
-          waapi(
+        after2(260 + i * STAG2, () => {
+          waapi2(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M8.base, easing: E.out, fill: "backwards" }
+            { duration: M9.base, easing: E2.out, fill: "backwards" }
           );
         });
       });
@@ -55296,28 +55847,28 @@ ${piece}` : piece;
     if (flow) {
       const tl = flow.querySelector(".bz-home-timeline");
       if (tl) {
-        after(300, () => ensureRiver(tl, true));
+        after2(300, () => ensureRiver(tl, true));
         revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
       }
       const empty = flow.querySelector(".bz-home-flow-empty");
-      if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+      if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
     }
     if (next) {
       const head = next.querySelector(".bz-home-sec-t");
-      if (head) waapi(
+      if (head) waapi2(
         head,
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-        { duration: M8.base, easing: E.out, fill: "backwards" }
+        { duration: M9.base, easing: E2.out, fill: "backwards" }
       );
       next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
-        after(640 + i * 90, () => {
-          waapi(
+        after2(640 + i * 90, () => {
+          waapi2(
             el,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
             ],
-            { duration: M8.base + 120, easing: E.out, fill: "backwards" }
+            { duration: M9.base + 120, easing: E2.out, fill: "backwards" }
           );
         });
         if (!narrow && canHover()) bindTilt(el);
@@ -55326,23 +55877,23 @@ ${piece}` : piece;
   }
   function motionDaySwitch(flow, rewrite) {
     const tl = flow.querySelector(".bz-home-timeline");
-    if (reduced() || !tl) {
+    if (reduced2() || !tl) {
       rewrite();
       return;
     }
-    const out = waapi(
+    const out = waapi2(
       tl,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
       ],
-      { duration: M8.fast + 20, easing: E.out, fill: "forwards" }
+      { duration: M9.fast + 20, easing: E2.out, fill: "forwards" }
     );
     if (!out) {
       rewrite();
       return;
     }
-    after(M8.fast + 30, () => {
+    after2(M9.fast + 30, () => {
       rewrite();
       const nt = flow.querySelector(".bz-home-timeline");
       if (nt) {
@@ -55350,7 +55901,7 @@ ${piece}` : piece;
         revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
       } else {
         const empty = flow.querySelector(".bz-home-flow-empty");
-        if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+        if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
       }
     });
   }
@@ -55377,18 +55928,18 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
       li.style.willChange = "transform,filter,opacity";
-      after(delay, () => {
-        waapi(
+      after2(delay, () => {
+        waapi2(
           li,
           [
             { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M8.base + 140, easing: E.out, fill: "backwards" }
+          { duration: M9.base + 140, easing: E2.out, fill: "backwards" }
         );
         li.classList.add("bz-hm-ign");
-        after(620, () => li.classList.remove("bz-hm-ign"));
-        after(120, () => {
+        after2(620, () => li.classList.remove("bz-hm-ign"));
+        after2(120, () => {
           const a = beforeAnchor(li);
           const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
           burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
@@ -55398,11 +55949,11 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const note = li.querySelector(".bz-home-ev-note");
       if (!note) return;
-      after(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
-        waapi(
+      after2(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi2(
           note,
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M8.base, easing: E.out, fill: "backwards" }
+          { duration: M9.base, easing: E2.out, fill: "backwards" }
         );
       });
     });
@@ -55456,16 +56007,16 @@ ${piece}` : piece;
     }
     reveal.style.strokeDasharray = String(len);
     reveal.style.strokeDashoffset = String(len);
-    tween(850, (v) => {
+    tween2(850, (v) => {
       reveal.style.strokeDashoffset = String(len * (1 - v));
     }, easeOutQuart);
-    after(870, () => base.classList.add("bz-hm-flowing"));
+    after2(870, () => base.classList.add("bz-hm-flowing"));
   }
   var sparkPools = /* @__PURE__ */ new Map();
   var fxRaf = 0;
   function burst(tl, x, y, color) {
     var _a2;
-    if (reduced()) return;
+    if (reduced2()) return;
     let fx = tl.querySelector(":scope > .bz-hm-fx");
     if (!fx) {
       fx = document.createElement("canvas");
@@ -55529,7 +56080,7 @@ ${piece}` : piece;
   function bindParallax(overlay2) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2 || parallax.has(overlay2)) return;
-    if (reduced() || !canHover() || panel2.clientWidth <= 768) return;
+    if (reduced2() || !canHover() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
       { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
@@ -55783,10 +56334,10 @@ ${piece}` : piece;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
     renderAll5();
-    motionPanelIn(overlay2, false);
+    motionPanelIn2(overlay2, false);
     window.__bzHomeReplay = () => {
-      motionPanelIn(overlay2, false);
-      motionRendered(overlay2, true);
+      motionPanelIn2(overlay2, false);
+      motionRendered2(overlay2, true);
     };
     trapPanelFocus(overlay2);
     void refreshRiverAndRender();
@@ -55830,7 +56381,7 @@ ${piece}` : piece;
     const overlay2 = H.currentOverlay;
     saveScroll(overlay2);
     H.overlayVisible = false;
-    motionPanelOut(overlay2, () => {
+    motionPanelOut2(overlay2, () => {
       if (!H.overlayVisible && H.currentOverlay === overlay2) overlay2.style.display = "none";
     });
   }
@@ -55841,7 +56392,7 @@ ${piece}` : piece;
     topifyZ(overlay2);
     H.overlayVisible = true;
     restoreScroll(overlay2);
-    motionPanelIn(overlay2, true);
+    motionPanelIn2(overlay2, true);
     void refreshRiverAndRender();
   }
   function bindEvents2(overlay2, app) {
@@ -56069,7 +56620,7 @@ ${piece}` : piece;
     mountIcons(tiles);
     mountRowInteractions(overlay2, H.appRef, river);
     restoreScroll(overlay2);
-    motionRendered(overlay2, flowBoot);
+    motionRendered2(overlay2, flowBoot);
     if (fk && fk.value && H.overlayVisible) {
       const target = overlay2.querySelector(`[${fk.attr}="${fk.value}"]`);
       target == null ? void 0 : target.focus();
