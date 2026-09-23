@@ -1,4 +1,4 @@
-/* 源指纹 bfab4468369a4b3c · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f186389e3c9d8d6a · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -6588,7 +6588,7 @@ var BZW_encrypt = (() => {
     if (max !== void 0) out = Math.min(max, out);
     return out;
   }
-  function wireSecretEye(setting, el, revealClass = "", mode = "type") {
+  function wireSecretEye(setting, el) {
     let revealed = false;
     setting.addExtraButton((b) => {
       b.setIcon("eye").setTooltip("显示 / 隐藏");
@@ -6596,8 +6596,7 @@ var BZW_encrypt = (() => {
       b.extraSettingsEl.setAttribute("aria-pressed", "false");
       b.onClick(() => {
         revealed = !revealed;
-        if (mode === "type") el.type = revealed ? "text" : "password";
-        else el.classList.toggle(revealClass, revealed);
+        el.type = revealed ? "text" : "password";
         b.setIcon(revealed ? "eye-off" : "eye");
         b.extraSettingsEl.setAttribute("aria-pressed", String(revealed));
         b.extraSettingsEl.setAttribute("aria-label", revealed ? "隐藏密钥" : "显示密钥");
@@ -6732,10 +6731,6 @@ var BZW_encrypt = (() => {
             inputEl.autocomplete = "off";
             inputEl.spellcheck = false;
             wireSecretEye(setting, inputEl);
-          }
-          if (row.type === "textarea" && row.masked) {
-            inputEl.classList.add("bz-maskarea");
-            wireSecretEye(setting, inputEl, "bz-maskarea--revealed", "class");
           }
           const mode = row.inputMode;
           if (mode && mode !== "text") inputEl.inputMode = mode;

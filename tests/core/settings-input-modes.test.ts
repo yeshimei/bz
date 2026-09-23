@@ -2,14 +2,13 @@
 /**
  * 设置「输入方式」回归（2026-09-23 输入方式体检批）。
  *
- * 1. 掩码档位两端同口径：
- *    - 单行 `type:'secret'` → input type=password + 眼睛切明文（core 弹窗渲染器 / 面板渲染器）；
- *    - 多行 `TextAreaRow.masked` → 保留多行粘贴面，打点走 core 的 `.bz-maskarea`
- *      （textarea 没有 type=password），眼睛翻 `--revealed`；
+ * 1. 掩码档位两端同口径：单行 `type:'secret'` → input type=password + 眼睛切明文
+ *    （core 弹窗渲染器 / 面板渲染器）；
  * 2. 键盘语义：TextRow.inputMode 落到 inputmode；
  * 3. 数值参数不再用文本行承载：secondbrain 7 键 / knowledge 3 键为 number（带 min/max/step）；
- * 4. 盘点：AI 服务商密钥 3 行（注册表三条在册通道，issue 411/ADR-0179 起）与 ApiZero Key
- *    全掩码、两个 Cookie 多行掩码——防回退成明文（本批改动前它们都是 text/textarea 明文）。
+ * 4. 盘点：AI 服务商密钥 3 行（注册表三条在册通道，issue 411/ADR-0179 起）与数据源凭据
+ *    3 行（ApiZero Key / B站 Cookie / 豆瓣 Cookie）全为 secret——防回退成明文；多行掩码
+ *    （textarea + -webkit-text-security）档位 2026-09-23 随凭据组改单行一并退役。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -98,17 +97,14 @@ describe('core 弹窗渲染器（⚙️ 设置弹窗）：掩码 / 键盘语义 
     expect(input.type).toBe('password');
   });
 
-  it('多行掩码：textarea 打点类 + 眼睛翻 reveal 类（值仍在 textarea 里）', () => {
+  it('多行文本：无掩码类、本行无眼睛（掩码档位退役——凭据一律单行 secret）', () => {
     const host = renderCore();
     const ta = host.querySelector('textarea') as HTMLTextAreaElement;
-    expect(ta.classList.contains('bz-maskarea')).toBe(true);
     expect(ta.value).toBe('a=b; c=d;');
-    const eye = ta.parentElement!.querySelector('button[aria-label="显示密钥"]') as HTMLButtonElement;
-    expect(eye, '多行掩码也要有眼睛').not.toBeNull();
-    eye.click();
-    expect(ta.classList.contains('bz-maskarea--revealed')).toBe(true);
-    eye.click();
-    expect(ta.classList.contains('bz-maskarea--revealed')).toBe(false);
+    expect(ta.classList.contains('bz-maskarea')).toBe(false);
+    // 眼睛只属密钥行（本 schema 里另有一行 secret），多行文本行自身不长眼睛
+    const row = ta.closest('.setting-item')!;
+    expect(row.querySelector('button[aria-label="显示密钥"]'), '多行文本行不应长眼睛').toBeNull();
   });
 
   it('键盘语义：inputMode 落成 inputmode', () => {
@@ -138,20 +134,18 @@ describe('设置面板渲染器：掩码档位与数字档位同口径', () => {
     expect(input.type).toBe('text');
   });
 
-  it('多行掩码：textarea 保留多行形态 + 打点类 + 眼睛；提交链照常落盘', async () => {
+  it('多行文本：普通 textarea（无掩码外壳）+ 提交链照常落盘', async () => {
     const host = renderPanel();
-    const ta = host.querySelector('textarea.bz-maskarea') as HTMLTextAreaElement;
-    expect(ta, 'Cookie 类行应是带打点类的 textarea（不是单行 input）').not.toBeNull();
-    expect(ta.classList.contains('bz-sp-textarea')).toBe(true); // 多行粘贴面还在
-    const eye = host.querySelector('.bz-sp-secret--area .bz-sp-secret-eye') as HTMLButtonElement;
-    eye.click();
-    expect(ta.classList.contains('bz-maskarea--revealed')).toBe(true);
+    const ta = host.querySelector('textarea.bz-sp-textarea') as HTMLTextAreaElement;
+    expect(ta).not.toBeNull();
+    expect(ta.classList.contains('bz-maskarea')).toBe(false);
+    expect(host.querySelector('.bz-sp-secret--area')).toBeNull();
 
     ta.value = 'x=1; y=2;';
     ta.dispatchEvent(new Event('input', { bubbles: true }));
     ta.dispatchEvent(new Event('blur'));
     await flush();
-    expect(state.areaVal).toBe('x=1; y=2;'); // 掩码不挡提交链
+    expect(state.areaVal).toBe('x=1; y=2;');
   });
 
   it('密钥行支持行内按钮（挂得上、点得动）', () => {
@@ -179,23 +173,16 @@ const rowsOf = (schema: SettingsSchema, groupName: string): NamedRow[] =>
   (schema.groups.find((g) => g.name === groupName)?.rows ?? []) as NamedRow[];
 
 describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => {
-  it('AI 域：服务商密钥 3 行（注册表三条在册通道）+ ApiZero Key 全为 secret', () => {
+  it('AI 域：服务商密钥 3 行（注册表三条在册通道）+ 数据源凭据 3 行全为 secret', () => {
     const ai = aiSettingsSchema();
     const providerRows = rowsOf(ai, '服务商').filter((r) => (r.name ?? '').includes('密钥'));
     expect(providerRows.length, '注册表三条通道各一行').toBe(3);
     expect(providerRows.every((r) => r.type === 'secret')).toBe(true);
 
+    // 数据源凭据组三行一律单行掩码（2026-09-23 用户拍板：加密的一律单行框）
     const credRows = rowsOf(ai, '数据源凭据');
-    expect(credRows.find((r) => r.name === 'ApiZero Key')!.type).toBe('secret');
-  });
-
-  it('AI 域：两个 Cookie 保留 textarea 但开多行掩码', () => {
-    const credRows = rowsOf(aiSettingsSchema(), '数据源凭据');
-    for (const name of ['B站 Cookie', '豆瓣 Cookie']) {
-      const row = credRows.find((r) => r.name === name)!;
-      expect(row.type, `${name} 应保留多行粘贴面`).toBe('textarea');
-      expect((row as { masked?: boolean }).masked, `${name} 应开掩码`).toBe(true);
-    }
+    expect(credRows.map((r) => r.name)).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
+    expect(credRows.every((r) => r.type === 'secret')).toBe(true);
   });
 
   it('第二大脑：检索/对话 7 个数值键是 number 行（键仍存字符串，走 numStrBinding）', () => {

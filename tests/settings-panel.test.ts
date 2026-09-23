@@ -296,7 +296,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：AI 域数据源凭据组——Cookie 行渲染为 textarea，B站行带「从 CLI 导入」按钮（issue 331）', async () => {
+  it('桌面端：AI 域数据源凭据组——三行统一单行掩码，B站行带「从 CLI 导入」按钮', async () => {
     // stub 桌面端判定 + CLI 凭据文件（schema 以 window.require 判定桌面端 ADR-0133 口径；
     // 导入读 ~/.bilibili-cookies.json 的 { cookie } 字段）
     (window as unknown as { require?: unknown }).require = (mod: string) => {
@@ -319,24 +319,29 @@ describe('设置面板（settings-panel）', () => {
         [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
           (r) => r.querySelector('.bz-sp-set-name')?.textContent === name
         );
-      // B站 Cookie / 豆瓣 Cookie = textarea；ApiZero Key 短令牌保持单行输入框
+      // 三行凭据一律单行掩码输入（2026-09-23 用户报「加密的做成多行框看着怪」：textarea 档位退役），
+      // 组序 ApiZero Key → B站 Cookie → 豆瓣 Cookie
+      const rowNames = [...popup.querySelectorAll('.bz-sp-set-row .bz-sp-set-name')].map((n) => n.textContent);
+      const credStart = rowNames.indexOf('ApiZero Key');
+      expect(rowNames.slice(credStart, credStart + 3)).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
       const bili = rowOf('B站 Cookie');
       const douban = rowOf('豆瓣 Cookie');
       const apizero = rowOf('ApiZero Key');
-      expect(bili?.querySelector('textarea.bz-input'), 'B站 Cookie 为多行文本框').toBeTruthy();
-      expect(douban?.querySelector('textarea.bz-input'), '豆瓣 Cookie 为多行文本框').toBeTruthy();
-      expect(apizero?.querySelector('textarea.bz-input')).toBeNull();
-      expect(apizero?.querySelector('input.bz-input'), 'ApiZero Key 为单行输入').toBeTruthy();
-      // 行内按钮在多行文本左侧（2026-09-08 拍板口径；textarea 行 actions 与 text 行同口径）
+      expect(apizero?.querySelector('.bz-sp-secret-input'), 'ApiZero Key 为单行掩码输入').toBeTruthy();
+      expect(bili?.querySelector('.bz-sp-secret-input'), 'B站 Cookie 为单行掩码输入').toBeTruthy();
+      expect(douban?.querySelector('.bz-sp-secret-input'), '豆瓣 Cookie 为单行掩码输入').toBeTruthy();
+      expect(bili?.querySelector('textarea.bz-input'), '凭据行不再用多行文本框').toBeNull();
+      expect(douban?.querySelector('textarea.bz-input')).toBeNull();
+      // 行内按钮在输入框左侧（2026-09-08 拍板口径；secret 行 actions 与 text 行同口径）
       const biliCtrl = bili!.querySelector('.bz-sp-set-ctrl')!;
       expect(biliCtrl.querySelector('.bz-sp-btn')?.textContent).toBe('从 CLI 导入');
       expect(biliCtrl.firstElementChild!.classList.contains('bz-sp-btn')).toBe(true);
       // ApiZero Key 行无行内按钮
       expect(apizero!.querySelector('.bz-sp-btn')).toBeNull();
-      // 点「从 CLI 导入」→ 写入绑定并回填 textarea 显示（动作回填经 displaySetters 程序化写值，不置脏）
+      // 点「从 CLI 导入」→ 写入绑定并回填输入框显示（动作回填经 displaySetters 程序化写值，不置脏）
       (biliCtrl.querySelector('.bz-sp-btn') as HTMLElement).click();
       await tick();
-      expect((bili!.querySelector('textarea.bz-input') as HTMLTextAreaElement).value).toBe('SESSDATA=abc; buvid=xyz');
+      expect((bili!.querySelector('.bz-sp-secret-input') as HTMLInputElement).value).toBe('SESSDATA=abc; buvid=xyz');
       expect(panelState.bilibiliCookie).toBe('SESSDATA=abc; buvid=xyz');
     } finally {
       ui.cleanup();

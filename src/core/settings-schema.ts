@@ -128,14 +128,8 @@ interface TextAreaRow extends RowBase, TextualCommit {
   binding: RowBinding<string>;
   placeholder?: string;
   onChange?: (value: string, ctx: SettingsRowContext) => void;
-  /** 行内附加按钮（issue 330：与 text 行同口径，渲染于多行文本左侧，如 B站 Cookie「从 CLI 导入」） */
+  /** 行内附加按钮（issue 330：与 text 行同口径，渲染于多行文本左侧） */
   actions?: RowAction[];
-  /**
-   * 多行掩码档位（2026-09-23）：给「长串凭据」用——Cookie 这类一贴几 KB 的值保留多行粘贴面，
-   * 但用 -webkit-text-security 打成圆点（textarea 没有 type=password），旁边配眼睛切明文。
-   * 与 type:'secret' 的分工：secret = 单行短凭据（密钥），本档 = 多行长串凭据（Cookie）。
-   */
-  masked?: boolean;
 }
 
 /**
@@ -414,26 +408,16 @@ export function parseClampedNumber(raw: string, min?: number, max?: number): num
   return out;
 }
 
-/** 可掩码控件的最小结构面：真实 input/textarea 与 TextualComponent.inputEl 都满足 */
+/** 可掩码控件的最小结构面（单行密钥档位）：真实 input 与 TextualComponent.inputEl 均满足 */
 interface MaskableEl {
   type: string;
-  classList: { toggle(c: string, on?: boolean): void };
 }
 
 /**
- * 掩码控件的「眼睛」切换钮（单行掩码与多行掩码共用，避免两套实现漂移）。
- * 两个档位靠 mode 区分：
- * - mode='type'（单行 input）：翻 `input.type` 在 password ↔ text 之间；
- * - mode='class'（多行 textarea，没有 type=password）：翻 revealClass，打点由 CSS 负责
- *   （.bz-maskarea { -webkit-text-security: disc }）。
+ * 掩码控件的「眼睛」切换钮：翻 `input.type` 在 password ↔ text 之间。
  * 切换只翻显示形态，不动值、不落盘（与设置面板渲染器的眼睛同语义）。
  */
-function wireSecretEye(
-  setting: Setting,
-  el: MaskableEl,
-  revealClass = '',
-  mode: 'type' | 'class' = 'type',
-): void {
+function wireSecretEye(setting: Setting, el: MaskableEl): void {
   let revealed = false;
   setting.addExtraButton((b) => {
     b.setIcon('eye').setTooltip('显示 / 隐藏');
@@ -441,8 +425,7 @@ function wireSecretEye(
     b.extraSettingsEl.setAttribute('aria-pressed', 'false');
     b.onClick(() => {
       revealed = !revealed;
-      if (mode === 'type') el.type = revealed ? 'text' : 'password';
-      else el.classList.toggle(revealClass, revealed);
+      el.type = revealed ? 'text' : 'password';
       b.setIcon(revealed ? 'eye-off' : 'eye');
       b.extraSettingsEl.setAttribute('aria-pressed', String(revealed));
       b.extraSettingsEl.setAttribute('aria-label', revealed ? '隐藏密钥' : '显示密钥');
@@ -464,7 +447,7 @@ interface TextualComponent {
     autocomplete?: string;
     spellcheck?: boolean;
     inputMode?: string;
-    classList: { add(c: string): void; remove(c: string): void; toggle(c: string, on?: boolean): void };
+    classList: { add(c: string): void; remove(c: string): void };
     addEventListener: (type: string, listener: (e: { key: string }) => void) => void;
   };
 }
@@ -621,12 +604,6 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           inputEl.autocomplete = 'off';
           inputEl.spellcheck = false;
           wireSecretEye(setting, inputEl);
-        }
-        // 多行掩码（TextAreaRow.masked，Cookie 类长串凭据）：textarea 没有 type=password，
-        // 走 -webkit-text-security 打点（样式见 core/ui/components.css .bz-maskarea）+ 眼睛切明文
-        if (row.type === 'textarea' && (row as TextAreaRow).masked) {
-          inputEl.classList.add('bz-maskarea');
-          wireSecretEye(setting, inputEl, 'bz-maskarea--revealed', 'class');
         }
         // 键盘语义提示（仅移动端软键盘；不参与校验）
         const mode = (row as { inputMode?: SettingsInputMode }).inputMode;

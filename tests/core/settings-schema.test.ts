@@ -88,28 +88,31 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('数据源凭据组（issue 331 拆组）：B站/豆瓣 Cookie 为多行掩码 textarea，ApiZero Key 单行掩码；桌面端 B站行带「从 CLI 导入」', () => {
+  it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
     const rows = schema.groups[2].rows;
-    // 2026-09-23：三行凭据全掩码——Cookie 保留多行粘贴面 + masked 打点，Key 走单行 secret
-    expect(rows.map((r) => r.type)).toEqual(['textarea', 'secret', 'textarea']);
-    expect(rows.map((r) => (r as { masked?: boolean }).masked)).toEqual([true, undefined, true]);
-    const [bili, apizero, douban] = rows as Array<{
+    // 2026-09-23 用户报「加密的做成多行框看着怪」：textarea 的多行掩码档位退役，
+    // 三行凭据一律单行 secret（password 掩码 + 眼睛切明文）
+    expect(rows.map((r) => r.type)).toEqual(['secret', 'secret', 'secret']);
+    const [apizero, bili, douban] = rows as Array<{
       name: string;
       binding?: { key: string };
       actions?: Array<{ text: string }>;
       placeholder?: string;
     }>;
-    expect([bili.name, apizero.name, douban.name]).toEqual(['B站 Cookie', 'ApiZero Key', '豆瓣 Cookie']);
-    expect(bili.binding).toEqual({ key: 'bilibiliCookie' });
+    expect([apizero.name, bili.name, douban.name]).toEqual(['ApiZero Key', 'B站 Cookie', '豆瓣 Cookie']);
     expect(apizero.binding).toEqual({ key: 'cinemaApizeroKey' });
+    expect(bili.binding).toEqual({ key: 'bilibiliCookie' });
     expect(douban.binding).toEqual({ key: 'cinemaDoubanCookie' });
     // 非桌面（node 环境无 window.require）：CLI 导入按钮不渲染（ADR-0133 零依赖判定口径）
     expect(bili.actions).toEqual([]);
-    // 桌面端：按钮在场（textarea 行 actions 与 text 行同口径，issue 331）
+    // 桌面端：按钮在场（secret 行 actions 与 text 行同口径）
     (globalThis as unknown as { window: unknown }).window = { require: () => ({}) };
     try {
-      const desktopRows = mainSettingsSchema().groups[2].rows as Array<{ actions?: Array<{ text: string }> }>;
-      expect(desktopRows[0].actions?.map((a) => a.text)).toEqual(['从 CLI 导入']);
+      const desktopRows = mainSettingsSchema().groups[2].rows as Array<{
+        name: string;
+        actions?: Array<{ text: string }>;
+      }>;
+      expect(desktopRows.find((r) => r.name === 'B站 Cookie')?.actions?.map((a) => a.text)).toEqual(['从 CLI 导入']);
     } finally {
       delete (globalThis as unknown as { window?: unknown }).window;
     }

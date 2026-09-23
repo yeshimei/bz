@@ -81,16 +81,6 @@ export function secretInputHtml(opts: { value: string; placeholder?: string }): 
     `</div>`;
 }
 
-/** 多行掩码（TextAreaRow.masked，Cookie 类长串凭据）：textarea 没有 type=password，打点由
- *  core/ui/components.css 的 .bz-maskarea（-webkit-text-security）负责，眼睛翻
- *  .bz-maskarea--revealed。外壳复用单行密钥档位的 .bz-sp-secret 布局（+ --area 顶部对齐）。 */
-export function maskedAreaHtml(opts: { value: string; placeholder?: string }): string {
-  return `<div class="bz-sp-secret bz-sp-secret--area">` +
-    `<textarea class="bz-input bz-sp-textarea bz-maskarea" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ''}>${esc(opts.value)}</textarea>` +
-    `<button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan('eye')}</button>` +
-    `</div>`;
-}
-
 /** 滑杆行（轻量读数 span）——原型 slider 分支 bz-sp-slider-row */
 export function sliderHtml(min: number | undefined, max: number | undefined, step: number | undefined, value: number): string {
   return `<div class="bz-sp-slider-row">` +

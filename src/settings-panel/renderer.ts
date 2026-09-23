@@ -121,7 +121,7 @@ function regRefreshDisplay(
 
 /** 文本/数字输入：.bz-input 共享底 + 行内布局修饰（mono/num 尺寸见域样式）。
  *  行为层独有：防抖落盘 + 失焦/回车提交 + refreshKey 程序化刷新（不置脏，防 blur 假写）。
- *  掩码档位不走这里（单行 = makeSecretInput，多行 = makeMaskedArea）。 */
+ *  掩码档位不走这里（凭据行 = makeSecretInput）。 */
 function makeInput(opts: {
   value: string;
   type?: 'text' | 'number';
@@ -182,25 +182,6 @@ function makeSecretInput(opts: {
     return reveal;
   });
   return holder.firstElementChild as HTMLDivElement;
-}
-
-/** 多行掩码输入（TextAreaRow.masked，Cookie 类长串凭据）：保留多行粘贴面（textarea 不换单行
- *  input），打点走 core/ui/components.css 的 .bz-maskarea（-webkit-text-security，textarea
- *  没有 type=password）；眼睛翻 .bz-maskarea--revealed。提交行为与 textarea 行同内核。 */
-function makeMaskedArea(opts: {
-  value: string;
-  placeholder?: string;
-}): { holder: HTMLDivElement; ta: HTMLTextAreaElement } {
-  const holder = document.createElement('div');
-  holder.innerHTML = R.maskedAreaHtml({ value: opts.value, placeholder: opts.placeholder });
-  const ta = holder.querySelector<HTMLTextAreaElement>('textarea')!;
-  const eye = holder.querySelector<HTMLButtonElement>('.bz-sp-secret-eye')!;
-  bindSecretEye(eye, () => {
-    const revealed = !ta.classList.contains('bz-maskarea--revealed');
-    ta.classList.toggle('bz-maskarea--revealed', revealed);
-    return revealed;
-  });
-  return { holder: holder.firstElementChild as HTMLDivElement, ta };
 }
 
 /* ==================== 路径行（共享 chips + 选择按钮） ==================== */
@@ -450,21 +431,10 @@ function renderRow(
     }
     case 'textarea': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      // 掩码档位（Cookie 类长串凭据）：保留多行粘贴面，外壳换成「多行 + 打点 + 眼睛」；
-      // 提交链与普通多行完全同内核，只是挂载的是外壳（holder）而不是裸 textarea
-      const masked = row.masked === true;
       const holder = document.createElement('div');
-      let ta: HTMLTextAreaElement;
-      let ctrl: HTMLElement;
-      if (masked) {
-        const m = makeMaskedArea({ value: acc.read() ?? '', placeholder: row.placeholder });
-        ta = m.ta;
-        ctrl = m.holder;
-      } else {
-        holder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
-        ta = holder.firstElementChild as HTMLTextAreaElement;
-        ctrl = ta;
-      }
+      holder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
+      const ta = holder.firstElementChild as HTMLTextAreaElement;
+      const ctrl: HTMLElement = ta;
       // 行级 onCommit 一次性提示（H1：备忘录「自定义场景列表」memoReloadScenes 即 textarea 行钩子）
       const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       let timer: number | null = null;

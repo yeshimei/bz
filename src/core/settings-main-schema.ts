@@ -19,8 +19,10 @@
  *   （aiContextOverrides 设置键一并退役）；
  * - issue 187 曾新增「采样参数」组，2026-09-08 拍板整体退役（UI 组 + 请求透传 + 设置键一并移除）；
  * - issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
- *   三组；B站 Cookie / 豆瓣 Cookie 行由单行输入框改 textarea（Cookie 串长，便于粘贴检查），
- *   「从 CLI 导入」按钮经 TextAreaRow.actions 保留。键与行为零变化；
+ *   三组；B站 Cookie / 豆瓣 Cookie 行当时由单行输入框改 textarea（Cookie 串长，便于粘贴检查），
+ *   「从 CLI 导入」按钮经 actions 保留。键与行为零变化；
+ * - 2026-09-23 凭据组三行统一回单行 secret（用户拍板「加密的做成多行框看着怪」）：textarea 的
+ *   masked 档位在凭据组退役，行序改为 ApiZero Key → B站 Cookie → 豆瓣 Cookie；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
@@ -276,24 +278,13 @@ function modelGroupRows(): SettingsRow[] {
 
 /**
  * 「数据源凭据」组行（issue 331 拆组，ADR-0133「AI 与凭据」单组退役）：与 AI 服务商无关的
- * 第三方数据源凭据集中一卡——B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）+ 影院
- * ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）。
- * Cookie 串动辄上千字符，textarea 行便于粘贴与检查（单行输入框已退役）；ApiZero Key 为短
- * 令牌，保持单行。
+ * 第三方数据源凭据集中一卡——影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）+
+ * B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）。
+ * 三行一律单行 secret（password 掩码 + 眼睛切明文）——2026-09-23 用户报「加密的做成多行框
+ * 看着怪」，Cookie 行的 textarea(masked) 档位退役；行序按使用频度：Key 在前，两个 Cookie 在后。
  */
 function credentialGroupRows(): SettingsRow[] {
   return [
-    {
-      type: 'textarea',
-      name: 'B站 Cookie',
-      desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
-      binding: { key: 'bilibiliCookie' },
-      placeholder: '粘贴从浏览器复制的 Cookie',
-      // 2026-09-23：Cookie 是凭据，长串保留多行粘贴面（textarea 换单行反而难贴），
-      // 但默认打成圆点（.bz-maskarea），眼睛可随时看明文
-      masked: true,
-      actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
-    },
     {
       type: 'secret',
       name: 'ApiZero Key',
@@ -302,12 +293,19 @@ function credentialGroupRows(): SettingsRow[] {
       placeholder: '粘贴密钥',
     },
     {
-      type: 'textarea',
+      type: 'secret',
+      name: 'B站 Cookie',
+      desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
+      binding: { key: 'bilibiliCookie' },
+      placeholder: '粘贴从浏览器复制的 Cookie',
+      actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
+    },
+    {
+      type: 'secret',
       name: '豆瓣 Cookie',
       desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓',
       binding: { key: 'cinemaDoubanCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
-      masked: true,
     },
   ];
 }
