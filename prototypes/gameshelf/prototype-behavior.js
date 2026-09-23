@@ -1,5 +1,5 @@
-/* 源指纹 bb45258e40d9097c · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 a84eb10217209f4b · 仓内输入 264 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -2936,7 +2936,7 @@ var BZW_gameshelf = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M13 = 10;
+    const M14 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -2963,7 +2963,7 @@ var BZW_gameshelf = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M13 || Math.abs(t.clientY - sy) > M13) {
+      if (Math.abs(t.clientX - sx) > M14 || Math.abs(t.clientY - sy) > M14) {
         moved = true;
         cancel();
       }
@@ -4170,15 +4170,15 @@ var BZW_gameshelf = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M13, s, ms) {
+        function createDate(y, m, d, h, M14, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M13, s, ms);
+            date = new Date(y + 400, m, d, h, M14, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M13, s, ms);
+            date = new Date(y, m, d, h, M14, s, ms);
           }
           return date;
         }
@@ -7949,10 +7949,10 @@ var BZW_gameshelf = (() => {
       el.setAttribute("aria-disabled", String(v));
       el.tabIndex = v ? -1 : 0;
     };
-    const enabled = () => !el.classList.contains("is-disabled");
+    const enabled2 = () => !el.classList.contains("is-disabled");
     const toggle = () => {
       var _a2;
-      if (!enabled()) return;
+      if (!enabled2()) return;
       const next = !el.classList.contains("on");
       setChecked(next);
       (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
@@ -17112,15 +17112,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E6 = pick.E;
+      const E7 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E6, nOut, stub);
+      const E1 = along(E7, nOut, stub);
       const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E6, E1, rects) || stubDirty(T1, T3, rects);
-      const items = [S3, E6, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E7, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E7, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -19349,10 +19349,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after6 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after6.data.length);
-    const tail = after6.splitText(len);
-    (_b2 = after6.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after7 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after7.data.length);
+    const tail = after7.splitText(len);
+    (_b2 = after7.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -58702,6 +58702,160 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/smartcat/motion.ts
+  function reduced7() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function enabled() {
+    try {
+      return typeof document !== "undefined" && !reduced7() && typeof requestAnimationFrame === "function";
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi6(el, frames, opts) {
+    if (!el || reduced7() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && reduced7() && last) {
+        for (const k of Object.keys(last)) {
+          if (k === "offset") continue;
+          try {
+            el.style[k] = String(last[k]);
+          } catch (e) {
+          }
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, {
+        duration: opts.duration,
+        delay: opts.delay,
+        easing: opts.easing,
+        fill: opts.fill,
+        id: opts.id,
+        iterations: opts.iterations
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+  function after6(ms, fn) {
+    const id = setTimeout(() => {
+      timers6.delete(id);
+      fn();
+    }, ms);
+    timers6.add(id);
+  }
+  function trackOrch(a) {
+    if (!a) return;
+    orchestra.add(a);
+    a.finished.then(() => orchestra.delete(a)).catch(() => orchestra.delete(a));
+  }
+  function cancelOrchestra() {
+    for (const a of orchestra) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    orchestra.clear();
+  }
+  function cancelById(el, id) {
+    if (!el || typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (a.id === id) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionChatIn(mask, popup) {
+    chatEpoch++;
+    if (!popup) return;
+    cancelById(popup, EXIT_CHAT);
+    cancelById(mask, EXIT_CHAT_MASK);
+    cancelOrchestra();
+    if (!enabled()) return;
+    if (mask) trackOrch(waapi6(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move, easing: E6.out, fill: "backwards" }));
+    trackOrch(waapi6(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.97)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 340, easing: E6.out, fill: "backwards" }
+    ));
+    const input = popup.querySelector(".chat-input-area");
+    if (input) trackOrch(waapi6(
+      input,
+      [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { delay: 100, duration: M13.base + 60, easing: E6.out, fill: "backwards" }
+    ));
+    const msgs = popup.querySelectorAll(".chat-messages .message");
+    const tail8 = Array.from(msgs).slice(-8);
+    tail8.forEach((m, i) => {
+      trackOrch(waapi6(
+        m,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { delay: 140 + i * STAG6, duration: M13.base, easing: E6.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionChatOut(mask, popup, done) {
+    if (!popup || !enabled()) {
+      done();
+      return;
+    }
+    const myEpoch = chatEpoch;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (chatEpoch !== myEpoch) return;
+      cancelById(popup, EXIT_CHAT);
+      cancelById(mask, EXIT_CHAT_MASK);
+      done();
+    };
+    const a = waapi6(
+      popup,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.97)", filter: "blur(5px)" }
+      ],
+      { duration: M13.move + 40, easing: E6.out, fill: "forwards", id: EXIT_CHAT }
+    );
+    if (mask) trackOrch(waapi6(mask, [{ opacity: 1 }, { opacity: 0 }], { duration: M13.move + 40, easing: E6.out, fill: "forwards", id: EXIT_CHAT_MASK }));
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after6(M13.move + 220, finish);
+  }
+  var M13, E6, STAG6, timers6, orchestra, EXIT_CHAT, EXIT_CHAT_MASK, chatEpoch;
+  var init_motion7 = __esm({
+    "src/smartcat/motion.ts"() {
+      M13 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E6 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG6 = 30;
+      timers6 = /* @__PURE__ */ new Set();
+      orchestra = /* @__PURE__ */ new Set();
+      EXIT_CHAT = "bz-sc-chat-exit";
+      EXIT_CHAT_MASK = "bz-sc-chat-exit-mask";
+      chatEpoch = 0;
+    }
+  });
+
   // src/smartcat/ui.ts
   var ui_exports9 = {};
   __export(ui_exports9, {
@@ -58813,11 +58967,14 @@ ${n.content.slice(0, 2e3)}
   function showChatPanel(panels) {
     panels.mask.style.display = "block";
     panels.chatPopup.style.display = "flex";
+    motionChatIn(panels.mask, panels.chatPopup);
     panels.chatInput.focus();
   }
   function hideChatPanel(panels) {
-    panels.mask.style.display = "none";
-    panels.chatPopup.style.display = "none";
+    motionChatOut(panels.mask, panels.chatPopup, () => {
+      panels.mask.style.display = "none";
+      panels.chatPopup.style.display = "none";
+    });
   }
   function smartcatSettingsSchema(opts) {
     const bindConfig = (key) => ({
@@ -59012,6 +59169,7 @@ ${n.content.slice(0, 2e3)}
       init_settings_modal();
       init_settings_provider();
       init_config5();
+      init_motion7();
       CAT_CONTAINER_ID = "smart-companion-cat";
       SKINS = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];
       CAT_HTML = `
@@ -59097,9 +59255,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after6 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after6 !== before) {
-        rec.secondBrainAllowPaths = after6;
+      const after7 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after7 !== before) {
+        rec.secondBrainAllowPaths = after7;
         migrated = true;
       }
     }
@@ -60478,20 +60636,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after6 = classifyFilePath(newPath);
-    if (!after6) return;
+    const after7 = classifyFilePath(newPath);
+    if (!after7) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after6
+      movedOut: before !== after7
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after6 === "diary") {
+    if (after7 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after6}:file-renamed`, payload);
+    emitDomainEvent(`${after7}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;
