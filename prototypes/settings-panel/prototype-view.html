@@ -15,8 +15,21 @@
 <link rel="stylesheet" href="../../src/core/styles.css">
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
-<link rel="stylesheet" href="../../src/settings-panel/styles.css">
 <link rel="stylesheet" href="../../src/home/styles.css">
+<!-- 收藏本域样式：本面板「收藏本 → 标签管理」是 custom 行（域内自绘列表），行骨架
+     .bz-fav-tagmgr-* 与图标尺寸（.bz-fav-tagmgr-ic/-btn svg）全在 favorites/styles.css，
+     域内 token（--chip-ink/--pop-ink/--menu-hover…）也在那份文件里。
+     漏链的症候（2026-09-23 用户报）：markup 全裸——行堆成一列、lucide 图标撑满整块（无尺寸约束）。
+     插件端走聚合根 styles.css 天然不缺；壳是逐文件链，漏一个域就静默裸奔。 -->
+<link rel="stylesheet" href="../../src/favorites/styles.css">
+<!-- 番茄钟皮肤域样式：外观组十张预览卡的 --pz-<id>-* 色值变量定义在此（:root 表），
+     缺链 = var 解析失败 → 预览卡透明（静默，与 2026-09-11 菜单透明同因）。
+     ⚠️ 2026-09-23 修正：这份 link 原先只挂在壳页 prototype.html（外层文档）上，
+     而预览卡渲染在**本 iframe 文档**里——等于没链。 -->
+<link rel="stylesheet" href="../../src/pomodoro/styles.css">
+<!-- 本域样式：位置与聚合次序一致（build-css SOURCES 里 settings-panel 在 pomodoro 之后），
+     保证壳的层叠次序 = 插件端聚合结果的次序 -->
+<link rel="stylesheet" href="../../src/settings-panel/styles.css">
 <!-- 跨域弹窗：通用组「数据体检」经动态 import('../checkup') 打开 bz-checkup-* 弹窗，其域样式须入链 -->
 <link rel="stylesheet" href="../../src/checkup/styles.css">
 <script src="./prototype-icons.js"></script>
