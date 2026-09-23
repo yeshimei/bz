@@ -281,7 +281,8 @@ function modelGroupRows(): SettingsRow[] {
  * 第三方数据源凭据集中一卡——影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）+
  * B站 Cookie（知识盒档位查询；桌面端可从 CLI 导入）。
  * 三行一律单行 secret（password 掩码 + 眼睛切明文）——2026-09-23 用户报「加密的做成多行框
- * 看着怪」，Cookie 行的 textarea(masked) 档位退役；行序按使用频度：Key 在前，两个 Cookie 在后。
+ * 看着怪」，Cookie 行的 textarea(masked) 档位退役；行序按用户要求（「第二项放到前面」）：
+ * ApiZero Key → B站 Cookie → 豆瓣 Cookie。
  */
 function credentialGroupRows(): SettingsRow[] {
   return [

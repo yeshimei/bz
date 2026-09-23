@@ -330,8 +330,6 @@ describe('设置面板（settings-panel）', () => {
       expect(apizero?.querySelector('.bz-sp-secret-input'), 'ApiZero Key 为单行掩码输入').toBeTruthy();
       expect(bili?.querySelector('.bz-sp-secret-input'), 'B站 Cookie 为单行掩码输入').toBeTruthy();
       expect(douban?.querySelector('.bz-sp-secret-input'), '豆瓣 Cookie 为单行掩码输入').toBeTruthy();
-      expect(bili?.querySelector('textarea.bz-input'), '凭据行不再用多行文本框').toBeNull();
-      expect(douban?.querySelector('textarea.bz-input')).toBeNull();
       // 行内按钮在输入框左侧（2026-09-08 拍板口径；secret 行 actions 与 text 行同口径）
       const biliCtrl = bili!.querySelector('.bz-sp-set-ctrl')!;
       expect(biliCtrl.querySelector('.bz-sp-btn')?.textContent).toBe('从 CLI 导入');

@@ -153,7 +153,7 @@ function makeInput(opts: {
   return input;
 }
 
-/** 眼睛钮行为（单行掩码与多行掩码共用，别各写一份）：翻显示形态 + aria 同步 + 图标换形。
+/** 眼睛钮行为（单行掩码凭据行的唯一实现）：翻显示形态 + aria 同步 + 图标换形。
  *  apply() 执行形态切换并返回切换后的「已显示明文」态；只翻形态，不动值不落盘。 */
 function bindSecretEye(eye: HTMLButtonElement, apply: () => boolean): void {
   eye.addEventListener('click', () => {

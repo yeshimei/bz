@@ -50,7 +50,7 @@ const schema: SettingsSchema = {
       icon: 'key-round',
       rows: [
         { type: 'secret', name: '测试密钥', desc: '掩码显示的密钥行', binding: strBinding('secretVal'), placeholder: '粘贴密钥' },
-        { type: 'textarea', name: '测试凭据', desc: '多行掩码的凭据行', binding: strBinding('areaVal'), masked: true },
+        { type: 'textarea', name: '测试多行', desc: '普通多行文本行', binding: strBinding('areaVal') },
         { type: 'text', name: '测试地址', desc: '地址类输入行', binding: strBinding('urlVal'), inputMode: 'url' },
         { type: 'number', name: '测试数量', desc: '数字类输入行', binding: numBinding('numVal'), min: 1, max: 50, step: 1 },
         {
@@ -97,14 +97,11 @@ describe('core 弹窗渲染器（⚙️ 设置弹窗）：掩码 / 键盘语义 
     expect(input.type).toBe('password');
   });
 
-  it('多行文本：无掩码类、本行无眼睛（掩码档位退役——凭据一律单行 secret）', () => {
+  it('多行文本：textarea 形态照常渲染', () => {
     const host = renderCore();
     const ta = host.querySelector('textarea') as HTMLTextAreaElement;
+    expect(ta).not.toBeNull();
     expect(ta.value).toBe('a=b; c=d;');
-    expect(ta.classList.contains('bz-maskarea')).toBe(false);
-    // 眼睛只属密钥行（本 schema 里另有一行 secret），多行文本行自身不长眼睛
-    const row = ta.closest('.setting-item')!;
-    expect(row.querySelector('button[aria-label="显示密钥"]'), '多行文本行不应长眼睛').toBeNull();
   });
 
   it('键盘语义：inputMode 落成 inputmode', () => {
@@ -134,12 +131,10 @@ describe('设置面板渲染器：掩码档位与数字档位同口径', () => {
     expect(input.type).toBe('text');
   });
 
-  it('多行文本：普通 textarea（无掩码外壳）+ 提交链照常落盘', async () => {
+  it('多行文本：普通 textarea + 提交链照常落盘', async () => {
     const host = renderPanel();
     const ta = host.querySelector('textarea.bz-sp-textarea') as HTMLTextAreaElement;
     expect(ta).not.toBeNull();
-    expect(ta.classList.contains('bz-maskarea')).toBe(false);
-    expect(host.querySelector('.bz-sp-secret--area')).toBeNull();
 
     ta.value = 'x=1; y=2;';
     ta.dispatchEvent(new Event('input', { bubbles: true }));
