@@ -145,78 +145,35 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     expect(document.getElementById('pomodoro-mask')).not.toBeNull(); // openPomodoro 照常出弹窗
   });
 
-  it('P3：恢复可见但无可解冻状态（未冻结/空闲）→ 仅渲染不落盘', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app); // 运行中、未冻结
-    const saveSpy = vi.spyOn(PomodoroDataManager.prototype, 'save');
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(saveSpy).not.toHaveBeenCalled(); // 无状态变化不写盘（原无条件 save）
-  });
-
-  it('后台自动暂停：hidden → 主番茄钟冻结（paused/endTime null），visible → 自动恢复（ticket 62）', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app);
-    // 运行中（endTime 非空）→ 模拟窗口最小化 hidden
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const frozen = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(frozen.state.paused).toBe(true);
-    expect(frozen.state.endTime).toBeNull();
-    expect(frozen.state.remaining).toBeGreaterThan(0);
-    expect(frozen.state.pausedBy).toBe('autopause'); // 冻结来源标记随落盘持久化（P1-4）
-    // 恢复 visible → 自动继续
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const resumed = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(resumed.state.paused).toBe(false);
-    expect(resumed.state.endTime).not.toBeNull();
-  });
-
-  it('后台自动暂停开关关闭 → hidden 不冻结（ticket 62）', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    setSettingsProvider(() => ({ pomodoroAutoPauseOnHide: false } as any));
-    await ensurePomodoro(app);
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(false);
-    expect(raw.state.endTime).not.toBeNull();
-  });
-
-  it('手动暂停后 hidden → 不被自动覆盖，visible → 不自动恢复（ticket 62 尊重手动暂停）', async () => {
+  it('窗口 hidden/visible 不干扰计时（后台自动暂停 2026-09-23 退役：不再监听 visibilitychange）', async () => {
     const vault = new MockVault();
     vault.files.set(getPomodoroFilePath(), runningData());
     const app = makeApp(vault);
     setApp(app);
     await openPomodoro(app);
-    // 手动暂停（点开始按钮 → 暂停）
-    (document.getElementById('pomodoro-btn-start') as HTMLElement).click();
-    await vi.advanceTimersByTimeAsync(0);
-    let raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    // hidden + visible：手动暂停保持
+    const startBtn = el('pomodoro-btn-start') as HTMLButtonElement;
+    expect(startBtn.textContent).toBe('暂停'); // 运行中
+    const saveSpy = vi.spyOn(PomodoroDataManager.prototype, 'save');
+    // 最小化/遮挡（hidden）：不暂停、不翻按钮、不落盘
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
     document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(startBtn.textContent).toBe('暂停');
+    // 恢复可见：同样无副作用（旧版此处解冻并写盘）
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
-    raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    expect(raw.state.endTime).toBeNull(); // 保持暂停
+    expect(saveSpy).not.toHaveBeenCalled();
+    // 关键判据：隐藏期间计时照走（旧版冻结在 remaining 不动、时间字也不刷新）
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    const before = el('pomodoro-time').textContent;
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(el('pomodoro-time').textContent).not.toBe(before);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(false);
+    expect(raw.state.endTime).not.toBeNull();
   });
 });
 
@@ -1366,32 +1323,5 @@ describe('深审修复批回归（bz-fix-pomo-core）', () => {
     el('pomodoro-stat-tab-month').click();
     const days = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
     expect(days[3].querySelector('.pomodoro-stat-num')?.textContent).toBe('100h'); // 2026-06（≥100h 取整）
-  });
-
-  it('F12 回归锁：冻结标记随解冻清除——手动暂停后 hidden→visible 不被静默续跑', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app);
-    // hidden 冻结（autoPauseMain 置位 + pausedBy:'autopause' 落盘）
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    // visible 自动解冻（autoPauseMain 清除）→ 立即手动暂停
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    await togglePause(app);
-    expect(JSON.parse(vault.files.get(getPomodoroFilePath())!).state.paused).toBe(true);
-    // 再 hidden → visible：不得把手动暂停静默续跑（F12：applyAction 统一清冻结标记）
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    expect(raw.state.endTime).toBeNull();
   });
 });

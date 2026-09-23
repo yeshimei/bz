@@ -4,7 +4,6 @@
  * - F4：剪藏本源搜索重选中条目后右栏同步渲染（防「高亮 A 读 B」）；
  * - F9：自动摘要失败通知「重试」走队列去重，双击只跑一次 AI；
  * - F11：番茄钟「重置」生效即落盘（重启不复活旧计时）；
- * - F12：冻结标记随 paused 清除——hidden 期间 resume→手动 pause 后 visible 不被静默续跑；
  * - F13：装载+落盘链路历史按保留窗裁剪；
  * - F14：favorites「打开」两层兜底落空时走 window.open，仍失败给人话提示；
  * - F15：favorites 表单单例守卫——重复打开只保留一层。
@@ -31,7 +30,7 @@ import { setClipDir } from './clipbook/helpers';
 import { processFile } from '../src/auto-summary/processor';
 import { unloadAutoSummary } from '../src/auto-summary/index';
 
-// ---- pomodoro（F11/F12/F13） ----
+// ---- pomodoro（F11/F13） ----
 import { openPomodoro, ensurePomodoro, unloadPomodoro } from '../src/pomodoro';
 import { getPomodoroFilePath } from '../src/pomodoro/data';
 
@@ -176,7 +175,7 @@ describe('F9：自动摘要失败「重试」走队列去重', () => {
   });
 });
 
-describe('F11/F12/F13：番茄钟落盘与冻结标记', () => {
+describe('F11/F13：番茄钟落盘（重置即写盘 / 历史裁剪）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
@@ -193,16 +192,11 @@ describe('F11/F12/F13：番茄钟落盘与冻结标记', () => {
   async function boot(vault: MockVault): Promise<void> {
     const app = mockAppWithVault(vault);
     setApp(app);
-    await ensurePomodoro(app); // 注册 visibilitychange 监听
+    await ensurePomodoro(app); // 装载 + 恢复（当前版本不再监听 visibilitychange）
     await openPomodoro(app);
     await vi.advanceTimersByTimeAsync(10);
   }
   const btn = (id: string) => document.getElementById(id) as HTMLElement;
-  const setHidden = (hidden: boolean) => {
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
-    document.dispatchEvent(new Event('visibilitychange'));
-  };
-
   it('F11：重置生效即落盘——重启不再复活旧计时（修复前 reset 恒 none 不 save）', async () => {
     const vault = new MockVault();
     await boot(vault);
@@ -218,28 +212,6 @@ describe('F11/F12/F13：番茄钟落盘与冻结标记', () => {
     const disk = pomoDisk(vault).state;
     expect(disk.endTime).toBeNull(); // 修复前：磁盘仍是运行态，重启弹「番茄钟继续」复活
     expect(disk.paused).toBe(false);
-  });
-
-  it('F12：hidden 期间 resume→手动 pause，visible 不被残留冻结标记静默续跑', async () => {
-    const vault = new MockVault();
-    await boot(vault);
-    btn('pomodoro-btn-start').click(); // 运行中
-    await vi.advanceTimersByTimeAsync(10);
-    setHidden(true); // 冻结（autoPauseMain=true）
-    await vi.advanceTimersByTimeAsync(10);
-    await flushPomo(vault);
-    expect(pomoDisk(vault).state.paused).toBe(true);
-    btn('pomodoro-btn-start').click(); // hidden 中 resume（popout 窗口等入口）：清冻结标记
-    await vi.advanceTimersByTimeAsync(10);
-    btn('pomodoro-btn-start').click(); // 再手动暂停
-    await vi.advanceTimersByTimeAsync(10);
-    await flushPomo(vault);
-    expect(pomoDisk(vault).state.paused).toBe(true);
-    setHidden(false); // 恢复可见：不得续跑手动暂停
-    await vi.advanceTimersByTimeAsync(10);
-    await flushPomo(vault);
-    expect(pomoDisk(vault).state.paused).toBe(true); // 修复前：残留标记致 endTime 被重新拉起
-    expect(pomoDisk(vault).state.endTime).toBeNull();
   });
 
   it('F13：装载+落盘链路历史按保留窗裁剪（窗外旧记录清除）', async () => {

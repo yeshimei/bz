@@ -776,15 +776,15 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 番茄钟 3 组 14 项，其中 3 个自定义时长项受 pomodoroPreset 门控（未设 → 隐藏）→ 可见 11 项
-    // （issue 246 补外观组两卡：9 → 11；组数 2 → 3）
+    // 番茄钟 3 组 13 项，其中 3 个自定义时长项受 pomodoroPreset 门控（未设 → 隐藏）→ 可见 10 项
+    // （issue 246 补外观组两卡：9 → 11；组数 2 → 3；2026-09-23 后台自动暂停行退役：11 → 10）
     const items = popup.querySelectorAll('.bz-sp-nav-item');
     const pomoItem = Array.from(items).find((el) => el.textContent?.includes('番茄钟')) as HTMLElement;
     expect(pomoItem).toBeTruthy();
     pomoItem.click();
     await waitGroups(popup, 3);
     const badge = pomoItem.querySelector('.bz-sp-nav-count')!;
-    expect(badge.textContent).toBe('11');
+    expect(badge.textContent).toBe('10');
     ui.cleanup();
   });
 
