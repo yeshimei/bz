@@ -76,27 +76,24 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     const schema = mainSettingsSchema();
     // issue 331 起 AI 页拆三组，行断言改全组 flatMap（跨组仍按行名查）
     const rows = schema.groups.flatMap((g) => g.rows) as Array<{ name: string; desc?: string }>;
-    // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token；
-    // ticket 171 注册表扩展为全部提供商各一行密钥（标题取自注册表 apiKeyLabel）；
+    // 键名/行为不动，标题可改（ticket 100 ④）；ticket 171 起注册表提供商各一行密钥
+    // （标题取自注册表 apiKeyLabel）；issue 411/ADR-0179 起注册表只留三条通道，custom 两行退役；
     // ticket 172 per-provider 行（模型名称/最大输出 token；「上下文窗口」行已删——issue 342 后续）
     const names = rows.map((r) => r.name);
     expect(names[0]).toBe('AI 服务商');
     expect(names).toContain('DeepSeek 密钥');
-    expect(names).toContain('OpenCode 密钥');
-    expect(names).toContain('OpenAI 密钥');
-    expect(names).toContain('Gemini 密钥');
-    expect(names).toContain('自定义 API 地址');
-    expect(names).toContain('自定义 API 密钥');
+    expect(names).toContain('智谱 Plan 密钥');
+    expect(names).toContain('Ollama 密钥');
+    expect(names).not.toContain('自定义 API 地址');
+    expect(names).not.toContain('OpenCode 密钥');
     expect(names).toContain('模型名称');
     expect(names).toContain('最大输出 token');
     expect(names).not.toContain('上下文窗口');
     const deepseekRow = rows.find((r) => r.name === 'DeepSeek 密钥')!;
-    const opencodeRow = rows.find((r) => r.name === 'OpenCode 密钥')!;
-    const customEndpoint = rows.find((r) => r.name === '自定义 API 地址')!;
+    const zhipuRow = rows.find((r) => r.name === '智谱 Plan 密钥')!;
     const modelRow = rows.find((r) => r.name === '模型名称')!;
     expect(deepseekRow.desc).toBe('留空则自动回退读取外部配置密钥');
-    expect(opencodeRow.desc).toBe('在订阅官网获取后填入这里');
-    expect(customEndpoint.desc).toBe('OpenAI 兼容服务的完整接口地址');
+    expect(zhipuRow.desc).toBe('智谱 Coding 套餐专用端点，密钥与智谱开放平台相同');
     expect(modelRow.desc).toBe('留空用该服务商默认模型');
     // issue 342/ADR-0151：未填覆盖时按当前模型查官方最大档
     const maxTokensRow = rows.find((r) => r.name === '最大输出 token')!;

@@ -4,11 +4,13 @@
  * lint（ticket 100）需以纯数据方式全量断言（本模块只依赖 core 与设置类型，node 环境可安全加载）。
  *
  * 行为零变化锚点：
- * - AI 服务商切换 → 密钥行显隐由 visibleWhen 声明（deepseek 显示 DeepSeek 行，其余显示 OpenCode 行，
- *   与原 refreshKeys 的 toggleClass 口径等价）；ticket 170 起 custom 显示自定义端点行；issue 187 起
- *   「自定义模型」行退役（模型统一走「模型名称」行，setProviderValue 特判 custom → aiCustomModel）；
- *   ticket 171 起全部注册表提供商各生成一行密钥（apiKeyLabel 标题、apiKeyDesc 描述）——行列表由
- *   AI_PROVIDER_REGISTRY 驱动，新增提供商零 schema 改动；
+ * - AI 服务商切换 → 密钥行显隐由 visibleWhen 声明（注册表驱动）；ticket 171 起全部注册表提供商各生成
+ *   一行密钥（apiKeyLabel 标题、apiKeyDesc 描述）——行列表由 AI_PROVIDER_REGISTRY 驱动，新增提供商
+ *   零 schema 改动；issue 411/ADR-0179 起表内只留 deepseek / zhipu-plan / ollama 三条通道，
+ *   custom（自定义 OpenAI 兼容端点）连同其两行一并退役；
+ * - 思考档位行（issue 411/ADR-0179）随服务商重取选项：档位词表是 provider 属性（deepseek 有
+ *   「关闭」无「中」/ 智谱 Plan 强制思考无「关闭」/ ollama 走 reasoning_effort），面板只列该家
+ *   真支持的档，值也按 provider 分开存（aiThinkingOverrides）——旧版全局五档已退役；
  * - ticket 172 per-provider 配置（模型/max token）：模型行 custom（内嵌「获取模型名」
  *   按钮，行级联动 onRefresh）；最大输出 token 为标准 number 行（三函数 binding +
  *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
@@ -25,7 +27,7 @@
  *   全部描述改写为约 20 字自然句、去符号花样（原描述含括号/斜杠/域名/超长枚举，lint 不过）。
  */
 
-import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
+import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
@@ -67,40 +69,50 @@ function importCliBilibiliCookie(): void {
 /** per-provider 覆盖 map 键集合（ticket 172；issue 342 后续：aiContextOverrides 随「上下文窗口」行退役） */
 type OverrideMapKey = 'aiModelOverrides' | 'aiMaxTokensOverrides';
 
-/** 当前 provider id（设置未显式时默认 opencode-go） */
+/** 当前 provider id（设置未显式时取注册表缺省服务商） */
 function currentProviderId(): string {
   const s = tryGetSettings() as any;
-  return s.aiProvider || 'opencode-go';
+  return s.aiProvider || DEFAULT_AI_PROVIDER;
 }
 
-/** 读当前 provider 的值（覆盖 > 按当前模型查官方档位 > 注册表默认；custom 模型用 aiCustomModel） */
+/** 读当前 provider 的值（覆盖 > 按当前模型查官方档位 > 注册表默认） */
 function providerValue(kind: 'model' | 'maxTokens'): string {
   const id = currentProviderId();
   const s = tryGetSettings() as any;
-  if (id === 'custom' && kind === 'model') return String(s.aiCustomModel || '');
   const mapKey: OverrideMapKey = kind === 'model' ? 'aiModelOverrides' : 'aiMaxTokensOverrides';
   const over = s[mapKey]?.[id];
   if (over !== undefined && over !== null && over !== '') return String(over);
   const d = getProviderDescriptor(id);
   if (kind === 'model') return d.model || '';
   // 未填覆盖：按「当前模型名」取官方最大档（issue 342/ADR-0151 单一事实源，与 ai.ts 解析同源）
-  const model = id === 'custom' ? String(s.aiCustomModel || '') : String(d.model || '');
-  return String(resolveModelLimits(model)?.maxOutput ?? d.defaultMaxTokens);
+  return String(resolveModelLimits(String(d.model || ''))?.maxOutput ?? d.defaultMaxTokens);
 }
 
-/** 写当前 provider 的覆盖值（空 = 清除覆盖，回落注册表默认）。
- *  issue 187 特判：custom 的模型覆盖不写 aiModelOverrides[custom]（providerValue custom
- *  分支只读 aiCustomModel，写覆盖表是读不到的死值——原「模型名称」手输在 custom 下不生效的根因），
- *  统一落到 aiCustomModel。 */
+/** 读当前 provider 的思考档位：档位不在该服务商档位表内（含历史遗留值）→ 回落 auto。
+ *  与请求侧 thinkingBodyFor「不在表内不注入」同口径——显示值与实际生效值不许背离。 */
+function providerThinkingValue(): string {
+  const id = currentProviderId();
+  const s = tryGetSettings() as any;
+  const v = String(s.aiThinkingOverrides?.[id] ?? '');
+  return thinkingLevelsOf(id).some((l) => l.value === v) ? v : 'auto';
+}
+
+/** 写当前 provider 的思考档位（auto = 删键，回落「不注入」；与两个 per-provider 行同口径） */
+function setProviderThinkingValue(v: string): void {
+  const id = currentProviderId();
+  const s = tryGetSettings() as any;
+  if (!s.aiThinkingOverrides || typeof s.aiThinkingOverrides !== 'object') s.aiThinkingOverrides = {};
+  const map = s.aiThinkingOverrides as Record<string, string>;
+  if (v === 'auto' || v === '') delete map[id];
+  else map[id] = v;
+  void saveSettings();
+}
+
+/** 写当前 provider 的覆盖值（空 = 清除覆盖，回落注册表默认） */
 function setProviderValue(mapKey: OverrideMapKey, raw: string): void {
   const id = currentProviderId();
   const s = tryGetSettings() as any;
   const v = raw.trim();
-  if (mapKey === 'aiModelOverrides' && id === 'custom') {
-    s.aiCustomModel = v === '0' ? '' : v;
-    void saveSettings();
-    return;
-  }
   if (!s[mapKey] || typeof s[mapKey] !== 'object') s[mapKey] = {};
   const map = s[mapKey] as Record<string, any>;
   if (v === '' || v === '0') {
@@ -130,11 +142,11 @@ function providerModelCustomRow(): SettingsRow {
       onClick: async (_value, ctx) => {
         try {
           await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
-          const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+          const providerId = String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
           const desc = providerDescriptorOf(providerId);
           const models = await fetchProviderModels(providerId);
           // 拉取期间模型行仍可能被 provider 切换刷新——以当前 provider 为准
-          const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+          const curProvider = String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
           if (curProvider !== providerId) {
             notice('服务商已切换，请重新获取', 'warning');
             return;
@@ -144,7 +156,7 @@ function providerModelCustomRow(): SettingsRow {
             current: providerValue('model'),
             models,
             onPick: (m) => {
-              // 与输入框 onChange 同口径（issue 187：setProviderValue 已统一 custom → aiCustomModel）
+              // 与输入框 onChange 同口径（issue 411：custom 通道退役后无特判，统一落 aiModelOverrides）
               setProviderValue('aiModelOverrides', m.id);
               ctx.refreshVisibility();
               notice(`模型已设为 ${m.id}`, 'success');
@@ -197,8 +209,11 @@ function providerMaxTokensRow(): NumberRow {
 
 /**
  * 「服务商」组行（issue 331 拆组）：服务商下拉 + 每家注册表提供商一行密钥（visibleWhen 随
- * aiProvider 显隐）+ custom 的端点/密钥两行。
- * 密钥行标题/描述取自 descriptor 的 apiKeyLabel / apiKeyDesc（文案 lint 与注册表单一事实源）。
+ * aiProvider 显隐）。
+ * 密钥行标题/描述取自 descriptor 的 apiKeyLabel / apiKeyDesc（文案 lint 与注册表单一事实源）；
+ * issue 411/ADR-0179：只留 deepseek / zhipu-plan / ollama 三条通道，custom 的端点/密钥两行退役
+ * （新通道按注册表加一行即可，不再需要「自填端点」这一档）。
+ * 密钥行全走「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文），凭据不裸奔。
  */
 function providerGroupRows(): SettingsRow[] {
   const rows: SettingsRow[] = [
@@ -210,11 +225,7 @@ function providerGroupRows(): SettingsRow[] {
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
   ];
-  // 每家注册表提供商一行密钥（custom 的密钥行排在自定义端点之后，故先跳过）
-  // 2026-09-23：全部改「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文）。此前这里是明文
-  // text 行——凭据类设置裸奔在面板上，与 Jev 行的掩码口径自相矛盾。
   for (const p of AI_PROVIDER_REGISTRY) {
-    if (p.id === 'custom') continue;
     rows.push({
       type: 'secret',
       name: p.apiKeyLabel,
@@ -224,53 +235,42 @@ function providerGroupRows(): SettingsRow[] {
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
     });
   }
-  // custom：端点 / 密钥两行（issue 187 起「自定义模型」行退役——模型统一走「模型名称」行，
-  // 手输经 setProviderValue 特判落 aiCustomModel，带「获取模型名」按钮）
-  rows.push(
-    {
-      type: 'text',
-      name: '自定义 API 地址',
-      desc: 'OpenAI 兼容服务的完整接口地址',
-      binding: { key: 'aiCustomEndpoint' },
-      placeholder: 'https://api.example.com/v1',
-      inputMode: 'url',
-      visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
-    },
-    {
-      type: 'secret',
-      name: '自定义 API 密钥',
-      desc: '在服务官网获取后填入这里',
-      binding: { key: 'aiCustomApiKey' },
-      placeholder: '粘贴密钥',
-      visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
-    },
-  );
   return rows;
+}
+
+/** 思考档位行（issue 411/ADR-0179）：选项随「AI 服务商」重取——档位词表与参数名是 provider 属性
+ *  （core/ai 的 descriptor.thinking 单一事实源）：deepseek = 关闭/低/高/最高；智谱 Plan 强制思考
+ *  = 低/高/最高（无关闭档）；ollama = 关闭/低/中/高（走 reasoning_effort）。
+ *  值按 provider 分开存（aiThinkingOverrides），切服务商互不污染；显示值与请求注入同源，
+ *  不列该家不支持的档——旧版全局五档（对每条通道都发不生效的参数）已退役。 */
+function providerThinkingRow(): SettingsRow {
+  return {
+    type: 'select',
+    name: '思考 reasoning',
+    desc: '关闭可省判定类小任务开销，档位随服务商显示',
+    binding: {
+      get: () => providerThinkingValue(),
+      set: (v) => setProviderThinkingValue(v),
+      save: () => {},
+    },
+    options: (snap) =>
+      thinkingLevelsOf(String((snap as { aiProvider?: string }).aiProvider || DEFAULT_AI_PROVIDER)).map((l) => ({
+        value: l.value,
+        label: l.label,
+      })),
+    refreshKey: () => providerThinkingValue(),
+  } as SettingsRow;
 }
 
 /** 「模型配置」组行（issue 331 拆组）：ticket 172 per-provider 两行——模型行 custom
  *  （内嵌「获取模型名」按钮）+ 最大输出 token 标准 number 行
- *  （refreshKey 随服务商切换联动，跨组生效）+ 思考档位（issue 330 并入本组）。
+ *  （refreshKey 随服务商切换联动，跨组生效）+ 思考档位（issue 411/ADR-0179 起随服务商显示）。
  *  「上下文窗口」行已删（issue 342 后续）：模型固有属性、零消费点，非可调参数。 */
 function modelGroupRows(): SettingsRow[] {
   return [
     providerModelCustomRow(),
     providerMaxTokensRow(),
-    // 思考档位（issue 330/ADR-0146）：全局单值，请求时按 provider 静态映射翻译各家参数；
-    // 「关闭」对 effort 家族无法用参数关思考（如实说明），enable/zhipu 家族发显式关闭键
-    {
-      type: 'select',
-      name: '思考 reasoning',
-      desc: '关闭可省判定类小任务的思考消耗，部分服务商不支持分档',
-      binding: { key: 'aiThinking' },
-      options: [
-        { value: 'auto', label: '跟随模型默认' },
-        { value: 'off', label: '关闭（省 token）' },
-        { value: 'low', label: '低' },
-        { value: 'medium', label: '中' },
-        { value: 'high', label: '高' },
-      ],
-    },
+    providerThinkingRow(),
   ];
 }
 

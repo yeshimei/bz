@@ -21,7 +21,7 @@ import { openPathPicker } from '../core/path-picker';
 import {
   bindValue, safePersist, CommitWarn, parseClampedNumber, TEXT_COMMIT_DELAY,
 } from '../core/settings-schema';
-import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext, SecretRow } from '../core/settings-schema';
+import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext, SecretRow, SelectOption } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { escManager } from '../core/esc-manager';
@@ -547,125 +547,179 @@ function renderRow(
     }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      // 下拉结构单源（R.selectTriggerHtml 触发器 + R.selectItemHtml 菜单项；旋转样式 styles.css .bz-select-car 单源）。
-      // UI-1/UI-2（对齐 core uiSelect 范式）：触发器带 tabindex/aria-expanded 可键盘聚焦，
-      // Enter/Space/↑↓ 开合菜单、菜单内 ↑↓ 移高亮 Enter 提交；ESC 经 escManager 层先收菜单不关面板。
-      const options = row.options;
-      const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
-      ctrlEl.innerHTML = R.selectTriggerHtml(labelOf(String(acc.read() ?? '') || (options[0] && options[0].value) || ''));
-      const sel = ctrlEl.querySelector('.bz-select') as HTMLElement;
-      const vspan = sel.querySelector('.bz-select-val')!;
-
-      let group: HTMLElement | null = null;
-      let docH: ((ev: MouseEvent) => void) | null = null;
-      let escLayer: ReturnType<typeof escManager.register> | null = null;
-
-      const closeMenu = () => {
-        sel.querySelector('.bz-select-menu')?.remove();
-        sel.setAttribute('aria-expanded', 'false');
-        if (escLayer) {
-          escLayer.unregister();
-          escLayer = null;
-        }
-        // 组卡 overflow 还原前查本组是否还有打开的菜单（H4）：A 的 closeMenu 冒泡末段
-        // 若无条件还原会把 B 刚设的 visible 抹掉，B 菜单被组卡裁剪
-        if (group && !group.querySelector('.bz-select-menu')) {
-          group.style.overflow = '';
-          group.style.zIndex = '';
-        }
-        if (docH) document.removeEventListener('click', docH);
+      /** 选项求值（issue 411/ADR-0179）：静态数组原样，函数形式随快照重取——思考档位随
+       *  「AI 服务商」切换换表（档位词表是 provider 属性，固定五档会把不生效的档摆给用户） */
+      const readOptions = (): SelectOption[] =>
+        typeof row.options === 'function' ? row.options(snapshot()) : row.options;
+      const optSigOf = (opts: SelectOption[]): string => opts.map((o) => o.value).join('\u0001');
+      /** 应显示值：绑定值不在选项内（空/历史遗留档位）→ 回落首项（同 core 渲染器口径） */
+      const displayValue = (opts: SelectOption[]): string => {
+        const v = String(acc.read() ?? '');
+        return opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
       };
 
-      /** 菜单内高亮移动（键盘 ↑↓；is-on + aria-selected 同步，焦点保持在触发器上） */
-      const moveHighlight = (delta: number) => {
-        const items = [...sel.querySelectorAll<HTMLElement>('.bz-select-item')];
-        if (!items.length) return;
-        const curIdx = items.findIndex((it) => it.classList.contains('is-on'));
-        const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
-        items.forEach((it, i) => {
-          const on = i === nextIdx;
-          it.classList.toggle('is-on', on);
-          it.setAttribute('aria-selected', String(on));
-        });
-      };
+      let vspan: HTMLElement | null = null;
+      /** 上一次挂载的收尾（重建前释放 document 监听与 ESC 层，防切换服务商时监听堆叠） */
+      let teardown: (() => void) | null = null;
 
-      /** 选项落盘统一入口（先写后翻 H5 + persist N5 兜底 ARCH-1；点击与键盘提交同路径） */
-      const applyOption = (o: { value: string }) => {
-        try {
-          acc.write(o.value);
-        } catch (e) {
-          notifyWriteError(e);
-          closeMenu();
-          return;
-        }
-        closeMenu();
-        vspan.textContent = labelOf(o.value);
-        motionSelectPick(sel); // 动效：旋钮位提亮一拍 + 箭头回弹（菜单本体不加动效——用户拍板）
-        safePersist(() => acc.persist(), rowName || '下拉设置');
-        row.onChange?.(o.value, ctx);
-        refresh();
-      };
+      const mount = (): void => {
+        teardown?.();
+        teardown = null;
+        const options = readOptions();
+        // 下拉结构单源（R.selectTriggerHtml 触发器 + R.selectItemHtml 菜单项；旋转样式 styles.css .bz-select-car 单源）。
+        // UI-1/UI-2（对齐 core uiSelect 范式）：触发器带 tabindex/aria-expanded 可键盘聚焦，
+        // Enter/Space/↑↓ 开合菜单、菜单内 ↑↓ 移高亮 Enter 提交；ESC 经 escManager 层先收菜单不关面板。
+        const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
+        ctrlEl.innerHTML = R.selectTriggerHtml(labelOf(displayValue(options)));
+        const sel = ctrlEl.querySelector('.bz-select') as HTMLElement;
+        vspan = sel.querySelector('.bz-select-val')!;
 
-      const openMenu = () => {
-        if (sel.querySelector('.bz-select-menu')) return;
-        // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
-        group = sel.closest<HTMLElement>('.bz-sp-group');
-        if (group) { group.style.overflow = 'visible'; group.style.zIndex = '10'; }
-        const menu = document.createElement('div');
-        menu.className = 'bz-select-menu';
-        menu.setAttribute('role', 'listbox');
-        const curNow = String(acc.read() ?? '') || (options[0] && options[0].value) || '';
-        menu.innerHTML = options.map((o) => R.selectItemHtml(o.label, o.value === curNow)).join('');
-        menu.querySelectorAll<HTMLElement>('.bz-select-item').forEach((it) => it.classList.add('bz-touch-target--lg')); // UI-4：30px 菜单项热区抬档
-        menu.querySelectorAll('.bz-select-item').forEach((it, i) => {
-          const o = options[i];
-          it.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            applyOption(o);
-          });
-        });
-        sel.appendChild(menu);
-        sel.setAttribute('aria-expanded', 'true');
-        mountIcons(menu); // 菜单项勾标占位物化
-        docH = (ev: MouseEvent) => {
-          if (!sel.contains(ev.target as Node)) closeMenu();
-        };
-        setTimeout(() => document.addEventListener('click', docH!));
-        // ESC 收菜单走 escManager 层序（UI-1，core uiSelect 同款）：开着菜单按 ESC 先收菜单不关
-        // 面板（层命中后 stopImmediatePropagation 短路面板层）；焦点不在触发器上（纯鼠标流）同样可收
-        escLayer = escManager.register('bz-ui-select', {
-          isVisible: () => !!sel.querySelector('.bz-select-menu'),
-          close: () => closeMenu(),
-        });
-      };
+        let group: HTMLElement | null = null;
+        let docH: ((ev: MouseEvent) => void) | null = null;
+        let docTimer: ReturnType<typeof setTimeout> | null = null;
+        let escLayer: ReturnType<typeof escManager.register> | null = null;
 
-      sel.addEventListener('click', () => {
-        if (sel.querySelector('.bz-select-menu')) closeMenu();
-        else openMenu();
-      });
-      sel.addEventListener('keydown', (e) => {
-        const menu = sel.querySelector('.bz-select-menu');
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          if (menu) {
-            // 菜单开着：提交当前高亮项（无高亮则仅收起）
-            const items = [...menu.querySelectorAll<HTMLElement>('.bz-select-item')];
-            const idx = items.findIndex((it) => it.classList.contains('is-on'));
-            if (idx >= 0) applyOption(options[idx]);
-            else closeMenu();
-          } else {
-            openMenu();
+        const closeMenu = () => {
+          sel.querySelector('.bz-select-menu')?.remove();
+          sel.setAttribute('aria-expanded', 'false');
+          if (escLayer) {
+            escLayer.unregister();
+            escLayer = null;
           }
-          return;
-        }
-        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-          e.preventDefault();
-          // 内层导航语义（UI-2）：下拉聚焦时 ↑↓ 移菜单高亮，不冒泡给面板 ↑↓ 切域（onNavKey）
-          e.stopPropagation();
-          if (!menu) openMenu();
-          moveHighlight(e.key === 'ArrowDown' ? 1 : -1);
-        }
-      });
+          // 组卡 overflow 还原前查本组是否还有打开的菜单（H4）：A 的 closeMenu 冒泡末段
+          // 若无条件还原会把 B 刚设的 visible 抹掉，B 菜单被组卡裁剪
+          if (group && !group.querySelector('.bz-select-menu')) {
+            group.style.overflow = '';
+            group.style.zIndex = '';
+          }
+          // 挂起的外点监听定时器一并撤（开合过快时它会在收菜单之后才把监听挂上去）
+          if (docTimer !== null) {
+            clearTimeout(docTimer);
+            docTimer = null;
+          }
+          if (docH) document.removeEventListener('click', docH);
+        };
+        // 重建/换表前的收尾：摘挂起的 document 监听定时器 + 收菜单 + 摘已挂的监听
+        // （DOM 由下一次 innerHTML 覆盖；不摘干净会在切服务商时堆叠监听）
+        teardown = () => {
+          if (docTimer !== null) {
+            clearTimeout(docTimer);
+            docTimer = null;
+          }
+          closeMenu();
+          docH = null;
+        };
+
+        /** 菜单内高亮移动（键盘 ↑↓；is-on + aria-selected 同步，焦点保持在触发器上） */
+        const moveHighlight = (delta: number) => {
+          const items = [...sel.querySelectorAll<HTMLElement>('.bz-select-item')];
+          if (!items.length) return;
+          const curIdx = items.findIndex((it) => it.classList.contains('is-on'));
+          const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+          items.forEach((it, i) => {
+            const on = i === nextIdx;
+            it.classList.toggle('is-on', on);
+            it.setAttribute('aria-selected', String(on));
+          });
+        };
+
+        /** 选项落盘统一入口（先写后翻 H5 + persist N5 兜底 ARCH-1；点击与键盘提交同路径） */
+        const applyOption = (o: { value: string }) => {
+          try {
+            acc.write(o.value);
+          } catch (e) {
+            notifyWriteError(e);
+            closeMenu();
+            return;
+          }
+          closeMenu();
+          vspan!.textContent = labelOf(o.value);
+          motionSelectPick(sel); // 动效：旋钮位提亮一拍 + 箭头回弹（菜单本体不加动效——用户拍板）
+          safePersist(() => acc.persist(), rowName || '下拉设置');
+          row.onChange?.(o.value, ctx);
+          refresh();
+        };
+
+        const openMenu = () => {
+          if (sel.querySelector('.bz-select-menu')) return;
+          // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
+          group = sel.closest<HTMLElement>('.bz-sp-group');
+          if (group) { group.style.overflow = 'visible'; group.style.zIndex = '10'; }
+          const menu = document.createElement('div');
+          menu.className = 'bz-select-menu';
+          menu.setAttribute('role', 'listbox');
+          const curNow = displayValue(options);
+          menu.innerHTML = options.map((o) => R.selectItemHtml(o.label, o.value === curNow)).join('');
+          menu.querySelectorAll<HTMLElement>('.bz-select-item').forEach((it) => it.classList.add('bz-touch-target--lg')); // UI-4：30px 菜单项热区抬档
+          menu.querySelectorAll('.bz-select-item').forEach((it, i) => {
+            const o = options[i];
+            it.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              applyOption(o);
+            });
+          });
+          sel.appendChild(menu);
+          sel.setAttribute('aria-expanded', 'true');
+          mountIcons(menu); // 菜单项勾标占位物化
+          docH = (ev: MouseEvent) => {
+            if (!sel.contains(ev.target as Node)) closeMenu();
+          };
+          // 延后一拍挂监听（本次点击同拍不误关）；重建时经 teardown 撤掉挂起定时器
+          docTimer = setTimeout(() => {
+            if (docH) document.addEventListener('click', docH);
+          });
+          // ESC 收菜单走 escManager 层序（UI-1，core uiSelect 同款）：开着菜单按 ESC 先收菜单不关
+          // 面板（层命中后 stopImmediatePropagation 短路面板层）；焦点不在触发器上（纯鼠标流）同样可收
+          escLayer = escManager.register('bz-ui-select', {
+            isVisible: () => !!sel.querySelector('.bz-select-menu'),
+            close: () => closeMenu(),
+          });
+        };
+
+        sel.addEventListener('click', () => {
+          if (sel.querySelector('.bz-select-menu')) closeMenu();
+          else openMenu();
+        });
+        sel.addEventListener('keydown', (e) => {
+          const menu = sel.querySelector('.bz-select-menu');
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (menu) {
+              // 菜单开着：提交当前高亮项（无高亮则仅收起）
+              const items = [...menu.querySelectorAll<HTMLElement>('.bz-select-item')];
+              const idx = items.findIndex((it) => it.classList.contains('is-on'));
+              if (idx >= 0) applyOption(options[idx]);
+              else closeMenu();
+            } else {
+              openMenu();
+            }
+            return;
+          }
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            // 内层导航语义（UI-2）：下拉聚焦时 ↑↓ 移菜单高亮，不冒泡给面板 ↑↓ 切域（onNavKey）
+            e.stopPropagation();
+            if (!menu) openMenu();
+            moveHighlight(e.key === 'ArrowDown' ? 1 : -1);
+          }
+        });
+      };
+
+      mount();
+      let optSig = optSigOf(readOptions());
+      // 联动刷新（issue 411/ADR-0179）：选项集变了 → 整只下拉重建（换表）；否则只回填当前值（不落盘）
+      if (regRefresh && (row.refreshKey !== undefined || typeof row.options === 'function')) {
+        regRefresh(() => {
+          const opts = readOptions();
+          const sig = optSigOf(opts);
+          if (sig !== optSig) {
+            optSig = sig;
+            mount();
+            return;
+          }
+          if (vspan) vspan.textContent = (opts.find((o) => o.value === displayValue(opts)) || { label: '' }).label;
+        });
+      }
       break;
     }
     case 'slider': {

@@ -7,61 +7,33 @@
 import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
 import { DEFAULT_PW_CHARSET } from './password-vault/data';
 import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
+// AI 注册表/档位表（issue 411/ADR-0179）：迁移须与注册表同源判定「在册服务商」，防两处字面量漂移
+import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './core/ai';
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
-  /** AI 服务商：注册表 id（ticket 170/171 策略模式；deepseek / opencode-go / openai / anthropic /
-   *  google / moonshot / zhipu / zhipu-plan / dashscope / siliconflow / openrouter / xai / groq / mistral /
-   *  together / ollama / custom） */
+  /** AI 服务商：注册表 id（ticket 170/171 策略模式）。**issue 411/ADR-0179 起只留三条在册通道**：
+   *  deepseek（缺省）/ zhipu-plan（智谱 Coding 套餐）/ ollama（本地）——其余服务商与其密钥键一并
+   *  退役（用到了再按 AI_PROVIDER_REGISTRY 加一行）；存量非法 id 由 migrateRetiredAIKeys 回落缺省 */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
-  /** 🔑 OpenCode Go API Key */
-  opencodeGoApiKey: string;
-  /** 🔑 OpenAI API Key */
-  openaiApiKey: string;
-  /** 🔑 Anthropic（Claude）API Key */
-  anthropicApiKey: string;
-  /** 🔑 Google Gemini API Key */
-  googleApiKey: string;
-  /** 🔑 Moonshot（Kimi）API Key */
-  moonshotApiKey: string;
-  /** 🔑 智谱（GLM）API Key */
-  zhipuApiKey: string;
   /** 🔑 智谱 Plan（Coding 套餐）API Key */
   zhipuPlanApiKey: string;
-  /** 🔑 阿里云百炼（通义）API Key */
-  dashscopeApiKey: string;
-  /** 🔑 硅基流动 API Key */
-  siliconflowApiKey: string;
-  /** 🔑 OpenRouter API Key */
-  openrouterApiKey: string;
-  /** 🔑 xAI（Grok）API Key */
-  xaiApiKey: string;
-  /** 🔑 Groq API Key */
-  groqApiKey: string;
-  /** 🔑 Mistral API Key */
-  mistralApiKey: string;
-  /** 🔑 Together AI API Key */
-  togetherApiKey: string;
-  /** 🔑 Ollama（本地）API Key（本地服务通常无需密钥） */
+  /** 🔑 Ollama（本地）API Key（本地服务无鉴权，留空放行） */
   ollamaApiKey: string;
-  /** 🌐 自定义 AI 服务 API 地址（OpenAI 兼容，ticket 170；覆盖任意提供商如 commandcode） */
-  aiCustomEndpoint: string;
-  /** 🧠 自定义 AI 服务默认模型名（如 commandcode 的 taste-1） */
-  aiCustomModel: string;
-  /** 🔑 自定义 AI 服务 API Key */
-  aiCustomApiKey: string;
   /** 🧠 每提供商模型覆盖（ticket 172，键 = provider id）：未填用注册表默认模型 */
   aiModelOverrides: Record<string, string>;
   /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填按当前模型查官方最大档
    *  （issue 342/ADR-0151 core/model-limits），未收录回落注册表 defaultMaxTokens。
    *  原 aiContextOverrides（上下文窗口覆盖）已退役——模型固有属性、插件零消费点（issue 342 后续） */
   aiMaxTokensOverrides: Record<string, number>;
-  /** 🧠 AI 思考档位（issue 330/ADR-0146）：auto=跟随模型默认（不注入参数，缺省）/ off=关闭 /
-   *  low|medium|high=思考强度。请求时按 provider 静态映射翻译成各家思考参数（ADR-0146）；
+  /** 🧠 每提供商思考档位（issue 411/ADR-0179，取代全局单值 aiThinking）：键 = provider id，
+   *  值 = 该 provider 档位表内的 value（core/ai 的 descriptor.thinking），缺省 auto = 不注入参数。
+   *  档位词表**逐家不同**（deepseek 有「关闭」无「中」/ 智谱 Plan 强制思考无「关闭」/
+   *  ollama 走 reasoning_effort），故按 provider 分开存——切服务商互不污染，档位不在表内即不注入。
    *  modelOptions 显式思考键优先，不受本设置影响 */
-  aiThinking: string;
+  aiThinkingOverrides: Record<string, string>;
 
   // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389）=====
   /** Jev 决策模型总开关（全局唯一一个）：关则自动关联裁判与影院类型判定全部回落 LLM / 不判定 */
@@ -563,17 +535,95 @@ export function migrateMemoSettingKeys(raw: unknown): boolean {
  * 幂等：无旧键 / 无冗余条目即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
  * 三盒目录从**同一份原始设置**解析（此时还没合并 DEFAULT_SETTINGS，故显式传入 rec）。
  */
+/** 已退役的 AI 服务商设置键（issue 411/ADR-0179：注册表只留 deepseek / zhipu-plan / ollama）——
+ *  14 家服务商的密钥键 + custom 的端点/模型/密钥三键，旧值不迁移直接丢 */
+const RETIRED_AI_KEYS: string[] = [
+  'opencodeGoApiKey',
+  'openaiApiKey',
+  'anthropicApiKey',
+  'googleApiKey',
+  'moonshotApiKey',
+  'zhipuApiKey',
+  'dashscopeApiKey',
+  'siliconflowApiKey',
+  'openrouterApiKey',
+  'xaiApiKey',
+  'groqApiKey',
+  'mistralApiKey',
+  'togetherApiKey',
+  'aiCustomEndpoint',
+  'aiCustomModel',
+  'aiCustomApiKey',
+];
+
+/** per-provider 覆盖表（迁移时清掉退役 provider 的条目——留着是读不到的死值） */
+const AI_OVERRIDE_MAPS: string[] = ['aiModelOverrides', 'aiMaxTokensOverrides', 'aiThinkingOverrides'];
+
 /**
- * issue 342 后续一次性迁移：「上下文窗口」per-provider 设置行删除——上下文窗口是模型固有属性、
- * 插件全链零消费点（纯展示），不是可调参数；aiContextOverrides 键退役，旧值不迁移直接丢。
- * 幂等：无旧键即不改动，调用方据此决定要不要落盘（同 migrateMemoSettingKeys 的 C16 口径）。
+ * AI 设置一次性迁移（issue 411/ADR-0179；并入了原 issue 342 后续的 aiContextOverrides 清理）：
+ * 1) **退役服务商密钥键删除**（上表 16 键）；
+ * 2) **aiProvider 非在册 id → 回落缺省服务商**：已退役的 id（opencode-go / openai / custom…）
+ *    若留在设置里，解析会一路落到缺省描述上（端点、密钥键、档位全对不上），必须显式改掉；
+ * 3) 三个 per-provider 覆盖表清掉退役 provider 的条目；
+ * 4) **全局 aiThinking → aiThinkingOverrides[当前 provider]**（旧键删除）：旧词表的 off/low/high
+ *    在三条通道里同名可用；`medium` 按官方映射（medium→high）折成 high；折后不在该 provider
+ *    档位表内的一律丢弃——宁可回落「跟随模型默认」，也不发服务商不认识的参数。
+ * 幂等：无旧键/无脏值即不改动（同 migrateMemoSettingKeys 的 C16 口径，调用方据返回值调度落盘）。
  */
 export function migrateRetiredAIKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
-  if (rec.aiContextOverrides === undefined) return false;
-  delete rec.aiContextOverrides;
-  return true;
+  const isLive = (id: string): boolean => AI_PROVIDER_REGISTRY.some((p) => p.id === id);
+  let migrated = false;
+  // 1) 上下文窗口覆盖（issue 342 后续：模型固有属性、插件零消费点）
+  if (rec.aiContextOverrides !== undefined) {
+    delete rec.aiContextOverrides;
+    migrated = true;
+  }
+  // 2) 退役服务商密钥键
+  for (const key of RETIRED_AI_KEYS) {
+    if (rec[key] !== undefined) {
+      delete rec[key];
+      migrated = true;
+    }
+  }
+  // 3) 服务商回落（存量非法 id；缺键不动——合并 DEFAULT_SETTINGS 时自然取缺省值）
+  const stored = rec.aiProvider === undefined ? undefined : String(rec.aiProvider);
+  const currentId = stored && isLive(stored) ? stored : DEFAULT_AI_PROVIDER;
+  if (stored !== undefined && !isLive(stored)) {
+    rec.aiProvider = DEFAULT_AI_PROVIDER;
+    migrated = true;
+  }
+  // 4) 覆盖表清退役 provider 条目
+  for (const mapKey of AI_OVERRIDE_MAPS) {
+    const map = rec[mapKey];
+    if (!map || typeof map !== 'object' || Array.isArray(map)) continue;
+    for (const id of Object.keys(map as Record<string, unknown>)) {
+      if (!isLive(id)) {
+        delete (map as Record<string, unknown>)[id];
+        migrated = true;
+      }
+    }
+  }
+  // 5) 旧全局思考档位 → per-provider 覆盖（旧键删）
+  if (rec.aiThinking !== undefined) {
+    const legacy = String(rec.aiThinking);
+    delete rec.aiThinking;
+    migrated = true;
+    // 档位在该 provider 新表内 → 直接沿用；只有「中」不在表内时才按官方映射折 high
+    // （deepseek / 智谱的 medium 都被服务端映射到 high）；折后仍不在表内或为 auto → 丢弃
+    const levels = thinkingLevelsOf(currentId).map((l) => l.value);
+    const mapped = levels.includes(legacy) ? legacy : legacy === 'medium' && levels.includes('high') ? 'high' : '';
+    if (mapped && mapped !== 'auto') {
+      const existing = rec.aiThinkingOverrides;
+      const overrides =
+        existing && typeof existing === 'object' && !Array.isArray(existing)
+          ? (existing as Record<string, string>)
+          : ((rec.aiThinkingOverrides = {}) as Record<string, string>);
+      overrides[currentId] = mapped;
+    }
+  }
+  return migrated;
 }
 
 /**
@@ -612,31 +662,15 @@ export function migrateAutoLinkSettings(raw: unknown): boolean {
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
-  // AI 全局
-  aiProvider: 'opencode-go',
+  // AI 全局（issue 411/ADR-0179：注册表只留三条通道，缺省 = DeepSeek 官方）
+  aiProvider: DEFAULT_AI_PROVIDER,
   deepseekApiKey: '',
-  opencodeGoApiKey: '',
-  openaiApiKey: '',
-  anthropicApiKey: '',
-  googleApiKey: '',
-  moonshotApiKey: '',
-  zhipuApiKey: '',
   zhipuPlanApiKey: '',
-  dashscopeApiKey: '',
-  siliconflowApiKey: '',
-  openrouterApiKey: '',
-  xaiApiKey: '',
-  groqApiKey: '',
-  mistralApiKey: '',
-  togetherApiKey: '',
   ollamaApiKey: '',
-  aiCustomEndpoint: '',
-  aiCustomModel: '',
-  aiCustomApiKey: '',
   aiModelOverrides: {},
   aiMaxTokensOverrides: {},
-  // AI 思考档位（issue 330/ADR-0146）：auto = 跟随模型默认，不注入思考参数
-  aiThinking: 'auto',
+  // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
+  aiThinkingOverrides: {},
 
   // Jev 决策通道（ADR-0173）：默认关闭——未填密钥时不接管任何判定，行为与接入前一致
   jevEnabled: false,

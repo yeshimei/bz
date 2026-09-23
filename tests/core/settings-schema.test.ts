@@ -24,63 +24,34 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     expect(schema.groups.map((g) => g.icon)).toEqual(['plug-zap', 'cpu', 'key-round', 'route', 'folder-open', 'bell']);
   });
 
-  it('服务商组：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行（ticket 171；issue 187 删自定义模型行；visibleWhen 随 aiProvider）', () => {
+  it('服务商组（issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
     const rows = schema.groups[0].rows;
-    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行 + 自定义端点/密钥。
-    // 2026-09-23：凭据行全部改「密钥型」档位（type:'secret' → password 掩码 + 眼睛切明文），
-    // 自定义端点仍是 text（地址不是凭据）
-    const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'secret'), 'text', 'secret'];
-    expect(rows.map((r) => r.type)).toEqual(types);
+    // 行序 = 服务商下拉 + 注册表每条通道一行密钥（custom 的端点/密钥两行已随通道退役）。
+    // 凭据行全走「密钥型」档位（type:'secret' → password 掩码 + 眼睛切明文）
+    expect(rows.map((r) => r.type)).toEqual(['select', 'secret', 'secret', 'secret']);
     // 密钥行标题来自注册表 apiKeyLabel（顺序与注册表一致）
-    const names = rows.map((r) => (r as { name: string }).name);
-    const keyNames = nonCustom.map((p) => p.apiKeyLabel);
-    expect(names).toEqual([
-      'AI 服务商', ...keyNames,
-      '自定义 API 地址', '自定义 API 密钥',
+    expect(rows.map((r) => (r as { name: string }).name)).toEqual([
+      'AI 服务商',
+      ...AI_PROVIDER_REGISTRY.map((p) => p.apiKeyLabel),
     ]);
-    const [provider, ...rest] = rows as Array<{
+    const [provider, ...keyRows] = rows as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
+      options?: Array<{ value: string; label: string }>;
     }>;
     expect(provider.binding).toEqual({ key: 'aiProvider' });
-    // 注册表每家的密钥行：键直绑 apiKeyKey + visibleWhen 跟随 aiProvider
-    nonCustom.forEach((p, i) => {
-      expect(rest[i].binding).toEqual({ key: p.apiKeyKey });
-      expect(rest[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
-      expect(rest[i].visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(false);
+    // 下拉选项 = 注册表（新增通道零 schema 改动）
+    expect(provider.options).toEqual(AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })));
+    // 每家的密钥行：键直绑 apiKeyKey + visibleWhen 跟随 aiProvider（互斥显隐）
+    AI_PROVIDER_REGISTRY.forEach((p, i) => {
+      expect(keyRows[i].binding).toEqual({ key: p.apiKeyKey });
+      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
+      const other = AI_PROVIDER_REGISTRY.find((x) => x.id !== p.id)!;
+      expect(keyRows[i].visibleWhen!(snapOf({ aiProvider: other.id }))).toBe(false);
     });
-    // 自定义两行（端点/密钥；issue 187 起模型统一走「模型名称」行）
-    const [customEndpoint, customKey] = rest.slice(nonCustom.length) as Array<{
-      binding?: { key: string };
-      visibleWhen?: (s: SettingsSnapshot) => boolean;
-    }>;
-    expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
-    expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
-    // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义两行
-    const findKey = (key: string) => {
-      const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);
-      return rest[idx].visibleWhen!;
-    };
-    const dv = findKey('deepseekApiKey');
-    const ov = findKey('opencodeGoApiKey');
-    const cev = customEndpoint.visibleWhen!;
-    expect(dv(snapOf({ aiProvider: 'deepseek' }))).toBe(true);
-    expect(ov(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
-    expect(cev(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
-    expect(dv(snapOf({ aiProvider: 'opencode-go' }))).toBe(false);
-    expect(ov(snapOf({ aiProvider: 'opencode-go' }))).toBe(true);
-    expect(cev(snapOf({ aiProvider: 'opencode-go' }))).toBe(false);
-    expect(dv(snapOf({ aiProvider: 'custom' }))).toBe(false);
-    expect(ov(snapOf({ aiProvider: 'custom' }))).toBe(false);
-    expect(cev(snapOf({ aiProvider: 'custom' }))).toBe(true);
-    // 每家提供商密钥行互斥显隐（选 A 不显示 B）
-    const openaiVw = findKey('openaiApiKey');
-    expect(openaiVw(snapOf({ aiProvider: 'openai' }))).toBe(true);
-    expect(openaiVw(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
   });
 
-  it('模型配置组（issue 331 拆组）：模型名称 text（三函数绑定 + 获取模型名按钮）+ 最大输出 token number（ticket 172；上下文窗口行已删）+ 思考档位 select（issue 330）', () => {
+  it('模型配置组（issue 331 拆组）：模型名称 + 最大输出 token + 思考档位（issue 411 起选项随服务商换表）', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
@@ -90,8 +61,8 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     }>;
     expect(rows.map((r) => r.name)).toEqual(['模型名称', '最大输出 token', '思考 reasoning']);
     expect(rows.map((r) => r.type)).toEqual(['text', 'number', 'select']);
-    // 前两行随服务商切换的联动走 refreshKey，跨组生效（issue 331）；思考档位无 refreshKey
-    rows.slice(0, 2).forEach((r) => {
+    // 三行都是 per-provider 行：三函数绑定（不用 key 直绑）+ refreshKey 随服务商联动
+    rows.forEach((r) => {
       expect(r.visibleWhen).toBeUndefined();
       expect(typeof r.refreshKey).toBe('function');
       expect('key' in r.binding!).toBe(false);
@@ -99,17 +70,22 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     });
     // 模型行内嵌「获取模型名」按钮
     expect((rows[0] as any).actions?.map((a: { text: string }) => a.text)).toEqual(['获取模型名']);
-    // 思考档位（issue 330）：key 直绑 aiThinking，五档 options，全局常显
+    // 思考档位（issue 411/ADR-0179）：options 为函数——按当前服务商取其档位表（core/ai 单源），
+    // 值存 aiThinkingOverrides[provider]（三函数绑定）
     const thinkingRow = rows[2] as unknown as {
-      binding: { key: string };
+      binding: { get: () => string; set: (v: string) => void; save: () => unknown };
       visibleWhen?: unknown;
-      refreshKey?: unknown;
-      options: Array<{ value: string }>;
+      refreshKey: unknown;
+      options: (s: SettingsSnapshot) => Array<{ value: string; label: string }>;
     };
-    expect(thinkingRow.binding).toEqual({ key: 'aiThinking' });
-    expect(thinkingRow.visibleWhen).toBeUndefined();
-    expect(thinkingRow.refreshKey).toBeUndefined();
-    expect(thinkingRow.options.map((o) => o.value)).toEqual(['auto', 'off', 'low', 'medium', 'high']);
+    expect(typeof thinkingRow.binding.get).toBe('function');
+    expect(typeof thinkingRow.binding.set).toBe('function');
+    expect(typeof thinkingRow.refreshKey).toBe('function');
+    const valuesOf = (provider: string) =>
+      thinkingRow.options(snapOf({ aiProvider: provider })).map((o) => o.value);
+    expect(valuesOf('deepseek')).toEqual(['auto', 'off', 'low', 'high', 'max']); // 有「关闭」，无「中」
+    expect(valuesOf('zhipu-plan')).toEqual(['auto', 'low', 'high', 'max']); // 强制思考：无「关闭」
+    expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
   it('数据源凭据组（issue 331 拆组）：B站/豆瓣 Cookie 为多行掩码 textarea，ApiZero Key 单行掩码；桌面端 B站行带「从 CLI 导入」', () => {

@@ -8,8 +8,8 @@
  *      （textarea 没有 type=password），眼睛翻 `--revealed`；
  * 2. 键盘语义：TextRow.inputMode 落到 inputmode；
  * 3. 数值参数不再用文本行承载：secondbrain 7 键 / knowledge 3 键为 number（带 min/max/step）；
- * 4. 盘点：AI 服务商密钥 17 行（注册表 16 + 自定义 1）与 ApiZero Key 全掩码、两个 Cookie
- *    多行掩码——防回退成明文（本批改动前它们都是 text/textarea 明文）。
+ * 4. 盘点：AI 服务商密钥 3 行（注册表三条在册通道，issue 411/ADR-0179 起）与 ApiZero Key
+ *    全掩码、两个 Cookie 多行掩码——防回退成明文（本批改动前它们都是 text/textarea 明文）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -179,10 +179,10 @@ const rowsOf = (schema: SettingsSchema, groupName: string): NamedRow[] =>
   (schema.groups.find((g) => g.name === groupName)?.rows ?? []) as NamedRow[];
 
 describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => {
-  it('AI 域：服务商密钥 17 行（16 家注册表 + 自定义）+ ApiZero Key 全为 secret', () => {
+  it('AI 域：服务商密钥 3 行（注册表三条在册通道）+ ApiZero Key 全为 secret', () => {
     const ai = aiSettingsSchema();
     const providerRows = rowsOf(ai, '服务商').filter((r) => (r.name ?? '').includes('密钥'));
-    expect(providerRows.length, '注册表 16 家 + 自定义 1 行').toBe(17);
+    expect(providerRows.length, '注册表三条通道各一行').toBe(3);
     expect(providerRows.every((r) => r.type === 'secret')).toBe(true);
 
     const credRows = rowsOf(ai, '数据源凭据');

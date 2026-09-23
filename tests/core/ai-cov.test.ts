@@ -4,7 +4,7 @@
  * provider 缓存命中/绕过、QuickAdd data.json 兜底成功与三种失败形态、
  * 流式解析坏 chunk/[DONE] 提前终止/非 SSE 整包响应、HTTP 错误体非 JSON 回退状态码、
  * 非流式错误格式矩阵（message/type/message 兜底/缺 content）、
- * setDefaultModel/setDefaultOptions、search/reasonAndSearch、createAI 与 _mergeOptions 合并优先级。
+ * setDefaultModel/setDefaultOptions、json 的 _prepareOptions 合并、createAI 与 _mergeOptions 合并优先级。
  * 外部网络全部经 fetch 打桩 + obsidian requestUrl mock，无真实请求。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -14,6 +14,7 @@ import {
   getAIProvider,
   setAISettingsProvider,
   resetAIProviderCache,
+  AI_PROVIDER_REGISTRY,
 } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -51,18 +52,17 @@ describe('getAIProvider 解析与缓存', () => {
     resetAIProviderCache();
   });
 
-  it('同配置二次解析返回缓存对象（同一引用）；override 绕过缓存重算', async () => {
-    // 双 provider 均配 key：deepseek 与 opencode-go 可切换
-    setupAI({ ...DEFAULT_SETTINGS, opencodeGoApiKey: 'sk-opencode-test' });
+  it('同配置二次解析返回缓存对象（同一引用）；override 绕过缓存重算且不污染缓存', async () => {
+    setupAI({ ...DEFAULT_SETTINGS, zhipuPlanApiKey: 'sk-zhipu-plan-test' });
     const p1 = await getAIProvider();
     const p2 = await getAIProvider();
     expect(p2).toBe(p1); // !override && cache → 直接返回缓存
 
-    // override 字符串强制重算（并覆盖缓存）
-    const p3 = await getAIProvider('opencode-go');
-    expect(p3.endpoint).toBe('https://opencode.ai/zen/go/v1');
-    expect(p3.noCors).toBe(true);
+    // override 字符串强制重算（C2：结果不写全局缓存）
+    const p3 = await getAIProvider('zhipu-plan');
+    expect(p3.endpoint).toBe('https://open.bigmodel.cn/api/coding/paas/v4');
     expect(p3).not.toBe(p1);
+    expect((await getAIProvider()).endpoint).toBe('https://api.deepseek.com'); // 缓存没被覆盖污染
   });
 
   it('override 对象带 apiKey：直接使用调用方配置，尾斜杠清理、model 缺省为 undefined', async () => {
@@ -131,68 +131,44 @@ describe('getAIProvider 解析与缓存', () => {
     await expect(getAIProvider()).rejects.toThrow('未配置 智谱 Plan API Key');
   });
 
-  it('custom provider：endpoint/key/model 全部取自设置，尾斜杠清理', async () => {
-    setupAI({
-      aiProvider: 'custom',
-      aiCustomEndpoint: 'https://api.commandcode.ai/v1/',
-      aiCustomApiKey: 'sk-custom',
-      aiCustomModel: 'taste-1',
-    });
-    const p = await getAIProvider();
-    expect(p.endpoint).toBe('https://api.commandcode.ai/v1');
-    expect(p.apiKey).toBe('sk-custom');
-    expect(p.model).toBe('taste-1');
-    expect(p.noCors).toBeUndefined();
-  });
-
-  it('custom provider：无 endpoint → 抛「未配置自定义 AI 服务」', async () => {
-    setupAI({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: 'sk-custom' });
-    await expect(getAIProvider()).rejects.toThrow('未配置自定义 AI 服务');
-  });
-
-  it('custom provider：无 key → 抛「未配置自定义 AI 服务」', async () => {
-    setupAI({ aiProvider: 'custom', aiCustomEndpoint: 'https://api.example.com/v1', aiCustomApiKey: '' });
-    await expect(getAIProvider()).rejects.toThrow('未配置自定义 AI 服务');
+  it('注册表（issue 411/ADR-0179）：只在册三条通道，每家字段齐全', () => {
+    expect(AI_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['deepseek', 'zhipu-plan', 'ollama']);
+    for (const p of AI_PROVIDER_REGISTRY) {
+      expect(p.endpoint, p.id).toBeTruthy();
+      expect(p.apiKeyLabel, p.id).toBeTruthy();
+      expect(p.apiKeyDesc, p.id).toBeTruthy();
+      expect(p.defaultMaxTokens, p.id).toBeGreaterThan(0);
+      expect(p.thinking?.levels.length, p.id).toBeGreaterThan(1);
+      expect((p as { apiKeyKey: string }).apiKeyKey).toBeTruthy();
+    }
   });
 
   it('provider.model 存在但显式指定模型 → 显式值优先', async () => {
-    setupAI({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-oc' });
-    vi.mocked(requestUrl).mockResolvedValue({
+    setupAI({ aiProvider: 'zhipu-plan', zhipuPlanApiKey: 'sk-oc' });
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
       status: 200,
-      text: JSON.stringify({ choices: [{ message: { content: 'ok' } }] }),
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
     });
     const ai = new AIService({}, 'deepseek-v4-flash');
     await ai.prompt('x', 'my-explicit-model');
-    const reqOpts: any = vi.mocked(requestUrl).mock.calls[0][0];
-    expect(JSON.parse(reqOpts.body).model).toBe('my-explicit-model');
+    const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
+    expect(body.model).toBe('my-explicit-model');
+    delete (global as any).fetch;
   });
 
-  it('注册表提供商（ticket 171）：openai 解析端点/模型/密钥，未选时设置键直取', async () => {
-    setupAI({ aiProvider: 'openai', openaiApiKey: 'sk-openai' });
+  it('注册表提供商（ticket 171）：解析端点/模型/密钥，键名取自注册表 apiKeyKey', async () => {
+    setupAI({ aiProvider: 'zhipu-plan', zhipuPlanApiKey: 'sk-zhipu-plan' });
     const p = await getAIProvider();
-    expect(p.endpoint).toBe('https://api.openai.com/v1');
-    expect(p.apiKey).toBe('sk-openai');
-    expect(p.model).toBe('gpt-4o-mini');
-    expect(p.noCors).toBeUndefined();
+    expect(p.endpoint).toBe('https://open.bigmodel.cn/api/coding/paas/v4');
+    expect(p.apiKey).toBe('sk-zhipu-plan');
+    expect(p.model).toBe('glm-5.3-flash');
   });
 
   it('注册表提供商缺密钥 → 报「未配置 <label> API Key」', async () => {
-    setupAI({ aiProvider: 'moonshot', moonshotApiKey: '' });
-    await expect(getAIProvider()).rejects.toThrow('未配置 Moonshot（Kimi） API Key');
-  });
-
-  it('extraHeaders（ticket 171）：anthropic 注入 anthropic-version 请求头', async () => {
-    setupAI({ aiProvider: 'anthropic', anthropicApiKey: 'sk-an' });
-    vi.mocked(requestUrl).mockResolvedValue({
-      status: 200,
-      text: JSON.stringify({ choices: [{ message: { content: 'ok' } }] }),
-    });
-    const ai = new AIService({}, 'deepseek-v4-flash');
-    await ai.prompt('x');
-    const reqOpts: any = vi.mocked(requestUrl).mock.calls[0][0];
-    expect(reqOpts.url).toBe('https://api.anthropic.com/v1/chat/completions');
-    expect(reqOpts.headers['anthropic-version']).toBe('2023-06-01');
-    expect(reqOpts.headers.Authorization).toBe('Bearer sk-an');
+    setupAI({ aiProvider: 'deepseek', deepseekApiKey: '' });
+    setApp({ vault: { adapter: { read: async () => { throw new Error('nope'); } } } } as any);
+    await expect(getAIProvider()).rejects.toThrow('未配置 DeepSeek API Key');
   });
 
   it('ollama 本地服务：endpoint 指向 localhost，密钥可为空', async () => {
@@ -205,32 +181,29 @@ describe('getAIProvider 解析与缓存', () => {
 
   it('per-provider 覆盖（ticket 172）：aiModelOverrides/aiMaxTokensOverrides 优先于注册表默认', async () => {
     setupAI({
-      aiProvider: 'openai',
-      openaiApiKey: 'sk-openai',
-      aiModelOverrides: { openai: 'gpt-4o' },
-      aiMaxTokensOverrides: { openai: 32000 },
+      aiProvider: 'ollama',
+      aiModelOverrides: { ollama: 'my-local-model' },
+      aiMaxTokensOverrides: { ollama: 32000 },
     });
     const p = await getAIProvider();
-    expect(p.model).toBe('gpt-4o'); // 覆盖注册表默认 gpt-4o-mini
+    expect(p.model).toBe('my-local-model'); // 覆盖注册表默认 llama3.1
     expect(p.defaultMaxTokens).toBe(32000);
   });
 
-  it('per-provider 覆盖只影响对应提供商（deepseek 覆盖不影响 openai 解析）', async () => {
+  it('per-provider 覆盖只影响对应提供商（deepseek 覆盖不影响 ollama 解析）', async () => {
     setupAI({
-      aiProvider: 'openai',
-      openaiApiKey: 'sk-openai',
+      aiProvider: 'ollama',
       aiModelOverrides: { deepseek: 'deepseek-chat' }, // 别的家的覆盖
     });
     const p = await getAIProvider();
-    expect(p.model).toBe('gpt-4o-mini'); // 注册表默认，未被 deepseek 覆盖污染
+    expect(p.model).toBe('llama3.1'); // 注册表默认，未被 deepseek 覆盖污染
   });
 
   it('per-provider 覆盖驱动请求体（模型与 max_tokens 均用覆盖值）', async () => {
     setupAI({
-      aiProvider: 'openai',
-      openaiApiKey: 'sk-openai',
-      aiModelOverrides: { openai: 'gpt-4o' },
-      aiMaxTokensOverrides: { openai: 32000 },
+      aiProvider: 'ollama',
+      aiModelOverrides: { ollama: 'my-local-model' },
+      aiMaxTokensOverrides: { ollama: 32000 },
     });
     (global as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -238,9 +211,9 @@ describe('getAIProvider 解析与缓存', () => {
       body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
     });
     const ai = new AIService({}, 'deepseek-v4-flash');
-    await ai.prompt('q'); // 未显式指定模型 → 用 provider.model（覆盖后 gpt-4o）
+    await ai.prompt('q'); // 未显式指定模型 → 用 provider.model（覆盖后 my-local-model）
     const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
-    expect(body.model).toBe('gpt-4o');
+    expect(body.model).toBe('my-local-model');
     expect(body.max_tokens).toBe(32000);
     delete (global as any).fetch;
   });
@@ -338,9 +311,11 @@ describe('流式与非流式解析边界', () => {
 
 describe('非流式（requestUrl）错误格式矩阵', () => {
   beforeEach(() => {
-    setupAI({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-oc' });
+    // issue 411：三条在册通道都无 desc.noCors，非流式路径经「fetch 失败 → requestUrl 兜底」进入；
+    // 这里直接让 fetch 拒绝（等价 CORS/网络失败），错误体解析口径与原 noCors 直连一致
+    setupAI();
     vi.mocked(requestUrl).mockReset();
-    (global as any).fetch = vi.fn();
+    (global as any).fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
   });
 
   afterEach(() => {
@@ -414,21 +389,10 @@ describe('选项合并与服务方法面', () => {
     expect(body.max_tokens).toBe(393216); // 上限不认 defaultOptions：恒取 provider 链（issue 334/ADR-0148）
   });
 
-  it('search / reasonAndSearch 方法透传对应 modelOptions', async () => {
+  it('_prepareOptions：预设模型选项被调用方显式键覆盖（json 的 response_format 可改）', async () => {
     const ai = new AIService({}, 'deepseek-v4-flash');
-    await ai.search('q');
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).search).toBe(true);
-
-    await ai.reasonAndSearch('q');
-    const body = JSON.parse(fetchMock.mock.calls[1][1].body);
-    expect(body.enable_thinking).toBe(true);
-    expect(body.search).toBe(true);
-  });
-
-  it('_prepareOptions 用户显式传入的 modelSettings 键不被预设覆盖（reason 关思考）', async () => {
-    const ai = new AIService({}, 'deepseek-v4-flash');
-    await ai.reason('q', { modelOptions: { enable_thinking: false } });
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body).enable_thinking).toBe(false);
+    await ai.json('q', { modelOptions: { response_format: { type: 'text' } } });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).response_format).toEqual({ type: 'text' });
   });
 
   it('_mergeOptions：defaultOptions 与调用方 options 均含 modelOptions 时浅合并且调用方优先（max_tokens 除外）', async () => {
