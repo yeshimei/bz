@@ -86,10 +86,25 @@ function findCard(board: HTMLElement, id: string): HTMLElement | null {
 
 /* ================= 面板壳：支板 / 收板 ================= */
 
+/** 退场动画 id（2026-09-23 修复，对齐 home 口径）：fill:forwards 会把末帧永久钉在动画层，
+    收口不 cancel、重开不按 id 撤残留 → 二次打开入场播完后旧退场重新接管（透明/闪烁） */
+const EXIT_ANIM_ID = 'bz-fav-exit';
+const EXIT_MASK_ANIM_ID = 'bz-fav-exit-mask';
+
+/** 撤掉指定 id 的残留动画（getAnimations 不可用的宿主安全跳过） */
+function cancelAnimsBy(el: HTMLElement, ids: string[]): void {
+  if (typeof el.getAnimations !== 'function') return;
+  for (const a of el.getAnimations()) {
+    if (ids.includes(a.id)) { try { a.cancel(); } catch { /* 已结束 */ } }
+  }
+}
+
 /** 开场：亚麻板支上台面——微倾立起 → 收平；遮罩同步睁眼 */
 export function motionPanelIn(overlay: HTMLElement): void {
   const panel = overlay.querySelector<HTMLElement>('.bz-fav-panel');
   if (!panel) return;
+  cancelAnimsBy(panel, [EXIT_ANIM_ID]); // 撤退场残留（动画层钉值内联样式清不掉）
+  cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
   panel.style.opacity = ''; panel.style.transform = ''; panel.style.filter = ''; // 清退场残留
   waapi(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: M.move + 40, easing: E.out });
   waapi(panel,
@@ -108,12 +123,20 @@ export function motionPanelOut(overlay: HTMLElement, done: () => void): void {
   const panel = overlay.querySelector<HTMLElement>('.bz-fav-panel');
   if (!panel) { done(); return; }
   let finished = false;
-  const finish = (): void => { if (!finished) { finished = true; done(); } };
-  waapi(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: M.fast + 40, easing: E.out, fill: 'forwards' });
+  const finish = (): void => {
+    if (finished) return;
+    finished = true;
+    // 收口即撤退场动画：forwards 钉住的末帧不得活到下一次打开（2026-09-23 修复）
+    try { if (maskAnim && maskAnim.playState !== 'idle') maskAnim.cancel(); } catch { /* 已收口忽略 */ }
+    try { if (a && a.playState !== 'idle') a.cancel(); } catch { /* 已收口忽略 */ }
+    done();
+  };
+  let maskAnim: Animation | null = waapi(overlay, [{ opacity: 1 }, { opacity: 0 }],
+    { duration: M.fast + 40, easing: E.out, fill: 'forwards', id: EXIT_MASK_ANIM_ID });
   const a = waapi(panel,
     [{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
      { opacity: 0, transform: 'translateY(12px) scale(.982) rotate(.25deg)', filter: 'blur(6px)' }],
-    { duration: M.fast + 40, easing: E.out, fill: 'forwards' });
+    { duration: M.fast + 40, easing: E.out, fill: 'forwards', id: EXIT_ANIM_ID });
   if (!a) { finish(); return; }
   a.finished.then(finish).catch(finish);
   setTimeout(finish, M.fast + 120);

@@ -1,4 +1,4 @@
-/* 源指纹 62d1e08f70a7bab4 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b4d8a91d36473a35 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -5789,10 +5789,33 @@ var BZW_diary = (() => {
       onInput: opts.onInput
     });
     el.appendChild(input);
+    let clearBtn = null;
+    if (opts.clearable !== false) {
+      clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "bz-search-clear";
+      clearBtn.title = "清除搜索";
+      clearBtn.setAttribute("aria-label", "清除搜索");
+      clearBtn.hidden = !input.value.trim();
+      clearBtn.appendChild(uiIcon("x"));
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      });
+      input.addEventListener("input", () => {
+        if (clearBtn) clearBtn.hidden = !input.value.trim();
+      });
+      el.appendChild(clearBtn);
+    }
+    const syncClear = () => {
+      if (clearBtn) clearBtn.hidden = !input.value.trim();
+    };
     const setValue = (v) => {
       input.value = v;
+      syncClear();
     };
-    return { el, input, setValue };
+    return { el, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -15062,6 +15085,8 @@ ${String(review).trim()}`;
           e.stopPropagation();
           this._searchDebounced.cancel();
           ui.searchBox.value = "";
+          ui.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
+          this._searchDebounced.cancel();
           this.searchKeyword = "";
           this.renderAll();
           ui.searchBox.blur();
@@ -17212,15 +17237,21 @@ ${String(review).trim()}`;
       if (row.style.display === "none") {
         row.style.display = "block";
         box.value = this.searchKeyword;
+        box.dispatchEvent(new Event("input", { bubbles: true }));
+        this._searchDebounced.cancel();
         box.focus();
         box.select();
         btn == null ? void 0 : btn.classList.add("bz-diary-icon-btn--on");
       } else {
-        this._searchDebounced.cancel();
         row.style.display = "none";
         box.value = "";
+        box.dispatchEvent(new Event("input", { bubbles: true }));
         this.searchKeyword = "";
-        if (other == null ? void 0 : other.searchBox) other.searchBox.value = "";
+        if (other == null ? void 0 : other.searchBox) {
+          other.searchBox.value = "";
+          other.searchBox.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        this._searchDebounced.cancel();
         this.renderAll();
         btn == null ? void 0 : btn.classList.remove("bz-diary-icon-btn--on");
       }

@@ -1,5 +1,5 @@
-/* 源指纹 94236e97b7d840ed · 仓内输入 247 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 128ead8503f97b87 · 仓内输入 248 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -6991,10 +6991,33 @@ var BZW_settings_panel = (() => {
       onInput: opts.onInput
     });
     el.appendChild(input);
+    let clearBtn = null;
+    if (opts.clearable !== false) {
+      clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "bz-search-clear";
+      clearBtn.title = "清除搜索";
+      clearBtn.setAttribute("aria-label", "清除搜索");
+      clearBtn.hidden = !input.value.trim();
+      clearBtn.appendChild(uiIcon("x"));
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      });
+      input.addEventListener("input", () => {
+        if (clearBtn) clearBtn.hidden = !input.value.trim();
+      });
+      el.appendChild(clearBtn);
+    }
+    const syncClear = () => {
+      if (clearBtn) clearBtn.hidden = !input.value.trim();
+    };
     const setValue = (v) => {
       input.value = v;
+      syncClear();
     };
-    return { el, input, setValue };
+    return { el, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -33329,7 +33352,7 @@ ${bodyText.substring(0, 6e3)}`;
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -33773,6 +33796,17 @@ ${bodyText.substring(0, 6e3)}`;
       }
     }
   }
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
   function motionPanelIn(overlay2, reopen) {
     const frame2 = overlay2.querySelector(".bz-clip-frame");
     if (!frame2) return;
@@ -33781,6 +33815,8 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
     panelAnim = null;
+    cancelAnimsBy(frame2, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay2, [EXIT_MASK_ANIM_ID]);
     frame2.style.opacity = "";
     frame2.style.transform = "";
     frame2.style.filter = "";
@@ -33816,12 +33852,20 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     let finished = false;
+    let maskAnim = null;
     const finish = () => {
-      if (!finished) {
-        finished = true;
-        panelAnim = null;
-        done();
+      if (finished) return;
+      finished = true;
+      panelAnim = null;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
       }
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
+      }
+      done();
     };
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
@@ -33833,9 +33877,13 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M6.move + 40, easing: E.out, fill: "forwards" }
+      { duration: M6.move + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
-    waapi(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M6.move + 40, easing: E.out });
+    maskAnim = waapi(
+      overlay2,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M6.move + 40, easing: E.out, id: EXIT_MASK_ANIM_ID }
+    );
     if (!a) {
       overlay2.style.opacity = "";
       finish();
@@ -34281,7 +34329,7 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
   }
-  var M6, E, STAG, easeOutQuart, timers, CSS_PROP, panelAnim, readerAnim;
+  var M6, E, STAG, easeOutQuart, timers, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
   var init_motion = __esm({
     "src/clipbook/motion.ts"() {
       M6 = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -34301,6 +34349,8 @@ ${bodyText.substring(0, 6e3)}`;
         willChange: "will-change"
       };
       panelAnim = null;
+      EXIT_ANIM_ID = "bz-clip-exit";
+      EXIT_MASK_ANIM_ID = "bz-clip-exit-mask";
       readerAnim = null;
     }
   });
@@ -38276,7 +38326,7 @@ ${c.trim()}
     resetClipbookState();
   }
   function buildDom2(app) {
-    var _a2;
+    var _a2, _b2;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -38298,6 +38348,7 @@ ${c.trim()}
     mobSearchbarEl = overlayEl2.querySelector("[data-clip-mob-searchbar]");
     const mobSearchbar = mobSearchbarEl;
     const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
+    mobSearchEl = mobInput;
     deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
     overlayEl2.addEventListener("click", (e) => {
       if (e.target === overlayEl2) closePanel2();
@@ -38353,9 +38404,9 @@ ${c.trim()}
       if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
-      var _a3, _b2;
+      var _a3, _b3;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
+      if ((e.key === "Enter" || e.key === " ") && ((_b3 = (_a3 = e.target).closest) == null ? void 0 : _b3.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
         if (M5.cur) openNote(M5.cur);
         return;
@@ -38380,14 +38431,24 @@ ${c.trim()}
       } else {
         mobInput.value = "";
         setSearchKw("");
+        syncMobSearchClear();
         renderMobToc();
       }
     });
     mobInput.addEventListener("input", () => {
       searchKw = mobInput.value.trim();
+      syncMobSearchClear();
       renderMood = "search";
       renderMobToc();
       renderMood = "mute";
+    });
+    (_b2 = overlayEl2.querySelector("[data-clip-mob-search-clear]")) == null ? void 0 : _b2.addEventListener("click", () => {
+      mobInput.value = "";
+      setSearchKw("");
+      syncMobSearchClear();
+      renderMobToc();
+      mobSearchbarEl.style.display = "none";
+      mobInput.blur();
     });
     mobCloseBtn.addEventListener("click", () => {
       const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === "block" : false;
@@ -38395,6 +38456,7 @@ ${c.trim()}
         searchKw = "";
         expandedMobArch.clear();
         if (mobInput) mobInput.value = "";
+        syncMobSearchClear();
         if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
         renderMobToc();
       } else {
@@ -38500,8 +38562,8 @@ ${c.trim()}
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
-    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
-    if (mobInput) mobInput.value = "";
+    if (mobSearchEl) mobSearchEl.value = "";
+    syncMobSearchClear();
     renderMood = "nav";
     renderAll3();
   }
@@ -38515,6 +38577,10 @@ ${c.trim()}
   function syncDeskSearchClear() {
     const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
     if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
+  }
+  function syncMobSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-search-clear]") : null;
+    if (btn) btn.hidden = !(mobSearchEl == null ? void 0 : mobSearchEl.value.trim());
   }
   function clearDeskSearch() {
     if (deskSearchEl) deskSearchEl.value = "";
@@ -39996,7 +40062,7 @@ ${c.trim()}
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui7 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -40041,6 +40107,7 @@ ${c.trim()}
       mobSaveBtnEl = null;
       mobSearchbarEl = null;
       deskSearchEl = null;
+      mobSearchEl = null;
       escKey = "";
       escHandle4 = null;
       loading = false;
@@ -40689,9 +40756,22 @@ ${c.trim()}
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
+  function cancelAnimsBy2(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
   function motionPanelIn2(overlay2) {
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
+    cancelAnimsBy2(panel2, [EXIT_ANIM_ID2]);
+    cancelAnimsBy2(overlay2, [EXIT_MASK_ANIM_ID2]);
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
@@ -40714,19 +40794,30 @@ ${c.trim()}
     }
     let finished = false;
     const finish = () => {
-      if (!finished) {
-        finished = true;
-        done();
+      if (finished) return;
+      finished = true;
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
       }
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
     };
-    waapi2(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M7.fast + 40, easing: E2.out, fill: "forwards" });
+    let maskAnim = waapi2(
+      overlay2,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M7.fast + 40, easing: E2.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
+    );
     const a = waapi2(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M7.fast + 40, easing: E2.out, fill: "forwards" }
+      { duration: M7.fast + 40, easing: E2.out, fill: "forwards", id: EXIT_ANIM_ID2 }
     );
     if (!a) {
       finish();
@@ -41163,7 +41254,7 @@ ${c.trim()}
     } catch (e) {
     }
   }
-  var M7, E2, STAG2, timers2, aiAnims, floatAnims;
+  var M7, E2, STAG2, timers2, EXIT_ANIM_ID2, EXIT_MASK_ANIM_ID2, aiAnims, floatAnims;
   var init_motion2 = __esm({
     "src/favorites/motion.ts"() {
       M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -41173,6 +41264,8 @@ ${c.trim()}
       };
       STAG2 = 30;
       timers2 = /* @__PURE__ */ new Set();
+      EXIT_ANIM_ID2 = "bz-fav-exit";
+      EXIT_MASK_ANIM_ID2 = "bz-fav-exit-mask";
       aiAnims = /* @__PURE__ */ new Map();
       floatAnims = /* @__PURE__ */ new Map();
       if (typeof window !== "undefined") {
@@ -42488,6 +42581,12 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/bookshelf/motion.ts
+  var init_motion3 = __esm({
+    "src/bookshelf/motion.ts"() {
+    }
+  });
+
   // src/bookshelf/notes.ts
   var init_notes = __esm({
     "src/bookshelf/notes.ts"() {
@@ -42513,6 +42612,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_modal();
       init_ui9();
+      init_motion3();
       init_notes();
       init_epub_notes();
     }
@@ -42548,6 +42648,7 @@ GitHub 仓库：${ghInfo.title}
       init_data();
       init_render11();
       init_notes_ui();
+      init_motion3();
       SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
     }
   });
@@ -43597,7 +43698,7 @@ ${n.content.slice(0, 2e3)}
     timers3.forEach(clearTimeout);
     timers3.clear();
   }
-  function motionTeardown3() {
+  function motionTeardown4() {
     cancelPending2();
   }
   function ensureRelative(el) {
@@ -44131,7 +44232,7 @@ ${n.content.slice(0, 2e3)}
     );
   }
   var M9, E3, STAG3, timers3, lastQKey;
-  var init_motion3 = __esm({
+  var init_motion4 = __esm({
     "src/review/motion.ts"() {
       M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
       E3 = {
@@ -44175,7 +44276,7 @@ ${n.content.slice(0, 2e3)}
       init_manager();
       init_generator();
       init_utils();
-      init_motion3();
+      init_motion4();
       CORRECT_JUMP_DELAY_MS = 800;
       _QuizMasterUI = class _QuizMasterUI {
         constructor() {
@@ -45274,7 +45375,7 @@ ${n.content.slice(0, 2e3)}
       init_esc_manager();
       init_stats3();
       init_render12();
-      init_motion3();
+      init_motion4();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -48162,7 +48263,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_stats3();
       init_fsrs();
-      init_motion3();
+      init_motion4();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;
@@ -48254,7 +48355,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_fsrs();
       init_render12();
-      init_motion3();
+      init_motion4();
       init_queue();
       init_sprint();
       init_settings_schema2();
@@ -48325,7 +48426,7 @@ ${n.content.slice(0, 2e3)}
         }
         hideMain() {
           if (this.sprint) return;
-          motionTeardown3();
+          motionTeardown4();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -48333,7 +48434,7 @@ ${n.content.slice(0, 2e3)}
           const sprint = this.sprint;
           this.sprint = null;
           sprint == null ? void 0 : sprint.destroy();
-          motionTeardown3();
+          motionTeardown4();
           this.hideMain();
           if (this.escHandle) {
             this.escHandle.unregister();
@@ -48771,7 +48872,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_quiz_core();
       init_render12();
-      init_motion3();
+      init_motion4();
       init_quiz_panel_data();
       MASK_ID2 = "bz-quiz-practice-mask";
       POPUP_ID = "bz-quiz-practice-popup";

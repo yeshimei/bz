@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { ReviewItem } from '../../src/review/data';
 import { deriveAnalysis, RA_RATING_ORDER } from '../../src/review/analysis/data';
-import { analysisHtml, RA_SCENES } from '../../src/review/analysis/view';
+import { analysisFixedHtml, analysisHtml, RA_SCENES } from '../../src/review/analysis/view';
 
 /** 固定「今天」，daily14/streak 断言确定性 */
 const NOW = new Date('2026-09-22T10:00:00+08:00');
@@ -147,10 +147,14 @@ describe('记忆分析契约（幕表/钩子/表演对齐）', () => {
   });
 
   it('固定件钩子齐全（隔扇/灯谱；更漏底栏 2026-09-23 拍板撤去，不再断言）', () => {
+    // 2026-09-23 结构修正：固定层（快门 + 灯轨）独立 analysisFixedHtml 导出——
+    // 原先钉在 .ra-film 第一屏内，随滚动漂走（第 2 幕被截断的根因）；引擎改从根节点取钩子
+    const fixed = analysisFixedHtml();
     for (const hook of ['shutter', 'rail']) {
-      expect(html).toContain(`data-r="${hook}"`);
+      expect(fixed).toContain(`data-r="${hook}"`);
     }
-    expect(html.match(/class="ra-lamp"/g)?.length).toBe(RA_SCENES.length);
+    expect(fixed.match(/class="ra-lamp"/g)?.length).toBe(RA_SCENES.length);
+    expect(html).not.toContain('data-r="shutter"'); // 胶片内不得再有固定层
   });
 
   it('motions 每幕表演（out.set）与幕表一一对应', () => {

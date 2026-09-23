@@ -1,4 +1,4 @@
-/* 源指纹 cb66c901d415701b · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 021a476bd33ff94e · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -170,7 +170,7 @@ var BZR_clipbook = (() => {
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>

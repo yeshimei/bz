@@ -1,4 +1,4 @@
-/* 源指纹 1f68df5c436b1345 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cc944188c5aa97cd · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -6742,9 +6742,24 @@ var BZW_favorites = (() => {
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
+  var EXIT_ANIM_ID = "bz-fav-exit";
+  var EXIT_MASK_ANIM_ID = "bz-fav-exit-mask";
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
   function motionPanelIn(overlay) {
     const panel = overlay.querySelector(".bz-fav-panel");
     if (!panel) return;
+    cancelAnimsBy(panel, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
     panel.style.opacity = "";
     panel.style.transform = "";
     panel.style.filter = "";
@@ -6767,19 +6782,30 @@ var BZW_favorites = (() => {
     }
     let finished = false;
     const finish = () => {
-      if (!finished) {
-        finished = true;
-        done();
+      if (finished) return;
+      finished = true;
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
       }
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
     };
-    waapi(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: M.fast + 40, easing: E.out, fill: "forwards" });
+    let maskAnim = waapi(
+      overlay,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M.fast + 40, easing: E.out, fill: "forwards", id: EXIT_MASK_ANIM_ID }
+    );
     const a = waapi(
       panel,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M.fast + 40, easing: E.out, fill: "forwards" }
+      { duration: M.fast + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
     if (!a) {
       finish();

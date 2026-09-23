@@ -135,6 +135,19 @@ function cleanSweep(el: HTMLElement, from: Keyframe, to: Keyframe, hadOrigin: bo
 /* ================= 面板壳：开 / 关 ================= */
 
 let panelAnim: Animation | null = null;
+/** 退场动画 id（2026-09-23 修复）：fill:forwards 会把 opacity:0 永久钉在动画层——
+   关闭收口后必须 cancel，重开时还要按 id 撤残留，否则入场播完自移除后旧退场重新接管，
+   主面板回落到透明只剩遮罩（用户报「二次打开不见主页面」的根因）。对齐 home 口径。 */
+const EXIT_ANIM_ID = 'bz-clip-exit';
+const EXIT_MASK_ANIM_ID = 'bz-clip-exit-mask';
+
+/** 撤掉指定 id 的残留动画（getAnimations 不可用的宿主安全跳过） */
+function cancelAnimsBy(el: HTMLElement, ids: string[]): void {
+  if (typeof el.getAnimations !== 'function') return;
+  for (const a of el.getAnimations()) {
+    if (ids.includes(a.id)) { try { a.cancel(); } catch { /* 已结束 */ } }
+  }
+}
 
 /** 面板壳入场（首开慢一些给足开印时间；重开快速唤回）。清退场残留防抖。 */
 export function motionPanelIn(overlay: HTMLElement, reopen: boolean): void {
@@ -142,6 +155,8 @@ export function motionPanelIn(overlay: HTMLElement, reopen: boolean): void {
   if (!frame) return;
   try { panelAnim?.cancel(); } catch { /* 已结束 */ }
   panelAnim = null;
+  cancelAnimsBy(frame, [EXIT_ANIM_ID]); // 撤退场残留（内联样式清不掉动画层的钉值）
+  cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
   frame.style.opacity = ''; frame.style.transform = ''; frame.style.filter = ''; // 清退场残留
   if (!overlay.style.opacity) overlay.style.opacity = '0';
   waapi(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: M.fast + 40, easing: E.out });
@@ -169,13 +184,23 @@ export function motionPanelOut(overlay: HTMLElement, done: () => void): void {
   const frame = overlay.querySelector<HTMLElement>('.bz-clip-frame');
   if (!frame) { done(); return; }
   let finished = false;
-  const finish = (): void => { if (!finished) { finished = true; panelAnim = null; done(); } };
+  let maskAnim: Animation | null = null;
+  const finish = (): void => {
+    if (finished) return;
+    finished = true;
+    panelAnim = null;
+    // 收口即撤退场动画：fill:forwards 钉住的 opacity:0 不得活到下一次打开（2026-09-23 修复）
+    try { if (a && a.playState !== 'idle') a.cancel(); } catch { /* 已收口忽略 */ }
+    try { if (maskAnim && maskAnim.playState !== 'idle') maskAnim.cancel(); } catch { /* 已收口忽略 */ }
+    done();
+  };
   try { panelAnim?.cancel(); } catch { /* 已结束 */ }
   const a = waapi(frame,
     [{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
      { opacity: 0, transform: 'translateY(10px) scale(.985)', filter: 'blur(6px)' }],
-    { duration: M.move + 40, easing: E.out, fill: 'forwards' });
-  waapi(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: M.move + 40, easing: E.out });
+    { duration: M.move + 40, easing: E.out, fill: 'forwards', id: EXIT_ANIM_ID });
+  maskAnim = waapi(overlay, [{ opacity: 1 }, { opacity: 0 }],
+    { duration: M.move + 40, easing: E.out, id: EXIT_MASK_ANIM_ID });
   if (!a) { overlay.style.opacity = ''; finish(); return; }
   panelAnim = a;
   a.finished.then(() => { overlay.style.opacity = ''; finish(); }).catch(() => { overlay.style.opacity = ''; finish(); });
