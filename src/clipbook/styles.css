@@ -393,8 +393,22 @@
 
 .bz-clip-mob-act:hover { color: var(--clip-accent); }
 }
-.bz-clip-mob-searchbar { padding: 10px 18px 0; flex-shrink: 0; }
-.bz-clip-mob-searchbar .bz-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line); border-radius: 0; padding: var(--bz-space-xs) 0 5px; font-family: var(--clip-serif); font-size: 18.75px; font-style: italic; color: var(--clip-ink); outline: none; box-shadow: none; }
+.bz-clip-mob-searchbar { padding: 10px 18px 0; flex-shrink: 0; position: relative; }
+/* 移动搜索条尾 ✕ 一键清词（clipbook 效率#12 全域拍板口径，桌面 bz-clip-search-clear 同款
+   形制落域 CSS）：绝对定位贴右缘，有词才现（hidden 由 ui.ts syncMobSearchClear 驱动） */
+.bz-clip-mob-search-clear {
+  position: absolute; right: 18px; bottom: 8px;
+  display: inline-flex; padding: 2px;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--bz-text-3); line-height: 0;
+}
+@media (hover: hover) {
+.bz-clip-mob-search-clear:hover { color: var(--bz-text-1); }
+}
+/* hidden 属性显式守卫（memo/cinema 同款坑）：上方 display:inline-flex 是作者规则，
+   UA 的 [hidden]{display:none} 同 origin 低序压不住，无词态必须显式钉死 */
+.bz-clip-mob-search-clear[hidden] { display: none; }
+.bz-clip-mob-searchbar .bz-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line); border-radius: 0; padding: var(--bz-space-xs) 22px 5px 0; font-family: var(--clip-serif); font-size: 18.75px; font-style: italic; color: var(--clip-ink); outline: none; box-shadow: none; } /* 右留 22px 尾 ✕ 让位 */
 .bz-clip-mob-searchbar .bz-input::placeholder { color: var(--clip-muted); }
 .bz-clip-mob-searchbar .bz-input:focus { border-bottom-color: var(--clip-accent); }
 /* 章目录流（滚动宿主；章 = 站） */

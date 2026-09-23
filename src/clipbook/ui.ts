@@ -79,6 +79,7 @@ let mobTitleEl: HTMLElement | null = null;
 let mobSaveBtnEl: HTMLElement | null = null;
 let mobSearchbarEl: HTMLElement | null = null;
 let deskSearchEl: HTMLInputElement | null = null; // 桌面搜索输入
+let mobSearchEl: HTMLInputElement | null = null; // 移动搜索输入（✕ 显隐同步用）
 let escKey = '';
 let escHandle: { unregister(): void } | null = null;
 let loading = false;
@@ -320,6 +321,7 @@ function buildDom(app: any): void {
   mobSearchbarEl = overlayEl.querySelector('[data-clip-mob-searchbar]') as HTMLElement;
   const mobSearchbar = mobSearchbarEl;
   const mobInput = overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement;
+  mobSearchEl = mobInput;
   deskSearchEl = overlayEl.querySelector('[data-clip-desk-search]') as HTMLInputElement;
 
   // 头行无按钮（issue 214 三轮用户拍板：去 ⚙/✕，关闭 = 点遮罩/ESC）；设置走命令/设置面板
@@ -399,11 +401,21 @@ function buildDom(app: any): void {
     const show = mobSearchbarEl!.style.display === 'none';
     mobSearchbarEl!.style.display = show ? 'block' : 'none';
     if (show) mobInput!.focus();
-    else { mobInput!.value = ''; setSearchKw(''); renderMobToc(); }
+    else { mobInput!.value = ''; setSearchKw(''); syncMobSearchClear(); renderMobToc(); }
   });
   mobInput!.addEventListener('input', () => {
     searchKw = mobInput!.value.trim();
+    syncMobSearchClear(); // 尾部 ✕ 显隐随词同步（效率#12 全域口径：有词才现、清空即隐）
     renderMobToc(); // 搜索态：命中全平铺（含已收），折叠不生效
+  });
+  // 尾部 ✕ 一键清除（桌面 clearDeskSearch 同范式）：清词 + 收起搜索条 + 焦点回框
+  overlayEl.querySelector('[data-clip-mob-search-clear]')?.addEventListener('click', () => {
+    mobInput!.value = '';
+    setSearchKw('');
+    syncMobSearchClear();
+    renderMobToc();
+    mobSearchbarEl!.style.display = 'none';
+    mobInput!.blur();
   });
   // 「关闭」（原型语义）：清搜索并收全部；无任何待复位态 = 退出面板（移动面板无其它关闭入口）
   mobCloseBtn!.addEventListener('click', () => {
@@ -412,6 +424,7 @@ function buildDom(app: any): void {
       searchKw = '';
       expandedMobArch.clear();
       if (mobInput) mobInput.value = '';
+      syncMobSearchClear();
       if (mobSearchbarEl) mobSearchbarEl.style.display = 'none';
       renderMobToc();
     } else {
@@ -521,8 +534,8 @@ function selectSource(src: any): void {
   // C-UI7：移动搜索栏一并复位——原实现只清桌面词，通知「查看」定位链换源后移动输入框
   // 仍有词、列表却按无词全量渲染，两端打架
   if (mobSearchbarEl) mobSearchbarEl.style.display = 'none';
-  const mobInput = overlayEl ? (overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement | null) : null;
-  if (mobInput) mobInput.value = '';
+  if (mobSearchEl) mobSearchEl.value = '';
+  syncMobSearchClear();
   renderAll();
 }
 
@@ -544,6 +557,12 @@ function setSearchKw(kw: string): void { searchKw = kw; }
 function syncDeskSearchClear(): void {
   const btn = overlayEl ? (overlayEl.querySelector('[data-clip-search-clear]') as HTMLElement | null) : null;
   if (btn) btn.hidden = !deskSearchEl?.value.trim();
+}
+
+/** 移动端 ✕ 显隐同步（效率#12 同款）：有词才显示（input/✕/收起/关闭四路都过这里） */
+function syncMobSearchClear(): void {
+  const btn = overlayEl ? (overlayEl.querySelector('[data-clip-mob-search-clear]') as HTMLElement | null) : null;
+  if (btn) btn.hidden = !mobSearchEl?.value.trim();
 }
 
 /** 桌面清词统一出口（效率#11 ESC / 效率#12 ✕ 同一收口）：输入框与状态词清空 +

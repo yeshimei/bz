@@ -106,6 +106,9 @@
 
 .bz-bs-search-clear:hover { color: var(--bsw-ink); }
 }
+/* hidden 属性显式守卫（clipbook 效率#12 / memo 同款坑）：上方 display:inline-flex 是
+   作者规则，UA 的 [hidden]{display:none} 同 origin 低序压不住，无词态必须显式钉死 */
+.bz-bs-search-clear[hidden] { display: none; }
 .bz-bs-search:focus { box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--bsw-brass); }
 .bz-bs-search::placeholder { color: #a08e6e; }
 .bz-bs-seg { display: flex; border: 1px solid var(--bsw-brass); }
