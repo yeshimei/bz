@@ -185,6 +185,29 @@ export interface SelectOption {
   label: string;
 }
 
+// ---- select 决策三件套（issue 412）：两套渲染器（本文件 addDropdown 路径 / settings-panel
+// ---- 自绘 .bz-select 路径）共用——DOM 形态各自实现，选项求值/换表判定/显示值回落只有一份 ----
+
+/** 选项求值：静态数组原样返回，函数形式随快照重取（服务商切换后换表） */
+export function selectOptionsOf(
+  options: SelectOption[] | ((snapshot: SettingsSnapshot) => SelectOption[]),
+  snapshot: SettingsSnapshot,
+): SelectOption[] {
+  return typeof options === 'function' ? options(snapshot) : options;
+}
+
+/** 选项集签名（value 序列）：签名变了 = 换了一张表，整只下拉须重建，旧选项不能留 */
+export function selectOptionsSignature(opts: SelectOption[]): string {
+  return opts.map((o) => o.value).join('\u0001');
+}
+
+/** 当前应显示值：绑定值不在选项内（空/历史遗留档位）→ 回落首个选项（原「空值回退首项」口径）。
+ *  与 core/thinkingBodyFor「不在表内不注入」同口径——显示值不许落在选项外。 */
+export function selectDisplayValue(read: () => unknown, opts: SelectOption[]): string {
+  const v = String(read() ?? '');
+  return opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
+}
+
 interface SliderRow extends RowBase {
   type: 'slider';
   name: string;
@@ -778,17 +801,10 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       case 'select': {
         const acc = bindValue(row.binding);
         const setting = newRowSetting(body, row);
-        /** 选项求值：静态数组原样返回，函数形式随快照重取（服务商切换后换表） */
-        const readOptions = (): SelectOption[] =>
-          typeof row.options === 'function' ? row.options(currentSnapshot()) : row.options;
-        /** 当前应显示值：绑定值不在选项内（空/历史遗留档位）→ 回落首个选项（原「空值回退首项」口径）。
-         *  与 core/thinkingBodyFor「不在表内不注入」同口径——显示值不许落在选项外。 */
-        const currentValue = (opts: SelectOption[]): string => {
-          const v = String(acc.read() ?? '');
-          return opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
-        };
+        // 选项求值 / 签名 / 显示值回落 = core 单源三件套（issue 412；settings-panel 自绘下拉同源）
+        const readOptions = (): SelectOption[] => selectOptionsOf(row.options, currentSnapshot());
         let dd: { setValue: (v: string) => void } | null = null;
-        let optSig: string | null = null;
+        let optionsSig: string | null = null;
         const mount = (): void => {
           // 重建先清控件区（选项集变化 = 换了一张表，旧 <select> 的 option 不能留）
           while (setting.controlEl.firstChild) setting.controlEl.removeChild(setting.controlEl.firstChild);
@@ -796,7 +812,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             dd = d as unknown as { setValue: (v: string) => void };
             const opts = readOptions();
             for (const opt of opts) d.addOption(opt.value, opt.label);
-            d.setValue(currentValue(opts));
+            d.setValue(selectDisplayValue(() => acc.read(), opts));
             d.onChange(async (v) => {
               acc.write(v);
               // 显隐随值同步切换（原 refreshKeys 口径）
@@ -811,19 +827,19 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           });
         };
         mount();
-        optSig = readOptions().map((o) => o.value).join('\u0001');
+        optionsSig = selectOptionsSignature(readOptions());
         // 联动刷新（issue 411/ADR-0179）：选项集变了 → 整只下拉重建；否则只回填当前值（不落盘）。
         // 与 text/number 行的 refreshKey 同一登记表（任意行变更后统一重求值）
         if (row.refreshKey !== undefined || typeof row.options === 'function') {
           const sync = (): void => {
             const opts = readOptions();
-            const sig = opts.map((o) => o.value).join('\u0001');
-            if (sig !== optSig) {
-              optSig = sig;
+            const sig = selectOptionsSignature(opts);
+            if (sig !== optionsSig) {
+              optionsSig = sig;
               mount();
               return;
             }
-            dd?.setValue(currentValue(opts));
+            dd?.setValue(selectDisplayValue(() => acc.read(), opts));
           };
           customRefreshes.push(sync);
         }

@@ -1,4 +1,4 @@
-/* 源指纹 61964778f828f9f8 · 仓内输入 255 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7039f8bc5191d4a9 · 仓内输入 255 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -8059,6 +8059,17 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/settings-schema.ts
+  function selectOptionsOf(options2, snapshot2) {
+    return typeof options2 === "function" ? options2(snapshot2) : options2;
+  }
+  function selectOptionsSignature(opts) {
+    return opts.map((o) => o.value).join("");
+  }
+  function selectDisplayValue(read, opts) {
+    var _a2, _b2, _c;
+    const v = String((_a2 = read()) != null ? _a2 : "");
+    return opts.some((o) => o.value === v) ? v : (_c = (_b2 = opts[0]) == null ? void 0 : _b2.value) != null ? _c : "";
+  }
   function bindValue(binding) {
     if ("key" in binding) {
       const key = binding.key;
@@ -8378,21 +8389,16 @@ var BZW_settings_panel = (() => {
         case "select": {
           const acc = bindValue(row.binding);
           const setting = newRowSetting(body, row);
-          const readOptions = () => typeof row.options === "function" ? row.options(currentSnapshot()) : row.options;
-          const currentValue = (opts) => {
-            var _a4, _b3, _c2;
-            const v = String((_a4 = acc.read()) != null ? _a4 : "");
-            return opts.some((o) => o.value === v) ? v : (_c2 = (_b3 = opts[0]) == null ? void 0 : _b3.value) != null ? _c2 : "";
-          };
+          const readOptions = () => selectOptionsOf(row.options, currentSnapshot());
           let dd = null;
-          let optSig = null;
+          let optionsSig = null;
           const mount = () => {
             while (setting.controlEl.firstChild) setting.controlEl.removeChild(setting.controlEl.firstChild);
             setting.addDropdown((d) => {
               dd = d;
               const opts = readOptions();
               for (const opt of opts) d.addOption(opt.value, opt.label);
-              d.setValue(currentValue(opts));
+              d.setValue(selectDisplayValue(() => acc.read(), opts));
               d.onChange(async (v) => {
                 var _a4;
                 acc.write(v);
@@ -8407,17 +8413,17 @@ var BZW_settings_panel = (() => {
             });
           };
           mount();
-          optSig = readOptions().map((o) => o.value).join("");
+          optionsSig = selectOptionsSignature(readOptions());
           if (row.refreshKey !== void 0 || typeof row.options === "function") {
             const sync = () => {
               const opts = readOptions();
-              const sig = opts.map((o) => o.value).join("");
-              if (sig !== optSig) {
-                optSig = sig;
+              const sig = selectOptionsSignature(opts);
+              if (sig !== optionsSig) {
+                optionsSig = sig;
                 mount();
                 return;
               }
-              dd == null ? void 0 : dd.setValue(currentValue(opts));
+              dd == null ? void 0 : dd.setValue(selectDisplayValue(() => acc.read(), opts));
             };
             customRefreshes.push(sync);
           }
@@ -9674,13 +9680,7 @@ var BZW_settings_panel = (() => {
       }
       case "select": {
         const acc = bindValue(row.binding);
-        const readOptions = () => typeof row.options === "function" ? row.options(snapshot()) : row.options;
-        const optSigOf = (opts) => opts.map((o) => o.value).join("");
-        const displayValue = (opts) => {
-          var _a3, _b3, _c2;
-          const v = String((_a3 = acc.read()) != null ? _a3 : "");
-          return opts.some((o) => o.value === v) ? v : (_c2 = (_b3 = opts[0]) == null ? void 0 : _b3.value) != null ? _c2 : "";
-        };
+        const readOptions = () => selectOptionsOf(row.options, snapshot());
         let vspan = null;
         let teardown = null;
         const mount = () => {
@@ -9688,7 +9688,7 @@ var BZW_settings_panel = (() => {
           teardown = null;
           const options2 = readOptions();
           const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-          ctrlEl.innerHTML = selectTriggerHtml(labelOf(displayValue(options2)));
+          ctrlEl.innerHTML = selectTriggerHtml(labelOf(selectDisplayValue(() => acc.read(), options2)));
           const sel = ctrlEl.querySelector(".bz-select");
           vspan = sel.querySelector(".bz-select-val");
           let group = null;
@@ -9758,8 +9758,8 @@ var BZW_settings_panel = (() => {
             const menu = document.createElement("div");
             menu.className = "bz-select-menu";
             menu.setAttribute("role", "listbox");
-            const curNow = displayValue(options2);
-            menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+            const currentValue = selectDisplayValue(() => acc.read(), options2);
+            menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === currentValue)).join("");
             menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
             menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
               const o = options2[i];
@@ -9809,17 +9809,17 @@ var BZW_settings_panel = (() => {
           });
         };
         mount();
-        let optSig = optSigOf(readOptions());
+        let optionsSig = selectOptionsSignature(readOptions());
         if (regRefresh && (row.refreshKey !== void 0 || typeof row.options === "function")) {
           regRefresh(() => {
             const opts = readOptions();
-            const sig = optSigOf(opts);
-            if (sig !== optSig) {
-              optSig = sig;
+            const sig = selectOptionsSignature(opts);
+            if (sig !== optionsSig) {
+              optionsSig = sig;
               mount();
               return;
             }
-            if (vspan) vspan.textContent = (opts.find((o) => o.value === displayValue(opts)) || { label: "" }).label;
+            if (vspan) vspan.textContent = (opts.find((o) => o.value === selectDisplayValue(() => acc.read(), opts)) || { label: "" }).label;
           });
         }
         break;
@@ -10347,8 +10347,6 @@ var BZW_settings_panel = (() => {
       endpoint: desc.endpoint,
       apiKey: key || "",
       model: overrideModel || desc.model || void 0,
-      noCors: desc.noCors,
-      extraHeaders: desc.extraHeaders,
       defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
     });
   }
@@ -10657,7 +10655,7 @@ var BZW_settings_panel = (() => {
           const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
           const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
           try {
-            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
+            const content = await streamChatCompletions(provider, body, signal, onDelta);
             return content;
           } catch (streamError) {
             if (signal == null ? void 0 : signal.aborted) throw streamError;
@@ -10768,9 +10766,7 @@ var BZW_settings_panel = (() => {
       return { resp: { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => JSON.parse(r.text) }, via: "requestUrl" };
     };
     let attempt;
-    if (desc.noCors) {
-      attempt = await requestUrlAttempt();
-    } else {
+    {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -27759,7 +27755,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
       <div id="pomodoro-phase"></div>
       <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
+      <div class="pomodoro-time-box" id="pomodoro-time-box">
+        <div id="pomodoro-time"></div>
+        <div class="pomodoro-time-reel" aria-hidden="true"></div>
+      </div>
       <div class="pomodoro-controls">
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
         <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
@@ -27799,6 +27798,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
 
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
+    var _a2, _b2;
     const w = typeof window !== "undefined" ? window : globalThis;
     const AC = w.AudioContext || w.webkitAudioContext;
     if (!AC) return;
@@ -27807,23 +27807,32 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const cfg = SOUND_CONFIG[kind];
       const ctx = new AC();
       if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
       const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
       const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
+      const partials = (_a2 = cfg.partials) != null ? _a2 : [{ ratio: 1, gain: 1, decay: 1 }];
+      let tail = cfg.dur;
+      for (const pt2 of partials) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = (_b2 = cfg.type) != null ? _b2 : "sine";
+        const base = cfg.freq * pt2.ratio;
+        osc.frequency.value = base;
+        if (cfg.sweepTo) osc.frequency.exponentialRampToValueAtTime(cfg.sweepTo * pt2.ratio, t + cfg.dur * 0.9);
+        const dur = cfg.dur * pt2.decay;
+        const amp = Math.max(1e-3, peak * pt2.gain);
+        gain.gain.setValueAtTime(1e-3, t);
+        gain.gain.exponentialRampToValueAtTime(amp, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(1e-3, t + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + dur + 0.02);
+        if (dur > tail) tail = dur;
+      }
       const ctxRef = ctx;
       setTimeout(() => {
         void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
+      }, tail * 1e3 + 300);
     } catch (e) {
     }
   }
@@ -27834,7 +27843,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         "focus-start": { freq: 880, dur: 0.25 },
         "short-break-start": { freq: 523, dur: 0.3 },
         "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
+        pause: { freq: 440, dur: 0.2 },
+        // 钟：D5 基频 + 五度 / 八度 / 十二度泛音，逐层变轻变短——衰减尾巴是「钟」与「beep」的分界
+        ceremony: {
+          freq: 587.33,
+          dur: 1.35,
+          partials: [
+            { ratio: 1, gain: 1, decay: 1 },
+            { ratio: 1.5, gain: 0.42, decay: 0.72 },
+            { ratio: 2, gain: 0.22, decay: 0.5 },
+            { ratio: 2.76, gain: 0.12, decay: 0.34 }
+          ]
+        },
+        // 滴答：短促、窄、不抢戏（音量由 tick 自身的 dur 与三角波决定，不另设衰减）
+        tick: { freq: 1900, dur: 0.055, type: "triangle" },
+        // 过渡：210 → 120Hz 下扫，像一口气沉下去
+        transition: { freq: 210, dur: 0.5, sweepTo: 120 }
       };
     }
   });
@@ -27956,6 +27980,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const mask = byId("pomodoro-mask");
     stopBreath();
     stopGlow();
+    setRestDepth(mask, key.startsWith("break"));
     switch (key) {
       case "focus-run": {
         stopTone();
@@ -28011,6 +28036,118 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function trackLoop(a) {
     if (a) loops.add(a);
+  }
+  function parseRgb(v) {
+    const s = (v || "").trim();
+    let m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+    if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+    m = s.match(/^#([0-9a-f]{6})$/i);
+    if (m) {
+      return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+    }
+    return null;
+  }
+  function mixTo(a, t) {
+    const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+  function timeBoxOf(el) {
+    var _a2;
+    return (_a2 = el == null ? void 0 : el.closest(".pomodoro-time-box")) != null ? _a2 : el;
+  }
+  function ensureFlowGrad(svg) {
+    if (!svg) return null;
+    if (flowGrad && flowGrad.isConnected) return flowGrad;
+    let defs = svg.querySelector(":scope > defs");
+    if (!defs) {
+      defs = svg.ownerDocument.createElementNS(SVG_NS, "defs");
+      svg.insertBefore(defs, svg.firstChild);
+    }
+    let g = defs.querySelector("#" + FLOW_ID);
+    if (!g) {
+      const doc = svg.ownerDocument;
+      g = doc.createElementNS(SVG_NS, "linearGradient");
+      g.setAttribute("id", FLOW_ID);
+      g.setAttribute("x1", "0");
+      g.setAttribute("y1", "0");
+      g.setAttribute("x2", "1");
+      g.setAttribute("y2", "1");
+      const s1 = doc.createElementNS(SVG_NS, "stop");
+      s1.setAttribute("offset", "0");
+      const s2 = doc.createElementNS(SVG_NS, "stop");
+      s2.setAttribute("offset", "1");
+      s2.setAttribute("stop-opacity", ".35");
+      g.appendChild(s1);
+      g.appendChild(s2);
+      if (!reduced3()) {
+        const anim = doc.createElementNS(SVG_NS, "animateTransform");
+        anim.setAttribute("attributeName", "gradientTransform");
+        anim.setAttribute("type", "rotate");
+        anim.setAttribute("from", "0 .5 .5");
+        anim.setAttribute("to", "360 .5 .5");
+        anim.setAttribute("dur", "20s");
+        anim.setAttribute("repeatCount", "indefinite");
+        g.appendChild(anim);
+      }
+      defs.appendChild(g);
+    }
+    flowGrad = g;
+    return g;
+  }
+  function motionProgressFx(popup, remain, total, phase) {
+    var _a2;
+    if (!popup || !popup.isConnected) return;
+    const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+    const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
+    const ring = byId("pomodoro-ring-progress");
+    const timeEl = byId("pomodoro-time");
+    if (ring && !baseStroke && !ring.style.stroke) {
+      const cs = getComputedStyle(ring).stroke;
+      if (parseRgb(cs)) baseStroke = cs;
+    }
+    if (timeEl && !baseTimeColor && !timeEl.style.color) {
+      baseTimeColor = getComputedStyle(timeEl).color;
+    }
+    const base = baseStroke ? parseRgb(baseStroke) : null;
+    const accent = base ? mixTo(base, hot) : "";
+    if (ring && accent) {
+      const grad = ensureFlowGrad(ring.ownerSVGElement);
+      if (grad) {
+        for (const s of Array.from(grad.querySelectorAll("stop"))) s.setAttribute("stop-color", accent);
+        ring.style.stroke = `url(#${FLOW_ID})`;
+      } else {
+        ring.style.stroke = accent;
+      }
+      const head = (_a2 = ring.ownerSVGElement) == null ? void 0 : _a2.querySelector(".bz-pm-head");
+      if (head) {
+        for (const c of Array.from(head.querySelectorAll("circle"))) c.setAttribute("fill", accent);
+      }
+    }
+    if (timeEl && baseTimeColor) {
+      const fg = parseRgb(baseTimeColor);
+      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+      else if (timeEl.style.color) timeEl.style.removeProperty("color");
+    }
+    const grow = remain > 0 && remain <= FINAL_WINDOW ? 1 + (FINAL_WINDOW - remain) * 0.028 : 0;
+    const growEl = timeBoxOf(timeEl);
+    if (growEl) {
+      if (grow > 1) growEl.style.transform = `scale(${grow.toFixed(3)})`;
+      else if (growEl.style.transform) growEl.style.removeProperty("transform");
+    }
+    const cold = phase === "break" || phase === "long-break";
+    const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
+    popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+  }
+  function setRestDepth(mask, on) {
+    if (!mask) return;
+    mask.classList.toggle("bz-pm-rest", on);
+    const popup = byId("pomodoro-popup");
+    if (popup) popup.classList.toggle("bz-pm-rest", on);
+  }
+  function resetFxCache() {
+    baseStroke = null;
+    baseTimeColor = null;
+    flowGrad = null;
   }
   function setHead(svg, mode) {
     if (!svg) return;
@@ -28190,6 +28327,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     lastCount = -1;
     taskShown = false;
     todayText = "";
+    resetFxCache();
+    setRestDepth(mask, false);
     bootUntil = performance.now() + 1200;
     const popup = byId("pomodoro-popup");
     if (!popup) return;
@@ -28284,6 +28423,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     lastCount = -1;
     taskShown = false;
     todayText = "";
+    resetFxCache();
     if (immediate || reduced3() || typeof mask.animate !== "function") {
       done();
       return;
@@ -28314,10 +28454,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function motionIgnite(popup, fresh) {
     if (!popup) return;
-    const timeEl = byId("pomodoro-time");
-    if (timeEl) {
+    const timeBox = timeBoxOf(byId("pomodoro-time"));
+    if (timeBox) {
       trackFx(waapi3(
-        timeEl,
+        timeBox,
         [{ transform: "scale(.985)", opacity: 0.7 }, { transform: "none", opacity: 1 }],
         { duration: M6.base, easing: E3.out }
       ));
@@ -28370,9 +28510,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function revealTime(timeEl) {
-    if (!timeEl) return;
+    const el = timeBoxOf(timeEl);
+    if (!el) return;
     trackFx(waapi3(
-      timeEl,
+      el,
       [
         { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -28491,7 +28632,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     revealTime(byId("pomodoro-time"));
   }
   function motionTimeTick(timeEl, remain, running2) {
-    if (!timeEl) {
+    const el = timeBoxOf(timeEl);
+    if (!el) {
       lastRemain = -1;
       return;
     }
@@ -28501,10 +28643,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     const delta = lastRemain - remain;
     if (Math.abs(delta) > 2) {
-      revealTime(timeEl);
+      revealTime(el);
     } else if (running2 && delta === 1 && remain > 0 && remain % 60 === 0) {
       trackFx(waapi3(
-        timeEl,
+        el,
         [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
         { duration: M6.fast + 120, easing: E3.out }
       ));
@@ -28641,6 +28783,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     stopTone();
     stopFx();
     cancelPending3();
+    resetFxCache();
     lastSig = "";
     headLastProgress = -1;
     lastRemain = -1;
@@ -28650,7 +28793,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     ceremonyUntil = 0;
     bootUntil = 0;
   }
-  var M6, E3, STAG3, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers3, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var M6, E3, STAG3, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers3, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_RGB, TINT_FOCUS, TINT_BREAK, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
   var init_motion3 = __esm({
     "src/pomodoro/motion.ts"() {
       M6 = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -28670,6 +28813,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       fxAnims = /* @__PURE__ */ new Set();
       lastSig = "";
       headLastProgress = -1;
+      URGENT_WINDOW = 300;
+      FINAL_WINDOW = 10;
+      HOT_RGB = [226, 75, 74];
+      TINT_FOCUS = "216, 90, 48";
+      TINT_BREAK = "61, 110, 180";
+      SVG_NS = "http://www.w3.org/2000/svg";
+      FLOW_ID = "bz-pm-flow";
+      TINT_ALPHA = 0.12;
+      baseStroke = null;
+      baseTimeColor = null;
+      flowGrad = null;
       ceremonyUntil = 0;
       bootUntil = 0;
       lastRemain = -1;
@@ -28812,8 +28966,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const s = tryGetSettings();
     if (s.pomodoroSound !== false) {
       const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound("transition", pomodoroVolume());
       playSound(kind, pomodoroVolume());
     }
+  }
+  function playCeremonySound() {
+    if (tryGetSettings().pomodoroSound === false) return;
+    playSound("ceremony", pomodoroVolume());
   }
   function notifyPhaseStarted(phase) {
     const d = durations();
@@ -28839,6 +28998,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function notifyPhaseComplete(e) {
     const d = durations();
+    if (e.completedPhase === "focus") playCeremonySound();
     playPhaseSound(e.nextPhase);
     if (e.autoStarted) {
       if (e.completedPhase === "focus") {
@@ -28987,6 +29147,36 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     void saveSettings();
     render();
   }
+  function syncTimeReels(remain) {
+    const box = document.getElementById("pomodoro-time-box");
+    if (!box) {
+      timeReels = null;
+      return;
+    }
+    const layer = box.querySelector(".pomodoro-time-reel");
+    if (!layer) return;
+    box.classList.add("reel-on");
+    if (!timeReels || timeReels.length === 0) {
+      const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join("")}</span></span>`;
+      layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
+      timeReels = Array.from(layer.querySelectorAll(".pomodoro-rinn"));
+    }
+    const text = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
+    timeReels.forEach((el, i) => {
+      el.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text[i])}))`;
+    });
+  }
+  function tickBeep(remain, running2) {
+    if (!running2 || remain <= 0 || remain > 10) {
+      lastBeepRemain = -1;
+      return;
+    }
+    if (remain === lastBeepRemain) return;
+    lastBeepRemain = remain;
+    const s = tryGetSettings();
+    if (s.pomodoroSound === false || s.pomodoroTickSound === false) return;
+    playSound("tick", pomodoroVolume());
+  }
   function render() {
     const d = durations();
     const remain = remainingSec();
@@ -29026,10 +29216,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       timeEl.textContent = fmt(remain);
       motionTimeTick(timeEl, remain, state2.endTime !== null);
     }
+    syncTimeReels(remain);
+    tickBeep(remain, state2.endTime !== null);
     renderStats();
     updateButtons();
     applySkinClass();
     motionPhaseSync(document.getElementById("pomodoro-popup"), state2.phase, state2.endTime !== null, state2.paused);
+    motionProgressFx(document.getElementById("pomodoro-popup"), remain, total, state2.phase);
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -29079,7 +29272,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const prev = state2;
     const r = transition(state2, action, Date.now(), durations(), options());
     state2 = r.state;
-    if (!state2.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -29105,60 +29297,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function onTick() {
     applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state2.endTime !== null && !state2.paused) {
-      state2 = freezeRunning(state2, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state2.paused) {
-      state2 = unfreezeRunning(state2, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-  }
-  function unregisterVisibilityListener() {
-    if (visibilityHandler) {
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      visibilityHandler = null;
-    }
   }
   function ensureTick() {
     const needsTick = state2.endTime !== null;
@@ -29204,10 +29342,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       },
       save: () => saveSettings()
     };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
+    const tickToggle = {
+      get: () => tryGetSettings().pomodoroTickSound !== false,
       set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
+        getSettings().pomodoroTickSound = v;
       },
       save: () => saveSettings()
     };
@@ -29305,7 +29443,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
             { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
             { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
+            { type: "toggle", name: "倒数滴答", desc: "最后十秒每秒一记轻响，提醒即将结束", binding: tickToggle, onChange: () => render() },
             // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
             {
               type: "slider",
@@ -29440,7 +29578,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     appRef = app;
     disposed = false;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
-    registerVisibilityListener();
     if (!loaded) {
       try {
         await initDataOnce();
@@ -29549,8 +29686,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       window.clearInterval(timerId);
       timerId = null;
     }
-    unregisterVisibilityListener();
-    autoPauseMain = false;
     recoveryNotified = false;
     openInflight = null;
     initInflight = null;
@@ -29565,7 +29700,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     appRef = null;
     loaded = false;
   }
-  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui4 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -29598,11 +29733,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       escHandle2 = null;
       timerId = null;
       appRef = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
       disposed = true;
       recoveryNotified = false;
       lastStatsKey = "";
+      timeReels = null;
+      lastBeepRemain = -1;
       SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;
       openInflight = null;
@@ -61332,9 +61467,9 @@ ${n.content.slice(0, 2e3)}
         pomodoroAutoCycle: false,
         pomodoroAutoSkipBreak: false,
         pomodoroSound: true,
+        pomodoroTickSound: true,
         pomodoroVolume: 100,
         pomodoroRestoreMode: "background",
-        pomodoroAutoPauseOnHide: true,
         pomodoroStatMode: "week",
         // 加密保险箱（encrypt 域）
         encryptRoot: "CONFIG/.ENCRYPT",

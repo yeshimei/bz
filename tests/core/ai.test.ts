@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * AIService 测试（ticket 03）：mock fetch 断言请求参数、流式解析、
- * fallback 非流式（requestUrl）、noCors 直走、chat/json 方法、provider 解析与错误。
+ * fallback 非流式（requestUrl）、chat/json 方法、provider 解析与错误。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import {

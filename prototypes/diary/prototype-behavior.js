@@ -1,4 +1,4 @@
-/* 源指纹 09344816a2af39a1 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 64e188a5be957c86 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -7407,6 +7407,17 @@ var BZW_diary = (() => {
   });
 
   // src/core/settings-schema.ts
+  function selectOptionsOf(options, snapshot) {
+    return typeof options === "function" ? options(snapshot) : options;
+  }
+  function selectOptionsSignature(opts) {
+    return opts.map((o) => o.value).join("");
+  }
+  function selectDisplayValue(read, opts) {
+    var _a, _b, _c;
+    const v = String((_a = read()) != null ? _a : "");
+    return opts.some((o) => o.value === v) ? v : (_c = (_b = opts[0]) == null ? void 0 : _b.value) != null ? _c : "";
+  }
   function bindValue(binding) {
     if ("key" in binding) {
       const key = binding.key;
@@ -7726,21 +7737,16 @@ var BZW_diary = (() => {
         case "select": {
           const acc = bindValue(row.binding);
           const setting = newRowSetting(body, row);
-          const readOptions = () => typeof row.options === "function" ? row.options(currentSnapshot()) : row.options;
-          const currentValue = (opts) => {
-            var _a3, _b2, _c2;
-            const v = String((_a3 = acc.read()) != null ? _a3 : "");
-            return opts.some((o) => o.value === v) ? v : (_c2 = (_b2 = opts[0]) == null ? void 0 : _b2.value) != null ? _c2 : "";
-          };
+          const readOptions = () => selectOptionsOf(row.options, currentSnapshot());
           let dd = null;
-          let optSig = null;
+          let optionsSig = null;
           const mount = () => {
             while (setting.controlEl.firstChild) setting.controlEl.removeChild(setting.controlEl.firstChild);
             setting.addDropdown((d) => {
               dd = d;
               const opts = readOptions();
               for (const opt of opts) d.addOption(opt.value, opt.label);
-              d.setValue(currentValue(opts));
+              d.setValue(selectDisplayValue(() => acc.read(), opts));
               d.onChange(async (v) => {
                 var _a3;
                 acc.write(v);
@@ -7755,17 +7761,17 @@ var BZW_diary = (() => {
             });
           };
           mount();
-          optSig = readOptions().map((o) => o.value).join("");
+          optionsSig = selectOptionsSignature(readOptions());
           if (row.refreshKey !== void 0 || typeof row.options === "function") {
             const sync = () => {
               const opts = readOptions();
-              const sig = opts.map((o) => o.value).join("");
-              if (sig !== optSig) {
-                optSig = sig;
+              const sig = selectOptionsSignature(opts);
+              if (sig !== optionsSig) {
+                optionsSig = sig;
                 mount();
                 return;
               }
-              dd == null ? void 0 : dd.setValue(currentValue(opts));
+              dd == null ? void 0 : dd.setValue(selectDisplayValue(() => acc.read(), opts));
             };
             customRefreshes.push(sync);
           }

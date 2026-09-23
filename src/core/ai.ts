@@ -5,7 +5,7 @@
  * 「用到了再按注册表加一行」——注册表加一行即含设置页密钥行与思考档位，解析零分支改动。
  * override 字符串（注册表 id）或对象 {endpoint, apiKey, model, extraHeaders, defaultMaxTokens}
  * （对象形态 = 调用方自带完整配置，不经注册表，脚本内指定第三方端点用）。
- * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式；noCors 直接走 requestUrl。
+ * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式。
  * 图像输入（issue 311）：`prompt` 除纯文本外也收 `{text, images}`，带图时 content 走 OpenAI
  * 多模态数组（`image_url`）；本地图用 `imageDataUrl` 转 base64 data URL（DeepSeek V4.1-Flash
  * 只收公网 https 或 base64，格式限 JPEG/PNG/GIF/WebP）。纯文本调用报文与旧版逐字节一致。
@@ -64,7 +64,7 @@ export interface AIThinkingLevel {
   /** 设置面板展示名 */
   label: string;
   /** 该档位注入的请求体键值；null = 不注入 */
-  body: Record<string, any> | null;
+  body: Record<string, unknown> | null;
 }
 
 /**
@@ -72,8 +72,8 @@ export interface AIThinkingLevel {
  * 参数名与被支持的档**逐家不同**（各家 api-docs 核对 2026-09-23）：
  * - deepseek：开关 `thinking:{type:enabled|disabled}` + 强度 `reasoning_effort: low|high|max`
  *   （官方映射表 low→low / medium→high / high→high / max→max，即「中」无独立档，不入表）；
- * - zhipu-plan：`thinking.type` 开关 + `reasoning_effort: low|high|max`；glm-5.3 / 5.3-flash 系
- *   **强制思考**（发 disabled 无效），故不提供「关闭」档；
+ * - zhipu-plan：仅 `reasoning_effort: low|high|max`（thinking.type 服务端默认 enabled，不发）；
+ *   glm-5.3 / 5.3-flash 系**强制思考**（发 disabled 直接报错），故不提供「关闭」档；
  * - ollama：OpenAI 兼容层只认 `reasoning_effort`（none = 关思考，low/medium/high = 开且分档）；
  *   省略该字段时有思考能力的模型**默认就是开**，故「关闭」走 `none` 而不是「不注入」。
  * 旧口径（ADR-0146 三风格静态映射 + 全局单值 aiThinking）已退役：名称与档位是 provider 属性，
@@ -110,10 +110,6 @@ export interface AIProviderDescriptor {
   apiKeyLabel: string;
   /** 密钥行描述（设置页；约 20 字自然句，ticket 100 文案规范） */
   apiKeyDesc?: string;
-  /** 无 CORS 头（fetch 必败 → 直接走 requestUrl） */
-  noCors?: boolean;
-  /** 附加请求头（如 Anthropic 的 anthropic-version；非 OpenAI 兼容服务在 extraHeaders 内声明） */
-  extraHeaders?: Record<string, string>;
   /** 该 provider 的思考档位表（缺省 = 不注入任何思考参数；设置面板选项与请求注入同源） */
   thinking?: AIThinkingSpec;
 }
@@ -212,7 +208,7 @@ export function thinkingLevelsOf(providerId?: string): AIThinkingLevel[] {
  * 「不认识的档位宁可不动」优先于「尽力翻译」，避免给端点发它不认识的参数。
  * providerId 为 undefined（对象形态 override，无注册表身份）同样不注入。
  */
-export function thinkingBodyFor(providerId: string | undefined, level: string | undefined): Record<string, any> | null {
+export function thinkingBodyFor(providerId: string | undefined, level: string | undefined): Record<string, unknown> | null {
   if (!providerId || !level || level === 'auto') return null;
   const hit = thinkingLevelsOf(providerId).find((l) => l.value === level);
   return hit?.body ?? null;
@@ -236,7 +232,7 @@ interface AIProvider {
   endpoint: string;
   apiKey: string;
   model?: string;
-  noCors?: boolean;
+  /** 附加请求头（仅对象 override 可带，如非 OpenAI 兼容服务的 anthropic-version） */
   extraHeaders?: Record<string, string>;
   /** 注册表默认 max_tokens（设置 per-provider 覆盖缺省时的兜底档） */
   defaultMaxTokens?: number;
@@ -314,8 +310,6 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
     model: overrideModel || desc.model || undefined,
-    noCors: desc.noCors,
-    extraHeaders: desc.extraHeaders,
     defaultMaxTokens: overrideMaxTokens || limits?.maxOutput || desc.defaultMaxTokens,
   });
 }
@@ -628,10 +622,7 @@ export class AIService {
     const signal = mergedOptions.signal instanceof AbortSignal ? (mergedOptions.signal as AbortSignal) : undefined;
     const onDelta = typeof mergedOptions.onDelta === 'function' ? (mergedOptions.onDelta as (delta: string) => void) : undefined;
     try {
-      // 无 CORS 头的服务（注册表 desc.noCors）直接走 requestUrl，跳过注定失败的 fetch
-      const content = provider.noCors
-        ? await chatCompletionsNonStream(provider, body, signal)
-        : await streamChatCompletions(provider, body, signal, onDelta);
+      const content = await streamChatCompletions(provider, body, signal, onDelta);
       return content;
     } catch (streamError: any) {
       if (signal?.aborted) throw streamError; // 用户取消：不再走 requestUrl 兜底
