@@ -600,3 +600,25 @@
 - [x] 门禁：tsc 0 错 + worktree 全量 474 文件 / 7038 例全绿（域内 12 文件 / 172 例）
 - [x] 存量清理：8,119 个 `*-ach-*.jpg`（89 MB）已同盘归档到 vault 外 `E:\Obsidian\_bz-media-archive\20260922-ach-icons\`；盒内剩 1,394 个、`-icon` 146 / `-shot-` 1,104 / 封面 144 完好
 - [ ] 收尾：原型产物重出 + 合并回主仓 + 主仓构建部署
+
+## Issue 411 — AI 服务商收敛三条通道 + 思考档位按 provider 单源（ADR-0179）
+
+**状态：进行中**（2026-09-23，用户拍板「只保留 deepseek 和智谱套餐即可，其他的用到了再添加」「也要保留 ollama」「思考参数和强度各家不同，在设置面板正确显示，而不是一律几个档位省事」）
+
+- [x] 病因核实：面板「关闭思考」对 deepseek 发的是 `enable_thinking`（Qwen/自建 vLLM 词表），
+      DeepSeek 官方 V4 认 `thinking:{type:enabled|disabled}`；官方口径「未知参数不报错也不生效」→ 静默失效
+- [x] 注册表收敛：只留 `deepseek`（缺省，新增 `DEFAULT_AI_PROVIDER`）/ `zhipu-plan` / `ollama`；
+      其余 14 家 + `custom` 连同密钥键、设置两行一并退役（对象 override 保留给脚本内端点）
+- [x] 思考档位表 = descriptor.thinking（单一事实源）：deepseek 关闭/低/高/最高、智谱 Plan 低/高/最高
+      （glm-5.3 系强制思考，不摆无效的关闭档）、ollama 关闭(none)/低/中/高；
+      `thinkingBodyFor` 对 auto / 表外档 / 无注册表身份一律不注入
+- [x] 值按 provider 存 `aiThinkingOverrides`（与模型/上限两行同族）；删除旧全局 `aiThinking` 与
+      `AI_THINKING_STYLE`/`thinkingOptionsFor`，删除死 API `reason()`/`search()`/`reasonAndSearch()`
+- [x] 渲染器支持函数型 `SelectRow.options`（+ `refreshKey`）：core 渲染器与面板自绘渲染器同口径
+      ——选项集变了整只下拉重建，否则只回填当前值（不落盘不置脏），显示值不在选项内回落首项
+- [x] 迁移 `migrateRetiredAIKeys` 扩写五步：退役键 / 存量非法 aiProvider 回落缺省 / 覆盖表清退役键 /
+      全局 aiThinking 迁 per-provider（「中」按官方映射折 high）/ 幂等
+- [x] 顺带补录：`model-limits` 补 glm-5.3 系（131072 / 1M）；`zhipu-plan` 默认 max_tokens 8192→131072
+- [x] 测试同步 12 文件（含新增「面板思考行换表 + 值按家存 + 切回不丢」「迁移八例」「三张档位表自洽」）
+- [x] 原型产物重出（`node scripts/build-preview.mjs`，14 个行为单源域）
+- [ ] 门禁：`pnpm test` + `tsc --noEmit` + 自审 + diff 审查 → 合并回主仓 → 主仓构建部署

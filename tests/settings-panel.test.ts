@@ -226,18 +226,73 @@ describe('设置面板（settings-panel）', () => {
       const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '最大输出 token')!;
       return row.querySelector<HTMLInputElement>('input.bz-input')!;
     };
-    // 初始 = 未设置回落 opencode-go（deepseek-v4-flash 官方档 393216）；下拉初始空值无高亮
+    // 初始 = 未设置回落缺省通道 deepseek（注册表 model 为空 → 兜底档 393216）
     const sel = popup.querySelector('.bz-select')!; // AI 服务商下拉（组内首个下拉）
     const before = maxTokensInput().value;
     expect(before).toBe('393216');
-    // 切 openai（注册表第 3 项，gpt-4o-mini 档 16384，档位不同）→ 输入值应联动刷新
+    // 切 ollama（注册表第 3 项，llama3.1 档 8192，档位不同）→ 输入值应联动刷新
     sel.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const opt = popup.querySelectorAll('.bz-select-item')[2] as HTMLElement; // openai
+    const opt = popup.querySelectorAll('.bz-select-item')[2] as HTMLElement; // ollama
     opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     // refreshKey 联动写回输入框（渲染器 valueRefreshes）
     const after = maxTokensInput().value;
     expect(after).not.toBe(before);
     expect(Number(after)).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：思考档位随服务商换表（issue 411/ADR-0179）——deepseek 有「关闭」，智谱 Plan 无；值按家存', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    aiItem.click();
+    await waitGroups(popup, 1);
+
+    const rowOf = (name: string) =>
+      [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
+        (r) => r.querySelector('.bz-sp-set-name')?.textContent === name
+      )!;
+    const selOf = (name: string) => rowOf(name).querySelector<HTMLElement>('.bz-select')!;
+    const valOf = (name: string) => selOf(name).querySelector('.bz-select-val')!.textContent;
+    /** 点开下拉读选项文案（读完再点一次收起） */
+    const readOptions = (name: string): (string | null)[] => {
+      selOf(name).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const labels = [...selOf(name).querySelectorAll<HTMLElement>('.bz-select-item')].map((i) => i.textContent);
+      selOf(name).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return labels;
+    };
+    const pick = (name: string, label: string) => {
+      selOf(name).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const item = [...selOf(name).querySelectorAll<HTMLElement>('.bz-select-item')].find(
+        (i) => i.textContent === label
+      )!;
+      item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    };
+
+    // 服务商下拉 = 注册表三条通道（custom 已退役）
+    expect(readOptions('AI 服务商')).toEqual(['DeepSeek', '智谱 Plan', 'Ollama（本地）']);
+    // deepseek：五档（有「关闭」、无「中」）
+    expect(valOf('思考 reasoning')).toBe('跟随模型默认');
+    expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '关闭（省 token）', '低', '高', '最高']);
+    pick('思考 reasoning', '关闭（省 token）');
+    expect(panelState.aiThinkingOverrides).toEqual({ deepseek: 'off' });
+    expect(valOf('思考 reasoning')).toBe('关闭（省 token）');
+
+    // 切智谱 Plan：档位表换掉（glm-5.3 强制思考 → 无「关闭」），值回落该家自己的缺省
+    pick('AI 服务商', '智谱 Plan');
+    expect(valOf('思考 reasoning')).toBe('跟随模型默认');
+    expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '低', '高', '最高']);
+    pick('思考 reasoning', '最高');
+    expect(panelState.aiThinkingOverrides).toEqual({ deepseek: 'off', 'zhipu-plan': 'max' });
+
+    // 切回 deepseek：本家档位仍在（per-provider 互不污染）
+    pick('AI 服务商', 'DeepSeek');
+    expect(valOf('思考 reasoning')).toBe('关闭（省 token）');
+    expect(readOptions('思考 reasoning')).toEqual(['跟随模型默认', '关闭（省 token）', '低', '高', '最高']);
     ui.cleanup();
   });
 

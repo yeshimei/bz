@@ -18,8 +18,9 @@ export class FavoritesAIService {
   /**
    * AI 是否已配置（ticket 23 + 审查建议 C：真实读取插件 AI 配置，替代恒真的 !!this.ai）。
    * issue 334/ADR-0148 起判定口径单源 core/ai——getAIProvider() 能解析即已配置，
-   * 含 deepseek QuickAdd data.json 异步兜底、ollama 免密钥、custom 三件套齐全；
-   * 本地不再复刻第二套判定（旧同步版对 deepseek 恒真，口径偏松）。
+   * 含 deepseek QuickAdd data.json 异步兜底、ollama 免密钥（issue 411/ADR-0179 起注册表只留
+   * deepseek / zhipu-plan / ollama 三条通道）；本地不再复刻第二套判定
+   * （旧同步版对 deepseek 恒真，口径偏松）。
    */
   async isAvailable(): Promise<boolean> {
     if (!this.ai) return false;

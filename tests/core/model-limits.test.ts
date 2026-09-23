@@ -32,6 +32,12 @@ describe('resolveModelLimits', () => {
     expect(resolveModelLimits('qwen-plus-2026-05-26')?.contextWindow).toBe(1000000);
   });
 
+  it('智谱 GLM-5.3 系（issue 411/ADR-0179 补录）：主名/别名/大小写/快照名同档', () => {
+    expect(resolveModelLimits('glm-5.3-flash')?.maxOutput).toBe(131072);
+    expect(resolveModelLimits('GLM-5.3-Flash')?.contextWindow).toBe(1000000); // 大小写归一
+    expect(resolveModelLimits('glm-5.3-flash-2026-09')?.maxOutput).toBe(131072); // 快照名落主条目
+  });
+
   it('未收录 / 空模型名返回 null（由调用方回落注册表默认，不在此造兜底值）', () => {
     expect(resolveModelLimits('some-unknown-model')).toBeNull();
     expect(resolveModelLimits('')).toBeNull();

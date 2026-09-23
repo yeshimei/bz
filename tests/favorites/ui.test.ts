@@ -131,8 +131,8 @@ async function setup(): Promise<Ctx> {
     // arch-3（深审批 A）：死键 favoritesStoragePath / favoritesSortKey 不再播种——两键在 src
     // 全树零消费（ADR-0009 七路径收敛 / issue 364 退役），「退役不生效」语义由下方
     // 「设置 favoritesSortKey=title 不再生效」独立用例显式承载，setup 常驻播种反成噪音。
-    aiProvider: 'opencode-go',
-    opencodeGoApiKey: 'sk-test',
+    aiProvider: 'zhipu-plan',
+    zhipuPlanApiKey: 'sk-test',
   };
   setSettingsProvider(() => state as any);
   // issue 334：isAvailable 判定单源 core getAIProvider——桥接同一份 state（活读）并重置 provider 缓存
@@ -1153,7 +1153,7 @@ describe('添加表单', () => {
 
   it('AI 不可用 → 点 AI 整理只 notice，不调用 ai.chat', async () => {
     const ctx = await setup();
-    ctx.state.opencodeGoApiKey = ''; // 清掉 key → isAvailable false
+    ctx.state.zhipuPlanApiKey = ''; // 清掉 key → isAvailable false
     resetAIProviderCache();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);

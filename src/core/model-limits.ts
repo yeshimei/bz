@@ -50,6 +50,8 @@ export const MODEL_LIMITS: ModelLimitEntry[] = [
   { id: 'qwen3.7-plus', aliases: ['qwen-plus'], maxOutput: 131072, contextWindow: 1000000 },
   { id: 'qwen3.7-max', aliases: ['qwen-max'], maxOutput: 65536, contextWindow: 1000000 },
   { id: 'qwen3.7-flash', aliases: ['qwen-flash', 'qwen-turbo'], maxOutput: 16384, contextWindow: 1000000 },
+  // ---- 智谱 GLM-5.3 系（2026-09-23 核对官方「核心参数」：最大输出 131072 / 默认 65536 / 上下文 1M）
+  { id: 'glm-5.3-flash', aliases: ['glm-5.3-flashx', 'glm-5.3'], maxOutput: 131072, contextWindow: 1000000 },
   // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
   { id: 'claude-sonnet-4-5', aliases: ['claude-sonnet-4.5'], maxOutput: 64000, contextWindow: 200000 },
   { id: 'gpt-4o-mini', maxOutput: 16384, contextWindow: 128000 },

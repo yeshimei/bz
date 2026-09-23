@@ -2,7 +2,7 @@
 /**
  * 全域审查共享基座修复批回归（C1/C2，src/core/ai.ts）：
  * - C1 流式/非流式 AI 请求空闲超时：建连后不回包或流中途停发超 60s 必 settle 报超时（原先 Promise 永不 settle、任务转圈到重启）；
- * - C2 字符串 override 解析结果不写全局缓存：getAIProvider('openai') 后无参调用仍解析当前设置的 provider。
+ * - C2 字符串 override 解析结果不写全局缓存：getAIProvider('zhipu-plan') 后无参调用仍解析当前设置的 provider。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
@@ -19,7 +19,7 @@ import { requestUrl } from '../mock-obsidian-entry';
 const BASE_SETTINGS = {
   aiProvider: 'deepseek',
   deepseekApiKey: 'sk-deepseek-test',
-  openaiApiKey: 'sk-openai-test',
+  zhipuPlanApiKey: 'sk-zhipu-plan-test',
 };
 
 describe('AI 请求超时与缓存隔离（sweep-core C1/C2）', () => {
@@ -140,9 +140,9 @@ describe('AI 请求超时与缓存隔离（sweep-core C1/C2）', () => {
   });
 
   it('C2 字符串 override 不写缓存：无参调用仍解析当前设置的 provider，缓存本身照常生效', async () => {
-    const viaOverride = await getAIProvider('openai');
-    expect(viaOverride.endpoint).toBe('https://api.openai.com/v1');
-    expect(viaOverride.apiKey).toBe('sk-openai-test');
+    const viaOverride = await getAIProvider('zhipu-plan');
+    expect(viaOverride.endpoint).toBe('https://open.bigmodel.cn/api/coding/paas/v4');
+    expect(viaOverride.apiKey).toBe('sk-zhipu-plan-test');
 
     const noArg = await getAIProvider();
     expect(noArg.endpoint).toBe('https://api.deepseek.com'); // 未被 override 的 openai 结果污染

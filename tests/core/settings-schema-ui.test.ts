@@ -110,7 +110,7 @@ describe('renderSettingsInto：绑定与落盘', () => {
               binding: { key: 'aiProvider' },
               options: [
                 { value: 'deepseek', label: 'DeepSeek' },
-                { value: 'opencode-go', label: 'OpenCode Go' },
+                { value: 'ollama', label: 'Ollama（本地）' },
               ],
             },
           ],
@@ -118,10 +118,10 @@ describe('renderSettingsInto：绑定与落盘', () => {
       ],
     });
     const dd = controlOf(findRow(container, '服务商'));
-    expect(dd.options).toEqual({ deepseek: 'DeepSeek', 'opencode-go': 'OpenCode Go' });
-    expect(dd.value).toBe('opencode-go');
-    dd.trigger('deepseek');
-    expect(state.aiProvider).toBe('deepseek');
+    expect(dd.options).toEqual({ deepseek: 'DeepSeek', ollama: 'Ollama（本地）' });
+    expect(dd.value).toBe('deepseek'); // 绑定现值（DEFAULT_SETTINGS 缺省通道）
+    dd.trigger('ollama');
+    expect(state.aiProvider).toBe('ollama');
     expect(saver).toHaveBeenCalledTimes(1);
   });
 
@@ -489,31 +489,31 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
   }
 
   it('模型名称/最大输出 token 两行渲染，初始值 = 当前模型官方最大档（issue 342/ADR-0151）', () => {
-    state.aiProvider = 'opencode-go';
+    state.aiProvider = 'zhipu-plan';
     const container = document.createElement('div');
     renderProviderRows(container);
     const modelRow = findRow(container, '模型名称');
     const maxTokensRow = findRow(container, '最大输出 token');
-    // 初始 = 按模型名查官方档（opencode-go: model deepseek-v4-flash → 384K 输出）；
+    // 初始 = 按模型名查官方档（zhipu-plan: model glm-5.3-flash → 128K 输出）；
     // 「上下文窗口」行已删（issue 342 后续：模型固有属性、零消费点）
-    expect(textControlOf(modelRow).value).toBe('deepseek-v4-flash');
+    expect(textControlOf(modelRow).value).toBe('glm-5.3-flash');
     expect([...container.querySelectorAll('.setting-item')].some(
       (s) => (s as HTMLElement).dataset.name === '上下文窗口'
     )).toBe(false);
-    expect(textControlOf(maxTokensRow).value).toBe('393216');
+    expect(textControlOf(maxTokensRow).value).toBe('131072');
   });
 
   it('输入覆盖值写入 per-provider map；清空回落注册表默认', () => {
-    state.aiProvider = 'openai';
+    state.aiProvider = 'ollama';
     const container = document.createElement('div');
     renderProviderRows(container);
     const modelRow = findRow(container, '模型名称');
-    // 初始 = openai 注册表默认 gpt-4o-mini
-    expect(textControlOf(modelRow).value).toBe('gpt-4o-mini');
-    textControlOf(modelRow).trigger('gpt-4o');
-    expect(state.aiModelOverrides?.openai).toBe('gpt-4o');
+    // 初始 = ollama 注册表默认 llama3.1
+    expect(textControlOf(modelRow).value).toBe('llama3.1');
+    textControlOf(modelRow).trigger('my-local-model');
+    expect(state.aiModelOverrides?.ollama).toBe('my-local-model');
     textControlOf(modelRow).trigger('');
-    expect(state.aiModelOverrides?.openai).toBeUndefined(); // 清空 = 回落默认
+    expect(state.aiModelOverrides?.ollama).toBeUndefined(); // 清空 = 回落默认
   });
 
   it('切换 provider 后两行值联动刷新（onRefresh）', () => {
@@ -522,17 +522,51 @@ describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
     state.aiMaxTokensOverrides = {};
     const container = document.createElement('div');
     renderProviderRows(container);
-    // 先看 openai 时的默认
+    // 先看 ollama 时的默认
     const providerRow = findRow(container, 'AI 服务商');
     const dd = controlOf(providerRow);
-    dd.trigger('openai');
-    // 触发 reevaluate（select onChange 后渲染器自动 reevaluate → custom onRefresh 刷新）
-    expect(textControlOf(findRow(container, '模型名称')).value).toBe('gpt-4o-mini');
-    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('16384');
+    dd.trigger('ollama');
+    // 触发 reevaluate（select onChange 后渲染器自动 reevaluate → 行级联动刷新）
+    expect(textControlOf(findRow(container, '模型名称')).value).toBe('llama3.1');
+    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('8192');
     // 再切 deepseek（注册表 model 为空 → 兜底档 = 端点在售模型官方最大档）
     dd.trigger('deepseek');
     expect(textControlOf(findRow(container, '模型名称')).value).toBe(''); // deepseek 注册表 model 为空
     expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('393216');
+  });
+
+  it('思考行随服务商换表（issue 411/ADR-0179）：档位按家显示、值按家存、切回不丢', () => {
+    state.aiProvider = 'deepseek';
+    state.aiThinkingOverrides = {};
+    const container = document.createElement('div');
+    renderProviderRows(container);
+    // 动态选项行切换服务商时整只下拉重建（controlEl 清空 + 新 <select>），
+    // mock 的 controls 数组保留旧件——取「当前在场」的最后一个 trigger 控件
+    const liveDd = () =>
+      [...((findRow(container, '思考 reasoning') as any).__setting.controls as any[])]
+        .reverse()
+        .find((c) => typeof c.trigger === 'function');
+
+    // deepseek：有「关闭」无「中」
+    expect(Object.keys(liveDd().options)).toEqual(['auto', 'off', 'low', 'high', 'max']);
+    liveDd().trigger('off');
+    expect(state.aiThinkingOverrides).toEqual({ deepseek: 'off' });
+
+    // 切智谱 Plan：换表（glm-5.3 强制思考 → 无「关闭」），该家自己的值缺省 auto
+    const providerDd = () =>
+      [...((findRow(container, 'AI 服务商') as any).__setting.controls as any[])]
+        .reverse()
+        .find((c) => typeof c.trigger === 'function');
+    providerDd().trigger('zhipu-plan');
+    expect(Object.keys(liveDd().options)).toEqual(['auto', 'low', 'high', 'max']);
+    expect(liveDd().value).toBe('auto');
+    liveDd().trigger('max');
+    expect(state.aiThinkingOverrides).toEqual({ deepseek: 'off', 'zhipu-plan': 'max' });
+
+    // 切回 deepseek：本家档位仍在（per-provider 互不污染）
+    providerDd().trigger('deepseek');
+    expect(liveDd().value).toBe('off');
+    expect(Object.keys(liveDd().options)).toEqual(['auto', 'off', 'low', 'high', 'max']);
   });
 });
 

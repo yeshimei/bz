@@ -176,9 +176,19 @@ interface SelectRow extends RowBase {
   type: 'select';
   name: string;
   binding: RowBinding<string>;
-  /** 选项（对象字面量书写，Q1 拍板） */
-  options: Array<{ value: string; label: string }>;
+  /** 选项（对象字面量书写，Q1 拍板）。函数形式 = 随快照求值（issue 411/ADR-0179：思考档位随
+   *  「AI 服务商」切换换表——档位词表是 provider 属性，固定五档会把不生效的档摆给用户） */
+  options: SelectOption[] | ((snapshot: SettingsSnapshot) => SelectOption[]);
+  /** 值随快照联动重读（语义同 TextualCommit.refreshKey）；与函数型 options 同用时，任意行变更后
+   *  重建选项并回填当前 provider 的值（不落盘、不置脏） */
+  refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
   onChange?: (value: string, ctx: SettingsRowContext) => void;
+}
+
+/** 下拉选项（静态数组与函数求值共用） */
+export interface SelectOption {
+  value: string;
+  label: string;
 }
 
 interface SliderRow extends RowBase {
@@ -791,22 +801,55 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       case 'select': {
         const acc = bindValue(row.binding);
         const setting = newRowSetting(body, row);
-        setting.addDropdown((dd) => {
-          for (const opt of row.options) dd.addOption(opt.value, opt.label);
-          // 空值回退首个选项（对齐原 diary 行 `s[field] || options[0][0]` 口径，防 undefined 值 setValue 抛错）
-          dd.setValue(String(acc.read() ?? '') || row.options[0].value);
-          dd.onChange(async (v) => {
-            acc.write(v);
-            // 显隐随值同步切换（原 refreshKeys 口径）
-            reevaluate();
-            try {
-              await acc.persist();
-            } catch (e) {
-              notifySaveError(e, row.name); // N5 同口径
-            }
-            row.onChange?.(v, ctx);
+        /** 选项求值：静态数组原样返回，函数形式随快照重取（服务商切换后换表） */
+        const readOptions = (): SelectOption[] =>
+          typeof row.options === 'function' ? row.options(currentSnapshot()) : row.options;
+        /** 当前应显示值：绑定值不在选项内（空/历史遗留档位）→ 回落首个选项（原「空值回退首项」口径）。
+         *  与 core/thinkingBodyFor「不在表内不注入」同口径——显示值不许落在选项外。 */
+        const currentValue = (opts: SelectOption[]): string => {
+          const v = String(acc.read() ?? '');
+          return opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
+        };
+        let dd: { setValue: (v: string) => void } | null = null;
+        let optSig: string | null = null;
+        const mount = (): void => {
+          // 重建先清控件区（选项集变化 = 换了一张表，旧 <select> 的 option 不能留）
+          while (setting.controlEl.firstChild) setting.controlEl.removeChild(setting.controlEl.firstChild);
+          setting.addDropdown((d) => {
+            dd = d as unknown as { setValue: (v: string) => void };
+            const opts = readOptions();
+            for (const opt of opts) d.addOption(opt.value, opt.label);
+            d.setValue(currentValue(opts));
+            d.onChange(async (v) => {
+              acc.write(v);
+              // 显隐随值同步切换（原 refreshKeys 口径）
+              reevaluate();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name); // N5 同口径
+              }
+              row.onChange?.(v, ctx);
+            });
           });
-        });
+        };
+        mount();
+        optSig = readOptions().map((o) => o.value).join('\u0001');
+        // 联动刷新（issue 411/ADR-0179）：选项集变了 → 整只下拉重建；否则只回填当前值（不落盘）。
+        // 与 text/number 行的 refreshKey 同一登记表（任意行变更后统一重求值）
+        if (row.refreshKey !== undefined || typeof row.options === 'function') {
+          const sync = (): void => {
+            const opts = readOptions();
+            const sig = opts.map((o) => o.value).join('\u0001');
+            if (sig !== optSig) {
+              optSig = sig;
+              mount();
+              return;
+            }
+            dd?.setValue(currentValue(opts));
+          };
+          customRefreshes.push(sync);
+        }
         return;
       }
       case 'choiceCards': {

@@ -1,4 +1,4 @@
-/* 源指纹 8f31a0c1c3a25144 · 仓内输入 113 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d14dce936d7ec9d8 · 仓内输入 113 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -7137,6 +7137,8 @@ ${c.trim()}
         { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
         { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
         { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
+        // ---- 智谱 GLM-5.3 系（2026-09-23 核对官方「核心参数」：最大输出 131072 / 默认 65536 / 上下文 1M）
+        { id: "glm-5.3-flash", aliases: ["glm-5.3-flashx", "glm-5.3"], maxOutput: 131072, contextWindow: 1e6 },
         // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
         { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
         { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
@@ -7166,25 +7168,23 @@ ${c.trim()}
     return _settingsProvider ? _settingsProvider() : {};
   }
   function getProviderDescriptor(id) {
-    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
+    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === DEFAULT_AI_PROVIDER) || AI_PROVIDER_REGISTRY[0];
   }
-  function thinkingOptionsFor(level, style) {
-    if (style === "none") return null;
-    if (level === "off") {
-      if (style === "enable") return { enable_thinking: false };
-      if (style === "zhipu") return { thinking: { type: "disabled" } };
-      return null;
-    }
-    if (level !== "low" && level !== "medium" && level !== "high") return null;
-    if (style === "effort") return { reasoning_effort: level };
-    if (style === "enable") return { enable_thinking: true };
-    return { thinking: { type: "enabled" } };
+  function thinkingLevelsOf(providerId) {
+    var _a, _b;
+    return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
+  }
+  function thinkingBodyFor(providerId, level) {
+    var _a;
+    if (!providerId || !level || level === "auto") return null;
+    const hit = thinkingLevelsOf(providerId).find((l) => l.value === level);
+    return (_a = hit == null ? void 0 : hit.body) != null ? _a : null;
   }
   function hasExplicitThinkingOption(mo) {
     return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
   }
   async function getAIProvider(override) {
-    var _a, _b, _c;
+    var _a, _b;
     if (!override && _aiProviderCache) return _aiProviderCache;
     const cacheable = !override;
     const cachePut = (p) => {
@@ -7201,23 +7201,8 @@ ${c.trim()}
         defaultMaxTokens: override.defaultMaxTokens
       };
     }
-    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
+    const name = typeof override === "string" && override || s.aiProvider || DEFAULT_AI_PROVIDER;
     const desc = getProviderDescriptor(name);
-    if (name === "custom") {
-      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
-      if (!endpoint || !s.aiCustomApiKey) {
-        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
-      }
-      const customLimits = resolveModelLimits(s.aiCustomModel || "");
-      return cachePut({
-        id: "custom",
-        endpoint,
-        apiKey: s.aiCustomApiKey,
-        model: s.aiCustomModel || void 0,
-        extraHeaders: desc.extraHeaders,
-        defaultMaxTokens: ((_a = s.aiMaxTokensOverrides) == null ? void 0 : _a["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
-      });
-    }
     const key = s[desc.apiKeyKey];
     if (!key && name === "deepseek") {
       try {
@@ -7238,8 +7223,8 @@ ${c.trim()}
     if (!key && name !== "ollama") {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
-    const overrideModel = (_b = s.aiModelOverrides) == null ? void 0 : _b[name];
-    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
+    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
     const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
@@ -7428,7 +7413,7 @@ ${c.trim()}
   function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
     return new AIService(params, defaultModel, defaultOptions);
   }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
+  var _settingsProvider, THINK_AUTO, THINK_OFF, THINK_LOW, THINK_MEDIUM, THINK_HIGH, THINK_MAX, DEFAULT_AI_PROVIDER, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -7436,6 +7421,13 @@ ${c.trim()}
       init_model_limits();
       init_crypto();
       _settingsProvider = null;
+      THINK_AUTO = { value: "auto", label: "跟随模型默认", body: null };
+      THINK_OFF = { value: "off", label: "关闭（省 token）", body: null };
+      THINK_LOW = { value: "low", label: "低", body: null };
+      THINK_MEDIUM = { value: "medium", label: "中", body: null };
+      THINK_HIGH = { value: "high", label: "高", body: null };
+      THINK_MAX = { value: "max", label: "最高", body: null };
+      DEFAULT_AI_PROVIDER = "deepseek";
       AI_PROVIDER_REGISTRY = [
         {
           id: "deepseek",
@@ -7448,72 +7440,17 @@ ${c.trim()}
           defaultMaxTokens: 393216,
           apiKeyKey: "deepseekApiKey",
           apiKeyLabel: "DeepSeek 密钥",
-          apiKeyDesc: "留空则自动回退读取外部配置密钥"
-        },
-        {
-          id: "opencode-go",
-          label: "OpenCode Go",
-          endpoint: "https://opencode.ai/zen/go/v1",
-          model: "deepseek-v4-flash",
-          // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
-          defaultMaxTokens: 393216,
-          apiKeyKey: "opencodeGoApiKey",
-          apiKeyLabel: "OpenCode 密钥",
-          apiKeyDesc: "在订阅官网获取后填入这里",
-          noCors: true
-        },
-        {
-          id: "openai",
-          label: "OpenAI",
-          endpoint: "https://api.openai.com/v1",
-          model: "gpt-4o-mini",
-          defaultMaxTokens: 16384,
-          apiKeyKey: "openaiApiKey",
-          apiKeyLabel: "OpenAI 密钥",
-          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
-        },
-        {
-          id: "anthropic",
-          label: "Anthropic（Claude）",
-          endpoint: "https://api.anthropic.com/v1",
-          model: "claude-sonnet-4-5",
-          defaultMaxTokens: 64e3,
-          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-          apiKeyKey: "anthropicApiKey",
-          apiKeyLabel: "Anthropic 密钥",
-          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
-          extraHeaders: { "anthropic-version": "2023-06-01" }
-        },
-        {
-          id: "google",
-          label: "Google Gemini",
-          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
-          model: "gemini-2.0-flash",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "googleApiKey",
-          apiKeyLabel: "Gemini 密钥",
-          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
-        },
-        {
-          id: "moonshot",
-          label: "Moonshot（Kimi）",
-          endpoint: "https://api.moonshot.cn/v1",
-          model: "kimi-k2-0711-preview",
-          defaultMaxTokens: 131072,
-          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-          apiKeyKey: "moonshotApiKey",
-          apiKeyLabel: "Kimi 密钥",
-          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
-        },
-        {
-          id: "zhipu",
-          label: "智谱（GLM）",
-          endpoint: "https://open.bigmodel.cn/api/paas/v4",
-          model: "glm-4-flash",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "zhipuApiKey",
-          apiKeyLabel: "智谱密钥",
-          apiKeyDesc: "在智谱开放平台获取后填入这里"
+          apiKeyDesc: "留空则自动回退读取外部配置密钥",
+          // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
+          thinking: {
+            levels: [
+              THINK_AUTO,
+              { ...THINK_OFF, body: { thinking: { type: "disabled" } } },
+              { ...THINK_LOW, body: { thinking: { type: "enabled" }, reasoning_effort: "low" } },
+              { ...THINK_HIGH, body: { thinking: { type: "enabled" }, reasoning_effort: "high" } },
+              { ...THINK_MAX, body: { thinking: { type: "enabled" }, reasoning_effort: "max" } }
+            ]
+          }
         },
         {
           // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
@@ -7521,81 +7458,20 @@ ${c.trim()}
           label: "智谱 Plan",
           endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
           model: "glm-5.3-flash",
-          defaultMaxTokens: 8192,
+          // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
+          defaultMaxTokens: 131072,
           apiKeyKey: "zhipuPlanApiKey",
           apiKeyLabel: "智谱 Plan 密钥",
-          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
-        },
-        {
-          id: "dashscope",
-          label: "阿里云百炼（通义）",
-          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-          model: "qwen-plus",
-          // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
-          defaultMaxTokens: 131072,
-          apiKeyKey: "dashscopeApiKey",
-          apiKeyLabel: "百炼密钥",
-          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
-        },
-        {
-          id: "siliconflow",
-          label: "硅基流动",
-          endpoint: "https://api.siliconflow.cn/v1",
-          model: "deepseek-ai/DeepSeek-V3",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "siliconflowApiKey",
-          apiKeyLabel: "硅基流动密钥",
-          apiKeyDesc: "在硅基流动官网获取后填入这里"
-        },
-        {
-          id: "openrouter",
-          label: "OpenRouter",
-          endpoint: "https://openrouter.ai/api/v1",
-          model: "deepseek/deepseek-chat",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "openrouterApiKey",
-          apiKeyLabel: "OpenRouter 密钥",
-          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
-        },
-        {
-          id: "xai",
-          label: "xAI（Grok）",
-          endpoint: "https://api.x.ai/v1",
-          model: "grok-2-latest",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "xaiApiKey",
-          apiKeyLabel: "xAI 密钥",
-          apiKeyDesc: "在 xAI 控制台获取后填入这里"
-        },
-        {
-          id: "groq",
-          label: "Groq",
-          endpoint: "https://api.groq.com/openai/v1",
-          model: "llama-3.3-70b-versatile",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "groqApiKey",
-          apiKeyLabel: "Groq 密钥",
-          apiKeyDesc: "在 Groq 控制台获取后填入这里"
-        },
-        {
-          id: "mistral",
-          label: "Mistral",
-          endpoint: "https://api.mistral.ai/v1",
-          model: "mistral-large-latest",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "mistralApiKey",
-          apiKeyLabel: "Mistral 密钥",
-          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
-        },
-        {
-          id: "together",
-          label: "Together AI",
-          endpoint: "https://api.together.xyz/v1",
-          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "togetherApiKey",
-          apiKeyLabel: "Together 密钥",
-          apiKeyDesc: "在 Together AI 官网获取后填入这里"
+          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同",
+          // 思考：glm-5.3 / 5.3-flash **强制思考**（发 disabled 无效），故只给强度档
+          thinking: {
+            levels: [
+              THINK_AUTO,
+              { ...THINK_LOW, body: { reasoning_effort: "low" } },
+              { ...THINK_HIGH, body: { reasoning_effort: "high" } },
+              { ...THINK_MAX, body: { reasoning_effort: "max" } }
+            ]
+          }
         },
         {
           id: "ollama",
@@ -7605,38 +7481,19 @@ ${c.trim()}
           defaultMaxTokens: 8192,
           apiKeyKey: "ollamaApiKey",
           apiKeyLabel: "Ollama 密钥",
-          apiKeyDesc: "本地服务无需密钥，留空即可"
-        },
-        {
-          id: "custom",
-          label: "自定义（OpenAI 兼容）",
-          endpoint: "",
-          model: "",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "aiCustomApiKey",
-          apiKeyLabel: "自定义 API 密钥",
-          apiKeyDesc: "在服务官网获取后填入这里"
+          apiKeyDesc: "本地服务无需密钥，留空即可",
+          // 思考：兼容层把 reasoning_effort 映射为内部 Think（none = 关；省略 = 有能力则开）
+          thinking: {
+            levels: [
+              THINK_AUTO,
+              { ...THINK_OFF, body: { reasoning_effort: "none" } },
+              { ...THINK_LOW, body: { reasoning_effort: "low" } },
+              { ...THINK_MEDIUM, body: { reasoning_effort: "medium" } },
+              { ...THINK_HIGH, body: { reasoning_effort: "high" } }
+            ]
+          }
         }
       ];
-      AI_THINKING_STYLE = {
-        openai: "effort",
-        openrouter: "effort",
-        anthropic: "effort",
-        google: "effort",
-        groq: "effort",
-        xai: "effort",
-        together: "effort",
-        mistral: "effort",
-        siliconflow: "effort",
-        deepseek: "enable",
-        "opencode-go": "enable",
-        dashscope: "enable",
-        zhipu: "zhipu",
-        "zhipu-plan": "zhipu",
-        moonshot: "none",
-        ollama: "none",
-        custom: "none"
-      };
       _aiProviderCache = null;
       AI_IDLE_TIMEOUT_MS = 6e4;
       AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
@@ -7659,6 +7516,7 @@ ${c.trim()}
          *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
          *  既有调用（不传这两项）行为零变化 */
         async prompt(input, model = this.defaultModel, options = {}) {
+          var _a;
           const mergedOptions = this._mergeOptions(options);
           const provider = await getAIProvider(mergedOptions.provider);
           const s = getQ3Settings();
@@ -7677,8 +7535,7 @@ ${c.trim()}
             body[k] = mo[k];
           }
           if (!hasExplicitThinkingOption(mo)) {
-            const style = AI_THINKING_STYLE[provider.id || ""] || "none";
-            const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+            const thinking = thinkingBodyFor(provider.id, (_a = s.aiThinkingOverrides) == null ? void 0 : _a[provider.id || ""]);
             if (thinking) Object.assign(body, thinking);
           }
           const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
@@ -7700,28 +7557,10 @@ ${c.trim()}
         async chat(input, extraOptions = {}) {
           return this.prompt(input, "deepseek-v4-flash", extraOptions);
         }
-        /** 推理模型，自动开启思考模式 */
-        async reason(input, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(input, "deepseek-v4-flash", options);
-        }
-        /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(input, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(input, "deepseek-v4-flash", options);
-        }
         /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
         async json(input, extraOptions = {}) {
           const options = this._prepareOptions(extraOptions, {
             response_format: { type: "json_object" }
-          });
-          return this.prompt(input, "deepseek-v4-flash", options);
-        }
-        /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(input, extraOptions = {}) {
-          const options = this._prepareOptions(extraOptions, {
-            enable_thinking: true,
-            search: true
           });
           return this.prompt(input, "deepseek-v4-flash", options);
         }
@@ -20283,22 +20122,49 @@ ${body}`;
         case "select": {
           const acc = bindValue(row.binding);
           const setting = newRowSetting(body, row);
-          setting.addDropdown((dd) => {
-            var _a3;
-            for (const opt of row.options) dd.addOption(opt.value, opt.label);
-            dd.setValue(String((_a3 = acc.read()) != null ? _a3 : "") || row.options[0].value);
-            dd.onChange(async (v) => {
-              var _a4;
-              acc.write(v);
-              reevaluate();
-              try {
-                await acc.persist();
-              } catch (e) {
-                notifySaveError(e, row.name);
-              }
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
+          const readOptions = () => typeof row.options === "function" ? row.options(currentSnapshot()) : row.options;
+          const currentValue = (opts) => {
+            var _a3, _b2, _c2;
+            const v = String((_a3 = acc.read()) != null ? _a3 : "");
+            return opts.some((o) => o.value === v) ? v : (_c2 = (_b2 = opts[0]) == null ? void 0 : _b2.value) != null ? _c2 : "";
+          };
+          let dd = null;
+          let optSig = null;
+          const mount = () => {
+            while (setting.controlEl.firstChild) setting.controlEl.removeChild(setting.controlEl.firstChild);
+            setting.addDropdown((d) => {
+              dd = d;
+              const opts = readOptions();
+              for (const opt of opts) d.addOption(opt.value, opt.label);
+              d.setValue(currentValue(opts));
+              d.onChange(async (v) => {
+                var _a3;
+                acc.write(v);
+                reevaluate();
+                try {
+                  await acc.persist();
+                } catch (e) {
+                  notifySaveError(e, row.name);
+                }
+                (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+              });
             });
-          });
+          };
+          mount();
+          optSig = readOptions().map((o) => o.value).join("");
+          if (row.refreshKey !== void 0 || typeof row.options === "function") {
+            const sync = () => {
+              const opts = readOptions();
+              const sig = opts.map((o) => o.value).join("");
+              if (sig !== optSig) {
+                optSig = sig;
+                mount();
+                return;
+              }
+              dd == null ? void 0 : dd.setValue(currentValue(opts));
+            };
+            customRefreshes.push(sync);
+          }
           return;
         }
         case "choiceCards": {
@@ -21816,7 +21682,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function renderRow(row, refresh, regRefresh) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const rowName = row.name;
     const bindKey = (_a = row.binding) == null ? void 0 : _a.key;
     const isCustom = row.type === "custom";
@@ -21994,119 +21860,160 @@ ${bodyText.substring(0, 6e3)}`;
       }
       case "select": {
         const acc = bindValue(row.binding);
-        const options = row.options;
-        const labelOf = (v) => (options.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_k = acc.read()) != null ? _k : "") || options[0] && options[0].value || ""));
-        const sel = ctrlEl.querySelector(".bz-select");
-        const vspan = sel.querySelector(".bz-select-val");
-        let group = null;
-        let docH = null;
-        let escLayer = null;
-        const closeMenu2 = () => {
-          var _a2;
-          (_a2 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a2.remove();
-          sel.setAttribute("aria-expanded", "false");
-          if (escLayer) {
-            escLayer.unregister();
-            escLayer = null;
-          }
-          if (group && !group.querySelector(".bz-select-menu")) {
-            group.style.overflow = "";
-            group.style.zIndex = "";
-          }
-          if (docH) document.removeEventListener("click", docH);
+        const readOptions = () => typeof row.options === "function" ? row.options(snapshot()) : row.options;
+        const optSigOf = (opts) => opts.map((o) => o.value).join("");
+        const displayValue = (opts) => {
+          var _a2, _b2, _c2;
+          const v = String((_a2 = acc.read()) != null ? _a2 : "");
+          return opts.some((o) => o.value === v) ? v : (_c2 = (_b2 = opts[0]) == null ? void 0 : _b2.value) != null ? _c2 : "";
         };
-        const moveHighlight = (delta) => {
-          const items = [...sel.querySelectorAll(".bz-select-item")];
-          if (!items.length) return;
-          const curIdx = items.findIndex((it) => it.classList.contains("is-on"));
-          const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
-          items.forEach((it, i) => {
-            const on = i === nextIdx;
-            it.classList.toggle("is-on", on);
-            it.setAttribute("aria-selected", String(on));
-          });
-        };
-        const applyOption = (o) => {
-          var _a2;
-          try {
-            acc.write(o.value);
-          } catch (e) {
-            notifyWriteError(e);
-            closeMenu2();
-            return;
-          }
-          closeMenu2();
-          vspan.textContent = labelOf(o.value);
-          motionSelectPick(sel);
-          safePersist(() => acc.persist(), rowName || "下拉设置");
-          (_a2 = row.onChange) == null ? void 0 : _a2.call(row, o.value, ctx);
-          refresh();
-        };
-        const openMenu = () => {
-          var _a2;
-          if (sel.querySelector(".bz-select-menu")) return;
-          group = sel.closest(".bz-sp-group");
-          if (group) {
-            group.style.overflow = "visible";
-            group.style.zIndex = "10";
-          }
-          const menu = document.createElement("div");
-          menu.className = "bz-select-menu";
-          menu.setAttribute("role", "listbox");
-          const curNow = String((_a2 = acc.read()) != null ? _a2 : "") || options[0] && options[0].value || "";
-          menu.innerHTML = options.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
-          menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
-          menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
-            const o = options[i];
-            it.addEventListener("click", (ev) => {
-              ev.stopPropagation();
-              applyOption(o);
-            });
-          });
-          sel.appendChild(menu);
-          sel.setAttribute("aria-expanded", "true");
-          mountIcons(menu);
-          docH = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
-          };
-          setTimeout(() => document.addEventListener("click", docH));
-          escLayer = escManager.register("bz-ui-select", {
-            isVisible: () => !!sel.querySelector(".bz-select-menu"),
-            close: () => closeMenu2()
-          });
-        };
-        sel.addEventListener("click", () => {
-          if (sel.querySelector(".bz-select-menu")) closeMenu2();
-          else openMenu();
-        });
-        sel.addEventListener("keydown", (e) => {
-          const menu = sel.querySelector(".bz-select-menu");
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            if (menu) {
-              const items = [...menu.querySelectorAll(".bz-select-item")];
-              const idx = items.findIndex((it) => it.classList.contains("is-on"));
-              if (idx >= 0) applyOption(options[idx]);
-              else closeMenu2();
-            } else {
-              openMenu();
+        let vspan = null;
+        let teardown = null;
+        const mount = () => {
+          teardown == null ? void 0 : teardown();
+          teardown = null;
+          const options = readOptions();
+          const labelOf = (v) => (options.find((o) => o.value === v) || { label: v }).label;
+          ctrlEl.innerHTML = selectTriggerHtml(labelOf(displayValue(options)));
+          const sel = ctrlEl.querySelector(".bz-select");
+          vspan = sel.querySelector(".bz-select-val");
+          let group = null;
+          let docH = null;
+          let docTimer = null;
+          let escLayer = null;
+          const closeMenu2 = () => {
+            var _a2;
+            (_a2 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a2.remove();
+            sel.setAttribute("aria-expanded", "false");
+            if (escLayer) {
+              escLayer.unregister();
+              escLayer = null;
             }
-            return;
-          }
-          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!menu) openMenu();
-            moveHighlight(e.key === "ArrowDown" ? 1 : -1);
-          }
-        });
+            if (group && !group.querySelector(".bz-select-menu")) {
+              group.style.overflow = "";
+              group.style.zIndex = "";
+            }
+            if (docTimer !== null) {
+              clearTimeout(docTimer);
+              docTimer = null;
+            }
+            if (docH) document.removeEventListener("click", docH);
+          };
+          teardown = () => {
+            if (docTimer !== null) {
+              clearTimeout(docTimer);
+              docTimer = null;
+            }
+            closeMenu2();
+            docH = null;
+          };
+          const moveHighlight = (delta) => {
+            const items = [...sel.querySelectorAll(".bz-select-item")];
+            if (!items.length) return;
+            const curIdx = items.findIndex((it) => it.classList.contains("is-on"));
+            const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+            items.forEach((it, i) => {
+              const on = i === nextIdx;
+              it.classList.toggle("is-on", on);
+              it.setAttribute("aria-selected", String(on));
+            });
+          };
+          const applyOption = (o) => {
+            var _a2;
+            try {
+              acc.write(o.value);
+            } catch (e) {
+              notifyWriteError(e);
+              closeMenu2();
+              return;
+            }
+            closeMenu2();
+            vspan.textContent = labelOf(o.value);
+            motionSelectPick(sel);
+            safePersist(() => acc.persist(), rowName || "下拉设置");
+            (_a2 = row.onChange) == null ? void 0 : _a2.call(row, o.value, ctx);
+            refresh();
+          };
+          const openMenu = () => {
+            if (sel.querySelector(".bz-select-menu")) return;
+            group = sel.closest(".bz-sp-group");
+            if (group) {
+              group.style.overflow = "visible";
+              group.style.zIndex = "10";
+            }
+            const menu = document.createElement("div");
+            menu.className = "bz-select-menu";
+            menu.setAttribute("role", "listbox");
+            const curNow = displayValue(options);
+            menu.innerHTML = options.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+            menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
+            menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
+              const o = options[i];
+              it.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                applyOption(o);
+              });
+            });
+            sel.appendChild(menu);
+            sel.setAttribute("aria-expanded", "true");
+            mountIcons(menu);
+            docH = (ev) => {
+              if (!sel.contains(ev.target)) closeMenu2();
+            };
+            docTimer = setTimeout(() => {
+              if (docH) document.addEventListener("click", docH);
+            });
+            escLayer = escManager.register("bz-ui-select", {
+              isVisible: () => !!sel.querySelector(".bz-select-menu"),
+              close: () => closeMenu2()
+            });
+          };
+          sel.addEventListener("click", () => {
+            if (sel.querySelector(".bz-select-menu")) closeMenu2();
+            else openMenu();
+          });
+          sel.addEventListener("keydown", (e) => {
+            const menu = sel.querySelector(".bz-select-menu");
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (menu) {
+                const items = [...menu.querySelectorAll(".bz-select-item")];
+                const idx = items.findIndex((it) => it.classList.contains("is-on"));
+                if (idx >= 0) applyOption(options[idx]);
+                else closeMenu2();
+              } else {
+                openMenu();
+              }
+              return;
+            }
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!menu) openMenu();
+              moveHighlight(e.key === "ArrowDown" ? 1 : -1);
+            }
+          });
+        };
+        mount();
+        let optSig = optSigOf(readOptions());
+        if (regRefresh && (row.refreshKey !== void 0 || typeof row.options === "function")) {
+          regRefresh(() => {
+            const opts = readOptions();
+            const sig = optSigOf(opts);
+            if (sig !== optSig) {
+              optSig = sig;
+              mount();
+              return;
+            }
+            if (vspan) vspan.textContent = (opts.find((o) => o.value === displayValue(opts)) || { label: "" }).label;
+          });
+        }
         break;
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_m = (_l = acc.read()) != null ? _l : row.min) != null ? _m : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_n = row.step) != null ? _n : 1, cur);
+        const cur = (_l = (_k = acc.read()) != null ? _k : row.min) != null ? _l : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_m = row.step) != null ? _m : 1, cur);
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
@@ -22118,7 +22025,7 @@ ${bodyText.substring(0, 6e3)}`;
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
           refresh();
         });
-        for (const a of (_o = row.actions) != null ? _o : []) {
+        for (const a of (_n = row.actions) != null ? _n : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -22140,7 +22047,7 @@ ${bodyText.substring(0, 6e3)}`;
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_p = acc.read()) != null ? _p : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_o = acc.read()) != null ? _o : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -22172,7 +22079,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
-        for (const a of (_q = row.actions) != null ? _q : []) {
+        for (const a of (_p = row.actions) != null ? _p : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -22212,13 +22119,13 @@ ${bodyText.substring(0, 6e3)}`;
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_r = snapshot()[layoutKey]) != null ? _r : "") : "";
+        const curLayout = layoutKey ? String((_q = snapshot()[layoutKey]) != null ? _q : "") : "";
         let opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
         if (!opts2.length) opts2 = row.options;
-        const cur = String((_s = acc.read()) != null ? _s : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_r = acc.read()) != null ? _r : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,

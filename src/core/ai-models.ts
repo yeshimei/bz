@@ -5,7 +5,7 @@
  * 纯数据层：不触 DOM、不弹 toast（报错文案抛给调用方，由设置页按钮统一提示）。
  */
 import { requestUrl } from 'obsidian';
-import { getProviderDescriptor } from './ai';
+import { getProviderDescriptor, DEFAULT_AI_PROVIDER } from './ai';
 import type { AIProviderDescriptor } from './ai';
 import { tryGetSettings } from './settings-provider';
 
@@ -32,17 +32,14 @@ export interface ModelsFetchDeps {
   }>;
 }
 
-/** 当前 settings 里的服务商描述（注册表查找失败回退 custom） */
+/** 当前 settings 里的服务商描述（注册表查找失败回退缺省服务商，与 ai.ts 解析同口径） */
 export function providerDescriptorOf(id: string): AIProviderDescriptor {
   return getProviderDescriptor(id);
 }
 
-/** 当前服务商的可拉取端点：custom（含未知名回退）用设置里的 aiCustomEndpoint，其余用注册表 endpoint */
+/** 当前服务商的可拉取端点（注册表 endpoint；三条在册通道端点均非空） */
 function endpointFor(id: string): string {
-  const s = tryGetSettings() as any;
-  const desc = providerDescriptorOf(id);
-  if (desc.id === 'custom') return String(s.aiCustomEndpoint || '').replace(/\/+$/, '');
-  return desc.endpoint.replace(/\/+$/, '');
+  return providerDescriptorOf(id).endpoint.replace(/\/+$/, '');
 }
 
 /** 当前服务商的 API key（Ollama 本地无鉴权返回空串） */
@@ -90,18 +87,11 @@ export async function fetchProviderModels(
   providerId?: string,
   deps: ModelsFetchDeps = {}
 ): Promise<ModelOption[]> {
-  const id = providerId || String((tryGetSettings() as any).aiProvider || 'opencode-go');
+  const id = providerId || String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
   const desc = providerDescriptorOf(id);
-  const s = tryGetSettings() as any;
 
-  // 端点来源：custom 用设置里的 aiCustomEndpoint；Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀）
-  let endpoint: string;
-  if (desc.id === 'ollama') {
-    endpoint = OLLAMA_BASE_URL;
-  } else {
-    endpoint = endpointFor(id);
-    if (!endpoint) throw new Error('未配置 API 地址：插件设置 → AI 配置 → 自定义 API 地址');
-  }
+  // 端点来源：Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀），其余用注册表 endpoint
+  const endpoint = desc.id === 'ollama' ? OLLAMA_BASE_URL : endpointFor(id);
 
   const key = keyFor(id);
   // 除 Ollama 本地服务外，缺 key 即拦截（对齐 getAIProvider 的拦截文案）

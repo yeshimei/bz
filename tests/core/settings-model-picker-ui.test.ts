@@ -74,7 +74,7 @@ afterEach(() => {
 
 describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
   it('按钮渲染在模型名称行内（行内嵌按钮，非独立操作行），行内同时有输入框', () => {
-    state.aiProvider = 'opencode-go';
+    state.aiProvider = 'zhipu-plan';
     const container = renderAIGroup();
     const modelRow = findRow(container, '模型名称');
     const btn = buttonOf(modelRow);
@@ -82,7 +82,7 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
     expect(btn.text).toBe('获取模型名');
     // 行内嵌按钮不挂 bz-setting-action-row（该豁免仅独立 ButtonRow）——模型行计为设置项
     expect(modelRow.classList.contains('bz-setting-action-row')).toBe(false);
-    expect(textControlOf(modelRow).value).toBe('deepseek-v4-flash');
+    expect(textControlOf(modelRow).value).toBe('glm-5.3-flash');
   });
 
   it('点击 → 拉取成功 → 弹选择器（服务商 label + 模型列表）→ 选中回填 aiModelOverrides + 落盘 + success toast', async () => {
@@ -116,11 +116,11 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
     }
   });
 
-  it('custom 服务商：选中回填 aiCustomModel；最大输出行无按钮', async () => {
-    state.aiProvider = 'custom';
-    state.aiCustomEndpoint = 'https://api.example.com/v1';
-    state.aiCustomApiKey = 'ck';
-    vi.stubGlobal('fetch', vi.fn(async () => okModels({ data: [{ id: 'taste-1' }, { id: 'taste-2' }] })));
+  it('Ollama 服务商：选中回填 aiModelOverrides.ollama；最大输出行无按钮', async () => {
+    state.aiProvider = 'ollama';
+    state.aiModelOverrides = { ollama: 'qwen3:8b' }; // 有当前值 → 置顶高亮（选中即当前值本身）
+    // Ollama 走原生 /api/tags 格式（models[].name），不是 OpenAI 兼容的 data[].id
+    vi.stubGlobal('fetch', vi.fn(async () => okModels({ models: [{ name: 'qwen3:8b' }, { name: 'llama3.1' }] })));
     try {
       const container = renderAIGroup();
       const modelRow = findRow(container, '模型名称');
@@ -128,8 +128,8 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
       await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
       const popup = document.getElementById('bz-model-picker-popup')!;
       (popup.querySelector('.bz-model-picker-row') as HTMLElement).click();
-      await vi.waitFor(() => expect(state.aiCustomModel).toBe('taste-1'));
-      expect(textControlOf(findRow(container, '模型名称')).value).toBe('taste-1');
+      await vi.waitFor(() => expect(state.aiModelOverrides?.ollama).toBe('qwen3:8b'));
+      expect(textControlOf(findRow(container, '模型名称')).value).toBe('qwen3:8b');
       // 最大输出行不渲染按钮（按钮仅模型行内嵌；该行已是标准 number 行，非 custom）
       expect(buttonOf(findRow(container, '最大输出 token'))).toBeFalsy();
       // 锁定：最大输出 token 是标准 number 行（input[type=number]，统一渲染器）
@@ -140,15 +140,15 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
   });
 
   it('失败路径：拉取报错 → error toast，设置不动', async () => {
-    state.aiProvider = 'openai';
-    state.openaiApiKey = 'bad';
+    state.aiProvider = 'zhipu-plan';
+    state.zhipuPlanApiKey = 'bad';
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) })));
     try {
       const container = renderAIGroup();
       const modelRow = findRow(container, '模型名称');
       buttonOf(modelRow).trigger();
       await vi.waitFor(() => expect(visibleToasts().some((t) => t.includes('拒绝访问'))).toBe(true));
-      expect(state.aiModelOverrides?.openai).toBeUndefined();
+      expect(state.aiModelOverrides?.['zhipu-plan']).toBeUndefined();
       expect(document.getElementById('bz-model-picker-popup')).toBeNull();
     } finally {
       vi.unstubAllGlobals();

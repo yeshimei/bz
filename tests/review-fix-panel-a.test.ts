@@ -229,8 +229,9 @@ describe('设置面板 review 回归（H1-H10）', () => {
     await waitFor(() => aiBadge() !== '·' && aiBadge() !== '—');
     const before = aiBadge();
     expect(before).not.toBe('·');
-    // 会话内改设置：AI 服务商设置后密钥行解除门控 → 可见项 +1
-    state.aiProvider = 'openai';
+    // 会话内改设置：AI 服务商设置后其密钥行解除门控 → 可见项 +1
+    // （issue 411 起注册表三条通道：切到智谱 Plan 时智谱密钥行显、DeepSeek 行隐，净 +1）
+    state.aiProvider = 'zhipu-plan';
     ui.hide();
     ui.open();
     await waitFor(() => aiBadge() === String(Number(before) + 1));
