@@ -1,5 +1,5 @@
-/* 源指纹 aea1970166087ff6 · 仓内输入 251 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 7fd04603dff743a1 · 仓内输入 252 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_review = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M13, s, ms) {
+        function createDate(y, m, d, h, M14, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M13, s, ms);
+            date = new Date(y + 400, m, d, h, M14, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M13, s, ms);
+            date = new Date(y, m, d, h, M14, s, ms);
           }
           return date;
         }
@@ -8439,7 +8439,7 @@ var BZW_review = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M13 = 10;
+    const M14 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -8466,7 +8466,7 @@ var BZW_review = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M13 || Math.abs(t.clientY - sy) > M13) {
+      if (Math.abs(t.clientX - sx) > M14 || Math.abs(t.clientY - sy) > M14) {
         moved = true;
         cancel();
       }
@@ -22724,15 +22724,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E7 = pick.E;
+      const E8 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E7, nOut, stub);
+      const E1 = along(E8, nOut, stub);
       const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E7, E1, rects) || stubDirty(T1, T3, rects);
-      const items = [S3, E7, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E8, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E8, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -23902,6 +23902,761 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/knowledge/motion.ts
+  function reduced4() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi3(el, frames, opts) {
+    if (!el || reduced4() || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after3(ms, fn) {
+    const id = setTimeout(() => {
+      timers3.delete(id);
+      fn();
+    }, ms);
+    timers3.add(id);
+  }
+  function cancelPending3() {
+    timers3.forEach(clearTimeout);
+    timers3.clear();
+  }
+  function motionClosing(el) {
+    return !!el && el.dataset.bzMotionClosing === "1";
+  }
+  function abortOut(el) {
+    const run = outRuns.get(el);
+    if (!run) return;
+    outRuns.delete(el);
+    run.abort();
+  }
+  function sweepExit(el, id) {
+    try {
+      if (typeof el.getAnimations !== "function") return;
+      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+    } catch (e) {
+    }
+  }
+  function runOut(el, id, frames, opts, done) {
+    var _a2;
+    if (!el) {
+      done();
+      return;
+    }
+    if (motionClosing(el)) return;
+    el.dataset.bzMotionClosing = "1";
+    let finished = false;
+    let anim = null;
+    const run = {
+      abort: () => {
+        run.aborted = true;
+        delete el.dataset.bzMotionClosing;
+        try {
+          anim == null ? void 0 : anim.cancel();
+        } catch (e) {
+        }
+      },
+      aborted: false
+    };
+    outRuns.set(el, run);
+    const finish = () => {
+      if (finished || run.aborted) return;
+      finished = true;
+      outRuns.delete(el);
+      delete el.dataset.bzMotionClosing;
+      try {
+        anim == null ? void 0 : anim.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    anim = waapi3(el, frames, { ...opts, fill: "forwards", id });
+    if (!anim) {
+      finish();
+      return;
+    }
+    anim.finished.then(finish).catch(() => {
+    });
+    after3(Number((_a2 = opts.duration) != null ? _a2 : 240) + 200, finish);
+  }
+  function motionMainIn(popup) {
+    cancelPending3();
+    if (!popup || reduced4()) return;
+    abortOut(popup);
+    sweepExit(popup, MAIN_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    const reopen = popup.dataset.kbMotionOpened === "1";
+    popup.dataset.kbMotionOpened = "1";
+    waapi3(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(12px) scale(.975)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? 300 : 460, easing: E3.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi3(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 160, delay: 140, easing: E3.out, fill: "backwards" }
+      );
+    }
+    const top = popup.querySelector(".bz-kb-top");
+    if (top) {
+      waapi3(
+        top,
+        [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: 60, easing: E3.out, fill: "backwards" }
+      );
+    }
+    const head = popup.querySelector(".bz-kb-head");
+    if (head) {
+      const line = document.createElement("i");
+      line.className = "bz-kb-headline";
+      line.setAttribute("aria-hidden", "true");
+      head.appendChild(line);
+      const a = waapi3(
+        line,
+        [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+        { duration: M4.base + 120, delay: 180, easing: E3.out, fill: "backwards" }
+      );
+      if (a) a.finished.then(() => line.remove()).catch(() => line.remove());
+      else line.remove();
+    }
+    popup.querySelectorAll(".bz-kb-part").forEach((b, i) => {
+      waapi3(
+        b,
+        [{ opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: 200 + i * 45, easing: E3.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionMainOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      MAIN_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(5px)" }
+      ],
+      { duration: M4.move + 40, easing: E3.out },
+      done
+    );
+  }
+  function cardFrames(to) {
+    return [
+      { opacity: 0, transform: "translateX(-7px) rotate(.2deg)", clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+      { opacity: 1, transform: to, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+    ];
+  }
+  function motionLitReveal(sc, cue) {
+    if (!sc || cue === "silent" || reduced4()) return;
+    const base = cue === "boot" ? 340 : 40;
+    const step = cue === "boot" ? STAG3 : 22;
+    sc.querySelectorAll(".bz-kb-lexrow").forEach((row, i) => {
+      if (i >= REVEAL_CAP) return;
+      waapi3(
+        row,
+        cardFrames("none"),
+        { duration: M4.base + 80, delay: base + i * step, easing: E3.out, fill: "backwards" }
+      );
+    });
+    sc.querySelectorAll(".bz-kb-entrybtn").forEach((btn, i) => {
+      waapi3(
+        btn,
+        [
+          { opacity: 0, transform: "translateY(9px)", clipPath: "inset(0 0 100% 0)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" }
+        ],
+        { duration: M4.base + 60, delay: (cue === "boot" ? 230 : 20) + i * 45, easing: E3.out, fill: "backwards" }
+      );
+    });
+    const bar = sc.querySelector(".bz-kb-cbar");
+    if (bar) {
+      waapi3(
+        bar,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: base - 60 > 0 ? base - 60 : 0, easing: E3.out, fill: "backwards" }
+      );
+    }
+    const empty = sc.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi3(
+        empty,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M4.base + 80, delay: base, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionCardsAppended(rowsEl, from, cue) {
+    if (!rowsEl || reduced4()) return;
+    const total = rowsEl.children.length;
+    if (from >= total) return;
+    if (from === 0 && cue === "silent") return;
+    const base = from > 0 ? 30 : cue === "boot" ? 340 : 50;
+    const step = from > 0 ? 18 : STAG3;
+    for (let i = from; i < total; i++) {
+      const row = rowsEl.children[i];
+      if (!row || i - from >= REVEAL_CAP) break;
+      waapi3(
+        row,
+        cardFrames("none"),
+        { duration: M4.base + 60, delay: base + (i - from) * step, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionStampBadge(badge) {
+    if (!badge || reduced4()) return;
+    waapi3(
+      badge,
+      [
+        { opacity: 0, transform: "scale(1.7) rotate(-7deg)" },
+        { opacity: 1, transform: "scale(1) rotate(0deg)" }
+      ],
+      { duration: M4.fast + 70, easing: E3.move, fill: "backwards" }
+    );
+  }
+  function motionSheetIn(ovl) {
+    if (!ovl || reduced4()) return;
+    cancelPending3();
+    waapi3(ovl, [{ opacity: 0 }, { opacity: 1 }], { duration: M4.fast, easing: E3.out, fill: "backwards" });
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    if (sheet) {
+      waapi3(
+        sheet,
+        [
+          { opacity: 0, transform: "translateY(12px) scale(.97)", filter: "blur(6px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 60, easing: E3.out, fill: "backwards" }
+      );
+      const head = sheet.querySelector(".bz-kb-sheet-head");
+      if (head) {
+        waapi3(
+          head,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: M4.base, delay: 80, easing: E3.out, fill: "backwards" }
+        );
+      }
+    }
+  }
+  function motionSheetOut(ovl, done) {
+    if (!ovl) {
+      done();
+      return;
+    }
+    if (ovl.dataset.bzMotionClosing === "1") return;
+    ovl.dataset.bzMotionClosing = "1";
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    const a = waapi3(ovl, [{ opacity: 1 }, { opacity: 0 }], { duration: M4.move - 20, easing: E3.out, fill: "forwards" });
+    const b = sheet ? waapi3(
+      sheet,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.98)", filter: "blur(4px)" }
+      ],
+      { duration: M4.move - 20, easing: E3.out, fill: "forwards" }
+    ) : null;
+    const finish = () => {
+      ovl.dataset.bzMotionClosing = "";
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+      try {
+        b == null ? void 0 : b.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    if (!a && !b) {
+      finish();
+      return;
+    }
+    let waited = 0;
+    const hit = () => {
+      waited++;
+      if (waited >= 2) finish();
+    };
+    if (a) a.finished.then(hit).catch(hit);
+    else hit();
+    if (b) b.finished.then(hit).catch(hit);
+    else hit();
+    after3(M4.move + 160, finish);
+  }
+  function motionPreviewBody(ovl) {
+    if (!ovl || reduced4()) return;
+    const body = ovl.querySelector("#bz-kb-preview-body");
+    if (body) {
+      [...body.children].forEach((el, i) => {
+        if (i >= 12) return;
+        waapi3(
+          el,
+          [
+            { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M4.base + 60, delay: 60 + i * STAG3, easing: E3.out, fill: "backwards" }
+        );
+      });
+    }
+    ovl.querySelectorAll(".bz-kb-cite").forEach((chip2, i) => {
+      waapi3(
+        chip2,
+        [{ opacity: 0, transform: "scale(.75)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.fast + 60, delay: 300 + i * 35, easing: E3.out, fill: "backwards" }
+      );
+    });
+    const link = ovl.querySelector(".bz-kb-cliplink");
+    if (link) {
+      waapi3(
+        link,
+        [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: 340, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoIn(popup) {
+    if (!popup || reduced4()) return;
+    abortOut(popup);
+    sweepExit(popup, VIDEO_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi3(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.base + 60, easing: E3.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi3(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 100, delay: 90, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoOut(popup, done) {
+    runOut(
+      popup,
+      VIDEO_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M4.move + 20, easing: E3.out },
+      done
+    );
+  }
+  function motionVideoRows(list, cue) {
+    if (!list || cue === "silent" || reduced4()) return;
+    list.querySelectorAll(".bz-kb-taskcard").forEach((card, i) => {
+      if (i >= 10) return;
+      waapi3(
+        card,
+        [
+          { opacity: 0, filter: "sepia(.85) contrast(.65) blur(3px)", transform: "translateY(6px)" },
+          { opacity: 1, filter: "sepia(0) contrast(1) blur(0px)", transform: "none" }
+        ],
+        { duration: M4.base + 140, delay: 30 + i * STAG3, easing: E3.out, fill: "backwards" }
+      );
+    });
+    const banner = list.querySelector(".bz-kb-banner");
+    if (banner) {
+      waapi3(
+        banner,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: 10, easing: E3.out, fill: "backwards" }
+      );
+    }
+    const empty = list.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi3(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M4.base + 60, easing: E3.out, fill: "backwards" });
+    }
+  }
+  function motionAddIn(popup) {
+    if (!popup || reduced4()) return;
+    abortOut(popup);
+    sweepExit(popup, ADD_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi3(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.base + 40, easing: E3.out }
+    );
+  }
+  function motionAddOut(popup, done) {
+    runOut(
+      popup,
+      ADD_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M4.move, easing: E3.out },
+      done
+    );
+  }
+  function motionAddReveal(more) {
+    if (!more || reduced4()) return;
+    waapi3(
+      more,
+      [
+        { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(-5px)" },
+        { opacity: 1, clipPath: "inset(0 0 0 0)", transform: "none" }
+      ],
+      { duration: M4.base + 120, easing: E3.out, fill: "backwards" }
+    );
+    more.querySelectorAll(".bz-lit-term-row, #lit-add-rb, .bz-lit-term-actions").forEach((row, i) => {
+      if (i >= 9) return;
+      waapi3(
+        row,
+        [
+          { opacity: 0, transform: "translateY(5px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M4.base, delay: 90 + i * 26, easing: E3.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionEntryIn(popup) {
+    if (!popup || reduced4()) return;
+    abortOut(popup);
+    sweepExit(popup, TERM_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi3(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.base + 40, easing: E3.out }
+    );
+    const title = popup.querySelector("#lit-entry-title");
+    if (title) {
+      waapi3(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 80, delay: 70, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      TERM_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M4.move, easing: E3.out },
+      done
+    );
+  }
+  function motionEntryPreviewIn(preview) {
+    if (!preview || reduced4()) return;
+    const cards = preview.querySelectorAll(".bz-lit-term-card");
+    cards.forEach((card, i) => {
+      waapi3(
+        card,
+        [
+          { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 80, delay: i * 120, easing: E3.out, fill: "backwards" }
+      );
+    });
+    const actions = preview.querySelector(".bz-lit-term-actions");
+    if (actions) {
+      waapi3(
+        actions,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.base, delay: cards.length * 120 + 60, easing: E3.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryPenOn(card) {
+    motionPenOff();
+    if (!card || reduced4() || typeof document === "undefined") return;
+    const pen = document.createElement("i");
+    pen.className = "bz-kb-pen";
+    pen.setAttribute("aria-hidden", "true");
+    card.appendChild(pen);
+    card.style.position = card.style.position || "relative";
+    penPool.add(pen);
+  }
+  function motionPenOff() {
+    for (const pen of penPool) pen.remove();
+    penPool.clear();
+  }
+  function motionMetaSetValue(el) {
+    if (!el || reduced4()) return;
+    waapi3(
+      el,
+      [
+        { opacity: 0.25, transform: "translateY(3px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.fast + 80, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionContentArrive(el) {
+    if (!el || reduced4()) return;
+    waapi3(
+      el,
+      [{ filter: "blur(1.5px)" }, { filter: "blur(0px)" }],
+      { duration: M4.fast + 60, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionRelRowIn(row) {
+    if (!row || reduced4()) return;
+    waapi3(
+      row,
+      [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+      { duration: M4.fast + 60, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionRelChips(relEl) {
+    if (!relEl || reduced4()) return;
+    relEl.querySelectorAll(".bz-lit-rel-chip").forEach((chip2, i) => {
+      waapi3(
+        chip2,
+        [{ opacity: 0, transform: "scale(.72) translateY(2px)" }, { opacity: 1, transform: "none" }],
+        { duration: M4.fast + 60, delay: 40 + i * STAG3, easing: E3.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDupHint(hint) {
+    if (!hint || reduced4()) return;
+    waapi3(
+      hint,
+      [
+        { opacity: 0, transform: "translateX(0)" },
+        { opacity: 1, transform: "translateX(-3px)", offset: 0.3 },
+        { transform: "translateX(3px)", offset: 0.55 },
+        { transform: "translateX(-2px)", offset: 0.78 },
+        { opacity: 1, transform: "translateX(0)" }
+      ],
+      { duration: M4.fast * 2 + 60, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionThumbsIn(grid, from) {
+    if (!grid || reduced4()) return;
+    const items = grid.querySelectorAll(".bz-lit-drop-item");
+    items.forEach((item, i) => {
+      if (i < from) return;
+      waapi3(
+        item,
+        [
+          { opacity: 0, transform: "scale(.88) rotate(-2deg)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M4.base, delay: (i - from) * STAG3, easing: E3.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionSrcChipIn(chip2) {
+    if (!chip2 || reduced4()) return;
+    waapi3(
+      chip2,
+      [{ opacity: 0, transform: "scale(.9) translateY(2px)" }, { opacity: 1, transform: "none" }],
+      { duration: M4.fast + 50, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionTreeIn(win, fresh) {
+    if (!win || reduced4() || !fresh) return;
+    abortOut(win);
+    sweepExit(win, TREE_EXIT);
+    win.style.opacity = "";
+    win.style.transform = "";
+    win.style.filter = "";
+    waapi3(
+      win,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.base + 140, easing: E3.out }
+    );
+  }
+  function motionTreeOut(win, done) {
+    runOut(
+      win,
+      TREE_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.99)", filter: "blur(5px)" }
+      ],
+      { duration: M4.move + 40, easing: E3.out },
+      done
+    );
+  }
+  function motionTreeCards(worldEl, opts) {
+    if (!worldEl || reduced4()) return;
+    if (opts.fresh) treeShownIds = /* @__PURE__ */ new Set();
+    const nodes = [...worldEl.querySelectorAll(".bz-kb-mt-node")];
+    nodes.sort((a, b) => {
+      const ra = a.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      const rb = b.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      return ra - rb;
+    });
+    let step = 0;
+    for (const node of nodes) {
+      const id = node.getAttribute("data-mt-id") || "";
+      if (treeShownIds.has(id)) continue;
+      treeShownIds.add(id);
+      if (node.style.display === "none") continue;
+      if (step >= 18) break;
+      const ghost = node.classList.contains("is-ghost");
+      waapi3(
+        node,
+        [
+          { opacity: 0, transform: "translateY(8px) scale(.96)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M4.base + 80, delay: 40 + step * STAG3, easing: E3.out, fill: "backwards" }
+      );
+      if (ghost) {
+        waapi3(node, [{ opacity: 0.4 }, { opacity: 1 }], { duration: M4.impulse - 300, delay: 300 + step * STAG3, easing: E3.out, fill: "backwards" });
+      }
+      step++;
+    }
+  }
+  function motionTreeEdges(svg) {
+    if (!svg || reduced4()) return;
+    const paths = [...svg.querySelectorAll(".bz-kb-mt-edge")];
+    let step = 0;
+    for (const p of paths) {
+      const dashed = p.classList.contains("is-sug") || p.classList.contains("is-fb");
+      if (dashed) continue;
+      if (step >= 24) break;
+      let len = 0;
+      try {
+        len = p.getTotalLength();
+      } catch (e) {
+        continue;
+      }
+      if (!len || !Number.isFinite(len)) continue;
+      waapi3(
+        p,
+        [
+          { strokeDasharray: `${len}`, strokeDashoffset: `${len}` },
+          { strokeDasharray: `${len}`, strokeDashoffset: "0" }
+        ],
+        { duration: M4.base + 160, delay: 160 + step * 24, easing: E3.move, fill: "backwards" }
+      );
+      step++;
+    }
+    if (step || paths.length) {
+      waapi3(svg, [{ opacity: 0 }, { opacity: 1 }], { duration: M4.fast + 60, easing: E3.out, fill: "backwards" });
+    }
+  }
+  function motionTreeMenu(menu) {
+    if (!menu || reduced4()) return;
+    menu.style.transformOrigin = "0 0";
+    waapi3(
+      menu,
+      [
+        { opacity: 0, transform: "scale(.93) translateY(-2px)", filter: "blur(2px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M4.fast + 40, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionProgressIn(loadingEl) {
+    if (!loadingEl || reduced4()) return;
+    waapi3(
+      loadingEl,
+      [
+        { opacity: 0, transform: "translate(-50%, -48%) scale(.97)", filter: "blur(3px)" },
+        { opacity: 1, transform: "translate(-50%, -50%)", filter: "blur(0px)" }
+      ],
+      { duration: M4.base, easing: E3.out, fill: "backwards" }
+    );
+  }
+  function motionTeardown3() {
+    cancelPending3();
+    for (const [el, run] of [...outRuns.entries()]) {
+      outRuns.delete(el);
+      run.abort();
+    }
+    motionPenOff();
+    treeShownIds = /* @__PURE__ */ new Set();
+  }
+  var M4, E3, STAG3, timers3, outRuns, MAIN_EXIT, REVEAL_CAP, VIDEO_EXIT, ADD_EXIT, TERM_EXIT, penPool, TREE_EXIT, treeShownIds;
+  var init_motion3 = __esm({
+    "src/knowledge/motion.ts"() {
+      M4 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E3 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG3 = 30;
+      timers3 = /* @__PURE__ */ new Set();
+      outRuns = /* @__PURE__ */ new Map();
+      MAIN_EXIT = "bz-kb-main-exit";
+      REVEAL_CAP = 14;
+      VIDEO_EXIT = "bz-kb-video-exit";
+      ADD_EXIT = "bz-kb-add-exit";
+      TERM_EXIT = "bz-kb-term-exit";
+      penPool = /* @__PURE__ */ new Set();
+      TREE_EXIT = "bz-kb-mt-exit";
+      treeShownIds = /* @__PURE__ */ new Set();
+      if (typeof window !== "undefined") {
+        window.addEventListener("hashchange", () => {
+          if (location.hash !== "#replay") return;
+          location.hash = "";
+          const replay = window.__bzKbReplay;
+          if (typeof replay === "function") setTimeout(replay, 600);
+        });
+        if (location.hash === "#replay") {
+          const wait = () => {
+            const replay = window.__bzKbReplay;
+            if (typeof replay === "function") {
+              location.hash = "";
+              setTimeout(replay, 600);
+            } else setTimeout(wait, 120);
+          };
+          setTimeout(wait, 120);
+        }
+      }
+    }
+  });
+
   // src/knowledge/mount-canvas.ts
   function mountKindColor(kind) {
     var _a2;
@@ -24353,8 +25108,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!st) return;
     closeMenu();
     cancelLongPress(st);
-    st.mask.style.display = "none";
-    st.win.style.display = "none";
+    const win = st.win;
+    const mask = st.mask;
+    motionTreeOut(win, () => {
+      if (mask) mask.style.display = "none";
+      if (win) win.style.display = "none";
+    });
     st.selected = null;
     st.token++;
     hideProgress(st);
@@ -24372,8 +25131,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
     st.deps = defaultDeps(opts == null ? void 0 : opts.deps);
     topifyZ(st.mask, st.win);
+    const shellFresh = st.win.style.display !== "flex";
     st.mask.style.display = "block";
     st.win.style.display = "flex";
+    motionTreeIn(st.win, shellFresh);
     if (!st.esc) {
       st.esc = escManager.register(ESC_ID, {
         isVisible: () => mountTreeOpen() || !!st.menu,
@@ -24446,7 +25207,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (waitFirst) {
       renderTop(st);
     } else {
-      await renderCanvas(st);
+      await renderCanvas(st, true);
       renderTop(st);
       fit();
     }
@@ -24474,11 +25235,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (s == null ? void 0 : s.target) st.ghosts.set(suggestionId(s), s);
         }
         st.tree = mergeSuggestions(tree, run);
-        await renderCanvas(st);
+        await renderCanvas(st, false);
         if (waitFirst) fit();
       } else if (waitFirst) {
         st.tree = tree;
-        await renderCanvas(st);
+        await renderCanvas(st, true);
         fit();
       } else {
         st.tree = tree;
@@ -24493,6 +25254,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (st.progressHint) st.progressHint.textContent = emptyHint;
     st.loadingEl.classList.toggle("is-bare", !!emptyHint);
     st.loadingEl.style.display = "";
+    motionProgressIn(st.loadingEl);
     st.startedAt = Date.now();
     if (st.progressBar) st.progressBar.style.width = "4%";
     if (st.progressText) st.progressText.textContent = "准备生成建议";
@@ -24552,7 +25314,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     if (token !== st.token) return;
     st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
-    await renderCanvas(st);
+    await renderCanvas(st, true);
     renderTop(st);
   }
   function renderTop(st) {
@@ -24599,7 +25361,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
   }
-  async function renderCanvas(st) {
+  async function renderCanvas(st, motionFresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
     for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
@@ -24691,6 +25453,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     syncWorld(st);
     drawEdges(st);
     applySelection(st);
+    motionTreeCards(worldEl, { fresh: motionFresh, rootId });
+    motionTreeEdges(st.svg);
   }
   function widthOf(st, node) {
     var _a2;
@@ -24961,10 +25725,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after6 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after6.data.length);
-    const tail = after6.splitText(len);
-    (_b2 = after6.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after7 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after7.data.length);
+    const tail = after7.splitText(len);
+    (_b2 = after7.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -25215,6 +25979,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
     menu.style.left = `${left}px`;
     menu.style.top = `${top}px`;
+    motionTreeMenu(menu);
     st.menu = menu;
     const outside = (ev) => {
       var _a3, _b3;
@@ -25359,6 +26124,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_mount_layout();
       init_mount_route();
       init_mount_suggest();
+      init_motion3();
       MASK_ID = "bz-kb-mt-mask";
       WIN_ID = "bz-kb-mt-window";
       ESC_ID = "bz-kb-mt";
@@ -26091,6 +26857,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_source();
       init_video_meta();
       init_range_bar();
+      init_motion3();
       IMAGE_ENTRY_MAX = 9;
       REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
       STATUS_META = {
@@ -26116,6 +26883,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.popup = null;
           this.contentEl = null;
           this.part = "z1";
+          /**
+           * 动效层 boot 消费标志（motion.ts 口径）：showMain 置 'boot'，点部签置 'part'，
+           * 首个渲染消费即熄复位 'silent'——后台文件变更刷新等非首次渲染静默不重播。
+           */
+          this.motionCue = "silent";
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
@@ -26320,6 +27092,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const act = t.getAttribute("data-kb-act");
           if (act === "part") {
             this.part = t.getAttribute("data-part") || "z1";
+            this.motionCue = "part";
             void this.refreshCurrent();
             this.syncPartButtons();
           } else if (act === "term-entry") this.showTermEntry();
@@ -26340,6 +27113,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           } else if (act === "cards-orphan") {
             if (!this.mountIndex) return;
             this.cardOrphanOnly = !this.cardOrphanOnly;
+            this.motionCue = "part";
             this.renderCards();
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
@@ -26359,12 +27133,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionCue = "boot";
+          motionMainIn(this.popup);
+          window.__bzKbReplay = () => {
+            if (!this.popup || !this.mask) return;
+            this.mask.style.display = "block";
+            this.popup.style.display = "flex";
+            this.motionCue = "boot";
+            motionMainIn(this.popup);
+            void this.refreshCurrent();
+          };
           void this.refreshCurrent();
           void this.runBackfill();
         }
         hideMain() {
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
+          if (this.popup && motionClosing(this.popup)) return;
+          const popup = this.popup;
+          const mask = this.mask;
+          motionMainOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
@@ -26462,6 +27251,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         </div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
         async openPreview(n, kind = "lit") {
@@ -26485,6 +27276,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc3(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
+          motionSheetIn(ovl);
           this._previewNote = n;
           const bodyEl3 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
           if (bodyEl3) {
@@ -26511,6 +27303,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               this._openExternal(a.getAttribute("data-lit-src-url") || "");
             });
           });
+          motionPreviewBody(ovl);
         }
         /**
          * 按 path 直达文献预览（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：主面板不出场——
@@ -26627,6 +27420,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.cardRowsEl = q(this.contentEl, "#kb-card-rows");
           this.cardsShown = 0;
           this.appendCardRows(80);
+          this.motionCue = "silent";
         }
         /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
         appendCardRows(n) {
@@ -26637,6 +27431,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在「卡片文件夹」里新建一篇笔记即可。"}</div>`;
             this.cardsShown = 0;
             this.updateCardMore(pool);
+            motionLitReveal(rowsEl, this.motionCue);
             return;
           }
           const from = Math.max(0, this.cardsShown);
@@ -26648,6 +27443,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             while (tmp.firstChild) frag.appendChild(tmp.firstChild);
             rowsEl.appendChild(frag);
             this.cardsShown = to;
+            motionCardsAppended(rowsEl, from, this.motionCue);
           }
           this.updateCardMore(pool);
         }
@@ -26674,6 +27470,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 span.className = "bz-kb-orphan";
                 span.title = "既无入链也无挂载";
                 span.textContent = "孤 儿";
+                motionStampBadge(span);
                 const dom = hw.querySelector(".bz-kb-dom");
                 if (dom) hw.insertBefore(span, dom);
                 else hw.appendChild(span);
@@ -26687,6 +27484,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 b.className = "bz-kb-refbadge";
                 b.title = refBadgeTitle(n);
                 b.textContent = `被引 ${n}`;
+                motionStampBadge(b);
                 const btn = tail.querySelector(".bz-kb-mt-openbtn");
                 if (btn) tail.insertBefore(b, btn);
                 else tail.appendChild(b);
@@ -26714,6 +27512,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             b.className = "bz-kb-refbadge";
             b.title = refBadgeTitle(n);
             b.textContent = `被引 ${n}`;
+            motionStampBadge(b);
             tail.insertBefore(b, tail.firstChild);
           }
         }
@@ -26780,6 +27579,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
     </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
         async noteRels(n) {
@@ -26825,13 +27626,28 @@ ${String(blockText != null ? blockText : "").trim()}`);
           return ovl;
         }
         closeSheet() {
+          const dropHost = () => {
+            if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
+              this.previewHostEl.remove();
+              this.previewHostEl = null;
+            }
+          };
+          let pending = 0;
           for (const host of [this.popup, this.previewHostEl]) {
-            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => {
+              if (x.dataset.bzMotionClosing === "1") {
+                x.remove();
+                return;
+              }
+              pending++;
+              motionSheetOut(x, () => {
+                x.remove();
+                pending--;
+                dropHost();
+              });
+            });
           }
-          if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
-            this.previewHostEl.remove();
-            this.previewHostEl = null;
-          }
+          if (!pending) dropHost();
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc3(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -27012,9 +27828,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
         _showVideoWindow() {
           if (!this.videoMask || !this.videoPopup) return;
+          const fresh = this.videoPopup.style.display !== "flex";
           topifyZ(this.videoMask, this.videoPopup);
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
+          this.motionCue = "part";
+          motionVideoIn(this.videoPopup);
           void this.refreshVideoPanel();
         }
         /**
@@ -27050,16 +27869,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideVideo() {
-          if (this.videoMask) this.videoMask.style.display = "none";
-          if (this.videoPopup) this.videoPopup.style.display = "none";
+          if (this.videoPopup && motionClosing(this.videoPopup)) return;
+          const popup = this.videoPopup;
+          const mask = this.videoMask;
+          motionVideoOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         async refreshVideoPanel() {
           const tasks = await KnowledgeData.loadTasks();
           if (!this.videoList) return;
+          const cue = this.motionCue;
+          this.motionCue = "silent";
           this._syncVideoHead();
           this.videoList.innerHTML = "";
           if (this.videoView === "history") {
             this.renderHistory(tasks);
+            motionVideoRows(this.videoList, cue);
             return;
           }
           const active2 = tasks.filter((t) => !t.archived);
@@ -27078,10 +27905,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
             empty.className = "bz-kb-empty";
             empty.textContent = "暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。";
             this.videoList.appendChild(empty);
+            motionVideoRows(this.videoList, cue);
             this._syncRunButton(active2);
             return;
           }
           for (const t of active2) this.videoList.appendChild(this.renderRow(t));
+          motionVideoRows(this.videoList, cue);
           this._syncRunButton(active2);
         }
         _syncStatusCounts(tasks) {
@@ -27471,6 +28300,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.addMask, this.addPopup);
           this.addMask.style.display = "block";
           this.addPopup.style.display = "flex";
+          motionAddIn(this.addPopup);
           const urlInput = q(this.addPopup, "#lit-add-url");
           if (urlInput) setTimeout(() => urlInput.focus(), 100);
           if (((_g = editItem == null ? void 0 : editItem.url) != null ? _g : "").trim()) void this._handleResolve({ auto: true });
@@ -27485,7 +28315,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const pages = (meta == null ? void 0 : meta.pages) || [];
           const multi = pages.length > 1;
           const more = q(popup, "#lit-add-more");
-          if (more) more.style.display = this.addRevealed ? "block" : "none";
+          if (more) {
+            const wasHidden = more.style.display === "none";
+            more.style.display = this.addRevealed ? "block" : "none";
+            if (wasHidden && this.addRevealed) motionAddReveal(more);
+          }
           const tEl = q(popup, "#lit-add-ititle");
           if (tEl) {
             tEl.textContent = (meta == null ? void 0 : meta.title) || "（未取到标题）";
@@ -27774,8 +28608,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideAddDialog() {
-          if (this.addMask) this.addMask.style.display = "none";
-          if (this.addPopup) this.addPopup.style.display = "none";
+          if (this.addPopup && motionClosing(this.addPopup)) return;
+          const popup = this.addPopup;
+          const mask = this.addMask;
+          motionAddOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
           this.editingId = null;
           this.addUrlReset();
           this.addMeta = null;
@@ -28182,6 +29021,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.termMask, this.termPopup);
           this.termMask.style.display = "block";
           this.termPopup.style.display = "flex";
+          motionEntryIn(this.termPopup);
           const zone = q(this.termPopup, "#lit-image-drop");
           const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
           if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
@@ -28198,8 +29038,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!hint) return;
           const term = ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
           const dup = term ? findDuplicateTermNote(term) : null;
+          const wasHidden = hint.style.display === "none";
           hint.textContent = dup ? "已存在同名文献笔记：" + ((_c = String(dup).split("/").pop()) == null ? void 0 : _c.replace(/\.md$/, "")) : "";
           hint.style.display = dup ? "" : "none";
+          if (dup && wasHidden) motionDupHint(hint);
         }
         /** 重名提醒复位（开面板 / 关面板即全新态） */
         resetTermDupHint() {
@@ -28235,8 +29077,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, "error");
           if (!added) return;
+          const prevCount = this.entryImages.length - added;
           this.renderEntryImage();
           this.draftInvalidate();
+          motionThumbsIn(this.termPopup ? q(this.termPopup, "#lit-image-grid") : null, prevCount);
         }
         /**
          * data URL 图片预填（issue 329 剪藏本工具框「存为图版」）：程序化入口没有 File 对象——
@@ -28403,6 +29247,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           chip2.style.display = "inline-flex";
           chip2.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc3(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
           if (input) input.style.display = "none";
+          motionSrcChipIn(chip2);
         }
         /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
         termSrcRefreshMeta() {
@@ -28461,8 +29306,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
           if (!el) return;
           if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
+          const wasPending = el.classList.contains("bz-lit-term-pending");
           el.classList.toggle("bz-lit-term-pending", pending);
           el.textContent = text;
+          if (wasPending && !pending && text) motionContentArrive(el);
         }
         /**
          * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
@@ -28474,12 +29321,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           el.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text}`;
           el.classList.add("bz-lit-meta-pending");
         }
-        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
         setTermMetaValue(sel, text) {
           const el = this.termPopup ? q(this.termPopup, sel) : null;
           if (!el) return;
+          const wasPending = el.classList.contains("bz-lit-meta-pending");
           el.textContent = text;
           el.classList.remove("bz-lit-meta-pending");
+          if (wasPending) motionMetaSetValue(el);
         }
         /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
         /**
@@ -28599,7 +29448,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!el) return;
           const st = this.entryRelState;
           const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
-          if (row) row.style.display = st === "idle" ? "none" : "";
+          if (row) {
+            const wasHidden = row.style.display === "none";
+            row.style.display = st === "idle" ? "none" : "";
+            if (wasHidden && st !== "idle") motionRelRowIn(row);
+          }
           el.className = "bz-lit-term-meta-v";
           if (st === "loading") {
             el.classList.add("bz-lit-rel-idle");
@@ -28616,6 +29469,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             el.innerHTML = items.map(
               (it, i) => `<span class="bz-lit-rel-chip"><span>${esc3(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
             ).join("");
+            motionRelChips(el);
             return;
           }
           if (st === "empty") {
@@ -28892,6 +29746,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
          *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
         abortTermGenerate() {
+          motionPenOff();
           const ac = this.termGenAbort;
           this.termGenAbort = null;
           ac == null ? void 0 : ac.abort();
@@ -28903,7 +29758,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 注意这里**不设** termPreview：草稿仍以收尾的 parseAiJson 结果为准，界面提前展开不等于草稿提前成立。
          */
         beginTermPreview() {
-          var _a2, _b2, _c;
+          var _a2, _b2, _c, _d, _e;
           if (!this.termPopup) return;
           this.termStreamBody = "";
           this.termDraftBroken = false;
@@ -28918,9 +29773,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.setTermMetaValue("#lit-term-meta-date", dateStamp());
           this.setTermContent("正在生成…", true);
           this.setTermPreviewVisible(true);
+          const previewEl = q(this.termPopup, "#lit-term-preview");
+          motionEntryPreviewIn(previewEl);
+          motionEntryPenOn((_d = (_c = q(this.termPopup, "#lit-term-content")) == null ? void 0 : _c.closest(".bz-lit-term-card")) != null ? _d : null);
           this.refreshTermActions();
           const prev = q(this.termPopup, "#lit-term-preview");
-          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
+          (_e = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _e.call(prev, { behavior: "smooth", block: "nearest" });
         }
         /**
          * 流式字段到达（ADR-0152 决策 3/11）：正文逐字写，领域与标题到达即填。
@@ -28950,6 +29808,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           };
           this.termStreamBody = draft.summary;
           this.termDraftBroken = false;
+          motionPenOff();
           if (!this.termPopup) return;
           if (this.entryTitled && !keepTitle) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
           if (!keepDomain) this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
@@ -28963,6 +29822,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
          */
         handleTermGenFailure(e) {
+          motionPenOff();
           if (this.termStreamBody) {
             this.termDraftBroken = true;
             notice("生成中断：已保留收到的内容，请重新生成后再写入", "error");
@@ -29047,7 +29907,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               }
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
-            this.hideTermEntry();
+            this.hideTermEntry(true);
             if (onCreated) {
               try {
                 onCreated(path);
@@ -29065,7 +29925,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
             this.refreshTermActions();
           }
         }
-        hideTermEntry() {
+        /**
+         * 关闭录入面板。`immediate` = 写入成功路径（确认落盘后无可丢失，用户预期即时收场）：
+         * 跳过收纸退场直接交还 display——否则关窗动画（240ms）与列表刷新竞速，
+         * 「写入 → 关窗 + 笔记进列表」的既有断言/体感会被退场演出拖慢。
+         */
+        hideTermEntry(immediate = false) {
+          if (this.termPopup && motionClosing(this.termPopup)) return;
           this.abortTermGenerate();
           this.termGenerating = false;
           this.termSaving = false;
@@ -29078,8 +29944,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.resetTermDupHint();
           const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
           this.termSrcReset(srcInput);
-          if (this.termMask) this.termMask.style.display = "none";
-          if (this.termPopup) this.termPopup.style.display = "none";
+          if (immediate) {
+            if (this.termMask) this.termMask.style.display = "none";
+            if (this.termPopup) this.termPopup.style.display = "none";
+          } else {
+            const popup = this.termPopup;
+            const mask = this.termMask;
+            motionEntryOut(popup, () => {
+              if (mask) mask.style.display = "none";
+              if (popup) popup.style.display = "none";
+            });
+          }
           void this.refreshCurrent();
         }
         /**
@@ -29137,6 +30012,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         destroy() {
           var _a2;
           this.abortTermGenerate();
+          motionTeardown3();
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -33296,10 +34172,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/state.ts
-  var M5;
+  var M6;
   var init_state4 = __esm({
     "src/memo/state.ts"() {
-      M5 = {
+      M6 = {
         appRef: null,
         overlay: null,
         items: [],
@@ -34741,16 +35617,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   // src/memo/ui.ts
   function syncSearchClear() {
     var _a2, _b2;
-    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
-    const btn = (_b2 = M5.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
+    const input = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const btn = (_b2 = M6.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
     if (btn && input) btn.hidden = !input.value.trim();
   }
   function clearMemoSearch() {
     var _a2;
     searchDebounced.cancel();
-    M5.search = "";
+    M6.search = "";
     touchViewEpoch();
-    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const input = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
     if (input) input.value = "";
     syncSearchClear();
     renderAll();
@@ -34790,7 +35666,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function loadData() {
     try {
-      M5.items = await MemoData.loadItems();
+      M6.items = await MemoData.loadItems();
       loadFailed = false;
     } catch (e) {
       loadFailed = true;
@@ -34801,7 +35677,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function refresh() {
     var _a2, _b2;
     await loadData();
-    (_b2 = (_a2 = M5).renderFn) == null ? void 0 : _b2.call(_a2);
+    (_b2 = (_a2 = M6).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
     if (!it.due) return 3;
@@ -34809,27 +35685,27 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return st === "overdue" ? 0 : st === "today" ? 1 : 2;
   }
   function getVisibleItems() {
-    const kw = M5.search.trim().toLowerCase();
+    const kw = M6.search.trim().toLowerCase();
     const today = localDayKey();
-    let list = M5.items.filter((it) => {
-      if (M5.activeScene === "今日") {
+    let list = M6.items.filter((it) => {
+      if (M6.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
         } else if (!isTodayStr(it.completed, today)) {
           return false;
         }
-      } else if (M5.activeScene === "重要") {
+      } else if (M6.activeScene === "重要") {
         if (it.priority !== "important") return false;
-      } else if (M5.activeScene !== "全部" && it.scene !== M5.activeScene) return false;
+      } else if (M6.activeScene !== "全部" && it.scene !== M6.activeScene) return false;
       if (kw) {
         const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-    if (M5.pinnedNewId && M5.activeScene !== "全部") {
-      const pinned = M5.items.find((i) => i.id === M5.pinnedNewId);
+    if (M6.pinnedNewId && M6.activeScene !== "全部") {
+      const pinned = M6.items.find((i) => i.id === M6.pinnedNewId);
       if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
     }
     list.sort((a, b) => {
@@ -34837,12 +35713,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (ac !== bc) return ac ? 1 : -1;
       const dr = dueRank(a) - dueRank(b);
       if (dr !== 0) return dr;
-      if (M5.sortMode === "priority") {
+      if (M6.sortMode === "priority") {
         const pa = a.priority === "important" ? 0 : 1;
         const pb = b.priority === "important" ? 0 : 1;
         if (pa !== pb) return pa - pb;
       }
-      if (M5.sortMode === "created") {
+      if (M6.sortMode === "created") {
         return (b.created || "").localeCompare(a.created || "");
       }
       if (a.due && b.due) return a.due.localeCompare(b.due);
@@ -34853,11 +35729,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function sceneCounts() {
     const today = localDayKey();
     const counts = /* @__PURE__ */ new Map([
-      ["全部", M5.items.length],
+      ["全部", M6.items.length],
       ["今日", 0],
       ["重要", 0]
     ]);
-    for (const it of M5.items) {
+    for (const it of M6.items) {
       if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
       if (it.priority === "important") counts.set("重要", (counts.get("重要") || 0) + 1);
       const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
@@ -34869,8 +35745,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return counts;
   }
   function applyMemoSkin(skin) {
-    if (!M5.overlay) return;
-    const panel2 = M5.overlay.querySelector(".bz-memo-panel");
+    if (!M6.overlay) return;
+    const panel2 = M6.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "paper" ? "paper" : "editorial";
@@ -34894,8 +35770,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }, delay);
   }
   function playCardsEnter() {
-    if (!M5.overlay) return;
-    M5.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
+    if (!M6.overlay) return;
+    M6.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
       enterLayer(c, 20 + i * 34, 14);
     });
   }
@@ -34921,23 +35797,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     window.setTimeout(() => wrap.remove(), PANEL_EXIT_MS);
   }
   function closeMemoPanel() {
-    if (M5.overlay) {
+    if (M6.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.memoLastScene = M5.activeScene;
+        s.memoLastScene = M6.activeScene;
         void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
-      playPanelExit(M5.overlay);
-      M5.overlay.remove();
-      M5.overlay = null;
+      playPanelExit(M6.overlay);
+      M6.overlay.remove();
+      M6.overlay = null;
     }
     searchDebounced.cancel();
-    for (const [id, t] of M5.completeTimers) {
+    for (const [id, t] of M6.completeTimers) {
       clearTimeout(t);
-      const it = M5.items.find((i) => i.id === id);
+      const it = M6.items.find((i) => i.id === id);
       if (it) void completeItem(it);
     }
-    M5.completeTimers.clear();
+    M6.completeTimers.clear();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -34950,19 +35826,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       panelFocusRelease();
       panelFocusRelease = null;
     }
-    M5.renderFn = null;
-    M5.pinnedNewId = null;
+    M6.renderFn = null;
+    M6.pinnedNewId = null;
     clipTitleHint = null;
   }
   function touchViewEpoch() {
     viewEpoch++;
   }
   function syncMemoPills() {
-    if (!M5.overlay) return;
-    syncSlidePills(M5.overlay, MEMO_PILL_TARGETS);
+    if (!M6.overlay) return;
+    syncSlidePills(M6.overlay, MEMO_PILL_TARGETS);
   }
   function renderAll() {
-    if (!M5.overlay) return;
+    if (!M6.overlay) return;
     const items = getVisibleItems();
     renderNav();
     renderMobScenes();
@@ -34975,11 +35851,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function renderMainHead(items) {
-    const overlay2 = M5.overlay;
+    const overlay2 = M6.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M5.activeScene);
+    titleEl.textContent = sceneLabel(M6.activeScene);
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
   }
@@ -34996,10 +35872,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
-    const nav = M5.overlay.querySelector("[data-memo-nav]");
+    const nav = M6.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
     const counts = sceneCounts();
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M5.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M6.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -35007,10 +35883,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function renderMobScenes() {
     if (!isMobileEnv()) return;
-    const wrap = M5.overlay.querySelector("[data-memo-mob-scenes]");
+    const wrap = M6.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap) return;
     const keepLeft = wrap.scrollLeft;
-    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M5.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M6.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap.scrollLeft = keepLeft;
     mountIcons(wrap);
     wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
@@ -35027,7 +35903,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
   function renderContent(items) {
-    const content = M5.overlay.querySelector("[data-memo-content]");
+    const content = M6.overlay.querySelector("[data-memo-content]");
     if (!content) return;
     const keepTop = content.scrollTop;
     const flipBefore = measureFlip(content, ".bz-memo-card", "memoId");
@@ -35049,8 +35925,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }));
         return;
       }
-      const emptyCopy = M5.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M5.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M5.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
-      const emptyActions = M5.search ? [
+      const emptyCopy = M6.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M6.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M6.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
+      const emptyActions = M6.search ? [
         uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearMemoSearch() }),
         uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })
       ] : [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
@@ -35066,7 +35942,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const done = items.filter((i) => i.completed);
     const urgent = active2.filter((i) => dueRank(i) <= 1);
     const normal = active2.filter((i) => dueRank(i) > 1);
-    const kw = M5.search.trim();
+    const kw = M6.search.trim();
     const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", kw);
     const sections = [];
     if (urgent.length) {
@@ -35078,16 +35954,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sections.push(...normal.map((it) => cardHtml4(it)));
     }
     if (done.length) {
-      const open = M5.showDone;
+      const open = M6.showDone;
       const win = doneWindowDays();
       const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
-      const listed = !open || M5.showEarlierDone ? done : recent2;
+      const listed = !open || M6.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(`<div class="bz-memo-donearea${doneJustOpened ? " bz-memo-areain" : ""}" data-memo-donearea><div>` + listed.map((it) => cardHtml4(it)).join("") + "</div></div>");
-        if (earlier > 0 && !M5.showEarlierDone) {
+        if (earlier > 0 && !M6.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
       }
@@ -35106,20 +35982,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M5.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M6.items.find((i) => i.id === el.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
     content.querySelectorAll("[data-memo-pos]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M5.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M6.items.find((i) => i.id === el.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
     content.querySelectorAll(".bz-memo-card").forEach((card) => {
       const id = card.dataset.memoId;
-      const it = M5.items.find((i) => i.id === id);
+      const it = M6.items.find((i) => i.id === id);
       if (!it) return;
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -35160,7 +36036,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return head;
   }
   function openItem(it) {
-    const app = M5.appRef;
+    const app = M6.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
       if (!file) {
@@ -35176,7 +36052,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function jumpToNote(it) {
     if (!it.notePath) return;
-    const app = M5.appRef;
+    const app = M6.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
@@ -35224,23 +36100,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void restoreItem(it);
       return;
     }
-    if (M5.completeTimers.has(it.id)) {
-      clearTimeout(M5.completeTimers.get(it.id));
-      M5.completeTimers.delete(it.id);
+    if (M6.completeTimers.has(it.id)) {
+      clearTimeout(M6.completeTimers.get(it.id));
+      M6.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       return;
     }
     const timer = setTimeout(() => {
-      M5.completeTimers.delete(it.id);
+      M6.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       void completeItem(it);
     }, 300);
-    M5.completeTimers.set(it.id, timer);
+    M6.completeTimers.set(it.id, timer);
     syncPendingCheck(it.id, true);
   }
   function bumpDoneBar() {
     var _a2;
-    const bar = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
+    const bar = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
     if (!bar) return;
     bar.classList.remove("bz-memo-donebar-bump");
     void bar.offsetWidth;
@@ -35253,14 +36129,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollTarget() {
     var _a2;
-    const cnt = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    const cnt = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
     if (!cnt) return null;
     const r = cnt.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
   function listLanding() {
     var _a2, _b2, _c;
-    const panel2 = (_b2 = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
+    const panel2 = (_b2 = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
     if (!panel2) return null;
     const first = panel2.querySelector(".bz-memo-card:not(.bz-memo-done)");
     if (first) {
@@ -35299,7 +36175,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay2 = M5.overlay;
+    const overlay2 = M6.overlay;
     const card = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
     if (!overlay2 || !card) return;
     const cr = card.getBoundingClientRect();
@@ -35419,7 +36295,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, true);
-    if (!M5.overlay) return;
+    if (!M6.overlay) return;
     await refresh();
     bumpDoneBar();
   }
@@ -35435,11 +36311,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, false);
-    if (!M5.overlay) return;
+    if (!M6.overlay) return;
     await refresh();
   }
   async function postponeItem(id, days) {
-    const it = M5.items.find((i) => i.id === id);
+    const it = M6.items.find((i) => i.id === id);
     if (!it || !it.due) return;
     const keepHm = it.due.replace("T", " ").slice(11, 16) || "09:00";
     const next = (0, import_moment6.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format(`YYYY-MM-DD ${keepHm}`);
@@ -35454,7 +36330,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   async function togglePrio(id) {
-    const it = M5.items.find((i) => i.id === id);
+    const it = M6.items.find((i) => i.id === id);
     if (!it) return;
     const to = it.priority === "important" ? "minor" : "important";
     try {
@@ -35469,7 +36345,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playDeleteExit(id) {
     var _a2;
-    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return Promise.resolve();
     card.classList.add("bz-memo-vanishing");
     return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
@@ -35504,7 +36380,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M5.appRef;
+    const app = M6.appRef;
     if (!app) return;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
@@ -35587,7 +36463,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function playEditorShrink(popup, id) {
     var _a2;
     if (!id) return;
-    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     const pr = popup.getBoundingClientRect();
     if (!card || pr.width < 4 || pr.height < 4) return;
     const cr = card.getBoundingClientRect();
@@ -35610,7 +36486,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playEditorGrow(popup, id) {
     var _a2;
-    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M6.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return;
     const cr = card.getBoundingClientRect();
     const pr = popup.getBoundingClientRect();
@@ -35732,8 +36608,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     prioField.appendChild(prioChoice.el);
     form.appendChild(prioField);
-    const knownScripts = [...new Set(M5.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M5.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    const knownScripts = [...new Set(M6.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M6.items.map((i) => i.courseName).filter((n) => !!n))].sort();
     function bindSug(input, list, onPick) {
       uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
     }
@@ -35908,7 +36784,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             };
             await MemoData.addItem(it);
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M5.pinnedNewId = it.id;
+            M6.pinnedNewId = it.id;
           }
           editorBusy = false;
           closeModal();
@@ -35972,7 +36848,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return actions;
   }
   function openMemoInSettings() {
-    const app = M5.appRef;
+    const app = M6.appRef;
     closeMemoPanel();
     if (!app) return;
     void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
@@ -35998,7 +36874,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const input = document.createElement("input");
     input.className = "bz-input";
     input.value = scene;
-    const count = M5.items.filter((i) => i.scene === scene).length;
+    const count = M6.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
     hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
@@ -36032,7 +36908,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M5.activeScene === scene) M5.activeScene = name;
+          if (M6.activeScene === scene) M6.activeScene = name;
           renderAll();
           close();
         } catch (e) {
@@ -36068,7 +36944,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       notice("至少保留一个场景");
       return;
     }
-    const count = M5.items.filter((i) => i.scene === scene).length;
+    const count = M6.items.filter((i) => i.scene === scene).length;
     const ok = await openFlowDialog({
       title: "删除场景",
       message: count > 0 ? `确定删除场景「${scene}」吗？
@@ -36086,7 +36962,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     try {
       moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
       await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M5.activeScene === scene) M5.activeScene = "全部";
+      if (M6.activeScene === scene) M6.activeScene = "全部";
       renderAll();
     } catch (e) {
       if (moved > 0) {
@@ -36123,7 +36999,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_state4();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
-        M5.search = v;
+        M6.search = v;
         touchViewEpoch();
         nextEnterSoft = true;
         renderAll();
@@ -37322,15 +38198,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/belongings/motion.ts
-  function reduced4() {
+  function reduced5() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
       return false;
     }
   }
-  function waapi3(el, frames, opts) {
-    if (!el || reduced4() || typeof el.animate !== "function") {
+  function waapi4(el, frames, opts) {
+    if (!el || reduced5() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -37348,7 +38224,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
-    if (typeof requestAnimationFrame !== "function" || reduced4()) return;
+    if (typeof requestAnimationFrame !== "function" || reduced5()) return;
     const t0 = performance.now();
     const tick = (now) => {
       const p = Math.min(1, (now - t0) / dur);
@@ -37357,19 +38233,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
     requestAnimationFrame(tick);
   }
-  function after3(ms, fn) {
+  function after4(ms, fn) {
     const id = setTimeout(() => {
-      timers3.delete(id);
+      timers4.delete(id);
       fn();
     }, ms);
-    timers3.add(id);
+    timers4.add(id);
   }
-  function cancelPending3() {
-    timers3.forEach(clearTimeout);
-    timers3.clear();
+  function cancelPending4() {
+    timers4.forEach(clearTimeout);
+    timers4.clear();
   }
-  function motionTeardown3() {
-    cancelPending3();
+  function motionTeardown4() {
+    cancelPending4();
     flipBook = null;
   }
   function stageable(el) {
@@ -37398,13 +38274,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
-    waapi3(
+    waapi4(
       panel2,
       [
         { opacity: 0, transform: "translateY(16px) scale(.982) rotate(.3deg)", filter: "blur(6px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: M6.base + 140, easing: E3.out }
+      { duration: M7.base + 140, easing: E4.out }
     );
   }
   function motionPanelOut(overlay2, done) {
@@ -37420,20 +38296,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         done();
       }
     };
-    const a = waapi3(
+    const a = waapi4(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-12px) scale(.985)", filter: "blur(4px)" }
       ],
-      { duration: M6.move + 40, easing: E3.out, fill: "forwards" }
+      { duration: M7.move + 40, easing: E4.out, fill: "forwards" }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    setTimeout(finish, M6.move + 400);
+    setTimeout(finish, M7.move + 400);
   }
   function motionBeforePaint(panel2) {
     var _a2, _b2;
@@ -37451,10 +38327,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function motionRendered2(panel2, mode) {
-    cancelPending3();
+    cancelPending4();
     const book = flipBook;
     flipBook = null;
-    if (mode === "silent" || reduced4()) return;
+    if (mode === "silent" || reduced5()) return;
     if (mode === "boot") {
       bootReveal(panel2);
       return;
@@ -37470,7 +38346,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (!Number.isFinite(target)) return;
     const decimals = (m[2].split(".")[1] || "").length;
     const fmt2 = (v) => (target * v).toLocaleString("zh-CN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    if (reduced4() || typeof requestAnimationFrame !== "function") return;
+    if (reduced5() || typeof requestAnimationFrame !== "function") return;
     el.textContent = prefix + fmt2(0) + suffix;
     tween2(dur, (v) => {
       el.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
@@ -37479,99 +38355,99 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function bootReveal(panel2) {
     const title = panel2.querySelector("[data-bel-herotitle]");
     if (stageable(title)) {
-      waapi3(
+      waapi4(
         title,
         [
           { opacity: 0, transform: "scale(1.9) rotate(-4deg)", filter: "blur(10px)" },
           { opacity: 1, transform: "scale(.965) rotate(.5deg)", filter: "blur(0px)", offset: 0.68 },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M6.base + 120, easing: E3.move, fill: "backwards" }
+        { duration: M7.base + 120, easing: E4.move, fill: "backwards" }
       );
     }
     const sub = panel2.querySelector("[data-bel-herosub]");
     if (stageable(sub)) {
-      waapi3(
+      waapi4(
         sub,
         [
           { opacity: 0, clipPath: "inset(0 100% 0 0)" },
           { opacity: 1, clipPath: "inset(0 -2% 0 0)" }
         ],
-        { duration: M6.base, delay: M6.fast, easing: E3.out, fill: "backwards" }
+        { duration: M7.base, delay: M7.fast, easing: E4.out, fill: "backwards" }
       );
     }
     const stamp = panel2.querySelector(".bz-bel-stamp");
     if (stageable(stamp)) {
-      waapi3(
+      waapi4(
         stamp,
         [
           { opacity: 0, transform: "scale(1.7) rotate(-6deg)" },
           { opacity: 1, transform: "scale(.96) rotate(1deg)", offset: 0.66 },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.base + 80, easing: E3.move, fill: "backwards" }
+        { duration: M7.base + 80, easing: E4.move, fill: "backwards" }
       );
     }
     panel2.querySelectorAll("[data-bel-kpis] .bz-bel-kpi").forEach((kpi, i) => {
       if (!stageable(kpi)) return;
-      waapi3(
+      waapi4(
         kpi,
         [
           { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M6.base, delay: 140 + i * STAG3, easing: E3.out, fill: "backwards" }
+        { duration: M7.base, delay: 140 + i * STAG4, easing: E4.out, fill: "backwards" }
       );
       const num2 = kpi.querySelector("b");
-      if (num2 && stageable(num2)) rollText(num2, M6.impulse);
+      if (num2 && stageable(num2)) rollText(num2, M7.impulse);
     });
     const stampN = panel2.querySelector("[data-bel-stampn]");
-    if (stageable(stampN)) rollText(stampN, M6.impulse);
+    if (stageable(stampN)) rollText(stampN, M7.impulse);
     panel2.querySelectorAll("[data-bel-chips] .bz-chip").forEach((chip2, i) => {
       if (!stageable(chip2)) return;
-      waapi3(
+      waapi4(
         chip2,
         [
           { opacity: 0, transform: "translateY(7px)" },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.fast + 40, delay: 220 + i * STAG3, easing: E3.out, fill: "backwards" }
+        { duration: M7.fast + 40, delay: 220 + i * STAG4, easing: E4.out, fill: "backwards" }
       );
     });
     const toolrow = panel2.querySelector(".bz-bel-toolrow");
     if (stageable(toolrow)) {
-      waapi3(
+      waapi4(
         toolrow,
         [
           { opacity: 0, transform: "translateY(8px)" },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.base, delay: 260, easing: E3.out, fill: "backwards" }
+        { duration: M7.base, delay: 260, easing: E4.out, fill: "backwards" }
       );
     }
     const cells = panel2.querySelectorAll("[data-bel-content] [data-bel-id]");
     cells.forEach((cell, i) => {
       if (!stageable(cell)) return;
-      after3(300 + Math.min(i, 14) * STAG3, () => {
-        waapi3(
+      after4(300 + Math.min(i, 14) * STAG4, () => {
+        waapi4(
           cell,
           [
             { opacity: 0, transform: "translateY(14px) scale(.97) rotate(.35deg)", filter: "blur(4px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M6.base, easing: E3.out, fill: "backwards" }
+          { duration: M7.base, easing: E4.out, fill: "backwards" }
         );
       });
     });
     const empty = panel2.querySelector("[data-bel-content] .bz-empty");
     if (stageable(empty)) {
-      waapi3(
+      waapi4(
         empty,
         [
           { opacity: 0, transform: "translateY(10px)" },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.base, delay: 240, easing: E3.out, fill: "backwards" }
+        { duration: M7.base, delay: 240, easing: E4.out, fill: "backwards" }
       );
     }
   }
@@ -37579,13 +38455,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     var _a2, _b2;
     const title = panel2.querySelector("[data-bel-herotitle]");
     if (stageable(title) && ((_a2 = title.textContent) != null ? _a2 : "") !== book.title && book.title !== "") {
-      waapi3(
+      waapi4(
         title,
         [
           { opacity: 0.15, transform: "scale(1.14)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M6.move, easing: E3.move, fill: "backwards" }
+        { duration: M7.move, easing: E4.move, fill: "backwards" }
       );
     }
     const cells = [...panel2.querySelectorAll("[data-bel-content] [data-bel-id]")];
@@ -37595,13 +38471,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const old = book.rects.get(id);
       if (!old) {
         if (stageable(cell)) {
-          waapi3(
+          waapi4(
             cell,
             [
               { opacity: 0, transform: "translateY(12px) scale(.98)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: M6.base, delay: Math.min(fresh, 8) * STAG3, easing: E3.out, fill: "backwards" }
+            { duration: M7.base, delay: Math.min(fresh, 8) * STAG4, easing: E4.out, fill: "backwards" }
           );
         }
         fresh++;
@@ -37611,13 +38487,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = cell.getBoundingClientRect();
       const dx = old.left - now.left, dy = old.top - now.top;
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
-      waapi3(
+      waapi4(
         cell,
         [
           { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` },
           { transform: "none" }
         ],
-        { duration: M6.move, easing: E3.out }
+        { duration: M7.move, easing: E4.out }
       );
     }
   }
@@ -37628,29 +38504,29 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       border: "2.5px solid var(--bz-bel-accent)",
       opacity: "0"
     });
-    const a = waapi3(
+    const a = waapi4(
       ring,
       [
         { opacity: 0, transform: "scale(1.6) rotate(-5deg)" },
         { opacity: 0.95, transform: "scale(1) rotate(-1deg)", offset: 0.55 },
         { opacity: 0, transform: "scale(1) rotate(0deg)" }
       ],
-      { duration: M6.base + 140, easing: E3.move }
+      { duration: M7.base + 140, easing: E4.move }
     );
     if (a) a.finished.then(() => ring.remove()).catch(() => ring.remove());
-    else after3(M6.base + 160, () => ring.remove());
+    else after4(M7.base + 160, () => ring.remove());
     const flash = deco(cell, "bz-bel-mink", {
       inset: "0",
       background: "var(--bz-bel-accent)",
       opacity: "0"
     });
-    const f = waapi3(
+    const f = waapi4(
       flash,
       [{ opacity: 0 }, { opacity: 0.12, offset: 0.3 }, { opacity: 0 }],
-      { duration: M6.base, easing: E3.out }
+      { duration: M7.base, easing: E4.out }
     );
     if (f) f.finished.then(() => flash.remove()).catch(() => flash.remove());
-    else after3(M6.base + 20, () => flash.remove());
+    else after4(M7.base + 20, () => flash.remove());
   }
   function motionCellStrike(cell) {
     if (!stageable(cell) || typeof cell.animate !== "function") return;
@@ -37659,17 +38535,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     line.setAttribute("aria-hidden", "true");
     line.style.cssText = "position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;background:var(--bz-bel-accent);transform:scaleX(0);transform-origin:0 50%;";
     box.appendChild(line);
-    waapi3(
+    waapi4(
       line,
       [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
-      { duration: M6.fast + 60, easing: E3.move, fill: "forwards" }
+      { duration: M7.fast + 60, easing: E4.move, fill: "forwards" }
     );
-    waapi3(
+    waapi4(
       cell,
       [{ opacity: 1 }, { opacity: 0.12, transform: "scale(.985)" }],
-      { duration: M6.fast + 80, delay: M6.fast + 40, easing: "linear", fill: "forwards" }
+      { duration: M7.fast + 80, delay: M7.fast + 40, easing: "linear", fill: "forwards" }
     );
-    after3(M6.move + 200, () => box.remove());
+    after4(M7.move + 200, () => box.remove());
   }
   function motionCellFlow(cell, toExited) {
     if (!stageable(cell) || typeof cell.animate !== "function") return;
@@ -37678,74 +38554,74 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       background: toExited ? "var(--bz-bel-line)" : "var(--bz-bel-accent)",
       opacity: "0"
     });
-    const a = waapi3(
+    const a = waapi4(
       wash,
       [{ opacity: 0 }, { opacity: toExited ? 0.55 : 0.2, offset: 0.35 }, { opacity: 0 }],
-      { duration: M6.base + 60, easing: E3.out }
+      { duration: M7.base + 60, easing: E4.out }
     );
     if (a) a.finished.then(() => wash.remove()).catch(() => wash.remove());
-    else after3(M6.base + 80, () => wash.remove());
+    else after4(M7.base + 80, () => wash.remove());
     const tag = cell.querySelector(".bz-bel-tag");
     if (stageable(tag)) {
-      waapi3(
+      waapi4(
         tag,
         [
           { opacity: 0, transform: "scale(1.55) rotate(-6deg)" },
           { opacity: 1, transform: "scale(.97) rotate(1deg)", offset: 0.62 },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.base, easing: E3.move, fill: "backwards" }
+        { duration: M7.base, easing: E4.move, fill: "backwards" }
       );
     }
   }
   function motionDropOpen(wrap) {
-    if (reduced4()) return;
+    if (reduced5()) return;
     const menu = wrap.querySelector(".bz-bel-dropmenu");
     if (!stageable(menu)) return;
     menu.style.transformOrigin = "50% 0";
-    waapi3(
+    waapi4(
       menu,
       [
         { opacity: 0, transform: "translateY(-5px) scaleY(.92)" },
         { opacity: 1, transform: "none" }
       ],
-      { duration: M6.fast, easing: E3.out, fill: "backwards" }
+      { duration: M7.fast, easing: E4.out, fill: "backwards" }
     );
     menu.querySelectorAll(".bz-bel-dropopt").forEach((opt, i) => {
       if (i >= 6 || !stageable(opt)) return;
-      waapi3(
+      waapi4(
         opt,
         [{ opacity: 0 }, { opacity: 1 }],
-        { duration: M6.fast, delay: M6.fast + i * STAG3, easing: E3.out, fill: "backwards" }
+        { duration: M7.fast, delay: M7.fast + i * STAG4, easing: E4.out, fill: "backwards" }
       );
     });
   }
   function popupIn(popup) {
     if (!stageable(popup)) return;
-    waapi3(
+    waapi4(
       popup,
       [
         { opacity: 0, translate: "0 18px", scale: ".98" },
         { opacity: 1, translate: "0 0px", scale: "1" }
       ],
-      { duration: M6.base, easing: E3.out, fill: "backwards" }
+      { duration: M7.base, easing: E4.out, fill: "backwards" }
     );
   }
-  function relay(els, base, step = STAG3) {
+  function relay(els, base, step = STAG4) {
     els.forEach((el, i) => {
       if (!stageable(el)) return;
-      waapi3(
+      waapi4(
         el,
         [
           { opacity: 0, transform: "translateY(7px)" },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.base, delay: base + i * step, easing: E3.out, fill: "backwards" }
+        { duration: M7.base, delay: base + i * step, easing: E4.out, fill: "backwards" }
       );
     });
   }
   function motionDetailIn(mask) {
-    if (reduced4()) return;
+    if (reduced5()) return;
     popupIn(mask.querySelector(".bz-bel-detail"));
     const detail = mask.querySelector(".bz-bel-detail");
     if (!detail) return;
@@ -37759,18 +38635,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     relay(seq, 60);
     detail.querySelectorAll(".bz-bel-flowbtn").forEach((btn, i) => {
       if (!stageable(btn)) return;
-      waapi3(
+      waapi4(
         btn,
         [
           { opacity: 0, transform: "translateY(5px)" },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M6.fast + 40, delay: 60 + (seq.length - 1) * STAG3 + 60 + i * STAG3, easing: E3.out, fill: "backwards" }
+        { duration: M7.fast + 40, delay: 60 + (seq.length - 1) * STAG4 + 60 + i * STAG4, easing: E4.out, fill: "backwards" }
       );
     });
   }
   function motionFormIn(mask) {
-    if (reduced4()) return;
+    if (reduced5()) return;
     popupIn(mask.querySelector(".bz-bel-form"));
     const form = mask.querySelector(".bz-bel-form");
     if (!form) return;
@@ -37783,24 +38659,24 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     relay(seq, 40);
   }
   function motionReportSection(sec) {
-    if (!sec || reduced4()) return;
-    waapi3(
+    if (!sec || reduced5()) return;
+    waapi4(
       sec,
       [
         { opacity: 0, transform: "translateY(12px)" },
         { opacity: 1, transform: "none" }
       ],
-      { duration: M6.base, easing: E3.out, fill: "backwards" }
+      { duration: M7.base, easing: E4.out, fill: "backwards" }
     );
     sec.querySelectorAll(".bz-belr-col-bar").forEach((bar, i) => {
       if (!stageable(bar) || typeof bar.animate !== "function") return;
       bar.style.transformOrigin = "50% 100%";
       bar.style.transform = "scaleY(0)";
-      after3(M6.base, () => {
-        const a = waapi3(
+      after4(M7.base, () => {
+        const a = waapi4(
           bar,
           [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
-          { duration: M6.base, delay: Math.min(i, 12) * STAG3, easing: E3.out, fill: "forwards" }
+          { duration: M7.base, delay: Math.min(i, 12) * STAG4, easing: E4.out, fill: "forwards" }
         );
         const clear = () => {
           bar.style.transform = "";
@@ -37813,11 +38689,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (!stageable(bar) || typeof bar.animate !== "function") return;
       bar.style.transformOrigin = "0 50%";
       bar.style.transform = "scaleX(0)";
-      after3(M6.base, () => {
-        const a = waapi3(
+      after4(M7.base, () => {
+        const a = waapi4(
           bar,
           [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
-          { duration: M6.base, delay: Math.min(i, 8) * STAG3, easing: E3.out, fill: "forwards" }
+          { duration: M7.base, delay: Math.min(i, 8) * STAG4, easing: E4.out, fill: "forwards" }
         );
         const clear = () => {
           bar.style.transform = "";
@@ -37826,18 +38702,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         else clear();
       });
     });
-    relay([...sec.querySelectorAll(".bz-belr-hero, .bz-belr-comp")], M6.fast, 40);
+    relay([...sec.querySelectorAll(".bz-belr-hero, .bz-belr-comp")], M7.fast, 40);
   }
-  var M6, STAG3, E3, timers3, flipBook;
-  var init_motion3 = __esm({
+  var M7, STAG4, E4, timers4, flipBook;
+  var init_motion4 = __esm({
     "src/belongings/motion.ts"() {
-      M6 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      STAG3 = 30;
-      E3 = {
+      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      STAG4 = 30;
+      E4 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      timers3 = /* @__PURE__ */ new Set();
+      timers4 = /* @__PURE__ */ new Set();
       flipBook = null;
     }
   });
@@ -38204,7 +39080,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_shared3();
       init_report_stats();
       init_shared3();
-      init_motion3();
+      init_motion4();
       renderSeq = 0;
       progressToastSeq = 0;
       activeProgress = null;
@@ -38592,13 +39468,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M7.overlay = null;
-    M7.db = null;
-    M7.status = null;
-    M7.year = "";
-    M7.q = "";
-    M7.sort = "recent";
-    M7.renderFn = null;
+    M8.overlay = null;
+    M8.db = null;
+    M8.status = null;
+    M8.year = "";
+    M8.q = "";
+    M8.sort = "recent";
+    M8.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -38693,11 +39569,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M7.db ? Object.values(M7.db.items) : [];
+    return M8.db ? Object.values(M8.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M7.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M8.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -38708,7 +39584,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M7.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M8.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -38731,7 +39607,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M7.overlay) {
+    if (M8.overlay) {
       closePanel();
       return;
     }
@@ -38748,18 +39624,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M7.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M8.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M7.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M7.year = "";
-    M7.db = await loadDatabase();
+    M8.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M8.year = "";
+    M8.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M7.overlay = overlay2;
-    M7.renderFn = () => renderAll2();
+    M8.overlay = overlay2;
+    M8.renderFn = () => renderAll2();
     mountIcons(overlay2);
     motionPanelIn2(overlay2);
     ensureBelongingsEsc();
@@ -38775,8 +39651,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M7.year = v;
-      else M7.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M8.year = v;
+      else M8.sort = v;
       renderAll2();
     };
     const onDocClick = (e) => {
@@ -38857,22 +39733,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M7.sort = segBtn.dataset.k;
+        M8.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M7.status = M7.status === "asset" ? null : "asset";
+        if (kind === "asset") M8.status = M8.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M7.overlay !== overlay2) return;
-        M7.q = inp.value.trim();
+        if (M8.overlay !== overlay2) return;
+        M8.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -38882,7 +39758,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M7.q = "";
+        M8.q = "";
         syncClear();
         renderAll2();
         if (refocus) inp.focus();
@@ -38963,15 +39839,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M7.overlay) {
-      const ov = M7.overlay;
-      M7.overlay = null;
+    if (M8.overlay) {
+      const ov = M8.overlay;
+      M8.overlay = null;
       motionPanelOut(ov, () => ov.remove());
     }
-    M7.renderFn = null;
-    M7.db = null;
-    M7.q = "";
-    motionTeardown3();
+    M8.renderFn = null;
+    M8.db = null;
+    M8.q = "";
+    motionTeardown4();
   }
   function cleanupBelongings() {
     closePanel();
@@ -38992,18 +39868,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M7.db = await loadDatabase();
+          M8.db = await loadDatabase();
           motionIntent = "silent";
-          (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+          (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M7.db = await loadDatabase();
+                  M8.db = await loadDatabase();
                   motionIntent = "silent";
-                  (_a3 = M7.renderFn) == null ? void 0 : _a3.call(M7);
+                  (_a3 = M8.renderFn) == null ? void 0 : _a3.call(M8);
                 } catch (e2) {
                 }
               })();
@@ -39039,40 +39915,40 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (now !== prev) {
         prev = now;
         motionIntent = "silent";
-        (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+        (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M7.db) return;
+    if (!M8.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M7.db);
+      await saveDatabase(M8.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+    (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
   }
   function renderAll2() {
-    if (!M7.overlay) return;
-    const panel2 = M7.overlay.querySelector(".bz-bel-panel");
+    if (!M8.overlay) return;
+    const panel2 = M8.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
     motionBeforePaint(panel2);
-    renderPanelView(panel2, itemList(), M7, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M8, { mountIcons }, currencyUnit());
     motionRendered2(panel2, motionIntent);
     motionIntent = "flip";
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M7.status = null;
-    else M7.status = M7.status === k ? null : k;
+    if (k === "__all") M8.status = null;
+    else M8.status = M8.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M7.db) {
+    if (M8.db) {
       items = itemList();
     } else {
       try {
@@ -39152,7 +40028,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+      (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
       return;
     }
     const prevStatus = cur.current_status;
@@ -39168,18 +40044,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M7.db = await loadDatabase().catch(() => null);
-      (_b2 = M7.renderFn) == null ? void 0 : _b2.call(M7);
+      M8.db = await loadDatabase().catch(() => null);
+      (_b2 = M8.renderFn) == null ? void 0 : _b2.call(M8);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
-    const flowCell = (_c = M7.overlay) == null ? void 0 : _c.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+    const flowCell = (_c = M8.overlay) == null ? void 0 : _c.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
     if (flowCell) motionCellFlow(flowCell, exitedStatus(s));
     notifyUndo(`「${cur.name}」已标记为${s}`, () => {
       void (async () => {
         var _a3;
         try {
-          if (!M7.db) M7.db = await loadDatabase();
+          if (!M8.db) M8.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -39194,8 +40070,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M7.db = await loadDatabase().catch(() => null);
-          (_a3 = M7.renderFn) == null ? void 0 : _a3.call(M7);
+          M8.db = await loadDatabase().catch(() => null);
+          (_a3 = M8.renderFn) == null ? void 0 : _a3.call(M8);
         }
       })();
     }, { type: "restore" });
@@ -39240,24 +40116,24 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2, _c;
-    if (!M7.db) return;
-    if (!M7.db.items[it.id]) {
+    if (!M8.db) return;
+    if (!M8.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+      (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
       return;
     }
-    const snapshot2 = { ...M7.db.items[it.id] };
-    const strikeCell = (_b2 = M7.overlay) == null ? void 0 : _b2.querySelector(`[data-bel-id="${CSS.escape(it.id)}"]`);
+    const snapshot2 = { ...M8.db.items[it.id] };
+    const strikeCell = (_b2 = M8.overlay) == null ? void 0 : _b2.querySelector(`[data-bel-id="${CSS.escape(it.id)}"]`);
     if (strikeCell) motionCellStrike(strikeCell);
-    delete M7.db.items[it.id];
+    delete M8.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M7.db.items[snapshot2.id] = snapshot2;
+      M8.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M7.db = await loadDatabase().catch(() => null);
-      (_c = M7.renderFn) == null ? void 0 : _c.call(M7);
+      M8.db = await loadDatabase().catch(() => null);
+      (_c = M8.renderFn) == null ? void 0 : _c.call(M8);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -39265,18 +40141,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M7.db) M7.db = await loadDatabase();
-          if (M7.db.items[snapshot2.id]) {
+          if (!M8.db) M8.db = await loadDatabase();
+          if (M8.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M7.db.items[snapshot2.id] = snapshot2;
+          M8.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M7.db = await loadDatabase().catch(() => null);
-          (_a3 = M7.renderFn) == null ? void 0 : _a3.call(M7);
+          M8.db = await loadDatabase().catch(() => null);
+          (_a3 = M8.renderFn) == null ? void 0 : _a3.call(M8);
         }
       })();
     }, { type: "restore" });
@@ -39319,9 +40195,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M7.db) {
+    if (!M8.db) {
       void loadDatabase().then((db) => {
-        M7.db = db;
+        M8.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -39369,13 +40245,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M7.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M7.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -39428,7 +40304,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M7.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -39496,7 +40372,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3;
         try {
-          if (!M7.db) M7.db = await loadDatabase();
+          if (!M8.db) M8.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -39525,12 +40401,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             }
             if (isBelReportOpen()) void openBelongingsReportView();
             if (snapshot2.current_status !== curStatus) {
-              const editCell = (_a3 = M7.overlay) == null ? void 0 : _a3.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+              const editCell = (_a3 = M8.overlay) == null ? void 0 : _a3.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
               if (editCell) motionCellFlow(editCell, exitedStatus(curStatus));
             }
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M7.db) throw new Error("数据库未加载");
+            if (!M8.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -39546,9 +40422,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M7.db.items[newItem.id] = newItem;
+            M8.db.items[newItem.id] = newItem;
             await saveAndRender();
-            const newCell = (_b3 = M7.overlay) == null ? void 0 : _b3.querySelector(`[data-bel-id="${CSS.escape(newItem.id)}"]`);
+            const newCell = (_b3 = M8.overlay) == null ? void 0 : _b3.querySelector(`[data-bel-id="${CSS.escape(newItem.id)}"]`);
             if (newCell) motionCellStamp(newCell);
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -39565,7 +40441,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M7, dropDocClick, motionIntent, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M8, dropDocClick, motionIntent, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui7 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -39587,10 +40463,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_report();
       init_render7();
       init_ai2();
-      init_motion3();
+      init_motion4();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M7 = {
+      M8 = {
         overlay: null,
         db: null,
         status: null,
@@ -40970,23 +41846,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M8.appRef = null;
-    M8.open = false;
-    M8.articles = [];
-    M8.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M8.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M8.clipNotes = null;
-    M8.clipUrls = /* @__PURE__ */ new Set();
-    M8.sel = defaultSel();
-    M8.cur = null;
-    M8.list = [];
-    M8.upInfo = {};
-    M8.mobDetailOpen = false;
+    M9.appRef = null;
+    M9.open = false;
+    M9.articles = [];
+    M9.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M9.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M9.clipNotes = null;
+    M9.clipUrls = /* @__PURE__ */ new Set();
+    M9.sel = defaultSel();
+    M9.cur = null;
+    M9.list = [];
+    M9.upInfo = {};
+    M9.mobDetailOpen = false;
   }
-  var M8;
+  var M9;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M8 = {
+      M9 = {
         appRef: null,
         open: false,
         articles: [],
@@ -41578,7 +42454,7 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/motion.ts
-  function reduced5() {
+  function reduced6() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -41586,10 +42462,10 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function canAnimate() {
-    return !reduced5() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
+    return !reduced6() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
   }
-  function waapi4(el, frames, opts) {
-    if (!el || reduced5() || typeof el.animate !== "function") {
+  function waapi5(el, frames, opts) {
+    if (!el || reduced6() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -41619,17 +42495,17 @@ ${bodyText.substring(0, 6e3)}`;
     };
     requestAnimationFrame(tick);
   }
-  function after4(ms, fn) {
+  function after5(ms, fn) {
     if (typeof setTimeout !== "function") return;
     const id = setTimeout(() => {
-      timers4.delete(id);
+      timers5.delete(id);
       fn();
     }, ms);
-    timers4.add(id);
+    timers5.add(id);
   }
-  function motionTeardown4() {
-    timers4.forEach(clearTimeout);
-    timers4.clear();
+  function motionTeardown5() {
+    timers5.forEach(clearTimeout);
+    timers5.clear();
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
@@ -41638,7 +42514,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function sweep2(el, from, to, opts = {}) {
     if (!el || !canAnimate()) return;
-    const { delay = 0, dur = M9.base, easing = E4.out, origin } = opts;
+    const { delay = 0, dur = M10.base, easing = E5.out, origin } = opts;
     if (origin) el.style.transformOrigin = origin;
     el.style.willChange = "transform,opacity,filter";
     let a = null;
@@ -41698,14 +42574,14 @@ ${bodyText.substring(0, 6e3)}`;
     frame2.style.transform = "";
     frame2.style.filter = "";
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
-    waapi4(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.fast + 40, easing: E4.out });
-    const a = waapi4(
+    waapi5(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.fast + 40, easing: E5.out });
+    const a = waapi5(
       frame2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? M9.base + 20 : 480, easing: E4.out }
+      { duration: reopen ? M10.base + 20 : 480, easing: E5.out }
     );
     if (a) {
       panelAnim = a;
@@ -41748,18 +42624,18 @@ ${bodyText.substring(0, 6e3)}`;
       panelAnim == null ? void 0 : panelAnim.cancel();
     } catch (e) {
     }
-    const a = waapi4(
+    const a = waapi5(
       frame2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M9.move + 40, easing: E4.out, fill: "forwards", id: EXIT_ANIM_ID }
+      { duration: M10.move + 40, easing: E5.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
-    maskAnim = waapi4(
+    maskAnim = waapi5(
       overlay2,
       [{ opacity: 1 }, { opacity: 0 }],
-      { duration: M9.move + 40, easing: E4.out, id: EXIT_MASK_ANIM_ID }
+      { duration: M10.move + 40, easing: E5.out, id: EXIT_MASK_ANIM_ID }
     );
     if (!a) {
       overlay2.style.opacity = "";
@@ -41774,7 +42650,7 @@ ${bodyText.substring(0, 6e3)}`;
       overlay2.style.opacity = "";
       finish();
     });
-    after4(M9.move + 200, finish);
+    after5(M10.move + 200, finish);
   }
   function motionHeadRevealed(overlay2) {
     var _a2, _b2, _c;
@@ -41790,7 +42666,7 @@ ${bodyText.substring(0, 6e3)}`;
       try {
         wire.animate(
           [{ opacity: 0, transform: "translateX(-70px)" }, { opacity: 1, transform: "none" }],
-          { duration: 360, easing: E4.out, fill: "backwards" }
+          { duration: 360, easing: E5.out, fill: "backwards" }
         );
       } catch (e) {
       }
@@ -41814,14 +42690,14 @@ ${bodyText.substring(0, 6e3)}`;
           );
         } catch (e) {
         }
-        after4(t, () => {
+        after5(t, () => {
           if (!cur.isConnected || cur.parentNode !== tape) return;
           const next = chars[i + 1];
           if (next) tape.insertBefore(cur, next);
           else tape.appendChild(cur);
         });
       });
-      after4(430 + chars.length * 390 + 260, () => {
+      after5(430 + chars.length * 390 + 260, () => {
         lamp == null ? void 0 : lamp.classList.add("on");
         try {
           lamp == null ? void 0 : lamp.animate(
@@ -41848,12 +42724,12 @@ ${bodyText.substring(0, 6e3)}`;
           );
         } catch (e) {
         }
-        after4(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
+        after5(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
       });
     } else {
-      sweep2(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M9.base + 40 });
+      sweep2(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M10.base + 40 });
     }
-    sweep2(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M9.base });
+    sweep2(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M10.base });
     if (!canAnimate() || head.querySelector(":scope > .bz-clm-ink-rule")) return;
     const prevStyle = head.getAttribute("style");
     const rule = document.createElement("span");
@@ -41864,37 +42740,37 @@ ${bodyText.substring(0, 6e3)}`;
     tween3(620, (v) => {
       rule.style.transform = `scaleX(${Math.max(1e-3, v).toFixed(3)})`;
     }, easeOutQuart);
-    after4(700, () => {
-      const fade = waapi4(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M9.base - 80, easing: E4.out });
+    after5(700, () => {
+      const fade = waapi5(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M10.base - 80, easing: E5.out });
       const remove = () => {
         rule.remove();
         if (prevStyle === null) head.removeAttribute("style");
         else head.setAttribute("style", prevStyle);
       };
       if (fade) fade.finished.then(remove).catch(remove);
-      else after4(M9.base, remove);
+      else after5(M10.base, remove);
     });
   }
   function motionRailRendered(railEl, mood) {
     if (mood === "boot") {
       const label = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-label") : null;
-      sweep2(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M9.base - 60 });
+      sweep2(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M10.base - 60 });
       const rows = [...railEl.querySelectorAll(".bz-rail-item")];
       rows.slice(0, 12).forEach((row, i) => {
         sweep2(
           row,
           { opacity: 0, transform: "translateX(-8px)", clipPath: "inset(0 100% 0 0)" },
           { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
-          { delay: 220 + i * STAG4, dur: M9.base + 60 }
+          { delay: 220 + i * STAG5, dur: M10.base + 60 }
         );
       });
       const foot = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-foot") : null;
-      sweep2(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG4 + 40, dur: M9.base });
+      sweep2(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG5 + 40, dur: M10.base });
       return;
     }
     if (mood === "nav") {
       const on = railEl.querySelector(".bz-rail-item.on");
-      sweep2(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M9.fast });
+      sweep2(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M10.fast });
     }
   }
   function motionListRendered(listEl2, mood, foldKind, pressed) {
@@ -41903,40 +42779,40 @@ ${bodyText.substring(0, 6e3)}`;
       const rows = [...listEl2.querySelectorAll(".bz-clip-item, .bz-clip-desk-fold")];
       const cap = boot ? 14 : 8;
       rows.slice(0, cap).forEach((row, i) => {
-        const delay = (boot ? 300 : 40) + i * STAG4;
+        const delay = (boot ? 300 : 40) + i * STAG5;
         sweep2(
           row,
           { opacity: 0, transform: "translateY(9px)", filter: "blur(4px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" },
-          { delay, dur: M9.base + (boot ? 60 : 0) }
+          { delay, dur: M10.base + (boot ? 60 : 0) }
         );
         const no = row.classList.contains("bz-clip-item") ? row.querySelector(".bz-clip-no") : null;
-        if (no) sweep2(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M9.fast + 70, easing: E4.move });
+        if (no) sweep2(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M10.fast + 70, easing: E5.move });
       });
       if (boot) {
         listEl2.querySelectorAll(".bz-clip-desk-fold-body:not([hidden])").forEach((body, i) => {
-          sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M9.base + 80 });
+          sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M10.base + 80 });
         });
       }
       return;
     }
     if (mood === "search") {
-      sweep2(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M9.fast + 60 });
+      sweep2(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M10.fast + 60 });
       return;
     }
     if (foldKind) {
       const row = listEl2.querySelector(`.bz-clip-desk-fold[data-desk-fold="${foldKind}"].on`);
       const body = row ? row.nextElementSibling : null;
       if (body && body.classList.contains("bz-clip-desk-fold-body") && !body.hidden) {
-        sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M9.move + 60 });
+        sweep2(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M10.move + 60 });
       }
     }
     if (pressed) {
       const on = listEl2.querySelector(".bz-clip-item.on");
-      sweep2(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M9.fast });
+      sweep2(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M10.fast });
     }
     if (!listEl2.querySelector(".bz-clip-item") && !listEl2.querySelector(".bz-clip-desk-fold")) {
-      sweep2(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M9.base - 40 });
+      sweep2(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M10.base - 40 });
     }
   }
   function motionReaderRendered(readerEl2, turn, mood) {
@@ -41946,7 +42822,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     readerAnim = null;
     if (!turn) {
-      if (mood === "boot") sweep2(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M9.base - 40 });
+      if (mood === "boot") sweep2(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M10.base - 40 });
       return;
     }
     if (turn === "first") {
@@ -41954,7 +42830,7 @@ ${bodyText.substring(0, 6e3)}`;
       let a2 = null;
       if (canAnimate()) {
         readerEl2.style.transformOrigin = "50% 0";
-        a2 = waapi4(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M9.base + 80, easing: E4.out });
+        a2 = waapi5(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M10.base + 80, easing: E5.out });
         if (a2) {
           readerAnim = a2;
           const done = () => {
@@ -41974,19 +42850,19 @@ ${bodyText.substring(0, 6e3)}`;
         title,
         { opacity: 0, transform: "translateY(6px)", clipPath: "inset(0 100% 0 0)" },
         { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
-        { delay: 90, dur: M9.base + 60 }
+        { delay: 90, dur: M10.base + 60 }
       );
-      sweep2(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M9.base - 40 });
+      sweep2(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M10.base - 40 });
       const tags = readerEl2.querySelector(".bz-clip-art-tags");
-      sweep2(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M9.base - 60 });
+      sweep2(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M10.base - 60 });
       sweep2(
         readerEl2.querySelector(".bz-clip-art-sum"),
         { opacity: 0, clipPath: "inset(0 100% 0 0)" },
         { opacity: 1, clipPath: "inset(0 0 0 0)" },
-        { delay: 250, dur: M9.base + 40 }
+        { delay: 250, dur: M10.base + 40 }
       );
-      sweep2(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M9.base + 60 });
-      sweep2(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M9.base - 40 });
+      sweep2(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M10.base + 60 });
+      sweep2(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M10.base - 40 });
       return;
     }
     const rx = turn === "back" ? -5 : 5;
@@ -41994,13 +42870,13 @@ ${bodyText.substring(0, 6e3)}`;
     let a = null;
     if (canAnimate()) {
       readerEl2.style.transformOrigin = `50% ${oy}`;
-      a = waapi4(
+      a = waapi5(
         readerEl2,
         [
           { opacity: 0.3, transform: `perspective(1100px) rotateX(${rx}deg) translateY(${turn === "back" ? -6 : 6}px)` },
           { opacity: 1, transform: "none" }
         ],
-        { duration: M9.move + 60, easing: E4.out }
+        { duration: M10.move + 60, easing: E5.out }
       );
       if (a) {
         readerAnim = a;
@@ -42024,23 +42900,23 @@ ${bodyText.substring(0, 6e3)}`;
         ch,
         { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" },
-        { delay: 200 + i * 60, dur: M9.base + 40 }
+        { delay: 200 + i * 60, dur: M10.base + 40 }
       );
     });
   }
   function motionMobFoldOpen(archEl) {
-    sweep2(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M9.move + 40 });
+    sweep2(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M10.move + 40 });
   }
   function motionMobDetailIn(detailEl) {
     let a = null;
     if (canAnimate()) {
-      a = waapi4(
+      a = waapi5(
         detailEl,
         [
           { opacity: 0.4, transform: "translateX(36px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M9.move + 60, easing: E4.move }
+        { duration: M10.move + 60, easing: E5.move }
       );
       if (a) {
         const done = () => {
@@ -42058,15 +42934,15 @@ ${bodyText.substring(0, 6e3)}`;
         detailEl.querySelector(sel),
         { opacity: 0, transform: "translateY(7px)" },
         { opacity: 1, transform: "none" },
-        { delay: 110 + i * 45, dur: M9.base - 20 }
+        { delay: 110 + i * 45, dur: M10.base - 20 }
       );
     });
   }
   function motionMobSearchbarIn(barEl) {
-    sweep2(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M9.fast + 40 });
+    sweep2(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M10.fast + 40 });
   }
   function motionSelbarIn(barEl) {
-    sweep2(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M9.fast + 20 });
+    sweep2(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M10.fast + 20 });
   }
   function motionArchStamp(host) {
     if (!host || !canAnimate() || host.querySelector(":scope > .bz-clm-stamp")) return;
@@ -42077,7 +42953,7 @@ ${bodyText.substring(0, 6e3)}`;
     stamp.setAttribute("aria-hidden", "true");
     stamp.textContent = "收";
     host.appendChild(stamp);
-    const a = waapi4(
+    const a = waapi5(
       stamp,
       [
         { opacity: 0, transform: "rotate(-14deg) scale(2.1)" },
@@ -42085,7 +42961,7 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.74 },
         { opacity: 0, transform: "rotate(-11deg) scale(1.06)" }
       ],
-      { duration: M9.impulse + 260, easing: E4.move }
+      { duration: M10.impulse + 260, easing: E5.move }
     );
     const remove = () => {
       stamp.remove();
@@ -42093,7 +42969,7 @@ ${bodyText.substring(0, 6e3)}`;
       else host.setAttribute("style", prevStyle);
     };
     if (a) a.finished.then(remove).catch(remove);
-    else after4(M9.impulse + 280, remove);
+    else after5(M10.impulse + 280, remove);
   }
   function motionInkStrike(titleEl, delay = 0) {
     if (!titleEl || !canAnimate() || titleEl.querySelector(":scope > .bz-clm-strike")) return;
@@ -42103,7 +42979,7 @@ ${bodyText.substring(0, 6e3)}`;
     strike.className = "bz-clm-strike";
     strike.setAttribute("aria-hidden", "true");
     titleEl.appendChild(strike);
-    const a = waapi4(
+    const a = waapi5(
       strike,
       [
         { opacity: 0.9, transform: "scaleX(0)" },
@@ -42111,7 +42987,7 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 0.9, transform: "scaleX(1)", offset: 0.68 },
         { opacity: 0, transform: "scaleX(1)" }
       ],
-      { duration: 980, delay, easing: E4.out }
+      { duration: 980, delay, easing: E5.out }
     );
     const remove = () => {
       strike.remove();
@@ -42119,7 +42995,7 @@ ${bodyText.substring(0, 6e3)}`;
       else titleEl.setAttribute("style", prevStyle);
     };
     if (a) a.finished.then(remove).catch(remove);
-    else after4(1e3 + delay, remove);
+    else after5(1e3 + delay, remove);
   }
   function motionSnipGhost(cardEl) {
     if (!cardEl || !canAnimate() || !cardEl.isConnected) return;
@@ -42134,31 +43010,31 @@ ${bodyText.substring(0, 6e3)}`;
     ghost.style.height = `${rect.height}px`;
     const host = cardEl.closest(".bz-clip-frame") || document.body;
     host.appendChild(ghost);
-    const a = waapi4(
+    const a = waapi5(
       ghost,
       [
         { opacity: 1, transform: "none", filter: "none" },
         { opacity: 1, transform: "translate(-8px,-4px) rotate(-.6deg) scale(1.01)", offset: 0.28 },
         { opacity: 0, transform: "translate(-70px,-16px) rotate(-3deg) scale(.96)", filter: "blur(2px)" }
       ],
-      { duration: M9.impulse - 160, easing: E4.move }
+      { duration: M10.impulse - 160, easing: E5.move }
     );
     const remove = () => ghost.remove();
     if (a) a.finished.then(remove).catch(remove);
-    else after4(M9.impulse, remove);
+    else after5(M10.impulse, remove);
   }
   function motionReportIn(overlay2) {
     const frame2 = overlay2.querySelector(".bz-clip-report-frame");
     if (!frame2) return;
     if (!overlay2.style.opacity) overlay2.style.opacity = "0";
-    waapi4(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.fast + 40, easing: E4.out });
-    const a = waapi4(
+    waapi5(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.fast + 40, easing: E5.out });
+    const a = waapi5(
       frame2,
       [
         { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: M9.base + 60, easing: E4.out }
+      { duration: M10.base + 60, easing: E5.out }
     );
     const clear = () => {
       overlay2.style.opacity = "";
@@ -42170,13 +43046,13 @@ ${bodyText.substring(0, 6e3)}`;
     const sec = secEl;
     if (!sec || !canAnimate()) return;
     const base = idx * 50;
-    sweep2(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M9.base + 40 });
-    sweep2(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M9.base - 40 });
+    sweep2(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M10.base + 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M10.base - 40 });
     sec.querySelectorAll(".bz-clp-rep-hero-card").forEach((card, i) => {
-      sweep2(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M9.base - 20, easing: E4.move });
+      sweep2(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M10.base - 20, easing: E5.move });
     });
     sec.querySelectorAll(".bz-clp-rep-top-row").forEach((row, i) => {
-      sweep2(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG4, dur: M9.base - 40 });
+      sweep2(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG5, dur: M10.base - 40 });
     });
     sec.querySelectorAll(".bz-clp-rep-bar-row").forEach((row, i) => {
       const bar = row.querySelector(".bz-clp-rep-bar-track i");
@@ -42184,7 +43060,7 @@ ${bodyText.substring(0, 6e3)}`;
         bar,
         { transform: "scaleX(0)" },
         { transform: "scaleX(1)" },
-        { delay: base + 200 + Math.min(i, 8) * 40, dur: M9.base + 80, easing: E4.move, origin: "left center" }
+        { delay: base + 200 + Math.min(i, 8) * 40, dur: M10.base + 80, easing: E5.move, origin: "left center" }
       );
     });
     sec.querySelectorAll(".bz-clp-rep-hcol").forEach((col, i) => {
@@ -42193,30 +43069,30 @@ ${bodyText.substring(0, 6e3)}`;
         bar,
         { transform: "scaleY(0)" },
         { transform: "scaleY(1)" },
-        { delay: base + 200 + Math.min(i, 24) * 18, dur: M9.base + 40, easing: E4.move, origin: "center bottom" }
+        { delay: base + 200 + Math.min(i, 24) * 18, dur: M10.base + 40, easing: E5.move, origin: "center bottom" }
       );
     });
-    sweep2(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M9.base - 40 });
-    sweep2(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M9.base - 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M10.base - 40 });
+    sweep2(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M10.base - 40 });
   }
   function motionLoadingPulse(el) {
-    if (!el || reduced5() || typeof el.animate !== "function") return;
+    if (!el || reduced6() || typeof el.animate !== "function") return;
     try {
       el.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
     } catch (e) {
     }
   }
-  var M9, E4, STAG4, easeOutQuart, timers4, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
-  var init_motion4 = __esm({
+  var M10, E5, STAG5, easeOutQuart, timers5, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
+  var init_motion5 = __esm({
     "src/clipbook/motion.ts"() {
-      M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E4 = {
+      M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E5 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG4 = 30;
+      STAG5 = 30;
       easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-      timers4 = /* @__PURE__ */ new Set();
+      timers5 = /* @__PURE__ */ new Set();
       CSS_PROP = {
         opacity: "opacity",
         transform: "transform",
@@ -42238,8 +43114,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M8.articles || []) keys.add(a.id);
-    for (const n of M8.clipNotes || []) {
+    for (const a of M9.articles || []) keys.add(a.id);
+    for (const n of M9.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -42492,7 +43368,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_flow();
       init_report_stats2();
       init_render8();
-      init_motion4();
+      init_motion5();
       init_clipbook();
       init_ui8();
       overlayEl = null;
@@ -45944,22 +46820,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M8.articles = [];
-      M8.clipNotes = null;
-      M8.clipUrls = /* @__PURE__ */ new Set();
-      M8.sidecar = emptySidecar();
-      M8.upInfo = {};
-      M8.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M8.sidecar, clipNotes: null, clipUrls: M8.clipUrls, upInfo: {} };
+      M9.articles = [];
+      M9.clipNotes = null;
+      M9.clipUrls = /* @__PURE__ */ new Set();
+      M9.sidecar = emptySidecar();
+      M9.upInfo = {};
+      M9.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M9.sidecar, clipNotes: null, clipUrls: M9.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M8.articles = [];
-      M8.clipNotes = null;
-      M8.clipUrls = /* @__PURE__ */ new Set();
-      M8.sidecar = emptySidecar();
-      M8.upInfo = {};
-      M8.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M8.sidecar, clipNotes: null, clipUrls: M8.clipUrls, upInfo: {} };
+      M9.articles = [];
+      M9.clipNotes = null;
+      M9.clipUrls = /* @__PURE__ */ new Set();
+      M9.sidecar = emptySidecar();
+      M9.upInfo = {};
+      M9.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M9.sidecar, clipNotes: null, clipUrls: M9.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -45996,13 +46872,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M8.articles = data.articles;
-    M8.stats = data.stats;
-    M8.sidecar = sidecar;
-    M8.clipNotes = clipNotes;
-    M8.clipUrls = clipUrls;
-    M8.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M8.upInfo };
+    M9.articles = data.articles;
+    M9.stats = data.stats;
+    M9.sidecar = sidecar;
+    M9.clipNotes = clipNotes;
+    M9.clipUrls = clipUrls;
+    M9.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M9.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -46039,7 +46915,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M8.appRef = app;
+    M9.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -46047,13 +46923,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M8.appRef);
+      buildDom2(M9.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M8.open = true;
+    M9.open = true;
     beginSession();
     pendingBoot = true;
     lastReaderId = "";
@@ -46074,7 +46950,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M8.open && overlayEl2) return Promise.resolve();
+    if (!M9.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -46091,7 +46967,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M8.open) renderAll3();
+      if (M9.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -46104,7 +46980,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M8.open) return;
+    if (!M9.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -46127,11 +47003,11 @@ ${c.trim()}
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M8.open = false;
-    M8.mobDetailOpen = false;
+    M9.open = false;
+    M9.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) motionPanelOut2(overlayEl2, () => {
-      if (!M8.open && overlayEl2) overlayEl2.style.display = "none";
+      if (!M9.open && overlayEl2) overlayEl2.style.display = "none";
     });
   }
   function unloadPanel() {
@@ -46169,7 +47045,7 @@ ${c.trim()}
     }
     clipBodyCache.clear();
     clipBodyInflight.clear();
-    motionTeardown4();
+    motionTeardown5();
     pendingBoot = false;
     renderMood = "mute";
     panelShownOnce = false;
@@ -46177,8 +47053,8 @@ ${c.trim()}
     lastListCurId = "";
     pendingFoldKind = null;
     setSearchKw("");
-    M8.open = false;
-    M8.mobDetailOpen = false;
+    M9.open = false;
+    M9.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -46278,14 +47154,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M8.cur) openNote(M8.cur);
+      if (t.closest("[data-clip-open-note]") && M9.cur) openNote(M9.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b3;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b3 = (_a3 = e.target).closest) == null ? void 0 : _b3.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M8.cur) openNote(M8.cur);
+        if (M9.cur) openNote(M9.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -46343,8 +47219,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M8.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M8.cur);
+      if (((_a3 = M9.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M9.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -46366,9 +47242,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M8.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M8.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M8.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M9.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M9.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M9.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -46383,7 +47259,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M8.mobDetailOpen) {
+        if (M9.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -46429,13 +47305,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M8.sel = {
+    M9.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M8.mobDetailOpen = false;
+    M9.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -46445,7 +47321,7 @@ ${c.trim()}
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M8.sel.kind && String(src.platform || "") === M8.sel.platform && (src.up ? String(src.up) : null) === M8.sel.up && String(src.site || "") === M8.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M9.sel.kind && String(src.platform || "") === M9.sel.platform && (src.up ? String(src.up) : null) === M9.sel.up && String(src.site || "") === M9.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -46470,7 +47346,7 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
-    if (!M8.open) return;
+    if (!M9.open) return;
     if (pendingBoot) {
       renderMood = "boot";
       pendingBoot = false;
@@ -46480,16 +47356,16 @@ ${c.trim()}
     renderMood = "mute";
   }
   function renderAllNow() {
-    if (!M8.open) return;
+    if (!M9.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M8.mobDetailOpen) {
-      if (M8.cur) renderMobDetail();
+    if (M9.mobDetailOpen) {
+      if (M9.cur) renderMobDetail();
       else {
-        M8.mobDetailOpen = false;
+        M9.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -46497,25 +47373,25 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M8.mobDetailOpen = false;
+    M9.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
   function renderHeadIssue() {
     if (!overlayEl2) return;
     overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
-      el.textContent = `第 ${M8.articles.length} 期`;
+      el.textContent = `第 ${M9.articles.length} 期`;
     });
   }
   function currentSrc() {
-    const s = M8.sel;
+    const s = M9.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], currentSrc(), M8.upInfo);
+    return queryBySource(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], currentSrc(), M9.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -46531,7 +47407,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], src, M8.upInfo));
+    const b = bucketByState(queryBySourceFull(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], src, M9.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -46539,7 +47415,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], src, M8.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], src, M9.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -46584,39 +47460,39 @@ ${c.trim()}
   function renderRailNow() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M8.articles;
-    const clipNotes = M8.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M8.sidecar, M8.clipUrls, clipNotes, source2, M8.upInfo).filter(matchesSearch).length;
+    const arts = M9.articles;
+    const clipNotes = M9.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M9.sidecar, M9.clipUrls, clipNotes, source2, M9.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M8.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M8.sidecar.savedArchive || []).map((x) => x.url)), M8.clipUrls)) {
-      const full = queryBySource(arts, M8.sidecar, M8.clipUrls, clipNotes, { kind: "site", site: row.site }, M8.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M9.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M9.sidecar.savedArchive || []).map((x) => x.url)), M9.clipUrls)) {
+      const full = queryBySource(arts, M9.sidecar, M9.clipUrls, clipNotes, { kind: "site", site: row.site }, M9.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M8.sel.kind === "site" && M8.sel.site === row.site;
+      const active2 = M9.sel.kind === "site" && M9.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M8.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M9.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M8.sel.kind === "inbox" && M8.sel.platform === "B站" && M8.sel.up === uid;
+      const active2 = M9.sel.kind === "inbox" && M9.sel.platform === "B站" && M9.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M8.sel.kind === "clip";
+    const clipActive = M9.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M8.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M9.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -46641,9 +47517,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M8.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M9.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M8.open) showPanel();
+      if (!M9.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -46656,10 +47532,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], source2, M8.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], source2, M9.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], source2, M8.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], source2, M9.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -46700,7 +47576,7 @@ ${c.trim()}
     if (!listEl) return;
     const foldKind = pendingFoldKind;
     pendingFoldKind = null;
-    const curId = M8.cur ? M8.cur.id : "";
+    const curId = M9.cur ? M9.cur.id : "";
     const pressed = !!curId && curId !== lastListCurId && renderMood !== "boot";
     lastListCurId = curId;
     motionListRendered(listEl, renderMood, foldKind, pressed);
@@ -46714,26 +47590,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M8.cur = null;
+      M9.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M8.articles, M8.sidecar, M8.clipUrls, M8.clipNotes || [], src, M8.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M9.articles, M9.sidecar, M9.clipUrls, M9.clipNotes || [], src, M9.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M8.cur = null;
+        M9.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M8.cur && M8.cur.id))) {
-        M8.cur = list[0];
+      if (!list.some((a) => a.id === (M9.cur && M9.cur.id))) {
+        M9.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M8.cur ? M8.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M8.list = list;
+      listEl.innerHTML = tocListHtml(list, M9.cur ? M9.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M9.list = list;
       bindItemMenus();
       return;
     }
@@ -46741,27 +47617,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M8.cur = null;
+      M9.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M8.cur && M8.cur.id))) {
-      M8.cur = flat[0];
+    if (!flat.some((a) => a.id === (M9.cur && M9.cur.id))) {
+      M9.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M8.cur ? M8.cur.id : null;
+    const curId = M9.cur ? M9.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M8.cur = null;
+        M9.cur = null;
         if (readerEl) renderReader();
-        M8.list = [];
+        M9.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M8.list = hit;
+      M9.list = hit;
       bindItemMenus();
       return;
     }
@@ -46779,7 +47655,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M8.list = flat;
+    M9.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -46802,10 +47678,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M8.list;
+    const all = M9.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M8.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M9.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -46881,8 +47757,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M8.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M8.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M9.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M9.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -46898,14 +47774,14 @@ ${c.trim()}
   function renderReader() {
     const prevId = lastReaderId;
     renderReaderNow();
-    const curId = M8.cur ? M8.cur.id : "";
+    const curId = M9.cur ? M9.cur.id : "";
     lastReaderId = curId;
     if (!readerEl || !curId || prevId === curId) return;
     motionReaderRendered(readerEl, prevId === "" ? "first" : readerDir, renderMood);
   }
   function renderReaderNow() {
     if (!readerEl) return;
-    const a = M8.cur;
+    const a = M9.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -46934,7 +47810,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M8.cur && M8.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M9.cur && M9.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -46945,13 +47821,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M8.cur && M8.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M9.cur && M9.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M8.mobDetailOpen && !!M8.cur && M8.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M9.mobDetailOpen && !!M9.cur && M9.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -46966,11 +47842,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M8.cur && M8.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M9.cur && M9.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M8.mobDetailOpen && M8.cur && M8.cur.id === a.id && mobDetailEl) {
+    if (M9.mobDetailOpen && M9.cur && M9.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -47012,12 +47888,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M8.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M9.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M8.cur ? list.findIndex((x) => x.id === M8.cur.id) : -1;
+    const idx = M9.cur ? list.findIndex((x) => x.id === M9.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M8.cur || next.id !== M8.cur.id)) {
+    if (next && (!M9.cur || next.id !== M9.cur.id)) {
       readerDir = delta >= 0 ? "fwd" : "back";
       selectArticle(next.id);
     }
@@ -47029,19 +47905,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M8.cur || M8.cur.id !== a.id;
+    const changed = !M9.cur || M9.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M8.cur) {
+    if (changed && M9.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M8.cur.id, sc.scrollTop);
+        readScrollMemo.set(M9.cur.id, sc.scrollTop);
       }
     }
-    M8.cur = a;
+    M9.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -47058,7 +47934,7 @@ ${c.trim()}
     const ok = await flowSave(a);
     if (!ok) return;
     await refreshAfterAction();
-    if (M8.mobDetailOpen && mobDetailEl) {
+    if (M9.mobDetailOpen && mobDetailEl) {
       motionArchStamp(mobDetailEl.querySelector("[data-clip-mob-detail-body]"));
     } else {
       motionArchStamp(readerEl ? readerEl.querySelector(".bz-clip-art-title") : null);
@@ -47186,25 +48062,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M8.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M8.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M9.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M9.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M8.cur = flat.find((x) => x.id === prevId) || M8.cur;
+      M9.cur = flat.find((x) => x.id === prevId) || M9.cur;
     } else if (flat.length) {
-      M8.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M8.cur && M8.cur.id !== prevId;
+      M9.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M9.cur && M9.cur.id !== prevId;
     } else {
-      M8.cur = null;
+      M9.cur = null;
     }
-    if (advanced && M8.cur) markReadOnOpen(M8.cur);
+    if (advanced && M9.cur) markReadOnOpen(M9.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M8.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M9.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -47238,9 +48114,9 @@ ${c.trim()}
   }
   function renderMobTocNow() {
     if (!mobListEl) return;
-    const arts = M8.articles;
-    const clipNotes = M8.clipNotes || [];
-    const savedUrls = new Set((M8.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M9.articles;
+    const clipNotes = M9.clipNotes || [];
+    const savedUrls = new Set((M9.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -47351,8 +48227,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M8.cur = a;
-    M8.mobDetailOpen = true;
+    M9.cur = a;
+    M9.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) {
@@ -47366,12 +48242,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M8.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M9.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M8.stats = res.stats;
-      if (M8.open && !M8.mobDetailOpen) {
+      if (res && res.changed && res.stats) M9.stats = res.stats;
+      if (M9.open && !M9.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -47380,8 +48256,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M8.cur) return;
-    const a = M8.cur;
+    if (!mobDetailEl || !M9.cur) return;
+    const a = M9.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -47413,7 +48289,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M8.mobDetailOpen && !!M8.cur && M8.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M9.mobDetailOpen && !!M9.cur && M9.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -47486,7 +48362,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M8.cur;
+    const a = M9.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -47503,7 +48379,7 @@ ${c.trim()}
     motionSelbarIn(bar);
   }
   function showImageSelBar(imgEl) {
-    const a = M8.cur;
+    const a = M9.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -47522,7 +48398,7 @@ ${c.trim()}
     motionSelbarIn(bar);
   }
   function checkTextSelection() {
-    if (!M8.open) return;
+    if (!M9.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -47585,7 +48461,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M8.cur && M8.cur.id === articleId ? M8.cur : null;
+    return M9.cur && M9.cur.id === articleId ? M9.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -47643,10 +48519,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M8.cur && M8.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M9.cur && M9.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M8.mobDetailOpen) return;
+    if (!mobDetailEl || !M9.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -47673,12 +48549,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M8.mobDetailOpen && !!M8.cur && M8.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M9.mobDetailOpen && !!M9.cur && M9.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M8.cur || M8.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M8.cur);
-    if (M8.mobDetailOpen) refreshMobBodyInPlace(M8.cur);
+    if (!M9.cur || M9.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M9.cur);
+    if (M9.mobDetailOpen) refreshMobBodyInPlace(M9.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -47695,8 +48571,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M8.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M8.sidecar = await addPendingSourceNote(a.id, notePath);
+        M9.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M9.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -47725,7 +48601,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M8.sidecar = res.sidecar;
+      if (res.sidecar) M9.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -47783,7 +48659,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M8.sidecar = await addPendingSourceNote(a.id, notePath);
+        M9.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -47933,8 +48809,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M8.clipNotes = null;
-        M8.clipUrls = /* @__PURE__ */ new Set();
+        M9.clipNotes = null;
+        M9.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -47964,7 +48840,7 @@ ${c.trim()}
       init_store();
       init_render8();
       init_state6();
-      init_motion4();
+      init_motion5();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
@@ -48582,7 +49458,7 @@ ${c.trim()}
   });
 
   // src/favorites/motion.ts
-  function reduced6() {
+  function reduced7() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -48596,8 +49472,8 @@ ${c.trim()}
       return false;
     }
   }
-  function waapi5(el, frames, opts) {
-    if (!el || reduced6() || typeof el.animate !== "function") {
+  function waapi6(el, frames, opts) {
+    if (!el || reduced7() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -48614,16 +49490,16 @@ ${c.trim()}
       return null;
     }
   }
-  function after5(ms, fn) {
+  function after6(ms, fn) {
     const id = setTimeout(() => {
-      timers5.delete(id);
+      timers6.delete(id);
       fn();
     }, ms);
-    timers5.add(id);
+    timers6.add(id);
   }
-  function cancelPending4() {
-    timers5.forEach(clearTimeout);
-    timers5.clear();
+  function cancelPending5() {
+    timers6.forEach(clearTimeout);
+    timers6.clear();
   }
   function findCard(board, id) {
     try {
@@ -48652,15 +49528,15 @@ ${c.trim()}
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi5(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.move + 40, easing: E5.out });
-    waapi5(
+    waapi6(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M11.move + 40, easing: E6.out });
+    waapi6(
       panel2,
       [
         { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
         { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 460, easing: E5.out }
+      { duration: 460, easing: E6.out }
     );
   }
   function motionPanelOut3(overlay2, done) {
@@ -48683,29 +49559,29 @@ ${c.trim()}
       }
       done();
     };
-    let maskAnim = waapi5(
+    let maskAnim = waapi6(
       overlay2,
       [{ opacity: 1 }, { opacity: 0 }],
-      { duration: M10.fast + 40, easing: E5.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
+      { duration: M11.fast + 40, easing: E6.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
     );
-    const a = waapi5(
+    const a = waapi6(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M10.fast + 40, easing: E5.out, fill: "forwards", id: EXIT_ANIM_ID2 }
+      { duration: M11.fast + 40, easing: E6.out, fill: "forwards", id: EXIT_ANIM_ID2 }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    setTimeout(finish, M10.fast + 120);
+    setTimeout(finish, M11.fast + 120);
   }
   function motionRendered3(overlay2, boot) {
     var _a2, _b2;
-    cancelPending4();
+    cancelPending5();
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
     const board = overlay2.querySelector("[data-fav-content]");
@@ -48713,48 +49589,48 @@ ${c.trim()}
       if (board) ensureEmptyFloat(board);
       return;
     }
-    if (reduced6()) return;
+    if (reduced7()) return;
     const h1 = panel2.querySelector(".bz-fav-head h1");
-    if (h1) waapi5(
+    if (h1) waapi6(
       h1,
       [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
-      { duration: M10.base, easing: E5.out, fill: "both" }
+      { duration: M11.base, easing: E6.out, fill: "both" }
     );
     const chips = [...panel2.querySelectorAll("[data-fav-tags] button")];
     chips.forEach((chip2, i) => {
-      waapi5(
+      waapi6(
         chip2,
         [
           { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
           { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M10.base + 60, delay: 60 + Math.min(i, 13) * STAG5, easing: E5.out, fill: "both" }
+        { duration: M11.base + 60, delay: 60 + Math.min(i, 13) * STAG6, easing: E6.out, fill: "both" }
       );
     });
     if (board) {
       const cards = [...board.querySelectorAll(".bz-fav-card")];
       const cold = (_b2 = (_a2 = cards[0]) == null ? void 0 : _a2.classList.contains("bz-fav-arch")) != null ? _b2 : false;
       cards.forEach((card, i) => {
-        const delay = 200 + Math.min(i, 16) * STAG5;
+        const delay = 200 + Math.min(i, 16) * STAG6;
         if (cold) {
-          waapi5(
+          waapi6(
             card,
             [
               { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
               { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
             ],
-            { duration: M10.base + 100, delay, easing: E5.out, fill: "both" }
+            { duration: M11.base + 100, delay, easing: E6.out, fill: "both" }
           );
         } else {
-          waapi5(
+          waapi6(
             card,
             [
               { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
               { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: M10.base + 90, delay, easing: E5.out, fill: "both" }
+            { duration: M11.base + 90, delay, easing: E6.out, fill: "both" }
           );
           const tape = card.querySelector(".bz-fav-tape");
           if (tape) tapePress(tape, delay + 140);
@@ -48762,10 +49638,10 @@ ${c.trim()}
       });
       const empty = board.querySelector(".bz-fav-empty");
       if (empty && !cards.length) {
-        waapi5(
+        waapi6(
           empty,
           [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
-          { duration: M10.base + 80, delay: 240, easing: E5.out, fill: "both" }
+          { duration: M11.base + 80, delay: 240, easing: E6.out, fill: "both" }
         );
       }
       ensureEmptyFloat(board);
@@ -48773,27 +49649,27 @@ ${c.trim()}
   }
   function motionFilterSwitch(board, tagsRow, rewrite) {
     rewrite();
-    if (reduced6() || typeof board.animate !== "function") return;
-    waapi5(
+    if (reduced7() || typeof board.animate !== "function") return;
+    waapi6(
       board,
       [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-      { duration: M10.fast + 60, easing: E5.out }
+      { duration: M11.fast + 60, easing: E6.out }
     );
     const fresh = board.querySelectorAll(".bz-fav-card");
     const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
     fresh.forEach((card, i) => {
-      waapi5(
+      waapi6(
         card,
         // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
         cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
-        { duration: M10.base, delay: Math.min(i, 14) * STAG5, easing: E5.out, fill: "both" }
+        { duration: M11.base, delay: Math.min(i, 14) * STAG6, easing: E6.out, fill: "both" }
       );
     });
     const ne = board.querySelector(".bz-fav-empty");
-    if (ne) waapi5(
+    if (ne) waapi6(
       ne,
       [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-      { duration: M10.base, easing: E5.out, fill: "both" }
+      { duration: M11.base, easing: E6.out, fill: "both" }
     );
     if (tagsRow) chipSnap(tagsRow);
     ensureEmptyFloat(board);
@@ -48801,10 +49677,10 @@ ${c.trim()}
   function chipSnap(row) {
     const on = row.querySelector("button.bz-fav-on");
     if (!on) return;
-    waapi5(
+    waapi6(
       on,
       [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
-      { duration: M10.base - 20, easing: E5.out }
+      { duration: M11.base - 20, easing: E6.out }
     );
   }
   function motionBindChipFeel(row) {
@@ -48813,12 +49689,12 @@ ${c.trim()}
     const pressed = /* @__PURE__ */ new WeakMap();
     row.addEventListener("pointerover", (e) => {
       var _a2, _b2, _c, _d;
-      if (!canHover2() || reduced6()) return;
+      if (!canHover2() || reduced7()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       pressed.delete(chip2);
-      waapi5(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M10.fast, easing: E5.out });
+      waapi6(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M11.fast, easing: E6.out });
     });
     row.addEventListener("pointerout", (e) => {
       var _a2, _b2, _c, _d;
@@ -48826,22 +49702,22 @@ ${c.trim()}
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       if (pressed.get(chip2)) return;
-      waapi5(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M10.fast, easing: E5.out });
+      waapi6(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M11.fast, easing: E6.out });
     });
     row.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced6()) return;
+      if (reduced7()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       pressed.set(chip2, Date.now());
-      waapi5(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E5.out, fill: "forwards" });
+      waapi6(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E6.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !pressed.get(chip2)) return;
       pressed.delete(chip2);
-      waapi5(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M10.base - 60, easing: E5.out });
+      waapi6(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M11.base - 60, easing: E6.out });
     };
     row.addEventListener("pointerup", release);
     row.addEventListener("pointercancel", release);
@@ -48853,11 +49729,11 @@ ${c.trim()}
     let held = null;
     content.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced6()) return;
+      if (reduced7()) return;
       const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
       if (!card) return;
       held = card;
-      waapi5(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E5.out, fill: "forwards" });
+      waapi6(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E6.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
@@ -48866,34 +49742,34 @@ ${c.trim()}
       if (!target) return;
       if (card && card !== held) return;
       held = null;
-      waapi5(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M10.move + 40, easing: E5.out });
+      waapi6(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M11.move + 40, easing: E6.out });
     };
     content.addEventListener("pointerup", release);
     content.addEventListener("pointercancel", release);
     content.addEventListener("pointerleave", release);
   }
   function motionCardPick(card) {
-    if (reduced6()) return;
-    waapi5(
+    if (reduced7()) return;
+    waapi6(
       card,
       [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
-      { duration: M10.move + 160, easing: E5.out }
+      { duration: M11.move + 160, easing: E6.out }
     );
   }
   function tapePress(tape, delay) {
     const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
-    waapi5(
+    waapi6(
       tape,
       [
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
       ],
-      { duration: M10.move + 80, delay, easing: E5.out }
+      { duration: M11.move + 80, delay, easing: E6.out }
     );
   }
   function sheen(card, delay) {
-    if (reduced6() || card.querySelector(".bz-favm-sheen")) return;
+    if (reduced7() || card.querySelector(".bz-favm-sheen")) return;
     const wrap = document.createElement("span");
     wrap.className = "bz-favm-sheen";
     wrap.setAttribute("aria-hidden", "true");
@@ -48901,62 +49777,62 @@ ${c.trim()}
     band.className = "bz-favm-sheen-band";
     wrap.appendChild(band);
     card.appendChild(wrap);
-    after5(delay, () => {
-      const a = waapi5(
+    after6(delay, () => {
+      const a = waapi6(
         band,
         [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
-        { duration: 620, easing: E5.out }
+        { duration: 620, easing: E6.out }
       );
-      after5(a ? 680 : 0, () => wrap.remove());
+      after6(a ? 680 : 0, () => wrap.remove());
     });
   }
   function motionCardLanded(board, id, kind) {
-    if (reduced6()) return;
+    if (reduced7()) return;
     const card = findCard(board, id);
     if (!card) return;
     if (kind === "add") {
-      waapi5(
+      waapi6(
         card,
         [
           { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
           { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
           { opacity: 1, transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M10.base + 160, easing: E5.out }
+        { duration: M11.base + 160, easing: E6.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 100);
       sheen(card, 140);
     } else if (kind === "edit") {
-      waapi5(
+      waapi6(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M10.base + 80, easing: E5.out }
+        { duration: M11.base + 80, easing: E6.out }
       );
     } else if (kind === "pin") {
-      waapi5(
+      waapi6(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M10.base + 140, easing: E5.out }
+        { duration: M11.base + 140, easing: E6.out }
       );
     } else {
-      waapi5(
+      waapi6(
         card,
         [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
-        { duration: M10.base + 100, easing: E5.out }
+        { duration: M11.base + 100, easing: E6.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 120);
     }
   }
   function motionCaptureRects(board) {
-    if (!board || reduced6() || typeof board.animate !== "function") return null;
+    if (!board || reduced7() || typeof board.animate !== "function") return null;
     const map = /* @__PURE__ */ new Map();
     board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
       const r = c.getBoundingClientRect();
@@ -48965,8 +49841,8 @@ ${c.trim()}
     return map;
   }
   function motionPinFlip(board, before, pinnedId) {
-    if (!before || before.size === 0 || reduced6()) {
-      if (!reduced6()) motionCardLanded(board, pinnedId, "pin");
+    if (!before || before.size === 0 || reduced7()) {
+      if (!reduced7()) motionCardLanded(board, pinnedId, "pin");
       return;
     }
     let played = false;
@@ -48978,20 +49854,20 @@ ${c.trim()}
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
       played = true;
       if (card.dataset.favId === pinnedId) {
-        waapi5(
+        waapi6(
           card,
           [
             { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
             { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
             { transform: "none", filter: "brightness(1)" }
           ],
-          { duration: M10.move + 140, easing: E5.move }
+          { duration: M11.move + 140, easing: E6.move }
         );
       } else {
-        waapi5(
+        waapi6(
           card,
           [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
-          { duration: M10.move + 60, delay: 30, easing: E5.move }
+          { duration: M11.move + 60, delay: 30, easing: E6.move }
         );
       }
     });
@@ -48999,7 +49875,7 @@ ${c.trim()}
   }
   function motionCardDepart(board, id, kind) {
     const card = board ? findCard(board, id) : null;
-    if (!card || reduced6() || typeof card.animate !== "function") return Promise.resolve();
+    if (!card || reduced7() || typeof card.animate !== "function") return Promise.resolve();
     return new Promise((res) => {
       let settled = false;
       const finish = () => {
@@ -49018,50 +49894,50 @@ ${c.trim()}
         { opacity: 1, transform: "none" },
         { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
       ];
-      const a = waapi5(card, frames, { duration: M10.move + (kind === "del" ? 0 : 40), easing: E5.out, fill: "forwards" });
+      const a = waapi6(card, frames, { duration: M11.move + (kind === "del" ? 0 : 40), easing: E6.out, fill: "forwards" });
       if (!a) {
         finish();
         return;
       }
       a.finished.then(finish).catch(finish);
-      setTimeout(finish, M10.move + 140);
+      setTimeout(finish, M11.move + 140);
     });
   }
   function motionFormIn2(popup) {
-    if (reduced6()) return;
+    if (reduced7()) return;
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
     rows.forEach((el, i) => {
-      waapi5(
+      waapi6(
         el,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M10.base, delay: i * 24, easing: E5.out, fill: "both" }
+        { duration: M11.base, delay: i * 24, easing: E6.out, fill: "both" }
       );
     });
   }
   function motionSwitchPop(el) {
-    if (reduced6()) return;
-    waapi5(
+    if (reduced7()) return;
+    waapi6(
       el,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
-      { duration: M10.base - 40, easing: E5.out }
+      { duration: M11.base - 40, easing: E6.out }
     );
   }
   function motionPickPop(btn, on) {
-    if (reduced6()) return;
-    waapi5(
+    if (reduced7()) return;
+    waapi6(
       btn,
       on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
-      { duration: M10.base - 60, easing: E5.out }
+      { duration: M11.base - 60, easing: E6.out }
     );
   }
   function motionErrShake(errEl) {
-    if (reduced6()) return;
-    waapi5(
+    if (reduced7()) return;
+    waapi6(
       errEl,
       [
         { transform: "translateX(0)" },
@@ -49070,7 +49946,7 @@ ${c.trim()}
         { transform: "translateX(-2px)", offset: 0.72 },
         { transform: "translateX(0)" }
       ],
-      { duration: M10.base + 20, easing: E5.out }
+      { duration: M11.base + 20, easing: E6.out }
     );
   }
   function motionAiBusy(btn, on) {
@@ -49079,10 +49955,10 @@ ${c.trim()}
       prev.cancel();
       aiAnims.delete(btn);
     }
-    if (!on || reduced6()) return;
+    if (!on || reduced7()) return;
     const star = btn.querySelector("svg");
     const target = star != null ? star : btn;
-    const a = waapi5(
+    const a = waapi6(
       target,
       [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
       { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
@@ -49090,12 +49966,12 @@ ${c.trim()}
     if (a) aiAnims.set(btn, a);
   }
   function motionTagMgrRows(wrap) {
-    if (reduced6()) return;
+    if (reduced7()) return;
     [...wrap.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
-      waapi5(
+      waapi6(
         el,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
-        { duration: M10.base, delay: Math.min(i, 10) * STAG5, easing: E5.out, fill: "both" }
+        { duration: M11.base, delay: Math.min(i, 10) * STAG6, easing: E6.out, fill: "both" }
       );
     });
   }
@@ -49103,15 +49979,15 @@ ${c.trim()}
     const ic2 = board.querySelector(".bz-empty .bz-empty-ic");
     if (!ic2 || ic2.dataset.favmFloat) return;
     ic2.dataset.favmFloat = "1";
-    const a = waapi5(
+    const a = waapi6(
       ic2,
       [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
       { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
     );
     if (a) floatAnims.set(ic2, a);
   }
-  function motionTeardown5() {
-    cancelPending4();
+  function motionTeardown6() {
+    cancelPending5();
     for (const a of floatAnims.values()) {
       try {
         a.cancel();
@@ -49131,16 +50007,16 @@ ${c.trim()}
     } catch (e) {
     }
   }
-  var M10, E5, STAG5, timers5, EXIT_ANIM_ID2, EXIT_MASK_ANIM_ID2, aiAnims, floatAnims;
-  var init_motion5 = __esm({
+  var M11, E6, STAG6, timers6, EXIT_ANIM_ID2, EXIT_MASK_ANIM_ID2, aiAnims, floatAnims;
+  var init_motion6 = __esm({
     "src/favorites/motion.ts"() {
-      M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E5 = {
+      M11 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E6 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG5 = 30;
-      timers5 = /* @__PURE__ */ new Set();
+      STAG6 = 30;
+      timers6 = /* @__PURE__ */ new Set();
       EXIT_ANIM_ID2 = "bz-fav-exit";
       EXIT_MASK_ANIM_ID2 = "bz-fav-exit-mask";
       aiAnims = /* @__PURE__ */ new Map();
@@ -49230,14 +50106,14 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M11.overlay = null;
-    M11.items = [];
-    M11.tag = null;
-    M11.archived = false;
-    M11.sort = "new";
-    M11.renderFn = null;
-    M11.stage = "idle";
-    motionTeardown5();
+    M12.overlay = null;
+    M12.items = [];
+    M12.tag = null;
+    M12.archived = false;
+    M12.sort = "new";
+    M12.renderFn = null;
+    M12.stage = "idle";
+    motionTeardown6();
   }
   function favoritesSettingsSchema() {
     return {
@@ -49308,7 +50184,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M11.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M12.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -49324,7 +50200,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M11.overlay) {
+    if (M12.overlay) {
       closePanel3();
       return;
     }
@@ -49333,22 +50209,22 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M11.overlay = overlay2;
-    M11.renderFn = (reveal) => renderAll4(reveal);
-    M11.stage = "placeholder";
-    motionTeardown5();
+    M12.overlay = overlay2;
+    M12.renderFn = (reveal) => renderAll4(reveal);
+    M12.stage = "placeholder";
+    motionTeardown6();
     const openFilter = resolveOpenFilter();
-    M11.tag = openFilter.tag;
-    M11.archived = openFilter.archived;
-    M11.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M12.tag = openFilter.tag;
+    M12.archived = openFilter.archived;
+    M12.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
     motionPanelIn4(overlay2);
     window.__bzFavReplay = () => {
-      if (M11.overlay !== overlay2) return;
+      if (M12.overlay !== overlay2) return;
       motionPanelIn4(overlay2);
-      M11.stage = "boot";
+      M12.stage = "boot";
       renderAll4();
     };
     overlay2.addEventListener("click", (e) => {
@@ -49429,21 +50305,21 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    const ov = M11.overlay;
+    const ov = M12.overlay;
     if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M11.archived ? "@archived" : M11.tag || "";
+        s.favoritesLastFilter = M12.archived ? "@archived" : M12.tag || "";
         void saveSettings();
       }
-      M11.overlay = null;
-      M11.renderFn = null;
-      M11.stage = "idle";
-      motionTeardown5();
+      M12.overlay = null;
+      M12.renderFn = null;
+      M12.stage = "idle";
+      motionTeardown6();
       motionPanelOut3(ov, () => ov.remove());
       return;
     }
-    M11.renderFn = null;
+    M12.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -49452,9 +50328,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M11.items = await dataManagerOf().getAll();
+      M12.items = await dataManagerOf().getAll();
     } catch (e) {
-      M11.items = [];
+      M12.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -49462,28 +50338,28 @@ ${c.trim()}
   async function reload2(reveal) {
     var _a2;
     await loadItems();
-    (_a2 = M11.renderFn) == null ? void 0 : _a2.call(M11, reveal);
+    (_a2 = M12.renderFn) == null ? void 0 : _a2.call(M12, reveal);
   }
   function boardEl() {
     var _a2, _b2;
-    return (_b2 = (_a2 = M11.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
+    return (_b2 = (_a2 = M12.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
   }
   function renderAll4(reveal) {
     var _a2;
-    if (!M11.overlay) return;
-    if (!M11.archived && M11.tag && !getTags().some((t) => t.label === M11.tag)) M11.tag = null;
-    const panel2 = M11.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M11.items, M11, { mountIcons, mobile: isMobileEnv() });
-    if (M11.stage === "placeholder") {
-      M11.stage = "boot";
+    if (!M12.overlay) return;
+    if (!M12.archived && M12.tag && !getTags().some((t) => t.label === M12.tag)) M12.tag = null;
+    const panel2 = M12.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M12.items, M12, { mountIcons, mobile: isMobileEnv() });
+    if (M12.stage === "placeholder") {
+      M12.stage = "boot";
       return;
     }
-    if (M11.stage === "boot") {
-      M11.stage = "idle";
-      motionRendered3(M11.overlay, true);
+    if (M12.stage === "boot") {
+      M12.stage = "idle";
+      motionRendered3(M12.overlay, true);
       return;
     }
-    motionRendered3(M11.overlay, false);
+    motionRendered3(M12.overlay, false);
     if (reveal == null ? void 0 : reveal.id) {
       const board = boardEl();
       if (!board) return;
@@ -49494,24 +50370,24 @@ ${c.trim()}
   function applyTagFilter(label) {
     var _a2, _b2;
     if (label === VIEW_ALL) {
-      M11.tag = null;
-      M11.archived = false;
+      M12.tag = null;
+      M12.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M11.tag = null;
-      M11.archived = !M11.archived;
+      M12.tag = null;
+      M12.archived = !M12.archived;
     } else {
-      M11.archived = false;
-      M11.tag = M11.tag === label ? null : label;
+      M12.archived = false;
+      M12.tag = M12.tag === label ? null : label;
     }
     const board = boardEl();
     if (board) {
-      motionFilterSwitch(board, (_b2 = (_a2 = M11.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
+      motionFilterSwitch(board, (_b2 = (_a2 = M12.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
     } else {
       renderAll4();
     }
   }
   function itemById2(id) {
-    return M11.items.find((i) => i.id === id);
+    return M12.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -50136,7 +51012,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M11, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M12, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -50158,9 +51034,9 @@ GitHub 仓库：${ghInfo.title}
       init_render10();
       init_ai3();
       init_data11();
-      init_motion5();
+      init_motion6();
       init_app3();
-      M11 = {
+      M12 = {
         overlay: null,
         items: [],
         tag: null,
@@ -50459,7 +51335,7 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/bookshelf/motion.ts
-  var init_motion6 = __esm({
+  var init_motion7 = __esm({
     "src/bookshelf/motion.ts"() {
     }
   });
@@ -50489,7 +51365,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_modal();
       init_ui10();
-      init_motion6();
+      init_motion7();
       init_notes();
       init_epub_notes();
     }
@@ -50525,7 +51401,7 @@ GitHub 仓库：${ghInfo.title}
       init_data3();
       init_render12();
       init_notes_ui();
-      init_motion6();
+      init_motion7();
       SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
     }
   });
@@ -54202,14 +55078,14 @@ GitHub 仓库：${ghInfo.title}
   }
   function motionAfter(ms, fn) {
     const id = setTimeout(() => {
-      timers6.delete(id);
+      timers7.delete(id);
       fn();
     }, ms);
-    timers6.add(id);
+    timers7.add(id);
   }
   function motionCancelPending() {
-    timers6.forEach(clearTimeout);
-    timers6.clear();
+    timers7.forEach(clearTimeout);
+    timers7.clear();
   }
   function motionShellAfter(ms, fn) {
     setTimeout(fn, ms);
@@ -54231,7 +55107,7 @@ GitHub 仓库：${ghInfo.title}
   function motionLoopStopAll() {
     for (const key of [...loops.keys()]) motionLoopStop(key);
   }
-  function motionTeardown7() {
+  function motionTeardown8() {
     motionCancelPending();
     motionLoopStopAll();
   }
@@ -54267,7 +55143,7 @@ GitHub 仓库：${ghInfo.title}
   function motionArmSearch() {
     if (!intent) intent = "search";
   }
-  function rise(el, delay, dur = M12.base, from = {}) {
+  function rise(el, delay, dur = M13.base, from = {}) {
     var _a2, _b2, _c;
     const y = (_a2 = from.y) != null ? _a2 : 8;
     const blur = (_b2 = from.blur) != null ? _b2 : 4;
@@ -54279,7 +55155,7 @@ GitHub 仓库：${ghInfo.title}
           { opacity: 0, transform: `translateY(${y}px)${scale !== 1 ? ` scale(${scale})` : ""}`, filter: `blur(${blur}px)` },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: dur, easing: E6.out, fill: "backwards" }
+        { duration: dur, easing: E7.out, fill: "backwards" }
       );
     });
   }
@@ -54305,41 +55181,41 @@ GitHub 仓库：${ghInfo.title}
             { opacity: 1, transform: "rotate(8deg) scale(1.06)", filter: "blur(0px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: 380, easing: E6.out, fill: "backwards" }
+          { duration: 380, easing: E7.out, fill: "backwards" }
         ));
-        items.forEach((el, i) => rise(el, 90 + i * 45, M12.base, { y: 6 }));
+        items.forEach((el, i) => rise(el, 90 + i * 45, M13.base, { y: 6 }));
         side.forEach((el, i) => {
-          if (el) rise(el, 240 + i * 60, M12.base, { y: 6 });
+          if (el) rise(el, 240 + i * 60, M13.base, { y: 6 });
         });
         const title = desk.querySelector("[data-vault-title]");
-        if (title) rise(title, 60, M12.base, { y: 5 });
+        if (title) rise(title, 60, M13.base, { y: 5 });
         motionBootSweep(popup);
       }
       if (phase === "boot") rows.forEach((el, i) => {
-        if (i < 14) rise(el, 300 + i * STAG6, M12.base, { y: 7 });
+        if (i < 14) rise(el, 300 + i * STAG7, M13.base, { y: 7 });
       });
       else if (phase === "switch") rows.forEach((el, i) => {
-        if (i < 12) rise(el, i * 20, M12.fast + 60, { y: 6, blur: 3 });
+        if (i < 12) rise(el, i * 20, M13.fast + 60, { y: 6, blur: 3 });
       });
       else if (phase === "search") rows.forEach((el, i) => {
-        if (i < 10) rise(el, i * 14, M12.fast + 40, { y: 4, blur: 2 });
+        if (i < 10) rise(el, i * 14, M13.fast + 40, { y: 4, blur: 2 });
       });
       if (detail) {
         if (phase === "boot" || phase === "switch") revealDetail(detail, phase === "boot" ? 220 : 40);
         else if (phase === "search") revealDetail(detail, 30, true);
-        else rise(detail, 0, M12.fast + 40, { y: 4, blur: 2 });
+        else rise(detail, 0, M13.fast + 40, { y: 4, blur: 2 });
       }
     }
     if (motionVisible(mob) && mob) {
       const rows = [...mob.querySelectorAll("[data-mob-body] > .bz-vault-row")];
       if (phase === "boot") rows.forEach((el, i) => {
-        if (i < 12) rise(el, 260 + i * STAG6, M12.base, { y: 7 });
+        if (i < 12) rise(el, 260 + i * STAG7, M13.base, { y: 7 });
       });
       else if (phase === "switch") rows.forEach((el, i) => {
-        if (i < 10) rise(el, i * 20, M12.fast + 60, { y: 6, blur: 3 });
+        if (i < 10) rise(el, i * 20, M13.fast + 60, { y: 6, blur: 3 });
       });
       else if (phase === "search") rows.forEach((el, i) => {
-        if (i < 8) rise(el, i * 14, M12.fast + 40, { y: 4, blur: 2 });
+        if (i < 8) rise(el, i * 14, M13.fast + 40, { y: 4, blur: 2 });
       });
     }
   }
@@ -54350,18 +55226,18 @@ GitHub 仓库：${ghInfo.title}
       detail.querySelector(".bz-vault-cards"),
       detail.querySelector(".bz-vault-two")
     ].filter((b) => !!b);
-    blocks.forEach((b, i) => rise(b, base + i * (light ? 40 : 70), light ? M12.fast + 60 : M12.base, { y: light ? 4 : 7 }));
+    blocks.forEach((b, i) => rise(b, base + i * (light ? 40 : 70), light ? M13.fast + 60 : M13.base, { y: light ? 4 : 7 }));
     const fields = [...detail.querySelectorAll(".bz-vault-dcontent .field, .bz-vault-dcontent .bigbtns")];
-    fields.forEach((f, i) => rise(f, base + blocks.length * 60 + i * 55, M12.base, { y: 5 }));
+    fields.forEach((f, i) => rise(f, base + blocks.length * 60 + i * 55, M13.base, { y: 5 }));
     const minis = [...detail.querySelectorAll(".bz-vault-minirow")];
     minis.forEach((m, i) => {
-      if (i < 6) rise(m, base + 260 + i * 50, M12.base, { y: 4, blur: 2 });
+      if (i < 6) rise(m, base + 260 + i * 50, M13.base, { y: 4, blur: 2 });
     });
   }
   function motionPanelIn6(popup) {
     if (!popup || motionReduced()) return;
     const mask = document.getElementById("bz-encrypt-mask");
-    if (mask) motionWaapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.move, easing: E6.out });
+    if (mask) motionWaapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move, easing: E7.out });
     const title = popup.querySelector("[data-vault-title]");
     if (title && motionVisible(popup)) {
       motionShellAfter(80, () => {
@@ -54371,7 +55247,7 @@ GitHub 仓库：${ghInfo.title}
             { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M12.base, easing: E6.out, fill: "backwards" }
+          { duration: M13.base, easing: E7.out, fill: "backwards" }
         );
       });
     }
@@ -54396,9 +55272,9 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 1, transform: "scale(1)", filter: "brightness(1) blur(0px)" },
         { opacity: 0, transform: "scale(.965)", filter: "brightness(.45) blur(5px)" }
       ],
-      { duration: M12.move + 20, easing: E6.out }
+      { duration: M13.move + 20, easing: E7.out }
     );
-    motionVeilGone(veil, anim, M12.move + 20);
+    motionVeilGone(veil, anim, M13.move + 20);
   }
   function motionLockSealing(popup) {
     if (!popup || motionReduced() || !motionVisible(popup)) return;
@@ -54422,33 +55298,33 @@ GitHub 仓库：${ghInfo.title}
     motionWaapi(
       top,
       [{ transform: "translateY(-102%)" }, { transform: "translateY(0)" }],
-      { duration: 260, easing: E6.move, fill: "forwards" }
+      { duration: 260, easing: E7.move, fill: "forwards" }
     );
     motionWaapi(
       bot,
       [{ transform: "translateY(102%)" }, { transform: "translateY(0)" }],
-      { duration: 260, easing: E6.move, fill: "forwards" }
+      { duration: 260, easing: E7.move, fill: "forwards" }
     );
     motionShellAfter(268, () => {
       motionWaapi(
         top,
         [{ filter: "brightness(1)" }, { filter: "brightness(1.55)" }, { filter: "brightness(1)" }],
-        { duration: 240, easing: E6.out }
+        { duration: 240, easing: E7.out }
       );
       motionWaapi(
         bot,
         [{ filter: "brightness(1)" }, { filter: "brightness(1.55)" }, { filter: "brightness(1)" }],
-        { duration: 240, easing: E6.out }
+        { duration: 240, easing: E7.out }
       );
     });
     const seal2 = popup.querySelector(".bz-vault-brand .seal");
     if (seal2) motionWaapi(
       seal2,
       [{ transform: "rotate(0deg)" }, { transform: "rotate(180deg)" }],
-      { duration: 460, easing: E6.move }
+      { duration: 460, easing: E7.move }
     );
     motionShellAfter(430, () => {
-      const out = motionWaapi(gate, [{ opacity: 1 }, { opacity: 0 }], { duration: 190, easing: E6.out, fill: "forwards" });
+      const out = motionWaapi(gate, [{ opacity: 1 }, { opacity: 0 }], { duration: 190, easing: E7.out, fill: "forwards" });
       const gone = () => {
         try {
           gate.remove();
@@ -54468,9 +55344,9 @@ GitHub 仓库：${ghInfo.title}
     const anim = motionWaapi(
       sweep3,
       [{ transform: "translateX(-72%)" }, { transform: "translateX(72%)" }],
-      { duration: M12.impulse, easing: E6.out }
+      { duration: M13.impulse, easing: E7.out }
     );
-    motionVeilGone(sweep3, anim, M12.impulse);
+    motionVeilGone(sweep3, anim, M13.impulse);
   }
   function motionLockScreenIn(lsEl) {
     if (!lsEl || motionReduced()) return;
@@ -54482,7 +55358,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 360, easing: E6.out, fill: "backwards" }
+      { duration: 360, easing: E7.out, fill: "backwards" }
     );
     const seal2 = lsEl.querySelector('[data-ls="seal"]');
     if (seal2) motionWaapi(
@@ -54492,7 +55368,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 1, transform: "rotate(4deg) scale(.97)", filter: "blur(0px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 440, easing: E6.out, fill: "backwards" }
+      { duration: 440, easing: E7.out, fill: "backwards" }
     );
     const lines = ['[data-ls="title"]', '[data-ls="sub"]', '[data-ls="row"]'];
     lines.forEach((sel, i) => {
@@ -54505,7 +55381,7 @@ GitHub 仓库：${ghInfo.title}
               { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M12.base, easing: E6.out, fill: "backwards" }
+            { duration: M13.base, easing: E7.out, fill: "backwards" }
           );
         });
       }
@@ -54519,7 +55395,7 @@ GitHub 仓库：${ghInfo.title}
             { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M12.base, easing: E6.out, fill: "backwards" }
+          { duration: M13.base, easing: E7.out, fill: "backwards" }
         );
       });
     });
@@ -54544,7 +55420,7 @@ GitHub 仓库：${ghInfo.title}
           { opacity: 1, transform: "translate(-50%,-50%) translate(0,0) scale(1)" },
           { opacity: 0, transform: `translate(-50%,-50%) translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(.4)` }
         ],
-        { duration: 380 + Math.random() * 120, easing: E6.out }
+        { duration: 380 + Math.random() * 120, easing: E7.out }
       );
     }
     const anim = motionWaapi(
@@ -54553,7 +55429,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0.95, transform: "translate(-50%,-50%) scale(.55)" },
         { opacity: 0, transform: "translate(-50%,-50%) scale(2.3)" }
       ],
-      { duration: 460, easing: E6.out }
+      { duration: 460, easing: E7.out }
     );
     motionVeilGone(veil, anim, 460);
   }
@@ -54570,7 +55446,7 @@ GitHub 仓库：${ghInfo.title}
         { transform: "translateX(-4px)" },
         { transform: "translateX(0)" }
       ],
-      { duration: 300, easing: E6.out }
+      { duration: 300, easing: E7.out }
     );
   }
   function motionPreviewIn(popup) {
@@ -54581,7 +55457,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0, transform: "translateY(12px) scale(.985)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 300, easing: E6.out, fill: "backwards" }
+      { duration: 300, easing: E7.out, fill: "backwards" }
     );
     motionBootSweep(popup);
   }
@@ -54593,7 +55469,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0.3, filter: "blur(7px) brightness(1.35)" },
         { opacity: 1, filter: "blur(0px) brightness(1)" }
       ],
-      { duration: 460, easing: E6.out, fill: "backwards" }
+      { duration: 460, easing: E7.out, fill: "backwards" }
     );
   }
   function motionOriginalFlash(slot) {
@@ -54603,7 +55479,7 @@ GitHub 仓库：${ghInfo.title}
     motionWaapi(
       target,
       [{ filter: "brightness(1.6) contrast(1.05)" }, { filter: "brightness(1) contrast(1)" }],
-      { duration: 300, easing: E6.out }
+      { duration: 300, easing: E7.out }
     );
   }
   function motionHealthIn(box) {
@@ -54614,7 +55490,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0, transform: "translateY(12px) scale(.985)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 300, easing: E6.out, fill: "backwards" }
+      { duration: 300, easing: E7.out, fill: "backwards" }
     );
     motionBootSweep(box);
   }
@@ -54649,11 +55525,11 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: M12.base, easing: E6.out, fill: "backwards" }
+      { duration: M13.base, easing: E7.out, fill: "backwards" }
     );
     const secs = [...body.querySelectorAll(".bz-encrypt-health-section, .bz-encrypt-health-item, .bz-encrypt-health-hint")];
     secs.forEach((el, i) => {
-      if (i < 12) rise(el, 90 + i * 35, M12.base, { y: 4, blur: 2 });
+      if (i < 12) rise(el, 90 + i * 35, M13.base, { y: 4, blur: 2 });
     });
   }
   function motionFindRowIn(row) {
@@ -54664,7 +55540,7 @@ GitHub 仓库：${ghInfo.title}
         { opacity: 0, transform: "translateX(-6px)", filter: "blur(2px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: M12.fast + 40, easing: E6.out, fill: "backwards" }
+      { duration: M13.fast + 40, easing: E7.out, fill: "backwards" }
     );
   }
   function motionStatusbarSpin(el) {
@@ -54678,19 +55554,19 @@ GitHub 仓库：${ghInfo.title}
         { transform: "rotate(10deg) scale(1.08)", opacity: 1 },
         { transform: "none", opacity: 1 }
       ],
-      { duration: 360, easing: E6.out }
+      { duration: 360, easing: E7.out }
     );
   }
-  var M12, E6, STAG6, timers6, loops, intent;
-  var init_motion7 = __esm({
+  var M13, E7, STAG7, timers7, loops, intent;
+  var init_motion8 = __esm({
     "src/encrypt/motion.ts"() {
-      M12 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E6 = {
+      M13 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E7 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG6 = 30;
-      timers6 = /* @__PURE__ */ new Set();
+      STAG7 = 30;
+      timers7 = /* @__PURE__ */ new Set();
       loops = /* @__PURE__ */ new Map();
       intent = null;
     }
@@ -55018,7 +55894,7 @@ GitHub 仓库：${ghInfo.title}
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
-      init_motion7();
+      init_motion8();
       LOCK_KIND_META = {
         vault: {
           icon: "shield",
@@ -57113,7 +57989,7 @@ GitHub 仓库：${ghInfo.title}
           this.uiManager.detachGlobalListeners();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
-          motionTeardown7();
+          motionTeardown8();
           this.uiManager.pwDataManager.destroy();
           this.uiManager.mask = null;
           this.uiManager.popup = null;
@@ -57917,9 +58793,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after6 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after6 !== before) {
-        rec.secondBrainAllowPaths = after6;
+      const after7 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after7 !== before) {
+        rec.secondBrainAllowPaths = after7;
         migrated = true;
       }
     }
