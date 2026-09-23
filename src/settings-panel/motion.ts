@@ -264,7 +264,8 @@ export function motionNavSynced(nav: HTMLElement): void {
       },
     };
     cursorStates.set(nav, st);
-    // 侧栏滚动 → 目标随内容挪位，萤标一直追（滚动中滞后滑追反而活）
+    // 侧栏滚动 → 重算一次（换算到内容坐标后，滚动中 tx/ty 其实不变——萤标随 side 一起滚，
+    // 天然贴住选中项；这里的重算只为宽度/高度与搜索过滤后的落位兜底）
     side.addEventListener('scroll', st.onScroll, { passive: true });
   }
   const target = nav.querySelector<HTMLElement>('.bz-sp-nav-item.on');
@@ -274,8 +275,13 @@ export function motionNavSynced(nav: HTMLElement): void {
   }
   const tr = target.getBoundingClientRect();
   const sr = st.side.getBoundingClientRect();
-  st.tx = tr.left - sr.left;
-  st.ty = tr.top - sr.top;
+  // ⚠️ 坐标帧必须是「side 的内容坐标」，不是视口相对量：光标是 side 的绝对定位子元素
+  // （.bz-spm-cursor absolute/left:0/top:0，containing block = side 的 padding box），它随
+  // side 一起滚；而 tr.top - sr.top 是**视口**相对差 —— side 一滚就差出一个 scrollTop，
+  // 萤标于是停在比选中项高 scrollTop 的位置（2026-09-23 用户报：点靠下的侧栏项，光晕留在
+  // 上面几行）。补回 side 的滚动量才换算到内容坐标，滚动中萤标与选中项严丝合缝。
+  st.tx = tr.left - sr.left + st.side.scrollLeft;
+  st.ty = tr.top - sr.top + st.side.scrollTop;
   st.el.style.width = `${Math.max(1, tr.width).toFixed(1)}px`;
   st.el.style.height = `${Math.max(1, tr.height).toFixed(1)}px`;
   if (!st.init) {
