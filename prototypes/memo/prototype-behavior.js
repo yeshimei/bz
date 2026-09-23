@@ -1,5 +1,5 @@
-/* 源指纹 e7c5f8aeaa3ae6e1 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4b114f62afee0987 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_memo = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M7, s, ms) {
+        function createDate(y, m, d, h, M8, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
+            date = new Date(y + 400, m, d, h, M8, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M7, s, ms);
+            date = new Date(y, m, d, h, M8, s, ms);
           }
           return date;
         }
@@ -5833,7 +5833,7 @@ var BZW_memo = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5860,7 +5860,7 @@ var BZW_memo = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -17380,15 +17380,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -19617,10 +19617,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -35434,10 +35434,9 @@ ${c.trim()}
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
-    const ext = (it.url || "").trim() ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON2.open, "bz-ic--xs")}</span>` : "";
     return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -35462,6 +35461,7 @@ ${c.trim()}
   function actionSpecs2(it) {
     const acts = [];
     if ((it.url || "").trim()) acts.push({ icon: ICON2.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON2.copy, label: "复制网址", act: "copy" });
     acts.push({
       icon: it.pinned ? ICON2.pinOff : ICON2.pin,
       label: it.pinned ? "取消置顶" : "置顶",
@@ -35516,6 +35516,7 @@ ${c.trim()}
         close: "x",
         add: "plus",
         open: "external-link",
+        copy: "copy",
         pin: "pin",
         pinOff: "pin-off",
         edit: "pencil",
@@ -35910,6 +35911,565 @@ ${c.trim()}
     }
   });
 
+  // src/favorites/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canHover() {
+    try {
+      return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function findCard(board, id) {
+    try {
+      const hit = board.querySelector(`.bz-fav-card[data-fav-id="${CSS.escape(id)}"]`);
+      if (hit) return hit;
+    } catch (e) {
+    }
+    return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
+  }
+  function motionPanelIn(overlay2) {
+    const panel2 = overlay2.querySelector(".bz-fav-panel");
+    if (!panel2) return;
+    panel2.style.opacity = "";
+    panel2.style.transform = "";
+    panel2.style.filter = "";
+    waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M6.move + 40, easing: E.out });
+    waapi(
+      panel2,
+      [
+        { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
+        { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 460, easing: E.out }
+    );
+  }
+  function motionPanelOut(overlay2, done) {
+    const panel2 = overlay2.querySelector(".bz-fav-panel");
+    if (!panel2) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    waapi(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M6.fast + 40, easing: E.out, fill: "forwards" });
+    const a = waapi(
+      panel2,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
+      ],
+      { duration: M6.fast + 40, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    setTimeout(finish, M6.fast + 120);
+  }
+  function motionRendered(overlay2, boot) {
+    var _a2, _b2;
+    cancelPending();
+    const panel2 = overlay2.querySelector(".bz-fav-panel");
+    if (!panel2) return;
+    const board = overlay2.querySelector("[data-fav-content]");
+    if (!boot) {
+      if (board) ensureEmptyFloat(board);
+      return;
+    }
+    if (reduced()) return;
+    const h1 = panel2.querySelector(".bz-fav-head h1");
+    if (h1) waapi(
+      h1,
+      [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M6.base, easing: E.out, fill: "both" }
+    );
+    const chips = [...panel2.querySelectorAll("[data-fav-tags] button")];
+    chips.forEach((chip2, i) => {
+      waapi(
+        chip2,
+        [
+          { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
+          { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M6.base + 60, delay: 60 + Math.min(i, 13) * STAG, easing: E.out, fill: "both" }
+      );
+    });
+    if (board) {
+      const cards = [...board.querySelectorAll(".bz-fav-card")];
+      const cold = (_b2 = (_a2 = cards[0]) == null ? void 0 : _a2.classList.contains("bz-fav-arch")) != null ? _b2 : false;
+      cards.forEach((card, i) => {
+        const delay = 200 + Math.min(i, 16) * STAG;
+        if (cold) {
+          waapi(
+            card,
+            [
+              { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
+              { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
+            ],
+            { duration: M6.base + 100, delay, easing: E.out, fill: "both" }
+          );
+        } else {
+          waapi(
+            card,
+            [
+              { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
+              { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
+              { opacity: 1, transform: "none" }
+            ],
+            { duration: M6.base + 90, delay, easing: E.out, fill: "both" }
+          );
+          const tape = card.querySelector(".bz-fav-tape");
+          if (tape) tapePress(tape, delay + 140);
+        }
+      });
+      const empty = board.querySelector(".bz-fav-empty");
+      if (empty && !cards.length) {
+        waapi(
+          empty,
+          [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
+          { duration: M6.base + 80, delay: 240, easing: E.out, fill: "both" }
+        );
+      }
+      ensureEmptyFloat(board);
+    }
+  }
+  function motionFilterSwitch(board, tagsRow, rewrite) {
+    rewrite();
+    if (reduced() || typeof board.animate !== "function") return;
+    waapi(
+      board,
+      [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M6.fast + 60, easing: E.out }
+    );
+    const fresh = board.querySelectorAll(".bz-fav-card");
+    const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
+    fresh.forEach((card, i) => {
+      waapi(
+        card,
+        // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
+        cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
+        { duration: M6.base, delay: Math.min(i, 14) * STAG, easing: E.out, fill: "both" }
+      );
+    });
+    const ne = board.querySelector(".bz-fav-empty");
+    if (ne) waapi(
+      ne,
+      [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+      { duration: M6.base, easing: E.out, fill: "both" }
+    );
+    if (tagsRow) chipSnap(tagsRow);
+    ensureEmptyFloat(board);
+  }
+  function chipSnap(row) {
+    const on = row.querySelector("button.bz-fav-on");
+    if (!on) return;
+    waapi(
+      on,
+      [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
+      { duration: M6.base - 20, easing: E.out }
+    );
+  }
+  function motionBindChipFeel(row) {
+    if (row.dataset.favmFeel) return;
+    row.dataset.favmFeel = "1";
+    const pressed = /* @__PURE__ */ new WeakMap();
+    row.addEventListener("pointerover", (e) => {
+      var _a2, _b2, _c, _d;
+      if (!canHover() || reduced()) return;
+      const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
+      if (!chip2 || !row.contains(chip2)) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
+      pressed.delete(chip2);
+      waapi(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M6.fast, easing: E.out });
+    });
+    row.addEventListener("pointerout", (e) => {
+      var _a2, _b2, _c, _d;
+      const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
+      if (!chip2 || !row.contains(chip2)) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
+      if (pressed.get(chip2)) return;
+      waapi(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M6.fast, easing: E.out });
+    });
+    row.addEventListener("pointerdown", (e) => {
+      var _a2, _b2;
+      if (reduced()) return;
+      const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
+      if (!chip2 || !row.contains(chip2)) return;
+      pressed.set(chip2, Date.now());
+      waapi(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E.out, fill: "forwards" });
+    });
+    const release = (e) => {
+      var _a2, _b2;
+      const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
+      if (!chip2 || !pressed.get(chip2)) return;
+      pressed.delete(chip2);
+      waapi(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M6.base - 60, easing: E.out });
+    };
+    row.addEventListener("pointerup", release);
+    row.addEventListener("pointercancel", release);
+    row.addEventListener("pointerleave", release);
+  }
+  function motionBindCardFeel(content) {
+    if (content.dataset.favmFeel) return;
+    content.dataset.favmFeel = "1";
+    let held = null;
+    content.addEventListener("pointerdown", (e) => {
+      var _a2, _b2;
+      if (reduced()) return;
+      const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
+      if (!card) return;
+      held = card;
+      waapi(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E.out, fill: "forwards" });
+    });
+    const release = (e) => {
+      var _a2, _b2;
+      const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
+      const target = card != null ? card : held;
+      if (!target) return;
+      if (card && card !== held) return;
+      held = null;
+      waapi(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M6.move + 40, easing: E.out });
+    };
+    content.addEventListener("pointerup", release);
+    content.addEventListener("pointercancel", release);
+    content.addEventListener("pointerleave", release);
+  }
+  function motionCardPick(card) {
+    if (reduced()) return;
+    waapi(
+      card,
+      [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
+      { duration: M6.move + 160, easing: E.out }
+    );
+  }
+  function tapePress(tape, delay) {
+    const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
+    waapi(
+      tape,
+      [
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
+      ],
+      { duration: M6.move + 80, delay, easing: E.out }
+    );
+  }
+  function sheen(card, delay) {
+    if (reduced() || card.querySelector(".bz-favm-sheen")) return;
+    const wrap = document.createElement("span");
+    wrap.className = "bz-favm-sheen";
+    wrap.setAttribute("aria-hidden", "true");
+    const band = document.createElement("i");
+    band.className = "bz-favm-sheen-band";
+    wrap.appendChild(band);
+    card.appendChild(wrap);
+    after(delay, () => {
+      const a = waapi(
+        band,
+        [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
+        { duration: 620, easing: E.out }
+      );
+      after(a ? 680 : 0, () => wrap.remove());
+    });
+  }
+  function motionCardLanded(board, id, kind) {
+    if (reduced()) return;
+    const card = findCard(board, id);
+    if (!card) return;
+    if (kind === "add") {
+      waapi(
+        card,
+        [
+          { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
+          { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
+          { opacity: 1, transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M6.base + 160, easing: E.out }
+      );
+      tapePress(card.querySelector(".bz-fav-tape"), 100);
+      sheen(card, 140);
+    } else if (kind === "edit") {
+      waapi(
+        card,
+        [
+          { transform: "none", filter: "brightness(1)" },
+          { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
+          { transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M6.base + 80, easing: E.out }
+      );
+    } else if (kind === "pin") {
+      waapi(
+        card,
+        [
+          { transform: "none", filter: "brightness(1)" },
+          { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
+          { transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M6.base + 140, easing: E.out }
+      );
+    } else {
+      waapi(
+        card,
+        [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
+        { duration: M6.base + 100, easing: E.out }
+      );
+      tapePress(card.querySelector(".bz-fav-tape"), 120);
+    }
+  }
+  function motionCaptureRects(board) {
+    if (!board || reduced() || typeof board.animate !== "function") return null;
+    const map = /* @__PURE__ */ new Map();
+    board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
+      const r = c.getBoundingClientRect();
+      map.set(c.dataset.favId, { x: r.left, y: r.top });
+    });
+    return map;
+  }
+  function motionPinFlip(board, before, pinnedId) {
+    if (!before || before.size === 0 || reduced()) {
+      if (!reduced()) motionCardLanded(board, pinnedId, "pin");
+      return;
+    }
+    let played = false;
+    board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((card) => {
+      const old = before.get(card.dataset.favId);
+      if (!old) return;
+      const r = card.getBoundingClientRect();
+      const dx = old.x - r.left, dy = old.y - r.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      played = true;
+      if (card.dataset.favId === pinnedId) {
+        waapi(
+          card,
+          [
+            { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
+            { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
+            { transform: "none", filter: "brightness(1)" }
+          ],
+          { duration: M6.move + 140, easing: E.move }
+        );
+      } else {
+        waapi(
+          card,
+          [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
+          { duration: M6.move + 60, delay: 30, easing: E.move }
+        );
+      }
+    });
+    if (!played) motionCardLanded(board, pinnedId, "pin");
+  }
+  function motionCardDepart(board, id, kind) {
+    const card = board ? findCard(board, id) : null;
+    if (!card || reduced() || typeof card.animate !== "function") return Promise.resolve();
+    return new Promise((res) => {
+      let settled = false;
+      const finish = () => {
+        if (!settled) {
+          settled = true;
+          res();
+        }
+      };
+      const frames = kind === "del" ? [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "rotate(-3deg) scale(.82) translateY(6px)", filter: "blur(4px)" }
+      ] : kind === "archive" ? [
+        { opacity: 1, transform: "none" },
+        { opacity: 0, transform: "rotate(2deg) scale(.9) translateY(10px)" }
+      ] : [
+        { opacity: 1, transform: "none" },
+        { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
+      ];
+      const a = waapi(card, frames, { duration: M6.move + (kind === "del" ? 0 : 40), easing: E.out, fill: "forwards" });
+      if (!a) {
+        finish();
+        return;
+      }
+      a.finished.then(finish).catch(finish);
+      setTimeout(finish, M6.move + 140);
+    });
+  }
+  function motionFormIn(popup) {
+    if (reduced()) return;
+    const rows = [
+      ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
+    ];
+    rows.forEach((el, i) => {
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M6.base, delay: i * 24, easing: E.out, fill: "both" }
+      );
+    });
+  }
+  function motionSwitchPop(el) {
+    if (reduced()) return;
+    waapi(
+      el,
+      [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
+      { duration: M6.base - 40, easing: E.out }
+    );
+  }
+  function motionPickPop(btn, on) {
+    if (reduced()) return;
+    waapi(
+      btn,
+      on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
+      { duration: M6.base - 60, easing: E.out }
+    );
+  }
+  function motionErrShake(errEl) {
+    if (reduced()) return;
+    waapi(
+      errEl,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-5px)", offset: 0.2 },
+        { transform: "translateX(4px)", offset: 0.45 },
+        { transform: "translateX(-2px)", offset: 0.72 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: M6.base + 20, easing: E.out }
+    );
+  }
+  function motionAiBusy(btn, on) {
+    const prev = aiAnims.get(btn);
+    if (prev) {
+      prev.cancel();
+      aiAnims.delete(btn);
+    }
+    if (!on || reduced()) return;
+    const star = btn.querySelector("svg");
+    const target = star != null ? star : btn;
+    const a = waapi(
+      target,
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
+      { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
+    );
+    if (a) aiAnims.set(btn, a);
+  }
+  function motionTagMgrRows(wrap) {
+    if (reduced()) return;
+    [...wrap.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
+      waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M6.base, delay: Math.min(i, 10) * STAG, easing: E.out, fill: "both" }
+      );
+    });
+  }
+  function ensureEmptyFloat(board) {
+    const ic2 = board.querySelector(".bz-empty .bz-empty-ic");
+    if (!ic2 || ic2.dataset.favmFloat) return;
+    ic2.dataset.favmFloat = "1";
+    const a = waapi(
+      ic2,
+      [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
+      { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
+    );
+    if (a) floatAnims.set(ic2, a);
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const a of floatAnims.values()) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    floatAnims.clear();
+    for (const a of aiAnims.values()) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    aiAnims.clear();
+    try {
+      document.querySelectorAll(".bz-favm-sheen").forEach((el) => el.remove());
+    } catch (e) {
+    }
+  }
+  var M6, E, STAG, timers, aiAnims, floatAnims;
+  var init_motion = __esm({
+    "src/favorites/motion.ts"() {
+      M6 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      aiAnims = /* @__PURE__ */ new Map();
+      floatAnims = /* @__PURE__ */ new Map();
+      if (typeof window !== "undefined") {
+        window.addEventListener("hashchange", () => {
+          if (location.hash !== "#replay") return;
+          location.hash = "";
+          const replay = window.__bzFavReplay;
+          if (typeof replay === "function") setTimeout(replay, 600);
+        });
+        if (location.hash === "#replay") {
+          const wait = () => {
+            const replay = window.__bzFavReplay;
+            if (typeof replay === "function") {
+              location.hash = "";
+              setTimeout(replay, 600);
+            } else setTimeout(wait, 120);
+          };
+          setTimeout(wait, 120);
+        }
+      }
+    }
+  });
+
   // src/favorites/app.ts
   var _FavoritesApp, FavoritesApp;
   var init_app2 = __esm({
@@ -35974,12 +36534,14 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M6.overlay = null;
-    M6.items = [];
-    M6.tag = null;
-    M6.archived = false;
-    M6.sort = "new";
-    M6.renderFn = null;
+    M7.overlay = null;
+    M7.items = [];
+    M7.tag = null;
+    M7.archived = false;
+    M7.sort = "new";
+    M7.renderFn = null;
+    M7.stage = "idle";
+    motionTeardown();
   }
   function favoritesSettingsSchema() {
     return {
@@ -36050,7 +36612,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -36066,7 +36628,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M6.overlay) {
+    if (M7.overlay) {
       closePanel3();
       return;
     }
@@ -36075,15 +36637,24 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M6.overlay = overlay2;
-    M6.renderFn = () => renderAll3();
+    M7.overlay = overlay2;
+    M7.renderFn = (reveal) => renderAll3(reveal);
+    M7.stage = "placeholder";
+    motionTeardown();
     const openFilter = resolveOpenFilter();
-    M6.tag = openFilter.tag;
-    M6.archived = openFilter.archived;
-    M6.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M7.tag = openFilter.tag;
+    M7.archived = openFilter.archived;
+    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
+    motionPanelIn(overlay2);
+    window.__bzFavReplay = () => {
+      if (M7.overlay !== overlay2) return;
+      motionPanelIn(overlay2);
+      M7.stage = "boot";
+      renderAll3();
+    };
     overlay2.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === overlay2) {
@@ -36107,20 +36678,10 @@ ${c.trim()}
     });
     const content = overlay2.querySelector("[data-fav-content]");
     const openCardDefault = (it, card) => {
+      if (card) motionCardPick(card);
       if (isMobileEnv()) {
         openMobSheet2(it);
         return;
-      }
-      const rawUrl = (it.url || "").trim();
-      if (rawUrl) {
-        openExternal(normalizeUrl(rawUrl));
-        return;
-      }
-      if (card) {
-        card.classList.remove("bz-fav-nolink");
-        void card.offsetWidth;
-        card.classList.add("bz-fav-nolink");
-        card.addEventListener("animationend", () => card.classList.remove("bz-fav-nolink"), { once: true });
       }
     };
     content.addEventListener("click", (e) => {
@@ -36143,6 +36704,7 @@ ${c.trim()}
       const card = e.target.closest("[data-fav-id]");
       if (!card || isMobileEnv()) return;
       e.preventDefault();
+      motionCardPick(card);
       const it = itemById2(card.dataset.favId);
       if (it) openRowMenuAt2(it, e.clientX, e.clientY);
     });
@@ -36152,6 +36714,7 @@ ${c.trim()}
         var _a3, _b3;
         const card = (_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-fav-id]");
         if (!card) return;
+        motionCardPick(card);
         const it = itemById2(card.dataset.favId);
         if (it) openMobSheet2(it);
       },
@@ -36161,6 +36724,8 @@ ${c.trim()}
         return isMobileEnv() && !!((_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-fav-id]"));
       }
     );
+    motionBindChipFeel(stickers);
+    motionBindCardFeel(content);
     renderAll3();
     void (async () => {
       await loadItems();
@@ -36168,16 +36733,21 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    if (M6.overlay) {
+    const ov = M7.overlay;
+    if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M6.archived ? "@archived" : M6.tag || "";
+        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
         void saveSettings();
       }
-      M6.overlay.remove();
-      M6.overlay = null;
+      M7.overlay = null;
+      M7.renderFn = null;
+      M7.stage = "idle";
+      motionTeardown();
+      motionPanelOut(ov, () => ov.remove());
+      return;
     }
-    M6.renderFn = null;
+    M7.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -36186,53 +36756,83 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M6.items = await dataManagerOf().getAll();
+      M7.items = await dataManagerOf().getAll();
     } catch (e) {
-      M6.items = [];
+      M7.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
   }
-  async function reload2() {
+  async function reload2(reveal) {
     var _a2;
     await loadItems();
-    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
+    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7, reveal);
   }
-  function renderAll3() {
-    if (!M6.overlay) return;
-    if (!M6.archived && M6.tag && !getTags().some((t) => t.label === M6.tag)) M6.tag = null;
-    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+  function boardEl() {
+    var _a2, _b2;
+    return (_b2 = (_a2 = M7.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
+  }
+  function renderAll3(reveal) {
+    var _a2;
+    if (!M7.overlay) return;
+    if (!M7.archived && M7.tag && !getTags().some((t) => t.label === M7.tag)) M7.tag = null;
+    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
+    if (M7.stage === "placeholder") {
+      M7.stage = "boot";
+      return;
+    }
+    if (M7.stage === "boot") {
+      M7.stage = "idle";
+      motionRendered(M7.overlay, true);
+      return;
+    }
+    motionRendered(M7.overlay, false);
+    if (reveal == null ? void 0 : reveal.id) {
+      const board = boardEl();
+      if (!board) return;
+      if (reveal.flipBefore) motionPinFlip(board, reveal.flipBefore, reveal.id);
+      else motionCardLanded(board, reveal.id, (_a2 = reveal.kind) != null ? _a2 : "edit");
+    }
   }
   function applyTagFilter(label) {
+    var _a2, _b2;
     if (label === VIEW_ALL) {
-      M6.tag = null;
-      M6.archived = false;
+      M7.tag = null;
+      M7.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M6.tag = null;
-      M6.archived = !M6.archived;
+      M7.tag = null;
+      M7.archived = !M7.archived;
     } else {
-      M6.archived = false;
-      M6.tag = M6.tag === label ? null : label;
+      M7.archived = false;
+      M7.tag = M7.tag === label ? null : label;
     }
-    renderAll3();
+    const board = boardEl();
+    if (board) {
+      motionFilterSwitch(board, (_b2 = (_a2 = M7.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll3());
+    } else {
+      renderAll3();
+    }
   }
   function itemById2(id) {
-    return M6.items.find((i) => i.id === id);
+    return M7.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
     if (spec.act === "open") {
       openExternal(normalizeUrl(rawUrl));
+    } else if (spec.act === "copy") {
+      void navigator.clipboard.writeText(normalizeUrl(rawUrl)).then(() => notify("网址已复制")).catch(() => notify("无法复制网址"));
     } else if (spec.act === "pin") {
       const next = !it.pinned;
       const prev = it.pinned;
+      const before = motionCaptureRects(boardEl());
       it.pinned = next;
       void dataManagerOf().update(it.id, { pinned: next }).catch((e) => {
         it.pinned = prev;
         notifySaveError(e, "置顶收藏");
       }).finally(() => {
-        void reload2();
+        void reload2(before ? { id: it.id, kind: "pin", flipBefore: before } : void 0);
       });
     } else if (spec.act === "edit") {
       openForm2(it);
@@ -36277,7 +36877,8 @@ ${c.trim()}
   }
   async function archiveItem(it) {
     try {
-      await dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() });
+      const depart = motionCardDepart(boardEl(), it.id, "archive");
+      await Promise.all([dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() }), depart]);
       emitDomainEvent("favorites", { kind: "archive", title: it.title });
       await reload2();
       notifyUndo(`已归档收藏「${it.title}」`, () => {
@@ -36285,7 +36886,7 @@ ${c.trim()}
           try {
             await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
             emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
-            await reload2();
+            await reload2({ id: it.id, kind: "restore" });
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -36297,7 +36898,8 @@ ${c.trim()}
   }
   async function unarchiveItem(it) {
     try {
-      await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
+      const depart = motionCardDepart(boardEl(), it.id, "unarchive");
+      await Promise.all([dataManagerOf().update(it.id, { archived: false, archivedAt: null }), depart]);
       emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
       await reload2();
       notice(`已取消归档，「${it.title}」回到主列表`, "success");
@@ -36308,7 +36910,8 @@ ${c.trim()}
   async function deleteItem2(it) {
     const snapshot2 = it;
     try {
-      await dataManagerOf().delete(it.id);
+      const depart = motionCardDepart(boardEl(), it.id, "del");
+      await Promise.all([dataManagerOf().delete(it.id), depart]);
       emitDomainEvent("favorites", { kind: "delete", title: it.title });
       await reload2();
       notifyUndo(`已删除收藏「${it.title}」`, () => {
@@ -36316,7 +36919,7 @@ ${c.trim()}
           try {
             await dataManagerOf().restoreItem(snapshot2);
             emitDomainEvent("favorites", { kind: "restored", title: it.title });
-            await reload2();
+            await reload2({ id: snapshot2.id, kind: "restore" });
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -36422,7 +37025,9 @@ ${c.trim()}
         const label = b.dataset.tag;
         if (sel.has(label)) sel.delete(label);
         else sel.add(label);
-        b.classList.toggle("bz-fav-on", sel.has(label));
+        const on = sel.has(label);
+        b.classList.toggle("bz-fav-on", on);
+        motionPickPop(b, on);
       }));
       mountIcons(pick);
     };
@@ -36431,6 +37036,7 @@ ${c.trim()}
     const togglePin = () => {
       const on = pinEl.classList.toggle("bz-fav-on");
       pinEl.setAttribute("aria-checked", String(on));
+      motionSwitchPop(pinEl);
     };
     pinEl.addEventListener("click", togglePin);
     pinEl.addEventListener("keydown", (e) => {
@@ -36444,6 +37050,7 @@ ${c.trim()}
     (_b2 = popup.querySelector("#fz-ai")) == null ? void 0 : _b2.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
     bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
+    motionFormIn(popup);
   }
   async function runAiFill(popup, sel, redraw, errEl) {
     const ai = aiServiceOf();
@@ -36462,6 +37069,7 @@ ${c.trim()}
     const aiLabel = btn.lastElementChild;
     btn.disabled = true;
     aiLabel.textContent = "AI 整理中…";
+    motionAiBusy(btn, true);
     const handle = notify("AI 分析中…", { type: "progress" });
     try {
       let ghInfo = null;
@@ -36505,6 +37113,7 @@ ${c.trim()}
     } finally {
       btn.disabled = false;
       aiLabel.textContent = "AI 整理";
+      motionAiBusy(btn, false);
       errEl.textContent = "";
     }
   }
@@ -36548,14 +37157,17 @@ GitHub 仓库：${ghInfo.title}
     const url = rawUrl ? normalizeUrl(rawUrl) : "";
     if (!title) {
       errEl.textContent = "请输入标题";
+      motionErrShake(errEl);
       return;
     }
     if (url && !/^https?:\/\//i.test(url)) {
       errEl.textContent = "链接需以 http(s):// 开头";
+      motionErrShake(errEl);
       return;
     }
     if (sel.size === 0) {
       errEl.textContent = "请至少选择一个标签";
+      motionErrShake(errEl);
       return;
     }
     const desc = inputVal(popup, "#fz-desc").trim();
@@ -36566,6 +37178,7 @@ GitHub 仓库：${ghInfo.title}
     saveBtn.disabled = true;
     saveBtn.textContent = "保存中…";
     const dm = dataManagerOf();
+    let reveal;
     try {
       if (it) {
         const old = it;
@@ -36580,6 +37193,7 @@ GitHub 仓库：${ghInfo.title}
         const changes = favoritesEditChanges(old, next);
         await dm.update(old.id, next);
         emitDomainEvent("favorites", { kind: "edit", title: next.title, changes });
+        reveal = { id: old.id, kind: "edit" };
       } else {
         const data = {
           id: Date.now().toString(),
@@ -36597,9 +37211,10 @@ GitHub 仓库：${ghInfo.title}
         };
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
+        reveal = { id: data.id, kind: "add" };
       }
       closeForm();
-      await reload2();
+      await reload2(reveal);
     } catch (e) {
       notifySaveError(e);
       saveBtn.disabled = false;
@@ -36664,6 +37279,7 @@ GitHub 仓库：${ghInfo.title}
     addBtn.addEventListener("click", () => openTagEditor(dm, null, redraw));
     wrap.appendChild(addBtn);
     mountIcons(wrap);
+    motionTagMgrRows(wrap);
   }
   async function moveTag(dm, idx, delta, redraw) {
     const tags = [...getTags()];
@@ -36773,6 +37389,7 @@ GitHub 仓库：${ghInfo.title}
     };
     (_a2 = popup.querySelector("[data-fz-tag-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => close());
     (_b2 = popup.querySelector("#fz-tag-save")) == null ? void 0 : _b2.addEventListener("click", () => void doSave2());
+    motionFormIn(popup);
     bindFormSubmit(popup, () => void doSave2());
   }
   async function deleteTagFlow(dm, tag, redraw) {
@@ -36823,7 +37440,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M7, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -36845,14 +37462,16 @@ GitHub 仓库：${ghInfo.title}
       init_render9();
       init_ai3();
       init_data8();
+      init_motion();
       init_app2();
-      M6 = {
+      M7 = {
         overlay: null,
         items: [],
         tag: null,
         archived: false,
         sort: "new",
-        renderFn: null
+        renderFn: null,
+        stage: "idle"
       };
       _dm = null;
       _ai = null;
@@ -48946,9 +49565,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after !== before) {
-        rec.secondBrainAllowPaths = after;
+      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after2 !== before) {
+        rec.secondBrainAllowPaths = after2;
         migrated = true;
       }
     }
@@ -52031,20 +52650,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;

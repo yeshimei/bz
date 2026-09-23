@@ -1,9 +1,10 @@
 /**
- * 收藏卡点按反馈与外链标识回归（全域深审拍板后修复批 Wave1 · favorites）：
- * - F1（呈报#24）：桌面点无链卡片不再零反馈——卡片挂 .bz-fav-nolink 轻微晃动动效类
- *   （animationend 摘类；仍不开链、不弹菜单，issue 201「不动作」拍板保持）
- * - F6（呈报#25）：有链接卡片常驻 external-link 外链标识角标（.bz-fav-ext），
- *   无链接卡片不挂角标
+ * 收藏卡点按契约回归（全域深审拍板后修复批 Wave1 · favorites；2026-09-23 拍板更新）：
+ * - 点卡不再导航（2026-09-23）：桌面点卡（有链/无链）一律不开浏览器、不弹菜单、
+ *   不再挂 .bz-fav-nolink 晃动类（F1 晃动反馈随点卡开链一并退役）；开链/复制网址走右键菜单
+ * - F6（呈报#25）2026-09-23 退役：外链角标 .bz-fav-ext 从卡片 markup 摘除，任何卡片不再挂
+ * - 复制网址（2026-09-23 新增）：actionSpecs 有 url 才含 copy、紧跟 open（数据层契约；
+ *   UI 层 clipboard 行为盖在 ui.test.ts）
  * - F5（呈报#61）：桌面磁贴行限高 + 纵向滚动（样式文本断言，jsdom 不解析 css）
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -15,6 +16,7 @@ import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { openPanel, closePanel, unloadFavoritesUI } from '../../src/favorites/ui';
+import { actionSpecs } from '../../src/favorites/shared';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 
@@ -79,8 +81,8 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('F1：无链卡片点按反馈（晃动，呈报#24）', () => {
-  it('桌面点无链卡片 → 卡片挂 .bz-fav-nolink 晃动类；不开链、不弹菜单（不动作拍板保持）', async () => {
+describe('点卡不再导航（2026-09-23 拍板；F1 晃动随开链退役）', () => {
+  it('桌面点无链卡片 → 不开链、不弹菜单、不挂晃动类', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -93,12 +95,12 @@ describe('F1：无链卡片点按反馈（晃动，呈报#24）', () => {
 
     const card = cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!;
     clickCard(card);
-    expect(card.classList.contains('bz-fav-nolink'), '点按后挂晃动类（修复前必红：旧版零反馈）').toBe(true);
+    expect(card.classList.contains('bz-fav-nolink'), '晃动反馈已退役：不再挂类').toBe(false);
     expect(app.openUrl).not.toHaveBeenCalled();
     expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 
-  it('键盘 Enter 触发无链卡片同径晃动；有链卡片点击直开、不挂晃动类', async () => {
+  it('有链卡片点击也不跳网站（开链/复制网址移至右键菜单）；Enter 同径', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -110,19 +112,20 @@ describe('F1：无链卡片点按反馈（晃动，呈报#24）', () => {
     openPanel(getApp(), new DataManager('CONFIG/STORAGE/favorites.json'), new FavoritesAIService());
     await tick(20);
 
-    const noLink = cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!;
-    pressEnter(noLink);
-    expect(noLink.classList.contains('bz-fav-nolink')).toBe(true);
-
     const withLink = cards().find((c) => c.querySelector('h3')!.textContent === '有链收藏')!;
     clickCard(withLink);
-    expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
+    expect(app.openUrl).not.toHaveBeenCalled();
     expect(withLink.classList.contains('bz-fav-nolink')).toBe(false);
+
+    const noLink = cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!;
+    pressEnter(noLink);
+    expect(noLink.classList.contains('bz-fav-nolink')).toBe(false);
+    expect(app.openUrl).not.toHaveBeenCalled();
   });
 });
 
-describe('F6：外链标识角标（呈报#25）', () => {
-  it('有链卡片挂 .bz-fav-ext 角标（external-link 占位 + title 提示）；无链卡片不挂', async () => {
+describe('F6 退役：外链标识角标摘除（2026-09-23 拍板）', () => {
+  it('任何卡片都不再挂 .bz-fav-ext 角标', async () => {
     const vault = new MockVault();
     setApp(makeApp(vault));
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
@@ -133,15 +136,18 @@ describe('F6：外链标识角标（呈报#25）', () => {
     openPanel(getApp(), new DataManager('CONFIG/STORAGE/favorites.json'), new FavoritesAIService());
     await tick(20);
 
-    const withLink = cards().find((c) => c.querySelector('h3')!.textContent === '有链收藏')!;
-    const ext = withLink.querySelector('.bz-fav-ext') as HTMLElement | null;
-    expect(ext, '有链卡片带外链角标').toBeTruthy();
-    expect(ext!.getAttribute('title')).toBe('打开外部链接');
-    // 图标占位 data-lucide 经 mountIcons（mock setIcon 记 data-icon）兑现，两态任一在即视为 external-link
-    expect(ext!.querySelector('[data-lucide="external-link"], [data-icon="external-link"]')).toBeTruthy();
+    expect(document.querySelectorAll('.bz-fav-ext').length, '角标 markup 已从 cardHtml 摘除').toBe(0);
+  });
+});
 
-    const noLink = cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!;
-    expect(noLink.querySelector('.bz-fav-ext')).toBeNull();
+describe('actionSpecs：复制网址动作（2026-09-23 拍板，数据层契约）', () => {
+  it('有 url：动作序 open→copy 相邻，copy 带「复制网址」文案；无 url：不含 copy', () => {
+    const withUrl = actionSpecs(seedItem({ id: '1', title: '有链收藏', url: 'github.com/a/b' }));
+    expect(withUrl.map((a) => a.act).slice(0, 2)).toEqual(['open', 'copy']);
+    expect(withUrl.find((a) => a.act === 'copy')!.label).toBe('复制网址');
+    const noUrl = actionSpecs(seedItem({ id: '2', title: '无链收藏', url: '' }));
+    expect(noUrl.map((a) => a.act)).not.toContain('copy');
+    expect(noUrl.map((a) => a.act)).toEqual(['pin', 'edit', 'archive', 'del']);
   });
 });
 

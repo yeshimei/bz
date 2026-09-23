@@ -59,6 +59,7 @@ export const ICON = {
   close: 'x',
   add: 'plus',
   open: 'external-link',
+  copy: 'copy',
   pin: 'pin',
   pinOff: 'pin-off',
   edit: 'pencil',
@@ -162,16 +163,12 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
   const hue = hueOf((it.tags || [])[0] || '');
   // 胶带三色轮换：基础类恒在（承载 absolute 定位/尺寸），变体类只换色与角度
   const tape = 'bz-fav-tape' + (idx % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][idx % 3 - 1] : '');
-  // 外链标识角标（F6/呈报#25）：有链接卡片常驻 external-link 微标——「点卡=开网页」的
-  // 点击前暗示（桌面点卡直开浏览器，此前唯一提示只有 cursor:pointer）
-  const ext = (it.url || '').trim()
-    ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON.open, 'bz-ic--xs')}</span>`
-    : '';
   // 键盘可达（UI-06③）：卡片最小语义 role=button + tabindex=0——Enter/Space 走与点击同径
-  // （移动抽屉 / 桌面直开），keydown 委托在 ui.ts content 容器
+  // （移动抽屉 / 桌面拾取），keydown 委托在 ui.ts content 容器。
+  // 2026-09-23 拍板：外链角标退役 + 点卡不再跳网站（开链/复制入口在右键菜单）
   return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || '无标题')}</h3>
     <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -206,15 +203,16 @@ export function emptyHtml(view?: FavView, items?: FavoritesItem[]): string {
 export interface FavActionSpec {
   icon: string;
   label: string;
-  /** 动作语义键（打开/置顶/编辑/归档⇄取消归档/删除；ADR-0101 跳转笔记/刷新余额退役） */
-  act: 'open' | 'pin' | 'edit' | 'archive' | 'unarchive' | 'del';
+  /** 动作语义键（打开/复制网址/置顶/编辑/归档⇄取消归档/删除；ADR-0101 跳转笔记/刷新余额退役） */
+  act: 'open' | 'copy' | 'pin' | 'edit' | 'archive' | 'unarchive' | 'del';
   danger?: boolean;
 }
 
-/** 行操作序列（动作序：打开→置顶→编辑→归档⇄取消归档→删除；原 ui.ts buildActions 迁入） */
+/** 行操作序列（动作序：打开→复制网址→置顶→编辑→归档⇄取消归档→删除；原 ui.ts buildActions 迁入） */
 export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
   const acts: FavActionSpec[] = [];
   if ((it.url || '').trim()) acts.push({ icon: ICON.open, label: '打开', act: 'open' });
+  if ((it.url || '').trim()) acts.push({ icon: ICON.copy, label: '复制网址', act: 'copy' });
   acts.push({
     icon: it.pinned ? ICON.pinOff : ICON.pin,
     label: it.pinned ? '取消置顶' : '置顶',

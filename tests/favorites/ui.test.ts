@@ -21,7 +21,7 @@ import { getTags } from '../../src/favorites/config';
 import { hueOf } from '../../src/favorites/render';
 import { MockVault } from '../mock-vault';
 import {
-  resetObsidianMocks, hasNotice, Platform, requestUrl,
+  resetObsidianMocks, hasNotice, clearNotices, Platform, requestUrl,
 } from '../mock-obsidian-entry';
 import { formatRelativeTime } from '../../src/core/utils';
 
@@ -642,7 +642,7 @@ describe('默认排序（issue 296）', () => {
 // ==================== 6. 行动作（桌面右键 → .bz-item-menu；点卡不弹菜单 bug 修复） ====================
 
 describe('桌面行动作浮层', () => {
-  it('桌面点卡片不再弹操作菜单（issue 201 bug 修复）：有链直开浏览器、无链不动作；菜单只走右键', async () => {
+  it('桌面点卡片不导航不弹菜单（2026-09-23 拍板：点卡不再跳网站，开链/复制网址走右键）；菜单只走右键', async () => {
     const ctx = await setup();
     const app = getApp() as any;
     seedVault(ctx.vault, [
@@ -651,13 +651,13 @@ describe('桌面行动作浮层', () => {
     ]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    // 点有链卡片 → openUrl（补协议），不弹菜单
+    // 点有链卡片 → 不开浏览器、不弹菜单（2026-09-23 拍板：点卡不再跳网站，开链/复制网址走右键菜单）
     cards().find((c) => c.querySelector('h3')!.textContent === '有链收藏')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
-    expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
+    expect(app.openUrl).not.toHaveBeenCalled();
     expect(document.querySelector('.bz-item-menu')).toBeNull();
-    // 点无链卡片 → 不动作、不弹菜单
+    // 点无链卡片 → 同样不动作、不弹菜单
     cards().find((c) => c.querySelector('h3')!.textContent === '无链收藏')!
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
@@ -726,7 +726,7 @@ describe('桌面行动作浮层', () => {
     expect(app.openUrl).toHaveBeenCalledWith('https://github.com/x/y'); // 补协议头
   });
 
-  it('app.openUrl 缺失 → 调用抛错落 catch 走 electron shell 兜底（F9：去掉 ?. 短路）', async () => {
+  it('app.openUrl 缺失 → 调用抛错落 catch 走 electron shell 兜底（F9：去掉 ?. 短路；点卡退役后入口=右键「打开」）', async () => {
     const ctx = await setup();
     const app = getApp() as any;
     delete app.openUrl; // 宿主未提供 openUrl：?. 写法会静默 no-op，兜底永不触发
@@ -736,11 +736,74 @@ describe('桌面行动作浮层', () => {
       seedVault(ctx.vault, [seedItem({ id: '1', title: '有链收藏', url: 'https://github.com/a/b' })]);
       openPanel(getApp(), ctx.dm, ctx.ai);
       await tick(20);
-      cards()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      openCardMenu(cards()[0]);
+      await tick(10);
+      clickAction('打开');
       await tick(10);
       expect(shellSpy).toHaveBeenCalledWith('https://github.com/a/b');
     } finally {
       delete (window as any).require;
+    }
+  });
+
+  it('有 url：动作含「复制网址」紧跟「打开」；无 url 不含（点卡退役后复制入口只在右键，2026-09-23 拍板）', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [
+      seedItem({ id: '1', title: '有链收藏', url: 'github.com/a/b', desc: 'x' }),
+      seedItem({ id: '2', title: '无链收藏', url: '', desc: 'x' }),
+    ]);
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    await tick(20);
+    const byTitle = (t: string) => cards().find((c) => c.querySelector('h3')!.textContent === t)!;
+    openCardMenu(byTitle('有链收藏'));
+    await tick(10);
+    expect(menuLabels().slice(0, 2)).toEqual(['打开', '复制网址']);
+    document.querySelector('.bz-item-menu')?.remove();
+    openCardMenu(byTitle('无链收藏'));
+    await tick(10);
+    expect(menuLabels()).not.toContain('复制网址');
+    document.querySelector('.bz-item-menu')?.remove();
+  });
+
+  it('点「复制网址」→ clipboard.writeText 收到 normalizeUrl(url)，成功弹「网址已复制」且不开浏览器', async () => {
+    const ctx = await setup();
+    const app = getApp() as any;
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '有链收藏', url: 'github.com/a/b' })]);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    try {
+      openPanel(getApp(), ctx.dm, ctx.ai);
+      await tick(20);
+      openCardMenu(cards()[0]);
+      await tick(10);
+      clickAction('复制网址');
+      await tick(10);
+      expect(writeText).toHaveBeenCalledWith('https://github.com/a/b'); // 补协议头
+      expect(app.openUrl).not.toHaveBeenCalled(); // 复制是无副作用替代：不开链
+      expect(hasNotice('网址已复制')).toBe(true);
+    } finally {
+      clearNotices();
+      delete (navigator as any).clipboard;
+    }
+  });
+
+  it('复制网址失败（clipboard 拒绝写入）→ 弹「无法复制网址」', async () => {
+    const ctx = await setup();
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '有链收藏', url: 'https://github.com/a/b' })]);
+    const writeText = vi.fn().mockRejectedValue(new Error('denied'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    try {
+      openPanel(getApp(), ctx.dm, ctx.ai);
+      await tick(20);
+      openCardMenu(cards()[0]);
+      await tick(10);
+      clickAction('复制网址');
+      await tick(10);
+      expect(writeText).toHaveBeenCalledWith('https://github.com/a/b');
+      expect(hasNotice('无法复制网址')).toBe(true);
+    } finally {
+      clearNotices();
+      delete (navigator as any).clipboard;
     }
   });
 
