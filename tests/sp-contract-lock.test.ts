@@ -34,7 +34,7 @@ const COUNT_BASELINE: Record<string, number> = {
   review: 12,
   secondbrain: 14,
   home: 12,
-  pomodoro: 10, // 2026-09-23：后台自动暂停行退役（ADR-0179）
+  pomodoro: 11, // 2026-09-23：后台自动暂停退役（-1）、特效批「倒数滴答」新增（+1）
   encrypt: 5,
   'password-vault': 5,
   smartcat: 15,

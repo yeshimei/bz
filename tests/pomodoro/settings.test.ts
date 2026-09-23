@@ -95,7 +95,7 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：分组卡片（外观/时间方案/行为）+ 13 个可见设置项（issue 246 补外观组）', async () => {
+  it('打开设置弹窗：分组卡片（外观/时间方案/行为）+ 14 个可见设置项（issue 246 补外观组）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
@@ -103,7 +103,7 @@ describe('⚙️ 设置弹窗', () => {
     expect(el('bz-settings-modal-popup')).not.toBeNull();
     // 「移动端默认全屏」组已随特性退役删除：全部设置项均可见
     const allItems = [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')];
-    expect(allItems.length).toBe(13);
+    expect(allItems.length).toBe(14);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
@@ -116,7 +116,7 @@ describe('⚙️ 设置弹窗', () => {
     const isHiddenGroup = (el: Element) =>
       Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
     const heads = [...document.querySelectorAll('#bz-settings-modal-popup .bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
-    expect(heads.map((h) => (h as HTMLElement).textContent!.trim())).toEqual(['外观2 项', '时间方案2 项', '行为6 项']);
+    expect(heads.map((h) => (h as HTMLElement).textContent!.trim())).toEqual(['外观2 项', '时间方案2 项', '行为7 项']);
     expect(heads.map((h) => h.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['palette', 'timer', 'sliders-horizontal']);
     const names = [...document.querySelectorAll('#bz-settings-modal-popup .bz-settings-group-body .setting-item')]
       .filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden'))
@@ -124,7 +124,7 @@ describe('⚙️ 设置弹窗', () => {
     expect(names).toEqual([
       '面板布局', '面板主题',
       '预设方案', '工作时长', '短休息时长', '长休息时长', '长休息间隔',
-      '强制专注模式', '自动循环', '自动跳过休息', '声音提醒', '提示音音量', '打开时恢复方式',
+      '强制专注模式', '自动循环', '自动跳过休息', '声音提醒', '倒数滴答', '提示音音量', '打开时恢复方式',
     ]);
   });
 
@@ -153,7 +153,7 @@ describe('⚙️ 设置弹窗', () => {
         .find((h) => h.querySelector('.bz-settings-group-name')!.textContent === groupName)!
         .querySelector('.bz-settings-group-count')!.textContent;
     expect(countOf('时间方案')).toBe('2 项');
-    expect(countOf('行为')).toBe('6 项'); // 2026-09-23：后台自动暂停行退役（原 7 项）
+    expect(countOf('行为')).toBe('7 项'); // 2026-09-23：后台自动暂停退役（-1）、倒数滴答新增（+1），净回 7
     const dd = itemByName('预设方案').__setting.controls[0];
     dd.trigger(CUSTOM_PRESET_ID);
     expect(workRow.classList.contains('bz-setting-hidden')).toBe(false);

@@ -57,6 +57,11 @@ export function skinClassOf(v: unknown): string {
 /**
  * 弹窗骨架（#pomodoro-popup 内部；控件 id 由 ui.ts 接线）
  * ——环形进度 / 循环圆点 / 阶段 / 任务 / 时间 / 三按钮 / 今日统计 + 统计两档（近 7 天 / 近 6 月，issue 357）。
+ *
+ * 时间字双层（2026-09-23 翻牌机）：`#pomodoro-time` 是可见文本层（读屏与测试锚点，语义不变），
+ * `.pomodoro-time-reel` 是同尺寸的视觉层（aria-hidden，四位滚动位由 ui.ts 填充）——翻牌机开着时
+ * 前者 opacity 归零让位、后者顶上（类 .reel-on，见 styles.css）。拆两层的理由：旧断言与读屏都吃
+ * `#pomodoro-time` 的 textContent，把 40 个数字 span 塞进同一个元素会一次毁掉二十多处断言。
  */
 export function panelShellHtml(): string {
   return `
@@ -67,7 +72,10 @@ export function panelShellHtml(): string {
       <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
       <div id="pomodoro-phase"></div>
       <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
+      <div class="pomodoro-time-box" id="pomodoro-time-box">
+        <div id="pomodoro-time"></div>
+        <div class="pomodoro-time-reel" aria-hidden="true"></div>
+      </div>
       <div class="pomodoro-controls">
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
         <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>

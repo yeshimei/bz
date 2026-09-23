@@ -18,6 +18,15 @@
  *  - 点亮 motionCycleDots   循环方点随完成逐颗「按亮」；长休清零级联释放
  *  - 起立 motionStatsIn     统计柱自底接力起立（30ms 一波）；motionTodayBlip 今日行落墨
  *  - 微跃 motionStatusbarPop 状态栏相位变化一记微跃（插件侧；壳内无状态栏）
+ *  - 进度四味 motionProgressFx（2026-09-23 特效批，用户拍板采纳 2/4/7/8）——ui.render 每秒调：
+ *      紧迫色移 剩余 ≤5 分钟起，环与时间字连续升温（只覆内联，不动皮肤变量表）
+ *      渐变流光 环描边走注入的渐变（20s 一圈 SMIL），渐变 stop 随紧迫度同步升温——两者天然兼容
+ *      倒数放大 最后 10 秒时间字逐秒放大（作用在 box，翻牌层一并长大）
+ *      色温漂移 弹窗底色随进度极慢漂移（专注偏暖 / 休息偏冷，color-mix 直染 background-color）
+ *  - 世界退后 setRestDepth 休息相位：遮罩 backdrop-blur 加深一档 + 弹窗极缓呼吸（.bz-pm-rest）
+ *
+ * 翻牌机（6）的结构在 render.ts（.pomodoro-time-box 两个兄弟层），滚动位由 ui.ts 写；本层只把
+ * 时间字动画目标从 #pomodoro-time 抬到 box（closest），使揭新 / 脉冲 / 放大作用于整体。
  *
  * 台账：fast 160 / move 200 / base 280 / impulse 740，接力 30ms；揭示 out 曲线、位移 move 曲线。
  * 呼吸类长驻循环是氛围指示（同影院「加载循环不入台账」口径），周期自定：专注 4.2s、休息 6.4s。
@@ -146,6 +155,7 @@ export function motionPhaseSync(popup: HTMLElement | null, phase: string, runnin
   const timeEl = byId('pomodoro-time');
   const mask = byId('pomodoro-mask');
   stopBreath(); stopGlow();
+  setRestDepth(mask, key.startsWith('break'));
   switch (key) {
     case 'focus-run': {
       stopTone();
@@ -195,6 +205,174 @@ export function motionPhaseSync(popup: HTMLElement | null, phase: string, runnin
 }
 
 function trackLoop(a: Animation | null): void { if (a) loops.add(a); }
+
+/* ================= 进度四味（2026-09-23 特效批；ui.render 每秒调） ================= */
+
+/** 紧迫窗口：剩余 ≤5 分钟开始升温 */
+const URGENT_WINDOW = 300;
+/** 倒数窗口：剩余 ≤10 秒，时间字逐秒放大 */
+const FINAL_WINDOW = 10;
+/** 升温终点（警示红；刻意不写进皮肤变量表——那要给 10 套皮肤各加一行） */
+const HOT_RGB: readonly [number, number, number] = [226, 75, 74];
+/** 底色漂移两端：专注偏暖、休息偏冷 */
+const TINT_FOCUS = '216, 90, 48';
+const TINT_BREAK = '61, 110, 180';
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const FLOW_ID = 'bz-pm-flow';
+/** 底色暖/冷层最大不透明度（再高就压字了） */
+const TINT_ALPHA = 0.12;
+
+/**
+ * 基准色缓存：首帧抓一次。此后 ring 的 computed stroke 已是我们写的 url(#…)、时间字也已被
+ * 覆过内联色——现读会读到自己的覆盖值，故必须缓存而非每帧现读。
+ */
+let baseStroke: string | null = null;
+let baseTimeColor: string | null = null;
+let flowGrad: SVGLinearGradientElement | null = null;
+
+/** 颜色串 → rgb 三元组（只认 computed 出来的 rgb()/rgba() 与 #rrggbb；var() 串返回 null） */
+function parseRgb(v: string): [number, number, number] | null {
+  const s = (v || '').trim();
+  let m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+  if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+  m = s.match(/^#([0-9a-f]{6})$/i);
+  if (m) {
+    return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+  }
+  return null;
+}
+
+/** 朝警示红插值（t=0 原色，t=1 全红） */
+function mixTo(a: [number, number, number], t: number): string {
+  const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}
+
+/** 时间字动画目标：翻牌层是 #pomodoro-time 的兄弟，动作抬到共同的 box 上才带得住 */
+function timeBoxOf(el: HTMLElement | null): HTMLElement | null {
+  return (el?.closest('.pomodoro-time-box') as HTMLElement | null) ?? el;
+}
+
+/**
+ * 流光渐变（defs 注入一次）：环描边换 url(#bz-pm-flow)，停靠点颜色由 motionProgressFx 每帧写，
+ * 于是「流光」与「紧迫色移」共用同一条描边而互不打架。RM 下不插 SMIL（静态渐变，语义不损）。
+ */
+function ensureFlowGrad(svg: Element | null): SVGLinearGradientElement | null {
+  if (!svg) return null;
+  if (flowGrad && flowGrad.isConnected) return flowGrad;
+  let defs = svg.querySelector(':scope > defs');
+  if (!defs) {
+    defs = svg.ownerDocument.createElementNS(SVG_NS, 'defs');
+    svg.insertBefore(defs, svg.firstChild);
+  }
+  let g = defs.querySelector('#' + FLOW_ID) as SVGLinearGradientElement | null;
+  if (!g) {
+    const doc = svg.ownerDocument;
+    g = doc.createElementNS(SVG_NS, 'linearGradient') as SVGLinearGradientElement;
+    g.setAttribute('id', FLOW_ID);
+    g.setAttribute('x1', '0'); g.setAttribute('y1', '0');
+    g.setAttribute('x2', '1'); g.setAttribute('y2', '1');
+    const s1 = doc.createElementNS(SVG_NS, 'stop');
+    s1.setAttribute('offset', '0');
+    const s2 = doc.createElementNS(SVG_NS, 'stop');
+    s2.setAttribute('offset', '1'); s2.setAttribute('stop-opacity', '.35');
+    g.appendChild(s1); g.appendChild(s2);
+    if (!reduced()) {
+      const anim = doc.createElementNS(SVG_NS, 'animateTransform');
+      anim.setAttribute('attributeName', 'gradientTransform');
+      anim.setAttribute('type', 'rotate');
+      anim.setAttribute('from', '0 .5 .5');
+      anim.setAttribute('to', '360 .5 .5');
+      anim.setAttribute('dur', '20s');
+      anim.setAttribute('repeatCount', 'indefinite');
+      g.appendChild(anim);
+    }
+    defs.appendChild(g);
+  }
+  flowGrad = g;
+  return g;
+}
+
+/**
+ * 进度四味：全是「持续态」而非一次性演出——不设签名，每帧按当前剩余直接写终值。
+ * RM / 无 WAAPI 宿主照写（终值无害），只是渐变不转、放大不补间。
+ */
+export function motionProgressFx(
+  popup: HTMLElement | null,
+  remain: number,
+  total: number,
+  phase: string,
+): void {
+  if (!popup || !popup.isConnected) return;
+  const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+  const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
+
+  const ring = byId('pomodoro-ring-progress') as SVGElement | null;
+  const timeEl = byId('pomodoro-time');
+
+  // 基准色：首帧抓（判据 = 还没被我们自己覆过内联）
+  if (ring && !baseStroke && !ring.style.stroke) {
+    const cs = getComputedStyle(ring).stroke;
+    if (parseRgb(cs)) baseStroke = cs;
+  }
+  if (timeEl && !baseTimeColor && !timeEl.style.color) {
+    baseTimeColor = getComputedStyle(timeEl).color;
+  }
+
+  const base = baseStroke ? parseRgb(baseStroke) : null;
+  const accent = base ? mixTo(base, hot) : '';
+
+  // 紧迫色移 + 渐变流光：同一条描边
+  if (ring && accent) {
+    const grad = ensureFlowGrad(ring.ownerSVGElement);
+    if (grad) {
+      for (const s of Array.from(grad.querySelectorAll('stop'))) s.setAttribute('stop-color', accent);
+      ring.style.stroke = `url(#${FLOW_ID})`;
+    } else {
+      ring.style.stroke = accent;
+    }
+    const head = ring.ownerSVGElement?.querySelector('.bz-pm-head');
+    if (head) {
+      for (const c of Array.from(head.querySelectorAll('circle'))) c.setAttribute('fill', accent);
+    }
+  }
+
+  // 紧迫色移：时间字同步（后段才染，前面留给环）
+  if (timeEl && baseTimeColor) {
+    const fg = parseRgb(baseTimeColor);
+    if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+    else if (timeEl.style.color) timeEl.style.removeProperty('color');
+  }
+
+  // 倒数放大：作用在 box（含翻牌层）
+  const grow = remain > 0 && remain <= FINAL_WINDOW ? 1 + (FINAL_WINDOW - remain) * 0.028 : 0;
+  const growEl = timeBoxOf(timeEl);
+  if (growEl) {
+    if (grow > 1) growEl.style.transform = `scale(${grow.toFixed(3)})`;
+    else if (growEl.style.transform) growEl.style.removeProperty('transform');
+  }
+
+  // 色温漂移：专注偏暖、休息偏冷，进度越深越浓。直染 background-color 而不注入覆盖层——
+  // 覆盖层会盖住文字（负 z 在未建层叠上下文的相对定位父级里并不可靠），且 background 简写会
+  // 抹掉「方格纸」皮肤那层格纹。color-mix 写不出来（老引擎）时整条声明无效 = 优雅降级。
+  const cold = phase === 'break' || phase === 'long-break';
+  const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
+  popup.style.backgroundColor =
+    `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+}
+
+/** 休息退后（break-* 相位）：遮罩 backdrop-blur 加深一档 + 弹窗极缓呼吸（类单源在 styles.css） */
+function setRestDepth(mask: HTMLElement | null, on: boolean): void {
+  if (!mask) return;
+  mask.classList.toggle('bz-pm-rest', on);
+  const popup = byId('pomodoro-popup');
+  if (popup) popup.classList.toggle('bz-pm-rest', on);
+}
+
+/** 基准色与渐变引用清场（开/关/卸载共用）：下次首帧重抓，换皮肤后才拿得到新 accent */
+function resetFxCache(): void {
+  baseStroke = null; baseTimeColor = null; flowGrad = null;
+}
 
 /** 环头藏显（motionPhaseSync 的相位面）；显头尊重 motionRingHead 的进度规则（progress>0.002 才显），
  *  防新相位起步时以旧角度残留幽灵点 */
@@ -365,6 +543,7 @@ export function motionRingHead(svg: Element | null, progress: number, active: bo
 export function motionPanelOpen(mask: HTMLElement, idleish: boolean): void {
   cancelPending(); stopFx(); stopBreath(); stopGlow(); stopTone();
   lastSig = ''; headLastProgress = -1; lastRemain = -1; lastCount = -1; taskShown = false; todayText = '';
+  resetFxCache(); setRestDepth(mask, false);
   bootUntil = performance.now() + 1200;
   const popup = byId('pomodoro-popup');
   if (!popup) return;
@@ -442,6 +621,7 @@ export function motionPanelClose(mask: HTMLElement, done: () => void, immediate:
   stopBreath(); stopGlow(); stopTone(); stopFx();
   cancelPending();
   lastSig = ''; headLastProgress = -1; lastRemain = -1; lastCount = -1; taskShown = false; todayText = '';
+  resetFxCache();
   if (immediate || reduced() || typeof mask.animate !== 'function') { done(); return; }
   const popup = mask.querySelector<HTMLElement>('#pomodoro-popup');
   let finished = false;
@@ -463,9 +643,9 @@ export function motionPanelClose(mask: HTMLElement, done: () => void, immediate:
 /** 开始/继续：时间字落定；全新开始（idle → focus）加面板一记沉浮 + 主按钮亮脉冲 */
 export function motionIgnite(popup: HTMLElement | null, fresh: boolean): void {
   if (!popup) return;
-  const timeEl = byId('pomodoro-time');
-  if (timeEl) {
-    trackFx(waapi(timeEl,
+  const timeBox = timeBoxOf(byId('pomodoro-time'));
+  if (timeBox) {
+    trackFx(waapi(timeBox,
       [{ transform: 'scale(.985)', opacity: 0.7 }, { transform: 'none', opacity: 1 }],
       { duration: M.base, easing: E.out }));
   }
@@ -523,8 +703,9 @@ export function motionCeremony(popup: HTMLElement | null, svg: HTMLElement | nul
 
 /** 时间字揭新（收工/大跳共用）：blur 升落，新值落定 */
 function revealTime(timeEl: HTMLElement | null): void {
-  if (!timeEl) return;
-  trackFx(waapi(timeEl,
+  const el = timeBoxOf(timeEl);
+  if (!el) return;
+  trackFx(waapi(el,
     [{ opacity: 0, transform: 'translateY(7px) scale(.97)', filter: 'blur(5px)' },
      { opacity: 1, transform: 'none', filter: 'blur(0px)' }],
     { duration: M.base + 100, easing: E.out }));
@@ -629,13 +810,14 @@ export function motionRewind(popup: HTMLElement | null): void {
  * 运行中整分跨越 → 一记脉冲（42px 大字的「分钟落格」）；普通走秒不出手（秒针心跳在环头上）。
  */
 export function motionTimeTick(timeEl: HTMLElement | null, remain: number, running: boolean): void {
-  if (!timeEl) { lastRemain = -1; return; }
+  const el = timeBoxOf(timeEl);
+  if (!el) { lastRemain = -1; return; }
   if (lastRemain < 0) { lastRemain = remain; return; }
   const delta = lastRemain - remain;
   if (Math.abs(delta) > 2) {
-    revealTime(timeEl);
+    revealTime(el);
   } else if (running && delta === 1 && remain > 0 && remain % 60 === 0) {
-    trackFx(waapi(timeEl,
+    trackFx(waapi(el,
       [{ transform: 'scale(1)' }, { transform: 'scale(1.035)' }, { transform: 'scale(1)' }],
       { duration: M.fast + 120, easing: E.out }));
   }
@@ -749,6 +931,7 @@ export function motionStatusbarPop(el: HTMLElement | null, sig: string, first: b
 /** 卸载/重置统一清场：循环、持有、延时、一次性编排与差异记忆全收，不留永动孤儿 */
 export function motionTeardown(): void {
   stopBreath(); stopGlow(); stopTone(); stopFx(); cancelPending();
+  resetFxCache();
   lastSig = ''; headLastProgress = -1; lastRemain = -1; lastCount = -1;
   taskShown = false; todayText = ''; ceremonyUntil = 0; bootUntil = 0;
 }

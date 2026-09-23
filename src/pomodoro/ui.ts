@@ -47,6 +47,7 @@ import type { SoundKind } from './sound';
 import {
   motionBindButtons,
   motionCeremony,
+  motionProgressFx,
   motionCycleDots,
   motionIgnite,
   motionPanelClose,
@@ -157,14 +158,23 @@ function phaseText(phase: Phase, count: number, d: Durations): string {
   return phaseLabel(phase);
 }
 
-/** 阶段开始提示声（专注/短休/长休各一种，听声即知状态；声音开关关闭时静默） */
+/** 阶段开始提示声（专注/短休/长休各一种，听声即知状态；声音开关关闭时静默）。
+ *  2026-09-23 特效批：先垫一记低频下扫（transition，用户拍板采纳 12）再落定音——原来的单音起落太硬。 */
 function playPhaseSound(phase: Phase): void {
   const s = tryGetSettings();
   if (s.pomodoroSound !== false) {
     const kind: SoundKind =
       phase === 'focus' ? 'focus-start' : phase === 'long-break' ? 'long-break-start' : 'short-break-start';
+    playSound('transition', pomodoroVolume());
     playSound(kind, pomodoroVolume());
   }
+}
+
+/** 收工钟声（用户拍板采纳 10）：只在专注自然完成时敲——休息结束是「苏醒」，轻的，不敲
+ *  （与 motionCeremony 的视觉分层同口径）。带泛音的长衰减，是这套音里唯一一记「重」的。 */
+function playCeremonySound(): void {
+  if (tryGetSettings().pomodoroSound === false) return;
+  playSound('ceremony', pomodoroVolume());
 }
 
 /** 阶段开始（手动开始/继续）：toast + 提示音 */
@@ -208,6 +218,8 @@ function forceFocusHint(paused = false): string {
  */
 function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed' }>): void {
   const d = durations();
+  // 收工钟：专注完成才敲（休息结束不敲，见 playCeremonySound 注）
+  if (e.completedPhase === 'focus') playCeremonySound();
   // 声音 = 新阶段开始提示（听声即知状态，无需打开弹窗）
   playPhaseSound(e.nextPhase);
   // 自动流转（autoCycle/autoSkipBreak）：下一阶段已在计时，toast 只报完成事实
@@ -384,6 +396,50 @@ function setStatMode(mode: 'week' | 'month'): void {
   render();
 }
 
+/* ================= 翻牌机 / 倒数滴答（2026-09-23 特效批，用户拍板采纳 6、11） ================= */
+
+/** 滚动位句柄（惰性一次）与滴答去重位 */
+let timeReels: HTMLElement[] | null = null;
+let lastBeepRemain = -1;
+
+/**
+ * 时间翻牌：可见文本层照旧写 textContent（读屏与既有断言都以它为锚点，不动），
+ * 滚动层只把每一位平移到目标数字——只有变化的那位会滚（整分＝分钟位单独滚一格）。
+ * 结构惰性建一次（40 个数字 span），此后每帧只写 4 次 transform。
+ * 行高走 CSS 变量，不在 TS 里写死像素。
+ */
+function syncTimeReels(remain: number): void {
+  const box = document.getElementById('pomodoro-time-box');
+  if (!box) { timeReels = null; return; }
+  const layer = box.querySelector<HTMLElement>('.pomodoro-time-reel');
+  if (!layer) return;
+  box.classList.add('reel-on');
+  if (!timeReels || timeReels.length === 0) {
+    const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${
+      Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join('')
+    }</span></span>`;
+    layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
+    timeReels = Array.from(layer.querySelectorAll<HTMLElement>('.pomodoro-rinn'));
+  }
+  const text = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
+  timeReels.forEach((el, i) => {
+    el.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text[i])}))`;
+  });
+}
+
+/**
+ * 倒数滴答：最后十秒每秒一记，随提示音总开关；同一秒不重播（render 可能被别处多调），
+ * 离开窗口即复位。暂停/停止不出声。
+ */
+function tickBeep(remain: number, running: boolean): void {
+  if (!running || remain <= 0 || remain > 10) { lastBeepRemain = -1; return; }
+  if (remain === lastBeepRemain) return;
+  lastBeepRemain = remain;
+  const s = tryGetSettings();
+  if (s.pomodoroSound === false || s.pomodoroTickSound === false) return;
+  playSound('tick', pomodoroVolume());
+}
+
 function render(): void {
   const d = durations();
   const remain = remainingSec();
@@ -429,11 +485,15 @@ function render(): void {
     timeEl.textContent = fmt(remain);
     motionTimeTick(timeEl, remain, state.endTime !== null); // 动效层：大跳揭新 / 整分脉冲
   }
+  syncTimeReels(remain); // 翻牌机：滚动位跟随（文本层不动，仍是读屏与断言的锚点）
+  tickBeep(remain, state.endTime !== null); // 倒数滴答：最后十秒每秒一记（随声音总开关）
   renderStats();
   updateButtons();
   applySkinClass(); // 面板主题随设置走（设置面板改主题后下一次 render 即生效）
   // 动效层：相位氛围单点（专注呼吸 / 休息渐暗 / 暂停凝滞 / 待发亮息；签名变更才动）
   motionPhaseSync(document.getElementById('pomodoro-popup'), state.phase, state.endTime !== null, state.paused);
+  // 动效层：进度四味（紧迫色移 / 渐变流光 / 倒数放大 / 色温漂移；每帧写终值，不设签名）
+  motionProgressFx(document.getElementById('pomodoro-popup'), remain, total, state.phase);
 }
 
 /** 本轮循环位置：N 个 6px 方点，已完成填 accent 色（替代旧「专注 2/4」文字小字） */
@@ -604,6 +664,15 @@ export function pomodoroSettingsSchema(): SettingsSchema {
     },
     save: () => saveSettings(),
   } as const;
+  // 倒数滴答独立成键（2026-09-23 特效批）：它是「每秒一记」，与每阶段一次的提示音不同——
+  // 想留钟声但嫌滴答烦时，得能单独关掉。缺省开语义同 soundToggle（旧数据无键视为开）。
+  const tickToggle = {
+    get: () => (tryGetSettings() as any).pomodoroTickSound !== false,
+    set: (v: boolean) => {
+      (getSettings() as any).pomodoroTickSound = v;
+    },
+    save: () => saveSettings(),
+  } as const;
   return {
     groups: [
       {
@@ -695,6 +764,7 @@ export function pomodoroSettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '自动循环', desc: '阶段结束后自动开始下一阶段', binding: { key: 'pomodoroAutoCycle' }, onChange: () => render() },
           { type: 'toggle', name: '自动跳过休息', desc: '专注结束后直接进入下一个专注', binding: { key: 'pomodoroAutoSkipBreak' }, onChange: () => render() },
           { type: 'toggle', name: '声音提醒', desc: '阶段切换时播放提示音', binding: soundToggle, onChange: () => render() },
+          { type: 'toggle', name: '倒数滴答', desc: '最后十秒每秒一记轻响，提醒即将结束', binding: tickToggle, onChange: () => render() },
           // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
           { type: 'slider', name: '提示音音量', desc: '提示音大小，默认最大',
             binding: { get: () => (tryGetSettings() as any).pomodoroVolume ?? 100, set: (v) => { (getSettings() as any).pomodoroVolume = v; }, save: () => saveSettings() },

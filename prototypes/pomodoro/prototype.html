@@ -152,6 +152,9 @@
         t('移动端同种子（15:00/继续）', (mob('#pomodoro-time') || {}).textContent === '15:00' && (mob('#pomodoro-btn-start') || {}).textContent === '继续');
         t('相位单源 menuPhase=paused', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'paused');
         t('循环圆点行 4 点在场', dd.querySelectorAll('#pomodoro-cycle .pomodoro-cycle-dot').length === 4);
+        t('翻牌机层在场（4 位滚动位 + reel-on，文本层让位）', dd.querySelectorAll('#pomodoro-time-box .pomodoro-rcol').length === 4
+          && dd.querySelector('#pomodoro-time-box').classList.contains('reel-on')
+          && getComputedStyle(dt('#pomodoro-time')).opacity === '0');
         t('今日统计在场', ((dt('#pomodoro-today') || {}).textContent || '').length > 0);
         t('近 7 天柱在场（标签=日，不折行）', dd.querySelectorAll('#pomodoro-week .pomodoro-stat-bar').length === 7
           && [...dd.querySelectorAll('#pomodoro-week .pomodoro-stat-label')].every((l) => (l.textContent || '').length === 2));
