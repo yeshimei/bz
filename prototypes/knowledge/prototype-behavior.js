@@ -1,4 +1,4 @@
-/* 源指纹 9eef5a693b0ccd77 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4f4ad626b4589ee3 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -13227,8 +13227,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       popup.innerHTML = isMobileEnv() ? `
       <div class="bz-kb-head">
         <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
         </div>
         <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
       </div>
@@ -13239,8 +13239,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
         </div>
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
@@ -13405,7 +13405,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const rows = this.allNotes.map((n) => {
         const kind = litKindLabel(n.type);
         return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
-        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : ""}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
+        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === "video" ? "hot" : n.type === "image" ? "img" : ""}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
         <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span></div>
       </div>`;
       }).join("");
@@ -13435,12 +13435,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const parasHtml = body.split(/\r?\n\r?\n+/).map((b) => b.trim()).filter(Boolean).map((b) => `<p>${esc(b)}</p>`).join("") || "<p>（无正文）</p>";
       const rels = await this.noteRels(n);
       const srcHtml = n.source && !n.source.startsWith("[[") ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>` : "";
-      const head = kind === "card" ? { title: "卡片预览 · 卡片盒", badge: "卡 片", hot: false } : kind === "topic" ? { title: "主题预览 · 主题笔记", badge: "主 题", hot: false } : { title: `文献预览 · ${litKindPlain(n.type || "")}`, badge: litKindLabel(n.type || ""), hot: n.type === "video" };
-      const ovl = this.openSheet(this.sheetWrap(head.title, `
+      const badge = kind === "card" ? { text: "卡 片", cls: "" } : kind === "topic" ? { text: "主 题", cls: "" } : { text: litKindLabel(n.type || ""), cls: n.type === "video" ? "hot" : n.type === "image" ? "img" : "" };
+      const mtBtn = kind === "card" ? `<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button>` : "";
+      const ovl = this.openSheet(this.sheetWrap("", `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
-        <span class="bz-kb-pos ${head.hot ? "hot" : ""}">${head.badge}</span>
+        <span class="bz-kb-pos ${badge.cls}">${badge.text}</span>
         <span class="bz-kb-dom">${esc(n.domain || "未分类")}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这篇为主卡打开挂载树">看挂载树</button></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || "")}</span>${mtBtn}</div>
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
@@ -13681,7 +13682,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         b.title = refBadgeTitle(n);
         b.textContent = `被引 ${n}`;
         motionStampBadge(b);
-        tail.insertBefore(b, tail.firstChild);
+        tail.appendChild(b);
       }
     }
     /** 芯片原地同步（索引落地时改这一个节点：计数 / 置灰 / 点亮，不重建整表） */
@@ -13818,7 +13819,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (!pending) dropHost();
     }
     sheetWrap(title, body) {
-      return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
+      const head = title ? `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div>` : "";
+      return `${head}<div class="bz-kb-sheet-body">${body}</div>`;
     }
     /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
     async runBackfill() {
@@ -13905,8 +13907,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       header.innerHTML = `
       <div class="bz-kb-vmeta" id="lit-video-counts"></div>
       <div class="bz-kb-brand">
-        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
         <div class="bz-kb-title">影 像</div>
+        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
       </div>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="新增影像">${iconSpan("plus")}</button>
@@ -14438,6 +14440,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     showAddDialog(editItem) {
       var _a, _b, _c, _d, _e, _f, _g;
       if (!this.addPopup || !this.addMask) return;
+      if (!this.videoPopup || this.videoPopup.style.display !== "flex") {
+        this.videoView = "tasks";
+        this._showVideoWindow();
+      }
       this.addUrlReset();
       this.addDirty = false;
       this.editingId = (_a = editItem == null ? void 0 : editItem.id) != null ? _a : null;
@@ -14454,6 +14460,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.addEnd = (_f = timeTextToSec((_e = editItem == null ? void 0 : editItem.end) != null ? _e : "")) != null ? _f : this.addDuration;
       this._setResolveState(null);
       this._renderAdd(this.editingId !== null);
+      if ((editItem == null ? void 0 : editItem.start) && this.addDuration <= 0) {
+        const sEl = q(this.addPopup, "#lit-add-start");
+        if (sEl) sEl.value = secToTimeText(this.addStart);
+      }
       if (editItem == null ? void 0 : editItem.quality) {
         const qSel = q(this.addPopup, "#lit-add-quality");
         if (qSel) qSel.value = editItem.quality;
@@ -14608,7 +14618,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (this.addBar && this.addDuration >= 2) this.addBar.set(this.addDuration, this.addStart, this.addEnd);
       const sEl = q(popup, "#lit-add-start");
       const eEl = q(popup, "#lit-add-end");
-      if (sEl && only !== "end") sEl.value = this.addStart > 0 || this.addDuration > 0 ? secToTimeText(this.addStart) : "";
+      if (sEl && only !== "end") {
+        if (this.addStart > 0 || this.addDuration > 0) sEl.value = secToTimeText(this.addStart);
+      }
       if (eEl && only !== "start") eEl.value = this.addEnd > 0 ? secToTimeText(this.addEnd) : "";
     }
     /** 「整片」一键重置（ADR-0133）：有量程 → 全选；无时长 → 清空时间框 */
@@ -14802,7 +14814,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this.addUrlSeq++;
     }
     async _handleAddSave() {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
       if (!this.addPopup) return;
       if (this.addResolving) {
         notice("解析中，请稍候", "info");
@@ -14823,7 +14835,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       let start = null;
       let end = null;
       if (!whole) {
-        if (!(this.addStart > 0) || !(this.addEnd > 0)) {
+        const sFilled = !!((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
+        const eFilled = !!((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
+        if (!sFilled || !eFilled) {
           notice("开始与结束时间需成对填写", "error");
           return;
         }
@@ -14835,22 +14849,22 @@ ${String(blockText != null ? blockText : "").trim()}`);
         end = secToTimeText(this.addEnd);
       }
       let page = null;
-      const pages = ((_e = this.addMeta) == null ? void 0 : _e.pages) || [];
+      const pages = ((_i = this.addMeta) == null ? void 0 : _i.pages) || [];
       if (pages.length > 1) {
         page = this.addPage > 1 ? this.addPage : null;
       } else if (!pages.length) {
-        const raw = ((_g = (_f = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _f.value) != null ? _g : "").trim();
+        const raw = ((_k = (_j = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _j.value) != null ? _k : "").trim();
         if (raw) {
           const n = Number(raw);
           if (!Number.isInteger(n) || n < 1) {
             notice("分P 应为正整数（留空 = 第 1 P）", "error");
-            (_h = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _h.focus();
+            (_l = q(this.addPopup, "#lit-add-page-num")) == null ? void 0 : _l.focus();
             return;
           }
           page = n > 1 ? n : null;
         }
       }
-      const quality = ((_j = (_i = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _i.value) != null ? _j : "").trim() || null;
+      const quality = ((_n = (_m = q(this.addPopup, "#lit-add-quality")) == null ? void 0 : _m.value) != null ? _n : "").trim() || null;
       const editing = this.editingId;
       try {
         const patch = {
@@ -14859,8 +14873,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           end,
           quality,
           page,
-          title: ((_k = this.addMeta) == null ? void 0 : _k.title) || null,
-          uploader: ((_l = this.addMeta) == null ? void 0 : _l.uploader) || null,
+          title: ((_o = this.addMeta) == null ? void 0 : _o.title) || null,
+          uploader: ((_p = this.addMeta) == null ? void 0 : _p.uploader) || null,
           duration: dur > 0 ? dur : null
         };
         if (editing) {
@@ -14872,7 +14886,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notice(editing ? "任务已更新" : "已加入影像处理队列", "success");
         this.showVideoTasks();
       } catch (e) {
-        notice("保存失败：" + ((_m = e == null ? void 0 : e.message) != null ? _m : String(e)), "error");
+        notice("保存失败：" + ((_q = e == null ? void 0 : e.message) != null ? _q : String(e)), "error");
       }
     }
     // ==================== 历史（处理面板内的第二视图，2026-09-14 复核） ====================

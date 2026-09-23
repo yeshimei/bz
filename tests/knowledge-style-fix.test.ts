@@ -23,17 +23,14 @@ describe('issue 270：knowledge 三处无样式 UI 补齐', () => {
     expect(ui).not.toContain('lit-term-cancel');
   });
 
-  it('.bz-kb-brand：品牌区 flex 锁定居中 + accent 点墨短线（::after），零硬编码色', () => {
+  it('.bz-kb-brand：品牌区 flex 锁定居中，零硬编码色（accent 点墨短线已退役，2026-09-24 用户拍板）', () => {
     const css = kbCss();
     const base = css.match(/\.bz-kb-brand\s*\{[^}]*\}/);
     expect(base, '缺 .bz-kb-brand 规则').not.toBeNull();
     expect(base![0]).toContain('display: flex');
     expect(base![0]).toContain('color: var(--ink)');
     noHex(base![0]);
-    const tick = css.match(/\.bz-kb-brand::after\s*\{[^}]*\}/);
-    expect(tick, '缺 .bz-kb-brand::after 点墨短线').not.toBeNull();
-    expect(tick![0]).toContain('background: var(--accent)');
-    noHex(tick![0]);
+    expect(css.match(/\.bz-kb-brand::after\s*\{[^}]*\}/), '题字下点墨短线应已删（2026-09-24）').toBeNull();
   });
 
   it('.bz-lit-run-btn：头行图标组内强调档，accent 软底 + hover 加深 + disabled 沉芯片底', () => {

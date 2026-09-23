@@ -592,8 +592,8 @@ export class UIManager {
     popup.innerHTML = isMobileEnv() ? `
       <div class="bz-kb-head">
         <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
         </div>
         <button class="bz-kb-mclose" data-kb-act="kb-close" title="关闭知识盒">✕</button>
       </div>
@@ -604,8 +604,8 @@ export class UIManager {
         <div class="bz-kb-parts">${partBtns}
         </div>
         <div class="bz-kb-brand">
-          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
           <div class="bz-kb-title">知 识 盒</div>
+          <div class="bz-kb-top">LEXICON · BOX OF NOTES</div>
         </div>
       </div>
       <div class="bz-kb-sc" id="kb-sc"></div>`;
@@ -762,7 +762,7 @@ export class UIManager {
     const rows = this.allNotes.map((n) => {
       const kind = litKindLabel(n.type);
       return `<div class="bz-kb-lexrow" data-kb-act="lit-peek" data-path="${esc(n.path)}">
-        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' ? 'hot' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
+        <div class="bz-kb-hw"><span class="bz-kb-w">${esc(n.title)}</span><span class="bz-kb-pos ${n.type === 'video' ? 'hot' : n.type === 'image' ? 'img' : ''}">${kind}</span><span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
         <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span></div>
       </div>`;
     }).join('');
@@ -801,16 +801,22 @@ export class UIManager {
     const srcHtml = n.source && !n.source.startsWith('[[')
       ? `<div class="bz-kb-sec">来 源</div><div class="bz-kb-cliplink"><a class="bz-lit-srcopen" data-lit-src-url="${esc(n.source)}" href="#">${esc(n.sourceTitle || n.source)}</a></div>`
       : '';
-    const head = kind === 'card'
-      ? { title: '卡片预览 · 卡片盒', badge: '卡 片', hot: false }
+    // 预览头不放「××预览」标题（2026-09-24 用户拍板）：笔记标题 + 部签 + 领域已说明一切
+    // 部签色档随类型：影像 hot（红）、图版 img（accent 蓝），与名词/段落灰签区分
+    const badge = kind === 'card'
+      ? { text: '卡 片', cls: '' }
       : kind === 'topic'
-        ? { title: '主题预览 · 主题笔记', badge: '主 题', hot: false }
-        : { title: `文献预览 · ${litKindPlain(n.type || '')}`, badge: litKindLabel(n.type || ''), hot: n.type === 'video' };
-    const ovl = this.openSheet(this.sheetWrap(head.title, `
+        ? { text: '主 题', cls: '' }
+        : { text: litKindLabel(n.type || ''), cls: n.type === 'video' ? 'hot' : n.type === 'image' ? 'img' : '' };
+    // 挂载树入口只留卡片（2026-09-24 用户拍板：文献/主题笔记没有挂载数的概念）
+    const mtBtn = kind === 'card'
+      ? `<button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这张卡为主卡打开挂载树">看挂载树</button>`
+      : '';
+    const ovl = this.openSheet(this.sheetWrap('', `
       <div class="bz-kb-hw"><span class="bz-kb-w" style="font-size:17px">${esc(n.title)}</span>
-        <span class="bz-kb-pos ${head.hot ? 'hot' : ''}">${head.badge}</span>
+        <span class="bz-kb-pos ${badge.cls}">${badge.text}</span>
         <span class="bz-kb-dom">${esc(n.domain || '未分类')}</span></div>
-      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span><button class="bz-kb-mt-openbtn" data-kb-act="mount-tree" data-path="${esc(n.path)}" title="以这篇为主卡打开挂载树">看挂载树</button></div>
+      <div class="bz-kb-tail"><span class="bz-kb-meta">${esc(n.date || '')}</span>${mtBtn}</div>
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}`));
@@ -1074,7 +1080,7 @@ export class UIManager {
       b.title = refBadgeTitle(n);
       b.textContent = `被引 ${n}`;
       motionStampBadge(b); // 动效层：被引徽标盖章落位
-      tail.insertBefore(b, tail.firstChild);
+      tail.appendChild(b); // 尾插：日期恒左、徽标凭 margin-left:auto 独占右侧（首插会把日期带到右边，2026-09-24 用户拍板）
     }
   }
 
@@ -1214,7 +1220,9 @@ export class UIManager {
     if (!pending) dropHost(); // 无弹层在场：独立宿主直接撤空壳
   }
   private sheetWrap(title: string, body: string): string {
-    return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
+    // 空 title = 不出头行（预览弹层不放「××预览」标题，2026-09-24）
+    const head = title ? `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div>` : '';
+    return `${head}<div class="bz-kb-sheet-body">${body}</div>`;
   }
 
   /** 旧笔记自动补全（note-gen；AI 未配置跳过并提示一句）；每目录至多跑一次 */
@@ -1304,8 +1312,8 @@ export class UIManager {
     header.innerHTML = `
       <div class="bz-kb-vmeta" id="lit-video-counts"></div>
       <div class="bz-kb-brand">
-        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
         <div class="bz-kb-title">影 像</div>
+        <div class="bz-kb-top">VIDEO · TO LITERATURE</div>
       </div>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="新增影像">${iconSpan('plus')}</button>
@@ -1718,7 +1726,6 @@ export class UIManager {
     // 词典皮（issue 310：与名词/段落录入同壳）：标题栏 → 链接行 + 解析 →
     // 「解析完成后」才展开的下半个表单（只读信息 / 分P / 剪辑 / 清晰度 / 保存）。
     // ADR-0133 的解析式录入契约不变（单框 + 解析按钮 → 只读信息 → 双把手范围 + 时间框 → 清晰度）。
-    // 标题栏不放出口（issue 310 复核）：处理队列与历史随「保存」进入（保存即落队列并打开处理面板）。
     popup.innerHTML = `
       <div class="bz-lit-sheet-head">
         <span class="bz-lit-sheet-title">影 像</span>
@@ -1836,6 +1843,12 @@ export class UIManager {
 
   showAddDialog(editItem?: Partial<KnowledgeTask>): void {
     if (!this.addPopup || !this.addMask) return;
+    // 影像处理面板垫底（2026-09-24 用户拍板）：不开出口图标，录入弹窗打开时直接把面板
+    // 开在下面（只展示，不触发 backfill 自动重抓）；录入窗随后 topify 压上，面板四边留可见余量
+    if (!this.videoPopup || this.videoPopup.style.display !== 'flex') {
+      this.videoView = 'tasks';
+      this._showVideoWindow();
+    }
     this.addUrlReset(); // 开弹窗使在途解析过期（ADR-0133）
     this.addDirty = false; // 开窗即干净基线（issue 326：脏标只在用户事件点打）
     this.editingId = editItem?.id ?? null;
@@ -1856,6 +1869,11 @@ export class UIManager {
     this.addEnd = timeTextToSec(editItem?.end ?? '') ?? this.addDuration;
     this._setResolveState(null);
     this._renderAdd(this.editingId !== null);
+    // 编辑回填补刀：start=0 且无时长时 _paintRange 不碰框（防吞手填），这里按任务已有数据显式落框
+    if (editItem?.start && this.addDuration <= 0) {
+      const sEl = q<HTMLInputElement>(this.addPopup, '#lit-add-start');
+      if (sEl) sEl.value = secToTimeText(this.addStart);
+    }
     if (editItem?.quality) {
       const qSel = q<HTMLSelectElement>(this.addPopup, '#lit-add-quality');
       if (qSel) qSel.value = editItem.quality;
@@ -1999,7 +2017,10 @@ export class UIManager {
     if (this.addBar && this.addDuration >= 2) this.addBar.set(this.addDuration, this.addStart, this.addEnd);
     const sEl = q<HTMLInputElement>(popup, '#lit-add-start');
     const eEl = q<HTMLInputElement>(popup, '#lit-add-end');
-    if (sEl && only !== 'end') sEl.value = this.addStart > 0 || this.addDuration > 0 ? secToTimeText(this.addStart) : '';
+    if (sEl && only !== 'end') {
+      // start=0 且无时长：框空（没填）与手填 0:00（从零截段）在数值上同形 → 不碰框，写空会吞掉手填的 0:00
+      if (this.addStart > 0 || this.addDuration > 0) sEl.value = secToTimeText(this.addStart);
+    }
     if (eEl && only !== 'start') eEl.value = this.addEnd > 0 ? secToTimeText(this.addEnd) : '';
   }
 
@@ -2222,7 +2243,11 @@ export class UIManager {
     let start: string | null = null;
     let end: string | null = null;
     if (!whole) {
-      if (!(this.addStart > 0) || !(this.addEnd > 0)) { notice('开始与结束时间需成对填写', 'error'); return; }
+      // 成对与否看框文本：0:00 是合法开始值（从零截段），数值 0 分不清「没填」——框空才是没填
+      // （保存前 _commitTimeInput 已把非法/空输入归位：dur>0 恒回填状态值，dur=0 空则留空）
+      const sFilled = !!(q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
+      const eFilled = !!(q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
+      if (!sFilled || !eFilled) { notice('开始与结束时间需成对填写', 'error'); return; }
       if (this.addStart >= this.addEnd) { notice('结束时间需大于开始时间', 'error'); return; }
       start = secToTimeText(this.addStart);
       end = secToTimeText(this.addEnd);

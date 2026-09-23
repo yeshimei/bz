@@ -327,7 +327,11 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.querySelector('.bz-kb-sc')!.textContent).toContain('认知觉醒'));
     (document.querySelector('[data-kb-act=topic-open]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
-    expect(document.querySelector('.bz-kb-sheet')!.textContent).toContain('主题预览');
+    // 预览头「××预览」标题退役（2026-09-24）：部签仍在、文献/主题无挂载树入口
+    const sheet = document.querySelector('.bz-kb-sheet')!;
+    expect(sheet.textContent).not.toContain('主题预览');
+    expect(sheet.textContent).toContain('主 题');
+    expect(sheet.querySelector('[data-kb-act=mount-tree]')).toBeNull();
     expect(document.getElementById('bz-kb-preview-body')!.textContent).toContain('本能脑');
     // 同一 openPreview 的清空语义：主题正文也恰好一份（issue 275）
     expect(document.getElementById('bz-kb-preview-body')!.textContent!.split('本能脑').length - 1).toBe(1);
@@ -340,11 +344,15 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     await vi.waitFor(() => expect(document.querySelector('[data-kb-act=card-peek]')).toBeTruthy());
     (document.querySelector('[data-kb-act=card-peek]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('bz-kb-preview-body')).toBeTruthy());
-    expect(document.querySelector('.bz-kb-sheet')!.textContent).toContain('卡片预览');
+    // 卡片预览：头行标题退役但部签在；卡片保留挂载树入口（挂载数是卡片概念）
+    const sheet = document.querySelector('.bz-kb-sheet')!;
+    expect(sheet.textContent).not.toContain('卡片预览');
+    expect(sheet.textContent).toContain('卡 片');
+    expect(sheet.querySelector('[data-kb-act=mount-tree]')).toBeTruthy();
     expect(document.querySelector('.bz-kb-sheet')!.querySelector('[data-lit-src-url]')).toBeNull();
   });
 
-  it('录入入口：名词面板 / 影像直达录入界面（issue 310：不再先落处理队列）', async () => {
+  it('录入入口：名词面板 / 影像直达录入界面（处理面板垫底可见，2026-09-24 拍板）', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.querySelector('[data-kb-act=term-entry]')).toBeTruthy());
     (document.querySelector('[data-kb-act=term-entry]') as HTMLElement).click();
@@ -352,7 +360,9 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     ui.hideTermEntry();
     (document.querySelector('[data-kb-act=video-entry]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
-    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none'); // 处理队列不再自动叠开
+    // 处理面板直接垫在录入弹窗下面（不出右上角出口图标）
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex');
+    expect(document.getElementById('knowledge-add-popup')!.querySelector('#lit-add-tasks')).toBeNull();
   });
 
   // ==================== 视频录入 ====================
@@ -459,14 +469,7 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(document.querySelector('#knowledge-video-list .bz-kb-taskcard')!.textContent).toContain('整片');
   });
 
-  it('录入界面标题栏不放出口（issue 310 复核）：处理队列与历史随「保存」进入', async () => {
-    ui.showVideoEntry();
-    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
-    const popup = document.getElementById('knowledge-add-popup')!;
-    expect(popup.querySelector('.bz-lit-head-btns')).toBeNull(); // 右上角两个钮已退役
-    expect(document.getElementById('lit-add-tasks')).toBeNull();
-    expect(document.getElementById('lit-add-history')).toBeNull();
-    // 处理队列仍可达：保存 → 关窗 + 打开处理面板（另一个用例断言落库；此处断言窗口切换）
+  it('录入打开时影像处理面板垫底（2026-09-24 拍板）：不出口图标、不触发自动重抓，保存进队列路径不变', async () => {
     const reqMock = requestUrl as ReturnType<typeof vi.fn>;
     reqMock.mockImplementation(async (opts: any) => {
       const url = String(opts?.url ?? '');
@@ -474,12 +477,24 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       return httpResp(404, '');
     });
     try {
-      (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1notoolbar';
+      ui.showVideoEntry();
+      await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+      // 垫底：处理面板同步在下面，且只是展示（零请求 = 不带 backfill 自动重抓）
+      expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex');
+      // z 序：录入弹窗与遮罩都要压过垫底面板（topify 后开者在上）
+      const addZ = Number((document.getElementById('knowledge-add-popup') as HTMLElement).style.zIndex || 0);
+      const videoZ = Number((document.getElementById('knowledge-video-popup') as HTMLElement).style.zIndex || 0);
+      expect(addZ).toBeGreaterThan(videoZ);
+      expect(document.getElementById('knowledge-add-popup')!.querySelector('#lit-add-tasks')).toBeNull();
+      // 保存 → 落队列（面板已在场，路径不变）
+      (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1underlay';
       (document.getElementById('lit-add-resolve') as HTMLElement).click();
       await vi.waitFor(() => expect(document.getElementById('lit-add-more')!.style.display).not.toBe('none'));
       (document.getElementById('lit-add-save') as HTMLElement).click();
-      await vi.waitFor(() => expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'));
-      expect(popup.style.display).toBe('none');
+      await vi.waitFor(async () => {
+        const tasks = await KnowledgeData.loadTasks();
+        expect(tasks).toHaveLength(1);
+      });
     } finally {
       reqMock.mockImplementation(async () => httpResp(200, ''));
     }
@@ -700,6 +715,64 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
       expect(tasks[0].start).toBeNull();
     });
     expect(tasks[0].end).toBeNull();
+  });
+
+  it('从零截段（0 秒开始是合法值）：0:00 ~ 0:53 保存不再误报「成对填写」，start 落库 0:00', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async (opts: any) => {
+      const url = String(opts?.url ?? '');
+      if (url.includes('web-interface/view')) {
+        return httpResp(200, JSON.stringify({ code: 0, data: {
+          title: '长视频', owner: { mid: 1, name: 'UP' }, duration: 601,
+          pages: [{ cid: 9, page: 1, part: '', duration: 601 }],
+        } }));
+      }
+      return httpResp(404, '');
+    });
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    const urlInput = document.getElementById('lit-add-url') as HTMLInputElement;
+    urlInput.value = 'https://www.bilibili.com/video/BV1zerostart';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-ititle')!.textContent).toBe('长视频'));
+    // 全选默认 start=0:00；把结束改小 = 从零截段（非整片）
+    const endInput = document.getElementById('lit-add-end') as HTMLInputElement;
+    endInput.value = '0:53';
+    endInput.dispatchEvent(new Event('change', { bubbles: true }));
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].start).toBe('0:00');
+    expect(tasks[0].end).toBe('0:53');
+    expect(getNoticeMessages().join('\n')).not.toContain('成对填写');
+  });
+
+  it('无时长手填从零截段：失败态 start 输 0:00 不被清空、成对落库；编辑回填显式落框', async () => {
+    const reqMock = requestUrl as ReturnType<typeof vi.fn>;
+    reqMock.mockImplementation(async () => httpResp(500, ''));
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1handfill0';
+    (document.getElementById('lit-add-resolve') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-add-rstate')!.textContent).toContain('解析失败'));
+    const startInput = document.getElementById('lit-add-start') as HTMLInputElement;
+    startInput.value = '0:00';
+    startInput.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(startInput.value).toBe('0:00'); // 手填 0:00 不被 paint 写空（数值 0 分不清「没填」→ 不碰框）
+    const endInput = document.getElementById('lit-add-end') as HTMLInputElement;
+    endInput.value = '1:30';
+    endInput.dispatchEvent(new Event('change', { bubbles: true }));
+    (document.getElementById('lit-add-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-kb-taskcard').length).toBe(1));
+    const tasks = await KnowledgeData.loadTasks();
+    expect(tasks[0].start).toBe('0:00');
+    expect(tasks[0].end).toBe('1:30');
+    expect(getNoticeMessages().join('\n')).not.toContain('成对填写');
+    // 编辑回填：无时长任务带 start=0:00 打开时框里要看得见（paint 不碰框 → 补刀显式落框）
+    ui.showAddDialog(tasks[0]);
+    await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
+    expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');
   });
 
   it('解析式录入（ADR-0133）：净化写回 + 只读信息区；改动输入作废旧信息；失败进失败态可手填', async () => {

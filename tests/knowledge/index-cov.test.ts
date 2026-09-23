@@ -60,9 +60,9 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
 
     openKnowledgeAddTask(app, { url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '某视频', uploader: 'UP主甲' });
 
-    // issue 310：聚合讯入口与主窗「影像」一致——直达录入界面，不再先落处理队列
+    // 聚合讯入口与主窗「影像」一致——直达录入界面；处理面板垫底可见（2026-09-24 拍板）
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
-    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex');
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
     // 预填标题/UP 落只读信息行（ADR-0133：标题与 UP 主输入框退役）
     expect(document.getElementById('lit-add-ititle')!.textContent).toBe('某视频');
@@ -83,7 +83,7 @@ describe('openKnowledgeAddTask（聚合讯「保存至文献」入口，ticket 1
     openKnowledgeAddTask(app);
 
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
-    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('none');
+    expect(document.getElementById('knowledge-video-popup')!.style.display).toBe('flex'); // 垫底面板（2026-09-24）
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('');
     expect(document.getElementById('lit-add-more')!.style.display).toBe('none'); // 未解析：只见链接行
   });

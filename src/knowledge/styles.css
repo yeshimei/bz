@@ -38,9 +38,10 @@
 
 .bz-kb-window {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  /* 居中走 inset + margin:auto，transform 留空给动效层——此前 transform 定位会被
+     入/退场 WAAPI 的 transform 帧覆盖（丢 -50% 偏移 = 窗先顶在右下、演完才跳回中间） */
+  inset: 0;
+  margin: auto;
   width: min(900px, calc(100vw - 48px));
   height: min(640px, calc(100vh - 48px));
   background: var(--panel);
@@ -127,7 +128,7 @@
   text-indent: 0.5em;
 }
 
-/* 面板头品牌区（桌面：头部网格中列题字锁定；移动：块级头部通栏居中）——ink 随主题 + accent 点墨短线 */
+/* 面板头品牌区（桌面：头部网格中列题字锁定；移动：块级头部通栏居中）——ink 随主题 */
 .bz-kb-brand {
   display: flex;
   flex-direction: column;
@@ -135,15 +136,6 @@
   justify-self: center;
   min-width: 0;
   color: var(--ink);
-}
-.bz-kb-brand::after {
-  content: "";
-  width: 26px;
-  height: 2px;
-  margin-top: 7px;
-  border-radius: 1px;
-  background: var(--accent);
-  opacity: 0.6;
 }
 
 /* ===== 内容滚动区 ===== */
@@ -213,6 +205,8 @@
   white-space: nowrap;
 }
 .bz-kb-pos.hot { border-color: var(--red); color: var(--red); }
+/* 图版签 accent 蓝档（2026-09-24 用户拍板）：与影像红签、名词/段落灰签区分 */
+.bz-kb-pos.img { border-color: var(--accent); color: var(--accent); }
 
 .bz-kb-tail {
   display: flex;
@@ -600,9 +594,11 @@
 /* ===== 保留弹窗的纸墨皮（术语 / 添加任务 / 头行按钮） ===== */
 .bz-lit-dialog {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  /* 居中走 inset + margin:auto，transform 留空给动效层（同 .bz-kb-window，防动画帧丢偏移跳位）；
+     height 须 fit-content 显式收缩——绝对定位下 height:auto + 上下 inset 夹住会被拉伸填满（2026-09-24） */
+  inset: 0;
+  margin: auto;
+  height: fit-content;
   width: min(520px, 92vw);
   max-height: 88vh;
   overflow-y: auto;
@@ -1130,6 +1126,7 @@
   left: 0;
   right: 0;
   bottom: env(safe-area-inset-bottom, 0);
+  margin: 0; /* 覆写基础规则的 margin:auto 居中（全屏无剩余空间，防两端 auto 干扰） */
   transform: none;
   width: 100vw;
   height: auto;
