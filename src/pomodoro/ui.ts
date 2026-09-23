@@ -493,7 +493,14 @@ function render(): void {
   // 动效层：相位氛围单点（专注呼吸 / 休息渐暗 / 暂停凝滞 / 待发亮息；签名变更才动）
   motionPhaseSync(document.getElementById('pomodoro-popup'), state.phase, state.endTime !== null, state.paused);
   // 动效层：进度四味（紧迫色移 / 渐变流光 / 倒数放大 / 色温漂移；每帧写终值，不设签名）
-  motionProgressFx(document.getElementById('pomodoro-popup'), remain, total, state.phase);
+  // running 传「在走且没 paused」——暂停＝凝滞，渐变不再空转（setFlowPlay）
+  motionProgressFx(
+    document.getElementById('pomodoro-popup'),
+    remain,
+    total,
+    state.phase,
+    state.endTime !== null && !state.paused,
+  );
 }
 
 /** 本轮循环位置：N 个 6px 方点，已完成填 accent 色（替代旧「专注 2/4」文字小字） */

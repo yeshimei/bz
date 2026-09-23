@@ -14,7 +14,14 @@
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     #pomodoro-mask.bz-overlay-mask { padding: 0; } /* 三件套（fixed/inset/--bz-overlay 底/token blur/居中）已收编 .bz-overlay-mask 单源（issue 365）；padding 归零对齐原可用区，320px 弹窗窄屏不被裁 */
-    #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
+    #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative;
+      /* 演出终态色（motion.ts 每帧据此插值）：紧迫升温的红、底色漂移的暖/冷两端。
+         停留在此层的理由是 colors-pass §2——主题换了跟着换，不再像写死 rgb 那样亮暗主题打架。
+         取不到时 motion 层整味缺席；各皮肤可按需覆写这三个 token 说自己一套话。 */
+      --pz-hot: var(--text-error, var(--color-red, #e24b4a));
+      --pz-tint-focus: var(--color-orange, #d85a30);
+      --pz-tint-break: var(--color-blue, #3d6eb4);
+    }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
     /* overflow: visible 是环光的必要项，不是装饰：进行中的辉光是挂在 #pomodoro-ring-progress 上的
        drop-shadow（motion.ts setGlow，半径 7 = 专注 / 4 = 休息），它的绘制范围会溢出 circle 本体。
@@ -176,6 +183,8 @@
    类由 motion.ts::setRestDepth 挂/摘，只活在 break-* 相位；RM 口径与域内一致（不在此处单独降级）。 */
 #pomodoro-mask.bz-pm-rest { backdrop-filter: blur(calc(var(--bz-overlay-blur, 8px) * 1.9)); }
 #pomodoro-popup.bz-pm-rest { animation: bz-pm-rest-breath 6.4s ease-in-out infinite; }
+/* RM（?rm=1）：CSS 呼吸与 SMIL 流光同闸——class 由 setRestDepth 按 reduced() 挂 */
+#pomodoro-popup.bz-pm-rm.bz-pm-rest { animation: none; }
 @keyframes bz-pm-rest-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.008); } }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================

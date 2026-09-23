@@ -41,6 +41,9 @@
  *  - 无 WAAPI 宿主（jsdom）：一次性效果落终态内联样式（幂等无害），循环类直接跳过——域内测试零感知。
  */
 
+/** Phase 单源（state.ts）：本文件零**值**依赖——只取类型，编译后退场，Node 单测仍可直载。 */
+import type { Phase } from './state';
+
 /* ================= 台账与口径 ================= */
 
 const M = { fast: 160, move: 200, base: 280, impulse: 740 } as const;
@@ -135,7 +138,13 @@ function stopFx(): void { for (const a of fxAnims) { try { a.cancel(); } catch {
  * 氛围签名：ready / focus-run / focus-pause / break-run / break-pause。
  * phase 'focus' 停止态（reset 后）与 'idle' 同归 ready——都是「钟已上弦等你按」。
  */
-function atmosKey(phase: string, running: boolean, paused: boolean): string {
+/**
+ * 休息相位判据。**Phase 里没有 'break' 这个成员**（只有 short-break / long-break）——曾在这里
+ * 写 `phase === 'break'` 导致短休息判成专注、色温取反岔；类型收严成 Phase 后编译器能拦。
+ */
+function isBreakPhase(phase: Phase): boolean { return phase === 'short-break' || phase === 'long-break'; }
+
+function atmosKey(phase: Phase, running: boolean, paused: boolean): string {
   if (running) return phase === 'focus' ? 'focus-run' : 'break-run';
   if (paused) return phase === 'focus' ? 'focus-pause' : 'break-pause';
   return 'ready';
@@ -145,7 +154,7 @@ let lastSig = '';
 let headLastProgress = -1;
 
 /** 相位氛围同步：ui.render 每秒调用；签名不变零开销。popup 为 null（面板关着后台走秒）只记账不演出。 */
-export function motionPhaseSync(popup: HTMLElement | null, phase: string, running: boolean, paused: boolean): void {
+export function motionPhaseSync(popup: HTMLElement | null, phase: Phase, running: boolean, paused: boolean): void {
   const key = atmosKey(phase, running, paused);
   if (key === lastSig) return;
   const prev = lastSig;
@@ -212,11 +221,14 @@ function trackLoop(a: Animation | null): void { if (a) loops.add(a); }
 const URGENT_WINDOW = 300;
 /** 倒数窗口：剩余 ≤10 秒，时间字逐秒放大 */
 const FINAL_WINDOW = 10;
-/** 升温终点（警示红；刻意不写进皮肤变量表——那要给 10 套皮肤各加一行） */
-const HOT_RGB: readonly [number, number, number] = [226, 75, 74];
-/** 底色漂移两端：专注偏暖、休息偏冷 */
-const TINT_FOCUS = '216, 90, 48';
-const TINT_BREAK = '61, 110, 180';
+/**
+ * 演出终态色的**变量名**——值住在 styles.css 的 --pz-* token 上。
+ * §2 禁写死色值：写死就绕过主题，亮/暗主题切换与新皮肤都不跟；插值需要数值，故运行时
+ * 从 computed 里读（与 accentOf 同手法），读不到则该味整条缺席（优于把错色糊上去）。
+ */
+const HOT_VAR = '--pz-hot';
+const TINT_FOCUS_VAR = '--pz-tint-focus';
+const TINT_BREAK_VAR = '--pz-tint-break';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const FLOW_ID = 'bz-pm-flow';
 /** 底色暖/冷层最大不透明度（再高就压字了） */
@@ -242,10 +254,18 @@ function parseRgb(v: string): [number, number, number] | null {
   return null;
 }
 
-/** 朝警示红插值（t=0 原色，t=1 全红） */
-function mixTo(a: [number, number, number], t: number): string {
-  const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+/** 朝目标色插值（t=0 原色，t=1 终点色）；目标色由调用方从 --pz-* token 读出 */
+function mixTo(a: [number, number, number], t: number, target: [number, number, number]): string {
+  const c = [0, 1, 2].map((i) => Math.round(a[i] + (target[i] - a[i]) * t));
   return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+}
+
+/** 语法糖：把 CSS 变量读成可用作插值终点的三元组（无该 token → null，整味缺席） */
+function varRgb(el: Element | null, name: string): [number, number, number] | null {
+  try {
+    const v = el ? getComputedStyle(el).getPropertyValue(name).trim() : '';
+    return v ? parseRgb(v) : null;
+  } catch { return null; } // 测试宿主无 computedStyle
 }
 
 /** 时间字动画目标：翻牌层是 #pomodoro-time 的兄弟，动作抬到共同的 box 上才带得住 */
@@ -294,6 +314,32 @@ function ensureFlowGrad(svg: Element | null): SVGLinearGradientElement | null {
 }
 
 /**
+ * 渐变流光的 SMIL 轮转开关：running 则转，暂停 / 待发则停。
+ * 「暂停＝凝滞」是本域动效语义（见文件头 *-pause），环不该在暂停时还在慢慢转；把 SMIL 挂在
+ * SVG 根的时间轴上统一收，也避免相位切走后留一个看不到摸不着的后台空转（即僵尸孤儿）。
+ */
+function setFlowPlay(svg: SVGSVGElement | null | undefined, on: boolean): void {
+  if (!svg || typeof svg.pauseAnimations !== 'function') return; // jsdom / 老引擎无 SMIL 时间轴
+  try { if (on) svg.unpauseAnimations(); else svg.pauseAnimations(); } catch { /* 宿主不给，转就转着 */ }
+}
+
+/**
+ * 皮肤失效：名单（className）变了就清掉基准色缓存与旧内联，让本帧重新从 skin 的 computed 取色。
+ * 不这么做的话，运行中改皮肤只能等下次开面板才跟手——一秒内改来改去更容易看出来。
+ */
+let fxSkinSig = '';
+function syncFxSkin(popup: HTMLElement, running: boolean): void {
+  if (popup.className === fxSkinSig) return;
+  resetFxCache(); // 会连带把 fxSkinSig 清成 ''，故必须**先**清、后记账
+  fxSkinSig = popup.className;
+  const ring = byId('pomodoro-ring-progress');
+  if (ring) ring.style.removeProperty('stroke');
+  const timeEl = byId('pomodoro-time');
+  if (timeEl) timeEl.style.removeProperty('color');
+  setFlowPlay(document.getElementById('pomodoro-ring-svg') as SVGSVGElement | null, running);
+}
+
+/**
  * 进度四味：全是「持续态」而非一次性演出——不设签名，每帧按当前剩余直接写终值。
  * RM / 无 WAAPI 宿主照写（终值无害），只是渐变不转、放大不补间。
  */
@@ -301,10 +347,14 @@ export function motionProgressFx(
   popup: HTMLElement | null,
   remain: number,
   total: number,
-  phase: string,
+  phase: Phase,
+  running: boolean,
 ): void {
   if (!popup || !popup.isConnected) return;
-  const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+  // 皮肤换了（设置面板改肤→下一次 render）：缓存与旧内联都要退场，否则插值拿到旧皮肤的起点色
+  syncFxSkin(popup, running);
+  const hotTarget = varRgb(popup, HOT_VAR);
+  const hot = hotTarget && remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
   const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
 
   const ring = byId('pomodoro-ring-progress') as SVGElement | null;
@@ -320,7 +370,7 @@ export function motionProgressFx(
   }
 
   const base = baseStroke ? parseRgb(baseStroke) : null;
-  const accent = base ? mixTo(base, hot) : '';
+  const accent = base && hotTarget ? mixTo(base, hot, hotTarget) : '';
 
   // 紧迫色移 + 渐变流光：同一条描边
   if (ring && accent) {
@@ -328,6 +378,7 @@ export function motionProgressFx(
     if (grad) {
       for (const s of Array.from(grad.querySelectorAll('stop'))) s.setAttribute('stop-color', accent);
       ring.style.stroke = `url(#${FLOW_ID})`;
+      setFlowPlay(ring.ownerSVGElement, running); // 凝滞＝转也停（暂停 / 待发不空转）
     } else {
       ring.style.stroke = accent;
     }
@@ -338,9 +389,9 @@ export function motionProgressFx(
   }
 
   // 紧迫色移：时间字同步（后段才染，前面留给环）
-  if (timeEl && baseTimeColor) {
+  if (timeEl && baseTimeColor && hotTarget) {
     const fg = parseRgb(baseTimeColor);
-    if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+    if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65), hotTarget);
     else if (timeEl.style.color) timeEl.style.removeProperty('color');
   }
 
@@ -354,11 +405,17 @@ export function motionProgressFx(
 
   // 色温漂移：专注偏暖、休息偏冷，进度越深越浓。直染 background-color 而不注入覆盖层——
   // 覆盖层会盖住文字（负 z 在未建层叠上下文的相对定位父级里并不可靠），且 background 简写会
-  // 抹掉「方格纸」皮肤那层格纹。color-mix 写不出来（老引擎）时整条声明无效 = 优雅降级。
-  const cold = phase === 'break' || phase === 'long-break';
+  // 抹掉「方格纸」皮肤那层格纹。色值是 styles.css 的 --pz-tint-* token（§2 禁 TS 写死）；
+  // token 缺席则该味整条不作（宁可无色温，也不把 Judge Me 的暖冷糊上去）。
+  const cold = isBreakPhase(phase);
+  const tint = varRgb(popup, cold ? TINT_BREAK_VAR : TINT_FOCUS_VAR);
   const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
-  popup.style.backgroundColor =
-    `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+  if (tint) {
+    popup.style.backgroundColor =
+      `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${tint[0]}, ${tint[1]}, ${tint[2]}))`;
+  } else if (popup.style.backgroundColor) {
+    popup.style.removeProperty('background-color');
+  }
 }
 
 /** 休息退后（break-* 相位）：遮罩 backdrop-blur 加深一档 + 弹窗极缓呼吸（类单源在 styles.css） */
@@ -367,11 +424,19 @@ function setRestDepth(mask: HTMLElement | null, on: boolean): void {
   mask.classList.toggle('bz-pm-rest', on);
   const popup = byId('pomodoro-popup');
   if (popup) popup.classList.toggle('bz-pm-rest', on);
+  // RM 口径与流光拉齐（都认 ?rm=1 这一个闸）：没有这行，ERP ?rm=1 下流光停了而 CSS 呼吸还在转
+  if (popup) popup.classList.toggle('bz-pm-rm', reduced());
 }
 
-/** 基准色与渐变引用清场（开/关/卸载共用）：下次首帧重抓，换皮肤后才拿得到新 accent */
+/** 基准色与渐变引用清场（开/关/换肤/卸载共用）：下次首帧重抓 */
 function resetFxCache(): void {
-  baseStroke = null; baseTimeColor = null; flowGrad = null;
+  baseStroke = null; baseTimeColor = null;
+  if (flowGrad) {
+    // SMIL 一起摘：节点跟着 defs 留在 svg 里会成为新的数据源（孤儿），必须随引用一并退场
+    for (const a of Array.from(flowGrad.querySelectorAll('animateTransform'))) a.remove();
+    flowGrad = null;
+  }
+  fxSkinSig = '';
 }
 
 /** 环头藏显（motionPhaseSync 的相位面）；显头尊重 motionRingHead 的进度规则（progress>0.002 才显），
