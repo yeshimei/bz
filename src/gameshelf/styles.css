@@ -818,3 +818,31 @@
   .bz-gs-achlist { max-height: 240px; }
   .bz-gs-shots { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 }
+
+/* ---------- 动效注入件（motion.ts 专用，2026-09-23）----------
+   全部 absolute + pointer-events:none + aria-hidden，演出完自毁——终态 UI 与无动效完全一致。
+   不参与布局：gridhost 只补 position:relative（无偏移，几何零变化），纸屑画布以它为定位基準。 */
+.bz-gs-gridhost { position: relative; }
+.bz-gs-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+/* CRT 扫描线（开机一道亮带掠过面板）：挂在 .bz-gs-panel（overflow:hidden 裁住出界段） */
+.bz-gs-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 24%;
+  pointer-events: none;
+  z-index: 9;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.10) 42%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.10) 58%, rgba(255, 255, 255, 0) 100%);
+}
+/* 封面扫光（详情卡带落位后一道斜向亮带）：宿主 .bz-gs-detail-cover 已 overflow:hidden */
+.bz-gs-shine {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 42%;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.20) 50%, rgba(255, 255, 255, 0) 100%);
+}
