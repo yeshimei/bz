@@ -161,7 +161,7 @@ export function motionPhaseSync(popup: HTMLElement | null, phase: Phase, running
   lastSig = key;
   if (!popup || !popup.isConnected) return;
   const svg = byId('pomodoro-ring-svg');
-  const timeEl = byId('pomodoro-time');
+  const timeEl = timeVisualOf(byId('pomodoro-time')); // 动效打在可见层：翻牌机开时是 reel
   const mask = byId('pomodoro-mask');
   stopBreath(); stopGlow();
   setRestDepth(mask, key.startsWith('break'));
@@ -274,6 +274,22 @@ function timeBoxOf(el: HTMLElement | null): HTMLElement | null {
 }
 
 /**
+ * 时间「视觉层」：翻牌机开着时可见的是 .pomodoro-time-reel，#pomodoro-time 只是 opacity:0
+ * 让位（读屏与旧断言的锚点）。动效必须打在**当前可见的那一层**上——打在隐藏层上会被
+ * WAAPI 的效果值顶掉它的 opacity:0（动画在级联里高于普通声明），表现为两层数字同时显形、
+ * 错位重叠（2026-09-24 用户报「两个计时重叠」）。
+ */
+function timeVisualOf(el: HTMLElement | null): HTMLElement | null {
+  if (!el) return el;
+  const box = el.closest('.pomodoro-time-box') as HTMLElement | null;
+  if (box && box.classList.contains('reel-on')) {
+    const reel = box.querySelector<HTMLElement>('.pomodoro-time-reel');
+    if (reel) return reel;
+  }
+  return el;
+}
+
+/**
  * 流光渐变（defs 注入一次）：环描边换 url(#bz-pm-flow)，停靠点颜色由 motionProgressFx 每帧写，
  * 于是「流光」与「紧迫色移」共用同一条描边而互不打架。RM 下不插 SMIL（静态渐变，语义不损）。
  */
@@ -358,7 +374,7 @@ export function motionProgressFx(
   const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
 
   const ring = byId('pomodoro-ring-progress') as SVGElement | null;
-  const timeEl = byId('pomodoro-time');
+  const timeEl = timeVisualOf(byId('pomodoro-time')); // 紧迫色移染在**可见**的那一层
 
   // 基准色：首帧抓（判据 = 还没被我们自己覆过内联）
   if (ring && !baseStroke && !ring.style.stroke) {
@@ -624,7 +640,7 @@ export function motionPanelOpen(mask: HTMLElement, idleish: boolean): void {
        { opacity: 1, transform: 'none', filter: 'blur(0px)' }],
       { duration: M.base + 60, easing: E.out, delay, fill: 'backwards' }));
   };
-  reveal(byId('pomodoro-time'), 300, 7);
+  reveal(timeVisualOf(byId('pomodoro-time')), 300, 7);
   reveal(byId('pomodoro-phase'), 360);
   reveal(byId('pomodoro-task'), 410, 3);
   [...popup.querySelectorAll<HTMLElement>('.pomodoro-controls > button')].forEach((b, i) => reveal(b, 470 + i * STAG, 4));

@@ -46,14 +46,17 @@
     /* 时间字双层（2026-09-23 翻牌机）：可见文本层承载读屏与语义，滚动层绝对定位叠在上面。
        文本层用 opacity:0 让位而非 visibility/display——后两者会把时间对辅助技术一并藏掉。
        --pomodoro-reel-cell 是滚动行高单源：ui.ts 的位移算式直接引用它，不写死像素。 */
-    .pomodoro-time-box { position: relative; --pomodoro-reel-cell: 46px; transition: transform .3s ease; }
+    .pomodoro-time-box { position: relative; --pomodoro-reel-cell: 58px; transition: transform .3s ease; }
     .pomodoro-time-box.reel-on #pomodoro-time { opacity: 0; }
-    .pomodoro-time-reel { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; }
+    /* 翻牌层 = 唯一可见层：字号/字重/等宽数字与文本层同口径，再放大一档（用户：默认数字太小）。
+       注意它不吃 #pomodoro-time 的 42px——那是兄弟不是父子，必须自己声明。 */
+    .pomodoro-time-reel { display: none; position: absolute; inset: 0; align-items: center; justify-content: center;
+      font-size: 52px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--pz-fg, var(--text-normal)); }
     .pomodoro-time-box.reel-on .pomodoro-time-reel { display: flex; }
-    .pomodoro-rcol { display: inline-block; width: 25px; height: var(--pomodoro-reel-cell); overflow: hidden; vertical-align: top; }
+    .pomodoro-rcol { display: inline-block; width: 34px; height: var(--pomodoro-reel-cell); overflow: hidden; vertical-align: top; }
     .pomodoro-rinn { display: block; transition: transform .38s cubic-bezier(.34,.06,.16,1); }
     .pomodoro-rinn > span { display: block; height: var(--pomodoro-reel-cell); line-height: var(--pomodoro-reel-cell); text-align: center; }
-    .pomodoro-rdot { display: inline-block; width: 14px; height: var(--pomodoro-reel-cell); line-height: var(--pomodoro-reel-cell); vertical-align: top; }
+    .pomodoro-rdot { display: inline-block; width: 18px; height: var(--pomodoro-reel-cell); line-height: var(--pomodoro-reel-cell); vertical-align: top; }
     .pomodoro-controls { display: flex; gap: var(--bz-space-sm); justify-content: center; margin-top: var(--bz-space-lg); }
     .pomodoro-btn { padding: 6px 14px; border-radius: var(--bz-radius-sm); background: var(--pz-btn, var(--background-secondary)); color: var(--pz-btn-fg, var(--text-normal)); cursor: pointer; font-size: var(--bz-font-body); }@media (hover: hover) {
 
