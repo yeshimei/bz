@@ -53,6 +53,12 @@ import {
   deskFoldRowHtml, foldBodyHtml, ICO, clipReportEntryHtml,
 } from './render';
 import { M, resetClipbookState } from './state';
+import {
+  motionPanelIn, motionPanelOut, motionHeadRevealed, motionRailRendered, motionListRendered,
+  motionReaderRendered, motionMobTocRendered, motionMobFoldOpen, motionMobDetailIn,
+  motionMobSearchbarIn, motionSelbarIn, motionArchStamp, motionInkStrike, motionSnipGhost,
+  motionLoadingPulse, motionTeardown, type MotionMood,
+} from './motion';
 import { readNewsAndSidecar } from './loader';
 import { readNewsData } from './news-data';
 import { writeClipNote } from './save';
@@ -63,7 +69,7 @@ import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowUndoMarkAllRead,
 } from './flow';
-import { openClipbookReport } from './report-ui';
+import { openReadingPress } from './press';
 import type { ClipNote } from './scan';
 
 // ================= 模块级 UI 引用 =================
@@ -92,6 +98,15 @@ let loadError: { kind: 'corrupt' | 'exception'; reason: string } | null = null;
 const readScrollMemo = new Map<string, number>();
 const READ_SCROLL_MEMO_MAX = 200; // 上限防涨（FIFO 淘汰最旧即可，不必 LRU）
 
+// ================= 动效层接线状态（语义词汇表见 motion.ts 文件头） =================
+let pendingBoot = false;              // showPanel 置位 → 下一次 renderAll 播「开印」编排（消费一次）
+let renderMood: MotionMood = 'mute';  // 当前渲染心境：boot 开印 / nav 换源 / search 检索 / mute 静默
+let panelShownOnce = false;           // 面板开过没有（重开走快速唤回入场）
+let lastReaderId = '';                // 右栏当前篇 id（换篇才翻面；同篇刷新 / 后台刷新静默）
+let lastListCurId = '';               // 目录当前篇 id（换选才按压）
+let readerDir: 'fwd' | 'back' = 'fwd';// jk / ←→ 步进方向（翻面绕上缘还是下缘）
+let pendingFoldKind: 'read' | 'saved' | null = null; // 刚切换的桌面折叠段（展开揭出一次）
+
 // ================= 增强包常量与状态 =================
 const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/备忘录
 const PANEL_MIN_W = 760; // 桌面缩放钳制（三栏骨架最小可读宽度）
@@ -103,8 +118,10 @@ const clipBodyCache = new Map<string, string>();
 /** 桌面搜索防抖（issue 365 收编 core debounce：尾触语义与原手写定时器等价，面板关闭 cancel） */
 const searchDebounced = debounce(() => {
   setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : '');
+  renderMood = 'search'; // 动效：检索重排只做列表微沉降，不重播编排
   renderList();
   renderRail();
+  renderMood = 'mute';
 }, SEARCH_DEBOUNCE_MS);
 let panelResizeDetach: { detach: () => void; flush: () => void } | null = null;
 let panelSplit: { el: HTMLElement; restore: () => void; flush: () => void; detach: () => void } | null = null;
@@ -135,12 +152,21 @@ export function showPanel(): void {
   panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
   beginSession();
+  // 动效层：新会话开印——本次 renderAll 播完整入场编排；换篇/换选判定基线复位
+  pendingBoot = true;
+  lastReaderId = '';
+  lastListCurId = '';
+  motionPanelIn(overlayEl!, !panelShownOnce);
+  panelShownOnce = true;
   // C5/ADR-0063：已装载且无目录事件（!dirty）直接用内存缓存渲染——零扫描瞬时显示；
   // 首开未装载或有变更才异步重读
   if (dirty || !loaded) {
     // 效率#17：首开装载骨架——中栏 dim 占位一行，装载完成 renderAll 自然覆盖；
     // 三栏全空与错误态同貌，先给一句「正在装载」对冲误导（dirty 重载不占位：旧面仍可读）
-    if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+    if (!loaded && listEl) {
+      listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+      motionLoadingPulse(listEl.firstElementChild as HTMLElement | null); // 功能性呼吸指示（不入台账）
+    }
     void loadIfNeeded();
   }
   else renderAll();
@@ -230,7 +256,8 @@ export function closePanel(): void {
   M.mobDetailOpen = false;
   // C7：移动详情 overlay 的 DOM 显示态同步复位——原实现只清布尔，重开面板会直接落在上次的详情屏
   if (mobDetailEl) mobDetailEl.style.display = 'none';
-  if (overlayEl) overlayEl.style.display = 'none';
+  // 动效层：先演退场再收 display（done 判 M.open 防退场期间被重开抢收）
+  if (overlayEl) motionPanelOut(overlayEl, () => { if (!M.open && overlayEl) overlayEl.style.display = 'none'; });
 }
 
 /** 卸载（main.ts onunload） */
@@ -267,6 +294,13 @@ export function unloadPanel(): void {
   }
   clipBodyCache.clear();
   clipBodyInflight.clear(); // 在途读盘位一并清（卸载后迟到读盘只写缓存，不拦重开后的新 kick）
+  motionTeardown(); // 动效层清场：取消待演延时与在演面板壳动画（unload 后不得再碰 DOM）
+  pendingBoot = false;
+  renderMood = 'mute';
+  panelShownOnce = false;
+  lastReaderId = '';
+  lastListCurId = '';
+  pendingFoldKind = null;
   setSearchKw(''); // 卸载清搜索词（模块级变量，泄漏会污染下一次装载的列表/rail 计数）
   M.open = false;
   M.mobDetailOpen = false;
@@ -327,21 +361,21 @@ function buildDom(app: any): void {
   overlayEl.addEventListener('click', (e) => {
     if (e.target === overlayEl) closePanel();
   });
-  // rail 脚注·阅读报告入口（issue 358）：「我读了什么」弹层（剪藏本自有报告，非书库深链）
+  // rail 脚注·阅读报告入口（issue 358；2026-09-23 重做）：「我读了什么」→ 读报特刊（press/）
   railFootEl!.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) openClipbookReport(app);
+    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) void openReadingPress(app);
   });
   // 审查修复批 P3⑦：入口 role=button tabindex=0 补 Enter/Space（假可达修复，与弹层关闭钮同款）
   railFootEl!.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) {
       e.preventDefault();
-      openClipbookReport(app);
+      void openReadingPress(app);
     }
   });
-  // 移动头行「报告」文字钮（issue 358）：同一弹层
+  // 移动头行「报告」文字钮（issue 358）：同一入口
   const mobReportBtn = overlayEl.querySelector('[data-clip-mob-report]');
-  mobReportBtn!.addEventListener('click', () => openClipbookReport(app));
+  mobReportBtn!.addEventListener('click', () => void openReadingPress(app));
   // 桌面 rail 源切换（再点已选源回「全部未读」，issue 208）
   railListEl!.addEventListener('click', (e) => {
     const row = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
@@ -398,12 +432,14 @@ function buildDom(app: any): void {
   mobSearchBtn!.addEventListener('click', () => {
     const show = mobSearchbarEl!.style.display === 'none';
     mobSearchbarEl!.style.display = show ? 'block' : 'none';
-    if (show) mobInput!.focus();
+    if (show) { motionMobSearchbarIn(mobSearchbarEl!); mobInput!.focus(); }
     else { mobInput!.value = ''; setSearchKw(''); renderMobToc(); }
   });
   mobInput!.addEventListener('input', () => {
     searchKw = mobInput!.value.trim();
+    renderMood = 'search'; // 动效：移动检索静默（命中平铺即时可读，不做逐键编排）
     renderMobToc(); // 搜索态：命中全平铺（含已收），折叠不生效
+    renderMood = 'mute';
   });
   // 「关闭」（原型语义）：清搜索并收全部；无任何待复位态 = 退出面板（移动面板无其它关闭入口）
   mobCloseBtn!.addEventListener('click', () => {
@@ -523,6 +559,7 @@ function selectSource(src: any): void {
   if (mobSearchbarEl) mobSearchbarEl.style.display = 'none';
   const mobInput = overlayEl ? (overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement | null) : null;
   if (mobInput) mobInput.value = '';
+  renderMood = 'nav'; // 动效：换源 = 轻排字 + 选中行按压（不重播开印）
   renderAll();
 }
 
@@ -552,8 +589,10 @@ function clearDeskSearch(): void {
   if (deskSearchEl) deskSearchEl.value = '';
   setSearchKw('');
   syncDeskSearchClear();
+  renderMood = 'search';
   renderList();
   renderRail();
+  renderMood = 'mute';
   deskSearchEl?.focus();
 }
 /** 已展开「已收」的章（site）集合（issue 248：详情往返不丢折叠态；面板重开复位） */
@@ -564,7 +603,17 @@ let mobItemById = new Map<string, ClipArticle>();
 let mobItemOrder: ClipArticle[] = [];
 
 // ================= 装载后全量渲染 =================
+/** 渲染心境收口：showPanel 置位的开印在这里消费一次；其余触发源直设 renderMood。
+ *  编排挂点在各子渲染 wrapper 内读 renderMood；走完归 mute（后续局部重渲不重播）。 */
 function renderAll(): void {
+  if (!M.open) return;
+  if (pendingBoot) { renderMood = 'boot'; pendingBoot = false; }
+  if (renderMood === 'boot' && overlayEl) motionHeadRevealed(overlayEl);
+  renderAllNow();
+  renderMood = 'mute';
+}
+
+function renderAllNow(): void {
   if (!M.open) return;
   renderHeadIssue();
   renderRail();
@@ -592,12 +641,13 @@ function closeMobDetail(): void {
   renderAll();
 }
 
-/** 头行期号（issue 214）：「YYYY 年 M 月 D 日 · 第 N 期」，N = news 总条数（含已处理），随刷新更新 */
+/** 期号戳章（2026-09-23 头行五版拍板 D+C；移动刊名同日并入戳章）：桌面抬头单 + 移动头行双端同填
+ *  「第 N 期」，N = news 总条数（含已处理），随刷新更新 */
 function renderHeadIssue(): void {
-  const el = overlayEl ? (overlayEl.querySelector('[data-clip-issue]') as HTMLElement | null) : null;
-  if (!el) return;
-  const d = new Date();
-  el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
+  if (!overlayEl) return;
+  overlayEl.querySelectorAll<HTMLElement>('[data-clip-issue]').forEach((el) => {
+    el.textContent = `第 ${M.articles.length} 期`;
+  });
 }
 
 // ================= 视图派生 =================
@@ -681,11 +731,12 @@ function deskFoldIsOpen(kind: 'read' | 'saved', n: number, savedN: number, snapU
   return savedN <= 0;                                      // 已收空 → 展已读兜底
 }
 
-/** 点击桌面折叠行（toggle 后翻转手动态并重渲目录） */
+/** 点击桌面折叠行（toggle 后翻转手动态并重渲目录；动效 = 对应段体裁切揭出一次） */
 function toggleDeskFold(kind: 'read' | 'saved'): void {
   const key = srcKey(currentSrc()) + '#' + kind;
   deskFoldTouched.add(key);
   if (deskFoldOpen.has(key)) deskFoldOpen.delete(key); else deskFoldOpen.add(key);
+  pendingFoldKind = kind;
   renderList();
 }
 
@@ -719,7 +770,13 @@ function matchesSearch(a: ClipArticle): boolean {
 
 
 // ================= 渲染：左 rail =================
+/** 动效挂点：boot = 点线索引排字 / nav = 选中行按压（见 motionRailRendered）。 */
 function renderRail(): void {
+  renderRailNow();
+  if (railListEl) motionRailRendered(railListEl, renderMood);
+}
+
+function renderRailNow(): void {
   if (!railListEl) return;
   const arts = M.articles;
   const clipNotes = M.clipNotes || [];
@@ -865,6 +922,10 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
     await refreshAfterAction();
   })());
   await refreshAfterAction();
+  // 动效：批量勾销——原位灰显的这批标题接力划墨线（写盘事件重渲到来前至少首数条演完）
+  items.slice(0, 12).forEach((a, i) => {
+    motionInkStrike(clipTitleEl(clipCardEl(a.id)), i * 70);
+  });
 }
 
 // ================= 渲染：中栏列表 =================
@@ -876,7 +937,20 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
  *  - 折叠默认收起；目录无未读时默认展开「已收」（已收空则展开「已读」）——桌面兜底不空场。
  *  - 搜索态：命中平铺（无折叠行），与移动端检索语义一致。
  */
+/** 动效挂点：boot/nav 排字与落号、search 检索沉降、折叠段揭出、换选按压（见 motionListRendered）。 */
 function renderList(): void {
+  renderListNow();
+  if (!listEl) return;
+  const foldKind = pendingFoldKind;
+  pendingFoldKind = null;
+  const curId = M.cur ? M.cur.id : '';
+  // 换选按压：boot 不按（入场编排已覆盖），会话内点卡片 / jk 才按一下
+  const pressed = !!curId && curId !== lastListCurId && renderMood !== 'boot';
+  lastListCurId = curId;
+  motionListRendered(listEl, renderMood, foldKind, pressed);
+}
+
+function renderListNow(): void {
   if (!listEl) return;
   // 效率#16：装载错误态分流——错误空态（图标 + 原因 + 重试钮）替代引导空态，
   // 防 corrupt/读盘异常呈现「暂无内容」假空态误导用户以为数据全丢
@@ -973,6 +1047,24 @@ function relTime(ts: number): string {
   } catch (e) {
     return '';
   }
+}
+
+/** 按条目 id 找目录卡片（动效三件套锚点；桌面目录 / 移动章目录都查） */
+function clipCardEl(id: string): HTMLElement | null {
+  if (!id) return null;
+  const safe = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+    ? CSS.escape(id)
+    : id.replace(/"/g, '\\"');
+  const sel = `[data-id="${safe}"]`;
+  return (listEl && listEl.querySelector(sel) as HTMLElement | null)
+    || (mobListEl && mobListEl.querySelector(sel) as HTMLElement | null)
+    || null;
+}
+
+/** 条目标题元素（勾销墨线锚点；桌面 / 移动行各归各） */
+function clipTitleEl(card: HTMLElement | null): HTMLElement | null {
+  if (!card) return null;
+  return card.querySelector<HTMLElement>('.bz-clip-item-t') || card.querySelector<HTMLElement>('.bz-clip-mob-ttl');
 }
 
 /** 给中栏卡片挂右键/长按菜单（item-actions：桌面 contextmenu / 触屏长按抽屉）。
@@ -1102,7 +1194,17 @@ export function __bindImgFallbackForTests(container: HTMLElement): void {
   bindImgFallback(container);
 }
 
+/** 动效挂点：换篇才翻面（first 上版 / fwd·back 翻面）；同篇刷新与后台刷新静默。 */
 function renderReader(): void {
+  const prevId = lastReaderId;
+  renderReaderNow();
+  const curId = M.cur ? M.cur.id : '';
+  lastReaderId = curId;
+  if (!readerEl || !curId || prevId === curId) return;
+  motionReaderRendered(readerEl, prevId === '' ? 'first' : readerDir, renderMood);
+}
+
+function renderReaderNow(): void {
   if (!readerEl) return;
   const a = M.cur;
   hideSelBar(); // 切篇/重渲收工具框（旧选区 rect 已失效）
@@ -1255,7 +1357,10 @@ function stepArticle(delta: number): void {
   const idx = M.cur ? list.findIndex((x) => x.id === M.cur!.id) : -1;
   const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
   const next = list[nextIdx];
-  if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
+  if (next && (!M.cur || next.id !== M.cur.id)) {
+    readerDir = delta >= 0 ? 'fwd' : 'back'; // 动效：翻面方向跟步进方向
+    selectArticle(next.id);
+  }
 }
 
 // ================= 动作 =================
@@ -1302,6 +1407,13 @@ async function doSave(a: ClipArticle | null): Promise<void> {
   const ok = await flowSave(a);
   if (!ok) return;
   await refreshAfterAction();
+  // 动效：钤收——盖在**阅读面标题**上（换篇才重建，不被写盘事件的重渲截断；语义也更对：
+  // 正在读的这篇被盖上「收」章）。移动详情开着则盖详情正文体（保存钮就在那片）。
+  if (M.mobDetailOpen && mobDetailEl) {
+    motionArchStamp(mobDetailEl.querySelector('[data-clip-mob-detail-body]'));
+  } else {
+    motionArchStamp(readerEl ? readerEl.querySelector('.bz-clip-art-title') : null);
+  }
 }
 
 async function doMarkRead(a: ClipArticle | null): Promise<void> {
@@ -1327,6 +1439,9 @@ async function doMarkRead(a: ClipArticle | null): Promise<void> {
   }
   notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
   await refreshAfterAction();
+  // 动效：勾销——刷新后即划（写盘事件的重渲约 300ms 后到来，划线 200ms 已完成；
+  // 灰显类是终态语义，重渲换卡即收场）
+  motionInkStrike(clipTitleEl(clipCardEl(a.id)));
 }
 
 /** 动作前 raw 快照（C32）：以磁盘现态为准（读不到盘/条目不在则回退内存 raw，不阻断动作） */
@@ -1366,6 +1481,7 @@ async function deleteNewsItem(a: ClipArticle): Promise<void> {
   }
   void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });
   notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
+  motionSnipGhost(clipCardEl(a.id)); // 动效：剪走——刷新前把卡片剪下带走（克隆纸片向左消散）
   await refreshAfterAction();
 }
 
@@ -1401,6 +1517,7 @@ export async function deleteClipNote(a: ClipArticle): Promise<void> {
       clipBodyCache.delete(path);
       void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });
       notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
+      motionSnipGhost(clipCardEl(a.id)); // 动效：剪走（剪藏条目同样从目录被剪下）
       await refreshAfterAction();
     } catch (e) {
       // 一致#15：错误人话化——动作名 + 原因 + 重试途径，替换无归因的「请检查文件权限」
@@ -1511,7 +1628,13 @@ function rememberSplitWidth(w: number): void {
 }
 
 // ================= 渲染：移动（m3 目录索引：site 章 + 已读/已收双折叠，ADR-0108） =================
+/** 动效挂点：boot = 章块接力浮出（见 motionMobTocRendered）；search/mute 静默。 */
 function renderMobToc(): void {
+  renderMobTocNow();
+  if (mobListEl) motionMobTocRendered(mobListEl, renderMood);
+}
+
+function renderMobTocNow(): void {
   if (!mobListEl) return;
   const arts = M.articles;
   const clipNotes = M.clipNotes || [];
@@ -1618,6 +1741,7 @@ function toggleMobArch(foldEl: HTMLElement): void {
     const label = kind === 'read' ? '已读' : '已收';
     lab.innerHTML = opening ? '收起' : `${label} <b>${n}</b> 篇`;
   }
+  if (opening && arch) motionMobFoldOpen(arch); // 动效：展开段体裁切揭出（收起瞬时，与今日一致）
   if (site) {
     if (opening) expandedMobArch.add(key); else expandedMobArch.delete(key);
   }
@@ -1635,7 +1759,10 @@ function openMobDetail(id: string): void {
   // setReadingSession 换 key 时自动封存旧篇；返回目录由 closeMobDetail 封存。
   setReadingSession(a.id, { title: a.title, src: a.srcName });
   renderMobDetail();
-  if (mobDetailEl) mobDetailEl.style.display = 'flex';
+  if (mobDetailEl) {
+    mobDetailEl.style.display = 'flex';
+    motionMobDetailIn(mobDetailEl); // 动效：详情翻入（右→左落页 + 内容接力）
+  }
   const body = mobDetailEl ? (mobDetailEl.querySelector('[data-clip-mob-detail-body]') as HTMLElement | null) : null;
   if (body) body.scrollTop = 0; // issue 206：进详情从开头读
   markReadOnOpen(a); // 打开即已读（不打断当前详情正文；返回目录时该条已让位沉入已收折叠段）
@@ -1820,6 +1947,7 @@ function showTextSelBar(info: { text: string; rect: { top: number; left: number;
   // （CSS 注释里写的 allocZ 此前从未接线，2026-09-19 用户报「被主弹窗遮挡」补齐）
   placeSelBar(info.rect);
   armSelBarEsc();
+  motionSelbarIn(bar); // 动效：工具框浮现（只动 opacity/transform，定位内联不动）
 }
 
 function showImageSelBar(imgEl: HTMLImageElement): void {
@@ -1840,6 +1968,7 @@ function showImageSelBar(imgEl: HTMLImageElement): void {
   const r = typeof imgEl.getBoundingClientRect === 'function' ? imgEl.getBoundingClientRect() : null;
   placeSelBar(r || ({ top: 0, left: 0, bottom: 0, right: 0 } as any));
   armSelBarEsc();
+  motionSelbarIn(bar); // 动效：图片工具框浮现（同文字框）
 }
 
 /** 选区检查（mouseup 即时 + selectionchange 防抖共用）：塌陷/离开正文 → 收框 */

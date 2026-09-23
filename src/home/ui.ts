@@ -39,6 +39,7 @@ import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
+import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered } from './motion';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
@@ -128,6 +129,12 @@ export function createOverlay(app: any): void {
   mountIcons(overlay); // 头行关闭钮等静态占位（renderAll 只挂数据区图标）
   bindEvents(overlay, app);
   renderAll();
+  motionPanelIn(overlay, false); // 动效层：面板壳入场（渲染编排由 renderAll 内的 motionRendered 管）
+  // 评审便利：#replay 重播首屏编排（motion.ts 的 hashchange 钩子消费；插件内无害）
+  (window as unknown as Record<string, unknown>).__bzHomeReplay = () => {
+    motionPanelIn(overlay, false);
+    motionRendered(overlay, true);
+  };
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlay);
   void refreshRiverAndRender();
@@ -199,9 +206,13 @@ async function refreshRiverAndRender(): Promise<void> {
  */
 export function closeOverlay(): void {
   if (!H.currentOverlay || !H.overlayVisible) return;
-  saveScroll(H.currentOverlay);
-  H.currentOverlay.style.display = 'none';
+  const overlay = H.currentOverlay;
+  saveScroll(overlay);
   H.overlayVisible = false;
+  // 动效层：先演退场再收 display（重开竞态由 motionPanelOut 的 done 判 H.overlayVisible 兜住）
+  motionPanelOut(overlay, () => {
+    if (!H.overlayVisible && H.currentOverlay === overlay) overlay.style.display = 'none';
+  });
 }
 
 /** 重开复用（issue 290）：恢复显示 + 重新发号（谁后显示谁在上）+ 立即动态刷新数据；滚位写回 */
@@ -212,6 +223,7 @@ export function showOverlay(): void {
   topifyZ(overlay);
   H.overlayVisible = true;
   restoreScroll(overlay);
+  motionPanelIn(overlay, true);
   void refreshRiverAndRender();
 }
 
@@ -258,8 +270,11 @@ function bindEvents(overlay: HTMLElement, app: any): void {
         });
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
         if (flow) {
-          flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
-          mountIcons(flow);
+          // 切天编排（动效层）：旧河 blur 退场 → 重写（markup 单源不动）→ 新河接力揭出
+          motionDaySwitch(flow, () => {
+            flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
+            mountIcons(flow);
+          });
         }
       }
     }
@@ -483,10 +498,13 @@ function renderAll(): void {
   H.riverView = view;
   const today = river.today.dateStr;
   const week = overlay.querySelector('[data-home-week]') as HTMLElement;
-  // 周历只画范围窗口内的格子（today 档就一格「今」——范围设置本身在管「能翻到多远」）
-  if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view ?? today);
   const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
   const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
+  // 动效层 boot 判定：重写前 flow 还处于「骨架 / 汇入中 / 失败位」= 数据首次到达 → 走首屏编排；
+  // 已有渲染的 keepHome 刷新走静默（整屏不闪，对齐 cinema issue 402 的 identity 口径）
+  const flowBoot = !!flow.querySelector('.bz-home-sk-line, .bz-home-flow-empty');
+  // 周历只画范围窗口内的格子（today 档就一格「今」——范围设置本身在管「能翻到多远」）
+  if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view ?? today);
   const next = overlay.querySelector('[data-home-next]') as HTMLElement;
   entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
   flow.innerHTML = flowHtml(river, view ?? today, cfg.flow);
@@ -505,6 +523,7 @@ function renderAll(): void {
   mountIcons(tiles);
   mountRowInteractions(overlay, H.appRef, river);
   restoreScroll(overlay);
+  motionRendered(overlay, flowBoot); // 动效层：首屏编排 / 刷新静默补挂河道
   // 焦点回置（ui P3-4）：等价新元素在场且面板显示中才回焦，找不到不抢
   if (fk && fk.value && H.overlayVisible) {
     const target = overlay.querySelector(`[${fk.attr}="${fk.value}"]`) as HTMLElement | null;

@@ -40,22 +40,37 @@
   --h-ai-line: #453e66;
 }
 
-/* ---- 头行（V5 周历头拍板）：本周动静历（可点切天）+ 日期；关闭钮仅移动端显示。
-      标题 2026-09-09 用户拍板退役（桌面/移动都去掉） ---- */
+/* ---- 头行（V7 台历卡头，2026-09-23 用户拍板）：本周动静历改「台历卡」样式——
+      每天 = 一张迷你台历卡（星期色带 + 星期字 + 大数字），动静绿点、今日红带红字、
+      选中整卡抬升描边。只换样式不带翻页动效（用户明确：不要那个动效）。
+      类名契约保留：--hit/--sel/--today、data-home-weekday、bz-home-wk-n（tests 锚点）。
+      关闭钮仅移动端显示；标题 2026-09-09 用户拍板退役（桌面/移动都去掉） ---- */
 .bz-home-head { display: flex; align-items: center; gap: var(--bz-space-lg); padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
-/* 2026-09-09 日历整体 ×1.2：格宽 24→29、条高 22→26、字 9.5→11.4、缝 5→6（用户拍板） */
 .bz-home-week { display: flex; gap: 6px; }
-.bz-home-panel .bz-home-wk { width: 29px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 11.4px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
-.bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
-.bz-home-wk i { display: block; height: 26px; border-radius: 7px; background: #efede3; }
-.theme-dark .bz-home-wk i { background: #33312a; }@media (hover: hover) {
-
-.bz-home-panel .bz-home-wk:hover i { background: #e6e3d5; }
-.theme-dark .bz-home-wk:hover i { background: #3d3b32; }
+.bz-home-panel .bz-home-wk {
+  width: 28px; border: 1px solid var(--h-line); border-radius: 5px; background: var(--h-card);
+  padding: 0; text-align: center; font-family: var(--h-mono); color: var(--h-dim);
+  display: flex; flex-direction: column; cursor: pointer; position: relative; overflow: hidden;
+  transition: transform var(--bz-dur-fast, .16s) ease, box-shadow var(--bz-dur-fast, .16s) ease, border-color var(--bz-dur-fast, .16s) ease;
 }
-.bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
-.bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
-.bz-home-panel .bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
+.bz-home-wk .bz-home-wk-band { display: block; height: 5px; background: var(--h-bar); flex: none; }
+.theme-dark .bz-home-wk .bz-home-wk-band { background: #33312a; }
+.bz-home-wk .bz-home-wk-wd { display: block; font-size: 7.5px; line-height: 1.8; letter-spacing: .04em; }
+.bz-home-wk .bz-home-wk-n { display: block; font-size: 12px; line-height: 1.35; font-weight: 600; letter-spacing: 0; padding-bottom: 1.5px; }
+@media (hover: hover) {
+.bz-home-panel .bz-home-wk:hover { transform: translateY(-2px); }
+}
+/* 动静绿点：色带右缘一颗小绿点 */
+.bz-home-wk--hit::after { content: ""; position: absolute; top: 1.5px; right: 2.5px; width: 3px; height: 3px; border-radius: 50%; background: var(--h-ok); }
+/* 今日：红带红字（今天不再依赖 --sel 表达，选中切走也保持） */
+.bz-home-wk--today .bz-home-wk-band { background: color-mix(in srgb, var(--h-red) 82%, #fff); }
+.theme-dark .bz-home-wk--today .bz-home-wk-band { background: color-mix(in srgb, var(--h-red) 70%, #000); }
+.bz-home-wk--today .bz-home-wk-n { color: var(--h-red); }
+/* 选中：整卡抬升 + 墨色描边 */
+.bz-home-wk--sel { transform: translateY(-4px); border-color: var(--h-ink); box-shadow: 0 6px 14px rgba(23, 21, 15, .14); }
+.theme-dark .bz-home-wk--sel { box-shadow: 0 6px 14px rgba(0, 0, 0, .4); }
+.bz-home-panel .bz-home-wk.bz-home-wk--sel .bz-home-wk-n { color: var(--h-ink); }
+.theme-dark .bz-home-panel .bz-home-wk.bz-home-wk--sel .bz-home-wk-n { color: var(--h-ink); }
 .bz-home-date { margin-left: auto; font-size: var(--bz-font-meta); color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
 .bz-home-panel .bz-home-close { display: none; }
 
@@ -198,7 +213,11 @@
      触控热区（ui P2-2）：格宽 29→34（步距 34+6gap=40px 达 §8.2 下限）——不挂 bz-touch-target
      外扩类：7 格 × 外扩会互叠串格（core 注释口径），抬格宽是行距紧凑场景的正解；
      头行宽度余量核算：7×34+6×6=274 + 头行 gap + 关闭钮 36 ≈ 322px ≤ 360 屏可用宽。 */
-  .bz-home-panel .bz-home-wk { width: 34px; font-size: 17.1px; }
+  .bz-home-panel .bz-home-wk { width: 32px; border-radius: 6px; }
+  .bz-home-panel .bz-home-wk .bz-home-wk-band { height: 6px; }
+  .bz-home-panel .bz-home-wk .bz-home-wk-wd { font-size: 11px; line-height: 2; }
+  .bz-home-panel .bz-home-wk .bz-home-wk-n { font-size: 17px; line-height: 1.4; padding-bottom: 3px; }
+  .bz-home-week { gap: 4px; }
   .bz-home-sec-t { font-size: 16.5px; }
   .bz-home-ev-tm { font-size: 18px; width: 58px; }
   .bz-home-ev-tx { font-size: 21.75px; }
@@ -334,3 +353,42 @@
 .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
 .theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }
 }
+/* ==================== 动效层（2026-09-22 快速原型批：在原 UI 上叠动画，布局零改动） ====================
+   台账对齐 cinema/motion.ts（issue 400）：fast 160 / move 200 / base 280 / impulse 740 + 接力 30ms。
+   注入件（河面 SVG / 迸光画布 / 光泽层）全部绝对定位、pointer-events:none、不参与排版；
+   .has-river 只是把原生虚线轨道的视觉同位替换成会流动的 SVG 河（几何同位，从 ::before 现算）。
+   reduced-motion：JS 侧整层直达终态，这里再兜一层「动画全停」。 */
+
+/* 河面：描线 + 虚线常流（几何 = 事件行圆点锚的贝塞尔串，见 motion.ts ensureRiver） */
+.bz-home-timeline.has-river::before { opacity: 0; }
+.bz-hm-river { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: visible; }
+.bz-hm-river.flow .bz-hm-rv-base { animation: bz-hm-march 2.6s linear infinite; }
+@keyframes bz-hm-march { to { stroke-dashoffset: -60; } }
+
+/* 迸光画布：压在事件文字之上、不吃事件 */
+.bz-home-timeline .bz-hm-fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+/* 彩点点亮：圆点带白环一起弹性放大（transform 不吃布局） */
+.bz-home-ev.bz-hm-ign::before { animation: bz-hm-ign .5s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes bz-hm-ign { 0% { transform: scale(0); } 62% { transform: scale(1.45); } 100% { transform: scale(1); } }
+
+/* 入口行 hover：彩点轻轻一跳（微反馈档） */
+@media (hover: hover) {
+  .bz-home-erow:hover .bz-home-dot { animation: bz-hm-dotping .5s cubic-bezier(.34, 1.56, .64, 1); }
+}
+@keyframes bz-hm-dotping { 0% { transform: scale(.7); } 55% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* 明天预告卡：3D 倾斜 + 跟手光泽（inject 件随卡裁切；倾斜 transform 不吃布局） */
+.bz-home-pr.bz-hm-tilt { position: relative; overflow: hidden; will-change: transform; }
+.bz-home-pr .bz-hm-glare {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  transition: opacity var(--bz-dur-fast, .16s) ease;
+  background: radial-gradient(190px 130px at var(--gx, 50%) var(--gy, 50%), rgba(122, 92, 224, .16), transparent 65%);
+}
+@media (hover: hover) {
+  .bz-home-pr:hover .bz-hm-glare { opacity: 1; }
+}
+
+/* reduced-motion 兜底（评审期停用）：系统 RM 不再拦 CSS 动画——评审要看到完整动效，
+   正式版拍板后按「放缓不减义」恢复为降速版而非全停。 */
+/* @media (prefers-reduced-motion: reduce) { ... } */
