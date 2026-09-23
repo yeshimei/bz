@@ -2,7 +2,8 @@
  * 剪藏本动效层（2026-09-22 快速原型批，对齐 issue 400 台账口径；与 cinema/memo/home 同量级）。
  *
  * 语义词汇表（剪藏本自己的话——剪报 / 纸张 / 印刷，不借其他域的特效）：
- *   开印     boot 编排：一期剪报付印——刊名落墨、期号浮出、头行下压一条版线（ink rule 画线）
+ *   开印     boot 编排：一期剪报付印——刊名电传上带（纸带进机、逐字击打、字车推进、收带铃响）、
+ *            期号浮出、头行下压一条版线（ink rule 画线）
  *   排字     rail 点线索引自左向右擦出（clip-path 裁切 = 排字机走纸）；目录序号「落号」
  *            （号码机盖下去：scale 1.7 → 1 + 微转）；目录条目接力上浮
  *   上版     首篇上文：右栏纸页落版（perspective rotateX settle）+ 标题滚印（左→右 wipe）
@@ -21,7 +22,8 @@
  *    揭示用 out 曲线，位移与冲量用 move 曲线。
  *  - reduced-motion（评审期口径）：默认无视系统「减少动态效果」放完整演出；
  *    ?rm=1 显式直达终态。无 WAAPI 宿主（jsdom / 老壳）零注入零内联——DOM 与今日全同。
- *  - markup 单源 render.ts 一字不改；本层只被 ui.ts / report-ui.ts 生命周期挂点调用。
+ *  - markup 单源 render.ts（刊名电传纸带结构随 2026-09-23「D · 电传打字机」拍板落 render，
+ *    原型 × 插件两侧同源）；本层只被 ui.ts / report-ui.ts 生命周期挂点调用。
  *  - 非首次渲染（前后台刷新 reloadIfOpen）静默：mood 由 ui.ts 按触发源给出。
  */
 
@@ -180,16 +182,77 @@ export function motionPanelOut(overlay: HTMLElement, done: () => void): void {
   after(M.move + 200, finish); // 兜底：动画事件丢失也不能卡住关闭
 }
 
-/* ================= 开印：头行（刊名 / 期号 / 版线） ================= */
+/* ================= 开印：头行（电传纸带刊名 / 期号 / 版线） ================= */
 
-/** 头行开印（boot 专属）：刊名落墨、期号浮出、下缘 2px 版线自左向右压印后隐去（原生 border 恒在）。 */
+/** 头行开印（boot 专属）：纸带进机（自左滑入）、逐字击打上带（字砸落 + 带体推进 + 字车随击右移）、
+ *  收带铃响（灯点亮闪两记回灰 + 带轻颤）；期号浮出；下缘版线自左向右压印后隐去（原生 border 恒在）。
+ *  结构/拍点/色值 1:1 对齐 .scratch/clip-title/d.html（「D · 电传打字机」，2026-09-23 拍板）：
+ *  进带 360ms + 70ms 起手拍，每字 390ms（砸落 130ms），末字后 260ms 响铃，灯亮 500ms 收。
+ *  字车 DOM 位移复刻 d.html 的 insertBefore(span, cur)——字先落位、字车同刻推到字后。
+ *  静默渲染（mute/刷新）不演：markup 即终态（字全上带、字车停带尾）。 */
 export function motionHeadRevealed(overlay: HTMLElement): void {
   const head = overlay.querySelector<HTMLElement>('.bz-clip-desk .bz-panel-head');
   if (!head || head.offsetParent === null) return; // 移动视口桌面头行不可见，不演
-  const title = head.querySelector<HTMLElement>('.bz-panel-title');
-  const issue = head.querySelector<HTMLElement>('[data-clip-issue]');
-  sweep(title, { opacity: 0, transform: 'translateY(7px)', filter: 'blur(5px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }, { delay: 60, dur: M.base + 40 });
-  sweep(issue, { opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }, { delay: 150, dur: M.base });
+  const wire = head.querySelector<HTMLElement>('[data-clip-title-wire]');
+  const strip = head.querySelector<HTMLElement>('.bz-clip-head-strip');
+  const tape = wire?.querySelector<HTMLElement>('.bz-clip-title-tape') ?? null;
+  const cur = wire?.querySelector<HTMLElement>('.bz-clip-tape-cur') ?? null;
+  const lamp = wire?.querySelector<HTMLElement>('.bz-clip-tape-lamp') ?? null;
+  const chars = tape ? [...tape.querySelectorAll<HTMLElement>('.bz-clip-tape-ch')] : [];
+
+  if (wire && tape && cur && chars.length && canAnimate()) {
+    // 1 纸带进机：wire 自左 70px 滑入（d.html 同款时长/曲线）
+    try {
+      wire.animate(
+        [{ opacity: 0, transform: 'translateX(-70px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 360, easing: E.out, fill: 'backwards' });
+    } catch { /* 进带失败：带保持原位 */ }
+    // 字车先回带首（markup 终态停带尾；下面逐字击打把它送回去）
+    tape.insertBefore(cur, chars[0]);
+    // 2 逐字击打：字砸上带（fill:backwards 隐于各自 delay，等价 d.html 的逐刻插入）、
+    //   带体随击推进一颤、字车同刻推进到该字之后
+    chars.forEach((c, i) => {
+      const t = 430 + i * 390;
+      try {
+        c.animate(
+          [{ opacity: 0, transform: 'translateY(-6px) scale(1.25) rotate(-5deg)', color: '#7d2f26' },
+           { opacity: 1, transform: 'none', color: '#32302c' }],
+          { duration: 130, delay: t, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
+      } catch { /* 字保持终态 */ }
+      try {
+        tape.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(0)' }],
+          { duration: 110, delay: t, easing: 'ease-out', fill: 'backwards' });
+      } catch { /* 带颤失败无碍 */ }
+      after(t, () => {
+        if (!cur.isConnected || cur.parentNode !== tape) return;
+        const next = chars[i + 1];
+        if (next) tape.insertBefore(cur, next);
+        else tape.appendChild(cur);
+      });
+    });
+    // 3 收带铃响：末字后 260ms，灯点亮闪两记 + 带轻颤，500ms 后灯回灰米
+    after(430 + chars.length * 390 + 260, () => {
+      lamp?.classList.add('on');
+      try {
+        lamp?.animate(
+          [{ filter: 'brightness(1)' }, { filter: 'brightness(1.7)' }, { filter: 'brightness(1)' },
+           { filter: 'brightness(1.7)' }, { filter: 'brightness(1)' }],
+          { duration: 420 });
+      } catch { /* 灯演失败保持点亮 */ }
+      try {
+        tape.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(2px)' },
+           { transform: 'translateX(0)' }],
+          { duration: 220 });
+      } catch { /* 带颤失败无碍 */ }
+      after(500, () => lamp?.classList.remove('on'));
+    });
+  } else {
+    // 无纸带 markup（异常兜底）/ 无动画宿主：退回轻浮出；jsdom 下 sweep 自身零注入
+    sweep(wire, { opacity: 0, transform: 'translateY(7px)', filter: 'blur(5px)' }, { opacity: 1, transform: 'none', filter: 'blur(0px)' }, { delay: 60, dur: M.base + 40 });
+  }
+  sweep(strip, { opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }, { delay: 150, dur: M.base });
 
   // 版线：注入绝对定位线（与原生 border 同几何同色），画完隐去即移除——终态回到纯 border
   if (!canAnimate() || head.querySelector(':scope > .bz-clm-ink-rule')) return;

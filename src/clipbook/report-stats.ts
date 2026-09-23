@@ -56,6 +56,8 @@ export interface ClipReportData {
   topArticles: Array<{ key: string; title: string; src: string; minutes: number }>;
   /** 有阅读的天数（本地日去重） */
   activeDays: number;
+  /** 连续阅读天数（全历史口径，非周期窗口；今天没读不打断） */
+  streakDays: number;
 }
 
 /** 来源分布 / 最长阅读榜取前 N（对齐 reading-report 作者 Top 5 口径） */
@@ -123,6 +125,7 @@ export function buildClipReport(log: ClipReadLogEntry[] | null | undefined, peri
     hours,
     topArticles,
     activeDays: days.size,
+    streakDays: streakDays(log, now),
   };
 }
 
@@ -133,4 +136,156 @@ export function formatMinutes(min: number): string {
   const r = m % 60;
   if (h <= 0) return `${r} 分钟`;
   return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
+}
+
+/* ================= 原创分析扩展（2026-09-23「我读了什么」重做） =================
+ * 自创「报社工班」口径（不借影院放映室语言）：阅读时段按报社排班分四班——
+ * 夜班（0-6 点）/ 晨班（6-12 点）/ 午班（12-18 点）/ 晚班（18-24 点）；
+ * 报库盘点 = news.json 未读流的真实家底（建库以来），与阅读周期窗口无关。 */
+
+/** 四班时段行 */
+export interface ClipShift {
+  key: 'night' | 'morning' | 'noon' | 'evening';
+  label: string;
+  span: string;
+  minutes: number;
+}
+
+const CLIP_SHIFTS: Array<{ key: ClipShift['key']; label: string; span: string; from: number; to: number }> = [
+  { key: 'night', label: '夜班', span: '0-6 点', from: 0, to: 6 },
+  { key: 'morning', label: '晨班', span: '6-12 点', from: 6, to: 12 },
+  { key: 'noon', label: '午班', span: '12-18 点', from: 12, to: 18 },
+  { key: 'evening', label: '晚班', span: '18-24 点', from: 18, to: 24 },
+];
+
+/** 24 小时桶 → 四班汇总（各班 = 该班小时桶分钟求和） */
+export function shiftBuckets(hours: number[]): ClipShift[] {
+  return CLIP_SHIFTS.map((s) => ({
+    key: s.key, label: s.label, span: s.span,
+    minutes: (hours || []).slice(s.from, s.to).reduce((sum, m) => sum + m, 0),
+  }));
+}
+
+/** 小时 → 班次名（高峰人话用） */
+export function shiftOfHour(h: number): string {
+  const s = CLIP_SHIFTS.find((x) => h >= x.from && h < x.to);
+  return s ? s.label : '晚班';
+}
+
+/** 连续阅读天数：从今天往回逐日数（今天还没读不打断——从昨天起数），断一天即停 */
+export function streakDays(log: ClipReadLogEntry[] | null | undefined, now: Date = new Date()): number {
+  const days = new Set<string>();
+  for (const e of log || []) {
+    if (e && typeof e.ts === 'number' && isFinite(e.ts) && (Number(e.minutes) || 0) > 0) days.add(dayKeyOf(e.ts));
+  }
+  if (!days.size) return 0;
+  const keyOf = (d: Date): string => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  let streak = 0;
+  const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (!days.has(keyOf(cursor))) cursor.setDate(cursor.getDate() - 1);
+  while (days.has(keyOf(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+/** 本期最投入的一天 */
+export interface ClipDayRow { date: string; minutes: number }
+
+/** 周期内按日聚合分钟，取最投入的一天（并列取较早日；无有效段 → null） */
+export function busiestDay(log: ClipReadLogEntry[] | null | undefined, period: ReportPeriod, now: Date = new Date()): ClipDayRow | null {
+  const perDay = new Map<string, number>();
+  for (const e of filterReadLogByPeriod(log, period, now)) {
+    const m = Math.max(0, Math.round(Number(e.minutes) || 0));
+    if (m <= 0) continue;
+    const k = dayKeyOf(e.ts);
+    perDay.set(k, (perDay.get(k) || 0) + m);
+  }
+  let best: ClipDayRow | null = null;
+  for (const [date, minutes] of perDay) {
+    if (!best || minutes > best.minutes || (minutes === best.minutes && date < best.date)) best = { date, minutes };
+  }
+  return best;
+}
+
+/** 收录节奏窗口（近 N 天，今日为窗尾） */
+export const LIB_PACE_DAYS = 14;
+
+/** 报库盘点（news.json 未读流家底；articles 为原始 json 条目形状） */
+export interface ClipLibraryStats {
+  /** 在流总篇数 */
+  total: number;
+  /** 已读篇数（read 标记） */
+  readCount: number;
+  /** 待读篇数 */
+  unread: number;
+  /** 已读率（0-100 整数） */
+  readRate: number;
+  /** 近 LIB_PACE_DAYS 天收录节奏（label = 'M/D'，今日收尾） */
+  byDay: Array<{ label: string; n: number }>;
+  /** 窗口内单日收录峰值 */
+  byDayPeak: number;
+  /** 在流来源 Top（篇数降序前 REPORT_TOP_N） */
+  topPlatforms: Array<{ name: string; n: number }>;
+  /** 压库最久的待读（fetchedAt 最早；全部无日期 → null） */
+  oldestUnread: { title: string; src: string; days: number } | null;
+}
+
+/** 聚合报库盘点。日期解析用 Date.parse（fetchedAt = 「YYYY-MM-DD HH:mm:ss」本地口径）；
+ *  无 fetchedAt 的条目不参与收录节奏与压库判定（缺字段不造数，yearbook 同纪律）。 */
+export function buildLibraryStats(
+  articles: Array<{ platform?: string; title?: string; read?: boolean; fetchedAt?: string; date?: string }> | null | undefined,
+  now: Date = new Date(),
+): ClipLibraryStats {
+  const list = articles || [];
+  let readCount = 0;
+  const platformMap = new Map<string, number>();
+  let oldestTs = Infinity;
+  let oldest: ClipLibraryStats['oldestUnread'] = null;
+  for (const a of list) {
+    if (a.read) readCount += 1;
+    const p = String(a.platform || '').trim() || '未知';
+    platformMap.set(p, (platformMap.get(p) || 0) + 1);
+    if (!a.read) {
+      const ts = Date.parse(String(a.fetchedAt || a.date || ''));
+      if (isFinite(ts) && ts < oldestTs) {
+        oldestTs = ts;
+        oldest = {
+          title: String(a.title || '(无标题)'),
+          src: p,
+          days: Math.max(0, Math.floor((now.getTime() - ts) / 86400000)),
+        };
+      }
+    }
+  }
+  const dayStart = (d: Date): number => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const firstTs = dayStart(now) - (LIB_PACE_DAYS - 1) * 86400000;
+  const buckets = new Array<number>(LIB_PACE_DAYS).fill(0);
+  for (const a of list) {
+    const ts = Date.parse(String(a.fetchedAt || ''));
+    if (!isFinite(ts) || ts < firstTs) continue;
+    const idx = LIB_PACE_DAYS - 1 - Math.floor((dayStart(new Date(ts)) - firstTs) / 86400000);
+    if (idx >= 0 && idx < LIB_PACE_DAYS) buckets[idx] += 1;
+  }
+  const byDay: Array<{ label: string; n: number }> = [];
+  for (let i = 0; i < LIB_PACE_DAYS; i++) {
+    const d = new Date(firstTs + i * 86400000);
+    byDay.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, n: buckets[i] });
+  }
+  const topPlatforms = [...platformMap.entries()]
+    .map(([name, n]) => ({ name, n }))
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+    .slice(0, REPORT_TOP_N);
+  const total = list.length;
+  return {
+    total,
+    readCount,
+    unread: total - readCount,
+    readRate: total ? Math.round((readCount / total) * 100) : 0,
+    byDay,
+    byDayPeak: Math.max(0, ...buckets),
+    topPlatforms,
+    oldestUnread: oldest,
+  };
 }

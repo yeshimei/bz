@@ -69,7 +69,7 @@ import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
   flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowUndoMarkAllRead,
 } from './flow';
-import { openClipbookReport } from './report-ui';
+import { openReadingPress } from './press';
 import type { ClipNote } from './scan';
 
 // ================= 模块级 UI 引用 =================
@@ -361,21 +361,21 @@ function buildDom(app: any): void {
   overlayEl.addEventListener('click', (e) => {
     if (e.target === overlayEl) closePanel();
   });
-  // rail 脚注·阅读报告入口（issue 358）：「我读了什么」弹层（剪藏本自有报告，非书库深链）
+  // rail 脚注·阅读报告入口（issue 358；2026-09-23 重做）：「我读了什么」→ 读报特刊（press/）
   railFootEl!.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) openClipbookReport(app);
+    if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) void openReadingPress(app);
   });
   // 审查修复批 P3⑦：入口 role=button tabindex=0 补 Enter/Space（假可达修复，与弹层关闭钮同款）
   railFootEl!.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     if ((e.target as HTMLElement).closest('[data-clp-rep-entry]')) {
       e.preventDefault();
-      openClipbookReport(app);
+      void openReadingPress(app);
     }
   });
-  // 移动头行「报告」文字钮（issue 358）：同一弹层
+  // 移动头行「报告」文字钮（issue 358）：同一入口
   const mobReportBtn = overlayEl.querySelector('[data-clip-mob-report]');
-  mobReportBtn!.addEventListener('click', () => openClipbookReport(app));
+  mobReportBtn!.addEventListener('click', () => void openReadingPress(app));
   // 桌面 rail 源切换（再点已选源回「全部未读」，issue 208）
   railListEl!.addEventListener('click', (e) => {
     const row = (e.target as HTMLElement).closest('[data-src]') as HTMLElement | null;
@@ -641,12 +641,13 @@ function closeMobDetail(): void {
   renderAll();
 }
 
-/** 头行期号（issue 214）：「YYYY 年 M 月 D 日 · 第 N 期」，N = news 总条数（含已处理），随刷新更新 */
+/** 期号戳章（2026-09-23 头行五版拍板 D+C；移动刊名同日并入戳章）：桌面抬头单 + 移动头行双端同填
+ *  「第 N 期」，N = news 总条数（含已处理），随刷新更新 */
 function renderHeadIssue(): void {
-  const el = overlayEl ? (overlayEl.querySelector('[data-clip-issue]') as HTMLElement | null) : null;
-  if (!el) return;
-  const d = new Date();
-  el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
+  if (!overlayEl) return;
+  overlayEl.querySelectorAll<HTMLElement>('[data-clip-issue]').forEach((el) => {
+    el.textContent = `第 ${M.articles.length} 期`;
+  });
 }
 
 // ================= 视图派生 =================
