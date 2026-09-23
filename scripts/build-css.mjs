@@ -42,6 +42,8 @@ const SOURCES = [
   "src/clipbook/styles.css",
   "src/favorites/styles.css",
   "src/review/styles.css",
+  // 记忆分析特刊（analysis/ 全屏逐幕层）：随复习域聚合
+  "src/review/analysis/styles.css",
   "src/pomodoro/styles.css",
   "src/attach/styles.css",
   "src/encrypt/styles.css",

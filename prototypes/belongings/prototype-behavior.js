@@ -1,5 +1,5 @@
-/* 源指纹 3eff82f6f67e0313 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
+/* 源指纹 6c5376d0d707c376 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
   var __create = Object.create;
@@ -1013,15 +1013,15 @@ var BZW_belongings = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -4699,7 +4699,7 @@ var BZW_belongings = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M2 = 10;
+    const M3 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -4726,7 +4726,7 @@ var BZW_belongings = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
         moved = true;
         cancel();
       }
@@ -6677,6 +6677,522 @@ var BZW_belongings = (() => {
     };
   }
 
+  // src/belongings/motion.ts
+  var M = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var STAG = 30;
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function" || reduced()) return;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionTeardown() {
+    cancelPending();
+    flipBook = null;
+  }
+  function stageable(el) {
+    if (!el) return false;
+    try {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 2 || r.height <= 2) return false;
+      const vh = typeof window !== "undefined" && window.innerHeight || 900;
+      return r.top < vh + 120 && r.bottom > -120;
+    } catch (e) {
+      return false;
+    }
+  }
+  function deco(host, cls, css) {
+    const d = document.createElement("i");
+    d.className = cls;
+    d.setAttribute("aria-hidden", "true");
+    d.style.position = "absolute";
+    d.style.pointerEvents = "none";
+    Object.assign(d.style, css);
+    host.appendChild(d);
+    return d;
+  }
+  function motionPanelIn(overlay) {
+    const panel = overlay.querySelector(".bz-bel-panel");
+    if (!panel) return;
+    panel.style.opacity = "";
+    panel.style.transform = "";
+    waapi(
+      panel,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.982) rotate(.3deg)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 140, easing: E.out }
+    );
+  }
+  function motionPanelOut(overlay, done) {
+    const panel = overlay.querySelector(".bz-bel-panel");
+    if (!panel) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    const a = waapi(
+      panel,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(-12px) scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M.move + 40, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    setTimeout(finish, M.move + 400);
+  }
+  var flipBook = null;
+  function motionBeforePaint(panel) {
+    var _a, _b;
+    flipBook = null;
+    try {
+      const grid = panel.querySelector("[data-bel-content]");
+      if (!grid) return;
+      const rects = /* @__PURE__ */ new Map();
+      grid.querySelectorAll("[data-bel-id]").forEach((c) => {
+        const id = c.dataset.belId;
+        if (id) rects.set(id, c.getBoundingClientRect());
+      });
+      flipBook = { rects, title: (_b = (_a = panel.querySelector("[data-bel-herotitle]")) == null ? void 0 : _a.textContent) != null ? _b : "" };
+    } catch (e) {
+    }
+  }
+  function motionRendered(panel, mode) {
+    cancelPending();
+    const book = flipBook;
+    flipBook = null;
+    if (mode === "silent" || reduced()) return;
+    if (mode === "boot") {
+      bootReveal(panel);
+      return;
+    }
+    if (book) flipRepaint(panel, book);
+  }
+  function rollText(el, dur) {
+    var _a;
+    const finalText = (_a = el.textContent) != null ? _a : "";
+    const m = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/.exec(finalText);
+    if (!m) return;
+    const prefix = m[1], target = parseFloat(m[2].replace(/,/g, "")), suffix = m[3];
+    if (!Number.isFinite(target)) return;
+    const decimals = (m[2].split(".")[1] || "").length;
+    const fmt = (v) => (target * v).toLocaleString("zh-CN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    if (reduced() || typeof requestAnimationFrame !== "function") return;
+    el.textContent = prefix + fmt(0) + suffix;
+    tween(dur, (v) => {
+      el.textContent = v >= 1 ? finalText : prefix + fmt(v) + suffix;
+    });
+  }
+  function bootReveal(panel) {
+    const title = panel.querySelector("[data-bel-herotitle]");
+    if (stageable(title)) {
+      waapi(
+        title,
+        [
+          { opacity: 0, transform: "scale(1.9) rotate(-4deg)", filter: "blur(10px)" },
+          { opacity: 1, transform: "scale(.965) rotate(.5deg)", filter: "blur(0px)", offset: 0.68 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 120, easing: E.move, fill: "backwards" }
+      );
+    }
+    const sub = panel.querySelector("[data-bel-herosub]");
+    if (stageable(sub)) {
+      waapi(
+        sub,
+        [
+          { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+          { opacity: 1, clipPath: "inset(0 -2% 0 0)" }
+        ],
+        { duration: M.base, delay: M.fast, easing: E.out, fill: "backwards" }
+      );
+    }
+    const stamp = panel.querySelector(".bz-bel-stamp");
+    if (stageable(stamp)) {
+      waapi(
+        stamp,
+        [
+          { opacity: 0, transform: "scale(1.7) rotate(-6deg)" },
+          { opacity: 1, transform: "scale(.96) rotate(1deg)", offset: 0.66 },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.base + 80, easing: E.move, fill: "backwards" }
+      );
+    }
+    panel.querySelectorAll("[data-bel-kpis] .bz-bel-kpi").forEach((kpi, i) => {
+      if (!stageable(kpi)) return;
+      waapi(
+        kpi,
+        [
+          { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base, delay: 140 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+      const num = kpi.querySelector("b");
+      if (num && stageable(num)) rollText(num, M.impulse);
+    });
+    const stampN = panel.querySelector("[data-bel-stampn]");
+    if (stageable(stampN)) rollText(stampN, M.impulse);
+    panel.querySelectorAll("[data-bel-chips] .bz-chip").forEach((chip, i) => {
+      if (!stageable(chip)) return;
+      waapi(
+        chip,
+        [
+          { opacity: 0, transform: "translateY(7px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.fast + 40, delay: 220 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+    const toolrow = panel.querySelector(".bz-bel-toolrow");
+    if (stageable(toolrow)) {
+      waapi(
+        toolrow,
+        [
+          { opacity: 0, transform: "translateY(8px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.base, delay: 260, easing: E.out, fill: "backwards" }
+      );
+    }
+    const cells = panel.querySelectorAll("[data-bel-content] [data-bel-id]");
+    cells.forEach((cell, i) => {
+      if (!stageable(cell)) return;
+      after(300 + Math.min(i, 14) * STAG, () => {
+        waapi(
+          cell,
+          [
+            { opacity: 0, transform: "translateY(14px) scale(.97) rotate(.35deg)", filter: "blur(4px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+    const empty = panel.querySelector("[data-bel-content] .bz-empty");
+    if (stageable(empty)) {
+      waapi(
+        empty,
+        [
+          { opacity: 0, transform: "translateY(10px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.base, delay: 240, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function flipRepaint(panel, book) {
+    var _a, _b;
+    const title = panel.querySelector("[data-bel-herotitle]");
+    if (stageable(title) && ((_a = title.textContent) != null ? _a : "") !== book.title && book.title !== "") {
+      waapi(
+        title,
+        [
+          { opacity: 0.15, transform: "scale(1.14)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.move, easing: E.move, fill: "backwards" }
+      );
+    }
+    const cells = [...panel.querySelectorAll("[data-bel-content] [data-bel-id]")];
+    let fresh = 0;
+    for (const cell of cells) {
+      const id = (_b = cell.dataset.belId) != null ? _b : "";
+      const old = book.rects.get(id);
+      if (!old) {
+        if (stageable(cell)) {
+          waapi(
+            cell,
+            [
+              { opacity: 0, transform: "translateY(12px) scale(.98)" },
+              { opacity: 1, transform: "none" }
+            ],
+            { duration: M.base, delay: Math.min(fresh, 8) * STAG, easing: E.out, fill: "backwards" }
+          );
+        }
+        fresh++;
+        continue;
+      }
+      if (!stageable(cell)) continue;
+      const now = cell.getBoundingClientRect();
+      const dx = old.left - now.left, dy = old.top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      waapi(
+        cell,
+        [
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` },
+          { transform: "none" }
+        ],
+        { duration: M.move, easing: E.out }
+      );
+    }
+  }
+  function motionCellStamp(cell) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const ring = deco(cell, "bz-bel-mstamp", {
+      inset: "6px",
+      border: "2.5px solid var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const a = waapi(
+      ring,
+      [
+        { opacity: 0, transform: "scale(1.6) rotate(-5deg)" },
+        { opacity: 0.95, transform: "scale(1) rotate(-1deg)", offset: 0.55 },
+        { opacity: 0, transform: "scale(1) rotate(0deg)" }
+      ],
+      { duration: M.base + 140, easing: E.move }
+    );
+    if (a) a.finished.then(() => ring.remove()).catch(() => ring.remove());
+    else after(M.base + 160, () => ring.remove());
+    const flash = deco(cell, "bz-bel-mink", {
+      inset: "0",
+      background: "var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const f = waapi(
+      flash,
+      [{ opacity: 0 }, { opacity: 0.12, offset: 0.3 }, { opacity: 0 }],
+      { duration: M.base, easing: E.out }
+    );
+    if (f) f.finished.then(() => flash.remove()).catch(() => flash.remove());
+    else after(M.base + 20, () => flash.remove());
+  }
+  function motionCellStrike(cell) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const box = deco(cell, "bz-bel-mstrike", { inset: "4px", overflow: "hidden" });
+    const line = document.createElement("i");
+    line.setAttribute("aria-hidden", "true");
+    line.style.cssText = "position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;background:var(--bz-bel-accent);transform:scaleX(0);transform-origin:0 50%;";
+    box.appendChild(line);
+    waapi(
+      line,
+      [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+      { duration: M.fast + 60, easing: E.move, fill: "forwards" }
+    );
+    waapi(
+      cell,
+      [{ opacity: 1 }, { opacity: 0.12, transform: "scale(.985)" }],
+      { duration: M.fast + 80, delay: M.fast + 40, easing: "linear", fill: "forwards" }
+    );
+    after(M.move + 200, () => box.remove());
+  }
+  function motionCellFlow(cell, toExited) {
+    if (!stageable(cell) || typeof cell.animate !== "function") return;
+    const wash = deco(cell, "bz-bel-mwash", {
+      inset: "0",
+      background: toExited ? "var(--bz-bel-line)" : "var(--bz-bel-accent)",
+      opacity: "0"
+    });
+    const a = waapi(
+      wash,
+      [{ opacity: 0 }, { opacity: toExited ? 0.55 : 0.2, offset: 0.35 }, { opacity: 0 }],
+      { duration: M.base + 60, easing: E.out }
+    );
+    if (a) a.finished.then(() => wash.remove()).catch(() => wash.remove());
+    else after(M.base + 80, () => wash.remove());
+    const tag = cell.querySelector(".bz-bel-tag");
+    if (stageable(tag)) {
+      waapi(
+        tag,
+        [
+          { opacity: 0, transform: "scale(1.55) rotate(-6deg)" },
+          { opacity: 1, transform: "scale(.97) rotate(1deg)", offset: 0.62 },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.base, easing: E.move, fill: "backwards" }
+      );
+    }
+  }
+  function motionDropOpen(wrap) {
+    if (reduced()) return;
+    const menu = wrap.querySelector(".bz-bel-dropmenu");
+    if (!stageable(menu)) return;
+    menu.style.transformOrigin = "50% 0";
+    waapi(
+      menu,
+      [
+        { opacity: 0, transform: "translateY(-5px) scaleY(.92)" },
+        { opacity: 1, transform: "none" }
+      ],
+      { duration: M.fast, easing: E.out, fill: "backwards" }
+    );
+    menu.querySelectorAll(".bz-bel-dropopt").forEach((opt, i) => {
+      if (i >= 6 || !stageable(opt)) return;
+      waapi(
+        opt,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M.fast, delay: M.fast + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function popupIn(popup) {
+    if (!stageable(popup)) return;
+    waapi(
+      popup,
+      [
+        { opacity: 0, translate: "0 18px", scale: ".98" },
+        { opacity: 1, translate: "0 0px", scale: "1" }
+      ],
+      { duration: M.base, easing: E.out, fill: "backwards" }
+    );
+  }
+  function relay(els, base, step = STAG) {
+    els.forEach((el, i) => {
+      if (!stageable(el)) return;
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(7px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.base, delay: base + i * step, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDetailIn(mask) {
+    if (reduced()) return;
+    popupIn(mask.querySelector(".bz-bel-detail"));
+    const detail = mask.querySelector(".bz-bel-detail");
+    if (!detail) return;
+    const seq = [
+      ...detail.querySelector(".bz-bel-detail-head") ? [detail.querySelector(".bz-bel-detail-head")] : [],
+      ...detail.querySelector(".bz-bel-detail-idrow") ? [detail.querySelector(".bz-bel-detail-idrow")] : [],
+      ...[...detail.querySelectorAll(".bz-bel-dfield")],
+      ...detail.querySelector(".bz-bel-detail-acts") ? [detail.querySelector(".bz-bel-detail-acts")] : [],
+      ...detail.querySelector(".bz-bel-detail-btns") ? [detail.querySelector(".bz-bel-detail-btns")] : []
+    ];
+    relay(seq, 60);
+    detail.querySelectorAll(".bz-bel-flowbtn").forEach((btn, i) => {
+      if (!stageable(btn)) return;
+      waapi(
+        btn,
+        [
+          { opacity: 0, transform: "translateY(5px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M.fast + 40, delay: 60 + (seq.length - 1) * STAG + 60 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionFormIn(mask) {
+    if (reduced()) return;
+    popupIn(mask.querySelector(".bz-bel-form"));
+    const form = mask.querySelector(".bz-bel-form");
+    if (!form) return;
+    const seq = [];
+    const title = form.querySelector(".bz-bel-form-title");
+    if (title) seq.push(title);
+    seq.push(...[...form.querySelectorAll(".bz-bel-form-body > .bz-field")]);
+    const actions = form.querySelector(".bz-bel-form-actions");
+    if (actions) seq.push(actions);
+    relay(seq, 40);
+  }
+  function motionReportSection(sec) {
+    if (!sec || reduced()) return;
+    waapi(
+      sec,
+      [
+        { opacity: 0, transform: "translateY(12px)" },
+        { opacity: 1, transform: "none" }
+      ],
+      { duration: M.base, easing: E.out, fill: "backwards" }
+    );
+    sec.querySelectorAll(".bz-belr-col-bar").forEach((bar, i) => {
+      if (!stageable(bar) || typeof bar.animate !== "function") return;
+      bar.style.transformOrigin = "50% 100%";
+      bar.style.transform = "scaleY(0)";
+      after(M.base, () => {
+        const a = waapi(
+          bar,
+          [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+          { duration: M.base, delay: Math.min(i, 12) * STAG, easing: E.out, fill: "forwards" }
+        );
+        const clear = () => {
+          bar.style.transform = "";
+        };
+        if (a) a.finished.then(clear).catch(clear);
+        else clear();
+      });
+    });
+    sec.querySelectorAll(".bz-belr-row-track i").forEach((bar, i) => {
+      if (!stageable(bar) || typeof bar.animate !== "function") return;
+      bar.style.transformOrigin = "0 50%";
+      bar.style.transform = "scaleX(0)";
+      after(M.base, () => {
+        const a = waapi(
+          bar,
+          [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: M.base, delay: Math.min(i, 8) * STAG, easing: E.out, fill: "forwards" }
+        );
+        const clear = () => {
+          bar.style.transform = "";
+        };
+        if (a) a.finished.then(clear).catch(clear);
+        else clear();
+      });
+    });
+    relay([...sec.querySelectorAll(".bz-belr-hero, .bz-belr-comp")], M.fast, 40);
+  }
+
   // src/belongings/report.ts
   var renderSeq = 0;
   var progressToastSeq = 0;
@@ -6823,6 +7339,7 @@ var BZW_belongings = (() => {
         body.innerHTML = "";
         body.appendChild(buildLibraryEmpty());
         mountIcons(body);
+        motionReportSection(body.firstElementChild);
         return finishDone(true);
       }
       progress.setMessage("正在汇总购入与离场…");
@@ -6834,6 +7351,7 @@ var BZW_belongings = (() => {
       if (!stats.hasYearData) {
         body.innerHTML = emptyYearHtml(year);
         mountIcons(body);
+        motionReportSection(body.firstElementChild);
         return finishDone(true);
       }
       const sections = buildReportSections(stats);
@@ -6843,6 +7361,7 @@ var BZW_belongings = (() => {
         await yieldToMainThread2();
         if (!alive()) return finishAbort();
         body.insertAdjacentHTML("beforeend", section.generate());
+        motionReportSection(body.lastElementChild);
         progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
@@ -7965,7 +8484,7 @@ var BZW_belongings = (() => {
   // src/belongings/ui.ts
   var THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
   var SEARCH_DEBOUNCE_MS = 180;
-  var M = {
+  var M2 = {
     overlay: null,
     db: null,
     status: null,
@@ -7975,14 +8494,15 @@ var BZW_belongings = (() => {
     renderFn: null
   };
   var dropDocClick = null;
+  var motionIntent = "flip";
   function resetBelongingsState() {
-    M.overlay = null;
-    M.db = null;
-    M.status = null;
-    M.year = "";
-    M.q = "";
-    M.sort = "recent";
-    M.renderFn = null;
+    M2.overlay = null;
+    M2.db = null;
+    M2.status = null;
+    M2.year = "";
+    M2.q = "";
+    M2.sort = "recent";
+    M2.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -7993,11 +8513,11 @@ var BZW_belongings = (() => {
   }
   var DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
   function itemList() {
-    return M.db ? Object.values(M.db.items) : [];
+    return M2.db ? Object.values(M2.db.items) : [];
   }
   function itemById(id) {
     var _a;
-    return (_a = M.db) == null ? void 0 : _a.items[id];
+    return (_a = M2.db) == null ? void 0 : _a.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -8008,7 +8528,7 @@ var BZW_belongings = (() => {
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M2.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -8035,7 +8555,7 @@ var BZW_belongings = (() => {
   var bodyThemeObserver = null;
   var opening = false;
   async function openPanel() {
-    if (M.overlay) {
+    if (M2.overlay) {
       closePanel();
       return;
     }
@@ -8052,19 +8572,20 @@ var BZW_belongings = (() => {
   async function openPanelInner() {
     var _a;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M2.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M.year = "";
-    M.db = await loadDatabase();
+    M2.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M2.year = "";
+    M2.db = await loadDatabase();
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay";
     overlay.innerHTML = panelHtml();
     document.body.appendChild(overlay);
     topifyZ(overlay);
-    M.overlay = overlay;
-    M.renderFn = () => renderAll();
+    M2.overlay = overlay;
+    M2.renderFn = () => renderAll();
     mountIcons(overlay);
+    motionPanelIn(overlay);
     ensureBelongingsEsc();
     trapPanelFocus((_a = overlay.querySelector(".bz-bel-panel")) != null ? _a : overlay);
     const moveDropActive = (wrap, delta) => {
@@ -8078,8 +8599,8 @@ var BZW_belongings = (() => {
       var _a2;
       closeAllDrops();
       const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M.year = v;
-      else M.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M2.year = v;
+      else M2.sort = v;
       renderAll();
     };
     const onDocClick = (e) => {
@@ -8093,6 +8614,7 @@ var BZW_belongings = (() => {
         if (!wasOpen) {
           wrap.classList.add("is-open");
           (_a2 = wrap.querySelector(".bz-bel-dropopt.is-cur")) == null ? void 0 : _a2.classList.add("is-active");
+          motionDropOpen(wrap);
         }
         return;
       }
@@ -8159,22 +8681,22 @@ var BZW_belongings = (() => {
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M.sort = segBtn.dataset.k;
+        M2.sort = segBtn.dataset.k;
         renderAll();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M.status = M.status === "asset" ? null : "asset";
+        if (kind === "asset") M2.status = M2.status === "asset" ? null : "asset";
         renderAll();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M.overlay !== overlay) return;
-        M.q = inp.value.trim();
+        if (M2.overlay !== overlay) return;
+        M2.q = inp.value.trim();
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
       const clearBtn = overlay.querySelector("[data-bel-search-clear]");
@@ -8184,7 +8706,7 @@ var BZW_belongings = (() => {
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M.q = "";
+        M2.q = "";
         syncClear();
         renderAll();
         if (refocus) inp.focus();
@@ -8246,6 +8768,7 @@ var BZW_belongings = (() => {
         return isMobileEnv() && !!((_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-bel-id]"));
       }
     );
+    motionIntent = "boot";
     renderAll();
     startAutoRefresh();
     observeTheme();
@@ -8264,13 +8787,15 @@ var BZW_belongings = (() => {
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M.overlay) {
-      M.overlay.remove();
-      M.overlay = null;
+    if (M2.overlay) {
+      const ov = M2.overlay;
+      M2.overlay = null;
+      motionPanelOut(ov, () => ov.remove());
     }
-    M.renderFn = null;
-    M.db = null;
-    M.q = "";
+    M2.renderFn = null;
+    M2.db = null;
+    M2.q = "";
+    motionTeardown();
   }
   function startAutoRefresh() {
     stopAutoRefresh();
@@ -8282,16 +8807,18 @@ var BZW_belongings = (() => {
       void (async () => {
         var _a;
         try {
-          M.db = await loadDatabase();
-          (_a = M.renderFn) == null ? void 0 : _a.call(M);
+          M2.db = await loadDatabase();
+          motionIntent = "silent";
+          (_a = M2.renderFn) == null ? void 0 : _a.call(M2);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a2;
                 try {
-                  M.db = await loadDatabase();
-                  (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
+                  M2.db = await loadDatabase();
+                  motionIntent = "silent";
+                  (_a2 = M2.renderFn) == null ? void 0 : _a2.call(M2);
                 } catch (e2) {
                 }
               })();
@@ -8326,37 +8853,41 @@ var BZW_belongings = (() => {
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a = M.renderFn) == null ? void 0 : _a.call(M);
+        motionIntent = "silent";
+        (_a = M2.renderFn) == null ? void 0 : _a.call(M2);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a;
-    if (!M.db) return;
+    if (!M2.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M.db);
+      await saveDatabase(M2.db);
     } finally {
       selfWritePending--;
     }
-    (_a = M.renderFn) == null ? void 0 : _a.call(M);
+    (_a = M2.renderFn) == null ? void 0 : _a.call(M2);
   }
   function renderAll() {
-    if (!M.overlay) return;
-    const panel = M.overlay.querySelector(".bz-bel-panel");
+    if (!M2.overlay) return;
+    const panel = M2.overlay.querySelector(".bz-bel-panel");
     if (!panel) return;
-    renderPanelView(panel, itemList(), M, { mountIcons }, currencyUnit());
+    motionBeforePaint(panel);
+    renderPanelView(panel, itemList(), M2, { mountIcons }, currencyUnit());
+    motionRendered(panel, motionIntent);
+    motionIntent = "flip";
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M.status = null;
-    else M.status = M.status === k ? null : k;
+    if (k === "__all") M2.status = null;
+    else M2.status = M2.status === k ? null : k;
     renderAll();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M.db) {
+    if (M2.db) {
       items = itemList();
     } else {
       try {
@@ -8391,6 +8922,7 @@ var BZW_belongings = (() => {
     });
     belDetailClose = close;
     mountIcons(mask);
+    motionDetailIn(mask);
     const acts = mask.querySelector("[data-bd-acts]");
     const drawActs = () => {
       const cur = itemById(it.id);
@@ -8432,11 +8964,11 @@ var BZW_belongings = (() => {
     return holder.firstElementChild;
   }
   async function applyFlowWithUndo(it, s) {
-    var _a, _b;
+    var _a, _b, _c;
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a = M.renderFn) == null ? void 0 : _a.call(M);
+      (_a = M2.renderFn) == null ? void 0 : _a.call(M2);
       return;
     }
     const prevStatus = cur.current_status;
@@ -8452,16 +8984,18 @@ var BZW_belongings = (() => {
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M.db = await loadDatabase().catch(() => null);
-      (_b = M.renderFn) == null ? void 0 : _b.call(M);
+      M2.db = await loadDatabase().catch(() => null);
+      (_b = M2.renderFn) == null ? void 0 : _b.call(M2);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
+    const flowCell = (_c = M2.overlay) == null ? void 0 : _c.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+    if (flowCell) motionCellFlow(flowCell, exitedStatus(s));
     notifyUndo(`「${cur.name}」已标记为${s}`, () => {
       void (async () => {
         var _a2;
         try {
-          if (!M.db) M.db = await loadDatabase();
+          if (!M2.db) M2.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -8476,8 +9010,8 @@ var BZW_belongings = (() => {
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M.db = await loadDatabase().catch(() => null);
-          (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
+          M2.db = await loadDatabase().catch(() => null);
+          (_a2 = M2.renderFn) == null ? void 0 : _a2.call(M2);
         }
       })();
     }, { type: "restore" });
@@ -8521,23 +9055,25 @@ var BZW_belongings = (() => {
     openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
   }
   async function deleteItem(it) {
-    var _a, _b;
-    if (!M.db) return;
-    if (!M.db.items[it.id]) {
+    var _a, _b, _c;
+    if (!M2.db) return;
+    if (!M2.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a = M.renderFn) == null ? void 0 : _a.call(M);
+      (_a = M2.renderFn) == null ? void 0 : _a.call(M2);
       return;
     }
-    const snapshot = { ...M.db.items[it.id] };
-    delete M.db.items[it.id];
+    const snapshot = { ...M2.db.items[it.id] };
+    const strikeCell = (_b = M2.overlay) == null ? void 0 : _b.querySelector(`[data-bel-id="${CSS.escape(it.id)}"]`);
+    if (strikeCell) motionCellStrike(strikeCell);
+    delete M2.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M.db.items[snapshot.id] = snapshot;
+      M2.db.items[snapshot.id] = snapshot;
       notifySaveError(e, "删除物品");
-      M.db = await loadDatabase().catch(() => null);
-      (_b = M.renderFn) == null ? void 0 : _b.call(M);
+      M2.db = await loadDatabase().catch(() => null);
+      (_c = M2.renderFn) == null ? void 0 : _c.call(M2);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -8545,18 +9081,18 @@ var BZW_belongings = (() => {
       void (async () => {
         var _a2;
         try {
-          if (!M.db) M.db = await loadDatabase();
-          if (M.db.items[snapshot.id]) {
+          if (!M2.db) M2.db = await loadDatabase();
+          if (M2.db.items[snapshot.id]) {
             notice(`已存在同 id 物品（${snapshot.id}），跳过恢复`, "warning");
             return;
           }
-          M.db.items[snapshot.id] = snapshot;
+          M2.db.items[snapshot.id] = snapshot;
           await saveAndRender();
           notice(`已恢复「${snapshot.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M.db = await loadDatabase().catch(() => null);
-          (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
+          M2.db = await loadDatabase().catch(() => null);
+          (_a2 = M2.renderFn) == null ? void 0 : _a2.call(M2);
         }
       })();
     }, { type: "restore" });
@@ -8603,9 +9139,9 @@ var BZW_belongings = (() => {
       }
       return;
     }
-    if (!M.db) {
+    if (!M2.db) {
       void loadDatabase().then((db) => {
-        M.db = db;
+        M2.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -8629,6 +9165,7 @@ var BZW_belongings = (() => {
     belFormMask = mask;
     _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
     mountIcons(mask);
+    motionFormIn(mask);
     const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
     if (it && sheetOpen) registerSheetCompanion(mask);
     _belBaseline = {
@@ -8652,13 +9189,13 @@ var BZW_belongings = (() => {
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a2, _b2;
-      return ((_b2 = (_a2 = M.db) == null ? void 0 : _a2.categoryIcons) == null ? void 0 : _b2[cat]) || "";
+      return ((_b2 = (_a2 = M2.db) == null ? void 0 : _a2.categoryIcons) == null ? void 0 : _b2[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a2, _b2;
-        return (_b2 = (_a2 = M.db) == null ? void 0 : _a2.categories) != null ? _b2 : [];
+        return (_b2 = (_a2 = M2.db) == null ? void 0 : _a2.categories) != null ? _b2 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -8711,7 +9248,7 @@ var BZW_belongings = (() => {
       void (async () => {
         var _a2, _b2, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b2 = (_a2 = M.db) == null ? void 0 : _a2.categories) == null ? void 0 : _b2.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b2 = (_a2 = M2.db) == null ? void 0 : _a2.categories) == null ? void 0 : _b2.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -8777,8 +9314,9 @@ var BZW_belongings = (() => {
       saveBtn.disabled = true;
       saveBtn.textContent = "保存中…";
       void (async () => {
+        var _a2, _b2;
         try {
-          if (!M.db) M.db = await loadDatabase();
+          if (!M2.db) M2.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -8806,9 +9344,13 @@ var BZW_belongings = (() => {
               if (redrew) openBelDetail(redrew);
             }
             if (isBelReportOpen()) void openBelongingsReportView();
+            if (snapshot.current_status !== curStatus) {
+              const editCell = (_a2 = M2.overlay) == null ? void 0 : _a2.querySelector(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+              if (editCell) motionCellFlow(editCell, exitedStatus(curStatus));
+            }
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot, cur) });
           } else {
-            if (!M.db) throw new Error("数据库未加载");
+            if (!M2.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -8824,8 +9366,10 @@ var BZW_belongings = (() => {
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M.db.items[newItem.id] = newItem;
+            M2.db.items[newItem.id] = newItem;
             await saveAndRender();
+            const newCell = (_b2 = M2.overlay) == null ? void 0 : _b2.querySelector(`[data-bel-id="${CSS.escape(newItem.id)}"]`);
+            if (newCell) motionCellStamp(newCell);
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
           }

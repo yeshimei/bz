@@ -560,3 +560,14 @@
 .bz-qp-foot { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 .bz-qp-acc { font-size: var(--bz-font-label); color: var(--bz-text-2); }
 .bz-qp-acc b { color: var(--bz-brand); font-weight: 700; font-size: var(--bz-font-emphasis); }
+
+/* ==================== 动效层注入件（2026-09-22 批，src/review/motion.ts 消费） ====================
+   绝对定位 · pointer-events:none · aria-hidden · 演完自毁——终态 UI 与无动效版完全一致。
+   朱批=批改语义（逾期卡「急」/结算「优·完成」）；红晕=失利氛围；环/扫=节奏点缀。 */
+.bz-rv-seal { position: absolute; top: 4px; right: 6px; width: 34px; height: 34px; border: 2px solid var(--bz-danger); border-radius: 50%; color: var(--bz-danger); display: flex; align-items: center; justify-content: center; font-family: Georgia, 'KaiTi', 'STKaiti', serif; font-size: 14px; font-weight: 700; line-height: 1; letter-spacing: 1px; pointer-events: none; z-index: 3; background: color-mix(in srgb, var(--bz-surface-2, #fff) 55%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--bz-danger) 32%, transparent); }
+.bz-rv-seal::before { content: ''; position: absolute; inset: 2.5px; border: 1px dashed color-mix(in srgb, var(--bz-danger) 55%, transparent); border-radius: 50%; }
+.bz-rv-seal--big { top: -8px; right: 4px; width: 78px; height: 78px; font-size: 30px; border-width: 3px; z-index: 4; }
+.bz-rv-ring { position: absolute; border: 2px solid var(--bz-brand); border-radius: 50%; pointer-events: none; transform: translate(-50%,-50%); z-index: 4; }
+.bz-rv-sweep { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; pointer-events: none; z-index: 5; }
+.bz-rv-sweep u { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent); }
+.bz-rv-failflash { position: absolute; inset: 0; pointer-events: none; z-index: 6; background: radial-gradient(ellipse at center, transparent 40%, color-mix(in srgb, var(--bz-danger) 36%, transparent) 100%); }

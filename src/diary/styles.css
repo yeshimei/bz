@@ -1769,3 +1769,57 @@
   --ls-muted: var(--dw-muted);
   --ls-faint: var(--dw-faint);
 }
+
+/* ============ 动效层支持样式（src/diary/motion.ts 注入件与功能性指示；不参与排版） ============
+   注入件一律 absolute + pointer-events:none + aria-hidden（属性由 JS 挂），演出完自动移除——
+   终态 UI 与无动效版逐像素一致；时长/曲线台账见 motion.ts（token 不落 CSS，行为层单源）。 */
+
+/* 翻页纸面：筛选切换时扫过面板的一页纸（假透视由 JS 内联 transform 驱动，演完即撤） */
+.bz-dm-page {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--dw-surface) 16%,
+    var(--dw-bg) 50%,
+    var(--dw-surface) 84%,
+    transparent
+  );
+  box-shadow: 0 0 24px 6px color-mix(in srgb, var(--dw-ink) 8%, transparent);
+  will-change: transform, opacity;
+}
+
+/* 墨晕：台历戳落下时在日期下洇开的一小撮墨（演完即撤，墙上不留痕） */
+.bz-dm-ink {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--dw-ink) 42%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+/* 灯箱加密媒体解密等待占位：功能性加载指示（加载类循环不入台账，同影院口径；
+   系统 RM 下随既有通杀规则停摆） */
+.bz-diary-lb-pending {
+  animation: bz-dm-pulse 1.1s ease-in-out infinite;
+}
+@keyframes bz-dm-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}

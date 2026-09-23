@@ -23,6 +23,7 @@ import { mountIcons } from '../core/ui';
 import type { ReviewDataManager, ReviewItem, FittedParams } from './data';
 import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
 import { DEFAULT_W, currentR as fsrsCurrentR } from './fsrs';
+import { motionStats, motionHistory } from './motion';
 
 let statsMask: HTMLElement | null = null;
 let statsPopup: HTMLElement | null = null;
@@ -145,6 +146,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   const stats = computeStats(items, { w });
   body.innerHTML = buildStatsHTML(app, dm, items, stats, fit);
   mountIcons(body); // R11：sec 板块头 lucide 兑现
+  motionStats(body); // 光泽开场+统计卡滚数+条浪+时间线接力
 
   // 时间线列表行 → 独立复习历史弹窗（click + 键盘 Enter/Space，R7 可达）
   const openTimeline = (el: HTMLElement): void => {
@@ -346,6 +348,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   }).join('');
   tl.innerHTML = itemsHTML;
   body.appendChild(tl);
+  motionHistory(body); // 记忆回放：圆点逐个点亮、竖线生长
 
   histEsc = escManager.register('bz-review-history', {
     isVisible: () => !!histMask && histMask.style.display === 'block',
