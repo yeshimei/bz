@@ -62,12 +62,26 @@
     .pomodoro-controls { display: flex; gap: var(--bz-space-sm); justify-content: center; margin-top: var(--bz-space-lg); }
     .pomodoro-btn { padding: 6px 14px; border-radius: var(--bz-radius-sm); background: var(--pz-btn, var(--background-secondary)); color: var(--pz-btn-fg, var(--text-normal)); cursor: pointer; font-size: var(--bz-font-body); }@media (hover: hover) {
 
-    .pomodoro-btn:hover:not(:disabled) { background: var(--background-modifier-hover); }
+    /* hover 不刷灰：--background-modifier-hover 是那层通用「灰罩」，用户 2026-09-24 明确不要
+       （「其他的按钮放上去，背景也变成了灰色，这也不行」）。改成本色轻微提亮——亮/暗主题
+       都不糊成灰，仍能给出「这颗可点」的反馈。确认态（.pomodoro-btn-armed）完全不参与。 */
+    .pomodoro-btn:hover:not(:disabled):not(.pomodoro-btn-armed) { filter: brightness(1.07); }
 }
     .pomodoro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .pomodoro-btn-primary { background: var(--pz-accent, var(--interactive-accent)); color: var(--pz-on-accent, var(--text-on-accent)); }@media (hover: hover) {
+    .pomodoro-btn-primary { background: var(--pz-accent, var(--interactive-accent)); color: var(--pz-on-accent, var(--text-on-accent)); }
+    /* 二次确认态：按钮自己变成确认条（2026-09-24 替代确认弹窗）。警示色走 --pz-hot 单源。
+       hover/active 必须一并覆盖：上面 .pomodoro-btn:hover:not(:disabled) 是三类选择器，
+       比单类 .pomodoro-btn-armed 权重高——不补同权重且靠后的规则，鼠标停上去会被刷成灰底
+       （用户 2026-09-24 报：确认态配色被 hover 顶掉）。确认态是「等你表态」的状态色，不该随悬停变。 */
+    .pomodoro-btn-armed,
+    .pomodoro-btn-armed:hover:not(:disabled),
+    .pomodoro-btn-armed:active:not(:disabled) { background: var(--pz-hot, var(--text-error, var(--interactive-accent))); color: var(--pz-on-accent, var(--text-on-accent)); font-weight: 600; }
+@media (hover: hover) {
 
-    .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
+    /* 主按钮同样不换底色：--interactive-accent-hover 是 Obsidian 主题变量，评审壳（以及部分主题）
+       拿不到 → 背景声明整条失效变透明，而字色是 --pz-on-accent 白字 → 白字糊在弹窗底色上「发白」
+       （用户 2026-09-24 报）。统一走本色轻微提亮，与次按钮同口径。 */
+    .pomodoro-btn-primary:hover:not(:disabled):not(.pomodoro-btn-armed) { background: var(--pz-accent, var(--interactive-accent)); filter: brightness(1.07); }
 }
     .pomodoro-stats { margin-top: var(--bz-space-lg); padding-top: var(--bz-space-md); border-top: 1px solid var(--pz-line, var(--background-modifier-border)); }
     #pomodoro-today { font-size: var(--bz-font-label); color: var(--pz-muted, var(--text-muted)); margin-bottom: var(--bz-space-sm); }
@@ -75,7 +89,10 @@
     .pomodoro-stat-tabs { display: flex; gap: var(--bz-space-xs); justify-content: center; margin-bottom: var(--bz-space-sm); }
     .pomodoro-stat-tab { padding: 2px 10px; border-radius: var(--bz-radius-sm, var(--bz-radius-xs)); font-size: var(--bz-font-caption); color: var(--pz-faint, var(--text-faint)); background: transparent; cursor: pointer; }@media (hover: hover) {
 
-    .pomodoro-stat-tab:hover { background: var(--background-modifier-hover); }
+    /* 同按钮口径（2026-09-24）：hover 不刷灰罩。未激活 → 换本域次钮底色（--pz-btn，皮肤内）；
+       激活档 → 保持 accent（原规则只有单类 .pomodoro-stat-tab-on，会被上面两类 hover 顶成灰底）。 */
+    .pomodoro-stat-tab:hover:not(.pomodoro-stat-tab-on) { background: var(--pz-btn, var(--background-secondary)); }
+    .pomodoro-stat-tab-on:hover { background: var(--pz-accent, var(--interactive-accent)); filter: brightness(1.07); }
 }
     .pomodoro-stat-tab-on { color: var(--pz-on-accent, var(--text-on-accent)); background: var(--pz-accent, var(--interactive-accent)); }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }

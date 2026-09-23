@@ -20,7 +20,8 @@
  * PF4 暂停会话「专注这个」不再续跑改归属 / PF5 load·save 失败兜底（notifyActionError 带重试）/
  * PF6 环形进度钳制 / PE1 tick 同值微写收敛 / PE2 点内容区焦点收回面板（Space 动线）/
  * PE3 空闲态跳过禁用 / disposed 旗标统一卸载竞态护栏 / recoveryNotified 恢复通知单发（PA-2）/
- * issues/144 拍板执行项：专注中重置走 core flow-dialog 确认（danger 反焦）。
+ * issues/144 拍板执行项：专注中重置需确认——2026-09-24 改为**按钮内二次确认**（原走 core
+ * flow-dialog，那层通用壳不吃番茄钟皮肤，风格化不一致）。
  */
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
@@ -29,7 +30,6 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice, notify, notifyActionError } from '../core/notice';
-import { openFlowDialog } from '../core/flow-dialog';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager, trimWithArchive } from './data';
@@ -553,10 +553,25 @@ function updateButtons(): void {
   startBtn.disabled = startLocked;
   const resetBtn = document.getElementById('pomodoro-btn-reset') as HTMLButtonElement | null;
   const skipBtn = document.getElementById('pomodoro-btn-skip') as HTMLButtonElement | null;
-  if (resetBtn) resetBtn.disabled = locked;
+  if (resetBtn) {
+    resetBtn.disabled = locked;
+    // 二次确认态：按钮自己变成确认条（警示色 + 「再点一次·重置」），三秒不点自动退回
+    const armed = armedBtn === 'reset';
+    const want = armed ? ARM_LABEL : '重置';
+    if (resetBtn.textContent !== want) resetBtn.textContent = want;
+    resetBtn.classList.toggle('pomodoro-btn-armed', armed);
+    resetBtn.title = armed ? '再点一次即重置本阶段（进度作废）' : '重置本阶段';
+  }
   // 深审 PE3：空闲态没有可跳过的阶段（跳的是当前阶段）——禁用，防一键落「短休息待开始」
   // 意外态且 phase-completed 事件静默落盘（重启后仍是意外态）；命令链 skipBreak 的 warning 口径不变
-  if (skipBtn) skipBtn.disabled = locked || state.phase === 'idle';
+  if (skipBtn) {
+    skipBtn.disabled = locked || state.phase === 'idle';
+    const armed = armedBtn === 'skip';
+    const want = armed ? ARM_LABEL : '跳过';
+    if (skipBtn.textContent !== want) skipBtn.textContent = want;
+    skipBtn.classList.toggle('pomodoro-btn-armed', armed);
+    skipBtn.title = armed ? '再点一次即跳过本阶段（不计入历史）' : '跳过本阶段';
+  }
 }
 
 /** 状态变更统一入口：transition → 落盘（完成事件）→ 通知/声音 → tick 生命周期 → 渲染 */
@@ -795,13 +810,16 @@ export function pomodoroSettingsSchema(): SettingsSchema {
 
 function bindEvents(): void {
   const startBtn = document.getElementById('pomodoro-btn-start')!;
-  startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
-  // issues/144 拍板执行项：专注中「重置」加确认（走 core flow-dialog 单源，danger 反焦）；空闲/停止态直接重置
-  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => void resetWithConfirm());
+  startBtn.addEventListener('click', () => {
+    if (armedBtn !== null) disarmConfirm(); // 点了主按钮即撤销待确认（避免误触连击）
+    applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start');
+  });
+  // 2026-09-24 拍板：重置 / 跳过 都不再弹确认框，改按钮内二次确认（见 confirmOrRun 块注）
+  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => resetWithConfirm());
   // 深审 PE3：updateButtons 已对 idle 禁用跳过；此处守卫双保险（防程序化触发绕过 disabled）
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => {
     if (state.phase === 'idle') return;
-    applyAction('skip');
+    skipWithConfirm();
   });
   // 统计两档切换（issue 357）：近 7 天明细 / 近 6 月趋势
   document.getElementById('pomodoro-stat-tab-week')?.addEventListener('click', () => setStatMode('week'));
@@ -826,26 +844,48 @@ function bindEvents(): void {
 }
 
 /**
- * 重置确认（issues/144 拍板执行项「专注中重置加确认」）：走 core flow-dialog 单源；
- * 危险主动作 danger 反焦（焦点反落「继续计时」，回车不再直通重置）。空闲/停止满时长直接重置
- * 不打扰（无进度可作废）。效率线「notifyUndo 事后撤销」替代方案仅登记不采——拍板原文是确认框。
+ * ==================== 按钮内二次确认（2026-09-24 拍板：替代确认弹窗） ====================
+ *
+ * 「重置 / 跳过」都是作废当前进度的危险动作，原先弹 core flow-dialog 确认——但那层弹窗不吃
+ * 番茄钟皮肤（通用壳配色，风格化不一致），且打断感重。改为**按钮自身变成二次确认态**：
+ * 第一次点 → 按钮染警示色、文案改「再点一次·重置」；三秒内再点才真正执行；超时 / 点了别的
+ * 按钮 / 关面板即自动解除。焦点与回车不再被弹窗劫持。
  */
+
+/** 已 armed 的按钮（null = 无）；一次只可能有一个在等确认 */
+let armedBtn: 'reset' | 'skip' | null = null;
+/** armed 期间的「点别处即解除」监听（捕获阶段；句柄留存便于精确摘除） */
+let armedOutside: ((e: MouseEvent) => void) | null = null;
+/** 确认态文案：短疑问句 + 警示色（用户 2026-09-24 拍板：不要倒计时自毁） */
+const ARM_LABEL = '确认';
+
+function disarmConfirm(): void {
+  if (armedOutside) { document.removeEventListener('click', armedOutside, true); armedOutside = null; }
+  armedBtn = null;
+  updateButtons();
+}
+
+/** 第一次点 → 按钮变「确认？」；再点 → 执行；点别处 → 解除。一律先问，不看有无进度 */
+function confirmOrRun(kind: 'reset' | 'skip', run: () => void): void {
+  if (armedBtn === kind) { disarmConfirm(); run(); return; }
+  if (armedBtn !== null) disarmConfirm(); // 改点另一个按钮：前一个确认态作废
+  armedBtn = kind;
+  updateButtons();
+  const btn = document.getElementById(kind === 'reset' ? 'pomodoro-btn-reset' : 'pomodoro-btn-skip');
+  armedOutside = (e: MouseEvent) => {
+    const t = e.target as Node | null;
+    if (btn && t && btn.contains(t)) return; // 点自己 = 执行（由按钮自身的 click 处理）
+    disarmConfirm(); // 点别处 = 撤销待确认
+  };
+  document.addEventListener('click', armedOutside, true);
+}
+
 function resetWithConfirm(): void {
-  const focusing = state.phase === 'focus' && (state.endTime !== null || state.paused);
-  if (!focusing) {
-    applyAction('reset');
-    return;
-  }
-  void openFlowDialog({
-    title: '重置专注',
-    message: '专注进行中，重置后本阶段进度作废（不计入历史）',
-    actions: [
-      { label: '继续计时', value: 'cancel' },
-      { label: '重置', value: 'ok', cta: true, danger: true },
-    ],
-  }).then((v) => {
-    if (v === 'ok') applyAction('reset');
-  });
+  confirmOrRun('reset', () => applyAction('reset'));
+}
+
+function skipWithConfirm(): void {
+  confirmOrRun('skip', () => applyAction('skip'));
 }
 
 function buildDOM(): void {
@@ -957,6 +997,7 @@ export async function ensurePomodoro(app: App): Promise<void> {
  * 无动画宿主（jsdom）/ 评审 RM 同步收口——行为与今天完全一致。
  */
 export function closePomodoro(immediate = false): void {
+  if (armedBtn !== null) disarmConfirm(); // 关面板即解除待确认（摘掉全局监听）
   if (maskEl) {
     const el = maskEl;
     maskEl = null;
