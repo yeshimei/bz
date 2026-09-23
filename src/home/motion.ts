@@ -139,6 +139,8 @@ export function motionRendered(overlay: HTMLElement, boot: boolean): void {
   const entries = overlay.querySelector<HTMLElement>('[data-home-entries]');
   const flow = overlay.querySelector<HTMLElement>('[data-home-flow]');
   const next = overlay.querySelector<HTMLElement>('[data-home-next]');
+  // 预告卡倾斜/光泽 = **绑定件**，不是编排：静默档也得挂（详见 bindNextTilt 注释）
+  bindNextTilt(next, narrow);
   if (!boot) {
     // 后台刷新（keepHome 落地等）：整屏不闪；河道静默补挂（innerHTML 重建会冲掉注入件）
     if (flow) { const tl = flow.querySelector<HTMLElement>('.bz-home-timeline'); if (tl) ensureRiver(tl, false); }
@@ -198,9 +200,27 @@ export function motionRendered(overlay: HTMLElement, boot: boolean): void {
            { opacity: 1, clipPath: 'inset(0 0 -8% 0)', transform: 'none' }],
           { duration: M.base + 120, easing: E.out, fill: 'backwards' });
       });
-      if (!narrow && canHover()) bindTilt(el);
     });
   }
+}
+
+/**
+ * 明天预告卡的 3D 倾斜 + 跟手光泽：**绑定件**（往卡里注入 .bz-hm-glare + 挂 pointermove），
+ * 不是首屏编排。
+ *
+ * 坑（2026-09-23 用户报「BZ 与原型动效不一样」）：`renderAll` 每次全量重写
+ * `[data-home-next]` 的 innerHTML（ui.ts:514），`.bz-home-pr` 元素是全新的——注入的光泽层
+ * 与监听随旧元素一起没了。而 bindTilt 原先只挂在 boot 档、静默档（上面 `!boot` 早退分支）
+ * 不挂，于是：**插件里关闭再打开（showOverlay → refreshRiverAndRender）就没动效了**；
+ * 原型壳每次都是首屏渲染，永远看得到 → 两侧表现不一致。
+ *
+ * 挂在 boot 判据之外，两个档位都走这一处：静默档本来就不闪（bindTilt 自身不产生动画，
+ * 只加类 + 注入 opacity:0 的光泽层），且 bindTilt 有 `dataset.hmTilt` 守卫、重复调用幂等。
+ * RM 下仍不挂（评审模拟 RM 的零编排口径）。
+ */
+function bindNextTilt(next: HTMLElement | null, narrow: boolean): void {
+  if (!next || reduced() || narrow || !canHover()) return;
+  next.querySelectorAll<HTMLElement>('.bz-home-pr').forEach(bindTilt);
 }
 
 /* ================= 周历切天：旧河退场 → 重写 → 新河揭出 ================= */

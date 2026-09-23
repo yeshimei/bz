@@ -45,12 +45,15 @@
       大数字）经用户验收后回退，理由：色块一屏之内更先读到「哪几天有动静」。
       类名契约保留：--hit/--sel、data-home-weekday、bz-home-wk-n（tests 锚点）。
       关闭钮仅移动端显示；标题 2026-09-09 用户拍板退役（桌面/移动都去掉） ---- */
-.bz-home-head { display: flex; align-items: center; gap: var(--bz-space-lg); padding: 11px 18px 10px; border-bottom: 1px solid var(--h-line); flex: none; }
-/* 2026-09-09 日历整体 ×1.2：格宽 24→29、条高 22→26、字 9.5→11.4、缝 5→6（用户拍板） */
-.bz-home-week { display: flex; gap: 6px; }
-.bz-home-panel .bz-home-wk { width: 29px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 11.4px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
+.bz-home-head { display: flex; align-items: center; gap: var(--bz-space-lg); padding: 8px 16px 8px; border-bottom: 1px solid var(--h-line); flex: none; }
+/* 2026-09-09 日历整体 ×1.2：格宽 24→29、条高 22→26、字 9.5→11.4、缝 5→6（用户拍板）
+   2026-09-23 用户拍板：头行整体收小一档（格宽 29→25、条高 26→21、字 11.4→10.5、格缝 6→5）
+   + 色块与下方星期字之间留出边距（2→5）——原先 2px 近乎贴死，字被色块压着读。
+   移动档不跟着缩：格宽另有 §8.2 触控下限依据，仅在容器断点里钉住条高（见下） */
+.bz-home-week { display: flex; gap: 5px; }
+.bz-home-panel .bz-home-wk { width: 25px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 10.5px; color: var(--h-dim); display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
 .bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
-.bz-home-wk i { display: block; height: 26px; border-radius: 7px; background: #efede3; }
+.bz-home-wk i { display: block; height: 21px; border-radius: 6px; background: #efede3; }
 .theme-dark .bz-home-wk i { background: #33312a; }
 @media (hover: hover) {
 .bz-home-panel .bz-home-wk:hover i { background: #e6e3d5; }
@@ -59,8 +62,8 @@
 .bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
 .bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
 .bz-home-panel .bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
-/* 今天：红星期字（数字行已去，今天不再靠「今」字；切到别的天也认得出哪天是今天） */
-.bz-home-wk--today .bz-home-wk-n { color: var(--h-red); }
+/* 2026-09-23 用户拍板：今天不再染红星期字（原 --today 红字退役）。
+   --today 类与 aria-label 的「今天」保留——读屏仍能听出哪天是今天，只是视觉上不再特殊上色。 */
 .bz-home-date { margin-left: auto; font-size: var(--bz-font-meta); color: var(--h-dim); font-family: var(--h-mono); letter-spacing: .1em; }
 .bz-home-panel .bz-home-close { display: none; }
 
@@ -202,8 +205,12 @@
   /* 周历/时间线/预告 同档 ×1.5（基数见基座规则；周历 11.4×1.5=17.1，时刻列加宽容纳 18px）。
      触控热区（ui P2-2）：格宽 29→34（步距 34+6gap=40px 达 §8.2 下限）——不挂 bz-touch-target
      外扩类：7 格 × 外扩会互叠串格（core 注释口径），抬格宽是行距紧凑场景的正解；
-     头行宽度余量核算：7×34+6×6=274 + 头行 gap + 关闭钮 36 ≈ 322px ≤ 360 屏可用宽。 */
+     头行宽度余量核算：7×34+6×6=274 + 头行 gap + 关闭钮 36 ≈ 322px ≤ 360 屏可用宽。
+     2026-09-23 桌面档收小后：移动档把格缝/条高钉回旧值（5→6、21→26），步距守 40px 下限，
+     条高不跟着缩窄（34 宽配 21 矮会显扁）。 */
+  .bz-home-week { gap: 6px; }
   .bz-home-panel .bz-home-wk { width: 34px; font-size: 17.1px; }
+  .bz-home-panel .bz-home-wk i { height: 26px; }
   .bz-home-sec-t { font-size: 16.5px; }
   .bz-home-ev-tm { font-size: 18px; width: 58px; }
   .bz-home-ev-tx { font-size: 21.75px; }
