@@ -130,7 +130,8 @@ describe('批 B（bz-fix-fav-view）样式契约：vvh 单源 / 负 token calc /
 
   it('UI-02（C-UI4 同形态）：负 token 必须走 calc，`-var(` 无效声明零残留', () => {
     expect(favCss()).not.toContain('-var(');
-    expect(favCss()).toContain('margin: 0 calc(-1 * var(--bz-space-xs))');
+    // 2026-09-23 拍板：卡墙上移补呼吸（margin 顶 10px），负 token 仍走 calc 单点不变
+    expect(favCss()).toContain('margin: 10px calc(-1 * var(--bz-space-xs)) 0');
   });
 
   it('func-6：标签编辑弹窗独立内容根与表单同皮（:is 组并列承载，.bz-fav-form 保持表单专用契约钩子）', () => {
