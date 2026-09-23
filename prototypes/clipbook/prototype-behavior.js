@@ -1,5 +1,5 @@
-/* 源指纹 de3240b05c9f577b · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 9864797b13515e58 · 仓内输入 106 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -1797,15 +1797,15 @@ var BZW_clipbook = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -7784,7 +7784,7 @@ ${c.trim()}
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M2 = 10;
+    const M3 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -7811,7 +7811,7 @@ ${c.trim()}
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
         moved = true;
         cancel();
       }
@@ -10842,15 +10842,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -13002,10 +13002,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b = after.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b = after2.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -20598,6 +20598,120 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/settings-panel/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function motionSwitchFlip(sw, on) {
+    if (!sw || reduced()) return;
+    waapi(
+      sw,
+      on ? [{ transform: "scale(1)", filter: "brightness(1)" }, { transform: "scale(1.14)", offset: 0.38, filter: "brightness(1.25)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(1)" }, { transform: "scale(1.1)", offset: 0.4 }, { transform: "none" }],
+      { duration: M.base - 40, easing: E.out }
+    );
+  }
+  function motionSelectPick(sel) {
+    if (!sel || reduced()) return;
+    waapi(
+      sel,
+      [{ filter: "brightness(1)" }, { filter: "brightness(1.09)", offset: 0.45 }, { filter: "brightness(1)" }],
+      { duration: M.base - 60, easing: E.out }
+    );
+    const car = sel.querySelector(".bz-select-car");
+    if (car) {
+      waapi(
+        car,
+        [{ transform: "rotate(90deg)" }, { transform: "rotate(112deg) scale(1.22)", offset: 0.42 }, { transform: "rotate(90deg)" }],
+        { duration: M.base - 20, easing: E.out }
+      );
+    }
+  }
+  function motionCardChoose(card) {
+    if (!card || reduced()) return;
+    waapi(
+      card,
+      [
+        { transform: "scale(1)", filter: "brightness(1)" },
+        { transform: "scale(.96)", offset: 0.3, filter: "brightness(1.12)" },
+        { transform: "scale(1.03)", offset: 0.66 },
+        { transform: "none", filter: "brightness(1)" }
+      ],
+      { duration: M.base, easing: E.out }
+    );
+  }
+  function motionInputSaved(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [{ filter: "brightness(1)" }, { filter: "brightness(1.045)", offset: 0.5 }, { filter: "brightness(1)" }],
+      { duration: M.move + 60, easing: E.out }
+    );
+  }
+  function motionInputReject(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-5px)", offset: 0.22 },
+        { transform: "translateX(4px)", offset: 0.46 },
+        { transform: "translateX(-2px)", offset: 0.72 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: M.base + 20, easing: E.out }
+    );
+    input.classList.add("bz-spm-reject");
+    after(M.base + 160, () => input.classList.remove("bz-spm-reject"));
+  }
+  function motionInputAdjust(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [{ transform: "scale(.985)" }, { transform: "scale(1.012)", offset: 0.55 }, { transform: "none" }],
+      { duration: M.move + 40, easing: E.out }
+    );
+  }
+  var M, E, timers;
+  var init_motion = __esm({
+    "src/settings-panel/motion.ts"() {
+      M = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      timers = /* @__PURE__ */ new Set();
+    }
+  });
+
   // src/settings-panel/renderer.ts
   var renderer_exports = {};
   __export(renderer_exports, {
@@ -20819,6 +20933,7 @@ ${bodyText.substring(0, 6e3)}`;
           }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
+          motionSwitchFlip(sw, v);
           safePersist(() => acc.persist(), rowName || "开关设置");
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
           refresh();
@@ -20838,6 +20953,7 @@ ${bodyText.substring(0, 6e3)}`;
           onCommit: (v) => {
             var _a2;
             acc.write(v);
+            motionInputSaved(input);
             safePersist(() => acc.persist(), rowName || "文本设置");
             (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
             warn.fire(v);
@@ -20858,6 +20974,7 @@ ${bodyText.substring(0, 6e3)}`;
           onCommit: (v) => {
             var _a2;
             acc.write(v);
+            motionInputSaved(input.querySelector(".bz-sp-secret-input"));
             safePersist(() => acc.persist(), rowName || "密钥设置");
             (_a2 = sec.onChange) == null ? void 0 : _a2.call(sec, v, ctx);
             refresh();
@@ -20879,6 +20996,7 @@ ${bodyText.substring(0, 6e3)}`;
           if (timer !== null) window.clearTimeout(timer);
           if (!dirty2) return;
           acc.write(ta.value);
+          motionInputSaved(ta);
           safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
           refresh();
@@ -20921,8 +21039,13 @@ ${bodyText.substring(0, 6e3)}`;
             var _a2, _b2;
             if (raw.trim() === "") return;
             const v = parseClampedNumber(raw, row.min, row.max);
-            if (v === null) return String((_a2 = acc.read()) != null ? _a2 : "");
+            if (v === null) {
+              motionInputReject(input);
+              return String((_a2 = acc.read()) != null ? _a2 : "");
+            }
             acc.write(v);
+            if (String(v) !== raw.trim()) motionInputAdjust(input);
+            else motionInputSaved(input);
             safePersist(() => acc.persist(), rowName || "数字设置");
             (_b2 = row.onChange) == null ? void 0 : _b2.call(row, v, ctx);
             warn.fire(raw);
@@ -20982,6 +21105,7 @@ ${bodyText.substring(0, 6e3)}`;
           }
           closeMenu2();
           vspan.textContent = labelOf(o.value);
+          motionSelectPick(sel);
           safePersist(() => acc.persist(), rowName || "下拉设置");
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, o.value, ctx);
           refresh();
@@ -21184,6 +21308,7 @@ ${bodyText.substring(0, 6e3)}`;
             });
             c.classList.add("is-on");
             c.setAttribute("aria-checked", "true");
+            motionCardChoose(c);
             safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b2 = c.dataset.spCard) != null ? _b2 : "", ctx);
             refresh();
@@ -21336,6 +21461,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_esc_manager();
       init_render2();
       init_ui2();
+      init_motion();
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
@@ -22463,23 +22589,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M.appRef = null;
-    M.open = false;
-    M.articles = [];
-    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M.clipNotes = null;
-    M.clipUrls = /* @__PURE__ */ new Set();
-    M.sel = defaultSel();
-    M.cur = null;
-    M.list = [];
-    M.upInfo = {};
-    M.mobDetailOpen = false;
+    M2.appRef = null;
+    M2.open = false;
+    M2.articles = [];
+    M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M2.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M2.clipNotes = null;
+    M2.clipUrls = /* @__PURE__ */ new Set();
+    M2.sel = defaultSel();
+    M2.cur = null;
+    M2.list = [];
+    M2.upInfo = {};
+    M2.mobDetailOpen = false;
   }
-  var M;
+  var M2;
   var init_state = __esm({
     "src/clipbook/state.ts"() {
-      M = {
+      M2 = {
         appRef: null,
         open: false,
         articles: [],
@@ -22580,22 +22706,22 @@ ${bodyText.substring(0, 6e3)}`;
     var _a;
     const res = await readNewsData();
     if (res.missing) {
-      M.articles = [];
-      M.clipNotes = null;
-      M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = emptySidecar();
-      M.upInfo = {};
-      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+      M2.articles = [];
+      M2.clipNotes = null;
+      M2.clipUrls = /* @__PURE__ */ new Set();
+      M2.sidecar = emptySidecar();
+      M2.upInfo = {};
+      M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M2.sidecar, clipNotes: null, clipUrls: M2.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M.articles = [];
-      M.clipNotes = null;
-      M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = emptySidecar();
-      M.upInfo = {};
-      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+      M2.articles = [];
+      M2.clipNotes = null;
+      M2.clipUrls = /* @__PURE__ */ new Set();
+      M2.sidecar = emptySidecar();
+      M2.upInfo = {};
+      M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M2.sidecar, clipNotes: null, clipUrls: M2.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a : 30;
@@ -22632,13 +22758,13 @@ ${bodyText.substring(0, 6e3)}`;
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M.articles = data.articles;
-    M.stats = data.stats;
-    M.sidecar = sidecar;
-    M.clipNotes = clipNotes;
-    M.clipUrls = clipUrls;
-    M.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M.upInfo };
+    M2.articles = data.articles;
+    M2.stats = data.stats;
+    M2.sidecar = sidecar;
+    M2.clipNotes = clipNotes;
+    M2.clipUrls = clipUrls;
+    M2.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M2.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -22662,8 +22788,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M.articles || []) keys.add(a.id);
-    for (const n of M.clipNotes || []) {
+    for (const a of M2.articles || []) keys.add(a.id);
+    for (const n of M2.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -22939,7 +23065,7 @@ ${bodyText.substring(0, 6e3)}`;
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M.appRef = app;
+    M2.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -22947,13 +23073,13 @@ ${bodyText.substring(0, 6e3)}`;
   function showPanel() {
     var _a;
     if (!overlayEl2) {
-      buildDom2(M.appRef);
+      buildDom2(M2.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M.open = true;
+    M2.open = true;
     beginSession();
     if (dirty || !loaded) {
       if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -22966,7 +23092,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M.open && overlayEl2) return Promise.resolve();
+    if (!M2.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -22983,7 +23109,7 @@ ${bodyText.substring(0, 6e3)}`;
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M.open) renderAll();
+      if (M2.open) renderAll();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -22996,7 +23122,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M.open) return;
+    if (!M2.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -23019,8 +23145,8 @@ ${bodyText.substring(0, 6e3)}`;
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M.open = false;
-    M.mobDetailOpen = false;
+    M2.open = false;
+    M2.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -23060,8 +23186,8 @@ ${bodyText.substring(0, 6e3)}`;
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M.open = false;
-    M.mobDetailOpen = false;
+    M2.open = false;
+    M2.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -23160,14 +23286,14 @@ ${bodyText.substring(0, 6e3)}`;
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
+      if (t.closest("[data-clip-open-note]") && M2.cur) openNote(M2.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a2, _b;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b = (_a2 = e.target).closest) == null ? void 0 : _b.call(_a2, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M.cur) openNote(M.cur);
+        if (M2.cur) openNote(M2.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -23210,8 +23336,8 @@ ${bodyText.substring(0, 6e3)}`;
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a2;
-      if (((_a2 = M.cur) == null ? void 0 : _a2.st) === "saved") return;
-      void doSave(M.cur);
+      if (((_a2 = M2.cur) == null ? void 0 : _a2.st) === "saved") return;
+      void doSave(M2.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -23233,9 +23359,9 @@ ${bodyText.substring(0, 6e3)}`;
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M2.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M2.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M2.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -23250,7 +23376,7 @@ ${bodyText.substring(0, 6e3)}`;
     escHandle2 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M.mobDetailOpen) {
+        if (M2.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -23296,13 +23422,13 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function selectSource(src) {
-    M.sel = {
+    M2.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M.mobDetailOpen = false;
+    M2.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -23311,7 +23437,7 @@ ${bodyText.substring(0, 6e3)}`;
     renderAll();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M.sel.kind && String(src.platform || "") === M.sel.platform && (src.up ? String(src.up) : null) === M.sel.up && String(src.site || "") === M.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M2.sel.kind && String(src.platform || "") === M2.sel.platform && (src.up ? String(src.up) : null) === M2.sel.up && String(src.site || "") === M2.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -23330,16 +23456,16 @@ ${bodyText.substring(0, 6e3)}`;
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll() {
-    if (!M.open) return;
+    if (!M2.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M.mobDetailOpen) {
-      if (M.cur) renderMobDetail();
+    if (M2.mobDetailOpen) {
+      if (M2.cur) renderMobDetail();
       else {
-        M.mobDetailOpen = false;
+        M2.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -23347,7 +23473,7 @@ ${bodyText.substring(0, 6e3)}`;
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M.mobDetailOpen = false;
+    M2.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll();
   }
@@ -23355,17 +23481,17 @@ ${bodyText.substring(0, 6e3)}`;
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M2.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M.sel;
+    const s = M2.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+    return queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], currentSrc(), M2.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -23381,7 +23507,7 @@ ${bodyText.substring(0, 6e3)}`;
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
+    const b = bucketByState(queryBySourceFull(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -23389,7 +23515,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -23429,39 +23555,39 @@ ${bodyText.substring(0, 6e3)}`;
   function renderRail() {
     var _a, _b, _c, _d;
     if (!railListEl) return;
-    const arts = M.articles;
-    const clipNotes = M.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source2, M.upInfo).filter(matchesSearch).length;
+    const arts = M2.articles;
+    const clipNotes = M2.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M2.sidecar, M2.clipUrls, clipNotes, source2, M2.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
-      const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M2.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M2.sidecar.savedArchive || []).map((x) => x.url)), M2.clipUrls)) {
+      const full = queryBySource(arts, M2.sidecar, M2.clipUrls, clipNotes, { kind: "site", site: row.site }, M2.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active = M.sel.kind === "site" && M.sel.site === row.site;
+      const active = M2.sel.kind === "site" && M2.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b = (_a = M.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
+        const backfilled = (_b = (_a = M2.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active = M.sel.kind === "inbox" && M.sel.platform === "B站" && M.sel.up === uid;
+      const active = M2.sel.kind === "inbox" && M2.sel.platform === "B站" && M2.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active, name.slice(0, 1));
     }
-    const clipActive = M.sel.kind === "clip";
+    const clipActive = M2.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M2.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -23486,9 +23612,9 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     const trySelect = () => {
-      const hit = M.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M2.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M.open) showPanel();
+      if (!M2.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -23501,10 +23627,10 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], source2, M2.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], source2, M2.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -23546,26 +23672,26 @@ ${bodyText.substring(0, 6e3)}`;
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M.cur = null;
+      M2.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M.cur = null;
+        M2.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
-        M.cur = list[0];
+      if (!list.some((a) => a.id === (M2.cur && M2.cur.id))) {
+        M2.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M.list = list;
+      listEl.innerHTML = tocListHtml(list, M2.cur ? M2.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M2.list = list;
       bindItemMenus();
       return;
     }
@@ -23573,27 +23699,27 @@ ${bodyText.substring(0, 6e3)}`;
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M.cur = null;
+      M2.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M.cur && M.cur.id))) {
-      M.cur = flat[0];
+    if (!flat.some((a) => a.id === (M2.cur && M2.cur.id))) {
+      M2.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M.cur ? M.cur.id : null;
+    const curId = M2.cur ? M2.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M.cur = null;
+        M2.cur = null;
         if (readerEl) renderReader();
-        M.list = [];
+        M2.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M.list = hit;
+      M2.list = hit;
       bindItemMenus();
       return;
     }
@@ -23611,7 +23737,7 @@ ${bodyText.substring(0, 6e3)}`;
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M.list = flat;
+    M2.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -23624,10 +23750,10 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M.list;
+    const all = M2.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M2.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -23703,8 +23829,8 @@ ${bodyText.substring(0, 6e3)}`;
   function transformBodyForRead(a, body) {
     var _a, _b;
     if (a.origin !== "news") return body;
-    const marks = ((_a = M.sidecar.marks) == null ? void 0 : _a[a.id]) || [];
-    const swaps = ((_b = M.sidecar.savedImages) == null ? void 0 : _b[a.id]) || [];
+    const marks = ((_a = M2.sidecar.marks) == null ? void 0 : _a[a.id]) || [];
+    const swaps = ((_b = M2.sidecar.savedImages) == null ? void 0 : _b[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -23719,7 +23845,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M.cur;
+    const a = M2.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -23748,7 +23874,7 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M2.cur && M2.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -23759,13 +23885,13 @@ ${bodyText.substring(0, 6e3)}`;
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M.cur && M.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M2.cur && M2.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -23780,11 +23906,11 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M.cur && M.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M2.cur && M2.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M.mobDetailOpen && M.cur && M.cur.id === a.id && mobDetailEl) {
+    if (M2.mobDetailOpen && M2.cur && M2.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -23826,12 +23952,12 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M2.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M.cur ? list.findIndex((x) => x.id === M.cur.id) : -1;
+    const idx = M2.cur ? list.findIndex((x) => x.id === M2.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
+    if (next && (!M2.cur || next.id !== M2.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -23840,19 +23966,19 @@ ${bodyText.substring(0, 6e3)}`;
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M.cur || M.cur.id !== a.id;
+    const changed = !M2.cur || M2.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M.cur) {
+    if (changed && M2.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M.cur.id, sc.scrollTop);
+        readScrollMemo.set(M2.cur.id, sc.scrollTop);
       }
     }
-    M.cur = a;
+    M2.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -23989,25 +24115,25 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function refreshAfterAction() {
     var _a;
-    const prevId = (_a = M.cur) == null ? void 0 : _a.id;
-    const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a = M2.cur) == null ? void 0 : _a.id;
+    const prevIdx = M2.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M.cur = flat.find((x) => x.id === prevId) || M.cur;
+      M2.cur = flat.find((x) => x.id === prevId) || M2.cur;
     } else if (flat.length) {
-      M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M.cur && M.cur.id !== prevId;
+      M2.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M2.cur && M2.cur.id !== prevId;
     } else {
-      M.cur = null;
+      M2.cur = null;
     }
-    if (advanced && M.cur) markReadOnOpen(M.cur);
+    if (advanced && M2.cur) markReadOnOpen(M2.cur);
     renderAll();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M2.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -24037,9 +24163,9 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M.articles;
-    const clipNotes = M.clipNotes || [];
-    const savedUrls = new Set((M.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M2.articles;
+    const clipNotes = M2.clipNotes || [];
+    const savedUrls = new Set((M2.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -24149,8 +24275,8 @@ ${bodyText.substring(0, 6e3)}`;
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M.cur = a;
-    M.mobDetailOpen = true;
+    M2.cur = a;
+    M2.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -24161,12 +24287,12 @@ ${bodyText.substring(0, 6e3)}`;
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M2.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M.stats = res.stats;
-      if (M.open && !M.mobDetailOpen) {
+      if (res && res.changed && res.stats) M2.stats = res.stats;
+      if (M2.open && !M2.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -24175,8 +24301,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderMobDetail() {
     var _a;
-    if (!mobDetailEl || !M.cur) return;
-    const a = M.cur;
+    if (!mobDetailEl || !M2.cur) return;
+    const a = M2.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -24208,7 +24334,7 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -24281,7 +24407,7 @@ ${bodyText.substring(0, 6e3)}`;
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M.cur;
+    const a = M2.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -24297,7 +24423,7 @@ ${bodyText.substring(0, 6e3)}`;
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M.cur;
+    const a = M2.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -24315,7 +24441,7 @@ ${bodyText.substring(0, 6e3)}`;
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M.open) return;
+    if (!M2.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -24378,7 +24504,7 @@ ${bodyText.substring(0, 6e3)}`;
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M.cur && M.cur.id === articleId ? M.cur : null;
+    return M2.cur && M2.cur.id === articleId ? M2.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -24436,10 +24562,10 @@ ${bodyText.substring(0, 6e3)}`;
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M2.cur && M2.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M.mobDetailOpen) return;
+    if (!mobDetailEl || !M2.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -24466,12 +24592,12 @@ ${bodyText.substring(0, 6e3)}`;
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M.cur || M.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M.cur);
-    if (M.mobDetailOpen) refreshMobBodyInPlace(M.cur);
+    if (!M2.cur || M2.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M2.cur);
+    if (M2.mobDetailOpen) refreshMobBodyInPlace(M2.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -24488,8 +24614,8 @@ ${bodyText.substring(0, 6e3)}`;
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M.sidecar = await addPendingSourceNote(a.id, notePath);
+        M2.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M2.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -24518,7 +24644,7 @@ ${bodyText.substring(0, 6e3)}`;
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M.sidecar = res.sidecar;
+      if (res.sidecar) M2.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -24576,7 +24702,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M.sidecar = await addPendingSourceNote(a.id, notePath);
+        M2.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -24726,8 +24852,8 @@ ${bodyText.substring(0, 6e3)}`;
       maxWidth: 560,
       schema,
       onClose: () => {
-        M.clipNotes = null;
-        M.clipUrls = /* @__PURE__ */ new Set();
+        M2.clipNotes = null;
+        M2.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -25137,20 +25263,20 @@ ${bodyText.substring(0, 6e3)}`;
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;

@@ -1418,3 +1418,58 @@
 /* choiceCards 全宽卡组（上下结构行的卡容器） */
 .bz-sp-set-cards { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* ═══════════ 动效层注入件（bz-spm-*，motion.ts 消费） ═══════════
+ * 纪律：注入件一律 absolute + pointer-events:none + aria-hidden；只动 transform/opacity/
+ * filter/clip-path，几何零改写；色彩反馈走 CSS 类 transition（与「滑轨动画归 CSS」同口径）。
+ * 不自造滚动条（core 界面级单源隐藏，ADR-0122）。 */
+
+/* 定位基准：萤标垫在侧栏之下、尘光铺在内容滚动域之上（relative 无偏移值，零几何改写） */
+.bz-sp-desk-side { position: relative; }
+.bz-sp-desk-main { position: relative; }
+.bz-sp-mob-page-body { position: relative; }
+
+/* 萤标：左栏选中项背后的柔光（尺寸/位移由 motion.ts 同步；弹簧趋近，DOM 序保证实底画在光上） */
+.bz-spm-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 10px;
+  background: var(--sp-accent);
+  opacity: 0;
+  filter: blur(11px);
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.24s ease;
+  z-index: 0;
+}
+.bz-spm-cursor.is-on { opacity: 0.3; }
+
+/* 灯下尘：内容区常驻微尘画布（低透明光点，菜单/提层 z 10/20 仍在尘上） */
+.bz-spm-dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* 卡簧弹回：数字校验拒绝红晕（类由 motion.ts 挂/摘；色彩 transition 承担，几何零改写） */
+.bz-sp-desk .bz-input,
+.bz-sp-mobile .bz-input {
+  transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
+}
+.bz-input.bz-spm-reject {
+  border-color: #c2543f !important;
+  box-shadow: 0 0 0 3px rgba(194, 84, 63, 0.16) !important;
+}
+
+/* 危险位：「重置本域」hover 色温转警示暖红（transition 平滑；压既有 hover 规则之后生效） */
+.bz-sp-page-reset {
+  transition: color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
+}
+@media (hover: hover) {
+  .bz-sp-page-reset:hover {
+    color: #c2543f;
+    border-color: rgba(194, 84, 63, 0.5);
+  }
+}
+

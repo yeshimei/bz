@@ -1,5 +1,5 @@
-/* 源指纹 30850c2880d6b09a · 仓内输入 256 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 681f9edd8681ca8e · 仓内输入 257 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M10, s, ms) {
+        function createDate(y, m, d, h, M11, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M10, s, ms);
+            date = new Date(y + 400, m, d, h, M11, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M10, s, ms);
+            date = new Date(y, m, d, h, M11, s, ms);
           }
           return date;
         }
@@ -6851,7 +6851,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M10 = 10;
+    const M11 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6878,7 +6878,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M10 || Math.abs(t.clientY - sy) > M10) {
+      if (Math.abs(t.clientX - sx) > M11 || Math.abs(t.clientY - sy) > M11) {
         moved = true;
         cancel();
       }
@@ -15004,6 +15004,590 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/settings-panel/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canHover() {
+    try {
+      return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function pumpFrame(now) {
+    pumpRaf = 0;
+    for (const tick of [...pumpTicks]) {
+      try {
+        tick(now);
+      } catch (e) {
+      }
+    }
+    if (pumpTicks.size) pumpEnsure();
+  }
+  function pumpEnsure() {
+    if (pumpRaf || typeof requestAnimationFrame !== "function") return;
+    pumpRaf = requestAnimationFrame(pumpFrame);
+  }
+  function pumpStart() {
+    pumpEnsure();
+    if (!pumpGuard && typeof window !== "undefined" && typeof window.setInterval === "function") {
+      pumpGuard = window.setInterval(() => {
+        if (pumpTicks.size && !pumpRaf) pumpEnsure();
+      }, 220);
+    }
+  }
+  function pumpAdd(tick) {
+    pumpTicks.add(tick);
+    pumpStart();
+  }
+  function pumpDel(tick) {
+    pumpTicks.delete(tick);
+    if (!pumpTicks.size && pumpGuard) {
+      clearInterval(pumpGuard);
+      pumpGuard = 0;
+    }
+  }
+  function motionPanelIn(popup, mask) {
+    if (!popup) return;
+    popup.style.opacity = "";
+    popup.style.filter = "";
+    if (mask) {
+      mask.style.opacity = "";
+      waapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.move + 40, easing: E.out });
+    }
+    if (popup.classList.contains("bz-sp-mobile")) {
+      waapi(
+        popup,
+        [{ opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)" }],
+        { duration: M3.base + 60, easing: E.out }
+      );
+      return;
+    }
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translate(-50%, calc(-50% + 16px)) scale(.976)", filter: "blur(9px)" },
+        { opacity: 1, transform: "translate(-50%, calc(-50% - 2px)) scale(1.004)", offset: 0.72 },
+        { opacity: 1, transform: "translate(-50%, -50%)", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 180, easing: E.out }
+    );
+  }
+  function motionRendered(pane) {
+    if (!pane || !pane.isConnected) return;
+    cancelPending();
+    if (reduced()) return;
+    const head = pane.querySelector(".bz-sp-page-head");
+    if (head) {
+      [...head.children].forEach((el, i) => {
+        waapi(
+          el,
+          [{ opacity: 0, transform: "translateY(-5px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
+          { duration: M3.base, delay: i * 40, easing: E.out, fill: "backwards" }
+        );
+      });
+    }
+    const groups = [...pane.querySelectorAll(".bz-sp-group")].filter((g) => g.style.display !== "none");
+    groups.forEach((g, i) => {
+      waapi(
+        g,
+        [
+          { opacity: 0, transform: "translateY(12px) scale(.988)", clipPath: "inset(0 0 100% 0)", filter: "blur(4px)" },
+          { opacity: 1, transform: "translateY(3px) scale(.996)", clipPath: "inset(0 0 -6% 0)", offset: 0.72, filter: "blur(0px)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 -6% 0)" }
+        ],
+        { duration: M3.base + 140, delay: 80 + Math.min(i, 7) * 70, easing: E.out, fill: "backwards" }
+      );
+      [...g.querySelectorAll(":scope .bz-sp-set-row")].slice(0, 6).forEach((row, j) => {
+        if (row.style.display === "none") return;
+        waapi(
+          row,
+          [{ transform: "translateY(7px)", filter: "blur(2px)" }, { transform: "none", filter: "blur(0px)" }],
+          { duration: M3.base, delay: 80 + Math.min(i, 7) * 70 + 60 + j * STAG, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+    const empty = pane.querySelector(".bz-empty");
+    if (empty && !groups.length) {
+      waapi(
+        empty,
+        [{ opacity: 0, transform: "translateY(8px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
+        { duration: M3.base + 60, delay: 160, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionMobList(list) {
+    if (!list || !list.isConnected || reduced()) return;
+    const items = [...list.querySelectorAll(".bz-sp-mob-item")];
+    items.forEach((el, i) => {
+      if (i >= 12) return;
+      waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
+        { duration: M3.base, delay: Math.min(i, 11) * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionNavSynced(nav) {
+    if (!nav || reduced()) return;
+    const side = nav.parentElement;
+    if (!side) return;
+    let st = cursorStates.get(nav);
+    if (!st) {
+      const el = document.createElement("span");
+      el.className = "bz-spm-cursor";
+      el.setAttribute("aria-hidden", "true");
+      try {
+        side.prepend(el);
+      } catch (e) {
+        return;
+      }
+      st = {
+        side,
+        nav,
+        el,
+        x: 0,
+        y: 0,
+        vx: 0,
+        vy: 0,
+        tx: 0,
+        ty: 0,
+        init: false,
+        onScroll: () => motionNavSynced(nav),
+        tick: (now) => {
+          if (!st) return;
+          st.vx = (st.vx + (st.tx - st.x) * 0.14) * 0.68;
+          st.vy = (st.vy + (st.ty - st.y) * 0.14) * 0.68;
+          st.x += st.vx;
+          st.y += st.vy;
+          st.el.style.transform = `translate3d(${st.x.toFixed(2)}px, ${st.y.toFixed(2)}px, 0)`;
+          if (Math.abs(st.tx - st.x) < 0.3 && Math.abs(st.ty - st.y) < 0.3 && Math.abs(st.vx) < 0.05 && Math.abs(st.vy) < 0.05) {
+            pumpDel(st.tick);
+          }
+        }
+      };
+      cursorStates.set(nav, st);
+      side.addEventListener("scroll", st.onScroll, { passive: true });
+    }
+    const target = nav.querySelector(".bz-sp-nav-item.on");
+    if (!target) {
+      st.el.classList.remove("is-on");
+      return;
+    }
+    const tr = target.getBoundingClientRect();
+    const sr = st.side.getBoundingClientRect();
+    st.tx = tr.left - sr.left;
+    st.ty = tr.top - sr.top;
+    st.el.style.width = `${Math.max(1, tr.width).toFixed(1)}px`;
+    st.el.style.height = `${Math.max(1, tr.height).toFixed(1)}px`;
+    if (!st.init) {
+      st.init = true;
+      st.x = st.tx;
+      st.y = st.ty;
+      st.vx = 0;
+      st.vy = 0;
+      st.el.style.transform = `translate3d(${st.tx.toFixed(2)}px, ${st.ty.toFixed(2)}px, 0)`;
+    } else if (Math.abs(st.tx - st.x) > 0.5 || Math.abs(st.ty - st.y) > 0.5) {
+      pumpAdd(st.tick);
+    }
+    st.el.classList.add("is-on");
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0;
+      a = a + 1831565813 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function hexToRgb(v) {
+    const m = /^#([0-9a-f]{6})$/i.exec(v.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255];
+  }
+  function dustResize(st) {
+    const w = st.host.clientWidth;
+    const h = st.host.clientHeight;
+    if (w < 10 || h < 10) return;
+    st.w = w;
+    st.h = h;
+    const dpr = Math.min(2, typeof window !== "undefined" && window.devicePixelRatio || 1);
+    st.fx.width = Math.round(w * dpr);
+    st.fx.height = Math.round(h * dpr);
+    st.fx.style.width = `${w}px`;
+    st.fx.style.height = `${h}px`;
+    st.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    st.rect = readHostRect(st.host);
+    const rng = mulberry32(20260923);
+    for (const m of st.motes) {
+      m.hx = rng() * w;
+      m.hy = rng() * h;
+    }
+  }
+  function readHostRect(host) {
+    try {
+      const r = host.getBoundingClientRect();
+      return { left: r.left, top: r.top };
+    } catch (e) {
+      return { left: 0, top: 0 };
+    }
+  }
+  function motionEnsureDust(popup) {
+    var _a2, _b2, _c;
+    if (!popup || reduced()) return;
+    const host = (_a2 = popup.querySelector(".bz-sp-desk-main")) != null ? _a2 : popup.querySelector(".bz-sp-mob-page-body");
+    if (!host) return;
+    const exist = dustStates.get(host);
+    if (exist) {
+      dustResize(exist);
+      if (exist.fx.isConnected) pumpAdd(exist.tick);
+      return;
+    }
+    let ctx = null;
+    try {
+      const probe = document.createElement("canvas");
+      ctx = probe.getContext("2d");
+    } catch (e) {
+      ctx = null;
+    }
+    if (!ctx) return;
+    const fx = document.createElement("canvas");
+    fx.className = "bz-spm-dust";
+    fx.setAttribute("aria-hidden", "true");
+    host.appendChild(fx);
+    const ctx2 = fx.getContext("2d");
+    if (!ctx2) {
+      fx.remove();
+      return;
+    }
+    let accent = [201, 90, 40];
+    let inkc = [122, 116, 102];
+    try {
+      const cs = getComputedStyle(host);
+      accent = (_b2 = hexToRgb(cs.getPropertyValue("--sp-accent"))) != null ? _b2 : accent;
+      inkc = (_c = hexToRgb(cs.getPropertyValue("--sp-ink-2"))) != null ? _c : inkc;
+    } catch (e) {
+    }
+    const rng = mulberry32(20260923);
+    const motes = [];
+    for (let i = 0; i < DUST_MAX; i++) {
+      motes.push({
+        hx: 0,
+        hy: 0,
+        ox: 0,
+        oy: 0,
+        ovx: 0,
+        ovy: 0,
+        ax: 5 + rng() * 10,
+        ay: 5 + rng() * 10,
+        fa: 0.05 + rng() * 0.12,
+        fb: 0.05 + rng() * 0.12,
+        ph: rng() * Math.PI * 2,
+        tw: 0.4 + rng() * 1.1,
+        r: 0.7 + rng() * 1.5,
+        ink: rng() < 0.22
+      });
+    }
+    const st = {
+      host,
+      fx,
+      ctx: ctx2,
+      motes,
+      w: 0,
+      h: 0,
+      rect: { left: 0, top: 0 },
+      px: -9999,
+      py: -9999,
+      ro: null,
+      onMove: (e) => {
+        st.px = e.clientX - st.rect.left;
+        st.py = e.clientY - st.rect.top;
+      },
+      onLeave: () => {
+        st.px = -9999;
+        st.py = -9999;
+      },
+      onScroll: () => {
+        st.rect = readHostRect(st.host);
+      },
+      tick: (_now) => {
+        const now = _now || 0;
+        if (!st.fx.isConnected) {
+          disposeDust(host);
+          return;
+        }
+        const t = now / 1e3;
+        const c = st.ctx;
+        c.clearRect(0, 0, st.w + 2, st.h + 2);
+        for (const m of st.motes) {
+          const dx = Math.sin(t * m.fa + m.ph) * m.ax;
+          const dy = Math.cos(t * m.fb + m.ph * 1.7) * m.ay;
+          const bx = m.hx + dx + m.ox;
+          const by = m.hy + dy + m.oy;
+          const fxp = bx - st.px;
+          const fyp = by - st.py;
+          const d2 = fxp * fxp + fyp * fyp;
+          if (d2 < 110 * 110 && d2 > 0.01) {
+            const d = Math.sqrt(d2);
+            const push = (1 - d / 110) * (1 - d / 110) * 1.15;
+            m.ovx += fxp / d * push;
+            m.ovy += fyp / d * push;
+          }
+          m.ovx = (m.ovx - m.ox * 0.03) * 0.9;
+          m.ovy = (m.ovy - m.oy * 0.03) * 0.9;
+          m.ox += m.ovx;
+          m.oy += m.ovy;
+          const x = m.hx + dx + m.ox;
+          const y = m.hy + dy + m.oy;
+          if (x < -8 || x > st.w + 8 || y < -8 || y > st.h + 8) continue;
+          const a = 0.05 + 0.11 * (0.5 + 0.5 * Math.sin(t * m.tw + m.ph));
+          const col = m.ink ? inkc : accent;
+          c.globalAlpha = a * 0.5;
+          c.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+          c.beginPath();
+          c.arc(x, y, m.r * 2.6, 0, 7);
+          c.fill();
+          c.globalAlpha = a * 2;
+          c.beginPath();
+          c.arc(x, y, m.r, 0, 7);
+          c.fill();
+        }
+        c.globalAlpha = 1;
+      }
+    };
+    dustStates.set(host, st);
+    dustResize(st);
+    if (typeof ResizeObserver === "function") {
+      st.ro = new ResizeObserver(() => dustResize(st));
+      st.ro.observe(host);
+    }
+    host.addEventListener("pointermove", st.onMove, { passive: true });
+    host.addEventListener("pointerleave", st.onLeave, { passive: true });
+    host.addEventListener("scroll", st.onScroll, { passive: true });
+    pumpAdd(st.tick);
+  }
+  function disposeDust(host) {
+    var _a2;
+    const st = dustStates.get(host);
+    if (!st) return;
+    pumpDel(st.tick);
+    try {
+      (_a2 = st.ro) == null ? void 0 : _a2.disconnect();
+    } catch (e) {
+    }
+    try {
+      st.host.removeEventListener("pointermove", st.onMove);
+      st.host.removeEventListener("pointerleave", st.onLeave);
+      st.host.removeEventListener("scroll", st.onScroll);
+    } catch (e) {
+    }
+    try {
+      st.fx.remove();
+    } catch (e) {
+    }
+    dustStates.delete(host);
+  }
+  function motionSwitchFlip(sw, on) {
+    if (!sw || reduced()) return;
+    waapi(
+      sw,
+      on ? [{ transform: "scale(1)", filter: "brightness(1)" }, { transform: "scale(1.14)", offset: 0.38, filter: "brightness(1.25)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(1)" }, { transform: "scale(1.1)", offset: 0.4 }, { transform: "none" }],
+      { duration: M3.base - 40, easing: E.out }
+    );
+  }
+  function motionSelectPick(sel) {
+    if (!sel || reduced()) return;
+    waapi(
+      sel,
+      [{ filter: "brightness(1)" }, { filter: "brightness(1.09)", offset: 0.45 }, { filter: "brightness(1)" }],
+      { duration: M3.base - 60, easing: E.out }
+    );
+    const car = sel.querySelector(".bz-select-car");
+    if (car) {
+      waapi(
+        car,
+        [{ transform: "rotate(90deg)" }, { transform: "rotate(112deg) scale(1.22)", offset: 0.42 }, { transform: "rotate(90deg)" }],
+        { duration: M3.base - 20, easing: E.out }
+      );
+    }
+  }
+  function motionCardChoose(card) {
+    if (!card || reduced()) return;
+    waapi(
+      card,
+      [
+        { transform: "scale(1)", filter: "brightness(1)" },
+        { transform: "scale(.96)", offset: 0.3, filter: "brightness(1.12)" },
+        { transform: "scale(1.03)", offset: 0.66 },
+        { transform: "none", filter: "brightness(1)" }
+      ],
+      { duration: M3.base, easing: E.out }
+    );
+  }
+  function motionInputSaved(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [{ filter: "brightness(1)" }, { filter: "brightness(1.045)", offset: 0.5 }, { filter: "brightness(1)" }],
+      { duration: M3.move + 60, easing: E.out }
+    );
+  }
+  function motionInputReject(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-5px)", offset: 0.22 },
+        { transform: "translateX(4px)", offset: 0.46 },
+        { transform: "translateX(-2px)", offset: 0.72 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: M3.base + 20, easing: E.out }
+    );
+    input.classList.add("bz-spm-reject");
+    after(M3.base + 160, () => input.classList.remove("bz-spm-reject"));
+  }
+  function motionInputAdjust(input) {
+    if (!input || reduced()) return;
+    waapi(
+      input,
+      [{ transform: "scale(.985)" }, { transform: "scale(1.012)", offset: 0.55 }, { transform: "none" }],
+      { duration: M3.move + 40, easing: E.out }
+    );
+  }
+  function motionBindPressFeel(popup) {
+    if (!popup || popup.dataset.spmFeel) return;
+    popup.dataset.spmFeel = "1";
+    const pressed = /* @__PURE__ */ new WeakMap();
+    popup.addEventListener("pointerdown", (e) => {
+      var _a2, _b2;
+      if (reduced()) return;
+      const el = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      if (!el || !popup.contains(el)) return;
+      pressed.set(el, Date.now());
+      waapi(el, [{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: 110, easing: E.out, fill: "forwards" });
+    });
+    const release = (e) => {
+      var _a2, _b2;
+      const el = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      const target = el && pressed.has(el) ? el : null;
+      if (!target) return;
+      pressed.delete(target);
+      waapi(target, [{ transform: "scale(.955)" }, { transform: "scale(1.02)", offset: 0.6 }, { transform: "none" }], { duration: M3.move + 40, easing: E.out });
+    };
+    popup.addEventListener("pointerup", release);
+    popup.addEventListener("pointercancel", release);
+  }
+  function motionBindNavFeel(nav) {
+    if (!nav || nav.dataset.spmNavFeel) return;
+    nav.dataset.spmNavFeel = "1";
+    if (!canHover() || reduced()) return;
+    nav.addEventListener("pointerover", (e) => {
+      var _a2, _b2, _c, _d;
+      const item = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, ".bz-sp-nav-item");
+      if (!item || item.classList.contains("on")) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, ".bz-sp-nav-item")) === item) return;
+      waapi(item, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M3.fast, easing: E.out });
+    });
+    nav.addEventListener("pointerout", (e) => {
+      var _a2, _b2, _c, _d;
+      const item = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, ".bz-sp-nav-item");
+      if (!item) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, ".bz-sp-nav-item")) === item) return;
+      waapi(item, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M3.fast, easing: E.out });
+    });
+  }
+  function motionSleep() {
+    cancelPending();
+    for (const st of [...dustStates.values()]) pumpDel(st.tick);
+    for (const st of cursorStates.values()) pumpDel(st.tick);
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const host of [...dustStates.keys()]) disposeDust(host);
+    for (const st of [...cursorStates.values()]) {
+      pumpDel(st.tick);
+      try {
+        st.el.remove();
+      } catch (e) {
+      }
+      try {
+        st.side.removeEventListener("scroll", st.onScroll);
+      } catch (e) {
+      }
+    }
+    cursorStates.clear();
+    if (pumpRaf && typeof cancelAnimationFrame === "function") {
+      try {
+        cancelAnimationFrame(pumpRaf);
+      } catch (e) {
+      }
+    }
+    pumpRaf = 0;
+    if (pumpGuard) {
+      window.clearInterval(pumpGuard);
+      pumpGuard = 0;
+    }
+    pumpTicks.clear();
+  }
+  var M3, E, STAG, timers, pumpTicks, pumpRaf, pumpGuard, cursorStates, dustStates, DUST_MAX, PRESS_SEL;
+  var init_motion = __esm({
+    "src/settings-panel/motion.ts"() {
+      M3 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      pumpTicks = /* @__PURE__ */ new Set();
+      pumpRaf = 0;
+      pumpGuard = 0;
+      cursorStates = /* @__PURE__ */ new Map();
+      dustStates = /* @__PURE__ */ new Map();
+      DUST_MAX = 44;
+      PRESS_SEL = ".bz-sp-btn, .bz-sw, .bz-sp-cardpick-card, .bz-sp-page-reset, .bz-sp-nav-item, .bz-sp-mob-item, .bz-btn";
+    }
+  });
+
   // src/settings-panel/renderer.ts
   var renderer_exports = {};
   __export(renderer_exports, {
@@ -15225,6 +15809,7 @@ ${n.content.slice(0, 2e3)}
           }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
+          motionSwitchFlip(sw, v);
           safePersist(() => acc.persist(), rowName || "开关设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
@@ -15244,6 +15829,7 @@ ${n.content.slice(0, 2e3)}
           onCommit: (v) => {
             var _a3;
             acc.write(v);
+            motionInputSaved(input);
             safePersist(() => acc.persist(), rowName || "文本设置");
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             warn.fire(v);
@@ -15264,6 +15850,7 @@ ${n.content.slice(0, 2e3)}
           onCommit: (v) => {
             var _a3;
             acc.write(v);
+            motionInputSaved(input.querySelector(".bz-sp-secret-input"));
             safePersist(() => acc.persist(), rowName || "密钥设置");
             (_a3 = sec.onChange) == null ? void 0 : _a3.call(sec, v, ctx);
             refresh2();
@@ -15285,6 +15872,7 @@ ${n.content.slice(0, 2e3)}
           if (timer !== null) window.clearTimeout(timer);
           if (!dirty2) return;
           acc.write(ta.value);
+          motionInputSaved(ta);
           safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
           refresh2();
@@ -15327,8 +15915,13 @@ ${n.content.slice(0, 2e3)}
             var _a3, _b3;
             if (raw.trim() === "") return;
             const v = parseClampedNumber(raw, row.min, row.max);
-            if (v === null) return String((_a3 = acc.read()) != null ? _a3 : "");
+            if (v === null) {
+              motionInputReject(input);
+              return String((_a3 = acc.read()) != null ? _a3 : "");
+            }
             acc.write(v);
+            if (String(v) !== raw.trim()) motionInputAdjust(input);
+            else motionInputSaved(input);
             safePersist(() => acc.persist(), rowName || "数字设置");
             (_b3 = row.onChange) == null ? void 0 : _b3.call(row, v, ctx);
             warn.fire(raw);
@@ -15388,6 +15981,7 @@ ${n.content.slice(0, 2e3)}
           }
           closeMenu2();
           vspan.textContent = labelOf(o.value);
+          motionSelectPick(sel);
           safePersist(() => acc.persist(), rowName || "下拉设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
           refresh2();
@@ -15590,6 +16184,7 @@ ${n.content.slice(0, 2e3)}
             });
             c.classList.add("is-on");
             c.setAttribute("aria-checked", "true");
+            motionCardChoose(c);
             safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
             refresh2();
@@ -15742,6 +16337,7 @@ ${n.content.slice(0, 2e3)}
       init_esc_manager();
       init_render3();
       init_ui();
+      init_motion();
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
@@ -20031,15 +20627,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E3 = pick.E;
+      const E4 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E3, nOut, stub);
+      const E1 = along(E4, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E3, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E4, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E4, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -22268,10 +22864,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after3 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after3.data.length);
-    const tail = after3.splitText(len);
-    (_b2 = after3.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after4 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after4.data.length);
+    const tail = after4.splitText(len);
+    (_b2 = after4.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -27419,12 +28015,12 @@ ${body}`;
       return DEFAULT_FOLDER2;
     }
   }
-  var DEFAULT_FOLDER2, M3;
+  var DEFAULT_FOLDER2, M4;
   var init_state3 = __esm({
     "src/gameshelf/state.ts"() {
       init_settings_provider();
       DEFAULT_FOLDER2 = "我的/游戏";
-      M3 = {
+      M4 = {
         currentOverlay: null,
         items: [],
         view: "shelf",
@@ -30044,10 +30640,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/state.ts
-  var M4;
+  var M5;
   var init_state4 = __esm({
     "src/memo/state.ts"() {
-      M4 = {
+      M5 = {
         appRef: null,
         overlay: null,
         items: [],
@@ -31480,16 +32076,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   // src/memo/ui.ts
   function syncSearchClear() {
     var _a2, _b2;
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
-    const btn = (_b2 = M4.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const btn = (_b2 = M5.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
     if (btn && input) btn.hidden = !input.value.trim();
   }
   function clearMemoSearch() {
     var _a2;
     searchDebounced.cancel();
-    M4.search = "";
+    M5.search = "";
     touchViewEpoch();
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
     if (input) input.value = "";
     syncSearchClear();
     renderAll();
@@ -31529,7 +32125,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function loadData() {
     try {
-      M4.items = await MemoData.loadItems();
+      M5.items = await MemoData.loadItems();
       loadFailed = false;
     } catch (e) {
       loadFailed = true;
@@ -31540,7 +32136,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function refresh() {
     var _a2, _b2;
     await loadData();
-    (_b2 = (_a2 = M4).renderFn) == null ? void 0 : _b2.call(_a2);
+    (_b2 = (_a2 = M5).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
     if (!it.due) return 3;
@@ -31548,27 +32144,27 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return st === "overdue" ? 0 : st === "today" ? 1 : 2;
   }
   function getVisibleItems() {
-    const kw = M4.search.trim().toLowerCase();
+    const kw = M5.search.trim().toLowerCase();
     const today = localDayKey();
-    let list = M4.items.filter((it) => {
-      if (M4.activeScene === "今日") {
+    let list = M5.items.filter((it) => {
+      if (M5.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
         } else if (!isTodayStr(it.completed, today)) {
           return false;
         }
-      } else if (M4.activeScene === "重要") {
+      } else if (M5.activeScene === "重要") {
         if (it.priority !== "important") return false;
-      } else if (M4.activeScene !== "全部" && it.scene !== M4.activeScene) return false;
+      } else if (M5.activeScene !== "全部" && it.scene !== M5.activeScene) return false;
       if (kw) {
         const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-    if (M4.pinnedNewId && M4.activeScene !== "全部") {
-      const pinned = M4.items.find((i) => i.id === M4.pinnedNewId);
+    if (M5.pinnedNewId && M5.activeScene !== "全部") {
+      const pinned = M5.items.find((i) => i.id === M5.pinnedNewId);
       if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
     }
     list.sort((a, b) => {
@@ -31576,12 +32172,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (ac !== bc) return ac ? 1 : -1;
       const dr = dueRank(a) - dueRank(b);
       if (dr !== 0) return dr;
-      if (M4.sortMode === "priority") {
+      if (M5.sortMode === "priority") {
         const pa = a.priority === "important" ? 0 : 1;
         const pb = b.priority === "important" ? 0 : 1;
         if (pa !== pb) return pa - pb;
       }
-      if (M4.sortMode === "created") {
+      if (M5.sortMode === "created") {
         return (b.created || "").localeCompare(a.created || "");
       }
       if (a.due && b.due) return a.due.localeCompare(b.due);
@@ -31592,11 +32188,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function sceneCounts() {
     const today = localDayKey();
     const counts = /* @__PURE__ */ new Map([
-      ["全部", M4.items.length],
+      ["全部", M5.items.length],
       ["今日", 0],
       ["重要", 0]
     ]);
-    for (const it of M4.items) {
+    for (const it of M5.items) {
       if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
       if (it.priority === "important") counts.set("重要", (counts.get("重要") || 0) + 1);
       const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
@@ -31608,8 +32204,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return counts;
   }
   function applyMemoSkin(skin) {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-memo-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "paper" ? "paper" : "editorial";
@@ -31633,8 +32229,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }, delay);
   }
   function playCardsEnter() {
-    if (!M4.overlay) return;
-    M4.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
+    if (!M5.overlay) return;
+    M5.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
       enterLayer(c, 20 + i * 34, 14);
     });
   }
@@ -31660,23 +32256,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     window.setTimeout(() => wrap2.remove(), PANEL_EXIT_MS);
   }
   function closeMemoPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.memoLastScene = M4.activeScene;
+        s.memoLastScene = M5.activeScene;
         void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
-      playPanelExit(M4.overlay);
-      M4.overlay.remove();
-      M4.overlay = null;
+      playPanelExit(M5.overlay);
+      M5.overlay.remove();
+      M5.overlay = null;
     }
     searchDebounced.cancel();
-    for (const [id, t] of M4.completeTimers) {
+    for (const [id, t] of M5.completeTimers) {
       clearTimeout(t);
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (it) void completeItem(it);
     }
-    M4.completeTimers.clear();
+    M5.completeTimers.clear();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -31689,19 +32285,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       panelFocusRelease();
       panelFocusRelease = null;
     }
-    M4.renderFn = null;
-    M4.pinnedNewId = null;
+    M5.renderFn = null;
+    M5.pinnedNewId = null;
     clipTitleHint = null;
   }
   function touchViewEpoch() {
     viewEpoch++;
   }
   function syncMemoPills() {
-    if (!M4.overlay) return;
-    syncSlidePills(M4.overlay, MEMO_PILL_TARGETS);
+    if (!M5.overlay) return;
+    syncSlidePills(M5.overlay, MEMO_PILL_TARGETS);
   }
   function renderAll() {
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     const items = getVisibleItems();
     renderNav();
     renderMobScenes();
@@ -31714,11 +32310,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function renderMainHead(items) {
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M4.activeScene);
+    titleEl.textContent = sceneLabel(M5.activeScene);
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
   }
@@ -31735,10 +32331,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
-    const nav = M4.overlay.querySelector("[data-memo-nav]");
+    const nav = M5.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
     const counts = sceneCounts();
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M5.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -31746,10 +32342,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function renderMobScenes() {
     if (!isMobileEnv()) return;
-    const wrap2 = M4.overlay.querySelector("[data-memo-mob-scenes]");
+    const wrap2 = M5.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap2) return;
     const keepLeft = wrap2.scrollLeft;
-    wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M4.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap2.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M5.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap2.scrollLeft = keepLeft;
     mountIcons(wrap2);
     wrap2.querySelectorAll("[data-memo-scene]").forEach((el) => {
@@ -31766,7 +32362,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
   function renderContent(items) {
-    const content = M4.overlay.querySelector("[data-memo-content]");
+    const content = M5.overlay.querySelector("[data-memo-content]");
     if (!content) return;
     const keepTop = content.scrollTop;
     const flipBefore = measureFlip(content, ".bz-memo-card", "memoId");
@@ -31788,8 +32384,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }));
         return;
       }
-      const emptyCopy = M4.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M4.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M4.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
-      const emptyActions = M4.search ? [
+      const emptyCopy = M5.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M5.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M5.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
+      const emptyActions = M5.search ? [
         uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearMemoSearch() }),
         uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })
       ] : [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
@@ -31805,7 +32401,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const done = items.filter((i) => i.completed);
     const urgent = active2.filter((i) => dueRank(i) <= 1);
     const normal = active2.filter((i) => dueRank(i) > 1);
-    const kw = M4.search.trim();
+    const kw = M5.search.trim();
     const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", kw);
     const sections = [];
     if (urgent.length) {
@@ -31817,16 +32413,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sections.push(...normal.map((it) => cardHtml4(it)));
     }
     if (done.length) {
-      const open = M4.showDone;
+      const open = M5.showDone;
       const win = doneWindowDays();
       const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
-      const listed = !open || M4.showEarlierDone ? done : recent2;
+      const listed = !open || M5.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(`<div class="bz-memo-donearea${doneJustOpened ? " bz-memo-areain" : ""}" data-memo-donearea><div>` + listed.map((it) => cardHtml4(it)).join("") + "</div></div>");
-        if (earlier > 0 && !M4.showEarlierDone) {
+        if (earlier > 0 && !M5.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
       }
@@ -31845,20 +32441,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M5.items.find((i) => i.id === el.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
     content.querySelectorAll("[data-memo-pos]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M5.items.find((i) => i.id === el.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
     content.querySelectorAll(".bz-memo-card").forEach((card) => {
       const id = card.dataset.memoId;
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (!it) return;
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -31899,7 +32495,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return head;
   }
   function openItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
       if (!file) {
@@ -31915,7 +32511,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function jumpToNote(it) {
     if (!it.notePath) return;
-    const app = M4.appRef;
+    const app = M5.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
@@ -31963,23 +32559,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void restoreItem(it);
       return;
     }
-    if (M4.completeTimers.has(it.id)) {
-      clearTimeout(M4.completeTimers.get(it.id));
-      M4.completeTimers.delete(it.id);
+    if (M5.completeTimers.has(it.id)) {
+      clearTimeout(M5.completeTimers.get(it.id));
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       return;
     }
     const timer = setTimeout(() => {
-      M4.completeTimers.delete(it.id);
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       void completeItem(it);
     }, 300);
-    M4.completeTimers.set(it.id, timer);
+    M5.completeTimers.set(it.id, timer);
     syncPendingCheck(it.id, true);
   }
   function bumpDoneBar() {
     var _a2;
-    const bar = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
+    const bar = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
     if (!bar) return;
     bar.classList.remove("bz-memo-donebar-bump");
     void bar.offsetWidth;
@@ -31992,14 +32588,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollTarget() {
     var _a2;
-    const cnt = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    const cnt = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
     if (!cnt) return null;
     const r = cnt.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
   function listLanding() {
     var _a2, _b2, _c;
-    const panel2 = (_b2 = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
+    const panel2 = (_b2 = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
     if (!panel2) return null;
     const first = panel2.querySelector(".bz-memo-card:not(.bz-memo-done)");
     if (first) {
@@ -32038,7 +32634,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const card = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
     if (!overlay2 || !card) return;
     const cr = card.getBoundingClientRect();
@@ -32158,7 +32754,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, true);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
     bumpDoneBar();
   }
@@ -32174,11 +32770,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, false);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
   }
   async function postponeItem(id, days) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it || !it.due) return;
     const keepHm = it.due.replace("T", " ").slice(11, 16) || "09:00";
     const next = (0, import_moment6.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format(`YYYY-MM-DD ${keepHm}`);
@@ -32193,7 +32789,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   async function togglePrio(id) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it) return;
     const to = it.priority === "important" ? "minor" : "important";
     try {
@@ -32208,7 +32804,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playDeleteExit(id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return Promise.resolve();
     card.classList.add("bz-memo-vanishing");
     return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
@@ -32243,7 +32839,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (!app) return;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
@@ -32326,7 +32922,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function playEditorShrink(popup, id) {
     var _a2;
     if (!id) return;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     const pr = popup.getBoundingClientRect();
     if (!card || pr.width < 4 || pr.height < 4) return;
     const cr = card.getBoundingClientRect();
@@ -32349,7 +32945,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playEditorGrow(popup, id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return;
     const cr = card.getBoundingClientRect();
     const pr = popup.getBoundingClientRect();
@@ -32471,8 +33067,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     prioField.appendChild(prioChoice.el);
     form.appendChild(prioField);
-    const knownScripts = [...new Set(M4.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M4.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    const knownScripts = [...new Set(M5.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M5.items.map((i) => i.courseName).filter((n) => !!n))].sort();
     function bindSug(input, list, onPick) {
       uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
     }
@@ -32647,7 +33243,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             };
             await MemoData.addItem(it);
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M4.pinnedNewId = it.id;
+            M5.pinnedNewId = it.id;
           }
           editorBusy = false;
           closeModal();
@@ -32711,7 +33307,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return actions;
   }
   function openMemoInSettings() {
-    const app = M4.appRef;
+    const app = M5.appRef;
     closeMemoPanel();
     if (!app) return;
     void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
@@ -32737,7 +33333,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const input = document.createElement("input");
     input.className = "bz-input";
     input.value = scene;
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
     hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
@@ -32771,7 +33367,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M4.activeScene === scene) M4.activeScene = name;
+          if (M5.activeScene === scene) M5.activeScene = name;
           renderAll();
           close();
         } catch (e) {
@@ -32807,7 +33403,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       notice("至少保留一个场景");
       return;
     }
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const ok = await openFlowDialog({
       title: "删除场景",
       message: count > 0 ? `确定删除场景「${scene}」吗？
@@ -32825,7 +33421,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     try {
       moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
       await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M4.activeScene === scene) M4.activeScene = "全部";
+      if (M5.activeScene === scene) M5.activeScene = "全部";
       renderAll();
     } catch (e) {
       if (moved > 0) {
@@ -32862,7 +33458,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_state4();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
-        M4.search = v;
+        M5.search = v;
         touchViewEpoch();
         nextEnterSoft = true;
         renderAll();
@@ -34806,13 +35402,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M5.overlay = null;
-    M5.db = null;
-    M5.status = null;
-    M5.year = "";
-    M5.q = "";
-    M5.sort = "recent";
-    M5.renderFn = null;
+    M6.overlay = null;
+    M6.db = null;
+    M6.status = null;
+    M6.year = "";
+    M6.q = "";
+    M6.sort = "recent";
+    M6.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -34907,11 +35503,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M5.db ? Object.values(M5.db.items) : [];
+    return M6.db ? Object.values(M6.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M6.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -34922,7 +35518,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M6.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -34945,7 +35541,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M5.overlay) {
+    if (M6.overlay) {
       closePanel();
       return;
     }
@@ -34962,18 +35558,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M6.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M5.year = "";
-    M5.db = await loadDatabase();
+    M6.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M6.year = "";
+    M6.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M5.overlay = overlay2;
-    M5.renderFn = () => renderAll2();
+    M6.overlay = overlay2;
+    M6.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
@@ -34988,8 +35584,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
-      else M5.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M6.year = v;
+      else M6.sort = v;
       renderAll2();
     };
     const onDocClick = (e) => {
@@ -35069,22 +35665,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M5.sort = segBtn.dataset.k;
+        M6.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
+        if (kind === "asset") M6.status = M6.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M5.overlay !== overlay2) return;
-        M5.q = inp.value.trim();
+        if (M6.overlay !== overlay2) return;
+        M6.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -35094,7 +35690,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M5.q = "";
+        M6.q = "";
         syncClear();
         renderAll2();
         if (refocus) inp.focus();
@@ -35174,13 +35770,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M5.overlay) {
-      M5.overlay.remove();
-      M5.overlay = null;
+    if (M6.overlay) {
+      M6.overlay.remove();
+      M6.overlay = null;
     }
-    M5.renderFn = null;
-    M5.db = null;
-    M5.q = "";
+    M6.renderFn = null;
+    M6.db = null;
+    M6.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -35201,16 +35797,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M5.db = await loadDatabase();
-          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+          M6.db = await loadDatabase();
+          (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M5.db = await loadDatabase();
-                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+                  M6.db = await loadDatabase();
+                  (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
                 } catch (e2) {
                 }
               })();
@@ -35245,37 +35841,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+        (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M5.db) return;
+    if (!M6.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M5.db);
+      await saveDatabase(M6.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
   }
   function renderAll2() {
-    if (!M5.overlay) return;
-    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
+    if (!M6.overlay) return;
+    const panel2 = M6.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M6, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M5.status = null;
-    else M5.status = M5.status === k ? null : k;
+    if (k === "__all") M6.status = null;
+    else M6.status = M6.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M5.db) {
+    if (M6.db) {
       items = itemList();
     } else {
       try {
@@ -35354,7 +35950,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
     const prevStatus = cur.current_status;
@@ -35370,8 +35966,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -35379,7 +35975,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -35394,8 +35990,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35440,22 +36036,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    if (!M5.db) return;
-    if (!M5.db.items[it.id]) {
+    if (!M6.db) return;
+    if (!M6.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
-    const snapshot2 = { ...M5.db.items[it.id] };
-    delete M5.db.items[it.id];
+    const snapshot2 = { ...M6.db.items[it.id] };
+    delete M6.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M5.db.items[snapshot2.id] = snapshot2;
+      M6.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -35463,18 +36059,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
-          if (M5.db.items[snapshot2.id]) {
+          if (!M6.db) M6.db = await loadDatabase();
+          if (M6.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M5.db.items[snapshot2.id] = snapshot2;
+          M6.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -35517,9 +36113,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M5.db) {
+    if (!M6.db) {
       void loadDatabase().then((db) => {
-        M5.db = db;
+        M6.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -35566,13 +36162,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -35625,7 +36221,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -35692,7 +36288,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -35722,7 +36318,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M5.db) throw new Error("数据库未加载");
+            if (!M6.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -35738,7 +36334,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M5.db.items[newItem.id] = newItem;
+            M6.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -35755,7 +36351,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M6, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui7 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -35779,7 +36375,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M5 = {
+      M6 = {
         overlay: null,
         db: null,
         status: null,
@@ -37158,23 +37754,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M6.appRef = null;
-    M6.open = false;
-    M6.articles = [];
-    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M6.clipNotes = null;
-    M6.clipUrls = /* @__PURE__ */ new Set();
-    M6.sel = defaultSel();
-    M6.cur = null;
-    M6.list = [];
-    M6.upInfo = {};
-    M6.mobDetailOpen = false;
+    M7.appRef = null;
+    M7.open = false;
+    M7.articles = [];
+    M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M7.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M7.clipNotes = null;
+    M7.clipUrls = /* @__PURE__ */ new Set();
+    M7.sel = defaultSel();
+    M7.cur = null;
+    M7.list = [];
+    M7.upInfo = {};
+    M7.mobDetailOpen = false;
   }
-  var M6;
+  var M7;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M6 = {
+      M7 = {
         appRef: null,
         open: false,
         articles: [],
@@ -37607,8 +38203,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M6.articles || []) keys.add(a.id);
-    for (const n of M6.clipNotes || []) {
+    for (const a of M7.articles || []) keys.add(a.id);
+    for (const n of M7.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -39164,22 +39760,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -39216,13 +39812,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M6.articles = data.articles;
-    M6.stats = data.stats;
-    M6.sidecar = sidecar;
-    M6.clipNotes = clipNotes;
-    M6.clipUrls = clipUrls;
-    M6.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
+    M7.articles = data.articles;
+    M7.stats = data.stats;
+    M7.sidecar = sidecar;
+    M7.clipNotes = clipNotes;
+    M7.clipUrls = clipUrls;
+    M7.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M7.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -39259,7 +39855,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M6.appRef = app;
+    M7.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -39267,13 +39863,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M6.appRef);
+      buildDom2(M7.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M6.open = true;
+    M7.open = true;
     beginSession();
     if (dirty || !loaded2) {
       if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -39286,7 +39882,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M6.open && overlayEl2) return Promise.resolve();
+    if (!M7.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -39303,7 +39899,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M6.open) renderAll3();
+      if (M7.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -39316,7 +39912,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M6.open) return;
+    if (!M7.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -39339,8 +39935,8 @@ ${c.trim()}
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -39380,8 +39976,8 @@ ${c.trim()}
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -39480,14 +40076,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
+      if (t.closest("[data-clip-open-note]") && M7.cur) openNote(M7.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M6.cur) openNote(M6.cur);
+        if (M7.cur) openNote(M7.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -39530,8 +40126,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M6.cur);
+      if (((_a3 = M7.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M7.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -39553,9 +40149,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M6.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M7.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M7.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M7.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -39570,7 +40166,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M6.mobDetailOpen) {
+        if (M7.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -39616,13 +40212,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M6.sel = {
+    M7.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -39631,7 +40227,7 @@ ${c.trim()}
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M7.sel.kind && String(src.platform || "") === M7.sel.platform && (src.up ? String(src.up) : null) === M7.sel.up && String(src.site || "") === M7.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -39650,16 +40246,16 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M6.mobDetailOpen) {
-      if (M6.cur) renderMobDetail();
+    if (M7.mobDetailOpen) {
+      if (M7.cur) renderMobDetail();
       else {
-        M6.mobDetailOpen = false;
+        M7.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -39667,7 +40263,7 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
@@ -39675,17 +40271,17 @@ ${c.trim()}
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M7.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M6.sel;
+    const s = M7.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], currentSrc(), M7.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -39701,7 +40297,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
+    const b = bucketByState(queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -39709,7 +40305,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -39749,39 +40345,39 @@ ${c.trim()}
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, source2, M7.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
-      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M7.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M7.sidecar.savedArchive || []).map((x) => x.url)), M7.clipUrls)) {
+      const full = queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, { kind: "site", site: row.site }, M7.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
+      const active2 = M7.sel.kind === "site" && M7.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M7.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
+      const active2 = M7.sel.kind === "inbox" && M7.sel.platform === "B站" && M7.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M6.sel.kind === "clip";
+    const clipActive = M7.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M7.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -39806,9 +40402,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M7.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M6.open) showPanel();
+      if (!M7.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -39821,10 +40417,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -39866,26 +40462,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
-        M6.cur = list[0];
+      if (!list.some((a) => a.id === (M7.cur && M7.cur.id))) {
+        M7.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M6.list = list;
+      listEl.innerHTML = tocListHtml(list, M7.cur ? M7.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M7.list = list;
       bindItemMenus();
       return;
     }
@@ -39893,27 +40489,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
-      M6.cur = flat[0];
+    if (!flat.some((a) => a.id === (M7.cur && M7.cur.id))) {
+      M7.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M6.cur ? M6.cur.id : null;
+    const curId = M7.cur ? M7.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
-        M6.list = [];
+        M7.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M6.list = hit;
+      M7.list = hit;
       bindItemMenus();
       return;
     }
@@ -39931,7 +40527,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M6.list = flat;
+    M7.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -39944,10 +40540,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M6.list;
+    const all = M7.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M7.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -40023,8 +40619,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M7.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M7.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -40039,7 +40635,7 @@ ${c.trim()}
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M6.cur;
+    const a = M7.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -40068,7 +40664,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -40079,13 +40675,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M7.cur && M7.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -40100,11 +40696,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M7.cur && M7.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
+    if (M7.mobDetailOpen && M7.cur && M7.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -40146,12 +40742,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M7.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
+    const idx = M7.cur ? list.findIndex((x) => x.id === M7.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
+    if (next && (!M7.cur || next.id !== M7.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -40160,19 +40756,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M6.cur || M6.cur.id !== a.id;
+    const changed = !M7.cur || M7.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M6.cur) {
+    if (changed && M7.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M6.cur.id, sc.scrollTop);
+        readScrollMemo.set(M7.cur.id, sc.scrollTop);
       }
     }
-    M6.cur = a;
+    M7.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -40309,25 +40905,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M7.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M7.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
+      M7.cur = flat.find((x) => x.id === prevId) || M7.cur;
     } else if (flat.length) {
-      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
+      M7.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M7.cur && M7.cur.id !== prevId;
     } else {
-      M6.cur = null;
+      M7.cur = null;
     }
-    if (advanced && M6.cur) markReadOnOpen(M6.cur);
+    if (advanced && M7.cur) markReadOnOpen(M7.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M7.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -40357,9 +40953,9 @@ ${c.trim()}
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const savedUrls = new Set((M7.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -40469,8 +41065,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M6.cur = a;
-    M6.mobDetailOpen = true;
+    M7.cur = a;
+    M7.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -40481,12 +41077,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M7.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M6.stats = res.stats;
-      if (M6.open && !M6.mobDetailOpen) {
+      if (res && res.changed && res.stats) M7.stats = res.stats;
+      if (M7.open && !M7.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -40495,8 +41091,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M6.cur) return;
-    const a = M6.cur;
+    if (!mobDetailEl || !M7.cur) return;
+    const a = M7.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -40528,7 +41124,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -40601,7 +41197,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -40617,7 +41213,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -40635,7 +41231,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -40698,7 +41294,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
+    return M7.cur && M7.cur.id === articleId ? M7.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -40756,10 +41352,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M6.mobDetailOpen) return;
+    if (!mobDetailEl || !M7.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -40786,12 +41382,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M6.cur || M6.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M6.cur);
-    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
+    if (!M7.cur || M7.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M7.cur);
+    if (M7.mobDetailOpen) refreshMobBodyInPlace(M7.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -40808,8 +41404,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -40838,7 +41434,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M6.sidecar = res.sidecar;
+      if (res.sidecar) M7.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -40896,7 +41492,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -41046,8 +41642,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M6.clipNotes = null;
-        M6.clipUrls = /* @__PURE__ */ new Set();
+        M7.clipNotes = null;
+        M7.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -41684,22 +42280,22 @@ ${c.trim()}
   });
 
   // src/favorites/motion.ts
-  function reduced() {
+  function reduced2() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
       return false;
     }
   }
-  function canHover() {
+  function canHover2() {
     try {
       return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
     } catch (e) {
       return false;
     }
   }
-  function waapi(el, frames, opts) {
-    if (!el || reduced() || typeof el.animate !== "function") {
+  function waapi2(el, frames, opts) {
+    if (!el || reduced2() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -41716,16 +42312,16 @@ ${c.trim()}
       return null;
     }
   }
-  function after(ms, fn) {
+  function after2(ms, fn) {
     const id = setTimeout(() => {
-      timers.delete(id);
+      timers2.delete(id);
       fn();
     }, ms);
-    timers.add(id);
+    timers2.add(id);
   }
-  function cancelPending() {
-    timers.forEach(clearTimeout);
-    timers.clear();
+  function cancelPending2() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
   }
   function findCard(board, id) {
     try {
@@ -41735,21 +42331,21 @@ ${c.trim()}
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
-  function motionPanelIn(overlay2) {
+  function motionPanelIn2(overlay2) {
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.move + 40, easing: E.out });
-    waapi(
+    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.move + 40, easing: E2.out });
+    waapi2(
       panel2,
       [
         { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
         { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 460, easing: E.out }
+      { duration: 460, easing: E2.out }
     );
   }
   function motionPanelOut(overlay2, done) {
@@ -41765,25 +42361,25 @@ ${c.trim()}
         done();
       }
     };
-    waapi(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M7.fast + 40, easing: E.out, fill: "forwards" });
-    const a = waapi(
+    waapi2(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M8.fast + 40, easing: E2.out, fill: "forwards" });
+    const a = waapi2(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M7.fast + 40, easing: E.out, fill: "forwards" }
+      { duration: M8.fast + 40, easing: E2.out, fill: "forwards" }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    setTimeout(finish, M7.fast + 120);
+    setTimeout(finish, M8.fast + 120);
   }
-  function motionRendered(overlay2, boot) {
+  function motionRendered2(overlay2, boot) {
     var _a2, _b2;
-    cancelPending();
+    cancelPending2();
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
     const board = overlay2.querySelector("[data-fav-content]");
@@ -41791,48 +42387,48 @@ ${c.trim()}
       if (board) ensureEmptyFloat(board);
       return;
     }
-    if (reduced()) return;
+    if (reduced2()) return;
     const h1 = panel2.querySelector(".bz-fav-head h1");
-    if (h1) waapi(
+    if (h1) waapi2(
       h1,
       [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.base, easing: E.out, fill: "both" }
+      { duration: M8.base, easing: E2.out, fill: "both" }
     );
     const chips = [...panel2.querySelectorAll("[data-fav-tags] button")];
     chips.forEach((chip2, i) => {
-      waapi(
+      waapi2(
         chip2,
         [
           { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
           { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M7.base + 60, delay: 60 + Math.min(i, 13) * STAG, easing: E.out, fill: "both" }
+        { duration: M8.base + 60, delay: 60 + Math.min(i, 13) * STAG2, easing: E2.out, fill: "both" }
       );
     });
     if (board) {
       const cards = [...board.querySelectorAll(".bz-fav-card")];
       const cold = (_b2 = (_a2 = cards[0]) == null ? void 0 : _a2.classList.contains("bz-fav-arch")) != null ? _b2 : false;
       cards.forEach((card, i) => {
-        const delay = 200 + Math.min(i, 16) * STAG;
+        const delay = 200 + Math.min(i, 16) * STAG2;
         if (cold) {
-          waapi(
+          waapi2(
             card,
             [
               { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
               { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
             ],
-            { duration: M7.base + 100, delay, easing: E.out, fill: "both" }
+            { duration: M8.base + 100, delay, easing: E2.out, fill: "both" }
           );
         } else {
-          waapi(
+          waapi2(
             card,
             [
               { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
               { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: M7.base + 90, delay, easing: E.out, fill: "both" }
+            { duration: M8.base + 90, delay, easing: E2.out, fill: "both" }
           );
           const tape = card.querySelector(".bz-fav-tape");
           if (tape) tapePress(tape, delay + 140);
@@ -41840,10 +42436,10 @@ ${c.trim()}
       });
       const empty = board.querySelector(".bz-fav-empty");
       if (empty && !cards.length) {
-        waapi(
+        waapi2(
           empty,
           [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
-          { duration: M7.base + 80, delay: 240, easing: E.out, fill: "both" }
+          { duration: M8.base + 80, delay: 240, easing: E2.out, fill: "both" }
         );
       }
       ensureEmptyFloat(board);
@@ -41851,27 +42447,27 @@ ${c.trim()}
   }
   function motionFilterSwitch(board, tagsRow, rewrite) {
     rewrite();
-    if (reduced() || typeof board.animate !== "function") return;
-    waapi(
+    if (reduced2() || typeof board.animate !== "function") return;
+    waapi2(
       board,
       [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.fast + 60, easing: E.out }
+      { duration: M8.fast + 60, easing: E2.out }
     );
     const fresh = board.querySelectorAll(".bz-fav-card");
     const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
     fresh.forEach((card, i) => {
-      waapi(
+      waapi2(
         card,
         // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
         cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base, delay: Math.min(i, 14) * STAG, easing: E.out, fill: "both" }
+        { duration: M8.base, delay: Math.min(i, 14) * STAG2, easing: E2.out, fill: "both" }
       );
     });
     const ne = board.querySelector(".bz-fav-empty");
-    if (ne) waapi(
+    if (ne) waapi2(
       ne,
       [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.base, easing: E.out, fill: "both" }
+      { duration: M8.base, easing: E2.out, fill: "both" }
     );
     if (tagsRow) chipSnap(tagsRow);
     ensureEmptyFloat(board);
@@ -41879,10 +42475,10 @@ ${c.trim()}
   function chipSnap(row) {
     const on = row.querySelector("button.bz-fav-on");
     if (!on) return;
-    waapi(
+    waapi2(
       on,
       [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
-      { duration: M7.base - 20, easing: E.out }
+      { duration: M8.base - 20, easing: E2.out }
     );
   }
   function motionBindChipFeel(row) {
@@ -41891,12 +42487,12 @@ ${c.trim()}
     const pressed = /* @__PURE__ */ new WeakMap();
     row.addEventListener("pointerover", (e) => {
       var _a2, _b2, _c, _d;
-      if (!canHover() || reduced()) return;
+      if (!canHover2() || reduced2()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       pressed.delete(chip2);
-      waapi(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M7.fast, easing: E.out });
+      waapi2(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M8.fast, easing: E2.out });
     });
     row.addEventListener("pointerout", (e) => {
       var _a2, _b2, _c, _d;
@@ -41904,22 +42500,22 @@ ${c.trim()}
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       if (pressed.get(chip2)) return;
-      waapi(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M7.fast, easing: E.out });
+      waapi2(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M8.fast, easing: E2.out });
     });
     row.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced()) return;
+      if (reduced2()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       pressed.set(chip2, Date.now());
-      waapi(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E.out, fill: "forwards" });
+      waapi2(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E2.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !pressed.get(chip2)) return;
       pressed.delete(chip2);
-      waapi(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M7.base - 60, easing: E.out });
+      waapi2(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M8.base - 60, easing: E2.out });
     };
     row.addEventListener("pointerup", release);
     row.addEventListener("pointercancel", release);
@@ -41931,11 +42527,11 @@ ${c.trim()}
     let held = null;
     content.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced()) return;
+      if (reduced2()) return;
       const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
       if (!card) return;
       held = card;
-      waapi(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E.out, fill: "forwards" });
+      waapi2(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E2.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
@@ -41944,34 +42540,34 @@ ${c.trim()}
       if (!target) return;
       if (card && card !== held) return;
       held = null;
-      waapi(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M7.move + 40, easing: E.out });
+      waapi2(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M8.move + 40, easing: E2.out });
     };
     content.addEventListener("pointerup", release);
     content.addEventListener("pointercancel", release);
     content.addEventListener("pointerleave", release);
   }
   function motionCardPick(card) {
-    if (reduced()) return;
-    waapi(
+    if (reduced2()) return;
+    waapi2(
       card,
       [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
-      { duration: M7.move + 160, easing: E.out }
+      { duration: M8.move + 160, easing: E2.out }
     );
   }
   function tapePress(tape, delay) {
     const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
-    waapi(
+    waapi2(
       tape,
       [
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
       ],
-      { duration: M7.move + 80, delay, easing: E.out }
+      { duration: M8.move + 80, delay, easing: E2.out }
     );
   }
   function sheen(card, delay) {
-    if (reduced() || card.querySelector(".bz-favm-sheen")) return;
+    if (reduced2() || card.querySelector(".bz-favm-sheen")) return;
     const wrap2 = document.createElement("span");
     wrap2.className = "bz-favm-sheen";
     wrap2.setAttribute("aria-hidden", "true");
@@ -41979,62 +42575,62 @@ ${c.trim()}
     band.className = "bz-favm-sheen-band";
     wrap2.appendChild(band);
     card.appendChild(wrap2);
-    after(delay, () => {
-      const a = waapi(
+    after2(delay, () => {
+      const a = waapi2(
         band,
         [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
-        { duration: 620, easing: E.out }
+        { duration: 620, easing: E2.out }
       );
-      after(a ? 680 : 0, () => wrap2.remove());
+      after2(a ? 680 : 0, () => wrap2.remove());
     });
   }
   function motionCardLanded(board, id, kind) {
-    if (reduced()) return;
+    if (reduced2()) return;
     const card = findCard(board, id);
     if (!card) return;
     if (kind === "add") {
-      waapi(
+      waapi2(
         card,
         [
           { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
           { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
           { opacity: 1, transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 160, easing: E.out }
+        { duration: M8.base + 160, easing: E2.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 100);
       sheen(card, 140);
     } else if (kind === "edit") {
-      waapi(
+      waapi2(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 80, easing: E.out }
+        { duration: M8.base + 80, easing: E2.out }
       );
     } else if (kind === "pin") {
-      waapi(
+      waapi2(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 140, easing: E.out }
+        { duration: M8.base + 140, easing: E2.out }
       );
     } else {
-      waapi(
+      waapi2(
         card,
         [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base + 100, easing: E.out }
+        { duration: M8.base + 100, easing: E2.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 120);
     }
   }
   function motionCaptureRects(board) {
-    if (!board || reduced() || typeof board.animate !== "function") return null;
+    if (!board || reduced2() || typeof board.animate !== "function") return null;
     const map = /* @__PURE__ */ new Map();
     board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
       const r = c.getBoundingClientRect();
@@ -42043,8 +42639,8 @@ ${c.trim()}
     return map;
   }
   function motionPinFlip(board, before, pinnedId) {
-    if (!before || before.size === 0 || reduced()) {
-      if (!reduced()) motionCardLanded(board, pinnedId, "pin");
+    if (!before || before.size === 0 || reduced2()) {
+      if (!reduced2()) motionCardLanded(board, pinnedId, "pin");
       return;
     }
     let played = false;
@@ -42056,20 +42652,20 @@ ${c.trim()}
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
       played = true;
       if (card.dataset.favId === pinnedId) {
-        waapi(
+        waapi2(
           card,
           [
             { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
             { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
             { transform: "none", filter: "brightness(1)" }
           ],
-          { duration: M7.move + 140, easing: E.move }
+          { duration: M8.move + 140, easing: E2.move }
         );
       } else {
-        waapi(
+        waapi2(
           card,
           [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
-          { duration: M7.move + 60, delay: 30, easing: E.move }
+          { duration: M8.move + 60, delay: 30, easing: E2.move }
         );
       }
     });
@@ -42077,7 +42673,7 @@ ${c.trim()}
   }
   function motionCardDepart(board, id, kind) {
     const card = board ? findCard(board, id) : null;
-    if (!card || reduced() || typeof card.animate !== "function") return Promise.resolve();
+    if (!card || reduced2() || typeof card.animate !== "function") return Promise.resolve();
     return new Promise((res) => {
       let settled = false;
       const finish = () => {
@@ -42096,50 +42692,50 @@ ${c.trim()}
         { opacity: 1, transform: "none" },
         { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
       ];
-      const a = waapi(card, frames, { duration: M7.move + (kind === "del" ? 0 : 40), easing: E.out, fill: "forwards" });
+      const a = waapi2(card, frames, { duration: M8.move + (kind === "del" ? 0 : 40), easing: E2.out, fill: "forwards" });
       if (!a) {
         finish();
         return;
       }
       a.finished.then(finish).catch(finish);
-      setTimeout(finish, M7.move + 140);
+      setTimeout(finish, M8.move + 140);
     });
   }
   function motionFormIn(popup) {
-    if (reduced()) return;
+    if (reduced2()) return;
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
     rows.forEach((el, i) => {
-      waapi(
+      waapi2(
         el,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M7.base, delay: i * 24, easing: E.out, fill: "both" }
+        { duration: M8.base, delay: i * 24, easing: E2.out, fill: "both" }
       );
     });
   }
   function motionSwitchPop(el) {
-    if (reduced()) return;
-    waapi(
+    if (reduced2()) return;
+    waapi2(
       el,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
-      { duration: M7.base - 40, easing: E.out }
+      { duration: M8.base - 40, easing: E2.out }
     );
   }
   function motionPickPop(btn, on) {
-    if (reduced()) return;
-    waapi(
+    if (reduced2()) return;
+    waapi2(
       btn,
       on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
-      { duration: M7.base - 60, easing: E.out }
+      { duration: M8.base - 60, easing: E2.out }
     );
   }
   function motionErrShake(errEl) {
-    if (reduced()) return;
-    waapi(
+    if (reduced2()) return;
+    waapi2(
       errEl,
       [
         { transform: "translateX(0)" },
@@ -42148,7 +42744,7 @@ ${c.trim()}
         { transform: "translateX(-2px)", offset: 0.72 },
         { transform: "translateX(0)" }
       ],
-      { duration: M7.base + 20, easing: E.out }
+      { duration: M8.base + 20, easing: E2.out }
     );
   }
   function motionAiBusy(btn, on) {
@@ -42157,10 +42753,10 @@ ${c.trim()}
       prev.cancel();
       aiAnims.delete(btn);
     }
-    if (!on || reduced()) return;
+    if (!on || reduced2()) return;
     const star = btn.querySelector("svg");
     const target = star != null ? star : btn;
-    const a = waapi(
+    const a = waapi2(
       target,
       [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
       { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
@@ -42168,12 +42764,12 @@ ${c.trim()}
     if (a) aiAnims.set(btn, a);
   }
   function motionTagMgrRows(wrap2) {
-    if (reduced()) return;
+    if (reduced2()) return;
     [...wrap2.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
-      waapi(
+      waapi2(
         el,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base, delay: Math.min(i, 10) * STAG, easing: E.out, fill: "both" }
+        { duration: M8.base, delay: Math.min(i, 10) * STAG2, easing: E2.out, fill: "both" }
       );
     });
   }
@@ -42181,15 +42777,15 @@ ${c.trim()}
     const ic2 = board.querySelector(".bz-empty .bz-empty-ic");
     if (!ic2 || ic2.dataset.favmFloat) return;
     ic2.dataset.favmFloat = "1";
-    const a = waapi(
+    const a = waapi2(
       ic2,
       [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
       { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
     );
     if (a) floatAnims.set(ic2, a);
   }
-  function motionTeardown() {
-    cancelPending();
+  function motionTeardown2() {
+    cancelPending2();
     for (const a of floatAnims.values()) {
       try {
         a.cancel();
@@ -42209,16 +42805,16 @@ ${c.trim()}
     } catch (e) {
     }
   }
-  var M7, E, STAG, timers, aiAnims, floatAnims;
-  var init_motion = __esm({
+  var M8, E2, STAG2, timers2, aiAnims, floatAnims;
+  var init_motion2 = __esm({
     "src/favorites/motion.ts"() {
-      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E = {
+      M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E2 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG = 30;
-      timers = /* @__PURE__ */ new Set();
+      STAG2 = 30;
+      timers2 = /* @__PURE__ */ new Set();
       aiAnims = /* @__PURE__ */ new Map();
       floatAnims = /* @__PURE__ */ new Map();
       if (typeof window !== "undefined") {
@@ -42306,14 +42902,14 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M8.overlay = null;
-    M8.items = [];
-    M8.tag = null;
-    M8.archived = false;
-    M8.sort = "new";
-    M8.renderFn = null;
-    M8.stage = "idle";
-    motionTeardown();
+    M9.overlay = null;
+    M9.items = [];
+    M9.tag = null;
+    M9.archived = false;
+    M9.sort = "new";
+    M9.renderFn = null;
+    M9.stage = "idle";
+    motionTeardown2();
   }
   function favoritesSettingsSchema() {
     return {
@@ -42384,7 +42980,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M8.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M9.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -42400,7 +42996,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M8.overlay) {
+    if (M9.overlay) {
       closePanel3();
       return;
     }
@@ -42409,22 +43005,22 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M8.overlay = overlay2;
-    M8.renderFn = (reveal) => renderAll4(reveal);
-    M8.stage = "placeholder";
-    motionTeardown();
+    M9.overlay = overlay2;
+    M9.renderFn = (reveal) => renderAll4(reveal);
+    M9.stage = "placeholder";
+    motionTeardown2();
     const openFilter = resolveOpenFilter();
-    M8.tag = openFilter.tag;
-    M8.archived = openFilter.archived;
-    M8.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M9.tag = openFilter.tag;
+    M9.archived = openFilter.archived;
+    M9.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
-    motionPanelIn(overlay2);
+    motionPanelIn2(overlay2);
     window.__bzFavReplay = () => {
-      if (M8.overlay !== overlay2) return;
-      motionPanelIn(overlay2);
-      M8.stage = "boot";
+      if (M9.overlay !== overlay2) return;
+      motionPanelIn2(overlay2);
+      M9.stage = "boot";
       renderAll4();
     };
     overlay2.addEventListener("click", (e) => {
@@ -42505,21 +43101,21 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    const ov = M8.overlay;
+    const ov = M9.overlay;
     if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M8.archived ? "@archived" : M8.tag || "";
+        s.favoritesLastFilter = M9.archived ? "@archived" : M9.tag || "";
         void saveSettings();
       }
-      M8.overlay = null;
-      M8.renderFn = null;
-      M8.stage = "idle";
-      motionTeardown();
+      M9.overlay = null;
+      M9.renderFn = null;
+      M9.stage = "idle";
+      motionTeardown2();
       motionPanelOut(ov, () => ov.remove());
       return;
     }
-    M8.renderFn = null;
+    M9.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -42528,9 +43124,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M8.items = await dataManagerOf().getAll();
+      M9.items = await dataManagerOf().getAll();
     } catch (e) {
-      M8.items = [];
+      M9.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -42538,28 +43134,28 @@ ${c.trim()}
   async function reload2(reveal) {
     var _a2;
     await loadItems();
-    (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8, reveal);
+    (_a2 = M9.renderFn) == null ? void 0 : _a2.call(M9, reveal);
   }
   function boardEl() {
     var _a2, _b2;
-    return (_b2 = (_a2 = M8.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
+    return (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
   }
   function renderAll4(reveal) {
     var _a2;
-    if (!M8.overlay) return;
-    if (!M8.archived && M8.tag && !getTags().some((t) => t.label === M8.tag)) M8.tag = null;
-    const panel2 = M8.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M8.items, M8, { mountIcons, mobile: isMobileEnv() });
-    if (M8.stage === "placeholder") {
-      M8.stage = "boot";
+    if (!M9.overlay) return;
+    if (!M9.archived && M9.tag && !getTags().some((t) => t.label === M9.tag)) M9.tag = null;
+    const panel2 = M9.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M9.items, M9, { mountIcons, mobile: isMobileEnv() });
+    if (M9.stage === "placeholder") {
+      M9.stage = "boot";
       return;
     }
-    if (M8.stage === "boot") {
-      M8.stage = "idle";
-      motionRendered(M8.overlay, true);
+    if (M9.stage === "boot") {
+      M9.stage = "idle";
+      motionRendered2(M9.overlay, true);
       return;
     }
-    motionRendered(M8.overlay, false);
+    motionRendered2(M9.overlay, false);
     if (reveal == null ? void 0 : reveal.id) {
       const board = boardEl();
       if (!board) return;
@@ -42570,24 +43166,24 @@ ${c.trim()}
   function applyTagFilter(label) {
     var _a2, _b2;
     if (label === VIEW_ALL) {
-      M8.tag = null;
-      M8.archived = false;
+      M9.tag = null;
+      M9.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M8.tag = null;
-      M8.archived = !M8.archived;
+      M9.tag = null;
+      M9.archived = !M9.archived;
     } else {
-      M8.archived = false;
-      M8.tag = M8.tag === label ? null : label;
+      M9.archived = false;
+      M9.tag = M9.tag === label ? null : label;
     }
     const board = boardEl();
     if (board) {
-      motionFilterSwitch(board, (_b2 = (_a2 = M8.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
+      motionFilterSwitch(board, (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll4());
     } else {
       renderAll4();
     }
   }
   function itemById2(id) {
-    return M8.items.find((i) => i.id === id);
+    return M9.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -43212,7 +43808,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M8, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M9, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -43234,9 +43830,9 @@ GitHub 仓库：${ghInfo.title}
       init_render10();
       init_ai3();
       init_data10();
-      init_motion();
+      init_motion2();
       init_app2();
-      M8 = {
+      M9 = {
         overlay: null,
         items: [],
         tag: null,
@@ -50050,9 +50646,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after3 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after3 !== before) {
-        rec.secondBrainAllowPaths = after3;
+      const after4 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after4 !== before) {
+        rec.secondBrainAllowPaths = after4;
         migrated = true;
       }
     }
@@ -50425,6 +51021,7 @@ GitHub 仓库：${ghInfo.title}
       init_focus_trap();
       init_utils();
       init_render3();
+      init_motion();
       SEARCH_DEBOUNCE_MS4 = 180;
       spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       schemaLoaders = {
@@ -50597,6 +51194,8 @@ GitHub 仓库：${ghInfo.title}
               if (pane) void this.renderDomain(pane, deep);
             }
             this.recomputeBadgesFromCache();
+            motionPanelIn(this.popup, this.mask);
+            motionEnsureDust(this.popup);
             void this.preloadAllBadges();
             return;
           }
@@ -50681,6 +51280,7 @@ GitHub 仓库：${ghInfo.title}
                 void this.renderDomain(pane, DOMAINS2.find((x) => x.id === id));
               });
             });
+            motionNavSynced(nav);
           };
           const applySearch = debounce(() => {
             renderNav2(searchIn.value);
@@ -50712,8 +51312,12 @@ GitHub 仓库：${ghInfo.title}
             }
           });
           renderNav2("");
+          motionBindNavFeel(nav);
           this.rerenderList = () => renderNav2(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
+          motionPanelIn(popup, this.mask);
+          motionBindPressFeel(popup);
+          motionEnsureDust(popup);
         }
         /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
          *  新轮被收敛不重跑——缓存重算保证「重开即重算」新鲜度；visibleWhen 按当前设置实时求值） */
@@ -50845,6 +51449,7 @@ GitHub 仓库：${ghInfo.title}
             this.applyHitFilter(pane, this.searchQuery);
             pane.dataset.spActive = domain.id;
             scroller.scrollTop = (_c = this.scrollMem.get(`${side}:${domain.id}`)) != null ? _c : 0;
+            motionRendered(pane);
             return;
           } catch (e) {
             body.innerHTML = "";
@@ -51078,6 +51683,7 @@ GitHub 仓库：${ghInfo.title}
               if (d) b.addEventListener("click", () => void this.pushDomain(d, b.dataset.spRow));
             });
             mountIcons(list);
+            motionMobList(list);
           };
           const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS4);
           searchIn.addEventListener("input", () => applySearch());
@@ -51114,6 +51720,9 @@ GitHub 仓库：${ghInfo.title}
             }
           });
           render2("");
+          motionPanelIn(popup, this.mask);
+          motionBindPressFeel(popup);
+          motionEnsureDust(popup);
           this.rerenderList = () => {
             if (!this.mobPushed) render2(searchIn.value);
           };
@@ -51169,6 +51778,7 @@ GitHub 仓库：${ghInfo.title}
         }
         hide() {
           if (this.popup) closeAllSelectMenus(this.popup);
+          motionSleep();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -51183,6 +51793,7 @@ GitHub 仓库：${ghInfo.title}
         }
         cleanup() {
           unregisterPanelEsc("bz-settings-panel");
+          motionTeardown();
           this.flushPendingTextCommit();
           if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) {
@@ -51228,6 +51839,7 @@ GitHub 仓库：${ghInfo.title}
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
   }
   function unloadSettingsPanel() {
+    motionTeardown();
     if (ui) ui.cleanup();
     ui = null;
     initialized5 = false;
@@ -51236,6 +51848,7 @@ GitHub 仓库：${ghInfo.title}
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui13();
+      init_motion();
       initialized5 = false;
       ui = null;
     }
@@ -55503,7 +56116,7 @@ ${piece}` : piece;
     const folder = resolveGameshelfFolderPath();
     const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
     const prevByPath = /* @__PURE__ */ new Map();
-    for (const it of M3.items) {
+    for (const it of M4.items) {
       if (it.file) prevByPath.set(it.file.path, it);
     }
     const items = [];
@@ -55544,7 +56157,7 @@ ${piece}` : piece;
       const prev = prevByPath.get(file.path);
       items.push(prev && sameItem(prev, next) ? prev : next);
     }
-    M3.items = items;
+    M4.items = items;
     return items;
   }
 
@@ -55759,28 +56372,28 @@ ${piece}` : piece;
   init_order();
 
   // src/home/motion.ts
-  var M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E2 = {
+  var M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E3 = {
     out: "cubic-bezier(.22,.82,.3,1)",
     move: "cubic-bezier(.34,.06,.16,1)"
   };
-  var STAG2 = 30;
-  function reduced2() {
+  var STAG3 = 30;
+  function reduced3() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
       return false;
     }
   }
-  function canHover2() {
+  function canHover3() {
     try {
       return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
     } catch (e) {
       return false;
     }
   }
-  function waapi2(el, frames, opts) {
-    if (!el || reduced2() || typeof el.animate !== "function") {
+  function waapi3(el, frames, opts) {
+    if (!el || reduced3() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -55807,20 +56420,20 @@ ${piece}` : piece;
     requestAnimationFrame(tick);
   }
   var easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-  var timers2 = /* @__PURE__ */ new Set();
-  function after2(ms, fn) {
+  var timers3 = /* @__PURE__ */ new Set();
+  function after3(ms, fn) {
     const id = setTimeout(() => {
-      timers2.delete(id);
+      timers3.delete(id);
       fn();
     }, ms);
-    timers2.add(id);
+    timers3.add(id);
   }
-  function cancelPending2() {
-    timers2.forEach(clearTimeout);
-    timers2.clear();
+  function cancelPending3() {
+    timers3.forEach(clearTimeout);
+    timers3.clear();
   }
   var EXIT_ANIM_ID = "bz-home-panel-exit";
-  function motionPanelIn2(overlay2, reopen) {
+  function motionPanelIn3(overlay2, reopen) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
@@ -55831,13 +56444,13 @@ ${piece}` : piece;
         if (a.id === EXIT_ANIM_ID) a.cancel();
       }
     }
-    waapi2(
+    waapi3(
       panel2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? 300 : 480, easing: E2.out }
+      { duration: reopen ? 300 : 480, easing: E3.out }
     );
     bindParallax(overlay2);
   }
@@ -55858,23 +56471,23 @@ ${piece}` : piece;
       }
       done();
     };
-    const a = waapi2(
+    const a = waapi3(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M9.move + 40, easing: E2.out, fill: "forwards", id: EXIT_ANIM_ID }
+      { duration: M10.move + 40, easing: E3.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    after2(M9.move + 200, finish);
+    after3(M10.move + 200, finish);
   }
-  function motionRendered2(overlay2, boot) {
-    cancelPending2();
+  function motionRendered3(overlay2, boot) {
+    cancelPending3();
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
@@ -55889,18 +56502,18 @@ ${piece}` : piece;
       }
       return;
     }
-    if (reduced2()) return;
+    if (reduced3()) return;
     if (week) {
       [...week.querySelectorAll(".bz-home-wk")].forEach((el, i) => {
-        after2(140 + i * 40, () => {
+        after3(140 + i * 40, () => {
           const to = el.classList.contains("bz-home-wk--sel") ? "translateY(-4px)" : "none";
-          waapi2(
+          waapi3(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: to, filter: "blur(0px)" }
             ],
-            { duration: M9.base, easing: E2.out, fill: "backwards" }
+            { duration: M10.base, easing: E3.out, fill: "backwards" }
           );
         });
       });
@@ -55909,14 +56522,14 @@ ${piece}` : piece;
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
       rows.forEach((el, i) => {
         if (i >= 14) return;
-        after2(260 + i * STAG2, () => {
-          waapi2(
+        after3(260 + i * STAG3, () => {
+          waapi3(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M9.base, easing: E2.out, fill: "backwards" }
+            { duration: M10.base, easing: E3.out, fill: "backwards" }
           );
         });
       });
@@ -55924,53 +56537,53 @@ ${piece}` : piece;
     if (flow) {
       const tl = flow.querySelector(".bz-home-timeline");
       if (tl) {
-        after2(300, () => ensureRiver(tl, true));
+        after3(300, () => ensureRiver(tl, true));
         revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
       }
       const empty = flow.querySelector(".bz-home-flow-empty");
-      if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
+      if (empty) waapi3(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" });
     }
     if (next) {
       const head = next.querySelector(".bz-home-sec-t");
-      if (head) waapi2(
+      if (head) waapi3(
         head,
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-        { duration: M9.base, easing: E2.out, fill: "backwards" }
+        { duration: M10.base, easing: E3.out, fill: "backwards" }
       );
       next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
-        after2(640 + i * 90, () => {
-          waapi2(
+        after3(640 + i * 90, () => {
+          waapi3(
             el,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
             ],
-            { duration: M9.base + 120, easing: E2.out, fill: "backwards" }
+            { duration: M10.base + 120, easing: E3.out, fill: "backwards" }
           );
         });
-        if (!narrow && canHover2()) bindTilt(el);
+        if (!narrow && canHover3()) bindTilt(el);
       });
     }
   }
   function motionDaySwitch(flow, rewrite) {
     const tl = flow.querySelector(".bz-home-timeline");
-    if (reduced2() || !tl) {
+    if (reduced3() || !tl) {
       rewrite();
       return;
     }
-    const out = waapi2(
+    const out = waapi3(
       tl,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
       ],
-      { duration: M9.fast + 20, easing: E2.out, fill: "forwards" }
+      { duration: M10.fast + 20, easing: E3.out, fill: "forwards" }
     );
     if (!out) {
       rewrite();
       return;
     }
-    after2(M9.fast + 30, () => {
+    after3(M10.fast + 30, () => {
       rewrite();
       const nt = flow.querySelector(".bz-home-timeline");
       if (nt) {
@@ -55978,7 +56591,7 @@ ${piece}` : piece;
         revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
       } else {
         const empty = flow.querySelector(".bz-home-flow-empty");
-        if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
+        if (empty) waapi3(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E3.out, fill: "backwards" });
       }
     });
   }
@@ -56005,18 +56618,18 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
       li.style.willChange = "transform,filter,opacity";
-      after2(delay, () => {
-        waapi2(
+      after3(delay, () => {
+        waapi3(
           li,
           [
             { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M9.base + 140, easing: E2.out, fill: "backwards" }
+          { duration: M10.base + 140, easing: E3.out, fill: "backwards" }
         );
         li.classList.add("bz-hm-ign");
-        after2(620, () => li.classList.remove("bz-hm-ign"));
-        after2(120, () => {
+        after3(620, () => li.classList.remove("bz-hm-ign"));
+        after3(120, () => {
           const a = beforeAnchor(li);
           const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
           burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
@@ -56026,11 +56639,11 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const note = li.querySelector(".bz-home-ev-note");
       if (!note) return;
-      after2(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
-        waapi2(
+      after3(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi3(
           note,
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M9.base, easing: E2.out, fill: "backwards" }
+          { duration: M10.base, easing: E3.out, fill: "backwards" }
         );
       });
     });
@@ -56087,13 +56700,13 @@ ${piece}` : piece;
     tween(850, (v) => {
       reveal.style.strokeDashoffset = String(len * (1 - v));
     }, easeOutQuart);
-    after2(870, () => base.classList.add("bz-hm-flowing"));
+    after3(870, () => base.classList.add("bz-hm-flowing"));
   }
   var sparkPools = /* @__PURE__ */ new Map();
   var fxRaf = 0;
   function burst(tl, x, y, color) {
     var _a2;
-    if (reduced2()) return;
+    if (reduced3()) return;
     let fx = tl.querySelector(":scope > .bz-hm-fx");
     if (!fx) {
       fx = document.createElement("canvas");
@@ -56157,7 +56770,7 @@ ${piece}` : piece;
   function bindParallax(overlay2) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2 || parallax.has(overlay2)) return;
-    if (reduced2() || !canHover2() || panel2.clientWidth <= 768) return;
+    if (reduced3() || !canHover3() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
       { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
@@ -56411,10 +57024,10 @@ ${piece}` : piece;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
     renderAll5();
-    motionPanelIn2(overlay2, false);
+    motionPanelIn3(overlay2, false);
     window.__bzHomeReplay = () => {
-      motionPanelIn2(overlay2, false);
-      motionRendered2(overlay2, true);
+      motionPanelIn3(overlay2, false);
+      motionRendered3(overlay2, true);
     };
     trapPanelFocus(overlay2);
     void refreshRiverAndRender();
@@ -56469,7 +57082,7 @@ ${piece}` : piece;
     topifyZ(overlay2);
     H.overlayVisible = true;
     restoreScroll(overlay2);
-    motionPanelIn2(overlay2, true);
+    motionPanelIn3(overlay2, true);
     void refreshRiverAndRender();
   }
   function bindEvents2(overlay2, app) {
@@ -56697,7 +57310,7 @@ ${piece}` : piece;
     mountIcons(tiles);
     mountRowInteractions(overlay2, H.appRef, river);
     restoreScroll(overlay2);
-    motionRendered2(overlay2, flowBoot);
+    motionRendered3(overlay2, flowBoot);
     if (fk && fk.value && H.overlayVisible) {
       const target = overlay2.querySelector(`[${fk.attr}="${fk.value}"]`);
       target == null ? void 0 : target.focus();
