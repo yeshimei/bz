@@ -1,4 +1,4 @@
-/* 源指纹 98f085474175123f · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 55378b8a7c101ebb · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -30,6 +30,7 @@ var BZR_settings_panel = (() => {
     groupCardHtml: () => groupCardHtml,
     iconSpan: () => iconSpan,
     loadingHtml: () => loadingHtml,
+    maskedAreaHtml: () => maskedAreaHtml,
     miniHtml: () => miniHtml,
     mobItemHtml: () => mobItemHtml,
     mobShellHtml: () => mobShellHtml,
@@ -73,13 +74,13 @@ var BZR_settings_panel = (() => {
     const cls = ["bz-input"];
     if (opts.mono) cls.push("mono");
     if (opts.num) cls.push("num");
-    if (opts.secret) cls.push("secret");
     const attrs = [`class="${cls.join(" ")}"`, `value="${esc(opts.value)}"`];
     attrs.push(opts.type === "number" ? 'type="number"' : 'type="text"');
     if (opts.placeholder) attrs.push(`placeholder="${esc(opts.placeholder)}"`);
     if (opts.min !== void 0) attrs.push(`min="${opts.min}"`);
     if (opts.max !== void 0) attrs.push(`max="${opts.max}"`);
     if (opts.step !== void 0) attrs.push(`step="${opts.step}"`);
+    if (opts.inputMode && opts.inputMode !== "text") attrs.push(`inputmode="${esc(opts.inputMode)}"`);
     return `<input ${attrs.join(" ")} autocomplete="off">`;
   }
   function textareaHtml(value, placeholder) {
@@ -87,6 +88,9 @@ var BZR_settings_panel = (() => {
   }
   function secretInputHtml(opts) {
     return `<div class="bz-sp-secret"><input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
+  }
+  function maskedAreaHtml(opts) {
+    return `<div class="bz-sp-secret bz-sp-secret--area"><textarea class="bz-input bz-sp-textarea bz-maskarea" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}>${esc(opts.value)}</textarea><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
   }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;

@@ -1,4 +1,4 @@
-/* 源指纹 cf8f4fd0e3651057 · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 de26f0bfcfc833bd · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -13428,6 +13428,7 @@ ${n.content.slice(0, 2e3)}
                 save: () => saveSettings()
               },
               min: 0,
+              max: 100,
               visibleWhen: (s) => s.forceQuizForReview === true,
               isChild: true
             },
@@ -13453,7 +13454,7 @@ ${n.content.slice(0, 2e3)}
           name: "复习节奏",
           rows: [
             // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
-            { type: "number", name: "每日复习上限", desc: "一轮最多复习的篇数，不填则不限制", binding: { key: "reviewDailyLimit" }, min: 0 },
+            { type: "number", name: "每日复习上限", desc: "一轮最多复习的篇数，不填则不限制", binding: { key: "reviewDailyLimit" }, min: 0, max: 1e3 },
             // 深审新-14②/A14：超界改渲染器声明钳制（min/max 进界并回写输入框，R9 通路显示值=落盘值），
             // 原.onChange「超上界回 1」复刻删除——输入 8 落 5 且回显 5，不再出现显示 8 落 1 的缝
             {
@@ -17009,6 +17010,22 @@ ${n.content.slice(0, 2e3)}
     if (max !== void 0) out = Math.min(max, out);
     return out;
   }
+  function wireSecretEye(setting, el, revealClass = "", mode = "type") {
+    let revealed = false;
+    setting.addExtraButton((b) => {
+      b.setIcon("eye").setTooltip("显示 / 隐藏");
+      b.extraSettingsEl.setAttribute("aria-label", "显示密钥");
+      b.extraSettingsEl.setAttribute("aria-pressed", "false");
+      b.onClick(() => {
+        revealed = !revealed;
+        if (mode === "type") el.type = revealed ? "text" : "password";
+        else el.classList.toggle(revealClass, revealed);
+        b.setIcon(revealed ? "eye-off" : "eye");
+        b.extraSettingsEl.setAttribute("aria-pressed", String(revealed));
+        b.extraSettingsEl.setAttribute("aria-label", revealed ? "隐藏密钥" : "显示密钥");
+      });
+    });
+  }
   function renderSettingsInto(container, schema) {
     var _a2;
     const entries = [];
@@ -17132,6 +17149,18 @@ ${n.content.slice(0, 2e3)}
             if (num2.max !== void 0) inputEl.max = String(num2.max);
             if (num2.step !== void 0) inputEl.step = String(num2.step);
           }
+          if (row.type === "secret") {
+            inputEl.type = "password";
+            inputEl.autocomplete = "off";
+            inputEl.spellcheck = false;
+            wireSecretEye(setting, inputEl);
+          }
+          if (row.type === "textarea" && row.masked) {
+            inputEl.classList.add("bz-maskarea");
+            wireSecretEye(setting, inputEl, "bz-maskarea--revealed", "class");
+          }
+          const mode = row.inputMode;
+          if (mode && mode !== "text") inputEl.inputMode = mode;
           inputEl.addEventListener("blur", commit);
           if (row.type !== "textarea") {
             inputEl.addEventListener("keydown", (e) => {
@@ -17397,6 +17426,7 @@ ${n.content.slice(0, 2e3)}
         case "text":
         case "textarea":
         case "number":
+        case "secret":
           renderTextualRow(body, row);
           return;
       }
@@ -17469,13 +17499,13 @@ ${n.content.slice(0, 2e3)}
     const cls = ["bz-input"];
     if (opts.mono) cls.push("mono");
     if (opts.num) cls.push("num");
-    if (opts.secret) cls.push("secret");
     const attrs = [`class="${cls.join(" ")}"`, `value="${esc(opts.value)}"`];
     attrs.push(opts.type === "number" ? 'type="number"' : 'type="text"');
     if (opts.placeholder) attrs.push(`placeholder="${esc(opts.placeholder)}"`);
     if (opts.min !== void 0) attrs.push(`min="${opts.min}"`);
     if (opts.max !== void 0) attrs.push(`max="${opts.max}"`);
     if (opts.step !== void 0) attrs.push(`step="${opts.step}"`);
+    if (opts.inputMode && opts.inputMode !== "text") attrs.push(`inputmode="${esc(opts.inputMode)}"`);
     return `<input ${attrs.join(" ")} autocomplete="off">`;
   }
   function textareaHtml(value, placeholder) {
@@ -17483,6 +17513,9 @@ ${n.content.slice(0, 2e3)}
   }
   function secretInputHtml(opts) {
     return `<div class="bz-sp-secret"><input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
+  }
+  function maskedAreaHtml(opts) {
+    return `<div class="bz-sp-secret bz-sp-secret--area"><textarea class="bz-input bz-sp-textarea bz-maskarea" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}>${esc(opts.value)}</textarea><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
   }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
@@ -17809,8 +17842,8 @@ ${n.content.slice(0, 2e3)}
     }
     const tr = target.getBoundingClientRect();
     const sr = st.side.getBoundingClientRect();
-    st.tx = tr.left - sr.left;
-    st.ty = tr.top - sr.top;
+    st.tx = tr.left - sr.left + st.side.scrollLeft;
+    st.ty = tr.top - sr.top + st.side.scrollTop;
     st.el.style.width = `${Math.max(1, tr.width).toFixed(1)}px`;
     st.el.style.height = `${Math.max(1, tr.height).toFixed(1)}px`;
     if (!st.init) {
@@ -18193,14 +18226,10 @@ ${n.content.slice(0, 2e3)}
     closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
     refreshGroupCounts: () => refreshGroupCounts,
-    renderPanelSchema: () => renderPanelSchema,
-    secretRow: () => secretRow
+    renderPanelSchema: () => renderPanelSchema
   });
   function snapshot() {
     return getSettings();
-  }
-  function secretRow(row) {
-    return row;
   }
   function notifyWriteError(e) {
     notifySaveError(e, "设置写入");
@@ -18253,14 +18282,23 @@ ${n.content.slice(0, 2e3)}
       type: opts.type,
       mono: opts.mono,
       num: opts.num,
-      secret: opts.secret,
       placeholder: opts.placeholder,
       min: opts.min,
-      max: opts.max
+      max: opts.max,
+      inputMode: opts.inputMode
     });
     const input = holder.firstElementChild;
     bindTextCommit(input, opts.onCommit);
     return input;
+  }
+  function bindSecretEye(eye, apply) {
+    eye.addEventListener("click", () => {
+      const revealed = apply();
+      eye.setAttribute("aria-pressed", String(revealed));
+      eye.setAttribute("aria-label", revealed ? "隐藏密钥" : "显示密钥");
+      eye.innerHTML = iconSpan(revealed ? "eye-off" : "eye");
+      mountIcons(eye);
+    });
   }
   function makeSecretInput(opts) {
     const holder = document.createElement("div");
@@ -18268,15 +18306,24 @@ ${n.content.slice(0, 2e3)}
     const input = holder.querySelector(".bz-sp-secret-input");
     const eye = holder.querySelector(".bz-sp-secret-eye");
     bindTextCommit(input, opts.onCommit);
-    eye.addEventListener("click", () => {
+    bindSecretEye(eye, () => {
       const reveal = input.type === "password";
       input.type = reveal ? "text" : "password";
-      eye.setAttribute("aria-pressed", String(reveal));
-      eye.setAttribute("aria-label", reveal ? "隐藏密钥" : "显示密钥");
-      eye.innerHTML = iconSpan(reveal ? "eye-off" : "eye");
-      mountIcons(eye);
+      return reveal;
     });
     return holder.firstElementChild;
+  }
+  function makeMaskedArea(opts) {
+    const holder = document.createElement("div");
+    holder.innerHTML = maskedAreaHtml({ value: opts.value, placeholder: opts.placeholder });
+    const ta = holder.querySelector("textarea");
+    const eye = holder.querySelector(".bz-sp-secret-eye");
+    bindSecretEye(eye, () => {
+      const revealed = !ta.classList.contains("bz-maskarea--revealed");
+      ta.classList.toggle("bz-maskarea--revealed", revealed);
+      return revealed;
+    });
+    return { holder: holder.firstElementChild, ta };
   }
   function makePathRowCtrl(opts) {
     const readValue = () => {
@@ -18369,7 +18416,7 @@ ${n.content.slice(0, 2e3)}
     }
   }
   function renderRow(row, refresh2, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
     const isCustom = row.type === "custom";
@@ -18423,8 +18470,8 @@ ${n.content.slice(0, 2e3)}
           value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
           num: !!row.num,
-          secret: !!row.secret,
           placeholder: ph,
+          inputMode: row.inputMode,
           onCommit: (v) => {
             var _a3;
             acc.write(v);
@@ -18445,7 +18492,7 @@ ${n.content.slice(0, 2e3)}
         const acc = bindValue(sec.binding);
         const input = makeSecretInput({
           value: String((_d = acc.read()) != null ? _d : ""),
-          placeholder: sec.placeholder,
+          placeholder: typeof sec.placeholder === "function" ? sec.placeholder(snapshot()) : sec.placeholder,
           onCommit: (v) => {
             var _a3;
             acc.write(v);
@@ -18455,16 +18502,27 @@ ${n.content.slice(0, 2e3)}
             refresh2();
           }
         });
+        mountTextActions(ctrlEl, input.querySelector(".bz-sp-secret-input"), acc, sec.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector(".bz-sp-secret-input"));
         break;
       }
       case "textarea": {
         const acc = bindValue(row.binding);
-        const taHolder = document.createElement("div");
-        taHolder.innerHTML = textareaHtml((_e = acc.read()) != null ? _e : "", row.placeholder);
-        const ta = taHolder.firstElementChild;
-        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const masked = row.masked === true;
+        const holder2 = document.createElement("div");
+        let ta;
+        let ctrl;
+        if (masked) {
+          const m = makeMaskedArea({ value: (_e = acc.read()) != null ? _e : "", placeholder: row.placeholder });
+          ta = m.ta;
+          ctrl = m.holder;
+        } else {
+          holder2.innerHTML = textareaHtml((_f = acc.read()) != null ? _f : "", row.placeholder);
+          ta = holder2.firstElementChild;
+          ctrl = ta;
+        }
+        const warn = new CommitWarn(String((_g = acc.read()) != null ? _g : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
@@ -18496,15 +18554,15 @@ ${n.content.slice(0, 2e3)}
           });
         }
         mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh2);
-        ctrlEl.appendChild(ta);
+        ctrlEl.appendChild(ctrl);
         break;
       }
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new CommitWarn(String((_g = acc.read()) != null ? _g : ""), row.onCommit);
+        const warn = new CommitWarn(String((_h = acc.read()) != null ? _h : ""), row.onCommit);
         const input = makeInput({
-          value: String((_h = acc.read()) != null ? _h : ""),
+          value: String((_i = acc.read()) != null ? _i : ""),
           type: "number",
           num: true,
           placeholder: ph,
@@ -18528,7 +18586,7 @@ ${n.content.slice(0, 2e3)}
             return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
-        input.step = String((_i = row.step) != null ? _i : 1);
+        input.step = String((_j = row.step) != null ? _j : 1);
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -18538,7 +18596,7 @@ ${n.content.slice(0, 2e3)}
         const acc = bindValue(row.binding);
         const options2 = row.options;
         const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_j = acc.read()) != null ? _j : "") || options2[0] && options2[0].value || ""));
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_k = acc.read()) != null ? _k : "") || options2[0] && options2[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         let group = null;
@@ -18647,8 +18705,8 @@ ${n.content.slice(0, 2e3)}
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_l = (_k = acc.read()) != null ? _k : row.min) != null ? _l : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_m = row.step) != null ? _m : 1, cur);
+        const cur = (_m = (_l = acc.read()) != null ? _l : row.min) != null ? _m : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_n = row.step) != null ? _n : 1, cur);
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
@@ -18660,7 +18718,7 @@ ${n.content.slice(0, 2e3)}
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
         });
-        for (const a of (_n = row.actions) != null ? _n : []) {
+        for (const a of (_o = row.actions) != null ? _o : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -18682,7 +18740,7 @@ ${n.content.slice(0, 2e3)}
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_o = acc.read()) != null ? _o : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_p = acc.read()) != null ? _p : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -18714,7 +18772,7 @@ ${n.content.slice(0, 2e3)}
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
-        for (const a of (_p = row.actions) != null ? _p : []) {
+        for (const a of (_q = row.actions) != null ? _q : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -18754,13 +18812,13 @@ ${n.content.slice(0, 2e3)}
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_q = snapshot()[layoutKey]) != null ? _q : "") : "";
+        const curLayout = layoutKey ? String((_r = snapshot()[layoutKey]) != null ? _r : "") : "";
         let opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
         if (!opts2.length) opts2 = row.options;
-        const cur = String((_r = acc.read()) != null ? _r : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_s = acc.read()) != null ? _s : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
@@ -19290,7 +19348,10 @@ ${n.content.slice(0, 2e3)}
       desc: "留空时取该模型官方上限",
       // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
       //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
+      // 2026-09-23 补上界：原只有 min，手滑多打几个 0 会直送服务商（400/超长请求）；
+      // 20 万是当前最大上下文模型的量级上沿，够用且拦得住误触
       min: 0,
+      max: 2e5,
       binding: {
         // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
         get: () => {
@@ -19320,10 +19381,11 @@ ${n.content.slice(0, 2e3)}
     for (const p of AI_PROVIDER_REGISTRY) {
       if (p.id === "custom") continue;
       rows.push({
-        type: "text",
+        type: "secret",
         name: p.apiKeyLabel,
         desc: p.apiKeyDesc,
         binding: { key: p.apiKeyKey },
+        placeholder: "粘贴密钥",
         visibleWhen: (snapshot2) => snapshot2.aiProvider === p.id
       });
     }
@@ -19334,13 +19396,15 @@ ${n.content.slice(0, 2e3)}
         desc: "OpenAI 兼容服务的完整接口地址",
         binding: { key: "aiCustomEndpoint" },
         placeholder: "https://api.example.com/v1",
+        inputMode: "url",
         visibleWhen: (snapshot2) => snapshot2.aiProvider === "custom"
       },
       {
-        type: "text",
+        type: "secret",
         name: "自定义 API 密钥",
         desc: "在服务官网获取后填入这里",
         binding: { key: "aiCustomApiKey" },
+        placeholder: "粘贴密钥",
         visibleWhen: (snapshot2) => snapshot2.aiProvider === "custom"
       }
     );
@@ -19375,20 +19439,25 @@ ${n.content.slice(0, 2e3)}
         desc: "视频录入解析清晰度档位用，留空则档位回落固定列表",
         binding: { key: "bilibiliCookie" },
         placeholder: "粘贴从浏览器复制的 Cookie",
+        // 2026-09-23：Cookie 是凭据，长串保留多行粘贴面（textarea 换单行反而难贴），
+        // 但默认打成圆点（.bz-maskarea），眼睛可随时看明文
+        masked: true,
         actions: isDesktopShell() ? [{ text: "从 CLI 导入", onClick: () => importCliBilibiliCookie() }] : []
       },
       {
-        type: "text",
+        type: "secret",
         name: "ApiZero Key",
         desc: "豆瓣字段接口的密钥，不填时字段走豆瓣演职员接口兜底",
-        binding: { key: "cinemaApizeroKey" }
+        binding: { key: "cinemaApizeroKey" },
+        placeholder: "粘贴密钥"
       },
       {
         type: "textarea",
         name: "豆瓣 Cookie",
         desc: "搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓",
         binding: { key: "cinemaDoubanCookie" },
-        placeholder: "粘贴从浏览器复制的 Cookie"
+        placeholder: "粘贴从浏览器复制的 Cookie",
+        masked: true
       }
     ];
   }
@@ -19406,9 +19475,9 @@ ${n.content.slice(0, 2e3)}
         desc: "判定服务接口地址，一般无需改动",
         binding: { key: "jevEndpoint" },
         placeholder: "https://api.typesafe.ai/v1/systemone",
+        inputMode: "url",
         visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
       },
-      // 就地声明掩码档位：不复用 renderer.secretRow()，理由见函数注（core 层禁 import obsidian 侧模块）
       {
         type: "secret",
         name: "Jev 密钥",
@@ -19431,6 +19500,7 @@ ${n.content.slice(0, 2e3)}
         desc: "单次判定超时毫秒，留空用默认十秒",
         binding: { key: "jevTimeoutMs" },
         min: 0,
+        max: 12e4,
         placeholder: "10000",
         visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
       }
@@ -27214,72 +27284,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           name: "自动关联",
           rows: [
             { type: "toggle", name: "自动关联", desc: "三个盒子的笔记改动后自动建关联，候选近邻经 AI 裁判筛选", binding: boolDefaultOn("linkAgentEnabled"), onChange: warnReload },
-            {
-              type: "text",
-              name: "单篇候选数量 TopK",
-              desc: "每篇笔记的近邻候选数，越大召回越全也越慢",
-              // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
-              binding: {
-                get: () => {
-                  var _a2;
-                  return String((_a2 = getSettings().linkAgentTopK) != null ? _a2 : 8);
-                },
-                set: (v) => {
-                  getSettings().linkAgentTopK = v;
-                },
-                save: () => saveSettings()
-              },
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              onChange: (v) => {
-                const n = Math.floor(Number(v));
-                getSettings().linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
-              }
-            },
-            {
-              type: "text",
-              name: "每篇关联上限",
-              desc: "0 表示不限量，由 AI 裁判自行决定",
-              // number 键（linkAgentMaxLinks）同上
-              binding: {
-                get: () => {
-                  var _a2;
-                  return String((_a2 = getSettings().linkAgentMaxLinks) != null ? _a2 : 0);
-                },
-                set: (v) => {
-                  getSettings().linkAgentMaxLinks = v;
-                },
-                save: () => saveSettings()
-              },
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              onChange: (v) => {
-                const n = Math.floor(Number(v));
-                getSettings().linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
-              }
-            },
-            {
-              type: "text",
-              name: "候选相似度下限",
-              desc: "低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤",
-              // number 键（linkAgentMinScore，0~1 小数）同 TopK 口径：三函数绑定 + onChange 钳制
-              binding: {
-                get: () => {
-                  var _a2;
-                  return String((_a2 = getSettings().linkAgentMinScore) != null ? _a2 : 0.65);
-                },
-                set: (v) => {
-                  getSettings().linkAgentMinScore = v;
-                },
-                save: () => saveSettings()
-              },
-              visibleWhen: (s) => s.linkAgentEnabled !== false,
-              isChild: true,
-              onChange: (v) => {
-                const n = Number(v);
-                getSettings().linkAgentMinScore = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.65;
-              }
-            },
+            // 2026-09-23：三行原为 text + 「三函数绑定 + onChange 钳制复写」——那是「number 键
+            // （linkAgentTopK/MaxLinks/MinScore）在 text 行里被收窄到 string」逼出来的绕行。
+            // 改标准 number 行后：键直绑（类型本就 number）；钳制交给输入框 min/max/step；
+            // 空串不再被 Number('') 误写成默认值（parseClampedNumber 空→null→不写）。
+            { type: "number", name: "单篇候选数量 TopK", desc: "每篇笔记的近邻候选数，越大召回越全也越慢", binding: { key: "linkAgentTopK" }, min: 1, max: 50, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+            { type: "number", name: "每篇关联上限", desc: "0 表示不限量，由 AI 裁判自行决定", binding: { key: "linkAgentMaxLinks" }, min: 0, max: 100, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+            { type: "number", name: "候选相似度下限", desc: "低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤", binding: { key: "linkAgentMinScore" }, min: 0, max: 1, step: 0.05, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
             { type: "toggle", name: "完成通知", desc: "处理完成后通知提醒，关闭则全程静默", binding: boolDefaultOn("linkAgentNotify"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
             { type: "toggle", name: "失效关联自动清理", desc: "目标笔记删除后自动移除指向它的失效关联条目", binding: boolDefaultOn("linkAgentAutoClean"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
             { type: "toggle", name: "已有关联不再建链", desc: "笔记已有关联时自动跳过处理", binding: boolDefaultOn("linkAgentRespectRelated"), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true }
@@ -47252,6 +47263,7 @@ ${c.trim()}
         name: "文章保留天数",
         desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
         min: 1,
+        max: 3650,
         step: 1,
         binding: numStrBinding("newsRetentionUnsavedDays", 30)
       }
@@ -52048,14 +52060,15 @@ GitHub 仓库：${ghInfo.title}
               placeholder: "76561198000000000"
             },
             // GS3（呈报#48）：密钥行接「密钥型」档位——type=password 掩码显示 + 眼睛切换明文，
-            // 原明文 text 行退役（旁人瞄屏不可见）；提交链与 text 行同内核
-            secretRow({
+            // 原明文 text 行退役（旁人瞄屏不可见）；提交链与 text 行同内核。
+            // 2026-09-23：档位收编进 core 的 SettingsRow 联合，行字面量直接写（secretRow() 断言退场）
+            {
               type: "secret",
               name: "Web API 密钥",
               desc: "在 Steam 官网开发者页免费申请",
               binding: { key: "gameshelfSteamApiKey" },
               placeholder: "32 位十六进制串"
-            }),
+            },
             {
               type: "toggle",
               name: "自动同步",
@@ -52069,7 +52082,6 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings5 = __esm({
     "src/gameshelf/settings.ts"() {
-      init_renderer();
     }
   });
 
@@ -53995,7 +54007,7 @@ GitHub 仓库：${ghInfo.title}
           // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
           name: "服务",
           rows: [
-            { type: "text", name: "Ollama 本地 URL", desc: "本地 Ollama 服务地址，留空用默认端口", binding: { key: "secondBrainOllamaUrl" }, onChange: trimStore("secondBrainOllamaUrl") },
+            { type: "text", name: "Ollama 本地 URL", desc: "本地 Ollama 服务地址，留空用默认端口", binding: { key: "secondBrainOllamaUrl" }, inputMode: "url", onChange: trimStore("secondBrainOllamaUrl") },
             // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
             // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
             {
@@ -54003,6 +54015,7 @@ GitHub 仓库：${ghInfo.title}
               name: "移动端远程地址",
               desc: "手机上连本地向量库走这个地址",
               binding: { key: "secondBrainRemoteOllamaUrl" },
+              inputMode: "url",
               onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
               actions: [{
                 text: "填入远程 URL",
@@ -54068,20 +54081,24 @@ GitHub 仓库：${ghInfo.title}
           icon: "search",
           name: "检索",
           rows: [
-            // 2026-09-12：检索组六行原本零描述（参数名裸奔），补齐自然句说明
-            { type: "text", name: "参考结果数 TopK", desc: "参考侧返回的近邻条数，越大越全也越慢", binding: { key: "secondBrainTopK" }, onChange: trimStore("secondBrainTopK") },
-            { type: "text", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: { key: "secondBrainChatTopK" }, onChange: trimStore("secondBrainChatTopK") },
-            { type: "text", name: "段落最小长度", desc: "短于该字符数的段落不入向量索引", binding: { key: "secondBrainChunkMinLength" }, onChange: trimStore("secondBrainChunkMinLength") },
-            { type: "text", name: "上下文限制", desc: "单次注入对话的上下文字符上限", binding: { key: "secondBrainContextLimit" }, onChange: trimStore("secondBrainContextLimit") },
-            { type: "text", name: "防抖延迟毫秒", desc: "输入停顿该毫秒数后才开始检索", binding: { key: "secondBrainDebounceDelay" }, onChange: trimStore("secondBrainDebounceDelay") },
-            { type: "text", name: "光标轮询毫秒", desc: "光标位置轮询间隔，越小跟随越快", binding: { key: "secondBrainCursorPollInterval" }, onChange: trimStore("secondBrainCursorPollInterval") }
+            // 2026-09-23：检索组六行原为 text（每键自己 Number() + 钳制），改标准 number 行——
+            // 键仍存字符串（消费侧 Number(x) || 默认，见 config.ts），故走 numStrBinding 适配器
+            // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值；
+            // 六键消费侧一律 `Number(x) || 默认` → 0 与非法值都回落默认，与 numStrBinding 的
+            // 「≤0 取默认」语义一致（0 不是这些参数的有效值）。
+            { type: "number", name: "参考结果数 TopK", desc: "参考侧返回的近邻条数，越大越全也越慢", binding: numStrBinding("secondBrainTopK", 20), min: 1, max: 50, step: 1 },
+            { type: "number", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: numStrBinding("secondBrainChatTopK", 20), min: 1, max: 50, step: 1 },
+            { type: "number", name: "段落最小长度", desc: "短于该字符数的段落不入向量索引", binding: numStrBinding("secondBrainChunkMinLength", 50), min: 1, max: 2e3, step: 1 },
+            { type: "number", name: "上下文限制", desc: "单次注入对话的上下文字符上限", binding: numStrBinding("secondBrainContextLimit", 600), min: 1, max: 2e4, step: 1 },
+            { type: "number", name: "防抖延迟毫秒", desc: "输入停顿该毫秒数后才开始检索", binding: numStrBinding("secondBrainDebounceDelay", 300), min: 1, max: 5e3, step: 10 },
+            { type: "number", name: "光标轮询毫秒", desc: "光标位置轮询间隔，越小跟随越快", binding: numStrBinding("secondBrainCursorPollInterval", 500), min: 1, max: 5e3, step: 10 }
           ]
         },
         {
           icon: "message-square",
           name: "对话",
           rows: [
-            { type: "text", name: "最大历史记录", desc: "对话保留的历史轮数上限", binding: { key: "secondBrainMaxHistory" }, onChange: trimStore("secondBrainMaxHistory") }
+            { type: "number", name: "最大历史记录", desc: "对话保留的历史轮数上限", binding: numStrBinding("secondBrainMaxHistory", 10), min: 1, max: 200, step: 1 }
             // 「AI 通道」跳转按钮已删（2026-09-12 用户拍板）：设置面板不放跳转移交类按钮
           ]
         }
@@ -54105,6 +54122,7 @@ GitHub 仓库：${ghInfo.title}
       init_utils();
       init_settings_provider();
       init_settings_modal();
+      init_settings_common();
       init_config3();
       init_whitelist();
       init_local_ip();

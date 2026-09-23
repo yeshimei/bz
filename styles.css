@@ -4480,6 +4480,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-caption);
   color: var(--ls-faint);
 }
+
+/* ═══ 多行掩码（2026-09-23）：Cookie 类长串凭据的 textarea 打点 ═══
+   textarea 没有 type=password，故用 -webkit-text-security 把字符打成圆点（Chromium / WKWebView /
+   Android WebView 均支持；不支持的引擎退化为明文显示，不比改装前更差，值本身照常落盘）。
+   两个渲染器共用这一对类：设置面板走 R.maskedAreaHtml（外壳 .bz-sp-secret--area + 眼睛），
+   core 设置弹窗走 Setting.addTextArea + inputEl.classList + ExtraButtonComponent 眼睛。 */
+.bz-maskarea { -webkit-text-security: disc; }
+.bz-maskarea--revealed { -webkit-text-security: none; }
 /* ==================== 日记本域样式（src/diary/styles.css）—— 原回忆墙升格正名（ADR-0115） ==================== */
 /* ==================== 日记本（媒体墙原型 v5：章节固定 + 滚动高亮 + 性能优化） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。
@@ -14108,6 +14116,10 @@ canvas { display: block; }
    :focus-visible 口径一致（core components.css .bz-btn 先例） */
 .bz-sp-secret { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .bz-sp-secret .bz-input { flex: 1; min-width: 0; font-family: ui-monospace, Consolas, monospace; }
+/* 多行掩码档位（Cookie 类长串凭据）：textarea 比输入框高，眼睛顶对齐才不吊在半空；
+   打点本体走 core components.css 的 .bz-maskarea（两渲染器共用一对类） */
+.bz-sp-secret--area { align-items: flex-start; }
+.bz-sp-secret--area .bz-sp-secret-eye { margin-top: 2px; }
 .bz-sp-secret-eye {
   border: none; background: transparent; cursor: pointer;
   color: var(--bz-text-3); padding: 4px; line-height: 0;
