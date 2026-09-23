@@ -204,9 +204,11 @@ describe('F11/F13：番茄钟落盘（重置即写盘 / 历史裁剪）', () => 
     await vi.advanceTimersByTimeAsync(10);
     await flushPomo(vault);
     expect(pomoDisk(vault).state.endTime).not.toBeNull(); // 运行态已落盘
-    btn('pomodoro-btn-reset').click(); // 重置（深审修复批 issues/144：专注中重置加确认框——语义翻转注记：
-    // 原断言「点击即重置」与拍板冲突，确认后落盘契约本身不变，故补点确认钮再断言）
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    // 2026-09-24：重置确认改「按钮内二次确认」（原 core flow-dialog 不吃番茄钟皮肤）——
+    // 首点只进「确认」态，再点才执行；落盘契约本身不变
+    btn('pomodoro-btn-reset').click();
+    expect(btn('pomodoro-btn-reset').textContent).toBe('确认'); // 确认态
+    btn('pomodoro-btn-reset').click(); // 再点 = 执行
     await vi.advanceTimersByTimeAsync(10);
     await flushPomo(vault);
     const disk = pomoDisk(vault).state;
