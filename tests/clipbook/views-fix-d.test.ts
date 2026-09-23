@@ -216,8 +216,8 @@ describe('批 D·样式断言', () => {
 
   it('C-UI4：负 margin 走 calc（无效声明 -var(...) 清零）', () => {
     const css = cssOf();
+    // 2026-09-23 头行重做后旧落点行（margin-right calc）已随规则块重写撤去，守住 -var( 无效声明清零即可
     expect(css).not.toMatch(/margin-right:\s*-var\(/);
-    expect(css).toContain('margin-right: calc(-1 * var(--bz-space-sm))');
   });
 
   it('C-UI6：移动真全屏两处接 var(--bz-vvh, 100vh)', () => {

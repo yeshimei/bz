@@ -89,6 +89,8 @@ const EXPECTED_COMMAND_IDS = [
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）
   'bz-bookshelf-continue',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
+  // 记忆分析特刊（analysis/）：全屏逐幕分析层入口
+  'bz-review-analysis',
   // 做题练习（issue 362）：做题家独立面板入口
   'bz-review-quiz-open',
   // 评级四命令保留（issue 362 做题家面板依赖，原 issue 364 裁剪案撤回；难度弹窗仍为无热键时的面板外评级入口）

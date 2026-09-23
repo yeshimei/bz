@@ -244,8 +244,8 @@ export function queueViewHtml(items: ReviewItem[], ctx: QueueViewCtx = {}): stri
       <div class="bz-q-footer">
         ${archItem}
         <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${iconSpan('bar-chart-3', 'bz-q-ic')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="逐幕回放全馆记忆">
+          ${iconSpan('flame', 'bz-q-ic')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
