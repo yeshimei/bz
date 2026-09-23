@@ -1,4 +1,4 @@
-/* 源指纹 8aa886bb1eb74fba · 仓内输入 111 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 385f1bdb1bb91a4e · 仓内输入 111 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -22756,6 +22756,17 @@ ${bodyText.substring(0, 6e3)}`;
       }
     }
   }
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
   function motionPanelIn(overlay, reopen) {
     const frame = overlay.querySelector(".bz-clip-frame");
     if (!frame) return;
@@ -22764,6 +22775,8 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
     panelAnim = null;
+    cancelAnimsBy(frame, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
     frame.style.opacity = "";
     frame.style.transform = "";
     frame.style.filter = "";
@@ -22799,12 +22812,20 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     let finished = false;
+    let maskAnim = null;
     const finish = () => {
-      if (!finished) {
-        finished = true;
-        panelAnim = null;
-        done();
+      if (finished) return;
+      finished = true;
+      panelAnim = null;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
       }
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
+      }
+      done();
     };
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
@@ -22816,9 +22837,13 @@ ${bodyText.substring(0, 6e3)}`;
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M2.move + 40, easing: E.out, fill: "forwards" }
+      { duration: M2.move + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
-    waapi(overlay, [{ opacity: 1 }, { opacity: 0 }], { duration: M2.move + 40, easing: E.out });
+    maskAnim = waapi(
+      overlay,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M2.move + 40, easing: E.out, id: EXIT_MASK_ANIM_ID }
+    );
     if (!a) {
       overlay.style.opacity = "";
       finish();
@@ -23264,7 +23289,7 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
     }
   }
-  var M2, E, STAG, easeOutQuart, timers, CSS_PROP, panelAnim, readerAnim;
+  var M2, E, STAG, easeOutQuart, timers, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
   var init_motion = __esm({
     "src/clipbook/motion.ts"() {
       M2 = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -23284,6 +23309,8 @@ ${bodyText.substring(0, 6e3)}`;
         willChange: "will-change"
       };
       panelAnim = null;
+      EXIT_ANIM_ID = "bz-clip-exit";
+      EXIT_MASK_ANIM_ID = "bz-clip-exit-mask";
       readerAnim = null;
     }
   });
