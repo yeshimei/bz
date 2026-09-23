@@ -1,12 +1,16 @@
 /**
- * 影院类型判定（issue 395）：豆瓣字段 → Jev Choice → 闭合词表选一。
+ * 影院类型判定（issue 395；ADR-0181 补 LLM 回落）：豆瓣字段 → Jev Choice → 闭合词表选一；
+ * Jev 不可用回落 LLM（题面同样给闭合词表 + 回执严格校验）。
  *
  * 覆盖面（上一版 393 踩过的坑，本票必须用断言守住）：
  * - `criteria` 必须是**对象**——写成数组会被 Jev API 直接 422；
- * - 候选 = `ALL_TAGS` 单源去掉「公开课」（2026-09-21 拍板：公开课不参与自动分类，手选仍可用）+ 显式哨兵；
+ * - 候选 = `ALL_TAGS` 单源去掉「公开课」+ 显式哨兵；
  * - 哨兵命中 / 置信度不足 / 答案不在清单 → 一律 `null`（不允许逃逸，宁缺勿滥）；
- * - state 只压非空字段（Jev 官方：塞太多无关内容掉精度）；
- * - 未配置即抛错、失败上抛——本链不回落 LLM。
+ * - **弃权不是失败**：Jev 选哨兵或置信度不足不触发回落（回落等于绕过校准概率）；
+ * - Jev 未配置 / 请求失败 / 答案畸形 → 回落 LLM；
+ * - abort → 抛出且不回落（LLM 零调用）；
+ * - 两道都不可用 → 抛错，由调用方留空手点；
+ * - state 只压非空字段（Jev 官方：塞太多无关内容掉精度）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -17,8 +21,19 @@ import type { JevResult } from '../../src/core/jev';
 import {
   TYPE_SENTINEL, CONFIDENCE_FLOOR,
   buildTypeCriteria, buildTypeState, judgeTypeChoice, decideCinemaType,
+  buildTypeLlmPrompt, parseTypeLlmOutput,
 } from '../../src/cinema/type-decide';
 import { ALL_TAGS } from '../../src/cinema/constants';
+
+// LLM 回落打桩（createAI().json）：回落链不碰真实 core/ai
+const aiStub = vi.hoisted(() => ({
+  json: vi.fn(async (_prompt: string, _opts?: unknown): Promise<string> => '{"type":"日漫"}'),
+}));
+vi.mock('../../src/core/ai', async (importOriginal) => {
+  // 必须 spread actual——settings.ts 在模块级取 DEFAULT_AI_PROVIDER，整体替换会让其变 undefined
+  const actual = await importOriginal<typeof import('../../src/core/ai')>();
+  return { ...actual, createAI: () => ({ json: aiStub.json }) };
+});
 
 function jevSettings(over: Record<string, unknown> = {}): any {
   return {
@@ -43,6 +58,10 @@ function choiceResult(choice: string, confidence: number): JevResult {
 
 beforeEach(() => {
   resetObsidianMocks();
+  // 同文件内 vi.spyOn(jev,'askJev') 复用同一 mock——不还原会带着上一用例的调用记录
+  vi.restoreAllMocks();
+  aiStub.json.mockReset();
+  aiStub.json.mockResolvedValue('{"type":"日漫"}');
 });
 
 describe('buildTypeCriteria：候选清单构造', () => {
@@ -120,18 +139,40 @@ describe('judgeTypeChoice：判据（纯函数）', () => {
   });
 });
 
-describe('decideCinemaType：编排', () => {
-  it('Jev 未启用 → 抛错（本链不静默、不回落 LLM）', async () => {
-    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
-    await expect(decideCinemaType({ title: 'X' })).rejects.toThrow(/未配置/);
+describe('LLM 回落：题面与回执', () => {
+  const criteria = buildTypeCriteria();
+
+  it('题面把闭合词表原样拷进去（含哨兵）且带 state', () => {
+    const p = buildTypeLlmPrompt({ title: '千与千寻', isTv: false }, criteria);
+    expect(p).toContain('日漫（动漫）');
+    expect(p).toContain(TYPE_SENTINEL);
+    expect(p).toContain('{"type":"候选分类之一"}');
+    expect(p).toContain('片名：千与千寻');
+    expect(p).toContain('是否剧集：否');
+    expect(p).not.toContain('公开课');
   });
 
-  it('正常链：state + choice 题单发给 Jev，criteria 是对象，命中即返回 tag', async () => {
+  it('回执合法 → tag；带 codefence 也能剥', () => {
+    expect(parseTypeLlmOutput('{"type":"美剧"}', criteria)).toBe('美剧');
+    expect(parseTypeLlmOutput('```json\n{"type":"韩剧"}\n```', criteria)).toBe('韩剧');
+  });
+
+  it('回执不在清单 / 哨兵 / 非 JSON / 缺字段 → null（弃权，不写值）', () => {
+    expect(parseTypeLlmOutput('{"type":"自创分类"}', criteria)).toBeNull();
+    expect(parseTypeLlmOutput(`{"type":"${TYPE_SENTINEL}"}`, criteria)).toBeNull();
+    expect(parseTypeLlmOutput('不是 JSON', criteria)).toBeNull();
+    expect(parseTypeLlmOutput('{"kind":"美剧"}', criteria)).toBeNull();
+  });
+});
+
+describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () => {
+  it('Jev 正常链：state + choice 题单发给 Jev，criteria 是对象，命中即返回 tag（LLM 零调用）', async () => {
     setSettingsProvider(() => jevSettings());
     const spy = vi.spyOn(jev, 'askJev').mockResolvedValue(choiceResult('日漫', 0.93));
     const got = await decideCinemaType({ title: '千与千寻', isTv: false, area: '日本', genre: '动画' });
     expect(got).toBe('日漫');
     expect(spy).toHaveBeenCalledTimes(1);
+    expect(aiStub.json).not.toHaveBeenCalled();
     const [state, questions] = spy.mock.calls[0] as unknown as [string, Record<string, { type: string; criteria: unknown }>];
     expect(state).toContain('片名：千与千寻');
     expect(state).toContain('是否剧集：否');
@@ -141,21 +182,59 @@ describe('decideCinemaType：编排', () => {
     expect(Object.keys(q.criteria as Record<string, string>)).toContain(TYPE_SENTINEL);
   });
 
-  it('Jev 选了哨兵 → 返回 null（不抛错：调用方据此保持现值交人工）', async () => {
+  it('Jev 弃权（哨兵 / 置信度不足）→ null 且**不回落**（有效判定，不是失败）', async () => {
     setSettingsProvider(() => jevSettings());
-    vi.spyOn(jev, 'askJev').mockResolvedValue(choiceResult(TYPE_SENTINEL, 0.88));
+    const spy = vi.spyOn(jev, 'askJev').mockResolvedValue(choiceResult(TYPE_SENTINEL, 0.88));
     await expect(decideCinemaType({ title: 'X', isTv: true })).resolves.toBeNull();
+    spy.mockResolvedValue(choiceResult('美剧', CONFIDENCE_FLOOR - 0.01));
+    await expect(decideCinemaType({ title: 'X', isTv: true })).resolves.toBeNull();
+    expect(aiStub.json).not.toHaveBeenCalled();
   });
 
-  it('Jev 抛错（超时/网络/畸形响应）→ 原样上抛，不回落', async () => {
+  it('Jev 未启用 → 回落 LLM（题面闭合词表，回执校验后采信）', async () => {
+    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+    const spy = vi.spyOn(jev, 'askJev');
+    const got = await decideCinemaType({ title: '千与千寻', isTv: false, area: '日本', genre: '动画' });
+    expect(got).toBe('日漫');
+    expect(spy).not.toHaveBeenCalled(); // 未就绪不发请求
+    expect(aiStub.json).toHaveBeenCalledTimes(1);
+    expect(String(aiStub.json.mock.calls[0][0])).toContain('电影（电影）');
+  });
+
+  it('Jev 请求失败（超时/网络/畸形响应）→ 回落 LLM', async () => {
     setSettingsProvider(() => jevSettings());
     vi.spyOn(jev, 'askJev').mockRejectedValue(new Error('jev timeout'));
-    await expect(decideCinemaType({ title: 'X' })).rejects.toThrow('jev timeout');
+    await expect(decideCinemaType({ title: 'X' })).resolves.toBe('日漫');
+    expect(aiStub.json).toHaveBeenCalledTimes(1);
   });
 
-  it('answers 缺题单键（畸形响应）→ 抛错而非静默 null', async () => {
+  it('answers 缺题单键（畸形响应）→ 回落 LLM', async () => {
     setSettingsProvider(() => jevSettings());
     vi.spyOn(jev, 'askJev').mockResolvedValue({ model: 'jev-test', answers: {} } as unknown as JevResult);
-    await expect(decideCinemaType({ title: 'X' })).rejects.toThrow(/choice/);
+    await expect(decideCinemaType({ title: 'X' })).resolves.toBe('日漫');
+    expect(aiStub.json).toHaveBeenCalledTimes(1);
+  });
+
+  it('LLM 回执非法 → null（弃权，不写值）', async () => {
+    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+    aiStub.json.mockResolvedValue('{"type":"自创分类"}');
+    await expect(decideCinemaType({ title: 'X' })).resolves.toBeNull();
+  });
+
+  it('abort → 抛 AbortError 且 LLM 零调用', async () => {
+    setSettingsProvider(() => jevSettings());
+    const spy = vi.spyOn(jev, 'askJev');
+    const ctrl = new AbortController();
+    ctrl.abort();
+    await expect(decideCinemaType({ title: 'X' }, { signal: ctrl.signal })).rejects.toMatchObject({ name: 'AbortError' });
+    expect(spy).not.toHaveBeenCalled();
+    expect(aiStub.json).not.toHaveBeenCalled();
+  });
+
+  it('两道都不可用（Jev 挂 + LLM 也挂）→ 抛错，由调用方留空手点', async () => {
+    setSettingsProvider(() => jevSettings());
+    vi.spyOn(jev, 'askJev').mockRejectedValue(new Error('jev timeout'));
+    aiStub.json.mockRejectedValue(new Error('未配置 DeepSeek API Key'));
+    await expect(decideCinemaType({ title: 'X' })).rejects.toThrow('未配置 DeepSeek API Key');
   });
 });

@@ -1346,8 +1346,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
 
   /** 解析（2026-09-21 拆两段）：
    *  ① 豆瓣信息到手 → **立刻翻面**（不等信息全齐才让用户看到卡）
-   *  ② 海报与分类随后补——海报交给 img 自己加载（骨架 → 淡入），分类等 Jev 回来就地填。
-   *  判定失败或弃权都不阻断解析：字段已经到手，分类留空、由用户手点。 */
+   *  ② 海报与分类随后补——海报交给 img 自己加载（骨架 → 淡入），分类等 Jev 回来就地填
+   *  （Jev 不可用回落 LLM，见 type-decide）。判定弃权或两道都不可用都不阻断解析：
+   *  字段已经到手，分类留空、由用户手点。 */
   async function runParse(): Promise<void> {
     const name = nameInput?.value.trim() ?? '';
     if (!name) { notice('请输入名称', 'warning'); return; }
@@ -1386,7 +1387,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
         year: az?.year ?? null,
       });
       if (decided && !userPickedTag) cur.tag = decided;
-    } catch { /* 判定通道不可用不阻断解析：字段已到手，分类由用户手点 */ }
+    } catch { /* 两道判定通道都不可用不阻断解析：字段已到手，分类由用户手点 */ }
     classifying = false;
     updateBadges();
     refreshFormState();

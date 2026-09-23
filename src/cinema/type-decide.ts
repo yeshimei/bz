@@ -1,5 +1,6 @@
 /**
- * 影院类型判定（issue 395）：把**豆瓣查询字段**交给 Jev Choice，从闭合词表里选一个 typeTag。
+ * 影院类型判定（issue 395；ADR-0181 起补 LLM 回落）：把**豆瓣查询字段**交给 Jev Choice，
+ * 从闭合词表里选一个 typeTag；Jev 不可用则回落 LLM（题面同样给闭合词表，回执严格校验）。
  *
  * 与已撤销的 393 版（issue 394 全删）的区别在**材料**：
  * 393 拿的是笔记 frontmatter，而「添加影视」表单阶段笔记根本还没落盘——那版只能服务已存在的笔记，
@@ -7,10 +8,16 @@
  * （是否剧集 / 制片国家地区 / 豆瓣类型），这三个是**客观事实**，判定才有依据。
  *
  * 候选 = `ALL_TAGS` 去掉「公开课」（2026-09-21 用户拍板：公开课不参与自动分类，手选仍可用），
- * 末尾追加显式哨兵「以上都不是」——Jev 一定会选一个，这个出口必须显式给出（Choice 语义）。
- * 不允许逃逸：哨兵命中或置信度不足都不写值，留给用户手点。
+ * 末尾追加显式哨兵「以上都不是」——Choice 语义下模型必选其一，这个出口必须显式给出。
+ * 不允许逃逸：哨兵命中 / Jev 置信度不足 / LLM 回执不在清单，一律不写值，留给用户手点。
+ *
+ * 回落口径（2026-09-23 用户拍板，ADR-0181）：未配置 / 请求失败 / 答案畸形都回落 LLM；
+ * 取消（`signal.aborted`）不回落。**弃权不是失败**——Jev 选哨兵或置信度不足是有效判定，
+ * 不回落（回落等于绕过 Jev 的校准概率）；两道都不可用才抛错，由调用方留空。
  */
-import { askJev, isJevConfigured, type JevAskOptions, type JevChoiceAnswer, type JevChoiceQuestion } from '../core/jev';
+import { createAI } from '../core/ai';
+import { judgeOrFallback } from '../core/jev-fallback';
+import type { JevAskOptions, JevChoiceAnswer, JevChoiceQuestion } from '../core/jev';
 import { ALL_TAGS, getGroupForTag } from './constants';
 
 /** 显式哨兵：候选清单末尾追加，命中即视为「都不合适」 */
@@ -21,6 +28,15 @@ export const CONFIDENCE_FLOOR = 0.5;
 const EXCLUDED_FROM_DECIDE = ['公开课'];
 /** Jev choice 题单键 */
 const Q_KEY = 'type';
+
+/** 判定线索（Jev 题面与 LLM 回落 prompt 共用一份，避免两处漂移） */
+const DECIDE_HINTS =
+  '判断线索：是否剧集区分「电影」与其他剧种；制片国家/地区决定是国产剧、美剧、日剧、韩剧、英剧还是德剧；' +
+  '豆瓣类型里含「动画」时按地区归入日漫、国漫或美漫；含「纪录片」时归「纪录片」（此时不按剧集判）。';
+
+/** Jev 题面（候选值的说明是该标签所属的组） */
+const JEV_INSTRUCTIONS =
+  `根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。${DECIDE_HINTS}若都不贴切，请选「${TYPE_SENTINEL}」。`;
 
 /** 判定所需的豆瓣字段（够用即可；Jev 官方：塞太多无关内容掉精度） */
 export interface TypeDecideInfo {
@@ -67,29 +83,64 @@ export function judgeTypeChoice(answer: JevChoiceAnswer, criteria: Record<string
   return choice;
 }
 
+// ---------------- LLM 回落（Jev 不可用时的后补通道，ADR-0181） ----------------
+
+/** LLM 回落 prompt：候选清单**原样拷贝**进题面（闭合约束在提示词里给，回执再严格校验） */
+export function buildTypeLlmPrompt(info: TypeDecideInfo, criteria: Record<string, string>): string {
+  const menu = Object.keys(criteria)
+    .map((tag) => (tag === TYPE_SENTINEL ? tag : `${tag}（${criteria[tag]}）`))
+    .join('、');
+  return [
+    '你是影视分类助手。根据下面的豆瓣信息，从候选分类里选出最贴切的一个。',
+    `候选分类：${menu}`,
+    DECIDE_HINTS,
+    `若都不贴切，选「${TYPE_SENTINEL}」。`,
+    '只输出 JSON 对象：{"type":"候选分类之一"}',
+    '',
+    buildTypeState(info),
+  ].join('\n');
+}
+
+/** LLM 输出 → tag（严格校验：剥 codefence → JSON → 值须 ∈ 候选且非哨兵，否则 null 弃权） */
+export function parseTypeLlmOutput(raw: string, criteria: Record<string, string>): string | null {
+  let text = String(raw || '').trim();
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence) text = fence[1].trim();
+  let obj: any;
+  try {
+    obj = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const tag = String(obj?.type ?? '').trim();
+  if (!tag || tag === TYPE_SENTINEL || !(tag in criteria)) return null;
+  return tag;
+}
+
+/** LLM 回落入口：请求失败（未配置 / 网络）抛错，由调用方留空；输出不合规则弃权（null） */
+async function decideTypeByLlm(info: TypeDecideInfo, criteria: Record<string, string>): Promise<string | null> {
+  const raw = await createAI().json(buildTypeLlmPrompt(info, criteria));
+  return parseTypeLlmOutput(raw, criteria);
+}
+
 /**
- * 编排：组 state + 调 Jev choice + 判定。
- * 未配置或请求失败一律上抛，由调用方决定「不预选」——本链不回落 LLM
- * （回落等于回到「自由写类目」的漂移老路）。
+ * 编排（`core/jev-fallback` 单源）：Jev Choice 优先，不可用回落 LLM。
+ * 两道都不可用才抛错，由调用方「不预选」（分类留空、交给用户手点）——不引第三层兜底。
  */
 export async function decideCinemaType(info: TypeDecideInfo, opts?: JevAskOptions): Promise<string | null> {
-  if (!isJevConfigured()) {
-    throw new Error('Jev 决策通道未配置（设置 → AI → Jev 决策通道）');
-  }
   const criteria = buildTypeCriteria();
-  const question: JevChoiceQuestion = {
-    type: 'choice',
-    instructions:
-      '根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。' +
-      '判断线索：是否剧集区分「电影」与其他剧种；制片国家/地区决定是国产剧、美剧、日剧、韩剧、英剧还是德剧；' +
-      '豆瓣类型里含「动画」时按地区归入日漫、国漫或美漫；含「纪录片」时归「纪录片」（此时不按剧集判）。' +
-      '若都不贴切，请选「以上都不是」。',
-    criteria,
-  };
-  const result = await askJev(buildTypeState(info), { [Q_KEY]: question }, opts);
-  const answer = result.answers[Q_KEY];
-  if (!answer || answer.type !== 'choice') {
-    throw new Error('Jev 未返回有效的 choice 答案');
-  }
-  return judgeTypeChoice(answer, criteria);
+  return judgeOrFallback<string | null>({
+    signal: opts?.signal,
+    config: opts?.config,
+    request: () => {
+      const question: JevChoiceQuestion = { type: 'choice', instructions: JEV_INSTRUCTIONS, criteria };
+      return { state: buildTypeState(info), questions: { [Q_KEY]: question } };
+    },
+    parse: (answers) => {
+      const answer = answers[Q_KEY];
+      if (!answer || answer.type !== 'choice') throw new Error('Jev 未返回有效的 choice 答案');
+      return judgeTypeChoice(answer, criteria);
+    },
+    fallback: () => decideTypeByLlm(info, criteria),
+  });
 }
