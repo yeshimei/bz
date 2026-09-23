@@ -1,4 +1,4 @@
-/* 源指纹 f4004fb538dd850d · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5ffae73cee601d50 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/pomodoro/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/pomodoro/render.ts → window.BZR_pomodoro（评审壳预览包，ADR-0104） */
 var BZR_pomodoro = (() => {
@@ -59,7 +59,10 @@ var BZR_pomodoro = (() => {
       <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
       <div id="pomodoro-phase"></div>
       <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
+      <div class="pomodoro-time-box" id="pomodoro-time-box">
+        <div id="pomodoro-time"></div>
+        <div class="pomodoro-time-reel" aria-hidden="true"></div>
+      </div>
       <div class="pomodoro-controls">
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
         <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>

@@ -1,4 +1,4 @@
-/* 源指纹 21879bc50a54cd19 · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 050b4166791b2e9a · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -5487,7 +5487,10 @@ var BZW_pomodoro = (() => {
       <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
       <div id="pomodoro-phase"></div>
       <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
+      <div class="pomodoro-time-box" id="pomodoro-time-box">
+        <div id="pomodoro-time"></div>
+        <div class="pomodoro-time-reel" aria-hidden="true"></div>
+      </div>
       <div class="pomodoro-controls">
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
         <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
@@ -5527,6 +5530,7 @@ var BZW_pomodoro = (() => {
 
   // src/pomodoro/sound.ts
   function playSound(kind, volume = 100) {
+    var _a, _b;
     const w = typeof window !== "undefined" ? window : globalThis;
     const AC = w.AudioContext || w.webkitAudioContext;
     if (!AC) return;
@@ -5535,23 +5539,32 @@ var BZW_pomodoro = (() => {
       const cfg = SOUND_CONFIG[kind];
       const ctx = new AC();
       if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
       const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
       const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
+      const partials = (_a = cfg.partials) != null ? _a : [{ ratio: 1, gain: 1, decay: 1 }];
+      let tail = cfg.dur;
+      for (const pt of partials) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = (_b = cfg.type) != null ? _b : "sine";
+        const base = cfg.freq * pt.ratio;
+        osc.frequency.value = base;
+        if (cfg.sweepTo) osc.frequency.exponentialRampToValueAtTime(cfg.sweepTo * pt.ratio, t + cfg.dur * 0.9);
+        const dur = cfg.dur * pt.decay;
+        const amp = Math.max(1e-3, peak * pt.gain);
+        gain.gain.setValueAtTime(1e-3, t);
+        gain.gain.exponentialRampToValueAtTime(amp, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(1e-3, t + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + dur + 0.02);
+        if (dur > tail) tail = dur;
+      }
       const ctxRef = ctx;
       setTimeout(() => {
         void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
+      }, tail * 1e3 + 300);
     } catch (e) {
     }
   }
@@ -5562,7 +5575,22 @@ var BZW_pomodoro = (() => {
         "focus-start": { freq: 880, dur: 0.25 },
         "short-break-start": { freq: 523, dur: 0.3 },
         "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
+        pause: { freq: 440, dur: 0.2 },
+        // 钟：D5 基频 + 五度 / 八度 / 十二度泛音，逐层变轻变短——衰减尾巴是「钟」与「beep」的分界
+        ceremony: {
+          freq: 587.33,
+          dur: 1.35,
+          partials: [
+            { ratio: 1, gain: 1, decay: 1 },
+            { ratio: 1.5, gain: 0.42, decay: 0.72 },
+            { ratio: 2, gain: 0.22, decay: 0.5 },
+            { ratio: 2.76, gain: 0.12, decay: 0.34 }
+          ]
+        },
+        // 滴答：短促、窄、不抢戏（音量由 tick 自身的 dur 与三角波决定，不另设衰减）
+        tick: { freq: 1900, dur: 0.055, type: "triangle" },
+        // 过渡：210 → 120Hz 下扫，像一口气沉下去
+        transition: { freq: 210, dur: 0.5, sweepTo: 120 }
       };
     }
   });
@@ -5684,6 +5712,7 @@ var BZW_pomodoro = (() => {
     const mask = byId("pomodoro-mask");
     stopBreath();
     stopGlow();
+    setRestDepth(mask, key.startsWith("break"));
     switch (key) {
       case "focus-run": {
         stopTone();
@@ -5739,6 +5768,118 @@ var BZW_pomodoro = (() => {
   }
   function trackLoop(a) {
     if (a) loops.add(a);
+  }
+  function parseRgb(v) {
+    const s = (v || "").trim();
+    let m = s.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i);
+    if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+    m = s.match(/^#([0-9a-f]{6})$/i);
+    if (m) {
+      return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+    }
+    return null;
+  }
+  function mixTo(a, t) {
+    const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+  function timeBoxOf(el) {
+    var _a;
+    return (_a = el == null ? void 0 : el.closest(".pomodoro-time-box")) != null ? _a : el;
+  }
+  function ensureFlowGrad(svg) {
+    if (!svg) return null;
+    if (flowGrad && flowGrad.isConnected) return flowGrad;
+    let defs = svg.querySelector(":scope > defs");
+    if (!defs) {
+      defs = svg.ownerDocument.createElementNS(SVG_NS, "defs");
+      svg.insertBefore(defs, svg.firstChild);
+    }
+    let g = defs.querySelector("#" + FLOW_ID);
+    if (!g) {
+      const doc = svg.ownerDocument;
+      g = doc.createElementNS(SVG_NS, "linearGradient");
+      g.setAttribute("id", FLOW_ID);
+      g.setAttribute("x1", "0");
+      g.setAttribute("y1", "0");
+      g.setAttribute("x2", "1");
+      g.setAttribute("y2", "1");
+      const s1 = doc.createElementNS(SVG_NS, "stop");
+      s1.setAttribute("offset", "0");
+      const s2 = doc.createElementNS(SVG_NS, "stop");
+      s2.setAttribute("offset", "1");
+      s2.setAttribute("stop-opacity", ".35");
+      g.appendChild(s1);
+      g.appendChild(s2);
+      if (!reduced()) {
+        const anim = doc.createElementNS(SVG_NS, "animateTransform");
+        anim.setAttribute("attributeName", "gradientTransform");
+        anim.setAttribute("type", "rotate");
+        anim.setAttribute("from", "0 .5 .5");
+        anim.setAttribute("to", "360 .5 .5");
+        anim.setAttribute("dur", "20s");
+        anim.setAttribute("repeatCount", "indefinite");
+        g.appendChild(anim);
+      }
+      defs.appendChild(g);
+    }
+    flowGrad = g;
+    return g;
+  }
+  function motionProgressFx(popup, remain, total, phase) {
+    var _a;
+    if (!popup || !popup.isConnected) return;
+    const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+    const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
+    const ring = byId("pomodoro-ring-progress");
+    const timeEl = byId("pomodoro-time");
+    if (ring && !baseStroke && !ring.style.stroke) {
+      const cs = getComputedStyle(ring).stroke;
+      if (parseRgb(cs)) baseStroke = cs;
+    }
+    if (timeEl && !baseTimeColor && !timeEl.style.color) {
+      baseTimeColor = getComputedStyle(timeEl).color;
+    }
+    const base = baseStroke ? parseRgb(baseStroke) : null;
+    const accent = base ? mixTo(base, hot) : "";
+    if (ring && accent) {
+      const grad = ensureFlowGrad(ring.ownerSVGElement);
+      if (grad) {
+        for (const s of Array.from(grad.querySelectorAll("stop"))) s.setAttribute("stop-color", accent);
+        ring.style.stroke = `url(#${FLOW_ID})`;
+      } else {
+        ring.style.stroke = accent;
+      }
+      const head = (_a = ring.ownerSVGElement) == null ? void 0 : _a.querySelector(".bz-pm-head");
+      if (head) {
+        for (const c of Array.from(head.querySelectorAll("circle"))) c.setAttribute("fill", accent);
+      }
+    }
+    if (timeEl && baseTimeColor) {
+      const fg = parseRgb(baseTimeColor);
+      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+      else if (timeEl.style.color) timeEl.style.removeProperty("color");
+    }
+    const grow = remain > 0 && remain <= FINAL_WINDOW ? 1 + (FINAL_WINDOW - remain) * 0.028 : 0;
+    const growEl = timeBoxOf(timeEl);
+    if (growEl) {
+      if (grow > 1) growEl.style.transform = `scale(${grow.toFixed(3)})`;
+      else if (growEl.style.transform) growEl.style.removeProperty("transform");
+    }
+    const cold = phase === "break" || phase === "long-break";
+    const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
+    popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+  }
+  function setRestDepth(mask, on) {
+    if (!mask) return;
+    mask.classList.toggle("bz-pm-rest", on);
+    const popup = byId("pomodoro-popup");
+    if (popup) popup.classList.toggle("bz-pm-rest", on);
+  }
+  function resetFxCache() {
+    baseStroke = null;
+    baseTimeColor = null;
+    flowGrad = null;
   }
   function setHead(svg, mode) {
     if (!svg) return;
@@ -5918,6 +6059,8 @@ var BZW_pomodoro = (() => {
     lastCount = -1;
     taskShown = false;
     todayText = "";
+    resetFxCache();
+    setRestDepth(mask, false);
     bootUntil = performance.now() + 1200;
     const popup = byId("pomodoro-popup");
     if (!popup) return;
@@ -6012,6 +6155,7 @@ var BZW_pomodoro = (() => {
     lastCount = -1;
     taskShown = false;
     todayText = "";
+    resetFxCache();
     if (immediate || reduced() || typeof mask.animate !== "function") {
       done();
       return;
@@ -6042,10 +6186,10 @@ var BZW_pomodoro = (() => {
   }
   function motionIgnite(popup, fresh) {
     if (!popup) return;
-    const timeEl = byId("pomodoro-time");
-    if (timeEl) {
+    const timeBox = timeBoxOf(byId("pomodoro-time"));
+    if (timeBox) {
       trackFx(waapi(
-        timeEl,
+        timeBox,
         [{ transform: "scale(.985)", opacity: 0.7 }, { transform: "none", opacity: 1 }],
         { duration: M.base, easing: E.out }
       ));
@@ -6098,9 +6242,10 @@ var BZW_pomodoro = (() => {
     }
   }
   function revealTime(timeEl) {
-    if (!timeEl) return;
+    const el = timeBoxOf(timeEl);
+    if (!el) return;
     trackFx(waapi(
-      timeEl,
+      el,
       [
         { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -6219,7 +6364,8 @@ var BZW_pomodoro = (() => {
     revealTime(byId("pomodoro-time"));
   }
   function motionTimeTick(timeEl, remain, running) {
-    if (!timeEl) {
+    const el = timeBoxOf(timeEl);
+    if (!el) {
       lastRemain = -1;
       return;
     }
@@ -6229,10 +6375,10 @@ var BZW_pomodoro = (() => {
     }
     const delta = lastRemain - remain;
     if (Math.abs(delta) > 2) {
-      revealTime(timeEl);
+      revealTime(el);
     } else if (running && delta === 1 && remain > 0 && remain % 60 === 0) {
       trackFx(waapi(
-        timeEl,
+        el,
         [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
         { duration: M.fast + 120, easing: E.out }
       ));
@@ -6363,7 +6509,7 @@ var BZW_pomodoro = (() => {
       { duration: M.fast + 80, easing: E.out }
     ));
   }
-  var M, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var M, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_RGB, TINT_FOCUS, TINT_BREAK, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
   var init_motion = __esm({
     "src/pomodoro/motion.ts"() {
       M = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -6383,6 +6529,17 @@ var BZW_pomodoro = (() => {
       fxAnims = /* @__PURE__ */ new Set();
       lastSig = "";
       headLastProgress = -1;
+      URGENT_WINDOW = 300;
+      FINAL_WINDOW = 10;
+      HOT_RGB = [226, 75, 74];
+      TINT_FOCUS = "216, 90, 48";
+      TINT_BREAK = "61, 110, 180";
+      SVG_NS = "http://www.w3.org/2000/svg";
+      FLOW_ID = "bz-pm-flow";
+      TINT_ALPHA = 0.12;
+      baseStroke = null;
+      baseTimeColor = null;
+      flowGrad = null;
       ceremonyUntil = 0;
       bootUntil = 0;
       lastRemain = -1;
@@ -6526,8 +6683,13 @@ var BZW_pomodoro = (() => {
     const s = tryGetSettings();
     if (s.pomodoroSound !== false) {
       const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound("transition", pomodoroVolume());
       playSound(kind, pomodoroVolume());
     }
+  }
+  function playCeremonySound() {
+    if (tryGetSettings().pomodoroSound === false) return;
+    playSound("ceremony", pomodoroVolume());
   }
   function notifyPhaseStarted(phase) {
     const d = durations();
@@ -6550,6 +6712,7 @@ var BZW_pomodoro = (() => {
   }
   function notifyPhaseComplete(e) {
     const d = durations();
+    if (e.completedPhase === "focus") playCeremonySound();
     playPhaseSound(e.nextPhase);
     if (e.autoStarted) {
       if (e.completedPhase === "focus") {
@@ -6698,6 +6861,36 @@ var BZW_pomodoro = (() => {
     void saveSettings();
     render();
   }
+  function syncTimeReels(remain) {
+    const box = document.getElementById("pomodoro-time-box");
+    if (!box) {
+      timeReels = null;
+      return;
+    }
+    const layer = box.querySelector(".pomodoro-time-reel");
+    if (!layer) return;
+    box.classList.add("reel-on");
+    if (!timeReels || timeReels.length === 0) {
+      const col = `<span class="pomodoro-rcol"><span class="pomodoro-rinn">${Array.from({ length: 10 }, (_, d) => `<span>${d}</span>`).join("")}</span></span>`;
+      layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
+      timeReels = Array.from(layer.querySelectorAll(".pomodoro-rinn"));
+    }
+    const text = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
+    timeReels.forEach((el, i) => {
+      el.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text[i])}))`;
+    });
+  }
+  function tickBeep(remain, running) {
+    if (!running || remain <= 0 || remain > 10) {
+      lastBeepRemain = -1;
+      return;
+    }
+    if (remain === lastBeepRemain) return;
+    lastBeepRemain = remain;
+    const s = tryGetSettings();
+    if (s.pomodoroSound === false || s.pomodoroTickSound === false) return;
+    playSound("tick", pomodoroVolume());
+  }
   function render() {
     const d = durations();
     const remain = remainingSec();
@@ -6737,10 +6930,13 @@ var BZW_pomodoro = (() => {
       timeEl.textContent = fmt(remain);
       motionTimeTick(timeEl, remain, state.endTime !== null);
     }
+    syncTimeReels(remain);
+    tickBeep(remain, state.endTime !== null);
     renderStats();
     updateButtons();
     applySkinClass();
     motionPhaseSync(document.getElementById("pomodoro-popup"), state.phase, state.endTime !== null, state.paused);
+    motionProgressFx(document.getElementById("pomodoro-popup"), remain, total, state.phase);
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -6790,7 +6986,6 @@ var BZW_pomodoro = (() => {
     const prev = state;
     const r = transition(state, action, Date.now(), durations(), options());
     state = r.state;
-    if (!state.paused) autoPauseMain = false;
     if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
     if (r.event.type === "phase-completed") {
       if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
@@ -6816,54 +7011,6 @@ var BZW_pomodoro = (() => {
   }
   function onTick() {
     applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state.endTime !== null && !state.paused) {
-      state = freezeRunning(state, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state.paused) {
-      state = unfreezeRunning(state, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
   }
   function ensureTick() {
     const needsTick = state.endTime !== null;
@@ -7001,7 +7148,6 @@ var BZW_pomodoro = (() => {
     appRef = app;
     disposed = false;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
-    registerVisibilityListener();
     if (!loaded) {
       try {
         await initDataOnce();
@@ -7040,7 +7186,7 @@ var BZW_pomodoro = (() => {
     if (state.paused) return "paused";
     return state.endTime !== null ? "focusing" : "idle";
   }
-  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -7073,11 +7219,11 @@ var BZW_pomodoro = (() => {
       escHandle = null;
       timerId = null;
       appRef = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
       disposed = true;
       recoveryNotified = false;
       lastStatsKey = "";
+      timeReels = null;
+      lastBeepRemain = -1;
       SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;
       openInflight = null;
