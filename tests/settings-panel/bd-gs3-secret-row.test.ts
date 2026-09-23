@@ -1,13 +1,14 @@
 /**
  * GS3（呈报#48）settings-panel 侧基建回归：「密钥型」输入档位。
- * 基建 = settings-panel schema/渲染器新增 type:'secret' 档位——input type=password
- * 掩码显示 + 眼睛按钮切换明文；提交链（防抖落盘 / 失焦提交 / refreshKey 联动）
- * 与 text 行同内核；样式落域 styles.css。
- * 修复前必红：secretRow/密钥档位不存在，渲染不出掩码输入。
+ * 基建 = type:'secret' 行档次——input type=password 掩码显示 + 眼睛按钮切换明文；提交链
+ * （防抖落盘 / 失焦提交 / refreshKey 联动 / actions）与 text 行同内核；样式落域 styles.css。
+ * 修复前必红：密钥档位不存在，渲染不出掩码输入。
+ * 2026-09-23：本档位已收编进 core 的 SettingsRow 判别联合（原先 core 层够不着，只能靠
+ * renderer 的 secretRow() 受控断言硬塞）——行字面量直接写 type:'secret'，断言工厂退场。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderPanelSchema, secretRow } from '../../src/settings-panel/renderer';
+import { renderPanelSchema } from '../../src/settings-panel/renderer';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { readFileSync } from 'node:fs';
@@ -29,7 +30,7 @@ describe('GS3：设置面板「密钥型」档位', () => {
           icon: 'key-round',
           name: '密钥组',
           rows: [
-            secretRow({
+            {
               type: 'secret',
               name: '测试密钥',
               desc: '掩码显示的密钥行',
@@ -40,7 +41,7 @@ describe('GS3：设置面板「密钥型」档位', () => {
                 save: () => {},
               },
               placeholder: '请输入密钥',
-            }),
+            },
           ],
         },
       ],

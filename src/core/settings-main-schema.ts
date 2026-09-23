@@ -174,7 +174,10 @@ function providerMaxTokensRow(): NumberRow {
     desc: '留空时取该模型官方上限',
     // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
     //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
+    // 2026-09-23 补上界：原只有 min，手滑多打几个 0 会直送服务商（400/超长请求）；
+    // 20 万是当前最大上下文模型的量级上沿，够用且拦得住误触
     min: 0,
+    max: 200000,
     binding: {
       // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
       get: () => {
@@ -208,13 +211,16 @@ function providerGroupRows(): SettingsRow[] {
     },
   ];
   // 每家注册表提供商一行密钥（custom 的密钥行排在自定义端点之后，故先跳过）
+  // 2026-09-23：全部改「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文）。此前这里是明文
+  // text 行——凭据类设置裸奔在面板上，与 Jev 行的掩码口径自相矛盾。
   for (const p of AI_PROVIDER_REGISTRY) {
     if (p.id === 'custom') continue;
     rows.push({
-      type: 'text',
+      type: 'secret',
       name: p.apiKeyLabel,
       desc: p.apiKeyDesc,
       binding: { key: p.apiKeyKey as never },
+      placeholder: '粘贴密钥',
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
     });
   }
@@ -227,13 +233,15 @@ function providerGroupRows(): SettingsRow[] {
       desc: 'OpenAI 兼容服务的完整接口地址',
       binding: { key: 'aiCustomEndpoint' },
       placeholder: 'https://api.example.com/v1',
+      inputMode: 'url',
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
     {
-      type: 'text',
+      type: 'secret',
       name: '自定义 API 密钥',
       desc: '在服务官网获取后填入这里',
       binding: { key: 'aiCustomApiKey' },
+      placeholder: '粘贴密钥',
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
   );
@@ -281,13 +289,17 @@ function credentialGroupRows(): SettingsRow[] {
       desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
       binding: { key: 'bilibiliCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
+      // 2026-09-23：Cookie 是凭据，长串保留多行粘贴面（textarea 换单行反而难贴），
+      // 但默认打成圆点（.bz-maskarea），眼睛可随时看明文
+      masked: true,
       actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
     },
     {
-      type: 'text',
+      type: 'secret',
       name: 'ApiZero Key',
       desc: '豆瓣字段接口的密钥，不填时字段走豆瓣演职员接口兜底',
       binding: { key: 'cinemaApizeroKey' },
+      placeholder: '粘贴密钥',
     },
     {
       type: 'textarea',
@@ -295,6 +307,7 @@ function credentialGroupRows(): SettingsRow[] {
       desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓',
       binding: { key: 'cinemaDoubanCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
+      masked: true,
     },
   ];
 }
@@ -304,9 +317,9 @@ function credentialGroupRows(): SettingsRow[] {
  * （后四行 visibleWhen 跟随总开关）。Jev 是判定通道（输出不计费、无 max_tokens），不挂进生成通道
  * AI_PROVIDER_REGISTRY——独立成组（issue 391 决策 1）。
  * 密钥行刻意用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文
- * 口径（issue 391 决策 3）。本文件在 core 层、须保持 node 环境可安全加载，故不 import
- * settings-panel/renderer 的 secretRow()——那会拉进 obsidian 侧 DOM 依赖形成跨层环；此处就地声明
- * 一个 type:'secret' 的受控断言，运行时由 renderer 的 case 'secret' 单点消费（与 secretRow 同款收口）。
+ * 口径（issue 391 决策 3）。**2026-09-23 起** secret 已收编进 core 的 SettingsRow 判别联合，
+ * 这里直接写行字面量——原先「core 层够不着 settings-panel/renderer 的 secretRow()，只能
+ * `as unknown as SettingsRow` 就地断言」的跨层 hack 随之退场（providerGroupRows 也已改用同档位）。
  */
 function jevGroupRows(): SettingsRow[] {
   return [
@@ -322,9 +335,9 @@ function jevGroupRows(): SettingsRow[] {
       desc: '判定服务接口地址，一般无需改动',
       binding: { key: 'jevEndpoint' },
       placeholder: 'https://api.typesafe.ai/v1/systemone',
+      inputMode: 'url',
       visibleWhen: (snapshot) => snapshot.jevEnabled === true,
     },
-    // 就地声明掩码档位：不复用 renderer.secretRow()，理由见函数注（core 层禁 import obsidian 侧模块）
     {
       type: 'secret',
       name: 'Jev 密钥',
@@ -332,7 +345,7 @@ function jevGroupRows(): SettingsRow[] {
       binding: { key: 'jevApiKey' },
       placeholder: '粘贴 Jev 密钥',
       visibleWhen: (snapshot) => snapshot.jevEnabled === true,
-    } as unknown as SettingsRow,
+    },
     {
       type: 'text',
       name: 'Jev 模型',
@@ -347,6 +360,7 @@ function jevGroupRows(): SettingsRow[] {
       desc: '单次判定超时毫秒，留空用默认十秒',
       binding: { key: 'jevTimeoutMs' },
       min: 0,
+      max: 120000,
       placeholder: '10000',
       visibleWhen: (snapshot) => snapshot.jevEnabled === true,
     },

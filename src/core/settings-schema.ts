@@ -102,6 +102,10 @@ export interface RowAction {
   onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void>;
 }
 
+/** 输入框键盘语义（移动端软键盘/自动填充提示；桌面无可见影响、不做校验——面板无 form 提交面，
+ *  真正的合法性由各域消费侧兜底，别在这里演「格式校验」）。'url' = 地址类行（端点/服务地址）。 */
+export type SettingsInputMode = 'text' | 'url' | 'numeric' | 'decimal' | 'tel' | 'search' | 'email';
+
 interface TextRow extends RowBase, TextualCommit {
   type: 'text';
   name: string;
@@ -114,6 +118,8 @@ interface TextRow extends RowBase, TextualCommit {
   num?: boolean;
   /** 行内附加按钮（渲染于输入框左侧） */
   actions?: RowAction[];
+  /** 输入框键盘语义（见 SettingsInputMode；仅提示，不参与校验） */
+  inputMode?: SettingsInputMode;
 }
 
 interface TextAreaRow extends RowBase, TextualCommit {
@@ -123,6 +129,29 @@ interface TextAreaRow extends RowBase, TextualCommit {
   placeholder?: string;
   onChange?: (value: string, ctx: SettingsRowContext) => void;
   /** 行内附加按钮（issue 330：与 text 行同口径，渲染于多行文本左侧，如 B站 Cookie「从 CLI 导入」） */
+  actions?: RowAction[];
+  /**
+   * 多行掩码档位（2026-09-23）：给「长串凭据」用——Cookie 这类一贴几 KB 的值保留多行粘贴面，
+   * 但用 -webkit-text-security 打成圆点（textarea 没有 type=password），旁边配眼睛切明文。
+   * 与 type:'secret' 的分工：secret = 单行短凭据（密钥），本档 = 多行长串凭据（Cookie）。
+   */
+  masked?: boolean;
+}
+
+/**
+ * 单行掩码行（2026-09-23 自 settings-panel 收编进 core 联合，原 GS3「密钥型」档位）：
+ * 控件形态 = 密码框 + 眼睛切明文，其余（防抖落盘 / 失焦回车提交 / refreshKey 联动 /
+ * actions / onCommit）与 text 行同内核。**凭据类设置一律走本档，别用 text 行裸奔**——
+ * 收编前本档位不在 core 联合里，core 层（如 settings-main-schema 的 Jev 行）只能
+ * `as unknown as SettingsRow` 就地断言硬塞，AI 服务商密钥则一直是明文 text 行。
+ */
+export interface SecretRow extends RowBase, TextualCommit {
+  type: 'secret';
+  name: string;
+  binding: RowBinding<string>;
+  placeholder?: string | ((snapshot: SettingsSnapshot) => string);
+  onChange?: (value: string, ctx: SettingsRowContext) => void;
+  /** 行内附加按钮（渲染于输入框左侧，与 text 行同口径） */
   actions?: RowAction[];
 }
 
@@ -263,6 +292,7 @@ export type SettingsRow =
   | InfoRow
   | CustomRow
   | ChoiceCardsRow
+  | SecretRow
   | ListRow;
 
 /** 分组声明：有 icon = 分组卡片（createSettingsGroup）；无 icon = 区块标题 + 平铺行
@@ -374,7 +404,44 @@ export function parseClampedNumber(raw: string, min?: number, max?: number): num
   return out;
 }
 
-/** 文本/多行/数字组件的最小结构面（真实 obsidian Text/TextAreaComponent 与 mock 均满足） */
+/** 可掩码控件的最小结构面：真实 input/textarea 与 TextualComponent.inputEl 都满足 */
+interface MaskableEl {
+  type: string;
+  classList: { toggle(c: string, on?: boolean): void };
+}
+
+/**
+ * 掩码控件的「眼睛」切换钮（单行掩码与多行掩码共用，避免两套实现漂移）。
+ * 两个档位靠 mode 区分：
+ * - mode='type'（单行 input）：翻 `input.type` 在 password ↔ text 之间；
+ * - mode='class'（多行 textarea，没有 type=password）：翻 revealClass，打点由 CSS 负责
+ *   （.bz-maskarea { -webkit-text-security: disc }）。
+ * 切换只翻显示形态，不动值、不落盘（与设置面板渲染器的眼睛同语义）。
+ */
+function wireSecretEye(
+  setting: Setting,
+  el: MaskableEl,
+  revealClass = '',
+  mode: 'type' | 'class' = 'type',
+): void {
+  let revealed = false;
+  setting.addExtraButton((b) => {
+    b.setIcon('eye').setTooltip('显示 / 隐藏');
+    b.extraSettingsEl.setAttribute('aria-label', '显示密钥');
+    b.extraSettingsEl.setAttribute('aria-pressed', 'false');
+    b.onClick(() => {
+      revealed = !revealed;
+      if (mode === 'type') el.type = revealed ? 'text' : 'password';
+      else el.classList.toggle(revealClass, revealed);
+      b.setIcon(revealed ? 'eye-off' : 'eye');
+      b.extraSettingsEl.setAttribute('aria-pressed', String(revealed));
+      b.extraSettingsEl.setAttribute('aria-label', revealed ? '隐藏密钥' : '显示密钥');
+    });
+  });
+}
+
+/** 文本/多行/数字/掩码组件的最小结构面（真实 obsidian Text/TextAreaComponent 与 mock 均满足）。
+ *  掩码档位用到 type/autocomplete/spellcheck（单行翻 password↔text）；inputMode 为键盘语义提示。 */
 interface TextualComponent {
   setValue: (v: string) => unknown;
   setPlaceholder?: (p: string) => unknown;
@@ -384,7 +451,10 @@ interface TextualComponent {
     min?: string;
     max?: string;
     step?: string;
-    classList: { add(c: string): void; remove(c: string): void };
+    autocomplete?: string;
+    spellcheck?: boolean;
+    inputMode?: string;
+    classList: { add(c: string): void; remove(c: string): void; toggle(c: string, on?: boolean): void };
     addEventListener: (type: string, listener: (e: { key: string }) => void) => void;
   };
 }
@@ -419,8 +489,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     return setting;
   };
 
-  /** 文本类行（text/textarea/number）：原 main.ts textSetting 语义逐字收口 */
-  const renderTextualRow = (body: HTMLElement, row: TextRow | TextAreaRow | NumberRow): void => {
+  /** 文本类行（text/textarea/number/secret）：原 main.ts textSetting 语义逐字收口 */
+  const renderTextualRow = (body: HTMLElement, row: TextRow | TextAreaRow | NumberRow | SecretRow): void => {
     const ctx: SettingsRowContext = { rowEl: body, refreshVisibility: reevaluate };
     const setting = newRowSetting(body, row);
 
@@ -534,6 +604,23 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           if (num.max !== undefined) inputEl.max = String(num.max);
           if (num.step !== undefined) inputEl.step = String(num.step);
         }
+        // 单行掩码（type:'secret'）：密码框 + 右侧眼睛切明文——与设置面板渲染器同口径
+        // （切形态只翻 input.type，不动值不落盘）
+        if (row.type === 'secret') {
+          inputEl.type = 'password';
+          inputEl.autocomplete = 'off';
+          inputEl.spellcheck = false;
+          wireSecretEye(setting, inputEl);
+        }
+        // 多行掩码（TextAreaRow.masked，Cookie 类长串凭据）：textarea 没有 type=password，
+        // 走 -webkit-text-security 打点（样式见 core/ui/components.css .bz-maskarea）+ 眼睛切明文
+        if (row.type === 'textarea' && (row as TextAreaRow).masked) {
+          inputEl.classList.add('bz-maskarea');
+          wireSecretEye(setting, inputEl, 'bz-maskarea--revealed', 'class');
+        }
+        // 键盘语义提示（仅移动端软键盘；不参与校验）
+        const mode = (row as { inputMode?: SettingsInputMode }).inputMode;
+        if (mode && mode !== 'text') inputEl.inputMode = mode;
         inputEl.addEventListener('blur', commit);
         if (row.type !== 'textarea') {
           inputEl.addEventListener('keydown', (e) => {
@@ -567,7 +654,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     };
     // 行内附加按钮（先注册 → 渲染于输入框左侧，2026-09-08 拍板换位的对齐口径；textarea 行同口径，issue 330）：
     // onClick 完成后重读本行绑定值回填显示（不置脏）+ 重求值——供「填入/拉取回填」类动作即时回显
-    const actions = (row as TextRow | TextAreaRow | NumberRow).actions;
+    const actions = (row as TextRow | TextAreaRow | NumberRow | SecretRow).actions;
     if (actions) {
       for (const a of actions) {
         setting.addButton((b) => {
@@ -833,6 +920,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       case 'text':
       case 'textarea':
       case 'number':
+      case 'secret':
         renderTextualRow(body, row);
         return;
     }

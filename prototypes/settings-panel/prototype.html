@@ -9,9 +9,11 @@
   │ 范式随 belongings 试点；2026-09-07 拍板推翻 4b068bb「原型 app.js 为真理」  │
   │ 方向——行为唯一真理 = 域 ui.ts，本壳退化为双 iframe 评审壳，                │
   │ prototype.app.js / prototype-data.js 退役删除）。                         │
-  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
-  │   ../core/styles.css → ../core/ui/tokens.css → ../core/ui/components.css │
-  │   → ./styles.css                                                        │
+  │ 组件样式零内联：面板真身跑在 iframe 里，样式链在 ./prototype-view.html（顺序同      │
+  │   build-css SOURCES）：core → tokens → components → home → favorites → pomodoro    │
+  │   → settings-panel → checkup。域样式按「本面板会渲染该域内容」逐份直链——custom    │
+  │   行/预览卡吃的是域内类名与域内 token，漏链不报错、只静默裸奔（2026-09-23 标签     │
+  │   管理即此症）。本页自己的 link 只服务外景（两枚 iframe + 评审徽牌）。            │
   │ 行为单源：交互逻辑全部是插件同款 ui.ts / renderer.ts / dir-picker.ts        │
   │   依赖链——经 ./prototype-behavior.js（src/settings-panel/fake-sim.ts       │
   │   构建，alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；          │
@@ -174,6 +176,12 @@
         t('桌面CSS外链≥4', sheetsOf(dd) >= 4);
         t('桌面CSS规则非空', rulesOf(dd) > 50);
         t('桌面面板底色非透明（域 tokens 命中）', getComputedStyle(dt('.bz-sp-desk')).backgroundColor !== 'rgba(0, 0, 0, 0)');
+        // 域样式是逐份直链的：本面板会渲染该域内容（custom 行/预览卡），漏链不报错、只静默裸奔。
+        // 2026-09-23 症候 = 收藏本「标签管理」行裸奔（图标撑满整块）；补链后钉一条断言防回归。
+        const hasRule = (doc, frag) => [...doc.styleSheets].some((s) => {
+          try { return [...s.cssRules].some((r) => (r.selectorText || '').includes(frag)); } catch { return false; }
+        });
+        t('收藏本域样式在链上（标签管理行骨架与图标尺寸来源）', hasRule(dd, '.bz-fav-tagmgr-ic svg'));
         t('移动CSS外链≥4', sheetsOf(md) >= 4);
         t('移动CSS规则非空', rulesOf(md) > 50);
         t('移动面板底色非透明', getComputedStyle(mob('.bz-sp-mobile')).backgroundColor !== 'rgba(0, 0, 0, 0)');
@@ -231,12 +239,38 @@
         searchIn.value = '';
         searchIn.dispatchEvent(new Event('input', { bubbles: true }));
 
-        /* ---------- 桌面：「设置」域外观组（经纬/晨昏 各一卡） ---------- */
-        dt('.bz-sp-nav-item[data-sp-domain="appearance"]').click();
+        /* ---------- 桌面：萤标坐标帧（2026-09-23 用户报「点靠下的侧栏项，光晕留在上面几行」） ----------
+           萤标是 .bz-sp-desk-side 的绝对定位子元素（随 side 一起滚），而目标位置原先按
+           「视口相对差」算 —— side 一滚就少算一个 scrollTop，萤标停在比选中项高 scrollTop 处。
+           这条断言是唯一能验它的门禁（jsdom 无布局，单测量不了几何）。 */
+        {
+          const nav = dt('.bz-sp-nav');
+          const side = nav.parentElement;
+          side.scrollTop = side.scrollHeight;
+          await waitFor(() => side.scrollTop > 0);
+          const lowItem = dtAll('.bz-sp-nav-item')[dtAll('.bz-sp-nav-item').length - 2];
+          const wantId = lowItem.dataset.spDomain;
+          dtAll('.bz-sp-nav-item').find((b) => b.dataset.spDomain === wantId).click();
+          await waitFor(() => dt('.bz-sp-nav-item.on')?.dataset.spDomain === wantId);
+          await new Promise((r) => setTimeout(r, 1400)); // 弹簧收敛
+          const curBox = dt('.bz-spm-cursor').getBoundingClientRect();
+          const selBox = dt('.bz-sp-nav-item.on').getBoundingClientRect();
+          const delta = Math.round(curBox.top - selBox.top);
+          t('滚动后萤标落在选中项上（scrollTop=' + Math.round(side.scrollTop) + '，视口差 ' + delta + 'px）',
+            Math.abs(delta) <= 1 && Math.abs(curBox.height - selBox.height) <= 1);
+        }
+
+        /* ---------- 桌面：通用域「外观」组（经纬/晨昏 各一卡） ----------
+           2026-09-23 修：原先点 [data-sp-domain="appearance"]——「设置」域 2026-09-12 已撤销、
+           外观组并入「通用」并排最前，选择器返回 null → `.click()` 抛错**整段自检中断**
+           （症状：只报 16 项通过后 ERR，后面几十条断言一条都没跑）。改点通用域。 */
+        const apNav = await waitFor(() => dt('.bz-sp-nav-item[data-sp-domain="global"]'));
+        t('导航出现「通用」域', !!apNav);
+        if (apNav) apNav.click();
         await waitPaneGroups(1);
         const apPicks = () => dtAll('.bz-sp-pane .bz-sp-cardpick');
-        await waitFor(() => apPicks().length === 2 && apPicks()[0].querySelectorAll('.bz-sp-cardpick-card').length === 1);
-        t('设置域外观组两卡组', apPicks().length === 2);
+        await waitFor(() => apPicks().length >= 2 && apPicks()[0].querySelectorAll('.bz-sp-cardpick-card').length === 1);
+        t('通用域外观组含布局/主题两卡组', apPicks().length === 2);
         t('布局卡=经纬', apPicks()[0].textContent.includes('经纬'));
         t('主题卡=晨昏', apPicks()[1].textContent.includes('晨昏'));
         t('空值回退首卡选中', apPicks()[0].querySelector('.bz-sp-cardpick-card').classList.contains('is-on') &&

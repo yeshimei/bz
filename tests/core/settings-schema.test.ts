@@ -26,9 +26,11 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
 
   it('服务商组：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行（ticket 171；issue 187 删自定义模型行；visibleWhen 随 aiProvider）', () => {
     const rows = schema.groups[0].rows;
-    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/密钥（text×2）
+    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行 + 自定义端点/密钥。
+    // 2026-09-23：凭据行全部改「密钥型」档位（type:'secret' → password 掩码 + 眼睛切明文），
+    // 自定义端点仍是 text（地址不是凭据）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text'];
+    const types = ['select', ...nonCustom.map(() => 'secret'), 'text', 'secret'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
@@ -110,9 +112,11 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     expect(thinkingRow.options.map((o) => o.value)).toEqual(['auto', 'off', 'low', 'medium', 'high']);
   });
 
-  it('数据源凭据组（issue 331 拆组）：B站 Cookie/豆瓣 Cookie 换 textarea，ApiZero Key 保持单行；桌面端 B站行带「从 CLI 导入」', () => {
+  it('数据源凭据组（issue 331 拆组）：B站/豆瓣 Cookie 为多行掩码 textarea，ApiZero Key 单行掩码；桌面端 B站行带「从 CLI 导入」', () => {
     const rows = schema.groups[2].rows;
-    expect(rows.map((r) => r.type)).toEqual(['textarea', 'text', 'textarea']);
+    // 2026-09-23：三行凭据全掩码——Cookie 保留多行粘贴面 + masked 打点，Key 走单行 secret
+    expect(rows.map((r) => r.type)).toEqual(['textarea', 'secret', 'textarea']);
+    expect(rows.map((r) => (r as { masked?: boolean }).masked)).toEqual([true, undefined, true]);
     const [bili, apizero, douban] = rows as Array<{
       name: string;
       binding?: { key: string };

@@ -21,7 +21,7 @@ import { openPathPicker } from '../core/path-picker';
 import {
   bindValue, safePersist, CommitWarn, parseClampedNumber, TEXT_COMMIT_DELAY,
 } from '../core/settings-schema';
-import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
+import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext, SecretRow } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { escManager } from '../core/esc-manager';
@@ -42,26 +42,12 @@ function snapshot(): SettingsSnapshot {
 /* ==================== 密钥型行（GS3 档位，呈报#48） ==================== */
 
 /**
- * 密钥型行：TextRow 的掩码档位变体——input type=password 掩码显示 + 眼睛切换明文，
- * 提交链（防抖落盘 / 失焦回车提交 / refreshKey 联动）与 text 行同内核。
- * core SettingsRow 判别联合未收编本档位（core 属本批改动白名单外，类型收编另行走
- * core 批）——本域以「渲染入参放宽为 SettingsRow | SecretRow」承接；schema 侧经
- * secretRow() 声明（运行时 type 恒 'secret'，唯一消费方 = 本渲染器 case 'secret'）。
+ * 密钥型行（type:'secret'）：TextRow 的掩码档位变体——input type=password 掩码显示 +
+ * 眼睛切换明文，提交链（防抖落盘 / 失焦回车提交 / refreshKey 联动 / actions）与 text 行同内核。
+ * 2026-09-23：本档位已收编进 core 的 SettingsRow 判别联合（core/settings-schema.ts 的
+ * SecretRow，两渲染器同口径）——原先这里自持一份 SecretRow + secretRow() 受控断言，
+ * 只为绕开 core 联合未收编；现在直接用 core 类型，断言与跨层 hack 一并退场。
  */
-export interface SecretRow {
-  type: 'secret';
-  name: string;
-  desc?: string;
-  binding: RowBinding<string>;
-  placeholder?: string;
-  onChange?: (value: string, ctx: SettingsRowContext) => void;
-  refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
-}
-
-/** SecretRow → SettingsRow 收口（一次受控断言；理由见 SecretRow 注） */
-export function secretRow(row: SecretRow): SettingsRow {
-  return row as unknown as SettingsRow;
-}
 
 /** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示）；
  *  文案收编 core notifySaveError 单源（review-deep 一致#3） */
@@ -133,17 +119,19 @@ function regRefreshDisplay(
   });
 }
 
-/** 文本/数字输入：.bz-input 共享底 + 行内布局修饰（mono/num/secret 尺寸见域样式）。
- *  行为层独有：防抖落盘 + 失焦/回车提交 + refreshKey 程序化刷新（不置脏，防 blur 假写）。 */
+/** 文本/数字输入：.bz-input 共享底 + 行内布局修饰（mono/num 尺寸见域样式）。
+ *  行为层独有：防抖落盘 + 失焦/回车提交 + refreshKey 程序化刷新（不置脏，防 blur 假写）。
+ *  掩码档位不走这里（单行 = makeSecretInput，多行 = makeMaskedArea）。 */
 function makeInput(opts: {
   value: string;
   type?: 'text' | 'number';
   mono?: boolean;
   num?: boolean;
-  secret?: boolean;
   placeholder?: string;
   min?: number;
   max?: number;
+  /** 软键盘语义提示（仅提示不校验） */
+  inputMode?: string;
   /** 提交回调；返回字符串 = 回显值（R9：number 非法输入不写入，回显生效旧值防「显示 ≠ 生效」） */
   onCommit: (v: string) => string | void;
 }): HTMLInputElement {
@@ -154,14 +142,26 @@ function makeInput(opts: {
     type: opts.type,
     mono: opts.mono,
     num: opts.num,
-    secret: opts.secret,
     placeholder: opts.placeholder,
     min: opts.min,
     max: opts.max,
+    inputMode: opts.inputMode,
   });
   const input = holder.firstElementChild as HTMLInputElement;
   bindTextCommit(input, opts.onCommit); // 防抖落盘/失焦回车提交/refreshKey 写回入口（内核单源）
   return input;
+}
+
+/** 眼睛钮行为（单行掩码与多行掩码共用，别各写一份）：翻显示形态 + aria 同步 + 图标换形。
+ *  apply() 执行形态切换并返回切换后的「已显示明文」态；只翻形态，不动值不落盘。 */
+function bindSecretEye(eye: HTMLButtonElement, apply: () => boolean): void {
+  eye.addEventListener('click', () => {
+    const revealed = apply();
+    eye.setAttribute('aria-pressed', String(revealed));
+    eye.setAttribute('aria-label', revealed ? '隐藏密钥' : '显示密钥');
+    eye.innerHTML = R.iconSpan(revealed ? 'eye-off' : 'eye'); // 图标随形态换（占位串 → mountIcons 兑现）
+    mountIcons(eye);
+  });
 }
 
 /** 密钥型输入（GS3 档位）：type=password 掩码 + 眼睛切换明文（切换只翻显示形态，
@@ -176,15 +176,31 @@ function makeSecretInput(opts: {
   const input = holder.querySelector('.bz-sp-secret-input') as HTMLInputElement;
   const eye = holder.querySelector('.bz-sp-secret-eye') as HTMLButtonElement;
   bindTextCommit(input, opts.onCommit);
-  eye.addEventListener('click', () => {
+  bindSecretEye(eye, () => {
     const reveal = input.type === 'password';
     input.type = reveal ? 'text' : 'password';
-    eye.setAttribute('aria-pressed', String(reveal));
-    eye.setAttribute('aria-label', reveal ? '隐藏密钥' : '显示密钥');
-    eye.innerHTML = R.iconSpan(reveal ? 'eye-off' : 'eye'); // 图标随形态换（占位串 → mountIcons 兑现）
-    mountIcons(eye);
+    return reveal;
   });
   return holder.firstElementChild as HTMLDivElement;
+}
+
+/** 多行掩码输入（TextAreaRow.masked，Cookie 类长串凭据）：保留多行粘贴面（textarea 不换单行
+ *  input），打点走 core/ui/components.css 的 .bz-maskarea（-webkit-text-security，textarea
+ *  没有 type=password）；眼睛翻 .bz-maskarea--revealed。提交行为与 textarea 行同内核。 */
+function makeMaskedArea(opts: {
+  value: string;
+  placeholder?: string;
+}): { holder: HTMLDivElement; ta: HTMLTextAreaElement } {
+  const holder = document.createElement('div');
+  holder.innerHTML = R.maskedAreaHtml({ value: opts.value, placeholder: opts.placeholder });
+  const ta = holder.querySelector<HTMLTextAreaElement>('textarea')!;
+  const eye = holder.querySelector<HTMLButtonElement>('.bz-sp-secret-eye')!;
+  bindSecretEye(eye, () => {
+    const revealed = !ta.classList.contains('bz-maskarea--revealed');
+    ta.classList.toggle('bz-maskarea--revealed', revealed);
+    return revealed;
+  });
+  return { holder: holder.firstElementChild as HTMLDivElement, ta };
 }
 
 /* ==================== 路径行（共享 chips + 选择按钮） ==================== */
@@ -391,8 +407,8 @@ function renderRow(
         value: acc.read() ?? '',
         mono: !!(row as { mono?: boolean }).mono,
         num: !!(row as { num?: boolean }).num,
-        secret: !!(row as { secret?: boolean }).secret,
         placeholder: ph,
+        inputMode: row.inputMode,
         onCommit: (v) => {
           acc.write(v);
           motionInputSaved(input); // 动效：入槽一呼吸（提交落盘确认，轻到不打断输入流）
@@ -409,12 +425,13 @@ function renderRow(
       break;
     }
     case 'secret': {
-      // 密钥型行（GS3，呈报#48）：password 掩码 + 眼睛切换明文；提交链走 text 行同内核
+      // 密钥型行（GS3，呈报#48；2026-09-23 类型收编进 core 联合）：password 掩码 + 眼睛切换
+      // 明文；提交链 / refreshKey / actions 全走 text 行同内核
       const sec = row as SecretRow;
       const acc = bindValue<string>(sec.binding as unknown as RowBinding<string>);
       const input = makeSecretInput({
         value: String(acc.read() ?? ''),
-        placeholder: sec.placeholder,
+        placeholder: typeof sec.placeholder === 'function' ? sec.placeholder(snapshot()) : sec.placeholder,
         onCommit: (v) => {
           acc.write(v);
           motionInputSaved(input.querySelector('.bz-sp-secret-input') as HTMLInputElement); // 动效：入槽（密钥提交同皮同反馈）
@@ -423,6 +440,9 @@ function renderRow(
           refresh(); // C-2：值驱动 visibleWhen 的子行跟随（text 行 commit 点同口径）
         },
       });
+      // 行内附加按钮（text 行同口径，渲染于输入框左侧）：B站 Cookie 那种「从 CLI 导入」不再
+      // 只能挂在多行行上——密钥行也能带动作
+      mountTextActions(ctrlEl, input.querySelector('.bz-sp-secret-input') as HTMLInputElement, acc, sec.actions, ctx, refresh);
       ctrlEl.appendChild(input);
       // refreshKey 联动（text 行同口径）：任意行变更后重读显示值写回输入框（不落盘）
       regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector('.bz-sp-secret-input') as HTMLInputElement);
@@ -430,10 +450,21 @@ function renderRow(
     }
     case 'textarea': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      // 结构单源（R.textareaHtml）；行内附加按钮在左（issue 330，同 text 行拍板口径）——textarea 最后插入
-      const taHolder = document.createElement('div');
-      taHolder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
-      const ta = taHolder.firstElementChild as HTMLTextAreaElement;
+      // 掩码档位（Cookie 类长串凭据）：保留多行粘贴面，外壳换成「多行 + 打点 + 眼睛」；
+      // 提交链与普通多行完全同内核，只是挂载的是外壳（holder）而不是裸 textarea
+      const masked = row.masked === true;
+      const holder = document.createElement('div');
+      let ta: HTMLTextAreaElement;
+      let ctrl: HTMLElement;
+      if (masked) {
+        const m = makeMaskedArea({ value: acc.read() ?? '', placeholder: row.placeholder });
+        ta = m.ta;
+        ctrl = m.holder;
+      } else {
+        holder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
+        ta = holder.firstElementChild as HTMLTextAreaElement;
+        ctrl = ta;
+      }
       // 行级 onCommit 一次性提示（H1：备忘录「自定义场景列表」memoReloadScenes 即 textarea 行钩子）
       const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       let timer: number | null = null;
@@ -467,8 +498,9 @@ function renderRow(
           displaySetters.get(ta)?.(String(fresh ?? ''));
         });
       }
-      mountTextActions(ctrlEl, ta, acc, (row as { actions?: never }).actions as never, ctx, refresh);
-      ctrlEl.appendChild(ta);
+      // 行内附加按钮在左（issue 330，同 text 行拍板口径）——多行控件最后插入
+      mountTextActions(ctrlEl, ta, acc, row.actions, ctx, refresh);
+      ctrlEl.appendChild(ctrl);
       break;
     }
     case 'number': {

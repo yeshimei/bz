@@ -235,6 +235,8 @@ export class MockButton {
   icon: string | null = null;
   buttonEl: HTMLButtonElement;
   private cb: (() => void) | null = null;
+  /** 真实 ExtraButtonComponent 有 extraSettingsEl（挂 aria 的宿主）；mock 指向 buttonEl */
+  get extraSettingsEl(): HTMLButtonElement { return this.buttonEl; }
   constructor() {
     this.buttonEl = document.createElement('button');
     this.buttonEl.addEventListener('click', () => this.cb?.());

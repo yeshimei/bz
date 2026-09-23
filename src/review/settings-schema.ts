@@ -57,6 +57,7 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
               save: () => saveSettings(),
             },
             min: 0,
+            max: 100,
             visibleWhen: (s) => s.forceQuizForReview === true,
             isChild: true,
           },
@@ -82,7 +83,7 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         name: '复习节奏',
         rows: [
           // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
-          { type: 'number', name: '每日复习上限', desc: '一轮最多复习的篇数，不填则不限制', binding: { key: 'reviewDailyLimit' }, min: 0 },
+          { type: 'number', name: '每日复习上限', desc: '一轮最多复习的篇数，不填则不限制', binding: { key: 'reviewDailyLimit' }, min: 0, max: 1000 },
           // 深审新-14②/A14：超界改渲染器声明钳制（min/max 进界并回写输入框，R9 通路显示值=落盘值），
           // 原.onChange「超上界回 1」复刻删除——输入 8 落 5 且回显 5，不再出现显示 8 落 1 的缝
           {
