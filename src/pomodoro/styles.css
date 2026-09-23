@@ -73,10 +73,12 @@
        hover/active 必须一并覆盖：上面 .pomodoro-btn:hover:not(:disabled) 是三类选择器，
        比单类 .pomodoro-btn-armed 权重高——不补同权重且靠后的规则，鼠标停上去会被刷成灰底
        （用户 2026-09-24 报：确认态配色被 hover 顶掉）。确认态是「等你表态」的状态色，不该随悬停变。 */
-    .pomodoro-btn-armed,
-    .pomodoro-btn-armed:hover:not(:disabled),
-    .pomodoro-btn-armed:active:not(:disabled) { background: var(--pz-hot, var(--text-error, var(--interactive-accent))); color: var(--pz-on-accent, var(--text-on-accent)); font-weight: 600; }
+    .pomodoro-btn-armed { background: var(--pz-hot, var(--text-error, var(--interactive-accent))); color: var(--pz-on-accent, var(--text-on-accent)); font-weight: 600; }
 @media (hover: hover) {
+
+    /* 确认态的 hover/active 也钉死警示色（BD 范式门禁：:hover 必须在 @media (hover: hover) 内） */
+    .pomodoro-btn-armed:hover:not(:disabled),
+    .pomodoro-btn-armed:active:not(:disabled) { background: var(--pz-hot, var(--text-error, var(--interactive-accent))); color: var(--pz-on-accent, var(--text-on-accent)); }
 
     /* 主按钮同样不换底色：--interactive-accent-hover 是 Obsidian 主题变量，评审壳（以及部分主题）
        拿不到 → 背景声明整条失效变透明，而字色是 --pz-on-accent 白字 → 白字糊在弹窗底色上「发白」

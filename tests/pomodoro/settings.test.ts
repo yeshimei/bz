@@ -355,9 +355,9 @@ describe('设置生效', () => {
     el('pomodoro-btn-start').click();
     expect(el('pomodoro-phase').textContent).toBe('专注'); // 增强包：阶段文案不带 N/M，位置由圆点行表达
     expect(cycleDots().length).toBe(4);
-    // 2026-09-24：跳过改为按钮内二次确认——首点只变「确认？」（不执行），再点才流转
+    // 2026-09-24：跳过改为按钮内二次确认——首点只变「确认」（不执行），再点才流转
     el('pomodoro-btn-skip').click();
-    expect(el('pomodoro-btn-skip').textContent).toBe('确认？');
+    expect(el('pomodoro-btn-skip').textContent).toBe('确认');
     expect(el('pomodoro-time').textContent).toBe('50:00');
     el('pomodoro-btn-skip').click(); // 短休息用预设时长 10min
     expect(el('pomodoro-time').textContent).toBe('10:00');
@@ -376,7 +376,7 @@ describe('设置生效', () => {
     expect(el('pomodoro-time').textContent).toBe('30:00');
     el('pomodoro-btn-start').click();
     el('pomodoro-btn-skip').click();
-    expect(el('pomodoro-btn-skip').textContent).toBe('确认？');
+    expect(el('pomodoro-btn-skip').textContent).toBe('确认');
     el('pomodoro-btn-skip').click();
     expect(el('pomodoro-time').textContent).toBe('06:00');
   });

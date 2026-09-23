@@ -270,15 +270,15 @@ describe('番茄钟弹窗', () => {
     expect(lastFreq()).toBe(880); // 继续＝过渡 + 落定
   });
 
-  it('重置（专注中）→ 确认框（issues/144 拍板）确认后回满时长并停止，且落盘（F11 回归锁）', async () => {
+  it('重置（专注中）→ 按钮内二次确认（2026-09-24 替代确认弹窗）：首点「确认」、点别处解除、再点执行，且落盘（F11 回归锁）', async () => {
     const { app, vault } = setup();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     await vi.advanceTimersByTimeAsync(5000);
-    // 2026-09-24：不再弹确认框——首点按钮自己变「确认？」
+    // 2026-09-24：不再弹确认框——首点按钮自己变「确认」
     el('pomodoro-btn-reset').click();
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
-    expect(el('pomodoro-btn-reset').textContent).toBe('确认？');
+    expect(el('pomodoro-btn-reset').textContent).toBe('确认');
     expect(el('pomodoro-btn-reset').classList.contains('pomodoro-btn-armed')).toBe(true);
     expect(el('pomodoro-time').textContent).toBe('24:55');
     // 点别处 → 解除待确认，计时继续
@@ -304,9 +304,9 @@ describe('番茄钟弹窗', () => {
     const { app } = setup();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
-    // 2026-09-24：跳过同口径二次确认——首点只变「确认？」
+    // 2026-09-24：跳过同口径二次确认——首点只变「确认」
     el('pomodoro-btn-skip').click();
-    expect(el('pomodoro-btn-skip').textContent).toBe('确认？');
+    expect(el('pomodoro-btn-skip').textContent).toBe('确认');
     expect(el('pomodoro-phase').textContent).toContain('专注'); // 尚未流转
     el('pomodoro-btn-skip').click();
     expect(el('pomodoro-phase').textContent).toContain('短休息');
