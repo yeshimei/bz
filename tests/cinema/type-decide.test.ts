@@ -7,7 +7,7 @@
  * - 候选 = `ALL_TAGS` 单源去掉「公开课」+ 显式哨兵；
  * - 哨兵命中 / 置信度不足 / 答案不在清单 → 一律 `null`（不允许逃逸，宁缺勿滥）；
  * - **弃权不是失败**：Jev 选哨兵或置信度不足不触发回落（回落等于绕过校准概率）；
- * - Jev 未配置 / 请求失败 / 答案畸形 → 回落 LLM；
+ * - Jev 未配置 / 请求失败 / 答案畸形（题型不符、**取值越界**）→ 回落 LLM；
  * - abort → 抛出且不回落（LLM 零调用）；
  * - 两道都不可用 → 抛错，由调用方留空手点；
  * - state 只压非空字段（Jev 官方：塞太多无关内容掉精度）。
@@ -137,6 +137,12 @@ describe('judgeTypeChoice：判据（纯函数）', () => {
   it('答案不在候选清单（接口异常形态）→ null', () => {
     expect(judgeTypeChoice({ type: 'choice', choice: '自行编造的分类', confidence: 0.99, probabilities: {} }, criteria)).toBeNull();
   });
+
+  it('原型链键（toString / constructor 等）不算命中候选（`in` 会把它们认成合法 tag）', () => {
+    for (const key of ['toString', 'constructor', 'hasOwnProperty', '__proto__']) {
+      expect(judgeTypeChoice({ type: 'choice', choice: key, confidence: 0.99, probabilities: {} }, criteria)).toBeNull();
+    }
+  });
 });
 
 describe('LLM 回落：题面与回执', () => {
@@ -159,6 +165,7 @@ describe('LLM 回落：题面与回执', () => {
 
   it('回执不在清单 / 哨兵 / 非 JSON / 缺字段 → null（弃权，不写值）', () => {
     expect(parseTypeLlmOutput('{"type":"自创分类"}', criteria)).toBeNull();
+    expect(parseTypeLlmOutput('{"type":"constructor"}', criteria)).toBeNull(); // 原型链键不算候选
     expect(parseTypeLlmOutput(`{"type":"${TYPE_SENTINEL}"}`, criteria)).toBeNull();
     expect(parseTypeLlmOutput('不是 JSON', criteria)).toBeNull();
     expect(parseTypeLlmOutput('{"kind":"美剧"}', criteria)).toBeNull();
@@ -215,10 +222,34 @@ describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () =
     expect(aiStub.json).toHaveBeenCalledTimes(1);
   });
 
+  it('答案题型不符（回 score 而非 choice）→ 回落 LLM', async () => {
+    setSettingsProvider(() => jevSettings());
+    vi.spyOn(jev, 'askJev').mockResolvedValue({
+      model: 'jev-test',
+      answers: { type: { type: 'score', score: 3, probabilities: {} } },
+    } as unknown as JevResult);
+    await expect(decideCinemaType({ title: 'X' })).resolves.toBe('日漫');
+    expect(aiStub.json).toHaveBeenCalledTimes(1);
+  });
+
+  it('答案越界（Jev 吐清单外的词）→ 回落 LLM（与哨兵弃权不同路）', async () => {
+    setSettingsProvider(() => jevSettings());
+    vi.spyOn(jev, 'askJev').mockResolvedValue(choiceResult('自行编造的分类', 0.99));
+    await expect(decideCinemaType({ title: 'X' })).resolves.toBe('日漫');
+    expect(aiStub.json).toHaveBeenCalledTimes(1);
+  });
+
   it('LLM 回执非法 → null（弃权，不写值）', async () => {
     setSettingsProvider(() => jevSettings({ jevEnabled: false }));
     aiStub.json.mockResolvedValue('{"type":"自创分类"}');
     await expect(decideCinemaType({ title: 'X' })).resolves.toBeNull();
+  });
+
+  it('回落请求带调用方的 signal（在途取消能传导进 LLM 通道）', async () => {
+    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+    const ctrl = new AbortController();
+    await decideCinemaType({ title: 'X' }, { signal: ctrl.signal });
+    expect(aiStub.json.mock.calls[0][1]).toMatchObject({ signal: ctrl.signal });
   });
 
   it('abort → 抛 AbortError 且 LLM 零调用', async () => {

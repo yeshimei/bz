@@ -8,7 +8,9 @@
  * 回落覆盖的「Jev 不可用」四类（2026-09-23 用户拍板：一律回落，不挑场景）：
  * ① 未启用 / 未配置（端点或密钥不齐）→ 不发请求直接回落；
  * ② 请求失败（超时 / 网络 / HTTP 非 2xx）→ 回落；
- * ③ 答案畸形（响应缺 answers、缺题单键、题型不符——由 `parse` 抛错表达）→ 回落；
+ * ③ 答案畸形（响应缺 answers、题型不符、取值越界……）→ 回落。**何为畸形由调用方的 `parse` 定义**
+ *    （约定：不可用的答案抛错）；调用方也可把某类答案定为「域内弃权」而正常返回（如影院哨兵、
+ *   link-agent 缺题单键按 issue 392 决策 9 计 0）——那是有效判定，不算不可用；
  * ④ 取消（`signal.aborted`）**不回落**——用户主动放弃，回落等于白烧一次 LLM（issue 392 决策 6）。
  * 回落自身失败原样上抛，由调用方决定降级（关联入队重试 / 影院分类留空手点），不引第三层兜底。
  *
@@ -28,9 +30,10 @@ function abortError(): Error {
 export interface JudgePlan<T> {
   /** Jev 侧材料（**惰性构造**：未就绪 / 已取消时不建，state 常要读 vault / 拼档案卡） */
   request: () => { state: string; questions: Record<string, JevQuestion> };
-  /** 类型化答案 → 域内结果；**抛错 = 答案不可用**（缺题单键 / 题型不符）→ 回落 */
+  /** 类型化答案 → 域内结果；**抛错 = 答案不可用**（缺题单键 / 题型不符 / 取值越界）→ 回落 */
   parse: (answers: Record<string, JevAnswer>) => T;
-  /** 生成通道回落（LLM 路径）；abort 时不调用，自身失败原样上抛 */
+  /** 生成通道回落（LLM 路径）；abort 时不调用，自身失败原样上抛。
+   *  本层只保证「已取消不调用」，**在途取消要传导进回落请求须由实现自行接 `signal`** */
   fallback: () => Promise<T>;
   signal?: AbortSignal;
   /** 显式覆盖 Jev 配置（测试 / 特殊调用点；就绪门仍以设置为准，透传 askJev） */
@@ -51,7 +54,9 @@ export async function judgeOrFallback<T>(plan: JudgePlan<T>): Promise<T> {
     const result = await askJev(state, questions, { signal, config: plan.config });
     return plan.parse(result.answers);
   } catch (e) {
-    if (signal?.aborted) throw e; // 取消不算失败：抛出，不回落
+    // 取消不算失败：抛出、不回落。class ④ 的出口恒为 AbortError——取消恰与超时/网络错同时发生时
+    // 原始错误可能是 TimeoutError 等，归一化后再抛，调用方只需认这一种（与 core/jev.ts 同义）
+    if (signal?.aborted) throw e instanceof Error && e.name === 'AbortError' ? e : abortError();
     console.debug('[jev] 判定通道不可用，回落 LLM：', e instanceof Error ? e.message : e);
     return plan.fallback();
   }
