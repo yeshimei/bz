@@ -769,7 +769,10 @@ describe('知识盒 UI（ADR-0112 三部）', () => {
     expect(tasks[0].start).toBe('0:00');
     expect(tasks[0].end).toBe('1:30');
     expect(getNoticeMessages().join('\n')).not.toContain('成对填写');
-    // 编辑回填：无时长任务带 start=0:00 打开时框里要看得见（paint 不碰框 → 补刀显式落框）
+    // 编辑回填：无时长任务带 start=0:00 打开时框里要看得见（paint 不碰框 → 补刀显式落框）。
+    // 先清掉上一步手填残留（hideAddDialog 不清框），否则断言近似恒真、测不到补刀
+    (document.getElementById('lit-add-start') as HTMLInputElement).value = '';
+    (document.getElementById('lit-add-end') as HTMLInputElement).value = '';
     ui.showAddDialog(tasks[0]);
     await vi.waitFor(() => expect(document.getElementById('knowledge-add-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('0:00');

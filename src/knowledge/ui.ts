@@ -2018,8 +2018,12 @@ export class UIManager {
     const sEl = q<HTMLInputElement>(popup, '#lit-add-start');
     const eEl = q<HTMLInputElement>(popup, '#lit-add-end');
     if (sEl && only !== 'end') {
-      // start=0 且无时长：框空（没填）与手填 0:00（从零截段）在数值上同形 → 不碰框，写空会吞掉手填的 0:00
-      if (this.addStart > 0 || this.addDuration > 0) sEl.value = secToTimeText(this.addStart);
+      // 全量重画（only=null）按状态写，零值显式写空（secToTimeText(0)='0:00'，不能直写）——
+      // 重置/开窗/整片/失败态靠它清场，防上一轮手填残留被当真值落库；
+      // 单框提交/微调（only='start'）且 start=0 且无时长时不碰：框空（没填）与手填 0:00 数值同形，写空会吞手填
+      const showStart = this.addStart > 0 || this.addDuration > 0;
+      if (only === null) sEl.value = showStart ? secToTimeText(this.addStart) : '';
+      else if (showStart) sEl.value = secToTimeText(this.addStart);
     }
     if (eEl && only !== 'start') eEl.value = this.addEnd > 0 ? secToTimeText(this.addEnd) : '';
   }
@@ -2238,16 +2242,17 @@ export class UIManager {
     this._commitTimeInput('start', true);
     this._commitTimeInput('end', true);
     const dur = this.addDuration;
+    // 框文本提前读（whole 与成对校验同源）：dur=0 时「两端框都空」才算整片——显式手填的 0:00 不再被整片判定吞掉
+    const sRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
+    const eRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
     // 整片判定：有量程 = 全选（start=0 且 end=duration）；无时长 = 两端都空
-    const whole = this.addStart <= 0 && (dur > 0 ? this.addEnd >= dur : this.addEnd <= 0);
+    const whole = dur > 0 ? this.addStart <= 0 && this.addEnd >= dur : !sRaw && !eRaw;
     let start: string | null = null;
     let end: string | null = null;
     if (!whole) {
       // 成对与否看框文本：0:00 是合法开始值（从零截段），数值 0 分不清「没填」——框空才是没填
       // （保存前 _commitTimeInput 已把非法/空输入归位：dur>0 恒回填状态值，dur=0 空则留空）
-      const sFilled = !!(q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
-      const eFilled = !!(q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
-      if (!sFilled || !eFilled) { notice('开始与结束时间需成对填写', 'error'); return; }
+      if (!sRaw || !eRaw) { notice('开始与结束时间需成对填写', 'error'); return; }
       if (this.addStart >= this.addEnd) { notice('结束时间需大于开始时间', 'error'); return; }
       start = secToTimeText(this.addStart);
       end = secToTimeText(this.addEnd);

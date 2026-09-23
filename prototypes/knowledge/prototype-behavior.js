@@ -1,4 +1,4 @@
-/* 源指纹 4f4ad626b4589ee3 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 be8c30fc655ad8ed · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -14619,7 +14619,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const sEl = q(popup, "#lit-add-start");
       const eEl = q(popup, "#lit-add-end");
       if (sEl && only !== "end") {
-        if (this.addStart > 0 || this.addDuration > 0) sEl.value = secToTimeText(this.addStart);
+        const showStart = this.addStart > 0 || this.addDuration > 0;
+        if (only === null) sEl.value = showStart ? secToTimeText(this.addStart) : "";
+        else if (showStart) sEl.value = secToTimeText(this.addStart);
       }
       if (eEl && only !== "start") eEl.value = this.addEnd > 0 ? secToTimeText(this.addEnd) : "";
     }
@@ -14831,13 +14833,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
       this._commitTimeInput("start", true);
       this._commitTimeInput("end", true);
       const dur = this.addDuration;
-      const whole = this.addStart <= 0 && (dur > 0 ? this.addEnd >= dur : this.addEnd <= 0);
+      const sRaw = ((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
+      const eRaw = ((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
+      const whole = dur > 0 ? this.addStart <= 0 && this.addEnd >= dur : !sRaw && !eRaw;
       let start = null;
       let end = null;
       if (!whole) {
-        const sFilled = !!((_f = (_e = q(this.addPopup, "#lit-add-start")) == null ? void 0 : _e.value) != null ? _f : "").trim();
-        const eFilled = !!((_h = (_g = q(this.addPopup, "#lit-add-end")) == null ? void 0 : _g.value) != null ? _h : "").trim();
-        if (!sFilled || !eFilled) {
+        if (!sRaw || !eRaw) {
           notice("开始与结束时间需成对填写", "error");
           return;
         }
