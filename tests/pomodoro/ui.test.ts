@@ -815,6 +815,16 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(/#pomodoro-mask[^{]*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
     expect(css).toContain('.pomodoro-statusbar:hover');
   });
+
+  it('样式基线：环形 SVG 显式 overflow:visible——环光的 drop-shadow 绘到框外才不会被硬切（2026-09-23）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    // 环光 = 挂在 #pomodoro-ring-progress 上的 drop-shadow（motion.ts setGlow）。
+    // 环实绘外缘 r=56 用户单位、viewBox 半宽 60 → 余量 4 单位；辉光要 ~7 单位 →
+    // UA 默认 overflow:hidden 会在元素框上切出一条直边（用户报「光晕被裁切到一个方块中」）。
+    // 量化对照（CDP 探针读像素剖面，环心沿 +x）：置 visible 前在 +60.5 单位一步断到背景色，
+    // 置 visible 后同一段平滑衰减到 +74 单位。jsdom 无绘制 → 这条只能钉声明。
+    expect(/#pomodoro-ring-svg\s*\{[^}]*overflow:\s*visible/.test(css)).toBe(true);
+  });
 });
 
 /**
