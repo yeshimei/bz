@@ -52,6 +52,11 @@ import {
 } from './render';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 import { aiSuggestCategory } from './ai';
+import {
+  motionBeforePaint, motionRendered, motionCellFlow, motionCellStamp, motionCellStrike,
+  motionDetailIn, motionDropOpen, motionFormIn, motionPanelIn, motionPanelOut,
+  motionTeardown, type BelRenderMotion,
+} from './motion';
 
 const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 
@@ -85,6 +90,10 @@ const M: BelState = {
 
 /** 自绘下拉的 document 外点收起监听（openPanel 挂，closePanel 摘） */
 let dropDocClick: ((e: MouseEvent) => void) | null = null;
+
+/** 动效意图（动效层消费，renderAll 单点复位）：boot=开册编排 / flip=重排 FLIP（默认）/
+ *  silent=静默（外部 modify 自动刷新、主题切换等非用户触发的全量重渲不重播任何编排） */
+let motionIntent: BelRenderMotion = 'flip';
 
 export function resetBelongingsState(): void {
   M.overlay = null;
@@ -300,6 +309,7 @@ async function openPanelInner(): Promise<void> {
   M.overlay = overlay;
   M.renderFn = () => renderAll();
   mountIcons(overlay);
+  motionPanelIn(overlay); // 动效层：海报上墙（内容编排由 renderAll 的 boot 模式管）
 
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）
   ensureBelongingsEsc();
@@ -338,6 +348,7 @@ async function openPanelInner(): Promise<void> {
         wrap.classList.add('is-open');
         // 开时定位当前值（is-cur）为键盘高亮项——原生 select 打开即停在所选
         wrap.querySelector('.bz-bel-dropopt.is-cur')?.classList.add('is-active');
+        motionDropOpen(wrap); // 动效层：纸签弹出
       }
       return;
     }
@@ -490,6 +501,7 @@ async function openPanelInner(): Promise<void> {
     (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('[data-bel-id]')
   );
 
+  motionIntent = 'boot'; // 动效层：本次是首屏（开册编排；后续重渲默认走 flip）
   renderAll();
   startAutoRefresh();
   observeTheme();
@@ -512,14 +524,17 @@ export function closePanel(): void {
   }
   if (dropDocClick) { document.removeEventListener('click', dropDocClick); dropDocClick = null; }
   if (M.overlay) {
-    M.overlay.remove();
+    const ov = M.overlay;
     M.overlay = null;
+    // 动效层：合册退场（演完再摘；重开竞态——新面板即刻 append，退场件由 done 兜底移除）
+    motionPanelOut(ov, () => ov.remove());
   }
   M.renderFn = null;
   // 会话态一并清（B1/B3）：面板关后命令/撤销路径若复用陈旧库会把外部改动覆盖写盘；
   // 搜索词残留会让重开面板「空搜索框配过滤后列表」。库按需重载（openForm/撤销回调自补）
   M.db = null;
   M.q = '';
+  motionTeardown(); // 动效层：作废在途延时编排 + 丢弃 FLIP 台账（退场收口走裸定时器，不受此清）
 }
 
 export function cleanupBelongings(): void {
@@ -546,6 +561,7 @@ function startAutoRefresh(): void {
     void (async () => {
       try {
         M.db = await loadDatabase();
+        motionIntent = 'silent'; // 动效层：外部数据刷新非用户动作，静默重渲不重播编排
         M.renderFn?.();
       } catch (e: unknown) {
         // arch A2：自动刷新路径 reject 不再 unhandled rejection（旧库保留，下次 modify 自然重试，
@@ -555,6 +571,7 @@ function startAutoRefresh(): void {
             void (async () => {
               try {
                 M.db = await loadDatabase();
+                motionIntent = 'silent'; // 动效层：重试同走静默（与首刷同口径）
                 M.renderFn?.();
               } catch { /* 重试仍失败：通知由 notifyActionError 本轮已给，静默等下次 modify */ }
             })();
@@ -587,6 +604,7 @@ function observeTheme(): void {
     const now = themeOf();
     if (now !== prev) {
       prev = now;
+      motionIntent = 'silent'; // 动效层：主题换壳重渲静默（不重播开册编排）
       M.renderFn?.();
     }
   });
@@ -612,7 +630,10 @@ function renderAll(): void {
   const panel = M.overlay.querySelector('.bz-bel-panel') as HTMLElement | null;
   if (!panel) return;
   // BelState 与 render.BelViewState 结构兼容（status/year/q/sort）；view.year 悬空回写直通 M
+  motionBeforePaint(panel); // 动效层：先量（旧坑位台账）
   renderPanelView(panel, itemList(), M, { mountIcons }, currencyUnit());
+  motionRendered(panel, motionIntent); // 动效层：后演（开册编排 / 货架重排 FLIP / 静默）
+  motionIntent = 'flip';
 }
 
 /** 状态筛选切换语义（chips 与移动横滑条委托共用）：
@@ -669,6 +690,7 @@ function openBelDetail(it: BelongingsItem): void {
   });
   belDetailClose = close; // 遮罩点击/ESC 关已归 uiModal（详情无脏态，直接关）
   mountIcons(mask);
+  motionDetailIn(mask); // 动效层：抽档案卡（字段接力显影）
 
   // 四态流转条（当前态高亮；点击 = 同右键菜单流转，带撤销）
   const acts = mask.querySelector('[data-bd-acts]') as HTMLElement;
@@ -743,6 +765,9 @@ async function applyFlowWithUndo(it: BelongingsItem, s: string): Promise<void> {
     return; // 失败路径不发领域事件、不弹撤销 toast
   }
   emitDomainEvent('belongings', { kind: 'status', title: cur.name, status: s });
+  // 动效层：换牌——纸面一闪 + 状态徽章重盖（出库偏灰、回库偏橙），让「流转了」被看见
+  const flowCell = M.overlay?.querySelector<HTMLElement>(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+  if (flowCell) motionCellFlow(flowCell, exitedStatus(s));
   notifyUndo(`「${cur.name}」已标记为${s}`, () => {
     void (async () => {
       try {
@@ -835,6 +860,9 @@ async function deleteItem(it: BelongingsItem): Promise<void> {
     return;
   }
   const snapshot = { ...M.db.items[it.id] };
+  // 动效层：勾销——在旧 DOM 上演划线 + 卡面隐去（真渲染随后接管，货架 FLIP 补位）
+  const strikeCell = M.overlay?.querySelector<HTMLElement>(`[data-bel-id="${CSS.escape(it.id)}"]`);
+  if (strikeCell) motionCellStrike(strikeCell);
   delete M.db.items[it.id];
   closeBelDetail(); // 详情内删除：详情随之关闭
   // 写盘失败兜底（B5）：条目已在内存摘除，须回滚——否则后续任意保存把删除补刀持久化
@@ -974,6 +1002,7 @@ export function openForm(it: BelongingsItem | null): void {
   belFormMask = mask;
   _belFormTargetId = it?.id ?? null;
   mountIcons(mask);
+  motionFormIn(mask); // 动效层：填入库单（标题与字段接力落纸）
   // 编辑自抽屉：companion 防误关
   const sheetOpen = !!document.querySelector('.bz-item-sheet-mask');
   if (it && sheetOpen) registerSheetCompanion(mask);
@@ -1142,6 +1171,11 @@ export function openForm(it: BelongingsItem | null): void {
           }
           // 审查修复批（issue 356）：报告持一次性快照，开着时保存后就地重开刷新（openBelReport 重入语义）
           if (isBelReportOpen()) void openBelongingsReportView();
+          // 动效层：编辑里改了状态 = 一次换牌（与右键流转同款，出库偏灰、回库偏橙）
+          if (snapshot.current_status !== curStatus) {
+            const editCell = M.overlay?.querySelector<HTMLElement>(`[data-bel-id="${CSS.escape(cur.id)}"]`);
+            if (editCell) motionCellFlow(editCell, exitedStatus(curStatus));
+          }
           emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
         } else {
           if (!M.db) throw new Error('数据库未加载');
@@ -1162,6 +1196,9 @@ export function openForm(it: BelongingsItem | null): void {
           };
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）
           await saveAndRender();
+          // 动效层：盖章——新件入库，印圈一压（卡片上浮由 FLIP「新入列」分支给出）
+          const newCell = M.overlay?.querySelector<HTMLElement>(`[data-bel-id="${CSS.escape(newItem.id)}"]`);
+          if (newCell) motionCellStamp(newCell);
           // 审查修复批（issue 356）：报告开着时空态「记一笔」保存后就地刷新（旧快照仍显示空）
           if (isBelReportOpen()) void openBelongingsReportView();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });

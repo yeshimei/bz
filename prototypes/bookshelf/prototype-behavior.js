@@ -1,5 +1,5 @@
-/* 源指纹 46f7c7835f837d07 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
+/* 源指纹 b47cdf7f3cf14202 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
   var __create = Object.create;
@@ -1013,15 +1013,15 @@ var BZW_bookshelf = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -7261,6 +7261,608 @@ var BZW_bookshelf = (() => {
     }
   }
 
+  // src/bookshelf/motion.ts
+  var M2 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  var STAG = 30;
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function playable(el) {
+    if (reduced()) return false;
+    if (el && typeof el.animate !== "function") return false;
+    return true;
+  }
+  function waapi(el, frames, opts) {
+    if (!el || !playable(el)) return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function") return;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    if (typeof setTimeout !== "function") {
+      try {
+        fn();
+      } catch (e) {
+      }
+      return;
+    }
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  var liveAnims = /* @__PURE__ */ new Set();
+  function track(a, onfinish) {
+    if (!a) return;
+    liveAnims.add(a);
+    const done = () => {
+      liveAnims.delete(a);
+      try {
+        onfinish == null ? void 0 : onfinish();
+      } catch (e) {
+      }
+    };
+    a.finished.then(done).catch(done);
+  }
+  var liveSway = /* @__PURE__ */ new Set();
+  var rrObserver = null;
+  var knownSpines = null;
+  var lastHint = "";
+  var bootPending = false;
+  var busyUntil = 0;
+  function motionBusy() {
+    try {
+      return typeof performance !== "undefined" && performance.now() < busyUntil;
+    } catch (e) {
+      return false;
+    }
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const a of [...liveAnims]) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    liveAnims.clear();
+    for (const el of liveSway) el.classList.remove("bz-bsm-sway");
+    liveSway.clear();
+    stopReportObserver();
+    knownSpines = null;
+    lastHint = "";
+    if (typeof document !== "undefined") {
+      document.querySelectorAll(".bz-bsm-sheen").forEach((el) => el.remove());
+    }
+  }
+  function restOf(el) {
+    try {
+      const cs = getComputedStyle(el);
+      return {
+        transform: cs.transform && cs.transform !== "none" ? cs.transform : "none",
+        filter: cs.filter && cs.filter !== "none" ? cs.filter : "none"
+      };
+    } catch (e) {
+      return { transform: "none", filter: "none" };
+    }
+  }
+  function ensureRelative(el) {
+    try {
+      if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    } catch (e) {
+    }
+  }
+  function sheen(host, vertical) {
+    if (!playable(host)) return;
+    ensureRelative(host);
+    const i = document.createElement("i");
+    i.className = "bz-bsm-sheen" + (vertical ? " v" : "");
+    i.setAttribute("aria-hidden", "true");
+    host.appendChild(i);
+    after(760, () => i.remove());
+  }
+  function countUp(el, dur) {
+    if (!el.isConnected || reduced()) return;
+    const raw = el.textContent || "";
+    const m = raw.match(/-?\d[\d,]*(?:\.\d+)?/);
+    if (!m) return;
+    const target = parseFloat(m[0].replace(/,/g, ""));
+    if (!isFinite(target) || target === 0) return;
+    const decimals = (m[0].split(".")[1] || "").length;
+    const fmt = (v) => v.toFixed(decimals).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    tween(dur, (v) => {
+      if (!el.isConnected) return;
+      el.textContent = raw.replace(m[0], fmt(target * v));
+    });
+    after(dur + 40, () => {
+      if (el.isConnected) el.textContent = raw;
+    });
+  }
+  var EXIT_ANIM_ID = "bz-bs-panel-exit";
+  function motionPanelIn(overlay) {
+    bootPending = true;
+    const panel = overlay.querySelector(".bz-bs-panel");
+    if (!panel) return;
+    panel.style.opacity = "";
+    panel.style.transform = "";
+    panel.style.filter = "";
+    waapi(
+      panel,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.984)", filter: "brightness(.5) blur(9px)" },
+        { opacity: 1, transform: "none", filter: "brightness(1) blur(0px)" }
+      ],
+      { duration: 480, easing: E.out }
+    );
+  }
+  function motionPanelOut(overlay, done) {
+    const panel = overlay.querySelector(".bz-bs-panel");
+    if (!panel) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    const a = waapi(
+      panel,
+      [
+        { opacity: 1, transform: "none", filter: "brightness(1) blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.988)", filter: "brightness(.55) blur(5px)" }
+      ],
+      { duration: M2.move + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(M2.move + 200, finish);
+  }
+  function motionWallRendered(overlay, shelf, hint, action) {
+    for (const a of [...liveAnims]) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    liveAnims.clear();
+    const boot = bootPending;
+    bootPending = false;
+    if (reduced()) {
+      snapshotSpines(shelf);
+      return;
+    }
+    busyUntil = 0;
+    hintBeat(hint, boot);
+    if (action === "refresh" || action === "layout") {
+      reSway(shelf);
+      admitNewSpines(shelf);
+      return;
+    }
+    busyUntil = (typeof performance !== "undefined" ? performance.now() : 0) + (boot ? 2400 : action === "search" ? 1100 : 1500);
+    if (!boot && action === "filter") choreographWall(shelf, "filter");
+    else if (!boot && action === "search") choreographWall(shelf, "search");
+    else if (!boot && action === "reshelf") choreographWall(shelf, "reshelf");
+    else choreographBoot(overlay, shelf);
+    snapshotSpines(shelf);
+  }
+  function snapshotSpines(shelf) {
+    if (!knownSpines) knownSpines = /* @__PURE__ */ new Set();
+    shelf.querySelectorAll(".bz-bs-spine").forEach((sp) => {
+      if (sp.dataset.bsId) knownSpines.add(sp.dataset.bsId);
+    });
+  }
+  function reSway(shelf) {
+    if (reduced()) return;
+    shelf.querySelectorAll(".bz-bs-spine.reading .ribbon").forEach((ribbon) => {
+      if (!ribbon.classList.contains("bz-bsm-sway")) {
+        ribbon.classList.add("bz-bsm-sway");
+        liveSway.add(ribbon);
+      }
+    });
+  }
+  function admitNewSpines(shelf) {
+    if (!knownSpines) {
+      snapshotSpines(shelf);
+      return;
+    }
+    const fresh = [];
+    shelf.querySelectorAll(".bz-bs-spine").forEach((sp) => {
+      const id = sp.dataset.bsId || "";
+      if (id && !knownSpines.has(id)) fresh.push(sp);
+    });
+    if (!fresh.length) return;
+    snapshotSpines(shelf);
+    fresh.forEach((sp, i) => {
+      shelveIn(sp, i * 90, { fast: false, accent: true, unread: sp.classList.contains("unread"), reading: sp.classList.contains("reading") });
+    });
+  }
+  function choreographBoot(overlay, shelf) {
+    if (!overlay) {
+      choreographWall(shelf, "boot");
+      return;
+    }
+    const plaque = overlay.querySelector(".bz-bs-plaque");
+    if (plaque) {
+      track(waapi(
+        plaque,
+        [
+          { opacity: 0, transform: "translateY(-12px) scale(1.1)", filter: "blur(5px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base + 120, easing: E.out, fill: "backwards" }
+      ));
+      after(380, () => {
+        if (plaque.isConnected) sheen(plaque, false);
+      });
+    }
+    overlay.querySelectorAll(".bz-bs-taglabel").forEach((lb, i) => {
+      const rest = restOf(lb);
+      track(waapi(
+        lb,
+        [
+          { opacity: 0, transform: "translateY(-9px) scale(1.14)", filter: "blur(2px)" },
+          { opacity: 1, transform: rest.transform, filter: "none" }
+        ],
+        { duration: M2.base, delay: 90 + Math.min(i, 12) * STAG + 5, easing: E.out, fill: "backwards" }
+      ));
+    });
+    const tools = overlay.querySelector(".bz-bs-tools");
+    if (tools) track(waapi(
+      tools,
+      [{ opacity: 0, transform: "translateY(-5px)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.base, delay: 150, easing: E.out, fill: "backwards" }
+    ));
+    const note = overlay.querySelector(".bz-bs-wallnote");
+    if (note) track(waapi(
+      note,
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: M2.base + 140, delay: 460, easing: E.out, fill: "backwards" }
+    ));
+    choreographWall(shelf, "boot");
+  }
+  function choreographWall(shelf, mode) {
+    const zones = [...shelf.querySelectorAll(".bz-bs-zone")];
+    if (!zones.length) {
+      const empty = shelf.querySelector(".bz-bs-wall-empty");
+      if (empty) track(waapi(
+        empty,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base + 100, delay: 160, easing: E.out, fill: "backwards" }
+      ));
+      return;
+    }
+    const zGap = mode === "boot" ? 55 : mode === "search" ? 22 : 40;
+    const sGap = mode === "boot" ? 11 : mode === "search" ? 4.5 : 7;
+    const sCap = mode === "boot" ? 18 : mode === "search" ? 26 : 14;
+    const zBase = mode === "boot" ? 190 : mode === "search" ? 30 : 50;
+    const fast = mode !== "boot";
+    if (mode === "search") {
+      track(waapi(
+        shelf,
+        [{ opacity: 0.3, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)" }],
+        { duration: M2.move + 80, easing: E.out }
+      ));
+    }
+    zones.forEach((zone, zi) => {
+      const divider = zone.querySelector(".bz-bs-divider");
+      const zDelay = zBase + zi * zGap;
+      const unreadZone = !!divider && (divider.textContent || "").includes("倒");
+      if (divider) track(waapi(
+        divider,
+        [
+          { opacity: 0, transform: "translateY(-16px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base, delay: Math.max(0, zDelay - 40), easing: E.out, fill: "backwards" }
+      ));
+      zone.querySelectorAll(".bz-bs-bookend").forEach((bk, bi) => track(waapi(
+        bk,
+        [
+          { opacity: 0, transform: "scaleY(.55)", transformOrigin: "50% 100%" },
+          { opacity: 1, transform: "none", transformOrigin: "50% 100%" }
+        ],
+        { duration: M2.base, delay: zDelay + bi * 60, easing: E.out, fill: "backwards" }
+      )));
+      let j = 0;
+      zone.querySelectorAll(".bz-bs-spine").forEach((sp) => {
+        const idx = j++;
+        const delay = zDelay + 60 + Math.min(idx, sCap) * sGap;
+        shelveIn(sp, delay, {
+          fast,
+          accent: false,
+          unread: unreadZone || sp.classList.contains("unread"),
+          reading: sp.classList.contains("reading")
+        });
+      });
+    });
+  }
+  function shelveIn(sp, delay, opts) {
+    const rest = restOf(sp);
+    const dur = opts.fast ? M2.move + 60 : M2.base + 140;
+    const from = opts.reading ? { opacity: 0, transform: "translateY(-10px)", filter: opts.accent ? "brightness(1.8) blur(2px)" : "brightness(1.5) blur(2px)" } : opts.unread ? { opacity: 0, transform: "translateY(-18px) rotate(-4deg)", filter: "grayscale(1) brightness(.7) blur(1px)" } : { opacity: 0, transform: "perspective(520px) rotateX(-16deg) translateY(22px)", filter: opts.accent ? "brightness(1.6) blur(1px)" : "brightness(1.3) blur(2px)" };
+    const a = waapi(
+      sp,
+      [from, { opacity: 1, transform: rest.transform, filter: rest.filter }],
+      { duration: dur, delay, easing: E.out, fill: "backwards" }
+    );
+    track(a);
+    if (!a) return;
+    sp.style.willChange = "transform, opacity, filter";
+    const clear = () => {
+      sp.style.willChange = "";
+    };
+    a.finished.then(clear).catch(clear);
+    const tail = delay + dur - 60;
+    if (sp.isConnected) {
+      if (opts.reading) dropRibbon(sp.querySelector(".ribbon"), tail);
+      else popStamp(sp.querySelector(".stamp"), tail);
+      if (opts.accent || sp.dataset.bsEpub === "1") after(tail + 120, () => {
+        if (sp.isConnected) sheen(sp, true);
+      });
+    }
+  }
+  function dropRibbon(ribbon, delay) {
+    if (!ribbon) return;
+    const a = waapi(
+      ribbon,
+      [
+        { transform: "translateX(-50%) scaleY(0)", transformOrigin: "50% 0%" },
+        { transform: "translateX(-50%) scaleY(1)", transformOrigin: "50% 0%" }
+      ],
+      { duration: M2.base, delay, easing: E.out, fill: "backwards" }
+    );
+    track(a, () => {
+      if (!ribbon.isConnected) return;
+      ribbon.classList.add("bz-bsm-sway");
+      liveSway.add(ribbon);
+    });
+  }
+  function popStamp(stamp, delay) {
+    if (!stamp) return;
+    track(waapi(
+      stamp,
+      [
+        { opacity: 0, transform: "rotate(-8deg) scale(.3)" },
+        { opacity: 1, transform: "rotate(-8deg) scale(1.45)", offset: 0.62 },
+        { opacity: 0.85, transform: "rotate(-8deg) scale(1)" }
+      ],
+      { duration: 380, delay, easing: E.out, fill: "backwards" }
+    ));
+  }
+  function hintBeat(hint, boot) {
+    if (!hint) return;
+    const changed = (hint.textContent || "") !== lastHint;
+    lastHint = hint.textContent || "";
+    if (boot) track(waapi(
+      hint,
+      [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.base, delay: 260, easing: E.out, fill: "backwards" }
+    ));
+    else if (changed) track(waapi(hint, [{ opacity: 0.2 }, { opacity: 1 }], { duration: M2.move, easing: E.out }));
+  }
+  function motionDetailOpen(popup, spine) {
+    if (reduced()) return;
+    if (spine && spine.isConnected) {
+      const rest = restOf(spine);
+      track(waapi(
+        spine,
+        [
+          { transform: rest.transform, filter: rest.filter },
+          { transform: "translateY(-30px) scale(1.04)", filter: "brightness(1.3)", offset: 0.42 },
+          { transform: rest.transform, filter: rest.filter }
+        ],
+        { duration: M2.move + 240, easing: E.move }
+      ));
+      after(60, () => {
+        if (spine.isConnected) sheen(spine, true);
+      });
+    }
+    const card = popup.querySelector(".bz-bs-d-card");
+    if (card) {
+      const rest = restOf(card);
+      track(waapi(
+        card,
+        [
+          { opacity: 0, transform: "rotate(1.6deg) translateY(16px) scale(.96)", filter: "blur(5px)" },
+          { opacity: 1, transform: rest.transform, filter: "blur(0px)" }
+        ],
+        { duration: M2.base + 140, easing: E.out }
+      ));
+    }
+    const pull = popup.querySelector(".bz-bs-d-pull");
+    if (pull) track(waapi(
+      pull,
+      [{ opacity: 0, transform: "translateY(-12px)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.base, delay: 140, easing: E.out, fill: "backwards" }
+    ));
+    popup.querySelectorAll(".bz-bs-d-cover img, .bz-bs-d-cover-ph").forEach((cover) => {
+      track(waapi(
+        cover,
+        [{ opacity: 0, transform: "translateX(-10px) rotate(-2deg)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, delay: 180, easing: E.out, fill: "backwards" }
+      ));
+    });
+    popup.querySelectorAll(".bz-bs-d-ledger tr").forEach((tr, i) => {
+      track(waapi(
+        tr,
+        [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, delay: 220 + i * 35, easing: E.out, fill: "backwards" }
+      ));
+    });
+    popup.querySelectorAll(".bz-bs-d-meter").forEach((meter, mi) => {
+      const fill = meter.querySelector(".bar > i");
+      if (fill) track(waapi(
+        fill,
+        [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 -2% 0 0)" }],
+        { duration: M2.impulse, delay: 320 + mi * 180, easing: E.move, fill: "backwards" }
+      ));
+    });
+    const num = popup.querySelector(".bz-bs-d-prognum");
+    if (num) after(320, () => countUp(num, M2.impulse));
+    const seal = popup.querySelector(".bz-bs-d-seal");
+    if (seal) {
+      const rest = restOf(seal);
+      track(waapi(
+        seal,
+        [
+          { opacity: 0, transform: "rotate(-14deg) scale(1.9)", filter: "blur(3px)" },
+          { opacity: 1, transform: rest.transform, filter: "blur(0px)" }
+        ],
+        { duration: 360, delay: 560, easing: E.out, fill: "backwards" }
+      ));
+    }
+  }
+  function motionReportEnter(view) {
+    bootPending = false;
+    if (!view || reduced()) return;
+    track(waapi(
+      view,
+      [
+        { opacity: 0, transform: "perspective(1100px) rotateX(5deg) translateY(14px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.base + 120, easing: E.out }
+    ));
+    const head = view.querySelector(".bz-rr-head");
+    if (head) track(waapi(
+      head,
+      [{ opacity: 0, transform: "translateY(-5px)" }, { opacity: 1, transform: "none" }],
+      { duration: M2.base, delay: 90, easing: E.out, fill: "backwards" }
+    ));
+  }
+  function motionReportWatch(content, silent) {
+    stopReportObserver();
+    if (silent || !playable(content) || typeof MutationObserver !== "function") return;
+    try {
+      rrObserver = new MutationObserver((muts) => {
+        for (const m of muts) {
+          for (const n of m.addedNodes) {
+            if (n instanceof HTMLElement && n.classList.contains("bz-rr-skeleton")) continue;
+            if (n instanceof HTMLElement) motionReportSection(n);
+          }
+        }
+      });
+      rrObserver.observe(content, { childList: true });
+    } catch (e) {
+      rrObserver = null;
+    }
+  }
+  function motionReportStop() {
+    stopReportObserver();
+  }
+  function stopReportObserver() {
+    if (rrObserver) {
+      try {
+        rrObserver.disconnect();
+      } catch (e) {
+      }
+      rrObserver = null;
+    }
+  }
+  function motionReportSection(sec) {
+    if (reduced()) return;
+    track(waapi(
+      sec,
+      [
+        { opacity: 0, transform: "translateY(12px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.base + 80, easing: E.out }
+    ));
+    sec.querySelectorAll(".bz-rr-bar-track > i, .bz-rr-focus-fill, .bz-rr-speed-fill").forEach((bar, i) => {
+      track(waapi(
+        bar,
+        [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 -2% 0 0)" }],
+        { duration: M2.impulse, delay: 120 + i * 70, easing: E.move, fill: "backwards" }
+      ));
+    });
+    sec.querySelectorAll(".bz-rr-mbar").forEach((col, i) => {
+      track(waapi(
+        col,
+        [
+          { transform: "scaleY(0)", transformOrigin: "50% 100%" },
+          { transform: "scaleY(1)", transformOrigin: "50% 100%" }
+        ],
+        { duration: M2.base, delay: 140 + i * 28, easing: E.out, fill: "backwards" }
+      ));
+    });
+    sec.querySelectorAll(".bz-rr-hm-cell--data").forEach((cell, i) => {
+      track(waapi(
+        cell,
+        [{ opacity: 0.08, transform: "scale(.55)" }, { opacity: 1, transform: "scale(1)" }],
+        { duration: M2.move, delay: 160 + Math.min(i, 42) * 14, easing: E.out, fill: "backwards" }
+      ));
+    });
+    sec.querySelectorAll(".bz-rr-hero-num, .bz-rr-total, .bz-rr-metric-num, .bz-rr-metric-num--lg, .bz-rr-metric-num--xl").forEach((n, i) => {
+      after(140 + i * 80, () => countUp(n, M2.impulse));
+    });
+    sec.querySelectorAll(".bz-rr-author-card, .bz-rr-year-cell").forEach((c, i) => {
+      track(waapi(
+        c,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, delay: 100 + Math.min(i, 8) * 60, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionHeatmapNav(body) {
+    if (!body || reduced()) return;
+    body.querySelectorAll(".bz-rr-hm-cell--data").forEach((cell, i) => {
+      track(waapi(
+        cell,
+        [{ opacity: 0.05, transform: "scale(.5)" }, { opacity: 1, transform: "scale(1)" }],
+        { duration: M2.fast + 60, delay: Math.min(i, 42) * 9, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionYearToggle(body) {
+    if (!body || !body.classList.contains("open") || reduced()) return;
+    body.querySelectorAll(".bz-rr-mbar").forEach((col, i) => {
+      track(waapi(
+        col,
+        [
+          { transform: "scaleY(0)", transformOrigin: "50% 100%" },
+          { transform: "scaleY(1)", transformOrigin: "50% 100%" }
+        ],
+        { duration: M2.base, delay: i * 26, easing: E.out, fill: "backwards" }
+      ));
+    });
+  }
+
   // src/bookshelf/notes-ui.ts
   var mdNotesClose = null;
   var bookNotesLoadSeq = 0;
@@ -7287,6 +7889,7 @@ var BZW_bookshelf = (() => {
 
   // src/bookshelf/ui.ts
   var HOOKS = { mountIcons };
+  var wallAction = "refresh";
   function coverUrl(it, app) {
     if (!it.cover) return null;
     const f = app.vault.getAbstractFileByPath(it.cover);
@@ -7325,10 +7928,12 @@ var BZW_bookshelf = (() => {
     if (!shelf) return;
     const sig = displaySignature();
     const room = shelf.closest(".bz-bs-room");
+    const hint = overlay.querySelector("#bz-bs-hint");
     const prevScroll = room ? room.scrollTop : 0;
     const keepScroll = sig === lastWallSig;
+    if (keepScroll && motionBusy()) return;
     renderWallInto(shelf, {
-      hint: overlay.querySelector("#bz-bs-hint"),
+      hint,
       all: M.items,
       list: getDisplayItems2(),
       q: M.searchKeyword,
@@ -7338,6 +7943,8 @@ var BZW_bookshelf = (() => {
     });
     lastWallSig = sig;
     if (room && keepScroll) room.scrollTop = prevScroll;
+    motionWallRendered(overlay, shelf, hint, wallAction);
+    wallAction = "refresh";
   }
   function renderChrome() {
     const overlay = M.currentOverlay;
@@ -7363,6 +7970,8 @@ var BZW_bookshelf = (() => {
     var _a;
     const container = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector(".bz-rr-content");
     if (!container) return;
+    motionReportStop();
+    motionReportWatch(container, extraOpts.silent);
     renderReadingReport(container, app, {
       onFilter: (kind, value) => applyReportFilter(app, kind, value),
       onBack: () => showView(app, "shelf"),
@@ -7382,13 +7991,19 @@ var BZW_bookshelf = (() => {
     showView(app, "shelf");
   }
   function showView(app, view) {
+    var _a;
     const changed = M.view !== view;
     M.view = view;
     paintViewContainers();
     if (view === "report") {
+      motionReportEnter((_a = M.currentOverlay) == null ? void 0 : _a.querySelector(".bz-bs-view-report"));
       startReportRender(app);
     } else {
-      if (changed) cancelReadingReport();
+      if (changed) {
+        cancelReadingReport();
+        motionReportStop();
+        wallAction = "reshelf";
+      }
       renderAll();
     }
   }
@@ -7430,7 +8045,7 @@ var BZW_bookshelf = (() => {
     closeOverlay();
     void app.workspace.openLinkText(target, "", true);
   }
-  function openBookDetail(it, app) {
+  function openBookDetail(it, app, spine) {
     var _a, _b;
     const body = document.createElement("div");
     body.className = "bz-bs-detail";
@@ -7452,6 +8067,7 @@ var BZW_bookshelf = (() => {
     });
     (_b = popup.querySelector("[data-bs-d-continue]")) == null ? void 0 : _b.addEventListener("click", () => continueBook(app, it));
     bindCoverFallback(popup);
+    motionDetailOpen(popup, spine && spine.isConnected ? spine : null);
   }
   var SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
   function normalizeSkin(v) {
@@ -7493,6 +8109,7 @@ var BZW_bookshelf = (() => {
         } else {
           M.side = M.side === id ? "all" : id;
         }
+        wallAction = "filter";
         renderAll();
         return;
       }
@@ -7500,18 +8117,28 @@ var BZW_bookshelf = (() => {
       if (cat) {
         const name = cat.dataset.bsCat || "all";
         M.catFilter = name !== "all" && M.catFilter === name ? "all" : name;
+        wallAction = "filter";
         renderAll();
         return;
       }
       const sortBtn = t.closest("[data-bs-sort]");
       if (sortBtn) {
         M.sortMode = sortBtn.dataset.bsSort || "recent";
+        wallAction = "filter";
         renderAll();
         return;
       }
       if (M.view === "report") {
         const rrContent = overlay.querySelector(".bz-rr-content");
-        if (rrContent && handleReportInteraction(rrContent, t)) return;
+        if (rrContent && handleReportInteraction(rrContent, t)) {
+          if (t.closest("[data-rr-hm-prev]") || t.closest("[data-rr-hm-next]")) {
+            motionHeatmapNav(rrContent.querySelector("[data-rr-hm-body]"));
+          } else {
+            const yc = t.closest("[data-rr-year]");
+            if (yc) motionYearToggle(rrContent.querySelector(`[data-rr-year-body="${yc.getAttribute("data-rr-year") || ""}"]`));
+          }
+          return;
+        }
         if (t.closest("[data-rr-goto-shelf]")) {
           showView(app, "shelf");
           return;
@@ -7534,7 +8161,7 @@ var BZW_bookshelf = (() => {
           var _a2;
           return epub ? x.epubVaultPath === spine.dataset.bsId : ((_a2 = x.file) == null ? void 0 : _a2.path) === spine.dataset.bsId;
         });
-        if (it) openBookDetail(it, app);
+        if (it) openBookDetail(it, app, spine);
         return;
       }
     });
@@ -7550,6 +8177,7 @@ var BZW_bookshelf = (() => {
       searchInput.value = "";
       M.searchKeyword = "";
       syncSearchClear();
+      wallAction = "filter";
       renderWall();
     };
     searchInput.addEventListener("input", () => {
@@ -7558,6 +8186,7 @@ var BZW_bookshelf = (() => {
       if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
       M.searchDebounceTimer = setTimeout(() => {
         M.searchKeyword = searchInput.value.trim();
+        wallAction = "search";
         renderWall();
       }, 200);
     });
@@ -7578,12 +8207,16 @@ var BZW_bookshelf = (() => {
       if (wallResizeTimer) clearTimeout(wallResizeTimer);
       wallResizeTimer = setTimeout(() => {
         wallResizeTimer = null;
-        if (M.currentOverlay && M.view === "shelf") renderAll();
+        if (M.currentOverlay && M.view === "shelf") {
+          wallAction = "layout";
+          renderAll();
+        }
       }, 150);
     };
     window.addEventListener("resize", wallResizeHandler);
     mountIcons(overlay);
     paintViewContainers();
+    motionPanelIn(overlay);
     const shelf0 = overlay.querySelector("#bz-bs-shelf");
     if (shelf0) shelf0.innerHTML = wallLoadingHTML();
     if (M.view === "report") showView(app, "report");
@@ -7592,6 +8225,7 @@ var BZW_bookshelf = (() => {
     });
   }
   function closeOverlay() {
+    const ov = M.currentOverlay;
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     if (wallResizeTimer) {
       clearTimeout(wallResizeTimer);
@@ -7603,9 +8237,11 @@ var BZW_bookshelf = (() => {
     }
     closeDomainModals();
     cancelReadingReport();
-    if (M.currentOverlay) {
-      M.currentOverlay.remove();
+    motionTeardown();
+    if (ov) {
       M.currentOverlay = null;
+      ov.style.pointerEvents = "none";
+      motionPanelOut(ov, () => ov.remove());
     }
     lastWallSig = "";
   }

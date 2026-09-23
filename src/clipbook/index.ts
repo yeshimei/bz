@@ -15,6 +15,7 @@ import { flowMarkAllRead, flowUndoMarkAllRead } from './flow';
 import { clipDir } from './save';
 import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 import { openClipbookReport, unloadClipbookReport } from './report-ui';
+import { openReadingPress, unloadReadingPress } from './press';
 import { unloadManagerModals } from './news-sources-group';
 
 let initialized = false;
@@ -84,7 +85,8 @@ export async function markAllUnreadRead(): Promise<void> {
 
 /** 卸载清理（main.ts onunload） */
 export function unloadClipbook(): void {
-  // 阅读报告弹层可由命令直开（不经 openClipbook 初始化），卸载无条件收口
+  // 阅读报告（特刊/经典弹层）可由命令直开（不经 openClipbook 初始化），卸载无条件收口
+  unloadReadingPress();
   unloadClipbookReport();
   // CB10 域内兜底：UP/RSS 管理弹窗可从设置面板直开（不经 openClipbook 装载），无条件收口——
   // 先走 close（幂等：DOM+esc+单例旗标），再按 id 摘可能的残留（close 已收则此处空转）
@@ -101,9 +103,10 @@ export function unloadClipbook(): void {
   setNewsFetchDoneListener(() => {});
 }
 
-/** 打开剪藏阅读报告弹层（命令 bz-clipbook-report；issue 358）：
- *  只读 clipbook.json 侧写 readLog，不依赖剪藏本主面板装载态 */
-export { openClipbookReport };
+/** 打开剪藏阅读报告（issue 358；2026-09-23 重做拍板）：
+ *  新界面 = 读报特刊（覆盖面板的一层，八幕长片，press/）；经典报告弹层保留作
+ *  无动画宿主 / 空账降级（press 内部回落）。两者都只读数据文件，不依赖面板装载态 */
+export { openClipbookReport, openReadingPress };
 
 /** clipbook.json 引用同步（issue 336 / ADR-0149 决策 4，main.ts onLayoutReady 常驻接线；
  *  实现同 memo file-sync 范式：域事件订阅 + 去抖 + 读改写事务） */

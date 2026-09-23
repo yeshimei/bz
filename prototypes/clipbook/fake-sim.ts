@@ -31,8 +31,10 @@ const CLIP_DIR = '归档/网页剪藏';
 /** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖）
  *  v1 → v2（2026-09-10）：种子补入「每日简报」briefs 段，旧标记下已种子过的浏览器
  *  不会重跑种子 → 简报源空态。升版本号强制重种子（评审数据本就是快照，可接受覆盖）。
- *  v2 → v3（2026-09-11，ADR-0121）：每日简报退役，种子摘除 briefs/briefUps、sources 补 rss。 */
-const SEED_MARK = 'bz-sim:__clipbook-seed-v3';
+ *  v2 → v3（2026-09-11，ADR-0121）：每日简报退役，种子摘除 briefs/briefUps、sources 补 rss。
+ *  v3 → v4（2026-09-23）：快照重出（.scratch/gen-clip-demo.mjs）——news 260 篇 + 真实 stats/byDate
+ *  + 真实 readLog；「我读了什么」重做后分析吃真实库数据，旧种子必须重灌。 */
+const SEED_MARK = 'bz-sim:__clipbook-seed-v4';
 /** 设置持久键（设置保存经 saveSettings 通道写入 localStorage；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -56,6 +58,8 @@ interface SeedArticle {
 interface SeedData {
   NEWS: {
     articles: SeedArticle[];
+    /** 真实快照带真实统计（totalRead/byDate/byPlatform）；旧快照无此段 → 种子落回演示值 */
+    stats?: { totalRead?: number; totalSaved?: number; totalSkipped?: number; byPlatform?: Record<string, number>; byDate?: Record<string, number> } | null;
     upInfo?: Record<string, { name?: string; avatar?: string }>;
   };
   SIDECAR: { articleOverrides: Record<string, { reading?: boolean }>; savedArchive: Array<{ url: string; title: string; savedAt: string }>; order: string[] };
@@ -91,7 +95,8 @@ function seedDatabase(): void {
   if (!src || localStorage.getItem(SEED_MARK)) return;
   seedVaultFile(NEWS_PATH, JSON.stringify({
     articles: src.NEWS.articles,
-    stats: { totalRead: 24, totalSaved: 8, totalSkipped: 16, byPlatform: {}, byDate: buildByDate() },
+    // 真实快照带真实 stats（byDate = 每日已读事实源）；旧快照无 stats 时落回演示值
+    stats: src.NEWS.stats || { totalRead: 24, totalSaved: 8, totalSkipped: 16, byPlatform: {}, byDate: buildByDate() },
     bilibiliUps: [],
     bilibiliUpInfo: src.NEWS.upInfo || {},
     bilibiliMaxItems: 10,

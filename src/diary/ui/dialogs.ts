@@ -40,6 +40,7 @@ import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
 import { createDateTimeControl, resetDateTimeControl, setDateTimeYearRangeProvider } from './datetime-picker';
 import { jumpToDiaryEntry, showConfirm } from './entry-actions';
 import { buildLocatorPredicateFor } from './locator';
+import { motionSheetDialog } from '../motion';
 
 /** 放弃确认框的域皮（与两浮层同皮，issue 291 先例） */
 const DIARY_FLOW_SKIN = 'bz-diary-flow-dialog';
@@ -286,6 +287,7 @@ export function showTagPicker(loc: DiaryEntryLocator) {
   mask.id = 'diary-tag-selector-mask';
   popup.id = 'diary-tag-selector-popup';
   tagPickerUi = { mask, popup, close };
+  motionSheetDialog(popup); // 动效层：纸页展开 + 章签摆上（壳归 core 不动，只编排骨内内容）
   bindFormSubmit(popup, () => void commitTagPickerSave()); // 效率#2
 }
 
@@ -468,6 +470,7 @@ export function openAddDialog(opts?: { yearRange?: { min: number; max: number };
   // 1. 刷新类型按钮（频次前置排序）
   // ----- 不预选任何标签（用户确认：默认全部加载，不选择任何标签） -----
   renderTagOptions(typeContainer, sortTagsByUsage(getSortedTagsForAddDialog()), new Set());
+  motionSheetDialog(popup); // 动效层：纸页展开 + 章签摆上（须在章签渲染后调用，壳归 core 不动）
 
   // 2. 设置日期时间默认值（一致#7：日期键走 core localDayKey 单源）
   let defaultDateStr = localDayKey();

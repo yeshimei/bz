@@ -51,6 +51,9 @@
 }
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex: none; position: relative; }
 .bz-fav-panel .bz-fav-head h1 { font-size: var(--bz-font-body); letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
+/* 桌面去标题（2026-09-23 拍板）：桌面头行只剩「收藏本」名牌 + 移动关闭钮——整行隐藏，
+   卡墙直接上移；移动端保留标题与 ✕（bz-fav-mob 不受影响）。头行动效对隐藏元素无害 */
+.bz-fav-panel:not(.bz-fav-mob) .bz-fav-head { display: none; }
 /* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆）。
    高度接 core --bz-vvh 可视视口单源（UI-01/C4，memo/belongings/clipbook/cinema 四域先例）：
    真机原生顶栏/底栏与软键盘弹出时面板随可视视口收缩，裸 100vh 会被原生栏遮住一截 */
@@ -100,7 +103,7 @@
    负 token 必须 calc（UI-02/C-UI4，clipbook 同款纠偏）：负号直连 var 的写法是无效声明，整条被浏览器丢弃 */
 .bz-fav-board {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 22px 20px;
-  align-items: start; padding: 6px var(--bz-space-xs) 0; margin: 0 calc(-1 * var(--bz-space-xs)); flex: 1; min-height: 0; overflow: auto;
+  align-items: start; padding: 6px var(--bz-space-xs) 0; margin: 10px calc(-1 * var(--bz-space-xs)) 0; flex: 1; min-height: 0; overflow: auto;
 }
 .bz-fav-board .bz-fav-card { width: auto; }
 .bz-fav-board .bz-fav-empty { grid-column: 1 / -1; }
@@ -121,30 +124,12 @@
   position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-/* 外链标识角标（F6/呈报#25）：有链接卡片左上常驻 external-link 微标（与右上磁圆点对称），
-   「点卡=开网页」的点击前暗示；淡底不抢胶带/标题视觉，hover 卡片时点亮 */
-.bz-fav-card .bz-fav-ext {
-  position: absolute; top: 10px; left: 10px; width: 18px; height: 18px; border-radius: 50%;
-  background: var(--chip); color: var(--ink-faint);
-  display: inline-flex; align-items: center; justify-content: center;
-}@media (hover: hover) {
-
-.bz-fav-card:hover .bz-fav-ext { color: var(--acc); }
-}
-.bz-fav-card .bz-fav-ext .bz-ic { width: 11px !important; height: 11px !important; }
-/* 无链卡片点按反馈（F1/呈报#24）：轻微晃动示意「这张卡没有可打开的链接」——类由 ui.ts
-   点击/Enter 时挂上，animationend 摘类（可重复触发）；持续覆盖 hover 的 translateY 无妨 */
-.bz-fav-card.bz-fav-nolink { animation: bz-fav-nudge .28s ease; }
-@keyframes bz-fav-nudge {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  55% { transform: translateX(3px); }
-  80% { transform: translateX(-2px); }
-}
+/* 外链角标 + 无链晃动反馈（F6/F1）2026-09-23 退役：点卡不再跳网站（开链/复制走右键菜单），
+   角标 markup 已从 shared.ts cardHtml 摘除，规则随之清出 */
 .bz-fav-card h3 { font-size: var(--bz-font-body); margin: 0 0 6px; color: var(--ink-strong); }
 .bz-fav-card p {
   font-size: var(--bz-font-meta); line-height: 1.65; color: var(--ink-mut); margin: 0;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  /* 2026-09-23 拍板：简介不省略，完整显示（卡高随内容自然生长；撤 -webkit-line-clamp 3 行截断） */
 }
 .bz-fav-card .bz-fav-ft {
   margin-top: 10px; padding-top: var(--bz-space-sm); border-top: 1px solid var(--ft-bd); font-size: 10.5px; color: var(--ink-faint);
@@ -371,3 +356,17 @@
 .bz-fav-tageditor-ic:hover { border-color: var(--acc); color: var(--acc-deep); }
 }
 .bz-fav-tageditor-ic.bz-fav-on { border-color: var(--acc); background: var(--acc); color: var(--on-acc); }
+
+/* ==================== 动效层注入件（src/favorites/motion.ts 消费，2026-09-22 动效批） ====================
+   只服务动效注入装饰：绝对定位 + 不吃事件 + aria-hidden（属性由 motion.ts 注入时挂），
+   演出完即摘——终态 UI 与无动效版逐像素一致。不改任何既有选择器的几何；
+   滚动条样式仍归 core 界级单源（ADR-0122），域内不自造。 */
+/* 收藏落定/复贴的光泽扫层：外层沿卡片圆角裁切，内层斜向亮带横扫（transform 驱动） */
+.bz-favm-sheen {
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
+}
+.bz-favm-sheen-band {
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 46%;
+  transform: translateX(-140%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+}
