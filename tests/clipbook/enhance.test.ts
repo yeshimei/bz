@@ -377,14 +377,16 @@ describe('面板拖拽缩放 + 尺寸记忆（enh 包 8）', () => {
 });
 
 describe('副题术语（enh 包 12）', () => {
-  it('issue 214：头行去副题，期号行 = 日期 + news 总条数', async () => {
+  it('issue 214：头行去副题，期号戳章双端同填 = 第 news 总条数 期（2026-09-23 头行重做：日期撤出期号行）', async () => {
     await openDesktop();
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-panel-head-sub')).toBeNull();
     expect(overlay.textContent).not.toContain('未读流与剪藏');
     expect(overlay.textContent).not.toContain('聚合讯已接入');
-    const issue = overlay.querySelector('[data-clip-issue]') as HTMLElement;
-    expect(issue.textContent).toMatch(/^\d{4} 年 \d{1,2} 月 \d{1,2} 日 · 第 2 期$/);
+    // 新契约：期号移入 .bz-clip-issue-stamp 戳章，桌面抬头单 + 移动刊名双端同填（renderHeadIssue querySelectorAll）
+    const stamps = overlay.querySelectorAll<HTMLElement>('[data-clip-issue]');
+    expect(stamps.length).toBe(2);
+    stamps.forEach((s) => expect(s.textContent).toBe('第 2 期'));
   });
 });
 

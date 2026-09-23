@@ -19,6 +19,7 @@ import { QuestionGenerator } from './generator';
 import { escapeHtml } from '../../core/utils';
 import type { QuizQuestion } from './manager';
 import type { AIService } from '../../core/ai';
+import { motionQuizCard, motionQuizJudge } from '../motion';
 
 /** 复习联动结果：一轮做题会话完成后的统计（复习域经 onComplete 接收） */
 export interface QuizReviewResults {
@@ -30,6 +31,11 @@ export interface QuizReviewResults {
 
 /** ticket 156：答对后亮绿反馈到自动进入下一题的延时（用户拍板 0.8 秒） */
 const CORRECT_JUMP_DELAY_MS = 800;
+
+/** 判定动效取题面弹窗（onclick 闭包内无 popup 引用；判定时弹窗必已连入 DOM） */
+function quizPopupEl(): HTMLElement | null {
+  return document.getElementById('quiz-popup');
+}
 
 /** 清理选项文本，去除可能的前缀如 "A." "A、" "A)" "(A)" 等（renderModal 拆分） */
 function cleanOptionText(text: string): string {
@@ -254,6 +260,7 @@ export class QuizMasterUI {
     document.body.appendChild(mask);
     // R4：题头/选项的 lucide 占位统一兑现（本弹窗此前无图标消费）
     mountIcons(popup);
+    motionQuizCard(popup); // 题干俯揭示题+选项接力（每题一演，换题即重开）
     // U5/C7：句柄存实例字段（_teardownModal 显式注销，消 N 题层累积）；id 归 `bz-<域>` 约定
     this._escHandle = escManager.register('bz-review-quiz', {
       isVisible: () => !!(this.mask && this.mask.isConnected),
@@ -342,6 +349,8 @@ export class QuizMasterUI {
             optionElements.forEach((b, i) => {
               if (i === q.correctIndices[0]) b.classList.add('correct');
             });
+            const p = quizPopupEl();
+            if (p) motionQuizJudge(p, true);
             this._answerCorrect(q, app, () => {
               answeredRef.value = false;
               // U建5：恢复作答态须同时熄掉正确项高亮——不亮答案，可无痕重答
@@ -355,6 +364,8 @@ export class QuizMasterUI {
               if (i === q.correctIndices[0]) b.classList.add('correct');
               if (i === idx) b.classList.add('wrong');
             });
+            const p = quizPopupEl();
+            if (p) motionQuizJudge(p, false);
             this.addNextButton(optionsContainer);
           }
         } else {
@@ -397,6 +408,8 @@ export class QuizMasterUI {
           // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项；
           // 递增时机在 _answerCorrect 持久化成功后，失败恢复作答态不重复计）
           // ticket 153：答对自动进入下一题（不再挂「下一题」按钮，持久化成功后自动跳）
+          const p = quizPopupEl();
+          if (p) motionQuizJudge(p, true);
           this._answerCorrect(q, app, () => {
             answeredRef.value = false;
             submitBtn.disabled = false;
@@ -407,6 +420,8 @@ export class QuizMasterUI {
           // 答错：同单选——仅移出本轮会话（不落盘删除），「下一题」按钮继续
           this.wrongCount++;
           this.currentQuestions.splice(this.currentIndex, 1);
+          const p = quizPopupEl();
+          if (p) motionQuizJudge(p, false);
           this.addNextButton(optionsContainer);
         }
       };

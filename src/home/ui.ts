@@ -39,7 +39,7 @@ import type { PomodoroPhase } from '../core/pomodoro-phase';
 import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
-import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered } from './motion';
+import { motionDaySwitch, motionPanelIn, motionPanelOut, motionRendered, motionWeekPop } from './motion';
 import {
   headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
@@ -263,11 +263,14 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       H.riverView = wk.dataset.homeWeekday || null;
       const overlay2 = H.currentOverlay;
       if (overlay2) {
+        let selEl: HTMLElement | null = null;
         overlay2.querySelectorAll('[data-home-weekday]').forEach((b) => {
           const sel = (b as HTMLElement).dataset.homeWeekday === H.riverView;
           b.classList.toggle('bz-home-wk--sel', sel);
           b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+          if (sel) selEl = b as HTMLElement;
         });
+        if (selEl) motionWeekPop(selEl); // 选中彩条弹跳（动效层）
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
         if (flow) {
           // 切天编排（动效层）：旧河 blur 退场 → 重写（markup 单源不动）→ 新河接力揭出
