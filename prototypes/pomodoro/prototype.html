@@ -172,8 +172,11 @@
         t('暂停剩余时长落盘（<900s）', !!(pausedData && pausedData.state && pausedData.state.remaining > 0 && pausedData.state.remaining < 900));
 
         // —— 重置回 idle（25:00 / 开始；reset 不落盘，DOM 为准） ——
+        // （issues/144 补齐：专注中重置走 flow-dialog 确认，danger 反焦——壳自检同步点「重置」）
         dt('#pomodoro-btn-reset').click();
         await sleep(300);
+        const confirmOk = dt('#__shared_confirm_ok__');
+        if (confirmOk) { confirmOk.click(); await sleep(300); }
         t('重置后=开始（idle 单条）', dStart() === '开始');
         t('重置后回 25:00', dTxt() === '25:00');
         t('重置后相位 menuPhase=idle', dtFrame().contentWindow.BZW_pomodoro.phaseNow() === 'idle');
@@ -194,10 +197,11 @@
         t('默认皮肤=番茄（单源 POMODORO_SKIN_THEMES）', dt('#pomodoro-popup').classList.contains('pomodoro-skin-tomato'));
 
         // —— 关主弹窗（点遮罩）：计时后台继续，重开从内存渲染 ——
+        // （2026-09-23 动效批：关闭走 200ms 离席尾奏后移除 DOM，此步等待放宽到 500ms）
         dt('#pomodoro-btn-start').click();
         await sleep(200);
         dt('#pomodoro-mask').click();
-        await sleep(250);
+        await sleep(500);
         t('点遮罩关主弹窗', !dt('#pomodoro-popup'));
         dtFrame().contentWindow.BZW_pomodoro.openPanel();
         await waitFrame(dtDoc, '#pomodoro-popup');

@@ -42,6 +42,25 @@ export { POMODORO_SKIN_THEMES } from './render';
 export type { PomodoroSkinTheme } from './render';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
+// 动效层（表现层）：只在生命周期挂点调用，render.ts markup 与几何一律不动
+import {
+  motionBindButtons,
+  motionCeremony,
+  motionCycleDots,
+  motionIgnite,
+  motionPanelClose,
+  motionPanelOpen,
+  motionPhaseLabelSwap,
+  motionPhaseSync,
+  motionRingHead,
+  motionRewind,
+  motionSkipWhoosh,
+  motionStatsIn,
+  motionTaskLine,
+  motionTeardown,
+  motionTimeTick,
+  motionTodayBlip,
+} from './motion';
 import { syncPomodoroStatusBar } from './statusbar';
 import { todayCount, todayMinutes, last7Days, lastNMonths, TREND_MONTHS } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
@@ -298,7 +317,10 @@ function renderStats(): void {
   const todayEl = document.getElementById('pomodoro-today');
   if (todayEl) {
     const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-    if (todayEl.textContent !== todayText) todayEl.textContent = todayText; // 深审 PE1：同值不重写
+    if (todayEl.textContent !== todayText) {
+      todayEl.textContent = todayText; // 深审 PE1：同值不重写
+      motionTodayBlip(todayEl, todayText); // 动效层：计数变化落墨一记
+    }
   }
   const weekEl = document.getElementById('pomodoro-week');
   const monthsEl = document.getElementById('pomodoro-months');
@@ -323,6 +345,7 @@ function renderStats(): void {
       })),
       { metric: 'minutes', valueLabel: (r) => hoursLabel(r.minutes ?? 0) }
     );
+    motionStatsIn(monthsEl); // 动效层：柱区接力起立
     return;
   }
   const days = last7Days(history, now);
@@ -340,6 +363,7 @@ function renderStats(): void {
       count: d.count,
     }))
   );
+  motionStatsIn(weekEl); // 动效层：柱区接力起立
 }
 
 /** 统计两档 tab 的可视态（高亮类 + aria-pressed，深审 ui P2-2：激活档给读屏非视觉指示） */
@@ -380,6 +404,8 @@ function render(): void {
     circle.setAttribute('stroke-dasharray', String(C));
     circle.setAttribute('stroke-dashoffset', String(C * (1 - progress)));
   }
+  // 动效层：环头光点骑环随行（进行中且环已有进度才显）
+  motionRingHead(document.getElementById('pomodoro-ring-svg'), progress, state.endTime !== null && progress > 0.002);
   const phaseEl = document.getElementById('pomodoro-phase');
   if (phaseEl) {
     const label = phaseLabel(state.phase);
@@ -396,15 +422,21 @@ function render(): void {
       } else {
         phaseEl.textContent = label;
       }
+      motionPhaseLabelSwap(phaseEl); // 动效层：阶段文案换字
     }
   }
   renderCycleDots(d);
   renderTaskLine();
   const timeEl = document.getElementById('pomodoro-time');
-  if (timeEl) timeEl.textContent = fmt(remain);
+  if (timeEl) {
+    timeEl.textContent = fmt(remain);
+    motionTimeTick(timeEl, remain, state.endTime !== null); // 动效层：大跳揭新 / 整分脉冲
+  }
   renderStats();
   updateButtons();
   applySkinClass(); // 面板主题随设置走（设置面板改主题后下一次 render 即生效）
+  // 动效层：相位氛围单点（专注呼吸 / 休息渐暗 / 暂停凝滞 / 待发亮息；签名变更才动）
+  motionPhaseSync(document.getElementById('pomodoro-popup'), state.phase, state.endTime !== null, state.paused);
 }
 
 /** 本轮循环位置：N 个 6px 方点，已完成填 accent 色（替代旧「专注 2/4」文字小字） */
@@ -424,6 +456,7 @@ function renderCycleDots(d: Durations): void {
     const want = 'pomodoro-cycle-dot' + (i < state.cycleFocusCount ? ' pomodoro-cycle-dot-on' : '');
     if ((dot as HTMLElement).className !== want) (dot as HTMLElement).className = want; // 深审 PE1：同值不重写
   });
+  motionCycleDots(cycleEl, state.cycleFocusCount); // 动效层：点亮 / 级联释放
 }
 
 /** 当前专注任务行（备忘录「专注这个」联动）：有归属显示标题（超长省略 + title 全文），无归属收起 */
@@ -438,6 +471,7 @@ function renderTaskLine(): void {
     if (taskEl.textContent !== '') taskEl.textContent = '';
     if (taskEl.hasAttribute('title')) taskEl.removeAttribute('title');
   }
+  motionTaskLine(taskEl, !!state.task); // 动效层：任务名落名轻揭
 }
 
 /** 按钮态渲染（render 内部抽取） */
@@ -487,6 +521,18 @@ function applyAction(action: PomodoroAction): void {
   // 手动暂停不带来源标记，重启后 locked 判定维持锁定），或重置/停止生效（F11：reset 恒返回
   // none 事件，不落盘会旧计时复活重启后弹「番茄钟继续」；forceFocus 拦下的 reset 同引用不写）
   if (r.event.type !== 'none' || (action === 'pause' && state.paused) || (action === 'reset' && r.state !== prev)) void save();
+  // 动效层一次性挂点（表现层，不影响状态语义；氛围差异由 render 尾的 motionPhaseSync 管）：
+  const popupEl = document.getElementById('pomodoro-popup');
+  const ringSvg = document.getElementById('pomodoro-ring-svg');
+  if (r.event.type === 'started') {
+    motionIgnite(popupEl, prev.endTime === null && !prev.paused); // 全新开始＝点火全套，继续＝轻落
+  }
+  // 收工仪式仅自然完成（tick 驱动）出演；skip 是作废，翻页过场即可，不配仪式
+  if (r.event.type === 'phase-completed' && action === 'tick') {
+    motionCeremony(popupEl, ringSvg, r.event.completedPhase);
+  }
+  if (action === 'skip') motionSkipWhoosh(popupEl);
+  if (action === 'reset' && r.state !== prev) motionRewind(popupEl);
   ensureTick();
   render();
 }
@@ -830,6 +876,10 @@ function buildDOM(): void {
     close: closePomodoro,
   });
   bindEvents();
+  // 动效层：按钮按压反馈 + 入席编排（先于 render——编排目标在骨架里已就位，内容随后即落；
+  // 相位氛围由 render 尾的 motionPhaseSync 在全新 DOM 上首轮应用）
+  motionBindButtons(mask);
+  motionPanelOpen(mask, state.endTime === null && !state.paused);
   render();
   // 面板聚焦（tabindex=-1）：打开即可用 Space 切换开始/暂停。
   // 呈报#13 F3+H3 升级为全域范式单源：trapPanelFocus = 容器入焦 + Tab 圈闭（焦点管理收编 core）
@@ -910,11 +960,16 @@ export async function ensurePomodoro(app: App): Promise<void> {
   }
 }
 
-/** 关闭弹窗：移除 DOM，计时后台继续（tick 常驻） */
-export function closePomodoro(): void {
+/**
+ * 关闭弹窗：移除 DOM，计时后台继续（tick 常驻）。
+ * 动效层：默认先演 200ms 离席尾奏再移除（immediate=true 卸载路径同步移除，绝不让 DOM 晚走）；
+ * 无动画宿主（jsdom）/ 评审 RM 同步收口——行为与今天完全一致。
+ */
+export function closePomodoro(immediate = false): void {
   if (maskEl) {
-    maskEl.remove();
+    const el = maskEl;
     maskEl = null;
+    motionPanelClose(el, () => el.remove(), immediate);
   }
   if (escHandle) {
     escHandle.unregister();
@@ -1063,7 +1118,8 @@ export function unloadPomodoro(): void {
   recoveryNotified = false; // 深审 PA-2：新会话恢复通知可再弹
   openInflight = null; // 丢弃未完成的初始化（下次 openPomodoro 重新走 init）
   initInflight = null; // P3：共享初始化 in-flight 一并丢弃
-  closePomodoro();
+  closePomodoro(true); // 卸载路径同步移除，不等离席尾奏
+  motionTeardown(); // 动效层统一清场：循环 / 持有 / 延时 / 差异记忆全收，不留永动孤儿
   state = createInitialState();
   history = [];
   archived = []; // issue 357：归档行随历史一并重置
