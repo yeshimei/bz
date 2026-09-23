@@ -1,5 +1,5 @@
-/* 源指纹 e59a0fc6c0228674 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 c1717d3f6338c8f2 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -10304,11 +10304,34 @@ tags:
     return parseJevResponse(text, status);
   }
 
+  // src/core/jev-fallback.ts
+  function abortError3() {
+    const e = new Error("判定请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  async function judgeOrFallback(plan) {
+    const signal = plan.signal;
+    if (signal == null ? void 0 : signal.aborted) throw abortError3();
+    if (!isJevConfigured()) return plan.fallback();
+    try {
+      const { state, questions } = plan.request();
+      const result = await askJev(state, questions, { signal, config: plan.config });
+      return plan.parse(result.answers);
+    } catch (e) {
+      if (signal == null ? void 0 : signal.aborted) throw e;
+      console.debug("[jev] 判定通道不可用，回落 LLM：", e instanceof Error ? e.message : e);
+      return plan.fallback();
+    }
+  }
+
   // src/cinema/type-decide.ts
   var TYPE_SENTINEL = "以上都不是";
   var CONFIDENCE_FLOOR = 0.5;
   var EXCLUDED_FROM_DECIDE = ["公开课"];
   var Q_KEY = "type";
+  var DECIDE_HINTS = "判断线索：是否剧集区分「电影」与其他剧种；制片国家/地区决定是国产剧、美剧、日剧、韩剧、英剧还是德剧；豆瓣类型里含「动画」时按地区归入日漫、国漫或美漫；含「纪录片」时归「纪录片」（此时不按剧集判）。";
+  var JEV_INSTRUCTIONS = `根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。${DECIDE_HINTS}若都不贴切，请选「${TYPE_SENTINEL}」。`;
   function buildTypeCriteria() {
     var _a;
     const criteria = {};
@@ -10335,22 +10358,53 @@ tags:
     if (answer.confidence < CONFIDENCE_FLOOR) return null;
     return choice;
   }
+  function buildTypeLlmPrompt(info, criteria) {
+    const menu = Object.keys(criteria).map((tag) => tag === TYPE_SENTINEL ? tag : `${tag}（${criteria[tag]}）`).join("、");
+    return [
+      "你是影视分类助手。根据下面的豆瓣信息，从候选分类里选出最贴切的一个。",
+      `候选分类：${menu}`,
+      DECIDE_HINTS,
+      `若都不贴切，选「${TYPE_SENTINEL}」。`,
+      '只输出 JSON 对象：{"type":"候选分类之一"}',
+      "",
+      buildTypeState(info)
+    ].join("\n");
+  }
+  function parseTypeLlmOutput(raw, criteria) {
+    var _a;
+    let text = String(raw || "").trim();
+    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) text = fence[1].trim();
+    let obj;
+    try {
+      obj = JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+    const tag = String((_a = obj == null ? void 0 : obj.type) != null ? _a : "").trim();
+    if (!tag || tag === TYPE_SENTINEL || !(tag in criteria)) return null;
+    return tag;
+  }
+  async function decideTypeByLlm(info, criteria) {
+    const raw = await createAI().json(buildTypeLlmPrompt(info, criteria));
+    return parseTypeLlmOutput(raw, criteria);
+  }
   async function decideCinemaType(info, opts) {
-    if (!isJevConfigured()) {
-      throw new Error("Jev 决策通道未配置（设置 → AI → Jev 决策通道）");
-    }
     const criteria = buildTypeCriteria();
-    const question = {
-      type: "choice",
-      instructions: "根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。判断线索：是否剧集区分「电影」与其他剧种；制片国家/地区决定是国产剧、美剧、日剧、韩剧、英剧还是德剧；豆瓣类型里含「动画」时按地区归入日漫、国漫或美漫；含「纪录片」时归「纪录片」（此时不按剧集判）。若都不贴切，请选「以上都不是」。",
-      criteria
-    };
-    const result = await askJev(buildTypeState(info), { [Q_KEY]: question }, opts);
-    const answer = result.answers[Q_KEY];
-    if (!answer || answer.type !== "choice") {
-      throw new Error("Jev 未返回有效的 choice 答案");
-    }
-    return judgeTypeChoice(answer, criteria);
+    return judgeOrFallback({
+      signal: opts == null ? void 0 : opts.signal,
+      config: opts == null ? void 0 : opts.config,
+      request: () => {
+        const question = { type: "choice", instructions: JEV_INSTRUCTIONS, criteria };
+        return { state: buildTypeState(info), questions: { [Q_KEY]: question } };
+      },
+      parse: (answers) => {
+        const answer = answers[Q_KEY];
+        if (!answer || answer.type !== "choice") throw new Error("Jev 未返回有效的 choice 答案");
+        return judgeTypeChoice(answer, criteria);
+      },
+      fallback: () => decideTypeByLlm(info, criteria)
+    });
   }
 
   // src/cinema/seasons.ts
