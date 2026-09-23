@@ -967,6 +967,34 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   pointer-events: none;
 }
 .bz-search .bz-input { width: 100%; padding-left: 30px; }
+/* 尾部清除钮（clipbook 效率#12 全域拍板口径，uiSearch 内置）：绝对定位贴右缘，
+   有词才现（hidden 由组件 input 同步驱动）；图标重置前缀 .bz-ic 的左侧绝对定位 */
+.bz-search .bz-input { padding-right: 22px; } /* 尾部 ✕ 让位，词长不压钮 */
+.bz-search .bz-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--bz-text-3);
+  line-height: 0;
+}
+.bz-search .bz-search-clear .bz-ic {
+  position: static;
+  width: 12px;
+  height: 12px;
+  pointer-events: auto;
+}@media (hover: hover) {
+
+.bz-search .bz-search-clear:hover { color: var(--bz-text-1); }
+}
+/* hidden 属性显式守卫（clipbook 效率#12 同款坑）：上方 display:inline-flex 是作者
+   规则，UA 的 [hidden]{display:none} 同 origin 低序压不住，无词态必须显式钉死 */
+.bz-search .bz-search-clear[hidden] { display: none; }
 
 /* ═══════════ F. 状态侧栏 .bz-rail ═══════════
    左栏分组导航：分组 label + 行（图标/emoji/字母徽标 + 名称 + 计数/未读）+ 底部固定区。

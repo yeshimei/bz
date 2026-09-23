@@ -838,6 +838,51 @@ describe('bz ui 组件库', () => {
     });
   });
 
+  describe('uiSearch 尾部清除钮（效率#12 全域拍板：有词才现、清空即隐）', () => {
+    it('结构：bz-search-clear 带 hidden 初始态 + aria-label', () => {
+      const { el } = uiSearch({ placeholder: '搜索' });
+      const btn = el.querySelector<HTMLButtonElement>('.bz-search-clear');
+      expect(btn).not.toBeNull();
+      expect(btn!.getAttribute('aria-label')).toBe('清除搜索');
+      expect(btn!.hidden).toBe(true); // 无词初始态：hidden
+    });
+    it('有初值时清除钮立即可见', () => {
+      const { el } = uiSearch({ value: '初值' });
+      expect(el.querySelector<HTMLButtonElement>('.bz-search-clear')!.hidden).toBe(false);
+    });
+    it('input 事件同步显隐：输入即显、清空即隐', () => {
+      const { el, input } = uiSearch({});
+      const btn = el.querySelector<HTMLButtonElement>('.bz-search-clear')!;
+      input.value = '词';
+      input.dispatchEvent(new Event('input'));
+      expect(btn.hidden).toBe(false);
+      input.value = '   '; // 纯空白 = 无词
+      input.dispatchEvent(new Event('input'));
+      expect(btn.hidden).toBe(true);
+    });
+    it('点击清除钮：清值 + 派发 input（onInput 收到空串）+ 钮隐藏', () => {
+      const fn = vi.fn();
+      const { el, input } = uiSearch({ value: '有词', onInput: fn });
+      const btn = el.querySelector<HTMLButtonElement>('.bz-search-clear')!;
+      btn.click();
+      expect(input.value).toBe('');
+      expect(fn).toHaveBeenCalledWith('');
+      expect(btn.hidden).toBe(true);
+    });
+    it('setValue 程序化置值同步清除钮显隐', () => {
+      const { el, setValue } = uiSearch({});
+      const btn = el.querySelector<HTMLButtonElement>('.bz-search-clear')!;
+      setValue('程序置词');
+      expect(btn.hidden).toBe(false);
+      setValue('');
+      expect(btn.hidden).toBe(true);
+    });
+    it('clearable:false 不渲染内置钮（gameshelf 自带同款钮防双钮）', () => {
+      const { el } = uiSearch({ clearable: false, value: '有词' });
+      expect(el.querySelector('.bz-search-clear')).toBeNull();
+    });
+  });
+
   describe('uiMainHead 主头行', () => {
     it('结构：标题 + spacer；无 count 时计数位隐藏', () => {
       const { el } = uiMainHead({ title: '全部' });

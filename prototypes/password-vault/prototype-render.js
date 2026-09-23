@@ -1,4 +1,4 @@
-/* 源指纹 2f310a15dc572486 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7319a2f924735996 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -171,7 +171,7 @@ var BZR_password_vault = (() => {
       <div class="bz-password-vault-list">
         <div class="bz-password-vault-listhead">
           <h1>全部条目</h1>
-          <div class="bz-password-vault-search">${ICONS.search}<input placeholder="搜索平台、账号、备注…"></div>
+          <div class="bz-password-vault-search">${ICONS.search}<input placeholder="搜索平台、账号、备注…"><button type="button" class="bz-pwv-search-clear" data-pwv-search-clear title="清除搜索" aria-label="清除搜索" hidden>${ICONS.x}</button></div>
         </div>
         <div class="bz-password-vault-count"></div>
         <div class="bz-password-vault-rows"></div>
@@ -199,7 +199,7 @@ var BZR_password_vault = (() => {
         <button class="tab on" data-mobview="all" role="tab" aria-selected="true">全部</button>
         <button class="tab" data-mobview="fav" role="tab" aria-selected="false">已收藏</button>
       </div>
-      <div class="bz-password-vault-mobsearch">${ICONS.search}<input placeholder="搜索平台、账号、备注…"></div>
+      <div class="bz-password-vault-mobsearch">${ICONS.search}<input placeholder="搜索平台、账号、备注…"><button type="button" class="bz-pwv-search-clear" data-pwv-search-clear title="清除搜索" aria-label="清除搜索" hidden>${ICONS.x}</button></div>
       <div class="bz-password-vault-moblist"></div>
       <button class="bz-password-vault-fab">${ICONS.plus}</button>
       <div class="bz-password-vault-mobpage">

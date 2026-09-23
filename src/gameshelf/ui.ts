@@ -1251,6 +1251,7 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   const search = uiSearch({
     placeholder: '搜索游戏名',
     value: M.query,
+    clearable: false, // 自带 .bz-gs-search-clear 同款钮（下方），关 core 内置钮防双钮
     onInput: (v) => {
       lastInputAt = Date.now(); // 打字心跳：renderSoft 据此让路（含 IME 组合期）
       M.query = v;

@@ -42,6 +42,9 @@ import {
   sprintResultHtml, sprintSummaryHtml, reviewBarHtml,
   isPlayable as isPlayableRender,
 } from './render';
+import {
+  motionQueueBoot, motionChargeStrip, motionDrawCard, motionTeardown, motionRatingBar,
+} from './motion';
 import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
@@ -92,6 +95,8 @@ export class UIManager {
   private sprintStarting = false;
   showArchived = false;
   private escHandle: { unregister: () => void } | null = null;
+  /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
+  private motionBootPending = false;
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -151,6 +156,7 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    this.motionBootPending = true; // 动效首屏编排由紧随的 renderEntries 消费
     // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
     trapPanelFocus(this.popup);
     await this.showQueue();
@@ -158,6 +164,7 @@ export class UIManager {
 
   hideMain(): void {
     if (this.sprint) return; // 冲刺中不响应遮罩关闭
+    motionTeardown(); // 动效延时编排随面板收场
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
@@ -167,6 +174,7 @@ export class UIManager {
     const sprint = this.sprint;
     this.sprint = null;
     sprint?.destroy();
+    motionTeardown();
     this.hideMain();
     if (this.escHandle) {
       this.escHandle.unregister();
@@ -235,6 +243,11 @@ export class UIManager {
     });
     if (focusKey) restoreFocusKey(container, focusKey);
     this.bindQueueEvents(container, items);
+    // 动效：仅首屏编排（boot 消费即熄）；刷新渲染静默（E6 滚位/焦点还原不受扰动）
+    if (this.motionBootPending) {
+      this.motionBootPending = false;
+      motionQueueBoot(container);
+    }
   }
   /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
   async showQueue(): Promise<void> {
@@ -266,12 +279,23 @@ export class UIManager {
   private bindQueueEvents(container: HTMLElement, items: ReviewItem[]): void {
     container.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hideMain());
     // ⚙设置直达钮已退役（issue 254 迭代拍板）：设置走插件设置页，头行不再深链 settings-panel
-    container.querySelector('[data-act="begin"]')?.addEventListener('click', () => void this.beginRound());
+    container.querySelector('[data-act="begin"]')?.addEventListener('click', () => {
+      const strip = container.querySelector<HTMLElement>('.bz-q-strip');
+      if (strip) motionChargeStrip(strip); // 蓄力涟漪：出发的召唤感
+      void this.beginRound();
+    });
     container.querySelector('[data-act="arch"]')?.addEventListener('click', () => {
       this.showArchived = !this.showArchived;
       void this.refreshPanel();
     });
-    container.querySelector('[data-act="stats"]')?.addEventListener('click', () => void this.openStats());
+    // 累计/连续 chip = 直开记忆分析特刊（2026-09-23 拍板：去掉中间统计弹窗与「记忆分析」
+    // 入口字样；analysis/ 动态 import 不拖主包，空库/无动画宿主在层内回落经典统计）
+    container.querySelector('[data-act="stats"]')?.addEventListener('click', () => {
+      void (async () => {
+        const { openReviewAnalysis } = await import('./analysis/index');
+        await openReviewAnalysis(this.app);
+      })();
+    });
     // item 10：空态两条路（把当前笔记加入复习 / 监听文件夹配置说明）
     container.querySelector('[data-act="add-current"]')?.addEventListener('click', () => void this.addCurrentNote());
     container.querySelector('[data-act="watch-help"]')?.addEventListener('click', () => void this.showWatchHelp());
@@ -280,7 +304,10 @@ export class UIManager {
     container.querySelectorAll<HTMLElement>('.bz-q-card[data-id]:not(.no)').forEach((card) => {
       const activate = () => {
         const it = items.find((x) => x.id === card.dataset.id);
-        if (it && isPlayable(it)) void this.beginSingle(it);
+        if (it && isPlayable(it)) {
+          motionDrawCard(card); // 抽卡手感：先一记「抽走」再切题面
+          void this.beginSingle(it);
+        }
       };
       card.addEventListener('click', activate);
       card.addEventListener('keydown', (e) => {
@@ -381,13 +408,6 @@ export class UIManager {
     return this.sprint.start();
   }
 
-  // ================= 归档 / 统计 =================
-
-  private async openStats(): Promise<void> {
-    const { showStatsModal } = await import('./stats-ui');
-    await showStatsModal(this.app, this.dataManager);
-  }
-
   // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
 
   /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
@@ -442,12 +462,12 @@ export class UIManager {
     card.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      void this.openDrawer(item, card);
+      void this.openDrawer(item, e.clientX, e.clientY);
     });
   }
 
-  private async openDrawer(item: ReviewItem, anchor: HTMLElement): Promise<void> {
-    const { attachItemActions, closeItemMenu } = await import('../core/item-actions');
+  private async openDrawer(item: ReviewItem, x: number, y: number): Promise<void> {
+    const { openItemMenu, resetItemMenuClickGuard } = await import('../core/item-actions');
     const actions: ItemActionLite[] = [
       {
         icon: 'file-text',
@@ -496,7 +516,10 @@ export class UIManager {
         },
       },
     ];
-    attachItemActions(anchor, actions);
+    // 跟手菜单直开（2026-09-23 修复「要按两次右键」：原先误调 attachItemActions——那是给卡片
+    // 绑定监听的辅助，首按只挂监听不弹层，二按才真正开菜单）；bz-rv-menu = 面板同皮（styles.css）
+    openItemMenu(x, y, actions, true, 'bz-rv-menu');
+    resetItemMenuClickGuard();
   }
 
   private async openItemFile(item: ReviewItem): Promise<void> {
@@ -578,6 +601,7 @@ export function mountFloatingRatingBar(opts: {
     else el.blur();
   });
   document.body.appendChild(el);
+  motionRatingBar(el); // 底部弹升入场（保留 translateX(-50%) 居中）
   el.focus({ preventScroll: true });
   return { close };
 }

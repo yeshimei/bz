@@ -900,6 +900,34 @@ tags: [电影]
     expect(root.querySelector('.j-mcnt')?.textContent).toBe('· 1');
   });
 
+  it('搜索清除钮三路同步（效率#12 全域口径）：输入即显、ESC/✕ 即隐 + 框值同清', async () => {
+    const { app } = seedMobile();
+    createOverlay(app);
+    const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
+    const input = root.querySelector('.j-mq') as HTMLInputElement;
+    const btn = root.querySelector('[data-cinema-clear]') as HTMLElement;
+    expect(btn).toBeTruthy();
+    expect(btn.hidden).toBe(true); // 无词初始态
+    // input：有词即显
+    input.value = '绝命';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(btn.hidden).toBe(false);
+    // ESC 清词：框值同清 + 钮即隐（mob 框随壳常驻，不随 renderAll 重建）；
+    // 有词分支要求 M.searchKeyword 已落地（300ms 防抖），先等尾触
+    await vi.waitFor(() => expect(M.searchKeyword).toBe('绝命'), { timeout: 2000 });
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(input.value).toBe('');
+    expect(btn.hidden).toBe(true);
+    // ✕ 点击：框值同清 + 钮即隐 + 状态词清空
+    input.value = '瑞克';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(btn.hidden).toBe(false);
+    btn.click();
+    expect(input.value).toBe('');
+    expect(btn.hidden).toBe(true);
+    expect(M.searchKeyword).toBe('');
+  });
+
   // 抽屉已统一到 core/item-actions（.bz-item-sheet，挂 document.body，皮肤 cn-sheet-skin）；
   // 手势 = core/dom.longPress（touchstart 被动监听，500ms）。
   it('移动端长按 → core 底部抽屉（头=名称+meta，动作项按状态）；越过静置窗口后遮罩点击关闭', () => {

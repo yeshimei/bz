@@ -413,12 +413,16 @@ export class DiaryAppController {
     });
     // 搜索输入：防抖过滤
     ui.searchBox.addEventListener('input', () => this._searchDebounced(ui.searchBox.value));
-    // ESC 在搜索框内：只清空/失焦（不关面板）；D-UI3：先取消防抖尾触，防关键词「复活」
+    // ESC 在搜索框内：只清空/失焦（不关面板）；D-UI3：先取消防抖尾触，防关键词「复活」。
+    // 置空后派发 input：同步 uiSearch 内置清除钮显隐（效率#12 全域口径），随后的 cancel
+    // 收掉派生尾触（renderAll 已同步刷，不重复）
     ui.searchBox.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
         this._searchDebounced.cancel();
         ui.searchBox.value = '';
+        ui.searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+        this._searchDebounced.cancel();
         this.searchKeyword = '';
         this.renderAll();
         ui.searchBox.blur();
@@ -2952,17 +2956,26 @@ export class DiaryAppController {
       row.style.display = 'block';
       motionSearchRow(row); // 动效层：搜索行纸条滑出
       box.value = this.searchKeyword;
+      // 预填后派发 input：同步 uiSearch 内置清除钮显隐（效率#12 全域口径）；cancel 收掉
+      // 派生尾触——开框只恢复显示，不触发重刷
+      box.dispatchEvent(new Event('input', { bubbles: true }));
+      this._searchDebounced.cancel();
       box.focus();
       box.select();
       btn?.classList.add('bz-diary-icon-btn--on');
     } else {
       // D-UI3：收起前取消防抖尾触——否则 250ms 内尾触落地把关键词写回 + 再 renderAll，
-      // 列表按一个不可见的词过滤（下次点开搜索框「自己长出了词」）
-      this._searchDebounced.cancel();
+      // 列表按一个不可见的词过滤（下次点开搜索框「自己长出了词」）。
+      // 置空后派发 input：同步清除钮显隐，随后的 cancel 收掉派生尾触
       row.style.display = 'none';
       box.value = '';
+      box.dispatchEvent(new Event('input', { bubbles: true }));
       this.searchKeyword = '';
-      if (other?.searchBox) other.searchBox.value = '';
+      if (other?.searchBox) {
+        other.searchBox.value = '';
+        other.searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      this._searchDebounced.cancel();
       this.renderAll();
       btn?.classList.remove('bz-diary-icon-btn--on');
     }

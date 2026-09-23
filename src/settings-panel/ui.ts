@@ -28,6 +28,8 @@ import { debounce } from '../core/utils';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
 // 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 评审壳
 import * as R from './render';
+// 动效层（校准台语义世界，见 motion.ts 文件头）：只在生命周期挂点被调用，markup 契约不变
+import * as spm from './motion';
 
 /** 搜索输入防抖窗口（E-5）：纯 UI 重绘无数据丢失面，每键全量重建导航/列表 + 图标物化 + 全行
  *  重扫收敛为一停顿一次（core debounce 先例口径 180ms）。 */
@@ -338,6 +340,9 @@ export class SettingsPanelUI {
       // 会话内其他域徽标可能已过期（preload 只在首次 build 跑）——重开即重算（H9）。
       // 先从会话缓存同步重算（单飞在途时新轮被收敛，缓存重算保住新鲜度），再起新轮预载
       this.recomputeBadgesFromCache();
+      // 动效挂点：软重开 = 重新通电（尘光/萤标随 open 链唤醒，见 motion.ts 睡眠/唤醒）
+      spm.motionPanelIn(this.popup, this.mask);
+      spm.motionEnsureDust(this.popup);
       void this.preloadAllBadges();
       return;
     }
@@ -446,6 +451,8 @@ export class SettingsPanelUI {
           void this.renderDomain(pane, DOMAINS.find((x) => x.id === id)!);
         });
       });
+      // 动效挂点：萤标跟随新选中项（重建后 sync，幂等）——不推迟任何 DOM 就位
+      spm.motionNavSynced(nav);
     };
 
     // E-5：搜索输入 180ms 防抖（每键全量重建导航/列表收敛为一停顿一次；纯 UI 重绘无数据丢失面）
@@ -486,9 +493,16 @@ export class SettingsPanelUI {
       }
     });
     renderNav('');
+    // 动效挂点：导航悬停微浮（委托绑 nav 容器，重建免疫）
+    spm.motionBindNavFeel(nav);
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
     this.rerenderList = () => renderNav(searchIn.value);
     void this.renderDomain(pane, DOMAINS.find((x) => x.id === this.activeDomainId) ?? DOMAINS[0]);
+    // 动效挂点（面板级，build 一次）：通电入场 + 按压实感 + 灯下尘常驻
+    // （萤标已由 renderNav→motionNavSynced 自建；markup 契约零改写，见 motion.ts）
+    spm.motionPanelIn(popup, this.mask);
+    spm.motionBindPressFeel(popup);
+    spm.motionEnsureDust(popup);
   }
 
   /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
@@ -650,6 +664,8 @@ export class SettingsPanelUI {
       // SP5：记账本域 + 回填记忆滚位——重进域回到离开时的位置（过滤后行高已定，钳制自然兜底）
       pane.dataset.spActive = domain.id;
       scroller.scrollTop = this.scrollMem.get(`${side}:${domain.id}`) ?? 0;
+      // 动效挂点：翻层揭帘（DOM 已全部就位后纯表现编排，绝不推迟重写——契约见 motion.ts）
+      spm.motionRendered(pane);
       return;
     } catch (e) {
       body.innerHTML = '';
@@ -904,6 +920,8 @@ export class SettingsPanelUI {
         if (d) b.addEventListener('click', () => void this.pushDomain(d, b.dataset.spRow));
       });
       mountIcons(list); // 列表项图标占位物化（render 重绘后补挂）
+      // 动效挂点：列表项轻浮接力（DOM 已就位的纯表现层，前 12 项，其余直达）
+      spm.motionMobList(list);
     };
 
     // E-5：搜索输入 180ms 防抖（每键全量重建列表 + 图标物化收敛，同桌面口径）
@@ -942,6 +960,10 @@ export class SettingsPanelUI {
       }
     });
     render('');
+    // 动效挂点（面板级，build 一次）：通电入场 + 按压实感 + 灯下尘常驻（尘挂域页滚动域）
+    spm.motionPanelIn(popup, this.mask);
+    spm.motionBindPressFeel(popup);
+    spm.motionEnsureDust(popup);
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘列表（issue 194 按端隐藏）
     this.rerenderList = () => { if (!this.mobPushed) render(searchIn.value); };
   }
@@ -995,6 +1017,8 @@ export class SettingsPanelUI {
   hide(): void {
     // UI-1 纵深：软关前强制收起自绘下拉——菜单 DOM 与组卡提层样式不留残，重开面板不「复活」
     if (this.popup) closeAllSelectMenus(this.popup);
+    // 动效挂点：软关入睡（编排定时器清空 + 双系统停泵；唤醒在 open→motionPanelIn 链）
+    spm.motionSleep();
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
@@ -1014,6 +1038,8 @@ export class SettingsPanelUI {
 
   cleanup(): void {
     unregisterPanelEsc('bz-settings-panel'); // C-5：幂等注销样板
+    // 动效挂点：全清（泵/监听/注入件状态全收，幂等）——先于 DOM 摘除，句柄不残留
+    spm.motionTeardown();
     this.flushPendingTextCommit(); // F-2：卸载清理路径 flush 防抖窗口文本
     if (this.popup) closeAllSelectMenus(this.popup); // UI-1 纵深：非常规关闭路径菜单不留残
     if (this.mask) {

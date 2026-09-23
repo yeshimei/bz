@@ -1,4 +1,4 @@
-/* 源指纹 1a82ca2e137bc8a3 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 dfc56ad537889ce9 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -12449,6 +12449,8 @@ tags:
     };
   }
   function onSearchInput(app, sec, isMob, raw) {
+    const clearBtn = sec.querySelector("[data-cinema-clear]");
+    if (clearBtn) clearBtn.hidden = !raw.trim();
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = setTimeout(() => {
       M.searchKeyword = raw.trim();
@@ -12472,9 +12474,11 @@ tags:
     renderAll(app);
     const el = sec.querySelector(isMob ? ".j-mq" : ".j-q");
     if (el) {
+      el.value = "";
       el.focus();
-      el.setSelectionRange(el.value.length, el.value.length);
     }
+    const clearBtn = sec.querySelector("[data-cinema-clear]");
+    if (clearBtn) clearBtn.hidden = true;
   }
   function refreshDeskList(app, sec) {
     const view = sec.querySelector(".j-view");
@@ -12610,7 +12614,7 @@ tags:
       }
     });
     sec.addEventListener("click", (e) => {
-      var _a, _b, _c;
+      var _a, _b, _c, _d;
       const t = e.target;
       const aiBtn = t.closest("[data-cinema-ai-start],[data-rec-add]");
       if (aiBtn) {
@@ -12629,6 +12633,9 @@ tags:
         M.typeFilter = null;
         M.statusFilter = null;
         M.searchKeyword = "";
+        const inp = (_b = clear.closest("label")) == null ? void 0 : _b.querySelector("input");
+        if (inp) inp.value = "";
+        clear.hidden = true;
         renderAll(app);
         return;
       }
@@ -12665,7 +12672,7 @@ tags:
           M.typeFilter = railBtn.dataset.g === "全部" ? null : railBtn.dataset.g;
           M.statusFilter = null;
         } else {
-          const s = (_b = railBtn.dataset.s) != null ? _b : null;
+          const s = (_c = railBtn.dataset.s) != null ? _c : null;
           M.statusFilter = M.statusFilter === s ? null : s;
         }
         renderAll(app);
@@ -12678,7 +12685,7 @@ tags:
           M.typeFilter = chip.dataset.c === "all" ? null : chip.dataset.c;
           M.statusFilter = null;
         } else {
-          const s = (_c = chip.dataset.s) != null ? _c : null;
+          const s = (_d = chip.dataset.s) != null ? _d : null;
           M.statusFilter = M.statusFilter === s ? null : s;
         }
         renderAll(app);

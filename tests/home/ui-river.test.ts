@@ -191,9 +191,11 @@ describe('home 活动河 UI（issue 232）', () => {
     await new Promise((r) => setTimeout(r, 20));
     const wks = document.querySelectorAll('[data-home-weekday]');
     expect(wks.length).toBe(7);
-    // 倒排：第一格=今天，显示「今」不写数字
+    // 倒排：第一格=今天。2026-09-23 用户拍板：格内只留星期中文（日期数字行退役），
+    // 今天不再写「今」字（数字行没了），改 --today 红字标（样式见 styles.css 头排段）
     expect((wks[0] as HTMLElement).dataset.homeWeekday).toBe(todayStr());
-    expect(wks[0].querySelector('.bz-home-wk-n')!.textContent).toBe('今');
+    expect(wks[0].classList.contains('bz-home-wk--today')).toBe(true);
+    expect(wks[0].querySelector('.bz-home-wk-n')!.textContent).toBe('日一二三四五六'[new Date().getDay()]);
     const yesterday = yesterdayDateStr();
     const ybtn = document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement;
     ybtn.click();

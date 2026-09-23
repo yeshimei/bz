@@ -28,6 +28,11 @@ import { escManager } from '../core/esc-manager';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
 import { mountIcons, uiSetlist, uiChip, uiBtn } from '../core/ui';
+// 动效层（校准台语义世界，见 motion.ts 文件头）：只在行为反馈点被调用，markup 契约不变
+import {
+  motionSwitchFlip, motionSelectPick, motionCardChoose,
+  motionInputSaved, motionInputReject, motionInputAdjust,
+} from './motion';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -358,7 +363,7 @@ function renderRow(
       const acc = bindValue<boolean>(row.binding as unknown as RowBinding<boolean>);
       // 开关结构单源（R.toggleHtml 逐字原型），行为绑定留本层
       ctrlEl.innerHTML = R.toggleHtml(acc.read() === true);
-      const sw = ctrlEl.querySelector('.bz-sw')!;
+      const sw = ctrlEl.querySelector<HTMLElement>('.bz-sw')!;
       sw.addEventListener('click', () => {
         const v = !sw.classList.contains('on');
         // 先写后翻 UI（H5）：写入抛错（三函数逃生口）时不翻开关只提示，避免显示值与实际值背离
@@ -370,6 +375,7 @@ function renderRow(
         }
         sw.classList.toggle('on', v);
         sw.setAttribute('aria-checked', String(v));
+        motionSwitchFlip(sw, v); // 动效：拨杆按弹 + 到位微光（旋钮滑行归 CSS transition）
         safePersist(() => acc.persist(), rowName || '开关设置'); // N5 兜底（ARCH-1 单源）
         row.onChange?.(v, ctx);
         refresh();
@@ -389,6 +395,7 @@ function renderRow(
         placeholder: ph,
         onCommit: (v) => {
           acc.write(v);
+          motionInputSaved(input); // 动效：入槽一呼吸（提交落盘确认，轻到不打断输入流）
           safePersist(() => acc.persist(), rowName || '文本设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(v, ctx);
           warn.fire(v);
@@ -410,6 +417,7 @@ function renderRow(
         placeholder: sec.placeholder,
         onCommit: (v) => {
           acc.write(v);
+          motionInputSaved(input.querySelector('.bz-sp-secret-input') as HTMLInputElement); // 动效：入槽（密钥提交同皮同反馈）
           safePersist(() => acc.persist(), rowName || '密钥设置'); // N5 兜底（ARCH-1 单源）
           sec.onChange?.(v, ctx);
           refresh(); // C-2：值驱动 visibleWhen 的子行跟随（text 行 commit 点同口径）
@@ -434,6 +442,7 @@ function renderRow(
         if (timer !== null) window.clearTimeout(timer);
         if (!dirty) return;
         acc.write(ta.value);
+        motionInputSaved(ta); // 动效：入槽一呼吸（多行文本提交同皮同反馈）
         safePersist(() => acc.persist(), rowName || '多行文本设置'); // N5 兜底（ARCH-1 单源）
         warn.fire(ta.value);
         refresh(); // C-2：值驱动 visibleWhen 的子行跟随（core commit 点 reevaluate 同口径）
@@ -481,8 +490,14 @@ function renderRow(
           // R9 口径对齐 core（parseClampedNumber 内核单源 ARCH-1）：非空非法输入不写入——
           // 回显生效旧值（返回值经 makeInput 回写输入框），不再 NaN→0 意外改写绑定
           const v = parseClampedNumber(raw, row.min, row.max);
-          if (v === null) return String(acc.read() ?? '');
+          if (v === null) {
+            motionInputReject(input); // 动效：卡簧弹回（校验拒绝——摇头 + 红晕一闪）
+            return String(acc.read() ?? '');
+          }
           acc.write(v);
+          // 动效：钳制回显 = 规整轻弹（值被修正到位）；原样写入 = 入槽一呼吸
+          if (String(v) !== raw.trim()) motionInputAdjust(input);
+          else motionInputSaved(input);
           safePersist(() => acc.persist(), rowName || '数字设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(v, ctx);
           warn.fire(raw);
@@ -553,6 +568,7 @@ function renderRow(
         }
         closeMenu();
         vspan.textContent = labelOf(o.value);
+        motionSelectPick(sel); // 动效：旋钮位提亮一拍 + 箭头回弹（菜单本体不加动效——用户拍板）
         safePersist(() => acc.persist(), rowName || '下拉设置');
         row.onChange?.(o.value, ctx);
         refresh();
@@ -775,6 +791,7 @@ function renderRow(
           });
           c.classList.add('is-on');
           c.setAttribute('aria-checked', 'true'); // UI-2：radio 选中态同步播报
+          motionCardChoose(c); // 动效：选卡按实 + 提亮一拍
           safePersist(() => acc.persist(), rowName || '卡片设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(c.dataset.spCard ?? '', ctx);
           refresh();
