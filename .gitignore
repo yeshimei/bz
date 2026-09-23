@@ -9,5 +9,5 @@ viz/
 .dsh-worktrees/
 .zcode/
 .workbuddy/
-.docs/
-.issues/
+docs/
+issues/
