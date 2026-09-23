@@ -1,5 +1,5 @@
-/* 源指纹 3408827d2b4b9f52 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
+/* 源指纹 cc944188c5aa97cd · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
   var __create = Object.create;
@@ -1013,15 +1013,15 @@ var BZW_favorites = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -5701,7 +5701,7 @@ var BZW_favorites = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M2 = 10;
+    const M3 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5728,7 +5728,7 @@ var BZW_favorites = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
         moved = true;
         cancel();
       }
@@ -6517,6 +6517,7 @@ var BZW_favorites = (() => {
     close: "x",
     add: "plus",
     open: "external-link",
+    copy: "copy",
     pin: "pin",
     pinOff: "pin-off",
     edit: "pencil",
@@ -6573,10 +6574,9 @@ var BZW_favorites = (() => {
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
-    const ext = (it.url || "").trim() ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON.open, "bz-ic--xs")}</span>` : "";
     return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -6601,6 +6601,7 @@ var BZW_favorites = (() => {
   function actionSpecs(it) {
     const acts = [];
     if ((it.url || "").trim()) acts.push({ icon: ICON.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON.copy, label: "复制网址", act: "copy" });
     acts.push({
       icon: it.pinned ? ICON.pinOff : ICON.pin,
       label: it.pinned ? "取消置顶" : "置顶",
@@ -6682,6 +6683,576 @@ var BZW_favorites = (() => {
     if (board) renderBoardInto(board, items, view, hooks);
   }
 
+  // src/favorites/motion.ts
+  var M = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  var STAG = 30;
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canHover() {
+    try {
+      return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function findCard(board, id) {
+    try {
+      const hit = board.querySelector(`.bz-fav-card[data-fav-id="${CSS.escape(id)}"]`);
+      if (hit) return hit;
+    } catch (e) {
+    }
+    return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
+  }
+  var EXIT_ANIM_ID = "bz-fav-exit";
+  var EXIT_MASK_ANIM_ID = "bz-fav-exit-mask";
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionPanelIn(overlay) {
+    const panel = overlay.querySelector(".bz-fav-panel");
+    if (!panel) return;
+    cancelAnimsBy(panel, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
+    panel.style.opacity = "";
+    panel.style.transform = "";
+    panel.style.filter = "";
+    waapi(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: M.move + 40, easing: E.out });
+    waapi(
+      panel,
+      [
+        { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
+        { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 460, easing: E.out }
+    );
+  }
+  function motionPanelOut(overlay, done) {
+    const panel = overlay.querySelector(".bz-fav-panel");
+    if (!panel) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
+      }
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    let maskAnim = waapi(
+      overlay,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M.fast + 40, easing: E.out, fill: "forwards", id: EXIT_MASK_ANIM_ID }
+    );
+    const a = waapi(
+      panel,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
+      ],
+      { duration: M.fast + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    setTimeout(finish, M.fast + 120);
+  }
+  function motionRendered(overlay, boot) {
+    var _a, _b;
+    cancelPending();
+    const panel = overlay.querySelector(".bz-fav-panel");
+    if (!panel) return;
+    const board = overlay.querySelector("[data-fav-content]");
+    if (!boot) {
+      if (board) ensureEmptyFloat(board);
+      return;
+    }
+    if (reduced()) return;
+    const h1 = panel.querySelector(".bz-fav-head h1");
+    if (h1) waapi(
+      h1,
+      [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M.base, easing: E.out, fill: "both" }
+    );
+    const chips = [...panel.querySelectorAll("[data-fav-tags] button")];
+    chips.forEach((chip, i) => {
+      waapi(
+        chip,
+        [
+          { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
+          { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 60, delay: 60 + Math.min(i, 13) * STAG, easing: E.out, fill: "both" }
+      );
+    });
+    if (board) {
+      const cards = [...board.querySelectorAll(".bz-fav-card")];
+      const cold = (_b = (_a = cards[0]) == null ? void 0 : _a.classList.contains("bz-fav-arch")) != null ? _b : false;
+      cards.forEach((card, i) => {
+        const delay = 200 + Math.min(i, 16) * STAG;
+        if (cold) {
+          waapi(
+            card,
+            [
+              { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
+              { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
+            ],
+            { duration: M.base + 100, delay, easing: E.out, fill: "both" }
+          );
+        } else {
+          waapi(
+            card,
+            [
+              { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
+              { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
+              { opacity: 1, transform: "none" }
+            ],
+            { duration: M.base + 90, delay, easing: E.out, fill: "both" }
+          );
+          const tape = card.querySelector(".bz-fav-tape");
+          if (tape) tapePress(tape, delay + 140);
+        }
+      });
+      const empty = board.querySelector(".bz-fav-empty");
+      if (empty && !cards.length) {
+        waapi(
+          empty,
+          [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
+          { duration: M.base + 80, delay: 240, easing: E.out, fill: "both" }
+        );
+      }
+      ensureEmptyFloat(board);
+    }
+  }
+  function motionFilterSwitch(board, tagsRow, rewrite) {
+    rewrite();
+    if (reduced() || typeof board.animate !== "function") return;
+    waapi(
+      board,
+      [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M.fast + 60, easing: E.out }
+    );
+    const fresh = board.querySelectorAll(".bz-fav-card");
+    const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
+    fresh.forEach((card, i) => {
+      waapi(
+        card,
+        // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
+        cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: Math.min(i, 14) * STAG, easing: E.out, fill: "both" }
+      );
+    });
+    const ne = board.querySelector(".bz-fav-empty");
+    if (ne) waapi(
+      ne,
+      [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+      { duration: M.base, easing: E.out, fill: "both" }
+    );
+    if (tagsRow) chipSnap(tagsRow);
+    ensureEmptyFloat(board);
+  }
+  function chipSnap(row) {
+    const on = row.querySelector("button.bz-fav-on");
+    if (!on) return;
+    waapi(
+      on,
+      [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
+      { duration: M.base - 20, easing: E.out }
+    );
+  }
+  function motionBindChipFeel(row) {
+    if (row.dataset.favmFeel) return;
+    row.dataset.favmFeel = "1";
+    const pressed = /* @__PURE__ */ new WeakMap();
+    row.addEventListener("pointerover", (e) => {
+      var _a, _b, _c, _d;
+      if (!canHover() || reduced()) return;
+      const chip = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "button");
+      if (!chip || !row.contains(chip)) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip) return;
+      pressed.delete(chip);
+      waapi(chip, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M.fast, easing: E.out });
+    });
+    row.addEventListener("pointerout", (e) => {
+      var _a, _b, _c, _d;
+      const chip = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "button");
+      if (!chip || !row.contains(chip)) return;
+      if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip) return;
+      if (pressed.get(chip)) return;
+      waapi(chip, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M.fast, easing: E.out });
+    });
+    row.addEventListener("pointerdown", (e) => {
+      var _a, _b;
+      if (reduced()) return;
+      const chip = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "button");
+      if (!chip || !row.contains(chip)) return;
+      pressed.set(chip, Date.now());
+      waapi(chip, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E.out, fill: "forwards" });
+    });
+    const release = (e) => {
+      var _a, _b;
+      const chip = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "button");
+      if (!chip || !pressed.get(chip)) return;
+      pressed.delete(chip);
+      waapi(chip, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M.base - 60, easing: E.out });
+    };
+    row.addEventListener("pointerup", release);
+    row.addEventListener("pointercancel", release);
+    row.addEventListener("pointerleave", release);
+  }
+  function motionBindCardFeel(content) {
+    if (content.dataset.favmFeel) return;
+    content.dataset.favmFeel = "1";
+    let held = null;
+    content.addEventListener("pointerdown", (e) => {
+      var _a, _b;
+      if (reduced()) return;
+      const card = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "[data-fav-id]");
+      if (!card) return;
+      held = card;
+      waapi(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E.out, fill: "forwards" });
+    });
+    const release = (e) => {
+      var _a, _b;
+      const card = (_b = (_a = e.target).closest) == null ? void 0 : _b.call(_a, "[data-fav-id]");
+      const target = card != null ? card : held;
+      if (!target) return;
+      if (card && card !== held) return;
+      held = null;
+      waapi(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M.move + 40, easing: E.out });
+    };
+    content.addEventListener("pointerup", release);
+    content.addEventListener("pointercancel", release);
+    content.addEventListener("pointerleave", release);
+  }
+  function motionCardPick(card) {
+    if (reduced()) return;
+    waapi(
+      card,
+      [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
+      { duration: M.move + 160, easing: E.out }
+    );
+  }
+  function tapePress(tape, delay) {
+    const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
+    waapi(
+      tape,
+      [
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
+        { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
+      ],
+      { duration: M.move + 80, delay, easing: E.out }
+    );
+  }
+  function sheen(card, delay) {
+    if (reduced() || card.querySelector(".bz-favm-sheen")) return;
+    const wrap = document.createElement("span");
+    wrap.className = "bz-favm-sheen";
+    wrap.setAttribute("aria-hidden", "true");
+    const band = document.createElement("i");
+    band.className = "bz-favm-sheen-band";
+    wrap.appendChild(band);
+    card.appendChild(wrap);
+    after(delay, () => {
+      const a = waapi(
+        band,
+        [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
+        { duration: 620, easing: E.out }
+      );
+      after(a ? 680 : 0, () => wrap.remove());
+    });
+  }
+  function motionCardLanded(board, id, kind) {
+    if (reduced()) return;
+    const card = findCard(board, id);
+    if (!card) return;
+    if (kind === "add") {
+      waapi(
+        card,
+        [
+          { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
+          { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
+          { opacity: 1, transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M.base + 160, easing: E.out }
+      );
+      tapePress(card.querySelector(".bz-fav-tape"), 100);
+      sheen(card, 140);
+    } else if (kind === "edit") {
+      waapi(
+        card,
+        [
+          { transform: "none", filter: "brightness(1)" },
+          { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
+          { transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M.base + 80, easing: E.out }
+      );
+    } else if (kind === "pin") {
+      waapi(
+        card,
+        [
+          { transform: "none", filter: "brightness(1)" },
+          { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
+          { transform: "none", filter: "brightness(1)" }
+        ],
+        { duration: M.base + 140, easing: E.out }
+      );
+    } else {
+      waapi(
+        card,
+        [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base + 100, easing: E.out }
+      );
+      tapePress(card.querySelector(".bz-fav-tape"), 120);
+    }
+  }
+  function motionCaptureRects(board) {
+    if (!board || reduced() || typeof board.animate !== "function") return null;
+    const map = /* @__PURE__ */ new Map();
+    board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
+      const r = c.getBoundingClientRect();
+      map.set(c.dataset.favId, { x: r.left, y: r.top });
+    });
+    return map;
+  }
+  function motionPinFlip(board, before, pinnedId) {
+    if (!before || before.size === 0 || reduced()) {
+      if (!reduced()) motionCardLanded(board, pinnedId, "pin");
+      return;
+    }
+    let played = false;
+    board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((card) => {
+      const old = before.get(card.dataset.favId);
+      if (!old) return;
+      const r = card.getBoundingClientRect();
+      const dx = old.x - r.left, dy = old.y - r.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      played = true;
+      if (card.dataset.favId === pinnedId) {
+        waapi(
+          card,
+          [
+            { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
+            { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
+            { transform: "none", filter: "brightness(1)" }
+          ],
+          { duration: M.move + 140, easing: E.move }
+        );
+      } else {
+        waapi(
+          card,
+          [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
+          { duration: M.move + 60, delay: 30, easing: E.move }
+        );
+      }
+    });
+    if (!played) motionCardLanded(board, pinnedId, "pin");
+  }
+  function motionCardDepart(board, id, kind) {
+    const card = board ? findCard(board, id) : null;
+    if (!card || reduced() || typeof card.animate !== "function") return Promise.resolve();
+    return new Promise((res) => {
+      let settled = false;
+      const finish = () => {
+        if (!settled) {
+          settled = true;
+          res();
+        }
+      };
+      const frames = kind === "del" ? [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "rotate(-3deg) scale(.82) translateY(6px)", filter: "blur(4px)" }
+      ] : kind === "archive" ? [
+        { opacity: 1, transform: "none" },
+        { opacity: 0, transform: "rotate(2deg) scale(.9) translateY(10px)" }
+      ] : [
+        { opacity: 1, transform: "none" },
+        { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
+      ];
+      const a = waapi(card, frames, { duration: M.move + (kind === "del" ? 0 : 40), easing: E.out, fill: "forwards" });
+      if (!a) {
+        finish();
+        return;
+      }
+      a.finished.then(finish).catch(finish);
+      setTimeout(finish, M.move + 140);
+    });
+  }
+  function motionFormIn(popup) {
+    if (reduced()) return;
+    const rows = [
+      ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
+    ];
+    rows.forEach((el, i) => {
+      waapi(
+        el,
+        [
+          { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base, delay: i * 24, easing: E.out, fill: "both" }
+      );
+    });
+  }
+  function motionSwitchPop(el) {
+    if (reduced()) return;
+    waapi(
+      el,
+      [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
+      { duration: M.base - 40, easing: E.out }
+    );
+  }
+  function motionPickPop(btn, on) {
+    if (reduced()) return;
+    waapi(
+      btn,
+      on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
+      { duration: M.base - 60, easing: E.out }
+    );
+  }
+  function motionErrShake(errEl) {
+    if (reduced()) return;
+    waapi(
+      errEl,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-5px)", offset: 0.2 },
+        { transform: "translateX(4px)", offset: 0.45 },
+        { transform: "translateX(-2px)", offset: 0.72 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: M.base + 20, easing: E.out }
+    );
+  }
+  var aiAnims = /* @__PURE__ */ new Map();
+  function motionAiBusy(btn, on) {
+    const prev = aiAnims.get(btn);
+    if (prev) {
+      prev.cancel();
+      aiAnims.delete(btn);
+    }
+    if (!on || reduced()) return;
+    const star = btn.querySelector("svg");
+    const target = star != null ? star : btn;
+    const a = waapi(
+      target,
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
+      { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
+    );
+    if (a) aiAnims.set(btn, a);
+  }
+  var floatAnims = /* @__PURE__ */ new Map();
+  function ensureEmptyFloat(board) {
+    const ic = board.querySelector(".bz-empty .bz-empty-ic");
+    if (!ic || ic.dataset.favmFloat) return;
+    ic.dataset.favmFloat = "1";
+    const a = waapi(
+      ic,
+      [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
+      { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
+    );
+    if (a) floatAnims.set(ic, a);
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const a of floatAnims.values()) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    floatAnims.clear();
+    for (const a of aiAnims.values()) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    aiAnims.clear();
+    try {
+      document.querySelectorAll(".bz-favm-sheen").forEach((el) => el.remove());
+    } catch (e) {
+    }
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => {
+      if (location.hash !== "#replay") return;
+      location.hash = "";
+      const replay = window.__bzFavReplay;
+      if (typeof replay === "function") setTimeout(replay, 600);
+    });
+    if (location.hash === "#replay") {
+      const wait = () => {
+        const replay = window.__bzFavReplay;
+        if (typeof replay === "function") {
+          location.hash = "";
+          setTimeout(replay, 600);
+        } else setTimeout(wait, 120);
+      };
+      setTimeout(wait, 120);
+    }
+  }
+
   // src/favorites/app.ts
   var _FavoritesApp = class _FavoritesApp {
     constructor() {
@@ -6725,21 +7296,24 @@ var BZW_favorites = (() => {
   var FavoritesApp = _FavoritesApp;
 
   // src/favorites/ui.ts
-  var M = {
+  var M2 = {
     overlay: null,
     items: [],
     tag: null,
     archived: false,
     sort: "new",
-    renderFn: null
+    renderFn: null,
+    stage: "idle"
   };
   function resetFavoritesState() {
-    M.overlay = null;
-    M.items = [];
-    M.tag = null;
-    M.archived = false;
-    M.sort = "new";
-    M.renderFn = null;
+    M2.overlay = null;
+    M2.items = [];
+    M2.tag = null;
+    M2.archived = false;
+    M2.sort = "new";
+    M2.renderFn = null;
+    M2.stage = "idle";
+    motionTeardown();
   }
   function resolveOpenFilter() {
     const s = tryGetSettings();
@@ -6756,7 +7330,7 @@ var BZW_favorites = (() => {
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M2.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -6775,7 +7349,7 @@ var BZW_favorites = (() => {
   function openPanel(app, dm, ai) {
     var _a, _b;
     initFavoritesUI(app, dm, ai);
-    if (M.overlay) {
+    if (M2.overlay) {
       closePanel();
       return;
     }
@@ -6784,15 +7358,24 @@ var BZW_favorites = (() => {
     overlay.innerHTML = panelHtml(isMobileEnv());
     document.body.appendChild(overlay);
     topifyZ(overlay);
-    M.overlay = overlay;
-    M.renderFn = () => renderAll();
+    M2.overlay = overlay;
+    M2.renderFn = (reveal) => renderAll(reveal);
+    M2.stage = "placeholder";
+    motionTeardown();
     const openFilter = resolveOpenFilter();
-    M.tag = openFilter.tag;
-    M.archived = openFilter.archived;
-    M.sort = normalizeFavSort((_a = tryGetSettings()) == null ? void 0 : _a.favoritesDefaultSort);
+    M2.tag = openFilter.tag;
+    M2.archived = openFilter.archived;
+    M2.sort = normalizeFavSort((_a = tryGetSettings()) == null ? void 0 : _a.favoritesDefaultSort);
     mountIcons(overlay);
     ensureFavoritesEsc();
     trapPanelFocus((_b = overlay.querySelector(".bz-fav-panel")) != null ? _b : overlay);
+    motionPanelIn(overlay);
+    window.__bzFavReplay = () => {
+      if (M2.overlay !== overlay) return;
+      motionPanelIn(overlay);
+      M2.stage = "boot";
+      renderAll();
+    };
     overlay.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === overlay) {
@@ -6816,20 +7399,10 @@ var BZW_favorites = (() => {
     });
     const content = overlay.querySelector("[data-fav-content]");
     const openCardDefault = (it, card) => {
+      if (card) motionCardPick(card);
       if (isMobileEnv()) {
         openMobSheet(it);
         return;
-      }
-      const rawUrl = (it.url || "").trim();
-      if (rawUrl) {
-        openExternal(normalizeUrl(rawUrl));
-        return;
-      }
-      if (card) {
-        card.classList.remove("bz-fav-nolink");
-        void card.offsetWidth;
-        card.classList.add("bz-fav-nolink");
-        card.addEventListener("animationend", () => card.classList.remove("bz-fav-nolink"), { once: true });
       }
     };
     content.addEventListener("click", (e) => {
@@ -6852,6 +7425,7 @@ var BZW_favorites = (() => {
       const card = e.target.closest("[data-fav-id]");
       if (!card || isMobileEnv()) return;
       e.preventDefault();
+      motionCardPick(card);
       const it = itemById(card.dataset.favId);
       if (it) openRowMenuAt(it, e.clientX, e.clientY);
     });
@@ -6861,6 +7435,7 @@ var BZW_favorites = (() => {
         var _a2, _b2;
         const card = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
         if (!card) return;
+        motionCardPick(card);
         const it = itemById(card.dataset.favId);
         if (it) openMobSheet(it);
       },
@@ -6870,6 +7445,8 @@ var BZW_favorites = (() => {
         return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]"));
       }
     );
+    motionBindChipFeel(stickers);
+    motionBindCardFeel(content);
     renderAll();
     void (async () => {
       await loadItems();
@@ -6877,66 +7454,101 @@ var BZW_favorites = (() => {
     })();
   }
   function closePanel() {
-    if (M.overlay) {
+    const ov = M2.overlay;
+    if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M.archived ? "@archived" : M.tag || "";
+        s.favoritesLastFilter = M2.archived ? "@archived" : M2.tag || "";
         void saveSettings();
       }
-      M.overlay.remove();
-      M.overlay = null;
+      M2.overlay = null;
+      M2.renderFn = null;
+      M2.stage = "idle";
+      motionTeardown();
+      motionPanelOut(ov, () => ov.remove());
+      return;
     }
-    M.renderFn = null;
+    M2.renderFn = null;
   }
   async function loadItems() {
     try {
-      M.items = await dataManagerOf().getAll();
+      M2.items = await dataManagerOf().getAll();
     } catch (e) {
-      M.items = [];
+      M2.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
   }
-  async function reload() {
+  async function reload(reveal) {
     var _a;
     await loadItems();
-    (_a = M.renderFn) == null ? void 0 : _a.call(M);
+    (_a = M2.renderFn) == null ? void 0 : _a.call(M2, reveal);
   }
-  function renderAll() {
-    if (!M.overlay) return;
-    if (!M.archived && M.tag && !getTags().some((t) => t.label === M.tag)) M.tag = null;
-    const panel = M.overlay.querySelector(".bz-fav-panel");
-    renderPanelView(panel, M.items, M, { mountIcons, mobile: isMobileEnv() });
+  function boardEl() {
+    var _a, _b;
+    return (_b = (_a = M2.overlay) == null ? void 0 : _a.querySelector("[data-fav-content]")) != null ? _b : null;
+  }
+  function renderAll(reveal) {
+    var _a;
+    if (!M2.overlay) return;
+    if (!M2.archived && M2.tag && !getTags().some((t) => t.label === M2.tag)) M2.tag = null;
+    const panel = M2.overlay.querySelector(".bz-fav-panel");
+    renderPanelView(panel, M2.items, M2, { mountIcons, mobile: isMobileEnv() });
+    if (M2.stage === "placeholder") {
+      M2.stage = "boot";
+      return;
+    }
+    if (M2.stage === "boot") {
+      M2.stage = "idle";
+      motionRendered(M2.overlay, true);
+      return;
+    }
+    motionRendered(M2.overlay, false);
+    if (reveal == null ? void 0 : reveal.id) {
+      const board = boardEl();
+      if (!board) return;
+      if (reveal.flipBefore) motionPinFlip(board, reveal.flipBefore, reveal.id);
+      else motionCardLanded(board, reveal.id, (_a = reveal.kind) != null ? _a : "edit");
+    }
   }
   function applyTagFilter(label) {
+    var _a, _b;
     if (label === VIEW_ALL) {
-      M.tag = null;
-      M.archived = false;
+      M2.tag = null;
+      M2.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M.tag = null;
-      M.archived = !M.archived;
+      M2.tag = null;
+      M2.archived = !M2.archived;
     } else {
-      M.archived = false;
-      M.tag = M.tag === label ? null : label;
+      M2.archived = false;
+      M2.tag = M2.tag === label ? null : label;
     }
-    renderAll();
+    const board = boardEl();
+    if (board) {
+      motionFilterSwitch(board, (_b = (_a = M2.overlay) == null ? void 0 : _a.querySelector("[data-fav-tags]")) != null ? _b : null, () => renderAll());
+    } else {
+      renderAll();
+    }
   }
   function itemById(id) {
-    return M.items.find((i) => i.id === id);
+    return M2.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
     if (spec.act === "open") {
       openExternal(normalizeUrl(rawUrl));
+    } else if (spec.act === "copy") {
+      void navigator.clipboard.writeText(normalizeUrl(rawUrl)).then(() => notify("网址已复制")).catch(() => notify("无法复制网址"));
     } else if (spec.act === "pin") {
       const next = !it.pinned;
       const prev = it.pinned;
+      const before = motionCaptureRects(boardEl());
       it.pinned = next;
       void dataManagerOf().update(it.id, { pinned: next }).catch((e) => {
         it.pinned = prev;
         notifySaveError(e, "置顶收藏");
       }).finally(() => {
-        void reload();
+        void reload(before ? { id: it.id, kind: "pin", flipBefore: before } : void 0);
       });
     } else if (spec.act === "edit") {
       openForm(it);
@@ -6981,7 +7593,8 @@ var BZW_favorites = (() => {
   }
   async function archiveItem(it) {
     try {
-      await dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() });
+      const depart = motionCardDepart(boardEl(), it.id, "archive");
+      await Promise.all([dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() }), depart]);
       emitDomainEvent("favorites", { kind: "archive", title: it.title });
       await reload();
       notifyUndo(`已归档收藏「${it.title}」`, () => {
@@ -6989,7 +7602,7 @@ var BZW_favorites = (() => {
           try {
             await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
             emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
-            await reload();
+            await reload({ id: it.id, kind: "restore" });
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -7001,7 +7614,8 @@ var BZW_favorites = (() => {
   }
   async function unarchiveItem(it) {
     try {
-      await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
+      const depart = motionCardDepart(boardEl(), it.id, "unarchive");
+      await Promise.all([dataManagerOf().update(it.id, { archived: false, archivedAt: null }), depart]);
       emitDomainEvent("favorites", { kind: "unarchive", title: it.title });
       await reload();
       notice(`已取消归档，「${it.title}」回到主列表`, "success");
@@ -7012,7 +7626,8 @@ var BZW_favorites = (() => {
   async function deleteItem(it) {
     const snapshot = it;
     try {
-      await dataManagerOf().delete(it.id);
+      const depart = motionCardDepart(boardEl(), it.id, "del");
+      await Promise.all([dataManagerOf().delete(it.id), depart]);
       emitDomainEvent("favorites", { kind: "delete", title: it.title });
       await reload();
       notifyUndo(`已删除收藏「${it.title}」`, () => {
@@ -7020,7 +7635,7 @@ var BZW_favorites = (() => {
           try {
             await dataManagerOf().restoreItem(snapshot);
             emitDomainEvent("favorites", { kind: "restored", title: it.title });
-            await reload();
+            await reload({ id: snapshot.id, kind: "restore" });
           } catch (e) {
             notifySaveError(e, "恢复收藏");
           }
@@ -7129,7 +7744,9 @@ var BZW_favorites = (() => {
         const label = b.dataset.tag;
         if (sel.has(label)) sel.delete(label);
         else sel.add(label);
-        b.classList.toggle("bz-fav-on", sel.has(label));
+        const on = sel.has(label);
+        b.classList.toggle("bz-fav-on", on);
+        motionPickPop(b, on);
       }));
       mountIcons(pick);
     };
@@ -7138,6 +7755,7 @@ var BZW_favorites = (() => {
     const togglePin = () => {
       const on = pinEl.classList.toggle("bz-fav-on");
       pinEl.setAttribute("aria-checked", String(on));
+      motionSwitchPop(pinEl);
     };
     pinEl.addEventListener("click", togglePin);
     pinEl.addEventListener("keydown", (e) => {
@@ -7151,6 +7769,7 @@ var BZW_favorites = (() => {
     (_b = popup.querySelector("#fz-ai")) == null ? void 0 : _b.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
     bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
+    motionFormIn(popup);
   }
   async function runAiFill(popup, sel, redraw, errEl) {
     const ai = aiServiceOf();
@@ -7169,6 +7788,7 @@ var BZW_favorites = (() => {
     const aiLabel = btn.lastElementChild;
     btn.disabled = true;
     aiLabel.textContent = "AI 整理中…";
+    motionAiBusy(btn, true);
     const handle = notify("AI 分析中…", { type: "progress" });
     try {
       let ghInfo = null;
@@ -7212,6 +7832,7 @@ var BZW_favorites = (() => {
     } finally {
       btn.disabled = false;
       aiLabel.textContent = "AI 整理";
+      motionAiBusy(btn, false);
       errEl.textContent = "";
     }
   }
@@ -7255,14 +7876,17 @@ GitHub 仓库：${ghInfo.title}
     const url = rawUrl ? normalizeUrl(rawUrl) : "";
     if (!title) {
       errEl.textContent = "请输入标题";
+      motionErrShake(errEl);
       return;
     }
     if (url && !/^https?:\/\//i.test(url)) {
       errEl.textContent = "链接需以 http(s):// 开头";
+      motionErrShake(errEl);
       return;
     }
     if (sel.size === 0) {
       errEl.textContent = "请至少选择一个标签";
+      motionErrShake(errEl);
       return;
     }
     const desc = inputVal(popup, "#fz-desc").trim();
@@ -7273,6 +7897,7 @@ GitHub 仓库：${ghInfo.title}
     saveBtn.disabled = true;
     saveBtn.textContent = "保存中…";
     const dm = dataManagerOf();
+    let reveal;
     try {
       if (it) {
         const old = it;
@@ -7287,6 +7912,7 @@ GitHub 仓库：${ghInfo.title}
         const changes = favoritesEditChanges(old, next);
         await dm.update(old.id, next);
         emitDomainEvent("favorites", { kind: "edit", title: next.title, changes });
+        reveal = { id: old.id, kind: "edit" };
       } else {
         const data = {
           id: Date.now().toString(),
@@ -7304,9 +7930,10 @@ GitHub 仓库：${ghInfo.title}
         };
         await dm.add(data);
         emitDomainEvent("favorites", { kind: "add", item: data });
+        reveal = { id: data.id, kind: "add" };
       }
       closeForm();
-      await reload();
+      await reload(reveal);
     } catch (e) {
       notifySaveError(e);
       saveBtn.disabled = false;

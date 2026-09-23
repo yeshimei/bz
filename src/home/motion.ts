@@ -68,8 +68,18 @@ function cancelPending(): void {
 
 /* ================= 面板壳：开 / 关 ================= */
 
-/** 退场动画的 id（motionPanelIn 按 id 撤残留，不误伤面板上的 CSS 动画） */
+/** 退场动画的 id（motionPanelIn 按 id 撤残留，不误伤面板上的 CSS 动画）；
+    遮罩淡出独立 id（2026-09-23 修复：关面板时遮罩同步淡出，消灭「黑幕滞留一拍再硬切」的闪烁感） */
 const EXIT_ANIM_ID = 'bz-home-panel-exit';
+const EXIT_MASK_ANIM_ID = 'bz-home-mask-exit';
+
+/** 撤掉指定 id 的残留动画（getAnimations 不可用的宿主安全跳过） */
+function cancelAnimsBy(el: HTMLElement, ids: string[]): void {
+  if (typeof el.getAnimations !== 'function') return;
+  for (const a of el.getAnimations()) {
+    if (ids.includes(a.id)) { try { a.cancel(); } catch { /* 已结束 */ } }
+  }
+}
 
 export function motionPanelIn(overlay: HTMLElement, reopen: boolean): void {
   const panel = overlay.querySelector<HTMLElement>('.bz-home-panel');
@@ -77,11 +87,8 @@ export function motionPanelIn(overlay: HTMLElement, reopen: boolean): void {
   panel.style.opacity = ''; panel.style.transform = ''; panel.style.filter = ''; // 清 RM 内联残留
   // 撤退场残留：上次退场的 fill:forwards 会把 opacity:0 钉在动画层（内联样式清不掉）——
   // 不撤则「关→再开」入场播完自移除后，面板重新落回钉住的透明（整屏不可见但可点）
-  if (typeof panel.getAnimations === 'function') {
-    for (const a of panel.getAnimations()) {
-      if (a.id === EXIT_ANIM_ID) a.cancel();
-    }
-  }
+  cancelAnimsBy(panel, [EXIT_ANIM_ID]);
+  cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]); // 遮罩退场残留同撤（不动内联，入场动画自己收口）
   waapi(panel,
     [{ opacity: 0, transform: 'translateY(14px) scale(.985)', filter: 'blur(8px)' },
      { opacity: 1, transform: 'none', filter: 'blur(0px)' }],
@@ -99,17 +106,23 @@ export function motionPanelOut(overlay: HTMLElement, done: () => void): void {
   stopParallax(overlay);
   if (!panel) { done(); return; }
   let finished = false;
+  let maskAnim: Animation | null = null;
   const finish = (): void => {
     if (finished) return;
     finished = true;
     // 面板收口后撤掉退场动画：fill:forwards 钉住的 opacity:0 不得活到下一次打开
     try { if (a && a.playState !== 'idle') a.cancel(); } catch { /* 已收口忽略 */ }
+    try { if (maskAnim && maskAnim.playState !== 'idle') maskAnim.cancel(); } catch { /* 已收口忽略 */ }
     done();
   };
   const a = waapi(panel,
     [{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
      { opacity: 0, transform: 'translateY(10px) scale(.985)', filter: 'blur(6px)' }],
     { duration: M.move + 40, easing: E.out, fill: 'forwards', id: EXIT_ANIM_ID });
+  // 遮罩同步淡出（2026-09-23 修复）：面板淡出期间遮罩恒黑滞留一拍、随后 display:none 硬切，
+  // 用户感知「遮罩等一下才关 + 闪一下」——让遮罩与面板同一时长一起淡出即可消除
+  maskAnim = waapi(overlay, [{ opacity: 1 }, { opacity: 0 }],
+    { duration: M.move + 40, easing: E.out, id: EXIT_MASK_ANIM_ID });
   if (!a) { finish(); return; }
   a.finished.then(finish).catch(finish);
   after(M.move + 200, finish); // 兜底：动画事件丢失也不能卡住关闭
@@ -133,18 +146,19 @@ export function motionRendered(overlay: HTMLElement, boot: boolean): void {
   }
   if (reduced()) return; // 评审模拟 RM：内容已由 render 直接落终态，零编排
 
-  /* —— 周历头：与入口行同语的波浪入场（台历卡不带翻页动效，只做轻波浪；
-      选中卡的 transform 抬升不参与插值，落点按各自终态写） —— */
+  /* —— 周历：3D 翻落接力 —— */
   if (week) {
-    [...week.querySelectorAll<HTMLElement>('.bz-home-wk')].forEach((el, i) => {
-      after(140 + i * 40, () => {
-        const to = el.classList.contains('bz-home-wk--sel') ? 'translateY(-4px)' : 'none';
+    const cells = [...week.querySelectorAll<HTMLElement>('.bz-home-wk')];
+    cells.forEach((el, i) => {
+      after(140 + i * 46, () => {
         waapi(el,
-          [{ opacity: 0, transform: 'translateY(8px)', filter: 'blur(4px)' },
-           { opacity: 1, transform: to, filter: 'blur(0px)' }],
-          { duration: M.base, easing: E.out, fill: 'backwards' });
+          [{ opacity: 0, transform: 'rotateX(-64deg) translateY(6px)' },
+           { opacity: 1, transform: 'none' }],
+          { duration: 560, easing: E.out, fill: 'backwards' });
       });
     });
+    const sel = cells.find((c) => c.classList.contains('bz-home-wk--sel'));
+    if (sel) after(620, () => popBar(sel));
   }
 
   /* —— 入口行：涟漪上浮（30ms 接力，前 14 行，其余直达）—— */
@@ -212,6 +226,15 @@ export function motionDaySwitch(flow: HTMLElement, rewrite: () => void): void {
     }
   });
 }
+
+/** 选中格彩条弹跳（切天 / 首屏落到选中日） */
+export function motionWeekPop(wk: HTMLElement): void {
+  if (reduced()) return;
+  wk.classList.remove('bz-hm-wkpop');
+  void wk.offsetWidth; // 重启动画
+  wk.classList.add('bz-hm-wkpop');
+}
+function popBar(wk: HTMLElement): void { motionWeekPop(wk); }
 
 /* ================= 事件揭出：彩点点亮 + 迸光 + 卡片上浮 ================= */
 

@@ -119,11 +119,13 @@ export interface BzSelectOpts<T extends string = string> {
   onChange: (value: T) => void;
 }
 
-/** 搜索框（.bz-search：前缀搜索图标 + 输入） */
+/** 搜索框（.bz-search：前缀搜索图标 + 输入 + 尾部清除钮） */
 export interface BzSearchOpts {
   placeholder?: string;
   value?: string;
   onInput?: (v: string) => void;
+  /** 尾部清除钮（有词才现，clipbook 效率#12 全域拍板口径）；默认开。自带同款钮的域传 false 关掉防双钮 */
+  clearable?: boolean;
 }
 
 /** 主头行（.bz-main-head：分组标题 + 计数 + spacer + 主按钮） */

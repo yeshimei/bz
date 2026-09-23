@@ -266,6 +266,24 @@
   outline: none;
   border-color: transparent;
 }
+/* 尾部 ✕ 一键清词（clipbook 效率#12 全域拍板口径）：flex 流内贴右，有词才现
+   （hidden 由 ui.ts syncSearchClear 驱动）；钮内 svg 沿用壳级 svg 尺寸/淡色 */
+.bz-password-vault-search .bz-pwv-search-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--pwv-faint);
+  line-height: 0;
+}
+@media (hover: hover) {
+.bz-password-vault-search .bz-pwv-search-clear:hover { color: var(--pwv-muted); }
+}
+/* hidden 属性显式守卫（clipbook 效率#12 同款坑）：UA 的 [hidden]{display:none}
+   同 origin 低序，作者 display 声明出现即失效，无词态必须显式钉死 */
+.bz-password-vault-search .bz-pwv-search-clear[hidden] { display: none; }
 .bz-password-vault-count {
   font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
@@ -1197,6 +1215,20 @@
   outline: none;
   border-color: transparent;
 }
+.bz-password-vault-mobsearch .bz-pwv-search-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--pwv-faint);
+  line-height: 0;
+}
+@media (hover: hover) {
+.bz-password-vault-mobsearch .bz-pwv-search-clear:hover { color: var(--pwv-muted); }
+}
+.bz-password-vault-mobsearch .bz-pwv-search-clear[hidden] { display: none; }
 .bz-password-vault-moblist {
   flex: 1;
   overflow-y: auto;

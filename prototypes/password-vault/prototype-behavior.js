@@ -1,4 +1,4 @@
-/* 源指纹 1fb87c7ef774b68b · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 117fc1103d6567c3 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -12453,7 +12453,7 @@ var BZW_password_vault = (() => {
       <div class="bz-password-vault-list">
         <div class="bz-password-vault-listhead">
           <h1>全部条目</h1>
-          <div class="bz-password-vault-search">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
+          <div class="bz-password-vault-search">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"><button type="button" class="bz-pwv-search-clear" data-pwv-search-clear title="清除搜索" aria-label="清除搜索" hidden>${ICONS2.x}</button></div>
         </div>
         <div class="bz-password-vault-count"></div>
         <div class="bz-password-vault-rows"></div>
@@ -12481,7 +12481,7 @@ var BZW_password_vault = (() => {
         <button class="tab on" data-mobview="all" role="tab" aria-selected="true">全部</button>
         <button class="tab" data-mobview="fav" role="tab" aria-selected="false">已收藏</button>
       </div>
-      <div class="bz-password-vault-mobsearch">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
+      <div class="bz-password-vault-mobsearch">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"><button type="button" class="bz-pwv-search-clear" data-pwv-search-clear title="清除搜索" aria-label="清除搜索" hidden>${ICONS2.x}</button></div>
       <div class="bz-password-vault-moblist"></div>
       <button class="bz-password-vault-fab">${ICONS2.plus}</button>
       <div class="bz-password-vault-mobpage">
@@ -13086,12 +13086,18 @@ var BZW_password_vault = (() => {
     }
     // ---------- 交互绑定 ----------
     bindDesk() {
+      var _a, _b;
       const root = this.root;
       root.querySelectorAll(".bz-password-vault-navitem").forEach((it) => {
         it.addEventListener("click", () => this.setView(it.getAttribute("data-view")));
       });
       this.desk.search.addEventListener("input", (e) => {
+        this.syncSearchClear();
         this.applySearch(e.target.value.trim());
+      });
+      (_b = (_a = this.desk.search.parentElement) == null ? void 0 : _a.querySelector("[data-pwv-search-clear]")) == null ? void 0 : _b.addEventListener("click", () => {
+        this.clearSearch();
+        this.desk.search.focus();
       });
       root.addEventListener("click", (e) => {
         if (e.target === root && this.root.style.display === "flex") {
@@ -13100,21 +13106,26 @@ var BZW_password_vault = (() => {
       });
     }
     bindMob() {
-      var _a, _b, _c, _d;
+      var _a, _b, _c, _d, _e, _f;
       const root = this.root;
       root.querySelectorAll("[data-mobview]").forEach((it) => {
         it.addEventListener("click", () => this.setView(it.getAttribute("data-mobview")));
       });
       this.mob.search.addEventListener("input", (e) => {
+        this.syncSearchClear();
         this.applySearch(e.target.value.trim());
       });
-      (_a = root.querySelector(".bz-password-vault-fab")) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
-      (_b = root.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b.addEventListener("click", () => this.hide());
-      (_c = root.querySelector(".bz-password-vault-back")) == null ? void 0 : _c.addEventListener("click", () => this.mob.page.classList.remove("open"));
+      (_b = (_a = this.mob.search.parentElement) == null ? void 0 : _a.querySelector("[data-pwv-search-clear]")) == null ? void 0 : _b.addEventListener("click", () => {
+        this.clearSearch();
+        this.mob.search.focus();
+      });
+      (_c = root.querySelector(".bz-password-vault-fab")) == null ? void 0 : _c.addEventListener("click", () => this.openEntryDialog(null));
+      (_d = root.querySelector('[data-act="mob-close"]')) == null ? void 0 : _d.addEventListener("click", () => this.hide());
+      (_e = root.querySelector(".bz-password-vault-back")) == null ? void 0 : _e.addEventListener("click", () => this.mob.page.classList.remove("open"));
       this.mob.page.addEventListener("click", (e) => {
         if (e.target === this.mob.page) this.mob.page.classList.remove("open");
       });
-      (_d = root.querySelector('.bz-password-vault-mobpage .head [data-act="menu"]')) == null ? void 0 : _d.addEventListener("click", () => {
+      (_f = root.querySelector('.bz-password-vault-mobpage .head [data-act="menu"]')) == null ? void 0 : _f.addEventListener("click", () => {
         const cur = this.mobPagePlatform;
         if (cur) {
           openItemSheet(this.buildPlatformActions(cur), {
@@ -13258,6 +13269,24 @@ var BZW_password_vault = (() => {
       for (const inp of [this.desk.search, this.mob.search]) {
         if (inp && inp.value.trim() !== kw) inp.value = kw;
       }
+      this.syncSearchClear();
+    }
+    /** 尾部 ✕ 显隐随词同步（效率#12 全域口径：有词才现、清空即隐；双框各自按实值） */
+    syncSearchClear() {
+      var _a;
+      for (const inp of [this.desk.search, this.mob.search]) {
+        const btn = (_a = inp.parentElement) == null ? void 0 : _a.querySelector("[data-pwv-search-clear]");
+        if (btn) btn.hidden = !inp.value.trim();
+      }
+    }
+    /** 清词统一出口（✕ 共用；clipbook clearDeskSearch 同范式）：取消防抖尾触防关键词
+     *  「复活」+ 双框同清 + ✕ 显隐同步 + 立即重绘（不走防抖） */
+    clearSearch() {
+      this.applySearch.cancel();
+      this.searchKw = "";
+      for (const inp of [this.desk.search, this.mob.search]) inp.value = "";
+      this.syncSearchClear();
+      this.renderAll();
     }
     renderAll() {
       if (!this.root) return;

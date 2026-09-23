@@ -1,4 +1,4 @@
-/* 源指纹 95e2efcb4bd4c091 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 021a476bd33ff94e · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -81,6 +81,24 @@ var BZR_clipbook = (() => {
     if (h <= 0) return `${r} 分钟`;
     return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
   }
+  var CLIP_SHIFTS = [
+    { key: "night", label: "夜班", span: "0-6 点", from: 0, to: 6 },
+    { key: "morning", label: "晨班", span: "6-12 点", from: 6, to: 12 },
+    { key: "noon", label: "午班", span: "12-18 点", from: 12, to: 18 },
+    { key: "evening", label: "晚班", span: "18-24 点", from: 18, to: 24 }
+  ];
+  function shiftBuckets(hours) {
+    return CLIP_SHIFTS.map((s) => ({
+      key: s.key,
+      label: s.label,
+      span: s.span,
+      minutes: (hours || []).slice(s.from, s.to).reduce((sum, m) => sum + m, 0)
+    }));
+  }
+  function shiftOfHour(h) {
+    const s = CLIP_SHIFTS.find((x) => h >= x.from && h < x.to);
+    return s ? s.label : "晚班";
+  }
 
   // src/clipbook/render.ts
   var ICO = {
@@ -110,13 +128,22 @@ var BZR_clipbook = (() => {
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
+          <!-- 刊名电传纸带（.scratch/clip-title/d.html D 版 1:1，2026-09-23 拍板）：tape 内字位 span 供
+               motion 逐字击打；字车 cur 常驻 blink（boot 由 motion 先送带首再随击推进）；lamp = 收带铃圆点。
+               span 间不得有空白（textContent 契约=「剪藏本」）；静默渲染不演即终态 -->
+          <div class="bz-panel-title bz-clip-title-wire" data-clip-title-wire><div class="bz-clip-title-tape"><span class="bz-clip-tape-ch">剪</span><span class="bz-clip-tape-ch">藏</span><span class="bz-clip-tape-ch">本</span><span class="bz-clip-tape-cur" aria-hidden="true"></span></div><i class="bz-clip-tape-lamp" aria-hidden="true"></i></div>
           <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
-               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
-               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          <!-- 头行右侧「电传抬头单」（2026-09-23 头行五版拍板 D 版 + C 版期号戳章）：
+               期号戳章 + 细分隔 + 检索（纸底色/点线/上下边线/日期随当日追加拍板逐次撤去）。
+               data-clip-issue = 戳章（第 N 期）；检索钩子（data-clip-desk-search / data-clip-search-clear）不变。
+               效率#12 ✕ 清除钮：定位走内联随单源 markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的
+               左缘绝对定位会劫持 iconSpan 产物，且 mountIcons 换节点会丢内联样式；不带 display 内联值，
+               hidden 属性才能生效 -->
+          <div class="bz-clip-head-strip">
+            <span class="bz-clip-issue-stamp" data-clip-issue></span>
+            <span class="bz-clip-strip-sep" aria-hidden="true"></span>
+            <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          </div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -136,13 +163,14 @@ var BZR_clipbook = (() => {
       <!-- 移动双屏 -->
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
+          <!-- 移动刊名 = 期号戳章（2026-09-23 拍板）：与桌面抬头单同款同钩（data-clip-issue），renderHeadIssue 双端同填 -->
+          <div class="bz-clip-issue-stamp" data-clip-issue></div>
           <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -187,7 +215,7 @@ var BZR_clipbook = (() => {
     </div>`;
   }
   function railFootHtml(todayRead) {
-    return `今日已读<br><b>${todayRead}</b> 篇`;
+    return `<div class="bz-clip-foot-row">今日已读<i class="bz-clip-lead"></i><b>${todayRead}</b> 篇</div>`;
   }
   function clipReportEntryHtml() {
     return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
@@ -343,11 +371,19 @@ var BZR_clipbook = (() => {
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
   }
   function buildClipReportSections(d, opts) {
-    return [
+    const secs = [
       { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d, opts) },
       { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
       { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
     ];
+    if ((opts == null ? void 0 : opts.library) && opts.library.total > 0) {
+      secs.push({ key: "library", label: "报库盘点", generate: () => clipReportLibraryHtml(opts.library) });
+    }
+    return secs;
+  }
+  function dayCn(iso) {
+    const parts = iso.split("-");
+    return parts.length >= 3 ? `${Number(parts[1])} 月 ${Number(parts[2])} 日` : esc(iso);
   }
   function clipReportOverviewHtml(d, opts) {
     const keys = (opts == null ? void 0 : opts.availableKeys) || null;
@@ -364,14 +400,17 @@ var BZR_clipbook = (() => {
       ${openBtn}
     </div>`;
     }).join("");
+    const busiest = (opts == null ? void 0 : opts.busiest) ? `<div class="bz-clp-rep-busiest"><span>最投入的一天</span><i class="bz-clp-rep-lead" aria-hidden="true"></i><b>${dayCn(opts.busiest.date)}</b><span class="bz-clp-rep-busiest-min">${esc(formatMinutes(opts.busiest.minutes))}</span></div>` : "";
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">统计概览</div>
-      <div class="bz-clp-rep-hero">
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
         <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
         <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
         <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.streakDays}</b><span>连续天数</span></div>
       </div>
+      ${busiest}
       ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
     </div>`;
   }
@@ -405,12 +444,56 @@ var BZR_clipbook = (() => {
       return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
     }).join("");
     const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
-    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后（${shiftOfHour(peakHour)}）` : "暂无";
+    const shifts = shiftBuckets(d.hours);
+    const shiftMax = Math.max(1, ...shifts.map((s) => s.minutes));
+    const shiftRows = shifts.map((s, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label">${s.label}<span class="bz-clp-rep-shift-span">${s.span}</span></span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(s.minutes / shiftMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${esc(formatMinutes(s.minutes))}</span>
+    </div>`).join("");
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-sub">工班盘点</div>
+      <div class="bz-clp-rep-bars">${shiftRows}</div>
+      <div class="bz-clp-rep-sub">全天 24 小时</div>
       <div class="bz-clp-rep-hours">${cols}</div>
       <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+  }
+  function clipReportLibraryHtml(lib) {
+    const paceMax = Math.max(1, lib.byDayPeak);
+    const paceCols = lib.byDay.map((d, i) => {
+      const height = d.n > 0 ? 10 + Math.round(d.n / paceMax * 44) : 3;
+      const accent = lib.byDayPeak > 0 && d.n === lib.byDayPeak;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${esc(d.label)} · 收 ${d.n} 篇"></div><div class="bz-clp-rep-hlabel">${esc(d.label)}</div></div>`;
+    }).join("");
+    const platMax = Math.max(1, ...lib.topPlatforms.map((p) => p.n));
+    const platRows = lib.topPlatforms.map((p, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(p.name)}">${esc(p.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(p.n / platMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${p.n} 篇</span>
+    </div>`).join("");
+    const oldest = lib.oldestUnread ? `<div class="bz-clp-rep-old"><span class="bz-clp-rep-old-tag">压库</span><span class="bz-clp-rep-top-title" title="${esc(lib.oldestUnread.title)}">${esc(lib.oldestUnread.title)}</span><span class="bz-clp-rep-top-src">${esc(lib.oldestUnread.src)}</span><span class="bz-clp-rep-top-min">压了 ${lib.oldestUnread.days} 天</span></div>` : "";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">报库盘点 · 建库以来</div>
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
+        <div class="bz-clp-rep-hero-card"><b>${lib.total}</b><span>在流篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readCount}</b><span>已读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.unread}</b><span>待读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readRate}%</b><span>已读率</span></div>
+      </div>
+      <div class="bz-clp-rep-sub">近 14 天收录节奏</div>
+      <div class="bz-clp-rep-hours">${paceCols}</div>
+      <div class="bz-clp-rep-hours-note">每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇</div>
+      <div class="bz-clp-rep-sub">在流来源</div>
+      <div class="bz-clp-rep-bars">${platRows}</div>
+      ${oldest}
     </div>`;
   }
   return __toCommonJS(render_exports);

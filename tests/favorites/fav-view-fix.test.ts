@@ -367,7 +367,7 @@ describe('UI-06 键盘可达与 aria', () => {
     expect(chip('__all').getAttribute('aria-pressed')).toBe('false');
   });
 
-  it('卡片 role=button + tabindex=0，键盘 Enter 与点击同径（有链直开浏览器）', async () => {
+  it('卡片 role=button + tabindex=0，键盘 Enter 与点击同径（2026-09-23 拍板：同径=只给拾取反馈，均不导航）', async () => {
     const ctx = await setup();
     const app = getApp() as any;
     seedVault(ctx.vault, [seedItem({ id: '1', title: '键盘卡', url: 'https://github.com/a/b' })]);
@@ -379,7 +379,9 @@ describe('UI-06 键盘可达与 aria', () => {
     card.focus();
     card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     await tick(10);
-    expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
+    // 点卡不再跳网站（开链/复制网址走右键菜单）：键盘 Enter 同径，也不导航、不弹菜单
+    expect(app.openUrl).not.toHaveBeenCalled();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
   });
 });
 
