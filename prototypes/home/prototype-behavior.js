@@ -1,5 +1,5 @@
-/* 源指纹 721809a36f2ed701 · 仓内输入 276 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 9288deea90613077 · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M18, s, ms) {
+        function createDate(y, m, d, h, M19, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M18, s, ms);
+            date = new Date(y + 400, m, d, h, M19, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M18, s, ms);
+            date = new Date(y, m, d, h, M19, s, ms);
           }
           return date;
         }
@@ -5936,10 +5936,10 @@ var BZW_home = (() => {
       el.setAttribute("aria-disabled", String(v));
       el.tabIndex = v ? -1 : 0;
     };
-    const enabled = () => !el.classList.contains("is-disabled");
+    const enabled2 = () => !el.classList.contains("is-disabled");
     const toggle = () => {
       var _a2;
-      if (!enabled()) return;
+      if (!enabled2()) return;
       const next = !el.classList.contains("on");
       setChecked(next);
       (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
@@ -6874,7 +6874,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M18 = 10;
+    const M19 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6901,7 +6901,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M18 || Math.abs(t.clientY - sy) > M18) {
+      if (Math.abs(t.clientX - sx) > M19 || Math.abs(t.clientY - sy) > M19) {
         moved = true;
         cancel();
       }
@@ -23226,15 +23226,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E11 = pick.E;
+      const E12 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E11, nOut, stub);
+      const E1 = along(E12, nOut, stub);
       const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E11, E1, rects) || stubDirty(T1, T3, rects);
-      const items = [S3, E11, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E12, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E12, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -26227,10 +26227,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after10 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after10.data.length);
-    const tail = after10.splitText(len);
-    (_b2 = after10.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after11 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after11.data.length);
+    const tail = after11.splitText(len);
+    (_b2 = after11.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -59463,6 +59463,160 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/smartcat/motion.ts
+  function reduced10() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function enabled() {
+    try {
+      return typeof document !== "undefined" && !reduced10() && typeof requestAnimationFrame === "function";
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi9(el, frames, opts) {
+    if (!el || reduced10() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && reduced10() && last) {
+        for (const k of Object.keys(last)) {
+          if (k === "offset") continue;
+          try {
+            el.style[k] = String(last[k]);
+          } catch (e) {
+          }
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, {
+        duration: opts.duration,
+        delay: opts.delay,
+        easing: opts.easing,
+        fill: opts.fill,
+        id: opts.id,
+        iterations: opts.iterations
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+  function after9(ms, fn) {
+    const id = setTimeout(() => {
+      timers10.delete(id);
+      fn();
+    }, ms);
+    timers10.add(id);
+  }
+  function trackOrch(a) {
+    if (!a) return;
+    orchestra.add(a);
+    a.finished.then(() => orchestra.delete(a)).catch(() => orchestra.delete(a));
+  }
+  function cancelOrchestra() {
+    for (const a of orchestra) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    orchestra.clear();
+  }
+  function cancelById(el, id) {
+    if (!el || typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (a.id === id) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionChatIn(mask, popup) {
+    chatEpoch++;
+    if (!popup) return;
+    cancelById(popup, EXIT_CHAT);
+    cancelById(mask, EXIT_CHAT_MASK);
+    cancelOrchestra();
+    if (!enabled()) return;
+    if (mask) trackOrch(waapi9(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M17.move, easing: E10.out, fill: "backwards" }));
+    trackOrch(waapi9(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.97)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 340, easing: E10.out, fill: "backwards" }
+    ));
+    const input = popup.querySelector(".chat-input-area");
+    if (input) trackOrch(waapi9(
+      input,
+      [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { delay: 100, duration: M17.base + 60, easing: E10.out, fill: "backwards" }
+    ));
+    const msgs = popup.querySelectorAll(".chat-messages .message");
+    const tail8 = Array.from(msgs).slice(-8);
+    tail8.forEach((m, i) => {
+      trackOrch(waapi9(
+        m,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { delay: 140 + i * STAG10, duration: M17.base, easing: E10.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionChatOut(mask, popup, done) {
+    if (!popup || !enabled()) {
+      done();
+      return;
+    }
+    const myEpoch = chatEpoch;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (chatEpoch !== myEpoch) return;
+      cancelById(popup, EXIT_CHAT);
+      cancelById(mask, EXIT_CHAT_MASK);
+      done();
+    };
+    const a = waapi9(
+      popup,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.97)", filter: "blur(5px)" }
+      ],
+      { duration: M17.move + 40, easing: E10.out, fill: "forwards", id: EXIT_CHAT }
+    );
+    if (mask) trackOrch(waapi9(mask, [{ opacity: 1 }, { opacity: 0 }], { duration: M17.move + 40, easing: E10.out, fill: "forwards", id: EXIT_CHAT_MASK }));
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after9(M17.move + 220, finish);
+  }
+  var M17, E10, STAG10, timers10, orchestra, EXIT_CHAT, EXIT_CHAT_MASK, chatEpoch;
+  var init_motion11 = __esm({
+    "src/smartcat/motion.ts"() {
+      M17 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E10 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG10 = 30;
+      timers10 = /* @__PURE__ */ new Set();
+      orchestra = /* @__PURE__ */ new Set();
+      EXIT_CHAT = "bz-sc-chat-exit";
+      EXIT_CHAT_MASK = "bz-sc-chat-exit-mask";
+      chatEpoch = 0;
+    }
+  });
+
   // src/smartcat/ui.ts
   var ui_exports9 = {};
   __export(ui_exports9, {
@@ -59574,11 +59728,14 @@ GitHub 仓库：${ghInfo.title}
   function showChatPanel(panels) {
     panels.mask.style.display = "block";
     panels.chatPopup.style.display = "flex";
+    motionChatIn(panels.mask, panels.chatPopup);
     panels.chatInput.focus();
   }
   function hideChatPanel(panels) {
-    panels.mask.style.display = "none";
-    panels.chatPopup.style.display = "none";
+    motionChatOut(panels.mask, panels.chatPopup, () => {
+      panels.mask.style.display = "none";
+      panels.chatPopup.style.display = "none";
+    });
   }
   function smartcatSettingsSchema(opts) {
     const bindConfig = (key) => ({
@@ -59773,6 +59930,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_modal();
       init_settings_provider();
       init_config2();
+      init_motion11();
       CAT_CONTAINER_ID = "smart-companion-cat";
       SKINS = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];
       CAT_HTML = `
@@ -59858,9 +60016,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after10 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after10 !== before) {
-        rec.secondBrainAllowPaths = after10;
+      const after11 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after11 !== before) {
+        rec.secondBrainAllowPaths = after11;
         migrated = true;
       }
     }
@@ -65595,13 +65753,13 @@ ${piece}` : piece;
   init_order();
 
   // src/home/motion.ts
-  var M17 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E10 = {
+  var M18 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E11 = {
     out: "cubic-bezier(.22,.82,.3,1)",
     move: "cubic-bezier(.34,.06,.16,1)"
   };
-  var STAG10 = 30;
-  function reduced10() {
+  var STAG11 = 30;
+  function reduced11() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -65615,8 +65773,8 @@ ${piece}` : piece;
       return false;
     }
   }
-  function waapi9(el, frames, opts) {
-    if (!el || reduced10() || typeof el.animate !== "function") {
+  function waapi10(el, frames, opts) {
+    if (!el || reduced11() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -65643,17 +65801,17 @@ ${piece}` : piece;
     requestAnimationFrame(tick);
   }
   var easeOutQuart2 = (t) => 1 - Math.pow(1 - t, 4);
-  var timers10 = /* @__PURE__ */ new Set();
-  function after9(ms, fn) {
+  var timers11 = /* @__PURE__ */ new Set();
+  function after10(ms, fn) {
     const id = setTimeout(() => {
-      timers10.delete(id);
+      timers11.delete(id);
       fn();
     }, ms);
-    timers10.add(id);
+    timers11.add(id);
   }
   function cancelPending8() {
-    timers10.forEach(clearTimeout);
-    timers10.clear();
+    timers11.forEach(clearTimeout);
+    timers11.clear();
   }
   var EXIT_ANIM_ID3 = "bz-home-panel-exit";
   var EXIT_MASK_ANIM_ID3 = "bz-home-mask-exit";
@@ -65676,13 +65834,13 @@ ${piece}` : piece;
     panel2.style.filter = "";
     cancelAnimsBy3(panel2, [EXIT_ANIM_ID3]);
     cancelAnimsBy3(overlay2, [EXIT_MASK_ANIM_ID3]);
-    waapi9(
+    waapi10(
       panel2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? 300 : 480, easing: E10.out }
+      { duration: reopen ? 300 : 480, easing: E11.out }
     );
     bindParallax(overlay2);
   }
@@ -65708,25 +65866,25 @@ ${piece}` : piece;
       }
       done();
     };
-    const a = waapi9(
+    const a = waapi10(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M17.move + 40, easing: E10.out, fill: "forwards", id: EXIT_ANIM_ID3 }
+      { duration: M18.move + 40, easing: E11.out, fill: "forwards", id: EXIT_ANIM_ID3 }
     );
-    maskAnim = waapi9(
+    maskAnim = waapi10(
       overlay2,
       [{ opacity: 1 }, { opacity: 0 }],
-      { duration: M17.move + 40, easing: E10.out, id: EXIT_MASK_ANIM_ID3 }
+      { duration: M18.move + 40, easing: E11.out, id: EXIT_MASK_ANIM_ID3 }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    after9(M17.move + 200, finish);
+    after10(M18.move + 200, finish);
   }
   function motionRendered5(overlay2, boot) {
     cancelPending8();
@@ -65744,36 +65902,36 @@ ${piece}` : piece;
       }
       return;
     }
-    if (reduced10()) return;
+    if (reduced11()) return;
     if (week) {
       const cells = [...week.querySelectorAll(".bz-home-wk")];
       cells.forEach((el, i) => {
-        after9(140 + i * 46, () => {
-          waapi9(
+        after10(140 + i * 46, () => {
+          waapi10(
             el,
             [
               { opacity: 0, transform: "rotateX(-64deg) translateY(6px)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: 560, easing: E10.out, fill: "backwards" }
+            { duration: 560, easing: E11.out, fill: "backwards" }
           );
         });
       });
       const sel = cells.find((c) => c.classList.contains("bz-home-wk--sel"));
-      if (sel) after9(620, () => popBar(sel));
+      if (sel) after10(620, () => popBar(sel));
     }
     if (entries) {
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
       rows.forEach((el, i) => {
         if (i >= 14) return;
-        after9(260 + i * STAG10, () => {
-          waapi9(
+        after10(260 + i * STAG11, () => {
+          waapi10(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M17.base, easing: E10.out, fill: "backwards" }
+            { duration: M18.base, easing: E11.out, fill: "backwards" }
           );
         });
       });
@@ -65781,28 +65939,28 @@ ${piece}` : piece;
     if (flow) {
       const tl = flow.querySelector(".bz-home-timeline");
       if (tl) {
-        after9(300, () => ensureRiver(tl, true));
+        after10(300, () => ensureRiver(tl, true));
         revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
       }
       const empty = flow.querySelector(".bz-home-flow-empty");
-      if (empty) waapi9(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M17.base, easing: E10.out, fill: "backwards" });
+      if (empty) waapi10(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M18.base, easing: E11.out, fill: "backwards" });
     }
     if (next) {
       const head = next.querySelector(".bz-home-sec-t");
-      if (head) waapi9(
+      if (head) waapi10(
         head,
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-        { duration: M17.base, easing: E10.out, fill: "backwards" }
+        { duration: M18.base, easing: E11.out, fill: "backwards" }
       );
       next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
-        after9(640 + i * 90, () => {
-          waapi9(
+        after10(640 + i * 90, () => {
+          waapi10(
             el,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
             ],
-            { duration: M17.base + 120, easing: E10.out, fill: "backwards" }
+            { duration: M18.base + 120, easing: E11.out, fill: "backwards" }
           );
         });
         if (!narrow && canHover3()) bindTilt(el);
@@ -65811,23 +65969,23 @@ ${piece}` : piece;
   }
   function motionDaySwitch(flow, rewrite) {
     const tl = flow.querySelector(".bz-home-timeline");
-    if (reduced10() || !tl) {
+    if (reduced11() || !tl) {
       rewrite();
       return;
     }
-    const out = waapi9(
+    const out = waapi10(
       tl,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
       ],
-      { duration: M17.fast + 20, easing: E10.out, fill: "forwards" }
+      { duration: M18.fast + 20, easing: E11.out, fill: "forwards" }
     );
     if (!out) {
       rewrite();
       return;
     }
-    after9(M17.fast + 30, () => {
+    after10(M18.fast + 30, () => {
       rewrite();
       const nt = flow.querySelector(".bz-home-timeline");
       if (nt) {
@@ -65835,12 +65993,12 @@ ${piece}` : piece;
         revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
       } else {
         const empty = flow.querySelector(".bz-home-flow-empty");
-        if (empty) waapi9(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M17.base, easing: E10.out, fill: "backwards" });
+        if (empty) waapi10(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M18.base, easing: E11.out, fill: "backwards" });
       }
     });
   }
   function motionWeekPop(wk) {
-    if (reduced10()) return;
+    if (reduced11()) return;
     wk.classList.remove("bz-hm-wkpop");
     void wk.offsetWidth;
     wk.classList.add("bz-hm-wkpop");
@@ -65871,18 +66029,18 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
       li.style.willChange = "transform,filter,opacity";
-      after9(delay, () => {
-        waapi9(
+      after10(delay, () => {
+        waapi10(
           li,
           [
             { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M17.base + 140, easing: E10.out, fill: "backwards" }
+          { duration: M18.base + 140, easing: E11.out, fill: "backwards" }
         );
         li.classList.add("bz-hm-ign");
-        after9(620, () => li.classList.remove("bz-hm-ign"));
-        after9(120, () => {
+        after10(620, () => li.classList.remove("bz-hm-ign"));
+        after10(120, () => {
           const a = beforeAnchor(li);
           const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
           burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
@@ -65892,11 +66050,11 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const note = li.querySelector(".bz-home-ev-note");
       if (!note) return;
-      after9(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
-        waapi9(
+      after10(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi10(
           note,
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M17.base, easing: E10.out, fill: "backwards" }
+          { duration: M18.base, easing: E11.out, fill: "backwards" }
         );
       });
     });
@@ -65953,13 +66111,13 @@ ${piece}` : piece;
     tween4(850, (v) => {
       reveal.style.strokeDashoffset = String(len * (1 - v));
     }, easeOutQuart2);
-    after9(870, () => base.classList.add("bz-hm-flowing"));
+    after10(870, () => base.classList.add("bz-hm-flowing"));
   }
   var sparkPools = /* @__PURE__ */ new Map();
   var fxRaf = 0;
   function burst(tl, x, y, color) {
     var _a2;
-    if (reduced10()) return;
+    if (reduced11()) return;
     let fx = tl.querySelector(":scope > .bz-hm-fx");
     if (!fx) {
       fx = document.createElement("canvas");
@@ -66023,7 +66181,7 @@ ${piece}` : piece;
   function bindParallax(overlay2) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2 || parallax.has(overlay2)) return;
-    if (reduced10() || !canHover3() || panel2.clientWidth <= 768) return;
+    if (reduced11() || !canHover3() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
       { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
@@ -66203,8 +66361,8 @@ ${piece}` : piece;
     }
     return wrap2('<div class="bz-home-flow-empty">这一天还没有留下痕迹。<br><b>写一篇日记</b>、点一轮番茄、读几页书——<br>都会出现在这条河里。</div>');
   }
-  function nextHtml(data, enabled = true) {
-    if (!enabled) return "";
+  function nextHtml(data, enabled2 = true) {
+    if (!enabled2) return "";
     return '<div class="bz-home-sec-t bz-home-sec-t--ai">明 天 预 告</div>' + buildPreviews(data).map(
       (pr) => '<div role="button" tabindex="0" class="bz-home-pr" data-home-go="' + pr.go + '"><div class="bz-home-pr-h">' + esc(pr.h) + "</div><div>" + esc(pr.b) + '</div><span class="bz-home-pr-go">' + esc(pr.goLabel) + "</span></div>"
     ).join("");

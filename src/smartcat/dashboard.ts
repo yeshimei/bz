@@ -67,6 +67,7 @@ import {
 } from './dossier';
 import type { SmartCatData, MemoryStreamEntry, CharacterTraits, OceanProfile, BehaviorItem } from './types';
 import { buildBehaviorWording, behaviorActionWord } from './behavior-wording';
+import { motionDashIn, motionDashOut, motionDashRendered, motionDashTab, motionDashBatch, motionDashFilter } from './motion';
 
 // ---------------- 中文标签表 ----------------
 
@@ -1015,6 +1016,8 @@ function applyBehaviorFilter(source: string): void {
   st.behaviorFilter = st.behaviorFilter === normalized ? null : normalized;
   st.behaviorShown = BEHAVIOR_BATCH_SIZE;
   renderBehavior(st.panes.behavior, st.lastData);
+  // 筛选重渲后的列表轻接力（时间线小橘重走一程）
+  motionDashFilter(st.panes.behavior.querySelector('.bz-sc-dash-behavior-tl'));
 }
 
 /** 追加下一批行为条目（触底滚动 / 加载更多按钮共用；直接 append 不整页重排，保持滚动位置） */
@@ -1031,6 +1034,7 @@ function appendBehaviorBatch(): void {
   for (let i = shown; i < next; i++) frag.appendChild(buildBehaviorItemEl(filtered[i]));
   list.appendChild(frag);
   st.behaviorShown = next;
+  motionDashBatch(Array.from(frag.children)); // 新批沿时间线踏入
   if (st.behaviorLoadMoreBtn) st.behaviorLoadMoreBtn.style.display = next < filtered.length ? '' : 'none';
 }
 
@@ -1145,6 +1149,7 @@ function activateTab(key: PaneKey): void {
     dashState.tabs[k]?.classList.toggle('active', k === key);
     if (dashState.panes[k]) dashState.panes[k]!.style.display = k === key ? 'block' : 'none';
   }
+  motionDashTab(dashState.panes[key] ?? null); // 新 pane 轻揭 + 英雄呼吸随总览进出挂/收
 }
 
 /** 重渲染全部页签（打开/刷新共用；数据现读现渲染；不触碰页签显隐 → 刷新保持当前页签） */
@@ -1267,6 +1272,10 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 
   mask.style.display = 'block';
   popup.style.display = 'flex';
+  motionDashIn(mask, popup); // 档案台揭示 + 页签接力
+
+  // 首屏编排（boot）：卡片接力 + PAD 潮汐条生长 + 爪账数字滚动 + 作息柱拔节 + 英雄呼吸
+  motionDashRendered(dashState?.panes[dashState.activeTab] ?? null, true);
 
 
   // C1 事件驱动静默刷新：vault modify 命中 smartcat.json / memo.json → 防抖 3s 静默重读渲染
@@ -1293,11 +1302,15 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 /** 关闭面板并解除 ESC + 全量清理自动刷新监听与防抖计时器（unloadSmartCat 全量清理时调用） */
 export function closeSmartcatDashboard(): void {
   if (!dashState) return;
+  const st = dashState;
   teardownAutoRefresh();
-  dashState.mask.remove();
-  dashState.popup.remove();
   try {
-    dashState.escHandle?.unregister();
+    st.escHandle?.unregister();
   } catch (e) { /* 句柄可能已失效 */ }
   dashState = null;
+  // 档案台折回后交还 remove（done 收口；无动效宿主同步收口，时序与今天一致）
+  motionDashOut(st.mask, st.popup, () => {
+    st.mask.remove();
+    st.popup.remove();
+  });
 }

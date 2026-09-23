@@ -12,6 +12,7 @@ import { escManager } from '../core/esc-manager';
 import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { normalizeMemoryDirectories } from './config';
+import { motionChatIn, motionChatOut } from './motion';
 import type { GroupDecl, SettingsSchema } from '../core/settings-schema';
 import type { Appearance } from './types';
 
@@ -171,13 +172,17 @@ export function createChatPanel(opts: {
 export function showChatPanel(panels: SmartcatPanels): void {
   panels.mask.style.display = 'block';
   panels.chatPopup.style.display = 'flex';
+  motionChatIn(panels.mask, panels.chatPopup); // 上浮揭示 + 历史消息接力（长驻壳：先撤退场残留）
   panels.chatInput.focus();
 }
 
 /** 关闭聊天面板 */
 export function hideChatPanel(panels: SmartcatPanels): void {
-  panels.mask.style.display = 'none';
-  panels.chatPopup.style.display = 'none';
+  // 下沉折回再交还 display:none（done 收口；无动效宿主同步收口，时序与今天一致）
+  motionChatOut(panels.mask, panels.chatPopup, () => {
+    panels.mask.style.display = 'none';
+    panels.chatPopup.style.display = 'none';
+  });
 }
 
 /**

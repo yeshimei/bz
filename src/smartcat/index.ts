@@ -13,7 +13,8 @@ import { stripMdExt } from '../core/utils';
 import { getSettings } from '../core/settings-provider';
 import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, touchPresence, applyInsightPatch } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
-import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
+import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings, CAT_CONTAINER_ID } from './ui';
+import { motionMarkBoot, motionCatArrival, motionCatRecall, motionCatSlink, motionCatRecoat, motionChatMessage, motionTeardown } from './motion';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
 import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData } from './memory';
@@ -313,6 +314,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   animation.initialize();
   // 100ms 后问候（原 SmartCatAnimation module.exports greet；定时器挂模块级供 unload 清理）
   greetTimer = setTimeout(() => animation?.greet(), 100);
+  // 动效层：boot 标志置位 + 登场演出（首个渲染消费即熄；卸载重装才重播完整版）
+  motionMarkBoot();
+  motionCatArrival(container);
 
   // 交互（2026-08-23 用户拍板：删语音模块）
   interaction = new InteractionManager({
@@ -970,6 +974,7 @@ export async function openSmartCat(app: App): Promise<void> {
   if (initialized) {
     const container = mountCatContainer();
     if (container && data) applyAppearance(container, data.config.appearance);
+    motionCatRecall(container); // 召回演出：探头弹出 + 双耳抖（轻版，不重播 boot 登场）
     bubbleManager?.processBubbleQueue();
     return;
   }
@@ -987,7 +992,14 @@ export function hideSmartCat(): void {
   if (!initialized) return;
   closeChat();
   closeSettings();
-  unmountCatContainer();
+  // 猫走缓台（压低身子溜下屏幕缘）再自证身份摘除——收口只摘动画里的那只，
+  // 防与召回竞态误摘新容器；无动效宿主同步收口（时序与今天一致）
+  const cat = document.getElementById(CAT_CONTAINER_ID);
+  if (cat) motionCatSlink(cat, () => { if (cat.isConnected) cat.parentNode?.removeChild(cat); });
+  for (const id of ['settings-panel', 'chat-panel', 'panel-mask']) {
+    const p = document.getElementById(id);
+    if (p && p.parentNode) p.parentNode.removeChild(p);
+  }
 }
 
 /** 打开聊天面板（挂猫容器 + 建面板 + 显示） */
@@ -1033,7 +1045,10 @@ function openSettings(): void {
     // 平铺色块换肤即时生效
     onAppearanceChanged: (appearance) => {
       const c = mountCatContainer();
-      if (c) applyAppearance(c, appearance);
+      if (c) {
+        applyAppearance(c, appearance);
+        motionCatRecoat(c); // 换毛演出：一道高光从头扫到尾 + 抖毛
+      }
     },
     // ADR-0069：记忆目录变更 → 同步增量同步器（移除目录清理条目/新增目录补扫）。
     // 审查 P0：全清也必须先走 syncDirectories([]) 回删名下条目（UI 承诺「移除目录会清掉对应记忆」），
@@ -1099,6 +1114,7 @@ async function sendChatMessage(message: string): Promise<void> {
   userMessageEl.className = 'message user-message';
   userMessageEl.textContent = message;
   chatMessages.appendChild(userMessageEl);
+  motionChatMessage(userMessageEl, 'user'); // 用户消息右入
   chatInput.value = '';
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -1107,6 +1123,7 @@ async function sendChatMessage(message: string): Promise<void> {
   typingIndicator.textContent = '小橘正在思考...';
   typingIndicator.id = 'typing-indicator';
   chatMessages.appendChild(typingIndicator);
+  motionChatMessage(typingIndicator, 'typing'); // 打字占位轻浮
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   try {
@@ -1131,6 +1148,7 @@ async function sendChatMessage(message: string): Promise<void> {
     const catMessageEl = document.createElement('div');
     catMessageEl.className = 'message cat-message';
     chatMessages.appendChild(catMessageEl);
+    motionChatMessage(catMessageEl, 'cat'); // 小橘回复左入踱步
     await typewriterEffect(catMessageEl, response, 30);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
@@ -1158,6 +1176,7 @@ async function sendChatMessage(message: string): Promise<void> {
     const errorMessageEl = document.createElement('div');
     errorMessageEl.className = 'message cat-message';
     chatMessages.appendChild(errorMessageEl);
+    motionChatMessage(errorMessageEl, 'cat');
     const errorText = '抱歉，我现在无法回复。请检查API密钥设置或网络连接。';
     await typewriterEffect(errorMessageEl, errorText, 30);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1251,6 +1270,7 @@ export function unloadSmartCat(): void {
     greetTimer = null;
   }
   animation?.dispose();
+  motionTeardown(); // 动效层清场：编排/循环/注入件残渣/boot 与拎起标记全收
   // ADR-0069：卸载前尽力冲刷脏 sidecar（防抖窗口内的记忆/行为条目不丢）。
   // 审查 P1：传卸载前的 data 快照——冲刷内部不再经 dataProvider()（函数尾部 data 会被置 null，
   // 原实现记忆分支必然抛错且 fire-and-forget 被吞，未落盘条目确定丢失）

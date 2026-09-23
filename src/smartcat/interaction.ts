@@ -16,6 +16,7 @@ import { buildRetrieveQuery, USER_CONTENT_BOUNDARY } from './memory';
 import { buildCompanionContext } from './companion-context';
 import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext, getVisibleContent } from './content';
 import { CAT_CONTAINER_ID } from './ui';
+import { motionCatLift, motionPetBurst } from './motion';
 import type { BubbleManager } from './bubble';
 import type { MoodSystem } from './mood';
 import type { SmartCatConfig } from './types';
@@ -218,6 +219,8 @@ export class InteractionManager {
     const maxTop = window.innerHeight - DRAG_PEEK;
     this.catContainer.style.left = Math.max(minLeft, Math.min(newLeft, maxLeft)) + 'px';
     this.catContainer.style.top = Math.max(minTop, Math.min(newTop, maxTop)) + 'px';
+    // 首次拖动 = 被拎住：耳朵后贴、尾巴绷住（挂起态入池，松手必收）
+    if (!this.isDragging) motionCatLift(this.catContainer, true);
     this.isDragging = true;
     eventSystem.emit(EVENTS.CAT_DRAGGED, { x: newLeft, y: newTop });
   }
@@ -229,6 +232,8 @@ export class InteractionManager {
   springBackIntoViewport(): void {
     const c = this.catContainer;
     if (!c) return;
+    // 放下：若真拎过（耳朵后贴挂起态），撤挂起 + 落地抖毛；纯点击不触发
+    motionCatLift(c, false);
     const curLeft = parseFloat(c.style.left);
     const curTop = parseFloat(c.style.top);
     if (Number.isNaN(curLeft) || Number.isNaN(curTop)) return; // 未拖拽过（无内联位置）无须修正
@@ -370,6 +375,7 @@ export class InteractionManager {
         catBody.style.animation = '';
       }, 500);
     }
+    motionPetBurst(this.catContainer); // 抚摸演出：爪印三连在猫身上绽开
     eventSystem.emit(EVENTS.PET_INTERACTION);
     // 2026-08-23 用户拍板：抚摸=纯互动信号，不持久影响信任/心情/人格（原 ADR-0023 性格微移已移除）
   }

@@ -9,6 +9,7 @@
  */
 import { eventSystem, isPageVisible } from './state';
 import { EVENTS } from './types';
+import { motionBubbleIn, motionBubblePin } from './motion';
 
 export type BubbleDuration = number | string | null;
 
@@ -98,6 +99,7 @@ export class BubbleManager {
     void bubble.offsetWidth;
     bubble.classList.add('show');
     this.clampBubbleToViewport(bubble);
+    motionBubbleIn(bubble); // 弹出过冲 + 小橘竖尾一摆（要说话了；位移帧携带 --bz-sc-shift）
 
     this.startTypingEffect(bubble, message, timing);
 
@@ -259,6 +261,7 @@ export class BubbleManager {
     bubble.dataset.permanent = 'true';
     this.bubbleClickState.isPermanent = true;
     bubble.classList.add('bz-sc-bubble-pinned');
+    motionBubblePin(bubble); // 钉住同拍轻弹一记
     setTimeout(() => bubble.classList.remove('bz-sc-bubble-pinned'), 1000);
     eventSystem.emit(EVENTS.BUBBLE_PINNED, { message });
   }
