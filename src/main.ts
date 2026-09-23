@@ -31,7 +31,7 @@ import { openMemoPanel, addMemoItem, addMemoForActiveNote, unloadMemo, ensureMem
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { addBelongingsItem, openBelongings, openBelongingsReport, unloadBelongings } from './belongings';
 // 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一
-import { openClipbook, markAllUnreadRead, openClipbookReport, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
+import { openClipbook, markAllUnreadRead, openReadingPress, unloadClipbook, ensureClipbookFileSync, unloadClipbookFileSync } from './clipbook';
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
@@ -115,7 +115,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 剪藏阅读报告（issue 358「我读了什么」）：剪藏本自有阅读流水报告弹层（数据 = clipbook.json
   // 侧写 readLog），与书库「阅读分析报告」并列；图标弃 bar-chart-3（阅读分析报告独占）改
   // newspaper（剪藏本语义），与 pie-chart/calendar-check 继续错开
-  { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openClipbookReport(getApp()) },
+  { id: 'bz-clipbook-report', name: '剪藏阅读报告', icon: 'newspaper', callback: () => openReadingPress(getApp()) },
 
   // 日记本（diary 域，ADR-0115：原回忆墙升格正名；媒体墙即日记本唯一 UI）
   { id: 'bz-diary-open', name: '日记本', icon: DOMAIN_ICONS.diary, callback: () => openDiary(getApp()) },

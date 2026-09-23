@@ -1,9 +1,9 @@
 /**
  * clipbook 阅读报告弹层（issue 358「我读了什么」）：独立 overlay 面板。
  *
- * 数据 = clipbook.json 侧写 readLog（flow.ts 阅读会话封存入账），与书库「阅读分析报告」
- * （bz-reading-report-open，书架墙面板内视图）并列不深链——本弹层只读侧写，不依赖
- * news.json 与剪藏本主面板装载态（命令直开亦可用）。
+ * 数据 = clipbook.json 侧写 readLog（flow.ts 阅读会话封存入账）+ news.json 真实库
+ * （2026-09-23 重做新增「报库盘点」段：建库以来口径，读失败整段省略不碍阅读分析），
+ * 与书库「阅读分析报告」（bz-reading-report-open，书架墙面板内视图）并列不深链。
  * 范式仿 reading-report/index.ts：骨架占位 → progress toast → 分片渲染（逐段让出主线程，
  * 在途渲染可作废）→ 错误人话化（技术详情留 console）。
  * 入口：剪藏本 rail 脚注「我读了什么」/ 移动头行「报告」/ 命令 bz-clipbook-report。
@@ -21,10 +21,11 @@ import { readNewsData } from './news-data';
 import { articleKeyOf } from './constants';
 import { M } from './state';
 import { flushReadingSession } from './flow';
-import { buildClipReport, type ClipReportData, type ReportPeriod } from './report-stats';
+import { buildClipReport, buildLibraryStats, busiestDay, type ClipLibraryStats, type ClipReportData, type ReportPeriod } from './report-stats';
 import {
   clipReportShellHtml, clipReportSkeletonHtml, buildClipReportSections,
 } from './render';
+import { motionReportIn, motionReportSection, motionLoadingPulse } from './motion';
 import { openClipbook } from './index';
 import { revealArticleByKey } from './ui';
 
@@ -94,6 +95,7 @@ export async function openClipbookReport(_app?: App): Promise<void> {
   topifyZ(overlayEl);
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlayEl!.querySelector<HTMLElement>('.bz-clip-report-frame') ?? overlayEl!);
+  motionReportIn(overlayEl!); // 动效：弹层升帘（遮罩快淡入 + 框体浮起）
   await renderBody(true);
 }
 
@@ -235,6 +237,7 @@ async function renderBody(withToast: boolean): Promise<void> {
   const alive = (): boolean => seq === renderSeq && !!overlayEl && overlayEl!.style.display !== 'none' && body.isConnected;
 
   body.innerHTML = clipReportSkeletonHtml();
+  motionLoadingPulse(body.firstElementChild as HTMLElement | null); // 功能性呼吸指示（不入台账）
 
   try {
     if (!logCache) {
@@ -256,6 +259,7 @@ async function renderBody(withToast: boolean): Promise<void> {
     // 空态人话·首次：还没有任何阅读记录（openClipbookReport 已先 flush，能记的都在了）
     if (!logCache.length) {
       renderEmptyState(body, buildClipReportEmpty('never'));
+      motionReportSection(body.firstElementChild, 0); // 动效：空态轻浮出
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }
@@ -267,6 +271,15 @@ async function renderBody(withToast: boolean): Promise<void> {
     // Top5 可点回看（效率#20）：现查库内可定位条目，命中行才挂「打开」钮
     const availKeys = await collectAvailableKeys();
     if (!alive()) return finishAbort();
+    // 报库盘点（2026-09-23 重做）：news.json 真实家底（建库以来口径，与周期无关）；
+    // 读盘失败/缺失 → library null，报库段整段省略，阅读分析不受影响
+    let library: ClipLibraryStats | null = null;
+    try {
+      const res = await readNewsData();
+      if (res.ok && !res.missing) library = buildLibraryStats((res.data && res.data.articles) as never, new Date());
+    } catch (e) { library = null; }
+    if (!alive()) return finishAbort();
+    const busiest = busiestDay(logCache, period, new Date());
 
     // 本期空态（⑨）：readLog 有记录但本期窗口（本周/本月）没读过，或记录全是零分钟段——
     // 整页只显空态，不渲染零值统计段（issue 358 真机回归「没有阅读记录时统计有误」）。
@@ -277,17 +290,20 @@ async function renderBody(withToast: boolean): Promise<void> {
       const otherData = buildClipReport(logCache, other, new Date());
       const switchTo = otherData.articles || otherData.totalMinutes ? other : undefined;
       renderEmptyState(body, buildClipReportEmpty('period', switchTo));
+      motionReportSection(body.firstElementChild, 0); // 动效：空态也走一段轻浮出
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }
 
     body.innerHTML = ''; // 骨架 → 报告区（分段渐进填充）
-    for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
+    let secIdx = 0;
+    for (const section of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
       if (!alive()) return finishAbort();
       await yieldToMainThread(YIELD_MS);
       // 二次校验：让出期间弹层可能已被关闭 → 不把本段写进已隐藏的 DOM
       if (!alive()) return finishAbort();
       body.insertAdjacentHTML('beforeend', section.generate());
+      motionReportSection(body.lastElementChild, secIdx++); // 动效：逐段落版（段内件接力）
       progress?.setMessage(`正在生成${section.label}…`);
     }
     if (alive()) {
