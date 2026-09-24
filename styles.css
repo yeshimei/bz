@@ -10309,7 +10309,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: 800;
   color: var(--ink-strong);
 }
-.bz-people-portrait {
+/* 画像与关系时间线共用卡片底（同一阅读层，仅标题语义不同） */
+.bz-people-portrait,
+.bz-people-chronicle {
   margin-top: 12px;
   padding: 16px 18px;
   background: var(--card);
@@ -10320,32 +10322,81 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   line-height: 1.75;
   color: var(--ink);
 }
-.bz-people-portrait h4 {
+.bz-people-portrait h4,
+.bz-people-chronicle h4 {
   margin: 12px 0 4px;
   font-size: 14px;
   color: var(--acc-deep);
   letter-spacing: 0.5px;
 }
-.theme-dark .bz-people-portrait h4 {
+.theme-dark .bz-people-portrait h4,
+.theme-dark .bz-people-chronicle h4 {
   color: var(--acc);
 }
-.bz-people-portrait h4:first-child {
+.bz-people-portrait h4:first-child,
+.bz-people-chronicle h4:first-child {
   margin-top: 0;
 }
-.bz-people-portrait h5 {
+/* 时间线年份分节：加一条细横线，读起来像纪年 */
+.bz-people-chronicle h4 {
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--card-bd);
+}
+.bz-people-portrait h5,
+.bz-people-chronicle h5 {
   margin: 8px 0 4px;
   font-size: 13px;
   color: var(--ink-strong);
 }
-.bz-people-portrait ul {
+.bz-people-portrait ul,
+.bz-people-chronicle ul {
   margin: 4px 0;
   padding-left: 18px;
 }
-.bz-people-portrait li {
+.bz-people-portrait li,
+.bz-people-chronicle li {
   margin: 2px 0;
 }
-.bz-people-portrait strong {
+.bz-people-portrait strong,
+.bz-people-chronicle strong {
   color: var(--ink-strong);
+}
+/* 画像「表达 DNA」的原话例句（issue 438 移植：模式后面跟证据） */
+.bz-people-portrait blockquote {
+  margin: 5px 0 9px;
+  padding: 6px 12px;
+  border-left: 3px solid var(--acc);
+  border-radius: 0 6px 6px 0;
+  background: var(--bg-weave2);
+}
+.bz-people-portrait blockquote p {
+  margin: 2px 0;
+  font-size: 12.5px;
+  color: var(--ink-mut);
+}
+/* 代表原话证据层 */
+.bz-people-quotes {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.bz-people-quote {
+  padding: 8px 12px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+}
+.bz-people-quote-text {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.bz-people-quote-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--ink-mut);
 }
 .bz-people-section-title {
   margin-top: 16px;
@@ -10381,6 +10432,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-people-event-summary {
   color: var(--ink);
+}
+/* 大事：红点 + 加重字；小事（minor）保持基线样式 */
+.bz-people-event-major .bz-people-event-dot {
+  background: var(--acc);
+  box-shadow: 0 0 0 3px rgba(168, 67, 60, 0.15);
+}
+.bz-people-event-major .bz-people-event-summary {
+  color: var(--ink-strong);
+  font-weight: 600;
 }
 .bz-people-detail-foot {
   margin-top: 16px;

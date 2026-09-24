@@ -36,6 +36,59 @@ export interface MomentItem {
   summary: string;
 }
 
+/**
+ * 人物档案（手动填写）。ADR-0191 背景即写明「聊天记录是素材来源**之一**而非全部」，
+ * 本结构承载聊天之外的信息：社交账号、生日、怎么认识的、标签、备注。
+ */
+export interface PersonProfile {
+  /** 社交账号：平台 + 账号（微信 / QQ / 微博 / 小红书 / Telegram…） */
+  socials?: Array<{ platform: string; handle: string }>;
+  /** 生日（YYYY-MM-DD；年份不明可只写 MM-DD） */
+  birthday?: string;
+  /** 怎么认识的 */
+  metVia?: string;
+  /** 什么时候认识的（自由文本，如「2023 年夏天」） */
+  metAt?: string;
+  /** 家乡 / 现居 */
+  hometown?: string;
+  /** 职业 */
+  job?: string;
+  /** 关系标签（家人 / 同学 / 同事 / 网友…） */
+  tags?: string[];
+  /** 一句话备注 */
+  note?: string;
+}
+
+/** 随手记的一笔（手动事件；重画画像时与导入提炼的事件合并） */
+export interface ManualEvent {
+  id: string;
+  /** YYYY-MM-DD */
+  ts: string;
+  summary: string;
+  /** 记录时间 ISO */
+  createdAt: string;
+}
+
+/**
+ * 互动统计（纯本地计算，零 AI 成本）。落盘的是**聚合结果**，不含聊天原文——
+ * 与 ADR-0191 §2 的隐私口径一致。
+ */
+export interface ContactStats {
+  /** 按月消息量（升序）：[['2026-03', 1234], ...] */
+  monthly: Array<[string, number]>;
+  /** 会话发起数（相邻消息间隔 ≥ 30 分钟视为新会话） */
+  initiatedByMe: number;
+  initiatedByOther: number;
+  /** 平均回复时延（秒；0 = 无样本） */
+  myAvgReplySec: number;
+  otherAvgReplySec: number;
+  /** 24 小时活跃分布（消息条数，索引 = 小时） */
+  myHourly: number[];
+  otherHourly: number[];
+  /** 消息形态计数：文本 / 图片 / 语音 / 视频 / 表情 / 通话 / 文件 / 引用 / 分享 / 系统 */
+  kindCounts: Record<string, number>;
+}
+
 /** 一次导入的元数据 */
 export interface ImportRecord {
   /** 源文件名（不含路径） */
@@ -49,6 +102,8 @@ export interface ImportRecord {
   /** 消息时间跨度 ISO */
   timeFrom: string;
   timeTo: string;
+  /** 本次导入的互动统计（旧数据无此字段） */
+  stats?: ContactStats;
 }
 
 /** 脸谱（AI 生成产物，重新导入可覆盖重画） */
@@ -74,6 +129,12 @@ export interface PersonEntry {
   createdAt: string;
   imports: ImportRecord[];
   digest?: FaceDigest;
+  /** 手动档案（聊天之外的补充信息） */
+  profile?: PersonProfile;
+  /** 随手记的事件（与导入提炼的事件并存） */
+  manualEvents?: ManualEvent[];
+  /** 增量提炼锚点：上次提炼过的最大消息时间戳（毫秒）；更早的消息不再重复送 AI */
+  lastProcessedTs?: number;
 }
 
 export interface PeopleData {
