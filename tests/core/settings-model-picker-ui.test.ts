@@ -358,6 +358,9 @@ describe('重排模型行：获取模型（issue 429）', () => {
     const row = findRow(container, '重排模型');
     buttonOf(row).trigger();
     await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    // 有 rerank 字样模型 → 标题不提「全量回退」
+    expect(document.querySelector('#bz-model-picker-popup .bz-settings-title')!.textContent).toContain('Ollama 重排');
+    expect(document.querySelector('#bz-model-picker-popup .bz-settings-title')!.textContent).not.toContain('未找到');
     const popupRows = [...document.querySelectorAll('.bz-model-picker-row')];
     expect(popupRows).toHaveLength(1); // 聊天模型不进重排候选
     (popupRows[0] as HTMLElement).click();
@@ -367,6 +370,18 @@ describe('重排模型行：获取模型（issue 429）', () => {
     );
     expect(saver).toHaveBeenCalled();
     await vi.waitFor(() => expect(visibleToasts().some((t) => t.includes('重排模型已设为'))).toBe(true));
+  });
+
+  it('列表里一个 rerank 字样都没有 → 全量回退，标题注明（用户才知道为何列表这么长）', async () => {
+    state.secondBrainEmbeddingModel = 'qwen3-embedding:8b';
+    vi.stubGlobal('fetch', vi.fn(async () => okModels({
+      models: [{ name: '自定义打分器:latest' }, { name: 'llama3.1:latest' }],
+    })));
+    const container = renderAIGroup();
+    buttonOf(findRow(container, '重排模型')).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    expect(document.querySelectorAll('.bz-model-picker-row')).toHaveLength(2); // 全部列出
+    expect(document.querySelector('#bz-model-picker-popup .bz-settings-title')!.textContent).toContain('未找到 rerank 字样模型');
   });
 
   it('拉取失败（Ollama 无响应）→ 行内报错 toast，设置不动', async () => {

@@ -253,6 +253,30 @@ describe('secondbrain/reference-panel 刷新竞态防护', () => {
     panel.close();
   });
 
+  it('[428] 旧轮迟到返回：resolve 路径也不回填（列表归最新一轮所有）', async () => {
+    const { app, setLine } = appWithText('第一条查询上下文');
+    let resolveOld!: () => void;
+    const store: any = {
+      search: (q: string) => {
+        if (q === '第二条查询上下文') return Promise.resolve([HIT_B]);
+        // 旧轮忽略中断、悬着不落：等新一轮渲染完成后再迟到返回
+        return new Promise((resolve) => {
+          resolveOld = () => resolve([HIT_A]);
+        });
+      },
+    };
+    const panel = new ReferencePanel(app, store as any);
+    const first = panel.refreshContent();
+    setLine('第二条查询上下文');
+    await panel.refreshContent();
+    expect(panel.resultsDiv.textContent).toContain('笔记B');
+    resolveOld();
+    await first;
+    expect(panel.resultsDiv.textContent).toContain('笔记B'); // 不被旧轮盖掉
+    expect(panel.resultsDiv.textContent).not.toContain('笔记A');
+    panel.close();
+  });
+
   it('[428] 关闭面板：中断在途检索（已无接管者），本轮静默收口不抛错', async () => {
     const { app } = appWithText('关闭前发起的长查询上下文');
     const signals: AbortSignal[] = [];

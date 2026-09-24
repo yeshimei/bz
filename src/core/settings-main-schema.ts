@@ -53,7 +53,7 @@ import { JEV_PROVIDER_REGISTRY, getJevProviderDescriptor, fetchJevModels } from 
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
-import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
+import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -500,7 +500,8 @@ function rerankModelRow(): SettingsRow {
           // 绑定回填输入框，openModelPicker 是「打开即返回」的弹窗）
           await new Promise<void>((resolve) => {
             openModelPicker({
-              providerLabel: 'Ollama 重排',
+              // 一个 rerank 都没匹配到 = 列的是全部模型（不是筛选失败）：标题里说明，用户才知道为何列表这么长
+              providerLabel: hasRerankNamed(models) ? 'Ollama 重排' : 'Ollama 重排（未找到 rerank 字样模型，已列出全部）',
               current: String((tryGetSettings() as any).secondBrainRerankModel || ''),
               models,
               onPick: (m) => {

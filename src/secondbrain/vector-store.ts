@@ -707,7 +707,8 @@ export class VectorStore {
 
   /**
    * 重排接线（issue 427/ADR-0186）：头部 RERANK_MAX_DOCS 条交 Qwen3-Reranker 交叉编码重排，
-   * 其余保持余弦序接在其后。**hit.score 不动**——名次按重排分，分数与阈值仍走 ADR-0185 的
+   * 其余保持余弦序接在其后（该上限取 TopK 设置上限，任何合法配置下列表整列同尺——issue 429）。
+   * **hit.score 不动**——名次按重排分，分数与阈值仍走 ADR-0185 的
    * 单一余弦尺；重排分另记 `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺。
    * 任一失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
    * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。

@@ -9,7 +9,7 @@ import { DEFAULT_SETTINGS } from '../../src/settings';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { fetchProviderModels, parseModelList, MODELS_TIMEOUT_MS } from '../../src/core/ai-models';
 import { embeddingServiceUrl, fetchEmbeddingModels, parseOllamaTags, pickEmbeddingModels } from '../../src/core/ai-models';
-import { fetchRerankModels, pickRerankModels } from '../../src/core/ai-models';
+import { fetchRerankModels, hasRerankNamed, pickRerankModels } from '../../src/core/ai-models';
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from '../../src/core/ai';
 import { Platform as MockPlatform, requestUrl } from '../mock-obsidian-entry';
 
@@ -305,6 +305,13 @@ describe('重排模型列表（issue 429：AI 面板「重排模型」行「获�
     const models = pickRerankModels({ models: [{ name: '自定义打分器:latest' }, { name: 'llama3.1:latest' }] });
     expect(models.map((m) => m.id)).toEqual(['自定义打分器:latest', 'llama3.1:latest']);
     expect(pickRerankModels({}).map((m) => m.id)).toEqual([]); // 空响应交调用方报错
+  });
+
+  it('hasRerankNamed：选择器标题据它提示「全量回退」（有 rerank 名 → 不提）', () => {
+    expect(hasRerankNamed([{ id: 'dengcao/Qwen3-Reranker-4B:Q4_K_M' }, { id: 'llama3.1:latest' }])).toBe(true);
+    expect(hasRerankNamed([{ id: '自定义打分器:latest' }, { id: 'bge-reranker-v2-m3' }])).toBe(true); // 名字含 rerank 即算
+    expect(hasRerankNamed([{ id: 'llama3.1:latest' }])).toBe(false);
+    expect(hasRerankNamed([])).toBe(false);
   });
 
   it('fetchRerankModels：GET {服务地址}/api/tags（尾斜杠归一）→ 重排子集', async () => {

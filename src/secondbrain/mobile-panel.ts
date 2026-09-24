@@ -284,7 +284,9 @@ export class MobilePanel {
     }
     try {
       this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
-      if (this.inflight === ac) this.inflight = null;
+      // 仍是本轮才收尾（issue 428）：被新一轮接管则结果作废，让新轮独占列表态
+      if (this.inflight !== ac) return;
+      this.inflight = null;
       this.refError = null; // 本次检索成功：清除上一轮失败态
     } catch (e) {
       // 被更新的一轮中断：本轮作废，列表态归新查询所有——静默收口
