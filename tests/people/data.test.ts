@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PeopleStore, getPeopleFilePath } from '../../src/people/data';
-import type { PersonEntry } from '../../src/people/types';
+import type { FaceDigest, ImportRecord, ManualEvent, PersonEntry } from '../../src/people/types';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
@@ -83,5 +83,72 @@ describe('PeopleStore', () => {
     await store.upsert(person('wxid_a'));
     await store.remove('wxid_a');
     expect(await store.list()).toEqual([]);
+  });
+});
+
+describe('PeopleStore.mergeInto（评审 443 补测）', () => {
+  let vault: MockVault;
+  let store: PeopleStore;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    store = new PeopleStore({ vault });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  function entry(id: string, extra: Partial<PersonEntry> = {}): PersonEntry {
+    return { id, name: id, createdAt: '2026-09-25T00:00:00.000Z', imports: [], ...extra };
+  }
+  const rec = (file: string, importedAt: string): ImportRecord => ({
+    file, importedAt, messageCount: 3, skippedCount: 0,
+    timeFrom: '2024-01-01T00:00:00.000Z', timeTo: '2024-02-01T00:00:00.000Z',
+  });
+  const man = (id: string, ts: string): ManualEvent => ({ id, ts, summary: `事 ${id}`, createdAt: '2026-09-01T00:00:00.000Z' });
+
+  it('imports 并入按 importedAt 升序；manualEvents 并入按 ts 升序', async () => {
+    await store.upsert(entry('to', {
+      imports: [rec('b.csv', '2026-09-02T00:00:00.000Z')],
+      manualEvents: [man('t1', '2024-05-01')],
+    }));
+    await store.upsert(entry('from', {
+      imports: [rec('a.csv', '2026-09-01T00:00:00.000Z')],
+      manualEvents: [man('f2', '2024-06-01'), man('f1', '2024-04-01')],
+    }));
+    await store.mergeInto('from', 'to');
+    const to = (await store.list()).find((p) => p.id === 'to');
+    expect(to!.imports.map((r) => r.file)).toEqual(['a.csv', 'b.csv']);
+    expect(to!.manualEvents!.map((e) => e.ts)).toEqual(['2024-04-01', '2024-05-01', '2024-06-01']);
+  });
+
+  it('digest 继承：to 无脸谱时继承 from 的；to 已有时保留自己的（from 的舍弃）', async () => {
+    const digestOf = (portrait: string): FaceDigest => ({ portrait, events: [], generatedAt: '2026-09-01T00:00:00.000Z' });
+    await store.upsert(entry('to1'));
+    await store.upsert(entry('from', { digest: digestOf('from 画像') }));
+    await store.mergeInto('from', 'to1');
+    expect((await store.list()).find((p) => p.id === 'to1')!.digest?.portrait).toBe('from 画像');
+
+    await store.upsert(entry('to2', { digest: digestOf('to 自己的') }));
+    await store.upsert(entry('from2', { digest: digestOf('from2 画像') }));
+    await store.mergeInto('from2', 'to2');
+    expect((await store.list()).find((p) => p.id === 'to2')!.digest?.portrait).toBe('to 自己的');
+  });
+
+  it('from 合并后被移除', async () => {
+    await store.upsert(entry('to'));
+    await store.upsert(entry('from'));
+    await store.mergeInto('from', 'to');
+    expect((await store.list()).map((p) => p.id)).toEqual(['to']);
+  });
+
+  it('fromId === toId 直接返回：不抛错、人物原样保留', async () => {
+    await store.upsert(entry('same'));
+    await store.mergeInto('same', 'same');
+    const people = await store.list();
+    expect(people).toHaveLength(1);
+    expect(people[0].id).toBe('same');
   });
 });

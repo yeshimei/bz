@@ -76,8 +76,8 @@ export function chunkMessages(messages: UnifiedMessage[], opts: ChunkOptions = {
   return evenlySample(chunks, maxBatches);
 }
 
-/** 等距抽样（首尾必保），并去掉抽样造成的相邻重复项 */
-function evenlySample<T>(items: T[], max: number): T[] {
+/** 等距抽样（首尾必保），并去掉抽样造成的相邻重复项（people 增量合并素材同用，评审 443 导出） */
+export function evenlySample<T>(items: T[], max: number): T[] {
   if (items.length <= max) return items;
   const picked: T[] = [];
   for (let i = 0; i < max; i++) picked.push(items[Math.round((i * (items.length - 1)) / (max - 1))]);
