@@ -50,7 +50,7 @@ import { JEV_PROVIDER_REGISTRY, getJevProviderDescriptor, fetchJevModels } from 
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
-import { fetchEmbeddingModels, fetchProviderModels, providerDescriptorOf } from './ai-models';
+import { fetchEmbeddingModels, fetchProviderModels, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -450,7 +450,23 @@ function jevModelRow(): SettingsRow {
  * （secondbrain/local-ip.ensureRemoteOllamaUrl），不再需要人工看/改。
  */
 function embeddingGroupRows(): SettingsRow[] {
-  return [ollamaLocalUrlRow(), embeddingModelRow()];
+  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow()];
+}
+
+/**
+ * 「启用重排」开关（issue 427/ADR-0186）：召回结果交 Qwen3-Reranker 交叉编码重排，头部若干条按
+ * 重排分排序（分数与阈值仍走原始余弦单尺，重排只改顺序，见 secondbrain/vector-store）。
+ * 默认开；只在「Embedding 模型 = Qwen3-Embedding-8B」时显示——可见性判定与检索侧生效条件
+ * 共用 core `isQwen3Embedding8b`（行藏起来时检索侧也不生效，不留暗态开关）。
+ */
+function rerankToggleRow(): SettingsRow {
+  return {
+    type: 'toggle',
+    name: '启用重排',
+    desc: '召回结果再用重排模型精排，相关笔记排序更准',
+    binding: { key: 'secondBrainRerank' },
+    visibleWhen: (snapshot) => isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel),
+  };
 }
 
 /**

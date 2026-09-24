@@ -1,4 +1,4 @@
-/* 源指纹 3c38cd4b54a30068 · 仓内输入 280 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 30c18e765eac0f7c · 仓内输入 280 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -10010,6 +10010,155 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/ai-models.ts
+  function providerDescriptorOf(id) {
+    return getProviderDescriptor(id);
+  }
+  function endpointFor(id) {
+    return providerDescriptorOf(id).endpoint.replace(/\/+$/, "");
+  }
+  function keyFor(id) {
+    const s = tryGetSettings();
+    const desc = providerDescriptorOf(id);
+    if (desc.id === "ollama") return "";
+    return String(s[desc.apiKeyKey] || "");
+  }
+  function ollamaModelIds(data) {
+    const list = data == null ? void 0 : data.models;
+    if (Array.isArray(list)) {
+      const ids = list.map((m) => m && typeof m.name === "string" ? m.name : "").filter(Boolean);
+      if (ids.length) return ids;
+    }
+    throw new Error("该服务商未返回可用模型");
+  }
+  function openaiModelIds(data) {
+    if (Array.isArray(data == null ? void 0 : data.data)) {
+      const ids = data.data.map((m) => m && typeof m.id === "string" ? m.id : "").filter(Boolean);
+      if (ids.length) return ids;
+    }
+    if (Array.isArray(data == null ? void 0 : data.models)) {
+      const ids = data.models.map((m) => m && typeof m.name === "string" ? m.name : "").filter(Boolean);
+      if (ids.length) return ids;
+    }
+    throw new Error("该服务商未返回可用模型");
+  }
+  function parseModelList(desc, data) {
+    return desc.id === "ollama" ? ollamaModelIds(data) : openaiModelIds(data);
+  }
+  async function fetchModelsJson(url, headers, timeoutMs, label, deps) {
+    var _a2;
+    const fetchFn = deps.fetchFn || ((u, init) => fetch(u, init));
+    const requestUrlFn = deps.requestUrlFn || requestUrl;
+    const fetchAttempt = async (signal) => {
+      const resp2 = await fetchFn(url, { method: "GET", headers, signal });
+      return { resp: resp2, via: "fetch" };
+    };
+    const requestUrlAttempt = async () => {
+      const r = await requestUrlFn({ url, method: "GET", headers, throw: false });
+      return { resp: { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => JSON.parse(r.text) }, via: "requestUrl" };
+    };
+    let attempt;
+    {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        attempt = await fetchAttempt(controller.signal);
+      } catch (e) {
+        if (controller.signal.aborted) {
+          throw new Error(`${label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
+        }
+        attempt = await requestUrlAttempt();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    const { resp } = attempt;
+    if (!resp.ok) {
+      if (resp.status === 401 || resp.status === 403) {
+        throw new Error(`${label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
+      }
+      if (resp.status === 404) {
+        throw new Error(`${label} 不支持模型列表接口（404）`);
+      }
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if ((_a2 = err == null ? void 0 : err.error) == null ? void 0 : _a2.message) msg = err.error.message;
+      } catch (e) {
+      }
+      throw new Error(msg);
+    }
+    return resp.json();
+  }
+  async function fetchProviderModels(providerId, deps = {}) {
+    const id = providerId || String(tryGetSettings().aiProvider || DEFAULT_AI_PROVIDER);
+    const desc = providerDescriptorOf(id);
+    const endpoint = desc.id === "ollama" ? OLLAMA_BASE_URL : endpointFor(id);
+    const key = keyFor(id);
+    if (!key && desc.id !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const url = desc.id === "ollama" ? `${endpoint}/api/tags` : `${endpoint}/models`;
+    const headers = {};
+    if (key) headers["Authorization"] = `Bearer ${key}`;
+    const timeoutMs = desc.id === "ollama" ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
+    const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);
+    const ids = parseModelList(desc, data);
+    const seen = /* @__PURE__ */ new Set();
+    return ids.filter((m) => seen.has(m) ? false : (seen.add(m), true)).map((m) => ({ id: m, detail: desc.label }));
+  }
+  function parseOllamaTags(data) {
+    const list = data == null ? void 0 : data.models;
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const m of list) {
+      if (!m || typeof m.name !== "string" || !m.name) continue;
+      const capabilities = Array.isArray(m.capabilities) ? m.capabilities.filter((c) => typeof c === "string") : [];
+      const det = m.details || {};
+      const bits = [];
+      if (typeof det.parameter_size === "string" && det.parameter_size) bits.push(det.parameter_size);
+      if (typeof det.embedding_length === "number" && det.embedding_length > 0) bits.push(`${det.embedding_length} 维`);
+      out.push({ id: m.name, capabilities, detail: bits.join("，") || "Ollama" });
+    }
+    return out;
+  }
+  function pickEmbeddingModels(data) {
+    const tags = parseOllamaTags(data);
+    const known = tags.some((t) => t.capabilities.length > 0);
+    return (known ? tags.filter((t) => t.capabilities.includes("embedding")) : tags).map((t) => ({
+      id: t.id,
+      detail: t.detail
+    }));
+  }
+  function isQwen3Embedding8b(model) {
+    return /qwen3[-_]?embedding[:\-_.]?8b\b/i.test(String(model != null ? model : ""));
+  }
+  function embeddingServiceUrl() {
+    const s = tryGetSettings();
+    const local = String(s.secondBrainOllamaUrl || "").trim() || OLLAMA_BASE_URL;
+    const remote = String(s.secondBrainRemoteOllamaUrl || "").trim();
+    return isMobileEnv() && remote ? remote : local;
+  }
+  async function fetchEmbeddingModels(deps = {}) {
+    const url = `${embeddingServiceUrl().replace(/\/+$/, "")}/api/tags`;
+    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps);
+    const models = pickEmbeddingModels(data);
+    if (!models.length) throw new Error("Ollama 未返回可用的向量化模型");
+    return models;
+  }
+  var MODELS_TIMEOUT_MS, OLLAMA_TIMEOUT_MS, OLLAMA_BASE_URL;
+  var init_ai_models = __esm({
+    "src/core/ai-models.ts"() {
+      init_fake_obsidian();
+      init_ai();
+      init_mobile();
+      init_settings_provider();
+      MODELS_TIMEOUT_MS = 8e3;
+      OLLAMA_TIMEOUT_MS = 3e4;
+      OLLAMA_BASE_URL = "http://localhost:11434";
+    }
+  });
+
   // src/core/knowledge-boxes.ts
   function normalizeBoxDir(raw, fallback) {
     const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
@@ -10061,8 +10210,10 @@ var BZW_home = (() => {
     CURSOR_POLL_INTERVAL_MS: () => CURSOR_POLL_INTERVAL_MS,
     DEFAULT_EMBEDDING_MODEL: () => DEFAULT_EMBEDDING_MODEL,
     IS_MOBILE: () => IS_MOBILE,
+    RERANK_MODEL: () => RERANK_MODEL,
     SEARCH_DEBOUNCE_DELAY: () => SEARCH_DEBOUNCE_DELAY,
     buildConfig: () => buildConfig,
+    rerankActive: () => rerankActive,
     resolveAllowPaths: () => resolveAllowPaths
   });
   function resolveAllowPaths(rawAllowPaths) {
@@ -10070,6 +10221,10 @@ var BZW_home = (() => {
     const dirs = boxDirs(boxes);
     const extra = parseDirList(rawAllowPaths).filter((p) => !isBoxDir(p, boxes) && !dirs.includes(p));
     return [...dirs, ...extra];
+  }
+  function rerankActive() {
+    const s = tryGetSettings();
+    return s.secondBrainRerank !== false && isQwen3Embedding8b(s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL);
   }
   function buildConfig() {
     const s = tryGetSettings();
@@ -10088,15 +10243,17 @@ var BZW_home = (() => {
       OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || ""
     };
   }
-  var SEARCH_DEBOUNCE_DELAY, CURSOR_POLL_INTERVAL_MS, DEFAULT_EMBEDDING_MODEL, _a, _b, IS_MOBILE;
+  var SEARCH_DEBOUNCE_DELAY, CURSOR_POLL_INTERVAL_MS, DEFAULT_EMBEDDING_MODEL, RERANK_MODEL, _a, _b, IS_MOBILE;
   var init_config3 = __esm({
     "src/secondbrain/config.ts"() {
       init_settings_provider();
+      init_ai_models();
       init_storage();
       init_knowledge_boxes();
       SEARCH_DEBOUNCE_DELAY = 300;
       CURSOR_POLL_INTERVAL_MS = 500;
       DEFAULT_EMBEDDING_MODEL = "bge-m3";
+      RERANK_MODEL = "dengcao/Qwen3-Reranker-4B:Q4_K_M";
       IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
     }
   });
@@ -19087,152 +19244,6 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/core/ai-models.ts
-  function providerDescriptorOf(id) {
-    return getProviderDescriptor(id);
-  }
-  function endpointFor(id) {
-    return providerDescriptorOf(id).endpoint.replace(/\/+$/, "");
-  }
-  function keyFor(id) {
-    const s = tryGetSettings();
-    const desc = providerDescriptorOf(id);
-    if (desc.id === "ollama") return "";
-    return String(s[desc.apiKeyKey] || "");
-  }
-  function ollamaModelIds(data) {
-    const list = data == null ? void 0 : data.models;
-    if (Array.isArray(list)) {
-      const ids = list.map((m) => m && typeof m.name === "string" ? m.name : "").filter(Boolean);
-      if (ids.length) return ids;
-    }
-    throw new Error("该服务商未返回可用模型");
-  }
-  function openaiModelIds(data) {
-    if (Array.isArray(data == null ? void 0 : data.data)) {
-      const ids = data.data.map((m) => m && typeof m.id === "string" ? m.id : "").filter(Boolean);
-      if (ids.length) return ids;
-    }
-    if (Array.isArray(data == null ? void 0 : data.models)) {
-      const ids = data.models.map((m) => m && typeof m.name === "string" ? m.name : "").filter(Boolean);
-      if (ids.length) return ids;
-    }
-    throw new Error("该服务商未返回可用模型");
-  }
-  function parseModelList(desc, data) {
-    return desc.id === "ollama" ? ollamaModelIds(data) : openaiModelIds(data);
-  }
-  async function fetchModelsJson(url, headers, timeoutMs, label, deps) {
-    var _a2;
-    const fetchFn = deps.fetchFn || ((u, init) => fetch(u, init));
-    const requestUrlFn = deps.requestUrlFn || requestUrl;
-    const fetchAttempt = async (signal) => {
-      const resp2 = await fetchFn(url, { method: "GET", headers, signal });
-      return { resp: resp2, via: "fetch" };
-    };
-    const requestUrlAttempt = async () => {
-      const r = await requestUrlFn({ url, method: "GET", headers, throw: false });
-      return { resp: { ok: r.status >= 200 && r.status < 300, status: r.status, json: async () => JSON.parse(r.text) }, via: "requestUrl" };
-    };
-    let attempt;
-    {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        attempt = await fetchAttempt(controller.signal);
-      } catch (e) {
-        if (controller.signal.aborted) {
-          throw new Error(`${label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
-        }
-        attempt = await requestUrlAttempt();
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-    const { resp } = attempt;
-    if (!resp.ok) {
-      if (resp.status === 401 || resp.status === 403) {
-        throw new Error(`${label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
-      }
-      if (resp.status === 404) {
-        throw new Error(`${label} 不支持模型列表接口（404）`);
-      }
-      let msg = `API ${resp.status}`;
-      try {
-        const err = await resp.json();
-        if ((_a2 = err == null ? void 0 : err.error) == null ? void 0 : _a2.message) msg = err.error.message;
-      } catch (e) {
-      }
-      throw new Error(msg);
-    }
-    return resp.json();
-  }
-  async function fetchProviderModels(providerId, deps = {}) {
-    const id = providerId || String(tryGetSettings().aiProvider || DEFAULT_AI_PROVIDER);
-    const desc = providerDescriptorOf(id);
-    const endpoint = desc.id === "ollama" ? OLLAMA_BASE_URL : endpointFor(id);
-    const key = keyFor(id);
-    if (!key && desc.id !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const url = desc.id === "ollama" ? `${endpoint}/api/tags` : `${endpoint}/models`;
-    const headers = {};
-    if (key) headers["Authorization"] = `Bearer ${key}`;
-    const timeoutMs = desc.id === "ollama" ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
-    const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);
-    const ids = parseModelList(desc, data);
-    const seen = /* @__PURE__ */ new Set();
-    return ids.filter((m) => seen.has(m) ? false : (seen.add(m), true)).map((m) => ({ id: m, detail: desc.label }));
-  }
-  function parseOllamaTags(data) {
-    const list = data == null ? void 0 : data.models;
-    if (!Array.isArray(list)) return [];
-    const out = [];
-    for (const m of list) {
-      if (!m || typeof m.name !== "string" || !m.name) continue;
-      const capabilities = Array.isArray(m.capabilities) ? m.capabilities.filter((c) => typeof c === "string") : [];
-      const det = m.details || {};
-      const bits = [];
-      if (typeof det.parameter_size === "string" && det.parameter_size) bits.push(det.parameter_size);
-      if (typeof det.embedding_length === "number" && det.embedding_length > 0) bits.push(`${det.embedding_length} 维`);
-      out.push({ id: m.name, capabilities, detail: bits.join("，") || "Ollama" });
-    }
-    return out;
-  }
-  function pickEmbeddingModels(data) {
-    const tags = parseOllamaTags(data);
-    const known = tags.some((t) => t.capabilities.length > 0);
-    return (known ? tags.filter((t) => t.capabilities.includes("embedding")) : tags).map((t) => ({
-      id: t.id,
-      detail: t.detail
-    }));
-  }
-  function embeddingServiceUrl() {
-    const s = tryGetSettings();
-    const local = String(s.secondBrainOllamaUrl || "").trim() || OLLAMA_BASE_URL;
-    const remote = String(s.secondBrainRemoteOllamaUrl || "").trim();
-    return isMobileEnv() && remote ? remote : local;
-  }
-  async function fetchEmbeddingModels(deps = {}) {
-    const url = `${embeddingServiceUrl().replace(/\/+$/, "")}/api/tags`;
-    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps);
-    const models = pickEmbeddingModels(data);
-    if (!models.length) throw new Error("Ollama 未返回可用的向量化模型");
-    return models;
-  }
-  var MODELS_TIMEOUT_MS, OLLAMA_TIMEOUT_MS, OLLAMA_BASE_URL;
-  var init_ai_models = __esm({
-    "src/core/ai-models.ts"() {
-      init_fake_obsidian();
-      init_ai();
-      init_mobile();
-      init_settings_provider();
-      MODELS_TIMEOUT_MS = 8e3;
-      OLLAMA_TIMEOUT_MS = 3e4;
-      OLLAMA_BASE_URL = "http://localhost:11434";
-    }
-  });
-
   // src/core/settings-model-picker.ts
   function closeModelPicker() {
     var _a2;
@@ -19649,7 +19660,16 @@ ${n.content.slice(0, 2e3)}
     };
   }
   function embeddingGroupRows() {
-    return [ollamaLocalUrlRow(), embeddingModelRow()];
+    return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow()];
+  }
+  function rerankToggleRow() {
+    return {
+      type: "toggle",
+      name: "启用重排",
+      desc: "召回结果再用重排模型精排，相关笔记排序更准",
+      binding: { key: "secondBrainRerank" },
+      visibleWhen: (snapshot2) => isQwen3Embedding8b(snapshot2.secondBrainEmbeddingModel)
+    };
   }
   function credentialGroupRows() {
     return [
@@ -60618,6 +60638,8 @@ GitHub 仓库：${ghInfo.title}
         // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
         secondBrainRemoteOllamaUrl: "",
         secondBrainRemoteOllamaAuto: "",
+        secondBrainRerank: true,
+        // issue 427/ADR-0186：默认开；仅 Qwen3-Embedding-8B 配置下显示与生效
         // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
         linkAgentEnabled: true,
         linkAgentTopK: 8,
