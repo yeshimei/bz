@@ -257,7 +257,7 @@ function providerGroupRows(): SettingsRow[] {
     {
       type: 'select',
       name: 'AI 服务商',
-      desc: '选择 AI 服务商',
+      desc: '当前使用的 AI 服务商',
       binding: { key: 'aiProvider' },
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -483,7 +483,7 @@ function jevModelRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Jev 模型',
-    desc: '判定使用的模型',
+    desc: '判定通道使用的模型',
     placeholder: 'jev-latest',
     binding: {
       get: () => jevScopedValue('model'),
@@ -584,7 +584,7 @@ function rerankModelRow(): SettingsRow {
   return {
     type: 'text',
     name: '重排模型',
-    desc: '重排使用的模型',
+    desc: '重排通道使用的模型',
     placeholder: 'dengcao/Qwen3-Reranker-4B:Q4_K_M',
     binding: { key: 'secondBrainRerankModel' },
     visibleWhen: (snapshot) =>
@@ -734,7 +734,7 @@ export function noticeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '停留时长',
-            desc: '通知停留的时长',
+            desc: '每条通知停留的时长',
             binding: { key: 'noticeDuration' },
             options: [
               { value: 'quick', label: '干脆（2 秒）' },

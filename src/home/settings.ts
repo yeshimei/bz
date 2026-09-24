@@ -86,13 +86,13 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '产出动作',
-            desc: '写下的、收进的、读完的动作记录',
+            desc: '写下的收进的读完的动作记录',
             binding: { key: 'homeTimelineProduce' },
           },
           {
             type: 'toggle',
             name: '状态推进',
-            desc: '加入片单、读到一半、新增待办等推进记录',
+            desc: '加入片单读到一半等推进记录',
             binding: { key: 'homeTimelineProgress' },
           },
           {
@@ -121,7 +121,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '明天预告卡',
-            desc: '右侧的复习、剪藏与日记预告栏',
+            desc: '右侧的复习剪藏与日记预告栏',
             binding: { key: 'homeNextCards' },
           },
         ],

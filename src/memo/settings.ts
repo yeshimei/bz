@@ -135,13 +135,13 @@ export function memoSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '启动时自动弹出',
-            desc: '启动时自动打开面板提醒重要或到期备忘录',
+            desc: '启动时自动打开备忘录面板提醒到期事项',
             binding: { key: 'autoPopupOnStart' },
           },
           {
             type: 'toggle',
             name: '打开笔记自动提醒',
-            desc: '打开笔记时自动定位相关备忘录',
+            desc: '打开笔记时弹出备忘录面板并定位',
             binding: {
               get: () => getSettings().openNoteReminder !== false,
               set: (v) => {

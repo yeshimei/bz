@@ -56,12 +56,12 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
   const upListDesc = () =>
     box.bilibiliUps.length > 0
       ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主`
-      : '暂未跟踪 UP 主';
+      : '暂未跟踪任何 UP 主';
   /** RSS 订阅行描述（ADR-0121：订阅源计数） */
   const rssListDesc = () =>
     box.rssFeeds.length > 0
       ? `已订阅 ${box.rssFeeds.length} 个 RSS 源`
-      : '暂未订阅 RSS 源';
+      : '暂未订阅任何 RSS 源';
 
   /** 抓取间隔描述（动态展示上次抓取时间；时间走 localDatetime 免斜杠串） */
   const intervalDesc = () => {

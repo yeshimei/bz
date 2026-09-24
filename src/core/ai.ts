@@ -133,7 +133,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 393216,
     apiKeyKey: 'deepseekApiKey',
     apiKeyLabel: 'DeepSeek 密钥',
-    apiKeyDesc: 'DeepSeek 的接口密钥',
+    apiKeyDesc: 'DeepSeek 官方的接口密钥',
     // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
     thinking: {
       levels: [

@@ -247,7 +247,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     // 新标题与描述（键名不动，只改文案）
     const interval = document.querySelector('.setting-item[data-name="自言自语间隔"]') as any;
     expect(interval).not.toBeNull();
-    expect(interval.__setting.desc).toBe('小橘每隔多久主动说一句话，范围 1 到 60 分钟');
+    expect(interval.__setting.desc).toBe('小橘主动说话的间隔分钟数');
     // 全部行：标题零符号（括号/等号），描述无、·/— 等禁用符号
     for (const row of Array.from(document.querySelectorAll('.setting-item')) as any[]) {
       expect(row.dataset.name).not.toMatch(/[（【=]/);

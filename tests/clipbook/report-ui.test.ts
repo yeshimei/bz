@@ -111,7 +111,7 @@ describe('clipbook 阅读报告弹层', () => {
     await openClipbookReport(getApp());
     const overlay = document.querySelector('.bz-clip-report-overlay') as HTMLElement;
     await waitForRendered(overlay, '还没有阅读记录');
-    expect(overlay.textContent).toContain('在剪藏本里打开文章阅读');
+    expect(overlay.textContent).toContain('打开文章阅读满一分钟自动记录');
     // ⑩ 标准件结构：.bz-empty + CTA 按钮行（手册 §8.3 空态带动作），不再是域自造 empty
     const empty = overlay.querySelector('[data-clp-rep-body] .bz-empty') as HTMLElement;
     expect(empty).toBeTruthy();

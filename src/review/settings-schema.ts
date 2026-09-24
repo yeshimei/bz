@@ -99,7 +99,7 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
           {
             type: 'number',
             name: 'R 目标阈值',
-            desc: '触发提前复习的保留度阈值',
+            desc: '触发提前复习的保留度阈值，不改变排期间隔',
             binding: { key: 'reviewRThreshold' },
             min: 0.5,
             max: 0.99,

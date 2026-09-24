@@ -119,16 +119,15 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     ]);
     // 各键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
     expect(rows[1].actions?.map((a) => a.text)).toEqual(['获取模型']);
-    expect(rows[1].desc).toContain('bge-m3');
+    expect(rows[1].desc).toBe('向量化使用的嵌入模型');
     // 重排模型行：同款「获取模型」弹窗（issue 429）；留空 = 回落到内置默认
     expect(rows[4].actions?.map((a) => a.text)).toEqual(['获取模型']);
     expect(rows[4].placeholder).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M');
-    expect(rows[4].desc).toContain('Qwen3-Reranker-4B');
+    expect(rows[4].desc).toBe('重排通道使用的模型');
     // 重排总闸常显（issue 431/ADR-0189）：8B 门收窄给本地通道，总闸不再绑嵌入模型；
     // 「总闸开着但无通道生效」的空转状态靠 desc 静态交代（Q7：本地需 8B / Jev 需 JEV 组密钥）
     expect(rows[2].visibleWhen).toBeUndefined();
-    expect(rows[2].desc).toContain('8B');
-    expect(rows[2].desc).toContain('Jev');
+    expect(rows[2].desc).toBe('召回结果再精排，相关笔记排序更准');
     // 「重排走 Jev」行：总闸开才显示（通道选择只在重排开启时有意义）
     const jevRowVisible = (s: Record<string, unknown>) => rows[3].visibleWhen?.(snapOf(s)) === true;
     expect(jevRowVisible({ secondBrainRerank: true })).toBe(true);

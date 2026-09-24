@@ -263,7 +263,7 @@ export function smartcatSettingsSchema(opts: {
         name: '互动',
         rows: [
           // ticket 163：小橘对我的称呼（默认包仔；把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼）
-          { type: 'text', name: '小橘对我的称呼', desc: '小橘对你的称呼', binding: bindBehavior('smartcatUserName') },
+          { type: 'text', name: '小橘对我的称呼', desc: '小橘提到你时的称呼', binding: bindBehavior('smartcatUserName') },
           { type: 'number', name: '自言自语间隔', desc: '小橘主动说话的间隔分钟数', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
           { type: 'number', name: '说话概率', desc: '定时主动说话的概率', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
           { type: 'toggle', name: '主动关心', desc: '每周按活跃时段主动搭话', binding: bindConfig('proactiveCare') },

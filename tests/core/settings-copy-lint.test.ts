@@ -92,8 +92,8 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
     const deepseekRow = rows.find((r) => r.name === 'DeepSeek 密钥')!;
     const zhipuRow = rows.find((r) => r.name === '智谱 Plan 密钥')!;
     const modelRow = rows.find((r) => r.name === '模型名称')!;
-    expect(deepseekRow.desc).toBe('DeepSeek 的接口密钥');
-    expect(zhipuRow.desc).toBe('智谱 Coding 套餐专用端点，密钥与智谱开放平台相同');
+    expect(deepseekRow.desc).toBe('DeepSeek 官方的接口密钥');
+    expect(zhipuRow.desc).toBe('智谱 Coding 套餐的接口密钥');
     expect(modelRow.desc).toBe('AI 生成使用的模型');
     // issue 342/ADR-0151：未填覆盖时按当前模型查官方最大档
     const maxTokensRow = rows.find((r) => r.name === '最大输出 token')!;

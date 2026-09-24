@@ -140,8 +140,8 @@ describe('数据源组常显（B 站/RSS 开关退役）', () => {
   it('UP 名单行 desc 计数：已跟踪 N 位 / 暂未跟踪', async () => {
     seedDisk();
     const rows = dataSourceGroupRows(await readDataSourceState());
-    expect(rowByName(rows, 'UP 主名单').desc).toBe('已跟踪 1 位 UP 主，添加与移除在管理弹窗');
+    expect(rowByName(rows, 'UP 主名单').desc).toBe('已跟踪 1 位 UP 主');
     const empty = dataSourceGroupRows({ ...emptyDataSourceState(true), exists: true });
-    expect(rowByName(empty, 'UP 主名单').desc).toBe('暂未跟踪 UP 主，添加与移除在管理弹窗');
+    expect(rowByName(empty, 'UP 主名单').desc).toBe('暂未跟踪任何 UP 主');
   });
 });
