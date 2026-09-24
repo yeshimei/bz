@@ -137,3 +137,74 @@ describe('vectorSearch 重排接线（issue 427/ADR-0186）', () => {
     expect(vi.mocked(rerankScores)).not.toHaveBeenCalled();
   });
 });
+
+describe('检索取消与重排分回填（issue 428/429）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => settings() as any);
+    vi.mocked(getEmbedding).mockReset();
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
+    vi.mocked(rerankScores).mockReset();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('重排分回填 rerankScore（仅头部），score 与尾部条目不动——参考面板百分比据此与名次同尺', async () => {
+    const vs = seedStore();
+    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9]); // 头部两条对调：b > a
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['b.md', 'a.md', 'c.md']);
+    expect(res.map((r) => r.rerankScore)).toEqual([0.9, 0.1, undefined]); // 尾部 c 没重排分
+    expect(res.map((r) => r.score)).toEqual([
+      expect.closeTo(0.6, 5),
+      expect.closeTo(1, 5),
+      expect.closeTo(0.28, 5),
+    ]);
+  });
+
+  it('signal 逐级下传：嵌入与重排都收到同一 signal（取消才能真中断 HTTP）', async () => {
+    const vs = seedStore();
+    const ac = new AbortController();
+    vi.mocked(rerankScores).mockResolvedValue([0.9, 0.1]);
+
+    await vs.vectorSearch('q', 10, undefined, ac.signal);
+    expect(vi.mocked(getEmbedding).mock.calls[0][4]).toBe(ac.signal);
+    expect(vi.mocked(rerankScores).mock.calls[0][3]).toBe(ac.signal);
+  });
+
+  it('已取消的 signal：vectorSearch 在嵌入前就中断（AbortError），一次请求都不发', async () => {
+    const vs = seedStore();
+    const ac = new AbortController();
+    ac.abort();
+
+    await expect(vs.vectorSearch('q', 10, undefined, ac.signal)).rejects.toThrow('请求已中断');
+    expect(vi.mocked(getEmbedding)).not.toHaveBeenCalled();
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled();
+  });
+
+  it('重排中途取消：AbortError 直抛，**不回退余弦序**（旧序回填会盖掉新查询的列表）', async () => {
+    const vs = seedStore();
+    const ac = new AbortController();
+    vi.mocked(rerankScores).mockImplementation(async () => {
+      ac.abort();
+      throw Object.assign(new Error('请求已中断'), { name: 'AbortError' });
+    });
+
+    await expect(vs.vectorSearch('q', 10, undefined, ac.signal)).rejects.toThrow('请求已中断');
+  });
+
+  it('search 层：取消不降级文本、不触发降级回调（与「向量链路故障」分流）', async () => {
+    const vs = seedStore();
+    const ac = new AbortController();
+    ac.abort();
+    const onDegraded = vi.fn();
+
+    await expect(vs.search('q', 10, onDegraded, ac.signal)).rejects.toThrow('请求已中断');
+    expect(onDegraded).not.toHaveBeenCalled();
+  });
+});

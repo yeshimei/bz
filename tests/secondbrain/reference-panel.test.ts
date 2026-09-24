@@ -214,6 +214,64 @@ describe('secondbrain/reference-panel 刷新竞态防护', () => {
     expect(spy).toHaveBeenCalled();
     panel.close();
   });
+
+  /** 编辑器行内容可变的 app 桩（issue 428：同一面板上先后发两次查询） */
+  function appWithText(initial: string): { app: any; setLine: (v: string) => void } {
+    let line = initial;
+    const app = makeApp();
+    app.workspace.activeEditor = {
+      editor: { getCursor: () => ({ line: 0, ch: 4 }), getLine: () => line },
+    };
+    return { app, setLine: (v: string) => (line = v) };
+  }
+
+  it('[428] 只查最新：新查询发起即中断上一轮（signal 中断、旧结果不回填、静默不报错）', async () => {
+    const { app, setLine } = appWithText('第一条查询上下文');
+    const signals: AbortSignal[] = [];
+    const store: any = {
+      search: (q: string, _k?: number, _onDeg?: unknown, signal?: AbortSignal) => {
+        signals.push(signal as AbortSignal);
+        return new Promise((resolve, reject) => {
+          (signal as AbortSignal).addEventListener('abort', () =>
+            reject(Object.assign(new Error('请求已中断'), { name: 'AbortError' }))
+          );
+          if (q === '第二条查询上下文') resolve([HIT_B]); // 只有最新那条给出结果
+        });
+      },
+    };
+    const panel = new ReferencePanel(app, store as any);
+    const first = panel.refreshContent(); // 第一条挂起（永不 resolve）
+    expect(signals).toHaveLength(1);
+    setLine('第二条查询上下文');
+    const second = panel.refreshContent();
+    await Promise.all([first, second]);
+    expect(signals).toHaveLength(2);
+    expect(signals[0].aborted).toBe(true); // 上一轮被真中断
+    expect(signals[1].aborted).toBe(false);
+    expect(panel.resultsDiv.textContent).toContain('笔记B'); // 列表是新一轮的结果
+    expect(panel.resultsDiv.textContent).not.toContain('检索失败'); // 旧轮被中断 ≠ 检索故障
+    panel.close();
+  });
+
+  it('[428] 关闭面板：中断在途检索（已无接管者），本轮静默收口不抛错', async () => {
+    const { app } = appWithText('关闭前发起的长查询上下文');
+    const signals: AbortSignal[] = [];
+    const store: any = {
+      search: (_q: string, _k?: number, _onDeg?: unknown, signal?: AbortSignal) => {
+        signals.push(signal as AbortSignal);
+        return new Promise((_resolve, reject) => {
+          (signal as AbortSignal).addEventListener('abort', () =>
+            reject(Object.assign(new Error('请求已中断'), { name: 'AbortError' }))
+          );
+        });
+      },
+    };
+    const panel = new ReferencePanel(app, store as any);
+    const pending = panel.refreshContent();
+    panel.close();
+    expect(signals[0].aborted).toBe(true);
+    await expect(pending).resolves.toBeUndefined();
+  });
 });
 
 type SearchHitLike = { path: string; score: number; chunk: string };

@@ -2,7 +2,8 @@
 /**
  * 第二大脑纯函数测试（ticket 103 重写对齐）：chunk/vector-math/text-search/tfidf/context/parallel
  * 口径要点：smartChunk 空行分段聚合（非全文句界顺序拼接）；normalizeVec 返回新数组不改入参、
- * 退化输入兜底零向量；searchTextIndex(query, notes, topK) 直接评分扫描；getCurrentContext 句界含分号/省略号。
+ * 退化输入兜底零向量；searchTextIndex(query, notes, topK) 直接评分扫描；getCurrentContext 句界含分号/省略号，
+ * 空白行返回空串（issue 428：旧版回退上一行会让光标停空行时触发查询）。
  * ticket 110：stripFrontmatter/embedChunks——YAML 头不进任何 chunk、标题并入首块。
  * issue 425/ADR-0185：vptree 已退役（近似召回 + 零向量假高分），其测试块随之改名 vector-math。
  */
@@ -318,9 +319,10 @@ describe('getCurrentContext', () => {
     expect(getCurrentContext(ed(lines, 0, 4))).toBe('丙…'); // 半角分号作前界、省略号收尾
   });
 
-  it('当前行整行空白才回退上一行尾 300 字（「<2 字回退」已废）', () => {
+  it('当前行整行空白 → 空串（issue 428：不再回退上一行——光标停空行不该触发查询）', () => {
     const prev = '前'.repeat(500);
-    expect(getCurrentContext(ed([prev, '   '], 1, 0))).toBe('前'.repeat(300));
+    expect(getCurrentContext(ed([prev, '   '], 1, 0))).toBe('');
+    expect(getCurrentContext(ed([prev, ''], 1, 0))).toBe('');
   });
 
   it('上一行也空白或编辑器为空 → 空串', () => {

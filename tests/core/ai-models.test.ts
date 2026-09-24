@@ -9,6 +9,7 @@ import { DEFAULT_SETTINGS } from '../../src/settings';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { fetchProviderModels, parseModelList, MODELS_TIMEOUT_MS } from '../../src/core/ai-models';
 import { embeddingServiceUrl, fetchEmbeddingModels, parseOllamaTags, pickEmbeddingModels } from '../../src/core/ai-models';
+import { fetchRerankModels, pickRerankModels } from '../../src/core/ai-models';
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from '../../src/core/ai';
 import { Platform as MockPlatform, requestUrl } from '../mock-obsidian-entry';
 
@@ -285,5 +286,46 @@ describe('向量化模型列表（issue 422/ADR-0182：AI 面板 Embedding 组�
     await expect(fetchEmbeddingModels({ fetchFn: boom, requestUrlFn })).resolves.toEqual([
       { id: 'bge-m3', detail: 'Ollama' },
     ]);
+  });
+});
+
+describe('重排模型列表（issue 429：AI 面板「重排模型」行「获取模型」）', () => {
+  it('pickRerankModels：名字含 rerank 的优先（一堆聊天模型里直取重排器）', () => {
+    const models = pickRerankModels({
+      models: [
+        { name: 'llama3.1:latest', capabilities: ['completion'] },
+        { name: 'dengcao/Qwen3-Reranker-4B:Q4_K_M', capabilities: ['completion'] },
+        { name: 'qwen3-embedding:8b', capabilities: ['embedding'] },
+      ],
+    });
+    expect(models.map((m) => m.id)).toEqual(['dengcao/Qwen3-Reranker-4B:Q4_K_M']);
+  });
+
+  it('pickRerankModels：无 rerank 命名 → 不过滤全量返回（自定义名 / 旧版服务由用户自辨）', () => {
+    const models = pickRerankModels({ models: [{ name: '自定义打分器:latest' }, { name: 'llama3.1:latest' }] });
+    expect(models.map((m) => m.id)).toEqual(['自定义打分器:latest', 'llama3.1:latest']);
+    expect(pickRerankModels({}).map((m) => m.id)).toEqual([]); // 空响应交调用方报错
+  });
+
+  it('fetchRerankModels：GET {服务地址}/api/tags（尾斜杠归一）→ 重排子集', async () => {
+    state.secondBrainOllamaUrl = 'http://localhost:11434/';
+    const fetchFn = vi.fn(async (u: string, init: any) => {
+      expect(u).toBe('http://localhost:11434/api/tags');
+      expect(init.method).toBe('GET');
+      return okOpenAI({
+        models: [
+          { name: 'Qwen3-Reranker-4B:Q4_K_M', capabilities: ['completion'], details: { parameter_size: '4B' } },
+          { name: 'llama3.1:latest', capabilities: ['completion'] },
+        ],
+      });
+    });
+    await expect(fetchRerankModels({ fetchFn })).resolves.toEqual([
+      { id: 'Qwen3-Reranker-4B:Q4_K_M', detail: '4B' },
+    ]);
+  });
+
+  it('fetchRerankModels：空列表 → 抛「Ollama 未返回可用的重排模型」', async () => {
+    const empty = vi.fn(async () => okOpenAI({ models: [] }));
+    await expect(fetchRerankModels({ fetchFn: empty })).rejects.toThrow('Ollama 未返回可用的重排模型');
   });
 });

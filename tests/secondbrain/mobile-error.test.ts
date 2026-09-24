@@ -17,7 +17,7 @@ function makeApp(): any {
   };
 }
 
-function makePanel(searchMobile: () => Promise<unknown[]>): { panel: MobilePanel; store: any } {
+function makePanel(searchMobile: (q: string, k?: number, signal?: AbortSignal) => Promise<unknown[]>): { panel: MobilePanel; store: any } {
   const store: any = {
     notes: {},
     initMobile: async () => '',
@@ -78,5 +78,69 @@ describe('secondbrain/mobile-panel 检索失败提示（ticket 141）', () => {
     } finally {
       panel.close();
     }
+  });
+});
+
+describe('secondbrain/mobile-panel 检索取消（issue 428「只查最新」）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setApp(null as any);
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }) as BzSettings);
+  });
+
+  it('新查询发起即中断上一轮：旧 signal 已 abort，旧结果不回填、不报错', async () => {
+    const signals: AbortSignal[] = [];
+    const resolvers: ((v: any) => void)[] = [];
+    const { panel } = makePanel((q: string) => {
+      signals.push((panel as any).inflight.signal);
+      return new Promise((resolve) => resolvers.push((_s) => resolve(q === '第一轮查询' ? [{ path: '旧结果.md', score: 0.9, chunk: '旧' }] : [])));
+    });
+    try {
+      const first = panel.refreshResults('第一轮查询');
+      const second = panel.refreshResults('第二轮查询');
+      expect(signals[0].aborted).toBe(true); // 上一轮真中断
+      expect(signals[1].aborted).toBe(false);
+      resolvers.forEach((r) => r(null)); // 旧轮即便已返回数据也不再回填
+      await Promise.all([first, second]);
+      expect(panel.refError).toBeNull(); // 被中断的一轮不当作失败
+      expect(panel.body.textContent).not.toContain('检索失败');
+      expect(panel.body.textContent).not.toContain('旧结果');
+    } finally {
+      panel.close();
+    }
+  });
+
+  it('中断发生在 store 抛错路径：本轮静默收口，不落失败提示', async () => {
+    const { panel, store } = makePanel(async () => {
+      throw Object.assign(new Error('请求已中断'), { name: 'AbortError' });
+    });
+    try {
+      (store.searchMobile as any).mockImplementation(async (_q: string, _k: number, signal: AbortSignal) => {
+        if (signal.aborted) throw Object.assign(new Error('请求已中断'), { name: 'AbortError' });
+        return [];
+      });
+      await panel.refreshResults('足够长的查询词');
+      expect(panel.refError).toBeNull();
+      expect(panel.body.textContent).not.toContain('检索失败');
+    } finally {
+      panel.close();
+    }
+  });
+
+  it('关闭抽屉：在途检索被中断（无接管者），不抛错', async () => {
+    let captured: AbortSignal | undefined;
+    const { panel } = makePanel(
+      (_q: string) =>
+        new Promise((resolve) => {
+          const signal: AbortSignal = (panel as any).inflight.signal;
+          captured = signal;
+          signal.addEventListener('abort', () => resolve([] as any));
+        })
+    );
+    const pending = panel.refreshResults('足够长的查询词');
+    panel.close();
+    expect(captured?.aborted).toBe(true);
+    await expect(pending).resolves.toBeUndefined();
   });
 });

@@ -1,4 +1,4 @@
-/* 源指纹 3bfef1ebf52952a9 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 abac12960b1d1cf2 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -8815,15 +8815,7 @@ ${userMsg}`;
     try {
       const cursor = ed.getCursor();
       const line = ed.getLine(cursor.line);
-      if (!line || line.trim().length === 0) {
-        if (cursor.line > 0) {
-          const prevLine = ed.getLine(cursor.line - 1);
-          if (prevLine && prevLine.trim().length > 0) {
-            return prevLine.trim().slice(-300);
-          }
-        }
-        return "";
-      }
+      if (!line || line.trim().length === 0) return "";
       const fullText = line;
       const cursorPos = cursor.ch;
       const sentenceBreaks = /[。！？!?；;…\n]/;
@@ -8851,6 +8843,10 @@ ${userMsg}`;
 
   // src/secondbrain/reference-panel.ts
   init_ui();
+  function relevancePct(item) {
+    var _a2;
+    return Math.round(((_a2 = item.rerankScore) != null ? _a2 : item.score) * 100);
+  }
   var ReferencePanel = class {
     constructor(app, store2, existingWin) {
       this.lastQuery = "";
@@ -8871,6 +8867,8 @@ ${userMsg}`;
       this.cardTeardowns = /* @__PURE__ */ new Map();
       /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
       this.floatDetachers = /* @__PURE__ */ new Map();
+      /** 在途检索（issue 428「只查最新」）：新查询发起即中断上一轮，关闭面板也中断 */
+      this.inflight = null;
       this.app = app;
       this.store = store2;
       this.denseBtn = document.createElement("button");
@@ -8932,7 +8930,7 @@ ${userMsg}`;
       this.debounceTimer = setTimeout(() => void this.refreshContent(), CONFIG.DEBOUNCE_DELAY);
     }
     async refreshContent() {
-      var _a2;
+      var _a2, _b2;
       if (this.isClosed) return;
       const ed = (_a2 = this.app.workspace.activeEditor) == null ? void 0 : _a2.editor;
       if (!ed) {
@@ -8942,17 +8940,23 @@ ${userMsg}`;
       const query = getCurrentContext(ed);
       if (query.length < 2 || query === this.lastQuery) return;
       this.lastQuery = query;
+      (_b2 = this.inflight) == null ? void 0 : _b2.abort();
+      const ac = new AbortController();
+      this.inflight = ac;
       this.showListState("检索中…");
       let degraded = false;
       try {
         const CONFIG = buildConfig();
         const results = await this.store.search(query, CONFIG.TOP_K, () => {
           degraded = true;
-        });
+        }, ac.signal);
+        if (this.inflight === ac) this.inflight = null;
         if (this.isClosed) return;
         this.renderResults(results);
         if (degraded) this.appendListHint("⚠ 向量检索暂不可用，已降级为文本匹配");
       } catch (err) {
+        if (ac.signal.aborted) return;
+        if (this.inflight === ac) this.inflight = null;
         console.warn("[secondbrain] 参考面板检索失败", err);
         if (this.isClosed) return;
         this.showListState("检索失败：请检查 Ollama 服务后重试");
@@ -8999,7 +9003,7 @@ ${userMsg}`;
       const panel2 = this;
       const card = document.createElement("div");
       card.className = "bz-sb-ref-card";
-      card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), Math.round(item.score * 100), "#a33d2a");
+      card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, "")), relevancePct(item), "#a33d2a");
       const topRow = card.querySelector(".bz-sb-ref-card-top");
       const bodyDiv = card.querySelector(".bz-sb-ref-card-body");
       renderMarkdown(bodyDiv, item.chunk, panel2.app);
@@ -9167,7 +9171,7 @@ ${userMsg}`;
       pathLabel.textContent = item.path;
       const scoreLabel = document.createElement("div");
       scoreLabel.className = "bz-sb-ref-preview-score";
-      scoreLabel.textContent = `匹配度 ${Math.round(item.score * 100)}%`;
+      scoreLabel.textContent = `匹配度 ${relevancePct(item)}%`;
       const bodyDiv = document.createElement("div");
       bodyDiv.className = "bz-sb-ref-preview-body";
       renderMarkdown(bodyDiv, item.chunk, this.app);
@@ -9197,11 +9201,13 @@ ${userMsg}`;
       this.fw.close();
     }
     destroyResources() {
-      var _a2, _b2;
+      var _a2, _b2, _c;
       if (this.isClosed) return;
       this.isClosed = true;
-      clearTimeout((_a2 = this.debounceTimer) != null ? _a2 : void 0);
-      clearInterval((_b2 = this.pollTimer) != null ? _b2 : void 0);
+      (_a2 = this.inflight) == null ? void 0 : _a2.abort();
+      this.inflight = null;
+      clearTimeout((_b2 = this.debounceTimer) != null ? _b2 : void 0);
+      clearInterval((_c = this.pollTimer) != null ? _c : void 0);
       this.debounceTimer = null;
       this.pollTimer = null;
       if (this.vaultRef || this.leafRef || this.editorRef) {
@@ -9250,6 +9256,8 @@ ${userMsg}`;
       this.escHandle = null;
       this.lastCursor = null;
       this.lastQuery = "";
+      /** 在途检索（issue 428「只查最新」）：新查询/空上下文发起即中断上一轮，关闭抽屉也中断 */
+      this.inflight = null;
       var _a2;
       this.app = app;
       this.store = store2;
@@ -9422,17 +9430,25 @@ ${userMsg}`;
       }, buildConfig().DEBOUNCE_DELAY);
     }
     async refreshResults(query) {
+      var _a2;
       const CONFIG = buildConfig();
+      (_a2 = this.inflight) == null ? void 0 : _a2.abort();
+      const ac = new AbortController();
+      this.inflight = ac;
       if (!query || query.length < 2) {
+        this.inflight = null;
         this.refResults = [];
         this.refError = null;
         if (this.mode === "ref") this.renderRefTab();
         return;
       }
       try {
-        this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K);
+        this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
+        if (this.inflight === ac) this.inflight = null;
         this.refError = null;
       } catch (e) {
+        if (ac.signal.aborted) return;
+        if (this.inflight === ac) this.inflight = null;
         console.warn("[secondbrain] 移动端检索失败", e);
         this.refResults = [];
         this.refError = "检索失败：请检查 Ollama 服务后重试";
@@ -9632,9 +9648,11 @@ ${text}`;
     }
     /** 完全关闭（区别于收起）：清理监听与定时器后移除 DOM */
     close() {
-      var _a2, _b2, _c;
+      var _a2, _b2, _c, _d;
       (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
       this.escHandle = null;
+      (_b2 = this.inflight) == null ? void 0 : _b2.abort();
+      this.inflight = null;
       if (this.evLeaf) {
         try {
           this.app.workspace.offref(this.evLeaf);
@@ -9644,8 +9662,8 @@ ${text}`;
       document.removeEventListener("selectionchange", this.onSelectionChange);
       document.removeEventListener("touchmove", this.onTouchMove);
       document.removeEventListener("touchend", this.onTouchEnd);
-      clearInterval((_b2 = this.cursorPoll) != null ? _b2 : void 0);
-      clearTimeout((_c = this.debounceTimer) != null ? _c : void 0);
+      clearInterval((_c = this.cursorPoll) != null ? _c : void 0);
+      clearTimeout((_d = this.debounceTimer) != null ? _d : void 0);
       this.cursorPoll = null;
       this.debounceTimer = null;
       this.sheet.classList.remove("bz-sb-mb-open");

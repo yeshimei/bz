@@ -223,6 +223,7 @@ export function isQwen3Embedding8b(model: unknown): boolean {
 /**
  * 向量化服务端点（「获取模型」按钮拉列表用）：与 secondbrain/config.ts buildConfig 同口径——
  * 移动端优先「移动端远程地址」、未配置回落本地；两键留空一律默认 http://localhost:11434。
+ * 嵌入与重排两个模型行共用这一个地址（issue 429：重排走的就是同一台 Ollama）。
  * （规则镜像域侧实现：域侧 IS_MOBILE 另有 UA 兜底，此处按 obsidian Platform 判定。）
  */
 export function embeddingServiceUrl(): string {
@@ -239,5 +240,23 @@ export async function fetchEmbeddingModels(deps: ModelsFetchDeps = {}): Promise<
   const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, 'Ollama', deps);
   const models = pickEmbeddingModels(data);
   if (!models.length) throw new Error('Ollama 未返回可用的向量化模型');
+  return models;
+}
+
+/** 重排模型选项（issue 429）：名字含 rerank 的优先；一个都没有 → 全量返回由用户自辨
+ *  （重排模型是社区转换版，命名五花八门且 capabilities 里没有 rerank 这一档——
+ *  按能力过滤会把真正的重排模型滤掉，故只按名字软过滤）。 */
+export function pickRerankModels(data: any): ModelOption[] {
+  const tags = parseOllamaTags(data);
+  const rerank = tags.filter((t) => /rerank/i.test(t.id));
+  return (rerank.length ? rerank : tags).map((t) => ({ id: t.id, detail: t.detail }));
+}
+
+/** 拉取重排模型列表（AI 面板「重排模型」行的行内按钮）：与嵌入侧同一端点，空列表抛错由调用方提示 */
+export async function fetchRerankModels(deps: ModelsFetchDeps = {}): Promise<ModelOption[]> {
+  const url = `${embeddingServiceUrl().replace(/\/+$/, '')}/api/tags`;
+  const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, 'Ollama', deps);
+  const models = pickRerankModels(data);
+  if (!models.length) throw new Error('Ollama 未返回可用的重排模型');
   return models;
 }

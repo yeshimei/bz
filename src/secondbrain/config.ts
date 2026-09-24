@@ -68,6 +68,16 @@ export function rerankActive(): boolean {
   return s.secondBrainRerank !== false && isQwen3Embedding8b(s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL);
 }
 
+/**
+ * 实际生效的重排模型（issue 429）：设置留空 → 默认 RERANK_MODEL（4B）。
+ * 换重排模型不动向量索引（重排是纯换序层），故与 Embedding 模型的「换模型需重建」不同——
+ * 改完下一次检索即生效。
+ */
+export function resolvedRerankModel(): string {
+  const s: any = tryGetSettings();
+  return String(s.secondBrainRerankModel || '').trim() || RERANK_MODEL;
+}
+
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();
   return {

@@ -334,3 +334,60 @@ describe('Jev 模型行：获取模型（issue 424/ADR-0184）', () => {
     expect(document.getElementById('bz-model-picker-popup')).toBeNull();
   });
 });
+
+/**
+ * 重排模型行「获取模型」（issue 429）：与 Embedding 模型行同款弹窗流程——拉 /api/tags →
+ * pickRerankModels 优先取名字含 rerank 的 → 选中写 secondBrainRerankModel + 落盘 + success toast，
+ * 且等选择器关闭再 resolve（一次点击即回填）。行可见性挂在 8B 嵌入 + 重排开关上。
+ */
+describe('重排模型行：获取模型（issue 429）', () => {
+  it('拉取 Ollama 模型列表 → 只列重排候选 → 选中即回填（一次点击）', async () => {
+    state.secondBrainEmbeddingModel = 'qwen3-embedding:8b'; // 行可见前提
+    state.secondBrainRerankModel = ''; // 当前空 → 选中后必变
+    const fetchMock = vi.fn(async (u: string) => {
+      expect(u).toBe('http://localhost:11434/api/tags');
+      return okModels({
+        models: [
+          { name: 'llama3.1:latest', capabilities: ['completion'] },
+          { name: 'dengcao/Qwen3-Reranker-4B:Q4_K_M', capabilities: ['completion'], details: { parameter_size: '4B' } },
+        ],
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const container = renderAIGroup();
+    const row = findRow(container, '重排模型');
+    buttonOf(row).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    const popupRows = [...document.querySelectorAll('.bz-model-picker-row')];
+    expect(popupRows).toHaveLength(1); // 聊天模型不进重排候选
+    (popupRows[0] as HTMLElement).click();
+    await vi.waitFor(() => expect(state.secondBrainRerankModel).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M'));
+    await vi.waitFor(() =>
+      expect(textControlOf(findRow(container, '重排模型')).value).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M')
+    );
+    expect(saver).toHaveBeenCalled();
+    await vi.waitFor(() => expect(visibleToasts().some((t) => t.includes('重排模型已设为'))).toBe(true));
+  });
+
+  it('拉取失败（Ollama 无响应）→ 行内报错 toast，设置不动', async () => {
+    state.secondBrainEmbeddingModel = 'qwen3-embedding:8b';
+    state.secondBrainRerankModel = '原模型';
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    }));
+    requestUrlMock.mockRejectedValue(new Error('Ollama 无响应'));
+    const container = renderAIGroup();
+    buttonOf(findRow(container, '重排模型')).trigger();
+    await vi.waitFor(() => expect(visibleToasts().length).toBeGreaterThan(0));
+    expect(state.secondBrainRerankModel).toBe('原模型');
+    expect(document.getElementById('bz-model-picker-popup')).toBeNull();
+  });
+
+  it('嵌入模型非 8B → 重排行与重排模型行都收起（bz-setting-hidden）', () => {
+    state.secondBrainEmbeddingModel = 'bge-m3';
+    const container = renderAIGroup();
+    expect(findRow(container, 'Embedding 模型').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '启用重排').classList.contains('bz-setting-hidden')).toBe(true);
+    expect(findRow(container, '重排模型').classList.contains('bz-setting-hidden')).toBe(true);
+  });
+});

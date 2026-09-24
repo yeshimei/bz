@@ -31,6 +31,15 @@ import {
 import { mountIcons } from '../core/ui';
 import type { SearchHit, VectorStore } from './vector-store';
 
+/**
+ * 列表显示用相关度百分比（issue 429）：重排过的条目显示重排分（P(yes)）——
+ * 名次按重排分排，显示的百分比就得是同一个尺，否则肉眼看到「没按相关度排序」。
+ * 未重排/重排回退的条目回落到余弦 score。**只影响显示**：分数条与阈值仍以余弦为唯一尺（ADR-0186）。
+ */
+function relevancePct(item: SearchHit): number {
+  return Math.round((item.rerankScore ?? item.score) * 100);
+}
+
 export class ReferencePanel {
   fw: FloatWindow;
   resultsDiv: HTMLElement;
@@ -56,6 +65,8 @@ export class ReferencePanel {
   private cardTeardowns = new Map<HTMLElement, () => void>();
   /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
   private floatDetachers = new Map<HTMLElement, () => void>();
+  /** 在途检索（issue 428「只查最新」）：新查询发起即中断上一轮，关闭面板也中断 */
+  private inflight: AbortController | null = null;
 
   constructor(app: App, store: VectorStore, existingWin?: FloatWindow) {
     this.app = app;
@@ -143,6 +154,11 @@ export class ReferencePanel {
     const query = getCurrentContext(ed);
     if (query.length < 2 || query === this.lastQuery) return;
     this.lastQuery = query;
+    // 只查最新（issue 428）：先中断在途的那一轮（真中断嵌入/重排 HTTP，不只是丢弃结果）。
+    // 检查点放在早退之后——查询文本没变时不该动在途请求，否则「检索中…」会悬在中途没有接管者。
+    this.inflight?.abort();
+    const ac = new AbortController();
+    this.inflight = ac;
     // [46] 查询期 loading 占位：清掉旧结果给出进行中状态（避免停留上一份结果造成误导）
     this.showListState('检索中…');
     let degraded = false;
@@ -150,11 +166,15 @@ export class ReferencePanel {
       const CONFIG = buildConfig();
       const results = await this.store.search(query, CONFIG.TOP_K, () => {
         degraded = true; // store 内部向量检索失败已降级文本：向用户明示
-      });
+      }, ac.signal);
+      if (this.inflight === ac) this.inflight = null;
       if (this.isClosed) return; // 关闭瞬间检索才返回：不再向已 detach 的 DOM 渲染（ticket 107）
       this.renderResults(results);
       if (degraded) this.appendListHint('⚠ 向量检索暂不可用，已降级为文本匹配');
     } catch (err) {
+      // 被更新的一轮中断：本轮作废且列表态已归新查询所有——静默收口，不当成检索故障
+      if (ac.signal.aborted) return;
+      if (this.inflight === ac) this.inflight = null;
       console.warn('[secondbrain] 参考面板检索失败', err);
       if (this.isClosed) return;
       this.showListState('检索失败：请检查 Ollama 服务后重试');
@@ -207,7 +227,7 @@ export class ReferencePanel {
     const card = document.createElement('div');
     card.className = 'bz-sb-ref-card';
     // markup 出 render.ts 纯层（issue 251）：名称行 + 匹配度 + 分数条 + 正文容器
-    card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, '')), Math.round(item.score * 100), '#a33d2a');
+    card.innerHTML = refCardHtml(stripMdExt(item.path.replace(/^.*[\\/]/, '')), relevancePct(item), '#a33d2a');
     const topRow = card.querySelector('.bz-sb-ref-card-top') as HTMLElement;
     // 正文 markdown 预渲染（列表态收起，浮出态展开）
     const bodyDiv = card.querySelector('.bz-sb-ref-card-body') as HTMLElement;
@@ -403,7 +423,7 @@ export class ReferencePanel {
     pathLabel.textContent = item.path;
     const scoreLabel = document.createElement('div');
     scoreLabel.className = 'bz-sb-ref-preview-score';
-    scoreLabel.textContent = `匹配度 ${Math.round(item.score * 100)}%`;
+    scoreLabel.textContent = `匹配度 ${relevancePct(item)}%`;
     const bodyDiv = document.createElement('div');
     bodyDiv.className = 'bz-sb-ref-preview-body';
     renderMarkdown(bodyDiv, item.chunk, this.app);
@@ -440,6 +460,9 @@ export class ReferencePanel {
   private destroyResources(): void {
     if (this.isClosed) return;
     this.isClosed = true;
+    // 在途检索兜底中断（issue 428）：关了面板就不再有接管者，请求没必要跑完
+    this.inflight?.abort();
+    this.inflight = null;
     clearTimeout(this.debounceTimer ?? undefined);
     clearInterval(this.pollTimer ?? undefined);
     this.debounceTimer = null;

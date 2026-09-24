@@ -265,18 +265,31 @@ export class MobilePanel {
     }, buildConfig().DEBOUNCE_DELAY);
   }
 
+  /** 在途检索（issue 428「只查最新」）：新查询/空上下文发起即中断上一轮，关闭抽屉也中断 */
+  private inflight: AbortController | null = null;
+
   async refreshResults(query: string): Promise<void> {
     const CONFIG = buildConfig();
+    // 只查最新（issue 428）：接了新上下文就中断上一轮（真中断远程嵌入 HTTP）——
+    // 快速改字时否则会有一串远程查询排队，旧结果返回来还会盖掉最新一轮
+    this.inflight?.abort();
+    const ac = new AbortController();
+    this.inflight = ac;
     if (!query || query.length < 2) {
+      this.inflight = null;
       this.refResults = [];
       this.refError = null;
       if (this.mode === 'ref') this.renderRefTab();
       return;
     }
     try {
-      this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K);
+      this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
+      if (this.inflight === ac) this.inflight = null;
       this.refError = null; // 本次检索成功：清除上一轮失败态
     } catch (e) {
+      // 被更新的一轮中断：本轮作废，列表态归新查询所有——静默收口
+      if (ac.signal.aborted) return;
+      if (this.inflight === ac) this.inflight = null;
       console.warn('[secondbrain] 移动端检索失败', e);
       this.refResults = [];
       // ticket 141：与桌面 reference-panel 同款真实错误提示（不再吞成「暂无相关笔记」）
@@ -495,6 +508,9 @@ export class MobilePanel {
   close(): void {
     this.escHandle?.unregister();
     this.escHandle = null;
+    // 在途检索兜底中断（issue 428）：抽屉关了就不再有接管者，请求没必要跑完
+    this.inflight?.abort();
+    this.inflight = null;
     if (this.evLeaf) {
       try {
         this.app.workspace.offref(this.evLeaf);

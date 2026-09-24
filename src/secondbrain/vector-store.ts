@@ -37,6 +37,7 @@ import { TFIDF } from './tfidf';
 import { searchTextIndex } from './text-search';
 import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch, SEARCH_TIMEOUT_MS } from './ollama';
 import { bytesEqual } from '../core/utils';
+import { abortError, isAbortError, throwIfAborted } from '../core/abort';
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
@@ -71,7 +72,11 @@ export interface SecondBrainMeta {
 export interface SearchHit {
   path: string;
   chunk: string;
+  /** 相关度分（余弦 [0,1]）——**阈值判定的唯一尺**（ADR-0185），显示亦默认用它 */
   score: number;
+  /** 重排分 P(yes)（issue 429）：仅头部经重排的条目携带，用于显示与名次同尺的百分比。
+   *  不参与任何阈值判定（重排是纯换序层，ADR-0186 §1）。 */
+  rerankScore?: number;
 }
 
 interface ChunkTask {
@@ -649,9 +654,12 @@ export class VectorStore {
    * 全扫精确无近似：VP-Tree 近似召回会漏掉真实最近邻，且其距离→余弦换算只对单位向量成立
    * （零向量距离恒 1.0 → 旧公式反推 0.5 → 锐化后 78%，见 ADR-0185）。分数即原始余弦 [0,1]，
    * 与参考面板百分比同尺，不再做幂次锐化——阈值型调用方（自动关联下限 / 每周撞车）已同步换算。
+   * signal（issue 428）：面板换新查询即中断本轮（嵌入请求中断 + 全扫/重排检查点让出）。
    */
-  async vectorSearch(query: string, topK = 20, baseUrl?: string): Promise<SearchHit[]> {
-    const queryEmbedding = await getEmbedding(query, true, baseUrl);
+  async vectorSearch(query: string, topK = 20, baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
+    throwIfAborted(signal);
+    const queryEmbedding = await getEmbedding(query, true, baseUrl, undefined, signal);
+    throwIfAborted(signal);
     if (!isValidVector(queryEmbedding)) return [];
     const dim = this.meta._dim || this.dim;
     if (!dim || this.vectors.length === 0) return [];
@@ -667,7 +675,11 @@ export class VectorStore {
     // 行序不变量：行号 = meta.notes 键序 × chunks（与 .vec 行序同源），边扫边定位所属笔记
     const hits: SearchHit[] = [];
     let row = 0;
+    let scanned = 0;
     for (const [path, note] of Object.entries(this.meta.notes)) {
+      // 取消检查点（issue 428）：全扫是同步段，取消只能靠行间让出——每 64 篇一查，
+      // 检查开销相对点积可忽略，大库下也让「已经没人要的查询」不再吃完整个扫描
+      if (++scanned % 64 === 0) throwIfAborted(signal);
       for (const chunk of note.chunks) {
         if (row >= cache.rows) break; // meta 与 .vec 不一致（损坏态）：按可检索行数截断
         if (cache.valid[row]) {
@@ -690,39 +702,44 @@ export class VectorStore {
       deduped.push(item);
       if (deduped.length >= topK) break;
     }
-    return this.applyRerank(query, deduped, baseUrl);
+    return this.applyRerank(query, deduped, baseUrl, signal);
   }
 
   /**
    * 重排接线（issue 427/ADR-0186）：头部 RERANK_MAX_DOCS 条交 Qwen3-Reranker 交叉编码重排，
    * 其余保持余弦序接在其后。**hit.score 不动**——名次按重排分，分数与阈值仍走 ADR-0185 的
-   * 单一余弦尺（代价：面板百分比可能不随名次单调，这是刻意保留的取舍）。
+   * 单一余弦尺；重排分另记 `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺。
    * 任一失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
    * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。
+   * 取消（AbortError）例外：直抛——发起方已换成新查询，这里回填旧序只会盖掉新结果。
    */
-  private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string): Promise<SearchHit[]> {
+  private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
     if (hits.length < 2 || !rerankActive()) return hits;
     const head = hits.slice(0, RERANK_MAX_DOCS);
     try {
-      const scores = await rerankScores(query, head.map((h) => h.chunk), baseUrl);
+      const scores = await rerankScores(query, head.map((h) => h.chunk), baseUrl, signal);
       const ordered = head
         .map((hit, i) => ({ hit, s: scores[i], i }))
         .sort((a, b) => b.s - a.s || a.i - b.i) // 同分保持余弦序（稳定排序）
-        .map((x) => x.hit);
+        .map((x) => ({ ...x.hit, rerankScore: x.s }));
       return [...ordered, ...hits.slice(RERANK_MAX_DOCS)];
     } catch (e) {
+      if (signal?.aborted || isAbortError(e)) throw abortError();
       console.warn('[secondbrain] 重排不可用，按余弦序返回', e);
       return hits;
     }
   }
 
-  /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进） */
-  async search(query: string, topK = 20, onDegraded?: (reason: unknown) => void): Promise<SearchHit[]> {
+  /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进）。
+   *  signal（issue 428）：取消通道——被更新查询中断时直抛 AbortError（不降级、不回调），
+   *  由发起方（参考面板）静默收口；超时（withSearchTimeout）仍按失败走文本降级。 */
+  async search(query: string, topK = 20, onDegraded?: (reason: unknown) => void, signal?: AbortSignal): Promise<SearchHit[]> {
     if (IS_MOBILE) return searchTextIndex(query, this.meta.notes, topK);
     try {
       // ticket 46：检索整体限时（与 Ollama 统一超时同值）——挂起/超时即降级文本，避免 30s 阻塞参考面板/对话
-      return await this.withSearchTimeout(this.vectorSearch(query, topK));
+      return await this.withSearchTimeout(this.vectorSearch(query, topK, undefined, signal));
     } catch (e) {
+      if (signal?.aborted || isAbortError(e)) throw abortError();
       console.warn('[secondbrain] 向量检索失败，降级为文本检索', e);
       onDegraded?.(e); // 降级信号：调用方（参考面板）可给用户降级提示
       return searchTextIndex(query, this.meta.notes, topK);
@@ -747,14 +764,16 @@ export class VectorStore {
     return searchTextIndex(query, this.meta.notes, topK);
   }
 
-  /** 移动端三级检索：远程向量 → TF-IDF（复用已建索引）→ 文本（QA L704-718） */
-  async searchMobile(query: string, topK = 20): Promise<SearchHit[]> {
+  /** 移动端三级检索：远程向量 → TF-IDF（复用已建索引）→ 文本（QA L704-718）。
+   *  signal（issue 428）：取消通道——远程向量这一级被取消时直抛（不清空结果、不降级文本）。 */
+  async searchMobile(query: string, topK = 20, signal?: AbortSignal): Promise<SearchHit[]> {
     const CONFIG = buildConfig();
     if (this.searchMode === 'remote' && CONFIG.OLLAMA_REMOTE_URL) {
       try {
-        const results = await this.vectorSearch(query, topK, CONFIG.OLLAMA_REMOTE_URL);
+        const results = await this.vectorSearch(query, topK, CONFIG.OLLAMA_REMOTE_URL, signal);
         if (results.length) return results;
       } catch (e) {
+        if (signal?.aborted || isAbortError(e)) throw abortError();
         console.warn('[secondbrain] 远程向量检索失败，降级', e);
       }
     }
