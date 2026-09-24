@@ -14,8 +14,18 @@ import { getApp } from '../core/app';
 import { createAI } from '../core/ai';
 import { PeopleStore } from './data';
 import { parseWechatExport, type ContactGroup } from './parse';
-import { buildFace, type AskLLM } from './digest';
-import type { FaceDigest, ImportRecord, PersonEntry } from './types';
+import {
+  buildChroniclePrompt,
+  buildFace,
+  buildPortraitPrompt,
+  chunkMessages,
+  extractBatch,
+  type AskLLM,
+  type BatchExtract,
+  type BuiltFace,
+  type PortraitMaterial,
+} from './digest';
+import type { FaceDigest, FaceEvent, ImportRecord, PersonEntry, UnifiedMessage } from './types';
 
 const ESC_ID = 'people-panel';
 
@@ -38,7 +48,9 @@ let fileInput: HTMLInputElement | null = null;
 let running = false;
 let runMain = '';
 let runSub = '';
-let runResult: { ok: number; failed: string[] } | null = null;
+let runResult: { ok: number; failed: string[]; skipped: string[] } | null = null;
+/** pick 阶段的人物快照（issue 441 成本预告用：勾选频繁变化，不逐次异步查库） */
+let peopleSnap: PersonEntry[] = [];
 /** 删除二次确认（第一次点进入武装态，3 秒回落） */
 let deleteArmId: string | null = null;
 let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -99,6 +111,7 @@ export function closePeoplePanel(): void {
   step = 'file';
   running = false;
   runResult = null;
+  peopleSnap = [];
   disarmDelete();
 }
 
@@ -108,6 +121,7 @@ export function startImport(): void {
   if (running) return;
   stage = 'import';
   step = pending ? 'pick' : 'file';
+  if (step === 'pick') void refreshPeopleSnap().then(() => { if (stage === 'import' && step === 'pick') updatePickFooter(); });
   renderBody();
   if (step === 'file') pickFile();
 }
@@ -266,6 +280,7 @@ async function onFilePicked(): Promise<void> {
     names = new Map();
     stage = 'import';
     step = 'pick';
+    await refreshPeopleSnap();
     renderBody();
   } catch (e) {
     notifyActionError(e, '解析聊天文件');
@@ -342,14 +357,14 @@ function renderImport(body: HTMLElement): void {
   });
   body.appendChild(list);
   body.appendChild(el('div', 'bz-people-pick-foot', [
-    el('div', 'bz-people-pick-count', { 'data-people-count': '' }, text(selectedCountLabel(contacts))),
+    el('div', 'bz-people-pick-count', { 'data-people-count': '' }, text(pickFooterLabel(contacts))),
     button('bz-people-btn bz-people-btn-acc', '开始生成脸谱', { 'data-people-start': '' }),
   ]));
 }
 
 function updatePickFooter(): void {
   const el2 = overlay?.querySelector<HTMLElement>('[data-people-count]');
-  if (el2) el2.textContent = selectedCountLabel(pending?.contacts ?? []);
+  if (el2) el2.textContent = pickFooterLabel(pending?.contacts ?? []);
   // 勾选态行高亮
   overlay?.querySelectorAll<HTMLElement>('[data-people-check]').forEach((cb) => {
     const input = cb as HTMLInputElement;
@@ -358,17 +373,26 @@ function updatePickFooter(): void {
   });
 }
 
-function selectedCountLabel(contacts: ContactGroup[]): string {
-  const n = contacts.filter((c) => c.messages.length > 0 && selected.has(c.talker)).length;
-  return `已选 ${n} 位`;
+/** pick 页脚文案：已选人数 + 成本预告（issue 441：开始生成前给出 AI 调用次数与新增消息条数） */
+function pickFooterLabel(contacts: ContactGroup[]): string {
+  const sel = contacts.filter((c) => c.messages.length > 0 && selected.has(c.talker));
+  const head = `已选 ${sel.length} 位`;
+  if (!sel.length) return head;
+  const est = estimateCost(sel);
+  if (!est.calls) return `${head} · 所选均无新消息，开始后不调用 AI`;
+  return `${head} · 预计 ${est.calls} 次 AI 调用 · 新增 ${est.newMsgs} 条消息`;
 }
 
 function renderRun(body: HTMLElement): void {
   if (runResult) {
+    const hints: string[] = [];
+    if (runResult.failed.length) hints.push(`失败 ${runResult.failed.length} 位：${runResult.failed.join('、')}。可稍后重试。`);
+    if (runResult.skipped.length) hints.push(`${runResult.skipped.length} 位没有新消息、无需重画：${runResult.skipped.join('、')}。`);
+    if (!hints.length) hints.push('点开卡片查看画像与交往事件。');
     body.appendChild(el('div', 'bz-people-empty', [
       el('div', 'bz-people-empty-mark', text('成')),
       el('div', 'bz-people-empty-title', text(`已生成 ${runResult.ok} 张脸谱`)),
-      el('div', 'bz-people-empty-hint', text(runResult.failed.length ? `失败 ${runResult.failed.length} 位：${runResult.failed.join('、')}。可稍后重试。` : '点开卡片查看画像与交往事件。')),
+      el('div', 'bz-people-empty-hint', text(hints.join(''))),
       button('bz-people-btn bz-people-btn-acc', '回到列表', { 'data-people-back-btn': '' }),
     ]));
     return;
@@ -395,23 +419,45 @@ async function runGeneration(): Promise<void> {
   const askPortrait: AskLLM = (p) => ai.chat(p);
   let ok = 0;
   const failed: string[] = [];
+  const skipped: string[] = [];
   for (let i = 0; i < targets.length; i++) {
     const { talker, name, group } = targets[i];
-    setRun(`正在生成「${name}」（${i + 1}/${targets.length}）`, '');
+    const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
+    setRun(main, '');
     try {
-      const face = await buildFace(askExtract, askPortrait, group.messages, name, (done, total) => {
-        setRun(`正在生成「${name}」（${i + 1}/${targets.length}）`, `第 ${done} / ${total} 批`);
-      });
+      const existing = (await store.list()).find((p) => p.id === talker);
+      const plan = planIncremental(group.messages, existing);
       const now = new Date().toISOString();
+      // 导入记录始终落一条；messageCount 记本次实际进提炼的条数（跳过即 0）
       const rec: ImportRecord = {
         file,
         importedAt: now,
-        messageCount: group.messages.length,
+        messageCount: plan.mode === 'skip' ? 0 : plan.msgs.length,
         skippedCount: group.skippedCount,
         timeFrom: new Date(group.messages[0].ts).toISOString(),
         timeTo: new Date(group.messages[group.messages.length - 1].ts).toISOString(),
       };
-      const existing = (await store.list()).find((p) => p.id === talker);
+      if (plan.mode === 'skip') {
+        const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
+        await store.upsert(entry);
+        await store.appendImport(talker, rec);
+        skipped.push(name);
+        continue;
+      }
+      // 「早于锚点的消息」不静默丢：补录明确说仍会提炼；混合导入明确说不重复提炼
+      if (plan.mode === 'older') {
+        notice(`「${name}」这批 ${plan.msgs.length} 条消息早于上次提炼点，将作为补充素材提炼`);
+      } else if (plan.olderCount > 0) {
+        notice(`「${name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
+      }
+      const face = plan.mode === 'full'
+        ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
+            setRun(main, `第 ${done} / ${total} 批`);
+          })
+        : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing?.digest, (done, total) => {
+            const lead = plan.mode === 'older' ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
+            setRun(main, `${lead} · 第 ${done} / ${total} 批`);
+          });
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
       await store.upsert(entry);
       await store.appendImport(talker, rec);
@@ -423,6 +469,8 @@ async function runGeneration(): Promise<void> {
         generatedAt: now,
       };
       await store.setDigest(talker, digest);
+      // 锚点写回：已提炼过的最大消息时间戳（组内升序取末条；补录不回退锚点）
+      await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, plan.msgs[plan.msgs.length - 1].ts));
       ok++;
     } catch (e) {
       failed.push(name);
@@ -430,9 +478,13 @@ async function runGeneration(): Promise<void> {
     }
   }
   running = false;
-  runResult = { ok, failed };
+  runResult = { ok, failed, skipped };
   pending = null;
-  notice(failed.length ? `已生成 ${ok} 张脸谱，${failed.length} 位失败` : `已生成 ${ok} 张脸谱`, failed.length ? 'warning' : 'success');
+  const parts: string[] = [];
+  if (ok) parts.push(`已生成 ${ok} 张脸谱`);
+  if (skipped.length) parts.push(`${skipped.length} 位没有新消息、无需重画`);
+  if (failed.length) parts.push(`${failed.length} 位失败`);
+  notice(parts.join('，') || '没有可生成的脸谱', failed.length ? 'warning' : 'success');
   renderBody();
 }
 
@@ -621,4 +673,120 @@ function button(cls: string, label: string, attrs: Record<string, string>): HTML
   b.type = 'button';
   b.textContent = label;
   return b;
+}
+
+// ---------------- 增量提炼（issue 441） ----------------
+//
+// 「哪条消息算新」的判定留在 ui 层（提炼层 buildFace / buildFaceIncremental 只管给定消息集合）：
+// - full  首次导入（无锚点）→ 全量提炼（走 digest.buildFace）。
+// - newer 只把 ts > lastProcessedTs 的消息送提炼；更早的不重复烧 token（提示条数）。
+// - older 全部消息都不晚于锚点（补录老数据）→ 仍提炼并提示，不静默丢。
+// - skip  同一份导出再导（同尾锚点或同指纹）→ 不调用 AI，提示「没有新消息，无需重画」。
+
+type IncrementalPlan = {
+  mode: 'full' | 'newer' | 'older' | 'skip';
+  /** 将送提炼的消息（skip 为空） */
+  msgs: UnifiedMessage[];
+  /** 早于锚点、本次不重复提炼的条数（newer 模式供提示） */
+  olderCount: number;
+};
+
+/** 增量计划（组内消息按 ts 升序，parse 层保证；调用方保证 msgs 非空） */
+function planIncremental(msgs: UnifiedMessage[], existing: PersonEntry | undefined): IncrementalPlan {
+  const anchor = existing?.lastProcessedTs;
+  if (!anchor) return { mode: 'full', msgs, olderCount: 0 };
+  const newer = msgs.filter((m) => m.ts > anchor);
+  if (newer.length) return { mode: 'newer', msgs: newer, olderCount: msgs.length - newer.length };
+  // 全部不晚于锚点：尾部与锚点重合（锚点即上次提炼的最大 ts）或整份指纹相同（同一导出再导）→ 无新素材
+  const maxTs = msgs[msgs.length - 1].ts;
+  const from = new Date(msgs[0].ts).toISOString();
+  const to = new Date(maxTs).toISOString();
+  const dup = existing.imports.some((r) => r.messageCount === msgs.length && r.timeFrom === from && r.timeTo === to);
+  if (maxTs === anchor || dup) return { mode: 'skip', msgs: [], olderCount: msgs.length };
+  return { mode: 'older', msgs, olderCount: 0 };
+}
+
+/** 成本预告（与真实跑批同口径：批数按 chunkMessages 默认参数，每人 +2 = 画像 + 时间线） */
+function estimateCost(sel: ContactGroup[]): { calls: number; newMsgs: number } {
+  let calls = 0;
+  let newMsgs = 0;
+  for (const c of sel) {
+    const plan = planIncremental(c.messages, peopleSnap.find((p) => p.id === c.talker));
+    if (plan.mode === 'skip') continue;
+    calls += chunkMessages(plan.msgs).length + 2;
+    newMsgs += plan.msgs.length;
+  }
+  return { calls, newMsgs };
+}
+
+/** pick 阶段的人物快照（勾选频繁变化，不逐次异步查库） */
+async function refreshPeopleSnap(): Promise<void> {
+  peopleSnap = store ? await store.list() : [];
+}
+
+/**
+ * 增量 / 补录提炼（ui 层编排；digest.buildFace 保持「只管给定消息集合」的通用性）：
+ * 新消息分批采集 → 与旧脸谱的事件 / 原话合并去重 → 用合并后素材重画画像与时间线。
+ * 去重口径与 digest.ts 一致：事件按 ts|summary 且 kind 回填、其余按文本键；
+ * 素材上限对齐 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / chronicle 300）。
+ * 调用数 = 批数 + 2（画像 + 时间线），与成本预告口径一致。
+ */
+async function buildFaceIncremental(
+  askExtract: AskLLM,
+  askPortrait: AskLLM,
+  msgs: UnifiedMessage[],
+  name: string,
+  old: FaceDigest | undefined,
+  onProgress?: (done: number, total: number) => void
+): Promise<BuiltFace> {
+  const chunks = chunkMessages(msgs);
+  if (!chunks.length) throw new Error('没有可提炼的文本消息');
+  const batches: BatchExtract[] = [];
+  for (let i = 0; i < chunks.length; i++) {
+    batches.push(await extractBatch(askExtract, chunks[i], name));
+    onProgress?.(i + 1, chunks.length);
+  }
+  const newEvents = dedupeEvents(batches.flatMap((b) => b.events));
+  const events = dedupeEvents([...(old?.events ?? []), ...newEvents]); // 旧在前：同 key 旧条目优先，新 kind 回填
+  const quotes = dedupeByText([...(old?.quotes ?? []), ...batches.flatMap((b) => b.quotes)], (q) => q.text).slice(0, 60);
+  const traits = dedupeByText(batches.flatMap((b) => b.traits), (t) => t).slice(0, 30);
+  const moments = dedupeByText(batches.flatMap((b) => b.moments), (m) => m.summary).slice(0, 40);
+  const material: PortraitMaterial = { events: events.slice(0, 300), traits, quotes, moments };
+  const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
+  if (!portrait) throw new Error('画像生成为空');
+  // 时间线是次要产物：失败不阻断画像（与 digest.buildFace 同口径）
+  let chronicle = '';
+  if (events.length) {
+    try {
+      chronicle = (await askPortrait(buildChroniclePrompt(name, events.slice(0, 300)))).trim();
+    } catch {
+      chronicle = '';
+    }
+  }
+  return { portrait, events, quotes, chronicle };
+}
+
+/** 事件合并去重：key = ts|summary，后出现的轻重标记回填（与 digest.ts mergeEvents 同口径）；结果按日期升序 */
+function dedupeEvents(events: FaceEvent[]): FaceEvent[] {
+  const byKey = new Map<string, FaceEvent>();
+  for (const e of events) {
+    const key = `${e.ts}|${e.summary}`;
+    const prev = byKey.get(key);
+    if (!prev) byKey.set(key, e);
+    else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
+  }
+  return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
+}
+
+/** 按键去重只留首个，保持输入顺序（与 digest.ts dedupeBy 同口径） */
+function dedupeByText<T>(items: T[], key: (item: T) => string): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of items) {
+    const k = key(item);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(item);
+  }
+  return out;
 }
