@@ -56,3 +56,11 @@
 - **隐私上云**：每次交互检索最多 50 × 300 字笔记摘录发往 Jev 服务商——已向用户明示并拍板接受；ADR-0189「后果」节留痕。
 - **noul 与 P(yes) 无跨通道可比性**：两者都是 0–1 但校准分布不同——同一时刻只有一个通道生效（二选一），列表内同尺、无混尺；跨通道比较百分比无意义，亦无场景。
 - **对话面板不另设通道开关**：重排接线在 `vectorSearch` 末尾（ADR-0186 决策 2「全部链路统一」），Jev 通道继承同一范围，不为对话单开分叉。
+
+## 子代理 review 收口（2026-09-25）
+
+三审结论 APPROVE、零应修，建议三条处置如下：
+
+- **Jev 回落缺 console.warn（建议，已改）**：ADR-0189 决策 5 写明失败「一律回余弦序 + console.warn」，实现里 null 回落原样静默——judgeOrFallback 自身只有 console.debug 且文案「回落 LLM」对本调用点失真（本票是首个非 LLM 回落），未配密钥（类别①）连 debug 都没有，与本地通道 catch-warn 不对称。现 applyRerank 的 null 分支补 warn（「Jev 重排不可用，按余弦序返回」），补接线用例断言。
+- **Jev 分支 signal 下传无回归锁（建议，已改）**：「Jev 中途取消」用例的 mock 无条件 reject、不感知实参，删掉 signal 实参测试照样绿。现补透传断言（mock.calls[0][2] === ac.signal，对齐本地通道同款）。
+- **「Jev 抛非取消错」演练的是生产不可达路径（建议，未改）**：真实 jevRerankScores 除取消外不抛（judgeOrFallback 吞成 null），该用例只证 applyRerank catch 的防御力——保留作防御回归，不算假绿；answers 多余键静默忽略合规（决策 6 只定义「缺」为畸形），不另加用例。

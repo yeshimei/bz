@@ -295,6 +295,20 @@ describe('Jev 重排通道分流（issue 431/ADR-0189）', () => {
     vi.mocked(jevRerankScores).mockRejectedValue(abortError());
 
     await expect(vs.vectorSearch('q', 10, undefined, ac.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    // signal 透传回归锁（对齐本地通道同款断言）：applyRerank 若漏传 signal，此行即红——
+    // 上面的无条件 reject 不感知实参，单靠它锁不住透传（review 收口补）
+    expect(vi.mocked(jevRerankScores).mock.calls[0][2]).toBe(ac.signal);
+  });
+
+  it('Jev 不可用（null 回落）：console.warn 留痕（ADR-0189 决策 5 与本地通道失败同口径）', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    vi.mocked(jevRerankScores).mockResolvedValue(null);
+    const warnSpy = vi.spyOn(console, 'warn');
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']);
+    expect(warnSpy.mock.calls.some((c) => String(c[0]).includes('Jev 重排不可用，按余弦序返回'))).toBe(true);
   });
 
   it('总闸关：即使 Jev 开着也不重排（off 优先于通道选择，无「总闸关了 Jev 还在跑」的怪态）', async () => {

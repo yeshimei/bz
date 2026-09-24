@@ -740,7 +740,14 @@ export class VectorStore {
     try {
       if (channel === 'jev') {
         const scores = await jevRerankScores(query, hits.map((h) => h.chunk), signal);
-        if (!scores) return hits; // null = Jev 不可用 → 维持余弦序（judgeOrFallback 的 fallback 槽位）
+        if (!scores) {
+          // null = Jev 不可用（未配密钥 / 超时 / 畸形 / 缺题键）→ 维持余弦序（judgeOrFallback 的
+          // fallback 槽位）。失败要留痕（ADR-0189 决策 5：失败一律 warn）——judgeOrFallback 自己
+          // 只有 debug 且文案是「回落 LLM」（本票是首个非 LLM 回落），未配密钥连 debug 都没有，
+          // 与本地通道的 catch-warn 不对称，review 收口补齐。
+          console.warn('[secondbrain] Jev 重排不可用，按余弦序返回');
+          return hits;
+        }
         return this.rankByScores(hits, scores);
       }
       const scores = await rerankScores(query, hits.map((h) => h.chunk), baseUrl, signal);
