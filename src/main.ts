@@ -57,6 +57,7 @@ import {
   rebuildSecondBrainIndex,
   unloadSecondBrain,
   ensureSecondBrain,
+  ensureRemoteOllamaUrl,
 } from './secondbrain';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, toggleFocus, skipBreak, togglePause } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
@@ -282,6 +283,9 @@ export default class BzPlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 设置保存通道（域设置弹窗写回后持久化）
     setSettingsSaver(() => this.saveSettings());
+    // 移动端远程地址自动补全（issue 423/ADR-0183）：桌面端启动时若设置为空 → 探测本机局域网 IP
+    // 写入（手机端读同步值，自身探测不到电脑 IP）；已有值/探测不到一律不动，静默无提示。
+    ensureRemoteOllamaUrl();
     // 日记本目录常量（diary/config 内部跨域解析影视/书库目录）
     applyDiarySettingsToRuntime(this.settings);
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
