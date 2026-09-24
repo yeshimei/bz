@@ -41,6 +41,8 @@ const SOURCES = [
   "src/memo/styles.css",
   "src/clipbook/styles.css",
   "src/favorites/styles.css",
+  // 脸谱本（people 域，issue 435/436；issue 437 补录——首版漏登清单致域样式从未进产物）
+  "src/people/styles.css",
   "src/review/styles.css",
   // 记忆分析特刊（analysis/ 全屏逐幕层）：随复习域聚合
   "src/review/analysis/styles.css",
