@@ -1,7 +1,7 @@
 /**
  * core/landscape · 软横屏几何换算单源
  *
- * 桌面偏移回归（issue 431）：boxLogicalPoint/Rect 的返回值消费方（开卷幕字靶/盒壁）
+ * 桌面偏移回归（issue 432）：boxLogicalPoint/Rect 的返回值消费方（开卷幕字靶/盒壁）
  * 直接当**画布坐标**用，而画布满铺层框内——非旋转态必须同样以层框左上角为原点，
  * 否则桌面面板不贴窗口左上角时整面偏移 (box.left, box.top)（移动端面板满屏看不出来）。
  * 旋转态（is-rot90）口径有真机验证背书，这里一并锁住防回归。
@@ -21,7 +21,7 @@ function stubOffset(el: HTMLElement, w: number, h: number): void {
 }
 
 describe('boxLogicalPoint（视口点 → 层框逻辑点）', () => {
-  it('非旋转态：减层框左上角——桌面层框不贴窗口原点也不偏（issue 431 回归）', () => {
+  it('非旋转态：减层框左上角——桌面层框不贴窗口原点也不偏（issue 432 回归）', () => {
     const box = document.createElement('div');
     stubRect(box, rect(300, 120, 800, 600));
     // 层框正中：视口 (700,400) − 原点 (300,120) = 画布 (400,280)
@@ -41,7 +41,7 @@ describe('boxLogicalPoint（视口点 → 层框逻辑点）', () => {
 });
 
 describe('boxLogicalRect（视口矩形 → 层框逻辑矩形）', () => {
-  it('非旋转态：平移到层框系，宽高不变（issue 431 回归）', () => {
+  it('非旋转态：平移到层框系，宽高不变（issue 432 回归）', () => {
     const box = document.createElement('div');
     stubRect(box, rect(300, 120, 800, 600));
     expect(boxLogicalRect(box, 300, 120, 1100, 720)).toEqual({ left: 0, top: 0, right: 800, bottom: 600 });
