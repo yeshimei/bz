@@ -27,6 +27,7 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   belongings: 'package',
   clipping: 'scissors',
   favorites: 'star',
+  people: 'drama',
   diary: 'notebook-pen',
   'reading-report': 'bar-chart-3',
   cinema: 'clapperboard',

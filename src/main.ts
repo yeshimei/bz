@@ -38,6 +38,8 @@ import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipboo
 import { openDiary, openDiaryWrite, prewarmDiary, unloadDiary } from './diary';
 import { applyDirectories } from './diary/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
+// 脸谱本（people 域，issue 435/ADR-0191：留痕导出的微信聊天 → AI 提炼脸谱；原文不落盘）
+import { openPeople, importWechat, unloadPeople } from './people';
 // 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
 import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
@@ -124,6 +126,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
+  // 脸谱本（people 域，issue 435/ADR-0191）
+  { id: 'bz-people-open', name: '脸谱本', icon: DOMAIN_ICONS.people, callback: () => openPeople(getApp()) },
+  { id: 'bz-people-import', name: '导入微信聊天', icon: DOMAIN_ICONS.people, callback: () => importWechat(getApp()) },
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
   { id: 'bz-reading-report-open', name: '阅读分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；
@@ -425,6 +430,8 @@ export default class BzPlugin extends Plugin {
     unloadDiary();
     unloadBelongings();
     unloadFavorites();
+    // 脸谱本（people 域，issue 435）：面板 overlay 摘除 + ESC 层注销
+    unloadPeople();
     unloadReview();
     unloadCinema();
     // 游戏库（gameshelf 域：面板 DOM + 模块单例复位）
