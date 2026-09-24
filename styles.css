@@ -6203,74 +6203,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 
-/* ==================== 日记格式体检面板（ADR-0130 起只读体检；入口落设置页维护组） ==================== */
-.bz-diary-repair-progress {
-  margin: var(--bz-space-md) 0 var(--bz-space-lg);
-}
-.bz-diary-repair-progress-track {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--background-modifier-border);
-  overflow: hidden;
-}
-.bz-diary-repair-progress-fill {
-  height: 100%;
-  background: var(--interactive-accent);
-  border-radius: 3px;
-  transition: width var(--bz-dur-base);
-}
-.bz-diary-repair-progress-text {
-  margin-top: 6px;
-  font-size: var(--font-ui-small);
-  color: var(--text-muted);
-}
-.bz-diary-repair-summary {
-  margin: var(--bz-space-xs) 0 var(--bz-space-md);
-}
-.bz-diary-repair-section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 600;
-  margin: 14px 0 6px;
-}
-.bz-diary-repair-snippet {
-  opacity: 0.75;
-}
-.bz-diary-repair-footer {
-  margin-top: 14px;
-}
-.bz-diary-repair-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 2px 0;
-  font-size: var(--font-ui-small);
-}
-.bz-diary-repair-row code {
-  font-size: var(--font-ui-small);
-}
-.bz-diary-repair-link {
-  cursor: pointer;
-  color: var(--text-accent);
-  text-decoration: underline;
-}
-/* 检测面板操作按钮（一键修复/重新检测） */
-.bz-button {
-  cursor: pointer;
-  padding: var(--bz-space-xs) var(--bz-space-md);
-  border: none;
-  border-radius: var(--radius-s, var(--bz-radius-xs));
-  background: var(--interactive-accent);
-  color: var(--text-on-accent, #fff);
-  font-size: var(--font-ui-small);
-}@media (hover: hover) {
-
-.bz-button:hover {
-  background: var(--interactive-accent-hover);
-}
-}
-
 /* ============ 解锁屏（三域共用骨架 · 加密日记口径） ============
  * 弹层挂 body，够不着 .bz-diary 根 —— 与日期筛选同款教训：自己重声明 --dw-* 再消费。
  * 风格 = 日记域口径：扁平强调色 + 收敛圆角（比保险库克制）。
@@ -13419,7 +13351,8 @@ canvas { display: block; }
 .bz-sp-skin,
 #bz-up-manager-popup,
 #bz-rss-manager-popup,
-#bz-model-picker-popup {
+#bz-model-picker-popup,
+#bz-checkup-popup {
   --sp-bg: #f6f2e9;
   --sp-panel: #fffcf6;
   --sp-line: #e5dfcf;
@@ -13447,7 +13380,8 @@ canvas { display: block; }
 .theme-dark .bz-sp-skin,
 .theme-dark #bz-up-manager-popup,
 .theme-dark #bz-rss-manager-popup,
-.theme-dark #bz-model-picker-popup {
+.theme-dark #bz-model-picker-popup,
+.theme-dark #bz-checkup-popup {
   --sp-bg: #1b1b1f;
   --sp-panel: #242429;
   --sp-line: #35353c;
@@ -13465,6 +13399,122 @@ canvas { display: block; }
   --sp-input-bg: #202024;
   --sp-ctl-off: #3c3c44;
   --sp-knob: #fff;
+}
+
+/* ═══════════ 面板体系 scope：组件库令牌重定向（一处声明，全体系同皮） ═══════════
+ * 病灶（2026-09-25 用户报「子弹窗 / 输入框 / 列表白得和面板不一致」）：面板皮 --sp-*（S1 亚麻暖白 /
+ * S3 炭黑夜航）与组件库的中性冷色令牌 --bz-*（亮色下 surface-1 #fafafa / surface-2·3 #fff）各管一段——
+ * 面板里的组件库件与 core 弹窗壳一律落回「纯白 / 近白」，铺在暖纸上就是一处一处白斑：
+ *   · .bz-chip 底 = --bz-surface-2（亮色 #fff，路径 chips 即「白药丸」）；
+ *   · .bz-input 底 = --bz-surface-1（UP 名单 / RSS 订阅弹窗的输入框）；
+ *   · .bz-setlist--rows 条目底 = --bz-surface-2（名单列表）；
+ *   · .bz-overlay-popup 底 = --bz-surface-3（流程框 / 各管理弹窗壳体）；
+ *   · .bz-panel-frame 底 = --bz-surface-2（数据体检面板壳体）。
+ *
+ * 口径：面板体系 = 面板壳自身（.bz-sp-desk / .bz-sp-mobile）+ 面板打开的**全部浮层**
+ * （路径选择 .bz-sp-skin、UP 名单、RSS 订阅、模型选择、数据体检、流程框）。这些 scope 内把 bz 的
+ * **中性表面 · 描边 · 文字 · 主色**令牌整体重定向到 --sp-*——组件库 DOM 与选择器一字不改即同皮。
+ * **语义色（success / warning / danger）不重定向**：红黄绿是数据语义，不随皮变。
+ * 新增浮层：把它的 popup 根加进下面这组选择器即自动同皮，不要再逐个选择器补白名单。
+ * （两套令牌都是 var 引用，重定向块与明暗无关：--sp-* 由上方 S1 / S3 两组按 .theme-dark 提供。） */
+.bz-sp-desk,
+.bz-sp-mobile,
+.bz-sp-skin,
+#bz-up-manager-popup,
+#bz-rss-manager-popup,
+#bz-model-picker-popup,
+#bz-checkup-popup {
+  --bz-surface-0: var(--sp-bg);
+  --bz-surface-1: var(--sp-input-bg);
+  --bz-surface-2: var(--sp-panel);
+  --bz-surface-3: var(--sp-panel);
+  --bz-surface-4: var(--sp-pop);
+  --bz-surface-hover: var(--sp-accent-soft);
+  --bz-surface-active: var(--sp-accent-soft);
+  --bz-border: var(--sp-line);
+  --bz-border-strong: var(--sp-line);
+  --bz-border-hover: var(--sp-ink-3);
+  --bz-text-1: var(--sp-ink);
+  --bz-text-2: var(--sp-ink-2);
+  --bz-text-3: var(--sp-ink-3);
+  --bz-brand: var(--sp-accent);
+  --bz-brand-hover: var(--sp-accent);
+  --bz-brand-soft: var(--sp-accent-soft);
+  --bz-on-brand: var(--sp-on-accent);
+  --bz-track: var(--sp-ctl-off);
+  --bz-thumb: var(--sp-knob);
+  --bz-code-bg: var(--sp-bg);
+  --bz-mark-bg: var(--sp-accent-soft);
+}
+
+/* 药丸 .bz-chip：基线的底 = --bz-surface-2，重定向后与卡片同色 = 药丸「没有底」。族内改挂比卡片
+   暗一档的纸色 --sp-bg，与面板行 / 字段同一套层级语言（同色即层级消失，2026-09-11 菜单教训）。
+   选中态（--on / --sel）与域自注入 tint 不拦：前者靠 --bz-brand 重定向即得面板主色，
+   后者底色来自域内联的 --bz-chip-tint。 */
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint) {
+  background: var(--sp-bg) !important;
+  border-color: var(--sp-line) !important;
+  color: var(--sp-ink-2) !important;
+}
+}@media (hover: hover) {
+
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint):hover {
+  background: var(--sp-accent-soft) !important;
+  color: var(--sp-ink) !important;
+}
+}
+
+/* 流程框 / 普通弹窗壳（.bz-overlay-popup）：底色·描边已由上面的令牌重定向接管（--bz-surface-3 →
+   --sp-panel、--bz-border → --sp-line），此处只补面板档的圆角与阴影。 */
+.bz-overlay-popup.bz-sp-skin {
+  border-radius: 14px;
+  box-shadow: var(--sp-shadow);
+}
+/* 流程框按钮：core 的次要钮底 = --bz-surface-2（重定向后 = 卡片同色 → 底消失了，且描边是
+   transparent，只剩字浮着）——族内改挂与 .bz-sp-btn / .bz-path-picker-btn 同一形制
+   （panel 底 + line 描边）。确认钮（主动作）的底取自品牌令牌，重定向后已是 --sp-accent，
+   无需再补；危险主动作（core 的 danger 中性形制）同样复位，红字保留。
+   注：本段与下段的注释刻意不写确认钮的完整 id 选择器——tests/core/flow-dialog-danger-neutral
+   按「含确认钮 id 的规则块」正则抠规则，注释里出现该 id 会被当成一条 (2,2,0) 域皮规则误报。 */
+.bz-sp-skin #__shared_confirm_cancel__,
+.bz-sp-skin button.bz-flow-dialog-action:not(.bz-flow-dialog-cta) {
+  background: var(--sp-panel);
+  border-color: var(--sp-line);
+  color: var(--sp-ink);
+}
+.bz-sp-skin #__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  background: var(--sp-panel);
+  border-color: var(--sp-line);
+}
+
+/* 收藏本标签管理（面板「标签管理」custom 行）与添加 / 编辑标签子弹窗：组件自带一份域私有暖皮
+   token（--fld-bg 亮色是纯白 #fff、--card 纯白），落在面板里即「一列白条」。族内把这组私有 token
+   重映射到面板纸——组件 CSS 一字不改即同皮（域主色 --acc 一并收编，绿钮在面板里改穿面板主色）。
+   第二个选择器覆盖「弹窗自身即 scope 根」的形态（标签编辑弹窗 popup 同时挂 bz-fav-scope 与
+   bz-sp-skin，没有面板祖先可依）。 */
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-fav-scope,
+.bz-fav-scope.bz-sp-skin {
+  --fld-bg: var(--sp-input-bg);
+  --fld-bd: var(--sp-line);
+  --fld-ink: var(--sp-ink);
+  --card: var(--sp-panel);
+  --chip: var(--sp-bg);
+  --chip-ink: var(--sp-ink-2);
+  --chip-add-bd: var(--sp-line);
+  --chip-add-ink: var(--sp-ink-3);
+  --menu: var(--sp-pop);
+  --menu-bd: var(--sp-line);
+  --menu-hover: var(--sp-accent-soft);
+  --menu-ink: var(--sp-ink);
+  --pop: var(--sp-panel);
+  --pop-ink: var(--sp-ink);
+  --pop-mut: var(--sp-ink-2);
+  --pop-faint: var(--sp-ink-3);
+  --acc: var(--sp-accent);
+  --acc-deep: var(--sp-accent);
 }
 
 /* ═══════════ 路径选择弹窗：core 实现 + 面板皮肤（ADR-0127） ═══════════

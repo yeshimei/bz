@@ -1,5 +1,5 @@
-/* 源指纹 f4e84deb9dd22441 · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 627d03b1d49b1d04 · 仓内输入 261 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -4293,10 +4293,6 @@ var BZW_memo = (() => {
   function diaryStampText(date, time) {
     return `${date} ${time}`;
   }
-  function parseDiaryStamp(value) {
-    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
-    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-  }
   function isValidDiaryDate(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
     if (!m) return false;
@@ -4329,15 +4325,6 @@ var BZW_memo = (() => {
       if (t && !tags.includes(t)) tags.push(t);
     }
     return { tags, time: m[2] };
-  }
-  function readDiaryFrontmatterFieldRaw(content, key) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return null;
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return null;
-    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
-    return m ? m[1].trim() : null;
   }
   var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
   var init_diary_format = __esm({
@@ -29831,232 +29818,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
-  // src/diary/repair.ts
-  function lintEntryFile(path, content) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
-    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
-    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
-    const fmMeta = raw ? parseDiaryStamp(raw) : null;
-    const fileMeta = diaryMetaFromEntryPath(base);
-    if (rawLegacyKey && !raw) return "unparsable";
-    if (raw && !fmMeta && !fileMeta) return "unparsable";
-    if (!fmMeta && !fileMeta) return "unparsable";
-    if (raw && !fmMeta && fileMeta) return "unparsable";
-    if (fmMeta && !fileMeta) return "name-mismatch";
-    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
-      return "name-mismatch";
-    }
-    return null;
-  }
-  var LINT_REASON_TEXT;
-  var init_repair = __esm({
-    "src/diary/repair.ts"() {
-      init_diary_format();
-      LINT_REASON_TEXT = {
-        legacy: "旧格式日期文件（未迁移）",
-        unparsable: "无法解析为条目",
-        "name-mismatch": "属性时间与题目不一致"
-      };
-    }
-  });
-
-  // src/diary/ui/repair-modal.ts
-  function findDirRecursive(node, target) {
-    if (node.path === target) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        const found = findDirRecursive(child, target);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-  async function collectDiaryFiles() {
-    const app = getApp();
-    let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY);
-    if (!dir || !dir.children) {
-      const root = app.vault.getRoot();
-      dir = findDirRecursive(root, DIARY_DIRECTORY);
-    }
-    if (!dir || !dir.children) return [];
-    const out = [];
-    const walk = (node) => {
-      var _a2;
-      for (const child of (_a2 = node.children) != null ? _a2 : []) {
-        if (child.children) walk(child);
-        else if (child.extension === "md") out.push(child);
-      }
-    };
-    walk(dir);
-    return out.sort((a, b) => b.name.localeCompare(a.name));
-  }
-  async function runScan(isAlive, onProgress) {
-    const app = getApp();
-    const mdFiles2 = await collectDiaryFiles();
-    const total = mdFiles2.length;
-    const scanned = [];
-    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
-      if (!isAlive()) return scanned;
-      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
-      const results = await Promise.all(
-        batch.map(async (file, idx) => {
-          const content = await app.vault.read(file);
-          if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
-          return { path: file.path, reason: lintEntryFile(file.path, content) };
-        })
-      );
-      scanned.push(...results);
-    }
-    return scanned;
-  }
-  async function openAtTop(path, onOpened) {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(path);
-    if (!file) return;
-    const leaf = app.workspace.getLeaf();
-    await leaf.openFile(file);
-    const view = leaf.view;
-    if (view && view.editor) {
-      view.editor.focus();
-      view.editor.setCursor(0, 0);
-      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
-    }
-    onOpened();
-  }
-  function openDiaryRepairModal() {
-    const { mask, popup } = createOverlay({
-      maskId: "bz-diary-repair-mask",
-      popupId: "bz-diary-repair-popup",
-      maxWidth: 640,
-      onMaskClick: close
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = "日记格式体检";
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const handle = escManager.register("bz-diary-repair", {
-      isVisible: () => mask.isConnected,
-      close
-    });
-    function close() {
-      mask.remove();
-      popup.remove();
-      handle.unregister();
-    }
-    const progressWrap = document.createElement("div");
-    progressWrap.className = "bz-diary-repair-progress";
-    const track = document.createElement("div");
-    track.className = "bz-diary-repair-progress-track";
-    const fill = document.createElement("div");
-    fill.className = "bz-diary-repair-progress-fill";
-    const ptext = document.createElement("div");
-    ptext.className = "bz-diary-repair-progress-text";
-    ptext.textContent = "正在体检日记文件…";
-    track.appendChild(fill);
-    progressWrap.appendChild(track);
-    progressWrap.appendChild(ptext);
-    content.appendChild(progressWrap);
-    const summarize = (scanned) => {
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      progressWrap.style.display = "none";
-      const items = [];
-      for (const s of scanned) {
-        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
-      }
-      const summary = document.createElement("div");
-      summary.className = "bz-diary-repair-summary";
-      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
-      content.appendChild(summary);
-      const order = ["legacy", "unparsable", "name-mismatch"];
-      for (const reason of order) {
-        const group = items.filter((i) => i.reason === reason);
-        if (group.length === 0) continue;
-        const sec = document.createElement("div");
-        sec.className = "bz-diary-repair-section-title";
-        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
-        content.appendChild(sec);
-        for (const item of group) {
-          const row = document.createElement("div");
-          row.className = "bz-diary-repair-row";
-          const link = document.createElement("span");
-          link.className = "bz-diary-repair-link";
-          link.textContent = item.path.split("/").pop() || item.path;
-          link.addEventListener("click", () => void openAtTop(item.path, close));
-          const snippet = document.createElement("span");
-          snippet.className = "bz-diary-repair-snippet";
-          snippet.textContent = item.path;
-          row.append(link, snippet);
-          content.appendChild(row);
-        }
-      }
-      mountRetryFooter();
-    };
-    function mountRetryFooter() {
-      const again = document.createElement("button");
-      again.className = "bz-button";
-      again.textContent = "重新体检";
-      again.addEventListener("click", () => void startScan());
-      const bar = document.createElement("div");
-      bar.className = "bz-diary-repair-footer";
-      bar.appendChild(again);
-      content.appendChild(bar);
-    }
-    async function startScan() {
-      progressWrap.style.display = "block";
-      fill.style.width = "0%";
-      ptext.textContent = "正在体检日记文件…";
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      try {
-        const scanned = await runScan(
-          () => mask.isConnected,
-          (done, total, label) => {
-            fill.style.width = `${Math.round(done / total * 100)}%`;
-            ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
-          }
-        );
-        if (!mask.isConnected) return;
-        summarize(scanned);
-      } catch (e) {
-        if (!mask.isConnected) return;
-        const msg = (e == null ? void 0 : e.message) || String(e);
-        ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
-        mountRetryFooter();
-        try {
-          notify(`日记格式体检失败：${msg}`, { type: "error" });
-        } catch (e2) {
-        }
-      }
-    }
-    void startScan();
-  }
-  var BATCH_CONCURRENCY;
-  var init_repair_modal = __esm({
-    "src/diary/ui/repair-modal.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_app();
-      init_notice();
-      init_config3();
-      init_repair();
-      BATCH_CONCURRENCY = 10;
-    }
-  });
-
   // src/diary/settings.ts
   var settings_exports2 = {};
   __export(settings_exports2, {
@@ -30088,13 +29849,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           rows: [
             { type: "toggle", name: "默认日期取自文件", desc: "默认日期取自当前打开的日记文件", binding: { key: "useFileDateTime" } }
           ]
-        },
-        {
-          icon: "wrench",
-          name: "维护",
-          rows: [
-            { type: "button", name: "日记格式体检", desc: "检查日记条目的格式问题", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
-          ]
         }
       ]
     };
@@ -30103,7 +29857,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     "src/diary/settings.ts"() {
       init_settings_provider();
       init_config3();
-      init_repair_modal();
     }
   });
 
@@ -43970,7 +43723,8 @@ GitHub 仓库：${ghInfo.title}
     var _a2, _b2;
     return (_b2 = FavoritesApp.getInstance().dataManager) != null ? _b2 : new DataManager(getStoragePath((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath));
   }
-  function renderTagManager(body, _ctx) {
+  function renderTagManager(body, ctx) {
+    tagMgrSkin = ctx.rowEl.closest(".bz-sp-desk, .bz-sp-mobile") ? " bz-sp-skin" : "";
     const dm = tagManagerDm();
     const wrap = document.createElement("div");
     wrap.className = "bz-fav-scope bz-fav-tagmgr";
@@ -44051,12 +43805,14 @@ GitHub 仓库：${ghInfo.title}
     </div>`;
     const { popup, close } = uiModal({
       content: host.firstElementChild,
-      className: "bz-fav-scope",
+      // 皮肤随行上下文（tagMgrSkin）：设置面板内开 → 补 bz-sp-skin，拿 --sp-* 且让私有 token
+      // （--fld-*/--pop-* 亮色是纯白）重映射到面板纸，不再白得和面板不一致；⚙️ 设置页里为空串
+      className: "bz-fav-scope" + tagMgrSkin,
       maxWidth: 380,
       requestClose: () => {
         const input2 = popup.querySelector("#fz-tag-name");
         if (input2 && input2.value.trim() && input2.value.trim() !== ((existing == null ? void 0 : existing.label) || "")) {
-          confirmDiscard(() => close(), void 0, "bz-fav-flow-dialog bz-fav-scope");
+          confirmDiscard(() => close(), void 0, "bz-fav-flow-dialog bz-fav-scope" + tagMgrSkin);
         } else {
           close();
         }
@@ -44152,7 +43908,8 @@ GitHub 仓库：${ghInfo.title}
     }
     const ok = await openFlowDialog({
       title: "删除标签",
-      className: "bz-fav-flow-dialog bz-fav-scope",
+      // 皮肤随行上下文（tagMgrSkin）：设置面板内开走面板体系皮肤，⚙️ 设置页里维持域自有暖皮
+      className: "bz-fav-flow-dialog bz-fav-scope" + tagMgrSkin,
       message: count > 0 ? `确定删除标签「${tag.label}」吗？
 其中 ${count} 条收藏将迁入标签「${fallback.label}」。` : `确定删除标签「${tag.label}」吗？
 标签将从标签列表中移除。`,
@@ -44183,7 +43940,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M12, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M12, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES, tagMgrSkin;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -44246,6 +44003,7 @@ GitHub 仓库：${ghInfo.title}
         "link",
         "folder"
       ];
+      tagMgrSkin = "";
     }
   });
 
@@ -60757,7 +60515,7 @@ ${n.content.slice(0, 2e3)}
         { id: "notice", name: "通知", icon: DOMAIN_ICONS.notice, desc: "通知级别、时长与弹出位置", schemaLoader: schemaLoaders.notice },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 模型与凭据配置", schemaLoader: schemaLoaders.ai },
         // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
-        { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与格式体检", schemaLoader: schemaLoaders.diary },
+        { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录与写日记口径", schemaLoader: schemaLoaders.diary },
         { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒设置", schemaLoader: schemaLoaders.memo },
         { id: "belongings", name: "归物本", icon: DOMAIN_ICONS.belongings, desc: "物品登记与查找", schemaLoader: schemaLoaders.belongings },
         { id: "clipping", name: "剪藏本", icon: DOMAIN_ICONS.clipping, desc: "未读流与剪藏笔记", schemaLoader: schemaLoaders.clipping },
@@ -61249,6 +61007,9 @@ ${n.content.slice(0, 2e3)}
           const ans = await openFlowDialog({
             title: "重置本域设置",
             message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
+            // 面板体系皮肤（2026-09-25）：流程框挂 .bz-sp-skin 才拿得到 --sp-*（否则回落到组件库中性冷色，
+            // 亮皮下弹窗是纯白、按钮同色看不见）——与路径选择器/各管理弹窗同一口径
+            className: "bz-sp-skin",
             actions: [
               { label: "取消", value: "cancel" },
               // E-2：破坏性动作 danger 反焦（全仓惯例）——主按钮不默认持焦，防 Enter 一击即重置
