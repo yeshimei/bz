@@ -703,17 +703,17 @@ describe('cinema 风格化面板（issue 236）', () => {
     });
   });
 
-  it('观影分析：覆盖影院面板的一层 26 幕 + 点框外关闭；空库给空态且添加可直达（ADR-0175）', () => {
+  it('观影分析：覆盖影院面板的一层 25 幕 + 点框外关闭；空库给空态且添加可直达（ADR-0175）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(root.querySelector('[data-film-open]'));
     const ovl = document.querySelector('.bz-yb') as HTMLElement;
     expect(ovl).toBeTruthy();
-    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(25);
     // 影片里没有 DOM 文案（页眉/页脚已去，片名只在开卷那团粒子的画布里）
     const film = ovl.querySelector('.bz-yb-film') as HTMLElement;
-    expect(film.dataset.cur).toBe('01');
+    expect(ovl.dataset.cur).toBe('01'); // data-cur 由引擎写在层根（固定层已挪到滚动容器外）
     expect(film.textContent).not.toContain('观影分析');
     expect(M.view).toBe('list'); // 面板视图不动（层不是视图切换）
     // 覆盖层形态：纸面在 .bz-yb-box 里、桌面不给关闭按钮（jsdom 非移动环境）、层根即遮罩
@@ -743,7 +743,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     openCinemaAnalysis(app);
     const ovl = document.querySelector('.bz-yb') as HTMLElement;
     expect(ovl).toBeTruthy();
-    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(25);
     openCinemaAnalysis(app); // 已开：不叠第二层
     expect(document.querySelectorAll('.bz-yb').length).toBe(1);
     expect(document.querySelector('.bz-yb')).toBe(ovl); // 还是同一层（只晃一下）
@@ -795,7 +795,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     const { vault, app } = seedVault();
     openCinemaAnalysis(app);
     const ovl = document.querySelector('.bz-yb') as HTMLElement;
-    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(25);
     vault.files.set('我的/影视/《新片》.md', md(`---
 tags: [电影]
 评分: 8
@@ -1930,8 +1930,8 @@ describe('深审批A：写路径与 ui 行为回归', () => {
   });
 
   // P3-14：list 页不预算 AI 页大字符串，进页才构建；观影志（独立全屏长片）同样是
-  // 打开时才拼 26 幕的 DOM——面板渲染期间不该出现任何 .bz-yb 节点
-  it('P3-14：list 页惰性构建——观影志 26 幕不在面板里预建', async () => {
+  // 打开时才拼 25 幕的 DOM——面板渲染期间不该出现任何 .bz-yb 节点
+  it('P3-14：list 页惰性构建——观影志 25 幕不在面板里预建', async () => {
     const { app } = seedVault();
     createOverlay(app);
     expect(document.querySelector('.bz-yb')).toBeNull();
@@ -2836,8 +2836,8 @@ describe('影院覆盖层与跟手（issue 409）', () => {
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(root.querySelector('[data-film-open]'));
     const scns = document.querySelectorAll('.bz-yb-scn');
-    expect(scns.length).toBe(26);
-    expect(scns[25].getAttribute('data-foot'), '落款副题跟着改名').toContain('观影分析');
+    expect(scns.length).toBe(25);
+    expect(scns[24].getAttribute('data-foot'), '落款副题跟着改名').toContain('观影分析');
     closeYearbookOverlay();
   });
 });

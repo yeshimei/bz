@@ -1,4 +1,4 @@
-/* 源指纹 6444adf2479e0371 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 44d6a28a88a43017 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4038,8 +4038,9 @@ var BZW_cinema = (() => {
   });
 
   // prototypes/cinema/fake/fake-obsidian.ts
+  var PLATFORM_Q = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("platform") : null;
   var Platform = {
-    isMobile: typeof window !== "undefined" && window.innerWidth <= 768
+    isMobile: typeof window !== "undefined" && (PLATFORM_Q === "mobile" || PLATFORM_Q === null && window.innerWidth <= 768)
   };
   function setIcon(container, iconId) {
     var _a;
@@ -7826,8 +7827,7 @@ tags:
       h: 0,
       fit() {
         const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-        const r = el.getBoundingClientRect();
-        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        const w = Math.max(1, el.offsetWidth), h = Math.max(1, el.offsetHeight);
         if (w === cv.w && h === cv.h) return false;
         cv.w = w;
         cv.h = h;
@@ -7974,7 +7974,6 @@ tags:
     { id: "notes", name: "影评手记" },
     { id: "quotes", name: "豆瓣短评" },
     { id: "matrix", name: "口味矩阵" },
-    { id: "wall", name: "群像墙" },
     { id: "colophon", name: "落款" }
   ];
   var pad22 = (n) => String(n).padStart(2, "0");
@@ -8069,10 +8068,7 @@ tags:
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const S2 = [];
     const years = data.years;
-    S2.push(frame(1, "开卷", "tags · 观影日期", `
-    <div class="yb-open">
-      <div class="yb-open-cv" data-r="cvbox"><canvas data-cv="open"></canvas></div>
-    </div>`, `滚轮 / ↓ 翻一幕 · 共 ${YB_SCENES.length} 幕`));
+    S2.push(frame(1, "开卷", "tags · 观影日期", "", `滚轮 / ↓ 翻一幕 · 共 ${YB_SCENES.length} 幕`));
     const yearTicks = years.map((y, i) => `<span class="yb-tick${y.films.length === Math.max(...years.map((x) => x.films.length)) ? " is-peak" : ""}" data-r="yt" data-i="${i}">${y.y}</span>`).join("");
     S2.push(frame(2, "十二年", "观影日期", `
     <div class="yb-years">
@@ -8448,7 +8444,10 @@ tags:
       "座上常客",
       "主演",
       `
-    <div class="yb-actors"><div class="yb-arc" data-r="arc">${actCards}</div></div>`,
+    <div class="yb-actors">
+      <div class="yb-attl" data-r="attl" aria-hidden="true"><i>座</i><i>上</i><i>常</i><i>客</i></div>
+      <div class="yb-arc" data-r="arc">${actCards}</div>
+    </div>`,
       `按主演出现次数 · 只看 ≥ 2 部的（共 ${data.actors.length} 位）`
     ));
     const seriesRows = data.series.map((s, i) => `<div class="yb-ser" data-r="ser" data-i="${i}">
@@ -8500,13 +8499,7 @@ tags:
       <div class="yb-mx-cols">${data.matrix.cols.map((c) => `<span>${escapeHtml2(c)}</span>`).join("")}</div>
       <div class="yb-mx-rows">${data.matrix.rows.map((r) => `<span>${escapeHtml2(r)}</span>`).join("")}</div>
     </div>`, `${data.matrix.rows.length} 个出品地 × ${data.matrix.cols.length} 个类型 · 颜色越深片子越多`));
-    const WALL_N = 60;
-    const wallPick = data.posters.filter((_, i) => i % Math.max(1, Math.floor(data.posters.length / WALL_N)) === 0).slice(0, WALL_N);
-    S2.push(frame(25, "群像墙", "海报", `
-    <div class="yb-wall" data-r="wall">
-      ${wallPick.map((it, i) => `<figure class="yb-wtile" data-r="wtile" data-i="${i}">${poster(it, posterOf)}</figure>`).join("")}
-    </div>`, `全部 ${data.posters.length} 部都有海报 · 这里抽 ${wallPick.length} 张按序翻上来`));
-    S2.push(frame(26, "落款", "全部字段", `
+    S2.push(frame(25, "落款", "全部字段", `
     <div class="yb-colo">
       <div class="yb-colo-grid">
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapTotal">${flapHtml(zeroOf(String(data.total)))}</b><span>部影视</span></div>
@@ -8515,18 +8508,16 @@ tags:
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapEp">${flapHtml(zeroOf(String(data.epTotal)))}</b><span>集剧集</span></div>
       </div>
     </div>`, `${YB_TITLE} · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
-    const fixed = `<div class="yb-fixed">
+    return `<div class="bz-yb-film">${S2.join("")}</div>`;
+  }
+  function yearbookOpenHtml() {
+    return `<div class="bz-yb-openfx"><canvas data-cv="open"></canvas></div>`;
+  }
+  function yearbookFixedHtml() {
+    return `<div class="yb-fixed">
     <div class="yb-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
     <div class="yb-rail" data-r="rail">${YB_SCENES.map((s, i) => `<i class="yb-rail-t" data-r="railT" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
-    <div class="yb-bar">
-      <span class="yb-bar-i" data-r="barI">01</span>
-      <span class="yb-bar-n" data-r="barN">${escapeHtml2(YB_SCENES[0].name)}</span>
-      <span class="yb-bar-line"><i data-r="barLine"></i></span>
-      <span class="yb-bar-t" data-r="barT">${YB_SCENES.length}</span>
-      <button class="yb-pb" data-r="pb" type="button" title="自动放映">自动</button>
-    </div>
   </div>`;
-    return `<div class="bz-yb-film">${fixed}${S2.join("")}</div>`;
   }
   function commaNum(n) {
     return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -8567,86 +8558,343 @@ tags:
     };
     {
       const s = scn("open");
-      const cv = canvas(s, "open");
+      const cv = canvas(host, "open");
       let ps = [];
       let builtFor = 0;
-      out.set("open", {
-        dur: 3.8,
-        update({ t, pal, px, py }) {
-          var _a2, _b;
-          if (cv) cv.fit();
-          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b = cv == null ? void 0 : cv.h) != null ? _b : 100;
-          if (cv && ps.length === 0 && w > 8) {
-            builtFor = w;
-            const fontPx = Math.max(46, Math.min(h * 0.42, w * 0.22));
-            const N = 1400;
-            const resample = (text, fp) => {
-              const raw = sampleText(text, fp, 800, 4);
-              if (!raw.length) return [];
-              return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
-            };
-            const a = resample(String(data.total), fontPx);
-            const b = resample(YB_TITLE, fontPx * 0.46);
-            if (a.length !== b.length || !a.length) {
+      let lastT = 0;
+      let claimAt = null;
+      const pt = { x: 0, y: 0, in: false, vx: 0, vy: 0, ds: 0, was: false };
+      const CLAIM_AT = 0.9, CLAIM_SPAN = 0.9, CLAIM_DUR = 1.2;
+      const N = 1200, FLOW = 150, ATTR = 42, DAMP_FREE = 2.6, DAMP_LOCK = 8.5, VCAP = 640;
+      const GRAV = 300, DAMP_FALL = 1.1, BOUNCE = 0.55, FLOOR_MARGIN = 3, KNOCK = 0.25, SWEEP_R = 0.08, SPLASH = 0.62, METEOR_FROM = 3, METEOR_EVERY = 3.5, METEOR_SPAN = 6;
+      const WRAP = 140;
+      const HOME_K = 30, SWAY = 42;
+      const flowAngle = (x, y, t) => Math.sin(x * 31e-4 + t * 0.22) * 1.9 + Math.sin(y * 26e-4 - t * 0.17) * 1.6 + Math.sin((x + y) * 14e-4 + t * 0.11) * 1.2 + Math.sin((x - y) * 43e-4 - t * 0.09) * 0.7;
+      const assign = (targets, ref) => {
+        const n = targets.length;
+        const used = new Uint8Array(n);
+        const idx = new Int32Array(n);
+        const order = new Int32Array(n);
+        for (let i = 0; i < n; i++) order[i] = i;
+        for (let i = n - 1; i > 0; i--) {
+          const k = Math.random() * (i + 1) | 0;
+          const tmp = order[i];
+          order[i] = order[k];
+          order[k] = tmp;
+        }
+        for (let q = 0; q < n; q++) {
+          const j = order[q];
+          let best = 0, bd = Infinity;
+          const tx = targets[j].x, ty = targets[j].y;
+          for (let i = 0; i < n; i++) {
+            if (used[i]) continue;
+            const dx = ref[i].x - tx, dy = ref[i].y - ty;
+            const dd = dx * dx + dy * dy;
+            if (dd < bd) {
+              bd = dd;
+              best = i;
             }
-            ps = a.map((p, i) => {
-              var _a3, _b2;
-              const ang = i / Math.max(1, N) * Math.PI * 2 + Math.random() * 0.6;
-              const rad = Math.max(w, h) * (0.5 + Math.random() * 0.45);
-              return {
-                tx: p.x,
-                ty: p.y,
-                tx2: ((_a3 = b[i]) != null ? _a3 : p).x,
-                ty2: ((_b2 = b[i]) != null ? _b2 : p).y,
-                sx: Math.cos(ang) * rad,
-                sy: Math.sin(ang) * rad * 0.68,
-                d: Math.random() * 0.5,
-                r: 1.1 + Math.random() * 1.5,
-                red: Math.random() < 0.1
-              };
-            });
-          } else if (cv && builtFor !== w && w > 8) {
-            ps = [];
-            builtFor = 0;
           }
-          if (cv) {
+          used[best] = 1;
+          idx[j] = best;
+        }
+        return idx;
+      };
+      const build = (w, h) => {
+        builtFor = w;
+        const r = s.getBoundingClientRect();
+        const fontPx = Math.max(46, Math.min(r.height * 0.44, r.width * 0.23));
+        const resample = (text, fp) => {
+          const raw = sampleText(text, fp, 800, 4);
+          if (!raw.length) return [];
+          return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
+        };
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const ta = resample(YB_TITLE, fontPx).map((p) => ({ x: p.x + cx, y: p.y + cy }));
+        if (!ta.length) {
+          ps = [];
+          return;
+        }
+        ps = Array.from({ length: N }, () => {
+          const roll = Math.random();
+          const kind = roll < 0.03 ? 2 : roll < 0.11 ? 1 : 0;
+          return {
+            // 出生撒满整窗、一部分落在外屏（WRAP 余量内），聚合时从四面八方汇进纸面卡
+            x: -WRAP + Math.random() * (w + WRAP * 2),
+            y: -WRAP + Math.random() * (h + WRAP * 2),
+            pxl: 0,
+            pyl: 0,
+            vx: 0,
+            vy: 0,
+            ax: 0,
+            ay: 0,
+            bx: 0,
+            by: 0,
+            d: CLAIM_AT + Math.random() * CLAIM_SPAN,
+            // 认领时刻错峰：字是一层层扑上去的
+            r: kind ? 1.7 + Math.random() * 0.9 : 1 + Math.random() * 0.6,
+            // 萤火略大
+            kind,
+            ph: Math.random() * Math.PI * 2,
+            wr: 1.2 + Math.random() * 1.6,
+            // 落位后巡游半径（萤火不钉死）
+            ws: 0.8 + Math.random() * 0.9,
+            // 巡游角速度
+            fm: 0.7 + Math.random() * 0.6,
+            // 流场受力个体差异
+            hx: 0,
+            hy: 0,
+            air: 0
+            // 0=在位 1=下坠 3=堆底 4=归位
+          };
+        });
+        for (const p of ps) {
+          p.pxl = p.x;
+          p.pyl = p.y;
+          p.hx = p.x;
+          p.hy = p.y;
+        }
+        const aA = assign(ta, ps.map((p) => ({ x: p.x, y: p.y })));
+        for (let j = 0; j < N; j++) {
+          ps[aA[j]].ax = ta[j].x;
+          ps[aA[j]].ay = ta[j].y;
+        }
+      };
+      const mets = [];
+      let nextMet = 4;
+      out.set("open", {
+        dur: 7,
+        // 自动放映的停留时长：满布待命也给几秒，移入后叙事约 5s 走到落补循环
+        update({ t, pal, px, py }) {
+          if (!cv) {
+            lastT = t;
+            return;
+          }
+          const changed = cv.fit();
+          const w = cv.w, h = cv.h;
+          if (w < 8) {
+            lastT = t;
+            return;
+          }
+          if (changed || ps.length === 0 || builtFor !== w || t < lastT - 0.25) {
+            build(w, h);
+            claimAt = null;
             cv.clear();
-            const ctx = cv.ctx;
-            const cx = w / 2, cy = h / 2;
-            const morph = easeInOut(at(t, 1.1, 2.5));
-            const pxx = cx + px * w / 2, pyy = cy + py * h / 2;
-            for (const p of ps) {
-              const k = spring(clamp01((t - p.d) / 1.5), 5.2, 2.6);
-              const txx = lerp(p.tx, p.tx2, morph), tyy = lerp(p.ty, p.ty2, morph);
-              const jit = t > 1.8 ? 1.2 : 0;
-              let x = cx + lerp(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * 0.05) * jit;
-              let y = cy + lerp(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * 0.06) * jit;
-              if (px || py) {
-                const dx = x - pxx, dy = y - pyy;
-                const dist = Math.hypot(dx, dy);
-                const R = Math.min(w, h) * 0.17;
-                if (dist < R && dist > 1e-3) {
-                  const f = (1 - dist / R) * 26 * (0.35 + 0.65 * (1 - clamp01(k) * 0.6));
-                  x += dx / dist * f;
-                  y += dy / dist * f;
+          }
+          const dt = Math.min(0.05, Math.max(1e-3, t - lastT));
+          lastT = t;
+          const ctx = cv.ctx;
+          const pxx = w / 2 + px * w / 2, pyy = h / 2 + py * h / 2;
+          pt.in = px !== 0 || py !== 0;
+          if (!pt.was) {
+            pt.vx = 0;
+            pt.vy = 0;
+          } else if (pt.in) {
+            const kV = 1 - Math.exp(-9 * dt);
+            pt.vx += ((pxx - pt.x) / dt - pt.vx) * kV;
+            pt.vy += ((pyy - pt.y) / dt - pt.vy) * kV;
+          }
+          pt.was = pt.in;
+          pt.x = pxx;
+          pt.y = pyy;
+          const pv = Math.sqrt(pt.vx * pt.vx + pt.vy * pt.vy);
+          const dsTarget = pt.in ? Math.min(1, pv / 700) : 0;
+          pt.ds += (dsTarget - pt.ds) * (1 - Math.exp(-(dsTarget > pt.ds ? 9 : 1.1) * dt));
+          ctx.globalCompositeOperation = "destination-out";
+          ctx.fillStyle = "rgba(0,0,0,.08)";
+          ctx.fillRect(0, 0, w, h);
+          ctx.globalCompositeOperation = "source-over";
+          ctx.lineCap = "round";
+          if (claimAt === null && pt.in) claimAt = t;
+          const tt = claimAt === null ? -1 : t - claimAt;
+          const br = s.getBoundingClientRect();
+          const floor = br.bottom - FLOOR_MARGIN;
+          if (tt > METEOR_FROM && t >= nextMet && mets.length < 3) {
+            nextMet = t + METEOR_EVERY + Math.random() * METEOR_SPAN;
+            const l2r = Math.random() < 0.5;
+            mets.push({
+              x: l2r ? -40 : w + 40,
+              y: h * (0.1 + Math.random() * 0.42),
+              vx: (l2r ? 1 : -1) * (720 + Math.random() * 380),
+              vy: 140 + Math.random() * 170,
+              life: 1.6,
+              col: Math.random() < 0.5 ? pal.goldRgb : pal.redRgb
+            });
+          }
+          for (const p of ps) {
+            const att = spring(clamp01((tt - p.d) / CLAIM_DUR), 4.6, 2.2);
+            let fx, fy;
+            if (tt < 0) {
+              fx = (p.hx - p.x) * HOME_K + Math.cos(t * 0.5 + p.ph) * SWAY + Math.cos(t * p.ws * 1.7 + p.ph * 2.3) * 18;
+              fy = (p.hy - p.y) * HOME_K + Math.sin(t * 0.44 + p.ph * 1.7) * SWAY + Math.sin(t * p.ws * 1.3 + p.ph * 1.1) * 18;
+            } else {
+              const ang = flowAngle(p.x, p.y, t);
+              const flowK = FLOW * p.fm * Math.max(0, 1 - att * 0.85) * (p.air === 0 ? 1 : 0.3);
+              fx = Math.cos(ang) * flowK;
+              fy = Math.sin(ang) * flowK;
+              fx += Math.cos(t * p.ws * 1.7 + p.ph * 2.3) * 16;
+              fy += Math.sin(t * p.ws * 1.3 + p.ph * 1.1) * 16;
+            }
+            let dampK = tt < 0 ? 4 : lerp(DAMP_FREE, DAMP_LOCK, clamp01(att));
+            if (p.air === 1) {
+              fy += GRAV;
+              dampK = DAMP_FALL;
+            } else if (p.air === 4) {
+              fx += (p.ax - p.x) * ATTR * 1.15;
+              fy += (p.ay - p.y) * ATTR * 1.15;
+              dampK = 7;
+              const rdx = p.x - p.ax, rdy = p.y - p.ay;
+              if (rdx * rdx + rdy * rdy < 256) p.air = 0;
+            } else if (p.air === 3) {
+              dampK = 12;
+              fy += (floor - p.r - p.y) * 60;
+            } else {
+              const gx = p.ax + Math.cos(t * p.ws + p.ph) * p.wr;
+              const gy = p.ay + Math.sin(t * p.ws * 0.83 + p.ph * 1.7) * p.wr;
+              fx += (gx - p.x) * ATTR * att;
+              fy += (gy - p.y) * ATTR * att;
+            }
+            if (pt.ds > 0.01) {
+              const dx = p.x - pt.x, dy = p.y - pt.y;
+              const dd = Math.sqrt(dx * dx + dy * dy);
+              const R = Math.min(w, h) * SWEEP_R;
+              if (dd < R && dd > 0.5) {
+                const fall = (1 - dd / R) * (1 - dd / R);
+                const ux = dx / dd, uy = dy / dd;
+                if (p.air === 0 && att > 0.85 && pt.ds > KNOCK) {
+                  const base = Math.atan2(pt.vy, pt.vx);
+                  const ang = base + (Math.random() - 0.5) * SPLASH;
+                  const pv2 = Math.sqrt(pt.vx * pt.vx + pt.vy * pt.vy);
+                  const spd = Math.min(950, Math.max(300, pv2)) * (0.55 + 0.75 * Math.random()) * (1 - dd / R * 0.5);
+                  p.air = 1;
+                  p.vx = Math.cos(ang) * spd;
+                  p.vy = Math.sin(ang) * spd;
+                  dampK = DAMP_FALL;
+                } else if (p.air === 3 && pt.ds > KNOCK) {
+                  p.air = 4;
+                  fx += (pt.vx * 1.6 + (p.ax - p.x) * 2.2) * fall;
+                  fy += -560 * fall - pt.vy * 0.6;
+                  dampK = 3.2;
+                } else {
+                  const f = fall * pt.ds * (p.air === 1 ? 0.5 : 1);
+                  fx += (pt.vx * 1.5 + ux * 620 - uy * 240) * f;
+                  fy += (pt.vy * 1.5 + uy * 620 + ux * 240) * f;
                 }
               }
-              ctx.globalAlpha = 0.16 + 0.84 * clamp01(k);
-              ctx.fillStyle = rgba(p.red ? pal.redRgb : pal.inkRgb, 0.78);
+            }
+            p.vx += fx * dt;
+            p.vy += fy * dt;
+            const dmp = Math.exp(-dampK * dt);
+            p.vx *= dmp;
+            p.vy *= dmp;
+            const sp2 = p.vx * p.vx + p.vy * p.vy;
+            if (sp2 > VCAP * VCAP) {
+              const cap = VCAP / Math.sqrt(sp2);
+              p.vx *= cap;
+              p.vy *= cap;
+            }
+            p.pxl = p.x;
+            p.pyl = p.y;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            if (p.air !== 0) {
+              const wl = br.left + p.r, wrt = br.right - p.r, wtp = br.top + p.r;
+              if (p.x < wl) {
+                p.x = wl;
+                p.vx = -p.vx * BOUNCE;
+              } else if (p.x > wrt) {
+                p.x = wrt;
+                p.vx = -p.vx * BOUNCE;
+              }
+              if (p.y < wtp) {
+                p.y = wtp;
+                p.vy = -p.vy * BOUNCE;
+              }
+            }
+            if (p.air === 1 && p.y >= floor - p.r && p.vy > 0) {
+              p.y = floor - p.r;
+              p.vy = -p.vy * BOUNCE;
+              p.vx *= 0.6;
+              if (p.vy > -34) {
+                p.vy = 0;
+                p.air = 3;
+              }
+            }
+            if (p.air === 3 && p.y > floor - p.r) {
+              p.y = floor - p.r;
+              p.vy = 0;
+            }
+            let col, a;
+            if (p.kind === 1) {
+              col = pal.goldRgb;
+              a = 0.5 + 0.45 * Math.sin(t * 1.7 + p.ph * 3.1);
+            } else if (p.kind === 2) {
+              col = pal.redRgb;
+              a = 0.5 + 0.45 * Math.sin(t * 2.1 + p.ph * 2.3);
+            } else {
+              col = pal.dark ? pal.jadeRgb : pal.inkRgb;
+              a = 0.46 + 0.12 * Math.sin(t * 2.2 + p.ph);
+            }
+            a = Math.max(0.06, a) * (0.6 + 0.4 * clamp01(att)) * at(t, 0.9);
+            if (pal.dark) {
+              a = Math.min(1, a * 1.18);
+              if (p.air === 3) a *= 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * 0.9 + p.ph * 3.1));
+            }
+            const sx0 = p.air === 1 ? p.x - p.vx * 0.09 : p.pxl;
+            const sy0 = p.air === 1 ? p.y - p.vy * 0.09 : p.pyl;
+            const mx = p.x - sx0, my = p.y - sy0;
+            const long = mx * mx + my * my > 0.18 || p.air === 1;
+            if (p.kind) {
+              ctx.strokeStyle = rgba(col, a * (pal.dark ? 0.26 : 0.16));
+              ctx.lineWidth = p.r * 6.5;
+              if (long) {
+                ctx.beginPath();
+                ctx.moveTo(sx0, sy0);
+                ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+              } else {
+                ctx.fillStyle = rgba(col, a * (pal.dark ? 0.26 : 0.16));
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r * 3.2, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            ctx.strokeStyle = rgba(col, a);
+            ctx.fillStyle = rgba(col, a);
+            ctx.lineWidth = p.r * 2;
+            if (long) {
               ctx.beginPath();
-              ctx.arc(x, y, p.r * (0.45 + 0.55 * clamp01(k)), 0, Math.PI * 2);
+              ctx.moveTo(sx0, sy0);
+              ctx.lineTo(p.x, p.y);
+              ctx.stroke();
+            } else {
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
               ctx.fill();
             }
-            ctx.globalAlpha = 1;
-            const sweep = at(t, 0.5, 1.6);
-            if (sweep > 0 && sweep < 1) {
-              const g = ctx.createLinearGradient(0, 0, w, 0);
-              g.addColorStop(0, rgba(pal.redRgb, 0));
-              g.addColorStop(0.5, rgba(pal.redRgb, 0.13 * Math.sin(sweep * Math.PI)));
-              g.addColorStop(1, rgba(pal.redRgb, 0));
-              ctx.fillStyle = g;
-              ctx.fillRect(0, cy - h * 0.3, w * sweep, h * 0.6);
+            p.pxl = p.x;
+            p.pyl = p.y;
+          }
+          for (let i = mets.length - 1; i >= 0; i--) {
+            const m = mets[i];
+            m.x += m.vx * dt;
+            m.y += m.vy * dt;
+            m.life -= dt;
+            if (m.life <= 0 || m.x < -80 || m.x > w + 80) {
+              mets.splice(i, 1);
+              continue;
             }
+            const ml = Math.min(1, m.life) * 0.8;
+            const gx0 = m.x - m.vx * 0.12, gy0 = m.y - m.vy * 0.12;
+            const g = ctx.createLinearGradient(gx0, gy0, m.x, m.y);
+            g.addColorStop(0, rgba(m.col, 0));
+            g.addColorStop(1, rgba(m.col, ml));
+            ctx.strokeStyle = g;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(gx0, gy0);
+            ctx.lineTo(m.x, m.y);
+            ctx.stroke();
           }
         }
       });
@@ -9631,6 +9879,7 @@ tags:
       const s = scn("actors");
       const cards = qsa(s, ".yb-acard");
       const arc = s.querySelector('[data-r="arc"]');
+      const attlChars = qsa(s, ".yb-attl i");
       const mid = (cards.length - 1) / 2;
       let hotCard = -1;
       out.set("actors", {
@@ -9643,6 +9892,10 @@ tags:
         update({ t, px }) {
           const tw = t > 1.8 ? px : 0;
           S(arc, `transform:translateX(${(tw * 10).toFixed(1)}px) rotate(${(tw * 1.5).toFixed(2)}deg)`);
+          attlChars.forEach((c, i) => {
+            const k = easeOut(at(t, 0.7, 0.3 + i * 0.16));
+            S(c, `opacity:${k.toFixed(3)};transform:translateY(${((1 - k) * 30).toFixed(1)}px) rotate(${i % 2 ? 1.6 : -1.6}deg)`);
+          });
           cards.forEach((c, i) => {
             const p = at(t, 0.95, i * 0.13);
             const k = easeOut(p);
@@ -9853,40 +10106,6 @@ tags:
       });
     }
     {
-      const s = scn("wall");
-      const tiles = qsa(s, ".yb-wtile");
-      const wall = s.querySelector('[data-r="wall"]');
-      const cols = 12, rowsN = 5;
-      let hotTile = -1, wallAt = null;
-      out.set("wall", {
-        dur: 3.6,
-        move(p) {
-          var _a2;
-          const el = under(p, ".yb-wtile");
-          hotTile = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          wallAt = localAt(wall, p);
-        },
-        update({ t, px, py }) {
-          const tw = t > 1.9 ? 1 : 0;
-          S(wall, tw ? `transform:perspective(1400px) rotateX(${(-py * 3).toFixed(2)}deg) rotateY(${(px * 3.4).toFixed(2)}deg)` : "");
-          tiles.forEach((el, i) => {
-            const r = Math.floor(i / cols), c = i % cols;
-            const p = at(t, 0.6, 0.15 + (r + c) * 0.045);
-            const k = easeOut(p);
-            const on = i === hotTile;
-            const drift = t > 1.7 ? Math.sin((t - 1.7) * 0.8 + r * 0.6 + c * 0.3) * 2.6 : 0;
-            let pull = 0;
-            if (wallAt && tw) {
-              const dx = (c + 0.5) / cols - wallAt.x, dy = (r + 0.5) / rowsN - wallAt.y;
-              const d2 = dx * dx + dy * dy;
-              pull = Math.exp(-d2 / 0.012) * 9;
-            }
-            S(el, `opacity:${(k * (hotTile >= 0 && !on ? 0.55 : 1)).toFixed(3)};transform:perspective(900px) translateY(${((1 - k) * 22 + drift - pull - (on ? 10 : 0)).toFixed(1)}px) rotateX(${((1 - k) * 42).toFixed(2)}deg) scale(${((0.9 + 0.1 * k) * (on ? 1.07 : 1)).toFixed(3)})` + (on ? ";z-index:3" : ""));
-          });
-        }
-      });
-    }
-    {
       const s = scn("colophon");
       const items = ["flapTotal", "flapWatched", "flapDur", "flapEp"].map((k) => s.querySelector(`[data-r="${k}"]`));
       const groups = items.map((el) => {
@@ -9939,47 +10158,32 @@ tags:
     const handle = { stop: () => void 0, goTo: () => void 0 };
     if (!sc || !film) return handle;
     const scEl = sc;
-    const filmEl = film;
     const scenes = qsa(film, ".bz-yb-scn");
     if (!scenes.length) return handle;
     const perfs = buildPerfs(film, data, root);
-    const names = scenes.map((s) => {
-      var _a;
-      return (_a = s.dataset.name) != null ? _a : "";
-    });
-    const rails = qsa(film, ".yb-rail-t");
-    const barI = film.querySelector('[data-r="barI"]');
-    const barN = film.querySelector('[data-r="barN"]');
-    const barLine = film.querySelector('[data-r="barLine"]');
-    const pb = film.querySelector('[data-r="pb"]');
+    const rails = qsa(root, ".yb-rail-t");
     let pal = palette(root);
     let cur = -1;
     let t0 = performance.now();
     let raf = 0;
     let fallback = 0;
     let dead = false;
-    let autoplay = false;
-    let autoAt = 0;
     let navTarget = -1;
     let navUntil = 0;
     const settled = /* @__PURE__ */ new Set();
-    const shutter = film.querySelector('[data-r="shutter"]');
+    const shutter = root.querySelector('[data-r="shutter"]');
     let cutTimers = [];
     let px = 0, py = 0, pin = 0;
     const unit = () => Math.max(1, scEl.clientHeight);
     const indexAt = () => clamp(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
-    function hud(i, p) {
-      var _a;
+    function hud(i) {
       if (rails.length) {
         rails.forEach((r, k) => {
           if (k === i) r.setAttribute("data-on", "1");
           else r.removeAttribute("data-on");
         });
       }
-      filmEl.dataset.cur = String(i + 1).padStart(2, "0");
-      if (barI) barI.textContent = String(i + 1).padStart(2, "0");
-      if (barN) barN.textContent = (_a = names[i]) != null ? _a : "";
-      if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+      root.dataset.cur = String(i + 1).padStart(2, "0");
     }
     function activate(i, replay = true, force = false) {
       var _a, _b;
@@ -10001,8 +10205,7 @@ tags:
       sc2.classList.remove("is-in");
       void sc2.offsetWidth;
       sc2.classList.add("is-in");
-      hud(i, 0);
-      autoAt = performance.now();
+      hud(i);
     }
     const clearCut = () => {
       for (const id of cutTimers) clearTimeout(id);
@@ -10057,7 +10260,6 @@ tags:
       }
       if (Math.abs(e.deltaY) < 1) return;
       e.preventDefault();
-      setAuto(false);
       goRel(e.deltaY > 0 ? 1 : -1);
     }
     function onKey(e) {
@@ -10065,11 +10267,9 @@ tags:
       const k = e.key;
       if (k === "ArrowDown" || k === "PageDown") {
         e.preventDefault();
-        setAuto(false);
         goRel(1);
       } else if (k === "ArrowUp" || k === "PageUp") {
         e.preventDefault();
-        setAuto(false);
         goRel(-1);
       } else if (k === "Home") {
         e.preventDefault();
@@ -10104,31 +10304,13 @@ tags:
       if (!perf) return;
       const t = (now - t0) / 1e3;
       perf.update({ t, pal, px: px * pin, py: py * pin });
-      hud(cur, clamp(t / perf.dur, 0, 1));
-      if (autoplay && now - autoAt > (perf.dur + 1.4) * 1e3) {
-        if (cur >= scenes.length - 1) setAuto(false);
-        else goRel(1);
-      }
-    }
-    function setAuto(on) {
-      if (autoplay === on) return;
-      autoplay = on;
-      if (pb) {
-        pb.textContent = on ? "暂停" : "自动";
-        pb.classList.toggle("is-on", on);
-      }
-      autoAt = performance.now();
+      hud(cur);
     }
     const onOvlClick = (e) => {
       var _a;
       const t = e.target;
-      if (t.closest('[data-r="pb"]')) {
-        setAuto(!autoplay);
-        return;
-      }
       const rail = t.closest(".yb-rail-t");
       if (rail) {
-        setAuto(false);
         goTo(Number((_a = rail.dataset.i) != null ? _a : 0), { cut: true });
       }
     };
@@ -10174,7 +10356,7 @@ tags:
     root.addEventListener("pointercancel", onPtrUp);
     scEl.addEventListener("wheel", onWheel, { passive: false });
     scEl.addEventListener("scroll", syncFromScroll, { passive: true });
-    filmEl.addEventListener("click", onOvlClick);
+    root.addEventListener("click", onOvlClick);
     document.addEventListener("keydown", onKey);
     activate(0, true);
     pump2();
@@ -10193,7 +10375,7 @@ tags:
       tip(root, "");
       scEl.removeEventListener("wheel", onWheel);
       scEl.removeEventListener("scroll", syncFromScroll);
-      filmEl.removeEventListener("click", onOvlClick);
+      root.removeEventListener("click", onOvlClick);
       document.removeEventListener("keydown", onKey);
     };
     return handle;
@@ -11846,11 +12028,15 @@ tags:
   function fitYbBox(box, panel) {
     const r = panel == null ? void 0 : panel.getBoundingClientRect();
     if (!panel || !r || r.width < 40 || r.height < 40) return;
-    box.style.left = `${Math.round(r.left)}px`;
-    box.style.top = `${Math.round(r.top)}px`;
-    box.style.width = `${Math.round(r.width)}px`;
-    box.style.height = `${Math.round(r.height)}px`;
-    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    const rot = isMobileEnv() && r.height > r.width;
+    box.classList.toggle("is-rot90", rot);
+    const w = rot ? r.height : r.width;
+    const h = rot ? r.width : r.height;
+    box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
+    box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
+    box.style.width = `${Math.round(w)}px`;
+    box.style.height = `${Math.round(h)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(w / 900, h / 620)));
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || "";
   }
@@ -11873,7 +12059,9 @@ tags:
     ovl2.innerHTML = `
     <div class="bz-yb-box">
       ${isMobileEnv() ? `<button class="bz-yb-close" data-yb-close title="关闭观影分析" aria-label="关闭观影分析">${iconSpan(ICON.close)}</button>` : ""}
+      ${data.total ? yearbookOpenHtml() : ""}
       <div class="bz-yb-scroll">${data.total ? yearbookHtml(data, (it) => posterUrl(it, app)) : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>
+      ${data.total ? yearbookFixedHtml() : ""}
     </div>`;
     document.body.appendChild(ovl2);
     mountIcons(ovl2);

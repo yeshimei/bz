@@ -35,7 +35,7 @@ import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
-import { bindYearbook, deriveYb, yearbookHtml, type YbHandle } from './yearbook';
+import { bindYearbook, deriveYb, yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, type YbHandle } from './yearbook';
 import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
 import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
@@ -1112,15 +1112,22 @@ let ybSync: (() => void) | null = null; // 层框跟随面板矩形（窗 resize
 let ybRo: ResizeObserver | null = null;
 
 /** 层框 = 面板矩形（ADR-0175）：层根 fixed inset:0，客户端坐标即层内坐标，rect 直接写内联。
- *  基字号随层框派生（不再 vmin）——面板是固定尺寸，跟窗口跑会让真机与原型排成两个密度。 */
+ *  基字号随层框派生（不再 vmin）——面板是固定尺寸，跟窗口跑会让真机与原型排成两个密度。
+ *  移动端竖屏（2026-09-24 拍板）：观影分析**横屏呈现**——面板竖着、内容横着：层框宽高对调
+ *  并加 `.is-rot90`（CSS 转 90°），基字号按对调后的框派生；用户侧转手机观看。
+ *  真机横屏（面板本来就宽>高）不转，直接满幅横屏布局。 */
 function fitYbBox(box: HTMLElement, panel: HTMLElement | null): void {
   const r = panel?.getBoundingClientRect();
   if (!panel || !r || r.width < 40 || r.height < 40) return; // 面板没几何（测试环境）：保持 CSS 兜底
-  box.style.left = `${Math.round(r.left)}px`;
-  box.style.top = `${Math.round(r.top)}px`;
-  box.style.width = `${Math.round(r.width)}px`;
-  box.style.height = `${Math.round(r.height)}px`;
-  const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+  const rot = isMobileEnv() && r.height > r.width;
+  box.classList.toggle('is-rot90', rot);
+  const w = rot ? r.height : r.width;
+  const h = rot ? r.width : r.height;
+  box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
+  box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
+  box.style.width = `${Math.round(w)}px`;
+  box.style.height = `${Math.round(h)}px`;
+  const base = Math.max(12, Math.min(19, 12 * Math.min(w / 900, h / 620)));
   box.style.fontSize = `${base.toFixed(2)}px`;
   box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || '';
 }
@@ -1141,13 +1148,16 @@ export function openYearbookOverlay(app: App): void {
   const panel = M.currentOverlay?.querySelector<HTMLElement>('[data-cinema-root]') ?? null;
   const ovl = document.createElement('div');
   ovl.className = 'bz-yb';
-  // 层根只当遮罩（透明、接「点框外」）；纸面与内容全在 .bz-yb-box 里，框即面板矩形
+  // 层根只当遮罩（透明、接「点框外」）；纸面与内容全在 .bz-yb-box 里，框即面板矩形。
+  // 固定层（导航点/底栏/遮片）放 .bz-yb-scroll 的兄弟位：box 不滚，翻到哪幕都常驻
   ovl.innerHTML = `
     <div class="bz-yb-box">
       ${isMobileEnv() ? `<button class="bz-yb-close" data-yb-close title="关闭观影分析" aria-label="关闭观影分析">${iconSpan(ICON.close)}</button>` : ''}
+      ${data.total ? yearbookOpenHtml() : ''}
       <div class="bz-yb-scroll">${data.total
         ? yearbookHtml(data, (it) => posterUrl(it, app))
         : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>
+      ${data.total ? yearbookFixedHtml() : ''}
     </div>`;
   document.body.appendChild(ovl);
   mountIcons(ovl);

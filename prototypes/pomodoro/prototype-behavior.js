@@ -1,5 +1,5 @@
-/* 源指纹 050b4166791b2e9a · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 ef25d93130101a2f · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4757,146 +4757,6 @@ var BZW_pomodoro = (() => {
     }
   });
 
-  // src/core/http.ts
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      init_notice();
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle2 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle2.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
   // src/core/settings-common.ts
   var init_settings_common = __esm({
     "src/core/settings-common.ts"() {
@@ -5217,6 +5077,38 @@ var BZW_pomodoro = (() => {
   var init_state = __esm({
     "src/pomodoro/state.ts"() {
       PHASES = ["idle", "focus", "short-break", "long-break"];
+    }
+  });
+
+  // src/core/http.ts
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+    }
+  });
+
+  // src/core/utils.ts
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
     }
   });
 
@@ -5696,6 +5588,9 @@ var BZW_pomodoro = (() => {
     }
     fxAnims.clear();
   }
+  function isBreakPhase(phase) {
+    return phase === "short-break" || phase === "long-break";
+  }
   function atmosKey(phase, running, paused) {
     if (running) return phase === "focus" ? "focus-run" : "break-run";
     if (paused) return phase === "focus" ? "focus-pause" : "break-pause";
@@ -5708,7 +5603,7 @@ var BZW_pomodoro = (() => {
     lastSig = key;
     if (!popup || !popup.isConnected) return;
     const svg = byId("pomodoro-ring-svg");
-    const timeEl = byId("pomodoro-time");
+    const timeEl = timeVisualOf(byId("pomodoro-time"));
     const mask = byId("pomodoro-mask");
     stopBreath();
     stopGlow();
@@ -5779,13 +5674,30 @@ var BZW_pomodoro = (() => {
     }
     return null;
   }
-  function mixTo(a, t) {
-    const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+  function mixTo(a, t, target) {
+    const c = [0, 1, 2].map((i) => Math.round(a[i] + (target[i] - a[i]) * t));
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+  function varRgb(el, name) {
+    try {
+      const v = el ? getComputedStyle(el).getPropertyValue(name).trim() : "";
+      return v ? parseRgb(v) : null;
+    } catch (e) {
+      return null;
+    }
   }
   function timeBoxOf(el) {
     var _a;
     return (_a = el == null ? void 0 : el.closest(".pomodoro-time-box")) != null ? _a : el;
+  }
+  function timeVisualOf(el) {
+    if (!el) return el;
+    const box = el.closest(".pomodoro-time-box");
+    if (box && box.classList.contains("reel-on")) {
+      const reel = box.querySelector(".pomodoro-time-reel");
+      if (reel) return reel;
+    }
+    return el;
   }
   function ensureFlowGrad(svg) {
     if (!svg) return null;
@@ -5826,13 +5738,33 @@ var BZW_pomodoro = (() => {
     flowGrad = g;
     return g;
   }
-  function motionProgressFx(popup, remain, total, phase) {
+  function setFlowPlay(svg, on) {
+    if (!svg || typeof svg.pauseAnimations !== "function") return;
+    try {
+      if (on) svg.unpauseAnimations();
+      else svg.pauseAnimations();
+    } catch (e) {
+    }
+  }
+  function syncFxSkin(popup, running) {
+    if (popup.className === fxSkinSig) return;
+    resetFxCache();
+    fxSkinSig = popup.className;
+    const ring = byId("pomodoro-ring-progress");
+    if (ring) ring.style.removeProperty("stroke");
+    const timeEl = byId("pomodoro-time");
+    if (timeEl) timeEl.style.removeProperty("color");
+    setFlowPlay(document.getElementById("pomodoro-ring-svg"), running);
+  }
+  function motionProgressFx(popup, remain, total, phase, running) {
     var _a;
     if (!popup || !popup.isConnected) return;
-    const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+    syncFxSkin(popup, running);
+    const hotTarget = varRgb(popup, HOT_VAR);
+    const hot = hotTarget && remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
     const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
     const ring = byId("pomodoro-ring-progress");
-    const timeEl = byId("pomodoro-time");
+    const timeEl = timeVisualOf(byId("pomodoro-time"));
     if (ring && !baseStroke && !ring.style.stroke) {
       const cs = getComputedStyle(ring).stroke;
       if (parseRgb(cs)) baseStroke = cs;
@@ -5841,12 +5773,13 @@ var BZW_pomodoro = (() => {
       baseTimeColor = getComputedStyle(timeEl).color;
     }
     const base = baseStroke ? parseRgb(baseStroke) : null;
-    const accent = base ? mixTo(base, hot) : "";
+    const accent = base && hotTarget ? mixTo(base, hot, hotTarget) : "";
     if (ring && accent) {
       const grad = ensureFlowGrad(ring.ownerSVGElement);
       if (grad) {
         for (const s of Array.from(grad.querySelectorAll("stop"))) s.setAttribute("stop-color", accent);
         ring.style.stroke = `url(#${FLOW_ID})`;
+        setFlowPlay(ring.ownerSVGElement, running);
       } else {
         ring.style.stroke = accent;
       }
@@ -5855,9 +5788,9 @@ var BZW_pomodoro = (() => {
         for (const c of Array.from(head.querySelectorAll("circle"))) c.setAttribute("fill", accent);
       }
     }
-    if (timeEl && baseTimeColor) {
+    if (timeEl && baseTimeColor && hotTarget) {
       const fg = parseRgb(baseTimeColor);
-      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65), hotTarget);
       else if (timeEl.style.color) timeEl.style.removeProperty("color");
     }
     const grow = remain > 0 && remain <= FINAL_WINDOW ? 1 + (FINAL_WINDOW - remain) * 0.028 : 0;
@@ -5866,20 +5799,30 @@ var BZW_pomodoro = (() => {
       if (grow > 1) growEl.style.transform = `scale(${grow.toFixed(3)})`;
       else if (growEl.style.transform) growEl.style.removeProperty("transform");
     }
-    const cold = phase === "break" || phase === "long-break";
+    const cold = isBreakPhase(phase);
+    const tint = varRgb(popup, cold ? TINT_BREAK_VAR : TINT_FOCUS_VAR);
     const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
-    popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+    if (tint) {
+      popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${tint[0]}, ${tint[1]}, ${tint[2]}))`;
+    } else if (popup.style.backgroundColor) {
+      popup.style.removeProperty("background-color");
+    }
   }
   function setRestDepth(mask, on) {
     if (!mask) return;
     mask.classList.toggle("bz-pm-rest", on);
     const popup = byId("pomodoro-popup");
     if (popup) popup.classList.toggle("bz-pm-rest", on);
+    if (popup) popup.classList.toggle("bz-pm-rm", reduced());
   }
   function resetFxCache() {
     baseStroke = null;
     baseTimeColor = null;
-    flowGrad = null;
+    if (flowGrad) {
+      for (const a of Array.from(flowGrad.querySelectorAll("animateTransform"))) a.remove();
+      flowGrad = null;
+    }
+    fxSkinSig = "";
   }
   function setHead(svg, mode) {
     if (!svg) return;
@@ -6084,7 +6027,7 @@ var BZW_pomodoro = (() => {
         { duration: M.base + 60, easing: E.out, delay, fill: "backwards" }
       ));
     };
-    reveal(byId("pomodoro-time"), 300, 7);
+    reveal(timeVisualOf(byId("pomodoro-time")), 300, 7);
     reveal(byId("pomodoro-phase"), 360);
     reveal(byId("pomodoro-task"), 410, 3);
     [...popup.querySelectorAll(".pomodoro-controls > button")].forEach((b, i) => reveal(b, 470 + i * STAG, 4));
@@ -6509,7 +6452,7 @@ var BZW_pomodoro = (() => {
       { duration: M.fast + 80, easing: E.out }
     ));
   }
-  var M, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_RGB, TINT_FOCUS, TINT_BREAK, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var M, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_VAR, TINT_FOCUS_VAR, TINT_BREAK_VAR, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, fxSkinSig, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
   var init_motion = __esm({
     "src/pomodoro/motion.ts"() {
       M = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -6531,15 +6474,16 @@ var BZW_pomodoro = (() => {
       headLastProgress = -1;
       URGENT_WINDOW = 300;
       FINAL_WINDOW = 10;
-      HOT_RGB = [226, 75, 74];
-      TINT_FOCUS = "216, 90, 48";
-      TINT_BREAK = "61, 110, 180";
+      HOT_VAR = "--pz-hot";
+      TINT_FOCUS_VAR = "--pz-tint-focus";
+      TINT_BREAK_VAR = "--pz-tint-break";
       SVG_NS = "http://www.w3.org/2000/svg";
       FLOW_ID = "bz-pm-flow";
       TINT_ALPHA = 0.12;
       baseStroke = null;
       baseTimeColor = null;
       flowGrad = null;
+      fxSkinSig = "";
       ceremonyUntil = 0;
       bootUntil = 0;
       lastRemain = -1;
@@ -6936,7 +6880,13 @@ var BZW_pomodoro = (() => {
     updateButtons();
     applySkinClass();
     motionPhaseSync(document.getElementById("pomodoro-popup"), state.phase, state.endTime !== null, state.paused);
-    motionProgressFx(document.getElementById("pomodoro-popup"), remain, total, state.phase);
+    motionProgressFx(
+      document.getElementById("pomodoro-popup"),
+      remain,
+      total,
+      state.phase,
+      state.endTime !== null && !state.paused
+    );
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -6979,8 +6929,22 @@ var BZW_pomodoro = (() => {
     startBtn.disabled = startLocked;
     const resetBtn = document.getElementById("pomodoro-btn-reset");
     const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked || state.phase === "idle";
+    if (resetBtn) {
+      resetBtn.disabled = locked;
+      const armed = armedBtn === "reset";
+      const want = armed ? ARM_LABEL : "重置";
+      if (resetBtn.textContent !== want) resetBtn.textContent = want;
+      resetBtn.classList.toggle("pomodoro-btn-armed", armed);
+      resetBtn.title = armed ? "再点一次即重置本阶段（进度作废）" : "重置本阶段";
+    }
+    if (skipBtn) {
+      skipBtn.disabled = locked || state.phase === "idle";
+      const armed = armedBtn === "skip";
+      const want = armed ? ARM_LABEL : "跳过";
+      if (skipBtn.textContent !== want) skipBtn.textContent = want;
+      skipBtn.classList.toggle("pomodoro-btn-armed", armed);
+      skipBtn.title = armed ? "再点一次即跳过本阶段（不计入历史）" : "跳过本阶段";
+    }
   }
   function applyAction(action) {
     const prev = state;
@@ -7051,11 +7015,14 @@ var BZW_pomodoro = (() => {
   function bindEvents() {
     var _a, _b;
     const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => void resetWithConfirm());
+    startBtn.addEventListener("click", () => {
+      if (armedBtn !== null) disarmConfirm();
+      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
+    });
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => resetWithConfirm());
     document.getElementById("pomodoro-btn-skip").addEventListener("click", () => {
       if (state.phase === "idle") return;
-      applyAction("skip");
+      skipWithConfirm();
     });
     (_a = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a.addEventListener("click", () => setStatMode("week"));
     (_b = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b.addEventListener("click", () => setStatMode("month"));
@@ -7074,22 +7041,36 @@ var BZW_pomodoro = (() => {
       applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
     });
   }
-  function resetWithConfirm() {
-    const focusing = state.phase === "focus" && (state.endTime !== null || state.paused);
-    if (!focusing) {
-      applyAction("reset");
+  function disarmConfirm() {
+    if (armedOutside) {
+      document.removeEventListener("click", armedOutside, true);
+      armedOutside = null;
+    }
+    armedBtn = null;
+    updateButtons();
+  }
+  function confirmOrRun(kind, run) {
+    if (armedBtn === kind) {
+      disarmConfirm();
+      run();
       return;
     }
-    void openFlowDialog({
-      title: "重置专注",
-      message: "专注进行中，重置后本阶段进度作废（不计入历史）",
-      actions: [
-        { label: "继续计时", value: "cancel" },
-        { label: "重置", value: "ok", cta: true, danger: true }
-      ]
-    }).then((v) => {
-      if (v === "ok") applyAction("reset");
-    });
+    if (armedBtn !== null) disarmConfirm();
+    armedBtn = kind;
+    updateButtons();
+    const btn = document.getElementById(kind === "reset" ? "pomodoro-btn-reset" : "pomodoro-btn-skip");
+    armedOutside = (e) => {
+      const t = e.target;
+      if (btn && t && btn.contains(t)) return;
+      disarmConfirm();
+    };
+    document.addEventListener("click", armedOutside, true);
+  }
+  function resetWithConfirm() {
+    confirmOrRun("reset", () => applyAction("reset"));
+  }
+  function skipWithConfirm() {
+    confirmOrRun("skip", () => applyAction("skip"));
   }
   function buildDOM() {
     const mask = document.createElement("div");
@@ -7169,6 +7150,7 @@ var BZW_pomodoro = (() => {
     }
   }
   function closePomodoro(immediate = false) {
+    if (armedBtn !== null) disarmConfirm();
     if (maskEl) {
       const el = maskEl;
       maskEl = null;
@@ -7186,7 +7168,7 @@ var BZW_pomodoro = (() => {
     if (state.paused) return "paused";
     return state.endTime !== null ? "focusing" : "idle";
   }
-  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
   var init_ui = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -7195,7 +7177,6 @@ var BZW_pomodoro = (() => {
       init_z_order();
       init_settings_provider();
       init_notice();
-      init_flow_dialog();
       init_settings_common();
       init_data();
       init_render();
@@ -7225,6 +7206,9 @@ var BZW_pomodoro = (() => {
       timeReels = null;
       lastBeepRemain = -1;
       SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
+      armedBtn = null;
+      armedOutside = null;
+      ARM_LABEL = "确认";
       initInflight = null;
       openInflight = null;
     }
