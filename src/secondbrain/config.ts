@@ -59,19 +59,28 @@ export const DEFAULT_EMBEDDING_MODEL = 'bge-m3';
 export const RERANK_MODEL = 'dengcao/Qwen3-Reranker-4B:Q4_K_M';
 
 /**
- * 重排是否生效（issue 427/ADR-0186）：开关缺省开 + 当前 Embedding 模型为 Qwen3-Embedding-8B。
- * 与 AI 面板「启用重排」行的 visibleWhen 共用 core `isQwen3Embedding8b` —— **行隐藏即不生效**
- * （用户切走 8B 后残留的开关值不再起作用，不留暗态）。
+ * 重排通道（issue 431/ADR-0189）：总闸 × 通道开关的二选一结果。
  */
-export function rerankActive(): boolean {
+export type RerankChannel = 'off' | 'local' | 'jev';
+
+/**
+ * 重排通道单源判定（issue 431/ADR-0189）：AI 面板各行可见性与检索侧 applyRerank 分流**共用这一条**。
+ * - `off`：总闸关；或 Jev 关但嵌入非 8B（本地通道的门收窄在此——与原 rerankActive 语义一致）；
+ * - `local`：总闸开 + Jev 关 + 嵌入为 Qwen3-Embedding-8B（ADR-0186 语义零改动）；
+ * - `jev`：总闸开 + Jev 开——不查嵌入模型、不查本地 Reranker（云端判定不吃本地显存）。
+ * 暗态原则（ADR-0186 决策 3）以通道为单位继续成立：行可见性 = 生效条件（各自通道）。
+ */
+export function rerankChannel(): RerankChannel {
   const s: any = tryGetSettings();
-  return s.secondBrainRerank !== false && isQwen3Embedding8b(s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL);
+  if (s.secondBrainRerank === false) return 'off';
+  if (s.secondBrainRerankJev === true) return 'jev';
+  return isQwen3Embedding8b(s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL) ? 'local' : 'off';
 }
 
 /**
  * 实际生效的重排模型（issue 429）：设置留空 → 默认 RERANK_MODEL（4B）。
  * 换重排模型不动向量索引（重排是纯换序层），故与 Embedding 模型的「换模型需重建」不同——
- * 改完下一次检索即生效。
+ * 改完下一次检索即生效。仅本地通道消费（issue 431/ADR-0189：Jev 通道的模型由 JEV 组决定）。
  */
 export function resolvedRerankModel(): string {
   const s: any = tryGetSettings();

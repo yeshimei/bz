@@ -312,12 +312,18 @@ export default interface BzSettings {
   /** 上次由插件自动填入的远程地址（issue 424/ADR-0184 自动跟随的判据：与当前值相同 = 该值归插件管，
    *  本机 IP 变了就跟着刷新；不同 = 用户手改过，一律不动。空 = 从没自动填过） */
   secondBrainRemoteOllamaAuto: string;
-  /** 重排开关（issue 427/ADR-0186）：召回后交 Qwen3-Reranker 交叉编码重排。仅 Embedding 模型为
-   *  Qwen3-Embedding-8B 时生效（与 AI 面板「启用重排」行可见性共用同一判定，见 core/ai-models） */
+  /** 重排总闸（issue 427/ADR-0186；issue 431/ADR-0189 起常显）：召回后交重排通道精排。通道二选一
+   *  见 secondBrainRerankJev；本地通道仅在 Embedding 模型为 Qwen3-Embedding-8B 时生效（判定单源
+   *  secondbrain/config rerankChannel，与「重排模型」行可见性共用 core isQwen3Embedding8b） */
   secondBrainRerank: boolean;
   /** 重排模型名（issue 429）：留空回落 RERANK_MODEL（Qwen3-Reranker-4B）；换它不动向量索引，
-   *  下一次检索即生效（重排是纯换序层，与 Embedding 模型的「换模型需重建」不同） */
+   *  下一次检索即生效（重排是纯换序层，与 Embedding 模型的「换模型需重建」不同）。
+   *  仅本地通道消费——Jev 通道的模型由 AI 面板 JEV 组决定（issue 431/ADR-0189） */
   secondBrainRerankModel: string;
+  /** 重排走 Jev（issue 431/ADR-0189）：与「启用重排」总闸构成通道二选一——开启后检索重排改走
+   *  AI 面板 JEV 组配置的 Jev 通道（noul 判定），本地「重排模型」行隐藏；不绑 8B 嵌入门（云端
+   *  不吃本地显存）。Jev 不可用（未配密钥等）整轮回余弦序 */
+  secondBrainRerankJev: boolean;
 
   // ===== 🔗 自动关联（知识盒设置页「自动关联」组；ADR-0141 自第二大脑迁入并正名）=====
   /** 自动关联总开关：三个盒子里的笔记落盘 / 改动后自动建立 related（false 时无任何监听与写入） */
@@ -883,8 +889,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
   secondBrainRemoteOllamaUrl: '',
   secondBrainRemoteOllamaAuto: '',
-  secondBrainRerank: true, // issue 427/ADR-0186：默认开；仅 Qwen3-Embedding-8B 配置下显示与生效
+  secondBrainRerank: true, // issue 427/ADR-0186：默认开；本地通道仅 Qwen3-Embedding-8B 配置下生效（issue 431 起总闸常显）
   secondBrainRerankModel: '', // issue 429：空 = 默认 Qwen3-Reranker-4B（secondbrain/config RERANK_MODEL）
+  secondBrainRerankJev: false, // issue 431/ADR-0189：默认关——存量用户行为零变化；开 = 重排走 JEV 组的 Jev 通道
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,

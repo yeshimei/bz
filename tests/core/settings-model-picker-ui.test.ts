@@ -338,7 +338,8 @@ describe('Jev 模型行：获取模型（issue 424/ADR-0184）', () => {
 /**
  * 重排模型行「获取模型」（issue 429）：与 Embedding 模型行同款弹窗流程——拉 /api/tags →
  * pickRerankModels 优先取名字含 rerank 的 → 选中写 secondBrainRerankModel + 落盘 + success toast，
- * 且等选择器关闭再 resolve（一次点击即回填）。行可见性挂在 8B 嵌入 + 重排开关上。
+ * 且等选择器关闭再 resolve（一次点击即回填）。行可见性 = 8B 嵌入 ∧ 重排总闸开 ∧ Jev 关
+ * （issue 431/ADR-0189：本行是本地通道专属，Jev 开时隐藏）。
  */
 describe('重排模型行：获取模型（issue 429）', () => {
   it('拉取 Ollama 模型列表 → 只列重排候选 → 选中即回填（一次点击）', async () => {
@@ -398,11 +399,31 @@ describe('重排模型行：获取模型（issue 429）', () => {
     expect(document.getElementById('bz-model-picker-popup')).toBeNull();
   });
 
-  it('嵌入模型非 8B → 重排行与重排模型行都收起（bz-setting-hidden）', () => {
+  it('嵌入模型非 8B → 总闸与「重排走 Jev」照常显示，仅本地「重排模型」行收起（issue 431/ADR-0189）', () => {
     state.secondBrainEmbeddingModel = 'bge-m3';
     const container = renderAIGroup();
     expect(findRow(container, 'Embedding 模型').classList.contains('bz-setting-hidden')).toBe(false);
-    expect(findRow(container, '启用重排').classList.contains('bz-setting-hidden')).toBe(true);
+    // 总闸常显（8B 门收窄给本地通道）；「重排走 Jev」只看总闸（默认开）——Jev 通道不绑 8B 门
+    expect(findRow(container, '启用重排').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '重排走 Jev').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '重排模型').classList.contains('bz-setting-hidden')).toBe(true);
+  });
+
+  it('Jev 开 → 本地「重排模型」行隐藏（通道二选一，无暗态）', () => {
+    state.secondBrainEmbeddingModel = 'qwen3-embedding:8b';
+    state.secondBrainRerankJev = true;
+    const container = renderAIGroup();
+    expect(findRow(container, '启用重排').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '重排走 Jev').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '重排模型').classList.contains('bz-setting-hidden')).toBe(true);
+  });
+
+  it('总闸关 → 通道开关与重排模型行一起收起（无孤立设置）', () => {
+    state.secondBrainEmbeddingModel = 'qwen3-embedding:8b';
+    state.secondBrainRerank = false;
+    const container = renderAIGroup();
+    expect(findRow(container, '启用重排').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(findRow(container, '重排走 Jev').classList.contains('bz-setting-hidden')).toBe(true);
     expect(findRow(container, '重排模型').classList.contains('bz-setting-hidden')).toBe(true);
   });
 });

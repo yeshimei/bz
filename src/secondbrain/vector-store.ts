@@ -26,8 +26,9 @@
  * isRefreshing() 暴露进行中状态供主面板恢复进度视图。
  */
 import type { App, TFile } from 'obsidian';
-import { buildConfig, DEFAULT_EMBEDDING_MODEL, IS_MOBILE, rerankActive } from './config';
+import { buildConfig, DEFAULT_EMBEDDING_MODEL, IS_MOBILE, rerankChannel, type RerankChannel } from './config';
 import { RERANK_MAX_DOCS, rerankScores } from './rerank';
+import { jevRerankScores } from './rerank-jev';
 import { loadStore, mutateStore } from './store-file';
 import { MobileBuffer } from './binary';
 import { embedChunks, canvasToText, noteTitleFromPath } from './chunk';
@@ -716,32 +717,47 @@ export class VectorStore {
   }
 
   /**
-   * 重排接线（issue 427/ADR-0186）：列表整体交 Qwen3-Reranker 交叉编码重排，重排分另记
-   * `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺；**hit.score 不动**——阈值仍走
-   * ADR-0185 的单一余弦尺。**要么整体重排、要么维持余弦序**（ADR-0186 不变量）：列表超过
-   * RERANK_MAX_DOCS 即整轮不重排（见下方早退）——已重排头部 + 只有余弦分的尾部混排，正是
-   * issue 429 要消灭的两把尺观感；面板侧 TopK 上限（1–50）保证交互检索永远走整列重排。
-   * 任一失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
+   * 重排接线（issue 427/ADR-0186 建本地通道；issue 431/ADR-0189 起双通道二选一）：列表整体交
+   * 当前生效通道打分，重排分另记 `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺；
+   * **hit.score 不动**——阈值仍走 ADR-0185 的单一余弦尺。**要么整体重排、要么维持余弦序**
+   * （ADR-0186 不变量）：列表超过 RERANK_MAX_DOCS 即整轮不重排（见下方早退）——已重排头部 +
+   * 只有余弦分的尾部混排，正是 issue 429 要消灭的两把尺观感；面板侧 TopK 上限（1–50）保证
+   * 交互检索永远走整列重排。通道由 `rerankChannel()` 单源决定（off / local / jev）：
+   * local = Qwen3-Reranker 交叉编码（Ollama，绑 8B 嵌入门）；jev = Jev noul 云端判定
+   * （不绑 8B 门；返回 null 即 Jev 不可用——未配密钥 / 超时 / 畸形 / 缺题键都在这一路回落）。
+   * 任一通道失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
    * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。
    * 取消（AbortError）例外：直抛——发起方已换成新查询，这里回填旧序只会盖掉新结果。
    */
   private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
-    if (hits.length < 2 || !rerankActive()) return hits;
+    if (hits.length < 2) return hits;
+    const channel: RerankChannel = rerankChannel();
+    if (channel === 'off') return hits;
     // 超长列表（建链管线候选池 = max(TopK×3, 24)，TopK 上限 50 → 可达 150）整轮不重排：
-    // 那些链路自己会按 score 重排/取 max，重排对它们的产出零影响，只付 GPU 耗时——
+    // 那些链路自己会按 score 重排/取 max，重排对它们的产出零影响，只付耗时——
     // 而半重排会让本函数的「整轮同尺」不变量失守（多数 > 50 的场景恰是后台链路）。
     if (hits.length > RERANK_MAX_DOCS) return hits;
     try {
+      if (channel === 'jev') {
+        const scores = await jevRerankScores(query, hits.map((h) => h.chunk), signal);
+        if (!scores) return hits; // null = Jev 不可用 → 维持余弦序（judgeOrFallback 的 fallback 槽位）
+        return this.rankByScores(hits, scores);
+      }
       const scores = await rerankScores(query, hits.map((h) => h.chunk), baseUrl, signal);
-      return hits
-        .map((hit, i) => ({ hit, s: scores[i], i }))
-        .sort((a, b) => b.s - a.s || a.i - b.i) // 同分保持余弦序（稳定排序）
-        .map((x) => ({ ...x.hit, rerankScore: x.s }));
+      return this.rankByScores(hits, scores);
     } catch (e) {
       if (signal?.aborted || isAbortError(e)) throw abortError();
       console.warn('[secondbrain] 重排不可用，按余弦序返回', e);
       return hits;
     }
+  }
+
+  /** 重排分 → 名次（同分保持余弦序的稳定排序），重排分随条目走、score 不动（单一余弦尺） */
+  private rankByScores(hits: SearchHit[], scores: number[]): SearchHit[] {
+    return hits
+      .map((hit, i) => ({ hit, s: scores[i], i }))
+      .sort((a, b) => b.s - a.s || a.i - b.i) // 同分保持余弦序（稳定排序）
+      .map((x) => ({ ...x.hit, rerankScore: x.s }));
   }
 
   /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进）。

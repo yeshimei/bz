@@ -371,6 +371,8 @@ describe('bz 骨架冒烟', () => {
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     // issue 429：重排模型留空 = 用内置默认（secondbrain/config RERANK_MODEL）
     expect(s.secondBrainRerankModel).toBe('');
+    // issue 431/ADR-0189：重排走 Jev 默认关——存量用户行为零变化
+    expect(s.secondBrainRerankJev).toBe(false);
     // enh-sweep-a：远程 Ollama URL 默认留空（空 = 未配置远程，不再写死内网 IP）
     expect(s.secondBrainRemoteOllamaUrl).toBe('');
     expect(s.passwordLength).toBe('16');

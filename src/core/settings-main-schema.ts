@@ -48,6 +48,10 @@
  * - issue 429：「Embedding」组尾补「重排模型」行（开启重排才显示），行内「获取模型」拉同一台
  *   Ollama 的已装模型（名字含 rerank 的优先）；键 secondBrainRerankModel，留空回落
  *   secondbrain/config 的 RERANK_MODEL（Qwen3-Reranker-4B）。重排是纯换序层，换模型不重建索引。
+ * - issue 431/ADR-0189：重排双通道二选一——「启用重排」改常显总闸（desc 写双通道门槛），新增
+ *   「重排走 Jev」开关（键 secondBrainRerankJev，总闸开才显示，开启后走 JEV 组的 Jev 通道）、
+ *   「重排模型」行改本地通道专属（可见性叠 Jev 关，Jev 开时隐藏）。运行期判定单源
+ *   secondbrain/config rerankChannel（off/local/jev）。
  */
 
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
@@ -460,24 +464,43 @@ function jevModelRow(): SettingsRow {
  * （secondbrain/local-ip.ensureRemoteOllamaUrl），不再需要人工看/改。
  * issue 429：重排开关之后接「重排模型」行（开启重排才显示）——重排器也是 Ollama 上的模型，
  * 与嵌入同一台服务，可选可换。
+ * issue 431/ADR-0189：行序 = 地址 → 嵌入模型 → 重排总闸（改常显）→ 「重排走 Jev」（通道二选一）
+ * → 「重排模型」（本地通道专属，Jev 开时隐藏）。
  */
 function embeddingGroupRows(): SettingsRow[] {
-  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow(), rerankModelRow()];
+  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow(), jevRerankToggleRow(), rerankModelRow()];
 }
 
 /**
- * 「启用重排」开关（issue 427/ADR-0186）：召回结果交 Qwen3-Reranker 交叉编码重排，头部若干条按
- * 重排分排序（分数与阈值仍走原始余弦单尺，重排只改顺序，见 secondbrain/vector-store）。
- * 默认开；只在「Embedding 模型 = Qwen3-Embedding-8B」时显示——可见性判定与检索侧生效条件
- * 共用 core `isQwen3Embedding8b`（行藏起来时检索侧也不生效，不留暗态开关）。
+ * 「启用重排」总闸（issue 427/ADR-0186 建；issue 431/ADR-0189 改常显）：召回结果交重排通道精排，
+ * 相关笔记排序更准（分数与阈值仍走原始余弦单尺，重排只改顺序，见 secondbrain/vector-store）。
+ * 默认开。原「仅 8B 嵌入时可见」的门随 Jev 第二通道的引入收窄给本地通道（`rerankChannel()`）——
+ * 总闸常显、desc 静态写明双通道各自门槛（Q7 拍板：非 8B + Jev 关 / Jev 无密钥的「总闸开着但
+ * 无通道生效」状态靠 desc 交代，不做动态警示）。
  */
 function rerankToggleRow(): SettingsRow {
   return {
     type: 'toggle',
     name: '启用重排',
-    desc: '召回结果再用重排模型精排，相关笔记排序更准',
+    desc: '召回结果再精排，相关笔记排序更准。本地需 8B 嵌入，Jev 需填密钥',
     binding: { key: 'secondBrainRerank' },
-    visibleWhen: (snapshot) => isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel),
+  };
+}
+
+/**
+ * 「重排走 Jev」开关（issue 431/ADR-0189）：与「启用重排」总闸构成通道二选一——开启后检索重排
+ * 走 AI 面板 JEV 组配置的 Jev 通道（noul 判定，见 secondbrain/rerank-jev），本地「重排模型」行
+ * 隐藏；不绑 8B 嵌入门（云端判定不吃本地显存，任何嵌入模型可用）。可见性 = 总闸开（通道选择
+ * 只在重排开启时有意义）；Jev 未配密钥时运行期自动回余弦序（judgeOrFallback 类别①不发请求），
+ * desc 静态交代、不做动态警示（Q7 拍板）。
+ */
+function jevRerankToggleRow(): SettingsRow {
+  return {
+    type: 'toggle',
+    name: '重排走 Jev',
+    desc: '改用 Jev 模型云端重排，未填密钥时自动回退余弦序',
+    binding: { key: 'secondBrainRerankJev' },
+    visibleWhen: (snapshot) => snapshot.secondBrainRerank !== false,
   };
 }
 
@@ -485,8 +508,8 @@ function rerankToggleRow(): SettingsRow {
  * 「重排模型」行（issue 429，用户拍板「开启重排之后还要显示一个选择重排模型的选项」）：
  * 照 Embedding 模型行范式——行内「获取模型」拉同一台 Ollama 的已装模型（名字含 rerank 的
  * 优先，见 core/ai-models pickRerankModels），选中即写入 secondBrainRerankModel。
- * 可见性 = 与「启用重排」开关同一条件链（8B 嵌入 + 开关非关）；换它不动向量索引，
- * 下一次检索即生效（重排是纯换序层，无重建语义）。
+ * 可见性 = 8B 嵌入 ∧ 总闸非关 ∧ Jev 关（issue 431/ADR-0189：本行是**本地通道**专属，
+ * Jev 通道开时隐藏——通道二选一；换它不动向量索引，下一次检索即生效，重排是纯换序层）。
  */
 function rerankModelRow(): SettingsRow {
   return {
@@ -496,7 +519,9 @@ function rerankModelRow(): SettingsRow {
     placeholder: 'dengcao/Qwen3-Reranker-4B:Q4_K_M',
     binding: { key: 'secondBrainRerankModel' },
     visibleWhen: (snapshot) =>
-      isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel) && snapshot.secondBrainRerank !== false,
+      isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel) &&
+      snapshot.secondBrainRerank !== false &&
+      snapshot.secondBrainRerankJev !== true,
     actions: [{
       text: '获取模型',
       onClick: async (_value, ctx) => {
