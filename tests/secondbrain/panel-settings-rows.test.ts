@@ -68,20 +68,22 @@ describe('第二大脑设置「服务」组：连接面四行退场（issue 424/
 });
 
 /**
- * TopK 上限与重排头部上限的不变式（issue 429 review 收口）：
+ * TopK 上限与重排条数上限的不变式（issue 429 review 收口）：
  * 参考面板的百分比取自 `hit.rerankScore ?? hit.score`——若 TopK 能超过 RERANK_MAX_DOCS，
- * 尾部条目就没有重排分、与已重排头部混排，「相关度高的排上面」的观感会被破坏。
- * 两处数字分居两个域，靠本测试钉住「TopK 上限 ≤ 重排头部上限」。
+ * 列表就会整体跳过重排（applyRerank 的「要么整体重排、要么整体不重排」），
+ * 用户调大的 TopK 反而让重排静默失效。两处数字分居两个域，靠本测试钉住「TopK 上限 ≤ 重排上限」。
  * （按行名认行：这两个 number 行用 numStrBinding，绑定上不带 key 字段。）
  */
-describe('TopK 上限 ≤ 重排头部上限（issue 429）', () => {
+describe('TopK 上限 ≤ 重排条数上限（issue 429）', () => {
   it('「参考结果数 TopK」「对话参考结果数」的 max 都不超过 RERANK_MAX_DOCS', () => {
     const rows = secondBrainSettingsSchema().groups.flatMap((g) => g.rows);
     const numbers = rows.filter((r) => r.type === 'number') as NumberRow[];
     const topKs = numbers.filter((r) => ['参考结果数 TopK', '对话参考结果数'].includes(r.name));
     expect(topKs).toHaveLength(2); // 两行改名/下线即本不变式失效，先在此炸掉
     for (const row of topKs) {
-      expect(RERANK_MAX_DOCS).toBeGreaterThanOrEqual(row.max ?? 0);
+      // max 缺失 = 本不变式失去意义（`?? 0` 会让断言变成恒真），先炸掉而不是放行
+      expect(row.max, `${row.name} 缺 max`).toBeTypeOf('number');
+      expect(RERANK_MAX_DOCS).toBeGreaterThanOrEqual(row.max as number);
     }
   });
 });

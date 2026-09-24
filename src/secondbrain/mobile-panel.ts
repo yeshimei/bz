@@ -26,7 +26,7 @@ import { AI } from './ai';
 import { CHAT_CHIPS } from './render';
 import { motionMobileCards, motionMsgIn, motionTeardown } from './motion';
 import { appendChatHistory, loadChatHistory, type ChatHistoryEntry } from './store-file';
-import type { SearchHit, VectorStore } from './vector-store';
+import { relevancePct, type SearchHit, type VectorStore } from './vector-store';
 
 const SNAP_MID = 45;
 const SNAP_HIGH = 75;
@@ -273,20 +273,24 @@ export class MobilePanel {
     // 只查最新（issue 428）：接了新上下文就中断上一轮（真中断远程嵌入 HTTP）——
     // 快速改字时否则会有一串远程查询排队，旧结果返回来还会盖掉最新一轮
     this.inflight?.abort();
-    const ac = new AbortController();
-    this.inflight = ac;
     if (!query || query.length < 2) {
+      // 短上下文是终止态（清空列表 + 重绘空态），不需要谁接手——故先 abort 再判长度（ADR-0187 §5）
       this.inflight = null;
       this.refResults = [];
       this.refError = null;
       if (this.mode === 'ref') this.renderRefTab();
       return;
     }
+    const ac = new AbortController();
+    this.inflight = ac;
+    let r: SearchHit[] = [];
     try {
-      this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
+      r = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
       // 仍是本轮才收尾（issue 428）：被新一轮接管则结果作废，让新轮独占列表态
+      // （赋值必须在门禁之后——否则旧轮结果照样落进 refResults，盖掉新轮）
       if (this.inflight !== ac) return;
       this.inflight = null;
+      this.refResults = r;
       this.refError = null; // 本次检索成功：清除上一轮失败态
     } catch (e) {
       // 被更新的一轮中断：本轮作废，列表态归新查询所有——静默收口
@@ -330,7 +334,7 @@ export class MobilePanel {
       pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ''));
       const scoreDiv = document.createElement('div');
       scoreDiv.className = 'bz-sb-mb-card-score';
-      scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
+      scoreDiv.textContent = `${relevancePct(item)}%`;
       topRow.appendChild(pathDiv);
       topRow.appendChild(scoreDiv);
       card.appendChild(topRow);
@@ -339,7 +343,7 @@ export class MobilePanel {
       const bar = document.createElement('div');
       bar.className = 'bz-sb-mb-card-bar';
       const barFill = document.createElement('span');
-      barFill.style.width = `${Math.round(item.score * 100)}%`;
+      barFill.style.width = `${relevancePct(item)}%`;
       bar.appendChild(barFill);
       card.appendChild(bar);
 
