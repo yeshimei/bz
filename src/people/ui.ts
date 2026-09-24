@@ -24,6 +24,8 @@ const AVATAR_COLORS = ['#b5534a', '#5a8f6d', '#4a7d9e', '#8a6bb0', '#b08a3e', '#
 
 type Stage = 'list' | 'import' | 'detail';
 type ImportStep = 'file' | 'pick' | 'run';
+/** 卡墙排序键（issue 442）：最近互动（默认）/ 消息量 / 建卡时间 / 名字 */
+type SortKey = 'recent' | 'msgs' | 'created' | 'name';
 
 let overlay: HTMLElement | null = null;
 let store: PeopleStore | null = null;
@@ -42,6 +44,15 @@ let runResult: { ok: number; failed: string[] } | null = null;
 /** 删除二次确认（第一次点进入武装态，3 秒回落） */
 let deleteArmId: string | null = null;
 let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
+/** 卡墙排序 / 标签筛选 / 搜索状态（issue 442，与 stage / selected 同款模块级持久） */
+let sortKey: SortKey = 'recent';
+let filterTag = '';
+let searchText = '';
+/** 最近一次 renderList 拉到的人物（工具条原位刷新用——搜索时不 refetch、不重建输入框） */
+let listCache: PersonEntry[] = [];
+/** 合并流程（issue 442）：mergeFromId = 待并出的人物；mergeToId = 已点选、待二次确认的目标 */
+let mergeFromId: string | null = null;
+let mergeToId: string | null = null;
 
 export function isPeopleOpen(): boolean {
   return overlay !== null;
@@ -99,6 +110,12 @@ export function closePeoplePanel(): void {
   step = 'file';
   running = false;
   runResult = null;
+  sortKey = 'recent';
+  filterTag = '';
+  searchText = '';
+  listCache = [];
+  mergeFromId = null;
+  mergeToId = null;
   disarmDelete();
 }
 
@@ -130,6 +147,20 @@ function onOverlayClick(e: MouseEvent): void {
     void renderBody();
     return;
   }
+  // —— issue 442 分支：筛选清除 / 导出 / 合并（目标点选走独立分支，不侵入下方卡片分支） ——
+  if (t.closest('[data-people-filter-clear]')) { clearFilters(); return; }
+  if (t.closest('[data-people-export]')) { void handleExport(); return; }
+  const mergeBtn = t.closest<HTMLElement>('[data-people-merge]');
+  if (mergeBtn) { mergeFromId = mergeBtn.dataset.peopleMerge || null; mergeToId = null; void renderBody(); return; }
+  if (t.closest('[data-people-merge-cancel]')) { mergeFromId = null; mergeToId = null; void renderBody(); return; }
+  if (t.closest('[data-people-merge-confirm]')) { void handleMergeConfirm(); return; }
+  const mergePick = mergeFromId ? t.closest<HTMLElement>('[data-people-card]') : null;
+  if (mergePick) {
+    // 合并模式：点其他卡 = 选目标；点自己这张卡不响应
+    const id = mergePick.dataset.peopleCard || '';
+    if (id && id !== mergeFromId) { mergeToId = id; void renderBody(); }
+    return;
+  }
   const del = t.closest<HTMLElement>('[data-people-del]');
   if (del) { void handleDelete(del.dataset.peopleDel ?? ''); return; }
   const card = t.closest<HTMLElement>('[data-people-card]');
@@ -143,6 +174,9 @@ function onOverlayChange(e: Event): void {
     if (el.checked) selected.add(tk); else selected.delete(tk);
     updatePickFooter();
   }
+  // —— issue 442：排序 / 标签筛选（原位刷卡墙，工具条不重建） ——
+  if (el.matches('[data-people-sort]')) { sortKey = (el.value || 'recent') as SortKey; refreshWall(); }
+  if (el.matches('[data-people-tag]')) { filterTag = el.value || ''; refreshWall(); }
 }
 
 function onOverlayInput(e: Event): void {
@@ -150,6 +184,8 @@ function onOverlayInput(e: Event): void {
   if (el.matches('[data-people-name]')) {
     names.set(el.dataset.peopleName ?? '', el.value);
   }
+  // —— issue 442：搜索（原位刷卡墙，输入框不重建、焦点不丢） ——
+  if (el.matches('[data-people-search]')) { searchText = el.value; refreshWall(); }
 }
 
 function selectAll(contacts: ContactGroup[]): void {
@@ -182,6 +218,7 @@ function renderStats(people: PersonEntry[]): void {
 async function renderList(body: HTMLElement): Promise<void> {
   const people = store ? await store.list() : [];
   renderStats(people);
+  listCache = people;
   body.replaceChildren();
   if (!people.length) {
     body.appendChild(el('div', 'bz-people-empty', [
@@ -192,24 +229,29 @@ async function renderList(body: HTMLElement): Promise<void> {
     ]));
     return;
   }
-  const wall = el('div', 'bz-people-wall');
-  for (const p of people) {
-    const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-    const from = p.imports.map((r) => r.timeFrom).sort()[0];
-    const to = p.imports.map((r) => r.timeTo).sort().pop();
-    const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
-    const card = el('div', 'bz-people-card', [
-      el('div', 'bz-people-ava', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-      el('div', 'bz-people-card-main', [
-        el('div', 'bz-people-card-name', text(p.name)),
-        el('div', 'bz-people-card-meta', text([total ? `${total} 条消息` : '尚无消息', span].filter(Boolean).join(' · '))),
-        el('div', `bz-people-chip ${p.digest ? 'bz-people-chip-on' : ''}`, text(p.digest ? '已画脸谱' : '待生成')),
-      ]),
-      button('bz-people-btn bz-people-btn-ghost bz-people-del', deleteArmId === p.id ? '再点确认删除' : '删除', { 'data-people-del': p.id }),
-    ]);
-    card.setAttribute('data-people-card', p.id);
-    wall.appendChild(card);
+  // 工具条（issue 442）：排序 / 标签筛选 / 搜索——追加在卡墙上方，头部结构不动
+  body.appendChild(buildToolbar(people));
+  // 合并流程横幅（issue 442）：待选目标 → 已选目标待二次确认
+  const from = mergeFromId ? people.find((x) => x.id === mergeFromId) : null;
+  if (mergeFromId && !from) { mergeFromId = null; mergeToId = null; } // 人已删，流程自愈回落
+  else if (from) {
+    const to = mergeToId && mergeToId !== mergeFromId ? people.find((x) => x.id === mergeToId) : null;
+    if (to) {
+      body.appendChild(el('div', 'bz-people-merge-bar', [
+        el('div', 'bz-people-merge-text', text(`确认合并：把「${from.name}」的导入记录与随手记并到「${to.name}」，「${from.name}」将被删除。`)),
+        button('bz-people-btn bz-people-btn-acc', '确认合并', { 'data-people-merge-confirm': '' }),
+        button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-merge-cancel': '' }),
+      ]));
+    } else {
+      body.appendChild(el('div', 'bz-people-merge-bar', [
+        el('div', 'bz-people-merge-text', text(`合并重复人物：点选一张卡片，把「${from.name}」的导入记录与随手记并过去——对方保留，「${from.name}」这张将删除。`)),
+        button('bz-people-btn bz-people-btn-ghost', '取消合并', { 'data-people-merge-cancel': '' }),
+      ]));
+    }
   }
+  const wall = el('div', 'bz-people-wall');
+  wall.setAttribute('data-people-wall', '');
+  applyWall(people, wall);
   body.appendChild(wall);
 }
 
@@ -515,8 +557,238 @@ async function renderDetail(body: HTMLElement): Promise<void> {
     body.appendChild(el('div', 'bz-people-empty-hint', text('还没有脸谱。导入聊天记录后自动生成。')));
   }
   body.appendChild(el('div', 'bz-people-detail-foot', [
+    button('bz-people-btn bz-people-btn-ghost', '导出为笔记', { 'data-people-export': '' }),
     button('bz-people-btn', '再导一次聊天（重画脸谱）', { 'data-people-import-btn': '' }),
   ]));
+}
+
+// ---------------- 卡墙工具条：排序 / 筛选 / 搜索（issue 442） ----------------
+
+const SORT_OPTIONS: Array<[SortKey, string]> = [
+  ['recent', '最近互动'],
+  ['msgs', '消息量'],
+  ['created', '建卡时间'],
+  ['name', '名字'],
+];
+
+/** 工具条：排序下拉 + 关系标签下拉（只列实际出现过的）+ 搜索框。仅在有人物时渲染。 */
+function buildToolbar(people: PersonEntry[]): HTMLElement {
+  const tags = collectTags(people);
+  if (filterTag && !tags.includes(filterTag)) filterTag = ''; // 标签已消失（合并/改档案）→ 回落全部
+  const sortSel = document.createElement('select');
+  sortSel.className = 'bz-people-select';
+  sortSel.setAttribute('data-people-sort', '');
+  sortSel.setAttribute('aria-label', '排序方式');
+  for (const [k, label] of SORT_OPTIONS) {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = label;
+    if (k === sortKey) o.selected = true;
+    sortSel.appendChild(o);
+  }
+  const tagSel = document.createElement('select');
+  tagSel.className = 'bz-people-select';
+  tagSel.setAttribute('data-people-tag', '');
+  tagSel.setAttribute('aria-label', '按关系标签筛选');
+  const all = document.createElement('option');
+  all.value = '';
+  all.textContent = '全部标签';
+  tagSel.appendChild(all);
+  for (const tag of tags) {
+    const o = document.createElement('option');
+    o.value = tag;
+    o.textContent = tag;
+    if (tag === filterTag) o.selected = true;
+    tagSel.appendChild(o);
+  }
+  const search = document.createElement('input');
+  search.type = 'search';
+  search.className = 'bz-people-search';
+  search.placeholder = '搜称呼 / 标签 / 备注';
+  search.value = searchText;
+  search.setAttribute('data-people-search', '');
+  search.setAttribute('aria-label', '搜索人物');
+  return el('div', 'bz-people-toolbar', [sortSel, tagSel, search]);
+}
+
+/** 全库实际出现过的关系标签（去重 + 中文序） */
+function collectTags(people: PersonEntry[]): string[] {
+  const set = new Set<string>();
+  for (const p of people) for (const tag of p.profile?.tags ?? []) if (tag.trim()) set.add(tag.trim());
+  return [...set].sort((a, b) => a.localeCompare(b, 'zh'));
+}
+
+/** 消息总量（卡墙 meta 与排序共用） */
+function msgTotal(p: PersonEntry): number {
+  return p.imports.reduce((s, r) => s + r.messageCount, 0);
+}
+
+function sortPeople(list: PersonEntry[]): PersonEntry[] {
+  const arr = [...list];
+  const lastSeen = (p: PersonEntry) => p.imports.reduce((m, r) => (r.timeTo > m ? r.timeTo : m), '');
+  switch (sortKey) {
+    case 'msgs':
+      return arr.sort((a, b) => msgTotal(b) - msgTotal(a) || a.createdAt.localeCompare(b.createdAt));
+    case 'created':
+      return arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    case 'name':
+      return arr.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+    case 'recent':
+    default:
+      // 无导入记录的人物按建卡时间兜底，不沉底到不可预期位置
+      return arr.sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
+  }
+}
+
+/** 标签筛选 + 关键词搜索（称呼 / 标签 / 备注，大小写不敏感） */
+function matchPerson(p: PersonEntry): boolean {
+  if (filterTag && !(p.profile?.tags ?? []).includes(filterTag)) return false;
+  const q = searchText.trim().toLowerCase();
+  if (!q) return true;
+  return [p.name, ...(p.profile?.tags ?? []), p.profile?.note ?? ''].join('\n').toLowerCase().includes(q);
+}
+
+/** 按当前排序 / 筛选 / 搜索状态刷卡墙（merge 状态也在这里反映为卡片样式） */
+function applyWall(people: PersonEntry[], wall: HTMLElement): void {
+  wall.replaceChildren();
+  const shown = sortPeople(people.filter((p) => matchPerson(p)));
+  if (!shown.length) {
+    wall.appendChild(el('div', 'bz-people-nomatch', [
+      el('div', 'bz-people-empty-hint', text('没有匹配的人物')),
+      button('bz-people-btn bz-people-btn-ghost', '清除筛选', { 'data-people-filter-clear': '' }),
+    ]));
+    return;
+  }
+  const canMerge = people.length > 1;
+  for (const p of shown) {
+    const total = msgTotal(p);
+    const from = p.imports.map((r) => r.timeFrom).sort()[0];
+    const to = p.imports.map((r) => r.timeTo).sort().pop();
+    const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
+    const side = el('div', 'bz-people-card-side');
+    if (canMerge && !mergeFromId) {
+      side.appendChild(button('bz-people-btn bz-people-btn-ghost', '合并到…', { 'data-people-merge': p.id }));
+    }
+    side.appendChild(button('bz-people-btn bz-people-btn-ghost bz-people-del', deleteArmId === p.id ? '再点确认删除' : '删除', { 'data-people-del': p.id }));
+    const card = el('div', 'bz-people-card', [
+      el('div', 'bz-people-ava', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
+      el('div', 'bz-people-card-main', [
+        el('div', 'bz-people-card-name', text(p.name)),
+        el('div', 'bz-people-card-meta', text([total ? `${total} 条消息` : '尚无消息', span].filter(Boolean).join(' · '))),
+        el('div', `bz-people-chip ${p.digest ? 'bz-people-chip-on' : ''}`, text(p.digest ? '已画脸谱' : '待生成')),
+      ]),
+      side,
+    ]);
+    if (p.id === mergeFromId) card.classList.add('bz-people-card-merge-from');
+    else if (mergeFromId) card.classList.add('bz-people-card-merge-pick');
+    card.setAttribute('data-people-card', p.id);
+    wall.appendChild(card);
+  }
+}
+
+/** 工具条原位刷新：只刷卡墙，不 refetch、不重建工具条（搜索焦点不丢） */
+function refreshWall(): void {
+  const wall = overlay?.querySelector<HTMLElement>('[data-people-wall]');
+  if (wall) applyWall(listCache, wall);
+}
+
+function clearFilters(): void {
+  filterTag = '';
+  searchText = '';
+  const search = overlay?.querySelector<HTMLInputElement>('[data-people-search]');
+  const tagSel = overlay?.querySelector<HTMLSelectElement>('[data-people-tag]');
+  if (search) search.value = '';
+  if (tagSel) tagSel.value = '';
+  refreshWall();
+}
+
+// ---------------- 合并重复人物（issue 442） ----------------
+
+async function handleMergeConfirm(): Promise<void> {
+  const fromId = mergeFromId;
+  const toId = mergeToId;
+  if (!store || !fromId || !toId || fromId === toId) return;
+  const from = listCache.find((x) => x.id === fromId);
+  const to = listCache.find((x) => x.id === toId);
+  try {
+    await store.mergeInto(fromId, toId);
+    notice(`已把「${from?.name ?? fromId}」的导入记录与随手记并到「${to?.name ?? toId}」，原人物已删除。要更新脸谱可再导入聊天重画`, 'success');
+  } catch (e) {
+    notifyActionError(e, '合并人物');
+  }
+  mergeFromId = null;
+  mergeToId = null;
+  void renderBody();
+}
+
+// ---------------- 导出为 markdown 笔记（issue 442） ----------------
+
+/** 导出目录单源（issue 442）：我的/脸谱 */
+const EXPORT_DIR = '我的/脸谱';
+
+async function handleExport(): Promise<void> {
+  if (!store || !detailId) return;
+  const p = (await store.list()).find((x) => x.id === detailId);
+  if (!p) return;
+  const app = getApp();
+  try {
+    if (!app.vault.getAbstractFileByPath(EXPORT_DIR)) await app.vault.createFolder(EXPORT_DIR);
+    const base = cleanFileNameOf(p.name) || '未命名';
+    let path = `${EXPORT_DIR}/${base}.md`;
+    // 同名不静默覆盖：追加序号「名字 2.md」「名字 3.md」…
+    for (let n = 2; app.vault.getAbstractFileByPath(path); n++) path = `${EXPORT_DIR}/${base} ${n}.md`;
+    await app.vault.create(path, buildFaceNote(p));
+    notice(`已导出到 ${path}`, 'success');
+  } catch (e) {
+    notifyActionError(e, '导出脸谱笔记');
+  }
+}
+
+/** 脸谱 → 笔记 markdown：画像 + 关系时间线 + 代表原话 + 事件列表 + 档案（有则含） */
+function buildFaceNote(p: PersonEntry): string {
+  const lines: string[] = [`# 脸谱 · ${p.name}`, ''];
+  const meta = [
+    msgTotal(p) ? `${msgTotal(p)} 条消息` : '尚无消息',
+    `${p.imports.length} 次导入`,
+    p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : '脸谱未生成',
+    `导出于 ${new Date().toISOString().slice(0, 10)}`,
+  ].join(' · ');
+  lines.push(`> ${meta}`, '');
+  if (p.digest?.portrait) lines.push('## 画像', '', p.digest.portrait.trim(), '');
+  if (p.digest?.chronicle) lines.push('## 关系时间线', '', p.digest.chronicle.trim(), '');
+  if (p.digest?.quotes?.length) {
+    lines.push('## 代表原话', '');
+    for (const q of p.digest.quotes) lines.push(`- **${q.ts} · ${q.who === '我' ? '我' : p.name}**：「${q.text}」`);
+    lines.push('');
+  }
+  if (p.digest?.events.length) {
+    lines.push('## 交往事件', '');
+    for (const ev of p.digest.events) lines.push(ev.kind === 'major' ? `- **${ev.ts}** ${ev.summary}` : `- ${ev.ts} ${ev.summary}`);
+    lines.push('');
+  }
+  const prof = p.profile;
+  if (prof) {
+    const rows: string[] = [];
+    if (prof.tags?.length) rows.push(`- 标签：${prof.tags.join('、')}`);
+    if (prof.birthday) rows.push(`- 生日：${prof.birthday}`);
+    if (prof.metVia) rows.push(`- 怎么认识：${prof.metVia}`);
+    if (prof.metAt) rows.push(`- 什么时候认识：${prof.metAt}`);
+    if (prof.hometown) rows.push(`- 家乡 / 现居：${prof.hometown}`);
+    if (prof.job) rows.push(`- 职业：${prof.job}`);
+    if (prof.socials?.length) rows.push(`- 社交账号：${prof.socials.map((s) => `${s.platform} ${s.handle}`).join('；')}`);
+    if (prof.note) rows.push(`- 备注：${prof.note}`);
+    if (rows.length) lines.push('## 档案', '', ...rows, '');
+  }
+  return lines.join('\n');
+}
+
+/** 文件名清洗（issue 442）：剥 `[\\/:*?"<>|]` + Windows 命名边界——尾点/尾空格剥掉，
+ *  设备名（con/prn/aux/nul/com1-9/lpt1-9，大小写不敏感）前置 `_`，否则 vault.create 恒失败（clipbook 同款口径） */
+function cleanFileNameOf(name: string): string {
+  let t = String(name ?? '').replace(/[\\/:*?"<>|]/g, '').trim();
+  t = t.replace(/[. ]+$/, '');
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
+  return t;
 }
 
 // ---------------- 迷你 markdown（受限语法，ADR-0191 §4） ----------------
