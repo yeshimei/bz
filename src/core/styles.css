@@ -1165,3 +1165,37 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }
+
+/* ==================== 行内动作钮三态（issue 434：测试类按钮，core 原生钮与 bz-sp-btn 同类生效） ==================== */
+/* busy：文案隐形保宽 + 转圈；ok：绿勾；fail：红叉。2 秒后由渲染器复原为原文案 */
+button.bz-rowbtn--busy {
+  position: relative;
+  pointer-events: none;
+  color: transparent !important;
+}
+button.bz-rowbtn--busy::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border: 2px solid var(--text-muted, #999);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: bz-rowbtn-spin 0.7s linear infinite;
+}
+button.bz-rowbtn--ok {
+  color: var(--text-success, #2da44e) !important;
+  font-weight: 700;
+}
+button.bz-rowbtn--fail {
+  color: var(--text-error, #cf222e) !important;
+  font-weight: 700;
+}
+@keyframes bz-rowbtn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

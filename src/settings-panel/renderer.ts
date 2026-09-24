@@ -15,6 +15,7 @@
  * 3. 图标一律 lucide（setIcon/组件库），禁止 emoji 当图标（ui-kit-manual §5）。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
+import { ROW_BTN_RESET_MS, setRowBtnState } from '../core/settings-btn-state';
 import { openPathPicker } from '../core/path-picker';
 // 行为内核单源（ARCH-1）：safePersist（N5）/CommitWarn（H1）/parseClampedNumber（R9）/
 // TEXT_COMMIT_DELAY（防抖窗口）下沉 core 导出，两渲染器消费同一实现——core 历轮加固经此传导
@@ -296,12 +297,13 @@ export function makePathRowCtrl(opts: {
 
 /** 文本/数字/多行文本行行内附加按钮：先插按钮再插输入框（2026-09-08 拍板：按钮在左、输入框右缘对齐；
  *  issue 330 起 textarea 行同口径）。onClick 传当前输入值，完成后重读绑定回填显示（不置脏）+
- *  刷新显隐——供「填入/回填」类动作 */
+ *  刷新显隐——供「填入/回填」类动作。
+ *  stateful 钮（issue 434）：点击即转圈、resolve 绿✓ / reject 红✕（红叉吞错不外抛——反馈长在按钮上） */
 function mountTextActions(
   ctrlEl: HTMLElement,
   input: HTMLInputElement | HTMLTextAreaElement,
   acc: { read: () => unknown },
-  actions: Array<{ text: string; cta?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
+  actions: Array<{ text: string; cta?: boolean; stateful?: boolean; onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void> }> | undefined,
   ctx: SettingsRowContext,
   refresh: () => void
 ): void {
@@ -311,7 +313,16 @@ function mountTextActions(
     const btn = holder.firstElementChild as HTMLElement;
     btn.addEventListener('click', () => {
       void (async () => {
-        await a.onClick(input.value, ctx);
+        try {
+          if (a.stateful) setRowBtnState(btn, 'busy', a.text);
+          await a.onClick(input.value, ctx);
+          if (a.stateful) setRowBtnState(btn, 'ok', a.text);
+        } catch (e) {
+          if (a.stateful) setRowBtnState(btn, 'fail', a.text);
+          else throw e;
+        } finally {
+          if (a.stateful) setTimeout(() => setRowBtnState(btn, 'idle', a.text), ROW_BTN_RESET_MS);
+        }
         displaySetters.get(input)?.(String(acc.read() ?? ''));
         refresh();
       })();

@@ -268,14 +268,11 @@ function providerGroupRows(): SettingsRow[] {
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
       actions: [{
         text: '测试',
+        // issue 434 拍板：状态长在按钮上——点击转圈、成功绿✓、失败红✕，不弹通知不显详情
+        stateful: true,
         onClick: async () => {
-          try {
-            await saveSettings(); // 先落盘防抖中的手输密钥——所配即所测
-            const r = await testAIConnectivity(p.id);
-            notice(`${r.label} 连通正常：${r.model} · ${(r.ms / 1000).toFixed(1)} 秒`, 'success');
-          } catch (e) {
-            notice(e instanceof Error ? e.message : String(e), 'error');
-          }
+          await saveSettings(); // 先落盘防抖中的手输密钥——所配即所测
+          await testAIConnectivity(p.id); // 抛错 = 红✕；成功 = 绿✓
         },
       }],
     });
@@ -459,19 +456,15 @@ function setJevScopedValue(kind: 'keys' | 'model', raw: string): void {
   void saveSettings();
 }
 
-/** 「测试」按钮（issue 433）：发一次真实判定请求验证连通，成功/失败均弹通知（文案不带耗时
- *  会失去「连着但很慢」的判断依据，故带秒数）。先落盘防抖中的手输值——所配即所测。 */
+/** 「测试」按钮（issue 434 拍板：状态长在按钮上——点击转圈、成功绿✓、失败红✕，不弹通知不显详情）。
+ *  先落盘防抖中的手输值——所配即所测；失败经 reject 交给渲染器翻红叉，文案不外弹。 */
 function jevTestAction(): RowAction {
   return {
     text: '测试',
+    stateful: true,
     onClick: async () => {
-      try {
-        await saveSettings();
-        const r = await testJevConnectivity();
-        notice(`${r.provider} 判定连通正常：${r.model} · ${(r.ms / 1000).toFixed(1)} 秒`, 'success');
-      } catch (e) {
-        notice(e instanceof Error ? e.message : String(e), 'error');
-      }
+      await saveSettings();
+      await testJevConnectivity(); // 抛错 = 红✕；成功 = 绿✓
     },
   };
 }
