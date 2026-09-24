@@ -43,6 +43,9 @@
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
  *   全部描述改写为约 20 字自然句、去符号花样（原描述含括号/斜杠/域名/超长枚举，lint 不过）。
+ * - issue 429：「Embedding」组尾补「重排模型」行（开启重排才显示），行内「获取模型」拉同一台
+ *   Ollama 的已装模型（名字含 rerank 的优先）；键 secondBrainRerankModel，留空回落
+ *   secondbrain/config 的 RERANK_MODEL（Qwen3-Reranker-4B）。重排是纯换序层，换模型不重建索引。
  */
 
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
@@ -50,7 +53,7 @@ import { JEV_PROVIDER_REGISTRY, getJevProviderDescriptor, fetchJevModels } from 
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
-import { fetchEmbeddingModels, fetchProviderModels, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
+import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -448,9 +451,11 @@ function jevModelRow(): SettingsRow {
  * （先知道服务在哪台机器，再拉它的模型列表）。第二大脑与跟随回退的小橘记忆库共用同一模型键。
  * issue 424/ADR-0184：「移动端远程地址」行删除——该值由桌面端启动自动跟随本机 IP
  * （secondbrain/local-ip.ensureRemoteOllamaUrl），不再需要人工看/改。
+ * issue 429：重排开关之后接「重排模型」行（开启重排才显示）——重排器也是 Ollama 上的模型，
+ * 与嵌入同一台服务，可选可换。
  */
 function embeddingGroupRows(): SettingsRow[] {
-  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow()];
+  return [ollamaLocalUrlRow(), embeddingModelRow(), rerankToggleRow(), rerankModelRow()];
 }
 
 /**
@@ -467,6 +472,54 @@ function rerankToggleRow(): SettingsRow {
     binding: { key: 'secondBrainRerank' },
     visibleWhen: (snapshot) => isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel),
   };
+}
+
+/**
+ * 「重排模型」行（issue 429，用户拍板「开启重排之后还要显示一个选择重排模型的选项」）：
+ * 照 Embedding 模型行范式——行内「获取模型」拉同一台 Ollama 的已装模型（名字含 rerank 的
+ * 优先，见 core/ai-models pickRerankModels），选中即写入 secondBrainRerankModel。
+ * 可见性 = 与「启用重排」开关同一条件链（8B 嵌入 + 开关非关）；换它不动向量索引，
+ * 下一次检索即生效（重排是纯换序层，无重建语义）。
+ */
+function rerankModelRow(): SettingsRow {
+  return {
+    type: 'text',
+    name: '重排模型',
+    desc: '重排用的模型名，留空用默认 Qwen3-Reranker-4B',
+    placeholder: 'dengcao/Qwen3-Reranker-4B:Q4_K_M',
+    binding: { key: 'secondBrainRerankModel' },
+    visibleWhen: (snapshot) =>
+      isQwen3Embedding8b(snapshot.secondBrainEmbeddingModel) && snapshot.secondBrainRerank !== false,
+    actions: [{
+      text: '获取模型',
+      onClick: async (_value, ctx) => {
+        try {
+          await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+          const models = await fetchRerankModels();
+          // 与 Embedding 模型行同款：等选择器真正关闭再返回（渲染器在动作 Promise 完成后才重读
+          // 绑定回填输入框，openModelPicker 是「打开即返回」的弹窗）
+          await new Promise<void>((resolve) => {
+            openModelPicker({
+              providerLabel: 'Ollama 重排',
+              current: String((tryGetSettings() as any).secondBrainRerankModel || ''),
+              models,
+              onPick: (m) => {
+                (tryGetSettings() as any).secondBrainRerankModel = m.id;
+                void saveSettings();
+                // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
+                ctx.refreshVisibility();
+                notice(`重排模型已设为 ${m.id}，下次检索即生效`, 'success');
+              },
+              // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+              onClose: () => resolve(),
+            });
+          });
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), 'error');
+        }
+      },
+    }],
+  } as SettingsRow;
 }
 
 /**

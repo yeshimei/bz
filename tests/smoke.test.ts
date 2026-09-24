@@ -366,6 +366,8 @@ describe('bz 骨架冒烟', () => {
     expect('bookshelfMobileDefaultFullscreen' in s).toBe(false);
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
+    // issue 429：重排模型留空 = 用内置默认（secondbrain/config RERANK_MODEL）
+    expect(s.secondBrainRerankModel).toBe('');
     // enh-sweep-a：远程 Ollama URL 默认留空（空 = 未配置远程，不再写死内网 IP）
     expect(s.secondBrainRemoteOllamaUrl).toBe('');
     expect(s.passwordLength).toBe('16');

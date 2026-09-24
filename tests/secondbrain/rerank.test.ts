@@ -5,13 +5,16 @@
  * - 请求口径：官方模板三段、logprobs + num_predict 1 + temperature 0、模型 = RERANK_MODEL；
  * - 失败语义：非 2xx / 无 logprobs **一律抛错**（不做 yes/no 文本二值降级——那会让排序退回
  *   0/1 两档并列，且引入 ADR-0185 已清理的「两把尺」）；
- * - 整轮预算用尽即抛错（调用方回退余弦序）。
+ * - 整轮预算用尽即抛错（调用方回退余弦序）；
+ * - issue 428：取消（signal）抛 AbortError——调用方据此**不回退余弦序**（旧序回填会盖掉新查询）；
+ * - issue 429：模型名逐次读设置（留空回落 RERANK_MODEL）。
  * 只 fake Date（不 fake 定时器）：预算判定走 Date.now，超时定时器保持真身以免微任务与假时钟纠缠。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { yesNoLogprobScore, rerankScores } from '../../src/secondbrain/rerank';
 import { RERANK_MODEL } from '../../src/secondbrain/config';
 import { isQwen3Embedding8b } from '../../src/core/ai-models';
+import { isAbortError } from '../../src/core/abort';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const lp = (pYes: number) => [
@@ -155,6 +158,46 @@ describe('rerankScores（串行打分）', () => {
     vi.stubGlobal('fetch', fetchMock);
     await expect(rerankScores('q', ['d1', 'd2', 'd3'])).rejects.toThrow('重排预算用尽');
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('模型名逐次解析（issue 429）：设置覆盖即用设置值，留空回落 RERANK_MODEL 默认', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: any) => okResponse(0.5));
+    vi.stubGlobal('fetch', fetchMock);
+
+    setSettingsProvider(() => ({ secondBrainRerankModel: 'dengcao/Qwen3-Reranker-8B:Q4_K_M' }) as any);
+    await rerankScores('q', ['d']);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe('dengcao/Qwen3-Reranker-8B:Q4_K_M');
+
+    setSettingsProvider(() => ({ secondBrainRerankModel: '   ' }) as any); // 纯空白 = 未设置
+    await rerankScores('q', ['d']);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe(RERANK_MODEL);
+  });
+
+  it('取消（signal 已中断）：对间检查点直抛 AbortError，一对都不发', async () => {
+    const fetchMock = vi.fn(async () => okResponse(0.5));
+    vi.stubGlobal('fetch', fetchMock);
+    const ac = new AbortController();
+    ac.abort();
+    await expect(rerankScores('q', ['d1', 'd2'], undefined, ac.signal)).rejects.toSatisfy((e: unknown) => isAbortError(e));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('取消（打分途中）：在途那对被中断并抛 AbortError（不误报成「重排调用超时」）', async () => {
+    const ac = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, init: any) =>
+        new Promise<Response>((_resolve, reject) => {
+          ac.abort(); // 模拟「查询已换」发生在打分途中（请求已带内层 signal 发出）
+          if (init.signal.aborted) {
+            reject(new Error('The operation was aborted'));
+            return;
+          }
+          init.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
+        })
+      )
+    );
+    await expect(rerankScores('q', ['d1'], undefined, ac.signal)).rejects.toSatisfy((e: unknown) => isAbortError(e));
   });
 });
 

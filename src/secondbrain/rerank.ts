@@ -9,8 +9,11 @@
  * - 串行逐对调用：GPU 单实例下并发不缩短总时长，还会让超时预算失去意义；
  * - 整轮预算（RERANK_BUDGET_MS）用尽即失败。**要么整体重排、要么维持余弦序**，不做半重排——
  *   半重排会让同一列表里混着两种排序口径，用户看到的名次无法解释。
+ * - 取消（issue 428）：对间检查点 + 每对透传 signal，取消抛 AbortError 由调用方直抛——
+ *   **取消不走余弦回退**（旧序回填只会盖掉新查询的列表）。
  */
-import { buildConfig, RERANK_MODEL } from './config';
+import { buildConfig, resolvedRerankModel } from './config';
+import { abortError, linkAbort, throwIfAborted } from '../core/abort';
 
 /** 指令文本与嵌入侧查询指令同句（Qwen3 官方检索口径），保证重排与召回对「问题」的理解一致 */
 export const RERANK_INSTRUCT = 'Given a web search query, retrieve relevant passages that answer the query';
@@ -70,16 +73,22 @@ export function yesNoLogprobScore(logprobs: unknown): number | null {
   return py / (py + pn);
 }
 
-async function rerankOne(baseUrl: string, query: string, doc: string, timeoutMs: number): Promise<number> {
+async function rerankOne(baseUrl: string, query: string, doc: string, timeoutMs: number, signal?: AbortSignal): Promise<number> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  const unlink = linkAbort(signal, controller);
   try {
     const resp = await fetch(`${baseUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
-        model: RERANK_MODEL,
+        // 模型名逐次解析（issue 429）：设置可覆盖，留空回落 4B 默认（resolvedRerankModel）
+        model: resolvedRerankModel(),
         stream: false,
         // 关思考：本模型是 Qwen3 思考模板转换版，不关则首 token 恒为 thinking 标记（num_predict 1 下
         // 根本走不到 yes/no），拿不到 logprobs → 每次都回退余弦序、重排形同虚设。
@@ -103,10 +112,13 @@ async function rerankOne(baseUrl: string, query: string, doc: string, timeoutMs:
     if (score === null) throw new Error('Ollama 未返回 yes/no logprobs（该服务的重排打分不可用）');
     return score;
   } catch (e) {
-    if (controller.signal.aborted) throw new Error(`重排调用超时（${Math.round(timeoutMs / 1000)}s）`);
+    // 取消优先于超时判定（两者都让 controller 中断，见 ollama.httpFetch 同款口径）
+    if (signal?.aborted) throw abortError();
+    if (timedOut || controller.signal.aborted) throw new Error(`重排调用超时（${Math.round(timeoutMs / 1000)}s）`);
     throw e;
   } finally {
     clearTimeout(timer);
+    unlink();
   }
 }
 
@@ -114,17 +126,19 @@ async function rerankOne(baseUrl: string, query: string, doc: string, timeoutMs:
  * 串行重排打分：docs 顺序进、分数同序出（长度一致）。任一环节失败即抛错——调用方
  * （vector-store）catch 后按余弦序返回并 console.warn，绝不打断检索链路。
  * baseUrl 与嵌入侧同口径（移动端传远程 URL；undefined = 本地设置地址）。
+ * signal（issue 428）：取消通道——面板换新查询即中断在途重排（抛 AbortError，调用方不回退余弦序）。
  */
-export async function rerankScores(query: string, docs: string[], baseUrl?: string): Promise<number[]> {
+export async function rerankScores(query: string, docs: string[], baseUrl?: string, signal?: AbortSignal): Promise<number[]> {
   const url = (baseUrl || buildConfig().OLLAMA_URL).replace(/\/+$/, '');
   const deadline = Date.now() + RERANK_BUDGET_MS;
   const out: number[] = [];
   for (const doc of docs) {
+    throwIfAborted(signal); // 对间检查点：取消后不再发起下一对
     const left = deadline - Date.now();
     if (left <= 0) {
       throw new Error(`重排预算用尽（${RERANK_BUDGET_MS}ms，完成 ${out.length}/${docs.length} 对）`);
     }
-    out.push(await rerankOne(url, query, doc, Math.min(RERANK_TIMEOUT_MS, left)));
+    out.push(await rerankOne(url, query, doc, Math.min(RERANK_TIMEOUT_MS, left), signal));
   }
   return out;
 }

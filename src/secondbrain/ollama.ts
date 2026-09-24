@@ -3,6 +3,7 @@
  */
 import { buildConfig } from './config';
 import { isValidVector } from './vector-math';
+import { abortError, linkAbort } from '../core/abort';
 
 export const EMBED_BATCH_SIZE = 64;
 
@@ -11,18 +12,31 @@ export const EMBED_TIMEOUT_MS = 30000;
 /** 检索超时（ticket 46）：查询嵌入/检索全链路 10s 上限，超出即降级文本，避免参考面板/对话被挂起请求长期阻塞 */
 export const SEARCH_TIMEOUT_MS = 10000;
 
-async function httpFetch(url: string, opts: any, timeoutMs: number = EMBED_TIMEOUT_MS): Promise<Response> {
+/**
+ * 请求通道（自带超时 controller；`signal` 为调用方的取消通道，issue 428）。
+ * 两种中断必须分开报：取消（面板换了新查询/关面板）抛 AbortError 静默收口，
+ * 超时才是「Ollama 无响应」。用 `timedOut` 标记而非 `controller.signal.aborted` 判定——
+ * 取消也会让该 controller 中断，光看它会把取消误报成超时。
+ */
+async function httpFetch(url: string, opts: any, timeoutMs: number = EMBED_TIMEOUT_MS, signal?: AbortSignal): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+  const unlink = linkAbort(signal, controller);
   try {
     return await fetch(url, { ...opts, signal: controller.signal });
   } catch (e) {
-    if (controller.signal.aborted) {
+    if (signal?.aborted) throw abortError();
+    if (timedOut || controller.signal.aborted) {
       throw new Error(`Ollama 无响应（超过 ${timeoutMs / 1000}s 未应答）：${url}`);
     }
     throw e;
   } finally {
     clearTimeout(timer);
+    unlink();
   }
 }
 
@@ -39,8 +53,9 @@ export function queryInstruction(model: string): string {
   return 'Represent this sentence for searching relevant passages: ';
 }
 
-/** 单条嵌入（isQuery 时按模型加检索指令前缀；model 缺省跟随第二大脑设置——小橘记忆库可经设置面板覆盖） */
-export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: string, model?: string): Promise<number[]> {
+/** 单条嵌入（isQuery 时按模型加检索指令前缀；model 缺省跟随第二大脑设置——小橘记忆库可经设置面板覆盖）。
+ *  signal（issue 428）：查询侧取消通道——面板换新查询即中断在途的查询嵌入。 */
+export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: string, model?: string, signal?: AbortSignal): Promise<number[]> {
   const CONFIG = buildConfig();
   const url = baseUrl || CONFIG.OLLAMA_URL;
   const resolved = model || CONFIG.EMBEDDING_MODEL;
@@ -49,7 +64,7 @@ export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: str
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: resolved, prompt }),
-  });
+  }, EMBED_TIMEOUT_MS, signal);
   if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
   const data = await resp.json();
   const vec = data.embedding;
@@ -60,14 +75,14 @@ export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: str
   return vec;
 }
 
-/** 批量嵌入（baseUrl 缺省本地；ticket 107 移动端引导初始化传远程 URL） */
-export async function getEmbeddingsBatch(texts: string[], baseUrl?: string): Promise<number[][]> {
+/** 批量嵌入（baseUrl 缺省本地；ticket 107 移动端引导初始化传远程 URL；signal = 取消通道，见 getEmbedding） */
+export async function getEmbeddingsBatch(texts: string[], baseUrl?: string, signal?: AbortSignal): Promise<number[][]> {
   const CONFIG = buildConfig();
   const resp = await httpFetch(`${baseUrl || CONFIG.OLLAMA_URL}/api/embed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: CONFIG.EMBEDDING_MODEL, input: texts }),
-  });
+  }, EMBED_TIMEOUT_MS, signal);
   if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
   const data = await resp.json();
   // 空结果校验（QA L125 同语义，ticket 107 补回）：畸形 2xx 响应走逐条回退而非登记空向量

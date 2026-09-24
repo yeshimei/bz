@@ -315,6 +315,9 @@ export default interface BzSettings {
   /** 重排开关（issue 427/ADR-0186）：召回后交 Qwen3-Reranker 交叉编码重排。仅 Embedding 模型为
    *  Qwen3-Embedding-8B 时生效（与 AI 面板「启用重排」行可见性共用同一判定，见 core/ai-models） */
   secondBrainRerank: boolean;
+  /** 重排模型名（issue 429）：留空回落 RERANK_MODEL（Qwen3-Reranker-4B）；换它不动向量索引，
+   *  下一次检索即生效（重排是纯换序层，与 Embedding 模型的「换模型需重建」不同） */
+  secondBrainRerankModel: string;
 
   // ===== 🔗 自动关联（知识盒设置页「自动关联」组；ADR-0141 自第二大脑迁入并正名）=====
   /** 自动关联总开关：三个盒子里的笔记落盘 / 改动后自动建立 related（false 时无任何监听与写入） */
@@ -881,6 +884,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainRemoteOllamaUrl: '',
   secondBrainRemoteOllamaAuto: '',
   secondBrainRerank: true, // issue 427/ADR-0186：默认开；仅 Qwen3-Embedding-8B 配置下显示与生效
+  secondBrainRerankModel: '', // issue 429：空 = 默认 Qwen3-Reranker-4B（secondbrain/config RERANK_MODEL）
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,

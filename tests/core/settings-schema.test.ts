@@ -89,27 +89,34 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('Embedding 组（issue 422/ADR-0182 + issue 424/ADR-0184 + issue 427/ADR-0186）：地址 / 模型 / 重排三行', () => {
+  it('Embedding 组（issue 422/ADR-0182 + issue 424/ADR-0184 + issue 427/ADR-0186 + issue 429）：地址 / 模型 / 重排开关 / 重排模型四行', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
       desc?: string;
+      placeholder?: string;
       binding?: { key: string };
       actions?: Array<{ text: string }>;
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     // issue 424：第二行「移动端远程地址」删除（桌面端启动自动跟随本机 IP，无人看/改）
     // issue 427：第三行「启用重排」——仅 Embedding 模型为 Qwen3-Embedding-8B 时可见
-    expect(rows.map((r) => r.name)).toEqual(['Ollama 本地 URL', 'Embedding 模型', '启用重排']);
-    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'toggle']);
+    // issue 429：第四行「重排模型」——同上可见性，并受重排开关联动（关则不显示）
+    expect(rows.map((r) => r.name)).toEqual(['Ollama 本地 URL', 'Embedding 模型', '启用重排', '重排模型']);
+    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'toggle', 'text']);
     expect(rows.map((r) => r.binding)).toEqual([
       { key: 'secondBrainOllamaUrl' },
       { key: 'secondBrainEmbeddingModel' },
       { key: 'secondBrainRerank' },
+      { key: 'secondBrainRerankModel' },
     ]);
-    // 两键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
+    // 各键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
     expect(rows[1].actions?.map((a) => a.text)).toEqual(['获取模型']);
     expect(rows[1].desc).toContain('bge-m3');
+    // 重排模型行：同款「获取模型」弹窗（issue 429）；留空 = 回落到内置默认
+    expect(rows[3].actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(rows[3].placeholder).toBe('dengcao/Qwen3-Reranker-4B:Q4_K_M');
+    expect(rows[3].desc).toContain('Qwen3-Reranker-4B');
     // 重排行可见性口径 = 运行期 rerankActive 同一判定（core isQwen3Embedding8b 单源）
     const visible = (model: string) => rows[2].visibleWhen?.(snapOf({ secondBrainEmbeddingModel: model })) === true;
     expect(visible('qwen3-embedding:8b')).toBe(true);
@@ -117,6 +124,11 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     expect(visible('qwen3-embedding:4b')).toBe(false);
     expect(visible('bge-m3')).toBe(false);
     expect(visible('')).toBe(false);
+    // 重排模型行 additionally 与开关联动：8B 但关掉重排 → 行一起收起（无孤立设置）
+    const modelRowVisible = (s: Record<string, unknown>) => rows[3].visibleWhen?.(snapOf(s)) === true;
+    expect(modelRowVisible({ secondBrainEmbeddingModel: 'qwen3-embedding:8b', secondBrainRerank: true })).toBe(true);
+    expect(modelRowVisible({ secondBrainEmbeddingModel: 'qwen3-embedding:8b', secondBrainRerank: false })).toBe(false);
+    expect(modelRowVisible({ secondBrainEmbeddingModel: 'bge-m3', secondBrainRerank: true })).toBe(false);
     // 反向断言（第二大脑设置页不再有这些行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
   });
 

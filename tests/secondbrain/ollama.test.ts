@@ -3,16 +3,24 @@
  * 闪念 Ollama HTTP 测试（P1-10 / ticket 46）：嵌入端点统一超时 30s（EMBED_TIMEOUT_MS）——
  * 挂起请求到点中止并拒绝「Ollama 无响应」；检索级 10s 上限（SEARCH_TIMEOUT_MS）由 vector-store
  * 检索降级层负责（vector-store.test.ts 有 fake timer 用例）。正常响应不受影响。
+ * issue 428：调用方 signal 取消与服务端超时**报错必须分开**——取消抛 AbortError（面板静默收口），
+ * 超时才报「Ollama 无响应」。
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getEmbedding, checkRemoteOllama, EMBED_TIMEOUT_MS } from '../../src/secondbrain/ollama';
+import { isAbortError } from '../../src/core/abort';
 
 const BASE = 'http://127.0.0.1:65535';
 
-/** 永不 resolve 的 fetch mock：仅监听 abort 信号后 reject（模拟 Ollama 挂起） */
+/** 永不 resolve 的 fetch mock：仅监听 abort 信号后 reject（模拟 Ollama 挂起；
+ *  signal 已中断时立即 reject —— 真 fetch 同语义，issue 428 的「已取消」用例依赖它） */
 function stubPendingFetch() {
   const fetchMock = vi.fn((_url: string, opts: any) =>
     new Promise<Response>((_resolve, reject) => {
+      if (opts.signal?.aborted) {
+        reject(new Error('The operation was aborted'));
+        return;
+      }
       opts.signal.addEventListener('abort', () => reject(new Error('The operation was aborted')));
     })
   );
@@ -56,5 +64,43 @@ describe('httpFetch 统一超时（P1-10）', () => {
     await vi.advanceTimersByTimeAsync(0);
     await assertion;
     expect(vi.getTimerCount()).toBe(0); // abort 定时器已被 finally 清理
+  });
+});
+
+describe('调用方取消（issue 428）', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('signal 取消：抛 AbortError（不是「Ollama 无响应」），且请求的 signal 被中断', async () => {
+    const fetchMock = stubPendingFetch();
+    vi.useFakeTimers();
+    const ac = new AbortController();
+    const p = getEmbedding('文本', true, BASE, undefined, ac.signal);
+    const assertion = expect(p).rejects.toSatisfy((e: unknown) => isAbortError(e));
+    ac.abort();
+    await assertion;
+    expect((fetchMock.mock.calls[0][1] as any).signal.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0); // 取消路径同样清定时器、解绑外层监听
+  });
+
+  it('取消早于超时：不报超时文案（timedOut 标记只认定时器触发）', async () => {
+    stubPendingFetch();
+    const ac = new AbortController();
+    const p = getEmbedding('文本', true, BASE, undefined, ac.signal);
+    const assertion = p.then(
+      () => 'resolved',
+      (e) => (isAbortError(e) ? 'aborted' : String(e))
+    );
+    ac.abort();
+    await expect(assertion).resolves.toBe('aborted');
+  });
+
+  it('已取消的 signal：请求即刻中断（不发第二次调用也拿 AbortError）', async () => {
+    stubPendingFetch();
+    const ac = new AbortController();
+    ac.abort();
+    await expect(getEmbedding('文本', true, BASE, undefined, ac.signal)).rejects.toSatisfy((e: unknown) => isAbortError(e));
   });
 });
