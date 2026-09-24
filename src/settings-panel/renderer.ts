@@ -15,7 +15,7 @@
  * 3. 图标一律 lucide（setIcon/组件库），禁止 emoji 当图标（ui-kit-manual §5）。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { ROW_BTN_RESET_MS, setRowBtnState } from '../core/settings-btn-state';
+import { ROW_BTN_RESET_MS, setRowBtnState, shortFailReason } from '../core/settings-btn-state';
 import { openPathPicker } from '../core/path-picker';
 // 行为内核单源（ARCH-1）：safePersist（N5）/CommitWarn（H1）/parseClampedNumber（R9）/
 // TEXT_COMMIT_DELAY（防抖窗口）下沉 core 导出，两渲染器消费同一实现——core 历轮加固经此传导
@@ -318,7 +318,7 @@ function mountTextActions(
           await a.onClick(input.value, ctx);
           if (a.stateful) setRowBtnState(btn, 'ok', a.text);
         } catch (e) {
-          if (a.stateful) setRowBtnState(btn, 'fail', a.text);
+          if (a.stateful) setRowBtnState(btn, 'fail', a.text, shortFailReason(e));
           else throw e;
         } finally {
           if (a.stateful) setTimeout(() => setRowBtnState(btn, 'idle', a.text), ROW_BTN_RESET_MS);
