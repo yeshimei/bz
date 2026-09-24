@@ -26,7 +26,8 @@
  * isRefreshing() 暴露进行中状态供主面板恢复进度视图。
  */
 import type { App, TFile } from 'obsidian';
-import { buildConfig, DEFAULT_EMBEDDING_MODEL, IS_MOBILE } from './config';
+import { buildConfig, DEFAULT_EMBEDDING_MODEL, IS_MOBILE, rerankActive } from './config';
+import { RERANK_MAX_DOCS, rerankScores } from './rerank';
 import { loadStore, mutateStore } from './store-file';
 import { MobileBuffer } from './binary';
 import { embedChunks, canvasToText, noteTitleFromPath } from './chunk';
@@ -689,7 +690,30 @@ export class VectorStore {
       deduped.push(item);
       if (deduped.length >= topK) break;
     }
-    return deduped;
+    return this.applyRerank(query, deduped, baseUrl);
+  }
+
+  /**
+   * 重排接线（issue 427/ADR-0186）：头部 RERANK_MAX_DOCS 条交 Qwen3-Reranker 交叉编码重排，
+   * 其余保持余弦序接在其后。**hit.score 不动**——名次按重排分，分数与阈值仍走 ADR-0185 的
+   * 单一余弦尺（代价：面板百分比可能不随名次单调，这是刻意保留的取舍）。
+   * 任一失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
+   * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。
+   */
+  private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string): Promise<SearchHit[]> {
+    if (hits.length < 2 || !rerankActive()) return hits;
+    const head = hits.slice(0, RERANK_MAX_DOCS);
+    try {
+      const scores = await rerankScores(query, head.map((h) => h.chunk), baseUrl);
+      const ordered = head
+        .map((hit, i) => ({ hit, s: scores[i], i }))
+        .sort((a, b) => b.s - a.s || a.i - b.i) // 同分保持余弦序（稳定排序）
+        .map((x) => x.hit);
+      return [...ordered, ...hits.slice(RERANK_MAX_DOCS)];
+    } catch (e) {
+      console.warn('[secondbrain] 重排不可用，按余弦序返回', e);
+      return hits;
+    }
   }
 
   /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进） */

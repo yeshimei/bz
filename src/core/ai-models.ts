@@ -213,6 +213,13 @@ export function pickEmbeddingModels(data: any): ModelOption[] {
   }));
 }
 
+/** Qwen3-Embedding-8B 判定（issue 427/ADR-0186）：AI 面板「启用重排」行的可见性与 secondbrain
+ *  检索侧的重排生效条件**共用这一条判定**（行隐藏即不生效，不留「藏着的开关还在起作用」的暗态）。
+ *  只认 8b：重排是给 8B 嵌入配的增强档（8b 之外的嵌入模型一律不启用）。 */
+export function isQwen3Embedding8b(model: unknown): boolean {
+  return /qwen3[-_]?embedding[:\-_.]?8b\b/i.test(String(model ?? ''));
+}
+
 /**
  * 向量化服务端点（「获取模型」按钮拉列表用）：与 secondbrain/config.ts buildConfig 同口径——
  * 移动端优先「移动端远程地址」、未配置回落本地；两键留空一律默认 http://localhost:11434。

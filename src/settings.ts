@@ -312,6 +312,9 @@ export default interface BzSettings {
   /** 上次由插件自动填入的远程地址（issue 424/ADR-0184 自动跟随的判据：与当前值相同 = 该值归插件管，
    *  本机 IP 变了就跟着刷新；不同 = 用户手改过，一律不动。空 = 从没自动填过） */
   secondBrainRemoteOllamaAuto: string;
+  /** 重排开关（issue 427/ADR-0186）：召回后交 Qwen3-Reranker 交叉编码重排。仅 Embedding 模型为
+   *  Qwen3-Embedding-8B 时生效（与 AI 面板「启用重排」行可见性共用同一判定，见 core/ai-models） */
+  secondBrainRerank: boolean;
 
   // ===== 🔗 自动关联（知识盒设置页「自动关联」组；ADR-0141 自第二大脑迁入并正名）=====
   /** 自动关联总开关：三个盒子里的笔记落盘 / 改动后自动建立 related（false 时无任何监听与写入） */
@@ -877,6 +880,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
   secondBrainRemoteOllamaUrl: '',
   secondBrainRemoteOllamaAuto: '',
+  secondBrainRerank: true, // issue 427/ADR-0186：默认开；仅 Qwen3-Embedding-8B 配置下显示与生效
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,

@@ -9,6 +9,7 @@
  *   「唯一语料来源」降级为「三盒之外还要纳入检索的目录」（ticket 116 的「空 = 什么也不录」作废）。
  */
 import { tryGetSettings } from '../core/settings-provider';
+import { isQwen3Embedding8b } from '../core/ai-models';
 import { storageFile } from '../core/storage';
 import { boxDirs, getKnowledgeBoxes, isBoxDir, parseDirList } from '../core/knowledge-boxes';
 
@@ -49,6 +50,23 @@ export function resolveAllowPaths(rawAllowPaths: unknown): string[] {
  *  历史上默认值一直是 bge-m3，故「未记录 = bge-m3」是安全推断：换过模型的老库会被判不一致，
  *  多跑一次重建而不写坏向量库） */
 export const DEFAULT_EMBEDDING_MODEL = 'bge-m3';
+
+/** 重排模型（issue 427/ADR-0186）：与 Qwen3-Embedding-8B 配对的交叉编码重排器（社区转换版）。
+ *  **为什么 4B 而不是 8B**：实测 12GB 显存（4070）下 Qwen3-Reranker-8B（ctx 8192 占 9.6GB）
+ *  与 qwen3-embedding:8b（7.19GB）无法共驻，每次检索要多付 ~8s 模型换入换出（嵌入重载 4.4s +
+ *  重排重载 3.9s），20 条重排 ≈ 9.7s 直接撞上 SEARCH_TIMEOUT_MS 10s → 面板降级纯文本检索，
+ *  比不重排更差；4B（2.5GB）与嵌入共驻，单对仅 +几十 ms。 */
+export const RERANK_MODEL = 'dengcao/Qwen3-Reranker-4B:Q4_K_M';
+
+/**
+ * 重排是否生效（issue 427/ADR-0186）：开关缺省开 + 当前 Embedding 模型为 Qwen3-Embedding-8B。
+ * 与 AI 面板「启用重排」行的 visibleWhen 共用 core `isQwen3Embedding8b` —— **行隐藏即不生效**
+ * （用户切走 8B 后残留的开关值不再起作用，不留暗态）。
+ */
+export function rerankActive(): boolean {
+  const s: any = tryGetSettings();
+  return s.secondBrainRerank !== false && isQwen3Embedding8b(s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL);
+}
 
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();
