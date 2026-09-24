@@ -14,7 +14,8 @@ import { buildConfig, RERANK_MODEL } from './config';
 
 /** 指令文本与嵌入侧查询指令同句（Qwen3 官方检索口径），保证重排与召回对「问题」的理解一致 */
 export const RERANK_INSTRUCT = 'Given a web search query, retrieve relevant passages that answer the query';
-/** 单对调用上限：冷加载（重排模型首载入显存）计入第一对，故给足 */
+/** 单对调用上限：实际生效值 = min(该值, 整轮剩余预算)——6s 预算通常先到，此值是
+ *  「单次挂起吞掉整轮」的绝对上限（实测冷启动首对 3.1~3.3s 含 4B 载入，落在预算内） */
 export const RERANK_TIMEOUT_MS = 20000;
 /** 整轮预算：须落在检索级 10s（SEARCH_TIMEOUT_MS）之内——嵌入 + 全扫 + 重排共享该上限。
  *  单对超时另按 min(RERANK_TIMEOUT_MS, 剩余预算) 收紧：否则一次挂起的调用就能让整轮
@@ -41,22 +42,21 @@ const RERANK_SYS =
 
 /** logprobs 段 → P(yes)：取首 token 位置里 yes/no 两类 logprob 做二分类归一化（softmax）。
  *  类内累加（logsumexp）：「yes」「 yes」「Yes」是不同 token，只取首个会低估该类概率。
- *  两类都缺席（旧版服务不返回 logprobs / 未按模板作答）→ null，交调用方判失败。 */
+ *  **必须带 top_logprobs**：只有首 token 一条 logprob 时无法归一化（如旧版服务忽略 top_logprobs），
+ *  按「拿不到 logprobs」处理返回 null —— 否则每对都只落 0/1 两档、并列全按余弦序排，等于
+ *  用「看起来生效了」掩盖没重排（ADR-0186 明令不做二值降级）。 */
 export function yesNoLogprobScore(logprobs: unknown): number | null {
   const first = Array.isArray(logprobs) ? (logprobs[0] as Record<string, unknown>) : null;
-  if (!first) return null;
-  const raw = Array.isArray(first.top_logprobs) && first.top_logprobs.length
-    ? (first.top_logprobs as unknown[])
-    : first.token !== undefined
-      ? [{ token: first.token, logprob: first.logprob }]
-      : [];
+  if (!first || !Array.isArray(first.top_logprobs) || !first.top_logprobs.length) return null;
+  const raw = first.top_logprobs as unknown[];
   let ly: number | null = null;
   let ln: number | null = null;
   const acc = (a: number | null, b: number): number =>
     a === null ? b : Math.max(a, b) + Math.log1p(Math.exp(-Math.abs(a - b)));
   for (const item of raw) {
     const e = (item || {}) as { token?: unknown; logprob?: unknown };
-    if (typeof e.logprob !== 'number') continue;
+    // 非有限值（±Infinity / NaN）一律当无效候选：留着会让下面的归一出 NaN
+    if (typeof e.logprob !== 'number' || !Number.isFinite(e.logprob)) continue;
     const t = String(e.token ?? '').toLowerCase().replace(/[^a-z]/g, '');
     if (t === 'yes') ly = acc(ly, e.logprob);
     if (t === 'no') ln = acc(ln, e.logprob);
