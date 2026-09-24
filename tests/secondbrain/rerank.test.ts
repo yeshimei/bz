@@ -184,6 +184,7 @@ describe('rerankScores（串行打分）', () => {
 
   it('取消（打分途中）：在途那对被中断并抛 AbortError（不误报成「重排调用超时」）', async () => {
     const ac = new AbortController();
+    const removeSpy = vi.spyOn(ac.signal, 'removeEventListener');
     vi.stubGlobal(
       'fetch',
       vi.fn((_url: string, init: any) =>
@@ -198,6 +199,7 @@ describe('rerankScores（串行打分）', () => {
       )
     );
     await expect(rerankScores('q', ['d1'], undefined, ac.signal)).rejects.toSatisfy((e: unknown) => isAbortError(e));
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function)); // 取消路径解绑外层监听（不漏监听）
   });
 });
 

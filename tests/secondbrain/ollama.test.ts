@@ -77,12 +77,24 @@ describe('调用方取消（issue 428）', () => {
     const fetchMock = stubPendingFetch();
     vi.useFakeTimers();
     const ac = new AbortController();
+    const removeSpy = vi.spyOn(ac.signal, 'removeEventListener');
     const p = getEmbedding('文本', true, BASE, undefined, ac.signal);
     const assertion = expect(p).rejects.toSatisfy((e: unknown) => isAbortError(e));
     ac.abort();
     await assertion;
     expect((fetchMock.mock.calls[0][1] as any).signal.aborted).toBe(true);
     expect(vi.getTimerCount()).toBe(0); // 取消路径同样清定时器、解绑外层监听
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function)); // 外层监听真解绑（ADR-0187 口径）
+  });
+
+  it('正常返回：外层监听也被解绑（成功路径同样走 finally，长会话不累积监听）', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ embedding: [0.3] }), { status: 200 })
+    ));
+    const ac = new AbortController();
+    const removeSpy = vi.spyOn(ac.signal, 'removeEventListener');
+    await expect(getEmbedding('x', false, BASE, undefined, ac.signal)).resolves.toEqual([0.3]);
+    expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 
   it('取消早于超时：不报超时文案（timedOut 标记只认定时器触发）', async () => {

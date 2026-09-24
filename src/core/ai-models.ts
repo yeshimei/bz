@@ -243,12 +243,20 @@ export async function fetchEmbeddingModels(deps: ModelsFetchDeps = {}): Promise<
   return models;
 }
 
-/** 重排模型选项（issue 429）：名字含 rerank 的优先；一个都没有 → 全量返回由用户自辨
- *  （重排模型是社区转换版，命名五花八门且 capabilities 里没有 rerank 这一档——
- *  按能力过滤会把真正的重排模型滤掉，故只按名字软过滤）。 */
+/** 重排模型名判定：社区转换版命名五花八门、capabilities 里也没有 rerank 这一档，
+ *  只按名字软过滤（硬按能力过滤会把真正的重排模型滤掉）。 */
+const RERANK_NAME_RE = /rerank/i;
+
+/** 列表里是否含名字带 rerank 的条目（issue 429：选择器标题据此提示「全量回退」——
+ *  一个都没匹配到时列的是全部模型，不是筛选失败，用户需要知道为什么列表这么长）。 */
+export function hasRerankNamed(items: Array<{ id: string }>): boolean {
+  return items.some((m) => RERANK_NAME_RE.test(m.id));
+}
+
+/** 重排模型选项（issue 429）：名字含 rerank 的优先；一个都没有 → 全量返回由用户自辨。 */
 export function pickRerankModels(data: any): ModelOption[] {
   const tags = parseOllamaTags(data);
-  const rerank = tags.filter((t) => /rerank/i.test(t.id));
+  const rerank = tags.filter((t) => RERANK_NAME_RE.test(t.id));
   return (rerank.length ? rerank : tags).map((t) => ({ id: t.id, detail: t.detail }));
 }
 

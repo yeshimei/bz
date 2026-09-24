@@ -22,7 +22,7 @@ vi.mock('../../src/secondbrain/ollama', () => ({
 }));
 
 vi.mock('../../src/secondbrain/rerank', () => ({
-  RERANK_MAX_DOCS: 2, // 收紧截断便于断言（生产 24）
+  RERANK_MAX_DOCS: 2, // 收紧截断便于断言（生产 50 = TopK 设置上限，见 panel-settings-rows 不变式测试）
   rerankScores: vi.fn(),
 }));
 
