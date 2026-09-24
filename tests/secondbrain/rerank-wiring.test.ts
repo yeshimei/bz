@@ -87,6 +87,8 @@ describe('vectorSearch 重排接线（issue 427/ADR-0186）', () => {
 
   it('列表超过 RERANK_MAX_DOCS（建链候选池等后台链路）：整轮不重排，不半重排', async () => {
     const vs = seedStore(4);
+    // 给一组「若被调用就会换序」的分数：顺序与 rerankScore 都不变，才真证明是早退而非失败回退
+    vi.mocked(rerankScores).mockResolvedValue([0.05, 0.1, 0.9, 0.2]);
 
     const res = await vs.vectorSearch('q', 10);
     expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md', 'd.md']); // 纯余弦序
