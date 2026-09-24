@@ -7,6 +7,7 @@
 import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
 import { DEFAULT_PW_CHARSET } from './password-vault/data';
 import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
+import { unsharpenScore } from './secondbrain/vector-math';
 // AI 注册表/档位表（issue 411/ADR-0179）：迁移须与注册表同源判定「在册服务商」，防两处字面量漂移
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, thinkingLevelsOf } from './core/ai';
 
@@ -685,16 +686,13 @@ export function migrateRetiredFavoritesSortKey(raw: unknown): boolean {
   return true;
 }
 
-/** 锐化尺 → 原始余弦尺的换算指数（issue 425/ADR-0185）：旧分 = cos^0.35 ⇒ cos = 旧分^(1/0.35) */
-export const MIN_SCORE_UNSHARPEN_EXPONENT = 1 / 0.35;
-
 /**
  * issue 425/ADR-0185 一次性迁移：`linkAgentMinScore` 从「score^0.35 锐化尺」换算到「原始余弦尺」。
  *
  * 两把尺值域同为 [0,1]，光看数值判不出是否已换算（0.3 再换算一次会掉到 0.03 ≈ 关掉阈值），
  * 故留内部标记键 `linkAgentMinScoreScale`（'cos' = 已换算）作幂等凭据；标记在册即不再动值。
- * 换算结果按两位小数取整并下限 0.01：0.05 这类极小值经幂次会掉到 1e-4，取整成 0 就把
- * 「极严」翻成「不过滤」，与用户原意相反。
+ * `0 = 不过滤` 是文档化语义、两把尺上同为 0，原样保留（换算公式会把 0 幂成 0 再被下限抬到 0.01，
+ * 等于替用户把过滤打开）；换算与下限口径见 unsharpenScore。
  */
 export function migrateLinkMinScoreScale(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
@@ -703,11 +701,12 @@ export function migrateLinkMinScoreScale(raw: unknown): boolean {
   if (rec.linkAgentMinScore === undefined) return false; // 未落盘过该键：缺省值走新尺，无需换算
   const old = rec.linkAgentMinScore;
   rec.linkAgentMinScoreScale = 'cos';
-  if (typeof old !== 'number' || !Number.isFinite(old) || old <= 0) {
-    rec.linkAgentMinScore = DEFAULT_SETTINGS.linkAgentMinScore; // 脏值（0/负数/非数）：回落新默认
+  if (old === 0) return true; // 不过滤：原样保留
+  if (typeof old !== 'number' || !Number.isFinite(old) || old < 0) {
+    rec.linkAgentMinScore = DEFAULT_SETTINGS.linkAgentMinScore; // 脏值（负数/非数）：回落新默认
     return true;
   }
-  rec.linkAgentMinScore = Math.max(0.01, Math.round(Math.pow(old, MIN_SCORE_UNSHARPEN_EXPONENT) * 100) / 100);
+  rec.linkAgentMinScore = unsharpenScore(old);
   return true;
 }
 

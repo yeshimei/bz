@@ -387,6 +387,49 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expectClose(parseVec(binary).rows, [1, 0]); // saveVectors 紧凑重排，Ghost 两行移除
   });
 
+  it('refresh：读取失败摘掉 meta 条目且本轮零任务 → 同样落盘对齐行序（行数不变量：meta 段落数 == .vec 行数）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '存活文件占位内容。');
+    vault.files.set('我的/B.md', '读取会失败的文件的占位内容。');
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({
+        version: 9,
+        notes: {
+          '我的/A.md': { mtime: 1, chunks: [{ text: 't1' }] },
+          '我的/B.md': { mtime: 1, chunks: [{ text: 'b1' }, { text: 'b2' }] },
+        },
+        _dim: 2,
+      })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    binary.set(VEC_PATH, vecBuffer([[1, 0], [0, 1], [0.5, 0.5]], 2));
+    // B 的 mtime 变了（进 toProcess）但读取抛错 → 摘条目后本轮无任务，走早退分支（非「有删除」分支）
+    const app = makeApp(vault, adapter, { '我的/A.md': 1, '我的/B.md': 2 });
+    const origRead = app.vault.read;
+    app.vault.read = async (f: any) => {
+      if (f.path === '我的/B.md') throw new Error('EIO');
+      return origRead(f);
+    };
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const progress = vi.fn();
+    try {
+      await vs.refresh(progress);
+    } finally {
+      errSpy.mockRestore();
+    }
+
+    expect(progress).toHaveBeenCalledWith('✅ 向量化完成（无新内容）');
+    expect(Object.keys(readMeta(vault).notes)).toEqual(['我的/A.md']); // B 条目已摘并落盘
+    expectClose(parseVec(binary).rows, [1, 0]); // .vec 同步紧凑，不留 B 的两行
+    // 行序不变量：内存两侧也不许错位（不落盘时 meta 短、.vec 长 → 后续检索把 B 之后的行认到别的笔记）
+    const rowsInMeta = Object.values(vs.meta.notes).reduce((n, note: any) => n + note.chunks.length, 0);
+    expect(vs.vectors.length / vs.dim).toBe(rowsInMeta);
+  });
+
   it('refresh：无删除无变更 → 提示「向量库已最新」且完全不落盘', async () => {
     const vault = new MockVault();
     vault.files.set('我的/A.md', '内容不重要不会读。');

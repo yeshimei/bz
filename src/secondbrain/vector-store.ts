@@ -87,7 +87,6 @@ interface NormCache {
   rows: number;
   data: Float32Array;
   valid: Uint8Array;
-  skipped: number;
 }
 
 export class VectorStore {
@@ -448,6 +447,7 @@ export class VectorStore {
     // 读取 + 分块（issue 424/ADR-0184：不按段落长度过滤——「段落最小长度」设置项已删）
     const fileChunksMap = new Map<string, (ChunkTask | null)[]>();
     const globalTasks: ChunkTask[] = [];
+    let readFailed = 0;
     for (const file of toProcess) {
       try {
         const raw = await this.app.vault.read(file);
@@ -459,10 +459,15 @@ export class VectorStore {
         chunks.forEach((text, idx) => globalTasks.push({ filePath: file.path, chunkIdx: idx, text }));
       } catch (err) {
         console.error(`[secondbrain] 读取失败 [${file.path}]`, err);
+        if (this.meta.notes[file.path]) readFailed++; // 条目真被摘掉才需要补一次落盘对齐行序
         delete this.meta.notes[file.path];
       }
     }
     if (globalTasks.length === 0) {
+      // 本轮摘掉了 meta 条目（文件消失 deleted / 读取失败 readFailed）却没走到 mergeWrite：
+      // 行数已短于 .vec，必须同步落盘，否则本会话后续检索按 meta 键序漫游会把被摘条目之后的
+      // 整段行认到别的笔记上（与上方「无变更但有删除」分支同口径）
+      if (deleted + readFailed > 0) await this.compactAndSave(srcOffsets);
       this.updateProgress('✅ 向量化完成（无新内容）');
       return;
     }
@@ -625,8 +630,16 @@ export class VectorStore {
       // 坏行不抛错、不参与检索（存量库可能已带病），面板「重新索引」全量重建即修复
       console.warn(`[secondbrain] 检索跳过 ${skipped}/${rows} 条无效向量（零向量或非有限分量）——重新索引可修复`);
     }
+    // meta 段落总数与 .vec 行数须一致（行序不变量）：不一致即损坏态——多出/少掉的尾部
+    // 笔记会被静默漏检，先说清再截断（buildNormCache 只建一次，这个扫描不落在查询热路径）
+    const expected = Object.values(this.meta.notes).reduce((n, note) => n + note.chunks.length, 0);
+    if (expected !== rows) {
+      console.warn(
+        `[secondbrain] .vec 行数 ${rows} 与 meta 段落总数 ${expected} 不一致（损坏态），本次检索仅覆盖 ${Math.min(rows, expected)} 行——重新索引可修复`
+      );
+    }
     console.log(`[secondbrain] 检索归一化缓存已构建: ${rows} 行 × ${dim} 维`);
-    this.normCache = { src: this.vectors, dim, rows, data, valid, skipped };
+    this.normCache = { src: this.vectors, dim, rows, data, valid };
     return this.normCache;
   }
 

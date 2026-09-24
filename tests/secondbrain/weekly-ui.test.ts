@@ -49,6 +49,7 @@ function makeDigest(): WeeklyDigest {
     collisions: [
       { path: '卡片盒/番茄钟实践.md', targetPath: '文献盒/旧番茄笔记.md', score: 0.91, mode: 'vector' },
     ],
+    scale: 'cos', // issue 425/ADR-0185 起新产出摘要自带口径标记（分数即原始余弦，显示不换算）
     aiSummary: '本周新增两篇笔记，其中番茄钟实践与旧文高度重合，建议合并。',
   };
 }
@@ -123,6 +124,22 @@ describe('详情弹层 openWeeklyDigest（issue 360）', () => {
     // 三节行数：撞车 1 / 新增笔记 2 / 新增关联 1（节题旁计数）
     const counts = [...weeklyPanel().querySelectorAll('.bz-sb-weekly-section .bz-sb-ct-n')].map((el) => el.textContent);
     expect(counts).toEqual(['1', '2', '1']);
+  });
+
+  it('存量摘要（无 scale 标记）：向量通道分数按旧锐化尺换算后再显示，TF-IDF 覆盖率不换算', async () => {
+    const { vault, app } = makeEnv(false);
+    const legacy = makeDigest();
+    delete (legacy as { scale?: 'cos' }).scale;
+    // 两条撞车：向量通道 0.91 是旧锐化尺（0.91^(1/0.35)≈0.76），TF-IDF 0.85 是覆盖率（本就有绝对标尺）
+    legacy.collisions = [
+      { path: '卡片盒/番茄钟实践.md', targetPath: '文献盒/旧番茄笔记.md', score: 0.91, mode: 'vector' },
+      { path: '卡片盒/费曼.md', targetPath: '文献盒/费曼学习法.md', score: 0.85, mode: 'tfidf' },
+    ];
+    await seedDigestOnly(vault, legacy);
+    openWeeklyDigest(app);
+    await vi.waitFor(() => expect(weeklyPanel().querySelector('#bz-sb-weekly-body')!.innerHTML).toContain('主题撞车提示'));
+    const pcts = [...weeklyPanel().querySelectorAll('.bz-sb-weekly-row-pct')].map((el) => el.textContent);
+    expect(pcts).toEqual(['76%', '85%']); // 旧尺 91% 换算成 76%；TF-IDF 85% 原样
   });
 
   it('行跳转：新增笔记行点击 → workspace.openFile 打开对应文件；撞车行仅两段名字段各跳各的（行容器不带 data-path）', async () => {

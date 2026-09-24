@@ -7,7 +7,7 @@
  * issue 425/ADR-0185：vptree 已退役（近似召回 + 零向量假高分），其测试块随之改名 vector-math。
  */
 import { describe, it, expect } from 'vitest';
-import { isValidVector, normalizeVec } from '../../src/secondbrain/vector-math';
+import { isValidVector, normalizeVec, unsharpenScore } from '../../src/secondbrain/vector-math';
 import { smartChunk, CHUNK_SIZE, stripFrontmatter, embedChunks, noteTitleFromPath, canvasToText } from '../../src/secondbrain/chunk';
 import { STOP_WORDS, extractTerms, searchTextIndex } from '../../src/secondbrain/text-search';
 import { TFIDF, TFIDF_STOP_WORDS } from '../../src/secondbrain/tfidf';
@@ -182,6 +182,15 @@ describe('vector-math（归一化 / 向量校验）', () => {
     expect(isValidVector(0.5)).toBe(false);
     expect(isValidVector('0.5')).toBe(false);
     expect(isValidVector({})).toBe(false);
+  });
+
+  it('unsharpenScore：锐化尺 → 原始余弦（旧分 = cos^0.35 ⇒ cos = 旧分^(1/0.35)，含 0.01 下限）', () => {
+    // 两处存量数据的换算同源：设置项 linkAgentMinScore、旧周摘要的向量通道撞车分
+    expect(unsharpenScore(0.65)).toBe(0.29);
+    expect(unsharpenScore(0.85)).toBe(0.63);
+    expect(unsharpenScore(0.91)).toBe(0.76);
+    expect(unsharpenScore(1)).toBe(1);
+    expect(unsharpenScore(0.1)).toBe(0.01); // 极小值取整会掉到 0（= 不过滤），下限兜底
   });
 });
 

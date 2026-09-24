@@ -21,6 +21,7 @@ import { notice, notify } from '../core/notice';
 import { formatRelativeTime } from '../core/utils';
 import { loadStore, type WeeklyDigest } from './store-file';
 import { runWeeklyDigest, formatDigestRange, WEEKLY_MAX_COLLISIONS, type WeeklyRunOptions, type WeeklyStoreLike } from './weekly';
+import { unsharpenScore } from './vector-math';
 import {
   weeklyShellHtml,
   weeklySummaryHtml,
@@ -42,6 +43,16 @@ export function __setWeeklyScheduleDelayMsForTests(ms: number): void {
 
 /** 通知 dedupeKey：周报一条语义，重复触发合并单框 */
 export const WEEKLY_NOTICE_KEY = 'bz-sb-weekly-digest';
+
+/**
+ * 撞车行显示的整数百分比（issue 425/ADR-0185）：`scale` 缺失的存量摘要里，**向量通道**分数是
+ * 旧锐化尺（`cos^0.35`），显示前换算回原始余弦；**TF-IDF 通道**分数是覆盖率（本就有绝对标尺）
+ * 不换算。新摘要带 `scale: 'cos'`，直接按分数渲染。
+ */
+export function collisionPctOf(c: { score: number; mode: 'vector' | 'tfidf' }, digest: WeeklyDigest): number {
+  const legacyVector = c.mode === 'vector' && digest.scale !== 'cos';
+  return Math.round((legacyVector ? unsharpenScore(c.score) : c.score) * 100);
+}
 
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -293,7 +304,7 @@ function showWeeklyModal(digest: WeeklyDigest | null, opts?: { loading?: boolean
   if (digest.collisions.length > 0) {
     const rows = digest.collisions
       .map((c) =>
-        weeklyCollisionRowHtml(c.path, nameOf(c.path), c.targetPath, nameOf(c.targetPath), Math.round(c.score * 100))
+        weeklyCollisionRowHtml(c.path, nameOf(c.path), c.targetPath, nameOf(c.targetPath), collisionPctOf(c, digest))
       )
       .join('');
     sections.push(weeklySectionHtml('bz-sb-weekly-hits', 'copy', '主题撞车提示', digest.collisions.length, rows));

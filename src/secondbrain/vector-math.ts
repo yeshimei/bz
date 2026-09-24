@@ -40,3 +40,17 @@ export function isValidVector(v: unknown): v is Vec {
   }
   return Number.isFinite(norm) && norm > 0;
 }
+
+/** 旧检索分数的锐化指数（旧实现 `score = cos^0.35`；issue 425/ADR-0185 退役，见 unsharpenScore） */
+export const LEGACY_SHARPEN_EXPONENT = 0.35;
+
+/**
+ * 存量锐化尺分数 → 原始余弦尺（幂次反演 `cos = 旧分^(1/0.35)`）。
+ * 落盘过的分数（设置项 `linkAgentMinScore`、周摘要撞车分）都是旧尺，改写口径时须换算，
+ * 否则同一个数字在旧尺含义下会静默变松/变严。取两位小数、下限 0.01——极小值经幂次会掉到
+ * 1e-4，取整成 0 就把「极严」翻成「不过滤」，与用户原意相反。
+ * 调用方须自备幂等凭据（换算不可重放：再换算一次会继续下探）。
+ */
+export function unsharpenScore(old: number): number {
+  return Math.max(0.01, Math.round(Math.pow(old, 1 / LEGACY_SHARPEN_EXPONENT) * 100) / 100);
+}

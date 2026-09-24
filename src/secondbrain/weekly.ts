@@ -266,6 +266,7 @@ export async function runWeeklyDigest(store: WeeklyStoreLike, opts: WeeklyRunOpt
     newNotes: newNotes.slice(0, WEEKLY_MAX_LIST),
     newLinks: newLinks.slice(0, WEEKLY_MAX_LIST),
     collisions: collisions.slice(0, WEEKLY_MAX_COLLISIONS),
+    scale: 'cos', // 撞车分即原始余弦（issue 425/ADR-0185 起不锐化）；旧摘要无此标记，显示侧按旧尺换算
   };
 
   // AI 文案可选（issue 360）：未配置/失败降级纯列表，不阻塞产出

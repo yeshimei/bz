@@ -41,8 +41,15 @@ describe('migrateLinkMinScoreScale', () => {
     expect('linkAgentMinScoreScale' in raw).toBe(false);
   });
 
-  it('脏值（0 / 负数 / 非数）→ 回落新默认并留标记', () => {
-    for (const bad of [0, -0.5, '0.65', NaN]) {
+  it('0（不过滤）原样保留——两把尺上都是「关掉过滤」，换算会把下限 0.01 变成替用户打开过滤', () => {
+    const raw: Record<string, unknown> = { linkAgentMinScore: 0 };
+    expect(migrateLinkMinScoreScale(raw)).toBe(true);
+    expect(raw.linkAgentMinScore).toBe(0);
+    expect(raw.linkAgentMinScoreScale).toBe('cos');
+  });
+
+  it('脏值（负数 / 非数）→ 回落新默认并留标记', () => {
+    for (const bad of [-0.5, '0.65', NaN]) {
       const raw: Record<string, unknown> = { linkAgentMinScore: bad };
       expect(migrateLinkMinScoreScale(raw)).toBe(true);
       expect(raw.linkAgentMinScore).toBe(DEFAULT_SETTINGS.linkAgentMinScore);

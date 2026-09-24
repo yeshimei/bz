@@ -75,6 +75,9 @@ export interface WeeklyDigest {
   collisions: WeeklyCollisionEntry[];
   /** AI 人话总结（可选；未配置/失败降级纯列表） */
   aiSummary?: string;
+  /** 撞车分数口径（issue 425/ADR-0185）：'cos' = 原始余弦尺；缺失 = 旧锐化尺
+   *  （存量摘要分数随摘要落盘、空轮还会保留上一份，显示侧须按此标记决定是否换算，见 weekly-ui） */
+  scale?: 'cos';
 }
 
 /** weekly 段（issue 360）：周界判定状态 + 新增判定快照 + 最近一份非空摘要 */
