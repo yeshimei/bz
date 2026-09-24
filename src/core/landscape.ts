@@ -31,10 +31,12 @@ export function fitRotatedBox(box: HTMLElement, panel: HTMLElement | null, mobil
   return { rot, w, h };
 }
 
-/** 视口点 → 层框逻辑点（画布位图 / 布局坐标系）。非旋转态原样返回。 */
+/** 视口点 → 层框逻辑点（画布位图 / 布局坐标系）。两种态的返回值都以**层框左上角**为原点：
+ *  消费方（开卷幕字靶 / 盒壁）把它直接当画布坐标用，而画布满铺在层框内——
+ *  非旋转态若原样返回视口值，层框不贴窗口左上角（桌面常态）时整面偏移 (box.left, box.top)。 */
 export function boxLogicalPoint(box: HTMLElement, x: number, y: number): { x: number; y: number } {
-  if (!box.classList.contains('is-rot90')) return { x, y };
   const vr = box.getBoundingClientRect();
+  if (!box.classList.contains('is-rot90')) return { x: x - vr.left, y: y - vr.top };
   const bw = box.offsetWidth || 1, bh = box.offsetHeight || 1;
   const cx = vr.left + vr.width / 2, cy = vr.top + vr.height / 2;
   // rotate(90deg) 顺时针：视觉相对中心 = (−ly, lx)，逆映射即 (vy, −vx)

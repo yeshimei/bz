@@ -122,6 +122,19 @@ describe('DOMAIN_MENU 形状', () => {
     // 菜单项不许叫「打开游戏库」（入口本身就是打开）
     expect(list.some((a) => a.label.startsWith('打开'))).toBe(false);
   });
+
+  it('2026-09-24 密码本：快速生成密码（跳过选择器直接生成，与快速取密并存、图标错开）', () => {
+    const byId = (commandId: string) => DOMAIN_MENU.vault.find((a) => a.commandId === commandId);
+    const item = byId('bz-password-vault-quick-gen');
+    expect(item).toBeTruthy();
+    expect(item!.label).toBe('快速生成密码');
+    expect(item!.icon).toBe('wand-sparkles');
+    // 与「快速取密」（fuzzy 选择器）并存且图标错开
+    expect(byId('bz-password-vault-gen')).toBeTruthy();
+    expect(item!.icon).not.toBe(byId('bz-password-vault-gen')!.icon);
+    // 缺省关首页再执行（复制完通常切走去粘贴，不 keepHome）
+    expect(item!.keepHome).toBeUndefined();
+  });
 });
 
 describe('DOMAIN_MENU 设置直达（2026-09-21 拍板，issues 388）', () => {

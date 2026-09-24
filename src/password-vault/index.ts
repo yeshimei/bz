@@ -10,7 +10,7 @@ import { notice } from '../core/notice';
 import { copySensitiveWithFallback } from '../core/utils';
 import { lockSafe, ensureSafeUnlocked } from '../encrypt';
 import { PasswordVaultAppController } from './ui';
-import { DEFAULT_PW_CHARSET } from './data';
+import { DEFAULT_PW_CHARSET, clearPendingQuickPassword, setPendingQuickPassword } from './data';
 import { openPasswordQuickPicker, closePasswordQuickPicker } from './quick-pick';
 
 let initialized = false;
@@ -40,6 +40,31 @@ export function openPasswordVault(app: App): void {
   void ensurePasswordVault(app)
     .then(() => getController().openManager())
     .catch(() => notice('密码本初始化失败，请重试', 'error')); // void 链 catch 收口（对齐 encrypt openEncrypt）
+}
+
+/**
+ * 快速生成密码（命令 bz-password-vault-quick-gen，2026-09-24 首页右键菜单点名）：
+ * 不解锁、不开任何面板——按设置的字符集/长度生成 → 复制剪贴板（60s 自动清空语义同快速
+ * 取密）→ 把明文记入 data 层待存状态（内存单条 + 10 分钟 TTL，不上盘）。之后用户解锁
+ * 密码本（锁屏任意路径）时由 ui 层 maybeOpenPendingAdd 消费：自动弹出添加窗并预填该密码，
+ * 「复制去注册 → 回密码本存档」一步到位。与「快速取密」（bz-password-vault-gen）的差异：
+ * 那条出 fuzzy 选择器（可挑存量），这条跳过选择器直接出新密码。
+ */
+export async function quickGeneratePassword(app: App): Promise<void> {
+  try {
+    await ensurePasswordVault(app);
+  } catch {
+    notice('密码本初始化失败，请重试', 'error'); // main.ts 侧 void 调用，链内自兜底防 unhandled rejection
+    return;
+  }
+  const pw = getController().uiManager.generatePassword();
+  const ok = await copySensitiveWithFallback(pw);
+  if (!ok) {
+    notice('复制失败，请手动复制', 'error');
+    return;
+  }
+  setPendingQuickPassword(pw);
+  notice('已生成并复制密码，60 秒后自动清空；解锁密码本时将自动弹出录入窗', 'success');
 }
 
 /**
@@ -102,6 +127,7 @@ export async function lockPasswordVault(app: App): Promise<void> {
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadPasswordVault(): void {
   closePasswordQuickPicker(); // 快速取密选择器若开着：插件卸载即撤（遮罩/ESC 层不残留）
+  clearPendingQuickPassword(); // 快速生成密码的待存状态是内存便签：卸载即弃（不留跨重载的明文）
   if (controller) controller.cleanup();
   controller = null;
   initialized = false;
