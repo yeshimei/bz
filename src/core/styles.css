@@ -1187,14 +1187,14 @@ button.bz-rowbtn--busy::after {
   animation: bz-rowbtn-spin 0.7s linear infinite;
 }
 button.bz-rowbtn--ok {
-  background: #1f883d !important;
-  border-color: transparent !important;
-  color: #fff !important;
+  border: 2px solid #1f883d !important;
+  color: #1f883d !important;
+  background: transparent !important;
 }
 button.bz-rowbtn--fail {
-  background: #cf222e !important;
-  border-color: transparent !important;
-  color: #fff !important;
+  border: 2px solid #cf222e !important;
+  color: #cf222e !important;
+  background: transparent !important;
 }
 @keyframes bz-rowbtn-spin {
   to {
