@@ -150,8 +150,11 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
       { key: 'jevApiKey' },
       { key: 'jevModel' },
     ]);
-    // 服务商下拉由注册表驱动（目前仅 Typesafe）；无 visibleWhen——常开，不再挂在总开关下
-    expect(rows[0].options).toEqual([{ value: 'typesafe', label: 'Typesafe' }]);
+    // 服务商下拉由注册表驱动（issue 430 起两家：Typesafe + 博查）；无 visibleWhen——常开，不再挂在总开关下
+    expect(rows[0].options).toEqual([
+      { value: 'typesafe', label: 'Typesafe' },
+      { value: 'bocha', label: '博查' },
+    ]);
     rows.forEach((r) => expect(r.visibleWhen).toBeUndefined());
     // 模型行内嵌「获取模型」（照 Embedding 模型行范式）；缺省 jev-latest
     expect(rows[2].actions?.map((a) => a.text)).toEqual(['获取模型']);

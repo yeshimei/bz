@@ -35,8 +35,10 @@
  *   地址改由桌面端启动**自动跟随本机 IP**，见 secondbrain/local-ip.ensureRemoteOllamaUrl）；
  *   「JEV」组收口为服务商 / 密钥 / 模型三行——「启用 Jev 判定」开关退役（常开：填了密钥即
  *   接管，清空即回落 LLM）、「Jev 端点」退役（改「Jev 服务商」下拉，列表源自 core/jev 的
- *   JEV_PROVIDER_REGISTRY，目前仅 Typesafe）、「Jev 超时」退役（固化十秒）、「Jev 模型」加
- *   行内「获取模型」（拉服务商 /v1/models，默认 jev-latest = 服务端最新）；
+ *   JEV_PROVIDER_REGISTRY）、「Jev 超时」退役（固化十秒）、「Jev 模型」加
+ *   行内「获取模型」（拉服务商 /v1/models 自选，留空跟随服务商缺省）；
+ * - issue 430：「Jev 服务商」下拉新增博查（bocha-jev-v1，与 Typesafe 报文同构、国内直连），
+ *   模型缺省改按服务商各配（typesafe → jev-latest，博查 → bocha-jev-v1）；
  * - 2026-09-23 凭据组三行统一回单行 secret（用户拍板「加密的做成多行框看着怪」）：textarea 的
  *   masked 档位在凭据组退役，行序改为 ApiZero Key → B站 Cookie → 豆瓣 Cookie；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
@@ -378,21 +380,24 @@ function ollamaLocalUrlRow(): SettingsRow {
 }
 
 /**
- * 「JEV」组行（issue 391/ADR-0173 §6 起；issue 424/ADR-0184 收口）：服务商下拉 + 密钥 + 模型，
- * 照「LLM」组同序（先选通道与密钥、再配这一通道用哪个模型）。
+ * 「JEV」组行（issue 391/ADR-0173 §6 起；issue 424/ADR-0184 收口；issue 430 加博查）：
+ * 服务商下拉 + 密钥 + 模型，照「LLM」组同序（先选通道与密钥、再配这一通道用哪个模型）。
  * - 「启用 Jev 判定」开关**退役**（用户拍板「默认启动，无需设置」）：`isJevConfigured` 只看
  *   密钥齐备，清空密钥即回落 LLM——设置里不再有第二处「要不要用」的真相；
- * - 「Jev 端点」退役 → 「Jev 服务商」下拉（列表由 `JEV_PROVIDER_REGISTRY` 驱动，目前仅 Typesafe）；
+ * - 「Jev 端点」退役 → 「Jev 服务商」下拉（列表由 `JEV_PROVIDER_REGISTRY` 驱动；
+ *   issue 430 起两家，在册者与 SystemOne 报文同构，端点不再是设置项）；
  * - 「Jev 超时」退役 → 固定十秒（`JEV_DEFAULT_TIMEOUT_MS`）；
- * - 「Jev 模型」加行内「获取模型」按钮（拉服务商模型列表，默认 `jev-latest` = 服务端最新）。
+ * - 「Jev 模型」加行内「获取模型」按钮（拉服务商模型列表，留空跟随服务商缺省——
+ *   typesafe → `jev-latest`，博查 → `bocha-jev-v1`）。
  * 密钥行用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文口径。
+ * 注意两家密钥互不通用：Typesafe 与博查各发各的 key，换服务商须连同密钥、模型一起换。
  */
 function jevGroupRows(): SettingsRow[] {
   return [
     {
       type: 'select',
       name: 'Jev 服务商',
-      desc: '判定通道的服务商，目前仅支持一家',
+      desc: '判定通道的服务商，各家密钥不通用',
       binding: { key: 'jevProvider' },
       options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -408,12 +413,14 @@ function jevGroupRows(): SettingsRow[] {
 }
 
 /** 「Jev 模型」行（issue 424/ADR-0184）：声明式 text + 行内「获取模型」按钮，照 Embedding 模型行范式
- *  （选中即回填一次到位——等选择器关闭再 resolve 动作 Promise，见该行注释）。空值回落 `jev-latest`。 */
+ *  （选中即回填一次到位——等选择器关闭再 resolve 动作 Promise，见该行注释）。空值回落服务商缺省
+ *  （issue 430 起按服务商各配，见 core/jev 描述符的 defaultModel）。placeholder 钉 `jev-latest`
+ *  只是示例展示（它在博查亦是有效别名），非全局缺省。 */
 function jevModelRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Jev 模型',
-    desc: '判定使用的模型，留空跟随服务端最新',
+    desc: '判定使用的模型，留空跟随服务商缺省',
     placeholder: 'jev-latest',
     binding: { key: 'jevModel' },
     actions: [{

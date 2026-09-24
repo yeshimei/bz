@@ -37,11 +37,11 @@ export default interface BzSettings {
   aiThinkingOverrides: Record<string, string>;
 
   // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389；issue 424/ADR-0184 起常开）=====
-  /** Jev 服务商（issue 424：照 LLM「AI 服务商」同款；目前仅 typesafe，端点走 JEV_PROVIDER_REGISTRY） */
+  /** Jev 服务商（issue 424：照 LLM「AI 服务商」同款；issue 430 起 typesafe / bocha，端点走 JEV_PROVIDER_REGISTRY） */
   jevProvider: string;
-  /** Jev 密钥（TypeSafe 控制台创建；创建时只显示一次）——填了即接管判定，无独立开关 */
+  /** Jev 密钥（各服务商控制台创建，互不通用；创建时只显示一次）——填了即接管判定，无独立开关 */
   jevApiKey: string;
-  /** Jev 模型名。默认 jev-latest（服务端最新；issue 424 起改为可取模型列表后自选） */
+  /** Jev 模型名。留空跟随服务商缺省（issue 430：typesafe → jev-latest，博查 → bocha-jev-v1；可取模型列表后自选） */
   jevModel: string;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====

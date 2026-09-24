@@ -9,12 +9,14 @@ import {
   askJev,
   buildJevBody,
   fetchJevModels,
+  getJevProviderDescriptor,
   isJevConfigured,
   parseJevModels,
   resolveJevConfig,
   JEV_DEFAULT_ENDPOINT,
   JEV_DEFAULT_MODEL,
   JEV_DEFAULT_TIMEOUT_MS,
+  JEV_PROVIDER_REGISTRY,
   type JevQuestion,
 } from '../../src/core/jev';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -245,6 +247,27 @@ describe('core/jev', () => {
     expect(resolveJevConfig().endpoint).toBe(JEV_DEFAULT_ENDPOINT);
   });
 
+  it('注册表两家在册（issue 430）：博查与 Typesafe 同构协议，描述符含缺省模型', () => {
+    expect(JEV_PROVIDER_REGISTRY.map((p) => p.id)).toEqual(['typesafe', 'bocha']);
+    const bocha = getJevProviderDescriptor('bocha');
+    expect(bocha.label).toBe('博查');
+    expect(bocha.endpoint).toBe('https://jev.bochaai.com/v1/systemone');
+    expect(bocha.modelsUrl).toBe('https://jev.bochaai.com/v1/models');
+    expect(bocha.defaultModel).toBe('bocha-jev-v1');
+    // 缺省常量仍锚在注册表首条（Typesafe），不因追加服务商漂移
+    expect(JEV_DEFAULT_ENDPOINT).toBe('https://api.typesafe.ai/v1/systemone');
+    expect(JEV_DEFAULT_MODEL).toBe('jev-latest');
+  });
+
+  it('resolveJevConfig：模型缺省按服务商各配（博查 → bocha-jev-v1），手输值优先', () => {
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKey: 'sk-bocha' }) as any);
+    const cfg = resolveJevConfig();
+    expect(cfg.endpoint).toBe('https://jev.bochaai.com/v1/systemone');
+    expect(cfg.model).toBe('bocha-jev-v1');
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevModel: 'bocha-jev-latest' }) as any);
+    expect(resolveJevConfig().model).toBe('bocha-jev-latest');
+  });
+
   it('resolveJevConfig：模型覆盖（空串回落缺省）', () => {
     setSettingsProvider(() => ({ jevModel: 'jev-preview', jevApiKey: 'sk-x' }) as any);
     expect(resolveJevConfig().model).toBe('jev-preview');
@@ -297,6 +320,22 @@ describe('core/jev · 模型列表', () => {
     expect(parseJevModels(null)).toEqual([]);
   });
 
+  it('parseJevModels：博查实测响应原样可解析（2026-09-24 实测原文，多余 data 字段不炸）', () => {
+    const bochaJson = {
+      models: [
+        { name: 'bocha-jev-v1', description: 'Bocha Jev structured decision model', release_date: '2026-09-22' },
+        { name: 'bocha-jev-latest', description: 'Compatibility alias for bocha-jev-v1', release_date: '2026-09-22' },
+        { name: 'jev-latest', description: 'Compatibility alias for bocha-jev-v1', release_date: '2026-09-22' },
+      ],
+      data: [{ max_candidate_tokens: 512, status: 'experimental', id: 'bocha-jev-v1' }],
+    };
+    expect(parseJevModels(bochaJson, '博查')).toEqual([
+      { id: 'bocha-jev-v1', detail: 'Bocha Jev structured decision model，2026-09-22' },
+      { id: 'bocha-jev-latest', detail: 'Compatibility alias for bocha-jev-v1，2026-09-22' },
+      { id: 'jev-latest', detail: 'Compatibility alias for bocha-jev-v1，2026-09-22' },
+    ]);
+  });
+
   it('fetchJevModels：打到服务商 modelsUrl，带 Bearer 密钥；响应 → 选项列表', async () => {
     setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: 'sk-jev' }) as any);
     requestUrlMock.mockResolvedValue({ status: 200, text: JSON.stringify(MODELS_JSON) } as any);
@@ -305,6 +344,19 @@ describe('core/jev · 模型列表', () => {
     const call = requestUrlMock.mock.calls[0][0] as any;
     expect(call.url).toBe('https://api.typesafe.ai/v1/models');
     expect(call.headers.Authorization).toBe('Bearer sk-jev');
+  });
+
+  it('fetchJevModels：博查服务商打到博查列表端点（issue 430）', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKey: 'sk-bocha' }) as any);
+    requestUrlMock.mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ models: [{ name: 'bocha-jev-v1', description: 'Bocha Jev' }] }),
+    } as any);
+    const models = await fetchJevModels();
+    expect(models.map((m) => m.id)).toEqual(['bocha-jev-v1']);
+    const call = requestUrlMock.mock.calls[0][0] as any;
+    expect(call.url).toBe('https://jev.bochaai.com/v1/models');
+    expect(call.headers.Authorization).toBe('Bearer sk-bocha');
   });
 
   it('fetchJevModels：缺密钥 → 抛错且不发请求（与判定请求同口径）', async () => {
