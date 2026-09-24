@@ -6,12 +6,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import type BzSettings from '../../src/settings';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, requestUrl } from '../mock-obsidian-entry';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { renderSettingsInto } from '../../src/core/settings-schema';
 import { mainSettingsSchema } from '../../src/core/settings-main-schema';
 import { closeModelPicker } from '../../src/core/settings-model-picker';
 import { __resetNoticeForTests, cleanupNotices } from '../../src/core/notice';
+
+const requestUrlMock = vi.mocked(requestUrl);
 
 const state = { ...DEFAULT_SETTINGS } as BzSettings & Record<string, unknown>;
 const saver = vi.fn(async () => {});
@@ -56,6 +58,7 @@ function okModels(data: unknown): any {
 
 beforeEach(() => {
   resetObsidianMocks();
+  requestUrlMock.mockReset();
   for (const k of Object.keys(state)) delete (state as any)[k];
   Object.assign(state, DEFAULT_SETTINGS);
   saver.mockClear();
@@ -285,5 +288,49 @@ describe('模型选择器回填时机：选中即刷新（一次点击）', () =
     await vi.waitFor(() =>
       expect(textControlOf(findRow(container, 'Embedding 模型')).value).toBe('qwen3-embedding:8b')
     );
+  });
+});
+
+/**
+ * Jev 模型行「获取模型」（issue 424/ADR-0184）：拉 Typesafe `/v1/models`（自家格式
+ * `{models:[{name,…}]}`，走 requestUrl——该域预检无 ACAO，浏览器 fetch 必被拒）→ 选择器 →
+ * 选中写 jevModel。同 Embedding 行：等选择器关闭再 resolve 动作 Promise，一次点击即回填。
+ */
+describe('Jev 模型行：获取模型（issue 424/ADR-0184）', () => {
+  it('拉取 Typesafe 模型列表 → 选择器 → 选中即回填（一次点击）', async () => {
+    state.jevApiKey = 'sk-jev';
+    state.jevModel = ''; // 当前空 → 选中后必变（否则「回填显示值」断言恒真，抓不到回填断链）
+    requestUrlMock.mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({
+        models: [
+          { name: 'jev-latest', description: '最新版', release_date: '2026-09-01' },
+          { name: 'jev-preview', description: '预览版' },
+        ],
+      }),
+    } as any);
+    const container = renderAIGroup();
+    const row = findRow(container, 'Jev 模型');
+    buttonOf(row).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    // 请求打到服务商模型列表端点（不是判定端点），带 Bearer 密钥
+    const call = requestUrlMock.mock.calls[0][0] as any;
+    expect(call.url).toBe('https://api.typesafe.ai/v1/models');
+    expect(call.method).toBe('GET');
+    expect(call.headers.Authorization).toBe('Bearer sk-jev');
+    (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
+    await vi.waitFor(() => expect(state.jevModel).toBe('jev-latest'));
+    await vi.waitFor(() =>
+      expect(textControlOf(findRow(container, 'Jev 模型')).value).toBe('jev-latest')
+    );
+  });
+
+  it('缺密钥 → 行内报错，不发请求（服务商模型列表也要鉴权）', async () => {
+    state.jevApiKey = '';
+    const container = renderAIGroup();
+    buttonOf(findRow(container, 'Jev 模型')).trigger();
+    await vi.waitFor(() => expect(visibleToasts().some((t) => t.includes('Typesafe 密钥'))).toBe(true));
+    expect(requestUrlMock).not.toHaveBeenCalled();
+    expect(document.getElementById('bz-model-picker-popup')).toBeNull();
   });
 });

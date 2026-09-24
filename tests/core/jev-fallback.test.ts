@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * 判定编排（src/core/jev-fallback.ts，ADR-0181）：
- * - 未启用 / 未配置 → 直接回落：Jev 材料**零构造**、零请求；
+ * - 未配置（issue 424 起常开：无密钥即未配置，无总开关）→ 直接回落：材料**零构造**、零请求；
  * - Jev 成功 → 以 parse 结果为准（含域内弃权值），回落零调用；
  * - 请求失败（HTTP 非 2xx）→ 回落；
  * - 答案畸形（parse 抛错）→ 回落；
@@ -24,11 +24,9 @@ function ready(): void {
   setSettingsProvider(
     () =>
       ({
-        jevEnabled: true,
-        jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+        jevProvider: 'typesafe',
         jevApiKey: 'sk-test',
-        jevModel: 'jev-1.13.0',
-        jevTimeoutMs: 5000,
+        jevModel: 'jev-latest',
       }) as any
   );
 }
@@ -75,8 +73,8 @@ beforeEach(() => {
 });
 
 describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
-  it('未启用（jevEnabled=false）→ 直接回落：材料零构造、零请求', async () => {
-    setSettingsProvider(() => ({ jevEnabled: false, jevApiKey: 'sk-test' }) as any);
+  it('未配置（无密钥）→ 直接回落：材料零构造、零请求', async () => {
+    setSettingsProvider(() => ({ jevEnabled: false, jevApiKey: '' }) as any);
     const { plan, request, fallback } = makePlan();
     await expect(judgeOrFallback(plan)).resolves.toBe('LLM 结果');
     expect(request).not.toHaveBeenCalled();
@@ -84,8 +82,8 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
     expect(fallback).toHaveBeenCalledTimes(1);
   });
 
-  it('已启用但缺密钥 → 同样直接回落（就绪门含端点/密钥齐备）', async () => {
-    setSettingsProvider(() => ({ jevEnabled: true, jevEndpoint: 'https://api.typesafe.ai/v1/systemone', jevApiKey: '' }) as any);
+  it('密钥被清空 → 同样直接回落（就绪门只看密钥；旧总开关键残留不再影响）', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: '' }) as any);
     const { plan, request, fallback } = makePlan();
     await expect(judgeOrFallback(plan)).resolves.toBe('LLM 结果');
     expect(request).not.toHaveBeenCalled();
@@ -142,7 +140,7 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   });
 
   it('取消优先于就绪门：未配置 + 已取消 → 仍抛 AbortError、零回落', async () => {
-    setSettingsProvider(() => ({ jevEnabled: false }) as any);
+    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
     const ctrl = new AbortController();
     ctrl.abort();
     const { plan, fallback } = makePlan({ signal: ctrl.signal });
@@ -177,7 +175,7 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   });
 
   it('回落自身失败 → 原样上抛（由调用方入队 / 留空，不引第三层）', async () => {
-    setSettingsProvider(() => ({ jevEnabled: false }) as any);
+    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
     const fb = vi.fn(async () => {
       throw new Error('LLM 未配置 API Key');
     });

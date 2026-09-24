@@ -35,17 +35,13 @@ export default interface BzSettings {
    *  modelOptions 显式思考键优先，不受本设置影响 */
   aiThinkingOverrides: Record<string, string>;
 
-  // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389）=====
-  /** Jev 决策模型总开关（全局唯一一个）：关则自动关联裁判与影院类型判定全部回落 LLM */
-  jevEnabled: boolean;
-  /** Jev 端点（默认 https://api.typesafe.ai/v1/systemone） */
-  jevEndpoint: string;
-  /** Jev 密钥（TypeSafe 控制台创建；创建时只显示一次） */
+  // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389；issue 424/ADR-0184 起常开）=====
+  /** Jev 服务商（issue 424：照 LLM「AI 服务商」同款；目前仅 typesafe，端点走 JEV_PROVIDER_REGISTRY） */
+  jevProvider: string;
+  /** Jev 密钥（TypeSafe 控制台创建；创建时只显示一次）——填了即接管判定，无独立开关 */
   jevApiKey: string;
-  /** Jev 模型名。默认固定版本 jev-1.13.0——口径不该由供应商的远端别名决定何时变更（ADR-0173 §5） */
+  /** Jev 模型名。默认 jev-latest（服务端最新；issue 424 起改为可取模型列表后自选） */
   jevModel: string;
-  /** Jev 请求超时（毫秒；实测单次 1–2 秒，默认 10000 留 5x 余量） */
-  jevTimeoutMs: number;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -306,20 +302,15 @@ export default interface BzSettings {
   secondBrainTopK: string;
   /** AI 检索结果数 */
   secondBrainChatTopK: string;
-  /** 段落最小长度 */
-  secondBrainChunkMinLength: string;
   /** 允许的文件夹（逗号分隔；f8：留空/空=不索引任何目录，不是「全库」） */
   secondBrainAllowPaths: string;
-  /** 上下文限制 */
-  secondBrainContextLimit: string;
-  /** 防抖延迟（ms） */
-  secondBrainDebounceDelay: string;
-  /** 光标轮询间隔（ms） */
-  secondBrainCursorPollInterval: string;
   /** 最大历史记录 */
   secondBrainMaxHistory: string;
   /** 远程 Ollama URL（移动端探活/降级链；空 = 未配置远程——移动端回落本地 URL，不探任何远程） */
   secondBrainRemoteOllamaUrl: string;
+  /** 上次由插件自动填入的远程地址（issue 424/ADR-0184 自动跟随的判据：与当前值相同 = 该值归插件管，
+   *  本机 IP 变了就跟着刷新；不同 = 用户手改过，一律不动。空 = 从没自动填过） */
+  secondBrainRemoteOllamaAuto: string;
 
   // ===== 🔗 自动关联（知识盒设置页「自动关联」组；ADR-0141 自第二大脑迁入并正名）=====
   /** 自动关联总开关：三个盒子里的笔记落盘 / 改动后自动建立 related（false 时无任何监听与写入） */
@@ -630,6 +621,58 @@ export function migrateRetiredAIKeys(raw: unknown): boolean {
 }
 
 /**
+ * 第二大脑一次性迁移（issue 424/ADR-0184）：四个参数键退役——「段落最小长度」「上下文限制」
+ * 不再限制（分块全留），「防抖延迟毫秒」「光标轮询毫秒」固化为常量（secondbrain/config.ts）。
+ * 旧值不迁移直接丢（留着是读不到的死值）。幂等：无旧键即不改动。
+ */
+const RETIRED_SECONDBRAIN_KEYS: string[] = [
+  'secondBrainChunkMinLength',
+  'secondBrainContextLimit',
+  'secondBrainDebounceDelay',
+  'secondBrainCursorPollInterval',
+];
+
+export function migrateRetiredSecondBrainKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  let migrated = false;
+  for (const key of RETIRED_SECONDBRAIN_KEYS) {
+    if (rec[key] !== undefined) {
+      delete rec[key];
+      migrated = true;
+    }
+  }
+  return migrated;
+}
+
+/** Jev 通道一次性迁移（issue 424/ADR-0184）：
+ * 1) **总开关键退役**（`jevEnabled`）——常开：填了密钥即接管判定，清空即回落 LLM；
+ * 2) **端点 / 超时两键退役**——端点由「Jev 服务商」决定（`JEV_PROVIDER_REGISTRY`），超时固定十秒；
+ * 3) `jevModel` 仍钉在旧缺省 `jev-1.13.0` → 改写为 `jev-latest`（服务端最新版；旧值只是插件
+ *    缺省被落盘的产物，用户自选的其他模型名一律保留）。
+ * 幂等：无旧键/无脏值即不改动（同 migrateMemoSettingKeys 的 C16 口径，调用方据返回值调度落盘）。 */
+const RETIRED_JEV_KEYS: string[] = ['jevEnabled', 'jevEndpoint', 'jevTimeoutMs'];
+/** 旧缺省模型名（ADR-0173 §5 曾刻意钉版本；issue 424 起改为跟随服务端最新） */
+const LEGACY_JEV_DEFAULT_MODEL = 'jev-1.13.0';
+
+export function migrateRetiredJevKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  let migrated = false;
+  for (const key of RETIRED_JEV_KEYS) {
+    if (rec[key] !== undefined) {
+      delete rec[key];
+      migrated = true;
+    }
+  }
+  if (rec.jevModel !== undefined && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
+    rec.jevModel = 'jev-latest';
+    migrated = true;
+  }
+  return migrated;
+}
+
+/**
  * issue 364 一次性迁移：收藏本排序循环钮键退役——ADR-0083 重设计后循环钮已删，键全链
  * 零消费点（打开面板的排序由 favoritesDefaultSort 承担），旧值不迁移直接丢。
  * 幂等：无旧键即不改动，调用方据此决定要不要落盘（同 migrateRetiredAIKeys 口径）。
@@ -701,12 +744,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
   aiThinkingOverrides: {},
 
-  // Jev 决策通道（ADR-0173）：默认关闭——未填密钥时不接管任何判定，行为与接入前一致
-  jevEnabled: false,
-  jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+  // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开）：无开关，未填密钥时不接管任何判定
+  jevProvider: 'typesafe',
   jevApiKey: '',
-  jevModel: 'jev-1.13.0',
-  jevTimeoutMs: 10000,
+  jevModel: 'jev-latest',
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
@@ -830,14 +871,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainEmbeddingModel: 'bge-m3',
   secondBrainTopK: '20',
   secondBrainChatTopK: '20',
-  secondBrainChunkMinLength: '50',
+  // issue 424/ADR-0184：段落最小长度 / 上下文限制（本就无消费方）/ 防抖 / 光标轮询四键退役——
+  // 前三者不再限制，防抖 300ms 与轮询 500ms 固化为常量（secondbrain/config.ts）
   secondBrainAllowPaths: '', // ticket 116：默认空 = 什么也不录（不索引任何目录），由用户自行填写
-  secondBrainContextLimit: '600',
-  secondBrainDebounceDelay: '300',
-  secondBrainCursorPollInterval: '500',
   secondBrainMaxHistory: '10',
   // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
   secondBrainRemoteOllamaUrl: '',
+  secondBrainRemoteOllamaAuto: '',
 
   // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,

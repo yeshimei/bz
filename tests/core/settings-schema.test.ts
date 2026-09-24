@@ -89,7 +89,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('Embedding 组（issue 422/ADR-0182 + issue 423/ADR-0183）：地址两行在前、模型行在后，键全不变', () => {
+  it('Embedding 组（issue 422/ADR-0182 + issue 424/ADR-0184）：本地地址在前、模型行在后，键全不变', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
@@ -97,21 +97,43 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
       binding?: { key: string };
       actions?: Array<{ text: string }>;
     }>;
-    // issue 423：第二大脑「服务」组两行 Ollama 地址迁入（服务在哪台机器 → 再拉它的模型列表）
-    expect(rows.map((r) => r.name)).toEqual(['Ollama 本地 URL', '移动端远程地址', 'Embedding 模型']);
-    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'text']);
+    // issue 424：第二行「移动端远程地址」删除（桌面端启动自动跟随本机 IP，无人看/改）
+    expect(rows.map((r) => r.name)).toEqual(['Ollama 本地 URL', 'Embedding 模型']);
+    expect(rows.map((r) => r.type)).toEqual(['text', 'text']);
     expect(rows.map((r) => r.binding)).toEqual([
       { key: 'secondBrainOllamaUrl' },
-      { key: 'secondBrainRemoteOllamaUrl' },
       { key: 'secondBrainEmbeddingModel' },
     ]);
-    // 三个键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
-    expect(rows[1].desc).toContain('自动填入'); // 桌面端启动自动补全的空值说明
+    // 两键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
+    expect(rows[1].actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(rows[1].desc).toContain('bge-m3');
+    // 反向断言（第二大脑设置页不再有这些行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
+  });
+
+  it('JEV 组（issue 424/ADR-0184）：服务商 / 密钥 / 模型三行；总开关、端点、超时三行退役', () => {
+    const rows = schema.groups[2].rows as Array<{
+      name: string;
+      type: string;
+      desc?: string;
+      binding?: { key: string };
+      placeholder?: string;
+      visibleWhen?: unknown;
+      actions?: Array<{ text: string }>;
+      options?: Array<{ value: string; label: string }>;
+    }>;
+    expect(rows.map((r) => r.name)).toEqual(['Jev 服务商', 'Jev 密钥', 'Jev 模型']);
+    expect(rows.map((r) => r.type)).toEqual(['select', 'secret', 'text']);
+    expect(rows.map((r) => r.binding)).toEqual([
+      { key: 'jevProvider' },
+      { key: 'jevApiKey' },
+      { key: 'jevModel' },
+    ]);
+    // 服务商下拉由注册表驱动（目前仅 Typesafe）；无 visibleWhen——常开，不再挂在总开关下
+    expect(rows[0].options).toEqual([{ value: 'typesafe', label: 'Typesafe' }]);
+    rows.forEach((r) => expect(r.visibleWhen).toBeUndefined());
+    // 模型行内嵌「获取模型」（照 Embedding 模型行范式）；缺省 jev-latest
     expect(rows[2].actions?.map((a) => a.text)).toEqual(['获取模型']);
-    expect(rows[2].desc).toContain('bge-m3');
-    // 「填入远程 URL」按钮不在本组（issue 423 决策 4）：与探测展示同处，留在第二大脑 IP 行
-    expect(rows.every((r) => !r.actions?.some((a) => a.text === '填入远程 URL'))).toBe(true);
-    // 反向断言（第二大脑设置页不再有这三行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
+    expect(rows[2].placeholder).toBe('jev-latest');
   });
 
   it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {

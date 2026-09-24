@@ -537,7 +537,7 @@ export class LinkAgent {
   /**
    * 统一裁判入口（issue 392 决策 1；编排单源 `core/jev-fallback`，ADR-0181）：
    * `processNote` 与 `previewLinks` 共用，筛选与排序只在这里做一次。
-   * - Jev 未启用/未配置（`jevEnabled !== true` 或端点密钥不齐）→ 直接走原 LLM 路径（零风险回退，行为与接入前一致）；
+   * - Jev 未配置（密钥为空——issue 424/ADR-0184 起常开，无总开关）→ 直接走原 LLM 路径（零风险回退，行为与接入前一致）；
    * - Jev 优先：`request()` 里一次问完所有候选的三个独立 Noul 维度（材料惰性构造，未就绪/已取消不白拼）；
    * - Jev 抛**非 abort** 错误（请求失败 / 答案畸形）→ 同一次 `judge()` 内用现有 prompt + `parseJudgeOutput` 回落 LLM（对用户不可见）；
    *   注：`request()` 抛错同样落进回落（材料构造已移入原语的 try）——比接入前「直接上抛入队」宽松一档，有意如此；

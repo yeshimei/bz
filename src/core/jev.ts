@@ -12,8 +12,9 @@
  * 能力，`AbortSignal` 只能做到「立即拒绝、底层结果弃用」（与本项目 core/http.ts 的既有取舍一致）。
  *
  * 与生成通道的边界（ADR-0173 §6）：Jev **不走** `AI_PROVIDER_REGISTRY`——那张表的每条描述符
- * 都带生成专用语义（max_tokens / 思考档位风格映射），判定通道没有这些概念。端点、密钥、模型、
- * 超时独立配置（`jev*` 键，见设置面板 AI 分区的独立分组）。
+ * 都带生成专用语义（max_tokens / 思考档位风格映射），判定通道没有这些概念，故自带一张更小的
+ * `JEV_PROVIDER_REGISTRY`（issue 424/ADR-0184：服务商选择照 LLM 同款，目前仅 Typesafe）。
+ * 配置只剩服务商 / 密钥 / 模型三项 `jev*` 键（超时固化、总开关退役，issue 424/ADR-0184）。
  *
  * 失败一律**抛错**，由调用方决定回落（ADR-0173 §2：Jev 优先、失败即当次回落 LLM）——
  * 通道自己不兜底、不静默返回空答案，否则一次故障会被伪装成「这批确实没有关联」。
@@ -88,13 +89,44 @@ export interface JevResult {
 
 // ---------------- 配置 ----------------
 
-export const JEV_DEFAULT_ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
-/** 固定版本，不用 `jev-latest`（ADR-0173 §5）：口径是核心资产，不该由远端别名决定何时变更 */
-export const JEV_DEFAULT_MODEL = 'jev-1.13.0';
-/** 实测单次 1–2 秒（含跨国网络），留 5x 余量 */
+/** Jev 服务商描述符（issue 424/ADR-0184：照 `AI_PROVIDER_REGISTRY` 同款，供设置行与端点解析共用）。
+ *  与生成通道注册表分开的理由见模块头——判定通道没有 max_tokens / 思考档位这些生成专用语义。
+ *  `modelsUrl` 为服务商自家模型列表端点（GET，非 OpenAI 兼容面，响应见 parseJevModels）。 */
+export interface JevProviderDescriptor {
+  id: string;
+  label: string;
+  /** 判定端点（POST，报文见 buildJevBody） */
+  endpoint: string;
+  /** 模型列表端点（GET） */
+  modelsUrl: string;
+}
+
+/** 在册 Jev 服务商（目前仅 Typesafe——2026-09-24 实测其 /v1/models 只要模型名清单） */
+export const JEV_PROVIDER_REGISTRY: JevProviderDescriptor[] = [
+  {
+    id: 'typesafe',
+    label: 'Typesafe',
+    endpoint: 'https://api.typesafe.ai/v1/systemone',
+    modelsUrl: 'https://api.typesafe.ai/v1/models',
+  },
+];
+
+export const DEFAULT_JEV_PROVIDER = 'typesafe';
+
+/** 按 id 取服务商描述（未在册/缺省 → 缺省服务商；口径同 `getProviderDescriptor`） */
+export function getJevProviderDescriptor(id?: string): JevProviderDescriptor {
+  return JEV_PROVIDER_REGISTRY.find((p) => p.id === id) || JEV_PROVIDER_REGISTRY[0];
+}
+
+/** 缺省服务商判定端点（= 注册表首条；issue 424 起端点由「Jev 服务商」行决定，不再是设置项） */
+export const JEV_DEFAULT_ENDPOINT = JEV_PROVIDER_REGISTRY[0].endpoint;
+/** 缺省模型：服务端最新版（issue 424/ADR-0184 起——模型可用列表在线获取，别名不再由插件钉版本） */
+export const JEV_DEFAULT_MODEL = 'jev-latest';
+/** 实测单次 1–2 秒（含跨国网络），留 5x 余量；issue 424 起固化（原「Jev 超时」设置项已删） */
 export const JEV_DEFAULT_TIMEOUT_MS = 10000;
 
 export interface JevConfig {
+  /** 判定端点（由服务商描述符解析；`override.endpoint` 可显式指定，测试用） */
   endpoint: string;
   apiKey: string;
   model: string;
@@ -108,26 +140,93 @@ export function resolveJevConfig(override?: Partial<JevConfig>): JevConfig {
     const v = s?.[key];
     return v === undefined || v === null || v === '' ? fallback : (v as T);
   };
-  const timeoutRaw = Number(pick('jevTimeoutMs', JEV_DEFAULT_TIMEOUT_MS));
+  const desc = getJevProviderDescriptor(pick('jevProvider', DEFAULT_JEV_PROVIDER));
   return {
-    endpoint: String(override?.endpoint ?? pick('jevEndpoint', JEV_DEFAULT_ENDPOINT)),
+    endpoint: String(override?.endpoint ?? desc.endpoint),
     apiKey: String(override?.apiKey ?? pick('jevApiKey', '')),
     model: String(override?.model ?? pick('jevModel', JEV_DEFAULT_MODEL)),
-    timeoutMs:
-      override?.timeoutMs ??
-      (Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : JEV_DEFAULT_TIMEOUT_MS),
+    timeoutMs: override?.timeoutMs ?? JEV_DEFAULT_TIMEOUT_MS,
   };
 }
 
 /**
- * 是否已配置可用（启用开关 + 端点 + 密钥齐备）。
- * **这只是就绪检查**——通道自己不判断「要不要用 Jev」，调用方的门（如 `jevEnabled`）。
+ * 是否已配置可用（端点 + 密钥齐备）。
+ * **常开**（issue 424/ADR-0184 用户拍板「默认启动，无需设置」）：没有总开关，填了密钥即接管判定，
+ * 清空密钥即回落 LLM——「要不要用 Jev」这件事只剩这一个可观察事实。
  */
 export function isJevConfigured(): boolean {
-  const s = tryGetSettings() as Record<string, unknown>;
-  if (s?.jevEnabled !== true) return false;
   const cfg = resolveJevConfig();
   return !!cfg.endpoint && !!cfg.apiKey;
+}
+
+/* ---------------- 模型列表（issue 424/ADR-0184「获取模型」） ---------------- */
+
+/** 模型选项（与 `core/ai-models.ts` 的 ModelOption 同形——选择器弹窗按结构消费，两模块互不依赖） */
+export interface JevModelOption {
+  id: string;
+  detail?: string;
+}
+
+/** 模型列表拉取注入（测试桩；缺省用插件运行时真实实现） */
+export interface JevModelsFetchDeps {
+  requestUrlFn?: (opts: {
+    url: string;
+    method: string;
+    headers: Record<string, string>;
+    throw?: boolean;
+  }) => Promise<{ status: number; text: string }>;
+}
+
+/** `/v1/models` 响应 → 选项列表（自家格式 `{models:[{name, description?, release_date?}]}`；
+ *  畸形项跳过。说明取描述 + 发布日；都缺回落服务商名） */
+export function parseJevModels(data: any, label = 'Typesafe'): JevModelOption[] {
+  const list = data?.models;
+  if (!Array.isArray(list)) return [];
+  const out: JevModelOption[] = [];
+  for (const m of list) {
+    const id = m && typeof m.name === 'string' ? m.name : '';
+    if (!id) continue;
+    const bits: string[] = [];
+    if (typeof m.description === 'string' && m.description) bits.push(m.description);
+    if (typeof m.release_date === 'string' && m.release_date) bits.push(m.release_date);
+    out.push({ id, detail: bits.join('，') || label });
+  }
+  return out;
+}
+
+/**
+ * 拉取 Jev 服务商模型列表（AI 面板「Jev 模型」行的「获取模型」按钮）。走 `requestUrl`——
+ * 与判定请求同因（`api.typesafe.ai` 预检无 ACAO，浏览器 fetch 必被拒），故不套 fetch 优先双通道。
+ * 报错文案抛给调用方（本模块只做数据层，不弹提示）。
+ */
+export async function fetchJevModels(deps: JevModelsFetchDeps = {}): Promise<JevModelOption[]> {
+  const s = tryGetSettings() as Record<string, unknown>;
+  const cfg = resolveJevConfig();
+  const desc = getJevProviderDescriptor(String(s?.jevProvider ?? '') || DEFAULT_JEV_PROVIDER);
+  if (!cfg.apiKey) throw new Error(`未配置 ${desc.label} 密钥（插件设置 → AI → JEV）`);
+
+  const requestUrlFn = deps.requestUrlFn || requestUrl;
+  const resp: any = await requestUrlFn({
+    url: desc.modelsUrl,
+    method: 'GET',
+    headers: { Authorization: `Bearer ${cfg.apiKey}` },
+    throw: false,
+  });
+  const status = Number(resp?.status ?? 0);
+  const text = String(resp?.text ?? '');
+  if (status < 200 || status >= 300) {
+    const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+    throw new Error(`${desc.label} 模型列表请求失败（${status}）：${brief || '无响应正文'}`);
+  }
+  let data: any;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`${desc.label} 模型列表响应不是合法 JSON（HTTP ${status}）`);
+  }
+  const models = parseJevModels(data, desc.label);
+  if (!models.length) throw new Error(`${desc.label} 未返回可用模型`);
+  return models;
 }
 
 // ---------------- 错误 ----------------

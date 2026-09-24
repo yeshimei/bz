@@ -8,7 +8,7 @@
  * - signal abort → 不回落（AI.ask 零调用）；
  * - answers 整体缺失 → 回落（不静默零命中）；
  * - 两道都抛错 → 入队 + failed；
- * - jevEnabled=false → 不碰 Jev，走旧 LLM 路径；
+ * - 未配置（密钥为空，issue 424 起常开无开关）→ 不碰 Jev，走旧 LLM 路径；
  * - previewLinks 与主流程 processNote 共用同一裁判 judge()（两处都覆盖）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -29,11 +29,9 @@ const JUDGE_DIM_MIN = 0.5;
 function jevSettings(over: Record<string, unknown> = {}): any {
   return {
     ...DEFAULT_SETTINGS,
-    jevEnabled: true,
-    jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+    jevProvider: 'typesafe',
     jevApiKey: 'test-key',
-    jevModel: 'jev-1.13.0',
-    jevTimeoutMs: 10000,
+    jevModel: 'jev-latest',
     ...over,
   };
 }
@@ -216,8 +214,8 @@ describe('裁判接入 Jev：失败回落 LLM（processNote）', () => {
     expect(q.some((i) => i.path === '文献盒/A.md')).toBe(true);
   });
 
-  it('jevEnabled=false → 不碰 Jev，走旧 LLM 路径（行为与本票前一致）', async () => {
-    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+  it('未配置 Jev（无密钥）→ 不碰 Jev，走旧 LLM 路径（行为与接入前一致）', async () => {
+    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
     const { vault, agent, askJevSpy, askSpy } = makeWorld({
       hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
     });

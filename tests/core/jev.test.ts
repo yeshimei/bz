@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Jev 决策通道测试（issue 389）：报文形态（choice.criteria 字典 / score.criteria 数组之别是
+ * Jev 决策通道测试（issue 389；模型列表 issue 424/ADR-0184）：报文形态（choice.criteria 字典 / score.criteria 数组之别是
  * 实测踩过的坑，必须有断言守住）、三种题型解析、超时/HTTP/网络失败上抛、AbortSignal 取消、
  * 未配置拦截、空问题不发请求。
  */
@@ -8,7 +8,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   askJev,
   buildJevBody,
+  fetchJevModels,
   isJevConfigured,
+  parseJevModels,
   resolveJevConfig,
   JEV_DEFAULT_ENDPOINT,
   JEV_DEFAULT_MODEL,
@@ -236,37 +238,96 @@ describe('core/jev', () => {
     expect(cfg.apiKey).toBe('');
   });
 
-  it('resolveJevConfig：设置覆盖（空串回落缺省）', () => {
-    setSettingsProvider(
-      () =>
-        ({
-          jevEndpoint: 'https://example.test/systemone',
-          jevModel: 'jev-latest',
-          jevApiKey: 'sk-x',
-          jevTimeoutMs: 3000,
-        }) as any
-    );
-    const cfg = resolveJevConfig();
-    expect(cfg.endpoint).toBe('https://example.test/systemone');
-    expect(cfg.model).toBe('jev-latest');
-    expect(cfg.timeoutMs).toBe(3000);
+  it('resolveJevConfig：端点由「Jev 服务商」解析（在册 id + 非法 id 回落缺省）', () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe' }) as any);
+    expect(resolveJevConfig().endpoint).toBe(JEV_DEFAULT_ENDPOINT);
+    setSettingsProvider(() => ({ jevProvider: 'nobody' }) as any);
+    expect(resolveJevConfig().endpoint).toBe(JEV_DEFAULT_ENDPOINT);
+  });
+
+  it('resolveJevConfig：模型覆盖（空串回落缺省）', () => {
+    setSettingsProvider(() => ({ jevModel: 'jev-preview', jevApiKey: 'sk-x' }) as any);
+    expect(resolveJevConfig().model).toBe('jev-preview');
     setSettingsProvider(() => ({ jevModel: '' }) as any);
     expect(resolveJevConfig().model).toBe(JEV_DEFAULT_MODEL);
   });
 
-  it('resolveJevConfig：超时非法值回落缺省', () => {
-    setSettingsProvider(() => ({ jevTimeoutMs: 0 }) as any);
+  it('resolveJevConfig：超时固化十秒（旧超时设置键已退役，设置里写什么都不看）', () => {
+    setSettingsProvider(() => ({ jevTimeoutMs: 3000 }) as any);
     expect(resolveJevConfig().timeoutMs).toBe(JEV_DEFAULT_TIMEOUT_MS);
-    setSettingsProvider(() => ({ jevTimeoutMs: 'abc' }) as any);
+    setSettingsProvider(() => ({}) as any);
     expect(resolveJevConfig().timeoutMs).toBe(JEV_DEFAULT_TIMEOUT_MS);
   });
 
-  it('isJevConfigured：开关关 / 缺密钥 / 齐备 三态', () => {
-    setSettingsProvider(() => ({ jevEnabled: true, jevApiKey: 'sk-x' }) as any);
+  it('isJevConfigured：常开（issue 424 起总开关键退役）——只看密钥，无开关', () => {
+    setSettingsProvider(() => ({ jevApiKey: 'sk-x' }) as any);
     expect(isJevConfigured()).toBe(true);
+    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
+    expect(isJevConfigured()).toBe(false);
+    // 存量数据里残留的旧开关值不再影响判定（键已退役）
     setSettingsProvider(() => ({ jevEnabled: false, jevApiKey: 'sk-x' }) as any);
-    expect(isJevConfigured()).toBe(false);
-    setSettingsProvider(() => ({ jevEnabled: true, jevApiKey: '' }) as any);
-    expect(isJevConfigured()).toBe(false);
+    expect(isJevConfigured()).toBe(true);
+  });
+});
+
+// ---------------- 模型列表（issue 424/ADR-0184「获取模型」） ----------------
+
+describe('core/jev · 模型列表', () => {
+  const MODELS_JSON = {
+    models: [
+      { name: 'jev-latest', description: '最新版', release_date: '2026-09-01' },
+      { name: 'jev-preview' },
+    ],
+  };
+
+  beforeEach(() => {
+    requestUrlMock.mockReset();
+  });
+
+  it('parseJevModels：自家格式 {models:[{name,…}]} → 选项；说明取描述 + 发布日，缺省回落服务商名', () => {
+    expect(parseJevModels(MODELS_JSON)).toEqual([
+      { id: 'jev-latest', detail: '最新版，2026-09-01' },
+      { id: 'jev-preview', detail: 'Typesafe' },
+    ]);
+    // 畸形项跳过；非数组/缺字段一律空表（调用方据此报错，不静默发空选择器）
+    expect(parseJevModels({ models: [{ description: '无名' }, null, { name: 'ok' }] })).toEqual([
+      { id: 'ok', detail: 'Typesafe' },
+    ]);
+    expect(parseJevModels({})).toEqual([]);
+    expect(parseJevModels(null)).toEqual([]);
+  });
+
+  it('fetchJevModels：打到服务商 modelsUrl，带 Bearer 密钥；响应 → 选项列表', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: 'sk-jev' }) as any);
+    requestUrlMock.mockResolvedValue({ status: 200, text: JSON.stringify(MODELS_JSON) } as any);
+    const models = await fetchJevModels();
+    expect(models.map((m) => m.id)).toEqual(['jev-latest', 'jev-preview']);
+    const call = requestUrlMock.mock.calls[0][0] as any;
+    expect(call.url).toBe('https://api.typesafe.ai/v1/models');
+    expect(call.headers.Authorization).toBe('Bearer sk-jev');
+  });
+
+  it('fetchJevModels：缺密钥 → 抛错且不发请求（与判定请求同口径）', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: '' }) as any);
+    await expect(fetchJevModels()).rejects.toThrow(/密钥/);
+    expect(requestUrlMock).not.toHaveBeenCalled();
+  });
+
+  it('fetchJevModels：HTTP 非 2xx / 畸形 JSON / 空列表 → 抛错（不静默返回空选择器）', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: 'sk-jev' }) as any);
+    requestUrlMock.mockResolvedValue({ status: 401, text: 'unauthorized' } as any);
+    await expect(fetchJevModels()).rejects.toThrow(/401/);
+    requestUrlMock.mockResolvedValue({ status: 200, text: '不是 JSON' } as any);
+    await expect(fetchJevModels()).rejects.toThrow(/合法 JSON/);
+    requestUrlMock.mockResolvedValue({ status: 200, text: JSON.stringify({ models: [] }) } as any);
+    await expect(fetchJevModels()).rejects.toThrow(/未返回可用模型/);
+  });
+
+  it('fetchJevModels：测试注入通道可绕开 obsidian requestUrl（deps 口径）', async () => {
+    setSettingsProvider(() => ({ jevApiKey: 'sk-x' }) as any);
+    const requestUrlFn = vi.fn(async () => ({ status: 200, text: JSON.stringify(MODELS_JSON) }));
+    const models = await fetchJevModels({ requestUrlFn });
+    expect(models.map((m) => m.id)).toEqual(['jev-latest', 'jev-preview']);
+    expect(requestUrlMock).not.toHaveBeenCalled();
   });
 });

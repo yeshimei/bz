@@ -445,8 +445,7 @@ export class VectorStore {
       return;
     }
 
-    // 读取 + 分块
-    const minChunk = CONFIG.CHUNK_MIN_LENGTH || 50;
+    // 读取 + 分块（issue 424/ADR-0184：不按段落长度过滤——「段落最小长度」设置项已删）
     const fileChunksMap = new Map<string, (ChunkTask | null)[]>();
     const globalTasks: ChunkTask[] = [];
     for (const file of toProcess) {
@@ -455,7 +454,7 @@ export class VectorStore {
         // ADR-0141 §5：canvas 是 JSON 白板——抽节点文本后走同一条切块链路（md 原样进）
         const content = file.extension === 'canvas' ? canvasToText(raw) : raw;
         // ticket 110：frontmatter 剥离后切块、标题并入首块（空正文兜底截断收口在 embedChunks 内）
-        const chunks = embedChunks(content, noteTitleFromPath(file.path), minChunk);
+        const chunks = embedChunks(content, noteTitleFromPath(file.path));
         fileChunksMap.set(file.path, chunks.map(() => null));
         chunks.forEach((text, idx) => globalTasks.push({ filePath: file.path, chunkIdx: idx, text }));
       } catch (err) {

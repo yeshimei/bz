@@ -38,11 +38,9 @@ vi.mock('../../src/core/ai', async (importOriginal) => {
 function jevSettings(over: Record<string, unknown> = {}): any {
   return {
     ...DEFAULT_SETTINGS,
-    jevEnabled: true,
-    jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+    jevProvider: 'typesafe',
     jevApiKey: 'test-key',
-    jevModel: 'jev-1.13.0',
-    jevTimeoutMs: 10000,
+    jevModel: 'jev-latest',
     ...over,
   };
 }
@@ -198,8 +196,8 @@ describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () =
     expect(aiStub.json).not.toHaveBeenCalled();
   });
 
-  it('Jev 未启用 → 回落 LLM（题面闭合词表，回执校验后采信）', async () => {
-    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+  it('Jev 未配置（无密钥）→ 回落 LLM（题面闭合词表，回执校验后采信）', async () => {
+    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
     const spy = vi.spyOn(jev, 'askJev');
     const got = await decideCinemaType({ title: '千与千寻', isTv: false, area: '日本', genre: '动画' });
     expect(got).toBe('日漫');
@@ -240,13 +238,13 @@ describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () =
   });
 
   it('LLM 回执非法 → null（弃权，不写值）', async () => {
-    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
     aiStub.json.mockResolvedValue('{"type":"自创分类"}');
     await expect(decideCinemaType({ title: 'X' })).resolves.toBeNull();
   });
 
   it('回落请求带调用方的 signal（在途取消能传导进 LLM 通道）', async () => {
-    setSettingsProvider(() => jevSettings({ jevEnabled: false }));
+    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
     const ctrl = new AbortController();
     await decideCinemaType({ title: 'X' }, { signal: ctrl.signal });
     expect(aiStub.json.mock.calls[0][1]).toMatchObject({ signal: ctrl.signal });

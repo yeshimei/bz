@@ -2,8 +2,9 @@
 /**
  * 本机局域网 IP 枚举（ticket 122）纯函数测试：
  * 过滤 loopback / link-local / IPv6 / internal；URL 组装。
- * issue 423/ADR-0183 增：detect/ensure（桌面端启动自动补全「移动端远程地址」——只补空值，
- * 手改值不覆盖；手机端探测不到即不写）。
+ * issue 423/ADR-0183 增：detect/ensure（桌面端启动自动补全「移动端远程地址」）。
+ * issue 424/ADR-0184 改：ensure 升级为**自动跟随本机 IP**——插件写的值随 IP 漂移刷新，
+ * 人填值（指向他机的自定地址）不动；手机端探测不到即不写。
  */
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
@@ -82,7 +83,7 @@ describe('detectRemoteOllamaUrl（issue 423）', () => {
   });
 });
 
-describe('ensureRemoteOllamaUrl（issue 423：桌面端启动自动补全，只补空值）', () => {
+describe('ensureRemoteOllamaUrl（issue 424/ADR-0184：桌面端启动自动跟随本机 IP）', () => {
   let settings: Record<string, unknown>;
   let saveSpy: ReturnType<typeof vi.fn>;
 
@@ -98,17 +99,47 @@ describe('ensureRemoteOllamaUrl（issue 423：桌面端启动自动补全，只�
     vi.restoreAllMocks();
   });
 
-  it('设置为空 → 写入探测值并落盘（手机端读同步值）', () => {
+  it('设置为空 → 写入探测值并落盘，同时记下「插件写的值」（手机端读同步值）', () => {
     expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.45' }])).toBe(true);
     expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.45:11434');
+    expect(settings.secondBrainRemoteOllamaAuto).toBe('http://192.168.1.45:11434');
     expect(saveSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('已有值（含手改的点对点地址）→ 一律不覆盖、不落盘', () => {
-    settings.secondBrainRemoteOllamaUrl = 'http://10.0.0.9:11434';
+  it('本机 IP 漂移：上次自动写的值 → 跟随刷新（DHCP 漂移自愈）', () => {
+    settings.secondBrainRemoteOllamaUrl = 'http://192.168.1.45:11434';
+    settings.secondBrainRemoteOllamaAuto = 'http://192.168.1.45:11434';
+    expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.50' }])).toBe(true);
+    expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.50:11434');
+    expect(settings.secondBrainRemoteOllamaAuto).toBe('http://192.168.1.50:11434');
+    expect(saveSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('IP 没变 → 零写入零落盘（幂等）', () => {
+    settings.secondBrainRemoteOllamaUrl = 'http://192.168.1.45:11434';
+    settings.secondBrainRemoteOllamaAuto = 'http://192.168.1.45:11434';
     expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.45' }])).toBe(false);
-    expect(settings.secondBrainRemoteOllamaUrl).toBe('http://10.0.0.9:11434');
     expect(saveSpy).not.toHaveBeenCalled();
+  });
+
+  it('存量升级（无自动记录）：插件口径值 http://<ip>:11434 认领并跟随', () => {
+    settings.secondBrainRemoteOllamaUrl = 'http://192.168.1.45:11434';
+    expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.50' }])).toBe(true);
+    expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.50:11434');
+  });
+
+  it('人填值（指向他机，自定端口）→ 一律不覆盖、不落盘', () => {
+    settings.secondBrainRemoteOllamaUrl = 'http://192.168.1.99:8080';
+    expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.45' }])).toBe(false);
+    expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.99:8080');
+    expect(saveSpy).not.toHaveBeenCalled();
+  });
+
+  it('清空设置 → 重新接管（空值分支优先，补当前探测值）', () => {
+    settings.secondBrainRemoteOllamaUrl = '';
+    settings.secondBrainRemoteOllamaAuto = 'http://192.168.1.45:11434';
+    expect(ensureRemoteOllamaUrl([{ iface: 'WLAN', ip: '192.168.1.50' }])).toBe(true);
+    expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.50:11434');
   });
 
   it('探测不到网卡（手机端 / 未联网）→ 不写', () => {

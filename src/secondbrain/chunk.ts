@@ -2,6 +2,8 @@ import { stripMdExt } from '../core/utils';
 /**
  * 第二大脑 smartChunk（ticket 103；逐字对齐 QA 闪念.js L277-310）
  * 算法：空行分段聚合（块间保留 '\n' 结构）→ 超长段再按句界切分；短于 minChunk 的尾块丢弃。
+ * issue 424/ADR-0184：minChunk 默认 1 = **不按长度丢块**（原「段落最小长度」设置项已删，用户拍板
+ * 「不做限制」——只保留空块不推的兜底；参数保留供测试与特殊调用点显式指定）。
  * ⚠ 唯一有意偏差（Q3=B 修缺陷）：QA 原版大段路径不清 buffer，后续小段会与已入块的
  *   旧 buffer 重复拼接（内容重复入索引）；本版在 else 分支入口先 flush 并清空 buffer。
  * ticket 110：新增切块管线 embedChunks——先剥离 YAML frontmatter 再 smartChunk，
@@ -73,7 +75,7 @@ export function canvasToText(raw: string): string {
  * → 标题并入首块（保留主题信号，首块可超 CHUNK_SIZE 一个标题长度，bge-m3 长文本无碍）。
  * 纯 frontmatter 无正文的文件返回 []，调用方按「无可嵌入内容」不入索引。
  */
-export function embedChunks(content: string, title: string, minChunk = 50): string[] {
+export function embedChunks(content: string, title: string, minChunk = 1): string[] {
   const body = stripFrontmatter(content);
   const chunks = smartChunk(body, minChunk);
   if (chunks.length === 0 && body.trim().length > 0) chunks.push(body.trim().slice(0, CHUNK_SIZE));
@@ -81,7 +83,7 @@ export function embedChunks(content: string, title: string, minChunk = 50): stri
   return chunks;
 }
 
-export function smartChunk(text: string, minChunk = 50): string[] {
+export function smartChunk(text: string, minChunk = 1): string[] {
   const blocks = text.split(/\n\s*\n/);
   const chunks: string[] = [];
   let buffer = '';

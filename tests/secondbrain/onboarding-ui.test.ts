@@ -88,7 +88,6 @@ function makeApp(vault: MockVault, adapter: any, mtimes: Record<string, number> 
 function sbSettings() {
   return {
     storagePath: 'CONFIG/STORAGE',
-    secondBrainChunkMinLength: '10',
     secondBrainAllowPaths: '我的',
     secondBrainRemoteOllamaUrl: '',
   };
