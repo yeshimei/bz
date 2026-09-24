@@ -41,6 +41,17 @@ describe('migrateLinkMinScoreScale', () => {
     expect('linkAgentMinScoreScale' in raw).toBe(false);
   });
 
+  it('落盘过的默认设置再启动 → 不改值（标记随 DEFAULT_SETTINGS 一起落盘，绝不能被当旧尺二次换算）', () => {
+    // 插件自身的保存路径（ensureRemoteOllamaUrl / 设置页任意一键）会把
+    // Object.assign({}, DEFAULT_SETTINGS, loaded) 整份写回 data.json——若 DEFAULT_SETTINGS 不带标记，
+    // 默认值 0.30 会在第二次启动被当旧尺换算成 0.03（下限静默失效、候选全量送裁判），故标记须在缺省值里。
+    const persisted: Record<string, unknown> = { ...DEFAULT_SETTINGS };
+    expect(persisted.linkAgentMinScore).toBe(0.3);
+    expect(persisted.linkAgentMinScoreScale).toBe('cos');
+    expect(migrateLinkMinScoreScale(persisted)).toBe(false);
+    expect(persisted.linkAgentMinScore).toBe(0.3);
+  });
+
   it('0（不过滤）原样保留——两把尺上都是「关掉过滤」，换算会把下限 0.01 变成替用户打开过滤', () => {
     const raw: Record<string, unknown> = { linkAgentMinScore: 0 };
     expect(migrateLinkMinScoreScale(raw)).toBe(true);
