@@ -68,8 +68,29 @@ export function setIcon(container: HTMLElement, iconId: string): void {
 
 export type IconName = string;
 
-/** requestUrl（core/utils、core/ai 模块级 import 触及）：原型无网络，抛错让调用方走各自降级 */
-export async function requestUrl(): Promise<never> {
+/** 判定端点模拟（issue 434「测试」钮原型演示）：绿→红交替，~900ms 延迟让转圈可见。
+ *  响应为真实 SystemOne 报文形态（noul 题），成功 / 失败（401）两态都能在原型里走到。 */
+let fakeSystemOneToggle = 0;
+
+/** requestUrl（core/utils、core/ai 模块级 import 触及）：原型无网络，抛错让调用方走各自降级。
+ *  例外：判定端点（/v1/systemone）不抛——返回交替的成功 / 401 canned 响应，演示「测试」钮三态。 */
+export async function requestUrl(opts?: { url?: string; method?: string }): Promise<{ status: number; text: string }> {
+  const url = String(opts?.url || '');
+  if (opts?.method === 'POST' && /\/v1\/systemone$/.test(url)) {
+    await new Promise((r) => setTimeout(r, 900));
+    const succeed = fakeSystemOneToggle++ % 2 === 0;
+    if (succeed) {
+      return {
+        status: 200,
+        text: JSON.stringify({
+          model: 'bocha-jev-v1',
+          answers: { ping: { type: 'noul', noul: 0.99 } },
+          usage: { input_tokens: 20, output_tokens: 0 },
+        }),
+      };
+    }
+    return { status: 401, text: JSON.stringify({ detail: 'invalid API key（原型模拟失败）' }) };
+  }
   throw new Error('原型环境无网络请求（fake obsidian requestUrl）');
 }
 

@@ -34,6 +34,10 @@ const SEED_MARKER = 'bz-sim:__sp_seed_v1';
 const SEED_SETTINGS: Record<string, unknown> = {
   storagePath: 'CONFIG/STORAGE',
   aiProvider: 'deepseek',
+  // issue 434「测试」钮演示：预填假密钥（key 有无只影响「红叉即时失败」与「转圈后绿/红交替」的路径）
+  jevProvider: 'bocha',
+  jevApiKeys: { bocha: 'sk-prototype-demo' },
+  jevModels: {},
   diaryDirectory: '我的/日记',
   letterDirectory: '我的/信',
   movieDirectory: '我的/影视',
