@@ -145,7 +145,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'notice', name: '通知', icon: DOMAIN_ICONS.notice, desc: '通知级别、时长与弹出位置', schemaLoader: schemaLoaders.notice },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 模型与凭据配置', schemaLoader: schemaLoaders.ai },
   // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
-  { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、写日记与格式体检', schemaLoader: schemaLoaders.diary },
+  { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录与写日记口径', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒设置', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
@@ -827,6 +827,9 @@ export class SettingsPanelUI {
     const ans = await openFlowDialog({
       title: '重置本域设置',
       message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
+      // 面板体系皮肤（2026-09-25）：流程框挂 .bz-sp-skin 才拿得到 --sp-*（否则回落到组件库中性冷色，
+      // 亮皮下弹窗是纯白、按钮同色看不见）——与路径选择器/各管理弹窗同一口径
+      className: 'bz-sp-skin',
       actions: [
         { label: '取消', value: 'cancel' },
         // E-2：破坏性动作 danger 反焦（全仓惯例）——主按钮不默认持焦，防 Enter 一击即重置

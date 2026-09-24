@@ -8,7 +8,7 @@
  * （tests/settings-panel.test.ts），「接线本身」无断言——有人把目录行 onChange 删空或改错
  * 通道时无测试报警，本文件钉死接线。
  *
- * 环境 node：settings.ts 依赖链（core/settings-schema、ui/repair-modal 声明面）无 DOM 执行
+ * 环境 node：settings.ts 依赖链（core/settings-schema 声明面）无 DOM 执行
  * （同 tests/core/settings-copy-lint-a.test.ts 已验）。
  * 注意：ESM export let 为活绑定，直接 import 常量断言即为「运行时值」，与 config.test.ts 同款。
  */

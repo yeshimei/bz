@@ -965,8 +965,14 @@ function tagManagerDm(): DataManager {
     ?? new DataManager(getStoragePath((tryGetSettings() as any)?.storagePath));
 }
 
+/** 标签管理行的皮肤上下文（2026-09-25）：本行的子弹窗（添加/编辑标签、删除标签确认）挂 body，
+ *  够不着面板作用域——行落在设置面板壳内时给它们补 `.bz-sp-skin`，弹窗才和面板同皮。
+ *  ⚙️ 原生设置页里同一行也复用本模块，那里没有面板祖先 → 空串（按域自有暖皮走，维持原观感）。 */
+let tagMgrSkin = '';
+
 /** 管理列表渲染（custom 行 render 入口）：先画当前生效集，loadTags（含旧文件迁移）完成后重画 */
-function renderTagManager(body: HTMLElement, _ctx: { rowEl: HTMLElement; refreshVisibility: () => void }): void {
+function renderTagManager(body: HTMLElement, ctx: { rowEl: HTMLElement; refreshVisibility: () => void }): void {
+  tagMgrSkin = ctx.rowEl.closest('.bz-sp-desk, .bz-sp-mobile') ? ' bz-sp-skin' : '';
   const dm = tagManagerDm();
   const wrap = document.createElement('div');
   wrap.className = 'bz-fav-scope bz-fav-tagmgr';
@@ -1059,13 +1065,15 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   // 弹窗壳只挂 scope（token 域）；内容根携独立类（func-6：bz-fav-form 单例守卫不误命中）
   const { popup, close } = uiModal({
     content: host.firstElementChild as HTMLElement,
-    className: 'bz-fav-scope',
+    // 皮肤随行上下文（tagMgrSkin）：设置面板内开 → 补 bz-sp-skin，拿 --sp-* 且让私有 token
+    // （--fld-*/--pop-* 亮色是纯白）重映射到面板纸，不再白得和面板不一致；⚙️ 设置页里为空串
+    className: 'bz-fav-scope' + tagMgrSkin,
     maxWidth: 380,
     requestClose: () => {
       const input = popup.querySelector('#fz-tag-name') as HTMLInputElement | null;
       // 轻量脏检：名称非空且与编辑初值不同 = 有未保存输入 → 放弃确认；空白/未改直关
       if (input && input.value.trim() && input.value.trim() !== (existing?.label || '')) {
-        confirmDiscard(() => close(), undefined, 'bz-fav-flow-dialog bz-fav-scope');
+        confirmDiscard(() => close(), undefined, 'bz-fav-flow-dialog bz-fav-scope' + tagMgrSkin);
       } else {
         close();
       }
@@ -1154,7 +1162,8 @@ async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): 
   } catch { /* 读失败按 0 条处理：删除定义本身不受影响 */ }
   const ok = await openFlowDialog({
     title: '删除标签',
-    className: 'bz-fav-flow-dialog bz-fav-scope',
+    // 皮肤随行上下文（tagMgrSkin）：设置面板内开走面板体系皮肤，⚙️ 设置页里维持域自有暖皮
+    className: 'bz-fav-flow-dialog bz-fav-scope' + tagMgrSkin,
     message: count > 0
       ? `确定删除标签「${tag.label}」吗？\n其中 ${count} 条收藏将迁入标签「${fallback.label}」。`
       : `确定删除标签「${tag.label}」吗？\n标签将从标签列表中移除。`,

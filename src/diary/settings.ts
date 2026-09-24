@@ -2,14 +2,14 @@
  * 日记本设置 schema（ADR-0115：旧 diary 12 键按消费面收编为 3 键 + 2 跨域读）。
  * 「外观」沿用 issue 246 范式（diarySkin 布局行「媒体墙」+ diarySkinTheme 主题行「画廊白」layoutKey 联动）；
  * 「目录」仅日记/信两键（影视走影院域 cinemaFolderPath、书库走书架墙域 resolveFolderPath，跨域读）；
- * 「显示」useFileDateTime（写日记弹窗时间口径）；
- * 「维护」日记格式体检按钮（只读体检面板入口落设置页）。
+ * 「显示」useFileDateTime（写日记弹窗时间口径）。
+ * 「维护」组与「日记格式体检」弹窗按用户拍板退役（2026-09-25）——格式 lint 仍留在
+ * src/diary/repair.ts（store 写入路径消费），只是不再有手动体检入口。
  * ⚙️ 弹窗 / 设置面板「日记本」页共用本 schema。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 import { getSettings } from '../core/settings-provider';
 import { applyDirectories } from './config';
-import { openDiaryRepairModal } from './ui/repair-modal';
 
 /** 日记本设置 schema */
 export function diarySettingsSchema(): SettingsSchema {
@@ -37,13 +37,6 @@ export function diarySettingsSchema(): SettingsSchema {
         name: '显示',
         rows: [
           { type: 'toggle', name: '默认日期取自文件', desc: '默认日期取自当前打开的日记文件', binding: { key: 'useFileDateTime' } },
-        ],
-      },
-      {
-        icon: 'wrench',
-        name: '维护',
-        rows: [
-          { type: 'button', name: '日记格式体检', desc: '检查日记条目的格式问题', buttonText: '日记格式体检', cta: true, onClick: () => openDiaryRepairModal() },
         ],
       },
     ],

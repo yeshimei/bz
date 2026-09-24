@@ -154,7 +154,7 @@ async function readEntryCtxInQueue(filePath: string): Promise<EntryFileCtx> {
   if (file && !entry) {
     warnUnparsed(
       `「${filePath.split('/').pop()}」无法解析为日记条目（文件名非条目形状或日期非法），本次修改没有执行。` +
-        `请先在日记本设置中运行「日记格式体检」排查。`,
+        `请检查该文件的文件名与正文里的日期。`,
       `diary-write-refused-${filePath}`
     );
     throw new UnparsedLineError(filePath.split('/').pop() || filePath, 1);
@@ -297,7 +297,7 @@ export async function updateDiaryTags(
         if (lintEntryFile(p, content) === 'name-mismatch') {
           warnUnparsed(
             `「${p.split('/').pop()}」属性时间与文件名不一致（需人工裁决），本次改标签没有执行。` +
-              `请先在日记本设置中运行「日记格式体检」处理该文件后再试。`,
+              `请先修正该文件的文件名或属性时间后再试。`,
             `diary-name-mismatch-${p}`
           );
           return null;

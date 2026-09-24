@@ -1,6 +1,6 @@
 /**
  * 写层守卫通知（ADR-0131 语义，jsdom）：
- * - 操作目标解析不出条目（非条目文件名/日期非法）时弹 warning 人话通知（点明文件与「日记格式体检」入口）；
+ * - 操作目标解析不出条目（非条目文件名/日期非法）时弹 warning 人话通知（点明文件与自查指引）；
  * - 读盘失败弹 error 人话通知（D1：直接写会覆盖整篇日记）；
  * - 干净文件操作不弹守卫通知。
  * 磁盘状态断言在 store.test.ts（node 环境）。
@@ -27,13 +27,14 @@ beforeEach(() => {
 });
 
 describe('写层守卫人话通知（条目文件口径）', () => {
-  it('目标解析不出条目：弹 warning 点明文件与「日记格式体检」入口，正文不带 emoji', async () => {
+  it('目标解析不出条目：弹 warning 点明文件与自查指引（体检入口已退役），正文不带 emoji', async () => {
     vault.files.set('我的/日记/随手记.md', '没有 frontmatter 的普通笔记');
     await updateDiaryTags('2024-01-01', () => true, ['日记'], { filePath: '我的/日记/随手记.md' });
     const msgs = getNoticeMessages().join('\n');
     expect(msgs).toContain('随手记');
     expect(msgs).toContain('无法解析为日记条目');
-    expect(msgs).toContain('日记格式体检');
+    // 「日记格式体检」入口 2026-09-25 退役（用户拍板删维护组）→ 提示改为自查文件名与正文日期
+    expect(msgs).toContain('文件名与正文里的日期');
     expect(msgs).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
   });
 

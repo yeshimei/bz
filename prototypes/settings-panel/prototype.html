@@ -228,7 +228,7 @@
         t('默认域=通用（数据存储路径组）', await waitFor(() => dt('.bz-sp-pane .bz-sp-group-name')?.textContent === '数据存储路径') !== null);
         // 路径行控件二态（renderer.ts path 分支）：有值 → chip 回显（点文本重开），空值 → 「选择…」按钮。
         // 种子给了 storagePath，所以这里兑现的是 chip 态；两态都是自绘（无原生 Setting 嵌套）。
-        t('通用路径行自绘 chip 回显（有值态）', !!dt('.bz-sp-pane .bz-sp-chips .bz-sp-chip') &&
+        t('通用路径行自绘 chip 回显（有值态）', !!dt('.bz-sp-pane .bz-sp-chips .bz-chip') &&
           !dt('.bz-sp-pane .bz-sp-path-btn'));
 
         /* ---------- 桌面：搜索过滤域导航 ---------- */
