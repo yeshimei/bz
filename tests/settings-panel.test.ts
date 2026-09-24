@@ -1031,6 +1031,64 @@ describe('choiceCards 视觉卡片行（issue 210）', () => {
   });
 });
 
+/**
+ * 面板渲染器的动作回填时机（issue 423/ADR-0183）：用户报「获取模型要选中两次，输入框才变」
+ * 出在设置面板（非原生设置页）——渲染器在动作 Promise 完成后才重读绑定回填显示值，旧实现
+ * 动作先 resolve（选择器打开即返回）→ 回填的是旧值。core 渲染器已有同款锚（无 refreshKey 的
+ * Embedding 行），此处补面板渲染器的同一条链，防两条渲染路径漂移。
+ */
+describe('面板渲染器：模型选择器选中即刷新（issue 423 回归锚）', () => {
+  it('AI 页「Embedding 模型」行：获取模型 → 选中 → 输入框当场回填（一次点击）', async () => {
+    const state: Record<string, unknown> = { secondBrainEmbeddingModel: '' };
+    setSettingsProvider(() => state as any);
+    const { setSettingsSaver } = await import('../src/core/settings-provider');
+    setSettingsSaver(vi.fn(async () => {}));
+    const { closeModelPicker } = await import('../src/core/settings-model-picker');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          models: [
+            {
+              name: 'qwen3-embedding:8b',
+              capabilities: ['embedding'],
+              details: { parameter_size: '8B', embedding_length: 4096 },
+            },
+          ],
+        }),
+      }))
+    );
+    try {
+      const ui = new SettingsPanelUI();
+      ui.open();
+      const popup = document.getElementById('bz-settings-panel-popup')!;
+      (Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find((el) =>
+        el.textContent?.includes('AI')
+      ) as HTMLElement).click();
+      expect(await waitGroups(popup, 1)).toBe(true);
+      const row = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')].find(
+        (r) => r.querySelector('.bz-sp-set-name')?.textContent === 'Embedding 模型'
+      )!;
+      expect(row, 'Embedding 模型行存在').toBeTruthy();
+      const input = () => row.querySelector<HTMLInputElement>('input.bz-input')!;
+      ([...row.querySelectorAll<HTMLElement>('button.bz-sp-btn')].find(
+        (b) => b.textContent === '获取模型'
+      ) as HTMLElement).click();
+      await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+      (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
+      await vi.waitFor(() => expect(state.secondBrainEmbeddingModel).toBe('qwen3-embedding:8b'));
+      // 关键：不再点第二次按钮，行内输入框显示值已刷新
+      await vi.waitFor(() => expect(input().value).toBe('qwen3-embedding:8b'));
+      ui.cleanup();
+      closeModelPicker();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
 describe('行为单源回归锚点（ADR-0106：行为唯一真理 = 域 ui.ts，原型壳为双 iframe 评审壳）', () => {
   it('行定位 data-key 契约：纯层 rowHtml 出 data-key（渲染器/ui.ts 消费同一份）', async () => {
     const { readFileSync } = await import('node:fs');

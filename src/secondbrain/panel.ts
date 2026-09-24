@@ -464,7 +464,7 @@ export class SecondBrainPanel {
         // [3]：失败段提示（缺 ✅ 完整完成）或全跑完仍未登记 → 判为 Ollama/数据不可用，先于「范围为空」提示
         status.textContent =
           '没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用' +
-          (IS_MOBILE ? '（移动端需配置「远程 Ollama URL」）' : '') +
+          (IS_MOBILE ? '（移动端需在 AI 面板配置「移动端远程地址」）' : '') +
           '后重试';
         this.revealInitBtn('重试初始化');
       } else if (sawWarning) {
