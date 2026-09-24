@@ -79,6 +79,16 @@ export interface SearchHit {
   rerankScore?: number;
 }
 
+/**
+ * 列表显示用相关度百分比（issue 429）：重排过的条目显示重排分（P(yes)）——
+ * 名次按重排分排，显示的百分比就得是同一个尺，否则肉眼看到「没按相关度排序」。
+ * 未重排/重排回退的条目回落到余弦 score。**只影响显示**：阈值仍以余弦为唯一尺（ADR-0186）。
+ * 桌面参考面板与移动端参考列表共用（同一「灵感参考」功能的两端，尺不能各用各的）。
+ */
+export function relevancePct(item: SearchHit): number {
+  return Math.round((item.rerankScore ?? item.score) * 100);
+}
+
 interface ChunkTask {
   filePath: string;
   chunkIdx: number;
@@ -706,24 +716,27 @@ export class VectorStore {
   }
 
   /**
-   * 重排接线（issue 427/ADR-0186）：头部 RERANK_MAX_DOCS 条交 Qwen3-Reranker 交叉编码重排，
-   * 其余保持余弦序接在其后（该上限取 TopK 设置上限，任何合法配置下列表整列同尺——issue 429）。
-   * **hit.score 不动**——名次按重排分，分数与阈值仍走 ADR-0185 的
-   * 单一余弦尺；重排分另记 `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺。
+   * 重排接线（issue 427/ADR-0186）：列表整体交 Qwen3-Reranker 交叉编码重排，重排分另记
+   * `hit.rerankScore`（issue 429），显示层据此让百分比与名次同尺；**hit.score 不动**——阈值仍走
+   * ADR-0185 的单一余弦尺。**要么整体重排、要么维持余弦序**（ADR-0186 不变量）：列表超过
+   * RERANK_MAX_DOCS 即整轮不重排（见下方早退）——已重排头部 + 只有余弦分的尾部混排，正是
+   * issue 429 要消灭的两把尺观感；面板侧 TopK 上限（1–50）保证交互检索永远走整列重排。
    * 任一失败（模型未装 / 超时 / 预算用尽）→ 静默回退余弦序 + console.warn：重排是增强层，
    * 不打断检索链路，也不触发 search() 的文本降级（那是向量链路故障的降级）。
    * 取消（AbortError）例外：直抛——发起方已换成新查询，这里回填旧序只会盖掉新结果。
    */
   private async applyRerank(query: string, hits: SearchHit[], baseUrl?: string, signal?: AbortSignal): Promise<SearchHit[]> {
     if (hits.length < 2 || !rerankActive()) return hits;
-    const head = hits.slice(0, RERANK_MAX_DOCS);
+    // 超长列表（建链管线候选池 = max(TopK×3, 24)，TopK 上限 50 → 可达 150）整轮不重排：
+    // 那些链路自己会按 score 重排/取 max，重排对它们的产出零影响，只付 GPU 耗时——
+    // 而半重排会让本函数的「整轮同尺」不变量失守（多数 > 50 的场景恰是后台链路）。
+    if (hits.length > RERANK_MAX_DOCS) return hits;
     try {
-      const scores = await rerankScores(query, head.map((h) => h.chunk), baseUrl, signal);
-      const ordered = head
+      const scores = await rerankScores(query, hits.map((h) => h.chunk), baseUrl, signal);
+      return hits
         .map((hit, i) => ({ hit, s: scores[i], i }))
         .sort((a, b) => b.s - a.s || a.i - b.i) // 同分保持余弦序（稳定排序）
         .map((x) => ({ ...x.hit, rerankScore: x.s }));
-      return [...ordered, ...hits.slice(RERANK_MAX_DOCS)];
     } catch (e) {
       if (signal?.aborted || isAbortError(e)) throw abortError();
       console.warn('[secondbrain] 重排不可用，按余弦序返回', e);

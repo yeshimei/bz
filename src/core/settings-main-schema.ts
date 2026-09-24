@@ -501,7 +501,8 @@ function rerankModelRow(): SettingsRow {
           await new Promise<void>((resolve) => {
             openModelPicker({
               // 一个 rerank 都没匹配到 = 列的是全部模型（不是筛选失败）：标题里说明，用户才知道为何列表这么长
-              providerLabel: hasRerankNamed(models) ? 'Ollama 重排' : 'Ollama 重排（未找到 rerank 字样模型，已列出全部）',
+              // （标题模板自带一层全角括号，这里用间隔号续句，避免嵌套括号）
+              providerLabel: hasRerankNamed(models) ? 'Ollama 重排' : 'Ollama 重排 · 未找到 rerank 字样模型，已列出全部',
               current: String((tryGetSettings() as any).secondBrainRerankModel || ''),
               models,
               onPick: (m) => {

@@ -1,5 +1,5 @@
-/* 源指纹 87359467771a2334 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 687d555bc79983a8 · 仓内输入 95 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -8843,10 +8843,30 @@ ${userMsg}`;
 
   // src/secondbrain/reference-panel.ts
   init_ui();
+
+  // src/secondbrain/vector-store.ts
+  init_config();
+
+  // src/secondbrain/rerank.ts
+  init_config();
+
+  // src/secondbrain/vector-store.ts
+  init_store_file();
+
+  // src/secondbrain/text-search.ts
+  var STOP_WORDS = new Set("的了是在我有和人这中大为上个国不以到说时要就出会也年对自其");
+
+  // src/secondbrain/ollama.ts
+  init_config();
+
+  // src/secondbrain/vector-store.ts
+  init_utils();
   function relevancePct(item) {
     var _a2;
     return Math.round(((_a2 = item.rerankScore) != null ? _a2 : item.score) * 100);
   }
+
+  // src/secondbrain/reference-panel.ts
   var ReferencePanel = class {
     constructor(app, store2, existingWin) {
       this.lastQuery = "";
@@ -9434,8 +9454,6 @@ ${userMsg}`;
       var _a2;
       const CONFIG = buildConfig();
       (_a2 = this.inflight) == null ? void 0 : _a2.abort();
-      const ac = new AbortController();
-      this.inflight = ac;
       if (!query || query.length < 2) {
         this.inflight = null;
         this.refResults = [];
@@ -9443,10 +9461,14 @@ ${userMsg}`;
         if (this.mode === "ref") this.renderRefTab();
         return;
       }
+      const ac = new AbortController();
+      this.inflight = ac;
+      let r = [];
       try {
-        this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
+        r = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
         if (this.inflight !== ac) return;
         this.inflight = null;
+        this.refResults = r;
         this.refError = null;
       } catch (e) {
         if (ac.signal.aborted) return;
@@ -9485,14 +9507,14 @@ ${userMsg}`;
         pathDiv.textContent = stripMdExt(item.path.replace(/^.*[\\/]/, ""));
         const scoreDiv = document.createElement("div");
         scoreDiv.className = "bz-sb-mb-card-score";
-        scoreDiv.textContent = `${Math.round(item.score * 100)}%`;
+        scoreDiv.textContent = `${relevancePct(item)}%`;
         topRow.appendChild(pathDiv);
         topRow.appendChild(scoreDiv);
         card.appendChild(topRow);
         const bar = document.createElement("div");
         bar.className = "bz-sb-mb-card-bar";
         const barFill = document.createElement("span");
-        barFill.style.width = `${Math.round(item.score * 100)}%`;
+        barFill.style.width = `${relevancePct(item)}%`;
         bar.appendChild(barFill);
         card.appendChild(bar);
         const chunkDiv = document.createElement("div");

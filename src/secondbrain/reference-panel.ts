@@ -29,16 +29,7 @@ import {
   motionDensitySettle,
 } from './motion';
 import { mountIcons } from '../core/ui';
-import type { SearchHit, VectorStore } from './vector-store';
-
-/**
- * 列表显示用相关度百分比（issue 429）：重排过的条目显示重排分（P(yes)）——
- * 名次按重排分排，显示的百分比就得是同一个尺，否则肉眼看到「没按相关度排序」。
- * 未重排/重排回退的条目回落到余弦 score。**只影响显示**：分数条与阈值仍以余弦为唯一尺（ADR-0186）。
- */
-function relevancePct(item: SearchHit): number {
-  return Math.round((item.rerankScore ?? item.score) * 100);
-}
+import { relevancePct, type SearchHit, type VectorStore } from './vector-store';
 
 export class ReferencePanel {
   fw: FloatWindow;

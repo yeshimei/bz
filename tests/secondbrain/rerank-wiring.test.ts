@@ -2,7 +2,8 @@
 /**
  * 重排接线测试（issue 427/ADR-0186）：vectorSearch 末尾的 applyRerank——
  * 开关 / 模型门槛（qwen3-embedding:8b 才生效）、重排分定名次而 score 仍为余弦、
- * 头部截断（RERANK_MAX_DOCS）与尾部保序、失败静默回退 + console.warn。
+ * 整列重排（列表 ≤ RERANK_MAX_DOCS）与超长列表整轮跳过（> RERANK_MAX_DOCS，不半重排）、
+ * 失败静默回退 + console.warn。
  * ollama 与 rerank 两模块均经 vi.mock 替身（不碰网络）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -22,21 +23,25 @@ vi.mock('../../src/secondbrain/ollama', () => ({
 }));
 
 vi.mock('../../src/secondbrain/rerank', () => ({
-  RERANK_MAX_DOCS: 2, // 收紧截断便于断言（生产 50 = TopK 设置上限，见 panel-settings-rows 不变式测试）
+  RERANK_MAX_DOCS: 3, // 收紧上限便于断言（生产 50 = TopK 设置上限，见 panel-settings-rows 不变式测试）
   rerankScores: vi.fn(),
 }));
 
-/** 三笔记各一块：行与查询 [1,0] 的余弦 = 1 / 0.6 / 0.28（余弦序 a > b > c） */
-function seedStore(): VectorStore {
+/** N 笔记各一块：行与查询 [1,0] 的余弦 = 1 / 0.6 / 0.28 / 0.2（余弦序 a > b > c > d） */
+function seedStore(count = 3): VectorStore {
+  const rows: Array<[string, string, number[]]> = [
+    ['a.md', '甲', [1, 0]],
+    ['b.md', '乙', [0.6, 0.8]],
+    ['c.md', '丙', [0.28, 0.96]],
+    ['d.md', '丁', [0.2, 0.9797958971]],
+  ];
   const vs = new VectorStore({ vault: { getMarkdownFiles: () => [], adapter: {} } } as any);
-  vs.meta.notes = {
-    'a.md': { mtime: 1, chunks: [{ text: '甲' }] },
-    'b.md': { mtime: 1, chunks: [{ text: '乙' }] },
-    'c.md': { mtime: 1, chunks: [{ text: '丙' }] },
-  };
+  vs.meta.notes = Object.fromEntries(
+    rows.slice(0, count).map(([path, text]) => [path, { mtime: 1, chunks: [{ text }] }])
+  );
   vs.meta._dim = 2;
   vs.dim = 2;
-  vs.vectors = new Float32Array([1, 0, 0.6, 0.8, 0.28, 0.96]);
+  vs.vectors = new Float32Array(rows.slice(0, count).flatMap(([, , v]) => v));
   return vs;
 }
 
@@ -66,32 +71,32 @@ describe('vectorSearch 重排接线（issue 427/ADR-0186）', () => {
 
   it('开关开 + 8B 模型：名次按重排分，但 score 字段保持余弦值（单一分数尺）', async () => {
     const vs = seedStore();
-    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9]); // 头部两条对调：b > a
+    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9, 0.05]); // 全列重排：b 压过 a
 
     const res = await vs.vectorSearch('q', 10);
     expect(res.map((r) => r.path)).toEqual(['b.md', 'a.md', 'c.md']);
-    // 分数随笔记走（b 仍显示自己的余弦 0.6，a 仍是 1），不随名次走——面板百分比可能不单调是刻意的
+    // 分数随笔记走（b 仍显示自己的余弦 0.6，a 仍是 1），不随名次走——阈值判定仍只认余弦
     expect(res[0].score).toBeCloseTo(0.6, 5);
     expect(res[1].score).toBeCloseTo(1, 5);
     expect(res[2].score).toBeCloseTo(0.28, 5);
     expect(vi.mocked(rerankScores)).toHaveBeenCalledTimes(1);
     const [query, docs] = vi.mocked(rerankScores).mock.calls[0];
     expect(query).toBe('q');
-    expect(docs).toEqual(['甲', '乙']); // 只送头部 RERANK_MAX_DOCS（替身 = 2）条
+    expect(docs).toEqual(['甲', '乙', '丙']); // 整列都进重排（3 ≤ 上限替身 3）
   });
 
-  it('头部截断：尾部（第 3 条起）不吃重排、保持余弦序接在其后', async () => {
-    const vs = seedStore();
-    vi.mocked(rerankScores).mockResolvedValue([0.9, 0.1]); // 头部两条对调
+  it('列表超过 RERANK_MAX_DOCS（建链候选池等后台链路）：整轮不重排，不半重排', async () => {
+    const vs = seedStore(4);
 
     const res = await vs.vectorSearch('q', 10);
-    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']); // 头部重排 + 尾部 c 保余弦序
-    expect(vi.mocked(rerankScores).mock.calls[0][1]).toEqual(['甲', '乙']);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md', 'd.md']); // 纯余弦序
+    expect(res.map((r) => r.rerankScore)).toEqual([undefined, undefined, undefined, undefined]);
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled(); // 一对都不发（也不白付 GPU 耗时）
   });
 
   it('重排同分：保持原余弦序（稳定排序，不抖动）', async () => {
     const vs = seedStore();
-    vi.mocked(rerankScores).mockResolvedValue([0.5, 0.5]);
+    vi.mocked(rerankScores).mockResolvedValue([0.5, 0.5, 0.5]);
 
     const res = await vs.vectorSearch('q', 10);
     expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']);
@@ -153,13 +158,13 @@ describe('检索取消与重排分回填（issue 428/429）', () => {
     vi.restoreAllMocks();
   });
 
-  it('重排分回填 rerankScore（仅头部），score 与尾部条目不动——参考面板百分比据此与名次同尺', async () => {
+  it('重排分回填 rerankScore（整列），score 不动——参考面板百分比据此与名次同尺', async () => {
     const vs = seedStore();
-    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9]); // 头部两条对调：b > a
+    vi.mocked(rerankScores).mockResolvedValue([0.1, 0.9, 0.05]); // 全列重排：b 压过 a
 
     const res = await vs.vectorSearch('q', 10);
     expect(res.map((r) => r.path)).toEqual(['b.md', 'a.md', 'c.md']);
-    expect(res.map((r) => r.rerankScore)).toEqual([0.9, 0.1, undefined]); // 尾部 c 没重排分
+    expect(res.map((r) => r.rerankScore)).toEqual([0.9, 0.1, 0.05]);
     expect(res.map((r) => r.score)).toEqual([
       expect.closeTo(0.6, 5),
       expect.closeTo(1, 5),
@@ -170,7 +175,7 @@ describe('检索取消与重排分回填（issue 428/429）', () => {
   it('signal 逐级下传：嵌入与重排都收到同一 signal（取消才能真中断 HTTP）', async () => {
     const vs = seedStore();
     const ac = new AbortController();
-    vi.mocked(rerankScores).mockResolvedValue([0.9, 0.1]);
+    vi.mocked(rerankScores).mockResolvedValue([0.9, 0.1, 0.5]);
 
     await vs.vectorSearch('q', 10, undefined, ac.signal);
     expect(vi.mocked(getEmbedding).mock.calls[0][4]).toBe(ac.signal);
