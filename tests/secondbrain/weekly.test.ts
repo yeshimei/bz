@@ -5,8 +5,8 @@
  * - 新增差分 diffNewNotes（快照键差、mtime 降序）与新增关联 collectNewLinks
  *   （窗口 (since, now]、empty「已尝试且 0 条」不计、非法时间戳剔除）；
  * - 撞车阈值口径（代码即注释、测试同锚）：
- *   · 向量通道 pickVectorCollision：vectorSearch 锐化后分数（score^0.35，参考面板百分比同尺）
- *     ≥ WEEKLY_COLLISION_SCORE(0.85) 判高度重合（≈原始余弦 0.63，高于建链候选下限 0.65）；
+ *   · 向量通道 pickVectorCollision：vectorSearch 分数（原始余弦 [0,1]，参考面板百分比同尺）
+ *     ≥ WEEKLY_COLLISION_SCORE(0.63) 判高度重合（高于建链候选下限 0.30；issue 425/ADR-0185 起不再锐化）；
  *   · TF-IDF 降级 pickTfidfCollision：BM25 只作短名单，token 覆盖率 ≥ WEEKLY_COLLISION_CONTAINMENT(0.7)；
  *   · 撞车目标只认既有笔记（上轮快照内的 path），自身剔除，同 path 取最高分；
  * - 聚合编排 runWeeklyDigest：首轮立基线不产出 / 未到周界不聚 / 有内容产出并落盘 /
@@ -112,20 +112,20 @@ describe('新增差分与新增关联（数据来源：meta.notes 键 × link.st
   });
 });
 
-describe('撞车阈值口径（向量 0.85 / TF-IDF 覆盖率 0.7；代码注释与测试同锚）', () => {
+describe('撞车阈值口径（向量 0.63 / TF-IDF 覆盖率 0.7；代码注释与测试同锚）', () => {
   const existing = new Set(['盒/既有.md']);
 
-  it('向量通道：锐化后分数 ≥ WEEKLY_COLLISION_SCORE(0.85) 才算高度重合', () => {
+  it('向量通道：原始余弦 ≥ WEEKLY_COLLISION_SCORE(0.63) 才算高度重合', () => {
     const hits = [
       { path: '盒/既有.md', chunk: 'x', score: WEEKLY_COLLISION_SCORE }, // 恰在阈值上（含）
-      { path: '盒/既有.md', chunk: 'y', score: 0.7 }, // 同 path 低分命中不覆盖结论
+      { path: '盒/既有.md', chunk: 'y', score: 0.5 }, // 同 path 低分命中不覆盖结论
     ];
     const c = pickVectorCollision('盒/新.md', hits, existing);
     expect(c).toEqual({ path: '盒/新.md', targetPath: '盒/既有.md', score: WEEKLY_COLLISION_SCORE, mode: 'vector' });
   });
 
   it('向量通道：恰低于阈值不算；自身剔除；目标不在既有快照内剔除；同 path 取最高分', () => {
-    const below = pickVectorCollision('盒/新.md', [{ path: '盒/既有.md', chunk: '', score: 0.8499 }], existing);
+    const below = pickVectorCollision('盒/新.md', [{ path: '盒/既有.md', chunk: '', score: 0.6299 }], existing);
     expect(below).toBeNull();
     const self = pickVectorCollision('盒/既有.md', [{ path: '盒/既有.md', chunk: '', score: 0.99 }], existing);
     expect(self).toBeNull(); // 自身不算撞
