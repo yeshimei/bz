@@ -9,6 +9,7 @@
  * - 画布一律 DPR 缩放 + 尺寸变化才重设，绘制前 clearRect，无残留；
  * - 取色只走 palette()（读 CSS 变量 --ra-*），画布与 DOM 同一套色，明暗切换自动同步。
  */
+import { hostLocalPx } from '../../core/landscape';
 
 export const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
 export const clamp = (x: number, lo: number, hi: number): number => (x < lo ? lo : x > hi ? hi : x);
@@ -120,8 +121,9 @@ export function canvas(host: HTMLElement, key: string): Cv | null {
     el, ctx, w: 0, h: 0,
     fit(): boolean {
       const dpr = Math.min(2, (globalThis.devicePixelRatio || 1));
-      const r = el.getBoundingClientRect();
-      const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+      // 只认布局尺寸：软横屏旋转态下 getBoundingClientRect 返回的是视觉尺寸（宽高对调），
+      // 拿它采位图会把画布拉花（cinema yearbook 同款教训）
+      const w = Math.max(1, el.offsetWidth), h = Math.max(1, el.offsetHeight);
       if (w === cv.w && h === cv.h) return false;
       cv.w = w; cv.h = h;
       el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
@@ -179,12 +181,14 @@ export const refs = <T extends HTMLElement = HTMLElement>(host: ParentNode, name
    1. 命中判定一律走 under()（浏览器自己的 elementFromPoint），不逐元素量 rect；
    2. 连续量只在 update() 里写、move() 里只记状态。 */
 export interface PointerAt { cx: number; cy: number; px: number; py: number }
-/** 指针在宿主内的比例坐标（0..1）；不在宿主内返回 null */
+/** 指针在宿主内的比例坐标（0..1）；不在宿主内返回 null。
+ *  换算走 core/landscape 的 hostLocalPx：软横屏旋转态下视觉 rect 作差会转错象限。 */
 export const localAt = (host: HTMLElement | null | undefined, p: PointerAt): { x: number; y: number } | null => {
   if (!host) return null;
-  const r = host.getBoundingClientRect();
-  if (r.width < 1 || r.height < 1) return null;
-  const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+  const at = hostLocalPx(host, p.cx, p.cy);
+  if (!at) return null;
+  const w = host.offsetWidth || 1, h = host.offsetHeight || 1;
+  const x = at.x / w, y = at.y / h;
   return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
 };
 /** 比例坐标里离指针最近的一枚；超出 radius（比例距离）算没命中，空表返回 -1 */

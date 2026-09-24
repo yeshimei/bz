@@ -1,5 +1,5 @@
-/* 源指纹 44d6a28a88a43017 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 88e5cd6aa027d29a · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -6374,6 +6374,38 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/landscape.ts
+  function fitRotatedBox(box, panel, mobile) {
+    const r = panel == null ? void 0 : panel.getBoundingClientRect();
+    if (!panel || !r || r.width < 40 || r.height < 40) return null;
+    const rot = mobile && r.height > r.width;
+    box.classList.toggle("is-rot90", rot);
+    const w = rot ? r.height : r.width;
+    const h = rot ? r.width : r.height;
+    box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
+    box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
+    box.style.width = `${Math.round(w)}px`;
+    box.style.height = `${Math.round(h)}px`;
+    return { rot, w, h };
+  }
+  function boxLogicalPoint(box, x, y) {
+    if (!box.classList.contains("is-rot90")) return { x, y };
+    const vr = box.getBoundingClientRect();
+    const bw = box.offsetWidth || 1, bh = box.offsetHeight || 1;
+    const cx = vr.left + vr.width / 2, cy = vr.top + vr.height / 2;
+    return { x: bw / 2 + (y - cy), y: bh / 2 - (x - cx) };
+  }
+  function boxLogicalRect(box, left, top, right, bottom) {
+    const p0 = boxLogicalPoint(box, left, top);
+    const p1 = boxLogicalPoint(box, right, bottom);
+    return {
+      left: Math.min(p0.x, p1.x),
+      right: Math.max(p0.x, p1.x),
+      top: Math.min(p0.y, p1.y),
+      bottom: Math.max(p0.y, p1.y)
+    };
+  }
+
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
     if (!dur) dur = 500;
@@ -8547,7 +8579,7 @@ tags:
   }
   var esc0 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   function buildPerfs(root, data, host = root) {
-    var _a;
+    var _a, _b;
     const out = /* @__PURE__ */ new Map();
     const scn = (id) => root.querySelector(`[data-id="${id}"]`);
     if (!scn("open")) return out;
@@ -8559,6 +8591,7 @@ tags:
     {
       const s = scn("open");
       const cv = canvas(host, "open");
+      const boxEl = (_a = cv == null ? void 0 : cv.el.closest(".bz-yb-box")) != null ? _a : null;
       let ps = [];
       let builtFor = 0;
       let lastT = 0;
@@ -8601,15 +8634,17 @@ tags:
         return idx;
       };
       const build = (w, h) => {
+        if (!cv) return;
         builtFor = w;
-        const r = s.getBoundingClientRect();
-        const fontPx = Math.max(46, Math.min(r.height * 0.44, r.width * 0.23));
+        const vr = s.getBoundingClientRect();
+        const r = boxEl ? boxLogicalRect(boxEl, vr.left, vr.top, vr.right, vr.bottom) : { left: vr.left, top: vr.top, right: vr.right, bottom: vr.bottom };
+        const fontPx = Math.max(46, Math.min((r.bottom - r.top) * 0.44, (r.right - r.left) * 0.23));
         const resample = (text, fp) => {
           const raw = sampleText(text, fp, 800, 4);
           if (!raw.length) return [];
           return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
         };
-        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
         const ta = resample(YB_TITLE, fontPx).map((p) => ({ x: p.x + cx, y: p.y + cy }));
         if (!ta.length) {
           ps = [];
@@ -8628,8 +8663,6 @@ tags:
             vy: 0,
             ax: 0,
             ay: 0,
-            bx: 0,
-            by: 0,
             d: CLAIM_AT + Math.random() * CLAIM_SPAN,
             // 认领时刻错峰：字是一层层扑上去的
             r: kind ? 1.7 + Math.random() * 0.9 : 1 + Math.random() * 0.6,
@@ -8664,8 +8697,8 @@ tags:
       let nextMet = 4;
       out.set("open", {
         dur: 7,
-        // 自动放映的停留时长：满布待命也给几秒，移入后叙事约 5s 走到落补循环
-        update({ t, pal, px, py }) {
+        // 定格基准：翻走时按它把这一幕推到终态（自动放映已删）
+        update({ t, pal, px, py, pin }) {
           if (!cv) {
             lastT = t;
             return;
@@ -8676,16 +8709,18 @@ tags:
             lastT = t;
             return;
           }
-          if (changed || ps.length === 0 || builtFor !== w || t < lastT - 0.25) {
+          if (changed || builtFor !== w || t < lastT - 0.25) {
             build(w, h);
             claimAt = null;
+            mets.length = 0;
+            nextMet = 4;
             cv.clear();
           }
           const dt = Math.min(0.05, Math.max(1e-3, t - lastT));
           lastT = t;
           const ctx = cv.ctx;
           const pxx = w / 2 + px * w / 2, pyy = h / 2 + py * h / 2;
-          pt.in = px !== 0 || py !== 0;
+          pt.in = pin > 0;
           if (!pt.was) {
             pt.vx = 0;
             pt.vy = 0;
@@ -8707,7 +8742,8 @@ tags:
           ctx.lineCap = "round";
           if (claimAt === null && pt.in) claimAt = t;
           const tt = claimAt === null ? -1 : t - claimAt;
-          const br = s.getBoundingClientRect();
+          const vr = s.getBoundingClientRect();
+          const br = boxEl ? boxLogicalRect(boxEl, vr.left, vr.top, vr.right, vr.bottom) : { left: vr.left, top: vr.top, right: vr.right, bottom: vr.bottom };
           const floor = br.bottom - FLOOR_MARGIN;
           if (tt > METEOR_FROM && t >= nextMet && mets.length < 3) {
             nextMet = t + METEOR_EVERY + Math.random() * METEOR_SPAN;
@@ -9010,8 +9046,8 @@ tags:
       const orderOf = /* @__PURE__ */ new Map();
       [...data.days.keys()].sort().forEach((d, i) => orderOf.set(d.slice(4), i));
       const cells = qsa(s, ".yb-cell").map((el) => {
-        var _a2, _b, _c, _d, _e, _f;
-        const mi = Number((_b = (_a2 = el.closest(".yb-month")) == null ? void 0 : _a2.dataset.mi) != null ? _b : 0);
+        var _a2, _b2, _c, _d, _e, _f;
+        const mi = Number((_b2 = (_a2 = el.closest(".yb-month")) == null ? void 0 : _a2.dataset.mi) != null ? _b2 : 0);
         const day = Number((_c = el.dataset.d) != null ? _c : 0);
         const key = `-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
         return { el, n: (_d = dayCount.get(key)) != null ? _d : 0, o: (_e = orderOf.get(key)) != null ? _e : -1, tipTxt: (_f = el.dataset.tip) != null ? _f : "" };
@@ -9067,7 +9103,7 @@ tags:
           hotSpoke = k;
         },
         update({ t }) {
-          var _a2, _b;
+          var _a2, _b2;
           spokes.forEach((sp, i) => {
             const p = stagger(t, i, 0.09, 0.8);
             const on = t > 1.8 && i === hotSpoke;
@@ -9089,7 +9125,7 @@ tags:
           if (hubB && hubS) {
             if (hotSpoke >= 0) {
               T(hubB, String(data.weekN[hotSpoke]));
-              T(hubS, ((_b = (_a2 = labels[hotSpoke]) == null ? void 0 : _a2.textContent) != null ? _b : "").split(/\s+/)[0] || "部");
+              T(hubS, ((_b2 = (_a2 = labels[hotSpoke]) == null ? void 0 : _a2.textContent) != null ? _b2 : "").split(/\s+/)[0] || "部");
             } else {
               T(hubB, String(data.watchedCount));
               T(hubS, "部");
@@ -9121,11 +9157,11 @@ tags:
       out.set("streak", {
         dur: 3.2,
         move(p) {
-          var _a2, _b, _c;
+          var _a2, _b2, _c;
           const dot = under(p, ".yb-rib-dot");
           const tick = under(p, ".yb-busy-tick");
           hotDot = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
-          hotTick = tick ? Number((_b = tick.dataset.i) != null ? _b : -1) : -1;
+          hotTick = tick ? Number((_b2 = tick.dataset.i) != null ? _b2 : -1) : -1;
           const el = dot != null ? dot : tick;
           const txt = (_c = el == null ? void 0 : el.dataset.tip) != null ? _c : "";
           if (txt) tip(host, txt, p.cx, p.cy);
@@ -9502,7 +9538,7 @@ tags:
       const wy = data.years.map((y2) => ({ y: y2.y, n: y2.films.length }));
       const maxN = Math.max(1, ...ry.map((r) => r.n));
       const maxW = Math.max(1, ...wy.map((r) => r.n));
-      const denseY = ry.reduce((b, r) => r.n > b.n ? r : b, (_a = ry[0]) != null ? _a : { y: 0, n: 0 });
+      const denseY = ry.reduce((b, r) => r.n > b.n ? r : b, (_b = ry[0]) != null ? _b : { y: 0, n: 0 });
       T(dense, `${denseY.y} 年 · ${denseY.n} 部`);
       let atEra = null;
       out.set("eras", {
@@ -9511,7 +9547,7 @@ tags:
           atEra = localAt(cv == null ? void 0 : cv.el, p);
         },
         update({ t, pal }) {
-          var _a2, _b, _c, _d;
+          var _a2, _b2, _c, _d;
           if (cv) {
             cv.fit();
             cv.clear();
@@ -9529,7 +9565,7 @@ tags:
             const Y2 = (n, i) => mid2 - n / maxW * amp2 + wake(X2(i) / Math.max(1, w), 0.5);
             const upto = Math.max(1, Math.floor(g * (ry.length - 1)));
             ctx.beginPath();
-            ctx.moveTo(X2(0), Y2((_b = (_a2 = wy[0]) == null ? void 0 : _a2.n) != null ? _b : 0, 0));
+            ctx.moveTo(X2(0), Y2((_b2 = (_a2 = wy[0]) == null ? void 0 : _a2.n) != null ? _b2 : 0, 0));
             for (let i = 0; i < wy.length; i++) {
               const px2 = X2(i), py2 = Y2(wy[i].n, i);
               const nx2 = X2(Math.min(wy.length - 1, i + 1)), ny2 = Y2(wy[Math.min(wy.length - 1, i + 1)].n, Math.min(wy.length - 1, i + 1));
@@ -9652,11 +9688,11 @@ tags:
       out.set("myrate", {
         dur: 3.6,
         move(p) {
-          var _a2, _b, _c;
+          var _a2, _b2, _c;
           const dot = under(p, ".yb-sdot2");
           hotDot = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
           const rowEl = under(p, ".yb-erow");
-          hotScore = rowEl ? Number((_b = rowEl.dataset.i) != null ? _b : -1) : -1;
+          hotScore = rowEl ? Number((_b2 = rowEl.dataset.i) != null ? _b2 : -1) : -1;
           const dotTip = dot == null ? void 0 : dot.dataset.tip;
           if (dotTip) tip(host, dotTip, p.cx, p.cy);
           else if (rowEl) tip(host, `<b>${hotScore}</b> 分 · ${(_c = data.myHist[hotScore]) != null ? _c : 0} 部`, p.cx, p.cy);
@@ -9704,10 +9740,10 @@ tags:
       out.set("mirror", {
         dur: 3,
         move(p) {
-          var _a2, _b, _c;
+          var _a2, _b2, _c;
           const col = under(p, ".yb-mcol");
           hotScore = col ? Number((_a2 = col.dataset.i) != null ? _a2 : -1) : -1;
-          if (hotScore >= 0) tip(host, `<b>${hotScore}</b> 分 · 我的 ${(_b = myN[hotScore]) != null ? _b : 0} 部 · 豆瓣 ${(_c = dbN[hotScore]) != null ? _c : 0} 部`, p.cx, p.cy);
+          if (hotScore >= 0) tip(host, `<b>${hotScore}</b> 分 · 我的 ${(_b2 = myN[hotScore]) != null ? _b2 : 0} 部 · 豆瓣 ${(_c = dbN[hotScore]) != null ? _c : 0} 部`, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
@@ -10017,10 +10053,10 @@ tags:
       out.set("quotes", {
         dur: 2,
         move(p) {
-          var _a2, _b;
+          var _a2, _b2;
           const el = under(p, ".yb-quote");
           hotQuote = el;
-          hotLane = el ? Number((_b = (_a2 = el.closest(".yb-lane")) == null ? void 0 : _a2.dataset.i) != null ? _b : -1) : -1;
+          hotLane = el ? Number((_b2 = (_a2 = el.closest(".yb-lane")) == null ? void 0 : _a2.dataset.i) != null ? _b2 : -1) : -1;
           if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
@@ -10150,6 +10186,44 @@ tags:
     move: "cubic-bezier(.34,.06,.16,1)"
   };
 
+  // src/core/gesture.ts
+  function bindSwipeTurn(el, go) {
+    const TH = 46;
+    let x0 = 0, y0 = 0, on = false, fired = false;
+    const start = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      x0 = t.clientX;
+      y0 = t.clientY;
+      on = true;
+      fired = false;
+    };
+    const move = (e) => {
+      if (!on) return;
+      e.preventDefault();
+      if (fired) return;
+      const t = e.touches[0];
+      if (!t) return;
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) < TH && Math.abs(dy) < TH) return;
+      fired = true;
+      go(Math.abs(dy) >= Math.abs(dx) ? dy < 0 ? 1 : -1 : dx < 0 ? 1 : -1);
+    };
+    const end = () => {
+      on = false;
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end, { passive: true });
+    el.addEventListener("touchcancel", end, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchmove", move);
+      el.removeEventListener("touchend", end);
+      el.removeEventListener("touchcancel", end);
+    };
+  }
+
   // src/cinema/yearbook/engine.ts
   var GESTURE_GAP = 340;
   function bindYearbook(root, data) {
@@ -10162,6 +10236,7 @@ tags:
     if (!scenes.length) return handle;
     const perfs = buildPerfs(film, data, root);
     const rails = qsa(root, ".yb-rail-t");
+    const boxEl = root.querySelector(".bz-yb-box");
     let pal = palette(root);
     let cur = -1;
     let t0 = performance.now();
@@ -10191,7 +10266,7 @@ tags:
       if (cur >= 0 && cur !== i) {
         const prev = perfs.get((_a = scenes[cur].dataset.id) != null ? _a : "");
         if (prev && !settled.has(cur)) {
-          prev.update({ t: prev.dur, pal, px: px * pin, py: py * pin });
+          prev.update({ t: prev.dur, pal, px: px * pin, py: py * pin, pin });
           settled.add(cur);
         }
         tip(root, "");
@@ -10200,7 +10275,7 @@ tags:
       settled.delete(i);
       const perf = perfs.get((_b = scenes[i].dataset.id) != null ? _b : "");
       if (replay) t0 = performance.now();
-      if (perf) perf.update({ t: replay ? 0 : perf.dur, pal, px: px * pin, py: py * pin });
+      if (perf) perf.update({ t: replay ? 0 : perf.dur, pal, px: px * pin, py: py * pin, pin });
       const sc2 = scenes[i];
       sc2.classList.remove("is-in");
       void sc2.offsetWidth;
@@ -10303,7 +10378,7 @@ tags:
       const perf = perfs.get((_a = scenes[cur].dataset.id) != null ? _a : "");
       if (!perf) return;
       const t = (now - t0) / 1e3;
-      perf.update({ t, pal, px: px * pin, py: py * pin });
+      perf.update({ t, pal, px: px * pin, py: py * pin, pin });
       hud(cur);
     }
     const onOvlClick = (e) => {
@@ -10314,18 +10389,24 @@ tags:
         goTo(Number((_a = rail.dataset.i) != null ? _a : 0), { cut: true });
       }
     };
+    const normPtr = (e) => {
+      const r = (boxEl != null ? boxEl : root).getBoundingClientRect();
+      const nx = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      const ny = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      return (boxEl == null ? void 0 : boxEl.classList.contains("is-rot90")) ? { px: ny, py: -nx } : { px: nx, py: ny };
+    };
     const onPointer = (e) => {
       var _a, _b;
-      const r = root.getBoundingClientRect();
-      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
-      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      const n = normPtr(e);
+      px = n.px;
+      py = n.py;
       pin = 1;
       (_b = (_a = curPerf()) == null ? void 0 : _a.move) == null ? void 0 : _b.call(_a, { cx: e.clientX, cy: e.clientY, px, py });
     };
     const onPtrDown = (e) => {
       var _a, _b;
-      const r = root.getBoundingClientRect();
-      (_b = (_a = curPerf()) == null ? void 0 : _a.down) == null ? void 0 : _b.call(_a, { cx: e.clientX, cy: e.clientY, px: (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1, py: (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1 });
+      const n = normPtr(e);
+      (_b = (_a = curPerf()) == null ? void 0 : _a.down) == null ? void 0 : _b.call(_a, { cx: e.clientX, cy: e.clientY, px: n.px, py: n.py });
     };
     const onPtrUp = () => {
       var _a, _b;
@@ -10356,6 +10437,7 @@ tags:
     root.addEventListener("pointercancel", onPtrUp);
     scEl.addEventListener("wheel", onWheel, { passive: false });
     scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    const unSwipe = bindSwipeTurn(scEl, (d) => goRel(d));
     root.addEventListener("click", onOvlClick);
     document.addEventListener("keydown", onKey);
     activate(0, true);
@@ -10375,6 +10457,7 @@ tags:
       tip(root, "");
       scEl.removeEventListener("wheel", onWheel);
       scEl.removeEventListener("scroll", syncFromScroll);
+      unSwipe();
       root.removeEventListener("click", onOvlClick);
       document.removeEventListener("keydown", onKey);
     };
@@ -12026,17 +12109,9 @@ tags:
   var ybSync = null;
   var ybRo = null;
   function fitYbBox(box, panel) {
-    const r = panel == null ? void 0 : panel.getBoundingClientRect();
-    if (!panel || !r || r.width < 40 || r.height < 40) return;
-    const rot = isMobileEnv() && r.height > r.width;
-    box.classList.toggle("is-rot90", rot);
-    const w = rot ? r.height : r.width;
-    const h = rot ? r.width : r.height;
-    box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
-    box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
-    box.style.width = `${Math.round(w)}px`;
-    box.style.height = `${Math.round(h)}px`;
-    const base = Math.max(12, Math.min(19, 12 * Math.min(w / 900, h / 620)));
+    const fit = fitRotatedBox(box, panel, isMobileEnv());
+    if (!fit || !panel) return;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(fit.w / 900, fit.h / 620)));
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || "";
   }

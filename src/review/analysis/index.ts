@@ -10,6 +10,7 @@
 import type { App } from 'obsidian';
 import { topifyZ } from '../../core/z-order';
 import { escManager } from '../../core/esc-manager';
+import { fitRotatedBox } from '../../core/landscape';
 import { ensureReview, dataManager } from '../index';
 import { reviewApp } from '../app';
 import type { RaData } from './data';
@@ -23,10 +24,16 @@ let raEsc: { unregister(): void } | null = null;
 let raSync: (() => void) | null = null;
 let raRo: ResizeObserver | null = null;
 
-/** 层框 = 复习面板矩形（同 ADR-0175 几何口径）；面板没几何时给视口内边距兜底 */
+/** 移动端判定（关闭钮显隐与软横屏转置同口径）：视口窄即按移动算（原型移动 iframe 也命中） */
+const isNarrow = (): boolean => {
+  try { return window.matchMedia('(max-width: 768px)').matches; } catch { return false; }
+};
+
+/** 层框 = 复习面板矩形（同 ADR-0175 几何口径）；几何与软横屏转置单源 core/landscape
+ *  （移动竖屏横屏呈现，影院观影分析同款）。面板没几何时给视口内边距兜底（兜底态不转）。 */
 function fitRaBox(box: HTMLElement, panel: HTMLElement | null): void {
-  const r = panel?.getBoundingClientRect();
-  if (!panel || !r || r.width < 40 || r.height < 40) {
+  const fit = fitRotatedBox(box, panel, isNarrow());
+  if (!fit || !panel) {
     box.style.left = '16px';
     box.style.top = '16px';
     box.style.width = 'calc(100vw - 32px)';
@@ -34,11 +41,7 @@ function fitRaBox(box: HTMLElement, panel: HTMLElement | null): void {
     box.style.fontSize = '16px';
     return;
   }
-  box.style.left = `${Math.round(r.left)}px`;
-  box.style.top = `${Math.round(r.top)}px`;
-  box.style.width = `${Math.round(r.width)}px`;
-  box.style.height = `${Math.round(r.height)}px`;
-  const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+  const base = Math.max(12, Math.min(19, 12 * Math.min(fit.w / 900, fit.h / 620)));
   box.style.fontSize = `${base.toFixed(2)}px`;
   box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || '';
 }
@@ -81,11 +84,9 @@ export async function openReviewAnalysis(app: App): Promise<void> {
       ${analysisFixedHtml()}
       <div class="bz-ra-scroll">${analysisHtml(data)}</div>
     </div>`;
-  // 移动端面板满屏没有遮罩可点，关闭钮即出口（桌面点框外/ESC）
-  const isMobile = (() => {
-    try { return window.matchMedia('(max-width: 768px)').matches; } catch { return false; }
-  })();
-  if (isMobile) {
+  // 移动端面板满屏没有遮罩可点，关闭钮即出口（桌面点框外/ESC）。
+  // 钮放**层框内**：跟着软横屏一起转——内容横过来看时它才落在手持视角的右上角（影院同款）
+  if (isNarrow()) {
     const close = document.createElement('button');
     close.type = 'button';
     close.className = 'bz-ra-close';
@@ -93,7 +94,7 @@ export async function openReviewAnalysis(app: App): Promise<void> {
     close.title = '关闭';
     close.setAttribute('aria-label', '关闭');
     close.textContent = '✕';
-    ovl.appendChild(close);
+    ovl.querySelector<HTMLElement>('.bz-ra-box')?.appendChild(close);
   }
   document.body.appendChild(ovl);
   topifyZ(ovl); // 显示即发号（ADR-0067）：叠在复习面板之上，关掉即销号

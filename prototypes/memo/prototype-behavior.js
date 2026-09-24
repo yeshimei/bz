@@ -1,5 +1,5 @@
-/* 源指纹 29037da035d7ea12 · 仓内输入 260 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 3b0ac9aade483e17 · 仓内输入 262 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -35961,6 +35961,55 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/core/landscape.ts
+  function fitRotatedBox(box, panel2, mobile) {
+    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
+    if (!panel2 || !r || r.width < 40 || r.height < 40) return null;
+    const rot = mobile && r.height > r.width;
+    box.classList.toggle("is-rot90", rot);
+    const w = rot ? r.height : r.width;
+    const h = rot ? r.width : r.height;
+    box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
+    box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
+    box.style.width = `${Math.round(w)}px`;
+    box.style.height = `${Math.round(h)}px`;
+    return { rot, w, h };
+  }
+  function boxLogicalPoint(box, x, y) {
+    if (!box.classList.contains("is-rot90")) return { x, y };
+    const vr = box.getBoundingClientRect();
+    const bw = box.offsetWidth || 1, bh = box.offsetHeight || 1;
+    const cx = vr.left + vr.width / 2, cy = vr.top + vr.height / 2;
+    return { x: bw / 2 + (y - cy), y: bh / 2 - (x - cx) };
+  }
+  function boxLogicalRect(box, left, top, right, bottom) {
+    const p0 = boxLogicalPoint(box, left, top);
+    const p1 = boxLogicalPoint(box, right, bottom);
+    return {
+      left: Math.min(p0.x, p1.x),
+      right: Math.max(p0.x, p1.x),
+      top: Math.min(p0.y, p1.y),
+      bottom: Math.max(p0.y, p1.y)
+    };
+  }
+  function hostLocalPx(host, cx, cy) {
+    const box = host.closest(".is-rot90");
+    if (!box) {
+      const r = host.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return null;
+      return { x: cx - r.left, y: cy - r.top };
+    }
+    const vr = host.getBoundingClientRect();
+    const hr = boxLogicalRect(box, vr.left, vr.top, vr.right, vr.bottom);
+    if (hr.right - hr.left < 1 || hr.bottom - hr.top < 1) return null;
+    const p = boxLogicalPoint(box, cx, cy);
+    return { x: p.x - hr.left, y: p.y - hr.top };
+  }
+  var init_landscape = __esm({
+    "src/core/landscape.ts"() {
+    }
+  });
+
   // src/clipbook/press/data.ts
   function hourOf2(ts) {
     const h = new Date(ts).getHours();
@@ -36604,9 +36653,9 @@ ${bodyText.substring(0, 6e3)}`;
           if (f) {
             const { ctx, w, h } = f;
             ctx.clearRect(0, 0, w, h);
-            const rect = pin ? cv.getBoundingClientRect() : null;
-            const lx = rect ? cx - rect.left : -9999;
-            const ly = rect ? cy - rect.top : -9999;
+            const ptl = pin ? localPx(cv, cx, cy) : null;
+            const lx = ptl ? ptl.x : -9999;
+            const ly = ptl ? ptl.y : -9999;
             for (const dr of drops) {
               const p = at(t, dr.life, dr.t0);
               if (p <= 0 || p >= 1) {
@@ -36737,9 +36786,9 @@ ${bodyText.substring(0, 6e3)}`;
             ctx.clearRect(0, 0, w, h);
             const cx0 = w * (w > h * 1.2 ? 0.36 : 0.5), cy0 = h * 0.52;
             const R = Math.min(w * 0.3, h * 0.34);
-            const rect = pin ? cv.getBoundingClientRect() : null;
-            const lx = rect ? cx - rect.left : -9999;
-            const ly = rect ? cy - rect.top : -9999;
+            const ptl = pin ? localPx(cv, cx, cy) : null;
+            const lx = ptl ? ptl.x : -9999;
+            const ly = ptl ? ptl.y : -9999;
             ctx.strokeStyle = rgba(pal.muted, 0.85);
             ctx.lineWidth = 1;
             for (let i = 0; i < 24; i++) {
@@ -36871,9 +36920,9 @@ ${bodyText.substring(0, 6e3)}`;
         const gx = w * 0.12, gw = w * 0.66;
         const gy = h * 0.24, gh = h * 0.54;
         const cw = gw / cols, chh = gh / rowsN;
-        const rect = pin ? cv.getBoundingClientRect() : null;
-        const lx = rect ? cx - rect.left : -9999;
-        const ly = rect ? cy - rect.top : -9999;
+        const ptl = pin ? localPx(cv, cx, cy) : null;
+        const lx = ptl ? ptl.x : -9999;
+        const ly = ptl ? ptl.y : -9999;
         let hoverText = "";
         let hcx = -1, hry = -1;
         if (pin && lx >= gx && lx < gx + gw && ly >= gy && ly < gy + gh) {
@@ -37167,9 +37216,9 @@ ${bodyText.substring(0, 6e3)}`;
         const cols = 8, rowsN = 7;
         const size = Math.min(w * 0.5 / cols, h * 0.52 / rowsN, 44);
         const gx = w * 0.1, gy = h * 0.3;
-        const rect = pin ? cv.getBoundingClientRect() : null;
-        const lx = rect ? cx - rect.left : -9999;
-        const ly = rect ? cy - rect.top : -9999;
+        const ptl = pin ? localPx(cv, cx, cy) : null;
+        const lx = ptl ? ptl.x : -9999;
+        const ly = ptl ? ptl.y : -9999;
         let hoverText = "";
         d.cal.forEach((day, i) => {
           const col = Math.floor(i / rowsN), row = i % rowsN;
@@ -37263,9 +37312,9 @@ ${bodyText.substring(0, 6e3)}`;
           const gy = h * 0.3, rowH = Math.min(34, h * 0.52 / rows.length);
           const maxTotal = Math.max(1, ...rows.map((r) => r.shifts.reduce((s, x) => s + x, 0)));
           const segColors = [rgba(pal.line, 0.9), rgba(pal.accentSoft, 0.5), rgba(pal.accentSoft, 0.8), pal.accent];
-          const rect = pin ? cv.getBoundingClientRect() : null;
-          const lx = rect ? cx - rect.left : -9999;
-          const ly = rect ? cy - rect.top : -9999;
+          const ptl = pin ? localPx(cv, cx, cy) : null;
+          const lx = ptl ? ptl.x : -9999;
+          const ly = ptl ? ptl.y : -9999;
           let hoverText = "";
           let hotRow = -1;
           rows.forEach((r, i) => {
@@ -37377,9 +37426,9 @@ ${bodyText.substring(0, 6e3)}`;
           });
         }
         ctx.clearRect(0, 0, w, h);
-        const rect = pin ? cv.getBoundingClientRect() : null;
-        const lx = rect ? cx - rect.left : -9999;
-        const ly = rect ? cy - rect.top : -9999;
+        const ptl = pin ? localPx(cv, cx, cy) : null;
+        const lx = ptl ? ptl.x : -9999;
+        const ly = ptl ? ptl.y : -9999;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         laid.forEach((lw) => {
@@ -37600,9 +37649,9 @@ ${bodyText.substring(0, 6e3)}`;
           if (f) {
             const { ctx, w, h } = f;
             ctx.clearRect(0, 0, w, h);
-            const rect = pin ? cv.getBoundingClientRect() : null;
-            const lx = rect ? cx - rect.left : -9999;
-            const ly = rect ? cy - rect.top : -9999;
+            const ptl = pin ? localPx(cv, cx, cy) : null;
+            const lx = ptl ? ptl.x : -9999;
+            const ly = ptl ? ptl.y : -9999;
             const bursts = [
               { x: w * 0.38, y: h * 0.42, t0: 0.5, seed: 7 },
               { x: w * 0.62, y: h * 0.4, t0: 1, seed: 91 }
@@ -37673,9 +37722,10 @@ ${bodyText.substring(0, 6e3)}`;
     bind("c16", perfC16);
     return m;
   }
-  var SERIF, HEI, clamp01, at, easeOut, easeInOut, easeBack, easeOutExpo, springUp, lerp, roll, comma, sdelta, lastStyle, lastText, q2, qa;
+  var SERIF, HEI, clamp01, at, easeOut, easeInOut, easeBack, easeOutExpo, springUp, lerp, roll, comma, sdelta, lastStyle, lastText, q2, qa, localPx;
   var init_motions = __esm({
     "src/clipbook/press/motions.ts"() {
+      init_landscape();
       SERIF = 'Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif';
       HEI = `'Microsoft YaHei', sans-serif`;
       clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
@@ -37701,6 +37751,49 @@ ${bodyText.substring(0, 6e3)}`;
       lastText = /* @__PURE__ */ new WeakMap();
       q2 = (root, sel) => root.querySelector(sel);
       qa = (root, sel) => [...root.querySelectorAll(sel)];
+      localPx = (cv, cx, cy) => hostLocalPx(cv, cx, cy);
+    }
+  });
+
+  // src/core/gesture.ts
+  function bindSwipeTurn(el, go) {
+    const TH = 46;
+    let x0 = 0, y0 = 0, on = false, fired = false;
+    const start = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      x0 = t.clientX;
+      y0 = t.clientY;
+      on = true;
+      fired = false;
+    };
+    const move = (e) => {
+      if (!on) return;
+      e.preventDefault();
+      if (fired) return;
+      const t = e.touches[0];
+      if (!t) return;
+      const dx = t.clientX - x0, dy = t.clientY - y0;
+      if (Math.abs(dx) < TH && Math.abs(dy) < TH) return;
+      fired = true;
+      go(Math.abs(dy) >= Math.abs(dx) ? dy < 0 ? 1 : -1 : dx < 0 ? 1 : -1);
+    };
+    const end = () => {
+      on = false;
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end, { passive: true });
+    el.addEventListener("touchcancel", end, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchmove", move);
+      el.removeEventListener("touchend", end);
+      el.removeEventListener("touchcancel", end);
+    };
+  }
+  var init_gesture = __esm({
+    "src/core/gesture.ts"() {
     }
   });
 
@@ -37882,11 +37975,14 @@ ${bodyText.substring(0, 6e3)}`;
       if (tickEl) goTo(Number((_a3 = tickEl.getAttribute("data-i")) != null ? _a3 : 0), { cut: true });
     };
     const onPointerMove = (e) => {
-      const r = root.getBoundingClientRect();
+      const r = box.getBoundingClientRect();
+      const nx = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      const ny = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      const rot = box.classList.contains("is-rot90");
       cx = e.clientX;
       cy = e.clientY;
-      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
-      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      px = rot ? ny : nx;
+      py = rot ? -nx : ny;
       pin = 1;
     };
     const onPointerLeave = () => {
@@ -37908,6 +38004,7 @@ ${bodyText.substring(0, 6e3)}`;
     scEl.addEventListener("wheel", onWheel, { passive: false });
     scEl.addEventListener("scroll", syncFromScroll, { passive: true });
     box.addEventListener("click", onOvlClick);
+    const unSwipe = bindSwipeTurn(scEl, (d) => goRel(d));
     root.addEventListener("pointermove", onPointerMove, { passive: true });
     root.addEventListener("pointerleave", onPointerLeave, { passive: true });
     document.addEventListener("keydown", onKey);
@@ -37922,6 +38019,7 @@ ${bodyText.substring(0, 6e3)}`;
       clearCut();
       scEl.removeEventListener("wheel", onWheel);
       scEl.removeEventListener("scroll", syncFromScroll);
+      unSwipe();
       box.removeEventListener("click", onOvlClick);
       root.removeEventListener("pointermove", onPointerMove);
       root.removeEventListener("pointerleave", onPointerLeave);
@@ -37933,6 +38031,7 @@ ${bodyText.substring(0, 6e3)}`;
   var init_engine = __esm({
     "src/clipbook/press/engine.ts"() {
       init_motions();
+      init_gesture();
       GESTURE_GAP = 340;
       rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
       rafStop = (id) => {
@@ -37946,8 +38045,8 @@ ${bodyText.substring(0, 6e3)}`;
 
   // src/clipbook/press/index.ts
   function fitPressBox(box, panel2) {
-    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
-    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+    const fit3 = fitRotatedBox(box, panel2, isNarrow());
+    if (!fit3 || !panel2) {
       box.style.left = "16px";
       box.style.top = "16px";
       box.style.width = "calc(100vw - 32px)";
@@ -37955,16 +38054,12 @@ ${bodyText.substring(0, 6e3)}`;
       box.style.fontSize = "16px";
       return;
     }
-    box.style.left = `${Math.round(r.left)}px`;
-    box.style.top = `${Math.round(r.top)}px`;
-    box.style.width = `${Math.round(r.width)}px`;
-    box.style.height = `${Math.round(r.height)}px`;
-    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    const base = Math.max(12, Math.min(19, 12 * Math.min(fit3.w / 900, fit3.h / 620)));
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
   }
   async function openReadingPress(app) {
-    var _a2, _b2;
+    var _a2, _b2, _c;
     const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
     if (pressOvl == null ? void 0 : pressOvl.isConnected) {
       const box2 = pressOvl.querySelector(".bz-rp-box");
@@ -38005,14 +38100,7 @@ ${bodyText.substring(0, 6e3)}`;
     const ovl = document.createElement("div");
     ovl.className = "bz-rp";
     ovl.innerHTML = pressHtml(data);
-    const isMobile = (() => {
-      try {
-        return window.matchMedia("(max-width: 768px)").matches;
-      } catch (e) {
-        return false;
-      }
-    })();
-    if (isMobile) {
+    if (isNarrow()) {
       const close = document.createElement("button");
       close.type = "button";
       close.className = "bz-rp-close";
@@ -38020,7 +38108,7 @@ ${bodyText.substring(0, 6e3)}`;
       close.setAttribute("title", "关闭");
       close.setAttribute("aria-label", "关闭读报特刊");
       close.textContent = "✕";
-      ovl.appendChild(close);
+      (_c = ovl.querySelector(".bz-rp-box")) == null ? void 0 : _c.appendChild(close);
     }
     document.body.appendChild(ovl);
     topifyZ(ovl);
@@ -38071,11 +38159,12 @@ ${bodyText.substring(0, 6e3)}`;
   function unloadReadingPress() {
     closeReadingPress();
   }
-  var pressOvl, pressHandle, pressEsc, pressSync, pressRo;
+  var pressOvl, pressHandle, pressEsc, pressSync, pressRo, isNarrow;
   var init_press = __esm({
     "src/clipbook/press/index.ts"() {
       init_dom();
       init_esc_manager();
+      init_landscape();
       init_flow();
       init_data4();
       init_news_data();
@@ -38088,6 +38177,13 @@ ${bodyText.substring(0, 6e3)}`;
       pressEsc = null;
       pressSync = null;
       pressRo = null;
+      isNarrow = () => {
+        try {
+          return window.matchMedia("(max-width: 768px)").matches;
+        } catch (e) {
+          return false;
+        }
+      };
     }
   });
 
@@ -47834,8 +47930,7 @@ ${n.content.slice(0, 2e3)}
       h: 0,
       fit() {
         const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-        const r = el.getBoundingClientRect();
-        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        const w = Math.max(1, el.offsetWidth), h = Math.max(1, el.offsetHeight);
         if (w === cv.w && h === cv.h) return false;
         cv.w = w;
         cv.h = h;
@@ -47923,6 +48018,7 @@ ${n.content.slice(0, 2e3)}
   var clamp013, lerp2, at2, easeOut2, easeInOut2, easeBack2, spring, stagger, rollTo, cssVar, luma, rgba2, qsa, localAt, tipNode, toward;
   var init_kits = __esm({
     "src/review/analysis/kits.ts"() {
+      init_landscape();
       clamp013 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
       lerp2 = (a, b, t) => a + (b - a) * t;
       at2 = (t, dur, delay = 0) => clamp013((t - delay) / Math.max(dur, 1e-4));
@@ -47952,9 +48048,10 @@ ${n.content.slice(0, 2e3)}
       qsa = (host, sel) => Array.from(host.querySelectorAll(sel));
       localAt = (host, p) => {
         if (!host) return null;
-        const r = host.getBoundingClientRect();
-        if (r.width < 1 || r.height < 1) return null;
-        const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+        const at3 = hostLocalPx(host, p.cx, p.cy);
+        if (!at3) return null;
+        const w = host.offsetWidth || 1, h = host.offsetHeight || 1;
+        const x = at3.x / w, y = at3.y / h;
         return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
       };
       tipNode = /* @__PURE__ */ new WeakMap();
@@ -49078,12 +49175,17 @@ ${n.content.slice(0, 2e3)}
         goTo(Number((_a2 = lamp.getAttribute("data-i")) != null ? _a2 : 0), { cut: true });
       }
     };
+    const boxEl = root.querySelector(".bz-ra-box");
     const onPointerMove = (e) => {
-      const r = root.getBoundingClientRect();
+      var _a2;
+      const r = (boxEl != null ? boxEl : root).getBoundingClientRect();
+      const nx = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      const ny = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      const rot = (_a2 = boxEl == null ? void 0 : boxEl.classList.contains("is-rot90")) != null ? _a2 : false;
       cx = e.clientX;
       cy = e.clientY;
-      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
-      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      px = rot ? ny : nx;
+      py = rot ? -nx : ny;
       pin = 1;
     };
     const onPointerLeave = () => {
@@ -49106,6 +49208,10 @@ ${n.content.slice(0, 2e3)}
     filmEl.addEventListener("click", onOvlClick);
     scEl.addEventListener("wheel", onWheel, { passive: false });
     scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    const unSwipe = bindSwipeTurn(scEl, (d) => {
+      setAuto(false);
+      goRel(d);
+    });
     root.addEventListener("pointermove", onPointerMove, { passive: true });
     root.addEventListener("pointerleave", onPointerLeave, { passive: true });
     document.addEventListener("keydown", onKey);
@@ -49132,6 +49238,7 @@ ${n.content.slice(0, 2e3)}
       filmEl.removeEventListener("click", onOvlClick);
       scEl.removeEventListener("wheel", onWheel);
       scEl.removeEventListener("scroll", syncFromScroll);
+      unSwipe();
       root.removeEventListener("pointermove", onPointerMove);
       root.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("keydown", onKey);
@@ -49143,6 +49250,7 @@ ${n.content.slice(0, 2e3)}
     "src/review/analysis/engine.ts"() {
       init_motions2();
       init_kits();
+      init_gesture();
       GESTURE_GAP2 = 340;
       rafFn2 = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
       rafStop2 = (id) => {
@@ -49162,8 +49270,8 @@ ${n.content.slice(0, 2e3)}
     unloadReviewAnalysis: () => unloadReviewAnalysis
   });
   function fitRaBox(box, panel2) {
-    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
-    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+    const fit3 = fitRotatedBox(box, panel2, isNarrow2());
+    if (!fit3 || !panel2) {
       box.style.left = "16px";
       box.style.top = "16px";
       box.style.width = "calc(100vw - 32px)";
@@ -49171,15 +49279,12 @@ ${n.content.slice(0, 2e3)}
       box.style.fontSize = "16px";
       return;
     }
-    box.style.left = `${Math.round(r.left)}px`;
-    box.style.top = `${Math.round(r.top)}px`;
-    box.style.width = `${Math.round(r.width)}px`;
-    box.style.height = `${Math.round(r.height)}px`;
-    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    const base = Math.max(12, Math.min(19, 12 * Math.min(fit3.w / 900, fit3.h / 620)));
     box.style.fontSize = `${base.toFixed(2)}px`;
     box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
   }
   async function openReviewAnalysis(app) {
+    var _a2;
     const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
     if (raOvl == null ? void 0 : raOvl.isConnected) {
       const box2 = raOvl.querySelector(".bz-ra-box");
@@ -49217,14 +49322,7 @@ ${n.content.slice(0, 2e3)}
       ${analysisFixedHtml()}
       <div class="bz-ra-scroll">${analysisHtml(data)}</div>
     </div>`;
-    const isMobile = (() => {
-      try {
-        return window.matchMedia("(max-width: 768px)").matches;
-      } catch (e) {
-        return false;
-      }
-    })();
-    if (isMobile) {
+    if (isNarrow2()) {
       const close = document.createElement("button");
       close.type = "button";
       close.className = "bz-ra-close";
@@ -49232,7 +49330,7 @@ ${n.content.slice(0, 2e3)}
       close.title = "关闭";
       close.setAttribute("aria-label", "关闭");
       close.textContent = "✕";
-      ovl.appendChild(close);
+      (_a2 = ovl.querySelector(".bz-ra-box")) == null ? void 0 : _a2.appendChild(close);
     }
     document.body.appendChild(ovl);
     topifyZ(ovl);
@@ -49283,11 +49381,12 @@ ${n.content.slice(0, 2e3)}
   function unloadReviewAnalysis() {
     closeReviewAnalysis();
   }
-  var raOvl, raHandle, raEsc, raSync, raRo;
+  var raOvl, raHandle, raEsc, raSync, raRo, isNarrow2;
   var init_analysis = __esm({
     "src/review/analysis/index.ts"() {
       init_z_order();
       init_esc_manager();
+      init_landscape();
       init_review();
       init_app3();
       init_data11();
@@ -49298,6 +49397,13 @@ ${n.content.slice(0, 2e3)}
       raEsc = null;
       raSync = null;
       raRo = null;
+      isNarrow2 = () => {
+        try {
+          return window.matchMedia("(max-width: 768px)").matches;
+        } catch (e) {
+          return false;
+        }
+      };
     }
   });
 

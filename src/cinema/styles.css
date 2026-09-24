@@ -845,7 +845,7 @@
 .bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   观影志（.bz-yb，2026-09-22 全新设计）——独立全屏长片，26 幕，一幕一屏。
+   观影志（.bz-yb，2026-09-22 全新设计）——独立全屏长片，25 幕，一幕一屏。
 
    与上一稿的取舍：**幕不再靠滚动进度抽帧**。26 节各占一屏（`.bz-yb-scn` 高 = 滚动口高），
    翻一幕 = 滚一屏；翻到的那幕自己按时间轴演一遍（motions.ts）。于是没有 sticky 钉、
@@ -902,7 +902,7 @@
 .bz-yb-scroll{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
   overscroll-behavior:contain; scroll-snap-type:y mandatory}
 /* 影片根必须有确定高度：26 节的 `height:100%` 是以它为基准解析的——
-   它一旦是 auto，节高全部塌成 0，滚动口 scrollHeight 就等于屏高（2026-09-22 实测：26 幕全叠在一屏里）。 */
+   它一旦是 auto，节高全部塌成 0，滚动口 scrollHeight 就等于屏高（2026-09-22 实测：25 幕全叠在一屏里）。 */
 .bz-yb-film{position:relative; height:100%; background:var(--yb-paper)}
 .bz-yb-close{position:absolute; top:1.1em; right:1.3em; z-index:30;
   width:2.4em; height:2.4em; border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -915,7 +915,7 @@
 
 /* ── 一幕一屏 + 幕骨架（序号/幕名/字段来源 · 主构图 · 脚注） ── */
 .bz-yb-scn{position:relative; height:100%; overflow:hidden; scroll-snap-align:start; scroll-snap-stop:always}
-/* 幕里只有主构图：顶部/底部文字已按用户拍板去掉（2026-09-22），上下留白只用于呼吸与避让底栏 */
+/* 幕里只有主构图：顶部/底部文字已按用户拍板去掉（2026-09-22），上下留白只用于呼吸 */
 .yb-sc{position:absolute; inset:0; display:grid; grid-template-rows:minmax(0,1fr);
   padding:3.2em 4em 3.6em 3.4em}
 .yb-main{position:relative; min-height:0}
@@ -937,7 +937,7 @@
 .yb-h4{margin:0 0 .5em; font-size:.86em; letter-spacing:.06em; color:rgb(var(--yb-dim-rgb)); font-weight:600}
 .yb-empty{color:rgb(var(--yb-faint-rgb)); font-size:.9em}
 
-/* 固定层：右侧导航点（每幕常驻的翻幕提醒，视觉刻意放弱）+ 底栏。
+/* 固定层：右缘导航点（每幕常驻的翻幕提醒，视觉刻意放弱）。
    层在 .bz-yb-box 直下（滚动容器外），翻幕不位移。 */
 .yb-fixed{position:absolute; inset:0; pointer-events:none; z-index:6}
 .yb-rail{position:absolute; right:.5em; top:50%; transform:translateY(-50%);

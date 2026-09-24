@@ -1,10 +1,10 @@
 /**
- * 观影志 · 26 幕版式（纯字符串，用户文本一律转义）
+ * 观影志 · 25 幕版式（纯字符串，用户文本一律转义）
  *
  * 版式纪律（上一稿「每幕各画一套、颜色版面乱」就是这么来的）：
  *   **每一幕共用同一个骨架** `.yb-sc`：左上「序号 + 幕名 + 字段来源」，中间「本幕主构图」，
  *   左下「本幕口径脚注」。主构图只换 `.yb-main` 里的东西，标题/脚注/边距恒定——
- *   26 幕摆在一起才像同一本书。
+ *   25 幕摆在一起才像同一本书。
  * 颜色只走 `--yb-*`（styles.css 的变量层，明暗两套），幕内不写死颜色。
  * 动效一律由 motions.ts 驱动，这里只出静态 DOM 与 `data-r` 引用点。
  */
@@ -580,7 +580,7 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
       </div>
     </div>`, `${YB_TITLE} · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
 
-  /* 固定层：右侧导航点 + 底栏。原来挂在 film 内，但 film 盒只有一屏高（26 幕是它的溢出内容），
+  /* 固定层：右侧导航点 + 底栏。原来挂在 film 内，但 film 盒只有一屏高（25 幕是它的溢出内容），
    * absolute inset:0 会钉死在第一幕、翻幕即被滚走——「导航只有首页有」就是这么来的。
    * 改为单独导出，由 ui 层放进滚动容器外（.bz-yb-box 直下），box 不滚，这才是真固定层。 */
   return `<div class="bz-yb-film">${S.join('')}</div>`;

@@ -14,6 +14,7 @@
  */
 import type { PressData } from './data';
 import { buildPressPerfs, palette, type Palette, type Perf, type PerfCtx } from './motions';
+import { bindSwipeTurn } from '../../core/gesture';
 
 export interface PressHandle { stop(): void }
 
@@ -197,11 +198,17 @@ export function bindPress(root: HTMLElement, data: PressData): PressHandle {
     if (tickEl) goTo(Number(tickEl.getAttribute('data-i') ?? 0), { cut: true });
   };
 
+  /** 指针归一（−1..1）认**层框逻辑**系（box = .bz-rp-box）：各幕把 px/py 直接映回画布像素，
+   *  软横屏旋转态（is-rot90）视觉 rect 会把交互整个转错 90°——归一后换轴反向。
+   *  cx/cy 仍是视口值（浮签等 fixed 定位消费方要的就是它）。 */
   const onPointerMove = (e: PointerEvent): void => {
-    const r = root.getBoundingClientRect();
+    const r = box.getBoundingClientRect();
+    const nx = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
+    const ny = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
+    const rot = box.classList.contains('is-rot90');
     cx = e.clientX; cy = e.clientY;
-    px = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
-    py = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
+    px = rot ? ny : nx;
+    py = rot ? -nx : ny;
     pin = 1;
   };
   const onPointerLeave = (): void => { pin = 0; px = 0; py = 0; };
@@ -224,6 +231,8 @@ export function bindPress(root: HTMLElement, data: PressData): PressHandle {
   scEl.addEventListener('wheel', onWheel, { passive: false });
   scEl.addEventListener('scroll', syncFromScroll, { passive: true });
   box.addEventListener('click', onOvlClick); // 底栏（自动/刻度）在 box 层，点测绑 box
+  // 触屏没有 wheel（真机上滑翻不动页）：手势区整体接管，一滑一幕（core/gesture 单源）
+  const unSwipe = bindSwipeTurn(scEl, (d) => goRel(d));
   root.addEventListener('pointermove', onPointerMove, { passive: true });
   root.addEventListener('pointerleave', onPointerLeave, { passive: true });
   document.addEventListener('keydown', onKey);
@@ -240,6 +249,7 @@ export function bindPress(root: HTMLElement, data: PressData): PressHandle {
     clearCut();
     scEl.removeEventListener('wheel', onWheel);
     scEl.removeEventListener('scroll', syncFromScroll);
+    unSwipe();
     box.removeEventListener('click', onOvlClick);
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerleave', onPointerLeave);
