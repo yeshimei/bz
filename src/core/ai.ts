@@ -716,12 +716,14 @@ const AI_TEST_PROMPT = '这是一次连通性测试。请只回复两个字母�
  */
 export async function testAIConnectivity(providerId?: string): Promise<AITestResult> {
   const id = String(providerId || '').trim();
-  const desc = getProviderDescriptor(id || DEFAULT_AI_PROVIDER);
-  const provider = await getAIProvider(id || undefined);
-  const model = provider.model || undefined; // getAIProvider 已含 desc.model 兜底（review nit 4）
+  const s = getQ3Settings();
+  const effective = id || String(s.aiProvider || '') || DEFAULT_AI_PROVIDER;
+  const desc = getProviderDescriptor(effective);
+  const provider = await getAIProvider(effective);
+  const model = provider.model || desc.model || undefined; // getAIProvider 已含 desc.model 兜底（review nit 4）
   const t0 = Date.now();
   const svc = createAI();
-  const reply = (await svc.prompt(AI_TEST_PROMPT, model, { provider: id || undefined })).trim();
+  const reply = (await svc.prompt(AI_TEST_PROMPT, model, { provider: effective })).trim();
   if (!reply) throw new Error(`${desc.label} 连通异常：请求成功但回复为空`);
   return { label: desc.label, model: model || '默认模型', ms: Date.now() - t0, reply };
 }

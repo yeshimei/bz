@@ -23,9 +23,21 @@ export function shortFailReason(e: unknown): string {
   return '请求失败';
 }
 
+/** 复原定时器按元素分账（issue 434 review）：结果态 2 秒窗口内再点一轮，先清上一轮的复原柄，
+ *  否则旧柄会把新一轮 busy 中途拍回 idle，造成对计费接口的重复请求。 */
+const resetTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
+function clearResetTimer(el: HTMLElement): void {
+  const prev = resetTimers.get(el);
+  if (prev !== undefined) {
+    clearTimeout(prev);
+    resetTimers.delete(el);
+  }
+}
+
 /** 把状态写到按钮元素上（el 缺省安全——渲染器拿不到 buttonEl 时静默退化为无状态）。
- *  busy 期间禁点、文案让位转圈；ok 换「已连通」、fail 换简短原因（failText），文案配色由
- *  样式类的绿/红边框承担；idle 恢复原文案（如「测试」）。 */
+ *  busy 期间禁点、文案隐形保宽只留转圈（并清掉未决的复原柄）；ok 换「已连通」、fail 换简短
+ *  原因（failText），红绿由样式类承担；idle 恢复原文案（如「测试」）。 */
 export function setRowBtnState(
   el: HTMLElement | undefined,
   state: RowBtnState,
@@ -37,6 +49,7 @@ export function setRowBtnState(
   (el as HTMLButtonElement).disabled = state === 'busy';
   if (state === 'busy') {
     el.classList.add('bz-rowbtn--busy');
+    clearResetTimer(el);
   } else if (state === 'ok') {
     el.classList.add('bz-rowbtn--ok');
     el.textContent = ROW_BTN_OK_TEXT;
@@ -46,4 +59,17 @@ export function setRowBtnState(
   } else {
     el.textContent = label;
   }
+}
+
+/** 结果态落定后安排复原（渲染器在 ok/fail 后调用一次；到点回原文案并重新可点） */
+export function armRowBtnReset(el: HTMLElement | undefined, label: string): void {
+  if (!el) return;
+  const prev = resetTimers.get(el);
+  if (prev !== undefined) clearTimeout(prev);
+  const t = setTimeout(() => {
+    resetTimers.delete(el);
+    setRowBtnState(el, 'idle', label);
+    (el as HTMLButtonElement).disabled = false;
+  }, ROW_BTN_RESET_MS);
+  resetTimers.set(el, t);
 }

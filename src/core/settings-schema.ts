@@ -16,7 +16,7 @@
  */
 import { Setting } from 'obsidian';
 import type BzSettings from '../settings';
-import { ROW_BTN_RESET_MS, setRowBtnState, shortFailReason } from './settings-btn-state';
+import { ROW_BTN_RESET_MS, armRowBtnReset, setRowBtnState, shortFailReason } from './settings-btn-state';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
@@ -685,7 +685,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
                 if (a.stateful) setRowBtnState(el, 'fail', a.text, shortFailReason(e));
                 else throw e;
               } finally {
-                if (a.stateful) setTimeout(() => setRowBtnState(el, 'idle', a.text), ROW_BTN_RESET_MS);
+                if (a.stateful) armRowBtnReset(el, a.text);
               }
               if (currentText && currentText.setValue) {
                 dirty = false;

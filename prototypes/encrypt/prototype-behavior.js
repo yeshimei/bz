@@ -1,4 +1,4 @@
-/* 源指纹 58ce35b4eb1757ed · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ad6beec0ed8992ec · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -6111,12 +6111,21 @@ var BZW_encrypt = (() => {
     if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
     return "请求失败";
   }
+  var resetTimers = /* @__PURE__ */ new WeakMap();
+  function clearResetTimer(el) {
+    const prev = resetTimers.get(el);
+    if (prev !== void 0) {
+      clearTimeout(prev);
+      resetTimers.delete(el);
+    }
+  }
   function setRowBtnState(el, state, label, failText) {
     if (!el) return;
     el.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
     el.disabled = state === "busy";
     if (state === "busy") {
       el.classList.add("bz-rowbtn--busy");
+      clearResetTimer(el);
     } else if (state === "ok") {
       el.classList.add("bz-rowbtn--ok");
       el.textContent = ROW_BTN_OK_TEXT;
@@ -6126,6 +6135,17 @@ var BZW_encrypt = (() => {
     } else {
       el.textContent = label;
     }
+  }
+  function armRowBtnReset(el, label) {
+    if (!el) return;
+    const prev = resetTimers.get(el);
+    if (prev !== void 0) clearTimeout(prev);
+    const t = setTimeout(() => {
+      resetTimers.delete(el);
+      setRowBtnState(el, "idle", label);
+      el.disabled = false;
+    }, ROW_BTN_RESET_MS);
+    resetTimers.set(el, t);
   }
 
   // src/core/settings-schema.ts
@@ -6823,7 +6843,7 @@ var BZW_encrypt = (() => {
                   if (a.stateful) setRowBtnState(el, "fail", a.text, shortFailReason(e));
                   else throw e;
                 } finally {
-                  if (a.stateful) setTimeout(() => setRowBtnState(el, "idle", a.text), ROW_BTN_RESET_MS);
+                  if (a.stateful) armRowBtnReset(el, a.text);
                 }
                 if (currentText && currentText.setValue) {
                   dirty = false;
