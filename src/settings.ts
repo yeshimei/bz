@@ -334,9 +334,12 @@ export default interface BzSettings {
   linkAgentAutoClean: boolean;
   /** 已有关联不再建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 related 非空笔记跳过；手动重跑豁免 */
   linkAgentRespectRelated: boolean;
-  /** 候选相似度下限（issue 330/ADR-0146）：vectorSearch 锐化后分数（与参考面板百分比同尺）
-   *  低于此值的候选直接剔除不送 AI 裁判；0 = 不过滤 */
+  /** 候选相似度下限（issue 330/ADR-0146）：vectorSearch 分数（原始余弦 [0,1]，与参考面板百分比同尺）
+   *  低于此值的候选直接剔除不送 AI 裁判；0 = 不过滤。issue 425/ADR-0185 起分数不再锐化 */
   linkAgentMinScore: number;
+  /** 内部标记（issue 425/ADR-0185，非设置项、不进设置面板）：'cos' = linkAgentMinScore 已从
+   *  锐化尺换算到原始余弦尺。两把尺值域重叠、无法由数值判幂等，故显式留痕（见 migrateLinkMinScoreScale） */
+  linkAgentMinScoreScale?: 'cos';
 
   // ===== 第二大脑（2026-09-12 拍板：启用开关退役）=====
   /** 第二大脑不再有启用键：启动时无条件自动加载（原 l7A secondBrainEnabled 开关与懒加载分支一并退役，
@@ -639,6 +642,32 @@ export function migrateRetiredFavoritesSortKey(raw: unknown): boolean {
   return true;
 }
 
+/** 锐化尺 → 原始余弦尺的换算指数（issue 425/ADR-0185）：旧分 = cos^0.35 ⇒ cos = 旧分^(1/0.35) */
+export const MIN_SCORE_UNSHARPEN_EXPONENT = 1 / 0.35;
+
+/**
+ * issue 425/ADR-0185 一次性迁移：`linkAgentMinScore` 从「score^0.35 锐化尺」换算到「原始余弦尺」。
+ *
+ * 两把尺值域同为 [0,1]，光看数值判不出是否已换算（0.3 再换算一次会掉到 0.03 ≈ 关掉阈值），
+ * 故留内部标记键 `linkAgentMinScoreScale`（'cos' = 已换算）作幂等凭据；标记在册即不再动值。
+ * 换算结果按两位小数取整并下限 0.01：0.05 这类极小值经幂次会掉到 1e-4，取整成 0 就把
+ * 「极严」翻成「不过滤」，与用户原意相反。
+ */
+export function migrateLinkMinScoreScale(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if (rec.linkAgentMinScoreScale === 'cos') return false;
+  if (rec.linkAgentMinScore === undefined) return false; // 未落盘过该键：缺省值走新尺，无需换算
+  const old = rec.linkAgentMinScore;
+  rec.linkAgentMinScoreScale = 'cos';
+  if (typeof old !== 'number' || !Number.isFinite(old) || old <= 0) {
+    rec.linkAgentMinScore = DEFAULT_SETTINGS.linkAgentMinScore; // 脏值（0/负数/非数）：回落新默认
+    return true;
+  }
+  rec.linkAgentMinScore = Math.max(0.01, Math.round(Math.pow(old, MIN_SCORE_UNSHARPEN_EXPONENT) * 100) / 100);
+  return true;
+}
+
 export function migrateAutoLinkSettings(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
@@ -817,7 +846,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentNotify: true,
   linkAgentAutoClean: true,
   linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
-  linkAgentMinScore: 0.65, // issue 330/ADR-0146：候选相似度下限（锐化后分数，0.65≈原始余弦 0.30）；0=不过滤
+  linkAgentMinScore: 0.3, // issue 330/ADR-0146（issue 425/ADR-0185 换算）：候选相似度下限（原始余弦，0.3≡旧锐化尺 0.65）；0=不过滤
 
   // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
   // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘

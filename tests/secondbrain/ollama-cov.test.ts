@@ -1,7 +1,8 @@
 // @vitest-environment node
 /**
  * 第二大脑 Ollama HTTP 覆盖率补测（ticket 103：设置键随 secondBrain* 换代）：
- * 非 2xx 响应抛错、空向量/缺字段兜底、批量 embeddings 缺省、对话消息缺省回退、
+ * 非 2xx 响应抛错、空向量/缺字段兜底、坏向量（零向量/非有限分量/维度不齐/条数不符）拦截
+ * （issue 425/ADR-0185）、批量 embeddings 缺省、对话消息缺省回退、
  * 远程探活 ok/false/异常三分支、自定义 baseUrl/model 传参。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -66,6 +67,27 @@ describe('Ollama HTTP 覆盖补测', () => {
     await expect(getEmbedding('x', false)).rejects.toThrow('向量为空');
     vi.stubGlobal('fetch', stubJson({ embedding: [] }));
     await expect(getEmbedding('x', false)).rejects.toThrow('向量为空');
+  });
+
+  it('getEmbedding：零向量 / 非有限分量 → 抛「向量无效」（issue 425：坏向量绝不入库）', async () => {
+    vi.stubGlobal('fetch', stubJson({ embedding: [0, 0, 0] }));
+    await expect(getEmbedding('x', false)).rejects.toThrow('向量无效（全零或含非有限分量）');
+    vi.stubGlobal('fetch', stubJson({ embedding: [0.1, NaN] }));
+    await expect(getEmbedding('x', false)).rejects.toThrow('向量无效（全零或含非有限分量）');
+    vi.stubGlobal('fetch', stubJson({ embedding: [0.1, Infinity] }));
+    await expect(getEmbedding('x', false)).rejects.toThrow('向量无效（全零或含非有限分量）');
+  });
+
+  it('getEmbeddingsBatch：条数与输入不符 → 抛「不匹配」（防错位登记）', async () => {
+    vi.stubGlobal('fetch', stubJson({ embeddings: [[1], [2], [3]] }));
+    await expect(getEmbeddingsBatch(['a', 'b'])).rejects.toThrow('批量向量结果与输入不匹配（3/2）');
+  });
+
+  it('getEmbeddingsBatch：批内含零向量 / 维度不齐 → 整批失败（交逐条回退逐条把关）', async () => {
+    vi.stubGlobal('fetch', stubJson({ embeddings: [[1, 0], [0, 0]] }));
+    await expect(getEmbeddingsBatch(['a', 'b'])).rejects.toThrow('批量向量含无效向量');
+    vi.stubGlobal('fetch', stubJson({ embeddings: [[1, 0], [1, 0, 0]] }));
+    await expect(getEmbeddingsBatch(['a', 'b'])).rejects.toThrow('批量向量含无效向量');
   });
 
   it('getEmbeddingsBatch：请求体含模型与 input；embeddings 正常返回', async () => {

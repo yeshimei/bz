@@ -316,13 +316,13 @@ describe('管线：related 幂等写入与可达性门', () => {
     expect(r2.map((c) => c.path)).toEqual(['卡片盒2/N.md']);
   });
 
-  it('候选相似度下限（issue 330/ADR-0146）：低于下限的候选剔除不送裁判；边界值保留；0 不过滤', async () => {
-    // 默认 0.65：等于下限保留（严格小于才剔）、低于剔除
+  it('候选相似度下限（issue 330/ADR-0146，issue 425/ADR-0185 换算）：低于下限的候选剔除不送裁判；边界值保留；0 不过滤', async () => {
+    // 默认 0.30（原始余弦尺，分数不再锐化）：等于下限保留（严格小于才剔）、低于剔除
     const { vault, agent } = makeWorld({
       hits: [
-        { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
-        { path: '文献盒/D.md', chunk: 'D', score: 0.65 }, // 边界：保留
-        { path: '文献盒/E.md', chunk: 'E', score: 0.649 }, // 低于下限：剔除
+        { path: '文献盒/B.md', chunk: 'B', score: 0.5 },
+        { path: '文献盒/D.md', chunk: 'D', score: 0.3 }, // 边界：保留
+        { path: '文献盒/E.md', chunk: 'E', score: 0.299 }, // 低于下限：剔除
       ],
     });
     vault.files.set('文献盒/E.md', 'e');

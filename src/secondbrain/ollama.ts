@@ -2,6 +2,7 @@
  * 第二大脑 Ollama HTTP（ticket 103；对齐 QA 闪念.js L100-151）
  */
 import { buildConfig } from './config';
+import { isValidVector } from './vector-math';
 
 export const EMBED_BATCH_SIZE = 64;
 
@@ -53,6 +54,9 @@ export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: str
   const data = await resp.json();
   const vec = data.embedding;
   if (!vec || !vec.length) throw new Error('向量为空');
+  // issue 425/ADR-0185：零向量（或含 NaN/Infinity）绝不放行——旧库那 5 条零向量正是
+  // 「任何查询都命中同一批 78%」的根因（零向量到任意单位向量的距离恒 1.0）
+  if (!isValidVector(vec) || !Array.isArray(vec)) throw new Error('向量无效（全零或含非有限分量）');
   return vec;
 }
 
@@ -68,7 +72,14 @@ export async function getEmbeddingsBatch(texts: string[], baseUrl?: string): Pro
   const data = await resp.json();
   // 空结果校验（QA L125 同语义，ticket 107 补回）：畸形 2xx 响应走逐条回退而非登记空向量
   const vec = data.embeddings;
-  if (!vec || !vec.length) throw new Error('向量为空');
+  if (!Array.isArray(vec) || !vec.length) throw new Error('向量为空');
+  // issue 425/ADR-0185：条数与输入不符 / 含零向量或维度不齐 → 整批失败交逐条回退
+  // （逐条路径由 getEmbedding 同口径把关）——坏向量一旦登记进库就会长期污染检索结果
+  if (vec.length !== texts.length) throw new Error(`批量向量结果与输入不匹配（${vec.length}/${texts.length}）`);
+  const dim = (vec[0] as number[]).length;
+  for (const v of vec) {
+    if (!isValidVector(v) || v.length !== dim) throw new Error('批量向量含无效向量（零向量/非有限分量/维度不齐）');
+  }
   return vec;
 }
 

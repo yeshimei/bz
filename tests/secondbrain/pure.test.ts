@@ -1,12 +1,13 @@
 // @vitest-environment node
 /**
- * 第二大脑纯函数测试（ticket 103 重写对齐）：chunk/vptree/text-search/tfidf/context/parallel
- * 口径要点：smartChunk 空行分段聚合（非全文句界顺序拼接）；vptree_search 无累加器新签名；
- * searchTextIndex(query, notes, topK) 直接评分扫描；getCurrentContext 句界含分号/省略号。
+ * 第二大脑纯函数测试（ticket 103 重写对齐）：chunk/vector-math/text-search/tfidf/context/parallel
+ * 口径要点：smartChunk 空行分段聚合（非全文句界顺序拼接）；normalizeVec 返回新数组不改入参、
+ * 退化输入兜底零向量；searchTextIndex(query, notes, topK) 直接评分扫描；getCurrentContext 句界含分号/省略号。
  * ticket 110：stripFrontmatter/embedChunks——YAML 头不进任何 chunk、标题并入首块。
+ * issue 425/ADR-0185：vptree 已退役（近似召回 + 零向量假高分），其测试块随之改名 vector-math。
  */
 import { describe, it, expect } from 'vitest';
-import { euclideanSq, normalizeVec, vptree_build, vptree_search } from '../../src/secondbrain/vptree';
+import { isValidVector, normalizeVec } from '../../src/secondbrain/vector-math';
 import { smartChunk, CHUNK_SIZE, stripFrontmatter, embedChunks, noteTitleFromPath, canvasToText } from '../../src/secondbrain/chunk';
 import { STOP_WORDS, extractTerms, searchTextIndex } from '../../src/secondbrain/text-search';
 import { TFIDF, TFIDF_STOP_WORDS } from '../../src/secondbrain/tfidf';
@@ -146,14 +147,8 @@ describe('canvasToText（ADR-0141 §5：白板抽节点文本进索引，只作�
   });
 });
 
-describe('vptree', () => {
-  it('euclideanSq 接受 number[] 与 Float32Array', () => {
-    expect(euclideanSq([0, 0], [3, 4])).toBe(25);
-    expect(euclideanSq(Float32Array.from([0, 0]), [3, 4])).toBe(25);
-    expect(euclideanSq([0, 0], Float32Array.from([3, 4]))).toBe(25);
-  });
-
-  it('normalizeVec 返回新数组且不改入参；零向量返回副本', () => {
+describe('vector-math（归一化 / 向量校验）', () => {
+  it('normalizeVec 返回新数组且不改入参；零向量返回等长零向量', () => {
     const src = [3, 4];
     const n = normalizeVec(src);
     expect(src).toEqual([3, 4]); // 入参不被原地修改
@@ -161,62 +156,32 @@ describe('vptree', () => {
     expect(n[0]).toBeCloseTo(0.6, 10);
     expect(n[1]).toBeCloseTo(0.8, 10);
     expect(normalizeVec([0, 0])).toEqual([0, 0]);
+    expect(normalizeVec(Float32Array.from([0, 0, 0]))).toEqual([0, 0, 0]); // 长度跟随入参
   });
 
-  it('build + search（无第 5 参的新签名）返回升序 best-k', () => {
-    const items = [
-      [0, 0],
-      [1, 0],
-      [0, 1],
-      [10, 10],
-    ];
-    const tree = vptree_build(items, items.map((_, i) => i));
-    const r = vptree_search(tree, items, [0.1, 0.1], 2);
-    expect(r).toHaveLength(2);
-    expect(r[0].idx).toBe(0); // 最近
-    for (let i = 1; i < r.length; i++) expect(r[i].dist).toBeGreaterThanOrEqual(r[i - 1].dist);
+  it('normalizeVec：非有限分量（NaN/Infinity）兜底零向量，不把脏值扩散进点积', () => {
+    expect(normalizeVec([NaN, 1])).toEqual([0, 0]);
+    expect(normalizeVec([Infinity, 1])).toEqual([0, 0]);
   });
 
-  it('mu/minD/maxD 包络剪枝不漏点：大 k 全量结果与树节点枚举一致（QA 同构：vp 复制进子树）', () => {
-    const items = [
-      [0, 0],
-      [1, 1],
-      [2, 0],
-      [0, 2],
-      [5, 5],
-      [-3, 4],
-      [4, -1],
-      [-1, -1],
-      [10, 0],
-      [0, 10],
-      [3, 3],
-      [-4, -2],
-    ];
-    const tree = vptree_build(items, items.map((_, i) => i));
-    // 与 QA 一致的实现会把 vp 节点复制进自己的子树（节点数 > 元素数），
-    // 故正确性基准取「树节点全枚举」而非元素去重集。
-    const enumAll = (n: typeof tree, q: number[]): { idx: number; dist: number }[] =>
-      n
-        ? [
-            { idx: n.idx, dist: euclideanSq(q, items[n.idx]) },
-            ...enumAll(n.left, q),
-            ...enumAll(n.right, q),
-          ]
-        : [];
-    const canon = (arr: { idx: number; dist: number }[]) =>
-      arr.map((r) => ({ idx: r.idx, dist: r.dist })).sort((a, b) => a.dist - b.dist || a.idx - b.idx);
-    for (const q of [[0.5, 0.5], [9, 9], [-4, -3], [2, -1]]) {
-      const got = vptree_search(tree, items, q, 999); // k 超过节点数 → 全树遍历不剪枝
-      const want = enumAll(tree, q);
-      expect(canon(got)).toEqual(canon(want)); // 每个节点的 (idx, dist) 完整且升序可达
-      const nearest = vptree_search(tree, items, q, 1)[0];
-      expect(nearest.dist).toBe(Math.min(...want.map((r) => r.dist))); // 最近邻不丢
-    }
+  it('isValidVector：有限且模 > 0 才算有效（number[] / Float32Array 均可）', () => {
+    expect(isValidVector([1, 0])).toBe(true);
+    expect(isValidVector(Float32Array.from([0.5, 0.5]))).toBe(true);
+    expect(isValidVector([1e-30, 0])).toBe(true); // 极小但非零：仍可归一化
   });
 
-  it('空树：build 返回 null、search 返回 []', () => {
-    expect(vptree_build([], [])).toBeNull();
-    expect(vptree_search(null, [], [], 5)).toEqual([]);
+  it('isValidVector：空 / 零向量 / 非有限分量 / 非数组一律无效（issue 425 病根防线）', () => {
+    // 零向量到任意单位向量的距离恒 1.0，旧公式 cos=1−d²/2 会反推出 0.5 的假高分
+    expect(isValidVector([0, 0])).toBe(false);
+    expect(isValidVector(Float32Array.from([0, 0, 0]))).toBe(false);
+    expect(isValidVector([])).toBe(false);
+    expect(isValidVector([NaN, 1])).toBe(false);
+    expect(isValidVector([Infinity])).toBe(false);
+    expect(isValidVector(undefined)).toBe(false);
+    expect(isValidVector(null)).toBe(false);
+    expect(isValidVector(0.5)).toBe(false);
+    expect(isValidVector('0.5')).toBe(false);
+    expect(isValidVector({})).toBe(false);
   });
 });
 

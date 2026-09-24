@@ -23,7 +23,7 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -271,8 +271,16 @@ export default class BzPlugin extends Plugin {
     const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
     // issue 364：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
     const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
+    // issue 425：候选相似度下限从「score^0.35 锐化尺」换算到「原始余弦尺」（分数不再锐化）
+    const minScoreScaleMigrated = migrateLinkMinScoreScale(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated || retiredSortKeyMigrated) {
+    if (
+      memoKeysMigrated ||
+      autoLinkMigrated ||
+      retiredAIKeysMigrated ||
+      retiredSortKeyMigrated ||
+      minScoreScaleMigrated
+    ) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);
