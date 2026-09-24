@@ -22,7 +22,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 const COUNT_BASELINE: Record<string, number> = {
   global: 3,
   notice: 4,
-  ai: 12, // 2026-09-24 issue 424：JEV 组收口为服务商/密钥/模型（-总开关-端点-超时+服务商）；Embedding 组「移动端远程地址」行删
+  ai: 14, // 2026-09-24 issue 431/ADR-0189：重排总闸常显（空快照下由隐转现 +1）+「重排走 Jev」通道开关（+1）；issue 424 基线 12
   diary: 5,
   memo: 11,
   belongings: 6,

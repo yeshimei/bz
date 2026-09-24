@@ -213,9 +213,10 @@ export function pickEmbeddingModels(data: any): ModelOption[] {
   }));
 }
 
-/** Qwen3-Embedding-8B 判定（issue 427/ADR-0186）：AI 面板「启用重排」行的可见性与 secondbrain
- *  检索侧的重排生效条件**共用这一条判定**（行隐藏即不生效，不留「藏着的开关还在起作用」的暗态）。
- *  只认 8b：重排是给 8B 嵌入配的增强档（8b 之外的嵌入模型一律不启用）。 */
+/** Qwen3-Embedding-8B 判定（issue 427/ADR-0186 建；issue 431/ADR-0189 起收窄为**本地重排通道**门）：
+ *  secondbrain/config `rerankChannel()` 的 local 档与 AI 面板「重排模型」行的可见性共用这一条判定
+ *  （「启用重排」总闸自 issue 431 起常显——Jev 第二通道不吃本地显存、不绑此门，8B 门只管本地通道）。
+ *  只认 8b：本地重排是给 8B 嵌入配的增强档（显存共驻考量，8b 之外的嵌入模型不启用本地通道）。 */
 export function isQwen3Embedding8b(model: unknown): boolean {
   return /qwen3[-_]?embedding[:\-_.]?8b\b/i.test(String(model ?? ''));
 }

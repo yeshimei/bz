@@ -13,6 +13,9 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { VectorStore } from '../../src/secondbrain/vector-store';
 import { getEmbedding } from '../../src/secondbrain/ollama';
 import { rerankScores } from '../../src/secondbrain/rerank';
+import { jevRerankScores } from '../../src/secondbrain/rerank-jev';
+import { abortError } from '../../src/core/abort';
+
 
 vi.mock('../../src/secondbrain/ollama', () => ({
   EMBED_BATCH_SIZE: 64,
@@ -25,6 +28,10 @@ vi.mock('../../src/secondbrain/ollama', () => ({
 vi.mock('../../src/secondbrain/rerank', () => ({
   RERANK_MAX_DOCS: 3, // 收紧上限便于断言（生产 50 = TopK 设置上限，见 panel-settings-rows 不变式测试）
   rerankScores: vi.fn(),
+}));
+
+vi.mock('../../src/secondbrain/rerank-jev', () => ({
+  jevRerankScores: vi.fn(),
 }));
 
 /** N 笔记各一块：行与查询 [1,0] 的余弦 = 1 / 0.6 / 0.28 / 0.2（余弦序 a > b > c > d） */
@@ -51,6 +58,7 @@ function settings(overrides: Record<string, unknown> = {}) {
     secondBrainOllamaUrl: 'http://localhost:11434',
     secondBrainEmbeddingModel: 'qwen3-embedding:8b',
     secondBrainRerank: true,
+    secondBrainRerankJev: false, // issue 431/ADR-0189：缺省本地通道（既有用例语义零变化）
     ...overrides,
   };
 }
@@ -213,5 +221,99 @@ describe('检索取消与重排分回填（issue 428/429）', () => {
 
     await expect(vs.search('q', 10, onDegraded, ac.signal)).rejects.toThrow('请求已中断');
     expect(onDegraded).not.toHaveBeenCalled();
+  });
+});
+
+describe('Jev 重排通道分流（issue 431/ADR-0189）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => settings() as any);
+    vi.mocked(getEmbedding).mockReset();
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
+    vi.mocked(rerankScores).mockReset();
+    vi.mocked(jevRerankScores).mockReset();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('Jev 开：名次按 noul 分，score 仍余弦；本地通道一次不发（二选一）', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    vi.mocked(jevRerankScores).mockResolvedValue([0.1, 0.9, 0.05]); // 按档序给分：b(0.9) 压过 a(0.1)
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['b.md', 'a.md', 'c.md']);
+    expect(res.map((r) => r.rerankScore)).toEqual([0.9, 0.1, 0.05]);
+    expect(res[0].score).toBeCloseTo(0.6, 5); // score 不动：阈值仍走余弦单尺
+    expect(vi.mocked(jevRerankScores)).toHaveBeenCalledTimes(1);
+    const [query, docs] = vi.mocked(jevRerankScores).mock.calls[0];
+    expect(query).toBe('q');
+    expect(docs).toEqual(['甲', '乙', '丙']); // 整列进重排
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled();
+  });
+
+  it('Jev 开 + 嵌入非 8B：照样走 Jev 重排（云端不吃本地显存，8B 门只管本地通道）', async () => {
+    setSettingsProvider(() => settings({ secondBrainEmbeddingModel: 'bge-m3', secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    vi.mocked(jevRerankScores).mockResolvedValue([0.2, 0.9, 0.1]);
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['b.md', 'a.md', 'c.md']);
+    expect(vi.mocked(jevRerankScores)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled();
+  });
+
+  it('Jev 不可用（null = 未配密钥 / 超时 / 畸形 / 缺题）：维持余弦序，无 rerankScore', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    vi.mocked(jevRerankScores).mockResolvedValue(null);
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']); // 纯余弦序
+    expect(res.map((r) => r.rerankScore)).toEqual([undefined, undefined, undefined]);
+  });
+
+  it('Jev 抛非取消错：整轮回余弦序 + console.warn，不打断检索', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    vi.mocked(jevRerankScores).mockRejectedValue(new Error('Jev API 503'));
+    const warnSpy = vi.spyOn(console, 'warn');
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']);
+    expect(warnSpy.mock.calls.some((c) => String(c[0]).includes('重排不可用，按余弦序返回'))).toBe(true);
+  });
+
+  it('Jev 中途取消：AbortError 直抛，不回退余弦序（与本地通道同口径）', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+    const ac = new AbortController();
+    vi.mocked(jevRerankScores).mockRejectedValue(abortError());
+
+    await expect(vs.vectorSearch('q', 10, undefined, ac.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('总闸关：即使 Jev 开着也不重排（off 优先于通道选择，无「总闸关了 Jev 还在跑」的怪态）', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerank: false, secondBrainRerankJev: true }) as any);
+    const vs = seedStore();
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md']);
+    expect(vi.mocked(jevRerankScores)).not.toHaveBeenCalled();
+    expect(vi.mocked(rerankScores)).not.toHaveBeenCalled();
+  });
+
+  it('超长列表：Jev 通道同样整轮跳过（不半重排，也不白付云端往返）', async () => {
+    setSettingsProvider(() => settings({ secondBrainRerankJev: true }) as any);
+    const vs = seedStore(4);
+    vi.mocked(jevRerankScores).mockResolvedValue([0.05, 0.1, 0.9, 0.2]);
+
+    const res = await vs.vectorSearch('q', 10);
+    expect(res.map((r) => r.path)).toEqual(['a.md', 'b.md', 'c.md', 'd.md']);
+    expect(vi.mocked(jevRerankScores)).not.toHaveBeenCalled();
   });
 });
