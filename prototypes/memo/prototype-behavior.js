@@ -1,5 +1,5 @@
-/* 源指纹 99e69764395f0cd2 · 仓内输入 262 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 a29d96b077a6e537 · 仓内输入 261 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -14450,6 +14450,88 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/jev.ts
+  function getJevProviderDescriptor(id) {
+    return JEV_PROVIDER_REGISTRY.find((p) => p.id === id) || JEV_PROVIDER_REGISTRY[0];
+  }
+  function resolveJevConfig(override) {
+    var _a2, _b2, _c, _d;
+    const s = tryGetSettings();
+    const pick = (key, fallback) => {
+      const v = s == null ? void 0 : s[key];
+      return v === void 0 || v === null || v === "" ? fallback : v;
+    };
+    const desc = getJevProviderDescriptor(pick("jevProvider", DEFAULT_JEV_PROVIDER));
+    return {
+      endpoint: String((_a2 = override == null ? void 0 : override.endpoint) != null ? _a2 : desc.endpoint),
+      apiKey: String((_b2 = override == null ? void 0 : override.apiKey) != null ? _b2 : pick("jevApiKey", "")),
+      model: String((_c = override == null ? void 0 : override.model) != null ? _c : pick("jevModel", JEV_DEFAULT_MODEL)),
+      timeoutMs: (_d = override == null ? void 0 : override.timeoutMs) != null ? _d : JEV_DEFAULT_TIMEOUT_MS
+    };
+  }
+  function parseJevModels(data, label = "Typesafe") {
+    const list = data == null ? void 0 : data.models;
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const m of list) {
+      const id = m && typeof m.name === "string" ? m.name : "";
+      if (!id) continue;
+      const bits = [];
+      if (typeof m.description === "string" && m.description) bits.push(m.description);
+      if (typeof m.release_date === "string" && m.release_date) bits.push(m.release_date);
+      out.push({ id, detail: bits.join("，") || label });
+    }
+    return out;
+  }
+  async function fetchJevModels(deps = {}) {
+    var _a2, _b2, _c;
+    const s = tryGetSettings();
+    const cfg = resolveJevConfig();
+    const desc = getJevProviderDescriptor(String((_a2 = s == null ? void 0 : s.jevProvider) != null ? _a2 : "") || DEFAULT_JEV_PROVIDER);
+    if (!cfg.apiKey) throw new Error(`未配置 ${desc.label} 密钥（插件设置 → AI → JEV）`);
+    const requestUrlFn = deps.requestUrlFn || requestUrl;
+    const resp = await requestUrlFn({
+      url: desc.modelsUrl,
+      method: "GET",
+      headers: { Authorization: `Bearer ${cfg.apiKey}` },
+      throw: false
+    });
+    const status = Number((_b2 = resp == null ? void 0 : resp.status) != null ? _b2 : 0);
+    const text = String((_c = resp == null ? void 0 : resp.text) != null ? _c : "");
+    if (status < 200 || status >= 300) {
+      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      throw new Error(`${desc.label} 模型列表请求失败（${status}）：${brief || "无响应正文"}`);
+    }
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`${desc.label} 模型列表响应不是合法 JSON（HTTP ${status}）`);
+    }
+    const models = parseJevModels(data, desc.label);
+    if (!models.length) throw new Error(`${desc.label} 未返回可用模型`);
+    return models;
+  }
+  var JEV_PROVIDER_REGISTRY, DEFAULT_JEV_PROVIDER, JEV_DEFAULT_ENDPOINT, JEV_DEFAULT_MODEL, JEV_DEFAULT_TIMEOUT_MS;
+  var init_jev = __esm({
+    "src/core/jev.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      JEV_PROVIDER_REGISTRY = [
+        {
+          id: "typesafe",
+          label: "Typesafe",
+          endpoint: "https://api.typesafe.ai/v1/systemone",
+          modelsUrl: "https://api.typesafe.ai/v1/models"
+        }
+      ];
+      DEFAULT_JEV_PROVIDER = "typesafe";
+      JEV_DEFAULT_ENDPOINT = JEV_PROVIDER_REGISTRY[0].endpoint;
+      JEV_DEFAULT_MODEL = "jev-latest";
+      JEV_DEFAULT_TIMEOUT_MS = 1e4;
+    }
+  });
+
   // src/core/ai-models.ts
   function providerDescriptorOf(id) {
     return getProviderDescriptor(id);
@@ -14944,32 +15026,75 @@ var BZW_memo = (() => {
       }]
     };
   }
-  function ollamaAddressRows() {
-    const trimStore = (key) => (v) => {
-      tryGetSettings()[key] = v.trim();
+  function ollamaLocalUrlRow() {
+    return {
+      type: "text",
+      name: "Ollama 本地 URL",
+      desc: "本地 Ollama 服务地址，留空用默认端口",
+      binding: { key: "secondBrainOllamaUrl" },
+      inputMode: "url",
+      // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
+      onChange: (v) => {
+        tryGetSettings().secondBrainOllamaUrl = v.trim();
+      }
     };
-    const rows = [
+  }
+  function jevGroupRows() {
+    return [
       {
-        type: "text",
-        name: "Ollama 本地 URL",
-        desc: "本地 Ollama 服务地址，留空用默认端口",
-        binding: { key: "secondBrainOllamaUrl" },
-        inputMode: "url",
-        onChange: trimStore("secondBrainOllamaUrl")
+        type: "select",
+        name: "Jev 服务商",
+        desc: "判定通道的服务商，目前仅支持一家",
+        binding: { key: "jevProvider" },
+        options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label }))
       },
       {
-        type: "text",
-        name: "移动端远程地址",
-        desc: "手机连电脑向量库用，桌面端启动自动填入",
-        binding: { key: "secondBrainRemoteOllamaUrl" },
-        inputMode: "url",
-        onChange: trimStore("secondBrainRemoteOllamaUrl")
-      }
+        type: "secret",
+        name: "Jev 密钥",
+        desc: "填写后判定通道即启用，清空则回落语言模型",
+        binding: { key: "jevApiKey" },
+        placeholder: "粘贴 Jev 密钥"
+      },
+      jevModelRow()
     ];
-    return rows;
+  }
+  function jevModelRow() {
+    return {
+      type: "text",
+      name: "Jev 模型",
+      desc: "判定使用的模型，留空跟随服务端最新",
+      placeholder: "jev-latest",
+      binding: { key: "jevModel" },
+      actions: [{
+        text: "获取模型",
+        onClick: async (_value, ctx) => {
+          try {
+            await saveSettings();
+            const models = await fetchJevModels();
+            await new Promise((resolve2) => {
+              openModelPicker({
+                providerLabel: "Typesafe",
+                current: String(tryGetSettings().jevModel || ""),
+                models,
+                onPick: (m) => {
+                  tryGetSettings().jevModel = m.id;
+                  void saveSettings();
+                  ctx.refreshVisibility();
+                  notice(`Jev 模型已设为 ${m.id}`, "success");
+                },
+                // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+                onClose: () => resolve2()
+              });
+            });
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+          }
+        }
+      }]
+    };
   }
   function embeddingGroupRows() {
-    return [...ollamaAddressRows(), embeddingModelRow()];
+    return [ollamaLocalUrlRow(), embeddingModelRow()];
   }
   function credentialGroupRows() {
     return [
@@ -14994,51 +15119,6 @@ var BZW_memo = (() => {
         desc: "搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓",
         binding: { key: "cinemaDoubanCookie" },
         placeholder: "粘贴从浏览器复制的 Cookie"
-      }
-    ];
-  }
-  function jevGroupRows() {
-    return [
-      {
-        type: "toggle",
-        name: "启用 Jev 判定",
-        desc: "开启后关联判定与影院类型归类改走 Jev 决策通道",
-        binding: { key: "jevEnabled" }
-      },
-      {
-        type: "text",
-        name: "Jev 端点",
-        desc: "判定服务接口地址，一般无需改动",
-        binding: { key: "jevEndpoint" },
-        placeholder: "https://api.typesafe.ai/v1/systemone",
-        inputMode: "url",
-        visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
-      },
-      {
-        type: "secret",
-        name: "Jev 密钥",
-        desc: "连接 Jev 决策通道所需的密钥",
-        binding: { key: "jevApiKey" },
-        placeholder: "粘贴 Jev 密钥",
-        visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
-      },
-      {
-        type: "text",
-        name: "Jev 模型",
-        desc: "判定使用的模型，默认固定版本",
-        binding: { key: "jevModel" },
-        placeholder: "jev-1.13.0",
-        visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
-      },
-      {
-        type: "number",
-        name: "Jev 超时",
-        desc: "单次判定超时毫秒，留空用默认十秒",
-        binding: { key: "jevTimeoutMs" },
-        min: 0,
-        max: 12e4,
-        placeholder: "10000",
-        visibleWhen: (snapshot2) => snapshot2.jevEnabled === true
       }
     ];
   }
@@ -15144,6 +15224,7 @@ var BZW_memo = (() => {
   var init_settings_main_schema = __esm({
     "src/core/settings-main-schema.ts"() {
       init_ai();
+      init_jev();
       init_model_limits();
       init_notice();
       init_settings_provider();
@@ -51793,22 +51874,22 @@ ${n.content.slice(0, 2e3)}
       VEC_PATH: storageFile("secondbrain.vec"),
       TOP_K: Number(s.secondBrainTopK) || 20,
       CHAT_TOP_K: Number(s.secondBrainChatTopK) || 20,
-      CHUNK_MIN_LENGTH: Number(s.secondBrainChunkMinLength) || 50,
       ALLOW_PATHS: resolveAllowPaths(s.secondBrainAllowPaths),
-      CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
-      DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,
-      CURSOR_POLL_INTERVAL: Number(s.secondBrainCursorPollInterval) || 500,
+      DEBOUNCE_DELAY: SEARCH_DEBOUNCE_DELAY,
+      CURSOR_POLL_INTERVAL: CURSOR_POLL_INTERVAL_MS,
       MAX_HISTORY: Number(s.secondBrainMaxHistory) || 10,
       // 空 = 未配置远程（enh-sweep-a：不再回落写死内网 IP；消费方均有 || OLLAMA_URL/真值判断兜底）
       OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || ""
     };
   }
-  var DEFAULT_EMBEDDING_MODEL, _a, _b, IS_MOBILE;
+  var SEARCH_DEBOUNCE_DELAY, CURSOR_POLL_INTERVAL_MS, DEFAULT_EMBEDDING_MODEL, _a, _b, IS_MOBILE;
   var init_config4 = __esm({
     "src/secondbrain/config.ts"() {
       init_settings_provider();
       init_storage();
       init_knowledge_boxes();
+      SEARCH_DEBOUNCE_DELAY = 300;
+      CURSOR_POLL_INTERVAL_MS = 500;
       DEFAULT_EMBEDDING_MODEL = "bge-m3";
       IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
     }
@@ -51832,53 +51913,6 @@ ${n.content.slice(0, 2e3)}
   var init_whitelist = __esm({
     "src/secondbrain/whitelist.ts"() {
       init_knowledge_boxes();
-    }
-  });
-
-  // src/secondbrain/local-ip.ts
-  function isUsableLanIp(ip) {
-    if (!ip) return false;
-    if (ip.includes(":")) return false;
-    if (ip.startsWith("127.") || ip.startsWith("169.254.")) return false;
-    return true;
-  }
-  function enumerateLanIPs(interfaces) {
-    const list = [];
-    if (!interfaces) return list;
-    for (const [iface, addrs] of Object.entries(interfaces)) {
-      for (const a of addrs || []) {
-        if (a.internal) continue;
-        if (isUsableLanIp(a.address)) list.push({ iface, ip: a.address });
-      }
-    }
-    return list;
-  }
-  function getLanIPs() {
-    try {
-      const os = window.require && window.require("os");
-      if (!os || typeof os.networkInterfaces !== "function") return [];
-      return enumerateLanIPs(os.networkInterfaces());
-    } catch (e) {
-      return [];
-    }
-  }
-  function formatRemoteOllamaUrl(ip, port = 11434) {
-    return `http://${ip}:${port}`;
-  }
-  function ifaceMatches(iface, keyword) {
-    if (keyword !== keyword.toLowerCase()) return iface.toLowerCase().includes(keyword.toLowerCase());
-    return new RegExp(`\\b${keyword}\\b`, "i").test(iface);
-  }
-  function pickPrimaryLanIp(list) {
-    if (!list.length) return null;
-    const hit = list.find((l) => PREFERRED_IFACE_KEYWORDS.some((k) => ifaceMatches(l.iface, k)));
-    return hit || list[0];
-  }
-  var PREFERRED_IFACE_KEYWORDS;
-  var init_local_ip = __esm({
-    "src/secondbrain/local-ip.ts"() {
-      init_settings_provider();
-      PREFERRED_IFACE_KEYWORDS = ["wlan", "wi-fi", "wifi", "wireless", "ethernet", "以太网", "有线"];
     }
   });
 
@@ -53471,39 +53505,6 @@ ${n.content.slice(0, 2e3)}
     const i = path.indexOf("/");
     return i === -1 ? "（根目录）" : path.slice(0, i);
   }
-  function lanIpDesc() {
-    if (isMobileEnv()) return "";
-    const lanIPs = getLanIPs();
-    if (lanIPs.length === 0) {
-      return "未能探测本机局域网 IP，请确认电脑已联网，远程地址需在 AI 面板手动填写";
-    }
-    const primary = pickPrimaryLanIp(lanIPs);
-    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，点「填入远程 URL」把远程地址刷新为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "本机 IP"}`;
-  }
-  function fillRemoteOllamaUrl() {
-    const primary = pickPrimaryLanIp(getLanIPs());
-    if (!primary) {
-      notice("未探测到本机局域网 IP，请在 AI 面板手动填写");
-      return;
-    }
-    const target = formatRemoteOllamaUrl(primary.ip);
-    return openFlowDialog({
-      title: "填入远程 Ollama URL",
-      message: `将 AI 面板的「移动端远程地址」覆盖为 ${target}？`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
-        // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
-        // 不构成不可逆数据破坏，故保留普通高亮主动作。
-        { label: "覆盖", value: "ok", cta: true }
-      ]
-    }).then((v) => {
-      if (v === "ok") {
-        getSettings().secondBrainRemoteOllamaUrl = target;
-        void saveSettings();
-      }
-    });
-  }
   function secondBrainSettingsSchema() {
     const pathsOf = (key) => ({
       get: () => {
@@ -53531,26 +53532,9 @@ ${n.content.slice(0, 2e3)}
           // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
           name: "服务",
           rows: [
-            // issue 423/ADR-0183：「Ollama 本地 URL」「移动端远程地址」两行迁 AI 面板「Embedding」组
-            // （向量化服务地址与模型同组；远程地址另有桌面端启动自动补全，见 local-ip.ensureRemoteOllamaUrl）。
-            // 本组只留本机 IP 自查行 + 一键刷新（ticket 122：DHCP 漂移时点一下就修好）。
-            {
-              type: "info",
-              name: "本机局域网 IP",
-              visibleWhen: () => !isMobileEnv(),
-              desc: lanIpDesc(),
-              actions: [{ text: "填入远程 URL", cta: true, onClick: () => fillRemoteOllamaUrl() }]
-            },
-            {
-              type: "info",
-              name: "局域网 IP 提示",
-              visibleWhen: () => isMobileEnv(),
-              desc: "连不上远程库时，在电脑端 AI 面板核对远程地址"
-            },
-            // 「Embedding 模型」行已迁 AI 面板（issue 422/ADR-0182：「AI」页 Embedding 组，
-            // 行内「获取模型」按钮拉 Ollama 已装向量化模型）；键 secondBrainEmbeddingModel 不变，
-            // 本页不再重复暴露。issue 423/ADR-0183 起两行 Ollama 地址同迁该组——本页只剩
-            // 「本机 IP 是多少」这一条自查信息（手机端连不上时唯一需要人工核对的现场事实）。
+            // 「Embedding 模型」行迁 AI 面板（issue 422/ADR-0182）；「Ollama 本地 URL」「移动端远程地址」
+            // 两行同迁该组（issue 423/ADR-0183）；「本机局域网 IP」自查行与「局域网 IP 提示」行删除
+            // （issue 424/ADR-0184：IP 探测与远程地址写入全自动，不再需要人工核对）。
             // 额外检索目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
             // ADR-0141 §3：三个盒子恒含索引，本行语义降级为「三盒之外还要纳入检索的目录」
             {
@@ -53571,17 +53555,13 @@ ${n.content.slice(0, 2e3)}
           icon: "search",
           name: "检索",
           rows: [
-            // 2026-09-23：检索组六行原为 text（每键自己 Number() + 钳制），改标准 number 行——
+            // 2026-09-23：检索组原为 text 行（每键自己 Number() + 钳制），改标准 number 行——
             // 键仍存字符串（消费侧 Number(x) || 默认，见 config.ts），故走 numStrBinding 适配器
-            // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值；
-            // 六键消费侧一律 `Number(x) || 默认` → 0 与非法值都回落默认，与 numStrBinding 的
-            // 「≤0 取默认」语义一致（0 不是这些参数的有效值）。
+            // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值。
+            // issue 424/ADR-0184：后四行（段落最小长度 / 上下文限制 / 防抖延迟毫秒 / 光标轮询毫秒）
+            // 删除——前两者不再限制（分块全留），防抖 300ms 与轮询 500ms 固化为常量（config.ts）。
             { type: "number", name: "参考结果数 TopK", desc: "参考侧返回的近邻条数，越大越全也越慢", binding: numStrBinding("secondBrainTopK", 20), min: 1, max: 50, step: 1 },
-            { type: "number", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: numStrBinding("secondBrainChatTopK", 20), min: 1, max: 50, step: 1 },
-            { type: "number", name: "段落最小长度", desc: "短于该字符数的段落不入向量索引", binding: numStrBinding("secondBrainChunkMinLength", 50), min: 1, max: 2e3, step: 1 },
-            { type: "number", name: "上下文限制", desc: "单次注入对话的上下文字符上限", binding: numStrBinding("secondBrainContextLimit", 600), min: 1, max: 2e4, step: 1 },
-            { type: "number", name: "防抖延迟毫秒", desc: "输入停顿该毫秒数后才开始检索", binding: numStrBinding("secondBrainDebounceDelay", 300), min: 1, max: 5e3, step: 10 },
-            { type: "number", name: "光标轮询毫秒", desc: "光标位置轮询间隔，越小跟随越快", binding: numStrBinding("secondBrainCursorPollInterval", 500), min: 1, max: 5e3, step: 10 }
+            { type: "number", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: numStrBinding("secondBrainChatTopK", 20), min: 1, max: 50, step: 1 }
           ]
         },
         {
@@ -53605,7 +53585,6 @@ ${n.content.slice(0, 2e3)}
     "src/secondbrain/panel.ts"() {
       init_notice();
       init_z_order();
-      init_mobile();
       init_ui();
       init_flow_dialog();
       init_esc_manager();
@@ -53615,7 +53594,6 @@ ${n.content.slice(0, 2e3)}
       init_settings_common();
       init_config4();
       init_whitelist();
-      init_local_ip();
       init_store_file();
       init_weekly_ui();
       init_render13();
@@ -59835,7 +59813,9 @@ ${n.content.slice(0, 2e3)}
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
     migrateMemoSettingKeys: () => migrateMemoSettingKeys,
     migrateRetiredAIKeys: () => migrateRetiredAIKeys,
-    migrateRetiredFavoritesSortKey: () => migrateRetiredFavoritesSortKey
+    migrateRetiredFavoritesSortKey: () => migrateRetiredFavoritesSortKey,
+    migrateRetiredJevKeys: () => migrateRetiredJevKeys,
+    migrateRetiredSecondBrainKeys: () => migrateRetiredSecondBrainKeys
   });
   function migrateMemoSettingKeys(raw) {
     if (!raw || typeof raw !== "object") return false;
@@ -59895,6 +59875,34 @@ ${n.content.slice(0, 2e3)}
     }
     return migrated;
   }
+  function migrateRetiredSecondBrainKeys(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    let migrated = false;
+    for (const key of RETIRED_SECONDBRAIN_KEYS) {
+      if (rec[key] !== void 0) {
+        delete rec[key];
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
+  function migrateRetiredJevKeys(raw) {
+    if (!raw || typeof raw !== "object") return false;
+    const rec = raw;
+    let migrated = false;
+    for (const key of RETIRED_JEV_KEYS) {
+      if (rec[key] !== void 0) {
+        delete rec[key];
+        migrated = true;
+      }
+    }
+    if (rec.jevModel !== void 0 && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
+      rec.jevModel = "jev-latest";
+      migrated = true;
+    }
+    return migrated;
+  }
   function migrateRetiredFavoritesSortKey(raw) {
     if (!raw || typeof raw !== "object") return false;
     const rec = raw;
@@ -59922,7 +59930,7 @@ ${n.content.slice(0, 2e3)}
     }
     return migrated;
   }
-  var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, DEFAULT_SETTINGS;
+  var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, RETIRED_SECONDBRAIN_KEYS, RETIRED_JEV_KEYS, LEGACY_JEV_DEFAULT_MODEL, DEFAULT_SETTINGS;
   var init_settings8 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
@@ -59954,6 +59962,14 @@ ${n.content.slice(0, 2e3)}
         "aiCustomApiKey"
       ];
       AI_OVERRIDE_MAPS = ["aiModelOverrides", "aiMaxTokensOverrides", "aiThinkingOverrides"];
+      RETIRED_SECONDBRAIN_KEYS = [
+        "secondBrainChunkMinLength",
+        "secondBrainContextLimit",
+        "secondBrainDebounceDelay",
+        "secondBrainCursorPollInterval"
+      ];
+      RETIRED_JEV_KEYS = ["jevEnabled", "jevEndpoint", "jevTimeoutMs"];
+      LEGACY_JEV_DEFAULT_MODEL = "jev-1.13.0";
       DEFAULT_SETTINGS = {
         // AI 全局（issue 411/ADR-0179：注册表只留三条通道，缺省 = DeepSeek 官方）
         aiProvider: DEFAULT_AI_PROVIDER,
@@ -59964,12 +59980,10 @@ ${n.content.slice(0, 2e3)}
         aiMaxTokensOverrides: {},
         // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
         aiThinkingOverrides: {},
-        // Jev 决策通道（ADR-0173）：默认关闭——未填密钥时不接管任何判定，行为与接入前一致
-        jevEnabled: false,
-        jevEndpoint: "https://api.typesafe.ai/v1/systemone",
+        // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开）：无开关，未填密钥时不接管任何判定
+        jevProvider: "typesafe",
         jevApiKey: "",
-        jevModel: "jev-1.13.0",
-        jevTimeoutMs: 1e4,
+        jevModel: "jev-latest",
         // 共享数据路径（ADR-0009）
         storagePath: "CONFIG/STORAGE",
         // 附件搬移（ticket 65，运行时记忆）
@@ -60074,15 +60088,14 @@ ${n.content.slice(0, 2e3)}
         secondBrainEmbeddingModel: "bge-m3",
         secondBrainTopK: "20",
         secondBrainChatTopK: "20",
-        secondBrainChunkMinLength: "50",
+        // issue 424/ADR-0184：段落最小长度 / 上下文限制（本就无消费方）/ 防抖 / 光标轮询四键退役——
+        // 前三者不再限制，防抖 300ms 与轮询 500ms 固化为常量（secondbrain/config.ts）
         secondBrainAllowPaths: "",
         // ticket 116：默认空 = 什么也不录（不索引任何目录），由用户自行填写
-        secondBrainContextLimit: "600",
-        secondBrainDebounceDelay: "300",
-        secondBrainCursorPollInterval: "500",
         secondBrainMaxHistory: "10",
         // 空 = 未配置远程（enh-sweep-a：原写死内网 IP 改留空；secondbrain/config 同步去 IP 回落）
         secondBrainRemoteOllamaUrl: "",
+        secondBrainRemoteOllamaAuto: "",
         // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
         linkAgentEnabled: true,
         linkAgentTopK: 8,

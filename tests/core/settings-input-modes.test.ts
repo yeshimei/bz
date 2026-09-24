@@ -5,7 +5,7 @@
  * 1. 掩码档位两端同口径：单行 `type:'secret'` → input type=password + 眼睛切明文
  *    （core 弹窗渲染器 / 面板渲染器）；
  * 2. 键盘语义：TextRow.inputMode 落到 inputmode；
- * 3. 数值参数不再用文本行承载：secondbrain 7 键 / knowledge 3 键为 number（带 min/max/step）；
+ * 3. 数值参数不再用文本行承载：secondbrain 3 键（issue 424 起）/ knowledge 3 键为 number（带 min/max/step）；
  * 4. 盘点：AI 服务商密钥 3 行（注册表三条在册通道，issue 411/ADR-0179 起）与数据源凭据
  *    3 行（ApiZero Key / B站 Cookie / 豆瓣 Cookie）全为 secret——防回退成明文；多行掩码
  *    （textarea + -webkit-text-security）档位 2026-09-23 随凭据组改单行一并退役。
@@ -181,13 +181,13 @@ describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => 
     expect(credRows.every((r) => r.type === 'secret')).toBe(true);
   });
 
-  it('第二大脑：检索/对话 7 个数值键是 number 行（键仍存字符串，走 numStrBinding）', () => {
+  it('第二大脑：检索/对话 3 个数值键是 number 行（键仍存字符串，走 numStrBinding）', () => {
     const schema = secondBrainSettingsSchema();
     const all = schema.groups.flatMap((g) => g.rows as SettingsRow[]);
     const byName = new Map(all.map((r) => [(r as { name?: string }).name, r]));
     // numStrBinding 出的是三函数绑定（无 key 字段），故按行名盘点
-    const numericNames = ['参考结果数 TopK', '对话参考结果数', '段落最小长度', '上下文限制',
-      '防抖延迟毫秒', '光标轮询毫秒', '最大历史记录'];
+    // issue 424/ADR-0184：段落最小长度 / 上下文限制（不再限制）与防抖 / 轮询（固化为常量）四行删除
+    const numericNames = ['参考结果数 TopK', '对话参考结果数', '最大历史记录'];
     for (const name of numericNames) {
       const row = byName.get(name);
       expect(row, `${name} 行应存在`).toBeTruthy();
@@ -209,31 +209,27 @@ describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => 
     expect(keys).not.toContain('secondBrainEmbeddingModel');
   });
 
-  it('第二大脑：两行 Ollama 地址已迁出（唯一入口 = AI 面板 Embedding 组，issue 423/ADR-0183）', () => {
+  it('第二大脑：Ollama 地址 / IP 自查行全部退场（issue 424/ADR-0184：全自动，本页零连接面）', () => {
     const schema = secondBrainSettingsSchema();
     const names = schema.groups.flatMap((g) => g.rows.map((r) => (r as { name?: string }).name));
     expect(names).not.toContain('Ollama 本地 URL');
     expect(names).not.toContain('移动端远程地址');
-    // 键迁移无残留（本页只剩本机 IP 自查行 + 额外检索目录）：两键不再由第二大脑 schema 持有
+    // IP 探测与远程地址写入改全自动（桌面端启动跟随本机 IP），两行自查/一键修正入口删除
+    expect(names).not.toContain('本机局域网 IP');
+    expect(names).not.toContain('局域网 IP 提示');
+    // 键迁移无残留（本页只剩额外检索目录）：两键不再由第二大脑 schema 持有
     const keys = schema.groups.flatMap((g) =>
       g.rows.map((r) => (r as { binding?: { key?: string } }).binding?.key).filter(Boolean)
     );
     expect(keys).not.toContain('secondBrainOllamaUrl');
     expect(keys).not.toContain('secondBrainRemoteOllamaUrl');
-    // 「填入远程 URL」一键修正随探测展示留在本页（IP 行 actions）
-    const ipRow = schema.groups
-      .flatMap((g) => g.rows as SettingsRow[])
-      .find((r) => (r as { name?: string }).name === '本机局域网 IP') as {
-      actions?: Array<{ text: string }>;
-    };
-    expect(ipRow?.actions?.map((a) => a.text)).toEqual(['填入远程 URL']);
   });
 
-  it('AI 面板 Embedding 组：两行 Ollama 地址以 URL 键盘档位承接（issue 423 反向锚）', () => {
+  it('AI 面板 Embedding 组：本地 Ollama 地址以 URL 键盘档位承接（issue 424 反向锚，远程地址行已删）', () => {
     const rows = rowsOf(aiSettingsSchema(), 'Embedding');
     const urls = rows.filter((r) => (r.name ?? '').includes('URL') || (r.name ?? '').includes('远程地址'));
-    expect(urls.map((r) => r.name)).toEqual(['Ollama 本地 URL', '移动端远程地址']);
-    expect(urls.map((r) => (r as { inputMode?: string }).inputMode)).toEqual(['url', 'url']);
+    expect(urls.map((r) => r.name)).toEqual(['Ollama 本地 URL']);
+    expect(urls.map((r) => (r as { inputMode?: string }).inputMode)).toEqual(['url']);
   });
 
   it('知识盒：自动关联三键是 number 直绑（三函数绕行已退场）', () => {

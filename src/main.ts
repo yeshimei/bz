@@ -23,7 +23,7 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -271,8 +271,18 @@ export default class BzPlugin extends Plugin {
     const retiredAIKeysMigrated = migrateRetiredAIKeys(loaded);
     // issue 364：收藏本排序循环钮键退役（ADR-0083 后零消费点，残留清除）
     const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
+    // issue 424/ADR-0184：第二大脑四个参数键退役（不限制 + 固化）+ Jev 三键退役、旧缺省模型名改写
+    const retiredSecondBrainKeysMigrated = migrateRetiredSecondBrainKeys(loaded);
+    const retiredJevKeysMigrated = migrateRetiredJevKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
-    if (memoKeysMigrated || autoLinkMigrated || retiredAIKeysMigrated || retiredSortKeyMigrated) {
+    if (
+      memoKeysMigrated ||
+      autoLinkMigrated ||
+      retiredAIKeysMigrated ||
+      retiredSortKeyMigrated ||
+      retiredSecondBrainKeysMigrated ||
+      retiredJevKeysMigrated
+    ) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }
     setApp(this.app);
@@ -283,8 +293,9 @@ export default class BzPlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 设置保存通道（域设置弹窗写回后持久化）
     setSettingsSaver(() => this.saveSettings());
-    // 移动端远程地址自动补全（issue 423/ADR-0183）：桌面端启动时若设置为空 → 探测本机局域网 IP
-    // 写入（手机端读同步值，自身探测不到电脑 IP）；已有值/探测不到一律不动，静默无提示。
+    // 移动端远程地址自动跟随本机 IP（issue 424/ADR-0184；原 issue 423 只补空值）：桌面端启动时
+    // 探测本机局域网 IP，插件自己写下的旧值随 IP 漂移刷新（手机端读同步值，自身探测不到电脑 IP）；
+    // 人填值（指向他机的地址）与探测不到两种情况一律不动，静默无提示。
     ensureRemoteOllamaUrl();
     // 日记本目录常量（diary/config 内部跨域解析影视/书库目录）
     applyDiarySettingsToRuntime(this.settings);

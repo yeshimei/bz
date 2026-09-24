@@ -226,10 +226,7 @@ function injectSettings(): void {
     linkAgentEnabled: false, // 原型不跑自动双链（避免空转队列）
     secondBrainTopK: '20',
     secondBrainChatTopK: '20',
-    secondBrainChunkMinLength: '50',
-    secondBrainContextLimit: '600',
-    secondBrainDebounceDelay: '300',
-    secondBrainCursorPollInterval: '500',
+    // 段落最小长度 / 上下文限制 / 防抖 / 轮询四键已退役（issue 424/ADR-0184：不再限制 + 固化常量）
     secondBrainMaxHistory: '10',
     secondBrainOllamaUrl: 'http://localhost:11434',
     secondBrainEmbeddingModel: 'bge-m3',

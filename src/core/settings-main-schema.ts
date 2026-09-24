@@ -31,6 +31,12 @@
  *   移动端远程地址，地址在前、模型在后）。远程地址另有桌面端启动自动补全（只补空值、
  *   不覆盖手改值），探测与「填入远程 URL」实现留在 secondbrain/local-ip——本模块仍不
  *   import 域侧模块，node 可加载口径不变；
+ * - issue 424/ADR-0184（用户拍板五处删改）：「Embedding」组「移动端远程地址」行删除（远程
+ *   地址改由桌面端启动**自动跟随本机 IP**，见 secondbrain/local-ip.ensureRemoteOllamaUrl）；
+ *   「JEV」组收口为服务商 / 密钥 / 模型三行——「启用 Jev 判定」开关退役（常开：填了密钥即
+ *   接管，清空即回落 LLM）、「Jev 端点」退役（改「Jev 服务商」下拉，列表源自 core/jev 的
+ *   JEV_PROVIDER_REGISTRY，目前仅 Typesafe）、「Jev 超时」退役（固化十秒）、「Jev 模型」加
+ *   行内「获取模型」（拉服务商 /v1/models，默认 jev-latest = 服务端最新）；
  * - 2026-09-23 凭据组三行统一回单行 secret（用户拍板「加密的做成多行框看着怪」）：textarea 的
  *   masked 档位在凭据组退役，行序改为 ApiZero Key → B站 Cookie → 豆瓣 Cookie；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
@@ -40,6 +46,7 @@
  */
 
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
+import { JEV_PROVIDER_REGISTRY, fetchJevModels } from './jev';
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
@@ -348,45 +355,102 @@ function embeddingModelRow(): SettingsRow {
 }
 
 /**
- * 「Ollama 地址」两行（issue 423/ADR-0183）：原第二大脑设置页「服务」组迁入——
- * 本地 URL（桌面向量化服务地址，留空用默认端口）+ 移动端远程地址（桌面端启动自动探测填入，
- * 手机端读同步值，见 secondbrain/local-ip.ensureRemoteOllamaUrl）。
- * 键 secondBrainOllamaUrl / secondBrainRemoteOllamaUrl 不变，secondbrain/config.ts 与
- * vector-store / weekly / link-agent 的消费口径零改动；「填入远程 URL」一键修正留在第二大脑
- * 「本机局域网 IP」行（探测展示与按钮同处——手机连不上时就地自查自修，issue 423 决策 4）。
- * 两行均为可编辑输入框：自动填入只补空值，手改值（如 Ollama 装在另一台机器）不被覆盖。
+ * 「Ollama 本地 URL」行（issue 423/ADR-0183 自第二大脑「服务」组迁入）：桌面向量化服务地址。
+ * 键 secondBrainOllamaUrl 不变，secondbrain/config.ts 与 vector-store / weekly / link-agent
+ * 的消费口径零改动；「移动端远程地址」行 issue 424/ADR-0184 删除（桌面端启动自动跟随本机 IP，
+ * 见 secondbrain/local-ip.ensureRemoteOllamaUrl）。
  */
-function ollamaAddressRows(): SettingsRow[] {
-  // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
-  const trimStore = (key: string) => (v: string) => {
-    (tryGetSettings() as Record<string, unknown>)[key] = v.trim();
+function ollamaLocalUrlRow(): SettingsRow {
+  return {
+    type: 'text',
+    name: 'Ollama 本地 URL',
+    desc: '本地 Ollama 服务地址，留空用默认端口',
+    binding: { key: 'secondBrainOllamaUrl' },
+    inputMode: 'url',
+    // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
+    onChange: (v: string) => {
+      (tryGetSettings() as Record<string, unknown>).secondBrainOllamaUrl = v.trim();
+    },
   };
-  const rows: SettingsRow[] = [
-    {
-      type: 'text',
-      name: 'Ollama 本地 URL',
-      desc: '本地 Ollama 服务地址，留空用默认端口',
-      binding: { key: 'secondBrainOllamaUrl' },
-      inputMode: 'url',
-      onChange: trimStore('secondBrainOllamaUrl'),
-    },
-    {
-      type: 'text',
-      name: '移动端远程地址',
-      desc: '手机连电脑向量库用，桌面端启动自动填入',
-      binding: { key: 'secondBrainRemoteOllamaUrl' },
-      inputMode: 'url',
-      onChange: trimStore('secondBrainRemoteOllamaUrl'),
-    },
-  ];
-  return rows;
 }
 
-/** 「Embedding」组行（issue 422/ADR-0182）：向量化服务三件套——服务地址（本机 / 移动端）
- *  在前、向量化模型在后（先知道服务在哪台机器，再拉它的模型列表）。
- *  第二大脑与跟随回退的小橘记忆库共用同一模型键与端点解析。 */
+/**
+ * 「JEV」组行（issue 391/ADR-0173 §6 起；issue 424/ADR-0184 收口）：服务商下拉 + 密钥 + 模型，
+ * 照「LLM」组同序（先选通道与密钥、再配这一通道用哪个模型）。
+ * - 「启用 Jev 判定」开关**退役**（用户拍板「默认启动，无需设置」）：`isJevConfigured` 只看
+ *   密钥齐备，清空密钥即回落 LLM——设置里不再有第二处「要不要用」的真相；
+ * - 「Jev 端点」退役 → 「Jev 服务商」下拉（列表由 `JEV_PROVIDER_REGISTRY` 驱动，目前仅 Typesafe）；
+ * - 「Jev 超时」退役 → 固定十秒（`JEV_DEFAULT_TIMEOUT_MS`）；
+ * - 「Jev 模型」加行内「获取模型」按钮（拉服务商模型列表，默认 `jev-latest` = 服务端最新）。
+ * 密钥行用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文口径。
+ */
+function jevGroupRows(): SettingsRow[] {
+  return [
+    {
+      type: 'select',
+      name: 'Jev 服务商',
+      desc: '判定通道的服务商，目前仅支持一家',
+      binding: { key: 'jevProvider' },
+      options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
+    },
+    {
+      type: 'secret',
+      name: 'Jev 密钥',
+      desc: '填写后判定通道即启用，清空则回落语言模型',
+      binding: { key: 'jevApiKey' },
+      placeholder: '粘贴 Jev 密钥',
+    },
+    jevModelRow(),
+  ];
+}
+
+/** 「Jev 模型」行（issue 424/ADR-0184）：声明式 text + 行内「获取模型」按钮，照 Embedding 模型行范式
+ *  （选中即回填一次到位——等选择器关闭再 resolve 动作 Promise，见该行注释）。空值回落 `jev-latest`。 */
+function jevModelRow(): SettingsRow {
+  return {
+    type: 'text',
+    name: 'Jev 模型',
+    desc: '判定使用的模型，留空跟随服务端最新',
+    placeholder: 'jev-latest',
+    binding: { key: 'jevModel' },
+    actions: [{
+      text: '获取模型',
+      onClick: async (_value, ctx) => {
+        try {
+          await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+          const models = await fetchJevModels();
+          await new Promise<void>((resolve) => {
+            openModelPicker({
+              providerLabel: 'Typesafe',
+              current: String((tryGetSettings() as any).jevModel || ''),
+              models,
+              onPick: (m) => {
+                (tryGetSettings() as any).jevModel = m.id;
+                void saveSettings();
+                // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
+                ctx.refreshVisibility();
+                notice(`Jev 模型已设为 ${m.id}`, 'success');
+              },
+              // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+              onClose: () => resolve(),
+            });
+          });
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), 'error');
+        }
+      },
+    }],
+  } as SettingsRow;
+}
+
+/**
+ * 「Embedding」组行（issue 422/ADR-0182）：向量化服务地址在前、向量化模型在后
+ * （先知道服务在哪台机器，再拉它的模型列表）。第二大脑与跟随回退的小橘记忆库共用同一模型键。
+ * issue 424/ADR-0184：「移动端远程地址」行删除——该值由桌面端启动自动跟随本机 IP
+ * （secondbrain/local-ip.ensureRemoteOllamaUrl），不再需要人工看/改。
+ */
 function embeddingGroupRows(): SettingsRow[] {
-  return [...ollamaAddressRows(), embeddingModelRow()];
+  return [ollamaLocalUrlRow(), embeddingModelRow()];
 }
 
 /**
@@ -424,61 +488,6 @@ function credentialGroupRows(): SettingsRow[] {
   ];
 }
 
-/**
- * 「Jev 决策通道」组行（issue 391 / ADR-0173 §6）：启用总开关 + 端点 / 密钥 / 模型 / 超时四行
- * （后四行 visibleWhen 跟随总开关）。Jev 是判定通道（输出不计费、无 max_tokens），不挂进生成通道
- * AI_PROVIDER_REGISTRY——独立成组（issue 391 决策 1）。
- * 密钥行刻意用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文
- * 口径（issue 391 决策 3）。**2026-09-23 起** secret 已收编进 core 的 SettingsRow 判别联合，
- * 这里直接写行字面量——原先「core 层够不着 settings-panel/renderer 的 secretRow()，只能
- * `as unknown as SettingsRow` 就地断言」的跨层 hack 随之退场（providerGroupRows 也已改用同档位）。
- */
-function jevGroupRows(): SettingsRow[] {
-  return [
-    {
-      type: 'toggle',
-      name: '启用 Jev 判定',
-      desc: '开启后关联判定与影院类型归类改走 Jev 决策通道',
-      binding: { key: 'jevEnabled' },
-    },
-    {
-      type: 'text',
-      name: 'Jev 端点',
-      desc: '判定服务接口地址，一般无需改动',
-      binding: { key: 'jevEndpoint' },
-      placeholder: 'https://api.typesafe.ai/v1/systemone',
-      inputMode: 'url',
-      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
-    },
-    {
-      type: 'secret',
-      name: 'Jev 密钥',
-      desc: '连接 Jev 决策通道所需的密钥',
-      binding: { key: 'jevApiKey' },
-      placeholder: '粘贴 Jev 密钥',
-      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
-    },
-    {
-      type: 'text',
-      name: 'Jev 模型',
-      desc: '判定使用的模型，默认固定版本',
-      binding: { key: 'jevModel' },
-      placeholder: 'jev-1.13.0',
-      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
-    },
-    {
-      type: 'number',
-      name: 'Jev 超时',
-      desc: '单次判定超时毫秒，留空用默认十秒',
-      binding: { key: 'jevTimeoutMs' },
-      min: 0,
-      max: 120000,
-      placeholder: '10000',
-      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
-    },
-  ];
-}
-
 /** AI 页设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
  *  issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *  三组——接入（选谁+密钥）/ 模型参数（用哪个模型+窗口）/ 数据源凭据（非 AI 的第三方凭据）
@@ -486,7 +495,10 @@ function jevGroupRows(): SettingsRow[] {
  *  issue 422/ADR-0182：按模型族收敛为 LLM / Embedding / JEV 三张模型卡 + 数据源凭据——
  *  「服务商」组撤销，其行并入「LLM」组首部（先选服务商与密钥、再配模型参数，同卡一条链）；
  *  第二大脑的「Embedding 模型」行迁入「Embedding」组（键 secondBrainEmbeddingModel 不变，
- *  消费方 secondbrain/config.ts 与 smartcat 跟随回退口径零改动）。 */
+ *  消费方 secondbrain/config.ts 与 smartcat 跟随回退口径零改动）。
+ *  issue 423/ADR-0183：「Embedding」组再收两行 Ollama 地址（本地 URL + 移动端远程地址）。
+ *  issue 424/ADR-0184：「移动端远程地址」行删（桌面端自动跟随本机 IP）；JEV 组收口为
+ *  服务商 / 密钥 / 模型三行（总开关、端点、超时三行退役——常开、端点由服务商决定、超时固定）。 */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [

@@ -153,8 +153,9 @@ export function unloadSecondBrain(): void {
 /** 只读检索面（issue 318）：类型出口留在 index（对外 API 不破）；实现与取用走叶子模块 readonly.ts */
 export type { ReadonlyVectorSearch } from './readonly';
 
-/** 移动端远程地址自动补全（issue 423/ADR-0183）：main.ts onload 调一次——
- *  桌面端设置为空时探测本机局域网 IP 写入（手机端读同步值）；实现见 local-ip.ts */
+/** 移动端远程地址自动跟随本机 IP（issue 423/ADR-0183 起，issue 424/ADR-0184 改跟随）：
+ *  main.ts onload 调一次——桌面端探测本机局域网 IP，插件写下的旧值随 IP 漂移刷新
+ *  （手机端读同步值）；实现见 local-ip.ts */
 export { ensureRemoteOllamaUrl } from './local-ip';
 
 function ensureReference(): void {

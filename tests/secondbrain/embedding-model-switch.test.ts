@@ -77,7 +77,6 @@ function makeApp(vault: MockVault, adapter: any, mtimes: Record<string, number> 
 function sbSettings(overrides: Record<string, unknown> = {}) {
   return {
     storagePath: 'CONFIG/STORAGE',
-    secondBrainChunkMinLength: '10',
     secondBrainAllowPaths: '我的',
     ...overrides,
   };

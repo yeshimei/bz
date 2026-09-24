@@ -1,13 +1,13 @@
 /**
- * 本机局域网 IP 枚举（ticket 122）：桌面端展示「远程 Ollama URL（移动端）」应填的电脑 IP，
- * 帮助移动端连不上时的自查自修（根因常是 DHCP 漂移导致旧 IP 失效）。
+ * 本机局域网 IP 枚举（ticket 122）：桌面端探测本机 IP，写入「移动端远程地址」（手机自身
+ * 探测不到电脑 IP，只能读同步来的设置值）。
  *
  * 运行时取数走 window.require('os')（Obsidian 桌面端 renderer 可用——obsidian42-brat / pdf-plus
  * 既有先例；esbuild 侧已将 "os" external 化，勿 bundle）。测试注入 interfaces 对象走 enumerateLanIPs。
  *
- * issue 423/ADR-0183：新增 detect/ensure 两函数——桌面端启动自动补全「移动端远程地址」
- * （手机自身探测不到电脑 IP，只能读同步来的设置值）；第二大脑「本机局域网 IP」行的
- * 「填入远程 URL」按钮走同一探测口径。
+ * issue 423/ADR-0183：新增 detect/ensure——桌面端启动自动补全「移动端远程地址」。
+ * issue 424/ADR-0184：改为**自动跟随本机 IP**（DHCP 漂移自愈，两处人工入口——第二大脑
+ * 「本机局域网 IP」行与 AI 面板「移动端远程地址」行——随之全部删除）。
  */
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 
@@ -81,19 +81,34 @@ export function detectRemoteOllamaUrl(lanIPs: LanIp[] = getLanIPs()): string | n
   return primary ? formatRemoteOllamaUrl(primary.ip) : null;
 }
 
+/** 插件自己写出的远程地址形态（默认端口 + IPv4 字面量）——存量值归属判定的依据，见下 */
+const PLUGIN_WRITTEN_URL = /^http:\/\/\d{1,3}(?:\.\d{1,3}){3}:11434$/;
+
 /**
- * 桌面端启动自动补全「移动端远程地址」（issue 423/ADR-0183）：**仅当设置为空时**写入探测值——
- * 用户手改过的值（如 Ollama 装在另一台机器）一律不动，防误覆盖。
- * 手机端 getLanIPs 恒空 → 不写，只读桌面同步过去的设置值；探测不到也不写。
+ * 桌面端启动自动跟随本机 IP（issue 423/ADR-0183 补空值 → issue 424/ADR-0184 跟随）：
+ * 「移动端远程地址」写入探测值，本机 IP 变了就跟着刷新（DHCP 漂移自愈，用户不必再管）。
+ *
+ * 归属判定——只有**插件管的**值才刷新：
+ * - 当前值为空 → 归插件管（首次自动填）；
+ * - 当前值 = `secondBrainRemoteOllamaAuto`（上次自动写下的值）→ 归插件管，IP 变了即跟随；
+ * - 存量升级场景（自动值记录为空）：当前值形如 `http://<ip>:11434`（即插件口径——原
+ *   「填入远程 URL」按钮与旧默认值都产出这一形态）→ 认领为插件管，随后跟随；
+ * - 其余（指向他机的自定地址，如 `http://192.168.1.99:8080`）→ 人填值，一律不动。
+ *
+ * 手机端 getLanIPs 恒空 → 探测不到即不写（只读桌面同步过去的设置值）。
  * 返回是否发生写入（写内存 + saveSettings 落盘）。
  */
 export function ensureRemoteOllamaUrl(lanIPs: LanIp[] = getLanIPs()): boolean {
-  const s = tryGetSettings() as Record<string, unknown>;
-  if (String(s.secondBrainRemoteOllamaUrl ?? '').trim()) return false;
   const url = detectRemoteOllamaUrl(lanIPs);
   if (!url) return false;
+  const s = tryGetSettings() as Record<string, unknown>;
+  const current = String(s.secondBrainRemoteOllamaUrl ?? '').trim();
+  const auto = String(s.secondBrainRemoteOllamaAuto ?? '').trim();
+  const managed = !current || current === auto || (!auto && PLUGIN_WRITTEN_URL.test(current));
+  if (!managed || current === url) return false;
   s.secondBrainRemoteOllamaUrl = url;
+  s.secondBrainRemoteOllamaAuto = url;
   void saveSettings();
-  console.log(`[secondbrain] 已自动填入移动端远程地址: ${url}`);
+  console.log(`[secondbrain] 移动端远程地址已跟随本机 IP：${current || '（空）'} → ${url}`);
   return true;
 }

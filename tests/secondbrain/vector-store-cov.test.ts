@@ -80,7 +80,6 @@ function sbSettings(overrides: Record<string, unknown> = {}) {
   return {
     storagePath: 'CONFIG/STORAGE',
     secondBrainOllamaUrl: 'http://localhost:11434',
-    secondBrainChunkMinLength: '10',
     secondBrainAllowPaths: '我的',
     secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
     ...overrides,

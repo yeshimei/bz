@@ -19,14 +19,17 @@ interface SecondBrainConfig {
   VEC_PATH: string;
   TOP_K: number;
   CHAT_TOP_K: number;
-  CHUNK_MIN_LENGTH: number;
   ALLOW_PATHS: string[];
-  CONTEXT_LIMIT: number;
   DEBOUNCE_DELAY: number;
   CURSOR_POLL_INTERVAL: number;
   MAX_HISTORY: number;
   OLLAMA_REMOTE_URL: string;
 }
+
+/** 参考面板 / 移动面板的检索防抖（ms）——issue 424/ADR-0184 起固化：原设置项已删 */
+export const SEARCH_DEBOUNCE_DELAY = 300;
+/** 光标位置轮询间隔（ms）——同上，固化：原设置项已删 */
+export const CURSOR_POLL_INTERVAL_MS = 500;
 
 /**
  * 索引目录解析（ADR-0141 §3）：三盒恒含 + 白名单额外目录。
@@ -56,11 +59,9 @@ export function buildConfig(): SecondBrainConfig {
     VEC_PATH: storageFile('secondbrain.vec'),
     TOP_K: Number(s.secondBrainTopK) || 20,
     CHAT_TOP_K: Number(s.secondBrainChatTopK) || 20,
-    CHUNK_MIN_LENGTH: Number(s.secondBrainChunkMinLength) || 50,
     ALLOW_PATHS: resolveAllowPaths(s.secondBrainAllowPaths),
-    CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
-    DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,
-    CURSOR_POLL_INTERVAL: Number(s.secondBrainCursorPollInterval) || 500,
+    DEBOUNCE_DELAY: SEARCH_DEBOUNCE_DELAY,
+    CURSOR_POLL_INTERVAL: CURSOR_POLL_INTERVAL_MS,
     MAX_HISTORY: Number(s.secondBrainMaxHistory) || 10,
     // 空 = 未配置远程（enh-sweep-a：不再回落写死内网 IP；消费方均有 || OLLAMA_URL/真值判断兜底）
     OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || '',

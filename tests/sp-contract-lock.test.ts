@@ -22,7 +22,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 const COUNT_BASELINE: Record<string, number> = {
   global: 3,
   notice: 4,
-  ai: 11, // 2026-09-24 issue 423：Embedding 组再收「Ollama 本地 URL」「移动端远程地址」两行（第二大脑迁入）
+  ai: 12, // 2026-09-24 issue 424：JEV 组收口为服务商/密钥/模型（-总开关-端点-超时+服务商）；Embedding 组「移动端远程地址」行删
   diary: 5,
   memo: 11,
   belongings: 6,
@@ -32,7 +32,7 @@ const COUNT_BASELINE: Record<string, number> = {
   bookshelf: 5,
   gameshelf: 7,
   review: 12,
-  secondbrain: 11, // 2026-09-24 issue 423：两行 Ollama 地址迁出（AI 面板 Embedding 组）
+  secondbrain: 6, // 2026-09-24 issue 424：检索组四行删（不限制 + 固化）、服务组两行 IP 自查/提示删
   home: 12,
   pomodoro: 11, // 2026-09-23：后台自动暂停退役（-1）、特效批「倒数滴答」新增（+1）
   encrypt: 5,
