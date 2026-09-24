@@ -125,6 +125,9 @@ const EXPECTED_COMMAND_IDS = [
   'bz-password-vault-open',
   // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）
   'bz-password-vault-gen',
+  // 快速生成密码（2026-09-24 首页右键菜单：跳过选择器直接生成复制 + 记待存状态，
+  // 下次解锁密码本自动弹录入窗预填）
+  'bz-password-vault-quick-gen',
   // 锁定密码本（2026-09-11 首页入口菜单；与保险库同库同锁）
   'bz-password-vault-lock',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',

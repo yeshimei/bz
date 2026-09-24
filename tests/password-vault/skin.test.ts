@@ -33,9 +33,12 @@ function block(sel: string): string | null {
 }
 
 describe('issue 291：password-vault 确认框随金色印章皮', () => {
-  it('全部确认框都传 className: bz-pwv-flow-dialog（首设风险 / 清单损坏重设 / 删除类 askConfirm）', () => {
+  it('全部确认框都传 className: bz-pwv-flow-dialog（首设风险 / 清单损坏重设 / 删除类 askConfirm / 弹窗关闭守卫）', () => {
     const hits = ui().match(/className: 'bz-pwv-flow-dialog'/g) || [];
-    expect(hits.length, '锁屏两处各一 + askConfirm 收编单源一处（issue 365）').toBe(3);
+    expect(
+      hits.length,
+      '锁屏两处各一 + askConfirm 收编单源一处（issue 365）+ 弹窗关闭守卫一处（2026-09-24）'
+    ).toBe(4);
     expect(ui()).toContain('设置主密码');
     expect(ui()).toContain('清单疑似损坏');
   });
