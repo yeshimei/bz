@@ -679,16 +679,16 @@ describe('VectorStore（检索链路）', () => {
     return { vs, app };
   }
 
-  it('vectorSearch：同向得分 1、正交得分 0（cos=max(0,1−d²/2)，反转旧 1−√d/2 失真口径）', async () => {
+  it('vectorSearch：同向得分 1、正交得分 0（分数 = 归一化点积，即原始余弦）', async () => {
     const { vs } = seedOrthoStore();
     vi.mocked(getEmbedding).mockResolvedValue([0, 3]); // 未归一化查询向量，方向同 b
 
     const results = await vs.vectorSearch('香蕉', 5);
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ path: 'b.md', chunk: '香蕉' });
-    expect(results[0].score).toBe(1); // d²=0 → 1^0.35
+    expect(results[0].score).toBe(1); // 归一化后点积 = 1
     expect(results[1]).toMatchObject({ path: 'a.md', chunk: '苹果' });
-    expect(results[1].score).toBe(0); // 归一化正交 d²=2 → max(0,0)=0（旧公式误给 ≈0.29）
+    expect(results[1].score).toBe(0); // 正交 → 0（旧公式 1−d²/2 给 0、锐化后 0；负相关归零）
   });
 
   it('vectorSearch：path::chunk 去重与 topK 截断', async () => {
@@ -710,22 +710,75 @@ describe('VectorStore（检索链路）', () => {
     expect(top1[0].path).toBe('b.md');
   });
 
-  it('VP 索引缓存：键相同且 vectors 引用未变时跳过重建，引用变更后重建', async () => {
+  it('归一化缓存：键相同且 vectors 引用未变时跳过重建，引用变更后重建', async () => {
     const { vs } = seedOrthoStore();
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     try {
       vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
       await vs.vectorSearch('q1', 5);
       await vs.vectorSearch('q2', 5);
-      const builds = () => logSpy.mock.calls.filter((c) => String(c[0]).includes('VP-Tree built')).length;
-      expect(builds()).toBe(1); // 同键同引用 → 复用
+      const builds = () => logSpy.mock.calls.filter((c) => String(c[0]).includes('检索归一化缓存已构建')).length;
+      expect(builds()).toBe(1); // 同引用 → 复用（归一化 3000+ 行 × 4096 维不该每次查询重做）
 
-      vs.vectors = new Float32Array([1, 0, 0, 1]); // 内容相同但引用已变
-      await vs.vectorSearch('q3', 5);
-      expect(builds()).toBe(2); // 引用校验触发重建
+      vs.vectors = new Float32Array([0, 1, 1, 0]); // 行 0/1 内容对调（引用已变）
+      const after = await vs.vectorSearch('q3', 5);
+      expect(builds()).toBe(2); // 身份校验触发重建
+      expect(after[0].path).toBe('b.md'); // 按新布局重排：b.md 行朝查询方向
+      expect(after[1].score).toBe(0); // 对调后 a.md 行与之正交
     } finally {
       logSpy.mockRestore();
     }
+  });
+
+  it('零向量行被整行跳过（issue 425 回归）：既不占位也不产出「任何查询都 78%」的假高分', async () => {
+    const app: any = { vault: { getMarkdownFiles: () => [], adapter: {} } };
+    const vs = new VectorStore(app);
+    vs.meta.notes = {
+      'a.md': { mtime: 1, chunks: [{ text: '苹果' }] },
+      '坏.md': { mtime: 1, chunks: [{ text: '坏向量段' }] }, // 零向量：任何查询都点积 0，旧公式反推 0.5 → 锐化 0.78
+      'b.md': { mtime: 1, chunks: [{ text: '香蕉' }] },
+    };
+    vs.meta._dim = 2;
+    vs.dim = 2;
+    vs.vectors = new Float32Array([1, 0, 0, 0, 0, 1]);
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      vi.mocked(getEmbedding).mockResolvedValue([1, 0]); // 查询朝 a
+      const results = await vs.vectorSearch('苹果', 5);
+      expect(results.map((r) => r.path)).toEqual(['a.md', 'b.md']); // 坏行整行出局，不占位
+      expect(results.some((r) => r.path === '坏.md')).toBe(false);
+      expect(results.some((r) => Math.abs(r.score - 0.78) < 0.02)).toBe(false); // 旧的恒定 78% 不再出现
+      expect(warnSpy.mock.calls.some((c) => String(c[0]).includes('跳过 1/3 条无效向量'))).toBe(true); // 坏行有据可查
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('全文含非有限分量的行同样出局（NaN 行不会把点积污染成 NaN 参与排序）', async () => {
+    const app: any = { vault: { getMarkdownFiles: () => [], adapter: {} } };
+    const vs = new VectorStore(app);
+    vs.meta.notes = {
+      'a.md': { mtime: 1, chunks: [{ text: '苹果' }] },
+      'nan.md': { mtime: 1, chunks: [{ text: 'NaN 段' }] },
+    };
+    vs.meta._dim = 2;
+    vs.dim = 2;
+    vs.vectors = new Float32Array([1, 0, NaN, 0]);
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
+    const results = await vs.vectorSearch('苹果', 5);
+    expect(results.map((r) => r.path)).toEqual(['a.md']);
+  });
+
+  it('查询向量维度与索引维度不符 → 抛错（不给垃圾排序），search 承接后降级文本', async () => {
+    const { vs } = seedOrthoStore(); // 索引 2 维
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0, 0, 0]); // 4 维（如换模型后未重建）
+    await expect(vs.vectorSearch('香蕉', 5)).rejects.toThrow('与索引维度 2 不符');
+
+    const degraded: unknown[] = [];
+    const res = await vs.search('香蕉', 5, (reason) => degraded.push(reason)); // 上层降级文本，不空手而归
+    expect(degraded).toHaveLength(1);
+    expect(String(degraded[0])).toContain('与索引维度 2 不符');
+    expect(res.map((r) => r.path)).toEqual(['b.md']); // 文本索引命中「香蕉」
   });
 
   it('searchText 直通 searchTextIndex(query, meta.notes, topK)，返回命中 chunk 原文', () => {

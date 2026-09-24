@@ -206,12 +206,13 @@ export class LinkAgent {
   }
 
   /**
-   * 候选相似度下限（issue 330/ADR-0146）：vectorSearch 锐化后分数（score^0.35，与参考面板
-   * 百分比同尺）低于此值的候选直接剔除、不送 AI 裁判；0 = 不过滤。默认 0.65 ≈ 原始余弦 0.30。
+   * 候选相似度下限（issue 330/ADR-0146，issue 425/ADR-0185 换算）：vectorSearch 分数
+   * （原始余弦 [0,1]，与参考面板百分比同尺）低于此值的候选直接剔除、不送 AI 裁判；0 = 不过滤。
+   * 默认 0.30——原锐化尺 0.65（score^0.35）同语义换算而来，见 ADR-0185。
    */
   private get minScore(): number {
     const s = tryGetSettings() as any;
-    return settingNumber(s.linkAgentMinScore, 0.65);
+    return settingNumber(s.linkAgentMinScore, 0.3);
   }
 
   private get maxLinks(): number {

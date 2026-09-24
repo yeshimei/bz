@@ -16,9 +16,9 @@
  * - 新增关联：link.state 中 linkedAt 落在窗口内且 empty !== true 的条目（linkedAt 在每次成功
  *   建链后随基准哈希落盘——「已尝试且 0 条」的空跑不算新增关联）。
  * - 撞车阈值（两个通道，代码即口径、测试同锚）：
- *   ① 向量近邻（桌面默认）：vectorSearch 锐化后分数（score^0.35，与参考面板百分比同尺）
- *      ≥ WEEKLY_COLLISION_SCORE(0.85) 判「高度重合」，≈ 原始余弦 0.63——刻意高于自动关联
- *      候选下限 linkAgentMinScore 默认 0.65（≈ 原始余弦 0.30）：「高度重合」要比「值得建链」严得多。
+ *   ① 向量近邻（桌面默认）：vectorSearch 分数（原始余弦 [0,1]，与参考面板百分比同尺——
+ *      issue 425/ADR-0185 起不再做 score^0.35 锐化）≥ WEEKLY_COLLISION_SCORE(0.63) 判「高度重合」，
+ *      刻意高于自动关联候选下限 linkAgentMinScore 默认 0.30：「高度重合」要比「值得建链」严得多。
  *      查询文本 = 笔记标题 + 首块（≤ WEEKLY_QUERY_MAX_CHARS 截尾），控制嵌入调用成本。
  *   ② TF-IDF 降级（移动端 / embedding 不可达）：TFIDF BM25（chunk 粒度）先取近邻短名单，
  *      再以 TFIDF.tokenize 分词的 token 覆盖率（containment = |q∩d| / |q|，[0,1] 有绝对标尺）
@@ -41,11 +41,12 @@ import type { SearchHit } from './vector-store';
 export const WEEKLY_INTERVAL_MS = 7 * 24 * 3600 * 1000;
 
 /**
- * 撞车阈值 · 向量通道（issue 360）：vectorSearch 锐化后分数（score^0.35，参考面板百分比同尺）
- * ≥ 0.85 判「高度重合」，≈ 原始余弦 0.63；高于自动关联候选下限 0.65（≈ 原始余弦 0.30）——
- * 同一把锐化尺上的两档语义：0.65「值得送 AI 裁判建链」，0.85「内容高度重合该提醒了」。
+ * 撞车阈值 · 向量通道（issue 360；issue 425/ADR-0185 换算到原始余弦尺）：vectorSearch 分数
+ * （原始余弦 [0,1]，参考面板百分比同尺）≥ 0.63 判「高度重合」；高于自动关联候选下限 0.30——
+ * 同一把尺上的两档语义：0.30「值得送 AI 裁判建链」，0.63「内容高度重合该提醒了」。
+ * 0.63 即旧锐化尺 0.85（0.85^(1/0.35)）的同语义换算值。
  */
-export const WEEKLY_COLLISION_SCORE = 0.85;
+export const WEEKLY_COLLISION_SCORE = 0.63;
 
 /**
  * 撞车阈值 · TF-IDF 降级通道：新笔记 token（TFIDF.tokenize，去停用词）被候选笔记覆盖率
