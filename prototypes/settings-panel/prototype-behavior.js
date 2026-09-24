@@ -1,4 +1,4 @@
-/* 源指纹 12aa61de49a156ab · 仓内输入 256 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 33ccad2284292f18 · 仓内输入 256 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -27980,6 +27980,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     fxAnims.clear();
   }
+  function isBreakPhase(phase) {
+    return phase === "short-break" || phase === "long-break";
+  }
   function atmosKey(phase, running2, paused) {
     if (running2) return phase === "focus" ? "focus-run" : "break-run";
     if (paused) return phase === "focus" ? "focus-pause" : "break-pause";
@@ -27992,7 +27995,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     lastSig = key;
     if (!popup || !popup.isConnected) return;
     const svg = byId("pomodoro-ring-svg");
-    const timeEl = byId("pomodoro-time");
+    const timeEl = timeVisualOf(byId("pomodoro-time"));
     const mask = byId("pomodoro-mask");
     stopBreath();
     stopGlow();
@@ -28063,13 +28066,30 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return null;
   }
-  function mixTo(a, t) {
-    const c = [0, 1, 2].map((i) => Math.round(a[i] + (HOT_RGB[i] - a[i]) * t));
+  function mixTo(a, t, target) {
+    const c = [0, 1, 2].map((i) => Math.round(a[i] + (target[i] - a[i]) * t));
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+  function varRgb(el, name) {
+    try {
+      const v = el ? getComputedStyle(el).getPropertyValue(name).trim() : "";
+      return v ? parseRgb(v) : null;
+    } catch (e) {
+      return null;
+    }
   }
   function timeBoxOf(el) {
     var _a2;
     return (_a2 = el == null ? void 0 : el.closest(".pomodoro-time-box")) != null ? _a2 : el;
+  }
+  function timeVisualOf(el) {
+    if (!el) return el;
+    const box = el.closest(".pomodoro-time-box");
+    if (box && box.classList.contains("reel-on")) {
+      const reel = box.querySelector(".pomodoro-time-reel");
+      if (reel) return reel;
+    }
+    return el;
   }
   function ensureFlowGrad(svg) {
     if (!svg) return null;
@@ -28110,13 +28130,33 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     flowGrad = g;
     return g;
   }
-  function motionProgressFx(popup, remain, total, phase) {
+  function setFlowPlay(svg, on) {
+    if (!svg || typeof svg.pauseAnimations !== "function") return;
+    try {
+      if (on) svg.unpauseAnimations();
+      else svg.pauseAnimations();
+    } catch (e) {
+    }
+  }
+  function syncFxSkin(popup, running2) {
+    if (popup.className === fxSkinSig) return;
+    resetFxCache();
+    fxSkinSig = popup.className;
+    const ring = byId("pomodoro-ring-progress");
+    if (ring) ring.style.removeProperty("stroke");
+    const timeEl = byId("pomodoro-time");
+    if (timeEl) timeEl.style.removeProperty("color");
+    setFlowPlay(document.getElementById("pomodoro-ring-svg"), running2);
+  }
+  function motionProgressFx(popup, remain, total, phase, running2) {
     var _a2;
     if (!popup || !popup.isConnected) return;
-    const hot = remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
+    syncFxSkin(popup, running2);
+    const hotTarget = varRgb(popup, HOT_VAR);
+    const hot = hotTarget && remain > 0 && remain <= URGENT_WINDOW ? 1 - remain / URGENT_WINDOW : 0;
     const ratio = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 0;
     const ring = byId("pomodoro-ring-progress");
-    const timeEl = byId("pomodoro-time");
+    const timeEl = timeVisualOf(byId("pomodoro-time"));
     if (ring && !baseStroke && !ring.style.stroke) {
       const cs = getComputedStyle(ring).stroke;
       if (parseRgb(cs)) baseStroke = cs;
@@ -28125,12 +28165,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       baseTimeColor = getComputedStyle(timeEl).color;
     }
     const base = baseStroke ? parseRgb(baseStroke) : null;
-    const accent = base ? mixTo(base, hot) : "";
+    const accent = base && hotTarget ? mixTo(base, hot, hotTarget) : "";
     if (ring && accent) {
       const grad = ensureFlowGrad(ring.ownerSVGElement);
       if (grad) {
         for (const s of Array.from(grad.querySelectorAll("stop"))) s.setAttribute("stop-color", accent);
         ring.style.stroke = `url(#${FLOW_ID})`;
+        setFlowPlay(ring.ownerSVGElement, running2);
       } else {
         ring.style.stroke = accent;
       }
@@ -28139,9 +28180,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         for (const c of Array.from(head.querySelectorAll("circle"))) c.setAttribute("fill", accent);
       }
     }
-    if (timeEl && baseTimeColor) {
+    if (timeEl && baseTimeColor && hotTarget) {
       const fg = parseRgb(baseTimeColor);
-      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65));
+      if (fg && hot > 0.35) timeEl.style.color = mixTo(fg, Math.min(1, (hot - 0.35) / 0.65), hotTarget);
       else if (timeEl.style.color) timeEl.style.removeProperty("color");
     }
     const grow = remain > 0 && remain <= FINAL_WINDOW ? 1 + (FINAL_WINDOW - remain) * 0.028 : 0;
@@ -28150,20 +28191,30 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (grow > 1) growEl.style.transform = `scale(${grow.toFixed(3)})`;
       else if (growEl.style.transform) growEl.style.removeProperty("transform");
     }
-    const cold = phase === "break" || phase === "long-break";
+    const cold = isBreakPhase(phase);
+    const tint = varRgb(popup, cold ? TINT_BREAK_VAR : TINT_FOCUS_VAR);
     const keep = Math.round((1 - ratio * TINT_ALPHA) * 100);
-    popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${cold ? TINT_BREAK : TINT_FOCUS}))`;
+    if (tint) {
+      popup.style.backgroundColor = `color-mix(in srgb, var(--pz-bg, var(--background-primary)) ${keep}%, rgb(${tint[0]}, ${tint[1]}, ${tint[2]}))`;
+    } else if (popup.style.backgroundColor) {
+      popup.style.removeProperty("background-color");
+    }
   }
   function setRestDepth(mask, on) {
     if (!mask) return;
     mask.classList.toggle("bz-pm-rest", on);
     const popup = byId("pomodoro-popup");
     if (popup) popup.classList.toggle("bz-pm-rest", on);
+    if (popup) popup.classList.toggle("bz-pm-rm", reduced3());
   }
   function resetFxCache() {
     baseStroke = null;
     baseTimeColor = null;
-    flowGrad = null;
+    if (flowGrad) {
+      for (const a of Array.from(flowGrad.querySelectorAll("animateTransform"))) a.remove();
+      flowGrad = null;
+    }
+    fxSkinSig = "";
   }
   function setHead(svg, mode) {
     if (!svg) return;
@@ -28368,7 +28419,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         { duration: M6.base + 60, easing: E3.out, delay, fill: "backwards" }
       ));
     };
-    reveal(byId("pomodoro-time"), 300, 7);
+    reveal(timeVisualOf(byId("pomodoro-time")), 300, 7);
     reveal(byId("pomodoro-phase"), 360);
     reveal(byId("pomodoro-task"), 410, 3);
     [...popup.querySelectorAll(".pomodoro-controls > button")].forEach((b, i) => reveal(b, 470 + i * STAG3, 4));
@@ -28809,7 +28860,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     ceremonyUntil = 0;
     bootUntil = 0;
   }
-  var M6, E3, STAG3, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers3, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_RGB, TINT_FOCUS, TINT_BREAK, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var M6, E3, STAG3, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers3, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, URGENT_WINDOW, FINAL_WINDOW, HOT_VAR, TINT_FOCUS_VAR, TINT_BREAK_VAR, SVG_NS, FLOW_ID, TINT_ALPHA, baseStroke, baseTimeColor, flowGrad, fxSkinSig, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
   var init_motion3 = __esm({
     "src/pomodoro/motion.ts"() {
       M6 = { fast: 160, move: 200, base: 280, impulse: 740 };
@@ -28831,15 +28882,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       headLastProgress = -1;
       URGENT_WINDOW = 300;
       FINAL_WINDOW = 10;
-      HOT_RGB = [226, 75, 74];
-      TINT_FOCUS = "216, 90, 48";
-      TINT_BREAK = "61, 110, 180";
+      HOT_VAR = "--pz-hot";
+      TINT_FOCUS_VAR = "--pz-tint-focus";
+      TINT_BREAK_VAR = "--pz-tint-break";
       SVG_NS = "http://www.w3.org/2000/svg";
       FLOW_ID = "bz-pm-flow";
       TINT_ALPHA = 0.12;
       baseStroke = null;
       baseTimeColor = null;
       flowGrad = null;
+      fxSkinSig = "";
       ceremonyUntil = 0;
       bootUntil = 0;
       lastRemain = -1;
@@ -29238,7 +29290,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     updateButtons();
     applySkinClass();
     motionPhaseSync(document.getElementById("pomodoro-popup"), state2.phase, state2.endTime !== null, state2.paused);
-    motionProgressFx(document.getElementById("pomodoro-popup"), remain, total, state2.phase);
+    motionProgressFx(
+      document.getElementById("pomodoro-popup"),
+      remain,
+      total,
+      state2.phase,
+      state2.endTime !== null && !state2.paused
+    );
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -29281,8 +29339,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     startBtn.disabled = startLocked;
     const resetBtn = document.getElementById("pomodoro-btn-reset");
     const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked || state2.phase === "idle";
+    if (resetBtn) {
+      resetBtn.disabled = locked;
+      const armed = armedBtn === "reset";
+      const want = armed ? ARM_LABEL : "重置";
+      if (resetBtn.textContent !== want) resetBtn.textContent = want;
+      resetBtn.classList.toggle("pomodoro-btn-armed", armed);
+      resetBtn.title = armed ? "再点一次即重置本阶段（进度作废）" : "重置本阶段";
+    }
+    if (skipBtn) {
+      skipBtn.disabled = locked || state2.phase === "idle";
+      const armed = armedBtn === "skip";
+      const want = armed ? ARM_LABEL : "跳过";
+      if (skipBtn.textContent !== want) skipBtn.textContent = want;
+      skipBtn.classList.toggle("pomodoro-btn-armed", armed);
+      skipBtn.title = armed ? "再点一次即跳过本阶段（不计入历史）" : "跳过本阶段";
+    }
   }
   function applyAction(action) {
     const prev = state2;
@@ -29497,11 +29569,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function bindEvents() {
     var _a2, _b2;
     const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => void resetWithConfirm());
+    startBtn.addEventListener("click", () => {
+      if (armedBtn !== null) disarmConfirm();
+      applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start");
+    });
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => resetWithConfirm());
     document.getElementById("pomodoro-btn-skip").addEventListener("click", () => {
       if (state2.phase === "idle") return;
-      applyAction("skip");
+      skipWithConfirm();
     });
     (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
     (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
@@ -29520,22 +29595,36 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start");
     });
   }
-  function resetWithConfirm() {
-    const focusing = state2.phase === "focus" && (state2.endTime !== null || state2.paused);
-    if (!focusing) {
-      applyAction("reset");
+  function disarmConfirm() {
+    if (armedOutside) {
+      document.removeEventListener("click", armedOutside, true);
+      armedOutside = null;
+    }
+    armedBtn = null;
+    updateButtons();
+  }
+  function confirmOrRun(kind, run) {
+    if (armedBtn === kind) {
+      disarmConfirm();
+      run();
       return;
     }
-    void openFlowDialog({
-      title: "重置专注",
-      message: "专注进行中，重置后本阶段进度作废（不计入历史）",
-      actions: [
-        { label: "继续计时", value: "cancel" },
-        { label: "重置", value: "ok", cta: true, danger: true }
-      ]
-    }).then((v) => {
-      if (v === "ok") applyAction("reset");
-    });
+    if (armedBtn !== null) disarmConfirm();
+    armedBtn = kind;
+    updateButtons();
+    const btn = document.getElementById(kind === "reset" ? "pomodoro-btn-reset" : "pomodoro-btn-skip");
+    armedOutside = (e) => {
+      const t = e.target;
+      if (btn && t && btn.contains(t)) return;
+      disarmConfirm();
+    };
+    document.addEventListener("click", armedOutside, true);
+  }
+  function resetWithConfirm() {
+    confirmOrRun("reset", () => applyAction("reset"));
+  }
+  function skipWithConfirm() {
+    confirmOrRun("skip", () => applyAction("skip"));
   }
   function buildDOM() {
     const mask = document.createElement("div");
@@ -29615,6 +29704,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function closePomodoro(immediate = false) {
+    if (armedBtn !== null) disarmConfirm();
     if (maskEl) {
       const el = maskEl;
       maskEl = null;
@@ -29716,7 +29806,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     appRef = null;
     loaded = false;
   }
-  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
   var init_ui4 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -29725,7 +29815,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_z_order();
       init_settings_provider();
       init_notice();
-      init_flow_dialog();
       init_settings_common();
       init_data6();
       init_render4();
@@ -29755,6 +29844,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       timeReels = null;
       lastBeepRemain = -1;
       SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
+      armedBtn = null;
+      armedOutside = null;
+      ARM_LABEL = "确认";
       initInflight = null;
       openInflight = null;
     }

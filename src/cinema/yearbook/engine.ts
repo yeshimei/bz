@@ -8,7 +8,7 @@
  * 这样就没有「自己滚到底」「幕与幕错位」这类几何问题：翻幕只是 `scrollTop = i × 屏高`。
  *
  * 手势：一次滚轮手势只翻一幕（GESTURE_GAP 内的连续 wheel 事件算同一次，
- * 触控板惯性不再连翻）；「自动」按钮按各幕自己的时长往下放，可随时暂停。
+ * 触控板惯性不再连翻）。
  *
  * 翻幕的「过片」：换幕时先把**遮片**合上（两片纸从上下合到中线，留一道朱红细缝），
  * 遮片合上的那一帧完成滚动与激活，再打开——于是换幕是一刀切，而不是「慢慢滑过去」。
@@ -29,17 +29,11 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   const handle: YbHandle = { stop: () => undefined, goTo: () => undefined };
   if (!sc || !film) return handle;
   const scEl: HTMLElement = sc;
-  const filmEl: HTMLElement = film;
 
   const scenes = qsa(film, '.bz-yb-scn');
   if (!scenes.length) return handle;
   const perfs = buildPerfs(film, data, root); // 浮签挂整屏根：翻幕/离场由这里统一收
-  const names = scenes.map((s) => s.dataset.name ?? '');
-  const rails = qsa(film, '.yb-rail-t');
-  const barI = film.querySelector<HTMLElement>('[data-r="barI"]');
-  const barN = film.querySelector<HTMLElement>('[data-r="barN"]');
-  const barLine = film.querySelector<HTMLElement>('[data-r="barLine"]');
-  const pb = film.querySelector<HTMLElement>('[data-r="pb"]');
+  const rails = qsa(root, '.yb-rail-t');
 
   let pal: Palette = palette(root);
   let cur = -1;
@@ -47,12 +41,10 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   let raf = 0;
   let fallback = 0;
   let dead = false;
-  let autoplay = false;
-  let autoAt = 0;
   let navTarget = -1;
   let navUntil = 0;
   const settled = new Set<number>();
-  const shutter = film.querySelector<HTMLElement>('[data-r="shutter"]');
+  const shutter = root.querySelector<HTMLElement>('[data-r="shutter"]');
   let cutTimers: ReturnType<typeof setTimeout>[] = [];
   // 指针（归一化到 -1..1；指针不在画面里时归零，各幕自己决定要不要缓动跟上）
   let px = 0, py = 0, pin = 0;
@@ -60,19 +52,16 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   const unit = (): number => Math.max(1, scEl.clientHeight);
   const indexAt = (): number => clamp(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
 
-  function hud(i: number, p: number): void {
+  function hud(i: number): void {
     if (rails.length) {
       rails.forEach((r, k) => {
         if (k === i) r.setAttribute('data-on', '1');
         else r.removeAttribute('data-on');
       });
     }
-    // 开卷要「一屏只有一团粒子」：底栏（红线 + 幕号/幕名 + 自动）在第 1 幕隐掉。
-    // 幕号写在影片根上，由 CSS 决定显隐——放在这里是为了翻幕与显隐永远同一帧。
-    filmEl.dataset.cur = String(i + 1).padStart(2, '0');
-    if (barI) barI.textContent = String(i + 1).padStart(2, '0');
-    if (barN) barN.textContent = names[i] ?? '';
-    if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+    // 幕号写在层根上（固定层在 box 直下、不在 film 子树里，选择器认层根）：
+    // 开卷幕要靠它收掉粒子的底栏显隐、翻幕显隐永远同一帧
+    root.dataset.cur = String(i + 1).padStart(2, '0');
   }
 
   /** 激活第 i 幕：重置它的时间轴并从 0 演（replay=false 时直接给终态） */
@@ -94,8 +83,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     sc.classList.remove('is-in');
     void sc.offsetWidth;
     sc.classList.add('is-in');
-    hud(i, 0);
-    autoAt = performance.now();
+    hud(i);
   }
 
   const clearCut = (): void => { for (const id of cutTimers) clearTimeout(id); cutTimers = []; };
@@ -147,15 +135,14 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     if (!fresh) { e.preventDefault(); return; }
     if (Math.abs(e.deltaY) < 1) return;
     e.preventDefault();
-    setAuto(false);
     goRel(e.deltaY > 0 ? 1 : -1);
   }
 
   function onKey(e: KeyboardEvent): void {
     if (dead || !root.isConnected) return;
     const k = e.key;
-    if (k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); setAuto(false); goRel(1); }
-    else if (k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); setAuto(false); goRel(-1); }
+    if (k === 'ArrowDown' || k === 'PageDown') { e.preventDefault(); goRel(1); }
+    else if (k === 'ArrowUp' || k === 'PageUp') { e.preventDefault(); goRel(-1); }
     else if (k === 'Home') { e.preventDefault(); goTo(0, { cut: true }); }
     else if (k === 'End') { e.preventDefault(); goTo(scenes.length - 1, { cut: true }); }
   }
@@ -186,28 +173,13 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     if (!perf) return;
     const t = (now - t0) / 1000;
     perf.update({ t, pal, px: px * pin, py: py * pin });
-    hud(cur, clamp(t / perf.dur, 0, 1));
-    if (autoplay && now - autoAt > (perf.dur + 1.4) * 1000) {
-      if (cur >= scenes.length - 1) setAuto(false);
-      else goRel(1);
-    }
-  }
-
-  function setAuto(on: boolean): void {
-    if (autoplay === on) return;
-    autoplay = on;
-    if (pb) {
-      pb.textContent = on ? '暂停' : '自动';
-      pb.classList.toggle('is-on', on);
-    }
-    autoAt = performance.now();
+    hud(cur);
   }
 
   const onOvlClick = (e: Event): void => {
     const t = e.target as HTMLElement;
-    if (t.closest('[data-r="pb"]')) { setAuto(!autoplay); return; }
     const rail = t.closest<HTMLElement>('.yb-rail-t');
-    if (rail) { setAuto(false); goTo(Number(rail.dataset.i ?? 0), { cut: true }); }
+    if (rail) { goTo(Number(rail.dataset.i ?? 0), { cut: true }); }
   };
 
   const onPointer = (e: PointerEvent): void => {
@@ -250,7 +222,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   root.addEventListener('pointercancel', onPtrUp);
   scEl.addEventListener('wheel', onWheel, { passive: false });
   scEl.addEventListener('scroll', syncFromScroll, { passive: true });
-  filmEl.addEventListener('click', onOvlClick);
+  root.addEventListener('click', onOvlClick); // 自动钮/导航点都在固定层（film 外），监听得挂层根
   document.addEventListener('keydown', onKey);
 
   activate(0, true);
@@ -271,7 +243,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     tip(root, '');
     scEl.removeEventListener('wheel', onWheel);
     scEl.removeEventListener('scroll', syncFromScroll);
-    filmEl.removeEventListener('click', onOvlClick);
+    root.removeEventListener('click', onOvlClick);
     document.removeEventListener('keydown', onKey);
   };
   return handle;

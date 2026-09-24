@@ -891,8 +891,13 @@
    框外那圈是遮罩——点它关闭（层根本身透明，露出的就是影院面板自己的底色）。 */
 .bz-yb-box{position:absolute; overflow:hidden; background:var(--yb-paper);
   box-shadow:0 14px 44px #0004,0 2px 8px #0002}
+/* 移动竖屏：观影分析横屏呈现——层框尺寸已按对调写内联（fitYbBox），这里只负责转 90°；
+   触摸/点击命中由浏览器按 transform 逆映射，交互无需特判。
+   转角走 --rot：is-nudge 的晃动 keyframes 同乘它，不然动画帧会把 90° 洗回 0°（闪竖版） */
+.bz-yb-box{--rot:0deg}
+.bz-yb-box.is-rot90{--rot:90deg; transform:rotate(var(--rot))}
 .bz-yb-box.is-nudge{animation:bzYbNudge var(--cn-m-base) var(--cn-e-out)}
-@keyframes bzYbNudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes bzYbNudge{0%,100%{transform:rotate(var(--rot,0deg)) translateX(0)}25%{transform:rotate(var(--rot,0deg)) translateX(-6px)}75%{transform:rotate(var(--rot,0deg)) translateX(6px)}}
 
 .bz-yb-scroll{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
   overscroll-behavior:contain; scroll-snap-type:y mandatory}
@@ -932,29 +937,20 @@
 .yb-h4{margin:0 0 .5em; font-size:.86em; letter-spacing:.06em; color:rgb(var(--yb-dim-rgb)); font-weight:600}
 .yb-empty{color:rgb(var(--yb-faint-rgb)); font-size:.9em}
 
-/* 固定层：右侧刻度尺 + 底栏 */
+/* 固定层：右侧导航点（每幕常驻的翻幕提醒，视觉刻意放弱）+ 底栏。
+   层在 .bz-yb-box 直下（滚动容器外），翻幕不位移。 */
 .yb-fixed{position:absolute; inset:0; pointer-events:none; z-index:6}
-.yb-rail{position:absolute; right:1.35em; top:50%; transform:translateY(-50%);
-  display:flex; flex-direction:column; gap:.5em; pointer-events:auto}
-.yb-rail-t{display:block; width:.95em; height:1.5px; background:rgba(var(--yb-ink-rgb), .2);
-  cursor:pointer; transition:width var(--cn-m-fast),background var(--cn-m-fast)}
-.yb-rail-t[data-on]{width:1.9em; background:rgb(var(--yb-red-rgb))}
-@media (hover:hover){ .yb-rail-t:hover{background:rgba(var(--yb-ink-rgb), .55)} }
-.yb-bar{position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; gap:.9em;
-  padding:.8em 3.4em .9em; font-size:.8em; letter-spacing:.08em; color:rgb(var(--yb-dim-rgb));
-  background:linear-gradient(to top, var(--yb-paper) 42%, transparent);
-  transition:opacity var(--cn-m-move) ease}
-/* 第 1 幕（开卷）：整条底栏连红进度线一起收掉——开卷只有中间那团会化形的粒子 */
-.bz-yb-film[data-cur="01"] .yb-bar{opacity:0; pointer-events:none}
-.yb-bar-i{font-weight:700; color:rgb(var(--yb-red-rgb))}
-.yb-bar-line{position:relative; flex:1; height:1px; background:rgba(var(--yb-ink-rgb), .16)}
-.yb-bar-line>i{position:absolute; inset:0; background:rgb(var(--yb-red-rgb)); transform:scaleX(0); transform-origin:left center}
-.yb-pb{pointer-events:auto; cursor:pointer; font:inherit; letter-spacing:.08em;
-  padding:.28em .8em; border-radius:999px; color:rgb(var(--yb-dim-rgb));
-  border:1px solid rgba(var(--yb-ink-rgb), .22); background:transparent;
-  transition:color var(--cn-m-fast),border-color var(--cn-m-fast),background var(--cn-m-fast)}
-.yb-pb.is-on{color:var(--yb-paper); background:rgb(var(--yb-red-rgb)); border-color:transparent}
-@media (hover:hover){ .yb-pb:hover{color:rgb(var(--yb-ink-rgb)); border-color:rgba(var(--yb-ink-rgb), .5)} }
+.yb-rail{position:absolute; right:.5em; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:.38em; pointer-events:auto}
+.yb-rail-t{display:block; width:.2em; height:.2em; border-radius:50%;
+  /* 视觉只有 ~.2em 的点（刻意弱化，只是翻幕提醒），命中区靠透明 border 撑到 ~.8em */
+  border:.3em solid transparent; background-clip:padding-box;
+  background:rgba(var(--yb-ink-rgb), .12);
+  cursor:pointer; transition:transform var(--cn-m-fast),background var(--cn-m-fast)}
+.yb-rail-t[data-on]{background:rgba(var(--yb-red-rgb), .66); transform:scale(1.3)}
+@media (hover:hover){ .yb-rail-t:hover{background:rgba(var(--yb-ink-rgb), .36)}
+  .yb-rail-t[data-on]:hover{background:rgb(var(--yb-red-rgb))} }
+/* 底栏（幕号/幕名/进度线/自动）已整条移除（2026-09-24 拍板）：翻幕只认右缘导航点。 */
 
 /* ── 跟随浮签（指针层）：全片共用一个节点，挂在 .bz-yb 上（fixed inset:0 → 客户端坐标即根内坐标）。
    幕里的「点」多是缩略图与画布，不给名字就读不出内容；翻幕与指针离场由引擎统一收掉。
@@ -967,6 +963,22 @@
   opacity:0; transition:opacity var(--cn-m-fast) ease}
 .yb-tip b{font-weight:800; color:var(--yb-paper)}
 
+/* data-tip 在年书里只喂 JS 浮窗（kits.under 读 dataset → kits.tip 画 .yb-tip 黑窗）；
+   core 的纯 CSS hover 浮窗（[data-tip]::after）会跟它撞出「白卡 + 黑窗」双重读数
+   （2026-09-24 用户指的白字），这里整体关掉。 */
+.bz-yb [data-tip]::before,.bz-yb [data-tip]::after{content:none}
+
+/* 座上常客的艺术字：四字衬线、墨色渐变（底端透一线朱红），悬在弧形卡阵上方居中偏上；
+   逐字由运动层错峰浮起，偶数字带 1.6° 的闲笔微侧 */
+.yb-attl{position:absolute; left:50%; top:34%; transform:translate(-50%,-50%);
+  display:flex; gap:.45em; pointer-events:none; white-space:nowrap;
+  font-family:var(--yb-serif); font-size:3.6em; line-height:1;
+  filter:drop-shadow(0 .1em .18em rgba(var(--yb-ink-rgb), .12))}
+.yb-attl i{font-style:normal; display:block;
+  background:linear-gradient(180deg, rgb(var(--yb-ink-rgb)) 12%, rgb(var(--yb-dim-rgb)) 70%, rgba(var(--yb-red-rgb), .9));
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent}
+
 /* 07 长短两端：指针在尺子上量出的那道读数线（不占位、不吃事件） */
 .yb-rread{position:absolute; top:.6em; bottom:.6em; width:1px; background:rgb(var(--yb-red-rgb));
   opacity:0; pointer-events:none; transition:opacity var(--cn-m-fast) ease}
@@ -974,9 +986,15 @@
   border-radius:999px; background:rgb(var(--yb-red-rgb))}
 
 /* ── 01 开卷 ── */
-.yb-open{position:absolute; inset:0}
-.yb-open-cv{position:absolute; inset:0}
-.yb-open-cv canvas{position:absolute; inset:0; width:100%; height:100%}
+/* 01 开卷的粒子画布：覆盖层根直下、满屏铺——粒子飞得出纸面卡，从屏外汇聚进卡里成字。
+   不放幕里有两个原因：面板 overflow 会裁掉出卡的部分；幕入场动画的 transform 会让
+   画布逐帧量到不同尺寸、不停重建粒子群（「旧粒子被换成新的」就是这么来的，2026-09-24）。
+   z 排：纸面卡（auto）< 粒子画布（5）< 固定层（6）< 移动端关闭钮（30）。 */
+.bz-yb-openfx{position:absolute; inset:0; z-index:5; pointer-events:none;
+  transition:opacity var(--cn-m-move) ease}
+.bz-yb-openfx canvas{position:absolute; inset:0; width:100%; height:100%}
+/* 翻离第 1 幕后整层淡出——画布不在幕里、不会跟着滚走，得自己隐 */
+.bz-yb[data-cur]:not([data-cur="01"]) .bz-yb-openfx{opacity:0}
 
 /* ── 02 十二年 ── */
 .yb-years{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 13.5em;
@@ -1251,7 +1269,7 @@
 .yb-podium{position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); gap:2.2em;
   align-items:stretch; perspective:1200px}
 /* 台座固定高、卡片吃剩下的高度：海报按剩余空间裁切——不然三张卡各随内容长，必然顶出幕外 */
-.yb-pod-slot{position:relative; display:flex; flex-direction:column; min-height:0; opacity:0}
+.yb-pod-slot{position:relative; display:flex; flex-direction:column; min-height:0; min-width:0; opacity:0}
 .yb-pod-slot[data-i="0"]{order:2}
 .yb-pod-slot[data-i="1"]{order:1}
 .yb-pod-slot[data-i="2"]{order:3}
@@ -1378,7 +1396,7 @@
 
 /* ── 23 豆瓣短评 ── */
 .yb-quotes{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 10em; gap:2.4em}
-.yb-lanes{display:grid; grid-template-columns:repeat(3,1fr); gap:1.6em; min-height:0; overflow:hidden;
+.yb-lanes{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1.6em; min-height:0; overflow:hidden;
   mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
   -webkit-mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)}
 .yb-lane{display:flex; flex-direction:column; gap:1.1em}
@@ -1399,13 +1417,7 @@
   align-items:center; font-size:.84em; color:rgb(var(--yb-dim-rgb)); text-align:right; padding-right:.7em}
 .yb-mx-rows span{opacity:0}
 
-/* ── 25 群像墙 ── */
-.yb-wall{position:absolute; inset:0; display:grid; grid-template-columns:repeat(12,1fr);
-  grid-template-rows:repeat(5,1fr); gap:.5em; align-content:center; perspective:1000px}
-.yb-wtile{margin:0; height:100%; border-radius:2px; overflow:hidden; opacity:0; background:var(--yb-card)}
-.yb-wtile img, .yb-wtile .yb-ph{width:100%; height:100%}
-
-/* ── 26 落款 ── */
+/* ── 25 落款 ── */
 .yb-colo{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:1.8em}
 .yb-colo{justify-content:center; align-items:center}
 /* 最后一页只有四格大字，居中一行；单位在数字下方（小字但成组，不散排） */
@@ -1476,55 +1488,37 @@
 @keyframes ybFlapIn{from{transform:rotateX(-92deg)}to{transform:rotateX(0)}}
 @keyframes ybFlapOut{from{transform:rotateX(0)}to{transform:rotateX(92deg)}}
 
-/* 窄屏：两栏收一栏、幕内边距收紧（26 幕同一套骨架，这里只调栅格） */
-/* 窄屏重排：**不能只把栅格压成一列**——子项写死的 grid-column 会造出隐式列，
- *  于是「钟盘/胶片盘被挤成窄条、主图整块消失」（2026-09-22 用户在窄窗口实测）。
- *  这里按幕逐个给：该并排的并排（两列），该铺满的铺满（跨列），子项列号一并复位。 */
-@media (max-width: 900px){
-  /* 基字号不再在这里覆盖：真值由 fitYbBox 按层框写内联（ADR-0175），层内一律跟框走——
-     这条 vmin 覆盖既被内联盖住、口径也和「随框派生」相抵，删掉。 */
-  .yb-sc{padding:1.8em 2.2em 3em 2em}
 
-  /* 06 片长画像：上排「胶片盘 + 数字」，下排柱状图铺满 */
-  .yb-len{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
-    grid-template-rows:minmax(0,1.1fr) minmax(0,.9fr); gap:1.6em}
-  .yb-len-reel{grid-column:1; grid-row:1}
-  .yb-len-side{grid-column:2; grid-row:1}
-  .yb-len-bars{grid-column:1 / -1; grid-row:2; padding-top:0}
-  .yb-len-side .yb-flap-big{font-size:1.5em}
-
-  /* 26 落款：四格大字在窄屏一行排不下（单「42天18时」就占 16em），折成 2×2 仍居中 */
-  .yb-colo-grid{grid-template-columns:repeat(2,auto); gap:2.4em 3.4em}
-  .yb-colo-grid .yb-flap-big.yb-flap-row{font-size:2.2em}
-
-  /* 04 日晷 / 12 片龄横轴：主图铺满，统计挪到下方一行 */
-  .yb-dial, .yb-ageax{grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:1.2em}
-  .yb-dial-face{width:min(100%, 30em)}
-  .yb-dial-side, .yb-ageax-side{flex-direction:row; flex-wrap:wrap; gap:.6em 1.6em; align-items:baseline}
-  .yb-dial-side .yb-kv.big, .yb-ageax-side .yb-kv.big{width:100%}
-
-  /* 13 评分散点：散点 + 边缘直方并排，统计一行放底下 */
-  .yb-scatter{grid-template-columns:minmax(0,1fr) minmax(0,9em);
-    grid-template-rows:minmax(0,1fr) auto; gap:1em 1.4em}
-  .yb-scatter-plot{grid-column:1; grid-row:1}
-  .yb-edge{grid-column:2; grid-row:1}
-  .yb-hist-side{grid-column:1 / -1; grid-row:2; flex-direction:row; flex-wrap:wrap; gap:.4em 1.8em}
-
-  /* 08 类型光谱：条 + 星图上下排 */
-  .yb-genres{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:1.2em}
-  .yb-genres-net{min-height:12em}
-
-  /* 其余两栏幕：直接收一栏（子项本来就是自动排位） */
-  .yb-eras, .yb-binge, .yb-ninewall, .yb-series, .yb-bal-lists{grid-template-columns:1fr}
-  .yb-streak{grid-template-columns:1fr; gap:1.6em}
-  .yb-days{grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr)}
-  .yb-podium{grid-template-columns:1fr; gap:1.2em}
-  .yb-wall, .yb-ninewall-grid{grid-template-columns:repeat(6,1fr)}
-  .yb-arc{--arc-r:40em; --arc-k:.62; bottom:-30em}
-  .yb-title{font-size:3.6em}
-  .yb-notes{grid-template-columns:1fr}
-  .yb-quotes{grid-template-columns:1fr}
-  .yb-era-side{position:static; transform:none; width:auto; flex-direction:row; flex-wrap:wrap; gap:.6em 1.6em}
-  .yb-pod-block{height:calc(var(--h,1) * 6em)}
-  .yb-ribbon-head{flex-wrap:wrap; gap:.4em 1.6em}
+/* ════════════════════════════════════════════════════════════════════════
+   横屏矮幅（2026-09-24 真机反馈）：移动端沿用桌面布局横屏显示，但横屏视口高
+   只有 ~410px——格子类构图的行高由 aspect-ratio × 列宽驱动，宽屏下列宽暴涨
+   把行高顶穿幕外（3/4/12/17 幕实测溢出）。这里只做高度适配：加列数压行高、
+   圆盘限径、片龄整块 zoom、弧线压低避开题字——布局骨架仍与桌面同款。
+   阈值 480px：桌面窗口高 ≥640 不命中，只拦手机横屏。
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-height: 480px){
+  /* 03 落笔的日子：4×3 行在矮幅纵向溢出——改 6×2，格子随列宽自然缩 */
+  .yb-days{grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(2,1fr); gap:.8em 1em}
+  /* 04 星期节律：圆盘 aspect 1、宽 min(100%,34em) 在矮幅顶穿——限径 */
+  .yb-dial-face{width:min(100%, 24em)}
+  /* 12 片龄横轴：12 条海报 lane 纵铺 395px——整块构图 zoom 收缩（连轴带字等比） */
+  .yb-ageax-plot{zoom:.68}
+  /* 17 高分墙：9 列×4 行格高 128px 纵向放不下——加到 12 列，35 格只占 3 行 */
+  .yb-ninewall-grid{grid-template-columns:repeat(12,1fr); gap:.5em}
+  /* 导航点挪到左缘：右侧留给关闭钮，翻幕的手也不挡内容（2026-09-24 拍板） */
+  .yb-rail{right:auto; left:.5em}
+  /* 19 座上常客：弧线整体压低、半径收小，题字上移——互不重叠 */
+  .yb-attl{top:20%}
+  .yb-arc{bottom:-42em; --arc-r:44em}
 }
+
+/* ── 移动竖屏旋转态（.is-rot90 = fitYbBox 对调了层框并转 90°）：内容坐标系是横屏
+   矮幅，但视口 media（max-height:480）在竖屏不命中——上面那组的规则在这里按类再上一份，
+   两处**同步维护**（2026-09-24 拍板：移动端观影分析横屏呈现）。 ── */
+.bz-yb-box.is-rot90 .yb-days{grid-template-columns:repeat(6,1fr); grid-template-rows:repeat(2,1fr); gap:.8em 1em}
+.bz-yb-box.is-rot90 .yb-dial-face{width:min(100%, 24em)}
+.bz-yb-box.is-rot90 .yb-ageax-plot{zoom:.68}
+.bz-yb-box.is-rot90 .yb-ninewall-grid{grid-template-columns:repeat(12,1fr); gap:.5em}
+.bz-yb-box.is-rot90 .yb-rail{right:auto; left:.5em}
+.bz-yb-box.is-rot90 .yb-attl{top:20%}
+.bz-yb-box.is-rot90 .yb-arc{bottom:-42em; --arc-r:44em}

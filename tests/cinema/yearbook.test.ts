@@ -3,12 +3,12 @@
  *
  * 三件事各钉一层：
  *  1. 派生只认 frontmatter 真有的字段（片长/季集/评分的解析口径与缺值行为）；
- *  2. 版式 26 幕、骨架齐整、用户文本转义；
+ *  2. 版式 25 幕、骨架齐整、用户文本转义；
  *  3. 引擎「一滚一幕」+ 翻幕即激活 + stop 后不再响应（这几条是用户当场拍板的交互）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { deriveYb, parseMinutes, parseEpisodes, humanMinutes, dayOf, YB_WEEK } from '../../src/cinema/yearbook/data';
-import { yearbookHtml, YB_SCENES } from '../../src/cinema/yearbook/scenes';
+import { yearbookHtml, yearbookFixedHtml, yearbookOpenHtml, YB_SCENES } from '../../src/cinema/yearbook/scenes';
 import { bindYearbook } from '../../src/cinema/yearbook/engine';
 import { STATUS_WATCHED, STATUS_WANT, STATUS_WATCHING } from '../../src/cinema/constants';
 import type { CinemaItem } from '../../src/cinema/state';
@@ -163,14 +163,15 @@ describe('观影志 · 派生（deriveYb）', () => {
   });
 });
 
-describe('观影志 · 版式（26 幕共用一套骨架）', () => {
+describe('观影志 · 版式（25 幕共用一套骨架）', () => {
   const data = deriveYb(FIXTURE);
   const html = yearbookHtml(data, () => null);
+  const fixed = yearbookFixedHtml();
 
   it('幕数 = YB_SCENES；每幕只有主构图（顶部/底部文字已去），幕名与口径留在 data-*', () => {
-    expect(YB_SCENES.length).toBe(26);
+    expect(YB_SCENES.length).toBe(25);
     const scn = html.match(/class="bz-yb-scn"/g) ?? [];
-    expect(scn.length).toBe(26);
+    expect(scn.length).toBe(25);
     // 2026-09-22 用户拍板：每页顶部/底部的文字整段去掉，幕里只有主构图
     expect(html).not.toContain('class="yb-hd"');
     expect(html).not.toContain('class="yb-ft"');
@@ -182,22 +183,23 @@ describe('观影志 · 版式（26 幕共用一套骨架）', () => {
 
   it('开卷不上任何 DOM 文字（标题与总数都由中间那团粒子画出来）', () => {
     const open = html.slice(html.indexOf('data-id="open"'), html.indexOf('data-id="years"'));
-    expect(open).toContain('data-cv="open"');
+    // 画布满屏铺在覆盖层根（yearbookOpenHtml），幕里不再放——放幕里会被面板裁剪、
+    // 且幕入场动画的 transform 会让画布逐帧量到不同尺寸、不停重建粒子群
+    expect(open).not.toContain('data-cv="open"');
+    expect(yearbookOpenHtml()).toContain('data-cv="open"');
     expect(open).not.toContain('观影志'); // 片名只在画布粒子里
     expect(open).not.toContain('部影视');
     expect(open).not.toContain('<h1');
     expect(open).not.toContain('<p');
   });
 
-  it('固定层：刻度尺 26 格 + 底栏 + 自动按钮', () => {
-    expect(html.match(/class="yb-rail-t"/g)?.length).toBe(26);
-    expect(html).toContain('data-r="barI"');
-    expect(html).toContain('data-r="pb"');
-    // 底栏只留「幕号 / 幕名 / 进度 / 总数 / 自动」：重看钮随底栏文字一并去掉，
-    // 回开卷走 Home 键或点第 1 格刻度（engine 里已无 again 分支）
-    expect(html).toContain('data-r="barN"');
-    expect(html).toContain('data-r="barLine"');
-    expect(html).not.toContain('data-r="again"');
+  it('固定层（独立导出，挂在滚动容器外）：刻度尺 26 格', () => {
+    // 固定层不再内嵌 film（film 盒一屏高，内嵌会被第一幕滚走——「导航只有首页有」的根因）
+    expect(fixed.match(/class="yb-rail-t"/g)?.length).toBe(25);
+    // 底栏（幕号/幕名/进度线/自动）已整条去掉（2026-09-24 拍板）：翻幕只认右侧导航点
+    expect(fixed).not.toContain('yb-bar');
+    expect(fixed).not.toContain('data-r="pb"');
+    expect(html).not.toContain('yb-fixed'); // film 里不再有固定层
   });
 
   it('用户文本一律转义（片名/影评/短评/导演都不许漏标签进来）', () => {
@@ -214,7 +216,7 @@ describe('观影志 · 版式（26 幕共用一套骨架）', () => {
 
   it('空库也能出片（幕数与骨架齐，不出现 undefined/NaN）', () => {
     const out = yearbookHtml(deriveYb([]), () => null);
-    expect(out.match(/class="bz-yb-scn"/g)?.length).toBe(26);
+    expect(out.match(/class="bz-yb-scn"/g)?.length).toBe(25);
     expect(out).not.toContain('undefined');
     expect(out).not.toContain('NaN');
   });
@@ -238,38 +240,34 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     ovl = document.createElement('div');
     ovl.className = 'bz-yb';
-    ovl.innerHTML = `<div class="bz-yb-scroll">${yearbookHtml(deriveYb(FIXTURE), () => null)}</div>`;
+    // 与 ui.openYearbookOverlay 同构：固定层（rail/底栏/遮片）在滚动容器外、与 film 平级
+    ovl.innerHTML = `<div class="bz-yb-scroll">${yearbookHtml(deriveYb(FIXTURE), () => null)}</div>${yearbookFixedHtml()}`;
     document.body.appendChild(ovl);
     sc = ovl.querySelector<HTMLElement>('.bz-yb-scroll')!;
   });
 
-  const barI = (): string | null => ovl.querySelector('[data-r="barI"]')!.textContent;
   const railOn = (): number => Array.from(ovl.querySelectorAll('.yb-rail-t')).findIndex((el) => el.hasAttribute('data-on'));
 
-  it('绑定即演第 1 幕：底栏 01、刻度尺第一格点亮', () => {
+  it('绑定即演第 1 幕：刻度尺第一格点亮', () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
-    expect(barI()).toBe('01');
-    expect(ovl.querySelector('.bz-yb-film')?.getAttribute('data-cur')).toBe('01'); // 开卷：底栏由 CSS 收掉
+    expect(ovl.getAttribute('data-cur')).toBe('01'); // data-cur 由引擎写在层根上
     expect(railOn()).toBe(0);
-    expect(ovl.querySelector('[data-r="barN"]')!.textContent).toBe('开卷');
     handle.stop();
   });
 
-  it('goTo 翻到第 4 幕：底栏/幕名/刻度尺同步，且被翻过的那幕定格', async () => {
+  it('goTo 翻到第 4 幕：刻度尺同步，且被翻过的那幕定格', async () => {
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     handle.goTo(3);
     await new Promise((r) => setTimeout(r, 60));
     // 过片：换幕前遮片先合上（MOTION.fast = 160ms 后才真正换幕）
     expect(ovl.querySelector('[data-r="shutter"]')?.className).toContain('is-close');
     await new Promise((r) => setTimeout(r, 260));
-    expect(barI()).toBe('04');
     expect(railOn()).toBe(3);
-    expect(ovl.querySelector('[data-r="barN"]')!.textContent).toBe('星期节律');
     // 目标幕的表演跑到终态：日晷第一根辐条已整根抽出（不是停在 t=0 的半截）
     const bar = ovl.querySelector('[data-id="week"] .yb-spoke-bar') as HTMLElement;
     expect(bar.getAttribute('style') ?? '').toContain('scaleX(1');
-    // 第 1 幕底栏整条收掉（开卷只留中间那团粒子）
-    expect(ovl.querySelector('.bz-yb-film')?.getAttribute('data-cur')).toBe('04');
+    // data-cur 写在层根上
+    expect(ovl.getAttribute('data-cur')).toBe('04');
     handle.stop();
   });
 
@@ -280,7 +278,7 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
     wheel(120);
     wheel(120); // 同一次手势：只认第一下
     await new Promise((r) => setTimeout(r, 260));
-    expect(barI()).toBe('02');
+    expect(railOn()).toBe(1);
     handle.stop();
   });
 
@@ -288,7 +286,7 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     sc.dispatchEvent(new WheelEvent('wheel', { deltaY: -120, bubbles: true, cancelable: true }));
     await new Promise((r) => setTimeout(r, 260));
-    expect(barI()).toBe('01');
+    expect(railOn()).toBe(0);
     handle.stop();
   });
 
@@ -296,10 +294,10 @@ describe('观影志 · 引擎（一滚一幕 / 翻幕即激活 / stop 后安静�
     handle = bindYearbook(ovl, deriveYb(FIXTURE));
     (ovl.querySelectorAll('.yb-rail-t')[5] as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 260));
-    expect(barI()).toBe('06');
+    expect(railOn()).toBe(5);
     handle.stop();
     sc.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
-    expect(barI()).toBe('06');
+    expect(railOn()).toBe(5);
   });
 
   it('结构不齐（没有滚动口）时不抛、也不留监听', () => {

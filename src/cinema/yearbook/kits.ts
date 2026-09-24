@@ -125,8 +125,9 @@ export function canvas(host: HTMLElement, key: string): Cv | null {
     el, ctx, w: 0, h: 0,
     fit(): boolean {
       const dpr = Math.min(2, (globalThis.devicePixelRatio || 1));
-      const r = el.getBoundingClientRect();
-      const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+      // 用布局尺寸而非 getBoundingClientRect：移动竖屏旋转态下 rect 是视觉尺寸（转了 90°），
+      // 会让位图按错误比例建、粒子/折线整体拉伸变形
+      const w = Math.max(1, el.offsetWidth), h = Math.max(1, el.offsetHeight);
       if (w === cv.w && h === cv.h) return false;
       cv.w = w; cv.h = h;
       el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);

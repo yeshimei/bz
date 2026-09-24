@@ -3,14 +3,14 @@
  *
  * 分三层钉：
  *  1. 工具箱是纯函数（`localAt` / `nearest` / `toward`）——比例坐标与命中判定的口径只有这一处；
- *  2. 版式给指针留的钩子（`data-tip` / `.yb-rread`）在 26 幕里齐不齐——
+ *  2. 版式给指针留的钩子（`data-tip` / `.yb-rread`）在 25 幕里齐不齐——
  *     运动层靠这些钩子取读数，少一个就是某一页「悬停没反应」；
  *  3. 引擎真的把指针转给**当前这一幕**：翻幕之后指针事件不能还发给上一幕（否则上一幕会背着演），
  *     也不能在 stop 之后继续。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { deriveYb } from '../../src/cinema/yearbook/data';
-import { yearbookHtml, YB_SCENES } from '../../src/cinema/yearbook/scenes';
+import { yearbookHtml, yearbookFixedHtml, YB_SCENES } from '../../src/cinema/yearbook/scenes';
 import { bindYearbook } from '../../src/cinema/yearbook/engine';
 import { localAt, nearest, toward, under, tip } from '../../src/cinema/yearbook/kits';
 import { STATUS_WATCHED } from '../../src/cinema/constants';
@@ -162,7 +162,7 @@ describe('观影志 · 引擎把指针转给「当前这一幕」', () => {
     document.body.innerHTML = '';
     ovl = document.createElement('div');
     ovl.className = 'bz-yb';
-    ovl.innerHTML = `<div class="bz-yb-scroll"><div class="bz-yb-film">${yearbookHtml(deriveYb(FIXTURE), () => null)}</div></div>`;
+    ovl.innerHTML = `<div class="bz-yb-scroll">${yearbookHtml(deriveYb(FIXTURE), () => null)}</div>${yearbookFixedHtml()}`;
     document.body.appendChild(ovl);
     sc = ovl.querySelector('.bz-yb-scroll') as HTMLElement;
     Object.defineProperty(sc, 'clientHeight', { value: 600, configurable: true });
@@ -230,6 +230,6 @@ describe('观影志 · 引擎把指针转给「当前这一幕」', () => {
   });
 
   it('一幕的表演次数与幕数一一对应（指针层没有偷偷多挂）', () => {
-    expect(YB_SCENES.length).toBe(26);
+    expect(YB_SCENES.length).toBe(25);
   });
 });

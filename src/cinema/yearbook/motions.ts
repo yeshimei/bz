@@ -11,10 +11,10 @@
  *  2. `S()` 保留元素上已有的 `--*` 声明并自带记忆（同值不重写），
  *     所以「整段写 cssText」不会顺手把排版用的变量擦掉。
  *
- * 手法清单（一幕一种，不重复）：粒子汇聚 / 折线描画 / 日历逐格点亮 / 柱状弹性生长 /
+ * 手法清单（一幕一种，不重复）：流场萤火拖尾 / 折线描画 / 日历逐格点亮 / 柱状弹性生长 /
  * 链条串珠 / 直方图 + 里程表 / 双向滑出标尺 / 条形错峰 / 堆叠流图 / 印章落纸 / 河流冲刷 /
  * 抽屉拉开 / 均值线扫过 / 背靠背双峰 / 天平阻尼摆动 / 纵深飞入 / 对角波浪翻牌 / 右侧推入 /
- * 弧线归位 / 扇面摊开 / 磁带延展 / 打字机 / 弹幕漂流 / 热力矩阵扫行 / 墙面视差 / 落款错峰
+ * 弧线归位 / 扇面摊开 / 磁带延展 / 打字机 / 弹幕漂流 / 热力矩阵扫行 / 落款错峰
  */
 import { YB_TITLE, type YbData } from './data';
 import {
@@ -81,87 +81,319 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
     return Number.isFinite(v) ? v : fallback;
   };
 
-  /* ── 01 开卷：粒子汇聚成总藏量 ── */
+  /* ── 01 开卷：流场萤火（探索稿 v4 上岸，2026-09-24 用户拍板）──
+     粒子骑在慢速流场上（伪 curl：几层不同频率正弦叠出方向角），像萤火群顺气流游动；
+     画布不清屏、每帧向透明擦一层（destination-out）——旧迹渐渐隐去露出纸面，
+     光迹拖尾是这一幕的标志手感；开场 0.9s 整体淡入（满屏出生点瞬显会闪一下）。
+     未移入：粒子（栗子）锚在出生点原地轻晃，不游荡；鼠标移入立即聚合，直接成片名
+     「观影分析」。聚齐之后全靠手玩（2026-09-24「栗子逻辑」二次拍板）：
+     快扫字面 → 栗子被打飞、脱队坠落盒底堆积；快扫盒底的堆 → 栗子被扬回天上、飞回
+     各自字位——可以把整片字扫空，再把它们全部扫回来；慢挪只是轻抚，不脱队。
+     另有偶发流星曳光；暗色主题下萤火转荧光、堆底如余烬明灭。 */
   {
     const s = scn('open')!;
-    const cv = canvas(s, 'open');
-    interface P { tx: number; ty: number; tx2: number; ty2: number; sx: number; sy: number; d: number; r: number; red: boolean }
+    const cv = canvas(host, 'open'); // 画布在覆盖层根上（满屏铺，见 yearbookOpenHtml），不在幕里
+    interface P {
+      x: number; y: number; pxl: number; pyl: number; vx: number; vy: number;
+      ax: number; ay: number; d: number; r: number;
+      kind: 0 | 1 | 2; ph: number; wr: number; ws: number; fm: number;
+      hx: number; hy: number;
+      air: 0 | 1 | 3 | 4; // 0=在位 1=下坠 3=堆底 4=归位途中（全靠手扫，不自动）
+    }
     let ps: P[] = [];
     let builtFor = 0;
-    out.set('open', {
-      dur: 3.8,
-      update({ t, pal, px, py }) {
-        if (cv) cv.fit();
-        const w = cv?.w ?? 100, h = cv?.h ?? 100;
-        if (cv && ps.length === 0 && w > 8) {
-          builtFor = w;
-          const fontPx = Math.max(46, Math.min(h * .42, w * .22));
-          // 两套靶点：先「686」，再化形成片名 YB_TITLE——同一批粒子换靶点，不是两套动画
-          const N = 1400;
-          const resample = (text: string, fp: number): { x: number; y: number }[] => {
-            const raw = sampleText(text, fp, 800, 4);
-            if (!raw.length) return [];
-            return Array.from({ length: N }, (_, i) => raw[Math.floor((i / N) * raw.length)]);
-          };
-          const a = resample(String(data.total), fontPx);
-          // 四字比原三字宽：字号系数按位宽同比收（.62 × 3/4 ≈ .46），整串宽度与三字版持平
-          const b = resample(YB_TITLE, fontPx * .46);
-          if (a.length !== b.length || !a.length) { /* 取样失败就只做第一段 */ }
-          ps = a.map((p, i) => {
-            const ang = (i / Math.max(1, N)) * Math.PI * 2 + Math.random() * .6;
-            const rad = Math.max(w, h) * (.5 + Math.random() * .45);
-            return {
-              tx: p.x, ty: p.y, tx2: (b[i] ?? p).x, ty2: (b[i] ?? p).y,
-              sx: Math.cos(ang) * rad, sy: Math.sin(ang) * rad * .68,
-              d: Math.random() * .5, r: 1.1 + Math.random() * 1.5, red: Math.random() < .1,
-            };
-          });
-        } else if (cv && builtFor !== w && w > 8) {
-          ps = [];
-          builtFor = 0;
+    let lastT = 0;
+    // 聚合起点（鼠标首次移入才起表）：null = 还在满布游荡待命；叙事时间轴 tt 全挂在它上
+    let claimAt: number | null = null;
+    // 指针状态：update 的 px/py 是归一化坐标，这里换算回画布像素，另记速度与场强包络
+    const pt = { x: 0, y: 0, in: false, vx: 0, vy: 0, ds: 0, was: false };
+    // 叙事拍点：鼠标移入起表，0.9 起错峰认领 → ≈3.0 收齐成片名（直排片名，不再先出数字）
+    const CLAIM_AT = .9, CLAIM_SPAN = .9, CLAIM_DUR = 1.2;
+    // 动力学常数（px/s²、1/s；自由巡航 ≈ FLOW/DAMP_FREE ≈ 58px/s）
+    const N = 1200, FLOW = 150, ATTR = 42, DAMP_FREE = 2.6, DAMP_LOCK = 8.5, VCAP = 640;
+    // 栗子物理：重力 300（柔坠）、弹性 .55（多段反弹），坠粒齐落在纸面卡下缘一线堆积；
+    // 快扫字面才打飞（KNOCK=指针速度档，慢挪不脱队），栗子沿手势正前方**扇形飞溅**
+    // （SPLASH=扇形半角，速度/角度各带随机），弹道之后才被重力拉坠；快扫盒底的堆则整把扬回；
+    // 扫入半径 = min(w,h)*SWEEP_R；METEOR_*=流星节奏
+    const GRAV = 300, DAMP_FALL = 1.1, BOUNCE = .55, FLOOR_MARGIN = 3,
+      KNOCK = .25, SWEEP_R = .08, SPLASH = .62, METEOR_FROM = 3, METEOR_EVERY = 3.5, METEOR_SPAN = 6;
+    const WRAP = 140; // 出生撒点可越出屏幕的余量（聚合时从屏外四面八方汇进纸面卡）
+    const HOME_K = 30, SWAY = 42; // 未移入时锚在出生点：回位劲度 + 慢晃/微颤幅度
+    /** 流场：几层不同频率正弦叠出方向角（弧度）；时间项系数都很小——气流慢漂 */
+    const flowAngle = (x: number, y: number, t: number): number =>
+      Math.sin(x * .0031 + t * .22) * 1.9 + Math.sin(y * .0026 - t * .17) * 1.6 +
+      Math.sin((x + y) * .0014 + t * .11) * 1.2 + Math.sin((x - y) * .0043 - t * .09) * .7;
+    /** 认领：每粒按最近靶点吸附——贪心从「靶点侧」挑最近未认领的粒，等长下恰成双射，
+     *  笔画密度均匀。一次性 O(n²)（≈1.4M 次比较 ×2 段），构建期跑一次无压力。 */
+    const assign = (targets: { x: number; y: number }[], ref: { x: number; y: number }[]): Int32Array => {
+      const n = targets.length;
+      const used = new Uint8Array(n);
+      const idx = new Int32Array(n);
+      const order = new Int32Array(n);
+      for (let i = 0; i < n; i++) order[i] = i;
+      for (let i = n - 1; i > 0; i--) { // 洗牌：消除扫描线顺序的系统性偏置
+        const k = (Math.random() * (i + 1)) | 0;
+        const tmp = order[i]; order[i] = order[k]; order[k] = tmp;
+      }
+      for (let q = 0; q < n; q++) {
+        const j = order[q];
+        let best = 0, bd = Infinity;
+        const tx = targets[j].x, ty = targets[j].y;
+        for (let i = 0; i < n; i++) {
+          if (used[i]) continue;
+          const dx = ref[i].x - tx, dy = ref[i].y - ty;
+          const dd = dx * dx + dy * dy;
+          if (dd < bd) { bd = dd; best = i; }
         }
-        if (cv) {
+        used[best] = 1; idx[j] = best;
+      }
+      return idx;
+    };
+    /** 构建：直接取样片名 YB_TITLE 一套字靶（2026-09-24 拍板：不再先排总藏量数字）。
+     *  字的大小与中心锚定**纸面卡**（幕 rect，画布满屏后不能拿窗口尺寸当字号基准），
+     *  字号此番调大（.5/.26）；出生撒满整窗、一部分超出屏幕之外 */
+    const build = (w: number, h: number): void => {
+      builtFor = w;
+      const r = s.getBoundingClientRect();
+      const fontPx = Math.max(46, Math.min(r.height * .44, r.width * .23));
+      const resample = (text: string, fp: number): { x: number; y: number }[] => {
+        const raw = sampleText(text, fp, 800, 4);
+        if (!raw.length) return [];
+        return Array.from({ length: N }, (_, i) => raw[Math.floor((i / N) * raw.length)]);
+      };
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const ta = resample(YB_TITLE, fontPx).map((p) => ({ x: p.x + cx, y: p.y + cy }));
+      if (!ta.length) { ps = []; return; }
+      ps = Array.from({ length: N }, () => {
+        const roll = Math.random();
+        const kind: 0 | 1 | 2 = roll < .03 ? 2 : roll < .11 ? 1 : 0; // 红 ~3%、金 ~8%，其余墨
+        return {
+          // 出生撒满整窗、一部分落在外屏（WRAP 余量内），聚合时从四面八方汇进纸面卡
+          x: -WRAP + Math.random() * (w + WRAP * 2),
+          y: -WRAP + Math.random() * (h + WRAP * 2),
+          pxl: 0, pyl: 0, vx: 0, vy: 0,
+          ax: 0, ay: 0, bx: 0, by: 0,
+          d: CLAIM_AT + Math.random() * CLAIM_SPAN, // 认领时刻错峰：字是一层层扑上去的
+          r: kind ? 1.7 + Math.random() * .9 : 1 + Math.random() * .6, // 萤火略大
+          kind, ph: Math.random() * Math.PI * 2,
+          wr: 1.2 + Math.random() * 1.6, // 落位后巡游半径（萤火不钉死）
+          ws: .8 + Math.random() * .9,   // 巡游角速度
+          fm: .7 + Math.random() * .6,   // 流场受力个体差异
+          hx: 0, hy: 0,
+          air: 0,                         // 0=在位 1=下坠 3=堆底 4=归位
+        };
+      });
+      for (const p of ps) {
+        p.pxl = p.x; p.pyl = p.y;        // 首帧不留从原点出发的假拖尾
+        p.hx = p.x; p.hy = p.y;          // 出生点即锚点：未移入时原地轻晃
+      }
+      // 按出生位置就近认领字靶（贪心从靶点侧挑最近未认领的粒，恰成双射、笔画密度均匀）
+      const aA = assign(ta, ps.map((p) => ({ x: p.x, y: p.y })));
+      for (let j = 0; j < N; j++) { ps[aA[j]].ax = ta[j].x; ps[aA[j]].ay = ta[j].y; }
+    };
+    // 流星：偶发曳光斜穿纸面（纯装饰，不占字位、不参与物理）
+    const mets: { x: number; y: number; vx: number; vy: number; life: number; col: string }[] = [];
+    let nextMet = 4;
+    out.set('open', {
+      dur: 7, // 自动放映的停留时长：满布待命也给几秒，移入后叙事约 5s 走到落补循环
+      update({ t, pal, px, py }) {
+        if (!cv) { lastT = t; return; }
+        const changed = cv.fit();
+        const w = cv.w, h = cv.h;
+        if (w < 8) { lastT = t; return; }
+        // 首帧 / resize / 重播（t 回零）：整面擦掉重来——拖尾长在画布上，不清会叠上次演出的残迹；
+        // 重建即回到满布待命，鼠标移入再聚合
+        if (changed || ps.length === 0 || builtFor !== w || t < lastT - .25) {
+          build(w, h);
+          claimAt = null;
           cv.clear();
-          const ctx = cv.ctx;
-          const cx = w / 2, cy = h / 2;
-          // 化形进度：1.5 秒汇聚成 686 → 停一拍 → 1.1 秒再化成片名（常驻停在片名上）
-          const morph = easeInOut(at(t, 1.1, 2.5));
-          const pxx = cx + (px * w) / 2, pyy = cy + (py * h) / 2;
-          for (const p of ps) {
-            const k = spring(clamp01((t - p.d) / 1.5), 5.2, 2.6);
-            const txx = lerp(p.tx, p.tx2, morph), tyy = lerp(p.ty, p.ty2, morph);
-            const jit = t > 1.8 ? 1.2 : 0;
-            let x = cx + lerp(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * .05) * jit;
-            let y = cy + lerp(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * .06) * jit;
-            // 指针斥力：鼠标扫过时粒子被推开，离开后自己归位（k 越大越推不动）
-            if (px || py) {
-              const dx = x - pxx, dy = y - pyy;
-              const dist = Math.hypot(dx, dy);
-              const R = Math.min(w, h) * .17;
-              if (dist < R && dist > .001) {
-                const f = (1 - dist / R) * 26 * (.35 + .65 * (1 - clamp01(k) * .6));
-                x += (dx / dist) * f;
-                y += (dy / dist) * f;
+        }
+        const dt = Math.min(.05, Math.max(.001, t - lastT));
+        lastT = t;
+        const ctx = cv.ctx;
+        // 指针速度与场强包络：快扫才有劲（慢挪几乎不扰），停手/离开后指数平复（≈1~2s）
+        const pxx = w / 2 + (px * w) / 2, pyy = h / 2 + (py * h) / 2;
+        pt.in = px !== 0 || py !== 0;
+        if (!pt.was) { pt.vx = 0; pt.vy = 0; } // 换位重进先归零，防一次跨屏速度尖峰
+        else if (pt.in) {
+          const kV = 1 - Math.exp(-9 * dt);
+          pt.vx += ((pxx - pt.x) / dt - pt.vx) * kV;
+          pt.vy += ((pyy - pt.y) / dt - pt.vy) * kV;
+        }
+        pt.was = pt.in; pt.x = pxx; pt.y = pyy;
+        const pv = Math.sqrt(pt.vx * pt.vx + pt.vy * pt.vy);
+        const dsTarget = pt.in ? Math.min(1, pv / 700) : 0;
+        pt.ds += (dsTarget - pt.ds) * (1 - Math.exp(-(dsTarget > pt.ds ? 9 : 1.1) * dt));
+
+        // 不清屏：每帧向透明擦一层（destination-out）——旧迹渐渐隐去露出纸面，新迹拖出光痕。
+        // 不用「盖纸色帷幕」：低透明度在 8-bit 画布上永远合不到底，整幕会留一层
+        // 比纸面深几个色阶的残雾（看着就像垫了块底色）；向透明擦稳态即纸面，明暗主题通吃。
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,.08)';
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineCap = 'round';
+        // 聚合起点：鼠标首次移入才起表；整条叙事（认领/打飞/扬回）都挂 tt 上
+        if (claimAt === null && pt.in) claimAt = t;
+        const tt = claimAt === null ? -1 : t - claimAt;
+        // 盒子四壁与地面：飞出的栗子全部圈在**纸面卡**内（飞出盒子就扫不回来了）——
+        // 墙与地面每帧从面板矩形现量，层框跟面板走也不怕
+        const br = s.getBoundingClientRect();
+        const floor = br.bottom - FLOOR_MARGIN;
+        // 偶发流星：聚合完成后才开演，随机方向斜穿纸面上半区
+        if (tt > METEOR_FROM && t >= nextMet && mets.length < 3) {
+          nextMet = t + METEOR_EVERY + Math.random() * METEOR_SPAN;
+          const l2r = Math.random() < .5;
+          mets.push({
+            x: l2r ? -40 : w + 40, y: h * (.1 + Math.random() * .42),
+            vx: (l2r ? 1 : -1) * (720 + Math.random() * 380), vy: 140 + Math.random() * 170,
+            life: 1.6, col: Math.random() < .5 ? pal.goldRgb : pal.redRgb,
+          });
+        }
+        for (const p of ps) {
+          // 认领进度：错峰 + 弹簧微过冲（吸附那一下有「扑上去」的劲）；未移入（tt<0）恒 0
+          const att = spring(clamp01((tt - p.d) / CLAIM_DUR), 4.6, 2.2);
+          // 受力：未移入锚在出生点原地轻晃（慢晃 + 微颤，不游荡）；移入后吃流场 + 微颤
+          let fx: number, fy: number;
+          if (tt < 0) {
+            fx = (p.hx - p.x) * HOME_K + Math.cos(t * .5 + p.ph) * SWAY
+              + Math.cos(t * p.ws * 1.7 + p.ph * 2.3) * 18;
+            fy = (p.hy - p.y) * HOME_K + Math.sin(t * .44 + p.ph * 1.7) * SWAY
+              + Math.sin(t * p.ws * 1.3 + p.ph * 1.1) * 18;
+          } else {
+            // 流场：在位时只剩一成半（字保持形状但仍被微风拂动）；下坠/归位时更弱
+            const ang = flowAngle(p.x, p.y, t);
+            const flowK = FLOW * p.fm * Math.max(0, 1 - att * .85) * (p.air === 0 ? 1 : .3);
+            fx = Math.cos(ang) * flowK;
+            fy = Math.sin(ang) * flowK;
+            // 私有微颤：落位时让字微微呼吸
+            fx += Math.cos(t * p.ws * 1.7 + p.ph * 2.3) * 16;
+            fy += Math.sin(t * p.ws * 1.3 + p.ph * 1.1) * 16;
+          }
+          // 字靶：单套片名靶点（p.ax/ay）。态分支：下坠/归位/堆底/在位各自受力
+          let dampK = tt < 0 ? 4 : lerp(DAMP_FREE, DAMP_LOCK, clamp01(att));
+          if (p.air === 1) {
+            // 下坠：脱离字靶只受重力；重力已调轻（300），低阻尼放行 ≈270px/s 的柔坠
+            fy += GRAV;
+            dampK = DAMP_FALL;
+          } else if (p.air === 4) {
+            // 归位：从堆底飞回自己的字位（扫到堆才会触发——全靠手，不自动）
+            fx += (p.ax - p.x) * ATTR * 1.15;
+            fy += (p.ay - p.y) * ATTR * 1.15;
+            dampK = 7;
+            const rdx = p.x - p.ax, rdy = p.y - p.ay;
+            if (rdx * rdx + rdy * rdy < 256) p.air = 0; // 16px 内到家，重新落座
+          } else if (p.air === 3) {
+            // 堆底：软钉在纸面卡下缘（堆积不消失，微微呼吸）
+            dampK = 12;
+            fy += (floor - p.r - p.y) * 60;
+          } else {
+            // 在位：吸向「字靶 + 巡游偏移」，常驻态的字由这点微光晕开
+            const gx = p.ax + Math.cos(t * p.ws + p.ph) * p.wr;
+            const gy = p.ay + Math.sin(t * p.ws * .83 + p.ph * 1.7) * p.wr;
+            fx += (gx - p.x) * ATTR * att;
+            fy += (gy - p.y) * ATTR * att;
+          }
+          // 指针 = 一把扫帚：快扫字面把栗子打飞（脱队坠落），快扫盒底的堆把栗子整把扬回；
+          // 慢挪只是轻抚（微扰，不脱队）。打飞/扬回都吃顺手势的冲量，打出去有手感
+          if (pt.ds > .01) {
+            const dx = p.x - pt.x, dy = p.y - pt.y;
+            const dd = Math.sqrt(dx * dx + dy * dy);
+            const R = Math.min(w, h) * SWEEP_R;
+            if (dd < R && dd > .5) {
+              const fall = (1 - dd / R) * (1 - dd / R);
+              const ux = dx / dd, uy = dy / dd;
+              if (p.air === 0 && att > .85 && pt.ds > KNOCK) {
+                // 打飞：栗子沿手势正前方**扇形飞溅**（半角 SPLASH，角度/速度各带随机、
+                // 越近飞越急）——直接赋速度，先飞出去，弹道之后才被重力拉坠
+                const base = Math.atan2(pt.vy, pt.vx);
+                const ang = base + (Math.random() - .5) * SPLASH;
+                const pv = Math.sqrt(pt.vx * pt.vx + pt.vy * pt.vy);
+                const spd = Math.min(950, Math.max(300, pv)) * (.55 + .75 * Math.random()) * (1 - (dd / R) * .5);
+                p.air = 1;
+                p.vx = Math.cos(ang) * spd;
+                p.vy = Math.sin(ang) * spd;
+                dampK = DAMP_FALL;
+              } else if (p.air === 3 && pt.ds > KNOCK) {
+                // 扬回：堆底的栗子被扫到，弹起飞回自己的字位
+                p.air = 4;
+                fx += (pt.vx * 1.6 + (p.ax - p.x) * 2.2) * fall;
+                fy += -560 * fall - pt.vy * .6;
+                dampK = 3.2;
+              } else {
+                const f = fall * pt.ds * (p.air === 1 ? .5 : 1);
+                fx += (pt.vx * 1.5 + ux * 620 - uy * 240) * f;
+                fy += (pt.vy * 1.5 + uy * 620 + ux * 240) * f;
               }
             }
-            ctx.globalAlpha = .16 + .84 * clamp01(k);
-            ctx.fillStyle = rgba(p.red ? pal.redRgb : pal.inkRgb, .78);
-            ctx.beginPath();
-            ctx.arc(x, y, p.r * (.45 + .55 * clamp01(k)), 0, Math.PI * 2);
-            ctx.fill();
           }
-          ctx.globalAlpha = 1;
-          const sweep = at(t, .5, 1.6);
-          if (sweep > 0 && sweep < 1) {
-            const g = ctx.createLinearGradient(0, 0, w, 0);
-            g.addColorStop(0, rgba(pal.redRgb, 0));
-            g.addColorStop(.5, rgba(pal.redRgb, .13 * Math.sin(sweep * Math.PI)));
-            g.addColorStop(1, rgba(pal.redRgb, 0));
-            ctx.fillStyle = g;
-            ctx.fillRect(0, cy - h * .3, w * sweep, h * .6);
+          // 半隐式欧拉 + 帧率无关阻尼（按态选：游荡松、在位紧、下坠放行）+ 限速保险丝
+          p.vx += fx * dt; p.vy += fy * dt;
+          const dmp = Math.exp(-dampK * dt);
+          p.vx *= dmp; p.vy *= dmp;
+          const sp2 = p.vx * p.vx + p.vy * p.vy;
+          if (sp2 > VCAP * VCAP) { const cap = VCAP / Math.sqrt(sp2); p.vx *= cap; p.vy *= cap; }
+          p.pxl = p.x; p.pyl = p.y;
+          p.x += p.vx * dt; p.y += p.vy * dt;
+          // 四壁（只管飞行/归位/堆底的栗子）：撞墙按弹性弹回，保证永远圈在纸面卡内、
+          // 随时扫得回来；聚合在途的在位粒（air=0）不设墙——它们正从屏外往字位汇
+          if (p.air !== 0) {
+            const wl = br.left + p.r, wrt = br.right - p.r, wtp = br.top + p.r;
+            if (p.x < wl) { p.x = wl; p.vx = -p.vx * BOUNCE; }
+            else if (p.x > wrt) { p.x = wrt; p.vx = -p.vx * BOUNCE; }
+            if (p.y < wtp) { p.y = wtp; p.vy = -p.vy * BOUNCE; }
           }
+          // 落到纸面卡下缘：反弹耗能（弹性 + 横向摩擦），弹不动了就地落座堆积（不消失）
+          if (p.air === 1 && p.y >= floor - p.r && p.vy > 0) {
+            p.y = floor - p.r;
+            p.vy = -p.vy * BOUNCE;
+            p.vx *= .6;
+            if (p.vy > -34) { p.vy = 0; p.air = 3; }
+          }
+          if (p.air === 3 && p.y > floor - p.r) { p.y = floor - p.r; p.vy = 0; }
+          // 绘制：短线段（上一帧位置 → 当前位置）当彗尾；近乎不动时落一颗圆点。
+          // 暗色主题：墨粒转荧光玉色、堆底如余烬明灭；亮色主题维持墨 + 金红萤火
+          let col: string, a: number;
+          if (p.kind === 1)      { col = pal.goldRgb; a = .5 + .45 * Math.sin(t * 1.7 + p.ph * 3.1); } // 金萤呼吸
+          else if (p.kind === 2) { col = pal.redRgb;  a = .5 + .45 * Math.sin(t * 2.1 + p.ph * 2.3); } // 红萤呼吸
+          else                   { col = pal.dark ? pal.jadeRgb : pal.inkRgb; a = .46 + .12 * Math.sin(t * 2.2 + p.ph); }
+          a = Math.max(.06, a) * (.6 + .4 * clamp01(att)) * at(t, .9); // 落位渐亮 + 开场淡入
+          if (pal.dark) {
+            a = Math.min(1, a * 1.18);                                 // 暗纸面整体提亮一档
+            if (p.air === 3) a *= .45 + .55 * (.5 + .5 * Math.sin(t * .9 + p.ph * 3.1)); // 余烬明灭
+          }
+          // 下坠的栗子曳光拉长（沿速度方向补一段尾巴），其余按帧间位移
+          const sx0 = p.air === 1 ? p.x - p.vx * .09 : p.pxl;
+          const sy0 = p.air === 1 ? p.y - p.vy * .09 : p.pyl;
+          const mx = p.x - sx0, my = p.y - sy0;
+          const long = mx * mx + my * my > .18 || p.air === 1;
+          if (p.kind) { // 萤火亮点：宽而淡的一笔当柔光晕（暗色下晕更亮）
+            ctx.strokeStyle = rgba(col, a * (pal.dark ? .26 : .16));
+            ctx.lineWidth = p.r * 6.5;
+            if (long) { ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+            else { ctx.fillStyle = rgba(col, a * (pal.dark ? .26 : .16)); ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3.2, 0, Math.PI * 2); ctx.fill(); }
+          }
+          ctx.strokeStyle = rgba(col, a);
+          ctx.fillStyle = rgba(col, a);
+          ctx.lineWidth = p.r * 2;
+          if (long) { ctx.beginPath(); ctx.moveTo(sx0, sy0); ctx.lineTo(p.x, p.y); ctx.stroke(); }
+          else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill(); }
+          p.pxl = p.x; p.pyl = p.y;
         }
-        void data;
+        // 流星：偶发曳光斜穿纸面（纯装饰，至多同屏 3 颗）
+        for (let i = mets.length - 1; i >= 0; i--) {
+          const m = mets[i];
+          m.x += m.vx * dt; m.y += m.vy * dt; m.life -= dt;
+          if (m.life <= 0 || m.x < -80 || m.x > w + 80) { mets.splice(i, 1); continue; }
+          const ml = Math.min(1, m.life) * .8;
+          const gx0 = m.x - m.vx * .12, gy0 = m.y - m.vy * .12;
+          const g = ctx.createLinearGradient(gx0, gy0, m.x, m.y);
+          g.addColorStop(0, rgba(m.col, 0));
+          g.addColorStop(1, rgba(m.col, ml));
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(gx0, gy0); ctx.lineTo(m.x, m.y); ctx.stroke();
+        }
       },
     });
   }
@@ -1159,6 +1391,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
     const s = scn('actors')!;
     const cards = qsa(s, '.yb-acard');
     const arc = s.querySelector<HTMLElement>('[data-r="arc"]');
+    const attlChars = qsa(s, '.yb-attl i');
     const mid = (cards.length - 1) / 2;
     // 指针左右横move：整条弧转一点（像转头看这一排人）；停在哪张卡上，它沿弧升起来
     let hotCard = -1;
@@ -1171,6 +1404,11 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
       update({ t, px }) {
         const tw = t > 1.8 ? px : 0;
         S(arc, `transform:translateX(${(tw * 10).toFixed(1)}px) rotate(${(tw * 1.5).toFixed(2)}deg)`);
+        // 艺术字「座上常客」：四字逐字浮起落定，偶数字微侧一点点（盖章不正的闲笔）
+        attlChars.forEach((c, i) => {
+          const k = easeOut(at(t, .7, .3 + i * .16));
+          S(c, `opacity:${k.toFixed(3)};transform:translateY(${((1 - k) * 30).toFixed(1)}px) rotate(${i % 2 ? 1.6 : -1.6}deg)`);
+        });
         cards.forEach((c, i) => {
           const p = at(t, .95, i * .13);
           const k = easeOut(p);
@@ -1389,47 +1627,6 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
         // 行列标签跟着指针那一格亮：这页的字全在画布里，标签是唯一的定位参照
         colLabels.forEach((el, i) => S(el, `opacity:${(hotCell && hotCell.c === i ? 1 : at(t, .5, .2 + i * .05) * (hotCell ? .45 : 1)).toFixed(3)}`));
         rowLabels.forEach((el, i) => S(el, `opacity:${(hotCell && hotCell.r === i ? 1 : at(t, .5, .2 + i * .05) * (hotCell ? .45 : 1)).toFixed(3)}`));
-      },
-    });
-  }
-
-  /* ── 25 群像墙：对角翻牌 + 视差 ── */
-  {
-    const s = scn('wall')!;
-    const tiles = qsa(s, '.yb-wtile');
-    const wall = s.querySelector<HTMLElement>('[data-r="wall"]');
-    const cols = 12, rowsN = 5;
-    // 磁吸墙：指针附近的一圈砖朝指针方向抬起（远的一动不动），指针停在哪张上它就整个站出来。
-    // 位置按格号算（r/c），不需要逐砖量 rect——墙是等分的栅格，算出来的位置比量出来的还稳。
-    let hotTile = -1, wallAt: { x: number; y: number } | null = null;
-    out.set('wall', {
-      dur: 3.6,
-      move(p) {
-        const el = under<HTMLElement>(p, '.yb-wtile');
-        hotTile = el ? Number(el.dataset.i ?? -1) : -1;
-        wallAt = localAt(wall, p);
-      },
-      update({ t, px, py }) {
-        const tw = t > 1.9 ? 1 : 0;
-        S(wall, tw ? `transform:perspective(1400px) rotateX(${(-py * 3).toFixed(2)}deg) rotateY(${(px * 3.4).toFixed(2)}deg)` : '');
-        tiles.forEach((el, i) => {
-          const r = Math.floor(i / cols), c = i % cols;
-          const p = at(t, .6, .15 + (r + c) * .045);
-          const k = easeOut(p);
-          const on = i === hotTile;
-          const drift = t > 1.7 ? Math.sin((t - 1.7) * .8 + r * .6 + c * .3) * 2.6 : 0;
-          // 磁吸：距离指针越近抬得越高（高斯衰减，不要一刀切）
-          let pull = 0;
-          if (wallAt && tw) {
-            const dx = (c + .5) / cols - wallAt.x, dy = (r + .5) / rowsN - wallAt.y;
-            const d2 = dx * dx + dy * dy;
-            pull = Math.exp(-d2 / .012) * 9;
-          }
-          S(el, `opacity:${(k * (hotTile >= 0 && !on ? .55 : 1)).toFixed(3)}`
-            + `;transform:perspective(900px) translateY(${((1 - k) * 22 + drift - pull - (on ? 10 : 0)).toFixed(1)}px)`
-            + ` rotateX(${((1 - k) * 42).toFixed(2)}deg) scale(${((.9 + .1 * k) * (on ? 1.07 : 1)).toFixed(3)})`
-            + (on ? ';z-index:3' : ''));
-        });
       },
     });
   }

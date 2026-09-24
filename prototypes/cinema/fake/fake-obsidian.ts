@@ -21,9 +21,15 @@
  */
 // ==================== 视口判定 ====================
 
-/** 评审壳容器判定：真实端走 Obsidian Platform.isMobile；浏览器按视口宽（≤768） */
+/** 评审壳容器判定：真实端走 Obsidian Platform.isMobile；浏览器按视口宽（≤768）。
+ *  2026-09-24 拍板：观影分析移动端 = 桌面布局横屏显示——横屏外景宽 915 已过 768，
+ *  用 `?platform=mobile` 强制按移动设备判（关闭钮等移动行为保真）；`?platform=desktop` 反向强制。 */
+const PLATFORM_Q = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('platform')
+  : null;
 export const Platform = {
-  isMobile: typeof window !== 'undefined' && window.innerWidth <= 768,
+  isMobile: typeof window !== 'undefined' &&
+    (PLATFORM_Q === 'mobile' || (PLATFORM_Q === null && window.innerWidth <= 768)),
 };
 
 // ==================== 图标（表 = prototype-icons.js 的 window.CN_ICONS） ====================

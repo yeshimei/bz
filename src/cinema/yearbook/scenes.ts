@@ -41,7 +41,6 @@ export const YB_SCENES: YbSceneDef[] = [
   { id: 'notes', name: '影评手记' },
   { id: 'quotes', name: '豆瓣短评' },
   { id: 'matrix', name: '口味矩阵' },
-  { id: 'wall', name: '群像墙' },
   { id: 'colophon', name: '落款' },
 ];
 
@@ -104,10 +103,8 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
 
   /* 01 开卷 —— 粒子汇成总藏量 */
   // 开卷只有一团粒子：先汇成总藏量数字，再化形成片名——不上任何 DOM 文字
-  S.push(frame(1, '开卷', 'tags · 观影日期', `
-    <div class="yb-open">
-      <div class="yb-open-cv" data-r="cvbox"><canvas data-cv="open"></canvas></div>
-    </div>`, `滚轮 / ↓ 翻一幕 · 共 ${YB_SCENES.length} 幕`));
+  // 开卷的粒子画布满屏铺在覆盖层根（yearbookOpenHtml），幕里不再放画布
+  S.push(frame(1, '开卷', 'tags · 观影日期', '', `滚轮 / ↓ 翻一幕 · 共 ${YB_SCENES.length} 幕`));
 
   /* 02 十二年 —— 年度浪潮 */
   const yearTicks = years.map((y, i) =>
@@ -509,7 +506,10 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
     </div>`;
   }).join('');
   S.push(frame(19, '座上常客', '主演', `
-    <div class="yb-actors"><div class="yb-arc" data-r="arc">${actCards}</div></div>`,
+    <div class="yb-actors">
+      <div class="yb-attl" data-r="attl" aria-hidden="true"><i>座</i><i>上</i><i>常</i><i>客</i></div>
+      <div class="yb-arc" data-r="arc">${actCards}</div>
+    </div>`,
     `按主演出现次数 · 只看 ≥ 2 部的（共 ${data.actors.length} 位）`));
 
   /* 20 连映系列 */
@@ -569,16 +569,8 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
       <div class="yb-mx-rows">${data.matrix.rows.map((r) => `<span>${esc(r)}</span>`).join('')}</div>
     </div>`, `${data.matrix.rows.length} 个出品地 × ${data.matrix.cols.length} 个类型 · 颜色越深片子越多`));
 
-  /* 25 群像墙 */
-  const WALL_N = 60; // 12 列 × 5 行：正好铺满一幕（多出来的行会被幕的 overflow 裁掉）
-  const wallPick = data.posters.filter((_, i) => i % Math.max(1, Math.floor(data.posters.length / WALL_N)) === 0).slice(0, WALL_N);
-  S.push(frame(25, '群像墙', '海报', `
-    <div class="yb-wall" data-r="wall">
-      ${wallPick.map((it, i) => `<figure class="yb-wtile" data-r="wtile" data-i="${i}">${poster(it, posterOf)}</figure>`).join('')}
-    </div>`, `全部 ${data.posters.length} 部都有海报 · 这里抽 ${wallPick.length} 张按序翻上来`));
-
-  /* 26 落款 */
-  S.push(frame(26, '落款', '全部字段', `
+  /* 25 落款 */
+  S.push(frame(25, '落款', '全部字段', `
     <div class="yb-colo">
       <div class="yb-colo-grid">
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapTotal">${flapHtml(zeroOf(String(data.total)))}</b><span>部影视</span></div>
@@ -588,20 +580,26 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
       </div>
     </div>`, `${YB_TITLE} · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
 
-  /* 固定层：右侧刻度 + 底栏（挂 film 上，滚幕不动） */
-  const fixed = `<div class="yb-fixed">
+  /* 固定层：右侧导航点 + 底栏。原来挂在 film 内，但 film 盒只有一屏高（26 幕是它的溢出内容），
+   * absolute inset:0 会钉死在第一幕、翻幕即被滚走——「导航只有首页有」就是这么来的。
+   * 改为单独导出，由 ui 层放进滚动容器外（.bz-yb-box 直下），box 不滚，这才是真固定层。 */
+  return `<div class="bz-yb-film">${S.join('')}</div>`;
+}
+
+/** 01 开卷的满屏粒子画布：挂在覆盖层根（.bz-yb 直下）、纸面卡之上——粒子可以飞出
+ *  纸面卡、从屏外汇聚进卡里成字；引擎从根上找 canvas[data-cv="open"] 接线。 */
+export function yearbookOpenHtml(): string {
+  return `<div class="bz-yb-openfx"><canvas data-cv="open"></canvas></div>`;
+}
+
+/** 固定层（遮片 + 右缘导航点）：调用方放在 .bz-yb-scroll 的**兄弟**位置——
+ *  与 film 平级、不随滚动位移；引擎从 root 上找这些 [data-r]，放哪都能接线。
+ *  底栏（幕号/幕名/进度线/自动）已按 2026-09-24 拍板整条去掉：翻幕只认右侧导航点。 */
+export function yearbookFixedHtml(): string {
+  return `<div class="yb-fixed">
     <div class="yb-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
     <div class="yb-rail" data-r="rail">${YB_SCENES.map((s, i) => `<i class="yb-rail-t" data-r="railT" data-i="${i}" title="${esc(s.name)}"></i>`).join('')}</div>
-    <div class="yb-bar">
-      <span class="yb-bar-i" data-r="barI">01</span>
-      <span class="yb-bar-n" data-r="barN">${esc(YB_SCENES[0].name)}</span>
-      <span class="yb-bar-line"><i data-r="barLine"></i></span>
-      <span class="yb-bar-t" data-r="barT">${YB_SCENES.length}</span>
-      <button class="yb-pb" data-r="pb" type="button" title="自动放映">自动</button>
-    </div>
   </div>`;
-
-  return `<div class="bz-yb-film">${fixed}${S.join('')}</div>`;
 }
 function commaNum(n: number): string {
   return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
