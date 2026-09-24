@@ -170,7 +170,8 @@ const rowsOf = (schema: SettingsSchema, groupName: string): NamedRow[] =>
 describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => {
   it('AI 域：服务商密钥 3 行（注册表三条在册通道）+ 数据源凭据 3 行全为 secret', () => {
     const ai = aiSettingsSchema();
-    const providerRows = rowsOf(ai, '服务商').filter((r) => (r.name ?? '').includes('密钥'));
+    // issue 422：服务商组并入「LLM」组（密钥行仍居组首）
+    const providerRows = rowsOf(ai, 'LLM').filter((r) => (r.name ?? '').includes('密钥'));
     expect(providerRows.length, '注册表三条通道各一行').toBe(3);
     expect(providerRows.every((r) => r.type === 'secret')).toBe(true);
 
@@ -195,6 +196,17 @@ describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => 
       expect((row as { max?: number }).max, `${name} 应有上界`).toBeDefined();
       expect(typeof (row as { binding?: { get?: unknown } }).binding?.get, `${name} 应走 numStrBinding`).toBe('function');
     }
+  });
+
+  it('第二大脑：Embedding 模型行已迁出（唯一入口 = AI 面板 Embedding 组，issue 422/ADR-0182）', () => {
+    const schema = secondBrainSettingsSchema();
+    const names = schema.groups.flatMap((g) => g.rows.map((r) => (r as { name?: string }).name));
+    expect(names).not.toContain('Embedding 模型');
+    // 同键不得两处并存（迁移无残留）：服务组只剩连接面三行 + 额外目录
+    const keys = schema.groups.flatMap((g) =>
+      g.rows.map((r) => (r as { binding?: { key?: string } }).binding?.key).filter(Boolean)
+    );
+    expect(keys).not.toContain('secondBrainEmbeddingModel');
   });
 
   it('知识盒：自动关联三键是 number 直绑（三函数绕行已退场）', () => {

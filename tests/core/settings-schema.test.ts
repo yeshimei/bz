@@ -16,16 +16,17 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
   return partial as SettingsSnapshot;
 }
 
-describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三组）', () => {
+describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/Embedding/JEV/凭据 四组）', () => {
   const schema = mainSettingsSchema();
 
-  it('issue 331：五个分组卡片（带 icon）——服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 391 追加 Jev 决策通道）', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['服务商', '模型配置', '数据源凭据', 'Jev 决策通道', '数据存储路径', '通知']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['plug-zap', 'cpu', 'key-round', 'route', 'folder-open', 'bell']);
+  it('issue 422：六个分组卡片（带 icon）——LLM/Embedding/JEV/数据源凭据 + 数据存储路径 + 通知', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '数据源凭据', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'key-round', 'folder-open', 'bell']);
   });
 
-  it('服务商组（issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
-    const rows = schema.groups[0].rows;
+  it('LLM 组首部（前「服务商」组，issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
+    // issue 422/ADR-0182：「服务商」组撤销并入 LLM 组首部——先选通道与密钥，再配该通道的模型参数
+    const rows = schema.groups[0].rows.slice(0, 1 + AI_PROVIDER_REGISTRY.length);
     // 行序 = 服务商下拉 + 注册表每条通道一行密钥（custom 的端点/密钥两行已随通道退役）。
     // 凭据行全走「密钥型」档位（type:'secret' → password 掩码 + 眼睛切明文）
     expect(rows.map((r) => r.type)).toEqual(['select', 'secret', 'secret', 'secret']);
@@ -51,8 +52,8 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     });
   });
 
-  it('模型配置组（issue 331 拆组）：模型名称 + 最大输出 token + 思考档位（issue 411 起选项随服务商换表）', () => {
-    const rows = schema.groups[1].rows as Array<{
+  it('LLM 组模型行（原「模型配置」组）：模型名称 + 最大输出 token + 思考档位（issue 411 起选项随服务商换表）', () => {
+    const rows = schema.groups[0].rows.slice(1 + AI_PROVIDER_REGISTRY.length) as Array<{
       name: string;
       type: string;
       binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
@@ -88,8 +89,25 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
+  it('Embedding 组（issue 422/ADR-0182）：向量化模型行从第二大脑迁入，键不变 + 行内「获取模型」', () => {
+    const rows = schema.groups[1].rows as Array<{
+      name: string;
+      type: string;
+      desc?: string;
+      binding?: { key: string };
+      actions?: Array<{ text: string }>;
+    }>;
+    expect(rows.map((r) => r.name)).toEqual(['Embedding 模型']);
+    expect(rows.map((r) => r.type)).toEqual(['text']);
+    // 键仍是 secondBrainEmbeddingModel：secondbrain/config.ts 与 smartcat「留空跟随」口径零改动
+    expect(rows[0].binding).toEqual({ key: 'secondBrainEmbeddingModel' });
+    expect(rows[0].actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(rows[0].desc).toContain('bge-m3');
+    // 反向断言（第二大脑设置页不再有该行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
+  });
+
   it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
-    const rows = schema.groups[2].rows;
+    const rows = schema.groups[3].rows;
     // 2026-09-23 用户报「加密的做成多行框看着怪」：textarea 的多行掩码档位退役，
     // 三行凭据一律单行 secret（password 掩码 + 眼睛切明文）
     expect(rows.map((r) => r.type)).toEqual(['secret', 'secret', 'secret']);
@@ -108,7 +126,7 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
     // 桌面端：按钮在场（secret 行 actions 与 text 行同口径）
     (globalThis as unknown as { window: unknown }).window = { require: () => ({}) };
     try {
-      const desktopRows = mainSettingsSchema().groups[2].rows as Array<{
+      const desktopRows = mainSettingsSchema().groups[3].rows as Array<{
         name: string;
         actions?: Array<{ text: string }>;
       }>;

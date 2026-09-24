@@ -3,10 +3,13 @@
  * 统一 OpenAI 兼容 GET {endpoint}/models（Authorization: Bearer），Ollama 特判 GET {base}/api/tags（无鉴权）。
  * HTTP 通道与 core/ai.ts 请求同口径：fetch 优先，失败回退 requestUrl（无 CORS 限制）。
  * 纯数据层：不触 DOM、不弹 toast（报错文案抛给调用方，由设置页按钮统一提示）。
+ * issue 422/ADR-0182：新增向量化模型拉取（fetchEmbeddingModels）——AI 面板「Embedding 模型」行的
+ * 「获取模型」按钮消费，端点取第二大脑的 Ollama 服务地址（移动端优先远程地址）。
  */
 import { requestUrl } from 'obsidian';
 import { getProviderDescriptor, DEFAULT_AI_PROVIDER } from './ai';
 import type { AIProviderDescriptor } from './ai';
+import { isMobileEnv } from './mobile';
 import { tryGetSettings } from './settings-provider';
 
 /** OpenAI 兼容 /models 拉取超时（s）：设置页交互场景，8s 未应答即放弃走回退/报错 */
@@ -82,28 +85,15 @@ export function parseModelList(desc: AIProviderDescriptor, data: any): string[] 
   return desc.id === 'ollama' ? ollamaModelIds(data) : openaiModelIds(data);
 }
 
-/** 拉取当前服务商模型列表（id 去重保序）。desc 可显式传入（测试构造；缺省按注册表查找当前 provider） */
-export async function fetchProviderModels(
-  providerId?: string,
-  deps: ModelsFetchDeps = {}
-): Promise<ModelOption[]> {
-  const id = providerId || String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
-  const desc = providerDescriptorOf(id);
-
-  // 端点来源：Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀），其余用注册表 endpoint
-  const endpoint = desc.id === 'ollama' ? OLLAMA_BASE_URL : endpointFor(id);
-
-  const key = keyFor(id);
-  // 除 Ollama 本地服务外，缺 key 即拦截（对齐 getAIProvider 的拦截文案）
-  if (!key && desc.id !== 'ollama') {
-    throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-  }
-
-  const url = desc.id === 'ollama' ? `${endpoint}/api/tags` : `${endpoint}/models`;
-  const headers: Record<string, string> = {};
-  if (key) headers['Authorization'] = `Bearer ${key}`;
-  const timeoutMs = desc.id === 'ollama' ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
-
+/** 模型列表端点 JSON 拉取（fetch 优先 → requestUrl 回退 → 超时/状态码报错）。
+ *  label 只进报错文案（各调用方的服务商/服务名），行为与原内联实现逐字一致。 */
+async function fetchModelsJson(
+  url: string,
+  headers: Record<string, string>,
+  timeoutMs: number,
+  label: string,
+  deps: ModelsFetchDeps
+): Promise<any> {
   const fetchFn = deps.fetchFn || ((u: string, init?: any) => fetch(u, init));
   const requestUrlFn = deps.requestUrlFn || requestUrl;
 
@@ -126,7 +116,7 @@ export async function fetchProviderModels(
       attempt = await fetchAttempt(controller.signal);
     } catch (e) {
       if (controller.signal.aborted) {
-        throw new Error(`${desc.label} 无响应（超过 ${timeoutMs / 1000}s 未应答）`);
+        throw new Error(`${label} 无响应（超过 ${timeoutMs / 1000}s 未应答）`);
       }
       // CORS/网络失败 → requestUrl 兜底（对齐 streamChatCompletions 的 fallback 口径）
       attempt = await requestUrlAttempt();
@@ -138,10 +128,10 @@ export async function fetchProviderModels(
   const { resp } = attempt;
   if (!resp.ok) {
     if (resp.status === 401 || resp.status === 403) {
-      throw new Error(`${desc.label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
+      throw new Error(`${label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
     }
     if (resp.status === 404) {
-      throw new Error(`${desc.label} 不支持模型列表接口（404）`);
+      throw new Error(`${label} 不支持模型列表接口（404）`);
     }
     let msg = `API ${resp.status}`;
     try {
@@ -151,10 +141,96 @@ export async function fetchProviderModels(
     throw new Error(msg);
   }
 
-  const data = await resp.json();
+  return resp.json();
+}
+
+/** 拉取当前服务商模型列表（id 去重保序）。desc 可显式传入（测试构造；缺省按注册表查找当前 provider） */
+export async function fetchProviderModels(
+  providerId?: string,
+  deps: ModelsFetchDeps = {}
+): Promise<ModelOption[]> {
+  const id = providerId || String((tryGetSettings() as any).aiProvider || DEFAULT_AI_PROVIDER);
+  const desc = providerDescriptorOf(id);
+
+  // 端点来源：Ollama 用本地根地址（注册表 /v1 兼容面去掉后缀），其余用注册表 endpoint
+  const endpoint = desc.id === 'ollama' ? OLLAMA_BASE_URL : endpointFor(id);
+
+  const key = keyFor(id);
+  // 除 Ollama 本地服务外，缺 key 即拦截（对齐 getAIProvider 的拦截文案）
+  if (!key && desc.id !== 'ollama') {
+    throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+  }
+
+  const url = desc.id === 'ollama' ? `${endpoint}/api/tags` : `${endpoint}/models`;
+  const headers: Record<string, string> = {};
+  if (key) headers['Authorization'] = `Bearer ${key}`;
+  const timeoutMs = desc.id === 'ollama' ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
+
+  const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);
   const ids = parseModelList(desc, data);
   const seen = new Set<string>();
   return ids
     .filter((m) => (seen.has(m) ? false : (seen.add(m), true)))
     .map((m) => ({ id: m, detail: desc.label }));
+}
+
+/* ==================== 向量化模型（Embedding；issue 422/ADR-0182） ==================== */
+
+/** Ollama /api/tags 单条：id + 能力标签 + 展示说明（参数量 + 向量维度，缺字段回落服务名） */
+export interface OllamaTag {
+  id: string;
+  capabilities: string[];
+  detail: string;
+}
+
+/** /api/tags 响应 → 结构化条目列表（畸形项跳过；capabilities 旧版服务不返回，空数组表示「未知」） */
+export function parseOllamaTags(data: any): OllamaTag[] {
+  const list = data?.models;
+  if (!Array.isArray(list)) return [];
+  const out: OllamaTag[] = [];
+  for (const m of list) {
+    if (!m || typeof m.name !== 'string' || !m.name) continue;
+    const capabilities = Array.isArray(m.capabilities)
+      ? (m.capabilities as unknown[]).filter((c): c is string => typeof c === 'string')
+      : [];
+    const det = (m.details || {}) as Record<string, unknown>;
+    const bits: string[] = [];
+    if (typeof det.parameter_size === 'string' && det.parameter_size) bits.push(det.parameter_size);
+    if (typeof det.embedding_length === 'number' && det.embedding_length > 0) bits.push(`${det.embedding_length} 维`);
+    out.push({ id: m.name, capabilities, detail: bits.join('，') || 'Ollama' });
+  }
+  return out;
+}
+
+/** 向量化模型选项：有 capabilities 的按 embedding 能力过滤（聊天模型不进列表）；
+ *  旧版 Ollama 不返回该字段（全部为空）→ 不过滤，全量返回由用户自辨。 */
+export function pickEmbeddingModels(data: any): ModelOption[] {
+  const tags = parseOllamaTags(data);
+  const known = tags.some((t) => t.capabilities.length > 0);
+  return (known ? tags.filter((t) => t.capabilities.includes('embedding')) : tags).map((t) => ({
+    id: t.id,
+    detail: t.detail,
+  }));
+}
+
+/**
+ * 向量化服务端点（「获取模型」按钮拉列表用）：与 secondbrain/config.ts buildConfig 同口径——
+ * 移动端优先「移动端远程地址」、未配置回落本地；两键留空一律默认 http://localhost:11434。
+ * （规则镜像域侧实现：域侧 IS_MOBILE 另有 UA 兜底，此处按 obsidian Platform 判定。）
+ */
+export function embeddingServiceUrl(): string {
+  const s = tryGetSettings() as any;
+  const local = String(s.secondBrainOllamaUrl || '').trim() || OLLAMA_BASE_URL;
+  const remote = String(s.secondBrainRemoteOllamaUrl || '').trim();
+  return isMobileEnv() && remote ? remote : local;
+}
+
+/** 拉取向量化模型列表（AI 面板 Embedding 组的行内按钮）：Ollama 原生 GET {service}/api/tags，
+ *  按 embedding 能力过滤；空列表抛错由调用方提示。 */
+export async function fetchEmbeddingModels(deps: ModelsFetchDeps = {}): Promise<ModelOption[]> {
+  const url = `${embeddingServiceUrl().replace(/\/+$/, '')}/api/tags`;
+  const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, 'Ollama', deps);
+  const models = pickEmbeddingModels(data);
+  if (!models.length) throw new Error('Ollama 未返回可用的向量化模型');
+  return models;
 }

@@ -204,7 +204,7 @@ export async function askJev(
   const signal = opts.signal;
   if (signal?.aborted) throw abortError();
   if (!cfg.endpoint) throw new Error('未配置 Jev 端点');
-  if (!cfg.apiKey) throw new Error('未配置 Jev 密钥（插件设置 → AI → Jev 决策通道）');
+  if (!cfg.apiKey) throw new Error('未配置 Jev 密钥（插件设置 → AI → JEV）');
 
   const body = buildJevBody(state, questions, cfg.model);
   const headers: Record<string, string> = {

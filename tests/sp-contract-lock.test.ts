@@ -22,7 +22,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 const COUNT_BASELINE: Record<string, number> = {
   global: 3,
   notice: 4,
-  ai: 8,
+  ai: 9, // 2026-09-24 issue 422：「Embedding」组新增向量化模型行（第二大脑迁入）
   diary: 5,
   memo: 11,
   belongings: 6,
@@ -32,7 +32,7 @@ const COUNT_BASELINE: Record<string, number> = {
   bookshelf: 5,
   gameshelf: 7,
   review: 12,
-  secondbrain: 14,
+  secondbrain: 13, // 2026-09-24 issue 422：「Embedding 模型」行迁出（AI 面板 Embedding 组）
   home: 12,
   pomodoro: 11, // 2026-09-23：后台自动暂停退役（-1）、特效批「倒数滴答」新增（+1）
   encrypt: 5,

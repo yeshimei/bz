@@ -8,8 +8,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { fetchProviderModels, parseModelList, MODELS_TIMEOUT_MS } from '../../src/core/ai-models';
+import { embeddingServiceUrl, fetchEmbeddingModels, parseOllamaTags, pickEmbeddingModels } from '../../src/core/ai-models';
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from '../../src/core/ai';
-import { requestUrl } from '../mock-obsidian-entry';
+import { Platform as MockPlatform, requestUrl } from '../mock-obsidian-entry';
 
 const state = { ...DEFAULT_SETTINGS } as Record<string, any>;
 
@@ -17,6 +18,7 @@ beforeEach(() => {
   for (const k of Object.keys(state)) delete state[k];
   Object.assign(state, DEFAULT_SETTINGS);
   setSettingsProvider(() => state as any);
+  MockPlatform.isMobile = false;
 });
 
 afterEach(() => {
@@ -181,5 +183,107 @@ describe('注册表覆盖面（issue 411/ADR-0179：只留在册三条通道）'
     });
     const models = await fetchProviderModels(undefined, { fetchFn });
     expect(models.map((m) => m.id)).toEqual(['m1']);
+  });
+});
+
+describe('向量化模型列表（issue 422/ADR-0182：AI 面板 Embedding 组「获取模型」）', () => {
+  it('parseOllamaTags：能力标签 + 参数量/维度说明；畸形项跳过', () => {
+    const tags = parseOllamaTags({
+      models: [
+        { name: 'qwen3-embedding:8b', capabilities: ['embedding'], details: { parameter_size: '8B', embedding_length: 4096 } },
+        { name: 'llama3.1:latest', capabilities: ['completion'], details: { parameter_size: '8B' } },
+        { name: 'bge-m3', details: {} },
+        { name: '' },
+        null,
+        { capabilities: ['embedding'] }, // 缺 name → 跳过
+      ],
+    });
+    expect(tags.map((t) => t.id)).toEqual(['qwen3-embedding:8b', 'llama3.1:latest', 'bge-m3']);
+    expect(tags[0]).toEqual({
+      id: 'qwen3-embedding:8b',
+      capabilities: ['embedding'],
+      detail: '8B，4096 维',
+    });
+    expect(tags[1].detail).toBe('8B'); // 无维度字段只留参数量
+    expect(tags[2]).toEqual({ id: 'bge-m3', capabilities: [], detail: 'Ollama' }); // 旧版服务无 capabilities → 空数组「未知」
+  });
+
+  it('parseOllamaTags：非数组响应 → 空列表（调用方按空列表报错）', () => {
+    expect(parseOllamaTags({})).toEqual([]);
+    expect(parseOllamaTags(null)).toEqual([]);
+    expect(parseOllamaTags({ models: 'oops' })).toEqual([]);
+  });
+
+  it('pickEmbeddingModels：有能力标签按 embedding 过滤（Qwen3-8B 在列，聊天模型剔除）', () => {
+    const models = pickEmbeddingModels({
+      models: [
+        { name: 'qwen3-embedding:8b', capabilities: ['embedding'], details: { parameter_size: '8B', embedding_length: 4096 } },
+        { name: 'llama3.1:latest', capabilities: ['completion'] },
+        { name: 'bge-m3', capabilities: ['embedding'] },
+      ],
+    });
+    expect(models.map((m) => m.id)).toEqual(['qwen3-embedding:8b', 'bge-m3']);
+    expect(models[0].detail).toBe('8B，4096 维');
+  });
+
+  it('pickEmbeddingModels：旧版 Ollama 全无 capabilities → 不过滤全量返回（由用户自辨）', () => {
+    const models = pickEmbeddingModels({ models: [{ name: 'bge-m3' }, { name: 'llama3.1:latest' }] });
+    expect(models.map((m) => m.id)).toEqual(['bge-m3', 'llama3.1:latest']);
+  });
+
+  it('embeddingServiceUrl：桌面端取本地地址忽略远程；移动端优先远程地址；两键留空回落 localhost', () => {
+    state.secondBrainOllamaUrl = 'http://192.168.1.5:11434';
+    state.secondBrainRemoteOllamaUrl = 'http://10.0.0.9:11434';
+    expect(embeddingServiceUrl()).toBe('http://192.168.1.5:11434');
+    MockPlatform.isMobile = true;
+    expect(embeddingServiceUrl()).toBe('http://10.0.0.9:11434');
+    state.secondBrainOllamaUrl = '';
+    state.secondBrainRemoteOllamaUrl = '';
+    expect(embeddingServiceUrl()).toBe('http://localhost:11434');
+    MockPlatform.isMobile = false;
+    // 桌面端远程地址配了也不用（与 secondbrain/config 的 IS_MOBILE 口径一致）
+    state.secondBrainRemoteOllamaUrl = 'http://10.0.0.9:11434';
+    expect(embeddingServiceUrl()).toBe('http://localhost:11434');
+  });
+
+  it('fetchEmbeddingModels：GET {服务地址}/api/tags 无鉴权（尾斜杠归一），过滤后返回', async () => {
+    state.secondBrainOllamaUrl = 'http://localhost:11434/';
+    const fetchFn = vi.fn(async (u: string, init: any) => {
+      expect(u).toBe('http://localhost:11434/api/tags');
+      expect(init.method).toBe('GET');
+      expect(init.headers).toEqual({}); // Ollama 本地无鉴权
+      return okOpenAI({
+        models: [
+          { name: 'qwen3-embedding:8b', capabilities: ['embedding'], details: { parameter_size: '8B', embedding_length: 4096 } },
+          { name: 'llama3.1:latest', capabilities: ['completion'] },
+        ],
+      });
+    });
+    await expect(fetchEmbeddingModels({ fetchFn })).resolves.toEqual([
+      { id: 'qwen3-embedding:8b', detail: '8B，4096 维' },
+    ]);
+  });
+
+  it('fetchEmbeddingModels：过滤后无候选 → 抛「Ollama 未返回可用的向量化模型」', async () => {
+    const onlyChat = vi.fn(async () => okOpenAI({ models: [{ name: 'llama3.1:latest', capabilities: ['completion'] }] }));
+    await expect(fetchEmbeddingModels({ fetchFn: onlyChat })).rejects.toThrow('Ollama 未返回可用的向量化模型');
+    const empty = vi.fn(async () => okOpenAI({ models: [] }));
+    await expect(fetchEmbeddingModels({ fetchFn: empty })).rejects.toThrow('Ollama 未返回可用的向量化模型');
+  });
+
+  it('fetchEmbeddingModels：404 报「Ollama 不支持模型列表接口」；fetch 失败回退 requestUrl', async () => {
+    const notFound = vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }));
+    await expect(fetchEmbeddingModels({ fetchFn: notFound })).rejects.toThrow('Ollama 不支持模型列表接口（404）');
+
+    const boom = vi.fn(async () => {
+      throw new TypeError('Failed to fetch');
+    });
+    const requestUrlFn = vi.fn(async (opts: { url: string }) => {
+      expect(opts.url).toBe('http://localhost:11434/api/tags');
+      return { status: 200, text: JSON.stringify({ models: [{ name: 'bge-m3', capabilities: ['embedding'] }] }) };
+    });
+    await expect(fetchEmbeddingModels({ fetchFn: boom, requestUrlFn })).resolves.toEqual([
+      { id: 'bge-m3', detail: 'Ollama' },
+    ]);
   });
 });

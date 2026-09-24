@@ -5,9 +5,9 @@
  * - 追加（issue 291）：panel.ts 单源 confirmFullRebuild 的确认框带域皮肤类 bz-sb-flow-dialog
  *   （挂 body 的流程框不继承 --sb-*，漏传则掉回 core 裸样式）
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import BzSettings, { DEFAULT_SETTINGS } from '../../src/settings';
@@ -29,6 +29,7 @@ function makeStore(): any {
     isIndexReady: () => true,
     hasPendingChanges: () => false,
     isRefreshing: () => false,
+    needsModelRebuild: () => false,
     refresh: async () => {},
     meta: {
       notes: {
@@ -104,5 +105,27 @@ describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
     expect(popup!.classList.contains('bz-flow-dialog')).toBe(true);
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await expect(p).resolves.toBe(false); // 取消 → false（原语义不变）
+  });
+});
+
+describe('issue 422：换 Embedding 模型 → 打开面板自动全量重建', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearNotices();
+    document.body.innerHTML = '';
+  });
+
+  it('needsModelRebuild 为真：发原因通知 + 走重建（不落空库引导、无需用户点按钮）', async () => {
+    const app = makeEnv();
+    const store = {
+      ...makeStore(),
+      needsModelRebuild: () => true,
+      rebuildAll: vi.fn(async () => {}),
+    };
+    const panel = new SecondBrainPanel(app, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    expect(store.rebuildAll).toHaveBeenCalledTimes(1);
+    expect(hasNotice(/Embedding 模型已更换/)).toBe(true);
+    panel.destroy();
   });
 });

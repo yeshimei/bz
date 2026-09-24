@@ -25,7 +25,7 @@
  * isRefreshing() 暴露进行中状态供主面板恢复进度视图。
  */
 import type { App, TFile } from 'obsidian';
-import { buildConfig, IS_MOBILE } from './config';
+import { buildConfig, DEFAULT_EMBEDDING_MODEL, IS_MOBILE } from './config';
 import { loadStore, mutateStore } from './store-file';
 import { MobileBuffer } from './binary';
 import { embedChunks, canvasToText, noteTitleFromPath } from './chunk';
@@ -38,6 +38,12 @@ import { bytesEqual } from '../core/utils';
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
+
+/** 库内记录的产出 Embedding 模型（issue 422/ADR-0182）：旧库无 _model 字段 → 按历史默认 bge-m3
+ *  推断（默认值自始未变，故推断安全：真换过模型的老库会判不一致，多跑一次重建而不写坏向量库）。 */
+export function recordedModelOf(meta: SecondBrainMeta | null | undefined): string {
+  return (meta && meta._model) || DEFAULT_EMBEDDING_MODEL;
+}
 
 /**
  * 断点暂存阈值（ticket 114）：距上次暂存 ≥minIntervalMs 且新完成块数 ≥minNewChunks 才落盘一次。
@@ -54,6 +60,10 @@ export interface SecondBrainMeta {
   version: number;
   notes: Record<string, NoteEntry>;
   _dim: number;
+  /** 产出当前向量的 Embedding 模型（issue 422/ADR-0182；旧库无此字段 → 按历史默认 bge-m3 推断）。
+   *  换模型必须整库重嵌：不同模型维度不同（bge-m3 1024 维 / qwen3-embedding:8b 4096 维），
+   *  混存会让行偏移错位写坏 .vec。 */
+  _model?: string;
 }
 
 export interface SearchHit {
@@ -79,6 +89,9 @@ export class VectorStore {
   updateProgress: (msg: string) => void = () => {};
   /** 初始 load 完成信号（域入口注入；主面板打开时等待，防启动竞态误入引导态——ticket 107） */
   initialLoad: Promise<void> | null = null;
+  /** load 期因换 Embedding 模型清库的标志（issue 422/ADR-0182）：面板据此自动全量重建，
+   *  而非落进「空库引导」等用户点按钮；doRefresh 跑起即复位（本轮就是按当前模型的全量重嵌）。 */
+  private modelChangedOnLoad = false;
 
   /** VP 索引缓存：树 + 归一化向量 + 缓存键 + 来源数组身份（内容变更即失效） */
   private vpTree: VPNode | null = null;
@@ -100,9 +113,22 @@ export class VectorStore {
     // ticket 120：meta 段并入 secondbrain.json；旧 secondbrain_meta.json 经 store-file 一次性迁移
     const data = await loadStore(this.app);
     const parsed = data.meta as SecondBrainMeta | null;
-    if (parsed && typeof parsed === 'object' && parsed.version === VECTOR_STORE_VERSION) {
-      this.meta = parsed;
-      this.dim = parsed._dim || 0;
+    const adopted = parsed && typeof parsed === 'object' && parsed.version === VECTOR_STORE_VERSION;
+    // 换模型即旧库作废（issue 422/ADR-0182）：维度不同不可混存——不清空就是拿旧维度的行偏移
+    // 去套新模型向量（检索出垃圾、增量重嵌写坏 .vec），故与版本不符同路：清空 + 待重建标志
+    if (adopted && recordedModelOf(parsed as SecondBrainMeta) !== buildConfig().EMBEDDING_MODEL) {
+      console.log(
+        `[secondbrain] Embedding 模型变更: ${recordedModelOf(parsed as SecondBrainMeta)} → ${buildConfig().EMBEDDING_MODEL}，旧向量库作废`
+      );
+      this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
+      this.vectors = new Float32Array(0);
+      this.dim = 0;
+      this.modelChangedOnLoad = true;
+      return;
+    }
+    if (adopted) {
+      this.meta = parsed as SecondBrainMeta;
+      this.dim = parsed!._dim || 0;
       await this.loadVectors();
       return;
     }
@@ -142,6 +168,31 @@ export class VectorStore {
   /** 是否有 refresh 正在进行（ticket 114）：主面板重开时据此恢复进度视图而非引导死按钮 */
   isRefreshing(): boolean {
     return this.refreshPromise !== null;
+  }
+
+  /**
+   * 是否需按当前 Embedding 模型整库重建（issue 422/ADR-0182）：
+   * ① 运行中改设置——内存 meta 仍在，与配置比对即知（面板打开即自动重建）；
+   * ② 重启后加载——load() 已清库并置标志（否则会落进空库引导态等用户点按钮）。
+   */
+  needsModelRebuild(): boolean {
+    if (this.modelChangedOnLoad) return true;
+    return Object.keys(this.meta.notes).length > 0 && recordedModelOf(this.meta) !== buildConfig().EMBEDDING_MODEL;
+  }
+
+  /** 清空内存态向量库（全量重建 / 换模型 / 索引范围空集共用）。
+   *  _model 一并抹掉：空库无产出模型可言，判定只认「有向量」的库。 */
+  private clearStore(): void {
+    this.meta.notes = {};
+    delete this.meta._model;
+    this.vectors = new Float32Array(0);
+    this.dim = 0;
+    this.meta._dim = 0;
+    // VP 索引缓存随内容失效（来源数组身份已变，此处显式置空双保险）
+    this.vpTree = null;
+    this.vpVecs = null;
+    this.vpMetaKey = null;
+    this.vpSrc = null;
   }
 
   /**
@@ -194,15 +245,7 @@ export class VectorStore {
         /* 前一轮失败不影响重建 */
       }
     }
-    this.meta.notes = {};
-    this.vectors = new Float32Array(0);
-    this.dim = 0;
-    this.meta._dim = 0;
-    // VP 索引缓存随内容失效（来源数组身份已变，此处显式置空双保险）
-    this.vpTree = null;
-    this.vpVecs = null;
-    this.vpMetaKey = null;
-    this.vpSrc = null;
+    this.clearStore();
     await this.refresh(updateProgress);
   }
 
@@ -229,6 +272,9 @@ export class VectorStore {
   }
 
   async saveStore(): Promise<void> {
+    // 产出模型随库记录（有向量即记）：写盘时内存向量必定出自当前模型——换模型的两条入口
+    // （load 期 / refresh 期）都已清库，故这里记的模型与向量真实来源一致
+    if (this.dim > 0) this.meta._model = buildConfig().EMBEDDING_MODEL;
     // ticket 120：meta 段写入 secondbrain.json（经串行写链，与 panel/link 段互斥）
     await mutateStore(
       (s) => {
@@ -314,6 +360,16 @@ export class VectorStore {
 
   private async doRefresh(): Promise<void> {
     const CONFIG = buildConfig();
+
+    // 换模型清库（issue 422/ADR-0182）：内存库仍按旧模型时先清空，本轮转全量重嵌——
+    // 增量路径下旧向量按旧维度拷贝、新向量按新维度写入会错位写坏 .vec；
+    // 主面板入口通常在 render() 已先走自动重建，这里是后台防抖刷新等非面板入口的兜底。
+    if (Object.keys(this.meta.notes).length > 0 && recordedModelOf(this.meta) !== CONFIG.EMBEDDING_MODEL) {
+      console.log(`[secondbrain] Embedding 模型变更: ${recordedModelOf(this.meta)} → ${CONFIG.EMBEDDING_MODEL}，清库全量重嵌`);
+      this.clearStore();
+    }
+    // 本轮即按当前模型重嵌，load 期标志复位（面板自动重建途中的恢复路径不再重复触发）
+    this.modelChangedOnLoad = false;
 
     // 索引范围过滤（与 hasPendingChanges / 主面板覆盖率同一实现）
     const allowPaths = CONFIG.ALLOW_PATHS || [];

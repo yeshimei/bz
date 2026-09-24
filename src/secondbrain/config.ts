@@ -42,11 +42,16 @@ export function resolveAllowPaths(rawAllowPaths: unknown): string[] {
 }
 
 
+/** 默认向量化模型（设置留空时回落到此；ADR-0182：库内未记录产出模型的旧库也按此推断——
+ *  历史上默认值一直是 bge-m3，故「未记录 = bge-m3」是安全推断：换过模型的老库会被判不一致，
+ *  多跑一次重建而不写坏向量库） */
+export const DEFAULT_EMBEDDING_MODEL = 'bge-m3';
+
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();
   return {
     OLLAMA_URL: s.secondBrainOllamaUrl || 'http://localhost:11434',
-    EMBEDDING_MODEL: s.secondBrainEmbeddingModel || 'bge-m3',
+    EMBEDDING_MODEL: s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL,
     STORE_PATH: storageFile('secondbrain.json'),
     VEC_PATH: storageFile('secondbrain.vec'),
     TOP_K: Number(s.secondBrainTopK) || 20,

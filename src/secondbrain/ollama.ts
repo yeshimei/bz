@@ -25,15 +25,29 @@ async function httpFetch(url: string, opts: any, timeoutMs: number = EMBED_TIMEO
   }
 }
 
-/** 单条嵌入（isQuery 时加检索前缀；model 缺省跟随第二大脑设置——小橘记忆库可经设置面板覆盖） */
+/**
+ * 查询侧指令前缀（issue 422/ADR-0182：query 指令是模型族属性，随当前模型分派）。
+ * - Qwen3-Embedding（qwen3-embedding:0.6b/4b/8b）：官方检索格式 Instruct + Query 两行，
+ *   文档侧不加指令（见 getEmbeddingsBatch）；
+ * - 其余（bge-m3 等）：沿用原有英文检索指令前缀，逐字不动——存量索引口径不受影响。
+ */
+export function queryInstruction(model: string): string {
+  if (/qwen3[-_]?embedding/i.test(model)) {
+    return 'Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: ';
+  }
+  return 'Represent this sentence for searching relevant passages: ';
+}
+
+/** 单条嵌入（isQuery 时按模型加检索指令前缀；model 缺省跟随第二大脑设置——小橘记忆库可经设置面板覆盖） */
 export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: string, model?: string): Promise<number[]> {
   const CONFIG = buildConfig();
   const url = baseUrl || CONFIG.OLLAMA_URL;
-  const prompt = isQuery ? `Represent this sentence for searching relevant passages: ${text}` : text;
+  const resolved = model || CONFIG.EMBEDDING_MODEL;
+  const prompt = isQuery ? `${queryInstruction(resolved)}${text}` : text;
   const resp = await httpFetch(`${url}/api/embeddings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: model || CONFIG.EMBEDDING_MODEL, prompt }),
+    body: JSON.stringify({ model: resolved, prompt }),
   });
   if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
   const data = await resp.json();

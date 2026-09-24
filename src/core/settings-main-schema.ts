@@ -21,6 +21,12 @@
  * - issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *   三组；B站 Cookie / 豆瓣 Cookie 行当时由单行输入框改 textarea（Cookie 串长，便于粘贴检查），
  *   「从 CLI 导入」按钮经 actions 保留。键与行为零变化；
+ * - issue 422/ADR-0182 按模型族收敛：撤销「服务商」组（行并入 LLM 组首部），「模型配置」更名
+ *   「LLM」、「Jev 决策通道」更名「JEV」，新增「Embedding」组（第二大脑迁移来的向量化模型行，
+ *   行内「获取模型」按钮拉 Ollama 已装 embedding 模型：bge-m3 / nomic-embed-text /
+ *   qwen3-embedding:8b…）。四组 = LLM / Embedding / JEV / 数据源凭据；键与行为零变化；
+ *   注意本模块须保持 node 环境可安全加载（文案 lint 直接 import），故新增逻辑不 import
+ *   obsidian 侧模块——移动端判定走 core/mobile（obsidian Platform），与域侧口径同源；
  * - 2026-09-23 凭据组三行统一回单行 secret（用户拍板「加密的做成多行框看着怪」）：textarea 的
  *   masked 档位在凭据组退役，行序改为 ApiZero Key → B站 Cookie → 豆瓣 Cookie；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
@@ -33,7 +39,7 @@ import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, think
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
-import { fetchProviderModels, providerDescriptorOf } from './ai-models';
+import { fetchEmbeddingModels, fetchProviderModels, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
 import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -276,6 +282,60 @@ function modelGroupRows(): SettingsRow[] {
   ];
 }
 
+/** 「LLM」组行（issue 422/ADR-0182）：「服务商」组撤销后与其「模型配置」组合卡——
+ *  接入行（服务商下拉 + 各家密钥，visibleWhen 随 aiProvider 显隐）在前，
+ *  模型参数三行在后：先选通道与密钥、再配这一通道用哪个模型。键与行为零变化。 */
+function llmGroupRows(): SettingsRow[] {
+  return [...providerGroupRows(), ...modelGroupRows()];
+}
+
+/**
+ * 「Embedding 模型」行（issue 422/ADR-0182）：原第二大脑设置页「服务」组迁入 AI 面板。
+ * 行内「获取模型」按钮照 LLM 模型行范式：拉向量化服务已装模型（Ollama /api/tags 按
+ * embedding 能力过滤：bge-m3 / nomic-embed-text / qwen3-embedding:8b…）弹选择器，选中即写入。
+ * 键 secondBrainEmbeddingModel 不变——secondbrain/config.ts 读取与 smartcat「留空跟随」回退
+ * 口径零改动；换模型后维度不同（bge-m3 1024 维 / qwen3-embedding:8b 4096 维），
+ * 第二大脑下次打开自动全量重建（vector-store 记录产出模型，ADR-0182 §2）。
+ */
+function embeddingModelRow(): SettingsRow {
+  return {
+    type: 'text',
+    name: 'Embedding 模型',
+    desc: '向量化用的嵌入模型名，留空用默认 bge-m3',
+    placeholder: 'bge-m3',
+    binding: { key: 'secondBrainEmbeddingModel' },
+    actions: [{
+      text: '获取模型',
+      onClick: async (_value, ctx) => {
+        try {
+          await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+          const models = await fetchEmbeddingModels();
+          openModelPicker({
+            providerLabel: 'Ollama 向量化',
+            current: String((tryGetSettings() as any).secondBrainEmbeddingModel || ''),
+            models,
+            onPick: (m) => {
+              (tryGetSettings() as any).secondBrainEmbeddingModel = m.id;
+              void saveSettings();
+              // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
+              ctx.refreshVisibility();
+              notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, 'success');
+            },
+          });
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), 'error');
+        }
+      },
+    }],
+  } as SettingsRow;
+}
+
+/** 「Embedding」组行（issue 422/ADR-0182）：向量化模型（第二大脑与跟随回退的小橘记忆库共用）。
+ *  Ollama 服务地址 / 移动端远程地址仍留在第二大脑设置页「服务」组——那里是本机与手机的连接面。 */
+function embeddingGroupRows(): SettingsRow[] {
+  return [embeddingModelRow()];
+}
+
 /**
  * 「数据源凭据」组行（issue 331 拆组，ADR-0133「AI 与凭据」单组退役）：与 AI 服务商无关的
  * 第三方数据源凭据集中一卡——影院 ApiZero Key / 豆瓣 Cookie（原影院「数据抓取」组挪入）+
@@ -369,14 +429,18 @@ function jevGroupRows(): SettingsRow[] {
 /** AI 页设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
  *  issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *  三组——接入（选谁+密钥）/ 模型参数（用哪个模型+窗口）/ 数据源凭据（非 AI 的第三方凭据）
- *  三层各归各卡；键与行为零变化。issue 391 追加「Jev 决策通道」组（判定通道，独立于生成通道）。 */
+ *  三层各归各卡；键与行为零变化。issue 391 追加「Jev 决策通道」组（判定通道，独立于生成通道）。
+ *  issue 422/ADR-0182：按模型族收敛为 LLM / Embedding / JEV 三张模型卡 + 数据源凭据——
+ *  「服务商」组撤销，其行并入「LLM」组首部（先选服务商与密钥、再配模型参数，同卡一条链）；
+ *  第二大脑的「Embedding 模型」行迁入「Embedding」组（键 secondBrainEmbeddingModel 不变，
+ *  消费方 secondbrain/config.ts 与 smartcat 跟随回退口径零改动）。 */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
-      { icon: 'plug-zap', name: '服务商', rows: providerGroupRows() },
-      { icon: 'cpu', name: '模型配置', rows: modelGroupRows() },
+      { icon: 'cpu', name: 'LLM', rows: llmGroupRows() },
+      { icon: 'binary', name: 'Embedding', rows: embeddingGroupRows() },
+      { icon: 'route', name: 'JEV', rows: jevGroupRows() },
       { icon: 'key-round', name: '数据源凭据', rows: credentialGroupRows() },
-      { icon: 'route', name: 'Jev 决策通道', rows: jevGroupRows() },
     ],
   };
 }

@@ -326,6 +326,7 @@ describe('第二大脑：AI 生成概括移除（ticket 141）', () => {
       isIndexReady: () => true,
       hasPendingChanges: () => false,
       isRefreshing: () => false,
+      needsModelRebuild: () => false,
       refresh: async () => {},
       meta: { notes: {}, _dim: 0 },
       vectors: [],

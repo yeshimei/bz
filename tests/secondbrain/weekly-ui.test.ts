@@ -429,6 +429,7 @@ describe('主面板头行入口 bz-sb-weekly-open（issue 360 真机回归）', 
       isIndexReady: () => true,
       hasPendingChanges: () => false,
       isRefreshing: () => false,
+      needsModelRebuild: () => false,
       refresh: async () => {},
       meta: {
         notes: {

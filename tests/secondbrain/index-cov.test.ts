@@ -31,6 +31,9 @@ vi.mock('../../src/secondbrain/vector-store', () => {
     isRefreshing(): boolean {
       return false;
     }
+    needsModelRebuild(): boolean {
+      return false;
+    }
     async load(): Promise<void> {}
     async initMobile(): Promise<string> {
       return '';

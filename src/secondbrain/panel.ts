@@ -193,6 +193,12 @@ export class SecondBrainPanel {
       await this.runRebuild();
       return;
     }
+    // 换 Embedding 模型（issue 422/ADR-0182）：旧向量按旧维度存，不可混用 → 打开面板即自动全量重建
+    // （无需用户再点按钮），并提示原因；重建期间进度视图与「全量重建」同一形态
+    if (this.store.needsModelRebuild()) {
+      await this.runModelRebuild();
+      return;
+    }
     if (!this.store.isIndexReady()) {
       if (this.store.isRefreshing()) {
         // 初始向量化仍在后台跑（关页重开场景）：先展示进度视图，不 await——
@@ -332,6 +338,13 @@ export class SecondBrainPanel {
     } finally {
       this.initializing = false;
     }
+  }
+
+  /** 换 Embedding 模型后的自动全量重建（issue 422/ADR-0182）：库内记录模型与当前配置不一致
+   *  （含重启后 load 期已清库的两态）时由 render 分派到此——先提示原因再走重建全流程。 */
+  private async runModelRebuild(): Promise<void> {
+    notice('Embedding 模型已更换，正在重建向量索引', 'info');
+    await this.runRebuild();
   }
 
   /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
@@ -637,11 +650,13 @@ function topLevelName(path: string): string {
 // ==================== ⚙️ 域设置弹窗（主面板 / 窄窗共用） ====================
 
 /**
- * 第二大脑设置 schema（ticket 131；ADR-0064）：基础/自动双链/检索/对话/面板 五组卡片。
+ * 第二大脑设置 schema（ticket 131；ADR-0064）：外观/服务/检索/对话 四组卡片。
  * - ticket 100 文案修正：含符号标题（（本地）/（ms）/（电脑）/…）改写自然句，键名/行为/通知文案零变化；
  * - 省略 desc 的行保持省略（lint 只查有 name/desc 的行，不为过 lint 加文案）；
  * - 「本机局域网 IP」行为态（探测 IP 动态 desc + 「填入远程 URL」确认覆盖 + 输入框即时回显）
- *   走 custom 插槽保行为；「重新索引」确认已 flow 化（openFlowDialog）不动。
+ *   走 custom 插槽保行为；「重新索引」确认已 flow 化（openFlowDialog）不动；
+ * - issue 422/ADR-0182：「Embedding 模型」行迁出（AI 面板 Embedding 组），本页「服务」组只留
+ *   Ollama 连接面（本地 URL / 移动端远程地址 / 局域网 IP）与额外检索目录。
  * 置于模块顶层供文案 lint 直接引用。 */
 
 /** 本机局域网 IP 描述（schema 构建期探测；「填入远程 URL」动作实时重探）。
@@ -740,7 +755,9 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             visibleWhen: () => isMobileEnv(),
             desc: '连不上远程库时，在电脑上查看本机 IP 并核对上方地址',
           },
-          { type: 'text', name: 'Embedding 模型', desc: '向量化用的嵌入模型名，留空用默认', binding: { key: 'secondBrainEmbeddingModel' }, onChange: trimStore('secondBrainEmbeddingModel') },
+          // 「Embedding 模型」行已迁 AI 面板（issue 422/ADR-0182：「AI」页 Embedding 组，
+          // 行内「获取模型」按钮拉 Ollama 已装向量化模型）；键 secondBrainEmbeddingModel 不变，
+          // 本页不再重复暴露。Ollama 服务地址仍在此组——本机与手机的连接面归第二大脑。
           // 额外检索目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
           // ADR-0141 §3：三个盒子恒含索引，本行语义降级为「三盒之外还要纳入检索的目录」
           {
