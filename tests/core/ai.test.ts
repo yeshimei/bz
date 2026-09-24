@@ -588,7 +588,6 @@ describe('createAI', () => {
     delete (global as any).fetch;
   });
 });
-;
 // ==================== 连通性测试（issue 433 密钥行「测试」按钮的数据层） ====================
 
 describe('testAIConnectivity', () => {
