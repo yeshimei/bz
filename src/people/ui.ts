@@ -26,7 +26,7 @@ import {
   type PortraitMaterial,
 } from './digest';
 import { computeStats, formatCount, formatReplySec } from './stats';
-import type { FaceDigest, FaceEvent, ImportRecord, PersonEntry, UnifiedMessage } from './types';
+import type { FaceDigest, FaceEvent, ImportRecord, ManualEvent, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 
 const ESC_ID = 'people-panel';
 
@@ -149,6 +149,19 @@ function onOverlayClick(e: MouseEvent): void {
   if (del) { void handleDelete(del.dataset.peopleDel ?? ''); return; }
   const card = t.closest<HTMLElement>('[data-people-card]');
   if (card) { detailId = card.dataset.peopleCard ?? null; stage = 'detail'; void renderBody(); return; }
+  // —— issue 439：档案与随手记（元素只在详情页出现，属性名互不重叠） ——
+  if (t.closest('[data-people-prof-new]') || t.closest('[data-people-prof-edit]')) { profEditId = detailId; void renderBody(); return; }
+  if (t.closest('[data-people-prof-cancel]')) { profEditId = null; void renderBody(); return; }
+  if (t.closest('[data-people-prof-save]')) { void saveProfile(); return; }
+  if (t.closest('[data-people-prof-add-social]')) { addSocialRow(); return; }
+  if (t.closest('[data-people-prof-tag-add]')) { addTagChip(); return; }
+  if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-prof-tag')?.remove(); return; }
+  if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
+  if (t.closest('[data-people-note-add]')) { noteAddId = detailId; void renderBody(); return; }
+  if (t.closest('[data-people-note-cancel]')) { noteAddId = null; void renderBody(); return; }
+  if (t.closest('[data-people-note-save]')) { void saveManualNote(); return; }
+  const evDel = t.closest<HTMLElement>('[data-people-ev-del]');
+  if (evDel) { void removeManualNote(evDel.dataset.peopleEvDel ?? ''); return; }
 }
 
 function onOverlayChange(e: Event): void {
@@ -466,7 +479,7 @@ async function runGeneration(): Promise<void> {
       await store.appendImport(talker, rec);
       const digest: FaceDigest = {
         portrait: face.portrait,
-        events: face.events,
+        events: mergeManualEvents(face.events, existing?.manualEvents), // issue 439：手动随手记并入事件素材
         quotes: face.quotes,
         chronicle: face.chronicle || undefined,
         generatedAt: now,
@@ -537,6 +550,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
     const portrait = el('div', 'bz-people-portrait');
     renderMiniMarkdown(p.digest.portrait, portrait);
     body.appendChild(portrait);
+    renderProfileBlock(p, body);
     if (p.digest.chronicle) {
       body.appendChild(el('div', 'bz-people-section-title', text('关系时间线')));
       const chronicle = el('div', 'bz-people-chronicle');
@@ -568,6 +582,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
     }
   } else {
     body.appendChild(el('div', 'bz-people-empty-hint', text('还没有脸谱。导入聊天记录后自动生成。')));
+    renderProfileBlock(p, body);
   }
   renderInsights(body, p);
   body.appendChild(el('div', 'bz-people-detail-foot', [
@@ -878,4 +893,292 @@ function dedupeByText<T>(items: T[], key: (item: T) => string): T[] {
     out.push(item);
   }
   return out;
+// ---------------- 档案与随手记（issue 439） ----------------
+// 手动输入路径：档案（社交账号/生日/认识方式/标签/备注…）落盘走 store.updateProfile，
+// 随手记走 store.addManualEvent / removeManualEvent；显式保存按钮写盘，不随 input 落盘。
+
+/** 编辑态 / 记一笔态只对当前人物生效（不用动 closePeoplePanel，换人即自然退出） */
+let profEditId: string | null = null;
+let noteAddId: string | null = null;
+
+/** 手动随手记并入脸谱事件（重画时送进时间线与事件列表）：ts|summary 去重后按 ts 排序 */
+function mergeManualEvents(events: FaceEvent[], manual: ManualEvent[] | undefined): FaceEvent[] {
+  if (!manual?.length) return events;
+  const seen = new Set(events.map((e) => `${e.ts}|${e.summary}`));
+  const extra = manual
+    .map((m) => ({ ts: m.ts, summary: m.summary }))
+    .filter((e) => e.ts && e.summary && !seen.has(`${e.ts}|${e.summary}`));
+  if (!extra.length) return events;
+  return [...events, ...extra].sort((a, b) => a.ts.localeCompare(b.ts));
+}
+
+/** 档案是否至少填了一项（决定详情页出不出现档案区块） */
+function profileFilled(prof: PersonProfile | undefined): boolean {
+  if (!prof) return false;
+  return Boolean(
+    (prof.socials && prof.socials.length) ||
+    (prof.tags && prof.tags.length) ||
+    (prof.birthday ?? '').trim() || (prof.metVia ?? '').trim() || (prof.metAt ?? '').trim() ||
+    (prof.hometown ?? '').trim() || (prof.job ?? '').trim() || (prof.note ?? '').trim()
+  );
+}
+
+/** 详情页档案区：有档案/有随手记/在编辑才出对应区块；全空时只给一行入口 */
+function renderProfileBlock(p: PersonEntry, body: HTMLElement): void {
+  const prof = p.profile;
+  const hasProf = profileFilled(prof);
+  const evs = p.manualEvents ?? [];
+  const editing = profEditId === p.id;
+  const addingNote = noteAddId === p.id;
+
+  if (hasProf || editing) {
+    body.appendChild(el('div', 'bz-people-section-title', text('人物档案')));
+    body.appendChild(editing ? buildProfileEditor(prof) : buildProfileView(prof));
+  }
+  if (evs.length || addingNote) {
+    body.appendChild(el('div', 'bz-people-section-title', text('随手记')));
+    if (addingNote) body.appendChild(buildNoteAddRow());
+    if (evs.length) {
+      const list = el('div', 'bz-people-notes');
+      for (const ev of evs) {
+        list.appendChild(el('div', 'bz-people-note', [
+          el('span', 'bz-people-note-ts', text(ev.ts)),
+          el('span', 'bz-people-note-summary', text(ev.summary)),
+          button('bz-people-btn bz-people-btn-ghost bz-people-note-del', '删', { 'data-people-ev-del': ev.id }),
+        ]));
+      }
+      body.appendChild(list);
+    }
+  }
+  // 入口行：缺什么补什么；档案与随手记全空时加一句提示，避免凭空两个按钮
+  const entries: HTMLElement[] = [];
+  if (!hasProf && !editing) entries.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '补人物档案', { 'data-people-prof-new': '' }));
+  if (!evs.length && !addingNote) entries.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '记一笔', { 'data-people-note-add': '' }));
+  if (entries.length) {
+    const solo = !hasProf && !editing && !evs.length && !addingNote;
+    body.appendChild(el('div', `bz-people-prof-entry${solo ? ' bz-people-prof-entry-solo' : ''}`, [
+      ...(solo ? [el('span', 'bz-people-prof-entry-hint', text('聊天之外的也可以记：'))] : []),
+      ...entries,
+    ]));
+  }
+}
+
+/** 档案展示卡：只列填过的字段 */
+function buildProfileView(prof: PersonProfile | undefined): HTMLElement {
+  const rows: HTMLElement[] = [];
+  const addRow = (label: string, value: string) => {
+    rows.push(el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text(label)),
+      el('span', 'bz-people-prof-value', text(value)),
+    ]));
+  };
+  if (prof?.socials?.length) {
+    rows.push(el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('社交账号')),
+      el('span', 'bz-people-prof-value', text(prof.socials.map((s) => [s.platform, s.handle].filter(Boolean).join(' ')).filter(Boolean).join(' · '))),
+    ]));
+  }
+  if (prof?.birthday?.trim()) addRow('生日', prof.birthday.trim());
+  if (prof?.metVia?.trim()) addRow('认识方式', prof.metVia.trim());
+  if (prof?.metAt?.trim()) addRow('认识时间', prof.metAt.trim());
+  if (prof?.hometown?.trim()) addRow('家乡 / 现居', prof.hometown.trim());
+  if (prof?.job?.trim()) addRow('职业', prof.job.trim());
+  if (prof?.tags?.length) {
+    rows.push(el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('标签')),
+      el('span', 'bz-people-prof-value bz-people-prof-tags', prof.tags.filter(Boolean).map((t) => el('span', 'bz-people-chip', text(t)))),
+    ]));
+  }
+  if (prof?.note?.trim()) addRow('备注', prof.note.trim());
+  rows.push(el('div', 'bz-people-prof-actions', [
+    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '编辑档案', { 'data-people-prof-edit': '' }),
+  ]));
+  return el('div', 'bz-people-prof', rows);
+}
+
+function profInput(value: string, placeholder: string, attr: [string, string], cls = 'bz-people-prof-input'): HTMLInputElement {
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = cls;
+  inp.value = value;
+  inp.placeholder = placeholder;
+  inp.setAttribute(attr[0], attr[1]);
+  return inp;
+}
+
+function socialRow(platform: string, handle: string): HTMLElement {
+  return el('div', 'bz-people-prof-social-row', [
+    profInput(platform, '平台（微信 / 微博…）', ['data-people-prof-social-platform', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
+    profInput(handle, '账号', ['data-people-prof-social-handle', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
+    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-social-del': '', 'aria-label': '删除这条社交账号' }),
+  ]);
+}
+
+function tagChip(t: string): HTMLElement {
+  return el('span', 'bz-people-prof-tag', [
+    el('span', 'bz-people-prof-tag-text', text(t)),
+    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-tag-del': '', 'aria-label': `删除标签 ${t}` }),
+  ]);
+}
+
+/** 档案编辑卡：行内增删（社交行 / 标签）只动 DOM，点「保存档案」才读全量写盘 */
+function buildProfileEditor(prof: PersonProfile | undefined): HTMLElement {
+  const grid = (label: string, input: HTMLElement) =>
+    el('div', 'bz-people-prof-row', [el('span', 'bz-people-prof-label', text(label)), input]);
+  const socialList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-social-list': '' });
+  for (const s of prof?.socials ?? []) socialList.appendChild(socialRow(s.platform, s.handle));
+  const tagList = el('div', 'bz-people-prof-tag-list', { 'data-people-prof-tag-list': '' });
+  for (const t of prof?.tags ?? []) tagList.appendChild(tagChip(t));
+  const tagInput = profInput('', '加标签…', ['data-people-prof-tag-input', ''], 'bz-people-prof-input bz-people-prof-tag-input');
+  return el('div', 'bz-people-prof bz-people-prof-edit', [
+    el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('社交账号')),
+      el('div', 'bz-people-prof-social', [
+        socialList,
+        el('div', 'bz-people-prof-social-tools', [
+          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 社交账号', { 'data-people-prof-add-social': '' }),
+        ]),
+      ]),
+    ]),
+    grid('生日', profInput(prof?.birthday ?? '', 'YYYY-MM-DD 或 MM-DD', ['data-people-prof-field', 'birthday'])),
+    grid('认识方式', profInput(prof?.metVia ?? '', '怎么认识的', ['data-people-prof-field', 'metVia'])),
+    grid('认识时间', profInput(prof?.metAt ?? '', '比如 2023 年夏天', ['data-people-prof-field', 'metAt'])),
+    grid('家乡 / 现居', profInput(prof?.hometown ?? '', '家乡 · 现居', ['data-people-prof-field', 'hometown'])),
+    grid('职业', profInput(prof?.job ?? '', '职业', ['data-people-prof-field', 'job'])),
+    el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('标签')),
+      el('div', 'bz-people-prof-tags-edit', [
+        tagList,
+        el('div', 'bz-people-prof-tag-tools', [
+          tagInput,
+          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 标签', { 'data-people-prof-tag-add': '' }),
+        ]),
+      ]),
+    ]),
+    grid('备注', profInput(prof?.note ?? '', '一句话备注', ['data-people-prof-field', 'note'])),
+    el('div', 'bz-people-prof-actions', [
+      button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '保存档案', { 'data-people-prof-save': '' }),
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '取消', { 'data-people-prof-cancel': '' }),
+    ]),
+  ]);
+}
+
+function addSocialRow(): void {
+  overlay?.querySelector<HTMLElement>('[data-people-prof-social-list]')?.appendChild(socialRow('', ''));
+}
+
+function addTagChip(): void {
+  const input = overlay?.querySelector<HTMLInputElement>('[data-people-prof-tag-input]');
+  const list = overlay?.querySelector<HTMLElement>('[data-people-prof-tag-list]');
+  const v = (input?.value ?? '').trim();
+  if (!input || !list || !v) return;
+  const dupes = new Set(
+    Array.from(list.querySelectorAll('.bz-people-prof-tag-text')).map((n) => (n.textContent ?? '').trim())
+  );
+  if (!dupes.has(v)) list.appendChild(tagChip(v));
+  input.value = '';
+  input.focus();
+}
+
+/** 读编辑卡全量输入 → updateProfile；整卡为空 = 清档案（落盘 undefined） */
+async function saveProfile(): Promise<void> {
+  if (!store || !detailId || !overlay) return;
+  const val = (sel: string) => overlay!.querySelector<HTMLInputElement>(sel)?.value?.trim() ?? '';
+  const rows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
+  const socials = rows
+    .map((row) => ({
+      platform: row.querySelector<HTMLInputElement>('[data-people-prof-social-platform]')?.value?.trim() ?? '',
+      handle: row.querySelector<HTMLInputElement>('[data-people-prof-social-handle]')?.value?.trim() ?? '',
+    }))
+    .filter((s) => s.platform && s.handle);
+  const partial = rows.length - socials.length;
+  const tagTexts = Array.from(overlay.querySelectorAll('[data-people-prof-tag-list] .bz-people-prof-tag-text'))
+    .map((n) => (n.textContent ?? '').trim())
+    .filter(Boolean);
+  const tags = [...new Set(tagTexts)];
+  const profile: PersonProfile = {};
+  const f = {
+    birthday: val('[data-people-prof-field="birthday"]'),
+    metVia: val('[data-people-prof-field="metVia"]'),
+    metAt: val('[data-people-prof-field="metAt"]'),
+    hometown: val('[data-people-prof-field="hometown"]'),
+    job: val('[data-people-prof-field="job"]'),
+    note: val('[data-people-prof-field="note"]'),
+  };
+  if (f.birthday) profile.birthday = f.birthday;
+  if (f.metVia) profile.metVia = f.metVia;
+  if (f.metAt) profile.metAt = f.metAt;
+  if (f.hometown) profile.hometown = f.hometown;
+  if (f.job) profile.job = f.job;
+  if (f.note) profile.note = f.note;
+  if (socials.length) profile.socials = socials;
+  if (tags.length) profile.tags = tags;
+  const empty = !socials.length && !tags.length && !Object.keys(profile).length;
+  try {
+    await store.updateProfile(detailId, empty ? undefined : profile);
+    profEditId = null;
+    notice(empty ? '档案已清空' : '档案已保存', 'success');
+    if (partial > 0) notice(`${partial} 行社交账号没填完整，已跳过`, 'warning');
+  } catch (e) {
+    notifyActionError(e, '保存档案');
+  }
+  void renderBody();
+}
+
+/** 随手记录入行：日期（默认今天）+ 一句话，显式「记一笔」写盘 */
+function buildNoteAddRow(): HTMLElement {
+  const date = document.createElement('input');
+  date.type = 'date';
+  date.className = 'bz-people-prof-input bz-people-note-date';
+  date.value = todayStr();
+  date.setAttribute('data-people-note-date', '');
+  const txt = profInput('', '一句话记下这一天……', ['data-people-note-text', ''], 'bz-people-prof-input bz-people-note-text');
+  txt.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); void saveManualNote(); }
+  });
+  return el('div', 'bz-people-note-add', [
+    date,
+    txt,
+    button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '记一笔', { 'data-people-note-save': '' }),
+    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '收起', { 'data-people-note-cancel': '' }),
+  ]);
+}
+
+async function saveManualNote(): Promise<void> {
+  if (!store || !detailId || !overlay) return;
+  const summary = overlay.querySelector<HTMLInputElement>('[data-people-note-text]')?.value?.trim() ?? '';
+  if (!summary) { notice('随手记还没写内容', 'warning'); return; }
+  const ts = overlay.querySelector<HTMLInputElement>('[data-people-note-date]')?.value?.trim() || todayStr();
+  try {
+    await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: new Date().toISOString() });
+    noteAddId = null;
+    notice('已记一笔', 'success');
+  } catch (e) {
+    notifyActionError(e, '记随手记');
+  }
+  void renderBody();
+}
+
+async function removeManualNote(evId: string): Promise<void> {
+  if (!store || !detailId || !evId) return;
+  try {
+    await store.removeManualEvent(detailId, evId);
+    notice('已删除随手记', 'delete');
+  } catch (e) {
+    notifyActionError(e, '删除随手记');
+  }
+  void renderBody();
+}
+
+/** 本地日期 YYYY-MM-DD（随手记默认值；FaceEvent.ts 同构） */
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 随手记 id：优先 crypto.randomUUID，降级时间戳+随机串 */
+function genId(): string {
+  const c = typeof crypto !== 'undefined' ? (crypto as unknown as { randomUUID?: () => string }) : null;
+  if (c && typeof c.randomUUID === 'function') return c.randomUUID();
+  return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
