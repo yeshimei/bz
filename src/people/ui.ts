@@ -15,6 +15,7 @@ import { createAI } from '../core/ai';
 import { PeopleStore } from './data';
 import { parseWechatExport, type ContactGroup } from './parse';
 import { buildFace, type AskLLM } from './digest';
+import { computeStats, formatCount, formatReplySec } from './stats';
 import type { FaceDigest, ImportRecord, PersonEntry } from './types';
 
 const ESC_ID = 'people-panel';
@@ -410,6 +411,8 @@ async function runGeneration(): Promise<void> {
         skippedCount: group.skippedCount,
         timeFrom: new Date(group.messages[0].ts).toISOString(),
         timeTo: new Date(group.messages[group.messages.length - 1].ts).toISOString(),
+        // 纯本地聚合（issue 440），与原文一起用完即弃，落盘只有统计结果
+        stats: computeStats(group.messages, group.kindCounts),
       };
       const existing = (await store.list()).find((p) => p.id === talker);
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
@@ -514,9 +517,95 @@ async function renderDetail(body: HTMLElement): Promise<void> {
   } else {
     body.appendChild(el('div', 'bz-people-empty-hint', text('还没有脸谱。导入聊天记录后自动生成。')));
   }
+  renderInsights(body, p);
   body.appendChild(el('div', 'bz-people-detail-foot', [
     button('bz-people-btn', '再导一次聊天（重画脸谱）', { 'data-people-import-btn': '' }),
   ]));
+}
+
+// ---------------- 互动数据（issue 440：纯本地统计展示） ----------------
+
+/** 详情页互动数据卡：只展示最近一次导入的统计；旧数据无 stats 时只给一句占位说明 */
+function renderInsights(body: HTMLElement, p: PersonEntry): void {
+  if (!p.imports.length) return;
+  const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
+  body.appendChild(el('div', 'bz-people-section-title', text('互动数据')));
+  if (!latest.stats) {
+    body.appendChild(el('div', 'bz-people-empty-hint', text('这次导入还没有互动统计（旧版数据）。再导一次聊天即可生成。')));
+    return;
+  }
+  const s = latest.stats;
+  const totalMsg = s.monthly.reduce((a, [, n]) => a + n, 0);
+  const card = el('div', 'bz-people-insights');
+  card.appendChild(el('div', 'bz-people-ins-head', [
+    el('div', 'bz-people-ins-range', text(`${latest.timeFrom.slice(0, 7)} ~ ${latest.timeTo.slice(0, 7)} · 共 ${formatCount(totalMsg)} 条`)),
+    el('div', 'bz-people-ins-file', text(latest.file)),
+  ]));
+  if (s.monthly.length) card.appendChild(buildMonthlyChart(s.monthly));
+
+  const rows = el('div', 'bz-people-ins-rows');
+  // 谁主动：会话发起占比条 + 数字
+  const initiated = s.initiatedByMe + s.initiatedByOther;
+  rows.appendChild(el('div', 'bz-people-ins-row', [
+    el('span', 'bz-people-ins-label', text('谁主动')),
+    initiated
+      ? el('div', 'bz-people-duo', [
+        el('div', 'bz-people-duo-me', { style: `width:${Math.round((s.initiatedByMe / initiated) * 100)}%` }),
+        el('div', 'bz-people-duo-other', { style: `width:${Math.round((s.initiatedByOther / initiated) * 100)}%` }),
+      ])
+      : el('div', 'bz-people-duo'),
+    el('span', 'bz-people-ins-val', text(initiated ? `我 ${s.initiatedByMe} · 对方 ${s.initiatedByOther}` : '暂无会话')),
+  ]));
+  // 平均回复时延（秒/分/小时自适应）
+  rows.appendChild(el('div', 'bz-people-ins-row', [
+    el('span', 'bz-people-ins-label', text('平均回复')),
+    el('span', 'bz-people-ins-val', text(`我 ${formatReplySec(s.myAvgReplySec)} · 对方 ${formatReplySec(s.otherAvgReplySec)}`)),
+  ]));
+  // 活跃时段：双方合计的 24 小时分布
+  const hourly = s.myHourly.map((n, i) => n + (s.otherHourly[i] ?? 0));
+  const hourTotal = hourly.reduce((a, n) => a + n, 0);
+  const hourMax = Math.max(...hourly);
+  rows.appendChild(el('div', 'bz-people-ins-row', [
+    el('span', 'bz-people-ins-label', text('活跃时段')),
+    el('div', 'bz-people-strip', hourly.map((n, i) => {
+      const h = hourMax > 0 && n > 0 ? Math.max(Math.round((n / hourMax) * 100), 6) : 0;
+      return el('div', 'bz-people-strip-bar', { style: `height:${h}%`, title: `${i} 点 · ${n} 条` });
+    })),
+    el('span', 'bz-people-ins-val', text(hourTotal ? `峰值 ${hourly.indexOf(hourMax)} 点` : '—')),
+  ]));
+  // 形态占比
+  const kinds = Object.entries(s.kindCounts).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const kindTotal = kinds.reduce((a, [, n]) => a + n, 0);
+  if (kinds.length) {
+    rows.appendChild(el('div', 'bz-people-ins-row', [
+      el('span', 'bz-people-ins-label', text('消息形态')),
+      el('div', 'bz-people-kinds', kinds.map(([k, n]) =>
+        el('span', 'bz-people-kind', text(`${k} ${formatCount(n)} · ${Math.round((n / kindTotal) * 100)}%`)))),
+    ]));
+  }
+  card.appendChild(rows);
+  body.appendChild(card);
+}
+
+/** 温度曲线：按月消息量柱条（纯 CSS，无依赖）；月份标签首尾必显，中段抽稀 */
+function buildMonthlyChart(monthly: Array<[string, number]>): HTMLElement {
+  const max = monthly.reduce((a, [, n]) => Math.max(a, n), 0);
+  const wrap = el('div', 'bz-people-chart-wrap');
+  const chart = el('div', 'bz-people-chart');
+  for (const [month, n] of monthly) {
+    const h = max > 0 ? Math.max(Math.round((n / max) * 100), 4) : 0;
+    chart.appendChild(el('div', 'bz-people-col', { title: `${month} · ${n} 条` },
+      el('div', 'bz-people-col-bar', { style: `height:${h}%` })));
+  }
+  wrap.appendChild(chart);
+  const labels = el('div', 'bz-people-chart-labels');
+  const step = monthly.length <= 8 ? 1 : Math.ceil(monthly.length / 6);
+  monthly.forEach(([month], i) => {
+    const show = i === 0 || i === monthly.length - 1 || i % step === 0;
+    labels.appendChild(el('span', '', text(show ? month.slice(2) : '')));
+  });
+  wrap.appendChild(labels);
+  return wrap;
 }
 
 // ---------------- 迷你 markdown（受限语法，ADR-0191 §4） ----------------

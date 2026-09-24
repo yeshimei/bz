@@ -10,6 +10,9 @@
  *
  * 解密导出全部由社区工具完成（用户在留痕 GUI 操作），本层假设输入已是明文表格；
  * 格式变更只改本层——外部工具的灰色易碎性由留痕侧承担升级。
+ *
+ * issue 440：分桶时顺带累计**消息形态计数**（normalizeKind：中文 typeName / 数字 typeNum /
+ * 导出文本标签三种来源归一成中文键），供互动统计展示，不改变文本消息的收集判定。
  */
 import type { UnifiedMessage } from './types';
 
@@ -22,6 +25,8 @@ export interface ContactGroup {
   messages: UnifiedMessage[];
   /** 该联系人被过滤的非文本 / 空消息条数 */
   skippedCount: number;
+  /** 消息形态计数（含被过滤的非文本形态；键为归一中文形态，issue 440） */
+  kindCounts: Record<string, number>;
 }
 
 export interface ParsedWechatExport {
@@ -177,32 +182,33 @@ function pickField(obj: Record<string, unknown>, candidates: string[]): unknown 
 
 /** 消息收集器：按 talker 分桶 + 文本类型判定 / 空值过滤 / 计数 / 时间排序 */
 class GroupBuilder {
-  private readonly buckets = new Map<string, { messages: UnifiedMessage[]; skipped: number }>();
+  private readonly buckets = new Map<string, { messages: UnifiedMessage[]; skipped: number; kindCounts: Record<string, number> }>();
   private readonly fallbackTalker: string;
 
   constructor(fileName: string) {
     this.fallbackTalker = stripExt(fileName);
   }
 
-  private bucketOf(talker: string | undefined): { messages: UnifiedMessage[]; skipped: number } {
+  private bucketOf(talker: string | undefined): { messages: UnifiedMessage[]; skipped: number; kindCounts: Record<string, number> } {
     const key = talker && talker.trim() ? talker.trim() : this.fallbackTalker;
     let bucket = this.buckets.get(key);
     if (!bucket) {
-      bucket = { messages: [], skipped: 0 };
+      bucket = { messages: [], skipped: 0, kindCounts: {} };
       this.buckets.set(key, bucket);
     }
     return bucket;
   }
 
-  /** 类型 / 时间 / 文本三道过滤；通过则收集。返回是否收集 */
+  /** 类型 / 时间 / 文本三道过滤；通过则收集。返回是否收集。形态计数不论收否都记（issue 440） */
   offer(talker: string | undefined, typeName: string | undefined, typeNum: string | undefined, ts: number | null, text: string, isSender: boolean): boolean {
     const bucket = this.bucketOf(talker);
+    bumpKind(bucket.kindCounts, normalizeKind(typeName, typeNum, text));
     if (!isTextType(typeName, typeNum) || ts === null || !text) { bucket.skipped++; return false; }
     bucket.messages.push({ ts, isSender, text });
     return true;
   }
 
-  /** 非消息级跳过（JSON 里非对象元素）计数 */
+  /** 非消息级跳过（JSON 里非对象元素）计数（无类型信息，不计形态） */
   bumpSkipped(talker?: string): void {
     this.bucketOf(talker).skipped++;
   }
@@ -214,10 +220,85 @@ class GroupBuilder {
         .sort((a, b2) => a.ts - b2.ts)
         .map((m) => ({ ...m, text: m.text.replace(/\r\n?/g, '\n') })), // 引号字段内的硬换行归一 LF
       skippedCount: b.skipped,
+      kindCounts: b.kindCounts,
     }));
     contacts.sort((a, b) => b.messages.length - a.messages.length || a.talker.localeCompare(b.talker));
     return { contacts };
   }
+}
+
+// ---------------- 形态归一（issue 440） ----------------
+
+/**
+ * 三种来源归一成中文形态键（文本 / 图片 / 语音 / 视频 / 表情 / 通话 / 文件 / 引用 / 分享 / 系统 / 其他）：
+ * 1) CSV / JSON 的中文 typeName（文本 / 图片 / 语音 / 动画表情 / 系统消息 / 引用消息 / 撤回消息…）；
+ * 2) JSON 的数字 typeNum（1=文本 3=图片 34=语音 43=视频 47=表情 50=通话 49=引用/分享 10000=系统）；
+ * 3) 导出侧文本标签嗅探（[图片] / [语音 12秒] / [通话时长 …] / [文件] … / [引用「…」] / [分享] … / [撤回…]）。
+ * 只影响统计口径，不改变 isTextType 的收集判定。
+ */
+export function normalizeKind(typeName: string | undefined, typeNum: string | undefined, text: string): string {
+  if (typeName !== undefined && typeName !== '') return kindFromTypeName(typeName);
+  if (typeNum !== undefined && typeNum !== '') {
+    const k = kindFromTypeNum(typeNum, text);
+    if (k) return k;
+  }
+  return kindFromLabel(text);
+}
+
+function kindFromTypeName(raw: string): string {
+  const n = raw.trim();
+  if (!n) return '其他';
+  if (/^(文本|文字|text)$/i.test(n)) return '文本';
+  if (n.includes('通话')) return '通话'; // 语音通话 / 视频通话先于语音 / 视频判定
+  if (n.includes('撤回') || n.includes('系统')) return '系统';
+  if (n.includes('引用')) return '引用';
+  if (n.includes('表情')) return '表情'; // 表情包 / 动画表情
+  if (n.includes('图片')) return '图片';
+  if (n.includes('视频')) return '视频';
+  if (n.includes('语音')) return '语音';
+  if (n.includes('文件')) return '文件';
+  if (n.includes('分享') || n.includes('链接')) return '分享';
+  return '其他'; // 名片 / 位置 / 红包等导出工具自定义名
+}
+
+function kindFromTypeNum(raw: string, text: string): string | null {
+  const s = raw.trim();
+  if (!/^\d+$/.test(s)) return null;
+  switch (Number(s)) {
+    case 1: return '文本';
+    case 3: return '图片';
+    case 34: return '语音';
+    case 43: return '视频';
+    case 47: return '表情';
+    case 50: return '通话';
+    case 49: // 引用 / 文件 / 分享同挂 49，看文本标签细分
+      if (text.startsWith('[引用')) return '引用';
+      if (text.startsWith('[文件')) return '文件';
+      return '分享';
+    case 10000:
+    case 10002: // 撤回通知
+      return '系统';
+    default: return '其他';
+  }
+}
+
+/** 导出侧文本标签嗅探；无标签的默认是打字的普通文本 */
+function kindFromLabel(text: string): string {
+  const t = text.trim();
+  if (t.startsWith('[图片')) return '图片';
+  if (t.startsWith('[视频')) return '视频';
+  if (t.startsWith('[语音')) return '语音';
+  if (t.startsWith('[通话') || t.includes('通话时长')) return '通话';
+  if (t.startsWith('[表情')) return '表情';
+  if (t.startsWith('[文件')) return '文件';
+  if (t.startsWith('[引用')) return '引用';
+  if (t.startsWith('[分享') || t.startsWith('[链接')) return '分享';
+  if (t.startsWith('[撤回')) return '系统';
+  return '文本';
+}
+
+function bumpKind(counts: Record<string, number>, kind: string): void {
+  counts[kind] = (counts[kind] ?? 0) + 1;
 }
 
 /** 文本消息判定：type_name 优先（'文本'），缺位回落数字 Type（1=文本）；两者皆缺放行有文本的 */

@@ -579,6 +579,156 @@
   justify-content: flex-end;
 }
 
+/* —— 互动数据（issue 440：纯本地统计展示） —— */
+.bz-people-insights {
+  margin-top: 6px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+.bz-people-ins-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bz-people-ins-range {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-ins-file {
+  font-size: 11.5px;
+  color: var(--ink-mut);
+  word-break: break-all;
+}
+/* 温度曲线：按月消息量柱条（纯 CSS） */
+.bz-people-chart-wrap {
+  margin-top: 10px;
+}
+.bz-people-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: 72px;
+}
+.bz-people-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.bz-people-col-bar {
+  background: linear-gradient(180deg, var(--acc), var(--acc-deep));
+  border-radius: 2px 2px 0 0;
+  opacity: 0.82;
+  transition: opacity 0.15s ease;
+}
+@media (hover: hover) {
+  .bz-people-col-bar:hover {
+    opacity: 1;
+  }
+}
+.bz-people-chart-labels {
+  display: flex;
+  gap: 3px;
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--ink-mut);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-chart-labels span {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bz-people-ins-rows {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bz-people-ins-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  font-size: 12.5px;
+}
+.bz-people-ins-label {
+  flex: none;
+  width: 60px;
+  color: var(--ink-mut);
+}
+.bz-people-ins-val {
+  flex: none;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 谁主动：双段占比条（我 = 朱红，对方 = 苔绿） */
+.bz-people-duo {
+  flex: 1;
+  min-width: 48px;
+  height: 8px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--soft-neutral);
+}
+.bz-people-duo-me {
+  background: var(--acc);
+}
+.bz-people-duo-other {
+  background: var(--chip-on);
+}
+/* 活跃时段：24 小时细柱 */
+.bz-people-strip {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.bz-people-strip-bar {
+  flex: 1;
+  min-width: 0;
+  min-height: 1px;
+  border-radius: 1px;
+  background: var(--gold);
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+@media (hover: hover) {
+  .bz-people-strip-bar:hover {
+    opacity: 1;
+  }
+}
+/* 形态占比：小圆片 */
+.bz-people-kinds {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.bz-people-kind {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: var(--soft-neutral);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 /* —— 窄容器（移动 / 小窗）：单列卡墙 + 收紧内边距 —— */
 @container (max-width: 560px) {
   .bz-people-wall {
@@ -595,5 +745,18 @@
   }
   .bz-people-pick-name {
     width: 110px;
+  }
+}
+
+/* —— 窄容器：互动数据收紧（issue 440） —— */
+@container (max-width: 560px) {
+  .bz-people-insights {
+    padding: 12px;
+  }
+  .bz-people-ins-label {
+    width: 56px;
+  }
+  .bz-people-ins-val {
+    white-space: normal;
   }
 }
