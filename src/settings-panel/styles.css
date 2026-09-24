@@ -112,21 +112,43 @@
 
 /* 药丸 .bz-chip：基线的底 = --bz-surface-2，重定向后与卡片同色 = 药丸「没有底」。族内改挂比卡片
    暗一档的纸色 --sp-bg，与面板行 / 字段同一套层级语言（同色即层级消失，2026-09-11 菜单教训）。
-   选中态（--on / --sel）与域自注入 tint 不拦：前者靠 --bz-brand 重定向即得面板主色，
-   后者底色来自域内联的 --bz-chip-tint。 */
+   选中态（--on / --sel）、锁定态（--locked）与域自注入 tint 不拦：选中/主色靠 --bz-brand 重定向
+   即得面板主色，锁定态底走 --bz-surface-1（= 面板字段色）保其虚线半透语义，tint 底色来自域内联。 */
 :is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
-  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint) {
+  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint):not(.bz-chip--locked) {
   background: var(--sp-bg) !important;
   border-color: var(--sp-line) !important;
   color: var(--sp-ink-2) !important;
-}
 }@media (hover: hover) {
 
 :is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
-  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint):hover {
+  .bz-chip:not(.bz-chip--on):not(.bz-chip--sel):not(.bz-chip--tint):not(.bz-chip--locked):hover {
   background: var(--sp-accent-soft) !important;
   color: var(--sp-ink) !important;
 }
+}
+
+/* 钮 .bz-btn：基线底 = --bz-surface-2（重定向后 = 卡片同色）+ 描边 transparent → 静止态「钮只剩字」
+   （先例：数据体检面板脚行「取消体检」）。族内把基线次级档补成形制（paper 底 + line 描边，同
+   .bz-sp-btn）；实底档（primary / danger）与透底描边档（ghost / danger-ghost）自有形制，不拦。
+   hover 另立一条——本规则特异性高于 core 的 .bz-btn:hover，不补就会把悬停反馈一并压掉。 */
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-btn:not(.bz-btn--primary):not(.bz-btn--danger):not(.bz-btn--danger-ghost):not(.bz-btn--ghost) {
+  background: var(--sp-bg) !important;
+  border-color: var(--sp-line) !important;
+}@media (hover: hover) {
+
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-btn:not(.bz-btn--primary):not(.bz-btn--danger):not(.bz-btn--danger-ghost):not(.bz-btn--ghost):hover {
+  background: var(--sp-accent-soft) !important;
+}
+}
+
+/* 列表行（.bz-setlist--rows 变体）：条目底 = --bz-surface-2（重定向后与卡片同色 → 层级消失，
+   只剩描边）——族内改挂 --sp-bg，与 chip / 钮同一套层级语言（同色即层级消失）。 */
+:is(.bz-sp-desk, .bz-sp-mobile, .bz-sp-skin, #bz-up-manager-popup, #bz-rss-manager-popup, #bz-model-picker-popup, #bz-checkup-popup)
+  .bz-setlist--rows .bz-setlist-item {
+  background: var(--sp-bg);
 }
 
 /* 流程框 / 普通弹窗壳（.bz-overlay-popup）：底色·描边已由上面的令牌重定向接管（--bz-surface-3 →

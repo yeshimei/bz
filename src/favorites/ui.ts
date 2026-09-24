@@ -967,22 +967,26 @@ function tagManagerDm(): DataManager {
 
 /** 标签管理行的皮肤上下文（2026-09-25）：本行的子弹窗（添加/编辑标签、删除标签确认）挂 body，
  *  够不着面板作用域——行落在设置面板壳内时给它们补 `.bz-sp-skin`，弹窗才和面板同皮。
- *  ⚙️ 原生设置页里同一行也复用本模块，那里没有面板祖先 → 空串（按域自有暖皮走，维持原观感）。 */
-let tagMgrSkin = '';
+ *  ⚙️ 原生设置页里同一行也复用本模块，那里没有面板祖先 → 空串（按域自有暖皮走，维持原观感）。
+ *  逐层传参、不外提模块级变量：同一会话里面板行与 ⚙️ 设置页行可能同时在渲染，模块级值会被
+ *  后渲染的一侧覆盖，在另一侧点开弹窗就串了皮（2026-09-25 审查提出）。 */
+function tagMgrSkinOf(rowEl: HTMLElement): string {
+  return rowEl.closest('.bz-sp-desk, .bz-sp-mobile') ? ' bz-sp-skin' : '';
+}
 
 /** 管理列表渲染（custom 行 render 入口）：先画当前生效集，loadTags（含旧文件迁移）完成后重画 */
 function renderTagManager(body: HTMLElement, ctx: { rowEl: HTMLElement; refreshVisibility: () => void }): void {
-  tagMgrSkin = ctx.rowEl.closest('.bz-sp-desk, .bz-sp-mobile') ? ' bz-sp-skin' : '';
+  const skin = tagMgrSkinOf(ctx.rowEl);
   const dm = tagManagerDm();
   const wrap = document.createElement('div');
   wrap.className = 'bz-fav-scope bz-fav-tagmgr';
   body.appendChild(wrap);
-  const draw = () => drawTagManager(wrap, dm, draw);
+  const draw = () => drawTagManager(wrap, dm, draw, skin);
   draw();
   void dm.loadTags().then(draw).catch(() => { /* 载入失败保持当前生效集 */ });
 }
 
-function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void): void {
+function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void, skin: string): void {
   wrap.innerHTML = '';
   const tags = getTags();
   /** 行内小图标钮（域内自绘，样式 .bz-fav-tagmgr-btn；UI-13：挂 core bz-touch-target，
@@ -1014,8 +1018,8 @@ function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void):
     ops.append(
       icBtn('chevron-up', '上移', idx === 0, false, () => void moveTag(dm, idx, -1, redraw)),
       icBtn('chevron-down', '下移', idx === tags.length - 1, false, () => void moveTag(dm, idx, 1, redraw)),
-      icBtn('pencil', '编辑', false, false, () => openTagEditor(dm, tag, redraw)),
-      icBtn('trash-2', '删除', false, true, () => void deleteTagFlow(dm, tag, redraw)),
+      icBtn('pencil', '编辑', false, false, () => openTagEditor(dm, tag, redraw, skin)),
+      icBtn('trash-2', '删除', false, true, () => void deleteTagFlow(dm, tag, redraw, skin)),
     );
     row.append(ic, name, ops);
     wrap.appendChild(row);
@@ -1024,7 +1028,7 @@ function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void):
   addBtn.type = 'button';
   addBtn.className = 'bz-fav-tagmgr-add';
   addBtn.innerHTML = `<i data-lucide="plus"></i><span>添加标签</span>`;
-  addBtn.addEventListener('click', () => openTagEditor(dm, null, redraw));
+  addBtn.addEventListener('click', () => openTagEditor(dm, null, redraw, skin));
   wrap.appendChild(addBtn);
   mountIcons(wrap);
   motionTagMgrRows(wrap); // 动效层：整列重新落定（重排/增删的回声）
@@ -1050,7 +1054,7 @@ async function moveTag(dm: DataManager, idx: number, delta: number, redraw: () =
  *  名称 + 图标胶囊；编辑改名先 updateTagLabelBulk 迁条目再存定义。
  *  UI-12：补 requestClose 关闭礼节——名称非空且非初值时走 confirmDiscard（遮罩/ESC 不再
  *  静默丢输入），与同域主表单同一套脏拦截纪律。 */
-function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => void): void {
+function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => void, skin: string): void {
   const host = document.createElement('div');
   host.innerHTML = `
     <div class="bz-fav-tageditor">
@@ -1065,15 +1069,15 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   // 弹窗壳只挂 scope（token 域）；内容根携独立类（func-6：bz-fav-form 单例守卫不误命中）
   const { popup, close } = uiModal({
     content: host.firstElementChild as HTMLElement,
-    // 皮肤随行上下文（tagMgrSkin）：设置面板内开 → 补 bz-sp-skin，拿 --sp-* 且让私有 token
+    // 皮肤随行入参（skin，行上下文算出）：设置面板内开 → 补 bz-sp-skin，拿 --sp-* 且让私有 token
     // （--fld-*/--pop-* 亮色是纯白）重映射到面板纸，不再白得和面板不一致；⚙️ 设置页里为空串
-    className: 'bz-fav-scope' + tagMgrSkin,
+    className: 'bz-fav-scope' + skin,
     maxWidth: 380,
     requestClose: () => {
       const input = popup.querySelector('#fz-tag-name') as HTMLInputElement | null;
       // 轻量脏检：名称非空且与编辑初值不同 = 有未保存输入 → 放弃确认；空白/未改直关
       if (input && input.value.trim() && input.value.trim() !== (existing?.label || '')) {
-        confirmDiscard(() => close(), undefined, 'bz-fav-flow-dialog bz-fav-scope' + tagMgrSkin);
+        confirmDiscard(() => close(), undefined, 'bz-fav-flow-dialog bz-fav-scope' + skin);
       } else {
         close();
       }
@@ -1150,7 +1154,7 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
 
 /** 删除标签：至少留一个；带条目时确认迁入「网站」（id 'web'，已删则取剩余第一个）。
  *  审查修复：与改名同形态——bulk 迁完条目后定义落盘失败，反向 bulk 迁回 + 内存定义回快照。 */
-async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): Promise<void> {
+async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void, skin: string): Promise<void> {
   const prevTags = [...getTags()]; // 改动前定义快照（落盘失败回滚用）
   const rest = getTags().filter((t) => t.id !== tag.id);
   if (!rest.length) { notice('至少保留一个标签'); return; }
@@ -1162,8 +1166,8 @@ async function deleteTagFlow(dm: DataManager, tag: FavTag, redraw: () => void): 
   } catch { /* 读失败按 0 条处理：删除定义本身不受影响 */ }
   const ok = await openFlowDialog({
     title: '删除标签',
-    // 皮肤随行上下文（tagMgrSkin）：设置面板内开走面板体系皮肤，⚙️ 设置页里维持域自有暖皮
-    className: 'bz-fav-flow-dialog bz-fav-scope' + tagMgrSkin,
+    // 皮肤随行入参（skin，行上下文算出）：设置面板内开走面板体系皮肤，⚙️ 设置页里维持域自有暖皮
+    className: 'bz-fav-flow-dialog bz-fav-scope' + skin,
     message: count > 0
       ? `确定删除标签「${tag.label}」吗？\n其中 ${count} 条收藏将迁入标签「${fallback.label}」。`
       : `确定删除标签「${tag.label}」吗？\n标签将从标签列表中移除。`,
