@@ -16,6 +16,24 @@ export interface UnifiedMessage {
 export interface FaceEvent {
   ts: string;
   summary: string;
+  /** 轻重：major = 大事（约定 / 见面 / 冲突 / 承诺），minor = 小事（日常片段）；旧数据无此字段 */
+  kind?: 'major' | 'minor';
+}
+
+/** 代表性原话（画像的证据层：口头禅 / 典型语气 / 冲突时的说法） */
+export interface QuoteItem {
+  /** 日期 YYYY-MM-DD */
+  ts: string;
+  /** 说话人：'对方' 或 '我' */
+  who: string;
+  /** 原话（提炼时要求不改写） */
+  text: string;
+}
+
+/** 场景与细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面） */
+export interface MomentItem {
+  ts: string;
+  summary: string;
 }
 
 /** 一次导入的元数据 */
@@ -35,9 +53,13 @@ export interface ImportRecord {
 
 /** 脸谱（AI 生成产物，重新导入可覆盖重画） */
 export interface FaceDigest {
-  /** 画像 markdown——受限语法：## 小节 / - 列表 / **粗体**（ui 层迷你渲染器消费） */
+  /** 画像 markdown——受限语法：## 小节 / - 列表 / **粗体** / > 引用块（ui 层迷你渲染器消费） */
   portrait: string;
   events: FaceEvent[];
+  /** 画像引用的代表性原话（证据层；旧数据无此字段） */
+  quotes?: QuoteItem[];
+  /** 关系时间线（编年史 markdown，从认识到现在；旧数据无此字段） */
+  chronicle?: string;
   /** 生成时间 ISO */
   generatedAt: string;
 }

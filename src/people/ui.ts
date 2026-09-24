@@ -415,7 +415,13 @@ async function runGeneration(): Promise<void> {
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
       await store.upsert(entry);
       await store.appendImport(talker, rec);
-      const digest: FaceDigest = { portrait: face.portrait, events: face.events, generatedAt: now };
+      const digest: FaceDigest = {
+        portrait: face.portrait,
+        events: face.events,
+        quotes: face.quotes,
+        chronicle: face.chronicle || undefined,
+        generatedAt: now,
+      };
       await store.setDigest(talker, digest);
       ok++;
     } catch (e) {
@@ -476,11 +482,28 @@ async function renderDetail(body: HTMLElement): Promise<void> {
     const portrait = el('div', 'bz-people-portrait');
     renderMiniMarkdown(p.digest.portrait, portrait);
     body.appendChild(portrait);
+    if (p.digest.chronicle) {
+      body.appendChild(el('div', 'bz-people-section-title', text('关系时间线')));
+      const chronicle = el('div', 'bz-people-chronicle');
+      renderMiniMarkdown(p.digest.chronicle, chronicle);
+      body.appendChild(chronicle);
+    }
+    if (p.digest.quotes?.length) {
+      body.appendChild(el('div', 'bz-people-section-title', text('代表原话')));
+      const quotes = el('div', 'bz-people-quotes');
+      for (const q of p.digest.quotes) {
+        quotes.appendChild(el('div', 'bz-people-quote', [
+          el('div', 'bz-people-quote-text', text(`「${q.text}」`)),
+          el('div', 'bz-people-quote-meta', text(`${q.who === '我' ? '我' : p.name} · ${q.ts}`)),
+        ]));
+      }
+      body.appendChild(quotes);
+    }
     if (p.digest.events.length) {
       body.appendChild(el('div', 'bz-people-section-title', text('交往事件')));
       const events = el('div', 'bz-people-events');
       for (const ev of p.digest.events) {
-        events.appendChild(el('div', 'bz-people-event', [
+        events.appendChild(el('div', `bz-people-event${ev.kind === 'major' ? ' bz-people-event-major' : ''}`, [
           el('span', 'bz-people-event-ts', text(ev.ts)),
           el('span', 'bz-people-event-dot'),
           el('span', 'bz-people-event-summary', text(ev.summary)),
@@ -498,22 +521,34 @@ async function renderDetail(body: HTMLElement): Promise<void> {
 
 // ---------------- 迷你 markdown（受限语法，ADR-0191 §4） ----------------
 
-/** 只认：## / ### 小节、- 列表、**粗体**、普通段落。其余语法原样输出文本。 */
+/** 只认：## / ### 小节、- 列表、> 引用块、**粗体**、普通段落。其余语法原样输出文本。 */
 function renderMiniMarkdown(md: string, root: HTMLElement): void {
   let list: HTMLUListElement | null = null;
+  let quote: HTMLQuoteElement | null = null;
   for (const raw of md.replace(/```+/g, '').split(/\r?\n/)) {
     const line = raw.trim();
-    if (!line) { list = null; continue; }
-    if (line.startsWith('### ')) { list = null; root.appendChild(textEl('h5', line.slice(4))); continue; }
-    if (line.startsWith('## ')) { list = null; root.appendChild(textEl('h4', line.slice(3))); continue; }
+    if (!line) { list = null; quote = null; continue; }
+    if (line.startsWith('### ')) { list = null; quote = null; root.appendChild(textEl('h5', line.slice(4))); continue; }
+    if (line.startsWith('## ')) { list = null; quote = null; root.appendChild(textEl('h4', line.slice(3))); continue; }
     if (line.startsWith('- ')) {
+      quote = null;
       if (!list) { list = document.createElement('ul'); root.appendChild(list); }
       const li = document.createElement('li');
       appendInline(li, line.slice(2));
       list.appendChild(li);
       continue;
     }
+    // 连续 > 行合成同一引用块（画像「表达 DNA」的原话例句即此形态）
+    if (line.startsWith('>')) {
+      list = null;
+      if (!quote) { quote = document.createElement('blockquote'); root.appendChild(quote); }
+      const p = document.createElement('p');
+      appendInline(p, line.slice(1).replace(/^\s/, ''));
+      quote.appendChild(p);
+      continue;
+    }
     list = null;
+    quote = null;
     const p = document.createElement('p');
     appendInline(p, line);
     root.appendChild(p);
