@@ -1,4 +1,4 @@
-/* 源指纹 4f299755013f707f · 仓内输入 258 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cb8a397b1a36aa78 · 仓内输入 258 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -18205,19 +18205,8 @@ ${n.content.slice(0, 2e3)}
   function parseModelList(desc, data) {
     return desc.id === "ollama" ? ollamaModelIds(data) : openaiModelIds(data);
   }
-  async function fetchProviderModels(providerId, deps = {}) {
+  async function fetchModelsJson(url, headers, timeoutMs, label, deps) {
     var _a2;
-    const id = providerId || String(tryGetSettings().aiProvider || DEFAULT_AI_PROVIDER);
-    const desc = providerDescriptorOf(id);
-    const endpoint = desc.id === "ollama" ? OLLAMA_BASE_URL : endpointFor(id);
-    const key = keyFor(id);
-    if (!key && desc.id !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const url = desc.id === "ollama" ? `${endpoint}/api/tags` : `${endpoint}/models`;
-    const headers = {};
-    if (key) headers["Authorization"] = `Bearer ${key}`;
-    const timeoutMs = desc.id === "ollama" ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
     const fetchFn = deps.fetchFn || ((u, init) => fetch(u, init));
     const requestUrlFn = deps.requestUrlFn || requestUrl;
     const fetchAttempt = async (signal) => {
@@ -18236,7 +18225,7 @@ ${n.content.slice(0, 2e3)}
         attempt = await fetchAttempt(controller.signal);
       } catch (e) {
         if (controller.signal.aborted) {
-          throw new Error(`${desc.label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
+          throw new Error(`${label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
         }
         attempt = await requestUrlAttempt();
       } finally {
@@ -18246,10 +18235,10 @@ ${n.content.slice(0, 2e3)}
     const { resp } = attempt;
     if (!resp.ok) {
       if (resp.status === 401 || resp.status === 403) {
-        throw new Error(`${desc.label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
+        throw new Error(`${label} 拒绝访问（${resp.status}）：请检查 API Key 是否有效`);
       }
       if (resp.status === 404) {
-        throw new Error(`${desc.label} 不支持模型列表接口（404）`);
+        throw new Error(`${label} 不支持模型列表接口（404）`);
       }
       let msg = `API ${resp.status}`;
       try {
@@ -18259,16 +18248,67 @@ ${n.content.slice(0, 2e3)}
       }
       throw new Error(msg);
     }
-    const data = await resp.json();
+    return resp.json();
+  }
+  async function fetchProviderModels(providerId, deps = {}) {
+    const id = providerId || String(tryGetSettings().aiProvider || DEFAULT_AI_PROVIDER);
+    const desc = providerDescriptorOf(id);
+    const endpoint = desc.id === "ollama" ? OLLAMA_BASE_URL : endpointFor(id);
+    const key = keyFor(id);
+    if (!key && desc.id !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const url = desc.id === "ollama" ? `${endpoint}/api/tags` : `${endpoint}/models`;
+    const headers = {};
+    if (key) headers["Authorization"] = `Bearer ${key}`;
+    const timeoutMs = desc.id === "ollama" ? OLLAMA_TIMEOUT_MS : MODELS_TIMEOUT_MS;
+    const data = await fetchModelsJson(url, headers, timeoutMs, desc.label, deps);
     const ids = parseModelList(desc, data);
     const seen = /* @__PURE__ */ new Set();
     return ids.filter((m) => seen.has(m) ? false : (seen.add(m), true)).map((m) => ({ id: m, detail: desc.label }));
+  }
+  function parseOllamaTags(data) {
+    const list = data == null ? void 0 : data.models;
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    for (const m of list) {
+      if (!m || typeof m.name !== "string" || !m.name) continue;
+      const capabilities = Array.isArray(m.capabilities) ? m.capabilities.filter((c) => typeof c === "string") : [];
+      const det = m.details || {};
+      const bits = [];
+      if (typeof det.parameter_size === "string" && det.parameter_size) bits.push(det.parameter_size);
+      if (typeof det.embedding_length === "number" && det.embedding_length > 0) bits.push(`${det.embedding_length} 维`);
+      out.push({ id: m.name, capabilities, detail: bits.join("，") || "Ollama" });
+    }
+    return out;
+  }
+  function pickEmbeddingModels(data) {
+    const tags = parseOllamaTags(data);
+    const known = tags.some((t) => t.capabilities.length > 0);
+    return (known ? tags.filter((t) => t.capabilities.includes("embedding")) : tags).map((t) => ({
+      id: t.id,
+      detail: t.detail
+    }));
+  }
+  function embeddingServiceUrl() {
+    const s = tryGetSettings();
+    const local = String(s.secondBrainOllamaUrl || "").trim() || OLLAMA_BASE_URL;
+    const remote = String(s.secondBrainRemoteOllamaUrl || "").trim();
+    return isMobileEnv() && remote ? remote : local;
+  }
+  async function fetchEmbeddingModels(deps = {}) {
+    const url = `${embeddingServiceUrl().replace(/\/+$/, "")}/api/tags`;
+    const data = await fetchModelsJson(url, {}, OLLAMA_TIMEOUT_MS, "Ollama", deps);
+    const models = pickEmbeddingModels(data);
+    if (!models.length) throw new Error("Ollama 未返回可用的向量化模型");
+    return models;
   }
   var MODELS_TIMEOUT_MS, OLLAMA_TIMEOUT_MS, OLLAMA_BASE_URL;
   var init_ai_models = __esm({
     "src/core/ai-models.ts"() {
       init_fake_obsidian();
       init_ai();
+      init_mobile();
       init_settings_provider();
       MODELS_TIMEOUT_MS = 8e3;
       OLLAMA_TIMEOUT_MS = 3e4;
@@ -18582,6 +18622,43 @@ ${n.content.slice(0, 2e3)}
       providerThinkingRow()
     ];
   }
+  function llmGroupRows() {
+    return [...providerGroupRows(), ...modelGroupRows()];
+  }
+  function embeddingModelRow() {
+    return {
+      type: "text",
+      name: "Embedding 模型",
+      desc: "向量化用的嵌入模型名，留空用默认 bge-m3",
+      placeholder: "bge-m3",
+      binding: { key: "secondBrainEmbeddingModel" },
+      actions: [{
+        text: "获取模型",
+        onClick: async (_value, ctx) => {
+          try {
+            await saveSettings();
+            const models = await fetchEmbeddingModels();
+            openModelPicker({
+              providerLabel: "Ollama 向量化",
+              current: String(tryGetSettings().secondBrainEmbeddingModel || ""),
+              models,
+              onPick: (m) => {
+                tryGetSettings().secondBrainEmbeddingModel = m.id;
+                void saveSettings();
+                ctx.refreshVisibility();
+                notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, "success");
+              }
+            });
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+          }
+        }
+      }]
+    };
+  }
+  function embeddingGroupRows() {
+    return [embeddingModelRow()];
+  }
   function credentialGroupRows() {
     return [
       {
@@ -18656,10 +18733,10 @@ ${n.content.slice(0, 2e3)}
   function aiSettingsSchema() {
     return {
       groups: [
-        { icon: "plug-zap", name: "服务商", rows: providerGroupRows() },
-        { icon: "cpu", name: "模型配置", rows: modelGroupRows() },
-        { icon: "key-round", name: "数据源凭据", rows: credentialGroupRows() },
-        { icon: "route", name: "Jev 决策通道", rows: jevGroupRows() }
+        { icon: "cpu", name: "LLM", rows: llmGroupRows() },
+        { icon: "binary", name: "Embedding", rows: embeddingGroupRows() },
+        { icon: "route", name: "JEV", rows: jevGroupRows() },
+        { icon: "key-round", name: "数据源凭据", rows: credentialGroupRows() }
       ]
     };
   }
@@ -52597,7 +52674,7 @@ GitHub 仓库：${ghInfo.title}
     const s = tryGetSettings();
     return {
       OLLAMA_URL: s.secondBrainOllamaUrl || "http://localhost:11434",
-      EMBEDDING_MODEL: s.secondBrainEmbeddingModel || "bge-m3",
+      EMBEDDING_MODEL: s.secondBrainEmbeddingModel || DEFAULT_EMBEDDING_MODEL,
       STORE_PATH: storageFile("secondbrain.json"),
       VEC_PATH: storageFile("secondbrain.vec"),
       TOP_K: Number(s.secondBrainTopK) || 20,
@@ -52612,12 +52689,13 @@ GitHub 仓库：${ghInfo.title}
       OLLAMA_REMOTE_URL: s.secondBrainRemoteOllamaUrl || ""
     };
   }
-  var _a, _b, IS_MOBILE;
+  var DEFAULT_EMBEDDING_MODEL, _a, _b, IS_MOBILE;
   var init_config4 = __esm({
     "src/secondbrain/config.ts"() {
       init_settings_provider();
       init_storage();
       init_knowledge_boxes();
+      DEFAULT_EMBEDDING_MODEL = "bge-m3";
       IS_MOBILE = /Android|iPhone|iPad|iPod/i.test(typeof navigator !== "undefined" ? navigator.userAgent : "") || ((_b = (_a = globalThis.obsidian) == null ? void 0 : _a.Platform) == null ? void 0 : _b.isMobile) === true;
     }
   });
@@ -54370,7 +54448,9 @@ GitHub 仓库：${ghInfo.title}
               visibleWhen: () => isMobileEnv(),
               desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
             },
-            { type: "text", name: "Embedding 模型", desc: "向量化用的嵌入模型名，留空用默认", binding: { key: "secondBrainEmbeddingModel" }, onChange: trimStore("secondBrainEmbeddingModel") },
+            // 「Embedding 模型」行已迁 AI 面板（issue 422/ADR-0182：「AI」页 Embedding 组，
+            // 行内「获取模型」按钮拉 Ollama 已装向量化模型）；键 secondBrainEmbeddingModel 不变，
+            // 本页不再重复暴露。Ollama 服务地址仍在此组——本机与手机的连接面归第二大脑。
             // 额外检索目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
             // ADR-0141 §3：三个盒子恒含索引，本行语义降级为「三盒之外还要纳入检索的目录」
             {
@@ -54528,6 +54608,10 @@ GitHub 仓库：${ghInfo.title}
             await this.runRebuild();
             return;
           }
+          if (this.store.needsModelRebuild()) {
+            await this.runModelRebuild();
+            return;
+          }
           if (!this.store.isIndexReady()) {
             if (this.store.isRefreshing()) {
               this.enterProgressView("正在初始化向量数据库");
@@ -54659,6 +54743,12 @@ GitHub 仓库：${ghInfo.title}
           } finally {
             this.initializing = false;
           }
+        }
+        /** 换 Embedding 模型后的自动全量重建（issue 422/ADR-0182）：库内记录模型与当前配置不一致
+         *  （含重启后 load 期已清库的两态）时由 render 分派到此——先提示原因再走重建全流程。 */
+        async runModelRebuild() {
+          notice("Embedding 模型已更换，正在重建向量索引", "info");
+          await this.runRebuild();
         }
         /** 组装弹窗 DOM（markup 全部出自 render.ts；本方法只绑定事件） */
         createUI() {
@@ -60496,7 +60586,7 @@ GitHub 仓库：${ghInfo.title}
               ]
             },
             // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
-            { type: "text", name: "向量化模型", desc: "留空跟随第二大脑嵌入模型，改动后需重建记忆向量索引", binding: bindBehavior("smartcatEmbeddingModel") },
+            { type: "text", name: "向量化模型", desc: "留空跟随 AI 面板的 Embedding 模型，改动后需重建记忆向量索引", binding: bindBehavior("smartcatEmbeddingModel") },
             { type: "number", name: "分块字符上限", desc: "长笔记每块向量的最大字符数，200 到 6000，越小检索越精准", binding: bindBehavior("smartcatChunkLimitChars"), min: 200, max: 6e3, step: 100 }
           ]
         },
@@ -61188,7 +61278,7 @@ GitHub 仓库：${ghInfo.title}
         { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "面板外观、存储路径等跨域偏好", schemaLoader: schemaLoaders.general },
         // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
         { id: "notice", name: "通知", icon: DOMAIN_ICONS.notice, desc: "通知级别、时长与弹出位置", schemaLoader: schemaLoaders.notice },
-        { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 服务商与模型配置", schemaLoader: schemaLoaders.ai },
+        { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 模型与凭据配置", schemaLoader: schemaLoaders.ai },
         // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
         { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录、写日记与格式体检", schemaLoader: schemaLoaders.diary },
         { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒设置", schemaLoader: schemaLoaders.memo },

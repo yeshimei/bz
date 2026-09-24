@@ -143,7 +143,7 @@ export const DOMAINS: DomainDef[] = [
   { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '面板外观、存储路径等跨域偏好', schemaLoader: schemaLoaders.general },
   // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
   { id: 'notice', name: '通知', icon: DOMAIN_ICONS.notice, desc: '通知级别、时长与弹出位置', schemaLoader: schemaLoaders.notice },
-  { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 服务商与模型配置', schemaLoader: schemaLoaders.ai },
+  { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 模型与凭据配置', schemaLoader: schemaLoaders.ai },
   // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录、写日记与格式体检', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒设置', schemaLoader: schemaLoaders.memo },

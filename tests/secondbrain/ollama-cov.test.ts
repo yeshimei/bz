@@ -5,7 +5,7 @@
  * 远程探活 ok/false/异常三分支、自定义 baseUrl/model 传参。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getEmbedding, getEmbeddingsBatch, checkRemoteOllama } from '../../src/secondbrain/ollama';
+import { getEmbedding, getEmbeddingsBatch, checkRemoteOllama, queryInstruction } from '../../src/secondbrain/ollama';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const BASE = 'http://127.0.0.1:11434';
@@ -116,5 +116,49 @@ describe('Ollama HTTP 覆盖补测', () => {
       })
     );
     await expect(checkRemoteOllama('http://r:11434')).resolves.toBe(false);
+  });
+});
+
+describe('Qwen3 Embedding 支持（issue 422/ADR-0182：Embedding 模型设置迁入 AI 面板）', () => {
+  beforeEach(() => {
+    setSettingsProvider(() => flashSettings() as any);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('queryInstruction：qwen3-embedding 族（含大小写/下划线变体）走官方检索指令；其余模型保持原前缀', () => {
+    expect(queryInstruction('qwen3-embedding:8b')).toBe(
+      'Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: '
+    );
+    expect(queryInstruction('Qwen3_Embedding:0.6b')).toContain('Instruct:');
+    expect(queryInstruction('QWEN3-EMBEDDING:8b')).toContain('Instruct:');
+    expect(queryInstruction('bge-m3')).toBe('Represent this sentence for searching relevant passages: ');
+  });
+
+  it('getEmbedding：设置里的 Qwen3-8B 生效（模型 + 查询指令），非查询不加前缀', async () => {
+    setSettingsProvider(
+      () => ({ ...flashSettings(), secondBrainEmbeddingModel: 'qwen3-embedding:8b' }) as any
+    );
+    const seen: { body: any }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, opts: any) => {
+        seen.push({ body: JSON.parse(opts.body) });
+        return { ok: true, status: 200, json: async () => ({ embedding: [0.1] }) };
+      })
+    );
+    await expect(getEmbedding('机器学习', true)).resolves.toEqual([0.1]);
+    expect(seen[0].body.model).toBe('qwen3-embedding:8b');
+    expect(seen[0].body.prompt).toBe(
+      'Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: 机器学习'
+    );
+    // 显式传模型（小橘记忆库等经参数覆盖的场景）同按模型选指令
+    await getEmbedding('机器学习', true, undefined, 'qwen3-embedding:0.6b');
+    expect(seen[1].body.model).toBe('qwen3-embedding:0.6b');
+    expect(seen[1].body.prompt.startsWith('Instruct: ')).toBe(true);
+    // 非查询（语料侧嵌入）不加前缀
+    await getEmbedding('普通文本', false);
+    expect(seen[2].body.prompt).toBe('普通文本');
   });
 });

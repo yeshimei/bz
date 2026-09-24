@@ -289,7 +289,7 @@ export function smartcatSettingsSchema(opts: {
             ],
           },
           // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
-          { type: 'text', name: '向量化模型', desc: '留空跟随第二大脑嵌入模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
+          { type: 'text', name: '向量化模型', desc: '留空跟随 AI 面板的 Embedding 模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
           { type: 'number', name: '分块字符上限', desc: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },

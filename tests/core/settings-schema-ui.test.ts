@@ -482,7 +482,8 @@ describe('path 行接入统一路径选择器（ADR-0061）', () => {
 
 describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
   // 直接构造与 mainSettingsSchema 相同的三行（避免全量 schema 重渲染的 DOM 噪音）；
-  // issue 331 拆组后模型三行在「模型配置」组——渲 AI 页前三组，顺带覆盖跨组 refreshKey 联动
+  // issue 422 起 AI 页四组（LLM/Embedding/JEV/凭据）；服务商与模型行同在 LLM 组——
+  // 渲 AI 页前三组，顺带覆盖 JEV/凭据组与「思考档位选项随服务商换表」的联动
   function renderProviderRows(container: HTMLElement) {
     const schema = mainSettingsSchema();
     renderSettingsInto(container, { groups: schema.groups.slice(0, 3) });
@@ -804,13 +805,13 @@ describe('新-1 连带：域行 onChange 同步抛错不中断防抖排程', () 
 describe('最大输出 token 行 min 钳制（N4）', () => {
   it('schema 声明 min:0；负数输入钳到 0 = 删覆盖回落默认（不再直通服务商 max_tokens）', () => {
     const schema = mainSettingsSchema();
-    const row = schema.groups[1].rows.find((r) => (r as { name?: string }).name === '最大输出 token') as { min?: number };
+    const row = schema.groups[0].rows.find((r) => (r as { name?: string }).name === '最大输出 token') as { min?: number };
     expect(row.min).toBe(0);
 
     state.aiProvider = 'openai';
     state.aiMaxTokensOverrides = { openai: 16384 };
     const container = document.createElement('div');
-    renderSettingsInto(container, { groups: schema.groups.slice(1, 2) });
+    renderSettingsInto(container, { groups: schema.groups.slice(0, 1) });
     const text = textControlOf(findRow(container, '最大输出 token'));
     expect(text.value).toBe('16384');
     text.trigger('-5');
