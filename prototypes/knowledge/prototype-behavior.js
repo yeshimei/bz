@@ -1,4 +1,4 @@
-/* 源指纹 dfc0ab7451d45ef3 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 63bcf49666b53aaa · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4717,7 +4717,7 @@ var BZW_knowledge = (() => {
       defaultMaxTokens: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
-      apiKeyDesc: "留空则自动回退读取外部配置密钥",
+      apiKeyDesc: "DeepSeek 官方的接口密钥",
       // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
       thinking: {
         levels: [
@@ -4739,7 +4739,7 @@ var BZW_knowledge = (() => {
       defaultMaxTokens: 131072,
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
-      apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同",
+      apiKeyDesc: "智谱 Coding 套餐的接口密钥",
       // 思考：glm-5.3 / 5.3-flash **强制思考**（发 disabled 无效），故只给强度档
       thinking: {
         levels: [
@@ -4758,7 +4758,7 @@ var BZW_knowledge = (() => {
       defaultMaxTokens: 8192,
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
-      apiKeyDesc: "本地服务无需密钥，留空即可",
+      apiKeyDesc: "本地服务无需密钥",
       // 思考：兼容层把 reasoning_effort 映射为内部 Think（none = 关；省略 = 有能力则开）
       thinking: {
         levels: [

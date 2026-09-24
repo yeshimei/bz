@@ -1,5 +1,5 @@
-/* 源指纹 737bc5532bb1f393 · 仓内输入 115 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 0f887eb2774e917b · 仓内输入 116 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -7438,7 +7438,7 @@ ${c.trim()}
           defaultMaxTokens: 393216,
           apiKeyKey: "deepseekApiKey",
           apiKeyLabel: "DeepSeek 密钥",
-          apiKeyDesc: "留空则自动回退读取外部配置密钥",
+          apiKeyDesc: "DeepSeek 官方的接口密钥",
           // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
           thinking: {
             levels: [
@@ -7460,7 +7460,7 @@ ${c.trim()}
           defaultMaxTokens: 131072,
           apiKeyKey: "zhipuPlanApiKey",
           apiKeyLabel: "智谱 Plan 密钥",
-          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同",
+          apiKeyDesc: "智谱 Coding 套餐的接口密钥",
           // 思考：glm-5.3 / 5.3-flash **强制思考**（发 disabled 无效），故只给强度档
           thinking: {
             levels: [
@@ -7479,7 +7479,7 @@ ${c.trim()}
           defaultMaxTokens: 8192,
           apiKeyKey: "ollamaApiKey",
           apiKeyLabel: "Ollama 密钥",
-          apiKeyDesc: "本地服务无需密钥，留空即可",
+          apiKeyDesc: "本地服务无需密钥",
           // 思考：兼容层把 reasoning_effort 映射为内部 Think（none = 关；省略 = 有能力则开）
           thinking: {
             levels: [
@@ -19368,6 +19368,42 @@ ${body}`;
     }
   });
 
+  // src/core/settings-btn-state.ts
+  function shortFailReason(e) {
+    const msg = e instanceof Error ? e.message : String(e != null ? e : "");
+    if (/超时|Timeout/.test(msg)) return "超时";
+    if (/取消|Abort/.test(msg)) return "已取消";
+    if (/未配置.*密钥|密钥.*为空/.test(msg)) return "无密钥";
+    if (/401|403|密钥|鉴权|invalid.*key|unauthorized/i.test(msg)) return "密钥无效";
+    if (/5\d\d|服务|no healthy|upstream/i.test(msg)) return "服务异常";
+    if (/网络|fetch|network|Failed to fetch/i.test(msg)) return "网络不通";
+    if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
+    return "请求失败";
+  }
+  function setRowBtnState(el, state2, label, failText) {
+    if (!el) return;
+    el.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
+    el.disabled = state2 === "busy";
+    if (state2 === "busy") {
+      el.classList.add("bz-rowbtn--busy");
+    } else if (state2 === "ok") {
+      el.classList.add("bz-rowbtn--ok");
+      el.textContent = ROW_BTN_OK_TEXT;
+    } else if (state2 === "fail") {
+      el.classList.add("bz-rowbtn--fail");
+      el.textContent = (failText || "失败").slice(0, 6);
+    } else {
+      el.textContent = label;
+    }
+  }
+  var ROW_BTN_RESET_MS, ROW_BTN_OK_TEXT;
+  var init_settings_btn_state = __esm({
+    "src/core/settings-btn-state.ts"() {
+      ROW_BTN_RESET_MS = 2e3;
+      ROW_BTN_OK_TEXT = "已连通";
+    }
+  });
+
   // src/core/path-picker.ts
   function isExcludedPath(p) {
     if (!p) return false;
@@ -20038,7 +20074,17 @@ ${body}`;
             b.setButtonText(a.text).onClick(() => {
               void (async () => {
                 var _a3;
-                await a.onClick(last, ctx);
+                const el = b.buttonEl;
+                try {
+                  if (a.stateful) setRowBtnState(el, "busy", a.text);
+                  await a.onClick(last, ctx);
+                  if (a.stateful) setRowBtnState(el, "ok", a.text);
+                } catch (e) {
+                  if (a.stateful) setRowBtnState(el, "fail", a.text, shortFailReason(e));
+                  else throw e;
+                } finally {
+                  if (a.stateful) setTimeout(() => setRowBtnState(el, "idle", a.text), ROW_BTN_RESET_MS);
+                }
                 if (currentText && currentText.setValue) {
                   dirty2 = false;
                   currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
@@ -20321,6 +20367,7 @@ ${body}`;
   var init_settings_schema = __esm({
     "src/core/settings-schema.ts"() {
       init_fake_obsidian();
+      init_settings_btn_state();
       init_settings_provider();
       init_path_picker();
       init_settings_modal();
@@ -21673,7 +21720,16 @@ ${bodyText.substring(0, 6e3)}`;
       btn.addEventListener("click", () => {
         void (async () => {
           var _a, _b;
-          await a.onClick(input.value, ctx);
+          try {
+            if (a.stateful) setRowBtnState(btn, "busy", a.text);
+            await a.onClick(input.value, ctx);
+            if (a.stateful) setRowBtnState(btn, "ok", a.text);
+          } catch (e) {
+            if (a.stateful) setRowBtnState(btn, "fail", a.text, shortFailReason(e));
+            else throw e;
+          } finally {
+            if (a.stateful) setTimeout(() => setRowBtnState(btn, "idle", a.text), ROW_BTN_RESET_MS);
+          }
           (_b = displaySetters.get(input)) == null ? void 0 : _b(String((_a = acc.read()) != null ? _a : ""));
           refresh();
         })();
@@ -22280,6 +22336,7 @@ ${bodyText.substring(0, 6e3)}`;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
+      init_settings_btn_state();
       init_path_picker();
       init_settings_schema();
       init_notice();
@@ -22310,11 +22367,11 @@ ${bodyText.substring(0, 6e3)}`;
         if (!await writeSources({ ...box.sources })) notifyWriteFailed("数据源开关");
       }
     });
-    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
-    const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
+    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主` : "暂未跟踪任何 UP 主";
+    const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源` : "暂未订阅任何 RSS 源";
     const intervalDesc = () => {
       const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
-      return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
+      return `上次抓取 ${t}`;
     };
     return [
       {
@@ -22335,7 +22392,7 @@ ${bodyText.substring(0, 6e3)}`;
       {
         type: "select",
         name: "抓取间隔",
-        desc: "打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟",
+        desc: "新闻自动抓取的最小间隔",
         options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
         binding: {
           get: () => String(box.fetchIntervalMin),
@@ -22386,7 +22443,7 @@ ${bodyText.substring(0, 6e3)}`;
       {
         type: "number",
         name: "B站抓取条数",
-        desc: "每位 UP 主抓取最近动态的条数上限，默认 10",
+        desc: "每位 UP 主抓取的动态条数上限",
         min: 1,
         max: 50,
         step: 1,
@@ -22403,7 +22460,7 @@ ${bodyText.substring(0, 6e3)}`;
       {
         type: "number",
         name: "文章保留天数",
-        desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
+        desc: "已读文章数据的保留天数",
         min: 1,
         max: 3650,
         step: 1,
@@ -24617,7 +24674,7 @@ ${bodyText.substring(0, 6e3)}`;
     return uiEmpty({
       icon: "book-open",
       title: "还没有阅读记录",
-      desc: "在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里",
+      desc: "打开文章阅读满一分钟自动记录",
       actions: uiBtnRow([uiBtn({
         label: "去剪藏本读几篇",
         icon: "scissors",
@@ -28787,7 +28844,7 @@ ${bodyText.substring(0, 6e3)}`;
           rows: [
             { type: "path", mode: "single", name: "剪藏文件夹", desc: "存放网页剪藏文章的文件夹", binding: { key: "articleDirectory" } },
             // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
-            { type: "path", mode: "single", name: "图片文件夹", desc: "保存网页图片的文件夹，留空存到剪藏目录下的 assets", binding: { key: "clipbookImageFolder" } }
+            { type: "path", mode: "single", name: "图片文件夹", desc: "网页图片的保存文件夹", binding: { key: "clipbookImageFolder" } }
           ]
         },
         {
@@ -28814,7 +28871,7 @@ ${bodyText.substring(0, 6e3)}`;
             {
               type: "select",
               name: "摘要时机",
-              desc: "保存后立刻生成，或仅打开文件时才补全",
+              desc: "生成剪藏摘要的时机",
               binding: { key: AUTO_SUMMARY_KEYS.timing },
               options: [
                 { value: "immediate", label: "保存后立刻" },

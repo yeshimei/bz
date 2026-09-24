@@ -1,4 +1,4 @@
-/* 源指纹 f6d0a0d546c9fae8 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ace53cd6a19506c5 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -7398,7 +7398,7 @@ var BZW_belongings = (() => {
     return uiEmpty({
       icon: "package",
       title: "归物本还没有物品",
-      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
+      desc: "登记物品后按年生成资产报告",
       actions
     });
   }
@@ -7780,7 +7780,7 @@ var BZW_belongings = (() => {
       defaultMaxTokens: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
-      apiKeyDesc: "留空则自动回退读取外部配置密钥",
+      apiKeyDesc: "DeepSeek 官方的接口密钥",
       // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
       thinking: {
         levels: [
@@ -7802,7 +7802,7 @@ var BZW_belongings = (() => {
       defaultMaxTokens: 131072,
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
-      apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同",
+      apiKeyDesc: "智谱 Coding 套餐的接口密钥",
       // 思考：glm-5.3 / 5.3-flash **强制思考**（发 disabled 无效），故只给强度档
       thinking: {
         levels: [
@@ -7821,7 +7821,7 @@ var BZW_belongings = (() => {
       defaultMaxTokens: 8192,
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
-      apiKeyDesc: "本地服务无需密钥，留空即可",
+      apiKeyDesc: "本地服务无需密钥",
       // 思考：兼容层把 reasoning_effort 映射为内部 Think（none = 关；省略 = 有能力则开）
       thinking: {
         levels: [

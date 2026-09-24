@@ -1,5 +1,5 @@
-/* 源指纹 eceeb4f911d533dd · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 58ce35b4eb1757ed · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
   var __create = Object.create;
@@ -6096,6 +6096,39 @@ var BZW_encrypt = (() => {
 
   // src/core/settings-schema.ts
   init_fake_obsidian2();
+
+  // src/core/settings-btn-state.ts
+  var ROW_BTN_RESET_MS = 2e3;
+  var ROW_BTN_OK_TEXT = "已连通";
+  function shortFailReason(e) {
+    const msg = e instanceof Error ? e.message : String(e != null ? e : "");
+    if (/超时|Timeout/.test(msg)) return "超时";
+    if (/取消|Abort/.test(msg)) return "已取消";
+    if (/未配置.*密钥|密钥.*为空/.test(msg)) return "无密钥";
+    if (/401|403|密钥|鉴权|invalid.*key|unauthorized/i.test(msg)) return "密钥无效";
+    if (/5\d\d|服务|no healthy|upstream/i.test(msg)) return "服务异常";
+    if (/网络|fetch|network|Failed to fetch/i.test(msg)) return "网络不通";
+    if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
+    return "请求失败";
+  }
+  function setRowBtnState(el, state, label, failText) {
+    if (!el) return;
+    el.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
+    el.disabled = state === "busy";
+    if (state === "busy") {
+      el.classList.add("bz-rowbtn--busy");
+    } else if (state === "ok") {
+      el.classList.add("bz-rowbtn--ok");
+      el.textContent = ROW_BTN_OK_TEXT;
+    } else if (state === "fail") {
+      el.classList.add("bz-rowbtn--fail");
+      el.textContent = (failText || "失败").slice(0, 6);
+    } else {
+      el.textContent = label;
+    }
+  }
+
+  // src/core/settings-schema.ts
   init_settings_provider();
 
   // src/core/path-picker.ts
@@ -6781,7 +6814,17 @@ var BZW_encrypt = (() => {
             b.setButtonText(a.text).onClick(() => {
               void (async () => {
                 var _a3;
-                await a.onClick(last, ctx);
+                const el = b.buttonEl;
+                try {
+                  if (a.stateful) setRowBtnState(el, "busy", a.text);
+                  await a.onClick(last, ctx);
+                  if (a.stateful) setRowBtnState(el, "ok", a.text);
+                } catch (e) {
+                  if (a.stateful) setRowBtnState(el, "fail", a.text, shortFailReason(e));
+                  else throw e;
+                } finally {
+                  if (a.stateful) setTimeout(() => setRowBtnState(el, "idle", a.text), ROW_BTN_RESET_MS);
+                }
                 if (currentText && currentText.setValue) {
                   dirty = false;
                   currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
