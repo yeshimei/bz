@@ -26,6 +26,7 @@
  *   4. 节奏参数（时长/粒子量/幅度）从数据规模派生——读史越盛大，演出越盛大。
  */
 import type { PressData } from './data';
+import { hostLocalPx } from '../../core/landscape';
 
 /* ─────────── 小工具（自足，零依赖） ─────────── */
 
@@ -115,6 +116,9 @@ function T(el: Element | null, v: string): void {
 }
 const q = (root: ParentNode, sel: string): Element | null => root.querySelector(sel);
 const qa = (root: ParentNode, sel: string): Element[] => [...root.querySelectorAll(sel)];
+// 指针命中换算单源 core/landscape：软横屏旋转态下视觉 rect 作差会把命中点转到错误象限
+const localPx = (cv: HTMLCanvasElement, cx: number, cy: number): { x: number; y: number } | null =>
+  hostLocalPx(cv, cx, cy);
 
 /** 画布就位：DPR 缩放 + 尺寸变化重采；返回 2D 上文与 CSS 尺寸（无 ctx → null，jsdom 安全） */
 function fit(cv: HTMLCanvasElement): { ctx: CanvasRenderingContext2D; w: number; h: number } | null {
@@ -224,9 +228,9 @@ function perfC01(scn: Element, d: PressData): Perf {
         if (f) {
           const { ctx, w, h } = f;
           ctx.clearRect(0, 0, w, h);
-          const rect = pin ? cv.getBoundingClientRect() : null;
-          const lx = rect ? cx - rect.left : -9999;
-          const ly = rect ? cy - rect.top : -9999;
+          const ptl = pin ? localPx(cv, cx, cy) : null;
+          const lx = ptl ? ptl.x : -9999;
+          const ly = ptl ? ptl.y : -9999;
           for (const dr of drops) {
             const p = at(t, dr.life, dr.t0);
             if (p <= 0 || p >= 1) { if (dr.trail.length) dr.trail.length = 0; continue; }
@@ -357,9 +361,9 @@ function perfC03(scn: Element, d: PressData): Perf {
           ctx.clearRect(0, 0, w, h);
           const cx0 = w * (w > h * 1.2 ? .36 : .5), cy0 = h * .52;
           const R = Math.min(w * .3, h * .34);
-          const rect = pin ? cv.getBoundingClientRect() : null;
-          const lx = rect ? cx - rect.left : -9999;
-          const ly = rect ? cy - rect.top : -9999;
+          const ptl = pin ? localPx(cv, cx, cy) : null;
+          const lx = ptl ? ptl.x : -9999;
+          const ly = ptl ? ptl.y : -9999;
           // 24 根刻度短线逐根画出（点线被画出来的离散式）
           ctx.strokeStyle = rgba(pal.muted, .85);
           ctx.lineWidth = 1;
@@ -494,9 +498,9 @@ function perfC04(scn: Element, d: PressData): Perf {
       const gx = w * .12, gw = w * .66;
       const gy = h * .24, gh = h * .54;
       const cw = gw / cols, chh = gh / rowsN;
-      const rect = pin ? cv.getBoundingClientRect() : null;
-      const lx = rect ? cx - rect.left : -9999;
-      const ly = rect ? cy - rect.top : -9999;
+      const ptl = pin ? localPx(cv, cx, cy) : null;
+      const lx = ptl ? ptl.x : -9999;
+      const ly = ptl ? ptl.y : -9999;
       let hoverText = '';
       // 光标十字（持续响应）：指针所在列/行整条提亮
       let hcx = -1, hry = -1;
@@ -804,9 +808,9 @@ function perfC09(scn: Element, d: PressData): Perf {
       const cols = 8, rowsN = 7;
       const size = Math.min((w * .5) / cols, (h * .52) / rowsN, 44);
       const gx = w * .1, gy = h * .3; // 格区左移，右侧留给连胜大数
-      const rect = pin ? cv.getBoundingClientRect() : null;
-      const lx = rect ? cx - rect.left : -9999;
-      const ly = rect ? cy - rect.top : -9999;
+      const ptl = pin ? localPx(cv, cx, cy) : null;
+      const lx = ptl ? ptl.x : -9999;
+      const ly = ptl ? ptl.y : -9999;
       let hoverText = '';
       d.cal.forEach((day, i) => {
         const col = Math.floor(i / rowsN), row = i % rowsN;
@@ -906,9 +910,9 @@ function perfC10(scn: Element, d: PressData): Perf {
         const gy = h * .3, rowH = Math.min(34, (h * .52) / rows.length);
         const maxTotal = Math.max(1, ...rows.map((r) => r.shifts.reduce((s, x) => s + x, 0)));
         const segColors = [rgba(pal.line, .9), rgba(pal.accentSoft, .5), rgba(pal.accentSoft, .8), pal.accent];
-        const rect = pin ? cv.getBoundingClientRect() : null;
-        const lx = rect ? cx - rect.left : -9999;
-        const ly = rect ? cy - rect.top : -9999;
+        const ptl = pin ? localPx(cv, cx, cy) : null;
+        const lx = ptl ? ptl.x : -9999;
+        const ly = ptl ? ptl.y : -9999;
         let hoverText = '';
         let hotRow = -1;
         rows.forEach((r, i) => {
@@ -1015,9 +1019,9 @@ function perfC11(scn: Element, d: PressData): Perf {
         });
       }
       ctx.clearRect(0, 0, w, h);
-      const rect = pin ? cv.getBoundingClientRect() : null;
-      const lx = rect ? cx - rect.left : -9999;
-      const ly = rect ? cy - rect.top : -9999;
+      const ptl = pin ? localPx(cv, cx, cy) : null;
+      const lx = ptl ? ptl.x : -9999;
+      const ly = ptl ? ptl.y : -9999;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       laid.forEach((lw) => {
@@ -1246,9 +1250,9 @@ function perfC16(scn: Element, d: PressData): Perf {
         if (f) {
           const { ctx, w, h } = f;
           ctx.clearRect(0, 0, w, h);
-          const rect = pin ? cv.getBoundingClientRect() : null;
-          const lx = rect ? cx - rect.left : -9999;
-          const ly = rect ? cy - rect.top : -9999;
+          const ptl = pin ? localPx(cv, cx, cy) : null;
+          const lx = ptl ? ptl.x : -9999;
+          const ly = ptl ? ptl.y : -9999;
           // 墨滴礼花两响（避指针）
           const bursts: Array<{ x: number; y: number; t0: number; seed: number }> = [
             { x: w * .38, y: h * .42, t0: .5, seed: 7 },

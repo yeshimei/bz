@@ -1,5 +1,5 @@
 /**
- * 观影志 · 引擎（翻幕 + 表演调度 + 底栏刻度）
+ * 观影志 · 引擎（翻幕 + 表演调度 + 导航点）
  *
  * 与上一稿最大的不同：**幕是整屏一节，表演按时间演，不靠滚动进度抽**。
  *   26 节各占一屏（`.bz-yb-scn` 高 = 滚动口高），滚轮/方向键/触控一滚就翻一节；
@@ -18,6 +18,7 @@ import type { YbData } from './data';
 import { buildPerfs, type Perf } from './motions';
 import { palette, qsa, clamp, tip, type Palette } from './kits';
 import { MOTION } from '../motion';
+import { bindSwipeTurn } from '../../core/gesture';
 
 export interface YbHandle { stop(): void; goTo(i: number, opts?: { replay?: boolean }): void }
 
@@ -34,6 +35,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   if (!scenes.length) return handle;
   const perfs = buildPerfs(film, data, root); // 浮签挂整屏根：翻幕/离场由这里统一收
   const rails = qsa(root, '.yb-rail-t');
+  const boxEl = root.querySelector<HTMLElement>('.bz-yb-box'); // 层框：指针归一化认它的逻辑系
 
   let pal: Palette = palette(root);
   let cur = -1;
@@ -60,7 +62,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
       });
     }
     // 幕号写在层根上（固定层在 box 直下、不在 film 子树里，选择器认层根）：
-    // 开卷幕要靠它收掉粒子的底栏显隐、翻幕显隐永远同一帧
+    // 开卷幕的粒子显隐跟着它走：翻幕显隐永远同一帧
     root.dataset.cur = String(i + 1).padStart(2, '0');
   }
 
@@ -69,7 +71,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     if (dead || (i === cur && !force)) return;
     if (cur >= 0 && cur !== i) {
       const prev = perfs.get(scenes[cur].dataset.id ?? '');
-      if (prev && !settled.has(cur)) { prev.update({ t: prev.dur, pal, px: px * pin, py: py * pin }); settled.add(cur); }
+      if (prev && !settled.has(cur)) { prev.update({ t: prev.dur, pal, px: px * pin, py: py * pin, pin }); settled.add(cur); }
       // 翻幕顺手收掉浮签：新一幕的悬停状态是干净的，不能继承上一幕的读数
       tip(root, '');
     }
@@ -77,7 +79,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     settled.delete(i);
     const perf = perfs.get(scenes[i].dataset.id ?? '');
     if (replay) t0 = performance.now();
-    if (perf) perf.update({ t: replay ? 0 : perf.dur, pal, px: px * pin, py: py * pin });
+    if (perf) perf.update({ t: replay ? 0 : perf.dur, pal, px: px * pin, py: py * pin, pin });
     // 入场定格：遮片打开后本幕内容有一下极轻的落定（不然换幕像换了张静止图）
     const sc = scenes[i];
     sc.classList.remove('is-in');
@@ -172,7 +174,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     const perf: Perf | undefined = perfs.get(scenes[cur].dataset.id ?? '');
     if (!perf) return;
     const t = (now - t0) / 1000;
-    perf.update({ t, pal, px: px * pin, py: py * pin });
+    perf.update({ t, pal, px: px * pin, py: py * pin, pin });
     hud(cur);
   }
 
@@ -182,18 +184,26 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     if (rail) { goTo(Number(rail.dataset.i ?? 0), { cut: true }); }
   };
 
+  /** 指针 → **层框逻辑**坐标的归一化（−1..1；旋转态 is-rot90 换轴反向）。
+   *  各幕拿 px/py 直接映回画布像素（w/2 + px·w/2），画布位图是逻辑系——
+   *  按视觉 rect 归一化会在旋转态把整套指针交互转错 90°；桌面层框≠窗口时也只认层框才不偏。
+   *  move/down 里的 cx/cy 仍是视口值：浮签等 fixed 定位的 DOM 消费方要的就是它。 */
+  const normPtr = (e: PointerEvent): { px: number; py: number } => {
+    const r = (boxEl ?? root).getBoundingClientRect();
+    const nx = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
+    const ny = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
+    return boxEl?.classList.contains('is-rot90') ? { px: ny, py: -nx } : { px: nx, py: ny };
+  };
   const onPointer = (e: PointerEvent): void => {
-    const r = root.getBoundingClientRect();
-    px = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
-    py = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
-    pin = 1;
+    const n = normPtr(e);
+    px = n.px; py = n.py; pin = 1;
     // 指针事件只发给**当前这一幕**：不是每帧都来，各幕在这里只记状态（悬停到谁），
     // 把它变成画面的事交给 update——在事件里写样式会在快速划动时写出抖动。
     curPerf()?.move?.({ cx: e.clientX, cy: e.clientY, px, py });
   };
   const onPtrDown = (e: PointerEvent): void => {
-    const r = root.getBoundingClientRect();
-    curPerf()?.down?.({ cx: e.clientX, cy: e.clientY, px: ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1, py: ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1 });
+    const n = normPtr(e);
+    curPerf()?.down?.({ cx: e.clientX, cy: e.clientY, px: n.px, py: n.py });
   };
   const onPtrUp = (): void => { curPerf()?.up?.(); };
   /** 指针离场：位置归零 + 收掉浮签（不然浮签会挂在上一幕或上一处悬停上） */
@@ -222,6 +232,8 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   root.addEventListener('pointercancel', onPtrUp);
   scEl.addEventListener('wheel', onWheel, { passive: false });
   scEl.addEventListener('scroll', syncFromScroll, { passive: true });
+  // 触屏没有 wheel（真机上滑翻不动页）：手势区整体接管，一滑一幕（core/gesture 单源）
+  const unSwipe = bindSwipeTurn(scEl, (d) => goRel(d));
   root.addEventListener('click', onOvlClick); // 自动钮/导航点都在固定层（film 外），监听得挂层根
   document.addEventListener('keydown', onKey);
 
@@ -243,6 +255,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     tip(root, '');
     scEl.removeEventListener('wheel', onWheel);
     scEl.removeEventListener('scroll', syncFromScroll);
+    unSwipe();
     root.removeEventListener('click', onOvlClick);
     document.removeEventListener('keydown', onKey);
   };

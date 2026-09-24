@@ -16,6 +16,7 @@
 import type { RaData } from './data';
 import { buildPerfs, type Perf, type PerfCtx } from './motions';
 import { palette, tip, type Palette } from './kits';
+import { bindSwipeTurn } from '../../core/gesture';
 
 export interface RaHandle { stop(): void; goTo(i: number): void }
 
@@ -230,11 +231,18 @@ export function bindAnalysis(root: HTMLElement, data: RaData): RaHandle {
     if (lamp) { setAuto(false); goTo(Number(lamp.getAttribute('data-i') ?? 0), { cut: true }); }
   };
 
+  /** 指针归一（−1..1）认**层框逻辑**系：各幕把 px/py 直接映回画布像素，软横屏旋转态
+   *  （is-rot90）视觉 rect 会把交互整个转错 90°——归一后换轴反向。cx/cy 仍是视口值
+   *  （浮签等 fixed 定位消费方要的就是它）。 */
+  const boxEl = root.querySelector<HTMLElement>('.bz-ra-box');
   const onPointerMove = (e: PointerEvent): void => {
-    const r = root.getBoundingClientRect();
+    const r = (boxEl ?? root).getBoundingClientRect();
+    const nx = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
+    const ny = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
+    const rot = boxEl?.classList.contains('is-rot90') ?? false;
     cx = e.clientX; cy = e.clientY;
-    px = ((e.clientX - r.left) / Math.max(1, r.width)) * 2 - 1;
-    py = ((e.clientY - r.top) / Math.max(1, r.height)) * 2 - 1;
+    px = rot ? ny : nx;
+    py = rot ? -nx : ny;
     pin = 1;
   };
   /** 指针离场：位置归零 + 收掉浮签（不然浮签会挂在上一幕/上一处悬停上） */
@@ -258,6 +266,8 @@ export function bindAnalysis(root: HTMLElement, data: RaData): RaHandle {
   filmEl.addEventListener('click', onOvlClick);
   scEl.addEventListener('wheel', onWheel, { passive: false });
   scEl.addEventListener('scroll', syncFromScroll, { passive: true });
+  // 触屏没有 wheel（真机上滑翻不动页）：手势区整体接管，一滑一幕；滑动同滚轮先停「巡火」
+  const unSwipe = bindSwipeTurn(scEl, (d) => { setAuto(false); goRel(d); });
   root.addEventListener('pointermove', onPointerMove, { passive: true });
   root.addEventListener('pointerleave', onPointerLeave, { passive: true });
   document.addEventListener('keydown', onKey);
@@ -286,6 +296,7 @@ export function bindAnalysis(root: HTMLElement, data: RaData): RaHandle {
     filmEl.removeEventListener('click', onOvlClick);
     scEl.removeEventListener('wheel', onWheel);
     scEl.removeEventListener('scroll', syncFromScroll);
+    unSwipe();
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerleave', onPointerLeave);
     document.removeEventListener('keydown', onKey);

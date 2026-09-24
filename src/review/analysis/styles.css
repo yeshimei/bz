@@ -32,10 +32,14 @@
   --ra-indigo-rgb: 122, 152, 222;
   background: rgba(4, 8, 12, .42);
 }
-/* 层框 = 复习面板矩形（index.ts 内联写入；此处为无几何兜底） */
-.bz-ra-box { position: absolute; inset: 16px; overflow: hidden; background: var(--ra-paper); font-size: 16px; }
+/* 层框 = 复习面板矩形（index.ts 内联写入；此处为无几何兜底）。
+   软横屏（2026-09-24 口径，观影分析同款）：移动竖屏时层框宽高对调 + is-rot90 转 90°
+   （core/landscape 单源）。转角走 --rot：is-nudge 的晃动 keyframes 同乘它，
+   不然动画帧会把 90° 洗回 0°（闪竖版）。 */
+.bz-ra-box { position: absolute; inset: 16px; overflow: hidden; background: var(--ra-paper); font-size: 16px; --rot: 0deg; }
+.bz-ra-box.is-rot90 { --rot: 90deg; transform: rotate(var(--rot)); }
 .bz-ra-box.is-nudge { animation: bzRaNudge .32s ease-out; }
-@keyframes bzRaNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes bzRaNudge { 0%, 100% { transform: rotate(var(--rot, 0deg)) translateX(0); } 25% { transform: rotate(var(--rot, 0deg)) translateX(-6px); } 75% { transform: rotate(var(--rot, 0deg)) translateX(6px); } }
 .bz-ra-close { position: absolute; top: 10px; right: 10px; z-index: 30; width: 34px; height: 34px; border-radius: 50%;
   border: 1px solid rgba(var(--ra-ink-rgb), .3); background: color-mix(in srgb, var(--ra-paper) 78%, transparent);
   color: rgb(var(--ra-ink-rgb)); font-size: 15px; cursor: pointer; }
@@ -261,11 +265,18 @@ canvas { display: block; }
 .ra-shutter .t { top: 0; border-bottom: 1.5px solid rgb(var(--ra-jade-rgb)); transform: translateY(-101%); }
 .ra-shutter .b { bottom: 0; border-top: 1.5px solid rgb(var(--ra-jade-rgb)); transform: translateY(101%); }
 .ra-shutter.is-close .t, .ra-shutter.is-close .b { transform: translateY(0); transition-duration: .16s; transition-timing-function: cubic-bezier(.4, 0, .6, 1); }
-.ra-lampcol { position: absolute; right: .9em; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: .55em; align-items: flex-end; pointer-events: auto; }
-.ra-lamp { display: block; width: .85em; height: 2px; border-radius: 1px; background: rgba(var(--ra-ink-rgb), .22);
-  transition: width .18s ease, background .18s ease; cursor: pointer; }
-.ra-lamp[data-on] { width: 1.8em; background: rgb(var(--ra-jade-rgb)); }
-@media (hover: hover) { .ra-lamp:hover { background: rgba(var(--ra-ink-rgb), .55); } }
+/* 灯谱改圆点（2026-09-24 用户拍板「都使用圆点导航」，视觉对齐观影分析 yb-rail）：
+   视觉只有 ~.2em 的点（刻意弱化，只是翻幕提醒），命中区靠透明 border 撑到 ~.8em */
+.ra-lampcol { position: absolute; right: .9em; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: .38em; align-items: flex-end; pointer-events: auto; }
+.ra-lamp { display: block; width: .2em; height: .2em; border-radius: 50%;
+  border: .3em solid transparent; background-clip: padding-box;
+  background: rgba(var(--ra-ink-rgb), .12);
+  cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.ra-lamp[data-on] { background: rgb(var(--ra-jade-rgb)); transform: scale(1.3); }
+@media (hover: hover) { .ra-lamp:hover { background: rgba(var(--ra-ink-rgb), .36); }
+  .ra-lamp[data-on]:hover { background: rgb(var(--ra-jade-rgb)); } }
+/* 软横屏（旋转态）：导航点换到左缘（真机横握的拇指侧，观影分析同款） */
+.bz-ra-box.is-rot90 .ra-lampcol { right: auto; left: .9em; align-items: flex-start; }
 .ra-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 22; display: flex; align-items: center; gap: 1em;
   padding: .9em 3.4em 1em; font-size: .8em; letter-spacing: .08em; color: rgba(var(--ra-ink-rgb), .62);
   background: linear-gradient(to top, var(--ra-paper) 42%, transparent); pointer-events: auto; }

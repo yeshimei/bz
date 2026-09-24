@@ -1,5 +1,5 @@
 /**
- * 观影志 · 26 幕的表演（时间驱动，不是被滚动进度抽着走）
+ * 观影志 · 25 幕的表演（时间驱动，不是被滚动进度抽着走）
  *
  * 一幕被翻到时「演一遍」：`t` 从 0 起算的秒数，每幕自己排进场（stagger + 各自缓动）、
  * 常驻（t 越过后进入呼吸/漂流/扫描这类氛围循环）、再到定格。翻走时引擎用
@@ -17,6 +17,7 @@
  * 弧线归位 / 扇面摊开 / 磁带延展 / 打字机 / 弹幕漂流 / 热力矩阵扫行 / 落款错峰
  */
 import { YB_TITLE, type YbData } from './data';
+import { boxLogicalRect } from '../../core/landscape';
 import {
   at, clamp01, easeOut, easeInOut, easeBack, easeElastic, spring, stagger,
   canvas, sampleText, rgba, qsa, humanDur, humanDurShort, setFlap, lerp, type Palette,
@@ -24,7 +25,7 @@ import {
 } from './kits';
 
 /** `px/py` = 指针位置（归一化 -1..1，指针不在画面里时是 0）；各幕自己决定要不要跟着走 */
-export interface PerfCtx { t: number; pal: Palette; px: number; py: number }
+export interface PerfCtx { t: number; pal: Palette; px: number; py: number; pin: number }
 export interface Perf {
   dur: number;
   update(ctx: PerfCtx): void;
@@ -92,7 +93,8 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
      另有偶发流星曳光；暗色主题下萤火转荧光、堆底如余烬明灭。 */
   {
     const s = scn('open')!;
-    const cv = canvas(host, 'open'); // 画布在覆盖层根上（满屏铺，见 yearbookOpenHtml），不在幕里
+    const cv = canvas(host, 'open'); // 画布在层框（.bz-yb-box）直下满铺（yearbookOpenHtml），不在幕里
+    const boxEl = cv?.el.closest<HTMLElement>('.bz-yb-box') ?? null; // 层框：旋转态判定与坐标换算都认它
     interface P {
       x: number; y: number; pxl: number; pyl: number; vx: number; vy: number;
       ax: number; ay: number; d: number; r: number;
@@ -124,7 +126,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
       Math.sin(x * .0031 + t * .22) * 1.9 + Math.sin(y * .0026 - t * .17) * 1.6 +
       Math.sin((x + y) * .0014 + t * .11) * 1.2 + Math.sin((x - y) * .0043 - t * .09) * .7;
     /** 认领：每粒按最近靶点吸附——贪心从「靶点侧」挑最近未认领的粒，等长下恰成双射，
-     *  笔画密度均匀。一次性 O(n²)（≈1.4M 次比较 ×2 段），构建期跑一次无压力。 */
+     *  笔画密度均匀。一次性 O(n²)（≈1.4M 次比较），构建期跑一次无压力。 */
     const assign = (targets: { x: number; y: number }[], ref: { x: number; y: number }[]): Int32Array => {
       const n = targets.length;
       const used = new Uint8Array(n);
@@ -153,15 +155,21 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
      *  字的大小与中心锚定**纸面卡**（幕 rect，画布满屏后不能拿窗口尺寸当字号基准），
      *  字号此番调大（.5/.26）；出生撒满整窗、一部分超出屏幕之外 */
     const build = (w: number, h: number): void => {
+      if (!cv) return;
       builtFor = w;
-      const r = s.getBoundingClientRect();
-      const fontPx = Math.max(46, Math.min(r.height * .44, r.width * .23));
+      // 纸面卡矩形必须是**逻辑**坐标（画布位图同系）：旋转态下 getBoundingClientRect 是
+      // 视觉值，直接当逻辑用会把字靶甩到框外——真机上聚合跑到屏幕左下角外的根因（2026-09-24）
+      const vr = s.getBoundingClientRect();
+      const r = boxEl
+        ? boxLogicalRect(boxEl, vr.left, vr.top, vr.right, vr.bottom)
+        : { left: vr.left, top: vr.top, right: vr.right, bottom: vr.bottom };
+      const fontPx = Math.max(46, Math.min((r.bottom - r.top) * .44, (r.right - r.left) * .23));
       const resample = (text: string, fp: number): { x: number; y: number }[] => {
         const raw = sampleText(text, fp, 800, 4);
         if (!raw.length) return [];
         return Array.from({ length: N }, (_, i) => raw[Math.floor((i / N) * raw.length)]);
       };
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
       const ta = resample(YB_TITLE, fontPx).map((p) => ({ x: p.x + cx, y: p.y + cy }));
       if (!ta.length) { ps = []; return; }
       ps = Array.from({ length: N }, () => {
@@ -172,7 +180,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
           x: -WRAP + Math.random() * (w + WRAP * 2),
           y: -WRAP + Math.random() * (h + WRAP * 2),
           pxl: 0, pyl: 0, vx: 0, vy: 0,
-          ax: 0, ay: 0, bx: 0, by: 0,
+          ax: 0, ay: 0,
           d: CLAIM_AT + Math.random() * CLAIM_SPAN, // 认领时刻错峰：字是一层层扑上去的
           r: kind ? 1.7 + Math.random() * .9 : 1 + Math.random() * .6, // 萤火略大
           kind, ph: Math.random() * Math.PI * 2,
@@ -195,17 +203,19 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
     const mets: { x: number; y: number; vx: number; vy: number; life: number; col: string }[] = [];
     let nextMet = 4;
     out.set('open', {
-      dur: 7, // 自动放映的停留时长：满布待命也给几秒，移入后叙事约 5s 走到落补循环
-      update({ t, pal, px, py }) {
+      dur: 7, // 定格基准：翻走时按它把这一幕推到终态（自动放映已删）
+      update({ t, pal, px, py, pin }) {
         if (!cv) { lastT = t; return; }
         const changed = cv.fit();
         const w = cv.w, h = cv.h;
         if (w < 8) { lastT = t; return; }
         // 首帧 / resize / 重播（t 回零）：整面擦掉重来——拖尾长在画布上，不清会叠上次演出的残迹；
-        // 重建即回到满布待命，鼠标移入再聚合
-        if (changed || ps.length === 0 || builtFor !== w || t < lastT - .25) {
+        // 重建即回到满布待命，鼠标移入再聚合。不拿 ps.length 当重建条件：取样空表的分支
+        // 会配出「每帧重建风暴」（评审 P2），空就让它安静空着
+        if (changed || builtFor !== w || t < lastT - .25) {
           build(w, h);
           claimAt = null;
+          mets.length = 0; nextMet = 4; // 流星节奏随重建复位：重播后不必隔老半天
           cv.clear();
         }
         const dt = Math.min(.05, Math.max(.001, t - lastT));
@@ -213,7 +223,9 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
         const ctx = cv.ctx;
         // 指针速度与场强包络：快扫才有劲（慢挪几乎不扰），停手/离开后指数平复（≈1~2s）
         const pxx = w / 2 + (px * w) / 2, pyy = h / 2 + (py * h) / 2;
-        pt.in = px !== 0 || py !== 0;
+        // 在场与否只认引擎的 pin（指针在层内）：归一坐标恰为 (0,0) 的正中死点也算在场——
+        // 聚合叙事全挂 pt.in 上，死点判「不在」会让悬停正中永远不起表（评审 P2）
+        pt.in = pin > 0;
         if (!pt.was) { pt.vx = 0; pt.vy = 0; } // 换位重进先归零，防一次跨屏速度尖峰
         else if (pt.in) {
           const kV = 1 - Math.exp(-9 * dt);
@@ -237,8 +249,11 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
         if (claimAt === null && pt.in) claimAt = t;
         const tt = claimAt === null ? -1 : t - claimAt;
         // 盒子四壁与地面：飞出的栗子全部圈在**纸面卡**内（飞出盒子就扫不回来了）——
-        // 墙与地面每帧从面板矩形现量，层框跟面板走也不怕
-        const br = s.getBoundingClientRect();
+        // 墙与地面每帧从面板矩形现量，层框跟面板走也不怕；旋转态换算成逻辑坐标（同 build）
+        const vr = s.getBoundingClientRect();
+        const br = boxEl
+          ? boxLogicalRect(boxEl, vr.left, vr.top, vr.right, vr.bottom)
+          : { left: vr.left, top: vr.top, right: vr.right, bottom: vr.bottom };
         const floor = br.bottom - FLOOR_MARGIN;
         // 偶发流星：聚合完成后才开演，随机方向斜穿纸面上半区
         if (tt > METEOR_FROM && t >= nextMet && mets.length < 3) {

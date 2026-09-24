@@ -19,6 +19,7 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
+import { fitRotatedBox } from '../core/landscape';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
@@ -1104,37 +1105,26 @@ export function openRandomMovie(app: App): void {
   notice(want.length ? `抽到「${it.name}」` : `想看清单空着，从全部影视里抽到「${it.name}」`, 'success');
 }
 
-// ---------- 观影分析：覆盖影院面板的一层（ADR-0175；26 幕长片见 yearbook/） ----------
+// ---------- 观影分析：覆盖影院面板的一层（ADR-0175；25 幕长片见 yearbook/） ----------
 
 let ybOvl: HTMLElement | null = null;
 let ybHandle: YbHandle | null = null;
 let ybSync: (() => void) | null = null; // 层框跟随面板矩形（窗 resize / 面板 resize）
 let ybRo: ResizeObserver | null = null;
 
-/** 层框 = 面板矩形（ADR-0175）：层根 fixed inset:0，客户端坐标即层内坐标，rect 直接写内联。
- *  基字号随层框派生（不再 vmin）——面板是固定尺寸，跟窗口跑会让真机与原型排成两个密度。
- *  移动端竖屏（2026-09-24 拍板）：观影分析**横屏呈现**——面板竖着、内容横着：层框宽高对调
- *  并加 `.is-rot90`（CSS 转 90°），基字号按对调后的框派生；用户侧转手机观看。
- *  真机横屏（面板本来就宽>高）不转，直接满幅横屏布局。 */
+/** 层框 = 面板矩形（ADR-0175）：几何与软横屏转置单源在 core/landscape（review/clipbook 同款）。
+ *  基字号随层框派生（不再 vmin）——面板是固定尺寸，跟窗口跑会让真机与原型排成两个密度。 */
 function fitYbBox(box: HTMLElement, panel: HTMLElement | null): void {
-  const r = panel?.getBoundingClientRect();
-  if (!panel || !r || r.width < 40 || r.height < 40) return; // 面板没几何（测试环境）：保持 CSS 兜底
-  const rot = isMobileEnv() && r.height > r.width;
-  box.classList.toggle('is-rot90', rot);
-  const w = rot ? r.height : r.width;
-  const h = rot ? r.width : r.height;
-  box.style.left = `${Math.round(r.left + (r.width - w) / 2)}px`;
-  box.style.top = `${Math.round(r.top + (r.height - h) / 2)}px`;
-  box.style.width = `${Math.round(w)}px`;
-  box.style.height = `${Math.round(h)}px`;
-  const base = Math.max(12, Math.min(19, 12 * Math.min(w / 900, h / 620)));
+  const fit = fitRotatedBox(box, panel, isMobileEnv());
+  if (!fit || !panel) return; // 面板没几何（测试环境）：保持 CSS 兜底
+  const base = Math.max(12, Math.min(19, 12 * Math.min(fit.w / 900, fit.h / 620)));
   box.style.fontSize = `${base.toFixed(2)}px`;
   box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || '';
 }
 
 /** 打开观影分析：**覆盖影院面板的一层**（ADR-0175，2026-09-21 用户改口径；推翻此前的整屏独立形态）。
  *  点框外（遮罩）＝关、ESC 同义；桌面不给关闭按钮，移动端面板满屏没有遮罩可点、按钮即出口。
- *  内容 = 26 幕长片（yearbook/），全部数据来自笔记 frontmatter 里的真实字段；
+ *  内容 = 25 幕长片（yearbook/），全部数据来自笔记 frontmatter 里的真实字段；
  *  一条影视都没有时给空态（带「添加影视」入口）。明暗跟随 Obsidian（styles.css 的 --yb-* 变量层）。
  *  翻幕：滚轮/方向键一滚一幕，翻到的那幕从头演一遍；「自动」按钮按各幕时长自己往下放。 */
 export function openYearbookOverlay(app: App): void {
