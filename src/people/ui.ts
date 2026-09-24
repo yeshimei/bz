@@ -893,6 +893,7 @@ function dedupeByText<T>(items: T[], key: (item: T) => string): T[] {
     out.push(item);
   }
   return out;
+}
 // ---------------- 档案与随手记（issue 439） ----------------
 // 手动输入路径：档案（社交账号/生日/认识方式/标签/备注…）落盘走 store.updateProfile，
 // 随手记走 store.addManualEvent / removeManualEvent；显式保存按钮写盘，不随 input 落盘。
