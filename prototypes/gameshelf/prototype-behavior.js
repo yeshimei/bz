@@ -1,4 +1,4 @@
-/* 源指纹 5f95dcf8dd14eddd · 仓内输入 272 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 86ab4ed60d61e590 · 仓内输入 272 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -705,6 +705,7 @@ var BZW_gameshelf = (() => {
     imageMimeOfPath: () => imageMimeOfPath,
     resetAIProviderCache: () => resetAIProviderCache,
     setAISettingsProvider: () => setAISettingsProvider,
+    testAIConnectivity: () => testAIConnectivity,
     thinkingBodyFor: () => thinkingBodyFor,
     thinkingLevelsOf: () => thinkingLevelsOf
   });
@@ -961,7 +962,18 @@ var BZW_gameshelf = (() => {
   function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
     return new AIService(params, defaultModel, defaultOptions);
   }
-  var _settingsProvider, THINK_AUTO, THINK_OFF, THINK_LOW, THINK_MEDIUM, THINK_HIGH, THINK_MAX, DEFAULT_AI_PROVIDER, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
+  async function testAIConnectivity(providerId) {
+    const id = String(providerId || "").trim();
+    const desc = getProviderDescriptor(id || DEFAULT_AI_PROVIDER);
+    const provider = await getAIProvider(id || void 0);
+    const model = provider.model || desc.model || void 0;
+    const t0 = Date.now();
+    const svc = createAI();
+    const reply = (await svc.prompt(AI_TEST_PROMPT, model, { provider: id || void 0 })).trim();
+    if (!reply) throw new Error(`${desc.label} 连通异常：请求成功但回复为空`);
+    return { label: desc.label, model: provider.model || desc.label, ms: Date.now() - t0, reply };
+  }
+  var _settingsProvider, THINK_AUTO, THINK_OFF, THINK_LOW, THINK_MEDIUM, THINK_HIGH, THINK_MAX, DEFAULT_AI_PROVIDER, AI_PROVIDER_REGISTRY, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService, AI_TEST_PROMPT;
   var init_ai = __esm({
     "src/core/ai.ts"() {
       init_fake_obsidian();
@@ -1138,6 +1150,7 @@ var BZW_gameshelf = (() => {
           return options2;
         }
       };
+      AI_TEST_PROMPT = "这是一次连通性测试。请只回复两个字母：OK";
     }
   });
 
@@ -11866,20 +11879,25 @@ var BZW_gameshelf = (() => {
     return JEV_PROVIDER_REGISTRY.find((p) => p.id === id) || JEV_PROVIDER_REGISTRY[0];
   }
   function resolveJevConfig(override) {
-    var _a2, _b2, _c, _d;
+    var _a2, _b2, _c, _d, _e, _f;
     const s = tryGetSettings();
     const pick = (key, fallback) => {
       const v = s == null ? void 0 : s[key];
       return v === void 0 || v === null || v === "" ? fallback : v;
     };
     const desc = getJevProviderDescriptor(pick("jevProvider", DEFAULT_JEV_PROVIDER));
+    const keys = (_a2 = s == null ? void 0 : s.jevApiKeys) != null ? _a2 : {};
+    const models = (_b2 = s == null ? void 0 : s.jevModels) != null ? _b2 : {};
     return {
-      endpoint: String((_a2 = override == null ? void 0 : override.endpoint) != null ? _a2 : desc.endpoint),
-      apiKey: String((_b2 = override == null ? void 0 : override.apiKey) != null ? _b2 : pick("jevApiKey", "")),
-      // 模型留空按服务商各回各的缺省（issue 430）：typesafe → jev-latest，博查 → bocha-jev-v1
-      model: String((_c = override == null ? void 0 : override.model) != null ? _c : pick("jevModel", desc.defaultModel)),
-      timeoutMs: (_d = override == null ? void 0 : override.timeoutMs) != null ? _d : JEV_DEFAULT_TIMEOUT_MS
+      endpoint: String((_c = override == null ? void 0 : override.endpoint) != null ? _c : desc.endpoint),
+      apiKey: String((_d = override == null ? void 0 : override.apiKey) != null ? _d : pickFrom(keys[desc.id], "")),
+      // 模型槽位留空 → 该服务商缺省（issue 430 起：typesafe → jev-latest，博查 → bocha-jev-v1）
+      model: String((_e = override == null ? void 0 : override.model) != null ? _e : pickFrom(models[desc.id], desc.defaultModel)),
+      timeoutMs: (_f = override == null ? void 0 : override.timeoutMs) != null ? _f : JEV_DEFAULT_TIMEOUT_MS
     };
+  }
+  function pickFrom(v, fallback) {
+    return v === void 0 || v === null || v === "" ? fallback : String(v);
   }
   function parseJevModels(data, label = "Typesafe") {
     const list = data == null ? void 0 : data.models;
@@ -11923,6 +11941,99 @@ var BZW_gameshelf = (() => {
     const models = parseJevModels(data, desc.label);
     if (!models.length) throw new Error(`${desc.label} 未返回可用模型`);
     return models;
+  }
+  function abortError2() {
+    const e = new Error("Jev 请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function timeoutError2(ms) {
+    const e = new Error(`Jev 请求超时（${Math.round(ms / 1e3)} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  function buildJevBody(state3, questions, model) {
+    return { model, state: state3, questions };
+  }
+  function parseJevResponse(text, status) {
+    var _a2;
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Jev 响应不是合法 JSON（HTTP ${status}）`);
+    }
+    const answers = data == null ? void 0 : data.answers;
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+      const detail = (data == null ? void 0 : data.detail) ? `: ${JSON.stringify(data.detail)}` : "";
+      throw new Error(`Jev 响应缺少 answers 字段（HTTP ${status}）${detail}`);
+    }
+    return {
+      model: String((_a2 = data.model) != null ? _a2 : ""),
+      answers,
+      usage: data.usage
+    };
+  }
+  async function askJev(state3, questions, opts = {}) {
+    var _a2, _b2;
+    const keys = Object.keys(questions || {});
+    if (!keys.length) return { model: "", answers: {} };
+    const cfg = resolveJevConfig(opts.config);
+    const signal = opts.signal;
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    if (!cfg.endpoint) throw new Error("未配置 Jev 端点");
+    if (!cfg.apiKey) throw new Error("未配置 Jev 密钥（插件设置 → AI → JEV）");
+    const body = buildJevBody(state3, questions, cfg.model);
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${cfg.apiKey}`
+    };
+    const resp = await new Promise((resolve2, reject) => {
+      let settled = false;
+      let timer = null;
+      const onAbort = () => settle(() => reject(abortError2()));
+      function settle(fn) {
+        if (settled) return;
+        settled = true;
+        if (timer !== null) clearTimeout(timer);
+        signal == null ? void 0 : signal.removeEventListener("abort", onAbort);
+        fn();
+      }
+      timer = setTimeout(() => settle(() => reject(timeoutError2(cfg.timeoutMs))), cfg.timeoutMs);
+      signal == null ? void 0 : signal.addEventListener("abort", onAbort);
+      requestUrl({
+        url: cfg.endpoint,
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        throw: false
+      }).then(
+        (r) => settle(() => resolve2(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    const status = Number((_a2 = resp == null ? void 0 : resp.status) != null ? _a2 : 0);
+    const text = String((_b2 = resp == null ? void 0 : resp.text) != null ? _b2 : "");
+    if (status < 200 || status >= 300) {
+      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      throw new Error(`Jev API ${status}: ${brief || "无响应正文"}`);
+    }
+    return parseJevResponse(text, status);
+  }
+  async function testJevConnectivity(opts = {}) {
+    var _a2;
+    const s = tryGetSettings();
+    const desc = getJevProviderDescriptor(String((_a2 = s == null ? void 0 : s.jevProvider) != null ? _a2 : "") || DEFAULT_JEV_PROVIDER);
+    const t0 = Date.now();
+    const result = await askJev(
+      "这是一条连通性测试消息。",
+      { ping: { instructions: "这条消息是连通性测试消息吗？", type: "noul" } },
+      opts
+    );
+    const answer = result.answers.ping;
+    const noul = answer && answer.type === "noul" && Number.isFinite(answer.noul) ? answer.noul : NaN;
+    return { provider: desc.label, model: result.model || "未知模型", ms: Date.now() - t0, noul };
   }
   var JEV_PROVIDER_REGISTRY, DEFAULT_JEV_PROVIDER, JEV_DEFAULT_ENDPOINT, JEV_DEFAULT_MODEL, JEV_DEFAULT_TIMEOUT_MS;
   var init_jev = __esm({
@@ -12397,7 +12508,19 @@ var BZW_gameshelf = (() => {
         desc: p.apiKeyDesc,
         binding: { key: p.apiKeyKey },
         placeholder: "粘贴密钥",
-        visibleWhen: (snapshot2) => snapshot2.aiProvider === p.id
+        visibleWhen: (snapshot2) => snapshot2.aiProvider === p.id,
+        actions: [{
+          text: "测试",
+          onClick: async () => {
+            try {
+              await saveSettings();
+              const r = await testAIConnectivity(p.id);
+              notice(`${r.label} 连通正常：${r.model} · ${(r.ms / 1e3).toFixed(1)} 秒`, "success");
+            } catch (e) {
+              notice(e instanceof Error ? e.message : String(e), "error");
+            }
+          }
+        }]
       });
     }
     return rows;
@@ -12483,19 +12606,60 @@ var BZW_gameshelf = (() => {
       {
         type: "select",
         name: "Jev 服务商",
-        desc: "判定通道的服务商，各家密钥不通用",
+        desc: "判定通道的服务商，密钥与模型随服务商各自保存",
         binding: { key: "jevProvider" },
         options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label }))
       },
       {
         type: "secret",
         name: "Jev 密钥",
-        desc: "填写后判定通道即启用，清空则回落语言模型",
-        binding: { key: "jevApiKey" },
-        placeholder: "粘贴 Jev 密钥"
+        desc: "填写后判定通道即启用，测试按钮会发一次真实请求",
+        binding: {
+          get: () => jevScopedValue("keys"),
+          set: (v) => setJevScopedValue("keys", v),
+          save: () => {
+          }
+        },
+        placeholder: "粘贴 Jev 密钥",
+        refreshKey: () => jevScopedValue("keys"),
+        actions: [jevTestAction()]
       },
       jevModelRow()
     ];
+  }
+  function currentJevProviderId() {
+    const s = tryGetSettings();
+    return String(s.jevProvider || "") || DEFAULT_JEV_PROVIDER;
+  }
+  function jevScopedValue(kind) {
+    var _a2;
+    const s = tryGetSettings();
+    const map = kind === "keys" ? s.jevApiKeys : s.jevModels;
+    return String((_a2 = map == null ? void 0 : map[currentJevProviderId()]) != null ? _a2 : "");
+  }
+  function setJevScopedValue(kind, raw) {
+    const s = tryGetSettings();
+    const field = kind === "keys" ? "jevApiKeys" : "jevModels";
+    if (!s[field] || typeof s[field] !== "object") s[field] = {};
+    const map = s[field];
+    const v = raw.trim();
+    if (v === "") delete map[currentJevProviderId()];
+    else map[currentJevProviderId()] = v;
+    void saveSettings();
+  }
+  function jevTestAction() {
+    return {
+      text: "测试",
+      onClick: async () => {
+        try {
+          await saveSettings();
+          const r = await testJevConnectivity();
+          notice(`${r.provider} 判定连通正常：${r.model} · ${(r.ms / 1e3).toFixed(1)} 秒`, "success");
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), "error");
+        }
+      }
+    };
   }
   function jevModelRow() {
     return {
@@ -12503,21 +12667,31 @@ var BZW_gameshelf = (() => {
       name: "Jev 模型",
       desc: "判定使用的模型，留空跟随服务商缺省",
       placeholder: "jev-latest",
-      binding: { key: "jevModel" },
+      binding: {
+        get: () => jevScopedValue("model"),
+        set: (v) => setJevScopedValue("model", v),
+        save: () => {
+        }
+      },
+      refreshKey: () => jevScopedValue("model"),
       actions: [{
         text: "获取模型",
         onClick: async (_value, ctx) => {
           try {
             await saveSettings();
+            const providerId = currentJevProviderId();
             const models = await fetchJevModels();
+            if (currentJevProviderId() !== providerId) {
+              notice("服务商已切换，请重新获取", "warning");
+              return;
+            }
             await new Promise((resolve2) => {
               openModelPicker({
-                providerLabel: getJevProviderDescriptor(String(tryGetSettings().jevProvider || "")).label,
-                current: String(tryGetSettings().jevModel || ""),
+                providerLabel: getJevProviderDescriptor(providerId).label,
+                current: jevScopedValue("model"),
                 models,
                 onPick: (m) => {
-                  tryGetSettings().jevModel = m.id;
-                  void saveSettings();
+                  setJevScopedValue("model", m.id);
                   ctx.refreshVisibility();
                   notice(`Jev 模型已设为 ${m.id}`, "success");
                 },
@@ -62639,15 +62813,24 @@ ${n.content.slice(0, 2e3)}
     if (!raw || typeof raw !== "object") return false;
     const rec = raw;
     let migrated = false;
+    if (rec.jevModel !== void 0 && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
+      rec.jevModel = "jev-latest";
+      migrated = true;
+    }
+    for (const [oldKey, mapField] of [
+      ["jevApiKey", "jevApiKeys"],
+      ["jevModel", "jevModels"]
+    ]) {
+      const v = rec[oldKey];
+      if (v === void 0 || v === null || v === "") continue;
+      if (!rec[mapField] || typeof rec[mapField] !== "object") rec[mapField] = {};
+      rec[mapField][LEGACY_JEV_PROVIDER] = v;
+    }
     for (const key of RETIRED_JEV_KEYS) {
       if (rec[key] !== void 0) {
         delete rec[key];
         migrated = true;
       }
-    }
-    if (rec.jevModel !== void 0 && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
-      rec.jevModel = "jev-latest";
-      migrated = true;
     }
     return migrated;
   }
@@ -62693,7 +62876,7 @@ ${n.content.slice(0, 2e3)}
     }
     return migrated;
   }
-  var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, RETIRED_SECONDBRAIN_KEYS, RETIRED_JEV_KEYS, LEGACY_JEV_DEFAULT_MODEL, DEFAULT_SETTINGS;
+  var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, RETIRED_SECONDBRAIN_KEYS, RETIRED_JEV_KEYS, LEGACY_JEV_DEFAULT_MODEL, LEGACY_JEV_PROVIDER, DEFAULT_SETTINGS;
   var init_settings8 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
@@ -62732,8 +62915,9 @@ ${n.content.slice(0, 2e3)}
         "secondBrainDebounceDelay",
         "secondBrainCursorPollInterval"
       ];
-      RETIRED_JEV_KEYS = ["jevEnabled", "jevEndpoint", "jevTimeoutMs"];
+      RETIRED_JEV_KEYS = ["jevEnabled", "jevEndpoint", "jevTimeoutMs", "jevApiKey", "jevModel"];
       LEGACY_JEV_DEFAULT_MODEL = "jev-1.13.0";
+      LEGACY_JEV_PROVIDER = "typesafe";
       DEFAULT_SETTINGS = {
         // AI 全局（issue 411/ADR-0179：注册表只留三条通道，缺省 = DeepSeek 官方）
         aiProvider: DEFAULT_AI_PROVIDER,
@@ -62744,10 +62928,10 @@ ${n.content.slice(0, 2e3)}
         aiMaxTokensOverrides: {},
         // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
         aiThinkingOverrides: {},
-        // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开）：无开关，未填密钥时不接管任何判定
+        // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 431/ADR-0189 起按服务商分存）：未填密钥时不接管任何判定
         jevProvider: "typesafe",
-        jevApiKey: "",
-        jevModel: "jev-latest",
+        jevApiKeys: {},
+        jevModels: {},
         // 共享数据路径（ADR-0009）
         storagePath: "CONFIG/STORAGE",
         // 附件搬移（ticket 65，运行时记忆）

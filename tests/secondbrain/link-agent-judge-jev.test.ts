@@ -30,7 +30,7 @@ function jevSettings(over: Record<string, unknown> = {}): any {
   return {
     ...DEFAULT_SETTINGS,
     jevProvider: 'typesafe',
-    jevApiKey: 'test-key',
+    jevApiKeys: { typesafe: 'test-key' },
     jevModel: 'jev-latest',
     ...over,
   };
@@ -215,7 +215,7 @@ describe('裁判接入 Jev：失败回落 LLM（processNote）', () => {
   });
 
   it('未配置 Jev（无密钥）→ 不碰 Jev，走旧 LLM 路径（行为与接入前一致）', async () => {
-    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
+    setSettingsProvider(() => jevSettings({ jevApiKeys: {} }));
     const { vault, agent, askJevSpy, askSpy } = makeWorld({
       hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
     });

@@ -50,14 +50,14 @@
  *   secondbrain/config 的 RERANK_MODEL（Qwen3-Reranker-4B）。重排是纯换序层，换模型不重建索引。
  */
 
-import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
-import { JEV_PROVIDER_REGISTRY, getJevProviderDescriptor, fetchJevModels } from './jev';
+import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity, thinkingLevelsOf } from './ai';
+import { JEV_PROVIDER_REGISTRY, DEFAULT_JEV_PROVIDER, getJevProviderDescriptor, fetchJevModels, testJevConnectivity } from './jev';
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
-import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
+import type { NumberRow, RowAction, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
 /** 存储路径改动防错提示（f1；正文不带 emoji，铁律 7）——文案逐字冻结，勿改 */
 export const STORAGE_PATH_COMMIT_NOTICE = '存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。';
@@ -245,6 +245,8 @@ function providerMaxTokensRow(): NumberRow {
  * issue 411/ADR-0179：只留 deepseek / zhipu-plan / ollama 三条通道，custom 的端点/密钥两行退役
  * （新通道按注册表加一行即可，不再需要「自填端点」这一档）。
  * 密钥行全走「密钥型」档位（type:'secret' → 密码框 + 眼睛切明文），凭据不裸奔。
+ * issue 433：行内「测试」按钮（输入框左侧，RowAction 统一渲染序）——对该行所属服务商发一次
+ * 真实极小请求验证连通（testAIConnectivity 按 id 解析该家设置，不受当前下拉选中影响）。
  */
 function providerGroupRows(): SettingsRow[] {
   const rows: SettingsRow[] = [
@@ -264,6 +266,18 @@ function providerGroupRows(): SettingsRow[] {
       binding: { key: p.apiKeyKey as never },
       placeholder: '粘贴密钥',
       visibleWhen: (snapshot) => snapshot.aiProvider === p.id,
+      actions: [{
+        text: '测试',
+        onClick: async () => {
+          try {
+            await saveSettings(); // 先落盘防抖中的手输密钥——所配即所测
+            const r = await testAIConnectivity(p.id);
+            notice(`${r.label} 连通正常：${r.model} · ${(r.ms / 1000).toFixed(1)} 秒`, 'success');
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), 'error');
+          }
+        },
+      }],
     });
   }
   return rows;
@@ -390,53 +404,115 @@ function ollamaLocalUrlRow(): SettingsRow {
  * - 「Jev 模型」加行内「获取模型」按钮（拉服务商模型列表，留空跟随服务商缺省——
  *   typesafe → `jev-latest`，博查 → `bocha-jev-v1`）。
  * 密钥行用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文口径。
- * 注意两家密钥互不通用：Typesafe 与博查各发各的 key，换服务商须连同密钥、模型一起换。
+ * issue 433/ADR-0190 起密钥/模型**按服务商分存**（`jevApiKeys` / `jevModels`，键 = 服务商 id）：
+ * 密钥行与模型行走三函数绑定读当前服务商槽位 + refreshKey——切下拉两行显示值原地换成该家存的
+ * 那份，互不覆盖（旧全局键经 onload 迁移进 typesafe 槽位，存量用户无感）。
  */
 function jevGroupRows(): SettingsRow[] {
   return [
     {
       type: 'select',
       name: 'Jev 服务商',
-      desc: '判定通道的服务商，各家密钥不通用',
+      desc: '判定通道的服务商，密钥与模型随服务商各自保存',
       binding: { key: 'jevProvider' },
       options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
     {
       type: 'secret',
       name: 'Jev 密钥',
-      desc: '填写后判定通道即启用，清空则回落语言模型',
-      binding: { key: 'jevApiKey' },
+      desc: '填写后判定通道即启用，测试按钮会发一次真实请求',
+      binding: {
+        get: () => jevScopedValue('keys'),
+        set: (v) => setJevScopedValue('keys', v),
+        save: () => {},
+      },
       placeholder: '粘贴 Jev 密钥',
+      refreshKey: () => jevScopedValue('keys'),
+      actions: [jevTestAction()],
     },
     jevModelRow(),
   ];
 }
 
+/** 当前 Jev 服务商 id（设置未显式时取注册表缺省；口径同 core/jev 的 resolveJevConfig） */
+function currentJevProviderId(): string {
+  const s = tryGetSettings() as any;
+  return String(s.jevProvider || '') || DEFAULT_JEV_PROVIDER;
+}
+
+/** 读当前服务商的分存槽位（keys = 密钥 map，model = 模型 map；空 = 显示空，回落逻辑在消费侧） */
+function jevScopedValue(kind: 'keys' | 'model'): string {
+  const s = tryGetSettings() as any;
+  const map = kind === 'keys' ? s.jevApiKeys : s.jevModels;
+  return String(map?.[currentJevProviderId()] ?? '');
+}
+
+/** 写当前服务商的分存槽位（空值 = 删键：密钥删即回落 LLM，模型删即回落该家缺省） */
+function setJevScopedValue(kind: 'keys' | 'model', raw: string): void {
+  const s = tryGetSettings() as any;
+  const field = kind === 'keys' ? 'jevApiKeys' : 'jevModels';
+  if (!s[field] || typeof s[field] !== 'object') s[field] = {};
+  const map = s[field] as Record<string, string>;
+  const v = raw.trim();
+  if (v === '') delete map[currentJevProviderId()];
+  else map[currentJevProviderId()] = v;
+  void saveSettings();
+}
+
+/** 「测试」按钮（issue 433）：发一次真实判定请求验证连通，成功/失败均弹通知（文案不带耗时
+ *  会失去「连着但很慢」的判断依据，故带秒数）。先落盘防抖中的手输值——所配即所测。 */
+function jevTestAction(): RowAction {
+  return {
+    text: '测试',
+    onClick: async () => {
+      try {
+        await saveSettings();
+        const r = await testJevConnectivity();
+        notice(`${r.provider} 判定连通正常：${r.model} · ${(r.ms / 1000).toFixed(1)} 秒`, 'success');
+      } catch (e) {
+        notice(e instanceof Error ? e.message : String(e), 'error');
+      }
+    },
+  };
+}
+
 /** 「Jev 模型」行（issue 424/ADR-0184）：声明式 text + 行内「获取模型」按钮，照 Embedding 模型行范式
  *  （选中即回填一次到位——等选择器关闭再 resolve 动作 Promise，见该行注释）。空值回落服务商缺省
  *  （issue 430 起按服务商各配，见 core/jev 描述符的 defaultModel）。placeholder 钉 `jev-latest`
- *  只是示例展示（它在博查亦是有效别名），非全局缺省。 */
+ *  只是示例展示（它在博查亦是有效别名），非全局缺省。
+ *  issue 433：绑定改三函数读写当前服务商槽位 + refreshKey，随「Jev 服务商」切换联动换值；
+ *  「获取模型」期间服务商被切则弃用结果（照 LLM 模型行的竞态口径）。 */
 function jevModelRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Jev 模型',
     desc: '判定使用的模型，留空跟随服务商缺省',
     placeholder: 'jev-latest',
-    binding: { key: 'jevModel' },
+    binding: {
+      get: () => jevScopedValue('model'),
+      set: (v) => setJevScopedValue('model', v),
+      save: () => {},
+    },
+    refreshKey: () => jevScopedValue('model'),
     actions: [{
       text: '获取模型',
       onClick: async (_value, ctx) => {
         try {
           await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+          const providerId = currentJevProviderId();
           const models = await fetchJevModels();
+          // 拉取期间服务商仍可能被切——以当前为准，不一致即弃用（照 LLM 模型行口径）
+          if (currentJevProviderId() !== providerId) {
+            notice('服务商已切换，请重新获取', 'warning');
+            return;
+          }
           await new Promise<void>((resolve) => {
             openModelPicker({
-              providerLabel: getJevProviderDescriptor(String((tryGetSettings() as any).jevProvider || '')).label,
-              current: String((tryGetSettings() as any).jevModel || ''),
+              providerLabel: getJevProviderDescriptor(providerId).label,
+              current: jevScopedValue('model'),
               models,
               onPick: (m) => {
-                (tryGetSettings() as any).jevModel = m.id;
-                void saveSettings();
+                setJevScopedValue('model', m.id);
                 // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
                 ctx.refreshVisibility();
                 notice(`Jev 模型已设为 ${m.id}`, 'success');

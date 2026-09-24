@@ -36,13 +36,13 @@ export default interface BzSettings {
    *  modelOptions 显式思考键优先，不受本设置影响 */
   aiThinkingOverrides: Record<string, string>;
 
-  // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389；issue 424/ADR-0184 起常开）=====
+  // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389；issue 424/ADR-0184 起常开；issue 433/ADR-0190 起按服务商分存）=====
   /** Jev 服务商（issue 424：照 LLM「AI 服务商」同款；issue 430 起 typesafe / bocha，端点走 JEV_PROVIDER_REGISTRY） */
   jevProvider: string;
-  /** Jev 密钥（各服务商控制台创建，互不通用；创建时只显示一次）——填了即接管判定，无独立开关 */
-  jevApiKey: string;
-  /** Jev 模型名。留空跟随服务商缺省（issue 430：typesafe → jev-latest，博查 → bocha-jev-v1；可取模型列表后自选） */
-  jevModel: string;
+  /** 各服务商密钥（键 = JEV_PROVIDER_REGISTRY id；旧全局键 jevApiKey 已迁移进 typesafe 槽位）——填了即接管判定，无独立开关 */
+  jevApiKeys: Record<string, string>;
+  /** 各服务商模型名（键 = 服务商 id；空/缺 = 跟随该家缺省；旧全局键 jevModel 已迁移进 typesafe 槽位） */
+  jevModels: Record<string, string>;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -652,29 +652,42 @@ export function migrateRetiredSecondBrainKeys(raw: unknown): boolean {
   return migrated;
 }
 
-/** Jev 通道一次性迁移（issue 424/ADR-0184）：
+/** Jev 通道一次性迁移（issue 424/ADR-0184；issue 433/ADR-0190 起键按服务商分存）：
  * 1) **总开关键退役**（`jevEnabled`）——常开：填了密钥即接管判定，清空即回落 LLM；
  * 2) **端点 / 超时两键退役**——端点由「Jev 服务商」决定（`JEV_PROVIDER_REGISTRY`），超时固定十秒；
- * 3) `jevModel` 仍钉在旧缺省 `jev-1.13.0` → 改写为 `jev-latest`（服务端最新版；旧值只是插件
- *    缺省被落盘的产物，用户自选的其他模型名一律保留）。
+ * 3) `jevApiKey` / `jevModel` 退役——迁移进按服务商分存的 `jevApiKeys` / `jevModels` map 的
+ *    **typesafe 槽位**（存量用户无感：原值原样带走，换服务商后各存各的互不覆盖）；搬运前仍先做
+ *    旧缺省模型名改写（`jev-1.13.0` → `jev-latest`，插件缺省被落盘的产物，用户自选值保留）。
  * 幂等：无旧键/无脏值即不改动（同 migrateMemoSettingKeys 的 C16 口径，调用方据返回值调度落盘）。 */
-const RETIRED_JEV_KEYS: string[] = ['jevEnabled', 'jevEndpoint', 'jevTimeoutMs'];
+const RETIRED_JEV_KEYS: string[] = ['jevEnabled', 'jevEndpoint', 'jevTimeoutMs', 'jevApiKey', 'jevModel'];
 /** 旧缺省模型名（ADR-0173 §5 曾刻意钉版本；issue 424 起改为跟随服务端最新） */
 const LEGACY_JEV_DEFAULT_MODEL = 'jev-1.13.0';
+/** 全局密钥/模型键迁移的落位服务商（旧键只有一份，归属缺省服务商 typesafe） */
+const LEGACY_JEV_PROVIDER = 'typesafe';
 
 export function migrateRetiredJevKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
   let migrated = false;
+  if (rec.jevModel !== undefined && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
+    rec.jevModel = 'jev-latest';
+    migrated = true;
+  }
+  // 全局键 → 按服务商分存 map（issue 433/ADR-0190）：非空才搬，空值搬进去等于噪音
+  for (const [oldKey, mapField] of [
+    ['jevApiKey', 'jevApiKeys'],
+    ['jevModel', 'jevModels'],
+  ] as const) {
+    const v = rec[oldKey];
+    if (v === undefined || v === null || v === '') continue;
+    if (!rec[mapField] || typeof rec[mapField] !== 'object') rec[mapField] = {};
+    (rec[mapField] as Record<string, unknown>)[LEGACY_JEV_PROVIDER] = v;
+  }
   for (const key of RETIRED_JEV_KEYS) {
     if (rec[key] !== undefined) {
       delete rec[key];
       migrated = true;
     }
-  }
-  if (rec.jevModel !== undefined && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
-    rec.jevModel = 'jev-latest';
-    migrated = true;
   }
   return migrated;
 }
@@ -749,10 +762,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
   aiThinkingOverrides: {},
 
-  // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开）：无开关，未填密钥时不接管任何判定
+  // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
   jevProvider: 'typesafe',
-  jevApiKey: '',
-  jevModel: 'jev-latest',
+  jevApiKeys: {},
+  jevModels: {},
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',

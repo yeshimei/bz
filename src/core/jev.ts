@@ -148,7 +148,9 @@ export interface JevConfig {
   timeoutMs: number;
 }
 
-/** 读取 Jev 配置（设置注入未就绪时用缺省；`override` 用于测试与显式指定） */
+/** 读取 Jev 配置（设置注入未就绪时用缺省；`override` 用于测试与显式指定）。
+ *  密钥 / 模型按服务商分存（issue 433/ADR-0190）：读当前服务商的 map 槽位，
+ *  切换「Jev 服务商」即整体换槽，两家的凭据互不覆盖。 */
 export function resolveJevConfig(override?: Partial<JevConfig>): JevConfig {
   const s = tryGetSettings() as Record<string, unknown>;
   const pick = <T>(key: string, fallback: T): T => {
@@ -156,13 +158,20 @@ export function resolveJevConfig(override?: Partial<JevConfig>): JevConfig {
     return v === undefined || v === null || v === '' ? fallback : (v as T);
   };
   const desc = getJevProviderDescriptor(pick('jevProvider', DEFAULT_JEV_PROVIDER));
+  const keys = (s?.jevApiKeys ?? {}) as Record<string, unknown>;
+  const models = (s?.jevModels ?? {}) as Record<string, unknown>;
   return {
     endpoint: String(override?.endpoint ?? desc.endpoint),
-    apiKey: String(override?.apiKey ?? pick('jevApiKey', '')),
-    // 模型留空按服务商各回各的缺省（issue 430）：typesafe → jev-latest，博查 → bocha-jev-v1
-    model: String(override?.model ?? pick('jevModel', desc.defaultModel)),
+    apiKey: String(override?.apiKey ?? pickFrom(keys[desc.id], '')),
+    // 模型槽位留空 → 该服务商缺省（issue 430 起：typesafe → jev-latest，博查 → bocha-jev-v1）
+    model: String(override?.model ?? pickFrom(models[desc.id], desc.defaultModel)),
     timeoutMs: override?.timeoutMs ?? JEV_DEFAULT_TIMEOUT_MS,
   };
+}
+
+/** map 槽位取值：undefined/null/'' 一律回落 fallback（与 pick 同口径，作用于分存 map） */
+function pickFrom(v: unknown, fallback: string): string {
+  return v === undefined || v === null || v === '' ? fallback : String(v);
 }
 
 /**
@@ -364,4 +373,36 @@ export async function askJev(
     throw new Error(`Jev API ${status}: ${brief || '无响应正文'}`);
   }
   return parseJevResponse(text, status);
+}
+
+// ---------------- 连通性测试（issue 433：设置面板「测试」按钮） ----------------
+
+export interface JevTestResult {
+  /** 服务商显示名（如 博查 / Typesafe） */
+  provider: string;
+  /** 服务端实际解析到的模型版本 */
+  model: string;
+  /** 全程耗时（毫秒） */
+  ms: number;
+  /** 测试题的 noul 概率（回显用，不作判定） */
+  noul: number;
+}
+
+/**
+ * 连通性测试：发一道**真实**的 noul 小题走完整判定链路（鉴权 / 报文 / 解析全过一遍才算通），
+ * 配置读当前设置（走 `resolveJevConfig`，测试按钮先落盘防抖值再调本函数即为所配即所测）。
+ * 失败一律抛错（超时 / 网络 / HTTP 非 2xx / 响应畸形），文案直接可弹通知。
+ */
+export async function testJevConnectivity(opts: JevAskOptions = {}): Promise<JevTestResult> {
+  const s = tryGetSettings() as Record<string, unknown>;
+  const desc = getJevProviderDescriptor(String(s?.jevProvider ?? '') || DEFAULT_JEV_PROVIDER);
+  const t0 = Date.now();
+  const result = await askJev(
+    '这是一条连通性测试消息。',
+    { ping: { instructions: '这条消息是连通性测试消息吗？', type: 'noul' } },
+    opts
+  );
+  const answer = result.answers.ping;
+  const noul = answer && answer.type === 'noul' && Number.isFinite(answer.noul) ? answer.noul : NaN;
+  return { provider: desc.label, model: result.model || '未知模型', ms: Date.now() - t0, noul };
 }

@@ -691,3 +691,37 @@ export class AIService {
 export function createAI(params?: any, defaultModel = 'deepseek-v4-flash', defaultOptions: any = {}): AIService {
   return new AIService(params, defaultModel, defaultOptions);
 }
+
+// ---------------- 连通性测试（issue 433：设置面板密钥行「测试」按钮） ----------------
+
+export interface AITestResult {
+  /** 服务商显示名（如 DeepSeek / 智谱 Plan / Ollama） */
+  label: string;
+  /** 本次测试实际使用的模型名 */
+  model: string;
+  /** 全程耗时（毫秒） */
+  ms: number;
+  /** 模型回复文本（回显用） */
+  reply: string;
+}
+
+/** 测试题面：诱导极短输出，控制真实调用的费用（deepseek/智谱按 token 计费，ollama 本地零成本） */
+const AI_TEST_PROMPT = '这是一次连通性测试。请只回复两个字母：OK';
+
+/**
+ * 连通性测试：对指定服务商发一次**真实**的极小对话请求，走完整链路（鉴权 / 端点 / 流式 /
+ * 兜底全过一遍才算通）。`providerId` 缺省 = 当前设置的 provider；显式传 id 时按该家设置解析
+ * （字符串 override 口径：不读不写全局缓存）。失败一律抛错（缺密钥 / 网络 / HTTP 非 2xx），
+ * 文案直接可弹通知；回复为空也视为不通（服务端异常的哑响应不该被当成「连着」）。
+ */
+export async function testAIConnectivity(providerId?: string): Promise<AITestResult> {
+  const id = String(providerId || '').trim();
+  const desc = getProviderDescriptor(id || DEFAULT_AI_PROVIDER);
+  const provider = await getAIProvider(id || undefined);
+  const model = provider.model || desc.model || undefined;
+  const t0 = Date.now();
+  const svc = createAI();
+  const reply = (await svc.prompt(AI_TEST_PROMPT, model, { provider: id || undefined })).trim();
+  if (!reply) throw new Error(`${desc.label} 连通异常：请求成功但回复为空`);
+  return { label: desc.label, model: model || '默认模型', ms: Date.now() - t0, reply };
+}

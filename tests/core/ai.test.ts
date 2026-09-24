@@ -13,6 +13,7 @@ import {
   imageDataUrl,
   imageExtOfMime,
   imageMimeOfPath,
+  testAIConnectivity,
   AI_IMAGE_MAX_BYTES,
   AI_PROVIDER_REGISTRY,
   DEFAULT_AI_PROVIDER,
@@ -585,5 +586,58 @@ describe('createAI', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.max_tokens).toBe(393216);
     delete (global as any).fetch;
+  });
+});
+;
+// ==================== 连通性测试（issue 433 密钥行「测试」按钮的数据层） ====================
+
+describe('testAIConnectivity', () => {
+  let fetchMock: any;
+
+  beforeEach(() => {
+    setApp({ vault: new MockVault(), adapter: { read: vi.fn() } } as any);
+    setAISettingsProvider(() => ({ ...DEFAULT_SETTINGS }));
+    resetAIProviderCache();
+    vi.mocked(requestUrl).mockReset();
+    fetchMock = vi.fn();
+    (global as any).fetch = fetchMock;
+  });
+
+  afterEach(() => {
+    delete (global as any).fetch;
+  });
+
+  it('按服务商 id 发一次真实极小请求：走该家设置密钥，回传服务商/模型/耗时/回复', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"OK"}}]}\n', 'data: [DONE]\n']),
+    });
+    const r = await testAIConnectivity('deepseek');
+    expect(r.label).toBe('DeepSeek');
+    expect(r.reply).toBe('OK');
+    expect(r.ms).toBeGreaterThanOrEqual(0);
+    expect(r.model).toBeTruthy();
+    const [url, opts] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.deepseek.com/chat/completions');
+    expect(opts.headers.Authorization).toBe('Bearer sk-deepseek-test');
+    const body = JSON.parse(opts.body);
+    expect(body.messages).toEqual([{ role: 'user', content: '这是一次连通性测试。请只回复两个字母：OK' }]);
+  });
+
+  it('缺密钥 → 抛错（文案含「未配置」），不冒充连通', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'zhipu-plan', zhipuPlanApiKey: '' }));
+    resetAIProviderCache();
+    await expect(testAIConnectivity('zhipu-plan')).rejects.toThrow(/未配置/);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('回复为空 → 视为不通（服务端哑响应不该被当成「连着」）', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":""}}]}\n', 'data: [DONE]\n']),
+    });
+    await expect(testAIConnectivity('deepseek')).rejects.toThrow(/回复为空/);
   });
 });

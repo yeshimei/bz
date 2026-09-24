@@ -13,6 +13,7 @@ import {
   isJevConfigured,
   parseJevModels,
   resolveJevConfig,
+  testJevConnectivity,
   JEV_DEFAULT_ENDPOINT,
   JEV_DEFAULT_MODEL,
   JEV_DEFAULT_TIMEOUT_MS,
@@ -259,19 +260,42 @@ describe('core/jev', () => {
     expect(JEV_DEFAULT_MODEL).toBe('jev-latest');
   });
 
+  it('resolveJevConfig：密钥与模型按服务商分存（issue 433），槽位空回落该家缺省', () => {
+    setSettingsProvider(() => ({
+      jevProvider: 'bocha',
+      jevApiKeys: { typesafe: 'sk-ts', bocha: 'sk-bocha' },
+      jevModels: { typesafe: 'jev-preview', bocha: 'bocha-jev-latest' },
+    }) as any);
+    expect(resolveJevConfig().apiKey).toBe('sk-bocha');
+    expect(resolveJevConfig().model).toBe('bocha-jev-latest');
+    // 切回 typesafe → 整体换槽，博查的值互不污染
+    setSettingsProvider((() => ({
+      jevProvider: 'typesafe',
+      jevApiKeys: { typesafe: 'sk-ts', bocha: 'sk-bocha' },
+      jevModels: { typesafe: 'jev-preview', bocha: 'bocha-jev-latest' },
+    })) as any);
+    expect(resolveJevConfig().apiKey).toBe('sk-ts');
+    expect(resolveJevConfig().model).toBe('jev-preview');
+    // 槽位缺/空 → 密钥空、模型回落该家缺省
+    setSettingsProvider(() => ({ jevProvider: 'bocha' }) as any);
+    const cfg = resolveJevConfig();
+    expect(cfg.apiKey).toBe('');
+    expect(cfg.model).toBe('bocha-jev-v1');
+  });
+
   it('resolveJevConfig：模型缺省按服务商各配（博查 → bocha-jev-v1），手输值优先', () => {
-    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKey: 'sk-bocha' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: { bocha: 'sk-bocha' } }) as any);
     const cfg = resolveJevConfig();
     expect(cfg.endpoint).toBe('https://jev.bochaai.com/v1/systemone');
     expect(cfg.model).toBe('bocha-jev-v1');
-    setSettingsProvider(() => ({ jevProvider: 'bocha', jevModel: 'bocha-jev-latest' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevModels: { bocha: 'bocha-jev-latest' } }) as any);
     expect(resolveJevConfig().model).toBe('bocha-jev-latest');
   });
 
   it('resolveJevConfig：模型覆盖（空串回落缺省）', () => {
-    setSettingsProvider(() => ({ jevModel: 'jev-preview', jevApiKey: 'sk-x' }) as any);
+    setSettingsProvider(() => ({ jevModels: { typesafe: 'jev-preview' }, jevApiKeys: { typesafe: 'sk-x' } }) as any);
     expect(resolveJevConfig().model).toBe('jev-preview');
-    setSettingsProvider(() => ({ jevModel: '' }) as any);
+    setSettingsProvider(() => ({ jevModels: {} }) as any);
     expect(resolveJevConfig().model).toBe(JEV_DEFAULT_MODEL);
   });
 
@@ -283,12 +307,15 @@ describe('core/jev', () => {
   });
 
   it('isJevConfigured：常开（issue 424 起总开关键退役）——只看密钥，无开关', () => {
-    setSettingsProvider(() => ({ jevApiKey: 'sk-x' }) as any);
+    setSettingsProvider(() => ({ jevApiKeys: { typesafe: 'sk-x' } }) as any);
     expect(isJevConfigured()).toBe(true);
-    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevApiKeys: {} }) as any);
+    expect(isJevConfigured()).toBe(false);
+    // 分存后只认当前服务商的槽位：另一家配了密钥不算已配置
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: { typesafe: 'sk-x' } }) as any);
     expect(isJevConfigured()).toBe(false);
     // 存量数据里残留的旧开关值不再影响判定（键已退役）
-    setSettingsProvider(() => ({ jevEnabled: false, jevApiKey: 'sk-x' }) as any);
+    setSettingsProvider(() => ({ jevEnabled: false, jevApiKeys: { typesafe: 'sk-x' } }) as any);
     expect(isJevConfigured()).toBe(true);
   });
 });
@@ -337,7 +364,7 @@ describe('core/jev · 模型列表', () => {
   });
 
   it('fetchJevModels：打到服务商 modelsUrl，带 Bearer 密钥；响应 → 选项列表', async () => {
-    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: 'sk-jev' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKeys: { typesafe: 'sk-jev' } }) as any);
     requestUrlMock.mockResolvedValue({ status: 200, text: JSON.stringify(MODELS_JSON) } as any);
     const models = await fetchJevModels();
     expect(models.map((m) => m.id)).toEqual(['jev-latest', 'jev-preview']);
@@ -347,7 +374,7 @@ describe('core/jev · 模型列表', () => {
   });
 
   it('fetchJevModels：博查服务商打到博查列表端点（issue 430）', async () => {
-    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKey: 'sk-bocha' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: { bocha: 'sk-bocha' } }) as any);
     requestUrlMock.mockResolvedValue({
       status: 200,
       text: JSON.stringify({ models: [{ name: 'bocha-jev-v1', description: 'Bocha Jev' }] }),
@@ -360,13 +387,13 @@ describe('core/jev · 模型列表', () => {
   });
 
   it('fetchJevModels：缺密钥 → 抛错且不发请求（与判定请求同口径）', async () => {
-    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKeys: {} }) as any);
     await expect(fetchJevModels()).rejects.toThrow(/密钥/);
     expect(requestUrlMock).not.toHaveBeenCalled();
   });
 
   it('fetchJevModels：HTTP 非 2xx / 畸形 JSON / 空列表 → 抛错（不静默返回空选择器）', async () => {
-    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: 'sk-jev' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKeys: { typesafe: 'sk-jev' } }) as any);
     requestUrlMock.mockResolvedValue({ status: 401, text: 'unauthorized' } as any);
     await expect(fetchJevModels()).rejects.toThrow(/401/);
     requestUrlMock.mockResolvedValue({ status: 200, text: '不是 JSON' } as any);
@@ -376,10 +403,59 @@ describe('core/jev · 模型列表', () => {
   });
 
   it('fetchJevModels：测试注入通道可绕开 obsidian requestUrl（deps 口径）', async () => {
-    setSettingsProvider(() => ({ jevApiKey: 'sk-x' }) as any);
+    setSettingsProvider(() => ({ jevApiKeys: { typesafe: 'sk-x' } }) as any);
     const requestUrlFn = vi.fn(async () => ({ status: 200, text: JSON.stringify(MODELS_JSON) }));
     const models = await fetchJevModels({ requestUrlFn });
     expect(models.map((m) => m.id)).toEqual(['jev-latest', 'jev-preview']);
     expect(requestUrlMock).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------- 连通性测试（issue 433「测试」按钮的数据层） ----------------
+
+describe('core/jev · 连通性测试', () => {
+  beforeEach(() => {
+    requestUrlMock.mockReset();
+  });
+
+  it('testJevConnectivity：发一道 noul 测试题走真实链路，回传服务商/模型/耗时/概率', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: { bocha: 'sk-bocha' } }) as any);
+    requestUrlMock.mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({
+        model: 'bocha-jev-v1',
+        answers: { ping: { type: 'noul', noul: 0.99 } },
+        usage: { input_tokens: 20, output_tokens: 0 },
+      }),
+    } as any);
+    const r = await testJevConnectivity();
+    expect(r.provider).toBe('博查');
+    expect(r.model).toBe('bocha-jev-v1');
+    expect(r.noul).toBe(0.99);
+    expect(r.ms).toBeGreaterThanOrEqual(0);
+    const call = requestUrlMock.mock.calls[0][0] as any;
+    expect(call.url).toBe('https://jev.bochaai.com/v1/systemone');
+    expect(call.headers.Authorization).toBe('Bearer sk-bocha');
+    const body = JSON.parse(call.body);
+    expect(body.questions.ping.type).toBe('noul');
+  });
+
+  it('testJevConnectivity：失败原样上抛（缺密钥 / HTTP 非 2xx），调用方弹通知', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: {} }) as any);
+    await expect(testJevConnectivity()).rejects.toThrow(/密钥/);
+    setSettingsProvider(() => ({ jevProvider: 'bocha', jevApiKeys: { bocha: 'sk-b' } }) as any);
+    requestUrlMock.mockResolvedValue({ status: 401, text: '{"detail":"invalid API key"}' } as any);
+    await expect(testJevConnectivity()).rejects.toThrow(/401/);
+  });
+
+  it('testJevConnectivity：答案畸形（缺 ping / 非数字）不冒充成功——noul 记 NaN', async () => {
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKeys: { typesafe: 'sk-ts' } }) as any);
+    requestUrlMock.mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ model: 'jev-1.13.0', answers: {} }),
+    } as any);
+    const r = await testJevConnectivity();
+    expect(r.model).toBe('jev-1.13.0');
+    expect(Number.isNaN(r.noul)).toBe(true);
   });
 });

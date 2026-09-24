@@ -298,8 +298,8 @@ describe('模型选择器回填时机：选中即刷新（一次点击）', () =
  */
 describe('Jev 模型行：获取模型（issue 424/ADR-0184）', () => {
   it('拉取 Typesafe 模型列表 → 选择器 → 选中即回填（一次点击）', async () => {
-    state.jevApiKey = 'sk-jev';
-    state.jevModel = ''; // 当前空 → 选中后必变（否则「回填显示值」断言恒真，抓不到回填断链）
+    state.jevApiKeys = { typesafe: 'sk-jev' };
+    state.jevModels = {}; // 当前空 → 选中后必变（否则「回填显示值」断言恒真，抓不到回填断链）
     requestUrlMock.mockResolvedValue({
       status: 200,
       text: JSON.stringify({
@@ -319,14 +319,14 @@ describe('Jev 模型行：获取模型（issue 424/ADR-0184）', () => {
     expect(call.method).toBe('GET');
     expect(call.headers.Authorization).toBe('Bearer sk-jev');
     (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
-    await vi.waitFor(() => expect(state.jevModel).toBe('jev-latest'));
+    await vi.waitFor(() => expect(state.jevModels?.typesafe).toBe('jev-latest'));
     await vi.waitFor(() =>
       expect(textControlOf(findRow(container, 'Jev 模型')).value).toBe('jev-latest')
     );
   });
 
   it('缺密钥 → 行内报错，不发请求（服务商模型列表也要鉴权）', async () => {
-    state.jevApiKey = '';
+    state.jevApiKeys = {};
     const container = renderAIGroup();
     buttonOf(findRow(container, 'Jev 模型')).trigger();
     await vi.waitFor(() => expect(visibleToasts().some((t) => t.includes('Typesafe 密钥'))).toBe(true));

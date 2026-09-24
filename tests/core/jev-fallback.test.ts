@@ -25,8 +25,8 @@ function ready(): void {
     () =>
       ({
         jevProvider: 'typesafe',
-        jevApiKey: 'sk-test',
-        jevModel: 'jev-latest',
+        jevApiKeys: { typesafe: 'sk-test' },
+        jevModels: { typesafe: 'jev-latest' },
       }) as any
   );
 }
@@ -74,7 +74,7 @@ beforeEach(() => {
 
 describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   it('未配置（无密钥）→ 直接回落：材料零构造、零请求', async () => {
-    setSettingsProvider(() => ({ jevEnabled: false, jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevEnabled: false, jevApiKeys: {} }) as any);
     const { plan, request, fallback } = makePlan();
     await expect(judgeOrFallback(plan)).resolves.toBe('LLM 结果');
     expect(request).not.toHaveBeenCalled();
@@ -83,7 +83,7 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   });
 
   it('密钥被清空 → 同样直接回落（就绪门只看密钥；旧总开关键残留不再影响）', async () => {
-    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevProvider: 'typesafe', jevApiKeys: {} }) as any);
     const { plan, request, fallback } = makePlan();
     await expect(judgeOrFallback(plan)).resolves.toBe('LLM 结果');
     expect(request).not.toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   });
 
   it('取消优先于就绪门：未配置 + 已取消 → 仍抛 AbortError、零回落', async () => {
-    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevApiKeys: {} }) as any);
     const ctrl = new AbortController();
     ctrl.abort();
     const { plan, fallback } = makePlan({ signal: ctrl.signal });
@@ -175,7 +175,7 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
   });
 
   it('回落自身失败 → 原样上抛（由调用方入队 / 留空，不引第三层）', async () => {
-    setSettingsProvider(() => ({ jevApiKey: '' }) as any);
+    setSettingsProvider(() => ({ jevApiKeys: {} }) as any);
     const fb = vi.fn(async () => {
       throw new Error('LLM 未配置 API Key');
     });

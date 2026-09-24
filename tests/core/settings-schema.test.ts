@@ -132,31 +132,34 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     // 反向断言（第二大脑设置页不再有这些行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
   });
 
-  it('JEV 组（issue 424/ADR-0184）：服务商 / 密钥 / 模型三行；总开关、端点、超时三行退役', () => {
+  it('JEV 组（issue 424/ADR-0184 收口；issue 430 两家；issue 433 分存 + 测试钮）：三行制不变', () => {
     const rows = schema.groups[2].rows as Array<{
       name: string;
       type: string;
       desc?: string;
-      binding?: { key: string };
+      binding?: { key: string } | { get: () => string; set: (v: string) => void; save: () => void };
       placeholder?: string;
       visibleWhen?: unknown;
+      refreshKey?: unknown;
       actions?: Array<{ text: string }>;
       options?: Array<{ value: string; label: string }>;
     }>;
     expect(rows.map((r) => r.name)).toEqual(['Jev 服务商', 'Jev 密钥', 'Jev 模型']);
     expect(rows.map((r) => r.type)).toEqual(['select', 'secret', 'text']);
-    expect(rows.map((r) => r.binding)).toEqual([
-      { key: 'jevProvider' },
-      { key: 'jevApiKey' },
-      { key: 'jevModel' },
-    ]);
+    // 服务商行仍键绑定；密钥/模型行改三函数绑定（读写当前服务商槽位，issue 433）并带 refreshKey 联动
+    expect(rows[0].binding).toEqual({ key: 'jevProvider' });
+    expect(typeof (rows[1].binding as { get: unknown }).get).toBe('function');
+    expect(typeof (rows[2].binding as { get: unknown }).get).toBe('function');
+    expect(typeof rows[1].refreshKey).toBe('function');
+    expect(typeof rows[2].refreshKey).toBe('function');
     // 服务商下拉由注册表驱动（issue 430 起两家：Typesafe + 博查）；无 visibleWhen——常开，不再挂在总开关下
     expect(rows[0].options).toEqual([
       { value: 'typesafe', label: 'Typesafe' },
       { value: 'bocha', label: '博查' },
     ]);
     rows.forEach((r) => expect(r.visibleWhen).toBeUndefined());
-    // 模型行内嵌「获取模型」（照 Embedding 模型行范式）；缺省 jev-latest
+    // 密钥行内嵌「测试」（发一次真实判定请求）；模型行内嵌「获取模型」（照 Embedding 模型行范式）
+    expect(rows[1].actions?.map((a) => a.text)).toEqual(['测试']);
     expect(rows[2].actions?.map((a) => a.text)).toEqual(['获取模型']);
     expect(rows[2].placeholder).toBe('jev-latest');
   });

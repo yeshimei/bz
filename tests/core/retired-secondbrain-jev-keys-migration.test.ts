@@ -42,8 +42,8 @@ describe('migrateRetiredSecondBrainKeys · issue 424/ADR-0184（四参数键退�
   });
 });
 
-describe('migrateRetiredJevKeys · issue 424/ADR-0184（Jev 常开 + 端点/超时退役）', () => {
-  it('三键删除 + 旧缺省模型名改写为 jev-latest', () => {
+describe('migrateRetiredJevKeys · issue 424/ADR-0184 + issue 433/ADR-0190（退役 + 按服务商分存）', () => {
+  it('五键退役 + 旧值迁入 typesafe 槽位（旧缺省模型名先改写再搬）', () => {
     const raw: Record<string, unknown> = {
       jevEnabled: true,
       jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
@@ -52,19 +52,39 @@ describe('migrateRetiredJevKeys · issue 424/ADR-0184（Jev 常开 + 端点/超�
       jevModel: 'jev-1.13.0',
     };
     expect(migrateRetiredJevKeys(raw)).toBe(true);
-    expect(Object.keys(raw).sort()).toEqual(['jevApiKey', 'jevModel']);
-    expect(raw.jevModel).toBe('jev-latest');
+    expect(raw.jevEnabled).toBeUndefined();
+    expect(raw.jevEndpoint).toBeUndefined();
+    expect(raw.jevTimeoutMs).toBeUndefined();
+    expect(raw.jevApiKey).toBeUndefined();
+    expect(raw.jevModel).toBeUndefined();
+    expect(raw.jevApiKeys).toEqual({ typesafe: 'sk-x' });
+    expect(raw.jevModels).toEqual({ typesafe: 'jev-latest' });
   });
 
-  it('用户自选的模型名保留（只改插件旧缺省那一枚）', () => {
+  it('用户自选的模型名原样迁入（只改插件旧缺省那一枚）', () => {
     const raw: Record<string, unknown> = { jevModel: 'jev-preview' };
-    expect(migrateRetiredJevKeys(raw)).toBe(false);
-    expect(raw.jevModel).toBe('jev-preview');
+    expect(migrateRetiredJevKeys(raw)).toBe(true);
+    expect(raw.jevModels).toEqual({ typesafe: 'jev-preview' });
+    expect(raw.jevModel).toBeUndefined();
+  });
+
+  it('空值不搬（搬进去等于噪音），键照删', () => {
+    const raw: Record<string, unknown> = { jevApiKey: '', jevModel: '' };
+    expect(migrateRetiredJevKeys(raw)).toBe(true);
+    expect(raw.jevApiKeys).toBeUndefined();
+    expect(raw.jevModels).toBeUndefined();
+    expect(raw.jevApiKey).toBeUndefined();
+    expect(raw.jevModel).toBeUndefined();
+  });
+
+  it('已有分存 map 时迁入 typesafe 槽位，其他服务商槽位不动', () => {
+    const raw: Record<string, unknown> = { jevApiKey: 'sk-x', jevApiKeys: { bocha: 'sk-b' } };
+    expect(migrateRetiredJevKeys(raw)).toBe(true);
+    expect(raw.jevApiKeys).toEqual({ bocha: 'sk-b', typesafe: 'sk-x' });
   });
 
   it('无旧键 → 不改动返回 false（幂等）', () => {
-    expect(migrateRetiredJevKeys({ jevApiKey: 'sk-x' })).toBe(false);
-    expect(migrateRetiredJevKeys({ jevModel: 'jev-latest' })).toBe(false);
+    expect(migrateRetiredJevKeys({ jevApiKeys: { typesafe: 'sk-x' } })).toBe(false);
     expect(migrateRetiredJevKeys({})).toBe(false);
     expect(migrateRetiredJevKeys(null)).toBe(false);
     expect(migrateRetiredJevKeys(undefined)).toBe(false);

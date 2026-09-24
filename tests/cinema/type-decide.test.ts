@@ -39,8 +39,8 @@ function jevSettings(over: Record<string, unknown> = {}): any {
   return {
     ...DEFAULT_SETTINGS,
     jevProvider: 'typesafe',
-    jevApiKey: 'test-key',
-    jevModel: 'jev-latest',
+    jevApiKeys: { typesafe: 'test-key' },
+    jevModels: { typesafe: 'jev-latest' },
     ...over,
   };
 }
@@ -197,7 +197,7 @@ describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () =
   });
 
   it('Jev 未配置（无密钥）→ 回落 LLM（题面闭合词表，回执校验后采信）', async () => {
-    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
+    setSettingsProvider(() => jevSettings({ jevApiKeys: {} }));
     const spy = vi.spyOn(jev, 'askJev');
     const got = await decideCinemaType({ title: '千与千寻', isTv: false, area: '日本', genre: '动画' });
     expect(got).toBe('日漫');
@@ -238,13 +238,13 @@ describe('decideCinemaType：编排（Jev 优先，不可用回落 LLM）', () =
   });
 
   it('LLM 回执非法 → null（弃权，不写值）', async () => {
-    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
+    setSettingsProvider(() => jevSettings({ jevApiKeys: {} }));
     aiStub.json.mockResolvedValue('{"type":"自创分类"}');
     await expect(decideCinemaType({ title: 'X' })).resolves.toBeNull();
   });
 
   it('回落请求带调用方的 signal（在途取消能传导进 LLM 通道）', async () => {
-    setSettingsProvider(() => jevSettings({ jevApiKey: '' }));
+    setSettingsProvider(() => jevSettings({ jevApiKeys: {} }));
     const ctrl = new AbortController();
     await decideCinemaType({ title: 'X' }, { signal: ctrl.signal });
     expect(aiStub.json.mock.calls[0][1]).toMatchObject({ signal: ctrl.signal });
