@@ -1135,6 +1135,9 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
 }
 .bz-model-picker-row {
   display: flex;
+  /* 说明文案过长时整段折到第二行：原先 flex 单行 + 说明不可收缩，长说明（如 Typesafe 的
+     Jev 模型描述）会挤占全部宽度，把模型名压成逐字竖排并溢出裁切 */
+  flex-wrap: wrap;
   align-items: baseline;
   gap: var(--bz-space-sm);
   padding: var(--bz-space-sm) 10px;
@@ -1156,7 +1159,9 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   word-break: break-all;
 }
 .bz-model-picker-detail {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: var(--bz-font-meta);
   color: var(--text-muted);
 }
