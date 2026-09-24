@@ -638,14 +638,14 @@ function credentialGroupRows(): SettingsRow[] {
     {
       type: 'secret',
       name: 'ApiZero Key',
-      desc: '豆瓣字段接口的密钥，不填时字段走豆瓣演职员接口兜底',
+      desc: '豆瓣字段接口的密钥',
       binding: { key: 'cinemaApizeroKey' },
       placeholder: '粘贴密钥',
     },
     {
       type: 'secret',
       name: 'B站 Cookie',
-      desc: '视频录入解析清晰度档位用，留空则档位回落固定列表',
+      desc: '视频录入解析清晰度用的凭据',
       binding: { key: 'bilibiliCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
       actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
@@ -653,7 +653,7 @@ function credentialGroupRows(): SettingsRow[] {
     {
       type: 'secret',
       name: '豆瓣 Cookie',
-      desc: '搜索被风控时粘贴浏览器Cookie可提高成功率，不填也能抓',
+      desc: '豆瓣搜索被风控时用的登录凭据',
       binding: { key: 'cinemaDoubanCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
     },
