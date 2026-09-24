@@ -28,9 +28,9 @@
  *   注意本模块须保持 node 环境可安全加载（文案 lint 直接 import），故新增逻辑不 import
  *   obsidian 侧模块——移动端判定走 core/mobile（obsidian Platform），与域侧口径同源；
  * - issue 423/ADR-0183：「Embedding」组再收第二大脑迁来的两行 Ollama 地址（本地 URL +
- *   移动端远程地址，地址在前、模型在后）。远程地址另有桌面端启动自动补全（只补空值、
- *   不覆盖手改值），探测与「填入远程 URL」实现留在 secondbrain/local-ip——本模块仍不
- *   import 域侧模块，node 可加载口径不变；
+ *   移动端远程地址，地址在前、模型在后）。远程地址另有桌面端启动自动写入（当时的「只补空值、
+ *   不覆盖手改值」已由下条 issue 424 的跟随语义取代）；探测实现留在 secondbrain/local-ip
+ *   ——本模块仍不 import 域侧模块，node 可加载口径不变；
  * - issue 424/ADR-0184（用户拍板五处删改）：「Embedding」组「移动端远程地址」行删除（远程
  *   地址改由桌面端启动**自动跟随本机 IP**，见 secondbrain/local-ip.ensureRemoteOllamaUrl）；
  *   「JEV」组收口为服务商 / 密钥 / 模型三行——「启用 Jev 判定」开关退役（常开：填了密钥即
@@ -46,7 +46,7 @@
  */
 
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, thinkingLevelsOf } from './ai';
-import { JEV_PROVIDER_REGISTRY, fetchJevModels } from './jev';
+import { JEV_PROVIDER_REGISTRY, getJevProviderDescriptor, fetchJevModels } from './jev';
 import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
@@ -421,7 +421,7 @@ function jevModelRow(): SettingsRow {
           const models = await fetchJevModels();
           await new Promise<void>((resolve) => {
             openModelPicker({
-              providerLabel: 'Typesafe',
+              providerLabel: getJevProviderDescriptor(String((tryGetSettings() as any).jevProvider || '')).label,
               current: String((tryGetSettings() as any).jevModel || ''),
               models,
               onPick: (m) => {
