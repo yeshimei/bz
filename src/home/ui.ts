@@ -467,7 +467,7 @@ function renderAll(): void {
       const empty = uiEmpty({
         icon: 'alert-circle',
         title: '首页数据采集失败',
-        desc: '活动河数据没能读出来（各域数据文件或面板数据暂不可用）',
+        desc: '活动河数据暂时读不出来',
       });
       const retry = uiBtn({ label: '重试', onClick: () => {
         H.riverFailed = false;

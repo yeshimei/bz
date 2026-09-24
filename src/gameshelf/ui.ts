@@ -199,7 +199,7 @@ function guidanceEl(app: App): HTMLElement {
   return uiEmpty({
     icon: 'gamepad-2',
     title: '接上 Steam，游戏库自己长出来',
-    desc: '在设置面板游戏库页填 SteamID64 和 Web API 密钥，保存后回来点同步，库和时长自动拉进来，不用手动登记。',
+    desc: '在设置面板填好 SteamID64 与密钥后点同步',
     actions,
   });
 }

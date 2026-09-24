@@ -307,7 +307,7 @@ function buildLibraryEmpty(): HTMLElement {
   return uiEmpty({
     icon: 'package',
     title: '归物本还没有物品',
-    desc: '登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件',
+    desc: '登记物品后按年生成资产报告',
     actions,
   });
 }

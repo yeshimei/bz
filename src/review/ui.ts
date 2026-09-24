@@ -229,7 +229,7 @@ export class UIManager {
           uiEmpty({
             icon: 'inbox',
             title: '复习计划还是空的',
-            desc: '在 设置 → 复习计划 → 监听文件夹 添加文件夹后，新笔记会自动加入复习；也可以先把当前笔记加入。',
+            desc: '添加监听文件夹后新笔记自动加入',
             actions: acts,
           })
         );

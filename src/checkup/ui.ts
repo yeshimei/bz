@@ -150,7 +150,7 @@ function renderIdle(): void {
     uiEmpty({
       icon: 'stethoscope',
       title: '还没体检过',
-      desc: '体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据',
+      desc: '检查各域数据文件的完整性与失效指向',
       actions,
     })
   );

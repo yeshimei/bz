@@ -2417,7 +2417,7 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
           ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: AUTO_SUMMARY_KEYS.tagsEnabled }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: AUTO_SUMMARY_KEYS.tagCount }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true && s[AUTO_SUMMARY_KEYS.tagsEnabled] === true, isChild: true },
-          { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: AUTO_SUMMARY_KEYS.timing }, options: [
+          { type: 'select', name: '摘要时机', desc: '生成摘要的时机', binding: { key: AUTO_SUMMARY_KEYS.timing }, options: [
             { value: 'immediate', label: '保存后立刻' },
             { value: 'lazy', label: '懒触发（打开时）' },
           ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true,

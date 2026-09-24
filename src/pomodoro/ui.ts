@@ -795,7 +795,7 @@ export function pomodoroSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '打开时恢复方式',
-            desc: '启动时正在倒计时，选择弹窗提醒或后台继续',
+            desc: '启动遇倒计时的处理方式',
             binding: { key: 'pomodoroRestoreMode' },
             options: [
               { value: 'background', label: '后台继续' },

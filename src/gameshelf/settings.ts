@@ -57,7 +57,7 @@ export function gameshelfSettingsSchema(): SettingsSchema {
           {
             type: 'text',
             name: 'SteamID64',
-            desc: 'Steam 数字账号的唯一标识，17 位数字',
+            desc: 'Steam 的数字账号 ID',
             binding: { key: 'gameshelfSteamId' },
             placeholder: '76561198000000000',
           },

@@ -52,21 +52,21 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
       if (!(await writeSources({ ...box.sources }))) notifyWriteFailed('数据源开关');
     },
   });
-  /** 名单行描述（动态计数；文案过 ticket 100 lint：8 字以上自然句） */
+  /** 名单行描述（动态计数；issue 434 精简口径，管理入口就是行内「管理」钮不再赘述） */
   const upListDesc = () =>
     box.bilibiliUps.length > 0
-      ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗`
-      : '暂未跟踪 UP 主，添加与移除在管理弹窗';
+      ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主`
+      : '暂未跟踪 UP 主';
   /** RSS 订阅行描述（ADR-0121：订阅源计数） */
   const rssListDesc = () =>
     box.rssFeeds.length > 0
-      ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗`
-      : '暂未订阅 RSS 源，添加与移除在管理弹窗';
+      ? `已订阅 ${box.rssFeeds.length} 个 RSS 源`
+      : '暂未订阅 RSS 源';
 
-  /** 抓取间隔描述（动态展示当前档位语义；时间走 localDatetime 免斜杠串） */
+  /** 抓取间隔描述（动态展示上次抓取时间；时间走 localDatetime 免斜杠串） */
   const intervalDesc = () => {
     const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : '还没有抓取过';
-    return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
+    return `上次抓取 ${t}`;
   };
   return [
     { type: 'button', name: '立即抓取', desc: intervalDesc(), buttonText: '抓取', cta: true,

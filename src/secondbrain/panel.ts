@@ -694,7 +694,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'multi',
             name: '额外检索目录',
-            desc: '三个盒子之外还要纳入检索的笔记文件夹',
+            desc: '额外纳入检索的笔记文件夹',
             binding: pathsOf('secondBrainAllowPaths'),
             pickerTitle: '选择额外检索目录',
             pickerDesc: '目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
@@ -713,7 +713,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
           // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值。
           // issue 424/ADR-0184：后四行（段落最小长度 / 上下文限制 / 防抖延迟毫秒 / 光标轮询毫秒）
           // 删除——前两者不再限制（分块全留），防抖 300ms 与轮询 500ms 固化为常量（config.ts）。
-          { type: 'number', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数，越大越全也越慢', binding: numStrBinding('secondBrainTopK', 20), min: 1, max: 50, step: 1 },
+          { type: 'number', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数', binding: numStrBinding('secondBrainTopK', 20), min: 1, max: 50, step: 1 },
           { type: 'number', name: '对话参考结果数', desc: '对话时注入上下文的参考条数', binding: numStrBinding('secondBrainChatTopK', 20), min: 1, max: 50, step: 1 },
         ],
       },

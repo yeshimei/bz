@@ -77,7 +77,7 @@ export function memoSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '已完成显示范围',
-            desc: '展开已完成折叠区时列出最近多少天完成的条目',
+            desc: '已完成折叠区展示的天数',
             binding: { key: 'memoDoneWindow' },
             options: [
               { value: '7', label: '近 7 天' },
@@ -141,7 +141,7 @@ export function memoSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '打开笔记自动提醒',
-            desc: '打开笔记时自动弹出面板并定位到相关备忘录',
+            desc: '打开笔记时自动定位相关备忘录',
             binding: {
               get: () => getSettings().openNoteReminder !== false,
               set: (v) => {

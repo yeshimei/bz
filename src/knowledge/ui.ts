@@ -360,29 +360,29 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         // 没有「关联范围」行——范围恒为上面三个文件夹，不再可配（ADR-0141 §2）。
         icon: 'link', name: '自动关联',
         rows: [
-          { type: 'toggle', name: '自动关联', desc: '三个盒子的笔记改动后自动建关联，候选近邻经 AI 裁判筛选', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
+          { type: 'toggle', name: '自动关联', desc: '笔记改动后自动建关联', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
           // 2026-09-23：三行原为 text + 「三函数绑定 + onChange 钳制复写」——那是「number 键
           // （linkAgentTopK/MaxLinks/MinScore）在 text 行里被收窄到 string」逼出来的绕行。
           // 改标准 number 行后：键直绑（类型本就 number）；钳制交给输入框 min/max/step；
           // 空串不再被 Number('') 误写成默认值（parseClampedNumber 空→null→不写）。
-          { type: 'number', name: '单篇候选数量 TopK', desc: '每篇笔记的近邻候选数，越大召回越全也越慢', binding: { key: 'linkAgentTopK' }, min: 1, max: 50, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'number', name: '单篇候选数量 TopK', desc: '每篇笔记的近邻候选数', binding: { key: 'linkAgentTopK' }, min: 1, max: 50, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'number', name: '每篇关联上限', desc: '0 表示不限量，由 AI 裁判自行决定', binding: { key: 'linkAgentMaxLinks' }, min: 0, max: 100, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
-          { type: 'number', name: '候选相似度下限', desc: '低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤', binding: { key: 'linkAgentMinScore' }, min: 0, max: 1, step: 0.05, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'number', name: '候选相似度下限', desc: '送 AI 裁判的相似度下限，0 不过滤', binding: { key: 'linkAgentMinScore' }, min: 0, max: 1, step: 0.05, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
-          { type: 'toggle', name: '失效关联自动清理', desc: '目标笔记删除后自动移除指向它的失效关联条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'toggle', name: '失效关联自动清理', desc: '自动清理失效关联', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
         ],
       },
       {
         icon: 'settings-2', name: '视频处理',
         rows: [
-          { type: 'toggle', name: '详细进度提示', desc: '处理中显示当前步骤与耗时，关闭则仅显示步骤徽章', binding: { key: 'knowledgeProgressDetail' } },
-          { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件，关闭则只生成文献笔记', binding: { key: 'knowledgeKeepVideo' } },
-          { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
-          { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务，关闭则失败后继续', binding: { key: 'knowledgeStopOnFailure' } },
+          { type: 'toggle', name: '详细进度提示', desc: '显示当前步骤与耗时', binding: { key: 'knowledgeProgressDetail' } },
+          { type: 'toggle', name: '保留视频原件', desc: '转文献后保留视频文件', binding: { key: 'knowledgeKeepVideo' } },
+          { type: 'select', name: '下载清晰度', desc: '下载视频的清晰度', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
+          { type: 'toggle', name: '遇错即停', desc: '失败即停止批量处理', binding: { key: 'knowledgeStopOnFailure' } },
           { type: 'text', name: '输出文件夹', desc: '视频文件的输出文件夹', binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos' },
           { type: 'toggle', name: '视频压缩', desc: '转文字前压缩视频', binding: { key: 'knowledgeCompress' } },
-          { type: 'number', name: '压缩质量 CRF', desc: '数值越小画质越高，范围 18 到 28', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
+          { type: 'number', name: '压缩质量 CRF', desc: '压缩画质，越小越高', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],
       },
       // 「工具」组（ffmpeg / ffprobe / Python 路径、Whisper 模型、缓存文件夹与保留天数）2026-09-16 移除：
@@ -393,13 +393,13 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         icon: 'wrench', name: '维护',
         rows: [
           {
-            type: 'button', name: '清空历史', desc: '移除全部成功归档的转文献记录，文献笔记与视频文件保留在库中',
+            type: 'button', name: '清空历史', desc: '清空转文献的归档记录',
             buttonText: '清空历史', onClick: () => { if (opts?.onClearHistory) void opts.onClearHistory(); },
           },
           // 挂载树（issue 318）：自动跑建议开关 + 建议缓存维护（ADR-0139 §3）
-          { type: 'toggle', name: '挂载建议', desc: '打开挂载树时自动跑 AI 语义建议，关闭则只看双链', binding: { key: 'knowledgeMountAutoSuggest' } },
+          { type: 'toggle', name: '挂载建议', desc: '打开挂载树时自动生成建议', binding: { key: 'knowledgeMountAutoSuggest' } },
           {
-            type: 'button', name: '清空建议缓存', desc: '清空候选与生成时间，保留已固定和已取消的留档',
+            type: 'button', name: '清空建议缓存', desc: '清空建议的候选与缓存',
             buttonText: '清空建议缓存', onClick: () => { if (opts?.onClearSuggestCache) void opts.onClearSuggestCache(); },
           },
         ],

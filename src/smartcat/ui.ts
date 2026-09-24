@@ -263,18 +263,18 @@ export function smartcatSettingsSchema(opts: {
         name: '互动',
         rows: [
           // ticket 163：小橘对我的称呼（默认包仔；把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼）
-          { type: 'text', name: '小橘对我的称呼', desc: '小橘提到你时使用的称呼，默认为包仔', binding: bindBehavior('smartcatUserName') },
+          { type: 'text', name: '小橘对我的称呼', desc: '小橘对你的称呼', binding: bindBehavior('smartcatUserName') },
           { type: 'number', name: '自言自语间隔', desc: '小橘主动说话的间隔分钟数', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
           { type: 'number', name: '说话概率', desc: '定时主动说话的概率', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
-          { type: 'toggle', name: '主动关心', desc: '按你的活跃时段，每周温和地主动搭话一两次', binding: bindConfig('proactiveCare') },
+          { type: 'toggle', name: '主动关心', desc: '每周按活跃时段主动搭话', binding: bindConfig('proactiveCare') },
         ],
       },
       {
         icon: 'archive',
         name: '记忆',
         rows: [
-          { type: 'number', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
-          { type: 'number', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
+          { type: 'number', name: '短期记忆量', desc: '短期记忆保留的对话轮数', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
+          { type: 'number', name: '上下文字数限制', desc: '上下文的最大字数，0 仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
           { type: 'number', name: '上下文分布比例', desc: '上下文的分配比例', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.01 },
           {
             type: 'select',
@@ -289,7 +289,7 @@ export function smartcatSettingsSchema(opts: {
             ],
           },
           // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
-          { type: 'text', name: '向量化模型', desc: '留空跟随 AI 面板的 Embedding 模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
+          { type: 'text', name: '向量化模型', desc: '跟随 AI 面板的嵌入模型', binding: bindBehavior('smartcatEmbeddingModel') },
           { type: 'number', name: '分块字符上限', desc: '长笔记分块的最大字符数', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },
@@ -304,7 +304,7 @@ export function smartcatSettingsSchema(opts: {
             type: 'path',
             mode: 'multi',
             name: '记忆文件夹',
-            desc: '文件夹内的笔记会进入小橘的记忆库，移除文件夹会清掉对应记忆',
+            desc: '文件夹内笔记进入小橘的记忆库',
             binding: {
               get: () => normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
               set: () => {},

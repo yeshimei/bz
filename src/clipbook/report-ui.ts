@@ -207,7 +207,7 @@ function buildClipReportEmpty(kind: 'never' | 'period', switchTo?: ReportPeriod)
   return uiEmpty({
     icon: 'book-open',
     title: '还没有阅读记录',
-    desc: '在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里',
+    desc: '打开文章阅读满一分钟自动记录',
     actions: uiBtnRow([uiBtn({
       label: '去剪藏本读几篇',
       icon: 'scissors',
