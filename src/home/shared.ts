@@ -321,6 +321,9 @@ const DOMAIN_MENU_RAW: Record<string, DomainMenuAction[]> = {
   vault: [
     // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
     { label: '快速取密', commandId: 'bz-password-vault-gen', icon: 'key' },
+    // 快速生成密码（2026-09-24 用户点名）：跳过选择器直接生成并复制剪贴板，同时记一笔
+    // 待存状态——下次解锁密码本自动弹录入窗并预填该密码（与上条差异：不出选择器）
+    { label: '快速生成密码', commandId: 'bz-password-vault-quick-gen', icon: 'wand-sparkles' },
     // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
     { label: '锁定密码本', commandId: 'bz-password-vault-lock', icon: 'lock', keepHome: true },
   ],

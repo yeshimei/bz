@@ -70,7 +70,7 @@ import { openAttachMove, ensureAttachFileMenu, ATTACH_COMMAND_ID } from './attac
 // 统一保险库（encrypt 域，ADR-0085：密码/加密笔记/加密日记三资产单一面板）
 import { openEncrypt, encryptCurrentNote, lockEncrypt, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 // 密码本（password-vault 域，ADR-0109 自统一保险库拆回独立域；ADR-0078 成型版，共享保险箱锁与数据）
-import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault } from './password-vault';
+import { openPasswordVault, unloadPasswordVault, copyGeneratedPassword, lockPasswordVault, quickGeneratePassword } from './password-vault';
 // 内容首页（home 域，ticket 177；旧入口页 launcher 已退役删除，ADR-0093）
 import { openHome, unloadHome } from './home';
 // recap 域面板已退役（ADR-0157）：总结链路一度迁 home 时间线卡动作行，
@@ -232,6 +232,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」，搜到即复制、无命中生成；
   // 60s 后清空剪贴板、不弹明文、不开面板。原 bz-encrypt-copy-password 退役，同语义由本条承接）
   { id: 'bz-password-vault-gen', name: '快速取密', icon: 'key-round', callback: () => void copyGeneratedPassword(getApp()) },
+  // 快速生成密码（2026-09-24 首页右键菜单）：不解锁不开面板，生成即复制剪贴板 + 记待存
+  // 状态；下次解锁密码本自动弹录入窗预填该密码（与「快速取密」差异：跳过选择器直接出新密码）
+  { id: 'bz-password-vault-quick-gen', name: '快速生成密码', icon: 'wand-sparkles', callback: () => void quickGeneratePassword(getApp()) },
   // 锁定密码本（2026-09-11 首页入口菜单）：与保险库同库同锁（一把主密码）
   { id: 'bz-password-vault-lock', name: '锁定密码本', icon: 'lock', callback: () => lockPasswordVault(getApp()) },
   // 小橘陪伴猫（smartcat 域）

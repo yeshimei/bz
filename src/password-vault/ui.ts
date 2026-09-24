@@ -27,6 +27,7 @@ import { attachItemActions, openItemSheet, type ItemAction } from '../core/item-
 import {
   PasswordVaultDataManager,
   DEFAULT_PW_CHARSET,
+  consumePendingQuickPassword,
   type PasswordVaultEntry,
   type PlatformGroup,
 } from './data';
@@ -116,6 +117,8 @@ export class PasswordVaultUIManager {
   selAccount: string | null = null;
   shownIds: Record<string, boolean> = {};
   editingId: string | null = null;
+  /** 添加/编辑弹窗打开时刻的字段快照（closeEntryDialog 关闭守卫的对比基准；真关时置 null） */
+  private entrySnapshot: Record<string, string> | null = null;
   // 安全机制（Q13）
   security: LockSecurity = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
   // 搜索防抖（core debounce 单源收编，自带 cancel；桌面/移动双实例输入共用一支）
@@ -390,7 +393,7 @@ export class PasswordVaultUIManager {
             this.selPlatform = item.platform;
             this.selAccount = this.dataManager.pwData[0]?.id ?? null;
           }
-          this.closeEntryDialog();
+          this.closeEntryDialog(true); // 保存已落盘：强制直关，不走未保存确认
           this.renderAll();
           this.toast('已保存');
         } catch (e: any) {
@@ -1184,7 +1187,18 @@ export class PasswordVaultUIManager {
     (el as HTMLInputElement | null)?.focus();
   }
 
-  openEntryDialog(editItem: PasswordVaultEntry | null = null, preset?: { platform?: string; url?: string }) {
+  /** 添加/编辑弹窗的字段清单（快照与 dirty 对比共用同一份口径） */
+  private static readonly ENTRY_FIELDS = ['platform', 'url', 'account', 'password', 'note'] as const;
+
+  /**
+   * preset 扩展出 password（2026-09-24）：首页「快速生成密码」记下的待存密码经
+   * maybeOpenPendingAdd 走这里预填——预填了就用预填值，没预填照旧自动生成，
+   * 两条路都过 motionGenFlash 亮一记。
+   */
+  openEntryDialog(
+    editItem: PasswordVaultEntry | null = null,
+    preset?: { platform?: string; url?: string; password?: string }
+  ) {
     if (!this.dataManager.unlocked) {
       notice('请先解锁密码本');
       return;
@@ -1193,14 +1207,17 @@ export class PasswordVaultUIManager {
     this.editingId = editItem ? editItem.id : null;
     const title = editItem ? '编辑密码条目' : '添加密码条目';
     const subtitle = '带 * 为必填 · 平台与账号密码不可为空';
+    // 添加态密码一次生成、双实例共用（preset 预填同理）：两实例本就该同内容，
+    // 分开生成会让移动实例揣着另一串密码，关闭守卫的快照对比也会误判 dirty
+    const genPw = editItem ? null : preset?.password || this.generatePassword();
     this.root!.querySelectorAll('.bz-password-vault-modal').forEach((modal) => {
       const dlg = modal.querySelector('.bz-password-vault-dialog')!;
       dlg.querySelector('h3')!.textContent = title;
       dlg.querySelector('.sub')!.textContent = subtitle;
-      const fields = ['platform', 'url', 'account', 'password', 'note'] as const;
+      const fields = PasswordVaultUIManager.ENTRY_FIELDS;
       fields.forEach((f) => {
         const input = dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement;
-        input.value = editItem ? editItem[f] || '' : preset && f !== 'password' ? preset[f as 'platform' | 'url'] || '' : '';
+        input.value = editItem ? editItem[f] || '' : preset && f !== 'password' ? (preset[f as 'platform' | 'url'] as string) || '' : '';
       });
       // N13：弹窗重开复位 eye 三件套——上次点过明文后，再开弹窗（含添加态自动生成的
       // 新密码）不得以明文示人
@@ -1211,8 +1228,8 @@ export class PasswordVaultUIManager {
         eye.innerHTML = ICONS.eye;
         eye.title = '显示密码';
       }
-      if (!editItem) {
-        pwInput.value = this.generatePassword();
+      if (genPw !== null) {
+        pwInput.value = genPw;
         motionGenFlash(pwInput); // 动效层：自动生成的密码亮一记
       }
       (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
@@ -1221,11 +1238,72 @@ export class PasswordVaultUIManager {
     });
     // 焦点（深审新-3）：落当前生效实例，移动端软键盘才弹得起
     this.focusDialogField('.bz-password-vault-modal', 'modal', '[data-f="platform"]');
+    // 关闭守卫基准（2026-09-24 需求 1）：拍打开时刻的字段快照——之后关闭走 closeEntryDialog
+    // 时对比快照，有改动先问一声。双实例打开时填同一值，快照记一份即可。
+    const dlg0 = this.root!.querySelector('.bz-password-vault-modal .bz-password-vault-dialog');
+    if (dlg0) {
+      const snap: Record<string, string> = {};
+      PasswordVaultUIManager.ENTRY_FIELDS.forEach((f) => {
+        snap[f] = (dlg0.querySelector(`[data-f="${f}"]`) as HTMLInputElement).value;
+      });
+      this.entrySnapshot = snap;
+    }
   }
 
-  private closeEntryDialog() {
+  /**
+   * 弹窗是否带未保存改动（2026-09-24 需求 1）：任一实例（desk/mob）任一字段偏离打开时
+   * 快照即算。双实例打开时同步填同一值，用户只在可见端输入、不可见端保持快照原值，
+   * 所以逐实例全查——中途跨断点（改窗口宽度）也不漏。快照缺失（弹窗没开过）视为干净。
+   */
+  private entryDialogDirty(): boolean {
+    if (!this.entrySnapshot) return false;
+    const snap = this.entrySnapshot;
+    const dialogs = this.root!.querySelectorAll('.bz-password-vault-modal .bz-password-vault-dialog');
+    return Array.from(dialogs).some((dlg) =>
+      PasswordVaultUIManager.ENTRY_FIELDS.some(
+        (f) => ((dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement | null)?.value ?? '') !== snap[f]
+      )
+    );
+  }
+
+  /**
+   * 关闭添加/编辑弹窗（2026-09-24 需求 1 二次确认）：
+   * - force=true 直关——两条既定强制路径：保存成功（内容已落盘）、上锁/关面板安全收场
+   *   （明文不得残留，二次确认反而把明文钉在锁屏上方）；
+   * - 缺省路径（遮罩点击 / 取消按钮 / ESC）先看 entryDialogDirty()：有未保存改动 →
+   *   域皮流程框（bz-pwv-flow-dialog，金色材质与密码本同皮）问一声，「继续编辑」留在
+   *   弹窗、确认「放弃修改」才真关；没动过手静默直关不烦人。
+   */
+  private closeEntryDialog(force = false) {
+    if (!force && this.entryDialogDirty()) {
+      void openFlowDialog({
+        title: '放弃未保存的修改？',
+        message: '弹窗里有未保存的修改，关闭后将丢失。确定放弃？',
+        className: 'bz-pwv-flow-dialog',
+        actions: [
+          { label: '继续编辑', value: 'cancel' },
+          { label: '放弃修改', value: 'ok', cta: true },
+        ],
+      }).then((v) => {
+        if (v === 'ok') this.closeEntryDialog(true);
+      });
+      return;
+    }
+    this.entrySnapshot = null;
     this.root!.querySelectorAll('.bz-password-vault-modal').forEach((m) => m.classList.remove('open'));
     this.editingId = null;
+  }
+
+  /**
+   * 首页「快速生成密码」的解锁钩子（2026-09-24 需求 2）：生成时密码已复制剪贴板并记入
+   * data 层待存状态（内存单条 + 10 分钟 TTL）；这里在解锁成功（首设/解锁/重设三路都汇经
+   * reloadAfterUnlock 之后）消费一次——自动弹出添加窗并预填该密码，让「复制去注册 →
+   * 回密码本存档」一步到位。消费即清，只在下一次解锁弹这一回。
+   */
+  private maybeOpenPendingAdd(): void {
+    const pw = consumePendingQuickPassword();
+    if (!pw) return;
+    this.openEntryDialog(null, { password: pw });
   }
 
   // ---------- 平台编辑弹窗 ----------
@@ -1308,7 +1386,7 @@ export class PasswordVaultUIManager {
   /** 上锁/关面板收场：面板内双实例弹窗 + body 流程框一并收起（cons 新-2 对齐 encrypt N9 形制）——
    *  明文密码/账号不得随弹窗浮在锁屏上方，安全承诺不被弹窗 DOM 击穿 */
   private closeAllDialogs(): void {
-    this.closeEntryDialog();
+    this.closeEntryDialog(true); // 安全收场强制直关：明文不得残留，二次确认反而把明文钉在锁屏上方
     this.root!.querySelectorAll('.bz-password-vault-platedit.open').forEach((el) => el.classList.remove('open'));
     // body 级流程确认框（首设风险告知/删除确认/损坏重设）随上锁收场，按取消语义结算不悬挂
     cancelActiveFlowDialog();
@@ -1685,6 +1763,7 @@ export class PasswordVaultUIManager {
               notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
               await this.reloadAfterUnlock();
               this.renderAll();
+              this.maybeOpenPendingAdd(); // 快速生成密码的待存状态在此消费（首设分支）
             } else {
               showErr('设置失败：无法写入清单，请检查磁盘空间后重试');
             }
@@ -1721,6 +1800,7 @@ export class PasswordVaultUIManager {
           notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
           await this.reloadAfterUnlock();
           this.renderAll();
+          this.maybeOpenPendingAdd(); // 快速生成密码的待存状态在此消费（常规解锁分支）
         } else {
           // 清单损坏（empty/corrupt）→ 重设确认
           const issue = safe.manifestIssue;
@@ -1756,6 +1836,7 @@ export class PasswordVaultUIManager {
                     notice('已重设主密码（旧数据不可恢复）', 'warning');
                     await this.reloadAfterUnlock();
                     this.renderAll();
+                    this.maybeOpenPendingAdd(); // 快速生成密码的待存状态在此消费（重设分支，全新空清单同样可录）
                   } else {
                     showErr('重设失败：无法写入清单');
                   }

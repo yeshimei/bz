@@ -334,3 +334,46 @@ export class PasswordVaultDataManager {
     this.offUnlockChanged = null;
   }
 }
+
+/* ---------- 快速生成密码·待存状态（2026-09-24 首页右键「快速生成密码」） ---------- */
+
+/**
+ * 首页「快速生成密码」（bz-password-vault-quick-gen）落下的一次性待存状态：
+ * 生成即复制剪贴板供用户去用，同时把明文记在这里；之后密码本解锁成功（锁屏任意路径）
+ * 由 UI 层消费——自动弹出添加窗并预填该密码（消费即清）。
+ * 只驻内存、不上盘：明文密码落盘会击穿保险库「静态数据全密文」承诺；插件重载即失，
+ * 本就是一次性便签语义。10 分钟 TTL 防陈旧突袭（点了生成却很久之后才解锁，
+ * 冷不丁弹一个添加窗反而莫名其妙）。放数据层是依赖方向使然：index.ts（命令入口）
+ * 与 ui.ts（解锁消费点）都要碰它，而 ui 不能回引 index（ADR-0002）。
+ */
+export interface PendingQuickPassword {
+  password: string;
+  /** 记入时刻（毫秒），TTL 判据 */
+  ts: number;
+}
+
+const PENDING_QUICK_TTL_MS = 10 * 60 * 1000;
+
+let pendingQuickPassword: PendingQuickPassword | null = null;
+
+/** 记录待存密码（同刻覆盖旧值——以最后一次快速生成为准） */
+export function setPendingQuickPassword(password: string): void {
+  pendingQuickPassword = { password, ts: Date.now() };
+}
+
+/**
+ * 消费待存密码：存在且未过期 → 返回明文并清除；没有/已过期 → 返回 null
+ * （无论哪支都先把槽位清掉，一次性语义不留残值）。
+ */
+export function consumePendingQuickPassword(): string | null {
+  const p = pendingQuickPassword;
+  pendingQuickPassword = null;
+  if (!p) return null;
+  if (Date.now() - p.ts > PENDING_QUICK_TTL_MS) return null;
+  return p.password;
+}
+
+/** 显式清除（插件卸载等内存态失效时机） */
+export function clearPendingQuickPassword(): void {
+  pendingQuickPassword = null;
+}

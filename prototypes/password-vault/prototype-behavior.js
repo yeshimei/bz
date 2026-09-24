@@ -1,4 +1,4 @@
-/* 源指纹 5788bea7c5809dc3 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 517dfa8049e5a088 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -9203,6 +9203,18 @@ var BZW_password_vault = (() => {
       this.offUnlockChanged = null;
     }
   };
+  var PENDING_QUICK_TTL_MS = 10 * 60 * 1e3;
+  var pendingQuickPassword = null;
+  function consumePendingQuickPassword() {
+    const p = pendingQuickPassword;
+    pendingQuickPassword = null;
+    if (!p) return null;
+    if (Date.now() - p.ts > PENDING_QUICK_TTL_MS) return null;
+    return p.password;
+  }
+  function clearPendingQuickPassword() {
+    pendingQuickPassword = null;
+  }
 
   // src/encrypt/vault-assets-view.ts
   init_utils();
@@ -13032,6 +13044,8 @@ var BZW_password_vault = (() => {
       this.selAccount = null;
       this.shownIds = {};
       this.editingId = null;
+      /** 添加/编辑弹窗打开时刻的字段快照（closeEntryDialog 关闭守卫的对比基准；真关时置 null） */
+      this.entrySnapshot = null;
       // 安全机制（Q13）
       this.security = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
       // 搜索防抖（core debounce 单源收编，自带 cancel；桌面/移动双实例输入共用一支）
@@ -13267,7 +13281,7 @@ var BZW_password_vault = (() => {
               this.selPlatform = item.platform;
               this.selAccount = (_b2 = (_a2 = this.dataManager.pwData[0]) == null ? void 0 : _a2.id) != null ? _b2 : null;
             }
-            this.closeEntryDialog();
+            this.closeEntryDialog(true);
             this.renderAll();
             this.toast("已保存");
           } catch (e) {
@@ -14006,6 +14020,11 @@ var BZW_password_vault = (() => {
       const el = this.root.querySelector(`${sel}[data-${attr}="${which}"] ${fieldSel}`) || this.root.querySelector(`${sel} ${fieldSel}`);
       el == null ? void 0 : el.focus();
     }
+    /**
+     * preset 扩展出 password（2026-09-24）：首页「快速生成密码」记下的待存密码经
+     * maybeOpenPendingAdd 走这里预填——预填了就用预填值，没预填照旧自动生成，
+     * 两条路都过 motionGenFlash 亮一记。
+     */
     openEntryDialog(editItem = null, preset) {
       if (!this.dataManager.unlocked) {
         notice("请先解锁密码本");
@@ -14014,11 +14033,12 @@ var BZW_password_vault = (() => {
       this.editingId = editItem ? editItem.id : null;
       const title = editItem ? "编辑密码条目" : "添加密码条目";
       const subtitle = "带 * 为必填 · 平台与账号密码不可为空";
+      const genPw = editItem ? null : (preset == null ? void 0 : preset.password) || this.generatePassword();
       this.root.querySelectorAll(".bz-password-vault-modal").forEach((modal) => {
         const dlg = modal.querySelector(".bz-password-vault-dialog");
         dlg.querySelector("h3").textContent = title;
         dlg.querySelector(".sub").textContent = subtitle;
-        const fields = ["platform", "url", "account", "password", "note"];
+        const fields = _PasswordVaultUIManager.ENTRY_FIELDS;
         fields.forEach((f) => {
           const input = dlg.querySelector(`[data-f="${f}"]`);
           input.value = editItem ? editItem[f] || "" : preset && f !== "password" ? preset[f] || "" : "";
@@ -14030,8 +14050,8 @@ var BZW_password_vault = (() => {
           eye.innerHTML = ICONS2.eye;
           eye.title = "显示密码";
         }
-        if (!editItem) {
-          pwInput.value = this.generatePassword();
+        if (genPw !== null) {
+          pwInput.value = genPw;
           motionGenFlash(pwInput);
         }
         dlg.querySelector("[data-f-err]").textContent = "";
@@ -14039,10 +14059,70 @@ var BZW_password_vault = (() => {
         motionDialogIn(dlg);
       });
       this.focusDialogField(".bz-password-vault-modal", "modal", '[data-f="platform"]');
+      const dlg0 = this.root.querySelector(".bz-password-vault-modal .bz-password-vault-dialog");
+      if (dlg0) {
+        const snap = {};
+        _PasswordVaultUIManager.ENTRY_FIELDS.forEach((f) => {
+          snap[f] = dlg0.querySelector(`[data-f="${f}"]`).value;
+        });
+        this.entrySnapshot = snap;
+      }
     }
-    closeEntryDialog() {
+    /**
+     * 弹窗是否带未保存改动（2026-09-24 需求 1）：任一实例（desk/mob）任一字段偏离打开时
+     * 快照即算。双实例打开时同步填同一值，用户只在可见端输入、不可见端保持快照原值，
+     * 所以逐实例全查——中途跨断点（改窗口宽度）也不漏。快照缺失（弹窗没开过）视为干净。
+     */
+    entryDialogDirty() {
+      if (!this.entrySnapshot) return false;
+      const snap = this.entrySnapshot;
+      const dialogs = this.root.querySelectorAll(".bz-password-vault-modal .bz-password-vault-dialog");
+      return Array.from(dialogs).some(
+        (dlg) => _PasswordVaultUIManager.ENTRY_FIELDS.some(
+          (f) => {
+            var _a, _b;
+            return ((_b = (_a = dlg.querySelector(`[data-f="${f}"]`)) == null ? void 0 : _a.value) != null ? _b : "") !== snap[f];
+          }
+        )
+      );
+    }
+    /**
+     * 关闭添加/编辑弹窗（2026-09-24 需求 1 二次确认）：
+     * - force=true 直关——两条既定强制路径：保存成功（内容已落盘）、上锁/关面板安全收场
+     *   （明文不得残留，二次确认反而把明文钉在锁屏上方）；
+     * - 缺省路径（遮罩点击 / 取消按钮 / ESC）先看 entryDialogDirty()：有未保存改动 →
+     *   域皮流程框（bz-pwv-flow-dialog，金色材质与密码本同皮）问一声，「继续编辑」留在
+     *   弹窗、确认「放弃修改」才真关；没动过手静默直关不烦人。
+     */
+    closeEntryDialog(force = false) {
+      if (!force && this.entryDialogDirty()) {
+        void openFlowDialog({
+          title: "放弃未保存的修改？",
+          message: "弹窗里有未保存的修改，关闭后将丢失。确定放弃？",
+          className: "bz-pwv-flow-dialog",
+          actions: [
+            { label: "继续编辑", value: "cancel" },
+            { label: "放弃修改", value: "ok", cta: true }
+          ]
+        }).then((v) => {
+          if (v === "ok") this.closeEntryDialog(true);
+        });
+        return;
+      }
+      this.entrySnapshot = null;
       this.root.querySelectorAll(".bz-password-vault-modal").forEach((m) => m.classList.remove("open"));
       this.editingId = null;
+    }
+    /**
+     * 首页「快速生成密码」的解锁钩子（2026-09-24 需求 2）：生成时密码已复制剪贴板并记入
+     * data 层待存状态（内存单条 + 10 分钟 TTL）；这里在解锁成功（首设/解锁/重设三路都汇经
+     * reloadAfterUnlock 之后）消费一次——自动弹出添加窗并预填该密码，让「复制去注册 →
+     * 回密码本存档」一步到位。消费即清，只在下一次解锁弹这一回。
+     */
+    maybeOpenPendingAdd() {
+      const pw = consumePendingQuickPassword();
+      if (!pw) return;
+      this.openEntryDialog(null, { password: pw });
     }
     // ---------- 平台编辑弹窗 ----------
     openPlatformEdit(platform) {
@@ -14118,7 +14198,7 @@ var BZW_password_vault = (() => {
     /** 上锁/关面板收场：面板内双实例弹窗 + body 流程框一并收起（cons 新-2 对齐 encrypt N9 形制）——
      *  明文密码/账号不得随弹窗浮在锁屏上方，安全承诺不被弹窗 DOM 击穿 */
     closeAllDialogs() {
-      this.closeEntryDialog();
+      this.closeEntryDialog(true);
       this.root.querySelectorAll(".bz-password-vault-platedit.open").forEach((el) => el.classList.remove("open"));
       cancelActiveFlowDialog();
     }
@@ -14429,6 +14509,7 @@ var BZW_password_vault = (() => {
                 notice("密码本已解锁", "success");
                 await this.reloadAfterUnlock();
                 this.renderAll();
+                this.maybeOpenPendingAdd();
               } else {
                 showErr("设置失败：无法写入清单，请检查磁盘空间后重试");
               }
@@ -14464,6 +14545,7 @@ var BZW_password_vault = (() => {
             notice("密码本已解锁", "success");
             await this.reloadAfterUnlock();
             this.renderAll();
+            this.maybeOpenPendingAdd();
           } else {
             const issue = safe.manifestIssue;
             if (issue === "empty" || issue === "corrupt") {
@@ -14495,6 +14577,7 @@ var BZW_password_vault = (() => {
                       notice("已重设主密码（旧数据不可恢复）", "warning");
                       await this.reloadAfterUnlock();
                       this.renderAll();
+                      this.maybeOpenPendingAdd();
                     } else {
                       showErr("重设失败：无法写入清单");
                     }
@@ -14569,6 +14652,8 @@ var BZW_password_vault = (() => {
       this._initialized = false;
     }
   };
+  /** 添加/编辑弹窗的字段清单（快照与 dirty 对比共用同一份口径） */
+  _PasswordVaultUIManager.ENTRY_FIELDS = ["platform", "url", "account", "password", "note"];
   // ---------- 安全模式 idle 自动上锁（cons 新-3，对齐 encrypt 形制） ----------
   /** 无交互自动上锁阈值（15 分钟，与 encrypt 同滩） */
   _PasswordVaultUIManager.IDLE_LOCK_MS = 15 * 60 * 1e3;
@@ -14650,6 +14735,7 @@ var BZW_password_vault = (() => {
   }
   function unloadPasswordVault() {
     closePasswordQuickPicker();
+    clearPendingQuickPassword();
     if (controller2) controller2.cleanup();
     controller2 = null;
     initialized = false;
