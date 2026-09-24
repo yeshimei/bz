@@ -52,7 +52,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '时间范围',
-            desc: '周历能往回翻几天。当天只留今天一格，本周是完整七天。',
+            desc: '周历可回翻的天数',
             binding: { key: 'homeTimelineRange' },
             options: [
               { value: 'today', label: '当天' },
@@ -86,13 +86,13 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '产出动作',
-            desc: '写下的收进的读完的，都是真正产出东西的动作。',
+            desc: '写下的、收进的、读完的动作记录',
             binding: { key: 'homeTimelineProduce' },
           },
           {
             type: 'toggle',
             name: '状态推进',
-            desc: '加入片单读到一半新增待办，这类还没成事实的推进。',
+            desc: '加入片单、读到一半、新增待办等推进记录',
             binding: { key: 'homeTimelineProgress' },
           },
           {
@@ -100,7 +100,7 @@ export function homeSettingsSchema(): SettingsSchema {
             // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
             // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
             name: '小橘点评',
-            desc: '小橘挂在痕迹下面的那句话，也包括你给影片打的星级。',
+            desc: '小橘的点评与影片星级记录',
             binding: { key: 'homeTimelineNotes' },
           },
           {
@@ -121,7 +121,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '明天预告卡',
-            desc: '右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。',
+            desc: '右侧的复习、剪藏与日记预告栏',
             binding: { key: 'homeNextCards' },
           },
         ],

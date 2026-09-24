@@ -264,8 +264,8 @@ export function smartcatSettingsSchema(opts: {
         rows: [
           // ticket 163：小橘对我的称呼（默认包仔；把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼）
           { type: 'text', name: '小橘对我的称呼', desc: '小橘提到你时使用的称呼，默认为包仔', binding: bindBehavior('smartcatUserName') },
-          { type: 'number', name: '自言自语间隔', desc: '小橘每隔多久主动说一句话，范围 1 到 60 分钟', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
-          { type: 'number', name: '说话概率', desc: '定时到来时小橘主动说话的概率，范围为十分之一到一', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
+          { type: 'number', name: '自言自语间隔', desc: '小橘主动说话的间隔分钟数', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
+          { type: 'number', name: '说话概率', desc: '定时主动说话的概率', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
           { type: 'toggle', name: '主动关心', desc: '按你的活跃时段，每周温和地主动搭话一两次', binding: bindConfig('proactiveCare') },
         ],
       },
@@ -275,11 +275,11 @@ export function smartcatSettingsSchema(opts: {
         rows: [
           { type: 'number', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
           { type: 'number', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
-          { type: 'number', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.01 },
+          { type: 'number', name: '上下文分布比例', desc: '上下文的分配比例', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.01 },
           {
             type: 'select',
             name: '记忆打分范围',
-            desc: '记忆质量打分的范围，智能模式自动分配云端与本地',
+            desc: '记忆质量打分的范围',
             binding: bindConfig('cloudScoring'),
             options: [
               { value: 'smart', label: '智能' },
@@ -290,7 +290,7 @@ export function smartcatSettingsSchema(opts: {
           },
           // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
           { type: 'text', name: '向量化模型', desc: '留空跟随 AI 面板的 Embedding 模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
-          { type: 'number', name: '分块字符上限', desc: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
+          { type: 'number', name: '分块字符上限', desc: '长笔记分块的最大字符数', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },
       // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
@@ -325,8 +325,8 @@ export function smartcatSettingsSchema(opts: {
         icon: 'database',
         name: '存储与记忆',
         rows: [
-          { type: 'number', name: '行为流保留天数', desc: '行为流条目最多保留 1 到 365 天，超出部分自动删除', binding: bindBehavior('behaviorMaxDays'), min: 1, max: 365, step: 1 },
-          { type: 'number', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
+          { type: 'number', name: '行为流保留天数', desc: '行为流条目的保留天数', binding: bindBehavior('behaviorMaxDays'), min: 1, max: 365, step: 1 },
+          { type: 'number', name: '行为流最大条数', desc: '行为流的最大条数', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
         ],
       },
       // 2026-09-19 机制审计 A13：「记忆巩固」（反思观察阈值 / 洞察条数上限 / 引用摘录字数）与

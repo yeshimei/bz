@@ -38,7 +38,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
         icon: 'folder-open',
         name: '目录',
         rows: [
-          { type: 'path', mode: 'single', name: '影视文件夹', desc: '影院读取的影视文件夹，日记本也从这里读影视', binding: { key: 'cinemaFolderPath' } },
+          { type: 'path', mode: 'single', name: '影视文件夹', desc: '影院读取的影视文件夹', binding: { key: 'cinemaFolderPath' } },
           { type: 'path', mode: 'single', name: '海报文件夹', desc: '豆瓣抓取的海报图片保存位置', binding: { key: 'cinemaPosterFolder' }, fallbackValue: () => POSTER_FOLDER },
           // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
         ],
@@ -74,7 +74,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
           {
             type: 'number',
             name: '网格每行列数',
-            desc: '海报网格每一行的列数，范围 2 到 12，重开面板生效',
+            desc: '海报网格的列数',
             binding: numStrBinding('cinemaGridColumns', 5),
             min: 2,
             max: 12,
@@ -85,7 +85,7 @@ export function cinemaSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '剧集按季合并',
-            desc: '同一部剧的各季合并成一张卡片，卡片上显示各季进度',
+            desc: '同一部剧的各季合并成一张卡片',
             binding: { key: 'cinemaMergeSeasons' },
           },
         ],
