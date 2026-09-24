@@ -886,6 +886,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentAutoClean: true,
   linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
   linkAgentMinScore: 0.3, // issue 330/ADR-0146（issue 425/ADR-0185 换算）：候选相似度下限（原始余弦，0.3≡旧锐化尺 0.65）；0=不过滤
+  // issue 425/ADR-0185：换算标记必须随缺省值一起落盘——落盘路径写的是整份 Object.assign({}, DEFAULT_SETTINGS, loaded)，
+  // 若缺省值不带标记，首次保存（ensureRemoteOllamaUrl / 设置页任意一键）写下的 0.3 会在第二次启动被当旧尺换算成 0.03
+  linkAgentMinScoreScale: 'cos',
 
   // 常驻监听（issue 187：旧 aiAgent 4 键退役，引用同步无条件常驻，不设开关）
   // 第二大脑（2026-09-12 拍板）：启用开关退役，启动无条件自动加载，键不再落盘
