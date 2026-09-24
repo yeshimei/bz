@@ -283,9 +283,8 @@ export class MobilePanel {
     }
     const ac = new AbortController();
     this.inflight = ac;
-    let r: SearchHit[] = [];
     try {
-      r = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
+      const r = await this.store.searchMobile(query, CONFIG.TOP_K, ac.signal);
       // 仍是本轮才收尾（issue 428）：被新一轮接管则结果作废，让新轮独占列表态
       // （赋值必须在门禁之后——否则旧轮结果照样落进 refResults，盖掉新轮）
       if (this.inflight !== ac) return;
