@@ -668,13 +668,15 @@ export function migrateRetiredSecondBrainKeys(raw: unknown): boolean {
 const RETIRED_JEV_KEYS: string[] = ['jevEnabled', 'jevEndpoint', 'jevTimeoutMs', 'jevApiKey', 'jevModel'];
 /** 旧缺省模型名（ADR-0173 §5 曾刻意钉版本；issue 424 起改为跟随服务端最新） */
 const LEGACY_JEV_DEFAULT_MODEL = 'jev-1.13.0';
-/** 全局密钥/模型键迁移的落位服务商（旧键只有一份，归属缺省服务商 typesafe） */
-const LEGACY_JEV_PROVIDER = 'typesafe';
+/** 全局密钥/模型键迁移的落位服务商（issue 433 review：落位 = 存量 jevProvider，切过服务商的用户旧键跟人走） */
+const legacyTargetOf = (rec: Record<string, unknown>): string =>
+  String(rec.jevProvider ?? '') || 'typesafe';
 
 export function migrateRetiredJevKeys(raw: unknown): boolean {
   if (!raw || typeof raw !== 'object') return false;
   const rec = raw as Record<string, unknown>;
   let migrated = false;
+  const legacyTarget = legacyTargetOf(rec);
   if (rec.jevModel !== undefined && String(rec.jevModel) === LEGACY_JEV_DEFAULT_MODEL) {
     rec.jevModel = 'jev-latest';
     migrated = true;
@@ -687,7 +689,7 @@ export function migrateRetiredJevKeys(raw: unknown): boolean {
     const v = rec[oldKey];
     if (v === undefined || v === null || v === '') continue;
     if (!rec[mapField] || typeof rec[mapField] !== 'object') rec[mapField] = {};
-    (rec[mapField] as Record<string, unknown>)[LEGACY_JEV_PROVIDER] = v;
+    (rec[mapField] as Record<string, unknown>)[legacyTarget] = v;
   }
   for (const key of RETIRED_JEV_KEYS) {
     if (rec[key] !== undefined) {

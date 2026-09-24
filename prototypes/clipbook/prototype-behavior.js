@@ -1,4 +1,4 @@
-/* 源指纹 0f887eb2774e917b · 仓内输入 116 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9a61d968e9bfc6a9 · 仓内输入 116 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -19380,12 +19380,20 @@ ${body}`;
     if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
     return "请求失败";
   }
+  function clearResetTimer(el) {
+    const prev = resetTimers.get(el);
+    if (prev !== void 0) {
+      clearTimeout(prev);
+      resetTimers.delete(el);
+    }
+  }
   function setRowBtnState(el, state2, label, failText) {
     if (!el) return;
     el.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
     el.disabled = state2 === "busy";
     if (state2 === "busy") {
       el.classList.add("bz-rowbtn--busy");
+      clearResetTimer(el);
     } else if (state2 === "ok") {
       el.classList.add("bz-rowbtn--ok");
       el.textContent = ROW_BTN_OK_TEXT;
@@ -19396,11 +19404,23 @@ ${body}`;
       el.textContent = label;
     }
   }
-  var ROW_BTN_RESET_MS, ROW_BTN_OK_TEXT;
+  function armRowBtnReset(el, label) {
+    if (!el) return;
+    const prev = resetTimers.get(el);
+    if (prev !== void 0) clearTimeout(prev);
+    const t = setTimeout(() => {
+      resetTimers.delete(el);
+      setRowBtnState(el, "idle", label);
+      el.disabled = false;
+    }, ROW_BTN_RESET_MS);
+    resetTimers.set(el, t);
+  }
+  var ROW_BTN_RESET_MS, ROW_BTN_OK_TEXT, resetTimers;
   var init_settings_btn_state = __esm({
     "src/core/settings-btn-state.ts"() {
       ROW_BTN_RESET_MS = 2e3;
       ROW_BTN_OK_TEXT = "已连通";
+      resetTimers = /* @__PURE__ */ new WeakMap();
     }
   });
 
@@ -20083,7 +20103,7 @@ ${body}`;
                   if (a.stateful) setRowBtnState(el, "fail", a.text, shortFailReason(e));
                   else throw e;
                 } finally {
-                  if (a.stateful) setTimeout(() => setRowBtnState(el, "idle", a.text), ROW_BTN_RESET_MS);
+                  if (a.stateful) armRowBtnReset(el, a.text);
                 }
                 if (currentText && currentText.setValue) {
                   dirty2 = false;
@@ -21728,7 +21748,7 @@ ${bodyText.substring(0, 6e3)}`;
             if (a.stateful) setRowBtnState(btn, "fail", a.text, shortFailReason(e));
             else throw e;
           } finally {
-            if (a.stateful) setTimeout(() => setRowBtnState(btn, "idle", a.text), ROW_BTN_RESET_MS);
+            if (a.stateful) armRowBtnReset(btn, a.text);
           }
           (_b = displaySetters.get(input)) == null ? void 0 : _b(String((_a = acc.read()) != null ? _a : ""));
           refresh();

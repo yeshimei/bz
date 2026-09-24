@@ -281,7 +281,7 @@ export default class BzPlugin extends Plugin {
     const retiredSortKeyMigrated = migrateRetiredFavoritesSortKey(loaded);
     // issue 425：候选相似度下限从「score^0.35 锐化尺」换算到「原始余弦尺」（分数不再锐化）
     const minScoreScaleMigrated = migrateLinkMinScoreScale(loaded);
-    // issue 424/ADR-0184：第二大脑四个参数键退役（不限制 + 固化）+ Jev 三键退役、旧缺省模型名改写
+    // issue 424/ADR-0184 + 433：第二大脑四参数键退役 + Jev 旧键退役迁移、旧缺省模型名改写
     const retiredSecondBrainKeysMigrated = migrateRetiredSecondBrainKeys(loaded);
     const retiredJevKeysMigrated = migrateRetiredJevKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
