@@ -61,12 +61,26 @@ describe('yesNoLogprobScore（logprobs → P(yes)）', () => {
     expect(yesNoLogprobScore(raw)).toBeCloseTo(0.7 / 0.95, 6);
   });
 
-  it('无 top_logprobs 时退回首 token 自身（token+logprob 单条）', () => {
-    expect(yesNoLogprobScore([{ token: 'yes', logprob: Math.log(0.7) }])).toBe(1);
+  it('无 top_logprobs（旧版服务忽略该参数）→ null：单条 logprob 无法归一化，不做 0/1 二值降级', () => {
+    expect(yesNoLogprobScore([{ token: 'yes', logprob: Math.log(0.7) }])).toBeNull();
+    expect(yesNoLogprobScore([{ token: 'no', logprob: Math.log(0.7) }])).toBeNull();
+    expect(yesNoLogprobScore([{}])).toBeNull();
+  });
+
+  it('非有限 logprob（±Infinity / NaN）当无效候选跳过；两类皆无效 → null（不产出 NaN 分）', () => {
+    expect(
+      yesNoLogprobScore([
+        { top_logprobs: [{ token: 'yes', logprob: -Infinity }, { token: 'no', logprob: Math.log(0.3) }] },
+      ])
+    ).toBe(0);
+    expect(
+      yesNoLogprobScore([{ top_logprobs: [{ token: 'yes', logprob: NaN }, { token: 'no', logprob: -Infinity }] }])
+    ).toBeNull();
   });
 
   it('yes/no 都不在（模型未按模板作答 / 旧版服务）→ null', () => {
     expect(yesNoLogprobScore([{ top_logprobs: [{ token: 'maybe', logprob: -1 }] }])).toBeNull();
+    expect(yesNoLogprobScore([{ top_logprobs: [] }])).toBeNull();
     expect(yesNoLogprobScore([])).toBeNull();
     expect(yesNoLogprobScore(undefined)).toBeNull();
   });
