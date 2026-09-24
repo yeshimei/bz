@@ -723,7 +723,7 @@ export function noticeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '通知级别',
-            desc: '低档位静默常规通知，带撤销按钮的通知不受影响',
+            desc: '展示哪些级别的通知',
             binding: { key: 'noticeLevel' },
             options: [
               { value: 'all', label: '全部' },
@@ -734,7 +734,7 @@ export function noticeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '停留时长',
-            desc: '长文案自动延长，撤销类 6 秒反悔窗口不受影响',
+            desc: '通知停留的时长',
             binding: { key: 'noticeDuration' },
             options: [
               { value: 'quick', label: '干脆（2 秒）' },
@@ -746,7 +746,7 @@ export function noticeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '弹出位置',
-            desc: '桌面端四角任选，移动端恒顶部居中',
+            desc: '通知弹出的屏幕位置',
             binding: { key: 'noticePosition' },
             options: [
               { value: 'top-right', label: '右上（默认）' },
@@ -758,7 +758,7 @@ export function noticeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '同屏上限',
-            desc: '超出时挤掉最旧的一条',
+            desc: '同屏最多的通知条数',
             binding: { key: 'noticeMaxVisible' },
             options: [
               { value: '3', label: '3 条' },
