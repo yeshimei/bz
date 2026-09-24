@@ -16,7 +16,7 @@ import { getSafeManager } from '../encrypt';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { onDomainEvent } from '../core/domain-bus';
 import { topifyZ, createSiteIcon } from '../core/dom';
-import { openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
+import { confirmDiscard, openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
@@ -1271,22 +1271,14 @@ export class PasswordVaultUIManager {
    * - force=true 直关——两条既定强制路径：保存成功（内容已落盘）、上锁/关面板安全收场
    *   （明文不得残留，二次确认反而把明文钉在锁屏上方）；
    * - 缺省路径（遮罩点击 / 取消按钮 / ESC）先看 entryDialogDirty()：有未保存改动 →
-   *   域皮流程框（bz-pwv-flow-dialog，金色材质与密码本同皮）问一声，「继续编辑」留在
-   *   弹窗、确认「放弃修改」才真关；没动过手静默直关不烦人。
+   *   走 core confirmDiscard 草稿拦截单源（ticket 141，review 收编——原手拼 openFlowDialog
+   *   把 cta 落在「放弃修改」上，回车即丢内容，与 core 安全焦点哲学相悖），域皮
+   *   bz-pwv-flow-dialog 透传金色材质；文案/按钮序/「默认聚焦继续编辑」（回车=不丢）全由
+   *   单源定；没动过手静默直关不烦人。
    */
   private closeEntryDialog(force = false) {
     if (!force && this.entryDialogDirty()) {
-      void openFlowDialog({
-        title: '放弃未保存的修改？',
-        message: '弹窗里有未保存的修改，关闭后将丢失。确定放弃？',
-        className: 'bz-pwv-flow-dialog',
-        actions: [
-          { label: '继续编辑', value: 'cancel' },
-          { label: '放弃修改', value: 'ok', cta: true },
-        ],
-      }).then((v) => {
-        if (v === 'ok') this.closeEntryDialog(true);
-      });
+      confirmDiscard(() => this.closeEntryDialog(true), undefined, 'bz-pwv-flow-dialog');
       return;
     }
     this.entrySnapshot = null;
@@ -1499,6 +1491,11 @@ export class PasswordVaultUIManager {
       notifyActionError(e, '加载数据', { onRetry: () => void this.loadAndRender() });
     }
     this.renderAll();
+    // 快速生成密码的待存状态在已解锁直进路径同样消费（2026-09-24 review 建议 3）：
+    // 面板打开时本就解锁 / 共锁别域解锁（onSharedLockChanged(true)）都汇经这里——
+    // 不接的话通知承诺的「解锁密码本时将自动弹出录入窗」在这两条路上落空。
+    // load 已完成，数据就绪后弹添加窗预填；消费即清，锁屏三路那支不会与此双弹。
+    this.maybeOpenPendingAdd();
   }
 
   /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
