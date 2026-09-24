@@ -241,6 +241,8 @@ describe('模型选择器回填时机：选中即刷新（一次点击）', () =
     );
   });
 
+  // 注：本行有 refreshKey，onPick 内 refreshVisibility() 本就能回填——此例在旧实现下也绿，
+  // 只作「一次点击即刷新」的语义锁；真正抓 bug 的锚是上一条 Embedding 行（无 refreshKey）。
   it('LLM 模型名称：选与当前值不同的模型 → 输入框当场回填', async () => {
     state.aiProvider = 'deepseek';
     state.deepseekApiKey = 'sk-test';
@@ -258,7 +260,7 @@ describe('模型选择器回填时机：选中即刷新（一次点击）', () =
     );
   });
 
-  it('取消选择（点遮罩关闭）不改变值，动作 Promise 正常收口（无残留弹窗）', async () => {
+  it('取消选择（点遮罩关闭）不改变值，动作 Promise 正常收口——取消后再选仍一次点击生效', async () => {
     state.secondBrainEmbeddingModel = 'bge-m3';
     vi.stubGlobal(
       'fetch',
@@ -271,5 +273,17 @@ describe('模型选择器回填时机：选中即刷新（一次点击）', () =
     await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeNull());
     expect(state.secondBrainEmbeddingModel).toBe('bge-m3');
     expect(textControlOf(findRow(container, 'Embedding 模型')).value).toBe('bge-m3');
+    // 取消路径若不触发 onClose，动作 Promise 悬空 → 再点按钮时渲染器仍在等上一次动作，
+    // 回填链断掉（本断言即该风险的观察点）。换一个不同的模型证明链还在。
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => okModels({ models: [{ name: 'qwen3-embedding:8b', capabilities: ['embedding'] }] }))
+    );
+    buttonOf(findRow(container, 'Embedding 模型')).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
+    await vi.waitFor(() =>
+      expect(textControlOf(findRow(container, 'Embedding 模型')).value).toBe('qwen3-embedding:8b')
+    );
   });
 });
