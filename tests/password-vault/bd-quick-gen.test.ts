@@ -173,7 +173,7 @@ describe('解锁消费 + 弹窗关闭守卫（ui 层）', () => {
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
   });
 
-  it('有未保存改动：点取消先弹域皮确认框；「继续编辑」留下、「放弃修改」真关', async () => {
+  it('有未保存改动：点取消先弹域皮确认框（core confirmDiscard 单源）；「继续编辑」留下、「放弃」真关', async () => {
     await sm.unlock('pw');
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
@@ -183,17 +183,18 @@ describe('解锁消费 + 弹窗关闭守卫（ui 层）', () => {
     (dlg.querySelector('[data-act="cancel"]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
     const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    expect(popup.querySelector('h4')!.textContent).toBe('放弃未保存的修改？');
+    expect(popup.querySelector('h4')!.textContent).toBe('放弃未保存的内容？'); // confirmDiscard 单源文案
     expect(popup.classList.contains('bz-pwv-flow-dialog')).toBe(true); // 域皮：金色材质随行
-    // 「继续编辑」：确认框收场，弹窗留存（手填内容不丢）
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    // 「继续编辑」= confirmDiscard 的 actions[1]（占 __shared_confirm_ok__ id，默认聚焦，
+    // 回车落这里防误丢）：确认框收场，弹窗留存（手填内容不丢）
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     expect(document.querySelector('.bz-password-vault-modal.open')).toBeTruthy();
-    // 再点取消 → 确认框再来 → 「放弃修改」：这次真关
+    // 再点取消 → 确认框再来 → 「放弃」= actions[0]（占 __shared_confirm_cancel__ id）：这次真关
     (dlg.querySelector('[data-act="cancel"]') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     expect(document.querySelector('.bz-password-vault-modal.open')).toBeNull();
@@ -214,7 +215,7 @@ describe('解锁消费 + 弹窗关闭守卫（ui 层）', () => {
     const modal = document.querySelector('.bz-password-vault-modal.open') as HTMLElement;
     modal.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click(); // 「放弃」侧
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelector('.bz-password-vault-modal.open')).toBeNull();
     // preset 预填：platform/url 照填、password 用预填值不再自动生成
@@ -238,5 +239,36 @@ describe('解锁消费 + 弹窗关闭守卫（ui 层）', () => {
     await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-modal.open')).toBeNull());
     expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     expect(dm.pwData.length).toBe(1);
+  });
+
+  it('已解锁直进也消费：面板打开时本就解锁 → show() 即弹录入窗预填（review 建议 3 闭环）', async () => {
+    await sm.unlock('pw');
+    setPendingQuickPassword('UNLOCKEDPW1');
+    ui.show(); // 已解锁：不走锁屏，loadAndRender 尾部消费
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-modal.open')).toBeTruthy()
+    );
+    const dlg = document.querySelector('.bz-password-vault-modal.open .bz-password-vault-dialog')!;
+    expect((dlg.querySelector('[data-f="password"]') as HTMLInputElement).value).toBe('UNLOCKEDPW1');
+    // 消费即清：关掉重开面板不再弹
+    (document.querySelector('.bz-password-vault-modal.open [data-act="cancel"]') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    ui.hide();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(document.querySelector('.bz-password-vault-modal.open')).toBeNull();
+  });
+
+  it('添加态双实例同值：一次生成共用，desk/mob 密码字段一致（review 备注 5）', async () => {
+    await sm.unlock('pw');
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+    ui.openEntryDialog(null);
+    const dialogs = document.querySelectorAll('.bz-password-vault-modal .bz-password-vault-dialog');
+    expect(dialogs.length).toBe(2); // desk + mob 双实例
+    const pw0 = (dialogs[0].querySelector('[data-f="password"]') as HTMLInputElement).value;
+    const pw1 = (dialogs[1].querySelector('[data-f="password"]') as HTMLInputElement).value;
+    expect(pw0).toBe(pw1);
+    expect(pw0).not.toBe('');
   });
 });

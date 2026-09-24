@@ -1,4 +1,4 @@
-/* 源指纹 517dfa8049e5a088 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b29b7b3dbcc7e6d4 · 仓内输入 67 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/motion.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -5410,6 +5410,19 @@ var BZW_password_vault = (() => {
   }
   function cancelActiveFlowDialog() {
     if (activeSettle) activeSettle(void 0);
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
   }
 
   // src/core/dom.ts
@@ -14091,22 +14104,14 @@ var BZW_password_vault = (() => {
      * - force=true 直关——两条既定强制路径：保存成功（内容已落盘）、上锁/关面板安全收场
      *   （明文不得残留，二次确认反而把明文钉在锁屏上方）；
      * - 缺省路径（遮罩点击 / 取消按钮 / ESC）先看 entryDialogDirty()：有未保存改动 →
-     *   域皮流程框（bz-pwv-flow-dialog，金色材质与密码本同皮）问一声，「继续编辑」留在
-     *   弹窗、确认「放弃修改」才真关；没动过手静默直关不烦人。
+     *   走 core confirmDiscard 草稿拦截单源（ticket 141，review 收编——原手拼 openFlowDialog
+     *   把 cta 落在「放弃修改」上，回车即丢内容，与 core 安全焦点哲学相悖），域皮
+     *   bz-pwv-flow-dialog 透传金色材质；文案/按钮序/「默认聚焦继续编辑」（回车=不丢）全由
+     *   单源定；没动过手静默直关不烦人。
      */
     closeEntryDialog(force = false) {
       if (!force && this.entryDialogDirty()) {
-        void openFlowDialog({
-          title: "放弃未保存的修改？",
-          message: "弹窗里有未保存的修改，关闭后将丢失。确定放弃？",
-          className: "bz-pwv-flow-dialog",
-          actions: [
-            { label: "继续编辑", value: "cancel" },
-            { label: "放弃修改", value: "ok", cta: true }
-          ]
-        }).then((v) => {
-          if (v === "ok") this.closeEntryDialog(true);
-        });
+        confirmDiscard(() => this.closeEntryDialog(true), void 0, "bz-pwv-flow-dialog");
         return;
       }
       this.entrySnapshot = null;
@@ -14283,6 +14288,7 @@ var BZW_password_vault = (() => {
         notifyActionError(e, "加载数据", { onRetry: () => void this.loadAndRender() });
       }
       this.renderAll();
+      this.maybeOpenPendingAdd();
     }
     /** 解锁态刷新内存统计快照（渲染期只备值不落盘——本域最高频入口，写盘收敛到上锁消费点） */
     refreshLockStatsCache() {
