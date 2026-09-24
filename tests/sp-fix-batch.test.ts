@@ -74,8 +74,8 @@ describe('面板交互收编回归', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 第二大脑「Ollama 本地 URL」text 行（键直绑，默认可见）
-    const sbItem = [...popup.querySelectorAll('.bz-sp-nav-item')].find((el) => el.textContent?.includes('第二大脑')) as HTMLElement;
+    // 「Ollama 本地 URL」text 行（键直绑，默认可见；issue 423 从第二大脑迁入 AI 面板 Embedding 组）
+    const sbItem = [...popup.querySelectorAll('.bz-sp-nav-item')].find((el) => el.textContent?.includes('AI')) as HTMLElement;
     sbItem.click();
     expect(await waitGroups(popup, 1)).toBe(true);
     const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];

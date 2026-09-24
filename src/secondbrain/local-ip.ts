@@ -4,7 +4,12 @@
  *
  * 运行时取数走 window.require('os')（Obsidian 桌面端 renderer 可用——obsidian42-brat / pdf-plus
  * 既有先例；esbuild 侧已将 "os" external 化，勿 bundle）。测试注入 interfaces 对象走 enumerateLanIPs。
+ *
+ * issue 423/ADR-0183：新增 detect/ensure 两函数——桌面端启动自动补全「移动端远程地址」
+ * （手机自身探测不到电脑 IP，只能读同步来的设置值）；第二大脑「本机局域网 IP」行的
+ * 「填入远程 URL」按钮走同一探测口径。
  */
+import { tryGetSettings, saveSettings } from '../core/settings-provider';
 
 export interface LanIp {
   iface: string;
@@ -67,4 +72,28 @@ export function pickPrimaryLanIp(list: LanIp[]): LanIp | null {
   if (!list.length) return null;
   const hit = list.find((l) => PREFERRED_IFACE_KEYWORDS.some((k) => ifaceMatches(l.iface, k)));
   return hit || list[0];
+}
+
+/** 本机远程 Ollama 地址（主网卡 IP + 默认 11434 端口）；探测不到返回 null。
+ *  入参可注入网卡列表（纯函数口径，测试直接喂数据）。 */
+export function detectRemoteOllamaUrl(lanIPs: LanIp[] = getLanIPs()): string | null {
+  const primary = pickPrimaryLanIp(lanIPs);
+  return primary ? formatRemoteOllamaUrl(primary.ip) : null;
+}
+
+/**
+ * 桌面端启动自动补全「移动端远程地址」（issue 423/ADR-0183）：**仅当设置为空时**写入探测值——
+ * 用户手改过的值（如 Ollama 装在另一台机器）一律不动，防误覆盖。
+ * 手机端 getLanIPs 恒空 → 不写，只读桌面同步过去的设置值；探测不到也不写。
+ * 返回是否发生写入（写内存 + saveSettings 落盘）。
+ */
+export function ensureRemoteOllamaUrl(lanIPs: LanIp[] = getLanIPs()): boolean {
+  const s = tryGetSettings() as Record<string, unknown>;
+  if (String(s.secondBrainRemoteOllamaUrl ?? '').trim()) return false;
+  const url = detectRemoteOllamaUrl(lanIPs);
+  if (!url) return false;
+  s.secondBrainRemoteOllamaUrl = url;
+  void saveSettings();
+  console.log(`[secondbrain] 已自动填入移动端远程地址: ${url}`);
+  return true;
 }

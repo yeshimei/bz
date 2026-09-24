@@ -653,10 +653,12 @@ function topLevelName(path: string): string {
  * 第二大脑设置 schema（ticket 131；ADR-0064）：外观/服务/检索/对话 四组卡片。
  * - ticket 100 文案修正：含符号标题（（本地）/（ms）/（电脑）/…）改写自然句，键名/行为/通知文案零变化；
  * - 省略 desc 的行保持省略（lint 只查有 name/desc 的行，不为过 lint 加文案）；
- * - 「本机局域网 IP」行为态（探测 IP 动态 desc + 「填入远程 URL」确认覆盖 + 输入框即时回显）
- *   走 custom 插槽保行为；「重新索引」确认已 flow 化（openFlowDialog）不动；
- * - issue 422/ADR-0182：「Embedding 模型」行迁出（AI 面板 Embedding 组），本页「服务」组只留
- *   Ollama 连接面（本地 URL / 移动端远程地址 / 局域网 IP）与额外检索目录。
+ * - ticket 122「本机局域网 IP」行：探测 IP 动态 desc + 「填入远程 URL」确认覆盖（issue 423 起该
+ *   按钮从「移动端远程地址」行改挂本行，原位自查→一键修正）；「重新索引」确认已 flow 化不动；
+ * - issue 422/ADR-0182：「Embedding 模型」行迁出（AI 面板 Embedding 组）；
+ * - issue 423/ADR-0183：「Ollama 本地 URL」「移动端远程地址」两行同迁 AI 面板「Embedding」组
+ *   （向量化服务地址与模型同组；远程地址另有桌面端启动自动补全）——本页「服务」组只剩
+ *   本机局域网 IP 自查行与额外检索目录，手机上不再需要手填任何地址。
  * 置于模块顶层供文案 lint 直接引用。 */
 
 /** 本机局域网 IP 描述（schema 构建期探测；「填入远程 URL」动作实时重探）。
@@ -665,18 +667,41 @@ function lanIpDesc(): string {
   if (isMobileEnv()) return ''; // 移动端整行隐藏（visibleWhen），不做 os 探测
   const lanIPs = getLanIPs();
   if (lanIPs.length === 0) {
-    return '未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP';
+    return '未能探测本机局域网 IP，请确认电脑已联网，远程地址需在 AI 面板手动填写';
   }
   const primary = pickPrimaryLanIp(lanIPs);
-  return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join('；')}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : '此处 IP'}`;
+  return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join('；')}。移动端连不上时，点「填入远程 URL」把远程地址刷新为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : '本机 IP'}`;
+}
+
+/** 「填入远程 URL」一键修正（ticket 122 起挂「移动端远程地址」行；issue 423/ADR-0183 随该行
+ *  迁 AI 面板而改挂本机 IP 行）：探测 → 确认 → 覆盖 secondBrainRemoteOllamaUrl。
+ *  返回 Promise——渲染器等确认框 resolve 后再重读绑定回填显示值。 */
+function fillRemoteOllamaUrl(): void | Promise<void> {
+  const primary = pickPrimaryLanIp(getLanIPs());
+  if (!primary) {
+    notice('未探测到本机局域网 IP，请在 AI 面板手动填写');
+    return;
+  }
+  const target = formatRemoteOllamaUrl(primary.ip);
+  return openFlowDialog({
+    title: '填入远程 Ollama URL',
+    message: `将 AI 面板的「移动端远程地址」覆盖为 ${target}？`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
+      // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
+      // 不构成不可逆数据破坏，故保留普通高亮主动作。
+      { label: '覆盖', value: 'ok', cta: true },
+    ],
+  }).then((v) => {
+    if (v === 'ok') {
+      (getSettings() as any).secondBrainRemoteOllamaUrl = target;
+      void saveSettings();
+    }
+  });
 }
 
 export function secondBrainSettingsSchema(): SettingsSchema {
-  // 远程 Ollama URL 输入框引用（「填入远程 URL」按钮确认覆盖后即时回显）
-  /** text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值） */
-  const trimStore = (key: string) => (v: string) => {
-    (getSettings() as any)[key] = v.trim();
-  };
   /** 逗号分隔串 ↔ 多选路径数组（存储格式冻结——英文逗号分隔字符串） */
   const pathsOf = (key: string) => ({
     get: () => parsePathList(String((tryGetSettings() as any)[key] ?? '')),
@@ -701,63 +726,26 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
         name: '服务',
         rows: [
-          { type: 'text', name: 'Ollama 本地 URL', desc: '本地 Ollama 服务地址，留空用默认端口', binding: { key: 'secondBrainOllamaUrl' }, inputMode: 'url', onChange: trimStore('secondBrainOllamaUrl') },
-          // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
-          // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
-          {
-            type: 'text',
-            name: '移动端远程地址',
-            desc: '手机上连本地向量库走这个地址',
-            binding: { key: 'secondBrainRemoteOllamaUrl' },
-            inputMode: 'url',
-            onChange: (v) => trimStore('secondBrainRemoteOllamaUrl')(v),
-            actions: [{
-              text: '填入远程 URL',
-              cta: true,
-              onClick: () => {
-                const lanIPs = getLanIPs();
-                const primary = pickPrimaryLanIp(lanIPs);
-                if (!primary) {
-                  notice('未探测到本机局域网 IP，请手动填写');
-                  return;
-                }
-                const target = formatRemoteOllamaUrl(primary.ip);
-                // 返回 Promise：渲染器等确认框 resolve 后再回填输入框显示值
-                return openFlowDialog({
-                  title: '填入远程 Ollama URL',
-                  message: `将「移动端远程地址」覆盖为 ${target}？`,
-                  actions: [
-                    { label: '取消', value: 'cancel' },
-                    // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
-                    // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
-                    // 不构成不可逆数据破坏，故保留普通高亮主动作。
-                    { label: '覆盖', value: 'ok', cta: true },
-                  ],
-                }).then((v) => {
-                  if (v === 'ok') {
-                    (getSettings() as any).secondBrainRemoteOllamaUrl = target;
-                    void saveSettings();
-                  }
-                });
-              },
-            }],
-          },
-          // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+          // issue 423/ADR-0183：「Ollama 本地 URL」「移动端远程地址」两行迁 AI 面板「Embedding」组
+          // （向量化服务地址与模型同组；远程地址另有桌面端启动自动补全，见 local-ip.ensureRemoteOllamaUrl）。
+          // 本组只留本机 IP 自查行 + 一键刷新（ticket 122：DHCP 漂移时点一下就修好）。
           {
             type: 'info',
             name: '本机局域网 IP',
             visibleWhen: () => !isMobileEnv(),
             desc: lanIpDesc(),
+            actions: [{ text: '填入远程 URL', cta: true, onClick: () => fillRemoteOllamaUrl() }],
           },
           {
             type: 'info',
             name: '局域网 IP 提示',
             visibleWhen: () => isMobileEnv(),
-            desc: '连不上远程库时，在电脑上查看本机 IP 并核对上方地址',
+            desc: '连不上远程库时，在电脑端 AI 面板核对远程地址',
           },
           // 「Embedding 模型」行已迁 AI 面板（issue 422/ADR-0182：「AI」页 Embedding 组，
           // 行内「获取模型」按钮拉 Ollama 已装向量化模型）；键 secondBrainEmbeddingModel 不变，
-          // 本页不再重复暴露。Ollama 服务地址仍在此组——本机与手机的连接面归第二大脑。
+          // 本页不再重复暴露。issue 423/ADR-0183 起两行 Ollama 地址同迁该组——本页只剩
+          // 「本机 IP 是多少」这一条自查信息（手机端连不上时唯一需要人工核对的现场事实）。
           // 额外检索目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
           // ADR-0141 §3：三个盒子恒含索引，本行语义降级为「三盒之外还要纳入检索的目录」
           {

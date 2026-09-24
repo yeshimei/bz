@@ -27,6 +27,10 @@
  *   qwen3-embedding:8b…）。四组 = LLM / Embedding / JEV / 数据源凭据；键与行为零变化；
  *   注意本模块须保持 node 环境可安全加载（文案 lint 直接 import），故新增逻辑不 import
  *   obsidian 侧模块——移动端判定走 core/mobile（obsidian Platform），与域侧口径同源；
+ * - issue 423/ADR-0183：「Embedding」组再收第二大脑迁来的两行 Ollama 地址（本地 URL +
+ *   移动端远程地址，地址在前、模型在后）。远程地址另有桌面端启动自动补全（只补空值、
+ *   不覆盖手改值），探测与「填入远程 URL」实现留在 secondbrain/local-ip——本模块仍不
+ *   import 域侧模块，node 可加载口径不变；
  * - 2026-09-23 凭据组三行统一回单行 secret（用户拍板「加密的做成多行框看着怪」）：textarea 的
  *   masked 档位在凭据组退役，行序改为 ApiZero Key → B站 Cookie → 豆瓣 Cookie；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
@@ -159,16 +163,23 @@ function providerModelCustomRow(): SettingsRow {
             notice('服务商已切换，请重新获取', 'warning');
             return;
           }
-          openModelPicker({
-            providerLabel: desc.label,
-            current: providerValue('model'),
-            models,
-            onPick: (m) => {
-              // 与输入框 onChange 同口径（issue 411：custom 通道退役后无特判，统一落 aiModelOverrides）
-              setProviderValue('aiModelOverrides', m.id);
-              ctx.refreshVisibility();
-              notice(`模型已设为 ${m.id}`, 'success');
-            },
+          // 等选择器真正关闭再返回：渲染器在动作 Promise 完成后才重读绑定回填输入框，
+          // 而 openModelPicker 是「打开即返回」的弹窗——不等就会先回填旧值，用户选中后
+          // 输入框不刷新，要再点一次按钮才变（2026-09-24 用户报「选中两次才变」）。
+          await new Promise<void>((resolve) => {
+            openModelPicker({
+              providerLabel: desc.label,
+              current: providerValue('model'),
+              models,
+              onPick: (m) => {
+                // 与输入框 onChange 同口径（issue 411：custom 通道退役后无特判，统一落 aiModelOverrides）
+                setProviderValue('aiModelOverrides', m.id);
+                ctx.refreshVisibility();
+                notice(`模型已设为 ${m.id}`, 'success');
+              },
+              // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+              onClose: () => resolve(),
+            });
           });
         } catch (e) {
           notice(e instanceof Error ? e.message : String(e), 'error');
@@ -310,17 +321,23 @@ function embeddingModelRow(): SettingsRow {
         try {
           await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
           const models = await fetchEmbeddingModels();
-          openModelPicker({
-            providerLabel: 'Ollama 向量化',
-            current: String((tryGetSettings() as any).secondBrainEmbeddingModel || ''),
-            models,
-            onPick: (m) => {
-              (tryGetSettings() as any).secondBrainEmbeddingModel = m.id;
-              void saveSettings();
-              // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
-              ctx.refreshVisibility();
-              notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, 'success');
-            },
+          // 与 LLM 模型行同款：等选择器真正关闭再返回（渲染器在动作 Promise 完成后才重读
+          // 绑定回填输入框，openModelPicker 是「打开即返回」的弹窗——2026-09-24 用户报「选中两次才变」）
+          await new Promise<void>((resolve) => {
+            openModelPicker({
+              providerLabel: 'Ollama 向量化',
+              current: String((tryGetSettings() as any).secondBrainEmbeddingModel || ''),
+              models,
+              onPick: (m) => {
+                (tryGetSettings() as any).secondBrainEmbeddingModel = m.id;
+                void saveSettings();
+                // 与手输 onChange 同口径（手输走 binding 防抖落盘）；回填显示值由渲染器动作链负责
+                ctx.refreshVisibility();
+                notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, 'success');
+              },
+              // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+              onClose: () => resolve(),
+            });
           });
         } catch (e) {
           notice(e instanceof Error ? e.message : String(e), 'error');
@@ -330,10 +347,46 @@ function embeddingModelRow(): SettingsRow {
   } as SettingsRow;
 }
 
-/** 「Embedding」组行（issue 422/ADR-0182）：向量化模型（第二大脑与跟随回退的小橘记忆库共用）。
- *  Ollama 服务地址 / 移动端远程地址仍留在第二大脑设置页「服务」组——那里是本机与手机的连接面。 */
+/**
+ * 「Ollama 地址」两行（issue 423/ADR-0183）：原第二大脑设置页「服务」组迁入——
+ * 本地 URL（桌面向量化服务地址，留空用默认端口）+ 移动端远程地址（桌面端启动自动探测填入，
+ * 手机端读同步值，见 secondbrain/local-ip.ensureRemoteOllamaUrl）。
+ * 键 secondBrainOllamaUrl / secondBrainRemoteOllamaUrl 不变，secondbrain/config.ts 与
+ * vector-store / weekly / link-agent 的消费口径零改动；「填入远程 URL」一键修正留在第二大脑
+ * 「本机局域网 IP」行（探测展示与按钮同处——手机连不上时就地自查自修，issue 423 决策 4）。
+ * 两行均为可编辑输入框：自动填入只补空值，手改值（如 Ollama 装在另一台机器）不被覆盖。
+ */
+function ollamaAddressRows(): SettingsRow[] {
+  // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
+  const trimStore = (key: string) => (v: string) => {
+    (tryGetSettings() as Record<string, unknown>)[key] = v.trim();
+  };
+  const rows: SettingsRow[] = [
+    {
+      type: 'text',
+      name: 'Ollama 本地 URL',
+      desc: '本地 Ollama 服务地址，留空用默认端口',
+      binding: { key: 'secondBrainOllamaUrl' },
+      inputMode: 'url',
+      onChange: trimStore('secondBrainOllamaUrl'),
+    },
+    {
+      type: 'text',
+      name: '移动端远程地址',
+      desc: '手机连电脑向量库用，桌面端启动自动填入',
+      binding: { key: 'secondBrainRemoteOllamaUrl' },
+      inputMode: 'url',
+      onChange: trimStore('secondBrainRemoteOllamaUrl'),
+    },
+  ];
+  return rows;
+}
+
+/** 「Embedding」组行（issue 422/ADR-0182）：向量化服务三件套——服务地址（本机 / 移动端）
+ *  在前、向量化模型在后（先知道服务在哪台机器，再拉它的模型列表）。
+ *  第二大脑与跟随回退的小橘记忆库共用同一模型键与端点解析。 */
 function embeddingGroupRows(): SettingsRow[] {
-  return [embeddingModelRow()];
+  return [...ollamaAddressRows(), embeddingModelRow()];
 }
 
 /**

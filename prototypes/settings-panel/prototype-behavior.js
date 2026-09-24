@@ -1,4 +1,4 @@
-/* 源指纹 7da2ee2f2f0fc26a · 仓内输入 258 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 78b7b92c5cfaa5d0 · 仓内输入 258 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -11068,15 +11068,19 @@ var BZW_settings_panel = (() => {
               notice("服务商已切换，请重新获取", "warning");
               return;
             }
-            openModelPicker({
-              providerLabel: desc.label,
-              current: providerValue("model"),
-              models,
-              onPick: (m) => {
-                setProviderValue("aiModelOverrides", m.id);
-                ctx.refreshVisibility();
-                notice(`模型已设为 ${m.id}`, "success");
-              }
+            await new Promise((resolve2) => {
+              openModelPicker({
+                providerLabel: desc.label,
+                current: providerValue("model"),
+                models,
+                onPick: (m) => {
+                  setProviderValue("aiModelOverrides", m.id);
+                  ctx.refreshVisibility();
+                  notice(`模型已设为 ${m.id}`, "success");
+                },
+                // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+                onClose: () => resolve2()
+              });
             });
           } catch (e) {
             notice(e instanceof Error ? e.message : String(e), "error");
@@ -11175,16 +11179,20 @@ var BZW_settings_panel = (() => {
           try {
             await saveSettings();
             const models = await fetchEmbeddingModels();
-            openModelPicker({
-              providerLabel: "Ollama 向量化",
-              current: String(tryGetSettings().secondBrainEmbeddingModel || ""),
-              models,
-              onPick: (m) => {
-                tryGetSettings().secondBrainEmbeddingModel = m.id;
-                void saveSettings();
-                ctx.refreshVisibility();
-                notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, "success");
-              }
+            await new Promise((resolve2) => {
+              openModelPicker({
+                providerLabel: "Ollama 向量化",
+                current: String(tryGetSettings().secondBrainEmbeddingModel || ""),
+                models,
+                onPick: (m) => {
+                  tryGetSettings().secondBrainEmbeddingModel = m.id;
+                  void saveSettings();
+                  ctx.refreshVisibility();
+                  notice(`Embedding 模型已设为 ${m.id}，第二大脑下次打开将重建向量索引`, "success");
+                },
+                // 选中/取消（遮罩、Esc）统一在此收口——动作 Promise 必有归宿，不回填悬空
+                onClose: () => resolve2()
+              });
             });
           } catch (e) {
             notice(e instanceof Error ? e.message : String(e), "error");
@@ -11193,8 +11201,32 @@ var BZW_settings_panel = (() => {
       }]
     };
   }
+  function ollamaAddressRows() {
+    const trimStore = (key) => (v) => {
+      tryGetSettings()[key] = v.trim();
+    };
+    const rows = [
+      {
+        type: "text",
+        name: "Ollama 本地 URL",
+        desc: "本地 Ollama 服务地址，留空用默认端口",
+        binding: { key: "secondBrainOllamaUrl" },
+        inputMode: "url",
+        onChange: trimStore("secondBrainOllamaUrl")
+      },
+      {
+        type: "text",
+        name: "移动端远程地址",
+        desc: "手机连电脑向量库用，桌面端启动自动填入",
+        binding: { key: "secondBrainRemoteOllamaUrl" },
+        inputMode: "url",
+        onChange: trimStore("secondBrainRemoteOllamaUrl")
+      }
+    ];
+    return rows;
+  }
   function embeddingGroupRows() {
-    return [embeddingModelRow()];
+    return [...ollamaAddressRows(), embeddingModelRow()];
   }
   function credentialGroupRows() {
     return [
@@ -53529,6 +53561,7 @@ ${n.content.slice(0, 2e3)}
   var PREFERRED_IFACE_KEYWORDS;
   var init_local_ip = __esm({
     "src/secondbrain/local-ip.ts"() {
+      init_settings_provider();
       PREFERRED_IFACE_KEYWORDS = ["wlan", "wi-fi", "wifi", "wireless", "ethernet", "以太网", "有线"];
     }
   });
@@ -55126,15 +55159,36 @@ ${n.content.slice(0, 2e3)}
     if (isMobileEnv()) return "";
     const lanIPs = getLanIPs();
     if (lanIPs.length === 0) {
-      return "未能探测本机局域网 IP，请确认电脑已联网，移动端远程地址需手动填写电脑的局域网 IP";
+      return "未能探测本机局域网 IP，请确认电脑已联网，远程地址需在 AI 面板手动填写";
     }
     const primary = pickPrimaryLanIp(lanIPs);
-    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，把远程地址填为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "此处 IP"}`;
+    return `本机当前局域网 IP 为 ${lanIPs.map((l) => `${l.ip}，${l.iface}`).join("；")}。移动端连不上时，点「填入远程 URL」把远程地址刷新为${primary ? ` ${formatRemoteOllamaUrl(primary.ip)}` : "本机 IP"}`;
+  }
+  function fillRemoteOllamaUrl() {
+    const primary = pickPrimaryLanIp(getLanIPs());
+    if (!primary) {
+      notice("未探测到本机局域网 IP，请在 AI 面板手动填写");
+      return;
+    }
+    const target = formatRemoteOllamaUrl(primary.ip);
+    return openFlowDialog({
+      title: "填入远程 Ollama URL",
+      message: `将 AI 面板的「移动端远程地址」覆盖为 ${target}？`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
+        // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
+        // 不构成不可逆数据破坏，故保留普通高亮主动作。
+        { label: "覆盖", value: "ok", cta: true }
+      ]
+    }).then((v) => {
+      if (v === "ok") {
+        getSettings().secondBrainRemoteOllamaUrl = target;
+        void saveSettings();
+      }
+    });
   }
   function secondBrainSettingsSchema() {
-    const trimStore = (key) => (v) => {
-      getSettings()[key] = v.trim();
-    };
     const pathsOf = (key) => ({
       get: () => {
         var _a2;
@@ -55161,62 +55215,26 @@ ${n.content.slice(0, 2e3)}
           // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
           name: "服务",
           rows: [
-            { type: "text", name: "Ollama 本地 URL", desc: "本地 Ollama 服务地址，留空用默认端口", binding: { key: "secondBrainOllamaUrl" }, inputMode: "url", onChange: trimStore("secondBrainOllamaUrl") },
-            // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
-            // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
-            {
-              type: "text",
-              name: "移动端远程地址",
-              desc: "手机上连本地向量库走这个地址",
-              binding: { key: "secondBrainRemoteOllamaUrl" },
-              inputMode: "url",
-              onChange: (v) => trimStore("secondBrainRemoteOllamaUrl")(v),
-              actions: [{
-                text: "填入远程 URL",
-                cta: true,
-                onClick: () => {
-                  const lanIPs = getLanIPs();
-                  const primary = pickPrimaryLanIp(lanIPs);
-                  if (!primary) {
-                    notice("未探测到本机局域网 IP，请手动填写");
-                    return;
-                  }
-                  const target = formatRemoteOllamaUrl(primary.ip);
-                  return openFlowDialog({
-                    title: "填入远程 Ollama URL",
-                    message: `将「移动端远程地址」覆盖为 ${target}？`,
-                    actions: [
-                      { label: "取消", value: "cancel" },
-                      // 刻意不标 danger（issue 291 评审）：这是「填便利值」而非删除类动作——
-                      // 只是把被探测到的局域网地址写进设置项，用户随时可手改回，
-                      // 不构成不可逆数据破坏，故保留普通高亮主动作。
-                      { label: "覆盖", value: "ok", cta: true }
-                    ]
-                  }).then((v) => {
-                    if (v === "ok") {
-                      getSettings().secondBrainRemoteOllamaUrl = target;
-                      void saveSettings();
-                    }
-                  });
-                }
-              }]
-            },
-            // 本机局域网 IP（展示行，actions 已并上侧「填入远程 URL」按钮；custom 双分支已退役）
+            // issue 423/ADR-0183：「Ollama 本地 URL」「移动端远程地址」两行迁 AI 面板「Embedding」组
+            // （向量化服务地址与模型同组；远程地址另有桌面端启动自动补全，见 local-ip.ensureRemoteOllamaUrl）。
+            // 本组只留本机 IP 自查行 + 一键刷新（ticket 122：DHCP 漂移时点一下就修好）。
             {
               type: "info",
               name: "本机局域网 IP",
               visibleWhen: () => !isMobileEnv(),
-              desc: lanIpDesc()
+              desc: lanIpDesc(),
+              actions: [{ text: "填入远程 URL", cta: true, onClick: () => fillRemoteOllamaUrl() }]
             },
             {
               type: "info",
               name: "局域网 IP 提示",
               visibleWhen: () => isMobileEnv(),
-              desc: "连不上远程库时，在电脑上查看本机 IP 并核对上方地址"
+              desc: "连不上远程库时，在电脑端 AI 面板核对远程地址"
             },
             // 「Embedding 模型」行已迁 AI 面板（issue 422/ADR-0182：「AI」页 Embedding 组，
             // 行内「获取模型」按钮拉 Ollama 已装向量化模型）；键 secondBrainEmbeddingModel 不变，
-            // 本页不再重复暴露。Ollama 服务地址仍在此组——本机与手机的连接面归第二大脑。
+            // 本页不再重复暴露。issue 423/ADR-0183 起两行 Ollama 地址同迁该组——本页只剩
+            // 「本机 IP 是多少」这一条自查信息（手机端连不上时唯一需要人工核对的现场事实）。
             // 额外检索目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
             // ADR-0141 §3：三个盒子恒含索引，本行语义降级为「三盒之外还要纳入检索的目录」
             {

@@ -209,6 +209,33 @@ describe('schema 盘点：凭据一律掩码、数值一律数字档位', () => 
     expect(keys).not.toContain('secondBrainEmbeddingModel');
   });
 
+  it('第二大脑：两行 Ollama 地址已迁出（唯一入口 = AI 面板 Embedding 组，issue 423/ADR-0183）', () => {
+    const schema = secondBrainSettingsSchema();
+    const names = schema.groups.flatMap((g) => g.rows.map((r) => (r as { name?: string }).name));
+    expect(names).not.toContain('Ollama 本地 URL');
+    expect(names).not.toContain('移动端远程地址');
+    // 键迁移无残留（本页只剩本机 IP 自查行 + 额外检索目录）：两键不再由第二大脑 schema 持有
+    const keys = schema.groups.flatMap((g) =>
+      g.rows.map((r) => (r as { binding?: { key?: string } }).binding?.key).filter(Boolean)
+    );
+    expect(keys).not.toContain('secondBrainOllamaUrl');
+    expect(keys).not.toContain('secondBrainRemoteOllamaUrl');
+    // 「填入远程 URL」一键修正随探测展示留在本页（IP 行 actions）
+    const ipRow = schema.groups
+      .flatMap((g) => g.rows as SettingsRow[])
+      .find((r) => (r as { name?: string }).name === '本机局域网 IP') as {
+      actions?: Array<{ text: string }>;
+    };
+    expect(ipRow?.actions?.map((a) => a.text)).toEqual(['填入远程 URL']);
+  });
+
+  it('AI 面板 Embedding 组：两行 Ollama 地址以 URL 键盘档位承接（issue 423 反向锚）', () => {
+    const rows = rowsOf(aiSettingsSchema(), 'Embedding');
+    const urls = rows.filter((r) => (r.name ?? '').includes('URL') || (r.name ?? '').includes('远程地址'));
+    expect(urls.map((r) => r.name)).toEqual(['Ollama 本地 URL', '移动端远程地址']);
+    expect(urls.map((r) => (r as { inputMode?: string }).inputMode)).toEqual(['url', 'url']);
+  });
+
   it('知识盒：自动关联三键是 number 直绑（三函数绕行已退场）', () => {
     const schema = knowledgeSettingsSchema();
     const all = schema.groups.flatMap((g) => g.rows as SettingsRow[]);

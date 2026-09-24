@@ -204,3 +204,72 @@ describe('模型选择器弹窗：双皮 token 选择器守卫（ticket 265）',
     }
   });
 });
+
+/**
+ * 回填时机回归（2026-09-24 用户报「获取模型要选中两次，输入框内容才变化」）：
+ * 渲染器只在「动作 Promise 完成」后重读绑定回填显示值，而 openModelPicker 是打开即返回的
+ * 弹窗——旧实现动作先 resolve，回填的是旧值，用户选中后输入框不刷新。现改为等选择器关闭
+ * （onClose 统一收口）再 resolve。断言用「选中值 ≠ 当前值」才有效（旧测试选的恰是当前值，
+ * 显示值断言恒真、抓不到本例）。
+ */
+describe('模型选择器回填时机：选中即刷新（一次点击）', () => {
+  it('Embedding 模型：选与当前值不同的模型 → 输入框当场回填', async () => {
+    state.secondBrainEmbeddingModel = ''; // 当前空 → 选中后必变
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        okModels({
+          models: [
+            {
+              name: 'qwen3-embedding:8b',
+              capabilities: ['embedding'],
+              details: { parameter_size: '8B', embedding_length: 4096 },
+            },
+          ],
+        })
+      )
+    );
+    const container = renderAIGroup();
+    const row = findRow(container, 'Embedding 模型');
+    buttonOf(row).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
+    await vi.waitFor(() => expect(state.secondBrainEmbeddingModel).toBe('qwen3-embedding:8b'));
+    // 关键断言：不必再点一次按钮，显示值已刷新（旧实现此值恒为旧值，waitFor 会超时）
+    await vi.waitFor(() =>
+      expect(textControlOf(findRow(container, 'Embedding 模型')).value).toBe('qwen3-embedding:8b')
+    );
+  });
+
+  it('LLM 模型名称：选与当前值不同的模型 → 输入框当场回填', async () => {
+    state.aiProvider = 'deepseek';
+    state.deepseekApiKey = 'sk-test';
+    state.aiModelOverrides = {}; // 无覆盖 → 显示注册表默认（deepseek 为「不强制模型」的空串）
+    vi.stubGlobal('fetch', vi.fn(async () => okModels({ data: [{ id: 'deepseek-chat' }] })));
+    const container = renderAIGroup();
+    const row = findRow(container, '模型名称');
+    expect(textControlOf(row).value).not.toBe('deepseek-chat'); // 前提：选中项 ≠ 当前显示值
+    buttonOf(row).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    (document.querySelector('.bz-model-picker-row') as HTMLElement).click();
+    await vi.waitFor(() => expect(state.aiModelOverrides?.deepseek).toBe('deepseek-chat'));
+    await vi.waitFor(() =>
+      expect(textControlOf(findRow(container, '模型名称')).value).toBe('deepseek-chat')
+    );
+  });
+
+  it('取消选择（点遮罩关闭）不改变值，动作 Promise 正常收口（无残留弹窗）', async () => {
+    state.secondBrainEmbeddingModel = 'bge-m3';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => okModels({ models: [{ name: 'bge-m3', capabilities: ['embedding'] }] }))
+    );
+    const container = renderAIGroup();
+    buttonOf(findRow(container, 'Embedding 模型')).trigger();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeTruthy());
+    (document.getElementById('bz-model-picker-mask') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('bz-model-picker-popup')).toBeNull());
+    expect(state.secondBrainEmbeddingModel).toBe('bge-m3');
+    expect(textControlOf(findRow(container, 'Embedding 模型')).value).toBe('bge-m3');
+  });
+});

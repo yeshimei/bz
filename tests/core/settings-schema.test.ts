@@ -89,7 +89,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     expect(valuesOf('ollama')).toEqual(['auto', 'off', 'low', 'medium', 'high']); // 走 reasoning_effort
   });
 
-  it('Embedding 组（issue 422/ADR-0182）：向量化模型行从第二大脑迁入，键不变 + 行内「获取模型」', () => {
+  it('Embedding 组（issue 422/ADR-0182 + issue 423/ADR-0183）：地址两行在前、模型行在后，键全不变', () => {
     const rows = schema.groups[1].rows as Array<{
       name: string;
       type: string;
@@ -97,13 +97,21 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
       binding?: { key: string };
       actions?: Array<{ text: string }>;
     }>;
-    expect(rows.map((r) => r.name)).toEqual(['Embedding 模型']);
-    expect(rows.map((r) => r.type)).toEqual(['text']);
-    // 键仍是 secondBrainEmbeddingModel：secondbrain/config.ts 与 smartcat「留空跟随」口径零改动
-    expect(rows[0].binding).toEqual({ key: 'secondBrainEmbeddingModel' });
-    expect(rows[0].actions?.map((a) => a.text)).toEqual(['获取模型']);
-    expect(rows[0].desc).toContain('bge-m3');
-    // 反向断言（第二大脑设置页不再有该行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
+    // issue 423：第二大脑「服务」组两行 Ollama 地址迁入（服务在哪台机器 → 再拉它的模型列表）
+    expect(rows.map((r) => r.name)).toEqual(['Ollama 本地 URL', '移动端远程地址', 'Embedding 模型']);
+    expect(rows.map((r) => r.type)).toEqual(['text', 'text', 'text']);
+    expect(rows.map((r) => r.binding)).toEqual([
+      { key: 'secondBrainOllamaUrl' },
+      { key: 'secondBrainRemoteOllamaUrl' },
+      { key: 'secondBrainEmbeddingModel' },
+    ]);
+    // 三个键的消费口径零改动（secondbrain/config.ts / vector-store / ai-models 读取路径不变）
+    expect(rows[1].desc).toContain('自动填入'); // 桌面端启动自动补全的空值说明
+    expect(rows[2].actions?.map((a) => a.text)).toEqual(['获取模型']);
+    expect(rows[2].desc).toContain('bge-m3');
+    // 「填入远程 URL」按钮不在本组（issue 423 决策 4）：与探测展示同处，留在第二大脑 IP 行
+    expect(rows.every((r) => !r.actions?.some((a) => a.text === '填入远程 URL'))).toBe(true);
+    // 反向断言（第二大脑设置页不再有这三行）在 settings-input-modes.test.ts 的 secondbrain 盘点里
   });
 
   it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
