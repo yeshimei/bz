@@ -157,7 +157,7 @@ function providerModelCustomRow(): SettingsRow {
   return {
     type: 'text',
     name: '模型名称',
-    desc: '留空用该服务商默认模型',
+    desc: 'AI 生成使用的模型',
     placeholder: '默认模型',
     binding: {
       get: () => providerValue('model'),
@@ -218,7 +218,7 @@ function providerMaxTokensRow(): NumberRow {
   return {
     type: 'number',
     name: '最大输出 token',
-    desc: '留空时取该模型官方上限',
+    desc: '单次回复的长度上限',
     // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
     //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
     // 2026-09-23 补上界：原只有 min，手滑多打几个 0 会直送服务商（400/超长请求）；
@@ -257,7 +257,7 @@ function providerGroupRows(): SettingsRow[] {
     {
       type: 'select',
       name: 'AI 服务商',
-      desc: '切换服务商后显示对应的配置项',
+      desc: '选择 AI 服务商',
       binding: { key: 'aiProvider' },
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -293,7 +293,7 @@ function providerThinkingRow(): SettingsRow {
   return {
     type: 'select',
     name: '思考 reasoning',
-    desc: '关闭可省判定类小任务开销，档位随服务商显示',
+    desc: '思考档位，随服务商不同',
     binding: {
       get: () => providerThinkingValue(),
       set: (v) => setProviderThinkingValue(v),
@@ -339,7 +339,7 @@ function embeddingModelRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Embedding 模型',
-    desc: '向量化用的嵌入模型名，留空用默认 bge-m3',
+    desc: '向量化使用的嵌入模型',
     placeholder: 'bge-m3',
     binding: { key: 'secondBrainEmbeddingModel' },
     actions: [{
@@ -384,7 +384,7 @@ function ollamaLocalUrlRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Ollama 本地 URL',
-    desc: '本地 Ollama 服务地址，留空用默认端口',
+    desc: '本地 Ollama 服务地址',
     binding: { key: 'secondBrainOllamaUrl' },
     inputMode: 'url',
     // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
@@ -414,14 +414,14 @@ function jevGroupRows(): SettingsRow[] {
     {
       type: 'select',
       name: 'Jev 服务商',
-      desc: '判定通道的服务商，密钥与模型随服务商各自保存',
+      desc: '判定通道的服务商',
       binding: { key: 'jevProvider' },
       options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
     {
       type: 'secret',
       name: 'Jev 密钥',
-      desc: '填写后判定通道即启用，测试按钮会发一次真实请求',
+      desc: '判定通道的接口密钥',
       binding: {
         get: () => jevScopedValue('keys'),
         set: (v) => setJevScopedValue('keys', v),
@@ -483,7 +483,7 @@ function jevModelRow(): SettingsRow {
   return {
     type: 'text',
     name: 'Jev 模型',
-    desc: '判定使用的模型，留空跟随服务商缺省',
+    desc: '判定使用的模型',
     placeholder: 'jev-latest',
     binding: {
       get: () => jevScopedValue('model'),
@@ -551,7 +551,7 @@ function rerankToggleRow(): SettingsRow {
   return {
     type: 'toggle',
     name: '启用重排',
-    desc: '召回结果再精排，相关笔记排序更准。本地需 8B 嵌入，Jev 需填密钥',
+    desc: '召回结果再精排，相关笔记排序更准',
     binding: { key: 'secondBrainRerank' },
   };
 }
@@ -567,7 +567,7 @@ function jevRerankToggleRow(): SettingsRow {
   return {
     type: 'toggle',
     name: '重排走 Jev',
-    desc: '改用 Jev 模型云端重排，未填密钥时自动回退余弦序',
+    desc: '改用 Jev 模型云端重排',
     binding: { key: 'secondBrainRerankJev' },
     visibleWhen: (snapshot) => snapshot.secondBrainRerank !== false,
   };
@@ -584,7 +584,7 @@ function rerankModelRow(): SettingsRow {
   return {
     type: 'text',
     name: '重排模型',
-    desc: '重排用的模型名，留空用默认 Qwen3-Reranker-4B',
+    desc: '重排使用的模型',
     placeholder: 'dengcao/Qwen3-Reranker-4B:Q4_K_M',
     binding: { key: 'secondBrainRerankModel' },
     visibleWhen: (snapshot) =>

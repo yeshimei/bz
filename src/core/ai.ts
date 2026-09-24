@@ -133,7 +133,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 393216,
     apiKeyKey: 'deepseekApiKey',
     apiKeyLabel: 'DeepSeek 密钥',
-    apiKeyDesc: '留空则自动回退读取外部配置密钥',
+    apiKeyDesc: 'DeepSeek 的接口密钥',
     // 思考：官方 OpenAI 格式开关 thinking.type + 强度 reasoning_effort（默认开、默认 high）
     thinking: {
       levels: [
@@ -155,7 +155,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 131072,
     apiKeyKey: 'zhipuPlanApiKey',
     apiKeyLabel: '智谱 Plan 密钥',
-    apiKeyDesc: '智谱 Coding 套餐专用端点，密钥与智谱开放平台相同',
+    apiKeyDesc: '智谱 Coding 套餐的接口密钥',
     // 思考：glm-5.3 / 5.3-flash **强制思考**（发 disabled 无效），故只给强度档
     thinking: {
       levels: [
@@ -174,7 +174,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 8192,
     apiKeyKey: 'ollamaApiKey',
     apiKeyLabel: 'Ollama 密钥',
-    apiKeyDesc: '本地服务无需密钥，留空即可',
+    apiKeyDesc: '本地服务无需密钥',
     // 思考：兼容层把 reasoning_effort 映射为内部 Think（none = 关；省略 = 有能力则开）
     thinking: {
       levels: [
