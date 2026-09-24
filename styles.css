@@ -9205,21 +9205,26 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   position: fixed; inset: 0;
   background: rgba(28, 26, 23, .22); /* 遮罩：点框外即关 */
 }
+/* 软横屏（2026-09-24 口径，观影分析同款）：移动竖屏时层框宽高对调 + is-rot90 转 90°
+   （core/landscape 单源）。转角走 --rot：入场/晃动动画的 transform 都要同乘它，
+   不然动画帧会把 90° 洗回 0°（闪竖版）。 */
 .bz-rp-box {
   position: fixed;
   background: var(--clip-paper, #faf8f3);
   color: var(--clip-ink, #1c1a17);
   overflow: hidden;
   animation: bz-rp-in .5s cubic-bezier(.22, .82, .3, 1);
+  --rot: 0deg;
 }
+.bz-rp-box.is-rot90 { --rot: 90deg; transform: rotate(var(--rot)); }
 .bz-rp-box.is-nudge { animation: bz-rp-nudge .32s ease-out; }
 @keyframes bz-rp-in {
-  from { opacity: 0; transform: translateY(12px) scale(.99); filter: blur(6px); }
+  from { opacity: 0; transform: rotate(var(--rot, 0deg)) translateY(12px) scale(.99); filter: blur(6px); }
 }
 @keyframes bz-rp-nudge {
-  0%, 100% { transform: translateX(0); }
-  30% { transform: translateX(-6px); }
-  60% { transform: translateX(5px); }
+  0%, 100% { transform: rotate(var(--rot, 0deg)) translateX(0); }
+  30% { transform: rotate(var(--rot, 0deg)) translateX(-6px); }
+  60% { transform: rotate(var(--rot, 0deg)) translateX(5px); }
 }
 .bz-rp-close {
   position: absolute; top: 10px; right: 10px; z-index: 9;
@@ -9488,16 +9493,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-rp-shut i:last-child { top: 49.5%; transform: translateY(102%); border-top: 2px dashed #cfc4a8; }
 .bz-rp-shut i:first-child { top: 0; border-bottom: 2px dashed #cfc4a8; }
 .bz-rp-shut.is-close i { transform: translateY(0); transition-duration: .16s; transition-timing-function: cubic-bezier(.34, .06, .16, 1); }
-/* 刻度条（原底栏精简：只留点线刻度，居中悬浮；首幕隐藏） */
+/* 刻度改圆点（2026-09-24 用户拍板「都使用圆点导航」，视觉对齐观影分析 yb-rail）：
+   视觉只有 ~.2em 的点，命中区靠透明 border 撑到 ~.8em；首幕仍整体隐去（保持原设计） */
 .bz-rp-ticks {
   position: absolute; left: 50%; bottom: 1.4em; z-index: 6;
   transform: translateX(-50%);
-  display: flex; gap: .55em;
+  display: flex; align-items: center; gap: .38em;
   transition: opacity .3s ease;
 }
 .bz-rp-box[data-cur="01"] .bz-rp-ticks { opacity: 0; pointer-events: none; }
-.bz-rp-tick { width: 2.6em; height: 2px; background: var(--clip-line, #e4ddd0); cursor: pointer; transition: background .2s, transform .2s; }
-.bz-rp-tick[data-on] { background: var(--clip-accent, #c2410c); transform: scaleY(2.4); }
+.bz-rp-tick { display: block; width: .2em; height: .2em; border-radius: 50%;
+  border: .3em solid transparent; background-clip: padding-box;
+  background: var(--clip-line, #e4ddd0);
+  cursor: pointer; transition: background .2s, transform .2s; }
+.bz-rp-tick[data-on] { background: var(--clip-accent, #c2410c); transform: scale(1.3); }
+@media (hover: hover) { .bz-rp-tick:hover { background: var(--clip-dim, #6b6458); }
+  .bz-rp-tick[data-on]:hover { background: var(--clip-accent, #c2410c); } }
+/* 软横屏（旋转态）：导航点换到左缘竖排（真机横握的拇指侧，观影分析同款） */
+.bz-rp-box.is-rot90 .bz-rp-ticks { left: .9em; right: auto; bottom: auto; top: 50%;
+  transform: translateY(-50%); flex-direction: column; }
 /* 单幕异常兜底：表演抛错时该幕全部转可见（静版仍可读；clip-path/字距一并还原） */
 .bz-rp-scn.is-err [data-r],
 .bz-rp-scn.is-err .bz-rp-cell,
@@ -10487,10 +10501,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --ra-indigo-rgb: 122, 152, 222;
   background: rgba(4, 8, 12, .42);
 }
-/* 层框 = 复习面板矩形（index.ts 内联写入；此处为无几何兜底） */
-.bz-ra-box { position: absolute; inset: 16px; overflow: hidden; background: var(--ra-paper); font-size: 16px; }
+/* 层框 = 复习面板矩形（index.ts 内联写入；此处为无几何兜底）。
+   软横屏（2026-09-24 口径，观影分析同款）：移动竖屏时层框宽高对调 + is-rot90 转 90°
+   （core/landscape 单源）。转角走 --rot：is-nudge 的晃动 keyframes 同乘它，
+   不然动画帧会把 90° 洗回 0°（闪竖版）。 */
+.bz-ra-box { position: absolute; inset: 16px; overflow: hidden; background: var(--ra-paper); font-size: 16px; --rot: 0deg; }
+.bz-ra-box.is-rot90 { --rot: 90deg; transform: rotate(var(--rot)); }
 .bz-ra-box.is-nudge { animation: bzRaNudge .32s ease-out; }
-@keyframes bzRaNudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes bzRaNudge { 0%, 100% { transform: rotate(var(--rot, 0deg)) translateX(0); } 25% { transform: rotate(var(--rot, 0deg)) translateX(-6px); } 75% { transform: rotate(var(--rot, 0deg)) translateX(6px); } }
 .bz-ra-close { position: absolute; top: 10px; right: 10px; z-index: 30; width: 34px; height: 34px; border-radius: 50%;
   border: 1px solid rgba(var(--ra-ink-rgb), .3); background: color-mix(in srgb, var(--ra-paper) 78%, transparent);
   color: rgb(var(--ra-ink-rgb)); font-size: 15px; cursor: pointer; }
@@ -10716,11 +10734,18 @@ canvas { display: block; }
 .ra-shutter .t { top: 0; border-bottom: 1.5px solid rgb(var(--ra-jade-rgb)); transform: translateY(-101%); }
 .ra-shutter .b { bottom: 0; border-top: 1.5px solid rgb(var(--ra-jade-rgb)); transform: translateY(101%); }
 .ra-shutter.is-close .t, .ra-shutter.is-close .b { transform: translateY(0); transition-duration: .16s; transition-timing-function: cubic-bezier(.4, 0, .6, 1); }
-.ra-lampcol { position: absolute; right: .9em; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: .55em; align-items: flex-end; pointer-events: auto; }
-.ra-lamp { display: block; width: .85em; height: 2px; border-radius: 1px; background: rgba(var(--ra-ink-rgb), .22);
-  transition: width .18s ease, background .18s ease; cursor: pointer; }
-.ra-lamp[data-on] { width: 1.8em; background: rgb(var(--ra-jade-rgb)); }
-@media (hover: hover) { .ra-lamp:hover { background: rgba(var(--ra-ink-rgb), .55); } }
+/* 灯谱改圆点（2026-09-24 用户拍板「都使用圆点导航」，视觉对齐观影分析 yb-rail）：
+   视觉只有 ~.2em 的点（刻意弱化，只是翻幕提醒），命中区靠透明 border 撑到 ~.8em */
+.ra-lampcol { position: absolute; right: .9em; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: .38em; align-items: flex-end; pointer-events: auto; }
+.ra-lamp { display: block; width: .2em; height: .2em; border-radius: 50%;
+  border: .3em solid transparent; background-clip: padding-box;
+  background: rgba(var(--ra-ink-rgb), .12);
+  cursor: pointer; transition: transform .18s ease, background .18s ease; }
+.ra-lamp[data-on] { background: rgb(var(--ra-jade-rgb)); transform: scale(1.3); }
+@media (hover: hover) { .ra-lamp:hover { background: rgba(var(--ra-ink-rgb), .36); }
+  .ra-lamp[data-on]:hover { background: rgb(var(--ra-jade-rgb)); } }
+/* 软横屏（旋转态）：导航点换到左缘（真机横握的拇指侧，观影分析同款） */
+.bz-ra-box.is-rot90 .ra-lampcol { right: auto; left: .9em; align-items: flex-start; }
 .ra-bar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 22; display: flex; align-items: center; gap: 1em;
   padding: .9em 3.4em 1em; font-size: .8em; letter-spacing: .08em; color: rgba(var(--ra-ink-rgb), .62);
   background: linear-gradient(to top, var(--ra-paper) 42%, transparent); pointer-events: auto; }
@@ -16308,7 +16333,7 @@ canvas { display: block; }
 .bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   观影志（.bz-yb，2026-09-22 全新设计）——独立全屏长片，26 幕，一幕一屏。
+   观影志（.bz-yb，2026-09-22 全新设计）——独立全屏长片，25 幕，一幕一屏。
 
    与上一稿的取舍：**幕不再靠滚动进度抽帧**。26 节各占一屏（`.bz-yb-scn` 高 = 滚动口高），
    翻一幕 = 滚一屏；翻到的那幕自己按时间轴演一遍（motions.ts）。于是没有 sticky 钉、
@@ -16365,7 +16390,7 @@ canvas { display: block; }
 .bz-yb-scroll{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
   overscroll-behavior:contain; scroll-snap-type:y mandatory}
 /* 影片根必须有确定高度：26 节的 `height:100%` 是以它为基准解析的——
-   它一旦是 auto，节高全部塌成 0，滚动口 scrollHeight 就等于屏高（2026-09-22 实测：26 幕全叠在一屏里）。 */
+   它一旦是 auto，节高全部塌成 0，滚动口 scrollHeight 就等于屏高（2026-09-22 实测：25 幕全叠在一屏里）。 */
 .bz-yb-film{position:relative; height:100%; background:var(--yb-paper)}
 .bz-yb-close{position:absolute; top:1.1em; right:1.3em; z-index:30;
   width:2.4em; height:2.4em; border-radius:50%; display:flex; align-items:center; justify-content:center;
@@ -16378,7 +16403,7 @@ canvas { display: block; }
 
 /* ── 一幕一屏 + 幕骨架（序号/幕名/字段来源 · 主构图 · 脚注） ── */
 .bz-yb-scn{position:relative; height:100%; overflow:hidden; scroll-snap-align:start; scroll-snap-stop:always}
-/* 幕里只有主构图：顶部/底部文字已按用户拍板去掉（2026-09-22），上下留白只用于呼吸与避让底栏 */
+/* 幕里只有主构图：顶部/底部文字已按用户拍板去掉（2026-09-22），上下留白只用于呼吸 */
 .yb-sc{position:absolute; inset:0; display:grid; grid-template-rows:minmax(0,1fr);
   padding:3.2em 4em 3.6em 3.4em}
 .yb-main{position:relative; min-height:0}
@@ -16400,7 +16425,7 @@ canvas { display: block; }
 .yb-h4{margin:0 0 .5em; font-size:.86em; letter-spacing:.06em; color:rgb(var(--yb-dim-rgb)); font-weight:600}
 .yb-empty{color:rgb(var(--yb-faint-rgb)); font-size:.9em}
 
-/* 固定层：右侧导航点（每幕常驻的翻幕提醒，视觉刻意放弱）+ 底栏。
+/* 固定层：右缘导航点（每幕常驻的翻幕提醒，视觉刻意放弱）。
    层在 .bz-yb-box 直下（滚动容器外），翻幕不位移。 */
 .yb-fixed{position:absolute; inset:0; pointer-events:none; z-index:6}
 .yb-rail{position:absolute; right:.5em; top:50%; transform:translateY(-50%);
