@@ -1,0 +1,297 @@
+/* ==================== 脸谱域样式（src/people/styles.css，issue 435 / ADR-0191） ====================
+ * 变量组照收藏本 c5-linen 主题口径（亚麻底 / 墨色字 / 绿强调），域内 scope 自持。
+ * 滚动条不自造（铁律 4）：overflow 交 core 通杀隐藏，域内禁 scrollbar-* 与自绘 thumb。
+ */
+
+.bz-people-scope {
+  --bg: #fffcf6;
+  --frame-bd: #d8d1c0;
+  --ink: #4a443a;
+  --ink-strong: #3c362c;
+  --ink-mut: #9a917d;
+  --card: #fff;
+  --card-bd: #e8e2d4;
+  --card-shadow: rgba(120, 110, 90, 0.18);
+  --acc: #5a8f6d;
+  --acc-deep: #3d6b4d;
+  --on-acc: #fff;
+  --fld-bd: #ddd5c2;
+  --fld-bg: #fff;
+  --danger: #b3564d;
+  --gold: #e0b73a;
+}
+.theme-dark .bz-people-scope {
+  --bg: #262320;
+  --frame-bd: #3a352d;
+  --ink: #cfc7b4;
+  --ink-strong: #e8e2d2;
+  --ink-mut: #9a917d;
+  --card: #35312a;
+  --card-bd: #454036;
+  --card-shadow: rgba(0, 0, 0, 0.35);
+  --acc: #6da37f;
+  --acc-deep: #4c7a5d;
+  --on-acc: #fff;
+  --fld-bd: #55503f;
+  --fld-bg: #2c2823;
+  --danger: #d0705f;
+  --gold: #e0b73a;
+}
+
+.bz-people-panel {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(720px, 92vw);
+  height: fit-content;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--frame-bd);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* —— 头行 —— */
+.bz-people-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--card-bd);
+}
+.bz-people-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* —— 按钮 —— */
+.bz-people-btn {
+  appearance: none;
+  border: 1px solid var(--card-bd);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.bz-people-btn-acc {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--on-acc);
+}
+.bz-people-btn-ghost {
+  background: transparent;
+}
+/* 触屏悬浮隔离范式（呈报#9 F4）：:hover 全量包 @media (hover: hover) */
+@media (hover: hover) {
+  .bz-people-btn:hover {
+    border-color: var(--acc);
+    color: var(--acc-deep);
+  }
+  .bz-people-btn-acc:hover {
+    background: var(--acc-deep);
+    border-color: var(--acc-deep);
+    color: var(--on-acc);
+  }
+  .bz-people-del:hover,
+  .theme-dark .bz-people-del:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}
+
+/* —— 内容区 —— */
+.bz-people-body {
+  padding: 16px 18px 20px;
+  overflow-y: auto;
+}
+.bz-people-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 12px;
+  text-align: center;
+}
+.bz-people-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-empty-hint {
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-mut);
+}
+
+/* —— 人物卡 —— */
+.bz-people-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bz-people-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px var(--card-shadow);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-people-card:hover {
+    border-color: var(--acc);
+  }
+}
+.bz-people-card-main {
+  flex: 1;
+  min-width: 0;
+}
+.bz-people-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-card-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+
+/* —— 导入确认 —— */
+.bz-people-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bz-people-confirm-file {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  word-break: break-all;
+}
+.bz-people-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bz-people-field label {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.bz-people-field input {
+  flex: 1;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink-strong);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.bz-people-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* —— 提炼进度 —— */
+.bz-people-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 12px;
+}
+.bz-people-progress {
+  font-size: 13px;
+  color: var(--ink-mut);
+}
+
+/* —— 详情 —— */
+.bz-people-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.bz-people-portrait {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.bz-people-portrait h4 {
+  margin: 10px 0 4px;
+  font-size: 14px;
+  color: var(--ink-strong);
+}
+.bz-people-portrait h4:first-child {
+  margin-top: 0;
+}
+.bz-people-portrait h5 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--ink-strong);
+}
+.bz-people-portrait ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.bz-people-portrait li {
+  margin: 2px 0;
+}
+.bz-people-portrait strong {
+  color: var(--ink-strong);
+}
+.bz-people-section-title {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-events {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bz-people-event {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bz-people-event-ts {
+  color: var(--gold);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-event-summary {
+  color: var(--ink);
+}
+.bz-people-detail-foot {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
