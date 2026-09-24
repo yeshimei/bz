@@ -579,6 +579,205 @@
   justify-content: flex-end;
 }
 
+/* —— 人物档案 + 随手记（issue 439）：手动输入路径，样式沿用卡片底 + 朱红/鎏金点缀 —— */
+.bz-people-prof {
+  margin-top: 6px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  font-size: 13px;
+}
+.bz-people-prof-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.bz-people-prof-label {
+  flex: none;
+  width: 72px;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-prof-value {
+  min-width: 0;
+  color: var(--ink);
+  line-height: 1.6;
+  word-break: break-word;
+}
+.bz-people-prof-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bz-people-prof-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.bz-people-btn-sm {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+/* 缺啥补啥的入口行；档案与随手记全空时给虚线框 + 提示，避免凭空两个按钮 */
+.bz-people-prof-entry {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bz-people-prof-entry-solo {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--card-bd);
+  border-radius: 10px;
+}
+.bz-people-prof-entry-hint {
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+/* 编辑态 */
+.bz-people-prof-edit .bz-people-prof-row {
+  align-items: center;
+}
+.bz-people-prof-edit .bz-people-prof-row > .bz-people-prof-input {
+  flex: 1;
+}
+.bz-people-prof-input {
+  min-width: 0;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink-strong);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.bz-people-prof-input::placeholder {
+  color: var(--ink-mut);
+  opacity: 0.7;
+}
+.bz-people-prof-input:focus {
+  outline: none;
+  border-color: var(--acc);
+}
+.bz-people-prof-social {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-people-prof-social-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-people-prof-social-platform {
+  width: 110px;
+  flex: none;
+}
+.bz-people-prof-social-handle {
+  flex: 1;
+}
+.bz-people-prof-tags-edit {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-people-prof-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bz-people-prof-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px 1px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  background: var(--soft);
+  color: var(--acc-deep);
+}
+.theme-dark .bz-people-prof-tag {
+  color: var(--acc);
+}
+.bz-people-prof-tag-tools {
+  display: flex;
+  gap: 6px;
+}
+.bz-people-prof-tag-input {
+  width: 130px;
+  flex: none;
+}
+.bz-people-prof-x {
+  padding: 0 6px;
+  border: none;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-mut);
+}
+/* 随手记 */
+.bz-people-notes {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.bz-people-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.bz-people-note-ts {
+  flex: none;
+  color: var(--gold);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-note-summary {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  word-break: break-word;
+}
+.bz-people-note-del {
+  flex: none;
+  padding: 1px 8px;
+  font-size: 11.5px;
+}
+.bz-people-note-add {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-people-note-date {
+  width: 138px;
+  flex: none;
+  color-scheme: light;
+}
+.theme-dark .bz-people-note-date {
+  color-scheme: dark;
+}
+.bz-people-note-text {
+  flex: 1;
+}
+@media (hover: hover) {
+  .bz-people-prof-x:hover,
+  .theme-dark .bz-people-prof-x:hover {
+    color: var(--danger);
+  }
+}
+
 /* —— 窄容器（移动 / 小窗）：单列卡墙 + 收紧内边距 —— */
 @container (max-width: 560px) {
   .bz-people-wall {
@@ -595,5 +794,18 @@
   }
   .bz-people-pick-name {
     width: 110px;
+  }
+}
+
+/* 档案与随手记的窄容器收紧（issue 439） */
+@container (max-width: 560px) {
+  .bz-people-prof {
+    padding: 10px 12px;
+  }
+  .bz-people-prof-social-platform {
+    width: 84px;
+  }
+  .bz-people-note-date {
+    width: 126px;
   }
 }
