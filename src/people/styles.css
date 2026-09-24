@@ -577,6 +577,7 @@
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 /* —— 互动数据（issue 440：纯本地统计展示） —— */
@@ -972,8 +973,6 @@
     width: 126px;
   }
 }
-  gap: 8px;
-}
 
 /* —— 卡墙工具条：排序 / 标签筛选 / 搜索（issue 442） —— */
 .bz-people-toolbar {
@@ -1073,6 +1072,7 @@
   padding: 3px 8px;
   font-size: 11.5px;
   white-space: nowrap;
+}
 
 /* —— 窄容器（issue 442）：工具条搜索独占一行，下拉并排 —— */
 @container (max-width: 560px) {
