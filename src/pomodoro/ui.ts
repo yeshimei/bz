@@ -788,7 +788,7 @@ export function pomodoroSettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '声音提醒', desc: '阶段切换时播放提示音', binding: soundToggle, onChange: () => render() },
           { type: 'toggle', name: '倒数滴答', desc: '最后十秒每秒一记轻响，提醒即将结束', binding: tickToggle, onChange: () => render() },
           // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-          { type: 'slider', name: '提示音音量', desc: '提示音大小，默认最大',
+          { type: 'slider', name: '提示音音量', desc: '提示音的音量',
             binding: { get: () => (tryGetSettings() as any).pomodoroVolume ?? 100, set: (v) => { (getSettings() as any).pomodoroVolume = v; }, save: () => saveSettings() },
             min: 0, max: 100, step: 5,
             actions: [{ text: '试听', onClick: () => playSound('focus-start', (tryGetSettings() as any).pomodoroVolume ?? 100) }] },

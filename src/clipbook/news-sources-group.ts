@@ -78,7 +78,7 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         box.fetchIntervalMin = fresh.fetchIntervalMin;
         setRowDesc(ctx, intervalDesc());
       } },
-    { type: 'select', name: '抓取间隔', desc: '打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟',
+    { type: 'select', name: '抓取间隔', desc: '新闻自动抓取的最小间隔',
       options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
       binding: {
         get: () => String(box.fetchIntervalMin),
@@ -112,7 +112,7 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
           ctx.refreshVisibility();
         },
       }) },
-    { type: 'number', name: 'B站抓取条数', desc: '每位 UP 主抓取最近动态的条数上限，默认 10', min: 1, max: 50, step: 1,
+    { type: 'number', name: 'B站抓取条数', desc: '每位 UP 主抓取的动态条数上限', min: 1, max: 50, step: 1,
       binding: {
         get: () => box.bilibiliMaxItems,
         set: (v) => { box.bilibiliMaxItems = v; },
@@ -120,7 +120,7 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
           if (!(await writeBilibiliMaxItems(box.bilibiliMaxItems))) notifyWriteFailed('B站抓取条数');
         },
       } },
-    { type: 'number', name: '文章保留天数', desc: '已读与跳过文章的数据超期自动清理，默认 30 天', min: 1, max: 3650, step: 1,
+    { type: 'number', name: '文章保留天数', desc: '已读文章数据的保留天数', min: 1, max: 3650, step: 1,
       binding: numStrBinding('newsRetentionUnsavedDays', 30) },
   ];
 }

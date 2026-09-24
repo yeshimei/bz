@@ -36,7 +36,7 @@ export function diarySettingsSchema(): SettingsSchema {
         icon: 'eye',
         name: '显示',
         rows: [
-          { type: 'toggle', name: '默认日期取自文件', desc: '写日记时默认日期取自当前打开的日记文件，否则用当前时间', binding: { key: 'useFileDateTime' } },
+          { type: 'toggle', name: '默认日期取自文件', desc: '默认日期取自当前打开的日记文件', binding: { key: 'useFileDateTime' } },
         ],
       },
       {

@@ -41,7 +41,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '时间线字号',
-            desc: '紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。',
+            desc: '时间线的信息密度',
             binding: { key: 'homeTimelineSize' },
             options: [
               { value: 'compact', label: '紧凑' },
@@ -63,7 +63,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'select',
             name: '默认打开日',
-            desc: '打开首页先落在哪天，选最后有动静就不会一开是空的。',
+            desc: '打开首页时定位的日期',
             binding: { key: 'homeDefaultDay' },
             options: [
               { value: 'today', label: '今天' },
@@ -73,7 +73,7 @@ export function homeSettingsSchema(): SettingsSchema {
           {
             type: 'toggle',
             name: '显示时刻列',
-            desc: '每行左边显示时刻，关掉整列收起，正文往左靠。',
+            desc: '时间线每行显示的时刻',
             binding: { key: 'homeTimelineTime' },
           },
         ],
@@ -108,7 +108,7 @@ export function homeSettingsSchema(): SettingsSchema {
             // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
             type: 'toggle',
             name: '跳过痕迹',
-            desc: '聚合讯里跳过的文章痕迹，量比较大，默认不显示。',
+            desc: '聚合讯里跳过的文章记录',
             binding: { key: 'homeTimelineSkipped' },
           },
         ],

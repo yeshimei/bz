@@ -2396,7 +2396,7 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         rows: [
           { type: 'path', mode: 'single', name: '剪藏文件夹', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
           // issue 329：保存正文图片的落地目录（留空回落剪藏目录 assets）
-          { type: 'path', mode: 'single', name: '图片文件夹', desc: '保存网页图片的文件夹，留空存到剪藏目录下的 assets', binding: { key: 'clipbookImageFolder' } },
+          { type: 'path', mode: 'single', name: '图片文件夹', desc: '网页图片的保存文件夹', binding: { key: 'clipbookImageFolder' } },
         ],
       },
       {

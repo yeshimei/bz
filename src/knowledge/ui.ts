@@ -346,13 +346,13 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         icon: 'folder-open', name: '目录与分类',
         rows: [
           { type: 'path', mode: 'single', name: '文献文件夹', desc: '文献笔记所在文件夹，部壹扫描这里', binding: { key: 'knowledgeDirectory' } },
-          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片落地位置，留空默认放文献文件夹下的 assets',
+          { type: 'path', mode: 'single', name: '图版图片文件夹', desc: '图版录入的图片保存位置',
             binding: { key: 'knowledgeImageFolder' },
             // 空值 = 回落到文献文件夹下的 assets（把「实际会落到哪」显式显示出来，不让人猜）
             fallbackValue: () => resolveImageDir(tryGetSettings() || {}) },
           { type: 'path', mode: 'single', name: '卡片文件夹', desc: '你自己写的卡片笔记所在文件夹，部贰扫描后把提炼的卡落在这里', binding: { key: 'knowledgeCardboxDirectory' } },
           { type: 'path', mode: 'single', name: '主题文件夹', desc: '主题笔记所在文件夹，部叁展示为主，自动关联会写入关联属性', binding: { key: 'knowledgeTopicDirectory' } },
-          { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词，留空则 AI 自由写领域', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
+          { type: 'textarea', name: '领域词表', desc: '逗号分隔的领域词表', binding: { key: 'knowledgeDomainList' }, placeholder: '物理,医学,计算机,经济…' },
         ],
       },
       {
@@ -380,8 +380,8 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件，关闭则只生成文献笔记', binding: { key: 'knowledgeKeepVideo' } },
           { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
           { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务，关闭则失败后继续', binding: { key: 'knowledgeStopOnFailure' } },
-          { type: 'text', name: '输出文件夹', desc: '视频文件落地文件夹，留空跟随工具配置', binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos' },
-          { type: 'toggle', name: '视频压缩', desc: '转文字前压缩视频，默认开启', binding: { key: 'knowledgeCompress' } },
+          { type: 'text', name: '输出文件夹', desc: '视频文件的输出文件夹', binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos' },
+          { type: 'toggle', name: '视频压缩', desc: '转文字前压缩视频', binding: { key: 'knowledgeCompress' } },
           { type: 'number', name: '压缩质量 CRF', desc: '数值越小画质越高，范围 18 到 28', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],
       },
