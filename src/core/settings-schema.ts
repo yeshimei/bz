@@ -16,6 +16,7 @@
  */
 import { Setting } from 'obsidian';
 import type BzSettings from '../settings';
+import { ROW_BTN_RESET_MS, setRowBtnState } from './settings-btn-state';
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
@@ -99,6 +100,9 @@ export interface RowAction {
   text: string;
   /** 强调色按钮 */
   cta?: boolean;
+  /** 状态反馈钮（issue 434，测试类按钮专用）：点击即转圈，resolve→绿✓、reject→红✕，
+   *  短暂停留后复原；约定不弹通知——结果长在按钮上（core/settings-btn-state 单源）。 */
+  stateful?: boolean;
   onClick: (value: string | undefined, ctx: SettingsRowContext) => void | Promise<void>;
 }
 
@@ -663,7 +667,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       }
     };
     // 行内附加按钮（先注册 → 渲染于输入框左侧，2026-09-08 拍板换位的对齐口径；textarea 行同口径，issue 330）：
-    // onClick 完成后重读本行绑定值回填显示（不置脏）+ 重求值——供「填入/拉取回填」类动作即时回显
+    // onClick 完成后重读本行绑定值回填显示（不置脏）+ 重求值——供「填入/拉取回填」类动作即时回显。
+    // stateful 钮（issue 434）：点击即转圈、resolve 绿✓ / reject 红✕（红叉吞错不外抛——反馈长在按钮上）
     const actions = (row as TextRow | TextAreaRow | NumberRow | SecretRow).actions;
     if (actions) {
       for (const a of actions) {
@@ -671,7 +676,17 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           if (a.cta) b.setCta();
           b.setButtonText(a.text).onClick(() => {
             void (async () => {
-              await a.onClick(last, ctx);
+              const el = (b as unknown as { buttonEl?: HTMLElement }).buttonEl;
+              try {
+                if (a.stateful) setRowBtnState(el, 'busy', a.text);
+                await a.onClick(last, ctx);
+                if (a.stateful) setRowBtnState(el, 'ok', a.text);
+              } catch (e) {
+                if (a.stateful) setRowBtnState(el, 'fail', a.text);
+                else throw e;
+              } finally {
+                if (a.stateful) setTimeout(() => setRowBtnState(el, 'idle', a.text), ROW_BTN_RESET_MS);
+              }
               if (currentText && currentText.setValue) {
                 dirty = false;
                 currentText.setValue(String(acc.read() ?? ''));

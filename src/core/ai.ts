@@ -718,7 +718,7 @@ export async function testAIConnectivity(providerId?: string): Promise<AITestRes
   const id = String(providerId || '').trim();
   const desc = getProviderDescriptor(id || DEFAULT_AI_PROVIDER);
   const provider = await getAIProvider(id || undefined);
-  const model = provider.model || desc.model || undefined;
+  const model = provider.model || undefined; // getAIProvider 已含 desc.model 兜底（review nit 4）
   const t0 = Date.now();
   const svc = createAI();
   const reply = (await svc.prompt(AI_TEST_PROMPT, model, { provider: id || undefined })).trim();
