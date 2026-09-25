@@ -220,14 +220,15 @@ export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
   const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
   const rel = (p.profile?.tags ?? []).filter(Boolean)[0] ?? '';
   const seal = p.digest
-    ? el('div', 'bz-people-seal', text(p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画'))
+    ? el('div', 'bz-people-seal', { title: '脸谱已提炼到这天的消息；之后的新消息再导入会增量补画' }, text(p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画'))
     : el('div', 'bz-people-seal bz-people-seal-todo', text('待画'));
   const label = mediaLabel(opts.media);
   const card = el('div', 'bz-people-fold', [
     el('div', 'bz-people-fold-inner', [
       seal,
       el('div', 'bz-people-fold-title vt', { title: p.name }, text(vtName(p.name))),
-      el('div', 'bz-people-fold-who', text(rel || (span ? span : (total ? `${formatCount(total)} 条` : '新折')))),
+      // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
+      el('div', 'bz-people-fold-who', text(rel || (span ? span : '新折'))),
       el('div', 'bz-people-fold-meta', text([
         total ? `${formatCount(total)} 条` : '尚无消息',
         label,
@@ -300,7 +301,7 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
       el('div', '', [el('div', 'bz-people-dt-n', text(media?.imageCount ? String(media.imageCount) : '—')), el('div', 'bz-people-dt-t', text('图片'))]),
     ]),
     p.lastProcessedTs
-      ? el('div', 'bz-people-dt-watermark', text(`已画到 ${formatDay(p.lastProcessedTs)}`))
+      ? el('div', 'bz-people-dt-watermark', { title: '脸谱已提炼到这天的消息；之后的新消息再导入会增量补画' }, text(`已画到 ${formatDay(p.lastProcessedTs)}`))
       : el('div', 'bz-people-dt-watermark bz-people-dt-watermark-todo', text('未画脸谱')),
     el('div', 'bz-people-dt-actions', [
       ...(opts.canGenerate ? [iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })] : []),
@@ -421,7 +422,7 @@ export function foldChronicleBody(mdRoot: HTMLElement | null): HTMLElement[] {
 export function foldDataBody(card: HTMLElement | null, p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = [];
   if (card) out.push(card);
-  else if (p.imports.length) out.push(el('div', 'bz-people-empty-hint', text('这次导入还没有互动统计（旧版数据）。从数据源补画一次即可生成。')));
+  else if (p.imports.length) out.push(el('div', 'bz-people-empty-hint', text('这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。')));
   else out.push(el('div', 'bz-people-empty-hint', text('还没有导入记录。')));
   return out;
 }
@@ -690,6 +691,8 @@ export interface DsModalState {
   /** null = 还没扫过；[] = 扫过无联系人 */
   rows: DsRowState[] | null;
   selectedCount: number;
+  /** 勾选名单快照：弹层重渲染时回显复选框（448 评审 P1：重建层不丢视觉勾选） */
+  selected: string[];
   freshCount: number;
   hiddenGroups: number;
   notice: string;
@@ -764,7 +767,7 @@ export function dsModal(s: DsModalState): HTMLElement {
     )));
   } else {
     const list = el('div', 'bz-people-ds-list');
-    for (const r of s.rows) list.appendChild(dsRow(r, false));
+    for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
     pop.appendChild(list);
     const hasFresh = s.rows.some((r) => r.newCount > 0);
     pop.appendChild(el('div', 'bz-people-ds-legend', [

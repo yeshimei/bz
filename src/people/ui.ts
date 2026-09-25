@@ -128,10 +128,20 @@ export function openPeoplePanel(app?: unknown): void {
   overlay.appendChild(panelShell());
   document.body.appendChild(overlay);
   topifyZ(overlay);
-  registerPanelEsc(ESC_ID, isPeopleOpen, closePeoplePanel);
+  // ESC 分层（448 评审）：数据源弹窗开着先关弹窗（保扫描快照与勾选），再层层关面板
+  registerPanelEsc(ESC_ID, isPeopleOpen, () => { if (dsOpen) closeDs(); else closePeoplePanel(); });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
   overlay.addEventListener('change', onOverlayChange);
+  // 输入框 Enter 直提交（448 评审 P3：标签 / 随手记连续录入免鼠标往返）
+  overlay.addEventListener('keydown', (e) => {
+    const input = e.target instanceof HTMLInputElement ? e.target : null;
+    if (e.key !== 'Enter' || !input) return;
+    if (!input.hasAttribute('data-people-prof-tag-input') && !input.hasAttribute('data-people-note-text')) return;
+    e.preventDefault();
+    if (input.hasAttribute('data-people-prof-tag-input')) addTagChip();
+    else void saveManualNote();
+  });
   void renderBody();
 }
 
@@ -168,7 +178,7 @@ function closeDsState(): void {
 /** 直开数据源弹窗（bz-people-import 命令回调；面板未开先开） */
 export function openDataSource(): void {
   if (!overlay) openPeoplePanel();
-  if (running) return;
+  if (running) { notice('正在生成脸谱，请等这批结束再开数据源', 'info'); return; }
   openDs();
 }
 
@@ -221,6 +231,7 @@ function dsModalState() {
     importing: dsImporting,
     rows: dsContacts === null ? null : dsRowStates(),
     selectedCount: sel.length,
+    selected: sel.map((c) => c.name),
     freshCount: sel.reduce((s, c) => s + c.newCount, 0),
     hiddenGroups: dsHiddenGroups,
     notice: dsNotice,
@@ -284,6 +295,8 @@ async function runScan(force = false): Promise<void> {
   if (overlay) {
     // 有更新排最前，其余名字序（拍板 Q4）
     dsContacts = contacts.sort((a, b) => b.newCount - a.newCount || a.name.localeCompare(b.name, 'zh'));
+    const names = new Set(dsContacts.map((c) => c.name));
+    dsSelected = new Set([...dsSelected].filter((n) => names.has(n)));
     const now = new Date();
     dsScannedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     renderBody();
@@ -423,7 +436,7 @@ async function generateOne(): Promise<void> {
   } catch (e) {
     console.warn('[people] 读取预览桶失败:', e);
   }
-  if (!target) { notice('还没有可画的消息素材——先「从数据源补画」导入', 'warning'); return; }
+  if (!target) { notice('还没有可画的消息素材——点右上「数据源」导入后再画', 'warning'); return; }
   await runGenerationNow([target]);
 }
 
@@ -433,14 +446,14 @@ function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
   // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
-  if (t.closest('[data-people-ds-open]')) { if (!running) openDs(); return; }
+  if (t.closest('[data-people-ds-open]')) { if (running) notice('正在生成脸谱，请等这批结束再开数据源', 'info'); else openDs(); return; }
   if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
   if (t.closest('[data-people-ds-scan]')) { void runScan(true); return; }
   if (t.closest('[data-people-ds-pickfresh]')) { pickFresh(); return; }
   if (t.closest('[data-people-ds-import]')) { void importDsSelected(); return; }
   if (t.closest('[data-people-ds-generate]')) { void generateFromDs(); return; }
   if (t.closest('[data-people-back-btn]')) {
-    if (running) return;
+    if (running) { notice('正在生成脸谱，完成后即可返回', 'info'); return; }
     stage = 'list'; detailId = null; detailFold = 'p';
     void renderBody();
     return;
@@ -555,10 +568,10 @@ function updateDsFooter(): void {
 async function renderBody(): Promise<void> {
   const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
   if (!body || !store || !overlay) return;
-  // 详情态：品牌标题区让位（隐藏），详情头顶到面板最上，折页册拉长占满（448）
-  overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
   if (stage === 'list') await renderList(body);
   else await renderDetail(body);
+  // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式
+  overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
   renderDsLayer();
   renderRunLine();
   mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
@@ -675,6 +688,11 @@ async function generateForTargets(
   const failed: string[] = [];
   const skipped: string[] = [];
   for (let i = 0; i < targets.length; i++) {
+    // 面板中途被关（store 已置空）：余下目标直接中止，不计入失败——旧实现会把它们全误报成「生成失败」
+    if (!overlay || !store) {
+      notice('面板已关闭，剩余人物停止生成（已完成的不受影响）');
+      break;
+    }
     const { talker, name, msgs, kindCounts, skippedCount, fileLabel } = targets[i];
     const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
     onProgress?.(main, '');
@@ -774,14 +792,24 @@ async function renderDetail(body: HTMLElement): Promise<void> {
       .join(' ');
     return [...t].length <= 40 ? t : `${[...t].slice(0, 40).join('')}…`;
   };
-  const hint = (msg: string): HTMLElement => {
+  const hint = (msg: string, action?: string): HTMLElement => {
     const d = document.createElement('div');
     d.className = 'bz-people-empty-hint';
     d.textContent = msg;
+    if (action) {
+      // 空态内联动作钮：复用数据源弹窗钩子，用户不用自己找右上角入口（448 评审 P2）
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bz-people-btn bz-people-btn-ghost';
+      b.setAttribute('data-people-ds-open', '');
+      b.textContent = action;
+      d.appendChild(document.createElement('br'));
+      d.appendChild(b);
+    }
     return d;
   };
   const quoteOf: Record<FoldId, string> = {
-    p: p.digest?.portrait ? spillOf(p.digest.portrait) : '还没有脸谱。从数据源补画一次生成。',
+    p: p.digest?.portrait ? spillOf(p.digest.portrait) : '还没有脸谱。从数据源导入一次即可生成。',
     e: p.digest?.events.length
       ? spillOf(p.digest.events[0].summary)
       : (p.manualEvents?.length ? spillOf(p.manualEvents[0].summary) : '还没有交往事件与随手记。'),
@@ -791,7 +819,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
   };
   const bodies: Record<FoldId, HTMLElement[]> = {
     p: detailFold === 'p'
-      ? foldPortraitBody(p.digest?.portrait ? miniMarkdown(p.digest.portrait) : hint('还没有脸谱。从数据源补画一次生成。'), p)
+      ? foldPortraitBody(p.digest?.portrait ? miniMarkdown(p.digest.portrait) : hint('还没有脸谱。从数据源导入一次即可生成。', '打开数据源'), p)
       : [],
     e: detailFold === 'e' ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
     c: detailFold === 'c' ? foldChronicleBody(p.digest?.chronicle ? miniMarkdown(p.digest.chronicle) : null) : [],
@@ -978,8 +1006,11 @@ async function saveManualNote(): Promise<void> {
 async function removeManualNote(evId: string): Promise<void> {
   if (!store || !detailId || !evId) return;
   try {
+    // notice 带内容摘要：手动录入不可再生，误删至少要有感（448 评审 P2 最小改动档）
+    const found = (await store.list()).find((p) => p.id === detailId)?.manualEvents?.find((m) => m.id === evId);
     await store.removeManualEvent(detailId, evId);
-    notice('已删除随手记', 'delete');
+    const brief = found?.summary ? `：${[...found.summary].slice(0, 20).join('')}${[...found.summary].length > 20 ? '…' : ''}` : '';
+    notice(`已删除随手记${brief}`, 'delete');
   } catch (e) {
     notifyActionError(e, '删除随手记');
   }

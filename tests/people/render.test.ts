@@ -57,6 +57,14 @@ describe('折子封面（foldCard）', () => {
     expect(pick.classList.contains('bz-people-fold-merge-pick')).toBe(true);
     expect(foldCard(person(), { media: null, mergeFrom: false, mergePick: false }).textContent).not.toContain('语音');
   });
+
+  it('无关系无跨度时 who 行兜底「新折」——不再与 meta 行重复同一消息数（P2 回归）', () => {
+    const card = foldCard(person({ profile: { tags: [] } } as Partial<PersonEntry>), { media: null, mergeFrom: false, mergePick: false });
+    const who = card.querySelector('.bz-people-fold-who')!.textContent;
+    expect(who).not.toContain('条');
+    const meta = card.querySelector('.bz-people-fold-meta')!.textContent;
+    expect(who).not.toBe(meta);
+  });
 });
 
 describe('面板壳与统计行', () => {
@@ -95,6 +103,14 @@ describe('详情折页册（foldBook）', () => {
     expect(eLeaf.querySelector('.bz-people-leaf-spill')!.textContent).toBe('事件引文');
     expect(eLeaf.querySelector('.bz-people-leaf-body')).toBeNull();
   });
+
+  it('折页切换钩子挂整片收起折（点竖排引文区也能切）；展开折不带——防吞折内按钮', () => {
+    const book = foldBook(person(), { fold: 'p', media: null, profEdit: false, noteAdd: false }, bodies, spills);
+    const eLeaf = book.querySelector('[data-people-leaf="e"]')!;
+    expect(eLeaf.hasAttribute('data-people-leaf-head')).toBe(true);
+    const pLeaf = book.querySelector('[data-people-leaf="p"]')!;
+    expect(pLeaf.hasAttribute('data-people-leaf-head')).toBe(false);
+  });
 });
 
 describe('数据源弹窗（dsModal 四态）', () => {
@@ -104,6 +120,7 @@ describe('数据源弹窗（dsModal 四态）', () => {
     importing: false,
     rows: [],
     selectedCount: 0,
+    selected: [],
     freshCount: 0,
     hiddenGroups: 0,
     notice: '',
@@ -136,6 +153,13 @@ describe('数据源弹窗（dsModal 四态）', () => {
     const idle = dsModal(state({ rows: [dsRowBase], selectedCount: 0 }));
     expect(idle.querySelector('[data-people-ds-generate]')).toBeNull();
     expect(idle.querySelector('[data-people-ds-count]')!.textContent).toBe('未勾选联系人');
+  });
+
+  it('勾选态回显：重建弹层时 selected 名单里的行复选框保持勾选（P1 回归）', () => {
+    const m = dsModal(state({ rows: [{ ...dsRowBase, name: '林晚' }, { ...dsRowBase, name: '陈默' }], selected: ['陈默'], selectedCount: 1 }));
+    const boxes = [...m.querySelectorAll('input[data-people-ds-check]')];
+    const checked = boxes.filter((b) => (b as HTMLInputElement).checked).map((b) => b.getAttribute('data-people-ds-check'));
+    expect(checked).toEqual(['陈默']);
   });
 
   it('空态三兄弟：未扫描 / 仅桌面端 / 无联系人；图例快捷只在有更新时出现', () => {
