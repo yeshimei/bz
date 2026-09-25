@@ -10144,6 +10144,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: rgba(90, 143, 109, 0.16);
   color: var(--chip-on);
 }
+/* 媒体徽章（issue 445）：「语音 26 条 · 4 分 · 图片 14 张」，与 chip 同排同款胶囊；
+   空数据不渲染元素（ui 层控制），无 hover 态、无滚动条样式（铁律） */
+.bz-people-media-badge {
+  margin-top: 6px;
+  margin-left: 6px;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: rgba(74, 125, 158, 0.14);
+  color: var(--ink-mut);
+}
+/* 详情页徽章独占一行（meta 是块级），不留卡片里的并排间距 */
+.bz-people-detail-id .bz-people-media-badge {
+  margin-left: 0;
+}
 
 /* —— 步骤条 —— */
 .bz-people-steps {
@@ -10446,6 +10462,157 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+}
+
+/* —— 互动数据（issue 440：纯本地统计展示） —— */
+.bz-people-insights {
+  margin-top: 6px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+.bz-people-ins-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bz-people-ins-range {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-ins-file {
+  font-size: 11.5px;
+  color: var(--ink-mut);
+  word-break: break-all;
+}
+/* 温度曲线：按月消息量柱条（纯 CSS） */
+.bz-people-chart-wrap {
+  margin-top: 10px;
+}
+.bz-people-chart {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  height: 72px;
+}
+.bz-people-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.bz-people-col-bar {
+  background: linear-gradient(180deg, var(--acc), var(--acc-deep));
+  border-radius: 2px 2px 0 0;
+  opacity: 0.82;
+  transition: opacity 0.15s ease;
+}
+@media (hover: hover) {
+  .bz-people-col-bar:hover {
+    opacity: 1;
+  }
+}
+.bz-people-chart-labels {
+  display: flex;
+  gap: 3px;
+  margin-top: 5px;
+  font-size: 10.5px;
+  color: var(--ink-mut);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-chart-labels span {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.bz-people-ins-rows {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bz-people-ins-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 20px;
+  font-size: 12.5px;
+}
+.bz-people-ins-label {
+  flex: none;
+  width: 60px;
+  color: var(--ink-mut);
+}
+.bz-people-ins-val {
+  flex: none;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 谁主动：双段占比条（我 = 朱红，对方 = 苔绿） */
+.bz-people-duo {
+  flex: 1;
+  min-width: 48px;
+  height: 8px;
+  display: flex;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--soft-neutral);
+}
+.bz-people-duo-me {
+  background: var(--acc);
+}
+.bz-people-duo-other {
+  background: var(--chip-on);
+}
+/* 活跃时段：24 小时细柱 */
+.bz-people-strip {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+.bz-people-strip-bar {
+  flex: 1;
+  min-width: 0;
+  min-height: 1px;
+  border-radius: 1px;
+  background: var(--gold);
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+@media (hover: hover) {
+  .bz-people-strip-bar:hover {
+    opacity: 1;
+  }
+}
+/* 形态占比：小圆片 */
+.bz-people-kinds {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.bz-people-kind {
+  padding: 1px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: var(--soft-neutral);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* —— 窄容器（移动 / 小窗）：单列卡墙 + 收紧内边距 —— */
@@ -10464,6 +10631,476 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-people-pick-name {
     width: 110px;
+  }
+}
+
+/* —— 窄容器：互动数据收紧（issue 440） —— */
+@container (max-width: 560px) {
+  .bz-people-insights {
+    padding: 12px;
+  }
+  .bz-people-ins-label {
+    width: 56px;
+  }
+  .bz-people-ins-val {
+    white-space: normal;
+  }
+}
+/* —— 人物档案 + 随手记（issue 439）：手动输入路径，样式沿用卡片底 + 朱红/鎏金点缀 —— */
+.bz-people-prof {
+  margin-top: 6px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  font-size: 13px;
+}
+.bz-people-prof-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  min-width: 0;
+}
+.bz-people-prof-label {
+  flex: none;
+  width: 72px;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-prof-value {
+  min-width: 0;
+  color: var(--ink);
+  line-height: 1.6;
+  word-break: break-word;
+}
+.bz-people-prof-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bz-people-prof-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.bz-people-btn-sm {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+/* 缺啥补啥的入口行；档案与随手记全空时给虚线框 + 提示，避免凭空两个按钮 */
+.bz-people-prof-entry {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bz-people-prof-entry-solo {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--card-bd);
+  border-radius: 10px;
+}
+.bz-people-prof-entry-hint {
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+/* 编辑态 */
+.bz-people-prof-edit .bz-people-prof-row {
+  align-items: center;
+}
+.bz-people-prof-edit .bz-people-prof-row > .bz-people-prof-input {
+  flex: 1;
+}
+.bz-people-prof-input {
+  min-width: 0;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink-strong);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.bz-people-prof-input::placeholder {
+  color: var(--ink-mut);
+  opacity: 0.7;
+}
+.bz-people-prof-input:focus {
+  outline: none;
+  border-color: var(--acc);
+}
+.bz-people-prof-social {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-people-prof-social-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-people-prof-social-platform {
+  width: 110px;
+  flex: none;
+}
+.bz-people-prof-social-handle {
+  flex: 1;
+}
+.bz-people-prof-tags-edit {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-people-prof-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.bz-people-prof-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 4px 1px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  background: var(--soft);
+  color: var(--acc-deep);
+}
+.theme-dark .bz-people-prof-tag {
+  color: var(--acc);
+}
+.bz-people-prof-tag-tools {
+  display: flex;
+  gap: 6px;
+}
+.bz-people-prof-tag-input {
+  width: 130px;
+  flex: none;
+}
+.bz-people-prof-x {
+  padding: 0 6px;
+  border: none;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-mut);
+}
+/* 随手记 */
+.bz-people-notes {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+}
+.bz-people-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.bz-people-note-ts {
+  flex: none;
+  color: var(--gold);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-note-summary {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  word-break: break-word;
+}
+.bz-people-note-del {
+  flex: none;
+  padding: 1px 8px;
+  font-size: 11.5px;
+}
+.bz-people-note-add {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bz-people-note-date {
+  width: 138px;
+  flex: none;
+  color-scheme: light;
+}
+.theme-dark .bz-people-note-date {
+  color-scheme: dark;
+}
+.bz-people-note-text {
+  flex: 1;
+}
+@media (hover: hover) {
+  .bz-people-prof-x:hover,
+  .theme-dark .bz-people-prof-x:hover {
+    color: var(--danger);
+  }
+}
+
+
+/* 档案与随手记的窄容器收紧（issue 439） */
+@container (max-width: 560px) {
+  .bz-people-prof {
+    padding: 10px 12px;
+  }
+  .bz-people-prof-social-platform {
+    width: 84px;
+  }
+  .bz-people-note-date {
+    width: 126px;
+  }
+}
+
+/* —— 卡墙工具条：排序 / 标签筛选 / 搜索（issue 442） —— */
+.bz-people-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 12px;
+}
+.bz-people-select {
+  appearance: none;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 26px 6px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-mut) 50%), linear-gradient(135deg, var(--ink-mut) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+  transition: border-color 0.15s ease;
+}
+.bz-people-select:focus {
+  outline: none;
+  border-color: var(--acc);
+}
+.bz-people-search {
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink-strong);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  transition: border-color 0.15s ease;
+}
+.bz-people-search::placeholder {
+  color: var(--ink-mut);
+  opacity: 0.7;
+}
+.bz-people-search:focus {
+  outline: none;
+  border-color: var(--acc);
+}
+/* 无匹配（筛选/搜索落空） */
+.bz-people-nomatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 0;
+}
+
+/* —— 合并流程（issue 442）：横幅 + 卡片选择态 —— */
+.bz-people-merge-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--acc);
+  border-radius: 10px;
+  background: var(--soft);
+}
+.bz-people-merge-text {
+  flex: 1;
+  min-width: 200px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+/* 合并模式：本卡（待并出）虚化，其他卡（候选目标）虚线描边示意可点 */
+.bz-people-card-merge-from {
+  opacity: 0.55;
+  border-style: dashed;
+}
+.bz-people-card-merge-pick {
+  border-style: dashed;
+  border-color: var(--acc);
+}
+@media (hover: hover) {
+  .bz-people-card-merge-pick:hover {
+    background: var(--soft);
+  }
+}
+/* 卡片右侧按钮列：合并到… / 删除 */
+.bz-people-card-side {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-people-card-side .bz-people-btn {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+/* —— 窄容器（issue 442）：工具条搜索独占一行，下拉并排 —— */
+@container (max-width: 560px) {
+  .bz-people-search {
+    flex-basis: 100%;
+  }
+}
+
+/* —— 数据源区（issue 446）：预处理导出目录直连，list 视图顶部常驻卡片 —— */
+.bz-people-ds {
+  border: 1px solid var(--card-bd);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 1px 4px var(--card-shadow);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bz-people-ds-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bz-people-ds-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  letter-spacing: 1px;
+}
+.bz-people-ds-meta {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-ds-tools {
+  display: flex;
+  gap: 6px;
+}
+.bz-people-ds-tools .bz-people-btn {
+  padding: 4px 12px;
+  font-size: 12.5px;
+}
+.bz-people-ds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--card-bd);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.theme-dark .bz-people-ds-list {
+  background: rgba(0, 0, 0, 0.12);
+}
+.bz-people-ds-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.bz-people-ds-row input[type='checkbox'] {
+  accent-color: var(--acc);
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.bz-people-ds-on {
+  background: var(--soft);
+}
+.bz-people-ds-main {
+  flex: 1;
+  min-width: 0;
+}
+.bz-people-ds-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-people-ds-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  max-width: 46%;
+}
+.bz-people-ds-mark {
+  font-size: 11.5px;
+  color: var(--ink-mut);
+  white-space: nowrap;
+}
+.bz-people-ds-new {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: var(--on-acc);
+  background: var(--chip-on);
+  white-space: nowrap;
+}
+.bz-people-ds-empty {
+  font-size: 12.5px;
+  color: var(--ink-mut);
+  padding: 4px 2px;
+}
+.bz-people-ds-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bz-people-ds-count {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-ds-foot .bz-people-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.bz-people-ds-notice {
+  font-size: 12px;
+  color: var(--ink-mut);
+  border-top: 1px dashed var(--card-bd);
+  padding-top: 8px;
+  word-break: break-all;
+}
+/* —— 窄容器（issue 446）：数据源行水位换行到下一行 —— */
+@container (max-width: 560px) {
+  .bz-people-ds-side {
+    max-width: none;
+  }
+  .bz-people-ds-row {
+    flex-wrap: wrap;
   }
 }
 /* ==================== 复习计划域样式（src/review/styles.css） ====================
