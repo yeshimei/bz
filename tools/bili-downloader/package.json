@@ -1,7 +1,7 @@
 {
   "name": "@jwbz/bili-downloader",
-  "version": "1.3.0",
-  "description": "B站下载器——无头批处理 CLI：B站视频解析、分P 选择、下载（多 CDN 节点切换 + 下载原件 7 天本地缓存）、多段剪辑/压缩（ffmpeg，产物 ffprobe 校验兜底）、转文字（faster-whisper）、交付（移入交付目录）；文献笔记的 AI 生成与落盘由 bz 插件完成（ticket 136，网页版已移除）",
+  "version": "1.4.0",
+  "description": "B站下载器——无头批处理 CLI：B站视频解析、分P 选择、下载（多 CDN 节点切换 + 下载原件 7 天本地缓存）、多段剪辑/压缩（ffmpeg，产物 ffprobe 校验兜底）、转文字（双引擎：SenseVoice-Small 缺省 / faster-whisper 备选）、交付（移入交付目录）；文献笔记的 AI 生成与落盘由 bz 插件完成（ticket 136，网页版已移除）",
   "main": "cli.js",
   "bin": {
     "bili-dl": "cli.js"

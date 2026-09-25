@@ -2,7 +2,8 @@
 // B站下载器 - 核心逻辑（零 DOM 依赖，可 headless 测试）
 // 由 QuickAdd 脚本《B站下载.js》抽取：wbi 签名、view + playurl、
 // 官方 CDN 多节点切换（150ms 节流平滑进度条 + EMA 速度）、
-// 流复制裁切 + CRF 重编码压缩、faster-whisper 转文字（python -c）。
+// 流复制裁切 + CRF 重编码压缩、转文字（python -c，双引擎：SenseVoice-Small 缺省 /
+// faster-whisper 备选，issue 444）。
 // 网络函数（fetchJson / https.get）可注入，便于测试。
 // ================================================================
 const { spawn } = require('child_process')
@@ -595,6 +596,42 @@ for f in sys.argv[2:]:
     sys.stdout.flush()
 `
 
+// 内嵌转录 Python 代码（SenseVoice-Small 分支，issue 444）：funasr AutoModel 一次加载、
+// 逐文件整段转录（SenseVoice 无流式分段——单文件单段输出，完成哨兵协议与 faster-whisper 一致）。
+// argv 布局与 PY_TRANSCRIBE 相同（argv[1] = 档位占位，SenseVoice 模型固定 iic/SenseVoiceSmall，
+// 忽略之——保两引擎 spawn 参数形状一致，插件/测试打桩零分叉）。
+// 输出文本须清洗 SenseVoice 的富标签（<|zh|><|NEUTRAL|><|Speech|><|woitn|> 等语言/情感/事件标记）。
+const PY_TRANSCRIBE_SENSEVOICE = `
+import sys, re
+from funasr import AutoModel
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+model = AutoModel(model='iic/SenseVoiceSmall', disable_update=True, device='cpu')
+for f in sys.argv[2:]:
+    try:
+        res = model.generate(input=f, language='zh', use_itn=True)
+        text = str((res and res[0] and res[0].get('text')) or '')
+    except Exception as e:
+        sys.stderr.write(str(e) + '\\n')
+        text = ''
+    # 去掉 <|zh|><|NEUTRAL|> 这类富标签再交付（正则吃掉所有 <|...|> 形态标记）
+    text = re.sub(r'<\\|[^>]*\\|>', '', text).strip()
+    if text:
+        sys.stdout.write('\\x1e' + f + '\\x1f' + text + '\\x1f\\n')
+        sys.stdout.flush()
+    sys.stdout.write('\\x1e' + f + '\\x1f' + '\\x1f\\n')
+    sys.stdout.flush()
+`
+
+// 引擎决议（issue 444）：'faster-whisper' 之外的任何值（含 rc 留空）都走缺省 SenseVoice——
+// 插件恒下发 engine，rc 键只服务手动 CLI 场景
+function resolveEngine(raw) {
+  return String(raw || '').trim() === 'faster-whisper' ? 'faster-whisper' : 'sensevoice'
+}
+
 // 解析逐文件转录输出（行格式 \x1e<file>\x1f<text>\x1f）；同文件多行聚合为一条；
 // 文件结束空行哨兵（\x1e<file>\x1f\x1f）只标记完成、不贡献文本。按输出序返回 [{file, text}]
 function parseTranscriptUnits(raw) {
@@ -618,10 +655,13 @@ function parseTranscriptUnits(raw) {
   return out
 }
 
-// 转文字：python -c 执行内嵌代码；stdout 逐块回调（修复原版双监听导致的文本双写）
-function runPython({ py, args, onChunk }) {
+// 转文字：python -c 执行内嵌代码；stdout 逐块回调（修复原版双监听导致的文本双写）。
+// engine（issue 444）：'faster-whisper' → PY_TRANSCRIBE；其余（缺省）→ PY_TRANSCRIBE_SENSEVOICE。
+// args 形状两引擎一致：[档位, 文件…]（SenseVoice 忽略档位占位）。
+function runPython({ py, engine, args, onChunk }) {
+  const script = resolveEngine(engine) === 'faster-whisper' ? PY_TRANSCRIBE : PY_TRANSCRIBE_SENSEVOICE
   return new Promise((resolve, reject) => {
-    const p = spawn(py, ['-c', PY_TRANSCRIBE, ...args], { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } })
+    const p = spawn(py, ['-c', script, ...args], { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } })
     trackProc(p)   // 取消任务时可 kill 中止转录
     let err = ''
     p.stdout.on('data', d => { const s = String(d); onChunk && onChunk(s) })
@@ -690,9 +730,11 @@ function resumeTranscriptPath(conf, bv, cid, s, e) {
 //   task.options（bz「文献盒」设置全量下发，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
 //     keepVideo=false 跳过交付（video 结果 null）、outputDir 覆盖交付目录（空跟随 conf.outputDir）、
 //     compress=false 关闭压缩（缺省开，用户拍板）、crf=18-28（缺省 23）、vaultPath/ffmpegPath/ffprobePath/
-//     pythonPath/whisperModel/cacheDir/cacheRetentionDays（缺省跟随 conf / rc 兜底）。
+//     pythonPath/whisperModel/cacheDir/cacheRetentionDays（缺省跟随 conf / rc 兜底）、
+//     engine='sensevoice'（缺省）|'faster-whisper'（issue 444，插件恒下发；whisperModel 档位仅
+//     faster-whisper 引擎消费，SenseVoice 模型固定无档位）。
 //   deps（全部可注入，防循环依赖——core 不 require config.js，conf 由调用方读入传入）：
-//     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel）、
+//     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel/engine）、
 //     cookie、fetchJson/get（网络注入，测试打桩）、ffmpeg、ffprobe、py、
 //     runPythonImpl（转录打桩）、onStep(名称)、onProgress(进度)、onInfo(解析信息 {title,uploader,bvid,url,duration})、tmpDir。
 // 步骤时序：resetAbort → 解析 → 下载（缓存命中检测与回写）→ 剪辑（起止有值才跑）→ 压缩（缺省开，crf 重编码）
@@ -729,7 +771,7 @@ function vaultRel(absPath, vaultPath) {
 async function runBatch(task, deps = {}) {
   resetAbort()   // 全局中止标志复位（server resetTask 同规）
   // conf 缺省 = rc（调用方读入），task.options（bz 文献盒设置全量下发）并入 conf——
-  // 让 options 里的 vaultPath/ffmpegPath/ffprobePath/pythonPath/whisperModel/cacheDir/cacheRetentionDays/outputDir 覆盖 rc 兜底
+  // 让 options 里的 vaultPath/ffmpegPath/ffprobePath/pythonPath/engine/whisperModel/cacheDir/cacheRetentionDays/outputDir 覆盖 rc 兜底
   const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
   const cookie = deps.cookie || null
   const fetchJson = deps.fetchJson || fetchJsonImpl
@@ -737,7 +779,10 @@ async function runBatch(task, deps = {}) {
   const ffmpeg = deps.ffmpeg || conf.ffmpegPath || 'ffmpeg'
   const ffprobe = deps.ffprobe || conf.ffprobePath || 'ffprobe'
   const py = deps.py || conf.pythonPath
-  const model = conf.whisperModel || 'small'
+  // 转写引擎与档位（issue 444）：engine 缺省 sensevoice；档位仅 faster-whisper 消费——
+  // args 形状两引擎一致（argv[1] 档位，SenseVoice 忽略），打桩与解析零分叉
+  const engine = resolveEngine(conf.engine)
+  const model = engine === 'faster-whisper' ? (conf.whisperModel || 'small') : ''
   const runPythonImpl = deps.runPythonImpl || runPython
   const onStep = deps.onStep || (() => {})
   const onProgress = deps.onProgress || (() => {})
@@ -878,7 +923,7 @@ async function runBatch(task, deps = {}) {
     let doneFiles = 0
     try {
       await runPythonImpl({
-        py, args: [model, srcForDeliver],
+        py, engine, args: [model, srcForDeliver],
         onChunk: s => {
           raw += s
           // 完成哨兵（\x1e<file>\x1f\x1f）计数 → 文件级进度（当前单文件：0→100 跳变，诚实不假报）
@@ -888,16 +933,24 @@ async function runBatch(task, deps = {}) {
       })
     } catch (err) {
       const m = (err && err.message) || err
-      // 找不到 Python（可执行名不在 PATH / 绝对路径不存在）→ 引导填写方式，不误导成 faster-whisper 未装
+      // 找不到 Python（可执行名不在 PATH / 绝对路径不存在）→ 引导填写方式，不误导成转写环境未装
       if (/无法启动 Python|ENOENT/i.test(String(m))) {
         throw new Error(`转文字失败：找不到 Python（${lastLine(String(m))}）——文献盒设置「Python 路径」填 python 即可（走系统 PATH），或填绝对路径（Windows 命令提示符运行 where python 可查）`)
       }
-      throw new Error(`转文字失败：${m}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+      // 环境引导按引擎分口径（issue 444）：funasr / faster-whisper 各自的 pip 安装引导
+      if (engine === 'faster-whisper') {
+        throw new Error(`转文字失败：${m}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+      }
+      throw new Error(`转文字失败：${m}（请确认 funasr 环境已安装：目标 Python 已 pip install funasr torch torchaudio）`)
     }
     const units = parseTranscriptUnits(raw)
     const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
     transcript = (byFile.get(path.resolve(srcForDeliver)) || '').trim()
-    if (!transcript) throw new Error('转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）')
+    if (!transcript) {
+      throw new Error(engine === 'faster-whisper'
+        ? '转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）'
+        : '转文字未产出文本（视频可能无语音，或请确认 funasr 环境可用、SenseVoice 模型正常加载）')
+    }
     try { fs.writeFileSync(transPath, transcript, 'utf8') } catch {}
   }
 
@@ -1052,7 +1105,7 @@ module.exports = {
   buildTrimArgs, runFfmpeg, probeDuration, validateClip, trimVideo, needsCompressFallback,
   buildMergeArgs, writeConcatList, mergeSegments,
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
-  abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,
+  abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, PY_TRANSCRIBE_SENSEVOICE, resolveEngine, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
   resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
   vaultRel, decodeBatchArg, runBatch,

@@ -196,11 +196,11 @@ test('runBatch：起止非法格式报错（parseTimeInput 拒绝）', async () 
   )
 })
 
-test('runBatch：whisper 失败 → 报错含 faster-whisper 环境引导', async () => {
+test('runBatch：whisper 失败 → 报错含 faster-whisper 环境引导（issue 444 起需显式引擎）', async () => {
   const env = makeEnv()
   env.seedCache('FAKE')
   await assert.rejects(
-    core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null, options: { compress: false } }, {
+    core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null, options: { compress: false, engine: 'faster-whisper' } }, {
       ...env.deps, conf: env.conf,
       runPythonImpl: async () => { throw new Error('模拟 python 启动失败') },
     }),
@@ -395,3 +395,50 @@ test('runBatch：缓存未命中且下载失败 → 报错（get 注入连接失
     /所有 CDN 节点均失败/
   )
 })
+
+// ---------- 转写引擎二选一（issue 444）----------
+
+test('runBatch：引擎选择与参数透传——engine 恒传 runPythonImpl；档位仅 faster-whisper 消费（SenseVoice 占位空串）', async () => {
+  const seen = []
+  const recording = async (o) => {
+    seen.push({ engine: o.engine, model: o.args[0] })
+    o.onChunk(`\x1e${o.args[1]}\x1f模拟转录文本。\x1f\n\x1e${o.args[1]}\x1f\x1f\n`)
+  }
+  const run = async (options, confOver = {}) => {
+    const env = makeEnv()
+    env.seedCache('FAKE')
+    const r = await core.runBatch(
+      { url: 'BV1GJ411x7h7', start: null, end: null, options: { compress: false, ...options } },
+      { ...env.deps, conf: { ...env.conf, ...confOver }, runPythonImpl: recording },
+    )
+    cleanTranscript(r)
+  }
+  // rc engine 留空 + options 未带 engine（手动 CLI）→ 缺省 sensevoice；档位不透传（占位空串）
+  await run({}, { engine: '' })
+  assert.deepEqual(seen.at(-1), { engine: 'sensevoice', model: '' })
+  // 插件恒下发 engine=sensevoice：rc 备用档位不透传（SenseVoice 模型固定）
+  await run({ engine: 'sensevoice' }, { whisperModel: 'medium' })
+  assert.deepEqual(seen.at(-1), { engine: 'sensevoice', model: '' })
+  // engine=faster-whisper：档位取 options.whisperModel（options 覆盖 rc 兜底）
+  await run({ engine: 'faster-whisper', whisperModel: 'large-v3' }, { whisperModel: 'medium' })
+  assert.deepEqual(seen.at(-1), { engine: 'faster-whisper', model: 'large-v3' })
+  // engine=faster-whisper 且未带档位 → rc whisperModel 兜底（缺省 small）
+  await run({ engine: 'faster-whisper' })
+  assert.deepEqual(seen.at(-1), { engine: 'faster-whisper', model: 'small' })
+  // 未知 engine 值 → 归一 sensevoice（不冒进走 whisper）
+  await run({ engine: 'whisperx' })
+  assert.equal(seen.at(-1).engine, 'sensevoice')
+})
+
+test('runBatch：sensevoice 转写失败 → 报错含 funasr 环境引导（faster-whisper 口径见既有用例）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  await assert.rejects(
+    core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, options: { compress: false, engine: 'sensevoice' } }, {
+      ...env.deps, conf: env.conf,
+      runPythonImpl: async () => { throw new Error('ModuleNotFoundError: funasr') },
+    }),
+    /转文字失败：ModuleNotFoundError: funasr（请确认 funasr 环境已安装：目标 Python 已 pip install funasr torch torchaudio）/
+  )
+})
+

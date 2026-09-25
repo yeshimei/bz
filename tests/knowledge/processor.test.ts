@@ -272,7 +272,8 @@ describe('BatchRunner', () => {
       knowledgeFfmpegPath: 'ffmpeg',
       knowledgeFfprobePath: 'ffprobe',
       knowledgePythonPath: 'python',
-      knowledgeWhisperModel: 'small',
+      asrEngine: 'faster-whisper',
+      asrWhisperModel: 'medium',
       knowledgeCacheDir: 'D:/cache',
       knowledgeCacheRetentionDays: 14,
     }) as any);
@@ -295,7 +296,8 @@ describe('BatchRunner', () => {
       ffmpegPath: 'ffmpeg',
       ffprobePath: 'ffprobe',
       pythonPath: 'python',
-      whisperModel: 'small',
+      engine: 'faster-whisper', // issue 444：引擎恒下发；档位随引擎下发
+      whisperModel: 'medium',
       cacheDir: 'D:/cache',
       cacheRetentionDays: 14,
     });
@@ -318,11 +320,43 @@ describe('BatchRunner', () => {
       options: {
         quality: 'highest', keepVideo: true,
         compress: true, crf: 23, vaultPath: '',
+        engine: 'sensevoice', // issue 444：引擎恒下发（无 rc 兜底语义），档位仅 faster-whisper 下发
         cacheRetentionDays: 7,
       },
     });
     child.emit('close', 0);
     await p;
+  });
+
+  it('转写引擎下发矩阵（issue 444）：engine 恒下发；whisperModel 仅 faster-whisper 且非空时下发', async () => {
+    const dispatch = async (settings: Record<string, unknown>): Promise<Record<string, unknown>> => {
+      cpMock.spawn.mockClear();
+      setSettingsProvider(() => settings as any);
+      // 只喂新任务：历史 close(0) 无 [bz-result] 的失败任务不进本轮（不重复 spawn、不挂起）
+      const task = await KnowledgeData.addTask({ url: 'BV1xx411c7mD' });
+      const p = BatchRunner.runAll([task], makeEvents());
+      await tick();
+      const [, args] = cpMock.spawn.mock.calls[0];
+      const json = JSON.parse(Buffer.from(args[1].slice(4), 'base64').toString('utf8'));
+      child.emit('close', 0);
+      await p;
+      return json.options;
+    };
+    // sensevoice + 档位有值 → 引擎下发、档位不下发（SenseVoice 模型固定，也不覆盖工具 rc 备用档）
+    let opts = await dispatch({ asrEngine: 'sensevoice', asrWhisperModel: 'large-v3' });
+    expect(opts).toMatchObject({ engine: 'sensevoice' });
+    expect(opts).not.toHaveProperty('whisperModel');
+    // faster-whisper + 档位空 → 引擎下发、档位不下发（留空 = 工具 rc 兜底，ticket 149 口径）
+    opts = await dispatch({ asrEngine: 'faster-whisper', asrWhisperModel: '' });
+    expect(opts).toMatchObject({ engine: 'faster-whisper' });
+    expect(opts).not.toHaveProperty('whisperModel');
+    // faster-whisper + 档位有值（含空格）→ trim 后下发
+    opts = await dispatch({ asrEngine: 'faster-whisper', asrWhisperModel: ' small ' });
+    expect(opts).toMatchObject({ engine: 'faster-whisper', whisperModel: 'small' });
+    // 引擎键缺失（迁移前存量 data.json）→ 按 sensevoice 下发
+    opts = await dispatch({ asrWhisperModel: 'small' });
+    expect(opts).toMatchObject({ engine: 'sensevoice' });
+    expect(opts).not.toHaveProperty('whisperModel');
   });
 
   it('spawn 决议唯一化（P2-2）：不探测本地 CLI 指针，固定全局 bili-dl --batch（shell:true）', async () => {

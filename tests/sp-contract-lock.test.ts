@@ -22,7 +22,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 const COUNT_BASELINE: Record<string, number> = {
   global: 3,
   notice: 4,
-  ai: 14, // 2026-09-24 issue 431/ADR-0189：重排总闸常显（空快照下由隐转现 +1）+「重排走 Jev」通道开关（+1）；issue 424 基线 12
+  ai: 15, // 2026-09-25 issue 444：「转写引擎」下拉（+1）；「Whisper 档位」visibleWhen 门控不计；issue 431 基线 14
   diary: 5,
   memo: 11,
   belongings: 6,

@@ -174,11 +174,11 @@ describe('设置面板（settings-panel）', () => {
     ) as HTMLElement;
     expect(aiItem).toBeTruthy();
     aiItem.click();
-    await waitGroups(popup, 4);
+    await waitGroups(popup, 5);
     groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(4); // issue 422：AI 页四组（服务商/模型配置并入「LLM」，新增「Embedding」）
+    expect(groups.length).toBe(5); // issue 422：AI 页四组（服务商/模型配置并入「LLM」）；issue 444 增「语音转写」
     expect([...groups].map((g) => g.querySelector('.bz-sp-group-name')!.textContent)).toEqual([
-      'LLM', 'Embedding', 'JEV', '数据源凭据',
+      'LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据',
     ]);
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
@@ -355,14 +355,14 @@ describe('设置面板（settings-panel）', () => {
     // 通用域分组：外观（palette，原「设置」域并入）+ 数据存储路径（folder-open）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
     expect(icons).toEqual(['palette', 'folder-open']);
-    // AI 域分组：LLM/Embedding/JEV/数据源凭据（issue 422 四组重排）
+    // AI 域分组：LLM/Embedding/JEV/语音转写/数据源凭据（issue 422 四组重排；issue 444 增语音转写）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
     ) as HTMLElement;
     aiItem.click();
-    await waitGroups(popup, 4);
+    await waitGroups(popup, 5);
     icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['cpu', 'binary', 'route', 'key-round']);
+    expect(icons).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round']);
     ui.cleanup();
   });
 

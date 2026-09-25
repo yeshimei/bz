@@ -23,7 +23,7 @@ import { DOMAIN_ICONS } from './core/domain-icons';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 
-import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateMemoSettingKeys, migrateAutoLinkSettings, migrateRetiredAIKeys, migrateRetiredFavoritesSortKey, migrateLinkMinScoreScale, migrateRetiredSecondBrainKeys, migrateRetiredJevKeys, migrateAsrKeys } from './settings';
 
 // 备忘录（memo 域，ADR-0092 旧备忘录域退役后 memo.json 唯一属主，ADR-0117 正名：UI/交互/写盘/引用同步归本域；
 // 被动捕获入口——启动自动弹出/file-open 提醒/侧栏图标——落点=备忘录面板）
@@ -284,6 +284,8 @@ export default class BzPlugin extends Plugin {
     // issue 424/ADR-0184 + 433：第二大脑四参数键退役 + Jev 旧键退役迁移、旧缺省模型名改写
     const retiredSecondBrainKeysMigrated = migrateRetiredSecondBrainKeys(loaded);
     const retiredJevKeysMigrated = migrateRetiredJevKeys(loaded);
+    // issue 444：knowledgeWhisperModel → asrWhisperModel（语音转写组升格到 AI 面板）
+    const asrKeysMigrated = migrateAsrKeys(loaded);
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     if (
       memoKeysMigrated ||
@@ -292,7 +294,8 @@ export default class BzPlugin extends Plugin {
       retiredSortKeyMigrated ||
       minScoreScaleMigrated ||
       retiredSecondBrainKeysMigrated ||
-      retiredJevKeysMigrated
+      retiredJevKeysMigrated ||
+      asrKeysMigrated
     ) {
       void this.saveSettings().catch((e) => console.error('[bz] 设置键迁移落盘失败:', e));
     }

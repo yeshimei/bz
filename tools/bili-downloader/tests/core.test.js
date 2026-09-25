@@ -446,3 +446,33 @@ test('parseTranscriptUnits：同文件多行聚合 + 文件结束空哨兵（逐
   assert.deepEqual(core.parseTranscriptUnits(''), [])
   assert.deepEqual(core.parseTranscriptUnits('abc\n'), [])
 })
+
+// ---------- 转写引擎二选一（issue 444）----------
+
+test('内嵌转写脚本双引擎：SenseVoice 分支用 funasr 并清洗富标签；faster-whisper 脚本保持原样', () => {
+  // SenseVoice 内嵌代码：funasr AutoModel、模型固定 iic/SenseVoiceSmall、disable_update、CPU
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /from funasr import AutoModel/)
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /iic\/SenseVoiceSmall/)
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /disable_update=True/)
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /device='cpu'/)
+  // 富标签清洗：<|zh|><|NEUTRAL|> 等语言/情感/事件标记经 re.sub 剔除再输出
+  const cleanLine = core.PY_TRANSCRIBE_SENSEVOICE.split('\n').find(l => l.includes('re.sub'))
+  assert.ok(cleanLine, 'SenseVoice 脚本应含 re.sub 清洗行')
+  assert.ok(cleanLine.includes('<\\|[^>]*\\|>'), `清洗正则应对准 <|...|> 形态：${cleanLine}`)
+  assert.doesNotMatch(core.PY_TRANSCRIBE_SENSEVOICE, /faster_whisper/)
+  // 交付协议两引擎一致（单元分隔符 + 完成哨兵——模板字面量里的 \x1e/\x1f 转义序列）
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /\\x1e/)
+  assert.match(core.PY_TRANSCRIBE_SENSEVOICE, /\\x1f/)
+  // faster-whisper 脚本原样保留（引擎二选一不改动既有分支）
+  assert.match(core.PY_TRANSCRIBE, /from faster_whisper import WhisperModel/)
+  assert.doesNotMatch(core.PY_TRANSCRIBE, /funasr/)
+})
+
+test('resolveEngine：引擎归一——仅 faster-whisper 字面量走 whisper，其余（含留空/未知）一律 sensevoice', () => {
+  assert.equal(core.resolveEngine('faster-whisper'), 'faster-whisper')
+  assert.equal(core.resolveEngine(' faster-whisper '), 'faster-whisper')
+  assert.equal(core.resolveEngine(''), 'sensevoice')
+  assert.equal(core.resolveEngine(undefined), 'sensevoice')
+  assert.equal(core.resolveEngine('sensevoice'), 'sensevoice')
+  assert.equal(core.resolveEngine('whisperx'), 'sensevoice')
+})

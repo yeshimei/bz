@@ -17,10 +17,12 @@ const DEFAULTS = {
   vaultPath: 'E:/Obsidian/叫我包仔',                   // Obsidian vault 根：交付目录在其下时生成相对路径
   ffmpegPath: 'ffmpeg',
   ffprobePath: 'ffprobe',                              // 产物校验（时长/可播放性）用
-  // pythonPath 通用默认 = 'python'（spawn 走系统 PATH）。一般装了 Python（并 pip install faster-whisper）
-  // 的用户无需改；Windows 可用 `where python` 查绝对路径后填入（如 C:/Users/<你>/AppData/Local/Programs/Python/Python311/python.exe）
+  // pythonPath 通用默认 = 'python'（spawn 走系统 PATH）。两种转写引擎共用（装了 Python 后按引擎
+  // pip install funasr torch torchaudio 或 faster-whisper 即可）；Windows 可用 `where python`
+  // 查绝对路径后填入（如 C:/Users/<你>/AppData/Local/Programs/Python/Python311/python.exe）
   pythonPath: 'python',
-  whisperModel: 'small',
+  engine: '',                                          // 转写引擎（issue 444）：'' = 缺省 sensevoice；插件 --batch 恒下发覆盖，本键只服务手动 CLI
+  whisperModel: 'small',                               // faster-whisper 档位（仅 engine=faster-whisper 消费；SenseVoice 模型固定无档位）
   cacheDir: '',                                        // 视频/断点续跑缓存目录（留空 = 系统临时目录/bili-dl-cache）
   cacheRetentionDays: 7,                               // 缓存保留天数
 }
