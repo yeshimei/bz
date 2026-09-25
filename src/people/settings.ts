@@ -42,19 +42,12 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
           {
             type: 'select',
             name: '图片描述',
-            desc: '图片条目的描述文本来源',
+            desc: '有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数',
             binding: { key: 'peopleImageDescMode' },
             options: [
-              { value: 'file', label: '预生成文件' },
-              { value: 'ai', label: 'AI 视觉' },
-              { value: 'off', label: '不读取' },
+              { value: 'file', label: '文件描述' },
+              { value: 'off', label: '仅标签' },
             ],
-          },
-          {
-            type: 'info',
-            name: 'AI 视觉暂未接入',
-            desc: '先用其他来源，接入后无需改数据',
-            visibleWhen: (s) => String((s as Record<string, unknown>).peopleImageDescMode ?? 'file') === 'ai',
           },
           {
             type: 'toggle',

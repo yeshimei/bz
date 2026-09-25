@@ -79,9 +79,12 @@ export interface ContactStats {
   /** 会话发起数（相邻消息间隔 ≥ 30 分钟视为新会话） */
   initiatedByMe: number;
   initiatedByOther: number;
-  /** 平均回复时延（秒；0 = 无样本） */
+  /** 平均回复时延（秒；新口径：会话首条不计、相邻间隔 >3600 秒不计；0 = 无样本） */
   myAvgReplySec: number;
   otherAvgReplySec: number;
+  /** 回复时延中位数（秒；口径同上，中位数比均值抗离群；旧数据无此字段） */
+  myMedianReplySec?: number;
+  otherMedianReplySec?: number;
   /** 24 小时活跃分布（消息条数，索引 = 小时） */
   myHourly: number[];
   otherHourly: number[];
@@ -121,6 +124,10 @@ export interface FaceDigest {
   quotes?: QuoteItem[];
   /** 关系时间线（编年史 markdown，从认识到现在；旧数据无此字段） */
   chronicle?: string;
+  /** 提炼出的特质标签（口头禅 / 典型说话方式等关键词；旧数据无此字段） */
+  traits?: string[];
+  /** 场景与细节（与导入提炼的 MomentItem 同构；旧数据无此字段） */
+  moments?: MomentItem[];
   /** 生成时间 ISO */
   generatedAt: string;
 }

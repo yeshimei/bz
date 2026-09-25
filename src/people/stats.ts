@@ -10,18 +10,35 @@ import { collectMediaStats } from './media';
 /** 会话切分阈值：相邻消息间隔 ≥ 30 分钟视为新会话 */
 const SESSION_GAP_MS = 30 * 60 * 1000;
 
+/** 回复时延封顶：相邻间隔 > 3600 秒不当作回复样本（issue 449 新口径；会话切分 30 分钟先截断，此为双保险） */
+const REPLY_CAP_SEC = 3600;
+
 /** 本地月键：YYYY-MM（字典序即时间序） */
 function monthKey(ts: number): string {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** 样本均值：无样本返回 0（与「0 = 无样本」口径一致） */
+export function avgOf(samples: number[]): number {
+  if (!samples.length) return 0;
+  return samples.reduce((a, b) => a + b, 0) / samples.length;
+}
+
+/** 样本中位数：偶数个取中间两数均值；无样本返回 0 */
+export function medianOf(samples: number[]): number {
+  if (!samples.length) return 0;
+  const s = [...samples].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
 /**
  * 纯函数：消息流 → 互动统计。
  * - monthly：按本地时间归月计数，升序；
  * - 会话发起：首条消息开启首个会话；之后与上一条间隔 ≥ 30 分钟即新会话，看首条是谁发的；
- * - 回复时延：相邻两条异侧（对方→我 / 我→对方）视为一次回复，耗时 = 两者的间隔（即对方「发完」
- *   到我回第一条——连续多条只有异侧切换那一条计入）；无样本记 0；
+ * - 回复时延（issue 449 新口径）：会话首条不计；相邻异侧切换且间隔 ≤ 3600 秒记一次样本，
+ *   均值与中位数双向统计（中位数抗离群，是展示主口径）；无样本记 0；
  * - hourly：24 长度数组，本地小时分布；
  * - kindCounts：透传（形态计数在 parse 层算好）；
  * - 媒体素材（issue 445）：voiceCount / voiceTotalSec / imageCount 由 media.collectMediaStats 从消息文本算出。
@@ -33,10 +50,8 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
   const otherHourly = new Array<number>(24).fill(0);
   let initiatedByMe = 0;
   let initiatedByOther = 0;
-  let myTotalSec = 0;
-  let myReplies = 0;
-  let otherTotalSec = 0;
-  let otherReplies = 0;
+  const mySamples: number[] = [];
+  const otherSamples: number[] = [];
   let prev: UnifiedMessage | null = null;
   for (const m of msgs) {
     if (!Number.isFinite(m.ts)) continue;
@@ -47,11 +62,9 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
     if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
       if (m.isSender) initiatedByMe++;
       else initiatedByOther++;
-    }
-    if (prev && m.isSender !== prev.isSender) {
+    } else if (m.isSender !== prev.isSender) {
       const sec = (m.ts - prev.ts) / 1000;
-      if (m.isSender) { myTotalSec += sec; myReplies++; }
-      else { otherTotalSec += sec; otherReplies++; }
+      if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
     }
     prev = m;
   }
@@ -60,8 +73,10 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
     monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
     initiatedByMe,
     initiatedByOther,
-    myAvgReplySec: myReplies ? myTotalSec / myReplies : 0,
-    otherAvgReplySec: otherReplies ? otherTotalSec / otherReplies : 0,
+    myAvgReplySec: avgOf(mySamples),
+    otherAvgReplySec: avgOf(otherSamples),
+    myMedianReplySec: medianOf(mySamples),
+    otherMedianReplySec: medianOf(otherSamples),
     myHourly,
     otherHourly,
     kindCounts: { ...kindCounts }, // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象

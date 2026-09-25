@@ -13,6 +13,7 @@ import {
   foldCard,
   formatCount,
   panelShell,
+  replyLatencySec,
   statsText,
   vtName,
   type DsRowState,
@@ -168,5 +169,15 @@ describe('数据源弹窗（dsModal 四态）', () => {
     expect(dsModal(state({ rows: [], hiddenGroups: 2 })).textContent).toContain('2 个群聊未纳入');
     const noFresh = dsModal(state({ rows: [{ ...dsRowBase, newCount: 0 }] }));
     expect(noFresh.querySelector('[data-people-ds-pickfresh]')).toBeNull();
+  });
+});
+
+// ---------------- 回复时延取值（issue 449） ----------------
+
+describe('replyLatencySec 中位数回退', () => {
+  it('新数据优先中位数；旧数据无中位数字段回落平均值；0（无样本）不被回退覆盖', () => {
+    expect(replyLatencySec(45, 120)).toBe(45);
+    expect(replyLatencySec(undefined, 120)).toBe(120);
+    expect(replyLatencySec(0, 120)).toBe(0);
   });
 });

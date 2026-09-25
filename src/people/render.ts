@@ -86,6 +86,14 @@ export function formatReplySec(sec: number): string {
 }
 
 /**
+ * 回复时延取值（issue 449）：优先中位数（更抗「刷屏一条隔很久」的失真）；
+ * 旧数据没有中位数字段 → 回落平均值；0 = 无样本，原样透传由 formatReplySec 出占位。
+ */
+export function replyLatencySec(median: number | undefined, avg: number): number {
+  return median ?? avg;
+}
+
+/**
  * 竖排姓名截断（真实形态适配：实测最长 37 字、纯数字字母名 4 人）：
  * ≤7 字原样竖排；更长取前 6 字 +「…」。
  */

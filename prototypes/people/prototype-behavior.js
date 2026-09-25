@@ -1,5 +1,5 @@
-/* 源指纹 52ead27e32d2e955 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 9e1296ca284d9815 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -5209,7 +5209,9 @@ var BZW_people = (() => {
   function buildExtractPrompt(chunk, personName) {
     const media = chunk.media;
     const head = [
-      `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`
+      `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
+      // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
+      "行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。"
     ];
     if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image)) {
       head.push(
@@ -5239,17 +5241,20 @@ var BZW_people = (() => {
       "",
       "4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。",
       "   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。",
+      "   反复分享的内容来源（如网易云 / B站 / 豆瓣）也是难忘画面。",
       ...(media == null ? void 0 : media.image) ? ["   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。"] : [],
       "",
       "只输出 JSON，不要任何解释或代码围栏：",
       '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}]}'
     ].join("\n");
   }
-  function buildChroniclePrompt(name, events, mediaNote) {
+  function buildChroniclePrompt(name, events, mediaNote, statsNote) {
     const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
     return [
       `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
       ...mediaNote ? ["", `素材说明：${mediaNote}`] : [],
+      // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
+      ...statsNote ? ["", statsNote] : [],
       "",
       eventLines,
       "",
@@ -5258,6 +5263,8 @@ var BZW_people = (() => {
       "要求：",
       "- 按时间顺序组织，用 `## 2023 年` 这样的年份小节分隔；素材密集的年份可用 `### 上半年 / 下半年` 再分。",
       "- 每个时期用 `-` 列表逐条写发生的事，**大事小事都要**：谁先开口、第一次做什么、一起去过哪、聊过什么重要话题、闹过什么别扭、怎么和好的。",
+      "- 沉默期（断联与回联）也写进对应年份的叙事：哪段时间明显话少或断了联系、后来又怎么重新热络起来。",
+      "- 通话或分享特别密集的时期，写成「这段关系的季节」——那是关系的高温期。",
       "- 有明确日期的条目以 `（YYYY-MM-DD）` 收在句尾；同一天的事合并成一条。",
       "- 开头先用一句话交代关系的起点（第一次说话是什么时候、从什么由头开始的）。",
       "- 只写素材里有的事，**不要编造**；素材稀疏的时期宁可只写一两条，也不要为填充而杜撰。",
@@ -5266,7 +5273,7 @@ var BZW_people = (() => {
     ].join("\n");
   }
   function buildPortraitPrompt(name, material) {
-    const { events, traits, quotes, moments, mediaNote } = material;
+    const { events, traits, quotes, moments, mediaNote, statsNote } = material;
     const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
     const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join("\n") : "（无）";
     const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join("\n") : "（无）";
@@ -5286,15 +5293,25 @@ var BZW_people = (() => {
       "",
       "## 素材四：特质线索",
       traitLines,
+      ...statsNote ? ["", "## 素材五：互动统计", statsNote] : [],
       "",
       "## 要产出的小节（按此顺序，每节用 ## 二级标题）",
       "",
       "## 画像速写",
       "两三句话抓住这个人给人的整体感觉。",
       "",
+      "## 聊天的形状",
+      "作息与聊天频率、谁更常先开口、回复快慢、是语音派还是文字派、通话多不多、有没有明显的沉默期。",
+      "写可感知的相处模式，不要罗列数字。",
+      "",
       "## 表达 DNA",
       "口头禅、高频词、说话节奏（话密还是话少、直给还是含蓄）、标点与语气习惯。",
+      "双方互相的称呼 / 昵称也收在这里：怎么叫对方、对方怎么叫你、称呼随情绪或时间的演变（如「对方习惯叫我 X，生气时叫 Y」）。",
       "每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。",
+      "",
+      "## 分享的口味",
+      "从分享 / 安利过的内容（歌、视频、文章、小程序……）归纳这个人的内容口味与审美。",
+      "素材里没有分享内容就写「（素材不足）」。",
       "",
       "## 情绪逻辑",
       "什么让他话变多、什么让他退缩或沉默、什么时候会主动找人、什么话题能点亮他。",
@@ -5313,7 +5330,7 @@ var BZW_people = (() => {
       "- 优先写模式，不要写传记：写「他习惯用玩笑化解尴尬」，不要写「他三月去了北京」。",
       "- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。",
       "- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。",
-      "- 素材不足以支撑的小节，写「（素材不足）」，绝不编造。",
+      "- 素材不足以支撑的小节（含「聊天的形状」「分享的口味」），写「（素材不足）」，绝不编造。",
       "- 总长 1200 字以内，直接输出 markdown 正文，不要代码围栏。"
     ].join("\n");
   }
@@ -5365,7 +5382,7 @@ var BZW_people = (() => {
   async function extractBatch(ask, chunk, personName) {
     return parseBatchExtract(await ask(buildExtractPrompt(chunk, personName)));
   }
-  async function buildFace(askExtract, askPortrait, messages, personName, onProgress, chunkOpts, mediaNote) {
+  async function buildFace(askExtract, askPortrait, messages, personName, onProgress, chunkOpts, mediaNote, statsNote) {
     const chunks = chunkMessages(messages, chunkOpts);
     if (!chunks.length) throw new Error("没有可提炼的文本消息");
     const batches = [];
@@ -5382,19 +5399,20 @@ var BZW_people = (() => {
       traits: evenlySample(traits, MATERIAL_LIMITS.traits),
       quotes: evenlySample(quotes, MATERIAL_LIMITS.quotes),
       moments: evenlySample(moments, MATERIAL_LIMITS.moments),
-      mediaNote: mediaNote != null ? mediaNote : buildMediaNote(collectMediaStats(messages)) || void 0
+      mediaNote: mediaNote != null ? mediaNote : buildMediaNote(collectMediaStats(messages)) || void 0,
+      statsNote
     };
     const portrait = (await askPortrait(buildPortraitPrompt(personName, material))).trim();
     if (!portrait) throw new Error("画像生成为空");
     let chronicle = "";
     if (events.length) {
       try {
-        chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote))).trim();
+        chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote))).trim();
       } catch (e) {
         chronicle = "";
       }
     }
-    return { portrait, events, quotes: material.quotes, chronicle };
+    return { portrait, events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
   }
   function mergeEvents(events) {
     const byKey = /* @__PURE__ */ new Map();
@@ -5733,8 +5751,8 @@ var BZW_people = (() => {
     if (newer.length) return { mode: "newer", msgs: newer, olderCount: msgs.length - newer.length };
     return { mode: "older", msgs, olderCount: 0 };
   }
-  async function buildFaceIncremental(askExtract, askPortrait, msgs, name, old, onProgress, mediaNote) {
-    var _a, _b;
+  async function buildFaceIncremental(askExtract, askPortrait, msgs, name, old, onProgress, mediaNote, statsNote) {
+    var _a, _b, _c, _d;
     const chunks = chunkMessages(msgs);
     if (!chunks.length) throw new Error("没有可提炼的文本消息");
     const batches = [];
@@ -5744,21 +5762,21 @@ var BZW_people = (() => {
     }
     const newEvents = dedupeEvents(batches.flatMap((b) => b.events));
     const events = dedupeEvents([...(_a = old == null ? void 0 : old.events) != null ? _a : [], ...newEvents]);
-    const quotes = evenlySample(dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...batches.flatMap((b) => b.quotes)], (q) => q.text), 60);
-    const traits = dedupeByText(batches.flatMap((b) => b.traits), (t) => t).slice(0, 30);
-    const moments = dedupeByText(batches.flatMap((b) => b.moments), (m) => m.summary).slice(0, 40);
-    const material = { events: evenlySample(events, 300), traits, quotes, moments, mediaNote };
+    const quotes = evenlySample(dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...batches.flatMap((b) => b.quotes)], (q) => q.text), MATERIAL_LIMITS.quotes);
+    const traits = evenlySample(dedupeByText([...(_c = old == null ? void 0 : old.traits) != null ? _c : [], ...batches.flatMap((b) => b.traits)], (t) => t), MATERIAL_LIMITS.traits);
+    const moments = evenlySample(dedupeByText([...(_d = old == null ? void 0 : old.moments) != null ? _d : [], ...batches.flatMap((b) => b.moments)], (m) => m.summary), MATERIAL_LIMITS.moments);
+    const material = { events: evenlySample(events, MATERIAL_LIMITS.chronicle), traits, quotes, moments, mediaNote, statsNote };
     const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
     if (!portrait) throw new Error("画像生成为空");
     let chronicle = "";
     if (events.length) {
       try {
-        chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, 300), mediaNote))).trim();
+        chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, MATERIAL_LIMITS.chronicle), mediaNote, statsNote))).trim();
       } catch (e) {
         chronicle = "";
       }
     }
-    return { portrait, events, quotes, chronicle };
+    return { portrait, events, quotes, chronicle, moments, traits };
   }
   function dedupeEvents(events) {
     const byKey = /* @__PURE__ */ new Map();
@@ -5791,9 +5809,20 @@ var BZW_people = (() => {
 
   // src/people/stats.ts
   var SESSION_GAP_MS = 30 * 60 * 1e3;
+  var REPLY_CAP_SEC = 3600;
   function monthKey(ts) {
     const d = new Date(ts);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function avgOf(samples) {
+    if (!samples.length) return 0;
+    return samples.reduce((a, b) => a + b, 0) / samples.length;
+  }
+  function medianOf(samples) {
+    if (!samples.length) return 0;
+    const s = [...samples].sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
   }
   function computeStats(messages, kindCounts) {
     var _a;
@@ -5803,10 +5832,8 @@ var BZW_people = (() => {
     const otherHourly = new Array(24).fill(0);
     let initiatedByMe = 0;
     let initiatedByOther = 0;
-    let myTotalSec = 0;
-    let myReplies = 0;
-    let otherTotalSec = 0;
-    let otherReplies = 0;
+    const mySamples = [];
+    const otherSamples = [];
     let prev = null;
     for (const m of msgs) {
       if (!Number.isFinite(m.ts)) continue;
@@ -5817,16 +5844,9 @@ var BZW_people = (() => {
       if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
         if (m.isSender) initiatedByMe++;
         else initiatedByOther++;
-      }
-      if (prev && m.isSender !== prev.isSender) {
+      } else if (m.isSender !== prev.isSender) {
         const sec = (m.ts - prev.ts) / 1e3;
-        if (m.isSender) {
-          myTotalSec += sec;
-          myReplies++;
-        } else {
-          otherTotalSec += sec;
-          otherReplies++;
-        }
+        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
       }
       prev = m;
     }
@@ -5835,8 +5855,10 @@ var BZW_people = (() => {
       monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
       initiatedByMe,
       initiatedByOther,
-      myAvgReplySec: myReplies ? myTotalSec / myReplies : 0,
-      otherAvgReplySec: otherReplies ? otherTotalSec / otherReplies : 0,
+      myAvgReplySec: avgOf(mySamples),
+      otherAvgReplySec: avgOf(otherSamples),
+      myMedianReplySec: medianOf(mySamples),
+      otherMedianReplySec: medianOf(otherSamples),
       myHourly,
       otherHourly,
       kindCounts: { ...kindCounts },
@@ -5851,6 +5873,121 @@ var BZW_people = (() => {
     if (sec < 60) return `${Math.max(1, Math.round(sec))} 秒`;
     if (sec < 3600) return `${Math.max(1, Math.round(sec / 60))} 分钟`;
     return `${Math.max(1, Math.round(sec / 3600))} 小时`;
+  }
+
+  // src/people/insights.ts
+  var SESSION_GAP_MS2 = 30 * 60 * 1e3;
+  var REPLY_CAP_SEC2 = 3600;
+  var SILENCE_GAP_MS = 14 * 24 * 3600 * 1e3;
+  var SILENCE_GAP_MAX = 12;
+  var NIGHT_HOURS = /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5]);
+  function emptyInsightSignals() {
+    return {
+      shareCount: 0,
+      emojiCount: 0,
+      emojiNamedCount: 0,
+      callCount: 0,
+      callTotalSec: 0,
+      callMissedCount: 0,
+      recantByMe: 0,
+      recantByOther: 0,
+      voiceEmotion: {}
+    };
+  }
+  function dateKeyOf(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  function computeInsights(msgs, signals) {
+    const sorted = msgs.filter((m) => m && Number.isFinite(m.ts)).sort((a, b) => a.ts - b.ts);
+    let sessionStartedByMe = 0;
+    let sessionStartedByOther = 0;
+    const mySamples = [];
+    const otherSamples = [];
+    let night = 0;
+    const gaps = [];
+    let prev = null;
+    for (const m of sorted) {
+      if (NIGHT_HOURS.has(new Date(m.ts).getHours())) night++;
+      if (!prev) {
+        if (m.isSender) sessionStartedByMe++;
+        else sessionStartedByOther++;
+        prev = m;
+        continue;
+      }
+      const gapMs = m.ts - prev.ts;
+      if (gapMs >= SESSION_GAP_MS2) {
+        if (m.isSender) sessionStartedByMe++;
+        else sessionStartedByOther++;
+      } else if (m.isSender !== prev.isSender) {
+        const sec = gapMs / 1e3;
+        if (sec <= REPLY_CAP_SEC2) (m.isSender ? mySamples : otherSamples).push(sec);
+      }
+      if (gapMs >= SILENCE_GAP_MS) {
+        gaps.push({
+          from: dateKeyOf(prev.ts),
+          to: dateKeyOf(m.ts),
+          days: Math.floor(gapMs / (24 * 3600 * 1e3))
+        });
+      }
+      prev = m;
+    }
+    const silenceGaps = gaps.sort((a, b) => b.days - a.days).slice(0, SILENCE_GAP_MAX).sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+    return {
+      sessionStartedByMe,
+      sessionStartedByOther,
+      myReplyMedianSec: medianOf(mySamples),
+      otherReplyMedianSec: medianOf(otherSamples),
+      nightSharePct: sorted.length ? Math.round(night / sorted.length * 1e3) / 10 : 0,
+      callCount: signals.callCount,
+      callTotalSec: signals.callTotalSec,
+      callMissedCount: signals.callMissedCount,
+      recantByMe: signals.recantByMe,
+      recantByOther: signals.recantByOther,
+      voiceEmotion: { ...signals.voiceEmotion },
+      silenceGaps,
+      shareCount: signals.shareCount,
+      emojiCount: signals.emojiCount,
+      emojiNamedCount: signals.emojiNamedCount
+    };
+  }
+  function buildStatsNote(i) {
+    const parts = [];
+    const sessions = [
+      i.sessionStartedByMe ? `我发起 ${i.sessionStartedByMe} 次` : "",
+      i.sessionStartedByOther ? `对方发起 ${i.sessionStartedByOther} 次` : ""
+    ].filter(Boolean);
+    if (sessions.length) parts.push(`会话${sessions.join("、")}`);
+    const replies = [
+      i.myReplyMedianSec ? `我中位 ${formatReplySec(i.myReplyMedianSec)}` : "",
+      i.otherReplyMedianSec ? `对方中位 ${formatReplySec(i.otherReplyMedianSec)}` : ""
+    ].filter(Boolean);
+    if (replies.length) parts.push(`回复时延${replies.join("、")}`);
+    if (i.nightSharePct > 0) parts.push(`深夜（0-6 点）消息占 ${i.nightSharePct}%`);
+    if (i.callCount > 0) {
+      let call = `通话 ${i.callCount} 次`;
+      if (i.callTotalSec > 0) call += `共 ${formatReplySec(i.callTotalSec)}`;
+      if (i.callMissedCount > 0) call += `、未接通 ${i.callMissedCount} 次`;
+      parts.push(call);
+    }
+    const recants = [
+      i.recantByMe ? `我撤回 ${i.recantByMe} 条` : "",
+      i.recantByOther ? `对方撤回 ${i.recantByOther} 条` : ""
+    ].filter(Boolean);
+    if (recants.length) parts.push(recants.join("、"));
+    const emotions = Object.entries(i.voiceEmotion).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    if (emotions.length) parts.push(`语音情感 ${emotions.map(([k, n]) => `${k} ${n}`).join("、")}`);
+    const shares = [];
+    if (i.shareCount > 0) shares.push(`分享链接 ${i.shareCount} 条`);
+    if (i.emojiCount > 0) {
+      shares.push(`表情包 ${i.emojiCount} 个${i.emojiNamedCount > 0 ? `（其中 ${i.emojiNamedCount} 个带名称）` : ""}`);
+    }
+    if (shares.length) parts.push(shares.join("，"));
+    if (i.silenceGaps.length) {
+      const top3 = [...i.silenceGaps].sort((a, b) => b.days - a.days).slice(0, 3);
+      parts.push(`最长的沉默 ${top3.map((g) => `${g.from} 至 ${g.to}（${g.days} 天）`).join("、")}`);
+    }
+    return parts.length ? `互动画像：${parts.join("；")}。` : "";
   }
 
   // src/people/parse.ts
@@ -6006,8 +6143,57 @@ var BZW_people = (() => {
     const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
     return text2 ? `${head} ${text2}` : head;
   }
+  var EMOJI_NAMED_RE = /^\[表情·[^\]]+\]/;
+  var SHARE_MAX_CHARS = 80;
+  var QUOTE_HEAD_MAX_CHARS = 60;
+  var CALL_MISSED_REASONS = [
+    "对方已拒绝",
+    "未应答",
+    "对方无应答",
+    "对方已取消",
+    "已取消",
+    "对方忙线中",
+    "忙线未接听",
+    "已在其它设备接听"
+  ];
+  function truncateChars(s, max) {
+    return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
+  }
+  function truncateQuoteHead(text2) {
+    const m = /^(\[引用「)([\s\S]*?)(」[\s\S]*)$/.exec(text2);
+    if (!m) return text2;
+    const quote = m[2];
+    if (quote.length <= QUOTE_HEAD_MAX_CHARS) return text2;
+    return `${m[1]}${quote.slice(0, QUOTE_HEAD_MAX_CHARS)}…」${m[3].slice(1)}`;
+  }
+  function parseCallDurationSec(text2) {
+    var _a, _b, _c;
+    const colon = /\[通话(?:中断)?(?:时长)?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*\]/.exec(text2);
+    if (colon) {
+      const [a, b, c] = [Number(colon[1]), Number(colon[2]), Number((_a = colon[3]) != null ? _a : 0)];
+      return colon[3] !== void 0 ? a * 3600 + b * 60 + c : a * 60 + b;
+    }
+    const zh = /\[通话(?:中断)?(?:时长)?\s+(?:(\d+)\s*分)?(?:(\d+)\s*秒)?\s*\]/.exec(text2);
+    if (zh && (zh[1] || zh[2])) return Number((_b = zh[1]) != null ? _b : 0) * 60 + Number((_c = zh[2]) != null ? _c : 0);
+    return null;
+  }
+  function formatCallDur(totalSec) {
+    const sec = Math.max(0, Math.round(totalSec));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor(sec % 3600 / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}时${m}分`;
+    if (m > 0) return `${m}分${s}秒`;
+    return `${s}秒`;
+  }
+  function missedCallReason(text2) {
+    for (const r of CALL_MISSED_REASONS) {
+      if (text2.includes(r)) return r;
+    }
+    return null;
+  }
   function normalizeChatJson(raws, opts, extras) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
     const voiceByWav = /* @__PURE__ */ new Map();
     for (const v of (_a = extras == null ? void 0 : extras.voice) != null ? _a : []) {
       if (!v || typeof v !== "object") continue;
@@ -6036,6 +6222,13 @@ var BZW_people = (() => {
     }
     for (const list of descByMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
     const descUsed = /* @__PURE__ */ new Set();
+    const group = isGroupChat(raws);
+    const signals = emptyInsightSignals();
+    const bumpEmotion = (emo) => {
+      var _a2;
+      const k = String(emo != null ? emo : "").trim();
+      if (k) signals.voiceEmotion[k] = ((_a2 = signals.voiceEmotion[k]) != null ? _a2 : 0) + 1;
+    };
     const kindCounts = {};
     const msgs = [];
     let maxSid = 0;
@@ -6064,19 +6257,21 @@ var BZW_people = (() => {
           const tagged = text2 ? parseMediaTag(text2) : null;
           if (tagged) {
             out = text2;
+            bumpEmotion(tagged.emotion);
             break;
           }
           const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-          out = buildVoiceText(raw, v);
+          const merged = buildVoiceText(raw, v);
+          const parsed = parseMediaTag(merged);
+          if (!parsed) continue;
+          out = merged;
+          bumpEmotion(parsed.emotion);
           break;
         }
         case 3: {
-          if (opts.imageDescMode !== "file") {
-            out = "[图片]";
-            break;
-          }
+          if (opts.imageDescMode !== "file") continue;
           const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-          out = hit ? `[图片] ${hit}` : "[图片]";
+          out = hit ? `[图片] ${hit}` : null;
           break;
         }
         case 43: {
@@ -6085,19 +6280,62 @@ var BZW_people = (() => {
           out = dur ? `[视频 ${dur}秒]` : "[视频]";
           break;
         }
-        case 1e4:
+        case 47: {
+          signals.emojiCount++;
+          if (!EMOJI_NAMED_RE.test(text2)) continue;
+          out = text2;
+          signals.emojiNamedCount++;
+          break;
+        }
+        case 49: {
+          if (text2.startsWith("[分享]") || text2.startsWith("[小程序]")) {
+            signals.shareCount++;
+            out = truncateChars(text2, SHARE_MAX_CHARS);
+          } else if (text2.startsWith("[引用「")) {
+            out = truncateQuoteHead(text2);
+          } else {
+            out = text2;
+          }
+          break;
+        }
+        case 50: {
+          signals.callCount++;
+          const missed = missedCallReason(text2);
+          if (missed) {
+            signals.callMissedCount++;
+            out = `[未接通·${missed}]`;
+            break;
+          }
+          const sec = parseCallDurationSec(text2);
+          if (sec === null) {
+            out = text2 || null;
+            break;
+          }
+          signals.callTotalSec += sec;
+          out = `[${text2.startsWith("[通话中断") ? "通话中断" : "通话"} ${formatCallDur(sec)}]`;
+          break;
+        }
+        case 1e4: {
+          if (text2.includes("撤回")) {
+            if (isSelfWho(raw.who)) signals.recantByMe++;
+            else signals.recantByOther++;
+          }
           if (!opts.keepSystem) continue;
           out = text2 || null;
           break;
+        }
         default:
           continue;
       }
       if (!out) continue;
+      const who = String((_j = raw.who) != null ? _j : "").trim();
+      if (group && who && !isSelfWho(who)) out = `[${who}] ${out}`;
       msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const stats = previewStatsOf(msgs);
-    return { msgs, kindCounts, stats, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
+    const insights = computeInsights(msgs, signals);
+    return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
     var _a;
@@ -6117,8 +6355,9 @@ var BZW_people = (() => {
       msgs,
       watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
       stats: previewStatsOf(msgs),
-      // 全量形态计数每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
       kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
+      insights: incoming.insights,
       updatedAt: nowIso
     };
     return { contact, added: fresh.length };
@@ -6132,7 +6371,7 @@ var BZW_people = (() => {
     const mode = String((_b = s.peopleImageDescMode) != null ? _b : "file");
     return {
       previewVoice: s.peoplePreviewVoice !== false,
-      imageDescMode: mode === "off" || mode === "ai" ? mode : "file",
+      imageDescMode: mode === "off" ? "off" : "file",
       previewVideo: s.peoplePreviewVideo !== false,
       keepSystem: s.peopleKeepSystem !== false
     };
@@ -6272,6 +6511,9 @@ var BZW_people = (() => {
   function formatCount(n) {
     if (n >= 1e4) return `${(n / 1e4).toFixed(n % 1e4 >= 100 ? 1 : 0)} 万`;
     return n.toLocaleString("en-US");
+  }
+  function replyLatencySec(median, avg) {
+    return median != null ? median : avg;
   }
   function vtName(name) {
     const s = String(name != null ? name : "").trim();
@@ -7122,7 +7364,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           kindCounts: (_a = pv.kindCounts) != null ? _a : {},
           skippedCount: 0,
           // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
-          fileLabel: `数据源:${name}`
+          fileLabel: `数据源:${name}`,
+          insights: pv.insights
         });
       }
     } catch (e) {
@@ -7170,7 +7413,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           msgs: previewToUnified(pv.msgs),
           kindCounts: (_a = pv.kindCounts) != null ? _a : {},
           skippedCount: 0,
-          fileLabel: `数据源:${name}`
+          fileLabel: `数据源:${name}`,
+          insights: pv.insights
         };
       }
     } catch (e) {
@@ -7471,7 +7715,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
         notice("面板已关闭，剩余人物停止生成（已完成的不受影响）");
         break;
       }
-      const { talker, name, msgs, kindCounts, skippedCount, fileLabel } = targets[i];
+      const { talker, name, msgs, kindCounts, skippedCount, fileLabel, insights } = targets[i];
       const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
       onProgress == null ? void 0 : onProgress(main, "");
       try {
@@ -7512,12 +7756,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           voiceTotalSec: (_b = stats.voiceTotalSec) != null ? _b : 0,
           imageCount: (_c = stats.imageCount) != null ? _c : 0
         });
+        const statsNote = insights ? buildStatsNote(insights) || void 0 : void 0;
         const face = plan.mode === "full" ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
           onProgress == null ? void 0 : onProgress(main, `第 ${done} / ${total} 批`);
-        }, void 0, mediaNote) : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing == null ? void 0 : existing.digest, (done, total) => {
+        }, void 0, mediaNote, statsNote) : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing == null ? void 0 : existing.digest, (done, total) => {
           const lead = plan.mode === "older" ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
           onProgress == null ? void 0 : onProgress(main, `${lead} · 第 ${done} / ${total} 批`);
-        }, mediaNote);
+        }, mediaNote, statsNote);
         const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
         await store.upsert(entry);
         await store.appendImport(talker, rec);
@@ -7526,6 +7771,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           events: mergeManualEvents(face.events, existing == null ? void 0 : existing.manualEvents),
           // issue 439：手动随手记并入事件素材
           quotes: face.quotes,
+          moments: face.moments,
+          // issue 449：场景 / 特质随生成落盘，增量重画才有的可合并
+          traits: face.traits,
           chronicle: face.chronicle || void 0,
           generatedAt: now
         };
@@ -7598,7 +7846,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     rows.className = "bz-people-ins-rows";
     const initiated = s.initiatedByMe + s.initiatedByOther;
     rows.appendChild(insRow("谁主动", initiated ? duoBar(Math.round(s.initiatedByMe / initiated * 100), Math.round(s.initiatedByOther / initiated * 100)) : duoBar(0, 0), initiated ? `我 ${s.initiatedByMe} · 对方 ${s.initiatedByOther}` : "暂无会话"));
-    rows.appendChild(insRow("平均回复", "", `我 ${formatReplySec(s.myAvgReplySec)} · 对方 ${formatReplySec(s.otherAvgReplySec)}`));
+    rows.appendChild(insRow("回复时延", "", `我 ${formatReplySec(replyLatencySec(s.myMedianReplySec, s.myAvgReplySec))} · 对方 ${formatReplySec(replyLatencySec(s.otherMedianReplySec, s.otherAvgReplySec))}`));
     const hourly = s.myHourly.map((n, i) => {
       var _a;
       return n + ((_a = s.otherHourly[i]) != null ? _a : 0);
@@ -7807,22 +8055,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
             {
               type: "select",
               name: "图片描述",
-              desc: "图片条目的描述文本来源",
+              desc: "有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
               binding: { key: "peopleImageDescMode" },
               options: [
-                { value: "file", label: "预生成文件" },
-                { value: "ai", label: "AI 视觉" },
-                { value: "off", label: "不读取" }
+                { value: "file", label: "文件描述" },
+                { value: "off", label: "仅标签" }
               ]
-            },
-            {
-              type: "info",
-              name: "AI 视觉暂未接入",
-              desc: "先用其他来源，接入后无需改数据",
-              visibleWhen: (s) => {
-                var _a;
-                return String((_a = s.peopleImageDescMode) != null ? _a : "file") === "ai";
-              }
             },
             {
               type: "toggle",

@@ -1,5 +1,5 @@
-/* 源指纹 0b6702768d166280 · 仓内输入 261 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/datasource.ts","src/people/media.ts","src/people/parse.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 a1e833f8db111b74 · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/datasource.ts","src/people/insights.ts","src/people/media.ts","src/people/parse.ts","src/people/settings.ts","src/people/stats.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -26447,6 +26447,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
         { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
         { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
+        // 脸谱（people 域，issue 435/ADR-0191；issue 449 D 补首页入口）：聊天记录里的人物画像，
+        // 与剪藏本同属「外部内容进库」域（网页剪藏 / 微信聊天导入），声明序紧随其后；
+        // 存量用户经 applyOrder「声明位前驱」落位在剪藏本之后，不打断既有阅读/复习主线顺序
+        { id: "people", commandId: "bz-people-open", name: "脸谱", sub: "聊天记录里的人物画像", icon: iconOf("people") },
         // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
         { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
         // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
@@ -26513,6 +26517,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
         clipping: [
           { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
+        ],
+        // 脸谱（issue 449 D）：「打开脸谱」是用户点名的右键/长按直达——全表唯一带「打开」前缀的
+        // 条目（形状契约测试对 people 显式豁免）；导入 = 微信聊天备份进库，folder-down 与 attach
+        // 「入库」同语义且已在原型图标表；打开类与磁贴同源用 drama（磁贴本就用它，原型表补一处即可）。
+        people: [
+          { label: "打开脸谱", commandId: "bz-people-open", icon: "drama" },
+          { label: "导入聊天数据源", commandId: "bz-people-import", icon: "folder-down" }
         ],
         // 知识盒：四入口补齐（2026-09-16 用户点名——此前只有名词与影像两条，段落/图版缺）。
         // 顺序与主窗录入入口行同源（名词 → 段落 → 图版 → 影像，见 knowledge/ui.ts renderLiterature），
@@ -60869,22 +60880,12 @@ ${n.content.slice(0, 2e3)}
             {
               type: "select",
               name: "图片描述",
-              desc: "图片条目的描述文本来源",
+              desc: "有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
               binding: { key: "peopleImageDescMode" },
               options: [
-                { value: "file", label: "预生成文件" },
-                { value: "ai", label: "AI 视觉" },
-                { value: "off", label: "不读取" }
+                { value: "file", label: "文件描述" },
+                { value: "off", label: "仅标签" }
               ]
-            },
-            {
-              type: "info",
-              name: "AI 视觉暂未接入",
-              desc: "先用其他来源，接入后无需改数据",
-              visibleWhen: (s) => {
-                var _a2;
-                return String((_a2 = s.peopleImageDescMode) != null ? _a2 : "file") === "ai";
-              }
             },
             {
               type: "toggle",
@@ -61055,6 +61056,104 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/people/stats.ts
+  function medianOf(samples) {
+    if (!samples.length) return 0;
+    const s = [...samples].sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  }
+  var SESSION_GAP_MS;
+  var init_stats4 = __esm({
+    "src/people/stats.ts"() {
+      init_media();
+      SESSION_GAP_MS = 30 * 60 * 1e3;
+    }
+  });
+
+  // src/people/insights.ts
+  function emptyInsightSignals() {
+    return {
+      shareCount: 0,
+      emojiCount: 0,
+      emojiNamedCount: 0,
+      callCount: 0,
+      callTotalSec: 0,
+      callMissedCount: 0,
+      recantByMe: 0,
+      recantByOther: 0,
+      voiceEmotion: {}
+    };
+  }
+  function dateKeyOf(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  function computeInsights(msgs, signals) {
+    const sorted = msgs.filter((m) => m && Number.isFinite(m.ts)).sort((a, b) => a.ts - b.ts);
+    let sessionStartedByMe = 0;
+    let sessionStartedByOther = 0;
+    const mySamples = [];
+    const otherSamples = [];
+    let night = 0;
+    const gaps = [];
+    let prev = null;
+    for (const m of sorted) {
+      if (NIGHT_HOURS.has(new Date(m.ts).getHours())) night++;
+      if (!prev) {
+        if (m.isSender) sessionStartedByMe++;
+        else sessionStartedByOther++;
+        prev = m;
+        continue;
+      }
+      const gapMs = m.ts - prev.ts;
+      if (gapMs >= SESSION_GAP_MS2) {
+        if (m.isSender) sessionStartedByMe++;
+        else sessionStartedByOther++;
+      } else if (m.isSender !== prev.isSender) {
+        const sec = gapMs / 1e3;
+        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
+      }
+      if (gapMs >= SILENCE_GAP_MS) {
+        gaps.push({
+          from: dateKeyOf(prev.ts),
+          to: dateKeyOf(m.ts),
+          days: Math.floor(gapMs / (24 * 3600 * 1e3))
+        });
+      }
+      prev = m;
+    }
+    const silenceGaps = gaps.sort((a, b) => b.days - a.days).slice(0, SILENCE_GAP_MAX).sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
+    return {
+      sessionStartedByMe,
+      sessionStartedByOther,
+      myReplyMedianSec: medianOf(mySamples),
+      otherReplyMedianSec: medianOf(otherSamples),
+      nightSharePct: sorted.length ? Math.round(night / sorted.length * 1e3) / 10 : 0,
+      callCount: signals.callCount,
+      callTotalSec: signals.callTotalSec,
+      callMissedCount: signals.callMissedCount,
+      recantByMe: signals.recantByMe,
+      recantByOther: signals.recantByOther,
+      voiceEmotion: { ...signals.voiceEmotion },
+      silenceGaps,
+      shareCount: signals.shareCount,
+      emojiCount: signals.emojiCount,
+      emojiNamedCount: signals.emojiNamedCount
+    };
+  }
+  var SESSION_GAP_MS2, REPLY_CAP_SEC, SILENCE_GAP_MS, SILENCE_GAP_MAX, NIGHT_HOURS;
+  var init_insights = __esm({
+    "src/people/insights.ts"() {
+      init_stats4();
+      SESSION_GAP_MS2 = 30 * 60 * 1e3;
+      REPLY_CAP_SEC = 3600;
+      SILENCE_GAP_MS = 14 * 24 * 3600 * 1e3;
+      SILENCE_GAP_MAX = 12;
+      NIGHT_HOURS = /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5]);
+    }
+  });
+
   // src/people/datasource.ts
   var datasource_exports = {};
   __export(datasource_exports, {
@@ -61156,8 +61255,44 @@ ${n.content.slice(0, 2e3)}
     const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
     return text ? `${head} ${text}` : head;
   }
+  function truncateChars(s, max) {
+    return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
+  }
+  function truncateQuoteHead(text) {
+    const m = /^(\[引用「)([\s\S]*?)(」[\s\S]*)$/.exec(text);
+    if (!m) return text;
+    const quote = m[2];
+    if (quote.length <= QUOTE_HEAD_MAX_CHARS) return text;
+    return `${m[1]}${quote.slice(0, QUOTE_HEAD_MAX_CHARS)}…」${m[3].slice(1)}`;
+  }
+  function parseCallDurationSec(text) {
+    var _a2, _b2, _c;
+    const colon = /\[通话(?:中断)?(?:时长)?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*\]/.exec(text);
+    if (colon) {
+      const [a, b, c] = [Number(colon[1]), Number(colon[2]), Number((_a2 = colon[3]) != null ? _a2 : 0)];
+      return colon[3] !== void 0 ? a * 3600 + b * 60 + c : a * 60 + b;
+    }
+    const zh = /\[通话(?:中断)?(?:时长)?\s+(?:(\d+)\s*分)?(?:(\d+)\s*秒)?\s*\]/.exec(text);
+    if (zh && (zh[1] || zh[2])) return Number((_b2 = zh[1]) != null ? _b2 : 0) * 60 + Number((_c = zh[2]) != null ? _c : 0);
+    return null;
+  }
+  function formatCallDur(totalSec) {
+    const sec = Math.max(0, Math.round(totalSec));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor(sec % 3600 / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}时${m}分`;
+    if (m > 0) return `${m}分${s}秒`;
+    return `${s}秒`;
+  }
+  function missedCallReason(text) {
+    for (const r of CALL_MISSED_REASONS) {
+      if (text.includes(r)) return r;
+    }
+    return null;
+  }
   function normalizeChatJson(raws, opts, extras) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
     const voiceByWav = /* @__PURE__ */ new Map();
     for (const v of (_a2 = extras == null ? void 0 : extras.voice) != null ? _a2 : []) {
       if (!v || typeof v !== "object") continue;
@@ -61186,6 +61321,13 @@ ${n.content.slice(0, 2e3)}
     }
     for (const list of descByMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
     const descUsed = /* @__PURE__ */ new Set();
+    const group = isGroupChat(raws);
+    const signals = emptyInsightSignals();
+    const bumpEmotion = (emo) => {
+      var _a3;
+      const k = String(emo != null ? emo : "").trim();
+      if (k) signals.voiceEmotion[k] = ((_a3 = signals.voiceEmotion[k]) != null ? _a3 : 0) + 1;
+    };
     const kindCounts = {};
     const msgs = [];
     let maxSid = 0;
@@ -61214,19 +61356,21 @@ ${n.content.slice(0, 2e3)}
           const tagged = text ? parseMediaTag(text) : null;
           if (tagged) {
             out = text;
+            bumpEmotion(tagged.emotion);
             break;
           }
           const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-          out = buildVoiceText(raw, v);
+          const merged = buildVoiceText(raw, v);
+          const parsed = parseMediaTag(merged);
+          if (!parsed) continue;
+          out = merged;
+          bumpEmotion(parsed.emotion);
           break;
         }
         case 3: {
-          if (opts.imageDescMode !== "file") {
-            out = "[图片]";
-            break;
-          }
+          if (opts.imageDescMode !== "file") continue;
           const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-          out = hit ? `[图片] ${hit}` : "[图片]";
+          out = hit ? `[图片] ${hit}` : null;
           break;
         }
         case 43: {
@@ -61235,19 +61379,62 @@ ${n.content.slice(0, 2e3)}
           out = dur ? `[视频 ${dur}秒]` : "[视频]";
           break;
         }
-        case 1e4:
+        case 47: {
+          signals.emojiCount++;
+          if (!EMOJI_NAMED_RE.test(text)) continue;
+          out = text;
+          signals.emojiNamedCount++;
+          break;
+        }
+        case 49: {
+          if (text.startsWith("[分享]") || text.startsWith("[小程序]")) {
+            signals.shareCount++;
+            out = truncateChars(text, SHARE_MAX_CHARS);
+          } else if (text.startsWith("[引用「")) {
+            out = truncateQuoteHead(text);
+          } else {
+            out = text;
+          }
+          break;
+        }
+        case 50: {
+          signals.callCount++;
+          const missed = missedCallReason(text);
+          if (missed) {
+            signals.callMissedCount++;
+            out = `[未接通·${missed}]`;
+            break;
+          }
+          const sec = parseCallDurationSec(text);
+          if (sec === null) {
+            out = text || null;
+            break;
+          }
+          signals.callTotalSec += sec;
+          out = `[${text.startsWith("[通话中断") ? "通话中断" : "通话"} ${formatCallDur(sec)}]`;
+          break;
+        }
+        case 1e4: {
+          if (text.includes("撤回")) {
+            if (isSelfWho(raw.who)) signals.recantByMe++;
+            else signals.recantByOther++;
+          }
           if (!opts.keepSystem) continue;
           out = text || null;
           break;
+        }
         default:
           continue;
       }
       if (!out) continue;
+      const who = String((_j = raw.who) != null ? _j : "").trim();
+      if (group && who && !isSelfWho(who)) out = `[${who}] ${out}`;
       msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const stats = previewStatsOf(msgs);
-    return { msgs, kindCounts, stats, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
+    const insights = computeInsights(msgs, signals);
+    return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
     var _a2;
@@ -61267,8 +61454,9 @@ ${n.content.slice(0, 2e3)}
       msgs,
       watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
       stats: previewStatsOf(msgs),
-      // 全量形态计数每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
       kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
+      insights: incoming.insights,
       updatedAt: nowIso
     };
     return { contact, added: fresh.length };
@@ -61282,7 +61470,7 @@ ${n.content.slice(0, 2e3)}
     const mode = String((_b2 = s.peopleImageDescMode) != null ? _b2 : "file");
     return {
       previewVoice: s.peoplePreviewVoice !== false,
-      imageDescMode: mode === "off" || mode === "ai" ? mode : "file",
+      imageDescMode: mode === "off" ? "off" : "file",
       previewVideo: s.peoplePreviewVideo !== false,
       keepSystem: s.peopleKeepSystem !== false
     };
@@ -61344,13 +61532,14 @@ ${n.content.slice(0, 2e3)}
     acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
     return acc.voiceCount || acc.imageCount ? acc : null;
   }
-  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, PreviewStore;
+  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, EMOJI_NAMED_RE, SHARE_MAX_CHARS, QUOTE_HEAD_MAX_CHARS, CALL_MISSED_REASONS, PreviewStore;
   var init_datasource = __esm({
     "src/people/datasource.ts"() {
       init_storage();
       init_settings_provider();
       init_media();
       init_parse();
+      init_insights();
       SELF_WHO = "我";
       IMG_DESC_NEAREST_SEC = 12 * 3600;
       EMOTION_ZH = {
@@ -61359,6 +61548,19 @@ ${n.content.slice(0, 2e3)}
         ANGRY: "生气",
         SAD: "难过"
       };
+      EMOJI_NAMED_RE = /^\[表情·[^\]]+\]/;
+      SHARE_MAX_CHARS = 80;
+      QUOTE_HEAD_MAX_CHARS = 60;
+      CALL_MISSED_REASONS = [
+        "对方已拒绝",
+        "未应答",
+        "对方无应答",
+        "对方已取消",
+        "已取消",
+        "对方忙线中",
+        "忙线未接听",
+        "已在其它设备接听"
+      ];
       PreviewStore = class {
         constructor(app) {
           this.app = app;

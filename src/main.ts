@@ -126,9 +126,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: DOMAIN_ICONS.favorites, callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
-  // 脸谱本（people 域，issue 435/ADR-0191）
-  { id: 'bz-people-open', name: '脸谱本', icon: DOMAIN_ICONS.people, callback: () => openPeople(getApp()) },
-  { id: 'bz-people-import', name: '导入微信聊天', icon: DOMAIN_ICONS.people, callback: () => importWechat(getApp()) },
+  // 脸谱（people 域，issue 435/ADR-0191；issue 449 D 命名收敛：去「本」字、导入动作以数据源立题）
+  { id: 'bz-people-open', name: '脸谱', icon: DOMAIN_ICONS.people, callback: () => openPeople(getApp()) },
+  { id: 'bz-people-import', name: '脸谱数据源', icon: DOMAIN_ICONS.people, callback: () => importWechat(getApp()) },
   // 阅读数据分析报告（读书报告内嵌化：打开书架墙面板并切到报告视图；home 报告磁贴/剪藏本深链自动受益）
   { id: 'bz-reading-report-open', name: '阅读分析报告', icon: DOMAIN_ICONS['reading-report'], callback: () => openBookshelfReport(getApp()) },
   // 影视分析报告（ADR-0090 内嵌化：独立报告窗退役，命令直达影院面板分析页；

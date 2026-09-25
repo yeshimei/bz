@@ -1,7 +1,8 @@
 // @vitest-environment node
 /**
  * 首页入口菜单纯层契约（core/item-actions 的接线面，2026-09-10）：
- *  - DOMAIN_MENU 形状：只放域自己的快捷动作（无「打开 X」、无「整理顺序」）；
+ *  - DOMAIN_MENU 形状：只放域自己的快捷动作（无「打开 X」、无「整理顺序」；
+ *    issue 449 D 起唯一例外 = people 的「打开脸谱」右键/长按直达，用户点名采纳）；
  *  - 末尾统一「设置」直达项（issue 388，2026-09-21）：每域动作后恒追加一条，定位该域设置页；
  *  - pomodoroMenuAction：番茄钟是唯一**相位敏感项**（四相位互斥、一次只出一条：
  *    未开始→开始专注 / 专注中→停止专注 / 暂停中→继续专注 / 休息中→跳过休息）；
@@ -52,7 +53,9 @@ describe('DOMAIN_MENU 形状', () => {
       expect(list.length).toBeGreaterThan(0);
       for (const a of list) {
         expect(a.label.trim()).not.toBe('');
-        expect(a.label.startsWith('打开')).toBe(false);
+        // 「无『打开 X』」契约：入口卡本身就是打开。唯一例外 = people「打开脸谱」
+        // （issue 449 D，用户点名要右键/长按直达，见 shared.ts DOMAIN_MENU_RAW.people 声明处）
+        if (id !== 'people') expect(a.label.startsWith('打开')).toBe(false);
         expect(a.label).not.toContain('整理顺序');
         expect(a.commandId).toMatch(/^bz-[a-z0-9-]+$/);
         expect(a.icon).toBeTruthy();
@@ -135,12 +138,38 @@ describe('DOMAIN_MENU 形状', () => {
     // 缺省关首页再执行（复制完通常切走去粘贴，不 keepHome）
     expect(item!.keepHome).toBeUndefined();
   });
+
+  it('2026-09-25 脸谱（people 域，issue 449 D）：入口卡 + 右键两条快捷 + 设置直达', () => {
+    // 入口卡：iconOf('people') 走 core/domain-icons 单源（home 的 ICON_KEY 无异名，无需登记）
+    const card = DOMAIN_MAP.get('people');
+    expect(card, 'people 必须在 DOMAINS 里（DOMAIN_MAP 锁死菜单域与入口域同源）').toBeTruthy();
+    expect(card!.name).toBe('脸谱');
+    expect(card!.commandId).toBe('bz-people-open');
+    expect(card!.icon).toBe(DOMAIN_ICONS.people);
+    // 菜单：2 条域动作 + 末尾统一「设置」直达（settings-panel 已有 id:'people' 设置页，同名直通无需映射）
+    const list = DOMAIN_MENU.people;
+    expect(list.length).toBe(3);
+    expect(list[0].label).toBe('打开脸谱');
+    expect(list[0].commandId).toBe('bz-people-open');
+    expect(list[0].icon).toBe('drama'); // 与磁贴同源（DOMAIN_ICONS.people）
+    expect(list[1].label).toBe('导入聊天数据源');
+    expect(list[1].commandId).toBe('bz-people-import');
+    expect(list[1].icon).toBe('folder-down'); // 已在原型图标表（attach「入库」同语义）
+    // 两条域动作都开别域面板 → 默认关首页（无 keepHome），也非慢动作（无 busyText）
+    for (const a of list.slice(0, 2)) {
+      expect(a.keepHome).toBeUndefined();
+      expect(a.busyText).toBeUndefined();
+    }
+    const last = list[list.length - 1];
+    expect(last.label).toBe('设置');
+    expect(last.settingsDeep).toBe('people');
+  });
 });
 
 describe('DOMAIN_MENU 设置直达（2026-09-21 拍板，issues 388）', () => {
   it('每个有菜单的域末尾统一追加一条「设置」，直达本域设置页', () => {
     const ids = Object.keys(DOMAIN_MENU);
-    expect(ids.length).toBe(14); // 14 个有快捷动作的域全追加；settings/attach 本就不在表内
+    expect(ids.length).toBe(15); // 15 个有快捷动作的域全追加（issue 449 D 起 people 入表）；settings/attach 本就不在表内
     for (const id of ids) {
       const last = DOMAIN_MENU[id][DOMAIN_MENU[id].length - 1];
       expect(last.label, id).toBe('设置'); // 末位恒为设置项（域动作在前）

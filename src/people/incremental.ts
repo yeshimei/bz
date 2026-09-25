@@ -14,6 +14,7 @@ import {
   chunkMessages,
   evenlySample,
   extractBatch,
+  MATERIAL_LIMITS,
   type AskLLM,
   type BatchExtract,
   type BuiltFace,
@@ -48,13 +49,15 @@ export function planIncremental(msgs: UnifiedMessage[], existing: PersonEntry | 
 
 /**
  * 增量 / 补录提炼（ui 层编排调用；digest.buildFace 保持「只管给定消息集合」的通用性）：
- * 新消息分批采集 → 与旧脸谱的事件 / 原话合并去重 → 用合并后素材重画画像与时间线。
+ * 新消息分批采集 → 与旧脸谱的事件 / 原话 / 场景 / 特质合并去重 → 用合并后素材重画画像与时间线。
  * 去重口径与 digest.ts 一致：事件按 ts|summary 且 kind 回填、其余按文本键；
  * 送 prompt 的素材超限按时间跨度均匀抽样（evenlySample 首尾必保）——合并去重后旧素材
  * 不再把新素材挤出头部（评审 P2-1 同号的 P1-1：此前 slice 留头，旧素材满额时新素材全丢）。
- * 上限对齐 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / chronicle 300）；
- * 落盘的 digest.events 保持全量，抽样只影响送 prompt 的素材口径。
- * mediaNote（issue 445）：媒体素材清单说明，ui 层传跨导入累计口径（本层消息只是新切片，自算会少算）。
+ * 上限统一取 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / chronicle 300）；
+ * 落盘的 digest.events 保持全量，抽样只影响送 prompt 与落盘的 moments / traits / quotes 口径
+ * （issue 449 缺陷修复：moments / traits 此前只吃新批且不落盘，增量一次旧「共同记忆 / 表达 DNA」全丢）。
+ * mediaNote（issue 445）：媒体素材清单说明，ui 层传跨导入累计口径（本层消息只是新切片，自算会少算）；
+ * statsNote（issue 449）：互动统计叙述段，同样由 ui 层按预览桶最新 insights 生成后透传。
  * 调用数 = 批数 + 2（画像 + 时间线），与成本预告口径一致。
  */
 export async function buildFaceIncremental(
@@ -64,7 +67,8 @@ export async function buildFaceIncremental(
   name: string,
   old: FaceDigest | undefined,
   onProgress?: (done: number, total: number) => void,
-  mediaNote?: string
+  mediaNote?: string,
+  statsNote?: string
 ): Promise<BuiltFace> {
   const chunks = chunkMessages(msgs);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
@@ -75,22 +79,23 @@ export async function buildFaceIncremental(
   }
   const newEvents = dedupeEvents(batches.flatMap((b) => b.events));
   const events = dedupeEvents([...(old?.events ?? []), ...newEvents]); // 旧在前：同 key 旧条目优先，新 kind 回填
-  const quotes = evenlySample(dedupeByText([...(old?.quotes ?? []), ...batches.flatMap((b) => b.quotes)], (q) => q.text), 60);
-  const traits = dedupeByText(batches.flatMap((b) => b.traits), (t) => t).slice(0, 30);
-  const moments = dedupeByText(batches.flatMap((b) => b.moments), (m) => m.summary).slice(0, 40);
-  const material: PortraitMaterial = { events: evenlySample(events, 300), traits, quotes, moments, mediaNote };
+  const quotes = evenlySample(dedupeByText([...(old?.quotes ?? []), ...batches.flatMap((b) => b.quotes)], (q) => q.text), MATERIAL_LIMITS.quotes);
+  // 旧素材不再丢（issue 449）：moments / traits 与事件 / 原话同口径——旧 + 新批合并去重后均匀抽样
+  const traits = evenlySample(dedupeByText([...(old?.traits ?? []), ...batches.flatMap((b) => b.traits)], (t) => t), MATERIAL_LIMITS.traits);
+  const moments = evenlySample(dedupeByText([...(old?.moments ?? []), ...batches.flatMap((b) => b.moments)], (m) => m.summary), MATERIAL_LIMITS.moments);
+  const material: PortraitMaterial = { events: evenlySample(events, MATERIAL_LIMITS.chronicle), traits, quotes, moments, mediaNote, statsNote };
   const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
   if (!portrait) throw new Error('画像生成为空');
   // 时间线是次要产物：失败不阻断画像（与 digest.buildFace 同口径）
   let chronicle = '';
   if (events.length) {
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, 300), mediaNote))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, MATERIAL_LIMITS.chronicle), mediaNote, statsNote))).trim();
     } catch {
       chronicle = '';
     }
   }
-  return { portrait, events, quotes, chronicle };
+  return { portrait, events, quotes, chronicle, moments, traits };
 }
 
 /** 事件合并去重：key = ts|summary，后出现的轻重标记回填（与 digest.ts mergeEvents 同口径）；结果按日期升序 */

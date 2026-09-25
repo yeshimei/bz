@@ -128,6 +128,51 @@ describe('computeStats 回复时延', () => {
   });
 });
 
+describe('computeStats 回复时延新口径（issue 449）', () => {
+  it('会话首条不计：新会话首条即使是异侧切换也不当回复样本；中位数字段同步产出', () => {
+    const s = computeStats(
+      [
+        msg(T0, false),            // 对方开首个会话
+        msg(T0 + 45_000, true),    // 我 45 秒后回（计我）
+        msg(T0 + 31 * MIN, false), // 31 分钟后对方开新会话：异侧切换但为首条，不计
+      ],
+      {}
+    );
+    expect(s.myAvgReplySec).toBe(45);
+    expect(s.otherAvgReplySec).toBe(0);
+    expect(s.myMedianReplySec).toBe(45);
+    expect(s.otherMedianReplySec).toBe(0);
+    expect(s.initiatedByMe).toBe(0);
+    expect(s.initiatedByOther).toBe(2); // 首条 + 31 分钟后新会话均对方开
+  });
+
+  it('间隔超 3600 秒的异侧切换不计（30 分钟会话切分先行截断，封顶为双保险）；无样本中位数记 0', () => {
+    const s = computeStats([msg(T0, false), msg(T0 + 31 * MIN, true)], {});
+    expect(s.myAvgReplySec).toBe(0);
+    expect(s.myMedianReplySec).toBe(0);
+    expect(s.otherMedianReplySec).toBe(0);
+    expect(s.initiatedByMe).toBe(1);
+  });
+
+  it('中位数：奇数样本取中位、偶数取中间两数均值；与均值并存（中位数抗离群）', () => {
+    const s = computeStats(
+      [
+        msg(T0, false),
+        msg(T0 + 10_000, true),    // 我 10
+        msg(T0 + 30_000, false),   // 对方 20
+        msg(T0 + 50_000, true),    // 我 20
+        msg(T0 + 140_000, false),  // 对方 90
+        msg(T0 + 160_000, true),   // 我 20
+      ],
+      {}
+    );
+    expect(s.myAvgReplySec).toBeCloseTo(50 / 3, 6); // (10+20+20)/3 被离群值拉偏前先看中位 20
+    expect(s.myMedianReplySec).toBe(20);
+    expect(s.otherAvgReplySec).toBe(55); // (20+90)/2
+    expect(s.otherMedianReplySec).toBe(55);
+  });
+});
+
 describe('computeStats kindCounts 透传', () => {
   it('原样透出且与源对象脱钩', () => {
     const src = { 文本: 2, 图片: 1 };

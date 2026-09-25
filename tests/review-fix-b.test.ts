@@ -151,9 +151,9 @@ describe('批 B-5：图标单一事实源尾差', () => {
     expect(DOMAIN_ICONS['settings-panel']).toBe('settings-2');
   });
 
-  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条；issue 251 补第二大脑 15 条；ADR-0115 回忆墙磁贴并入日记本 → 14 条；issue 368 补游戏架 → 15 条；issue 388 补菜单设置直达项 → 16 条）', () => {
+  it('home 入口 icon 全量迁移：iconOf() 引 DOMAIN_ICONS，无残留字面量（issue 232b 收敛后 13 条；issue 250 补密码本 14 条；issue 251 补第二大脑 15 条；ADR-0115 回忆墙磁贴并入日记本 → 14 条；issue 368 补游戏架 → 15 条；issue 388 补菜单设置直达项 → 16 条；issue 449 补脸谱 → 17 条）', () => {
     const src = repo('src/home/shared.ts'); // issue 243：域清单收编渲染纯层共享层，domains.ts 仅 re-export
-    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(16); // 15 磁贴 + settingsMenuAction 设置直达项（issue 388）
+    expect((src.match(/icon: iconOf\(/g) ?? []).length).toBe(17); // 16 磁贴 + settingsMenuAction 设置直达项（issue 388；issue 449 补脸谱磁贴）
     // 断言只作用于 DOMAINS 块：DOMAIN_MENU（入口菜单动作）用的是 lucide 字面量名，
     // 与「域图标必须走 iconOf 单一事实源」是两回事（2026-09-10 精确化）
     const domainsBlock = src.slice(src.indexOf('export const DOMAINS'), src.indexOf('export const DOMAIN_MAP'));

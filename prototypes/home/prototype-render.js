@@ -1,4 +1,4 @@
-/* 源指纹 f752933712a0b36b · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 528a73d7a3187529 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -128,6 +128,10 @@ var BZR_home = (() => {
     { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
     { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
     { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
+    // 脸谱（people 域，issue 435/ADR-0191；issue 449 D 补首页入口）：聊天记录里的人物画像，
+    // 与剪藏本同属「外部内容进库」域（网页剪藏 / 微信聊天导入），声明序紧随其后；
+    // 存量用户经 applyOrder「声明位前驱」落位在剪藏本之后，不打断既有阅读/复习主线顺序
+    { id: "people", commandId: "bz-people-open", name: "脸谱", sub: "聊天记录里的人物画像", icon: iconOf("people") },
     // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
     { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
     // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
@@ -240,6 +244,13 @@ var BZR_home = (() => {
     // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
     clipping: [
       { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
+    ],
+    // 脸谱（issue 449 D）：「打开脸谱」是用户点名的右键/长按直达——全表唯一带「打开」前缀的
+    // 条目（形状契约测试对 people 显式豁免）；导入 = 微信聊天备份进库，folder-down 与 attach
+    // 「入库」同语义且已在原型图标表；打开类与磁贴同源用 drama（磁贴本就用它，原型表补一处即可）。
+    people: [
+      { label: "打开脸谱", commandId: "bz-people-open", icon: "drama" },
+      { label: "导入聊天数据源", commandId: "bz-people-import", icon: "folder-down" }
     ],
     // 知识盒：四入口补齐（2026-09-16 用户点名——此前只有名词与影像两条，段落/图版缺）。
     // 顺序与主窗录入入口行同源（名词 → 段落 → 图版 → 影像，见 knowledge/ui.ts renderLiterature），

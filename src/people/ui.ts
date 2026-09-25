@@ -18,6 +18,7 @@ import { buildFace } from './digest';
 import type { AskLLM } from './digest';
 import { PeopleStore } from './data';
 import { buildFaceIncremental, mergeManualEvents, planIncremental } from './incremental';
+import { buildStatsNote } from './insights';
 import { buildMediaNote, emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
@@ -31,6 +32,7 @@ import {
   previewMediaBadge,
   previewToUnified,
   readContactBundle,
+  type PreviewContact,
   type PreviewStats,
 } from './datasource';
 import {
@@ -52,6 +54,7 @@ import {
   miniMarkdown,
   monthlyChart,
   panelShell,
+  replyLatencySec,
   socialRow,
   statsText,
   tagChip,
@@ -377,6 +380,7 @@ async function generateFromDs(): Promise<void> {
         kindCounts: pv.kindCounts ?? {},
         skippedCount: 0, // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
         fileLabel: `数据源:${name}`,
+        insights: pv.insights,
       });
     }
   } catch (e) {
@@ -431,6 +435,7 @@ async function generateOne(): Promise<void> {
         kindCounts: pv.kindCounts ?? {},
         skippedCount: 0,
         fileLabel: `数据源:${name}`,
+        insights: pv.insights,
       };
     }
   } catch (e) {
@@ -670,6 +675,8 @@ interface GenTarget {
   skippedCount: number;
   /** 导入记录的 file 标注 */
   fileLabel: string;
+  /** 预览桶侧写里的互动统计汇总（issue 449；旧桶可能没有）→ 生成互动统计叙述段喂画像与时间线 */
+  insights?: PreviewContact['insights'];
 }
 
 /**
@@ -693,7 +700,7 @@ async function generateForTargets(
       notice('面板已关闭，剩余人物停止生成（已完成的不受影响）');
       break;
     }
-    const { talker, name, msgs, kindCounts, skippedCount, fileLabel } = targets[i];
+    const { talker, name, msgs, kindCounts, skippedCount, fileLabel, insights } = targets[i];
     const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
     onProgress?.(main, '');
     try {
@@ -740,14 +747,17 @@ async function generateForTargets(
         voiceTotalSec: stats.voiceTotalSec ?? 0,
         imageCount: stats.imageCount ?? 0,
       });
+      // 互动统计叙述段（issue 449）：由预览桶最新 insights 生成（跨导入累计口径）；
+      // 无样本维度全空时 buildStatsNote 返回空串 → 归一成 undefined，整段不进 prompt
+      const statsNote = insights ? buildStatsNote(insights) || undefined : undefined;
       const face = plan.mode === 'full'
         ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
             onProgress?.(main, `第 ${done} / ${total} 批`);
-          }, undefined, mediaNote)
+          }, undefined, mediaNote, statsNote)
         : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing?.digest, (done, total) => {
             const lead = plan.mode === 'older' ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
             onProgress?.(main, `${lead} · 第 ${done} / ${total} 批`);
-          }, mediaNote);
+          }, mediaNote, statsNote);
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
       await store!.upsert(entry);
       await store!.appendImport(talker, rec);
@@ -755,6 +765,8 @@ async function generateForTargets(
         portrait: face.portrait,
         events: mergeManualEvents(face.events, existing?.manualEvents), // issue 439：手动随手记并入事件素材
         quotes: face.quotes,
+        moments: face.moments, // issue 449：场景 / 特质随生成落盘，增量重画才有的可合并
+        traits: face.traits,
         chronicle: face.chronicle || undefined,
         generatedAt: now,
       };
@@ -845,8 +857,8 @@ function buildInsightsCard(p: PersonEntry): HTMLElement | null {
   rows.appendChild(insRow('谁主动', initiated
     ? duoBar(Math.round((s.initiatedByMe / initiated) * 100), Math.round((s.initiatedByOther / initiated) * 100))
     : duoBar(0, 0), initiated ? `我 ${s.initiatedByMe} · 对方 ${s.initiatedByOther}` : '暂无会话'));
-  // 平均回复时延（秒/分/时自适应）
-  rows.appendChild(insRow('平均回复', '', `我 ${formatReplySec(s.myAvgReplySec)} · 对方 ${formatReplySec(s.otherAvgReplySec)}`));
+  // 回复时延（issue 449）：优先中位数（更抗刷屏失真），旧数据无中位数字段回落平均
+  rows.appendChild(insRow('回复时延', '', `我 ${formatReplySec(replyLatencySec(s.myMedianReplySec, s.myAvgReplySec))} · 对方 ${formatReplySec(replyLatencySec(s.otherMedianReplySec, s.otherAvgReplySec))}`));
   // 活跃时段：双方合计的 24 小时分布
   const hourly = s.myHourly.map((n, i) => n + (s.otherHourly[i] ?? 0));
   const max = Math.max(...hourly);

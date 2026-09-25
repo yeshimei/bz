@@ -22,7 +22,7 @@ import { DEFAULT_SETTINGS } from '../../src/settings';
 import { mountHomeEntryEditor } from '../../src/home/entry-editor';
 
 /** 可拖行数（可见域 = DOMAINS 全长，本测试不隐藏任何域） */
-const N = 15; // issue 368 补游戏架磁贴
+const N = 16; // issue 368 补游戏架磁贴；issue 449 D 补脸谱磁贴
 
 function makeHost(): HTMLElement {
   const host = document.createElement('div');

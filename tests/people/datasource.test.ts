@@ -86,16 +86,24 @@ describe('normalizeChatJson 归一化矩阵', () => {
     ];
     const r = normalizeChatJson(
       [
-        raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 21, wav: '20240101_110000_66.wav', dur: 12 }), // 表里没有
+        raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 21, wav: '20240101_110000_66.wav', dur: 12 }), // 表里没有 → 不进时间线只计数
         raw({ ct: BASE + 1, type: 34, msg: '[语音 8秒]', sid: 22, wav: '20240101_120000_77.wav', dur: 8 }), // 消息裸文件名 → 表全路径（尾段键兜底）
         raw({ ct: BASE + 2, type: 34, msg: '[语音 3秒]', sid: 23, wav: 'talker/voice/20240101_130000_88.wav', dur: 3 }), // 全路径直配
       ],
       opts(),
       { voice }
     );
-    expect(r.msgs[0].text).toBe('[语音 12秒]'); // 无转写保持标签（不解析成素材）
-    expect(r.msgs[1].text).toBe('[语音 8秒·开心] 构造语音文本');
-    expect(r.msgs[2].text).toBe('[语音 3秒·平静] 构造第二条');
+    expect(r.msgs.map((m) => m.text)).toEqual(['[语音 8秒·开心] 构造语音文本', '[语音 3秒·平静] 构造第二条']);
+    expect(r.kindCounts['语音']).toBe(3);
+    expect(r.skippedCount).toBe(1);
+    expect(r.insights.voiceEmotion).toEqual({ 开心: 1, 平静: 1 }); // 只数进时间线的
+  });
+
+  it('语音无转写且无兜底：不进时间线只计数（449 删掉空标签行）', () => {
+    const r = normalizeChatJson([raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 25, dur: 12 })], opts());
+    expect(r.msgs).toHaveLength(0);
+    expect(r.kindCounts['语音']).toBe(1);
+    expect(r.skippedCount).toBe(1);
   });
 
   it('previewVoice=false：语音丢弃只计数', () => {
@@ -127,15 +135,17 @@ describe('normalizeChatJson 归一化矩阵', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: ctOf('2026-03-05T10:00:00'), type: 3, msg: '[图片]', sid: 51 }), // 距 30 分钟 → 命中
-        raw({ ct: ctOf('2026-03-05T10:10:00'), type: 3, msg: '[图片]', sid: 52 }), // 更近但描述已被消费 → 回退
+        raw({ ct: ctOf('2026-03-05T10:10:00'), type: 3, msg: '[图片]', sid: 52 }), // 更近但描述已被消费 → 不进时间线只计数
       ],
       opts(),
       { imageDesc: descs }
     );
-    expect(r.msgs.map((m) => m.text)).toEqual(['[图片] 构造描述', '[图片]']);
+    expect(r.msgs.map((m) => m.text)).toEqual(['[图片] 构造描述']);
+    expect(r.kindCounts['图片']).toBe(2);
+    expect(r.skippedCount).toBe(1);
   });
 
-  it('图片描述缺失回退：无表 / 超 12h / 跨月 / img 对不上表 → 空标签 [图片]（不解析成素材）', () => {
+  it('图片描述缺失回退：无表 / 超 12h / 跨月 / img 对不上表 → 不进时间线只计数（449 删空标签）', () => {
     const descs: ImageDescItem[] = [{ file: `${MONTH}/a.jpg`, ct: ctOf('2026-03-05T08:00:00'), desc: '构造描述' }];
     const r = normalizeChatJson(
       [
@@ -146,17 +156,18 @@ describe('normalizeChatJson 归一化矩阵', () => {
       opts(),
       { imageDesc: descs }
     );
-    expect(r.msgs.map((m) => m.text)).toEqual(['[图片]', '[图片]', '[图片]']);
+    expect(r.msgs).toHaveLength(0);
+    expect(r.kindCounts['图片']).toBe(3);
+    expect(r.skippedCount).toBe(3);
     expect(r.stats.imageCount).toBe(0);
   });
 
-  it('imageDescMode=ai / off：只留 [图片] 标签（ai 本期占位同 off）', () => {
+  it('imageDescMode=off：无描述图片不进时间线只计数（449 摘除 ai 假开关）', () => {
     const raws = [raw({ ct: BASE, type: 3, msg: '[图片]', sid: 61 })];
     const descs: ImageDescItem[] = [{ file: `${MONTH}/a.jpg`, ct: BASE, desc: '构造描述' }];
-    for (const mode of ['ai', 'off'] as const) {
-      const r = normalizeChatJson(raws, opts({ imageDescMode: mode }), { imageDesc: descs });
-      expect(r.msgs[0].text).toBe('[图片]');
-    }
+    const r = normalizeChatJson(raws, opts({ imageDescMode: 'off' }), { imageDesc: descs });
+    expect(r.msgs).toHaveLength(0);
+    expect(r.kindCounts['图片']).toBe(1);
   });
 
   it('previewVideo=false：视频丢弃只计数；开则 [视频 N秒] 标签进预览', () => {
@@ -177,18 +188,84 @@ describe('normalizeChatJson 归一化矩阵', () => {
     expect(off.kindCounts['系统']).toBe(1);
   });
 
-  it('表情 / appmsg / 通话：一律丢弃只计数', () => {
+  it('type=47 表情：纯 [表情] 不进时间线只计数；[表情·名] 原样进并计命名数', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: BASE, type: 47, msg: '[表情]', sid: 91 }),
-        raw({ ct: BASE + 1, type: 49, msg: '[分享] 构造', sid: 92 }),
-        raw({ ct: BASE + 2, type: 50, msg: '[通话时长 1分]', sid: 93 }),
+        raw({ ct: BASE + 1, type: 47, msg: '[表情·笑哭]', sid: 92 }),
       ],
       opts()
     );
-    expect(r.msgs).toHaveLength(0);
-    expect(r.kindCounts).toMatchObject({ 表情: 1, 分享: 1, 通话: 1 });
-    expect(r.skippedCount).toBe(3);
+    expect(r.msgs.map((m) => m.text)).toEqual(['[表情·笑哭]']);
+    expect(r.kindCounts['表情']).toBe(2); // 全量形态计数不受分流影响
+    expect(r.insights.emojiCount).toBe(2);
+    expect(r.insights.emojiNamedCount).toBe(1);
+  });
+
+  it('type=49 分享 / 小程序：进时间线并截断至 ≤80 字，计 shareCount', () => {
+    const longTitle = `[分享] ${'构'.repeat(90)}`;
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 49, msg: longTitle, sid: 93 }),
+        raw({ ct: BASE + 1, type: 49, msg: '[小程序] 构造小程序', sid: 94 }),
+      ],
+      opts()
+    );
+    expect(r.msgs[0].text).toBe(`[分享] ${'构'.repeat(74)}…`); // 截断补 …，总长 80
+    expect(r.msgs[0].text.length).toBe(80);
+    expect(r.msgs[1].text).toBe('[小程序] 构造小程序');
+    expect(r.insights.shareCount).toBe(2);
+  });
+
+  it('type=49 文件：原样进时间线；引用：短引用原样保留', () => {
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 49, msg: '[文件] 构造报告.pdf', sid: 95 }),
+        raw({ ct: BASE + 1, type: 49, msg: '[引用「早」] 晚了', sid: 96 }),
+      ],
+      opts()
+    );
+    expect(r.msgs.map((m) => m.text)).toEqual(['[文件] 构造报告.pdf', '[引用「早」] 晚了']);
+    expect(r.insights.shareCount).toBe(0); // 文件 / 引用不计分享
+  });
+
+  it('type=49 引用头超 60 字：截断补 …」；回复部分原样保留', () => {
+    const quote = '长'.repeat(70);
+    const r = normalizeChatJson(
+      [raw({ ct: BASE, type: 49, msg: `[引用「${quote}」] 构造回复`, sid: 97 })],
+      opts()
+    );
+    expect(r.msgs[0].text).toBe(`[引用「${'长'.repeat(60)}…」] 构造回复`);
+  });
+
+  it('type=50 通话：时长换轻标签（时 / 分 / 秒三档），中断同款换算，callTotalSec 累计', () => {
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 50, msg: '[通话时长 01:02:03]', sid: 98 }),
+        raw({ ct: BASE + 1, type: 50, msg: '[通话时长 05:20]', sid: 99 }),
+        raw({ ct: BASE + 2, type: 50, msg: '[通话中断 00:00:59]', sid: 100 }),
+      ],
+      opts()
+    );
+    expect(r.msgs.map((m) => m.text)).toEqual(['[通话 1时2分]', '[通话 5分20秒]', '[通话中断 59秒]']);
+    expect(r.insights.callCount).toBe(3);
+    expect(r.insights.callTotalSec).toBe(3723 + 320 + 59);
+    expect(r.insights.callMissedCount).toBe(0);
+  });
+
+  it('type=50 未接通：换 [未接通·原因原文]，计 callMissedCount；callCount 含未接通', () => {
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 50, msg: '[对方已拒绝]', sid: 101 }),
+        raw({ ct: BASE + 1, type: 50, msg: '[对方忙线中]', sid: 102 }),
+        raw({ ct: BASE + 2, type: 50, msg: '[已取消]', sid: 103 }),
+      ],
+      opts()
+    );
+    expect(r.msgs.map((m) => m.text)).toEqual(['[未接通·对方已拒绝]', '[未接通·对方忙线中]', '[未接通·已取消]']);
+    expect(r.insights.callCount).toBe(3);
+    expect(r.insights.callMissedCount).toBe(3);
+    expect(r.insights.callTotalSec).toBe(0);
   });
 
   it('type=1 且 msg 以媒体标签开头：按 445 parseMediaTag 走媒体素材（stats 计数）', () => {
@@ -199,16 +276,69 @@ describe('normalizeChatJson 归一化矩阵', () => {
     expect(r.stats).toMatchObject({ msgCount: 2, voiceCount: 1, voiceTotalSec: 12, imageCount: 1 });
   });
 
-  it('stats 重算口径：合成标签的语音带时长计入 voiceTotalSec，空标签不计素材', () => {
+  it('stats 重算口径：合成标签的语音带时长计入 voiceTotalSec；无转写语音与无描述图片不进时间线', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: BASE, type: 34, msg: '[语音 8秒·开心] 构造', sid: 101 }),
-        raw({ ct: BASE + 1, type: 34, msg: '[语音 5秒]', sid: 102 }), // 无转写：不进素材数
-        raw({ ct: BASE + 2, type: 3, msg: '[图片]', sid: 103 }),
+        raw({ ct: BASE + 1, type: 34, msg: '[语音 5秒]', sid: 102 }), // 无转写：不进时间线不进素材数
+        raw({ ct: BASE + 2, type: 3, msg: '[图片]', sid: 103 }), // 无描述：不进时间线
       ],
       opts()
     );
-    expect(r.stats).toMatchObject({ msgCount: 3, voiceCount: 1, voiceTotalSec: 8, imageCount: 0 });
+    expect(r.stats).toMatchObject({ msgCount: 1, voiceCount: 1, voiceTotalSec: 8, imageCount: 0 });
+    expect(r.insights.voiceEmotion).toEqual({ 开心: 1 });
+  });
+
+  it('type=10000 撤回归属：按 who 计 recantByMe / recantByOther（不受 keepSystem 影响）', () => {
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 10000, who: '我', msg: '你撤回了一条消息', sid: 105 }),
+        raw({ ct: BASE + 1, type: 10000, who: '对方', msg: '"对方" 撤回了一条消息', sid: 106 }),
+      ],
+      opts({ keepSystem: false })
+    );
+    expect(r.msgs).toHaveLength(0); // keepSystem 关：不进时间线
+    expect(r.insights.recantByMe).toBe(1);
+    expect(r.insights.recantByOther).toBe(1);
+  });
+
+  it('群聊前缀：非我消息 text 前加 [成员名] ；我方不加；单聊不变', () => {
+    const groupRaws = [
+      raw({ ct: BASE, who: '甲', msg: '构造甲说', sid: 111 }),
+      raw({ ct: BASE + 1, who: '我', msg: '构造我说', sid: 112 }),
+      raw({ ct: BASE + 2, who: '乙', type: 47, msg: '[表情· OK]', sid: 113 }),
+    ];
+    const g = normalizeChatJson(groupRaws, opts());
+    expect(g.msgs.map((m) => m.text)).toEqual(['[甲] 构造甲说', '构造我说', '[乙] [表情· OK]']);
+    const single = normalizeChatJson(
+      [raw({ ct: BASE, who: '对方', msg: '构造单聊', sid: 114 }), raw({ ct: BASE + 1, who: '我', msg: '好', sid: 115 })],
+      opts()
+    );
+    expect(single.msgs.map((m) => m.text)).toEqual(['构造单聊', '好']);
+  });
+
+  it('insights 汇总：会话切分 / 回复中位数 / 深夜占比 / 沉默段随导入现算', () => {
+    const d = (day: number, hour: number, min = 0): number =>
+      Math.round(new Date(2026, 2, day, hour, min, 0).getTime() / 1000); // 本地时间构造（秒级 ct）
+    const r = normalizeChatJson(
+      [
+        raw({ ct: d(1, 1, 0), who: '我', msg: '深夜开场', sid: 121 }), // 会话1 我开；深夜
+        raw({ ct: d(1, 1, 1), who: '对方', msg: '回', sid: 122 }), // 对方 60 秒样本
+        raw({ ct: d(1, 1, 2), who: '我', msg: '嗯', sid: 123 }), // 我 60 秒样本
+        raw({ ct: d(1, 12, 0), who: '对方', msg: '中午新会话', sid: 124 }), // ≥30 分钟 → 对方开新会话
+        raw({ ct: d(20, 14, 0), who: '对方', msg: '19 天后', sid: 125 }), // 沉默段 19 天 + 新会话
+      ],
+      opts()
+    );
+    const i = r.insights;
+    expect(i.sessionStartedByMe).toBe(1);
+    expect(i.sessionStartedByOther).toBe(2);
+    expect(i.myReplyMedianSec).toBe(60);
+    expect(i.otherReplyMedianSec).toBe(60);
+    expect(i.nightSharePct).toBe(60); // 深夜 3 条（1:00 / 1:01 / 1:02）/ 全部 5 条
+    expect(i.silenceGaps).toEqual([
+      { from: '2026-03-01', to: '2026-03-20', days: 19 },
+    ]);
   });
 
   it('无效时间戳：只计数不进预览', () => {

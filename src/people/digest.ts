@@ -38,7 +38,7 @@ export interface BatchExtract {
   moments: MomentItem[];
 }
 
-/** 画像阶段吃到的四类素材（已合并去重并按上限抽样） */
+/** 画像阶段吃到的素材（已合并去重并按上限抽样） */
 export interface PortraitMaterial {
   events: FaceEvent[];
   traits: string[];
@@ -46,6 +46,8 @@ export interface PortraitMaterial {
   moments: MomentItem[];
   /** 素材清单说明：媒体计数 + 情感标记含义（无媒体素材时缺省，issue 445） */
   mediaNote?: string;
+  /** 素材五：互动统计叙述段（谁先开口 / 回复快慢 / 深夜比 / 通话时长等；ui 层由预览桶 insights 生成，issue 449） */
+  statsNote?: string;
 }
 
 export interface ChunkOptions {
@@ -56,8 +58,8 @@ export interface ChunkOptions {
 
 const DEFAULTS: Required<ChunkOptions> = { maxChars: 12000, maxCount: 400, maxBatches: 60 };
 
-/** 画像素材总量上限：素材段过长会让单次调用失衡，超限按时间跨度均匀抽样 */
-const MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 } as const;
+/** 画像素材总量上限：素材段过长会让单次调用失衡，超限按时间跨度均匀抽样（增量合并同用，issue 449） */
+export const MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 } as const;
 
 /** 切批：滤空文本 → 双限累积 → 批数超上限均匀抽样（保留时序跨度）；媒体标签顺带计数（issue 445） */
 export function chunkMessages(messages: UnifiedMessage[], opts: ChunkOptions = {}): DigestChunk[] {
@@ -125,6 +127,8 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
   const media = chunk.media;
   const head = [
     `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
+    // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
+    '行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。',
   ];
   if (media?.voice || media?.image) {
     head.push(
@@ -156,6 +160,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
     '',
     '4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。',
     '   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。',
+    '   反复分享的内容来源（如网易云 / B站 / 豆瓣）也是难忘画面。',
     ...(media?.image ? ['   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。'] : []),
     '',
     '只输出 JSON，不要任何解释或代码围栏：',
@@ -168,11 +173,13 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
  * 输入是全部交往事件（含小事），产出按年份分节的成文史——不是事件列表的复述，
  * 而是把碎片串成「这段关系怎么一步步走到今天」。
  */
-export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string): string {
+export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string, statsNote?: string): string {
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   return [
     `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
     ...(mediaNote ? ['', `素材说明：${mediaNote}`] : []),
+    // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
+    ...(statsNote ? ['', statsNote] : []),
     '',
     eventLines,
     '',
@@ -181,6 +188,8 @@ export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNot
     '要求：',
     '- 按时间顺序组织，用 `## 2023 年` 这样的年份小节分隔；素材密集的年份可用 `### 上半年 / 下半年` 再分。',
     '- 每个时期用 `-` 列表逐条写发生的事，**大事小事都要**：谁先开口、第一次做什么、一起去过哪、聊过什么重要话题、闹过什么别扭、怎么和好的。',
+    '- 沉默期（断联与回联）也写进对应年份的叙事：哪段时间明显话少或断了联系、后来又怎么重新热络起来。',
+    '- 通话或分享特别密集的时期，写成「这段关系的季节」——那是关系的高温期。',
     '- 有明确日期的条目以 `（YYYY-MM-DD）` 收在句尾；同一天的事合并成一条。',
     '- 开头先用一句话交代关系的起点（第一次说话是什么时候、从什么由头开始的）。',
     '- 只写素材里有的事，**不要编造**；素材稀疏的时期宁可只写一两条，也不要为填充而杜撰。',
@@ -196,7 +205,7 @@ export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNot
  * 「情绪具体化」「素材不足不编造」四条约束；这是画像深度与可信度的来源。
  */
 export function buildPortraitPrompt(name: string, material: PortraitMaterial): string {
-  const { events, traits, quotes, moments, mediaNote } = material;
+  const { events, traits, quotes, moments, mediaNote, statsNote } = material;
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join('\n') : '（无）';
   const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join('\n') : '（无）';
@@ -216,15 +225,25 @@ export function buildPortraitPrompt(name: string, material: PortraitMaterial): s
     '',
     '## 素材四：特质线索',
     traitLines,
+    ...(statsNote ? ['', '## 素材五：互动统计', statsNote] : []),
     '',
     '## 要产出的小节（按此顺序，每节用 ## 二级标题）',
     '',
     '## 画像速写',
     '两三句话抓住这个人给人的整体感觉。',
     '',
+    '## 聊天的形状',
+    '作息与聊天频率、谁更常先开口、回复快慢、是语音派还是文字派、通话多不多、有没有明显的沉默期。',
+    '写可感知的相处模式，不要罗列数字。',
+    '',
     '## 表达 DNA',
     '口头禅、高频词、说话节奏（话密还是话少、直给还是含蓄）、标点与语气习惯。',
+    '双方互相的称呼 / 昵称也收在这里：怎么叫对方、对方怎么叫你、称呼随情绪或时间的演变（如「对方习惯叫我 X，生气时叫 Y」）。',
     '每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。',
+    '',
+    '## 分享的口味',
+    '从分享 / 安利过的内容（歌、视频、文章、小程序……）归纳这个人的内容口味与审美。',
+    '素材里没有分享内容就写「（素材不足）」。',
     '',
     '## 情绪逻辑',
     '什么让他话变多、什么让他退缩或沉默、什么时候会主动找人、什么话题能点亮他。',
@@ -243,7 +262,7 @@ export function buildPortraitPrompt(name: string, material: PortraitMaterial): s
     '- 优先写模式，不要写传记：写「他习惯用玩笑化解尴尬」，不要写「他三月去了北京」。',
     '- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。',
     '- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。',
-    '- 素材不足以支撑的小节，写「（素材不足）」，绝不编造。',
+    '- 素材不足以支撑的小节（含「聊天的形状」「分享的口味」），写「（素材不足）」，绝不编造。',
     '- 总长 1200 字以内，直接输出 markdown 正文，不要代码围栏。',
   ].join('\n');
 }
@@ -313,6 +332,10 @@ export interface BuiltFace {
   portrait: string;
   events: FaceEvent[];
   quotes: QuoteItem[];
+  /** 场景与细节（合并抽样后随返回值落盘，增量重画不丢，issue 449） */
+  moments: MomentItem[];
+  /** 特质线索（同 moments，issue 449） */
+  traits: string[];
   /** 关系时间线（编年史）；生成失败或素材不足时为空串，不阻断画像产出 */
   chronicle: string;
 }
@@ -322,7 +345,8 @@ export interface BuiltFace {
  * → 汇总画像（askPortrait）+ 关系时间线（askPortrait）两次文本通道调用。
  * onProgress(done, total) 供 UI 更新进度；任一批失败原样抛错（上层中止并报错）。
  * chunkOpts 透传切批参数（UI 缺省即默认双限）；mediaNote 是媒体素材清单说明（issue 445），
- * 缺省由本次消息流自算（ui 层增量重画时传跨导入累计口径）。
+ * 缺省由本次消息流自算（ui 层增量重画时传跨导入累计口径）；statsNote 是互动统计叙述段
+ * （issue 449，ui 层由预览桶 insights 生成，本层不透传就整段不进 prompt）。
  */
 export async function buildFace(
   askExtract: AskLLM,
@@ -331,7 +355,8 @@ export async function buildFace(
   personName: string,
   onProgress?: (done: number, total: number) => void,
   chunkOpts?: ChunkOptions,
-  mediaNote?: string
+  mediaNote?: string,
+  statsNote?: string
 ): Promise<BuiltFace> {
   const chunks = chunkMessages(messages, chunkOpts);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
@@ -350,6 +375,7 @@ export async function buildFace(
     quotes: evenlySample(quotes, MATERIAL_LIMITS.quotes),
     moments: evenlySample(moments, MATERIAL_LIMITS.moments),
     mediaNote: mediaNote ?? (buildMediaNote(collectMediaStats(messages)) || undefined),
+    statsNote,
   };
   const portrait = (await askPortrait(buildPortraitPrompt(personName, material))).trim();
   if (!portrait) throw new Error('画像生成为空');
@@ -357,12 +383,12 @@ export async function buildFace(
   let chronicle = '';
   if (events.length) {
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote))).trim();
     } catch {
       chronicle = '';
     }
   }
-  return { portrait, events, quotes: material.quotes, chronicle };
+  return { portrait, events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
 }
 
 /**

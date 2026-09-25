@@ -1,4 +1,4 @@
-/* 源指纹 d88b82a87605aa7c · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ed90dd4c788ec6ff · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -60,6 +60,7 @@ var BZR_people = (() => {
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
     profileView: () => profileView,
+    replyLatencySec: () => replyLatencySec,
     socialRow: () => socialRow,
     spillOf: () => spillOf,
     statsText: () => statsText,
@@ -123,6 +124,9 @@ var BZR_people = (() => {
     if (sec < 60) return `${Math.round(sec)} 秒`;
     if (sec < 3600) return `${Math.round(sec / 60)} 分`;
     return `${(sec / 3600).toFixed(1)} 时`;
+  }
+  function replyLatencySec(median, avg) {
+    return median != null ? median : avg;
   }
   function vtName(name) {
     const s = String(name != null ? name : "").trim();

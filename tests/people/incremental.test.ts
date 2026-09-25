@@ -215,4 +215,77 @@ describe('buildFaceIncremental（假 ask）', () => {
     expect(prompts[0]).toContain('素材说明：跨导入媒体说明');
     expect(prompts[1]).toContain('素材说明：跨导入媒体说明');
   });
+
+  it('旧 moments / traits 与新批合并去重并随 BuiltFace 返回（issue 449：增量不再丢共同记忆与表达 DNA）', async () => {
+    const prompts: string[] = [];
+    const old: FaceDigest = {
+      portrait: '## 画像速写\n旧画像',
+      events: [{ ts: '2024-04-01', summary: '旧事件' }],
+      quotes: [],
+      moments: [
+        { ts: '2024-03-01', summary: '常去的那家店' },
+        { ts: '2024-03-02', summary: '凌晨的便利店' },
+      ],
+      traits: ['话痨', '细节控'],
+      generatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const askExtract = vi.fn(async () =>
+      JSON.stringify({
+        events: [],
+        traits: ['热心', '话痨'], // 话痨与旧重复 → 去重留旧条目
+        quotes: [],
+        moments: [
+          { ts: '2024-05-01', summary: '常去的那家店' }, // 与旧重复
+          { ts: '2024-05-02', summary: '一起看过的展' },
+        ],
+      })
+    );
+    const askPortrait = vi.fn(async (p: string) => {
+      prompts.push(p);
+      return prompts.length === 1 ? '## 画像速写\n稳' : '## 2024 年';
+    });
+    const face = await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', old);
+    // 旧素材不丢、新素材并入、重复去重（旧在前故同键留旧）
+    expect(face.moments.map((m) => m.summary)).toEqual(['常去的那家店', '凌晨的便利店', '一起看过的展']);
+    expect(face.traits).toEqual(['话痨', '细节控', '热心']);
+    // 合并后的旧素材也进画像 prompt（重画不丢）
+    expect(prompts[0]).toContain('凌晨的便利店');
+    expect(prompts[0]).toContain('细节控');
+    expect(prompts[0]).toContain('一起看过的展');
+  });
+
+  it('旧 + 新合并超上限：均匀抽样到 MATERIAL_LIMITS 首尾必保（旧的首条与最新的末条都在）', async () => {
+    const old: FaceDigest = {
+      portrait: '旧',
+      events: [],
+      quotes: [],
+      moments: [],
+      traits: Array.from({ length: 35 }, (_, i) => `旧特质-${i}`),
+      generatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const askExtract = vi.fn(async () =>
+      JSON.stringify({ events: [], traits: Array.from({ length: 5 }, (_, i) => `新特质-${i}`), quotes: [], moments: [] })
+    );
+    const face = await buildFaceIncremental(askExtract, async () => '## 画像速写', [msg(0, '聊起来')], '老王', old);
+    expect(face.traits).toHaveLength(30); // 35 旧 + 5 新去重 40 条 → 抽样到 traits 上限
+    expect(face.traits[0]).toBe('旧特质-0');
+    expect(face.traits[29]).toBe('新特质-4');
+  });
+
+  it('statsNote 透传画像与时间线 prompt（issue 449：ui 层按预览桶最新 insights 生成后传入）', async () => {
+    const { prompts, askExtract, askPortrait } = setupAsk();
+    await buildFaceIncremental(
+      askExtract,
+      askPortrait,
+      [msg(0, '聊起来')],
+      '老王',
+      oldDigest(),
+      undefined,
+      '跨导入媒体说明',
+      '互动画像：会话我发起 12 次、对方发起 5 次。'
+    );
+    expect(prompts[0]).toContain('## 素材五：互动统计');
+    expect(prompts[0]).toContain('会话我发起 12 次、对方发起 5 次');
+    expect(prompts[1]).toContain('互动画像：会话我发起 12 次、对方发起 5 次');
+  });
 });

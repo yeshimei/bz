@@ -282,3 +282,86 @@ describe('媒体素材进提示词（issue 445）', () => {
     expect(seen.filter((p) => p.includes('自定义媒体说明'))).toHaveLength(2); // 画像 + 时间线
   });
 });
+
+// ---------------- 互动统计素材与新对话行说明（issue 449） ----------------
+
+describe('buildExtractPrompt 新行类语义说明（issue 449）', () => {
+  it('分享 / 引用 / 通话 / 命名表情的标签说明进头部；moments 引导收分享来源', () => {
+    const prompt = buildExtractPrompt(
+      {
+        from: '2024-05-01',
+        to: '2024-05-01',
+        count: 3,
+        lines: [
+          '[2024-05-01 12:00][对方] [分享] 晨间新闻',
+          '[2024-05-01 12:01][我] [引用「明天见」] 好的',
+          '[2024-05-01 12:02][对方] [通话 32:15]',
+        ],
+      },
+      '老王'
+    );
+    expect(prompt).toContain('[分享]');
+    expect(prompt).toContain('[小程序]');
+    expect(prompt).toContain('引用回复');
+    expect(prompt).toContain('通话事件');
+    expect(prompt).toContain('[表情·名]');
+    expect(prompt).toContain('口味与审美');
+    expect(prompt).toContain('内容来源'); // moments 引导：分享来源也是难忘画面
+  });
+});
+
+describe('buildPortraitPrompt 互动统计与新小节（issue 449）', () => {
+  const base = { events: [] as never[], traits: [] as string[], quotes: [] as never[], moments: [] as never[] };
+
+  it('statsNote 原文进「素材五：互动统计」；缺省整段不渲染', () => {
+    const withStats = buildPortraitPrompt('老王', {
+      ...base,
+      statsNote: '互动画像：会话我发起 12 次、对方发起 5 次；深夜（0-6 点）消息占 18.0%。',
+    });
+    expect(withStats).toContain('## 素材五：互动统计');
+    expect(withStats).toContain('深夜（0-6 点）消息占 18.0%');
+
+    const without = buildPortraitPrompt('老王', base);
+    expect(without).not.toContain('素材五');
+    expect(without).not.toContain('互动统计');
+  });
+
+  it('新增「聊天的形状」「分享的口味」小节；表达 DNA 收称呼；硬性要求同步', () => {
+    const portrait = buildPortraitPrompt('老王', base);
+    expect(portrait).toContain('## 聊天的形状');
+    expect(portrait).toContain('谁更常先开口');
+    expect(portrait).toContain('## 分享的口味');
+    expect(portrait).toContain('称呼');
+    expect(portrait).toContain('（素材不足）');
+  });
+
+  it('buildChroniclePrompt：statsNote 进 prompt；沉默期与「关系的季节」引导在场', () => {
+    const chron = buildChroniclePrompt('老王', [{ ts: '2024-05-01', summary: '第一次说话' }], undefined, '互动画像：通话 26 次共 3.2 时。');
+    expect(chron).toContain('互动画像：通话 26 次共 3.2 时。');
+    expect(chron).toContain('沉默期');
+    expect(chron).toContain('季节');
+    expect(buildChroniclePrompt('老王', [{ ts: '2024-05-01', summary: '第一次说话' }])).not.toContain('互动画像：');
+  });
+});
+
+describe('buildFace moments/traits 出口与 statsNote 透传（issue 449）', () => {
+  it('BuiltFace 带合并后的 moments / traits；statsNote 进画像与时间线两路 prompt', async () => {
+    const seen: string[] = [];
+    const face = await buildFace(
+      async () =>
+        '{"events":[{"ts":"2024-05-01","summary":"约饭"}],"traits":["话痨"],"quotes":[],"moments":[{"ts":"2024-05-01","summary":"常去的那家店"}]}',
+      async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年' : '## 画像速写'),
+      [msg(0, false, '早')],
+      '老王',
+      undefined,
+      undefined,
+      undefined,
+      '互动画像：我中位 45 秒。'
+    );
+    expect(face.traits).toEqual(['话痨']);
+    expect(face.moments).toEqual([{ ts: '2024-05-01', summary: '常去的那家店' }]);
+    expect(seen[0]).toContain('## 素材五：互动统计');
+    expect(seen[0]).toContain('我中位 45 秒');
+    expect(seen.filter((p) => p.includes('互动画像：我中位 45 秒'))).toHaveLength(2); // 画像 + 时间线
+  });
+});
