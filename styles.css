@@ -9867,9 +9867,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   transform: translateX(-140%) skewX(-18deg);
   background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
 }
-/* ==================== 脸谱域样式（src/people/styles.css，issue 435/436 / ADR-0191） ====================
- * 完整独立主页面：亚麻纹理底板（收藏本同款双斜纹配方）+ 印章式品牌区 + 卡墙 + 步骤向导。
- * 主题：朱红主色（戏台/脸谱意象）+ 亮暗双主题变量组；域内 scope 自持（ADR-0101）。
+/* ==================== 脸谱域样式（src/people/styles.css，issue 435/447 / ADR-0191） ====================
+ * 折子语义（issue 447 拍板 G 案）：一人一册——封面墙竖排姓名 + 修复印章；详情五折折页册；
+ * 数据源为面板内独立弹层（默认不打开）。markup 单源出自 render.ts，本文件只管折子皮肤。
+ * 主题：宣纸 + 朱红 + 鎏金（戏台/印泥意象）+ 亮暗双主题变量组；域内 scope 自持（ADR-0101）。
  * 铁律：滚动条不自造（core 通杀隐藏）；:hover 全量包 @media (hover: hover)（呈报#9 F4）。
  */
 
@@ -9895,6 +9896,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --chip-on: #5a8f6d;
   --soft: rgba(168, 67, 60, 0.07);
   --soft-neutral: rgba(154, 145, 125, 0.16);
+  --paper-fold: #fbf7ec;
+  --paper-fold-2: #f3ecdc;
+  --seal-ink: #a8433c;
 }
 .theme-dark .bz-people-scope {
   --bg: #262320;
@@ -9917,13 +9921,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --chip-on: #6da37f;
   --soft: rgba(192, 100, 90, 0.12);
   --soft-neutral: rgba(154, 145, 125, 0.18);
+  --paper-fold: #3a352b;
+  --paper-fold-2: #332e26;
+  --seal-ink: #c0645a;
 }
 
 /* —— 面板：亚麻纹理底板 + 入场动效 —— */
 .bz-people-panel {
   position: relative;
-  width: min(880px, 94vw);
-  height: min(640px, 86vh);
+  width: min(920px, 94vw);
+  height: min(660px, 88vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -9949,7 +9956,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 20px 24px 12px;
+  padding: 18px 24px 10px;
 }
 .bz-people-brand {
   display: flex;
@@ -9974,7 +9981,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin: 0;
   font-size: 19px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   color: var(--ink-strong);
 }
 .bz-people-sub {
@@ -9988,10 +9995,46 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   gap: 8px;
 }
 .bz-people-stats {
-  padding: 0 24px 10px;
+  padding: 0 24px 8px;
   font-size: 12px;
   color: var(--ink-mut);
   letter-spacing: 0.3px;
+}
+
+/* —— 生成进度行（面板级；画脸谱关弹窗回面板跑） —— */
+.bz-people-runline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 24px 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--card-bd);
+  border-left: 3px solid var(--acc);
+  border-radius: 8px;
+  background: var(--card);
+  font-size: 12.5px;
+}
+.bz-people-runline[hidden] {
+  display: none;
+}
+.bz-people-run-spin {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid rgba(168, 67, 60, 0.2);
+  border-top-color: var(--acc);
+  animation: bzPeopleSpin 0.9s linear infinite;
+}
+@keyframes bzPeopleSpin {
+  to { transform: rotate(360deg); }
+}
+.bz-people-run-main {
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-run-sub {
+  color: var(--ink-mut);
 }
 
 /* —— 按钮 —— */
@@ -10014,6 +10057,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-people-btn-ghost {
   background: transparent;
+}
+.bz-people-btn-sm {
+  padding: 3px 10px;
+  font-size: 12px;
 }
 @media (hover: hover) {
   .bz-people-btn:hover {
@@ -10074,65 +10121,155 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--ink-mut);
 }
 
-/* —— 卡墙 —— */
+/* ==================== 折子封面墙（issue 447） ==================== */
 .bz-people-wall {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px;
 }
-.bz-people-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: var(--card);
-  border: 1px solid var(--card-bd);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px var(--card-shadow);
+/* 一册封面：竖排姓名 + 修复印章；整体即点卡 */
+.bz-people-fold {
+  position: relative;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 @media (hover: hover) {
-  .bz-people-card:hover {
+  .bz-people-fold:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 18px var(--card-shadow);
+  }
+  .bz-people-fold:hover .bz-people-fold-inner {
     border-color: var(--acc);
+    box-shadow: 0 8px 18px var(--card-shadow);
   }
 }
-.bz-people-ava {
-  width: 46px;
-  height: 46px;
-  flex: none;
+.bz-people-fold-inner {
+  position: relative;
+  min-height: 218px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 10px 12px;
+  background:
+    linear-gradient(90deg, var(--paper-fold-2) 0 6px, transparent 6px),
+    linear-gradient(-90deg, var(--paper-fold-2) 0 6px, transparent 6px),
+    var(--paper-fold);
+  border: 1px solid var(--card-bd);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px var(--card-shadow);
+  overflow: hidden;
+}
+/* 折痕：内缘两道细线示意折页 */
+.bz-people-fold-inner::before,
+.bz-people-fold-inner::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  width: 0;
+  border-left: 1px dashed var(--card-bd);
+  opacity: 0.7;
+}
+.bz-people-fold-inner::before { left: 16px; }
+.bz-people-fold-inner::after { right: 16px; }
+/* 修复印章：右上斜盖（画到日期 / 已画 / 待画虚印） */
+.bz-people-seal {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  z-index: 1;
+  max-width: 72px;
+  padding: 3px 6px;
+  border: 2px solid var(--seal-ink);
+  border-radius: 5px;
+  color: var(--seal-ink);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: pre-line;
+  transform: rotate(6deg);
+  opacity: 0.82;
+  pointer-events: none;
+}
+.bz-people-seal-todo {
+  border-style: dashed;
+  color: var(--ink-mut);
+  border-color: var(--ink-mut);
+  opacity: 0.6;
+}
+/* 竖排姓名（>7 字由 render 截断；再兜底溢出省略） */
+.bz-people-fold-title {
+  flex: 1;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
-}
-.bz-people-ava-sm { width: 32px; height: 32px; font-size: 13px; }
-.bz-people-ava-lg { width: 56px; height: 56px; font-size: 22px; }
-.bz-people-card-main {
-  flex: 1;
-  min-width: 0;
-}
-.bz-people-card-name {
-  font-size: 15px;
+  max-height: 128px;
+  overflow: hidden;
+  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+  font-size: 24px;
   font-weight: 700;
   color: var(--ink-strong);
+  letter-spacing: 0.28em;
+}
+.bz-people-fold-who {
+  font-size: 10.5px;
+  color: var(--ink-mut);
+  letter-spacing: 0.5px;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.bz-people-fold-meta {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--card-bd);
+  width: 100%;
+  text-align: center;
+  font-size: 10.5px;
+  color: var(--ink-mut);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* 封面动作行：合并到… / 删除（卡底小字，点按钮不进详情） */
+.bz-people-fold-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.bz-people-fold-actions .bz-people-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+/* 合并模式：本册（待并出）虚化，其他册（候选目标）虚线描边示意可点 */
+.bz-people-fold-merge-src {
+  opacity: 0.55;
+}
+.bz-people-fold-merge-src .bz-people-fold-inner {
+  border-style: dashed;
+}
+.bz-people-fold-merge-pick .bz-people-fold-inner {
+  border-style: dashed;
+  border-color: var(--acc);
+}
+@media (hover: hover) {
+  .bz-people-fold-merge-pick:hover .bz-people-fold-inner {
+    background: var(--soft);
+  }
+}
+
+/* —— 通用 meta / 徽章 / chip —— */
 .bz-people-card-meta {
   margin-top: 2px;
   font-size: 12px;
   color: var(--ink-mut);
 }
 .bz-people-chip {
-  margin-top: 6px;
   display: inline-block;
   padding: 2px 8px;
   border-radius: 99px;
@@ -10140,15 +10277,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--soft-neutral);
   color: var(--ink-mut);
 }
-.bz-people-chip-on {
-  background: rgba(90, 143, 109, 0.16);
-  color: var(--chip-on);
-}
-/* 媒体徽章（issue 445）：「语音 26 条 · 4 分 · 图片 14 张」，与 chip 同排同款胶囊；
-   空数据不渲染元素（ui 层控制），无 hover 态、无滚动条样式（铁律） */
+/* 媒体徽章（issue 445）：「语音 26 条 · 4 分 · 图片 14 张」；空数据不渲染元素 */
 .bz-people-media-badge {
-  margin-top: 6px;
-  margin-left: 6px;
+  margin-top: 4px;
   display: inline-block;
   padding: 2px 8px;
   border-radius: 99px;
@@ -10156,225 +10287,292 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: rgba(74, 125, 158, 0.14);
   color: var(--ink-mut);
 }
-/* 详情页徽章独占一行（meta 是块级），不留卡片里的并排间距 */
-.bz-people-detail-id .bz-people-media-badge {
-  margin-left: 0;
-}
 
-/* —— 步骤条 —— */
-.bz-people-steps {
+/* —— 卡墙工具条：排序 / 标签筛选 / 搜索（issue 442） —— */
+.bz-people-toolbar {
   display: flex;
-  gap: 18px;
-  padding: 6px 2px 16px;
-}
-.bz-people-step {
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  font-size: 12px;
-  color: var(--ink-mut);
+  margin: 2px 0 12px;
 }
-.bz-people-step-dot {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 11px;
-  background: var(--soft-neutral);
-  color: var(--ink-mut);
-}
-.bz-people-step-on {
-  color: var(--acc);
-  font-weight: 700;
-}
-.bz-people-step-on .bz-people-step-dot {
-  background: var(--acc);
-  color: var(--on-acc);
-}
-.bz-people-step-done .bz-people-step-dot {
-  background: var(--soft);
-  color: var(--acc);
-}
-
-/* —— 勾选向导 —— */
-.bz-people-pick-head {
-  margin-bottom: 10px;
-}
-.bz-people-pick-file {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  word-break: break-all;
-}
-.bz-people-pick-tools {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.bz-people-pick-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 296px;
-  overflow-y: auto;
-  padding: 4px;
-  border: 1px solid var(--card-bd);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.4);
-}
-.theme-dark .bz-people-pick-list {
-  background: rgba(0, 0, 0, 0.12);
-}
-.bz-people-pick-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+.bz-people-select {
+  appearance: none;
+  border: 1px solid var(--fld-bd);
+  background: var(--fld-bg);
+  color: var(--ink);
   border-radius: 8px;
+  padding: 6px 26px 6px 10px;
+  font-size: 12.5px;
   cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-mut) 50%), linear-gradient(135deg, var(--ink-mut) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+  transition: border-color 0.15s ease;
 }
-.bz-people-pick-row input[type='checkbox'] {
-  accent-color: var(--acc);
-  width: 15px;
-  height: 15px;
-  flex: none;
+.bz-people-select:focus {
+  outline: none;
+  border-color: var(--acc);
 }
-.bz-people-pick-on {
-  background: var(--soft);
-}
-.bz-people-pick-main {
+.bz-people-search {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.bz-people-pick-name {
-  width: 150px;
-  flex: none;
+  min-width: 140px;
   border: 1px solid var(--fld-bd);
   background: var(--fld-bg);
   color: var(--ink-strong);
-  border-radius: 6px;
-  padding: 4px 8px;
+  border-radius: 8px;
+  padding: 6px 10px;
   font-size: 13px;
+  transition: border-color 0.15s ease;
 }
-.bz-people-pick-name::placeholder {
+.bz-people-search::placeholder {
   color: var(--ink-mut);
   opacity: 0.7;
 }
-.bz-people-pick-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
+.bz-people-search:focus {
+  outline: none;
+  border-color: var(--acc);
 }
-.bz-people-pick-count {
-  font-size: 13px;
-  color: var(--ink);
-}
-
-/* —— 生成进度 —— */
-.bz-people-run {
+/* 无匹配（筛选/搜索落空） */
+.bz-people-nomatch {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 56px 12px;
-}
-.bz-people-run::before {
-  content: '';
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 3px solid rgba(168, 67, 60, 0.2);
-  border-top-color: var(--acc);
-  animation: bzPeopleSpin 0.9s linear infinite;
-}
-@keyframes bzPeopleSpin {
-  to { transform: rotate(360deg); }
-}
-.bz-people-run-main {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-strong);
-}
-.bz-people-run-sub {
-  font-size: 12px;
-  color: var(--ink-mut);
+  gap: 8px;
+  padding: 28px 0;
 }
 
-/* —— 详情 —— */
-.bz-people-detail-head {
+/* —— 合并流程（issue 442） —— */
+.bz-people-merge-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--acc);
+  border-radius: 10px;
+  background: var(--soft);
 }
-.bz-people-detail-id {
+.bz-people-merge-text {
+  flex: 1;
+  min-width: 200px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* ==================== 详情（折页册） ==================== */
+.bz-people-dt-head {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.bz-people-detail-name {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--ink-strong);
-}
-/* 画像与关系时间线共用卡片底（同一阅读层，仅标题语义不同） */
-.bz-people-portrait,
-.bz-people-chronicle {
-  margin-top: 12px;
-  padding: 16px 18px;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
   background: var(--card);
   border: 1px solid var(--card-bd);
   border-radius: 12px;
   box-shadow: 0 2px 8px var(--card-shadow);
+}
+.bz-people-dt-seal {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
+}
+.bz-people-dt-id {
+  min-width: 0;
+}
+.bz-people-dt-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink-strong);
+  letter-spacing: 1px;
+  word-break: break-all;
+}
+.bz-people-dt-nums {
+  margin-left: auto;
+  display: flex;
+  gap: 20px;
+  text-align: center;
+}
+.bz-people-dt-n {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-dt-t {
+  margin-top: 1px;
+  font-size: 10px;
+  color: var(--ink-mut);
+}
+.bz-people-dt-watermark {
+  flex: none;
+  padding: 4px 11px;
+  border: 2px solid var(--seal-ink);
+  border-radius: 6px;
+  color: var(--seal-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transform: rotate(-3deg);
+  opacity: 0.85;
+}
+.bz-people-dt-watermark-todo {
+  border-style: dashed;
+  color: var(--ink-mut);
+  border-color: var(--ink-mut);
+  opacity: 0.7;
+}
+.bz-people-dt-actions {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* —— 折页册：展开折占主幅，收起折只露折脊 + 竖排引文（点折脊切换） —— */
+.bz-people-book {
+  display: flex;
+  align-items: stretch;
+  min-height: 0;
+  height: calc(100% - 92px);
+}
+.bz-people-leaf {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--paper-fold);
+  border: 1px solid var(--card-bd);
+  border-left: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: flex 0.22s cubic-bezier(0.3, 0.7, 0.3, 1), background 0.22s ease;
+}
+.bz-people-leaf:first-child {
+  border-left: 1px solid var(--card-bd);
+  border-radius: 10px 0 0 10px;
+}
+.bz-people-leaf:last-child {
+  border-radius: 0 10px 10px 0;
+}
+.bz-people-leaf-on {
+  flex: 2.8;
+  cursor: default;
+  background: var(--card);
+  box-shadow: 0 6px 18px var(--card-shadow);
+  z-index: 1;
+}
+@media (hover: hover) {
+  .bz-people-leaf:not(.bz-people-leaf-on):hover {
+    background: var(--card);
+  }
+}
+/* 折脊：内缘缝线 */
+.bz-people-leaf-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: linear-gradient(90deg, var(--paper-fold-2), transparent);
+  pointer-events: none;
+}
+.bz-people-leaf-on .bz-people-leaf-spine {
+  background: linear-gradient(90deg, var(--paper-fold-2), transparent);
+}
+.bz-people-leaf-head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 12px 10px 8px 20px;
+}
+.bz-people-leaf-zh {
+  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink-2);
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+.bz-people-leaf-on .bz-people-leaf-zh {
+  color: var(--acc-deep);
+}
+.theme-dark .bz-people-leaf-on .bz-people-leaf-zh {
+  color: var(--acc);
+}
+.bz-people-leaf-cnt {
+  font-size: 10px;
+  color: var(--ink-mut);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 收起折的竖排引文（STKaiti 竖排；溢出裁切——全文展开后可见） */
+.bz-people-leaf-spill {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 6px 12px 20px;
+  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 2.1;
+  letter-spacing: 0.2em;
+  color: var(--ink-2);
+  opacity: 0.85;
+}
+/* 展开折正文 */
+.bz-people-leaf-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 16px 16px 20px;
+  font-size: 13px;
+}
+
+/* —— 画像 / 时间线（mini markdown 卡底；折内不再加卡片盒，直接排） —— */
+.bz-people-portrait {
+  font-size: 13px;
+  line-height: 1.85;
   color: var(--ink);
 }
-.bz-people-portrait h4,
-.bz-people-chronicle h4 {
+.bz-people-portrait h4 {
   margin: 12px 0 4px;
   font-size: 14px;
   color: var(--acc-deep);
   letter-spacing: 0.5px;
 }
-.theme-dark .bz-people-portrait h4,
-.theme-dark .bz-people-chronicle h4 {
+.theme-dark .bz-people-portrait h4 {
   color: var(--acc);
 }
-.bz-people-portrait h4:first-child,
-.bz-people-chronicle h4:first-child {
+.bz-people-portrait h4:first-child {
   margin-top: 0;
 }
-/* 时间线年份分节：加一条细横线，读起来像纪年 */
-.bz-people-chronicle h4 {
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--card-bd);
-}
-.bz-people-portrait h5,
-.bz-people-chronicle h5 {
+.bz-people-portrait h5 {
   margin: 8px 0 4px;
   font-size: 13px;
   color: var(--ink-strong);
 }
-.bz-people-portrait ul,
-.bz-people-chronicle ul {
+.bz-people-portrait ul {
   margin: 4px 0;
   padding-left: 18px;
 }
-.bz-people-portrait li,
-.bz-people-chronicle li {
+.bz-people-portrait li {
   margin: 2px 0;
 }
-.bz-people-portrait strong,
-.bz-people-chronicle strong {
+.bz-people-portrait strong {
   color: var(--ink-strong);
 }
 /* 画像「表达 DNA」的原话例句（issue 438 移植：模式后面跟证据） */
@@ -10390,6 +10588,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: 12.5px;
   color: var(--ink-mut);
 }
+.bz-people-section-title {
+  margin: 16px 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-strong);
+  letter-spacing: 0.5px;
+}
 /* 代表原话证据层 */
 .bz-people-quotes {
   margin-top: 8px;
@@ -10399,7 +10604,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-people-quote {
   padding: 8px 12px;
-  background: var(--card);
+  background: var(--paper-fold);
   border: 1px solid var(--card-bd);
   border-left: 3px solid var(--gold);
   border-radius: 0 8px 8px 0;
@@ -10414,15 +10619,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: 11.5px;
   color: var(--ink-mut);
 }
-.bz-people-section-title {
-  margin-top: 16px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  letter-spacing: 0.5px;
-}
 .bz-people-events {
-  margin-top: 6px;
   display: flex;
   flex-direction: column;
 }
@@ -10458,21 +10655,49 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--ink-strong);
   font-weight: 600;
 }
-.bz-people-detail-foot {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+/* 关系时间线（大事记折；chronicle mini markdown 卡底） */
+.bz-people-chronicle {
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--ink);
+}
+.bz-people-chronicle h4 {
+  margin: 12px 0 4px;
+  font-size: 14px;
+  color: var(--acc-deep);
+  letter-spacing: 0.5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--card-bd);
+}
+.theme-dark .bz-people-chronicle h4 {
+  color: var(--acc);
+}
+.bz-people-chronicle h4:first-child {
+  margin-top: 0;
+}
+.bz-people-chronicle h5 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--ink-strong);
+}
+.bz-people-chronicle ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.bz-people-chronicle li {
+  margin: 2px 0;
+}
+.bz-people-chronicle strong {
+  color: var(--ink-strong);
 }
 
-/* —— 互动数据（issue 440：纯本地统计展示） —— */
+/* —— 互动数据（issue 440；447 收进「数据」折） —— */
 .bz-people-insights {
-  margin-top: 6px;
-  padding: 14px 16px;
-  background: var(--card);
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--paper-fold);
   border: 1px solid var(--card-bd);
   border-radius: 12px;
-  box-shadow: 0 2px 8px var(--card-shadow);
 }
 .bz-people-ins-head {
   display: flex;
@@ -10615,45 +10840,233 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-variant-numeric: tabular-nums;
 }
 
-/* —— 窄容器（移动 / 小窗）：单列卡墙 + 收紧内边距 —— */
-@container (max-width: 560px) {
-  .bz-people-wall {
-    grid-template-columns: 1fr;
-  }
-  .bz-people-head {
-    padding: 16px 16px 10px;
-  }
-  .bz-people-stats {
-    padding: 0 16px 8px;
-  }
-  .bz-people-body {
-    padding: 4px 16px 16px;
-  }
-  .bz-people-pick-name {
-    width: 110px;
-  }
+/* ==================== 数据源弹层（issue 447：面板内独立弹窗，默认关） ==================== */
+.bz-people-ds-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+}
+.bz-people-ds-layer[hidden] {
+  display: none;
+}
+.bz-people-ds-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(40, 34, 26, 0.42);
+}
+.theme-dark .bz-people-ds-dim {
+  background: rgba(0, 0, 0, 0.5);
+}
+.bz-people-ds-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(600px, calc(100% - 32px));
+  max-height: calc(100% - 40px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--frame-bd);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: bzPeopleIn 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.bz-people-ds-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 8px;
+}
+.bz-people-ds-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink-strong);
+  letter-spacing: 3px;
+}
+.bz-people-ds-headmeta {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-ds-path {
+  padding: 0 16px 10px;
+  font-size: 11px;
+  color: var(--ink-mut);
+  word-break: break-all;
+  border-bottom: 1px dashed var(--card-bd);
+}
+.bz-people-ds-list {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bz-people-ds-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.bz-people-ds-row input[type='checkbox'] {
+  accent-color: var(--acc);
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+.bz-people-ds-row input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+.bz-people-ds-ava {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.bz-people-ds-on {
+  background: var(--soft);
+}
+/* 四态之一：有更新 = 行高亮 + 新素材胶囊 */
+.bz-people-ds-fresh {
+  background: rgba(90, 143, 109, 0.1);
+  outline: 1px solid rgba(90, 143, 109, 0.35);
+  outline-offset: -1px;
+}
+.theme-dark .bz-people-ds-fresh {
+  background: rgba(109, 163, 127, 0.12);
+}
+/* 四态之一：群聊未纳入 = 禁勾灰置 */
+.bz-people-ds-off {
+  opacity: 0.45;
+}
+.bz-people-ds-main {
+  flex: 1;
+  min-width: 0;
+}
+.bz-people-ds-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-people-ds-meta {
+  margin-top: 1px;
+  font-size: 11px;
+  color: var(--ink-mut);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-people-ds-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  max-width: 48%;
+}
+.bz-people-ds-mark {
+  font-size: 11px;
+  color: var(--ink-mut);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-ds-new {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--chip-on);
+  white-space: nowrap;
+}
+/* 图例行 + 「勾有更新的」快捷 */
+.bz-people-ds-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 10.5px;
+  color: var(--ink-mut);
+}
+.bz-people-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: baseline;
+}
+.bz-people-dot-ok { background: var(--chip-on); }
+.bz-people-dot-idle { background: rgba(74, 125, 158, 0.75); }
+.bz-people-dot-none { background: var(--soft-neutral); }
+.bz-people-ds-pickfresh {
+  appearance: none;
+  border: none;
+  background: none;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--acc-deep);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.theme-dark .bz-people-ds-pickfresh {
+  color: var(--acc);
+}
+.bz-people-ds-empty {
+  padding: 26px 16px;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-mut);
+  text-align: center;
+}
+.bz-people-ds-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 12px;
+  border-top: 1px dashed var(--card-bd);
+}
+.bz-people-ds-count {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-mut);
+}
+.bz-people-ds-foot .bz-people-btn {
+  padding: 5px 14px;
+  font-size: 12.5px;
+}
+.bz-people-ds-notice {
+  padding: 0 16px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-mut);
+  word-break: break-all;
 }
 
-/* —— 窄容器：互动数据收紧（issue 440） —— */
-@container (max-width: 560px) {
-  .bz-people-insights {
-    padding: 12px;
-  }
-  .bz-people-ins-label {
-    width: 56px;
-  }
-  .bz-people-ins-val {
-    white-space: normal;
-  }
-}
-/* —— 人物档案 + 随手记（issue 439）：手动输入路径，样式沿用卡片底 + 朱红/鎏金点缀 —— */
+/* —— 人物档案 + 随手记（issue 439；447 收进「档案」折） —— */
 .bz-people-prof {
-  margin-top: 6px;
   padding: 12px 16px;
-  background: var(--card);
+  background: var(--paper-fold);
   border: 1px solid var(--card-bd);
   border-radius: 12px;
-  box-shadow: 0 2px 8px var(--card-shadow);
   font-size: 13px;
 }
 .bz-people-prof-row {
@@ -10685,11 +11098,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   gap: 8px;
   margin-top: 10px;
 }
-.bz-people-btn-sm {
-  padding: 3px 10px;
-  font-size: 12px;
-}
-/* 缺啥补啥的入口行；档案与随手记全空时给虚线框 + 提示，避免凭空两个按钮 */
+/* 缺啥补啥的入口行；档案空时给虚线框 + 提示，避免凭空一个按钮 */
 .bz-people-prof-entry {
   margin-top: 8px;
   display: flex;
@@ -10786,9 +11195,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-people-prof-x {
   padding: 0 6px;
   border: none;
+  background: none;
   font-size: 13px;
   line-height: 1.5;
   color: var(--ink-mut);
+  cursor: pointer;
 }
 /* 随手记 */
 .bz-people-notes {
@@ -10845,9 +11256,81 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
 }
 
-
-/* 档案与随手记的窄容器收紧（issue 439） */
+/* ==================== 窄容器（移动 / 小窗） ==================== */
+@container (max-width: 640px) {
+  /* 折页册在窄容器退化为纵向手风琴：折脊横排，展开折正文在下 */
+  .bz-people-book {
+    flex-direction: column;
+    height: auto;
+  }
+  .bz-people-leaf,
+  .bz-people-leaf:first-child,
+  .bz-people-leaf:last-child {
+    border-left: 1px solid var(--card-bd);
+    border-radius: 0;
+  }
+  .bz-people-leaf:first-child {
+    border-radius: 10px 10px 0 0;
+  }
+  .bz-people-leaf:last-child {
+    border-radius: 0 0 10px 10px;
+  }
+  .bz-people-leaf-spine {
+    display: none;
+  }
+  .bz-people-leaf-head {
+    padding: 10px 14px 8px;
+  }
+  .bz-people-leaf-spill {
+    display: none; /* 窄容器不显引文，折脊行即 tab */
+  }
+  .bz-people-leaf:not(.bz-people-leaf-on) {
+    cursor: pointer;
+  }
+  .bz-people-leaf-on {
+    flex: 1;
+  }
+  .bz-people-leaf-body {
+    padding: 2px 14px 14px;
+  }
+  .bz-people-dt-nums {
+    gap: 14px;
+  }
+}
 @container (max-width: 560px) {
+  .bz-people-wall {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 10px;
+  }
+  .bz-people-fold-title {
+    font-size: 20px;
+  }
+  .bz-people-head {
+    padding: 14px 16px 8px;
+  }
+  .bz-people-stats,
+  .bz-people-ds-path {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .bz-people-head .bz-people-ds-path {
+    padding: 0;
+  }
+  .bz-people-body {
+    padding: 4px 16px 16px;
+  }
+  .bz-people-runline {
+    margin: 0 16px 8px;
+  }
+  .bz-people-insights {
+    padding: 12px;
+  }
+  .bz-people-ins-label {
+    width: 56px;
+  }
+  .bz-people-ins-val {
+    white-space: normal;
+  }
   .bz-people-prof {
     padding: 10px 12px;
   }
@@ -10857,245 +11340,24 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-people-note-date {
     width: 126px;
   }
-}
-
-/* —— 卡墙工具条：排序 / 标签筛选 / 搜索（issue 442） —— */
-.bz-people-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 2px 0 12px;
-}
-.bz-people-select {
-  appearance: none;
-  border: 1px solid var(--fld-bd);
-  background: var(--fld-bg);
-  color: var(--ink);
-  border-radius: 8px;
-  padding: 6px 26px 6px 10px;
-  font-size: 12.5px;
-  cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ink-mut) 50%), linear-gradient(135deg, var(--ink-mut) 50%, transparent 50%);
-  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
-  background-size: 4px 4px;
-  background-repeat: no-repeat;
-  transition: border-color 0.15s ease;
-}
-.bz-people-select:focus {
-  outline: none;
-  border-color: var(--acc);
-}
-.bz-people-search {
-  flex: 1;
-  min-width: 140px;
-  border: 1px solid var(--fld-bd);
-  background: var(--fld-bg);
-  color: var(--ink-strong);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
-  transition: border-color 0.15s ease;
-}
-.bz-people-search::placeholder {
-  color: var(--ink-mut);
-  opacity: 0.7;
-}
-.bz-people-search:focus {
-  outline: none;
-  border-color: var(--acc);
-}
-/* 无匹配（筛选/搜索落空） */
-.bz-people-nomatch {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 0;
-}
-
-/* —— 合并流程（issue 442）：横幅 + 卡片选择态 —— */
-.bz-people-merge-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--acc);
-  border-radius: 10px;
-  background: var(--soft);
-}
-.bz-people-merge-text {
-  flex: 1;
-  min-width: 200px;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ink);
-}
-/* 合并模式：本卡（待并出）虚化，其他卡（候选目标）虚线描边示意可点 */
-.bz-people-card-merge-from {
-  opacity: 0.55;
-  border-style: dashed;
-}
-.bz-people-card-merge-pick {
-  border-style: dashed;
-  border-color: var(--acc);
-}
-@media (hover: hover) {
-  .bz-people-card-merge-pick:hover {
-    background: var(--soft);
-  }
-}
-/* 卡片右侧按钮列：合并到… / 删除 */
-.bz-people-card-side {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.bz-people-card-side .bz-people-btn {
-  padding: 3px 8px;
-  font-size: 11.5px;
-  white-space: nowrap;
-}
-
-/* —— 窄容器（issue 442）：工具条搜索独占一行，下拉并排 —— */
-@container (max-width: 560px) {
   .bz-people-search {
     flex-basis: 100%;
   }
-}
-
-/* —— 数据源区（issue 446）：预处理导出目录直连，list 视图顶部常驻卡片 —— */
-.bz-people-ds {
-  border: 1px solid var(--card-bd);
-  border-radius: 12px;
-  background: var(--card);
-  box-shadow: 0 1px 4px var(--card-shadow);
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.bz-people-ds-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.bz-people-ds-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  letter-spacing: 1px;
-}
-.bz-people-ds-meta {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-ds-tools {
-  display: flex;
-  gap: 6px;
-}
-.bz-people-ds-tools .bz-people-btn {
-  padding: 4px 12px;
-  font-size: 12.5px;
-}
-.bz-people-ds-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border: 1px solid var(--card-bd);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.4);
-  padding: 4px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.theme-dark .bz-people-ds-list {
-  background: rgba(0, 0, 0, 0.12);
-}
-.bz-people-ds-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.bz-people-ds-row input[type='checkbox'] {
-  accent-color: var(--acc);
-  width: 15px;
-  height: 15px;
-  flex: none;
-}
-.bz-people-ds-on {
-  background: var(--soft);
-}
-.bz-people-ds-main {
-  flex: 1;
-  min-width: 0;
-}
-.bz-people-ds-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bz-people-ds-side {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-  max-width: 46%;
-}
-.bz-people-ds-mark {
-  font-size: 11.5px;
-  color: var(--ink-mut);
-  white-space: nowrap;
-}
-.bz-people-ds-new {
-  font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  color: var(--on-acc);
-  background: var(--chip-on);
-  white-space: nowrap;
-}
-.bz-people-ds-empty {
-  font-size: 12.5px;
-  color: var(--ink-mut);
-  padding: 4px 2px;
-}
-.bz-people-ds-foot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.bz-people-ds-count {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-ds-foot .bz-people-btn {
-  padding: 3px 10px;
-  font-size: 12px;
-}
-.bz-people-ds-notice {
-  font-size: 12px;
-  color: var(--ink-mut);
-  border-top: 1px dashed var(--card-bd);
-  padding-top: 8px;
-  word-break: break-all;
-}
-/* —— 窄容器（issue 446）：数据源行水位换行到下一行 —— */
-@container (max-width: 560px) {
+  .bz-people-dt-head {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .bz-people-dt-nums {
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+  .bz-people-dt-watermark {
+    order: 3;
+  }
+  .bz-people-dt-actions {
+    gap: 6px;
+  }
+  /* 弹窗行水位换行到下一行 */
   .bz-people-ds-side {
     max-width: none;
   }
