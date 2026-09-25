@@ -38,7 +38,7 @@ import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipboo
 import { openDiary, openDiaryWrite, prewarmDiary, unloadDiary } from './diary';
 import { applyDirectories } from './diary/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
-// 脸谱本（people 域，issue 435/ADR-0191：留痕导出的微信聊天 → AI 提炼脸谱；原文不落盘）
+// 脸谱（people 域，issue 435/ADR-0191：留痕导出的微信聊天 → AI 提炼脸谱；原文不落盘）
 import { openPeople, importWechat, unloadPeople } from './people';
 // 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
 import { unloadReadingReport } from './reading-report';

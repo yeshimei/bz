@@ -175,7 +175,7 @@ describe('normalizeChatJson 归一化矩阵', () => {
     expect(normalizeChatJson([v], opts({ previewVideo: false })).msgs).toHaveLength(0);
     const r = normalizeChatJson([v], opts());
     expect(r.msgs[0].text).toBe('[视频 61秒]');
-    expect(normalizeChatJson([{ ...v, dur: undefined }], opts()).msgs[0].text).toBe('[视频]');
+    expect(normalizeChatJson([{ ...v, dur: undefined }], opts()).msgs).toHaveLength(0); // 空标签不进时间线只计数
   });
 
   it('keepSystem 开关：type=10000 系统消息保留 / 丢弃，形态计数恒记', () => {
@@ -268,6 +268,14 @@ describe('normalizeChatJson 归一化矩阵', () => {
     expect(r.insights.callTotalSec).toBe(0);
   });
 
+  it('type=50 在其它设备接听：已接通（别处），不算未接通，原样进时间线', () => {
+    const r = normalizeChatJson([raw({ ct: BASE, type: 50, msg: '[已在其它设备接听]', sid: 107 })], opts());
+    expect(r.msgs.map((m) => m.text)).toEqual(['[已在其它设备接听]']);
+    expect(r.insights.callCount).toBe(1);
+    expect(r.insights.callMissedCount).toBe(0);
+    expect(r.insights.callTotalSec).toBe(0);
+  });
+
   it('type=1 且 msg 以媒体标签开头：按 445 parseMediaTag 走媒体素材（stats 计数）', () => {
     const r = normalizeChatJson(
       [raw({ ct: BASE, msg: '[语音 12s·平静] 构造转写' }), raw({ ct: BASE + 1, msg: '[图片] 构造描述' })],
@@ -307,9 +315,15 @@ describe('normalizeChatJson 归一化矩阵', () => {
       raw({ ct: BASE, who: '甲', msg: '构造甲说', sid: 111 }),
       raw({ ct: BASE + 1, who: '我', msg: '构造我说', sid: 112 }),
       raw({ ct: BASE + 2, who: '乙', type: 47, msg: '[表情· OK]', sid: 113 }),
+      raw({ ct: BASE + 3, who: '乙', type: 10000, msg: '"乙" 撤回了一条消息', sid: 116 }), // 系统消息自带归属
     ];
     const g = normalizeChatJson(groupRaws, opts());
-    expect(g.msgs.map((m) => m.text)).toEqual(['[甲] 构造甲说', '构造我说', '[乙] [表情· OK]']);
+    expect(g.msgs.map((m) => m.text)).toEqual([
+      '[甲] 构造甲说',
+      '构造我说',
+      '[乙] [表情· OK]',
+      '"乙" 撤回了一条消息', // 系统消息不加成员前缀（免双重归属）
+    ]);
     const single = normalizeChatJson(
       [raw({ ct: BASE, who: '对方', msg: '构造单聊', sid: 114 }), raw({ ct: BASE + 1, who: '我', msg: '好', sid: 115 })],
       opts()

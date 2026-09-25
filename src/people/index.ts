@@ -6,7 +6,7 @@
 import type { App } from 'obsidian';
 import { closePeoplePanel, isPeopleOpen, openDataSource, openPeoplePanel } from './ui';
 
-/** 打开脸谱本（toggle：开着再点关闭） */
+/** 打开脸谱（toggle：开着再点关闭） */
 export function openPeople(_app: App): void {
   if (isPeopleOpen()) closePeoplePanel();
   else openPeoplePanel(_app);

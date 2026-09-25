@@ -276,7 +276,6 @@ const CALL_MISSED_REASONS = [
   '已取消',
   '对方忙线中',
   '忙线未接听',
-  '已在其它设备接听',
 ] as const;
 
 /** 文本超限截断：≤ max 原样；否则取前 max-1 字补 `…`（总长不超 max） */
@@ -334,7 +333,7 @@ function missedCallReason(text: string): string | null {
  *   仍无 → 不进时间线只计数（449 起删掉 `[语音]` 空标签行）；关 → 只计数；
  * - 3 图片：imageDescMode='file' → 按 img 字段精确对上 image_desc（img 缺失走同月 ct 最近邻 ±12h
  *   兜底，一张描述只配一条消息）→ `[图片] 描述`；未命中 / 'off' → 不进时间线只计数（删掉空标签）；
- * - 43 视频：previewVideo 开 → `[视频 N秒]` / `[视频]`；关 → 只计数；
+ * - 43 视频：previewVideo 开且有时长 → `[视频 N秒]`；无时长或关 → 只计数（空标签不进时间线）；
  * - 47 表情：`[表情·名]` 原样进时间线计 emojiNamedCount；纯 `[表情]` 只计数；
  * - 49：`[分享]`/`[小程序]` 截断 ≤80 字进（shareCount）；`[文件]` 原样进；
  *   `[引用「…」]` 引用头超 60 字截断补 `…」`，回复保留；其余形态原样进（不丢）；
@@ -342,7 +341,7 @@ function missedCallReason(text: string): string | null {
  *   `[通话中断 …]` 同款换算、未接通类 → `[未接通·原因原文]`；未知形态原样进；
  * - 10000 系统：keepSystem 开 → 原样保留；关 → 只计数；msg 含「撤回」按 who 归属计 recant（不受开关影响）；
  * - 其余未知码：丢弃只计数。
- * 群聊（多位非我发送者）非我消息 text 前加 `[成员名] ` 前缀，单聊不变。
+ * 群聊（多位非我发送者）非我消息 text 前加 `[成员名] ` 前缀（系统消息除外，原文自带归属），单聊不变。
  * 空文本 / 非对象元素同样只计数。结果按 ts 升序。insights 随过滤后时间线现算。
  */
 export function normalizeChatJson(
@@ -431,7 +430,8 @@ export function normalizeChatJson(
       case 43: {
         if (!opts.previewVideo) continue;
         const dur = Number.isFinite(raw.dur) && (raw.dur as number) > 0 ? Math.round(raw.dur as number) : 0;
-        out = dur ? `[视频 ${dur}秒]` : '[视频]';
+        if (!dur) continue; // 空标签 `[视频]` 无信息，不进时间线只计数（与 [图片]/[语音] 同口径）
+        out = `[视频 ${dur}秒]`;
         break;
       }
       case 47: {
@@ -479,9 +479,10 @@ export function normalizeChatJson(
         continue; // 未知码：丢弃只计数
     }
     if (!out) continue;
-    // 群聊：非我消息加成员名前缀（who 缺省不加）；单聊不变
+    // 群聊：非我消息加成员名前缀（who 缺省不加）；单聊不变。
+    // 系统消息（撤回等）原文自带 "名字" 归属，加前缀会双重归属，跳过
     const who = String(raw.who ?? '').trim();
-    if (group && who && !isSelfWho(who)) out = `[${who}] ${out}`;
+    if (group && who && !isSelfWho(who) && raw.type !== 10000) out = `[${who}] ${out}`;
     msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, '\n') });
   }
   msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));

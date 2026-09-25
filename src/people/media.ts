@@ -38,7 +38,12 @@ export interface MediaStats {
  * 解析一条消息文本的媒体标签。返回 null = 不是媒体素材（纯文本 / 标签在正文中 / 旧空标签 / 空描述）。
  */
 export function parseMediaTag(msg: string): MediaMaterial | null {
-  const s = String(msg ?? '').trim();
+  // 群聊行带成员名前缀（datasource 合成 `[成员名] [图片] …`）：容忍一层非媒体标签的方括号前缀，
+  // 群聊语音/图片照常解析出素材（徽章统计 / mediaNote / 批内媒体计数同源受益）。
+  // 前缀内容以已知标签名开头即不剥离（防 [引用「xx」] 这类真标签被当成员名吃掉），长度 ≤16（成员名口径）。
+  let s = String(msg ?? '').trim();
+  const stripped = s.replace(/^\[(?!(?:语音|图片|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, '');
+  if (stripped !== s && /^\[(语音|图片)\s*([^\]]*)\]/.test(stripped)) s = stripped;
   const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
   if (!m) return null;
   const body = m[3].trim();

@@ -100,4 +100,19 @@ describe('展示与提示词文案', () => {
     expect(imageOnly).toContain('图片 2 张');
     expect(imageOnly).not.toContain('情感');
   });
+  it('群聊成员名前缀：[成员名] [语音/图片 …] 照常解析出素材（issue 449 评审 P1-1）', () => {
+    expect(parseMediaTag('[甲] [语音 12s·开心] 构造原话')).toEqual({
+      kind: 'voice',
+      text: '构造原话',
+      durationSec: 12,
+      emotion: '开心',
+    });
+    expect(parseMediaTag('[乙] [图片] 构造描述')).toEqual({ kind: 'image', text: '构造描述' });
+  });
+
+  it('已知标签名不做前缀剥离：[引用…] / [视频 N秒] / [分享] 仍不解析出素材', () => {
+    expect(parseMediaTag('[引用「xx」] [语音 5s] 嗯')).toBeNull();
+    expect(parseMediaTag('[视频 61秒]')).toBeNull();
+    expect(parseMediaTag('[分享] 构造分享')).toBeNull();
+  });
 });

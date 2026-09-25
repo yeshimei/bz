@@ -65,18 +65,18 @@ describe('computeInsights 聚合口径', () => {
     expect(computeInsights([m(T0, false)], emptyInsightSignals()).nightSharePct).toBe(0);
   });
 
-  it('silenceGaps：≥14 天才记、days 取整天数；输出按时间升序', () => {
+  it('silenceGaps：≥14 天才记、days 按日历差与 from/to 自洽；输出按时间升序', () => {
     const i = computeInsights(
       [
         m(T0, false),
-        m(T0 + 14 * DAY + 12 * 3600 * 1000, true), // 14.5 天 → 记，days 取整 14
+        m(T0 + 14 * DAY + 12 * 3600 * 1000, true), // 14.5 天 → 记，days 按日历差 15
         m(T0 + 14 * DAY + 12 * 3600 * 1000 + 13 * DAY, false), // 13 天 → 不记
         m(T0 + 14 * DAY + 12 * 3600 * 1000 + 13 * DAY + 20 * DAY, true), // 20 天 → 记
       ],
       emptyInsightSignals()
     );
     expect(i.silenceGaps).toEqual([
-      { from: '2026-01-05', to: '2026-01-20', days: 14 },
+      { from: '2026-01-05', to: '2026-01-20', days: 15 },
       { from: '2026-02-02', to: '2026-02-22', days: 20 },
     ]);
   });
@@ -140,7 +140,7 @@ describe('buildStatsNote 素材段文案', () => {
     expect(note).toContain('会话我发起 3 次、对方发起 2 次');
     expect(note).toContain('回复时延我中位 45 秒、对方中位 2 分钟');
     expect(note).toContain('深夜（0-6 点）消息占 12.3%');
-    expect(note).toContain('通话 2 次共 1 小时、未接通 1 次');
+    expect(note).toContain('通话 2 次（累计 1 小时），其中未接通 1 次');
     expect(note).toContain('我撤回 1 条、对方撤回 2 条');
     expect(note).toContain('语音情感 平静 5、开心 2');
     expect(note).toContain('分享链接 4 条，表情包 6 个（其中 2 个带名称）');
@@ -154,7 +154,7 @@ describe('buildStatsNote 素材段文案', () => {
 
   it('缺省维度自动省略：只有通话样本时不写会话 / 时延 / 深夜 / 撤回 / 情感 / 表情 / 沉默', () => {
     const note = buildStatsNote(computeInsights([], sig({ callCount: 2, callTotalSec: 90, callMissedCount: 1 })));
-    expect(note).toContain('通话 2 次共 2 分钟、未接通 1 次');
+    expect(note).toContain('通话 2 次（累计 2 分钟），其中未接通 1 次');
     expect(note).not.toContain('会话');
     expect(note).not.toContain('回复时延');
     expect(note).not.toContain('深夜');

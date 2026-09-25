@@ -73,7 +73,7 @@ const EXPECTED_COMMAND_IDS = [
   // 日记本（diary 域，ADR-0115 由回忆墙升格）：日记数据的媒体优先视图 + 写日记入口
   'bz-diary-open', 'bz-diary-write',
   'bz-favorites-open', 'bz-favorites-add',
-  // 脸谱本（people 域，issue 435/ADR-0191：微信聊天导入 + AI 生成脸谱）
+  // 脸谱（people 域，issue 435/ADR-0191：微信聊天导入 + AI 生成脸谱）
   'bz-people-open', 'bz-people-import',
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删（读书笔记入书架墙详情弹窗）
   'bz-reading-report-open',

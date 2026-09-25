@@ -145,7 +145,8 @@ export function computeInsights(msgs: InsightMsgLike[], signals: InsightSignals)
       gaps.push({
         from: dateKeyOf(prev.ts),
         to: dateKeyOf(m.ts),
-        days: Math.floor(gapMs / (24 * 3600 * 1000)),
+        // 日历日差（与 from/to 字面日期自洽；24h 时段的 floor 会出现「01-05 至 01-20（14 天）」式矛盾）
+        days: Math.round((Date.parse(dateKeyOf(m.ts)) - Date.parse(dateKeyOf(prev.ts))) / (24 * 3600 * 1000)),
       });
     }
     prev = m;
@@ -192,8 +193,8 @@ export function buildStatsNote(i: InsightsSummary): string {
   if (i.nightSharePct > 0) parts.push(`深夜（0-6 点）消息占 ${i.nightSharePct}%`);
   if (i.callCount > 0) {
     let call = `通话 ${i.callCount} 次`;
-    if (i.callTotalSec > 0) call += `共 ${formatReplySec(i.callTotalSec)}`;
-    if (i.callMissedCount > 0) call += `、未接通 ${i.callMissedCount} 次`;
+    if (i.callTotalSec > 0) call += `（累计 ${formatReplySec(i.callTotalSec)}）`;
+    if (i.callMissedCount > 0) call += `，其中未接通 ${i.callMissedCount} 次`;
     parts.push(call);
   }
   const recants = [
