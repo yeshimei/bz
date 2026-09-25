@@ -208,9 +208,9 @@ describe('订阅驱动渲染（450 后台化）', () => {
     engine.push([fakeJob({ batchesDone: 1, chunks: [meta(), meta()], message: '第 1/2 批 · 2026-01-01 ~ 2026-06-30 · 400 条' })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('20%'); // 1/5（455 分母 +3）
-    engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'portrait', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成画像' })]);
+    engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'person', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》' })]);
     await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('40%')); // 2/5
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toContain('正在生成画像');
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toContain('正在生成《其人》');
   });
 });
 
@@ -232,7 +232,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
       stage: 'done',
       message: '「陈默」脸谱已生成',
       batchesDone: 1,
-      portrait: '## 画像\n陈默说话简短。',
+      person: '## 画像\n陈默说话简短。',
       events: [{ ts: '2026-09-25', summary: '聊了早饭' }],
       quotes: [{ ts: '2026-09-25', who: '我', text: '中午吃什么' }],
       material: { traits: ['简短'], moments: [{ ts: '2026-09-25', summary: '午饭决策现场' }] },
@@ -264,7 +264,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     openPeoplePanel(getApp());
     await tick();
     await startGeneration([target()]);
-    const done = fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '画像', events: [] });
+    const done = fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '画像', events: [] });
     engine.push([done]);
     await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('画像'));
     engine.push([done]); // 引擎侧若仍带着 done 任务再推一帧
@@ -360,7 +360,7 @@ describe('关面板转后台（450）', () => {
     await tick();
     await startGeneration([target()]);
     closePeoplePanel();
-    engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '后台画完', events: [] })]);
+    engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '后台画完', events: [] })]);
     await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('后台画完'));
     expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true);
   });
@@ -587,14 +587,14 @@ describe('双卷落盘（455）', () => {
     expect(d.portrait).toBeUndefined();
   });
 
-  it('旧引擎 done（只有 portrait）：兼容读进卷一，卷二缺省', async () => {
+  it('done 只有 person（无 bond）：卷一写入、卷二缺省（旧 portrait→person 映射归引擎 resumeJobs）', async () => {
     const vault = await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
     await startGeneration([target()]);
-    engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '旧单卷画像', events: [] })]);
+    engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '旧单卷画像', events: [] })]);
     await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('旧单卷画像'));
     expect(disk(vault).people[0].digest!.bond).toBeUndefined();
   });

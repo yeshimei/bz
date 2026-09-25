@@ -641,7 +641,7 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
       targetsInFlight.delete(job.talker); // 先摘再落盘：快照重复推送不会重复写导入记录
       jobsPersisted.add(job.talker); // 引擎保留的 done 任务再推快照也不重落
       void persistJobDone(job, target);
-    } else if (!jobsPersisted.has(job.talker) && (job.person ?? job.portrait)) {
+    } else if (!jobsPersisted.has(job.talker) && job.person) {
       // 重启续跑完成的任务：入参走 job.importRecord / job.stats（引擎落盘口径）
       jobsPersisted.add(job.talker);
       void persistJobDone(job);
@@ -730,8 +730,8 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
   const talker = target?.talker ?? job.talker;
   const name = target?.name ?? job.name;
   try {
-    // issue 455 双卷：卷一《其人》为必达产物；旧引擎单卷 portrait 兼容读进卷一（job.bond 旧引擎没有）
-    const person = job.person ?? job.portrait;
+    // issue 455 双卷：卷一《其人》为必达产物（旧落盘 portrait 已由引擎 resumeJobs 读入时映射成 person）
+    const person = job.person;
     if (!person) { notice(`「${name}」生成完成但其人画像为空`, 'warning'); return; }
     const store = new PeopleStore(getApp());
     const existing = (await store.list()).find((p) => p.id === talker);
