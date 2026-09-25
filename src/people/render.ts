@@ -314,9 +314,12 @@ export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<Fo
   const book = el('div', 'bz-people-book', { 'data-people-book': '' });
   for (const [id, title] of FOLD_TITLES) {
     const on = opts.fold === id;
-    const leaf = el('div', `bz-people-leaf${on ? ' bz-people-leaf-on' : ''}`, { 'data-people-leaf': id });
+    // 切换钩子挂整片折页（收起折点竖排引文区也能切）；展开折不带——防吞折内按钮点击
+    const leaf = el('div', `bz-people-leaf${on ? ' bz-people-leaf-on' : ''}`, on
+      ? { 'data-people-leaf': id }
+      : { 'data-people-leaf': id, 'data-people-leaf-head': id });
     leaf.appendChild(el('div', 'bz-people-leaf-spine', { 'aria-hidden': 'true' }));
-    leaf.appendChild(el('div', 'bz-people-leaf-head', { 'data-people-leaf-head': id }, [
+    leaf.appendChild(el('div', 'bz-people-leaf-head', [
       el('span', 'bz-people-leaf-zh', text(title)),
       el('span', 'bz-people-leaf-cnt', text(spillMeta(p, id))),
     ]));

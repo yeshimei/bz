@@ -1,4 +1,4 @@
-/* 源指纹 bf3caeea6beed3ee · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b959041e1aaa2515 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -271,9 +271,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     const book = el("div", "bz-people-book", { "data-people-book": "" });
     for (const [id, title] of FOLD_TITLES) {
       const on = opts.fold === id;
-      const leaf = el("div", `bz-people-leaf${on ? " bz-people-leaf-on" : ""}`, { "data-people-leaf": id });
+      const leaf = el("div", `bz-people-leaf${on ? " bz-people-leaf-on" : ""}`, on ? { "data-people-leaf": id } : { "data-people-leaf": id, "data-people-leaf-head": id });
       leaf.appendChild(el("div", "bz-people-leaf-spine", { "aria-hidden": "true" }));
-      leaf.appendChild(el("div", "bz-people-leaf-head", { "data-people-leaf-head": id }, [
+      leaf.appendChild(el("div", "bz-people-leaf-head", [
         el("span", "bz-people-leaf-zh", text(title)),
         el("span", "bz-people-leaf-cnt", text(spillMeta(p, id)))
       ]));
