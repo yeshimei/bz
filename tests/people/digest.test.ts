@@ -163,3 +163,122 @@ describe('buildFace 全流程（假 ask）', () => {
     ).rejects.toThrow('画像生成为空');
   });
 });
+
+// ---------------- 媒体素材接线（issue 445） ----------------
+
+describe('chunkMessages 媒体计数', () => {
+  it('批内语音 / 图片条数随切批累计，无媒体则不带 media 字段', () => {
+    const messages = [
+      msg(0, false, '[语音 12s·平静] 转写一'),
+      msg(1, true, '普通文本'),
+      msg(2, false, '[图片] 一只猫'),
+      msg(3, true, '[语音]'), // 旧空标签：不算素材
+    ];
+    const [chunk] = chunkMessages(messages, { maxCount: 10 });
+    expect(chunk.media).toEqual({ voice: 1, image: 1 });
+    const [plain] = chunkMessages([msg(0, false, '早'), msg(1, true, '晚')]);
+    expect(plain.media).toBeUndefined();
+  });
+
+  it('切批边界重置计数：各批只算本批的媒体', () => {
+    const messages = [
+      msg(0, false, '[语音 5s] 甲'),
+      msg(1, true, '文字'),
+      msg(2, false, '[语音 6s] 乙'),
+      msg(3, true, '[图片] 描述'),
+    ];
+    const chunks = chunkMessages(messages, { maxCount: 2 });
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0].media).toEqual({ voice: 1, image: 0 });
+    expect(chunks[1].media).toEqual({ voice: 1, image: 1 });
+  });
+});
+
+describe('媒体素材进提示词（issue 445）', () => {
+  it('buildExtractPrompt 有媒体：说明标签含义、quotes 优先收语音原话、图片描述可进 moments', () => {
+    const withMedia = buildExtractPrompt(
+      {
+        from: '2024-05-01',
+        to: '2024-05-01',
+        count: 2,
+        lines: ['[2024-05-01 12:00][对方] [语音 12s·平静] 你猜怎么着', '[2024-05-01 12:01][对方] [图片] 一只猫'],
+        media: { voice: 1, image: 1 },
+      },
+      '老王'
+    );
+    expect(withMedia).toContain('语音转写');
+    expect(withMedia).toContain('画面描述');
+    expect(withMedia).toContain('优先收这里的口语原话');
+    expect(withMedia).toContain('不要把标签、时长、情感标记写进去');
+    expect(withMedia).toContain('难忘画面');
+
+    const plain = buildExtractPrompt(
+      { from: '2024-05-01', to: '2024-05-01', count: 1, lines: ['[2024-05-01 12:00][我] 早'] },
+      '老王'
+    );
+    expect(plain).not.toContain('语音转写');
+    expect(plain).not.toContain('口语原话');
+  });
+
+  it('buildPortraitPrompt / buildChroniclePrompt：媒体说明进素材清单，缺省不出现', () => {
+    const note = '聊天里还有语音 26 条 · 4 分 · 图片 14 张的媒体素材';
+    const portrait = buildPortraitPrompt('老王', {
+      events: [],
+      traits: [],
+      quotes: [{ ts: '2024-05-01', who: '对方', text: '你猜怎么着' }],
+      moments: [],
+      mediaNote: note,
+    });
+    expect(portrait).toContain(`素材说明：${note}`);
+    expect(portrait).toContain('你猜怎么着'); // 原话素材与媒体说明同在
+
+    expect(buildPortraitPrompt('老王', { events: [], traits: [], quotes: [], moments: [] })).not.toContain('素材说明');
+
+    const chronicle = buildChroniclePrompt('老王', [{ ts: '2024-05-01', summary: '第一次说话' }], note);
+    expect(chronicle).toContain(`素材说明：${note}`);
+    expect(buildChroniclePrompt('老王', [{ ts: '2024-05-01', summary: '第一次说话' }])).not.toContain('素材说明');
+  });
+
+  it('buildFace：语音原话进 quotes 与文字原话同池去重；媒体说明缺省自算并进画像 prompt', async () => {
+    const messages = [
+      msg(0, false, '[语音 12s·开心] 周末爬山去啊'),
+      msg(1, true, '普通文字原话哈哈'),
+    ];
+    let batch = 0;
+    const askExtract = vi.fn(async () => {
+      batch += 1;
+      // 两批都回同一句语音原话（模拟相邻批重复采集）——同池按 text 去重只留一条
+      return batch === 1
+        ? '{"events":[],"traits":[],"quotes":[{"ts":"2024-05-01","who":"对方","text":"周末爬山去啊"}],"moments":[]}'
+        : '{"events":[],"traits":[],"quotes":[{"ts":"2024-05-01","who":"对方","text":"周末爬山去啊"}],"moments":[]}';
+    });
+    const seen: string[] = [];
+    const face = await buildFace(
+      askExtract,
+      async (p) => (seen.push(p), '## 画像速写\n稳'),
+      messages,
+      '老王',
+      undefined,
+      { maxCount: 1 } // 强制切两批：跨批同池去重
+    );
+    expect(face.quotes).toEqual([{ ts: '2024-05-01', who: '对方', text: '周末爬山去啊' }]);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toContain('素材说明');
+    expect(seen[0]).toContain('语音 1 条');
+  });
+
+  it('buildFace 显式传 mediaNote：画像与时间线 prompt 都带说明', async () => {
+    const seen: string[] = [];
+    await buildFace(
+      async () => '{"events":[{"ts":"2024-05-01","summary":"约饭"}],"traits":[]}',
+      async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年\n- 开头' : '## 画像速写\n稳'),
+      [msg(0, false, '早')],
+      '老王',
+      undefined,
+      undefined,
+      '自定义媒体说明'
+    );
+    expect(seen.some((p) => p.includes('素材说明：自定义媒体说明'))).toBe(true);
+    expect(seen.filter((p) => p.includes('自定义媒体说明'))).toHaveLength(2); // 画像 + 时间线
+  });
+});

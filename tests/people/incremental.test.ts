@@ -77,6 +77,32 @@ describe('planIncremental', () => {
     expect(plan.msgs).toHaveLength(5);
     expect(plan.olderCount).toBe(0);
   });
+
+  it('媒体素材照常过水位（issue 445）：早于锚点的语音 / 图片不重复入库', () => {
+    // 上次提炼到第 5 秒；新文件 4 条里 2 条是媒体标签，其中 1 条语音早于锚点
+    const existing = person({ lastProcessedTs: BASE + 5000, imports: [importRec(2, 0, 5)] });
+    const msgs = [
+      msg(0, '[语音 12s·平静] 早先说过的话'),
+      msg(1, '[图片] 早先发过的图'),
+      msg(6, '[语音 8s·开心] 新的语音'),
+      msg(7, '[图片] 新的图片描述'),
+    ];
+    const plan = planIncremental(msgs, existing);
+    expect(plan.mode).toBe('newer');
+    // 只有锚点之后的媒体 / 文本进提炼，旧媒体不重复烧 token
+    expect(plan.msgs.map((m) => m.text)).toEqual(['[语音 8s·开心] 新的语音', '[图片] 新的图片描述']);
+    expect(plan.olderCount).toBe(2);
+  });
+
+  it('同一份含媒体的导出再导 → 指纹命中 skip，媒体素材不二次入库（issue 445）', () => {
+    const msgs = [
+      msg(0, '[语音 5s] 一'),
+      msg(1, '[图片] 描述'),
+      msg(2, '普通文本'),
+    ];
+    const existing = person({ lastProcessedTs: BASE + 2000, imports: [importRec(3, 0, 2)] });
+    expect(planIncremental(msgs, existing).mode).toBe('skip');
+  });
 });
 
 describe('dedupeByText', () => {
@@ -181,5 +207,12 @@ describe('buildFaceIncremental（假 ask）', () => {
 
     await expect(buildFaceIncremental(askExtract, askPortrait, [], '老王', undefined)).rejects.toThrow('没有可提炼的文本消息');
     await expect(buildFaceIncremental(askExtract, async () => '   ', [msg(0)], '老王', undefined)).rejects.toThrow('画像生成为空');
+  });
+
+  it('mediaNote 传入画像与时间线 prompt（issue 445）', async () => {
+    const { prompts, askExtract, askPortrait } = setupAsk();
+    await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), undefined, '跨导入媒体说明');
+    expect(prompts[0]).toContain('素材说明：跨导入媒体说明');
+    expect(prompts[1]).toContain('素材说明：跨导入媒体说明');
   });
 });

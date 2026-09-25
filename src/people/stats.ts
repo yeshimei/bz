@@ -2,8 +2,10 @@
  * 互动统计（issue 440）：客观数据侧的纯本地计算，零 AI 成本。
  * 输入是内存里的统一消息流（用完即弃）与解析层的形态计数，输出 ContactStats 聚合结果——
  * 落盘只有聚合数字，不含聊天原文（与 ADR-0191 §2 隐私口径一致）。
+ * issue 445：顺带累计媒体素材（语音条数 / 总时长 / 图片张数，见 media.ts）。
  */
 import type { ContactStats, UnifiedMessage } from './types';
+import { collectMediaStats } from './media';
 
 /** 会话切分阈值：相邻消息间隔 ≥ 30 分钟视为新会话 */
 const SESSION_GAP_MS = 30 * 60 * 1000;
@@ -21,7 +23,8 @@ function monthKey(ts: number): string {
  * - 回复时延：相邻两条异侧（对方→我 / 我→对方）视为一次回复，耗时 = 两者的间隔（即对方「发完」
  *   到我回第一条——连续多条只有异侧切换那一条计入）；无样本记 0；
  * - hourly：24 长度数组，本地小时分布；
- * - kindCounts：透传（形态计数在 parse 层算好）。
+ * - kindCounts：透传（形态计数在 parse 层算好）；
+ * - 媒体素材（issue 445）：voiceCount / voiceTotalSec / imageCount 由 media.collectMediaStats 从消息文本算出。
  */
 export function computeStats(messages: UnifiedMessage[], kindCounts: Record<string, number>): ContactStats {
   const msgs = [...messages].sort((a, b) => a.ts - b.ts);
@@ -52,6 +55,7 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
     }
     prev = m;
   }
+  const media = collectMediaStats(msgs);
   return {
     monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
     initiatedByMe,
@@ -61,6 +65,9 @@ export function computeStats(messages: UnifiedMessage[], kindCounts: Record<stri
     myHourly,
     otherHourly,
     kindCounts: { ...kindCounts }, // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
+    voiceCount: media.voiceCount,
+    voiceTotalSec: media.voiceTotalSec,
+    imageCount: media.imageCount,
   };
 }
 

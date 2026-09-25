@@ -20,6 +20,7 @@ import {
   type AskLLM,
 } from './digest';
 import { buildFaceIncremental, mergeManualEvents, planIncremental } from './incremental';
+import { buildMediaNote, emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatCount, formatReplySec } from './stats';
 import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile } from './types';
 
@@ -481,6 +482,8 @@ async function runGeneration(): Promise<void> {
       const existing = (await store.list()).find((p) => p.id === talker);
       const plan = planIncremental(group.messages, existing);
       const now = new Date().toISOString();
+      // 纯本地聚合（issue 440），与原文一起用完即弃，落盘只有统计结果；媒体计数见 issue 445
+      const stats = computeStats(group.messages, group.kindCounts);
       // 非 skip 才落一条导入记录（评审 P2-2：skip 不落 0 条记录）；messageCount 记本次实际进提炼的条数
       const rec: ImportRecord = {
         file,
@@ -489,8 +492,7 @@ async function runGeneration(): Promise<void> {
         skippedCount: group.skippedCount,
         timeFrom: new Date(group.messages[0].ts).toISOString(),
         timeTo: new Date(group.messages[group.messages.length - 1].ts).toISOString(),
-        // 纯本地聚合（issue 440），与原文一起用完即弃，落盘只有统计结果
-        stats: computeStats(group.messages, group.kindCounts),
+        stats,
       };
       if (plan.mode === 'skip') {
         // skip 只可能发生在已有导入的人物上（无锚点走 full）；这里顺带应用改名，
@@ -499,7 +501,7 @@ async function runGeneration(): Promise<void> {
           let imports = existing.imports;
           if (imports.length && !imports.some((r) => r.stats)) {
             imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
-            imports[0] = { ...imports[0], stats: rec.stats };
+            imports[0] = { ...imports[0], stats };
             await store.upsert({ ...existing, name, imports });
           } else {
             await store.upsert({ ...existing, name });
@@ -514,14 +516,20 @@ async function runGeneration(): Promise<void> {
       } else if (plan.olderCount > 0) {
         notice(`「${name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
+      // 媒体素材清单说明（issue 445）：按本次导入文件的统计口径（与 stats 同源）
+      const mediaNote = buildMediaNote({
+        voiceCount: stats.voiceCount ?? 0,
+        voiceTotalSec: stats.voiceTotalSec ?? 0,
+        imageCount: stats.imageCount ?? 0,
+      });
       const face = plan.mode === 'full'
         ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
             setRun(main, `第 ${done} / ${total} 批`);
-          })
+          }, undefined, mediaNote)
         : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing?.digest, (done, total) => {
             const lead = plan.mode === 'older' ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
             setRun(main, `${lead} · 第 ${done} / ${total} 批`);
-          });
+          }, mediaNote);
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
       await store.upsert(entry);
       await store.appendImport(talker, rec);
@@ -581,6 +589,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
   const p = people.find((x) => x.id === detailId);
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body); return; }
+  const badge = mediaBadge(p);
   body.appendChild(el('div', 'bz-people-detail-head', [
     el('div', 'bz-people-detail-id', [
       el('div', 'bz-people-ava bz-people-ava-lg', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
@@ -590,6 +599,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
           p.imports.reduce((s, r) => s + r.messageCount, 0) ? `${p.imports.reduce((s, r) => s + r.messageCount, 0)} 条消息 · ${p.imports.length} 次导入` : '尚无导入',
           p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : '脸谱未生成',
         ].join(' · '))),
+        ...(badge ? [badge] : []),
       ]),
     ]),
     button('bz-people-btn bz-people-btn-ghost', '返回列表', { 'data-people-back-btn': '' }),
@@ -785,6 +795,31 @@ function msgTotal(p: PersonEntry): number {
   return p.imports.reduce((s, r) => s + r.messageCount, 0);
 }
 
+// ---------------- 媒体徽章（issue 445） ----------------
+
+/**
+ * 人物媒体统计：跨导入累计（与卡片「N 条消息」同口径；旧数据无媒体字段按 0 计）。
+ * 无媒体素材返回 null——徽章空数据不渲染。
+ */
+export function personMedia(p: PersonEntry): MediaStats | null {
+  const acc = emptyMediaStats();
+  for (const r of p.imports) {
+    const s = r.stats;
+    if (!s) continue;
+    acc.voiceCount += s.voiceCount ?? 0;
+    acc.voiceTotalSec += s.voiceTotalSec ?? 0;
+    acc.imageCount += s.imageCount ?? 0;
+  }
+  return acc.voiceCount || acc.imageCount ? acc : null;
+}
+
+/** 媒体徽章：「语音 26 条 · 4 分 · 图片 14 张」（零项不出现）；空数据返回 null 不渲染 */
+export function mediaBadge(p: PersonEntry): HTMLElement | null {
+  const s = personMedia(p);
+  const label = s ? formatMediaCount(s) : '';
+  return label ? el('span', 'bz-people-media-badge', text(label)) : null;
+}
+
 function sortPeople(list: PersonEntry[]): PersonEntry[] {
   const arr = [...list];
   const lastSeen = (p: PersonEntry) => p.imports.reduce((m, r) => (r.timeTo > m ? r.timeTo : m), '');
@@ -827,6 +862,7 @@ function applyWall(people: PersonEntry[], wall: HTMLElement): void {
     const from = p.imports.map((r) => r.timeFrom).sort()[0];
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
+    const badge = mediaBadge(p);
     const side = el('div', 'bz-people-card-side');
     if (canMerge && !mergeFromId) {
       side.appendChild(button('bz-people-btn bz-people-btn-ghost', '合并到…', { 'data-people-merge': p.id }));
@@ -842,6 +878,7 @@ function applyWall(people: PersonEntry[], wall: HTMLElement): void {
         el('div', 'bz-people-card-name', text(p.name)),
         el('div', 'bz-people-card-meta', text([total ? `${total} 条消息` : '尚无消息', span].filter(Boolean).join(' · '))),
         el('div', `bz-people-chip ${p.digest ? 'bz-people-chip-on' : ''}`, text(p.digest ? '已画脸谱' : '待生成')),
+        ...(badge ? [badge] : []),
       ]),
       side,
     ]);

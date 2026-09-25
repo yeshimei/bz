@@ -275,6 +275,22 @@
   background: rgba(90, 143, 109, 0.16);
   color: var(--chip-on);
 }
+/* 媒体徽章（issue 445）：「语音 26 条 · 4 分 · 图片 14 张」，与 chip 同排同款胶囊；
+   空数据不渲染元素（ui 层控制），无 hover 态、无滚动条样式（铁律） */
+.bz-people-media-badge {
+  margin-top: 6px;
+  margin-left: 6px;
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  background: rgba(74, 125, 158, 0.14);
+  color: var(--ink-mut);
+}
+/* 详情页徽章独占一行（meta 是块级），不留卡片里的并排间距 */
+.bz-people-detail-id .bz-people-media-badge {
+  margin-left: 0;
+}
 
 /* —— 步骤条 —— */
 .bz-people-steps {

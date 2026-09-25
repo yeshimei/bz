@@ -11,8 +11,11 @@
  * 本层纯编排，可整管单测（假 ask）。
  *
  * 批切双限（maxChars / maxCount）防单批爆上下文；maxBatches 均匀抽样封顶防超大记录白烧 token。
+ * 媒体素材（issue 445）：`[语音 …]` 转写与 `[图片]` 描述随文本进对话行，切批时顺带计数，
+ * 提炼 prompt 据此说明标签含义并引导语音原话进 quotes、图片描述进 moments。
  */
 import type { FaceEvent, MomentItem, QuoteItem, UnifiedMessage } from './types';
+import { buildMediaNote, collectMediaStats, parseMediaTag } from './media';
 
 /** LLM 依赖（注入；抛错 = 该次提炼失败，上层中止） */
 export type AskLLM = (prompt: string) => Promise<string>;
@@ -24,6 +27,8 @@ export interface DigestChunk {
   count: number;
   /** 已渲染对话行（[YYYY-MM-DD HH:mm][我|对方] 文本） */
   lines: string[];
+  /** 批内媒体消息条数（语音转写 / 图片描述；无媒体则缺省，issue 445） */
+  media?: { voice: number; image: number };
 }
 
 export interface BatchExtract {
@@ -39,6 +44,8 @@ export interface PortraitMaterial {
   traits: string[];
   quotes: QuoteItem[];
   moments: MomentItem[];
+  /** 素材清单说明：媒体计数 + 情感标记含义（无媒体素材时缺省，issue 445） */
+  mediaNote?: string;
 }
 
 export interface ChunkOptions {
@@ -52,26 +59,34 @@ const DEFAULTS: Required<ChunkOptions> = { maxChars: 12000, maxCount: 400, maxBa
 /** 画像素材总量上限：素材段过长会让单次调用失衡，超限按时间跨度均匀抽样 */
 const MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 } as const;
 
-/** 切批：滤空文本 → 双限累积 → 批数超上限均匀抽样（保留时序跨度） */
+/** 切批：滤空文本 → 双限累积 → 批数超上限均匀抽样（保留时序跨度）；媒体标签顺带计数（issue 445） */
 export function chunkMessages(messages: UnifiedMessage[], opts: ChunkOptions = {}): DigestChunk[] {
   const { maxChars, maxCount, maxBatches } = { ...DEFAULTS, ...opts };
   const chunks: DigestChunk[] = [];
   let lines: string[] = [];
   let chars = 0;
+  let voice = 0;
+  let image = 0;
   for (const m of messages) {
     const text = (m.text ?? '').trim();
     if (!text) continue;
     const line = renderLine(m.ts, m.isSender, text);
     const fits = lines.length === 0 || (lines.length < maxCount && chars + line.length <= maxChars);
     if (!fits) {
-      chunks.push(makeChunk(lines));
+      chunks.push(makeChunk(lines, voice, image));
       lines = [];
       chars = 0;
+      voice = 0;
+      image = 0;
     }
+    // 媒体计数随消息归属本批：先 flush 再计数，被挤出本批的消息不算上一批的媒体（issue 445）
+    const mat = parseMediaTag(text);
+    if (mat?.kind === 'voice') voice++;
+    else if (mat?.kind === 'image') image++;
     lines.push(line);
     chars += line.length;
   }
-  if (lines.length) chunks.push(makeChunk(lines));
+  if (lines.length) chunks.push(makeChunk(lines, voice, image));
   if (chunks.length <= maxBatches) return chunks;
   return evenlySample(chunks, maxBatches);
 }
@@ -84,10 +99,12 @@ export function evenlySample<T>(items: T[], max: number): T[] {
   return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
 }
 
-function makeChunk(lines: string[]): DigestChunk {
+function makeChunk(lines: string[], voice = 0, image = 0): DigestChunk {
   const first = lines[0] ?? '';
   const last = lines[lines.length - 1] ?? '';
-  return { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
+  const chunk: DigestChunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
+  if (voice || image) chunk.media = { voice, image };
+  return chunk;
 }
 
 function renderLine(ts: number, isSender: boolean, text: string): string {
@@ -101,10 +118,21 @@ function renderLine(ts: number, isSender: boolean, text: string): string {
 /**
  * 批提炼 prompt：携带本批对话行，采集四类素材，只产出严格 JSON。
  * 采集范围刻意含「原话」与「场景」——它们是画像阶段写出具体模式（而非空话）的唯一证据来源。
+ * 批内有媒体消息（issue 445）时补标签说明：语音转写行是亲口说的原话，quotes 优先收（表达 DNA 质量核心）；
+ * 图片描述行可作「难忘画面」进 moments。
  */
 export function buildExtractPrompt(chunk: DigestChunk, personName: string): string {
-  return [
+  const media = chunk.media;
+  const head = [
     `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
+  ];
+  if (media?.voice || media?.image) {
+    head.push(
+      '本段含媒体消息：`[语音 …]` 开头的行是语音转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[图片]` 开头的行是一张图片的画面描述。'
+    );
+  }
+  return [
+    ...head,
     '',
     ...chunk.lines,
     '',
@@ -122,9 +150,13 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
     '3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。',
     '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
     '   优先收能体现说话风格与脾气秉性的句子，最多 8 条。',
+    ...(media?.voice
+      ? ['   `[语音 …]` 行是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）。']
+      : []),
     '',
     '4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。',
     '   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。',
+    ...(media?.image ? ['   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。'] : []),
     '',
     '只输出 JSON，不要任何解释或代码围栏：',
     '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}]}',
@@ -136,10 +168,11 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
  * 输入是全部交往事件（含小事），产出按年份分节的成文史——不是事件列表的复述，
  * 而是把碎片串成「这段关系怎么一步步走到今天」。
  */
-export function buildChroniclePrompt(name: string, events: FaceEvent[]): string {
+export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string): string {
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   return [
     `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
+    ...(mediaNote ? ['', `素材说明：${mediaNote}`] : []),
     '',
     eventLines,
     '',
@@ -163,13 +196,14 @@ export function buildChroniclePrompt(name: string, events: FaceEvent[]): string 
  * 「情绪具体化」「素材不足不编造」四条约束；这是画像深度与可信度的来源。
  */
 export function buildPortraitPrompt(name: string, material: PortraitMaterial): string {
-  const { events, traits, quotes, moments } = material;
+  const { events, traits, quotes, moments, mediaNote } = material;
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join('\n') : '（无）';
   const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join('\n') : '（无）';
   const traitLines = traits.length ? traits.map((t) => `- ${t}`).join('\n') : '（无）';
   return [
     `你在帮用户为好友「${name}」画一张「脸谱」——基于以下从聊天记录里提炼的素材，写出这个人的人物画像。`,
+    ...(mediaNote ? ['', `素材说明：${mediaNote}`, ''] : []),
     '',
     '## 素材一：交往事件',
     eventLines,
@@ -287,7 +321,8 @@ export interface BuiltFace {
  * 全流程：切批 → 逐批采集（askExtract / JSON 通道）→ 合并去重
  * → 汇总画像（askPortrait）+ 关系时间线（askPortrait）两次文本通道调用。
  * onProgress(done, total) 供 UI 更新进度；任一批失败原样抛错（上层中止并报错）。
- * chunkOpts 透传切批参数（UI 缺省即默认双限）。
+ * chunkOpts 透传切批参数（UI 缺省即默认双限）；mediaNote 是媒体素材清单说明（issue 445），
+ * 缺省由本次消息流自算（ui 层增量重画时传跨导入累计口径）。
  */
 export async function buildFace(
   askExtract: AskLLM,
@@ -295,7 +330,8 @@ export async function buildFace(
   messages: UnifiedMessage[],
   personName: string,
   onProgress?: (done: number, total: number) => void,
-  chunkOpts?: ChunkOptions
+  chunkOpts?: ChunkOptions,
+  mediaNote?: string
 ): Promise<BuiltFace> {
   const chunks = chunkMessages(messages, chunkOpts);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
@@ -313,6 +349,7 @@ export async function buildFace(
     traits: evenlySample(traits, MATERIAL_LIMITS.traits),
     quotes: evenlySample(quotes, MATERIAL_LIMITS.quotes),
     moments: evenlySample(moments, MATERIAL_LIMITS.moments),
+    mediaNote: mediaNote ?? (buildMediaNote(collectMediaStats(messages)) || undefined),
   };
   const portrait = (await askPortrait(buildPortraitPrompt(personName, material))).trim();
   if (!portrait) throw new Error('画像生成为空');
@@ -320,7 +357,7 @@ export async function buildFace(
   let chronicle = '';
   if (events.length) {
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle)))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote))).trim();
     } catch {
       chronicle = '';
     }

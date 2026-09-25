@@ -139,6 +139,32 @@ describe('computeStats kindCounts 透传', () => {
   });
 });
 
+describe('computeStats 媒体素材计数（issue 445）', () => {
+  it('语音条数 / 总时长 / 图片张数由消息文本算出；旧空标签与纯文本不计', () => {
+    const s = computeStats(
+      [
+        msg(T0, false, '[语音 12s·平静] 一'),
+        msg(T0 + MIN, true, '[语音 30s] 二'),
+        msg(T0 + 2 * MIN, false, '[语音] 三'), // 裸标签带转写：计条数、时长不计
+        msg(T0 + 3 * MIN, true, '[图片] 描述一'),
+        msg(T0 + 4 * MIN, false, '[图片]'), // 旧空标签：不计
+        msg(T0 + 5 * MIN, false, '普通文本'),
+      ],
+      { 文本: 2, 语音: 1, 图片: 2 }
+    );
+    expect(s.voiceCount).toBe(3);
+    expect(s.voiceTotalSec).toBe(42);
+    expect(s.imageCount).toBe(1);
+  });
+
+  it('无媒体消息：字段为 0（字段存在，供徽章判断）', () => {
+    const s = computeStats([msg(T0, false)], {});
+    expect(s.voiceCount).toBe(0);
+    expect(s.voiceTotalSec).toBe(0);
+    expect(s.imageCount).toBe(0);
+  });
+});
+
 describe('parse 层形态计数（normalizeKind 三来源）', () => {
   it('CSV 中文 typeName：非文本被过滤但计入形态', () => {
     const csv = [

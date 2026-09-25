@@ -54,6 +54,7 @@ export function planIncremental(msgs: UnifiedMessage[], existing: PersonEntry | 
  * 不再把新素材挤出头部（评审 P2-1 同号的 P1-1：此前 slice 留头，旧素材满额时新素材全丢）。
  * 上限对齐 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / chronicle 300）；
  * 落盘的 digest.events 保持全量，抽样只影响送 prompt 的素材口径。
+ * mediaNote（issue 445）：媒体素材清单说明，ui 层传跨导入累计口径（本层消息只是新切片，自算会少算）。
  * 调用数 = 批数 + 2（画像 + 时间线），与成本预告口径一致。
  */
 export async function buildFaceIncremental(
@@ -62,7 +63,8 @@ export async function buildFaceIncremental(
   msgs: UnifiedMessage[],
   name: string,
   old: FaceDigest | undefined,
-  onProgress?: (done: number, total: number) => void
+  onProgress?: (done: number, total: number) => void,
+  mediaNote?: string
 ): Promise<BuiltFace> {
   const chunks = chunkMessages(msgs);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
@@ -76,14 +78,14 @@ export async function buildFaceIncremental(
   const quotes = evenlySample(dedupeByText([...(old?.quotes ?? []), ...batches.flatMap((b) => b.quotes)], (q) => q.text), 60);
   const traits = dedupeByText(batches.flatMap((b) => b.traits), (t) => t).slice(0, 30);
   const moments = dedupeByText(batches.flatMap((b) => b.moments), (m) => m.summary).slice(0, 40);
-  const material: PortraitMaterial = { events: evenlySample(events, 300), traits, quotes, moments };
+  const material: PortraitMaterial = { events: evenlySample(events, 300), traits, quotes, moments, mediaNote };
   const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
   if (!portrait) throw new Error('画像生成为空');
   // 时间线是次要产物：失败不阻断画像（与 digest.buildFace 同口径）
   let chronicle = '';
   if (events.length) {
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, 300)))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, 300), mediaNote))).trim();
     } catch {
       chronicle = '';
     }

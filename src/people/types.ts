@@ -87,6 +87,12 @@ export interface ContactStats {
   otherHourly: number[];
   /** 消息形态计数：文本 / 图片 / 语音 / 视频 / 表情 / 通话 / 文件 / 引用 / 分享 / 系统 */
   kindCounts: Record<string, number>;
+  /** 媒体素材：语音条数（标签带转写的；issue 445，旧数据无此字段） */
+  voiceCount?: number;
+  /** 媒体素材：语音总时长（秒；标签没写时长的不计入） */
+  voiceTotalSec?: number;
+  /** 媒体素材：图片张数（带画面描述的） */
+  imageCount?: number;
 }
 
 /** 一次导入的元数据 */
