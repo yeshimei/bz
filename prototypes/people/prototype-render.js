@@ -1,4 +1,4 @@
-/* 源指纹 9054a6c56a230296 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 11b19ace85c73073 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -133,7 +133,8 @@ var BZR_people = (() => {
     return `${(sec / 3600).toFixed(1)} 时`;
   }
   function replyLatencySec(median, avg) {
-    return median != null ? median : avg;
+    var _a;
+    return (_a = median != null ? median : avg) != null ? _a : 0;
   }
   function vtName(name) {
     const s = String(name != null ? name : "").trim();
@@ -218,9 +219,15 @@ var BZR_people = (() => {
     running: { label: "暂停", hook: "data-people-jobs-pause" },
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
     interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
-    error: { label: "删除任务", hook: "data-people-jobs-dismiss" },
+    // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
+    // 450 时这里只有「删除任务」，把用户逼到别的入口（详情头 / 数据源弹窗）去「重新画」，那才是重烧。
+    error: { label: "继续生成", hook: "data-people-jobs-resume" },
     done: null
   };
+  function jobsActionOf(s) {
+    if (s.status === "error" && s.resumable === false) return { label: "删除任务", hook: "data-people-jobs-dismiss" };
+    return JOBS_ACTIONS[s.status];
+  }
   function progressBlock(s) {
     const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
     const block = el("div", "bz-people-jobs", {
@@ -240,7 +247,7 @@ var BZR_people = (() => {
     block.appendChild(el("div", "bz-people-jobs-main", text(s.message || jobsFallbackMessage(s.status, s.name))));
     block.appendChild(el("div", "bz-people-jobs-queue", text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
     block.appendChild(el("div", "bz-people-jobs-note", text("生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。")));
-    const action = JOBS_ACTIONS[s.status];
+    const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
     if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
@@ -367,6 +374,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const label = mediaLabel(media);
     const voice = (_a = media == null ? void 0 : media.voiceCount) != null ? _a : 0;
+    const job = opts.job && opts.job.status !== "done" ? opts.job : null;
+    const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
+      "data-people-generate-one": "",
+      "aria-label": job.status === "running" ? "正在生成" : "继续生成",
+      title: job.status === "running" ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部` : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`
+    }) : opts.canGenerate ? iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" }) : null;
     return el("div", "bz-people-dt-head", [
       el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
       el("div", "bz-people-dt-id", [
@@ -384,7 +397,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]),
       p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
-        ...opts.canGenerate ? [iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" })] : [],
+        ...action ? [action] : [],
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
@@ -490,8 +503,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function foldDataBody(card, p) {
     const out = [];
     if (card) out.push(card);
-    else if (p.imports.length) out.push(el("div", "bz-people-empty-hint", text("这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。")));
-    else out.push(el("div", "bz-people-empty-hint", text("还没有导入记录。")));
+    else if (p.imports.length) {
+      const poolOnly = p.imports.some((r) => {
+        var _a;
+        return r.stats && !((_a = r.stats.monthly) == null ? void 0 : _a.length);
+      });
+      out.push(el("div", "bz-people-empty-hint", { "data-people-data-hint": "" }, text(poolOnly ? "这些消息还没画过脸谱——画完脸谱后这里会有完整的互动统计（月度分布 / 回复时延 / 活跃时段）。" : "这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。")));
+    } else out.push(el("div", "bz-people-empty-hint", { "data-people-data-hint": "" }, text("还没有导入记录。")));
     return out;
   }
   function insightsCard(range, file, chart, rows) {

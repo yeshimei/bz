@@ -304,7 +304,9 @@ describe('暂停与断点续跑', () => {
       return BATCH_JSON;
     });
     const { askPortrait } = makeAsks();
-    const started = startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1 }, askExtract, askPortrait });
+    // maxRetries: 0 关掉批级重试（453 引入）——本用例测的是「error 能被 resume 接上」，
+    // 重试自愈另有用例；不关的话第 2 批会被重试救活，测不到 error 路径
+    const started = startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1 }, askExtract, askPortrait, maxRetries: 0 });
     await started;
     await whenIdle();
 
@@ -323,6 +325,123 @@ describe('暂停与断点续跑', () => {
     expect(done.batchesDone).toBe(3);
     expect(done.results).toHaveLength(3);
     expect(calls).toBe(4); // 只补第 2、3 批——第 1 批（已付）不重烧
+  });
+
+  it('批级重试（453）：单批失败自动重试，退避期间推「正在重试」文案，重试成功任务照常跑完', async () => {
+    const msgs = [pm(0), pm(1), pm(2)]; // maxCount 1 → 3 批
+    await seedPreview(msgs);
+    let calls = 0;
+    const waits: string[] = [];
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2) throw new Error('AI 调用超时'); // 第 2 批首次失败，重试成功
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    await startJobs(app, [target(msgs)], {
+      chunkOpts: { maxCount: 1 },
+      askExtract,
+      askPortrait,
+      maxRetries: 2,
+      sleep: async () => {
+        waits.push(snapshot().queue[0]?.message ?? ''); // 退避等待里读到的应是重试文案
+      },
+    });
+    await whenIdle();
+
+    const job = readQueue()[0];
+    expect(job.status).toBe('done');
+    expect(job.batchesDone).toBe(3); // 重试自愈，任务不停
+    expect(calls).toBe(4); // 批 1 + 批 2（失败）+ 批 2 重试 + 批 3
+    expect(waits).toHaveLength(1); // 只重试了一次
+    expect(waits[0]).toContain('正在重试 1/2');
+    expect(waits[0]).toContain('AI 调用超时');
+  });
+
+  it('批级重试（453）：重试耗尽 → error，已完成批次保留、文案说清不必从头重来', async () => {
+    const msgs = [pm(0), pm(1), pm(2)];
+    await seedPreview(msgs);
+    let calls = 0;
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls >= 2) throw new Error('AI 调用超时'); // 第 2 批永远失败
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    await startJobs(app, [target(msgs)], {
+      chunkOpts: { maxCount: 1 },
+      askExtract,
+      askPortrait,
+      maxRetries: 2,
+      sleep: async () => {},
+    });
+    await whenIdle();
+
+    const job = readQueue()[0];
+    expect(job.status).toBe('error');
+    expect(job.batchesDone).toBe(1); // 第 1 批成果保留
+    expect(job.results).toHaveLength(1);
+    expect(calls).toBe(4); // 批 1 + 批 2 的 1 次 + 2 次重试
+    expect(job.message).toContain('已完成 1/3 批');
+    expect(job.message).toContain('不会从头重烧');
+    expect(resume(TALKER)).toBe(true); // 仍可续（451 口径）
+  });
+
+  it('startJobs 复用已完成批次（453）：error 后重新排队同靶 → 续跑，已付批次不重烧', async () => {
+    const msgs = [pm(0), pm(1), pm(2)];
+    await seedPreview(msgs);
+    let calls = 0;
+    let fail = true;
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2 && fail) throw new Error('AI 调用超时');
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    const opts = { chunkOpts: { maxCount: 1 }, askExtract, askPortrait, maxRetries: 0 };
+    await startJobs(app, [target(msgs)], opts);
+    await whenIdle();
+    expect(readQueue()[0].status).toBe('error');
+    const paid = (askExtract as any).mock.calls.length;
+    expect(paid).toBe(2);
+
+    // 重新点「画脸谱」：同靶、同指纹 → 复用旧任务（过去这里整体替换 = 从第 1 批重烧）
+    fail = false;
+    const again = await startJobs(app, [target(msgs)], opts);
+    expect(again.resumed).toEqual(['构造对象']);
+    expect(again.queued).toEqual(['构造对象']);
+    await whenIdle();
+
+    const done = readQueue()[0];
+    expect(done.status).toBe('done');
+    expect(done.batchesDone).toBe(3);
+    expect(done.results).toHaveLength(3);
+    expect((askExtract as any).mock.calls.length).toBe(paid + 2); // 只补第 2、3 批
+  });
+
+  it('startJobs 不复用（453）：预览桶变了 → 指纹对不上，重排新任务从头跑', async () => {
+    const msgs = [pm(0), pm(1), pm(2)];
+    await seedPreview(msgs);
+    let calls = 0;
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2) throw new Error('AI 调用超时');
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    const opts = { chunkOpts: { maxCount: 1 }, askExtract, askPortrait, maxRetries: 0 };
+    await startJobs(app, [target(msgs)], opts);
+    await whenIdle();
+    expect(readQueue()[0].status).toBe('error');
+
+    const grown = [...msgs, pm(9)]; // 中途导入过新数据
+    await seedPreview(grown);
+    const again = await startJobs(app, [target(grown)], opts);
+    expect(again.resumed).toEqual([]); // 接不上：不复用
+    await whenIdle();
+    const job = readQueue()[0];
+    expect(job.status).toBe('done');
+    expect(job.batchesDone).toBe(4); // 新靶 4 批全跑
   });
 
   it('removeJob 运行中删除：立即收手、不落盘已废批次', async () => {

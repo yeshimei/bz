@@ -29,9 +29,9 @@ function click(sel: string): void {
 /** 空引擎：只记调用（本轮测的是墙，不测生成） */
 class FakeEngine implements JobsApi {
   calls = { start: [] as unknown[], pause: 0, resume: [] as string[], remove: [] as string[] };
-  startJobs = async (_app: unknown, targets: unknown[]): Promise<{ queued: string[]; skipped: string[] }> => {
+  startJobs = async (_app: unknown, targets: unknown[]): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }> => {
     this.calls.start.push(targets);
-    return { queued: [], skipped: [] };
+    return { queued: [], skipped: [], resumed: [] };
   };
   resumeJobs = async (): Promise<void> => undefined;
   resume = (t: string): boolean => { this.calls.resume.push(t); return true; };
@@ -41,14 +41,25 @@ class FakeEngine implements JobsApi {
   snapshot = () => ({ queue: [], currentIndex: -1, running: false });
 }
 
-/** 预览桶种子（某人的素材：条数 / 首尾跨度即卡面水位口径） */
-function seedPreview(vault: MockVault, id: string, count: number, updatedAt = '2026-09-25T08:00:00.000Z'): void {
+/** 预览桶种子（某人的素材：条数 / 首尾跨度即卡面水位口径；media = 侧写媒体计数，454 用） */
+function seedPreview(
+  vault: MockVault,
+  id: string,
+  count: number,
+  updatedAt = '2026-09-25T08:00:00.000Z',
+  media: { voiceCount?: number; voiceTotalSec?: number; imageCount?: number } = {}
+): void {
   const raw = vault.files.get(getPreviewFilePath());
   const data = raw ? JSON.parse(raw) : { version: 1, contacts: {} };
   data.contacts[id] = {
     msgs: Array.from({ length: count }, (_, i) => ({ key: `s${i}`, ts: T0 + i * 60_000, isSender: i % 2 === 1, text: `构造消息${i}` })),
     watermarkSid: count,
-    stats: { msgCount: count, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+    stats: {
+      msgCount: count,
+      voiceCount: media.voiceCount ?? 0,
+      voiceTotalSec: media.voiceTotalSec ?? 0,
+      imageCount: media.imageCount ?? 0,
+    },
     updatedAt,
   };
   vault.files.set(getPreviewFilePath(), JSON.stringify(data));
@@ -162,5 +173,38 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     expect(saved.profile!.job).toBe('插画师');
     expect(saved.imports).toEqual([]); // 合成导入记录不落盘
     expect(getNoticeMessages().some((m) => m.includes('档案已保存'))).toBe(true);
+  });
+
+  // ---------------- issue 454：合成记录的媒体数 ----------------
+
+  it('合成卡带媒体数（454）：语音 / 图片取预览桶侧写——卡面徽章与详情数字格都出得来', async () => {
+    const vault = await boot();
+    seedPreview(vault, '大琳', 9, '2026-09-25T08:00:00.000Z', { voiceCount: 1289, voiceTotalSec: 8464, imageCount: 1615 });
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+
+    const meta = card('大琳')!.querySelector('.bz-people-fold-meta')!.textContent!;
+    expect(meta).toContain('语音 1289 条');
+    expect(meta).toContain('图片 1615 张'); // 卡面 meta 行（9 条 · 语音… · 图片…）
+
+    click('[data-people-card="大琳"]'); // 进详情
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-dt-nums')).toBeTruthy());
+    const nums = [...document.querySelectorAll('.bz-people-dt-n')].map((n) => n.textContent);
+    expect(nums).toEqual(['9', '1289', '1615']); // 消息 / 语音 / 图片——过去后两格都是「—」
+  });
+
+  it('合成卡只有媒体三项（454）：「数据」折出占位并引导画脸谱，不画全 0 的空统计卡', async () => {
+    const vault = await boot();
+    seedPreview(vault, '大琳', 9, '2026-09-25T08:00:00.000Z', { voiceCount: 3, voiceTotalSec: 60, imageCount: 2 });
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+    click('[data-people-card="大琳"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf-head="d"]')).toBeTruthy());
+    click('[data-people-leaf-head="d"]');
+    // 等折页切到「数据」（数据折渲染出来才出现专属钩子；画像折的占位是通用类，不能用来等）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-data-hint]')).toBeTruthy());
+
+    expect(document.querySelector('.bz-people-ins-rows')).toBeNull(); // 没有 monthly 明细就不出统计卡
+    expect(document.querySelector('[data-people-data-hint]')!.textContent).toContain('画完脸谱后');
   });
 });

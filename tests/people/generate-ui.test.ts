@@ -21,7 +21,7 @@ import {
   type GenTarget,
   type JobsApi,
 } from '../../src/people/ui';
-import type { PersonJob, JobView, JobsSnapshot } from '../../src/people/jobs';
+import { DRIFT_ERROR, type PersonJob, type JobView, type JobsSnapshot } from '../../src/people/jobs';
 import { getPeopleFilePath } from '../../src/people/data';
 import { getPreviewFilePath } from '../../src/people/datasource';
 import type { PersonEntry, UnifiedMessage } from '../../src/people/types';
@@ -95,10 +95,10 @@ class FakeEngine implements JobsApi {
   };
   private listeners: Array<(s: JobsSnapshot) => void> = [];
 
-  startJobs = async (app: unknown, targets: GenTarget[], opts: unknown): Promise<{ queued: string[]; skipped: string[] }> => {
+  startJobs = async (app: unknown, targets: GenTarget[], opts: unknown): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }> => {
     void app;
     this.calls.start.push({ targets, opts });
-    return { queued: targets.map((t) => t.name), skipped: [] };
+    return { queued: targets.map((t) => t.name), skipped: [], resumed: [] };
   };
   resumeJobs = async (): Promise<void> => { this.calls.resumeJobs++; };
   resume = (talker: string): boolean => { this.calls.resume.push(talker); return true; };
@@ -297,7 +297,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
 });
 
 describe('进度块按钮派发（450）', () => {
-  it('运行中「暂停」→ pauseJobs；暂停「继续」→ resume(talker)；error「删除任务」→ removeJob(talker)', async () => {
+  it('运行中「暂停」→ pauseJobs；暂停「继续」→ resume；可续 error「继续生成」→ resume；接不上的 error「删除任务」→ removeJob', async () => {
     await boot();
     const engine = new FakeEngine();
     inject(engine);
@@ -315,9 +315,16 @@ describe('进度块按钮派发（450）', () => {
     await tick();
     expect(engine.calls.resume).toEqual(['wxid_a']);
 
+    // issue 453：可续 error（非漂移判废）出「继续生成」→ resume；「删除任务」只留给接不上的任务
     engine.push([fakeJob({ status: 'error', message: '第 1 批提炼失败：AI 调用超时', error: 'AI 调用超时' })]);
-    await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-dismiss]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-resume]')).toBeTruthy());
     expect(document.querySelector('.bz-people-jobs-err')!.textContent).toBe('AI 调用超时');
+    click('[data-people-jobs-resume]');
+    await tick();
+    expect(engine.calls.resume).toEqual(['wxid_a', 'wxid_a']); // 暂停那次 + 这次
+
+    engine.push([fakeJob({ status: 'error', message: DRIFT_ERROR, error: DRIFT_ERROR })]);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-dismiss]')).toBeTruthy());
     click('[data-people-jobs-dismiss]');
     await tick();
     expect(engine.calls.remove).toEqual(['wxid_a']);
@@ -447,5 +454,84 @@ describe('折子印章四态（451）', () => {
     click('[data-people-seal-act="draw"]');
     await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('还没有可画的消息素材'))).toBe(true));
     expect(engine.calls.start).toHaveLength(0);
+  });
+});
+
+// ---------------- issue 453：批级重试与续跑不重烧 ----------------
+
+describe('生成入口不重烧（453）', () => {
+  const undrawn = (): PersonEntry => ({ id: 'wxid_a', name: '陈默', createdAt: '2026-01-01T00:00:00.000Z', imports: [] });
+  const batches = (n: number) => Array.from({ length: n }, () => meta());
+  const seedPreview = (vault: MockVault): void => {
+    vault.files.set(getPreviewFilePath(), JSON.stringify({
+      version: 1,
+      contacts: {
+        wxid_a: {
+          msgs: [
+            { key: 's1:1', ts: T0, isSender: true, text: '早' },
+            { key: 's2:2', ts: T0 + 60_000, isSender: false, text: '早呀' },
+          ],
+          watermarkSid: 2,
+          stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+          updatedAt: new Date(T0).toISOString(),
+        },
+      },
+    }));
+  };
+  /** 大琳量级的中断任务：47 批、已完成 29 批、AI 调用类失败（可续） */
+  const failing = (over: Partial<PersonJob> = {}): Partial<PersonJob> => ({
+    status: 'error',
+    error: 'AI 调用超时',
+    message: '第 30/47 批提炼失败：AI 调用超时；已完成 29/47 批（点「继续生成」从这批重试，不会从头重烧）',
+    batchesDone: 29,
+    chunks: batches(47),
+    ...over,
+  });
+
+  it('详情头画笔钮按态：有中断任务时改「继续生成」并带批次进度，点它走 resume——不重烧', async () => {
+    await boot([undrawn()]);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+    engine.push([fakeJob(failing())]);
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-seal-halted')).toBeTruthy());
+
+    click('[data-people-card="wxid_a"]'); // 进详情
+    await vi.waitFor(() => expect(document.querySelector('[data-people-generate-one]')).toBeTruthy());
+    const btn = document.querySelector('[data-people-generate-one]')!;
+    expect(btn.getAttribute('title')).toContain('继续生成');
+    expect(btn.getAttribute('title')).toContain('29/47');
+
+    click('[data-people-generate-one]');
+    await tick();
+    expect(engine.calls.resume).toEqual(['wxid_a']); // 续跑
+    expect(engine.calls.start).toHaveLength(0); // 没把 47 批重新排一遍
+  });
+
+  it('无任务无脸谱：详情头仍是「画脸谱」（不因 453 改坏原语义）', async () => {
+    await boot([undrawn()]);
+    inject(new FakeEngine());
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-generate-one]')).toBeTruthy());
+    expect(document.querySelector('[data-people-generate-one]')!.getAttribute('title')).toBe('画脸谱（用已导入的消息生成）');
+  });
+
+  it('漂移判废（接不上）：印章出「重新生成」，点它才真重画（走 startJobs，不是 resume）', async () => {
+    const vault = await boot([undrawn()]);
+    seedPreview(vault);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+    engine.push([fakeJob(failing({ error: DRIFT_ERROR, message: DRIFT_ERROR }))]);
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-seal-halted')).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('[data-people-seal-act]')!.dataset.peopleSealAct).toBe('redraw');
+
+    click('[data-people-seal-act="redraw"]');
+    await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
+    expect(engine.calls.resume).toEqual([]);
   });
 });

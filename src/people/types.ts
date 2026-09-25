@@ -111,8 +111,12 @@ export interface ImportRecord {
   /** 消息时间跨度 ISO */
   timeFrom: string;
   timeTo: string;
-  /** 本次导入的互动统计（旧数据无此字段） */
-  stats?: ContactStats;
+  /**
+   * 本次导入的互动统计（旧数据无此字段）。
+   * issue 454：允许**部分统计**——墙上合成记录（452）只带媒体三项（语音 / 图片明细预览桶有现成的），
+   * 没有 monthly 等明细；消费方以「有没有 monthly」判定能不能出统计卡。
+   */
+  stats?: Partial<ContactStats>;
 }
 
 /** 脸谱（AI 生成产物，重新导入可覆盖重画） */

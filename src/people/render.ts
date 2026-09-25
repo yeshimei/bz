@@ -87,10 +87,11 @@ export function formatReplySec(sec: number): string {
 
 /**
  * 回复时延取值（issue 449）：优先中位数（更抗「刷屏一条隔很久」的失真）；
- * 旧数据没有中位数字段 → 回落平均值；0 = 无样本，原样透传由 formatReplySec 出占位。
+ * 旧数据没有中位数字段 → 回落平均值；两者都缺（旧数据 / 部分统计，issue 454）→ 0
+ * （无样本，原样透传由 formatReplySec 出占位）。
  */
-export function replyLatencySec(median: number | undefined, avg: number): number {
-  return median ?? avg;
+export function replyLatencySec(median: number | undefined, avg: number | undefined): number {
+  return median ?? avg ?? 0;
 }
 
 /**
@@ -201,6 +202,8 @@ export interface JobsBlockState {
   queueTotal: number;
   /** error 态错误说明 */
   errorText?: string;
+  /** error 态可否断点续跑（issue 453）：漂移判废（消息集已变）接不上，只能删除重来 */
+  resumable?: boolean;
 }
 
 /** 进度百分比（issue 450 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 2)，钳 0~100 */
@@ -238,9 +241,17 @@ const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null>
   running: { label: '暂停', hook: 'data-people-jobs-pause' },
   paused: { label: '继续生成', hook: 'data-people-jobs-resume' },
   interrupted: { label: '继续生成', hook: 'data-people-jobs-resume' },
-  error: { label: '删除任务', hook: 'data-people-jobs-dismiss' },
+  // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
+  // 450 时这里只有「删除任务」，把用户逼到别的入口（详情头 / 数据源弹窗）去「重新画」，那才是重烧。
+  error: { label: '继续生成', hook: 'data-people-jobs-resume' },
   done: null,
 };
+
+/** 进度块动作：仅「接不上」的 error（漂移判废）才出「删除任务」——续跑必然再判废，删了重来才对 */
+function jobsActionOf(s: JobsBlockState): { label: string; hook: string } | null {
+  if (s.status === 'error' && s.resumable === false) return { label: '删除任务', hook: 'data-people-jobs-dismiss' };
+  return JOBS_ACTIONS[s.status];
+}
 
 /**
  * 进度块（面板头统计行下）：细进度条 + 引擎主文案 + 队列副文案 + 灰字说明 + 状态动作钮。
@@ -261,7 +272,7 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   block.appendChild(el('div', 'bz-people-jobs-main', text(s.message || jobsFallbackMessage(s.status, s.name))));
   block.appendChild(el('div', 'bz-people-jobs-queue', text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
   block.appendChild(el('div', 'bz-people-jobs-note', text('生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。')));
-  const action = JOBS_ACTIONS[s.status];
+  const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
   if (action) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
@@ -467,13 +478,30 @@ export interface FoldDetailOpts {
 export interface FoldDetailHeadOpts {
   /** 未生成脸谱 → 出「画脸谱」 */
   canGenerate: boolean;
+  /**
+   * 生成任务（issue 453）：有未完成任务时，工具条画笔钮改成「继续生成」（刷新图标 + 进度提示），
+   * 点它不再从第 1 批重烧——详情头本来就是把用户引向重烧的入口之一。
+   */
+  job?: FoldCardJob | null;
 }
 
-/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱/返回列表） */
+/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱 / 继续生成 / 返回列表） */
 export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
   const label = mediaLabel(media);
   const voice = media?.voiceCount ?? 0;
+  const job = opts.job && opts.job.status !== 'done' ? opts.job : null;
+  const action = job
+    ? iconButton('refresh-cw', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', {
+      'data-people-generate-one': '',
+      'aria-label': job.status === 'running' ? '正在生成' : '继续生成',
+      title: job.status === 'running'
+        ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部`
+        : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`,
+    })
+    : opts.canGenerate
+      ? iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })
+      : null;
   return el('div', 'bz-people-dt-head', [
     el('div', 'bz-people-dt-seal', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
     el('div', 'bz-people-dt-id', [
@@ -493,7 +521,7 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
       ? el('div', 'bz-people-dt-watermark', { title: '脸谱已提炼到这天的消息；之后的新消息再导入会增量补画' }, text(`已画到 ${formatDay(p.lastProcessedTs)}`))
       : el('div', 'bz-people-dt-watermark bz-people-dt-watermark-todo', text('未画脸谱')),
     el('div', 'bz-people-dt-actions', [
-      ...(opts.canGenerate ? [iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })] : []),
+      ...(action ? [action] : []),
       iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
     ]),
   ]);
@@ -611,8 +639,14 @@ export function foldChronicleBody(mdRoot: HTMLElement | null): HTMLElement[] {
 export function foldDataBody(card: HTMLElement | null, p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = [];
   if (card) out.push(card);
-  else if (p.imports.length) out.push(el('div', 'bz-people-empty-hint', text('这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。')));
-  else out.push(el('div', 'bz-people-empty-hint', text('还没有导入记录。')));
+  else if (p.imports.length) {
+    // 有导入记录但没有明细统计，分两种：合成记录（452 只带媒体三项，预览桶没算月度分布）→
+    // 画完脸谱落盘时才算得出来；真·旧版数据（无 stats）→ 再导一次即可（issue 454）
+    const poolOnly = p.imports.some((r) => r.stats && !r.stats.monthly?.length);
+    out.push(el('div', 'bz-people-empty-hint', { 'data-people-data-hint': '' }, text(poolOnly
+      ? '这些消息还没画过脸谱——画完脸谱后这里会有完整的互动统计（月度分布 / 回复时延 / 活跃时段）。'
+      : '这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。')));
+  } else out.push(el('div', 'bz-people-empty-hint', { 'data-people-data-hint': '' }, text('还没有导入记录。')));
   return out;
 }
 

@@ -131,6 +131,10 @@ export interface JobStartOptions {
   mode?: 'full' | 'incremental' | 'auto';
   /** 切批参数（缺省即 digest.DEFAULTS） */
   chunkOpts?: ChunkOptions;
+  /** 单批 AI 调用失败的重试上限（缺省 DEFAULT_MAX_RETRIES；0 = 不重试，测试用） */
+  maxRetries?: number;
+  /** 重试退避等待（缺省真实定时器；测试注入 no-op，避免空等） */
+  sleep?: (ms: number) => Promise<void>;
   /** AI 依赖注入（digest 同款；测试用假 ask。缺省 createAI()：提炼 .json / 画像 .chat 通道） */
   askExtract?: AskLLM;
   askPortrait?: AskLLM;
@@ -205,8 +209,31 @@ interface EngineState {
   queue: PersonJob[];
   /** 最近一次 startJobs / resumeJobs 注入的 AI 依赖（缺省 createAI()） */
   injected: { askExtract?: AskLLM; askPortrait?: AskLLM } | null;
+  /** 批级重试参数（startJobs 注入；缺省 DEFAULT_MAX_RETRIES + 真实退避） */
+  retry: RetryPolicy;
   runningJob: string | null;
   pauseRequested: boolean;
+}
+
+/** 批级重试策略：失败后按 RETRY_BACKOFF_MS 逐档退避再试（网络抖动 / 限流自愈） */
+interface RetryPolicy {
+  maxRetries: number;
+  sleep: (ms: number) => Promise<void>;
+}
+
+/** 缺省重试上限 = 2（即单批最多 3 次 AI 尝试）——issue 453：超大量任务不能因单批抖动整任务作废 */
+export const DEFAULT_MAX_RETRIES = 2;
+
+/** 退避梯度（毫秒）：第 1 次重试等 1s，第 2 次等 3s；超出档位沿用末档 */
+const RETRY_BACKOFF_MS = [1000, 3000];
+
+function realSleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** 用户取消（AbortError）不重试——重试是给可自愈失败用的，不是给主动收手用的 */
+function isAbortError(e: unknown): boolean {
+  return e instanceof Error && e.name === 'AbortError';
 }
 
 let st: EngineState | null = null;
@@ -262,6 +289,19 @@ function materialMessage(c: MaterialCounts): string {
   return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成画像`;
 }
 
+/** 批失败重试中：`第 30/47 批失败（<原因>）——正在重试 1/2…` */
+function batchRetryMessage(i: number, total: number, attempt: number, maxRetries: number, err: string): string {
+  return `第 ${i + 1}/${total} 批失败（${err}）——正在重试 ${attempt}/${maxRetries}…`;
+}
+
+/**
+ * 批失败终局（issue 453）：必须让用户知道**已完成的批次还在**——
+ * 450 的错误文案只说「第 N 批失败」，用户以为整张脸谱废了，于是重新点「画脸谱」从第 1 批重烧。
+ */
+function batchFailMessage(i: number, total: number, done: number, err: string): string {
+  return `第 ${i + 1}/${total} 批提炼失败：${err}；已完成 ${done}/${total} 批（点「继续生成」从这批重试，不会从头重烧）`;
+}
+
 // ---------------- 快照 / 订阅 ----------------
 
 export function snapshot(): JobsSnapshot {
@@ -308,25 +348,70 @@ async function persist(): Promise<void> {
 // ---------------- 启动 / 排队 ----------------
 
 /**
+ * 导入记录元数据（落 ImportRecord 所需）。新建与复用两条路径共用同一口径——
+ * 否则「续跑」任务写回的导入记录会缺条数 / 跨度。
+ */
+function importRecordOf(t: JobTarget, digestMsgs: UnifiedMessage[]): NonNullable<PersonJob['importRecord']> {
+  return {
+    fileLabel: t.fileLabel,
+    skippedCount: t.skippedCount ?? 0,
+    messageCount: digestMsgs.length,
+    timeFrom: new Date(t.msgs[0].ts).toISOString(),
+    timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString(),
+  };
+}
+
+/**
+ * 复用判定（issue 453）：旧任务的已完成批次能不能接上本次目标。
+ * 三项全同才算接得上——**指纹**（预览桶没动过）/ **模式**（提炼集口径一致）/**切批参数**
+ * （重切批边界一致，否则已完成批次对不上号）。只要没成果或已 done，就没有可继承的东西。
+ */
+function reusableJob(
+  prev: PersonJob,
+  fp: { msgCount: number; lastMsgKey: string },
+  mode: 'full' | 'incremental',
+  opts: Required<ChunkOptions>
+): boolean {
+  if (prev.status === 'done' || prev.batchesDone <= 0) return false;
+  if (prev.msgCount !== fp.msgCount || prev.lastMsgKey !== fp.lastMsgKey) return false;
+  if (prev.mode !== mode) return false;
+  const po = { ...DEFAULTS, ...prev.chunkOpts };
+  return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
+}
+
+/**
  * 排队生成（多人顺序跑）：逐人建任务（预切批元数据 + 进度说明）→ 立即返回，
- * 引擎后台顺序执行；每批完成原子落盘。返回排队 / 跳过名单（skip = 无新消息或无可提炼文本）。
+ * 引擎后台顺序执行；每批完成原子落盘。返回排队 / 跳过 / **续跑**名单
+ * （skip = 无新消息或无可提炼文本；resumed = 接了上次没跑完的任务，已完成批次不重烧）。
  * 想等整批跑完：`await startJobs(...); await whenIdle();`
  */
 export async function startJobs(
   app: unknown,
   targets: JobTarget[],
   opts: JobStartOptions = {}
-): Promise<{ queued: string[]; skipped: string[] }> {
+): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }> {
   if (!st) {
-    st = { app, store: new JobStore(app), queue: [], injected: null, runningJob: null, pauseRequested: false };
+    st = {
+      app,
+      store: new JobStore(app),
+      queue: [],
+      injected: null,
+      retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
+      runningJob: null,
+      pauseRequested: false,
+    };
   }
   st.app = app;
   st.store = new JobStore(app);
   st.injected = opts.askExtract || opts.askPortrait ? { askExtract: opts.askExtract, askPortrait: opts.askPortrait } : null;
+  // 重试策略：只在显式传入时覆盖（不传 = 沿用当前，缺省 DEFAULT_MAX_RETRIES + 真实退避）
+  if (opts.maxRetries !== undefined) st.retry.maxRetries = opts.maxRetries;
+  if (opts.sleep) st.retry.sleep = opts.sleep;
   const people = new PeopleStore(app);
   const entries = await people.list();
   const queued: string[] = [];
   const skipped: string[] = [];
+  const resumed: string[] = [];
   const chunkFull: Required<ChunkOptions> = { ...DEFAULTS, ...opts.chunkOpts };
   for (const t of targets) {
     const label = t.name || t.talker;
@@ -370,8 +455,33 @@ export async function startJobs(
       imageCount: stats.imageCount ?? 0,
     });
     const now = nowIso();
-    // 重复排队（上次没跑完 / 已完成重画）：一律替换为本次新任务
+    const prev = st.queue.find((j) => j.talker === t.talker);
     st.queue = st.queue.filter((j) => j.talker !== t.talker);
+    const importRecord = importRecordOf(t, digestMsgs);
+    const noteMaterial = {
+      mediaNote: mediaNote || undefined,
+      statsNote: t.insights ? buildStatsNote(t.insights) || undefined : undefined,
+    };
+    // 续跑而非重烧（issue 453 主修）：同人 + 预览桶未变 + 模式与切批参数一致 + 有已完成批次
+    // ⇒ 复用旧任务对象，保留 results / batchesDone（error / interrupted 后重新点「画脸谱」
+    // 走的正是这条——超大量人物唯一跑得完的方式；重建 = 从第 1 批重烧 AI）。
+    if (prev && reusableJob(prev, fp, effective, chunkFull)) {
+      Object.assign(prev, {
+        name: t.name,
+        fileLabel: t.fileLabel,
+        importRecord,
+        stats,
+        material: { ...(prev.material ?? { traits: [], moments: [] }), ...noteMaterial },
+        message: `继续生成：已完成 ${prev.batchesDone}/${prev.chunks.length} 批`,
+        status: 'paused' as JobStatus,
+        error: undefined,
+        updatedAt: now,
+      });
+      st.queue.push(prev);
+      queued.push(label);
+      resumed.push(label);
+      continue;
+    }
     st.queue.push({
       talker: t.talker,
       name: t.name,
@@ -388,17 +498,10 @@ export async function startJobs(
       material: {
         traits: [],
         moments: [],
-        mediaNote: mediaNote || undefined,
-        statsNote: t.insights ? buildStatsNote(t.insights) || undefined : undefined,
+        ...noteMaterial,
       },
       stats,
-      importRecord: {
-        fileLabel: t.fileLabel,
-        skippedCount: t.skippedCount ?? 0,
-        messageCount: digestMsgs.length,
-        timeFrom: new Date(t.msgs[0].ts).toISOString(),
-        timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString(),
-      },
+      importRecord,
       message: sampled
         ? sampledMessage(t.msgs.length, all.length, chunks.length, all[0].from, all[all.length - 1].to)
         : chunkedMessage(t.msgs.length, chunks.length, chunkFull),
@@ -412,7 +515,7 @@ export async function startJobs(
     emit();
   }
   kick();
-  return { queued, skipped };
+  return { queued, skipped, resumed };
 }
 
 /**
@@ -440,7 +543,15 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
       dirty = true;
     }
   }
-  st = { app, store, queue, injected: ai.askExtract || ai.askPortrait ? ai : null, runningJob: null, pauseRequested: false };
+  st = {
+    app,
+    store,
+    queue,
+    injected: ai.askExtract || ai.askPortrait ? ai : null,
+    retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
+    runningJob: null,
+    pauseRequested: false,
+  };
   runPromise = null;
   if (dirty) await store.write({ version: 1, queue });
   emit();
@@ -584,12 +695,31 @@ async function runJob(job: PersonJob): Promise<void> {
       const c = chunks[i];
       job.message = batchMessage(i + 1, total, c);
       emit(); // 批开始只推快照；落盘粒度 = 批完成
-      let result: BatchExtract;
-      try {
-        result = await extractBatch(asks.extract, c, job.name);
-      } catch (e) {
-        await finish({ status: 'error', error: errorMessage(e), message: `第 ${i + 1} 批提炼失败：${errorMessage(e)}` });
-        return;
+      // 批级重试（issue 453）：单批 AI 失败不再直接作废整个任务——抖动 / 限流按梯度退避再试，
+      // 重试期间推快照让用户看见「它在自愈」。退避等待里响应暂停（转 paused，批次断点保留）。
+      let result!: BatchExtract;
+      let attempt = 0;
+      for (;;) {
+        try {
+          result = await extractBatch(asks.extract, c, job.name);
+          break;
+        } catch (e) {
+          if (gone(job)) return;
+          const err = errorMessage(e);
+          if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
+            await finish({ status: 'error', error: err, message: batchFailMessage(i, total, job.batchesDone, err) });
+            return;
+          }
+          attempt += 1;
+          job.message = batchRetryMessage(i, total, attempt, st!.retry.maxRetries, err);
+          emit();
+          await st!.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
+          if (gone(job)) return;
+          if (st!.pauseRequested) {
+            await finish({ status: 'paused', message: `已暂停（${job.batchesDone}/${total} 批）` });
+            return;
+          }
+        }
       }
       if (gone(job)) return;
       job.results.push(result);

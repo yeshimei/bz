@@ -316,15 +316,21 @@ describe('progressBlock 状态机（450）', () => {
     expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe(long);
   });
 
-  it('暂停 / 中断出「继续生成」；error 出「删除任务」+ 错误说明；done 无动作钮', () => {
+  it('暂停 / 中断 / 可续 error 出「继续生成」；接不上的 error 出「删除任务」+ 错误说明；done 无动作钮', () => {
     const paused = progressBlock(state({ status: 'paused', message: '' }));
     expect(paused.querySelector('[data-people-jobs-resume]')!.textContent).toBe('继续生成');
     expect(paused.querySelector('.bz-people-jobs-main')!.textContent).toContain('已暂停');
     const interrupted = progressBlock(state({ status: 'interrupted', message: '' }));
     expect(interrupted.querySelector('[data-people-jobs-resume]')).toBeTruthy();
+    // issue 453：error 也能续跑（451 放宽 resume）——默认出「继续生成」，只有漂移判废（resumable:false）
+    // 才出「删除任务」（续跑必然再判废，删了重来才对）
     const err = progressBlock(state({ status: 'error', message: '', errorText: 'AI 调用超时' }));
-    expect(err.querySelector('[data-people-jobs-dismiss]')!.textContent).toBe('删除任务');
+    expect(err.querySelector('[data-people-jobs-resume]')!.textContent).toBe('继续生成');
+    expect(err.querySelector('[data-people-jobs-dismiss]')).toBeNull();
     expect(err.querySelector('.bz-people-jobs-err')!.textContent).toBe('AI 调用超时');
+    const dead = progressBlock(state({ status: 'error', message: '', errorText: '消息集已变化', resumable: false }));
+    expect(dead.querySelector('[data-people-jobs-dismiss]')!.textContent).toBe('删除任务');
+    expect(dead.querySelector('[data-people-jobs-resume]')).toBeNull();
     const done = progressBlock(state({ status: 'done', message: '', stagesDone: 2, batchesDone: 60 }));
     expect(done.querySelector('[data-people-jobs-pause]')).toBeNull();
     expect(done.querySelector('[data-people-jobs-resume]')).toBeNull();

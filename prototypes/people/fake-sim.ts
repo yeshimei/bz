@@ -18,6 +18,7 @@
 import { FakeApp } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { collectMediaStats } from '../../src/people/media';
 import { closePeoplePanel, isPeopleOpen, openDataSource, openPeoplePanel } from '../../src/people/ui';
 import { peopleSettingsSchema } from '../../src/people/settings';
 
@@ -187,17 +188,20 @@ function seedPreview(dsFiles: Record<string, string>): string {
 		}
 	};
 	const contacts: Record<string, unknown> = {};
+	/** 预览桶侧写统计与真实实现同源（collectMediaStats）——issue 454 的媒体数由它供数 */
 	const build = (name: string, take: number) => {
 		const raws = read(name).slice(0, take);
+		const msgs = raws.map((m) => ({
+			key: `s${m.sid}:${m.ct}`,
+			ts: (m.ct as number) * 1000,
+			isSender: m.who === '我',
+			text: String(m.msg ?? ''),
+		}));
+		const media = collectMediaStats(msgs);
 		contacts[name] = {
-			msgs: raws.map((m) => ({
-				key: `s${m.sid}:${m.ct}`,
-				ts: (m.ct as number) * 1000,
-				isSender: m.who === '我',
-				text: String(m.msg ?? ''),
-			})),
+			msgs,
 			watermarkSid: raws.length ? Math.max(...raws.map((m) => m.sid as number)) : 0,
-			stats: { msgCount: raws.length, voiceCount: 2, voiceTotalSec: 20, imageCount: 1 },
+			stats: { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount },
 			updatedAt: '2026-03-12T21:00:00.000Z',
 		};
 	};

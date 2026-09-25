@@ -444,10 +444,16 @@ async function generateFromDs(): Promise<void> {
  * 详情 / 卡面「画脸谱」（448 仅未生成时出；451 卡上印章的「画脸谱 / 补画」也走这里）：
  * 用预览桶里该人物的消息素材单人生成，交引擎后台跑，进度走面板进度块。
  * 还没有预览素材时提示先走数据源导入。
+ *
+ * issue 453：**先看有没有可续任务**——中断 / 失败 / 暂停的人直接续跑，绝不走 startJobs。
+ * 这是覆盖所有入口的那道闸（详情头按钮、印章的「画脸谱 / 补画」都从这里出去）：error 态下
+ * `jobsBusy()` 为 false，过去会一路走到 startJobs 的整体替换 = 从第 1 批重烧 AI。
+ * `force` 供「重新生成」用（消息集已变、断点接不上时，用户明确要求从头重画）。
  */
-async function generateOne(id?: string): Promise<void> {
+async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise<void> {
   const name = id ?? detailId;
   if (!store || !name) return;
+  if (!opts.force && resumeExisting(name)) return;
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   let target: GenTarget | null = null;
   try {
@@ -468,6 +474,22 @@ async function generateOne(id?: string): Promise<void> {
   }
   if (!target) { notice('还没有可画的消息素材——点右上「数据源」导入后再画', 'warning'); return; }
   await startGeneration([target]);
+}
+
+/**
+ * 该人有未完成任务（非 running / 非 done）就直接续跑，返回是否接手（issue 453）。
+ * `resume` 不受理 = 漂移判废（消息集已变，断点接不上）——**不偷偷重烧**：
+ * 明确告知，要重来由用户点印章上的「重新生成」（那条路带 force）。
+ */
+function resumeExisting(name: string): boolean {
+  const pending = (jobsCache?.queue ?? []).find((j) => j.talker === name);
+  if (!pending || pending.status === 'running' || pending.status === 'done') return false;
+  if (jobs().resume(name)) {
+    notice(`「${name}」从第 ${pending.batchesDone + 1} 批继续——已完成的 ${pending.batchesDone} 批不重画`, 'info');
+    return true;
+  }
+  notice(`「${name}」的消息集已变，断点接不上——点印章上的「重新生成」会从头重画`, 'warning');
+  return true;
 }
 
 // ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
@@ -492,7 +514,7 @@ export interface GenTarget {
  * （测试域避免 vi.mock，与 obsidian alias 同一思路：注入缝比模块 mock 稳）。
  */
 export interface JobsApi {
-  startJobs(app: unknown, targets: JobTarget[], opts?: JobStartOptions): Promise<{ queued: string[]; skipped: string[] }>;
+  startJobs(app: unknown, targets: JobTarget[], opts?: JobStartOptions): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }>;
   /** 读 people-jobs.json 重建队列；崩溃遗留 running → interrupted（本会话只调一次） */
   resumeJobs(app: unknown): Promise<void>;
   /** 从断点继续指定人物（已完成批次不重烧） */
@@ -585,14 +607,18 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
     jobsPersisted.delete(t.talker); // 同人重新生成：上一次的落盘幂等标记不复用
   }
   let engineSkipped = 0;
+  let resumed: string[] = [];
   if (runnable.length) {
     const res = await jobs().startJobs(getApp(), runnable, {}); // mode 缺省 auto：引擎逐人按增量计划判定
     engineSkipped = res.skipped.length;
+    resumed = res.resumed ?? [];
     await ensureJobsWatch();
   }
   const started = runnable.length - engineSkipped;
+  const fresh = Math.max(0, started - resumed.length);
   const parts: string[] = [];
-  if (started > 0) parts.push(`已开始生成 ${started} 张脸谱（后台进行，可关面板）`);
+  if (fresh > 0) parts.push(`已开始生成 ${fresh} 张脸谱（后台进行，可关面板）`);
+  if (resumed.length) parts.push(`${resumed.join('、')} 接着上次没画完的批次继续（已完成的不重烧）`);
   if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
   if (parts.length) notice(parts.join('，'), 'success');
   renderJobs();
@@ -731,7 +757,13 @@ function toBlockState(job: JobView): JobsBlockState {
     queueIndex: job.queueIndex ?? pos + 1,
     queueTotal: job.queueTotal ?? queue.length,
     errorText: job.error,
+    resumable: isResumable(job),
   };
+}
+
+/** 失败态能否断点续跑（issue 453）：漂移判废（消息集已变）接不上——印章与进度块共用同一判定 */
+function isResumable(job: JobView): boolean {
+  return job.error !== jobsApi.DRIFT_ERROR;
 }
 
 /** 有无活跃任务（运行中 / 排队或已暂停）：数据源导入类守卫用它（导入会动预览桶 → 指纹漂移判废） */
@@ -784,7 +816,7 @@ function sealJobOf(job: JobView | undefined): FoldCardJob | null {
     batchesTotal: job.batchesTotal ?? job.chunks?.length ?? 0,
     stagesDone: jobsStagesDone(job.stage, job.status),
     // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
-    resumable: job.error !== jobsApi.DRIFT_ERROR,
+    resumable: isResumable(job),
   };
 }
 
@@ -815,11 +847,17 @@ async function sealAction(kind: string, id: string): Promise<void> {
     return;
   }
   if (kind === 'resume') {
-    if (!api.resume(id)) { notice('这个任务接不上了，请重新生成', 'info'); return; }
-    notice('继续生成——已完成的批次不重画', 'info');
+    const pending = (jobsCache?.queue ?? []).find((j) => j.talker === id);
+    if (!api.resume(id)) { notice('这个任务接不上了，请点「重新生成」', 'info'); return; }
+    notice(pending
+      ? `「${id}」从第 ${pending.batchesDone + 1} 批继续——已完成的 ${pending.batchesDone} 批不重画`
+      : '继续生成——已完成的批次不重画', 'info');
     return;
   }
-  if (kind === 'draw' || kind === 'redraw') await generateOne(id);
+  // draw（未画谱）/ redraw（补画 · 重新生成）都走 generateOne：它内部先认可续任务；
+  // redraw 带 force 才能越过那道闸——漂移判废时用户要的正是从头重画（印章文案也这么说）
+  if (kind === 'draw') await generateOne(id);
+  else if (kind === 'redraw') await generateOne(id, { force: true });
 }
 
 // ---------------- 事件委托 ----------------
@@ -1013,6 +1051,14 @@ function poolRecord(id: string, contact: PreviewContact | undefined): ImportReco
     skippedCount: 0,
     timeFrom: new Date(msgs[0].ts).toISOString(),
     timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
+    // issue 454：媒体计数取预览桶侧写（导入时从原始消息算的，语音总时长只有它知道）——
+    // 缺了它，合成卡与详情头的「语音 / 图片」永远是「—」（大琳 1289 条语音 / 1615 张图看不见）。
+    // 只带媒体三项：月度 / 时段明细预览桶没有，不在这编造——「数据」折见无 monthly 即出占位。
+    stats: {
+      voiceCount: contact.stats?.voiceCount ?? 0,
+      voiceTotalSec: contact.stats?.voiceTotalSec ?? 0,
+      imageCount: contact.stats?.imageCount ?? 0,
+    },
   };
 }
 
@@ -1107,7 +1153,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body); return; }
   const media = personMedia(p);
-  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest }));
+  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)) }));
 
   // 五折：展开折渲染正文，收起折只渲染竖排引文
   const spillOf = (md: string): string => {
@@ -1158,25 +1204,31 @@ async function renderDetail(body: HTMLElement): Promise<void> {
 
 // ---------------- 互动数据（issue 440：纯本地统计展示；447 收进「数据」折） ----------------
 
-/** 数据折互动卡：只展示最近一次导入的统计；旧数据无 stats 时返回 null（foldDataBody 出占位） */
+/**
+ * 数据折互动卡：只展示最近一次导入的统计。
+ * 判定口径是**有没有明细**（monthly），不是「有没有 stats」——452 的合成记录只带媒体三项
+ * （issue 454：给详情头 / 卡面徽章供数），拿它画统计卡会得到一张全 0 的空卡，比占位更糟。
+ */
 function buildInsightsCard(p: PersonEntry): HTMLElement | null {
   if (!p.imports.length) return null;
   const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
-  if (!latest.stats) return null;
   const s = latest.stats;
+  if (!s?.monthly?.length) return null;
   const totalMsg = s.monthly.reduce((a, [, n]) => a + n, 0);
   const rows = document.createElement('div');
   rows.className = 'bz-people-ins-rows';
   // 谁主动：会话发起占比条 + 数字
-  const initiated = s.initiatedByMe + s.initiatedByOther;
+  const byMe = s.initiatedByMe ?? 0;
+  const byOther = s.initiatedByOther ?? 0;
+  const initiated = byMe + byOther;
   rows.appendChild(insRow('谁主动', initiated
-    ? duoBar(Math.round((s.initiatedByMe / initiated) * 100), Math.round((s.initiatedByOther / initiated) * 100))
-    : duoBar(0, 0), initiated ? `我 ${s.initiatedByMe} · 对方 ${s.initiatedByOther}` : '暂无会话'));
+    ? duoBar(Math.round((byMe / initiated) * 100), Math.round((byOther / initiated) * 100))
+    : duoBar(0, 0), initiated ? `我 ${byMe} · 对方 ${byOther}` : '暂无会话'));
   // 回复时延（issue 449）：优先中位数（更抗刷屏失真），旧数据无中位数字段回落平均
   rows.appendChild(insRow('回复时延', '', `我 ${formatReplySec(replyLatencySec(s.myMedianReplySec, s.myAvgReplySec))} · 对方 ${formatReplySec(replyLatencySec(s.otherMedianReplySec, s.otherAvgReplySec))}`));
   // 活跃时段：双方合计的 24 小时分布
-  const hourly = s.myHourly.map((n, i) => n + (s.otherHourly[i] ?? 0));
-  const max = Math.max(...hourly);
+  const hourly = (s.myHourly ?? []).map((n, i) => n + (s.otherHourly?.[i] ?? 0));
+  const max = hourly.length ? Math.max(...hourly) : 0;
   const total = hourly.reduce((a, n) => a + n, 0);
   const strip = el('div', 'bz-people-strip', hourly.map((n, i) => {
     const h = max > 0 && n > 0 ? Math.max(Math.round((n / max) * 100), 6) : 0;
@@ -1184,7 +1236,7 @@ function buildInsightsCard(p: PersonEntry): HTMLElement | null {
   }));
   rows.appendChild(insRow('活跃时段', strip, total ? `峰值 ${hourly.indexOf(max)} 点` : '—'));
   // 形态占比
-  const kinds = Object.entries(s.kindCounts).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const kinds = Object.entries(s.kindCounts ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
   if (kinds.length) rows.appendChild(insRow('消息形态', kindChips(kinds), ''));
   return insightsCard(importMeta(latest, totalMsg), latest.file, monthlyChart(s.monthly), rows);
 }
