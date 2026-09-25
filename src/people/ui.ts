@@ -14,6 +14,8 @@
  * 重开面板 snapshot+resume 渲染当前任务态，中断任务出「继续生成」。
  * 451：折子封面卡的印章升级为四态（未画谱 / 画谱中 / 画谱中断 / 已画谱）且本身就是动作入口
  * （画脸谱 / 暂停 / 继续生成 / 补画），快照每帧原位只换印章节点。
+ * 452：墙成员 = 人物卡 ∪ 预览桶联系人——「导入过预览但没画过」的人也要以「待画」折子上墙
+ * （合成占位卡纯内存零写盘；占位卡上写档案 / 随手记前先 ensureEntry 落一张空卡）。
  */
 import { notice, notifyActionError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
@@ -38,6 +40,7 @@ import {
   previewToUnified,
   readContactBundle,
   type PreviewContact,
+  type PreviewData,
   type PreviewStats,
 } from './datasource';
 import {
@@ -184,6 +187,7 @@ export function closePeoplePanel(): void {
   detailFold = 'p';
   stage = 'list';
   listCache = [];
+  previewCache = null; // 452：预览桶缓存随面板关闭失效（下次打开重读，导入在别的会话改过也能看到）
   mergeFromId = null;
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
@@ -388,6 +392,7 @@ async function importDsSelected(): Promise<void> {
     return;
   }
   dsImporting = false;
+  previewCache = null; // 452：预览桶已变——刚导入的人立刻以「待画」折子上墙
   const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
   const summary = `已导入预览（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
@@ -977,8 +982,76 @@ function renderDsLayer(): void {
 
 // ---------------- 列表（折子封面墙） ----------------
 
-async function renderList(body: HTMLElement): Promise<void> {
+/** 预览桶会话缓存（issue 452：墙要预览桶算素材水位；18k 条的桶每次切视图重读会卡） */
+let previewCache: PreviewData | null = null;
+
+/** 预览桶读取（缓存到「导入预览成功」「关闭面板」失效；读不到按空桶兜底，照常出已有卡） */
+async function previewData(): Promise<PreviewData> {
+  if (previewCache) return previewCache;
+  try {
+    previewCache = await new PreviewStore(getApp()).read();
+  } catch (e) {
+    console.warn('[people] 读取预览桶失败:', e);
+    previewCache = { version: 1, contacts: {} };
+  }
+  return previewCache;
+}
+
+/**
+ * 预览桶素材 → 合成导入记录（issue 452）：条数 / 首尾跨度取预览桶口径——这就是「已经导入了什么」
+ * 的真实写照，让统计行、折子卡、详情头三处口径自动一致。无素材返回 null（清空后的残留桶不建占位卡）。
+ * 合成记录**只喂渲染**：写入路径全走 PeopleStore.mutate（读盘上数据），不会落盘。
+ */
+function poolRecord(id: string, contact: PreviewContact | undefined): ImportRecord | null {
+  if (!contact) return null;
+  const msgs = contact.msgs ?? [];
+  if (!msgs.length) return null;
+  return {
+    file: `数据源:${id}`,
+    importedAt: contact.updatedAt || new Date(msgs[msgs.length - 1].ts).toISOString(),
+    messageCount: msgs.length,
+    skippedCount: 0,
+    timeFrom: new Date(msgs[0].ts).toISOString(),
+    timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
+  };
+}
+
+/**
+ * 墙上人员 = 人物卡 ∪ 预览桶联系人（issue 452）。
+ * 447 定的「导入所选只进预览」、「画脸谱」才建卡，会让「导入了预览但没画过」的人在面板上彻底不可见
+ * （452 实例：大琳 18477 条只在预览桶里）。这里给无卡者合成一张占位卡——**纯内存，people.json 不动**。
+ * 卡上已有导入记录时不覆盖（那时的「预览桶更新」归数据源弹窗的「有更新」水位管）。
+ */
+async function wallPeople(): Promise<PersonEntry[]> {
   const people = store ? await store.list() : [];
+  const contacts = (await previewData()).contacts ?? {};
+  const out: PersonEntry[] = people.map((p) => {
+    const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
+    return rec ? { ...p, imports: [rec] } : p;
+  });
+  const known = new Set(people.map((p) => p.id));
+  for (const [id, contact] of Object.entries(contacts)) {
+    if (known.has(id)) continue;
+    const rec = poolRecord(id, contact);
+    if (!rec) continue;
+    out.push({ id, name: id, createdAt: rec.importedAt, imports: [rec] });
+  }
+  return out;
+}
+
+/**
+ * 占位卡写入前兜底（issue 452）：PeopleStore.mutate 对盘上不存在的 id 抛「人物不存在」，
+ * 所以在占位卡上写档案 / 随手记前先落一张空卡（真卡由此诞生，之后画脸谱正常接上）。
+ */
+async function ensureEntry(id: string): Promise<void> {
+  if (!store || !id) return;
+  if ((await store.list()).some((p) => p.id === id)) return;
+  const name = listCache.find((x) => x.id === id)?.name ?? id;
+  await store.upsert({ id, name, createdAt: new Date().toISOString(), imports: [] });
+}
+
+async function renderList(body: HTMLElement): Promise<void> {
+  const people = await wallPeople();
   const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
   if (statsEl) statsEl.textContent = statsText(people);
   listCache = people;
@@ -1027,7 +1100,7 @@ function disarmDelete(): void {
 // ---------------- 详情（折页册） ----------------
 
 async function renderDetail(body: HTMLElement): Promise<void> {
-  const people = store ? await store.list() : [];
+  const people = await wallPeople();
   const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
   if (statsEl) statsEl.textContent = statsText(people);
   const p = people.find((x) => x.id === detailId);
@@ -1202,6 +1275,7 @@ function addTagChip(): void {
 /** 读编辑卡全量输入 → updateProfile；整卡为空 = 清档案（落盘 undefined） */
 async function saveProfile(): Promise<void> {
   if (!store || !detailId || !overlay) return;
+  await ensureEntry(detailId); // 452：占位卡（预览桶合成，盘上还没卡）先落一张空卡
   const val = (sel: string) => overlay!.querySelector<HTMLInputElement>(sel)?.value?.trim() ?? '';
   const rows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
   const socials = rows
@@ -1250,6 +1324,7 @@ async function saveManualNote(): Promise<void> {
   if (!summary) { notice('随手记还没写内容', 'warning'); return; }
   const ts = overlay.querySelector<HTMLInputElement>('[data-people-note-date]')?.value?.trim() || todayStr();
   try {
+    await ensureEntry(detailId); // 452：占位卡先落一张空卡，再记（mutate 对不存在的 id 会抛）
     await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: new Date().toISOString() });
     noteAddId = null;
     notice('已记一笔', 'success');

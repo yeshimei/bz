@@ -1,0 +1,166 @@
+/**
+ * 封面墙成员口径测试（issue 452）：墙 = 人物卡 ∪ 预览桶联系人。
+ * 522 的实例是「导入所选只进预览」（447）导致「导入了预览但没画过」的人在面板上彻底不可见
+ * （真实数据：大琳 18477 条只在 people-preview.json 里）——本轮给无卡者合成内存占位卡，
+ * 并对占位卡上的档案 / 随手记写入做「先建空卡」兜底。
+ * 引擎用假件注入（setJobsModuleForTests）；数据全构造。
+ */
+// @vitest-environment jsdom
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
+import { MockVault } from '../mock-vault';
+import { makeApp } from '../helpers/app';
+import { setApp, getApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { closePeoplePanel, openPeoplePanel, setJobsModuleForTests, type JobsApi } from '../../src/people/ui';
+import { getPeopleFilePath } from '../../src/people/data';
+import { getPreviewFilePath } from '../../src/people/datasource';
+import type { PersonEntry } from '../../src/people/types';
+
+const T0 = new Date('2026-09-25T08:00:00').getTime();
+const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
+const disk = (vault: MockVault): { people: PersonEntry[] } =>
+  JSON.parse(vault.files.get(getPeopleFilePath()) ?? '{ "people": [] }');
+
+function click(sel: string): void {
+  document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
+/** 空引擎：只记调用（本轮测的是墙，不测生成） */
+class FakeEngine implements JobsApi {
+  calls = { start: [] as unknown[], pause: 0, resume: [] as string[], remove: [] as string[] };
+  startJobs = async (_app: unknown, targets: unknown[]): Promise<{ queued: string[]; skipped: string[] }> => {
+    this.calls.start.push(targets);
+    return { queued: [], skipped: [] };
+  };
+  resumeJobs = async (): Promise<void> => undefined;
+  resume = (t: string): boolean => { this.calls.resume.push(t); return true; };
+  pauseJobs = (): void => { this.calls.pause++; };
+  removeJob = (): boolean => false;
+  subscribe = (): (() => void) => () => undefined;
+  snapshot = () => ({ queue: [], currentIndex: -1, running: false });
+}
+
+/** 预览桶种子（某人的素材：条数 / 首尾跨度即卡面水位口径） */
+function seedPreview(vault: MockVault, id: string, count: number, updatedAt = '2026-09-25T08:00:00.000Z'): void {
+  const raw = vault.files.get(getPreviewFilePath());
+  const data = raw ? JSON.parse(raw) : { version: 1, contacts: {} };
+  data.contacts[id] = {
+    msgs: Array.from({ length: count }, (_, i) => ({ key: `s${i}`, ts: T0 + i * 60_000, isSender: i % 2 === 1, text: `构造消息${i}` })),
+    watermarkSid: count,
+    stats: { msgCount: count, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+    updatedAt,
+  };
+  vault.files.set(getPreviewFilePath(), JSON.stringify(data));
+}
+
+const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-card="${id}"]`);
+const cardMeta = (id: string): string => card(id)!.querySelector('.bz-people-fold-meta')!.textContent!;
+const cardWho = (id: string): string => card(id)!.querySelector('.bz-people-fold-who')!.textContent!;
+const cardSeal = (id: string): string => card(id)!.querySelector('.bz-people-seal')!.textContent!;
+
+function entry(over: Partial<PersonEntry> = {}): PersonEntry {
+  return { id: '莫莫', name: '莫莫', createdAt: '2026-09-25T02:57:37.341Z', imports: [], ...over };
+}
+
+async function boot(seed?: PersonEntry[]): Promise<MockVault> {
+  const vault = new MockVault();
+  vault.files.set(getPeopleFilePath(), JSON.stringify({ version: 1, people: seed ?? [] }));
+  vault.files.set(getPreviewFilePath(), JSON.stringify({ version: 1, contacts: {} }));
+  setApp(makeApp(vault));
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
+  return vault;
+}
+
+beforeEach(() => {
+  resetObsidianMocks();
+  document.body.innerHTML = '';
+  setJobsModuleForTests(new FakeEngine());
+});
+
+afterEach(() => {
+  try { closePeoplePanel(); } catch { /* 幂等 */ }
+  setJobsModuleForTests(null);
+});
+
+describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
+  it('预览桶有素材、people.json 没卡 → 上墙为「待画」折子，条数与跨度取预览桶口径', async () => {
+    const vault = await boot([entry({ imports: [{ file: '数据源:莫莫', importedAt: '2026-09-25T02:57:37.341Z', messageCount: 126, skippedCount: 0, timeFrom: '2026-03-03T17:55:24.000Z', timeTo: '2026-03-27T12:58:06.000Z' }] })]);
+    seedPreview(vault, '大琳', 3);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+
+    expect(card('大琳')!.querySelector('.bz-people-seal')!.textContent).toBe('待画'); // 451 四态的未画谱
+    expect(cardMeta('大琳')).toBe('3 条'); // 预览桶口径，不是「尚无消息」
+    expect(cardMeta('莫莫')).toBe('126 条'); // 有卡者走导入记录口径
+    expect(document.querySelectorAll('[data-people-card]')).toHaveLength(2);
+  });
+
+  it('只看不写：合成卡不进 people.json（合成导入记录只喂渲染）', async () => {
+    const vault = await boot();
+    seedPreview(vault, '大琳', 5);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+    await tick();
+    expect(disk(vault).people).toEqual([]); // 盘上零变更
+    expect(cardWho('大琳')).toBe('2026-09 ~ 2026-09'); // 跨度来自预览桶首尾
+  });
+
+  it('有卡但还没有导入记录（手写档案建的卡）→ 卡面水位用预览桶兜底', async () => {
+    const vault = await boot([entry({ id: '大琳', name: '大琳' })]);
+    seedPreview(vault, '大琳', 7);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+    expect(cardMeta('大琳')).toBe('7 条');
+    expect(document.querySelectorAll('[data-people-card]')).toHaveLength(1); // 不重复出卡
+  });
+
+  it('预览桶无素材的残留桶不建占位卡；读不到预览桶照常出已有卡', async () => {
+    const vault = await boot([entry()]);
+    vault.files.set(getPreviewFilePath(), JSON.stringify({
+      version: 1,
+      contacts: { 空桶: { msgs: [], watermarkSid: 0, stats: { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '2026-09-25T00:00:00.000Z' } },
+    }));
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
+    expect(card('空桶')).toBeNull();
+    expect(document.querySelectorAll('[data-people-card]')).toHaveLength(1);
+  });
+
+  it('点占位卡的印章「待画」→ 用预览桶素材交引擎画脸谱（451 × 452 接上）', async () => {
+    const vault = await boot();
+    seedPreview(vault, '大琳', 4);
+    const engine = new FakeEngine();
+    setJobsModuleForTests(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+
+    click('[data-people-card="大琳"] [data-people-seal-act="draw"]');
+    await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
+    const targets = engine.calls.start[0] as Array<{ talker: string; msgs: unknown[] }>;
+    expect(targets[0].talker).toBe('大琳');
+    expect(targets[0].msgs).toHaveLength(4);
+  });
+
+  it('在占位卡上存档案：先落一张空卡再写，不抛「人物不存在」', async () => {
+    const vault = await boot();
+    seedPreview(vault, '大琳', 3);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
+
+    click('[data-people-card="大琳"]'); // 进详情
+    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf-head="f"]')).toBeTruthy());
+    click('[data-people-leaf-head="f"]'); // 展开「档案」折
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-new]')).toBeTruthy()); // 无档案 → 补档入口
+    click('[data-people-prof-new]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-save]')).toBeTruthy());
+    document.querySelector<HTMLInputElement>('[data-people-prof-field="job"]')!.value = '插画师';
+    click('[data-people-prof-save]');
+    await vi.waitFor(() => expect(disk(vault).people.some((p) => p.id === '大琳')).toBe(true));
+
+    const saved = disk(vault).people.find((p) => p.id === '大琳')!;
+    expect(saved.profile!.job).toBe('插画师');
+    expect(saved.imports).toEqual([]); // 合成导入记录不落盘
+    expect(getNoticeMessages().some((m) => m.includes('档案已保存'))).toBe(true);
+  });
+});

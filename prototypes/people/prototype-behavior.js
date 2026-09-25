@@ -1,4 +1,4 @@
-/* 源指纹 1ef5255fcef54cf3 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5292b05398a9116b · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -7692,6 +7692,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     detailFold = "p";
     stage = "list";
     listCache = [];
+    previewCache = null;
     mergeFromId = null;
     mergeToId = null;
     profEditId = null;
@@ -7796,7 +7797,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const includeGroups = ((_a = tryGetSettings()) == null ? void 0 : _a.peopleIncludeGroups) === true;
       const opts = normalizeOptionsFromSettings();
       const previewStore = new PreviewStore(getApp());
-      const [previewData, people] = await Promise.all([previewStore.read(), store.list()]);
+      const [previewData2, people] = await Promise.all([previewStore.read(), store.list()]);
       for (const name of dirNames) {
         if (!overlay) return;
         const bundle = readContactBundle(dataDir, name);
@@ -7807,7 +7808,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const pv = previewData.contacts[name];
+        const pv = previewData2.contacts[name];
         const keys = new Set(((_b = pv == null ? void 0 : pv.msgs) != null ? _b : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
@@ -7882,6 +7883,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     dsImporting = false;
+    previewCache = null;
     const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
     const summary = `已导入预览（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
     dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
@@ -7902,9 +7904,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const targets = [];
     try {
-      const previewData = await new PreviewStore(getApp()).read();
+      const previewData2 = await new PreviewStore(getApp()).read();
       for (const name of names) {
-        const pv = previewData.contacts[name];
+        const pv = previewData2.contacts[name];
         if (!(pv == null ? void 0 : pv.msgs.length)) continue;
         targets.push({
           talker: name,
@@ -8430,9 +8432,58 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     layer.replaceChildren();
     if (dsOpen) layer.appendChild(dsModal(dsModalState()));
   }
-  async function renderList(body) {
+  var previewCache = null;
+  async function previewData() {
+    if (previewCache) return previewCache;
+    try {
+      previewCache = await new PreviewStore(getApp()).read();
+    } catch (e) {
+      console.warn("[people] 读取预览桶失败:", e);
+      previewCache = { version: 1, contacts: {} };
+    }
+    return previewCache;
+  }
+  function poolRecord(id, contact) {
+    var _a;
+    if (!contact) return null;
+    const msgs = (_a = contact.msgs) != null ? _a : [];
+    if (!msgs.length) return null;
+    return {
+      file: `数据源:${id}`,
+      importedAt: contact.updatedAt || new Date(msgs[msgs.length - 1].ts).toISOString(),
+      messageCount: msgs.length,
+      skippedCount: 0,
+      timeFrom: new Date(msgs[0].ts).toISOString(),
+      timeTo: new Date(msgs[msgs.length - 1].ts).toISOString()
+    };
+  }
+  async function wallPeople() {
     var _a;
     const people = store ? await store.list() : [];
+    const contacts = (_a = (await previewData()).contacts) != null ? _a : {};
+    const out = people.map((p) => {
+      const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
+      return rec ? { ...p, imports: [rec] } : p;
+    });
+    const known = new Set(people.map((p) => p.id));
+    for (const [id, contact] of Object.entries(contacts)) {
+      if (known.has(id)) continue;
+      const rec = poolRecord(id, contact);
+      if (!rec) continue;
+      out.push({ id, name: id, createdAt: rec.importedAt, imports: [rec] });
+    }
+    return out;
+  }
+  async function ensureEntry(id) {
+    var _a, _b;
+    if (!store || !id) return;
+    if ((await store.list()).some((p) => p.id === id)) return;
+    const name = (_b = (_a = listCache.find((x) => x.id === id)) == null ? void 0 : _a.name) != null ? _b : id;
+    await store.upsert({ id, name, createdAt: (/* @__PURE__ */ new Date()).toISOString(), imports: [] });
+  }
+  async function renderList(body) {
+    var _a;
+    const people = await wallPeople();
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     listCache = people;
@@ -8485,7 +8536,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   async function renderDetail(body) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
-    const people = store ? await store.list() : [];
+    const people = await wallPeople();
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     const p = people.find((x) => x.id === detailId);
@@ -8631,6 +8682,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   async function saveProfile() {
     if (!store || !detailId || !overlay) return;
+    await ensureEntry(detailId);
     const val = (sel) => {
       var _a, _b, _c;
       return (_c = (_b = (_a = overlay.querySelector(sel)) == null ? void 0 : _a.value) == null ? void 0 : _b.trim()) != null ? _c : "";
@@ -8687,6 +8739,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const ts = ((_e = (_d = overlay.querySelector("[data-people-note-date]")) == null ? void 0 : _d.value) == null ? void 0 : _e.trim()) || todayStr();
     try {
+      await ensureEntry(detailId);
       await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: (/* @__PURE__ */ new Date()).toISOString() });
       noteAddId = null;
       notice("已记一笔", "success");
@@ -8961,12 +9014,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
             timeFrom: iso("2026-03-01T00:00:00"),
             timeTo: iso("2026-03-01T00:00:00")
           }]
-        },
-        {
-          id: "苏黎",
-          name: "苏黎",
-          createdAt: iso("2026-03-22T10:00:00"),
-          imports: []
         }
       ]
     });
@@ -9000,6 +9047,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     build("陈默", Math.max(0, read("陈默").length - 12));
     build("林晚", read("林晚").length);
     build("周远山", read("周远山").length);
+    build("苏黎", read("苏黎").length);
     return JSON.stringify({ version: 1, contacts });
   }
   function buildDsFiles() {

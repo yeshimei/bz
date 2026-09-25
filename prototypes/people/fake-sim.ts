@@ -101,7 +101,11 @@ function months(count: number, base: number, drift: number): Array<[string, numb
 	return out;
 }
 
-/** people.json 种子（六位，覆盖真实形态：大量级 / 中位小量级 / 零媒体 / 数字名 / 超长名 / 线稿） */
+/**
+ * people.json 种子（五位，覆盖真实形态：大量级 / 中位小量级 / 零媒体 / 数字名 / 超长名）。
+ * issue 452：原「苏黎 empty 卡」改成**只在预览桶、没有卡**（seedPreview 里建）——
+ * 正是真实数据里大琳的处境（导入过预览但没画过），墙成员 = 卡 ∪ 预览桶的合成路径靠它评审。
+ */
 function seedPeople(): string {
 	const iso = (s: string) => new Date(s).toISOString();
 	return JSON.stringify({
@@ -169,15 +173,11 @@ function seedPeople(): string {
 					timeFrom: iso('2026-03-01T00:00:00'), timeTo: iso('2026-03-01T00:00:00'),
 				}],
 			},
-			{
-				id: '苏黎', name: '苏黎', createdAt: iso('2026-03-22T10:00:00'),
-				imports: [],
-			},
 		],
 	});
 }
 
-/** people-preview.json 种子：陈默（比构造目录少 12 条 → 有更新）/ 林晚（同量 → 无更新）/ 周远山（已导未画） */
+/** people-preview.json 种子：陈默（比构造目录少 12 条 → 有更新）/ 林晚（同量 → 无更新）/ 周远山（已导未画）/ 苏黎（只在桶里、没卡 → 452 上墙） */
 function seedPreview(dsFiles: Record<string, string>): string {
 	const read = (name: string): Array<Record<string, unknown>> => {
 		try {
@@ -204,6 +204,7 @@ function seedPreview(dsFiles: Record<string, string>): string {
 	build('陈默', Math.max(0, read('陈默').length - 12));
 	build('林晚', read('林晚').length);
 	build('周远山', read('周远山').length);
+	build('苏黎', read('苏黎').length); // 452：只在预览桶里、people.json 没有卡 → 应由墙合成「待画」折子
 	return JSON.stringify({ version: 1, contacts });
 }
 
