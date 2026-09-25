@@ -15,6 +15,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   closePeoplePanel,
   isPeopleOpen,
+  mergedMonthlyOf,
   openPeoplePanel,
   setJobsModuleForTests,
   startGeneration,
@@ -60,8 +61,8 @@ function meta(from = '2026-09-01', to = '2026-09-30', count = 397) {
   return { from, to, count };
 }
 
-/** 构造引擎任务（PersonJob 必填面 + 常用可选项） */
-function fakeJob(over: Partial<PersonJob> = {}): PersonJob {
+/** 构造引擎任务（PersonJob 必填面 + 常用可选项；person / bond 是新引擎双卷字段——worktree 内 jobs.ts 尚为旧版，形状先于实现） */
+function fakeJob(over: Partial<PersonJob> & { person?: string; bond?: string } = {}): PersonJob {
   return {
     talker: 'wxid_a',
     name: '陈默',
@@ -171,7 +172,7 @@ describe('开面板恢复任务态（450 状态恢复）', () => {
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(engine.calls.resumeJobs).toBe(1); // 每会话只重建一次
     expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
-    expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%'); // 12/62
+    expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%'); // 12/63（455 三段成文分母 +3）
     expect(document.querySelector('.bz-people-jobs-queue')!.textContent).toBe('（2/3 人）当前：大琳');
     expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy();
   });
@@ -206,9 +207,9 @@ describe('订阅驱动渲染（450 后台化）', () => {
     await tick();
     engine.push([fakeJob({ batchesDone: 1, chunks: [meta(), meta()], message: '第 1/2 批 · 2026-01-01 ~ 2026-06-30 · 400 条' })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
-    expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('25%'); // 1/4
+    expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('20%'); // 1/5（455 分母 +3）
     engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'portrait', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成画像' })]);
-    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('50%')); // 2/4
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('40%')); // 2/5
     expect(document.querySelector('.bz-people-jobs-main')!.textContent).toContain('正在生成画像');
   });
 });
@@ -237,7 +238,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
       material: { traits: ['简短'], moments: [{ ts: '2026-09-25', summary: '午饭决策现场' }] },
       chronicle: '## 时间线\n2026-09 仍常聊。',
     })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.portrait).toContain('陈默说话简短'));
+    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toContain('陈默说话简短'));
     const p = disk(vault).people[0];
     const d = p.digest!;
     expect(p.name).toBe('陈默');
@@ -265,7 +266,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     await startGeneration([target()]);
     const done = fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '画像', events: [] });
     engine.push([done]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.portrait).toBe('画像'));
+    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('画像'));
     engine.push([done]); // 引擎侧若仍带着 done 任务再推一帧
     await tick(); await tick();
     expect(disk(vault).people[0].imports).toHaveLength(1);
@@ -360,7 +361,7 @@ describe('关面板转后台（450）', () => {
     await startGeneration([target()]);
     closePeoplePanel();
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '后台画完', events: [] })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.portrait).toBe('后台画完'));
+    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('后台画完'));
     expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true);
   });
 });
@@ -385,7 +386,7 @@ describe('折子印章四态（451）', () => {
 
     engine.push([fakeJob({ batchesDone: 3, chunks: batches(10) })]);
     await vi.waitFor(() => expect(document.querySelector('.bz-people-seal-running')).toBeTruthy());
-    expect(sealNode().textContent).toBe('画谱中\n25%'); // (3+0)/(10+2)
+    expect(sealNode().textContent).toBe('画谱中\n23%'); // (3+0)/(10+3)，455 三段成文口径
     expect(sealNode().dataset.peopleSealAct).toBe('pause');
 
     engine.push([fakeJob({ status: 'interrupted', batchesDone: 3, chunks: batches(10), message: '上次未完成，可从断点继续' })]);
@@ -533,5 +534,168 @@ describe('生成入口不重烧（453）', () => {
     click('[data-people-seal-act="redraw"]');
     await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
     expect(engine.calls.resume).toEqual([]);
+  });
+});
+
+// ---------------- issue 455：详情页双折（其人/我们）+ 统计与档案弹窗 ----------------
+
+/** 已画谱人物：带导入统计（月度明细）与旧单卷 digest */
+function drawnPerson(over: Partial<PersonEntry> = {}): PersonEntry {
+  return {
+    id: 'wxid_a',
+    name: '陈默',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    imports: [{
+      file: '数据源:陈默',
+      importedAt: '2026-09-01T00:00:00.000Z',
+      messageCount: 10,
+      skippedCount: 0,
+      timeFrom: '2026-01-01T00:00:00.000Z',
+      timeTo: '2026-09-01T00:00:00.000Z',
+      stats: {
+        monthly: [['2026-01', 30], ['2026-02', 42]],
+        initiatedByMe: 2,
+        initiatedByOther: 3,
+        myAvgReplySec: 10,
+        otherAvgReplySec: 20,
+        myHourly: [],
+        otherHourly: [],
+        kindCounts: { 文本: 10 },
+      },
+    }],
+    digest: { portrait: '## 旧画像\n旧单卷数据。', events: [], generatedAt: '2026-03-01T00:00:00.000Z' },
+    ...over,
+  };
+}
+
+describe('双卷落盘（455）', () => {
+  it('新引擎 done（person/bond）：各归其卷写入 digest，旧 portrait 字段不再写', async () => {
+    const vault = await boot();
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await tick();
+    await startGeneration([target()]);
+    engine.push([fakeJob({
+      status: 'done', stage: 'done', message: '', batchesDone: 1,
+      person: '## 其人\n慢热。', bond: '## 我们\n老友。', events: [],
+    })]);
+    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toContain('慢热'));
+    const d = disk(vault).people[0].digest!;
+    expect(d.person).toContain('其人');
+    expect(d.bond).toContain('我们');
+    expect(d.portrait).toBeUndefined();
+  });
+
+  it('旧引擎 done（只有 portrait）：兼容读进卷一，卷二缺省', async () => {
+    const vault = await boot();
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await tick();
+    await startGeneration([target()]);
+    engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '旧单卷画像', events: [] })]);
+    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('旧单卷画像'));
+    expect(disk(vault).people[0].digest!.bond).toBeUndefined();
+  });
+});
+
+describe('生成入参带档案与月度（455）', () => {
+  it('mergedMonthlyOf：跨记录同名月相加、按月升序；无明细返回 undefined', () => {
+    expect(mergedMonthlyOf([
+      { stats: { monthly: [['2026-02', 5], ['2026-01', 3]] } },
+      { stats: { monthly: [['2026-01', 4]] } },
+      { stats: undefined },
+    ])).toEqual([['2026-01', 7], ['2026-02', 5]]);
+    expect(mergedMonthlyOf([])).toBeUndefined();
+    expect(mergedMonthlyOf([{ stats: {} }, {}])).toBeUndefined();
+  });
+
+  it('targets 交引擎时带上 profile 与跨导入合并的 monthly（statsNote 组装在引擎内，入参经此传入）', async () => {
+    const existing: PersonEntry = {
+      id: 'wxid_a',
+      name: '陈默',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      imports: [
+        { file: 'a.csv', importedAt: '2026-08-01T00:00:00.000Z', messageCount: 5, skippedCount: 0, timeFrom: '2026-01-01T00:00:00.000Z', timeTo: '2026-06-30T00:00:00.000Z', stats: { monthly: [['2026-03', 7], ['2026-01', 30]] } },
+        { file: 'b.csv', importedAt: '2026-09-01T00:00:00.000Z', messageCount: 5, skippedCount: 0, timeFrom: '2026-06-01T00:00:00.000Z', timeTo: '2026-09-01T00:00:00.000Z', stats: { monthly: [['2026-01', 12], ['2026-02', 5]] } },
+      ],
+      profile: { tags: ['同学'], note: '旧识' },
+    };
+    await boot([existing]);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await tick();
+    await startGeneration([target()]);
+    expect(engine.calls.start).toHaveLength(1);
+    const t0 = engine.calls.start[0].targets[0];
+    expect(t0.monthly).toEqual([['2026-01', 42], ['2026-02', 5], ['2026-03', 7]]);
+    expect(t0.profile).toEqual({ tags: ['同学'], note: '旧识' });
+  });
+});
+
+describe('详情折册四折与弹窗（455）', () => {
+  /** 开面板 → 进详情（折册可见） */
+  async function openDetail(seed: PersonEntry[]): Promise<MockVault> {
+    const vault = await boot(seed);
+    inject(new FakeEngine());
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-book]')).toBeTruthy());
+    return vault;
+  }
+
+  it('四折渲染：其人折展开显旧画像（兼容读）；我们折收起、引文为空态文案，点折脊展开显空态', async () => {
+    await openDetail([drawnPerson()]);
+    expect([...document.querySelectorAll('[data-people-leaf]')].map((l) => l.getAttribute('data-people-leaf')))
+      .toEqual(['p', 'b', 'e', 'c']);
+    expect(document.querySelector('[data-people-leaf="p"]')!.classList.contains('bz-people-leaf-on')).toBe(true);
+    expect(document.querySelector('[data-people-leaf="p"] .bz-people-portrait')!.textContent).toContain('旧画像');
+    expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(false);
+    expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-spill')!.textContent).toContain('还没有关系画像');
+    click('[data-people-leaf-head="b"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(true));
+    expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-body')!.textContent).toContain('还没有关系画像');
+  });
+
+  it('新 digest 双卷：其人 / 我们两折各显各卷', async () => {
+    await openDetail([drawnPerson({ digest: { person: '## 其人卷', bond: '## 我们卷', events: [], generatedAt: '2026-09-01T00:00:00.000Z' } })]);
+    expect(document.querySelector('[data-people-leaf="p"] .bz-people-portrait')!.textContent).toContain('其人卷');
+    click('[data-people-leaf-head="b"]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf="b"] .bz-people-portrait')!.textContent).toContain('我们卷'));
+  });
+
+  it('统计弹窗：详情头图标点开、出月度柱图互动卡、遮罩点击关闭且详情还在', async () => {
+    await openDetail([drawnPerson()]);
+    click('[data-people-stats-open]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-stats-pop]')).toBeTruthy());
+    expect(document.querySelector('[data-people-stats-pop] [role="dialog"]')!.getAttribute('aria-label')).toBe('互动统计');
+    expect(document.querySelector('[data-people-stats-pop] .bz-people-chart')).toBeTruthy();
+    click('[data-people-stats-pop] [data-people-pop-close]'); // 遮罩（DOM 序在面板前）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-stats-pop]')).toBeNull());
+    expect(document.querySelector('[data-people-book]')).toBeTruthy();
+  });
+
+  it('补充背景弹窗：空档出补档入口，编辑保存落盘且弹窗留查看态；Esc 先关弹窗不关面板', async () => {
+    const vault = await openDetail([drawnPerson()]);
+    click('[data-people-prof-open]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-pop]')).toBeTruthy());
+    expect(document.querySelector('[data-people-prof-pop] [role="dialog"]')!.getAttribute('aria-label')).toBe('补充背景');
+    click('[data-people-prof-new]'); // 补人物档案 → 编辑态
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-save]')).toBeTruthy());
+    const note = document.querySelector<HTMLInputElement>('[data-people-prof-field="note"]')!;
+    note.value = '小学同学';
+    click('[data-people-prof-save]');
+    await vi.waitFor(() => expect(disk(vault).people[0].profile?.note).toBe('小学同学'));
+    expect(document.querySelector('[data-people-prof-pop]')).toBeTruthy(); // 弹窗仍开
+    expect(document.querySelector('[data-people-prof-pop] [data-people-prof-edit]')).toBeTruthy(); // 回查看态
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-pop]')).toBeNull());
+    expect(isPeopleOpen()).toBe(true); // Esc 分层：先关弹窗，面板保留
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(isPeopleOpen()).toBe(false); // 再 Esc 才关面板
   });
 });

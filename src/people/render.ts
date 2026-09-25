@@ -1,12 +1,14 @@
 /**
- * 脸谱渲染纯层（issue 447 / 450 / 451 / ADR-0104 markup 单源）：面板壳 / 折子封面墙 / 详情折页册 /
- * 数据源弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 与评审壳共用同一份。
- * 纯度：零值 import（仅 type import，render-purity 守卫剥离后 import 图为空）——
+ * 脸谱渲染纯层（issue 447 / 450 / 451 / 455 / ADR-0104 markup 单源）：面板壳 / 折子封面墙 / 详情折页册 /
+ * 数据源弹窗 / 统计与档案弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 与评审壳共用同一份。
+ * 纯度：import 图只进域内零依赖模块（types.ts 兼容读单源 personOf/bondOf；render-purity 守卫同口径）——
  * DOM 构建走本文件自持 helper；时间文案由调用方算好注入，本层只拼字符串。
- * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情五折（画像/事件/大事记/数据/档案），
+ * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情折页册 issue 455 起为四折
+ * （卷一《其人》/ 卷二《我们》/ 事件 / 时间线；原画像折拆双卷，数据与档案两页改独立弹窗），
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
+import { bondOf, personOf } from './types';
 import type { ImportRecord, PersonEntry, PersonProfile } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
@@ -159,7 +161,7 @@ export function iconButton(icon: string, cls: string, attrs: Record<string, stri
   return b;
 }
 
-/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度块槽位 + body + 数据源弹层容器 */
+/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度块槽位 + body + 数据源弹层容器 + 统计/档案弹层容器 */
 export function panelShell(): HTMLElement {
   return el('div', 'bz-people-panel', [
     el('div', 'bz-people-head', [
@@ -178,6 +180,7 @@ export function panelShell(): HTMLElement {
     el('div', 'bz-people-jobs-slot', { 'data-people-jobs-slot': '', hidden: '' }),
     el('div', 'bz-people-body', { 'data-people-body': '' }),
     el('div', 'bz-people-ds-layer', { 'data-people-ds-layer': '', hidden: '' }),
+    el('div', 'bz-people-pop-layer', { 'data-people-pop-layer': '', hidden: '' }),
   ]);
 }
 
@@ -195,7 +198,7 @@ export interface JobsBlockState {
   message: string;
   batchesDone: number;
   batchesTotal: number;
-  /** 已完成成文阶段数（画像 / 时间线，0~2） */
+  /** 已完成成文阶段数（其人 / 我们 / 编年史，0~3；issue 455 四阶段） */
   stagesDone: number;
   /** 队列位置（1 起）与总人数 */
   queueIndex: number;
@@ -206,17 +209,23 @@ export interface JobsBlockState {
   resumable?: boolean;
 }
 
-/** 进度百分比（issue 450 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 2)，钳 0~100 */
+/** 进度百分比（issue 455 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 3)，钳 0~100 */
 export function jobsPercent(batchesDone: number, batchesTotal: number, stagesDone: number): number {
-  const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+  const denom = (batchesTotal > 0 ? batchesTotal : 0) + 3;
   const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
   return Math.min(100, Math.round((numer / denom) * 100));
 }
 
-/** 阶段键 → 已完成成文阶段数：时间线进行中 = 画像已完成（1）；done = 2；其余 0 */
+/**
+ * 阶段键 → 已完成成文阶段数（issue 455 四阶段：extracting 逐批 → person 画其人 → bond 写我们 → chronicle 编年史）：
+ * chronicle 进行中 = 其人 / 我们已完成（2）；bond 进行中 = 1；其余（extracting / person / 旧版 portrait）= 0；
+ * done = 3。
+ */
 export function jobsStagesDone(stage: string | undefined, status: JobsUiStatus): number {
-  if (status === 'done') return 2;
-  return stage === 'chronicle' ? 1 : 0;
+  if (status === 'done') return 3;
+  if (stage === 'chronicle') return 2;
+  if (stage === 'bond') return 1;
+  return 0;
 }
 
 /** 队列副文案：多人生成 `（2/5 人）当前：大琳`；单人生成 `当前：大琳` */
@@ -340,7 +349,7 @@ export interface FoldCardJob {
   status: JobsUiStatus;
   batchesDone: number;
   batchesTotal: number;
-  /** 已完成成文阶段数（画像 / 时间线，0~2） */
+  /** 已完成成文阶段数（其人 / 我们 / 编年史，0~3；issue 455 四阶段） */
   stagesDone: number;
   /** 失败态可否断点续跑：漂移类失败（消息集已变）接不上，只能重新生成 */
   resumable: boolean;
@@ -458,21 +467,18 @@ export function wallEmpty(): HTMLElement {
 
 // ---------------- 详情（折页册） ----------------
 
-export type FoldId = 'p' | 'e' | 'c' | 'd' | 'f';
+/** 折 id（issue 455 四折）：p = 卷一《其人》，b = 卷二《我们》；数据统计与档案已改独立弹窗 */
+export type FoldId = 'p' | 'b' | 'e' | 'c';
 
 const FOLD_TITLES: Array<[FoldId, string, string]> = [
-  ['p', '画像', '画像与代表原话'],
+  ['p', '其人', '卷一 · 其人画像与代表原话'],
+  ['b', '我们', '卷二 · 我们关系画像'],
   ['e', '事件', '交往事件与随手记'],
   ['c', '大事记', '关系时间线'],
-  ['d', '数据', '互动统计与媒体'],
-  ['f', '档案', '人物档案'],
 ];
 
 export interface FoldDetailOpts {
   fold: FoldId;
-  media: MediaShape | null;
-  profEdit: boolean;
-  noteAdd: boolean;
 }
 
 export interface FoldDetailHeadOpts {
@@ -485,7 +491,7 @@ export interface FoldDetailHeadOpts {
   job?: FoldCardJob | null;
 }
 
-/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱 / 继续生成 / 返回列表） */
+/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱 / 继续生成 / 互动统计 / 补充背景 / 返回列表） */
 export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
   const label = mediaLabel(media);
@@ -522,12 +528,15 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
       : el('div', 'bz-people-dt-watermark bz-people-dt-watermark-todo', text('未画脸谱')),
     el('div', 'bz-people-dt-actions', [
       ...(action ? [action] : []),
+      // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
+      iconButton('bar-chart-3', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-stats-open': '', 'aria-label': '互动统计', title: '互动统计' }),
+      iconButton('contact', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-prof-open': '', 'aria-label': '补充背景', title: '补充背景' }),
       iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
     ]),
   ]);
 }
 
-/** 折页册：五折；fold = 当前展开折，其余收起显竖排引文 */
+/** 折页册（issue 455 四折）；fold = 当前展开折，其余收起显竖排引文 */
 export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<FoldId, HTMLElement[]>, spills: Record<FoldId, string>): HTMLElement {
   const book = el('div', 'bz-people-book', { 'data-people-book': '' });
   for (const [id, title] of FOLD_TITLES) {
@@ -556,11 +565,10 @@ export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<Fo
 /** 折脊 meta 小字（各折条数概览） */
 function spillMeta(p: PersonEntry, id: FoldId): string {
   switch (id) {
-    case 'p': return p.digest?.portrait ? '修' : '空';
+    case 'p': return personOf(p.digest) ? '修' : '空';
+    case 'b': return bondOf(p.digest) ? '修' : '空';
     case 'e': return `${p.digest?.events.length ?? 0} 事${(p.manualEvents?.length ?? 0) ? ` · ${p.manualEvents!.length} 记` : ''}`;
     case 'c': return p.digest?.chronicle ? '编年' : '空';
-    case 'd': return p.imports.length ? `${p.imports.length} 次导入` : '—';
-    case 'f': return profileFilled(p.profile) ? '有档' : '补档';
   }
 }
 
@@ -577,9 +585,22 @@ export function profileFilled(prof: PersonProfile | undefined): boolean {
 
 // ---------------- 详情折内容（纯 markup；数据由调用方备好） ----------------
 
-/** 画像折正文：画像 mini markdown + 代表原话 */
-export function foldPortraitBody(mdRoot: HTMLElement, p: PersonEntry): HTMLElement[] {
-  const out: HTMLElement[] = [mdRoot];
+/** 折内空态提示：一句话 + 可选「打开数据源」动作（448 评审 P2 的入口内联习惯，markup 单源收进本层） */
+export function foldHint(msg: string, action?: string): HTMLElement {
+  const d = el('div', 'bz-people-empty-hint');
+  d.appendChild(text(msg));
+  if (action) {
+    d.appendChild(el('br'));
+    d.appendChild(button('bz-people-btn bz-people-btn-ghost', action, { 'data-people-ds-open': '' }));
+  }
+  return d;
+}
+
+/** 其人折正文（卷一《其人》，issue 455）：markdown + 代表原话；空态引导导入（旧单卷数据由 personOf 兼容读进来） */
+export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
+  const out: HTMLElement[] = mdRoot
+    ? [mdRoot]
+    : [foldHint('还没有其人画像。从数据源导入一次即可生成。', '打开数据源')];
   if (p.digest?.quotes?.length) {
     out.push(el('div', 'bz-people-section-title', text('代表原话')));
     const quotes = el('div', 'bz-people-quotes');
@@ -592,6 +613,11 @@ export function foldPortraitBody(mdRoot: HTMLElement, p: PersonEntry): HTMLEleme
     out.push(quotes);
   }
   return out;
+}
+
+/** 我们折正文（卷二《我们》，issue 455）：markdown；空态引导导入 */
+export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
+  return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
 }
 
 /** 事件折正文：交往事件 + 随手记（含录入行；today = 录入行默认日期） */
@@ -635,8 +661,8 @@ export function foldChronicleBody(mdRoot: HTMLElement | null): HTMLElement[] {
   return mdRoot ? [mdRoot] : [el('div', 'bz-people-empty-hint', text('还没有关系时间线。重画脸谱后会生成。'))];
 }
 
-/** 数据折正文：互动数据卡（由调用方组装；含导入记录 meta 与旧数据占位） */
-export function foldDataBody(card: HTMLElement | null, p: PersonEntry): HTMLElement[] {
+/** 统计弹窗正文（issue 455 自「数据」折迁来）：互动数据卡 + 占位（含导入记录 meta 与旧数据提示） */
+export function statsPopBody(card: HTMLElement | null, p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = [];
   if (card) out.push(card);
   else if (p.imports.length) {
@@ -819,8 +845,8 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
   ]);
 }
 
-/** 档案折正文：编辑态/有档显卡，全空给入口行 */
-export function foldProfileBody(p: PersonEntry, editing: boolean): HTMLElement[] {
+/** 补充背景弹窗正文（issue 455 自「档案」折迁来）：编辑态/有档显卡，全空给入口行 */
+export function profilePopBody(p: PersonEntry, editing: boolean): HTMLElement[] {
   const out: HTMLElement[] = [];
   const hasProf = profileFilled(p.profile);
   if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
@@ -831,6 +857,27 @@ export function foldProfileBody(p: PersonEntry, editing: boolean): HTMLElement[]
     ]));
   }
   return out;
+}
+
+// ---------------- 统计 / 档案弹窗（issue 455：自折册改独立弹窗，壳沿数据源弹窗形制） ----------------
+
+/**
+ * 弹窗壳（互动统计 / 补充背景共用）：遮罩 + 面板（标题 + 关闭钮）+ 可滚动正文。
+ * 遮罩与关闭钮都带 `data-people-pop-close`，点击关弹走 ui 委托；rootHook 标识是哪只弹窗开着。
+ */
+export function popShell(title: string, rootHook: string, body: HTMLElement[]): HTMLElement {
+  const wrap = el('div', 'bz-people-pop', { [rootHook]: '' });
+  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-pop-close': '' }));
+  const pop = el('div', 'bz-people-pop-panel', { role: 'dialog', 'aria-label': title });
+  pop.appendChild(el('div', 'bz-people-pop-head', [
+    el('div', 'bz-people-pop-title', text(title)),
+    iconButton('x', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-pop-close': '', 'aria-label': '关闭', title: '关闭' }),
+  ]));
+  const content = el('div', 'bz-people-pop-body');
+  for (const node of body) content.appendChild(node);
+  pop.appendChild(content);
+  wrap.appendChild(pop);
+  return wrap;
 }
 
 /** 随手记录入行：日期（默认今天）+ 一句话 */

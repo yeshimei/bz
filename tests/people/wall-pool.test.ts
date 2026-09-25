@@ -153,16 +153,16 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     expect(targets[0].msgs).toHaveLength(4);
   });
 
-  it('在占位卡上存档案：先落一张空卡再写，不抛「人物不存在」', async () => {
+  it('在占位卡上存档案：先落一张空卡再写，不抛「人物不存在」（455 档案页改弹窗，路径同款）', async () => {
     const vault = await boot();
     seedPreview(vault, '大琳', 3);
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
 
     click('[data-people-card="大琳"]'); // 进详情
-    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf-head="f"]')).toBeTruthy());
-    click('[data-people-leaf-head="f"]'); // 展开「档案」折
-    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-new]')).toBeTruthy()); // 无档案 → 补档入口
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-open]')).toBeTruthy());
+    click('[data-people-prof-open]'); // 开「补充背景」弹窗
+    await vi.waitFor(() => expect(document.querySelector('[data-people-prof-pop] [data-people-prof-new]')).toBeTruthy()); // 无档案 → 补档入口
     click('[data-people-prof-new]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-prof-save]')).toBeTruthy());
     document.querySelector<HTMLInputElement>('[data-people-prof-field="job"]')!.value = '插画师';
@@ -193,18 +193,18 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     expect(nums).toEqual(['9', '1289', '1615']); // 消息 / 语音 / 图片——过去后两格都是「—」
   });
 
-  it('合成卡只有媒体三项（454）：「数据」折出占位并引导画脸谱，不画全 0 的空统计卡', async () => {
+  it('合成卡只有媒体三项（454）：统计弹窗出占位并引导画脸谱，不画全 0 的空统计卡（455 数据页改弹窗）', async () => {
     const vault = await boot();
     seedPreview(vault, '大琳', 9, '2026-09-25T08:00:00.000Z', { voiceCount: 3, voiceTotalSec: 60, imageCount: 2 });
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
     click('[data-people-card="大琳"]');
-    await vi.waitFor(() => expect(document.querySelector('[data-people-leaf-head="d"]')).toBeTruthy());
-    click('[data-people-leaf-head="d"]');
-    // 等折页切到「数据」（数据折渲染出来才出现专属钩子；画像折的占位是通用类，不能用来等）
-    await vi.waitFor(() => expect(document.querySelector('[data-people-data-hint]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-stats-open]')).toBeTruthy());
+    click('[data-people-stats-open]');
+    // 等统计弹窗渲染出来（占位钩子跟着弹窗出现）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-stats-pop] [data-people-data-hint]')).toBeTruthy());
 
     expect(document.querySelector('.bz-people-ins-rows')).toBeNull(); // 没有 monthly 明细就不出统计卡
-    expect(document.querySelector('[data-people-data-hint]')!.textContent).toContain('画完脸谱后');
+    expect(document.querySelector('[data-people-stats-pop] [data-people-data-hint]')!.textContent).toContain('画完脸谱后');
   });
 });

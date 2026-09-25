@@ -119,10 +119,30 @@ export interface ImportRecord {
   stats?: Partial<ContactStats>;
 }
 
-/** 脸谱（AI 生成产物，重新导入可覆盖重画） */
+/** 兴趣信号（issue 455 卷一素材：分享/安利具体内容、反复话题） */
+export interface InterestItem {
+  /** 日期 YYYY-MM-DD */
+  ts: string;
+  /** 兴趣话题（提炼时 ≤15 字） */
+  topic: string;
+}
+
+/** 未竟之事（issue 455 卷二素材：约定/邀约/「下次一起」/半截话题，只采集不判断兑现） */
+export interface ThreadItem {
+  /** 日期 YYYY-MM-DD */
+  ts: string;
+  /** 事情原文（提炼时 ≤30 字） */
+  text: string;
+}
+
+/** 脸谱（AI 生成产物，重新导入可覆盖重画；issue 455 拆双卷：卷一《其人》+ 卷二《我们》） */
 export interface FaceDigest {
-  /** 画像 markdown——受限语法：## 小节 / - 列表 / **粗体** / > 引用块（ui 层迷你渲染器消费） */
-  portrait: string;
+  /** 卷一《其人》：人物画像 markdown（受限语法同 portrait；旧单卷数据无此字段，兼容读走 personOf） */
+  person?: string;
+  /** 卷二《我们》：关系画像 markdown（旧数据无此字段，读走 bondOf） */
+  bond?: string;
+  /** 画像 markdown（旧单卷，兼容读）——受限语法：## 小节 / - 列表 / **粗体** / > 引用块（ui 层迷你渲染器消费） */
+  portrait?: string;
   events: FaceEvent[];
   /** 画像引用的代表性原话（证据层；旧数据无此字段） */
   quotes?: QuoteItem[];
@@ -132,9 +152,18 @@ export interface FaceDigest {
   traits?: string[];
   /** 场景与细节（与导入提炼的 MomentItem 同构；旧数据无此字段） */
   moments?: MomentItem[];
+  /** 兴趣信号（issue 455 卷一素材；旧数据无此字段） */
+  interests?: InterestItem[];
+  /** 未竟之事（issue 455 卷二素材；旧数据无此字段） */
+  threads?: ThreadItem[];
   /** 生成时间 ISO */
   generatedAt: string;
 }
+
+/** 兼容读单源（issue 455）：卷一《其人》——新数据读 person，旧单卷回落 portrait */
+export function personOf(d: FaceDigest | undefined): string { return d?.person ?? d?.portrait ?? ''; }
+/** 兼容读单源（issue 455）：卷二《我们》——旧数据无 bond 即空 */
+export function bondOf(d: FaceDigest | undefined): string { return d?.bond ?? ''; }
 
 /** 人物卡 */
 export interface PersonEntry {

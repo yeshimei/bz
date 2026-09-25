@@ -2,7 +2,8 @@
  * 脸谱面板行为层（issue 447 / ADR-0106）：markup 全部出自 render.ts（折子语义单源），
  * 本文件只做生命周期 / 事件委托 / 数据流。
  *
- * 视图：list（折子封面墙）/ detail（折页册：画像/事件/大事记/数据/档案五折）+
+ * 视图：list（折子封面墙）/ detail（折页册：其人/我们/事件/时间线四折，issue 455 双卷拆折；
+ * 数据统计与补充背景改独立弹窗，入口在详情头返回钮前）+
  * 数据源独立弹窗（447 拍板：默认不打开、打开即扫、默认不勾选、四态水位、
  * 「导入所选」只进预览、「画脸谱」关弹窗回面板跑生成）。
  * 文件向导已退役（447）：bz-people-import 命令改开数据源弹窗；聊天原文只在本层内存流转
@@ -28,7 +29,8 @@ import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
 import type { JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
-import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
+import type { ContactStats, FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
+import { bondOf, personOf } from './types';
 import {
   PreviewStore,
   isGroupChat,
@@ -46,14 +48,13 @@ import {
 import {
   dsModal,
   duoBar,
+  foldBondBody,
   foldBook,
   foldCard,
   foldChronicleBody,
-  foldDataBody,
   foldDetailHead,
   foldEventsBody,
-  foldPortraitBody,
-  foldProfileBody,
+  foldPersonBody,
   foldSealNode,
   foldWall,
   importMeta,
@@ -63,9 +64,13 @@ import {
   miniMarkdown,
   monthlyChart,
   panelShell,
+  popShell,
+  profilePopBody,
   progressBlock,
   replyLatencySec,
   socialRow,
+  spillOf,
+  statsPopBody,
   statsText,
   tagChip,
   wallEmpty,
@@ -141,6 +146,35 @@ let dsNotice = '';
 let dsGenerateable = false;
 let dsScannedAt = '';
 
+// ---------------- 统计 / 档案弹窗（issue 455：自折册改独立弹窗，同时只开一只） ----------------
+
+/** 「互动统计」弹窗开着（详情头图标 / Esc / 遮罩关闭） */
+let statsOpen = false;
+/** 「补充背景」弹窗开着（编辑态仍由 profEditId 管，宿主从折册换成弹窗） */
+let profOpen = false;
+
+/** 开统计弹窗（另一只开着则换页） */
+function openStatsPop(): void {
+  statsOpen = true;
+  profOpen = false;
+  void renderBody();
+}
+
+/** 开补充背景弹窗（另一只开着则换页） */
+function openProfPop(): void {
+  profOpen = true;
+  statsOpen = false;
+  void renderBody();
+}
+
+/** 关掉统计 / 档案弹窗（都不开着则免渲染） */
+function closePops(): void {
+  if (!statsOpen && !profOpen) return;
+  statsOpen = false;
+  profOpen = false;
+  void renderBody();
+}
+
 export function isPeopleOpen(): boolean {
   return overlay !== null;
 }
@@ -157,8 +191,12 @@ export function openPeoplePanel(app?: unknown): void {
   overlay.appendChild(panelShell());
   document.body.appendChild(overlay);
   topifyZ(overlay);
-  // ESC 分层（448 评审）：数据源弹窗开着先关弹窗（保扫描快照与勾选），再层层关面板
-  registerPanelEsc(ESC_ID, isPeopleOpen, () => { if (dsOpen) closeDs(); else closePeoplePanel(); });
+  // ESC 分层（448 评审；455 弹窗再加一层）：统计/档案弹窗最上先关，其次数据源弹窗（保扫描快照与勾选），再层层关面板
+  registerPanelEsc(ESC_ID, isPeopleOpen, () => {
+    if (statsOpen || profOpen) closePops();
+    else if (dsOpen) closeDs();
+    else closePeoplePanel();
+  });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
   overlay.addEventListener('change', onOverlayChange);
@@ -192,6 +230,8 @@ export function closePeoplePanel(): void {
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
   noteAddId = null;
+  statsOpen = false; // 455：统计 / 档案弹窗同样不随面板存续
+  profOpen = false;
   disarmDelete();
   closeDsState();
   if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
@@ -507,6 +547,23 @@ export interface GenTarget {
   fileLabel: string;
   /** 预览桶侧写里的互动统计汇总（issue 449；旧桶可能没有）→ 引擎拼互动统计叙述段喂画像与时间线 */
   insights?: PreviewContact['insights'];
+  /** 手动档案（issue 455）：planTargets 从人物卡带上 → 引擎拼「档案」素材段进两卷 prompt 头 */
+  profile?: PersonProfile;
+  /** 跨导入合并的月度密度（issue 455）：planTargets 从导入记录 stats 现算 → buildStatsNote 月度段 */
+  monthly?: Array<[string, number]>;
+}
+
+/**
+ * 跨导入月度密度合并（issue 455）：各导入记录 stats.monthly 同名月相加，按月升序；
+ * 没有任何明细（旧数据 / 合成占位卡）返回 undefined——引擎侧不拼月度段。
+ */
+export function mergedMonthlyOf(imports: Array<{ stats?: Partial<ContactStats> }>): Array<[string, number]> | undefined {
+  const acc = new Map<string, number>();
+  for (const r of imports) {
+    for (const [month, n] of r.stats?.monthly ?? []) acc.set(month, (acc.get(month) ?? 0) + n);
+  }
+  if (!acc.size) return undefined;
+  return [...acc.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 }
 
 /**
@@ -584,7 +641,7 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
       targetsInFlight.delete(job.talker); // 先摘再落盘：快照重复推送不会重复写导入记录
       jobsPersisted.add(job.talker); // 引擎保留的 done 任务再推快照也不重落
       void persistJobDone(job, target);
-    } else if (!jobsPersisted.has(job.talker) && job.portrait) {
+    } else if (!jobsPersisted.has(job.talker) && (job.person ?? job.portrait)) {
       // 重启续跑完成的任务：入参走 job.importRecord / job.stats（引擎落盘口径）
       jobsPersisted.add(job.talker);
       void persistJobDone(job);
@@ -657,7 +714,8 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
     } else if (plan.olderCount > 0) {
       notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
     }
-    runnable.push(t);
+    // issue 455：档案与跨导入月度密度在这里带上（statsNote 组装在引擎内，入参经 JobTarget 传入）
+    runnable.push({ ...t, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
   }
   return { runnable, skipped };
 }
@@ -672,7 +730,9 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
   const talker = target?.talker ?? job.talker;
   const name = target?.name ?? job.name;
   try {
-    if (!job.portrait) { notice(`「${name}」生成完成但画像为空`, 'warning'); return; }
+    // issue 455 双卷：卷一《其人》为必达产物；旧引擎单卷 portrait 兼容读进卷一（job.bond 旧引擎没有）
+    const person = job.person ?? job.portrait;
+    if (!person) { notice(`「${name}」生成完成但其人画像为空`, 'warning'); return; }
     const store = new PeopleStore(getApp());
     const existing = (await store.list()).find((p) => p.id === talker);
     const now = new Date().toISOString();
@@ -692,7 +752,8 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     await store.upsert(entry);
     await store.appendImport(talker, rec);
     const digest: FaceDigest = {
-      portrait: job.portrait,
+      person, // 卷一《其人》
+      bond: job.bond || undefined, // 卷二《我们》（旧引擎无此产物）
       events: mergeManualEvents(job.events ?? [], existing?.manualEvents), // 439：手动随手记并入事件素材
       quotes: job.quotes,
       moments: job.material?.moments, // 449：场景 / 特质随生成落盘
@@ -869,6 +930,10 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-jobs-pause]')) { jobsAction('pause'); return; }
   if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
   if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
+  // —— 统计 / 档案弹窗（455：弹层在 body 之上，分支放前面；遮罩与关闭钮同一关闭钩子） ——
+  if (t.closest('[data-people-stats-open]')) { openStatsPop(); return; }
+  if (t.closest('[data-people-prof-open]')) { openProfPop(); return; }
+  if (t.closest('[data-people-pop-close]')) { closePops(); return; }
   // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
   if (t.closest('[data-people-ds-open]')) { void openDsIfIdle(); return; }
   if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
@@ -1000,11 +1065,13 @@ function updateDsFooter(): void {
 async function renderBody(): Promise<void> {
   const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
   if (!body || !store || !overlay) return;
-  if (stage === 'list') await renderList(body);
-  else await renderDetail(body);
+  const people = await wallPeople(); // 一次拉全量：列表 / 详情 / 弹窗三处同源（455 弹窗正文也要人物卡）
+  if (stage === 'list') await renderList(body, people);
+  else await renderDetail(body, people);
   // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式
   overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
   renderDsLayer();
+  renderPopLayer(people);
   renderJobs();
   mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
 }
@@ -1016,6 +1083,29 @@ function renderDsLayer(): void {
   layer.hidden = !dsOpen;
   layer.replaceChildren();
   if (dsOpen) layer.appendChild(dsModal(dsModalState()));
+}
+
+/**
+ * 统计 / 档案弹层（issue 455，独立容器；关着只置 hidden）。
+ * 弹窗跟着详情人物走：人物没了（被删 / 回列表）弹窗自愈收起；补充背景的编辑态由 profEditId 决定。
+ */
+function renderPopLayer(people: PersonEntry[]): void {
+  const layer = overlay?.querySelector<HTMLElement>('[data-people-pop-layer]');
+  if (!layer) return;
+  const p = statsOpen || profOpen ? people.find((x) => x.id === detailId) : null;
+  if (!p) {
+    statsOpen = false;
+    profOpen = false;
+    layer.hidden = true;
+    layer.replaceChildren();
+    return;
+  }
+  layer.hidden = false;
+  layer.replaceChildren(
+    statsOpen
+      ? popShell('互动统计', 'data-people-stats-pop', statsPopBody(buildInsightsCard(p), p))
+      : popShell('补充背景', 'data-people-prof-pop', profilePopBody(p, profEditId === p.id))
+  );
 }
 
 // ---------------- 列表（折子封面墙） ----------------
@@ -1096,8 +1186,7 @@ async function ensureEntry(id: string): Promise<void> {
   await store.upsert({ id, name, createdAt: new Date().toISOString(), imports: [] });
 }
 
-async function renderList(body: HTMLElement): Promise<void> {
-  const people = await wallPeople();
+async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<void> {
   const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
   if (statsEl) statsEl.textContent = statsText(people);
   listCache = people;
@@ -1145,61 +1234,33 @@ function disarmDelete(): void {
 
 // ---------------- 详情（折页册） ----------------
 
-async function renderDetail(body: HTMLElement): Promise<void> {
-  const people = await wallPeople();
+async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<void> {
   const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
   if (statsEl) statsEl.textContent = statsText(people);
   const p = people.find((x) => x.id === detailId);
   body.replaceChildren();
-  if (!p) { stage = 'list'; await renderList(body); return; }
+  if (!p) { stage = 'list'; await renderList(body, people); return; }
   const media = personMedia(p);
   body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)) }));
 
-  // 五折：展开折渲染正文，收起折只渲染竖排引文
-  const spillOf = (md: string): string => {
-    const t = String(md ?? '')
-      .replace(/```+/g, '')
-      .split(/\r?\n/)
-      .map((l) => l.replace(/^#{1,6}\s*/, '').replace(/^>\s?/, '').replace(/^-\s*/, '').replace(/\*\*/g, '').trim())
-      .filter(Boolean)
-      .join(' ');
-    return [...t].length <= 40 ? t : `${[...t].slice(0, 40).join('')}…`;
-  };
-  const hint = (msg: string, action?: string): HTMLElement => {
-    const d = document.createElement('div');
-    d.className = 'bz-people-empty-hint';
-    d.textContent = msg;
-    if (action) {
-      // 空态内联动作钮：复用数据源弹窗钩子，用户不用自己找右上角入口（448 评审 P2）
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'bz-people-btn bz-people-btn-ghost';
-      b.setAttribute('data-people-ds-open', '');
-      b.textContent = action;
-      d.appendChild(document.createElement('br'));
-      d.appendChild(b);
-    }
-    return d;
-  };
+  // 四折（issue 455 双卷拆折）：展开折渲染正文，收起折只渲染竖排引文；统计与档案已改详情头弹窗
+  const person = personOf(p.digest); // 旧单卷数据（只有 portrait）由此兼容读进卷一
+  const bond = bondOf(p.digest);
   const quoteOf: Record<FoldId, string> = {
-    p: p.digest?.portrait ? spillOf(p.digest.portrait) : '还没有脸谱。从数据源导入一次即可生成。',
+    p: person ? spillOf(person) : '还没有其人画像。从数据源导入一次即可生成。',
+    b: bond ? spillOf(bond) : '还没有关系画像。从数据源导入一次即可生成。',
     e: p.digest?.events.length
       ? spillOf(p.digest.events[0].summary)
       : (p.manualEvents?.length ? spillOf(p.manualEvents[0].summary) : '还没有交往事件与随手记。'),
     c: p.digest?.chronicle ? spillOf(p.digest.chronicle) : '还没有关系时间线。',
-    d: p.imports.length ? `最近导入 ${p.imports.length} 次` : '还没有导入记录。',
-    f: (p.profile?.tags ?? []).filter(Boolean).length ? (p.profile?.tags ?? []).filter(Boolean).join(' · ') : '聊天之外的也可以记。',
   };
   const bodies: Record<FoldId, HTMLElement[]> = {
-    p: detailFold === 'p'
-      ? foldPortraitBody(p.digest?.portrait ? miniMarkdown(p.digest.portrait) : hint('还没有脸谱。从数据源导入一次即可生成。', '打开数据源'), p)
-      : [],
+    p: detailFold === 'p' ? foldPersonBody(person ? miniMarkdown(person) : null, p) : [],
+    b: detailFold === 'b' ? foldBondBody(bond ? miniMarkdown(bond) : null) : [],
     e: detailFold === 'e' ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
     c: detailFold === 'c' ? foldChronicleBody(p.digest?.chronicle ? miniMarkdown(p.digest.chronicle) : null) : [],
-    d: detailFold === 'd' ? foldDataBody(buildInsightsCard(p), p) : [],
-    f: detailFold === 'f' ? foldProfileBody(p, profEditId === p.id) : [],
   };
-  body.appendChild(foldBook(p, { fold: detailFold, media, profEdit: profEditId === p.id, noteAdd: noteAddId === p.id }, bodies, quoteOf));
+  body.appendChild(foldBook(p, { fold: detailFold }, bodies, quoteOf));
 }
 
 // ---------------- 互动数据（issue 440：纯本地统计展示；447 收进「数据」折） ----------------

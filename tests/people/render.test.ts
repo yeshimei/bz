@@ -1,7 +1,8 @@
 /**
- * 脸谱 render 纯层测试（issue 447 / 450）：折子封面（竖排截断 / 印章水位 / 合并态）、
- * 详情折页册（五折结构 / 折脊引文）、数据源弹窗（四态行 / 勾选文案 / 图例快捷）、
- * 生成进度块（百分比口径 / 队列副文案 / 状态按钮态——450 后台化）。
+ * 脸谱 render 纯层测试（issue 447 / 450 / 455）：折子封面（竖排截断 / 印章水位 / 合并态）、
+ * 详情折页册（四折结构 / 双卷正文与空态 / 折脊引文）、详情头弹窗入口图标、
+ * 统计与档案弹窗（弹窗壳 / 占位口径 / 编辑态）、数据源弹窗（四态行 / 勾选文案 / 图例快捷）、
+ * 生成进度块（四阶段百分比口径 / 队列副文案 / 状态按钮态）。
  * markup 单源的锚测试——类名与 data 钩子即 ui 委托契约。
  * 隐私口径：fixture 全构造数据。
  */
@@ -10,8 +11,12 @@ import { describe, it, expect } from 'vitest';
 import {
   dsModal,
   dsRow,
+  el,
   foldBook,
+  foldBondBody,
   foldCard,
+  foldDetailHead,
+  foldPersonBody,
   foldSeal,
   foldSealNode,
   formatCount,
@@ -19,16 +24,21 @@ import {
   jobsPercent,
   jobsQueueLabel,
   jobsStagesDone,
+  miniMarkdown,
   panelShell,
+  popShell,
+  profilePopBody,
   progressBlock,
   replyLatencySec,
+  statsPopBody,
   statsText,
   vtName,
   type DsRowState,
   type FoldCardJob,
   type JobsBlockState,
 } from '../../src/people/render';
-import type { PersonEntry } from '../../src/people/types';
+import { bondOf, personOf } from '../../src/people/types';
+import type { ImportRecord, PersonEntry } from '../../src/people/types';
 
 function person(over: Partial<PersonEntry> = {}): PersonEntry {
   return {
@@ -94,7 +104,7 @@ describe('折子印章四态（451）', () => {
   it('画谱中：金实印带百分比（与进度块同口径）→ 唯一动作「暂停」', () => {
     const s = foldSeal(person(), job({ batchesDone: 3 }));
     expect(s.state).toBe('running');
-    expect(s.text).toBe('画谱中\n25%'); // (3+0)/(10+2)
+    expect(s.text).toBe('画谱中\n23%'); // (3+0)/(10+3)，455 三段成文分母 +3
     expect(s.action).toEqual({ kind: 'pause', label: '暂停' });
     expect(s.title).toContain('本批做完后暂停');
   });
@@ -127,7 +137,7 @@ describe('折子印章四态（451）', () => {
   it('任务态压过脸谱水位：已有脸谱又在中途补画 → 显「画谱中」而非「已画谱」', () => {
     const s = foldSeal(person({ digest, lastProcessedTs: Date.now() }), job({ batchesDone: 5 }));
     expect(s.state).toBe('running');
-    expect(s.text).toBe('画谱中\n42%'); // (5+0)/(10+2)
+    expect(s.text).toBe('画谱中\n38%'); // (5+0)/(10+3)，455 口径
   });
 
   it('印章是按钮且钩子 / 文案齐备；每态只出一个动作（互不并列）', () => {
@@ -168,14 +178,14 @@ describe('面板壳与统计行', () => {
   });
 });
 
-describe('详情折页册（foldBook）', () => {
-  const bodies = { p: [], e: [], c: [], d: [], f: [] } as Record<string, never[]>;
-  const spills = { p: '画像引文', e: '事件引文', c: '大事记引文', d: '数据引文', f: '档案引文' };
+describe('详情折页册（foldBook，issue 455 四折）', () => {
+  const bodies = { p: [], b: [], e: [], c: [] } as Record<string, never[]>;
+  const spills = { p: '其人引文', b: '我们引文', e: '事件引文', c: '大事记引文' };
 
-  it('五折齐全；展开折有正文容器，收起折出竖排引文', () => {
-    const book = foldBook(person(), { fold: 'p', media: null, profEdit: false, noteAdd: false }, bodies, spills);
-    const leaves = book.querySelectorAll('[data-people-leaf]');
-    expect(leaves.length).toBe(5);
+  it('四折齐全（其人/我们/事件/时间线）；展开折有正文容器，收起折出竖排引文', () => {
+    const book = foldBook(person(), { fold: 'p' }, bodies, spills);
+    const leaves = [...book.querySelectorAll('[data-people-leaf]')];
+    expect(leaves.map((l) => l.getAttribute('data-people-leaf'))).toEqual(['p', 'b', 'e', 'c']);
     const pLeaf = book.querySelector('[data-people-leaf="p"]')!;
     expect(pLeaf.classList.contains('bz-people-leaf-on')).toBe(true);
     expect(pLeaf.querySelector('.bz-people-leaf-body')).toBeTruthy();
@@ -184,12 +194,112 @@ describe('详情折页册（foldBook）', () => {
     expect(eLeaf.querySelector('.bz-people-leaf-body')).toBeNull();
   });
 
+  it('卷一《其人》+ 卷二《我们》：折脊 meta 走兼容读——旧单卷 portrait 只进其人折', () => {
+    const p = person({ digest: { portrait: '旧画像', events: [], generatedAt: '2026-03-12T00:00:00.000Z' } });
+    const book = foldBook(p, { fold: 'b' }, bodies, spills);
+    expect([...book.querySelectorAll('.bz-people-leaf-zh')].map((n) => n.textContent)).toEqual(['其人', '我们', '事件', '大事记']);
+    const metas = [...book.querySelectorAll('.bz-people-leaf-cnt')].map((n) => n.textContent);
+    expect(metas[0]).toBe('修'); // personOf 回落旧 portrait
+    expect(metas[1]).toBe('空'); // bondOf：旧数据没有 bond
+  });
+
   it('折页切换钩子挂整片收起折（点竖排引文区也能切）；展开折不带——防吞折内按钮', () => {
-    const book = foldBook(person(), { fold: 'p', media: null, profEdit: false, noteAdd: false }, bodies, spills);
+    const book = foldBook(person(), { fold: 'p' }, bodies, spills);
     const eLeaf = book.querySelector('[data-people-leaf="e"]')!;
     expect(eLeaf.hasAttribute('data-people-leaf-head')).toBe(true);
     const pLeaf = book.querySelector('[data-people-leaf="p"]')!;
     expect(pLeaf.hasAttribute('data-people-leaf-head')).toBe(false);
+  });
+});
+
+// ---------------- 双卷兼容读与折正文（issue 455） ----------------
+
+describe('双卷兼容读（personOf / bondOf 单源）', () => {
+  it('新数据读 person/bond；旧单卷回落 portrait；空 digest 兜空串', () => {
+    expect(personOf({ person: '新其人', portrait: '旧画像', events: [], generatedAt: '' })).toBe('新其人');
+    expect(personOf({ portrait: '旧画像', events: [], generatedAt: '' })).toBe('旧画像');
+    expect(personOf({ person: '其人', events: [], generatedAt: '' })).toBe('其人');
+    expect(personOf(undefined)).toBe('');
+    expect(bondOf({ bond: '我们', events: [], generatedAt: '' })).toBe('我们');
+    expect(bondOf({ portrait: '旧画像', events: [], generatedAt: '' })).toBe('');
+    expect(bondOf(undefined)).toBe('');
+  });
+});
+
+describe('折正文：其人 / 我们（issue 455）', () => {
+  it('其人折：markdown + 代表原话；空态给引导与「打开数据源」动作', () => {
+    const p = person({ digest: { events: [], generatedAt: '', quotes: [{ ts: '2026-03-01', who: '我', text: '行' }] } });
+    const withBody = foldPersonBody(miniMarkdown('## 速写\n- 简短'), p);
+    expect(withBody[0].classList.contains('bz-people-portrait')).toBe(true);
+    expect(withBody.map((n) => n.textContent).join('')).toContain('代表原话');
+    const empty = foldPersonBody(null, person());
+    expect(empty[0].textContent).toContain('还没有其人画像。从数据源导入一次即可生成。');
+    expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
+  });
+
+  it('我们折：markdown；空态引导导入（旧单卷 portrait 不进我们折）', () => {
+    expect(foldBondBody(miniMarkdown('## 我们\n- 常聊'))[0].querySelectorAll('li')).toHaveLength(1);
+    const empty = foldBondBody(null);
+    expect(empty[0].textContent).toContain('还没有关系画像。从数据源导入一次即可生成。');
+    expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
+  });
+});
+
+// ---------------- 详情头弹窗入口与统计 / 档案弹窗（issue 455） ----------------
+
+describe('详情头弹窗入口图标（issue 455）', () => {
+  it('互动统计 / 补充背景两图标在返回按钮前（DOM 序居其前）；生成钮仍在最前', () => {
+    const withGen = foldDetailHead(person(), null, { canGenerate: true });
+    expect([...withGen.querySelector('.bz-people-dt-actions')!.children].map((n) => n.getAttribute('aria-label')))
+      .toEqual(['画脸谱', '互动统计', '补充背景', '返回列表']);
+    const noGen = foldDetailHead(person(), null, { canGenerate: false });
+    const order = [...noGen.querySelector('.bz-people-dt-actions')!.children];
+    expect(order.map((n) => n.getAttribute('aria-label'))).toEqual(['互动统计', '补充背景', '返回列表']);
+    expect(order[0].getAttribute('data-people-stats-open')).toBe('');
+    expect(order[1].getAttribute('data-people-prof-open')).toBe('');
+    expect(order[2].getAttribute('data-people-back-btn')).toBe('');
+  });
+});
+
+describe('统计 / 档案弹窗（issue 455 弹窗化）', () => {
+  const rec = (stats?: ImportRecord['stats']): ImportRecord => ({
+    file: '数据源:陈默', importedAt: '2026-09-01T00:00:00.000Z', messageCount: 10, skippedCount: 0,
+    timeFrom: '2026-01-01T00:00:00.000Z', timeTo: '2026-09-01T00:00:00.000Z', stats,
+  });
+
+  it('popShell：遮罩与关闭钮共用 data-people-pop-close，root 钩子标识弹窗身份，面板 role=dialog', () => {
+    const pop = popShell('互动统计', 'data-people-stats-pop', [el('div', 'body-x')]);
+    expect(pop.hasAttribute('data-people-stats-pop')).toBe(true);
+    expect(pop.querySelector('[data-people-pop-close]')!.className).toBe('bz-people-pop-dim'); // 遮罩在前
+    const closeBtn = pop.querySelector('[data-people-pop-close][aria-label="关闭"]');
+    expect(closeBtn).toBeTruthy();
+    const panel = pop.querySelector('[role="dialog"]')!;
+    expect(panel.getAttribute('aria-label')).toBe('互动统计');
+    expect(panel.querySelector('.bz-people-pop-body')!.querySelector('.body-x')).toBeTruthy();
+  });
+
+  it('统计弹窗正文：出卡即卡；占位口径不变（合成记录待画 / 旧版数据 / 无导入）', () => {
+    const card = el('div', 'bz-people-insights');
+    expect(statsPopBody(card, person())[0]).toBe(card);
+    const pool = statsPopBody(null, person({ imports: [rec({ voiceCount: 1 })] })); // 有 stats 无 monthly = 452 合成记录
+    expect(pool[0].getAttribute('data-people-data-hint')).toBe('');
+    expect(pool[0].textContent).toContain('画完脸谱后这里会有完整的互动统计');
+    const legacy = statsPopBody(null, person({ imports: [rec()] })); // 无 stats = 旧版数据
+    expect(legacy[0].textContent).toContain('旧版数据');
+    expect(statsPopBody(null, person())[0].textContent).toContain('还没有导入记录');
+  });
+
+  it('补充背景弹窗正文：有档显卡、编辑态出编辑器、全空给补档入口', () => {
+    const filled = profilePopBody(person({ profile: { tags: ['同学'] } }), false);
+    expect(filled[0].classList.contains('bz-people-prof')).toBe(true);
+    expect(filled[0].textContent).toContain('同学');
+    expect(filled[0].querySelector('[data-people-prof-edit]')).toBeTruthy();
+    const editing = profilePopBody(person(), true);
+    expect(editing[0].classList.contains('bz-people-prof-edit')).toBe(true);
+    expect(editing[0].querySelector('[data-people-prof-save]')).toBeTruthy();
+    const blank = profilePopBody(person(), false);
+    expect(blank[0].textContent).toContain('聊天之外的也可以记');
+    expect(blank[0].querySelector('[data-people-prof-new]')!.textContent).toBe('补人物档案');
   });
 });
 
@@ -253,21 +363,23 @@ describe('数据源弹窗（dsModal 四态）', () => {
 
 // ---------------- 生成进度块（issue 450：阶段化进度 + 后台化） ----------------
 
-describe('进度块纯函数（450 口径）', () => {
-  it('jobsPercent = (已完成批 + 已完成成文阶段) / (总批数 + 2)，钳 0~100', () => {
+describe('进度块纯函数（455 四阶段口径）', () => {
+  it('jobsPercent = (已完成批 + 已完成成文阶段) / (总批数 + 3)，钳 0~100（455 三段成文）', () => {
     expect(jobsPercent(0, 60, 0)).toBe(0);
-    expect(jobsPercent(12, 60, 0)).toBe(19); // 12/62
-    expect(jobsPercent(60, 60, 1)).toBe(98); // 61/62（画像完成、时间线进行中）
-    expect(jobsPercent(60, 60, 2)).toBe(100);
+    expect(jobsPercent(12, 60, 0)).toBe(19); // 12/63
+    expect(jobsPercent(60, 60, 2)).toBe(98); // 62/63（编年史进行中 = 其人 / 我们已完成）
+    expect(jobsPercent(60, 60, 3)).toBe(100);
     expect(jobsPercent(0, 0, 0)).toBe(0); // 总数未知不除零
     expect(jobsPercent(99, 1, 2)).toBe(100);
   });
 
-  it('jobsStagesDone：时间线进行中 = 1（画像已完成）、done = 2、采集期 = 0', () => {
+  it('jobsStagesDone：四阶段对齐（extracting 逐批 → 画其人 → 写我们 → 编年史）——bond = 1、chronicle = 2、done = 3', () => {
     expect(jobsStagesDone('extracting', 'running')).toBe(0);
-    expect(jobsStagesDone('portrait', 'running')).toBe(0);
-    expect(jobsStagesDone('chronicle', 'running')).toBe(1);
-    expect(jobsStagesDone(undefined, 'done')).toBe(2);
+    expect(jobsStagesDone('person', 'running')).toBe(0);
+    expect(jobsStagesDone('portrait', 'running')).toBe(0); // 旧引擎阶段名兼容（旧落盘）
+    expect(jobsStagesDone('bond', 'running')).toBe(1);
+    expect(jobsStagesDone('chronicle', 'running')).toBe(2);
+    expect(jobsStagesDone(undefined, 'done')).toBe(3);
   });
 
   it('队列副文案：多人生成「（2/5 人）当前：大琳」；单人省略队列段', () => {
@@ -331,7 +443,7 @@ describe('progressBlock 状态机（450）', () => {
     const dead = progressBlock(state({ status: 'error', message: '', errorText: '消息集已变化', resumable: false }));
     expect(dead.querySelector('[data-people-jobs-dismiss]')!.textContent).toBe('删除任务');
     expect(dead.querySelector('[data-people-jobs-resume]')).toBeNull();
-    const done = progressBlock(state({ status: 'done', message: '', stagesDone: 2, batchesDone: 60 }));
+    const done = progressBlock(state({ status: 'done', message: '', stagesDone: 3, batchesDone: 60 }));
     expect(done.querySelector('[data-people-jobs-pause]')).toBeNull();
     expect(done.querySelector('[data-people-jobs-resume]')).toBeNull();
     expect(done.querySelector('[data-people-jobs-dismiss]')).toBeNull();
