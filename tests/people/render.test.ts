@@ -1,6 +1,7 @@
 /**
- * 脸谱 render 纯层测试（issue 447）：折子封面（竖排截断 / 印章水位 / 合并态）、
- * 详情折页册（五折结构 / 折脊引文）、数据源弹窗（四态行 / 勾选文案 / 图例快捷）。
+ * 脸谱 render 纯层测试（issue 447 / 450）：折子封面（竖排截断 / 印章水位 / 合并态）、
+ * 详情折页册（五折结构 / 折脊引文）、数据源弹窗（四态行 / 勾选文案 / 图例快捷）、
+ * 生成进度块（百分比口径 / 队列副文案 / 状态按钮态——450 后台化）。
  * markup 单源的锚测试——类名与 data 钩子即 ui 委托契约。
  * 隐私口径：fixture 全构造数据。
  */
@@ -12,11 +13,17 @@ import {
   foldBook,
   foldCard,
   formatCount,
+  jobsFallbackMessage,
+  jobsPercent,
+  jobsQueueLabel,
+  jobsStagesDone,
   panelShell,
+  progressBlock,
   replyLatencySec,
   statsText,
   vtName,
   type DsRowState,
+  type JobsBlockState,
 } from '../../src/people/render';
 import type { PersonEntry } from '../../src/people/types';
 
@@ -69,10 +76,10 @@ describe('折子封面（foldCard）', () => {
 });
 
 describe('面板壳与统计行', () => {
-  it('壳含数据源入口 / 进度行 / 弹层容器（data 钩子即委托契约）', () => {
+  it('壳含数据源入口 / 进度块槽位 / 弹层容器（data 钩子即委托契约）', () => {
     const shell = panelShell();
     expect(shell.querySelector('[data-people-ds-open]')).toBeTruthy();
-    expect(shell.querySelector('[data-people-runline]')).toBeTruthy();
+    expect(shell.querySelector('[data-people-jobs-slot]')).toBeTruthy();
     expect(shell.querySelector('[data-people-ds-layer]')).toBeTruthy();
   });
 
@@ -169,6 +176,88 @@ describe('数据源弹窗（dsModal 四态）', () => {
     expect(dsModal(state({ rows: [], hiddenGroups: 2 })).textContent).toContain('2 个群聊未纳入');
     const noFresh = dsModal(state({ rows: [{ ...dsRowBase, newCount: 0 }] }));
     expect(noFresh.querySelector('[data-people-ds-pickfresh]')).toBeNull();
+  });
+});
+
+// ---------------- 生成进度块（issue 450：阶段化进度 + 后台化） ----------------
+
+describe('进度块纯函数（450 口径）', () => {
+  it('jobsPercent = (已完成批 + 已完成成文阶段) / (总批数 + 2)，钳 0~100', () => {
+    expect(jobsPercent(0, 60, 0)).toBe(0);
+    expect(jobsPercent(12, 60, 0)).toBe(19); // 12/62
+    expect(jobsPercent(60, 60, 1)).toBe(98); // 61/62（画像完成、时间线进行中）
+    expect(jobsPercent(60, 60, 2)).toBe(100);
+    expect(jobsPercent(0, 0, 0)).toBe(0); // 总数未知不除零
+    expect(jobsPercent(99, 1, 2)).toBe(100);
+  });
+
+  it('jobsStagesDone：时间线进行中 = 1（画像已完成）、done = 2、采集期 = 0', () => {
+    expect(jobsStagesDone('extracting', 'running')).toBe(0);
+    expect(jobsStagesDone('portrait', 'running')).toBe(0);
+    expect(jobsStagesDone('chronicle', 'running')).toBe(1);
+    expect(jobsStagesDone(undefined, 'done')).toBe(2);
+  });
+
+  it('队列副文案：多人生成「（2/5 人）当前：大琳」；单人省略队列段', () => {
+    expect(jobsQueueLabel(2, 5, '大琳')).toBe('（2/5 人）当前：大琳');
+    expect(jobsQueueLabel(1, 1, '陈默')).toBe('当前：陈默');
+  });
+
+  it('无引擎文案时的状态兜底：各态都讲清下一步', () => {
+    expect(jobsFallbackMessage('running', '陈默')).toContain('正在生成');
+    expect(jobsFallbackMessage('paused', '陈默')).toContain('继续生成');
+    expect(jobsFallbackMessage('interrupted', '陈默')).toContain('中断');
+    expect(jobsFallbackMessage('error', '陈默')).toContain('失败');
+    expect(jobsFallbackMessage('done', '陈默')).toContain('已生成');
+  });
+});
+
+describe('progressBlock 状态机（450）', () => {
+  const state = (over: Partial<JobsBlockState> = {}): JobsBlockState => ({
+    talker: 'wxid_a',
+    name: '陈默',
+    status: 'running',
+    message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条',
+    batchesDone: 12,
+    batchesTotal: 60,
+    stagesDone: 0,
+    queueIndex: 2,
+    queueTotal: 5,
+    ...over,
+  });
+
+  it('运行中：细条宽度 = 百分比、主文案整句保留、队列副文案、出「暂停」不出「继续」', () => {
+    const b = progressBlock(state());
+    expect(b.getAttribute('data-people-jobs-talker')).toBe('wxid_a');
+    expect(b.querySelector('.bz-people-jobs-fill')!.getAttribute('style')).toBe('width:19%');
+    expect(b.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%');
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
+    expect(b.querySelector('.bz-people-jobs-queue')!.textContent).toBe('（2/5 人）当前：陈默');
+    expect(b.querySelector('.bz-people-jobs-note')!.textContent).toContain('后台');
+    expect(b.querySelector('[data-people-jobs-pause]')).toBeTruthy();
+    expect(b.querySelector('[data-people-jobs-resume]')).toBeNull();
+  });
+
+  it('主文案不截断：超长抽样说明整句保留在 DOM（换行交给样式）', () => {
+    const long = '消息 91234 条 → 300 批超上限，均匀抽样 60 批（覆盖全时段，首尾必保），共 62 次 AI 调用';
+    const b = progressBlock(state({ message: long }));
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe(long);
+  });
+
+  it('暂停 / 中断出「继续生成」；error 出「删除任务」+ 错误说明；done 无动作钮', () => {
+    const paused = progressBlock(state({ status: 'paused', message: '' }));
+    expect(paused.querySelector('[data-people-jobs-resume]')!.textContent).toBe('继续生成');
+    expect(paused.querySelector('.bz-people-jobs-main')!.textContent).toContain('已暂停');
+    const interrupted = progressBlock(state({ status: 'interrupted', message: '' }));
+    expect(interrupted.querySelector('[data-people-jobs-resume]')).toBeTruthy();
+    const err = progressBlock(state({ status: 'error', message: '', errorText: 'AI 调用超时' }));
+    expect(err.querySelector('[data-people-jobs-dismiss]')!.textContent).toBe('删除任务');
+    expect(err.querySelector('.bz-people-jobs-err')!.textContent).toBe('AI 调用超时');
+    const done = progressBlock(state({ status: 'done', message: '', stagesDone: 2, batchesDone: 60 }));
+    expect(done.querySelector('[data-people-jobs-pause]')).toBeNull();
+    expect(done.querySelector('[data-people-jobs-resume]')).toBeNull();
+    expect(done.querySelector('[data-people-jobs-dismiss]')).toBeNull();
+    expect(done.querySelector('.bz-people-jobs-pct')!.textContent).toBe('100%');
   });
 });
 

@@ -1,5 +1,5 @@
-/* 源指纹 9e1296ca284d9815 · 仓内输入 52 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 5ac5dc9e57ccde11 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -4648,6 +4648,794 @@ var BZW_people = (() => {
     return release;
   }
 
+  // src/core/storage.ts
+  var DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
+  function storageDir() {
+    const s = tryGetSettings();
+    return normalizeStorageDir(s && s.storagePath);
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
+  var fileTaskQueues = /* @__PURE__ */ new Map();
+  function enqueueFileTask(filePath, task) {
+    var _a;
+    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
+    const run = prev.then(task, task);
+    const tail = run.then(
+      () => void 0,
+      () => void 0
+    );
+    fileTaskQueues.set(filePath, tail);
+    void tail.then(() => {
+      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+    });
+    return run;
+  }
+  function isAlreadyExistsError(e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /already exist/i.test(msg);
+  }
+  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
+  var CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
+  var corruptNotifyAt = /* @__PURE__ */ new Map();
+  function corruptStamp(d = /* @__PURE__ */ new Date()) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  function baseNameOf(p) {
+    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
+  }
+  async function backupOriginal(app, filePath, raw) {
+    try {
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (!f) return null;
+      const content = raw !== void 0 ? raw : await app.vault.read(f);
+      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
+        try {
+          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
+        } catch (e) {
+        }
+      }
+      const base = baseNameOf(filePath);
+      const stamp = corruptStamp();
+      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
+      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
+        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
+      }
+      await app.vault.create(backupPath, content);
+      return backupPath;
+    } catch (e) {
+      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
+      return null;
+    }
+  }
+  function notifyBackup(filePath, backupPath, cause) {
+    var _a;
+    const now = Date.now();
+    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    corruptNotifyAt.set(filePath, now);
+    try {
+      const name = baseNameOf(filePath);
+      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
+      notify(msg, { type: "warning" });
+    } catch (e) {
+    }
+  }
+  function serialize(v) {
+    return JSON.stringify(v, null, 2);
+  }
+  function jsonFileStore(filePath, opts = {}) {
+    const resolveApp = () => opts.app || getApp();
+    const resolveDefault = () => {
+      const d = opts.defaultValue;
+      return typeof d === "function" ? d() : d === void 0 ? [] : d;
+    };
+    async function ensureDir(app) {
+      const d = filePath.substring(0, filePath.lastIndexOf("/"));
+      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    }
+    async function createIfMissing(app, content) {
+      await ensureDir(app);
+      try {
+        await app.vault.create(filePath, content);
+        return true;
+      } catch (e) {
+        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
+        throw e;
+      }
+    }
+    async function handleCorrupt(app, err, raw) {
+      var _a;
+      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+        return null;
+      }
+      const backupPath = await backupOriginal(app, filePath, raw);
+      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
+      const f = app.vault.getAbstractFileByPath(filePath);
+      if (f) {
+        await app.vault.modify(f, serialize(resolveDefault()));
+      } else {
+        await createIfMissing(app, serialize(resolveDefault()));
+      }
+      return resolveDefault();
+    }
+    async function modifyWithBackup(app, f, c) {
+      try {
+        await app.vault.modify(f, c);
+      } catch (e) {
+        const backupPath = await backupOriginal(app, filePath);
+        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
+        throw e;
+      }
+    }
+    return {
+      async read() {
+        const app = resolveApp();
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (!f) {
+          const created = await createIfMissing(app, serialize(resolveDefault()));
+          if (created) return resolveDefault();
+          f = app.vault.getAbstractFileByPath(filePath);
+          if (!f) return resolveDefault();
+        }
+        const raw = await app.vault.read(f);
+        try {
+          return JSON.parse(raw);
+        } catch (e) {
+          return await handleCorrupt(app, e, raw);
+        }
+      },
+      async write(data) {
+        const app = resolveApp();
+        const c = serialize(data);
+        let f = app.vault.getAbstractFileByPath(filePath);
+        if (f) {
+          if (opts.writeIfChanged) {
+            try {
+              const cur2 = await app.vault.read(f);
+              if (cur2 === c) return;
+            } catch (e) {
+            }
+          }
+          await modifyWithBackup(app, f, c);
+          return;
+        }
+        const created = await createIfMissing(app, c);
+        if (created) return;
+        let cur = app.vault.getAbstractFileByPath(filePath);
+        if (!cur) {
+          const retried = await createIfMissing(app, c);
+          if (retried) return;
+          cur = app.vault.getAbstractFileByPath(filePath);
+          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
+        }
+        await modifyWithBackup(app, cur, c);
+      }
+    };
+  }
+
+  // src/people/types.ts
+  function emptyPeopleData() {
+    return { version: 1, people: [] };
+  }
+
+  // src/people/data.ts
+  function getPeopleFilePath() {
+    const s = tryGetSettings();
+    return storageFile("people.json", s && s.storagePath || "CONFIG/STORAGE");
+  }
+  var PeopleStore = class {
+    constructor(app) {
+      this.app = app;
+      this.filePath = getPeopleFilePath();
+    }
+    open() {
+      return jsonFileStore(this.filePath, { defaultValue: emptyPeopleData, app: this.app });
+    }
+    /** 人物列表（建卡时间升序） */
+    async list() {
+      return enqueueFileTask(this.filePath, async () => {
+        const data = await this.open().read();
+        return [...data.people].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      });
+    }
+    /** 新增或整体替换人物卡（按 id） */
+    async upsert(entry) {
+      await enqueueFileTask(this.filePath, async () => {
+        const store2 = this.open();
+        const data = await store2.read();
+        const i = data.people.findIndex((p) => p.id === entry.id);
+        if (i >= 0) data.people[i] = entry;
+        else data.people.push(entry);
+        await store2.write(data);
+      });
+    }
+    /** 追加一条导入记录 */
+    async appendImport(id, rec) {
+      await this.mutate(id, (p) => {
+        p.imports.push(rec);
+      });
+    }
+    /** 覆盖脸谱（重画） */
+    async setDigest(id, digest) {
+      await this.mutate(id, (p) => {
+        p.digest = digest;
+      });
+    }
+    /** 设置人物档案（传 undefined 清空） */
+    async updateProfile(id, profile) {
+      await this.mutate(id, (p) => {
+        if (profile) p.profile = profile;
+        else delete p.profile;
+      });
+    }
+    /** 改称呼 */
+    async rename(id, name) {
+      await this.mutate(id, (p) => {
+        p.name = name;
+      });
+    }
+    /** 追加一条随手记（按日期序保持有序） */
+    async addManualEvent(id, ev) {
+      await this.mutate(id, (p) => {
+        var _a;
+        ((_a = p.manualEvents) != null ? _a : p.manualEvents = []).push(ev);
+        p.manualEvents.sort((a, b) => a.ts.localeCompare(b.ts));
+      });
+    }
+    /** 删除一条随手记 */
+    async removeManualEvent(id, evId) {
+      await this.mutate(id, (p) => {
+        var _a;
+        p.manualEvents = ((_a = p.manualEvents) != null ? _a : []).filter((e) => e.id !== evId);
+      });
+    }
+    /** 记录增量提炼锚点（毫秒时间戳） */
+    async setLastProcessedTs(id, ts) {
+      await this.mutate(id, (p) => {
+        p.lastProcessedTs = ts;
+      });
+    }
+    /**
+     * 合并人物：把 from 的导入记录 / 随手记 / 档案并进 to，然后移除 from。
+     * 用于同一人在数据里出现两个 wxid 的情况（两个不同号、或改过号）。
+     * 两份画像不自动混（混出来没有意义）：to 没有画像时才继承 from 的。
+     */
+    async mergeInto(fromId, toId) {
+      if (fromId === toId) return;
+      await enqueueFileTask(this.filePath, async () => {
+        var _a, _b, _c, _d;
+        const store2 = this.open();
+        const data = await store2.read();
+        const from = data.people.find((p) => p.id === fromId);
+        const to = data.people.find((p) => p.id === toId);
+        if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
+        to.imports.push(...from.imports);
+        to.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
+        to.manualEvents = [...(_a = to.manualEvents) != null ? _a : [], ...(_b = from.manualEvents) != null ? _b : []].sort((a, b) => a.ts.localeCompare(b.ts));
+        if (!to.profile && from.profile) to.profile = from.profile;
+        if (!to.digest && from.digest) to.digest = from.digest;
+        to.lastProcessedTs = Math.max((_c = to.lastProcessedTs) != null ? _c : 0, (_d = from.lastProcessedTs) != null ? _d : 0);
+        data.people = data.people.filter((p) => p.id !== fromId);
+        await store2.write(data);
+      });
+    }
+    async remove(id) {
+      await enqueueFileTask(this.filePath, async () => {
+        const store2 = this.open();
+        const data = await store2.read();
+        data.people = data.people.filter((p) => p.id !== id);
+        await store2.write(data);
+      });
+    }
+    /** 队列内单人物变更（不存在抛错——静默丢失比失败更糟） */
+    async mutate(id, fn) {
+      await enqueueFileTask(this.filePath, async () => {
+        const store2 = this.open();
+        const data = await store2.read();
+        const p = data.people.find((x) => x.id === id);
+        if (!p) throw new Error(`人物不存在: ${id}`);
+        fn(p);
+        await store2.write(data);
+      });
+    }
+  };
+
+  // src/people/media.ts
+  function parseMediaTag(msg) {
+    let s = String(msg != null ? msg : "").trim();
+    const stripped = s.replace(/^\[(?!(?:语音|图片|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, "");
+    if (stripped !== s && /^\[(语音|图片)\s*([^\]]*)\]/.test(stripped)) s = stripped;
+    const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
+    if (!m) return null;
+    const body = m[3].trim();
+    if (!body) return null;
+    const kind = m[1] === "语音" ? "voice" : "image";
+    const out = { kind, text: body };
+    if (kind === "voice") {
+      let durationSec;
+      const emos = [];
+      for (const part of m[2].split("·")) {
+        const t = part.trim();
+        if (!t) continue;
+        const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t);
+        if (dm) {
+          if (durationSec === void 0) durationSec = Number(dm[1]);
+        } else {
+          emos.push(t);
+        }
+      }
+      if (durationSec !== void 0) out.durationSec = durationSec;
+      const emotion = emos.join("·").trim();
+      if (emotion) out.emotion = emotion;
+    }
+    return out;
+  }
+  function emptyMediaStats() {
+    return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+  }
+  function collectMediaStats(messages) {
+    var _a;
+    const out = emptyMediaStats();
+    for (const m of messages) {
+      const mat = parseMediaTag((_a = m == null ? void 0 : m.text) != null ? _a : "");
+      if (!mat) continue;
+      if (mat.kind === "voice") {
+        out.voiceCount++;
+        if (mat.durationSec !== void 0 && Number.isFinite(mat.durationSec)) out.voiceTotalSec += mat.durationSec;
+      } else {
+        out.imageCount++;
+      }
+    }
+    return out;
+  }
+  function formatDuration(sec) {
+    const s = Math.max(0, Math.round(sec || 0));
+    if (s < 60) return `${s} 秒`;
+    if (s < 3600) return `${Math.round(s / 60)} 分`;
+    return `${Math.round(s / 3600)} 时`;
+  }
+  function formatMediaCount(s) {
+    const parts = [];
+    if (s.voiceCount > 0) {
+      parts.push(`语音 ${s.voiceCount} 条`);
+      if (s.voiceTotalSec > 0) parts.push(formatDuration(s.voiceTotalSec));
+    }
+    if (s.imageCount > 0) parts.push(`图片 ${s.imageCount} 张`);
+    return parts.join(" · ");
+  }
+  function buildMediaNote(s) {
+    const count = formatMediaCount(s);
+    if (!count) return "";
+    const emo = s.voiceCount > 0 ? "；语音行内「·」后的标记是语音情感识别结果（如平静、开心），可作情绪判断的参考" : "";
+    return `聊天里还有${count}的媒体素材——语音已转写成文字并入对话（引用原话时只写转写文本，不带标签），图片以画面描述入列${emo}。`;
+  }
+
+  // src/people/digest.ts
+  var DEFAULTS = { maxChars: 12e3, maxCount: 400, maxBatches: 60 };
+  var MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 };
+  function chunkMessages(messages, opts = {}) {
+    var _a;
+    const { maxChars, maxCount, maxBatches } = { ...DEFAULTS, ...opts };
+    const chunks = [];
+    let lines = [];
+    let chars = 0;
+    let voice = 0;
+    let image = 0;
+    for (const m of messages) {
+      const text2 = ((_a = m.text) != null ? _a : "").trim();
+      if (!text2) continue;
+      const line = renderLine(m.ts, m.isSender, text2);
+      const fits = lines.length === 0 || lines.length < maxCount && chars + line.length <= maxChars;
+      if (!fits) {
+        chunks.push(makeChunk(lines, voice, image));
+        lines = [];
+        chars = 0;
+        voice = 0;
+        image = 0;
+      }
+      const mat = parseMediaTag(text2);
+      if ((mat == null ? void 0 : mat.kind) === "voice") voice++;
+      else if ((mat == null ? void 0 : mat.kind) === "image") image++;
+      lines.push(line);
+      chars += line.length;
+    }
+    if (lines.length) chunks.push(makeChunk(lines, voice, image));
+    if (chunks.length <= maxBatches) return chunks;
+    return evenlySample(chunks, maxBatches);
+  }
+  function evenlySample(items, max) {
+    if (items.length <= max) return items;
+    const picked = [];
+    for (let i = 0; i < max; i++) picked.push(items[Math.round(i * (items.length - 1) / (max - 1))]);
+    return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
+  }
+  function makeChunk(lines, voice = 0, image = 0) {
+    var _a, _b;
+    const first = (_a = lines[0]) != null ? _a : "";
+    const last = (_b = lines[lines.length - 1]) != null ? _b : "";
+    const chunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
+    if (voice || image) chunk.media = { voice, image };
+    return chunk;
+  }
+  function chunkMetaOf(c) {
+    const meta = { from: c.from, to: c.to, count: c.count };
+    if (c.media) {
+      meta.voice = c.media.voice;
+      meta.image = c.media.image;
+    }
+    return meta;
+  }
+  function renderLine(ts, isSender, text2) {
+    const d = new Date(ts);
+    const pad = (n) => String(n).padStart(2, "0");
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `[${day} ${hm}][${isSender ? "我" : "对方"}] ${text2}`;
+  }
+  function buildExtractPrompt(chunk, personName) {
+    const media = chunk.media;
+    const head = [
+      `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
+      // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
+      "行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。群聊导出的行首会多一层 `[成员名]`——那不是标签，是群成员的名字，忽略它，谁在说仍看后面的 [我] / [对方]。"
+    ];
+    if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image)) {
+      head.push(
+        "本段含媒体消息：`[语音 …]` 开头的行是语音转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[图片]` 开头的行是一张图片的画面描述。"
+      );
+    }
+    return [
+      ...head,
+      "",
+      ...chunk.lines,
+      "",
+      "请采集以下四类素材，宁缺毋滥，没有就给空数组：",
+      "",
+      "1. events：交往事件，大事小事都要收。",
+      "   每条含 ts（YYYY-MM-DD，事件发生日期）、kind 与 summary（一句话，不超过 40 字）。",
+      '   kind = "major"：约定 / 见面 / 计划 / 重要话题 / 情绪事件 / 矛盾 / 承诺。',
+      '   kind = "minor"：第一次做某事 / 分享的具体内容 / 习惯性互动 / 有画面的日常片段。',
+      "   日常寒暄、表情包刷屏、无实义闲聊不要收。",
+      "",
+      "2. traits：对方的性格 / 兴趣 / 习惯线索短语（每条不超过 15 字）。",
+      "   只收反复出现或特征鲜明的，不因单次提及就下判断。",
+      "",
+      "3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。",
+      '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
+      "   优先收能体现说话风格与脾气秉性的句子，最多 8 条。",
+      ...(media == null ? void 0 : media.voice) ? ["   `[语音 …]` 行是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）。"] : [],
+      "",
+      "4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。",
+      "   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。",
+      "   反复分享的内容来源（如网易云 / B站 / 豆瓣）也是难忘画面。",
+      ...(media == null ? void 0 : media.image) ? ["   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。"] : [],
+      "",
+      "只输出 JSON，不要任何解释或代码围栏：",
+      '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}]}'
+    ].join("\n");
+  }
+  function buildChroniclePrompt(name, events, mediaNote, statsNote) {
+    const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
+    return [
+      `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
+      ...mediaNote ? ["", `素材说明：${mediaNote}`] : [],
+      // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
+      ...statsNote ? ["", statsNote] : [],
+      "",
+      eventLines,
+      "",
+      "请把这段关系写成一份「关系时间线」：",
+      "",
+      "要求：",
+      "- 按时间顺序组织，用 `## 2023 年` 这样的年份小节分隔；素材密集的年份可用 `### 上半年 / 下半年` 再分。",
+      "- 每个时期用 `-` 列表逐条写发生的事，**大事小事都要**：谁先开口、第一次做什么、一起去过哪、聊过什么重要话题、闹过什么别扭、怎么和好的。",
+      "- 沉默期（断联与回联）也写进对应年份的叙事：哪段时间明显话少或断了联系、后来又怎么重新热络起来。",
+      "- 通话或分享特别密集的时期，写成「这段关系的季节」——那是关系的高温期。",
+      "- 有明确日期的条目以 `（YYYY-MM-DD）` 收在句尾；同一天的事合并成一条。",
+      "- 开头先用一句话交代关系的起点（第一次说话是什么时候、从什么由头开始的）。",
+      "- 只写素材里有的事，**不要编造**；素材稀疏的时期宁可只写一两条，也不要为填充而杜撰。",
+      "- 可以适度归纳（如「这阵子聊得最多的是那家店」），但事实必须来自素材。",
+      "- 总长 1500 字以内，直接输出 markdown 正文，不要代码围栏。"
+    ].join("\n");
+  }
+  function buildPortraitPrompt(name, material) {
+    const { events, traits, quotes, moments, mediaNote, statsNote } = material;
+    const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
+    const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join("\n") : "（无）";
+    const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join("\n") : "（无）";
+    const traitLines = traits.length ? traits.map((t) => `- ${t}`).join("\n") : "（无）";
+    return [
+      `你在帮用户为好友「${name}」画一张「脸谱」——基于以下从聊天记录里提炼的素材，写出这个人的人物画像。`,
+      ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
+      "",
+      "## 素材一：交往事件",
+      eventLines,
+      "",
+      "## 素材二：代表性原话",
+      quoteLines,
+      "",
+      "## 素材三：场景与细节",
+      momentLines,
+      "",
+      "## 素材四：特质线索",
+      traitLines,
+      ...statsNote ? ["", "## 素材五：互动统计", statsNote] : [],
+      "",
+      "## 要产出的小节（按此顺序，每节用 ## 二级标题）",
+      "",
+      "## 画像速写",
+      "两三句话抓住这个人给人的整体感觉。",
+      "",
+      "## 聊天的形状",
+      "作息与聊天频率、谁更常先开口、回复快慢、是语音派还是文字派、通话多不多、有没有明显的沉默期。",
+      "写可感知的相处模式，不要罗列数字。",
+      "",
+      "## 表达 DNA",
+      "口头禅、高频词、说话节奏（话密还是话少、直给还是含蓄）、标点与语气习惯。",
+      "双方互相的称呼 / 昵称也收在这里：怎么叫对方、对方怎么叫你、称呼随情绪或时间的演变（如「对方习惯叫我 X，生气时叫 Y」）。",
+      "每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。",
+      "",
+      "## 分享的口味",
+      "从分享 / 安利过的内容（歌、视频、文章、小程序……）归纳这个人的内容口味与审美。",
+      "素材里没有分享内容就写「（素材不足）」。",
+      "",
+      "## 情绪逻辑",
+      "什么让他话变多、什么让他退缩或沉默、什么时候会主动找人、什么话题能点亮他。",
+      "",
+      "## 冲突与修复",
+      "出现分歧时他怎么做——解释、回避、反击还是冷处理？事后谁先开口、怎么缓和？",
+      "",
+      "## 共同记忆",
+      "反复出现的地点、物件、习惯、画面。要具体到能想起当时的场景。",
+      "",
+      "## 相处建议",
+      "跟这个人相处要注意什么、什么能让他打开、什么会让他关上。",
+      "",
+      "## 硬性要求",
+      "- 输出 markdown，只允许这几种语法：`##` 二级小节、`-` 列表项、`**加粗**`、`> ` 引用块。不要一级标题、不要表格、不要代码块。",
+      "- 优先写模式，不要写传记：写「他习惯用玩笑化解尴尬」，不要写「他三月去了北京」。",
+      "- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。",
+      "- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。",
+      "- 素材不足以支撑的小节（含「聊天的形状」「分享的口味」），写「（素材不足）」，绝不编造。",
+      "- 总长 1200 字以内，直接输出 markdown 正文，不要代码围栏。"
+    ].join("\n");
+  }
+  function extractJsonLoose(raw) {
+    let s = raw.trim();
+    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (fence) s = fence[1].trim();
+    const start = s.search(/[{[]/);
+    if (start < 0) throw new Error("AI 回执里没有 JSON");
+    const end = Math.max(s.lastIndexOf("}"), s.lastIndexOf("]"));
+    if (end <= start) throw new Error("AI 回执 JSON 不完整");
+    return JSON.parse(s.slice(start, end + 1));
+  }
+  function parseBatchExtract(raw) {
+    const data = extractJsonLoose(raw);
+    const events = [];
+    for (const e of arrOf(data.events)) {
+      const ts = str(e.ts);
+      const summary = str(e.summary);
+      if (!ts || !summary) continue;
+      const kind = str(e.kind);
+      events.push(kind === "major" || kind === "minor" ? { ts, summary, kind } : { ts, summary });
+    }
+    const quotes = [];
+    for (const q of arrOf(data.quotes)) {
+      const ts = str(q.ts);
+      const text2 = str(q.text);
+      if (ts && text2) quotes.push({ ts, who: str(q.who) || "对方", text: text2 });
+    }
+    const moments = [];
+    for (const m of arrOf(data.moments)) {
+      const ts = str(m.ts);
+      const summary = str(m.summary);
+      if (ts && summary) moments.push({ ts, summary });
+    }
+    const traits = rawArr(data.traits).filter((t) => typeof t !== "object" || t === null).map((t) => str(t)).filter(Boolean);
+    return { events, traits, quotes, moments };
+  }
+  function arrOf(v) {
+    if (!Array.isArray(v)) return [];
+    return v.filter((x) => !!x && typeof x === "object");
+  }
+  function rawArr(v) {
+    return Array.isArray(v) ? v : [];
+  }
+  function str(v) {
+    return String(v != null ? v : "").trim();
+  }
+  async function extractBatch(ask, chunk, personName) {
+    return parseBatchExtract(await ask(buildExtractPrompt(chunk, personName)));
+  }
+  function mergeBatches(batches) {
+    return {
+      events: mergeEvents(batches.flatMap((b) => b.events)),
+      quotes: dedupeBy(batches.flatMap((b) => b.quotes), (q) => q.text),
+      moments: dedupeBy(batches.flatMap((b) => b.moments), (m) => m.summary),
+      traits: dedupeBy(batches.flatMap((b) => b.traits), (t) => t)
+    };
+  }
+  function toPortraitMaterial(merged, o = {}) {
+    return {
+      events: o.sampleEvents ? evenlySample(merged.events, MATERIAL_LIMITS.chronicle) : merged.events,
+      traits: evenlySample(merged.traits, MATERIAL_LIMITS.traits),
+      quotes: evenlySample(merged.quotes, MATERIAL_LIMITS.quotes),
+      moments: evenlySample(merged.moments, MATERIAL_LIMITS.moments),
+      mediaNote: o.mediaNote,
+      statsNote: o.statsNote
+    };
+  }
+  function mergeEvents(events) {
+    const byKey = /* @__PURE__ */ new Map();
+    for (const e of events) {
+      const key = `${e.ts}|${e.summary}`;
+      const prev = byKey.get(key);
+      if (!prev) byKey.set(key, e);
+      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
+    }
+    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
+  }
+  function dedupeBy(items, key) {
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const item of items) {
+      const k = key(item);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(item);
+    }
+    return out;
+  }
+
+  // src/people/incremental.ts
+  function planIncremental(msgs, existing) {
+    const anchor = existing == null ? void 0 : existing.lastProcessedTs;
+    if (!anchor) return { mode: "full", msgs, olderCount: 0 };
+    const from = new Date(msgs[0].ts).toISOString();
+    const to = new Date(msgs[msgs.length - 1].ts).toISOString();
+    const dup = existing.imports.some((r) => r.messageCount === msgs.length && r.timeFrom === from && r.timeTo === to);
+    if (dup) return { mode: "skip", msgs: [], olderCount: msgs.length };
+    const newer = msgs.filter((m) => m.ts > anchor - 1);
+    if (newer.length) return { mode: "newer", msgs: newer, olderCount: msgs.length - newer.length };
+    return { mode: "older", msgs, olderCount: 0 };
+  }
+  function mergeWithOld(merged, old) {
+    var _a, _b, _c, _d;
+    return {
+      events: dedupeEvents([...(_a = old == null ? void 0 : old.events) != null ? _a : [], ...merged.events]),
+      quotes: dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...merged.quotes], (q) => q.text),
+      moments: dedupeByText([...(_c = old == null ? void 0 : old.moments) != null ? _c : [], ...merged.moments], (m) => m.summary),
+      traits: dedupeByText([...(_d = old == null ? void 0 : old.traits) != null ? _d : [], ...merged.traits], (t) => t)
+    };
+  }
+  function dedupeEvents(events) {
+    const byKey = /* @__PURE__ */ new Map();
+    for (const e of events) {
+      const key = `${e.ts}|${e.summary}`;
+      const prev = byKey.get(key);
+      if (!prev) byKey.set(key, e);
+      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
+    }
+    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
+  }
+  function dedupeByText(items, key) {
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const item of items) {
+      const k = key(item);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(item);
+    }
+    return out;
+  }
+  function mergeManualEvents(events, manual) {
+    if (!(manual == null ? void 0 : manual.length)) return events;
+    const seen = new Set(events.map((e) => `${e.ts}|${e.summary}`));
+    const extra = manual.map((m) => ({ ts: m.ts, summary: m.summary })).filter((e) => e.ts && e.summary && !seen.has(`${e.ts}|${e.summary}`));
+    if (!extra.length) return events;
+    return [...events, ...extra].sort((a, b) => a.ts.localeCompare(b.ts));
+  }
+
+  // src/people/stats.ts
+  var SESSION_GAP_MS = 30 * 60 * 1e3;
+  var REPLY_CAP_SEC = 3600;
+  function monthKey(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function avgOf(samples) {
+    if (!samples.length) return 0;
+    return samples.reduce((a, b) => a + b, 0) / samples.length;
+  }
+  function medianOf(samples) {
+    if (!samples.length) return 0;
+    const s = [...samples].sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  }
+  function computeStats(messages, kindCounts) {
+    var _a;
+    const msgs = [...messages].sort((a, b) => a.ts - b.ts);
+    const monthly = /* @__PURE__ */ new Map();
+    const myHourly = new Array(24).fill(0);
+    const otherHourly = new Array(24).fill(0);
+    let initiatedByMe = 0;
+    let initiatedByOther = 0;
+    const mySamples = [];
+    const otherSamples = [];
+    let prev = null;
+    for (const m of msgs) {
+      if (!Number.isFinite(m.ts)) continue;
+      const d = new Date(m.ts);
+      monthly.set(monthKey(m.ts), ((_a = monthly.get(monthKey(m.ts))) != null ? _a : 0) + 1);
+      myHourly[d.getHours()] += m.isSender ? 1 : 0;
+      otherHourly[d.getHours()] += m.isSender ? 0 : 1;
+      if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
+        if (m.isSender) initiatedByMe++;
+        else initiatedByOther++;
+      } else if (m.isSender !== prev.isSender) {
+        const sec = (m.ts - prev.ts) / 1e3;
+        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
+      }
+      prev = m;
+    }
+    const media = collectMediaStats(msgs);
+    return {
+      monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+      initiatedByMe,
+      initiatedByOther,
+      myAvgReplySec: avgOf(mySamples),
+      otherAvgReplySec: avgOf(otherSamples),
+      myMedianReplySec: medianOf(mySamples),
+      otherMedianReplySec: medianOf(otherSamples),
+      myHourly,
+      otherHourly,
+      kindCounts: { ...kindCounts },
+      // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
+      voiceCount: media.voiceCount,
+      voiceTotalSec: media.voiceTotalSec,
+      imageCount: media.imageCount
+    };
+  }
+  function formatReplySec(sec) {
+    if (!Number.isFinite(sec) || sec <= 0) return "无样本";
+    if (sec < 60) return `${Math.max(1, Math.round(sec))} 秒`;
+    if (sec < 3600) return `${Math.max(1, Math.round(sec / 60))} 分钟`;
+    return `${Math.max(1, Math.round(sec / 3600))} 小时`;
+  }
+
+  // src/people/jobs.ts
+  var jobs_exports = {};
+  __export(jobs_exports, {
+    DRIFT_ERROR: () => DRIFT_ERROR,
+    JobStore: () => JobStore,
+    __resetJobsForTests: () => __resetJobsForTests,
+    emptyJobsData: () => emptyJobsData,
+    fingerprintOf: () => fingerprintOf,
+    getJobsFilePath: () => getJobsFilePath,
+    pauseJobs: () => pauseJobs,
+    removeJob: () => removeJob,
+    resume: () => resume,
+    resumeJobs: () => resumeJobs,
+    snapshot: () => snapshot,
+    startJobs: () => startJobs,
+    subscribe: () => subscribe,
+    whenIdle: () => whenIdle
+  });
+
   // src/core/model-limits.ts
   var MODEL_LIMITS = [
     // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
@@ -5084,797 +5872,6 @@ var BZW_people = (() => {
     return new AIService(params, defaultModel, defaultOptions);
   }
 
-  // src/people/media.ts
-  function parseMediaTag(msg) {
-    const s = String(msg != null ? msg : "").trim();
-    const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
-    if (!m) return null;
-    const body = m[3].trim();
-    if (!body) return null;
-    const kind = m[1] === "语音" ? "voice" : "image";
-    const out = { kind, text: body };
-    if (kind === "voice") {
-      let durationSec;
-      const emos = [];
-      for (const part of m[2].split("·")) {
-        const t = part.trim();
-        if (!t) continue;
-        const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t);
-        if (dm) {
-          if (durationSec === void 0) durationSec = Number(dm[1]);
-        } else {
-          emos.push(t);
-        }
-      }
-      if (durationSec !== void 0) out.durationSec = durationSec;
-      const emotion = emos.join("·").trim();
-      if (emotion) out.emotion = emotion;
-    }
-    return out;
-  }
-  function emptyMediaStats() {
-    return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
-  }
-  function collectMediaStats(messages) {
-    var _a;
-    const out = emptyMediaStats();
-    for (const m of messages) {
-      const mat = parseMediaTag((_a = m == null ? void 0 : m.text) != null ? _a : "");
-      if (!mat) continue;
-      if (mat.kind === "voice") {
-        out.voiceCount++;
-        if (mat.durationSec !== void 0 && Number.isFinite(mat.durationSec)) out.voiceTotalSec += mat.durationSec;
-      } else {
-        out.imageCount++;
-      }
-    }
-    return out;
-  }
-  function formatDuration(sec) {
-    const s = Math.max(0, Math.round(sec || 0));
-    if (s < 60) return `${s} 秒`;
-    if (s < 3600) return `${Math.round(s / 60)} 分`;
-    return `${Math.round(s / 3600)} 时`;
-  }
-  function formatMediaCount(s) {
-    const parts = [];
-    if (s.voiceCount > 0) {
-      parts.push(`语音 ${s.voiceCount} 条`);
-      if (s.voiceTotalSec > 0) parts.push(formatDuration(s.voiceTotalSec));
-    }
-    if (s.imageCount > 0) parts.push(`图片 ${s.imageCount} 张`);
-    return parts.join(" · ");
-  }
-  function buildMediaNote(s) {
-    const count = formatMediaCount(s);
-    if (!count) return "";
-    const emo = s.voiceCount > 0 ? "；语音行内「·」后的标记是语音情感识别结果（如平静、开心），可作情绪判断的参考" : "";
-    return `聊天里还有${count}的媒体素材——语音已转写成文字并入对话（引用原话时只写转写文本，不带标签），图片以画面描述入列${emo}。`;
-  }
-
-  // src/people/digest.ts
-  var DEFAULTS = { maxChars: 12e3, maxCount: 400, maxBatches: 60 };
-  var MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 };
-  function chunkMessages(messages, opts = {}) {
-    var _a;
-    const { maxChars, maxCount, maxBatches } = { ...DEFAULTS, ...opts };
-    const chunks = [];
-    let lines = [];
-    let chars = 0;
-    let voice = 0;
-    let image = 0;
-    for (const m of messages) {
-      const text2 = ((_a = m.text) != null ? _a : "").trim();
-      if (!text2) continue;
-      const line = renderLine(m.ts, m.isSender, text2);
-      const fits = lines.length === 0 || lines.length < maxCount && chars + line.length <= maxChars;
-      if (!fits) {
-        chunks.push(makeChunk(lines, voice, image));
-        lines = [];
-        chars = 0;
-        voice = 0;
-        image = 0;
-      }
-      const mat = parseMediaTag(text2);
-      if ((mat == null ? void 0 : mat.kind) === "voice") voice++;
-      else if ((mat == null ? void 0 : mat.kind) === "image") image++;
-      lines.push(line);
-      chars += line.length;
-    }
-    if (lines.length) chunks.push(makeChunk(lines, voice, image));
-    if (chunks.length <= maxBatches) return chunks;
-    return evenlySample(chunks, maxBatches);
-  }
-  function evenlySample(items, max) {
-    if (items.length <= max) return items;
-    const picked = [];
-    for (let i = 0; i < max; i++) picked.push(items[Math.round(i * (items.length - 1) / (max - 1))]);
-    return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
-  }
-  function makeChunk(lines, voice = 0, image = 0) {
-    var _a, _b;
-    const first = (_a = lines[0]) != null ? _a : "";
-    const last = (_b = lines[lines.length - 1]) != null ? _b : "";
-    const chunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
-    if (voice || image) chunk.media = { voice, image };
-    return chunk;
-  }
-  function renderLine(ts, isSender, text2) {
-    const d = new Date(ts);
-    const pad = (n) => String(n).padStart(2, "0");
-    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    return `[${day} ${hm}][${isSender ? "我" : "对方"}] ${text2}`;
-  }
-  function buildExtractPrompt(chunk, personName) {
-    const media = chunk.media;
-    const head = [
-      `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
-      // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
-      "行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。"
-    ];
-    if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image)) {
-      head.push(
-        "本段含媒体消息：`[语音 …]` 开头的行是语音转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[图片]` 开头的行是一张图片的画面描述。"
-      );
-    }
-    return [
-      ...head,
-      "",
-      ...chunk.lines,
-      "",
-      "请采集以下四类素材，宁缺毋滥，没有就给空数组：",
-      "",
-      "1. events：交往事件，大事小事都要收。",
-      "   每条含 ts（YYYY-MM-DD，事件发生日期）、kind 与 summary（一句话，不超过 40 字）。",
-      '   kind = "major"：约定 / 见面 / 计划 / 重要话题 / 情绪事件 / 矛盾 / 承诺。',
-      '   kind = "minor"：第一次做某事 / 分享的具体内容 / 习惯性互动 / 有画面的日常片段。',
-      "   日常寒暄、表情包刷屏、无实义闲聊不要收。",
-      "",
-      "2. traits：对方的性格 / 兴趣 / 习惯线索短语（每条不超过 15 字）。",
-      "   只收反复出现或特征鲜明的，不因单次提及就下判断。",
-      "",
-      "3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。",
-      '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
-      "   优先收能体现说话风格与脾气秉性的句子，最多 8 条。",
-      ...(media == null ? void 0 : media.voice) ? ["   `[语音 …]` 行是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）。"] : [],
-      "",
-      "4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。",
-      "   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。",
-      "   反复分享的内容来源（如网易云 / B站 / 豆瓣）也是难忘画面。",
-      ...(media == null ? void 0 : media.image) ? ["   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。"] : [],
-      "",
-      "只输出 JSON，不要任何解释或代码围栏：",
-      '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}]}'
-    ].join("\n");
-  }
-  function buildChroniclePrompt(name, events, mediaNote, statsNote) {
-    const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
-    return [
-      `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
-      ...mediaNote ? ["", `素材说明：${mediaNote}`] : [],
-      // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
-      ...statsNote ? ["", statsNote] : [],
-      "",
-      eventLines,
-      "",
-      "请把这段关系写成一份「关系时间线」：",
-      "",
-      "要求：",
-      "- 按时间顺序组织，用 `## 2023 年` 这样的年份小节分隔；素材密集的年份可用 `### 上半年 / 下半年` 再分。",
-      "- 每个时期用 `-` 列表逐条写发生的事，**大事小事都要**：谁先开口、第一次做什么、一起去过哪、聊过什么重要话题、闹过什么别扭、怎么和好的。",
-      "- 沉默期（断联与回联）也写进对应年份的叙事：哪段时间明显话少或断了联系、后来又怎么重新热络起来。",
-      "- 通话或分享特别密集的时期，写成「这段关系的季节」——那是关系的高温期。",
-      "- 有明确日期的条目以 `（YYYY-MM-DD）` 收在句尾；同一天的事合并成一条。",
-      "- 开头先用一句话交代关系的起点（第一次说话是什么时候、从什么由头开始的）。",
-      "- 只写素材里有的事，**不要编造**；素材稀疏的时期宁可只写一两条，也不要为填充而杜撰。",
-      "- 可以适度归纳（如「这阵子聊得最多的是那家店」），但事实必须来自素材。",
-      "- 总长 1500 字以内，直接输出 markdown 正文，不要代码围栏。"
-    ].join("\n");
-  }
-  function buildPortraitPrompt(name, material) {
-    const { events, traits, quotes, moments, mediaNote, statsNote } = material;
-    const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
-    const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join("\n") : "（无）";
-    const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join("\n") : "（无）";
-    const traitLines = traits.length ? traits.map((t) => `- ${t}`).join("\n") : "（无）";
-    return [
-      `你在帮用户为好友「${name}」画一张「脸谱」——基于以下从聊天记录里提炼的素材，写出这个人的人物画像。`,
-      ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
-      "",
-      "## 素材一：交往事件",
-      eventLines,
-      "",
-      "## 素材二：代表性原话",
-      quoteLines,
-      "",
-      "## 素材三：场景与细节",
-      momentLines,
-      "",
-      "## 素材四：特质线索",
-      traitLines,
-      ...statsNote ? ["", "## 素材五：互动统计", statsNote] : [],
-      "",
-      "## 要产出的小节（按此顺序，每节用 ## 二级标题）",
-      "",
-      "## 画像速写",
-      "两三句话抓住这个人给人的整体感觉。",
-      "",
-      "## 聊天的形状",
-      "作息与聊天频率、谁更常先开口、回复快慢、是语音派还是文字派、通话多不多、有没有明显的沉默期。",
-      "写可感知的相处模式，不要罗列数字。",
-      "",
-      "## 表达 DNA",
-      "口头禅、高频词、说话节奏（话密还是话少、直给还是含蓄）、标点与语气习惯。",
-      "双方互相的称呼 / 昵称也收在这里：怎么叫对方、对方怎么叫你、称呼随情绪或时间的演变（如「对方习惯叫我 X，生气时叫 Y」）。",
-      "每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。",
-      "",
-      "## 分享的口味",
-      "从分享 / 安利过的内容（歌、视频、文章、小程序……）归纳这个人的内容口味与审美。",
-      "素材里没有分享内容就写「（素材不足）」。",
-      "",
-      "## 情绪逻辑",
-      "什么让他话变多、什么让他退缩或沉默、什么时候会主动找人、什么话题能点亮他。",
-      "",
-      "## 冲突与修复",
-      "出现分歧时他怎么做——解释、回避、反击还是冷处理？事后谁先开口、怎么缓和？",
-      "",
-      "## 共同记忆",
-      "反复出现的地点、物件、习惯、画面。要具体到能想起当时的场景。",
-      "",
-      "## 相处建议",
-      "跟这个人相处要注意什么、什么能让他打开、什么会让他关上。",
-      "",
-      "## 硬性要求",
-      "- 输出 markdown，只允许这几种语法：`##` 二级小节、`-` 列表项、`**加粗**`、`> ` 引用块。不要一级标题、不要表格、不要代码块。",
-      "- 优先写模式，不要写传记：写「他习惯用玩笑化解尴尬」，不要写「他三月去了北京」。",
-      "- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。",
-      "- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。",
-      "- 素材不足以支撑的小节（含「聊天的形状」「分享的口味」），写「（素材不足）」，绝不编造。",
-      "- 总长 1200 字以内，直接输出 markdown 正文，不要代码围栏。"
-    ].join("\n");
-  }
-  function extractJsonLoose(raw) {
-    let s = raw.trim();
-    const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (fence) s = fence[1].trim();
-    const start = s.search(/[{[]/);
-    if (start < 0) throw new Error("AI 回执里没有 JSON");
-    const end = Math.max(s.lastIndexOf("}"), s.lastIndexOf("]"));
-    if (end <= start) throw new Error("AI 回执 JSON 不完整");
-    return JSON.parse(s.slice(start, end + 1));
-  }
-  function parseBatchExtract(raw) {
-    const data = extractJsonLoose(raw);
-    const events = [];
-    for (const e of arrOf(data.events)) {
-      const ts = str(e.ts);
-      const summary = str(e.summary);
-      if (!ts || !summary) continue;
-      const kind = str(e.kind);
-      events.push(kind === "major" || kind === "minor" ? { ts, summary, kind } : { ts, summary });
-    }
-    const quotes = [];
-    for (const q of arrOf(data.quotes)) {
-      const ts = str(q.ts);
-      const text2 = str(q.text);
-      if (ts && text2) quotes.push({ ts, who: str(q.who) || "对方", text: text2 });
-    }
-    const moments = [];
-    for (const m of arrOf(data.moments)) {
-      const ts = str(m.ts);
-      const summary = str(m.summary);
-      if (ts && summary) moments.push({ ts, summary });
-    }
-    const traits = rawArr(data.traits).filter((t) => typeof t !== "object" || t === null).map((t) => str(t)).filter(Boolean);
-    return { events, traits, quotes, moments };
-  }
-  function arrOf(v) {
-    if (!Array.isArray(v)) return [];
-    return v.filter((x) => !!x && typeof x === "object");
-  }
-  function rawArr(v) {
-    return Array.isArray(v) ? v : [];
-  }
-  function str(v) {
-    return String(v != null ? v : "").trim();
-  }
-  async function extractBatch(ask, chunk, personName) {
-    return parseBatchExtract(await ask(buildExtractPrompt(chunk, personName)));
-  }
-  async function buildFace(askExtract, askPortrait, messages, personName, onProgress, chunkOpts, mediaNote, statsNote) {
-    const chunks = chunkMessages(messages, chunkOpts);
-    if (!chunks.length) throw new Error("没有可提炼的文本消息");
-    const batches = [];
-    for (let i = 0; i < chunks.length; i++) {
-      batches.push(await extractBatch(askExtract, chunks[i], personName));
-      onProgress == null ? void 0 : onProgress(i + 1, chunks.length);
-    }
-    const events = mergeEvents(batches.flatMap((b) => b.events));
-    const quotes = dedupeBy(batches.flatMap((b) => b.quotes), (q) => q.text);
-    const moments = dedupeBy(batches.flatMap((b) => b.moments), (m) => m.summary);
-    const traits = dedupeBy(batches.flatMap((b) => b.traits), (t) => t);
-    const material = {
-      events,
-      traits: evenlySample(traits, MATERIAL_LIMITS.traits),
-      quotes: evenlySample(quotes, MATERIAL_LIMITS.quotes),
-      moments: evenlySample(moments, MATERIAL_LIMITS.moments),
-      mediaNote: mediaNote != null ? mediaNote : buildMediaNote(collectMediaStats(messages)) || void 0,
-      statsNote
-    };
-    const portrait = (await askPortrait(buildPortraitPrompt(personName, material))).trim();
-    if (!portrait) throw new Error("画像生成为空");
-    let chronicle = "";
-    if (events.length) {
-      try {
-        chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote))).trim();
-      } catch (e) {
-        chronicle = "";
-      }
-    }
-    return { portrait, events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
-  }
-  function mergeEvents(events) {
-    const byKey = /* @__PURE__ */ new Map();
-    for (const e of events) {
-      const key = `${e.ts}|${e.summary}`;
-      const prev = byKey.get(key);
-      if (!prev) byKey.set(key, e);
-      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
-    }
-    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
-  }
-  function dedupeBy(items, key) {
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const item of items) {
-      const k = key(item);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(item);
-    }
-    return out;
-  }
-
-  // src/core/storage.ts
-  var DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
-  function normalizeStorageDir(value) {
-    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
-    if (/\.json$/i.test(dir)) {
-      const idx = dir.lastIndexOf("/");
-      dir = idx >= 0 ? dir.slice(0, idx) : "";
-    }
-    return dir || DEFAULT_STORAGE_DIR;
-  }
-  function storageDir() {
-    const s = tryGetSettings();
-    return normalizeStorageDir(s && s.storagePath);
-  }
-  function storageFile(name, base) {
-    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
-    return `${dir}/${name}`;
-  }
-  var fileTaskQueues = /* @__PURE__ */ new Map();
-  function enqueueFileTask(filePath, task) {
-    var _a;
-    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
-    const run = prev.then(task, task);
-    const tail = run.then(
-      () => void 0,
-      () => void 0
-    );
-    fileTaskQueues.set(filePath, tail);
-    void tail.then(() => {
-      if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
-    });
-    return run;
-  }
-  function isAlreadyExistsError(e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return /already exist/i.test(msg);
-  }
-  var CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
-  var CORRUPT_NOTIFY_DEDUPE_MS = 3e4;
-  var corruptNotifyAt = /* @__PURE__ */ new Map();
-  function corruptStamp(d = /* @__PURE__ */ new Date()) {
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
-  }
-  function baseNameOf(p) {
-    return p.includes("/") ? p.slice(p.lastIndexOf("/") + 1) : p;
-  }
-  async function backupOriginal(app, filePath, raw) {
-    try {
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (!f) return null;
-      const content = raw !== void 0 ? raw : await app.vault.read(f);
-      if (!app.vault.getAbstractFileByPath(CORRUPT_BACKUP_DIR)) {
-        try {
-          await app.vault.createFolder(CORRUPT_BACKUP_DIR);
-        } catch (e) {
-        }
-      }
-      const base = baseNameOf(filePath);
-      const stamp = corruptStamp();
-      let backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}.bak`;
-      for (let i = 2; app.vault.getAbstractFileByPath(backupPath); i++) {
-        backupPath = `${CORRUPT_BACKUP_DIR}/${base}.${stamp}-${i}.bak`;
-      }
-      await app.vault.create(backupPath, content);
-      return backupPath;
-    } catch (e) {
-      console.warn("[storage] " + filePath + " 留档失败（" + CORRUPT_BACKUP_DIR + "），继续原流程", e);
-      return null;
-    }
-  }
-  function notifyBackup(filePath, backupPath, cause) {
-    var _a;
-    const now = Date.now();
-    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
-    corruptNotifyAt.set(filePath, now);
-    try {
-      const name = baseNameOf(filePath);
-      const msg = cause === "解析失败" ? `数据文件 ${name} 解析失败，原内容已留档到 ${backupPath}，数据不会丢，已重建默认文件继续使用` : `数据文件 ${name} 写入失败，原内容已留档到 ${backupPath}，数据不会丢，请稍后重试`;
-      notify(msg, { type: "warning" });
-    } catch (e) {
-    }
-  }
-  function serialize(v) {
-    return JSON.stringify(v, null, 2);
-  }
-  function jsonFileStore(filePath, opts = {}) {
-    const resolveApp = () => opts.app || getApp();
-    const resolveDefault = () => {
-      const d = opts.defaultValue;
-      return typeof d === "function" ? d() : d === void 0 ? [] : d;
-    };
-    async function ensureDir(app) {
-      const d = filePath.substring(0, filePath.lastIndexOf("/"));
-      if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    }
-    async function createIfMissing(app, content) {
-      await ensureDir(app);
-      try {
-        await app.vault.create(filePath, content);
-        return true;
-      } catch (e) {
-        if (isAlreadyExistsError(e) && app.vault.getAbstractFileByPath(filePath)) return false;
-        throw e;
-      }
-    }
-    async function handleCorrupt(app, err, raw) {
-      var _a;
-      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
-        return null;
-      }
-      const backupPath = await backupOriginal(app, filePath, raw);
-      if (backupPath && !opts.onCorrupt) notifyBackup(filePath, backupPath, "解析失败");
-      const f = app.vault.getAbstractFileByPath(filePath);
-      if (f) {
-        await app.vault.modify(f, serialize(resolveDefault()));
-      } else {
-        await createIfMissing(app, serialize(resolveDefault()));
-      }
-      return resolveDefault();
-    }
-    async function modifyWithBackup(app, f, c) {
-      try {
-        await app.vault.modify(f, c);
-      } catch (e) {
-        const backupPath = await backupOriginal(app, filePath);
-        if (backupPath) notifyBackup(filePath, backupPath, "写入失败");
-        throw e;
-      }
-    }
-    return {
-      async read() {
-        const app = resolveApp();
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (!f) {
-          const created = await createIfMissing(app, serialize(resolveDefault()));
-          if (created) return resolveDefault();
-          f = app.vault.getAbstractFileByPath(filePath);
-          if (!f) return resolveDefault();
-        }
-        const raw = await app.vault.read(f);
-        try {
-          return JSON.parse(raw);
-        } catch (e) {
-          return await handleCorrupt(app, e, raw);
-        }
-      },
-      async write(data) {
-        const app = resolveApp();
-        const c = serialize(data);
-        let f = app.vault.getAbstractFileByPath(filePath);
-        if (f) {
-          if (opts.writeIfChanged) {
-            try {
-              const cur2 = await app.vault.read(f);
-              if (cur2 === c) return;
-            } catch (e) {
-            }
-          }
-          await modifyWithBackup(app, f, c);
-          return;
-        }
-        const created = await createIfMissing(app, c);
-        if (created) return;
-        let cur = app.vault.getAbstractFileByPath(filePath);
-        if (!cur) {
-          const retried = await createIfMissing(app, c);
-          if (retried) return;
-          cur = app.vault.getAbstractFileByPath(filePath);
-          if (!cur) throw new Error("storage: create 竞态降级失败（" + filePath + "）");
-        }
-        await modifyWithBackup(app, cur, c);
-      }
-    };
-  }
-
-  // src/people/types.ts
-  function emptyPeopleData() {
-    return { version: 1, people: [] };
-  }
-
-  // src/people/data.ts
-  function getPeopleFilePath() {
-    const s = tryGetSettings();
-    return storageFile("people.json", s && s.storagePath || "CONFIG/STORAGE");
-  }
-  var PeopleStore = class {
-    constructor(app) {
-      this.app = app;
-      this.filePath = getPeopleFilePath();
-    }
-    open() {
-      return jsonFileStore(this.filePath, { defaultValue: emptyPeopleData, app: this.app });
-    }
-    /** 人物列表（建卡时间升序） */
-    async list() {
-      return enqueueFileTask(this.filePath, async () => {
-        const data = await this.open().read();
-        return [...data.people].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-      });
-    }
-    /** 新增或整体替换人物卡（按 id） */
-    async upsert(entry) {
-      await enqueueFileTask(this.filePath, async () => {
-        const store2 = this.open();
-        const data = await store2.read();
-        const i = data.people.findIndex((p) => p.id === entry.id);
-        if (i >= 0) data.people[i] = entry;
-        else data.people.push(entry);
-        await store2.write(data);
-      });
-    }
-    /** 追加一条导入记录 */
-    async appendImport(id, rec) {
-      await this.mutate(id, (p) => {
-        p.imports.push(rec);
-      });
-    }
-    /** 覆盖脸谱（重画） */
-    async setDigest(id, digest) {
-      await this.mutate(id, (p) => {
-        p.digest = digest;
-      });
-    }
-    /** 设置人物档案（传 undefined 清空） */
-    async updateProfile(id, profile) {
-      await this.mutate(id, (p) => {
-        if (profile) p.profile = profile;
-        else delete p.profile;
-      });
-    }
-    /** 改称呼 */
-    async rename(id, name) {
-      await this.mutate(id, (p) => {
-        p.name = name;
-      });
-    }
-    /** 追加一条随手记（按日期序保持有序） */
-    async addManualEvent(id, ev) {
-      await this.mutate(id, (p) => {
-        var _a;
-        ((_a = p.manualEvents) != null ? _a : p.manualEvents = []).push(ev);
-        p.manualEvents.sort((a, b) => a.ts.localeCompare(b.ts));
-      });
-    }
-    /** 删除一条随手记 */
-    async removeManualEvent(id, evId) {
-      await this.mutate(id, (p) => {
-        var _a;
-        p.manualEvents = ((_a = p.manualEvents) != null ? _a : []).filter((e) => e.id !== evId);
-      });
-    }
-    /** 记录增量提炼锚点（毫秒时间戳） */
-    async setLastProcessedTs(id, ts) {
-      await this.mutate(id, (p) => {
-        p.lastProcessedTs = ts;
-      });
-    }
-    /**
-     * 合并人物：把 from 的导入记录 / 随手记 / 档案并进 to，然后移除 from。
-     * 用于同一人在数据里出现两个 wxid 的情况（两个不同号、或改过号）。
-     * 两份画像不自动混（混出来没有意义）：to 没有画像时才继承 from 的。
-     */
-    async mergeInto(fromId, toId) {
-      if (fromId === toId) return;
-      await enqueueFileTask(this.filePath, async () => {
-        var _a, _b, _c, _d;
-        const store2 = this.open();
-        const data = await store2.read();
-        const from = data.people.find((p) => p.id === fromId);
-        const to = data.people.find((p) => p.id === toId);
-        if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
-        to.imports.push(...from.imports);
-        to.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
-        to.manualEvents = [...(_a = to.manualEvents) != null ? _a : [], ...(_b = from.manualEvents) != null ? _b : []].sort((a, b) => a.ts.localeCompare(b.ts));
-        if (!to.profile && from.profile) to.profile = from.profile;
-        if (!to.digest && from.digest) to.digest = from.digest;
-        to.lastProcessedTs = Math.max((_c = to.lastProcessedTs) != null ? _c : 0, (_d = from.lastProcessedTs) != null ? _d : 0);
-        data.people = data.people.filter((p) => p.id !== fromId);
-        await store2.write(data);
-      });
-    }
-    async remove(id) {
-      await enqueueFileTask(this.filePath, async () => {
-        const store2 = this.open();
-        const data = await store2.read();
-        data.people = data.people.filter((p) => p.id !== id);
-        await store2.write(data);
-      });
-    }
-    /** 队列内单人物变更（不存在抛错——静默丢失比失败更糟） */
-    async mutate(id, fn) {
-      await enqueueFileTask(this.filePath, async () => {
-        const store2 = this.open();
-        const data = await store2.read();
-        const p = data.people.find((x) => x.id === id);
-        if (!p) throw new Error(`人物不存在: ${id}`);
-        fn(p);
-        await store2.write(data);
-      });
-    }
-  };
-
-  // src/people/incremental.ts
-  function planIncremental(msgs, existing) {
-    const anchor = existing == null ? void 0 : existing.lastProcessedTs;
-    if (!anchor) return { mode: "full", msgs, olderCount: 0 };
-    const from = new Date(msgs[0].ts).toISOString();
-    const to = new Date(msgs[msgs.length - 1].ts).toISOString();
-    const dup = existing.imports.some((r) => r.messageCount === msgs.length && r.timeFrom === from && r.timeTo === to);
-    if (dup) return { mode: "skip", msgs: [], olderCount: msgs.length };
-    const newer = msgs.filter((m) => m.ts > anchor - 1);
-    if (newer.length) return { mode: "newer", msgs: newer, olderCount: msgs.length - newer.length };
-    return { mode: "older", msgs, olderCount: 0 };
-  }
-  async function buildFaceIncremental(askExtract, askPortrait, msgs, name, old, onProgress, mediaNote, statsNote) {
-    var _a, _b, _c, _d;
-    const chunks = chunkMessages(msgs);
-    if (!chunks.length) throw new Error("没有可提炼的文本消息");
-    const batches = [];
-    for (let i = 0; i < chunks.length; i++) {
-      batches.push(await extractBatch(askExtract, chunks[i], name));
-      onProgress == null ? void 0 : onProgress(i + 1, chunks.length);
-    }
-    const newEvents = dedupeEvents(batches.flatMap((b) => b.events));
-    const events = dedupeEvents([...(_a = old == null ? void 0 : old.events) != null ? _a : [], ...newEvents]);
-    const quotes = evenlySample(dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...batches.flatMap((b) => b.quotes)], (q) => q.text), MATERIAL_LIMITS.quotes);
-    const traits = evenlySample(dedupeByText([...(_c = old == null ? void 0 : old.traits) != null ? _c : [], ...batches.flatMap((b) => b.traits)], (t) => t), MATERIAL_LIMITS.traits);
-    const moments = evenlySample(dedupeByText([...(_d = old == null ? void 0 : old.moments) != null ? _d : [], ...batches.flatMap((b) => b.moments)], (m) => m.summary), MATERIAL_LIMITS.moments);
-    const material = { events: evenlySample(events, MATERIAL_LIMITS.chronicle), traits, quotes, moments, mediaNote, statsNote };
-    const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
-    if (!portrait) throw new Error("画像生成为空");
-    let chronicle = "";
-    if (events.length) {
-      try {
-        chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(events, MATERIAL_LIMITS.chronicle), mediaNote, statsNote))).trim();
-      } catch (e) {
-        chronicle = "";
-      }
-    }
-    return { portrait, events, quotes, chronicle, moments, traits };
-  }
-  function dedupeEvents(events) {
-    const byKey = /* @__PURE__ */ new Map();
-    for (const e of events) {
-      const key = `${e.ts}|${e.summary}`;
-      const prev = byKey.get(key);
-      if (!prev) byKey.set(key, e);
-      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
-    }
-    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
-  }
-  function dedupeByText(items, key) {
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const item of items) {
-      const k = key(item);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(item);
-    }
-    return out;
-  }
-  function mergeManualEvents(events, manual) {
-    if (!(manual == null ? void 0 : manual.length)) return events;
-    const seen = new Set(events.map((e) => `${e.ts}|${e.summary}`));
-    const extra = manual.map((m) => ({ ts: m.ts, summary: m.summary })).filter((e) => e.ts && e.summary && !seen.has(`${e.ts}|${e.summary}`));
-    if (!extra.length) return events;
-    return [...events, ...extra].sort((a, b) => a.ts.localeCompare(b.ts));
-  }
-
-  // src/people/stats.ts
-  var SESSION_GAP_MS = 30 * 60 * 1e3;
-  var REPLY_CAP_SEC = 3600;
-  function monthKey(ts) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-  function avgOf(samples) {
-    if (!samples.length) return 0;
-    return samples.reduce((a, b) => a + b, 0) / samples.length;
-  }
-  function medianOf(samples) {
-    if (!samples.length) return 0;
-    const s = [...samples].sort((a, b) => a - b);
-    const mid = Math.floor(s.length / 2);
-    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-  }
-  function computeStats(messages, kindCounts) {
-    var _a;
-    const msgs = [...messages].sort((a, b) => a.ts - b.ts);
-    const monthly = /* @__PURE__ */ new Map();
-    const myHourly = new Array(24).fill(0);
-    const otherHourly = new Array(24).fill(0);
-    let initiatedByMe = 0;
-    let initiatedByOther = 0;
-    const mySamples = [];
-    const otherSamples = [];
-    let prev = null;
-    for (const m of msgs) {
-      if (!Number.isFinite(m.ts)) continue;
-      const d = new Date(m.ts);
-      monthly.set(monthKey(m.ts), ((_a = monthly.get(monthKey(m.ts))) != null ? _a : 0) + 1);
-      myHourly[d.getHours()] += m.isSender ? 1 : 0;
-      otherHourly[d.getHours()] += m.isSender ? 0 : 1;
-      if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
-        if (m.isSender) initiatedByMe++;
-        else initiatedByOther++;
-      } else if (m.isSender !== prev.isSender) {
-        const sec = (m.ts - prev.ts) / 1e3;
-        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
-      }
-      prev = m;
-    }
-    const media = collectMediaStats(msgs);
-    return {
-      monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
-      initiatedByMe,
-      initiatedByOther,
-      myAvgReplySec: avgOf(mySamples),
-      otherAvgReplySec: avgOf(otherSamples),
-      myMedianReplySec: medianOf(mySamples),
-      otherMedianReplySec: medianOf(otherSamples),
-      myHourly,
-      otherHourly,
-      kindCounts: { ...kindCounts },
-      // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
-      voiceCount: media.voiceCount,
-      voiceTotalSec: media.voiceTotalSec,
-      imageCount: media.imageCount
-    };
-  }
-  function formatReplySec(sec) {
-    if (!Number.isFinite(sec) || sec <= 0) return "无样本";
-    if (sec < 60) return `${Math.max(1, Math.round(sec))} 秒`;
-    if (sec < 3600) return `${Math.max(1, Math.round(sec / 60))} 分钟`;
-    return `${Math.max(1, Math.round(sec / 3600))} 小时`;
-  }
-
   // src/people/insights.ts
   var SESSION_GAP_MS2 = 30 * 60 * 1e3;
   var REPLY_CAP_SEC2 = 3600;
@@ -5927,7 +5924,8 @@ var BZW_people = (() => {
         gaps.push({
           from: dateKeyOf(prev.ts),
           to: dateKeyOf(m.ts),
-          days: Math.floor(gapMs / (24 * 3600 * 1e3))
+          // 日历日差（与 from/to 字面日期自洽；24h 时段的 floor 会出现「01-05 至 01-20（14 天）」式矛盾）
+          days: Math.round((Date.parse(dateKeyOf(m.ts)) - Date.parse(dateKeyOf(prev.ts))) / (24 * 3600 * 1e3))
         });
       }
       prev = m;
@@ -5966,8 +5964,8 @@ var BZW_people = (() => {
     if (i.nightSharePct > 0) parts.push(`深夜（0-6 点）消息占 ${i.nightSharePct}%`);
     if (i.callCount > 0) {
       let call = `通话 ${i.callCount} 次`;
-      if (i.callTotalSec > 0) call += `共 ${formatReplySec(i.callTotalSec)}`;
-      if (i.callMissedCount > 0) call += `、未接通 ${i.callMissedCount} 次`;
+      if (i.callTotalSec > 0) call += `（累计 ${formatReplySec(i.callTotalSec)}）`;
+      if (i.callMissedCount > 0) call += `，其中未接通 ${i.callMissedCount} 次`;
       parts.push(call);
     }
     const recants = [
@@ -6153,8 +6151,7 @@ var BZW_people = (() => {
     "对方已取消",
     "已取消",
     "对方忙线中",
-    "忙线未接听",
-    "已在其它设备接听"
+    "忙线未接听"
   ];
   function truncateChars(s, max) {
     return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
@@ -6277,7 +6274,8 @@ var BZW_people = (() => {
         case 43: {
           if (!opts.previewVideo) continue;
           const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-          out = dur ? `[视频 ${dur}秒]` : "[视频]";
+          if (!dur) continue;
+          out = `[视频 ${dur}秒]`;
           break;
         }
         case 47: {
@@ -6329,7 +6327,7 @@ var BZW_people = (() => {
       }
       if (!out) continue;
       const who = String((_j = raw.who) != null ? _j : "").trim();
-      if (group && who && !isSelfWho(who)) out = `[${who}] ${out}`;
+      if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
       msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
@@ -6346,7 +6344,7 @@ var BZW_people = (() => {
     const media = collectMediaStats(unified);
     return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
   }
-  function mergePreview(existing, incoming, nowIso) {
+  function mergePreview(existing, incoming, nowIso2) {
     var _a, _b, _c, _d;
     const seen = new Set(((_a = existing == null ? void 0 : existing.msgs) != null ? _a : []).map((m) => m.key));
     const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
@@ -6358,7 +6356,7 @@ var BZW_people = (() => {
       // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
       kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
       insights: incoming.insights,
-      updatedAt: nowIso
+      updatedAt: nowIso2
     };
     return { contact, added: fresh.length };
   }
@@ -6462,6 +6460,428 @@ var BZW_people = (() => {
     return acc.voiceCount || acc.imageCount ? acc : null;
   }
 
+  // src/people/jobs.ts
+  function emptyJobsData() {
+    return { version: 1, queue: [] };
+  }
+  function getJobsFilePath() {
+    const s = tryGetSettings();
+    return storageFile("people-jobs.json", s && s.storagePath || "CONFIG/STORAGE");
+  }
+  var JobStore = class {
+    constructor(app) {
+      this.app = app;
+      this.filePath = getJobsFilePath();
+    }
+    open() {
+      return jsonFileStore(this.filePath, { defaultValue: emptyJobsData, app: this.app });
+    }
+    async read() {
+      return enqueueFileTask(this.filePath, async () => this.open().read());
+    }
+    /** 整文件写回（引擎是本会话唯一写方；队列整体在内存，读→改→写整体入队） */
+    async write(data) {
+      await enqueueFileTask(this.filePath, async () => {
+        await this.open().write(data);
+      });
+    }
+  };
+  var st = null;
+  var runPromise = null;
+  var subs = /* @__PURE__ */ new Set();
+  var DRIFT_ERROR = "消息集已变化（导入过新数据），请删除任务后重新生成";
+  function hash322(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+  function fingerprintOf(msgs) {
+    const last = msgs[msgs.length - 1];
+    return { msgCount: msgs.length, lastMsgKey: last ? `${last.ts}|${hash322(last.text)}` : "" };
+  }
+  function nowIso() {
+    return (/* @__PURE__ */ new Date()).toISOString();
+  }
+  function errorMessage(e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+  function chunkedMessage(msgCount, batchCount, opts) {
+    return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 2} 次 AI 调用`;
+  }
+  function sampledMessage(msgCount, allCount, kept, spanFrom, spanTo) {
+    return `消息 ${msgCount} 条 → ${allCount} 批超上限，均匀抽样 ${kept} 批（覆盖 ${spanFrom} ~ ${spanTo} 全时段，首尾必保，未抽中的批次不送 AI）`;
+  }
+  function batchMessage(i, total, c) {
+    return `第 ${i}/${total} 批 · ${c.from} ~ ${c.to} · ${c.count} 条`;
+  }
+  function materialMessage(c) {
+    return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成画像`;
+  }
+  function snapshot() {
+    if (!st) return { queue: [], currentIndex: -1, running: false };
+    const currentIndex = st.queue.findIndex((j) => j.status === "running");
+    const total = st.queue.length;
+    const queue = st.queue.map((j, i) => ({
+      ...JSON.parse(JSON.stringify(j)),
+      batchesTotal: j.chunks.length,
+      queueIndex: i + 1,
+      queueTotal: total
+    }));
+    return { queue, currentIndex, running: currentIndex >= 0 };
+  }
+  function subscribe(fn) {
+    subs.add(fn);
+    if (st) fn(snapshot());
+    return () => subs.delete(fn);
+  }
+  function emit() {
+    const snap = snapshot();
+    for (const fn of subs) {
+      try {
+        fn(snap);
+      } catch (e) {
+      }
+    }
+  }
+  async function persist() {
+    if (!st) return;
+    try {
+      await st.store.write({ version: 1, queue: st.queue });
+    } catch (e) {
+      console.warn("[people] 任务进度落盘失败:", e);
+    }
+  }
+  async function startJobs(app, targets, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    if (!st) {
+      st = { app, store: new JobStore(app), queue: [], injected: null, runningJob: null, pauseRequested: false };
+    }
+    st.app = app;
+    st.store = new JobStore(app);
+    st.injected = opts.askExtract || opts.askPortrait ? { askExtract: opts.askExtract, askPortrait: opts.askPortrait } : null;
+    const people = new PeopleStore(app);
+    const entries = await people.list();
+    const queued = [];
+    const skipped = [];
+    const chunkFull = { ...DEFAULTS, ...opts.chunkOpts };
+    for (const t of targets) {
+      const label = t.name || t.talker;
+      if (!t.msgs.length) {
+        skipped.push(label);
+        continue;
+      }
+      if (st.runningJob === t.talker) {
+        skipped.push(label);
+        continue;
+      }
+      const existing = entries.find((p) => p.id === t.talker);
+      let effective;
+      let digestMsgs;
+      if (opts.mode === "full") {
+        effective = "full";
+        digestMsgs = t.msgs;
+      } else {
+        const plan = planIncremental(t.msgs, existing);
+        if (plan.mode === "skip" || !plan.msgs.length) {
+          skipped.push(label);
+          continue;
+        }
+        effective = opts.mode === "incremental" ? "incremental" : plan.mode === "full" ? "full" : "incremental";
+        digestMsgs = plan.msgs;
+      }
+      const all = chunkMessages(digestMsgs, { ...chunkFull, maxBatches: Number.MAX_SAFE_INTEGER });
+      if (!all.length) {
+        skipped.push(label);
+        continue;
+      }
+      const sampled = all.length > chunkFull.maxBatches;
+      const chunks = sampled ? evenlySample(all, chunkFull.maxBatches) : all;
+      const fp = fingerprintOf(t.msgs);
+      const stats = computeStats(t.msgs, (_a = t.kindCounts) != null ? _a : {});
+      const mediaNote = buildMediaNote({
+        voiceCount: (_b = stats.voiceCount) != null ? _b : 0,
+        voiceTotalSec: (_c = stats.voiceTotalSec) != null ? _c : 0,
+        imageCount: (_d = stats.imageCount) != null ? _d : 0
+      });
+      const now = nowIso();
+      st.queue = st.queue.filter((j) => j.talker !== t.talker);
+      st.queue.push({
+        talker: t.talker,
+        name: t.name,
+        mode: effective,
+        fileLabel: t.fileLabel,
+        status: "paused",
+        // 排队待跑（与用户暂停同态：runner 按序拾起）
+        stage: "chunked",
+        msgCount: fp.msgCount,
+        lastMsgKey: fp.lastMsgKey,
+        chunkOpts: chunkFull,
+        chunks: chunks.map(chunkMetaOf),
+        batchesDone: 0,
+        results: [],
+        material: {
+          traits: [],
+          moments: [],
+          mediaNote: mediaNote || void 0,
+          statsNote: t.insights ? buildStatsNote(t.insights) || void 0 : void 0
+        },
+        stats,
+        importRecord: {
+          fileLabel: t.fileLabel,
+          skippedCount: (_e = t.skippedCount) != null ? _e : 0,
+          messageCount: digestMsgs.length,
+          timeFrom: new Date(t.msgs[0].ts).toISOString(),
+          timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString()
+        },
+        message: sampled ? sampledMessage(t.msgs.length, all.length, chunks.length, all[0].from, all[all.length - 1].to) : chunkedMessage(t.msgs.length, chunks.length, chunkFull),
+        startedAt: now,
+        updatedAt: now
+      });
+      queued.push(label);
+    }
+    if (queued.length) {
+      await persist();
+      emit();
+    }
+    kick();
+    return { queued, skipped };
+  }
+  async function resumeJobs(app, ai = {}) {
+    if (st) {
+      st.app = app;
+      return;
+    }
+    const store2 = new JobStore(app);
+    const data = await store2.read();
+    const queue = Array.isArray(data == null ? void 0 : data.queue) ? data.queue : [];
+    let dirty = false;
+    for (const j of queue) {
+      if (!j || typeof j !== "object") continue;
+      if (!Array.isArray(j.results)) j.results = [];
+      if (!Array.isArray(j.chunks)) j.chunks = [];
+      if (j.status === "running") {
+        j.status = "interrupted";
+        j.message = "上次未完成，可从断点继续";
+        j.updatedAt = nowIso();
+        dirty = true;
+      }
+    }
+    st = { app, store: store2, queue, injected: ai.askExtract || ai.askPortrait ? ai : null, runningJob: null, pauseRequested: false };
+    runPromise = null;
+    if (dirty) await store2.write({ version: 1, queue });
+    emit();
+  }
+  function resume(talker) {
+    if (!st) return false;
+    const job = st.queue.find((j) => j.talker === talker);
+    if (!job || job.status !== "paused" && job.status !== "interrupted") return false;
+    job.status = "paused";
+    job.error = void 0;
+    job.updatedAt = nowIso();
+    void persist().then(emit);
+    kick();
+    return true;
+  }
+  function pauseJobs() {
+    if (st) st.pauseRequested = true;
+  }
+  async function removeJob(talker) {
+    if (!st) return false;
+    const before = st.queue.length;
+    st.queue = st.queue.filter((j) => j.talker !== talker);
+    if (st.runningJob === talker) st.runningJob = null;
+    if (st.queue.length < before) {
+      await persist();
+      emit();
+      return true;
+    }
+    return false;
+  }
+  function whenIdle() {
+    return runPromise != null ? runPromise : Promise.resolve();
+  }
+  function kick() {
+    if (!st || runPromise) return runPromise != null ? runPromise : Promise.resolve();
+    runPromise = runQueue().finally(() => {
+      runPromise = null;
+      if (st) st.pauseRequested = false;
+    });
+    return runPromise;
+  }
+  async function runQueue() {
+    for (; ; ) {
+      if (!st || st.pauseRequested) break;
+      const job = st.queue.find((j) => j.status === "paused");
+      if (!job) break;
+      await runJob(job);
+    }
+    if (st) st.pauseRequested = false;
+  }
+  function gone(job) {
+    return !st || st.queue.indexOf(job) < 0;
+  }
+  async function runJob(job) {
+    var _a, _b;
+    const asks = asksOf();
+    st.runningJob = job.talker;
+    job.status = "running";
+    job.error = void 0;
+    job.updatedAt = nowIso();
+    await persist();
+    emit();
+    const finish = async (patch) => {
+      Object.assign(job, patch, { updatedAt: nowIso() });
+      await persist();
+      emit();
+    };
+    try {
+      const pv = await new PreviewStore(st.app).read();
+      if (gone(job)) return;
+      const contact = pv.contacts[job.talker];
+      const bucketMsgs = contact ? previewToUnified(contact.msgs) : [];
+      const fp = fingerprintOf(bucketMsgs);
+      if (fp.msgCount !== job.msgCount || fp.lastMsgKey !== job.lastMsgKey) {
+        await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
+        return;
+      }
+      const existing = (await new PeopleStore(st.app).list()).find((p) => p.id === job.talker);
+      if (gone(job)) return;
+      let digestMsgs;
+      if (job.mode === "full") {
+        digestMsgs = bucketMsgs;
+      } else {
+        const plan = planIncremental(bucketMsgs, existing);
+        if (plan.mode === "skip" || !plan.msgs.length) {
+          await finish({ status: "error", error: "没有可提炼的新消息，请删除任务后重新生成", message: "没有可提炼的新消息" });
+          return;
+        }
+        digestMsgs = plan.msgs;
+      }
+      const optsC = { ...DEFAULTS, ...job.chunkOpts };
+      const all = chunkMessages(digestMsgs, { ...optsC, maxBatches: Number.MAX_SAFE_INTEGER });
+      if (!all.length) {
+        await finish({ status: "error", error: "没有可提炼的文本消息", message: "没有可提炼的文本消息" });
+        return;
+      }
+      const sampled = all.length > optsC.maxBatches;
+      const chunks = sampled ? evenlySample(all, optsC.maxBatches) : all;
+      const metas = chunks.map(chunkMetaOf);
+      if (job.chunks.length && JSON.stringify(job.chunks) !== JSON.stringify(metas)) {
+        await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
+        return;
+      }
+      job.chunks = metas;
+      job.stage = "extracting";
+      const total = chunks.length;
+      for (let i = job.batchesDone; i < total; i++) {
+        if (st.pauseRequested) {
+          await finish({ status: "paused", message: `已暂停（${job.batchesDone}/${total} 批）` });
+          return;
+        }
+        if (gone(job)) return;
+        const c = chunks[i];
+        job.message = batchMessage(i + 1, total, c);
+        emit();
+        let result;
+        try {
+          result = await extractBatch(asks.extract, c, job.name);
+        } catch (e) {
+          await finish({ status: "error", error: errorMessage(e), message: `第 ${i + 1} 批提炼失败：${errorMessage(e)}` });
+          return;
+        }
+        if (gone(job)) return;
+        job.results.push(result);
+        job.batchesDone = i + 1;
+        await persist();
+        emit();
+      }
+      let merged = mergeBatches(job.results);
+      if (job.mode === "incremental") merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
+      if (gone(job)) return;
+      const counts = {
+        events: merged.events.length,
+        quotes: merged.quotes.length,
+        moments: merged.moments.length,
+        traits: merged.traits.length
+      };
+      const material = toPortraitMaterial(merged, {
+        mediaNote: (_a = job.material) == null ? void 0 : _a.mediaNote,
+        statsNote: (_b = job.material) == null ? void 0 : _b.statsNote,
+        sampleEvents: job.mode === "incremental"
+      });
+      await finish({
+        stage: "portrait",
+        message: materialMessage(counts)
+      });
+      let portrait = "";
+      try {
+        portrait = (await asks.portrait(buildPortraitPrompt(job.name, material))).trim();
+      } catch (e) {
+        await finish({ status: "error", error: errorMessage(e), message: `画像生成失败：${errorMessage(e)}` });
+        return;
+      }
+      if (gone(job)) return;
+      if (!portrait) {
+        await finish({ status: "error", error: "画像生成为空", message: "画像生成为空" });
+        return;
+      }
+      job.portrait = portrait;
+      job.updatedAt = nowIso();
+      await persist();
+      emit();
+      await finish({ stage: "chronicle", message: "画像完成，正在生成关系时间线…" });
+      let chronicle = "";
+      if (merged.events.length) {
+        try {
+          chronicle = (await asks.portrait(
+            buildChroniclePrompt(job.name, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote)
+          )).trim();
+        } catch (e) {
+          chronicle = "";
+        }
+      }
+      if (gone(job)) return;
+      await finish({
+        stage: "done",
+        status: "done",
+        chronicle,
+        events: merged.events,
+        quotes: material.quotes,
+        material: {
+          traits: material.traits,
+          moments: material.moments,
+          mediaNote: material.mediaNote,
+          statsNote: material.statsNote
+        },
+        message: `「${job.name}」脸谱已生成`
+      });
+    } catch (e) {
+      if (gone(job)) return;
+      await finish({ status: "error", error: errorMessage(e), message: `生成失败：${errorMessage(e)}` });
+    } finally {
+      if (st && st.runningJob === job.talker) st.runningJob = null;
+    }
+  }
+  function asksOf() {
+    var _a, _b, _c, _d, _e;
+    if (((_a = st == null ? void 0 : st.injected) == null ? void 0 : _a.askExtract) && st.injected.askPortrait) {
+      return { extract: st.injected.askExtract, portrait: st.injected.askPortrait };
+    }
+    const ai = createAI();
+    return {
+      extract: (_c = (_b = st == null ? void 0 : st.injected) == null ? void 0 : _b.askExtract) != null ? _c : (p) => ai.json(p),
+      portrait: (_e = (_d = st == null ? void 0 : st.injected) == null ? void 0 : _d.askPortrait) != null ? _e : (p) => ai.chat(p)
+    };
+  }
+  function __resetJobsForTests() {
+    st = null;
+    runPromise = null;
+    subs.clear();
+  }
+
   // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
@@ -6555,14 +6975,70 @@ var BZW_people = (() => {
         ])
       ]),
       el("div", "bz-people-stats", { "data-people-stats": "" }),
-      el("div", "bz-people-runline", { "data-people-runline": "", hidden: "" }, [
-        el("span", "bz-people-run-spin", { "aria-hidden": "true" }),
-        el("span", "bz-people-run-main", { "data-people-run-main": "" }),
-        el("span", "bz-people-run-sub", { "data-people-run-sub": "" })
-      ]),
+      el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "", hidden: "" }),
       el("div", "bz-people-body", { "data-people-body": "" }),
       el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" })
     ]);
+  }
+  function jobsPercent(batchesDone, batchesTotal, stagesDone) {
+    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+    const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
+    return Math.min(100, Math.round(numer / denom * 100));
+  }
+  function jobsStagesDone(stage2, status) {
+    if (status === "done") return 2;
+    return stage2 === "chronicle" ? 1 : 0;
+  }
+  function jobsQueueLabel(queueIndex, queueTotal, name) {
+    const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
+    return `${pos}当前：${name}`;
+  }
+  function jobsFallbackMessage(status, name) {
+    switch (status) {
+      case "running":
+        return `正在生成「${name}」的脸谱…`;
+      case "paused":
+        return "已暂停——点「继续生成」接着画";
+      case "interrupted":
+        return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
+      case "error":
+        return `「${name}」生成失败`;
+      case "done":
+        return `「${name}」的脸谱已生成`;
+    }
+  }
+  var JOBS_ACTIONS = {
+    running: { label: "暂停", hook: "data-people-jobs-pause" },
+    paused: { label: "继续生成", hook: "data-people-jobs-resume" },
+    interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
+    error: { label: "删除任务", hook: "data-people-jobs-dismiss" },
+    done: null
+  };
+  function progressBlock(s) {
+    const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+    const block = el("div", "bz-people-jobs", {
+      "data-people-jobs": "",
+      "data-people-jobs-talker": s.talker,
+      role: "status"
+    });
+    block.appendChild(el("div", "bz-people-jobs-meter", [
+      el(
+        "div",
+        "bz-people-jobs-bar",
+        { "aria-hidden": "true" },
+        el("div", "bz-people-jobs-fill", { style: `width:${pct}%` })
+      ),
+      el("span", "bz-people-jobs-pct", text(`${pct}%`))
+    ]));
+    block.appendChild(el("div", "bz-people-jobs-main", text(s.message || jobsFallbackMessage(s.status, s.name))));
+    block.appendChild(el("div", "bz-people-jobs-queue", text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
+    block.appendChild(el("div", "bz-people-jobs-note", text("生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。")));
+    const action = JOBS_ACTIONS[s.status];
+    const foot = [];
+    if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
+    if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
+    return block;
   }
   function statsText(people) {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
@@ -7097,12 +7573,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   var stage = "list";
   var detailId = null;
   var detailFold = "p";
-  var running = false;
   var deleteArmId = null;
   var deleteArmTimer = null;
   var listCache = [];
   var mergeFromId = null;
   var mergeToId = null;
+  var jobsUnsub = null;
+  var jobsCache = null;
+  var targetsInFlight = /* @__PURE__ */ new Map();
+  var jobsPersisted = /* @__PURE__ */ new Set();
+  var jobsBooted = false;
   var dsOpen = false;
   var dsContacts = null;
   var dsSelected = /* @__PURE__ */ new Set();
@@ -7143,8 +7623,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       else void saveManualNote();
     });
     void renderBody();
+    void restoreJobsView();
   }
   function closePeoplePanel() {
+    const backgrounded = jobsRunning();
     unregisterPanelEsc(ESC_ID);
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
@@ -7152,7 +7634,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     detailId = null;
     detailFold = "p";
     stage = "list";
-    running = false;
     listCache = [];
     mergeFromId = null;
     mergeToId = null;
@@ -7160,6 +7641,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     noteAddId = null;
     disarmDelete();
     closeDsState();
+    if (backgrounded) notice("已转后台继续生成，重开面板查看进度", "info");
   }
   function closeDsState() {
     dsOpen = false;
@@ -7174,7 +7656,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   }
   function openDataSource() {
     if (!overlay) openPeoplePanel();
-    if (running) {
+    void openDsIfIdle();
+  }
+  async function openDsIfIdle() {
+    await ensureJobsBoot();
+    await ensureJobsWatch();
+    if (!overlay) return;
+    if (jobsBusy()) {
       notice("正在生成脸谱，请等这批结束再开数据源", "info");
       return;
     }
@@ -7233,7 +7721,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   async function runScan(force = false) {
     var _a, _b, _c, _d;
     const dataDir = dsDataDir();
-    if (!overlay || !store || !dataDir || dsScanning || dsImporting || running) return;
+    if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy()) return;
     if (!isDesktop()) {
       dsNotice = "";
       renderBody();
@@ -7292,8 +7780,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   }
   async function importDsSelected() {
     const dataDir = dsDataDir();
-    if (!overlay || !dataDir || dsImporting || dsScanning || running) return;
-    const chosen = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name) && !c.isGroup);
+    if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy()) return;
+    const chosen = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name));
     if (!chosen.length) {
       notice("还没有勾选联系人", "warning");
       return;
@@ -7345,7 +7833,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   }
   async function generateFromDs() {
     var _a;
-    if (!overlay || !store || running || dsImporting || dsScanning) return;
+    if (!overlay || !store || dsImporting || dsScanning) return;
+    if (jobsBusy()) {
+      notice("已有生成在进行——等它完成或暂停后再画", "info");
+      return;
+    }
     const names = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
     if (!names.length) {
       notice("还没有勾选联系人", "warning");
@@ -7380,28 +7872,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     closeDs();
-    await runGenerationNow(targets);
-  }
-  async function runGenerationNow(targets) {
-    if (!store || running) return;
-    running = true;
-    renderBody();
-    showRunLine("准备中…", "");
-    const res = await generateForTargets(targets, (main, sub) => {
-      setRunLine(main, sub);
-    });
-    running = false;
-    hideRunLine();
-    const parts = [];
-    if (res.ok) parts.push(`已生成 ${res.ok} 张脸谱`);
-    if (res.skipped.length) parts.push(`${res.skipped.length} 位没有新消息、无需重画`);
-    if (res.failed.length) parts.push(`${res.failed.length} 位失败`);
-    notice(parts.join("，") || "没有可生成的脸谱", res.failed.length ? "warning" : "success");
-    renderBody();
+    await startGeneration(targets);
   }
   async function generateOne() {
     var _a;
-    if (!store || !detailId || running) return;
+    if (!store || !detailId) return;
+    if (jobsBusy()) {
+      notice("已有生成在进行——等它完成或暂停后再画", "info");
+      return;
+    }
     const name = detailId;
     let target = null;
     try {
@@ -7424,7 +7903,209 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       notice("还没有可画的消息素材——点右上「数据源」导入后再画", "warning");
       return;
     }
-    await runGenerationNow([target]);
+    await startGeneration([target]);
+  }
+  var jobsOverride = null;
+  function jobs() {
+    return jobsOverride != null ? jobsOverride : jobs_exports;
+  }
+  function applySnapshot(s) {
+    jobsCache = s;
+    if (s) handleJobsSnapshot(s);
+    else renderJobs();
+  }
+  async function restoreJobsView() {
+    if (!overlay) return;
+    await ensureJobsBoot();
+    await ensureJobsWatch();
+  }
+  async function ensureJobsBoot() {
+    if (jobsBooted) return;
+    jobsBooted = true;
+    await jobs().resumeJobs(getApp());
+  }
+  async function ensureJobsWatch() {
+    if (!jobsUnsub) jobsUnsub = jobs().subscribe((s) => applySnapshot(s));
+    applySnapshot(jobs().snapshot());
+  }
+  function handleJobsSnapshot(s) {
+    for (const job of s.queue) {
+      if (job.status !== "done") continue;
+      const target = targetsInFlight.get(job.talker);
+      if (target) {
+        targetsInFlight.delete(job.talker);
+        jobsPersisted.add(job.talker);
+        void persistJobDone(job, target);
+      } else if (!jobsPersisted.has(job.talker) && job.portrait) {
+        jobsPersisted.add(job.talker);
+        void persistJobDone(job);
+      }
+    }
+    renderJobs();
+  }
+  async function startGeneration(targets) {
+    const { runnable, skipped } = await planTargets(targets);
+    for (const t of runnable) {
+      targetsInFlight.set(t.talker, t);
+      jobsPersisted.delete(t.talker);
+    }
+    let engineSkipped = 0;
+    if (runnable.length) {
+      const res = await jobs().startJobs(getApp(), runnable, {});
+      engineSkipped = res.skipped.length;
+      await ensureJobsWatch();
+    }
+    const started = runnable.length - engineSkipped;
+    const parts = [];
+    if (started > 0) parts.push(`已开始生成 ${started} 张脸谱（后台进行，可关面板）`);
+    if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
+    if (parts.length) notice(parts.join("，"), "success");
+    renderJobs();
+  }
+  async function planTargets(targets) {
+    const store2 = new PeopleStore(getApp());
+    const people = await store2.list();
+    const runnable = [];
+    const skipped = [];
+    for (const t of targets) {
+      const existing = people.find((p) => p.id === t.talker);
+      const plan = planIncremental(t.msgs, existing);
+      if (plan.mode === "skip") {
+        if (existing) {
+          let imports = existing.imports;
+          if (imports.length && !imports.some((r) => r.stats)) {
+            imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+            imports[0] = { ...imports[0], stats: computeStats(t.msgs, t.kindCounts) };
+            await store2.upsert({ ...existing, name: t.name, imports });
+          } else {
+            await store2.upsert({ ...existing, name: t.name });
+          }
+        }
+        skipped.push(t.name);
+        continue;
+      }
+      if (plan.mode === "older") {
+        notice(`「${t.name}」这批 ${plan.msgs.length} 条消息早于上次提炼点，将作为补充素材提炼`);
+      } else if (plan.olderCount > 0) {
+        notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
+      }
+      runnable.push(t);
+    }
+    return { runnable, skipped };
+  }
+  async function persistJobDone(job, target) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+    const talker = (_a = target == null ? void 0 : target.talker) != null ? _a : job.talker;
+    const name = (_b = target == null ? void 0 : target.name) != null ? _b : job.name;
+    try {
+      if (!job.portrait) {
+        notice(`「${name}」生成完成但画像为空`, "warning");
+        return;
+      }
+      const store2 = new PeopleStore(getApp());
+      const existing = (await store2.list()).find((p) => p.id === talker);
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const msgs = target == null ? void 0 : target.msgs;
+      const rec = {
+        file: (_f = (_e = (_d = target == null ? void 0 : target.fileLabel) != null ? _d : (_c = job.importRecord) == null ? void 0 : _c.fileLabel) != null ? _e : job.fileLabel) != null ? _f : `数据源:${talker}`,
+        importedAt: now,
+        messageCount: target ? (_h = (_g = job.importRecord) == null ? void 0 : _g.messageCount) != null ? _h : msgs.length : (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : 0,
+        skippedCount: (_m = (_l = target == null ? void 0 : target.skippedCount) != null ? _l : (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _m : 0,
+        timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_o = (_n = job.importRecord) == null ? void 0 : _n.timeFrom) != null ? _o : now,
+        timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeTo) != null ? _q : now,
+        stats: target ? computeStats(msgs, target.kindCounts) : job.stats
+      };
+      const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
+      await store2.upsert(entry);
+      await store2.appendImport(talker, rec);
+      const digest = {
+        portrait: job.portrait,
+        events: mergeManualEvents((_r = job.events) != null ? _r : [], existing == null ? void 0 : existing.manualEvents),
+        // 439：手动随手记并入事件素材
+        quotes: job.quotes,
+        moments: (_s = job.material) == null ? void 0 : _s.moments,
+        // 449：场景 / 特质随生成落盘
+        traits: (_t = job.material) == null ? void 0 : _t.traits,
+        chronicle: job.chronicle || void 0,
+        generatedAt: now
+      };
+      await store2.setDigest(talker, digest);
+      const lastTs = msgs ? msgs[msgs.length - 1].ts : Number(String((_u = job.lastMsgKey) != null ? _u : "").split("|")[0]);
+      if (Number.isFinite(lastTs)) {
+        await store2.setLastProcessedTs(talker, Math.max((_v = existing == null ? void 0 : existing.lastProcessedTs) != null ? _v : 0, lastTs));
+      }
+      notice(`「${name}」的脸谱已生成`, "success");
+      jobs().removeJob(talker);
+      if (overlay) void renderBody();
+    } catch (e) {
+      if (target) targetsInFlight.set(talker, target);
+      notifyActionError(e, `写入「${name}」的脸谱`);
+    }
+  }
+  function renderJobs() {
+    const slot = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs-slot]");
+    if (!slot) return;
+    const item = currentJobsItem();
+    if (!item) {
+      slot.hidden = true;
+      slot.replaceChildren();
+      return;
+    }
+    slot.hidden = false;
+    slot.replaceChildren(progressBlock(toBlockState(item)));
+  }
+  function currentJobsItem() {
+    var _a;
+    const queue = (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : [];
+    if (!queue.length) return null;
+    const rank = { running: 0, paused: 1, interrupted: 1, error: 2, done: 3 };
+    return [...queue].map((job, i) => ({ job, i })).sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
+  }
+  function toBlockState(job) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const queue = (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : [];
+    const pos = queue.findIndex((j) => j.talker === job.talker);
+    return {
+      talker: job.talker,
+      name: job.name || job.talker,
+      status: job.status,
+      message: (_b = job.message) != null ? _b : "",
+      batchesDone: (_c = job.batchesDone) != null ? _c : 0,
+      batchesTotal: (_f = (_e = job.batchesTotal) != null ? _e : (_d = job.chunks) == null ? void 0 : _d.length) != null ? _f : 0,
+      stagesDone: jobsStagesDone(job.stage, job.status),
+      queueIndex: (_g = job.queueIndex) != null ? _g : pos + 1,
+      queueTotal: (_h = job.queueTotal) != null ? _h : queue.length,
+      errorText: job.error
+    };
+  }
+  function jobsBusy() {
+    var _a;
+    return ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).some((j) => j.status === "running" || j.status === "paused");
+  }
+  function jobsRunning() {
+    var _a;
+    return ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).some((j) => j.status === "running");
+  }
+  function jobsAction(kind) {
+    var _a, _b, _c;
+    const api = jobs();
+    const talker = (_b = (_a = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a.getAttribute("data-people-jobs-talker")) != null ? _b : "";
+    if (kind === "pause") {
+      api.pauseJobs();
+      notice("这一批做完就暂停", "info");
+      return;
+    }
+    if (kind === "resume") {
+      const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
+      if (!who) return;
+      api.resume(who);
+      notice("继续生成——已完成的批次不重画", "info");
+      return;
+    }
+    if (talker && api.removeJob(talker)) {
+      notice("已删除该任务", "delete");
+      renderJobs();
+    }
   }
   function onOverlayClick(e) {
     var _a, _b, _c, _d, _e, _f;
@@ -7433,9 +8114,20 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       closePeoplePanel();
       return;
     }
+    if (t.closest("[data-people-jobs-pause]")) {
+      jobsAction("pause");
+      return;
+    }
+    if (t.closest("[data-people-jobs-resume]")) {
+      jobsAction("resume");
+      return;
+    }
+    if (t.closest("[data-people-jobs-dismiss]")) {
+      jobsAction("dismiss");
+      return;
+    }
     if (t.closest("[data-people-ds-open]")) {
-      if (running) notice("正在生成脸谱，请等这批结束再开数据源", "info");
-      else openDs();
+      void openDsIfIdle();
       return;
     }
     if (t.closest("[data-people-ds-close]") || t.closest("[data-people-ds-dim]")) {
@@ -7459,10 +8151,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-back-btn]")) {
-      if (running) {
-        notice("正在生成脸谱，完成后即可返回", "info");
-        return;
-      }
       stage = "list";
       detailId = null;
       detailFold = "p";
@@ -7620,7 +8308,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     else await renderDetail(body);
     (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
     renderDsLayer();
-    renderRunLine();
+    renderJobs();
     mountIcons(overlay);
   }
   function renderDsLayer() {
@@ -7629,25 +8317,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     layer.hidden = !dsOpen;
     layer.replaceChildren();
     if (dsOpen) layer.appendChild(dsModal(dsModalState()));
-  }
-  function renderRunLine() {
-    const line = overlay == null ? void 0 : overlay.querySelector("[data-people-runline]");
-    if (line) line.hidden = !running;
-  }
-  function showRunLine(main, sub) {
-    const line = overlay == null ? void 0 : overlay.querySelector("[data-people-runline]");
-    if (line) line.hidden = false;
-    setRunLine(main, sub);
-  }
-  function setRunLine(main, sub) {
-    const m = overlay == null ? void 0 : overlay.querySelector("[data-people-run-main]");
-    const s = overlay == null ? void 0 : overlay.querySelector("[data-people-run-sub]");
-    if (m) m.textContent = main;
-    if (s) s.textContent = sub;
-  }
-  function hideRunLine() {
-    const line = overlay == null ? void 0 : overlay.querySelector("[data-people-runline]");
-    if (line) line.hidden = true;
   }
   async function renderList(body) {
     var _a;
@@ -7701,91 +8370,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     deleteArmId = null;
     if (deleteArmTimer) clearTimeout(deleteArmTimer);
     deleteArmTimer = null;
-  }
-  async function generateForTargets(targets, onProgress) {
-    var _a, _b, _c, _d;
-    const ai = createAI();
-    const askExtract = (p) => ai.json(p);
-    const askPortrait = (p) => ai.chat(p);
-    let ok = 0;
-    const failed = [];
-    const skipped = [];
-    for (let i = 0; i < targets.length; i++) {
-      if (!overlay || !store) {
-        notice("面板已关闭，剩余人物停止生成（已完成的不受影响）");
-        break;
-      }
-      const { talker, name, msgs, kindCounts, skippedCount, fileLabel, insights } = targets[i];
-      const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
-      onProgress == null ? void 0 : onProgress(main, "");
-      try {
-        const existing = (await store.list()).find((p) => p.id === talker);
-        const plan = planIncremental(msgs, existing);
-        const now = (/* @__PURE__ */ new Date()).toISOString();
-        const stats = computeStats(msgs, kindCounts);
-        const rec = {
-          file: fileLabel,
-          importedAt: now,
-          messageCount: plan.msgs.length,
-          skippedCount,
-          timeFrom: new Date(msgs[0].ts).toISOString(),
-          timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
-          stats
-        };
-        if (plan.mode === "skip") {
-          if (existing) {
-            let imports = existing.imports;
-            if (imports.length && !imports.some((r) => r.stats)) {
-              imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
-              imports[0] = { ...imports[0], stats };
-              await store.upsert({ ...existing, name, imports });
-            } else {
-              await store.upsert({ ...existing, name });
-            }
-          }
-          skipped.push(name);
-          continue;
-        }
-        if (plan.mode === "older") {
-          notice(`「${name}」这批 ${plan.msgs.length} 条消息早于上次提炼点，将作为补充素材提炼`);
-        } else if (plan.olderCount > 0) {
-          notice(`「${name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
-        }
-        const mediaNote = buildMediaNote({
-          voiceCount: (_a = stats.voiceCount) != null ? _a : 0,
-          voiceTotalSec: (_b = stats.voiceTotalSec) != null ? _b : 0,
-          imageCount: (_c = stats.imageCount) != null ? _c : 0
-        });
-        const statsNote = insights ? buildStatsNote(insights) || void 0 : void 0;
-        const face = plan.mode === "full" ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
-          onProgress == null ? void 0 : onProgress(main, `第 ${done} / ${total} 批`);
-        }, void 0, mediaNote, statsNote) : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing == null ? void 0 : existing.digest, (done, total) => {
-          const lead = plan.mode === "older" ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
-          onProgress == null ? void 0 : onProgress(main, `${lead} · 第 ${done} / ${total} 批`);
-        }, mediaNote, statsNote);
-        const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
-        await store.upsert(entry);
-        await store.appendImport(talker, rec);
-        const digest = {
-          portrait: face.portrait,
-          events: mergeManualEvents(face.events, existing == null ? void 0 : existing.manualEvents),
-          // issue 439：手动随手记并入事件素材
-          quotes: face.quotes,
-          moments: face.moments,
-          // issue 449：场景 / 特质随生成落盘，增量重画才有的可合并
-          traits: face.traits,
-          chronicle: face.chronicle || void 0,
-          generatedAt: now
-        };
-        await store.setDigest(talker, digest);
-        await store.setLastProcessedTs(talker, Math.max((_d = existing == null ? void 0 : existing.lastProcessedTs) != null ? _d : 0, plan.msgs[plan.msgs.length - 1].ts));
-        ok++;
-      } catch (e) {
-        failed.push(name);
-        console.warn("[people] 生成失败:", name, e);
-      }
-    }
-    return { ok, failed, skipped };
   }
   async function renderDetail(body) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;

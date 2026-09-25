@@ -1,4 +1,4 @@
-/* 源指纹 ed90dd4c788ec6ff · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 83972bbe9103629f · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -49,6 +49,10 @@ var BZR_people = (() => {
     initials: () => initials,
     insRow: () => insRow,
     insightsCard: () => insightsCard,
+    jobsFallbackMessage: () => jobsFallbackMessage,
+    jobsPercent: () => jobsPercent,
+    jobsQueueLabel: () => jobsQueueLabel,
+    jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
     mdPlain: () => mdPlain,
     mediaLabel: () => mediaLabel,
@@ -60,6 +64,7 @@ var BZR_people = (() => {
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
     profileView: () => profileView,
+    progressBlock: () => progressBlock,
     replyLatencySec: () => replyLatencySec,
     socialRow: () => socialRow,
     spillOf: () => spillOf,
@@ -175,14 +180,70 @@ var BZR_people = (() => {
         ])
       ]),
       el("div", "bz-people-stats", { "data-people-stats": "" }),
-      el("div", "bz-people-runline", { "data-people-runline": "", hidden: "" }, [
-        el("span", "bz-people-run-spin", { "aria-hidden": "true" }),
-        el("span", "bz-people-run-main", { "data-people-run-main": "" }),
-        el("span", "bz-people-run-sub", { "data-people-run-sub": "" })
-      ]),
+      el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "", hidden: "" }),
       el("div", "bz-people-body", { "data-people-body": "" }),
       el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" })
     ]);
+  }
+  function jobsPercent(batchesDone, batchesTotal, stagesDone) {
+    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+    const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
+    return Math.min(100, Math.round(numer / denom * 100));
+  }
+  function jobsStagesDone(stage, status) {
+    if (status === "done") return 2;
+    return stage === "chronicle" ? 1 : 0;
+  }
+  function jobsQueueLabel(queueIndex, queueTotal, name) {
+    const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
+    return `${pos}当前：${name}`;
+  }
+  function jobsFallbackMessage(status, name) {
+    switch (status) {
+      case "running":
+        return `正在生成「${name}」的脸谱…`;
+      case "paused":
+        return "已暂停——点「继续生成」接着画";
+      case "interrupted":
+        return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
+      case "error":
+        return `「${name}」生成失败`;
+      case "done":
+        return `「${name}」的脸谱已生成`;
+    }
+  }
+  var JOBS_ACTIONS = {
+    running: { label: "暂停", hook: "data-people-jobs-pause" },
+    paused: { label: "继续生成", hook: "data-people-jobs-resume" },
+    interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
+    error: { label: "删除任务", hook: "data-people-jobs-dismiss" },
+    done: null
+  };
+  function progressBlock(s) {
+    const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+    const block = el("div", "bz-people-jobs", {
+      "data-people-jobs": "",
+      "data-people-jobs-talker": s.talker,
+      role: "status"
+    });
+    block.appendChild(el("div", "bz-people-jobs-meter", [
+      el(
+        "div",
+        "bz-people-jobs-bar",
+        { "aria-hidden": "true" },
+        el("div", "bz-people-jobs-fill", { style: `width:${pct}%` })
+      ),
+      el("span", "bz-people-jobs-pct", text(`${pct}%`))
+    ]));
+    block.appendChild(el("div", "bz-people-jobs-main", text(s.message || jobsFallbackMessage(s.status, s.name))));
+    block.appendChild(el("div", "bz-people-jobs-queue", text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
+    block.appendChild(el("div", "bz-people-jobs-note", text("生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。")));
+    const action = JOBS_ACTIONS[s.status];
+    const foot = [];
+    if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
+    if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
+    return block;
   }
   function statsText(people) {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);

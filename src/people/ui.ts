@@ -7,20 +7,23 @@
  * 「导入所选」只进预览、「画脸谱」关弹窗回面板跑生成）。
  * 文件向导已退役（447）：bz-people-import 命令改开数据源弹窗；聊天原文只在本层内存流转
  * （ADR-0191），预览桶只落标签化文本。
+ *
+ * 生成链（issue 450）：本层不再内联跑生成循环——组装 targets 交给 jobs.ts 生成引擎
+ * （模块级单例，独立于面板生命周期），面板只订阅快照渲染进度块；done 产物在本层
+ * 落 people.json（PeopleStore / ImportRecord 口径沿用 446 收编形态）。关面板转后台，
+ * 重开面板 snapshot+resume 渲染当前任务态，中断任务出「继续生成」。
  */
 import { notice, notifyActionError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { getApp } from '../core/app';
-import { createAI } from '../core/ai';
-import { buildFace } from './digest';
-import type { AskLLM } from './digest';
 import { PeopleStore } from './data';
-import { buildFaceIncremental, mergeManualEvents, planIncremental } from './incremental';
-import { buildStatsNote } from './insights';
-import { buildMediaNote, emptyMediaStats, formatMediaCount, type MediaStats } from './media';
+import { mergeManualEvents, planIncremental } from './incremental';
+import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
+import * as jobsApi from './jobs';
+import type { JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
 import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import {
   PreviewStore,
@@ -54,13 +57,17 @@ import {
   miniMarkdown,
   monthlyChart,
   panelShell,
+  progressBlock,
   replyLatencySec,
   socialRow,
   statsText,
   tagChip,
   wallEmpty,
+  jobsStagesDone,
   type DsRowState,
   type FoldId,
+  type JobsBlockState,
+  type JobsUiStatus,
 } from './render';
 import { el, text, textEl } from './render';
 import { mountIcons } from '../core/ui';
@@ -76,7 +83,6 @@ let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 详情当前展开的折（换人回落画像折） */
 let detailFold: FoldId = 'p';
-let running = false;
 /** 删除二次确认（第一次点进入武装态，3 秒回落） */
 let deleteArmId: string | null = null;
 let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -85,6 +91,19 @@ let listCache: PersonEntry[] = [];
 /** 合并流程（issue 442）：mergeFromId = 待并出的人物；mergeToId = 已点选、待二次确认的目标 */
 let mergeFromId: string | null = null;
 let mergeToId: string | null = null;
+
+// ---------------- 生成引擎接线状态（issue 450；引擎独立于面板生命周期） ----------------
+
+/** 快照退订（订阅跟会话走：关面板后引擎照推，重开面板即时恢复任务态） */
+let jobsUnsub: (() => void) | null = null;
+/** 引擎最近一次快照（关面板后仍在更新——关面板转后台 + 重开渲染都靠它） */
+let jobsCache: EngineSnapshot | null = null;
+/** 本次会话提交给引擎的目标（talker → target）：done 落盘要引擎不回传的入参（kindCounts 等） */
+const targetsInFlight = new Map<string, GenTarget>();
+/** 已落过盘的任务（防引擎保留的 done 任务重复推送重复落盘；重新生成时按 talker 清除） */
+const jobsPersisted = new Set<string>();
+/** 引擎本会话是否已从 people-jobs.json 重建（resumeJobs 只做一次，防覆盖运行中的内存队列） */
+let jobsBooted = false;
 
 // ---------------- 数据源弹窗（issue 447） ----------------
 
@@ -146,9 +165,13 @@ export function openPeoplePanel(app?: unknown): void {
     else void saveManualNote();
   });
   void renderBody();
+  // 状态恢复（issue 450）：面板打开即拉引擎快照 + 订阅——运行中 / 暂停 / 中断 / done 都有对应呈现
+  void restoreJobsView();
 }
 
 export function closePeoplePanel(): void {
+  // 关面板转后台（issue 450）：引擎照跑；有正在跑的任务才提示，只剩暂停 / 排队不打扰
+  const backgrounded = jobsRunning();
   unregisterPanelEsc(ESC_ID);
   overlay?.remove();
   overlay = null;
@@ -156,7 +179,6 @@ export function closePeoplePanel(): void {
   detailId = null;
   detailFold = 'p';
   stage = 'list';
-  running = false;
   listCache = [];
   mergeFromId = null;
   mergeToId = null;
@@ -164,6 +186,7 @@ export function closePeoplePanel(): void {
   noteAddId = null;
   disarmDelete();
   closeDsState();
+  if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
 }
 
 function closeDsState(): void {
@@ -181,7 +204,15 @@ function closeDsState(): void {
 /** 直开数据源弹窗（bz-people-import 命令回调；面板未开先开） */
 export function openDataSource(): void {
   if (!overlay) openPeoplePanel();
-  if (running) { notice('正在生成脸谱，请等这批结束再开数据源', 'info'); return; }
+  void openDsIfIdle();
+}
+
+/** 生成进行中不开弹窗：导入会动预览桶，正在跑的任务指纹会漂移判废（450 沿用 447 守卫） */
+async function openDsIfIdle(): Promise<void> {
+  await ensureJobsBoot();
+  await ensureJobsWatch();
+  if (!overlay) return;
+  if (jobsBusy()) { notice('正在生成脸谱，请等这批结束再开数据源', 'info'); return; }
   openDs();
 }
 
@@ -250,7 +281,7 @@ function dsModalState() {
  */
 async function runScan(force = false): Promise<void> {
   const dataDir = dsDataDir();
-  if (!overlay || !store || !dataDir || dsScanning || dsImporting || running) return;
+  if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy()) return;
   if (!isDesktop()) {
     dsNotice = '';
     renderBody();
@@ -312,8 +343,9 @@ async function runScan(force = false): Promise<void> {
  */
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
-  if (!overlay || !dataDir || dsImporting || dsScanning || running) return;
-  const chosen = (dsContacts ?? []).filter((c) => dsSelected.has(c.name) && !c.isGroup);
+  if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy()) return;
+  // 群聊能出现在 dsContacts = 设置已放开（runScan 按 peopleIncludeGroups 筛过），导入照单全收
+  const chosen = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
   if (!chosen.length) { notice('还没有勾选联系人', 'warning'); return; }
   if (!isDesktop()) {
     dsNotice = '数据源导入仅桌面端支持（需要读取库外文件夹）。';
@@ -360,11 +392,12 @@ async function importDsSelected(): Promise<void> {
 }
 
 /**
- * 「画脸谱」（447 拍板 Q5）：关闭弹窗回面板跑生成——进度走面板进度行，完成 notice + 刷新。
- * 不设门槛：弹窗里手动点，选了就画（skip 人物自动跳过）。
+ * 「画脸谱」（447 拍板 Q5；450 改走引擎）：关闭弹窗回面板，targets 交生成引擎后台跑，
+ * 进度走面板进度块。不设门槛：弹窗里手动点，选了就画（skip 人物自动跳过）。
  */
 async function generateFromDs(): Promise<void> {
-  if (!overlay || !store || running || dsImporting || dsScanning) return;
+  if (!overlay || !store || dsImporting || dsScanning) return;
+  if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   const names = (dsContacts ?? []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
   if (!names.length) { notice('还没有勾选联系人', 'warning'); return; }
   const targets: GenTarget[] = [];
@@ -395,34 +428,16 @@ async function generateFromDs(): Promise<void> {
     return;
   }
   closeDs();
-  await runGenerationNow(targets);
-}
-
-/** 面板级生成（数据源路径专用）：进度行走面板头下进度行 */
-async function runGenerationNow(targets: GenTarget[]): Promise<void> {
-  if (!store || running) return;
-  running = true;
-  renderBody();
-  showRunLine('准备中…', '');
-  const res = await generateForTargets(targets, (main, sub) => {
-    setRunLine(main, sub);
-  });
-  running = false;
-  hideRunLine();
-  const parts: string[] = [];
-  if (res.ok) parts.push(`已生成 ${res.ok} 张脸谱`);
-  if (res.skipped.length) parts.push(`${res.skipped.length} 位没有新消息、无需重画`);
-  if (res.failed.length) parts.push(`${res.failed.length} 位失败`);
-  notice(parts.join('，') || '没有可生成的脸谱', res.failed.length ? 'warning' : 'success');
-  renderBody();
+  await startGeneration(targets);
 }
 
 /**
  * 详情「画脸谱」（448：仅未生成脸谱时出）：用预览桶里该人物的消息素材单人生成，
- * 进度走面板进度行。还没有预览素材时提示先走数据源导入。
+ * 交引擎后台跑，进度走面板进度块。还没有预览素材时提示先走数据源导入。
  */
 async function generateOne(): Promise<void> {
-  if (!store || !detailId || running) return;
+  if (!store || !detailId) return;
+  if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   const name = detailId;
   let target: GenTarget | null = null;
   try {
@@ -442,7 +457,302 @@ async function generateOne(): Promise<void> {
     console.warn('[people] 读取预览桶失败:', e);
   }
   if (!target) { notice('还没有可画的消息素材——点右上「数据源」导入后再画', 'warning'); return; }
-  await runGenerationNow([target]);
+  await startGeneration([target]);
+}
+
+// ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
+
+/** 生成目标（引擎 JobTarget 同形；msgs 必须是全量预览桶消息——引擎断点续跑要重读校验指纹） */
+export interface GenTarget {
+  talker: string;
+  name: string;
+  msgs: UnifiedMessage[];
+  /** 全形态计数（数据源路径 = chat.json 全量口径，见 datasource） */
+  kindCounts: Record<string, number>;
+  /** 被过滤的非文本 / 空消息条数（导入记录 skippedCount 口径，评审 P2-2） */
+  skippedCount: number;
+  /** 导入记录的 file 标注 */
+  fileLabel: string;
+  /** 预览桶侧写里的互动统计汇总（issue 449；旧桶可能没有）→ 引擎拼互动统计叙述段喂画像与时间线 */
+  insights?: PreviewContact['insights'];
+}
+
+/**
+ * 生成引擎（jobs.ts）的 ui 消费面——模块本体天然满足；测试经 setJobsModuleForTests 注入假件
+ * （测试域避免 vi.mock，与 obsidian alias 同一思路：注入缝比模块 mock 稳）。
+ */
+export interface JobsApi {
+  startJobs(app: unknown, targets: JobTarget[], opts?: JobStartOptions): Promise<{ queued: string[]; skipped: string[] }>;
+  /** 读 people-jobs.json 重建队列；崩溃遗留 running → interrupted（本会话只调一次） */
+  resumeJobs(app: unknown): Promise<void>;
+  /** 从断点继续指定人物（已完成批次不重烧） */
+  resume(talker: string): boolean;
+  /** 当前批完成后暂停 */
+  pauseJobs(): void;
+  /** 删除任务（error 态「删除任务」；运行中的也删） */
+  removeJob(talker: string): boolean;
+  /** 进度快照推送（启动即推一次当前态），返回退订函数 */
+  subscribe(fn: (s: EngineSnapshot) => void): () => void;
+  snapshot(): EngineSnapshot;
+}
+
+let jobsOverride: JobsApi | null = null;
+
+/** 引擎入口（生产 = jobs.ts 模块；测试 = 注入假件） */
+function jobs(): JobsApi {
+  return jobsOverride ?? (jobsApi as unknown as JobsApi);
+}
+
+/** 测试注入缝：假引擎替换 jobs 模块（传 null 还原模块本体；一并清订阅 / 缓存 / 幂等标记） */
+export function setJobsModuleForTests(mod: JobsApi | null): void {
+  if (jobsUnsub) { jobsUnsub(); jobsUnsub = null; }
+  jobsOverride = mod;
+  jobsCache = null;
+  jobsBooted = false;
+  targetsInFlight.clear();
+  jobsPersisted.clear();
+}
+
+/** 快照进场（订阅回调 / 打开面板恢复共用）：done 落盘 → 渲染进度块 */
+function applySnapshot(s: EngineSnapshot | null): void {
+  jobsCache = s;
+  if (s) handleJobsSnapshot(s);
+  else renderJobs();
+}
+
+/**
+ * 面板打开时恢复任务态（openPeoplePanel 调）：先从 people-jobs.json 重建引擎队列
+ * （崩溃遗留 running → interrupted，出「继续生成」），再订阅快照渲染。
+ */
+async function restoreJobsView(): Promise<void> {
+  if (!overlay) return;
+  await ensureJobsBoot();
+  await ensureJobsWatch();
+}
+
+/** 引擎启动扫描（每会话一次；resumeJobs 会整体重建内存队列，不能在运行中重放） */
+async function ensureJobsBoot(): Promise<void> {
+  if (jobsBooted) return;
+  jobsBooted = true;
+  await jobs().resumeJobs(getApp());
+}
+
+/** 订阅引擎快照（整个会话只订一次；关面板不退订——引擎推送照收，重开面板即时恢复） */
+async function ensureJobsWatch(): Promise<void> {
+  if (!jobsUnsub) jobsUnsub = jobs().subscribe((s) => applySnapshot(s));
+  applySnapshot(jobs().snapshot());
+}
+
+/** 快照处理：done 任务落 people.json（每任务恰好一次）+ 进度块原位刷新 */
+function handleJobsSnapshot(s: EngineSnapshot): void {
+  for (const job of s.queue) {
+    if (job.status !== 'done') continue;
+    const target = targetsInFlight.get(job.talker);
+    if (target) {
+      targetsInFlight.delete(job.talker); // 先摘再落盘：快照重复推送不会重复写导入记录
+      jobsPersisted.add(job.talker); // 引擎保留的 done 任务再推快照也不重落
+      void persistJobDone(job, target);
+    } else if (!jobsPersisted.has(job.talker) && job.portrait) {
+      // 重启续跑完成的任务：入参走 job.importRecord / job.stats（引擎落盘口径）
+      jobsPersisted.add(job.talker);
+      void persistJobDone(job);
+    }
+  }
+  renderJobs();
+}
+
+/**
+ * 生成入口（数据源弹窗 / 详情「画脸谱」共用）：
+ * 1) 本地预筛——同一导出再导（指纹命中）不进引擎不烧 AI（441 语义原样保留，顺带应用改名
+ *    与旧记录 stats 补齐）；补录 / 增量的提示条数沿用原口径；
+ * 2) targets 交 startJobs（引擎内部切批 / 逐批采集 / 画像 / 时间线，每批原子落盘）；
+ * 3) 订阅快照渲染进度块——独立于面板生命周期，关面板照跑。
+ */
+export async function startGeneration(targets: GenTarget[]): Promise<void> {
+  const { runnable, skipped } = await planTargets(targets);
+  for (const t of runnable) {
+    targetsInFlight.set(t.talker, t);
+    jobsPersisted.delete(t.talker); // 同人重新生成：上一次的落盘幂等标记不复用
+  }
+  let engineSkipped = 0;
+  if (runnable.length) {
+    const res = await jobs().startJobs(getApp(), runnable, {}); // mode 缺省 auto：引擎逐人按增量计划判定
+    engineSkipped = res.skipped.length;
+    await ensureJobsWatch();
+  }
+  const started = runnable.length - engineSkipped;
+  const parts: string[] = [];
+  if (started > 0) parts.push(`已开始生成 ${started} 张脸谱（后台进行，可关面板）`);
+  if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
+  if (parts.length) notice(parts.join('，'), 'success');
+  renderJobs();
+}
+
+/**
+ * 本地预筛（441 planIncremental 语义保留在 ui 层）：skip 不进引擎；补录 / 增量的提示沿用原口径。
+ * 模式与旧画像的解析归引擎（startJobs opts / 增量所需 old digest 由引擎内部处理）。
+ */
+async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[]; skipped: string[] }> {
+  const store = new PeopleStore(getApp());
+  const people = await store.list();
+  const runnable: GenTarget[] = [];
+  const skipped: string[] = [];
+  for (const t of targets) {
+    const existing = people.find((p) => p.id === t.talker);
+    const plan = planIncremental(t.msgs, existing);
+    if (plan.mode === 'skip') {
+      // skip 只可能发生在已有导入的人物上；顺带应用改名，并给 440 之前的旧数据补一份
+      // 互动统计到最近一条导入记录（没有记录则不动）
+      if (existing) {
+        let imports = existing.imports;
+        if (imports.length && !imports.some((r) => r.stats)) {
+          imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
+          imports[0] = { ...imports[0], stats: computeStats(t.msgs, t.kindCounts) };
+          await store.upsert({ ...existing, name: t.name, imports });
+        } else {
+          await store.upsert({ ...existing, name: t.name });
+        }
+      }
+      skipped.push(t.name);
+      continue;
+    }
+    if (plan.mode === 'older') {
+      notice(`「${t.name}」这批 ${plan.msgs.length} 条消息早于上次提炼点，将作为补充素材提炼`);
+    } else if (plan.olderCount > 0) {
+      notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
+    }
+    runnable.push(t);
+  }
+  return { runnable, skipped };
+}
+
+/**
+ * done 落盘（沿用 446 收编形态的 PeopleStore / ImportRecord 口径）：
+ * 会话内任务用 targetsInFlight 里的原始入参（时间跨度 / 统计 / 锚点全量可算）；
+ * 重启续跑完成的任务走引擎落盘的 importRecord / stats（批元数据口径，不含原文）。
+ * 成功后把 done 任务从引擎队列清掉（产物已安全入 people.json，进度块不再挂旧账）。
+ */
+async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
+  const talker = target?.talker ?? job.talker;
+  const name = target?.name ?? job.name;
+  try {
+    if (!job.portrait) { notice(`「${name}」生成完成但画像为空`, 'warning'); return; }
+    const store = new PeopleStore(getApp());
+    const existing = (await store.list()).find((p) => p.id === talker);
+    const now = new Date().toISOString();
+    const msgs = target?.msgs;
+    const rec: ImportRecord = {
+      file: target?.fileLabel ?? job.importRecord?.fileLabel ?? job.fileLabel ?? `数据源:${talker}`,
+      importedAt: now,
+      messageCount: target
+        ? (job.importRecord?.messageCount ?? msgs!.length)
+        : (job.importRecord?.messageCount ?? 0),
+      skippedCount: target?.skippedCount ?? job.importRecord?.skippedCount ?? 0,
+      timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : job.importRecord?.timeFrom ?? now,
+      timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : job.importRecord?.timeTo ?? now,
+      stats: target ? computeStats(msgs!, target.kindCounts) : job.stats,
+    };
+    const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
+    await store.upsert(entry);
+    await store.appendImport(talker, rec);
+    const digest: FaceDigest = {
+      portrait: job.portrait,
+      events: mergeManualEvents(job.events ?? [], existing?.manualEvents), // 439：手动随手记并入事件素材
+      quotes: job.quotes,
+      moments: job.material?.moments, // 449：场景 / 特质随生成落盘
+      traits: job.material?.traits,
+      chronicle: job.chronicle || undefined,
+      generatedAt: now,
+    };
+    await store.setDigest(talker, digest);
+    // 锚点写回：已提炼过的最大消息时间戳（计划内末条；降级路径从指纹键解出 ts，解不出不动锚点）
+    const lastTs = msgs ? msgs[msgs.length - 1].ts : Number(String(job.lastMsgKey ?? '').split('|')[0]);
+    if (Number.isFinite(lastTs)) {
+      await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, lastTs));
+    }
+    notice(`「${name}」的脸谱已生成`, 'success');
+    jobs().removeJob(talker); // 产物已入 people.json：done 任务清出队列，进度块自然收起
+    if (overlay) void renderBody(); // 封面墙 / 详情立即可见新脸谱
+  } catch (e) {
+    if (target) targetsInFlight.set(talker, target); // 落盘失败放回：下个快照重试
+    notifyActionError(e, `写入「${name}」的脸谱`);
+  }
+}
+
+// ---------------- 进度块渲染与动作（render.progressBlock 的 ui 侧） ----------------
+
+/** 面板进度块：无活跃任务隐藏；有则渲染当前任务态（running 优先，其次可续跑 / 出错 / done） */
+function renderJobs(): void {
+  const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
+  if (!slot) return;
+  const item = currentJobsItem();
+  if (!item) {
+    slot.hidden = true;
+    slot.replaceChildren();
+    return;
+  }
+  slot.hidden = false;
+  slot.replaceChildren(progressBlock(toBlockState(item)));
+}
+
+/** 当前展示的任务：running > paused/interrupted > error > done（同档取队列靠前） */
+function currentJobsItem(): JobView | null {
+  const queue = jobsCache?.queue ?? [];
+  if (!queue.length) return null;
+  const rank: Record<JobsUiStatus, number> = { running: 0, paused: 1, interrupted: 1, error: 2, done: 3 };
+  return [...queue]
+    .map((job, i) => ({ job, i }))
+    .sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
+}
+
+/** 引擎任务 → 进度块视图（百分比口径见 render.jobsPercent；派生字段缺省自算兜底） */
+function toBlockState(job: JobView): JobsBlockState {
+  const queue = jobsCache?.queue ?? [];
+  const pos = queue.findIndex((j) => j.talker === job.talker);
+  return {
+    talker: job.talker,
+    name: job.name || job.talker,
+    status: job.status,
+    message: job.message ?? '',
+    batchesDone: job.batchesDone ?? 0,
+    batchesTotal: job.batchesTotal ?? job.chunks?.length ?? 0,
+    stagesDone: jobsStagesDone(job.stage, job.status),
+    queueIndex: job.queueIndex ?? pos + 1,
+    queueTotal: job.queueTotal ?? queue.length,
+    errorText: job.error,
+  };
+}
+
+/** 有无活跃任务（运行中 / 排队或已暂停）：数据源导入类守卫用它（导入会动预览桶 → 指纹漂移判废） */
+function jobsBusy(): boolean {
+  return (jobsCache?.queue ?? []).some((j) => j.status === 'running' || j.status === 'paused');
+}
+
+/** 是否有正在跑的任务（关面板转后台提示用；仅剩暂停 / 排队时关面板不打扰） */
+function jobsRunning(): boolean {
+  return (jobsCache?.queue ?? []).some((j) => j.status === 'running');
+}
+
+/** 进度块动作派发（talker 从块根 data 钩子读） */
+function jobsAction(kind: 'pause' | 'resume' | 'dismiss'): void {
+  const api = jobs();
+  const talker = overlay?.querySelector<HTMLElement>('[data-people-jobs]')?.getAttribute('data-people-jobs-talker') ?? '';
+  if (kind === 'pause') {
+    api.pauseJobs();
+    notice('这一批做完就暂停', 'info');
+    return;
+  }
+  if (kind === 'resume') {
+    const who = talker || currentJobsItem()?.talker || '';
+    if (!who) return;
+    api.resume(who);
+    notice('继续生成——已完成的批次不重画', 'info');
+    return;
+  }
+  if (talker && api.removeJob(talker)) {
+    notice('已删除该任务', 'delete');
+    renderJobs();
+  }
 }
 
 // ---------------- 事件委托 ----------------
@@ -450,15 +760,19 @@ async function generateOne(): Promise<void> {
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
+  // —— 生成进度块动作（450：暂停 / 继续 / 删除任务；块根带 talker 钩子） ——
+  if (t.closest('[data-people-jobs-pause]')) { jobsAction('pause'); return; }
+  if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
+  if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
   // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
-  if (t.closest('[data-people-ds-open]')) { if (running) notice('正在生成脸谱，请等这批结束再开数据源', 'info'); else openDs(); return; }
+  if (t.closest('[data-people-ds-open]')) { void openDsIfIdle(); return; }
   if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
   if (t.closest('[data-people-ds-scan]')) { void runScan(true); return; }
   if (t.closest('[data-people-ds-pickfresh]')) { pickFresh(); return; }
   if (t.closest('[data-people-ds-import]')) { void importDsSelected(); return; }
   if (t.closest('[data-people-ds-generate]')) { void generateFromDs(); return; }
+  // 生成已后台化（450）：详情返回列表不再被生成阻塞
   if (t.closest('[data-people-back-btn]')) {
-    if (running) { notice('正在生成脸谱，完成后即可返回', 'info'); return; }
     stage = 'list'; detailId = null; detailFold = 'p';
     void renderBody();
     return;
@@ -578,7 +892,7 @@ async function renderBody(): Promise<void> {
   // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式
   overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
   renderDsLayer();
-  renderRunLine();
+  renderJobs();
   mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
 }
 
@@ -589,29 +903,6 @@ function renderDsLayer(): void {
   layer.hidden = !dsOpen;
   layer.replaceChildren();
   if (dsOpen) layer.appendChild(dsModal(dsModalState()));
-}
-
-function renderRunLine(): void {
-  const line = overlay?.querySelector<HTMLElement>('[data-people-runline]');
-  if (line) line.hidden = !running;
-}
-
-function showRunLine(main: string, sub: string): void {
-  const line = overlay?.querySelector<HTMLElement>('[data-people-runline]');
-  if (line) line.hidden = false;
-  setRunLine(main, sub);
-}
-
-function setRunLine(main: string, sub: string): void {
-  const m = overlay?.querySelector<HTMLElement>('[data-people-run-main]');
-  const s = overlay?.querySelector<HTMLElement>('[data-people-run-sub]');
-  if (m) m.textContent = main;
-  if (s) s.textContent = sub;
-}
-
-function hideRunLine(): void {
-  const line = overlay?.querySelector<HTMLElement>('[data-people-runline]');
-  if (line) line.hidden = true;
 }
 
 // ---------------- 列表（折子封面墙） ----------------
@@ -661,125 +952,6 @@ function disarmDelete(): void {
   deleteArmId = null;
   if (deleteArmTimer) clearTimeout(deleteArmTimer);
   deleteArmTimer = null;
-}
-
-// ---------------- 生成内核（文件向导退役后唯一入口 = 数据源路径） ----------------
-/** 生成目标（预览桶路径内核入参） */
-interface GenTarget {
-  talker: string;
-  name: string;
-  msgs: UnifiedMessage[];
-  /** 全形态计数（数据源路径 = chat.json 全量口径，见 datasource） */
-  kindCounts: Record<string, number>;
-  /** 被过滤的非文本 / 空消息条数（导入记录 skippedCount 口径，评审 P2-2） */
-  skippedCount: number;
-  /** 导入记录的 file 标注 */
-  fileLabel: string;
-  /** 预览桶侧写里的互动统计汇总（issue 449；旧桶可能没有）→ 生成互动统计叙述段喂画像与时间线 */
-  insights?: PreviewContact['insights'];
-}
-
-/**
- * 批量生成内核（446 收编形态保留）：逐人 planIncremental（441 机制不动）→
- * full 走 buildFace / 其余走 buildFaceIncremental → 落导入记录 / 脸谱 / 锚点。
- * skip 不落 0 条记录；失败逐人收集不中断。
- */
-async function generateForTargets(
-  targets: GenTarget[],
-  onProgress?: (main: string, sub: string) => void
-): Promise<{ ok: number; failed: string[]; skipped: string[] }> {
-  const ai = createAI();
-  const askExtract: AskLLM = (p) => ai.json(p);
-  const askPortrait: AskLLM = (p) => ai.chat(p);
-  let ok = 0;
-  const failed: string[] = [];
-  const skipped: string[] = [];
-  for (let i = 0; i < targets.length; i++) {
-    // 面板中途被关（store 已置空）：余下目标直接中止，不计入失败——旧实现会把它们全误报成「生成失败」
-    if (!overlay || !store) {
-      notice('面板已关闭，剩余人物停止生成（已完成的不受影响）');
-      break;
-    }
-    const { talker, name, msgs, kindCounts, skippedCount, fileLabel, insights } = targets[i];
-    const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
-    onProgress?.(main, '');
-    try {
-      const existing = (await store!.list()).find((p) => p.id === talker);
-      const plan = planIncremental(msgs, existing);
-      const now = new Date().toISOString();
-      // 纯本地聚合（issue 440），与原文一起用完即弃，落盘只有统计结果；媒体计数见 issue 445
-      const stats = computeStats(msgs, kindCounts);
-      // 非 skip 才落一条导入记录（评审 P2-2：skip 不落 0 条记录）；messageCount 记本次实际进提炼的条数
-      const rec: ImportRecord = {
-        file: fileLabel,
-        importedAt: now,
-        messageCount: plan.msgs.length,
-        skippedCount,
-        timeFrom: new Date(msgs[0].ts).toISOString(),
-        timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
-        stats,
-      };
-      if (plan.mode === 'skip') {
-        // skip 只可能发生在已有导入的人物上（无锚点走 full）；这里顺带应用改名，
-        // 并给 issue 440 之前的旧数据补一份互动统计到最近一条导入记录（没有记录则不动）
-        if (existing) {
-          let imports = existing.imports;
-          if (imports.length && !imports.some((r) => r.stats)) {
-            imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
-            imports[0] = { ...imports[0], stats };
-            await store!.upsert({ ...existing, name, imports });
-          } else {
-            await store!.upsert({ ...existing, name });
-          }
-        }
-        skipped.push(name);
-        continue;
-      }
-      // 「早于锚点的消息」不静默丢：补录明确说仍会提炼；混合导入明确说不重复提炼
-      if (plan.mode === 'older') {
-        notice(`「${name}」这批 ${plan.msgs.length} 条消息早于上次提炼点，将作为补充素材提炼`);
-      } else if (plan.olderCount > 0) {
-        notice(`「${name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
-      }
-      // 媒体素材清单说明（issue 445）：按本次导入的统计口径（与 stats 同源）
-      const mediaNote = buildMediaNote({
-        voiceCount: stats.voiceCount ?? 0,
-        voiceTotalSec: stats.voiceTotalSec ?? 0,
-        imageCount: stats.imageCount ?? 0,
-      });
-      // 互动统计叙述段（issue 449）：由预览桶最新 insights 生成（跨导入累计口径）；
-      // 无样本维度全空时 buildStatsNote 返回空串 → 归一成 undefined，整段不进 prompt
-      const statsNote = insights ? buildStatsNote(insights) || undefined : undefined;
-      const face = plan.mode === 'full'
-        ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
-            onProgress?.(main, `第 ${done} / ${total} 批`);
-          }, undefined, mediaNote, statsNote)
-        : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing?.digest, (done, total) => {
-            const lead = plan.mode === 'older' ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
-            onProgress?.(main, `${lead} · 第 ${done} / ${total} 批`);
-          }, mediaNote, statsNote);
-      const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
-      await store!.upsert(entry);
-      await store!.appendImport(talker, rec);
-      const digest: FaceDigest = {
-        portrait: face.portrait,
-        events: mergeManualEvents(face.events, existing?.manualEvents), // issue 439：手动随手记并入事件素材
-        quotes: face.quotes,
-        moments: face.moments, // issue 449：场景 / 特质随生成落盘，增量重画才有的可合并
-        traits: face.traits,
-        chronicle: face.chronicle || undefined,
-        generatedAt: now,
-      };
-      await store!.setDigest(talker, digest);
-      // 锚点写回：已提炼过的最大消息时间戳（组内升序取末条；补录不回退锚点）
-      await store!.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, plan.msgs[plan.msgs.length - 1].ts));
-      ok++;
-    } catch (e) {
-      failed.push(name);
-      console.warn('[people] 生成失败:', name, e);
-    }
-  }
-  return { ok, failed, skipped };
 }
 
 // ---------------- 详情（折页册） ----------------

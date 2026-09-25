@@ -56,7 +56,8 @@ export interface ChunkOptions {
   maxBatches?: number;
 }
 
-const DEFAULTS: Required<ChunkOptions> = { maxChars: 12000, maxCount: 400, maxBatches: 60 };
+/** 切批默认双限（issue 450 导出：jobs 引擎的缺省 chunkOpts 与进度说明文案同源） */
+export const DEFAULTS: Required<ChunkOptions> = { maxChars: 12000, maxCount: 400, maxBatches: 60 };
 
 /** 画像素材总量上限：素材段过长会让单次调用失衡，超限按时间跨度均匀抽样（增量合并同用，issue 449） */
 export const MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 } as const;
@@ -109,6 +110,24 @@ function makeChunk(lines: string[], voice = 0, image = 0): DigestChunk {
   return chunk;
 }
 
+/** 批元数据快照（剥对话行的进度/落盘通用形态，issue 450：jobs 引擎与阶段回调单源） */
+export interface ChunkMeta {
+  from: string;
+  to: string;
+  count: number;
+  voice?: number;
+  image?: number;
+}
+
+export function chunkMetaOf(c: DigestChunk): ChunkMeta {
+  const meta: ChunkMeta = { from: c.from, to: c.to, count: c.count };
+  if (c.media) {
+    meta.voice = c.media.voice;
+    meta.image = c.media.image;
+  }
+  return meta;
+}
+
 function renderLine(ts: number, isSender: boolean, text: string): string {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -128,7 +147,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
   const head = [
     `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
     // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
-    '行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。',
+    '行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。群聊导出的行首会多一层 `[成员名]`——那不是标签，是群成员的名字，忽略它，谁在说仍看后面的 [我] / [对方]。',
   ];
   if (media?.voice || media?.image) {
     head.push(
@@ -340,55 +359,122 @@ export interface BuiltFace {
   chronicle: string;
 }
 
+/** 批结果合并后的素材（去重未抽样；events 含轻重回填并按日期升序） */
+export interface MergedMaterial {
+  events: FaceEvent[];
+  quotes: QuoteItem[];
+  moments: MomentItem[];
+  traits: string[];
+}
+
+/**
+ * 批结果 → 合并素材（全流程与 jobs 引擎共用的合并单源，issue 450 抽出）：
+ * events 按 ts|summary 去重（同一件事可能被相邻两批都采到）且后出现的轻重标记回填、按日期升序；
+ * quotes/moments/traits 按键去重只留首个、保持输入顺序（不抽样——抽样在 toPortraitMaterial）。
+ */
+export function mergeBatches(batches: BatchExtract[]): MergedMaterial {
+  return {
+    events: mergeEvents(batches.flatMap((b) => b.events)),
+    quotes: dedupeBy(batches.flatMap((b) => b.quotes), (q) => q.text),
+    moments: dedupeBy(batches.flatMap((b) => b.moments), (m) => m.summary),
+    traits: dedupeBy(batches.flatMap((b) => b.traits), (t) => t),
+  };
+}
+
+/**
+ * 合并素材 → 画像材料（抽样口径单源，issue 450 抽出）：
+ * 三素材按上限均匀抽样；events 缺省全量（full 口径），sampleEvents=true 时按时间线封顶抽样
+ * （incremental 口径）。mediaNote / statsNote 原样透传。
+ */
+export function toPortraitMaterial(
+  merged: MergedMaterial,
+  o: { mediaNote?: string; statsNote?: string; sampleEvents?: boolean } = {}
+): PortraitMaterial {
+  return {
+    events: o.sampleEvents ? evenlySample(merged.events, MATERIAL_LIMITS.chronicle) : merged.events,
+    traits: evenlySample(merged.traits, MATERIAL_LIMITS.traits),
+    quotes: evenlySample(merged.quotes, MATERIAL_LIMITS.quotes),
+    moments: evenlySample(merged.moments, MATERIAL_LIMITS.moments),
+    mediaNote: o.mediaNote,
+    statsNote: o.statsNote,
+  };
+}
+
+/** 阶段化进度（issue 450 E1）：extracting 逐批推进（total = 抽样后的批数），portrait / chronicle 各一步 */
+export interface FaceProgress {
+  stage: 'extracting' | 'portrait' | 'chronicle';
+  done: number;
+  total: number;
+  /** 本批元数据（extracting 阶段携带；含媒体计数） */
+  current?: ChunkMeta;
+}
+
+/** 素材采集完成后的中间计数（合并去重后、抽样前；供「事件 214 · 原话 63 …」成文文案） */
+export interface MaterialCounts {
+  events: number;
+  quotes: number;
+  moments: number;
+  traits: number;
+}
+
+/** buildFace / buildFaceIncremental 的运行参数（issue 450：旧位置参数 onProgress/chunkOpts/mediaNote/statsNote 收拢） */
+export interface FaceRunOptions {
+  /** 切批参数（缺省即 DEFAULTS；仅 buildFace 消费——增量管线固定默认双限） */
+  chunkOpts?: ChunkOptions;
+  /** 媒体素材清单说明（缺省由本次消息流自算） */
+  mediaNote?: string;
+  /** 互动统计叙述段（ui 层由预览桶 insights 生成后透传） */
+  statsNote?: string;
+  /** 阶段化进度回调 */
+  onProgress?: (p: FaceProgress) => void;
+  /** 素材采集完成回调（画像开始前；中间计数供成文阶段文案） */
+  onMaterial?: (c: MaterialCounts) => void;
+}
+
 /**
  * 全流程：切批 → 逐批采集（askExtract / JSON 通道）→ 合并去重
  * → 汇总画像（askPortrait）+ 关系时间线（askPortrait）两次文本通道调用。
- * onProgress(done, total) 供 UI 更新进度；任一批失败原样抛错（上层中止并报错）。
- * chunkOpts 透传切批参数（UI 缺省即默认双限）；mediaNote 是媒体素材清单说明（issue 445），
- * 缺省由本次消息流自算（ui 层增量重画时传跨导入累计口径）；statsNote 是互动统计叙述段
- * （issue 449，ui 层由预览桶 insights 生成，本层不透传就整段不进 prompt）。
+ * 任一批失败原样抛错（上层中止并报错）。
+ * opts（issue 450 收拢旧位置参数）：chunkOpts 透传切批参数（缺省即 DEFAULTS 双限）；
+ * onProgress 升级为阶段化进度（extracting 逐批带本批元数据 / portrait / chronicle）；
+ * onMaterial 在素材采集完成后回调中间计数（合并去重、抽样前口径）；
+ * mediaNote 缺省由本次消息流自算（ui 层增量重画时传跨导入累计口径）；statsNote 缺省整段不进 prompt。
  */
 export async function buildFace(
   askExtract: AskLLM,
   askPortrait: AskLLM,
   messages: UnifiedMessage[],
   personName: string,
-  onProgress?: (done: number, total: number) => void,
-  chunkOpts?: ChunkOptions,
-  mediaNote?: string,
-  statsNote?: string
+  opts: FaceRunOptions = {}
 ): Promise<BuiltFace> {
+  const { chunkOpts, mediaNote, statsNote, onProgress, onMaterial } = opts;
   const chunks = chunkMessages(messages, chunkOpts);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
   const batches: BatchExtract[] = [];
   for (let i = 0; i < chunks.length; i++) {
     batches.push(await extractBatch(askExtract, chunks[i], personName));
-    onProgress?.(i + 1, chunks.length);
+    onProgress?.({ stage: 'extracting', done: i + 1, total: chunks.length, current: chunkMetaOf(chunks[i]) });
   }
-  const events = mergeEvents(batches.flatMap((b) => b.events));
-  const quotes = dedupeBy(batches.flatMap((b) => b.quotes), (q) => q.text);
-  const moments = dedupeBy(batches.flatMap((b) => b.moments), (m) => m.summary);
-  const traits = dedupeBy(batches.flatMap((b) => b.traits), (t) => t);
-  const material: PortraitMaterial = {
-    events,
-    traits: evenlySample(traits, MATERIAL_LIMITS.traits),
-    quotes: evenlySample(quotes, MATERIAL_LIMITS.quotes),
-    moments: evenlySample(moments, MATERIAL_LIMITS.moments),
+  const merged = mergeBatches(batches);
+  onMaterial?.({ events: merged.events.length, quotes: merged.quotes.length, moments: merged.moments.length, traits: merged.traits.length });
+  const material = toPortraitMaterial(merged, {
     mediaNote: mediaNote ?? (buildMediaNote(collectMediaStats(messages)) || undefined),
     statsNote,
-  };
+  });
+  onProgress?.({ stage: 'portrait', done: 0, total: 1 });
   const portrait = (await askPortrait(buildPortraitPrompt(personName, material))).trim();
   if (!portrait) throw new Error('画像生成为空');
   // 时间线是次要产物：它失败不该把已经画好的画像一起丢掉，故单独兜住
   let chronicle = '';
-  if (events.length) {
+  if (merged.events.length) {
+    onProgress?.({ stage: 'chronicle', done: 0, total: 1 });
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(personName, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote))).trim();
     } catch {
       chronicle = '';
     }
   }
-  return { portrait, events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
+  return { portrait, events: merged.events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
 }
 
 /**

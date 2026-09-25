@@ -9,8 +9,10 @@ import {
   buildFaceIncremental,
   dedupeByText,
   mergeManualEvents,
+  mergeWithOld,
   planIncremental,
 } from '../../src/people/incremental';
+import { chunkMessages, chunkMetaOf } from '../../src/people/digest';
 import type { FaceDigest, FaceEvent, ImportRecord, ManualEvent, PersonEntry, QuoteItem, UnifiedMessage } from '../../src/people/types';
 
 /** 秒级粒度（与真实导出一致）：基准 2024-05-01 12:00:00 UTC 起第 n 秒 */
@@ -117,6 +119,45 @@ describe('dedupeByText', () => {
   });
 });
 
+describe('mergeWithOld（issue 450 抽出的合并单源：buildFaceIncremental 与 jobs 引擎共用）', () => {
+  it('旧在前合并去重：同键旧条目优先、新 kind 回填、事件按日期升序；不抽样', () => {
+    const merged = mergeWithOld(
+      {
+        events: [{ ts: '2024-05-01', summary: '约饭', kind: 'major' }],
+        quotes: [{ ts: '2024-05-01', who: '我', text: '新话' }],
+        moments: [{ ts: '2024-05-01', summary: '常去的那家店' }],
+        traits: ['热心', '话痨'],
+      },
+      {
+        portrait: '旧画像',
+        events: [
+          { ts: '2024-04-01', summary: '旧事件' },
+          { ts: '2024-05-01', summary: '约饭' },
+        ],
+        quotes: [{ ts: '2024-04-01', who: '对方', text: '旧话' }],
+        moments: [{ ts: '2024-03-01', summary: '常去的那家店' }],
+        traits: ['话痨'],
+        generatedAt: '2026-01-01T00:00:00.000Z',
+      }
+    );
+    expect(merged.events).toEqual([
+      { ts: '2024-04-01', summary: '旧事件' },
+      { ts: '2024-05-01', summary: '约饭', kind: 'major' }, // 同键旧条目保留，新批 kind 回填
+    ]);
+    expect(merged.quotes.map((q) => q.text)).toEqual(['旧话', '新话']);
+    expect(merged.moments.map((m) => m.summary)).toEqual(['常去的那家店']); // 同键旧优先，不重复
+    expect(merged.traits).toEqual(['话痨', '热心']); // 旧在前，新批重复项不覆盖
+  });
+
+  it('无旧脸谱（full 补位调用）：合并结果即新批素材', () => {
+    const merged = mergeWithOld(
+      { events: [{ ts: '2024-05-01', summary: '约饭' }], quotes: [], moments: [], traits: ['热心'] },
+      undefined
+    );
+    expect(merged).toEqual({ events: [{ ts: '2024-05-01', summary: '约饭' }], quotes: [], moments: [], traits: ['热心'] });
+  });
+});
+
 describe('mergeManualEvents', () => {
   const ev = (ts: string, summary: string): FaceEvent => ({ ts, summary });
   const man = (ts: string, summary: string): ManualEvent => ({ id: `m-${ts}-${summary}`, ts, summary, createdAt: '2026-09-01T00:00:00.000Z' });
@@ -173,10 +214,19 @@ describe('buildFaceIncremental（假 ask）', () => {
   it('新素材不再被旧素材挤出：合并抽样后首尾必保，新原话仍进画像 prompt（评审 P1-1）', async () => {
     const { prompts, askExtract, askPortrait } = setupAsk();
     const onProgress = vi.fn();
-    const face = await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), onProgress);
+    const onMaterial = vi.fn();
+    const face = await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), { onProgress, onMaterial });
 
     expect(askExtract).toHaveBeenCalledTimes(1);
-    expect(onProgress).toHaveBeenCalledWith(1, 1);
+    // 阶段化进度（issue 450）：单批 extracting → portrait → chronicle
+    const [chunk] = chunkMessages([msg(0, '聊起来')]);
+    expect(onProgress.mock.calls).toEqual([
+      [{ stage: 'extracting', done: 1, total: 1, current: chunkMetaOf(chunk) }],
+      [{ stage: 'portrait', done: 0, total: 1 }],
+      [{ stage: 'chronicle', done: 0, total: 1 }],
+    ]);
+    // 中间计数（旧 + 新合并去重后、抽样前口径，issue 450）
+    expect(onMaterial).toHaveBeenCalledWith({ events: 2, quotes: 70, moments: 0, traits: 1 });
     // 落盘事件保持全量 + 新 kind 回填
     expect(face.events).toEqual([
       { ts: '2024-04-01', summary: '旧事件' },
@@ -211,7 +261,7 @@ describe('buildFaceIncremental（假 ask）', () => {
 
   it('mediaNote 传入画像与时间线 prompt（issue 445）', async () => {
     const { prompts, askExtract, askPortrait } = setupAsk();
-    await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), undefined, '跨导入媒体说明');
+    await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), { mediaNote: '跨导入媒体说明' });
     expect(prompts[0]).toContain('素材说明：跨导入媒体说明');
     expect(prompts[1]).toContain('素材说明：跨导入媒体说明');
   });
@@ -280,9 +330,7 @@ describe('buildFaceIncremental（假 ask）', () => {
       [msg(0, '聊起来')],
       '老王',
       oldDigest(),
-      undefined,
-      '跨导入媒体说明',
-      '互动画像：会话我发起 12 次、对方发起 5 次。'
+      { mediaNote: '跨导入媒体说明', statsNote: '互动画像：会话我发起 12 次、对方发起 5 次。' }
     );
     expect(prompts[0]).toContain('## 素材五：互动统计');
     expect(prompts[0]).toContain('会话我发起 12 次、对方发起 5 次');

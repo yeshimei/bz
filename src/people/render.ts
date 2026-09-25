@@ -158,7 +158,7 @@ export function iconButton(icon: string, cls: string, attrs: Record<string, stri
   return b;
 }
 
-/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度行 + body + 数据源弹层容器 */
+/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度块槽位 + body + 数据源弹层容器 */
 export function panelShell(): HTMLElement {
   return el('div', 'bz-people-panel', [
     el('div', 'bz-people-head', [
@@ -174,14 +174,99 @@ export function panelShell(): HTMLElement {
       ]),
     ]),
     el('div', 'bz-people-stats', { 'data-people-stats': '' }),
-    el('div', 'bz-people-runline', { 'data-people-runline': '', hidden: '' }, [
-      el('span', 'bz-people-run-spin', { 'aria-hidden': 'true' }),
-      el('span', 'bz-people-run-main', { 'data-people-run-main': '' }),
-      el('span', 'bz-people-run-sub', { 'data-people-run-sub': '' }),
-    ]),
+    el('div', 'bz-people-jobs-slot', { 'data-people-jobs-slot': '', hidden: '' }),
     el('div', 'bz-people-body', { 'data-people-body': '' }),
     el('div', 'bz-people-ds-layer', { 'data-people-ds-layer': '', hidden: '' }),
   ]);
+}
+
+// ---------------- 生成进度块（issue 450：阶段化进度 + 后台化） ----------------
+
+/** 进度块任务态（ui 层从引擎快照映射；本层只管画） */
+export type JobsUiStatus = 'running' | 'paused' | 'interrupted' | 'done' | 'error';
+
+export interface JobsBlockState {
+  /** 任务 talker（挂块根 data 钩子，resume / dismiss 派发用） */
+  talker: string;
+  name: string;
+  status: JobsUiStatus;
+  /** 引擎主文案（切批 / 抽样 / 第 N 批 / 素材汇总）；空串回落状态兜底文案 */
+  message: string;
+  batchesDone: number;
+  batchesTotal: number;
+  /** 已完成成文阶段数（画像 / 时间线，0~2） */
+  stagesDone: number;
+  /** 队列位置（1 起）与总人数 */
+  queueIndex: number;
+  queueTotal: number;
+  /** error 态错误说明 */
+  errorText?: string;
+}
+
+/** 进度百分比（issue 450 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 2)，钳 0~100 */
+export function jobsPercent(batchesDone: number, batchesTotal: number, stagesDone: number): number {
+  const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+  const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
+  return Math.min(100, Math.round((numer / denom) * 100));
+}
+
+/** 阶段键 → 已完成成文阶段数：时间线进行中 = 画像已完成（1）；done = 2；其余 0 */
+export function jobsStagesDone(stage: string | undefined, status: JobsUiStatus): number {
+  if (status === 'done') return 2;
+  return stage === 'chronicle' ? 1 : 0;
+}
+
+/** 队列副文案：多人生成 `（2/5 人）当前：大琳`；单人生成 `当前：大琳` */
+export function jobsQueueLabel(queueIndex: number, queueTotal: number, name: string): string {
+  const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : '';
+  return `${pos}当前：${name}`;
+}
+
+/** 无引擎文案时的状态兜底（讲清下一步） */
+export function jobsFallbackMessage(status: JobsUiStatus, name: string): string {
+  switch (status) {
+    case 'running': return `正在生成「${name}」的脸谱…`;
+    case 'paused': return '已暂停——点「继续生成」接着画';
+    case 'interrupted': return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
+    case 'error': return `「${name}」生成失败`;
+    case 'done': return `「${name}」的脸谱已生成`;
+  }
+}
+
+/** 状态 → 动作钮（label + data 钩子）；done 无动作 */
+const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null> = {
+  running: { label: '暂停', hook: 'data-people-jobs-pause' },
+  paused: { label: '继续生成', hook: 'data-people-jobs-resume' },
+  interrupted: { label: '继续生成', hook: 'data-people-jobs-resume' },
+  error: { label: '删除任务', hook: 'data-people-jobs-dismiss' },
+  done: null,
+};
+
+/**
+ * 进度块（面板头统计行下）：细进度条 + 引擎主文案 + 队列副文案 + 灰字说明 + 状态动作钮。
+ * 主文案整句展示（切批 / 抽样说明可能是长句）：不截断、允许换行（样式 overflow-wrap）。
+ */
+export function progressBlock(s: JobsBlockState): HTMLElement {
+  const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+  const block = el('div', 'bz-people-jobs', {
+    'data-people-jobs': '',
+    'data-people-jobs-talker': s.talker,
+    role: 'status',
+  });
+  block.appendChild(el('div', 'bz-people-jobs-meter', [
+    el('div', 'bz-people-jobs-bar', { 'aria-hidden': 'true' },
+      el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })),
+    el('span', 'bz-people-jobs-pct', text(`${pct}%`)),
+  ]));
+  block.appendChild(el('div', 'bz-people-jobs-main', text(s.message || jobsFallbackMessage(s.status, s.name))));
+  block.appendChild(el('div', 'bz-people-jobs-queue', text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
+  block.appendChild(el('div', 'bz-people-jobs-note', text('生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。')));
+  const action = JOBS_ACTIONS[s.status];
+  const foot: HTMLElement[] = [];
+  if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
+  if (action) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
+  if (foot.length) block.appendChild(el('div', 'bz-people-jobs-foot', foot));
+  return block;
 }
 
 // ---------------- 列表（折子封面墙） ----------------
@@ -470,7 +555,7 @@ export function monthlyChart(monthly: Array<[string, number]>): HTMLElement | nu
   return wrap;
 }
 
-/** 指标行（谁主动 / 平均回复 / 活跃时段 / 消息形态）——条形与数值由调用方算好注入 */
+/** 指标行（谁主动 / 回复时延 / 活跃时段 / 消息形态）——条形与数值由调用方算好注入 */
 export function insRow(label: string, mid: HTMLElement | string, val: string): HTMLElement {
   return el('div', 'bz-people-ins-row', [
     el('span', 'bz-people-ins-label', text(label)),

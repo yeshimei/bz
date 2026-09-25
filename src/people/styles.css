@@ -134,40 +134,74 @@
   letter-spacing: 0.3px;
 }
 
-/* —— 生成进度行（面板级；画脸谱关弹窗回面板跑） —— */
-.bz-people-runline {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* —— 生成进度块（issue 450：阶段化进度 + 后台化；画脸谱关弹窗回面板看进度） —— */
+.bz-people-jobs-slot {
   margin: 0 24px 8px;
-  padding: 8px 14px;
+}
+.bz-people-jobs-slot[hidden] {
+  display: none;
+}
+.bz-people-jobs {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
   border: 1px solid var(--card-bd);
   border-left: 3px solid var(--acc);
   border-radius: 8px;
   background: var(--card);
   font-size: 12.5px;
 }
-.bz-people-runline[hidden] {
-  display: none;
+.bz-people-jobs-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.bz-people-run-spin {
-  width: 14px;
-  height: 14px;
+.bz-people-jobs-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(168, 67, 60, 0.18);
+  overflow: hidden;
+}
+.bz-people-jobs-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--acc);
+  transition: width 0.3s ease;
+}
+.bz-people-jobs-pct {
   flex: none;
-  border-radius: 50%;
-  border: 2px solid rgba(168, 67, 60, 0.2);
-  border-top-color: var(--acc);
-  animation: bzPeopleSpin 0.9s linear infinite;
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  color: var(--ink-mut);
+}
+/* 引擎主文案整句展示：切批 / 抽样说明可能是长句——不截断、允许换行 */
+.bz-people-jobs-main {
+  font-weight: 700;
+  color: var(--ink-strong);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.bz-people-jobs-queue {
+  color: var(--ink-mut);
+}
+.bz-people-jobs-note {
+  font-size: 11.5px;
+  color: var(--ink-mut);
+}
+.bz-people-jobs-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bz-people-jobs-err {
+  color: var(--danger);
+  overflow-wrap: anywhere;
 }
 @keyframes bzPeopleSpin {
   to { transform: rotate(360deg); }
-}
-.bz-people-run-main {
-  font-weight: 700;
-  color: var(--ink-strong);
-}
-.bz-people-run-sub {
-  color: var(--ink-mut);
 }
 
 /* —— 按钮 —— */
@@ -1436,7 +1470,7 @@
   .bz-people-body {
     padding: 4px 16px 16px;
   }
-  .bz-people-runline {
+  .bz-people-jobs-slot {
     margin: 0 16px 8px;
   }
   .bz-people-insights {

@@ -11,6 +11,7 @@ import {
   buildPortraitPrompt,
   buildFace,
   chunkMessages,
+  chunkMetaOf,
   extractJsonLoose,
   parseBatchExtract,
 } from '../../src/people/digest';
@@ -98,11 +99,20 @@ describe('buildFace 全流程（假 ask）', () => {
         : '## 画像速写\n**热情**开朗\n> 「别熬夜」'
     );
     const onProgress = vi.fn();
-    const face = await buildFace(askExtract, askPortrait, messages, '老王', onProgress, { maxCount: 2 });
+    const onMaterial = vi.fn();
+    const face = await buildFace(askExtract, askPortrait, messages, '老王', { chunkOpts: { maxCount: 2 }, onProgress, onMaterial });
     expect(askExtract).toHaveBeenCalledTimes(2);
     expect(askPortrait).toHaveBeenCalledTimes(2); // 画像 + 时间线各一次
-    expect(onProgress).toHaveBeenNthCalledWith(1, 1, 2);
-    expect(onProgress).toHaveBeenNthCalledWith(2, 2, 2);
+    // 阶段化进度（issue 450）：逐批带本批元数据 → portrait / chronicle 各一步
+    const [c1, c2] = chunkMessages(messages, { maxCount: 2 });
+    expect(onProgress.mock.calls).toEqual([
+      [{ stage: 'extracting', done: 1, total: 2, current: chunkMetaOf(c1) }],
+      [{ stage: 'extracting', done: 2, total: 2, current: chunkMetaOf(c2) }],
+      [{ stage: 'portrait', done: 0, total: 1 }],
+      [{ stage: 'chronicle', done: 0, total: 1 }],
+    ]);
+    // 中间计数（合并去重后、抽样前口径）：events 2（聊项目跨批去重）/ quotes 1 / moments 1 / traits 2
+    expect(onMaterial).toHaveBeenCalledWith({ events: 2, quotes: 1, moments: 1, traits: 2 });
     expect(face.events).toEqual([
       { ts: '2024-05-01', summary: '约饭' },
       { ts: '2024-05-02', summary: '聊项目', kind: 'major' }, // 后一批的 kind 回填
@@ -258,8 +268,7 @@ describe('媒体素材进提示词（issue 445）', () => {
       async (p) => (seen.push(p), '## 画像速写\n稳'),
       messages,
       '老王',
-      undefined,
-      { maxCount: 1 } // 强制切两批：跨批同池去重
+      { chunkOpts: { maxCount: 1 } } // 强制切两批：跨批同池去重
     );
     expect(face.quotes).toEqual([{ ts: '2024-05-01', who: '对方', text: '周末爬山去啊' }]);
     expect(seen).toHaveLength(1);
@@ -274,9 +283,7 @@ describe('媒体素材进提示词（issue 445）', () => {
       async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年\n- 开头' : '## 画像速写\n稳'),
       [msg(0, false, '早')],
       '老王',
-      undefined,
-      undefined,
-      '自定义媒体说明'
+      { mediaNote: '自定义媒体说明' }
     );
     expect(seen.some((p) => p.includes('素材说明：自定义媒体说明'))).toBe(true);
     expect(seen.filter((p) => p.includes('自定义媒体说明'))).toHaveLength(2); // 画像 + 时间线
@@ -353,10 +360,7 @@ describe('buildFace moments/traits 出口与 statsNote 透传（issue 449）', (
       async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年' : '## 画像速写'),
       [msg(0, false, '早')],
       '老王',
-      undefined,
-      undefined,
-      undefined,
-      '互动画像：我中位 45 秒。'
+      { statsNote: '互动画像：我中位 45 秒。' }
     );
     expect(face.traits).toEqual(['话痨']);
     expect(face.moments).toEqual([{ ts: '2024-05-01', summary: '常去的那家店' }]);
