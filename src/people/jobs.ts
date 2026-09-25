@@ -1,16 +1,18 @@
 /**
- * 脸谱生成任务引擎（issue 450 E1）：生成与面板生命周期解耦——模块级单例，
+ * 脸谱生成任务引擎（issue 450 E1；双卷画像 issue 455）：生成与面板生命周期解耦——模块级单例，
  * 关面板转后台继续、重启从断点续跑（已完成批次不重烧 AI）。
  *
  * 持久化：CONFIG/STORAGE/people-jobs.json（storagePath 设置键可覆盖基目录），
  * 每批 AI 采集完成后原子落盘（jsonFileStore + enqueueFileTask 串行写，PreviewStore 同款）。
  * **隐私红线（ADR-0191）**：批内对话行、消息原文一律不进这个文件——只落批元数据
- * （from/to/count/媒体数）、已完成批的提炼结果（events/quotes/moments/traits JSON）、
- * 画像 / 时间线成品、互动统计聚合与消息集指纹。
+ * （from/to/count/媒体数）、已完成批的提炼结果（events/quotes/moments/traits/interests/threads JSON）、
+ * 双卷画像 / 时间线成品、互动统计聚合与消息集指纹。
  *
  * 断点续跑判定：指纹 = 全量预览桶消息条数 + 末条派生键（ts|文本哈希）。
  * resume(talker) 重读预览桶重算指纹：一致 → chunkMessages 确定性重切（跳过已完成批）→ 续跑；
  * 漂移（中途导入过新数据）→ 任务判废（status error），提示删除后重新生成。
+ * 落盘兼容（issue 455）：旧版 in-flight job 的单卷 `portrait` 字段读入视作 `person`，
+ * 已缓存批次照常复用，从《其人》阶段起重画双卷。
  *
  * 分工口径：引擎只负责跑到 status done 并把 BuildFace 等价产物挂在 job 上；
  * people.json 写回（PeopleStore / ImportRecord / 面板刷新）由 ui 层（E2）订阅 done 完成。
@@ -19,13 +21,16 @@ import { createAI } from '../core/ai';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import {
+  buildBondPrompt,
   buildChroniclePrompt,
-  buildPortraitPrompt,
+  buildPersonPrompt,
+  buildProfileNote,
   chunkMetaOf,
   chunkMessages,
   evenlySample,
   extractBatch,
   mergeBatches,
+  sampleWarnOf,
   toPortraitMaterial,
   DEFAULTS,
   MATERIAL_LIMITS,
@@ -43,12 +48,23 @@ import { buildStatsNote, type InsightsSummary } from './insights';
 import { computeStats } from './stats';
 import { PeopleStore } from './data';
 import { PreviewStore, previewToUnified } from './datasource';
-import type { ContactStats, FaceDigest, FaceEvent, MomentItem, QuoteItem, UnifiedMessage } from './types';
+import type {
+  ContactStats,
+  FaceDigest,
+  FaceEvent,
+  InterestItem,
+  MomentItem,
+  PersonProfile,
+  QuoteItem,
+  ThreadItem,
+  UnifiedMessage,
+} from './types';
 
 // ---------------- 类型 ----------------
 
 export type JobStatus = 'running' | 'paused' | 'interrupted' | 'done' | 'error';
-export type JobStage = 'chunked' | 'extracting' | 'portrait' | 'chronicle' | 'done';
+/** 成文阶段四段对齐 digest.FaceProgress（issue 455）：person（其人）→ bond（我们）→ chronicle（时间线） */
+export type JobStage = 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
 
 /** 批元数据（无对话原文；人可读的进度与续跑校验都用它） */
 export type JobChunkMeta = ChunkMeta;
@@ -77,13 +93,27 @@ export interface PersonJob {
   batchesDone: number;
   /** 已完成批的提炼结果（素材级，可落盘） */
   results: BatchExtract[];
-  portrait?: string;
+  /** 卷一《其人》成品（issue 455；旧落盘字段 portrait 在 resumeJobs 读入时映射到此） */
+  person?: string;
+  /** 卷二《我们》成品（issue 455） */
+  bond?: string;
   chronicle?: string;
   /** 合并去重后的全量事件（随手记并入由 ui 层写回时处理） */
   events?: FaceEvent[];
   quotes?: QuoteItem[];
-  /** 成文素材：特质 / 场景（抽样后口径）+ 喂画像的两段说明 */
-  material?: { traits: string[]; moments: MomentItem[]; mediaNote?: string; statsNote?: string };
+  /** 成文素材：特质 / 场景 / 兴趣 / 未竟（抽样后口径）+ 喂双卷的三段说明 */
+  material?: {
+    traits: string[];
+    moments: MomentItem[];
+    /** 兴趣信号（抽样后口径，issue 455） */
+    interests?: InterestItem[];
+    /** 未竟之事（抽样后口径，issue 455） */
+    threads?: ThreadItem[];
+    mediaNote?: string;
+    statsNote?: string;
+    /** 手动档案文本段（buildProfileNote 产出，排队时定稿；issue 455） */
+    profileNote?: string;
+  };
   /** 互动统计聚合（导入记录 stats 口径；聚合数字不含原文） */
   stats?: ContactStats;
   /** 导入记录元数据（ui 层落 ImportRecord 所需；messageCount = 实际进提炼的条数） */
@@ -121,6 +151,11 @@ export interface JobTarget {
   fileLabel: string;
   /** 预览桶侧写互动统计汇总（issue 449）→ 互动统计叙述段 */
   insights?: InsightsSummary;
+  /** 手动档案（issue 455）：转档案段进两卷 prompt（缺省回落 PeopleStore 人物卡现有档案） */
+  profile?: PersonProfile;
+  /** 全量月度消息密度（issue 455，stats.monthly 口径）→ 互动统计叙述段尾的「消息密度」；
+   *  缺省不写密度段。注意引擎增量模式自算的 stats 只有新切片，不能当全量密度用，故由入参显式携带。 */
+  monthly?: Array<[string, number]>;
 }
 
 export interface JobStartOptions {
@@ -269,9 +304,9 @@ function errorMessage(e: unknown): string {
 
 // ---------------- 进度文案（issue 450 口径冻结） ----------------
 
-/** 切批说明：`消息 20773 条 → 35 批（每批 ≤400 条 · ≤12000 字），共 37 次 AI 调用` */
+/** 切批说明：`消息 20773 条 → 35 批（每批 ≤400 条 · ≤12000 字），共 38 次 AI 调用`（issue 455 起成文 = 其人 + 我们 + 时间线 3 次） */
 function chunkedMessage(msgCount: number, batchCount: number, opts: Required<ChunkOptions>): string {
-  return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 2} 次 AI 调用`;
+  return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 3} 次 AI 调用`;
 }
 
 /** 抽样说明：`消息 91234 条 → 300 批超上限，均匀抽样 60 批（覆盖 … 全时段，首尾必保，未抽中的批次不送 AI）` */
@@ -284,9 +319,9 @@ function batchMessage(i: number, total: number, c: ChunkMeta): string {
   return `第 ${i}/${total} 批 · ${c.from} ~ ${c.to} · ${c.count} 条`;
 }
 
-/** 成文：`素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成画像` */
+/** 成文：`素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》`（issue 455 双卷口径） */
 function materialMessage(c: MaterialCounts): string {
-  return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成画像`;
+  return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成《其人》`;
 }
 
 /** 批失败重试中：`第 30/47 批失败（<原因>）——正在重试 1/2…` */
@@ -460,7 +495,9 @@ export async function startJobs(
     const importRecord = importRecordOf(t, digestMsgs);
     const noteMaterial = {
       mediaNote: mediaNote || undefined,
-      statsNote: t.insights ? buildStatsNote(t.insights) || undefined : undefined,
+      statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || undefined : undefined,
+      // 手动档案段（issue 455）：入参优先，回落人物卡现有档案；排队时定稿（与 statsNote 同一语义）
+      profileNote: buildProfileNote(t.profile ?? existing?.profile) || undefined,
     };
     // 续跑而非重烧（issue 453 主修）：同人 + 预览桶未变 + 模式与切批参数一致 + 有已完成批次
     // ⇒ 复用旧任务对象，保留 results / batchesDone（error / interrupted 后重新点「画脸谱」
@@ -536,6 +573,13 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     if (!j || typeof j !== 'object') continue;
     if (!Array.isArray(j.results)) j.results = [];
     if (!Array.isArray(j.chunks)) j.chunks = [];
+    // 落盘兼容（issue 455）：旧版单卷字段 portrait 读入视作 person——已缓存批次照常复用，
+    // runJob 从《其人》阶段起重画双卷。映射发生即标记重写，把旧字段从盘上迁掉。
+    const legacy = (j as { portrait?: unknown }).portrait;
+    if (!j.person && typeof legacy === 'string' && legacy) {
+      j.person = legacy;
+      dirty = true;
+    }
     if (j.status === 'running') {
       j.status = 'interrupted';
       j.message = '上次未完成，可从断点继续';
@@ -728,7 +772,7 @@ async function runJob(job: PersonJob): Promise<void> {
       emit();
     }
 
-    // 5. 素材合并（digest / incremental 单源）→ 画像
+    // 5. 素材合并（digest / incremental 单源）→ 卷一《其人》
     let merged: MergedMaterial = mergeBatches(job.results);
     if (job.mode === 'incremental') merged = mergeWithOld(merged, existing?.digest);
     if (gone(job)) return;
@@ -741,32 +785,54 @@ async function runJob(job: PersonJob): Promise<void> {
     const material = toPortraitMaterial(merged, {
       mediaNote: job.material?.mediaNote,
       statsNote: job.material?.statsNote,
+      profileNote: job.material?.profileNote,
       sampleEvents: job.mode === 'incremental',
     });
+    // 样本警示（issue 455）：按全量预览桶消息数判（不是已提炼切片），两卷共用同一段
+    const sampleWarn = sampleWarnOf(job.msgCount);
     await finish({
-      stage: 'portrait',
+      stage: 'person',
       message: materialMessage(counts),
     });
 
-    let portrait = '';
+    let person = '';
     try {
-      portrait = (await asks.portrait(buildPortraitPrompt(job.name, material))).trim();
+      person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
     } catch (e) {
-      await finish({ status: 'error', error: errorMessage(e), message: `画像生成失败：${errorMessage(e)}` });
+      await finish({ status: 'error', error: errorMessage(e), message: `《其人》生成失败：${errorMessage(e)}` });
       return;
     }
     if (gone(job)) return;
-    if (!portrait) {
-      await finish({ status: 'error', error: '画像生成为空', message: '画像生成为空' });
+    if (!person) {
+      await finish({ status: 'error', error: '卷一《其人》生成为空', message: '卷一《其人》生成为空' });
       return;
     }
-    job.portrait = portrait;
+    job.person = person;
+    job.updatedAt = nowIso();
+    await persist();
+    emit();
+
+    // 5.5 卷二《我们》（必产：空则判 error，批次成果保留可续跑）
+    await finish({ stage: 'bond', message: '《其人》完成，正在生成《我们》…' });
+    let bond = '';
+    try {
+      bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
+    } catch (e) {
+      await finish({ status: 'error', error: errorMessage(e), message: `《我们》生成失败：${errorMessage(e)}` });
+      return;
+    }
+    if (gone(job)) return;
+    if (!bond) {
+      await finish({ status: 'error', error: '卷二《我们》生成为空', message: '卷二《我们》生成为空' });
+      return;
+    }
+    job.bond = bond;
     job.updatedAt = nowIso();
     await persist();
     emit();
 
     // 6. 关系时间线（次要产物：失败不阻断）
-    await finish({ stage: 'chronicle', message: '画像完成，正在生成关系时间线…' });
+    await finish({ stage: 'chronicle', message: '双卷完成，正在生成关系时间线…' });
     let chronicle = '';
     if (merged.events.length) {
       try {
@@ -791,8 +857,11 @@ async function runJob(job: PersonJob): Promise<void> {
       material: {
         traits: material.traits,
         moments: material.moments,
+        interests: material.interests,
+        threads: material.threads,
         mediaNote: material.mediaNote,
         statsNote: material.statsNote,
+        profileNote: material.profileNote,
       },
       message: `「${job.name}」脸谱已生成`,
     });

@@ -177,8 +177,10 @@ export function computeInsights(msgs: InsightMsgLike[], signals: InsightSignals)
 /**
  * InsightsSummary → 中文自然句一段（供提炼 prompt 的「互动统计」素材段）。
  * 无样本的维度自动略过不写废话；全空返回空串（prompt 不加该段）。
+ * monthly（issue 455，可选）：全量月度消息密度（stats.monthly 口径），非空时在末尾追加
+ * 「消息密度」段——按月升序全列；月份数 > 12 时按年合并求和（「2025 年合计 15000 条」式）。
  */
-export function buildStatsNote(i: InsightsSummary): string {
+export function buildStatsNote(i: InsightsSummary, monthly?: Array<[string, number]>): string {
   const parts: string[] = [];
   const sessions = [
     i.sessionStartedByMe ? `我发起 ${i.sessionStartedByMe} 次` : '',
@@ -216,5 +218,23 @@ export function buildStatsNote(i: InsightsSummary): string {
     const top3 = [...i.silenceGaps].sort((a, b) => b.days - a.days).slice(0, 3);
     parts.push(`最长的沉默 ${top3.map((g) => `${g.from} 至 ${g.to}（${g.days} 天）`).join('、')}`);
   }
+  if (monthly?.length) parts.push(monthlyDensity(monthly));
   return parts.length ? `互动画像：${parts.join('；')}。` : '';
+}
+
+/**
+ * 月度密度段（issue 455）：「消息密度：2026-03 6221 条、2026-04 4239 条」式，按月升序全列；
+ * 月份数 > 12 时按年合并求和（「2025 年合计 15000 条」式）——演变真信号，密到逐月失焦就不如按年。
+ */
+function monthlyDensity(monthly: Array<[string, number]>): string {
+  const asc = [...monthly].sort((a, b) => a[0].localeCompare(b[0]));
+  if (asc.length > 12) {
+    const byYear = new Map<string, number>();
+    for (const [m, n] of asc) {
+      const y = m.slice(0, 4);
+      byYear.set(y, (byYear.get(y) ?? 0) + n);
+    }
+    return `消息密度：${[...byYear.entries()].map(([y, n]) => `${y} 年合计 ${n} 条`).join('、')}`;
+  }
+  return `消息密度：${asc.map(([m, n]) => `${m} ${n} 条`).join('、')}`;
 }

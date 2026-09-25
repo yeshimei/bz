@@ -120,13 +120,15 @@ describe('dedupeByText', () => {
 });
 
 describe('mergeWithOld（issue 450 抽出的合并单源：buildFaceIncremental 与 jobs 引擎共用）', () => {
-  it('旧在前合并去重：同键旧条目优先、新 kind 回填、事件按日期升序；不抽样', () => {
+  it('旧在前合并去重：同键旧条目优先、新 kind 回填、事件按日期升序；interests/threads 按键去重旧优先', () => {
     const merged = mergeWithOld(
       {
         events: [{ ts: '2024-05-01', summary: '约饭', kind: 'major' }],
         quotes: [{ ts: '2024-05-01', who: '我', text: '新话' }],
         moments: [{ ts: '2024-05-01', summary: '常去的那家店' }],
         traits: ['热心', '话痨'],
+        interests: [{ ts: '2024-05-01', topic: '任天堂' }],
+        threads: [{ ts: '2024-05-01', text: '下次一起爬山' }],
       },
       {
         portrait: '旧画像',
@@ -137,6 +139,8 @@ describe('mergeWithOld（issue 450 抽出的合并单源：buildFaceIncremental 
         quotes: [{ ts: '2024-04-01', who: '对方', text: '旧话' }],
         moments: [{ ts: '2024-03-01', summary: '常去的那家店' }],
         traits: ['话痨'],
+        interests: [{ ts: '2024-03-01', topic: '任天堂' }],
+        threads: [{ ts: '2024-03-01', text: '说好一起去看海' }],
         generatedAt: '2026-01-01T00:00:00.000Z',
       }
     );
@@ -147,14 +151,50 @@ describe('mergeWithOld（issue 450 抽出的合并单源：buildFaceIncremental 
     expect(merged.quotes.map((q) => q.text)).toEqual(['旧话', '新话']);
     expect(merged.moments.map((m) => m.summary)).toEqual(['常去的那家店']); // 同键旧优先，不重复
     expect(merged.traits).toEqual(['话痨', '热心']); // 旧在前，新批重复项不覆盖
+    expect(merged.interests).toEqual([{ ts: '2024-03-01', topic: '任天堂' }]); // 同 topic 旧优先
+    expect(merged.threads.map((t) => t.text)).toEqual(['说好一起去看海', '下次一起爬山']);
   });
 
   it('无旧脸谱（full 补位调用）：合并结果即新批素材', () => {
     const merged = mergeWithOld(
-      { events: [{ ts: '2024-05-01', summary: '约饭' }], quotes: [], moments: [], traits: ['热心'] },
+      {
+        events: [{ ts: '2024-05-01', summary: '约饭' }],
+        quotes: [],
+        moments: [],
+        traits: ['热心'],
+        interests: [],
+        threads: [],
+      },
       undefined
     );
-    expect(merged).toEqual({ events: [{ ts: '2024-05-01', summary: '约饭' }], quotes: [], moments: [], traits: ['热心'] });
+    expect(merged).toEqual({
+      events: [{ ts: '2024-05-01', summary: '约饭' }],
+      quotes: [],
+      moments: [],
+      traits: ['热心'],
+      interests: [],
+      threads: [],
+    });
+  });
+
+  it('旧 digest 无 interests/threads 字段（issue 455 前老数据）：从空起并入新批，不丢不炸', () => {
+    const merged = mergeWithOld(
+      {
+        events: [],
+        quotes: [],
+        moments: [],
+        traits: [],
+        interests: [{ ts: '2024-05-01', topic: '五月天' }],
+        threads: [{ ts: '2024-05-01', text: '有空吗' }],
+      },
+      {
+        portrait: '旧画像',
+        events: [],
+        generatedAt: '2026-01-01T00:00:00.000Z',
+      }
+    );
+    expect(merged.interests).toEqual([{ ts: '2024-05-01', topic: '五月天' }]);
+    expect(merged.threads).toEqual([{ ts: '2024-05-01', text: '有空吗' }]);
   });
 });
 
@@ -184,7 +224,7 @@ describe('mergeManualEvents', () => {
   });
 });
 
-describe('buildFaceIncremental（假 ask）', () => {
+describe('buildFaceIncremental（假 ask，双卷三调用）', () => {
   function oldDigest(): FaceDigest {
     return {
       portrait: '## 画像速写\n旧画像',
@@ -204,25 +244,30 @@ describe('buildFaceIncremental（假 ask）', () => {
         moments: [],
       })
     );
+    // 三次文本调用：其人 → 我们 → 时间线（按 prompt 特征分支）
     const askPortrait = vi.fn(async (p: string) => {
       prompts.push(p);
-      return prompts.length === 1 ? '## 画像速写\n稳' : '## 2024 年';
+      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
+      return '## 画像速写\n稳';
     });
     return { prompts, askExtract, askPortrait };
   }
 
-  it('新素材不再被旧素材挤出：合并抽样后首尾必保，新原话仍进画像 prompt（评审 P1-1）', async () => {
+  it('新素材不再被旧素材挤出：合并抽样后首尾必保，新原话仍进其人 prompt（评审 P1-1）', async () => {
     const { prompts, askExtract, askPortrait } = setupAsk();
     const onProgress = vi.fn();
     const onMaterial = vi.fn();
     const face = await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), { onProgress, onMaterial });
 
     expect(askExtract).toHaveBeenCalledTimes(1);
-    // 阶段化进度（issue 450）：单批 extracting → portrait → chronicle
+    expect(askPortrait).toHaveBeenCalledTimes(3); // 其人 + 我们 + 时间线
+    // 阶段化进度（issue 455 四阶段）：单批 extracting → person → bond → chronicle
     const [chunk] = chunkMessages([msg(0, '聊起来')]);
     expect(onProgress.mock.calls).toEqual([
       [{ stage: 'extracting', done: 1, total: 1, current: chunkMetaOf(chunk) }],
-      [{ stage: 'portrait', done: 0, total: 1 }],
+      [{ stage: 'person', done: 0, total: 1 }],
+      [{ stage: 'bond', done: 0, total: 1 }],
       [{ stage: 'chronicle', done: 0, total: 1 }],
     ]);
     // 中间计数（旧 + 新合并去重后、抽样前口径，issue 450）
@@ -236,34 +281,75 @@ describe('buildFaceIncremental（假 ask）', () => {
     expect(face.quotes).toHaveLength(60);
     expect(face.quotes[0].text).toBe('旧-0');
     expect(face.quotes[59].text).toBe('新-9');
-    // 画像 prompt 吃到了新素材
+    // 双卷产物各自落位
+    expect(face.person).toContain('画像速写');
+    expect(face.bond).toContain('关系定性');
+    // 其人 prompt 吃到了新素材
     expect(prompts[0]).toContain('新-9');
     expect(prompts[0]).toContain('旧-0');
     // 时间线 prompt 吃到合并后的全量事件
-    expect(prompts[1]).toContain('旧事件');
-    expect(prompts[1]).toContain('约饭');
+    expect(prompts[2]).toContain('旧事件');
+    expect(prompts[2]).toContain('约饭');
     expect(face.chronicle).toBe('## 2024 年');
   });
 
-  it('时间线失败不阻断画像；空消息 / 空画像抛错', async () => {
+  it('双卷（issue 455）：旧 interests/threads 并入新批（同键旧优先）随 BuiltFace 返回并进 prompt', async () => {
+    const { prompts, askExtract, askPortrait } = setupAsk();
+    const old: FaceDigest = {
+      portrait: '旧',
+      events: [],
+      interests: [{ ts: '2024-03-01', topic: '任天堂' }],
+      threads: [{ ts: '2024-03-01', text: '说好一起去看海' }],
+      generatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    const askExtract2 = vi.fn(async () =>
+      JSON.stringify({
+        events: [],
+        traits: [],
+        quotes: [],
+        moments: [],
+        interests: [
+          { ts: '2024-05-01', topic: '任天堂' }, // 与旧重复 → 留旧
+          { ts: '2024-05-02', topic: '五月天' },
+        ],
+        threads: [{ ts: '2024-05-01', text: '下次一起爬山' }],
+      })
+    );
+    const face = await buildFaceIncremental(askExtract2, askPortrait, [msg(0, '聊起来')], '老王', old);
+    expect(face.interests.map((i) => i.topic)).toEqual(['任天堂', '五月天']);
+    expect(face.interests[0].ts).toBe('2024-03-01'); // 同 topic 旧条目优先
+    expect(face.threads.map((t) => t.text)).toEqual(['说好一起去看海', '下次一起爬山']);
+    // 卷一 prompt 吃兴趣信号；卷二 prompt 吃未竟线索
+    expect(prompts[0]).toContain('五月天');
+    expect(prompts[1]).toContain('说好一起去看海');
+    expect(prompts[1]).toContain('下次一起爬山');
+  });
+
+  it('时间线失败不阻断双卷；空消息 / 空卷一 / 空卷二抛错', async () => {
     const { askExtract, askPortrait } = setupAsk();
     const flaky = vi.fn(async (p: string) => {
       if (p.includes('关系时间线')) throw new Error('模型抽风');
+      if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
       return '## 画像速写\n稳';
     });
     const face = await buildFaceIncremental(askExtract, flaky, [msg(0)], '老王', oldDigest());
-    expect(face.portrait).toContain('画像速写');
+    expect(face.person).toContain('画像速写');
+    expect(face.bond).toContain('关系定性');
     expect(face.chronicle).toBe('');
 
     await expect(buildFaceIncremental(askExtract, askPortrait, [], '老王', undefined)).rejects.toThrow('没有可提炼的文本消息');
-    await expect(buildFaceIncremental(askExtract, async () => '   ', [msg(0)], '老王', undefined)).rejects.toThrow('画像生成为空');
+    await expect(buildFaceIncremental(askExtract, async () => '   ', [msg(0)], '老王', undefined)).rejects.toThrow('卷一《其人》生成为空');
+    await expect(
+      buildFaceIncremental(askExtract, async (p) => (p.includes('要产出的卷二') ? '   ' : '## 画像速写\n稳'), [msg(0)], '老王', undefined)
+    ).rejects.toThrow('卷二《我们》生成为空');
   });
 
-  it('mediaNote 传入画像与时间线 prompt（issue 445）', async () => {
+  it('mediaNote 传入其人 / 我们 / 时间线 prompt（issue 445）', async () => {
     const { prompts, askExtract, askPortrait } = setupAsk();
     await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', oldDigest(), { mediaNote: '跨导入媒体说明' });
     expect(prompts[0]).toContain('素材说明：跨导入媒体说明');
     expect(prompts[1]).toContain('素材说明：跨导入媒体说明');
+    expect(prompts[2]).toContain('素材说明：跨导入媒体说明');
   });
 
   it('旧 moments / traits 与新批合并去重并随 BuiltFace 返回（issue 449：增量不再丢共同记忆与表达 DNA）', async () => {
@@ -292,13 +378,15 @@ describe('buildFaceIncremental（假 ask）', () => {
     );
     const askPortrait = vi.fn(async (p: string) => {
       prompts.push(p);
-      return prompts.length === 1 ? '## 画像速写\n稳' : '## 2024 年';
+      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
+      return '## 画像速写\n稳';
     });
     const face = await buildFaceIncremental(askExtract, askPortrait, [msg(0, '聊起来')], '老王', old);
     // 旧素材不丢、新素材并入、重复去重（旧在前故同键留旧）
     expect(face.moments.map((m) => m.summary)).toEqual(['常去的那家店', '凌晨的便利店', '一起看过的展']);
     expect(face.traits).toEqual(['话痨', '细节控', '热心']);
-    // 合并后的旧素材也进画像 prompt（重画不丢）
+    // 合并后的旧素材也进其人 prompt（重画不丢）
     expect(prompts[0]).toContain('凌晨的便利店');
     expect(prompts[0]).toContain('细节控');
     expect(prompts[0]).toContain('一起看过的展');
@@ -322,7 +410,7 @@ describe('buildFaceIncremental（假 ask）', () => {
     expect(face.traits[29]).toBe('新特质-4');
   });
 
-  it('statsNote 透传画像与时间线 prompt（issue 449：ui 层按预览桶最新 insights 生成后传入）', async () => {
+  it('statsNote 透传三路 prompt（issue 449）；profile 进两卷素材〇（issue 455）', async () => {
     const { prompts, askExtract, askPortrait } = setupAsk();
     await buildFaceIncremental(
       askExtract,
@@ -330,10 +418,20 @@ describe('buildFaceIncremental（假 ask）', () => {
       [msg(0, '聊起来')],
       '老王',
       oldDigest(),
-      { mediaNote: '跨导入媒体说明', statsNote: '互动画像：会话我发起 12 次、对方发起 5 次。' }
+      {
+        mediaNote: '跨导入媒体说明',
+        statsNote: '互动画像：会话我发起 12 次、对方发起 5 次。',
+        profile: { birthday: '1994-02-14', tags: ['同学'] },
+      }
     );
-    expect(prompts[0]).toContain('## 素材五：互动统计');
+    expect(prompts[0]).toContain('## 素材六：互动统计');
     expect(prompts[0]).toContain('会话我发起 12 次、对方发起 5 次');
+    expect(prompts[1]).toContain('## 素材五：互动统计');
     expect(prompts[1]).toContain('互动画像：会话我发起 12 次、对方发起 5 次');
+    expect(prompts[2]).toContain('互动画像：会话我发起 12 次、对方发起 5 次');
+    expect(prompts[0]).toContain('## 素材〇：档案');
+    expect(prompts[0]).toContain('生日：1994-02-14');
+    expect(prompts[1]).toContain('生日：1994-02-14');
+    expect(prompts[2]).not.toContain('生日：1994-02-14'); // 时间线不吃档案段（口径不变）
   });
 });
