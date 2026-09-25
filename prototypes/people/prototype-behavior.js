@@ -1,4 +1,4 @@
-/* 源指纹 cbeb115bc6394320 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 52ead27e32d2e955 · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -6344,14 +6344,15 @@ var BZW_people = (() => {
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
     const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
-    const seal = p.digest ? el("div", "bz-people-seal", text(p.lastProcessedTs ? `画到
+    const seal = p.digest ? el("div", "bz-people-seal", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(p.lastProcessedTs ? `画到
 ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
         seal,
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
-        el("div", "bz-people-fold-who", text(rel || (span ? span : total ? `${formatCount(total)} 条` : "新折"))),
+        // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
+        el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
         el("div", "bz-people-fold-meta", text([
           total ? `${formatCount(total)} 条` : "尚无消息",
           label
@@ -6401,7 +6402,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
         el("div", "", [el("div", "bz-people-dt-n", text(voice ? String(voice) : "—")), el("div", "bz-people-dt-t", text(voice ? `语音 · ${formatDuration2((_b = media == null ? void 0 : media.voiceTotalSec) != null ? _b : 0)}` : "语音"))]),
         el("div", "", [el("div", "bz-people-dt-n", text((media == null ? void 0 : media.imageCount) ? String(media.imageCount) : "—")), el("div", "bz-people-dt-t", text("图片"))])
       ]),
-      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
+      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
         ...opts.canGenerate ? [iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" })] : [],
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
@@ -6509,7 +6510,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   function foldDataBody(card, p) {
     const out = [];
     if (card) out.push(card);
-    else if (p.imports.length) out.push(el("div", "bz-people-empty-hint", text("这次导入还没有互动统计（旧版数据）。从数据源补画一次即可生成。")));
+    else if (p.imports.length) out.push(el("div", "bz-people-empty-hint", text("这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。")));
     else out.push(el("div", "bz-people-empty-hint", text("还没有导入记录。")));
     return out;
   }
@@ -6797,7 +6798,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       )));
     } else {
       const list = el("div", "bz-people-ds-list");
-      for (const r of s.rows) list.appendChild(dsRow(r, false));
+      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
       pop.appendChild(list);
       const hasFresh = s.rows.some((r) => r.newCount > 0);
       pop.appendChild(el("div", "bz-people-ds-legend", [
@@ -6884,10 +6885,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     overlay.appendChild(panelShell());
     document.body.appendChild(overlay);
     topifyZ(overlay);
-    registerPanelEsc(ESC_ID, isPeopleOpen, closePeoplePanel);
+    registerPanelEsc(ESC_ID, isPeopleOpen, () => {
+      if (dsOpen) closeDs();
+      else closePeoplePanel();
+    });
     trapPanelFocus((_a = overlay.querySelector(".bz-people-panel")) != null ? _a : overlay);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("change", onOverlayChange);
+    overlay.addEventListener("keydown", (e) => {
+      const input = e.target instanceof HTMLInputElement ? e.target : null;
+      if (e.key !== "Enter" || !input) return;
+      if (!input.hasAttribute("data-people-prof-tag-input") && !input.hasAttribute("data-people-note-text")) return;
+      e.preventDefault();
+      if (input.hasAttribute("data-people-prof-tag-input")) addTagChip();
+      else void saveManualNote();
+    });
     void renderBody();
   }
   function closePeoplePanel() {
@@ -6920,7 +6932,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   }
   function openDataSource() {
     if (!overlay) openPeoplePanel();
-    if (running) return;
+    if (running) {
+      notice("正在生成脸谱，请等这批结束再开数据源", "info");
+      return;
+    }
     openDs();
   }
   function dsDataDir() {
@@ -6964,6 +6979,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       importing: dsImporting,
       rows: dsContacts === null ? null : dsRowStates(),
       selectedCount: sel.length,
+      selected: sel.map((c) => c.name),
       freshCount: sel.reduce((s, c) => s + c.newCount, 0),
       hiddenGroups: dsHiddenGroups,
       notice: dsNotice,
@@ -7025,6 +7041,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     dsHiddenGroups = hidden;
     if (overlay) {
       dsContacts = contacts.sort((a, b) => b.newCount - a.newCount || a.name.localeCompare(b.name, "zh"));
+      const names = new Set(dsContacts.map((c) => c.name));
+      dsSelected = new Set([...dsSelected].filter((n) => names.has(n)));
       const now = /* @__PURE__ */ new Date();
       dsScannedAt = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       renderBody();
@@ -7159,7 +7177,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       console.warn("[people] 读取预览桶失败:", e);
     }
     if (!target) {
-      notice("还没有可画的消息素材——先「从数据源补画」导入", "warning");
+      notice("还没有可画的消息素材——点右上「数据源」导入后再画", "warning");
       return;
     }
     await runGenerationNow([target]);
@@ -7172,7 +7190,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-ds-open]")) {
-      if (!running) openDs();
+      if (running) notice("正在生成脸谱，请等这批结束再开数据源", "info");
+      else openDs();
       return;
     }
     if (t.closest("[data-people-ds-close]") || t.closest("[data-people-ds-dim]")) {
@@ -7196,7 +7215,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-back-btn]")) {
-      if (running) return;
+      if (running) {
+        notice("正在生成脸谱，完成后即可返回", "info");
+        return;
+      }
       stage = "list";
       detailId = null;
       detailFold = "p";
@@ -7350,9 +7372,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     var _a;
     const body = overlay == null ? void 0 : overlay.querySelector("[data-people-body]");
     if (!body || !store || !overlay) return;
-    (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
     if (stage === "list") await renderList(body);
     else await renderDetail(body);
+    (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
     renderDsLayer();
     renderRunLine();
     mountIcons(overlay);
@@ -7445,6 +7467,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     const failed = [];
     const skipped = [];
     for (let i = 0; i < targets.length; i++) {
+      if (!overlay || !store) {
+        notice("面板已关闭，剩余人物停止生成（已完成的不受影响）");
+        break;
+      }
       const { talker, name, msgs, kindCounts, skippedCount, fileLabel } = targets[i];
       const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
       onProgress == null ? void 0 : onProgress(main, "");
@@ -7531,21 +7557,30 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       const t = String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
       return [...t].length <= 40 ? t : `${[...t].slice(0, 40).join("")}…`;
     };
-    const hint = (msg) => {
+    const hint = (msg, action) => {
       const d = document.createElement("div");
       d.className = "bz-people-empty-hint";
       d.textContent = msg;
+      if (action) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-people-btn bz-people-btn-ghost";
+        b.setAttribute("data-people-ds-open", "");
+        b.textContent = action;
+        d.appendChild(document.createElement("br"));
+        d.appendChild(b);
+      }
       return d;
     };
     const quoteOf = {
-      p: ((_a = p.digest) == null ? void 0 : _a.portrait) ? spillOf(p.digest.portrait) : "还没有脸谱。从数据源补画一次生成。",
+      p: ((_a = p.digest) == null ? void 0 : _a.portrait) ? spillOf(p.digest.portrait) : "还没有脸谱。从数据源导入一次即可生成。",
       e: ((_b = p.digest) == null ? void 0 : _b.events.length) ? spillOf(p.digest.events[0].summary) : ((_c = p.manualEvents) == null ? void 0 : _c.length) ? spillOf(p.manualEvents[0].summary) : "还没有交往事件与随手记。",
       c: ((_d = p.digest) == null ? void 0 : _d.chronicle) ? spillOf(p.digest.chronicle) : "还没有关系时间线。",
       d: p.imports.length ? `最近导入 ${p.imports.length} 次` : "还没有导入记录。",
       f: ((_f = (_e = p.profile) == null ? void 0 : _e.tags) != null ? _f : []).filter(Boolean).length ? ((_h = (_g = p.profile) == null ? void 0 : _g.tags) != null ? _h : []).filter(Boolean).join(" · ") : "聊天之外的也可以记。"
     };
     const bodies = {
-      p: detailFold === "p" ? foldPortraitBody(((_i = p.digest) == null ? void 0 : _i.portrait) ? miniMarkdown(p.digest.portrait) : hint("还没有脸谱。从数据源补画一次生成。"), p) : [],
+      p: detailFold === "p" ? foldPortraitBody(((_i = p.digest) == null ? void 0 : _i.portrait) ? miniMarkdown(p.digest.portrait) : hint("还没有脸谱。从数据源导入一次即可生成。", "打开数据源"), p) : [],
       e: detailFold === "e" ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
       c: detailFold === "c" ? foldChronicleBody(((_j = p.digest) == null ? void 0 : _j.chronicle) ? miniMarkdown(p.digest.chronicle) : null) : [],
       d: detailFold === "d" ? foldDataBody(buildInsightsCard(p), p) : [],
@@ -7714,10 +7749,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     void renderBody();
   }
   async function removeManualNote(evId) {
+    var _a, _b;
     if (!store || !detailId || !evId) return;
     try {
+      const found = (_b = (_a = (await store.list()).find((p) => p.id === detailId)) == null ? void 0 : _a.manualEvents) == null ? void 0 : _b.find((m) => m.id === evId);
       await store.removeManualEvent(detailId, evId);
-      notice("已删除随手记", "delete");
+      const brief = (found == null ? void 0 : found.summary) ? `：${[...found.summary].slice(0, 20).join("")}${[...found.summary].length > 20 ? "…" : ""}` : "";
+      notice(`已删除随手记${brief}`, "delete");
     } catch (e) {
       notifyActionError(e, "删除随手记");
     }

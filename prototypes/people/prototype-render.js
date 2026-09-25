@@ -1,4 +1,4 @@
-/* 源指纹 b959041e1aaa2515 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d88b82a87605aa7c · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -202,14 +202,15 @@ var BZR_people = (() => {
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
     const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
-    const seal = p.digest ? el("div", "bz-people-seal", text(p.lastProcessedTs ? `画到
+    const seal = p.digest ? el("div", "bz-people-seal", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(p.lastProcessedTs ? `画到
 ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
         seal,
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
-        el("div", "bz-people-fold-who", text(rel || (span ? span : total ? `${formatCount(total)} 条` : "新折"))),
+        // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
+        el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
         el("div", "bz-people-fold-meta", text([
           total ? `${formatCount(total)} 条` : "尚无消息",
           label
@@ -259,7 +260,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
         el("div", "", [el("div", "bz-people-dt-n", text(voice ? String(voice) : "—")), el("div", "bz-people-dt-t", text(voice ? `语音 · ${formatDuration((_b = media == null ? void 0 : media.voiceTotalSec) != null ? _b : 0)}` : "语音"))]),
         el("div", "", [el("div", "bz-people-dt-n", text((media == null ? void 0 : media.imageCount) ? String(media.imageCount) : "—")), el("div", "bz-people-dt-t", text("图片"))])
       ]),
-      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
+      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
         ...opts.canGenerate ? [iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" })] : [],
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
@@ -367,7 +368,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   function foldDataBody(card, p) {
     const out = [];
     if (card) out.push(card);
-    else if (p.imports.length) out.push(el("div", "bz-people-empty-hint", text("这次导入还没有互动统计（旧版数据）。从数据源补画一次即可生成。")));
+    else if (p.imports.length) out.push(el("div", "bz-people-empty-hint", text("这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。")));
     else out.push(el("div", "bz-people-empty-hint", text("还没有导入记录。")));
     return out;
   }
@@ -671,7 +672,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       )));
     } else {
       const list = el("div", "bz-people-ds-list");
-      for (const r of s.rows) list.appendChild(dsRow(r, false));
+      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
       pop.appendChild(list);
       const hasFresh = s.rows.some((r) => r.newCount > 0);
       pop.appendChild(el("div", "bz-people-ds-legend", [
