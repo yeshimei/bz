@@ -1,10 +1,11 @@
 /**
- * 媒体徽章 UI 测试（issue 445）：personMedia 跨导入累计与空数据判定、mediaBadge 渲染
- * （文案拼接 / 空数据不渲染元素）。徽章是详情页与卡墙共用的 UI 小件，抽出来整管单测。
+ * 媒体徽章测试（issue 445/447）：personMedia 跨导入累计与空数据判定（ui）、mediaLabel
+ * 渲染文案（render 纯层：零项省略拼接 / 空数据出空串不渲染）。徽章是封面与详情共用小件。
  * 隐私口径：fixture 全构造数据。
  */
 import { describe, it, expect } from 'vitest';
-import { mediaBadge, personMedia } from '../../src/people/ui';
+import { personMedia } from '../../src/people/ui';
+import { mediaLabel } from '../../src/people/render';
 import type { ImportRecord, PersonEntry } from '../../src/people/types';
 
 function person(imports: ImportRecord[]): PersonEntry {
@@ -45,24 +46,16 @@ describe('personMedia 跨导入累计', () => {
   });
 });
 
-describe('mediaBadge 渲染', () => {
-  it('有媒体：胶囊元素，文案按零项省略拼接', () => {
-    const p = person([
-      rec({ monthly: [], initiatedByMe: 0, initiatedByOther: 0, myAvgReplySec: 0, otherAvgReplySec: 0, myHourly: [], otherHourly: [], kindCounts: {}, voiceCount: 26, voiceTotalSec: 245, imageCount: 14 }),
-    ]);
-    const badge = mediaBadge(p);
-    expect(badge).not.toBeNull();
-    expect(badge!.className).toBe('bz-people-media-badge');
-    expect(badge!.textContent).toBe('语音 26 条 · 4 分 · 图片 14 张');
-
-    const imageOnly = person([
-      rec({ monthly: [], initiatedByMe: 0, initiatedByOther: 0, myAvgReplySec: 0, otherAvgReplySec: 0, myHourly: [], otherHourly: [], kindCounts: {}, imageCount: 2 }),
-    ]);
-    expect(mediaBadge(imageOnly)!.textContent).toBe('图片 2 张');
+describe('mediaLabel 文案（render 纯层）', () => {
+  it('有媒体：文案按零项省略拼接', () => {
+    expect(mediaLabel({ voiceCount: 26, voiceTotalSec: 245, imageCount: 14 })).toBe('语音 26 条 · 4 分 · 图片 14 张');
+    expect(mediaLabel({ voiceCount: 0, voiceTotalSec: 0, imageCount: 2 })).toBe('图片 2 张');
+    expect(mediaLabel({ voiceCount: 5, voiceTotalSec: 4200, imageCount: 0 })).toBe('语音 5 条 · 1.2 时');
   });
 
-  it('空数据（无媒体）返回 null：卡片与详情页都不出现徽章', () => {
-    expect(mediaBadge(person([]))).toBeNull();
-    expect(mediaBadge(person([rec(undefined)]))).toBeNull();
+  it('空数据（无媒体）返回空串：封面与详情都不出现徽章', () => {
+    expect(mediaLabel(null)).toBe('');
+    expect(mediaLabel(undefined)).toBe('');
+    expect(mediaLabel({ voiceCount: 0, voiceTotalSec: 0, imageCount: 0 })).toBe('');
   });
 });

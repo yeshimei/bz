@@ -100,7 +100,7 @@ async function buildOne({ entry, outfile, globalName, banner, alias }) {
 // settings-panel 2026-09-08 拍板维持行为单源（样式/渲染/行为一份源码两端共用）；
 // 原型观感对齐以 35c4342 自足三件套为参照系——冲突在壳环境（core 链 vs 域内自绘）逐一调和，
 // 不回退双轨。
-export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "home", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
+export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "diary", "home", "memo", "password-vault", "people", "pomodoro", "review", "secondbrain", "settings-panel"];
 
 // 行为单源域（issue 245/ADR-0106 试点：belongings）：除渲染产物外，另产「行为产物」——
 // 以 fake-sim.ts 为入口、alias obsidian→belongings/fake/fake-obsidian，把真 ui.ts
@@ -117,7 +117,7 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // gameshelf 行为产物（2026-09-17）：游戏架域 UI 全在 ui.ts 内拼（无 render.ts），加 V1 海报墙
 //   落域后接入评审壳——真 requestUrl 换 Steam 响应罐头（prototypes/gameshelf/fake/fake-obsidian.ts），
 //   数据 = 真实 vault 147 篇游戏笔记快照 + 真 appdetails/成就响应回放；同样只产行为包。
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "gameshelf", "home", "knowledge", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "gameshelf", "home", "knowledge", "memo", "password-vault", "people", "pomodoro", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");

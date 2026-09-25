@@ -1,8 +1,8 @@
 /**
  * 脸谱数据源层测试（issue 446）：替代键（sid / ct+msg 哈希）、chat.json 归一化矩阵
  * （语音转写回退 / 图片描述命中与缺失 / 视频与系统消息开关 / 群聊判定 / 非文本形态丢弃）、
- * 预览桶增量合并（首导 / 部分新增 / 完全重复 / stats 重算）、shouldGenerate 触发三态、
- * PreviewStore 落盘结构与清空（MockVault）。
+ * 预览桶增量合并（首导 / 部分新增 / 完全重复 / stats 重算）、
+ * PreviewStore 落盘结构与清空（MockVault）。（447：shouldGenerate 随自动链路退役，触发改弹窗手动。）
  * 隐私口径：全部构造数据，不含真实聊天内容。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -15,7 +15,6 @@ import {
   normalizeChatJson,
   previewStatsOf,
   previewToUnified,
-  shouldGenerate,
   type ImageDescItem,
   type NormalizeOptions,
   type PreviewContact,
@@ -276,24 +275,6 @@ describe('mergePreview 预览桶增量', () => {
   it('预览全量消息可直转 UnifiedMessage（第二段管线入参）', () => {
     const { contact } = mergePreview(undefined, normOf([raw({ ct: BASE, who: '我', msg: '构造' , sid: 151 })]), '2026-09-25T00:00:00.000Z');
     expect(previewToUnified(contact.msgs)).toEqual([{ ts: BASE * 1000, isSender: true, text: '构造' }]);
-  });
-});
-
-describe('shouldGenerate 生成触发', () => {
-  it('manual + threshold=0（默认）：从不自动', () => {
-    expect(shouldGenerate(0, 'manual', 0)).toBe(false);
-    expect(shouldGenerate(5, 'manual', 0)).toBe(false);
-  });
-  it('auto + threshold=0：导入即画', () => {
-    expect(shouldGenerate(0, 'auto', 0)).toBe(false); // 无新素材不空跑
-    expect(shouldGenerate(1, 'auto', 0)).toBe(true);
-    expect(shouldGenerate(999, 'auto', 0)).toBe(true);
-  });
-  it('threshold 边界：新素材 ≥ N 才画（auto 作门槛 / manual 独立生效）', () => {
-    expect(shouldGenerate(2, 'auto', 3)).toBe(false);
-    expect(shouldGenerate(3, 'auto', 3)).toBe(true);
-    expect(shouldGenerate(2, 'manual', 3)).toBe(false);
-    expect(shouldGenerate(3, 'manual', 3)).toBe(true);
   });
 });
 

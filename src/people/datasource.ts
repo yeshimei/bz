@@ -389,19 +389,8 @@ export function previewToUnified(msgs: PreviewMsg[]): UnifiedMessage[] {
   return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
 }
 
-// ---------------- 生成触发判定 ----------------
-
-/**
- * 自动生成触发（导入 / 扫描流程共用）：无新素材一律不画。
- * - trigger='auto'：导入即画（threshold>0 时作为门槛：新素材 ≥ N 才画；0 = 无门槛）；
- * - trigger='manual'：threshold>0 且新素材 ≥ N 才自动（默认 0 = 从不自动，手动入口在反馈行）。
- */
-export function shouldGenerate(newCount: number, trigger: 'manual' | 'auto', threshold: number): boolean {
-  if (!(newCount > 0)) return false;
-  const n = Math.max(0, Math.round(threshold || 0));
-  if (trigger === 'auto') return n === 0 || newCount >= n;
-  return n > 0 && newCount >= n;
-}
+// 447 退役：shouldGenerate 自动生成触发判定随自动链路一并移除——
+// 画脸谱一律由数据源弹窗「画脸谱」手动触发（无门槛，选了就画）。
 
 // ---------------- 设置读取（预览组快照） ----------------
 

@@ -26,7 +26,7 @@ const COUNT_BASELINE: Record<string, number> = {
   diary: 5,
   memo: 11,
   belongings: 6,
-  people: 11, // 2026-09-25 issue 446：数据源 3 + 预览 4（AI 提示 visibleWhen 门控不计）+ 生成 2 + 隐私 2（清空按钮不计）
+  people: 8, // 2026-09-25 issue 447：数据源 2 + 预览 4（AI 提示 visibleWhen 门控不计）+ 隐私 2（清空按钮不计）；生成组与自动扫描键随自动链路退役
   clipping: 11,
   favorites: 5,
   cinema: 8,

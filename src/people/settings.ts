@@ -1,7 +1,9 @@
 /**
- * 脸谱域（people）设置 schema（issue 446）：数据源 / 预览 / 生成 / 隐私 四组，声明式
+ * 脸谱域（people）设置 schema（issue 446/447）：数据源 / 预览 / 隐私 三组，声明式
  * （ADR-0064 渲染器）。数据文件夹在 vault 外（预处理线产出），故用文本行粘贴路径而非
  * vault 内选择器；「清空预览」经 loader 回调接线（core 不反向依赖域，knowledge 同款）。
+ * 447 拍板：「打开时自动扫描」与「生成」组（GenTrigger/GenThreshold）随自动链路一并退役——
+ * 扫描在打开数据源弹窗时进行，生成由弹窗内「画脸谱」手动触发。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 
@@ -15,15 +17,9 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
           {
             type: 'text',
             name: '数据文件夹',
-            desc: '预处理导出的联系人数据目录，粘贴完整路径',
+            desc: '预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口',
             binding: { key: 'peopleDataDir' },
             placeholder: '例如 D:\\微信备份\\export_full',
-          },
-          {
-            type: 'toggle',
-            name: '打开时自动扫描',
-            desc: '打开脸谱面板时自动扫描数据源',
-            binding: { key: 'peopleScanOnOpen' },
           },
           {
             type: 'toggle',
@@ -71,31 +67,6 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
             name: '系统消息',
             desc: '撤回与打招呼等锚点消息保留',
             binding: { key: 'peopleKeepSystem' },
-          },
-        ],
-      },
-      {
-        icon: 'wand-2',
-        name: '生成',
-        rows: [
-          {
-            type: 'select',
-            name: '生成触发',
-            desc: '导入完成后是否自动画脸谱',
-            binding: { key: 'peopleGenTrigger' },
-            options: [
-              { value: 'manual', label: '手动' },
-              { value: 'auto', label: '自动' },
-            ],
-          },
-          {
-            type: 'number',
-            name: '自动重画阈值',
-            desc: '新素材达到该条数自动重画',
-            binding: { key: 'peopleGenThreshold' },
-            min: 0,
-            max: 100000,
-            step: 1,
           },
         ],
       },
