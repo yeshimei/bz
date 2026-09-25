@@ -170,3 +170,37 @@ describe('buildStatsNote 素材段文案', () => {
     expect(note).not.toContain('我撤回');
   });
 });
+
+describe('buildStatsNote 月度密度段（issue 455）', () => {
+  it('不传 monthly：与旧口径一致，无「消息密度」段', () => {
+    expect(buildStatsNote(computeInsights([], sig({ callCount: 1 })))).not.toContain('消息密度');
+  });
+
+  it('≤12 个月：按月升序全列（入参乱序也排好）', () => {
+    const note = buildStatsNote(computeInsights([], emptyInsightSignals()), [
+      ['2026-04', 4239],
+      ['2026-03', 6221],
+    ]);
+    expect(note).toContain('消息密度：2026-03 6221 条、2026-04 4239 条');
+    expect(note.endsWith('。')).toBe(true);
+  });
+
+  it('>12 个月：按年合并求和（「YYYY 年合计 N 条」式，年份升序）', () => {
+    const monthly: Array<[string, number]> = [
+      ...Array.from({ length: 10 }, (_, i): [string, number] => [`2025-${String(i + 1).padStart(2, '0')}`, 100 + i]),
+      ...Array.from({ length: 12 }, (_, i): [string, number] => [`2026-${String(i + 1).padStart(2, '0')}`, 200 + i]),
+    ];
+    const note = buildStatsNote(computeInsights([], emptyInsightSignals()), monthly);
+    expect(note).not.toContain('2025-01'); // 月粒度不再逐列
+    expect(note).toContain('2025 年合计 1045 条'); // 100+...+109
+    expect(note).toContain('2026 年合计 2466 条'); // 200+...+211
+    expect(note.indexOf('2025 年合计')).toBeLessThan(note.indexOf('2026 年合计'));
+  });
+
+  it('密度段追加在末尾（沉默段之后）；其余维度照旧', () => {
+    const i = computeInsights([], sig({ recantByOther: 2 }));
+    i.silenceGaps = [{ from: '2025-01-02', to: '2025-03-01', days: 58 }];
+    const note = buildStatsNote(i, [['2026-03', 6221]]);
+    expect(note).toContain('最长的沉默 2025-01-02 至 2025-03-01（58 天）；消息密度：2026-03 6221 条。');
+  });
+});

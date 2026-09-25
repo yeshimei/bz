@@ -23,6 +23,7 @@ import {
   type PersonJob,
 } from '../../src/people/jobs';
 import { chunkMessages, chunkMetaOf, DEFAULTS, type DigestChunk } from '../../src/people/digest';
+import { computeInsights, emptyInsightSignals } from '../../src/people/insights';
 import { PreviewStore, previewStatsOf, previewToUnified, type PreviewMsg } from '../../src/people/datasource';
 import { PeopleStore } from '../../src/people/data';
 import { setApp } from '../../src/core/app';
@@ -38,18 +39,25 @@ function pm(n: number, text = `构造消息${n}`): PreviewMsg {
   return { key: `k${n}`, ts: BASE + n * 60000, isSender: n % 2 === 1, text };
 }
 
-/** 假提炼批回执（每批同内容：跨批去重后素材唯一） */
+/** 假提炼批回执（每批同内容：跨批去重后素材唯一；issue 455 起带 interests / threads 两类） */
 const BATCH_JSON = JSON.stringify({
   events: [{ ts: '2024-05-01', kind: 'major', summary: '构造事件' }],
   traits: ['构造特质'],
   quotes: [{ ts: '2024-05-01', who: '对方', text: '构造原话' }],
   moments: [{ ts: '2024-05-01', summary: '构造场景' }],
+  interests: [{ ts: '2024-05-01', topic: '构造话题' }],
+  threads: [{ ts: '2024-05-01', text: '下次一起构造' }],
 });
 
 function makeAsks() {
   return {
     askExtract: vi.fn(async () => BATCH_JSON),
-    askPortrait: vi.fn(async (p: string) => (p.includes('关系时间线') ? '## 2024 年' : '## 画像速写\n构造画像')),
+    // 三次文本调用（issue 455）：其人 → 我们 → 时间线，按 prompt 特征分支
+    askPortrait: vi.fn(async (p: string) => {
+      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('要产出的卷二')) return '## 关系定性\n构造我们';
+      return '## 画像速写\n构造画像';
+    }),
   };
 }
 
@@ -113,7 +121,7 @@ afterEach(() => {
 });
 
 describe('startJobs：任务创建与逐批落盘', () => {
-  it('排队跑完：产物挂 job、批次计数正确、文件结构与隐私红线', async () => {
+  it('排队跑完：双卷产物挂 job、批次计数正确、文件结构与隐私红线', async () => {
     const msgs = [pm(0), pm(1), pm(2), pm(3)];
     await seedPreview(msgs);
     const { askExtract, askPortrait } = makeAsks();
@@ -128,15 +136,18 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(job.stage).toBe('done');
     expect(job.batchesDone).toBe(2);
     expect(job.results).toHaveLength(2);
-    expect(job.portrait).toContain('画像速写');
+    expect(job.person).toContain('画像速写'); // 卷一《其人》
+    expect(job.bond).toContain('关系定性'); // 卷二《我们》
     expect(job.chronicle).toBe('## 2024 年');
     expect(job.events).toEqual([{ ts: '2024-05-01', summary: '构造事件', kind: 'major' }]); // 跨批同事件去重 + kind 回填
     expect(job.quotes).toEqual([{ ts: '2024-05-01', who: '对方', text: '构造原话' }]);
     expect(job.material?.traits).toEqual(['构造特质']);
     expect(job.material?.moments).toEqual([{ ts: '2024-05-01', summary: '构造场景' }]);
+    expect(job.material?.interests).toEqual([{ ts: '2024-05-01', topic: '构造话题' }]); // issue 455 新素材落盘
+    expect(job.material?.threads).toEqual([{ ts: '2024-05-01', text: '下次一起构造' }]);
     expect(job.message).toBe('「构造对象」脸谱已生成');
     expect(askExtract).toHaveBeenCalledTimes(2);
-    expect(askPortrait).toHaveBeenCalledTimes(2); // 画像 + 时间线
+    expect(askPortrait).toHaveBeenCalledTimes(3); // 其人 + 我们 + 时间线
     expect(snap.running).toBe(false);
     expect(snap.currentIndex).toBe(-1);
 
@@ -162,7 +173,7 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(fileRaw()).not.toContain('[2024-');
   });
 
-  it('切批说明（缺省双限 = digest.DEFAULTS）与逐批文案经 subscribe 推送；每批完成即落盘', async () => {
+  it('切批说明（缺省双限 = digest.DEFAULTS，成文三次调用）与逐批 / 四阶段文案经 subscribe 推送；每批完成即落盘', async () => {
     const msgs = [pm(0), pm(1), pm(2), pm(3)];
     await seedPreview(msgs);
     let calls = 0;
@@ -177,8 +188,10 @@ describe('startJobs：任务创建与逐批落盘', () => {
     });
     const { askPortrait } = makeAsks();
     const messages: string[] = [];
+    const stages: string[] = [];
     subscribe((s) => {
       if (s.queue[0]?.message) messages.push(s.queue[0].message);
+      if (s.queue[0]?.stage) stages.push(s.queue[0].stage);
     });
     void startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 2 }, askExtract, askPortrait });
     await until(() => readQueue()[0]?.batchesDone === 1);
@@ -190,11 +203,15 @@ describe('startJobs：任务创建与逐批落盘', () => {
     release();
     await whenIdle();
 
-    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 2）
-    expect(messages).toContain(`消息 4 条 → 2 批（每批 ≤2 条 · ≤12000 字），共 4 次 AI 调用`);
+    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 3：其人 / 我们 / 时间线）
+    expect(messages).toContain(`消息 4 条 → 2 批（每批 ≤2 条 · ≤12000 字），共 5 次 AI 调用`);
     expect(messages.some((m) => /^第 1\/2 批 · \d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2} · 2 条$/.test(m))).toBe(true);
     expect(messages.some((m) => /^第 2\/2 批 · /.test(m))).toBe(true);
-    expect(messages).toContain('素材采集完成：事件 1 · 原话 1 · 场景 1 · 特质 1 → 正在生成画像');
+    // 成文阶段四段（issue 455）：素材 → 《其人》 → 《我们》 → 时间线
+    expect(messages).toContain('素材采集完成：事件 1 · 原话 1 · 场景 1 · 特质 1 → 正在生成《其人》');
+    expect(messages).toContain('《其人》完成，正在生成《我们》…');
+    expect(messages).toContain('双卷完成，正在生成关系时间线…');
+    expect(stages).toEqual(expect.arrayContaining(['extracting', 'person', 'bond', 'chronicle', 'done']));
   });
 
   it('无可提炼文本 / 空消息目标不排队，计入 skipped', async () => {
@@ -205,6 +222,28 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(r.skipped).toEqual(['空桶']);
     await whenIdle();
     expect(readQueue()).toHaveLength(1);
+  });
+
+  it('monthly / profile 透传（issue 455）：statsNote 带「消息密度」段、素材〇随 material 落盘', async () => {
+    const msgs = [pm(0), pm(1)];
+    await seedPreview(msgs);
+    const insights = computeInsights([], emptyInsightSignals());
+    const { askExtract, askPortrait } = makeAsks();
+    await startJobs(
+      app,
+      [target(msgs, { insights, monthly: [['2026-04', 4239], ['2026-03', 6221]], profile: { tags: ['同学'], note: '手动备注' } })],
+      { chunkOpts: { maxCount: 1 }, askExtract, askPortrait }
+    );
+    await whenIdle();
+    const job = readQueue()[0];
+    // 密度段按月升序进 statsNote（buildStatsNote 第二参）
+    expect(job.material?.statsNote).toContain('消息密度：2026-03 6221 条、2026-04 4239 条');
+    // 档案段排队时定稿并落 material（重启续跑不用重算）
+    expect(job.material?.profileNote).toContain('关系标签：同学');
+    expect(job.material?.profileNote).toContain('备注：手动备注');
+    const personPrompts = (askPortrait as any).mock.calls.map((c: any[]) => c[0] as string);
+    expect(personPrompts.some((p: string) => p.includes('消息密度：2026-03 6221 条'))).toBe(true);
+    expect(personPrompts.filter((p: string) => p.includes('关系标签：同学'))).toHaveLength(2); // 两卷都吃素材〇
   });
 });
 
@@ -506,8 +545,65 @@ describe('resumeJobs：中断标记与重启续跑', () => {
     expect(done.batchesDone).toBe(2);
     expect(done.results).toHaveLength(2); // 断点前 1 批不重烧
     expect(askExtract).toHaveBeenCalledTimes(1); // 只补第 2 批
-    expect(done.portrait).toContain('画像速写');
-    expect(askPortrait).toHaveBeenCalledTimes(2);
+    expect(done.person).toContain('画像速写');
+    expect(askPortrait).toHaveBeenCalledTimes(3); // 其人 + 我们 + 时间线
+  });
+
+  it('旧落盘兼容（issue 455）：in-flight job 的 portrait 读入视作 person，续跑已缓存批次照常复用、重画双卷', async () => {
+    const msgs = [pm(0), pm(1), pm(2)];
+    await seedPreview(msgs);
+    const chunks: DigestChunk[] = chunkMessages(previewToUnified(msgs), { ...DEFAULTS, maxCount: 1 });
+    const fp = fingerprintOf(previewToUnified(msgs));
+    // 旧版任务形态：单卷 portrait 字段 + 旧阶段名 'portrait'（无 person/bond 概念）
+    const legacy = {
+      talker: TALKER,
+      name: '构造对象',
+      mode: 'full',
+      fileLabel: `数据源:${TALKER}`,
+      status: 'interrupted',
+      stage: 'portrait',
+      msgCount: fp.msgCount,
+      lastMsgKey: fp.lastMsgKey,
+      chunkOpts: { ...DEFAULTS, maxCount: 1 },
+      chunks: chunks.map(chunkMetaOf),
+      batchesDone: 2,
+      results: [JSON.parse(BATCH_JSON), JSON.parse(BATCH_JSON)],
+      portrait: '## 画像速写\n旧单卷画像',
+      startedAt: '2026-09-25T00:00:00.000Z',
+      updatedAt: '2026-09-25T00:00:00.000Z',
+    };
+    vault.files.set(JOBS_PATH, JSON.stringify({ version: 1, queue: [legacy] }));
+
+    const { askExtract, askPortrait } = makeAsks();
+    await resumeJobs(app, { askExtract, askPortrait });
+    expect(readQueue()[0].person).toBe('## 画像速写\n旧单卷画像'); // portrait → person 映射
+    expect(readQueue()[0].results).toHaveLength(2); // 已付批次保留
+
+    expect(resume(TALKER)).toBe(true);
+    await whenIdle();
+    const done = readQueue()[0];
+    expect(done.status).toBe('done');
+    expect(done.batchesDone).toBe(3);
+    expect(done.results).toHaveLength(3);
+    expect(askExtract).toHaveBeenCalledTimes(1); // 只补第 3 批——issue 453 批级复用语义不回退
+    expect(done.person).toContain('构造画像'); // 从《其人》阶段起重画双卷
+    expect(done.bond).toContain('构造我们');
+    expect(askPortrait).toHaveBeenCalledTimes(3);
+  });
+
+  it('样本警示与档案段（issue 455）：msgCount < 200 两卷 prompt 头注样本警示；target.profile 进素材〇', async () => {
+    const msgs = [pm(0), pm(1)];
+    await seedPreview(msgs);
+    const { askExtract, askPortrait } = makeAsks();
+    await startJobs(app, [target(msgs, { profile: { birthday: '1994-02-14', tags: ['同学'] } })], {
+      chunkOpts: { maxCount: 1 },
+      askExtract,
+      askPortrait,
+    });
+    await whenIdle();
+    const personPrompts = (askPortrait as any).mock.calls.map((c: any[]) => c[0] as string);
+    expect(personPrompts.filter((p: string) => p.includes('本次样本仅 2 条消息'))).toHaveLength(2); // 其人 + 我们共用
+    expect(personPrompts.filter((p: string) => p.includes('生日：1994-02-14'))).toHaveLength(2); // 素材〇进两卷
   });
 });
 
@@ -570,7 +666,8 @@ describe('增量模式与 skip 跳过', () => {
       { ts: '2024-04-01', summary: '旧事件' },
       { ts: '2024-05-01', summary: '构造事件', kind: 'major' },
     ]); // 旧事件不丢
-    expect(job.portrait).toContain('画像速写');
+    expect(job.person).toContain('画像速写');
+    expect(job.bond).toContain('关系定性');
   });
 
   it('整份指纹已在导入记录里（同一导出再导）→ 跳过不排队', async () => {

@@ -9,14 +9,17 @@
  * - skip  同一份导出再导（整份指纹＝条数 + 跨度已在导入记录里）→ 不调用 AI，提示「没有新消息」。
  */
 import {
+  buildBondPrompt,
   buildChroniclePrompt,
-  buildPortraitPrompt,
+  buildPersonPrompt,
+  buildProfileNote,
   chunkMetaOf,
   chunkMessages,
   evenlySample,
   extractBatch,
   mergeBatches,
   toPortraitMaterial,
+  sampleWarnOf,
   MATERIAL_LIMITS,
   type AskLLM,
   type BatchExtract,
@@ -24,7 +27,7 @@ import {
   type FaceRunOptions,
   type MergedMaterial,
 } from './digest';
-import type { FaceDigest, FaceEvent, ManualEvent, PersonEntry, UnifiedMessage } from './types';
+import type { FaceDigest, FaceEvent, ManualEvent, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 
 export type IncrementalPlan = {
   mode: 'full' | 'newer' | 'older' | 'skip';
@@ -54,6 +57,7 @@ export function planIncremental(msgs: UnifiedMessage[], existing: PersonEntry | 
 /**
  * 新批素材并入旧脸谱（issue 450 抽出的合并单源，buildFaceIncremental 与 jobs 引擎共用）：
  * 旧在前合并去重——同键旧条目优先、新批的轻重标记（kind）回填；不抽样（抽样在 digest.toPortraitMaterial）。
+ * interests / threads（issue 455）：旧 digest 无此字段时从空起（老数据不丢、新批照常并入）。
  */
 export function mergeWithOld(merged: MergedMaterial, old: FaceDigest | undefined): MergedMaterial {
   return {
@@ -61,22 +65,26 @@ export function mergeWithOld(merged: MergedMaterial, old: FaceDigest | undefined
     quotes: dedupeByText([...(old?.quotes ?? []), ...merged.quotes], (q) => q.text),
     moments: dedupeByText([...(old?.moments ?? []), ...merged.moments], (m) => m.summary),
     traits: dedupeByText([...(old?.traits ?? []), ...merged.traits], (t) => t),
+    interests: dedupeByText([...(old?.interests ?? []), ...merged.interests], (i) => i.topic),
+    threads: dedupeByText([...(old?.threads ?? []), ...merged.threads], (t) => t.text),
   };
 }
 
 /**
  * 增量 / 补录提炼（ui 层编排调用；digest.buildFace 保持「只管给定消息集合」的通用性）：
- * 新消息分批采集 → 与旧脸谱的事件 / 原话 / 场景 / 特质合并去重 → 用合并后素材重画画像与时间线。
+ * 新消息分批采集 → 与旧脸谱的事件 / 原话 / 场景 / 特质 / 兴趣 / 未竟合并去重 → 用合并后素材重画双卷与时间线。
  * 去重口径与 digest.ts 一致：事件按 ts|summary 且 kind 回填、其余按文本键（合并单源 mergeWithOld）；
  * 送 prompt 的素材超限按时间跨度均匀抽样（evenlySample 首尾必保）——合并去重后旧素材
  * 不再把新素材挤出头部（评审 P2-1 同号的 P1-1：此前 slice 留头，旧素材满额时新素材全丢）。
- * 上限统一取 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / chronicle 300）；
- * 落盘的 digest.events 保持全量，抽样只影响送 prompt 与落盘的 moments / traits / quotes 口径
+ * 上限统一取 digest 的 MATERIAL_LIMITS（quotes 60 / moments 40 / traits 30 / interests 40 / threads 30 / chronicle 300）；
+ * 落盘的 digest.events 保持全量，抽样只影响送 prompt 与落盘的 moments / traits / quotes / interests / threads 口径
  * （issue 449 缺陷修复：moments / traits 此前只吃新批且不落盘，增量一次旧「共同记忆 / 表达 DNA」全丢）。
  * mediaNote（issue 445）：媒体素材清单说明，ui 层传跨导入累计口径（本层消息只是新切片，自算会少算）；
- * statsNote（issue 449）：互动统计叙述段，同样由 ui 层按预览桶最新 insights 生成后透传。
+ * statsNote（issue 449）：互动统计叙述段，同样由 ui 层按预览桶最新 insights 生成后透传；
+ * profile（issue 455）：手动档案，转档案段进两卷 prompt；sampleWarn（issue 455）缺省按本层消息量自算，
+ * 增量场景建议调用方按全量消息数覆盖（本层只见到新切片）。
  * opts（issue 450 收拢旧位置参数）：onProgress 阶段化进度、onMaterial 中间计数（合并后、抽样前）。
- * 调用数 = 批数 + 2（画像 + 时间线），与成本预告口径一致。
+ * 调用数 = 批数 + 3（其人 + 我们 + 时间线），与成本预告口径一致。
  */
 export async function buildFaceIncremental(
   askExtract: AskLLM,
@@ -86,7 +94,7 @@ export async function buildFaceIncremental(
   old: FaceDigest | undefined,
   opts: FaceRunOptions = {}
 ): Promise<BuiltFace> {
-  const { mediaNote, statsNote, onProgress, onMaterial } = opts;
+  const { mediaNote, statsNote, profile, sampleWarn: warnOverride, onProgress, onMaterial } = opts;
   const chunks = chunkMessages(msgs);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
   const batches: BatchExtract[] = [];
@@ -96,11 +104,20 @@ export async function buildFaceIncremental(
   }
   const merged = mergeWithOld(mergeBatches(batches), old);
   onMaterial?.({ events: merged.events.length, quotes: merged.quotes.length, moments: merged.moments.length, traits: merged.traits.length });
-  const material = toPortraitMaterial(merged, { mediaNote, statsNote, sampleEvents: true });
-  onProgress?.({ stage: 'portrait', done: 0, total: 1 });
-  const portrait = (await askPortrait(buildPortraitPrompt(name, material))).trim();
-  if (!portrait) throw new Error('画像生成为空');
-  // 时间线是次要产物：失败不阻断画像（与 digest.buildFace 同口径）
+  const material = toPortraitMaterial(merged, {
+    mediaNote,
+    statsNote,
+    profileNote: buildProfileNote(profile) || undefined,
+    sampleEvents: true,
+  });
+  const sampleWarn = warnOverride ?? sampleWarnOf(msgs.length);
+  onProgress?.({ stage: 'person', done: 0, total: 1 });
+  const person = (await askPortrait(buildPersonPrompt(name, material, sampleWarn))).trim();
+  if (!person) throw new Error('卷一《其人》生成为空');
+  onProgress?.({ stage: 'bond', done: 0, total: 1 });
+  const bond = (await askPortrait(buildBondPrompt(name, material, sampleWarn))).trim();
+  if (!bond) throw new Error('卷二《我们》生成为空');
+  // 时间线是次要产物：失败不阻断双卷（与 digest.buildFace 同口径）
   let chronicle = '';
   if (merged.events.length) {
     onProgress?.({ stage: 'chronicle', done: 0, total: 1 });
@@ -110,7 +127,17 @@ export async function buildFaceIncremental(
       chronicle = '';
     }
   }
-  return { portrait, events: merged.events, quotes: material.quotes, chronicle, moments: material.moments, traits: material.traits };
+  return {
+    person,
+    bond,
+    chronicle,
+    events: merged.events,
+    quotes: material.quotes,
+    moments: material.moments,
+    traits: material.traits,
+    interests: material.interests,
+    threads: material.threads,
+  };
 }
 
 /** 事件合并去重：key = ts|summary，后出现的轻重标记回填（与 digest.ts mergeEvents 同口径）；结果按日期升序 */

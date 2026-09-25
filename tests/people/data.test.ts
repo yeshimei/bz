@@ -1,9 +1,11 @@
 /**
  * 脸谱域数据层测试（issue 435）：people.json 读写、upsert 增改、导入记录与脸谱写入、
- * 删除与不存在人物报错（MockVault + 串行写队列）。
+ * 删除与不存在人物报错（MockVault + 串行写队列）；
+ * 双卷画像数据契约（issue 455）：FaceDigest person/bond/interests/threads 落盘读回 + personOf/bondOf 兼容读。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PeopleStore, getPeopleFilePath } from '../../src/people/data';
+import { bondOf, personOf } from '../../src/people/types';
 import type { FaceDigest, ImportRecord, ManualEvent, PersonEntry } from '../../src/people/types';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -150,5 +152,63 @@ describe('PeopleStore.mergeInto（评审 443 补测）', () => {
     const people = await store.list();
     expect(people).toHaveLength(1);
     expect(people[0].id).toBe('same');
+  });
+});
+
+describe('FaceDigest 双卷契约与兼容读（issue 455）', () => {
+  let vault: MockVault;
+  let store: PeopleStore;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    store = new PeopleStore({ vault });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('双卷 digest 落盘读回：person / bond / interests / threads 全字段无损', async () => {
+    await store.upsert(person('wxid_dual', '双卷'));
+    await store.setDigest('wxid_dual', {
+      person: '## 画像速写\n其人卷',
+      bond: '## 关系定性\n我们卷',
+      events: [{ ts: '2024-05-01', summary: '约饭' }],
+      quotes: [{ ts: '2024-05-01', who: '对方', text: '原话' }],
+      chronicle: '## 2024 年',
+      traits: ['话痨'],
+      moments: [{ ts: '2024-05-01', summary: '常去的那家店' }],
+      interests: [{ ts: '2024-05-01', topic: '五月天' }],
+      threads: [{ ts: '2024-05-01', text: '下次一起爬山' }],
+      generatedAt: '2026-09-26T00:00:00.000Z',
+    });
+    const p = (await store.list()).find((x) => x.id === 'wxid_dual');
+    expect(p?.digest?.person).toBe('## 画像速写\n其人卷');
+    expect(p?.digest?.bond).toBe('## 关系定性\n我们卷');
+    expect(p?.digest?.interests).toEqual([{ ts: '2024-05-01', topic: '五月天' }]);
+    expect(p?.digest?.threads).toEqual([{ ts: '2024-05-01', text: '下次一起爬山' }]);
+    // 旧字段 portrait 不再写入（重画后缺席即新形态）
+    expect('portrait' in (p?.digest ?? {})).toBe(false);
+    // JSON 落盘带全部新字段
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/people.json')!);
+    const digest = raw.people[0].digest;
+    expect(digest.person).toContain('其人卷');
+    expect(digest.bond).toContain('我们卷');
+    expect(digest.interests).toHaveLength(1);
+    expect(digest.threads).toHaveLength(1);
+  });
+
+  it('personOf：双卷新数据取 person；旧单卷数据回落 portrait；空卷 / 缺 digest 返回空串', () => {
+    expect(personOf({ person: '新其人卷', portrait: '旧单卷', events: [], generatedAt: '' })).toBe('新其人卷');
+    expect(personOf({ portrait: '旧单卷', events: [], generatedAt: '' })).toBe('旧单卷');
+    expect(personOf({ bond: '只有我们卷', events: [], generatedAt: '' })).toBe('');
+    expect(personOf(undefined)).toBe('');
+  });
+
+  it('bondOf：有 bond 取 bond；旧数据无卷二返回空串；缺 digest 返回空串', () => {
+    expect(bondOf({ person: '其人', bond: '我们卷', events: [], generatedAt: '' })).toBe('我们卷');
+    expect(bondOf({ portrait: '旧单卷', events: [], generatedAt: '' })).toBe('');
+    expect(bondOf(undefined)).toBe('');
   });
 });
