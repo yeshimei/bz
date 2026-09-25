@@ -505,6 +505,26 @@ export default interface BzSettings {
   /** 记忆目录（ADR-0069 记忆目录流）：进入小橘笔记记忆库的多个 vault 文件夹（⚙️ 小橘设置弹窗配置） */
   memoryDirectories: string[];
 
+  // ===== 🎭 脸谱数据源（people 域，issue 446：微信全模态预处理导出目录直连，两段增量）=====
+  /** 数据文件夹路径（vault 外，预处理线按联系人一级目录产出 chat.json 等）；空 = 面板不显示数据源入口 */
+  peopleDataDir: string;
+  /** 打开脸谱面板自动扫描数据源（默认开） */
+  peopleScanOnOpen: boolean;
+  /** 群聊纳入勾选列表（默认关：非「我」发送者多于一人判为群聊） */
+  peopleIncludeGroups: boolean;
+  /** 预览消费语音转写（默认开；无转写的保持 [语音 N秒] 标签） */
+  peoplePreviewVoice: boolean;
+  /** 图片描述来源：'file'=读 image_desc.json（默认）/ 'ai'=AI 视觉（本期占位）/ 'off'=只留 [图片] 标签 */
+  peopleImageDescMode: string;
+  /** [视频 N秒] 标签进时间线（默认开） */
+  peoplePreviewVideo: boolean;
+  /** type=10000 系统消息保留（默认开：撤回 / 打招呼锚点） */
+  peopleKeepSystem: boolean;
+  /** 导入后自动画脸谱：'manual'（默认，手动入口在导入反馈行）/ 'auto'（导入即画） */
+  peopleGenTrigger: string;
+  /** 新素材达到该条数自动重画（默认 0 = 不设门槛、manual 下从不自动） */
+  peopleGenThreshold: number;
+
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
 
@@ -1042,6 +1062,18 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeCacheRetentionDays: 7,
   // 挂载树 AI 语义建议（issue 318）：默认开（打开白板即跑；缓存命中则无感）
   knowledgeMountAutoSuggest: true,
+
+  // 脸谱数据源（issue 446）：目录空 = 不显示数据源入口；其余按拍板默认
+  peopleDataDir: '',
+  peopleScanOnOpen: true,
+  peopleIncludeGroups: false,
+  peoplePreviewVoice: true,
+  peopleImageDescMode: 'file',
+  peoplePreviewVideo: true,
+  peopleKeepSystem: true,
+  peopleGenTrigger: 'manual',
+  peopleGenThreshold: 0,
+
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',
   settingsPanelSkin: 'chenhun',

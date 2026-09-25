@@ -1,5 +1,5 @@
-/* 源指纹 0591825c7420e0b4 · 仓内输入 257 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 3072bb2f396522ce · 仓内输入 261 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/datasource.ts","src/people/media.ts","src/people/parse.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -42,9 +42,9 @@ var BZW_review = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -5069,6 +5069,16 @@ var BZW_review = (() => {
   });
 
   // src/core/notice.ts
+  var notice_exports = {};
+  __export(notice_exports, {
+    __resetNoticeForTests: () => __resetNoticeForTests,
+    cleanupNotices: () => cleanupNotices,
+    notice: () => notice,
+    notify: () => notify,
+    notifyActionError: () => notifyActionError,
+    notifySaveError: () => notifySaveError,
+    notifyUndo: () => notifyUndo
+  });
   function maxVisible() {
     const v = Number(noticePref("noticeMaxVisible"));
     return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
@@ -5228,6 +5238,22 @@ var BZW_review = (() => {
         n.timer = window.setTimeout(() => hideNow(n), dur);
       }
     }
+  }
+  function __resetNoticeForTests() {
+    live.length = 0;
+    for (const k of Object.keys(recent)) delete recent[k];
+  }
+  function cleanupNotices() {
+    for (const n of live.splice(0)) {
+      if (n.timer !== null) {
+        window.clearTimeout(n.timer);
+        n.timer = null;
+      }
+      if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+    }
+    for (const k of Object.keys(recent)) delete recent[k];
+    const container = document.getElementById("bz-notice-container");
+    if (container && container.parentNode) container.parentNode.removeChild(container);
   }
   function noopHandle() {
     return {
@@ -31479,7 +31505,7 @@ ${body}`;
     const saved = savedUrls || /* @__PURE__ */ new Set();
     const byUrl = clipUrls || /* @__PURE__ */ new Set();
     const rows = /* @__PURE__ */ new Map();
-    const bump = (rawSite, unread) => {
+    const bump2 = (rawSite, unread) => {
       const site = normSite(rawSite);
       let r = rows.get(site);
       if (!r) {
@@ -31489,12 +31515,12 @@ ${body}`;
       r.total++;
       if (unread) r.unread++;
     };
-    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
+    for (const n of clipNotes || []) bump2(String(n && n.site || ""), false);
     for (const a of articles || []) {
       if (!a || a.read) continue;
       if (saved.has(String(a.url || ""))) continue;
       if (a.url && byUrl.has(String(a.url))) continue;
-      bump(siteName(a), true);
+      bump2(siteName(a), true);
     }
     return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
   }
@@ -42996,9 +43022,9 @@ ${bodyText.substring(0, 6e3)}`;
     try {
       const ok = await writeClipNote(raw);
       if (!ok) return false;
-      const bump = await markHandledAndBump(raw, "saved");
+      const bump2 = await markHandledAndBump(raw, "saved");
       const evt = buildReadEvt(raw, "saved");
-      if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
+      if (bump2.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: clipFilePathOf(raw.title) });
       void flushReadingSession();
       return true;
@@ -44724,16 +44750,16 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function titleWords(titles, limit) {
     const map = /* @__PURE__ */ new Map();
-    const bump = (w) => {
+    const bump2 = (w) => {
       if (CN_STOPWORDS.has(w)) return;
       map.set(w, (map.get(w) || 0) + 1);
     };
     for (const t of titles) {
       for (const seg of String(t).match(/[\u4e00-\u9fa5]{2,}/g) || []) {
-        for (let i = 0; i + 2 <= seg.length; i++) bump(seg.slice(i, i + 2));
+        for (let i = 0; i + 2 <= seg.length; i++) bump2(seg.slice(i, i + 2));
       }
       for (const w of String(t).match(/[A-Za-z]{3,}/g) || []) {
-        bump(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
+        bump2(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
       }
     }
     return [...map.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit).map(([w, n]) => ({ w, n }));
@@ -60020,6 +60046,605 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/people/settings.ts
+  var settings_exports8 = {};
+  __export(settings_exports8, {
+    peopleSettingsSchema: () => peopleSettingsSchema
+  });
+  function peopleSettingsSchema(opts) {
+    return {
+      groups: [
+        {
+          icon: "folder-open",
+          name: "数据源",
+          rows: [
+            {
+              type: "text",
+              name: "数据文件夹",
+              desc: "预处理导出的联系人数据目录，粘贴完整路径",
+              binding: { key: "peopleDataDir" },
+              placeholder: "例如 D:\\微信备份\\export_full"
+            },
+            {
+              type: "toggle",
+              name: "打开时自动扫描",
+              desc: "打开脸谱面板时自动扫描数据源",
+              binding: { key: "peopleScanOnOpen" }
+            },
+            {
+              type: "toggle",
+              name: "群聊纳入列表",
+              desc: "多位发送者的会话也进勾选列表",
+              binding: { key: "peopleIncludeGroups" }
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "预览",
+          rows: [
+            {
+              type: "toggle",
+              name: "语音转写",
+              desc: "语音消息以转写文本进预览",
+              binding: { key: "peoplePreviewVoice" }
+            },
+            {
+              type: "select",
+              name: "图片描述",
+              desc: "图片条目的描述文本来源",
+              binding: { key: "peopleImageDescMode" },
+              options: [
+                { value: "file", label: "预生成文件" },
+                { value: "ai", label: "AI 视觉" },
+                { value: "off", label: "不读取" }
+              ]
+            },
+            {
+              type: "info",
+              name: "AI 视觉暂未接入",
+              desc: "先用其他来源，接入后无需改数据",
+              visibleWhen: (s) => {
+                var _a2;
+                return String((_a2 = s.peopleImageDescMode) != null ? _a2 : "file") === "ai";
+              }
+            },
+            {
+              type: "toggle",
+              name: "视频标签",
+              desc: "视频消息以时长标签进预览",
+              binding: { key: "peoplePreviewVideo" }
+            },
+            {
+              type: "toggle",
+              name: "系统消息",
+              desc: "撤回与打招呼等锚点消息保留",
+              binding: { key: "peopleKeepSystem" }
+            }
+          ]
+        },
+        {
+          icon: "wand-2",
+          name: "生成",
+          rows: [
+            {
+              type: "select",
+              name: "生成触发",
+              desc: "导入完成后是否自动画脸谱",
+              binding: { key: "peopleGenTrigger" },
+              options: [
+                { value: "manual", label: "手动" },
+                { value: "auto", label: "自动" }
+              ]
+            },
+            {
+              type: "number",
+              name: "自动重画阈值",
+              desc: "新素材达到该条数自动重画",
+              binding: { key: "peopleGenThreshold" },
+              min: 0,
+              max: 1e5,
+              step: 1
+            }
+          ]
+        },
+        {
+          icon: "shield",
+          name: "隐私",
+          rows: [
+            {
+              type: "info",
+              name: "原始媒体不入库",
+              desc: "图片语音视频文件留在外部数据目录，不复制进库"
+            },
+            {
+              type: "info",
+              name: "预览只存文本",
+              desc: "语音转写与图片描述以文本进预览缓存"
+            },
+            {
+              type: "button",
+              name: "清空预览",
+              buttonText: "清空",
+              cta: true,
+              desc: "清掉全部导入预览缓存，不动已生成的脸谱",
+              onClick: () => {
+                var _a2;
+                return void ((_a2 = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a2.call(opts));
+              }
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings8 = __esm({
+    "src/people/settings.ts"() {
+    }
+  });
+
+  // src/people/media.ts
+  function parseMediaTag(msg) {
+    const s = String(msg != null ? msg : "").trim();
+    const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
+    if (!m) return null;
+    const body = m[3].trim();
+    if (!body) return null;
+    const kind = m[1] === "语音" ? "voice" : "image";
+    const out = { kind, text: body };
+    if (kind === "voice") {
+      let durationSec;
+      const emos = [];
+      for (const part of m[2].split("·")) {
+        const t = part.trim();
+        if (!t) continue;
+        const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t);
+        if (dm) {
+          if (durationSec === void 0) durationSec = Number(dm[1]);
+        } else {
+          emos.push(t);
+        }
+      }
+      if (durationSec !== void 0) out.durationSec = durationSec;
+      const emotion = emos.join("·").trim();
+      if (emotion) out.emotion = emotion;
+    }
+    return out;
+  }
+  function emptyMediaStats() {
+    return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+  }
+  function collectMediaStats(messages) {
+    var _a2;
+    const out = emptyMediaStats();
+    for (const m of messages) {
+      const mat = parseMediaTag((_a2 = m == null ? void 0 : m.text) != null ? _a2 : "");
+      if (!mat) continue;
+      if (mat.kind === "voice") {
+        out.voiceCount++;
+        if (mat.durationSec !== void 0 && Number.isFinite(mat.durationSec)) out.voiceTotalSec += mat.durationSec;
+      } else {
+        out.imageCount++;
+      }
+    }
+    return out;
+  }
+  var init_media = __esm({
+    "src/people/media.ts"() {
+    }
+  });
+
+  // src/people/parse.ts
+  function normalizeKind(typeName, typeNum, text) {
+    if (typeName !== void 0 && typeName !== "") return kindFromTypeName(typeName);
+    if (typeNum !== void 0 && typeNum !== "") {
+      const k = kindFromTypeNum(typeNum, text);
+      if (k) return k;
+    }
+    return kindFromLabel(text);
+  }
+  function kindFromTypeName(raw) {
+    const n = raw.trim();
+    if (!n) return "其他";
+    if (/^(文本|文字|text)$/i.test(n)) return "文本";
+    if (n.includes("通话")) return "通话";
+    if (n.includes("撤回") || n.includes("系统")) return "系统";
+    if (n.includes("引用")) return "引用";
+    if (n.includes("表情")) return "表情";
+    if (n.includes("图片")) return "图片";
+    if (n.includes("视频")) return "视频";
+    if (n.includes("语音")) return "语音";
+    if (n.includes("文件")) return "文件";
+    if (n.includes("分享") || n.includes("链接")) return "分享";
+    return "其他";
+  }
+  function kindFromTypeNum(raw, text) {
+    const s = raw.trim();
+    if (!/^\d+$/.test(s)) return null;
+    switch (Number(s)) {
+      case 1:
+        return "文本";
+      case 3:
+        return "图片";
+      case 34:
+        return "语音";
+      case 43:
+        return "视频";
+      case 47:
+        return "表情";
+      case 50:
+        return "通话";
+      case 49:
+        if (text.startsWith("[引用")) return "引用";
+        if (text.startsWith("[文件")) return "文件";
+        return "分享";
+      case 1e4:
+      case 10002:
+        return "系统";
+      default:
+        return "其他";
+    }
+  }
+  function kindFromLabel(text) {
+    const t = text.trim();
+    if (t.startsWith("[图片")) return "图片";
+    if (t.startsWith("[视频")) return "视频";
+    if (t.startsWith("[语音")) return "语音";
+    if (t.startsWith("[通话") || t.includes("通话时长")) return "通话";
+    if (t.startsWith("[表情")) return "表情";
+    if (t.startsWith("[文件")) return "文件";
+    if (t.startsWith("[引用")) return "引用";
+    if (t.startsWith("[分享") || t.startsWith("[链接")) return "分享";
+    if (t.startsWith("[撤回")) return "系统";
+    return "文本";
+  }
+  var init_parse = __esm({
+    "src/people/parse.ts"() {
+    }
+  });
+
+  // src/people/datasource.ts
+  var datasource_exports = {};
+  __export(datasource_exports, {
+    PreviewStore: () => PreviewStore,
+    emptyPreviewData: () => emptyPreviewData,
+    emptyPreviewStats: () => emptyPreviewStats,
+    getPreviewFilePath: () => getPreviewFilePath,
+    isGroupChat: () => isGroupChat,
+    isSelfWho: () => isSelfWho,
+    listContactDirs: () => listContactDirs,
+    mergePreview: () => mergePreview,
+    msgKey: () => msgKey,
+    normalizeChatJson: () => normalizeChatJson,
+    normalizeOptionsFromSettings: () => normalizeOptionsFromSettings,
+    previewMediaBadge: () => previewMediaBadge,
+    previewStatsOf: () => previewStatsOf,
+    previewToUnified: () => previewToUnified,
+    readContactBundle: () => readContactBundle,
+    shouldGenerate: () => shouldGenerate
+  });
+  function emptyPreviewData() {
+    return { version: 1, contacts: {} };
+  }
+  function emptyPreviewStats() {
+    return { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+  }
+  function hash32(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+  function msgKey(raw) {
+    var _a2, _b2, _c;
+    const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
+    if (sid) return `s${sid}:${(_a2 = raw.ct) != null ? _a2 : 0}`;
+    return `h${hash32(`${(_b2 = raw.ct) != null ? _b2 : 0}|${String((_c = raw.msg) != null ? _c : "")}`)}`;
+  }
+  function isSelfWho(who) {
+    return String(who != null ? who : "").trim() === SELF_WHO;
+  }
+  function matchImageDesc(raw, descByFile, descByMonth, descUsed) {
+    var _a2, _b2, _c, _d;
+    const img = String((_a2 = raw.img) != null ? _a2 : "").trim();
+    if (img) {
+      const exact = descByFile.get(img);
+      return exact ? String((_b2 = exact.desc) != null ? _b2 : "").trim() : "";
+    }
+    const ct = Number(raw.ct);
+    if (!Number.isFinite(ct)) return "";
+    const list = descByMonth.get(monthOf(ct));
+    if (!(list == null ? void 0 : list.length)) return "";
+    let best = null;
+    let bestDiff = Infinity;
+    for (const it of list) {
+      const ict = Number(it.ct);
+      if (!Number.isFinite(ict)) continue;
+      const diff = Math.abs(ict - ct);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = it;
+      }
+    }
+    if (!best || bestDiff > IMG_DESC_NEAREST_SEC) return "";
+    const file = String((_c = best.file) != null ? _c : "").trim();
+    const usedKey = file || `ct:${Number(best.ct)}`;
+    if (descUsed.has(usedKey)) return "";
+    descUsed.add(usedKey);
+    return String((_d = best.desc) != null ? _d : "").trim();
+  }
+  function isGroupChat(raws) {
+    var _a2;
+    const others = /* @__PURE__ */ new Set();
+    for (const r of raws) {
+      if (!r || typeof r !== "object") continue;
+      const who = String((_a2 = r.who) != null ? _a2 : "").trim();
+      if (!who || isSelfWho(who)) continue;
+      others.add(who);
+      if (others.size > 1) return true;
+    }
+    return false;
+  }
+  function monthOf(sec) {
+    const d = new Date(sec * 1e3);
+    if (Number.isNaN(d.getTime())) return "";
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function emotionZh(emotion) {
+    var _a2;
+    const e = emotion.trim();
+    return (_a2 = EMOTION_ZH[e.toUpperCase()]) != null ? _a2 : e;
+  }
+  function buildVoiceText(raw, voice) {
+    var _a2, _b2;
+    const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
+    const emo = emotionZh(String((_a2 = voice == null ? void 0 : voice.emotion) != null ? _a2 : ""));
+    const text = String((_b2 = voice == null ? void 0 : voice.text) != null ? _b2 : "").trim();
+    const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
+    return text ? `${head} ${text}` : head;
+  }
+  function normalizeChatJson(raws, opts, extras) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
+    const voiceByWav = /* @__PURE__ */ new Map();
+    for (const v of (_a2 = extras == null ? void 0 : extras.voice) != null ? _a2 : []) {
+      if (!v || typeof v !== "object") continue;
+      const wav = String((_b2 = v.wav) != null ? _b2 : "").trim();
+      if (!wav) continue;
+      voiceByWav.set(wav, v);
+      const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
+      if (base) voiceByWav.set(base, v);
+    }
+    const descByFile = /* @__PURE__ */ new Map();
+    const descByMonth = /* @__PURE__ */ new Map();
+    for (const it of (_c = extras == null ? void 0 : extras.imageDesc) != null ? _c : []) {
+      if (!it || typeof it !== "object") continue;
+      const desc = String((_d = it.desc) != null ? _d : "").trim();
+      if (!desc) continue;
+      const file = String((_e = it.file) != null ? _e : "").trim();
+      if (file) descByFile.set(file, it);
+      const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
+      if (!month) continue;
+      let list = descByMonth.get(month);
+      if (!list) {
+        list = [];
+        descByMonth.set(month, list);
+      }
+      list.push(it);
+    }
+    for (const list of descByMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
+    const descUsed = /* @__PURE__ */ new Set();
+    const kindCounts = {};
+    const msgs = [];
+    let maxSid = 0;
+    let rawTotal = 0;
+    for (const item of raws) {
+      rawTotal++;
+      if (!item || typeof item !== "object") {
+        kindCounts["其他"] = ((_f = kindCounts["其他"]) != null ? _f : 0) + 1;
+        continue;
+      }
+      const raw = item;
+      const typeNum = String((_g = raw.type) != null ? _g : "");
+      const text = String((_h = raw.msg) != null ? _h : "").trim();
+      bump(kindCounts, normalizeKind(void 0, typeNum, text));
+      const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
+      if (sid && sid > maxSid) maxSid = sid;
+      const ts = Number.isFinite(raw.ct) ? Math.round(raw.ct * 1e3) : NaN;
+      if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue;
+      let out = null;
+      switch (raw.type) {
+        case 1:
+          out = text || null;
+          break;
+        case 34: {
+          if (!opts.previewVoice) continue;
+          const tagged = text ? parseMediaTag(text) : null;
+          if (tagged) {
+            out = text;
+            break;
+          }
+          const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
+          out = buildVoiceText(raw, v);
+          break;
+        }
+        case 3: {
+          if (opts.imageDescMode !== "file") {
+            out = "[图片]";
+            break;
+          }
+          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+          out = hit ? `[图片] ${hit}` : "[图片]";
+          break;
+        }
+        case 43: {
+          if (!opts.previewVideo) continue;
+          const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
+          out = dur ? `[视频 ${dur}秒]` : "[视频]";
+          break;
+        }
+        case 1e4:
+          if (!opts.keepSystem) continue;
+          out = text || null;
+          break;
+        default:
+          continue;
+      }
+      if (!out) continue;
+      msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
+    }
+    msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+    const stats = previewStatsOf(msgs);
+    return { msgs, kindCounts, stats, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
+  }
+  function bump(counts, kind) {
+    var _a2;
+    counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
+  }
+  function previewStatsOf(msgs) {
+    const unified = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+    const media = collectMediaStats(unified);
+    return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+  }
+  function mergePreview(existing, incoming, nowIso) {
+    var _a2, _b2, _c, _d;
+    const seen = new Set(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => m.key));
+    const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
+    const msgs = [...(_b2 = existing == null ? void 0 : existing.msgs) != null ? _b2 : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+    const contact = {
+      msgs,
+      watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
+      stats: previewStatsOf(msgs),
+      // 全量形态计数每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
+      updatedAt: nowIso
+    };
+    return { contact, added: fresh.length };
+  }
+  function previewToUnified(msgs) {
+    return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  }
+  function shouldGenerate(newCount, trigger, threshold) {
+    if (!(newCount > 0)) return false;
+    const n = Math.max(0, Math.round(threshold || 0));
+    if (trigger === "auto") return n === 0 || newCount >= n;
+    return n > 0 && newCount >= n;
+  }
+  function normalizeOptionsFromSettings() {
+    var _a2, _b2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    const mode = String((_b2 = s.peopleImageDescMode) != null ? _b2 : "file");
+    return {
+      previewVoice: s.peoplePreviewVoice !== false,
+      imageDescMode: mode === "off" || mode === "ai" ? mode : "file",
+      previewVideo: s.peoplePreviewVideo !== false,
+      keepSystem: s.peopleKeepSystem !== false
+    };
+  }
+  function getFs2() {
+    const w = window;
+    if (!w || !w.require) return null;
+    try {
+      return w.require("fs");
+    } catch (e) {
+      return null;
+    }
+  }
+  function listContactDirs(dataDir) {
+    const fs = getFs2();
+    if (!fs || !dataDir) return [];
+    try {
+      return fs.readdirSync(dataDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => String(d.name)).filter((name) => {
+        try {
+          return fs.existsSync(`${dataDir}/${name}/chat.json`);
+        } catch (e) {
+          return false;
+        }
+      }).sort((a, b) => a.localeCompare(b, "zh"));
+    } catch (e) {
+      return [];
+    }
+  }
+  function readContactBundle(dataDir, name) {
+    var _a2, _b2;
+    const fs = getFs2();
+    if (!fs) return null;
+    const readJson = (path) => {
+      try {
+        const parsed = JSON.parse(String(fs.readFileSync(path, "utf8")).replace(/^\uFEFF/, ""));
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    const raws = readJson(`${dataDir}/${name}/chat.json`);
+    if (!raws) return null;
+    return {
+      raws,
+      voice: (_a2 = readJson(`${dataDir}/${name}/voice.json`)) != null ? _a2 : [],
+      imageDesc: (_b2 = readJson(`${dataDir}/${name}/image_desc.json`)) != null ? _b2 : []
+    };
+  }
+  function getPreviewFilePath() {
+    const s = tryGetSettings();
+    return storageFile("people-preview.json", s && s.storagePath || "CONFIG/STORAGE");
+  }
+  function previewMediaBadge(stats) {
+    var _a2, _b2, _c;
+    if (!stats) return null;
+    const acc = emptyMediaStats();
+    acc.voiceCount = (_a2 = stats.voiceCount) != null ? _a2 : 0;
+    acc.voiceTotalSec = (_b2 = stats.voiceTotalSec) != null ? _b2 : 0;
+    acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
+    return acc.voiceCount || acc.imageCount ? acc : null;
+  }
+  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, PreviewStore;
+  var init_datasource = __esm({
+    "src/people/datasource.ts"() {
+      init_storage();
+      init_settings_provider();
+      init_media();
+      init_parse();
+      SELF_WHO = "我";
+      IMG_DESC_NEAREST_SEC = 12 * 3600;
+      EMOTION_ZH = {
+        NEUTRAL: "平静",
+        HAPPY: "开心",
+        ANGRY: "生气",
+        SAD: "难过"
+      };
+      PreviewStore = class {
+        constructor(app) {
+          this.app = app;
+          this.filePath = getPreviewFilePath();
+        }
+        open() {
+          return jsonFileStore(this.filePath, { defaultValue: emptyPreviewData, app: this.app });
+        }
+        async read() {
+          return enqueueFileTask(this.filePath, async () => this.open().read());
+        }
+        /** 合并写回一位联系人（读→改→写整体入队） */
+        async upsertContact(name, contact) {
+          await enqueueFileTask(this.filePath, async () => {
+            const store2 = this.open();
+            const data = await store2.read();
+            data.contacts[name] = contact;
+            await store2.write(data);
+          });
+        }
+        /** 清空全部预览（保留文件框架；不动 people.json 的 PersonEntry） */
+        async clear() {
+          await enqueueFileTask(this.filePath, async () => {
+            const store2 = this.open();
+            await store2.write(emptyPreviewData());
+          });
+        }
+      };
+    }
+  });
+
   // src/smartcat/config.ts
   function defaultConfig() {
     return {
@@ -60868,8 +61493,8 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/settings.ts
-  var settings_exports8 = {};
-  __export(settings_exports8, {
+  var settings_exports9 = {};
+  __export(settings_exports9, {
     DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
     migrateAsrKeys: () => migrateAsrKeys,
     migrateAutoLinkSettings: () => migrateAutoLinkSettings,
@@ -61030,7 +61655,7 @@ GitHub 仓库：${ghInfo.title}
     return migrated;
   }
   var MEMO_KEY_MIGRATIONS, RETIRED_AI_KEYS, AI_OVERRIDE_MAPS, RETIRED_SECONDBRAIN_KEYS, RETIRED_JEV_KEYS, LEGACY_JEV_DEFAULT_MODEL, legacyTargetOf, DEFAULT_SETTINGS;
-  var init_settings8 = __esm({
+  var init_settings9 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
       init_data14();
@@ -61311,6 +61936,16 @@ GitHub 仓库：${ghInfo.title}
         knowledgeCacheRetentionDays: 7,
         // 挂载树 AI 语义建议（issue 318）：默认开（打开白板即跑；缓存命中则无感）
         knowledgeMountAutoSuggest: true,
+        // 脸谱数据源（issue 446）：目录空 = 不显示数据源入口；其余按拍板默认
+        peopleDataDir: "",
+        peopleScanOnOpen: true,
+        peopleIncludeGroups: false,
+        peoplePreviewVoice: true,
+        peopleImageDescMode: "file",
+        peoplePreviewVideo: true,
+        peopleKeepSystem: true,
+        peopleGenTrigger: "manual",
+        peopleGenThreshold: 0,
         // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
         settingsPanelLayout: "jingwei",
         settingsPanelSkin: "chenhun",
@@ -61475,6 +62110,22 @@ GitHub 仓库：${ghInfo.title}
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports4))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings7(), settings_exports7))).passwordVaultSettingsSchema(),
+        // 脸谱（issue 446）：「清空预览」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+        people: async () => {
+          const { peopleSettingsSchema: peopleSettingsSchema2 } = await Promise.resolve().then(() => (init_settings8(), settings_exports8));
+          const { PreviewStore: PreviewStore2 } = await Promise.resolve().then(() => (init_datasource(), datasource_exports));
+          const { notifyActionError: notifyActionError2 } = await Promise.resolve().then(() => (init_notice(), notice_exports));
+          return peopleSettingsSchema2({
+            onClearPreview: async () => {
+              try {
+                await new PreviewStore2(getApp()).clear();
+                notice("预览缓存已清空", "delete");
+              } catch (e) {
+                notifyActionError2(e, "清空预览缓存");
+              }
+            }
+          });
+        },
         knowledge: async () => {
           const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui3(), ui_exports3));
           return knowledgeSettingsSchema2({
@@ -61512,6 +62163,8 @@ GitHub 仓库：${ghInfo.title}
         { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录与写日记口径", schemaLoader: schemaLoaders.diary },
         { id: "memo", name: "备忘录", icon: DOMAIN_ICONS.memo, desc: "备忘录工作台与提醒设置", schemaLoader: schemaLoaders.memo },
         { id: "belongings", name: "归物本", icon: DOMAIN_ICONS.belongings, desc: "物品登记与查找", schemaLoader: schemaLoaders.belongings },
+        // 脸谱（issue 435 面板 / issue 446 数据源）：与备忘录同属记录类
+        { id: "people", name: "脸谱", icon: DOMAIN_ICONS.people, desc: "微信聊天导入与 AI 人物画像", schemaLoader: schemaLoaders.people },
         { id: "clipping", name: "剪藏本", icon: DOMAIN_ICONS.clipping, desc: "未读流与剪藏笔记", schemaLoader: schemaLoaders.clipping },
         { id: "favorites", name: "收藏本", icon: DOMAIN_ICONS.favorites, desc: "收藏条目", schemaLoader: schemaLoaders.favorites },
         { id: "reading-report", name: "阅读报告", icon: DOMAIN_ICONS["reading-report"], desc: "阅读统计", noSettings: true },
@@ -61533,7 +62186,7 @@ GitHub 仓库：${ghInfo.title}
       NAV_SECS = [
         { title: "基础", ids: ["global", "notice", "home"] },
         { title: "智能", ids: ["ai", "secondbrain"] },
-        { title: "记录", ids: ["diary", "memo", "belongings"] },
+        { title: "记录", ids: ["diary", "memo", "belongings", "people"] },
         { title: "收集", ids: ["clipping", "favorites"] },
         { title: "媒体与阅读", ids: ["cinema", "bookshelf", "gameshelf", "review", "knowledge"] },
         { title: "工具", ids: ["pomodoro", "smartcat"] },
@@ -62011,7 +62664,7 @@ GitHub 仓库：${ghInfo.title}
             ]
           });
           if (ans !== "ok") return;
-          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings8(), settings_exports8));
+          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = await Promise.resolve().then(() => (init_settings9(), settings_exports9));
           const defaults = DEFAULT_SETTINGS2;
           const s = getSettings();
           let n = 0;

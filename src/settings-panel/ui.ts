@@ -106,6 +106,22 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
+  // 脸谱（issue 446）：「清空预览」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+  people: async () => {
+    const { peopleSettingsSchema } = await import('../people/settings');
+    const { PreviewStore } = await import('../people/datasource');
+    const { notifyActionError } = await import('../core/notice');
+    return peopleSettingsSchema({
+      onClearPreview: async () => {
+        try {
+          await new PreviewStore(getApp()).clear();
+          notice('预览缓存已清空', 'delete');
+        } catch (e) {
+          notifyActionError(e, '清空预览缓存');
+        }
+      },
+    });
+  },
   knowledge: async () => {
     const { knowledgeSettingsSchema } = await import('../knowledge/ui');
     // 清空建议缓存（挂载树 issue 318）：域内单文件缓存的清空入口，接线口径同「清空历史」回调
@@ -148,6 +164,8 @@ export const DOMAINS: DomainDef[] = [
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录与写日记口径', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: DOMAIN_ICONS.memo, desc: '备忘录工作台与提醒设置', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: DOMAIN_ICONS.belongings, desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
+  // 脸谱（issue 435 面板 / issue 446 数据源）：与备忘录同属记录类
+  { id: 'people', name: '脸谱', icon: DOMAIN_ICONS.people, desc: '微信聊天导入与 AI 人物画像', schemaLoader: schemaLoaders.people },
   { id: 'clipping', name: '剪藏本', icon: DOMAIN_ICONS.clipping, desc: '未读流与剪藏笔记', schemaLoader: schemaLoaders.clipping },
   { id: 'favorites', name: '收藏本', icon: DOMAIN_ICONS.favorites, desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   { id: 'reading-report', name: '阅读报告', icon: DOMAIN_ICONS['reading-report'], desc: '阅读统计', noSettings: true },
@@ -174,7 +192,7 @@ export const DOMAINS: DomainDef[] = [
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
   { title: '基础', ids: ['global', 'notice', 'home'] },
   { title: '智能', ids: ['ai', 'secondbrain'] },
-  { title: '记录', ids: ['diary', 'memo', 'belongings'] },
+  { title: '记录', ids: ['diary', 'memo', 'belongings', 'people'] },
   { title: '收集', ids: ['clipping', 'favorites'] },
   { title: '媒体与阅读', ids: ['cinema', 'bookshelf', 'gameshelf', 'review', 'knowledge'] },
   { title: '工具', ids: ['pomodoro', 'smartcat'] },

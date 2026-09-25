@@ -113,7 +113,7 @@ describe('设置面板（settings-panel）', () => {
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）；按 data-sp-domain 契约定位
     //（ARCH-5：逐位下标断言退役，域清单插入/重排不再整段错位）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19
+    expect(navIcons.length).toBe(20); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
     const iconOf = (id: string) =>
       popup.querySelector(`.bz-sp-nav-item[data-sp-domain="${id}"] .bz-sp-nav-ic`)?.getAttribute('data-icon');
     expect(iconOf('global')).toBe('settings'); // 通用
@@ -122,6 +122,7 @@ describe('设置面板（settings-panel）', () => {
     expect(iconOf('ai')).toBe('sparkles'); // AI（智能组首位）
     expect(iconOf('diary')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
     expect(iconOf('memo')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
+    expect(iconOf('people')).toBe('drama'); // 脸谱（记录组，issue 446）
     expect(iconOf('cinema')).toBe('clapperboard'); // 影院（媒体与阅读组首位）
     expect(iconOf('bookshelf')).toBe('book-open'); // 书库（媒体与阅读组）
     expect(iconOf('gameshelf')).toBe('gamepad-2'); // 游戏库（媒体与阅读组，2026-09-17 归位）
@@ -761,11 +762,11 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 19 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 20 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19
+    expect(names).toHaveLength(20); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
     expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
@@ -801,11 +802,11 @@ describe('设置面板（settings-panel）', () => {
     let names: (string | null)[];
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || names.length === 19) break;
+      if (Date.now() > deadline0 || names.length === 20) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(19); // issue 368 补游戏架 → 19
+    expect(names).toHaveLength(20); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
     expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
@@ -862,7 +863,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
     // 拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(19); // issue 368 补游戏架
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(20); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

@@ -22,7 +22,21 @@ import {
 import { buildFaceIncremental, mergeManualEvents, planIncremental } from './incremental';
 import { buildMediaNote, emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatCount, formatReplySec } from './stats';
-import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile } from './types';
+import type { FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
+import {
+  PreviewStore,
+  isGroupChat,
+  listContactDirs,
+  mergePreview,
+  normalizeChatJson,
+  normalizeOptionsFromSettings,
+  previewMediaBadge,
+  previewToUnified,
+  readContactBundle,
+  shouldGenerate,
+  type PreviewStats,
+} from './datasource';
+import { tryGetSettings } from '../core/settings-provider';
 
 const ESC_ID = 'people-panel';
 
@@ -62,6 +76,38 @@ let listCache: PersonEntry[] = [];
 /** 合并流程（issue 442）：mergeFromId = 待并出的人物；mergeToId = 已点选、待二次确认的目标 */
 let mergeFromId: string | null = null;
 let mergeToId: string | null = null;
+
+// ---------------- 数据源（issue 446：预处理导出目录直连） ----------------
+
+/** 一位数据源联系人的扫描快照（内存态，不入盘） */
+interface DsContact {
+  /** 目录名（即预览桶键 / PersonEntry.id） */
+  name: string;
+  /** chat.json 原始条数 */
+  rawCount: number;
+  isGroup: boolean;
+  /** 归一化后能进预览的口径统计（按当前预览组开关） */
+  stats: PreviewStats;
+  /** 预览桶已有条数 */
+  previewCount: number;
+  /** 扫描时发现的新消息条数（原始 keys − 预览 keys） */
+  newCount: number;
+  /** 预览桶最新消息 ts（毫秒） */
+  lastTs: number | null;
+  /** 已画到的提炼锚点（PersonEntry.lastProcessedTs） */
+  processedTs: number | null;
+}
+
+let dsContacts: DsContact[] | null = null;
+let dsSelected = new Set<string>();
+let dsScanning = false;
+let dsImporting = false;
+/** 未纳入列表的群聊数（peopleIncludeGroups=false 时隐藏，meta 行提示） */
+let dsHiddenGroups = 0;
+/** 数据源区反馈行（扫描 / 导入 / 生成进行时与结果文案） */
+let dsNotice = '';
+/** 导入完成但未触发生成（manual）→ 反馈行出「画脸谱」手动入口 */
+let dsGenerateable = false;
 
 export function isPeopleOpen(): boolean {
   return overlay !== null;
@@ -103,6 +149,8 @@ export function openPeoplePanel(app?: unknown): void {
   overlay.addEventListener('change', onOverlayChange);
   overlay.addEventListener('input', onOverlayInput);
   void renderBody();
+  // 数据源自动扫描（issue 446）：配置了数据目录且开关未关时，打开面板即扫（结果供自动导入+生成判定）
+  if (dsDataDir() && tryGetSettings()?.peopleScanOnOpen !== false) void runScan();
 }
 
 export function closePeoplePanel(): void {
@@ -128,6 +176,13 @@ export function closePeoplePanel(): void {
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：此前漏重置，重开面板会落回编辑态）
   noteAddId = null;
+  dsContacts = null;
+  dsSelected = new Set();
+  dsScanning = false;
+  dsImporting = false;
+  dsHiddenGroups = 0;
+  dsNotice = '';
+  dsGenerateable = false;
   disarmDelete();
 }
 
@@ -149,6 +204,10 @@ function onOverlayClick(e: MouseEvent): void {
   if (e.target === overlay) { closePeoplePanel(); return; }
   if (t.closest('[data-people-close]')) { closePeoplePanel(); return; }
   if (t.closest('[data-people-import-btn]')) { if (!running) startImport(); return; }
+  // —— issue 446 数据源区（元素只在 list 视图出现，属性名独立不侵入下方分支） ——
+  if (t.closest('[data-people-ds-scan]')) { void runScan(); return; }
+  if (t.closest('[data-people-ds-import]')) { void importDsSelected(); return; }
+  if (t.closest('[data-people-ds-generate]')) { void generateDs([...dsSelected]); return; }
   if (t.closest('[data-people-pick-btn]')) { pickFile(); return; }
   if (t.closest('[data-people-repick-btn]')) { pending = null; selected = new Set(); names = new Map(); step = 'file'; pickFile(); return; }
   if (t.closest('[data-people-select-all]')) { selectAll(pending?.contacts ?? []); return; }
@@ -200,6 +259,12 @@ function onOverlayChange(e: Event): void {
     if (el.checked) selected.add(tk); else selected.delete(tk);
     updatePickFooter();
   }
+  // —— issue 446：数据源联系人勾选 ——
+  if (el.matches('[data-people-ds-check]')) {
+    const name = el.dataset.peopleDsCheck ?? '';
+    if (el.checked) dsSelected.add(name); else dsSelected.delete(name);
+    updateDsFooter();
+  }
   // —— issue 442：排序 / 标签筛选（原位刷卡墙，工具条不重建） ——
   if (el.matches('[data-people-sort]')) { sortKey = (el.value || 'recent') as SortKey; refreshWall(); }
   if (el.matches('[data-people-tag]')) { filterTag = el.value || ''; refreshWall(); }
@@ -246,6 +311,8 @@ async function renderList(body: HTMLElement): Promise<void> {
   renderStats(people);
   listCache = people;
   body.replaceChildren();
+  // 数据源区（issue 446）：配置了数据目录才出现；渲染扫描快照 / 联系人勾选 / 反馈行
+  if (dsDataDir()) body.appendChild(buildDataSource(people));
   if (!people.length) {
     body.appendChild(el('div', 'bz-people-empty', [
       el('div', 'bz-people-empty-mark', text('脸')),
@@ -457,17 +524,57 @@ function renderRun(body: HTMLElement): void {
   ]));
 }
 
+/** 生成目标（文件向导 / 数据源两条路径共用的内核入参） */
+interface GenTarget {
+  talker: string;
+  name: string;
+  msgs: UnifiedMessage[];
+  /** 全形态计数（文件路径 = 解析切片口径；数据源路径 = chat.json 全量口径，见 datasource） */
+  kindCounts: Record<string, number>;
+  /** 被过滤的非文本 / 空消息条数（导入记录 skippedCount 口径，评审 P2-2） */
+  skippedCount: number;
+  /** 导入记录的 file 标注（数据源路径 = `数据源:<名>`） */
+  fileLabel: string;
+}
+
 async function runGeneration(): Promise<void> {
   if (!pending || !store || running) return;
-  const targets = pending.contacts
+  const targets: GenTarget[] = pending.contacts
     .filter((c) => c.messages.length > 0 && selected.has(c.talker))
-    .map((c) => ({ talker: c.talker, name: (names.get(c.talker) ?? '').trim() || displayName(c.talker), group: c }));
+    .map((c) => ({
+      talker: c.talker,
+      name: (names.get(c.talker) ?? '').trim() || displayName(c.talker),
+      msgs: c.messages,
+      kindCounts: c.kindCounts,
+      skippedCount: c.skippedCount,
+      fileLabel: pending!.file,
+    }));
   if (!targets.length) { notice('还没有勾选联系人', 'warning'); return; }
-  const file = pending.file;
   running = true;
   step = 'run';
   runResult = null;
   renderBody();
+  const res = await generateForTargets(targets, setRun);
+  running = false;
+  runResult = res;
+  pending = null;
+  const parts: string[] = [];
+  if (res.ok) parts.push(`已生成 ${res.ok} 张脸谱`);
+  if (res.skipped.length) parts.push(`${res.skipped.length} 位没有新消息、无需重画`);
+  if (res.failed.length) parts.push(`${res.failed.length} 位失败`);
+  notice(parts.join('，') || '没有可生成的脸谱', res.failed.length ? 'warning' : 'success');
+  renderBody();
+}
+
+/**
+ * 批量生成内核（issue 446 自 runGeneration 收编，两条导入路径共用）：
+ * 逐人 planIncremental（441 机制不动）→ full 走 buildFace / 其余走 buildFaceIncremental →
+ * 落导入记录 / 脸谱 / 锚点。skip 不落 0 条记录；失败逐人收集不中断。
+ */
+async function generateForTargets(
+  targets: GenTarget[],
+  onProgress?: (main: string, sub: string) => void
+): Promise<{ ok: number; failed: string[]; skipped: string[] }> {
   const ai = createAI();
   const askExtract: AskLLM = (p) => ai.json(p);
   const askPortrait: AskLLM = (p) => ai.chat(p);
@@ -475,23 +582,23 @@ async function runGeneration(): Promise<void> {
   const failed: string[] = [];
   const skipped: string[] = [];
   for (let i = 0; i < targets.length; i++) {
-    const { talker, name, group } = targets[i];
+    const { talker, name, msgs, kindCounts, skippedCount, fileLabel } = targets[i];
     const main = `正在生成「${name}」（${i + 1}/${targets.length}）`;
-    setRun(main, '');
+    onProgress?.(main, '');
     try {
-      const existing = (await store.list()).find((p) => p.id === talker);
-      const plan = planIncremental(group.messages, existing);
+      const existing = (await store!.list()).find((p) => p.id === talker);
+      const plan = planIncremental(msgs, existing);
       const now = new Date().toISOString();
       // 纯本地聚合（issue 440），与原文一起用完即弃，落盘只有统计结果；媒体计数见 issue 445
-      const stats = computeStats(group.messages, group.kindCounts);
+      const stats = computeStats(msgs, kindCounts);
       // 非 skip 才落一条导入记录（评审 P2-2：skip 不落 0 条记录）；messageCount 记本次实际进提炼的条数
       const rec: ImportRecord = {
-        file,
+        file: fileLabel,
         importedAt: now,
         messageCount: plan.msgs.length,
-        skippedCount: group.skippedCount,
-        timeFrom: new Date(group.messages[0].ts).toISOString(),
-        timeTo: new Date(group.messages[group.messages.length - 1].ts).toISOString(),
+        skippedCount,
+        timeFrom: new Date(msgs[0].ts).toISOString(),
+        timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
         stats,
       };
       if (plan.mode === 'skip') {
@@ -502,9 +609,9 @@ async function runGeneration(): Promise<void> {
           if (imports.length && !imports.some((r) => r.stats)) {
             imports = [...imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt));
             imports[0] = { ...imports[0], stats };
-            await store.upsert({ ...existing, name, imports });
+            await store!.upsert({ ...existing, name, imports });
           } else {
-            await store.upsert({ ...existing, name });
+            await store!.upsert({ ...existing, name });
           }
         }
         skipped.push(name);
@@ -516,7 +623,7 @@ async function runGeneration(): Promise<void> {
       } else if (plan.olderCount > 0) {
         notice(`「${name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      // 媒体素材清单说明（issue 445）：按本次导入文件的统计口径（与 stats 同源）
+      // 媒体素材清单说明（issue 445）：按本次导入的统计口径（与 stats 同源）
       const mediaNote = buildMediaNote({
         voiceCount: stats.voiceCount ?? 0,
         voiceTotalSec: stats.voiceTotalSec ?? 0,
@@ -524,15 +631,15 @@ async function runGeneration(): Promise<void> {
       });
       const face = plan.mode === 'full'
         ? await buildFace(askExtract, askPortrait, plan.msgs, name, (done, total) => {
-            setRun(main, `第 ${done} / ${total} 批`);
+            onProgress?.(main, `第 ${done} / ${total} 批`);
           }, undefined, mediaNote)
         : await buildFaceIncremental(askExtract, askPortrait, plan.msgs, name, existing?.digest, (done, total) => {
             const lead = plan.mode === 'older' ? `补录 ${plan.msgs.length} 条` : `新消息 ${plan.msgs.length} 条`;
-            setRun(main, `${lead} · 第 ${done} / ${total} 批`);
+            onProgress?.(main, `${lead} · 第 ${done} / ${total} 批`);
           }, mediaNote);
       const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
-      await store.upsert(entry);
-      await store.appendImport(talker, rec);
+      await store!.upsert(entry);
+      await store!.appendImport(talker, rec);
       const digest: FaceDigest = {
         portrait: face.portrait,
         events: mergeManualEvents(face.events, existing?.manualEvents), // issue 439：手动随手记并入事件素材
@@ -540,24 +647,16 @@ async function runGeneration(): Promise<void> {
         chronicle: face.chronicle || undefined,
         generatedAt: now,
       };
-      await store.setDigest(talker, digest);
+      await store!.setDigest(talker, digest);
       // 锚点写回：已提炼过的最大消息时间戳（组内升序取末条；补录不回退锚点）
-      await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, plan.msgs[plan.msgs.length - 1].ts));
+      await store!.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, plan.msgs[plan.msgs.length - 1].ts));
       ok++;
     } catch (e) {
       failed.push(name);
       console.warn('[people] 生成失败:', name, e);
     }
   }
-  running = false;
-  runResult = { ok, failed, skipped };
-  pending = null;
-  const parts: string[] = [];
-  if (ok) parts.push(`已生成 ${ok} 张脸谱`);
-  if (skipped.length) parts.push(`${skipped.length} 位没有新消息、无需重画`);
-  if (failed.length) parts.push(`${failed.length} 位失败`);
-  notice(parts.join('，') || '没有可生成的脸谱', failed.length ? 'warning' : 'success');
-  renderBody();
+  return { ok, failed, skipped };
 }
 
 function setRun(main: string, sub: string): void {
@@ -567,6 +666,331 @@ function setRun(main: string, sub: string): void {
   const s = overlay?.querySelector<HTMLElement>('[data-people-run-sub]');
   if (m) m.textContent = main;
   if (s) s.textContent = sub;
+}
+
+// ---------------- 数据源区（issue 446：预处理导出目录直连） ----------------
+//
+// list 视图顶部的常驻区（peopleDataDir 配置后才出现）：扫描列联系人 → 勾选「导入所选」
+// 进预览桶（第一段增量，key 判重）→ 按 peopleGenTrigger / peopleGenThreshold 自动接
+// 预览→脸谱的第二段（441 planIncremental）。manual 默认不自动，反馈行出「画脸谱」手动入口。
+
+/** 数据目录（设置键；空串 = 不显示数据源入口） */
+function dsDataDir(): string {
+  return String(tryGetSettings()?.peopleDataDir ?? '').trim();
+}
+
+/** 生成触发设置（trigger / threshold；非法值回落默认 manual / 0） */
+function genTriggerSettings(): { trigger: 'manual' | 'auto'; threshold: number } {
+  const s = tryGetSettings() as Record<string, unknown> | null;
+  const trigger = s?.peopleGenTrigger === 'auto' ? 'auto' : 'manual';
+  const n = Number(s?.peopleGenThreshold ?? 0);
+  return { trigger, threshold: Number.isFinite(n) && n > 0 ? Math.round(n) : 0 };
+}
+
+/** 水位行文案：预览桶条数 + 已画脸谱的锚点日期 */
+function dsWatermarkLabel(c: DsContact): string {
+  if (!c.previewCount) return '未导入';
+  const drawn = c.processedTs ? ` · 已画到 ${formatDay(c.processedTs)}` : ' · 未画脸谱';
+  return `已导 ${c.previewCount} 条${drawn}`;
+}
+
+function formatDay(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 数据源区 DOM（含空态：目录读不到 / 没有联系人时给一行说明，不整块消失） */
+function buildDataSource(people: PersonEntry[]): HTMLElement {
+  const contacts = dsContacts;
+  const wrap = el('div', 'bz-people-ds');
+  wrap.appendChild(el('div', 'bz-people-ds-head', [
+    el('div', 'bz-people-ds-title', text('数据源')),
+    el('div', 'bz-people-ds-meta', text(dsHeadMeta())),
+    el('div', 'bz-people-ds-tools', [
+      button('bz-people-btn bz-people-btn-ghost', dsScanning ? '扫描中…' : '扫描', { 'data-people-ds-scan': '' }),
+      button('bz-people-btn bz-people-btn-acc', dsImporting ? '导入中…' : '导入所选', { 'data-people-ds-import': '' }),
+    ]),
+  ]));
+  if (!dsScanning && contacts !== null && contacts.length) {
+    const byId = new Map(people.map((p) => [p.id, p]));
+    const list = el('div', 'bz-people-ds-list');
+    for (const c of contacts) {
+      // 已画脸谱的锚点以人物卡为准（扫描后生成会推进锚点，刷新水位行）
+      const entry = byId.get(c.name);
+      if (entry && entry.lastProcessedTs && entry.lastProcessedTs !== c.processedTs) c.processedTs = entry.lastProcessedTs;
+      const on = dsSelected.has(c.name);
+      const badge = previewMediaBadge(c.stats);
+      const row = el('label', `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}`, [
+        (() => {
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = on;
+          cb.setAttribute('data-people-ds-check', c.name);
+          return cb;
+        })(),
+        el('div', 'bz-people-ava bz-people-ava-sm', { style: `background:${avatarColor(c.name)}` }, text(initials(c.name))),
+        el('div', 'bz-people-ds-main', [
+          el('div', 'bz-people-ds-name', text(c.name)),
+          el('div', 'bz-people-card-meta', text([
+            c.isGroup ? '群聊 · ' : '',
+            `${c.rawCount} 条`,
+            badge ? formatMediaCount(badge) : '',
+          ].filter(Boolean).join(' · '))),
+        ]),
+        el('div', 'bz-people-ds-side', [
+          ...(c.newCount > 0 ? [el('span', 'bz-people-ds-new', text(`新 ${c.newCount} 条`))] : []),
+          el('span', 'bz-people-ds-mark', text(dsWatermarkLabel(c))),
+        ]),
+      ]);
+      list.appendChild(row);
+    }
+    wrap.appendChild(list);
+    wrap.appendChild(el('div', 'bz-people-ds-foot', [
+      el('span', 'bz-people-ds-count', { 'data-people-ds-count': '' }, text(dsFooterLabel())),
+      ...(dsGenerateable && !dsImporting && !running
+        ? [button('bz-people-btn bz-people-btn-acc', '画脸谱', { 'data-people-ds-generate': '' })]
+        : []),
+    ]));
+  } else if (!dsScanning) {
+    wrap.appendChild(el('div', 'bz-people-ds-empty', text(
+      contacts === null
+        ? '还没扫描。点「扫描」读取数据文件夹里的联系人。'
+        : dsHiddenGroups > 0
+          ? `没有可导入的单聊（另有 ${dsHiddenGroups} 个群聊未纳入，可在设置开启）。`
+          : '数据文件夹里没有找到联系人（各联系人目录下需有 chat.json）。'
+    )));
+  }
+  if (dsNotice) {
+    wrap.appendChild(el('div', 'bz-people-ds-notice', text(dsNotice)));
+  }
+  return wrap;
+}
+
+function dsHeadMeta(): string {
+  const parts: string[] = [];
+  if (dsScanning) parts.push('正在扫描…');
+  else if (dsContacts) parts.push(`${dsContacts.length} 位联系人`);
+  if (dsHiddenGroups > 0) parts.push(`${dsHiddenGroups} 个群聊未纳入`);
+  return parts.join(' · ');
+}
+
+function dsFooterLabel(): string {
+  if (!dsContacts) return '';
+  const sel = dsContacts.filter((c) => dsSelected.has(c.name));
+  if (!sel.length) return '未勾选联系人';
+  const fresh = sel.reduce((s, c) => s + c.newCount, 0);
+  return fresh ? `已选 ${sel.length} 位 · 新素材 ${fresh} 条` : `已选 ${sel.length} 位 · 所选暂无新素材`;
+}
+
+function updateDsFooter(): void {
+  const count = overlay?.querySelector<HTMLElement>('[data-people-ds-count]');
+  if (count) count.textContent = dsFooterLabel();
+  overlay?.querySelectorAll<HTMLInputElement>('[data-people-ds-check]').forEach((cb) => {
+    cb.closest('.bz-people-ds-row')?.classList.toggle('bz-people-ds-on', cb.checked);
+  });
+}
+
+/** 扫描数据源：列目录 → 逐人读 chat.json 归一化 → 对照预览桶算新素材 → 落快照（不导入）。 */
+async function runScan(): Promise<void> {
+  const dataDir = dsDataDir();
+  if (!overlay || !store || !dataDir || dsScanning || dsImporting || running) return;
+  if (typeof window === 'undefined' || !(window as any).require) {
+    dsNotice = '数据源扫描仅桌面端支持（需要读取库外文件夹）。';
+    renderBody();
+    return;
+  }
+  dsScanning = true;
+  dsGenerateable = false;
+  dsNotice = '';
+  renderBody();
+  const contacts: DsContact[] = [];
+  let hidden = 0;
+  try {
+    const names = listContactDirs(dataDir);
+    const includeGroups = tryGetSettings()?.peopleIncludeGroups === true;
+    const opts = normalizeOptionsFromSettings();
+    const previewStore = new PreviewStore(getApp());
+    const [previewData, people] = await Promise.all([previewStore.read(), store.list()]);
+    for (const name of names) {
+      if (!overlay) return; // 面板已关，放弃本次扫描
+      const bundle = readContactBundle(dataDir, name);
+      if (!bundle) continue;
+      const group = isGroupChat(bundle.raws);
+      if (group && !includeGroups) { hidden++; continue; }
+      const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
+      const pv = previewData.contacts[name];
+      const keys = new Set((pv?.msgs ?? []).map((m) => m.key));
+      const entry = people.find((p) => p.id === name);
+      contacts.push({
+        name,
+        rawCount: bundle.raws.length,
+        isGroup: group,
+        stats: norm.stats,
+        previewCount: pv?.msgs.length ?? 0,
+        newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
+        lastTs: pv?.msgs.length ? pv.msgs[pv.msgs.length - 1].ts : null,
+        processedTs: entry?.lastProcessedTs ?? null,
+      });
+    }
+  } catch (e) {
+    console.warn('[people] 数据源扫描失败:', e);
+    dsNotice = '扫描失败：读不到数据文件夹或文件格式不对。';
+  }
+  dsScanning = false;
+  dsHiddenGroups = hidden;
+  if (overlay) {
+    dsContacts = contacts.sort((a, b) => b.newCount - a.newCount || a.name.localeCompare(b.name, 'zh'));
+    if (!dsSelected.size && dsContacts.some((c) => c.newCount > 0)) {
+      dsSelected = new Set(dsContacts.filter((c) => c.newCount > 0).map((c) => c.name)); // 默认勾有新素材的
+    }
+    renderBody();
+    // 扫描流程里的自动判定（issue 446）：auto 或 threshold 达标 → 自动导入 + 重画
+    void autoFromScan();
+  }
+}
+
+/** 扫描完成后的自动导入+生成（触发条件见 shouldGenerate；无匹配则静默等手动） */
+async function autoFromScan(): Promise<void> {
+  const { trigger, threshold } = genTriggerSettings();
+  const auto = (dsContacts ?? []).filter((c) => c.newCount > 0 && shouldGenerate(c.newCount, trigger, threshold));
+  if (!auto.length) return;
+  dsSelected = new Set(auto.map((c) => c.name));
+  await importDsSelected();
+}
+
+/**
+ * 导入所选（第一段：原始→预览桶增量）：逐人读 chat.json → normalizeChatJson → mergePreview
+ * 只补新消息 → 落 people-preview.json。完成后按 trigger/threshold 判定是否自动接第二段；
+ * 未触发时反馈行出「画脸谱」手动入口（manual 模式默认）。
+ */
+async function importDsSelected(): Promise<void> {
+  const dataDir = dsDataDir();
+  if (!overlay || !dataDir || dsImporting || dsScanning || running) return;
+  const chosen = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
+  if (!chosen.length) { notice('还没有勾选联系人', 'warning'); return; }
+  if (typeof window === 'undefined' || !(window as any).require) {
+    dsNotice = '数据源导入仅桌面端支持（需要读取库外文件夹）。';
+    renderBody();
+    return;
+  }
+  dsImporting = true;
+  dsGenerateable = false;
+  dsNotice = '正在导入预览…';
+  renderBody();
+  const opts = normalizeOptionsFromSettings();
+  const previewStore = new PreviewStore(getApp());
+  const now = new Date().toISOString();
+  const addedOf = new Map<string, number>();
+  const readFail: string[] = [];
+  try {
+    for (const c of chosen) {
+      if (!overlay) return; // 面板已关，中止
+      const bundle = readContactBundle(dataDir, c.name);
+      if (!bundle) { readFail.push(c.name); continue; }
+      const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
+      const existing = (await previewStore.read()).contacts[c.name];
+      const { contact, added } = mergePreview(existing, norm, now);
+      await previewStore.upsertContact(c.name, contact);
+      addedOf.set(c.name, added);
+      // 快照同步（水位行即时反映，不重扫）
+      c.previewCount = contact.msgs.length;
+      c.newCount = 0;
+      c.stats = contact.stats;
+      c.lastTs = contact.msgs.length ? contact.msgs[contact.msgs.length - 1].ts : null;
+    }
+  } catch (e) {
+    console.warn('[people] 预览导入失败:', e);
+    dsNotice = '导入失败：读数据文件时出错。';
+    dsImporting = false;
+    renderBody();
+    return;
+  }
+  dsImporting = false;
+  const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
+  // 第二段判定：auto 导入即画（threshold 作门槛）；manual 下 threshold 达标也自动
+  const { trigger, threshold } = genTriggerSettings();
+  const genNames = chosen
+    .filter((c) => (addedOf.get(c.name) ?? 0) > 0 && shouldGenerate(addedOf.get(c.name) ?? 0, trigger, threshold))
+    .map((c) => c.name);
+  const summary = [
+    `已导入预览（新增 ${fresh} 条）`,
+    readFail.length ? ` · ${readFail.length} 位读文件失败` : '',
+  ].join('');
+  if (genNames.length) {
+    dsNotice = summary;
+    renderBody();
+    await generateDs(genNames, summary);
+    return;
+  }
+  dsNotice = readFail.length
+    ? summary
+    : fresh > 0
+      ? `${summary}。要点「画脸谱」才会调用 AI 生成。`
+      : `${summary}，所选暂无新素材。`;
+  dsGenerateable = fresh > 0 && !readFail.length;
+  renderBody();
+}
+
+/**
+ * 第二段：预览桶 → 脸谱（441 增量管线，generateForTargets 内核）。
+ * 手动「画脸谱」与自动触发共用；不设门槛（门槛只在自动判定 shouldGenerate 里）。
+ */
+async function generateDs(names: string[], prefix = ''): Promise<void> {
+  if (!overlay || !store || running || dsImporting || dsScanning) return;
+  const targets: GenTarget[] = [];
+  try {
+    const previewData = await new PreviewStore(getApp()).read();
+    for (const name of names) {
+      const pv = previewData.contacts[name];
+      if (!pv?.msgs.length) continue;
+      targets.push({
+        talker: name,
+        name,
+        msgs: previewToUnified(pv.msgs),
+        kindCounts: pv.kindCounts ?? {},
+        skippedCount: 0, // 预览桶内全是有效文本；原始过滤数已在导入时计入 chat.json 口径，不在导入记录重复报
+        fileLabel: `数据源:${name}`,
+      });
+    }
+  } catch (e) {
+    console.warn('[people] 读取预览桶失败:', e);
+    dsNotice = '生成失败：读不到预览缓存。';
+    renderBody();
+    return;
+  }
+  if (!targets.length) {
+    dsNotice = `${prefix}。所选还没有预览数据，先「导入所选」。`;
+    renderBody();
+    return;
+  }
+  running = true;
+  dsGenerateable = false;
+  dsNotice = `${prefix} · 正在生成脸谱…`;
+  renderBody();
+  const res = await generateForTargets(targets, (main, sub) => {
+    dsNotice = `${prefix} · ${sub ? `${main} ${sub}` : main}`;
+    const el2 = overlay?.querySelector<HTMLElement>('.bz-people-ds-notice');
+    if (el2) el2.textContent = dsNotice;
+  });
+  running = false;
+  const parts: string[] = [];
+  if (res.ok) parts.push(`已生成 ${res.ok} 张脸谱`);
+  if (res.skipped.length) parts.push(`${res.skipped.length} 位没有新消息、无需重画`);
+  if (res.failed.length) parts.push(`${res.failed.length} 位失败：${res.failed.join('、')}`);
+  dsNotice = `${prefix} · ${parts.join('，') || '没有可生成的脸谱'}`;
+  notice(parts.join('，') || '没有可生成的脸谱', res.failed.length ? 'warning' : 'success');
+  // 刷新水位行（锚点已推进）与卡墙（新人物卡）
+  dsGenerateable = false;
+  await refreshDsWatermarks();
+  renderBody();
+}
+
+/** 生成后把人物卡最新锚点回填进扫描快照（水位行「已画到 …」即时跟进） */
+async function refreshDsWatermarks(): Promise<void> {
+  if (!store || !dsContacts?.length) return;
+  const people = await store.list();
+  const byId = new Map(people.map((p) => [p.id, p.lastProcessedTs ?? null]));
+  for (const c of dsContacts) c.processedTs = byId.get(c.name) ?? c.processedTs;
 }
 
 function stepBar(): HTMLElement {
