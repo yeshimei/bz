@@ -83,7 +83,8 @@ const BASE_SETTINGS: Record<string, any> = {
   knowledgeFfmpegPath: 'ffmpeg',
   knowledgeFfprobePath: 'ffprobe',
   knowledgePythonPath: '',
-  knowledgeWhisperModel: 'small',
+  asrEngine: 'sensevoice',
+  asrWhisperModel: 'small',
   knowledgeCacheDir: '',
   knowledgeCacheRetentionDays: 7,
 };

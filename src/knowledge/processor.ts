@@ -185,11 +185,15 @@ export const BatchRunner = {
       // ffprobePath/whisperModel/cacheDir）在留空时**不下发**（undefined 被 JSON.stringify 省略）——
       // 下发空串会在 core.js `{...deps.conf, ...options}` 合并里覆盖 rc 兜底，实测 Python 路径留空
       // 整批在转写环节报「未配置 pythonPath」；显式填写仍正常下发覆盖。
+      // issue 444：转写引擎（asrEngine）**恒下发**（引擎二选一是插件侧设置，无 rc 兜底语义）；
+      // whisperModel 仅 faster-whisper 时下发档位（SenseVoice 模型固定，档位不下发——避免覆盖
+      // 工具侧 rc 里用户手配的 whisperModel 备用值）。
       const s = tryGetSettings();
       const nonEmpty = (v: string | null | undefined): string | undefined => {
         const t = typeof v === 'string' ? v.trim() : '';
         return t ? t : undefined;
       };
+      const asrEngine = s && s.asrEngine === 'faster-whisper' ? 'faster-whisper' : 'sensevoice';
       const taskJson = JSON.stringify({
         url: task.url,
         start: task.start ?? null,
@@ -205,7 +209,8 @@ export const BatchRunner = {
           ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
           ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
           pythonPath: nonEmpty(s && s.knowledgePythonPath),
-          whisperModel: nonEmpty(s && s.knowledgeWhisperModel),
+          engine: asrEngine,
+          whisperModel: asrEngine === 'faster-whisper' ? nonEmpty(s && s.asrWhisperModel) : undefined,
           cacheDir: nonEmpty(s && s.knowledgeCacheDir),
           cacheRetentionDays: (s && s.knowledgeCacheRetentionDays) || 7,
         },

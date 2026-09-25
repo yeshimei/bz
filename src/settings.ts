@@ -44,6 +44,14 @@ export default interface BzSettings {
   /** 各服务商模型名（键 = 服务商 id；空/缺 = 跟随该家缺省；旧全局键 jevModel 已迁移进 typesafe 槽位） */
   jevModels: Record<string, string>;
 
+  // ===== 🎙 语音转写（issue 444：AI 面板「语音转写」组；知识盒视频录入转文字消费，工具侧 bili-dl）=====
+  /** 转写引擎：'sensevoice'（缺省，SenseVoice-Small，funasr）/ 'faster-whisper'（备选）。
+   *  两种引擎共用 knowledgePythonPath 的 Python 路径 */
+  asrEngine: string;
+  /** Whisper 档位（仅 faster-whisper 引擎消费）：tiny/base/small/medium/large-v2/large-v3，缺省 small。
+   *  旧键 knowledgeWhisperModel 已一次性迁移到本键（migrateAsrKeys） */
+  asrWhisperModel: string;
+
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
   storagePath: string;
@@ -447,10 +455,10 @@ export default interface BzSettings {
   knowledgeFfmpegPath: string;
   /** 文献盒：ffprobe 路径（原工具 rc ffprobePath） */
   knowledgeFfprobePath: string;
-  /** 文献盒：Python 路径（faster-whisper，原工具 rc pythonPath） */
+  /** 文献盒：Python 路径（转写引擎共用——SenseVoice 与 faster-whisper 都经它执行，原工具 rc pythonPath） */
   knowledgePythonPath: string;
-  /** 文献盒：Whisper 模型（原工具 rc whisperModel） */
-  knowledgeWhisperModel: string;
+  // 退役：knowledgeWhisperModel（Whisper 档位）——issue 444 升格为 AI 面板「语音转写」组的
+  // asrWhisperModel（migrateAsrKeys 一次性搬值），data.json 残留旧值由迁移清除
   /** 文献盒：缓存目录（原工具 rc cacheDir；留空=系统临时目录/bili-dl-cache） */
   knowledgeCacheDir: string;
   /** 文献盒：缓存保留天数（原工具 rc cacheRetentionDays） */
@@ -658,6 +666,24 @@ export function migrateRetiredSecondBrainKeys(raw: unknown): boolean {
   return migrated;
 }
 
+/**
+ * 语音转写键一次性迁移（issue 444）：知识盒的 `knowledgeWhisperModel`（faster-whisper 档位）
+ * 升格为 AI 面板「语音转写」组的 `asrWhisperModel`——读旧写新删旧（引擎键 asrEngine 为新增，
+ * 无旧可迁）。旧值为空串不搬（搬进去等于噪音，照 migrateRetiredJevKeys 口径）；新键已有值时
+ * 只删旧不覆盖（不踩用户改过的新值）。幂等：无旧键即不改动，调用方据此调度落盘（C16 口径）。
+ */
+export function migrateAsrKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  if (rec.knowledgeWhisperModel === undefined) return false;
+  const legacy = rec.knowledgeWhisperModel;
+  delete rec.knowledgeWhisperModel;
+  if (rec.asrWhisperModel === undefined && typeof legacy === 'string' && legacy.trim() !== '') {
+    rec.asrWhisperModel = legacy;
+  }
+  return true;
+}
+
 /** Jev 通道一次性迁移（issue 424/ADR-0184；issue 433/ADR-0190 起键按服务商分存）：
  * 1) **总开关键退役**（`jevEnabled`）——常开：填了密钥即接管判定，清空即回落 LLM；
  * 2) **端点 / 超时两键退役**——端点由「Jev 服务商」决定（`JEV_PROVIDER_REGISTRY`），超时固定十秒；
@@ -769,6 +795,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiMaxTokensOverrides: {},
   // 每提供商思考档位（issue 411/ADR-0179）：空 = 各 provider 都跟随模型默认（不注入思考参数）
   aiThinkingOverrides: {},
+
+  // 语音转写（issue 444：AI 面板「语音转写」组；知识盒视频录入转文字消费）
+  asrEngine: 'sensevoice',
+  asrWhisperModel: 'small',
 
   // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
   jevProvider: 'typesafe',
@@ -1007,7 +1037,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeFfmpegPath: 'ffmpeg',
   knowledgeFfprobePath: 'ffprobe',
   knowledgePythonPath: '',
-  knowledgeWhisperModel: 'small',
+  // knowledgeWhisperModel 已退役（issue 444 迁移为 asrWhisperModel，见接口注释区）
   knowledgeCacheDir: '',
   knowledgeCacheRetentionDays: 7,
   // 挂载树 AI 语义建议（issue 318）：默认开（打开白板即跑；缓存命中则无感）

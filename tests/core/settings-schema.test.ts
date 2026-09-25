@@ -16,12 +16,12 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
   return partial as SettingsSnapshot;
 }
 
-describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/Embedding/JEV/凭据 四组）', () => {
+describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模型族分组；issue 444 增语音转写）', () => {
   const schema = mainSettingsSchema();
 
-  it('issue 422：六个分组卡片（带 icon）——LLM/Embedding/JEV/数据源凭据 + 数据存储路径 + 通知', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '数据源凭据', '数据存储路径', '通知']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'key-round', 'folder-open', 'bell']);
+  it('issue 444：七个分组卡片（带 icon）——LLM/Embedding/JEV/语音转写/数据源凭据 + 数据存储路径 + 通知', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round', 'folder-open', 'bell']);
   });
 
   it('LLM 组首部（前「服务商」组，issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {
@@ -176,8 +176,37 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     expect(rows[2].placeholder).toBe('jev-latest');
   });
 
+  it('语音转写组（issue 444）：转写引擎下拉恒显 + Whisper 档位仅 faster-whisper 时显示', () => {
+    const rows = schema.groups[3].rows as Array<{
+      name: string;
+      type: string;
+      desc?: string;
+      binding?: { key: string };
+      options?: Array<{ value: string; label: string }> | ((s: SettingsSnapshot) => Array<{ value: string; label: string }>);
+      visibleWhen?: (s: SettingsSnapshot) => boolean;
+    }>;
+    expect(rows.map((r) => r.name)).toEqual(['转写引擎', 'Whisper 档位']);
+    expect(rows.map((r) => r.type)).toEqual(['select', 'select']);
+    // 引擎行：键直绑 asrEngine，两档（SenseVoice 缺省在前）
+    expect(rows[0].binding).toEqual({ key: 'asrEngine' });
+    expect(rows[0].options).toEqual([
+      { value: 'sensevoice', label: 'SenseVoice-Small' },
+      { value: 'faster-whisper', label: 'faster-whisper' },
+    ]);
+    expect(rows[0].visibleWhen).toBeUndefined();
+    // 档位行：键直绑 asrWhisperModel，六档（faster-whisper 实际可用档），缺省 small 在选项表内
+    expect(rows[1].binding).toEqual({ key: 'asrWhisperModel' });
+    const tierOptions = rows[1].options as Array<{ value: string }>;
+    expect(tierOptions.map((o) => o.value)).toEqual(['tiny', 'base', 'small', 'medium', 'large-v2', 'large-v3']);
+    // visibleWhen：仅引擎 = faster-whisper 时显示（SenseVoice 模型固定无档位）
+    const visible = (s: Record<string, unknown>) => rows[1].visibleWhen?.(snapOf(s)) === true;
+    expect(visible({ asrEngine: 'faster-whisper' })).toBe(true);
+    expect(visible({ asrEngine: 'sensevoice' })).toBe(false);
+    expect(visible({})).toBe(false); // 键缺省 = sensevoice，档位行隐藏
+  });
+
   it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
-    const rows = schema.groups[3].rows;
+    const rows = schema.groups[4].rows;
     // 2026-09-23 用户报「加密的做成多行框看着怪」：textarea 的多行掩码档位退役，
     // 三行凭据一律单行 secret（password 掩码 + 眼睛切明文）
     expect(rows.map((r) => r.type)).toEqual(['secret', 'secret', 'secret']);
@@ -196,7 +225,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
     // 桌面端：按钮在场（secret 行 actions 与 text 行同口径）
     (globalThis as unknown as { window: unknown }).window = { require: () => ({}) };
     try {
-      const desktopRows = mainSettingsSchema().groups[3].rows as Array<{
+      const desktopRows = mainSettingsSchema().groups[4].rows as Array<{
         name: string;
         actions?: Array<{ text: string }>;
       }>;
@@ -207,7 +236,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页 = LLM/E
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
-    // 按组名取（不按下标）：该组下标随 AI 分区组数变化而漂移（issue 391 已从 3 组增到 4 组）
+    // 按组名取（不按下标）：该组下标随 AI 分区组数变化而漂移（issue 444 起 AI 区 5 组）
     const row = schema.groups.find((g) => g.name === '数据存储路径')!.rows[0] as {
       type: string;
       mode: string;

@@ -462,6 +462,24 @@ ${failures.join('\n')}`).toEqual([]);
     expect(plugin2.settings.cinemaFolderPath).toBe('我的/影视');
   });
 
+  it('语音转写设置（issue 444 冒烟）：新键默认值 + knowledgeWhisperModel 一次性迁移到 asrWhisperModel', async () => {
+    // 默认：引擎 sensevoice / 档位 small；退役键不再有值
+    const plugin = await createPlugin(makeMockApp());
+    expect(plugin.settings.asrEngine).toBe('sensevoice');
+    expect(plugin.settings.asrWhisperModel).toBe('small');
+    expect((plugin.settings as any).knowledgeWhisperModel).toBeUndefined();
+
+    // 存量 data.json 带旧键 → onload 迁移（读旧写新删旧），Python 路径键不受影响
+    delete diskData['bz'];
+    diskData['bz'] = { knowledgeWhisperModel: 'medium', knowledgePythonPath: 'py' };
+    const plugin2 = await createPlugin(makeMockApp());
+    expect(plugin2.settings.asrWhisperModel).toBe('medium');
+    expect(plugin2.settings.asrEngine).toBe('sensevoice'); // 引擎键新增，无旧可迁走缺省
+    expect((plugin2.settings as any).knowledgeWhisperModel).toBeUndefined();
+    expect(plugin2.settings.knowledgePythonPath).toBe('py'); // 两引擎共用，迁移零扰动
+    delete diskData['bz'];
+  });
+
   it('番茄钟统计两档（issue 357）：bz-pomodoro-open 打开弹窗含「近 7 天 / 近 6 月」切换与双柱区', async () => {
     const { unloadPomodoro } = await import('../src/pomodoro');
     const plugin = await createPlugin(makeMockApp());

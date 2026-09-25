@@ -6,13 +6,15 @@
 //       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…","options":{...}}；start/end 都 null = 整片不剪辑
 //       或 --batch 'b64:<base64>'（插件经 shell 启动时用——JSON 引号/空格会被 shell 对消，base64 安全，P2-5）
 //       options（bz「文献盒」设置全量下发，全部可选）：quality、keepVideo、outputDir、compress（缺省开）、
-//       crf（缺省 23，范围 18-28）、vaultPath、ffmpegPath、ffprobePath、pythonPath、whisperModel、cacheDir、cacheRetentionDays
+//       crf（缺省 23，范围 18-28）、vaultPath、ffmpegPath、ffprobePath、pythonPath、
+//       engine（issue 444：'sensevoice' 缺省 |'faster-whisper'）、whisperModel（仅 faster-whisper 消费）、
+//       cacheDir、cacheRetentionDays
 //       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 压缩中(缺省开) → 转文字中
 //       → 交付中(keepVideo=false 时跳过)）；压缩中若压缩件比原文件还大自动回退用原文件（ticket 145）；
 //       进度打 [bz-p] 行（{"phase":"download|trim|compress|transcribe","pct":0-100|null}，300ms 节流，pct=null 为不确定）；
 //       成功末尾一行 [bz-result] {"transcript":"<转录临时文件绝对路径>","video":"CONFIG/APPENDIX/xxx.mp4"|null}
 //       （transcript = UTF-8 转录全文临时文件，插件读取后自删；video 为 vault 相对/绝对路径，null = 未交付）并 exit 0；
-//       任一步失败 stderr 给中文原因（含缺失前置引导，如 whisper 环境）并 exit 1，不写 [bz-result]。
+//       任一步失败 stderr 给中文原因（含缺失前置引导，如转写环境 funasr / faster-whisper）并 exit 1，不写 [bz-result]。
 //       断点续跑（ADR-0067，ticket 136 机械产物）：成功步骤产物（剪辑件/压缩件/转写稿）留存缓存目录，
 //       同一任务重跑自动从出错步骤继续，不重跑已成功步骤。
 //       --batch 模式不打印横幅、不起服务，避免污染协议。

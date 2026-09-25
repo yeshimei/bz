@@ -52,6 +52,10 @@
  *   「重排走 Jev」开关（键 secondBrainRerankJev，总闸开才显示，开启后走 JEV 组的 Jev 通道）、
  *   「重排模型」行改本地通道专属（可见性叠 Jev 关，Jev 开时隐藏）。运行期判定单源
  *   secondbrain/config rerankChannel（off/local/jev）。
+ * - issue 444：AI 区块追加「语音转写」组（JEV 之后、凭据之前）——「转写引擎」下拉
+ *   （SenseVoice-Small 缺省 / faster-whisper 备选）+「Whisper 档位」下拉
+ *   （仅 faster-whisper 时显示，visibleWhen）；知识盒视频录入转文字按该组下发，
+ *   旧 knowledgeWhisperModel 经 migrateAsrKeys 一次性迁移为 asrWhisperModel。
  */
 
 import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity, thinkingLevelsOf } from './ai';
@@ -660,6 +664,44 @@ function credentialGroupRows(): SettingsRow[] {
   ];
 }
 
+/**
+ * 「语音转写」组行（issue 444）：知识盒视频录入转文字的引擎二选一——SenseVoice-Small（缺省，
+ * funasr 识别，中文效果更好）/ faster-whisper（备选）。两种引擎共用文献盒的 Python 路径
+ * （knowledgePythonPath，原「工具」组 2026-09-16 移除后键保留、值继续生效）。
+ * - 「Whisper 档位」行仅 faster-whisper 引擎时显示（visibleWhen）——SenseVoice 模型固定
+ *   iic/SenseVoiceSmall，无档位可调；
+ * - 下发链路（knowledge/processor.ts）：engine 恒下发，whisperModel 仅 faster-whisper 时下发。
+ */
+function asrGroupRows(): SettingsRow[] {
+  return [
+    {
+      type: 'select',
+      name: '转写引擎',
+      desc: '视频转文字的识别引擎',
+      binding: { key: 'asrEngine' },
+      options: [
+        { value: 'sensevoice', label: 'SenseVoice-Small' },
+        { value: 'faster-whisper', label: 'faster-whisper' },
+      ],
+    },
+    {
+      type: 'select',
+      name: 'Whisper 档位',
+      desc: 'faster-whisper 的模型档位',
+      binding: { key: 'asrWhisperModel' },
+      options: [
+        { value: 'tiny', label: 'tiny（最快）' },
+        { value: 'base', label: 'base' },
+        { value: 'small', label: 'small（缺省）' },
+        { value: 'medium', label: 'medium' },
+        { value: 'large-v2', label: 'large-v2' },
+        { value: 'large-v3', label: 'large-v3（最准）' },
+      ],
+      visibleWhen: (snapshot) => snapshot.asrEngine === 'faster-whisper',
+    },
+  ];
+}
+
 /** AI 页设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
  *  issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *  三组——接入（选谁+密钥）/ 模型参数（用哪个模型+窗口）/ 数据源凭据（非 AI 的第三方凭据）
@@ -670,13 +712,15 @@ function credentialGroupRows(): SettingsRow[] {
  *  消费方 secondbrain/config.ts 与 smartcat 跟随回退口径零改动）。
  *  issue 423/ADR-0183：「Embedding」组再收两行 Ollama 地址（本地 URL + 移动端远程地址）。
  *  issue 424/ADR-0184：「移动端远程地址」行删（桌面端自动跟随本机 IP）；JEV 组收口为
- *  服务商 / 密钥 / 模型三行（总开关、端点、超时三行退役——常开、端点由服务商决定、超时固定）。 */
+ *  服务商 / 密钥 / 模型三行（总开关、端点、超时三行退役——常开、端点由服务商决定、超时固定）。
+ *  issue 444：追加「语音转写」组（转写引擎二选一 + Whisper 档位，知识盒视频录入转文字消费）。 */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
       { icon: 'cpu', name: 'LLM', rows: llmGroupRows() },
       { icon: 'binary', name: 'Embedding', rows: embeddingGroupRows() },
       { icon: 'route', name: 'JEV', rows: jevGroupRows() },
+      { icon: 'mic', name: '语音转写', rows: asrGroupRows() },
       { icon: 'key-round', name: '数据源凭据', rows: credentialGroupRows() },
     ],
   };
