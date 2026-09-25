@@ -9973,9 +9973,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 10px;
   background: linear-gradient(135deg, var(--acc), var(--acc-deep));
   color: var(--on-acc);
-  font-size: 20px;
-  font-weight: 800;
   box-shadow: 0 3px 10px rgba(138, 52, 46, 0.32);
+}
+.bz-people-mark .bz-ic {
+  width: 24px;
+  height: 24px;
 }
 .bz-people-title {
   margin: 0;
@@ -10080,6 +10082,30 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
 }
 
+/* —— 图标按钮（issue 448：lucide 占位在按钮内层 .bz-ic，mountIcons 只换占位不动按钮） —— */
+.bz-people-icon-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-people-icon-btn .bz-ic {
+  width: 16px;
+  height: 16px;
+}
+/* 删除武装态：红描边示意再点确认 */
+.bz-people-del-arm {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+/* 扫描中：图标转圈（复用生成进度 spin） */
+.bz-people-spin svg {
+  animation: bzPeopleSpin 0.9s linear infinite;
+}
+
 /* —— 内容区 —— */
 .bz-people-body {
   flex: 1;
@@ -10105,9 +10131,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 18px;
   border: 2px dashed var(--frame-bd);
   color: var(--ink-mut);
-  font-size: 34px;
-  font-weight: 800;
   opacity: 0.7;
+}
+.bz-people-empty-mark .bz-ic {
+  width: 36px;
+  height: 36px;
 }
 .bz-people-empty-title {
   font-size: 15px;
@@ -10235,17 +10263,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-/* 封面动作行：合并到… / 删除（卡底小字，点按钮不进详情） */
-.bz-people-fold-actions {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-.bz-people-fold-actions .bz-people-btn {
-  padding: 2px 8px;
-  font-size: 11px;
-}
 /* 合并模式：本册（待并出）虚化，其他册（候选目标）虚线描边示意可点 */
 .bz-people-fold-merge-src {
   opacity: 0.55;
@@ -10288,60 +10305,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--ink-mut);
 }
 
-/* —— 卡墙工具条：排序 / 标签筛选 / 搜索（issue 442） —— */
-.bz-people-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 2px 0 12px;
-}
-.bz-people-select {
-  appearance: none;
-  border: 1px solid var(--fld-bd);
-  background: var(--fld-bg);
-  color: var(--ink);
-  border-radius: 8px;
-  padding: 6px 26px 6px 10px;
-  font-size: 12.5px;
-  cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ink-mut) 50%), linear-gradient(135deg, var(--ink-mut) 50%, transparent 50%);
-  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
-  background-size: 4px 4px;
-  background-repeat: no-repeat;
-  transition: border-color 0.15s ease;
-}
-.bz-people-select:focus {
-  outline: none;
-  border-color: var(--acc);
-}
-.bz-people-search {
-  flex: 1;
-  min-width: 140px;
-  border: 1px solid var(--fld-bd);
-  background: var(--fld-bg);
-  color: var(--ink-strong);
-  border-radius: 8px;
-  padding: 6px 10px;
-  font-size: 13px;
-  transition: border-color 0.15s ease;
-}
-.bz-people-search::placeholder {
-  color: var(--ink-mut);
-  opacity: 0.7;
-}
-.bz-people-search:focus {
-  outline: none;
-  border-color: var(--acc);
-}
-/* 无匹配（筛选/搜索落空） */
-.bz-people-nomatch {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 28px 0;
-}
-
 /* —— 合并流程（issue 442） —— */
 .bz-people-merge-bar {
   display: flex;
@@ -10363,7 +10326,23 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 
 /* ==================== 详情（折页册） ==================== */
+/* 详情态（448）：品牌标题区让位隐藏，内容区顶到面板最上；body 转纵 flex，
+   详情头 flex:none 吸顶（滚动时也钉在面板顶），折页册拉长吃掉剩余高度 */
+.bz-people-panel-detail .bz-people-head,
+.bz-people-panel-detail .bz-people-stats {
+  display: none;
+}
+.bz-people-panel-detail .bz-people-body {
+  display: flex;
+  flex-direction: column;
+  padding-top: 14px; /* 与详情头 margin-bottom 同值：头部上下间距一致（448） */
+}
+/* 详情头置顶：粘性定位（初始即在顶，内容溢出滚动时钉住不动） */
 .bz-people-dt-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  flex: none;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -10437,15 +10416,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex-basis: 100%;
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
 }
 
-/* —— 折页册：展开折占主幅，收起折只露折脊 + 竖排引文（点折脊切换） —— */
+/* —— 折页册：展开折占主幅，收起折只露折脊 + 竖排引文（点折脊切换） ——
+   详情态 body 是纵 flex：折页册 flex:1 拉长占满详情头以下的全部高度 */
 .bz-people-book {
   display: flex;
   align-items: stretch;
+  flex: 1;
   min-height: 0;
-  height: calc(100% - 92px);
 }
 .bz-people-leaf {
   flex: 1;
@@ -10871,7 +10851,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  animation: bzPeopleIn 0.2s cubic-bezier(0.2, 0.7, 0.3, 1);
+  animation: bzPeopleDsIn 0.18s ease-out;
+}
+/* 弹窗居中入显（448：复用 bzPeopleIn 会带 translateY，观感像从右下角滑入——
+   且 to 帧会覆盖 -50% 居中位移；本动画自含居中位移，只做原位淡入） */
+@keyframes bzPeopleDsIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
 }
 .bz-people-ds-head {
   display: flex;
@@ -11339,9 +11325,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   .bz-people-note-date {
     width: 126px;
-  }
-  .bz-people-search {
-    flex-basis: 100%;
   }
   .bz-people-dt-head {
     padding: 10px 12px;
