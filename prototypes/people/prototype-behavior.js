@@ -1,4 +1,4 @@
-/* 源指纹 3e69fba361e1fcfa · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6fcb701f404cee2e · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -4895,6 +4895,14 @@ var BZW_people = (() => {
   }
 
   // src/people/types.ts
+  function personOf(d) {
+    var _a, _b;
+    return (_b = (_a = d == null ? void 0 : d.person) != null ? _a : d == null ? void 0 : d.portrait) != null ? _b : "";
+  }
+  function bondOf(d) {
+    var _a;
+    return (_a = d == null ? void 0 : d.bond) != null ? _a : "";
+  }
   function emptyPeopleData() {
     return { version: 1, people: [] };
   }
@@ -5023,7 +5031,7 @@ var BZW_people = (() => {
 
   // src/people/digest.ts
   var DEFAULTS = { maxChars: 12e3, maxCount: 400, maxBatches: 60 };
-  var MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, chronicle: 300 };
+  var MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, interests: 40, threads: 30, chronicle: 300 };
   function chunkMessages(messages, opts = {}) {
     var _a;
     const { maxChars, maxCount, maxBatches } = { ...DEFAULTS, ...opts };
@@ -5100,7 +5108,7 @@ var BZW_people = (() => {
       "",
       ...chunk.lines,
       "",
-      "请采集以下四类素材，宁缺毋滥，没有就给空数组：",
+      "请采集以下六类素材，宁缺毋滥，没有就给空数组：",
       "",
       "1. events：交往事件，大事小事都要收。",
       "   每条含 ts（YYYY-MM-DD，事件发生日期）、kind 与 summary（一句话，不超过 40 字）。",
@@ -5121,8 +5129,16 @@ var BZW_people = (() => {
       "   反复分享的内容来源（如网易云 / B站 / 豆瓣）也是难忘画面。",
       ...(media == null ? void 0 : media.image) ? ["   `[图片]` 行的画面描述就是现成的「难忘画面」，summary 直接用描述本身（不带标签）。"] : [],
       "",
+      "5. interests：兴趣信号——对方分享 / 安利的具体内容、反复聊起的话题、正在投入的事。",
+      "   每条含 ts（YYYY-MM-DD）与 topic（话题名，不超过 15 字）。",
+      "   单次顺带一提不收，反复出现或特征鲜明才收。",
+      "",
+      "6. threads：未竟之事——约定、邀约、「下次一起…」、聊到一半没下文的话题。",
+      "   每条含 ts（YYYY-MM-DD）与 text（不超过 30 字）。",
+      "   只采集，不判断是否兑现。",
+      "",
       "只输出 JSON，不要任何解释或代码围栏：",
-      '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}]}'
+      '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}],"interests":[{"ts":"YYYY-MM-DD","topic":"..."}],"threads":[{"ts":"YYYY-MM-DD","text":"..."}]}'
     ].join("\n");
   }
   function buildChroniclePrompt(name, events, mediaNote, statsNote) {
@@ -5149,66 +5165,133 @@ var BZW_people = (() => {
       "- 总长 1500 字以内，直接输出 markdown 正文，不要代码围栏。"
     ].join("\n");
   }
-  function buildPortraitPrompt(name, material) {
-    const { events, traits, quotes, moments, mediaNote, statsNote } = material;
-    const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
-    const quoteLines = quotes.length ? quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`).join("\n") : "（无）";
-    const momentLines = moments.length ? moments.map((m) => `- ${m.ts}：${m.summary}`).join("\n") : "（无）";
-    const traitLines = traits.length ? traits.map((t) => `- ${t}`).join("\n") : "（无）";
+  function buildProfileNote(profile) {
+    var _a;
+    if (!profile) return "";
+    const lines = [];
+    if (profile.birthday) lines.push(`生日：${profile.birthday}`);
+    if (profile.job) lines.push(`职业：${profile.job}`);
+    if (profile.hometown) lines.push(`家乡：${profile.hometown}`);
+    if (profile.metVia) lines.push(`怎么认识：${profile.metVia}`);
+    if (profile.metAt) lines.push(`什么时候认识：${profile.metAt}`);
+    if ((_a = profile.tags) == null ? void 0 : _a.length) lines.push(`关系标签：${profile.tags.join("、")}`);
+    if (profile.note) lines.push(`备注：${profile.note}`);
+    return lines.join("\n");
+  }
+  var HARD_RULES = [
+    "## 硬性要求",
+    "- 输出 markdown，只允许这几种语法：`##` 二级小节、`-` 列表项、`**加粗**`、`> ` 引用块。不要一级标题、不要表格、不要代码块。",
+    "- 优先写模式，不要写传记：写「TA 习惯用玩笑化解尴尬」，不要写「TA 三月去了北京」。",
+    "- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。",
+    "- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。",
+    "- 保留矛盾：素材里相互张力的特征（如恋旧又独立、记仇又复盘）是特征不是噪声，如实保留，不许抹平。",
+    "- 素材不足以支撑的小节，写「（素材不足）」，绝不编造。",
+    "- 全文 1200 字以内，直接输出 markdown 正文，不要代码围栏。"
+  ].join("\n");
+  function linesOrNone(lines) {
+    return lines.length ? lines.join("\n") : "（无）";
+  }
+  function buildPersonPrompt(name, material, sampleWarn) {
+    const { events, traits, quotes, moments, interests, mediaNote, statsNote, profileNote } = material;
     return [
-      `你在帮用户为好友「${name}」画一张「脸谱」——基于以下从聊天记录里提炼的素材，写出这个人的人物画像。`,
+      `你在帮用户为好友「${name}」画一张「脸谱」的卷一《其人》——基于以下从聊天记录里提炼的素材，写出这个人本身的人物画像。人物与关系是两条轴：TA 是个什么样的人归本卷，「我们」怎么相处归卷二《我们》，本卷不写关系。`,
+      ...sampleWarn ? [sampleWarn] : [],
       ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
       "",
+      ...profileNote ? ["## 素材〇：档案（手动信息，与聊天印象冲突时以档案为准）", profileNote, ""] : [],
       "## 素材一：交往事件",
-      eventLines,
+      linesOrNone(events.map((e) => `- ${e.ts}：${e.summary}`)),
       "",
       "## 素材二：代表性原话",
-      quoteLines,
+      linesOrNone(quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`)),
       "",
       "## 素材三：场景与细节",
-      momentLines,
+      linesOrNone(moments.map((m) => `- ${m.ts}：${m.summary}`)),
       "",
       "## 素材四：特质线索",
-      traitLines,
-      ...statsNote ? ["", "## 素材五：互动统计", statsNote] : [],
+      linesOrNone(traits.map((t) => `- ${t}`)),
       "",
-      "## 要产出的小节（按此顺序，每节用 ## 二级标题）",
+      "## 素材五：兴趣信号",
+      linesOrNone(interests.map((i) => `- ${i.ts}：${i.topic}`)),
+      ...statsNote ? ["", "## 素材六：互动统计", statsNote] : [],
+      "",
+      "## 要产出的卷一《其人》（按此顺序，每节用 ## 二级标题）",
       "",
       "## 画像速写",
-      "两三句话抓住这个人给人的整体感觉。",
+      "两三句话抓住这个人给人的整体感觉。必须写出一组矛盾感（相互张力的特征）——矛盾是特征不是噪声，不许抹平。",
       "",
-      "## 聊天的形状",
-      "作息与聊天频率、谁更常先开口、回复快慢、是语音派还是文字派、通话多不多、有没有明显的沉默期。",
-      "写可感知的相处模式，不要罗列数字。",
+      "## 性格与思维",
+      "处事风格、脾气秉性、社交姿态，加上思维模式：怎么想问题、自我对话的方式、对尝试与第一次的态度。",
+      "写法用行为规则：「当 X 时，TA Y」。TA 对自己的描述（自嘲 / 自剖 / 人格梗）只当线索引述，不当下结论。",
       "",
       "## 表达 DNA",
-      "口头禅、高频词、说话节奏（话密还是话少、直给还是含蓄）、标点与语气习惯。",
-      "双方互相的称呼 / 昵称也收在这里：怎么叫对方、对方怎么叫你、称呼随情绪或时间的演变（如「对方习惯叫我 X，生气时叫 Y」）。",
-      "每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。",
+      "口头禅、高频词、句式节奏、标点与语气习惯、表情使用习惯、「不想理人」的信号。",
+      "每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。称呼 / 昵称不写在这节（归卷二《我们》）。",
       "",
-      "## 分享的口味",
-      "从分享 / 安利过的内容（歌、视频、文章、小程序……）归纳这个人的内容口味与审美。",
-      "素材里没有分享内容就写「（素材不足）」。",
+      "## 兴趣爱好",
+      "分三层写：实际投入（愿意花时间做的事）→ 内容口味（爱看什么听什么）→ 精神底色（审美取向）。",
+      "每层要有具体名目（作品名 / 活动名），不许只写形容词；没有的层写「（素材不足）」。",
       "",
-      "## 情绪逻辑",
-      "什么让他话变多、什么让他退缩或沉默、什么时候会主动找人、什么话题能点亮他。",
+      "## 价值观与红线",
+      "在乎什么、反感什么、评判人和事的角度、绝不做什么。本节全部属推断：每条必须以「看来」或「似乎」起头；素材不足整节写「（素材不足）」。",
       "",
-      "## 冲突与修复",
-      "出现分歧时他怎么做——解释、回避、反击还是冷处理？事后谁先开口、怎么缓和？",
+      "## 习惯",
+      "生活习惯与聊天习惯：写可感知的模式，不罗列数字。",
+      "",
+      "## 情感倾向",
+      "情绪基线（素材里的语音情感计数可直引）、表达情绪的方式（外露 / 憋着 / 反话）、什么能点亮 TA、什么让 TA 沉默。",
+      "",
+      HARD_RULES
+    ].join("\n");
+  }
+  function buildBondPrompt(name, material, sampleWarn) {
+    const { events, quotes, moments, threads, mediaNote, statsNote, profileNote } = material;
+    return [
+      `你在帮用户为好友「${name}」画一张「脸谱」的卷二《我们》——基于以下从聊天记录里提炼的素材，写出「用户与 TA」这段关系的画像。TA 本身是个什么样的人归卷一《其人》，本卷只写这段关系。`,
+      ...sampleWarn ? [sampleWarn] : [],
+      ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
+      "",
+      ...profileNote ? ["## 素材〇：档案（手动信息，与聊天印象冲突时以档案为准）", profileNote, ""] : [],
+      "## 素材一：交往事件",
+      linesOrNone(events.map((e) => `- ${e.ts}：${e.summary}`)),
+      "",
+      "## 素材二：代表性原话",
+      linesOrNone(quotes.map((q) => `- [${q.who}]「${q.text}」（${q.ts}）`)),
+      "",
+      "## 素材三：场景与细节",
+      linesOrNone(moments.map((m) => `- ${m.ts}：${m.summary}`)),
+      "",
+      "## 素材四：未竟之事线索",
+      linesOrNone(threads.map((t) => `- ${t.ts}：${t.text}`)),
+      ...statsNote ? ["", "## 素材五：互动统计", statsNote] : [],
+      "",
+      "## 要产出的卷二《我们》（按此顺序，每节用 ## 二级标题）",
+      "",
+      "## 关系定性",
+      "一段什么关系、TA 在用户生活里的独特角色、现在处在什么阶段。手动档案（关系标签 / 怎么认识）优先；档案与聊天印象冲突时，以档案为准并注明。",
+      "",
+      "## 互动结构",
+      "谁更常先开口、回复节奏差、活跃时段、语音文字视频偏好、通话密度。互动统计是事实依据，但不要罗列数字——写可感知的相处模式与解读。",
+      "",
+      "## 演变阶段",
+      "按素材把这段关系划成几个阶段（如热络期 / 转折 / 渐冷 / 回联），每个阶段一句定性 + 转折点事件。转淡或沉默是怎么发生的、后来是谁先开口回联。最后一句写「现在」——这段关系此刻在哪。",
+      "",
+      "## 我们的语言",
+      "称呼演变：TA 怎么叫用户、用户怎么叫 TA、随情绪或亲密度的变化。再整理一份只属于这段关系的梗与暗语小词典。",
       "",
       "## 共同记忆",
       "反复出现的地点、物件、习惯、画面。要具体到能想起当时的场景。",
       "",
-      "## 相处建议",
-      "跟这个人相处要注意什么、什么能让他打开、什么会让他关上。",
+      "## 冲突与修复",
+      "按行为链写：触发点清单（素材明说的标「直接」，推断的标「推断」）→ 冲突时的第一反应谱 → 升级信号 → 怎么收场。和解信号单独写——和解不一定是道歉，可能是发来一个梗、一句「有空吗」。收尾给一份雷区清单。",
       "",
-      "## 硬性要求",
-      "- 输出 markdown，只允许这几种语法：`##` 二级小节、`-` 列表项、`**加粗**`、`> ` 引用块。不要一级标题、不要表格、不要代码块。",
-      "- 优先写模式，不要写传记：写「他习惯用玩笑化解尴尬」，不要写「他三月去了北京」。",
-      "- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。",
-      "- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。",
-      "- 素材不足以支撑的小节（含「聊天的形状」「分享的口味」），写「（素材不足）」，绝不编造。",
-      "- 总长 1200 字以内，直接输出 markdown 正文，不要代码围栏。"
+      "## 未竟之事",
+      "没兑现的约定、想一起做还没做的、聊一半断掉的话题。对照交往事件判断：约定过且后来一起做了的不收。",
+      "",
+      "## 经营建议",
+      "怎么经营这段关系：什么能升温、什么会伤害、别踩什么。把档案标签翻译成具体的相处规则。",
+      "",
+      HARD_RULES
     ].join("\n");
   }
   function extractJsonLoose(raw) {
@@ -5244,7 +5327,19 @@ var BZW_people = (() => {
       if (ts && summary) moments.push({ ts, summary });
     }
     const traits = rawArr(data.traits).filter((t) => typeof t !== "object" || t === null).map((t) => str(t)).filter(Boolean);
-    return { events, traits, quotes, moments };
+    const interests = [];
+    for (const it of arrOf(data.interests)) {
+      const ts = str(it.ts);
+      const topic = str(it.topic);
+      if (ts && topic) interests.push({ ts, topic });
+    }
+    const threads = [];
+    for (const t of arrOf(data.threads)) {
+      const ts = str(t.ts);
+      const text2 = str(t.text);
+      if (ts && text2) threads.push({ ts, text: text2 });
+    }
+    return { events, traits, quotes, moments, interests, threads };
   }
   function arrOf(v) {
     if (!Array.isArray(v)) return [];
@@ -5264,7 +5359,9 @@ var BZW_people = (() => {
       events: mergeEvents(batches.flatMap((b) => b.events)),
       quotes: dedupeBy(batches.flatMap((b) => b.quotes), (q) => q.text),
       moments: dedupeBy(batches.flatMap((b) => b.moments), (m) => m.summary),
-      traits: dedupeBy(batches.flatMap((b) => b.traits), (t) => t)
+      traits: dedupeBy(batches.flatMap((b) => b.traits), (t) => t),
+      interests: dedupeBy(batches.flatMap((b) => b.interests), (i) => i.topic),
+      threads: dedupeBy(batches.flatMap((b) => b.threads), (t) => t.text)
     };
   }
   function toPortraitMaterial(merged, o = {}) {
@@ -5273,9 +5370,16 @@ var BZW_people = (() => {
       traits: evenlySample(merged.traits, MATERIAL_LIMITS.traits),
       quotes: evenlySample(merged.quotes, MATERIAL_LIMITS.quotes),
       moments: evenlySample(merged.moments, MATERIAL_LIMITS.moments),
+      interests: evenlySample(merged.interests, MATERIAL_LIMITS.interests),
+      threads: evenlySample(merged.threads, MATERIAL_LIMITS.threads),
       mediaNote: o.mediaNote,
-      statsNote: o.statsNote
+      statsNote: o.statsNote,
+      profileNote: o.profileNote
     };
+  }
+  var SAMPLE_WARN_THRESHOLD = 200;
+  function sampleWarnOf(count) {
+    return count < SAMPLE_WARN_THRESHOLD ? `注意：本次样本仅 ${count} 条消息，素材偏少——证据不足的小节直接写（素材不足），不要脑补。` : void 0;
   }
   function mergeEvents(events) {
     const byKey = /* @__PURE__ */ new Map();
@@ -5312,12 +5416,14 @@ var BZW_people = (() => {
     return { mode: "older", msgs, olderCount: 0 };
   }
   function mergeWithOld(merged, old) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f;
     return {
       events: dedupeEvents([...(_a = old == null ? void 0 : old.events) != null ? _a : [], ...merged.events]),
       quotes: dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...merged.quotes], (q) => q.text),
       moments: dedupeByText([...(_c = old == null ? void 0 : old.moments) != null ? _c : [], ...merged.moments], (m) => m.summary),
-      traits: dedupeByText([...(_d = old == null ? void 0 : old.traits) != null ? _d : [], ...merged.traits], (t) => t)
+      traits: dedupeByText([...(_d = old == null ? void 0 : old.traits) != null ? _d : [], ...merged.traits], (t) => t),
+      interests: dedupeByText([...(_e = old == null ? void 0 : old.interests) != null ? _e : [], ...merged.interests], (i) => i.topic),
+      threads: dedupeByText([...(_f = old == null ? void 0 : old.threads) != null ? _f : [], ...merged.threads], (t) => t.text)
     };
   }
   function dedupeEvents(events) {
@@ -5950,7 +6056,7 @@ var BZW_people = (() => {
       emojiNamedCount: signals.emojiNamedCount
     };
   }
-  function buildStatsNote(i) {
+  function buildStatsNote(i, monthly) {
     const parts = [];
     const sessions = [
       i.sessionStartedByMe ? `我发起 ${i.sessionStartedByMe} 次` : "",
@@ -5986,7 +6092,21 @@ var BZW_people = (() => {
       const top3 = [...i.silenceGaps].sort((a, b) => b.days - a.days).slice(0, 3);
       parts.push(`最长的沉默 ${top3.map((g) => `${g.from} 至 ${g.to}（${g.days} 天）`).join("、")}`);
     }
+    if (monthly == null ? void 0 : monthly.length) parts.push(monthlyDensity(monthly));
     return parts.length ? `互动画像：${parts.join("；")}。` : "";
+  }
+  function monthlyDensity(monthly) {
+    var _a;
+    const asc = [...monthly].sort((a, b) => a[0].localeCompare(b[0]));
+    if (asc.length > 12) {
+      const byYear = /* @__PURE__ */ new Map();
+      for (const [m, n] of asc) {
+        const y = m.slice(0, 4);
+        byYear.set(y, ((_a = byYear.get(y)) != null ? _a : 0) + n);
+      }
+      return `消息密度：${[...byYear.entries()].map(([y, n]) => `${y} 年合计 ${n} 条`).join("、")}`;
+    }
+    return `消息密度：${asc.map(([m, n]) => `${m} ${n} 条`).join("、")}`;
   }
 
   // src/people/parse.ts
@@ -6518,7 +6638,7 @@ var BZW_people = (() => {
     return e instanceof Error ? e.message : String(e);
   }
   function chunkedMessage(msgCount, batchCount, opts) {
-    return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 2} 次 AI 调用`;
+    return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 3} 次 AI 调用`;
   }
   function sampledMessage(msgCount, allCount, kept, spanFrom, spanTo) {
     return `消息 ${msgCount} 条 → ${allCount} 批超上限，均匀抽样 ${kept} 批（覆盖 ${spanFrom} ~ ${spanTo} 全时段，首尾必保，未抽中的批次不送 AI）`;
@@ -6527,7 +6647,7 @@ var BZW_people = (() => {
     return `第 ${i}/${total} 批 · ${c.from} ~ ${c.to} · ${c.count} 条`;
   }
   function materialMessage(c) {
-    return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成画像`;
+    return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成《其人》`;
   }
   function batchRetryMessage(i, total, attempt, maxRetries, err) {
     return `第 ${i + 1}/${total} 批失败（${err}）——正在重试 ${attempt}/${maxRetries}…`;
@@ -6587,7 +6707,7 @@ var BZW_people = (() => {
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
   }
   async function startJobs(app, targets, opts = {}) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     if (!st) {
       st = {
         app,
@@ -6655,7 +6775,9 @@ var BZW_people = (() => {
       const importRecord = importRecordOf(t, digestMsgs);
       const noteMaterial = {
         mediaNote: mediaNote || void 0,
-        statsNote: t.insights ? buildStatsNote(t.insights) || void 0 : void 0
+        statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || void 0 : void 0,
+        // 手动档案段（issue 455）：入参优先，回落人物卡现有档案；排队时定稿（与 statsNote 同一语义）
+        profileNote: buildProfileNote((_e = t.profile) != null ? _e : existing == null ? void 0 : existing.profile) || void 0
       };
       if (prev && reusableJob(prev, fp, effective, chunkFull)) {
         Object.assign(prev, {
@@ -6663,7 +6785,7 @@ var BZW_people = (() => {
           fileLabel: t.fileLabel,
           importRecord,
           stats,
-          material: { ...(_e = prev.material) != null ? _e : { traits: [], moments: [] }, ...noteMaterial },
+          material: { ...(_f = prev.material) != null ? _f : { traits: [], moments: [] }, ...noteMaterial },
           message: `继续生成：已完成 ${prev.batchesDone}/${prev.chunks.length} 批`,
           status: "paused",
           error: void 0,
@@ -6721,6 +6843,11 @@ var BZW_people = (() => {
       if (!j || typeof j !== "object") continue;
       if (!Array.isArray(j.results)) j.results = [];
       if (!Array.isArray(j.chunks)) j.chunks = [];
+      const legacy = j.portrait;
+      if (!j.person && typeof legacy === "string" && legacy) {
+        j.person = legacy;
+        dirty = true;
+      }
       if (j.status === "running") {
         j.status = "interrupted";
         j.message = "上次未完成，可从断点继续";
@@ -6793,7 +6920,7 @@ var BZW_people = (() => {
     return !st || st.queue.indexOf(job) < 0;
   }
   async function runJob(job) {
-    var _a, _b;
+    var _a, _b, _c;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -6896,29 +7023,48 @@ var BZW_people = (() => {
       const material = toPortraitMaterial(merged, {
         mediaNote: (_a = job.material) == null ? void 0 : _a.mediaNote,
         statsNote: (_b = job.material) == null ? void 0 : _b.statsNote,
+        profileNote: (_c = job.material) == null ? void 0 : _c.profileNote,
         sampleEvents: job.mode === "incremental"
       });
+      const sampleWarn = sampleWarnOf(job.msgCount);
       await finish({
-        stage: "portrait",
+        stage: "person",
         message: materialMessage(counts)
       });
-      let portrait = "";
+      let person = "";
       try {
-        portrait = (await asks.portrait(buildPortraitPrompt(job.name, material))).trim();
+        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
       } catch (e) {
-        await finish({ status: "error", error: errorMessage(e), message: `画像生成失败：${errorMessage(e)}` });
+        await finish({ status: "error", error: errorMessage(e), message: `《其人》生成失败：${errorMessage(e)}` });
         return;
       }
       if (gone(job)) return;
-      if (!portrait) {
-        await finish({ status: "error", error: "画像生成为空", message: "画像生成为空" });
+      if (!person) {
+        await finish({ status: "error", error: "卷一《其人》生成为空", message: "卷一《其人》生成为空" });
         return;
       }
-      job.portrait = portrait;
+      job.person = person;
       job.updatedAt = nowIso();
       await persist();
       emit();
-      await finish({ stage: "chronicle", message: "画像完成，正在生成关系时间线…" });
+      await finish({ stage: "bond", message: "《其人》完成，正在生成《我们》…" });
+      let bond = "";
+      try {
+        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
+      } catch (e) {
+        await finish({ status: "error", error: errorMessage(e), message: `《我们》生成失败：${errorMessage(e)}` });
+        return;
+      }
+      if (gone(job)) return;
+      if (!bond) {
+        await finish({ status: "error", error: "卷二《我们》生成为空", message: "卷二《我们》生成为空" });
+        return;
+      }
+      job.bond = bond;
+      job.updatedAt = nowIso();
+      await persist();
+      emit();
+      await finish({ stage: "chronicle", message: "双卷完成，正在生成关系时间线…" });
       let chronicle = "";
       if (merged.events.length) {
         try {
@@ -6939,8 +7085,11 @@ var BZW_people = (() => {
         material: {
           traits: material.traits,
           moments: material.moments,
+          interests: material.interests,
+          threads: material.threads,
           mediaNote: material.mediaNote,
-          statsNote: material.statsNote
+          statsNote: material.statsNote,
+          profileNote: material.profileNote
         },
         message: `「${job.name}」脸谱已生成`
       });
@@ -7041,6 +7190,13 @@ var BZW_people = (() => {
     if (sec < 3600) return `${Math.round(sec / 60)} 分`;
     return `${(sec / 3600).toFixed(1)} 时`;
   }
+  function mdPlain(md) {
+    return String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
+  }
+  function spillOf(s, n = 40) {
+    const t = mdPlain(s);
+    return [...t].length <= n ? t : `${[...t].slice(0, n).join("")}…`;
+  }
   function iconButton(icon, cls, attrs) {
     const b = el("button", cls, attrs);
     b.type = "button";
@@ -7064,17 +7220,20 @@ var BZW_people = (() => {
       el("div", "bz-people-stats", { "data-people-stats": "" }),
       el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "", hidden: "" }),
       el("div", "bz-people-body", { "data-people-body": "" }),
-      el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" })
+      el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" }),
+      el("div", "bz-people-pop-layer", { "data-people-pop-layer": "", hidden: "" })
     ]);
   }
   function jobsPercent(batchesDone, batchesTotal, stagesDone) {
-    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 3;
     const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
     return Math.min(100, Math.round(numer / denom * 100));
   }
   function jobsStagesDone(stage2, status) {
-    if (status === "done") return 2;
-    return stage2 === "chronicle" ? 1 : 0;
+    if (status === "done") return 3;
+    if (stage2 === "chronicle") return 2;
+    if (stage2 === "bond") return 1;
+    return 0;
   }
   function jobsQueueLabel(queueIndex, queueTotal, name) {
     const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
@@ -7242,11 +7401,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   var FOLD_TITLES = [
-    ["p", "画像", "画像与代表原话"],
+    ["p", "其人", "卷一 · 其人画像与代表原话"],
+    ["b", "我们", "卷二 · 我们关系画像"],
     ["e", "事件", "交往事件与随手记"],
-    ["c", "大事记", "关系时间线"],
-    ["d", "数据", "互动统计与媒体"],
-    ["f", "档案", "人物档案"]
+    ["c", "大事记", "关系时间线"]
   ];
   function foldDetailHead(p, media, opts) {
     var _a, _b;
@@ -7277,6 +7435,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
         ...action ? [action] : [],
+        // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
+        iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
+        iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
@@ -7304,18 +7465,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return book;
   }
   function spillMeta(p, id) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     switch (id) {
       case "p":
-        return ((_a = p.digest) == null ? void 0 : _a.portrait) ? "修" : "空";
+        return personOf(p.digest) ? "修" : "空";
+      case "b":
+        return bondOf(p.digest) ? "修" : "空";
       case "e":
-        return `${(_c = (_b = p.digest) == null ? void 0 : _b.events.length) != null ? _c : 0} 事${((_e = (_d = p.manualEvents) == null ? void 0 : _d.length) != null ? _e : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
+        return `${(_b = (_a = p.digest) == null ? void 0 : _a.events.length) != null ? _b : 0} 事${((_d = (_c = p.manualEvents) == null ? void 0 : _c.length) != null ? _d : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
       case "c":
-        return ((_f = p.digest) == null ? void 0 : _f.chronicle) ? "编年" : "空";
-      case "d":
-        return p.imports.length ? `${p.imports.length} 次导入` : "—";
-      case "f":
-        return profileFilled(p.profile) ? "有档" : "补档";
+        return ((_e = p.digest) == null ? void 0 : _e.chronicle) ? "编年" : "空";
     }
   }
   function profileFilled(prof) {
@@ -7325,9 +7484,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       prof.socials && prof.socials.length || prof.tags && prof.tags.length || ((_a = prof.birthday) != null ? _a : "").trim() || ((_b = prof.metVia) != null ? _b : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim()
     );
   }
-  function foldPortraitBody(mdRoot, p) {
+  function foldHint(msg, action) {
+    const d = el("div", "bz-people-empty-hint");
+    d.appendChild(text(msg));
+    if (action) {
+      d.appendChild(el("br"));
+      d.appendChild(button("bz-people-btn bz-people-btn-ghost", action, { "data-people-ds-open": "" }));
+    }
+    return d;
+  }
+  function foldPersonBody(mdRoot, p) {
     var _a, _b;
-    const out = [mdRoot];
+    const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
     if ((_b = (_a = p.digest) == null ? void 0 : _a.quotes) == null ? void 0 : _b.length) {
       out.push(el("div", "bz-people-section-title", text("代表原话")));
       const quotes = el("div", "bz-people-quotes");
@@ -7340,6 +7508,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       out.push(quotes);
     }
     return out;
+  }
+  function foldBondBody(mdRoot) {
+    return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
   }
   function foldEventsBody(p, noteAdd, today) {
     var _a, _b;
@@ -7379,7 +7550,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function foldChronicleBody(mdRoot) {
     return mdRoot ? [mdRoot] : [el("div", "bz-people-empty-hint", text("还没有关系时间线。重画脸谱后会生成。"))];
   }
-  function foldDataBody(card, p) {
+  function statsPopBody(card, p) {
     const out = [];
     if (card) out.push(card);
     else if (p.imports.length) {
@@ -7530,7 +7701,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ])
     ]);
   }
-  function foldProfileBody(p, editing) {
+  function profilePopBody(p, editing) {
     const out = [];
     const hasProf = profileFilled(p.profile);
     if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
@@ -7541,6 +7712,20 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]));
     }
     return out;
+  }
+  function popShell(title, rootHook, body) {
+    const wrap = el("div", "bz-people-pop", { [rootHook]: "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-pop-close": "" }));
+    const pop = el("div", "bz-people-pop-panel", { role: "dialog", "aria-label": title });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text(title)),
+      iconButton("x", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-pop-close": "", "aria-label": "关闭", title: "关闭" })
+    ]));
+    const content = el("div", "bz-people-pop-body");
+    for (const node of body) content.appendChild(node);
+    pop.appendChild(content);
+    wrap.appendChild(pop);
+    return wrap;
   }
   function noteAddRow(today) {
     const date = document.createElement("input");
@@ -7751,6 +7936,24 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var dsNotice = "";
   var dsGenerateable = false;
   var dsScannedAt = "";
+  var statsOpen = false;
+  var profOpen = false;
+  function openStatsPop() {
+    statsOpen = true;
+    profOpen = false;
+    void renderBody();
+  }
+  function openProfPop() {
+    profOpen = true;
+    statsOpen = false;
+    void renderBody();
+  }
+  function closePops() {
+    if (!statsOpen && !profOpen) return;
+    statsOpen = false;
+    profOpen = false;
+    void renderBody();
+  }
   function isPeopleOpen() {
     return overlay !== null;
   }
@@ -7767,7 +7970,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     document.body.appendChild(overlay);
     topifyZ(overlay);
     registerPanelEsc(ESC_ID, isPeopleOpen, () => {
-      if (dsOpen) closeDs();
+      if (statsOpen || profOpen) closePops();
+      else if (dsOpen) closeDs();
       else closePeoplePanel();
     });
     trapPanelFocus((_a = overlay.querySelector(".bz-people-panel")) != null ? _a : overlay);
@@ -7799,6 +8003,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     mergeToId = null;
     profEditId = null;
     noteAddId = null;
+    statsOpen = false;
+    profOpen = false;
     disarmDelete();
     closeDsState();
     if (backgrounded) notice("已转后台继续生成，重开面板查看进度", "info");
@@ -8078,6 +8284,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     notice(`「${name}」的消息集已变，断点接不上——点印章上的「重新生成」会从头重画`, "warning");
     return true;
   }
+  function mergedMonthlyOf(imports) {
+    var _a, _b, _c;
+    const acc = /* @__PURE__ */ new Map();
+    for (const r of imports) {
+      for (const [month, n] of (_b = (_a = r.stats) == null ? void 0 : _a.monthly) != null ? _b : []) acc.set(month, ((_c = acc.get(month)) != null ? _c : 0) + n);
+    }
+    if (!acc.size) return void 0;
+    return [...acc.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }
   var jobsOverride = null;
   function jobs() {
     return jobsOverride != null ? jobsOverride : jobs_exports;
@@ -8109,7 +8324,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         targetsInFlight.delete(job.talker);
         jobsPersisted.add(job.talker);
         void persistJobDone(job, target);
-      } else if (!jobsPersisted.has(job.talker) && job.portrait) {
+      } else if (!jobsPersisted.has(job.talker) && job.person) {
         jobsPersisted.add(job.talker);
         void persistJobDone(job);
       }
@@ -8141,6 +8356,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     renderJobs();
   }
   async function planTargets(targets) {
+    var _a;
     const store2 = new PeopleStore(getApp());
     const people = await store2.list();
     const runnable = [];
@@ -8167,7 +8383,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       } else if (plan.olderCount > 0) {
         notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      runnable.push(t);
+      runnable.push({ ...t, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a = existing == null ? void 0 : existing.imports) != null ? _a : []) });
     }
     return { runnable, skipped };
   }
@@ -8176,8 +8392,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const talker = (_a = target == null ? void 0 : target.talker) != null ? _a : job.talker;
     const name = (_b = target == null ? void 0 : target.name) != null ? _b : job.name;
     try {
-      if (!job.portrait) {
-        notice(`「${name}」生成完成但画像为空`, "warning");
+      const person = job.person;
+      if (!person) {
+        notice(`「${name}」生成完成但其人画像为空`, "warning");
         return;
       }
       const store2 = new PeopleStore(getApp());
@@ -8197,7 +8414,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       await store2.upsert(entry);
       await store2.appendImport(talker, rec);
       const digest = {
-        portrait: job.portrait,
+        person,
+        // 卷一《其人》
+        bond: job.bond || void 0,
+        // 卷二《我们》（旧引擎无此产物）
         events: mergeManualEvents((_r = job.events) != null ? _r : [], existing == null ? void 0 : existing.manualEvents),
         // 439：手动随手记并入事件素材
         quotes: job.quotes,
@@ -8358,6 +8578,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     if (t.closest("[data-people-jobs-dismiss]")) {
       jobsAction("dismiss");
+      return;
+    }
+    if (t.closest("[data-people-stats-open]")) {
+      openStatsPop();
+      return;
+    }
+    if (t.closest("[data-people-prof-open]")) {
+      openProfPop();
+      return;
+    }
+    if (t.closest("[data-people-pop-close]")) {
+      closePops();
       return;
     }
     if (t.closest("[data-people-ds-open]")) {
@@ -8544,10 +8776,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     var _a;
     const body = overlay == null ? void 0 : overlay.querySelector("[data-people-body]");
     if (!body || !store || !overlay) return;
-    if (stage === "list") await renderList(body);
-    else await renderDetail(body);
+    const people = await wallPeople();
+    if (stage === "list") await renderList(body, people);
+    else await renderDetail(body, people);
     (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
     renderDsLayer();
+    renderPopLayer(people);
     renderJobs();
     mountIcons(overlay);
   }
@@ -8557,6 +8791,22 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     layer.hidden = !dsOpen;
     layer.replaceChildren();
     if (dsOpen) layer.appendChild(dsModal(dsModalState()));
+  }
+  function renderPopLayer(people) {
+    const layer = overlay == null ? void 0 : overlay.querySelector("[data-people-pop-layer]");
+    if (!layer) return;
+    const p = statsOpen || profOpen ? people.find((x) => x.id === detailId) : null;
+    if (!p) {
+      statsOpen = false;
+      profOpen = false;
+      layer.hidden = true;
+      layer.replaceChildren();
+      return;
+    }
+    layer.hidden = false;
+    layer.replaceChildren(
+      statsOpen ? popShell("互动统计", "data-people-stats-pop", statsPopBody(buildInsightsCard(p), p)) : popShell("补充背景", "data-people-prof-pop", profilePopBody(p, profEditId === p.id))
+    );
   }
   var previewCache = null;
   async function previewData() {
@@ -8615,9 +8865,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const name = (_b = (_a = listCache.find((x) => x.id === id)) == null ? void 0 : _a.name) != null ? _b : id;
     await store.upsert({ id, name, createdAt: (/* @__PURE__ */ new Date()).toISOString(), imports: [] });
   }
-  async function renderList(body) {
+  async function renderList(body, people) {
     var _a;
-    const people = await wallPeople();
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     listCache = people;
@@ -8668,54 +8917,34 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (deleteArmTimer) clearTimeout(deleteArmTimer);
     deleteArmTimer = null;
   }
-  async function renderDetail(body) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
-    const people = await wallPeople();
+  async function renderDetail(body, people) {
+    var _a, _b, _c, _d;
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     const p = people.find((x) => x.id === detailId);
     body.replaceChildren();
     if (!p) {
       stage = "list";
-      await renderList(body);
+      await renderList(body, people);
       return;
     }
     const media = personMedia(p);
     body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)) }));
-    const spillOf = (md) => {
-      const t = String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
-      return [...t].length <= 40 ? t : `${[...t].slice(0, 40).join("")}…`;
-    };
-    const hint = (msg, action) => {
-      const d = document.createElement("div");
-      d.className = "bz-people-empty-hint";
-      d.textContent = msg;
-      if (action) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "bz-people-btn bz-people-btn-ghost";
-        b.setAttribute("data-people-ds-open", "");
-        b.textContent = action;
-        d.appendChild(document.createElement("br"));
-        d.appendChild(b);
-      }
-      return d;
-    };
+    const person = personOf(p.digest);
+    const bond = bondOf(p.digest);
     const quoteOf = {
-      p: ((_a = p.digest) == null ? void 0 : _a.portrait) ? spillOf(p.digest.portrait) : "还没有脸谱。从数据源导入一次即可生成。",
-      e: ((_b = p.digest) == null ? void 0 : _b.events.length) ? spillOf(p.digest.events[0].summary) : ((_c = p.manualEvents) == null ? void 0 : _c.length) ? spillOf(p.manualEvents[0].summary) : "还没有交往事件与随手记。",
-      c: ((_d = p.digest) == null ? void 0 : _d.chronicle) ? spillOf(p.digest.chronicle) : "还没有关系时间线。",
-      d: p.imports.length ? `最近导入 ${p.imports.length} 次` : "还没有导入记录。",
-      f: ((_f = (_e = p.profile) == null ? void 0 : _e.tags) != null ? _f : []).filter(Boolean).length ? ((_h = (_g = p.profile) == null ? void 0 : _g.tags) != null ? _h : []).filter(Boolean).join(" · ") : "聊天之外的也可以记。"
+      p: person ? spillOf(person) : "还没有其人画像。从数据源导入一次即可生成。",
+      b: bond ? spillOf(bond) : "还没有关系画像。从数据源导入一次即可生成。",
+      e: ((_a = p.digest) == null ? void 0 : _a.events.length) ? spillOf(p.digest.events[0].summary) : ((_b = p.manualEvents) == null ? void 0 : _b.length) ? spillOf(p.manualEvents[0].summary) : "还没有交往事件与随手记。",
+      c: ((_c = p.digest) == null ? void 0 : _c.chronicle) ? spillOf(p.digest.chronicle) : "还没有关系时间线。"
     };
     const bodies = {
-      p: detailFold === "p" ? foldPortraitBody(((_i = p.digest) == null ? void 0 : _i.portrait) ? miniMarkdown(p.digest.portrait) : hint("还没有脸谱。从数据源导入一次即可生成。", "打开数据源"), p) : [],
+      p: detailFold === "p" ? foldPersonBody(person ? miniMarkdown(person) : null, p) : [],
+      b: detailFold === "b" ? foldBondBody(bond ? miniMarkdown(bond) : null) : [],
       e: detailFold === "e" ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
-      c: detailFold === "c" ? foldChronicleBody(((_j = p.digest) == null ? void 0 : _j.chronicle) ? miniMarkdown(p.digest.chronicle) : null) : [],
-      d: detailFold === "d" ? foldDataBody(buildInsightsCard(p), p) : [],
-      f: detailFold === "f" ? foldProfileBody(p, profEditId === p.id) : []
+      c: detailFold === "c" ? foldChronicleBody(((_d = p.digest) == null ? void 0 : _d.chronicle) ? miniMarkdown(p.digest.chronicle) : null) : []
     };
-    body.appendChild(foldBook(p, { fold: detailFold, media, profEdit: profEditId === p.id, noteAdd: noteAddId === p.id }, bodies, quoteOf));
+    body.appendChild(foldBook(p, { fold: detailFold }, bodies, quoteOf));
   }
   function buildInsightsCard(p) {
     var _a, _b, _c, _d, _e;

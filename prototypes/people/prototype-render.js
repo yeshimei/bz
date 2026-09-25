@@ -1,5 +1,5 @@
-/* 源指纹 11b19ace85c73073 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/people/render.ts"]*/
+/* 源指纹 73adca92877db9f4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
   var __defProp = Object.defineProperty;
@@ -30,14 +30,14 @@ var BZR_people = (() => {
     dsWatermark: () => dsWatermark,
     duoBar: () => duoBar,
     el: () => el,
+    foldBondBody: () => foldBondBody,
     foldBook: () => foldBook,
     foldCard: () => foldCard,
     foldChronicleBody: () => foldChronicleBody,
-    foldDataBody: () => foldDataBody,
     foldDetailHead: () => foldDetailHead,
     foldEventsBody: () => foldEventsBody,
-    foldPortraitBody: () => foldPortraitBody,
-    foldProfileBody: () => foldProfileBody,
+    foldHint: () => foldHint,
+    foldPersonBody: () => foldPersonBody,
     foldSeal: () => foldSeal,
     foldSealNode: () => foldSealNode,
     foldWall: () => foldWall,
@@ -63,13 +63,16 @@ var BZR_people = (() => {
     monthlyChart: () => monthlyChart,
     noteAddRow: () => noteAddRow,
     panelShell: () => panelShell,
+    popShell: () => popShell,
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
+    profilePopBody: () => profilePopBody,
     profileView: () => profileView,
     progressBlock: () => progressBlock,
     replyLatencySec: () => replyLatencySec,
     socialRow: () => socialRow,
     spillOf: () => spillOf,
+    statsPopBody: () => statsPopBody,
     statsText: () => statsText,
     tagChip: () => tagChip,
     text: () => text,
@@ -77,6 +80,18 @@ var BZR_people = (() => {
     vtName: () => vtName,
     wallEmpty: () => wallEmpty
   });
+
+  // src/people/types.ts
+  function personOf(d) {
+    var _a, _b;
+    return (_b = (_a = d == null ? void 0 : d.person) != null ? _a : d == null ? void 0 : d.portrait) != null ? _b : "";
+  }
+  function bondOf(d) {
+    var _a;
+    return (_a = d == null ? void 0 : d.bond) != null ? _a : "";
+  }
+
+  // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
     const flat = (ns) => ns.flatMap((n) => Array.isArray(n) ? n : [n]);
@@ -185,17 +200,20 @@ var BZR_people = (() => {
       el("div", "bz-people-stats", { "data-people-stats": "" }),
       el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "", hidden: "" }),
       el("div", "bz-people-body", { "data-people-body": "" }),
-      el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" })
+      el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" }),
+      el("div", "bz-people-pop-layer", { "data-people-pop-layer": "", hidden: "" })
     ]);
   }
   function jobsPercent(batchesDone, batchesTotal, stagesDone) {
-    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 2;
+    const denom = (batchesTotal > 0 ? batchesTotal : 0) + 3;
     const numer = Math.max(0, batchesDone || 0) + Math.max(0, stagesDone || 0);
     return Math.min(100, Math.round(numer / denom * 100));
   }
   function jobsStagesDone(stage, status) {
-    if (status === "done") return 2;
-    return stage === "chronicle" ? 1 : 0;
+    if (status === "done") return 3;
+    if (stage === "chronicle") return 2;
+    if (stage === "bond") return 1;
+    return 0;
   }
   function jobsQueueLabel(queueIndex, queueTotal, name) {
     const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
@@ -363,11 +381,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   var FOLD_TITLES = [
-    ["p", "画像", "画像与代表原话"],
+    ["p", "其人", "卷一 · 其人画像与代表原话"],
+    ["b", "我们", "卷二 · 我们关系画像"],
     ["e", "事件", "交往事件与随手记"],
-    ["c", "大事记", "关系时间线"],
-    ["d", "数据", "互动统计与媒体"],
-    ["f", "档案", "人物档案"]
+    ["c", "大事记", "关系时间线"]
   ];
   function foldDetailHead(p, media, opts) {
     var _a, _b;
@@ -398,6 +415,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
         ...action ? [action] : [],
+        // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
+        iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
+        iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
@@ -425,18 +445,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return book;
   }
   function spillMeta(p, id) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e;
     switch (id) {
       case "p":
-        return ((_a = p.digest) == null ? void 0 : _a.portrait) ? "修" : "空";
+        return personOf(p.digest) ? "修" : "空";
+      case "b":
+        return bondOf(p.digest) ? "修" : "空";
       case "e":
-        return `${(_c = (_b = p.digest) == null ? void 0 : _b.events.length) != null ? _c : 0} 事${((_e = (_d = p.manualEvents) == null ? void 0 : _d.length) != null ? _e : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
+        return `${(_b = (_a = p.digest) == null ? void 0 : _a.events.length) != null ? _b : 0} 事${((_d = (_c = p.manualEvents) == null ? void 0 : _c.length) != null ? _d : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
       case "c":
-        return ((_f = p.digest) == null ? void 0 : _f.chronicle) ? "编年" : "空";
-      case "d":
-        return p.imports.length ? `${p.imports.length} 次导入` : "—";
-      case "f":
-        return profileFilled(p.profile) ? "有档" : "补档";
+        return ((_e = p.digest) == null ? void 0 : _e.chronicle) ? "编年" : "空";
     }
   }
   function profileFilled(prof) {
@@ -446,9 +464,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       prof.socials && prof.socials.length || prof.tags && prof.tags.length || ((_a = prof.birthday) != null ? _a : "").trim() || ((_b = prof.metVia) != null ? _b : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim()
     );
   }
-  function foldPortraitBody(mdRoot, p) {
+  function foldHint(msg, action) {
+    const d = el("div", "bz-people-empty-hint");
+    d.appendChild(text(msg));
+    if (action) {
+      d.appendChild(el("br"));
+      d.appendChild(button("bz-people-btn bz-people-btn-ghost", action, { "data-people-ds-open": "" }));
+    }
+    return d;
+  }
+  function foldPersonBody(mdRoot, p) {
     var _a, _b;
-    const out = [mdRoot];
+    const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
     if ((_b = (_a = p.digest) == null ? void 0 : _a.quotes) == null ? void 0 : _b.length) {
       out.push(el("div", "bz-people-section-title", text("代表原话")));
       const quotes = el("div", "bz-people-quotes");
@@ -461,6 +488,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       out.push(quotes);
     }
     return out;
+  }
+  function foldBondBody(mdRoot) {
+    return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
   }
   function foldEventsBody(p, noteAdd, today) {
     var _a, _b;
@@ -500,7 +530,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function foldChronicleBody(mdRoot) {
     return mdRoot ? [mdRoot] : [el("div", "bz-people-empty-hint", text("还没有关系时间线。重画脸谱后会生成。"))];
   }
-  function foldDataBody(card, p) {
+  function statsPopBody(card, p) {
     const out = [];
     if (card) out.push(card);
     else if (p.imports.length) {
@@ -667,7 +697,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ])
     ]);
   }
-  function foldProfileBody(p, editing) {
+  function profilePopBody(p, editing) {
     const out = [];
     const hasProf = profileFilled(p.profile);
     if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
@@ -678,6 +708,20 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]));
     }
     return out;
+  }
+  function popShell(title, rootHook, body) {
+    const wrap = el("div", "bz-people-pop", { [rootHook]: "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-pop-close": "" }));
+    const pop = el("div", "bz-people-pop-panel", { role: "dialog", "aria-label": title });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text(title)),
+      iconButton("x", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-pop-close": "", "aria-label": "关闭", title: "关闭" })
+    ]));
+    const content = el("div", "bz-people-pop-body");
+    for (const node of body) content.appendChild(node);
+    pop.appendChild(content);
+    wrap.appendChild(pop);
+    return wrap;
   }
   function noteAddRow(today) {
     const date = document.createElement("input");
