@@ -12,6 +12,8 @@ import {
   dsRow,
   foldBook,
   foldCard,
+  foldSeal,
+  foldSealNode,
   formatCount,
   jobsFallbackMessage,
   jobsPercent,
@@ -23,6 +25,7 @@ import {
   statsText,
   vtName,
   type DsRowState,
+  type FoldCardJob,
   type JobsBlockState,
 } from '../../src/people/render';
 import type { PersonEntry } from '../../src/people/types';
@@ -72,6 +75,75 @@ describe('折子封面（foldCard）', () => {
     expect(who).not.toContain('条');
     const meta = card.querySelector('.bz-people-fold-meta')!.textContent;
     expect(who).not.toBe(meta);
+  });
+});
+
+describe('折子印章四态（451）', () => {
+  const digest = { portrait: 'x', events: [], generatedAt: '2026-03-12T00:00:00.000Z' };
+  const job = (over: Partial<FoldCardJob> = {}): FoldCardJob => ({
+    status: 'running', batchesDone: 0, batchesTotal: 10, stagesDone: 0, resumable: true, ...over,
+  });
+
+  it('未画谱：灰虚印「待画」→ 唯一动作「画脸谱」', () => {
+    const s = foldSeal(person(), null);
+    expect(s.state).toBe('todo');
+    expect(s.text).toBe('待画');
+    expect(s.action).toEqual({ kind: 'draw', label: '画脸谱' });
+  });
+
+  it('画谱中：金实印带百分比（与进度块同口径）→ 唯一动作「暂停」', () => {
+    const s = foldSeal(person(), job({ batchesDone: 3 }));
+    expect(s.state).toBe('running');
+    expect(s.text).toBe('画谱中\n25%'); // (3+0)/(10+2)
+    expect(s.action).toEqual({ kind: 'pause', label: '暂停' });
+    expect(s.title).toContain('本批做完后暂停');
+  });
+
+  it('画谱中断：朱红破框印带批数 → 「继续生成」（paused / interrupted / error 可续三态同形）', () => {
+    for (const status of ['paused', 'interrupted', 'error'] as const) {
+      const s = foldSeal(person(), job({ status, batchesDone: 12, batchesTotal: 60 }));
+      expect(s.state).toBe('halted');
+      expect(s.text).toBe('画谱中断\n12/60');
+      expect(s.action).toEqual({ kind: 'resume', label: '继续生成' });
+      expect(s.title).toContain('已画完的批次不重画');
+    }
+  });
+
+  it('画谱中断（漂移类失败不可续）→ 改「重新生成」', () => {
+    const s = foldSeal(person(), job({ status: 'error', resumable: false }));
+    expect(s.state).toBe('halted');
+    expect(s.text).toBe('画谱中断');
+    expect(s.action).toEqual({ kind: 'redraw', label: '重新生成' });
+  });
+
+  it('已画谱：朱红实印「画到 日期」→ 唯一动作「补画」；无锚点回落「已画」', () => {
+    const anchored = foldSeal(person({ digest, lastProcessedTs: new Date('2026-03-12T12:00:00').getTime() }), null);
+    expect(anchored.state).toBe('done');
+    expect(anchored.text).toBe('画到\n26-03-12'); // formatDay(YYYY-MM-DD) 去世纪前缀（447 沿用的印章口径）
+    expect(anchored.action).toEqual({ kind: 'redraw', label: '补画' });
+    expect(foldSeal(person({ digest }), null).text).toBe('已画');
+  });
+
+  it('任务态压过脸谱水位：已有脸谱又在中途补画 → 显「画谱中」而非「已画谱」', () => {
+    const s = foldSeal(person({ digest, lastProcessedTs: Date.now() }), job({ batchesDone: 5 }));
+    expect(s.state).toBe('running');
+    expect(s.text).toBe('画谱中\n42%'); // (5+0)/(10+2)
+  });
+
+  it('印章是按钮且钩子 / 文案齐备；每态只出一个动作（互不并列）', () => {
+    const card = foldCard(person(), { media: null, mergeFrom: false, mergePick: false, job: job({ batchesDone: 3 }) });
+    expect(card.querySelectorAll('[data-people-seal-act]')).toHaveLength(1);
+    const seal = card.querySelector<HTMLButtonElement>('.bz-people-seal')!;
+    expect(seal.tagName).toBe('BUTTON');
+    expect(seal.type).toBe('button');
+    expect(seal.classList.contains('bz-people-seal-running')).toBe(true);
+    expect(seal.dataset.peopleSealAct).toBe('pause');
+    expect(seal.getAttribute('aria-label')).toContain('暂停');
+    expect(seal.getAttribute('title')).toContain('陈默');
+    // 原位刷新换的是同一个节点形态：foldSealNode 与卡内印章同构
+    const swapped = foldSealNode(person(), job({ status: 'interrupted', batchesDone: 2 }));
+    expect(swapped.classList.contains('bz-people-seal-halted')).toBe(true);
+    expect(swapped.dataset.peopleSealAct).toBe('resume');
   });
 });
 

@@ -1,4 +1,4 @@
-/* 源指纹 83972bbe9103629f · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9054a6c56a230296 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -38,6 +38,8 @@ var BZR_people = (() => {
     foldEventsBody: () => foldEventsBody,
     foldPortraitBody: () => foldPortraitBody,
     foldProfileBody: () => foldProfileBody,
+    foldSeal: () => foldSeal,
+    foldSealNode: () => foldSealNode,
     foldWall: () => foldWall,
     formatCount: () => formatCount,
     formatDay: () => formatDay,
@@ -260,19 +262,74 @@ var BZR_people = (() => {
       button("bz-people-btn bz-people-btn-ghost", "取消合并", { "data-people-merge-cancel": "" })
     ]);
   }
+  function foldSeal(p, job) {
+    const name = p.name || p.id;
+    if (job && job.status !== "done") {
+      const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
+      if (job.status === "running") {
+        const pct = jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+        return {
+          state: "running",
+          text: `画谱中
+${pct}%`,
+          title: `正在生成「${name}」的脸谱（${prog}）——点这里在本批做完后暂停`,
+          action: { kind: "pause", label: "暂停" }
+        };
+      }
+      if (job.status === "error" && !job.resumable) {
+        return {
+          state: "halted",
+          text: "画谱中断",
+          title: `「${name}」上次生成中断且接不上（消息集已变）——点这里重新生成`,
+          action: { kind: "redraw", label: "重新生成" }
+        };
+      }
+      return {
+        state: "halted",
+        text: `画谱中断
+${job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal}` : "待续"}`,
+        title: `「${name}」${job.status === "error" ? "上次生成失败" : "上次没画完"}（${prog}）——点这里从断点继续，已画完的批次不重画`,
+        action: { kind: "resume", label: "继续生成" }
+      };
+    }
+    if (p.digest) {
+      return {
+        state: "done",
+        text: p.lastProcessedTs ? `画到
+${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
+        title: `「${name}」的脸谱已画到这天——点这里用新导入的消息补画（没有新消息会跳过）`,
+        action: { kind: "redraw", label: "补画" }
+      };
+    }
+    return {
+      state: "todo",
+      text: "待画",
+      title: `「${name}」还没有脸谱——点这里用已导入的消息画一张`,
+      action: { kind: "draw", label: "画脸谱" }
+    };
+  }
+  function foldSealNode(p, job) {
+    const seal = foldSeal(p, job);
+    const b = el("button", `bz-people-seal bz-people-seal-${seal.state}`, {
+      "data-people-seal-act": seal.action.kind,
+      "aria-label": `${seal.action.label}：${p.name || p.id}`,
+      title: seal.title
+    });
+    b.type = "button";
+    b.textContent = seal.text;
+    return b;
+  }
   function foldCard(p, opts) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const from = p.imports.map((r) => r.timeFrom).sort()[0];
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
     const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
-    const seal = p.digest ? el("div", "bz-people-seal", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(p.lastProcessedTs ? `画到
-${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
-        seal,
+        foldSealNode(p, (_d = opts.job) != null ? _d : null),
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
         // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
         el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),

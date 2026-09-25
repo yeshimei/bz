@@ -8,10 +8,12 @@
  * 文件向导已退役（447）：bz-people-import 命令改开数据源弹窗；聊天原文只在本层内存流转
  * （ADR-0191），预览桶只落标签化文本。
  *
- * 生成链（issue 450）：本层不再内联跑生成循环——组装 targets 交给 jobs.ts 生成引擎
+ * 生成链（issue 450 / 451）：本层不再内联跑生成循环——组装 targets 交给 jobs.ts 生成引擎
  * （模块级单例，独立于面板生命周期），面板只订阅快照渲染进度块；done 产物在本层
  * 落 people.json（PeopleStore / ImportRecord 口径沿用 446 收编形态）。关面板转后台，
  * 重开面板 snapshot+resume 渲染当前任务态，中断任务出「继续生成」。
+ * 451：折子封面卡的印章升级为四态（未画谱 / 画谱中 / 画谱中断 / 已画谱）且本身就是动作入口
+ * （画脸谱 / 暂停 / 继续生成 / 补画），快照每帧原位只换印章节点。
  */
 import { notice, notifyActionError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
@@ -49,6 +51,7 @@ import {
   foldEventsBody,
   foldPortraitBody,
   foldProfileBody,
+  foldSealNode,
   foldWall,
   importMeta,
   insightsCard,
@@ -65,6 +68,7 @@ import {
   wallEmpty,
   jobsStagesDone,
   type DsRowState,
+  type FoldCardJob,
   type FoldId,
   type JobsBlockState,
   type JobsUiStatus,
@@ -432,13 +436,14 @@ async function generateFromDs(): Promise<void> {
 }
 
 /**
- * 详情「画脸谱」（448：仅未生成脸谱时出）：用预览桶里该人物的消息素材单人生成，
- * 交引擎后台跑，进度走面板进度块。还没有预览素材时提示先走数据源导入。
+ * 详情 / 卡面「画脸谱」（448 仅未生成时出；451 卡上印章的「画脸谱 / 补画」也走这里）：
+ * 用预览桶里该人物的消息素材单人生成，交引擎后台跑，进度走面板进度块。
+ * 还没有预览素材时提示先走数据源导入。
  */
-async function generateOne(): Promise<void> {
-  if (!store || !detailId) return;
+async function generateOne(id?: string): Promise<void> {
+  const name = id ?? detailId;
+  if (!store || !name) return;
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
-  const name = detailId;
   let target: GenTarget | null = null;
   try {
     const pv = (await new PreviewStore(getApp()).read()).contacts[name];
@@ -686,13 +691,14 @@ function renderJobs(): void {
   const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
   if (!slot) return;
   const item = currentJobsItem();
-  if (!item) {
+  if (item) {
+    slot.hidden = false;
+    slot.replaceChildren(progressBlock(toBlockState(item)));
+  } else {
     slot.hidden = true;
     slot.replaceChildren();
-    return;
   }
-  slot.hidden = false;
-  slot.replaceChildren(progressBlock(toBlockState(item)));
+  syncWallSeals(); // 451：折子印章四态跟帧刷新（原位只换印章节点）
 }
 
 /** 当前展示的任务：running > paused/interrupted > error > done（同档取队列靠前） */
@@ -755,6 +761,62 @@ function jobsAction(kind: 'pause' | 'resume' | 'dismiss'): void {
   }
 }
 
+// ---------------- 折子印章四态接线（issue 451） ----------------
+
+/** 引擎队列按 talker 索引（同人至多一个任务——引擎排队即替换） */
+function jobViews(): Map<string, JobView> {
+  const m = new Map<string, JobView>();
+  for (const j of jobsCache?.queue ?? []) m.set(j.talker, j);
+  return m;
+}
+
+/** 引擎任务 → 印章任务视图（百分比与进度块同源：render.jobsPercent / jobsStagesDone） */
+function sealJobOf(job: JobView | undefined): FoldCardJob | null {
+  if (!job) return null;
+  return {
+    status: job.status,
+    batchesDone: job.batchesDone ?? 0,
+    batchesTotal: job.batchesTotal ?? job.chunks?.length ?? 0,
+    stagesDone: jobsStagesDone(job.stage, job.status),
+    // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
+    resumable: job.error !== jobsApi.DRIFT_ERROR,
+  };
+}
+
+/** 封面墙印章原位刷新（快照每帧都来；重建整墙会打断合并点选态与滚动位置，只换印章节点） */
+function syncWallSeals(): void {
+  const wall = overlay?.querySelector<HTMLElement>('[data-people-wall]');
+  if (!wall) return;
+  const map = jobViews();
+  const byId = new Map(listCache.map((p) => [p.id, p]));
+  for (const card of Array.from(wall.querySelectorAll<HTMLElement>('[data-people-card]'))) {
+    const p = byId.get(card.dataset.peopleCard ?? '');
+    const old = card.querySelector('.bz-people-seal');
+    if (!p || !old) continue;
+    old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
+  }
+}
+
+/**
+ * 印章动作派发（451 四态的下一步）：暂停 / 继续生成 / 画脸谱·补画·重新生成。
+ * draw 与 redraw 同一实现——都走预览桶素材单人生成，引擎 auto 判全量 / 增量 / 跳过。
+ * 只认这四个 kind（不设兜底分支：认不出的 hook 不该顺手烧一次 AI）。
+ */
+async function sealAction(kind: string, id: string): Promise<void> {
+  const api = jobs();
+  if (kind === 'pause') {
+    api.pauseJobs();
+    notice('这一批做完就暂停', 'info');
+    return;
+  }
+  if (kind === 'resume') {
+    if (!api.resume(id)) { notice('这个任务接不上了，请重新生成', 'info'); return; }
+    notice('继续生成——已完成的批次不重画', 'info');
+    return;
+  }
+  if (kind === 'draw' || kind === 'redraw') await generateOne(id);
+}
+
 // ---------------- 事件委托 ----------------
 
 function onOverlayClick(e: MouseEvent): void {
@@ -778,7 +840,7 @@ function onOverlayClick(e: MouseEvent): void {
     return;
   }
   // —— 详情「画脸谱」（仅未生成时出） ——
-  if (t.closest('[data-people-generate-one]')) { void generateOne(); return; }
+  if (t.closest('[data-people-generate-one]')) { void generateOne(detailId ?? undefined); return; }
   // —— 合并 / 删除（详情头图标工具条；合并回列表点选目标） ——
   const mergeBtn = t.closest<HTMLElement>('[data-people-merge]');
   if (mergeBtn) {
@@ -801,6 +863,14 @@ function onOverlayClick(e: MouseEvent): void {
   }
   const del = t.closest<HTMLElement>('[data-people-del]');
   if (del) { void handleDelete(del.dataset.peopleDel ?? ''); return; }
+  // —— 折子印章动作（451：四态各自可继续；放在合并点选之后、开人物详情之前——
+  //    合并流程里点印章仍按卡片语义选目标，印章的出入由样式关掉） ——
+  const seal = t.closest<HTMLElement>('[data-people-seal-act]');
+  if (seal) {
+    const id = seal.closest<HTMLElement>('[data-people-card]')?.dataset.peopleCard ?? '';
+    if (id) void sealAction(seal.dataset.peopleSealAct ?? '', id);
+    return;
+  }
   // —— 折脊切换（详情页）：点收起折的头展开该折 ——
   const leafHead = t.closest<HTMLElement>('[data-people-leaf-head]');
   if (leafHead) {
@@ -1078,11 +1148,13 @@ function sortPeople(list: PersonEntry[]): PersonEntry[] {
 /** 按最近互动排序刷封面墙（merge 状态也在这里反映为卡片样式） */
 function applyWall(people: PersonEntry[], wall: HTMLElement): void {
   wall.replaceChildren();
+  const map = jobViews();
   for (const p of sortPeople(people)) {
     wall.appendChild(foldCard(p, {
       media: personMedia(p),
       mergeFrom: p.id === mergeFromId,
       mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
+      job: sealJobOf(map.get(p.id)), // 451：印章四态（任务态压过脸谱水位）
     }));
   }
 }

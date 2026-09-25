@@ -374,7 +374,9 @@
   padding: 3px 6px;
   border: 2px solid var(--seal-ink);
   border-radius: 5px;
+  background: none;
   color: var(--seal-ink);
+  font: inherit;
   font-size: 10px;
   font-weight: 700;
   line-height: 1.35;
@@ -383,13 +385,35 @@
   white-space: pre-line;
   transform: rotate(6deg);
   opacity: 0.82;
-  pointer-events: none;
+  /* issue 451：印章即动作入口（四态都能从卡上继续进行），不再是纯装饰 */
+  cursor: pointer;
 }
 .bz-people-seal-todo {
   border-style: dashed;
   color: var(--ink-mut);
   border-color: var(--ink-mut);
   opacity: 0.6;
+}
+/* 451 四态皮：未画谱 = 灰虚印 / 画谱中 = 金实印 / 画谱中断 = 朱红破框 / 已画谱 = 朱红实印（基础态） */
+.bz-people-seal-running {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.bz-people-seal-halted {
+  border-style: dashed;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+@media (hover: hover) {
+  .bz-people-seal:hover {
+    opacity: 1;
+    transform: rotate(6deg) scale(1.06);
+  }
+}
+/* 合并流程里印章让位给「点卡片选目标」——不做出入口 */
+.bz-people-fold-merge-src .bz-people-seal,
+.bz-people-fold-merge-pick .bz-people-seal {
+  pointer-events: none;
 }
 /* 竖排姓名（>7 字由 render 截断；再兜底溢出省略） */
 .bz-people-fold-title {

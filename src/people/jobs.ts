@@ -446,11 +446,18 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
   emit();
 }
 
-/** 从断点继续指定人物（paused / interrupted 态；排队中任务按序拾起）。返回是否受理。 */
+/**
+ * 从断点继续指定人物（paused / interrupted 态；排队中任务按序拾起）。返回是否受理。
+ * issue 451 放宽：**除漂移判废外的 error 也受理**——AI 调用类失败（超时 / 画像为空）按
+ * job.batchesDone 从断点续跑，已付费批次不重烧（runJob 本就从已完成批之后起循环）。
+ * 漂移判废（DRIFT_ERROR）是终局，仍不受理——消息集已变，续跑必然再判废。
+ */
 export function resume(talker: string): boolean {
   if (!st) return false;
   const job = st.queue.find((j) => j.talker === talker);
-  if (!job || (job.status !== 'paused' && job.status !== 'interrupted')) return false;
+  if (!job) return false;
+  if (job.status === 'error' && job.error === DRIFT_ERROR) return false;
+  if (job.status !== 'paused' && job.status !== 'interrupted' && job.status !== 'error') return false;
   job.status = 'paused';
   job.error = undefined;
   job.updatedAt = nowIso();

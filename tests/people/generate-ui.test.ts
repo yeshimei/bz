@@ -23,6 +23,7 @@ import {
 } from '../../src/people/ui';
 import type { PersonJob, JobView, JobsSnapshot } from '../../src/people/jobs';
 import { getPeopleFilePath } from '../../src/people/data';
+import { getPreviewFilePath } from '../../src/people/datasource';
 import type { PersonEntry, UnifiedMessage } from '../../src/people/types';
 
 const T0 = new Date('2026-09-25T08:00:00').getTime();
@@ -354,5 +355,97 @@ describe('关面板转后台（450）', () => {
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, portrait: '后台画完', events: [] })]);
     await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.portrait).toBe('后台画完'));
     expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true);
+  });
+});
+
+// ---------------- issue 451：折子印章四态 ----------------
+
+describe('折子印章四态（451）', () => {
+  const undrawn = (): PersonEntry => ({
+    id: 'wxid_a', name: '陈默', createdAt: '2026-01-01T00:00:00.000Z', imports: [],
+  });
+  const sealNode = (): HTMLButtonElement => document.querySelector<HTMLButtonElement>('[data-people-seal-act]')!;
+  const batches = (n: number) => Array.from({ length: n }, () => meta());
+
+  it('列表印章四态跟帧原位刷新：待画 → 画谱中 → 画谱中断 → 已画谱', async () => {
+    await boot([undrawn()]);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+    expect(sealNode().textContent).toBe('待画');
+    expect(sealNode().dataset.peopleSealAct).toBe('draw');
+
+    engine.push([fakeJob({ batchesDone: 3, chunks: batches(10) })]);
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-seal-running')).toBeTruthy());
+    expect(sealNode().textContent).toBe('画谱中\n25%'); // (3+0)/(10+2)
+    expect(sealNode().dataset.peopleSealAct).toBe('pause');
+
+    engine.push([fakeJob({ status: 'interrupted', batchesDone: 3, chunks: batches(10), message: '上次未完成，可从断点继续' })]);
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-seal-halted')).toBeTruthy());
+    expect(sealNode().textContent).toBe('画谱中断\n3/10');
+    expect(sealNode().dataset.peopleSealAct).toBe('resume');
+
+    // 任务清出队列（done 落盘后 ui 会 removeJob）= 回到脸谱水位判定
+    engine.push([]);
+    await vi.waitFor(() => expect(sealNode().textContent).toBe('待画'));
+  });
+
+  it('印章动作派发：画谱中 → pauseJobs；中断 → resume(talker)', async () => {
+    await boot([undrawn()]);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
+
+    engine.push([fakeJob()]);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-seal-act="pause"]')).toBeTruthy());
+    click('[data-people-seal-act="pause"]');
+    await tick();
+    expect(engine.calls.pause).toBe(1);
+    expect(getNoticeMessages().some((m) => m.includes('这一批做完就暂停'))).toBe(true);
+
+    engine.push([fakeJob({ status: 'interrupted', message: '上次未完成，可从断点继续' })]);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-seal-act="resume"]')).toBeTruthy());
+    click('[data-people-seal-act="resume"]');
+    await tick();
+    expect(engine.calls.resume).toEqual(['wxid_a']);
+  });
+
+  it('未画谱印章「画脸谱」：有预览素材即交引擎（talker 与素材条数对齐）', async () => {
+    const vault = await boot([undrawn()]);
+    vault.files.set(getPreviewFilePath(), JSON.stringify({
+      version: 1,
+      contacts: {
+        wxid_a: {
+          msgs: [
+            { key: 's1:1', ts: T0, isSender: true, text: '早' },
+            { key: 's2:2', ts: T0 + 60_000, isSender: false, text: '早呀' },
+          ],
+          watermarkSid: 2,
+          stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+          updatedAt: new Date(T0).toISOString(),
+        },
+      },
+    }));
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-seal-act="draw"]')).toBeTruthy());
+    click('[data-people-seal-act="draw"]');
+    await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
+    expect(engine.calls.start[0].targets[0].talker).toBe('wxid_a');
+    expect(engine.calls.start[0].targets[0].msgs).toHaveLength(2);
+  });
+
+  it('未画谱印章「画脸谱」但预览桶空：提示先走数据源，不进引擎', async () => {
+    await boot([undrawn()]);
+    const engine = new FakeEngine();
+    inject(engine);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-seal-act="draw"]')).toBeTruthy());
+    click('[data-people-seal-act="draw"]');
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('还没有可画的消息素材'))).toBe(true));
+    expect(engine.calls.start).toHaveLength(0);
   });
 });

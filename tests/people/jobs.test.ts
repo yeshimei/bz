@@ -293,6 +293,38 @@ describe('暂停与断点续跑', () => {
     expect(snapshot().queue).toEqual([]);
   });
 
+  it('AI 调用类失败可续跑（451）：error → resume 从断点补剩余批，已付批次不重烧', async () => {
+    const msgs = [pm(0), pm(1), pm(2)]; // maxCount 1 → 3 批
+    await seedPreview(msgs);
+    let calls = 0;
+    let fail = true;
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2 && fail) throw new Error('AI 调用超时');
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    const started = startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1 }, askExtract, askPortrait });
+    await started;
+    await whenIdle();
+
+    const failed = readQueue()[0];
+    expect(failed.status).toBe('error');
+    expect(failed.error).toBe('AI 调用超时');
+    expect(failed.batchesDone).toBe(1);
+    expect(failed.results).toHaveLength(1); // 第 1 批已付、保留
+    expect(calls).toBe(2); // 第 1 批成功 + 第 2 批失败
+
+    fail = false;
+    expect(resume(TALKER)).toBe(true); // 451：AI 调用类失败受理（漂移判废仍不受理，见上一条）
+    await whenIdle();
+    const done = readQueue()[0];
+    expect(done.status).toBe('done');
+    expect(done.batchesDone).toBe(3);
+    expect(done.results).toHaveLength(3);
+    expect(calls).toBe(4); // 只补第 2、3 批——第 1 批（已付）不重烧
+  });
+
   it('removeJob 运行中删除：立即收手、不落盘已废批次', async () => {
     const msgs = [pm(0), pm(1), pm(2), pm(3)];
     await seedPreview(msgs);

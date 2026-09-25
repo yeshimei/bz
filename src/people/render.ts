@@ -1,5 +1,5 @@
 /**
- * 脸谱渲染纯层（issue 447 / ADR-0104 markup 单源）：面板壳 / 折子封面墙 / 详情折页册 /
+ * 脸谱渲染纯层（issue 447 / 450 / 451 / ADR-0104 markup 单源）：面板壳 / 折子封面墙 / 详情折页册 /
  * 数据源弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 与评审壳共用同一份。
  * 纯度：零值 import（仅 type import，render-purity 守卫剥离后 import 图为空）——
  * DOM 构建走本文件自持 helper；时间文案由调用方算好注入，本层只拼字符串。
@@ -299,12 +299,111 @@ export interface FoldCardOpts {
   media: MediaShape | null;
   mergeFrom: boolean;
   mergePick: boolean;
+  /** 生成引擎任务（issue 451）：印章四态的来源；无任务 = 按脸谱水位判已画 / 未画 */
+  job?: FoldCardJob | null;
+}
+
+// ---------------- 折子印章四态（issue 451：未画谱 / 画谱中 / 画谱中断 / 已画谱） ----------------
+
+/**
+ * 印章四态（互斥）。判定优先级：**任务态压过脸谱水位**——已有脸谱又在中途补画的人显「画谱中」
+ * 而不是「已画谱」，否则用户看到的是一张过期的印。
+ */
+export type FoldSealState = 'todo' | 'running' | 'halted' | 'done';
+
+/** 印章动作 kind（ui 事件委托按它分发）；每态恰好一个，互不并列 */
+export type FoldSealAction = 'draw' | 'pause' | 'resume' | 'redraw';
+
+export interface FoldSeal {
+  state: FoldSealState;
+  /** 印章可见文字（可含 \n 两行；样式 white-space: pre-line 承接） */
+  text: string;
+  /** 悬停说明：讲清当前状态与点击后果 */
+  title: string;
+  /** 印章点击动作（印章即入口——不往卡面加新元素，448 的「卡面不放动作」仍守） */
+  action: { kind: FoldSealAction; label: string };
+}
+
+/** 卡片上的任务视图（ui 从引擎快照映射；本层只管画） */
+export interface FoldCardJob {
+  status: JobsUiStatus;
+  batchesDone: number;
+  batchesTotal: number;
+  /** 已完成成文阶段数（画像 / 时间线，0~2） */
+  stagesDone: number;
+  /** 失败态可否断点续跑：漂移类失败（消息集已变）接不上，只能重新生成 */
+  resumable: boolean;
 }
 
 /**
- * 折子封面卡（issue 447）：竖排姓名 + 关系标签 + 消息量 + 修复印章（画到日期 / 待画）。
- * 水位 = lastProcessedTs（已画到的提炼锚点）；未画但有人物 = 「待画」虚印。
- * 卡面不放动作（448：合并 / 删除收进详情头图标工具条）。
+ * 印章四态判定与动作（issue 451，纯函数——文案与动作成对，单测锁契约）：
+ * 任务 running → 画谱中；paused / interrupted / error → 画谱中断；无活跃任务时按 digest 判已画谱 / 未画谱。
+ * 已画谱的「补画」走 auto 模式，没有新消息由 ui 层预筛拦下（通知「没有新消息、无需重画」），不烧 AI。
+ */
+export function foldSeal(p: PersonEntry, job: FoldCardJob | null): FoldSeal {
+  const name = p.name || p.id;
+  if (job && job.status !== 'done') {
+    const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : '尚未切批';
+    if (job.status === 'running') {
+      const pct = jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+      return {
+        state: 'running',
+        text: `画谱中\n${pct}%`,
+        title: `正在生成「${name}」的脸谱（${prog}）——点这里在本批做完后暂停`,
+        action: { kind: 'pause', label: '暂停' },
+      };
+    }
+    if (job.status === 'error' && !job.resumable) {
+      return {
+        state: 'halted',
+        text: '画谱中断',
+        title: `「${name}」上次生成中断且接不上（消息集已变）——点这里重新生成`,
+        action: { kind: 'redraw', label: '重新生成' },
+      };
+    }
+    return {
+      state: 'halted',
+      text: `画谱中断\n${job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal}` : '待续'}`,
+      title: `「${name}」${job.status === 'error' ? '上次生成失败' : '上次没画完'}（${prog}）——点这里从断点继续，已画完的批次不重画`,
+      action: { kind: 'resume', label: '继续生成' },
+    };
+  }
+  if (p.digest) {
+    return {
+      state: 'done',
+      text: p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画',
+      title: `「${name}」的脸谱已画到这天——点这里用新导入的消息补画（没有新消息会跳过）`,
+      action: { kind: 'redraw', label: '补画' },
+    };
+  }
+  return {
+    state: 'todo',
+    text: '待画',
+    title: `「${name}」还没有脸谱——点这里用已导入的消息画一张`,
+    action: { kind: 'draw', label: '画脸谱' },
+  };
+}
+
+/**
+ * 印章节点（foldCard 与 ui 原位刷新共用同一份 markup——印章单源）。
+ * 用 button 而非 div：印章本身就是动作入口（451），不再往卡面加第二个元素。
+ */
+export function foldSealNode(p: PersonEntry, job: FoldCardJob | null): HTMLElement {
+  const seal = foldSeal(p, job);
+  const b = el('button', `bz-people-seal bz-people-seal-${seal.state}`, {
+    'data-people-seal-act': seal.action.kind,
+    'aria-label': `${seal.action.label}：${p.name || p.id}`,
+    title: seal.title,
+  }) as HTMLButtonElement;
+  b.type = 'button';
+  b.textContent = seal.text;
+  return b;
+}
+
+/**
+ * 折子封面卡（issue 447 / 451）：竖排姓名 + 关系标签 + 消息量 + 修复印章（四态）。
+ * 水位 = lastProcessedTs（已画到的提炼锚点）；印章四态与动作见 foldSeal。
+ * 卡面不放动作（448：合并 / 删除收进详情头图标工具条）——印章本身即入口，不新增元素。
  */
 export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
@@ -312,13 +411,10 @@ export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
   const to = p.imports.map((r) => r.timeTo).sort().pop();
   const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
   const rel = (p.profile?.tags ?? []).filter(Boolean)[0] ?? '';
-  const seal = p.digest
-    ? el('div', 'bz-people-seal', { title: '脸谱已提炼到这天的消息；之后的新消息再导入会增量补画' }, text(p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画'))
-    : el('div', 'bz-people-seal bz-people-seal-todo', text('待画'));
   const label = mediaLabel(opts.media);
   const card = el('div', 'bz-people-fold', [
     el('div', 'bz-people-fold-inner', [
-      seal,
+      foldSealNode(p, opts.job ?? null),
       el('div', 'bz-people-fold-title vt', { title: p.name }, text(vtName(p.name))),
       // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
       el('div', 'bz-people-fold-who', text(rel || (span ? span : '新折'))),

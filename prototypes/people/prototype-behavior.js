@@ -1,4 +1,4 @@
-/* 源指纹 5ac5dc9e57ccde11 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1ef5255fcef54cf3 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -6677,7 +6677,9 @@ var BZW_people = (() => {
   function resume(talker) {
     if (!st) return false;
     const job = st.queue.find((j) => j.talker === talker);
-    if (!job || job.status !== "paused" && job.status !== "interrupted") return false;
+    if (!job) return false;
+    if (job.status === "error" && job.error === DRIFT_ERROR) return false;
+    if (job.status !== "paused" && job.status !== "interrupted" && job.status !== "error") return false;
     job.status = "paused";
     job.error = void 0;
     job.updatedAt = nowIso();
@@ -7055,19 +7057,74 @@ var BZW_people = (() => {
       button("bz-people-btn bz-people-btn-ghost", "取消合并", { "data-people-merge-cancel": "" })
     ]);
   }
+  function foldSeal(p, job) {
+    const name = p.name || p.id;
+    if (job && job.status !== "done") {
+      const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
+      if (job.status === "running") {
+        const pct = jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+        return {
+          state: "running",
+          text: `画谱中
+${pct}%`,
+          title: `正在生成「${name}」的脸谱（${prog}）——点这里在本批做完后暂停`,
+          action: { kind: "pause", label: "暂停" }
+        };
+      }
+      if (job.status === "error" && !job.resumable) {
+        return {
+          state: "halted",
+          text: "画谱中断",
+          title: `「${name}」上次生成中断且接不上（消息集已变）——点这里重新生成`,
+          action: { kind: "redraw", label: "重新生成" }
+        };
+      }
+      return {
+        state: "halted",
+        text: `画谱中断
+${job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal}` : "待续"}`,
+        title: `「${name}」${job.status === "error" ? "上次生成失败" : "上次没画完"}（${prog}）——点这里从断点继续，已画完的批次不重画`,
+        action: { kind: "resume", label: "继续生成" }
+      };
+    }
+    if (p.digest) {
+      return {
+        state: "done",
+        text: p.lastProcessedTs ? `画到
+${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
+        title: `「${name}」的脸谱已画到这天——点这里用新导入的消息补画（没有新消息会跳过）`,
+        action: { kind: "redraw", label: "补画" }
+      };
+    }
+    return {
+      state: "todo",
+      text: "待画",
+      title: `「${name}」还没有脸谱——点这里用已导入的消息画一张`,
+      action: { kind: "draw", label: "画脸谱" }
+    };
+  }
+  function foldSealNode(p, job) {
+    const seal = foldSeal(p, job);
+    const b = el("button", `bz-people-seal bz-people-seal-${seal.state}`, {
+      "data-people-seal-act": seal.action.kind,
+      "aria-label": `${seal.action.label}：${p.name || p.id}`,
+      title: seal.title
+    });
+    b.type = "button";
+    b.textContent = seal.text;
+    return b;
+  }
   function foldCard(p, opts) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const from = p.imports.map((r) => r.timeFrom).sort()[0];
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
     const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
-    const seal = p.digest ? el("div", "bz-people-seal", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(p.lastProcessedTs ? `画到
-${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
-        seal,
+        foldSealNode(p, (_d = opts.job) != null ? _d : null),
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
         // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
         el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
@@ -7874,14 +7931,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     closeDs();
     await startGeneration(targets);
   }
-  async function generateOne() {
+  async function generateOne(id) {
     var _a;
-    if (!store || !detailId) return;
+    const name = id != null ? id : detailId;
+    if (!store || !name) return;
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
       return;
     }
-    const name = detailId;
     let target = null;
     try {
       const pv = (await new PreviewStore(getApp()).read()).contacts[name];
@@ -8046,13 +8103,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     const slot = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs-slot]");
     if (!slot) return;
     const item = currentJobsItem();
-    if (!item) {
+    if (item) {
+      slot.hidden = false;
+      slot.replaceChildren(progressBlock(toBlockState(item)));
+    } else {
       slot.hidden = true;
       slot.replaceChildren();
-      return;
     }
-    slot.hidden = false;
-    slot.replaceChildren(progressBlock(toBlockState(item)));
+    syncWallSeals();
   }
   function currentJobsItem() {
     var _a;
@@ -8107,8 +8165,56 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       renderJobs();
     }
   }
+  function jobViews() {
+    var _a;
+    const m = /* @__PURE__ */ new Map();
+    for (const j of (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []) m.set(j.talker, j);
+    return m;
+  }
+  function sealJobOf(job) {
+    var _a, _b, _c, _d;
+    if (!job) return null;
+    return {
+      status: job.status,
+      batchesDone: (_a = job.batchesDone) != null ? _a : 0,
+      batchesTotal: (_d = (_c = job.batchesTotal) != null ? _c : (_b = job.chunks) == null ? void 0 : _b.length) != null ? _d : 0,
+      stagesDone: jobsStagesDone(job.stage, job.status),
+      // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
+      resumable: job.error !== DRIFT_ERROR
+    };
+  }
+  function syncWallSeals() {
+    var _a;
+    const wall = overlay == null ? void 0 : overlay.querySelector("[data-people-wall]");
+    if (!wall) return;
+    const map = jobViews();
+    const byId = new Map(listCache.map((p) => [p.id, p]));
+    for (const card of Array.from(wall.querySelectorAll("[data-people-card]"))) {
+      const p = byId.get((_a = card.dataset.peopleCard) != null ? _a : "");
+      const old = card.querySelector(".bz-people-seal");
+      if (!p || !old) continue;
+      old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
+    }
+  }
+  async function sealAction(kind, id) {
+    const api = jobs();
+    if (kind === "pause") {
+      api.pauseJobs();
+      notice("这一批做完就暂停", "info");
+      return;
+    }
+    if (kind === "resume") {
+      if (!api.resume(id)) {
+        notice("这个任务接不上了，请重新生成", "info");
+        return;
+      }
+      notice("继续生成——已完成的批次不重画", "info");
+      return;
+    }
+    if (kind === "draw" || kind === "redraw") await generateOne(id);
+  }
   function onOverlayClick(e) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -8158,7 +8264,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-generate-one]")) {
-      void generateOne();
+      void generateOne(detailId != null ? detailId : void 0);
       return;
     }
     const mergeBtn = t.closest("[data-people-merge]");
@@ -8195,6 +8301,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       void handleDelete((_a = del.dataset.peopleDel) != null ? _a : "");
       return;
     }
+    const seal = t.closest("[data-people-seal-act]");
+    if (seal) {
+      const id = (_c = (_b = seal.closest("[data-people-card]")) == null ? void 0 : _b.dataset.peopleCard) != null ? _c : "";
+      if (id) void sealAction((_d = seal.dataset.peopleSealAct) != null ? _d : "", id);
+      return;
+    }
     const leafHead = t.closest("[data-people-leaf-head]");
     if (leafHead) {
       const id = leafHead.dataset.peopleLeafHead;
@@ -8208,7 +8320,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     }
     const card = t.closest("[data-people-card]");
     if (card) {
-      detailId = (_b = card.dataset.peopleCard) != null ? _b : null;
+      detailId = (_e = card.dataset.peopleCard) != null ? _e : null;
       detailFold = "p";
       stage = "detail";
       void renderBody();
@@ -8229,7 +8341,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-prof-add-social]")) {
-      (_c = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _c.appendChild(socialRow("", ""));
+      (_f = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _f.appendChild(socialRow("", ""));
       return;
     }
     if (t.closest("[data-people-prof-tag-add]")) {
@@ -8237,11 +8349,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     if (t.closest("[data-people-prof-tag-del]")) {
-      (_d = t.closest(".bz-people-prof-tag")) == null ? void 0 : _d.remove();
+      (_g = t.closest(".bz-people-prof-tag")) == null ? void 0 : _g.remove();
       return;
     }
     if (t.closest("[data-people-prof-social-del]")) {
-      (_e = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _e.remove();
+      (_h = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _h.remove();
       return;
     }
     if (t.closest("[data-people-note-add]")) {
@@ -8260,7 +8372,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     }
     const evDel = t.closest("[data-people-ev-del]");
     if (evDel) {
-      void removeManualNote((_f = evDel.dataset.peopleEvDel) != null ? _f : "");
+      void removeManualNote((_i = evDel.dataset.peopleEvDel) != null ? _i : "");
       return;
     }
   }
@@ -8471,11 +8583,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   }
   function applyWall(people, wall) {
     wall.replaceChildren();
+    const map = jobViews();
     for (const p of sortPeople(people)) {
       wall.appendChild(foldCard(p, {
         media: personMedia(p),
         mergeFrom: p.id === mergeFromId,
-        mergePick: Boolean(mergeFromId) && p.id !== mergeFromId
+        mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
+        job: sealJobOf(map.get(p.id))
+        // 451：印章四态（任务态压过脸谱水位）
       }));
     }
   }
