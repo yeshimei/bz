@@ -42,20 +42,20 @@ describe('折子封面（foldCard）', () => {
     const drawn = foldCard(person({
       digest: { portrait: 'x', events: [], generatedAt: '2026-03-12T00:00:00.000Z' },
       lastProcessedTs: new Date('2026-03-12T00:00:00').getTime(),
-    }), { media: null, canMerge: false, mergeFrom: false, mergePick: false, deleteArm: false });
+    }), { media: null, mergeFrom: false, mergePick: false });
     expect(drawn.querySelector('.bz-people-seal')!.textContent).toContain('画到');
     expect(drawn.querySelector('.bz-people-seal-todo')).toBeNull();
 
-    const undrawn = foldCard(person(), { media: null, canMerge: false, mergeFrom: false, mergePick: false, deleteArm: false });
+    const undrawn = foldCard(person(), { media: null, mergeFrom: false, mergePick: false });
     expect(undrawn.querySelector('.bz-people-seal-todo')!.textContent).toBe('待画');
   });
 
   it('合并模式：本册 merge-from 虚化、候选册 merge-pick 描边；零媒体不出徽章文字', () => {
-    const from = foldCard(person(), { media: null, canMerge: true, mergeFrom: true, mergePick: false, deleteArm: false });
+    const from = foldCard(person(), { media: null, mergeFrom: true, mergePick: false });
     expect(from.classList.contains('bz-people-fold-merge-src')).toBe(true);
-    const pick = foldCard(person({ id: 'b', name: '林晚' }), { media: null, canMerge: true, mergeFrom: false, mergePick: true, deleteArm: false });
+    const pick = foldCard(person({ id: 'b', name: '林晚' }), { media: null, mergeFrom: false, mergePick: true });
     expect(pick.classList.contains('bz-people-fold-merge-pick')).toBe(true);
-    expect(foldCard(person(), { media: null, canMerge: false, mergeFrom: false, mergePick: false, deleteArm: false }).textContent).not.toContain('语音');
+    expect(foldCard(person(), { media: null, mergeFrom: false, mergePick: false }).textContent).not.toContain('语音');
   });
 });
 

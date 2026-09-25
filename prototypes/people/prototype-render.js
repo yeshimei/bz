@@ -1,4 +1,4 @@
-/* 源指纹 d4bf2fb991866ea0 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bf3caeea6beed3ee · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -25,7 +25,6 @@ var BZR_people = (() => {
   __export(render_exports, {
     avatarColor: () => avatarColor,
     button: () => button,
-    collectTags: () => collectTags,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
     dsWatermark: () => dsWatermark,
@@ -45,6 +44,7 @@ var BZR_people = (() => {
     formatDuration: () => formatDuration,
     formatReplySec: () => formatReplySec,
     hourStrip: () => hourStrip,
+    iconButton: () => iconButton,
     importMeta: () => importMeta,
     initials: () => initials,
     insRow: () => insRow,
@@ -55,7 +55,6 @@ var BZR_people = (() => {
     mergeBar: () => mergeBar,
     miniMarkdown: () => miniMarkdown,
     monthlyChart: () => monthlyChart,
-    noMatch: () => noMatch,
     noteAddRow: () => noteAddRow,
     panelShell: () => panelShell,
     profileEditor: () => profileEditor,
@@ -67,7 +66,6 @@ var BZR_people = (() => {
     tagChip: () => tagChip,
     text: () => text,
     textEl: () => textEl,
-    toolbar: () => toolbar,
     vtName: () => vtName,
     wallEmpty: () => wallEmpty
   });
@@ -152,19 +150,24 @@ var BZR_people = (() => {
     const t = mdPlain(s);
     return [...t].length <= n ? t : `${[...t].slice(0, n).join("")}…`;
   }
+  function iconButton(icon, cls, attrs) {
+    const b = el("button", cls, attrs);
+    b.type = "button";
+    b.appendChild(el("i", "bz-ic", { "data-lucide": icon, "aria-hidden": "true" }));
+    return b;
+  }
   function panelShell() {
     return el("div", "bz-people-panel", [
       el("div", "bz-people-head", [
         el("div", "bz-people-brand", [
-          el("div", "bz-people-mark", { "aria-hidden": "true" }, text("脸")),
+          el("div", "bz-people-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
           el("div", "bz-people-brand-text", [
             el("h1", "bz-people-title", text("脸谱")),
-            el("div", "bz-people-sub", text("微信聊天 · AI 人物画谱"))
+            el("div", "bz-people-sub", text("人物消息脸谱"))
           ])
         ]),
         el("div", "bz-people-head-actions", [
-          button("bz-people-btn bz-people-btn-acc", "数据源", { "data-people-ds-open": "" }),
-          button("bz-people-btn bz-people-btn-ghost", "关闭", { "data-people-close": "" })
+          iconButton("database", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-ds-open": "", "aria-label": "数据源", title: "数据源" })
         ])
       ]),
       el("div", "bz-people-stats", { "data-people-stats": "" }),
@@ -181,55 +184,6 @@ var BZR_people = (() => {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
     const faces = people.filter((p) => p.digest).length;
     return people.length ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱` : "还没有人物";
-  }
-  var SORT_OPTIONS = [
-    ["recent", "最近互动"],
-    ["msgs", "消息量"],
-    ["created", "建卡时间"],
-    ["name", "名字"]
-  ];
-  function toolbar(people, sortKey, filterTag, searchText) {
-    const tags = collectTags(people);
-    const sortSel = document.createElement("select");
-    sortSel.className = "bz-people-select";
-    sortSel.setAttribute("data-people-sort", "");
-    sortSel.setAttribute("aria-label", "排序方式");
-    for (const [k, label] of SORT_OPTIONS) {
-      const o = document.createElement("option");
-      o.value = k;
-      o.textContent = label;
-      if (k === sortKey) o.selected = true;
-      sortSel.appendChild(o);
-    }
-    const tagSel = document.createElement("select");
-    tagSel.className = "bz-people-select";
-    tagSel.setAttribute("data-people-tag", "");
-    tagSel.setAttribute("aria-label", "按关系标签筛选");
-    const all = document.createElement("option");
-    all.value = "";
-    all.textContent = "全部标签";
-    tagSel.appendChild(all);
-    for (const tag of tags) {
-      const o = document.createElement("option");
-      o.value = tag;
-      o.textContent = tag;
-      if (tag === filterTag) o.selected = true;
-      tagSel.appendChild(o);
-    }
-    const search = document.createElement("input");
-    search.type = "search";
-    search.className = "bz-people-search";
-    search.placeholder = "搜称呼 / 标签 / 备注";
-    search.value = searchText;
-    search.setAttribute("data-people-search", "");
-    search.setAttribute("aria-label", "搜索人物");
-    return el("div", "bz-people-toolbar", [sortSel, tagSel, search]);
-  }
-  function collectTags(people) {
-    var _a, _b;
-    const set = /* @__PURE__ */ new Set();
-    for (const p of people) for (const tag of (_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []) if (tag.trim()) set.add(tag.trim());
-    return [...set].sort((a, b) => a.localeCompare(b, "zh"));
   }
   function mergeBar(fromName, toName) {
     return toName ? el("div", "bz-people-merge-bar", [
@@ -251,9 +205,6 @@ var BZR_people = (() => {
     const seal = p.digest ? el("div", "bz-people-seal", text(p.lastProcessedTs ? `画到
 ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
-    const actions = el("div", "bz-people-fold-actions");
-    if (opts.canMerge && !opts.mergeFrom) actions.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "合并到…", { "data-people-merge": p.id }));
-    if (!opts.mergeFrom) actions.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm bz-people-del", opts.deleteArm ? "再点确认删除" : "删除", { "data-people-del": p.id }));
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
         seal,
@@ -263,8 +214,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           total ? `${formatCount(total)} 条` : "尚无消息",
           label
         ].filter(Boolean).join(" · ")))
-      ]),
-      actions
+      ])
     ]);
     if (opts.mergeFrom) card.classList.add("bz-people-fold-merge-src");
     else if (opts.mergePick) card.classList.add("bz-people-fold-merge-pick");
@@ -274,15 +224,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   function foldWall() {
     return el("div", "bz-people-wall", { "data-people-wall": "" });
   }
-  function noMatch() {
-    return el("div", "bz-people-nomatch", [
-      el("div", "bz-people-empty-hint", text("没有匹配的人物")),
-      button("bz-people-btn bz-people-btn-ghost", "清除筛选", { "data-people-filter-clear": "" })
-    ]);
-  }
   function wallEmpty() {
     return el("div", "bz-people-empty", [
-      el("div", "bz-people-empty-mark", text("脸")),
+      el("div", "bz-people-empty-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
       el("div", "bz-people-empty-title", text("还没有脸谱")),
       el("div", "bz-people-empty-hint", text("打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。")),
       button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-ds-open": "" })
@@ -295,7 +239,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     ["d", "数据", "互动统计与媒体"],
     ["f", "档案", "人物档案"]
   ];
-  function foldDetailHead(p, media) {
+  function foldDetailHead(p, media, opts) {
     var _a, _b;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const label = mediaLabel(media);
@@ -317,9 +261,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       ]),
       p.lastProcessedTs ? el("div", "bz-people-dt-watermark", text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
-        button("bz-people-btn bz-people-btn-ghost", "导出为笔记", { "data-people-export": "" }),
-        button("bz-people-btn bz-people-btn-ghost", "从数据源补画", { "data-people-ds-open": "" }),
-        button("bz-people-btn bz-people-btn-ghost", "返回列表", { "data-people-back-btn": "" })
+        ...opts.canGenerate ? [iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" })] : [],
+        iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
   }
@@ -709,8 +652,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
         s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
         s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : ""
       ].filter(Boolean).join(" · "))),
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", s.scanning ? "扫描中…" : "重扫", { "data-people-ds-scan": "" }),
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "关闭", { "data-people-ds-close": "" })
+      iconButton(
+        "refresh-cw",
+        `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? " bz-people-spin" : ""}`,
+        { "data-people-ds-scan": "", "aria-label": s.scanning ? "扫描中" : "重扫", title: s.scanning ? "扫描中…" : "重扫" }
+      )
     ]));
     pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据文件夹——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
     if (s.desktopOnly) {
@@ -718,7 +664,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     } else if (s.scanning) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据文件夹…")));
     } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点「重扫」读取数据文件夹里的联系人。")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据文件夹里的联系人。")));
     } else if (!s.rows.length) {
       pop.appendChild(el("div", "bz-people-ds-empty", text(
         s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据文件夹里没有找到联系人（各联系人目录下需有 chat.json）。"

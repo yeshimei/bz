@@ -1,5 +1,5 @@
-/* 源指纹 ba248830b4313aec · 仓内输入 24 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 9b36ae6f35cf95be · 仓内输入 51 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -39,9 +39,9 @@ var BZW_people = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4043,6 +4043,21 @@ var BZW_people = (() => {
   var Platform = {
     isMobile: typeof window !== "undefined" && window.innerWidth <= 768
   };
+  function setIcon(container, iconId) {
+    var _a;
+    const d = typeof window !== "undefined" && ((_a = window.BZW_PEOPLE_ICONS) == null ? void 0 : _a[iconId]) || "";
+    if (!d) return;
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    svg.innerHTML = d;
+    container.replaceChildren(svg);
+  }
   async function requestUrl() {
     throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
   }
@@ -6277,19 +6292,24 @@ var BZW_people = (() => {
     if (sec < 3600) return `${Math.round(sec / 60)} 分`;
     return `${(sec / 3600).toFixed(1)} 时`;
   }
+  function iconButton(icon, cls, attrs) {
+    const b = el("button", cls, attrs);
+    b.type = "button";
+    b.appendChild(el("i", "bz-ic", { "data-lucide": icon, "aria-hidden": "true" }));
+    return b;
+  }
   function panelShell() {
     return el("div", "bz-people-panel", [
       el("div", "bz-people-head", [
         el("div", "bz-people-brand", [
-          el("div", "bz-people-mark", { "aria-hidden": "true" }, text("脸")),
+          el("div", "bz-people-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
           el("div", "bz-people-brand-text", [
             el("h1", "bz-people-title", text("脸谱")),
-            el("div", "bz-people-sub", text("微信聊天 · AI 人物画谱"))
+            el("div", "bz-people-sub", text("人物消息脸谱"))
           ])
         ]),
         el("div", "bz-people-head-actions", [
-          button("bz-people-btn bz-people-btn-acc", "数据源", { "data-people-ds-open": "" }),
-          button("bz-people-btn bz-people-btn-ghost", "关闭", { "data-people-close": "" })
+          iconButton("database", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-ds-open": "", "aria-label": "数据源", title: "数据源" })
         ])
       ]),
       el("div", "bz-people-stats", { "data-people-stats": "" }),
@@ -6306,55 +6326,6 @@ var BZW_people = (() => {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
     const faces = people.filter((p) => p.digest).length;
     return people.length ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱` : "还没有人物";
-  }
-  var SORT_OPTIONS = [
-    ["recent", "最近互动"],
-    ["msgs", "消息量"],
-    ["created", "建卡时间"],
-    ["name", "名字"]
-  ];
-  function toolbar(people, sortKey2, filterTag2, searchText2) {
-    const tags = collectTags(people);
-    const sortSel = document.createElement("select");
-    sortSel.className = "bz-people-select";
-    sortSel.setAttribute("data-people-sort", "");
-    sortSel.setAttribute("aria-label", "排序方式");
-    for (const [k, label] of SORT_OPTIONS) {
-      const o = document.createElement("option");
-      o.value = k;
-      o.textContent = label;
-      if (k === sortKey2) o.selected = true;
-      sortSel.appendChild(o);
-    }
-    const tagSel = document.createElement("select");
-    tagSel.className = "bz-people-select";
-    tagSel.setAttribute("data-people-tag", "");
-    tagSel.setAttribute("aria-label", "按关系标签筛选");
-    const all = document.createElement("option");
-    all.value = "";
-    all.textContent = "全部标签";
-    tagSel.appendChild(all);
-    for (const tag of tags) {
-      const o = document.createElement("option");
-      o.value = tag;
-      o.textContent = tag;
-      if (tag === filterTag2) o.selected = true;
-      tagSel.appendChild(o);
-    }
-    const search = document.createElement("input");
-    search.type = "search";
-    search.className = "bz-people-search";
-    search.placeholder = "搜称呼 / 标签 / 备注";
-    search.value = searchText2;
-    search.setAttribute("data-people-search", "");
-    search.setAttribute("aria-label", "搜索人物");
-    return el("div", "bz-people-toolbar", [sortSel, tagSel, search]);
-  }
-  function collectTags(people) {
-    var _a, _b;
-    const set = /* @__PURE__ */ new Set();
-    for (const p of people) for (const tag of (_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []) if (tag.trim()) set.add(tag.trim());
-    return [...set].sort((a, b) => a.localeCompare(b, "zh"));
   }
   function mergeBar(fromName, toName) {
     return toName ? el("div", "bz-people-merge-bar", [
@@ -6376,9 +6347,6 @@ var BZW_people = (() => {
     const seal = p.digest ? el("div", "bz-people-seal", text(p.lastProcessedTs ? `画到
 ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-seal bz-people-seal-todo", text("待画"));
     const label = mediaLabel(opts.media);
-    const actions = el("div", "bz-people-fold-actions");
-    if (opts.canMerge && !opts.mergeFrom) actions.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "合并到…", { "data-people-merge": p.id }));
-    if (!opts.mergeFrom) actions.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm bz-people-del", opts.deleteArm ? "再点确认删除" : "删除", { "data-people-del": p.id }));
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
         seal,
@@ -6388,8 +6356,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
           total ? `${formatCount(total)} 条` : "尚无消息",
           label
         ].filter(Boolean).join(" · ")))
-      ]),
-      actions
+      ])
     ]);
     if (opts.mergeFrom) card.classList.add("bz-people-fold-merge-src");
     else if (opts.mergePick) card.classList.add("bz-people-fold-merge-pick");
@@ -6399,15 +6366,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   function foldWall() {
     return el("div", "bz-people-wall", { "data-people-wall": "" });
   }
-  function noMatch() {
-    return el("div", "bz-people-nomatch", [
-      el("div", "bz-people-empty-hint", text("没有匹配的人物")),
-      button("bz-people-btn bz-people-btn-ghost", "清除筛选", { "data-people-filter-clear": "" })
-    ]);
-  }
   function wallEmpty() {
     return el("div", "bz-people-empty", [
-      el("div", "bz-people-empty-mark", text("脸")),
+      el("div", "bz-people-empty-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
       el("div", "bz-people-empty-title", text("还没有脸谱")),
       el("div", "bz-people-empty-hint", text("打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。")),
       button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-ds-open": "" })
@@ -6420,7 +6381,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     ["d", "数据", "互动统计与媒体"],
     ["f", "档案", "人物档案"]
   ];
-  function foldDetailHead(p, media) {
+  function foldDetailHead(p, media, opts) {
     var _a, _b;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const label = mediaLabel(media);
@@ -6442,9 +6403,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       ]),
       p.lastProcessedTs ? el("div", "bz-people-dt-watermark", text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
       el("div", "bz-people-dt-actions", [
-        button("bz-people-btn bz-people-btn-ghost", "导出为笔记", { "data-people-export": "" }),
-        button("bz-people-btn bz-people-btn-ghost", "从数据源补画", { "data-people-ds-open": "" }),
-        button("bz-people-btn bz-people-btn-ghost", "返回列表", { "data-people-back-btn": "" })
+        ...opts.canGenerate ? [iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" })] : [],
+        iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
   }
@@ -6818,8 +6778,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
         s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
         s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : ""
       ].filter(Boolean).join(" · "))),
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", s.scanning ? "扫描中…" : "重扫", { "data-people-ds-scan": "" }),
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "关闭", { "data-people-ds-close": "" })
+      iconButton(
+        "refresh-cw",
+        `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? " bz-people-spin" : ""}`,
+        { "data-people-ds-scan": "", "aria-label": s.scanning ? "扫描中" : "重扫", title: s.scanning ? "扫描中…" : "重扫" }
+      )
     ]));
     pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据文件夹——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
     if (s.desktopOnly) {
@@ -6827,7 +6790,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     } else if (s.scanning) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据文件夹…")));
     } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点「重扫」读取数据文件夹里的联系人。")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据文件夹里的联系人。")));
     } else if (!s.rows.length) {
       pop.appendChild(el("div", "bz-people-ds-empty", text(
         s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据文件夹里没有找到联系人（各联系人目录下需有 chat.json）。"
@@ -6863,6 +6826,27 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
   }
 
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el2) => {
+      const name = el2.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el2.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el2.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+
   // src/people/ui.ts
   var ESC_ID = "people-panel";
   var overlay = null;
@@ -6873,9 +6857,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   var running = false;
   var deleteArmId = null;
   var deleteArmTimer = null;
-  var sortKey = "recent";
-  var filterTag = "";
-  var searchText = "";
   var listCache = [];
   var mergeFromId = null;
   var mergeToId = null;
@@ -6907,7 +6888,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     trapPanelFocus((_a = overlay.querySelector(".bz-people-panel")) != null ? _a : overlay);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("change", onOverlayChange);
-    overlay.addEventListener("input", onOverlayInput);
     void renderBody();
   }
   function closePeoplePanel() {
@@ -6919,9 +6899,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     detailFold = "p";
     stage = "list";
     running = false;
-    sortKey = "recent";
-    filterTag = "";
-    searchText = "";
     listCache = [];
     mergeFromId = null;
     mergeToId = null;
@@ -7161,14 +7138,36 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     notice(parts.join("，") || "没有可生成的脸谱", res.failed.length ? "warning" : "success");
     renderBody();
   }
+  async function generateOne() {
+    var _a;
+    if (!store || !detailId || running) return;
+    const name = detailId;
+    let target = null;
+    try {
+      const pv = (await new PreviewStore(getApp()).read()).contacts[name];
+      if (pv == null ? void 0 : pv.msgs.length) {
+        target = {
+          talker: name,
+          name,
+          msgs: previewToUnified(pv.msgs),
+          kindCounts: (_a = pv.kindCounts) != null ? _a : {},
+          skippedCount: 0,
+          fileLabel: `数据源:${name}`
+        };
+      }
+    } catch (e) {
+      console.warn("[people] 读取预览桶失败:", e);
+    }
+    if (!target) {
+      notice("还没有可画的消息素材——先「从数据源补画」导入", "warning");
+      return;
+    }
+    await runGenerationNow([target]);
+  }
   function onOverlayClick(e) {
     var _a, _b, _c, _d, _e, _f;
     const t = e.target;
     if (e.target === overlay) {
-      closePeoplePanel();
-      return;
-    }
-    if (t.closest("[data-people-close]")) {
       closePeoplePanel();
       return;
     }
@@ -7204,18 +7203,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       void renderBody();
       return;
     }
-    if (t.closest("[data-people-filter-clear]")) {
-      clearFilters();
-      return;
-    }
-    if (t.closest("[data-people-export]")) {
-      void handleExport();
+    if (t.closest("[data-people-generate-one]")) {
+      void generateOne();
       return;
     }
     const mergeBtn = t.closest("[data-people-merge]");
     if (mergeBtn) {
       mergeFromId = mergeBtn.dataset.peopleMerge || null;
       mergeToId = null;
+      stage = "list";
+      detailId = null;
+      detailFold = "p";
       void renderBody();
       return;
     }
@@ -7315,26 +7313,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
   function onOverlayChange(e) {
     var _a;
     const el2 = e.target;
-    if (el2.matches("[data-people-sort]")) {
-      sortKey = el2.value || "recent";
-      refreshWall();
-    }
-    if (el2.matches("[data-people-tag]")) {
-      filterTag = el2.value || "";
-      refreshWall();
-    }
     if (el2.matches("[data-people-ds-check]")) {
       const name = (_a = el2.dataset.peopleDsCheck) != null ? _a : "";
       if (el2.checked) dsSelected.add(name);
       else dsSelected.delete(name);
       updateDsFooter();
-    }
-  }
-  function onOverlayInput(e) {
-    const el2 = e.target;
-    if (el2.matches("[data-people-search]")) {
-      searchText = el2.value;
-      refreshWall();
     }
   }
   function pickFresh() {
@@ -7364,12 +7347,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     });
   }
   async function renderBody() {
+    var _a;
     const body = overlay == null ? void 0 : overlay.querySelector("[data-people-body]");
-    if (!body || !store) return;
+    if (!body || !store || !overlay) return;
+    (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
     if (stage === "list") await renderList(body);
     else await renderDetail(body);
     renderDsLayer();
     renderRunLine();
+    mountIcons(overlay);
   }
   function renderDsLayer() {
     const layer = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-layer]");
@@ -7408,7 +7394,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       body.appendChild(wallEmpty());
       return;
     }
-    body.appendChild(toolbar(people, sortKey, filterTag, searchText));
     const from = mergeFromId ? people.find((x) => x.id === mergeFromId) : null;
     if (mergeFromId && !from) {
       mergeFromId = null;
@@ -7541,7 +7526,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       return;
     }
     const media = personMedia(p);
-    body.appendChild(foldDetailHead(p, media));
+    body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest }));
     const spillOf = (md) => {
       const t = String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
       return [...t].length <= 40 ? t : `${[...t].slice(0, 40).join("")}…`;
@@ -7601,9 +7586,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
       el("span", "bz-people-ins-val", text(val))
     ]);
   }
-  function msgTotal(p) {
-    return p.imports.reduce((s, r) => s + r.messageCount, 0);
-  }
   function personMedia(p) {
     var _a, _b, _c;
     const acc = emptyMediaStats();
@@ -7617,57 +7599,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     return acc.voiceCount || acc.imageCount ? acc : null;
   }
   function sortPeople(list) {
-    const arr = [...list];
     const lastSeen = (p) => p.imports.reduce((m, r) => r.timeTo > m ? r.timeTo : m, "");
-    switch (sortKey) {
-      case "msgs":
-        return arr.sort((a, b) => msgTotal(b) - msgTotal(a) || a.createdAt.localeCompare(b.createdAt));
-      case "created":
-        return arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      case "name":
-        return arr.sort((a, b) => a.name.localeCompare(b.name, "zh"));
-      case "recent":
-      default:
-        return arr.sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
-    }
-  }
-  function matchPerson(p) {
-    var _a, _b, _c, _d, _e, _f;
-    if (filterTag && !((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).includes(filterTag)) return false;
-    const q = searchText.trim().toLowerCase();
-    if (!q) return true;
-    return [p.name, ...(_d = (_c = p.profile) == null ? void 0 : _c.tags) != null ? _d : [], (_f = (_e = p.profile) == null ? void 0 : _e.note) != null ? _f : ""].join("\n").toLowerCase().includes(q);
+    return [...list].sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
   }
   function applyWall(people, wall) {
     wall.replaceChildren();
-    const shown = sortPeople(people.filter((p) => matchPerson(p)));
-    if (!shown.length) {
-      wall.appendChild(noMatch());
-      return;
-    }
-    const canMerge = people.length > 1;
-    for (const p of shown) {
+    for (const p of sortPeople(people)) {
       wall.appendChild(foldCard(p, {
         media: personMedia(p),
-        canMerge,
         mergeFrom: p.id === mergeFromId,
-        mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
-        deleteArm: deleteArmId === p.id
+        mergePick: Boolean(mergeFromId) && p.id !== mergeFromId
       }));
     }
-  }
-  function refreshWall() {
-    const wall = overlay == null ? void 0 : overlay.querySelector("[data-people-wall]");
-    if (wall) applyWall(listCache, wall);
-  }
-  function clearFilters() {
-    filterTag = "";
-    searchText = "";
-    const search = overlay == null ? void 0 : overlay.querySelector("[data-people-search]");
-    const tagSel = overlay == null ? void 0 : overlay.querySelector("[data-people-tag]");
-    if (search) search.value = "";
-    if (tagSel) tagSel.value = "";
-    refreshWall();
   }
   async function handleMergeConfirm() {
     var _a, _b;
@@ -7685,66 +7628,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画")) : el("div", "bz-people-se
     mergeFromId = null;
     mergeToId = null;
     void renderBody();
-  }
-  var EXPORT_DIR = "我的/脸谱";
-  async function handleExport() {
-    if (!store || !detailId) return;
-    const p = (await store.list()).find((x) => x.id === detailId);
-    if (!p) return;
-    const app = getApp();
-    try {
-      if (!app.vault.getAbstractFileByPath(EXPORT_DIR)) await app.vault.createFolder(EXPORT_DIR);
-      const base = cleanFileNameOf(p.name) || "未命名";
-      let path = `${EXPORT_DIR}/${base}.md`;
-      for (let n = 2; app.vault.getAbstractFileByPath(path); n++) path = `${EXPORT_DIR}/${base} ${n}.md`;
-      await app.vault.create(path, buildFaceNote(p));
-      notice(`已导出到 ${path}`, "success");
-    } catch (e) {
-      notifyActionError(e, "导出脸谱笔记");
-    }
-  }
-  function buildFaceNote(p) {
-    var _a, _b, _c, _d, _e, _f, _g;
-    const lines = [`# 脸谱 · ${p.name}`, ""];
-    const meta = [
-      msgTotal(p) ? `${msgTotal(p)} 条消息` : "尚无消息",
-      `${p.imports.length} 次导入`,
-      p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : "脸谱未生成",
-      `导出于 ${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}`
-    ].join(" · ");
-    lines.push(`> ${meta}`, "");
-    if ((_a = p.digest) == null ? void 0 : _a.portrait) lines.push("## 画像", "", p.digest.portrait.trim(), "");
-    if ((_b = p.digest) == null ? void 0 : _b.chronicle) lines.push("## 关系时间线", "", p.digest.chronicle.trim(), "");
-    if ((_d = (_c = p.digest) == null ? void 0 : _c.quotes) == null ? void 0 : _d.length) {
-      lines.push("## 代表原话", "");
-      for (const q of p.digest.quotes) lines.push(`- **${q.ts} · ${q.who === "我" ? "我" : p.name}**：「${q.text}」`);
-      lines.push("");
-    }
-    if ((_e = p.digest) == null ? void 0 : _e.events.length) {
-      lines.push("## 交往事件", "");
-      for (const ev of p.digest.events) lines.push(ev.kind === "major" ? `- **${ev.ts}** ${ev.summary}` : `- ${ev.ts} ${ev.summary}`);
-      lines.push("");
-    }
-    const prof = p.profile;
-    if (prof) {
-      const rows = [];
-      if ((_f = prof.tags) == null ? void 0 : _f.length) rows.push(`- 标签：${prof.tags.join("、")}`);
-      if (prof.birthday) rows.push(`- 生日：${prof.birthday}`);
-      if (prof.metVia) rows.push(`- 怎么认识：${prof.metVia}`);
-      if (prof.metAt) rows.push(`- 什么时候认识：${prof.metAt}`);
-      if (prof.hometown) rows.push(`- 家乡 / 现居：${prof.hometown}`);
-      if (prof.job) rows.push(`- 职业：${prof.job}`);
-      if ((_g = prof.socials) == null ? void 0 : _g.length) rows.push(`- 社交账号：${prof.socials.map((s) => `${s.platform} ${s.handle}`).join("；")}`);
-      if (prof.note) rows.push(`- 备注：${prof.note}`);
-      if (rows.length) lines.push("## 档案", "", ...rows, "");
-    }
-    return lines.join("\n");
-  }
-  function cleanFileNameOf(name) {
-    let t = String(name != null ? name : "").replace(/[\\/:*?"<>|]/g, "").trim();
-    t = t.replace(/[. ]+$/, "");
-    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
-    return t;
   }
   var profEditId = null;
   var noteAddId = null;

@@ -138,20 +138,31 @@ export function spillOf(s: string, n = 40): string {
 
 // ---------------- 面板壳 ----------------
 
-/** 面板壳：头行（brand + 数据源/关闭）+ 统计行 + 生成进度行 + body + 数据源弹层容器 */
+/**
+ * 图标按钮：lucide 占位放按钮**内部**（mountIcons 只替换占位元素本身——
+ * 占位若在 button 上会把按钮整个换成 span，点击钩子即灭，448 踩过）。
+ * label 走 aria-label + title。
+ */
+export function iconButton(icon: string, cls: string, attrs: Record<string, string>): HTMLElement {
+  const b = el('button', cls, attrs) as HTMLButtonElement;
+  b.type = 'button';
+  b.appendChild(el('i', 'bz-ic', { 'data-lucide': icon, 'aria-hidden': 'true' }));
+  return b;
+}
+
+/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度行 + body + 数据源弹层容器 */
 export function panelShell(): HTMLElement {
   return el('div', 'bz-people-panel', [
     el('div', 'bz-people-head', [
       el('div', 'bz-people-brand', [
-        el('div', 'bz-people-mark', { 'aria-hidden': 'true' }, text('脸')),
+        el('div', 'bz-people-mark', { 'aria-hidden': 'true' }, el('i', 'bz-ic', { 'data-lucide': 'smile' })),
         el('div', 'bz-people-brand-text', [
           el('h1', 'bz-people-title', text('脸谱')),
-          el('div', 'bz-people-sub', text('微信聊天 · AI 人物画谱')),
+          el('div', 'bz-people-sub', text('人物消息脸谱')),
         ]),
       ]),
       el('div', 'bz-people-head-actions', [
-        button('bz-people-btn bz-people-btn-acc', '数据源', { 'data-people-ds-open': '' }),
-        button('bz-people-btn bz-people-btn-ghost', '关闭', { 'data-people-close': '' }),
+        iconButton('database', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-ds-open': '', 'aria-label': '数据源', title: '数据源' }),
       ]),
     ]),
     el('div', 'bz-people-stats', { 'data-people-stats': '' }),
@@ -176,59 +187,6 @@ export function statsText(people: PersonEntry[]): string {
     : '还没有人物';
 }
 
-const SORT_OPTIONS: Array<[string, string]> = [
-  ['recent', '最近互动'],
-  ['msgs', '消息量'],
-  ['created', '建卡时间'],
-  ['name', '名字'],
-];
-
-/** 工具条：排序 / 标签筛选 / 搜索（值由调用方注入；change/input 走委托） */
-export function toolbar(people: PersonEntry[], sortKey: string, filterTag: string, searchText: string): HTMLElement {
-  const tags = collectTags(people);
-  const sortSel = document.createElement('select');
-  sortSel.className = 'bz-people-select';
-  sortSel.setAttribute('data-people-sort', '');
-  sortSel.setAttribute('aria-label', '排序方式');
-  for (const [k, label] of SORT_OPTIONS) {
-    const o = document.createElement('option');
-    o.value = k;
-    o.textContent = label;
-    if (k === sortKey) o.selected = true;
-    sortSel.appendChild(o);
-  }
-  const tagSel = document.createElement('select');
-  tagSel.className = 'bz-people-select';
-  tagSel.setAttribute('data-people-tag', '');
-  tagSel.setAttribute('aria-label', '按关系标签筛选');
-  const all = document.createElement('option');
-  all.value = '';
-  all.textContent = '全部标签';
-  tagSel.appendChild(all);
-  for (const tag of tags) {
-    const o = document.createElement('option');
-    o.value = tag;
-    o.textContent = tag;
-    if (tag === filterTag) o.selected = true;
-    tagSel.appendChild(o);
-  }
-  const search = document.createElement('input');
-  search.type = 'search';
-  search.className = 'bz-people-search';
-  search.placeholder = '搜称呼 / 标签 / 备注';
-  search.value = searchText;
-  search.setAttribute('data-people-search', '');
-  search.setAttribute('aria-label', '搜索人物');
-  return el('div', 'bz-people-toolbar', [sortSel, tagSel, search]);
-}
-
-/** 全库实际出现过的关系标签（去重 + 中文序） */
-export function collectTags(people: PersonEntry[]): string[] {
-  const set = new Set<string>();
-  for (const p of people) for (const tag of p.profile?.tags ?? []) if (tag.trim()) set.add(tag.trim());
-  return [...set].sort((a, b) => a.localeCompare(b, 'zh'));
-}
-
 /** 合并横幅：to 已选 = 二次确认；未选 = 点选提示 */
 export function mergeBar(fromName: string, toName: string | null): HTMLElement {
   return toName
@@ -246,15 +204,14 @@ export function mergeBar(fromName: string, toName: string | null): HTMLElement {
 export interface FoldCardOpts {
   /** 跨导入累计媒体（零素材 null 不出徽章） */
   media: MediaShape | null;
-  canMerge: boolean;
   mergeFrom: boolean;
   mergePick: boolean;
-  deleteArm: boolean;
 }
 
 /**
  * 折子封面卡（issue 447）：竖排姓名 + 关系标签 + 消息量 + 修复印章（画到日期 / 待画）。
  * 水位 = lastProcessedTs（已画到的提炼锚点）；未画但有人物 = 「待画」虚印。
+ * 卡面不放动作（448：合并 / 删除收进详情头图标工具条）。
  */
 export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
@@ -266,9 +223,6 @@ export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
     ? el('div', 'bz-people-seal', text(p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画'))
     : el('div', 'bz-people-seal bz-people-seal-todo', text('待画'));
   const label = mediaLabel(opts.media);
-  const actions = el('div', 'bz-people-fold-actions');
-  if (opts.canMerge && !opts.mergeFrom) actions.appendChild(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '合并到…', { 'data-people-merge': p.id }));
-  if (!opts.mergeFrom) actions.appendChild(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm bz-people-del', opts.deleteArm ? '再点确认删除' : '删除', { 'data-people-del': p.id }));
   const card = el('div', 'bz-people-fold', [
     el('div', 'bz-people-fold-inner', [
       seal,
@@ -279,7 +233,6 @@ export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
         label,
       ].filter(Boolean).join(' · '))),
     ]),
-    actions,
   ]);
   if (opts.mergeFrom) card.classList.add('bz-people-fold-merge-src');
   else if (opts.mergePick) card.classList.add('bz-people-fold-merge-pick');
@@ -292,18 +245,10 @@ export function foldWall(): HTMLElement {
   return el('div', 'bz-people-wall', { 'data-people-wall': '' });
 }
 
-/** 没有匹配人物 */
-export function noMatch(): HTMLElement {
-  return el('div', 'bz-people-nomatch', [
-    el('div', 'bz-people-empty-hint', text('没有匹配的人物')),
-    button('bz-people-btn bz-people-btn-ghost', '清除筛选', { 'data-people-filter-clear': '' }),
-  ]);
-}
-
 /** 空库态：修谱引导（导入走数据源弹窗） */
 export function wallEmpty(): HTMLElement {
   return el('div', 'bz-people-empty', [
-    el('div', 'bz-people-empty-mark', text('脸')),
+    el('div', 'bz-people-empty-mark', { 'aria-hidden': 'true' }, el('i', 'bz-ic', { 'data-lucide': 'smile' })),
     el('div', 'bz-people-empty-title', text('还没有脸谱')),
     el('div', 'bz-people-empty-hint', text('打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。')),
     button('bz-people-btn bz-people-btn-acc', '打开数据源', { 'data-people-ds-open': '' }),
@@ -329,8 +274,13 @@ export interface FoldDetailOpts {
   noteAdd: boolean;
 }
 
-/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 动作（导出 / 从数据源补画） */
-export function foldDetailHead(p: PersonEntry, media: MediaShape | null): HTMLElement {
+export interface FoldDetailHeadOpts {
+  /** 未生成脸谱 → 出「画脸谱」 */
+  canGenerate: boolean;
+}
+
+/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱/返回列表） */
+export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
   const label = mediaLabel(media);
   const voice = media?.voiceCount ?? 0;
@@ -353,9 +303,8 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null): HTMLEl
       ? el('div', 'bz-people-dt-watermark', text(`已画到 ${formatDay(p.lastProcessedTs)}`))
       : el('div', 'bz-people-dt-watermark bz-people-dt-watermark-todo', text('未画脸谱')),
     el('div', 'bz-people-dt-actions', [
-      button('bz-people-btn bz-people-btn-ghost', '导出为笔记', { 'data-people-export': '' }),
-      button('bz-people-btn bz-people-btn-ghost', '从数据源补画', { 'data-people-ds-open': '' }),
-      button('bz-people-btn bz-people-btn-ghost', '返回列表', { 'data-people-back-btn': '' }),
+      ...(opts.canGenerate ? [iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })] : []),
+      iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
     ]),
   ]);
 }
@@ -793,8 +742,8 @@ export function dsModal(s: DsModalState): HTMLElement {
       s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人` : '',
       s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : '',
     ].filter(Boolean).join(' · '))),
-    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', s.scanning ? '扫描中…' : '重扫', { 'data-people-ds-scan': '' }),
-    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '关闭', { 'data-people-ds-close': '' }),
+    iconButton('refresh-cw', `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? ' bz-people-spin' : ''}`,
+      { 'data-people-ds-scan': '', 'aria-label': s.scanning ? '扫描中' : '重扫', title: s.scanning ? '扫描中…' : '重扫' }),
   ]));
   pop.appendChild(el('div', 'bz-people-ds-path', text(s.dataDir || '尚未配置数据文件夹——到「设置 → 脸谱」粘贴预处理导出目录。' + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''))));
 
@@ -803,7 +752,7 @@ export function dsModal(s: DsModalState): HTMLElement {
   } else if (s.scanning) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text('正在扫描数据文件夹…')));
   } else if (!s.rows) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点「重扫」读取数据文件夹里的联系人。')));
+    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上刷新图标读取数据文件夹里的联系人。')));
   } else if (!s.rows.length) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text(
       s.hiddenGroups > 0

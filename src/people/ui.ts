@@ -34,7 +34,6 @@ import {
   type PreviewStats,
 } from './datasource';
 import {
-  collectTags,
   dsModal,
   duoBar,
   foldBook,
@@ -52,17 +51,16 @@ import {
   mergeBar,
   miniMarkdown,
   monthlyChart,
-  noMatch,
   panelShell,
   socialRow,
   statsText,
   tagChip,
-  toolbar,
   wallEmpty,
   type DsRowState,
   type FoldId,
 } from './render';
 import { el, text, textEl } from './render';
+import { mountIcons } from '../core/ui';
 import { tryGetSettings } from '../core/settings-provider';
 
 const ESC_ID = 'people-panel';
@@ -79,11 +77,7 @@ let running = false;
 /** 删除二次确认（第一次点进入武装态，3 秒回落） */
 let deleteArmId: string | null = null;
 let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
-/** 卡墙排序 / 标签筛选 / 搜索状态（issue 442，模块级持久） */
-let sortKey: 'recent' | 'msgs' | 'created' | 'name' = 'recent';
-let filterTag = '';
-let searchText = '';
-/** 最近一次 renderList 拉到的人物（工具条原位刷新用） */
+/** 最近一次 renderList 拉到的人物（合并确认取名用） */
 let listCache: PersonEntry[] = [];
 /** 合并流程（issue 442）：mergeFromId = 待并出的人物；mergeToId = 已点选、待二次确认的目标 */
 let mergeFromId: string | null = null;
@@ -138,7 +132,6 @@ export function openPeoplePanel(app?: unknown): void {
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
   overlay.addEventListener('change', onOverlayChange);
-  overlay.addEventListener('input', onOverlayInput);
   void renderBody();
 }
 
@@ -151,9 +144,6 @@ export function closePeoplePanel(): void {
   detailFold = 'p';
   stage = 'list';
   running = false;
-  sortKey = 'recent';
-  filterTag = '';
-  searchText = '';
   listCache = [];
   mergeFromId = null;
   mergeToId = null;
@@ -410,13 +400,39 @@ async function runGenerationNow(targets: GenTarget[]): Promise<void> {
   renderBody();
 }
 
+/**
+ * 详情「画脸谱」（448：仅未生成脸谱时出）：用预览桶里该人物的消息素材单人生成，
+ * 进度走面板进度行。还没有预览素材时提示先走数据源导入。
+ */
+async function generateOne(): Promise<void> {
+  if (!store || !detailId || running) return;
+  const name = detailId;
+  let target: GenTarget | null = null;
+  try {
+    const pv = (await new PreviewStore(getApp()).read()).contacts[name];
+    if (pv?.msgs.length) {
+      target = {
+        talker: name,
+        name,
+        msgs: previewToUnified(pv.msgs),
+        kindCounts: pv.kindCounts ?? {},
+        skippedCount: 0,
+        fileLabel: `数据源:${name}`,
+      };
+    }
+  } catch (e) {
+    console.warn('[people] 读取预览桶失败:', e);
+  }
+  if (!target) { notice('还没有可画的消息素材——先「从数据源补画」导入', 'warning'); return; }
+  await runGenerationNow([target]);
+}
+
 // ---------------- 事件委托 ----------------
 
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
-  if (t.closest('[data-people-close]')) { closePeoplePanel(); return; }
-  // —— 数据源弹窗（弹层在 body 之上，分支放前面） ——
+  // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
   if (t.closest('[data-people-ds-open]')) { if (!running) openDs(); return; }
   if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
   if (t.closest('[data-people-ds-scan]')) { void runScan(true); return; }
@@ -429,11 +445,19 @@ function onOverlayClick(e: MouseEvent): void {
     void renderBody();
     return;
   }
-  // —— issue 442 分支：筛选清除 / 导出 / 合并（目标点选走独立分支，不侵入下方折子分支） ——
-  if (t.closest('[data-people-filter-clear]')) { clearFilters(); return; }
-  if (t.closest('[data-people-export]')) { void handleExport(); return; }
+  // —— 详情「画脸谱」（仅未生成时出） ——
+  if (t.closest('[data-people-generate-one]')) { void generateOne(); return; }
+  // —— 合并 / 删除（详情头图标工具条；合并回列表点选目标） ——
   const mergeBtn = t.closest<HTMLElement>('[data-people-merge]');
-  if (mergeBtn) { mergeFromId = mergeBtn.dataset.peopleMerge || null; mergeToId = null; void renderBody(); return; }
+  if (mergeBtn) {
+    mergeFromId = mergeBtn.dataset.peopleMerge || null;
+    mergeToId = null;
+    stage = 'list';
+    detailId = null;
+    detailFold = 'p';
+    void renderBody();
+    return;
+  }
   if (t.closest('[data-people-merge-cancel]')) { mergeFromId = null; mergeToId = null; void renderBody(); return; }
   if (t.closest('[data-people-merge-confirm]')) { void handleMergeConfirm(); return; }
   const mergePick = mergeFromId ? t.closest<HTMLElement>('[data-people-card]') : null;
@@ -485,21 +509,12 @@ function onOverlayClick(e: MouseEvent): void {
 
 function onOverlayChange(e: Event): void {
   const el = e.target as HTMLInputElement;
-  // —— issue 442：排序 / 标签筛选（原位刷封面墙，工具条不重建） ——
-  if (el.matches('[data-people-sort]')) { sortKey = (el.value || 'recent') as typeof sortKey; refreshWall(); }
-  if (el.matches('[data-people-tag]')) { filterTag = el.value || ''; refreshWall(); }
   // —— 数据源联系人勾选（原位刷新页脚与行高亮，不重建列表） ——
   if (el.matches('[data-people-ds-check]')) {
     const name = el.dataset.peopleDsCheck ?? '';
     if (el.checked) dsSelected.add(name); else dsSelected.delete(name);
     updateDsFooter();
   }
-}
-
-function onOverlayInput(e: Event): void {
-  const el = e.target as HTMLInputElement;
-  // —— issue 442：搜索（原位刷封面墙，输入框不重建、焦点不丢） ——
-  if (el.matches('[data-people-search]')) { searchText = el.value; refreshWall(); }
 }
 
 /** 「勾有更新的」：一键勾上全部有新素材的单聊（弹窗内原位刷新） */
@@ -539,11 +554,14 @@ function updateDsFooter(): void {
 
 async function renderBody(): Promise<void> {
   const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
-  if (!body || !store) return;
+  if (!body || !store || !overlay) return;
+  // 详情态：品牌标题区让位（隐藏），详情头顶到面板最上，折页册拉长占满（448）
+  overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
   if (stage === 'list') await renderList(body);
   else await renderDetail(body);
   renderDsLayer();
   renderRunLine();
+  mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
 }
 
 /** 数据源弹层（独立容器；关着只置 hidden） */
@@ -590,7 +608,6 @@ async function renderList(body: HTMLElement): Promise<void> {
     body.appendChild(wallEmpty());
     return;
   }
-  body.appendChild(toolbar(people, sortKey, filterTag, searchText));
   const from = mergeFromId ? people.find((x) => x.id === mergeFromId) : null;
   if (mergeFromId && !from) { mergeFromId = null; mergeToId = null; } // 人已删，流程自愈回落
   else if (from) {
@@ -629,7 +646,6 @@ function disarmDelete(): void {
 }
 
 // ---------------- 生成内核（文件向导退役后唯一入口 = 数据源路径） ----------------
-
 /** 生成目标（预览桶路径内核入参） */
 interface GenTarget {
   talker: string;
@@ -746,7 +762,7 @@ async function renderDetail(body: HTMLElement): Promise<void> {
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body); return; }
   const media = personMedia(p);
-  body.appendChild(foldDetailHead(p, media));
+  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest }));
 
   // 五折：展开折渲染正文，收起折只渲染竖排引文
   const spillOf = (md: string): string => {
@@ -826,12 +842,7 @@ function insRow(label: string, mid: HTMLElement | string, val: string): HTMLElem
   ]);
 }
 
-// ---------------- 卡墙：排序 / 筛选 / 搜索（issue 442） ----------------
-
-/** 消息总量（封面 meta 与排序共用） */
-function msgTotal(p: PersonEntry): number {
-  return p.imports.reduce((s, r) => s + r.messageCount, 0);
-}
+// ---------------- 卡墙（448：排序固定最近互动，筛选/搜索退役） ----------------
 
 /** 人物媒体统计：跨导入累计（零素材返回 null——徽章空数据不渲染） */
 export function personMedia(p: PersonEntry): MediaStats | null {
@@ -846,65 +857,22 @@ export function personMedia(p: PersonEntry): MediaStats | null {
   return acc.voiceCount || acc.imageCount ? acc : null;
 }
 
+/** 封面墙排序（448：工具条退役，固定最近互动优先；无导入记录按建卡时间兜底） */
 function sortPeople(list: PersonEntry[]): PersonEntry[] {
-  const arr = [...list];
   const lastSeen = (p: PersonEntry) => p.imports.reduce((m, r) => (r.timeTo > m ? r.timeTo : m), '');
-  switch (sortKey) {
-    case 'msgs':
-      return arr.sort((a, b) => msgTotal(b) - msgTotal(a) || a.createdAt.localeCompare(b.createdAt));
-    case 'created':
-      return arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    case 'name':
-      return arr.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
-    case 'recent':
-    default:
-      // 无导入记录的人物按建卡时间兜底，不沉底到不可预期位置
-      return arr.sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
-  }
+  return [...list].sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
 }
 
-/** 标签筛选 + 关键词搜索（称呼 / 标签 / 备注，大小写不敏感） */
-function matchPerson(p: PersonEntry): boolean {
-  if (filterTag && !(p.profile?.tags ?? []).includes(filterTag)) return false;
-  const q = searchText.trim().toLowerCase();
-  if (!q) return true;
-  return [p.name, ...(p.profile?.tags ?? []), p.profile?.note ?? ''].join('\n').toLowerCase().includes(q);
-}
-
-/** 按当前排序 / 筛选 / 搜索状态刷封面墙（merge 状态也在这里反映为卡片样式） */
+/** 按最近互动排序刷封面墙（merge 状态也在这里反映为卡片样式） */
 function applyWall(people: PersonEntry[], wall: HTMLElement): void {
   wall.replaceChildren();
-  const shown = sortPeople(people.filter((p) => matchPerson(p)));
-  if (!shown.length) {
-    wall.appendChild(noMatch());
-    return;
-  }
-  const canMerge = people.length > 1;
-  for (const p of shown) {
+  for (const p of sortPeople(people)) {
     wall.appendChild(foldCard(p, {
       media: personMedia(p),
-      canMerge,
       mergeFrom: p.id === mergeFromId,
       mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
-      deleteArm: deleteArmId === p.id,
     }));
   }
-}
-
-/** 工具条原位刷新：只刷封面墙，不 refetch、不重建工具条（搜索焦点不丢） */
-function refreshWall(): void {
-  const wall = overlay?.querySelector<HTMLElement>('[data-people-wall]');
-  if (wall) applyWall(listCache, wall);
-}
-
-function clearFilters(): void {
-  filterTag = '';
-  searchText = '';
-  const search = overlay?.querySelector<HTMLInputElement>('[data-people-search]');
-  const tagSel = overlay?.querySelector<HTMLSelectElement>('[data-people-tag]');
-  if (search) search.value = '';
-  if (tagSel) tagSel.value = '';
-  refreshWall();
 }
 
 // ---------------- 合并重复人物（issue 442） ----------------
@@ -924,76 +892,6 @@ async function handleMergeConfirm(): Promise<void> {
   mergeFromId = null;
   mergeToId = null;
   void renderBody();
-}
-
-// ---------------- 导出为 markdown 笔记（issue 442） ----------------
-
-/** 导出目录单源（issue 442）：我的/脸谱 */
-const EXPORT_DIR = '我的/脸谱';
-
-async function handleExport(): Promise<void> {
-  if (!store || !detailId) return;
-  const p = (await store.list()).find((x) => x.id === detailId);
-  if (!p) return;
-  const app = getApp();
-  try {
-    if (!app.vault.getAbstractFileByPath(EXPORT_DIR)) await app.vault.createFolder(EXPORT_DIR);
-    const base = cleanFileNameOf(p.name) || '未命名';
-    let path = `${EXPORT_DIR}/${base}.md`;
-    // 同名不静默覆盖：追加序号「名字 2.md」「名字 3.md」…
-    for (let n = 2; app.vault.getAbstractFileByPath(path); n++) path = `${EXPORT_DIR}/${base} ${n}.md`;
-    await app.vault.create(path, buildFaceNote(p));
-    notice(`已导出到 ${path}`, 'success');
-  } catch (e) {
-    notifyActionError(e, '导出脸谱笔记');
-  }
-}
-
-/** 脸谱 → 笔记 markdown：画像 + 关系时间线 + 代表原话 + 事件列表 + 档案（有则含） */
-function buildFaceNote(p: PersonEntry): string {
-  const lines: string[] = [`# 脸谱 · ${p.name}`, ''];
-  const meta = [
-    msgTotal(p) ? `${msgTotal(p)} 条消息` : '尚无消息',
-    `${p.imports.length} 次导入`,
-    p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : '脸谱未生成',
-    `导出于 ${new Date().toISOString().slice(0, 10)}`,
-  ].join(' · ');
-  lines.push(`> ${meta}`, '');
-  if (p.digest?.portrait) lines.push('## 画像', '', p.digest.portrait.trim(), '');
-  if (p.digest?.chronicle) lines.push('## 关系时间线', '', p.digest.chronicle.trim(), '');
-  if (p.digest?.quotes?.length) {
-    lines.push('## 代表原话', '');
-    for (const q of p.digest.quotes) lines.push(`- **${q.ts} · ${q.who === '我' ? '我' : p.name}**：「${q.text}」`);
-    lines.push('');
-  }
-  if (p.digest?.events.length) {
-    lines.push('## 交往事件', '');
-    for (const ev of p.digest.events) lines.push(ev.kind === 'major' ? `- **${ev.ts}** ${ev.summary}` : `- ${ev.ts} ${ev.summary}`);
-    lines.push('');
-  }
-  const prof = p.profile;
-  if (prof) {
-    const rows: string[] = [];
-    if (prof.tags?.length) rows.push(`- 标签：${prof.tags.join('、')}`);
-    if (prof.birthday) rows.push(`- 生日：${prof.birthday}`);
-    if (prof.metVia) rows.push(`- 怎么认识：${prof.metVia}`);
-    if (prof.metAt) rows.push(`- 什么时候认识：${prof.metAt}`);
-    if (prof.hometown) rows.push(`- 家乡 / 现居：${prof.hometown}`);
-    if (prof.job) rows.push(`- 职业：${prof.job}`);
-    if (prof.socials?.length) rows.push(`- 社交账号：${prof.socials.map((s) => `${s.platform} ${s.handle}`).join('；')}`);
-    if (prof.note) rows.push(`- 备注：${prof.note}`);
-    if (rows.length) lines.push('## 档案', '', ...rows, '');
-  }
-  return lines.join('\n');
-}
-
-/** 文件名清洗（issue 442）：剥 `[\\/:*?"<>|]` + Windows 命名边界——尾点/尾空格剥掉，
- *  设备名（con/prn/aux/nul/com1-9/lpt1-9，大小写不敏感）前置 `_`，否则 vault.create 恒失败（clipbook 同款口径） */
-function cleanFileNameOf(name: string): string {
-  let t = String(name ?? '').replace(/[\\/:*?"<>|]/g, '').trim();
-  t = t.replace(/[. ]+$/, '');
-  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
-  return t;
 }
 
 // ---------------- 档案与随手记（issue 439） ----------------
