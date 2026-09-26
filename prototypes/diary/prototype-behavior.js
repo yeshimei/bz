@@ -1,4 +1,4 @@
-/* 源指纹 0f82869b78c8212b · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 71f72a3384fd9f4d · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -9115,7 +9115,7 @@ var BZW_diary = (() => {
                 deleteFailed.push(a.path);
               }
             }
-            if (input.kind !== "diary-entry" && input.kind !== "password-vault") {
+            if (input.kind !== "diary-entry" && input.kind !== "password-vault" && input.kind !== "people") {
               let stale = false;
               try {
                 const f = getApp().vault.getAbstractFileByPath(input.path);
@@ -11921,7 +11921,7 @@ var BZW_diary = (() => {
         counts() {
           const notes = this.dataManager.manifest.notes;
           return {
-            note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
+            note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").length,
             diary: notes.filter((n) => n.kind === "diary-entry").length
           };
         }
@@ -11941,7 +11941,7 @@ var BZW_diary = (() => {
               return [{ num: String(list.length), label: labels[0] }, { num: String(atts), label: labels[1] }, { num: kb(bytes), label: labels[2] }];
             };
             this.lockStatsCache.vault = stat(
-              all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault"),
+              all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people"),
               ["笔记条目", "随库附件", "附件密文"]
             );
             this.lockStatsCache.diary = stat(
@@ -11998,7 +11998,7 @@ var BZW_diary = (() => {
         /** 概览统计（供 overviewHTML；口径与 captureLockStats 的 vault 档一致：附件/字节只算纯笔记） */
         overviewStats() {
           const c = this.counts();
-          const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== "password-vault");
+          const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== "password-vault" && n.kind !== "people");
           const pureNotes = vaultNotes.filter((n) => n.kind !== "diary-entry");
           const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
           const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
@@ -12100,7 +12100,7 @@ var BZW_diary = (() => {
           const list = this.desk.list;
           const detail = this.desk.detail;
           const kw = this.searchKw;
-          let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+          let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
           if (kw) {
             const lower = kw.toLowerCase();
@@ -12400,7 +12400,7 @@ var BZW_diary = (() => {
             return;
           }
           const kind = this.asset;
-          const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+          const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           const kw = this.searchKw;
           const filtered = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
           if (!filtered.length) {
