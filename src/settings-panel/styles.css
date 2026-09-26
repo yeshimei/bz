@@ -1667,28 +1667,27 @@
   width: min(calc(100vw - 32px), 880px);
   height: min(86vh, 680px);
 }
-/* 主体只做容器：滚动交 iframe 内日志文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉） */
+/* 主体只做容器：滚动交 iframe 内日志文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉）。
+   无头行形态（用户拍板，与手册弹窗对齐）：不留内边距，iframe 满铺——外壳不出标题，
+   日志文档自带内容即全部信息 */
 .bz-chg-body {
   flex: 1;
   min-height: 0;
   display: flex;
-  padding: 10px 12px 12px;
+  overflow: hidden;
 }
 .bz-chg-frame {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--sp-line);
-  border-radius: 10px;
+  border: 0;
   background: var(--sp-panel);
 }
-/* ≤768：手机窄屏留边收一档，其余交给日志文档自己的窄屏排版 */
 @media (max-width: 768px) {
   .bz-chg-popup {
     width: calc(100vw - 24px);
     height: 86vh;
     height: 86dvh;
   }
-  .bz-chg-body { padding: 8px 8px 10px; }
 }
 
 

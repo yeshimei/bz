@@ -114,12 +114,14 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     expect(document.getElementById('bz-changelog-popup')).toBeNull();
   });
 
-  it('弹窗：头行口径 + iframe 内嵌内容；ESC 关闭并清空 srcdoc；重开换内容', () => {
+  it('弹窗：无头行（与手册弹窗同形态）+ iframe 内嵌内容；ESC 关闭并清空 srcdoc；重开换内容', () => {
     openChangelogModal(CHG_HTML);
     const overlay = document.getElementById('bz-changelog-overlay')!;
     expect(overlay.style.display).toBe('flex');
     const popup = document.getElementById('bz-changelog-popup')!;
-    expect(popup.querySelector('.bz-panel-title')!.textContent).toBe('更新日志');
+    // 用户拍板：外壳不出标题，日志文档自带内容即全部信息（与使用手册弹窗对齐）
+    expect(popup.querySelector('.bz-panel-head')).toBeNull();
+    expect(popup.querySelector('iframe.bz-chg-frame')).toBeTruthy();
     expect((popup.querySelector('iframe') as HTMLIFrameElement).srcdoc).toBe(CHG_HTML);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

@@ -6,6 +6,9 @@
  * topifyZ），ESC 栈序随显示序重放注册，插件卸载经 unloadSettingsPanel →
  * unloadChangelog 收口。
  *
+ * 无头行（与使用手册弹窗同形态，用户拍板）：外壳不出标题，日志文档自带的内容
+ * 即全部信息；iframe 满铺零留白，滚动全交 iframe 内文档。
+ *
  * 内容（issue 474 拍板）= 现场从 GitHub 下载的 manual/bz-changelog.html
  * （单文件自包含：样式 + 版本数据 + 版本栏脚本全内联），用 iframe srcdoc
  * 直灌——与使用手册（manual-viewer）同一套范式，版本栏/三段主次/主题记忆
@@ -14,8 +17,6 @@
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
-import { uiIcon } from '../core/ui';
-import { mountIcons } from '../core/ui/icons';
 
 const OVERLAY_ID = 'bz-changelog-overlay';
 const FRAME_ID = 'bz-changelog-popup';
@@ -64,7 +65,6 @@ function build(): void {
   frame.id = FRAME_ID;
   frame.className = 'bz-panel-frame bz-sp-skin bz-chg-popup';
   frame.innerHTML = shellHtml();
-  mountIcons(frame);
   ov.appendChild(frame);
   ov.addEventListener('click', (e) => {
     if (e.target === ov) hide();
@@ -73,14 +73,7 @@ function build(): void {
   overlay = ov;
 }
 
-/** 弹窗骨架（头行复用 .bz-panel-head；主体 = iframe 内嵌更新日志，副标为静态口径——
- *  版本号/版本数随 HTML 走，弹窗头不再重复报数，免得与下载到的内容不一致） */
+/** 弹窗骨架（无头行——与手册弹窗同形态，用户拍板：外壳不出标题，零留白贴边） */
 function shellHtml(): string {
-  return `<div class="bz-panel-head">` +
-    `<div class="bz-panel-brand">${uiIcon('history')}</div>` +
-    `<span class="bz-panel-title">更新日志</span>` +
-    `<span class="bz-panel-head-pipe"></span>` +
-    `<span class="bz-panel-head-sub">包仔 · 逐版本变更记录</span>` +
-    `<span class="bz-panel-head-sp"></span></div>` +
-    `<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
+  return `<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
 }
