@@ -1,4 +1,4 @@
-/* 源指纹 95b77b8d9f75fd81 · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 86e4bf80d62c5459 · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -9724,7 +9724,7 @@ var BZW_gameshelf = (() => {
     };
     if (mode === "multi") mkBtn("清空", false, () => {
       selected.clear();
-      renderList4();
+      renderList3();
       updateSel();
     });
     const submit = () => {
@@ -9745,7 +9745,7 @@ var BZW_gameshelf = (() => {
         }
         if (mode === "single") selected.clear();
         selected.add(full);
-        renderList4();
+        renderList3();
         updateSel();
       })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
     });
@@ -9764,7 +9764,7 @@ var BZW_gameshelf = (() => {
       rest.reverse();
       return [...pinned, ...root === null ? [] : [root], ...rest];
     }
-    function renderList4() {
+    function renderList3() {
       listEl2.innerHTML = "";
       const q3 = state3.q.trim().toLowerCase();
       const exact = !!q3 && state3.folders.includes(q3);
@@ -9800,7 +9800,7 @@ var BZW_gameshelf = (() => {
           } else {
             selected.add(folder);
           }
-          renderList4();
+          renderList3();
           updateSel();
         };
         row.tabIndex = 0;
@@ -9841,7 +9841,7 @@ var BZW_gameshelf = (() => {
     search.oninput = () => {
       state3.q = search.value;
       newBtn.disabled = !state3.q.trim();
-      renderList4();
+      renderList3();
     };
     search.addEventListener("keydown", (ev) => {
       if (ev.key !== "Enter") return;
@@ -9860,9 +9860,9 @@ var BZW_gameshelf = (() => {
       if (!mask.isConnected) return;
       state3.folders = folders;
       popup.dataset.ready = "1";
-      renderList4();
+      renderList3();
     });
-    renderList4();
+    renderList3();
     updateSel();
     popup.append(head, search, listEl2, foot);
     document.body.appendChild(mask);
@@ -12172,1379 +12172,801 @@ var BZW_gameshelf = (() => {
   });
 
   // src/settings-panel/changelog-data.ts
-  var CHANGELOG_META, CHANGELOG_DOMAINS;
+  var CHANGELOG_DOMAIN_NAMES, CHANGELOG_META, CHANGELOG_RELEASES;
   var init_changelog_data = __esm({
     "src/settings-panel/changelog-data.ts"() {
-      CHANGELOG_META = { generatedAt: "2026-09-26", total: 1314 };
-      CHANGELOG_DOMAINS = [
-        { id: "diary", name: "日记本", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——纸张/翻页/墨迹/日历四语汇覆盖全舞台，布局零改动" },
-          { date: "2026-09-19", type: "fix", text: "特殊条目时分退役 ctime 口径（A1）" },
-          { date: "2026-09-19", type: "fix", text: "改标签写路径三修——重复标签误判/契约外键丢弃/name-mismatch 单方归一（N3/N4）" },
-          { date: "2026-09-19", type: "fix", text: "applyDirectories 对目录两键 trim 尾斜杠（N6）" },
-          { date: "2026-09-19", type: "fix", text: "加密链路三修——legacy 路径兜底/附件体积守卫/死代码清理（N7/N9/D14'）" },
-          { date: "2026-09-19", type: "fix", text: "墙加载批量读 per-file 容错，坏文件不空整墙（D5'）" },
-          { date: "2026-09-19", type: "fix", text: "体检面板扫描容错 + 开文件即收弹窗（D10'/D-UI8）" },
-          { date: "2026-09-19", type: "fix", text: "滚轮日期控件修复批 B（溢出漂移/补写昨晚/键盘可达/软键盘遮挡/档位对齐）" },
-          { date: "2026-09-19", type: "fix", text: "墙面板修复批 C——P2×2 与 bug/契约/体验全家桶（review-deep 20 条对号）" },
-          { date: "2026-09-19", type: "fix", text: "写链路弹窗族收编 uiModal 壳，补 ESC/脏拦截/取消钮与标签选择增强" },
-          { date: "2026-09-19", type: "fix", text: "主线程合并收尾——hide/relock 强制收壳写链路弹窗（D-UI2 残款 + func N1 配套）、事件契约开关翻转为必发、跨批测试 mock 与焦点断言适配" },
-          { date: "2026-09-19", type: "feat", text: "墙数据启动后台预热 + 四目录并行加载（issue 381 / ADR-0170）" },
-          { date: "2026-09-19", type: "fix", text: "review 修正——目录判定 config 单源、失效订阅走 vault:md-* 通用路、缓存闸门补测（issue 381）" },
-          { date: "2026-09-19", type: "feat", text: "打开先面板后内容——首帧让位读盘与整墙渲染（issue 383 / ADR-0171）" },
-          { date: "2026-09-18", type: "feat", text: "创建日记成功后打开新笔记并收起主窗口 (item-1789672493967-y11jgy)" },
-          { date: "2026-09-17", type: "feat", text: "那年今天放开纯文字条目（issue 352）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（码点截断/文字卡角标与行长/加密直测）（issue 352）" },
-          { date: "2026-09-13", type: "feat", text: "条目文件格式落地——store 重写条目粒度 + parser/encrypt v2 + 体检只读化（issue 304 / ADR-0130）" },
-          { date: "2026-09-13", type: "feat", text: "encrypt mergeDiaryBlock v2 + smartcat 四面 + recap 三面 + home streak 接条目文件契约（issue 304）" },
-          { date: "2026-09-13", type: "feat", text: "diary-split.mjs 迁移脚本——dry-run 默认/同刻让位/memory 引用重写/归档/Obsidian 运行拦截" },
-          { date: "2026-09-13", type: "fix", text: "diary-split 记忆引用按 locator 重指条目 + 回归测试" },
-          { date: "2026-09-13", type: "fix", text: "diary-split 重跑幂等——盘上同内容条目视为已迁移，不再让位产重复" },
-          { date: "2026-09-13", type: "feat", text: "契约 v3——题目改数字简写 YYMMDDHHmm + frontmatter 键英文化（ADR-0131）" },
-          { date: "2026-09-12", type: "fix", text: "日记家族审查修复批 D1–D15+R1（15 项，附回归 21 例）" },
-          { date: "2026-09-12", type: "fix", text: "修复写盘 runFix 包进同路径队列（D4 diary 半边）" },
-          { date: "2026-09-11", type: "feat", text: "移动端六档字号体系 + 抽屉长按唯一入口 + 头行关闭钮 + 视频首帧海报" },
-          { date: "2026-09-11", type: "feat", text: "抽屉收编 core/item-actions + setIcon 缺键真因修复" },
-          { date: "2026-09-11", type: "feat", text: "移动端主界面关闭钮「复位优先」——先收列表再关面板" },
-          { date: "2026-09-10", type: "feat", text: "日记本方向探索——五版概念稿 + 三版皮肤 + 原型主页（本轮未采纳）" },
-          { date: "2026-09-10", type: "fix", text: "章节栏取帧根治 + 弹窗/粘顶/头行等 9 项精修（issue 262）" },
-          { date: "2026-09-06", type: "fix", text: "review P1——菜单 click 抑制复位 + popover Esc 兜底 + 头行副题平级（issue 198）" },
-          { date: "2026-09-06", type: "feat", text: "章节栏纯缩略图化+正文双列+稀疏挤压修复（issue 209）" },
-          { date: "2026-09-06", type: "feat", text: "章节栏回滚月份行+仅媒体小缩略懒加载（issue 211）" },
-          { date: "2026-09-06", type: "perf", text: "章节栏小图缓存根治开墙原图解码冻结（issue 212）" },
-          { date: "2026-09-06", type: "fix", text: "正文按原文段序渲染去文字重复+删 sparse-2 挤压 hack（issue 213）" },
-          { date: "2026-09-06", type: "feat", text: "媒体卡文字置顶版式——时间+类型→拼接全文markdown→媒体堆叠（issue 214）" },
-          { date: "2026-09-06", type: "fix", text: "正文 markdown 渲染去 3s 超时竞速改离屏渲染成功才替换（issue 215）" },
-          { date: "2026-09-06", type: "fix", text: "markdown 渲染改回直接渲染进已挂载容器（issue 215 续）" },
-          { date: "2026-09-06", type: "fix", text: "markdown 渲染真凶=动态 import('obsidian') 改静态导入（issue 215 终）" },
-          { date: "2026-09-06", type: "fix", text: "胶卷格去多余占位图标+固定20×20不伸缩（issue 216）" },
-          { date: "2026-09-06", type: "fix", text: "全域审查修复批——8 功能 + 6 样式 + 2 小项（issue 217）" },
-          { date: "2026-09-06", type: "feat", text: "长文跨栏卡——≥800字整卡跨全宽+卡内分栏+媒体横排网格（issue 218）" },
-          { date: "2026-09-05", type: "feat", text: "那年今天数据口径 pickOnThisDay（增强 #5 数据层）" },
-          { date: "2026-09-05", type: "feat", text: "回忆墙用户增强包 UI/样式/回归（13 项拍板）" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——同日日记写/删入 per-path 串行队列（冻结区只动写安全）" },
-          { date: "2026-09-05", type: "feat", text: "今日回顾一键生成总结写进日记（R3）——AI 通道+降级模板+同日替换不叠条" },
-          { date: "2026-09-05", type: "fix", text: "走查批 D——「保险箱」术语统一「保险库」、解密确认/失败文案补原因" },
-          { date: "2026-09-05", type: "fix", text: "走查批 C 小修六项——review 贴底安全区/literature 遮罩与徽标/encrypt 轨道/home 焦点环/settings-panel 字号/diary-wall 矮窗兜底（项 10、15-20）" },
-          { date: "2026-09-05", type: "feat", text: "菜单迁移 item-actions + 抽屉收敛 .bz-sheet + 壳件接入（issue 198）" },
-          { date: "2026-09-04", type: "fix", text: "回忆墙审查修复 DW1-DW11" },
-          { date: "2026-09-04", type: "fix", text: "writeFile 写前守卫拒写含未解析行的文件" },
-          { date: "2026-09-04", type: "fix", text: "写日记弹窗打开时同步日期控件内部时刻" },
-          { date: "2026-09-04", type: "fix", text: "插卡后前移显示计数；改标签定位失败告警并中止" },
-          { date: "2026-09-04", type: "fix", text: "面板补订文件新建/删除/重命名三通道" },
-          { date: "2026-09-04", type: "fix", text: "日记目录缺失早退时清空 diaryDataMap" },
-          { date: "2026-09-04", type: "fix", text: "三动作按 filename+lineNumber 反查，特殊条目屏蔽加密删除" },
-          { date: "2026-09-04", type: "fix", text: "滚动高亮统一坐标系，relTop 不再与 scrollTop 比较" },
-          { date: "2026-09-04", type: "fix", text: "章节跳转按流式位置推算，已滚过月份可点击" },
-          { date: "2026-09-04", type: "fix", text: "日期选择器点年份只记浏览临时值，点月份/全部才提交" },
-          { date: "2026-09-04", type: "fix", text: "删除确认补失败提示；fix(diary-wall): 关面板收起右键菜单、灯箱单实例填充" },
-          { date: "2026-09-04", type: "fix", text: "设置应用时同步回忆墙目录常量" },
-          { date: "2026-09-02", type: "feat", text: "回忆墙新域——日记本媒体优先只读视图（ADR-0081）" },
-          { date: "2026-09-02", type: "feat", text: "合并回忆墙新域 + 构建产物更新（ADR-0081）" },
-          { date: "2026-09-02", type: "feat", text: "回忆墙 v2——自包含+四域聚合+完整交互（ADR-0081 修订）" },
-          { date: "2026-09-02", type: "fix", text: "日期筛选/二级标签/桌面单击/标签字号四项修复" },
-          { date: "2026-09-02", type: "fix", text: "章节高亮/桌面媒体/加密入口/交互细节批量修复" },
-          { date: "2026-09-02", type: "fix", text: "回忆墙 11 项交互细节修复（ticket 176）" },
-          { date: "2026-09-02", type: "fix", text: "审查修复——加密条目动作分流 + 渲染超时守卫 + 滚动高亮 rect 化（ticket 176 延伸）" },
-          { date: "2026-08-28", type: "feat", text: "域组 A 设置弹窗 schema 化（diary/memo/belongings/password），core 三处口径补正（ADR-0064）" },
-          { date: "2026-08-27", type: "feat", text: "UX 2026 整改批次落地——7 保存确认 / 8 加密改分类提示 / 9 解析失败汇总 / 24 ESC 只收搜索 / 25 关闭路径统一 / 34 滚轮年份放开 / 41 增量更新 / p5 滚动性能" },
-          { date: "2026-08-27", type: "fix", text: "分区流式缓存插删失效 + 解除 entries↔panel 顶层 import 环（review f79438d）" },
-          { date: "2026-08-27", type: "feat", text: "日记未解析行检测+一键修复（ticket 121）与移动端远程 IP 防呆（ticket 122）" },
-          { date: "2026-08-25", type: "fix", text: "特殊条目刷新保护+同分钟稳定定位+插入条件求值等 9 项修复" },
-          { date: "2026-08-24", type: "feat", text: "smartcat 日记观察完成——每条独立10分钟结算+首次有字才落+累计>50更新观察，全量 1488 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 完成——写日记/闪念计入信任成长（轻质量0.15）+ 笔记库内容为信息来源（context-source 隐私分级/本地打分不走LLM），1284 测试" },
-          { date: "2026-08-23", type: "fix", text: "ticket smartcat 完成——红队 B 工程级修复落地（反思 evidence 白名单防自引用/失败指数退避防空转/落盘限流/机械去簇/日记 0-1 谎报），1287 测试全绿" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 完成——数据接入面扩展（用户拍板：日记读正文+关键词、闪念全文、影视全影评、书库划线想法书评、现代诗/信/反省新源、全内容 LLM 云端打分+词法情绪；CONFIG/STORAGE 7 域 JSON 感知 domain-source；删语音模块；抚摸=纯互动信号不再影响信任/心情/人格），1288 测试全绿" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 云端打分范围——智能默认（日记/反省/闪念恒 LLM、长内容按 30 字、聊天/域事件本地），1361 测试" },
-          { date: "2026-08-22", type: "fix", text: "移动端主窗口全屏收尾——全屏顶距统一 max(34px,env(safe-area-inset-top))（日记 16px 头排规则改 :not(.bz-win-mfs) 让位、news 自垫 58 对齐 34、影视分析清基样式 34px 防原双重垫顶 68px）+ 主窗口头部按钮统一去阴影去边框（.bz-icon-btn 升 important + 11 组头部容器/按钮选择器压制主题 button 默认样式），ADR-0019 补修订节，1055 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "手势统一试点（memo）+ 移动端样式修复（diary/favorites）——core/item-actions 统一操作条与长按跟手菜单，memo 收敛标签长按暗语；移动端类型栏多行平铺与滚动条收敛，1107 测试" },
-          { date: "2026-08-22", type: "feat", text: "日记本抽屉头部 emoji/标题放大（与列表头部一致 20px/16px 加粗）；列表内容区真正禁选字（修掉 content 老规则的 user-select:text 覆盖，编辑模式例外保留），1124 测试" },
-          { date: "2026-08-22", type: "feat", text: "日记抽屉新增复制正文（右侧小字动态字数）、加密（解锁→确认→移入保险箱）、解密（保持原分类还原）；动作小字机制通用化；抽屉头部图片/视频限高不再出滚动条，1125 测试" },
-          { date: "2026-08-22", type: "fix", text: "加密入口收敛到抽屉——标签选择器/写日记弹窗不再提供加密分类（初渲染与打开时规则一致），删废弃加密分流与 downgradeEntry；解密=去加密标签重建标题（ emoji 不残留）；抽屉加解密全流程测试，1126 测试" },
-          { date: "2026-08-22", type: "feat", text: "memo 抽屉小字（打开=域名/笔记名、跳转=笔记名、标记完成=到期文案、延后=新日期、复制=字数）；日记抽屉点加密解锁后主动重并注入保险箱加密条目（弹窗解锁不触发回调的补漏）；accent 整行（文字+图标+小字）换强调色，1132 测试" },
-          { date: "2026-08-21", type: "fix", text: "日记加密分类 交互收敛——去掉加密卡片时间后的角标与只读预览弹窗（正文即预览，点击无操作），还原 merge 修复双时间标题与标题正文间缺空行，加密标签固定排筛选栏最后（count 排序同样），+回归测试，1014 测试全绿" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子 v4 设计落盘——容器改日记分析层（ADR-0017 + spec 重写 + CONTEXT 术语 + 调研报告 + tickets 57-64 拆分）" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子对话完成——三层记忆（日记 TF-IDF + 画像概要 + 历史 maxHistory）+ 包仔人设常量 + AI 降级，7 测试" },
-          { date: "2026-08-14", type: "fix", text: "黑匣子情绪落盘（用户反馈修复）——日记条目情绪推断 entryEmotions 落盘 + 情绪分布条合并日记情绪 + 完成通知含情绪统计，4 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子默认类型筛选设置项完成——blackboxDefaultTypeFilter（空=全部/概念/文献/想法，重启生效，与 diaryDefaultSelectedTag 同模式）全链路：MemoSettings+DEFAULT_SETTINGS、 弹窗下拉、面板消费（ticket 46 已接），1 测试" },
-          { date: "2026-08-10", type: "feat", text: "第 9 轮设置扩展+命令统一命名——日记本 6 项设置（标签 emoji/内容渲染/标签排序/默认日期筛选/默认标签/保存后编辑）+ 备忘录 12 项设置（场景/平台映射恢复、开关反注册语义、到期通知轮询、排序/归档/优先级/格式，删 AI 推荐场景）+ 命令 id 全改 bz-<域>-<动作> 三段式（带 lucide icon，删 bz-notification-demo/bz-diary-create-quote，同步 launcher.json/smoke 清单），spec/PROGRESS 同步，802 测试" },
-          { date: "2026-08-08", type: "fix", text: "通知覆盖补全——日记条目删除/影视添加成功/收藏删除三处操作反馈（全仓操作点扫描确认其余均已有通知或 UI 即时反馈），775 测试" },
-          { date: "2026-08-07", type: "feat", text: "日记本合并——插件更名「包仔」（日记本+备忘录同插件）——从历史恢复 diary-notebook 官方源码（72 测试全绿）/open-panel 裸注册+ribbon/styles.css 合并/设置页 7 项/onunload 清理/smoke 26 命令" }
-        ] },
-        { id: "memo", name: "备忘录", entries: [
-          { date: "2026-09-21", type: "fix", text: "载入即剥并全局消毒回滚残留字段 recur/checklist" },
-          { date: "2026-09-21", type: "fix", text: "数据层读入守卫、公开课检索边界与会话缓存" },
-          { date: "2026-09-21", type: "fix", text: "定位/延后/提醒链与录入提交链收口" },
-          { date: "2026-09-21", type: "fix", text: "读路径错误面、渲染省算与滚位保持" },
-          { date: "2026-09-21", type: "fix", text: "删除/完成/场景收尾链对齐全域口径" },
-          { date: "2026-09-21", type: "fix", text: "编辑器表单与交互杂项八件" },
-          { date: "2026-09-21", type: "fix", text: "范式收口——面板入焦圈闭与触屏悬浮隔离接线" },
-          { date: "2026-09-21", type: "fix", text: "样式清理与触控热区对齐" },
-          { date: "2026-09-21", type: "fix", text: "搜索体验四连——ESC 先清词、 一键清词、命中高亮、网址可搜" },
-          { date: "2026-09-21", type: "feat", text: "完成动作反馈——勾选圈待定态与折叠条去向轻反馈" },
-          { date: "2026-09-21", type: "feat", text: "「今日」「重要」伪场景空态专属文案" },
-          { date: "2026-09-21", type: "feat", text: "移动端编辑弹窗键盘适配——vvh 收缩、顶对齐、保存钮钉底" },
-          { date: "2026-09-21", type: "fix", text: "触控热区抬档组归还移动端收口段（曾被悬浮包裹误关进 hover 块，触屏整组失效）+ 结构守卫" },
-          { date: "2026-09-19", type: "fix", text: "批 D 条目动作/周期撤链/删除口径/composer 修复" },
-          { date: "2026-09-19", type: "fix", text: "编辑/场景弹窗族修复——脏表单拦截、anchorDay 门控、保存防重入等十二项" },
-          { date: "2026-09-19", type: "fix", text: "数据层读链健壮化 + 目录边界 + 批量清理数据侧" },
-          { date: "2026-09-19", type: "fix", text: "读链错误空态 + 提醒场景重置 + 批量清理入口 + 设置静默写盘" },
-          { date: "2026-09-19", type: "fix", text: "批C 渲染·检索·列表交互·月历深审修复（17 条带回归）" },
-          { date: "2026-09-19", type: "fix", text: "主线程合并收口——E 批契约开关翻转必发（openForNote 重置/composer 优先级/定位 await/错误空态）、pad2 守卫终态、场景写盘 catch 兜底（一致#13 残款）、原型产物重出" },
-          { date: "2026-09-19", type: "feat", text: "退役清单型子任务 UI（issue 354 回退，数据层保留）" },
-          { date: "2026-09-17", type: "feat", text: "周期性重复备忘（issue 353）" },
-          { date: "2026-09-17", type: "feat", text: "清单型子任务（issue 354）" },
-          { date: "2026-09-17", type: "feat", text: "月历视图（issue 355）" },
-          { date: "2026-09-17", type: "fix", text: "月历数据链与空月统计提示（issue 355 修复批）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（周期锚点漂移 P1 + restore 撤链 + 排期入口 + 月历语义与热区）（issue 353/354/355）" },
-          { date: "2026-09-12", type: "fix", text: "提醒监听自持 app 真正卸载（E7）；搜索残留/composer 防双提交保草稿/rename 联动收紧/范围外引用放行/非数组留档重建（E8,E19-E23）" },
-          { date: "2026-09-12", type: "feat", text: "退役「到期时间格式」设置——到期文案口径固定相对（issue 292）" },
-          { date: "2026-09-12", type: "feat", text: "设置补两项——打开默认场景 + 已完成显示范围（issue 293）" },
-          { date: "2026-09-11", type: "feat", text: "两肤补暗色模式 + 编辑器弹窗四类补样式（issue 270）" },
-          { date: "2026-09-11", type: "feat", text: "移动抽屉头接勾选圈，与列表 markup/交互单源" },
-          { date: "2026-09-11", type: "fix", text: "抽屉头勾选圈补 44px 触控热区并对齐列表尺寸" },
-          { date: "2026-09-10", type: "feat", text: "备忘录接入 markup+行为单源（issue 260 §2 / ADR-0104/0106）" },
-          { date: "2026-09-10", type: "fix", text: "移动端真全屏补关闭/新建入口并修键盘遮挡输入条（issue 266）" },
-          { date: "2026-09-10", type: "feat", text: "移动端评审两轮六改 + 切换链路三修（issue 268/269）" },
-          { date: "2026-09-10", type: "fix", text: "修复 styles.css 被 / → * 全局替换损毁（布局全乱）" },
-          { date: "2026-09-07", type: "fix", text: "四域 review P2 收尾——影院壳长按/状态兼容、首页 memoIdOf 归一、设置面板演示壳 api 引用与回归锚点" },
-          { date: "2026-09-05", type: "feat", text: "全屏面板根节点接 core .bz-panel-mtop——移动端 44px 顶距补接（终局 review 批 B-6）" },
-          { date: "2026-09-04", type: "fix", text: "编辑保存保留条目原 url，对齐 todo 语义" },
-          { date: "2026-09-04", type: "fix", text: "面板侧加装 memo.json modify 防抖重读，跨域同步不再单向" },
-          { date: "2026-09-04", type: "fix", text: "memo.json 读改写收敛到 per-path 串行队列，多写方并发不再互相覆盖" },
-          { date: "2026-09-04", type: "fix", text: "勾选完成/标记完成写盘失败包 try/catch 并提示，不再未处理 rejection" },
-          { date: "2026-08-27", type: "feat", text: "切场景保留已输入内容、剪藏预填提示、弹窗 ESC 单层关闭、归档通知合并（ux 拍板 10/11、e1、n2）" },
-          { date: "2026-08-27", type: "fix", text: "审查修复——归档通知去 dedupeKey、编辑模式预填门、unload 竞态守卫" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "建议列表注入转义+document click 监听自注销+ESC 双窗口径（P2×3）" },
-          { date: "2026-08-24", type: "feat", text: "smartcat 备忘录观察完成——UI 方法监听动作观察+每日到期扫描合并一条，28 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 心情/情感重构（ADR-0022）——PAD 三维三层模型（情绪/心情/人格）+ 原型最近邻判档解除断线 + 记忆↔情绪双向（LLM+词法标注）+ 反思驱动人格成长，删 emotionalMemory/timeEmotion 孤岛，1261 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "影视卡片双击打开笔记回加 + 备忘录抽屉跳转关联笔记小字去 .md——用户决策，spec US27/PROGRESS 同步，1154 测试" },
-          { date: "2026-08-15", type: "fix", text: "备忘录长文本换行修复（用户反馈）——.todo-content-span 加 min-width:0 允许 flex 收缩 + 移动端去掉 flex-basis:auto 覆盖（flex-wrap 下超长单行不再整体挤到下一行）+ overflow-wrap:anywhere 兜底长串（URL/英文），全量 956 测试绿" },
-          { date: "2026-08-12", type: "feat", text: "memo 域完成——内容多行输入（textarea auto-grow ≤8 行，Enter 换行）+ 面板纯文本 pre-wrap 展示，1052 测试" },
-          { date: "2026-08-12", type: "feat", text: "memo 代码精简完成——按钮工厂/标签常量/建议列表泛型化/设置项辅助，1936→1739 行，全量 1220 测试绿 + docs/memo-guide.html 初级程序员讲解（12 页幻灯片+3 动态演示）" },
-          { date: "2026-08-12", type: "feat", text: "memo 样式提取完成——内联样式全部收敛 styles.css（+197 行，视觉逐字等价），ui.ts 1216→1099 行，功能性内联保留（显隐/高度），测试视觉断言改类名断言，全量 1220 测试绿 + HTML 讲解新增样式提取页" },
-          { date: "2026-08-12", type: "fix", text: "ticket 代码体检落地——① 删残留 console.log（ai.ts/favorites）+ AGENTS.md 补 blackbox 域行；② tsc 25 预存错误清零（vector-store ArrayBuffer + 测试 24 处），npx tsc --noEmit 从此 0 错误可作门禁；③ core 层样式收敛（ticket 60 延伸）：notice 262 行 NOTICE_CSS/settings-modal CSS 移入 styles.css，confirm 全内联改 __shared_confirm_* id 选择器，dom createOverlay/createIconBtn/createSiteIcon 视觉改类名（bz-overlay-*/bz-icon-btn/bz-site-icon），settings-modal 头部空态类名化，删废弃 injectStyles 导出（测试同步删 1200→1199）；④ 工具收敛：escapeHtml 统一 core（补引号转义），新增 pad2 替换 9 文件 13 处 padStart(2,'0')，genId 因数据格式约束不统一；⑤ 9 个大函数拆分行为不变：favorites _renderCard 338→3、movie openAddModal 262→4 辅助/openFilterModal→renderFilterSettings、memo createAddDialog 304→ctx+2 方法、movie analysis 215→5 纯函数、library renderBookCard/renderBookNoteNode、password attachLongPress、quiz _buildOptionButtons、review _bindHeaderEvents；⑥ flash 4 未接线文件加 WIP 标注；PROGRESS 记录，全量 1199 测试绿 + 构建同步插件目录" },
-          { date: "2026-08-11", type: "fix", text: "黑匣子 UI 布局对齐备忘录——① 面板右上角动作区加 录入（ 设置之后 关闭恒在最后）② 录入弹窗保存/取消从底部 footer 移右上角（ 保存 + ，删除 footer）③ 对话弹窗头部统一（发送仍与输入框联动）④ 三弹窗头部改备忘录风格（18px 标题/无边框图标按钮 hover 背景）+ slideUp 入场动画，3 测试" },
-          { date: "2026-08-07", type: "feat", text: "03 完成——骨架(25命令/设置页/懒加载) + core 层(Q3 21工具/AIService/changelog 逐字移植)，148 测试全过" },
-          { date: "2026-08-07", type: "feat", text: "/05 完成——备忘录（memo.json 14字段零迁移/面板/CRUD/置顶提醒/AI推荐/URL提取/长按编辑），37 测试" },
-          { date: "2026-08-07", type: "feat", text: "/15 完成——影视（卡片/无限滚动/排序三键/Q3海报整理/AI推荐全链路）+ 影视数据分析（48字段聚合/21章节/6档评分桶/双榜），58 测试" },
-          { date: "2026-08-07", type: "feat", text: "/17 完成——复习计划（FSRS 幂律 19 权重/阶梯 10 级/难度弹窗/长按移出）+ 做题家（QuizManager/生成器三难度/单选即判/多选提交/复习联动），40 测试" },
-          { date: "2026-08-07", type: "fix", text: "源码对比修复（review）——ISO 日期零迁移/quizReviewLoop+reviewLoop/markReview 阶梯与 FSRS 语义/applyReviewStyles 时间徽标/常驻 DOM UI 逐字/4 快捷命令/事件监听" },
-          { date: "2026-08-07", type: "fix", text: "源码对比修复（quiz）——提示词逐字/单多选按 enableMultipleChoice/startQuiz 空题库生成流程/loading 弹窗/mask 点击 finishQuiz/选项 A. 前缀结构/多选计数源码缺陷逐字保留" },
-          { date: "2026-08-07", type: "fix", text: "源码对比修复（movie）——卡片布局逐字/类型筛选单标签语义/搜索三字段/ALL_TAGS 顺序优先/添加编辑按钮组交互/设置按钮组实时生效/Q3 renameFile+完整路径链接/本地时间" },
-          { date: "2026-08-07", type: "fix", text: "源码对比修复（movie-analysis）——全组件 CSS 逐字（PASTEL 顺序/柱状图柱内数值/环形图底色环/section 卡片化/topList 分隔线/chips 描边）+ 21 section accent 修正 + 弹窗逐字" },
-          { date: "2026-08-07", type: "fix", text: "源码对比修复收尾——memo 启动即初始化（file-open 提醒/剪贴板监听/autoPopup）、ai-agent json 签名、report percentage 字符串、password 弯引号" },
-          { date: "2026-08-07", type: "fix", text: "设置页 14 tab 分页重构 + movie-analysis 并入 movie 域（删除 q3/独立目录）+ 跨域源码对比修复——474 测试全绿，AGENTS.md 重写（独立插件定位，去 QuickAdd 描述）" },
-          { date: "2026-08-07", type: "feat", text: "主页改造+全量改名——主页.js 点击换 bz 命令/去 QuickAdd 降级链，插件目录 memo-suite→bz、30 命令统一 bz- 前缀（ADR-0004 修订）、新增 bz-belongings-open-panel，474 测试" },
-          { date: "2026-08-07", type: "fix", text: "设置页分页——styles.css 类名 memo-suite-*→bz-* 与 main.ts 对齐（批量替换遗漏），474 测试" },
-          { date: "2026-08-07", type: "feat", text: "收藏本数据路径固定文件名（设置只允许改目录，兼容旧完整路径值）+ 复习⇄做题家联动契约化（startReviewSession/endReviewSession + QuizReviewResults）+ AI Agent 路径去硬编码（getMemoPath/getFavoritesPath），494 测试" }
-        ] },
-        { id: "belongings", name: "归物本", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——纸面台账语汇（盖章入库/勾销出库/换牌流转/货架重排 FLIP/开册编排/报表铺开），markup 与终态零改动" },
-          { date: "2026-09-21", type: "fix", text: "0 元物品日均显示「—」，不再出现「￥0.0000」（呈报#20 B4）" },
-          { date: "2026-09-21", type: "fix", text: "报告空态统一小图标版，退役自绘纯文本空态（呈报#19 B8）" },
-          { date: "2026-09-21", type: "fix", text: "表单/详情输入框补 :focus-visible 焦点替代环（呈报#12 B2）" },
-          { date: "2026-09-21", type: "fix", text: "自绘下拉键盘导航 + ESC 二段语义（呈报#12 B5）" },
-          { date: "2026-09-20", type: "fix", text: "批A 数据口径与删除链——价格钳制/日期单源/免确认直达notifyUndo/事件补发" },
-          { date: "2026-09-20", type: "fix", text: "批B 视图交互与报告——closePanel收口/键盘路径/搜索范式/KPI口径/当月列" },
-          { date: "2026-09-19", type: "fix", text: "表单提交钮动词对齐「编辑=保存、新建=添加」（一致#9）" },
-          { date: "2026-09-17", type: "feat", text: "年度资产报告页（issue 356）" },
-          { date: "2026-09-17", type: "fix", text: "年度资产报告暗色 token 全覆盖 + 移动端面板规范（issue 356 修复批）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（纯离场年空态/千分位/截至今日/重入刷新/days0）（issue 356）" },
-          { date: "2026-09-12", type: "fix", text: "表单防叠开分目标/撤销失败兜底/出离倒挂校验等七修（H14-H20）" },
-          { date: "2026-09-12", type: "feat", text: "设置补三项——默认排序/新记默认状态/金额单位（issue 295）" },
-          { date: "2026-09-11", type: "fix", text: "poster 皮肤补暗色模式（夜版海报 token 组，推翻双主题恒定旧口径）" },
-          { date: "2026-09-08", type: "fix", text: "prototype-view CSS 链路径修正（../core/ 一级；selftest 仅断 DOM 未抓到 404）" },
-          { date: "2026-09-08", type: "fix", text: "外观组行名对齐 ticket 100（面板布局/面板主题 4 字）+ settings-modal 断言适配 3 组 + 登记 BEHAVIOR_DOMAINS 三域" },
-          { date: "2026-09-07", type: "fix", text: "归物本审查 B1/B3-B8 七修——关面板清陈旧库/搜索词、出离内流转保留封口、写盘失败回滚提示、ESC 层序、命令路径加载失败提示、表单防叠开" },
-          { date: "2026-09-07", type: "feat", text: "分类图标化+预设退役（issue 231/ADR-0102）" },
-          { date: "2026-09-07", type: "feat", text: "原型×插件 markup 单源试点——render.ts 渲染纯层 + 预览包管线（ADR-0104）" },
-          { date: "2026-09-07", type: "fix", text: "头行副题去同义重复 + 补品牌 token 覆盖；scripts 增原型热更新服务器" },
-          { date: "2026-09-07", type: "feat", text: "年份/排序下拉换自绘海报菜单——原生 select 弹层退役（纸面墨框方角+赤橙当前项）" },
-          { date: "2026-09-07", type: "feat", text: "年份/移动排序原生 select 退役换自绘海报菜单（并行会话批次收尾入库）" },
-          { date: "2026-09-07", type: "feat", text: "行为层单源试点——公共假 obsidian 层 + sim 启动器（issue 245/ADR-0106）" },
-          { date: "2026-09-07", type: "feat", text: "评审壳改双 iframe 真行为 + buildBehavior 产物链（issue 245）" },
-          { date: "2026-09-06", type: "fix", text: "同款 P1——右键菜单后复位残余 click 抑制（issue 198）" },
-          { date: "2026-09-06", type: "feat", text: "P20 瑞士大字报完全原型化——海报 hero/筛选 chips/大字网格/详情弹窗（issue 226 / ADR-0100）" },
-          { date: "2026-09-06", type: "feat", text: "P20 原型落域方向纠正——p20-full 定稿评审壳 + 域向原型对齐（issue 230）——用户点名『把原型写进 bz』返工：prototype.html 重建为拍板原型定稿（共用 styles.css，与 build-css SOURCES 同序链核心三份）；p20 值逐字回灌：方角墨框 chips 去图标/下划线搜索年份/墨底记一笔 hover 赤橙/页脚品牌行 BZ·BELONGINGS/排序 seg+横滑条海报皮/状态 pick join 四格闲置 c2 赤橙/右键菜单 bz-bel-menu 海报皮（menuClass 通道防泄漏）；移动端重排手机壳设计：mobhead 只留（mobsearch 折叠行+头部＋搜索钮退役）、搜索年份常驻工具行、m-kpis 四格缝线、mobsort 与桌面排序双实例 setValue 同步、mobadd 底部记一笔、脚注居中；修挂 body 浮层 token 失效（bz-bel-menu 进 token 名单）、核心 !important 档同重压制、9px/10px 抬 11px 过 enh-sweep-c；保留出离字段（ADR-0089）/uiSuggest（issue 203）/core 抽屉（issue 202）；prototype-data.js（真实65件+分类1226）+ prototype-icons.js（27图标，生成器入 .zcode）+ PROTOTYPE.md + issues/230；tsc 干净 4150/4150 绿" },
-          { date: "2026-09-06", type: "feat", text: "移动端整页迭代——印章头+等宽状态条+输入聚焦去环（issue 230 续）——移动 hero 顶行三轮收敛至 H8 印章头：墨章「64 在库」赤橙标签+「归物本」+投入/日均小字+右对齐（renderKpis 同口径填章数与钱数，mobhead 窄头行两废两立）；状态条五枚等宽铺满一行修右溢（flex:1 均分+44px 档豁免守卫同步）；输入聚焦 outline/box-shadow 去环+工具行墨线钉色；KPI 居中轮与 V5 极简轮中间态全被印章头取代；mob-head-variants/mob-layouts-10/mob-heads-2 三批 20 版原型对照页（核心 CSS 三级相对路径坑记录 PROTOTYPE.md）；效率口径入 docs/prototype-first.md 铁流程；tsc 干净 4149/4149 绿" },
-          { date: "2026-09-06", type: "fix", text: "宿主样式两边差异三修——下拉去input-shadow投影/浮层条目钉button基线/联想浮层海报化——Obsidian裸select的--input-shadow给年份/排序下拉多出一圈框（box-shadow:none钉掉）；.bz-popover-item是button被宿主justify-content:center+height:32px顶成居中大行（组件库钉flex-start+height:auto+去投影，全域受益）；分类联想浮层底色#fbf9f3近白与纸面不搭（域内海报化：纸面#f5f2ec+墨框方角+硬投影4px，hover墨dim、选中赤橙）；tsc干净4149/4149绿" },
-          { date: "2026-09-05", type: "feat", text: "D2 写路径收编——saveDatabase 写盘入 core 串行队列" },
-          { date: "2026-09-05", type: "fix", text: "走查批 D——损坏通知走 core 默认（含留档路径），形状异常提示补「原文件未改动」" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——面板壳/侧栏/主头行/统计卡/浮层（ADR-0094）" },
-          { date: "2026-09-05", type: "feat", text: "uiPopover 输入锚定模式 + picker 工厂化（issue 198）" },
-          { date: "2026-09-05", type: "fix", text: "状态计数去胶囊背景 + 桌面点行不开菜单（只走右键）+ 记一笔分类默认空（issue 202）" },
-          { date: "2026-09-05", type: "fix", text: "分类下拉改惰性弹出——聚焦/输入才开，开表单不再默认弹层（issue 202 跟进）" },
-          { date: "2026-09-04", type: "fix", text: "openPanel 加载窗口重入保护，杜绝双触发僵尸遮罩" },
-          { date: "2026-09-04", type: "fix", text: "表单纳入 ESC 层；外部 modify 换库后按 id 重取当前库防改动静默丢失" },
-          { date: "2026-09-04", type: "fix", text: "合法空对象不告警、悬空年份重置、已用天数改本地日历日口径并统一头注释" },
-          { date: "2026-09-04", type: "feat", text: "收藏本/归物本用户增强包——归档找回、撤销接全、出离闭环（ADR-0089）" },
-          { date: "2026-09-03", type: "feat", text: "收藏本 P1 标签工作台 + 归物本 P6 状态边栏×时间轴重设计（ADR-0083）" },
-          { date: "2026-08-27", type: "fix", text: "状态 toast、删除焦点、去全量重渲染、搬移预览、长按反馈、ESC 单层、番茄钟暂停可见（UX 整改 12/19/20/26/44/l6/e1/e3/x6）" },
-          { date: "2026-08-27", type: "fix", text: "ESC 死区/Enter 陷阱/z 档位归口 master 裁定" },
-          { date: "2026-08-25", type: "fix", text: "模态层级抬档+列表注入转义+回车单删+监听泄漏与形状容错（P0-7/P0-8/P1-38/P2×2）" },
-          { date: "2026-08-18", type: "feat", text: "归物本新增——AI 分类推荐模块（已有分类优先复用、均不合适才新建，解析失败抛错由 UI 提示），暂未接 UI" },
-          { date: "2026-08-07", type: "feat", text: "完成——归物本（1226 默认分类/面板/CRUD/排序弹窗/统计/长按交互），18 测试" },
-          { date: "2026-08-07", type: "fix", text: "冒烟测试适配归物本已实现（命令回调不再占位）" }
-        ] },
-        { id: "people", name: "脸谱", entries: [
-          { date: "2026-09-26", type: "feat", text: "详情页双折——其人/我们 + 统计与背景弹窗化" },
-          { date: "2026-09-26", type: "feat", text: "双卷画像管线——其人/我们 + 6 类素材 + 密度/档案/样本警示" },
-          { date: "2026-09-26", type: "fix", text: "合并交叉——JobView 无 portrait 后 ui 兼容读收敛 + 测试 fake 对齐四阶段" },
-          { date: "2026-09-26", type: "feat", text: "评审轮——朱砂戏台/三折更名合并(其人-相交-纪事)/长文层次排版/H1 头部栏/三处头像/记一笔独立弹窗/壳真实数据引导" },
-          { date: "2026-09-26", type: "fix", text: "头像入库——库外 avatar 复制进库内媒体文件夹（CONFIG/FACES），渲染走 vault getResourcePath" },
-          { date: "2026-09-26", type: "feat", text: "聊天仓 v2——全量原始消息入仓 + 派生 text 空串过滤 + upsert 同键覆盖 + 内容哈希指纹" },
-          { date: "2026-09-26", type: "feat", text: "脸谱工具包骨架与 bz-face doctor 自检" },
-          { date: "2026-09-25", type: "feat", text: "脸谱域立项——留痕导出的微信聊天导入 + AI 提炼脸谱（issue 435/ADR-0191）" },
-          { date: "2026-09-25", type: "feat", text: "多联系人勾选导入 + 主页面视觉重做（issue 436）" },
-          { date: "2026-09-25", type: "fix", text: "补登样式聚合清单 + 清单完整性守卫（issue 437）" },
-          { date: "2026-09-25", type: "feat", text: "画像深度移植（distilly 分层）+ 关系时间线（issue 438）" },
-          { date: "2026-09-25", type: "feat", text: "卡墙排序筛选搜索 + 导出笔记 + 合并重复人物（issue 442）" },
-          { date: "2026-09-25", type: "feat", text: "详情页人物档案与随手记手动输入路径（issue 439）" },
-          { date: "2026-09-25", type: "feat", text: "增量提炼 + 导入前成本预告（issue 441）" },
-          { date: "2026-09-25", type: "feat", text: "互动统计——客观数据侧纯本地计算与详情页展示（issue 440）" },
-          { date: "2026-09-25", type: "fix", text: "补 441 dedupeByText 闭合括号（冲突切分吃掉共享右括号）" },
-          { date: "2026-09-25", type: "fix", text: "守卫收编——脸谱导出笔记进 D3 白名单 + styles 拼接断裂修复（issue 439-442 合并收尾）" },
-          { date: "2026-09-25", type: "fix", text: "修复——增量判定迁出补测、skip 误伤与素材挤出、面板态残留等八项" },
-          { date: "2026-09-25", type: "feat", text: "全模态媒体素材进画像管线——语音转写/图片描述解析、统计与媒体徽章（issue 445）" },
-          { date: "2026-09-25", type: "feat", text: "脸谱数据源设置面板——预处理导出目录直连、两段增量进画像（issue 446）" },
-          { date: "2026-09-25", type: "feat", text: "脸谱折子改版——render/ui 单源拆分、数据源独立弹窗、自动链路退役（issue 447）" },
-          { date: "2026-09-25", type: "feat", text: "448 折子 UI 精简——图标化工具链、详情头置顶、弹窗居中、导出/工具条退役（issue 448）" },
-          { date: "2026-09-25", type: "fix", text: "收起折整片可点修折页切换死区——切换钩子挪到 leaf 元素（issue 448 反馈）" },
-          { date: "2026-09-25", type: "fix", text: "448 评审整批修复——弹窗勾选回显/ESC 分层/生成中止不误报/running 反馈/死区文案/空态动作钮/Enter 提交等（issue 448 评审）" },
-          { date: "2026-09-25", type: "feat", text: "脸谱语义深化与首页入口" },
-          { date: "2026-09-25", type: "fix", text: "评审收口——媒体标签前缀剥离、统计口径与文案、命令名定稿" },
-          { date: "2026-09-25", type: "feat", text: "画脸谱进度续跑——生成引擎后台化、批级落盘与进度块" },
-          { date: "2026-09-25", type: "feat", text: "折子印章四态——未画谱/画谱中/画谱中断/已画谱均可从卡上继续" },
-          { date: "2026-09-25", type: "feat", text: "封面墙成员补上预览桶——导入过预览但没画过的人也能上墙" },
-          { date: "2026-09-25", type: "feat", text: "+454 超大量任务单批失败不再重烧 + 合成卡媒体数" }
-        ] },
-        { id: "clipping", name: "剪藏本", entries: [
-          { date: "2026-09-24", type: "feat", text: "分析层软横屏单源 + 圆点导航统一 + 触屏翻幕——真机两症结修复" },
-          { date: "2026-09-23", type: "feat", text: "动效层——开印/排字/上版/翻面/剪走/钤收/勾销/报告落版全域演出" },
-          { date: "2026-09-23", type: "feat", text: "「我读了什么」全屏读报特刊层 + 头行电传纸带/期号戳章重做" },
-          { date: "2026-09-23", type: "fix", text: "退场残留收口 + 周历头回退色块（只留星期中文）" },
-          { date: "2026-09-22", type: "fix", text: "添加 UP 主支持长 uid（纯数字位数不设上限）" },
-          { date: "2026-09-22", type: "feat", text: "添加 UP 主即直查资料（名字/头像）+ 开弹窗补缺资料" },
-          { date: "2026-09-19", type: "fix", text: "批B数据写链·抓取·扫描·锚定九项修复" },
-          { date: "2026-09-19", type: "fix", text: "覆盖确认迁 flow-dialog 三出口，剪藏路径收单源" },
-          { date: "2026-09-19", type: "fix", text: "卸载收口自建浮层，自动刷新订阅退订闭环" },
-          { date: "2026-09-19", type: "fix", text: "批 D 视图层修复（列表·检索·移动端·报告·样式）" },
-          { date: "2026-09-19", type: "fix", text: "深审批 C——UI 核心动线·删除口径·生命周期" },
-          { date: "2026-09-19", type: "fix", text: "主线程合并收口——E 批六开关翻转必发、window.open×2 改 openExternalUrl 单源（新-7/A6）、CB9 loader stats 复位、image-save pad2、UID 分型文案接线、跨批测试探针适配（T5 按钮文案交集/T6 活跃订阅表/T9 快照语义）" },
-          { date: "2026-09-19", type: "fix", text: "rail 行内 钮退役 + 报告层/划选浮框补 topifyZ 发号 + 搜索框 hover 底色压回" },
-          { date: "2026-09-19", type: "fix", text: "保存图片后自动复制嵌入 wikilink 到剪贴板（memo item-1789790237962-3884qs）" },
-          { date: "2026-09-17", type: "feat", text: "剪藏阅读报告页（issue 358）" },
-          { date: "2026-09-17", type: "fix", text: "报告空态图标/统计与移动端规范（issue 358 修复批）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（打开即已读时长 P1 + 移动计时 + 弹层健壮性 + 空态两态）（issue 358）" },
-          { date: "2026-09-16", type: "fix", text: "阅读正文显式放开文本选择，修划选工具框不可用（issue 329）" },
-          { date: "2026-09-16", type: "feat", text: "保存剪藏全量图片本地化、图片命名去标题、条目菜单补复制链接（issue 329）" },
-          { date: "2026-09-16", type: "fix", text: "移动端工具框让位、双端原位重渲、basename 链接拦截、source 升级链修复（issue 329）" },
-          { date: "2026-09-16", type: "fix", text: "移动详情已收剪藏正文可读、正文长词防撑破（issue 329）" },
-          { date: "2026-09-16", type: "fix", text: "保存/标读后自动前进的下一篇补换篇语义——打开即已读+滚动归零（memo zrurtk）" },
-          { date: "2026-09-16", type: "fix", text: "评审修复七项——撤销不误标读、删除清侧写、本地图不出保存项、别名与图注 ]] 清洗、关联失败不吞 onCreated、预览宿主 ESC（issue 329 评审）" },
-          { date: "2026-09-16", type: "fix", text: "B站条目去除保存入口（ADR-0147）、已存按钮置灰、保留策略清侧写、锚定链接捕获拦截修移动端崩溃（issue 329 评审跟进/用户拍板）" },
-          { date: "2026-09-16", type: "fix", text: "锚定双链裸 basename 解析换正牌 API——getFirstLinkfileDest 在 Obsidian 1.12/1.13 不存在致拦截恒失效（issue 336）" },
-          { date: "2026-09-16", type: "fix", text: "正文屏蔽移动端原生长按选择菜单（issue 341/ADR-0150）" },
-          { date: "2026-09-16", type: "fix", text: "评审跟进——抑制作用域与拦截同口径，补漂移守卫（issue 341）" },
-          { date: "2026-09-16", type: "fix", text: "撤销移动端划选工具框的 48px 系统菜单让位（issue 341 真机验收后）" },
-          { date: "2026-09-15", type: "feat", text: "划选工具框与知识盒划词锚定、保存图片本地化（issue 329）" },
-          { date: "2026-09-13", type: "feat", text: "聚合讯抓取迁入插件内（issue 302 / ADR-0128）" },
-          { date: "2026-09-13", type: "fix", text: "review 修复批——窗口裁剪落盘 + lastFetchAt 语义 + 通知收窄（issue 302 / ADR-0128）" },
-          { date: "2026-09-13", type: "fix", text: "抓取侧修复五项（review C2/C3/C23/C24/C26）" },
-          { date: "2026-09-13", type: "fix", text: "UI 核心 8 条评审修复（C1/C5/C6/C7/C8/C13/C14/C15）" },
-          { date: "2026-09-13", type: "fix", text: "存储/数据侧 7 条评审修复（C9/C10/C12/C27/C28/C30/C31）" },
-          { date: "2026-09-13", type: "fix", text: "设置/弹窗侧 2 条评审修复（C4/C25）" },
-          { date: "2026-09-13", type: "fix", text: "UI 收尾 10 条评审修复（C11/C16/C17/C18/C19/C20/C21/C22/C29/C32）" },
-          { date: "2026-09-12", type: "fix", text: "剪藏流家族五域批修 F1-F15（全域审查第四节）" },
-          { date: "2026-09-12", type: "fix", text: "F3 守卫收窄——已读未收补收可升级 saved 且不重复计已读（review 收编）" },
-          { date: "2026-09-12", type: "fix", text: "文章标题字号降档——桌面 24px→display 档、移动 33px→27px（issue 301）" },
-          { date: "2026-09-11", type: "feat", text: "v1.3.0 RSS 订阅源抓取（rss-parser+turndown）+ 每日简报调度退役" },
-          { date: "2026-09-11", type: "feat", text: "正文渲染转 Obsidian MarkdownRenderer + issue 273 审查修复批" },
-          { date: "2026-09-11", type: "feat", text: "已读/已收正文保留不清空（issue 274）" },
-          { date: "2026-09-10", type: "feat", text: "每日简报——B站 UP 视频字幕/转写 → AI 要点（issue 263 / ADR-0119）" },
-          { date: "2026-09-10", type: "fix", text: "简报条目归一丢 transcriptPath——转录稿链接被插件回写抹掉（issue 263）" },
-          { date: "2026-09-10", type: "feat", text: "每日简报产出改为一句话总结（issue 263 形态修订）" },
-          { date: "2026-09-10", type: "feat", text: "每日简报产出定为「要点列表 + 每条要点一句话」（issue 263 形态定稿）" },
-          { date: "2026-09-10", type: "feat", text: "剪藏本 UI 五改 + 刊物刊名呼吸光标 + 暗色皮" },
-          { date: "2026-09-08", type: "feat", text: "原型落域——markup 单源 render.ts + 行为单源评审壳（issue 247/ADR-0104/0106）" },
-          { date: "2026-09-08", type: "feat", text: "移动端目录化——site 章+已收折叠（编辑部皮，issue 248/ADR-0107）" },
-          { date: "2026-09-08", type: "fix", text: "头行检索 flex:0 0 250px 定宽落地" },
-          { date: "2026-09-08", type: "feat", text: "移动端 m3 原型逐字覆盖（issue 248 追）" },
-          { date: "2026-09-08", type: "fix", text: "移动搜索/关闭/读下一则失灵 + 字号分段编辑部皮恢复" },
-          { date: "2026-09-08", type: "feat", text: "全局去在读 + 打开即已读即时让位 + 已读进折叠段 + 删除/确认弹窗纸墨化 + 去查看原文" },
-          { date: "2026-09-08", type: "feat", text: "视频正文链接可跳转 + 标题下状态章退役 + 阅读字号改设置面板项" },
-          { date: "2026-09-08", type: "feat", text: "会话冻结序——桌面打开即读+原位不重排+两端已读/已收双折叠（ADR-0108/issue 249）" },
-          { date: "2026-09-06", type: "fix", text: "六项——搜索进 rail+统计联动/平台动态分组+新文在前/favicon 高清回退/去分析入口/正文图片渲染/切文滚动归零" },
-          { date: "2026-09-06", type: "fix", text: "rail 搜索框被 .bz-search 基线 flex:1 纵向拉伸——flex 归零不参与伸缩" },
-          { date: "2026-09-06", type: "feat", text: "桌面端编辑部印刷风换肤——V1 点线索引左栏+目录序号制+阅读面去底部动作（issue 214）" },
-          { date: "2026-09-06", type: "feat", text: "编辑部风二轮——严格对齐 p1-final 原型（issue 214）" },
-          { date: "2026-09-06", type: "feat", text: "编辑部风三轮——头行去 /+刊名放大+右键菜单换肤经 menuClass 生效（issue 214）" },
-          { date: "2026-09-06", type: "feat", text: "rail 按 site 分类 + 中右栏分割线拖宽 + 拖拽误关闭 core 修复（issue 220）" },
-          { date: "2026-09-06", type: "fix", text: "右键菜单编辑部换肤变量并挂菜单根——修菜单透明裸奔（issue 222 修复轮 1）" },
-          { date: "2026-09-06", type: "fix", text: "在读让位移动端同序 + 保留天数两键合一（issue 224）" },
-          { date: "2026-09-05", type: "feat", text: "D2 写路径收编——news 写队列委托 core 串行，侧写读改写入队" },
-          { date: "2026-09-05", type: "fix", text: "走查批 C——死色收编/rail 选中态对齐实底档/徽标对比/间距归档（项 11-14）" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——面板壳/头行/侧栏/横滑条等（ADR-0094）" },
-          { date: "2026-09-05", type: "fix", text: "review P2——uiResizable 补 flush、closePanel 关闭即落盘、注释勘正" },
-          { date: "2026-09-05", type: "feat", text: "七域面板头行对齐待办 + 收藏本工作台精修 + 待办联想下拉化（issue 201）" },
-          { date: "2026-09-04", type: "fix", text: "全域审查修复 C1-C10" },
-          { date: "2026-09-04", type: "fix", text: "news.json 写回全部队列化 + 写前段级合并（防丢 daemon 并发写入）" },
-          { date: "2026-09-04", type: "fix", text: "rail/胶囊 data-src 过 esc + UP 行源映射修正 + 空源清当前阅读" },
-          { date: "2026-09-04", type: "feat", text: "剪藏本增强包——搜索/移动抽屉/读剪藏正文/批量已读/撤销/阅读动线/字号/面板缩放" },
-          { date: "2026-09-03", type: "feat", text: "剪藏本×聚合讯融合新域（ADR-0082，三栏工作台 + 移动双屏）" },
-          { date: "2026-08-29", type: "feat", text: "聚合讯视频条目「保存至文献」改道文献盒 + B站跳过行为流静音（ticket 134）" },
-          { date: "2026-08-28", type: "feat", text: "重开缓存复用零扫描（ticket 130）" },
-          { date: "2026-08-28", type: "fix", text: "选择器大库性能（环境目录剪枝+快速首渲染+渲染上限）+ 剪藏 created 通道补口（review M1/S1）" },
-          { date: "2026-08-28", type: "feat", text: "域组 B 设置弹窗 schema 化（clipping+数据源组+UP 名单弹窗/favorites/library），文案 lint 注册" },
-          { date: "2026-08-27", type: "fix", text: "聚合讯三态区分、本地日期口径、错误人话化（UX 整改 l5 · x2b · m1b）" },
-          { date: "2026-08-27", type: "fix", text: "show 加载链串行化防双链竞态（审查建议）" },
-          { date: "2026-08-27", type: "feat", text: "UX 整改——通知各弹各+重试+改名提示、增量加载、空态三态、确认框统一、空库空态、卸载清 DOM（1/2/a1/45/63/51/52/l1/l4）" },
-          { date: "2026-08-27", type: "fix", text: "增量刷新接删除/改名事件防幽灵卡片并重开即重载；删除失败路径重开壳给 toast；改名失败 warning 后置到落盘后；confirm 消息支持换行（B1/B2/B5/B6）" },
-          { date: "2026-08-27", type: "feat", text: "聚合讯 B 站 UP 主聚合 + 剪藏本设置「数据源」组（ticket 124，ADR-0060）" },
-          { date: "2026-08-27", type: "fix", text: "剪藏本先弹窗显示加载提示再加载；自动摘要详设去左边距平级（ticket 125）" },
-          { date: "2026-08-27", type: "feat", text: "B站UP名单整段联动隐藏+管理按钮独立弹窗+UP主名字头像回填（ticket 126）" },
-          { date: "2026-08-27", type: "feat", text: "B站不走24h窗口改每UP最近N条（页面可设）+ UP弹窗Cookie配置引导（ticket 127）" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "双写者合并防丢+游标锚定+转义推广；剪藏本注入/卡死/目录边界；自动摘要盲写覆盖/可关停/去重窗（P0-5/P0-8/P1-21~24/P2x4）" },
-          { date: "2026-08-24", type: "feat", text: "smartcat 聚合讯观察完成——逐篇三态+时长+保存联动 auto-summary+剪藏观察停用，全量 1442 测试" },
-          { date: "2026-08-24", type: "fix", text: "聚合讯观察仅保留保存 + 阅读时长按累计可视时间计算" },
-          { date: "2026-08-23", type: "fix", text: "聚合讯/阅读报告移动端默认全屏跟随剪藏本/书库，移除两窗口 设置入口" },
-          { date: "2026-08-22", type: "feat", text: "移动端主窗口默认全屏 完成——13 域（日记/备忘录/归物本/剪藏本/聚合讯/密码本/收藏本/书库/阅读报告/影视/复习/番茄钟/保险箱）各加「移动端默认全屏」开关（仅移动端显示生效，默认值行为保持 11 开 2 关），≤768 统一两态（.bz-win-mfs 真全屏覆写视口/头部安全区避让 vs 常规卡），解除 8 处 JS 内联+5 处 CSS 强制全屏旧规则，聚合讯/阅读报告补建设置入口，保险箱更名（原加密保险箱，仅文案与文档、id 与存储不动），ADR-0019+CONTEXT 术语+AGENTS/spec 同步，1052 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "主窗口头部行全页面统一——统一类 .bz-win-head 补 7 窗（password/review/belongings/clipping/movie 主/影视分析/阅读报告）+ 既有头部类并入同组：头行 16/24/10（头部↔列表间距 10px 统一）间距 8；头行按钮统一 22×26/14px 透明无阴影无边框圆角 4 text-muted hover 统一背景（news 浮动钮/番茄钟 同规格、movie 分析 0.55rem 与 belongings 无 hover 收敛、冗余规则清理），ADR-0019 修订第 3 条，1075 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "头部按钮秩序与关闭钮—— 置于 正前（favorites/encrypt/clipping 换序）+ 关闭按钮再小 2px（20×24/12px，新类 .bz-win-close 挂 7 处自定义关闭钮，icon-btn/--close、todo-btn-close、news-close-btn 并入）+ 移动端非真全屏（常规卡）隐藏关闭按钮（卡片态靠点遮罩关闭、全屏靠 ，桌面不受影响），ADR-0019 修订第 4 条，1075 测试全绿" },
-          { date: "2026-08-21", type: "feat", text: "聚合讯完成态本轮阅读改今日阅读（用户反馈）——完成卡首行改显示 stats.byDate 当日阅读数（byDate 兜底 0），删跳过统计行，测试同步断言 937 测试全绿" },
-          { date: "2026-08-21", type: "feat", text: "聚合讯 最后一篇交互优化（用户反馈）——剩最后一篇时「下一篇」按钮变「 最后一篇 · 完成阅读」，完成态底部栏保留右下角最终计数（3 / 4 → 4 / 4），无操作按钮；+2 测试；1013 测试全绿" },
-          { date: "2026-08-21", type: "feat", text: "聚合讯 计数改从 1 起算（用户反馈）——已读计数 0 / N → 1 / N（正在读的这篇算已读），最后一篇按钮文案改「 完成阅读」去「最后一篇」，测试断言同步更新；1013 测试全绿" },
-          { date: "2026-08-11", type: "feat", text: "卡片盒批量导入（一次性工具，用户重设计）——bz-blackbox-import-cardbox：扫描卡片盒 1506 张 md（frontmatter/正文/(描述::)/嵌入剔除）→ 规则预筛（空卡/敏感词恢复码密码/剪藏残渣自动跳过）→ AI 批量分类（concept/literature/失败降级永不拒收）→ 预览确认列表（原卡内容优先确认 + AI 总结勾选 + 跳过↩恢复）→ 自动关联（双链 [[…]] + TF-IDF，related 上限 5）→ 批量写入（一次 load→push→save，不触发复盘）；4 维度：createdAt=卡片创建时间/category/tags/summary（Entry 新增可选字段，向后兼容）；持久化日志 blackbox_import.json（imported+skipped，重跑不再出现；跳过只作用于导入流程，黑匣子正常录入不受影响）；MockVault 补 adapter，17 测试" },
-          { date: "2026-08-07", type: "feat", text: "完成——AI Agent（rename/delete/create/open 同步 + enqueue 队列 + AI 剪藏匹配批准弹窗），16 测试" },
-          { date: "2026-08-07", type: "feat", text: "/09 完成——剪藏本（搜索/站点单选/长按删除/反链）+聚合讯（阅读流状态机/统计落盘），21 测试" },
-          { date: "2026-08-07", type: "feat", text: "/11 完成——自动摘要（frontmatter 解析/监听剪藏目录）+收藏本（置顶排序/AI 整理/余额查询 5 分钟缓存/长按编辑删除），54 测试" },
-          { date: "2026-08-07", type: "fix", text: "设置页重组——做题家并入复习计划（动态显示+共用数据路径）、自动摘要并入剪藏本（跟随剪藏目录）、备忘录显示文件名移除设置、AI Agent 暴露监听范围/剪藏匹配/模型、修复主页影视在看想看过滤（window.__homeFilmStatus 兼容消费），488 测试" }
-        ] },
-        { id: "favorites", name: "收藏本", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——支板/磁贴吸附/贴卡入场/落定扫光/置顶飞行/冷存折收" },
-          { date: "2026-09-23", type: "feat", text: "el clic en tarjeta ya no navega — fuera insignia de enlace externo, «复制网址» en el menú contextual y frío con visual de archivado" },
-          { date: "2026-09-20", type: "fix", text: "深审批A数据侧修复——读出口归一管道 + 写链收口（arch-1/func-3/func-4/func-5/E6读侧/arch-2/arch-3/arch-4）" },
-          { date: "2026-09-20", type: "fix", text: "深审批B UI交互与通知链修复（免确认直达/滚位保持/哨兵解耦/可达性/单源收编）" },
-          { date: "2026-09-20", type: "fix", text: "卡墙点按反馈与外链标识 + 磁贴行限高（呈报#24/#25/#61）" },
-          { date: "2026-09-19", type: "fix", text: "表单动词「编辑=保存、新建=添加」+ 空态接 emptyHtmlStr 单源（一致#9/#16）" },
-          { date: "2026-09-17", type: "feat", text: "收藏标签自定义（issue 363）" },
-          { date: "2026-09-17", type: "fix", text: "uiModal 壳与单源内容根去重类，修 F15 单例守卫双计（批8 回归）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（改名回滚/bulk 条件/迁移串行/id 唯一/hue 兜底 + 回归测试）（issue 363）" },
-          { date: "2026-09-12", type: "feat", text: "设置补两项——打开默认筛选/默认排序（issue 296）" },
-          { date: "2026-09-08", type: "feat", text: "行为层单源——真 ui.ts 打进原型（issue 245/ADR-0106 范式随 belongings 试点）" },
-          { date: "2026-09-08", type: "fix", text: "prototype-view CSS 链路径修正（../core/ 一级，同 belongings f06bb03）" },
-          { date: "2026-09-07", type: "fix", text: "命令直开表单注册 ESC 层 + ESC 关抽屉改 closeSheet 整体移除——openForm 抽 ensureFavoritesEsc（openPanel 原位与 openForm 开头各调一次，对照 belongings 同款），修命令路径表单 ESC 关不掉；isVisible 抽屉判定改判遮罩元素存在（不依赖 show 类），close 抽屉分支改调 closeSheet（动作路径同款，遮罩连监听一并移除，不再残留 DOM）" },
-          { date: "2026-09-07", type: "fix", text: "openExternal 去 ?. 短路 + 编辑基线标签与 DOM chip 同口径——openUrl 缺失时调用抛 TypeError 落 catch 走 electron shell 兜底（与 todo/literature 对齐，不再静默 no-op）；基线 tags 过滤 TAGS 外标签（与 formTagsNow 只数九类 chip 同口径，一开表单不误判脏），保存侧 sel=new Set(it.tags) 口径不动仍保留未知标签" },
-          { date: "2026-09-06", type: "fix", text: "同款 P1——右键菜单后复位残余 click 抑制（issue 198）" },
-          { date: "2026-09-06", type: "feat", text: "亚麻记事板换血——C5 白卡墙+胶带磁点+置顶金圈+归档褪色（issue 219，ADR-0097）" },
-          { date: "2026-09-06", type: "feat", text: "完全原型化——删 rail/主头行/工具行，头区+磁贴行+卡墙（issue 219b，ADR-0098；搜索/排序退役）" },
-          { date: "2026-09-06", type: "feat", text: "头部彻底原型化——删壳头行与主按钮，标题改「收藏本」，磁贴白底贴纸+行尾「＋新收藏」（issue 219c）" },
-          { date: "2026-09-06", type: "feat", text: "头区 1:1 原型——标题粗黑款删副题，磁贴全白底，右键菜单/表单亚麻皮肤（issue 219d）" },
-          { date: "2026-09-06", type: "fix", text: "CSS 逐值 1:1 抄原型——底色去黄/标题 21px/副题灰字加回/磁贴胶囊白底/磁点浅白（issue 219e）" },
-          { date: "2026-09-06", type: "fix", text: "头行样式用户直供版照抄+副题只留白卡计数+磁贴 0,2,0 抗 reset+底色 #fffdf8（issue 219f）" },
-          { date: "2026-09-06", type: "fix", text: "标题字号 21px→14px（issue 219g）" },
-          { date: "2026-09-06", type: "fix", text: "C5 原型后轮改动回灌（issue 228）——主背景 #fffcf6、面板去底部内边距、头行 20px/标题 14px、磁贴行 20px+卡墙顶垫 6px、移动磁贴单行横滑新收藏置首、关闭钮 24×24" },
-          { date: "2026-09-06", type: "fix", text: "桌面固定 900×620 面板 + 移动关闭钮进 head 行（issue 228 续）——面板补边框/圆角/投影对齐原型 .frame，.bz-fav-mob-close 改 head 行内静态位，移动头行两端对齐 padding-top 4px" },
-          { date: "2026-09-06", type: "fix", text: "右键菜单/移动抽屉图标缺失修复——mountIcons 未调用致 <i data-lucide> 占位残留，菜单与抽屉渲染后补挂；ctx/sheet 按钮补 justify-content:flex-start 防核心居中" },
-          { date: "2026-09-06", type: "fix", text: "图标挂载补全+窄屏适配——renderTags/头行关闭钮 mountIcons 补挂（新收藏+/移动此前永不渲染），表单 min(430px,100vw-32px) 留边，面板 container query 窄于 520px 卡墙双列平摊" },
-          { date: "2026-09-06", type: "fix", text: "移动端面板显式 100vw/100vh + 卡墙防撑爆——overlay 弹性子项不定宽被 line-clamp 卡片 max-content 撑到两倍屏宽（右列出屏），mob 面板补视口宽高；grid 轨道 minmax(0,1fr)+卡片 min-width:0，已同步回原型" },
-          { date: "2026-09-06", type: "fix", text: "头行固定仅卡墙滚动+关闭钮压回 reset——面板改 flex 列 overflow:hidden，head/tags flex:none、board flex:1 min-height:0 overflow:auto（手机上 head 不再被滚走，原型手机框内也可滚）；bz-fav-mob-close 加容器前缀 0,2,0 压过 reset 0,1,1 恢复白底投影" },
-          { date: "2026-09-06", type: "feat", text: "原型评审壳共用 styles.css + 全域 emoji 换 lucide 图标 + 布局修复批（issue 229）——原型 <link> 引用域样式单源、markup 与 ui.ts 同构；标签 ic 字段（github/app-window/globe/brain-circuit/keyboard/bot/zap/beer/waypoints，whale 缺失改 waypoints）+ 已归档 archive；磁贴/徽记/pick inline-flex；面板分层滚动头行固定；关闭钮容器前缀压 reset；卡墙 auto-fill 网格左右对称（31/31）；移动面板 100vw/100vh 防撑爆 + minmax(0,1fr)；胶带基础类恒挂修 2/3 隐身；增强图标集 prototype-icons.js（生成器 _gen-icons.mjs，lucide-static@0.544.0，82 图标）；tsc 干净 4150/4150 绿" },
-          { date: "2026-09-05", type: "feat", text: "D2 写路径收编——读改写事务入 core 串行队列" },
-          { date: "2026-09-04", type: "fix", text: "收藏数据读取失败给出错误通知，不再静默显示空列表" },
-          { date: "2026-08-30", type: "feat", text: "抽屉归档冷存（ticket 140）——动作序编辑后删除前，确认弹窗+观察流，冷存条目界面/余额全排除" },
-          { date: "2026-08-30", type: "feat", text: "收藏本 UX 批次——分页/排序/搜索空态区分/删除可撤销/保存防假死/脏表单拦截/样式收敛" },
-          { date: "2026-08-27", type: "feat", text: "UX 整改——AI 不覆盖手写/未配直拦/搜索防抖/单击直开/空态引导（ticket 22 23 42 61 · l6-fav）" },
-          { date: "2026-08-27", type: "fix", text: "审查修复——右键菜单点外关闭不直开/选字守卫/AI 覆盖竞态（e9674f3 复核）" },
-          { date: "2026-08-25", type: "fix", text: "弹窗层级抬档+余额状态清理+批量写回防丢更新（P0-7/P1-36/P1-37）" },
-          { date: "2026-08-15", type: "feat", text: "收藏本 GitHub 增强（用户反馈，ticket 60 后续）——真实 GitHub API 拉取仓库名/简介(fetched 标志+8s超时+重试1次) + AI 整理联动(GitHub 链接标题预填/简介忠实翻译/标签兜底) + 无简介严禁编造 + 移动端样式与 fav-header 类 + DeepSeek Harness 标签, favorites 44 测试绿" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子设置/样式/装配完成——设置弹窗 6 项（含词表增删）+ Ollama 接入 + styles.css v4 收敛（删 v3 1300 行）+ 构建直出 vault，10 测试（styles.css 含收藏本既有 WIP 3 行）" }
-        ] },
-        { id: "reading-report", name: "阅读报告", entries: [
-          { date: "2026-09-20", type: "fix", text: "深审五向修复批——桌面返回出口/供数面收敛/渲染档位/效率与一致性群修" },
-          { date: "2026-09-20", type: "fix", text: "恒可见返回钮显式规则 + 旧走查守卫随 RR-U1 新拍板翻转" },
-          { date: "2026-09-11", type: "fix", text: "报告去内联样式收编域 CSS + 暗色指标色提亮（issue 270）" },
-          { date: "2026-09-05", type: "feat", text: "统计口径只算书库目录；新增翻月月键/年月柱纯函数" },
-          { date: "2026-09-05", type: "feat", text: "图表升级——环形图改条形行、热力图翻月、年卡展开月柱" },
-          { date: "2026-09-05", type: "fix", text: "域样式补进构建聚合清单——修读书报告图表样式现网失效（终局 review P1）" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——面板壳/统计卡/进度条（ADR-0094）" },
-          { date: "2026-09-04", type: "fix", text: "报告弹窗 ESC 收编 escManager 层级，不再私挂 document keydown" },
-          { date: "2026-09-04", type: "fix", text: "本月阅读按当前年月键直查，当月无数据显示 0 不再取旧月份" },
-          { date: "2026-09-04", type: "fix", text: "阅读状态口径对齐 bookshelf/library 双日期，双日期才算已读" },
-          { date: "2026-09-04", type: "fix", text: "热力图单元格尺寸/@media/:hover 迁入域样式类，内联写法全部无效" },
-          { date: "2026-09-04", type: "fix", text: "booksCompleted 只在完成日期桶记一次，阅读月不再双计数" },
-          { date: "2026-08-27", type: "fix", text: "UX 整改——统计分片不卡死、主题适配、先建窗占位、unload、XSS 转义、错误人话化（ticket 40，p1/l1/l3/s1/m1b）" },
-          { date: "2026-08-27", type: "fix", text: "progress toast dedupeKey 唯一化防快速重开静默（reviewer）" },
-          { date: "2026-08-25", type: "fix", text: "趋势反转口径/UTC 日期/标签精确等值/类目取样/热力图未来格五项修复" }
-        ] },
-        { id: "cinema", name: "影院", entries: [
-          { date: "2026-09-24", type: "feat", text: "观影分析收尾批——开卷流场萤火 v4 上岸 + 移动竖屏软横屏 + 滚轮一滚一幕" },
-          { date: "2026-09-24", type: "fix", text: "观影分析桌面端开卷聚合错位——层框换算非旋转态减原点（issue 432）" },
-          { date: "2026-09-23", type: "fix", text: "豆瓣检索弃搜索页改 subject_suggest——治解析风控误报（ADR-0177）" },
-          { date: "2026-09-23", type: "fix", text: "检索改三路兜底链——suggest 软拒绝不再误报没找到（ADR-0178）" },
-          { date: "2026-09-23", type: "feat", text: "不可用一律回落 LLM + 判定编排抽 core/jev-fallback（影院补回落）" },
-          { date: "2026-09-22", type: "fix", text: "季圆点悬浮正脸那一季——只换文案不建层，滑回正脸一次落回静息态（issue 404）" },
-          { date: "2026-09-22", type: "feat", text: "观影分析整页重做为滚动放映室——四本 22 幕 + 幕单元放映（issue 405）" },
-          { date: "2026-09-22", type: "fix", text: "新增背面加回「我的记录」段（评分/影评已看显示）+ 观影分析引擎根解析修复——面板根 closest 落空致整页静止（issue 406）" },
-          { date: "2026-09-22", type: "feat", text: "观影分析整篇重写为《观影志》26 幕（issues 406-408）" },
-          { date: "2026-09-22", type: "feat", text: "观影分析镶进影院面板（覆盖层 + 点遮罩关）+ 影院交互四修（issue 409）" },
-          { date: "2026-09-21", type: "fix", text: "季圆点悬浮通道改 matchMedia 能力判定，桌面宽屏触屏不再粘脸" },
-          { date: "2026-09-21", type: "fix", text: "右键菜单桌面分流改悬浮能力判定，与季圆点悬浮统一 hoverCapable 单出口" },
-          { date: "2026-09-21", type: "feat", text: "关联判定与影院类型判定接入 Jev 决策通道（issues 391/392/393）" },
-          { date: "2026-09-21", type: "fix", text: "表单重名反馈（红边框 + 锁保存）+ 撤销影院 Jev 接入 + 移除 TED 分类（issue 394）" },
-          { date: "2026-09-21", type: "feat", text: "添加影视改「解析 → 豆瓣预取 → 双面翻转卡片」（issue 395）" },
-          { date: "2026-09-21", type: "feat", text: "详情弹窗共享元素过渡——海报抽出飞入、面板从海报生长、关闭返程（issue 396）" },
-          { date: "2026-09-21", type: "feat", text: "抽离升级为整卡离场 + 列表 FLIP 补位/让位（issue 396 追加）" },
-          { date: "2026-09-21", type: "fix", text: "返程落点被源卡纠正动画污染——FLIP 集合排除源卡本体（issue 396）" },
-          { date: "2026-09-21", type: "feat", text: "合集共享元素——合集卡同款过渡 + 合集行钻入（issue 397）" },
-          { date: "2026-09-21", type: "feat", text: "保存即齐（海报落库、不再后台抓取）+ 侧栏/排序钮滑动高亮（issue 398）" },
-          { date: "2026-09-21", type: "feat", text: "季圆点悬浮换季改「涟漪揭示」——来片层从被悬浮的圆点圆形扩散（issue 399）" },
-          { date: "2026-09-21", type: "feat", text: "动效整合批——台账单源 / 既有动效修正 / 网格重排三件套 / 反馈与入口（issue 400-403）" },
-          { date: "2026-09-20", type: "feat", text: "特别篇前缀并入合并卡 + 合集卡手势与季弹窗收口（issue 387）" },
-          { date: "2026-09-20", type: "fix", text: "批C 队列与基建——cancelled残留/微单源/卸载注销/注释纠偏" },
-          { date: "2026-09-20", type: "fix", text: "批B 视图层与样式——移动空态/搜索回显+/键盘可达/统计守卫/热区" },
-          { date: "2026-09-20", type: "fix", text: "批A 写路径与ui行为——建档模板YAML收口/影评保留/事件补发/搜索二段清词/滚位" },
-          { date: "2026-09-20", type: "fix", text: "搜索框输入不再被后台整刷打断" },
-          { date: "2026-09-20", type: "feat", text: "详情弹窗补齐笔记已有字段（片长 / 季集 / 完整上映日期 / 热门短评）" },
-          { date: "2026-09-20", type: "feat", text: "合并卡明细行统一按上映日期升序（各季 + 特别篇一个口径）" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板 Wave1 呈报#7/#14——表单桌面端自动聚焦名称框 + 季圆点等效热区" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板 Wave1 呈报#23——豆瓣抓取失败通知挂「重试」动作" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板 Wave1 呈报#58——分析页 19 板块按语义各配图标" },
-          { date: "2026-09-18", type: "feat", text: "豆瓣抓取海报目录设置 + 抓取队列调整（并行会话 WIP）" },
-          { date: "2026-09-18", type: "feat", text: "剧集按季合并——季进度条卡片 + 设置开关（issue 376 / ADR-0168）" },
-          { date: "2026-09-18", type: "feat", text: "季进度改「海报右下角一排圆点」+ 去掉注释文字（issue 376 形态定稿）" },
-          { date: "2026-09-18", type: "fix", text: "季圆点改到海报左下角（用户订正方位）" },
-          { date: "2026-09-18", type: "feat", text: "季圆点悬浮预览——正脸换成该季海报与信息（issue 377）" },
-          { date: "2026-09-18", type: "fix", text: "想看落盘编码 -1，编辑不再弹回在看 (item-1789722741019-t82vuk)" },
-          { date: "2026-09-16", type: "fix", text: "海报路径 rename 联动 + 抓取队列存在性守卫（issue 337）" },
-          { date: "2026-09-13", type: "feat", text: "影院豆瓣抓取迁入插件，字段走 ApiZero（issue 303 / ADR-0129）" },
-          { date: "2026-09-13", type: "feat", text: "ApiZero 字段扩展——上映日期←year/季集←episodes/热门短评（issue 303 修订）" },
-          { date: "2026-09-13", type: "fix", text: "豆瓣抓取写回链路修复十项（review C1-C10）" },
-          { date: "2026-09-12", type: "fix", text: "补问期间保持运行态 + 随机抽一部先整刷已开面板" },
-          { date: "2026-09-11", type: "feat", text: "标记已看改走编辑窗（评分影评用户输入）" },
-          { date: "2026-09-11", type: "fix", text: "海报 loading 完成信号双通道 + AI 荐片方案 A + 视图切换高亮口径" },
-          { date: "2026-09-10", type: "fix", text: "通栏按钮左对齐并修 chips 不回落列表" },
-          { date: "2026-09-10", type: "fix", text: "移动端三修——面板真全屏、长按只出抽屉、方形钮钉死宿主 padding" },
-          { date: "2026-09-10", type: "fix", text: "移动端抽屉统一到 core 手势/浮层，并修 core 合成 mousedown 误关" },
-          { date: "2026-09-09", type: "feat", text: "豆瓣盲区补全——打开触碰协议+工具补全分支（ADR-0111/issue 252）" },
-          { date: "2026-09-09", type: "fix", text: "审查修复批——链接口径单源+引号读写往返+pipeline 可测化（issue 252）" },
-          { date: "2026-09-09", type: "feat", text: "豆瓣抓取插件直调——内存队列 spawn CLI+卡片 loading+守护退役（ADR-0113/issue 255）" },
-          { date: "2026-09-09", type: "fix", text: "直调架构合并前审查修复批（issue 255）" },
-          { date: "2026-09-09", type: "fix", text: "直调队列三连败修复（issue 256/ADR-0113 修订）" },
-          { date: "2026-09-08", type: "feat", text: "评审壳改双 iframe 真行为 + 公共假 obsidian 层（issue 245/ADR-0106）" },
-          { date: "2026-09-07", type: "feat", text: "三风格原型壳1:1回灌+午夜场完整功能版（原型批）" },
-          { date: "2026-09-07", type: "feat", text: "影院风格化落域——午夜场完整版进插件（issue 236/ADR-0103）" },
-          { date: "2026-09-07", type: "fix", text: "review 修复——status 串/数兼容回退 + 壳长按随渲染重挂 + selftest 回归锚点补强" },
-          { date: "2026-09-06", type: "feat", text: "影院交互回归原型+全域筛选再点回全部+网格列数设置（issue 208）" },
-          { date: "2026-09-05", type: "fix", text: "AI 错误页「重试」按基准影片分流——找同类失败重试重跑找同类，不再退化成全库荐片（终局 review 修复批 A·1）" },
-          { date: "2026-09-05", type: "fix", text: "走查批 D——「阅读分析报告」四套叫法统一、「加影视」去冗余后缀" },
-          { date: "2026-09-05", type: "fix", text: "走查批 C——移动添加钮抬档/触控热区收编/分析页排印归档（项 7-9）" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——面板壳/侧栏/主头行/统计卡等（ADR-0094）" },
-          { date: "2026-09-04", type: "fix", text: "影院/首页/分析页审查修复（CM1-CM4/CM6、MR1、HM1-HM2）" },
-          { date: "2026-09-04", type: "fix", text: "编辑弹窗名称/类型真实落盘，删除失败报错，AI 荐片防重入" },
-          { date: "2026-09-04", type: "fix", text: "删除死配置「每批加载数量」（cinemaPageSize）" },
-          { date: "2026-09-04", type: "fix", text: "「按创建」排序改用 ctime，编辑条目不再被顶上榜" },
-          { date: "2026-09-04", type: "feat", text: "海报卡统一操作/空态两种/AI 按需触发与反馈闭环/回收站删除/豆瓣直达/观影日期" },
-          { date: "2026-09-04", type: "feat", text: "内嵌分析页并入独立报告全量能力并升级图表" },
-          { date: "2026-09-03", type: "feat", text: "影院域收编组件库试点——emoji 全换 lucide + 共享模态 uiModal" },
-          { date: "2026-09-03", type: "fix", text: "评分滑条轨道缺失——收编组件库 .bz-range（自绘 track/thumb）" },
-          { date: "2026-09-03", type: "fix", text: "添加/编辑与快速状态表单收编 .bz-field/.bz-choice——label 上置归位、类型/状态平铺、评分读数轻化、去取消钮（遮罩/ESC 关闭）" },
-          { date: "2026-09-03", type: "feat", text: "影院分类全部/单选切换 + 主头行 + 排序 + AI 页内化 + 剧集加哥伦比亚剧" },
-          { date: "2026-09-03", type: "feat", text: "影院添加影视表单精简 + AI 荐片图标尺寸（cinema-add-form-polish）" },
-          { date: "2026-09-02", type: "feat", text: "新增影院域（海报墙 UI，与影视并存）" },
-          { date: "2026-09-02", type: "fix", text: "审查修复——落盘持久化/自动刷新/弹窗主题/死代码" },
-          { date: "2026-09-02", type: "feat", text: "AI 荐片真实调用 + 影视分析完整版 + 桌面去关闭钮" },
-          { date: "2026-08-23", type: "feat", text: "影视抽屉想看态新增「标记已看」（在看动作下方，直跳已看）+ 标记在看/标记已看均把观影日期更新为当前日期，1418 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 影视动作感知观察完成——快照 diff 动作文案/UI 影评与正文剥海报双链/delete 监听与去弹跳豁免，18 新测试" },
-          { date: "2026-08-23", type: "feat", text: "修订2 smartcat 影视观察改走方法监听——UI 确认回调 notify 一次动作一条根治打字刷屏，ADR-0027，全量 1430 测试" },
-          { date: "2026-08-22", type: "feat", text: "影视手势收敛——保留长按抽屉，移除双击打开与状态徽章点击编辑；改分动作小字显示当前分数（4.5）；移除抽屉编辑动作，1142 测试" },
-          { date: "2026-08-22", type: "feat", text: "创建影视界面——评分输入框改滑块（1~6 · 0.1 步进默认 3.5，仅已看显示）、移除日期输入框（保存默认当前日期）；改分小字去星标（纯分数），1143 测试" },
-          { date: "2026-08-22", type: "feat", text: "创建影视界面评分滑块实时显示对应分数（默认 3.5，拖动即更新），1142 测试" },
-          { date: "2026-08-22", type: "feat", text: "影视抽屉新增详情（有豆瓣抓取数据才显示，弹窗展示导演/主演/类型/地区/上映/片长/豆瓣）/复制双链/找同类（AI 生成推荐报告，复用加入想看）；均无小字、抽屉保持，1147 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子分类改为 AI 自动生成——① 概念录入弹窗移除手动分类输入框；② 新增 classifyCard（16+1 类候选，AI 失败静默留根目录）；③ applyCategory 落位（移动笔记+fm category+index 持久化），三类保存后异步自动归入分类文件夹；④ sync 自动维护：手动拖文件夹→fm category 跟随/拖回根目录→移除；⑤ tools/reclassify-blackbox-ai.mjs 存量 AI 重分类（max_tokens 8192 防截断+失败批自动补跑），已对 vault 执行：1489 篇全部重分类（医学 145/地理 278/科学 211/历史 151/艺术 137/宗教 116/哲学 114/心理学 99/文学 90/社会 56/计算机 45/音乐 17/饮食 15/体育 4/影视 4/游戏 7，含新增「游戏」类，11 篇 AI 未分类手动归位），fm 与目录 0 不一致，index 100% 一致，1115 测试" },
-          { date: "2026-08-10", type: "feat", text: "影视 默认视图设置——排序/类型筛选/状态筛选三默认值（设置第 9 轮扩展，重启生效，ensureMovie 幂等），3 测试" },
-          { date: "2026-08-09", type: "feat", text: "影视 海报抓取监听——创建影视笔记后轮询「海报」字段，非空即原地更新常驻 progress 通知为完成（不弹第二条通知），6 测试" },
-          { date: "2026-08-08", type: "feat", text: "影视 方案反转——海报抓取回归独立 PM2 守护（ADR-0007，撤销 0006 插件 spawn）；脚本 2.1.0：监听 create/change + 10s 防抖 + 遍历缺海报笔记 + birthtime 倒序队列 + 15s 间隔串行（28 node 测试）；插件移除 poster 逻辑，设置页改纯文字指引" },
-          { date: "2026-08-08", type: "fix", text: "ticket 影视 工具修复——cli.js 补回 switch 行（2.1.0 语法损坏）+ files 白名单加 watcher.js（2.1.2）+ test 脚本加 node --check 语法门禁" },
-          { date: "2026-08-08", type: "fix", text: "新增命令 bz-movie-report 影视分析报告（AI 品味分析推荐入口，原无命令注册）+ 移动端复习计划下一行加阅读报告/影视报告，72 测试" },
-          { date: "2026-08-08", type: "fix", text: "迁移 QuickAdd《影视数据分析.js》→ src/movie/analysis.ts（esc-manager/34px 顶距/适配 bz 模式）；bz-movie-report 与影视主界面右上角 按钮指向数据分析；ghost 磁贴改灰色（去虚线边框），74 测试" },
-          { date: "2026-08-07", type: "feat", text: "影视 完成——海报抓取集成全局 npm 包（ADR-0006：桌面端 spawn/移动端置灰/安装探测/串行队列/stdout 结果判定），21 测试" },
-          { date: "2026-08-07", type: "fix", text: "ticket 影视 修复+扩展——spawn 传磁盘绝对路径（修复「笔记不存在」重复拼接）+ file-open 无海报自动抓取（60s 冷却去重），28 测试" },
-          { date: "2026-08-07", type: "feat", text: "影视 工具 README 重写——去掉 pm2 内容，补充绝对路径坑/风控重试/跳过逻辑/插件集成说明" }
-        ] },
-        { id: "bookshelf", name: "书库", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——码墙/抽书/墨爬/盖印/垂带/翻找/入架/铺稿全舞台演出" },
-          { date: "2026-09-21", type: "fix", text: "报告视图宿主搜索行为收窄，消灭「只刷隐藏墙」假动作（RR-U13）" },
-          { date: "2026-09-20", type: "fix", text: "深审核心行为与数据批——P1 继续在读单口切视图 + 23 项 P2/P3 落修" },
-          { date: "2026-09-11", type: "feat", text: "借书卡详情改版——去钮/卡内分区滚动/印章随内容/在读可继续" },
-          { date: "2026-09-11", type: "feat", text: "借书卡固定高 + 在读「继续」不折行" },
-          { date: "2026-09-11", type: "fix", text: "借书卡固定高降档 82vh/700→72vh/600" },
-          { date: "2026-09-08", type: "feat", text: "行为单源接入——真 ui.ts 跑进评审壳（issue 245/ADR-0106）" },
-          { date: "2026-09-07", type: "feat", text: "原型落域——域内评审壳补齐（issue 233）" },
-          { date: "2026-09-07", type: "feat", text: "移动端头行一行横滑+原型迭代流程落规（issue 234）" },
-          { date: "2026-09-07", type: "feat", text: "五肤×亮暗双模式+移动端头行/借书卡迭代（issue 235）" },
-          { date: "2026-09-07", type: "feat", text: "接入 markup 单源（ADR-0104）——render.ts 纯层 + ui.ts 瘦身 + 壳消费 BZR_bookshelf" },
-          { date: "2026-09-06", type: "feat", text: "书架墙正名书库 + 排序浮岛化 + 月柱本月置首 + 状态文字角标（issue 207）" },
-          { date: "2026-09-06", type: "fix", text: "工具行删残留 spacer——搜索框 flex 拉长直抵排序浮岛（issue 207 跟进）" },
-          { date: "2026-09-06", type: "fix", text: "书卡状态角标整体下线 + 报告入口去尾随三角（issue 207 二轮拍板）" },
-          { date: "2026-09-06", type: "feat", text: "面板皮肤十选一，choiceCards 预览卡对齐待办范式（issue 216）" },
-          { date: "2026-09-06", type: "feat", text: "书脊墙 1:1 复刻换血，旧网格布局全退役（issue 218 / ADR-0096）" },
-          { date: "2026-09-06", type: "feat", text: "借书卡只读化（issue 220）——详情卡纯展示：移除状态/进度/日期/书评编辑与删除/保存，进度改静态条纹条+状态圆点+字数行；persistBook/rollbackBook/openBookDirect 死代码清理" },
-          { date: "2026-09-06", type: "feat", text: "分类细拆 20 类单一概念定稿 + EPUB 分类接 subjects 通道（issue 221 / ADR-0099）" },
-          { date: "2026-09-06", type: "feat", text: "头行行内标题「书库」+ 十肤全量补全 + 设置预览重画（issue 225）——木匾退场标题与标签同行居左、分类卡轻缩一档保纸标造型、九肤结构层自原型移植+dark 补墙映射+--bsw-title、.bz-skinprev-bs-* 重画；删死常量 SIDE_DEFS/死规则 .bz-bs-label" },
-          { date: "2026-09-06", type: "fix", text: "木匾复位逐肤换脸+筛选弱化对齐原型+工具行逐行对齐+报告残留+书脊起伏修复（issue 226）——小号匾额「书库·LIBRARY」九肤换脸；全馆点击清状态+分类；.off 弱化口径（无筛选全亮/激活弱化/全馆恒亮）；.bz-bs-view display 互斥修报告残留墙底；检索 280/阴影.5/seg 固定色等对齐原型基值；md 书时长 readingTime 毫秒直读+中英格式兜底修书脊全同高" },
-          { date: "2026-09-05", type: "feat", text: "读书报告内嵌书架墙面板，独立报告弹窗退役" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——weave-data.json 直改事务入队" },
-          { date: "2026-09-05", type: "fix", text: "删除通知补对象名——书目《X》与 1 条高亮，不再裸「已删除」（终局 review 修复批 A·2）" },
-          { date: "2026-09-05", type: "fix", text: "走查批 D——删除书目改回收站、划线统一、设置描述人话化" },
-          { date: "2026-09-05", type: "fix", text: "走查批 C——笔记引文类名拆雷/徽标 tint/类收尾/rr 头行归位/mtop 补接" },
-          { date: "2026-09-05", type: "fix", text: "书架墙统计行五处布局修复——柱值撞标题/纪念日卡折行截断/未分类置底/零值月明示/占位书名（issue 204）" },
-          { date: "2026-09-04", type: "fix", text: "书架墙审查修复 B1-B11 + 补数据层/UI 层测试" },
-          { date: "2026-09-04", type: "fix", text: "近12月读完柱月份映射反转，bars[0]=11个月前 bars[11]=本月" },
-          { date: "2026-09-04", type: "fix", text: "面板重开回写搜索关键字到输入框，过滤状态不再不可见" },
-          { date: "2026-09-04", type: "fix", text: "快速重开书库 EPUB 条目重复累加，md基准+合并序号守卫" },
-          { date: "2026-09-04", type: "fix", text: "EPUB 日期 UTC 切片改本地时区，早8点前读完不再归前一天" },
-          { date: "2026-09-04", type: "fix", text: "封面坏图回退监听容器只挂一次；toggle 关面板顺带收口详情/确认弹窗" },
-          { date: "2026-09-04", type: "fix", text: "rebuildItems 并发交错加序号守卫，旧快照晚到不覆盖新数据" },
-          { date: "2026-09-04", type: "feat", text: "读书笔记能力迁入书架墙详情弹窗" },
-          { date: "2026-09-04", type: "feat", text: "书架墙增强包——直达原文/一键回书/排序入口/分类筛选/保存撤销/纪念日卡/读完日期可改" },
-          { date: "2026-09-03", type: "feat", text: "书架墙新域——原型定稿落地（组件库收编 + 与书库数据同源并存）" },
-          { date: "2026-08-22", type: "feat", text: "书库接入统一抽屉（桌面右键/移动长按）——动作=打开原文(md笔记/EPUB阅读器)/读书笔记(companion 划线想法弹窗)，头部=书名+作者·状态·进度；封面单击读书笔记与标题单击开原文收敛进抽屉（用户拍板），双击封面转跳书籍保留并扩展到 md 书目（原仅 EPUB）；测试 51 通过" },
-          { date: "2026-08-21", type: "feat", text: "阅读报告并入 EPUB + EPUB 读书笔记（ADR-0013 扩展）" },
-          { date: "2026-08-21", type: "fix", text: "ticket 书库代码质量完成——样式收敛至 styles.css + 死代码清理 + 弹窗合并/长按复用 + 纯 EPUB 空态修复，935 测试" },
-          { date: "2026-08-21", type: "feat", text: "附件搬移完成——移动当前笔记附件到指定文件夹 + 仅同名才改名 + 全库改写链接 + 主页磁贴播种，27 测试；同批：书库去 weaveDataPath 依赖、AGENTS 增「任务完成后必提交」与写盘规则，964 测试全绿" },
-          { date: "2026-08-20", type: "feat", text: "书库 EPUB 条目——Weave 数据文件驱动（ADR-0013）" },
-          { date: "2026-08-12", type: "feat", text: "番茄钟读书自动关联完成——读书预设阅读沉浸45/10/20、epub打开自动读书专注/关书自动暂停（豁免强制专注）、换书直接切、确认弹窗、读书番茄统计、删书库tab、设置两项，159 pomodoro 测试（全量 1209 绿，capture.ts WIP 除外）" }
-        ] },
-        { id: "gameshelf", name: "游戏库", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——开机扫描线/卡带插入/架上架盖章颁奖/奖杯架揭幕/成就上墙全量编排，布局零改动" },
-          { date: "2026-09-22", type: "feat", text: "成就图标改远端直取，不再本地化（issue 410 + ADR-0176）" },
-          { date: "2026-09-21", type: "feat", text: "设置面板「密钥型」输入档位 + Steam API 密钥接入（呈报#48 GS3）" },
-          { date: "2026-09-20", type: "fix", text: "批A同步链与队列架构修复（F1/A1-A4/F6-F8/F11-F12/A6-A7/C2/C6/S2）" },
-          { date: "2026-09-20", type: "fix", text: "批B UI 渲染与交互——后台重渲软通道/搜索三件套/转义单源/交互细节群修" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板 Wave1 呈报#12-GS2/#49-GS4——最近玩过行键盘可达 + 面板会话滚位记忆" },
-          { date: "2026-09-19", type: "fix", text: "工具行单行化收紧 + 卡片去悬浮 title + 全成就角标换 字符（2026-09-19 用户点版）" },
-          { date: "2026-09-18", type: "fix", text: "卡片对宿主 button 基线整组设防 + 后台全量回填详情属性" },
-          { date: "2026-09-18", type: "feat", text: "全量落盘 + 媒体全本地化（用户拍板：所有数据、全量、完整、都在本地）" },
-          { date: "2026-09-18", type: "fix", text: "截图本地化真因修复 + 成就图标路径进属性（ADR-0167）" },
-          { date: "2026-09-18", type: "feat", text: "头行退役海报头顶格 + 卡片悬浮截图轮播 + 成就进度条/奖杯（issue 378）" },
-          { date: "2026-09-17", type: "feat", text: "游戏架域（issue 368）" },
-          { date: "2026-09-17", type: "feat", text: "属性中文化 + 海报本地缓存 + 成就详情弹窗（issue 368 增补）" },
-          { date: "2026-09-17", type: "feat", text: "游戏架 UI v3 —— V1 海报墙落域 + 数据统计面板 + 详情全量数据" },
-          { date: "2026-09-17", type: "feat", text: "展示中文名 + 头行收敛 + 遮罩毛玻璃（用户评审四条）" },
-          { date: "2026-09-17", type: "feat", text: "移动端工具行与头行收口（用户截图四条）" },
-          { date: "2026-09-17", type: "feat", text: "移动端按钮序/吸顶留白 + 媒体全部本地化（用户四条）" },
-          { date: "2026-09-17", type: "feat", text: "域落位 + 外观组 + 首页快捷命令（用户三条）" },
-          { date: "2026-09-17", type: "feat", text: "移动端去掉海报头 + 搜索行改「固定」（用户两条）" },
-          { date: "2026-09-17", type: "fix", text: "面板挂回遮罩内 —— 修真机「只有遮罩层、没有主窗口」" },
-          { date: "2026-09-17", type: "fix", text: "appdetails 解析按 appid 外层键取 —— 修真机「商店数据解析不出 / 没有中文名」" }
-        ] },
-        { id: "review", name: "复习计划", entries: [
-          { date: "2026-09-24", type: "fix", text: "/ADR-0185 review 收口——0 不过滤保留 + 读取失败行序对齐 + 存量周摘要口径换算" },
-          { date: "2026-09-23", type: "feat", text: "动效层——批改语汇（队列发牌/逾期朱批/题卡翻面/判定洇墨/结果徽章/结算大章/统计条浪/记忆回放/评级条弹升/做题练习与做题家判定），markup 与布局零改动" },
-          { date: "2026-09-23", type: "feat", text: "记忆分析特刊——全屏逐幕分析层（16 幕）" },
-          { date: "2026-09-23", type: "fix", text: "review-414 四改——越界算畸形走回落 / 闭集按自有键判 / 回落接 signal / AbortError 归一" },
-          { date: "2026-09-20", type: "fix", text: "轮次互斥提示 + 翻篇轮询降频命中才读盘（呈报#4/#38）" },
-          { date: "2026-09-20", type: "fix", text: "题面 emoji 换 lucide + 冲刺头行模式副标题 + 假可达与空态口径（呈报#54/#57/#12-R6/#19-R13）" },
-          { date: "2026-09-20", type: "fix", text: "统计弹窗按影院现行形制重刷 + 排名行键盘可达（呈报#55/#12-R7）" },
-          { date: "2026-09-20", type: "feat", text: "悬浮评级条键盘化——数字键 1-4 评级、ESC 归还焦点（呈报#12-R8）" },
-          { date: "2026-09-20", type: "fix", text: "六条复习命令 name 括号式改动宾式（呈报#56/R12）" },
-          { date: "2026-09-19", type: "fix", text: "文本符号 收编 lucide x（一致#6/#12）" },
-          { date: "2026-09-19", type: "fix", text: "深审批 C 批——弹窗浮层与做题练习修复" },
-          { date: "2026-09-19", type: "fix", text: "FSRS 难度 [1,10] 值域 + currentR 单源 + 死代码清理（F1/A7/A5）" },
-          { date: "2026-09-19", type: "fix", text: "非法日期容错 + 数据层 bulk API + 注释如实（F7/A11/A13-E4）" },
-          { date: "2026-09-19", type: "fix", text: "冲刺会话与渲染层深审批 D 九项修复" },
-          { date: "2026-09-19", type: "fix", text: "批 E 深审修复——统计 UI 与设置与样式与文档" },
-          { date: "2026-09-19", type: "fix", text: "批 B 出题链与编排修复——AI 失败不丢存量题、降级护栏复活、评级门禁入队、循环防重入" },
-          { date: "2026-09-19", type: "fix", text: "批 B 命令与监听链修复——移出免确认带撤销、卸载清场、事件链静默失败收口" },
-          { date: "2026-09-19", type: "fix", text: "主线程合并收口——F6 resetQuiz 接线、A7 三处切 fsrs.currentR、C3 stripTitleMarks 切 str、A15 spinner 类名随批E、watch 批量收编/移除接 bulk API、难度弹窗死导出+死样式清扫、T1 适配 flow-dialog 形态" },
-          { date: "2026-09-17", type: "feat", text: "FSRS 拟合放开全 19 参数（issue 361）" },
-          { date: "2026-09-17", type: "feat", text: "做题家独立面板（issue 362）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（w[4] 既有缺陷 + 拟合分片让出 + 做题面板取消/批量）（issue 361/362）" },
-          { date: "2026-09-16", type: "feat", text: "裁剪复习评级四命令（issue 346）" },
-          { date: "2026-09-13", type: "fix", text: "日记迁移 review 修复——emoji 头行 grapheme 切分 + 格式知识单源回收" },
-          { date: "2026-09-12", type: "fix", text: "书影阅家族 G1-G12 批量修复（复习门禁对齐本轮队列防卡死等十一条）" },
-          { date: "2026-09-12", type: "feat", text: "移动端字号体系——按视觉层级放大（队列/冲刺/结算/评级条/统计历史）" },
-          { date: "2026-09-11", type: "fix", text: "quiz-core 会话弹窗样式恢复（issue 270 批 A）" },
-          { date: "2026-09-10", type: "feat", text: "preview-live 导航页登记本机原型（知识盒）+ 目录纳入热刷新监听" },
-          { date: "2026-09-09", type: "feat", text: "复习计划域 UI 单源收编（issue 253，V1 原型增量落地）" },
-          { date: "2026-09-09", type: "feat", text: "导航首页卡片中文名+一句话说明（新域自动纳入，未知 id 回退）" },
-          { date: "2026-09-09", type: "fix", text: "移动端三区队列自然展开不内滚 + 区列头吸顶（issue 254）" },
-          { date: "2026-09-09", type: "fix", text: "254 迭代批——移动端全屏/头行精简/搜索退役/冲刺直退/空库自动重播" },
-          { date: "2026-09-05", type: "feat", text: "满血 FSRS——调度纯函数 scheduleNext，9 级后动态间隔" },
-          { date: "2026-09-05", type: "feat", text: "冲刺答题键盘化/跳过此篇/答错一行解析/结算连续 N 天" },
-          { date: "2026-09-05", type: "feat", text: "队列口径统一/悬浮评级条/中断放宽可恢复 + 面板小项打包" },
-          { date: "2026-09-05", type: "feat", text: "统计/历史弹窗 lucide 关闭钮、去开发文案；R 展示与调度同口径" },
-          { date: "2026-09-05", type: "fix", text: "移出复习计划接撤销通知，确认框三段式+按钮动词「移出」，错误通知补具体动作与重试途径" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——review.json 全部读改写事务入 core 串行队列" },
-          { date: "2026-09-05", type: "fix", text: "通知正文两处 U+2192 箭头换自然中文（终局 review 修复批 A·6）" },
-          { date: "2026-09-05", type: "fix", text: "拟合似然的遗忘指数固定 DEFAULT_D——w[7] 是难度参数非幂指数，喂入 R 公式会产出荒谬曲线（终局 review 遗留拆雷）" },
-          { date: "2026-09-05", type: "fix", text: "review P2——popover detach、文档计数、main-head 按钮高度 token 化" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——面板壳/侧栏/主头行/横滑条等（ADR-0094）" },
-          { date: "2026-09-05", type: "feat", text: "头行接入 + 全面 token 化（issue 198）" },
-          { date: "2026-09-04", type: "fix", text: "拟合链路补 difficulty 源头，生产旧数据可积累样本" },
-          { date: "2026-09-04", type: "fix", text: "R 阈值提前逾期条目放行 markReview 评级写盘" },
-          { date: "2026-09-04", type: "fix", text: "复习历史时间线 R 值二次放大" },
-          { date: "2026-09-04", type: "fix", text: "三区中列「今天到期」改日历口径，消除恒空死区" },
-          { date: "2026-09-04", type: "fix", text: "冲刺会话互斥与入口防抖" },
-          { date: "2026-09-04", type: "fix", text: "拟合重算改后台执行，不阻塞评级路径" },
-          { date: "2026-09-03", type: "fix", text: "冲刺答题时序错乱+末题卡死；队列界面简化（去列头/底部小字、搜索限宽、真实统计）" },
-          { date: "2026-09-03", type: "fix", text: "卡片/选项 button→div 根治核心样式干扰；开始本轮先进界面再取题；冲刺界面去小字；结果卡排期真实化" },
-          { date: "2026-09-01", type: "feat", text: "统计界面改影视布局窄卡 + 复习历史独立弹窗 + 去抽查/置顶 + 按钮顺序调整（ticket 174）" },
-          { date: "2026-09-01", type: "feat", text: "去热力图 + 统计头部紧凑化 + 独立「复习计划分析报告」命令（ticket 174）" },
-          { date: "2026-09-01", type: "feat", text: "add mobile fullscreen prototype preview (variant A)" },
-          { date: "2026-08-31", type: "fix", text: "重做终局点「完成复习」调用 endReviewSession 拆除残留遮罩（ticket 168）" },
-          { date: "2026-08-31", type: "feat", text: "记忆算法升级——自研 FSRS 参数拟合 + 置顶/R 优先级/抽查/每日上限排序（ADR-0077，ticket 174）" },
-          { date: "2026-08-31", type: "feat", text: "统计弹窗 + 负载视图 + 单条时间线 + 置顶/文件夹筛选/抽查 UI（ADR-0077，ticket 174）" },
-          { date: "2026-08-30", type: "feat", text: "UX 批次第一波——core 撤销/写盘失败 helper + toast action 减重 + 复习域规范收敛 + 做题家纯复习会话语义" },
-          { date: "2026-08-30", type: "fix", text: "通知「去复习」走做题流程分流 + 答题答对自动跳下一题（ticket 153）——checkOverdueAndNotify 的「去复习」action 改调 autoJumpOverdue（按 forceQuizForReview 分流做题/普通复习，不再裸开单篇，删 earliest 目标计算）；quiz 答对（单选/多选）持久化成功后自动 showQuestion 进入下一题、答错才挂「下一题」按钮，删 _enableNextButton/_removeNextButton/disabled 占位与 .quiz-next-btn--pending 样式；review/app.test.ts ticket 58 两用例改写 153 语义、quiz/ui.test.ts 答对类用例改自动跳题断言 + 新增键盘 Enter 答错跳题用例；issues/153 + CONTEXT/spec/PROGRESS" },
-          { date: "2026-08-30", type: "feat", text: "答对 0.8s 亮绿自动跳题 + 去头部对错统计 + 逾期复习出新题（ticket 156）——_answerCorrect 持久化成功后延时 800ms showQuestion（放弃/强制关闭清 _jumpTimer + 会话态守卫防僵尸弹窗）；删 .bz-quiz-stats 元素/字段/_syncHeaderStats/样式（结算面板统计保留）；batchGenerateQuestions 改先 saveQuestionsForNote 清空存量再 ensureQuestions 全新生成（对齐 regenerateQuestions 范式，上轮错题不再重考）；quiz/ui.test 答对类补 flushJump + 新增延时竞态用例、review/app.test 批量出题断言先清空；issues/156 + spec/PROGRESS" },
-          { date: "2026-08-30", type: "fix", text: "开始复习双 progress 通知合并为一条（ticket 166）——review/app.ts 外层框 dedupeKey 'review-generate' 统一为 'quiz-generate'，与 quiz/ui.ts:139 内层框同键触发原地合并更新文案，只留一条；失败/逐篇降级路径共用同键行为不变" },
-          { date: "2026-08-29", type: "feat", text: "设置弹窗重构——path-picker onChange 支持异步改写最终清单、分组与文案调整（并行流）" },
-          { date: "2026-08-29", type: "feat", text: "逾期通知改常驻篇数制——只报「有 N 篇笔记逾期」不列题目、逾期清零主动收起（用户拍板 2026-08-29）；二次复习结果卡隐藏自动标记徽标；终局结算面板只保留完成复习按钮" },
-          { date: "2026-08-27", type: "feat", text: "UX 整改集——扫描收敛、排除名单、提醒跳转、退出确认等（ticket 48 57 58 15 17 / s1-rev n2-rev x5 l6 f8-quiz p2-rev）" },
-          { date: "2026-08-27", type: "fix", text: "到期提醒「去复习」跳转目标改自 newly 集合（修 #1）" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "答对删除改稳定定位+复习close结算+计数时机/空库提示/batch校验（P0-2 P1-1 P2）" },
-          { date: "2026-08-25", type: "fix", text: "切走收尾+重做通过集合+卸载监听全量注销" },
-          { date: "2026-08-24", type: "feat", text: "复习计划完成——监听文件夹自动加入/困难强制复习重做到通过（待重做FIFO+首次评级唯一排期）/做题家命令入口退役/多选UI（提交按钮位+徽标+提示条），1878 测试全绿 + tsc 0 错误" },
-          { date: "2026-08-24", type: "fix", text: "ticket 复习/做题体验三改——多选标签静默删除+待重做split崩溃修复(补notePath+判空)+重命名自动更新+监听文件夹选择弹窗(取消不落名单/移除面板收编确认)，1885 测试全绿 + tsc 0 错误" },
-          { date: "2026-08-24", type: "feat", text: "复习计划设置重构——到期提醒真正生效(差集通知+常驻轮询)/设置分组白话文案/每日复习上限/复习间隔缩放(ADR-0046)/文件树标记开关/自动加入提醒3秒合并，1890 测试绿+tsc 0（library-source 3 例历史并发 flaky 除外）" },
-          { date: "2026-08-22", type: "fix", text: "加密保险箱 单击列表必弹预览窗——openPreview 拆为「先同步显示骨架+异步填充」（真实 Obsidian Markdown 渲染挂起时不再单击无响应），渲染加 3s 超时降级纯文本兜底，loading 占位样式；+回归测试（渲染挂起仍弹窗），1015 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "复习计划接入统一抽屉（桌面右键/移动长按）——动作=开始复习(未完成·keepOpen+难度弹窗companion·选完关抽屉)/打开原文/移出复习计划(danger)，头部=名称+阶段·到期（stage/due 文本提取共用）；名称单击开文件收敛，双击打开笔记保留（用户拍板）；阶段标签点击评分与时间长按移除；测试 58 通过" },
-          { date: "2026-08-15", type: "fix", text: "复习计划「做题决定难度」生效修复（用户反馈）——autoJumpOverdue 改为按 forceQuizForReview 分流：开启→ensureQuiz 注入后批量出题做题（正确率自动定级），关闭→普通复习跳转笔记；做题家未初始化/出题失败降级普通复习并警告；设置弹窗做题家 4 项随开关动态显隐（spec 用户决策）；5 测试，全量 961 绿" },
-          { date: "2026-08-15", type: "fix", text: "复习「做题家未初始化」误报修复——quizUI.ai 为静态属性，实例读取恒为 undefined，导致复习域判断做题家未初始化（原做题复习联动实际从未生效）；QuizMasterUI 增加实例镜像 ai 字段 + ensureQuiz 同步设置，复习域 quiz.ai 判断恢复有效；2 测试，全量 963 绿" },
-          { date: "2026-08-15", type: "fix", text: "复习批量出题秒失败修复（用户反馈）——batchGenerateQuestions 调 getQuestionsForNote 只传 1 参（签名 (app, notePath) 参数错位致 notePath=undefined），已有题目永远读不到 → 秒降级普通复习；改传 (getApp(), filePath) + 测试断言双参；逐篇出题失败通知附首条原因；全量 963 绿" },
-          { date: "2026-08-15", type: "fix", text: "做题选项长文本两头截断修复（用户反馈）——.quiz-option-btn 加 min-width:0/width:100%/white-space:normal + 文本 span 允许换行（word-break/overflow-wrap:anywhere），长选项在按钮内换行不再溢出弹窗被裁剪；选项文本补 escapeHtml（防 AI 文本含 < & 被当 HTML 解析截断）；1 测试，全量 964 绿" },
-          { date: "2026-08-15", type: "fix", text: "做题进度题号不递增修复（用户反馈）——答对走 splice 不递增 currentIndex，标题用 currentIndex+1 永远停 1；题号改为已消费题数+1（currentIndex + 总题数-剩余题数，答对/答错两路皆准，不依赖 correct/wrong 计数避开多选已知缺陷）；更新固化旧行为的测试断言 + 新增答错题号测试；2 测试，全量 965 绿" },
-          { date: "2026-08-11", type: "fix", text: "黑匣子 review 修复批次——① 复盘/AI 回复写前重载（跨长 AI 调用的陈旧快照整体写回会静默覆盖并发写入，数据丢失）；② 自动复盘 in-flight 去重（阈值连续命中只复盘一次）；③ AI 辅助在途关弹窗不抛错不误报；④ 坏 JSON 改名备份 .bak 保留现场；⑤ TF-IDF 索引引用+长度缓存（连续对话免全量重建）；⑥ saveSettings 重置 AI provider 缓存；⑦ 设置页隐私提示（默认云端传输警示），12 测试" },
-          { date: "2026-08-09", type: "fix", text: "通知系统修订——显式指定类型（删 emoji 自动归类）、类型图标 emoji（ℹ///）、桌面右侧弹出/移动端顶部居中、dedupe 同键存活期单框合并（可切类型+重置计时）、连续任务常驻单框（复习循环/批量出题/自动摘要），788 测试" },
-          { date: "2026-08-08", type: "fix", text: "新增命令 bz-review-start 开始复习（进入复习流程，包装 autoJumpOverdue）+ 移动端第四行复习三件套（复习/加入/移出，lucide 图标），64 测试" },
-          { date: "2026-08-08", type: "fix", text: "通知补白——dedupeKey 30s 去重节流 + z-index 100000 最顶 + 移动端适配（safe-area/34px 顶距/宽度 clamp 视口）；P0 静默失败通知（ai-agent 同步/匹配/归档、quiz 出题、review 降级）+ P1 完成反馈（quiz 生成、favorites 余额），775 测试" },
-          { date: "2026-08-07", type: "fix", text: "面板首次加载即显示、命令去重、设置 getter 独立模块、目录前缀边界、摘抄流程测试 + 文档措辞修正" }
-        ] },
-        { id: "secondbrain", name: "第二大脑", entries: [
-          { date: "2026-09-25", type: "feat", text: "重排第二通道 Jev——总闸+通道开关二选一·noul 云端判定·失败回余弦（issue 431/ADR-0189）" },
-          { date: "2026-09-25", type: "fix", text: "review 收口——Jev 回落补 warn 留痕 + signal 透传回归锁（issue 431）" },
-          { date: "2026-09-24", type: "feat", text: "向量化模型配置迁入 AI 面板——LLM/Embedding/JEV 三组化 + Qwen3-Embedding 支持与换模型维度守卫" },
-          { date: "2026-09-24", type: "feat", text: "Ollama 地址两行迁 AI 面板 + 桌面端远程地址自动补全 + 模型选择器回填时机修复" },
-          { date: "2026-09-24", type: "feat", text: "设置项瘦身与 JEV 常开自动配置" },
-          { date: "2026-09-24", type: "fix", text: "检索层改精确全扫余弦，坏向量双重防线，分数去锐化（issue 425/ADR-0185）" },
-          { date: "2026-09-24", type: "feat", text: "接入 Qwen3-Reranker-4B 交叉编码重排（issue 427/ADR-0186）" },
-          { date: "2026-09-24", type: "fix", text: "重排打分不做 0/1 降级——缺 top_logprobs 判失败，非有限 logprob 跳过" },
-          { date: "2026-09-24", type: "feat", text: "检索只查最新·空行不查询·重排模型可选（issue 428/429）" },
-          { date: "2026-09-24", type: "fix", text: "review 收口——重排头部上限对齐 TopK·旧轮迟到不回填（issue 429）" },
-          { date: "2026-09-24", type: "fix", text: "二轮 review 收口——超长列表整轮不重排·移动参考列表同尺（issue 429）" },
-          { date: "2026-09-24", type: "fix", text: "review 后续——移动端去掉死初始化·超长列表用例真区分早退与回退（issue 429）" },
-          { date: "2026-09-23", type: "feat", text: "动效层——神经元点亮/检索涟漪/联想连线/记忆星图/向量召回全舞台编排（markup 零改动）" },
-          { date: "2026-09-17", type: "feat", text: "AI 对话改走 core AI 设置（issue 359）" },
-          { date: "2026-09-17", type: "feat", text: "本周知识动态（issue 360）" },
-          { date: "2026-09-17", type: "feat", text: "周报主面板入口 + 弹层移动规范（issue 360 修复批）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（周报弹层遮罩/z 序 P1 + 数据口径）（issue 359/360）" },
-          { date: "2026-09-15", type: "fix", text: "review 修正——范围判定走 core 单源、目录串解析收进 core、入口守卫合并" },
-          { date: "2026-09-12", type: "feat", text: "文献笔记生成即跑——知识盒生成落盘后立即建链（issue 298）" },
-          { date: "2026-09-11", type: "fix", text: "补暗色模式 + 37 处硬编码色收编 token（issue 270）" },
-          { date: "2026-09-11", type: "feat", text: "主面板移动端全屏化 + 头行关闭钮（issue 272/ADR-0114 修订）" },
-          { date: "2026-09-11", type: "feat", text: "重建索引命令加确认框（单源 confirmFullRebuild）" },
-          { date: "2026-09-09", type: "feat", text: "定稿原型三界面落域——UI 抛弃式重写 + markup 单源（issue 251/ADR-0110）" },
-          { date: "2026-09-09", type: "fix", text: "对话弹窗尺寸锁定 760×600 + 灵感参考窗口几何找回（issue 251 追加）" },
-          { date: "2026-09-09", type: "fix", text: "评审壳桌面加高 920×860 + 三tab手机框 396×780，移动端走真抽屉分发（issue 251 追加）" },
-          { date: "2026-09-09", type: "fix", text: "对话弹窗摘模型徽标+输入行防溢出；移动抽屉同皮米白红棕（issue 251 追加）" },
-          { date: "2026-09-09", type: "feat", text: "移动端整体滚动模型+抽屉重排到新设计语言（ADR-0114/issue 251 追加）" },
-          { date: "2026-09-05", type: "feat", text: "D3 损坏留档对齐 core 契约——CONFIG/.CORRUPT 原样留档" },
-          { date: "2026-08-31", type: "feat", text: "已有 related 不再触发自动双链（ticket 167）——新增 linkAgentRespectRelated 开关（默认开），创建/修改/队列消费三条自动路径对 related 非空笔记跳过（skipped-related，队列条目顺带移除）；手动命令 bz-secondbrain-rebuild-links 传 respectRelated:false 豁免；数据层 hasRelatedEntries 统一判定出口； 弹窗新增 toggle「已有关联不再建链」；spec v1.7 节 + issues/167 + PROGRESS" },
-          { date: "2026-08-30", type: "feat", text: "对话体验重构——可取消+流式输出+历史持久化+多行输入，移除 AI 生成概括" },
-          { date: "2026-08-30", type: "feat", text: "Syncthing 冲突文件自动自愈（ticket 152）——store-file 每次读取扫描 *.sync-conflict-*，JSON 段级 union 合并回主文件、.vec 按合并后 meta 键序行级重排，随后删除冲突文件；meta 未变则主 .vec 直接复用；无同批 meta/维度不符/行不足走 ticket 107 indexIncomplete 全量重建兜底；损坏冲突 JSON 保留待人工处置；mock-vault adapter 补 readBinary/writeBinary、list 纳入 binaryFiles；spec v1.6 + CONTEXT + PROGRESS + issues/152 同步" },
-          { date: "2026-08-27", type: "feat", text: "存量笔记启动自动补链 + 批量补链命令（ticket 115）" },
-          { date: "2026-08-27", type: "feat", text: "关联范围语义修订——候选来源=白名单索引库、范围=目标侧、两目录字段默认空（ticket 116）" },
-          { date: "2026-08-27", type: "feat", text: "建链检索查询改全文嵌入（ticket 118）" },
-          { date: "2026-08-27", type: "feat", text: "正文大改自动重跑——基准哈希+修改监听过滤（ticket 119）" },
-          { date: "2026-08-27", type: "feat", text: "数据文件整合——JSON 并入 secondbrain.json、vec 改名、遗留清理（ticket 120）" },
-          { date: "2026-08-27", type: "fix", text: "UX 整改九项（3 46 31 l2 f2 n2 s1 p2 l7A）" },
-          { date: "2026-08-27", type: "fix", text: "reviewer 修正三处——部分失败不部分登记、拆嵌入/检索超时、silent 全静默" },
-          { date: "2026-08-26", type: "feat", text: "面板打磨——打开即增量索引进度 + 新统计维度 + 树形来源分布 + 统一 AI + 对话弹窗 (ticket 108, ADR-0052)" },
-          { date: "2026-08-26", type: "feat", text: "统计卡精简六张+嵌入维度+K缩写；灵感参考悬停浮层全文 (ticket 109)" },
-          { date: "2026-08-26", type: "fix", text: "参考面板刷新竞态致左上角幽灵浮卡——重建前清场+摘除卡片禁浮出；修关闭后无法重开" },
-          { date: "2026-08-26", type: "fix", text: "切块剥离 frontmatter——短卡向量去样板噪声（ticket 110）" },
-          { date: "2026-08-26", type: "feat", text: "自动双链管线——向量候选+AI裁判+单侧related+队列与死链清理（ticket 111）" },
-          { date: "2026-08-26", type: "feat", text: "自动双链范围改为 linkAgentScopes 可配置——监听与候选同源、命令解除范围限制、引导提示泛化（ticket 111 变更）" },
-          { date: "2026-08-26", type: "feat", text: "初始化断点暂存可续嵌 + 白名单目录选择器（ticket 113）" },
-          { date: "2026-08-25", type: "feat", text: "第二大脑正名接管——QuickAdd 完整复刻+主面板+设置/数据换代 (ticket 103, ADR-0051)" },
-          { date: "2026-08-25", type: "feat", text: "首用引导——首次向量化须用户触发 + 全套样式补齐与隐形 bug 清剿 (ticket 107, ADR-0051 补记)" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 记忆流重构（ADR-0021）——单层记忆流+GA 三因子检索+LLM 打分+反思/向量 .vec 豁免单 json，删四层与迁移，修复 ensure 竞态，97 smartcat 测试/全量 1259 全绿" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 人格对齐 MATE（ADR-0023）——删预设 5 选 1，OCEAN 随机种子+30 特质 9 群组成长（seed/transition/周更新/反思），trust/attachment 关系张量，行为统计，成长→PAD 调制接线，MATE 状态向量注入 prompt，人格可视化+重置 UI；1272 测试全绿" }
-        ] },
-        { id: "auto-summary", name: "自动摘要", entries: [
-          { date: "2026-09-20", type: "fix", text: "深审修复批——YAML 转义 core 单源 + 管辖键白名单 + 队列语义理顺" },
-          { date: "2026-09-16", type: "fix", text: "AI 起标题改名改走 fileManager.renameFile，联动更新全库双链（issue 335）" },
-          { date: "2026-09-04", type: "fix", text: "frontmatter 重建不再丢行/覆盖 tags；失败通知常驻" },
-          { date: "2026-09-04", type: "fix", text: "摘要时机切换即时生效；停用撤销已排队任务" },
-          { date: "2026-09-04", type: "feat", text: "手动重跑 force 重建与批量串行队列" },
-          { date: "2026-09-04", type: "feat", text: "完成通知「查看」定位剪藏本 + 右键/长按重新生成摘要入口" },
-          { date: "2026-08-11", type: "fix", text: "概念墙卡片只显示名称——定义摘要/关联引用数移入点击详情（卡片本体不再溢出壳子边距），样式改单行紧凑（13px 省略号），1 测试" },
-          { date: "2026-08-11", type: "fix", text: "卡片盒导入修复与 AI 关联重设计——①AI 生成内容作为导入主体：concept definition = AI 内容（用户可编辑）优先，无 AI 才用原文；summary 存卡片自带 desc；②没有 AI 生成时点「导入这张」也自动用 AI 建立关联（已有概念之间由 AI 决定，失败不阻断，aiChecked 防重复请求）；③有 AI 生成时预览只显示 AI 内容（原文隐藏），可编辑；④编辑态未保存直接导入/跳过/AI 生成 → flushEdit 自动回填 textarea（修复修改丢失）；⑤跨批关联补链：relatedNames 未解析的卡名落盘 Entry.pendingLinks（新可选字段，normalizeEntry 透传），每批导入后 resolvePendingLinks 按名解析为 id；⑥去掉本地 TF-IDF buildRelations（关联全由 AI 决定）；⑦概念墙卡片加 N 关联数角标（关联可见性）；黑匣子 114 测试，全量 1041" },
-          { date: "2026-08-08", type: "feat", text: "自动摘要 完成——create/open 双触发、缺字段 AI 补全（缺 title 重命名笔记）、通知《title》/summary/#tags，34 测试" },
-          { date: "2026-08-08", type: "feat", text: "自动摘要 补充——调用 AI 时通知「正在为《xx》生成摘要…」，34 测试" }
-        ] },
-        { id: "knowledge", name: "知识盒", entries: [
-          { date: "2026-09-25", type: "feat", text: "语音转写引擎二选一——SenseVoice-Small 主力 + faster-whisper 备选（issue 444）" },
-          { date: "2026-09-24", type: "fix", text: "零秒截段误判 + 原型评审 UI 迭代——居中直弹 / 处理面板垫底 / 预览去头行 / 图版蓝签" },
-          { date: "2026-09-24", type: "fix", text: "review 整改——paint 清场语义 / whole 同源读框 / 补刀测试去恒真" },
-          { date: "2026-09-23", type: "feat", text: "动效层——卡片盒语义全集：抽卡/盖章/翻部/落纸/墨印揭字/显影/展开释义/落墨/笔还在写/签片弹出/摇铃/上墙连线生长" },
-          { date: "2026-09-19", type: "feat", text: "术语文献退役 term 冗余键（issue 380 / ADR-0169）" },
-          { date: "2026-09-18", type: "fix", text: "遮罩漏挂单源类（bz-overlay-mask 收编后零尺寸不可见）" },
-          { date: "2026-09-16", type: "fix", text: "知识盒×剪藏引用同步——删除降级回外链、断链摘除、knowledge/clipbook.json 路径 file-sync（issue 336/ADR-0149）" },
-          { date: "2026-09-16", type: "feat", text: "录入草稿流式成形——点下即开界面 + 正文逐字长出（ADR-0152 / issue 343）" },
-          { date: "2026-09-16", type: "feat", text: "录入面板界面修订——日期沉底 / 生成入口移交底部 / 属性区 loading 统一 / 总结退役（ADR-0152 决策 12-15）" },
-          { date: "2026-09-16", type: "fix", text: "录入面板关联预演检索不可达如实报 queued（此前死分支冒充「暂无关联」）" },
-          { date: "2026-09-16", type: "feat", text: "知识盒清理批（issue 344）——删提炼成卡、来源与领域统一、反链走缓存、属性行可编辑" },
-          { date: "2026-09-15", type: "feat", text: "挂载建议三段式 + 白板渐进渲染与进度 + 卡片列表性能" },
-          { date: "2026-09-15", type: "feat", text: "挂载白板空板/重跑口径 + 建议锚点句高亮 + 固定改套整句（issue 324）" },
-          { date: "2026-09-15", type: "feat", text: "自动关联迁入知识盒，范围恒为三个盒子（ADR-0141/0142 + issue 325）" },
-          { date: "2026-09-15", type: "feat", text: "段落/图版快捷命令 + 四入口关闭二次确认 + 生成后开笔记（issue 326）" },
-          { date: "2026-09-15", type: "feat", text: "关联行三改——确认写入不回退 / 分析不锁按钮 / 真中断与后台分支（issue 327）" },
-          { date: "2026-09-15", type: "feat", text: "名词录入防重名——输入实时提醒 + 确认硬拦截（issue 328）" },
-          { date: "2026-09-15", type: "feat", text: "图版逐图描述与录入预填/预览直达/来源升级 API（issue 329）" },
-          { date: "2026-09-14", type: "feat", text: "视频录入改链接解析式（解析按钮 + 分P/时长/档位 + 双把手进度条）" },
-          { date: "2026-09-14", type: "fix", text: "b23.tv 短链解析补全元信息并写回规范链接（ADR-0134）" },
-          { date: "2026-09-14", type: "fix", text: "短链 bvid 提取收口（独立 review P2 + P3）" },
-          { date: "2026-09-14", type: "feat", text: "录入四名词 + 关联行显式双链 + 影像两界面 + AI 多模态 + 图版（issues 309-313）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树共享契约 mount-types（模块间唯一接口，只放类型）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树力导向布局（issues/316 前半）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树连线路由与几何原语（issues 316 连线侧）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树数据层：双链解析、三源汇总与树构建（issues 314/315）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树 AI 语义建议链路（issue 318）" },
-          { date: "2026-09-14", type: "fix", text: "清空建议缓存保留否决留档 + 开关关闭返回 off（审查收口）" },
-          { date: "2026-09-14", type: "fix", text: "挂载树数据层审查修复：同名文献不拉线、mounted 去重/删除收口" },
-          { date: "2026-09-14", type: "fix", text: "收口布局审查三项（viewport 语义钉死 / 残重叠容差 1e-3 / 兜底量级写实）" },
-          { date: "2026-09-14", type: "fix", text: "端点桩不再插进邻卡（审查阻断项，issues 316 连线侧）" },
-          { date: "2026-09-14", type: "feat", text: "MountNode 补 parent 字段：同名文献挂所属卡片、可沿链回到主卡" },
-          { date: "2026-09-14", type: "fix", text: "建议幽灵节点补 parent（MountNode.parent 落地后的集成点）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树白板（317）" },
-          { date: "2026-09-14", type: "feat", text: "挂载树入口与命令（319）" },
-          { date: "2026-09-14", type: "fix", text: "固定写正文收口（D3 写契约 + 只在写入真发生时才提示成功）" },
-          { date: "2026-09-14", type: "fix", text: "挂载树白板审查修复（317/319 改后合并）" },
-          { date: "2026-09-14", type: "feat", text: "卡列表引用计数徽标与孤儿筛选（320）" },
-          { date: "2026-09-14", type: "fix", text: "整库扫描每轮只走一遍 + 自链不计被引（320 审查）" },
-          { date: "2026-09-14", type: "fix", text: "挂载建议认得出模型的真实回答（标签编号/包壳）+ 思考拉满 128K" },
-          { date: "2026-09-14", type: "fix", text: "裁判改走 prompt 纯文本通道（json_object 会吐空壳）+ 思考回默认档 + callout 不再被 ! 切开" },
-          { date: "2026-09-12", type: "feat", text: "视频录入 URL 净化与标题/UP主 自动回填（issue 278）" },
-          { date: "2026-09-12", type: "fix", text: "录入回填联网范围收窄为仅 B 站域，非 B 站零请求（对齐 Q4 拍板）（issue 278）" },
-          { date: "2026-09-12", type: "fix", text: "预览兜底判据收窄为「是否产出元素」，纯嵌入正文不误触兜底（review 275）" },
-          { date: "2026-09-12", type: "feat", text: "领域词表与 AI 领域提示去示例枚举" },
-          { date: "2026-09-11", type: "fix", text: "补齐品牌区/批量处理钮/取消钮三处无样式 UI（issue 270）" },
-          { date: "2026-09-11", type: "fix", text: "文献/剪藏标题生成收敛为完整陈述句（issue 276）" },
-          { date: "2026-09-11", type: "fix", text: "文献预览正文重复两遍（渲染前清空 + mock/fake 追加语义对齐）（issue 275）" },
-          { date: "2026-09-10", type: "feat", text: "术语录入弹层完整化——词典皮标题栏/术 语标签/试试示例/取消/琥珀说明行（issue 258）" },
-          { date: "2026-09-10", type: "fix", text: "术语来源链接与标题净化——剥追踪参数/站点尾巴（issue 257 补记）" },
-          { date: "2026-09-10", type: "feat", text: "行为单源补课——真 ui.ts 跑进浏览器原型（ADR-0106 范式，终止单文件静态演示双维护）" },
-          { date: "2026-09-10", type: "feat", text: "部壹文献预览去掉「提炼成卡/先放回去」按钮——预览转纯只读（关闭走 /ESC）" },
-          { date: "2026-09-10", type: "feat", text: "术语弹层精简——术语/来源同款行内标签，删试试示例与两处说明行；行为包重出" },
-          { date: "2026-09-10", type: "feat", text: "影像文献预览内嵌可播放视频——MarkdownRenderer 渲染 ![[mp4]]（Obsidian 原生 <video>）" },
-          { date: "2026-09-10", type: "feat", text: "文献预览正文真 Markdown 渲染——视频内嵌可播 + 可点来源（原型演示词条同步）" },
-          { date: "2026-09-10", type: "feat", text: "移动端头部章回式重排 + 三部统一预览弹层" },
-          { date: "2026-09-09", type: "feat", text: "知识盒三部重构——literature 更名 knowledge（ADR-0112/issue 255）" },
-          { date: "2026-09-09", type: "feat", text: "术语录入可选「来源」source/sourceTitle 键 + 单框智能分流（ADR-0116, issue 257）" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——literature.json（bili-tasks 后继）事务入 core 串行队列" },
-          { date: "2026-08-31", type: "fix", text: "视频笔记润色改 deepseek-chat 防 reasoning 吃光预算 + 语音误听纠错 + 视频段去二级标题" },
-          { date: "2026-08-30", type: "feat", text: "文献盒 UX 二轮（ticket 139）——叠开导航/卡片级增量刷新/失败白话化/范围开关/术语面板重设计" },
-          { date: "2026-08-30", type: "feat", text: "术语生成面板简洁版（ticket 142）——删弹窗标题/术语 label/placeholder/状态行（加载并入按钮），预览只读：上属性卡（术语/领域/日期）下内容卡，无输入框不可编辑；「重新生成」手改守卫随只读一并移除" },
-          { date: "2026-08-30", type: "feat", text: "文献盒桌面窗口简洁布局（ticket 143，用户拍板）——主面板/视频录入保留标题，历史去标题（ 计数+）且组头去 UP主前缀与条数、笔记行去目录去 .md、时间 formatRelativeTime 相对显示；添加弹窗去 h4 标题（编辑态 mode 标签）+ 链接 label + 默认剪辑片段 + 分P 去括号 + 去 placeholder + 失败提示条中性化；搜索框去 placeholder；移动端每行一个输入框" },
-          { date: "2026-08-30", type: "feat", text: "主面板列表间距+相对日期，视频录入批量按钮单钮态机（ticket 146，原 144 与并行 UX 批次撞号重编）——卡片简介/日期间距分档加大（6→10/12px）且日期改 formatRelativeTime 相对显示（无效回退原文/空不显示）；去独立 ⏹ 改单钮（空闲▶批量处理无工作禁用↔运行中⏹终止/仅失败项续跑⏹终止整批，runAll 启动即刷新态），移动端整钮隐藏（.bz-lit-run-btn 文本钮）；测试改写+新增三用例；spec/PROGRESS 含 145+146 文档节" },
-          { date: "2026-08-30", type: "feat", text: "视频录入批量按钮纯 emoji（ticket 148，用户拍板）——▶/⏹ 去文字，终止 vs 终止整批区分移 title hover（中止批量处理 / 中止整批）；batchAbortLabel 逻辑与 #lit-btn-video-run 契约不动；用例断言改纯 emoji + 补 title 断言；issues/148 + spec/PROGRESS 记录 147/148" },
-          { date: "2026-08-30", type: "fix", text: "文献盒「留空跟随工具配置」键留空时不下发，修复转写环节 rc 兜底被空串覆盖（ticket 149）——processor options 对 pythonPath/outputDir/ffmpegPath/ffprobePath/whisperModel/cacheDir 空值改 undefined 省略（实测设置留空时转写整批报「未配置 pythonPath」，而 rc/DEFAULTS 有可用默认）；humanizeError whisper 分支细分未配置/环境缺失；测试适配 + issues/149 + CONTEXT/spec/PROGRESS" },
-          { date: "2026-08-30", type: "fix", text: "生成的文献笔记补回视频双链（ticket 151，用户实测笔记无视频）——ADR-0066/0073 定义正文=润色+视频双链但 AI 回迁时实现漏掉；generateVideoNote 增 videoPath 参数，非空时正文尾部嵌 ## 视频 + ![[vault相对路径]]（反斜杠归一），keepVideo=false 未交付则无视频段；processor _aiStep 传 [bz-result] 交付路径；note-gen +1 用例 + processor 断言补 videoPath；issues/151 + CONTEXT/spec/PROGRESS" },
-          { date: "2026-08-30", type: "feat", text: "术语窗口自动生成 + 输入行重跑/底部总结按钮（ticket 155）——showTermEntry 带词（选中文字）入口自动触发生成；生成成功后输入行按钮文案变「重新生成」（空态仍「生成」）；底部按钮语义由「重新生成」改「总结」（id 契约不变），点击 summarizeTermSummary 对预览正文 AI 精简回填、所见即所得落入确认写入；note-gen 新增 summarizeTermSummary；ui.test 622/732 改写 + 新增总结落盘用例、note-gen.test 补精简用例、index-cov 打桩并断言自动生成；issues/155 + CONTEXT/spec/PROGRESS" },
-          { date: "2026-08-29", type: "feat", text: "添加转文献任务弹窗重排——去备注、标题/UP主上移、起止时间宽松格式（12.2/12-2/12）、失败原因行内直显不弹窗" },
-          { date: "2026-08-29", type: "feat", text: "文献盒 v3.1 UX 整改——历史独立弹窗同视频分组/去行内重试/头部状态计数/完成态步骤文案/添加弹窗遮罩统一（ticket 135，ADR-0070）" },
-          { date: "2026-08-29", type: "fix", text: "文献盒历史分组卡片——UP主名去前缀紧随标题、笔记行去左边距（ticket 135 追加）" },
-          { date: "2026-08-29", type: "feat", text: "文献盒改版——去 AI 去网页版、批处理产转录临时文件、压缩步骤（ticket 136）" },
-          { date: "2026-08-29", type: "fix", text: "review 修复——测试契约对齐 + 遗留兼容（ticket 136，检查点 P1/P2）" },
-          { date: "2026-08-29", type: "feat", text: "视频转文献 AI 回迁插件侧——note-gen 生成层 + 批处理 AI 阶段（ticket 136）" },
-          { date: "2026-08-29", type: "feat", text: "文献盒主面板/视频录入/术语生成 UI + 设置 schema 五组（ticket 136）" },
-          { date: "2026-08-29", type: "feat", text: "bz-literature-note-term 命令 + 入口接线 + 样式聚合路径修正（ticket 136）" },
-          { date: "2026-08-29", type: "feat", text: "文献盒 UX 修复与增强（ticket 138）——实测反馈 + 终审全项闭环" },
-          { date: "2026-08-29", type: "fix", text: "领域筛选切回「全部」后高亮未同步——applyFilter 内补 rebuildDomainBar（ticket 138）" },
-          { date: "2026-08-28", type: "feat", text: "视频转文献——待转列表+无头批处理（ADR-0065）" },
-          { date: "2026-08-28", type: "fix", text: "待转文献步骤文案落库——修处理后一直显示「启动中」" },
-          { date: "2026-08-26", type: "feat", text: "文献笔记 1.2.7——七键 frontmatter+逐段润色+转录签名防串段" },
-          { date: "2026-08-25", type: "feat", text: "视频缓存与文献笔记快速流程（ticket 01，1.2.0）" },
-          { date: "2026-08-25", type: "fix", text: "文献笔记改底部快捷命令 + fmtPrec 秒位溢出修复（1.2.1）" },
-          { date: "2026-08-25", type: "feat", text: "生成文献笔记改一键全流水（1.2.2）" },
-          { date: "2026-08-11", type: "feat", text: "黑匣子录入改引导式（用户重设计）——无 header/菜单栏/保存关闭按钮（ESC/遮罩关）：① 类型选择三张卡片 ② 内容输入 ③ 感触或连接展示；概念=一个输入框+生成卡片（百科式正式定义填入可编辑，按钮变确认录入）→ 确认即保存 → 展示与其他概念的连接（ 完成回类型选择）；文献=摘抄+来源 → 分析名词（新 insight 提炼想法字段，可编辑）→ 名词表+提炼想法+情绪/人/场景 → 存入；想法=联想/追问（去查概念）→ 情绪/人/场景 → 存入；去掉指向/链接 UI（数据字段保留）；AI 失败降级为确认录入/直接存入（永不拒收）；保存后回类型选择可连续录入，19 测试" }
-        ] },
-        { id: "home", name: "首页", entries: [
-          { date: "2026-09-23", type: "feat", text: "首页动效层——开场编排/河道描线常流/事件揭出迸光/切天接力" },
-          { date: "2026-09-23", type: "feat", text: "周历头改台历卡样式——色带+星期+大数字，波浪入场" },
-          { date: "2026-09-23", type: "fix", text: "门禁收编——预告卡光泽 hover 规则包 @media (hover: hover)，台历星期标签移动档 9px→11px（小字号扫尾口径）" },
-          { date: "2026-09-23", type: "fix", text: "关后再开整屏不可见但可点——退场 fill:forwards 钉住 opacity:0 未撤；按动画 id 撤残留 + 收口即撤" },
-          { date: "2026-09-23", type: "fix", text: "预告卡倾斜绑定随静默刷新丢失——绑定件从 boot 档提到 boot 判据外" },
-          { date: "2026-09-23", type: "fix", text: "预览壳补游戏库图标 gamepad-2——「全部域」里该行此前渲染成空白" },
-          { date: "2026-09-21", type: "feat", text: "入口菜单末尾统一「设置」直达该域设置页（issues 388）" },
-          { date: "2026-09-20", type: "fix", text: "首页深审修复批（A1 解环 + P2×5 + P3 群 + 契约守卫）" },
-          { date: "2026-09-20", type: "fix", text: "骨架期标题不再闪现 + 裁「R1 生活周报」死代码（呈报#31/#53）" },
-          { date: "2026-09-20", type: "fix", text: "番茄钟菜单 focusing 文案对齐「暂停专注」（PM2 残款/呈报#63 半边）" },
-          { date: "2026-09-19", type: "fix", text: "清退域内滚动条隐藏声明，回归 core 界级单源（一致#13）" },
-          { date: "2026-09-18", type: "feat", text: "时间线新到旧 + 退役生成今日总结 + 入口行灰字补四域统计" },
-          { date: "2026-09-17", type: "feat", text: "recap 面板退役，「生成今日总结」并入首页时间线卡（ADR-0154/issue 346）" },
-          { date: "2026-09-13", type: "feat", text: "时间线痕迹源整体替换为小橘行为流（issue 305 / ADR-0132）" },
-          { date: "2026-09-12", type: "fix", text: "连击口径去重、采集失败空态重试、入口顺序落盘失败提示（H11-H13）" },
-          { date: "2026-09-12", type: "fix", text: "入口编辑器 blur 监听挂 AbortController + 触屏滚动仲裁重写" },
-          { date: "2026-09-12", type: "feat", text: "秒开三件套——首次骨架秒开、关闭保留 DOM、重开复用动态刷新（issue 290）" },
-          { date: "2026-09-11", type: "feat", text: "入口彩点五条件点亮（剪藏未读/专注中/复习逾期/影院在看/重要备忘）" },
-          { date: "2026-09-11", type: "feat", text: "时间线六项设置（issue 287）+ 修入口拖拽两个 bug" },
-          { date: "2026-09-11", type: "feat", text: "首页设置五组结构 + 入口菜单九条命令 + 弹出层观感整改" },
-          { date: "2026-09-10", type: "fix", text: "移动原型外景改用小米13U 真机视口 412×827" },
-          { date: "2026-09-10", type: "feat", text: "原型移动外景支持 1:1 真机物理尺寸（小米13U 屏宽 70.15mm，可尺量校准）" },
-          { date: "2026-09-10", type: "fix", text: "原型 1:1 校准改为基准线绝对公式，修掉连点累乘" },
-          { date: "2026-09-10", type: "feat", text: "原型移动外景高度加满屏/内容区两档，修 1:1 长度对不上" },
-          { date: "2026-09-10", type: "feat", text: "原型移动外景高度改自由可调（滑块 650~1000 CSS px）" },
-          { date: "2026-09-10", type: "feat", text: "原型 1:1 宽度固化为实测基准 118mm，撤掉测量 UI" },
-          { date: "2026-09-10", type: "feat", text: "原型外景尺寸全固定，撤掉高度调节条" },
-          { date: "2026-09-10", type: "feat", text: "入口顺序/显隐按端独立 + 域快捷菜单 + 首页外观组；设置面板侧栏七组" },
-          { date: "2026-09-09", type: "feat", text: "首页域入口加第二大脑磁贴（issue 251 追加）" },
-          { date: "2026-09-08", type: "feat", text: "行为单源——评审壳直跑插件同款 ui.ts（issue 245/ADR-0106）" },
-          { date: "2026-09-07", type: "feat", text: "首页活动河全域入口版落域（issue 232）" },
-          { date: "2026-09-07", type: "fix", text: "活动河四项调优（issue 232b）" },
-          { date: "2026-09-07", type: "feat", text: "周历头+按日时间线同步落域（issue 232c）" },
-          { date: "2026-09-07", type: "fix", text: "桌面瓦片块未隐藏+按钮被 core 基线压样式（issue 232d）" },
-          { date: "2026-09-07", type: "fix", text: "预告卡被 core 按钮基线 inline-flex 化致文字横叠（issue 232e）" },
-          { date: "2026-09-07", type: "feat", text: "周历倒排+今天显「今」+移动端关闭钮修复（issue 232h）" },
-          { date: "2026-09-07", type: "fix", text: "头行关闭钮图标空白（issue 232i）" },
-          { date: "2026-09-07", type: "fix", text: "周历倒排最新在前 + 今日标「今」+ 关闭钮选择器加面板前缀" },
-          { date: "2026-09-05", type: "feat", text: "本周聚合数据层（R1 生活周报口径）" },
-          { date: "2026-09-05", type: "feat", text: "钉选区下「本周」轻卡（R1 生活周报数字格）" },
-          { date: "2026-09-04", type: "fix", text: "首页遮罩动态发号，execPal 隐藏守卫，pick 右缘按实际宽度夹紧" },
-          { date: "2026-09-04", type: "feat", text: "内容首页增强包——钉选排序/统计条可点/聚焦搜索/30s 时效/空态可点/补两内容域/样式归档" },
-          { date: "2026-09-03", type: "feat", text: "新增内容首页域（ticket 177，入口页「新标签页」升级）" },
-          { date: "2026-09-03", type: "fix", text: "审查修复——快照只读契约/memo 直读/review 口径/域卡清单/ESC 生命周期/移动关闭钮" }
-        ] },
-        { id: "pomodoro", name: "番茄钟", entries: [
-          { date: "2026-09-24", type: "fix", text: "review 三改——短休色温判反 / TS 写死色值 / SMIL 空转 + 五味补断言" },
-          { date: "2026-09-24", type: "fix", text: "两个计时重叠——动效打在隐藏层上顶掉了 opacity:0；翻牌层转为唯一可见层并放大字号" },
-          { date: "2026-09-24", type: "feat", text: "重置/跳过改按钮内二次确认（替代确认弹窗）+ hover 一律不换底色" },
-          { date: "2026-09-23", type: "feat", text: "动效层——专注呼吸/暂停凝滞/休息渐暗/收工仪式全相位氛围，台账对齐 issue 400" },
-          { date: "2026-09-23", type: "fix", text: "环光被 SVG 元素框硬切——显式 overflow:visible" },
-          { date: "2026-09-23", type: "feat", text: "退役「后台自动暂停」——窗口 hidden 不再暂停计时（ADR-0179）" },
-          { date: "2026-09-23", type: "feat", text: "特效批九味——进度四味/世界退后/收工钟/倒数滴答/过渡音" },
-          { date: "2026-09-20", type: "fix", text: "深审修复批（bz-fix-pomo-core）" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板 Wave1 呈报#63-PM2/#49-PM3——命令文案改「重置」拆一词三义 + 统计档位跨重启记忆" },
-          { date: "2026-09-17", type: "feat", text: "周归档层与长期趋势统计（issue 357）" },
-          { date: "2026-09-17", type: "fix", text: "审查修复批（归档固化先落盘 + 统计呈现）（issue 357）" },
-          { date: "2026-09-12", type: "fix", text: "评审两轴清零——皮肤三源收敛单源、外观组即时换肤、死代码清退" },
-          { date: "2026-09-11", type: "feat", text: "番茄钟接入预览管线、弹窗降噪、10 套皮肤（亮/暗）" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——pomodoro.json 读写入 core per-path 串行队列" },
-          { date: "2026-09-04", type: "fix", text: "初始化共享 in-flight + 恢复可见仅解冻路径落盘" },
-          { date: "2026-09-04", type: "feat", text: "番茄钟增强包——完成通知挂动作/时段分布/循环圆点/待办专注联动" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "冻结暂停来源标记修复 forceFocus 重启死锁 + openPomodoro 并发单例锁 + 提示音挂起恢复/真静音" },
-          { date: "2026-08-18", type: "fix", text: "ticket 番茄钟完成——四 bug 修复：后台自动暂停（visibilitychange 冻结/自动恢复/手动暂停不被覆盖）+ 换书判定改会话书不漏判 + 不补算（recover 超时回空闲、reading 加 lastActiveAt 结算关闭前实读）+ 关设置即时结算退残留；统计口径完整番茄（book duration≥45min 才计个数）；手动暂停落盘附带修复；996 测试全绿" },
-          { date: "2026-08-16", type: "feat", text: "番茄钟读书计时重构完成——重置清目标、独立读书计时(后台不漏时)、关书恢复主番茄钟，+15 测试(980 全绿)" },
-          { date: "2026-08-16", type: "feat", text: "番茄钟读书计时重构定稿——独立读书番茄钟(阅读沉浸45/10/20自走节律)+重置清目标+关书恢复主番茄钟+读书时长统计，982测试全绿" },
-          { date: "2026-08-12", type: "fix", text: "番茄钟开始/暂停提醒与声音——专注开始/休息开始/长休息开始/暂停四种 toast+提示音（手动操作也有声），读书自动开始「已开始读书专注：《书名》」/自动暂停「已暂停读书专注」，音量峰值 0.4→0.8 翻倍，161 pomodoro 测试（全量 1211 绿，capture.ts WIP 除外）" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 grilling 定稿——issue 26-32 垂直切片 + ADR-0012（原脚本代码丢失，按手册重建）+ spec 命令清单/设置项总表/Out of Scope 同步 + CONTEXT.md 术语（番茄钟/专注阶段/短休息/长休息/循环/预设方案/强制专注模式）" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 数据层+状态机完成——transition/recover 纯函数（阶段流转/暂停恢复/强制专注禁止/自动循环/自动跳过休息/超时逐段重建/历史生成）+ pomodoro.json v1 读写（storagePath 优先、逐字段容错），37 测试" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 弹窗与主命令完成——bz-pomodoro-open「番茄钟」裸注册 + 中央单例弹窗（环形进度 SVG/阶段文案/开始暂停重置跳过/强制专注锁定）+ 1s tick 驱动（关闭后台继续/超时恢复落盘），12 测试" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 历史统计展示完成——todayCount/last7Days 聚合纯函数（今日计数 + 近 7 天滚动窗口，DST 安全）+ 弹窗统计区渲染（同日同计数跳过重建防 DOM churn），8 测试" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 设置完成——BzSettings +9 项（预设/自定义时长/N/四开关）+ 域设置弹窗（12 档预设下拉、自定义时长动态显隐、变更即保存）+ durations/options 读设置即时生效（非法值回退默认），13 测试" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 弹窗层级——mask z-index 10200→9998（域主弹窗层级，password 先例），低于 Obsidian 设置页与域设置弹窗 10030， 可正常覆盖，1 测试" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 遮罩点击关闭——点遮罩本身关闭弹窗（计时后台继续），弹窗内部点击不关闭，2 测试" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 状态栏 emoji 换原生 lucide 图标——setIcon(timer)（与命令 icon 一致），图标 mount 时渲染一次，sync 只更新文本，灰态保留" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 重启恢复继续倒计时 + 设置入口 hover 显示 + 恢复方式选项——ensurePomodoro 启动恢复（load+recover+后台 tick），修复恢复后不 tick bug；设置按钮默认隐藏 hover 面板显示（lucide gear 幽灵样式）；新增 pomodoroRestoreMode（background 默认/popup 自动弹窗），10 项设置，9 测试" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 提示音改为阶段开始声——专注 880Hz/短休 523Hz/长休 392Hz 各一声（听声即知状态，自动循环下无需打开弹窗），仅 tick 自然流转播放（手动 start/skip 不响），issue 26 修订记录，6 测试" },
-          { date: "2026-08-10", type: "fix", text: "番茄钟 目标选择器关闭残留——closeTargetPicker 只移除 mask 未移除 popup（createOverlay 兄弟元素），选中/遮罩/ 关闭后 popup 残留盖屏拦截点击；新增右上角 关闭按钮，移除底部「不使用目标」，4 测试" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 重启恢复弹通知——恢复继续（未暂停）时通知「番茄钟继续：专注 2/4，还剩 02:00」（阶段+剩余），暂停态恢复不弹；popup 模式弹窗+通知并存，4 测试" },
-          { date: "2026-08-10", type: "feat", text: "番茄钟 交互优化——① 目标区幽灵模式：未选中默认隐藏、hover 弹窗才显示「选择目标」（选中后始终可见）；② 设置弹窗新增音量 slider（0-100 默认 100 最大，旧数据兜底）+ 试听按钮（按当前音量播专注声），playSound 支持音量参数（clamp 1-100），6 测试；spec 同步 11 项设置表" }
-        ] },
-        { id: "smartcat", name: "小橘陪伴猫", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——猫语义全舞台编排（登场/召回/溜走/换毛/拎起/抚摸/思考ping/气泡竖尾/聊天台/档案台）" },
-          { date: "2026-09-20", type: "feat", text: "小橘「更智能」批——关系阶段/她自己的事/情绪惯性/记忆自动纠错/追问线" },
-          { date: "2026-09-10", type: "feat", text: "小橘行为流接线补齐 + 文案人性化（issue 261 / ADR-0118）" },
-          { date: "2026-08-31", type: "feat", text: "去掉动画心情状态机，心情动画并入随机池 + 新增多部件组合动作" },
-          { date: "2026-08-30", type: "fix", text: "归档行为流措辞补全与来源标签统一（ticket 140）——补 archived 行为文案与徽标词（此前缺失注册），归档观察文案去「收藏」前缀与前者统一，行为来源标签齐名「收藏本/归物本」" },
-          { date: "2026-08-30", type: "fix", text: "反思/日小结/周报记忆流断粮饿死修复（ticket 158）——ADR-0069 R2 后观察只进行为流：新增 behaviorToObservations 派生视图（wording 渲染+来源档位 credibility），反思证据池并入（legacy 双写按描述去重）、周报门槛与原料并入；shouldReflect 从未反思时行为流攒够 20 条也触发；shouldDigest 首次日小结与反思解耦（行为流 3 条即触发，基线回退行为流最早条目）；周报 hour>=10 + weekKey 去重防节拍相位跳档；memory.test 重写 2 旧语义用例 + 新增 4 用例；issues/158 + spec/PROGRESS" },
-          { date: "2026-08-30", type: "fix", text: "备忘录删除行为流落盘时序加固（ticket 159）——实证事件链路完整（emit→notifyMemoAction→memo:deleted 路由→三套注册表齐）而真实数据 deleted 恒 0 ⇒ 30s 防抖+卸载 fire-and-forget 丢尾窗；markBehaviorDirty 追加 5s 短防抖直写（窗口内合并、与 30s tick 并存），stopScheduler 清定时器，低频动作落盘窗口 30s→5s；behavior-stream.test 新增直写/合并/停止清理用例；issues/159 + spec/PROGRESS" },
-          { date: "2026-08-30", type: "feat", text: "三层记忆流水线 + 巩固参数设置面板（ticket 160）——日小结产出 observation 入记忆流接通管道、反思只吃记忆流观察并对引用条目贴原文摘录、周报只吃本周新增洞察（旧统计字段退役）、shouldReflect 改间隔+素材双闸（删 158 合并池 behaviorToObservations 与 20 条快车道，素材计数重定义只随记忆流新增）；11 个巩固参数上 「记忆巩固」组（smartcatReflect*/smartcatDigest*/smartcatWeeklyMinInsights/smartcatRefExcerptLimit，getConsolidationConfig 统一读取）；memory/report/adr0069/index-cov/settings 测试改写+新增；ADR-0075 + CONTEXT 三层记忆流水线词条 + spec/PROGRESS/issues/160" },
-          { date: "2026-08-30", type: "fix", text: "设置面板数字滑杆改输入框（ticket 161）——17 处 slider 行改 number 行（schema 既有行类型，min/max 钳制 + 防抖落盘语义不变），消除下滑误触滑杆；issues/161 + spec/PROGRESS" },
-          { date: "2026-08-30", type: "feat", text: "巩固语义重定义——行为小结并入反思 + 阈值精简 + 周报锚定首洞察（ticket 162）——反思只看素材阈值（默认 20，无间隔闸），证据池自上次反思全量按重要度排序（洞察条数 LLM 自定）；「日小结」更名「行为小结」并改为反思前置步骤（上次反思以来全部行为流→1 条 observation，首次 24h，不占素材额度，失败整轮退避重试，前置证据闸防重复总结）；周报窗口锚定第一条洞察按 7 天链式推进（空窗静默推进、洞察门槛退役）；巩固设置 11→2 行、「移动端默认全屏」挪面板最下、6 个退役设置键残留值忽略；memory.test「行为小结」describe 重写 + routedFetch 路由 mock，7 个测试文件同步；issues/162 + spec/PROGRESS/CONTEXT" },
-          { date: "2026-08-30", type: "feat", text: "洞察条数上限 + 来源分布按追查目录 + 小橘对我的称呼（ticket 163）——新增 smartcatReflectMaxInsights（默认 3，记忆巩固组可调，反思 prompt 声明最多 N 条 + LLM 返回按序截断兜底）与 smartcatUserName（默认包仔，互动组可调，replaceUserReference 把记忆流/行为流喂 AI 的「你/你们/用户」替换为称呼，不写盘存储冻结，模板/人物设定句不替换）；dashboard 记忆来源分布：洞察（含周报）单列「洞察」行 + source=note 引用条目按记忆目录追查目录分行（resolveTrackedDirLabel，未命中回退记忆目录）+ 行为小结行保留，最近记忆列表 note 行同口径；memory/report/companion-context/mood 六处内容替换接入；issues/163 + spec/PROGRESS/CONTEXT + ADR-0076" },
-          { date: "2026-08-29", type: "feat", text: "文献盒 v3——断点续跑、历史归档、行内标题链接+UP主、添加界面清晰度/分P、AI JSON 自愈、parsed 充实小橘条目（ADR-0067）" },
-          { date: "2026-08-29", type: "feat", text: "ADR-0069 行为流全量盘点补齐——各域事件接入+反转B站豁免+密码/加密exempt" },
-          { date: "2026-08-29", type: "feat", text: "ADR-0069 记忆目录——多文件夹配置/增量同步/日记拆段/引用入库+context-source收缩" },
-          { date: "2026-08-29", type: "feat", text: "ADR-0069 核心流——钩子上移/存储sidecar化/日小结换源/引用型记忆API（含迁移）" },
-          { date: "2026-08-29", type: "feat", text: "ADR-0069 三流合并收尾——exempt 路由分支、行为流扩容默认值（60天/10000条）、构建部署" },
-          { date: "2026-08-29", type: "fix", text: "ADR-0069 审查修复——迁移透传extraVectorRows/坏JSON备份中止/removeMemoryByRef精确ref/伪条目人类文案/日小结与目录清理收口/exempt覆盖legacy/事件类全降behavior" },
-          { date: "2026-08-29", type: "fix", text: "ADR-0069 数据面板现读合并 memory/behavior sidecar——smartcat.json 不再含双流后面板恒空的回归" },
-          { date: "2026-08-29", type: "fix", text: "重启记忆清零回归——迁移失败中止装配不再以空流覆写 sidecar；upsert 哈希提前去重省重启全量重打分；设置面板暴露向量化模型与分块上限；最近记忆点击展开详情" },
-          { date: "2026-08-29", type: "fix", text: "双定位符回归——diarySeeds 的 refPath 自带 #定位符致描述 path#t#t、refResolver 切分失败判失效反复删建（重启记忆清零/重打分根因）；upsert 去重纯路径+旧脏 ref 自愈；最近记忆改详细日期+正文直出不再展开" },
-          { date: "2026-08-29", type: "feat", text: "最近记忆按 created 降序+Obsidian Markdown 渲染正文直出；哈希跳过分支自愈遗留双#描述（prompt 取不到正文的尾巴）" },
-          { date: "2026-08-29", type: "feat", text: "断开剪藏删除行为记录——clipping:file-deleted 不再入行为流（用户拍板 2026-08-29）；移除构建器/路由规则/文案模板" },
-          { date: "2026-08-28", type: "feat", text: "行为流全量双写 + 时间线面板（ticket 129）" },
-          { date: "2026-08-28", type: "feat", text: "文献盒 v2——面板正名、下载入口、设置提取、详细进度、域事件接入小橘行为流（ADR-0066）" },
-          { date: "2026-08-27", type: "fix", text: "UX 整改五项——IME回车不误发/移动端拖拽/打字机跳过/未配AI话术/常驻轮询收敛（ticket 30 36 47 54 p2）" },
-          { date: "2026-08-27", type: "feat", text: "P1 数据基座——记忆流/行为流双流重构 (#123)" },
-          { date: "2026-08-27", type: "feat", text: "P3 用户体验层——行为日志页签、记忆管理API、关联聚合、设置UI (#123)" },
-          { date: "2026-08-27", type: "feat", text: "行为域 StructuredMeta 适配 (P2b #123)" },
-          { date: "2026-08-27", type: "feat", text: "add content completion detector & snapshot generator for P2c" },
-          { date: "2026-08-27", type: "fix", text: "显式添加 memo:due 路由规则 #123" },
-          { date: "2026-08-27", type: "fix", text: "P1 promote落盘 + 设置UI saveSettings + P2-1 enableAutoLinking (#123)" },
-          { date: "2026-08-27", type: "feat", text: "P2a 创作/情感域 StructuredMeta 适配——描述生成器注册表与接线改造 (#123)" },
-          { date: "2026-08-27", type: "fix", text: "flash(卡片盒)路由恢复为 behavior 流——用户拍板知识内容不进记忆流 (#123)" },
-          { date: "2026-08-27", type: "fix", text: "P1 review 修复——library credibility/description 截断/movie default (#123)" },
-          { date: "2026-08-27", type: "feat", text: "聚合讯跳过文章也进行为流观察（ticket 123 追加拍板，news:skipped）" },
-          { date: "2026-08-27", type: "fix", text: "行为流写入补 dataSaver 落盘——行为日志面板现读现渲染可见条目（ticket 123 缺陷）" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "记忆流死锁/半批重复/向量错位/召回锁死/面板回滚等 11 项红队修复" },
-          { date: "2026-08-24", type: "feat", text: "belongings 归物本改方法监听观察" },
-          { date: "2026-08-24", type: "feat", text: "favorites 收藏本改方法监听观察" },
-          { date: "2026-08-24", type: "feat", text: "pomodoro 番茄钟改方法监听观察" },
-          { date: "2026-08-24", type: "feat", text: "library 书库观察改 weave-data 数据文件监听（ticket 081）" },
-          { date: "2026-08-24", type: "fix", text: "补全合并时丢失的 notifyFavoritesAction/notifyBelongingsAction 闭合括号" },
-          { date: "2026-08-24", type: "feat", text: "去掉 quiz/review 盲通道计数观察（ticket 082 用户拍板，DOMAIN_FILES 全清空）" },
-          { date: "2026-08-24", type: "feat", text: "library 书库观察 v2——书架增删/时长带进度/划线想法带内容防抖（ticket 081）" },
-          { date: "2026-08-24", type: "feat", text: "卡片盒/现代诗/信改 per-file 日记模型观察，反省移除（ticket 083）" },
-          { date: "2026-08-24", type: "fix", text: "聚合讯保存补全链路修复（084b）" },
-          { date: "2026-08-24", type: "fix", text: "书库观察修复（084c）" },
-          { date: "2026-08-24", type: "fix", text: "memo/影视观察修复（084a）" },
-          { date: "2026-08-24", type: "fix", text: "日记观察修复（084d）" },
-          { date: "2026-08-24", type: "feat", text: "观察可信度 credibility（085）" },
-          { date: "2026-08-24", type: "feat", text: "085 追加拍板——记忆流取消上限、不做入流门槛、书库划线/想法档位上调" },
-          { date: "2026-08-24", type: "feat", text: "H4 记忆内容安全契约（087）" },
-          { date: "2026-08-24", type: "feat", text: "H5 在场口径 lastPresenceAt（088）" },
-          { date: "2026-08-24", type: "feat", text: "方向六特质归因学习——LLM 归因主+词法兜底 mode 标记留痕（091）" },
-          { date: "2026-08-24", type: "feat", text: "洞察版本化——supersede 前置剔除/主题枚举/候选通道/pinned 保护（092，ADR-0039）" },
-          { date: "2026-08-24", type: "feat", text: "单一缺席状态机——三态环/selfEvents 环形缓冲/PAD 幅度域[1.0,1.8]+0.5×共振帽/时序分窗同日不抵消/lazyAttachment 读侧惰性视图（093，ADR-0040）" },
-          { date: "2026-08-24", type: "feat", text: "方向八关系史沉淀——事件表派生/只留正性/独立周键叙事（094，ADR-0041）" },
-          { date: "2026-08-24", type: "feat", text: "方向四心情门控——温和话术子集/每日温和问候豁免/窗口多数采样/loadMoodState 归中性/quietMode 状态机（095，ADR-0042）" },
-          { date: "2026-08-24", type: "feat", text: "H3 情绪路前置重建——EMOTION_VAD 补 curious/sleepy/playful/focused/upset 五类（upset 共振差量=0 回归锁解除）/emotionAffinity VAD 连续距离评分（相反=负距离）/reflect 证据池 LLM 情绪追标 emotionBackfilledAt（只补不覆盖·失败裁剪·独立退避·H4 边界继承）/情绪密度指标纯函数（096 前置）" },
-          { date: "2026-08-24", type: "feat", text: "方向一多路召回联想检索——槽位保留制(语义≤4+情绪≥1+时间≥1 总≤6 落 formatMemoriesForPrompt 可选 maxEntries)/情绪路 vadAffinity PAD rerank 非硬过滤/时间路星期几+周年两类强锚点/空 query 显式退化/三路权重归一化公式+路由权重上限写入 ADR-0043（096）" },
-          { date: "2026-08-24", type: "feat", text: "数据面板升级——成长轨迹归因徽标+LLM 引用原文截 30 字（lexical 一律零解释）/总览安静陪伴 chip/情绪页标注覆盖率小字（样本<5 只报条数不显百分比）/感情卡依恋切 lazyAttachment 读侧视图对齐总览口径/洞察行 theme chip+已被推翻行降透明度删除线+pinned 并存优先/删手动刷新按钮改 vault modify 命中防抖 3s 静默自动刷新（保持页签·零 toast·失败保旧画面·close 全清监听）（097）" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 小橘样式修复——脸宽高致双眼重叠正中（删 cat-face 宽高还原原版 shrink-to-fit）、耳朵 10px、气泡上移 95px 补细节与暗色适配、happy/curious 心情动画选择器修正（tail/eye 组合对齐原版），1251 测试全绿" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 删 30 分钟空闲跟随（用户要求）+ 修气泡堆叠——去 transform 手动推挤改纯 flex 自然堆叠（原双重位移错位），1251 测试全绿" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 去掉气泡 emoji 抽离到独立指示器（用户要求）——emoji 直接留在气泡文本显示，删 EmojiProcessor/onEmojiDetached/data-mood-emoji 样式与 2 测试，1249 测试全绿" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 完成——RL 校准配方落地（真实库默认值+信任饱和钩子），1276 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 完成——进化第 2 轮红队裁决落地（信任软收拢 0.85 防顶格 + PAD 生产补接线 VAULT_PAD_GAIN=0.5 + mood 指数回摆对齐 sim + raw 浮点防微移吞噬；ADR-0024 追加决策 2 与标定缺口声明），1287 测试全绿" },
-          { date: "2026-08-23", type: "feat", text: "smartcat RAG 增强——检索 query 结合情绪及时段，记忆注入带来源/相对时间，9 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 睡前巩固——每日 digest 当日观察 LLM 归纳日小结写回流，驱动人格微漂移，8 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 作息模型+主动关心——24h 活跃画像判定搭话时机，每周 1-2 次温和关心，设置开关，11 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 每周懂你报告——周统计+LLM 个性化总结写回流，设置弹窗查看入口，7 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 认知基础模块——参考 cognitive-engine 自研：情绪趋势/波动度(VAD+EMA) + Thompson Bandit 自适应 + 元认知矛盾检测，零依赖纯函数，15 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 认知接入——Bandit 选臂优化主动关心话术 + 聊天 reward 回填 + 元认知矛盾检测提示 + 情绪趋势注入聊天/周报上下文" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 懂你闭环——情绪温和共振+全通道上下文+数据诚实化，1357 测试" },
-          { date: "2026-08-23", type: "feat", text: "smartcat 数据面板 完成——bz-smartcat-dashboard 四页签只读可视化（总览/情绪/人格/记忆）+ 作息直方图与成长轨迹，moodLevelFromPad 纯函数抽取，14 测试" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 桌面拖拽松开后仍跟随鼠标——document 监听改一次性 bind 稳定引用 + isMousePressed 守卫 + dispose 补摘监听，5 测试" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 移动端长按开设置关闭后无法拖拽——core 设置弹窗补 onClose 复位交互锁；外观改平铺色块选择器即时换肤；移动端删人格数据列表，7 测试" },
-          { date: "2026-08-23", type: "fix", text: "smartcat 设置/聊天面板开着时不再锁死拖拽——面板仅抑制点触与长按手势，移动照常（鼠标+触屏），3 测试" },
-          { date: "2026-08-23", type: "fix", text: "ticket smartcat 人格修复——撸猫退出一切数据面（数据层兜底短路）+ 基调表扩展修「越用越神经质」+ TRUST_SOFT_K 0.85 修软帽失效 + 周深更新门槛50与增益缩放1/12 + 种子回归保分化 + attachment 慢跟随接线 + 历史多样性保留，mood/character 测试重写" }
-        ] },
-        { id: "attach", name: "附件搬移", entries: [
-          { date: "2026-09-20", type: "fix", text: "深审修复批——收集语义 cache 优先根治 AF-1/AF-2，动线一次收集 + 失败明细重试 + 防重入 + 键盘确认 + 脏关闭拦截 + 全选/护栏 + 中止/撤销进度 + 术语清理" },
-          { date: "2026-09-20", type: "fix", text: "拍板修复批——动词统一「搬移」+ 跳过预览快捷出口 + 上次目标前置预告" },
-          { date: "2026-09-04", type: "fix", text: "md 链接百分号编码解码后再解析" },
-          { date: "2026-09-04", type: "feat", text: "搬移增强——可勾选清单预览/前置附件数/撤销搬移/大批量进度" },
-          { date: "2026-09-04", type: "feat", text: "文件右键菜单「搬移此笔记附件」入口" },
-          { date: "2026-08-25", type: "fix", text: "搬移汇总 moved 改按成功数计（计划数−失败数），通知文案与实际一致（P2）" },
-          { date: "2026-08-24", type: "fix", text: "ticket 追加——监听文件夹选择弹窗复用附件搬移 FolderSelectModal（参数化 title/okText/placeholder/initial，z-index 200000 修复层级）+ 移除监听文件夹同步清空其下排除记录 + CONTEXT.md 排除笔记/监听文件夹词条修订，1886 测试全绿 + tsc 0 错误" },
-          { date: "2026-08-22", type: "feat", text: "保险箱接入统一抽屉（桌面右键/移动长按）——动作=预览(keepOpen·预览窗companion叠抽屉)/还原(danger·confirm取出即删)，头部=标题+时间·附件数；卡片单击预览改双击（防误触，用户拍板）、长按还原收敛进抽屉；测试 105 通过" },
-          { date: "2026-08-21", type: "fix", text: "附件搬移改用 fileManager.renameFile——弃用 v1 自研全库改写（大库读取解析全部 md + 逐个 modify 致卡顿），链接更新改由 Obsidian 内建自动完成，保留收集/去重命名纯函数，无 fileManager 回退 vault.rename；960 测试全绿" }
-        ] },
-        { id: "encrypt", name: "保险库", entries: [
-          { date: "2026-09-23", type: "feat", text: "动效层——铁门/锁芯/密文显影/封条验印全舞台演出（含 password-vault 金印/金屑/封蜡共用台账）" },
-          { date: "2026-09-21", type: "feat", text: "保险库工作台键盘化，牵动剪藏本同型面板（呈报#12-E7）" },
-          { date: "2026-09-20", type: "fix", text: "数据层深审批 A 七项修复（还原收敛/队列收编/广播冗余）" },
-          { date: "2026-09-20", type: "fix", text: "恢复移动端断点样式整段并清退死样式（深审批 D）" },
-          { date: "2026-09-20", type: "fix", text: "批 C 修复——日记资产入口回潮 + 渲染导航区 12 项整改" },
-          { date: "2026-09-20", type: "fix", text: "ui 会话安全区批 B——15 项深审修复（P1 静默失败/锁屏清扫/单例等）" },
-          { date: "2026-09-20", type: "fix", text: "主线程合并收口——还原目录注入改 diary 域 DIARY_DIRECTORY 真源（D9 回归修复）、indigo 类替换内联、closeAllDialogs 收场 cancelActiveFlowDialog、搜索样式收编、secondbrain fake 层补 TFile 导出修 behavior 包构建" },
-          { date: "2026-09-17", type: "feat", text: "摘除密码资产视图，快速取密统一（ADR-0155/issue 346）" },
-          { date: "2026-09-16", type: "fix", text: "加密附件他引保护——共享原件保留、还原跳过（issue 338）" },
-          { date: "2026-09-12", type: "feat", text: "保险库面板收敛为只管加密笔记 + 销毁二次确认（vault-pwstyle 落域第二片）" },
-          { date: "2026-09-12", type: "fix", text: "review 修复片——解锁屏 ESC 层补链 + 静态 z 清退 + 流水定位（vault-v2 第三片）" },
-          { date: "2026-09-12", type: "fix", text: "锁家族修复批——E3 资产校验/E4 回发解锁态/E9 孤儿容器/E10 单例复位/E11 通知收敛/E12 损坏分支/E13 opQueue 串行/E14 删前重读/E18 最短 4 位/D4 merge 入同路径队列" },
-          { date: "2026-09-12", type: "feat", text: "保险库接入行为单源评审壳 + 面板评审改动（issue 299）" },
-          { date: "2026-09-12", type: "feat", text: "锁屏统计明文落盘——冷启动回落上次快照而非「—」（issue 300）" },
-          { date: "2026-09-11", type: "feat", text: "三域共用解锁屏（保险库/密码本/加密日记）" },
-          { date: "2026-09-05", type: "feat", text: "D2 写路径收编——清单与挂起标记写点入 core 串行队列" },
-          { date: "2026-09-05", type: "feat", text: "接入共享组件批次——进度条/空态/候选浮层（ADR-0094）" },
-          { date: "2026-09-04", type: "feat", text: "保险库统一合并（encrypt × password-vault → 单一面板三资产；ADR-0085/issue 183）" },
-          { date: "2026-09-04", type: "fix", text: "保险库统一面板回归修复（中栏滚动 + 密码弹窗可见 + 新增密码入口）" },
-          { date: "2026-09-04", type: "fix", text: "保险库写回滚/锁收敛 + 待办同源同步/尺寸防抖（E1-E5、T1-T6）" },
-          { date: "2026-09-04", type: "fix", text: "日记还原 merge 判重改标题+正文比对，同刻同标签不再吞块" },
-          { date: "2026-09-04", type: "fix", text: "移动端详情页更多操作直开抽屉（E6）+ 密码弹窗独立 ESC 层（E7）" },
-          { date: "2026-09-04", type: "feat", text: "保险库增强包——快速取密/表单效率/防偷看/体检真实化/样式修复" },
-          { date: "2026-08-27", type: "feat", text: "保险箱 UX 整改——失败收尾进度通知、自愈回滚提示、体检清理二次确认（ticket 5/6/18）" },
-          { date: "2026-08-27", type: "fix", text: "共享确认弹窗 z 档 10060 → 10250，修复体检弹窗倒挂压盖（encrypt-pw 审查）" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "数据层四修复——镜像暂存+rename原子换入(P0-1)/清单未落盘回退幽灵条目(P1-5)/操作级互斥+pending读改写(P1-6)/mapLimit allSettled收敛+stagedRefs即时登记(P1-7)" },
-          { date: "2026-08-25", type: "fix", text: "解锁连续失败递增冷却 1s/2s/4s 封顶 8s，成功复位；冷却期内拒绝尝试并提示剩余等待（P2）；同步适配共享解锁弹窗的密码本测试等待" },
-          { date: "2026-08-22", type: "fix", text: "加密保险箱 提交式加密（ADR-0018）——加密先流式入 .staging 暂存区（不占内存），全成功后才走提交序列：挂起标记→清单先行→搬入顶层→清标记→尽力删原文件；任一附件失败整笔放弃；解锁自愈回滚挂起半提交（数学零孤儿）；删原文件失败仅提示；面板新增手动清理无引用密文按钮（Q5-A 不自动）；+7 测试，1026 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "encrypt 加密预览按需加载——预览层默认省略图档（长边480/质量0.5，更激进压缩，模糊可接受），预览窗只解缩略图；点击缩略图才解密原始层：图片原地换原图、视频替换为可播放 controls，加载中该图转圈（不弹通知）、只加载被点那一张、失败提示可重试；无预览层占位也可点击加载；Blob URL 优先+dataURL 兜底、关闭预览统一 revoke；+8 测试，1034 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "encrypt 保险箱省略图档位回调——256/0.45 太小太糊，取折中 384 长边/质量 0.5（手机清晰、体积小），1052 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "encrypt 保险箱预览设置回归——恢复「预览目标长边/预览质量」设置项（默认 384/0.5，用户可调），新增「预览自动加载原图」开关（默认关：打开预览即自动解密原始层替换全部省略图，复用点击链路逐 slot 转圈/失败重试，视频同样替换为可播放）；+3 测试，1055 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "encrypt 域修复与优化——清单损坏防静默重设+原子写、还原原子化、附件并行加密、embeds 收集、重入保护等，+31 测试" },
-          { date: "2026-08-22", type: "fix", text: "encrypt 修复——saveManifest 三段式原子写(Obsidian rename 不支持覆盖目标导致的 Destination file already exists)、解锁崩溃恢复、还原幂等与清单落盘失败降级，+7 测试" },
-          { date: "2026-08-22", type: "fix", text: "encrypt 清理按钮双向化——清除正文镜像丢失的失效条目(残留附件镜像一并删除)+列表刷新，文件侧孤儿清理不变，+3 测试" },
-          { date: "2026-08-22", type: "feat", text: "encrypt 解锁弹窗体验——打开自动聚焦输入框(移动端二次聚焦弹键盘)、点遮罩关闭面板，+2 测试" },
-          { date: "2026-08-22", type: "fix", text: "encrypt 修复体检弹窗只剩遮罩（卡片脱离遮罩容器）+ 体检动态显示进度与实时发现，+2 测试" },
-          { date: "2026-08-22", type: "feat", text: "encrypt 体检弹窗去掉右上角与底部关闭按钮（遮罩点击/ESC 关闭），+1 测试" },
-          { date: "2026-08-22", type: "fix", text: "小窗口关闭按钮全取消——6 处二级弹窗 / 挂 .bz-win-close 复用全局隐藏（library 筛选/批注编辑/读书笔记、movie 筛选/AI 推荐、encrypt 预览）+ 3 处补点遮罩关闭（movie AI 推荐 overlay click、encrypt 预览 onMaskClick、news 覆盖确认遮罩=取消，此前仅 ESC+按钮），统一靠遮罩/ESC 关闭，ADR-0019 修订第 5 条，1098 测试全绿" },
-          { date: "2026-08-22", type: "feat", text: "抽屉头部 emoji 始终显示完整序列（与列表单选收缩解耦）；加密/解密动作小字只带附件数（无附件不显示）、已解锁时图标+小字同步换强调色（未解锁保持默认外观）；isUnlocked/附件数降级链兜底，1130 测试" },
-          { date: "2026-08-21", type: "feat", text: "加密保险箱 完成——移出式清单容器加密（正文+图片/视频附件密文化，清单解锁/压缩预览/真还原/加锁收回），19 测试" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 修复——预览生成超时防护（空/无效资源不再挂起，避免加密假死无限循环），+5 测试" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 修复——大附件加密栈溢出（btoa(String.fromCharCode(...bytes)) 改分块编码），图片/视频加密不再 Maximum call stack，+1 回归测试" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 修复——深层目录附件加锁/还原 Parent folder missing（递归建父目录），+2 回归测试" },
-          { date: "2026-08-21", type: "feat", text: "加密保险箱 增强——预览窗图随文走混排+加密/还原顶部动态进度通知+还原成功自动打开笔记，+8 测试" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 交互与通知收敛——列表去预览/还原按钮改手势（单击开预览、长按弹还原确认）、去徽标/眼睛/回收按钮，还原取出即删并跳转笔记关面板、加密完成自动开面板，动态进度改完成态去独立 toast、文件名截断防通知栏抖动，正文 MD 密文镜像入目录不写配置，+测试更新" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 存储平铺点前缀布局（ADR-0016）——密文镜像改 .随机名.enc 平铺于 encryptRoot 且点前缀 Obidian 侧栏彻底隐藏防误删、清单改 .safe.enc、默认根 CONFIG/.ENCRYPT，加密当前笔记前弹二次确认；旧 附件/<原路径> 布局不再读取（用户拍板不兼容）；996 测试全绿" },
-          { date: "2026-08-21", type: "fix", text: "加密保险箱 设主密码后再打开不再要求重设——点前缀路径不进 vault 索引树，清单/镜像改用 vault.adapter 直读磁盘判存在与读写（restoreNote 写回原路径仍走 vault.create 使 Obsidian 重索引）；exists 改异步贯穿 UI 解锁弹窗（一次判定首设/解锁，异步就绪再渲染）；+2 回归测试；998 测试全绿" },
-          { date: "2026-08-21", type: "feat", text: "加密保险箱 顶部加「加密当前笔记」按钮（ 置于 设置前，点击调 lockCurrentNote 弹二次确认），Controller 注入 onLockCurrentNote 回调；+1 测试；998 测试全绿" },
-          { date: "2026-08-07", type: "feat", text: "完成——密码本（AES-GCM 加密/主密码状态机/生成器/面板 CRUD），22 测试" }
-        ] },
-        { id: "password-vault", name: "密码本", entries: [
-          { date: "2026-09-25", type: "fix", text: "review 后续——关闭守卫收编 confirmDiscard 单源 + 已解锁直进也消费待存密码" },
-          { date: "2026-09-24", type: "feat", text: "快速生成密码 + 添加弹窗关闭二次确认" },
-          { date: "2026-09-20", type: "fix", text: "批A 数据取密协议——上锁广播自清明文缓存、快速取密 Enter 落点反转、活动行 LIMIT 钳制、search 空词防写副作用、协议常量单源、懒加载链旗标后置+catch 收口" },
-          { date: "2026-09-20", type: "fix", text: "批 B ui 会话锁屏——空锁屏卡死/kw 渲染链/安全模式双键/idle 自动上锁等 12 项" },
-          { date: "2026-09-20", type: "fix", text: "批A×B跨批收口——lock-stats改「渲染期刷内存快照+消费点落盘」（数据层自清订阅使外部上锁事件时刻pwData已空，原快照守卫恒跳过）；T12就绪等待改真实渲染锚点" },
-          { date: "2026-09-20", type: "fix", text: "渲染列表弹窗批 C——密码行样式/焦点/搜索回写/撤销链/口径收敛" },
-          { date: "2026-09-20", type: "fix", text: "深审拍板批 P2/P3/P4/P5/P6 五项修复" },
-          { date: "2026-09-12", type: "fix", text: "确认框监听器单绑定防删错条目（E1）；共锁感知/E6 移动页重建/E5 密码掩码/E15 全局通知/E16 失败提示/E17 头像转义" },
-          { date: "2026-09-09", type: "feat", text: "密码本自统一保险库拆回独立域（ADR-0109/issue 250）" },
-          { date: "2026-09-09", type: "feat", text: "密码本接入原型×插件三层单源（ADR-0110/issue 251）" },
-          { date: "2026-09-02", type: "feat", text: "保险库域接管密码管理，旧密码本入口断开 (ADR-0078/0079)" },
-          { date: "2026-09-01", type: "feat", text: "按 UI 设计手册重构密码本样式 + 收敛内联视觉样式进 CSS（Obsidian 差异适配）" },
-          { date: "2026-09-01", type: "fix", text: "移除 password-vault 引用（域未提交，恢复 master 可编译）" },
-          { date: "2026-08-27", type: "feat", text: "密码本 UX 整改——复制失败提示、搜索防抖与加载缓存、设置重载提示、计时器清理（ticket 4/43/55/l2-pw）" }
-        ] },
-        { id: "settings-panel", name: "通用与设置", entries: [
-          { date: "2026-09-26", type: "feat", text: "外部工具路径升格域无关组 + 微信账号目录键" },
-          { date: "2026-09-26", type: "feat", text: "更新日志弹窗——侧栏底部入口 + 按域分类（git 历史生成）" },
-          { date: "2026-09-25", type: "feat", text: "密钥行「测试」钮改三态反馈——点击转圈/成功绿勾/失败红叉，不弹通知（issue 434，快速原型）" },
-          { date: "2026-09-25", type: "feat", text: "测试钮文案版三态——绿底「成功」/红底「失败」，原型交替模拟两态（issue 434，快速原型）" },
-          { date: "2026-09-25", type: "feat", text: "测试钮反馈改描边态——绿框「已连通」/红框+简短失败原因（issue 434，快速原型）" },
-          { date: "2026-09-25", type: "fix", text: "同步门禁收口——lint 合规文案回补（8 字下限/去顿号）+ 关键语义保留 + 测试钉更新（issue 434）" },
-          { date: "2026-09-25", type: "fix", text: "面板体系令牌重定向——子弹窗与组件库件回面板皮，删日记维护组与格式体检弹窗" },
-          { date: "2026-09-25", type: "fix", text: "面板体系同皮补齐（diff 审查收口）" },
-          { date: "2026-09-25", type: "fix", text: "review 收口——迁移落位跟随存量服务商、复原柄按元素清账防重复请求、测试连通 label 解析修正 + 三态助手测试补齐（issue 434）" },
-          { date: "2026-09-24", type: "fix", text: "换算标记随 DEFAULT_SETTINGS 落盘——默认值不再被当旧尺二次换算" },
-          { date: "2026-09-23", type: "feat", text: "动效层——「校准台」语义世界，布局零改动" },
-          { date: "2026-09-23", type: "feat", text: "设置输入方式全量整改——凭据一律掩码 / 数值换数字档位 / 地址行键盘语义" },
-          { date: "2026-09-23", type: "fix", text: "萤标坐标帧差一个 scrollTop——滚动后点靠下的侧栏项，光晕留在上面几行" },
-          { date: "2026-09-23", type: "feat", text: "数据源凭据三行统一单行掩码 + 行序调整（Key 在前）" },
-          { date: "2026-09-22", type: "feat", text: "复合行窄屏两行排版 + UP 名单去头像" },
-          { date: "2026-09-20", type: "fix", text: "深审修复批——渲染器内核下沉 + 交互收编" },
-          { date: "2026-09-20", type: "fix", text: "面板重开放重挂 ESC 层，栈序随 z 序同步（checkup 深审 ui P2-1 同刀）" },
-          { date: "2026-09-20", type: "fix", text: "搜索键盘闭环 + 命中词高亮 + 会话滚位记忆（呈报#17/#26/#49）" },
-          { date: "2026-09-16", type: "feat", text: "设置 AI 页拆三组（服务商/模型配置/数据源凭据）、Cookie 行换多行文本框（issue 330）" },
-          { date: "2026-09-16", type: "feat", text: "原生设置页退役平铺，只留「打开设置面板」按钮（issue 345）" },
-          { date: "2026-09-12", type: "fix", text: "面板渲染器补 onCommit 提示/isChild 联动等八修（H1-H10）" },
-          { date: "2026-09-12", type: "fix", text: "生命周期修复批 C13/C14/C15/C16——onLayoutReady 回调与延迟初始化随卸载旗标短路防幽灵初始化、卸载前在途确认框按取消语义结算、saveSettings promise 链串行落盘、旧 todo* 设置键迁移发生即调度落盘（含回归测试）" },
-          { date: "2026-09-12", type: "feat", text: "剪藏本设置精简 + 管理弹窗通用组件化 + uiSetlist 组件入库（issue 294）" },
-          { date: "2026-09-12", type: "feat", text: "通知入基础组、设置页并入通用、搜索即过滤与重置本域 + 全域分组文案统一" },
-          { date: "2026-09-12", type: "feat", text: "路径选择弹窗单源化接入面板（ADR-0127 在途快照落库）" },
-          { date: "2026-09-11", type: "feat", text: "移动端全屏页顶部 44px 统一 + 弹窗关闭钮全域退役（issue 271）" },
-          { date: "2026-09-10", type: "fix", text: "模型选择器弹窗暗色皮断链 + 移动端 44px 错位（issue 265）" },
-          { date: "2026-09-08", type: "feat", text: "仿影院域重走分层——render.ts 三件套以原型为真理逐字提取，两侧消费同一份" },
-          { date: "2026-09-08", type: "feat", text: "外观组范式落归物本——占位单卡（布局·大字报/主题·暖白）" },
-          { date: "2026-09-08", type: "feat", text: "外观组范式铺开全面板域（issue 246）" },
-          { date: "2026-09-08", type: "feat", text: "行为单源三件套——真 ui.ts 进原型（issue 245/ADR-0106）" },
-          { date: "2026-09-08", type: "feat", text: "移动端域设置弹窗改底部抽屉（原型与 ui.ts 同步，拍板样式落地）" },
-          { date: "2026-09-08", type: "feat", text: "演示种子补全各域外观键默认值（并行会话批；外观组键须与 src/settings.ts DEFAULT 三处同值）" },
-          { date: "2026-09-08", type: "feat", text: "设置面板UI修复批（采样参数组全链退役+路径行拍板+移动端搜索+custom行范式）" },
-          { date: "2026-09-08", type: "feat", text: "移动端重写全屏推入式两页+移动端默认全屏特性全链退役" },
-          { date: "2026-09-08", type: "feat", text: "待办/书架墙外观组标准化——置顶双行（布局占位卡+主题 layoutKey 联动）" },
-          { date: "2026-09-07", type: "feat", text: "设置面板重设计落域——P1 系统面板 + S1/S3 双皮 + 外观独立「设置」域" },
-          { date: "2026-09-07", type: "fix", text: "空面板热修——.bz-sp-desk 撤 position:relative 复原 core 居中链" },
-          { date: "2026-09-07", type: "fix", text: "对齐原型补落控件层——按钮覆写输给组件库 !important + 文件夹选择器换域内自绘" },
-          { date: "2026-09-07", type: "feat", text: "设置行 note 补充提示 + 体检按钮 cta 强调" },
-          { date: "2026-09-06", type: "feat", text: "待办面板皮肤三选一+设置页顶部视觉卡片选择（issue 210）" },
-          { date: "2026-09-05", type: "feat", text: "设置子项透明度降级收尾 + enh-sweep-a 回归测试" },
-          { date: "2026-09-05", type: "feat", text: "新增 .bz-panel-mtop 移动全屏顶距工具类并接入可改域全屏面板" },
-          { date: "2026-09-05", type: "feat", text: "空设置域补齐 + 零设置项域按端隐藏（issue 194）" },
-          { date: "2026-09-05", type: "feat", text: "组件库扩充批次——面板壳/头行/侧栏/统计卡等 40+ 类与 9 工厂（ADR-0094）" },
-          { date: "2026-09-04", type: "feat", text: "设置面板打磨（AI 独立域/徽标设项口径/浅灰组卡/行对齐）" },
-          { date: "2026-09-04", type: "fix", text: "设置面板服务商下拉菜单随最长选项加宽（长名称不再截断）" },
-          { date: "2026-09-04", type: "feat", text: "AI 设置补全与旧 AIAgent 残留退役（ADR-0088/issue 187）" },
-          { date: "2026-09-04", type: "feat", text: "路径行空值回落显示实际生效目录（bookshelf 书库文件夹 chip）" },
-          { date: "2026-09-03", type: "feat", text: "待办桌面面板拖动缩放 + 尺寸记忆（uiResizable 组件库工厂 + todoPanelWidth/Height）" },
-          { date: "2026-09-02", type: "fix", text: "1:1 复刻原型布局样式，自绘路径行去除原生设置行嵌套" },
-          { date: "2026-09-02", type: "fix", text: "列表栏与面板 1:1 复刻原型（emoji 图标 + 静态徽标 + 边框 + 搜索设置项）" },
-          { date: "2026-09-02", type: "fix", text: "内容重复/下拉响应/动态徽标/透明列表 (ticket 174)" },
-          { date: "2026-09-02", type: "fix", text: "左侧徽标预加载动态计算/分组卡恢复背景/重写下拉 (ticket 174)" },
-          { date: "2026-09-02", type: "feat", text: "左侧列表隐藏无设置域，下拉文字左对齐 (ticket 174)" },
-          { date: "2026-09-02", type: "fix", text: "上下文窗口/最大输出 token 从 custom 逃生舱迁回标准 number 行" },
-          { date: "2026-09-02", type: "fix", text: "审查修复——dirty 防 blur 假写 + custom onRefresh 接线 + 空串不删键" },
-          { date: "2026-09-01", type: "feat", text: "设置面板新域 + 公用样式层提炼 (ticket 172)" },
-          { date: "2026-09-01", type: "fix", text: "面板内嵌渲染各域真实 schema（renderSettingsInto 同源）" },
-          { date: "2026-09-01", type: "feat", text: "自绘渲染器 1:1 复刻原型（抛弃 Obsidian 原生样式影响）" },
-          { date: "2026-08-30", type: "feat", text: "Python 路径填 python 即可（ticket 150）——DEFAULTS.pythonPath 通用化 'python'（走系统 PATH，rc 仍覆盖）；core.js 未配置/ENOENT 错误细分引导（where python 查绝对路径），不再误报 faster-whisper 未装；ui humanizeError 四分支独立匹配 + 设置 desc 更新；README 示例/表格同步；tools +2 单测 + ui 断言；issues/150 + CONTEXT/spec/PROGRESS" },
-          { date: "2026-08-28", type: "feat", text: "设置面板全部路径行接入统一选择器，退役旧两套弹窗（ticket 128）" },
-          { date: "2026-08-28", type: "feat", text: "主设置页 schema 化接入渲染器，ticket 100 文案修正与 bz-tab 死类清理（ticket 131）" },
-          { date: "2026-08-28", type: "feat", text: "域组 C 六域设置弹窗迁移声明式 schema" },
-          { date: "2026-08-28", type: "feat", text: "路径设置行空态/已选态翻转 + 选择器列表排序（已选置顶→库根→整体反转）" },
-          { date: "2026-08-27", type: "feat", text: "命令名/图标与设置 desc 统一、存储路径改动防错（UX 整改 f1/f3/f7/t1/t2/f8/l7A）" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片重设计（方案 A，先落日记本）" },
-          { date: "2026-08-25", type: "feat", text: "分组卡片图标改原生 lucide（用户拍板弃 emoji）" },
-          { date: "2026-08-25", type: "fix", text: "分组徽标计数修正——操作行豁免与 0 项隐藏" },
-          { date: "2026-08-25", type: "feat", text: "域设置弹窗分组卡片化 + 文案规范修订" },
-          { date: "2026-08-25", type: "fix", text: "删除死键 launcherColumns/launcherMobileColumns" },
-          { date: "2026-08-24", type: "feat", text: "域设置弹窗移除右上角关闭按钮" },
-          { date: "2026-08-22", type: "fix", text: "修复抽屉遮罩 z-index 缺失被主面板压盖——遮罩完整覆盖全屏（10999），点遮罩只关抽屉不连带主面板；按钮高特异性抗 Obsidian 默认样式，顶部间距放宽，1114 测试" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子提炼链路完成——vault 监听 30 分钟防抖 + 一次 AI 调用批量提炼 + 首次全量分批 50 + 三标签面板骨架，31 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子面板流式化完成——五标签→时间流（三类混排 createdAt 倒序/日期分隔吸顶/批次滚动），类型标签多选默认全部，搜索防抖 300ms，卡片纯展示三铺法，人物/时间线独立弹窗宿主复用 v2 渲染，17 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子主面板微调完成——标题只显示「黑匣子」（无 emoji 无条数，DOM id 保留）+ header 新增 （设置 前，显示高亮）切换搜索框显隐 + 默认隐藏/每次打开复位 + 隐藏即清空关键词立即重渲染（防抖前也生效），1086 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子录入打磨+新概念流转+面板标签完成——① 摘抄面板想法手输（不 AI 提炼，插在摘抄与来源之间，大间距）+概念面板来源框；② 书内来源只读显示纯文字书名（保存完整双链 cfi 不丢）；③ 三类录入删新建画像按钮；④ 新概念流转：保存摘抄→同弹窗依次概念录入→回填摘抄关联概念（跳过不建不加/重名关联既有/直达完成自动关）；⑤ 摘抄不分类留根目录（autoClassify 仅概念）；⑥ 面板三标签带数量改单选+概念子分类行，来源行移正文下显示可读名；⑦ 含 ticket 07/ADR-0016 书内选区录入遗留未提交实现（host/source-jump/notes 概念来源行/panel 来源点击）；1171 测试" },
-          { date: "2026-08-11", type: "feat", text: "38 黑匣子 完成——新域：感触录入（素材+感受+24词情绪+可选维度+AI辅助查概念/联想/追问）、中央弹窗对话（三层记忆：TF-IDF感触检索+人格档案+对话历史）、静默复盘生长（阈值10条自动+手动，产物公开写入对话）、包仔种子人设（有诗心的思辨者）、 设置5项、ADR-0013/0014，48 测试" },
-          { date: "2026-08-11", type: "fix", text: "黑匣子弹窗面板不显示——createOverlay 的 popup 默认 display:none，漏设 popup.style.display='flex'（录入/对话两弹窗），2 测试补断言" },
-          { date: "2026-08-11", type: "fix", text: "黑匣子 UI 统一收口——① 设置弹窗 z-index 10030→10050（黑匣子面板 10040/10041 之下被遮的层级漏洞，v2 引入时漏升）② 录入弹窗 tab 内容+感触外壳并入单一滚动区（去 46vh 独立滚动，与面板同行为）③ 两弹窗骨架统一：紧凑 header（15px 标题/20px 缩进）+ 同款胶囊（12px 圆角）+ 全弹窗 20px 左右对齐，1 测试" },
-          { date: "2026-08-11", type: "fix", text: "录入面板再简化——类型选择页去标题「这次想记录什么」、卡片去描述（只留图标+名称）、「← 换一个」按钮去文字改纯图标（title 悬停提示），换类型引导写入输入框 placeholder，2 测试" },
-          { date: "2026-08-11", type: "fix", text: "录入面板三删——删换类型按钮/返回按钮（换类型=关闭重开）、删全部输入框上方 label（内容并入 placeholder）、删所有头部标题（类型名/补充感触）；chips 组改轻提示小字，4 测试" },
-          { date: "2026-08-08", type: "fix", text: "手势触发简化为打开入口页——设置改开关（旧 string 设置自动迁移 boolean），动作固定 bz-launcher-open，66 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页美化——磁贴卡片化（微渐变+阴影+14px圆角）+ hover浮起/按压缩放动效 + emoji圆形底衬 + 移动端独立列数（默认4列，设置可调）+ 间距10 + 空白格淡入，71 测试" },
-          { date: "2026-08-08", type: "fix", text: "文字显隐统一为设置开关——launcherShowText 全局控制（默认显示），磁贴级 hideText 不再参与渲染；移动端配置移除 hideText 全部显示文字，71 测试" },
-          { date: "2026-08-08", type: "fix", text: "底层逻辑改造——列数入平台配置(v3 {tiles,columns} 各自生效，设置页删除列数项，编辑模式悬浮列数选择+越界自动重排)；删档位手柄改磁贴操作菜单(改名/图标/尺寸1×1 2×1 1×2 2×2/删除)；安卓式实时拖拽(拖动中实时让位+图标跟随放大+回位撤销)，62 测试" },
-          { date: "2026-08-08", type: "fix", text: "设置页恢复平台列数下拉（读写 launcher.json 各自配置，与编辑模式悬浮下拉同源）+ 默认列数统一 6 + 图标间距 14px + 图标与文字间距 8px，62 测试" },
-          { date: "2026-08-08", type: "fix", text: "设置页删除列数项（右上角编辑控件已可调）；右上角新增文字显隐开关（写回 launcherShowText 与设置页同源）；编辑控件距顶部 34px，63 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页设置全部移入编辑模式右上角（文字开关+手势选择+列数+完成，设置页删除入口页 tab）；移动端底部滑入贴底/桌面端居中显示，64 测试" },
-          { date: "2026-08-08", type: "feat", text: "设置归属模型完成——ADR-0009 全局设置页单页化（AI+共享 storagePath）+ 10 域 设置弹窗 + 筛选/排序统一 + storagePath 迁移（旧 7 字段兼容保留）+ AI Agent 设置不暴露，752 测试" },
-          { date: "2026-08-08", type: "fix", text: "设置弹窗 z-index 10030（盖过主面板 9999/面板内弹窗 10005/闪念窄窗 10020）+ 各面板 统一紧挨 前，752 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页设置平台双套：文字显隐与手势拆分为桌面（launcherShowText/launcherGesture）+移动（launcherShowTextMobile/launcherGestureMobile），未设置继承桌面，74 测试" },
-          { date: "2026-08-07", type: "fix", text: "config 模块加载时立即 buildTagMaps（删标签配置设置项后映射构建入口回归）+ 模块加载断言测试" }
-        ] },
-        { id: "notice", name: "通知", entries: [
-          { date: "2026-09-12", type: "feat", text: "通知设置四项——级别/停留档位/弹出位置/同屏上限（issue 297）" },
-          { date: "2026-09-05", type: "feat", text: "core/storage 冲突留档契约——CONFIG/.CORRUPT 原样留档 + 人话通知" },
-          { date: "2026-09-04", type: "fix", text: "批注/划线写盘收口 vault.process 原子读改写，失败路径 notice+false 不悬挂弹窗" },
-          { date: "2026-08-30", type: "fix", text: "通知操作按钮改 span 消除高度撑高（ticket 164）——Obsidian 核心 button 默认 height 32px 硬撑，.bz-notice-action 只覆盖 padding；改 span + role=button + line-height:1 对齐文字；auto-summary 重试按钮同步；issues/164 + PROGRESS" },
-          { date: "2026-08-30", type: "fix", text: "桌面端 toast 位置下移（ticket 165）——#bz-notice-container top 16px→56px，避开 Obsidian 顶部栏与标题区；移动端断点 34px 不动；ADR-0067 动态 z-index 机制已保证 toast 恒可见（小橘猫底部中央不重叠），z-index 无需再改" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子提炼进度通知（用户反馈）——完成汇总通知（新增人物/事件）+ 全失败 warning 且不推进 cursor（下次重试）+ AI 失败 console 可见 + provider 精确检查，2 测试" },
-          { date: "2026-08-14", type: "fix", text: "黑匣子诊断日志（用户反馈排查）——blackbox-debug.log 落盘自动提炼每一步与异常，启动异常不再静默（warning 通知），2 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子完成——打开秒开（立即渲染+扫描提示条+水合缓存只扫一次，vault 事件失效）+ 录入确认即关（AI 标题后台生成/重命名/注入/关联后台补全，成功通知），243 测试" }
-        ] },
-        { id: "ai", name: "AI", entries: [
-          { date: "2026-09-16", type: "feat", text: "思考档位设置与自动关联候选相似度下限（issue 330）" },
-          { date: "2026-09-16", type: "feat", text: "模型档位表——默认值按当前模型取官方最大档，删除上下文窗口设置行（issue 342/ADR-0151）" },
-          { date: "2026-09-05", type: "feat", text: "浮岛回退 segmented 视觉 + rail 行头三槽 + chip 档入库 + 默认场景保护（issue 200）" },
-          { date: "2026-08-31", type: "feat", text: "AI 提供商策略模式注册表 + 自定义 OpenAI 兼容端点 + 模型/max token 配置（ticket 170）" },
-          { date: "2026-08-31", type: "feat", text: "提供商注册表策略模式完整化——内置 16 家常见提供商（ticket 171）" },
-          { date: "2026-08-31", type: "feat", text: "per-provider 模型/上下文/max token 配置，默认填模型最大输出（ticket 172）" },
-          { date: "2026-08-31", type: "feat", text: "设置页「获取模型名」按钮——拉取服务商模型列表弹选择器回填（ticket 173）" },
-          { date: "2026-08-27", type: "feat", text: "体验优化十项（转文字/AI润色进度、刷新恢复、取消确认、实例复用、打开文件夹、fmtPrec、手柄、空段落引导）（ticket 117）" },
-          { date: "2026-08-25", type: "fix", text: "归档显式回传 url 防抹除+队列 cancelled 短路与同类事件去抖合并（P1-25 P2）" },
-          { date: "2026-08-25", type: "fix", text: "onunload 补全各域卸载接线 + 迁移完成立即落盘" },
-          { date: "2026-08-14", type: "fix", text: "黑匣子启动自动提炼（用户反馈修复）——重启后 cursor 空自动全量/待处理自动增量 + AI 未配置 warning 提示，3 测试" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子全量提炼提速（用户反馈「50/1413 后无数据」）——批次 50→10 + 并发 4 + ai-fail 重试 1 次 + 每轮保存（数据可见/中断不丢），2 测试" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子全量提炼幂等与并发收敛（实测 opencode.ai 并发不稳）——并发 4→1 串行 + processedKeys 已处理指纹（中断重跑不重复提炼/mention 不翻倍）+ 重试 2 次，1 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子摘抄/想法录入完成——bz-blackbox-capture-literature/-thought 直达命令（保存即关）+ 摘抄选区填充锁定与来源笔记自动填充 + 分析名词返回标题建议 + 保存时 AI 标题（分析优先→AI 生成→前 20 字降级，水合回填 title）+ 提炼想法独立笔记带「来自：[[摘抄]]」双链，1083 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子来源笔记原位注入完成——inject.ts（computeInjection 纯函数 + injectIntoSourceNote，恒别名形式 [[目标|原文字]] 显示不变）+ 四重守卫（frontmatter/代码块含未闭合栅栏/数学块/已是 [[…]] 包裹，命中跳过 + toast）+ 概念保存（目标=概念名）/摘抄保存（目标=AI 标题，标题确定后注入），铁律 #1 唯一豁免落地，1108 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子关联与同名处理——① 概念生成卡片 relatedNames 不限数量（AI 挑出所有相关）；② 不同分类同名概念：[[同名]] 关联解析到全部同名 id（conceptNameToIds 多值映射，related/terms 全解析，互不覆盖）；③ 摘抄名词匹配同名概念全部列出，label 带分类后缀区分，terms 关联全部 id；④ 同分类真重名落 -1 文件并存，181 黑匣子测试全绿" },
-          { date: "2026-08-11", type: "fix", text: "卡片盒导入改为逐批确认——修复长时间卡在「扫描中」（原一次性对全量 1400+ 卡串行 AI 分类，Ollama/云端任一挂起即无限等待）；现扫描一次（本地 IO 秒级）→ 每次只分类展示一批 20 张（CLASSIFY_BATCH 常量，AI 失败整批降级 concept 永不拒收）→ 行内 跳过/AI 总结勾选 →「导入本批 N 张」→ 写入 + 日志（imported+skipped）→ 自动加载下一批；统计「本批 x · 待处理 y · 已导入 k · 已跳过 m」；关闭后进度持久化下次继续；MockVault 补 adapter；16 测试" },
-          { date: "2026-08-11", type: "feat", text: "卡片盒导入改为一张一张确认 + Markdown 渲染 + 全部按概念——每次只展示一张卡的完整原始内容（MarkdownRenderer 渲染，失败回退纯文本；内容区可滚动），操作后自动下一张；全部按概念导入（不再 AI 分类类型，去掉分类请求，只保留勾选时的 AI 总结）；后台按 20 张预取池 + 本地关联构建（双链/TF-IDF）；跳过（永不录入，可撤销，撤销栈 20）→ 导入时持久化；统计「第 x/y 张 · 已导入 k · 已跳过 m」；mockMarkdownRenderer 参数化，16 测试" },
-          { date: "2026-08-07", type: "fix", text: "主页点击失效——main.ts 命令注册改回 app.commands.addCommand 裸注册（plugin.addCommand 自动加插件前缀导致 executeCommandById 裸 id 找不到；QuickAdd 删除后降级链消失暴露），主页.js 刷新命令改 dataview:force-refresh-views 完整 id，474 测试" }
-        ] },
-        { id: "core", name: "共享层 core", entries: [
-          { date: "2026-09-26", type: "fix", text: "AI 输出上限护栏——面板上界按 provider×模型动态取、解析出口封顶" },
-          { date: "2026-09-26", type: "feat", text: "四行协议解析与外部工具调用壳抽入核心层" },
-          { date: "2026-09-25", type: "feat", text: "Jev 密钥/模型按服务商分存 + LLM/JEV 密钥行「测试」连通按钮（issue 433/ADR-0190）" },
-          { date: "2026-09-24", type: "fix", text: "JEV 模型选择器服务商名取注册表 + 清理陈旧注释" },
-          { date: "2026-09-24", type: "fix", text: "模型选择器行长说明把模型名挤成逐字竖排" },
-          { date: "2026-09-24", type: "feat", text: "Jev 服务商新增博查——SystemOne 同构直连，模型缺省按服务商各配（issue 430/ADR-0188）" },
-          { date: "2026-09-22", type: "fix", text: "列表头像取图去 Referer——修移动端 UP 名单不显示头像" },
-          { date: "2026-09-21", type: "fix", text: "uiChip 切换型缺省挂 aria-pressed（深审 gameshelf 段残款）" },
-          { date: "2026-09-21", type: "feat", text: "Jev 决策通道封装（issue 389）" },
-          { date: "2026-09-20", type: "feat", text: "触屏悬浮隔离范式——全量 :hover 规则包进 @media (hover: hover)" },
-          { date: "2026-09-20", type: "feat", text: "大面板打开即入焦 + Tab 圈闭范式 trapPanelFocus 全域接线" },
-          { date: "2026-09-19", type: "fix", text: "esc-manager destroy 改软关，main 补 arm 重挂与浮层卸载收口" },
-          { date: "2026-09-19", type: "perf", text: "file-sync rename 引用判定挪进去抖批次按路径去重" },
-          { date: "2026-09-19", type: "fix", text: "fetchPageTitle 改走 httpGetText 带 8s 超时" },
-          { date: "2026-09-19", type: "fix", text: "flow-dialog 危险确认焦点反落取消钮 + message 换行渲染（效率审查#1/#4）" },
-          { date: "2026-09-19", type: "fix", text: "lightbox 媒体类型判定剥查询串/锚点再判后缀（N7 潜伏缺陷）" },
-          { date: "2026-09-19", type: "fix", text: "设置弹窗 ESC/程序化关闭前主动 blur 聚焦元素，防抖窗口内编辑不静默丢失（review-deep 新-1）" },
-          { date: "2026-09-19", type: "fix", text: "设置行落盘兜底与 number 输入批——persist 统一 catch/钳制回写/token 下界（N5/R9/效率#14/N4/新-1 连带）" },
-          { date: "2026-09-19", type: "feat", text: "路径选择器新建文件夹与键盘闭环，回调容错回滚（效率#10/#11、R7、N6）" },
-          { date: "2026-09-19", type: "fix", text: "相对时间收敛 str.relTime 单源，utils 基础档与密码本转发（一致#4）" },
-          { date: "2026-09-19", type: "fix", text: "uiSelect ESC 只收下拉不穿宿主面板层；select/popover 下方空间不足向上翻" },
-          { date: "2026-09-19", type: "feat", text: "触控热区修饰类自带热区；.bz-field 补定位锚定；通知常驻帧关闭钮样式" },
-          { date: "2026-09-19", type: "fix", text: "通知系统批——操作按钮键盘可达、常驻帧显式关闭、重试出口、句柄动作 API" },
-          { date: "2026-09-19", type: "fix", text: "拖拽收尾防线放行键盘 click；document 级拖拽监听离场自摘" },
-          { date: "2026-09-19", type: "feat", text: "uiModal 内置焦点管理 + trapFocus 三壳圈闭；stat/suggest 键盘收口" },
-          { date: "2026-09-19", type: "feat", text: "uiModal 补 dialog 读屏语义并新增 bindFormSubmit 回车提交基元" },
-          { date: "2026-09-19", type: "fix", text: "uiModal 增存活登记表与 closeAllModals，插件卸载统一收口弹窗" },
-          { date: "2026-09-19", type: "feat", text: "新增 openExternalUrl 外链打开单源（一致#14）" },
-          { date: "2026-09-16", type: "feat", text: "AI 输出上限面板独裁——调用点私有 max_tokens 全拆除（issue 334/ADR-0148）" },
-          { date: "2026-09-16", type: "fix", text: "引用同步补漏——secondbrain rename rekey、diary 内存同步、checkup 孤儿扩展（issue 339）" },
-          { date: "2026-09-15", type: "feat", text: "新增智谱 Plan 服务商——Coding 套餐专用端点（glm-5.3-flash）" },
-          { date: "2026-09-12", type: "fix", text: "共享基座修复批 C1-C12——AI 请求空闲超时与 provider 缓存隔离、vault 事件目录判定与 md↔非md 改名补发、下拉/浮层 ESC 走 escManager、长按静置窗口落点校验、派生密钥缓存 LRU 有界、恒顶集反注册与离场清扫、灯箱直关注销 esc、设置 list 行移除异常回滚通知、模型选择器 onPick 异常仍关闭、choice resize 监听离场自摘（含原型快照同步与回归测试）" },
-          { date: "2026-09-11", type: "feat", text: "共享遮罩统一毛玻璃（--bz-overlay-blur 单源，明暗自适应）" },
-          { date: "2026-09-11", type: "fix", text: "diary 日期筛选遮罩收编毛玻璃单源" },
-          { date: "2026-09-07", type: "feat", text: "reset.css 新增裸 button 排版基线，压平 Obsidian 核心组件化排版" },
-          { date: "2026-09-07", type: "fix", text: "裸 button 排版基线改直落聚合产物 styles.css，收窄 reset.css 与原型文档" },
-          { date: "2026-09-05", type: "feat", text: "通知层新增 notifyActionError 动作失败统一模板" },
-          { date: "2026-09-05", type: "feat", text: "全局覆盖层 reset.css——手动重置 Obsidian 默认（issue 196）" },
-          { date: "2026-09-05", type: "fix", text: "恢复长按抽屉共享基线——movie 退役时随域文件误删（issue 198）" },
-          { date: "2026-09-04", type: "fix", text: "组件库与设置面板/存储层审查修复（L1-L11、P2-1~4）" },
-          { date: "2026-09-04", type: "feat", text: "图表配色常量收编共享层，组件库扩 accent/tint 修饰符" },
-          { date: "2026-09-04", type: "feat", text: "图标钮扩 boxed/active 修饰符——盒装变体与开关激活态进样式库" },
-          { date: "2026-09-02", type: "fix", text: "输入框点击聚焦去强化外轮廓（ticket 175）" },
-          { date: "2026-09-02", type: "fix", text: "输入框聚焦保持基态边框（ticket 175 延伸）" },
-          { date: "2026-09-02", type: "feat", text: "bz 组件库首批——自绘 token + ui 工厂（btn/btnRow/iconBtn/chip/field/input/empty/segmented/dialogActions/lightbox）" },
-          { date: "2026-08-29", type: "feat", text: "动态 z-index 层级制——谁后显示谁在上（ADR-0067）" },
-          { date: "2026-08-28", type: "feat", text: "统一路径选择器卡片弹窗 + 移动端设置行两行式（ticket 128，ADR-0061）" },
-          { date: "2026-08-28", type: "feat", text: "声明式设置 schema 渲染器与通用组预设，设置弹窗 schema 入口收编（ticket 131）" },
-          { date: "2026-08-27", type: "feat", text: "通知 setType 按正文 60ms/字动态计时并导出 cleanupNotices（UX 整改 16/l2-toast）" },
-          { date: "2026-08-27", type: "feat", text: "弹窗焦点管理/读屏语义与菜单抽屉键盘导航（UX 整改 37/38）" },
-          { date: "2026-08-27", type: "fix", text: "确认弹窗聚焦确认钮/移动端跳输入聚焦/卸载兜底清理" },
-          { date: "2026-08-26", type: "feat", text: "通知停留时长按字数动态计算（ticket 113）" },
-          { date: "2026-08-25", type: "fix", text: "esc-manager 命中可见层后 stopImmediatePropagation，杜绝同节点私挂监听双触发（P1-30）" },
-          { date: "2026-08-25", type: "fix", text: "json-store 并发首建竞态降级 + 损坏留档重建（P1-31/P1-32）" },
-          { date: "2026-08-25", type: "fix", text: "confirm 弹窗文案 HTML 转义防注入（P0-8）" },
-          { date: "2026-08-25", type: "fix", text: "通知常驻帧不被堆叠挤出（P1-33）" },
-          { date: "2026-08-25", type: "feat", text: "域事件总线一期——总线+适配器+动态分类器，全域消费者换线（ticket 101，ADR-0047）" }
-        ] },
-        { id: "ui", name: "界面通用", entries: [
-          { date: "2026-09-12", type: "fix", text: "清退 bookshelf/diary 残留冗余滚动条声明（review 277）" },
-          { date: "2026-09-12", type: "feat", text: "全域子弹窗统一——一套浮层壳 + 域皮贯通（issue 291）" },
-          { date: "2026-09-12", type: "fix", text: "危险中性补全——8 处破坏性确认补 danger + core 整套中性形制复位（issue 291 评审）" },
-          { date: "2026-09-12", type: "fix", text: "危险中性语义补全（第二轮评审）——17 处破坏性确认 + 域皮不变量守门" },
-          { date: "2026-09-11", type: "feat", text: "域遮罩统一毛玻璃（token 单源收编，品牌底色域只加 blur）" },
-          { date: "2026-09-11", type: "fix", text: "隐藏滚动条收敛界面级单源 + 可见条清退（issue 277）" },
-          { date: "2026-09-05", type: "fix", text: "走查批 D——各域文案与术语清理（12 项）" },
-          { date: "2026-09-02", type: "feat", text: "重建克制版 reset（只压核心 box-shadow/outline 渗漏）" },
-          { date: "2026-09-02", type: "feat", text: "引入官方 normalize.css v8.0.1 全局生效" },
-          { date: "2026-08-28", type: "fix", text: "关闭按钮统一 （ticket 130）" },
-          { date: "2026-08-07", type: "feat", text: "主面板/条目列表/弹窗族/滚轮选择器/写摘抄 + 设置页装配（69 测试全绿，产物已构建到 vault）" }
-        ] },
-        { id: "checkup", name: "数据体检", entries: [
-          { date: "2026-09-20", type: "fix", text: "数据体检深审修复批——白名单对齐域单源 + 契约锁 + 修复链整改" },
-          { date: "2026-09-20", type: "fix", text: "拍板修复批——单条修复免确认 + 可选段豁免 + 按域分组修复 + 提示条可操作化" },
-          { date: "2026-09-05", type: "feat", text: "数据体检域数据层——四类只读检查纯函数与一键修复" },
-          { date: "2026-09-05", type: "feat", text: "体检面板 UI——三态分组/进度取消/一键修复撤销链" },
-          { date: "2026-09-05", type: "feat", text: "数据体检入口——bz-data-checkup-open 命令 + 设置面板通用组按钮行" },
-          { date: "2026-09-05", type: "feat", text: "头行与面板壳接入共享组件（issue 198）" }
-        ] },
-        { id: "other", name: "其他", entries: [
-          { date: "2026-09-23", type: "fix", text: "全域搜索框清除钮对齐效率#12 口径——有词才现、清空即隐" },
-          { date: "2026-09-23", type: "fix", text: "设置面板评审壳三处裸奔——样式链缺收藏本 / 图标表缺 11 键 / 自检卡在已退役的 appearance 域" },
-          { date: "2026-09-19", type: "fix", text: "三域假层 MarkdownRenderer 改追加语义并重出产物" },
-          { date: "2026-09-19", type: "fix", text: "保存失败文案收敛 notifySaveError + 文案口径三处（一致#3/#10/#11）" },
-          { date: "2026-09-19", type: "fix", text: "加密过滤只认「加密」标签，正文手打 不再误滤（N2）" },
-          { date: "2026-09-19", type: "fix", text: "假层 FakeVault.offref 按 ref 摘单个监听（A7）" },
-          { date: "2026-09-19", type: "fix", text: "修复既存红×2——原型新鲜度指纹行尾归一 + clipbook 冻结序 fixture 动态日期（issue 382）" },
-          { date: "2026-09-13", type: "fix", text: "空日期文件改判直接归档（无内容可拆零丢失），与未解析行人工清单分离" },
-          { date: "2026-09-11", type: "fix", text: "writeNewsData 剥离 missing 读兜底标记（八段契约约定外段）" },
-          { date: "2026-09-11", type: "fix", text: "首页域自检改用面板自绘组件选择器（.bz-select/.bz-sw + data-key）" },
-          { date: "2026-09-10", type: "feat", text: "评审环境保真——宿主主题桥 + vault 媒体按需取流" },
-          { date: "2026-09-10", type: "fix", text: "重出滞后的原型行为产物——首页退役「回忆墙」独立入口" },
-          { date: "2026-09-10", type: "feat", text: "13 个行为单源域的移动外景统一为小米13U 真机尺寸" },
-          { date: "2026-09-08", type: "feat", text: "原型热重载服务导航主页（仓库根 index.html）" },
-          { date: "2026-09-08", type: "fix", text: "uiSelect 菜单贴视口右缘溢出兜底（实测右缘左移收进，极窄视口交由 ellipsis）" },
-          { date: "2026-09-06", type: "feat", text: "纸感皮肤细节对齐原型 + 弹窗换肤（issue 210 二轮）" },
-          { date: "2026-09-06", type: "fix", text: "纸感排序改原型 segmented+表单选择同语言+隐藏头行钮+修皮肤卡预览塌陷（issue 210 三轮）" },
-          { date: "2026-09-06", type: "fix", text: "纸感排序/弹窗场景优先级统一拼接式 segmented+搜索框间距（issue 210 四轮）" },
-          { date: "2026-09-06", type: "feat", text: "编辑部排序/表单 segmented+右键菜单换肤+默认风格下线+预览卡兜底（issue 210 五轮）" },
-          { date: "2026-09-06", type: "fix", text: "皮肤卡预览 flex 收缩根治+编辑部隐藏头行钮（issue 210 六轮）" },
-          { date: "2026-09-05", type: "feat", text: "待办面板支持笔记定位与剪藏场景剪贴板预填" },
-          { date: "2026-09-05", type: "feat", text: "新增提醒后台，被动捕获入口改道待办面板" },
-          { date: "2026-09-05", type: "feat", text: "core/storage 段级合并写原语——读改段写一步式与声明式糖" },
-          { date: "2026-09-05", type: "feat", text: "今日回顾面板——五域当天痕迹只读聚合与时间轴" },
-          { date: "2026-09-05", type: "feat", text: "bz-recap-today 命令注册与 home 入口磁贴" },
-          { date: "2026-09-05", type: "feat", text: "导出原样留档原语 backupOriginal——供自带串行链的域对齐 core 留档契约" },
-          { date: "2026-09-05", type: "feat", text: "D3 写路径收编——launcher.json 保存入 core per-path 串行队列 + 回归" },
-          { date: "2026-09-05", type: "fix", text: "移动端接入 .bz-panel-mtop 统一 44px 顶距，头行去掉自垫安全区（增量 review P1）" },
-          { date: "2026-09-05", type: "fix", text: "走查批 C——头行改独有类 .bz-todo-panel-head 拆雷 + 面板挂 .bz-panel-mtop（项 6）" },
-          { date: "2026-09-05", type: "feat", text: "头行钮组/场景栏图标化/添加场景移位/主头行基线对齐（issue 197）" },
-          { date: "2026-09-05", type: "feat", text: "浮岛 segmented 组件化 + 待办弹窗修复 + meta 行基线对齐（issue 199）" },
-          { date: "2026-09-05", type: "fix", text: "浮岛指示器先建后挂自愈——未挂载时限次 rAF 重试，默认选中白卡开窗即现（issue 200 跟进）" },
-          { date: "2026-09-04", type: "fix", text: "服务商下拉宽度兜底，宿主钳宽时按选项实测溢出撑开菜单" },
-          { date: "2026-09-04", type: "fix", text: "下拉选中对勾紧跟选项文字，不再被 flex 拉伸推到行尾" },
-          { date: "2026-09-04", type: "fix", text: "移动端面板不写内联宽高；打开时播种共享排序/归档默认设置" },
-          { date: "2026-09-04", type: "fix", text: "readingProgress 非法值兜底为 0，防 NaN 污染进度与排序" },
-          { date: "2026-09-04", type: "fix", text: "z-index 写在 cssText 之后，动态发号不再被整体替换清掉" },
-          { date: "2026-09-04", type: "fix", text: "公开课条目保存/编辑随课程名写入 coursePath，课程标签不再断链" },
-          { date: "2026-09-04", type: "fix", text: "跳转高亮后 200ms 定时器捕获当次弹窗引用，不误关重开的新弹窗" },
-          { date: "2026-09-04", type: "fix", text: "jumpToHighlight 弃用 activeLeaf 改 getMostRecentLeaf，聚焦失败不阻断跳转" },
-          { date: "2026-09-04", type: "fix", text: "搜索加 180ms 防抖并修正注释口径，面板关闭清理计时器" },
-          { date: "2026-09-04", type: "fix", text: "open 异步竞态守卫 + 拖拽目标行上界钳制" },
-          { date: "2026-09-04", type: "feat", text: "待办场景工作台增强包（撤销/重要视图/场景管理/今日口径等）" },
-          { date: "2026-09-04", type: "feat", text: "确认键默认文案改「下一步」" },
-          { date: "2026-09-03", type: "feat", text: "新增平铺单选组件 .bz-choice/uiChoice（表单替代下拉）" },
-          { date: "2026-09-03", type: "feat", text: "新增待办域（场景工作台 UI，与备忘录并存同源 memo.json）" },
-          { date: "2026-09-03", type: "fix", text: "补回主头行（场景标题 + 计数 + 新建待办按钮）" },
-          { date: "2026-09-03", type: "fix", text: "编辑器去平铺圆点 + 第二输入框上移；回退全局按钮 !important" },
-          { date: "2026-09-03", type: "fix", text: "组件按钮三属性加 !important 对抗 Obsidian 核心 button 默认" },
-          { date: "2026-09-01", type: "feat", text: "列表改原型式行布局——平台粗体+mono账号+密码强度条+工具栏搜索（对齐 UI 原型）" },
-          { date: "2026-09-01", type: "feat", text: "v1-vault Route C platform-aggregated UI" },
-          { date: "2026-08-31", type: "fix", text: "搜索框首点即展开——初始内联 display:none 与 CSS 对齐（ticket 169）" },
-          { date: "2026-08-31", type: "feat", text: "评分 6 分制改 10 分制 + 星星支持半星（ticket 170）" },
-          { date: "2026-08-31", type: "fix", text: "星串改为整星四舍五入，去掉半星字符（ticket 170）" },
-          { date: "2026-08-30", type: "feat", text: "压缩回退——压缩件比原文件大则采纳原文件（ticket 145）——needsCompressFallback 严格更大回退（删压缩件/不写 resume-compress 缓存/交付文件名不带 _crf 标记，stat 异常保守采纳）；断点续跑命中压缩缓存恒为采纳；CONTEXT/README/cli.js 注释同步；新增单测" },
-          { date: "2026-08-30", type: "fix", text: "--batch 经 shell 启动改 base64 传输，修复批量处理整批 JSON 解析失败（ticket 147）——core.js decodeBatchArg 收 b64:/直传双形态，cli.js 改用它；processor resolveBatchSpawn 下发 b64: 前缀（.cmd shim shell:true 下 JSON 引号/空格被对消破坏 argv，实测报 position 1 JSON 错）；tools 新增 decodeBatchArg 单测 + processor 断言改 base64 解码；CONTEXT 词条补 b64 说明" },
-          { date: "2026-08-30", type: "fix", text: "移动端长按不松手直接拖拽图标（ticket 157）——bindDrag 常态按下挂同手势延续监听：长按进编辑后手指移动超阈值按 tile.id 重找元素直接 startDrag（iOS 式免重按）；document 非被动 touchmove preventDefault 防滚动抢占 pointercancel（拖拽全程、抬起解除、detachDragListeners 兜底）；.launcher-tile.editing 加 touch-action:none；grid 拦 contextmenu、磁贴禁 touch-callout；测试 helper 补 pointerup 释放 + 新增同手势拖拽/仅进编辑用例；issues/157 + spec/PROGRESS" },
-          { date: "2026-08-29", type: "fix", text: "移动端真全屏宽度被常规卡 95% 规则压制，:not(.bz-win-mfs) 排除修复" },
-          { date: "2026-08-28", type: "fix", text: "修订三处——路径行移动端单行兜底（split 跳过 + 守卫类 CSS）、移动端选择器外边距、空态按钮态回归锁定" },
-          { date: "2026-08-28", type: "fix", text: "统一样式——选择器桌面/移动端一张居中卡（去移动端近全屏分支、加外边框）；按钮已选态改 CSS data-filled 双保险隐藏" },
-          { date: "2026-08-27", type: "feat", text: "启动器即时反馈与软超时失败升级（ticket 117）" },
-          { date: "2026-08-27", type: "fix", text: "焦点环与 z 抬档落入域样式源并重建聚合产物" },
-          { date: "2026-08-27", type: "fix", text: "海报超时明确失败、标记已看直弹评分、自定义 tag 归「其他」、空态区分、卸载清 DOM（UX 整改 13/14/50/53/x4/l1/l6/f2）" },
-          { date: "2026-08-27", type: "fix", text: "复制失败提示覆盖 clipboard API 缺失路径（ticket 4 补丁）" },
-          { date: "2026-08-27", type: "fix", text: "B站接口风控识别与引导——web_location 参数 + -352 拦截显式提示登录 Cookie（ticket 127）" },
-          { date: "2026-08-25", type: "fix", text: "全量并发下 6 个用例假超时——放宽 testTimeout 与 waitFor 上限" },
-          { date: "2026-08-25", type: "fix", text: "拖拽补 pointercancel 回弹 + 关闭/卸载解绑 document 级监听；统一缺省列数=6 注释口径" },
-          { date: "2026-08-25", type: "fix", text: "缺片名推荐条目不建空笔记 + 空评分显式归已看" },
-          { date: "2026-08-25", type: "fix", text: "ESC 层永真/companion 层级/重开刷新/批注注入转义/空 id 守卫/双弹窗竞态（P0-9 P0-7 P1-19 P1-18 P2×2）" },
-          { date: "2026-08-25", type: "fix", text: "ollama httpFetch 统一 30s 超时+jumpToChunk 选区定位修正（P1-10 P2）" },
-          { date: "2026-08-25", type: "fix", text: "生成器改 crypto.getRandomValues+拒绝采样消除模偏差；复制账号/密码后 60s 定时尽力清空剪贴板；load 过滤 null/非对象脏元素不再炸整表（P2x3）" },
-          { date: "2026-08-25", type: "fix", text: "转文字逐段化 + 下载后空段落 + 笔记视频块布局（1.2.3）" },
-          { date: "2026-08-25", type: "fix", text: "本地未发布版直连 + 转录单次加载 + 顺序五步链路（1.2.4 未发布）" },
-          { date: "2026-08-23", type: "feat", text: "样式按域拆分完成——铁律9 改为 src/<域>/styles.css + 构建聚合（22 分节逐字搬运无损、顺序审计级联不变、scripts/build-css.mjs 聚合产物勿手改），1162 测试" },
-          { date: "2026-08-23", type: "feat", text: "收尾——build-css 聚合产物统一 CRLF 行尾（消除混合行尾导致的 git 状态假差异）" },
-          { date: "2026-08-22", type: "fix", text: "触屏单击无预览——longPress touchstart preventDefault 会抑制原生 click，短按（未长按/未移动）在 touchend 补发合成 click，保险箱表格触屏单击恢复开预览；+3 长按/触屏回归测试（短按补发/长按不补发/移动取消），1019 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "关闭按钮隐藏改全局（含桌面端）——非真全屏一律隐藏关闭钮（桌面/卡片靠点遮罩+ESC，真全屏 .bz-win-mfs 靠 ），元素选择器提特异性防覆盖，ADR-0019 修订第 4 条，1075 测试全绿" },
-          { date: "2026-08-22", type: "fix", text: "修复触屏列表滚动被长按禁掉 + 菜单紧凑化——core longPress 改被动监听（滚动恢复，长按吞合成 click 防穿透），跟手菜单小尺寸无底色简洁风，1108 测试" },
-          { date: "2026-08-22", type: "feat", text: "移动端长按改底部抽屉（参照 B 站/网易云）——遮罩+底部滑入+顶部显示选中条目信息，桌面保持跟手菜单与 hover 操作条，1114 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉顶部信息与列表完全一致（标题+完整 meta 共用 buildMeta）、按钮去背景去边框小字号、移除顶部把手，1114 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉按钮左对齐显式抗居中 + 编辑拆出「优先级切换」项（重要↔次要即时写盘），1115 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉新增标记完成/恢复、延后1·3天、复制内容、跳转关联笔记——全部按条目数据条件显示，编辑入口保留，1119 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉增强——功能项区 70vh 内部滚动隐藏滚动条、下滑关闭手势（拖动跟随+遮罩变淡+超阈值滑出/回弹，滚动区优先不抢），1123 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉/操作条图标从 emoji 换 Obsidian 原生 lucide（setIcon + IconName 类型化，svg 尺寸/颜色由 CSS 收敛），1123 测试" },
-          { date: "2026-08-22", type: "feat", text: "抽屉头部——信息区禁选复制、标签/时间字号 14px、内容固定区域三行省略（不滚动），1124 测试" },
-          { date: "2026-08-22", type: "fix", text: "解密还原后主动重读日期文件并并回列表（refreshFile 导出复用，不再依赖文件监听事件，修复还原条目不显示），1127 测试" },
-          { date: "2026-08-22", type: "feat", text: "桌面右键菜单项去边框——.bz-item-menu-item 加固为与抽屉项同款高特异性+!important（抗 Obsidian 默认 button 灰底/边框/圆角压盖），hover 保留浅灰底，1148 测试" },
-          { date: "2026-08-19", type: "fix", text: "bili-downloader 1.1.0 剪辑增强——多段落(分开/合并交付)、HH:MM:SS(.S) 时间、手动输入双向同步、-t 参数+ffprobe 校验修复长视频三秒，38 测试全绿" },
-          { date: "2026-08-19", type: "fix", text: "bili 1.1.1——修复合并双链双重嵌套；分批/分P 视频列出可单选下载、文件名带 P 标记，39 测试全绿" },
-          { date: "2026-08-19", type: "fix", text: "bili 1.1.2 下载进度修复——Content-Length 计真进度(不再恒 25%)；仅零字节 stall 才换节点(慢速不失败)，42 测试全绿" },
-          { date: "2026-08-19", type: "feat", text: "bili 分P 选择与下载按钮之间加 10px 边距" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子人物画像完成——画像卡（印象/观察/情绪/事件数）+ 详情采纳移除 + mentions 候选 + humanEdited 锁，6 测试" },
-          { date: "2026-08-14", type: "feat", text: "黑匣子复盘完成——手动四段报告（事实锚定）JSON 落盘 + 对话流可见 + 新人物提示 + 画像观察聚合 ≤5 裁旧，12 测试" },
-          { date: "2026-08-14", type: "fix", text: "删除黑匣子域（用户决策：功能失败，不留痕迹）——删 src/blackbox 13 文件 + tests/blackbox 9 文件 + ADR 0013-0017 + CONTEXT/AGENTS 术语 + styles.css 294 行 + spec/PROGRESS/issues 33-64 + vault 数据（blackbox.json/debug.log/data.json 字段），全量 962 测试绿" },
-          { date: "2026-08-12", type: "fix", text: "ticket 黑匣子 v3 数据层笔记化完成——blackbox.json v3（派生层+id→路径索引，entries 不落盘）、notes.ts 笔记引擎（frontmatter 冻结+关联区双链块解析+文件名清洗/-N 去重）、v1/v2 load 自动迁移（幂等/失败残留重试/崩溃孤儿跳过重写）、水合容错（缺失文件跳过+孤儿自愈+[[名]]→id 解析，未解析入 pendingLinks）、写入路径全笔记化（addEntry/addEntries/deleteEntry 引用清理/backfillRelated 重写既有笔记），内存条目接口不变，1069 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子概念录入改造完成——bz-blackbox-capture-concept 直达命令（保存即关）+ 双输入（概念名单行 + 定义 textarea auto-grow ≤8 行）+ 主按钮内容判定（空→生成卡片/非空→确定录入，无重新生成入口）+ core 选区读取助手（getSelectionSnapshot 供自动填充/原位注入复用）+ 选中文字自动填充概念名锁定只读，1077 测试" },
-          { date: "2026-08-12", type: "fix", text: "黑匣子按用户决策重构——① load 不再自动迁移（一次性迁移走 tools/migrate-blackbox-v3.mjs，已对用户 vault 执行：1489 篇笔记 + v3 索引）；② 概念分类子文件夹（黑匣子/概念/<分类>/<名>.md，tools/classify-blackbox-concepts.mjs 规则 16 类已执行，1489 篇全部分类归位，B细胞-1 修复）；③ frontmatter 完整化（name/title/related/terms/from/pendingLinks 全部落盘，正文关联区被手动修改或误删不丢数据，fm 优先+正文合并）；④ 索引缺失清理（笔记删除→索引移除持久化）；⑤ sync 移除 create 监听防自写循环 + load 并发互斥；⑥ LK-99 类「名含-数字」不再被文件名剥离，1110 测试" },
-          { date: "2026-08-12", type: "fix", text: "blackbox.json 移除 index 字段（2026-08-12 用户决策）——index 改为运行时内存映射，load 全量扫描黑匣子/ 笔记构建（id→路径），不再持久化；save 只写派生层（entries 已不写，index 也不再写），文件更小且笔记即事实源无残留索引；hydrate 简化为纯扫描（删除 index 遍历/缺失清理/孤儿分支，损坏笔记跳过下次重试）；tools 三个脚本与 v3-seed 同步不写 index，1115 测试" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子关联双链改完整路径 [[路径|名]]——① buildNoteContent 正文关联区写 [[黑匣子/概念/<分类>/<名>|显示名]]（fm 仍写名字兼容），nameForId 升级 id→{name,path}（buildNoteRefs），addEntries 增量 refs（同批摘抄→想法 from 双链不丢）；② 解析层 LinkRef{ref,display}：路径链接先 pathToId 精确匹配（同名不歧义）→ 名字匹配兜底（旧格式 [[名]]/fm）→ pendingLinks 用可读 display；③ tools/rewrite-blackbox-wikilinks.mjs 存量重写（幂等）：1489 篇中 1325 篇关联区已路径化，24 个真无匹配保持原样；④ backfillRelated 反向关联不再限 5 条，181 黑匣子测试全绿" },
-          { date: "2026-08-12", type: "feat", text: "黑匣子 目录迁移——黑匣子/ 移入 我的/（BB_NOTE_ROOT 常量 + sync typeRoots 改经常量拼接 + 136 处测试字面量；vault 存量 1327 篇双链与 workspace.json 已同步），1212 测试全绿" },
-          { date: "2026-08-11", type: "fix", text: "黑匣子 v2 审查修复批次——① 录入弹窗重开残留上次文本（6 变量未重置，防重复录入）② 时间线人物筛选兼容冷启动纯名字事件（与画像投影口径一致）③ 推测显示开关初值全局优先（与时间线消费一致）④ spec 命令表补 bz-blackbox-panel，1 测试" },
-          { date: "2026-08-09", type: "fix", text: "B站下载 裁切后可返回原视频重裁 + 压缩无收益保留原件——download 记录 originalPath，新增 /api/revert 恢复下载原件（重置 trimmed/compressed/start/end 与滑块），compress 产物 >= 原件时删压缩件留原件并返回 kept:'original'（前端反馈行红色提醒 + toast），预览区新增「↩ 原视频」按钮，31 测试" },
-          { date: "2026-08-08", type: "feat", text: "入口页完成——全局唯一命令入口弹窗（单例/长按编辑模式/推挤拖拽/档位手柄/幽灵磁贴/自定义图标/命令选择器），36 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页——移动端网格按容器宽度比例自适应（calcCellSize+拖拽步长同步）+ 磁贴改名（label 字段/编辑模式点名字弹窗），40 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页二轮增量——双平台独立配置(v2)+隐藏文字+emoji图标+去标题栏+空白格加号+遮罩关闭+间距8+手势触发(双击/三击/双指下滑)，60 测试" },
-          { date: "2026-08-08", type: "fix", text: "手势触发合并为单选下拉（launcherGesture off/double/triple/swipe，旧三开关自动迁移）+ 移动端配置落盘（3 行 9 磁贴全 emoji 隐藏文字），71 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页 Windows 磁贴风格——无背景无边框透明磁贴（emoji 上图下小字 9-12px）+ 底部滑入动画 + 紧贴底栏（顶部圆角/底部直角），60 测试" },
-          { date: "2026-08-08", type: "fix", text: "入口页测试类型——longPressEnterEdit 辅助返回类型收紧，tsc 清零" },
-          { date: "2026-08-08", type: "fix", text: "添加命令默认固化命令自带图标（tile.icon 缺省填命令 icon；无图标命令不固化走运行时兜底），66 测试" },
-          { date: "2026-08-08", type: "fix", text: "图标渲染改 getIcon 判定（命令图标不在本地清单但 Obsidian 有效 → setIcon，不再把图标名当文字）；移动端底部内边距加大到 48px 撑起贴底内容，68 测试" },
-          { date: "2026-08-08", type: "fix", text: "移动端判定改用 Obsidian 官方 Platform.isMobile（window.Capacitor 在桌面 Electron 环境可能被注入导致误判滑入），77 测试" },
-          { date: "2026-08-07", type: "feat", text: "工程骨架 + core 共享层 + 标签配置/解析层（36 测试全绿）" },
-          { date: "2026-08-07", type: "feat", text: "数据层（加载/写回/增删/刷新监听）+ 50 测试全绿" },
-          { date: "2026-08-07", type: "fix", text: "init 刷新回调先于 loadAll 注册——修复列表不渲染/搜索按钮不可见/搜索框未默认隐藏（+回归测试）" },
-          { date: "2026-08-07", type: "fix", text: "onLayoutReady 延迟初始化 + 目录递归查找兜底（解决 getAbstractFileByPath 在 onload 早期返回 null）" },
-          { date: "2026-08-07", type: "fix", text: "buildTagMaps 顶层调用移到映射表声明之后（TDZ）" },
-          { date: "2026-08-07", type: "feat", text: "完成——阅读数据分析报告（10 大章节：统计/年度/作者/速度/习惯/趋势/热力图/专注度/类别/互动，香农多样性/基尼平衡/FSRS 系列纯函数），34 测试" },
-          { date: "2026-08-07", type: "feat", text: "完成——e2e 验收（15 域/478 测试/25 命令/构建产物输出 vault）、README 重写、闪念按用户指示暂缓（stash flash-wip-ticket18）" }
-        ] }
+      CHANGELOG_DOMAIN_NAMES = {
+        "global": "通用",
+        "notice": "通知",
+        "ai": "AI",
+        "settings-panel": "设置面板",
+        "diary": "日记本",
+        "memo": "备忘录",
+        "belongings": "归物本",
+        "people": "脸谱",
+        "clipping": "剪藏本",
+        "favorites": "收藏本",
+        "reading-report": "阅读报告",
+        "cinema": "影院",
+        "bookshelf": "书库",
+        "gameshelf": "游戏库",
+        "review": "复习计划",
+        "secondbrain": "第二大脑",
+        "auto-summary": "自动摘要",
+        "knowledge": "知识盒",
+        "home": "首页",
+        "pomodoro": "番茄钟",
+        "smartcat": "小橘陪伴猫",
+        "attach": "附件搬移",
+        "encrypt": "保险库",
+        "password-vault": "密码本",
+        "core": "核心",
+        "ui": "界面",
+        "checkup": "数据体检",
+        "other": "其他"
+      };
+      CHANGELOG_META = { generatedAt: "2026-09-26", current: "1.24.0", releases: 25 };
+      CHANGELOG_RELEASES = [
+        {
+          version: "1.0.0",
+          date: "2026-08-03",
+          current: false,
+          added: [
+            { domain: "cinema", text: "影视 海报抓取监听", sub: "创建影视笔记后轮询「海报」字段，非空即原地更新常驻 progress 通知为完成（不弹第二条通知）" },
+            { domain: "settings-panel", text: "设置归属模型完成", sub: "ADR-0009 全局设置页单页化（AI+共享 storagePath）+ 10 域 设置弹窗 + 筛选/排序统一 + storagePath 迁移（旧 …" },
+            { domain: "other", text: "入口页完成", sub: "全局唯一命令入口弹窗（单例/长按编辑模式/推挤拖拽/档位手柄/幽灵磁贴/自定义图标/命令选择器）" },
+            { domain: "auto-summary", text: "自动摘要 补充", sub: "调用 AI 时通知「正在为《xx》生成摘要…」" },
+            { domain: "auto-summary", text: "自动摘要 完成", sub: "create/open 双触发、缺字段 AI 补全（缺 title 重命名笔记）、通知《title》/summary/#tags" },
+            { domain: "cinema", text: "影视 方案反转" },
+            { domain: "cinema", text: "影视 工具 README 重写", sub: "去掉 pm2 内容，补充绝对路径坑/风控重试/跳过逻辑/插件集成说明" },
+            { domain: "cinema", text: "影视 完成", sub: "海报抓取集成全局 npm 包" },
+            { domain: "memo", text: "收藏本数据路径固定文件名（设置只允许改目录，兼容旧完整路径值）+ 复习⇄做题家联动…" },
+            { domain: "memo", text: "主页改造+全量改名", sub: "主页.js 点击换 bz 命令/去 QuickAdd 降级链，插件目录 memo-suite→bz、30 命令统一 bz- 前缀（ADR-0004 修订）…" },
+            { domain: "diary", text: "日记本合并", sub: "插件更名「包仔」（日记本+备忘录同插件）——从历史恢复 diary-notebook 官方源码/open-panel 裸注册+ribbon/styles.…" },
+            { domain: "ui", text: "主面板/条目列表/弹窗族/滚轮选择器/写摘抄 + 设置页装配" },
+            { domain: "other", text: "数据层（加载/写回/增删/刷新监听）+" },
+            { domain: "other", text: "工程骨架 + core 共享层 + 标签配置/解析层" }
+          ],
+          fixed: [
+            { domain: "review", text: "通知系统修订", sub: "显式指定类型（删 emoji 自动归类）、类型图标 emoji（ℹ///）、桌面右侧弹出/移动端顶部居中、dedupe 同键存活期单框合并（可切类型+重置…" },
+            { domain: "other", text: "B站下载 裁切后可返回原视频重裁 + 压缩无收益保留原件", sub: "download 记录 originalPath，新增 /api/revert 恢复下载原件（重置 trimmed/compressed/start/en…" },
+            { domain: "diary", text: "通知覆盖补全", sub: "日记条目删除/影视添加成功/收藏删除三处操作反馈（全仓操作点扫描确认其余均已有通知或 UI 即时反馈）" },
+            { domain: "encrypt", text: "通知补白", sub: "dedupeKey 30s 去重节流 + z-index 100000 最顶 + 移动端适配（safe-area/34px 顶距/宽度 clamp 视口）…" },
+            { domain: "settings-panel", text: "入口页设置平台双套：文字显隐与手势拆分为桌面（launcherShowText/l…" },
+            { domain: "settings-panel", text: "设置弹窗 z-index 10030（盖过主面板 9999/面板内弹窗 10005…" },
+            { domain: "cinema", text: "迁移 QuickAdd《影视数据分析.js》→ src/movie/analysi…" },
+            { domain: "cinema", text: "新增命令 bz-movie-report 影视分析报告（AI 品味分析推荐入口，原…" },
+            { domain: "other", text: "移动端判定改用 Obsidian 官方 Platform.isMobile（win…" },
+            { domain: "other", text: "图标渲染改 getIcon 判定（命令图标不在本地清单但 Obsidian 有效 …" },
+            { domain: "other", text: "添加命令默认固化命令自带图标（tile.icon 缺省填命令 icon；无图标命令…" },
+            { domain: "review", text: "新增命令 bz-review-start 开始复习（进入复习流程，包装 autoJ…" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.1.0",
+          date: "2026-08-10",
+          current: false,
+          added: [
+            { domain: "favorites", text: "收藏本 GitHub 增强", sub: "真实 GitHub API 拉取仓库名/简介(fetched 标志+8s超时+重试1次) + AI 整理联动(GitHub 链接标题预填/简介忠实翻译/标…" },
+            { domain: "ai", text: "黑匣子全量提炼幂等与并发收敛（实测 opencode.ai 并发不稳）" },
+            { domain: "ai", text: "黑匣子全量提炼提速（用户反馈「50/1413 后无数据」）", sub: "批次 50→10 + 并发 4 + ai-fail 重试 1 次 + 每轮保存（数据可见/中断不丢）" },
+            { domain: "notice", text: "黑匣子提炼进度通知（用户反馈）", sub: "完成汇总通知（新增人物/事件）+ 全失败 warning 且不推进 cursor（下次重试）+ AI 失败 console 可见 + provider 精…" },
+            { domain: "favorites", text: "黑匣子设置/样式/装配完成", sub: "设置弹窗 6 项（含词表增删）+ Ollama 接入 + styles.css v4 收敛（删 v3 1300 行）+ 构建直出 vault" },
+            { domain: "diary", text: "黑匣子对话完成", sub: "三层记忆（日记 TF-IDF + 画像概要 + 历史 maxHistory）+ 包仔人设常量 + AI 降级" },
+            { domain: "other", text: "黑匣子复盘完成", sub: "手动四段报告（事实锚定）JSON 落盘 + 对话流可见 + 新人物提示 + 画像观察聚合 ≤5 裁旧" },
+            { domain: "other", text: "黑匣子人物画像完成", sub: "画像卡（印象/观察/情绪/事件数）+ 详情采纳移除 + mentions 候选 + humanEdited 锁" },
+            { domain: "settings-panel", text: "黑匣子提炼链路完成", sub: "vault 监听 30 分钟防抖 + 一次 AI 调用批量提炼 + 首次全量分批 50 + 三标签面板骨架" },
+            { domain: "diary", text: "黑匣子 v4 设计落盘", sub: "容器改日记分析层" },
+            { domain: "memo", text: "memo 样式提取完成" },
+            { domain: "memo", text: "memo 代码精简完成", sub: "按钮工厂/标签常量/建议列表泛型化/设置项辅助，1936→1739 行，全量" },
+            { domain: "notice", text: "黑匣子完成", sub: "打开秒开（立即渲染+扫描提示条+水合缓存只扫一次，vault 事件失效）+ 录入确认即关（AI 标题后台生成/重命名/注入/关联后台补全，成功通知）" },
+            { domain: "other", text: "黑匣子 目录迁移" }
+          ],
+          fixed: [
+            { domain: "review", text: "做题进度题号不递增修复（用户反馈）" },
+            { domain: "review", text: "做题选项长文本两头截断修复（用户反馈）" },
+            { domain: "review", text: "复习批量出题秒失败修复（用户反馈）" },
+            { domain: "review", text: "复习「做题家未初始化」误报修复" },
+            { domain: "review", text: "复习计划「做题决定难度」生效修复（用户反馈）" },
+            { domain: "memo", text: "备忘录长文本换行修复（用户反馈）", sub: ".todo-content-span 加 min-width:0 允许 flex 收缩 + 移动端去掉 flex-basis:auto 覆盖（flex-w…" },
+            { domain: "other", text: "删除黑匣子域（用户决策：功能失败，不留痕迹）", sub: "删 src/blackbox 13 文件 + tests/blackbox 9 文件 + ADR 0013-0017 + CONTEXT/AGENTS 术…" },
+            { domain: "notice", text: "黑匣子诊断日志（用户反馈排查）", sub: "blackbox-debug.log 落盘自动提炼每一步与异常，启动异常不再静默（warning 通知）" },
+            { domain: "diary", text: "黑匣子情绪落盘（用户反馈修复）", sub: "日记条目情绪推断 entryEmotions 落盘 + 情绪分布条合并日记情绪 + 完成通知含情绪统计" },
+            { domain: "ai", text: "黑匣子启动自动提炼（用户反馈修复）", sub: "重启后 cursor 空自动全量/待处理自动增量 + AI 未配置 warning 提示" },
+            { domain: "pomodoro", text: "番茄钟开始/暂停提醒与声音" },
+            { domain: "other", text: "blackbox.json 移除 index 字段（2026-08-12 用户决策）", sub: "index 改为运行时内存映射，load 全量扫描黑匣子/ 笔记构建（id→路径），不再持久化；save 只写派生层（entries 已不写，index …" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.2.0",
+          date: "2026-08-17",
+          current: false,
+          added: [
+            { domain: "cinema", text: "修订2 smartcat 影视观察改走方法监听", sub: "UI 确认回调 notify 一次动作一条根治打字刷屏，ADR-0027，全量" },
+            { domain: "cinema", text: "smartcat 影视动作感知观察完成", sub: "快照 diff 动作文案/UI 影评与正文剥海报双链/delete 监听与去弹跳豁免" },
+            { domain: "cinema", text: "影视抽屉想看态新增「标记已看」（在看动作下方，直跳已看）+ 标记在看/标记已看均把…" },
+            { domain: "diary", text: "smartcat 云端打分范围", sub: "智能默认（日记/反省/闪念恒 LLM、长内容按 30 字、聊天/域事件本地）" },
+            { domain: "smartcat", text: "smartcat 数据面板 完成", sub: "bz-smartcat-dashboard 四页签只读可视化（总览/情绪/人格/记忆）+ 作息直方图与成长轨迹，moodLevelFromPad 纯函数抽取" },
+            { domain: "smartcat", text: "smartcat 懂你闭环", sub: "情绪温和共振+全通道上下文+数据诚实化" },
+            { domain: "smartcat", text: "smartcat 认知接入", sub: "Bandit 选臂优化主动关心话术 + 聊天 reward 回填 + 元认知矛盾检测提示 + 情绪趋势注入聊天/周报上下文" },
+            { domain: "smartcat", text: "smartcat 认知基础模块", sub: "参考 cognitive-engine 自研：情绪趋势/波动度(VAD+EMA) + Thompson Bandit 自适应 + 元认知矛盾检测，零依赖纯…" },
+            { domain: "smartcat", text: "smartcat 每周懂你报告", sub: "周统计+LLM 个性化总结写回流，设置弹窗查看入口" },
+            { domain: "smartcat", text: "smartcat 作息模型+主动关心", sub: "24h 活跃画像判定搭话时机，每周 1-2 次温和关心，设置开关" },
+            { domain: "smartcat", text: "smartcat 睡前巩固", sub: "每日 digest 当日观察 LLM 归纳日小结写回流，驱动人格微漂移" },
+            { domain: "smartcat", text: "smartcat RAG 增强", sub: "检索 query 结合情绪及时段，记忆注入带来源/相对时间" },
+            { domain: "diary", text: "smartcat 完成", sub: "数据接入面扩展（用户拍板：日记读正文+关键词、闪念全文、影视全影评、书库划线想法书评、现代诗/信/反省新源、全内容 LLM 云端打分+词法情绪；CONFI…" },
+            { domain: "secondbrain", text: "smartcat 人格对齐 MATE（ADR-0023）", sub: "删预设 5 选 1，OCEAN 随机种子+30 特质 9 群组成长（seed/transition/周更新/反思），trust/attachment 关系…" }
+          ],
+          fixed: [
+            { domain: "clipping", text: "聚合讯/阅读报告移动端默认全屏跟随剪藏本/书库，移除两窗口 设置入口" },
+            { domain: "smartcat", text: "smartcat 设置/聊天面板开着时不再锁死拖拽", sub: "面板仅抑制点触与长按手势，移动照常（鼠标+触屏）" },
+            { domain: "smartcat", text: "smartcat 移动端长按开设置关闭后无法拖拽", sub: "core 设置弹窗补 onClose 复位交互锁；外观改平铺色块选择器即时换肤；移动端删人格数据列表" },
+            { domain: "smartcat", text: "smartcat 桌面拖拽松开后仍跟随鼠标", sub: "document 监听改一次性 bind 稳定引用 + isMousePressed 守卫 + dispose 补摘监听" },
+            { domain: "smartcat", text: "smartcat 去掉气泡 emoji 抽离到独立指示器（用户要求）" },
+            { domain: "smartcat", text: "smartcat 删 30 分钟空闲跟随（用户要求）+ 修气泡堆叠", sub: "去 transform 手动推挤改纯 flex 自然堆叠（原双重位移错位）" },
+            { domain: "smartcat", text: "smartcat 小橘样式修复", sub: "脸宽高致双眼重叠正中（删 cat-face 宽高还原原版 shrink-to-fit）、耳朵 10px、气泡上移 95px 补细节与暗色适配、happy/…" },
+            { domain: "other", text: "解密还原后主动重读日期文件并并回列表（refreshFile 导出复用，不再依赖文…" },
+            { domain: "diary", text: "加密入口收敛到抽屉" },
+            { domain: "settings-panel", text: "修复抽屉遮罩 z-index 缺失被主面板压盖", sub: "遮罩完整覆盖全屏（10999），点遮罩只关抽屉不连带主面板；按钮高特异性抗 Obsidian 默认样式，顶部间距放宽" },
+            { domain: "other", text: "修复触屏列表滚动被长按禁掉 + 菜单紧凑化", sub: "core longPress 改被动监听（滚动恢复，长按吞合成 click 防穿透），跟手菜单小尺寸无底色简洁风" },
+            { domain: "diary", text: "手势统一试点（memo）+ 移动端样式修复（diary/favorites）", sub: "core/item-actions 统一操作条与长按跟手菜单，memo 收敛标签长按暗语；移动端类型栏多行平铺与滚动条收敛" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.3.0",
+          date: "2026-08-24",
+          current: false,
+          added: [
+            { domain: "smartcat", text: "洞察条数上限 + 来源分布按追查目录 + 小橘对我的称呼", sub: "新增 smartcatReflectMaxInsights（默认 3，记忆巩固组可调，反思 prompt 声明最多 N 条 + LLM 返回按序截断兜底）…" },
+            { domain: "smartcat", text: "巩固语义重定义" },
+            { domain: "smartcat", text: "三层记忆流水线 + 巩固参数设置面板" },
+            { domain: "review", text: "答对 0.8s 亮绿自动跳题 + 去头部对错统计 + 逾期复习出新题" },
+            { domain: "knowledge", text: "术语窗口自动生成 + 输入行重跑/底部总结按钮" },
+            { domain: "secondbrain", text: "Syncthing 冲突文件自动自愈" },
+            { domain: "settings-panel", text: "Python 路径填 python 即可" },
+            { domain: "knowledge", text: "视频录入批量按钮纯 emoji" },
+            { domain: "knowledge", text: "主面板列表间距+相对日期，视频录入批量按钮单钮态机" },
+            { domain: "other", text: "压缩回退" },
+            { domain: "favorites", text: "收藏本 UX 批次", sub: "分页/排序/搜索空态区分/删除可撤销/保存防假死/脏表单拦截/样式收敛" },
+            { domain: "knowledge", text: "文献盒桌面窗口简洁布局", sub: "主面板/视频录入保留标题，历史去标题（ 计数+）且组头去 UP主前缀与条数、笔记行去目录去 .md、时间 formatRelativeTime 相对显示；…" },
+            { domain: "knowledge", text: "术语生成面板简洁版", sub: "删弹窗标题/术语 label/placeholder/状态行（加载并入按钮），预览只读：上属性卡（术语/领域/日期）下内容卡，无输入框不可编辑；「重新生成…" },
+            { domain: "review", text: "UX 批次第一波", sub: "core 撤销/写盘失败 helper + toast action 减重 + 复习域规范收敛 + 做题家纯复习会话语义" }
+          ],
+          fixed: [
+            { domain: "review", text: "开始复习双 progress 通知合并为一条", sub: "review/app.ts 外层框 dedupeKey 'review-generate' 统一为 'quiz-generate'，与 quiz/ui.t…" },
+            { domain: "notice", text: "桌面端 toast 位置下移", sub: "#bz-notice-container top 16px→56px，避开 Obsidian 顶部栏与标题区；移动端断点 34px 不动；ADR-0067…" },
+            { domain: "notice", text: "通知操作按钮改 span 消除高度撑高", sub: "Obsidian 核心 button 默认 height 32px 硬撑，.bz-notice-action 只覆盖 padding；改 span + r…" },
+            { domain: "smartcat", text: "设置面板数字滑杆改输入框", sub: "17 处 slider 行改 number 行（schema 既有行类型，min/max 钳制 + 防抖落盘语义不变），消除下滑误触滑杆；issues/1…" },
+            { domain: "smartcat", text: "备忘录删除行为流落盘时序加固", sub: "实证事件链路完整（emit→notifyMemoAction→memo:deleted 路由→三套注册表齐）而真实数据 deleted 恒 0 ⇒ 30s…" },
+            { domain: "smartcat", text: "反思/日小结/周报记忆流断粮饿死修复" },
+            { domain: "other", text: "移动端长按不松手直接拖拽图标" },
+            { domain: "review", text: "通知「去复习」走做题流程分流 + 答题答对自动跳下一题" },
+            { domain: "knowledge", text: "生成的文献笔记补回视频双链" },
+            { domain: "knowledge", text: "文献盒「留空跟随工具配置」键留空时不下发，修复转写环节 rc 兜底被空串覆盖" },
+            { domain: "other", text: "--batch 经 shell 启动改 base64 传输，修复批量处理整批 JS…" },
+            { domain: "smartcat", text: "归档行为流措辞补全与来源标签统一", sub: "补 archived 行为文案与徽标词（此前缺失注册），归档观察文案去「收藏」前缀与前者统一，行为来源标签齐名「收藏本/归物本」" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.4.0",
+          date: "2026-08-31",
+          current: false,
+          added: [
+            { domain: "belongings", text: "移动端整页迭代", sub: "印章头+等宽状态条+输入聚焦去环——移动 hero 顶行三轮收敛至 H8 印章头：墨章「64 在库」赤橙标签+「归物本」+投入/日均小字+右对齐（rend…" },
+            { domain: "belongings", text: "P20 原型落域方向纠正", sub: "p20-full 定稿评审壳 + 域向原型对齐——用户点名『把原型写进 bz』返工：prototype.html 重建为拍板原型定稿（共用 styles.…" },
+            { domain: "favorites", text: "原型评审壳共用 styles.css + 全域 emoji 换 lucide 图标…" },
+            { domain: "belongings", text: "P20 瑞士大字报完全原型化", sub: "海报 hero/筛选 chips/大字网格/详情弹窗" },
+            { domain: "bookshelf", text: "头行行内标题「书库」+ 十肤全量补全 + 设置预览重画", sub: "木匾退场标题与标签同行居左、分类卡轻缩一档保纸标造型、九肤结构层自原型移植+dark 补墙映射+--bsw-title、.bz-skinprev-bs-*…" },
+            { domain: "favorites", text: "头区 1:1 原型", sub: "标题粗黑款删副题，磁贴全白底，右键菜单/表单亚麻皮肤" },
+            { domain: "favorites", text: "头部彻底原型化" },
+            { domain: "bookshelf", text: "分类细拆 20 类单一概念定稿 + EPUB 分类接 subjects 通道" },
+            { domain: "bookshelf", text: "借书卡只读化", sub: "详情卡纯展示：移除状态/进度/日期/书评编辑与删除/保存，进度改静态条纹条+状态圆点+字数行；persistBook/rollbackBook/openB…" },
+            { domain: "favorites", text: "完全原型化", sub: "删 rail/主头行/工具行，头区+磁贴行+卡墙" },
+            { domain: "clipping", text: "rail 按 site 分类 + 中右栏分割线拖宽 + 拖拽误关闭 core 修复" },
+            { domain: "favorites", text: "亚麻记事板换血", sub: "C5 白卡墙+胶带磁点+置顶金圈+归档褪色" },
+            { domain: "diary", text: "长文跨栏卡", sub: "≥800字整卡跨全宽+卡内分栏+媒体横排网格" },
+            { domain: "bookshelf", text: "书脊墙 1:1 复刻换血，旧网格布局全退役" }
+          ],
+          fixed: [
+            { domain: "belongings", text: "宿主样式两边差异三修" },
+            { domain: "favorites", text: "头行固定仅卡墙滚动+关闭钮压回 reset", sub: "面板改 flex 列 overflow:hidden，head/tags flex:none、board flex:1 min-height:0 over…" },
+            { domain: "favorites", text: "移动端面板显式 100vw/100vh + 卡墙防撑爆", sub: "overlay 弹性子项不定宽被 line-clamp 卡片 max-content 撑到两倍屏宽（右列出屏），mob 面板补视口宽高；grid 轨道 m…" },
+            { domain: "favorites", text: "图标挂载补全+窄屏适配", sub: "renderTags/头行关闭钮 mountIcons 补挂（新收藏+/移动此前永不渲染），表单 min(430px,100vw-32px) 留边，面板 …" },
+            { domain: "favorites", text: "右键菜单/移动抽屉图标缺失修复", sub: "mountIcons 未调用致 <i data-lucide> 占位残留，菜单与抽屉渲染后补挂；ctx/sheet 按钮补 justify-content…" },
+            { domain: "favorites", text: "桌面固定 900×620 面板 + 移动关闭钮进 head 行", sub: "面板补边框/圆角/投影对齐原型 .frame，.bz-fav-mob-close 改 head 行内静态位，移动头行两端对齐 padding-top 4px" },
+            { domain: "favorites", text: "C5 原型后轮改动回灌", sub: "主背景 #fffcf6、面板去底部内边距、头行 20px/标题 14px、磁贴行 20px+卡墙顶垫 6px、移动磁贴单行横滑新收藏置首、关闭钮 24×24" },
+            { domain: "bookshelf", text: "木匾复位逐肤换脸+筛选弱化对齐原型+工具行逐行对齐+报告残留+书脊起伏修复", sub: "小号匾额「书库·LIBRARY」九肤换脸；全馆点击清状态+分类；.off 弱化口径（无筛选全亮/激活弱化/全馆恒亮）；.bz-bs-view displa…" },
+            { domain: "favorites", text: "标题字号 21px→14px" },
+            { domain: "favorites", text: "头行样式用户直供版照抄+副题只留白卡计数+磁贴 0,2,0 抗 reset+底色 …" },
+            { domain: "favorites", text: "CSS 逐值 1:1 抄原型", sub: "底色去黄/标题 21px/副题灰字加回/磁贴胶囊白底/磁点浅白" },
+            { domain: "clipping", text: "在读让位移动端同序 + 保留天数两键合一" }
+          ],
+          improved: [
+            { domain: "diary", text: "章节栏小图缓存根治开墙原图解码冻结" }
+          ]
+        },
+        {
+          version: "1.5.0",
+          date: "2026-09-07",
+          current: false,
+          added: [
+            { domain: "belongings", text: "年份/移动排序原生 select 退役换自绘海报菜单（并行会话批次收尾入库）" },
+            { domain: "belongings", text: "年份/排序下拉换自绘海报菜单", sub: "原生 select 弹层退役（纸面墨框方角+赤橙当前项）" },
+            { domain: "settings-panel", text: "设置行 note 补充提示 + 体检按钮 cta 强调" },
+            { domain: "cinema", text: "影院风格化落域", sub: "午夜场完整版进插件" },
+            { domain: "settings-panel", text: "设置面板重设计落域", sub: "P1 系统面板 + S1/S3 双皮 + 外观独立「设置」域" },
+            { domain: "cinema", text: "三风格原型壳1:1回灌+午夜场完整功能版（原型批）" },
+            { domain: "bookshelf", text: "五肤×亮暗双模式+移动端头行/借书卡迭代" },
+            { domain: "home", text: "周历倒排+今天显「今」+移动端关闭钮修复" },
+            { domain: "home", text: "周历头+按日时间线同步落域" },
+            { domain: "bookshelf", text: "移动端头行一行横滑+原型迭代流程落规" },
+            { domain: "bookshelf", text: "原型落域", sub: "域内评审壳补齐" },
+            { domain: "home", text: "首页活动河全域入口版落域" },
+            { domain: "belongings", text: "分类图标化+预设退役" }
+          ],
+          fixed: [
+            { domain: "memo", text: "四域 review P2 收尾", sub: "影院壳长按/状态兼容、首页 memoIdOf 归一、设置面板演示壳 api 引用与回归锚点" },
+            { domain: "cinema", text: "review 修复", sub: "status 串/数兼容回退 + 壳长按随渲染重挂 + selftest 回归锚点补强" },
+            { domain: "belongings", text: "头行副题去同义重复 + 补品牌 token 覆盖；scripts 增原型热更新服务器" },
+            { domain: "home", text: "周历倒排最新在前 + 今日标「今」+ 关闭钮选择器加面板前缀" },
+            { domain: "settings-panel", text: "空面板热修", sub: ".bz-sp-desk 撤 position:relative 复原 core 居中链" },
+            { domain: "home", text: "头行关闭钮图标空白" },
+            { domain: "home", text: "活动河四项调优" },
+            { domain: "belongings", text: "归物本审查 B1/B3-B8 七修", sub: "关面板清陈旧库/搜索词、出离内流转保留封口、写盘失败回滚提示、ESC 层序、命令路径加载失败提示、表单防叠开" },
+            { domain: "favorites", text: "命令直开表单注册 ESC 层 + ESC 关抽屉改 closeSheet 整体移除", sub: "openForm 抽 ensureFavoritesEsc（openPanel 原位与 openForm 开头各调一次，对照 belongings 同款）…" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.6.0",
+          date: "2026-09-08",
+          current: false,
+          added: [
+            { domain: "clipping", text: "会话冻结序", sub: "桌面打开即读+原位不重排+两端已读/已收双折叠" },
+            { domain: "clipping", text: "视频正文链接可跳转 + 标题下状态章退役 + 阅读字号改设置面板项" },
+            { domain: "clipping", text: "全局去在读 + 打开即已读即时让位 + 已读进折叠段 + 删除/确认弹窗纸墨化 +…" },
+            { domain: "clipping", text: "移动端 m3 原型逐字覆盖" },
+            { domain: "clipping", text: "移动端目录化", sub: "site 章+已收折叠" },
+            { domain: "global", text: "待办/书架墙外观组标准化", sub: "置顶双行（布局占位卡+主题 layoutKey 联动）" },
+            { domain: "settings-panel", text: "移动端重写全屏推入式两页+移动端默认全屏特性全链退役" },
+            { domain: "settings-panel", text: "设置面板UI修复批（采样参数组全链退役+路径行拍板+移动端搜索+custom行范式）" },
+            { domain: "settings-panel", text: "演示种子补全各域外观键默认值（并行会话批；外观组键须与 src/settings.…" },
+            { domain: "settings-panel", text: "移动端域设置弹窗改底部抽屉（原型与 ui.ts 同步，拍板样式落地）" },
+            { domain: "clipping", text: "原型落域" },
+            { domain: "other", text: "原型热重载服务导航主页（仓库根 index.html）" },
+            { domain: "settings-panel", text: "外观组范式铺开全面板域" },
+            { domain: "settings-panel", text: "外观组范式落归物本", sub: "占位单卡（布局·大字报/主题·暖白）" }
+          ],
+          fixed: [
+            { domain: "clipping", text: "移动搜索/关闭/读下一则失灵 + 字号分段编辑部皮恢复" },
+            { domain: "clipping", text: "头行检索 flex:0 0 250px 定宽落地" },
+            { domain: "other", text: "uiSelect 菜单贴视口右缘溢出兜底（实测右缘左移收进，极窄视口交由 elli…" },
+            { domain: "favorites", text: "prototype-view CSS 链路径修正（../core/ 一级，同 be…" },
+            { domain: "belongings", text: "prototype-view CSS 链路径修正（../core/ 一级；self…" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.7.0",
+          date: "2026-09-09",
+          current: false,
+          added: [
+            { domain: "knowledge", text: "术语录入可选「来源」source/sourceTitle 键 + 单框智能分流" },
+            { domain: "secondbrain", text: "移动端整体滚动模型+抽屉重排到新设计语言" },
+            { domain: "cinema", text: "豆瓣抓取插件直调", sub: "内存队列 spawn CLI+卡片 loading+守护退役" },
+            { domain: "home", text: "首页域入口加第二大脑磁贴" },
+            { domain: "home", text: "导航首页卡片中文名+一句话说明（新域自动纳入，未知 id 回退）" },
+            { domain: "cinema", text: "豆瓣盲区补全", sub: "打开触碰协议+工具补全分支" },
+            { domain: "secondbrain", text: "定稿原型三界面落域" },
+            { domain: "password-vault", text: "密码本自统一保险库拆回独立域" }
+          ],
+          fixed: [
+            { domain: "cinema", text: "直调队列三连败修复" },
+            { domain: "cinema", text: "直调架构合并前审查修复批" },
+            { domain: "secondbrain", text: "对话弹窗摘模型徽标+输入行防溢出；移动抽屉同皮米白红棕" },
+            { domain: "cinema", text: "审查修复批" },
+            { domain: "review", text: "移动端三区队列自然展开不内滚 + 区列头吸顶" },
+            { domain: "secondbrain", text: "对话弹窗尺寸锁定 760×600 + 灵感参考窗口几何找回" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.8.0",
+          date: "2026-09-10",
+          current: false,
+          added: [
+            { domain: "memo", text: "移动端评审两轮六改 + 切换链路三修" },
+            { domain: "home", text: "入口顺序/显隐按端独立 + 域快捷菜单 + 首页外观组；设置面板侧栏七组" },
+            { domain: "home", text: "原型外景尺寸全固定，撤掉高度调节条" },
+            { domain: "home", text: "原型 1:1 宽度固化为实测基准 118mm，撤掉测量 UI" },
+            { domain: "home", text: "原型移动外景高度改自由可调（滑块 650~1000 CSS px）" },
+            { domain: "home", text: "原型移动外景高度加满屏/内容区两档，修 1:1 长度对不上" },
+            { domain: "home", text: "原型移动外景支持 1:1 真机物理尺寸（小米13U 屏宽 70.15mm，可尺量校…" },
+            { domain: "clipping", text: "剪藏本 UI 五改 + 刊物刊名呼吸光标 + 暗色皮" },
+            { domain: "clipping", text: "每日简报产出定为「要点列表 + 每条要点一句话」" },
+            { domain: "clipping", text: "每日简报产出改为一句话总结" },
+            { domain: "clipping", text: "每日简报", sub: "B站 UP 视频字幕/转写 → AI 要点" },
+            { domain: "diary", text: "日记本方向探索", sub: "五版概念稿 + 三版皮肤 + 原型主页（本轮未采纳）" },
+            { domain: "smartcat", text: "小橘行为流接线补齐 + 文案人性化" },
+            { domain: "knowledge", text: "移动端头部章回式重排 + 三部统一预览弹层" }
+          ],
+          fixed: [
+            { domain: "cinema", text: "移动端抽屉统一到 core 手势/浮层，并修 core 合成 mousedown …" },
+            { domain: "cinema", text: "移动端三修", sub: "面板真全屏、长按只出抽屉、方形钮钉死宿主 padding" },
+            { domain: "cinema", text: "通栏按钮左对齐并修 chips 不回落列表" },
+            { domain: "memo", text: "修复 styles.css 被 / → * 全局替换损毁（布局全乱）" },
+            { domain: "home", text: "重出滞后的原型行为产物", sub: "首页退役「回忆墙」独立入口" },
+            { domain: "home", text: "原型 1:1 校准改为基准线绝对公式，修掉连点累乘" },
+            { domain: "home", text: "移动原型外景改用小米13U 真机视口 412×827" },
+            { domain: "memo", text: "移动端真全屏补关闭/新建入口并修键盘遮挡输入条" },
+            { domain: "settings-panel", text: "模型选择器弹窗暗色皮断链 + 移动端 44px 错位" },
+            { domain: "clipping", text: "简报条目归一丢 transcriptPath", sub: "转录稿链接被插件回写抹掉" },
+            { domain: "diary", text: "章节栏取帧根治 + 弹窗/粘顶/头行等 9 项精修" },
+            { domain: "knowledge", text: "术语来源链接与标题净化", sub: "剥追踪参数/站点尾巴" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.9.0",
+          date: "2026-09-11",
+          current: false,
+          added: [
+            { domain: "encrypt", text: "三域共用解锁屏（保险库/密码本/加密日记）" },
+            { domain: "pomodoro", text: "番茄钟接入预览管线、弹窗降噪、10 套皮肤（亮/暗）" },
+            { domain: "bookshelf", text: "借书卡固定高 + 在读「继续」不折行" },
+            { domain: "bookshelf", text: "借书卡详情改版", sub: "去钮/卡内分区滚动/印章随内容/在读可继续" },
+            { domain: "home", text: "时间线六项设置+ 修入口拖拽两个 bug" },
+            { domain: "diary", text: "移动端主界面关闭钮「复位优先」", sub: "先收列表再关面板" },
+            { domain: "home", text: "入口彩点五条件点亮（剪藏未读/专注中/复习逾期/影院在看/重要备忘）" },
+            { domain: "cinema", text: "标记已看改走编辑窗（评分影评用户输入）" },
+            { domain: "diary", text: "抽屉收编 core/item-actions + setIcon 缺键真因修复" },
+            { domain: "clipping", text: "已读/已收正文保留不清空" },
+            { domain: "clipping", text: "v1.3.0 RSS 订阅源抓取（rss-parser+turndown）+ 每日…" },
+            { domain: "diary", text: "移动端六档字号体系 + 抽屉长按唯一入口 + 头行关闭钮 + 视频首帧海报" },
+            { domain: "secondbrain", text: "主面板移动端全屏化 + 头行关闭钮" },
+            { domain: "global", text: "移动端全屏页顶部 44px 统一 + 弹窗关闭钮全域退役" }
+          ],
+          fixed: [
+            { domain: "knowledge", text: "文献/剪藏标题生成收敛为完整陈述句" },
+            { domain: "bookshelf", text: "借书卡固定高降档 82vh/700→72vh/600" },
+            { domain: "cinema", text: "海报 loading 完成信号双通道 + AI 荐片方案 A + 视图切换高亮口径" },
+            { domain: "home", text: "首页域自检改用面板自绘组件选择器（.bz-select/.bz-sw + data…" },
+            { domain: "memo", text: "抽屉头勾选圈补 44px 触控热区并对齐列表尺寸" },
+            { domain: "other", text: "writeNewsData 剥离 missing 读兜底标记（八段契约约定外段）" },
+            { domain: "review", text: "quiz-core 会话弹窗样式恢复" },
+            { domain: "reading-report", text: "报告去内联样式收编域 CSS + 暗色指标色提亮" },
+            { domain: "secondbrain", text: "补暗色模式 + 37 处硬编码色收编 token" },
+            { domain: "knowledge", text: "补齐品牌区/批量处理钮/取消钮三处无样式 UI" },
+            { domain: "belongings", text: "poster 皮肤补暗色模式（夜版海报 token 组，推翻双主题恒定旧口径）" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.10.0",
+          date: "2026-09-12",
+          current: false,
+          added: [
+            { domain: "settings-panel", text: "通知入基础组、设置页并入通用、搜索即过滤与重置本域 + 全域分组文案统一" },
+            { domain: "encrypt", text: "锁屏统计明文落盘", sub: "冷启动回落上次快照而非「—」" },
+            { domain: "secondbrain", text: "文献笔记生成即跑", sub: "知识盒生成落盘后立即建链" },
+            { domain: "knowledge", text: "领域词表与 AI 领域提示去示例枚举" },
+            { domain: "notice", text: "通知设置四项", sub: "级别/停留档位/弹出位置/同屏上限" },
+            { domain: "favorites", text: "设置补两项", sub: "打开默认筛选/默认排序" },
+            { domain: "belongings", text: "设置补三项", sub: "默认排序/新记默认状态/金额单位" },
+            { domain: "settings-panel", text: "剪藏本设置精简 + 管理弹窗通用组件化 + uiSetlist 组件入库" },
+            { domain: "memo", text: "退役「到期时间格式」设置", sub: "到期文案口径固定相对" },
+            { domain: "ui", text: "全域子弹窗统一", sub: "一套浮层壳 + 域皮贯通" },
+            { domain: "home", text: "秒开三件套", sub: "首次骨架秒开、关闭保留 DOM、重开复用动态刷新" },
+            { domain: "review", text: "移动端字号体系", sub: "按视觉层级放大（队列/冲刺/结算/评级条/统计历史）" },
+            { domain: "encrypt", text: "保险库面板收敛为只管加密笔记 + 销毁二次确认（vault-pwstyle 落域第…" },
+            { domain: "knowledge", text: "视频录入 URL 净化与标题/UP主 自动回填" }
+          ],
+          fixed: [
+            { domain: "clipping", text: "文章标题字号降档", sub: "桌面 24px→display 档、移动 33px→27px" },
+            { domain: "ui", text: "危险中性语义补全（第二轮评审）", sub: "17 处破坏性确认 + 域皮不变量守门" },
+            { domain: "ui", text: "危险中性补全", sub: "8 处破坏性确认补 danger + core 整套中性形制复位" },
+            { domain: "clipping", text: "F3 守卫收窄", sub: "已读未收补收可升级 saved 且不重复计已读（review 收编）" },
+            { domain: "home", text: "入口编辑器 blur 监听挂 AbortController + 触屏滚动仲裁重写" },
+            { domain: "cinema", text: "补问期间保持运行态 + 随机抽一部先整刷已开面板" },
+            { domain: "diary", text: "修复写盘 runFix 包进同路径队列（D4 diary 半边）" },
+            { domain: "memo", text: "提醒监听自持 app 真正卸载（E7）；搜索残留/composer 防双提交保草稿…" },
+            { domain: "password-vault", text: "确认框监听器单绑定防删错条目（E1）；共锁感知/E6 移动页重建/E5 密码掩码/…" },
+            { domain: "encrypt", text: "锁家族修复批", sub: "E3 资产校验/E4 回发解锁态/E9 孤儿容器/E10 单例复位/E11 通知收敛/E12 损坏分支/E13 opQueue 串行/E14 删前重读/E…" },
+            { domain: "diary", text: "日记家族审查修复批 D1–D15+R1（15 项，附回归 21 例）" },
+            { domain: "core", text: "共享基座修复批 C1-C12" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.11.0",
+          date: "2026-09-13",
+          current: false,
+          added: [
+            { domain: "home", text: "时间线痕迹源整体替换为小橘行为流" },
+            { domain: "diary", text: "diary-split.mjs 迁移脚本", sub: "dry-run 默认/同刻让位/memory 引用重写/归档/Obsidian 运行拦截" },
+            { domain: "diary", text: "encrypt mergeDiaryBlock v2 + smartcat 四面 …" },
+            { domain: "diary", text: "条目文件格式落地", sub: "store 重写条目粒度 + parser/encrypt v2 + 体检只读化" },
+            { domain: "cinema", text: "ApiZero 字段扩展", sub: "上映日期←year/季集←episodes/热门短评" },
+            { domain: "cinema", text: "影院豆瓣抓取迁入插件，字段走 ApiZero" },
+            { domain: "clipping", text: "聚合讯抓取迁入插件内" }
+          ],
+          fixed: [
+            { domain: "clipping", text: "UI 收尾 10 条评审修复（C11/C16/C17/C18/C19/C20/C2…" },
+            { domain: "clipping", text: "设置/弹窗侧 2 条评审修复（C4/C25）" },
+            { domain: "clipping", text: "存储/数据侧 7 条评审修复（C9/C10/C12/C27/C28/C30/C31）" },
+            { domain: "clipping", text: "UI 核心 8 条评审修复（C1/C5/C6/C7/C8/C13/C14/C15）" },
+            { domain: "diary", text: "diary-split 重跑幂等", sub: "盘上同内容条目视为已迁移，不再让位产重复" },
+            { domain: "review", text: "日记迁移 review 修复" },
+            { domain: "clipping", text: "抓取侧修复五项（review C2/C3/C23/C24/C26）" },
+            { domain: "other", text: "空日期文件改判直接归档（无内容可拆零丢失），与未解析行人工清单分离" },
+            { domain: "cinema", text: "豆瓣抓取写回链路修复十项（review C1-C10）" },
+            { domain: "clipping", text: "review 修复批", sub: "窗口裁剪落盘 + lastFetchAt 语义 + 通知收窄" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.12.0",
+          date: "2026-09-14",
+          current: false,
+          added: [
+            { domain: "knowledge", text: "卡列表引用计数徽标与孤儿筛选（320）" },
+            { domain: "knowledge", text: "挂载树入口与命令（319）" },
+            { domain: "knowledge", text: "挂载树白板（317）" },
+            { domain: "knowledge", text: "MountNode 补 parent 字段：同名文献挂所属卡片、可沿链回到主卡" },
+            { domain: "knowledge", text: "挂载树 AI 语义建议链路" },
+            { domain: "knowledge", text: "挂载树数据层：双链解析、三源汇总与树构建（issues 314/315）" },
+            { domain: "knowledge", text: "挂载树连线路由与几何原语（issues 316 连线侧）" },
+            { domain: "knowledge", text: "挂载树力导向布局（issues/316 前半）" },
+            { domain: "knowledge", text: "挂载树共享契约 mount-types（模块间唯一接口，只放类型）" },
+            { domain: "knowledge", text: "录入四名词 + 关联行显式双链 + 影像两界面 + AI 多模态 + 图版（iss…" },
+            { domain: "knowledge", text: "视频录入改链接解析式（解析按钮 + 分P/时长/档位 + 双把手进度条）" }
+          ],
+          fixed: [
+            { domain: "knowledge", text: "裁判改走 prompt 纯文本通道（json_object 会吐空壳）+ 思考回默…" },
+            { domain: "knowledge", text: "挂载建议认得出模型的真实回答（标签编号/包壳）+ 思考拉满 128K" },
+            { domain: "knowledge", text: "整库扫描每轮只走一遍 + 自链不计被引（320 审查）" },
+            { domain: "knowledge", text: "挂载树白板审查修复（317/319 改后合并）" },
+            { domain: "knowledge", text: "建议幽灵节点补 parent（MountNode.parent 落地后的集成点）" },
+            { domain: "knowledge", text: "端点桩不再插进邻卡（审查阻断项，issues 316 连线侧）" },
+            { domain: "knowledge", text: "b23.tv 短链解析补全元信息并写回规范链接" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.13.0",
+          date: "2026-09-15",
+          current: false,
+          added: [
+            { domain: "knowledge", text: "图版逐图描述与录入预填/预览直达/来源升级 API" },
+            { domain: "clipping", text: "划选工具框与知识盒划词锚定、保存图片本地化" },
+            { domain: "knowledge", text: "名词录入防重名", sub: "输入实时提醒 + 确认硬拦截" },
+            { domain: "knowledge", text: "关联行三改", sub: "确认写入不回退 / 分析不锁按钮 / 真中断与后台分支" },
+            { domain: "knowledge", text: "段落/图版快捷命令 + 四入口关闭二次确认 + 生成后开笔记" },
+            { domain: "core", text: "新增智谱 Plan 服务商", sub: "Coding 套餐专用端点（glm-5.3-flash）" },
+            { domain: "knowledge", text: "自动关联迁入知识盒，范围恒为三个盒子" },
+            { domain: "knowledge", text: "挂载白板空板/重跑口径 + 建议锚点句高亮 + 固定改套整句" },
+            { domain: "knowledge", text: "挂载建议三段式 + 白板渐进渲染与进度 + 卡片列表性能" }
+          ],
+          fixed: [
+            { domain: "secondbrain", text: "review 修正" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.14.0",
+          date: "2026-09-16",
+          current: false,
+          added: [
+            { domain: "review", text: "裁剪复习评级四命令" },
+            { domain: "global", text: "原生设置页退役平铺，只留「打开设置面板」按钮" },
+            { domain: "knowledge", text: "知识盒清理批", sub: "删提炼成卡、来源与领域统一、反链走缓存、属性行可编辑" },
+            { domain: "knowledge", text: "录入面板界面修订", sub: "日期沉底 / 生成入口移交底部 / 属性区 loading 统一 / 总结退役" },
+            { domain: "knowledge", text: "录入草稿流式成形", sub: "点下即开界面 + 正文逐字长出" },
+            { domain: "ai", text: "模型档位表", sub: "默认值按当前模型取官方最大档，删除上下文窗口设置行" },
+            { domain: "core", text: "AI 输出上限面板独裁", sub: "调用点私有 max_tokens 全拆除" },
+            { domain: "global", text: "设置 AI 页拆三组（服务商/模型配置/数据源凭据）、Cookie 行换多行文本框" },
+            { domain: "ai", text: "思考档位设置与自动关联候选相似度下限" },
+            { domain: "clipping", text: "保存剪藏全量图片本地化、图片命名去标题、条目菜单补复制链接" }
+          ],
+          fixed: [
+            { domain: "knowledge", text: "录入面板关联预演检索不可达如实报 queued（此前死分支冒充「暂无关联」）" },
+            { domain: "clipping", text: "撤销移动端划选工具框的 48px 系统菜单让位" },
+            { domain: "clipping", text: "正文屏蔽移动端原生长按选择菜单" },
+            { domain: "knowledge", text: "知识盒×剪藏引用同步", sub: "删除降级回外链、断链摘除、knowledge/clipbook.json 路径 file-sync" },
+            { domain: "core", text: "引用同步补漏", sub: "secondbrain rename rekey、diary 内存同步、checkup 孤儿扩展" },
+            { domain: "encrypt", text: "加密附件他引保护", sub: "共享原件保留、还原跳过" },
+            { domain: "cinema", text: "海报路径 rename 联动 + 抓取队列存在性守卫" },
+            { domain: "clipping", text: "锚定双链裸 basename 解析换正牌 API", sub: "getFirstLinkfileDest 在 Obsidian 1.12/1.13 不存在致拦截恒失效" },
+            { domain: "auto-summary", text: "AI 起标题改名改走 fileManager.renameFile，联动更新全库双链" },
+            { domain: "clipping", text: "B站条目去除保存入口（ADR-0147）、已存按钮置灰、保留策略清侧写、锚定链接捕…" },
+            { domain: "clipping", text: "保存/标读后自动前进的下一篇补换篇语义", sub: "打开即已读+滚动归零（memo zrurtk）" },
+            { domain: "clipping", text: "移动详情已收剪藏正文可读、正文长词防撑破" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.15.0",
+          date: "2026-09-17",
+          current: false,
+          added: [
+            { domain: "gameshelf", text: "移动端去掉海报头 + 搜索行改「固定」（用户两条）" },
+            { domain: "gameshelf", text: "域落位 + 外观组 + 首页快捷命令（用户三条）" },
+            { domain: "gameshelf", text: "移动端按钮序/吸顶留白 + 媒体全部本地化（用户四条）" },
+            { domain: "gameshelf", text: "展示中文名 + 头行收敛 + 遮罩毛玻璃（用户评审四条）" },
+            { domain: "gameshelf", text: "游戏架 UI v3", sub: "V1 海报墙落域 + 数据统计面板 + 详情全量数据" },
+            { domain: "gameshelf", text: "属性中文化 + 海报本地缓存 + 成就详情弹窗" },
+            { domain: "gameshelf", text: "游戏架域" },
+            { domain: "secondbrain", text: "周报主面板入口 + 弹层移动规范" },
+            { domain: "memo", text: "月历视图" },
+            { domain: "memo", text: "周期性重复备忘" },
+            { domain: "secondbrain", text: "本周知识动态" },
+            { domain: "review", text: "做题家独立面板" },
+            { domain: "review", text: "FSRS 拟合放开全 19 参数" },
+            { domain: "clipping", text: "剪藏阅读报告页" }
+          ],
+          fixed: [
+            { domain: "gameshelf", text: "appdetails 解析按 appid 外层键取", sub: "修真机「商店数据解析不出 / 没有中文名」" },
+            { domain: "gameshelf", text: "面板挂回遮罩内", sub: "修真机「只有遮罩层、没有主窗口」" },
+            { domain: "pomodoro", text: "审查修复批（归档固化先落盘 + 统计呈现）" },
+            { domain: "diary", text: "审查修复批（码点截断/文字卡角标与行长/加密直测）" },
+            { domain: "belongings", text: "审查修复批（纯离场年空态/千分位/截至今日/重入刷新/days0）" },
+            { domain: "favorites", text: "审查修复批（改名回滚/bulk 条件/迁移串行/id 唯一/hue 兜底 + 回归…" },
+            { domain: "review", text: "审查修复批（w[4] 既有缺陷 + 拟合分片让出 + 做题面板取消/批量）" },
+            { domain: "clipping", text: "审查修复批（打开即已读时长 P1 + 移动计时 + 弹层健壮性 + 空态两态）" },
+            { domain: "memo", text: "审查修复批（周期锚点漂移 P1 + restore 撤链 + 排期入口 + 月历语…" },
+            { domain: "secondbrain", text: "审查修复批（周报弹层遮罩/z 序 P1 + 数据口径）" },
+            { domain: "clipping", text: "报告空态图标/统计与移动端规范" },
+            { domain: "memo", text: "月历数据链与空月统计提示" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.16.0",
+          date: "2026-09-18",
+          current: false,
+          added: [
+            { domain: "diary", text: "创建日记成功后打开新笔记并收起主窗口 (item-1789672493967-y1…" },
+            { domain: "gameshelf", text: "头行退役海报头顶格 + 卡片悬浮截图轮播 + 成就进度条/奖杯" },
+            { domain: "cinema", text: "季圆点悬浮预览", sub: "正脸换成该季海报与信息" },
+            { domain: "cinema", text: "季进度改「海报右下角一排圆点」+ 去掉注释文字" },
+            { domain: "cinema", text: "剧集按季合并", sub: "季进度条卡片 + 设置开关" },
+            { domain: "gameshelf", text: "全量落盘 + 媒体全本地化（用户拍板：所有数据、全量、完整、都在本地）" },
+            { domain: "home", text: "时间线新到旧 + 退役生成今日总结 + 入口行灰字补四域统计" },
+            { domain: "cinema", text: "豆瓣抓取海报目录设置 + 抓取队列调整（并行会话 WIP）" }
+          ],
+          fixed: [
+            { domain: "cinema", text: "想看落盘编码 -1，编辑不再弹回在看 (item-1789722741019-t8…" },
+            { domain: "cinema", text: "季圆点改到海报左下角（用户订正方位）" },
+            { domain: "gameshelf", text: "截图本地化真因修复 + 成就图标路径进属性" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.17.0",
+          date: "2026-09-19",
+          current: false,
+          added: [
+            { domain: "diary", text: "打开先面板后内容", sub: "首帧让位读盘与整墙渲染" },
+            { domain: "diary", text: "墙数据启动后台预热 + 四目录并行加载" },
+            { domain: "knowledge", text: "术语文献退役 term 冗余键" },
+            { domain: "memo", text: "退役清单型子任务 UI" },
+            { domain: "core", text: "uiModal 补 dialog 读屏语义并新增 bindFormSubmit 回…" },
+            { domain: "core", text: "uiModal 内置焦点管理 + trapFocus 三壳圈闭；stat/sugg…" },
+            { domain: "core", text: "触控热区修饰类自带热区；.bz-field 补定位锚定；通知常驻帧关闭钮样式" },
+            { domain: "core", text: "路径选择器新建文件夹与键盘闭环，回调容错回滚（效率#10/#11、R7、N6）" }
+          ],
+          fixed: [
+            { domain: "clipping", text: "保存图片后自动复制嵌入 wikilink 到剪贴板（memo item-17897…" },
+            { domain: "review", text: "批 B 命令与监听链修复" },
+            { domain: "review", text: "批 B 出题链与编排修复" },
+            { domain: "review", text: "批 E 深审修复", sub: "统计 UI 与设置与样式与文档" },
+            { domain: "review", text: "冲刺会话与渲染层深审批 D 九项修复" },
+            { domain: "review", text: "非法日期容错 + 数据层 bulk API + 注释如实（F7/A11/A13-E…" },
+            { domain: "clipping", text: "修复既存红×2" },
+            { domain: "diary", text: "review 修正" },
+            { domain: "clipping", text: "rail 行内 钮退役 + 报告层/划选浮框补 topifyZ 发号 + 搜索框 …" },
+            { domain: "gameshelf", text: "工具行单行化收紧 + 卡片去悬浮 title + 全成就角标换 字符（2026-0…" },
+            { domain: "clipping", text: "批 D 视图层修复（列表·检索·移动端·报告·样式）" },
+            { domain: "clipping", text: "批B数据写链·抓取·扫描·锚定九项修复" }
+          ],
+          improved: [
+            { domain: "core", text: "file-sync rename 引用判定挪进去抖批次按路径去重" }
+          ]
+        },
+        {
+          version: "1.18.0",
+          date: "2026-09-20",
+          current: false,
+          added: [
+            { domain: "core", text: "大面板打开即入焦 + Tab 圈闭范式 trapPanelFocus 全域接线" },
+            { domain: "core", text: "触屏悬浮隔离范式", sub: "全量 :hover 规则包进 @media (hover: hover)" },
+            { domain: "review", text: "悬浮评级条键盘化", sub: "数字键 1-4 评级、ESC 归还焦点（呈报#12-R8）" },
+            { domain: "cinema", text: "详情弹窗补齐笔记已有字段（片长 / 季集 / 完整上映日期 / 热门短评）" },
+            { domain: "smartcat", text: "小橘「更智能」批", sub: "关系阶段/她自己的事/情绪惯性/记忆自动纠错/追问线" }
+          ],
+          fixed: [
+            { domain: "home", text: "番茄钟菜单 focusing 文案对齐「暂停专注」（PM2 残款/呈报#63 半边）" },
+            { domain: "review", text: "六条复习命令 name 括号式改动宾式（呈报#56/R12）" },
+            { domain: "settings-panel", text: "搜索键盘闭环 + 命中词高亮 + 会话滚位记忆（呈报#17/#26/#49）" },
+            { domain: "home", text: "骨架期标题不再闪现 + 裁「R1 生活周报」死代码（呈报#31/#53）" },
+            { domain: "favorites", text: "卡墙点按反馈与外链标识 + 磁贴行限高（呈报#24/#25/#61）" },
+            { domain: "review", text: "统计弹窗按影院现行形制重刷 + 排名行键盘可达（呈报#55/#12-R7）" },
+            { domain: "attach", text: "拍板修复批", sub: "动词统一「搬移」+ 跳过预览快捷出口 + 上次目标前置预告" },
+            { domain: "review", text: "题面 emoji 换 lucide + 冲刺头行模式副标题 + 假可达与空态口径（…" },
+            { domain: "review", text: "轮次互斥提示 + 翻篇轮询降频命中才读盘（呈报#4/#38）" },
+            { domain: "reading-report", text: "恒可见返回钮显式规则 + 旧走查守卫随 RR-U1 新拍板翻转" },
+            { domain: "settings-panel", text: "面板重开放重挂 ESC 层，栈序随 z 序同步（checkup 深审 ui P2-…" },
+            { domain: "checkup", text: "数据体检深审修复批" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.19.0",
+          date: "2026-09-21",
+          current: false,
+          added: [
+            { domain: "cinema", text: "动效整合批" },
+            { domain: "cinema", text: "季圆点悬浮换季改「涟漪揭示」", sub: "来片层从被悬浮的圆点圆形扩散" },
+            { domain: "cinema", text: "保存即齐（海报落库、不再后台抓取）+ 侧栏/排序钮滑动高亮" },
+            { domain: "cinema", text: "合集共享元素", sub: "合集卡同款过渡 + 合集行钻入" },
+            { domain: "cinema", text: "抽离升级为整卡离场 + 列表 FLIP 补位/让位" },
+            { domain: "cinema", text: "详情弹窗共享元素过渡", sub: "海报抽出飞入、面板从海报生长、关闭返程" },
+            { domain: "cinema", text: "添加影视改「解析 → 豆瓣预取 → 双面翻转卡片」" },
+            { domain: "cinema", text: "关联判定与影院类型判定接入 Jev 决策通道（issues 391/392/393）" },
+            { domain: "core", text: "Jev 决策通道封装" },
+            { domain: "memo", text: "移动端编辑弹窗键盘适配", sub: "vvh 收缩、顶对齐、保存钮钉底" },
+            { domain: "memo", text: "「今日」「重要」伪场景空态专属文案" },
+            { domain: "memo", text: "完成动作反馈", sub: "勾选圈待定态与折叠条去向轻反馈" },
+            { domain: "home", text: "入口菜单末尾统一「设置」直达该域设置页（issues 388）" },
+            { domain: "gameshelf", text: "设置面板「密钥型」输入档位 + Steam API 密钥接入（呈报#48 GS3）" }
+          ],
+          fixed: [
+            { domain: "cinema", text: "返程落点被源卡纠正动画污染", sub: "FLIP 集合排除源卡本体" },
+            { domain: "cinema", text: "表单重名反馈（红边框 + 锁保存）+ 撤销影院 Jev 接入 + 移除 TED 分类" },
+            { domain: "memo", text: "搜索体验四连", sub: "ESC 先清词、 一键清词、命中高亮、网址可搜" },
+            { domain: "memo", text: "样式清理与触控热区对齐" },
+            { domain: "memo", text: "编辑器表单与交互杂项八件" },
+            { domain: "memo", text: "删除/完成/场景收尾链对齐全域口径" },
+            { domain: "memo", text: "读路径错误面、渲染省算与滚位保持" },
+            { domain: "cinema", text: "右键菜单桌面分流改悬浮能力判定，与季圆点悬浮统一 hoverCapable 单出口" },
+            { domain: "memo", text: "数据层读入守卫、公开课检索边界与会话缓存" },
+            { domain: "bookshelf", text: "报告视图宿主搜索行为收窄，消灭「只刷隐藏墙」假动作（RR-U13）" },
+            { domain: "belongings", text: "自绘下拉键盘导航 + ESC 二段语义（呈报#12 B5）" },
+            { domain: "core", text: "uiChip 切换型缺省挂 aria-pressed（深审 gameshelf 段…" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.20.0",
+          date: "2026-09-22",
+          current: false,
+          added: [
+            { domain: "gameshelf", text: "成就图标改远端直取，不再本地化" },
+            { domain: "clipping", text: "添加 UP 主即直查资料（名字/头像）+ 开弹窗补缺资料" },
+            { domain: "settings-panel", text: "复合行窄屏两行排版 + UP 名单去头像" },
+            { domain: "cinema", text: "观影分析镶进影院面板（覆盖层 + 点遮罩关）+ 影院交互四修" },
+            { domain: "cinema", text: "观影分析整篇重写为《观影志》26 幕（issues 406-408）" },
+            { domain: "cinema", text: "观影分析整页重做为滚动放映室", sub: "四本 22 幕 + 幕单元放映" }
+          ],
+          fixed: [
+            { domain: "core", text: "列表头像取图去 Referer", sub: "修移动端 UP 名单不显示头像" },
+            { domain: "clipping", text: "添加 UP 主支持长 uid（纯数字位数不设上限）" },
+            { domain: "cinema", text: "新增背面加回「我的记录」段（评分/影评已看显示）+ 观影分析引擎根解析修复", sub: "面板根 closest 落空致整页静止" },
+            { domain: "cinema", text: "季圆点悬浮正脸那一季", sub: "只换文案不建层，滑回正脸一次落回静息态" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.21.0",
+          date: "2026-09-23",
+          current: false,
+          added: [
+            { domain: "cinema", text: "不可用一律回落 LLM + 判定编排抽 core/jev-fallback（影院补…" },
+            { domain: "pomodoro", text: "特效批九味", sub: "进度四味/世界退后/收工钟/倒数滴答/过渡音" },
+            { domain: "global", text: "数据源凭据三行统一单行掩码 + 行序调整（Key 在前）" },
+            { domain: "pomodoro", text: "退役「后台自动暂停」", sub: "窗口 hidden 不再暂停计时" },
+            { domain: "review", text: "记忆分析特刊", sub: "全屏逐幕分析层（16 幕）" },
+            { domain: "clipping", text: "「我读了什么」全屏读报特刊层 + 头行电传纸带/期号戳章重做" },
+            { domain: "favorites", text: "el clic en tarjeta ya no navega — fuera i…" },
+            { domain: "home", text: "周历头改台历卡样式", sub: "色带+星期+大数字，波浪入场" },
+            { domain: "home", text: "首页动效层", sub: "开场编排/河道描线常流/事件揭出迸光/切天接力" }
+          ],
+          fixed: [
+            { domain: "other", text: "review-414 四改", sub: "越界算畸形走回落 / 闭集按自有键判 / 回落接 signal / AbortError 归一" },
+            { domain: "pomodoro", text: "环光被 SVG 元素框硬切", sub: "显式 overflow:visible" },
+            { domain: "favorites", text: "设置面板评审壳三处裸奔", sub: "样式链缺收藏本 / 图标表缺 11 键 / 自检卡在已退役的 appearance 域" },
+            { domain: "settings-panel", text: "萤标坐标帧差一个 scrollTop", sub: "滚动后点靠下的侧栏项，光晕留在上面几行" },
+            { domain: "home", text: "预览壳补游戏库图标 gamepad-2", sub: "「全部域」里该行此前渲染成空白" },
+            { domain: "home", text: "预告卡倾斜绑定随静默刷新丢失", sub: "绑定件从 boot 档提到 boot 判据外" },
+            { domain: "other", text: "全域搜索框清除钮对齐效率#12 口径", sub: "有词才现、清空即隐" },
+            { domain: "home", text: "关后再开整屏不可见但可点" },
+            { domain: "cinema", text: "检索改三路兜底链", sub: "suggest 软拒绝不再误报没找到" },
+            { domain: "cinema", text: "豆瓣检索弃搜索页改 subject_suggest", sub: "治解析风控误报" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.22.0",
+          date: "2026-09-24",
+          current: false,
+          added: [
+            { domain: "password-vault", text: "快速生成密码 + 添加弹窗关闭二次确认" },
+            { domain: "core", text: "Jev 服务商新增博查", sub: "SystemOne 同构直连，模型缺省按服务商各配" },
+            { domain: "secondbrain", text: "检索只查最新·空行不查询·重排模型可选" },
+            { domain: "secondbrain", text: "接入 Qwen3-Reranker-4B 交叉编码重排" },
+            { domain: "secondbrain", text: "设置项瘦身与 JEV 常开自动配置" },
+            { domain: "secondbrain", text: "Ollama 地址两行迁 AI 面板 + 桌面端远程地址自动补全 + 模型选择器回…" },
+            { domain: "secondbrain", text: "向量化模型配置迁入 AI 面板", sub: "LLM/Embedding/JEV 三组化 + Qwen3-Embedding 支持与换模型维度守卫" },
+            { domain: "cinema", text: "观影分析收尾批", sub: "开卷流场萤火 v4 上岸 + 移动竖屏软横屏 + 滚轮一滚一幕" },
+            { domain: "pomodoro", text: "重置/跳过改按钮内二次确认（替代确认弹窗）+ hover 一律不换底色" }
+          ],
+          fixed: [
+            { domain: "cinema", text: "观影分析桌面端开卷聚合错位", sub: "层框换算非旋转态减原点" },
+            { domain: "secondbrain", text: "review 后续", sub: "移动端去掉死初始化·超长列表用例真区分早退与回退" },
+            { domain: "secondbrain", text: "重排打分不做 0/1 降级", sub: "缺 top_logprobs 判失败，非有限 logprob 跳过" },
+            { domain: "global", text: "换算标记随 DEFAULT_SETTINGS 落盘", sub: "默认值不再被当旧尺二次换算" },
+            { domain: "core", text: "模型选择器行长说明把模型名挤成逐字竖排" },
+            { domain: "secondbrain", text: "检索层改精确全扫余弦，坏向量双重防线，分数去锐化" },
+            { domain: "core", text: "JEV 模型选择器服务商名取注册表 + 清理陈旧注释" },
+            { domain: "knowledge", text: "零秒截段误判 + 原型评审 UI 迭代", sub: "居中直弹 / 处理面板垫底 / 预览去头行 / 图版蓝签" },
+            { domain: "pomodoro", text: "两个计时重叠", sub: "动效打在隐藏层上顶掉了 opacity:0；翻牌层转为唯一可见层并放大字号" },
+            { domain: "pomodoro", text: "review 三改" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.23.0",
+          date: "2026-09-25",
+          current: false,
+          added: [
+            { domain: "people", text: "+454 超大量任务单批失败不再重烧 + 合成卡媒体数" },
+            { domain: "people", text: "封面墙成员补上预览桶", sub: "导入过预览但没画过的人也能上墙" },
+            { domain: "people", text: "折子印章四态", sub: "未画谱/画谱中/画谱中断/已画谱均可从卡上继续" },
+            { domain: "people", text: "画脸谱进度续跑", sub: "生成引擎后台化、批级落盘与进度块" },
+            { domain: "people", text: "脸谱语义深化与首页入口" },
+            { domain: "people", text: "脸谱折子改版" },
+            { domain: "people", text: "脸谱数据源设置面板", sub: "预处理导出目录直连、两段增量进画像" },
+            { domain: "people", text: "全模态媒体素材进画像管线", sub: "语音转写/图片描述解析、统计与媒体徽章" },
+            { domain: "knowledge", text: "语音转写引擎二选一", sub: "SenseVoice-Small 主力 + faster-whisper 备选" },
+            { domain: "people", text: "互动统计", sub: "客观数据侧纯本地计算与详情页展示" },
+            { domain: "people", text: "增量提炼 + 导入前成本预告" },
+            { domain: "people", text: "详情页人物档案与随手记手动输入路径" },
+            { domain: "people", text: "卡墙排序筛选搜索 + 导出笔记 + 合并重复人物" },
+            { domain: "people", text: "画像深度移植（distilly 分层）+ 关系时间线" }
+          ],
+          fixed: [
+            { domain: "people", text: "收起折整片可点修折页切换死区", sub: "切换钩子挪到 leaf 元素" },
+            { domain: "global", text: "面板体系令牌重定向", sub: "子弹窗与组件库件回面板皮，删日记维护组与格式体检弹窗" },
+            { domain: "password-vault", text: "review 后续" }
+          ],
+          improved: []
+        },
+        {
+          version: "1.24.0",
+          date: "2026-09-26",
+          current: true,
+          added: [
+            { domain: "settings-panel", text: "使用手册按钮下载 + 新版本自更新 + 域设置深化" },
+            { domain: "people", text: "保库记录", sub: "脸谱数据整体入保险库，每联系人一条加密记录" },
+            { domain: "people", text: "bz-face sync 子命令", sub: "取密钥→解密→逐联系人 chat.json 与头像源" },
+            { domain: "settings-panel", text: "更新日志弹窗", sub: "侧栏底部入口 + 按域分类（git 历史生成）" },
+            { domain: "people", text: "脸谱工具包骨架与 bz-face doctor 自检" },
+            { domain: "core", text: "四行协议解析与外部工具调用壳抽入核心层" },
+            { domain: "global", text: "外部工具路径升格域无关组 + 微信账号目录键" },
+            { domain: "people", text: "聊天仓 v2" },
+            { domain: "people", text: "双卷画像管线", sub: "其人/我们 + 6 类素材 + 密度/档案/样本警示" },
+            { domain: "people", text: "详情页双折", sub: "其人/我们 + 统计与背景弹窗化" }
+          ],
+          fixed: [
+            { domain: "core", text: "AI 输出上限护栏", sub: "面板上界按 provider×模型动态取、解析出口封顶" },
+            { domain: "people", text: "头像入库", sub: "库外 avatar 复制进库内媒体文件夹（CONFIG/FACES），渲染走 vault getResourcePath" }
+          ],
+          improved: []
+        }
       ];
     }
   });
@@ -13561,11 +12983,11 @@ var BZW_gameshelf = (() => {
     escHandle = null;
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
-    activeId = null;
+    activeVersion = null;
   }
   function openChangelogModal() {
     var _a2;
-    if (!CHANGELOG_DOMAINS.length) return;
+    if (!CHANGELOG_RELEASES.length) return;
     if (!overlay) build();
     topifyZ(overlay);
     overlay.style.display = "flex";
@@ -13591,44 +13013,49 @@ var BZW_gameshelf = (() => {
     overlay = ov;
   }
   function shellHtml() {
-    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("history")}</div><span class="bz-panel-title">更新日志</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">共 ${CHANGELOG_META.total} 条 · ${CHANGELOG_META.generatedAt} 自提交历史生成</span><span class="bz-panel-head-sp"></span></div><div class="bz-chg-body"><nav class="bz-chg-side"></nav><div class="bz-chg-main"></div></div>`;
+    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("history")}</div><span class="bz-panel-title">更新日志</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">v${CHANGELOG_META.current} · ${CHANGELOG_META.releases} 个版本 · ${CHANGELOG_META.generatedAt} 生成</span><span class="bz-panel-head-sp"></span></div><div class="bz-chg-body"><nav class="bz-chg-side"></nav><div class="bz-chg-main"></div></div>`;
   }
   function render() {
     if (!overlay) return;
-    if (!activeId || !CHANGELOG_DOMAINS.some((d) => d.id === activeId)) {
-      activeId = CHANGELOG_DOMAINS[0].id;
+    if (!activeVersion || !CHANGELOG_RELEASES.some((r) => r.version === activeVersion)) {
+      activeVersion = CHANGELOG_RELEASES[CHANGELOG_RELEASES.length - 1].version;
     }
     renderRail();
-    renderList();
+    renderRelease();
   }
   function renderRail() {
     const side = overlay.querySelector(".bz-chg-side");
-    side.innerHTML = CHANGELOG_DOMAINS.map((d) => navItemHtml2(d, d.id === activeId)).join("");
-    mountIcons(side);
-    side.querySelectorAll("[data-chg-domain]").forEach((b) => {
+    side.innerHTML = [...CHANGELOG_RELEASES].reverse().map((r) => navItemHtml2(r, r.version === activeVersion)).join("");
+    side.querySelectorAll("[data-chg-version]").forEach((b) => {
       b.addEventListener("click", () => {
-        activeId = b.dataset.chgDomain;
+        activeVersion = b.dataset.chgVersion;
         render();
       });
     });
   }
-  function navItemHtml2(d, on) {
-    var _a2;
-    return `<button type="button" class="bz-chg-nav-item${on ? " on" : ""}" data-chg-domain="${esc(d.id)}">${iconSpan((_a2 = CHANGELOG_ICONS[d.id]) != null ? _a2 : "inbox", "bz-ic bz-chg-nav-ic")}<span class="bz-chg-nav-name">${esc(d.name)}</span><span class="bz-chg-nav-count">${d.entries.length}</span></button>`;
+  function navItemHtml2(r, on) {
+    const date = r.date.slice(5);
+    return `<button type="button" class="bz-chg-nav-item${on ? " on" : ""}${r.current ? " cur" : ""}" data-chg-version="${esc(r.version)}"><span class="bz-chg-nav-ver">v${esc(r.version)}</span>` + (r.current ? `<span class="bz-chg-nav-cur">当前</span>` : "") + `<span class="bz-chg-nav-date">${esc(date)}</span></button>`;
   }
-  function renderList() {
+  function renderRelease() {
     const main = overlay.querySelector(".bz-chg-main");
-    const d = CHANGELOG_DOMAINS.find((x) => x.id === activeId);
-    main.innerHTML = d ? listHtml(d) : "";
+    const rel = CHANGELOG_RELEASES.find((x) => x.version === activeVersion);
+    main.innerHTML = rel ? releaseHtml(rel) : "";
     main.scrollTop = 0;
   }
-  function listHtml(d) {
-    return `<div class="bz-chg-list-head"><span class="bz-chg-list-name">${esc(d.name)}</span><span class="bz-chg-list-count">${d.entries.length} 条</span></div>` + d.entries.map(itemHtml).join("");
+  function releaseHtml(r) {
+    return `<div class="bz-chg-rel-head"><span class="bz-chg-rel-ver">v${esc(r.version)}</span>` + (r.current ? `<span class="bz-chg-rel-cur">当前版本</span>` : "") + `<span class="bz-chg-rel-date">${esc(r.date)}</span></div>` + SECTIONS.filter((s) => r[s.key].length).map((s) => sectionHtml(s.key, s.label, r[s.key])).join("");
   }
-  function itemHtml(e) {
-    return `<div class="bz-chg-item"><span class="bz-chg-date">${e.date}</span><span class="bz-chg-badge bz-chg-badge--${e.type}">${TYPE_LABEL[e.type]}</span><span class="bz-chg-text">${esc(e.text)}</span></div>`;
+  function sectionHtml(key, label, items) {
+    const tier = key === "added" ? "pri" : "sec";
+    return `<div class="bz-chg-sec"><div class="bz-chg-sec-t bz-chg-sec-t--${tier}">${label}</div>` + items.map((it) => itemHtml(it, tier)).join("") + `</div>`;
   }
-  var OVERLAY_ID, FRAME_ID, CHANGELOG_ICONS, TYPE_LABEL, overlay, escHandle, activeId;
+  function itemHtml(it, tier) {
+    var _a2;
+    const dom = (_a2 = CHANGELOG_DOMAIN_NAMES[it.domain]) != null ? _a2 : "其他";
+    return `<div class="bz-chg-item bz-chg-item--${tier}"><span class="bz-chg-dom">${esc(dom)}</span><div class="bz-chg-body"><div class="bz-chg-text">${esc(it.text)}</div>` + (it.sub ? `<div class="bz-chg-sub">${esc(it.sub)}</div>` : "") + `</div></div>`;
+  }
+  var OVERLAY_ID, FRAME_ID, SECTIONS, overlay, escHandle, activeVersion;
   var init_changelog = __esm({
     "src/settings-panel/changelog.ts"() {
       init_z_order();
@@ -13637,22 +13064,17 @@ var BZW_gameshelf = (() => {
       init_ui();
       init_str();
       init_icons();
-      init_domain_icons();
       init_changelog_data();
       OVERLAY_ID = "bz-changelog-overlay";
       FRAME_ID = "bz-changelog-popup";
-      CHANGELOG_ICONS = {
-        ...DOMAIN_ICONS,
-        "settings-panel": DOMAIN_ICONS.global,
-        core: "waypoints",
-        ui: "monitor",
-        checkup: "activity",
-        other: "inbox"
-      };
-      TYPE_LABEL = { feat: "新增", fix: "修复", perf: "优化" };
+      SECTIONS = [
+        { key: "added", label: "新功能" },
+        { key: "fixed", label: "问题修复" },
+        { key: "improved", label: "体验优化" }
+      ];
       overlay = null;
       escHandle = null;
-      activeId = null;
+      activeVersion = null;
     }
   });
 
@@ -44856,7 +44278,7 @@ ${c.trim()}
     setSearchKw("");
     syncDeskSearchClear();
     renderMood = "search";
-    renderList2();
+    renderList();
     renderRail2();
     renderMood = "mute";
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
@@ -44875,7 +44297,7 @@ ${c.trim()}
     if (!M11.open) return;
     renderHeadIssue();
     renderRail2();
-    renderList2();
+    renderList();
     renderReader();
     renderMobToc();
     if (M11.mobDetailOpen) {
@@ -44955,7 +44377,7 @@ ${c.trim()}
     if (deskFoldOpen.has(key)) deskFoldOpen.delete(key);
     else deskFoldOpen.add(key);
     pendingFoldKind = kind;
-    renderList2();
+    renderList();
   }
   function beginSession() {
     epochReset();
@@ -45087,7 +44509,7 @@ ${c.trim()}
       motionInkStrike(clipTitleEl(clipCardEl(a.id)), i * 70);
     });
   }
-  function renderList2() {
+  function renderList() {
     renderListNow();
     if (!listEl) return;
     const foldKind = pendingFoldKind;
@@ -45435,7 +44857,7 @@ ${c.trim()}
     }
     M11.cur = a;
     markReadOnOpen(a);
-    renderList2();
+    renderList();
     renderReader();
     renderMobDetail();
     if (changed) {
@@ -45764,7 +45186,7 @@ ${c.trim()}
     void flowMarkRead(a, { keepSession: true }).then((res) => {
       if (res && res.changed && res.stats) M11.stats = res.stats;
       if (M11.open && !M11.mobDetailOpen) {
-        renderList2();
+        renderList();
         renderRail2();
       }
     }).catch(() => {
@@ -46403,7 +45825,7 @@ ${c.trim()}
       searchDebounced2 = debounce(() => {
         setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
         renderMood = "search";
-        renderList2();
+        renderList();
         renderRail2();
         renderMood = "mute";
       }, SEARCH_DEBOUNCE_MS3);
@@ -68726,7 +68148,7 @@ ${n.content.slice(0, 2e3)}
           M.bucket = def.key;
           syncChipState();
           bucketSelRef == null ? void 0 : bucketSelRef.setValue(M.bucket);
-          renderList3(app);
+          renderList2(app);
         }
       });
       chip2.classList.add("bz-gs-chip");
@@ -68745,7 +68167,7 @@ ${n.content.slice(0, 2e3)}
       onChange: (v) => {
         M.sort = v;
         sortSelRef == null ? void 0 : sortSelRef.setValue(v);
-        renderList3(app);
+        renderList2(app);
       }
     });
     sortSegRef = sortSeg;
@@ -68764,7 +68186,7 @@ ${n.content.slice(0, 2e3)}
       onChange: (v) => {
         M.bucket = v;
         syncChipState();
-        renderList3(app);
+        renderList2(app);
       }
     });
     const sortSel = uiSelect({
@@ -68778,7 +68200,7 @@ ${n.content.slice(0, 2e3)}
       onChange: (v) => {
         M.sort = v;
         sortSegRef == null ? void 0 : sortSegRef.setValue(v);
-        renderList3(app);
+        renderList2(app);
       }
     });
     selRefs.push(bucketSel, sortSel);
@@ -68817,11 +68239,11 @@ ${n.content.slice(0, 2e3)}
     });
     search.el.appendChild(searchClear);
     wrap.querySelector("#bz-gs-search").appendChild(search.el);
-    renderList3(app);
+    renderList2(app);
     return wrap;
   }
   var SEARCH_DEBOUNCE_MS5 = 180;
-  var searchListRender = debounce((app) => renderList3(app), SEARCH_DEBOUNCE_MS5);
+  var searchListRender = debounce((app) => renderList2(app), SEARCH_DEBOUNCE_MS5);
   function syncSearchClear2() {
     const btn = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search-clear");
     if (btn) btn.hidden = !M.query.trim();
@@ -68830,7 +68252,7 @@ ${n.content.slice(0, 2e3)}
     input.value = "";
     M.query = "";
     syncSearchClear2();
-    renderList3(app);
+    renderList2(app);
     input.focus();
   }
   function syncChipState() {
@@ -68840,7 +68262,7 @@ ${n.content.slice(0, 2e3)}
       c.setAttribute("aria-pressed", String(on));
     });
   }
-  function renderList3(app) {
+  function renderList2(app) {
     if (!gridEl) return;
     const rp = lastReport2 != null ? lastReport2 : buildReport(M.items);
     lastReport2 = rp;
@@ -68879,7 +68301,7 @@ ${n.content.slice(0, 2e3)}
         syncChipState();
         bucketSelRef == null ? void 0 : bucketSelRef.setValue(M.bucket);
         syncSearchClear2();
-        renderList3(app);
+        renderList2(app);
       }
     });
     clear.id = "bz-gs-clear-filter";
