@@ -122,7 +122,7 @@ export interface ImportRecord {
   importedAt: string;
   /** 解析得的文本消息条数（进提炼的） */
   messageCount: number;
-  /** 被过滤的非文本 / 空消息条数 */
+  /** 无法入仓的条数（非对象 / 无效时间；聊天仓 v2 起非文本消息全量入仓，issue 466） */
   skippedCount: number;
   /** 消息时间跨度 ISO */
   timeFrom: string;

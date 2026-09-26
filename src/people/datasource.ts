@@ -1,23 +1,27 @@
 /**
- * 脸谱数据源层（issue 446 / 449）：消费微信全模态预处理管线（skill wechat-media-preprocess）的
- * 按联系人数据文件夹——`<数据根>/<联系人>/chat.json`（消息流 [{ct,type,who,msg,sid,dur,wav,img?}]，
- * 语音已回填 `[语音 N秒·情感] 文本`、图片可带 img:"月/文件" 字段、表情开始回填 `[表情·名]`）。
+ * 脸谱数据源层（issue 446 / 449；聊天仓 v2 = issue 466 / ADR-0197）：消费微信全模态预处理管线
+ * （skill wechat-media-preprocess）的按联系人数据文件夹——`<数据根>/<联系人>/chat.json`
+ * （消息流 [{ct,type,who,msg,sid,dur,wav,img?}]，语音已回填 `[语音 N秒·情感] 文本`、
+ * 图片可带 img:"月/文件" 字段、表情开始回填 `[表情·名]`）。
  * `voice.json` / `image_desc.json` 为**兼容兜底**（正常情况 chat.json 已回填，单文件即可；
  * 旧数据目录缺回填时仍按 wav / img 关联补齐）。
  *
- * 449 语义分流（不再丢弃）：47 表情按命名分流、49 分享/文件/引用逐条进时间线（带截断上限）、
+ * 449 语义分流：47 表情按命名分流、49 分享/文件/引用逐条进时间线（带截断上限）、
  * 50 通话换轻标签；无转写语音 / 无描述图片 / 关开关的媒体**不进时间线只计数**。
  * 群聊（多位非我发送者）非我消息加 `[成员名] ` 前缀，单聊不变。
  *
  * 两段增量：
- * - 原始→预览（本层）：4.x 原始码消息归一成「type:1 文本形态」预览条目（与 445 导出契约一致，
- *   媒体按设置开关合成标签文本），按替代键（sid / ct+msg 哈希）只补新消息，落
- *   CONFIG/STORAGE/people-preview.json（vault 内、纯文本——语音转写与图片描述以文本进预览，
- *   原始媒体不入库不复制）。预览桶结构 { version, contacts: { <名>: { msgs, watermarkSid, stats, insights } } }。
+ * - 原始→聊天仓（本层）：4.x 原始码消息归一成「全量原始字段 + 派生消费文本」的仓条目——
+ *   原始字段 type/who/sid/dur/wav/img 全保留；text = 合成后的消费文本（`[图片] 描述` /
+ *   `[语音 N秒·情感] 转写` / `[表情·名]`…），**空串 = 不进时间线**（展示与素材组装只读
+ *   「text 非空」这一行过滤，存储完整可重算——466 / ADR-0197，取代 449「不进时间线就丢出
+ *   消息流」）。按替代键（sid / ct+msg 哈希）**upsert** 合并：同键新文本覆盖、原始字段按新值
+ *   更新（取代旧 append-only，修「源 28 条表情带名 / 仓 52 条」永远对不上的事故），落
+ *   CONFIG/STORAGE/people-preview.json（vault 内；**文件名保留，概念改称聊天仓**）。
  *   顺带产出互动画像汇总 insights（insights.ts，供提炼 prompt 的「互动统计」素材段）。
- * - 预览→脸谱：由 ui 层接既有 digest / planIncremental 增量管线（441 机制不动），本层不管。
+ * - 聊天仓→脸谱：由 ui 层接既有 digest / planIncremental 增量管线（441 机制不动），本层不管。
  *
- * 纯函数（normalizeChatJson / mergePreview 等）与 IO（fs 读数据目录、PreviewStore）分离：
+ * 纯函数（normalizeChatJson / mergeStore 等）与 IO（fs 读数据目录、MessageStore）分离：
  * 核心判定全部可单测，fs 仅桌面端可得（window.require，knowledge 同款）。
  */
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
@@ -78,35 +82,52 @@ export interface NormalizeOptions {
   keepSystem: boolean;
 }
 
-/** 一条预览消息（type:1 文本形态；key = 增量替代键） */
-export interface PreviewMsg {
+/**
+ * 一条聊天仓消息（466 / ADR-0197）：全量原始字段 + 派生消费文本；key = 增量替代键。
+ * 原始字段有则存（undefined 不落盘），展示与素材组装只读 `text !== ''` 的条目。
+ */
+export interface StoreMsg {
   key: string;
   /** 毫秒时间戳 */
   ts: number;
   isSender: boolean;
+  /** 4.x 原始码：1 文本 / 3 图片 / 34 语音 / 43 视频 / 47 表情 / 49 appmsg / 50 通话 / 10000 系统 */
+  type: number;
+  /** 发送者（预处理线还原：「我」或成员名） */
+  who?: string;
+  /** 消息 id（server_id；16~19 位整数，JSON.parse 后尾数有损——只作替代键，同环境幂等） */
+  sid?: number;
+  /** 语音 / 视频时长（秒） */
+  dur?: number;
+  /** 语音 wav 文件名（voice.json 关联键） */
+  wav?: string;
+  /** 图片定位（工具产 `月/文件名`，与 image_desc.file 同格式；缺省 = 未关联） */
+  img?: string;
+  /** 派生消费文本（`[图片] 描述` / `[语音 N秒·情感] 转写` / `[表情·名]`…）；**'' = 不进时间线** */
   text: string;
 }
 
-/** 预览桶统计（落盘口径；媒体数 = 合成后文本按 445 parseMediaTag 的素材计数） */
-export interface PreviewStats {
+/** 聊天仓统计（落盘口径；只统计时间线（text 非空）条目，媒体数 = 合成后文本按 445 parseMediaTag 的素材计数） */
+export interface StoreStats {
   msgCount: number;
   voiceCount: number;
   voiceTotalSec: number;
   imageCount: number;
 }
 
-/** 一位联系人的预览桶 */
-export interface PreviewContact {
-  msgs: PreviewMsg[];
+/** 一位联系人的聊天仓 */
+export interface StoreContact {
+  /** 全量原始消息流（含 text='' 条目），ts 升序 */
+  msgs: StoreMsg[];
   /** 已收最大 sid（展示参考；增量判定以 msgs 的 key 集合为准） */
   watermarkSid: number;
-  stats: PreviewStats;
+  stats: StoreStats;
   /**
    * chat.json 全量形态计数（440 中文形态键；每次导入按原始消息全量重算覆盖，幂等）。
-   * 预览条目已是文本形态、无法从桶内反推（系统消息原文无标签），故随桶落盘供生成管线复用。
+   * 仓条目已是文本形态、无法从仓内反推（系统消息原文无标签），故随仓落盘供生成管线复用。
    */
   kindCounts?: Record<string, number>;
-  /** 互动画像汇总（449；normalize 全量重算覆盖。旧桶无此字段照常读） */
+  /** 互动画像汇总（449；normalize 全量重算覆盖。旧数据无此字段照常读） */
   insights?: InsightsSummary;
   /** 头像文件路径（456 起存 vault 相对路径：导入时自外部数据目录复制进库内媒体文件夹，渲染走 vault getResourcePath——app://local 解析不了库外路径是 455 头像裂图根因） */
   avatar?: string;
@@ -114,30 +135,27 @@ export interface PreviewContact {
   updatedAt: string;
 }
 
-/** people-preview.json 根结构 */
-export interface PreviewData {
-  version: 1;
-  contacts: Record<string, PreviewContact>;
+/** people-preview.json 根结构（聊天仓；文件名保留旧名，466 / ADR-0197） */
+export interface MessageStoreData {
+  version: 2;
+  contacts: Record<string, StoreContact>;
 }
 
-export function emptyPreviewData(): PreviewData {
-  return { version: 1, contacts: {} };
-}
-
-export function emptyPreviewStats(): PreviewStats {
-  return { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+export function emptyMessageStore(): MessageStoreData {
+  return { version: 2, contacts: {} };
 }
 
 export interface NormalizeResult {
-  msgs: PreviewMsg[];
-  /** 全形态计数（含被开关过滤掉的消息；与既有 parse 层 kindCounts 同口径） */
+  /** 全量原始消息流（含 text='' 条目——不进时间线的也在，466） */
+  msgs: StoreMsg[];
+  /** 全形态计数（与既有 parse 层 kindCounts 同口径） */
   kindCounts: Record<string, number>;
-  stats: PreviewStats;
+  stats: StoreStats;
   /** 互动画像汇总（449；过滤后时间线现算 + 语义信号计数） */
   insights: InsightsSummary;
   /** 原始消息里的最大有效 sid */
   maxSid: number;
-  /** 原始条数 − 进预览条数（非文本 / 无效时间 / 预览开关关闭丢弃等；导入记录 skippedCount 口径） */
+  /** 原始条数 − 入仓条数（非对象 / 无效时间等无法入仓的；导入记录 skippedCount 口径） */
   skippedCount: number;
 }
 
@@ -329,22 +347,24 @@ function missedCallReason(text: string): string | null {
 }
 
 /**
- * chat.json → 预览消息流（纯函数，issue 449 语义分流）。媒体按开关合成 type:1 文本形态：
- * - 1 文本：原样（msg 以媒体标签开头的按 445 parseMediaTag 走媒体素材统计）；
+ * chat.json → 聊天仓消息流（纯函数，449 语义分流 + 466 全量入仓）。每条有效原始消息都入仓
+ * （原始字段保留），派生消费文本按规则合成，**不合成的条目 text 存空串（= 不进时间线）**：
+ * - 1 文本：msg 原样（空文本 text 空）；
  * - 34 语音：previewVoice 开 → msg 已回填转写则原样，无转写正文查 voice.json（wav 关联）回填，
- *   仍无 → 不进时间线只计数（449 起删掉 `[语音]` 空标签行）；关 → 只计数；
+ *   仍无 → text 空；关 → text 空（两态都只计数）；
  * - 3 图片：imageDescMode='file' → 按 img 字段精确对上 image_desc（img 缺失走同月 ct 最近邻 ±12h
- *   兜底，一张描述只配一条消息）→ `[图片] 描述`；未命中 / 'off' → 不进时间线只计数（删掉空标签）；
- * - 43 视频：previewVideo 开且有时长 → `[视频 N秒]`；无时长或关 → 只计数（空标签不进时间线）；
- * - 47 表情：`[表情·名]` 原样进时间线计 emojiNamedCount；纯 `[表情]` 只计数；
+ *   兜底，一张描述只配一条消息）→ `[图片] 描述`；未命中 / 'off' → text 空；
+ * - 43 视频：previewVideo 开且有时长 → `[视频 N秒]`；无时长或关 → text 空（空标签无信息）；
+ * - 47 表情：`[表情·名]` 进时间线计 emojiNamedCount；纯 `[表情]` / 未命名 text 空；
  * - 49：`[分享]`/`[小程序]` 截断 ≤80 字进（shareCount）；`[文件]` 原样进；
- *   `[引用「…」]` 引用头超 60 字截断补 `…」`，回复保留；其余形态原样进（不丢）；
+ *   `[引用「…」]` 引用头超 60 字截断补 `…」`，回复保留；其余形态原样进；
  * - 50 通话：`[通话时长 H:M:S]` → `[通话 H时M分]`（不足 1 时 M分N秒 / 不足 1 分 N秒）、
  *   `[通话中断 …]` 同款换算、未接通类 → `[未接通·原因原文]`；未知形态原样进；
- * - 10000 系统：keepSystem 开 → 原样保留；关 → 只计数；msg 含「撤回」按 who 归属计 recant（不受开关影响）；
- * - 其余未知码：丢弃只计数。
- * 群聊（多位非我发送者）非我消息 text 前加 `[成员名] ` 前缀（系统消息除外，原文自带归属），单聊不变。
- * 空文本 / 非对象元素同样只计数。结果按 ts 升序。insights 随过滤后时间线现算。
+ * - 10000 系统：keepSystem 开 → 原样；关 → text 空；msg 含「撤回」按 who 归属计 recant（不受开关影响）；
+ * - 其余未知码：全量入仓、text 空（唯一权威存储；只计数不进时间线）。
+ * 群聊（多位非我发送者）非我消息 text 前加 `[成员名] ` 前缀（系统消息除外，原文自带归属；text 空
+ * 不加前缀），单聊不变。非对象 / 无效时间的条目无法入仓，只计 kindCounts 与 skippedCount。
+ * 结果按 ts 升序。insights 随过滤后时间线现算。
  */
 export function normalizeChatJson(
   raws: unknown[],
@@ -386,7 +406,7 @@ export function normalizeChatJson(
   };
 
   const kindCounts: Record<string, number> = {};
-  const msgs: PreviewMsg[] = [];
+  const msgs: StoreMsg[] = [];
   let maxSid = 0;
   let rawTotal = 0;
   for (const item of raws) {
@@ -399,48 +419,53 @@ export function normalizeChatJson(
     const sid = typeof raw.sid === 'number' && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
     if (sid && sid > maxSid) maxSid = sid;
     const ts = Number.isFinite(raw.ct) ? Math.round((raw.ct as number) * 1000) : NaN;
-    if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue; // 无效时间：只计数
+    if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue; // 无效时间：无法入仓只计数
 
-    let out: string | null = null;
+    // 派生消费文本（'' = 不进时间线；条目仍全量入仓——466 / ADR-0197）
+    let out = '';
     switch (raw.type) {
       case 1:
-        out = text || null; // 纯空文本不进
+        out = text;
         break;
       case 34: {
-        if (!opts.previewVoice) continue;
-        // msg 已回填转写（有正文）原样；无正文查 voice.json（wav / sid 兜底）回填；仍无 → 只计数
-        const tagged = text ? parseMediaTag(text) : null;
-        if (tagged) {
-          out = text;
-          bumpEmotion(tagged.emotion);
-          break;
+        if (opts.previewVoice) {
+          // msg 已回填转写（有正文）原样；无正文查 voice.json（wav / sid 兜底）回填；仍无 → text 空
+          const tagged = text ? parseMediaTag(text) : null;
+          if (tagged) {
+            out = text;
+            bumpEmotion(tagged.emotion);
+          } else {
+            const v = voiceByWav.get(String(raw.wav ?? '').trim());
+            const merged = buildVoiceText(raw, v);
+            const parsed = parseMediaTag(merged);
+            if (parsed) {
+              out = merged;
+              bumpEmotion(parsed.emotion);
+            }
+          }
         }
-        const v = voiceByWav.get(String(raw.wav ?? '').trim());
-        const merged = buildVoiceText(raw, v);
-        const parsed = parseMediaTag(merged);
-        if (!parsed) continue; // 无转写正文：不进时间线只计数（449 删空标签行）
-        out = merged;
-        bumpEmotion(parsed.emotion);
         break;
       }
       case 3: {
-        if (opts.imageDescMode !== 'file') continue; // off / 旧存档 ai 回落后的兜底路径：只计数
-        const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-        out = hit ? `[图片] ${hit}` : null; // 未命中：不进时间线只计数（449 删空标签行）
+        if (opts.imageDescMode === 'file') { // off / 旧存档 ai 回落后的兜底路径：text 空
+          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+          if (hit) out = `[图片] ${hit}`;
+        }
         break;
       }
       case 43: {
-        if (!opts.previewVideo) continue;
-        const dur = Number.isFinite(raw.dur) && (raw.dur as number) > 0 ? Math.round(raw.dur as number) : 0;
-        if (!dur) continue; // 空标签 `[视频]` 无信息，不进时间线只计数（与 [图片]/[语音] 同口径）
-        out = `[视频 ${dur}秒]`;
+        if (opts.previewVideo) {
+          const dur = Number.isFinite(raw.dur) && (raw.dur as number) > 0 ? Math.round(raw.dur as number) : 0;
+          if (dur) out = `[视频 ${dur}秒]`; // 空标签 `[视频]` 无信息，不进时间线
+        }
         break;
       }
       case 47: {
         signals.emojiCount++;
-        if (!EMOJI_NAMED_RE.test(text)) continue; // 纯 [表情] / 未命名：只计数
-        out = text;
-        signals.emojiNamedCount++;
+        if (EMOJI_NAMED_RE.test(text)) {
+          out = text;
+          signals.emojiNamedCount++;
+        }
         break;
       }
       case 49: {
@@ -463,7 +488,7 @@ export function normalizeChatJson(
           break;
         }
         const sec = parseCallDurationSec(text);
-        if (sec === null) { out = text || null; break; } // 未知形态原样进（不丢）
+        if (sec === null) { out = text; break; } // 未知形态原样进（不丢）
         signals.callTotalSec += sec;
         out = `[${text.startsWith('[通话中断') ? '通话中断' : '通话'} ${formatCallDur(sec)}]`;
         break;
@@ -473,23 +498,35 @@ export function normalizeChatJson(
           if (isSelfWho(raw.who)) signals.recantByMe++;
           else signals.recantByOther++;
         }
-        if (!opts.keepSystem) continue;
-        out = text || null;
+        if (opts.keepSystem) out = text;
         break;
       }
       default:
-        continue; // 未知码：丢弃只计数
+        break; // 未知码：全量入仓、text 空（只计数不进时间线）
     }
-    if (!out) continue;
     // 群聊：非我消息加成员名前缀（who 缺省不加）；单聊不变。
-    // 系统消息（撤回等）原文自带 "名字" 归属，加前缀会双重归属，跳过
-    const who = String(raw.who ?? '').trim();
-    if (group && who && !isSelfWho(who) && raw.type !== 10000) out = `[${who}] ${out}`;
-    msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, '\n') });
+    // 系统消息（撤回等）原文自带 "名字" 归属，加前缀会双重归属，跳过；text 空不加前缀。
+    if (out) {
+      const who = String(raw.who ?? '').trim();
+      if (group && who && !isSelfWho(who) && raw.type !== 10000) out = `[${who}] ${out}`;
+      out = out.replace(/\r\n?/g, '\n');
+    }
+    msgs.push({
+      key: msgKey(raw),
+      ts,
+      isSender: isSelfWho(raw.who),
+      type: typeof raw.type === 'number' && Number.isFinite(raw.type) ? raw.type : 0,
+      ...(raw.who !== undefined && { who: raw.who }),
+      ...(sid !== 0 && { sid }),
+      ...(typeof raw.dur === 'number' && Number.isFinite(raw.dur) && raw.dur > 0 && { dur: raw.dur }),
+      ...(typeof raw.wav === 'string' && raw.wav && { wav: raw.wav }),
+      ...(typeof raw.img === 'string' && raw.img && { img: raw.img }),
+      text: out,
+    });
   }
   msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-  const stats = previewStatsOf(msgs);
-  const insights = computeInsights(msgs, signals);
+  const stats = storeStatsOf(msgs);
+  const insights = computeInsights(msgs.filter((m) => m.text !== ''), signals);
   return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
 }
 
@@ -497,43 +534,55 @@ function bump(counts: Record<string, number>, kind: string): void {
   counts[kind] = (counts[kind] ?? 0) + 1;
 }
 
-/** 预览消息流 → 桶统计（媒体计数复用 445 collectMediaStats——口径单源） */
-export function previewStatsOf(msgs: PreviewMsg[]): PreviewStats {
-  const unified: UnifiedMessage[] = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+/** 聊天仓消息流 → 仓统计（**只统计时间线**：text 非空的条目；媒体计数复用 445 collectMediaStats——口径单源，与改前一致） */
+export function storeStatsOf(msgs: StoreMsg[]): StoreStats {
+  const unified: UnifiedMessage[] = msgs
+    .filter((m) => m.text !== '')
+    .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   const media = collectMediaStats(unified);
-  return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+  return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
 }
 
-// ---------------- 预览桶增量合并 ----------------
+// ---------------- 聊天仓合并（upsert） ----------------
 
 /**
- * 增量合并（重导同一人不产生重复条目）：按 key 过滤已收条目只补新消息，ts 升序合并；
- * stats / watermarkSid 全量重算（媒体计数与 445 落盘口径一致）。
- * 返回新增条数（供触发判定与反馈文案）。
+ * 聊天仓合并（466 upsert，取代旧 append-only）：同键新条目**整体覆盖**（派生文本升级 + 原始字段
+ * 按新值更新——修「源里表情带名变了、仓里永远停在旧文本」修不回来的事故）；新键追加；仓里已有
+ * 而本次没出现的条目保留（部分导出 / 留痕导入等来源不互删）。结果按 ts 升序。
+ * stats 全量重算（时间线口径）；kindCounts / watermarkSid 合并取大；insights 随本次导入覆盖。
+ * 返回 added = 新键条数、updated = 被覆盖条数（供导入反馈）。
  */
-export function mergePreview(
-  existing: PreviewContact | undefined,
+export function mergeStore(
+  existing: StoreContact | undefined,
   incoming: NormalizeResult,
   nowIso: string
-): { contact: PreviewContact; added: number } {
-  const seen = new Set((existing?.msgs ?? []).map((m) => m.key));
-  const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
-  const msgs = [...(existing?.msgs ?? []), ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-  const contact: PreviewContact = {
+): { contact: StoreContact; added: number; updated: number } {
+  const prev = new Map((existing?.msgs ?? []).map((m) => [m.key, m]));
+  let added = 0;
+  let updated = 0;
+  for (const m of incoming.msgs) {
+    if (prev.has(m.key)) updated++;
+    else added++;
+    prev.set(m.key, m);
+  }
+  const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  const contact: StoreContact = {
     msgs,
     watermarkSid: Math.max(existing?.watermarkSid ?? 0, incoming.maxSid),
-    stats: previewStatsOf(msgs),
-    // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+    stats: storeStatsOf(msgs),
+    // 全量形态计数 / 互动画像每次导入重算或合并覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
     kindCounts: { ...(existing?.kindCounts ?? {}), ...incoming.kindCounts },
     insights: incoming.insights,
     updatedAt: nowIso,
   };
-  return { contact, added: fresh.length };
+  return { contact, added, updated };
 }
 
-/** 预览桶 → 提炼管线消息（UnifiedMessage；文本即 type:1 形态） */
-export function previewToUnified(msgs: PreviewMsg[]): UnifiedMessage[] {
-  return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+/** 聊天仓 → 提炼管线消息（UnifiedMessage；**只取时间线**：`text !== ''` 这一行过滤——展示与素材组装的唯一入口） */
+export function storeToUnified(msgs: StoreMsg[]): UnifiedMessage[] {
+  return msgs
+    .filter((m) => m.text !== '')
+    .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
 }
 
 // 447 退役：shouldGenerate 自动生成触发判定随自动链路一并移除——
@@ -691,34 +740,40 @@ export async function importAvatarToVault(
   }
 }
 
-// ---------------- IO：people-preview.json（vault 内） ----------------
+// ---------------- IO：people-preview.json（vault 内；聊天仓，466 / ADR-0197） ----------------
 
-/** 预览桶文件路径（storagePath 设置键可覆盖基目录，缺省 CONFIG/STORAGE） */
-export function getPreviewFilePath(): string {
+/** 聊天仓文件路径（文件名保留旧名 people-preview.json；storagePath 设置键可覆盖基目录） */
+export function getStoreFilePath(): string {
   const s = tryGetSettings() as { storagePath?: string } | null;
   return storageFile('people-preview.json', (s && s.storagePath) || 'CONFIG/STORAGE');
 }
 
-/** 预览桶读写（jsonFileStore + 串行写队列，PeopleStore 同款防并发覆盖） */
-export class PreviewStore {
+/** 聊天仓读写（jsonFileStore + 串行写队列，PeopleStore 同款防并发覆盖） */
+export class MessageStore {
   private readonly app: unknown;
   private readonly filePath: string;
 
   constructor(app: unknown) {
     this.app = app;
-    this.filePath = getPreviewFilePath();
+    this.filePath = getStoreFilePath();
   }
 
   private open() {
-    return jsonFileStore<PreviewData>(this.filePath, { defaultValue: emptyPreviewData, app: this.app });
+    return jsonFileStore<MessageStoreData>(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
   }
 
-  async read(): Promise<PreviewData> {
-    return enqueueFileTask(this.filePath, async () => this.open().read());
+  /**
+   * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
+   * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
+   */
+  async read(): Promise<MessageStoreData> {
+    const data = await enqueueFileTask(this.filePath, async () => this.open().read());
+    if (!data || data.version !== 2) return emptyMessageStore();
+    return data;
   }
 
   /** 合并写回一位联系人（读→改→写整体入队） */
-  async upsertContact(name: string, contact: PreviewContact): Promise<void> {
+  async upsertContact(name: string, contact: StoreContact): Promise<void> {
     await enqueueFileTask(this.filePath, async () => {
       const store = this.open();
       const data = await store.read();
@@ -727,17 +782,17 @@ export class PreviewStore {
     });
   }
 
-  /** 清空全部预览（保留文件框架；不动 people.json 的 PersonEntry） */
+  /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
   async clear(): Promise<void> {
     await enqueueFileTask(this.filePath, async () => {
       const store = this.open();
-      await store.write(emptyPreviewData());
+      await store.write(emptyMessageStore());
     });
   }
 }
 
-/** 预览桶媒体统计 → 445 徽章口径（零素材返回 null 不渲染） */
-export function previewMediaBadge(stats: PreviewStats | undefined): MediaStats | null {
+/** 聊天仓统计 → 445 徽章口径（零素材返回 null 不渲染） */
+export function storeMediaBadge(stats: StoreStats | undefined): MediaStats | null {
   if (!stats) return null;
   const acc = emptyMediaStats();
   acc.voiceCount = stats.voiceCount ?? 0;

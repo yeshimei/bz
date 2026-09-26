@@ -24,7 +24,7 @@ import {
 } from '../../src/people/jobs';
 import { chunkMessages, chunkMetaOf, DEFAULTS, type DigestChunk } from '../../src/people/digest';
 import { computeInsights, emptyInsightSignals } from '../../src/people/insights';
-import { PreviewStore, previewStatsOf, previewToUnified, type PreviewMsg } from '../../src/people/datasource';
+import { MessageStore, storeStatsOf, storeToUnified, type StoreMsg } from '../../src/people/datasource';
 import { PeopleStore } from '../../src/people/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -34,9 +34,9 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 const TALKER = 'wxid_test';
 const BASE = Date.UTC(2024, 4, 1, 12, 0, 0);
 
-/** 构造一条预览桶消息（秒级 ts、key 递增） */
-function pm(n: number, text = `构造消息${n}`): PreviewMsg {
-  return { key: `k${n}`, ts: BASE + n * 60000, isSender: n % 2 === 1, text };
+/** 构造一条聊天仓消息（时间线形态：type=1 有文本；key 递增） */
+function pm(n: number, text = `构造消息${n}`): StoreMsg {
+  return { key: `k${n}`, ts: BASE + n * 60000, isSender: n % 2 === 1, type: 1, text };
 }
 
 /** 假提炼批回执（每批同内容：跨批去重后素材唯一；issue 455 起带 interests / threads 两类） */
@@ -64,22 +64,22 @@ function makeAsks() {
 let vault: MockVault;
 let app: any;
 
-async function seedPreview(msgs: PreviewMsg[], name = TALKER): Promise<void> {
-  const store = new PreviewStore(app);
+async function seedPreview(msgs: StoreMsg[], name = TALKER): Promise<void> {
+  const store = new MessageStore(app);
   await store.upsertContact(name, {
     msgs,
     watermarkSid: 0,
-    stats: previewStatsOf(msgs),
+    stats: storeStatsOf(msgs),
     kindCounts: { 文本: msgs.length },
     updatedAt: '2026-09-25T00:00:00.000Z',
   });
 }
 
-function target(msgs: PreviewMsg[], over: Partial<JobTarget> = {}): JobTarget {
+function target(msgs: StoreMsg[], over: Partial<JobTarget> = {}): JobTarget {
   return {
     talker: TALKER,
     name: '构造对象',
-    msgs: previewToUnified(msgs),
+    msgs: storeToUnified(msgs),
     kindCounts: {},
     skippedCount: 0,
     fileLabel: `数据源:${TALKER}`,
@@ -217,9 +217,9 @@ describe('startJobs：任务创建与逐批落盘', () => {
   it('无可提炼文本 / 空消息目标不排队，计入 skipped', async () => {
     await seedPreview([pm(0)]);
     const { askExtract, askPortrait } = makeAsks();
-    const r = await startJobs(app, [target([pm(0, '有内容')]), target([], { name: '空桶' })], { askExtract, askPortrait });
+    const r = await startJobs(app, [target([pm(0, '有内容')]), target([], { name: '空仓' })], { askExtract, askPortrait });
     expect(r.queued).toEqual(['构造对象']);
-    expect(r.skipped).toEqual(['空桶']);
+    expect(r.skipped).toEqual(['空仓']);
     await whenIdle();
     expect(readQueue()).toHaveLength(1);
   });
@@ -273,7 +273,7 @@ describe('抽样说明（超大记录）', () => {
 
 describe('暂停与断点续跑', () => {
   /** 公共装配：3 批任务暂停在第 2 批完成处（第 2 批 AI 调用被闸门放行后收尾） */
-  async function setupPaused(): Promise<{ askExtract: ReturnType<typeof vi.fn>; msgs: PreviewMsg[] }> {
+  async function setupPaused(): Promise<{ askExtract: ReturnType<typeof vi.fn>; msgs: StoreMsg[] }> {
     const msgs = [pm(0), pm(1), pm(2)]; // maxCount 1 → 3 批
     await seedPreview(msgs);
     let calls = 0;
@@ -330,6 +330,17 @@ describe('暂停与断点续跑', () => {
     await expect(removeJob(TALKER)).resolves.toBe(true);
     expect(readQueue()).toEqual([]);
     expect(snapshot().queue).toEqual([]);
+  });
+
+  it('内容哈希指纹（466 / ADR-0197）：条数不变、内容变了 → 同样漂移判废（旧「条数+末条键」察觉不到）', async () => {
+    const { msgs } = await setupPaused();
+    // 中途回写升级：条数不变，某条文本被 upsert 覆盖（如语音转写补上）
+    await seedPreview([pm(0, '构造消息0（升级后）'), ...msgs.slice(1)]);
+    resume(TALKER);
+    await whenIdle();
+    const job = readQueue()[0];
+    expect(job.status).toBe('error');
+    expect(job.error).toBe(DRIFT_ERROR);
   });
 
   it('AI 调用类失败可续跑（451）：error → resume 从断点补剩余批，已付批次不重烧', async () => {
@@ -457,7 +468,7 @@ describe('暂停与断点续跑', () => {
     expect((askExtract as any).mock.calls.length).toBe(paid + 2); // 只补第 2、3 批
   });
 
-  it('startJobs 不复用（453）：预览桶变了 → 指纹对不上，重排新任务从头跑', async () => {
+  it('startJobs 不复用（453）：聊天仓变了 → 指纹对不上，重排新任务从头跑', async () => {
     const msgs = [pm(0), pm(1), pm(2)];
     await seedPreview(msgs);
     let calls = 0;
@@ -511,8 +522,8 @@ describe('resumeJobs：中断标记与重启续跑', () => {
     const msgs = [pm(0), pm(1), pm(2), pm(3)];
     await seedPreview(msgs);
     // 构造崩溃现场：running + 已完成 1 批（批元数据与指纹按引擎同口径构造）
-    const chunks: DigestChunk[] = chunkMessages(previewToUnified(msgs), { ...DEFAULTS, maxCount: 2 });
-    const fp = fingerprintOf(previewToUnified(msgs));
+    const chunks: DigestChunk[] = chunkMessages(storeToUnified(msgs), { ...DEFAULTS, maxCount: 2 });
+    const fp = fingerprintOf(storeToUnified(msgs));
     const crashed: PersonJob = {
       talker: TALKER,
       name: '构造对象',
@@ -521,7 +532,7 @@ describe('resumeJobs：中断标记与重启续跑', () => {
       status: 'running',
       stage: 'extracting',
       msgCount: fp.msgCount,
-      lastMsgKey: fp.lastMsgKey,
+      contentHash: fp.contentHash,
       chunkOpts: { ...DEFAULTS, maxCount: 2 },
       chunks: chunks.map(chunkMetaOf),
       batchesDone: 1,
@@ -551,8 +562,8 @@ describe('resumeJobs：中断标记与重启续跑', () => {
   it('旧落盘兼容（issue 455）：in-flight job 的 portrait 读入视作 person，续跑已缓存批次照常复用、重画双卷', async () => {
     const msgs = [pm(0), pm(1), pm(2)];
     await seedPreview(msgs);
-    const chunks: DigestChunk[] = chunkMessages(previewToUnified(msgs), { ...DEFAULTS, maxCount: 1 });
-    const fp = fingerprintOf(previewToUnified(msgs));
+    const chunks: DigestChunk[] = chunkMessages(storeToUnified(msgs), { ...DEFAULTS, maxCount: 1 });
+    const fp = fingerprintOf(storeToUnified(msgs));
     // 旧版任务形态：单卷 portrait 字段 + 旧阶段名 'portrait'（无 person/bond 概念）
     const legacy = {
       talker: TALKER,
@@ -562,7 +573,7 @@ describe('resumeJobs：中断标记与重启续跑', () => {
       status: 'interrupted',
       stage: 'portrait',
       msgCount: fp.msgCount,
-      lastMsgKey: fp.lastMsgKey,
+      contentHash: fp.contentHash,
       chunkOpts: { ...DEFAULTS, maxCount: 1 },
       chunks: chunks.map(chunkMetaOf),
       batchesDone: 2,
@@ -696,6 +707,22 @@ describe('增量模式与 skip 跳过', () => {
     await whenIdle();
     expect(readQueue()).toEqual([]);
     expect(askExtract).not.toHaveBeenCalled();
+  });
+});
+
+describe('fingerprintOf 内容哈希指纹（466）', () => {
+  const u = (ts: number, isSender: boolean, text: string) => ({ ts, isSender, text });
+  it('同一份素材 → 同一哈希；任一条内容或顺序变 → 哈希变', () => {
+    const a = [u(1, true, '甲'), u(2, false, '乙')];
+    expect(fingerprintOf(a)).toEqual(fingerprintOf([u(1, true, '甲'), u(2, false, '乙')]));
+    const h0 = fingerprintOf(a).contentHash;
+    expect(fingerprintOf([u(1, true, '甲'), u(2, false, '乙（内容升级）')]).contentHash).not.toBe(h0); // 条数不变内容变
+    expect(fingerprintOf([u(2, false, '乙'), u(1, true, '甲')]).contentHash).not.toBe(h0); // 顺序变
+    expect(fingerprintOf([u(1, true, '甲')]).contentHash).not.toBe(h0); // 条数变
+    expect(fingerprintOf([u(1, true, '甲'), u(2, false, '乙'), u(3, true, '丙')]).contentHash).not.toBe(h0);
+  });
+  it('空素材 → 条数 0 与稳定哈希', () => {
+    expect(fingerprintOf([])).toEqual({ msgCount: 0, contentHash: fingerprintOf([]).contentHash });
   });
 });
 

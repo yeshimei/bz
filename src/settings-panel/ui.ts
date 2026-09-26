@@ -106,18 +106,18 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
-  // 脸谱（issue 446）：「清空预览」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+  // 脸谱（issue 446/466）：「清空聊天仓」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
   people: async () => {
     const { peopleSettingsSchema } = await import('../people/settings');
-    const { PreviewStore } = await import('../people/datasource');
+    const { MessageStore } = await import('../people/datasource');
     const { notifyActionError } = await import('../core/notice');
     return peopleSettingsSchema({
-      onClearPreview: async () => {
+      onClearStore: async () => {
         try {
-          await new PreviewStore(getApp()).clear();
-          notice('预览缓存已清空', 'delete');
+          await new MessageStore(getApp()).clear();
+          notice('聊天仓已清空', 'delete');
         } catch (e) {
-          notifyActionError(e, '清空预览缓存');
+          notifyActionError(e, '清空聊天仓');
         }
       },
     });

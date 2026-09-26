@@ -1,24 +1,24 @@
 /**
- * 脸谱数据源层测试（issue 446）：替代键（sid / ct+msg 哈希）、chat.json 归一化矩阵
- * （语音转写回退 / 图片描述命中与缺失 / 视频与系统消息开关 / 群聊判定 / 非文本形态丢弃）、
- * 预览桶增量合并（首导 / 部分新增 / 完全重复 / stats 重算）、
- * PreviewStore 落盘结构与清空（MockVault）。（447：shouldGenerate 随自动链路退役，触发改弹窗手动。）
+ * 脸谱聊天仓测试（issue 446/449；聊天仓 v2 = issue 466 / ADR-0197）：替代键（sid / ct+msg 哈希）、
+ * chat.json 归一化矩阵（**全量入仓** + 派生 text 空串语义 / 语音转写回退 / 图片描述命中与缺失 /
+ * 视频与系统消息开关 / 群聊判定 / 原始字段保留）、聊天仓合并（首导 / 部分新增 / **同键 upsert 覆盖** /
+ * 完全重复 / stats 重算）、MessageStore 落盘结构与 v1 判废（MockVault）。
  * 隐私口径：全部构造数据，不含真实聊天内容。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  PreviewStore,
-  emptyPreviewData,
+  MessageStore,
+  emptyMessageStore,
   isGroupChat,
-  mergePreview,
+  mergeStore,
   msgKey,
   normalizeChatJson,
-  previewStatsOf,
-  previewToUnified,
+  storeStatsOf,
+  storeToUnified,
   type ImageDescItem,
   type NormalizeOptions,
-  type PreviewContact,
   type RawChatMsg,
+  type StoreContact,
   type VoiceItem,
 } from '../../src/people/datasource';
 import { setApp } from '../../src/core/app';
@@ -62,21 +62,25 @@ describe('msgKey 替代键', () => {
   });
 });
 
-describe('normalizeChatJson 归一化矩阵', () => {
-  it('文本消息：原样进预览，ts 秒转毫秒，who=「我」判 isSender', () => {
+describe('normalizeChatJson 归一化矩阵（466 全量入仓）', () => {
+  it('文本消息：原样进仓，ts 秒转毫秒，who=「我」判 isSender，原始码随条落盘', () => {
     const r = normalizeChatJson(
       [raw({ ct: BASE, msg: '你好' }), raw({ ct: BASE + 1, who: '我', msg: '在的' })],
       opts()
     );
     expect(r.msgs).toHaveLength(2);
-    expect(r.msgs[0]).toMatchObject({ ts: BASE * 1000, isSender: false, text: '你好' });
-    expect(r.msgs[1]).toMatchObject({ ts: (BASE + 1) * 1000, isSender: true });
+    expect(r.msgs[0]).toMatchObject({ ts: BASE * 1000, isSender: false, text: '你好', type: 1, who: '对方' });
+    expect(r.msgs[1]).toMatchObject({ ts: (BASE + 1) * 1000, isSender: true, text: '在的' });
     expect(r.skippedCount).toBe(0);
   });
 
-  it('语音已回填转写：msg 原样保留（445 导出契约形态）', () => {
-    const r = normalizeChatJson([raw({ ct: BASE, type: 34, msg: '[语音 14秒·平静] 构造转写内容', sid: 11 })], opts());
+  it('语音已回填转写：msg 原样保留（445 导出契约形态），dur / wav 原始字段随条落盘', () => {
+    const r = normalizeChatJson(
+      [raw({ ct: BASE, type: 34, msg: '[语音 14秒·平静] 构造转写内容', sid: 11, dur: 14, wav: 't/voice/a.wav' })],
+      opts()
+    );
     expect(r.msgs[0].text).toBe('[语音 14秒·平静] 构造转写内容');
+    expect(r.msgs[0]).toMatchObject({ type: 34, sid: 11, dur: 14, wav: 't/voice/a.wav' });
   });
 
   it('语音无转写：msg 无正文时查 voice.json（wav 关联）回填；英文情感标签转中文', () => {
@@ -86,34 +90,37 @@ describe('normalizeChatJson 归一化矩阵', () => {
     ];
     const r = normalizeChatJson(
       [
-        raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 21, wav: '20240101_110000_66.wav', dur: 12 }), // 表里没有 → 不进时间线只计数
+        raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 21, wav: '20240101_110000_66.wav', dur: 12 }), // 表里没有 → text 空只计数
         raw({ ct: BASE + 1, type: 34, msg: '[语音 8秒]', sid: 22, wav: '20240101_120000_77.wav', dur: 8 }), // 消息裸文件名 → 表全路径（尾段键兜底）
         raw({ ct: BASE + 2, type: 34, msg: '[语音 3秒]', sid: 23, wav: 'talker/voice/20240101_130000_88.wav', dur: 3 }), // 全路径直配
       ],
       opts(),
       { voice }
     );
-    expect(r.msgs.map((m) => m.text)).toEqual(['[语音 8秒·开心] 构造语音文本', '[语音 3秒·平静] 构造第二条']);
+    expect(r.msgs.map((m) => m.text)).toEqual(['', '[语音 8秒·开心] 构造语音文本', '[语音 3秒·平静] 构造第二条']);
     expect(r.kindCounts['语音']).toBe(3);
-    expect(r.skippedCount).toBe(1);
+    expect(r.skippedCount).toBe(0); // 全量入仓：不再算「跳过」
     expect(r.insights.voiceEmotion).toEqual({ 开心: 1, 平静: 1 }); // 只数进时间线的
   });
 
-  it('语音无转写且无兜底：不进时间线只计数（449 删掉空标签行）', () => {
+  it('语音无转写且无兜底：条目仍全量入仓（text 空 = 不进时间线），不进素材统计（466 取代 449「丢出消息流」）', () => {
     const r = normalizeChatJson([raw({ ct: BASE, type: 34, msg: '[语音 12秒]', sid: 25, dur: 12 })], opts());
-    expect(r.msgs).toHaveLength(0);
+    expect(r.msgs).toHaveLength(1);
+    expect(r.msgs[0]).toMatchObject({ type: 34, sid: 25, dur: 12, text: '' });
     expect(r.kindCounts['语音']).toBe(1);
-    expect(r.skippedCount).toBe(1);
+    expect(r.skippedCount).toBe(0);
+    expect(r.stats.msgCount).toBe(0); // 统计口径 = 时间线（text 非空），与改前一致
   });
 
-  it('previewVoice=false：语音丢弃只计数', () => {
+  it('previewVoice=false：语音条目入仓但 text 空，只计数', () => {
     const r = normalizeChatJson([raw({ ct: BASE, type: 34, msg: '[语音 14秒] 构造', sid: 31 })], opts({ previewVoice: false }));
-    expect(r.msgs).toHaveLength(0);
+    expect(r.msgs).toHaveLength(1);
+    expect(r.msgs[0].text).toBe('');
     expect(r.kindCounts['语音']).toBe(1);
-    expect(r.skippedCount).toBe(1);
+    expect(r.stats.msgCount).toBe(0);
   });
 
-  it('图片描述：img 字段有值按 file 精确命中（预处理线权威路径）', () => {
+  it('图片描述：img 字段有值按 file 精确命中（预处理线权威路径），img 字段随条落盘', () => {
     const descs: ImageDescItem[] = [
       { file: `${MONTH}/a.jpg`, ct: ctOf('2026-03-04'), desc: '构造描述甲' },
       { file: `${MONTH}/b.jpg`, ct: ctOf('2026-03-20'), desc: '构造描述乙' },
@@ -128,6 +135,7 @@ describe('normalizeChatJson 归一化矩阵', () => {
     );
     // ts 升序后：05 日消息配 a、20 日消息配 b（精确匹配不靠顺序）
     expect(r.msgs.map((m) => m.text)).toEqual(['[图片] 构造描述甲', '[图片] 构造描述乙']);
+    expect(r.msgs.map((m) => m.img)).toEqual([`${MONTH}/a.jpg`, `${MONTH}/b.jpg`]);
   });
 
   it('图片描述：img 缺失走同月 ct 最近邻（±12h 内命中；一张描述只配一条消息）', () => {
@@ -135,17 +143,17 @@ describe('normalizeChatJson 归一化矩阵', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: ctOf('2026-03-05T10:00:00'), type: 3, msg: '[图片]', sid: 51 }), // 距 30 分钟 → 命中
-        raw({ ct: ctOf('2026-03-05T10:10:00'), type: 3, msg: '[图片]', sid: 52 }), // 更近但描述已被消费 → 不进时间线只计数
+        raw({ ct: ctOf('2026-03-05T10:10:00'), type: 3, msg: '[图片]', sid: 52 }), // 更近但描述已被消费 → text 空
       ],
       opts(),
       { imageDesc: descs }
     );
-    expect(r.msgs.map((m) => m.text)).toEqual(['[图片] 构造描述']);
+    expect(r.msgs.map((m) => m.text)).toEqual(['[图片] 构造描述', '']);
     expect(r.kindCounts['图片']).toBe(2);
-    expect(r.skippedCount).toBe(1);
+    expect(r.skippedCount).toBe(0);
   });
 
-  it('图片描述缺失回退：无表 / 超 12h / 跨月 / img 对不上表 → 不进时间线只计数（449 删空标签）', () => {
+  it('图片描述缺失回退：无表 / 超 12h / 跨月 / img 对不上表 → 条目入仓 text 空（449 删空标签 → 466 入仓不进时间线）', () => {
     const descs: ImageDescItem[] = [{ file: `${MONTH}/a.jpg`, ct: ctOf('2026-03-05T08:00:00'), desc: '构造描述' }];
     const r = normalizeChatJson(
       [
@@ -156,39 +164,42 @@ describe('normalizeChatJson 归一化矩阵', () => {
       opts(),
       { imageDesc: descs }
     );
-    expect(r.msgs).toHaveLength(0);
+    expect(r.msgs).toHaveLength(3);
+    expect(r.msgs.every((m) => m.text === '')).toBe(true);
     expect(r.kindCounts['图片']).toBe(3);
-    expect(r.skippedCount).toBe(3);
     expect(r.stats.imageCount).toBe(0);
   });
 
-  it('imageDescMode=off：无描述图片不进时间线只计数（449 摘除 ai 假开关）', () => {
+  it('imageDescMode=off：无描述图片条目入仓 text 空（449 摘除 ai 假开关）', () => {
     const raws = [raw({ ct: BASE, type: 3, msg: '[图片]', sid: 61 })];
     const descs: ImageDescItem[] = [{ file: `${MONTH}/a.jpg`, ct: BASE, desc: '构造描述' }];
     const r = normalizeChatJson(raws, opts({ imageDescMode: 'off' }), { imageDesc: descs });
-    expect(r.msgs).toHaveLength(0);
+    expect(r.msgs).toHaveLength(1);
+    expect(r.msgs[0].text).toBe('');
     expect(r.kindCounts['图片']).toBe(1);
   });
 
-  it('previewVideo=false：视频丢弃只计数；开则 [视频 N秒] 标签进预览', () => {
+  it('previewVideo=false：视频入仓 text 空；开则 [视频 N秒] 标签进时间线；无时长 text 空', () => {
     const v = raw({ ct: BASE, type: 43, msg: '', sid: 71, dur: 61 });
-    expect(normalizeChatJson([v], opts({ previewVideo: false })).msgs).toHaveLength(0);
+    expect(normalizeChatJson([v], opts({ previewVideo: false })).msgs[0].text).toBe('');
     const r = normalizeChatJson([v], opts());
     expect(r.msgs[0].text).toBe('[视频 61秒]');
-    expect(normalizeChatJson([{ ...v, dur: undefined }], opts()).msgs).toHaveLength(0); // 空标签不进时间线只计数
+    expect(normalizeChatJson([{ ...v, dur: undefined }], opts()).msgs[0].text).toBe(''); // 空标签无信息
   });
 
-  it('keepSystem 开关：type=10000 系统消息保留 / 丢弃，形态计数恒记', () => {
+  it('keepSystem 开关：type=10000 系统消息条目恒入仓，开关只决定 text 是否进时间线，形态计数恒记', () => {
     const sys = raw({ ct: BASE, type: 10000, msg: '"对方" 撤回了一条消息', sid: 81 });
     const on = normalizeChatJson([sys], opts());
+    expect(on.msgs).toHaveLength(1);
     expect(on.msgs[0].text).toBe('"对方" 撤回了一条消息');
     expect(on.kindCounts['系统']).toBe(1);
     const off = normalizeChatJson([sys], opts({ keepSystem: false }));
-    expect(off.msgs).toHaveLength(0);
+    expect(off.msgs).toHaveLength(1);
+    expect(off.msgs[0].text).toBe('');
     expect(off.kindCounts['系统']).toBe(1);
   });
 
-  it('type=47 表情：纯 [表情] 不进时间线只计数；[表情·名] 原样进并计命名数', () => {
+  it('type=47 表情：条目恒入仓；纯 [表情] text 空只计数；[表情·名] 进时间线并计命名数', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: BASE, type: 47, msg: '[表情]', sid: 91 }),
@@ -196,7 +207,7 @@ describe('normalizeChatJson 归一化矩阵', () => {
       ],
       opts()
     );
-    expect(r.msgs.map((m) => m.text)).toEqual(['[表情·笑哭]']);
+    expect(r.msgs.map((m) => m.text)).toEqual(['', '[表情·笑哭]']);
     expect(r.kindCounts['表情']).toBe(2); // 全量形态计数不受分流影响
     expect(r.insights.emojiCount).toBe(2);
     expect(r.insights.emojiNamedCount).toBe(1);
@@ -284,15 +295,16 @@ describe('normalizeChatJson 归一化矩阵', () => {
     expect(r.stats).toMatchObject({ msgCount: 2, voiceCount: 1, voiceTotalSec: 12, imageCount: 1 });
   });
 
-  it('stats 重算口径：合成标签的语音带时长计入 voiceTotalSec；无转写语音与无描述图片不进时间线', () => {
+  it('stats 重算口径（时间线 = text 非空）：合成标签的语音带时长计入 voiceTotalSec；无转写语音与无描述图片不进', () => {
     const r = normalizeChatJson(
       [
         raw({ ct: BASE, type: 34, msg: '[语音 8秒·开心] 构造', sid: 101 }),
-        raw({ ct: BASE + 1, type: 34, msg: '[语音 5秒]', sid: 102 }), // 无转写：不进时间线不进素材数
-        raw({ ct: BASE + 2, type: 3, msg: '[图片]', sid: 103 }), // 无描述：不进时间线
+        raw({ ct: BASE + 1, type: 34, msg: '[语音 5秒]', sid: 102 }), // 无转写：text 空，不进素材数
+        raw({ ct: BASE + 2, type: 3, msg: '[图片]', sid: 103 }), // 无描述：text 空
       ],
       opts()
     );
+    expect(r.msgs).toHaveLength(3); // 全量入仓
     expect(r.stats).toMatchObject({ msgCount: 1, voiceCount: 1, voiceTotalSec: 8, imageCount: 0 });
     expect(r.insights.voiceEmotion).toEqual({ 开心: 1 });
   });
@@ -305,17 +317,19 @@ describe('normalizeChatJson 归一化矩阵', () => {
       ],
       opts({ keepSystem: false })
     );
-    expect(r.msgs).toHaveLength(0); // keepSystem 关：不进时间线
+    expect(r.msgs).toHaveLength(2); // 恒入仓
+    expect(r.msgs.every((m) => m.text === '')).toBe(true); // keepSystem 关：不进时间线
     expect(r.insights.recantByMe).toBe(1);
     expect(r.insights.recantByOther).toBe(1);
   });
 
-  it('群聊前缀：非我消息 text 前加 [成员名] ；我方不加；单聊不变', () => {
+  it('群聊前缀：非我消息 text 前加 [成员名] ；我方不加；单聊不变；text 空不加前缀', () => {
     const groupRaws = [
       raw({ ct: BASE, who: '甲', msg: '构造甲说', sid: 111 }),
       raw({ ct: BASE + 1, who: '我', msg: '构造我说', sid: 112 }),
       raw({ ct: BASE + 2, who: '乙', type: 47, msg: '[表情· OK]', sid: 113 }),
       raw({ ct: BASE + 3, who: '乙', type: 10000, msg: '"乙" 撤回了一条消息', sid: 116 }), // 系统消息自带归属
+      raw({ ct: BASE + 4, who: '乙', type: 47, msg: '[表情]', sid: 117 }), // 未命名：text 空
     ];
     const g = normalizeChatJson(groupRaws, opts());
     expect(g.msgs.map((m) => m.text)).toEqual([
@@ -323,6 +337,7 @@ describe('normalizeChatJson 归一化矩阵', () => {
       '构造我说',
       '[乙] [表情· OK]',
       '"乙" 撤回了一条消息', // 系统消息不加成员前缀（免双重归属）
+      '', // text 空不加前缀
     ]);
     const single = normalizeChatJson(
       [raw({ ct: BASE, who: '对方', msg: '构造单聊', sid: 114 }), raw({ ct: BASE + 1, who: '我', msg: '好', sid: 115 })],
@@ -355,10 +370,47 @@ describe('normalizeChatJson 归一化矩阵', () => {
     ]);
   });
 
-  it('无效时间戳：只计数不进预览', () => {
-    const r = normalizeChatJson([{ ct: Number.NaN, type: 1, who: '我', msg: '构造' }], opts());
-    expect(r.msgs).toHaveLength(0);
-    expect(r.kindCounts['文本']).toBe(1);
+  it('全量入仓：未命名表情 / 位置 / 名片 / 未知码 / 空文本都进仓（原始条数 = chat.json 条数，466 验收）', () => {
+    const raws = [
+      raw({ ct: BASE, type: 47, msg: '[表情]', sid: 131 }), // 未命名表情
+      raw({ ct: BASE + 1, type: 49, msg: '[位置] 构造路 1 号', sid: 132 }), // 位置
+      raw({ ct: BASE + 2, type: 49, msg: '[名片] 构造名片', sid: 133 }), // 名片
+      raw({ ct: BASE + 3, type: 48, msg: '构造未知码', sid: 134 }), // 未知原始码
+      raw({ ct: BASE + 4, type: 1, msg: '', sid: 135 }), // 空文本
+      raw({ ct: BASE + 5, msg: '构造正文', sid: 136 }), // 普通文本
+    ];
+    const r = normalizeChatJson(raws, opts());
+    expect(r.msgs).toHaveLength(raws.length); // 一条不少
+    // 位置 / 名片是 49 形态、原样进时间线；不进时间线的是未命名表情 / 未知码 / 空文本
+    expect(storeToUnified(r.msgs).map((m) => m.text)).toEqual([
+      '[位置] 构造路 1 号',
+      '[名片] 构造名片',
+      '构造正文',
+    ]);
+    expect(r.kindCounts['表情']).toBe(1);
+    expect(r.skippedCount).toBe(0);
+  });
+
+  it('原始字段保留：type / who / sid / dur / wav / img 有则存（466 验收六字段）', () => {
+    const r = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 34, who: '我', msg: '[语音]', sid: 141, dur: 9, wav: 't/voice/x.wav' }),
+        raw({ ct: BASE + 1, type: 3, msg: '[图片]', sid: 142, img: `${MONTH}/c.jpg` }),
+      ],
+      opts()
+    );
+    expect(r.msgs[0]).toMatchObject({ type: 34, who: '我', sid: 141, dur: 9, wav: 't/voice/x.wav' });
+    expect(r.msgs[1]).toMatchObject({ type: 3, sid: 142, img: `${MONTH}/c.jpg` });
+  });
+
+  it('非对象 / 无效时间戳：无法入仓只计数（skippedCount 口径，466 收窄）', () => {
+    const r = normalizeChatJson(
+      [null, { ct: Number.NaN, type: 1, who: '我', msg: '构造' }, raw({ ct: BASE, msg: '好', sid: 151 })],
+      opts()
+    );
+    expect(r.msgs).toHaveLength(1);
+    expect(r.skippedCount).toBe(2);
+    expect(r.kindCounts['文本']).toBe(2); // 形态计数在入仓判定之前——无效时间的那条也记文本
   });
 });
 
@@ -371,16 +423,17 @@ describe('isGroupChat 群聊判定', () => {
   });
 });
 
-describe('mergePreview 预览桶增量', () => {
+describe('mergeStore 聊天仓合并（466 upsert）', () => {
   const normOf = (raws: RawChatMsg[]): ReturnType<typeof normalizeChatJson> => normalizeChatJson(raws, opts());
 
-  it('首导：全量进桶（added = 条数），结构含 watermarkSid / stats / kindCounts', () => {
+  it('首导：全量进仓（added = 条数），结构含 watermarkSid / stats / kindCounts', () => {
     const first = normOf([
       raw({ ct: BASE, msg: '一', sid: 111 }),
       raw({ ct: BASE + 60, type: 34, msg: '[语音 9秒·平静] 构造', sid: 112, dur: 9 }),
     ]);
-    const { contact, added } = mergePreview(undefined, first, '2026-09-25T00:00:00.000Z');
+    const { contact, added, updated } = mergeStore(undefined, first, '2026-09-25T00:00:00.000Z');
     expect(added).toBe(2);
+    expect(updated).toBe(0);
     expect(contact.msgs).toHaveLength(2);
     expect(contact.watermarkSid).toBe(112);
     expect(contact.stats).toMatchObject({ msgCount: 2, voiceCount: 1, voiceTotalSec: 9 });
@@ -388,76 +441,131 @@ describe('mergePreview 预览桶增量', () => {
     expect(contact.updatedAt).toBe('2026-09-25T00:00:00.000Z');
   });
 
-  it('重导部分新增：只补新消息，不产生重复条目，ts 升序', () => {
+  it('重导部分新增：只补新键，不产生重复条目，ts 升序', () => {
     const old3 = [raw({ ct: BASE, msg: '一', sid: 121 }), raw({ ct: BASE + 1, msg: '二', sid: 122 }), raw({ ct: BASE + 2, msg: '三', sid: 123 })];
-    const { contact } = mergePreview(undefined, normOf(old3), '2026-09-25T00:00:00.000Z');
+    const { contact } = mergeStore(undefined, normOf(old3), '2026-09-25T00:00:00.000Z');
     const again = normOf([...old3, raw({ ct: BASE + 3, msg: '四', sid: 124 }), raw({ ct: BASE + 4, msg: '五', sid: 125 })]);
-    const { contact: merged, added } = mergePreview(contact, again, '2026-09-26T00:00:00.000Z');
+    const { contact: merged, added } = mergeStore(contact, again, '2026-09-26T00:00:00.000Z');
     expect(added).toBe(2);
     expect(merged.msgs).toHaveLength(5);
     expect(merged.msgs.map((m) => m.text)).toEqual(['一', '二', '三', '四', '五']);
     expect(merged.watermarkSid).toBe(125);
   });
 
-  it('完全重复导入：added = 0，条目与 stats 不变', () => {
+  it('同键 upsert：文本再次导入升级为新文本（现网「源 28 条带名 / 仓 52 条」事故的修复验收）', () => {
+    // 首导：表情未命名（text 空，入仓不进时间线）
+    const first = normOf([raw({ ct: BASE, type: 47, msg: '[表情]', sid: 131 })]);
+    const { contact } = mergeStore(undefined, first, '2026-09-25T00:00:00.000Z');
+    expect(contact.msgs[0].text).toBe('');
+    // 重导：同一条消息的表情已被命名（同 sid 同 ct 同键），文本必须升级
+    const again = normOf([raw({ ct: BASE, type: 47, msg: '[表情·笑哭]', sid: 131 })]);
+    const { contact: merged, added, updated } = mergeStore(contact, again, '2026-09-26T00:00:00.000Z');
+    expect(added).toBe(0);
+    expect(updated).toBe(1);
+    expect(merged.msgs).toHaveLength(1); // 不堆重复条目
+    expect(merged.msgs[0].text).toBe('[表情·笑哭]'); // 旧文本被覆盖
+    expect(merged.stats.msgCount).toBe(1); // 统计随新时间线重算
+  });
+
+  it('同键 upsert：原始字段按新值更新（图片关联 img 后补）', () => {
+    const first = normOf([raw({ ct: BASE, type: 3, msg: '[图片]', sid: 141 })]); // img 缺失，无描述 → text 空
+    const { contact } = mergeStore(undefined, first, '2026-09-25T00:00:00.000Z');
+    expect(contact.msgs[0].img).toBeUndefined();
+    const descs: ImageDescItem[] = [{ file: `${MONTH}/n.jpg`, ct: BASE, desc: '构造新描述' }];
+    const again = normalizeChatJson(
+      [raw({ ct: BASE, type: 3, msg: '[图片]', sid: 141, img: `${MONTH}/n.jpg` })],
+      opts(),
+      { imageDesc: descs }
+    );
+    const { contact: merged, updated } = mergeStore(contact, again, '2026-09-26T00:00:00.000Z');
+    expect(updated).toBe(1);
+    expect(merged.msgs[0]).toMatchObject({ img: `${MONTH}/n.jpg`, text: '[图片] 构造新描述' });
+  });
+
+  it('完全重复导入：added = 0，条目内容不变', () => {
     const raws = [raw({ ct: BASE, msg: '一', sid: 131 }), raw({ ct: BASE + 1, msg: '二', sid: 132 })];
-    const { contact } = mergePreview(undefined, normOf(raws), '2026-09-25T00:00:00.000Z');
-    const again = mergePreview(contact, normOf(raws), '2026-09-26T00:00:00.000Z');
+    const { contact } = mergeStore(undefined, normOf(raws), '2026-09-25T00:00:00.000Z');
+    const again = mergeStore(contact, normOf(raws), '2026-09-26T00:00:00.000Z');
     expect(again.added).toBe(0);
+    expect(again.updated).toBe(2); // 同键覆盖（内容同值）
     expect(again.contact.msgs).toEqual(contact.msgs);
     expect(again.contact.stats).toEqual(contact.stats);
   });
 
+  it('仓里已有而本次没出现的条目保留（部分导出不互删）', () => {
+    const full = [raw({ ct: BASE, msg: '一', sid: 151 }), raw({ ct: BASE + 1, msg: '二', sid: 152 })];
+    const { contact } = mergeStore(undefined, normOf(full), '2026-09-25T00:00:00.000Z');
+    const partial = normOf([raw({ ct: BASE + 1, msg: '二', sid: 152 })]);
+    const { contact: merged } = mergeStore(contact, partial, '2026-09-26T00:00:00.000Z');
+    expect(merged.msgs).toHaveLength(2);
+    expect(merged.msgs.map((m) => m.text)).toEqual(['一', '二']);
+  });
+
   it('无 sid 消息（哈希键）同样判重；watermarkSid 不被无 sid 消息回退', () => {
     const raws = [raw({ ct: BASE, msg: '无sid', sid: 0 }), raw({ ct: BASE + 1, msg: '有sid', sid: 141 })];
-    const { contact } = mergePreview(undefined, normOf(raws), '2026-09-25T00:00:00.000Z');
+    const { contact } = mergeStore(undefined, normOf(raws), '2026-09-25T00:00:00.000Z');
     expect(contact.watermarkSid).toBe(141);
-    const again = mergePreview(contact, normOf(raws), '2026-09-26T00:00:00.000Z');
+    const again = mergeStore(contact, normOf(raws), '2026-09-26T00:00:00.000Z');
     expect(again.added).toBe(0);
   });
 
-  it('预览全量消息可直转 UnifiedMessage（第二段管线入参）', () => {
-    const { contact } = mergePreview(undefined, normOf([raw({ ct: BASE, who: '我', msg: '构造' , sid: 151 })]), '2026-09-25T00:00:00.000Z');
-    expect(previewToUnified(contact.msgs)).toEqual([{ ts: BASE * 1000, isSender: true, text: '构造' }]);
+  it('仓消息直转 UnifiedMessage 只含时间线（text 非空；第二段管线入参）', () => {
+    const first = normOf([
+      raw({ ct: BASE, who: '我', msg: '构造', sid: 161 }),
+      raw({ ct: BASE + 1, type: 47, msg: '[表情]', sid: 162 }), // text 空
+    ]);
+    const { contact } = mergeStore(undefined, first, '2026-09-25T00:00:00.000Z');
+    expect(storeToUnified(contact.msgs)).toEqual([{ ts: BASE * 1000, isSender: true, text: '构造' }]);
   });
 });
 
-describe('previewStatsOf', () => {
+describe('storeStatsOf（时间线口径重算，466 验收：与改前一致）', () => {
   it('空流 → 全零', () => {
-    expect(previewStatsOf([])).toEqual({ msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 });
+    expect(storeStatsOf([])).toEqual({ msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 });
+  });
+  it('text 空的条目不进统计；带标签文本照 445 口径计数', () => {
+    const msgs = normalizeChatJson(
+      [
+        raw({ ct: BASE, type: 34, msg: '[语音 8秒·开心] 构造', sid: 171, dur: 8 }),
+        raw({ ct: BASE + 1, type: 34, msg: '[语音 5秒]', sid: 172 }), // text 空
+        raw({ ct: BASE + 2, msg: '[图片] 构造描述', sid: 173 }),
+      ],
+      opts()
+    ).msgs;
+    expect(storeStatsOf(msgs)).toMatchObject({ msgCount: 2, voiceCount: 1, voiceTotalSec: 8, imageCount: 1 });
   });
 });
 
-describe('PreviewStore（people-preview.json 落盘）', () => {
+describe('MessageStore（people-preview.json 落盘；聊天仓 v2）', () => {
   let vault: MockVault;
-  let store: PreviewStore;
+  let store: MessageStore;
 
   beforeEach(() => {
     vault = new MockVault();
     setApp({ vault } as any);
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     resetObsidianMocks();
-    store = new PreviewStore({ vault });
+    store = new MessageStore({ vault });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  const contactOf = (name: string, n: number): PreviewContact => {
+  const contactOf = (name: string, n: number): StoreContact => {
     const norm = normalizeChatJson(
       Array.from({ length: n }, (_, i) => raw({ ct: BASE + i, msg: `构造 ${i}`, sid: 1000 + i })),
       opts()
     );
-    return mergePreview(undefined, norm, '2026-09-25T00:00:00.000Z').contact;
+    return mergeStore(undefined, norm, '2026-09-25T00:00:00.000Z').contact;
   };
 
-  it('空桶读出默认结构；upsertContact 落盘后可读回', async () => {
-    expect(await store.read()).toEqual(emptyPreviewData());
+  it('空仓读出默认结构（version 2）；upsertContact 落盘后可读回', async () => {
+    expect(await store.read()).toEqual(emptyMessageStore());
     await store.upsertContact('构造者甲', contactOf('甲', 3));
     const data = await store.read();
     expect(Object.keys(data.contacts)).toEqual(['构造者甲']);
-    expect(data.version).toBe(1);
+    expect(data.version).toBe(2);
     expect(data.contacts['构造者甲'].msgs).toHaveLength(3);
     expect(data.contacts['构造者甲'].stats.msgCount).toBe(3);
     expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(true);
@@ -471,12 +579,25 @@ describe('PreviewStore（people-preview.json 落盘）', () => {
     expect(data.contacts['甲'].msgs).toHaveLength(5);
   });
 
-  it('clear 清空全部预览并保留文件框架（不动其他域文件）', async () => {
+  it('结构版本门禁（466 / ADR-0197 决策 6）：盘上 v1 旧桶判废返回空仓，从数据根重导', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/people-preview.json',
+      JSON.stringify({
+        version: 1,
+        contacts: { 甲: { msgs: [{ key: 'k', ts: 1, isSender: true, text: '旧结构' }], watermarkSid: 0, stats: { msgCount: 1, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '' } },
+      })
+    );
+    const data = await store.read();
+    expect(data).toEqual(emptyMessageStore()); // 旧结构就地判废（无升级路径）
+    expect(Object.keys(data.contacts)).toHaveLength(0);
+  });
+
+  it('clear 清空整仓并保留文件框架（不动其他域文件）', async () => {
     await store.upsertContact('甲', contactOf('甲', 2));
     await store.upsertContact('乙', contactOf('乙', 2));
     await store.clear();
     const data = await store.read();
-    expect(data).toEqual(emptyPreviewData());
+    expect(data).toEqual(emptyMessageStore());
     expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(true);
     expect(vault.files.has('CONFIG/STORAGE/people.json')).toBe(false); // PersonEntry 不受影响
   });
