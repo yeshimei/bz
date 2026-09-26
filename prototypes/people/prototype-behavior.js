@@ -1,5 +1,5 @@
-/* 源指纹 f14fe1496e6819c2 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/catpicker.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 61fd7993b091e84e · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/catpicker.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -13989,7 +13989,27 @@ var BZW_people = (() => {
     if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
     return content;
   }
+  var AI_IMAGE_MIME = {
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    gif: "image/gif",
+    webp: "image/webp"
+  };
   var AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
+  function imageMimeOfPath(path) {
+    var _a2;
+    const ext = ((_a2 = String(path || "").split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
+    return AI_IMAGE_MIME[ext] || null;
+  }
+  function imageDataUrl(bytes, mime) {
+    const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    if (u8.byteLength === 0) throw new Error("图片内容为空");
+    if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
+      throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
+    }
+    return `data:${mime};base64,${toBase64(u8)}`;
+  }
   function buildUserContent(input) {
     var _a2;
     if (typeof input === "string") return input;
@@ -15521,6 +15541,65 @@ var BZW_people = (() => {
     }
     return n;
   }
+  function applyImageDescToMsgs(msgs, descs) {
+    var _a2, _b2, _c, _d, _e, _f;
+    const byFile = /* @__PURE__ */ new Map();
+    const byMonth = /* @__PURE__ */ new Map();
+    for (const it of descs) {
+      if (!it || typeof it !== "object") continue;
+      if (!String((_a2 = it.desc) != null ? _a2 : "").trim()) continue;
+      const file = String((_b2 = it.file) != null ? _b2 : "").trim();
+      if (file) byFile.set(file, it);
+      const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
+      if (!month) continue;
+      let list = byMonth.get(month);
+      if (!list) {
+        list = [];
+        byMonth.set(month, list);
+      }
+      list.push(it);
+    }
+    for (const list of byMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
+    const used = /* @__PURE__ */ new Set();
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 3 || m.text !== "") continue;
+      const img = String((_c = m.img) != null ? _c : "").trim();
+      const ctSec = Math.round(m.ts / 1e3);
+      let desc = "";
+      const exact = img ? byFile.get(img) : void 0;
+      if (exact) {
+        desc = String((_d = exact.desc) != null ? _d : "").trim();
+      } else {
+        const list = byMonth.get(monthOf(ctSec));
+        if (list == null ? void 0 : list.length) {
+          let best = null;
+          let bestDiff = Infinity;
+          for (const it of list) {
+            const ict = Number(it.ct);
+            if (!Number.isFinite(ict)) continue;
+            const diff = Math.abs(ict - ctSec);
+            if (diff < bestDiff) {
+              bestDiff = diff;
+              best = it;
+            }
+          }
+          if (best && bestDiff <= IMG_DESC_NEAREST_SEC) {
+            const key = String((_e = best.file) != null ? _e : "").trim() || `ct:${Number(best.ct)}`;
+            if (!used.has(key)) {
+              used.add(key);
+              desc = String((_f = best.desc) != null ? _f : "").trim();
+            }
+          }
+        }
+      }
+      if (desc && m.text !== `[图片] ${desc}`) {
+        m.text = `[图片] ${desc}`;
+        n++;
+      }
+    }
+    return n;
+  }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
     const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
@@ -15625,6 +15704,164 @@ var BZW_people = (() => {
     acc.voiceTotalSec = (_b2 = stats.voiceTotalSec) != null ? _b2 : 0;
     acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
     return acc.voiceCount || acc.imageCount ? acc : null;
+  }
+
+  // src/people/describe.ts
+  init_settings_provider();
+  var DESCRIBE_DEFAULT_BATCH_SIZE = 20;
+  function newDescribeProgress(imgCount, batchSize) {
+    const size = clampBatchSize(batchSize);
+    return { imgCount, batchSize: size, totalBatches: Math.ceil(imgCount / size), doneBatches: 0 };
+  }
+  function clampBatchSize(n) {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v < 1) return DESCRIBE_DEFAULT_BATCH_SIZE;
+    return Math.min(200, Math.round(v));
+  }
+  function batchSizeFromSettings() {
+    var _a2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    return clampBatchSize(s.peopleDescBatchSize);
+  }
+  function describeOf(job) {
+    const d = job.describe;
+    if (!d || typeof d !== "object") return null;
+    d.batchSize = clampBatchSize(d.batchSize);
+    if (!Number.isFinite(d.imgCount) || d.imgCount < 0) d.imgCount = 0;
+    if (!Number.isFinite(d.totalBatches) || d.totalBatches < 0) d.totalBatches = Math.ceil(d.imgCount / d.batchSize);
+    if (!Number.isFinite(d.doneBatches) || d.doneBatches < 0) d.doneBatches = 0;
+    return d;
+  }
+  var DESCRIBE_LABEL = "图片描述";
+  function describeStageLine(done, total) {
+    return `${DESCRIBE_LABEL} ${Math.max(0, done)}/${Math.max(0, total)} 批`;
+  }
+  function describeOverallPct(done, total) {
+    if (total <= 0) return 0;
+    return Math.min(100, Math.max(0, Math.round(Math.min(done, total) / total * 100)));
+  }
+  function imageRefsOf(msgs) {
+    var _a2;
+    const out = [];
+    for (const m of msgs) {
+      if (m.type !== 3) continue;
+      const img = String((_a2 = m.img) != null ? _a2 : "").trim();
+      if (!img) continue;
+      out.push({ key: m.key, ts: m.ts, img });
+    }
+    return out.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  }
+  function describeBatches(refs, batchSize) {
+    const size = clampBatchSize(batchSize);
+    const out = [];
+    for (let i = 0; i < refs.length; i += size) out.push(refs.slice(i, i + size));
+    return out;
+  }
+  var DESCRIBE_CONTEXT_DEFAULTS = { windowMs: 36e5, maxChars: 6e3 };
+  function contextNameOf(m) {
+    var _a2;
+    if (m.isSender) return "我";
+    const who = String((_a2 = m.who) != null ? _a2 : "").trim();
+    return who || "对方";
+  }
+  function hhmm(ts) {
+    const d = new Date(ts);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+  function contextWindowOf(msgs, imgFromTs, imgToTs, opts = {}) {
+    var _a2, _b2, _c;
+    const windowMs = (_a2 = opts.windowMs) != null ? _a2 : DESCRIBE_CONTEXT_DEFAULTS.windowMs;
+    const maxChars = Math.max(1, (_b2 = opts.maxChars) != null ? _b2 : DESCRIBE_CONTEXT_DEFAULTS.maxChars);
+    const from = imgFromTs - windowMs;
+    const to = imgToTs + windowMs;
+    const lines = [];
+    for (const m of msgs) {
+      const t = String((_c = m.text) != null ? _c : "");
+      if (!t || m.ts < from || m.ts > to) continue;
+      const line = t.startsWith("[") ? `${hhmm(m.ts)} ${t}` : `${hhmm(m.ts)} ${contextNameOf(m)}：${t}`;
+      lines.push({ ts: m.ts, text: line, len: line.length });
+    }
+    if (!lines.length) return "";
+    let lo = 0;
+    let hi = lines.length - 1;
+    let total = lines.reduce((s, l) => s + l.len, 0) + (lines.length - 1);
+    while (total > maxChars && hi >= lo) {
+      const fd = Math.max(0, imgFromTs - lines[lo].ts);
+      const bd = Math.max(0, lines[hi].ts - imgToTs);
+      if (fd > bd) total -= lines[lo++].len + 1;
+      else total -= lines[hi--].len + 1;
+    }
+    return lines.slice(lo, hi + 1).map((l) => l.text).join("\n");
+  }
+  function buildDescribePrompt(imageCount, context) {
+    return [
+      "你是聊天记录图片描述助手。接下来给你一批聊天里的图片（按对话时间顺序），请为每张图片写一条描述。",
+      "只输出 JSON，不要任何解释、不要代码围栏：",
+      `{"descs":["第1张的描述","第2张的描述"]}`,
+      `硬约束：descs 数组长度必须等于图片张数 ${imageCount}，逐张对应、不得合并或省略。`,
+      "描述要求：",
+      "- 简体中文，1-2 句，客观说出图片里能看到的内容；截图类图片概括在聊什么、关键信息是什么（图中文字可提炼要点）。",
+      "- 可借助对话上下文理解图片在说什么，但只写图片本身可见的内容，不臆测图中没有的事实与数字。",
+      ...context ? ["", "【对话上下文】", context] : []
+    ].join("\n");
+  }
+  function parseDescribeReply(raw, expect) {
+    var _a2;
+    const arr = (_a2 = extractJsonLoose(raw)) == null ? void 0 : _a2.descs;
+    if (!Array.isArray(arr)) throw new Error("图片描述回执缺少 descs 数组");
+    const out = arr.map((d) => String(d != null ? d : "").trim());
+    if (out.length !== expect) throw new Error(`图片描述数量不符（回 ${out.length} 条，应为 ${expect} 条）`);
+    return out;
+  }
+  function defaultDescribeFs() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      const fs = w.require("fs");
+      return {
+        readBytes: (p) => {
+          try {
+            const buf = fs.readFileSync(p);
+            return buf ? new Uint8Array(buf) : null;
+          } catch (e) {
+            return null;
+          }
+        }
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  var describeFsOverride = null;
+  function fso2() {
+    return describeFsOverride != null ? describeFsOverride : defaultDescribeFs();
+  }
+  function descImagePath(dataRoot, talker, img) {
+    const base = `${dataRoot}/${talker}/desc/${String(img).trim()}`.replace(/\\/g, "/");
+    return base.replace(/\/+/g, "/");
+  }
+  function descDataUrlOf(dataRoot, talker, img) {
+    const fs = fso2();
+    if (!fs || !dataRoot || !talker) return null;
+    const path = descImagePath(dataRoot, talker, img);
+    const bytes = fs.readBytes(path);
+    if (!bytes || !bytes.byteLength) return null;
+    const mime = imageMimeOfPath(path);
+    if (!mime) return null;
+    try {
+      return imageDataUrl(bytes, mime);
+    } catch (e) {
+      return null;
+    }
+  }
+  function describeModelLabelOf() {
+    var _a2, _b2, _c, _d;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    const id = String((_b2 = s.aiProvider) != null ? _b2 : "") || DEFAULT_AI_PROVIDER;
+    const desc = getProviderDescriptor(id);
+    const model = String((_d = (_c = s.aiModelOverrides) == null ? void 0 : _c[id]) != null ? _d : "") || desc.model || "默认模型";
+    return { provider: desc.label, model };
   }
 
   // src/people/jobs.ts
@@ -15829,7 +16066,13 @@ var BZW_people = (() => {
     if (!st.safe.unlocked) {
       return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
     }
-    st.injected = opts.askExtract || opts.askPortrait ? { askExtract: opts.askExtract, askPortrait: opts.askPortrait } : null;
+    st.injected = opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm ? {
+      askExtract: opts.askExtract,
+      askPortrait: opts.askPortrait,
+      askDescribe: opts.askDescribe,
+      askDescribeConfirm: opts.askDescribeConfirm,
+      askPortraitConfirm: opts.askPortraitConfirm
+    } : null;
     if (opts.maxRetries !== void 0) st.retry.maxRetries = opts.maxRetries;
     if (opts.sleep) st.retry.sleep = opts.sleep;
     const people = new PeopleStore(app);
@@ -15972,7 +16215,7 @@ var BZW_people = (() => {
       store: store2,
       safe,
       queue,
-      injected: ai.askExtract || ai.askPortrait ? ai : null,
+      injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
       pauseRequested: false,
@@ -16178,8 +16421,153 @@ var BZW_people = (() => {
     });
     return counts;
   }
+  async function runDescribeStage(job, finish) {
+    var _a2, _b2, _c;
+    const safe = st.safe;
+    if (!(safe == null ? void 0 : safe.unlocked)) return "halted";
+    const ledger = describeOf(job);
+    if (ledger == null ? void 0 : ledger.skipped) return "skipped";
+    const dataRoot = dataRootOf();
+    if (!dataRoot) return "skipped";
+    const rec = await safe.read(job.talker);
+    if (gone(job)) return "halted";
+    const msgs = (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : [];
+    const refs = imageRefsOf(msgs);
+    if (!refs.length) return "skipped";
+    const byKey = new Map(msgs.map((m) => [m.key, m]));
+    const isDone = (ref) => {
+      var _a3, _b3;
+      return ((_b3 = (_a3 = byKey.get(ref.key)) == null ? void 0 : _a3.text) != null ? _b3 : "") !== "";
+    };
+    const batchSize = (_b2 = ledger == null ? void 0 : ledger.batchSize) != null ? _b2 : batchSizeFromSettings();
+    const batches = describeBatches(refs, batchSize);
+    const doneBatches = batches.filter((b) => b.every(isDone)).length;
+    const pendingCount = refs.filter((r) => !isDone(r)).length;
+    if (!ledger) job.describe = newDescribeProgress(refs.length, batchSize);
+    const led = job.describe;
+    led.imgCount = refs.length;
+    led.batchSize = batchSize;
+    led.totalBatches = batches.length;
+    led.doneBatches = Math.max(led.doneBatches, doneBatches);
+    if (pendingCount <= 0) {
+      await finish({ describe: led, message: describeStageLine(doneBatches, batches.length) });
+      return "skipped";
+    }
+    if (!led.confirmed) {
+      const gate = (_c = st.injected) == null ? void 0 : _c.askDescribeConfirm;
+      if (!gate) {
+        led.skipped = true;
+        await finish({ describe: led, message: "已跳过图片描述，继续生成画像" });
+        return "skipped";
+      }
+      const label = describeModelLabelOf();
+      job.stage = "describe";
+      job.message = "等待确认图片描述…";
+      await persist();
+      emit();
+      let answer;
+      try {
+        answer = await gate({
+          provider: label.provider,
+          model: label.model,
+          name: job.name,
+          totalImages: refs.length,
+          doneImages: refs.length - pendingCount,
+          calls: batches.filter((b) => b.some((r) => !isDone(r))).length,
+          // 有剩余工作的批 = 约调用次数
+          batchSize
+        });
+      } catch (e) {
+        console.warn("[people] 图片描述确认门异常，按跳过处理:", e);
+        answer = "skip";
+      }
+      if (gone(job)) return "halted";
+      if (answer === "skip") {
+        led.skipped = true;
+        await finish({ describe: led, message: "已跳过图片描述，继续生成画像" });
+        return "skipped";
+      }
+      led.confirmed = true;
+      await persist();
+    }
+    job.stage = "describe";
+    await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
+    const ask = asksOf().describe;
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      const pending = batch.filter((r) => !isDone(r));
+      if (!pending.length) {
+        if (led.doneBatches < i + 1) led.doneBatches = i + 1;
+        continue;
+      }
+      if (st.pauseRequested) {
+        await finish({ status: "paused", message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+        return "halted";
+      }
+      if (gone(job)) return "halted";
+      const images = [];
+      for (const ref of pending) {
+        const url = descDataUrlOf(dataRoot, job.talker, ref.img);
+        if (url) images.push({ ref, url });
+      }
+      if (!images.length) {
+        led.doneBatches = i + 1;
+        await persist();
+        continue;
+      }
+      led.doneBatches = i;
+      job.message = `图片描述 第 ${i + 1}/${batches.length} 批（${images.length} 张）`;
+      emit();
+      const context = contextWindowOf(msgs, batch[0].ts, batch[batch.length - 1].ts);
+      const prompt = buildDescribePrompt(images.length, context);
+      let descs;
+      let attempt = 0;
+      for (; ; ) {
+        try {
+          descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
+          break;
+        } catch (e) {
+          if (gone(job)) return "halted";
+          const err = errorMessage(e);
+          if (isAbortError(e) || attempt >= st.retry.maxRetries) {
+            await finish({
+              status: "error",
+              error: err,
+              message: `图片描述第 ${i + 1}/${batches.length} 批失败（已完成 ${led.doneBatches} 批保留，可从失败批续跑）`
+            });
+            return "halted";
+          }
+          attempt += 1;
+          job.message = `图片描述第 ${i + 1}/${batches.length} 批失败（${err}）——正在重试 ${attempt}/${st.retry.maxRetries}…`;
+          emit();
+          await st.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
+          if (gone(job)) return "halted";
+          if (st.pauseRequested) {
+            await finish({ status: "paused", message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+            return "halted";
+          }
+        }
+      }
+      const items = images.map((x, j) => {
+        var _a3;
+        return { file: x.ref.img, ct: Math.round(x.ref.ts / 1e3), desc: (_a3 = descs[j]) != null ? _a3 : "" };
+      });
+      await safe.write(job.talker, (rec2) => {
+        const n = applyImageDescToMsgs(rec2.store.msgs, items);
+        if (n > 0) {
+          rec2.store.stats = storeStatsOf(rec2.store.msgs);
+          rec2.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+        }
+      });
+      if (gone(job)) return "halted";
+      led.doneBatches = i + 1;
+      await persist();
+      emit();
+    }
+    return "ok";
+  }
   async function runJob(job) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -16212,6 +16600,8 @@ var BZW_people = (() => {
           job.message = `预处理完成${((_d = job.prep) == null ? void 0 : _d.failed) ? `（失败 ${job.prep.failed} 条，可用「重试失败项」补齐）` : ""}，开始组装素材…`;
         }
       }
+      const descState = await runDescribeStage(job, finish);
+      if (descState === "halted") return;
       const contact = (_e = await safe.read(job.talker)) == null ? void 0 : _e.store;
       if (gone(job)) return;
       const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
@@ -16267,6 +16657,38 @@ var BZW_people = (() => {
           };
         }
       }
+      if (!job.portraitConfirmed) {
+        const gate = (_m = st.injected) == null ? void 0 : _m.askPortraitConfirm;
+        if (gate) {
+          const label = describeModelLabelOf();
+          job.stage = "chunked";
+          job.message = "等待确认画像生成…";
+          await persist();
+          emit();
+          let answer;
+          try {
+            answer = await gate({
+              provider: label.provider,
+              model: label.model,
+              name: job.name,
+              materials: digestMsgs.length,
+              calls: chunks.length + 3
+            });
+          } catch (e) {
+            console.warn("[people] 画像生成确认门异常，按取消处理:", e);
+            answer = "cancel";
+          }
+          if (gone(job)) return;
+          if (answer === "cancel") {
+            await removeJob(job.talker);
+            return;
+          }
+          job.portraitConfirmed = true;
+          await persist();
+        } else {
+          job.portraitConfirmed = true;
+        }
+      }
       job.stage = "extracting";
       const total = chunks.length;
       for (let i = job.batchesDone; i < total; i++) {
@@ -16318,9 +16740,9 @@ var BZW_people = (() => {
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_m = job.material) == null ? void 0 : _m.mediaNote,
-        statsNote: (_n = job.material) == null ? void 0 : _n.statsNote,
-        profileNote: (_o = job.material) == null ? void 0 : _o.profileNote,
+        mediaNote: (_n = job.material) == null ? void 0 : _n.mediaNote,
+        statsNote: (_o = job.material) == null ? void 0 : _o.statsNote,
+        profileNote: (_p = job.material) == null ? void 0 : _p.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -16392,7 +16814,7 @@ var BZW_people = (() => {
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_p = st == null ? void 0 : st.safe) == null ? void 0 : _p.unlocked)) {
+      if (!((_q = st == null ? void 0 : st.safe) == null ? void 0 : _q.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，任务已暂停（解锁后可继续）" });
         return;
       }
@@ -16402,14 +16824,12 @@ var BZW_people = (() => {
     }
   }
   function asksOf() {
-    var _a2, _b2, _c, _d, _e;
-    if (((_a2 = st == null ? void 0 : st.injected) == null ? void 0 : _a2.askExtract) && st.injected.askPortrait) {
-      return { extract: st.injected.askExtract, portrait: st.injected.askPortrait };
-    }
+    var _a2, _b2, _c, _d, _e, _f;
     const ai = createAI();
     return {
-      extract: (_c = (_b2 = st == null ? void 0 : st.injected) == null ? void 0 : _b2.askExtract) != null ? _c : (p) => ai.json(p),
-      portrait: (_e = (_d = st == null ? void 0 : st.injected) == null ? void 0 : _d.askPortrait) != null ? _e : (p) => ai.chat(p)
+      extract: (_b2 = (_a2 = st == null ? void 0 : st.injected) == null ? void 0 : _a2.askExtract) != null ? _b2 : (p) => ai.json(p),
+      portrait: (_d = (_c = st == null ? void 0 : st.injected) == null ? void 0 : _c.askPortrait) != null ? _d : (p) => ai.chat(p),
+      describe: (_f = (_e = st == null ? void 0 : st.injected) == null ? void 0 : _e.askDescribe) != null ? _f : (input) => ai.json(input)
     };
   }
   function __resetJobsForTests() {
@@ -16732,9 +17152,15 @@ var BZW_people = (() => {
     var _a2, _b2;
     return (_b2 = (_a2 = s.prep) == null ? void 0 : _a2.stageText) != null ? _b2 : null;
   }
+  function describeStagePart(s) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = s.describe) == null ? void 0 : _a2.stageText) != null ? _b2 : null;
+  }
   function progressBlock(s) {
+    var _a2;
     const stagePart = prepStagePart(s);
-    const pct = stagePart ? s.prep.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+    const descPart = describeStagePart(s);
+    const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
     const block = el("div", "bz-people-jobs", {
       "data-people-jobs": "",
       "data-people-jobs-talker": s.talker,
@@ -16750,7 +17176,7 @@ var BZW_people = (() => {
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
     const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : stagePart != null ? stagePart : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_a2 = stagePart != null ? stagePart : descPart) != null ? _a2 : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
     block.appendChild(el("div", "bz-people-jobs-main", text(main)));
     const action = jobsActionOf(s);
     const foot = [];
@@ -16761,6 +17187,60 @@ var BZW_people = (() => {
     if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
+  }
+  function describeConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-desc-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-desc-skip": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "图片描述确认" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("图片描述"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-desc-line", text(
+      `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-note", text(
+      `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "跳过图片描述", { "data-people-desc-skip": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-desc-start": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-desc-start]")) onAnswer("start");
+      else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
+    });
+    return wrap;
+  }
+  function portraitConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-portrait-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-portrait-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "画像生成确认" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("画脸谱"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-desc-line", text(
+      `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-note", text(
+      "其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。"
+    )));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-portrait-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-portrait-start": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-portrait-start]")) onAnswer("start");
+      else if (t.closest("[data-people-portrait-cancel]")) onAnswer("cancel");
+    });
+    return wrap;
   }
   function statsText(people) {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
@@ -16778,12 +17258,12 @@ var BZW_people = (() => {
     ]);
   }
   function foldSeal(p, job) {
-    var _a2;
+    var _a2, _b2;
     const name = p.name || p.id;
     if (job && job.status !== "done") {
       const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
       if (job.status === "running") {
-        const pct = (_a2 = job.prepPct) != null ? _a2 : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+        const pct = (_b2 = (_a2 = job.describePct) != null ? _a2 : job.prepPct) != null ? _b2 : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
         return {
           state: "running",
           text: `画谱中
@@ -18035,7 +18515,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const safe = peopleSafe != null ? peopleSafe : await getPeopleSafeStore();
     if (!safe.unlocked) return;
     jobsBooted = true;
-    await jobs().resumeJobs(getApp());
+    await jobs().resumeJobs(getApp(), { askDescribeConfirm });
   }
   async function ensureJobsWatch() {
     if (!jobsUnsub) jobsUnsub = jobs().subscribe((s) => applySnapshot(s));
@@ -18066,7 +18546,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     let engineSkipped = 0;
     let resumed = [];
     if (runnable2.length) {
-      const res = await jobs().startJobs(getApp(), runnable2, {});
+      const res = await jobs().startJobs(getApp(), runnable2, {
+        askDescribeConfirm,
+        askPortraitConfirm
+      });
       engineSkipped = res.skipped.length;
       resumed = (_a2 = res.resumed) != null ? _a2 : [];
       await ensureJobsWatch();
@@ -18210,6 +18693,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         stageText: job.stage === "preprocess" ? prepStageLine(job.prep) : null,
         overall: prepOverallPct(job.prep),
         failed: (_i = job.prep.failed) != null ? _i : 0
+      } : void 0,
+      // 图片描述段进度（470）：阶段行 / 折算总进度只在 describe 阶段上屏（批口径）
+      describe: job.describe && job.stage === "describe" ? {
+        stageText: describeStageLine(job.describe.doneBatches, job.describe.totalBatches),
+        overall: describeOverallPct(job.describe.doneBatches, job.describe.totalBatches)
       } : void 0
     };
   }
@@ -18223,6 +18711,46 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function jobsRunning() {
     var _a2;
     return ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).some((j) => j.status === "running");
+  }
+  var descConfirmOpen = false;
+  function askDescribeConfirm(info) {
+    if (descConfirmOpen) return Promise.resolve("skip");
+    descConfirmOpen = true;
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        descConfirmOpen = false;
+        document.removeEventListener("keydown", onKey, true);
+        node.remove();
+        resolve(answer);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") done("skip");
+      };
+      const node = describeConfirmModal(info, done);
+      document.body.appendChild(node);
+      topifyZ(node);
+      document.addEventListener("keydown", onKey, true);
+    });
+  }
+  var portraitConfirmOpen = false;
+  function askPortraitConfirm(info) {
+    if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve("cancel");
+    portraitConfirmOpen = true;
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        portraitConfirmOpen = false;
+        document.removeEventListener("keydown", onKey, true);
+        node.remove();
+        resolve(answer);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") done("cancel");
+      };
+      const node = portraitConfirmModal(info, done);
+      document.body.appendChild(node);
+      topifyZ(node);
+      document.addEventListener("keydown", onKey, true);
+    });
   }
   function jobsAction(kind) {
     var _a2, _b2, _c, _d, _e;
@@ -18272,7 +18800,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
       resumable: isResumable(job),
       // 工具段总进度（469）：preprocess 阶段印章百分比按它算（AI 段回落批口径）
-      prepPct: job.prep && job.stage === "preprocess" ? prepOverallPct(job.prep) : void 0
+      prepPct: job.prep && job.stage === "preprocess" ? prepOverallPct(job.prep) : void 0,
+      // 图片描述段总进度（470）：describe 阶段印章百分比按它算
+      describePct: job.describe && job.stage === "describe" ? describeOverallPct(job.describe.doneBatches, job.describe.totalBatches) : void 0
     };
   }
   function syncWallSeals() {
@@ -19069,6 +19599,15 @@ ${s}`).join("\n\n");
                 { value: "file", label: "文件描述" },
                 { value: "off", label: "仅标签" }
               ]
+            },
+            {
+              type: "number",
+              name: "每批图片数",
+              desc: "画脸谱时图片描述每批的张数，一次 AI 调用一批（默认 20）",
+              binding: { key: "peopleDescBatchSize" },
+              min: 1,
+              max: 100,
+              step: 5
             },
             {
               type: "toggle",
