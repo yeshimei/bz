@@ -83,5 +83,10 @@
   multiprocessing 子进程的 sys.modules 垫片又不可靠。改惰性 import 后：装了真 yara-python
   的环境照常取密钥；没装的环境解密链照常跑、真去取密钥才报 ModuleNotFoundError。
   升级上游版本时重新套用此补丁。
+- **有据可查的最小偏离（2026-09-26，日志目录线）**：`wxManager/log/logger.py` 模块顶层
+  `log_dir = Path.cwd() / "logs" / …` 改为 `Path(__file__).resolve().parents[2] / "logs" / …`——
+  上游把日志目录锚在 CWD，插件派生本工具时 CWD 是 Obsidian 安装目录（不可写），import 即
+  `[WinError 5] 拒绝访问`，解密/导出全链被拖死。改锚本文件后日志落在
+  `vendor/WeChatMsg_Lite/logs/`（gitignore），行为不变。升级上游版本时重新套用此补丁。
 - 已知上游瑕疵（原样收编、不代改）：若干 `return` 出现在 `finally` 块，
   Python 3.14 下有 SyntaxWarning，不影响行为；升级上游版本时一并消化。

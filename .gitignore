@@ -9,3 +9,6 @@ viz/
 .dsh-worktrees/
 .zcode/
 .workbuddy/
+
+# bz-face vendor 运行日志（logger.py 以 __file__ 锚定，落在 vendor 内，不入 git）
+tools/obsidian-face/python/vendor/WeChatMsg_Lite/logs/
