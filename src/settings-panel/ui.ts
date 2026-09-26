@@ -545,7 +545,10 @@ export class SettingsPanelUI {
     spm.motionEnsureDust(popup);
   }
 
-  /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
+  /* 使用手册一键（issue 473；issue 476 加后台核对）：无手册先下载再打开，已下载直接打开
+   * （core/manual 单源）——本地内容**秒开**，随后后台向远端核对一次（不 await，阅读不被
+   * 网络拖住）：远端有新重出的手册才覆盖落盘，且弹窗还开着就热替换成新内容；已关闭则只落盘，
+   * 下次打开即新版。核对全程静默（不转圈、不通知，离线就是保持本地那一版）。
    * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
    * 完成/失败 finally 复原 book-open；就绪后在 Obsidian 内独立弹窗内嵌渲染
    * （manual-viewer，srcdoc 直灌，不走系统浏览器）；失败原因由 core/manual 的
@@ -562,6 +565,12 @@ export class SettingsPanelUI {
       if (ic) setIcon(ic, 'loader');
       const html = await core.ensureManualReady(getApp());
       viewer.openManualViewer(html);
+      void this.refreshDocInBackground(
+        () => core.refreshManual(getApp()),
+        (fresh) => {
+          if (viewer.isManualViewerOpen()) viewer.openManualViewer(fresh);
+        },
+      );
     } catch (e) {
       notice((e as Error)?.message || '手册下载失败', 'error');
     } finally {
@@ -573,7 +582,8 @@ export class SettingsPanelUI {
   /* 更新日志一键（issue 474）：与手册同口径——日志不随构建分发，现场从 GitHub 下载
    * manual/bz-changelog.html 再在 OB 内独立弹窗内嵌渲染（iframe srcdoc，与手册同范式）。
    * 下载期间按钮图标换 loader + .is-loading 转圈防重入；失败不兜底（用户拍板：
-   * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。 */
+   * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。
+   * issue 476 与手册同刀：本地版秒开后后台核对一次，有新重出的日志就热替换。 */
   private async runChangelogOpen(btn: HTMLElement): Promise<void> {
     if (btn.classList.contains('is-loading')) return; // 下载中防重入
     const ic = btn.querySelector<HTMLElement>('.bz-ic');
@@ -586,11 +596,32 @@ export class SettingsPanelUI {
       if (ic) setIcon(ic, 'loader');
       const html = await core.ensureChangelogReady(getApp());
       modal.openChangelogModal(html);
+      void this.refreshDocInBackground(
+        () => core.refreshChangelog(getApp()),
+        (fresh) => {
+          if (modal.isChangelogOpen()) modal.openChangelogModal(fresh);
+        },
+      );
     } catch (e) {
       notice((e as Error)?.message || '更新日志下载失败', 'error');
     } finally {
       btn.classList.remove('is-loading');
       if (ic) setIcon(ic, 'history');
+    }
+  }
+
+  /** 文档资产后台核对（issue 476）：`refresh` 返回新文本才调 `swap` 换内容；
+   *  同版 / 离线 / 任何异常一律静默——后台动作失败不是用户的操作失败，
+   *  不出通知、不转圈，保持本地已存的那一版即可。 */
+  private async refreshDocInBackground(
+    refresh: () => Promise<string | null>,
+    swap: (html: string) => void,
+  ): Promise<void> {
+    try {
+      const fresh = await refresh();
+      if (fresh) swap(fresh);
+    } catch (e) {
+      /* 静默：refreshAsset 内部已收口，这里只兜意外（如模块加载失败） */
     }
   }
 

@@ -9,7 +9,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
-import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 import { SettingsPanelUI } from '../../src/settings-panel/ui';
 import { unloadSettingsPanel } from '../../src/settings-panel';
 import { openManualViewer, unloadManualViewer } from '../../src/settings-panel/manual-viewer';
@@ -32,6 +32,7 @@ vi.mock('obsidian', async (importOriginal) => {
 });
 
 const MANUAL_HTML = '<!DOCTYPE html><html><body>包仔手册</body></html>';
+const MANUAL_HTML_V2 = '<!DOCTYPE html><html><body>包仔手册</body><p>新版</p></html>';
 const STORED = '.obsidian/plugins/bz/bz-manual.html';
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
@@ -88,7 +89,7 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     expect(popup.textContent).not.toContain('浏览器');
   });
 
-  it('点击（已下载）→ 直接打开不再下载；loading 期重复点击防重入', async () => {
+  it('点击（已下载）→ 本地内容直接打开（不走下载通道），随后后台核对一次；loading 期重复点击防重入', async () => {
     vault.files.set(STORED, MANUAL_HTML);
     const ui = new SettingsPanelUI();
     ui.open();
@@ -97,9 +98,61 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     man.click();
     man.click(); // 途中的第二次点击应被吞掉
     await tick(50);
-    expect(requestUrl).not.toHaveBeenCalled();
+    // 本地已有 → 内容来自本地，不再走「下载」通道；这一次请求 = 后台新鲜度核对（issue 476）
+    expect(requestUrl).toHaveBeenCalledTimes(1);
     expect(document.getElementById('bz-manual-popup')).toBeTruthy();
     expect(man.classList.contains('is-loading')).toBe(false);
+  });
+
+  it('后台核对发现新版（issue 476）→ 先秒开本地版，拿到新内容后热替换并落盘', async () => {
+    vault.files.set(STORED, MANUAL_HTML);
+    // 挂起的远端响应：把「秒开」与「热替换」两个时点钉开，避免只能看终态
+    let release!: (v: unknown) => void;
+    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    const man = document.querySelector('[data-sp-manual]') as HTMLElement;
+    man.click();
+    await tick(30);
+    const frame = () => document.querySelector('#bz-manual-popup iframe') as HTMLIFrameElement;
+    expect(frame().srcdoc).toBe(MANUAL_HTML); // 秒开：本地那一版
+    expect(man.classList.contains('is-loading')).toBe(false); // 后台核对不占按钮 loading
+    release({ status: 200, text: MANUAL_HTML_V2 });
+    await tick(30);
+    expect(frame().srcdoc).toBe(MANUAL_HTML_V2); // 热替换成远端新版
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML_V2); // 且落盘（下次打开即新版）
+  });
+
+  it('后台核对回来时弹窗已关闭 → 只落盘不重开（不打扰已结束的阅读）', async () => {
+    vault.files.set(STORED, MANUAL_HTML);
+    let release!: (v: unknown) => void;
+    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    (document.querySelector('[data-sp-manual]') as HTMLElement).click();
+    await tick(30);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); // 用户在核对回来之前关掉了
+    const overlay = document.getElementById('bz-manual-overlay')!;
+    expect(overlay.style.display).toBe('none');
+    release({ status: 200, text: MANUAL_HTML_V2 });
+    await tick(30);
+    expect(overlay.style.display).toBe('none'); // 没被后台任务重新弹出来
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML_V2); // 但磁盘已更新
+  });
+
+  it('后台核对失败（离线）→ 静默：不出通知、内容保持本地那一版', async () => {
+    vault.files.set(STORED, MANUAL_HTML);
+    vi.mocked(requestUrl).mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    (document.querySelector('[data-sp-manual]') as HTMLElement).click();
+    await tick(60);
+    const frame = document.querySelector('#bz-manual-popup iframe') as HTMLIFrameElement;
+    expect(frame.srcdoc).toBe(MANUAL_HTML);
+    expect(getNoticeMessages()).toHaveLength(0);
   });
 
   it('下载失败 → notice 出人话原因，loading 复原，不弹窗', async () => {

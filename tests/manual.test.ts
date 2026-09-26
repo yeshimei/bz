@@ -9,12 +9,13 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
-import { resetObsidianMocks, hasNotice, clearNotices } from './mock-obsidian-entry';
-import { downloadManual, hasManual, readManual, ensureManualReady, manualVaultPath, MANUAL_FILENAME } from '../src/core/manual';
+import { resetObsidianMocks, hasNotice, clearNotices, getNoticeMessages } from './mock-obsidian-entry';
+import { downloadManual, hasManual, readManual, ensureManualReady, refreshManual, manualVaultPath, MANUAL_FILENAME } from '../src/core/manual';
 import { openExternalUrl } from '../src/core/utils';
 import { MockVault } from './mock-vault';
 
 const MANUAL_HTML = '<!DOCTYPE html><html><head><title>包仔使用手册</title></head><body>目录</body></html>';
+const MANUAL_HTML_V2 = '<!DOCTYPE html><html><head><title>包仔使用手册</title></head><body>目录 v2</body></html>';
 const STORED = `.obsidian/plugins/bz/${MANUAL_FILENAME}`;
 
 const newVault = () => new MockVault();
@@ -100,6 +101,56 @@ describe('readManual / ensureManualReady（issue 473 二次拍板：OB 内弹窗
   it('manualVaultPath：跟随 vault.configDir，缺省兜底 .obsidian', () => {
     expect(manualVaultPath({ vault: { configDir: '.obsidian' } })).toBe(`.obsidian/plugins/bz/${MANUAL_FILENAME}`);
     expect(manualVaultPath({})).toBe(`.obsidian/plugins/bz/${MANUAL_FILENAME}`);
+  });
+});
+
+describe('refreshManual（issue 476：新鲜度核对）', () => {
+  it('远端有新重出的手册 → 覆盖落盘并返回新文本', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, MANUAL_HTML);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: MANUAL_HTML_V2 } as any);
+    expect(await refreshManual(appOf(vault))).toBe(MANUAL_HTML_V2);
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML_V2); // 落盘（下次打开即新版）
+  });
+
+  it('远端与本地同版 → null 且不动本地（不发写盘）', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, MANUAL_HTML);
+    const write = vi.spyOn(vault.adapter, 'write');
+    expect(await refreshManual(appOf(vault))).toBeNull();
+    expect(write).not.toHaveBeenCalled();
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
+    write.mockRestore();
+  });
+
+  it('行尾差异不算新版：本地 CRLF 与远端 LF 同版 → null（normalizeEol 口径）', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, MANUAL_HTML.replace(/\n/g, '\r\n'));
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: MANUAL_HTML } as any);
+    expect(await refreshManual(appOf(vault))).toBeNull();
+  });
+
+  it('离线/被墙 → null 静默（保持本地已存版本，不出通知）', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, MANUAL_HTML);
+    vi.mocked(requestUrl).mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
+    expect(await refreshManual(appOf(vault))).toBeNull();
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
+    expect(getNoticeMessages()).toHaveLength(0);
+  });
+
+  it('远端内容可疑（不像手册）→ null，不把错误页写进本地', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, MANUAL_HTML);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '{"error":"Not Found"}' } as any);
+    expect(await refreshManual(appOf(vault))).toBeNull();
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
+  });
+
+  it('本地还没有（ensure 之后被删的空档）→ 直接取远端并写盘', async () => {
+    const vault = newVault();
+    expect(await refreshManual(appOf(vault))).toBe(MANUAL_HTML);
+    expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
   });
 });
 

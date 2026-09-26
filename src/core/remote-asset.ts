@@ -16,6 +16,9 @@
  * 路径口径：`fileName` 是**相对 `manual/` 的路径**（可为多级，如
  * `skins/bookshelf/noir.css`）；落盘位置是**插件安装目录内的同名路径**。
  * 皮肤包（ADR-0199）复用本层，并额外用 `ensureAssetWithHash` 做 sha256 校验。
+ *
+ * 两条口径（issue 476）：`ensureAssetReady` 管「有没有」——无则下载、有则直接用；
+ * `refreshAsset` 管「新不新」——入口先本地秒开，再后台核对一次，远端真变了才覆盖。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
@@ -178,4 +181,37 @@ export async function ensureAssetReady(
   }
   if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
   return text;
+}
+
+/**
+ * 新鲜度核对（issue 476）：远端内容与本地不同 → 覆盖落盘并返回新文本；否则 null。
+ *
+ * 与 `ensureAssetReady` 的分工：那个管**有没有**（无则下载），本函数管**新不新**
+ * （有则核对）。入口口径 = 先 `ensureAssetReady` 本地秒开，再后台调本函数：
+ * 远端推了新文档（重新生成 manual/*.html 并 push，插件版本没动）时，
+ * 靠这一层才能发现——否则「存在即用」会让线上新版永远进不来。
+ *
+ * **全程静默**：同版 → null；离线 / 被墙 / 内容可疑 → null（保持本地已存版本，
+ * 不给用户任何通知与转圈——它是后台动作，失败不是用户的操作失败）。
+ *
+ * 比对用 sha256 且先过 `normalizeEol`（`textSha256` 内建）：Windows 本地 CRLF
+ * 与仓库 LF 不会被误判成新版而触发一次无意义的重写。
+ *
+ * @returns 新版文本（调用方据此决定是否热替换已打开的弹窗）；同版或失败 → null
+ */
+export async function refreshAsset(
+  app: unknown,
+  fileName: string,
+  validate: (text: string) => boolean,
+  label: string,
+): Promise<string | null> {
+  try {
+    const text = await fetchAssetText(fileName, validate, label, '页');
+    const local = await readAsset(app, fileName);
+    if (local !== null && textSha256(text) === textSha256(local)) return null;
+    await writeAssetText(app, fileName, text);
+    return text;
+  } catch (e) {
+    return null;
+  }
 }

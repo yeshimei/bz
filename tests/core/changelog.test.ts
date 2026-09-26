@@ -14,6 +14,7 @@ import {
   CHANGELOG_FILENAME,
   changelogVaultPath,
   ensureChangelogReady,
+  refreshChangelog,
 } from '../../src/core/changelog';
 import {
   assetVaultPath,
@@ -138,5 +139,39 @@ describe('ensureAssetReady（共用内核边界）', () => {
       vault: { configDir: '.obsidian', adapter: { exists: async () => true, read: async () => { throw new Error('boom'); } } },
     };
     expect(await readAsset(throwing as any, 'x.html')).toBeNull();
+  });
+});
+
+describe('refreshChangelog（issue 476：新鲜度核对）', () => {
+  const CHG_HTML_V2 = CHG_HTML.replace('"current":"1.24.0"', '"current":"1.24.1"');
+
+  it('远端有新重出的日志 → 覆盖落盘并返回新文本', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, CHG_HTML);
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: CHG_HTML_V2 } as any);
+    expect(await refreshChangelog(appOf(vault))).toBe(CHG_HTML_V2);
+    expect(vault.files.get(STORED)).toBe(CHG_HTML_V2);
+  });
+
+  it('远端与本地同版 → null 且不动本地', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, CHG_HTML);
+    const write = vi.spyOn(vault.adapter, 'write');
+    expect(await refreshChangelog(appOf(vault))).toBeNull();
+    expect(write).not.toHaveBeenCalled();
+    write.mockRestore();
+  });
+
+  it('离线 / 两路都不可信 → null 静默（保持本地已存版本）', async () => {
+    const vault = newVault();
+    vault.files.set(STORED, CHG_HTML);
+    vi.mocked(requestUrl).mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
+    expect(await refreshChangelog(appOf(vault))).toBeNull();
+    expect(vault.files.get(STORED)).toBe(CHG_HTML);
+
+    vi.mocked(requestUrl).mockReset();
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: '{"error":"Not Found"}' } as any);
+    expect(await refreshChangelog(appOf(vault))).toBeNull();
+    expect(vault.files.get(STORED)).toBe(CHG_HTML);
   });
 });

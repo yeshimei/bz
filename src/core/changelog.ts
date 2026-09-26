@@ -12,8 +12,10 @@
  *
  * 失败不兜底（用户拍板）：断网/被墙时下载失败即弹通知说明原因，不退回内置快照
  * ——内置快照会让「日志随发版更新」这件事悄悄失效，混着旧数据更难排查。
+ * （issue 476 补：本地已有版本时，入口先秒开本地版，再后台 refreshChangelog 核对
+ * 远端有没有新重出的日志——插件版本没动、日志单独重出推送时靠这层拿到新版。）
  * ============================================================ */
-import { assetVaultPath, ensureAssetReady } from './remote-asset';
+import { assetVaultPath, ensureAssetReady, refreshAsset } from './remote-asset';
 
 /** 更新日志文件名（写入插件目录时用；ASCII，避免转义麻烦） */
 export const CHANGELOG_FILENAME = 'bz-changelog.html';
@@ -36,4 +38,14 @@ function looksLikeChangelog(text: string): boolean {
  */
 export function ensureChangelogReady(app: unknown): Promise<string> {
   return ensureAssetReady(app, CHANGELOG_FILENAME, looksLikeChangelog, '更新日志');
+}
+
+/**
+ * 后台核对更新日志是否有新版（issue 476）：远端与本地同版 → null（不动）；
+ * 有新版 → 覆盖落盘并返回新文本；离线/失败 → null（静默，保持本地已存版本）。
+ * 入口口径 = ensureChangelogReady 先本地秒开，再调本函数后台核对一遍
+ * ——日志重出推上 GitHub 而插件版本没动时，靠这层才能拿到新版。
+ */
+export function refreshChangelog(app: unknown): Promise<string | null> {
+  return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, '更新日志');
 }

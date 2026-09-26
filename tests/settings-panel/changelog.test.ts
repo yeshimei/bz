@@ -33,6 +33,7 @@ vi.mock('obsidian', async (importOriginal) => {
 });
 
 const CHG_HTML = '<!DOCTYPE html><html><body><script>\nconst DATA = {"current":"1.24.0","releases":[]};\n</script></body></html>';
+const CHG_HTML_V2 = CHG_HTML.replace('"current":"1.24.0"', '"current":"1.24.1"');
 const STORED = `.obsidian/plugins/bz/${CHANGELOG_FILENAME}`;
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
@@ -88,7 +89,7 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     expect(btn.classList.contains('is-loading')).toBe(false);
   });
 
-  it('点击（已下载）→ 直接打开不再下载；loading 期重复点击防重入', async () => {
+  it('点击（已下载）→ 本地内容直接打开（不走下载通道），随后后台核对一次；loading 期重复点击防重入', async () => {
     vault.files.set(STORED, CHG_HTML);
     const ui = new SettingsPanelUI();
     ui.open();
@@ -97,9 +98,46 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     btn.click();
     btn.click(); // 途中的第二次点击应被吞掉
     await tick(50);
-    expect(requestUrl).not.toHaveBeenCalled();
+    // 本地已有 → 内容来自本地；这一次请求 = 后台新鲜度核对（issue 476）
+    expect(requestUrl).toHaveBeenCalledTimes(1);
     expect(document.getElementById('bz-changelog-popup')).toBeTruthy();
     expect(btn.classList.contains('is-loading')).toBe(false);
+  });
+
+  it('后台核对发现新版（issue 476）→ 先秒开本地版，拿到新内容后热替换并落盘', async () => {
+    vault.files.set(STORED, CHG_HTML);
+    let release!: (v: unknown) => void;
+    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    const btn = document.querySelector('[data-sp-changelog]') as HTMLElement;
+    btn.click();
+    await tick(30);
+    const frame = () => document.querySelector('#bz-changelog-popup iframe') as HTMLIFrameElement;
+    expect(frame().srcdoc).toBe(CHG_HTML); // 秒开：本地那一版
+    release({ status: 200, text: CHG_HTML_V2 });
+    await tick(30);
+    expect(frame().srcdoc).toBe(CHG_HTML_V2);
+    expect(vault.files.get(STORED)).toBe(CHG_HTML_V2);
+  });
+
+  it('后台核对回来时弹窗已关闭 → 只落盘不重开', async () => {
+    vault.files.set(STORED, CHG_HTML);
+    let release!: (v: unknown) => void;
+    vi.mocked(requestUrl).mockImplementation(() => new Promise((r) => { release = r; }) as any);
+    const ui = new SettingsPanelUI();
+    ui.open();
+    await tick();
+    (document.querySelector('[data-sp-changelog]') as HTMLElement).click();
+    await tick(30);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const overlay = document.getElementById('bz-changelog-overlay')!;
+    expect(overlay.style.display).toBe('none');
+    release({ status: 200, text: CHG_HTML_V2 });
+    await tick(30);
+    expect(overlay.style.display).toBe('none');
+    expect(vault.files.get(STORED)).toBe(CHG_HTML_V2);
   });
 
   it('下载失败 → notice 出人话原因，loading 复原，不弹窗（不兜底内置快照）', async () => {
