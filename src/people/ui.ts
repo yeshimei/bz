@@ -35,7 +35,9 @@ import type { ContactStats, FaceDigest, ImportRecord, PersonEntry, PersonProfile
 import { bondOf, personOf } from './types';
 import {
   PreviewStore,
+  importAvatarToVault,
   isGroupChat,
+  isVaultRelativePath,
   listContactDirs,
   mergePreview,
   normalizeChatJson,
@@ -384,7 +386,8 @@ async function runScan(force = false): Promise<void> {
         previewCount: pv?.msgs.length ?? 0,
         newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
         processedTs: entry?.lastProcessedTs ?? null,
-        avatar: bundle.avatar,
+        // 头像入库（456）：外部文件复制进库内媒体文件夹，列表/详情才加载得出来
+        avatar: await importAvatarToVault(getApp(), name, bundle.avatar),
       });
     }
   } catch (e) {
@@ -436,7 +439,10 @@ async function importDsSelected(): Promise<void> {
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
       const existing = (await previewStore.read()).contacts[c.name];
       const { contact, added } = mergePreview(existing, norm, now);
-      if (bundle.avatar) contact.avatar = bundle.avatar; // 头像随数据目录走（导入时刷新；文件删了导入后即清）
+      // 头像入库（456）：复制进库内媒体文件夹后存 vault 相对路径；外部文件删了导入后即清
+      const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
+      if (ava) contact.avatar = ava;
+      else delete contact.avatar;
       await previewStore.upsertContact(c.name, contact);
       addedOf.set(c.name, added);
       // 快照同步（水位行即时反映，不重扫）
@@ -1160,7 +1166,26 @@ async function previewData(): Promise<PreviewData> {
     console.warn('[people] 读取预览桶失败:', e);
     previewCache = { version: 1, contacts: {} };
   }
+  await migrateAvatars(previewCache);
   return previewCache;
+}
+
+/**
+ * 旧桶头像迁移（456）：455 落盘的是库外绝对路径，渲染端 app://local 已经加载不了（裂图根因）。
+ * 读到即复制进库内媒体文件夹并回写预览桶；已是库内路径（或外部文件已删且无库内副本）直接跳过——幂等。
+ */
+async function migrateAvatars(pv: PreviewData): Promise<void> {
+  const app = getApp();
+  const store = new PreviewStore(app);
+  for (const [name, c] of Object.entries(pv.contacts)) {
+    const cur = c.avatar;
+    if (!cur || isVaultRelativePath(cur)) continue;
+    let vPath: string | null = null;
+    try { vPath = await importAvatarToVault(app, name, cur); } catch { vPath = null; }
+    if (!vPath || vPath === cur) continue;
+    c.avatar = vPath;
+    try { await store.upsertContact(name, c); } catch (e) { console.warn('[people] 头像迁移回写失败:', name, e); }
+  }
 }
 
 /**

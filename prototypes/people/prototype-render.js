@@ -1,4 +1,4 @@
-/* 源指纹 aa08dba5119a94ad · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9323374b4d989555 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -159,14 +159,25 @@ var BZR_people = (() => {
     return `${(sec / 3600).toFixed(1)} 时`;
   }
   function localResourceUri(path) {
+    var _a, _b;
     const norm = path.replace(/\\/g, "/");
+    const escape = (s) => s.replace(/#/g, "%23").replace(/\?/g, "%3F");
     if (typeof window !== "undefined") {
       const base = window.BZW_MEDIA_BASE;
-      if (base) return base + encodeURI(norm).replace(/#/g, "%23").replace(/\?/g, "%3F");
+      if (base) return base + escape(encodeURI(norm));
+      const w = window;
+      const adapter = (_b = (_a = w.app) == null ? void 0 : _a.vault) == null ? void 0 : _b.adapter;
+      const res = adapter == null ? void 0 : adapter.getResourcePath;
+      if (adapter && res && !/^[A-Za-z]:/.test(norm) && !/^(https?:)?\/\//.test(norm) && !norm.startsWith("/")) {
+        try {
+          return res.call(adapter, norm);
+        } catch (e) {
+        }
+      }
     }
     if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
     const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
-    return `app://local/${encodeURI(rel).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
+    return `app://local/${escape(encodeURI(rel))}`;
   }
   function mdPlain(md) {
     return String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");

@@ -30,6 +30,24 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
         ],
       },
       {
+        icon: 'image',
+        name: '媒体',
+        rows: [
+          {
+            type: 'text',
+            name: '媒体文件夹',
+            desc: '库内存放头像等媒体资源的文件夹（vault 相对路径，如 CONFIG/FACES）；导入时头像复制进来，库外文件在 Obsidian 里加载不出来。空 = 用默认值',
+            binding: { key: 'peopleMediaDir' },
+            placeholder: 'CONFIG/FACES',
+          },
+          {
+            type: 'info',
+            name: '头像入库，其余媒体不入库',
+            desc: '只有头像会复制进库（几 KB 的小图）；聊天图片 / 语音 / 视频仍留在外部数据目录',
+          },
+        ],
+      },
+      {
         icon: 'eye',
         name: '预览',
         rows: [
@@ -70,7 +88,7 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
           {
             type: 'info',
             name: '原始媒体不入库',
-            desc: '图片语音视频文件留在外部数据目录，不复制进库',
+            desc: '图片语音视频文件留在外部数据目录，不复制进库；头像例外——复制进库内媒体文件夹才能显示',
           },
           {
             type: 'info',

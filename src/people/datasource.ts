@@ -108,7 +108,7 @@ export interface PreviewContact {
   kindCounts?: Record<string, number>;
   /** 互动画像汇总（449；normalize 全量重算覆盖。旧桶无此字段照常读） */
   insights?: InsightsSummary;
-  /** 头像文件绝对路径（数据目录 avatar.<ext>；只存路径不复制入库，隐私口径同 ADR-0191 §2） */
+  /** 头像文件路径（456 起存 vault 相对路径：导入时自外部数据目录复制进库内媒体文件夹，渲染走 vault getResourcePath——app://local 解析不了库外路径是 455 头像裂图根因） */
   avatar?: string;
   /** 最近一次导入时间 ISO */
   updatedAt: string;
@@ -607,15 +607,88 @@ export function readContactBundle(
   };
 }
 
+/** 头像文件扩展名探测序（数据目录与库内媒体文件夹同序） */
+const AVA_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
 /** 联系人目录里的头像文件（avatar.<扩展名>，按序探测；绝对路径，缺省 null） */
 function avatarFileOf(fs: any, dir: string): string | null {
-  for (const ext of ['jpg', 'jpeg', 'png', 'webp', 'gif']) {
+  for (const ext of AVA_EXTS) {
     const p = `${dir}/avatar.${ext}`;
     try {
       if (fs.existsSync(p)) return p;
     } catch { /* 探测失败按无头像 */ }
   }
   return null;
+}
+
+// ---------------- IO：库内媒体文件夹（头像入库，456） ----------------
+
+/** 库内媒体文件夹（vault 相对路径；peopleMediaDir 设置键，空 = CONFIG/FACES） */
+export function peopleMediaDir(): string {
+  const s = tryGetSettings() as { peopleMediaDir?: string } | null;
+  const dir = String(s?.peopleMediaDir ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  return dir || 'CONFIG/FACES';
+}
+
+/** 联系人名 → 媒体文件夹内的安全目录名（文件系统非法字符与首尾点空格压成 '_'） */
+function mediaDirName(name: string): string {
+  return String(name).replace(/[\\/:*?"<>|]/g, '_').replace(/^[\s.]+|[\s.]+$/g, '') || '未命名';
+}
+
+/** 判定头像路径是否已是库内相对路径（无盘符、无根斜杠、非协议地址） */
+export function isVaultRelativePath(p: string): boolean {
+  const norm = String(p ?? '').replace(/\\/g, '/');
+  return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith('/');
+}
+
+/**
+ * 头像入库（455 头像裂图修正）：外部数据目录的 avatar.<ext> 复制进 vault
+ * `<媒体文件夹>/<联系人>/avatar.<ext>`，返回 vault 相对路径——库内文件渲染走
+ * vault getResourcePath 必可加载。外部文件已删 → 回落库内已有副本；两头都没有 → null。
+ * 复制幂等：每次导入/扫描都按外部文件覆盖（头像改了重导即新）。
+ */
+export async function importAvatarToVault(
+  app: any,
+  name: string,
+  externalPath: string | null | undefined
+): Promise<string | null> {
+  const adapter = app?.vault?.adapter;
+  if (!adapter) return null;
+  const dir = `${peopleMediaDir()}/${mediaDirName(name)}`;
+  // 库内已有副本先探测（外部文件删了也能继续用）
+  let vaultCopy: string | null = null;
+  for (const ext of AVA_EXTS) {
+    const p = `${dir}/avatar.${ext}`;
+    try {
+      if (await adapter.exists(p)) { vaultCopy = p; break; }
+    } catch { /* 探测失败当没有 */ }
+  }
+  const fs = getFs();
+  if (!fs || !externalPath) return vaultCopy;
+  let srcExt = '';
+  try {
+    if (!fs.existsSync(externalPath)) return vaultCopy;
+    srcExt = String(externalPath.split('.').pop() ?? '').toLowerCase();
+  } catch { return vaultCopy; }
+  if (!AVA_EXTS.includes(srcExt)) return vaultCopy;
+  const target = `${dir}/avatar.${srcExt}`;
+  try {
+    const parts = dir.split('/');
+    let cur = '';
+    for (const seg of parts) {
+      cur = cur ? `${cur}/${seg}` : seg;
+      try { await adapter.mkdir(cur); } catch { /* 已存在即失败，忽略 */ }
+    }
+    const buf = fs.readFileSync(externalPath) as Uint8Array;
+    if (!buf || !buf.length) return vaultCopy;
+    // 转 ArrayBuffer 交给 vault（adapter.writeBinary 的官方入参形态）
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    await adapter.writeBinary(target, ab);
+    return target;
+  } catch (e) {
+    console.warn('[people] 头像入库失败:', name, e);
+    return vaultCopy ?? externalPath; // 入库失败退回外部路径（旧渲染路径，至少语义不变）
+  }
 }
 
 // ---------------- IO：people-preview.json（vault 内） ----------------

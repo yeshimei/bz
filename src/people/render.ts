@@ -130,17 +130,28 @@ export function formatDuration(sec: number): string {
   return `${(sec / 3600).toFixed(1)} 时`;
 }
 
-/** 库外路径 → 可加载的资源 URI。插件端：绝对路径走 app://local/（Obsidian 桌面协议）；
- *  评审壳：window.BZW_MEDIA_BASE 有值时（预览服务注入）走服务路由，浏览器才能加载库外图片。 */
+/** 路径 → 可加载的资源 URI。
+ *  - 评审壳：window.BZW_MEDIA_BASE 有值时（预览服务注入）走服务路由；
+ *  - 库内相对路径（CONFIG/FACES/... 头像入库后）：走 vault getResourcePath（app://<id>/...，必可加载）；
+ *  - 库外绝对路径：app://local/ 兜底（456 头像裂图根因——新版 Obsidian 已不解库外文件，故头像一律先入库）。 */
 export function localResourceUri(path: string): string {
   const norm = path.replace(/\\/g, '/');
+  const escape = (s: string): string => s.replace(/#/g, '%23').replace(/\?/g, '%3F');
   if (typeof window !== 'undefined') {
     const base = (window as { BZW_MEDIA_BASE?: string }).BZW_MEDIA_BASE;
-    if (base) return base + encodeURI(norm).replace(/#/g, '%23').replace(/\?/g, '%3F');
+    if (base) return base + escape(encodeURI(norm));
+    const w = window as unknown as {
+      app?: { vault?: { adapter?: { getResourcePath?: (p: string) => string } } };
+    };
+    const adapter = w.app?.vault?.adapter;
+    const res = adapter?.getResourcePath;
+    if (adapter && res && !/^[A-Za-z]:/.test(norm) && !/^(https?:)?\/\//.test(norm) && !norm.startsWith('/')) {
+      try { return res.call(adapter, norm); } catch { /* 拿不到走兜底 */ }
+    }
   }
   if (/^(https?:)?\/\//.test(norm) || norm.startsWith('/')) return norm;
   const rel = norm.replace(/^[A-Za-z]:/, '').replace(/^\/+/, '');
-  return `app://local/${encodeURI(rel).replace(/#/g, '%23').replace(/\?/g, '%3F')}`;
+  return `app://local/${escape(encodeURI(rel))}`;
 }
 
 /** markdown 去饰取纯文本（折脊引文用）：剥 #/>/-/** 与围栏，压成一行 */
