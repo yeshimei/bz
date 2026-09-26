@@ -1,0 +1,175 @@
+// @vitest-environment node
+/**
+ * 归物本归类编排（src/belongings/catalog-suggest.ts，issue 478 阶段 B）：
+ * 严格覆盖「null=无表回落 / 抛错=有表未成功」的语义分流，以及两次 Jev + 哨兵 + LLM 表内回落。
+ * mock 掉 core/jev（askJev / isJevConfigured）与 core/ai（createAI），不真联网。
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { suggestCategoryByCatalog } from '../../src/belongings/catalog-suggest';
+import * as jev from '../../src/core/jev';
+import * as aiMod from '../../src/core/ai';
+import * as categoryTable from '../../src/core/category-table';
+
+// 部分 mock：保留真实 matchByAlias / groupMenu / itemMenu，只替换 loadCategoryTable
+vi.mock('../../src/core/category-table', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../../src/core/category-table')>();
+  return { ...real, loadCategoryTable: vi.fn() };
+});
+vi.mock('../../src/core/jev', () => ({
+  askJev: vi.fn(),
+  isJevConfigured: vi.fn(),
+}));
+vi.mock('../../src/core/ai', () => ({
+  createAI: vi.fn(),
+}));
+
+const askJev = vi.mocked(jev.askJev);
+const isJevConfigured = vi.mocked(jev.isJevConfigured);
+const createAI = vi.mocked(aiMod.createAI);
+const loadCategoryTable = vi.mocked(categoryTable.loadCategoryTable);
+
+const jsonMock = vi.fn();
+
+const table = {
+  version: '1',
+  groups: [
+    {
+      id: 'g1',
+      name: '数码',
+      icon: 'smartphone',
+      items: [
+        { id: 'c1', name: '手机', icon: 'smartphone', aliases: ['电话', '移动电话'] },
+        { id: 'c2', name: '电脑', icon: 'laptop', aliases: ['笔记本'] },
+      ],
+    },
+    {
+      id: 'g2',
+      name: '家居',
+      icon: 'sofa',
+      items: [{ id: 'c3', name: '沙发', icon: 'sofa', aliases: [] }],
+    },
+  ],
+};
+
+const groupAns = (choice: string): any => ({
+  model: 'm',
+  answers: { group: { type: 'choice', choice, confidence: 1, probabilities: {} } },
+});
+const itemAns = (choice: string): any => ({
+  model: 'm',
+  answers: { item: { type: 'choice', choice, confidence: 1, probabilities: {} } },
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  isJevConfigured.mockReturnValue(true);
+  loadCategoryTable.mockResolvedValue(table as any);
+  createAI.mockReturnValue({ json: jsonMock } as any);
+});
+
+describe('suggestCategoryByCatalog', () => {
+  it('1) 别名直配命中 → 返回表里那条且 askJev 零调用', async () => {
+    const r = await suggestCategoryByCatalog({}, '电话', []);
+    expect(r).toEqual({ category: '手机', icon: 'smartphone' });
+    expect(askJev).not.toHaveBeenCalled();
+  });
+
+  it('2) 两次 choice 都命中 → 返回的是表里那条 name 与 icon（不是 id / 组名）', async () => {
+    askJev
+      .mockResolvedValueOnce(groupAns('g1'))
+      .mockResolvedValueOnce(itemAns('c1'));
+    const r = await suggestCategoryByCatalog({}, '一个叫不出名的东西', []);
+    expect(r).toEqual({ category: '手机', icon: 'smartphone' });
+    expect(askJev).toHaveBeenCalledTimes(2);
+  });
+
+  it('3) 第一次命中哨兵 → 转 LLM 回落，候选集是全表', async () => {
+    askJev.mockResolvedValueOnce(groupAns('__other__'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '沙发', icon: 'sofa' }));
+    const r = await suggestCategoryByCatalog({}, '不明物体', []);
+    expect(r).toEqual({ category: '沙发', icon: 'sofa' });
+    const prompt = jsonMock.mock.calls[0][0] as string;
+    expect(prompt).toContain('手机');
+    expect(prompt).toContain('电脑');
+    expect(prompt).toContain('沙发');
+    expect(askJev).toHaveBeenCalledTimes(1);
+  });
+
+  it('4) 第二次命中哨兵 → 转 LLM 回落，候选集只含该组', async () => {
+    askJev
+      .mockResolvedValueOnce(groupAns('g1'))
+      .mockResolvedValueOnce(itemAns('__other__'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '电脑', icon: 'laptop' }));
+    const r = await suggestCategoryByCatalog({}, '某个物件', []);
+    expect(r).toEqual({ category: '电脑', icon: 'laptop' });
+    const prompt = jsonMock.mock.calls[0][0] as string;
+    expect(prompt).toContain('手机');
+    expect(prompt).toContain('电脑');
+    expect(prompt).not.toContain('沙发'); // 家居组的分类不应出现
+    expect(prompt).not.toContain('家居');
+  });
+
+  it('5) Jev 未配置 → 直接 LLM 回落，askJev 零调用', async () => {
+    isJevConfigured.mockReturnValue(false);
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '手机', icon: 'smartphone' }));
+    const r = await suggestCategoryByCatalog({}, 'x', []);
+    expect(r).toEqual({ category: '手机', icon: 'smartphone' });
+    expect(askJev).not.toHaveBeenCalled();
+  });
+
+  it('6) askJev 第一次抛错 → LLM 回落（不半途失败，只调了一次 Jev）', async () => {
+    askJev.mockRejectedValueOnce(new Error('network down'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '电脑', icon: 'laptop' }));
+    const r = await suggestCategoryByCatalog({}, 'x', []);
+    expect(r).toEqual({ category: '电脑', icon: 'laptop' });
+    expect(askJev).toHaveBeenCalledTimes(1);
+  });
+
+  it('7) askJev 返回 criteria 外的畸形键 → LLM 回落', async () => {
+    askJev.mockResolvedValueOnce(groupAns('zzz-out-of-range'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '沙发', icon: 'sofa' }));
+    const r = await suggestCategoryByCatalog({}, 'x', []);
+    expect(r).toEqual({ category: '沙发', icon: 'sofa' });
+    expect(askJev).toHaveBeenCalledTimes(1);
+  });
+
+  it('7b) 选类阶段返回畸形键 → 只回落该组', async () => {
+    askJev
+      .mockResolvedValueOnce(groupAns('g1'))
+      .mockResolvedValueOnce(itemAns('zzz'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '电脑', icon: 'laptop' }));
+    const r = await suggestCategoryByCatalog({}, 'x', []);
+    expect(r).toEqual({ category: '电脑', icon: 'laptop' });
+    const prompt = jsonMock.mock.calls[0][0] as string;
+    expect(prompt).not.toContain('沙发');
+  });
+
+  it('8) LLM 返回表外分类 → 抛错', async () => {
+    askJev.mockResolvedValueOnce(groupAns('__other__'));
+    jsonMock.mockResolvedValueOnce(JSON.stringify({ category: '火星基地', icon: 'rocket' }));
+    await expect(suggestCategoryByCatalog({}, 'x', [])).rejects.toThrow();
+  });
+
+  it('9) 无表（loadCategoryTable 为 null）→ 返回 null 且不碰 Jev / LLM', async () => {
+    loadCategoryTable.mockResolvedValue(null);
+    const r = await suggestCategoryByCatalog({}, 'x', []);
+    expect(r).toBeNull();
+    expect(askJev).not.toHaveBeenCalled();
+    expect(jsonMock).not.toHaveBeenCalled();
+  });
+
+  it('10) signal 已 aborted → 抛 AbortError 且不触发 LLM 回落', async () => {
+    const ac = new AbortController();
+    ac.abort();
+    let err: any = null;
+    try {
+      await suggestCategoryByCatalog({}, 'x', [], { signal: ac.signal });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).not.toBeNull();
+    expect(err.name).toBe('AbortError');
+    expect(jsonMock).not.toHaveBeenCalled();
+    expect(askJev).not.toHaveBeenCalled();
+  });
+});

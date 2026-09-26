@@ -1,5 +1,5 @@
-/* 源指纹 f54a67ede7ac4c61 · 仓内输入 59 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
+/* 源指纹 5d8085d130e8b49c · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/remote-asset.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
   var __create = Object.create;
@@ -7687,6 +7687,452 @@ var BZW_belongings = (() => {
     return new AIService(params, defaultModel, defaultOptions);
   }
 
+  // src/core/jev.ts
+  var JEV_PROVIDER_REGISTRY = [
+    {
+      id: "typesafe",
+      label: "Typesafe",
+      endpoint: "https://api.typesafe.ai/v1/systemone",
+      modelsUrl: "https://api.typesafe.ai/v1/models",
+      defaultModel: "jev-latest"
+    },
+    {
+      id: "bocha",
+      label: "博查",
+      endpoint: "https://jev.bochaai.com/v1/systemone",
+      modelsUrl: "https://jev.bochaai.com/v1/models",
+      defaultModel: "bocha-jev-v1"
+    }
+  ];
+  var DEFAULT_JEV_PROVIDER = "typesafe";
+  function getJevProviderDescriptor(id) {
+    return JEV_PROVIDER_REGISTRY.find((p) => p.id === id) || JEV_PROVIDER_REGISTRY[0];
+  }
+  var JEV_DEFAULT_ENDPOINT = JEV_PROVIDER_REGISTRY[0].endpoint;
+  var JEV_DEFAULT_MODEL = JEV_PROVIDER_REGISTRY[0].defaultModel;
+  var JEV_DEFAULT_TIMEOUT_MS = 1e4;
+  function resolveJevConfig(override) {
+    var _a, _b, _c, _d, _e, _f;
+    const s = tryGetSettings();
+    const pick = (key, fallback) => {
+      const v = s == null ? void 0 : s[key];
+      return v === void 0 || v === null || v === "" ? fallback : v;
+    };
+    const desc = getJevProviderDescriptor(pick("jevProvider", DEFAULT_JEV_PROVIDER));
+    const keys = (_a = s == null ? void 0 : s.jevApiKeys) != null ? _a : {};
+    const models = (_b = s == null ? void 0 : s.jevModels) != null ? _b : {};
+    return {
+      endpoint: String((_c = override == null ? void 0 : override.endpoint) != null ? _c : desc.endpoint),
+      apiKey: String((_d = override == null ? void 0 : override.apiKey) != null ? _d : pickFrom(keys[desc.id], "")),
+      // 模型槽位留空 → 该服务商缺省（issue 430 起：typesafe → jev-latest，博查 → bocha-jev-v1）
+      model: String((_e = override == null ? void 0 : override.model) != null ? _e : pickFrom(models[desc.id], desc.defaultModel)),
+      timeoutMs: (_f = override == null ? void 0 : override.timeoutMs) != null ? _f : JEV_DEFAULT_TIMEOUT_MS
+    };
+  }
+  function pickFrom(v, fallback) {
+    return v === void 0 || v === null || v === "" ? fallback : String(v);
+  }
+  function isJevConfigured() {
+    const cfg = resolveJevConfig();
+    return !!cfg.endpoint && !!cfg.apiKey;
+  }
+  function abortError2() {
+    const e = new Error("Jev 请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function timeoutError2(ms) {
+    const e = new Error(`Jev 请求超时（${Math.round(ms / 1e3)} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  function buildJevBody(state, questions, model) {
+    return { model, state, questions };
+  }
+  function parseJevResponse(text, status) {
+    var _a;
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Jev 响应不是合法 JSON（HTTP ${status}）`);
+    }
+    const answers = data == null ? void 0 : data.answers;
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+      const detail = (data == null ? void 0 : data.detail) ? `: ${JSON.stringify(data.detail)}` : "";
+      throw new Error(`Jev 响应缺少 answers 字段（HTTP ${status}）${detail}`);
+    }
+    return {
+      model: String((_a = data.model) != null ? _a : ""),
+      answers,
+      usage: data.usage
+    };
+  }
+  async function askJev(state, questions, opts = {}) {
+    var _a, _b;
+    const keys = Object.keys(questions || {});
+    if (!keys.length) return { model: "", answers: {} };
+    const cfg = resolveJevConfig(opts.config);
+    const signal = opts.signal;
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    if (!cfg.endpoint) throw new Error("未配置 Jev 端点");
+    if (!cfg.apiKey) throw new Error("未配置 Jev 密钥（插件设置 → AI → JEV）");
+    const body = buildJevBody(state, questions, cfg.model);
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${cfg.apiKey}`
+    };
+    const resp = await new Promise((resolve, reject) => {
+      let settled = false;
+      let timer = null;
+      const onAbort = () => settle(() => reject(abortError2()));
+      function settle(fn) {
+        if (settled) return;
+        settled = true;
+        if (timer !== null) clearTimeout(timer);
+        signal == null ? void 0 : signal.removeEventListener("abort", onAbort);
+        fn();
+      }
+      timer = setTimeout(() => settle(() => reject(timeoutError2(cfg.timeoutMs))), cfg.timeoutMs);
+      signal == null ? void 0 : signal.addEventListener("abort", onAbort);
+      requestUrl({
+        url: cfg.endpoint,
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        throw: false
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    const status = Number((_a = resp == null ? void 0 : resp.status) != null ? _a : 0);
+    const text = String((_b = resp == null ? void 0 : resp.text) != null ? _b : "");
+    if (status < 200 || status >= 300) {
+      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      throw new Error(`Jev API ${status}: ${brief || "无响应正文"}`);
+    }
+    return parseJevResponse(text, status);
+  }
+
+  // src/core/sha256.ts
+  var K = new Uint32Array([
+    1116352408,
+    1899447441,
+    3049323471,
+    3921009573,
+    961987163,
+    1508970993,
+    2453635748,
+    2870763221,
+    3624381080,
+    310598401,
+    607225278,
+    1426881987,
+    1925078388,
+    2162078206,
+    2614888103,
+    3248222580,
+    3835390401,
+    4022224774,
+    264347078,
+    604807628,
+    770255983,
+    1249150122,
+    1555081692,
+    1996064986,
+    2554220882,
+    2821834349,
+    2952996808,
+    3210313671,
+    3336571891,
+    3584528711,
+    113926993,
+    338241895,
+    666307205,
+    773529912,
+    1294757372,
+    1396182291,
+    1695183700,
+    1986661051,
+    2177026350,
+    2456956037,
+    2730485921,
+    2820302411,
+    3259730800,
+    3345764771,
+    3516065817,
+    3600352804,
+    4094571909,
+    275423344,
+    430227734,
+    506948616,
+    659060556,
+    883997877,
+    958139571,
+    1322822218,
+    1537002063,
+    1747873779,
+    1955562222,
+    2024104815,
+    2227730452,
+    2361852424,
+    2428436474,
+    2756734187,
+    3204031479,
+    3329325298
+  ]);
+
+  // src/core/remote-asset.ts
+  function assetVaultPath(app, fileName) {
+    var _a;
+    const configDir = String(((_a = app.vault) == null ? void 0 : _a.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(assetVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // src/core/category-table.ts
+  var CATEGORY_TABLE_FILE = "belongings-categories.json";
+  var memCache = null;
+  function validateCategoryTable(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw;
+    if (typeof o.version !== "string" || !Array.isArray(o.groups)) return null;
+    const groupIds = /* @__PURE__ */ new Set();
+    const itemIds = /* @__PURE__ */ new Set();
+    const itemNames = /* @__PURE__ */ new Set();
+    const groups = [];
+    for (const g of o.groups) {
+      if (!g || typeof g !== "object") return null;
+      const gg = g;
+      if (typeof gg.id !== "string" || !gg.id) return null;
+      if (groupIds.has(gg.id)) return null;
+      groupIds.add(gg.id);
+      if (typeof gg.name !== "string" || typeof gg.icon !== "string") return null;
+      if (!Array.isArray(gg.items)) return null;
+      const items = [];
+      for (const it of gg.items) {
+        if (!it || typeof it !== "object") return null;
+        const ii = it;
+        if (typeof ii.id !== "string" || !ii.id) return null;
+        if (itemIds.has(ii.id)) return null;
+        itemIds.add(ii.id);
+        if (typeof ii.name !== "string" || !ii.name) return null;
+        if (itemNames.has(ii.name)) return null;
+        itemNames.add(ii.name);
+        if (typeof ii.icon !== "string") return null;
+        if (!Array.isArray(ii.aliases)) return null;
+        items.push({ id: ii.id, name: ii.name, icon: ii.icon, aliases: ii.aliases });
+      }
+      groups.push({ id: gg.id, name: gg.name, icon: gg.icon, items });
+    }
+    return { version: o.version, groups };
+  }
+  async function readLocalValidated(app) {
+    const text = await readAsset(app, CATEGORY_TABLE_FILE);
+    if (text === null) return null;
+    try {
+      return validateCategoryTable(JSON.parse(text));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function loadCategoryTable(app) {
+    if (memCache) return memCache;
+    const t = await readLocalValidated(app);
+    if (t) memCache = t;
+    return t;
+  }
+  function matchByAlias(name, table) {
+    const q = String(name || "").trim();
+    if (!q) return null;
+    for (const g of table.groups) {
+      for (const it of g.items) {
+        if (it.name === q) return { category: it.name, icon: it.icon };
+      }
+    }
+    let bestItem = null;
+    let bestLen = 0;
+    for (const g of table.groups) {
+      for (const it of g.items) {
+        let len = 0;
+        for (const a of it.aliases) {
+          if (q.includes(a) && a.length > len) len = a.length;
+        }
+        if (len === 0) continue;
+        if (len > bestLen) {
+          bestLen = len;
+          bestItem = it;
+        } else if (len === bestLen && bestItem && it.id < bestItem.id) {
+          bestItem = it;
+        }
+      }
+    }
+    return bestItem ? { category: bestItem.name, icon: bestItem.icon } : null;
+  }
+  function groupMenu(table) {
+    const menu = {};
+    for (const g of table.groups) menu[g.id] = g.name;
+    return menu;
+  }
+  function itemMenu(table, groupId) {
+    const menu = {};
+    const g = table.groups.find((x) => x.id === groupId);
+    if (!g) return menu;
+    for (const it of g.items) menu[it.id] = it.name;
+    return menu;
+  }
+
+  // src/belongings/catalog-suggest.ts
+  var SENTINEL = "__other__";
+  var SENTINEL_LABEL = "以上都不合适";
+  function abortError3() {
+    const e = new Error("归类请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function findItem(table, groupId, itemId) {
+    var _a;
+    const g = table.groups.find((x) => x.id === groupId);
+    if (!g) return null;
+    return (_a = g.items.find((x) => x.id === itemId)) != null ? _a : null;
+  }
+  function fullTableCandidates(table) {
+    const out = [];
+    for (const g of table.groups) {
+      for (const it of g.items) out.push({ category: it.name, icon: it.icon, group: g.name });
+    }
+    return out;
+  }
+  function groupCandidates(table, groupId) {
+    const g = table.groups.find((x) => x.id === groupId);
+    if (!g) return [];
+    return g.items.map((it) => ({ category: it.name, icon: it.icon, group: g.name }));
+  }
+  async function llmFallback(candidates, state, signal) {
+    var _a;
+    const lines = candidates.map((c) => `- ${c.group} / ${c.category}（图标：${c.icon}）`).join("\n");
+    const prompt = [
+      "你是物品收纳助手。请从下面的分类清单里，为物品选一个最贴切的分类，并给出该分类对应的图标。",
+      "",
+      state,
+      "",
+      "可选分类清单（每行一个，格式「组 / 分类名（图标：图标名）」）：",
+      lines,
+      "",
+      "要求：",
+      "1. category：必须是上方清单里的某一个分类名（一字不差，不要带组前缀）。",
+      "2. icon：必须是该分类对应的图标名（括号内的值），不要自造。",
+      '只输出 JSON 对象，格式：{"category":"<清单里的分类名>","icon":"<该分类的图标>"}'
+    ].join("\n");
+    const ai = createAI();
+    const raw = await ai.json(prompt, { signal });
+    let obj;
+    try {
+      let text = String(raw || "").trim();
+      const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (fence) text = fence[1].trim();
+      obj = JSON.parse(text);
+    } catch (e) {
+      throw new Error("LLM 回落返回的归类结果无法解析（不是合法 JSON）");
+    }
+    const category = String((_a = obj == null ? void 0 : obj.category) != null ? _a : "").trim();
+    const hit = candidates.find((c) => c.category === category);
+    if (!hit) {
+      throw new Error(
+        `LLM 回落给出的分类「${category}」不在分类表候选集内，已拒绝（有表时绝不造表外分类）`
+      );
+    }
+    return { category: hit.category, icon: hit.icon };
+  }
+  async function selectGroup(table, state, signal) {
+    if (!isJevConfigured()) return null;
+    const criteria = { ...groupMenu(table), [SENTINEL]: SENTINEL_LABEL };
+    try {
+      const res = await askJev(
+        state,
+        {
+          group: {
+            type: "choice",
+            instructions: "从下面的分组里，选出这个物品最可能属于的那一个。",
+            criteria
+          }
+        },
+        { signal }
+      );
+      const ans = res.answers.group;
+      if (!ans || ans.type !== "choice") return null;
+      const choice = ans.choice;
+      if (choice === SENTINEL) return null;
+      if (table.groups.some((g) => g.id === choice)) return choice;
+      return null;
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") throw e;
+      return null;
+    }
+  }
+  async function selectItem(table, groupId, state, signal) {
+    const criteria = { ...itemMenu(table, groupId), [SENTINEL]: SENTINEL_LABEL };
+    try {
+      const res = await askJev(
+        state,
+        {
+          item: {
+            type: "choice",
+            instructions: "从下面的分类里，选出这个物品最可能属于的那一个。",
+            criteria
+          }
+        },
+        { signal }
+      );
+      const ans = res.answers.item;
+      if (!ans || ans.type !== "choice") return null;
+      const choice = ans.choice;
+      if (choice === SENTINEL) return null;
+      const g = table.groups.find((x) => x.id === groupId);
+      if (g && g.items.some((it) => it.id === choice)) return choice;
+      return null;
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") throw e;
+      return null;
+    }
+  }
+  async function suggestCategoryByCatalog(app, name, history, opts = {}) {
+    var _a;
+    if ((_a = opts.signal) == null ? void 0 : _a.aborted) throw abortError3();
+    const table = await loadCategoryTable(app);
+    if (!table) return null;
+    const local = matchByAlias(name, table);
+    if (local) return local;
+    const state = `物品名称：${name}
+历史分类（优先复用）：${history.join("、") || "暂无"}`;
+    const groupId = await selectGroup(table, state, opts.signal);
+    if (groupId === null) {
+      return llmFallback(fullTableCandidates(table), state, opts.signal);
+    }
+    const itemId = await selectItem(table, groupId, state, opts.signal);
+    if (itemId === null) {
+      return llmFallback(groupCandidates(table, groupId), state, opts.signal);
+    }
+    const item = findItem(table, groupId, itemId);
+    return { category: item.name, icon: item.icon };
+  }
+
   // src/belongings/ai.ts
   var AI_ICON_MENU = [
     // 数码影音
@@ -7850,6 +8296,20 @@ var BZW_belongings = (() => {
     return { category, icon };
   }
   async function aiSuggestCategory(name, history) {
+    let app = null;
+    try {
+      app = getApp();
+    } catch (e) {
+      app = null;
+    }
+    if (app) {
+      try {
+        const fromTable = await suggestCategoryByCatalog(app, name, history);
+        if (fromTable) return fromTable;
+      } catch (e) {
+        throw e;
+      }
+    }
     const ai = createAI();
     const raw = await ai.json(buildCategoryPrompt(name, history), {});
     const parsed = parseCategorySuggestion(raw);
