@@ -1,4 +1,4 @@
-/* 源指纹 e6f6350f58e18197 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 338f716841db5bc1 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -16054,11 +16054,12 @@ var BZW_people = (() => {
     if (!st.safe.unlocked) {
       return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
     }
-    st.injected = opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm ? {
+    st.injected = opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm ? {
       askExtract: opts.askExtract,
       askPortrait: opts.askPortrait,
       askDescribe: opts.askDescribe,
-      askDescribeConfirm: opts.askDescribeConfirm
+      askDescribeConfirm: opts.askDescribeConfirm,
+      askPortraitConfirm: opts.askPortraitConfirm
     } : null;
     if (opts.maxRetries !== void 0) st.retry.maxRetries = opts.maxRetries;
     if (opts.sleep) st.retry.sleep = opts.sleep;
@@ -16202,7 +16203,7 @@ var BZW_people = (() => {
       store: store2,
       safe,
       queue,
-      injected: ai.askExtract || ai.askPortrait || ai.askDescribe ? ai : null,
+      injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
       pauseRequested: false,
@@ -16554,7 +16555,7 @@ var BZW_people = (() => {
     return "ok";
   }
   async function runJob(job) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -16644,6 +16645,38 @@ var BZW_people = (() => {
           };
         }
       }
+      if (!job.portraitConfirmed) {
+        const gate = (_m = st.injected) == null ? void 0 : _m.askPortraitConfirm;
+        if (gate) {
+          const label = describeModelLabelOf();
+          job.stage = "chunked";
+          job.message = "等待确认画像生成…";
+          await persist();
+          emit();
+          let answer;
+          try {
+            answer = await gate({
+              provider: label.provider,
+              model: label.model,
+              name: job.name,
+              materials: digestMsgs.length,
+              calls: chunks.length + 3
+            });
+          } catch (e) {
+            console.warn("[people] 画像生成确认门异常，按取消处理:", e);
+            answer = "cancel";
+          }
+          if (gone(job)) return;
+          if (answer === "cancel") {
+            await removeJob(job.talker);
+            return;
+          }
+          job.portraitConfirmed = true;
+          await persist();
+        } else {
+          job.portraitConfirmed = true;
+        }
+      }
       job.stage = "extracting";
       const total = chunks.length;
       for (let i = job.batchesDone; i < total; i++) {
@@ -16695,9 +16728,9 @@ var BZW_people = (() => {
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_m = job.material) == null ? void 0 : _m.mediaNote,
-        statsNote: (_n = job.material) == null ? void 0 : _n.statsNote,
-        profileNote: (_o = job.material) == null ? void 0 : _o.profileNote,
+        mediaNote: (_n = job.material) == null ? void 0 : _n.mediaNote,
+        statsNote: (_o = job.material) == null ? void 0 : _o.statsNote,
+        profileNote: (_p = job.material) == null ? void 0 : _p.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -16769,7 +16802,7 @@ var BZW_people = (() => {
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_p = st == null ? void 0 : st.safe) == null ? void 0 : _p.unlocked)) {
+      if (!((_q = st == null ? void 0 : st.safe) == null ? void 0 : _q.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，任务已暂停（解锁后可继续）" });
         return;
       }
@@ -17167,6 +17200,33 @@ var BZW_people = (() => {
       const t = e.target;
       if (t.closest("[data-people-desc-start]")) onAnswer("start");
       else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
+    });
+    return wrap;
+  }
+  function portraitConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-portrait-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-portrait-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "画像生成确认" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("画脸谱"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-desc-line", text(
+      `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-note", text(
+      "其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。"
+    )));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-portrait-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-portrait-start": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-portrait-start]")) onAnswer("start");
+      else if (t.closest("[data-people-portrait-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }
@@ -18474,7 +18534,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     let engineSkipped = 0;
     let resumed = [];
     if (runnable2.length) {
-      const res = await jobs().startJobs(getApp(), runnable2, { askDescribeConfirm });
+      const res = await jobs().startJobs(getApp(), runnable2, {
+        askDescribeConfirm,
+        askPortraitConfirm
+      });
       engineSkipped = res.skipped.length;
       resumed = (_a2 = res.resumed) != null ? _a2 : [];
       await ensureJobsWatch();
@@ -18652,6 +18715,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         if (e.key === "Escape") done("skip");
       };
       const node = describeConfirmModal(info, done);
+      document.body.appendChild(node);
+      topifyZ(node);
+      document.addEventListener("keydown", onKey, true);
+    });
+  }
+  var portraitConfirmOpen = false;
+  function askPortraitConfirm(info) {
+    if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve("cancel");
+    portraitConfirmOpen = true;
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        portraitConfirmOpen = false;
+        document.removeEventListener("keydown", onKey, true);
+        node.remove();
+        resolve(answer);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") done("cancel");
+      };
+      const node = portraitConfirmModal(info, done);
       document.body.appendChild(node);
       topifyZ(node);
       document.addEventListener("keydown", onKey, true);

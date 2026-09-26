@@ -1,4 +1,4 @@
-/* 源指纹 9a41c4dd9b40d124 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 622fb9518cd30b26 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -67,6 +67,7 @@ var BZR_people = (() => {
     noteAddRow: () => noteAddRow,
     panelShell: () => panelShell,
     popShell: () => popShell,
+    portraitConfirmModal: () => portraitConfirmModal,
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
     profilePopBody: () => profilePopBody,
@@ -325,6 +326,33 @@ var BZR_people = (() => {
       const t = e.target;
       if (t.closest("[data-people-desc-start]")) onAnswer("start");
       else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
+    });
+    return wrap;
+  }
+  function portraitConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-portrait-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-portrait-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "画像生成确认" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("画脸谱"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-desc-line", text(
+      `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-note", text(
+      "其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。"
+    )));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-portrait-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-portrait-start": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-portrait-start]")) onAnswer("start");
+      else if (t.closest("[data-people-portrait-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }

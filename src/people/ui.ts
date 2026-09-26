@@ -34,7 +34,7 @@ import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
 import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
-import type { ContactStats, DescribeConfirmInfo, FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
+import type { ContactStats, DescribeConfirmInfo, FaceDigest, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
   listContactDirs,
@@ -56,6 +56,7 @@ import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   describeConfirmModal,
+  portraitConfirmModal,
   dsModal,
   duoBar,
   foldBondBody,
@@ -906,8 +907,12 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   let engineSkipped = 0;
   let resumed: string[] = [];
   if (runnable.length) {
-    // 470：图片描述确认门随 startJobs 注入（引擎在 describe 段开始前回调弹窗征求授权）
-    const res = await jobs().startJobs(getApp(), runnable, { askDescribeConfirm: askDescribeConfirm }); // mode 缺省 auto：引擎逐人按增量计划判定
+    // 470/471：两道确认门随 startJobs 注入（ADR-0196 决策 8——图片描述与画像生成是两个
+    // 独立弹窗；引擎在各自烧 AI 前回调征求授权，跳过描述不影响画像这扇门照弹）
+    const res = await jobs().startJobs(getApp(), runnable, {
+      askDescribeConfirm: askDescribeConfirm,
+      askPortraitConfirm: askPortraitConfirm,
+    }); // mode 缺省 auto：引擎逐人按增量计划判定
     engineSkipped = res.skipped.length;
     resumed = res.resumed ?? [];
     await ensureJobsWatch();
@@ -1124,6 +1129,34 @@ function askDescribeConfirm(info: DescribeConfirmInfo): Promise<'start' | 'skip'
       if (e.key === 'Escape') done('skip');
     };
     const node = describeConfirmModal(info, done);
+    document.body.appendChild(node);
+    topifyZ(node);
+    document.addEventListener('keydown', onKey, true);
+  });
+}
+
+/** 画像生成确认窗开着（引擎串行跑任务，理论同时只弹一只；与描述确认互斥防叠窗） */
+let portraitConfirmOpen = false;
+
+/**
+ * 画像生成确认门（注入引擎的 askPortraitConfirm 依赖，471 / ADR-0196 决策 8 第二次确认）：
+ * 采集批切定后引擎回调，弹 body 级确认窗（面板可能没开）。解析值：开始 / 取消；
+ * Esc 与遮罩点击都归「取消」——那是唯一不花钱的路。跳过图片描述后本窗照弹（两次确认独立）。
+ */
+function askPortraitConfirm(info: PortraitConfirmInfo): Promise<'start' | 'cancel'> {
+  if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未授权处理
+  portraitConfirmOpen = true;
+  return new Promise((resolve) => {
+    const done = (answer: 'start' | 'cancel'): void => {
+      portraitConfirmOpen = false;
+      document.removeEventListener('keydown', onKey, true);
+      node.remove();
+      resolve(answer);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') done('cancel');
+    };
+    const node = portraitConfirmModal(info, done);
     document.body.appendChild(node);
     topifyZ(node);
     document.addEventListener('keydown', onKey, true);
