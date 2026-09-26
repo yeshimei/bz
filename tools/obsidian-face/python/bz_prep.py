@@ -444,6 +444,15 @@ def main() -> int:
 
     attach = Path(src) / "msg" / "attach" if src else None
     if not attach or not attach.exists():
+        # --src 常被填成多账号父目录（<微信文件> 而非 <微信文件>/<wxid>）——msg/attach 指不到时
+        # 回落 key.json 的 source_dir（sync 实际解密过的账号目录），两处都指不到才报错
+        ksrc = key.get("source_dir") or ""
+        kattach = Path(ksrc) / "msg" / "attach" if ksrc else None
+        if kattach and kattach.exists():
+            if src:
+                step(f"--src 下没有 msg/attach——媒体目录改用 key.json 账号目录：{ksrc}")
+            src, attach = ksrc, kattach
+    if not attach or not attach.exists():
         fail_hard(f"找不到媒体目录：{attach or '（key.json 里没有账号目录）'}——多账号 / 旧备份用 --src 指定账号目录")
 
     # 跨段状态（stop 在任何一段发生都要能进结果行，先全部立好）
