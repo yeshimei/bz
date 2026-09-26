@@ -4522,6 +4522,66 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   color: var(--ls-faint);
 }
 
+
+/* ═══════════ N. 行级说明浮窗 .bz-help ═══════════
+   说明入口 = 标题自己（core/ui/help-tip.ts 的 attachHelpTip；schema 侧 = 行字段 help）：
+   桌面停在标题上出浮窗、触屏点标题开合。静态不挂任何图标——标题旁常驻图元是噪点
+   （2026-09-26 用户拍板）。浮窗挂 document.body（position: fixed）——设置行住在
+   .bz-sp-group（overflow: hidden）与面板滚动区里，行内 absolute 浮层会被卡片边缘裁掉。
+   正文一档字号、一种墨色：说明就是一段话，不做清单/标题/警示条那套分层。
+   宿主皮肤：调用方传 skinClassName（设置面板 = 'bz-sp-skin'）后，浮窗吃到面板 token 重定向，
+   底色/描边/墨色/主色自动同面板；--sp-* 可取处优先取（阴影不在重定向表内，得自己接）。 */
+.bz-help-anchor { cursor: help; }
+/* 悬停提示：静态零痕迹，鼠标上来才出点状下划线（告诉人「这块有说明」）。
+   触屏无 hover 分支——点标题即开，不再另外给静态标记。 */
+@media (hover: hover) {
+  .bz-help-anchor:hover,
+  .bz-help-anchor.is-open {
+    text-decoration: underline dotted var(--bz-brand);
+    text-underline-offset: 3px;
+  }
+}
+
+.bz-help-pop {
+  position: fixed;
+  z-index: 60; /* topifyZ 动态发号后由内联值接管 */
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 24px));
+  /* 不限高、不出滚动条（bz 界面级单源隐藏滚动条，ADR-0122）：长清单靠 help-tip 的
+     位置算法整窗钳进视口，宁可下沿贴边也不把内容切掉 */
+  padding: 9px 11px;
+  background: var(--bz-surface-4);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: var(--sp-pop-shadow, var(--bz-shadow-md));
+  color: var(--bz-text-1);
+  font-size: 12px;
+  line-height: 1.65;
+  text-align: left;
+  white-space: normal;
+}
+.bz-help-p { margin: 0 0 6px; }
+.bz-help-p:last-child { margin-bottom: 0; }
+
+/* 列表项（`- ` 前缀）：底部罗列数据文件这类清单用；字号比首段小一档、行距更紧 */
+.bz-help-li {
+  display: flex;
+  gap: 7px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--bz-text-2);
+}
+.bz-help-li::before {
+  content: '';
+  flex: none;
+  width: 4px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: var(--bz-text-3);
+}
 /* ==================== 日记本域样式（src/diary/styles.css）—— 原回忆墙升格正名（ADR-0115） ==================== */
 /* ==================== 日记本（媒体墙原型 v5：章节固定 + 滚动高亮 + 性能优化） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。
