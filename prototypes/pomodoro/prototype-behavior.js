@@ -1,5 +1,5 @@
-/* 源指纹 d9fb3a2cf9a67c4c · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 3826e035693d9842 · 仓内输入 28 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4765,6 +4765,102 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/core/sha256.ts
+  var K;
+  var init_sha256 = __esm({
+    "src/core/sha256.ts"() {
+      K = new Uint32Array([
+        1116352408,
+        1899447441,
+        3049323471,
+        3921009573,
+        961987163,
+        1508970993,
+        2453635748,
+        2870763221,
+        3624381080,
+        310598401,
+        607225278,
+        1426881987,
+        1925078388,
+        2162078206,
+        2614888103,
+        3248222580,
+        3835390401,
+        4022224774,
+        264347078,
+        604807628,
+        770255983,
+        1249150122,
+        1555081692,
+        1996064986,
+        2554220882,
+        2821834349,
+        2952996808,
+        3210313671,
+        3336571891,
+        3584528711,
+        113926993,
+        338241895,
+        666307205,
+        773529912,
+        1294757372,
+        1396182291,
+        1695183700,
+        1986661051,
+        2177026350,
+        2456956037,
+        2730485921,
+        2820302411,
+        3259730800,
+        3345764771,
+        3516065817,
+        3600352804,
+        4094571909,
+        275423344,
+        430227734,
+        506948616,
+        659060556,
+        883997877,
+        958139571,
+        1322822218,
+        1537002063,
+        1747873779,
+        1955562222,
+        2024104815,
+        2227730452,
+        2361852424,
+        2428436474,
+        2756734187,
+        3204031479,
+        3329325298
+      ]);
+    }
+  });
+
+  // src/core/remote-asset.ts
+  var init_remote_asset = __esm({
+    "src/core/remote-asset.ts"() {
+      init_fake_obsidian();
+      init_sha256();
+    }
+  });
+
+  // src/core/skin-pack.ts
+  function isRemoteSkinReady(domain, id) {
+    var _a;
+    const v = String(id != null ? id : "");
+    return !!v && ((_a = ready.get(domain)) != null ? _a : []).some((r) => r.entry.id === v);
+  }
+  var ready;
+  var init_skin_pack = __esm({
+    "src/core/skin-pack.ts"() {
+      init_remote_asset();
+      init_sha256();
+      ready = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/core/storage.ts
   function normalizeStorageDir(value) {
     let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
@@ -6586,9 +6682,13 @@ var BZW_pomodoro = (() => {
   function applySkinClass() {
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
-    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    const setting = tryGetSettings().pomodoroSkinTheme;
+    const usable = setting === DEFAULT_POMODORO_SKIN_THEME || isRemoteSkinReady("pomodoro", setting);
+    const want = skinClassOf(usable ? setting : DEFAULT_POMODORO_SKIN_THEME);
     if (popup.classList.contains(want)) return;
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    for (const cls of Array.from(popup.classList)) {
+      if (cls.startsWith("pomodoro-skin-")) popup.classList.remove(cls);
+    }
     popup.classList.add(want);
   }
   function durations() {
@@ -7168,7 +7268,7 @@ var BZW_pomodoro = (() => {
     if (state.paused) return "paused";
     return state.endTime !== null ? "focusing" : "idle";
   }
-  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
   var init_ui = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -7178,6 +7278,7 @@ var BZW_pomodoro = (() => {
       init_settings_provider();
       init_notice();
       init_settings_common();
+      init_skin_pack();
       init_data();
       init_render();
       init_render();
@@ -7205,7 +7306,6 @@ var BZW_pomodoro = (() => {
       lastStatsKey = "";
       timeReels = null;
       lastBeepRemain = -1;
-      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       armedBtn = null;
       armedOutside = null;
       ARM_LABEL = "确认";

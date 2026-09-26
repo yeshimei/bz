@@ -1,0 +1,14 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/black（黑猫）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/black.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+#smart-companion-cat.skin-black .cat-body { background: linear-gradient(135deg, #2C3E50, #34495E); }
+#smart-companion-cat.skin-black .cat-ear, #smart-companion-cat.skin-black .cat-tail { background: #2C3E50; }
+.bz-sp-mini.bz-sc-prev-black, .bz-cardpick-prev.bz-sc-prev-black { background: linear-gradient(135deg, #2C3E50, #34495E);; }

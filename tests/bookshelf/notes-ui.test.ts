@@ -12,6 +12,8 @@ import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { ensureBookshelf, unloadBookshelf, openBookshelf } from '../../src/bookshelf';
 import { createOverlay } from '../../src/bookshelf/ui';
 import { showBookNotes, showEpubBookNotes, closeBookNoteModals } from '../../src/bookshelf/notes-ui';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   return {
@@ -129,6 +131,7 @@ describe('读书笔记弹窗（md 书）', () => {
     vault = new MockVault();
     setApp(makeApp(vault));
     setSettingsProvider(() => ({ bookTag: 'book' }) as any);
+    resetSkinPackState();
   });
 
   afterEach(() => {
@@ -244,6 +247,7 @@ describe('读书笔记弹窗（md 书）', () => {
 
   it('长按日期 → 先关壳弹确认框；确认删除划线并重开（B2），取消则原样重开', async () => {
     vault.files.set('书库/活着.md', NOTE_MD);
+    seedRemoteSkins('bookshelf', ['noir']); // noir 远端化：就绪后才挂得上（issue 291 噪声肤）
     setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'noir' }) as any); // issue 291：噪声肤验皮肤类随行
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
@@ -298,6 +302,7 @@ describe('读书笔记弹窗（EPUB）', () => {
     vault = new MockVault();
     setApp(makeApp(vault));
     setSettingsProvider(() => ({ bookTag: 'book' }) as any);
+    resetSkinPackState();
   });
 
   afterEach(() => {
@@ -349,6 +354,7 @@ describe('读书笔记弹窗（EPUB）', () => {
 
   it('长按日期 → 确认删除整条划线（weave-data.json 移除）+ 失败重开壳（B2）', async () => {
     vault.files.set('CONFIG/STORAGE/weave-data.json', EPUB_WEAVE());
+    seedRemoteSkins('bookshelf', ['kraft']); // kraft 远端化：就绪后才挂得上
     setSettingsProvider(() => ({ bookTag: 'book', bookshelfSkin: 'kraft' }) as any); // issue 291：EPUB 路径同样验皮肤类
     const app = makeApp(vault);
     showEpubBookNotes(app, '书库/悉达多.epub', '悉达多');

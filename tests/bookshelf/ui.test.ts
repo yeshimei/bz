@@ -13,6 +13,8 @@ import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import { ensureBookshelf, unloadBookshelf, openBookshelf, openBookshelfReport } from '../../src/bookshelf';
 import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '../../src/bookshelf/ui';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 
 /** 轮询等待报告分片渲染完成（EFF-7 后小库静默：以内容区段数 ≥9 为完成标记，与 toast 档位解耦） */
@@ -37,6 +39,14 @@ async function waitFor(fn: () => boolean, timeout = 3000, step = 15): Promise<vo
 function dateStr(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** 皮肤 CSS 单源读取：内置首套（雪松白）在域样式，四套远端皮肤在 src/bookshelf/skins/<id>.css（ADR-0199） */
+const BS_BUILTIN_SKIN = 'nordic';
+const BS_REMOTE_SKINS = ['noir', 'kraft', 'velvet', 'mono'];
+function skinCss(id: string): string {
+  const rel = id === BS_BUILTIN_SKIN ? 'src/bookshelf/styles.css' : `src/bookshelf/skins/${id}.css`;
+  return readFileSync(resolve(process.cwd(), rel), 'utf8');
 }
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
@@ -497,6 +507,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     resetBookshelfState();
     clearNotices();
     document.body.innerHTML = '';
+    resetSkinPackState();
   });
   afterEach(() => {
     unloadBookshelf();
@@ -505,6 +516,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   });
 
   it('未配置 → 默认雪松白+亮模式；配置值 → 面板根挂对应皮肤+模式类', async () => {
+    seedRemoteSkins('bookshelf', ['noir']);
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
@@ -521,6 +533,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   });
 
   it('applyBookshelfSkin 热切换已开面板（模式类保留）；非法值回落雪松白', async () => {
+    seedRemoteSkins('bookshelf', ['mono', 'velvet']);
     const { vault, app } = seedVault();
     await openPanel(vault, app);
     const panel = document.querySelector('.bz-bs-panel') as HTMLElement;
@@ -535,6 +548,7 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   });
 
   it('bsSkinClass：弹窗与面板同套皮肤+亮暗模式；退役肤/非法值回落 nordic', () => {
+    seedRemoteSkins('bookshelf', ['noir']);
     setSettingsProvider(() => ({ bookshelfSkin: 'noir' }) as never);
     expect(bsSkinClass()).toBe('bz-bs-skin-noir bz-bs-mode-light');
     document.body.classList.add('theme-dark');
@@ -564,9 +578,10 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
   });
 
   it('issue 235 五肤×亮暗：五肤预览/结构层在位；mode 变体补对侧 token；退役五肤样式清零', () => {
-    const css = readFileSync(resolve(process.cwd(), 'src/bookshelf/styles.css'), 'utf8');
+    const src = readFileSync(resolve(process.cwd(), 'src/bookshelf/styles.css'), 'utf8');
     const ids = ['nordic', 'noir', 'kraft', 'velvet', 'mono'];
     for (const id of ids) {
+      const css = skinCss(id); // 首套留源，四套远端在各自的 skins/<id>.css
       expect(css, `${id} 预览底`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}\\s*\\{`));
       expect(css, `${id} 预览书脊壳`).toMatch(new RegExp(`\\.bz-skinprev-bs-${id}::before`));
       expect(css, `${id} 书脊结构`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-spine\\s*\\{`));
@@ -575,12 +590,13 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     // mode 变体：每肤另一侧 = 整组 token 映射（含 --bsw-wall）
     const modes: Record<string, 'light' | 'dark'> = { nordic: 'dark', noir: 'light', kraft: 'dark', velvet: 'light', mono: 'dark' };
     for (const [id, mode] of Object.entries(modes)) {
-      expect(css, `${id} ${mode} 变体`).toMatch(new RegExp(`\\.bz-bs-skin-${id}\\.bz-bs-mode-${mode}\\s*\\{[^}]*--bsw-wall:`));
+      expect(skinCss(id), `${id} ${mode} 变体`).toMatch(new RegExp(`\\.bz-bs-skin-${id}\\.bz-bs-mode-${mode}\\s*\\{[^}]*--bsw-wall:`));
     }
-    // 退役五肤样式清零（dark/wabi/bauhaus/blueprint/neon）
+    // 退役五肤样式清零（dark/wabi/bauhaus/blueprint/neon）——全域（含切出的皮肤文件）不得残留
+    const allCss = [src, ...BS_REMOTE_SKINS.map((id) => skinCss(id))].join('\n');
     for (const id of ['dark', 'wabi', 'bauhaus', 'blueprint', 'neon']) {
-      expect(css, `${id} 皮肤已退役`).not.toMatch(new RegExp(`\\.bz-bs-skin-${id}[\\s{,.]`));
-      expect(css, `${id} 预览已退役`).not.toMatch(new RegExp(`\\.bz-skinprev-bs-${id}`));
+      expect(allCss, `${id} 皮肤已退役`).not.toMatch(new RegExp(`\\.bz-bs-skin-${id}[\\s{,.]`));
+      expect(allCss, `${id} 预览已退役`).not.toMatch(new RegExp(`\\.bz-skinprev-bs-${id}`));
     }
   });
 
@@ -591,9 +607,9 @@ describe('bookshelf 面板皮肤（issue 216）', () => {
     expect(plaque, '缺基础匾额规则').not.toBeNull();
     expect(plaque![1]).toMatch(/3px double var\(--bsw-brass\)/);
     expect(css).toMatch(/\.bz-bs-plaque h1\s*\{[^}]*color: var\(--bsw-brass\)/);
-    // 在架五肤逐肤匾额底色（dark 已退役）
+    // 在架五肤逐肤匾额底色（dark 已退役；首套留源，四套远端在各自皮肤文件）
     for (const id of ['nordic', 'noir', 'kraft', 'velvet', 'mono']) {
-      expect(css, `${id} 匾额`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-plaque\\s*\\{`));
+      expect(skinCss(id), `${id} 匾额`).toMatch(new RegExp(`\\.bz-bs-skin-${id} \\.bz-bs-plaque\\s*\\{`));
     }
     // 检索/排序原型基值：宽 280、阴影 .5、seg 文字 #b8a488、分隔半透明铜、on 字 #2b2018、placeholder #a08e6e
     const search = css.match(/\.bz-bs-search\s*\{([^}]*)\}/)!;

@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "skins": [
+    {
+      "id": "noir",
+      "domain": "bookshelf",
+      "name": "黑金夜曲",
+      "file": "skins/bookshelf/noir.css",
+      "previewClass": "bz-skinprev-bs-noir",
+      "sha256": "6d68d616a2a6d1bf7f78ef750c0ae9654f03266d1603390b8830f72a0aa37e3a"
+    },
+    {
+      "id": "kraft",
+      "domain": "bookshelf",
+      "name": "牛皮手帐",
+      "file": "skins/bookshelf/kraft.css",
+      "previewClass": "bz-skinprev-bs-kraft",
+      "sha256": "c798b9dd9cb3906a01f7ab9e09a7e2b8748b185005414c436d79aa278c1d36e7"
+    },
+    {
+      "id": "velvet",
+      "domain": "bookshelf",
+      "name": "丝绒剧院",
+      "file": "skins/bookshelf/velvet.css",
+      "previewClass": "bz-skinprev-bs-velvet",
+      "sha256": "6d9b666aa0f62507268266c19b44032349f1c7ce48f9f2f9d167255d638930f0"
+    },
+    {
+      "id": "mono",
+      "domain": "bookshelf",
+      "name": "极简黑白",
+      "file": "skins/bookshelf/mono.css",
+      "previewClass": "bz-skinprev-bs-mono",
+      "sha256": "738df15eaf6374793e5fe106c43d5d1c151e8fb6881162836e6ee75b70cbf251"
+    },
+    {
+      "id": "ink",
+      "domain": "pomodoro",
+      "name": "墨白",
+      "file": "skins/pomodoro/ink.css",
+      "previewClass": "bz-sp-prev-pomo-ink",
+      "sha256": "b89c0cbafec44abc558edb4f1769040ecc0cdeebf504139d9839b0be24cd4404"
+    },
+    {
+      "id": "grid",
+      "domain": "pomodoro",
+      "name": "方格纸",
+      "file": "skins/pomodoro/grid.css",
+      "previewClass": "bz-sp-prev-pomo-grid",
+      "sha256": "4191ed9f2bc301b201d393da712f0bb77986a0b08b6733acc61da81caff9f1e2"
+    },
+    {
+      "id": "moss",
+      "domain": "pomodoro",
+      "name": "苔原",
+      "file": "skins/pomodoro/moss.css",
+      "previewClass": "bz-sp-prev-pomo-moss",
+      "sha256": "ff5a493699f0d039a7f87b813be4101a1338a2c9f2be9f65c141fc64938c3be1"
+    },
+    {
+      "id": "mist",
+      "domain": "pomodoro",
+      "name": "海雾",
+      "file": "skins/pomodoro/mist.css",
+      "previewClass": "bz-sp-prev-pomo-mist",
+      "sha256": "693685b50eb64cbbbad303a3b058aa8396ffd1027351367b1061c2a9401d29bd"
+    },
+    {
+      "id": "sand",
+      "domain": "pomodoro",
+      "name": "暖沙",
+      "file": "skins/pomodoro/sand.css",
+      "previewClass": "bz-sp-prev-pomo-sand",
+      "sha256": "37d5ba0f103b2d382990e266bbf75ffdeb29761dad1efbdead1b6ea9645d32cd"
+    },
+    {
+      "id": "citrus",
+      "domain": "pomodoro",
+      "name": "蜜柑",
+      "file": "skins/pomodoro/citrus.css",
+      "previewClass": "bz-sp-prev-pomo-citrus",
+      "sha256": "ea36267426ed18d1d5b52b1835a998509d17399829f4d6996763e51cf0b3d340"
+    },
+    {
+      "id": "sakura",
+      "domain": "pomodoro",
+      "name": "樱粉",
+      "file": "skins/pomodoro/sakura.css",
+      "previewClass": "bz-sp-prev-pomo-sakura",
+      "sha256": "f1ef2db3e44d83c4a19639f286b65525ce1615b2eec79d56176c695ef0fb50e8"
+    },
+    {
+      "id": "latte",
+      "domain": "pomodoro",
+      "name": "咖啡",
+      "file": "skins/pomodoro/latte.css",
+      "previewClass": "bz-sp-prev-pomo-latte",
+      "sha256": "aecb0773b90415624386e7854be3e7f231fc9303a4fcdafa1b3c9a9a47d85b44"
+    },
+    {
+      "id": "night",
+      "domain": "pomodoro",
+      "name": "夜航",
+      "file": "skins/pomodoro/night.css",
+      "previewClass": "bz-sp-prev-pomo-night",
+      "sha256": "00e34f7dfb64c4e076fee5339428d4cea9c00413be7432e9d11d058571abd24a"
+    },
+    {
+      "id": "paper",
+      "domain": "memo",
+      "name": "纸感手账",
+      "file": "skins/memo/paper.css",
+      "previewClass": "bz-skinprev-paper",
+      "sha256": "738e209f12352cb476b92238c470aab61ec25fa8ba2deaaf4714d01c3e8d6159"
+    },
+    {
+      "id": "gray",
+      "domain": "smartcat",
+      "name": "灰猫",
+      "file": "skins/smartcat/gray.css",
+      "previewClass": "bz-sc-prev-gray",
+      "sha256": "d50147bcc308746233dfa5a2f215b37a12f7ea031117d13473e0abc1ffa88736"
+    },
+    {
+      "id": "black",
+      "domain": "smartcat",
+      "name": "黑猫",
+      "file": "skins/smartcat/black.css",
+      "previewClass": "bz-sc-prev-black",
+      "sha256": "c97be37027ca876c69942cf8533c9763d5bb1b5aed8528ee90d432d445559a09"
+    },
+    {
+      "id": "white",
+      "domain": "smartcat",
+      "name": "白猫",
+      "file": "skins/smartcat/white.css",
+      "previewClass": "bz-sc-prev-white",
+      "sha256": "5418d787020dc42dd1aec5534a7618c03a6ed56f8f930ef5f7b4cac5d3e00421"
+    },
+    {
+      "id": "calico",
+      "domain": "smartcat",
+      "name": "三花猫",
+      "file": "skins/smartcat/calico.css",
+      "previewClass": "bz-sc-prev-calico",
+      "sha256": "7244b3063d13cdb1f2cdf5531d1c3a6236c97399659404f9f6c3cfd09e15a763"
+    },
+    {
+      "id": "neon",
+      "domain": "smartcat",
+      "name": "霓虹灯",
+      "file": "skins/smartcat/neon.css",
+      "previewClass": "bz-sc-prev-neon",
+      "sha256": "44c85d163c4d8c7a43f8807074aaad584bf519f927ae45d25b273aa0678a57f5"
+    },
+    {
+      "id": "galaxy",
+      "domain": "smartcat",
+      "name": "银河星空",
+      "file": "skins/smartcat/galaxy.css",
+      "previewClass": "bz-sc-prev-galaxy",
+      "sha256": "19449a9fffebaefba0294a9f82958fc0621f8515f38c05d08e150798d4b96630"
+    },
+    {
+      "id": "liquidMetal",
+      "domain": "smartcat",
+      "name": "液态金属",
+      "file": "skins/smartcat/liquidMetal.css",
+      "previewClass": "bz-sc-prev-liquidMetal",
+      "sha256": "5e1c93fbe348efb759cb276fa1e4d674f6671fb62a4000f5b2a5c033c48411b0"
+    },
+    {
+      "id": "fire",
+      "domain": "smartcat",
+      "name": "火焰",
+      "file": "skins/smartcat/fire.css",
+      "previewClass": "bz-sc-prev-fire",
+      "sha256": "109fcff0f32ae22d61073379a7090bb15f9dd09bd43a43ecd10e8b17fbfd5ce2"
+    },
+    {
+      "id": "crystal",
+      "domain": "smartcat",
+      "name": "水晶透明",
+      "file": "skins/smartcat/crystal.css",
+      "previewClass": "bz-sc-prev-crystal",
+      "sha256": "e2b3086d0117373ac2655da0cd914fdd71eed315bab29573959c26eebeb4c281"
+    },
+    {
+      "id": "cyberpunk",
+      "domain": "smartcat",
+      "name": "赛博朋克",
+      "file": "skins/smartcat/cyberpunk.css",
+      "previewClass": "bz-sc-prev-cyberpunk",
+      "sha256": "00960e65ac7cae665524448451cd8d60739b96a9d0a0339eaf4ec499539dc9c1"
+    },
+    {
+      "id": "rainbow",
+      "domain": "smartcat",
+      "name": "彩虹渐变",
+      "file": "skins/smartcat/rainbow.css",
+      "previewClass": "bz-sc-prev-rainbow",
+      "sha256": "5946db96da874c8d08852f28651241a98fb56532be2d02a1ddaadf59ae8e49c6"
+    },
+    {
+      "id": "hologram",
+      "domain": "smartcat",
+      "name": "全息投影",
+      "file": "skins/smartcat/hologram.css",
+      "previewClass": "bz-sc-prev-hologram",
+      "sha256": "5569615a75e0f7006963ba468335a8186feb47750f765bc963cddd687a0d242e"
+    }
+  ]
+}

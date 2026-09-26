@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/sakura（樱粉）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/sakura.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 8 樱粉 sakura */
+    --pz-sakura-l:#fdf3f6; --pz-sakura-d:#2a2026; --pz-sakura-a:#d64d8f; --pz-sakura-ad:#ef77b4;
+    --pz-sakura-fgd:#f6e9ef; --pz-sakura-m:#8a5f74; --pz-sakura-md:#bd9aab; --pz-sakura-f:#b394a4; --pz-sakura-fd:#917a87;
+    --pz-sakura-bd:#352830; --pz-sakura-bfd:#e0cfd8;
+}
+
+/* 8 樱粉 · sakura */
+    #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-l); --pz-accent:var(--pz-sakura-a); --pz-muted:var(--pz-sakura-m); --pz-faint:var(--pz-sakura-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-d); --pz-accent:var(--pz-sakura-ad); --pz-fg:var(--pz-sakura-fgd); --pz-muted:var(--pz-sakura-md); --pz-faint:var(--pz-sakura-fd); --pz-btn:var(--pz-sakura-bd); --pz-btn-fg:var(--pz-sakura-bfd); --pz-on-accent:var(--pz-sakura-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-sakura {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-sakura-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-sakura-l) 0 50%, var(--pz-sakura-d) 50% 100%);
+  border-radius: 3px;
+}

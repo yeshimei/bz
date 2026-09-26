@@ -4,15 +4,32 @@
  * 空值时 chips 区显示实际生效目录（fallbackValue → data.resolveFolderPath，回落链已内置）。
  */
 import type { SettingsSchema } from '../core/settings-schema';
+import { skinPackOptions } from '../core/skin-pack';
 import { resolveFolderPath } from './data';
-import { applyBookshelfSkin } from './ui';
+import { applyBookshelfSkin, BUILTIN_SKIN } from './ui';
+
+/**
+ * 面板主题选项：**内置首套（恒首位）+ 已就绪的远端皮肤（清单顺序）**——
+ * 不生效（未下载/下架/版本区间外）的皮肤不进选择卡（ADR-0199 决策 6）。
+ * 清单在设置面板打开时才求值，故启动同步完成后重开面板即可见新皮肤。
+ */
+function skinOptions() {
+  return skinPackOptions('bookshelf', [
+    {
+      value: BUILTIN_SKIN,
+      label: '雪松白',
+      layout: 'default',
+      prevClass: `bz-skinprev-bs-${BUILTIN_SKIN}`,
+    },
+  ]);
+}
 
 export function bookshelfSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
-        // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin 五肤，layoutKey 联动同范式；
-        // onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin））
+        // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin，layoutKey 联动同范式；
+        // onChange 热切换已开面板；退役肤/未就绪远端肤值读取回落雪松白（normalizeSkin））
         icon: 'palette',
         name: '外观',
         rows: [
@@ -22,13 +39,7 @@ export function bookshelfSettingsSchema(): SettingsSchema {
             name: '面板主题',
             binding: { key: 'bookshelfSkin' },
             layoutKey: 'bookshelfLayout',
-            options: [
-              { value: 'nordic', label: '雪松白', layout: 'default', prevClass: 'bz-skinprev-bs-nordic' },
-              { value: 'noir', label: '黑金夜曲', layout: 'default', prevClass: 'bz-skinprev-bs-noir' },
-              { value: 'kraft', label: '牛皮手帐', layout: 'default', prevClass: 'bz-skinprev-bs-kraft' },
-              { value: 'velvet', label: '丝绒剧院', layout: 'default', prevClass: 'bz-skinprev-bs-velvet' },
-              { value: 'mono', label: '极简黑白', layout: 'default', prevClass: 'bz-skinprev-bs-mono' },
-            ],
+            options: skinOptions(),
             onChange: (v) => applyBookshelfSkin(v),
           },
         ],

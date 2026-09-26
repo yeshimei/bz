@@ -408,67 +408,12 @@
     linear-gradient(90deg, #2a2c34 0 50%, #111218 50% 100%);
   border-radius: 3px;
 }
-/* ── 番茄钟 10 套皮肤预览（2026-09-11 同构图异色：左亮块/右暗块 + 域色圆点；
-      色值引用 src/pomodoro/styles.css :root 的 --pz-<id>-* 表（同聚合进根 styles.css），
-      本文件不持有番茄钟色值——加皮/改色只在 pomodoro 侧改表） ── */
+/* ── 番茄钟皮肤预览 · **仅首套（番茄）留这里**；九套远端的预览随各自皮肤包下发
+      （ADR-0199 决策 6：预览规则跟皮肤走，源在 src/pomodoro/skins/<id>.css）。 ── */
 .bz-sp-mini.bz-sp-prev-pomo-tomato {
   background:
     radial-gradient(circle at 50% 50%, var(--pz-tomato-a) 0 4px, #fff 4px 6px, transparent 6px),
     linear-gradient(90deg, var(--pz-tomato-l) 0 50%, var(--pz-tomato-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-ink {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-ink-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-ink-l) 0 50%, var(--pz-ink-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-grid {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-grid-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-grid-l) 0 50%, var(--pz-grid-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-moss {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-moss-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-moss-l) 0 50%, var(--pz-moss-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-mist {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-mist-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-mist-l) 0 50%, var(--pz-mist-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-sand {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-sand-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-sand-l) 0 50%, var(--pz-sand-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-citrus {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-citrus-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-citrus-l) 0 50%, var(--pz-citrus-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-sakura {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-sakura-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-sakura-l) 0 50%, var(--pz-sakura-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-latte {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-latte-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-latte-l) 0 50%, var(--pz-latte-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-night {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-night-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-night-l) 0 50%, var(--pz-night-d) 50% 100%);
   border-radius: 3px;
 }
 

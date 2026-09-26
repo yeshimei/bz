@@ -1,0 +1,59 @@
+/* ============================================================
+ * bz 皮肤包 · bookshelf/kraft（牛皮手帐）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/bookshelf/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/bookshelf/kraft.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+.bz-bs-skin-kraft {
+  --bz-surface-0: #ab8c5e; --bz-surface-1: #b99a6b; --bz-surface-2: #d6bd8e; --bz-surface-3: #c6ab78; --bz-surface-4: #e2cd9f;
+  --bz-surface-hover: #ccb37f; --bz-surface-active: #bfa468;
+  --bz-text-1: #4c3a22; --bz-text-2: #6b5232; --bz-text-3: #8f7448; --bz-text-invert: #f0e2c4;
+  --bz-brand: #c04a2f; --bz-brand-hover: #d05a3d; --bz-brand-soft: rgba(192, 74, 47, 0.16); --bz-on-brand: #f0e2c4;
+  --bz-border: rgba(76, 58, 34, 0.35); --bz-border-strong: rgba(76, 58, 34, 0.6); --bz-border-hover: rgba(76, 58, 34, 0.8);
+  --bsw-wall: #b99a6b; --bsw-wall-dark: #8a6a3e; --bsw-shelf: #4c3a1e; --bsw-brass: #8a5a2b;
+  --bsw-paper: #d6bd8e; --bsw-ink: #4c3a22; --bsw-muted: #6b5232; --bsw-line: rgba(76, 58, 34, 0.35);
+  --bsw-accent: #c04a2f; --bsw-reading: #c04a2f;
+}
+
+/* 牛皮手帐：牛皮纸墙纤维纹，深棕匾，纸质书脊 + 蜡笔顶带，标签统一歪贴 */
+.bz-bs-skin-kraft .bz-bs-plaque { background: #8a6a3e; border-color: #5f4826; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2); }
+.bz-bs-skin-kraft .bz-bs-plaque h1 { color: #f0e2c4; }
+.bz-bs-skin-kraft .bz-bs-wallpage { background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 4px), linear-gradient(180deg, #c2a476, #ab8c5e); }
+.bz-bs-skin-kraft .bz-bs-taglabel { background: #e8d9b8; transform: rotate(-1.4deg); }
+.bz-bs-skin-kraft .bz-bs-zone { border-image: linear-gradient(180deg, #7c5c32, #4c3a1e) 1; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
+.bz-bs-skin-kraft .bz-bs-bookend { background: linear-gradient(90deg, #d8b985, #8a5a2b); box-shadow: none; }
+.bz-bs-skin-kraft .bz-bs-bookend::before { background: linear-gradient(90deg, #d8b985, #8a5a2b); }
+.bz-bs-skin-kraft .bz-bs-spine { background: linear-gradient(90deg, #d6bd8e, #c6ab78 60%, #d6bd8e); color: #4c3a22; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25); }
+.bz-bs-skin-kraft .bz-bs-spine::before { background: var(--c1); height: 5px; opacity: 0.85; }
+.bz-bs-skin-kraft .bz-bs-spine::after { display: none; }
+.bz-bs-skin-kraft .bz-bs-spine-title { text-shadow: none; }
+.bz-bs-skin-kraft .bz-bs-spine.unread { filter: sepia(0.2) brightness(0.8); }
+.bz-bs-skin-kraft .bz-bs-wallnote, .bz-bs-skin-kraft .bz-bs-hint { color: #6b5232; }
+.bz-bs-skin-kraft .bz-bs-seg button { color: #6b5232; }
+.bz-bs-skin-kraft .bz-bs-seg button.on { background: #8a5a2b; color: #f0e2c4; }
+
+/* —— 牛皮手帐 · 夜（深夜皮帐：深咖啡皮墙，牛皮纸签/纸脊不变） —— */
+.bz-bs-skin-kraft.bz-bs-mode-dark {
+  --bz-surface-0: #2b2114; --bz-surface-1: #332718; --bz-surface-2: #3d2f1d; --bz-surface-3: #463622; --bz-surface-4: #524028;
+  --bz-surface-hover: #463622; --bz-surface-active: #524028;
+  --bz-text-1: #efe0c2; --bz-text-2: #c2a878; --bz-text-3: #8f7a56; --bz-text-invert: #332718;
+  --bz-brand: #d05a3d; --bz-brand-hover: #dd6a4c; --bz-brand-soft: rgba(208, 90, 61, 0.18); --bz-on-brand: #ffffff;
+  --bz-border: rgba(194, 168, 120, 0.3); --bz-border-strong: rgba(194, 168, 120, 0.55); --bz-border-hover: rgba(194, 168, 120, 0.75);
+  --bsw-wall: #332718; --bsw-wall-dark: #241b0f; --bsw-shelf: #241a0e; --bsw-brass: #c2a878;
+  --bsw-paper: #d6bd8e; --bsw-ink: #3a2c18; --bsw-muted: #a58c62; --bsw-line: rgba(194, 168, 120, 0.35);
+  --bsw-accent: #d05a3d; --bsw-reading: #d9a441;
+}
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-plaque { background: #241b0f; border-color: #5a4526; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.45); }
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-wallpage { background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px), linear-gradient(180deg, #3d2f1d, #2a1f12); }
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-zone { border-image: linear-gradient(180deg, #5a4526, #241a0e) 1; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); }
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-bookend { background: linear-gradient(90deg, #c2a878, #6b5232); box-shadow: none; }
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-bookend::before { background: linear-gradient(90deg, #c2a878, #6b5232); }
+.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-seg button { color: #c2a878; }
+.bz-skinprev-bs-kraft { background: linear-gradient(180deg, #c2a476, #ab8c5e); }
+.bz-skinprev-bs-kraft::before { background: linear-gradient(180deg, #c04a2f 0 4px, #d6bd8e 4px); transform: rotate(-3deg); }
+.bz-skinprev-bs-kraft::after { background: #c6ab78; transform: rotate(2deg); }

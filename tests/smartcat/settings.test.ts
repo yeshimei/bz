@@ -16,6 +16,8 @@ import { ensureSmartCat, unloadSmartCat, __getSmartcatInternals } from '../../sr
 import { openSmartcatSettings } from '../../src/smartcat/ui';
 import { CAT_CONTAINER_ID } from '../../src/smartcat/ui';
 import { closeSettingsModal } from '../../src/core/settings-modal';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
 
@@ -51,7 +53,14 @@ beforeEach(() => {
   document.body.innerHTML = '';
   settings = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true };
   unloadSmartCat();
+  resetSkinPackState();
 });
+
+/** 十二套远端皮肤 id（首套橘猫内置，ADR-0199） */
+const REMOTE_CAT_SKINS = [
+  'gray', 'black', 'white', 'calico', 'neon', 'galaxy',
+  'liquidMetal', 'fire', 'crystal', 'cyberpunk', 'rainbow', 'hologram',
+];
 
 describe('移动端长按设置 → 关闭 → 拖拽恢复', () => {
   it('遮罩关闭设置弹窗后 isSettingsOpen 复位、触摸拖拽恢复', async () => {
@@ -103,6 +112,7 @@ describe('外观平铺色块选择器', () => {
   }
 
   it('13 皮肤 choiceCards 渲染，is-on 跟随当前配置；色块类名齐全', () => {
+    seedRemoteSkins('smartcat', REMOTE_CAT_SKINS); // 十二套远端就绪 → 与内置橘猫合成 13
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     openWith(baseConfig(), hooks);
     const items = Array.from(document.querySelectorAll('.bz-cardpick-card'));
@@ -116,6 +126,7 @@ describe('外观平铺色块选择器', () => {
   });
 
   it('点击色块：写盘新外观 + is-on 迁移 + 即时换肤回调', async () => {
+    seedRemoteSkins('smartcat', REMOTE_CAT_SKINS); // fire 为远端皮肤：就绪后卡才在
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     openWith(baseConfig(), hooks);
     const fire = document.querySelector('.bz-cardpick-card[data-value="fire"]') as HTMLElement;

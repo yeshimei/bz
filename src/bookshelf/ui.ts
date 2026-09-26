@@ -19,6 +19,7 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { isRemoteSkinReady } from '../core/skin-pack';
 import { uiModal, mountIcons } from '../core/ui';
 import { notice } from '../core/notice';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction, type ReportRenderOptions } from '../reading-report';
@@ -280,13 +281,25 @@ function openBookDetail(it: BookshelfItem, app: App, spine?: HTMLElement | null)
   motionDetailOpen(popup, spine && spine.isConnected ? spine : null);
 }
 
-// ---------- 面板皮肤（五肤×亮暗双模式；类挂面板根与弹窗根） ----------
+// ---------- 面板皮肤（首套内置 + 四套远端；ADR-0199） ----------
 
-const SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'] as const;
-type SkinId = (typeof SKIN_IDS)[number];
+/** 皮肤**已知**取值全集（含远端四套）：只用于取值校验与清单/原型，
+ *  **不代表可用**——能不能挂类看 core/skin-pack 的就绪表（本地有文件 + sha256 + 版本区间）。 */
+export const KNOWN_SKIN_IDS = ['nordic', 'noir', 'kraft', 'velvet', 'mono'] as const;
+type SkinId = (typeof KNOWN_SKIN_IDS)[number];
 
-function normalizeSkin(v: unknown): SkinId {
-  return SKIN_IDS.includes(v as SkinId) ? (v as SkinId) : 'nordic';
+/** 内置首套（离线兜底：断网/首装/远端未同步时面板落在这里） */
+export const BUILTIN_SKIN: SkinId = 'nordic';
+
+/**
+ * 取值 → 实际挂的皮肤：**内置首套 ∪ 已就绪的远端皮肤**，其余一律回落首套。
+ * 读时回落而不改写设置值（用户的选择留在盘上，远端同步到位后自动恢复）。
+ * 不生效的东西不挂类——这是 ADR-0199 决策 6 的核心口径（静默失效比不生效更坏）。
+ */
+function normalizeSkin(v: unknown): SkinId | string {
+  const s = String(v ?? '');
+  if (s === BUILTIN_SKIN) return s;
+  return isRemoteSkinReady('bookshelf', s) ? s : BUILTIN_SKIN;
 }
 
 /** 亮暗模式类（随 Obsidian 主题体；每肤两套变体见 styles.css「亮暗模式变体」节） */
@@ -294,7 +307,7 @@ function bsModeClass(): string {
   return document.body.classList.contains('theme-dark') ? 'bz-bs-mode-dark' : 'bz-bs-mode-light';
 }
 
-/** 当前皮肤+亮暗模式类（弹窗与面板共用；退役肤/非法值读取回落雪松白） */
+/** 当前皮肤+亮暗模式类（弹窗与面板共用；退役肤/非法值/远端未就绪 读取回落雪松白） */
 export function bsSkinClass(): string {
   return `bz-bs-skin-${normalizeSkin((tryGetSettings() as Record<string, unknown>).bookshelfSkin)} ${bsModeClass()}`;
 }
@@ -304,7 +317,12 @@ export function applyBookshelfSkin(skin: unknown): void {
   if (!M.currentOverlay) return;
   const panel = M.currentOverlay.querySelector('.bz-bs-panel') as HTMLElement | null;
   if (!panel) return;
-  panel.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), 'bz-bs-mode-light', 'bz-bs-mode-dark');
+  // 按**实际挂上的类**摘（前缀扫描）：远端皮肤数量动态，静态数组列举已不成立（ADR-0199 后果节）
+  for (const cls of Array.from(panel.classList)) {
+    if (cls.startsWith('bz-bs-skin-') || cls === 'bz-bs-mode-light' || cls === 'bz-bs-mode-dark') {
+      panel.classList.remove(cls);
+    }
+  }
   panel.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
 }
 

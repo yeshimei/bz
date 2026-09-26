@@ -7,6 +7,8 @@
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
     "changelog": "node scripts/_gen-changelog.mjs",
+    "skin-pack": "node scripts/build-skin-pack.mjs",
+    "split-skins": "node scripts/split-domain-skins.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --maxWorkers=2"

@@ -39,6 +39,7 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { isRemoteSkinReady } from '../core/skin-pack';
 import { uiModal, uiIcon, uiChoice, uiSelect, uiSegmented, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { measureFlip, playFlip, safeAnimate } from '../core/ui/flip';
@@ -334,31 +335,42 @@ function sceneCounts(): Map<string, number> {
 
 // ---------- 主面板（打开/关闭/ESC） ----------
 
+/** 内置首套（离线兜底）+ 已知取值全集（含远端「纸感手账」——只用于校验，不代表可用） */
+export const BUILTIN_MEMO_SKIN = 'editorial';
+export const KNOWN_MEMO_SKINS = ['editorial', 'paper'] as const;
+
+/** 取值 → 实际挂的皮肤：内置首套 ∪ 已就绪远端肤，其余回落首套（口径与 skinClass 逐字一致） */
+function normalizeMemoSkin(v: unknown): string {
+  const s = String(v ?? '');
+  if (s === BUILTIN_MEMO_SKIN) return s;
+  return isRemoteSkinReady('memo', s) ? s : BUILTIN_MEMO_SKIN;
+}
+
 /**
- * 皮肤应用（issue 210）：面板根挂 bz-memo-skin-{paper|editorial}——缺省一律编辑部
- * （2026-09-22 用户拍板：默认皮肤由纸感手账改为编辑部）。
+ * 皮肤应用（issue 210，ADR-0199 远端化）：面板根挂 bz-memo-skin-{id}——内置首套 = 编辑部。
  * 双入口：openMemoPanel 打开时按 memoSkin 挂载；设置行 onChange 热切换已开面板。
  * 面板未开时仅落盘（设置行已持久化），下次打开生效。
+ * **远端皮肤未就绪时回落首套**（不生效的东西不挂类）；用户的选择值不动，同步到位后自动恢复。
  */
 export function applyMemoSkin(skin: unknown): void {
   if (!M.overlay) return;
   const panel = M.overlay.querySelector('.bz-memo-panel') as HTMLElement | null;
   if (!panel) return;
-  panel.classList.remove('bz-memo-skin-paper', 'bz-memo-skin-editorial');
-  // 默认皮肤 = 编辑部（2026-09-22 用户拍板）：未知/缺省值一律回落编辑部
-  const v = skin === 'paper' ? 'paper' : 'editorial';
-  panel.classList.add(`bz-memo-skin-${v}`);
+  // 按实际挂上的类摘（远端皮肤数量动态，静态列举不成立）
+  for (const cls of Array.from(panel.classList)) {
+    if (cls.startsWith('bz-memo-skin-')) panel.classList.remove(cls);
+  }
+  panel.classList.add(`bz-memo-skin-${normalizeMemoSkin(skin)}`);
 }
 
 /**
  * 当前皮肤类名（issue 210）：挂 body 的浮层（uiModal 弹窗 / 流程框 / 右键菜单 / 抽屉）
- * 与面板共用同套皮肤。回落口径**必须与 applyMemoSkin 逐字一致**（未知/缺省 → 编辑部）：
- * 面板回落编辑部而弹窗返回空类的话，弹窗就掉回 core 裸皮——正是 issue 291 要消灭的
+ * 与面板共用同套皮肤。回落口径**必须与 applyMemoSkin 逐字一致**（同一 normalizeMemoSkin）：
+ * 面板回落首套而弹窗返回空类的话，弹窗就掉回 core 裸皮——正是 issue 291 要消灭的
  * 「面板有皮、子弹窗没皮」；且四类浮层都靠这个类才拿得到 --bz-* 皮肤 token。
  */
 function skinClass(): string {
-  const s = tryGetSettings().memoSkin;
-  return s === 'paper' ? 'bz-memo-skin-paper' : 'bz-memo-skin-editorial';
+  return `bz-memo-skin-${normalizeMemoSkin(tryGetSettings().memoSkin)}`;
 }
 
 /**

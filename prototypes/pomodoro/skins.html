@@ -7,7 +7,8 @@
   番茄钟皮肤**验收页**（评审外景）：消费真产物 prototype-render.js（src/pomodoro/render.ts → window.BZR_pomodoro）——
   弹窗骨架 popupShellHtml() 与主题清单 POMODORO_SKIN_THEMES 都是插件同源 markup，本页不手抄一份
   （改 src/pomodoro/render.ts 后 node scripts/build-preview.mjs pomodoro 重出即见）。
-  皮肤色值在 src/pomodoro/styles.css（pomodoro-skin-<id>，亮色 + .theme-dark 暗色两套）。
+  皮肤色值单源：首套「番茄」在 src/pomodoro/styles.css，其余九套远端皮肤在
+  src/pomodoro/skins/<id>.css（ADR-0199 皮肤包远端化，切出的文件仍进 git，验收页直连）。
   每张卡 = 同一布局的亮色实例 + 暗色实例；暗色实例外层挂 .theme-dark（与 Obsidian 宿主同口径）。
   卡片根 id 复用 #pomodoro-popup 是为了让真样式原样命中（重复 id 只影响 getElementById，不影响 CSS）。
   卡内演示数据（相位/时间/周柱）是外景道具，仅填充真骨架，不属于皮肤定义。
@@ -16,6 +17,15 @@
 <link rel="stylesheet" href="../../src/core/ui/tokens.css">
 <link rel="stylesheet" href="../../src/core/ui/components.css">
 <link rel="stylesheet" href="../../src/pomodoro/styles.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/ink.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/grid.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/moss.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/mist.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/sand.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/citrus.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/sakura.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/latte.css">
+<link rel="stylesheet" href="../../src/pomodoro/skins/night.css">
 <style>
   /* ===== 外景（验证页自用，禁放皮肤定义） ===== */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,7 +59,7 @@
   <div class="top"><h1>番茄钟皮肤 · 10 套（每套亮 / 暗两版，布局全同）</h1><a class="back" href="./prototype.html">← 返回原型</a></div>
   <div class="tip">
     骨架与清单来自真产物 <code>prototype-render.js</code>（<code>src/pomodoro/render.ts</code>），
-    皮肤实装在 <code>src/pomodoro/styles.css</code>（<code>pomodoro-skin-&lt;id&gt;</code>：亮色 + <code>.theme-dark</code> 暗色），
+    皮肤实装在 <code>src/pomodoro/styles.css</code>（首套）与 <code>src/pomodoro/skins/&lt;id&gt;.css</code>（远端九套；<code>pomodoro-skin-&lt;id&gt;</code>：亮色 + <code>.theme-dark</code> 暗色），
     设置面板「外观 → 面板主题」十张预览卡引用同一批 <code>--pz-*</code> 色值变量；本页只把它们铺出来验收。
     默认 = <b>番茄</b>（与 settings 里既有的 pomodoroSkinTheme 默认值一致），切主题走设置面板。
   </div>

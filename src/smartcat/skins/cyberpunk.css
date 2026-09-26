@@ -1,0 +1,42 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/cyberpunk（赛博朋克）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/cyberpunk.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+@keyframes cyberGlitch {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes gridScan {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 40px; }
+}
+@keyframes cyberTail {
+  0%, 100% { transform: rotate(0deg); filter: hue-rotate(0deg); }
+  50% { transform: rotate(-20deg); filter: hue-rotate(90deg); }
+}
+#smart-companion-cat.skin-cyberpunk .cat-body {
+  background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%);
+  background-size: 300% 300%;
+  animation: cyberGlitch 5s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-cyberpunk .cat-ear { background: #00ff88; box-shadow: 0 0 10px #00ff88, 0 0 20px #0088ff; }
+#smart-companion-cat.skin-cyberpunk .cat-tail { background: linear-gradient(90deg, #00ff88, #0088ff); animation: cyberTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-cyberpunk .cat-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(0,255,136,0.1) 2px, rgba(0,255,136,0.1) 4px),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,136,255,0.1) 2px, rgba(0,136,255,0.1) 4px);
+  animation: gridScan 4s linear infinite;
+}
+.bz-sp-mini.bz-sc-prev-cyberpunk, .bz-cardpick-prev.bz-sc-prev-cyberpunk { background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%);; }

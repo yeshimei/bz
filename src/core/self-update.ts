@@ -108,12 +108,34 @@ export async function checkSelfUpdate(app: unknown): Promise<void> {
   notice(`包仔已自动更新到 v${remoteVer}：重载插件（或重启 Obsidian）后生效`, 'success');
 }
 
-/** 启动巡检入口：延迟触发、静默失败（自动更新不弹错误脸）。app 未初始化时静默跳过。 */
-export function scheduleSelfUpdateCheck(getAppFn: () => unknown, isUnloaded: () => boolean): void {
+/**
+ * 启动巡检入口：延迟触发、静默失败（自动更新不弹错误脸）。app 未初始化时静默跳过。
+ * @param after 自更新**跑完之后**（成功或失败都算完）再执行的启动维护动作。
+ *   存在的理由：皮肤包的版本区间校验拿的是 `manifest.json` 的版本号，而本函数会
+ *   覆写它——两件事并发会出现「皮肤按旧版本校验通过 → 插件随即更新 → 皮肤当场
+ *   变不兼容」（ADR-0199 决策 5）。串行是唯一不会自我打脸的时序。
+ */
+export function scheduleSelfUpdateCheck(
+  getAppFn: () => unknown,
+  isUnloaded: () => boolean,
+  after?: (app: unknown) => unknown,
+): void {
   window.setTimeout(() => {
     if (isUnloaded()) return;
-    void checkSelfUpdate(getAppFn()).catch((e) => {
-      console.warn('[bz] 自更新巡检失败（已静默）:', (e as Error)?.message || e);
-    });
+    void (async () => {
+      const app = getAppFn();
+      try {
+        await checkSelfUpdate(app);
+      } catch (e) {
+        console.warn('[bz] 自更新巡检失败（已静默）:', (e as Error)?.message || e);
+      }
+      if (!after) return;
+      if (isUnloaded()) return;
+      try {
+        await after(app);
+      } catch (e) {
+        console.warn('[bz] 启动维护任务失败（已静默）:', (e as Error)?.message || e);
+      }
+    })();
   }, CHECK_DELAY_MS);
 }

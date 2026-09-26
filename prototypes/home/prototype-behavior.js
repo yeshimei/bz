@@ -1,5 +1,5 @@
-/* 源指纹 361fc3807b720537 · 仓内输入 288 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 1e0db9ddc4d156ae · 仓内输入 291 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -8470,12 +8470,12 @@ var BZW_home = (() => {
       const d = opts.defaultValue;
       return typeof d === "function" ? d() : d === void 0 ? [] : d;
     };
-    async function ensureDir(app) {
+    async function ensureDir2(app) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
       if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
     }
     async function createIfMissing(app, content) {
-      await ensureDir(app);
+      await ensureDir2(app);
       try {
         await app.vault.create(filePath, content);
         return true;
@@ -9280,6 +9280,28 @@ var BZW_home = (() => {
     }
   });
 
+  // src/smartcat/types.ts
+  var ALL_APPEARANCES;
+  var init_types = __esm({
+    "src/smartcat/types.ts"() {
+      ALL_APPEARANCES = [
+        "orange",
+        "gray",
+        "black",
+        "white",
+        "calico",
+        "neon",
+        "galaxy",
+        "liquidMetal",
+        "fire",
+        "crystal",
+        "cyberpunk",
+        "rainbow",
+        "hologram"
+      ];
+    }
+  });
+
   // src/smartcat/config.ts
   function defaultConfig() {
     return {
@@ -9314,8 +9336,7 @@ var BZW_home = (() => {
     if (typeof c.proactiveWeeklyCap !== "number" || c.proactiveWeeklyCap < 0 || c.proactiveWeeklyCap > 7) c.proactiveWeeklyCap = def.proactiveWeeklyCap;
     const cloudModes = ["all", "smart", "diary", "local"];
     if (!cloudModes.includes(c.cloudScoring)) c.cloudScoring = def.cloudScoring;
-    const appearances = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];
-    if (!appearances.includes(c.appearance)) c.appearance = def.appearance;
+    if (!ALL_APPEARANCES.includes(c.appearance)) c.appearance = def.appearance;
     if (c.conversationHistory.length > c.shortTermMemory * 2) {
       c.conversationHistory = c.conversationHistory.slice(-Math.min(c.shortTermMemory * 2, c.conversationHistory.length));
     }
@@ -9334,6 +9355,7 @@ var BZW_home = (() => {
   }
   var init_config2 = __esm({
     "src/smartcat/config.ts"() {
+      init_types();
     }
   });
 
@@ -34386,6 +34408,185 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
+  // src/core/sha256.ts
+  var K;
+  var init_sha256 = __esm({
+    "src/core/sha256.ts"() {
+      K = new Uint32Array([
+        1116352408,
+        1899447441,
+        3049323471,
+        3921009573,
+        961987163,
+        1508970993,
+        2453635748,
+        2870763221,
+        3624381080,
+        310598401,
+        607225278,
+        1426881987,
+        1925078388,
+        2162078206,
+        2614888103,
+        3248222580,
+        3835390401,
+        4022224774,
+        264347078,
+        604807628,
+        770255983,
+        1249150122,
+        1555081692,
+        1996064986,
+        2554220882,
+        2821834349,
+        2952996808,
+        3210313671,
+        3336571891,
+        3584528711,
+        113926993,
+        338241895,
+        666307205,
+        773529912,
+        1294757372,
+        1396182291,
+        1695183700,
+        1986661051,
+        2177026350,
+        2456956037,
+        2730485921,
+        2820302411,
+        3259730800,
+        3345764771,
+        3516065817,
+        3600352804,
+        4094571909,
+        275423344,
+        430227734,
+        506948616,
+        659060556,
+        883997877,
+        958139571,
+        1322822218,
+        1537002063,
+        1747873779,
+        1955562222,
+        2024104815,
+        2227730452,
+        2361852424,
+        2428436474,
+        2756734187,
+        3204031479,
+        3329325298
+      ]);
+    }
+  });
+
+  // src/core/remote-asset.ts
+  function remotesFor(fileName) {
+    return [
+      `https://raw.githubusercontent.com/yeshimei/bz/master/manual/${fileName}`,
+      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/${fileName}`
+    ];
+  }
+  function assetVaultPath(app, fileName) {
+    var _a2;
+    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  async function ensureDir(app, relPath) {
+    var _a2;
+    const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+    if (!(adapter == null ? void 0 : adapter.mkdir)) return;
+    const slash = relPath.lastIndexOf("/");
+    if (slash <= 0) return;
+    const dir = assetVaultPath(app, relPath.slice(0, slash));
+    try {
+      await adapter.mkdir(dir);
+    } catch (e) {
+    }
+  }
+  async function fetchAssetText(fileName, validate, label, unit = "页") {
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!validate(text)) {
+          lastErr = `${url} 返回内容不是${label}${unit}`;
+          continue;
+        }
+        return text;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function writeAssetText(app, fileName, text) {
+    await ensureDir(app, fileName);
+    await app.vault.adapter.write(assetVaultPath(app, fileName), text);
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function downloadAsset(app, fileName, validate, label) {
+    const text = await fetchAssetText(fileName, validate, label, "页");
+    await writeAssetText(app, fileName, text);
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(assetVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ensureAssetReady(app, fileName, validate, label) {
+    let text = await readAsset(app, fileName);
+    if (!text) {
+      await downloadAsset(app, fileName, validate, label);
+      text = await readAsset(app, fileName);
+    }
+    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
+    return text;
+  }
+  var init_remote_asset = __esm({
+    "src/core/remote-asset.ts"() {
+      init_fake_obsidian();
+      init_sha256();
+    }
+  });
+
+  // src/core/skin-pack.ts
+  function localSkinEntries(domain) {
+    var _a2;
+    return ((_a2 = ready.get(domain)) != null ? _a2 : []).map((r) => r.entry);
+  }
+  function isRemoteSkinReady(domain, id) {
+    var _a2;
+    const v = String(id != null ? id : "");
+    return !!v && ((_a2 = ready.get(domain)) != null ? _a2 : []).some((r) => r.entry.id === v);
+  }
+  function skinPackOptions(domain, builtins) {
+    const extra = localSkinEntries(domain).filter((e) => !builtins.some((b) => b.value === e.id)).map((e) => {
+      var _a2, _b2;
+      return { value: e.id, label: e.name, layout: (_b2 = (_a2 = builtins[0]) == null ? void 0 : _a2.layout) != null ? _b2 : "default", prevClass: e.previewClass };
+    });
+    return [...builtins, ...extra];
+  }
+  var ready;
+  var init_skin_pack = __esm({
+    "src/core/skin-pack.ts"() {
+      init_remote_asset();
+      init_sha256();
+      ready = /* @__PURE__ */ new Map();
+    }
+  });
+
   // src/core/ui/slide-pill.ts
   function hoverCapable() {
     try {
@@ -36446,9 +36647,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function applySkinClass() {
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
-    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    const setting = tryGetSettings().pomodoroSkinTheme;
+    const usable = setting === DEFAULT_POMODORO_SKIN_THEME || isRemoteSkinReady("pomodoro", setting);
+    const want = skinClassOf(usable ? setting : DEFAULT_POMODORO_SKIN_THEME);
     if (popup.classList.contains(want)) return;
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    for (const cls of Array.from(popup.classList)) {
+      if (cls.startsWith("pomodoro-skin-")) popup.classList.remove(cls);
+    }
     popup.classList.add(want);
   }
   function durations() {
@@ -36875,6 +37080,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (mainChanged || archivedChanged) await dataManager2.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
     loaded = true;
   }
+  function skinThemeOptions() {
+    return skinPackOptions(
+      "pomodoro",
+      POMODORO_SKIN_THEMES.filter((t) => t.value === DEFAULT_POMODORO_SKIN_THEME).map((t) => ({
+        value: t.value,
+        label: t.label,
+        layout: "default",
+        prevClass: `bz-sp-prev-pomo-${t.value}`
+      }))
+    );
+  }
   function pomodoroSettingsSchema() {
     const soundToggle = {
       get: () => tryGetSettings().pomodoroSound !== false,
@@ -36909,17 +37125,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
                 var _a2, _b2;
                 const s = tryGetSettings();
                 const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit3 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                const opts = skinThemeOptions();
+                const fit3 = opts.filter((o) => o.layout === s.pomodoroSkin);
                 if (!fit3.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit3[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                  s.pomodoroSkinTheme = ((_b2 = fit3[0]) != null ? _b2 : opts[0]).value;
                   saveSettings();
                 }
                 render();
               }
             },
-            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
-            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
+            // 面板主题：内置首套「番茄」+ 远端九套（就绪表见 core/skin-pack，ADR-0199；
+            // 每套亮/暗两版，CSS 侧同名落皮）；onChange 驱动 render() 重挂皮肤类——
+            // 设置面板关着弹窗换肤也要即时生效（评审 c1）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: skinThemeOptions(), onChange: () => render() }
           ]
         },
         {
@@ -37267,7 +37485,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     appRef = null;
     loaded = false;
   }
-  var dataManager2, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, SKIN_THEME_OPTIONS, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
+  var dataManager2, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, disposed, recoveryNotified, lastStatsKey, timeReels, lastBeepRemain, armedBtn, armedOutside, ARM_LABEL, initInflight, openInflight;
   var init_ui5 = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -37277,6 +37495,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_settings_provider();
       init_notice();
       init_settings_common();
+      init_skin_pack();
       init_data9();
       init_render5();
       init_render5();
@@ -37304,7 +37523,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       lastStatsKey = "";
       timeReels = null;
       lastBeepRemain = -1;
-      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       armedBtn = null;
       armedOutside = null;
       ARM_LABEL = "确认";
@@ -37462,17 +37680,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return counts;
   }
+  function normalizeMemoSkin(v) {
+    const s = String(v != null ? v : "");
+    if (s === BUILTIN_MEMO_SKIN) return s;
+    return isRemoteSkinReady("memo", s) ? s : BUILTIN_MEMO_SKIN;
+  }
   function applyMemoSkin(skin) {
     if (!M7.overlay) return;
     const panel2 = M7.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
-    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
-    const v = skin === "paper" ? "paper" : "editorial";
-    panel2.classList.add(`bz-memo-skin-${v}`);
+    for (const cls of Array.from(panel2.classList)) {
+      if (cls.startsWith("bz-memo-skin-")) panel2.classList.remove(cls);
+    }
+    panel2.classList.add(`bz-memo-skin-${normalizeMemoSkin(skin)}`);
   }
   function skinClass() {
-    const s = tryGetSettings().memoSkin;
-    return s === "paper" ? "bz-memo-skin-paper" : "bz-memo-skin-editorial";
+    return `bz-memo-skin-${normalizeMemoSkin(tryGetSettings().memoSkin)}`;
   }
   function enterLayer(el, delay, dy) {
     if (!el) return;
@@ -38693,7 +38916,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
   }
-  var import_moment6, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, loadFailed, panelEnterPending, PANEL_EXIT_MS, panelResizeDetach, sortSelectDetach, panelFocusRelease, viewEpoch, lastRenderEpoch, nextFlipSpin, nextEnterFrom, nextEnterSoft, doneJustOpened, MEMO_PILL_TARGETS, ROLL_CURL_MS, ROLL_FLY_MS, ROLL_MS, ROLL_CURL_W, ROLL_IMPACT_MS, EASE_OUT2, DELETE_EXIT_MS;
+  var import_moment6, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, loadFailed, BUILTIN_MEMO_SKIN, panelEnterPending, PANEL_EXIT_MS, panelResizeDetach, sortSelectDetach, panelFocusRelease, viewEpoch, lastRenderEpoch, nextFlipSpin, nextEnterFrom, nextEnterSoft, doneJustOpened, MEMO_PILL_TARGETS, ROLL_CURL_MS, ROLL_FLY_MS, ROLL_MS, ROLL_CURL_W, ROLL_IMPACT_MS, EASE_OUT2, DELETE_EXIT_MS;
   var init_ui6 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -38703,6 +38926,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_dom();
       init_mobile();
       init_settings_provider();
+      init_skin_pack();
       init_ui();
       init_slide_pill();
       init_flip();
@@ -38724,6 +38948,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }, SEARCH_DEBOUNCE_MS);
       clipTitleHint = null;
       loadFailed = false;
+      BUILTIN_MEMO_SKIN = "editorial";
       panelEnterPending = false;
       PANEL_EXIT_MS = 540;
       panelResizeDetach = null;
@@ -38764,7 +38989,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return {
       groups: [
         {
-          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
+          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin；
+          // 主题 = 内置首套「编辑部」+ 已就绪的远端「纸感手账」（ADR-0199：未就绪不进选择卡）；
           // 布局维度待皮肤设计时接入）
           icon: "palette",
           name: "外观",
@@ -38775,12 +39001,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               name: "面板主题",
               binding: { key: "memoSkin" },
               layoutKey: "memoLayout",
-              options: [
+              options: skinPackOptions("memo", [
                 // 编辑部置首（2026-09-22 用户拍板）：与默认值 memoSkin:'editorial' 同口径——
                 // 第一张卡就是新装 / 缺省时落到的那个
-                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" },
-                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" }
-              ],
+                { value: BUILTIN_MEMO_SKIN, label: "编辑部", layout: "default", prevClass: `bz-skinprev-${BUILTIN_MEMO_SKIN}` }
+              ]),
               onChange: (v) => applyMemoSkin(v)
             }
           ]
@@ -38903,6 +39128,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   var init_settings3 = __esm({
     "src/memo/settings.ts"() {
       init_settings_provider();
+      init_skin_pack();
       init_data8();
       init_ui6();
     }
@@ -53103,7 +53329,9 @@ GitHub 仓库：${ghInfo.title}
 
   // src/bookshelf/ui.ts
   function normalizeSkin(v) {
-    return SKIN_IDS.includes(v) ? v : "nordic";
+    const s = String(v != null ? v : "");
+    if (s === BUILTIN_SKIN) return s;
+    return isRemoteSkinReady("bookshelf", s) ? s : BUILTIN_SKIN;
   }
   function bsModeClass() {
     return document.body.classList.contains("theme-dark") ? "bz-bs-mode-dark" : "bz-bs-mode-light";
@@ -53112,10 +53340,14 @@ GitHub 仓库：${ghInfo.title}
     if (!M.currentOverlay) return;
     const panel2 = M.currentOverlay.querySelector(".bz-bs-panel");
     if (!panel2) return;
-    panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
+    for (const cls of Array.from(panel2.classList)) {
+      if (cls.startsWith("bz-bs-skin-") || cls === "bz-bs-mode-light" || cls === "bz-bs-mode-dark") {
+        panel2.classList.remove(cls);
+      }
+    }
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
   }
-  var SKIN_IDS;
+  var BUILTIN_SKIN;
   var init_ui10 = __esm({
     "src/bookshelf/ui.ts"() {
       init_fake_obsidian();
@@ -53124,6 +53356,7 @@ GitHub 仓库：${ghInfo.title}
       init_z_order();
       init_mobile();
       init_settings_provider();
+      init_skin_pack();
       init_ui();
       init_notice();
       init_reading_report();
@@ -53132,7 +53365,7 @@ GitHub 仓库：${ghInfo.title}
       init_render12();
       init_notes_ui();
       init_motion8();
-      SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
+      BUILTIN_SKIN = "nordic";
     }
   });
 
@@ -53141,12 +53374,22 @@ GitHub 仓库：${ghInfo.title}
   __export(settings_exports6, {
     bookshelfSettingsSchema: () => bookshelfSettingsSchema
   });
+  function skinOptions() {
+    return skinPackOptions("bookshelf", [
+      {
+        value: BUILTIN_SKIN,
+        label: "雪松白",
+        layout: "default",
+        prevClass: `bz-skinprev-bs-${BUILTIN_SKIN}`
+      }
+    ]);
+  }
   function bookshelfSettingsSchema() {
     return {
       groups: [
         {
-          // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin 五肤，layoutKey 联动同范式；
-          // onChange 热切换已开面板；退役肤值读取回落雪松白（normalizeSkin））
+          // 外观组（标准化：布局行占位单卡 + 主题=bookshelfSkin，layoutKey 联动同范式；
+          // onChange 热切换已开面板；退役肤/未就绪远端肤值读取回落雪松白（normalizeSkin））
           icon: "palette",
           name: "外观",
           rows: [
@@ -53156,13 +53399,7 @@ GitHub 仓库：${ghInfo.title}
               name: "面板主题",
               binding: { key: "bookshelfSkin" },
               layoutKey: "bookshelfLayout",
-              options: [
-                { value: "nordic", label: "雪松白", layout: "default", prevClass: "bz-skinprev-bs-nordic" },
-                { value: "noir", label: "黑金夜曲", layout: "default", prevClass: "bz-skinprev-bs-noir" },
-                { value: "kraft", label: "牛皮手帐", layout: "default", prevClass: "bz-skinprev-bs-kraft" },
-                { value: "velvet", label: "丝绒剧院", layout: "default", prevClass: "bz-skinprev-bs-velvet" },
-                { value: "mono", label: "极简黑白", layout: "default", prevClass: "bz-skinprev-bs-mono" }
-              ],
+              options: skinOptions(),
               onChange: (v) => applyBookshelfSkin(v)
             }
           ]
@@ -53215,6 +53452,7 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings6 = __esm({
     "src/bookshelf/settings.ts"() {
+      init_skin_pack();
       init_data();
       init_ui10();
     }
@@ -53809,7 +54047,7 @@ GitHub 仓库：${ghInfo.title}
     const roots = /* @__PURE__ */ new Map();
     const childOf = /* @__PURE__ */ new Map();
     const nodeOf = /* @__PURE__ */ new Map();
-    const ensureDir = (dir) => {
+    const ensureDir2 = (dir) => {
       let node = nodeOf.get(dir);
       if (node) return node;
       const segs = dir.split("/").filter(Boolean);
@@ -53824,7 +54062,7 @@ GitHub 仓库：${ghInfo.title}
       if (segs.length === 1) {
         roots.set(dir, node);
       } else {
-        const parent = ensureDir(segs.slice(0, -1).join("/"));
+        const parent = ensureDir2(segs.slice(0, -1).join("/"));
         const siblings = childOf.get(parent.path) || [];
         siblings.push(node);
         childOf.set(parent.path, siblings);
@@ -53834,7 +54072,7 @@ GitHub 仓库：${ghInfo.title}
     for (const [path, entry] of Object.entries(meta.notes)) {
       const idx = path.lastIndexOf("/");
       const dir = idx === -1 ? "（根目录）" : path.slice(0, idx);
-      let cursor = ensureDir(dir);
+      let cursor = ensureDir2(dir);
       while (cursor) {
         cursor.notes++;
         cursor.chunks += entry.chunks.length;
@@ -60961,6 +61199,7 @@ GitHub 仓库：${ghInfo.title}
   // src/smartcat/ui.ts
   var ui_exports9 = {};
   __export(ui_exports9, {
+    BUILTIN_APPEARANCE: () => BUILTIN_APPEARANCE,
     CAT_CONTAINER_ID: () => CAT_CONTAINER_ID,
     SKINS: () => SKINS,
     applyAppearance: () => applyAppearance,
@@ -60998,10 +61237,11 @@ GitHub 仓库：${ghInfo.title}
   }
   function applyAppearance(container, appearance) {
     if (!container) return;
-    for (const skin of SKINS) container.classList.remove(`bz-sc-skin-${skin}`);
-    container.classList.add(`bz-sc-skin-${appearance}`);
-    container.classList.remove("skin-orange", "skin-gray", "skin-black", "skin-white", "skin-calico", "skin-neon", "skin-galaxy", "skin-liquidMetal", "skin-fire", "skin-crystal", "skin-cyberpunk", "skin-rainbow", "skin-hologram");
-    if (appearance !== "orange") container.classList.add(`skin-${appearance}`);
+    const want = appearance === BUILTIN_APPEARANCE || isRemoteSkinReady("smartcat", appearance) ? appearance : BUILTIN_APPEARANCE;
+    for (const skin of ALL_APPEARANCES) container.classList.remove(`bz-sc-skin-${skin}`);
+    container.classList.add(`bz-sc-skin-${want}`);
+    for (const skin of ALL_APPEARANCES) container.classList.remove(`skin-${skin}`);
+    if (want !== BUILTIN_APPEARANCE) container.classList.add(`skin-${want}`);
   }
   function createChatPanel(opts) {
     const { mask, popup } = createOverlay({
@@ -61115,7 +61355,9 @@ GitHub 仓库：${ghInfo.title}
       rows: [
         {
           // 皮肤选择（choiceCards 标准行，custom 自绘格子已退役）：色块视觉由域 CSS 提供
-          // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）
+          // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）。
+          // ADR-0199：内置首套「橘猫」+ 已就绪的远端皮肤（清单顺序，中文名来自皮肤包清单）；
+          // 未就绪者不进选择卡。schema 在面板打开时求值，同步完成后重开面板即可见。
           type: "choiceCards",
           name: "面板皮肤",
           binding: {
@@ -61125,7 +61367,9 @@ GitHub 仓库：${ghInfo.title}
             },
             save: () => opts.saveConfig(opts.getConfig())
           },
-          options: SKINS.map((skin) => ({ value: skin, label: skinLabel(skin), prevClass: `bz-sc-prev-${skin}` })),
+          options: skinPackOptions("smartcat", [
+            { value: BUILTIN_APPEARANCE, label: "橘猫", layout: "default", prevClass: `bz-sc-prev-${BUILTIN_APPEARANCE}` }
+          ]),
           onChange: (v) => {
             var _a2;
             return (_a2 = opts.onAppearanceChanged) == null ? void 0 : _a2.call(opts, v);
@@ -61251,25 +61495,7 @@ GitHub 仓库：${ghInfo.title}
       schema: smartcatSettingsSchema(opts)
     });
   }
-  function skinLabel(skin) {
-    const labels = {
-      orange: "橘猫",
-      gray: "灰猫",
-      black: "黑猫",
-      white: "白猫",
-      calico: "三花猫",
-      neon: "霓虹灯",
-      galaxy: "银河星空",
-      liquidMetal: "液态金属",
-      fire: "火焰",
-      crystal: "水晶透明",
-      cyberpunk: "赛博朋克",
-      rainbow: "彩虹渐变",
-      hologram: "全息投影"
-    };
-    return labels[skin] || skin;
-  }
-  var CAT_CONTAINER_ID, SKINS, CAT_HTML, DEFAULT_BEHAVIOR;
+  var CAT_CONTAINER_ID, SKINS, BUILTIN_APPEARANCE, CAT_HTML, DEFAULT_BEHAVIOR;
   var init_ui12 = __esm({
     "src/smartcat/ui.ts"() {
       init_dom();
@@ -61279,8 +61505,11 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_config2();
       init_motion11();
+      init_skin_pack();
+      init_types();
       CAT_CONTAINER_ID = "smart-companion-cat";
-      SKINS = ["orange", "gray", "black", "white", "calico", "neon", "galaxy", "liquidMetal", "fire", "crystal", "cyberpunk", "rainbow", "hologram"];
+      SKINS = [...ALL_APPEARANCES];
+      BUILTIN_APPEARANCE = "orange";
       CAT_HTML = `
         <!-- 思考指示器（绿色小圆点） -->
         <div class="thinking-indicator" id="thinking-indicator"></div>
@@ -61313,66 +61542,6 @@ GitHub 仓库：${ghInfo.title}
         smartcatReflectMaxInsights: 3,
         smartcatUserName: "包仔"
       };
-    }
-  });
-
-  // src/core/remote-asset.ts
-  function remotesFor(fileName) {
-    return [
-      `https://raw.githubusercontent.com/yeshimei/bz/master/manual/${fileName}`,
-      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/${fileName}`
-    ];
-  }
-  function assetVaultPath(app, fileName) {
-    var _a2;
-    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
-    return `${configDir}/plugins/bz/${fileName}`;
-  }
-  async function hasAsset(app, fileName) {
-    try {
-      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
-    } catch (e) {
-      return false;
-    }
-  }
-  async function downloadAsset(app, fileName, validate, label) {
-    let lastErr = "";
-    for (const url of remotesFor(fileName)) {
-      try {
-        const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (!validate(text)) {
-          lastErr = `${url} 返回内容不是${label}页`;
-          continue;
-        }
-        await app.vault.adapter.write(assetVaultPath(app, fileName), text);
-        return;
-      } catch (e) {
-        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
-      }
-    }
-    throw new Error(`${label}下载失败：${lastErr}`);
-  }
-  async function readAsset(app, fileName) {
-    try {
-      if (!await hasAsset(app, fileName)) return null;
-      return await app.vault.adapter.read(assetVaultPath(app, fileName));
-    } catch (e) {
-      return null;
-    }
-  }
-  async function ensureAssetReady(app, fileName, validate, label) {
-    let text = await readAsset(app, fileName);
-    if (!text) {
-      await downloadAsset(app, fileName, validate, label);
-      text = await readAsset(app, fileName);
-    }
-    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
-    return text;
-  }
-  var init_remote_asset = __esm({
-    "src/core/remote-asset.ts"() {
-      init_fake_obsidian();
     }
   });
 

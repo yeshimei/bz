@@ -27,6 +27,17 @@ import { describe, expect, it } from 'vitest';
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), 'utf8');
 
+/**
+ * 域样式全量读法（ADR-0199 皮肤远端化后）：内置首套在 `src/memo/styles.css`，
+ * 远端皮肤（paper）切到 `src/memo/skins/<id>.css` —— 静态断言仍要看到「全套」，
+ * 故按域拼读；文件内相对顺序不变（虚线 chip 依赖「靠后写者赢」的断言仍成立）。
+ */
+const readMemoCss = (): string => {
+  const dir = path.join(process.cwd(), 'src/memo/skins');
+  const skins = fs.existsSync(dir) ? fs.readdirSync(dir).sort().map((f) => read(`src/memo/skins/${f}`)) : [];
+  return [read('src/memo/styles.css'), ...skins].join('\n');
+};
+
 /** 取文本内**所有** `@media (max-width: 768px)` 块的拼接（一个文件可能有多块） */
 function mobileBlock(css: string): string {
   const out: string[] = [];
@@ -69,7 +80,7 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
   });
 
   it('移动端媒体查询把头行钮组放回（反制皮肤层 display:none）', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     // 皮肤层确实藏了（设计如此，桌面保留）
     expect(css).toMatch(/\.bz-memo-skin-paper\s+\.bz-panel-head-btns\s*\{\s*display:\s*none/);
     expect(css).toMatch(/\.bz-memo-skin-editorial\s+\.bz-panel-head-btns\s*\{\s*display:\s*none/);
@@ -83,7 +94,7 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
   });
 
   it('关闭钮在移动端定档 28px + 皮肤贴纸形态 + 44px 命中区', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     const closing = css.slice(css.lastIndexOf('移动端收口段'));
     const block = mobileBlock(closing);
     // issue 269 两轮收小：268 的 38px → 34px → 28px（与头行品牌块 28×28 同尺寸）；图标 16px
@@ -102,7 +113,7 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
   });
 
   it('顶距 44px 改挂头行自身（issue 269：斜纹条铺到面板顶边）', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     const closing = css.slice(css.lastIndexOf('移动端收口段'));
     const block = mobileBlock(closing);
     // 面板根垫顶归零（压核心层 .bz-panel-mtop 的 !important）
@@ -117,7 +128,7 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
     expect(block).not.toMatch(/\.bz-panel-head\s*\{\s*height:\s*44px/);
   });
   it('移动场景条平铺 chip 也随皮肤换装（issue 269「平铺的场景也风格化」）', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     const paper = css.slice(css.indexOf('.bz-memo-skin-paper'));
     const editorial = css.slice(css.indexOf('.bz-memo-skin-editorial'));
     // 纸感：白底墨框贴纸；选中 = 品牌橙 + 墨框 + 硬阴影（与头行品牌块/主按钮同族）
@@ -143,7 +154,7 @@ describe('issue 268 · B. 移动端头行只留关闭，设置/新建撤出', ()
     expect(render).not.toContain('bz-memo-head-settings');
     const ts = read('src/memo/ui.ts');
     expect(ts).not.toContain('data-memo-head-settings');
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     expect(css).not.toContain('bz-memo-head-settings');
     // 设置入口仍在（场景项菜单「在设置中编辑」）
     expect(ts).toContain('openMemoInSettings');
@@ -153,7 +164,7 @@ describe('issue 268 · B. 移动端头行只留关闭，设置/新建撤出', ()
   it('移动端专属新建钮 .bz-memo-head-new 退役（issue 266 引入 → 268 撤除）', () => {
     const ts = read('src/memo/render.ts');
     expect(ts).not.toContain('bz-memo-head-new');
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     expect(css).not.toContain('bz-memo-head-new');
   });
 
@@ -201,7 +212,7 @@ describe('issue 266 · C. 移动端输入框随软键盘上浮（高度改挂可
   });
 
   it('备忘录面板移动端挂可视高度 + 顶部对齐（居中会让底边仍落在键盘下）', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     const block = mobileBlock(css);
     expect(block).toMatch(/\.bz-memo-panel[\s\S]{0,400}height:\s*var\(--bz-vvh/);
     expect(block).toMatch(/\.bz-memo-panel[\s\S]{0,600}align-self:\s*flex-start/);
@@ -211,7 +222,7 @@ describe('issue 266 · C. 移动端输入框随软键盘上浮（高度改挂可
   });
 
   it('桌面端零影响：面板桌面尺寸未被改动', () => {
-    const css = read('src/memo/styles.css');
+    const css = readMemoCss();
     expect(css).toMatch(/\.bz-memo-panel\s*\{\s*width:\s*720px/);
     // ≤768px 之外的 .bz-memo-panel 高度规则里不得出现 --bz-vvh（桌面不受管）
     const beforeMobile = css.slice(0, css.indexOf('@media (max-width: 768px)'));

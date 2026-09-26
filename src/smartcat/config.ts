@@ -4,6 +4,7 @@
  * OCEAN 种子 + 30 特质成长）承担，config 只留外观/行为参数。
  */
 import type { Appearance, SmartCatConfig } from './types';
+import { ALL_APPEARANCES } from './types';
 
 /** 默认配置（原 ConfigManager.defaultConfig 逐字，移除 apiKey 与 personality） */
 export function defaultConfig(): SmartCatConfig {
@@ -42,9 +43,10 @@ export function normalizeConfig(raw: any): SmartCatConfig {
   // 云端打分范围：非法值回退默认（ADR-0025 追加决策）
   const cloudModes = ['all', 'smart', 'diary', 'local'];
   if (!cloudModes.includes(c.cloudScoring)) c.cloudScoring = def.cloudScoring;
-  // 外观不在合法表内回退默认（原版读任意字符串只是 CSS 类名不匹配，这里兜底防样式失效）
-  const appearances: Appearance[] = ['orange','gray','black','white','calico','neon','galaxy','liquidMetal','fire','crystal','cyberpunk','rainbow','hologram'];
-  if (!appearances.includes(c.appearance as Appearance)) c.appearance = def.appearance;
+  // 外观不在**已知取值全集**内才回退默认（原版读任意字符串只是 CSS 类名不匹配，这里兜底防样式失效）。
+  // 注意：全集含远端 12 套——远端未同步只是**挂不上类**，绝不在这里改写用户的选择
+  // （详情见 ADR-0199：就绪判定在 core/skin-pack，落盘值保持原样）。
+  if (!ALL_APPEARANCES.includes(c.appearance as Appearance)) c.appearance = def.appearance;
   // 历史裁剪（原 ConfigManager.saveConfig 语义：超 shortTermMemory*2 截尾）
   if (c.conversationHistory.length > c.shortTermMemory * 2) {
     c.conversationHistory = c.conversationHistory.slice(-Math.min(c.shortTermMemory * 2, c.conversationHistory.length));

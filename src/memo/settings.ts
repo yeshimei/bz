@@ -7,8 +7,9 @@
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
+import { skinPackOptions } from '../core/skin-pack';
 import { MemoData } from './data';
-import { applyMemoSkin } from './ui';
+import { applyMemoSkin, BUILTIN_MEMO_SKIN } from './ui';
 
 /** 场景变更后即时生效：重建数据层场景列表（打开中的面板下次渲染即用） */
 function memoReloadScenes() {
@@ -19,7 +20,8 @@ export function memoSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
-        // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
+        // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin；
+        // 主题 = 内置首套「编辑部」+ 已就绪的远端「纸感手账」（ADR-0199：未就绪不进选择卡）；
         // 布局维度待皮肤设计时接入）
         icon: 'palette',
         name: '外观',
@@ -30,12 +32,11 @@ export function memoSettingsSchema(): SettingsSchema {
             name: '面板主题',
             binding: { key: 'memoSkin' },
             layoutKey: 'memoLayout',
-            options: [
+            options: skinPackOptions('memo', [
               // 编辑部置首（2026-09-22 用户拍板）：与默认值 memoSkin:'editorial' 同口径——
               // 第一张卡就是新装 / 缺省时落到的那个
-              { value: 'editorial', label: '编辑部', layout: 'default', prevClass: 'bz-skinprev-editorial' },
-              { value: 'paper', label: '纸感手账', layout: 'default', prevClass: 'bz-skinprev-paper' },
-            ],
+              { value: BUILTIN_MEMO_SKIN, label: '编辑部', layout: 'default', prevClass: `bz-skinprev-${BUILTIN_MEMO_SKIN}` },
+            ]),
             onChange: (v) => applyMemoSkin(v),
           },
         ],

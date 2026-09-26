@@ -1,0 +1,57 @@
+/* ============================================================
+ * bz 皮肤包 · bookshelf/noir（黑金夜曲）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/bookshelf/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/bookshelf/noir.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+.bz-bs-skin-noir {
+  --bz-surface-0: #0b0b0d; --bz-surface-1: #101013; --bz-surface-2: #141418; --bz-surface-3: #232329; --bz-surface-4: #2c2c34;
+  --bz-surface-hover: #1d1d23; --bz-surface-active: #26262e;
+  --bz-text-1: #e9dfc4; --bz-text-2: #b3a679; --bz-text-3: #7a6f4e; --bz-text-invert: #141418;
+  --bz-brand: #d9b45f; --bz-brand-hover: #e6c67c; --bz-brand-soft: rgba(217, 180, 95, 0.15); --bz-on-brand: #141418;
+  --bz-border: rgba(217, 180, 95, 0.25); --bz-border-strong: rgba(217, 180, 95, 0.45); --bz-border-hover: rgba(217, 180, 95, 0.65);
+  --bsw-wall: #0b0b0d; --bsw-wall-dark: #101013; --bsw-shelf: #191510; --bsw-brass: #d9b45f;
+  --bsw-paper: #141418; --bsw-ink: #e9dfc4; --bsw-muted: #8a7a55; --bsw-line: rgba(217, 180, 95, 0.3);
+  --bsw-accent: #d9b45f; --bsw-reading: #d9b45f;
+}
+
+/* 黑金夜曲：碳黑墙，碳黑书脊 + 烫金书名 + hover 金辉 */
+.bz-bs-skin-noir .bz-bs-plaque { background: #0f0f12; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9); }
+.bz-bs-skin-noir .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 90px), linear-gradient(180deg, #101013, #08080a); }
+.bz-bs-skin-noir .bz-bs-zone { border-image: linear-gradient(180deg, #3a3222, #191510) 1; }
+.bz-bs-skin-noir .bz-bs-bookend { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
+.bz-bs-skin-noir .bz-bs-bookend::before { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
+.bz-bs-skin-noir .bz-bs-spine { background: linear-gradient(90deg, #141418, #232329 60%, #141418); color: #d9b45f; border-left: 1px solid rgba(217, 180, 95, 0.25); border-right: 1px solid rgba(217, 180, 95, 0.25); }
+.bz-bs-skin-noir .bz-bs-spine::before, .bz-bs-skin-noir .bz-bs-spine::after { background: rgba(217, 180, 95, 0.28); }
+.bz-bs-skin-noir .bz-bs-spine-title { text-shadow: 0 0 8px rgba(217, 180, 95, 0.25); }@media (hover: hover) {
+
+.bz-bs-skin-noir .bz-bs-spine:hover { box-shadow: 0 14px 26px rgba(0, 0, 0, 0.8), 0 0 18px rgba(217, 180, 95, 0.12); }
+}
+.bz-bs-skin-noir .bz-bs-spine.unread { filter: brightness(0.55); }@media (hover: hover) {
+
+.bz-bs-skin-noir .bz-bs-spine.unread:hover { filter: brightness(0.9); }
+}
+.bz-bs-skin-noir .bz-bs-wallnote, .bz-bs-skin-noir .bz-bs-hint { color: #8a7a55; }
+.bz-bs-skin-noir .bz-bs-seg button { color: #8a7a55; }
+.bz-bs-skin-noir .bz-bs-seg button.on { background: #d9b45f; color: #0b0b0d; }
+
+/* —— 黑金夜曲 · 昼（象牙墙：碳黑书脊金字不变，墙转象牙纸感） —— */
+.bz-bs-skin-noir.bz-bs-mode-light {
+  --bz-surface-0: #efe9dc; --bz-surface-1: #f5f0e4; --bz-surface-2: #fbf8ef; --bz-surface-3: #f5f0e4; --bz-surface-4: #fffdf6;
+  --bz-surface-hover: #eee7d8; --bz-surface-active: #e4dcc9;
+  --bz-text-1: #262115; --bz-text-2: #6b6250; --bz-text-3: #99907a; --bz-text-invert: #fbf8ef;
+  --bz-brand: #a8842f; --bz-brand-hover: #bd9740; --bz-brand-soft: rgba(168, 132, 47, 0.14); --bz-on-brand: #ffffff;
+  --bz-border: #d8d0ba; --bz-border-strong: #b8ab88; --bz-border-hover: #9a8c66;
+  --bsw-wall: #efe9dc; --bsw-wall-dark: #e2d9c4; --bsw-shelf: #cfc4a8; --bsw-brass: #a8842f;
+  --bsw-paper: #fbf8ef; --bsw-ink: #262115; --bsw-muted: #8a7f66; --bsw-line: #d8d0ba;
+  --bsw-accent: #a8842f; --bsw-reading: #a8842f;
+}
+.bz-bs-skin-noir.bz-bs-mode-light .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 90px), linear-gradient(180deg, #f2ecdf, #e6ddc9); }
+.bz-bs-skin-noir.bz-bs-mode-light .bz-bs-zone { border-image: linear-gradient(180deg, #b8ab88, #8a7f66) 1; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15); }
+.bz-skinprev-bs-noir { background: linear-gradient(180deg, #101013, #08080a); }
+.bz-skinprev-bs-noir::before, .bz-skinprev-bs-noir::after { background: linear-gradient(90deg, #141418, #232329); border: 1px solid rgba(217, 180, 95, 0.45); }

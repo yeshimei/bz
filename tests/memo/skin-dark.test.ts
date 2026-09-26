@@ -11,11 +11,16 @@
  *     （.theme-dark 挂 body，后代选择器可达——挂载点改动会使暗色壳失效）。
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
-const css = () => repo('src/memo/styles.css');
+/** 域样式全量（ADR-0199 皮肤远端化）：内置首套 editorial 在源，远端 paper 在 skins/paper.css */
+const css = () => {
+  const dir = resolve(process.cwd(), 'src/memo/skins');
+  const skins = existsSync(dir) ? readdirSync(dir).sort().map((f) => repo(`src/memo/skins/${f}`)) : [];
+  return [repo('src/memo/styles.css'), ...skins].join('\n');
+};
 
 /** 截取某暗色 token 组规则体（首个匹配） */
 const darkTokenBlock = (skin: string) =>

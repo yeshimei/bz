@@ -11,6 +11,8 @@ import { M, resetMemoState } from '../../src/memo/state';
 import { openMemoPanel, closeMemoPanel, addMemo, openEditor, applyMemoSkin } from '../../src/memo/ui';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 import { MemoData } from '../../src/memo/data';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 // 设置面板 mock：头行设置钮/场景菜单「在设置中编辑」直达断言用（ui.ts 动态 import 同一模块）
 vi.mock('../../src/settings-panel', () => ({ openSettingsPanel: vi.fn() }));
@@ -1224,6 +1226,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
     resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
+    resetSkinPackState();
   });
   afterEach(() => {
     closeMemoPanel();
@@ -1232,6 +1235,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
   });
 
   it('设置 schema：外观组置顶（布局占位单卡 + 面板主题两肤，layoutKey 联动同范式）', async () => {
+    seedRemoteSkins('memo', ['paper']); // paper 远端化：就绪后才进选项（ADR-0199）
     const { app } = seedVault();
     const { memoSettingsSchema } = await import('../../src/memo/settings');
     const schema = memoSettingsSchema();
@@ -1264,6 +1268,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
   });
 
   it('打开面板按 memoSkin 挂皮肤类；未知/缺省值回落编辑部（2026-09-22 新默认）', async () => {
+    seedRemoteSkins('memo', ['paper']);
     const { app, settings } = seedVault();
     settings.memoSkin = 'paper';
     openMemoPanel(app);
@@ -1296,6 +1301,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
   });
 
   it('弹窗换肤：memoSkin=paper 挂纸感；default/未知回落编辑部（与面板 applyMemoSkin 同口径，issue 291）', async () => {
+    seedRemoteSkins('memo', ['paper']);
     const { app, settings } = seedVault();
     settings.memoSkin = 'paper';
     openMemoPanel(app);
@@ -1319,6 +1325,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
   });
 
   it('applyMemoSkin 热切换已开面板；未知值回落编辑部（2026-09-22 新默认）', async () => {
+    seedRemoteSkins('memo', ['paper']);
     const { app } = seedVault();
     openMemoPanel(app);
     const panel = document.querySelector('.bz-memo-panel') as HTMLElement;

@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/citrus（蜜柑）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/citrus.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 7 蜜柑 citrus */
+    --pz-citrus-l:#fffaf0; --pz-citrus-d:#272319; --pz-citrus-a:#e6951d; --pz-citrus-ad:#f2b544;
+    --pz-citrus-fgd:#f7efdf; --pz-citrus-m:#7d6a40; --pz-citrus-md:#bab192; --pz-citrus-f:#ab9a6c; --pz-citrus-fd:#8f876c;
+    --pz-citrus-bd:#332e20; --pz-citrus-bfd:#e0d9c2;
+}
+
+/* 7 蜜柑 · citrus */
+    #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-l); --pz-accent:var(--pz-citrus-a); --pz-muted:var(--pz-citrus-m); --pz-faint:var(--pz-citrus-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-d); --pz-accent:var(--pz-citrus-ad); --pz-fg:var(--pz-citrus-fgd); --pz-muted:var(--pz-citrus-md); --pz-faint:var(--pz-citrus-fd); --pz-btn:var(--pz-citrus-bd); --pz-btn-fg:var(--pz-citrus-bfd); --pz-on-accent:var(--pz-citrus-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-citrus {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-citrus-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-citrus-l) 0 50%, var(--pz-citrus-d) 50% 100%);
+  border-radius: 3px;
+}

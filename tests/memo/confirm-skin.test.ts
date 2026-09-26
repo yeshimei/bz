@@ -17,6 +17,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetMemoState } from '../../src/memo/state';
 import { openMemoPanel, closeMemoPanel } from '../../src/memo/ui';
 import { MemoData } from '../../src/memo/data';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 vi.mock('../../src/settings-panel', () => ({ openSettingsPanel: vi.fn() }));
 
@@ -73,6 +75,7 @@ describe('memo 确认框随皮肤（issue 291；条目删除已免确认，唯�
     resetMemoState();
     document.body.innerHTML = '';
     MockPlatform.isMobile = false;
+    resetSkinPackState();
   });
   afterEach(() => {
     closeMemoPanel();
@@ -81,6 +84,7 @@ describe('memo 确认框随皮肤（issue 291；条目删除已免确认，唯�
   });
 
   it('paper 皮肤：确认框挂 bz-overlay-popup + bz-flow-dialog + bz-memo-skin-paper（与编辑弹窗同壳同皮）', async () => {
+    seedRemoteSkins('memo', ['paper']); // paper 远端化：就绪后才挂得上（ADR-0199）
     const { app } = seed('paper');
     openMemoPanel(app);
     await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());

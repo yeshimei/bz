@@ -1,0 +1,59 @@
+{
+  "_note": "皮肤包目录（ADR-0199 / issue 475）——**远端皮肤的唯一事实源**：只有这里列出的皮肤会被 scripts/build-skin-pack.mjs 出版到 manual/skins/。域内「首套」是内置兜底，留 src/<域>/styles.css，不在此列。",
+  "_fields": {
+    "keep": "该域的内置首套（恒首位、不离线、永不分发）",
+    "keep.previewClass": "首套预览卡类名（留在域内 CSS）",
+    "skins[].id": "皮肤 id，= CSS 类名后缀，域内唯一",
+    "skins[].name": "选择卡中文名",
+    "skins[].previewClass": "选择卡预览区类名（预览规则随本皮肤 CSS 一并下发）",
+    "skins[].since": "最低插件版本（含），缺省不限",
+    "skins[].until": "最高插件版本（不含），缺省不限"
+  },
+  "version": 1,
+  "domains": {
+    "bookshelf": {
+      "keep": { "id": "nordic", "name": "雪松白", "previewClass": "bz-skinprev-bs-nordic" },
+      "skins": [
+        { "id": "noir", "name": "黑金夜曲", "previewClass": "bz-skinprev-bs-noir" },
+        { "id": "kraft", "name": "牛皮手帐", "previewClass": "bz-skinprev-bs-kraft" },
+        { "id": "velvet", "name": "丝绒剧院", "previewClass": "bz-skinprev-bs-velvet" },
+        { "id": "mono", "name": "极简黑白", "previewClass": "bz-skinprev-bs-mono" }
+      ]
+    },
+    "pomodoro": {
+      "keep": { "id": "tomato", "name": "番茄", "previewClass": "bz-sp-prev-pomo-tomato" },
+      "skins": [
+        { "id": "ink", "name": "墨白", "previewClass": "bz-sp-prev-pomo-ink" },
+        { "id": "grid", "name": "方格纸", "previewClass": "bz-sp-prev-pomo-grid" },
+        { "id": "moss", "name": "苔原", "previewClass": "bz-sp-prev-pomo-moss" },
+        { "id": "mist", "name": "海雾", "previewClass": "bz-sp-prev-pomo-mist" },
+        { "id": "sand", "name": "暖沙", "previewClass": "bz-sp-prev-pomo-sand" },
+        { "id": "citrus", "name": "蜜柑", "previewClass": "bz-sp-prev-pomo-citrus" },
+        { "id": "sakura", "name": "樱粉", "previewClass": "bz-sp-prev-pomo-sakura" },
+        { "id": "latte", "name": "咖啡", "previewClass": "bz-sp-prev-pomo-latte" },
+        { "id": "night", "name": "夜航", "previewClass": "bz-sp-prev-pomo-night" }
+      ]
+    },
+    "memo": {
+      "keep": { "id": "editorial", "name": "编辑部", "previewClass": "bz-skinprev-editorial" },
+      "skins": [{ "id": "paper", "name": "纸感手账", "previewClass": "bz-skinprev-paper" }]
+    },
+    "smartcat": {
+      "keep": { "id": "orange", "name": "橘猫", "previewClass": "bz-sc-prev-orange" },
+      "skins": [
+        { "id": "gray", "name": "灰猫", "previewClass": "bz-sc-prev-gray" },
+        { "id": "black", "name": "黑猫", "previewClass": "bz-sc-prev-black" },
+        { "id": "white", "name": "白猫", "previewClass": "bz-sc-prev-white" },
+        { "id": "calico", "name": "三花猫", "previewClass": "bz-sc-prev-calico" },
+        { "id": "neon", "name": "霓虹灯", "previewClass": "bz-sc-prev-neon" },
+        { "id": "galaxy", "name": "银河星空", "previewClass": "bz-sc-prev-galaxy" },
+        { "id": "liquidMetal", "name": "液态金属", "previewClass": "bz-sc-prev-liquidMetal" },
+        { "id": "fire", "name": "火焰", "previewClass": "bz-sc-prev-fire" },
+        { "id": "crystal", "name": "水晶透明", "previewClass": "bz-sc-prev-crystal" },
+        { "id": "cyberpunk", "name": "赛博朋克", "previewClass": "bz-sc-prev-cyberpunk" },
+        { "id": "rainbow", "name": "彩虹渐变", "previewClass": "bz-sc-prev-rainbow" },
+        { "id": "hologram", "name": "全息投影", "previewClass": "bz-sc-prev-hologram" }
+      ]
+    }
+  }
+}

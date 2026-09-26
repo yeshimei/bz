@@ -10,6 +10,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
 import { pomodoroSettingsSchema, POMODORO_SKIN_THEMES } from '../../src/pomodoro/ui';
+import { resetSkinPackState, seedSkinPackState } from '../../src/core/skin-pack';
 import { openSettingsModal } from '../../src/core/settings-modal';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { PRESETS, CUSTOM_PRESET_ID } from '../../src/pomodoro/config';
@@ -236,57 +237,92 @@ describe('⚙️ 设置弹窗', () => {
   });
 });
 
-describe('面板主题（皮肤单源）', () => {
-  it('10 套主题：清单 = 设置选项，且 CSS 每套都有亮/暗两套皮', () => {
-    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+describe('面板主题（皮肤单源 + 远端化）', () => {
+  const skinCssOf = (id: string) =>
+    readFileSync(resolve(process.cwd(), id === 'tomato' ? 'src/pomodoro/styles.css' : `src/pomodoro/skins/${id}.css`), 'utf8');
+
+  it('清单 = 已知取值全集（10 套，供校验与评审壳）；设置选项只放「内置首套 + 已就绪」', () => {
     expect(POMODORO_SKIN_THEMES.length).toBe(10);
     const themeRow = (pomodoroSettingsSchema().groups[0].rows as any[]).find((r) => r.name === '面板主题');
-    expect(themeRow.options.map((o: any) => o.value)).toEqual(POMODORO_SKIN_THEMES.map((t) => t.value));
-    // 每套皮 = 亮色一组 + .theme-dark 暗色一组（缺一套即静默「暗色下观感错乱」）
+    // 未同步任何远端皮肤 → 只剩内置首套（不生效的东西不进选择卡）
+    expect(themeRow.options.map((o: any) => o.value)).toEqual(['tomato']);
+    // 远端皮肤就绪后按清单顺序追加在内置首套之后
+    seedSkinPackState(
+      POMODORO_SKIN_THEMES.slice(1).map((t) => ({
+        id: t.value, domain: 'pomodoro', name: t.label,
+        file: `skins/pomodoro/${t.value}.css`, previewClass: `bz-sp-prev-pomo-${t.value}`, sha256: 'a'.repeat(64),
+      })),
+    );
+    const row2 = (pomodoroSettingsSchema().groups[0].rows as any[]).find((r) => r.name === '面板主题');
+    expect(row2.options.map((o: any) => o.value)).toEqual(POMODORO_SKIN_THEMES.map((t) => t.value));
+    resetSkinPackState();
+  });
+
+  it('每套皮都有亮/暗两套（首套在域样式，九套远端在 skins/<id>.css——缺一套即静默「暗色下观感错乱」）', () => {
     for (const t of POMODORO_SKIN_THEMES) {
-      expect(css).toContain(`#pomodoro-popup.pomodoro-skin-${t.value}`);
-      expect(css).toContain(`.theme-dark #pomodoro-popup.pomodoro-skin-${t.value}`);
+      const css = skinCssOf(t.value);
+      expect(css, `${t.value} 缺亮色皮`).toContain(`#pomodoro-popup.pomodoro-skin-${t.value}`);
+      expect(css, `${t.value} 缺暗色皮`).toContain(`.theme-dark #pomodoro-popup.pomodoro-skin-${t.value}`);
     }
   });
 
-  it('配色单源：色值只在 pomodoro/styles.css 的 :root --pz-<id>-* 表，settings-panel 预览卡引用变量（评审双源清零）', () => {
-    const pzCss = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+  it('配色单源：色值只在各皮自带的 :root --pz-<id>-* 表，预览卡引用变量（评审双源清零）', () => {
     const spCss = readFileSync(resolve(process.cwd(), 'src/settings-panel/styles.css'), 'utf8');
     for (const t of POMODORO_SKIN_THEMES) {
-      // 预览卡三槽：亮面/暗面/强调都出自 :root 表
+      const pzCss = skinCssOf(t.value);
+      // 预览卡三槽：亮面/暗面/强调都出自该皮的 :root 表
       expect(pzCss).toContain(`--pz-${t.value}-l:#`);
       expect(pzCss).toContain(`--pz-${t.value}-d:#`);
       expect(pzCss).toContain(`--pz-${t.value}-a:#`);
-      expect(spCss).toContain(`bz-sp-prev-pomo-${t.value}`);
-      expect(spCss).toContain(`var(--pz-${t.value}-a)`);
+      if (t.value === 'tomato') {
+        // 内置首套不随包下发：色值与预览卡同住设置面板内置段（与 :root 同址）
+        expect(spCss).toContain(`bz-sp-prev-pomo-${t.value}`);
+        expect(spCss).toContain(`var(--pz-${t.value}-a)`);
+      } else {
+        // 远端皮肤：预览卡与色值同址（ADR-0199 决策 6：预览随包下发，跨文件的那批已切回皮肤文件）
+        expect(pzCss).toContain(`bz-sp-prev-pomo-${t.value}`);
+        expect(pzCss).toContain(`var(--pz-${t.value}-a)`);
+      }
     }
-    // 预览卡段内不得再手抄六位 hex（#fff 圆点高光除外）——色值唯一出处 = :root 表
+    // 首套的预览卡仍在内置段，且段内不得手抄六位 hex（#fff 圆点高光除外）
     const prevBlock = spCss.slice(spCss.indexOf('bz-sp-prev-pomo-tomato'), spCss.indexOf('/* 保险库·钢灰 */'));
     expect(prevBlock).not.toMatch(/#[0-9a-fA-F]{6}/);
     // 旧预览键已退役（schema 只发 bz-sp-prev-pomo-*）
     expect(spCss).not.toContain('bz-sp-prev-tomato');
     // 弹窗消费块不再持有皮肤 hex：皮肤类行只允许变量声明（--pz-*）与 grid 格纹例外
-    const skinLines = pzCss.split('\n').filter((l) => l.includes('.pomodoro-skin-'));
-    for (const l of skinLines) {
-      const decl = l.replace(/--[a-z-]+:(var\(--pz-[a-z-]+\)|rgba\([^)]*\)|#fff\b)/gi, '');
-      expect(decl).not.toMatch(/#[0-9a-fA-F]{6}/);
+    for (const t of POMODORO_SKIN_THEMES) {
+      const skinLines = skinCssOf(t.value).split('\n').filter((l) => l.includes('.pomodoro-skin-'));
+      for (const l of skinLines) {
+        const decl = l.replace(/--[a-z-]+:(var\(--pz-[a-z-]+\)|rgba\([^)]*\)|#fff\b)/gi, '');
+        expect(decl).not.toMatch(/#[0-9a-fA-F]{6}/);
+      }
     }
   });
 });
 
 describe('外观组链路（评审 c1：设置面板改主题 → 弹窗即时换皮）', () => {
+  /** 把某套远端皮肤标成就绪（远端化后 ink/sakura 不再内置，须先 seed 才进选择卡） */
+  const seedSkin = (...ids: string[]) =>
+    seedSkinPackState(
+      ids.map((id) => ({
+        id, domain: 'pomodoro', name: id,
+        file: `skins/pomodoro/${id}.css`, previewClass: `bz-sp-prev-pomo-${id}`, sha256: 'a'.repeat(64),
+      })),
+    );
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
     setSettingsProvider(() => ({} as any));
     document.body.innerHTML = '';
     unloadPomodoro();
+    resetSkinPackState();
   });
   afterEach(() => {
     unloadPomodoro();
   });
 
   it('主题行 onChange：点卡片 → 写设置 + render → 弹窗皮肤类即时重挂（弹窗开着不用重开）', async () => {
+    seedSkin('ink'); // ink 为远端皮肤：就绪后才出现在卡片里
     const settings = { ...DEFAULT_SETTINGS, pomodoroSkinTheme: 'tomato' } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
@@ -305,6 +341,7 @@ describe('外观组链路（评审 c1：设置面板改主题 → 弹窗即时�
   });
 
   it('布局行 onChange 已挂（配套回落）；当前主题适配布局时不回落（防误重置用户主题）', () => {
+    seedSkin('sakura'); // sakura 为远端皮肤：就绪才会进适配集，否则会被回落成首套
     const settings = { ...DEFAULT_SETTINGS, pomodoroSkin: 'default', pomodoroSkinTheme: 'sakura' } as any;
     setup(settings);
     const rows = pomodoroSettingsSchema().groups[0].rows as any[];

@@ -107,13 +107,15 @@
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--pz-faint, var(--text-faint)); }
 
-/* ==================== 面板主题（皮肤）· 10 套 × 亮/暗两版 ====================
+/* ==================== 面板主题（皮肤）· 首套内置 + 九套远端（ADR-0199） ====================
    口径（2026-09-11 用户拍板「全都要，每套都要亮色和暗色」）：
    - 皮肤类由 ui.ts::applySkinClass 挂在 #pomodoro-popup 上，取值 = 设置 pomodoroSkinTheme；
-   - 清单单源 = src/pomodoro/render.ts::POMODORO_SKIN_THEMES（设置面板选项同表生成）；
-   - **色值单源 = 下方 :root 的 --pz-<id>-* 表**（唯一色值出处；设置面板预览卡
-     src/settings-panel/styles.css 引用同一批变量，加皮/改色两处自动同步）；
-   - 每套皮只剩两行「消费变量声明」：亮色一行 + .theme-dark 暗色一行，把表值赋给
+   - 清单单源 = src/pomodoro/render.ts::POMODORO_SKIN_THEMES（内置首套 + core/skin-pack 就绪表）；
+   - **首套「番茄」留在这里**（离线兜底）：色值 = 下方 :root 的 --pz-tomato-*，消费 = pomodoro-skin-tomato 两行；
+     其余九套（墨白/方格纸/苔原/海雾/暖沙/蜜柑/樱粉/咖啡/夜航）已远端化——
+     源在 src/pomodoro/skins/<id>.css（含各自的 `:root` 变量表、两行消费声明、设置面板预览卡），
+     不进构建聚合，启动时同步后经 core/skin-pack.ts 注入；
+   - 每套皮两行「消费变量声明」：亮色一行 + .theme-dark 暗色一行，把表值赋给
      --pz-bg/accent/fg/muted/faint/btn/btn-fg/on-accent（暗色再加 --pz-line），
      消费全走上方基础段的 var 兜底链（无皮肤 = 完全回落 Obsidian 主题变量）；
    - 槽位：l/d=亮·暗面 a/ad=亮·暗强调 fg/fgd=亮·暗时间字 m/md=亮·暗阶段·今日字
@@ -127,78 +129,10 @@
     --pz-tomato-l:#fdf7f3; --pz-tomato-d:#2a2320; --pz-tomato-a:#e5534b; --pz-tomato-ad:#f2705e;
     --pz-tomato-fgd:#f5ece8; --pz-tomato-m:#8b6f68; --pz-tomato-md:#b9a49c; --pz-tomato-f:#b09a94; --pz-tomato-fd:#8d7a74;
     --pz-tomato-b:#f3ece6; --pz-tomato-bf:#3d332f; --pz-tomato-bd:#352d29; --pz-tomato-bfd:#d9ccc5;
-    /* 2 墨白 ink */
-    --pz-ink-l:#ffffff; --pz-ink-d:#1f1f1e; --pz-ink-a:#171512; --pz-ink-ad:#f2f0ea;
-    --pz-ink-fgd:#f2f0ea; --pz-ink-m:#6b6558; --pz-ink-md:#a8a49c; --pz-ink-f:#a8a294; --pz-ink-fd:#7d7a72;
-    --pz-ink-bd:#2b2b29; --pz-ink-bfd:#d6d3cc;
-    /* 3 方格纸 grid */
-    --pz-grid-l:#fdfcf8; --pz-grid-d:#22231f; --pz-grid-a:#4a4a46; --pz-grid-ad:#d7d3c8;
-    --pz-grid-fgd:#eceae2; --pz-grid-m:#6b6558; --pz-grid-md:#a8a49c; --pz-grid-f:#a8a294; --pz-grid-fd:#7d7a72;
-    --pz-grid-bd:#2c2e29; --pz-grid-bfd:#d6d3cc;
-    /* 4 苔原 moss */
-    --pz-moss-l:#f2f5ef; --pz-moss-d:#20261f; --pz-moss-a:#4c9e6c; --pz-moss-ad:#6fc08e;
-    --pz-moss-fgd:#e8eee6; --pz-moss-m:#6a7d6c; --pz-moss-md:#9db3a2; --pz-moss-f:#9aa79c; --pz-moss-fd:#7b8f80;
-    --pz-moss-bd:#2a3228; --pz-moss-bfd:#d3ddd0;
-    /* 5 海雾 mist */
-    --pz-mist-l:#f1f4f8; --pz-mist-d:#1e2229; --pz-mist-a:#3d7bd6; --pz-mist-ad:#6fa0ef;
-    --pz-mist-fgd:#e6ecf5; --pz-mist-m:#66768f; --pz-mist-md:#9aa9c2; --pz-mist-f:#96a3b6; --pz-mist-fd:#78859c;
-    --pz-mist-bd:#272c35; --pz-mist-bfd:#d2dbe9;
-    /* 6 暖沙 sand */
-    --pz-sand-l:#f8f2e8; --pz-sand-d:#26221c; --pz-sand-a:#c27a48; --pz-sand-ad:#e0a373;
-    --pz-sand-fgd:#f1e9dc; --pz-sand-m:#7d6a55; --pz-sand-md:#b8a692; --pz-sand-f:#a8947c; --pz-sand-fd:#8d7f6d;
-    --pz-sand-bd:#322c25; --pz-sand-bfd:#dcd2c4;
-    /* 7 蜜柑 citrus */
-    --pz-citrus-l:#fffaf0; --pz-citrus-d:#272319; --pz-citrus-a:#e6951d; --pz-citrus-ad:#f2b544;
-    --pz-citrus-fgd:#f7efdf; --pz-citrus-m:#7d6a40; --pz-citrus-md:#bab192; --pz-citrus-f:#ab9a6c; --pz-citrus-fd:#8f876c;
-    --pz-citrus-bd:#332e20; --pz-citrus-bfd:#e0d9c2;
-    /* 8 樱粉 sakura */
-    --pz-sakura-l:#fdf3f6; --pz-sakura-d:#2a2026; --pz-sakura-a:#d64d8f; --pz-sakura-ad:#ef77b4;
-    --pz-sakura-fgd:#f6e9ef; --pz-sakura-m:#8a5f74; --pz-sakura-md:#bd9aab; --pz-sakura-f:#b394a4; --pz-sakura-fd:#917a87;
-    --pz-sakura-bd:#352830; --pz-sakura-bfd:#e0cfd8;
-    /* 9 咖啡 latte */
-    --pz-latte-l:#f6f0e6; --pz-latte-d:#241f19; --pz-latte-a:#8a5a3b; --pz-latte-ad:#c08a63;
-    --pz-latte-fg:#4a3628; --pz-latte-fgd:#f1e9dc; --pz-latte-m:#7a6553; --pz-latte-md:#b39d8c; --pz-latte-f:#a8947c; --pz-latte-fd:#8a7a6b;
-    --pz-latte-bd:#302920; --pz-latte-bfd:#dcd2c4;
-    /* 10 夜航 night */
-    --pz-night-l:#eceff3; --pz-night-d:#23262b; --pz-night-a:#b5801f; --pz-night-ad:#f0b429;
-    --pz-night-fgd:#f2efe6; --pz-night-m:#5f6a78; --pz-night-md:#a7b0bd; --pz-night-f:#8d97a5; --pz-night-fd:#7d8794;
-    --pz-night-b:#e4e9ef; --pz-night-bf:#3a4250; --pz-night-bd:#2e323a; --pz-night-bfd:#dfe3ea;
 }
 /* 1 番茄 · tomato（默认；暗色主按钮字=暗面深底，非白） */
     #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-l); --pz-accent:var(--pz-tomato-a); --pz-muted:var(--pz-tomato-m); --pz-faint:var(--pz-tomato-f); --pz-btn:var(--pz-tomato-b); --pz-btn-fg:var(--pz-tomato-bf); --pz-on-accent:#fff; }
     .theme-dark #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-d); --pz-accent:var(--pz-tomato-ad); --pz-fg:var(--pz-tomato-fgd); --pz-muted:var(--pz-tomato-md); --pz-faint:var(--pz-tomato-fd); --pz-btn:var(--pz-tomato-bd); --pz-btn-fg:var(--pz-tomato-bfd); --pz-on-accent:var(--pz-tomato-d); --pz-line:rgba(255,255,255,.14); }
-/* 2 墨白 · ink（无彩色；仅此皮有专属阴影一档） */
-    #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-l); --pz-accent:var(--pz-ink-a); --pz-muted:var(--pz-ink-m); --pz-faint:var(--pz-ink-f); --pz-on-accent:#fff; box-shadow: 0 6px 30px rgba(0,0,0,.14); }
-    .theme-dark #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-d); --pz-accent:var(--pz-ink-ad); --pz-fg:var(--pz-ink-fgd); --pz-muted:var(--pz-ink-md); --pz-faint:var(--pz-ink-fd); --pz-btn:var(--pz-ink-bd); --pz-btn-fg:var(--pz-ink-bfd); --pz-on-accent:var(--pz-ink-d); --pz-line:rgba(255,255,255,.14); }
-/* 3 方格纸 · grid（亮/暗各一道格纹线色，背景图唯一例外块） */
-    #pomodoro-popup.pomodoro-skin-grid {
-      --pz-bg:var(--pz-grid-l); --pz-accent:var(--pz-grid-a); --pz-muted:var(--pz-grid-m); --pz-faint:var(--pz-grid-f); --pz-on-accent:#fff;
-      --pz-grid-ln:rgba(23,21,18,.05);
-      background-image: linear-gradient(var(--pz-grid-ln) 1px, transparent 1px), linear-gradient(90deg, var(--pz-grid-ln) 1px, transparent 1px);
-      background-size: 16px 16px; background-position: -1px -1px;
-    }
-    .theme-dark #pomodoro-popup.pomodoro-skin-grid { --pz-bg:var(--pz-grid-d); --pz-accent:var(--pz-grid-ad); --pz-fg:var(--pz-grid-fgd); --pz-muted:var(--pz-grid-md); --pz-faint:var(--pz-grid-fd); --pz-btn:var(--pz-grid-bd); --pz-btn-fg:var(--pz-grid-bfd); --pz-on-accent:var(--pz-grid-d); --pz-line:rgba(255,255,255,.14); --pz-grid-ln:rgba(255,255,255,.05); }
-/* 4 苔原 · moss */
-    #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-l); --pz-accent:var(--pz-moss-a); --pz-muted:var(--pz-moss-m); --pz-faint:var(--pz-moss-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-d); --pz-accent:var(--pz-moss-ad); --pz-fg:var(--pz-moss-fgd); --pz-muted:var(--pz-moss-md); --pz-faint:var(--pz-moss-fd); --pz-btn:var(--pz-moss-bd); --pz-btn-fg:var(--pz-moss-bfd); --pz-on-accent:var(--pz-moss-d); --pz-line:rgba(255,255,255,.14); }
-/* 5 海雾 · mist */
-    #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-l); --pz-accent:var(--pz-mist-a); --pz-muted:var(--pz-mist-m); --pz-faint:var(--pz-mist-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-d); --pz-accent:var(--pz-mist-ad); --pz-fg:var(--pz-mist-fgd); --pz-muted:var(--pz-mist-md); --pz-faint:var(--pz-mist-fd); --pz-btn:var(--pz-mist-bd); --pz-btn-fg:var(--pz-mist-bfd); --pz-on-accent:var(--pz-mist-d); --pz-line:rgba(255,255,255,.14); }
-/* 6 暖沙 · sand */
-    #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-l); --pz-accent:var(--pz-sand-a); --pz-muted:var(--pz-sand-m); --pz-faint:var(--pz-sand-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-d); --pz-accent:var(--pz-sand-ad); --pz-fg:var(--pz-sand-fgd); --pz-muted:var(--pz-sand-md); --pz-faint:var(--pz-sand-fd); --pz-btn:var(--pz-sand-bd); --pz-btn-fg:var(--pz-sand-bfd); --pz-on-accent:var(--pz-sand-d); --pz-line:rgba(255,255,255,.14); }
-/* 7 蜜柑 · citrus */
-    #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-l); --pz-accent:var(--pz-citrus-a); --pz-muted:var(--pz-citrus-m); --pz-faint:var(--pz-citrus-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-d); --pz-accent:var(--pz-citrus-ad); --pz-fg:var(--pz-citrus-fgd); --pz-muted:var(--pz-citrus-md); --pz-faint:var(--pz-citrus-fd); --pz-btn:var(--pz-citrus-bd); --pz-btn-fg:var(--pz-citrus-bfd); --pz-on-accent:var(--pz-citrus-d); --pz-line:rgba(255,255,255,.14); }
-/* 8 樱粉 · sakura */
-    #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-l); --pz-accent:var(--pz-sakura-a); --pz-muted:var(--pz-sakura-m); --pz-faint:var(--pz-sakura-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-d); --pz-accent:var(--pz-sakura-ad); --pz-fg:var(--pz-sakura-fgd); --pz-muted:var(--pz-sakura-md); --pz-faint:var(--pz-sakura-fd); --pz-btn:var(--pz-sakura-bd); --pz-btn-fg:var(--pz-sakura-bfd); --pz-on-accent:var(--pz-sakura-d); --pz-line:rgba(255,255,255,.14); }
-/* 9 咖啡 · latte（仅此皮亮色时间字有专属值） */
-    #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-l); --pz-accent:var(--pz-latte-a); --pz-fg:var(--pz-latte-fg); --pz-muted:var(--pz-latte-m); --pz-faint:var(--pz-latte-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-d); --pz-accent:var(--pz-latte-ad); --pz-fg:var(--pz-latte-fgd); --pz-muted:var(--pz-latte-md); --pz-faint:var(--pz-latte-fd); --pz-btn:var(--pz-latte-bd); --pz-btn-fg:var(--pz-latte-bfd); --pz-on-accent:var(--pz-latte-d); --pz-line:rgba(255,255,255,.14); }
-/* 10 夜航 · night（亮面压深保证浅底可读） */
-    #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-l); --pz-accent:var(--pz-night-a); --pz-muted:var(--pz-night-m); --pz-faint:var(--pz-night-f); --pz-btn:var(--pz-night-b); --pz-btn-fg:var(--pz-night-bf); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-d); --pz-accent:var(--pz-night-ad); --pz-fg:var(--pz-night-fgd); --pz-muted:var(--pz-night-md); --pz-faint:var(--pz-night-fd); --pz-btn:var(--pz-night-bd); --pz-btn-fg:var(--pz-night-bfd); --pz-on-accent:var(--pz-night-d); --pz-line:rgba(255,255,255,.14); }
 
 /* ==================== 世界退后（2026-09-23 特效批采纳 9）· 休息相位专用 ====================
    休息不再只是「弹窗里变暗」：整个外部世界也后退一档，弹窗自己极缓地呼吸一下。

@@ -14,12 +14,18 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { normalizeMemoryDirectories } from './config';
 import { motionChatIn, motionChatOut } from './motion';
 import type { GroupDecl, SettingsSchema } from '../core/settings-schema';
+import { isRemoteSkinReady, skinPackOptions } from '../core/skin-pack';
+import { ALL_APPEARANCES } from './types';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
 
-/** 13 皮肤 key 全集（basic 5 + advanced 8） */
-export const SKINS: Appearance[] = ['orange', 'gray', 'black', 'white', 'calico', 'neon', 'galaxy', 'liquidMetal', 'fire', 'crystal', 'cyberpunk', 'rainbow', 'hologram'];
+/** 皮肤**已知取值全集**（13 套；ADR-0199 起除首套外全部远端化）——
+ *  只用于「取值合法性 / 类名清理 / 清单」；**能不能挂类看 core/skin-pack 就绪表**。 */
+export const SKINS: Appearance[] = [...ALL_APPEARANCES];
+
+/** 内置首套（离线兜底：远端未同步时猫落回橘猫） */
+export const BUILTIN_APPEARANCE: Appearance = 'orange';
 
 /** 猫本体 HTML（原 CAT_UI 模板：思考圆点/气泡容器/cat-body；voice 指示器 2026-09-19 审计删除——无任何 JS 驱动） */
 const CAT_HTML = `
@@ -71,14 +77,18 @@ export function unmountCatContainer(): void {
   }
 }
 
-/** 应用外观（原 AppearanceManager.applyAppearance：切类 + 事件） */
+/** 应用外观（原 AppearanceManager.applyAppearance：切类 + 事件）。
+ *  ADR-0199：**远端皮肤未就绪（未下载/下架/版本区间外）则回落内置首套橘猫**——
+ *  配置里的取值不动，同步到位后下次应用即恢复。 */
 export function applyAppearance(container: HTMLElement, appearance: Appearance): void {
   if (!container) return;
-  for (const skin of SKINS) container.classList.remove(`bz-sc-skin-${skin}`);
-  container.classList.add(`bz-sc-skin-${appearance}`);
-  // 兼容遗留：原版 .skin-<appearance> 类名（外部样式约定）
-  container.classList.remove('skin-orange', 'skin-gray', 'skin-black', 'skin-white', 'skin-calico', 'skin-neon', 'skin-galaxy', 'skin-liquidMetal', 'skin-fire', 'skin-crystal', 'skin-cyberpunk', 'skin-rainbow', 'skin-hologram');
-  if (appearance !== 'orange') container.classList.add(`skin-${appearance}`);
+  const want: Appearance =
+    appearance === BUILTIN_APPEARANCE || isRemoteSkinReady('smartcat', appearance) ? appearance : BUILTIN_APPEARANCE;
+  for (const skin of ALL_APPEARANCES) container.classList.remove(`bz-sc-skin-${skin}`);
+  container.classList.add(`bz-sc-skin-${want}`);
+  // 兼容遗留：原版 .skin-<appearance> 类名（远端皮肤规则就挂在这个类上；外部样式约定）
+  for (const skin of ALL_APPEARANCES) container.classList.remove(`skin-${skin}`);
+  if (want !== BUILTIN_APPEARANCE) container.classList.add(`skin-${want}`);
 }
 
 export interface SmartcatPanels {
@@ -239,7 +249,9 @@ export function smartcatSettingsSchema(opts: {
     rows: [
       {
         // 皮肤选择（choiceCards 标准行，custom 自绘格子已退役）：色块视觉由域 CSS 提供
-        // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）
+        // （prevClass → .bz-sc-prev-<skin>，面板 mini 与 ⚙️ 卡片两渲染器同类）。
+        // ADR-0199：内置首套「橘猫」+ 已就绪的远端皮肤（清单顺序，中文名来自皮肤包清单）；
+        // 未就绪者不进选择卡。schema 在面板打开时求值，同步完成后重开面板即可见。
         type: 'choiceCards',
         name: '面板皮肤',
         binding: {
@@ -247,7 +259,9 @@ export function smartcatSettingsSchema(opts: {
           set: (v) => { opts.getConfig().appearance = v; },
           save: () => opts.saveConfig(opts.getConfig()),
         },
-        options: SKINS.map((skin) => ({ value: skin, label: skinLabel(skin), prevClass: `bz-sc-prev-${skin}` })),
+        options: skinPackOptions('smartcat', [
+          { value: BUILTIN_APPEARANCE, label: '橘猫', layout: 'default', prevClass: `bz-sc-prev-${BUILTIN_APPEARANCE}` },
+        ]),
         onChange: (v) => opts.onAppearanceChanged?.(v),
       },
     ],
@@ -412,11 +426,5 @@ export function openSmartcatSettings(opts: {
   });
 }
 
-function skinLabel(skin: Appearance): string {
-  const labels: Record<string, string> = {
-    orange: '橘猫', gray: '灰猫', black: '黑猫', white: '白猫', calico: '三花猫',
-    neon: '霓虹灯', galaxy: '银河星空', liquidMetal: '液态金属', fire: '火焰',
-    crystal: '水晶透明', cyberpunk: '赛博朋克', rainbow: '彩虹渐变', hologram: '全息投影',
-  };
-  return labels[skin] || skin;
-}
+// 远端皮肤的中文名不在这里：随皮肤包清单下发（scripts/skins.catalog.json → manual/skins/index.json）
+// ——本文件只留内置首套的名字（写在上面的选项里）。

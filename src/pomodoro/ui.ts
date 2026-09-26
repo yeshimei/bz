@@ -32,9 +32,11 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { notice, notify, notifyActionError } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
+import { isRemoteSkinReady, skinPackOptions } from '../core/skin-pack';
 import { PomodoroDataManager, trimWithArchive } from './data';
 // 面板主题清单 / 弹窗骨架：单源在 ./render（ui.ts 与评审壳皮肤页共用）
 import {
+  DEFAULT_POMODORO_SKIN_THEME,
   POMODORO_SKIN_THEMES,
   skinClassOf,
   popupShellHtml,
@@ -103,18 +105,25 @@ let disposed = true;
 let recoveryNotified = false;
 
 /**
- * 面板主题 → 弹窗皮肤类（未知/空值回落默认）。
+ * 面板主题 → 弹窗皮肤类（未知/空值回落默认，**远端皮肤未就绪也回落默认**）。
  * 清单与取值类型单源 = ./render（POMODORO_SKIN_THEMES / skinClassOf）；
- * 亮/暗两套配色单源 = styles.css 的 :root 变量表，本文件不持有色值。
+ * 就绪判定单源 = core/skin-pack（ADR-0199：本地有文件 + sha256 + 版本区间才算可用）；
+ * 色值单源 = 各皮肤包自带的 `:root` 变量表（内置首套在 src/pomodoro/styles.css）。
  */
 function applySkinClass(): void {
   const popup = document.getElementById('pomodoro-popup');
   if (!popup) return;
-  const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
-  // 深审 PE1：render 每秒跑，皮肤未变（已挂 want 类）即早退——免 10 连 remove + 1 add 的空转；
+  const setting = tryGetSettings().pomodoroSkinTheme;
+  // 设置值不动（用户的选择留在盘上），只在**挂类**这一步回落——远端同步到位后自动恢复
+  const usable = setting === DEFAULT_POMODORO_SKIN_THEME || isRemoteSkinReady('pomodoro', setting);
+  const want = skinClassOf(usable ? setting : DEFAULT_POMODORO_SKIN_THEME);
+  // 深审 PE1：render 每秒跑，皮肤未变（已挂 want 类）即早退——免 remove + add 的空转；
   // 皮肤类唯一变更入口是本函数（设置 onChange → render），不变式「至多挂一套皮」使早退安全
   if (popup.classList.contains(want)) return;
-  for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+  // 按实际挂上的类摘（远端皮肤数量动态，静态列举不成立）
+  for (const cls of Array.from(popup.classList)) {
+    if (cls.startsWith('pomodoro-skin-')) popup.classList.remove(cls);
+  }
   popup.classList.add(want);
 }
 
@@ -670,8 +679,19 @@ async function initData(): Promise<void> {
   loaded = true;
 }
 
-/** 外观组主题行 options（issue 246）：由清单单源 map 生成；布局行的配套回落按 layout 字段判定 */
-const SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: 'default', prevClass: `bz-sp-prev-pomo-${t.value}` }));
+/** 外观组主题行 options（issue 246 / ADR-0199）：内置首套 + 已就绪远端皮肤（清单顺序）。
+ *  **必须是函数**——就绪表在启动同步后才填充，模块级常量会冻在「只有番茄」那一刻。 */
+function skinThemeOptions() {
+  return skinPackOptions(
+    'pomodoro',
+    POMODORO_SKIN_THEMES.filter((t) => t.value === DEFAULT_POMODORO_SKIN_THEME).map((t) => ({
+      value: t.value,
+      label: t.label,
+      layout: 'default',
+      prevClass: `bz-sp-prev-pomo-${t.value}`,
+    })),
+  );
+}
 
 /** 番茄钟设置 schema（ticket 131；ADR-0064）：时间方案/行为/移动端三组，置于模块顶层供文案 lint 直接引用。
  *  消费方 = 设置面板全域 schema（src/settings-panel/ui.ts）——面板右上角 ⚙ 设置钮已移除
@@ -711,17 +731,19 @@ export function pomodoroSettingsSchema(): SettingsSchema {
             onChange: () => {
               const s = tryGetSettings() as any;
               const cur = String(s.pomodoroSkinTheme ?? '');
-              const fit = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+              const opts = skinThemeOptions();
+              const fit = opts.filter((o) => o.layout === s.pomodoroSkin);
               if (!fit.some((o) => o.value === cur)) {
-                s.pomodoroSkinTheme = (fit[0] ?? SKIN_THEME_OPTIONS[0]).value;
+                s.pomodoroSkinTheme = (fit[0] ?? opts[0]).value;
                 saveSettings();
               }
               render();
             },
           },
-          // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
-          // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
-          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: SKIN_THEME_OPTIONS, onChange: () => render() },
+          // 面板主题：内置首套「番茄」+ 远端九套（就绪表见 core/skin-pack，ADR-0199；
+          // 每套亮/暗两版，CSS 侧同名落皮）；onChange 驱动 render() 重挂皮肤类——
+          // 设置面板关着弹窗换肤也要即时生效（评审 c1）
+          { type: 'choiceCards', name: '面板主题', binding: { key: 'pomodoroSkinTheme' }, layoutKey: 'pomodoroSkin', options: skinThemeOptions(), onChange: () => render() },
         ],
       },
       {

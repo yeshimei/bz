@@ -19,6 +19,8 @@ import { setSettingsProvider } from '../src/core/settings-provider';
 import { setApp, getApp } from '../src/core/app';
 import type { SettingsSchema } from '../src/core/settings-schema';
 import { MockVault } from './mock-vault';
+import { resetSkinPackState } from '../src/core/skin-pack';
+import { seedRemoteSkins } from './skin-pack-helpers';
 
 // mock Platform.isMobile 切换（桌面/移动两态）
 let mobileFlag = false;
@@ -60,6 +62,7 @@ describe('设置面板（settings-panel）', () => {
     document.body.innerHTML = '';
     unloadSettingsPanel();
     (escManager as any).handlers = new Map();
+    resetSkinPackState();
     // 共享单例 state（每次 getSettings 返回同一对象——否则 select 等写入落到临时对象丢失）
     panelState = { belSkin: 'poster', belSkinTheme: 'warmwhite' } as any;
     setSettingsProvider(() => panelState as any);
@@ -543,6 +546,10 @@ describe('设置面板（settings-panel）', () => {
       ['保险库', 'encryptSkin', 'encryptSkinTheme', async () => (await import('../src/encrypt/ui')).encryptSettingsSchema()],
     ];
     for (const [name, layoutKey, themeKey, load] of cases) {
+      // 番茄钟九套远端皮肤：就绪后才进选择卡（ADR-0199；未 seed 只剩内置首套）
+      if (name === '番茄钟') {
+        seedRemoteSkins('pomodoro', ['ink', 'grid', 'moss', 'mist', 'sand', 'citrus', 'sakura', 'latte', 'night']);
+      }
       const schema = await load();
       const look = schema.groups[0];
       expect(look.name, `${name} 组[0] 应为外观组`).toBe('外观');
@@ -555,7 +562,7 @@ describe('设置面板（settings-panel）', () => {
       expect(theme.type).toBe('choiceCards');
       expect(theme.binding.key).toBe(themeKey);
       expect(theme.layoutKey).toBe(layoutKey);
-      // 主题项数：番茄钟 2026-09-11 实装 10 套皮（每套亮/暗两版），其余域仍是单套占位
+      // 主题项数：番茄钟 10 套皮（首套内置 + 九套远端，见上 seed），其余域仍是单套占位
       expect(theme.options, `${name} 主题项数`).toHaveLength(name === '番茄钟' ? 10 : 1);
       for (const o of theme.options as any[]) {
         expect(o.layout, `${name} 主题项 layout`).toBe('default');

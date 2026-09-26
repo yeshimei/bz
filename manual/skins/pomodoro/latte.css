@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/latte（咖啡）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/latte.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 9 咖啡 latte */
+    --pz-latte-l:#f6f0e6; --pz-latte-d:#241f19; --pz-latte-a:#8a5a3b; --pz-latte-ad:#c08a63;
+    --pz-latte-fg:#4a3628; --pz-latte-fgd:#f1e9dc; --pz-latte-m:#7a6553; --pz-latte-md:#b39d8c; --pz-latte-f:#a8947c; --pz-latte-fd:#8a7a6b;
+    --pz-latte-bd:#302920; --pz-latte-bfd:#dcd2c4;
+}
+
+/* 9 咖啡 · latte（仅此皮亮色时间字有专属值） */
+    #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-l); --pz-accent:var(--pz-latte-a); --pz-fg:var(--pz-latte-fg); --pz-muted:var(--pz-latte-m); --pz-faint:var(--pz-latte-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-d); --pz-accent:var(--pz-latte-ad); --pz-fg:var(--pz-latte-fgd); --pz-muted:var(--pz-latte-md); --pz-faint:var(--pz-latte-fd); --pz-btn:var(--pz-latte-bd); --pz-btn-fg:var(--pz-latte-bfd); --pz-on-accent:var(--pz-latte-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-latte {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-latte-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-latte-l) 0 50%, var(--pz-latte-d) 50% 100%);
+  border-radius: 3px;
+}

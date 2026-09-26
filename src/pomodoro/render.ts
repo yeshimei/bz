@@ -22,10 +22,14 @@ export type PomodoroSkinTheme =
   | 'night';
 
 /**
- * 面板主题清单（**皮肤单源**）：设置面板选项、弹窗皮肤类、评审壳皮肤页三处同表。
+ * 面板主题清单（**皮肤清单单源**）：设置面板选项、弹窗皮肤类、评审壳皮肤页同表。
  * 顺序 = 默认项（番茄）在前；value 改动牵动 CSS 类名与旧设置值。
- * 色值不在这里：亮/暗两套配色见 styles.css 的 `:root` 变量表（`--pz-<id>-*`），
- * 设置面板预览卡（src/settings-panel/styles.css）引用同一批变量——避免「两处手抄色值」。
+ *
+ * ⚠️ 本清单是「**已知取值全集**」而非「可用集合」——ADR-0199 起除首套「番茄」外的九套
+ * 都是**远端皮肤**（源在 `src/pomodoro/skins/<id>.css`，不进构建聚合）：能不能挂类看
+ * `core/skin-pack` 的就绪表（本地有文件 + sha256 + 版本区间）。本文件是**零依赖纯层**
+ * （render-purity 守卫禁 obsidian/core 依赖），故就绪判定落在 `ui.ts::applySkinClass`。
+ * 色值不在公共 CSS 里：各皮自带的 `:root` 变量表随皮肤包下发（`--pz-<id>-*`）。
  */
 export const POMODORO_SKIN_THEMES: ReadonlyArray<{ value: PomodoroSkinTheme; label: string }> = [
   { value: 'tomato', label: '番茄' },
@@ -40,10 +44,11 @@ export const POMODORO_SKIN_THEMES: ReadonlyArray<{ value: PomodoroSkinTheme; lab
   { value: 'night', label: '夜航' },
 ];
 
-/** 默认皮肤（与 src/settings.ts 的 pomodoroSkinTheme 默认值一致） */
+/** 默认皮肤（与 src/settings.ts 的 pomodoroSkinTheme 默认值一致；**内置首套**——离线性靠它） */
 export const DEFAULT_POMODORO_SKIN_THEME: PomodoroSkinTheme = 'tomato';
 
-/** 任意设置值 → 合法主题（未知/空值回落默认） */
+/** 任意设置值 → 合法主题（未知/空值回落默认）。**只做已知取值校验**——
+ *  远端皮肤是否已同步到本地由调用方（ui.ts）叠加判定，本文件不引 core 依赖。 */
 export function normalizeSkinTheme(v: unknown): PomodoroSkinTheme {
   const cur = String(v ?? '');
   return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? (cur as PomodoroSkinTheme) : DEFAULT_POMODORO_SKIN_THEME;

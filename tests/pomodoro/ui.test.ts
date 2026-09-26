@@ -10,6 +10,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { resetSkinPackState, seedSkinPackState, type SkinPackEntry } from '../../src/core/skin-pack';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, togglePause, isFocusing, menuPhase } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
@@ -18,6 +19,18 @@ import { FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID } from '../../src/core/flow-di
 import { resetPomodoroFixture } from '../helpers/pomodoro-fixture';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
+
+/** 构造一条「已就绪」的皮肤条目（ADR-0199：远端皮肤要进就绪表才可用） */
+function skinEntry(domain: string, id: string): SkinPackEntry {
+  return {
+    id,
+    domain,
+    name: id,
+    file: `skins/${domain}/${id}.css`,
+    previewClass: `bz-sp-prev-pomo-${id}`,
+    sha256: 'a'.repeat(64),
+  };
+}
 
 
 function setup(vault: MockVault = new MockVault(), settings: any = {}) {
@@ -672,11 +685,24 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
   });
 
   it('面板主题 → 弹窗皮肤类：设置给值即换类，同时只挂一套', async () => {
+    // ADR-0199：九套皮远端化后，「可用」= 就绪表里有（本地有文件 + sha256 + 版本区间）
+    seedSkinPackState([skinEntry('pomodoro', 'night')]);
     const { app } = setup(new MockVault(), { pomodoroSkinTheme: 'night' });
     await openPomodoro(app);
     const popup = el('pomodoro-popup');
     expect(popup.classList.contains('pomodoro-skin-night')).toBe(true);
     expect(popup.classList.contains('pomodoro-skin-tomato')).toBe(false);
+  });
+
+  it('远端皮肤未就绪（未下载/下架/区间外）→ 挂内置首套，但不动设置值', async () => {
+    resetSkinPackState();
+    const settings: any = { pomodoroSkinTheme: 'night' };
+    const { app } = setup(new MockVault(), settings);
+    await openPomodoro(app);
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-tomato')).toBe(true);
+    expect(el('pomodoro-popup').classList.contains('pomodoro-skin-night')).toBe(false);
+    // 用户的选择留在盘上——同步到位后下次 render 自动恢复
+    expect(settings.pomodoroSkinTheme).toBe('night');
   });
 
   it('面板主题未设 / 未知值 → 回落默认皮肤番茄', async () => {

@@ -9,6 +9,8 @@ import { M, resetBookshelfState, applyDefaultView } from '../../src/bookshelf/st
 import { bookshelfSettingsSchema } from '../../src/bookshelf/settings';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { resetSkinPackState } from '../../src/core/skin-pack';
+import { seedRemoteSkins } from '../skin-pack-helpers';
 
 describe('bookshelf applyDefaultView（issue 194）', () => {
   afterEach(() => {
@@ -46,7 +48,11 @@ describe('bookshelf applyDefaultView（issue 194）', () => {
 });
 
 describe('bookshelf 设置 schema（issue 194）', () => {
+  afterEach(() => resetSkinPackState());
+
   it('组序：外观 → 目录 → 显示；外观组皮肤行 + 显示组两行键与选项集契约（issue 246 收编、issue 218 排序三档）', () => {
+    // 主题行 = 内置首套雪松白 + 四套远端皮肤（就绪后才进选项，ADR-0199）
+    seedRemoteSkins('bookshelf', ['noir', 'kraft', 'velvet', 'mono']);
     const schema = bookshelfSettingsSchema();
     expect(schema.groups.map((g) => g.name)).toEqual(['外观', '目录', '显示']);
     // 外观组（标准化）：布局占位单卡 + 主题行 choiceCards 五选一（layoutKey 联动），onChange 热切换
