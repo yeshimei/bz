@@ -21,6 +21,7 @@
 import { FakeApp, encodeSeedFile } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
+import { setSystemFolderPicker } from '../../src/core/path-picker';
 import { openSettingsPanel as openPanelReal } from '../../src/settings-panel/index';
 
 /** 设置持久化键（localStorage；壳重置 = 移除本键 + 种子标记后重载） */
@@ -97,6 +98,15 @@ const SEED_SETTINGS: Record<string, unknown> = {
   noticeDuration: 'standard',
   noticePosition: 'top-right',
   noticeMaxVisible: '5',
+  // 脸谱（issue 457 设置页评审）：数据文件夹空 = 演示「选择…」系统选择器端点（壳内注入假实现）；
+  // 媒体文件夹与插件端 DEFAULT 同值 —— 路径行 chip 才有实际生效目录可看
+  peopleDataDir: '',
+  peopleMediaDir: 'CONFIG/FACES',
+  peopleIncludeGroups: false,
+  peoplePreviewVoice: true,
+  peopleImageDescMode: 'file',
+  peoplePreviewVideo: true,
+  peopleKeepSystem: true,
 };
 
 /**
@@ -168,6 +178,9 @@ export function bootSettingsPanelSim(): void {
   seedVault();
   injectApp();
   injectSettings();
+  // 系统文件夹选择器（issue 457）：浏览器无 Electron，原生链取不到绝对路径 —— 注入演示实现，
+  // 「数据文件夹」行的「选择…」在壳内跑同一条写入链（真 settings-provider），返回构造目录
+  setSystemFolderPicker(async () => 'D:/演示数据/export_full');
 }
 
 function ensureBoot(): void {

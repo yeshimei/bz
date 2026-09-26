@@ -70,6 +70,9 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
   };
   return [
     { type: 'button', name: '立即抓取', desc: intervalDesc(), buttonText: '抓取', cta: true,
+      help:
+        '立刻跑一轮抓取，不必等抓取间隔到点。范围是所有启用的源：知乎日报、果壳，以及名单非空的 B 站与 RSS——名单为空的源直接跳过。四个源并行抓，已经在抓的时候再点会提示稍候。' +
+        '这一步只发 HTTP 请求、不调 AI，不产生费用；被风控或抓取失败会弹通知，不静默。',
       onClick: async (ctx) => {
         const r = await fetchNowNews();
         notifyManualFetchResult(r);
@@ -90,6 +93,9 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
     { type: 'toggle', name: '知乎日报', desc: '抓取知乎日报每日文章', binding: sourceBinding('zhihu') },
     { type: 'toggle', name: '果壳科学人', desc: '抓取果壳科学人最新文章', binding: sourceBinding('guokr') },
     { type: 'button', name: 'UP 主名单', desc: upListDesc(), buttonText: '管理', cta: true,
+      help:
+        '要跟进的 B 站 UP 主名单，点「管理」增删，行描述里显示当前条数。名单为空时 B 站这一路直接跳过，不算报错，只是不抓。' +
+        '抓取时按名单逐个 UP 主翻最近投稿，每位抓多少条由下面的「B站抓取条数」决定。',
       onClick: (ctx) => openUpManagerModal({
         ups: [...box.bilibiliUps],
         upInfo: { ...box.bilibiliUpInfo },
@@ -103,6 +109,9 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
         },
       }) },
     { type: 'button', name: 'RSS 订阅源', desc: rssListDesc(), buttonText: '管理', cta: true,
+      help:
+        'RSS 订阅列表，点「管理」增删，行描述里显示当前条数。名单为空时 RSS 这一路整个跳过，不报错。' +
+        '抓回来的文章走与其它源统一的入库流程：默认进未读流，要不要立刻生成摘要由上方的「自动摘要」设置决定。',
       onClick: (ctx) => openRssManagerModal({
         feeds: box.rssFeeds.map((f) => ({ ...f })),
         onChanged: async () => {

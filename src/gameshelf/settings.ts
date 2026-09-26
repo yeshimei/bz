@@ -58,6 +58,9 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             type: 'text',
             name: 'SteamID64',
             desc: 'Steam 的数字账号 ID',
+            help:
+              'Steam 账号的固定数字 ID，用来拉已购游戏、累计时长（分钟）、最近游玩时间与成就进度。格式是 17 位纯数字、固定以 7656 开头，不符合就判定为未配置，不会发出请求。' +
+              '它和 Web API 密钥必须同时填好，同步才跑得起来；拉取走 Steam 官方接口，国内直连常被重置，需要系统代理。',
             binding: { key: 'gameshelfSteamId' },
             placeholder: '76561198000000000',
           },
@@ -68,6 +71,9 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             type: 'secret',
             name: 'Web API 密钥',
             desc: '在 Steam 官网开发者页免费申请',
+            help:
+              'Steam Web API 的密钥，拉已购游戏、近期游玩与成就都要用它，在 Steam 官网开发者页免费申请。它与 SteamID64 是并列的必填项：任一为空，同步就停在未配置状态，不发出请求。' +
+              '密钥是账号级的，要跟上面的 SteamID64 对上——配成别人的 ID，拉回来的就是别人的库；接口在国内直连常被重置，需要系统代理。',
             binding: { key: 'gameshelfSteamApiKey' },
             placeholder: '32 位十六进制串',
           },

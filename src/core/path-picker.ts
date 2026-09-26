@@ -609,3 +609,132 @@ export function openPathPicker(opts: PathPickerOptions): void {
     if (mask.isConnected) search.focus();
   }, 30);
 }
+
+/* ==================== 系统文件夹选择器（vault 外，issue 457） ==================== */
+
+/**
+ * 系统文件夹选择器：走宿主原生目录对话框，可选 **vault 之外** 的目录（脸谱数据源这类
+ * 「外部工具产出目录」用；vault 内目录一律走 openPathPicker，库内路径可渲染、库外不可）。
+ *
+ * 原生链（无 Obsidian API，逐级兜底）：
+ * 1. Electron 远程对话框：`@electron/remote`.dialog.showOpenDialog（新版宿主）→
+ *    `electron.remote`.dialog（旧版宿主）；用户取消 → null。
+ * 2. `<input type="file" webkitdirectory>`：选中目录内任一文件后取父目录。Electron ≥32
+ *    已删 `File.path`，故路径经 `electron.webUtils.getPathForFile` 取（两条都试）。
+ * 3. 都不行（移动端 / 浏览器）→ null，调用侧按「用户取消」处理，不弹错。
+ *
+ * 返回值统一正斜杠归一（域侧一律 `${dir}/${name}` 拼接，Windows 反斜杠混拼易漏）。
+ * 评审壳无 Electron：fake-sim 经 setSystemFolderPicker 注入构造目录演示同一交互。
+ */
+export type SystemFolderPicker = () => Promise<string | null>;
+
+/** 注入点（仅评审壳 / 测试用；插件端不注入 = 原生链） */
+let systemPickerImpl: SystemFolderPicker | null = null;
+
+/** 注入演示级选择器（传 null 复原原生链） */
+export function setSystemFolderPicker(fn: SystemFolderPicker | null): void {
+  systemPickerImpl = fn;
+}
+
+/** 取宿主 node 侧模块（非桌面宿主无 require → null） */
+function requireNode(moduleName: string): any {
+  try {
+    const w = window as unknown as { require?: (m: string) => unknown };
+    return w.require ? w.require(moduleName) ?? null : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 路径归一：反斜杠 → 正斜杠、去尾斜杠（保留根盘符 `D:`） */
+function normalizeSystemPath(p: string): string {
+  const s = String(p ?? '').trim().replace(/\\/g, '/');
+  return s.length > 1 ? s.replace(/\/+$/, '') : s;
+}
+
+/** 取父目录（输入 = 目录内任一文件的绝对路径） */
+function parentDirOf(filePath: string): string {
+  const s = String(filePath).replace(/\\/g, '/');
+  const i = s.lastIndexOf('/');
+  return i <= 0 ? s : s.slice(0, i);
+}
+
+/** File 对象的磁盘绝对路径：旧 Electron 的 File.path → 新 Electron 的 webUtils.getPathForFile */
+function fileDiskPath(f: File): string {
+  const legacy = (f as File & { path?: string }).path;
+  if (typeof legacy === 'string' && legacy) return legacy;
+  const webUtils = requireNode('electron')?.webUtils;
+  if (webUtils?.getPathForFile) {
+    try {
+      return String(webUtils.getPathForFile(f) ?? '');
+    } catch {
+      /* 取不到当没有 */
+    }
+  }
+  return '';
+}
+
+/** 兜底链二：webkitdirectory 输入框（选中目录内任一文件，取其父目录） */
+function pickDirViaInput(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.setAttribute('webkitdirectory', '');
+    input.setAttribute('directory', '');
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    let settled = false;
+    const finish = (v: string | null): void => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('focus', onFocus);
+      input.remove();
+      resolve(v);
+    };
+    // 取消检测：对话框关闭后窗口回焦、而 change 未派发（迟 200ms 让 change 先行）
+    const onFocus = (): void => {
+      window.setTimeout(() => {
+        const f = input.files?.[0];
+        if (!f) finish(null);
+      }, 200);
+    };
+    input.addEventListener('change', () => {
+      const f = input.files?.[0];
+      const p = f ? fileDiskPath(f) : '';
+      finish(p ? parentDirOf(p) : null);
+    });
+    window.addEventListener('focus', onFocus);
+    input.click();
+  });
+}
+
+/** 原生链：Electron 对话框优先，webkitdirectory 兜底 */
+async function nativePickSystemFolder(): Promise<string | null> {
+  const remote =
+    requireNode('@electron/remote') ??
+    (requireNode('electron') as { remote?: unknown } | null)?.remote ??
+    null;
+  const dialog = (remote as { dialog?: { showOpenDialog?: (o: unknown) => Promise<{ canceled?: boolean; filePaths?: string[] }> } } | null)?.dialog;
+  if (dialog?.showOpenDialog) {
+    const res = await dialog.showOpenDialog({
+      title: '选择文件夹',
+      properties: ['openDirectory', 'dontAddToRecent'],
+    });
+    const picked = res?.filePaths?.[0];
+    if (picked && !res?.canceled) return normalizeSystemPath(picked);
+    return null; // 用户取消：不再落兜底（否则会连开两次对话框）
+  }
+  return pickDirViaInput();
+}
+
+/** 弹出系统文件夹选择器。返回绝对路径（正斜杠归一）；null = 取消 / 环境不支持（不弹错） */
+export async function pickSystemFolder(): Promise<string | null> {
+  try {
+    const pick = systemPickerImpl ?? nativePickSystemFolder;
+    const dir = await pick();
+    return dir ? normalizeSystemPath(dir) : null;
+  } catch (e) {
+    notifyActionError(e, '选择文件夹');
+    return null;
+  }
+}

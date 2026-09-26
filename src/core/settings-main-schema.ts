@@ -65,6 +65,8 @@ import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
+import { downloadManual, hasManual, openManual } from './manual';
+import { getApp } from './app';
 import type { NumberRow, RowAction, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
 /** 存储路径改动防错提示（f1；正文不带 emoji，铁律 7）——文案逐字冻结，勿改 */
@@ -162,6 +164,9 @@ function providerModelCustomRow(): SettingsRow {
     type: 'text',
     name: '模型名称',
     desc: 'AI 生成使用的模型',
+    help:
+      '生成通道用哪个模型，按服务商分别存储，切服务商互不覆盖；留空就用该服务商的注册表默认模型。「获取模型名」从当前服务商的模型列表接口拉取（Ollama 读本机 /api/tags，其余走 /models），选中即回填；拉取期间切了服务商，这批结果作废、需要重取。' +
+      '这一行是自由文本，不校验模型是否存在：名字写错面板不会拦，请求会被服务端直接拒绝。',
     placeholder: '默认模型',
     binding: {
       get: () => providerValue('model'),
@@ -223,6 +228,9 @@ function providerMaxTokensRow(): NumberRow {
     type: 'number',
     name: '最大输出 token',
     desc: '单次回复的长度上限',
+    help:
+      '请求里的 max_tokens，是封顶值，不是每次都消耗这么多。解析顺序：本行按服务商存的覆盖值 > 按当前模型名查内置档位表（各模型的官方最大档，8K 到 384K 不等）> 该服务商注册表默认值；留空或填 0 都按未填处理。' +
+      '输入框只做 0 到 200000 的格式钳制，与模型真实上限无关：填得比模型官方档位还大时插件不拦，由服务端以 400 拒绝整个请求。',
     // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
     //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
     // 2026-09-23 补上界：原只有 min，手滑多打几个 0 会直送服务商（400/超长请求）；
@@ -262,6 +270,9 @@ function providerGroupRows(): SettingsRow[] {
       type: 'select',
       name: 'AI 服务商',
       desc: '当前使用的 AI 服务商',
+      help:
+        '切换服务商不影响已填内容：密钥、模型名、最大输出 token、思考档位都是按服务商分别存储（per-provider 覆盖），切回哪家就是哪家上次的值。' +
+        '当前只有 deepseek、智谱 Plan、Ollama 三条通道。',
       binding: { key: 'aiProvider' },
       options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -298,6 +309,9 @@ function providerThinkingRow(): SettingsRow {
     type: 'select',
     name: '思考 reasoning',
     desc: '思考档位，随服务商不同',
+    help:
+      '思考档位（reasoning effort），按服务商分别存储，切换服务商时选项表随之更换：DeepSeek 为关、低、高、最高；智谱 Plan 无关闭档（强制思考），只有低、高、最高；Ollama 为关、低、中、高。' +
+      '选「跟随」＝不注入任何思考参数，交由模型默认。',
     binding: {
       get: () => providerThinkingValue(),
       set: (v) => setProviderThinkingValue(v),
@@ -344,6 +358,9 @@ function embeddingModelRow(): SettingsRow {
     type: 'text',
     name: 'Embedding 模型',
     desc: '向量化使用的嵌入模型',
+    help:
+      '第二大脑向量化用的模型，留空回落 bge-m3。换模型会改变向量维度，已建索引全部失效：第二大脑下次打开时自动全量重建，重建期间周期性落盘，中途关掉下次自动续建。' +
+      '「获取模型」按 embedding 能力过滤，但只在 Ollama 返回 capabilities 字段时有效，旧版会把聊天模型一并列出。',
     placeholder: 'bge-m3',
     binding: { key: 'secondBrainEmbeddingModel' },
     actions: [{
@@ -389,6 +406,9 @@ function ollamaLocalUrlRow(): SettingsRow {
     type: 'text',
     name: 'Ollama 本地 URL',
     desc: '本地 Ollama 服务地址',
+    help:
+      '桌面端第二大脑连接的 Ollama 地址，留空回落 http://localhost:11434。' +
+      '移动端不读这一键：它读 secondBrainRemoteOllamaUrl，由桌面端启动时按本机 IP 自动维护。下面 Embedding 模型、重排模型两处「获取模型」就是去这个服务拉列表。',
     binding: { key: 'secondBrainOllamaUrl' },
     inputMode: 'url',
     // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
@@ -419,6 +439,9 @@ function jevGroupRows(): SettingsRow[] {
       type: 'select',
       name: 'Jev 服务商',
       desc: '判定通道的服务商',
+      help:
+        'Jev 是与生成通道并存的判定通道：输入状态与类型化问题，输出类型化答案与校准概率，不生成文本，知识盒的关联判定走它。' +
+        '可选 Typesafe 与博查两家，与上面生成内容用的 AI 服务商互不影响；切换后密钥与模型各自换成那一家。',
       binding: { key: 'jevProvider' },
       options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label })),
     },
@@ -488,6 +511,9 @@ function jevModelRow(): SettingsRow {
     type: 'text',
     name: 'Jev 模型',
     desc: '判定通道使用的模型',
+    help:
+      '判定通道用哪个模型，按 Jev 服务商分别存储；留空就用该家的缺省模型（Typesafe 是 jev-latest，博查是 bocha-jev-v1）。「获取模型」调当前服务商的模型列表，拉取期间切了服务商则弃用结果、需要重取。' +
+      '与「模型名称」一样是自由文本，不做格式校验，名字写错由服务端报错。',
     placeholder: 'jev-latest',
     binding: {
       get: () => jevScopedValue('model'),
@@ -556,6 +582,9 @@ function rerankToggleRow(): SettingsRow {
     type: 'toggle',
     name: '启用重排',
     desc: '召回结果再精排，相关笔记排序更准',
+    help:
+      '检索分两段：先用向量召回一批候选，再用 rerank 模型对这批候选重新排序。' +
+      '只改顺序、不动向量索引，关掉照样搜得到，只是排序精度下降。它是下面「重排走 Jev」「重排模型」两行的总开关。',
     binding: { key: 'secondBrainRerank' },
   };
 }
@@ -572,6 +601,9 @@ function jevRerankToggleRow(): SettingsRow {
     type: 'toggle',
     name: '重排走 Jev',
     desc: '改用 Jev 模型云端重排',
+    help:
+      '重排有两个通道：本地 rerank 模型，或 Jev 判定通道（云端）。' +
+      '开启即改用 Jev，下面本地「重排模型」一行随之隐藏。Jev 未配密钥时运行期自动回落余弦相似度排序，不报错。',
     binding: { key: 'secondBrainRerankJev' },
     visibleWhen: (snapshot) => snapshot.secondBrainRerank !== false,
   };
@@ -589,6 +621,9 @@ function rerankModelRow(): SettingsRow {
     type: 'text',
     name: '重排模型',
     desc: '重排通道使用的模型',
+    help:
+      '本地 rerank 模型，留空回落内置的 Qwen3-Reranker-4B。' +
+      '本地重排只在嵌入模型是 Qwen3-Embedding-8B 时可用：换成别的嵌入模型后，即便总闸开着，重排通道判定为 off，这一行也不会出现。',
     placeholder: 'dengcao/Qwen3-Reranker-4B:Q4_K_M',
     binding: { key: 'secondBrainRerankModel' },
     visibleWhen: (snapshot) =>
@@ -643,6 +678,9 @@ function credentialGroupRows(): SettingsRow[] {
       type: 'secret',
       name: 'ApiZero Key',
       desc: '豆瓣字段接口的密钥',
+      help:
+        '影院取豆瓣字段的密钥，用来补齐评分、导演、主演、类型、地区、片长这些字段。留空则不走这条通道，改由内置的演职员信息兜底，能取到多少算多少。' +
+        '它只影响影院条目的字段来源，不参与搜索，也不决定抓取本身能不能跑起来。',
       binding: { key: 'cinemaApizeroKey' },
       placeholder: '粘贴密钥',
     },
@@ -650,6 +688,9 @@ function credentialGroupRows(): SettingsRow[] {
       type: 'secret',
       name: 'B站 Cookie',
       desc: '视频录入解析清晰度用的凭据',
+      help:
+        '录入 B 站视频时解析可用清晰度的登录凭据；没有它只回落固定清晰度列表。值可从浏览器登录后的请求头复制。' +
+        '桌面端有「从 CLI 导入」，读本机 ~/.bilibili-cookies.json 填进来；移动端没有这个按钮，因为读不到本机文件。',
       binding: { key: 'bilibiliCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
       actions: isDesktopShell() ? [{ text: '从 CLI 导入', onClick: () => importCliBilibiliCookie() }] : [],
@@ -658,6 +699,9 @@ function credentialGroupRows(): SettingsRow[] {
       type: 'secret',
       name: '豆瓣 Cookie',
       desc: '豆瓣搜索被风控时用的登录凭据',
+      help:
+        '豆瓣搜索的风控凭据：被风控后抓取失败，填上登录 Cookie 可缓解（三条检索链路都会带上）。' +
+        '拦截会由队列聚合通知与表单提示报出来，不会静默失败。',
       binding: { key: 'cinemaDoubanCookie' },
       placeholder: '粘贴从浏览器复制的 Cookie',
     },
@@ -678,6 +722,9 @@ function asrGroupRows(): SettingsRow[] {
       type: 'select',
       name: '转写引擎',
       desc: '视频转文字的识别引擎',
+      help:
+        '知识盒把视频转成文字时用哪个引擎。SenseVoice-Small 是缺省档，走 funasr，中文识别更好；faster-whisper 是备选，选它之后才会多出「Whisper 档位」这一行。' +
+        '两者都通过外部 Python 执行，环境里缺对应的包时整批转写会失败，错误提示里会点名缺的是哪个。',
       binding: { key: 'asrEngine' },
       options: [
         { value: 'sensevoice', label: 'SenseVoice-Small' },
@@ -727,10 +774,39 @@ export function aiSettingsSchema(): SettingsSchema {
 }
 
 /** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项）。
- *  2026-09-12：通知组拆出为独立面板页（noticeSettingsSchema），本组只剩数据存储路径。 */
+ *  2026-09-12：通知组拆出为独立面板页（noticeSettingsSchema），本组只剩数据存储路径。
+ *  2026-09-26：补「使用手册」按钮（core/manual 单源）——手册不随构建分发，
+ *  点按钮从 GitHub 拉取写进插件安装目录，已下载则直接打开（一个控件按状态分岔）。 */
 export function generalSettingsSchema(): SettingsSchema {
   return {
     groups: [
+      {
+        icon: 'book-open',
+        name: '使用手册',
+        rows: [
+          {
+            type: 'button',
+            name: '使用手册',
+            desc: '首次点击从 GitHub 拉取手册写入插件目录并自动打开，已下载则直接打开',
+            buttonText: '使用手册',
+            onClick: () => {
+              void (async () => {
+                const app = getApp();
+                try {
+                  if (!(await hasManual(app))) {
+                    notice('正在从 GitHub 下载使用手册…', 'info');
+                    await downloadManual(app);
+                    notice('手册已下载到插件目录', 'success');
+                  }
+                  openManual(app);
+                } catch (e) {
+                  notice((e as Error)?.message || '手册下载失败', 'error');
+                }
+              })();
+            },
+          },
+        ],
+      },
       {
         icon: 'folder-open',
         name: '数据存储路径',
@@ -740,6 +816,14 @@ export function generalSettingsSchema(): SettingsSchema {
             mode: 'single',
             name: '数据存储路径',
             desc: '全部 JSON 数据文件统一存放的目录',
+            help:
+              '各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。' +
+              '\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本' +
+              '\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题' +
+              '\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量' +
+              '\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量' +
+              '\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务' +
+              '\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据',
             note: '改动仅改路径不迁移旧数据；重载插件后生效',
             binding: { key: 'storagePath' },
             onCommit: () => {

@@ -182,8 +182,6 @@ export default interface BzSettings {
   cinemaSortMode: string;
   /** 🎬 影院：默认状态筛选（空串=全部，其余为想看/在看/已看；非法值回落全部。issue 194） */
   cinemaStatusFilter: string;
-  /** 🎬 影院：海报网格每行列数（2~12，默认 5；issue 208） */
-  cinemaGridColumns: string;
   /** 🎬 影院：剧集按季合并（同一部剧的各季在片库里合并成一张卡；issue 376 / ADR-0168）。
    *  纯渲染层分组——不改笔记、不加存储，关掉即逐季一卡 */
   cinemaMergeSeasons: boolean;
@@ -386,8 +384,8 @@ export default interface BzSettings {
   pomodoroStatMode: string;
 
   // ===== 🔐 加密保险箱（encrypt 域，ticket NN）=====
-  /** 📂 保险箱根目录（加密清单 .safe.enc 与点前缀密文镜像的统一存放目录，默认 CONFIG/.ENCRYPT——点前缀目录 Obsidian 侧栏不可见，防误删） */
-  encryptRoot: string;
+  // encryptRoot 键已退役（2026-09-26）：密文根目录固定 = <数据存储路径>/.ENCRYPT
+  // （core/storage 的 encryptDir 单源；面板不再给改，也就没有「密文不跟着数据目录走」这一说）
   /** 🖼️ 生成省略图预览：加密时生成图片/视频压缩预览层（体积小但看得清，默认开） */
   encryptPreviewEnabled: boolean;
   /** 📏 预览目标长边（px，默认 384——用户可调，越小预览打开越快） */
@@ -905,7 +903,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaFolderPath: '我的/影视',
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
-  cinemaGridColumns: '5',
   // 剧集按季合并（issue 376 / ADR-0168）：2026-09-20 用户改默认**开**（合并已是常态视图）
   cinemaMergeSeasons: true,
   cinemaStyle: 'midnight',
@@ -988,8 +985,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroRestoreMode: 'background',
   pomodoroStatMode: 'week',
 
-  // 加密保险箱（encrypt 域）
-  encryptRoot: 'CONFIG/.ENCRYPT',
+  // 加密保险箱（encrypt 域）：根目录固定 = <数据存储路径>/.ENCRYPT（encryptRoot 键已退役）
   encryptPreviewEnabled: true,
   encryptPreviewSize: '384',
   encryptPreviewQuality: '0.5',

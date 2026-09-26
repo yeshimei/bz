@@ -2,7 +2,7 @@
  * 影院（cinema）域设置 schema（接入设置面板；窗口内无设置按钮，收敛进 Obsidian 设置面板）
  * issue 194：补「显示」组——默认排序/默认状态筛选（打开面板时读，非法值回落，见 index.ts applyDefaultView）。
  */
-import { numStrBinding } from '../core/settings-common';
+import { numStrBinding } from '../core/settings-common'; // eslint-disable-line @typescript-eslint/no-unused-vars -- 保留：列数行退役后本域暂无消费者
 import type { SettingsSchema } from '../core/settings-schema';
 import { POSTER_FOLDER } from './douban-fetcher';
 
@@ -71,21 +71,15 @@ export function cinemaSettingsSchema(): SettingsSchema {
               { value: '已看', label: '已看' },
             ],
           },
-          {
-            type: 'number',
-            name: '网格每行列数',
-            desc: '海报墙每一行的列数',
-            binding: numStrBinding('cinemaGridColumns', 5),
-            min: 2,
-            max: 12,
-            step: 1,
-          },
           // issue 376 / ADR-0168：剧集按季合并（纯渲染层分组；同一部剧 ≥2 季才合并，单季照旧一卡）。
           // 2026-09-20：缺省**开**（用户拍板），并入的「剧名：副标题」特别篇在卡片详情里单列
           {
             type: 'toggle',
             name: '剧集按季合并',
             desc: '同一部剧的各季合并成一张卡片',
+            help:
+              '同一个剧集或动漫的多个季，在海报墙上合并成一张卡片，点进去才展开各季；「剧名：副标题」这类特别篇也归进卡里单独一段。' +
+              '它只改变海报墙怎么分组，不碰笔记、不改文件名、不动目录；关掉立刻恢复成每季一张卡，数据层面没有任何变化。',
             binding: { key: 'cinemaMergeSeasons' },
           },
         ],

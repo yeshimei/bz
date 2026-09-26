@@ -29,7 +29,7 @@ import { notice, notifySaveError } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
-import { mountIcons, uiSetlist, uiChip, uiBtn } from '../core/ui';
+import { mountIcons, uiSetlist, uiChip, uiBtn, attachHelpTip } from '../core/ui';
 // 动效层（校准台语义世界，见 motion.ts 文件头）：只在行为反馈点被调用，markup 契约不变
 import {
   motionSwitchFlip, motionSelectPick, motionCardChoose,
@@ -359,6 +359,14 @@ function renderRow(
     note: (row as { note?: string }).note,
   });
   const el = holder.firstElementChild as HTMLElement;
+  // 用法说明（issue 457 二轮）：入口 = 标题自己（悬停/点击出浮窗），不再往标题旁挂图标。
+  // 挂类就地在 .bz-sp-set-name 上——搜索命中高亮只重建该元素的 textContent，监听与类都不丢。
+  const helpText = (row as { help?: string }).help;
+  if (helpText) {
+    const nameEl = el.querySelector<HTMLElement>('.bz-sp-set-name');
+    // 皮肤随宿主（ADR-0127）：浮窗挂 body 够不着面板作用域，传 bz-sp-skin 才拿得到 --sp-*
+    if (nameEl) attachHelpTip(nameEl, { text: helpText, skinClassName: 'bz-sp-skin' });
+  }
   const ctx = makeCtx(el, refresh);
   // 行上下文的 rowEl 即本行元素（switch 内 custom 分支渲染插槽时已可用）
   (ctx as { rowEl: HTMLElement }).rowEl = el;

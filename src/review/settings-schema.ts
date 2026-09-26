@@ -42,7 +42,11 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         icon: 'graduation-cap',
         name: '做题家',
         rows: [
-          { type: 'toggle', name: '用做题测难度', desc: '开始复习即做题，按正确率自动定难度', binding: { key: 'forceQuizForReview' } },
+          { type: 'toggle', name: '用做题测难度', desc: '开始复习即做题，按正确率自动定难度',
+            help:
+              '打开后「开始复习」先出题，再按正确率定本次难度。' +
+              '下面多选、题量、打乱顺序、出题难度四行是它的子项，只在开着时显示；关掉则回到普通跳转复习。',
+            binding: { key: 'forceQuizForReview' } },
           // 出题子项：仅「用做题测难度」开启时显示（ticket 170 isChild 联动 + visibleWhen 兜底）
           { type: 'toggle', name: '允许多选题', desc: '开启后 AI 可能出多选题，关闭则只出单选题', binding: { key: 'enableMultipleChoice' }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
           // 数量语义行口径对齐全域（深审新-14①）：number 行 + min 钳制（原 text 行可输 -5/abc）。
@@ -90,6 +94,9 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
             type: 'number',
             name: '复习间隔缩放',
             desc: '数值越小复习越频繁，数值越大越宽松',
+            help:
+              '作用在 FSRS 动态间隔上的乘数：间隔 = intervalDays × scale，只对已进入 FSRS 的复习生效；固定的阶梯间隔表（含进入 FSRS 那一步）不受影响。' +
+              '范围 0.1 到 5，填 0.5 更勤、填 2 更宽松。',
             binding: { key: 'reviewIntervalScale' },
             min: 0.1,
             max: 5,
@@ -100,6 +107,9 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
             type: 'number',
             name: 'R 目标阈值',
             desc: '触发提前复习的保留度阈值，不改变排期间隔',
+            help:
+              'R 是算法估计的记忆保留度，取值 0 到 1（1 = 完全记得）。' +
+              '低于这个阈值会触发一次提前复习，但不改变排期间隔本身，所以调它不会让整体节奏变快变慢。',
             binding: { key: 'reviewRThreshold' },
             min: 0.5,
             max: 0.99,
@@ -111,7 +121,11 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         name: '记忆算法',
         rows: [
           // ADR-0077：FSRS 参数自动拟合（全自动定期重算）
-          { type: 'toggle', name: '参数自动拟合', desc: '按个人复习历史拟合记忆参数，优化复习节奏', binding: { key: 'reviewEnableFit' } },
+          { type: 'toggle', name: '参数自动拟合', desc: '按个人复习历史拟合记忆参数，优化复习节奏',
+            help:
+              '用你的复习记录重新拟合 FSRS 参数。' +
+              '样本少于 100 条直接跳过（沿用默认参数），100 到 300 条只拟合基础八参，300 条以上拟合全参——所以刚开始用看不出差别。',
+            binding: { key: 'reviewEnableFit' } },
           {
             type: 'number',
             name: '每 N 次复习重算',
@@ -135,6 +149,9 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
             mode: 'multi',
             name: '监听文件夹',
             desc: '新笔记自动加入复习计划',
+            help:
+              '目录里的新笔记自动加入复习计划。库根目录不支持监听，会被拦下。' +
+              '首次添加目录时会问是否把目录内已有笔记一并收编：取消 = 该目录不加入监听（新老笔记都不收），确认才加入。',
             binding: {
               get: () => ((getSettings() as any).reviewWatchedFolders || []) as string[],
               set: () => {},
@@ -198,7 +215,13 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         icon: 'eye',
         name: '界面',
         rows: [
-          { type: 'toggle', name: '文件树标记', desc: '文件树中标记复习笔记', binding: { key: 'reviewTreeBadge' } },
+          {
+            type: 'toggle', name: '文件树标记', desc: '文件树中标记复习笔记',
+            help:
+              '在 Obsidian 文件树里给复习中的笔记染色并挂阶段徽标，不开复习面板也能看出哪些到期、处在哪个阶段。' +
+              '关掉只是不画这些视觉标记，排期计算与到期提醒都不受影响，文件树恢复宿主原样。',
+            binding: { key: 'reviewTreeBadge' },
+          },
         ],
       },
     ],

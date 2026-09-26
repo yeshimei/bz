@@ -62,6 +62,16 @@ export function storageFile(name: string, base?: string): string {
   return `${dir}/${name}`;
 }
 
+/**
+ * 加密密文根目录（保险库 encrypt 与密码本 password-vault 共用的同一个库）：
+ * 固定 = `<数据存储路径>/.ENCRYPT` —— 2026-09-26 拍板「统一放进数据存储路径，不给用户单独配」，
+ * 原 `encryptRoot` 设置键与面板行一并退役（点前缀目录 Obsidian 侧栏不可见，防误删；
+ * 与数据目录同盘，也就不用再解释「密文为什么不跟着数据目录走」）。全域唯一解析口径，勿在域内自算。
+ */
+export function encryptDir(): string {
+  return `${storageDir()}/.ENCRYPT`;
+}
+
 export interface JsonFileStoreOptions<T> {
   /** 缺失/损坏时落盘的初始值（默认 []）。传函数则每次读取时求值（防共享引用被外部 mutate） */
   defaultValue?: T | (() => T);

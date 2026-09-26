@@ -695,6 +695,9 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             mode: 'multi',
             name: '额外检索目录',
             desc: '额外纳入检索的笔记文件夹',
+            help:
+              '三个盒子（文献、卡片、主题）之外的额外检索范围，可填多个，用英文逗号分隔，按 vault 内相对路径解析。留空就是只检索三个盒子。' +
+              '加进来的目录在下一轮增量索引时进库，不需要重建整个索引；把目录摘掉也不会立刻清掉它已经建好的向量。',
             binding: pathsOf('secondBrainAllowPaths'),
             pickerTitle: '选择额外检索目录',
             pickerDesc: '目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
@@ -713,8 +716,20 @@ export function secondBrainSettingsSchema(): SettingsSchema {
           // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值。
           // issue 424/ADR-0184：后四行（段落最小长度 / 上下文限制 / 防抖延迟毫秒 / 光标轮询毫秒）
           // 删除——前两者不再限制（分块全留），防抖 300ms 与轮询 500ms 固化为常量（config.ts）。
-          { type: 'number', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数', binding: numStrBinding('secondBrainTopK', 20), min: 1, max: 50, step: 1 },
-          { type: 'number', name: '对话参考结果数', desc: '对话时注入上下文的参考条数', binding: numStrBinding('secondBrainChatTopK', 20), min: 1, max: 50, step: 1 },
+          {
+            type: 'number', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数',
+            help:
+              '参考检索每次从向量库召回的近邻条数，1 到 50。它是重排之前的召回量：先按这个数把候选捞出来，再交给 rerank 重新排序，所以调大之后重排有更多可选，代价是每次检索的计算量更高。' +
+              '它只作用于参考面板，跟对话侧那一行各算各的，也不钳制对话的条数。',
+            binding: numStrBinding('secondBrainTopK', 20), min: 1, max: 50, step: 1,
+          },
+          {
+            type: 'number', name: '对话参考结果数', desc: '对话时注入上下文的参考条数',
+            help:
+              '和小橘对话时，往上下文里注入多少条检索结果，1 到 50。它与上面的参考结果数各自独立召回、互不钳制，也不共用候选池。' +
+              '调大模型能看到更多材料，每次提问消耗的 token 也更高；对话保留多少轮历史是另一个键，不受这里影响。',
+            binding: numStrBinding('secondBrainChatTopK', 20), min: 1, max: 50, step: 1,
+          },
         ],
       },
       {

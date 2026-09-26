@@ -1,5 +1,5 @@
-/* 源指纹 3a855fb4f8c19cbb · 仓内输入 116 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 942b89e92db84376 · 仓内输入 117 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -19052,6 +19052,152 @@ ${body}`;
     }
   });
 
+  // src/core/ui/help-tip.ts
+  function bodyNodes(text) {
+    const out = [];
+    for (const raw of String(text != null ? text : "").split("\n")) {
+      const line = raw.trim();
+      if (!line) continue;
+      const isItem = line.startsWith("- ");
+      const el = document.createElement("div");
+      el.className = isItem ? "bz-help-li" : "bz-help-p";
+      el.textContent = isItem ? line.slice(2).trim() : line;
+      out.push(el);
+    }
+    return out;
+  }
+  function attachHelpTip(anchor, opts) {
+    anchor.classList.add("bz-help-anchor");
+    let layer = null;
+    let escHandle3 = null;
+    let pinned = false;
+    let overAnchor = false;
+    let overLayer = false;
+    let openedAt2 = 0;
+    let closeTimer = null;
+    let openTimer = null;
+    const isOpen = () => !!layer;
+    const clearTimers = () => {
+      if (closeTimer !== null) {
+        window.clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+      if (openTimer !== null) {
+        window.clearTimeout(openTimer);
+        openTimer = null;
+      }
+    };
+    const onOutside = (e) => {
+      const t = e.target;
+      if (t && (anchor.contains(t) || (layer == null ? void 0 : layer.contains(t)))) return;
+      close();
+    };
+    const onScroll = () => close();
+    const place = () => {
+      if (!layer) return;
+      const r = anchor.getBoundingClientRect();
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const h = layer.offsetHeight;
+      const w = layer.offsetWidth;
+      const below = vh - r.bottom;
+      const up = below < h + 12 && r.top > below;
+      const top = Math.min(Math.max(12, up ? r.top - h - 8 : r.bottom + 8), Math.max(12, vh - h - 12));
+      const left = Math.min(Math.max(12, r.left), Math.max(12, vw - w - 12));
+      layer.style.top = `${top}px`;
+      layer.style.left = `${left}px`;
+      layer.classList.toggle("is-up", up);
+    };
+    function close() {
+      clearTimers();
+      pinned = false;
+      overAnchor = false;
+      overLayer = false;
+      document.removeEventListener("pointerdown", onOutside, true);
+      document.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", place);
+      escHandle3 == null ? void 0 : escHandle3.unregister();
+      escHandle3 = null;
+      layer == null ? void 0 : layer.remove();
+      layer = null;
+      anchor.classList.remove("is-open");
+      if (currentClose === close) currentClose = null;
+    }
+    function open() {
+      if (layer || !anchor.isConnected) return;
+      if (currentClose && currentClose !== close) currentClose();
+      const pop = document.createElement("div");
+      pop.className = "bz-help-pop" + (opts.skinClassName ? " " + opts.skinClassName : "");
+      pop.setAttribute("role", "tooltip");
+      for (const n of bodyNodes(opts.text)) pop.appendChild(n);
+      pop.addEventListener("mouseenter", () => {
+        overLayer = true;
+      });
+      pop.addEventListener("mouseleave", () => {
+        overLayer = false;
+        if (!pinned) scheduleClose();
+      });
+      document.body.appendChild(pop);
+      topifyZ(pop);
+      layer = pop;
+      openedAt2 = Date.now();
+      place();
+      anchor.classList.add("is-open");
+      document.addEventListener("pointerdown", onOutside, true);
+      document.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", place);
+      escHandle3 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
+      currentClose = close;
+    }
+    function scheduleClose() {
+      if (pinned) return;
+      if (closeTimer !== null) window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        closeTimer = null;
+        if (!pinned && !overAnchor && !overLayer) close();
+      }, CLOSE_DELAY);
+    }
+    anchor.addEventListener("mouseenter", () => {
+      overAnchor = true;
+      if (isOpen() || openTimer !== null) return;
+      openTimer = window.setTimeout(() => {
+        openTimer = null;
+        if (overAnchor) open();
+      }, HOVER_OPEN_DELAY);
+    });
+    anchor.addEventListener("mouseleave", () => {
+      overAnchor = false;
+      if (openTimer !== null) {
+        window.clearTimeout(openTimer);
+        openTimer = null;
+      }
+      scheduleClose();
+    });
+    anchor.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (isOpen() && Date.now() - openedAt2 < SYNTHETIC_TAP_MS) {
+        pinned = true;
+        return;
+      }
+      if (isOpen()) close();
+      else {
+        open();
+        pinned = true;
+      }
+    });
+  }
+  var HOVER_OPEN_DELAY, CLOSE_DELAY, SYNTHETIC_TAP_MS, currentClose;
+  var init_help_tip = __esm({
+    "src/core/ui/help-tip.ts"() {
+      init_esc_manager();
+      init_z_order();
+      HOVER_OPEN_DELAY = 180;
+      CLOSE_DELAY = 140;
+      SYNTHETIC_TAP_MS = 400;
+      currentClose = null;
+    }
+  });
+
   // src/core/ui/lightbox.ts
   var init_lightbox = __esm({
     "src/core/ui/lightbox.ts"() {
@@ -19362,6 +19508,7 @@ ${body}`;
       init_stat();
       init_progress();
       init_popover();
+      init_help_tip();
       init_suggest();
       init_lightbox();
       init_modal();
@@ -19947,9 +20094,15 @@ ${body}`;
       refreshSettingsGroupCounts(container);
       markSettingSplitRows(container);
     };
+    const attachHelp = (setting, help) => {
+      if (!help) return;
+      const nameEl = setting.nameEl;
+      if (nameEl) attachHelpTip(nameEl, { text: help });
+    };
     const newRowSetting = (body, row) => {
       const setting = new Setting(body).setName(row.name);
       if (row.desc) setting.setDesc(row.desc);
+      attachHelp(setting, row.help);
       if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
       return setting;
     };
@@ -20325,6 +20478,7 @@ ${body}`;
           body.appendChild(wrap);
           const setting = new Setting(wrap).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
+          attachHelp(setting, row.help);
           if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
           const readItems = () => typeof row.items === "function" ? row.items() : row.items;
           const renderItems = () => {
@@ -21780,6 +21934,11 @@ ${bodyText.substring(0, 6e3)}`;
       note: row.note
     });
     const el = holder.firstElementChild;
+    const helpText = row.help;
+    if (helpText) {
+      const nameEl = el.querySelector(".bz-sp-set-name");
+      if (nameEl) attachHelpTip(nameEl, { text: helpText, skinClassName: "bz-sp-skin" });
+    }
     const ctx = makeCtx(el, refresh);
     ctx.rowEl = el;
     const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
@@ -22402,6 +22561,7 @@ ${bodyText.substring(0, 6e3)}`;
         desc: intervalDesc(),
         buttonText: "抓取",
         cta: true,
+        help: "立刻跑一轮抓取，不必等抓取间隔到点。范围是所有启用的源：知乎日报、果壳，以及名单非空的 B 站与 RSS——名单为空的源直接跳过。四个源并行抓，已经在抓的时候再点会提示稍候。这一步只发 HTTP 请求、不调 AI，不产生费用；被风控或抓取失败会弹通知，不静默。",
         onClick: async (ctx) => {
           const r = await fetchNowNews();
           notifyManualFetchResult(r);
@@ -22434,6 +22594,7 @@ ${bodyText.substring(0, 6e3)}`;
         desc: upListDesc(),
         buttonText: "管理",
         cta: true,
+        help: "要跟进的 B 站 UP 主名单，点「管理」增删，行描述里显示当前条数。名单为空时 B 站这一路直接跳过，不算报错，只是不抓。抓取时按名单逐个 UP 主翻最近投稿，每位抓多少条由下面的「B站抓取条数」决定。",
         onClick: (ctx) => openUpManagerModal({
           ups: [...box.bilibiliUps],
           upInfo: { ...box.bilibiliUpInfo },
@@ -22452,6 +22613,7 @@ ${bodyText.substring(0, 6e3)}`;
         desc: rssListDesc(),
         buttonText: "管理",
         cta: true,
+        help: "RSS 订阅列表，点「管理」增删，行描述里显示当前条数。名单为空时 RSS 这一路整个跳过，不报错。抓回来的文章走与其它源统一的入库流程：默认进未读流，要不要立刻生成摘要由上方的「自动摘要」设置决定。",
         onClick: (ctx) => openRssManagerModal({
           feeds: box.rssFeeds.map((f) => ({ ...f })),
           onChanged: async () => {
@@ -28877,6 +29039,7 @@ ${bodyText.substring(0, 6e3)}`;
               type: "toggle",
               name: "自动摘要",
               desc: "新剪藏的文章自动生成 AI 摘要",
+              help: "新入库的剪藏文章自动跑一遍 AI 摘要，每篇消耗一次 LLM 调用。关掉之后，摘要长度、生成标签、标签数量、摘要时机这几行会一起收起来（它们只在这个开关打开时才有意义）。已有摘要不受影响，之后再想要摘要得在文章里手动触发；它只管新进来的文章。",
               binding: { key: AUTO_SUMMARY_KEYS.enabled },
               onChange: (v) => {
                 if (v) ensureAutoSummary(getApp());
@@ -28894,6 +29057,7 @@ ${bodyText.substring(0, 6e3)}`;
               type: "select",
               name: "摘要时机",
               desc: "生成剪藏摘要的时机",
+              help: "immediate＝保存后立刻跑摘要；lazy＝懒触发，打开文章时才跑。前者进库即消耗一次 LLM 调用（批量导入就是 N 次），后者推迟到真正打开时。",
               binding: { key: AUTO_SUMMARY_KEYS.timing },
               options: [
                 { value: "immediate", label: "保存后立刻" },

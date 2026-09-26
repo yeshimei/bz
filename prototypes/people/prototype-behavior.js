@@ -1,5 +1,5 @@
-/* 源指纹 aae39f8ded7babf4 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 7f5e76858367b464 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -4170,8 +4170,18 @@ var BZW_people = (() => {
 
   // src/core/settings-provider.ts
   var _provider = null;
+  var _saver = null;
   function setSettingsProvider(fn) {
     _provider = fn;
+  }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
@@ -6540,8 +6550,9 @@ var BZW_people = (() => {
       avatar: avatarFileOf(fs, `${dataDir}/${name}`)
     };
   }
+  var AVA_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
   function avatarFileOf(fs, dir) {
-    for (const ext of ["jpg", "jpeg", "png", "webp", "gif"]) {
+    for (const ext of AVA_EXTS) {
       const p = `${dir}/avatar.${ext}`;
       try {
         if (fs.existsSync(p)) return p;
@@ -6549,6 +6560,66 @@ var BZW_people = (() => {
       }
     }
     return null;
+  }
+  function peopleMediaDir() {
+    var _a2;
+    const s = tryGetSettings();
+    const dir = String((_a2 = s == null ? void 0 : s.peopleMediaDir) != null ? _a2 : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return dir || "CONFIG/FACES";
+  }
+  function mediaDirName(name) {
+    return String(name).replace(/[\\/:*?"<>|]/g, "_").replace(/^[\s.]+|[\s.]+$/g, "") || "未命名";
+  }
+  function isVaultRelativePath(p) {
+    const norm = String(p != null ? p : "").replace(/\\/g, "/");
+    return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith("/");
+  }
+  async function importAvatarToVault(app, name, externalPath) {
+    var _a2, _b2;
+    const adapter = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.adapter;
+    if (!adapter) return null;
+    const dir = `${peopleMediaDir()}/${mediaDirName(name)}`;
+    let vaultCopy = null;
+    for (const ext of AVA_EXTS) {
+      const p = `${dir}/avatar.${ext}`;
+      try {
+        if (await adapter.exists(p)) {
+          vaultCopy = p;
+          break;
+        }
+      } catch (e) {
+      }
+    }
+    const fs = getFs();
+    if (!fs || !externalPath) return vaultCopy;
+    let srcExt = "";
+    try {
+      if (!fs.existsSync(externalPath)) return vaultCopy;
+      srcExt = String((_b2 = externalPath.split(".").pop()) != null ? _b2 : "").toLowerCase();
+    } catch (e) {
+      return vaultCopy;
+    }
+    if (!AVA_EXTS.includes(srcExt)) return vaultCopy;
+    const target = `${dir}/avatar.${srcExt}`;
+    try {
+      const parts = dir.split("/");
+      let cur = "";
+      for (const seg of parts) {
+        cur = cur ? `${cur}/${seg}` : seg;
+        try {
+          await adapter.mkdir(cur);
+        } catch (e) {
+        }
+      }
+      const buf = fs.readFileSync(externalPath);
+      if (!buf || !buf.length) return vaultCopy;
+      const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+      await adapter.writeBinary(target, ab);
+      return target;
+    } catch (e) {
+      console.warn("[people] 头像入库失败:", name, e);
+      return vaultCopy != null ? vaultCopy : externalPath;
+    }
   }
   function getPreviewFilePath() {
     const s = tryGetSettings();
@@ -7202,14 +7273,25 @@ var BZW_people = (() => {
     return `${(sec / 3600).toFixed(1)} 时`;
   }
   function localResourceUri(path) {
+    var _a2, _b2;
     const norm = path.replace(/\\/g, "/");
+    const escape = (s) => s.replace(/#/g, "%23").replace(/\?/g, "%3F");
     if (typeof window !== "undefined") {
       const base = window.BZW_MEDIA_BASE;
-      if (base) return base + encodeURI(norm).replace(/#/g, "%23").replace(/\?/g, "%3F");
+      if (base) return base + escape(encodeURI(norm));
+      const w = window;
+      const adapter = (_b2 = (_a2 = w.app) == null ? void 0 : _a2.vault) == null ? void 0 : _b2.adapter;
+      const res = adapter == null ? void 0 : adapter.getResourcePath;
+      if (adapter && res && !/^[A-Za-z]:/.test(norm) && !/^(https?:)?\/\//.test(norm) && !norm.startsWith("/")) {
+        try {
+          return res.call(adapter, norm);
+        } catch (e) {
+        }
+      }
     }
     if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
     const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
-    return `app://local/${encodeURI(rel).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
+    return `app://local/${escape(encodeURI(rel))}`;
   }
   function iconButton(icon, cls, attrs) {
     const b = el("button", cls, attrs);
@@ -8204,7 +8286,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           previewCount: (_c = pv == null ? void 0 : pv.msgs.length) != null ? _c : 0,
           newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
           processedTs: (_d = entry == null ? void 0 : entry.lastProcessedTs) != null ? _d : null,
-          avatar: bundle.avatar
+          // 头像入库（456）：外部文件复制进库内媒体文件夹，列表/详情才加载得出来
+          avatar: await importAvatarToVault(getApp(), name, bundle.avatar)
         });
       }
     } catch (e) {
@@ -8255,7 +8338,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
         const existing = (await previewStore.read()).contacts[c.name];
         const { contact, added } = mergePreview(existing, norm, now);
-        if (bundle.avatar) contact.avatar = bundle.avatar;
+        const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
+        if (ava) contact.avatar = ava;
+        else delete contact.avatar;
         await previewStore.upsertContact(c.name, contact);
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
@@ -8912,7 +8997,29 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       console.warn("[people] 读取预览桶失败:", e);
       previewCache = { version: 1, contacts: {} };
     }
+    await migrateAvatars(previewCache);
     return previewCache;
+  }
+  async function migrateAvatars(pv) {
+    const app = getApp();
+    const store2 = new PreviewStore(app);
+    for (const [name, c] of Object.entries(pv.contacts)) {
+      const cur = c.avatar;
+      if (!cur || isVaultRelativePath(cur)) continue;
+      let vPath = null;
+      try {
+        vPath = await importAvatarToVault(app, name, cur);
+      } catch (e) {
+        vPath = null;
+      }
+      if (!vPath || vPath === cur) continue;
+      c.avatar = vPath;
+      try {
+        await store2.upsertContact(name, c);
+      } catch (e) {
+        console.warn("[people] 头像迁移回写失败:", name, e);
+      }
+    }
   }
   function poolRecord(id, contact) {
     var _a2, _b2, _c, _d, _e, _f, _g;
@@ -9304,6 +9411,98 @@ ${s}`).join("\n\n");
     return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
+  // src/core/path-picker.ts
+  var systemPickerImpl = null;
+  function requireNode(moduleName) {
+    var _a2;
+    try {
+      const w = window;
+      return w.require ? (_a2 = w.require(moduleName)) != null ? _a2 : null : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function normalizeSystemPath(p) {
+    const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
+    return s.length > 1 ? s.replace(/\/+$/, "") : s;
+  }
+  function parentDirOf(filePath) {
+    const s = String(filePath).replace(/\\/g, "/");
+    const i = s.lastIndexOf("/");
+    return i <= 0 ? s : s.slice(0, i);
+  }
+  function fileDiskPath(f) {
+    var _a2, _b2;
+    const legacy = f.path;
+    if (typeof legacy === "string" && legacy) return legacy;
+    const webUtils = (_a2 = requireNode("electron")) == null ? void 0 : _a2.webUtils;
+    if (webUtils == null ? void 0 : webUtils.getPathForFile) {
+      try {
+        return String((_b2 = webUtils.getPathForFile(f)) != null ? _b2 : "");
+      } catch (e) {
+      }
+    }
+    return "";
+  }
+  function pickDirViaInput() {
+    return new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.setAttribute("webkitdirectory", "");
+      input.setAttribute("directory", "");
+      input.style.display = "none";
+      document.body.appendChild(input);
+      let settled = false;
+      const finish = (v) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("focus", onFocus);
+        input.remove();
+        resolve(v);
+      };
+      const onFocus = () => {
+        window.setTimeout(() => {
+          var _a2;
+          const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+          if (!f) finish(null);
+        }, 200);
+      };
+      input.addEventListener("change", () => {
+        var _a2;
+        const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+        const p = f ? fileDiskPath(f) : "";
+        finish(p ? parentDirOf(p) : null);
+      });
+      window.addEventListener("focus", onFocus);
+      input.click();
+    });
+  }
+  async function nativePickSystemFolder() {
+    var _a2, _b2, _c, _d;
+    const remote = (_c = (_b2 = requireNode("@electron/remote")) != null ? _b2 : (_a2 = requireNode("electron")) == null ? void 0 : _a2.remote) != null ? _c : null;
+    const dialog = remote == null ? void 0 : remote.dialog;
+    if (dialog == null ? void 0 : dialog.showOpenDialog) {
+      const res = await dialog.showOpenDialog({
+        title: "选择文件夹",
+        properties: ["openDirectory", "dontAddToRecent"]
+      });
+      const picked = (_d = res == null ? void 0 : res.filePaths) == null ? void 0 : _d[0];
+      if (picked && !(res == null ? void 0 : res.canceled)) return normalizeSystemPath(picked);
+      return null;
+    }
+    return pickDirViaInput();
+  }
+  async function pickSystemFolder() {
+    try {
+      const pick = systemPickerImpl != null ? systemPickerImpl : nativePickSystemFolder;
+      const dir = await pick();
+      return dir ? normalizeSystemPath(dir) : null;
+    } catch (e) {
+      notifyActionError(e, "选择文件夹");
+      return null;
+    }
+  }
+
   // src/people/settings.ts
   function peopleSettingsSchema(opts) {
     return {
@@ -9315,15 +9514,50 @@ ${s}`).join("\n\n");
             {
               type: "text",
               name: "数据文件夹",
-              desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口",
+              desc: "微信聊天导出的联系人数据目录",
+              help: "外部数据根目录，结构为 <数据根>/<联系人>/chat.json，voice.json 与 image_desc.json 为兼容兜底。留空则面板不显示数据源入口。换目录后要在数据源弹窗点刷新重新扫描，不会自动重扫。",
               binding: { key: "peopleDataDir" },
-              placeholder: "例如 D:\\微信备份\\export_full"
+              placeholder: "例如 D:\\微信备份\\export_full",
+              actions: [
+                {
+                  text: "选择…",
+                  onClick: async () => {
+                    const dir = await pickSystemFolder();
+                    if (!dir) return;
+                    try {
+                      getSettings().peopleDataDir = dir;
+                      await saveSettings();
+                    } catch (e) {
+                      notifyActionError(e, "保存数据文件夹");
+                    }
+                  }
+                }
+              ]
             },
             {
               type: "toggle",
               name: "群聊纳入列表",
-              desc: "多位发送者的会话也进勾选列表",
+              desc: "群聊会话也进勾选列表",
               binding: { key: "peopleIncludeGroups" }
+            }
+          ]
+        },
+        {
+          icon: "image",
+          name: "媒体",
+          rows: [
+            {
+              type: "path",
+              mode: "single",
+              name: "媒体文件夹",
+              desc: "库内存放头像的文件夹",
+              binding: { key: "peopleMediaDir" },
+              fallbackValue: () => peopleMediaDir()
+            },
+            {
+              type: "info",
+              name: "头像入库",
+              desc: "只有头像复制进库，其余媒体留在外部数据目录"
             }
           ]
         },
@@ -9340,7 +9574,7 @@ ${s}`).join("\n\n");
             {
               type: "select",
               name: "图片描述",
-              desc: "有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
+              desc: "有描述的图片以描述文本进预览",
               binding: { key: "peopleImageDescMode" },
               options: [
                 { value: "file", label: "文件描述" },
@@ -9356,7 +9590,7 @@ ${s}`).join("\n\n");
             {
               type: "toggle",
               name: "系统消息",
-              desc: "撤回与打招呼等锚点消息保留",
+              desc: "撤回与打招呼等消息保留",
               binding: { key: "peopleKeepSystem" }
             }
           ]
@@ -9365,16 +9599,6 @@ ${s}`).join("\n\n");
           icon: "shield",
           name: "隐私",
           rows: [
-            {
-              type: "info",
-              name: "原始媒体不入库",
-              desc: "图片语音视频文件留在外部数据目录，不复制进库"
-            },
-            {
-              type: "info",
-              name: "预览只存文本",
-              desc: "语音转写与图片描述以文本进预览缓存"
-            },
             {
               type: "button",
               name: "清空预览",
