@@ -169,10 +169,11 @@ describe('设置面板（settings-panel）', () => {
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(3); // issue 479：通知组并回通用 → 外观 + 通知 + 存储路径
-    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
-    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('通知');
-    expect(groups[2].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
+    // issue 479：通知组并回通用 → 外观 + 通知 + 存储路径；issue 478：追加「数据资产」组（归物分类表下载行）
+    expect(groups.length).toBe(4);
+    expect([...groups].map((g) => g.querySelector('.bz-sp-group-name')!.textContent)).toEqual([
+      '外观', '通知', '数据存储路径', '数据资产',
+    ]);
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
