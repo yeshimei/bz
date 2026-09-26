@@ -11266,6 +11266,72 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   word-break: break-all;
 }
 
+/* 同步按钮与进度行（issue 465：弹窗内一条进度行，不占画像生成的进度块） */
+.bz-people-ds-syncbtn {
+  flex: none;
+  padding: 4px 14px;
+  font-size: 12.5px;
+}
+.bz-people-ds-syncline {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 16px;
+  border-bottom: 1px dashed var(--card-bd);
+  font-size: 12px;
+}
+.bz-people-ds-sync-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.bz-people-ds-sync-text {
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-ds-syncline-run .bz-people-ds-sync-text {
+  color: var(--acc);
+}
+.bz-people-ds-syncline-err .bz-people-ds-sync-text {
+  color: var(--danger);
+}
+.bz-people-ds-syncline-stop .bz-people-ds-sync-text {
+  color: var(--ink-mut);
+}
+.bz-people-ds-sync-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--card-bd);
+  overflow: hidden;
+}
+.bz-people-ds-sync-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--acc);
+  transition: width 0.25s ease;
+}
+.bz-people-ds-sync-sub {
+  color: var(--ink-mut);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bz-people-ds-syncline-err .bz-people-ds-sync-sub {
+  color: var(--ink);
+}
+.bz-people-ds-sync-fail {
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bz-people-ds-sync-hint {
+  color: var(--ink-mut);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
 /* ==================== 统计 / 档案弹窗（issue 455：详情头入口，壳沿数据源弹窗形制） ==================== */
 .bz-people-pop-layer {
   position: absolute;
@@ -17013,18 +17079,18 @@ canvas { display: block; }
   width: min(calc(100vw - 32px), 1080px);
   height: min(90vh, 860px);
 }
-/* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉） */
+/* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉）。
+   无头行形态（用户拍板）：不留内边距，iframe 满铺——外壳不出标题，手册自带内容即全部信息 */
 .bz-manv-body {
   flex: 1;
   min-height: 0;
   display: flex;
-  padding: 10px 14px 14px;
+  overflow: hidden;
 }
 .bz-manv-frame {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--sp-line);
-  border-radius: 10px;
+  border: 0;
   background: var(--sp-panel);
 }
 @media (max-width: 768px) {
@@ -17033,7 +17099,6 @@ canvas { display: block; }
     height: 88vh;
     height: 88dvh;
   }
-  .bz-manv-body { padding: 8px 10px 12px; }
 }
 /* ==================== 归物本域样式（src/belongings/styles.css，P20「瑞士大字报」） ====================
  * 单源：本文件同时是域内 prototype.html（评审壳）的唯一组件样式来源——先改原型评审、再落这里。
