@@ -385,10 +385,19 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'number', name: '压缩质量 CRF', desc: '压缩画质，越小越高', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],
       },
-      // 「工具」组（ffmpeg / ffprobe / Python 路径、Whisper 模型、缓存文件夹与保留天数）2026-09-16 移除：
-      // 这些是「负责把外部工具装起来」的人才调的参数，不是记笔记的人该面对的旋钮。
-      // **设置键与消费链原样保留**（settings.ts 的键声明 + processor 的读取都没动）：存量用户配过的值
-      // 继续生效，只是不再从面板暴露；留空本来就走工具侧默认值。
+      // 外部工具组（issue 462/ADR-0195）：Python / ffmpeg / ffprobe 三个运行时路径键升格为域无关
+      // 设置（pythonPath / ffmpegPath / ffprobePath，脸谱工具包与知识盒共用同一套值，旧键经
+      // migrateExternalToolKeys 一次性搬值）。2026-09-16 移除整组是因为「记笔记的人不该面对装工具的
+      // 旋钮」；现键位已是两域共用的运行时前提，回归知识盒页收在维护组之前，Whisper 档位走 AI 面板
+      // 「语音转写」组、缓存两键仍不暴露。
+      {
+        icon: 'terminal', name: '外部工具',
+        rows: [
+          { type: 'text', name: 'Python 路径', desc: '视频转文字与脸谱工具共用的 Python 路径', binding: { key: 'pythonPath' }, placeholder: 'python' },
+          { type: 'text', name: 'ffmpeg 路径', desc: '视频处理与脸谱媒体导出共用的 ffmpeg 路径', binding: { key: 'ffmpegPath' }, placeholder: 'ffmpeg' },
+          { type: 'text', name: 'ffprobe 路径', desc: '视频处理与脸谱媒体导出共用的 ffprobe 路径', binding: { key: 'ffprobePath' }, placeholder: 'ffprobe' },
+        ],
+      },
       {
         icon: 'wrench', name: '维护',
         rows: [

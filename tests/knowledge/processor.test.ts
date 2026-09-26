@@ -269,9 +269,10 @@ describe('BatchRunner', () => {
       knowledgeOutputDir: 'D:/videos',
       knowledgeCompress: true,
       knowledgeCrf: 26,
-      knowledgeFfmpegPath: 'ffmpeg',
-      knowledgeFfprobePath: 'ffprobe',
-      knowledgePythonPath: 'python',
+      // issue 462：外部工具三键升格共享，processor 读新键（旧 knowledge* 键已退役）
+      ffmpegPath: 'ffmpeg',
+      ffprobePath: 'ffprobe',
+      pythonPath: 'python',
       asrEngine: 'faster-whisper',
       asrWhisperModel: 'medium',
       knowledgeCacheDir: 'D:/cache',

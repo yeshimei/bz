@@ -178,7 +178,7 @@ function seedPeople(): string {
 	});
 }
 
-/** people-preview.json 种子：陈默（比构造目录少 12 条 → 有更新）/ 林晚（同量 → 无更新）/ 周远山（已导未画）/ 苏黎（只在桶里、没卡 → 452 上墙） */
+/** people-preview.json 种子：陈默（比构造目录少 12 条 → 有更新）/ 林晚（同量 → 无更新）/ 周远山（已导未画）/ 苏黎（只在仓里、没卡 → 452 上墙） */
 function seedPreview(dsFiles: Record<string, string>): string {
 	const read = (name: string): Array<Record<string, unknown>> => {
 		try {
@@ -188,13 +188,14 @@ function seedPreview(dsFiles: Record<string, string>): string {
 		}
 	};
 	const contacts: Record<string, unknown> = {};
-	/** 预览桶侧写统计与真实实现同源（collectMediaStats）——issue 454 的媒体数由它供数 */
+	/** 聊天仓侧写统计与真实实现同源（collectMediaStats）——issue 454 的媒体数由它供数 */
 	const build = (name: string, take: number) => {
 		const raws = read(name).slice(0, take);
 		const msgs = raws.map((m) => ({
 			key: `s${m.sid}:${m.ct}`,
 			ts: (m.ct as number) * 1000,
 			isSender: m.who === '我',
+			type: m.type ?? 1,
 			text: String(m.msg ?? ''),
 		}));
 		const media = collectMediaStats(msgs);
@@ -208,8 +209,8 @@ function seedPreview(dsFiles: Record<string, string>): string {
 	build('陈默', Math.max(0, read('陈默').length - 12));
 	build('林晚', read('林晚').length);
 	build('周远山', read('周远山').length);
-	build('苏黎', read('苏黎').length); // 452：只在预览桶里、people.json 没有卡 → 应由墙合成「待画」折子
-	return JSON.stringify({ version: 1, contacts });
+	build('苏黎', read('苏黎').length); // 452：只在聊天仓里、people.json 没有卡 → 应由墙合成「待画」折子
+	return JSON.stringify({ version: 2, contacts }); // 聊天仓 v2（issue 466）：旧 version 判废
 }
 
 /** 构造数据目录（chat.json 供真扫描管线读取；老周家 = 群聊：两位发送者） */

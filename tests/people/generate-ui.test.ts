@@ -24,7 +24,7 @@ import {
 } from '../../src/people/ui';
 import { DRIFT_ERROR, type PersonJob, type JobView, type JobsSnapshot } from '../../src/people/jobs';
 import { getPeopleFilePath } from '../../src/people/data';
-import { getPreviewFilePath } from '../../src/people/datasource';
+import { getStoreFilePath } from '../../src/people/datasource';
 import type { PersonEntry, UnifiedMessage } from '../../src/people/types';
 
 const T0 = new Date('2026-09-25T08:00:00').getTime();
@@ -71,7 +71,7 @@ function fakeJob(over: Partial<PersonJob> & { person?: string; bond?: string } =
     status: 'running',
     stage: 'extracting',
     msgCount: 3,
-    lastMsgKey: `${T0 + 120_000}|abc`,
+    contentHash: 'fakehash',
     chunks: [meta()],
     batchesDone: 0,
     results: [],
@@ -430,15 +430,15 @@ describe('折子印章四态（451）', () => {
     expect(engine.calls.resume).toEqual(['wxid_a']);
   });
 
-  it('未画谱印章「画脸谱」：有预览素材即交引擎（talker 与素材条数对齐）', async () => {
+  it('未画谱印章「画脸谱」：有仓内素材即交引擎（talker 与素材条数对齐）', async () => {
     const vault = await boot([undrawn()]);
-    vault.files.set(getPreviewFilePath(), JSON.stringify({
-      version: 1,
+    vault.files.set(getStoreFilePath(), JSON.stringify({
+      version: 2,
       contacts: {
         wxid_a: {
           msgs: [
-            { key: 's1:1', ts: T0, isSender: true, text: '早' },
-            { key: 's2:2', ts: T0 + 60_000, isSender: false, text: '早呀' },
+            { key: 's1:1', ts: T0, isSender: true, type: 1, text: '早' },
+            { key: 's2:2', ts: T0 + 60_000, isSender: false, type: 1, text: '早呀' },
           ],
           watermarkSid: 2,
           stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
@@ -456,7 +456,7 @@ describe('折子印章四态（451）', () => {
     expect(engine.calls.start[0].targets[0].msgs).toHaveLength(2);
   });
 
-  it('未画谱印章「画脸谱」但预览桶空：提示先走数据源，不进引擎', async () => {
+  it('未画谱印章「画脸谱」但聊天仓空：提示先走数据源，不进引擎', async () => {
     await boot([undrawn()]);
     const engine = new FakeEngine();
     inject(engine);
@@ -474,13 +474,13 @@ describe('生成入口不重烧（453）', () => {
   const undrawn = (): PersonEntry => ({ id: 'wxid_a', name: '陈默', createdAt: '2026-01-01T00:00:00.000Z', imports: [] });
   const batches = (n: number) => Array.from({ length: n }, () => meta());
   const seedPreview = (vault: MockVault): void => {
-    vault.files.set(getPreviewFilePath(), JSON.stringify({
-      version: 1,
+    vault.files.set(getStoreFilePath(), JSON.stringify({
+      version: 2,
       contacts: {
         wxid_a: {
           msgs: [
-            { key: 's1:1', ts: T0, isSender: true, text: '早' },
-            { key: 's2:2', ts: T0 + 60_000, isSender: false, text: '早呀' },
+            { key: 's1:1', ts: T0, isSender: true, type: 1, text: '早' },
+            { key: 's2:2', ts: T0 + 60_000, isSender: false, type: 1, text: '早呀' },
           ],
           watermarkSid: 2,
           stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },

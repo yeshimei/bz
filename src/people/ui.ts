@@ -5,9 +5,9 @@
  * 视图：list（折子封面墙）/ detail（折页册：其人/我们/事件/时间线四折，issue 455 双卷拆折；
  * 数据统计与补充背景改独立弹窗，入口在详情头返回钮前）+
  * 数据源独立弹窗（447 拍板：默认不打开、打开即扫、默认不勾选、四态水位、
- * 「导入所选」只进预览、「画脸谱」关弹窗回面板跑生成）。
+ * 「导入所选」只进聊天仓、「画脸谱」关弹窗回面板跑生成）。
  * 文件向导已退役（447）：bz-people-import 命令改开数据源弹窗；聊天原文只在本层内存流转
- * （ADR-0191），预览桶只落标签化文本。
+ * （ADR-0191），聊天仓只落标签化文本。
  *
  * 生成链（issue 450 / 451）：本层不再内联跑生成循环——组装 targets 交给 jobs.ts 生成引擎
  * （模块级单例，独立于面板生命周期），面板只订阅快照渲染进度块；done 产物在本层
@@ -15,7 +15,7 @@
  * 重开面板 snapshot+resume 渲染当前任务态，中断任务出「继续生成」。
  * 451：折子封面卡的印章升级为四态（未画谱 / 画谱中 / 画谱中断 / 已画谱）且本身就是动作入口
  * （画脸谱 / 暂停 / 继续生成 / 补画），快照每帧原位只换印章节点。
- * 452：墙成员 = 人物卡 ∪ 预览桶联系人——「导入过预览但没画过」的人也要以「待画」折子上墙
+ * 452：墙成员 = 人物卡 ∪ 聊天仓联系人——「导入过素材但没画过」的人也要以「待画」折子上墙
  * （合成占位卡纯内存零写盘；占位卡上写档案 / 随手记前先 ensureEntry 落一张空卡）。
  */
 import { notice, notifyActionError } from '../core/notice';
@@ -34,20 +34,20 @@ import type { JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapsho
 import type { ContactStats, FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
-  PreviewStore,
+  MessageStore,
   importAvatarToVault,
   isGroupChat,
   isVaultRelativePath,
   listContactDirs,
-  mergePreview,
+  mergeStore,
   normalizeChatJson,
   normalizeOptionsFromSettings,
-  previewMediaBadge,
-  previewToUnified,
+  storeMediaBadge,
+  storeToUnified,
   readContactBundle,
-  type PreviewContact,
-  type PreviewData,
-  type PreviewStats,
+  type MessageStoreData,
+  type StoreContact,
+  type StoreStats,
 } from './datasource';
 import {
   dsModal,
@@ -124,15 +124,15 @@ let jobsBooted = false;
 
 /** 一位数据源联系人的扫描快照（内存态，不入盘） */
 interface DsContact {
-  /** 目录名（即预览桶键 / PersonEntry.id） */
+  /** 目录名（即聊天仓键 / PersonEntry.id） */
   name: string;
   rawCount: number;
   isGroup: boolean;
-  /** 归一化后能进预览的口径统计（按当前预览组开关） */
-  stats: PreviewStats;
-  /** 预览桶已有条数 */
+  /** 归一化后的时间线口径统计（按当前聊天仓开关） */
+  stats: StoreStats;
+  /** 聊天仓已有条数（全量原始消息口径） */
   previewCount: number;
-  /** 扫描时发现的新消息条数（原始 keys − 预览 keys） */
+  /** 扫描时发现的新消息条数（原始 keys − 仓内 keys） */
   newCount: number;
   /** 已画到的提炼锚点（PersonEntry.lastProcessedTs） */
   processedTs: number | null;
@@ -243,7 +243,7 @@ export function closePeoplePanel(): void {
   detailFold = 'p';
   stage = 'list';
   listCache = [];
-  previewCache = null; // 452：预览桶缓存随面板关闭失效（下次打开重读，导入在别的会话改过也能看到）
+  storeCache = null; // 452：聊天仓缓存随面板关闭失效（下次打开重读，导入在别的会话改过也能看到）
   mergeFromId = null;
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
@@ -274,7 +274,7 @@ export function openDataSource(): void {
   void openDsIfIdle();
 }
 
-/** 生成进行中不开弹窗：导入会动预览桶，正在跑的任务指纹会漂移判废（450 沿用 447 守卫） */
+/** 生成进行中不开弹窗：导入会动聊天仓，正在跑的任务指纹会漂移判废（450 沿用 447 守卫） */
 async function openDsIfIdle(): Promise<void> {
   await ensureJobsBoot();
   await ensureJobsWatch();
@@ -311,7 +311,7 @@ function closeDs(): void {
 /** 弹窗行状态（快照 + 水位 → 渲染入参） */
 function dsRowStates(): DsRowState[] {
   return (dsContacts ?? []).map((c) => {
-    const badge = previewMediaBadge(c.stats);
+    const badge = storeMediaBadge(c.stats);
     return {
       name: c.name,
       rawCount: c.rawCount,
@@ -344,7 +344,7 @@ function dsModalState() {
 }
 
 /**
- * 扫描数据源：列目录 → 逐人读 chat.json 归一化 → 对照预览桶算新素材 → 落快照
+ * 扫描数据源：列目录 → 逐人读 chat.json 归一化 → 对照聊天仓算新素材 → 落快照
  * （不导入、不自动勾选——447 拍板：默认不选任何联系人）。
  */
 async function runScan(force = false): Promise<void> {
@@ -366,8 +366,8 @@ async function runScan(force = false): Promise<void> {
     const dirNames = listContactDirs(dataDir);
     const includeGroups = tryGetSettings()?.peopleIncludeGroups === true;
     const opts = normalizeOptionsFromSettings();
-    const previewStore = new PreviewStore(getApp());
-    const [previewData, people] = await Promise.all([previewStore.read(), store.list()]);
+    const msgStore = new MessageStore(getApp());
+    const [storeData, people] = await Promise.all([msgStore.read(), store.list()]);
     for (const name of dirNames) {
       if (!overlay) return; // 面板已关，放弃本次扫描
       const bundle = readContactBundle(dataDir, name);
@@ -375,7 +375,7 @@ async function runScan(force = false): Promise<void> {
       const group = isGroupChat(bundle.raws);
       if (group && !includeGroups) { hidden++; continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-      const pv = previewData.contacts[name];
+      const pv = storeData.contacts[name];
       const keys = new Set((pv?.msgs ?? []).map((m) => m.key));
       const entry = people.find((p) => p.id === name);
       contacts.push({
@@ -408,8 +408,8 @@ async function runScan(force = false): Promise<void> {
 }
 
 /**
- * 导入所选（第一段：原始→预览桶增量）：逐人读 chat.json → normalizeChatJson → mergePreview
- * 只补新消息 → 落 people-preview.json。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
+ * 导入所选（第一段：原始→聊天仓增量）：逐人读 chat.json → normalizeChatJson → mergeStore
+ * upsert 合并（同键覆盖升级）→ 落 people-preview.json。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
  */
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
@@ -424,10 +424,10 @@ async function importDsSelected(): Promise<void> {
   }
   dsImporting = true;
   dsGenerateable = false;
-  dsNotice = '正在导入预览…';
+  dsNotice = '正在导入聊天仓…';
   renderBody();
   const opts = normalizeOptionsFromSettings();
-  const previewStore = new PreviewStore(getApp());
+  const msgStore = new MessageStore(getApp());
   const now = new Date().toISOString();
   const addedOf = new Map<string, number>();
   const readFail: string[] = [];
@@ -437,13 +437,13 @@ async function importDsSelected(): Promise<void> {
       const bundle = readContactBundle(dataDir, c.name);
       if (!bundle) { readFail.push(c.name); continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-      const existing = (await previewStore.read()).contacts[c.name];
-      const { contact, added } = mergePreview(existing, norm, now);
+      const existing = (await msgStore.read()).contacts[c.name];
+      const { contact, added } = mergeStore(existing, norm, now);
       // 头像入库（456）：复制进库内媒体文件夹后存 vault 相对路径；外部文件删了导入后即清
       const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
       if (ava) contact.avatar = ava;
       else delete contact.avatar;
-      await previewStore.upsertContact(c.name, contact);
+      await msgStore.upsertContact(c.name, contact);
       addedOf.set(c.name, added);
       // 快照同步（水位行即时反映，不重扫）
       c.previewCount = contact.msgs.length;
@@ -451,16 +451,16 @@ async function importDsSelected(): Promise<void> {
       c.stats = contact.stats;
     }
   } catch (e) {
-    console.warn('[people] 预览导入失败:', e);
+    console.warn('[people] 聊天仓导入失败:', e);
     dsNotice = '导入失败：读数据文件时出错。';
     dsImporting = false;
     renderBody();
     return;
   }
   dsImporting = false;
-  previewCache = null; // 452：预览桶已变——刚导入的人立刻以「待画」折子上墙
+  storeCache = null; // 452：聊天仓已变——刚导入的人立刻以「待画」折子上墙
   const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
-  const summary = `已导入预览（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
+  const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
   dsGenerateable = fresh > 0 && !readFail.length;
   renderBody();
@@ -477,23 +477,24 @@ async function generateFromDs(): Promise<void> {
   if (!names.length) { notice('还没有勾选联系人', 'warning'); return; }
   const targets: GenTarget[] = [];
   try {
-    const previewData = await new PreviewStore(getApp()).read();
+    const storeData = await new MessageStore(getApp()).read();
     for (const name of names) {
-      const pv = previewData.contacts[name];
-      if (!pv?.msgs.length) continue;
+      const pv = storeData.contacts[name];
+      const unified = storeToUnified(pv?.msgs ?? []);
+      if (!unified.length) continue;
       targets.push({
         talker: name,
         name,
-        msgs: previewToUnified(pv.msgs),
+        msgs: unified,
         kindCounts: pv.kindCounts ?? {},
-        skippedCount: 0, // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
+        skippedCount: 0, // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
         fileLabel: `数据源:${name}`,
         insights: pv.insights,
       });
     }
   } catch (e) {
-    console.warn('[people] 读取预览桶失败:', e);
-    dsNotice = '生成失败：读不到预览缓存。';
+    console.warn('[people] 读取聊天仓失败:', e);
+    dsNotice = '生成失败：读不到聊天仓。';
     renderBody();
     return;
   }
@@ -508,7 +509,7 @@ async function generateFromDs(): Promise<void> {
 
 /**
  * 详情 / 卡面「画脸谱」（448 仅未生成时出；451 卡上印章的「画脸谱 / 补画」也走这里）：
- * 用预览桶里该人物的消息素材单人生成，交引擎后台跑，进度走面板进度块。
+ * 用聊天仓里该人物的消息素材单人生成，交引擎后台跑，进度走面板进度块。
  * 还没有预览素材时提示先走数据源导入。
  *
  * issue 453：**先看有没有可续任务**——中断 / 失败 / 暂停的人直接续跑，绝不走 startJobs。
@@ -523,12 +524,13 @@ async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   let target: GenTarget | null = null;
   try {
-    const pv = (await new PreviewStore(getApp()).read()).contacts[name];
-    if (pv?.msgs.length) {
+    const pv = (await new MessageStore(getApp()).read()).contacts[name];
+    const unified = storeToUnified(pv?.msgs ?? []);
+    if (unified.length) {
       target = {
         talker: name,
         name,
-        msgs: previewToUnified(pv.msgs),
+        msgs: unified,
         kindCounts: pv.kindCounts ?? {},
         skippedCount: 0,
         fileLabel: `数据源:${name}`,
@@ -536,7 +538,7 @@ async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise
       };
     }
   } catch (e) {
-    console.warn('[people] 读取预览桶失败:', e);
+    console.warn('[people] 读取聊天仓失败:', e);
   }
   if (!target) { notice('还没有可画的消息素材——点右上「数据源」导入后再画', 'warning'); return; }
   await startGeneration([target]);
@@ -560,7 +562,7 @@ function resumeExisting(name: string): boolean {
 
 // ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
 
-/** 生成目标（引擎 JobTarget 同形；msgs 必须是全量预览桶消息——引擎断点续跑要重读校验指纹） */
+/** 生成目标（引擎 JobTarget 同形；msgs 必须是全量时间线消息——引擎断点续跑要重读校验指纹） */
 export interface GenTarget {
   talker: string;
   name: string;
@@ -571,8 +573,8 @@ export interface GenTarget {
   skippedCount: number;
   /** 导入记录的 file 标注 */
   fileLabel: string;
-  /** 预览桶侧写里的互动统计汇总（issue 449；旧桶可能没有）→ 引擎拼互动统计叙述段喂画像与时间线 */
-  insights?: PreviewContact['insights'];
+  /** 聊天仓侧写里的互动统计汇总（issue 449；旧数据可能没有）→ 引擎拼互动统计叙述段喂画像与时间线 */
+  insights?: StoreContact['insights'];
   /** 手动档案（issue 455）：planTargets 从人物卡带上 → 引擎拼「档案」素材段进两卷 prompt 头 */
   profile?: PersonProfile;
   /** 跨导入合并的月度密度（issue 455）：planTargets 从导入记录 stats 现算 → buildStatsNote 月度段 */
@@ -788,8 +790,9 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       generatedAt: now,
     };
     await store.setDigest(talker, digest);
-    // 锚点写回：已提炼过的最大消息时间戳（计划内末条；降级路径从指纹键解出 ts，解不出不动锚点）
-    const lastTs = msgs ? msgs[msgs.length - 1].ts : Number(String(job.lastMsgKey ?? '').split('|')[0]);
+    // 锚点写回：已提炼过的最大消息时间戳（计划内末条；重启续跑的任务用引擎落盘的导入跨度末点——
+    // 466 起指纹是内容哈希、解不出 ts——缺了不动锚点）
+    const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse(job.importRecord?.timeTo ?? '');
     if (Number.isFinite(lastTs)) {
       await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, lastTs));
     }
@@ -857,7 +860,7 @@ function isResumable(job: JobView): boolean {
   return job.error !== jobsApi.DRIFT_ERROR;
 }
 
-/** 有无活跃任务（运行中 / 排队或已暂停）：数据源导入类守卫用它（导入会动预览桶 → 指纹漂移判废） */
+/** 有无活跃任务（运行中 / 排队或已暂停）：数据源导入类守卫用它（导入会动聊天仓 → 指纹漂移判废） */
 function jobsBusy(): boolean {
   return (jobsCache?.queue ?? []).some((j) => j.status === 'running' || j.status === 'paused');
 }
@@ -927,7 +930,7 @@ function syncWallSeals(): void {
 
 /**
  * 印章动作派发（451 四态的下一步）：暂停 / 继续生成 / 画脸谱·补画·重新生成。
- * draw 与 redraw 同一实现——都走预览桶素材单人生成，引擎 auto 判全量 / 增量 / 跳过。
+ * draw 与 redraw 同一实现——都走聊天仓素材单人生成，引擎 auto 判全量 / 增量 / 跳过。
  * 只认这四个 kind（不设兜底分支：认不出的 hook 不该顺手烧一次 AI）。
  */
 async function sealAction(kind: string, id: string): Promise<void> {
@@ -1154,29 +1157,29 @@ function renderPopLayer(people: PersonEntry[]): void {
 
 // ---------------- 列表（折子封面墙） ----------------
 
-/** 预览桶会话缓存（issue 452：墙要预览桶算素材水位；18k 条的桶每次切视图重读会卡） */
-let previewCache: PreviewData | null = null;
+/** 聊天仓会话缓存（issue 452：墙要聊天仓算素材水位；18k 条的仓每次切视图重读会卡） */
+let storeCache: MessageStoreData | null = null;
 
-/** 预览桶读取（缓存到「导入预览成功」「关闭面板」失效；读不到按空桶兜底，照常出已有卡） */
-async function previewData(): Promise<PreviewData> {
-  if (previewCache) return previewCache;
+/** 聊天仓读取（缓存到「导入成功」「关闭面板」失效；读不到按空仓兜底，照常出已有卡） */
+async function storeData(): Promise<MessageStoreData> {
+  if (storeCache) return storeCache;
   try {
-    previewCache = await new PreviewStore(getApp()).read();
+    storeCache = await new MessageStore(getApp()).read();
   } catch (e) {
-    console.warn('[people] 读取预览桶失败:', e);
-    previewCache = { version: 1, contacts: {} };
+    console.warn('[people] 读取聊天仓失败:', e);
+    storeCache = { version: 2, contacts: {} };
   }
-  await migrateAvatars(previewCache);
-  return previewCache;
+  await migrateAvatars(storeCache);
+  return storeCache;
 }
 
 /**
  * 旧桶头像迁移（456）：455 落盘的是库外绝对路径，渲染端 app://local 已经加载不了（裂图根因）。
- * 读到即复制进库内媒体文件夹并回写预览桶；已是库内路径（或外部文件已删且无库内副本）直接跳过——幂等。
+ * 读到即复制进库内媒体文件夹并回写聊天仓；已是库内路径（或外部文件已删且无库内副本）直接跳过——幂等。
  */
-async function migrateAvatars(pv: PreviewData): Promise<void> {
+async function migrateAvatars(pv: MessageStoreData): Promise<void> {
   const app = getApp();
-  const store = new PreviewStore(app);
+  const store = new MessageStore(app);
   for (const [name, c] of Object.entries(pv.contacts)) {
     const cur = c.avatar;
     if (!cur || isVaultRelativePath(cur)) continue;
@@ -1189,13 +1192,14 @@ async function migrateAvatars(pv: PreviewData): Promise<void> {
 }
 
 /**
- * 预览桶素材 → 合成导入记录（issue 452）：条数 / 首尾跨度取预览桶口径——这就是「已经导入了什么」
- * 的真实写照，让统计行、折子卡、详情头三处口径自动一致。无素材返回 null（清空后的残留桶不建占位卡）。
+ * 聊天仓素材 → 合成导入记录（issue 452）：条数 / 首尾跨度取时间线口径（text 非空，与改前一致）——
+ * 这就是「已经导入了什么」的真实写照，让统计行、折子卡、详情头三处口径自动一致。
+ * 无素材返回 null（清空后的残留仓不建占位卡）。
  * 合成记录**只喂渲染**：写入路径全走 PeopleStore.mutate（读盘上数据），不会落盘。
  */
-function poolRecord(id: string, contact: PreviewContact | undefined): ImportRecord | null {
+function poolRecord(id: string, contact: StoreContact | undefined): ImportRecord | null {
   if (!contact) return null;
-  const msgs = contact.msgs ?? [];
+  const msgs = storeToUnified(contact.msgs ?? []);
   if (!msgs.length) return null;
   return {
     file: `数据源:${id}`,
@@ -1204,9 +1208,9 @@ function poolRecord(id: string, contact: PreviewContact | undefined): ImportReco
     skippedCount: 0,
     timeFrom: new Date(msgs[0].ts).toISOString(),
     timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
-    // issue 454：媒体计数取预览桶侧写（导入时从原始消息算的，语音总时长只有它知道）——
+    // issue 454：媒体计数取聊天仓侧写（导入时从原始消息算的，语音总时长只有它知道）——
     // 缺了它，合成卡与详情头的「语音 / 图片」永远是「—」（大琳 1289 条语音 / 1615 张图看不见）。
-    // 只带媒体三项：月度 / 时段明细预览桶没有，不在这编造——「数据」折见无 monthly 即出占位。
+    // 只带媒体三项：月度 / 时段明细聊天仓没有，不在这编造——「数据」折见无 monthly 即出占位。
     stats: {
       voiceCount: contact.stats?.voiceCount ?? 0,
       voiceTotalSec: contact.stats?.voiceTotalSec ?? 0,
@@ -1216,14 +1220,14 @@ function poolRecord(id: string, contact: PreviewContact | undefined): ImportReco
 }
 
 /**
- * 墙上人员 = 人物卡 ∪ 预览桶联系人（issue 452）。
- * 447 定的「导入所选只进预览」、「画脸谱」才建卡，会让「导入了预览但没画过」的人在面板上彻底不可见
- * （452 实例：大琳 18477 条只在预览桶里）。这里给无卡者合成一张占位卡——**纯内存，people.json 不动**。
- * 卡上已有导入记录时不覆盖（那时的「预览桶更新」归数据源弹窗的「有更新」水位管）。
+ * 墙上人员 = 人物卡 ∪ 聊天仓联系人（issue 452）。
+ * 447 定的「导入所选只进仓」、「画脸谱」才建卡，会让「导入了素材但没画过」的人在面板上彻底不可见
+ * （452 实例：大琳 18477 条只在聊天仓里）。这里给无卡者合成一张占位卡——**纯内存，people.json 不动**。
+ * 卡上已有导入记录时不覆盖（那时的「聊天仓更新」归数据源弹窗的「有更新」水位管）。
  */
 async function wallPeople(): Promise<PersonEntry[]> {
   const people = store ? await store.list() : [];
-  const contacts = (await previewData()).contacts ?? {};
+  const contacts = (await storeData()).contacts ?? {};
   const out: PersonEntry[] = people.map((p) => {
     const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
     return rec ? { ...p, imports: [rec] } : p;
@@ -1265,7 +1269,7 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
     body.appendChild(mergeBar(from.name, to?.name ?? null));
   }
   const wall = foldWall();
-  const preview = await previewData();
+  const preview = await storeData();
   applyWall(people, wall, (name) => preview.contacts[name]?.avatar);
   body.appendChild(wall);
 }
@@ -1305,8 +1309,8 @@ async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<v
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body, people); return; }
   const media = personMedia(p);
-  // 头像：数据目录 avatar.<ext> 的绝对路径随预览桶走（导入时刷新）；没有回落首字印章
-  const avatar = (await previewData()).contacts[p.name]?.avatar;
+  // 头像：数据目录 avatar.<ext> 的绝对路径随聊天仓走（导入时刷新）；没有回落首字印章
+  const avatar = (await storeData()).contacts[p.name]?.avatar;
   body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
 
   // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊
@@ -1515,7 +1519,7 @@ async function aiFillProfile(): Promise<void> {
 
 async function saveProfile(): Promise<void> {
   if (!store || !detailId || !overlay) return;
-  await ensureEntry(detailId); // 452：占位卡（预览桶合成，盘上还没卡）先落一张空卡
+  await ensureEntry(detailId); // 452：占位卡（聊天仓合成，盘上还没卡）先落一张空卡
   const val = (sel: string) => overlay!.querySelector<HTMLInputElement>(sel)?.value?.trim() ?? '';
   const rows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
   const socials = rows

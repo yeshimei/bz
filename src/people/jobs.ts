@@ -3,13 +3,15 @@
  * 关面板转后台继续、重启从断点续跑（已完成批次不重烧 AI）。
  *
  * 持久化：CONFIG/STORAGE/people-jobs.json（storagePath 设置键可覆盖基目录），
- * 每批 AI 采集完成后原子落盘（jsonFileStore + enqueueFileTask 串行写，PreviewStore 同款）。
+ * 每批 AI 采集完成后原子落盘（jsonFileStore + enqueueFileTask 串行写，MessageStore 同款）。
  * **隐私红线（ADR-0191）**：批内对话行、消息原文一律不进这个文件——只落批元数据
  * （from/to/count/媒体数）、已完成批的提炼结果（events/quotes/moments/traits/interests/threads JSON）、
  * 双卷画像 / 时间线成品、互动统计聚合与消息集指纹。
  *
- * 断点续跑判定：指纹 = 全量预览桶消息条数 + 末条派生键（ts|文本哈希）。
- * resume(talker) 重读预览桶重算指纹：一致 → chunkMessages 确定性重切（跳过已完成批）→ 续跑；
+ * 断点续跑判定（466 / ADR-0197 决策 5）：指纹 = 组装素材的**内容哈希**（条数 + 逐条 ts|归属|文本
+ * 链式哈希）。取代旧「条数 + 末条派生键」——聊天仓 upsert 让「条数不变、内容变了」（转写 /
+ * 描述回写升级）成为常态，旧指纹察觉不到，会拿旧素材静默续跑；内容哈希条数不变也判得出。
+ * resume(talker) 重读聊天仓重算指纹：一致 → chunkMessages 确定性重切（跳过已完成批）→ 续跑；
  * 漂移（中途导入过新数据）→ 任务判废（status error），提示删除后重新生成。
  * 落盘兼容（issue 455）：旧版 in-flight job 的单卷 `portrait` 字段读入视作 `person`，
  * 已缓存批次照常复用，从《其人》阶段起重画双卷。
@@ -47,7 +49,7 @@ import { buildMediaNote } from './media';
 import { buildStatsNote, type InsightsSummary } from './insights';
 import { computeStats } from './stats';
 import { PeopleStore } from './data';
-import { PreviewStore, previewToUnified } from './datasource';
+import { MessageStore, storeToUnified } from './datasource';
 import type {
   ContactStats,
   FaceDigest,
@@ -81,10 +83,10 @@ export interface PersonJob {
   fileLabel: string;
   status: JobStatus;
   stage: JobStage;
-  /** 消息集指纹：全量预览桶消息条数 */
+  /** 消息集指纹：全量时间线消息条数（样本警示等人类可读口径） */
   msgCount: number;
-  /** 消息集指纹：末条派生键（ts|文本哈希；续跑校验） */
-  lastMsgKey: string;
+  /** 消息集指纹：组装素材内容哈希（466 / ADR-0197 决策 5；续跑校验——内容变即判废，条数不变也判得出） */
+  contentHash: string;
   /** 切批参数（缺省即 digest.DEFAULTS；续跑按存储值重切，不随设置漂移） */
   chunkOpts?: { maxChars: number; maxCount: number; maxBatches: number };
   /** 批元数据快照（无对话原文） */
@@ -136,8 +138,8 @@ export function emptyJobsData(): JobsData {
 }
 
 /**
- * 生成目标（ui GenTarget 同形）。**msgs 必须是全量预览桶消息**（previewToUnified(pv.msgs)）——
- * 断点续跑要重读预览桶校验指纹并重推导提炼集，这是判定成立的前提。
+ * 生成目标（ui GenTarget 同形）。**msgs 必须是全量时间线消息**（storeToUnified(store.msgs)）——
+ * 断点续跑要重读聊天仓校验指纹并重推导提炼集，这是判定成立的前提。
  */
 export interface JobTarget {
   talker: string;
@@ -149,7 +151,7 @@ export interface JobTarget {
   skippedCount?: number;
   /** 导入记录的 file 标注 */
   fileLabel: string;
-  /** 预览桶侧写互动统计汇总（issue 449）→ 互动统计叙述段 */
+  /** 聊天仓侧写互动统计汇总（issue 449）→ 互动统计叙述段 */
   insights?: InsightsSummary;
   /** 手动档案（issue 455）：转档案段进两卷 prompt（缺省回落 PeopleStore 人物卡现有档案） */
   profile?: PersonProfile;
@@ -203,7 +205,7 @@ export type JobView = PersonJob & {
   queueTotal: number;
 };
 
-// ---------------- 持久化（PreviewStore 同款：jsonFileStore + 串行写队列） ----------------
+// ---------------- 持久化（MessageStore 同款：jsonFileStore + 串行写队列） ----------------
 
 /** 任务文件路径（storagePath 设置键可覆盖基目录，缺省 CONFIG/STORAGE） */
 export function getJobsFilePath(): string {
@@ -278,20 +280,22 @@ const subs = new Set<(s: JobsSnapshot) => void>();
 /** 指纹漂移判废文案（冻结：issue 450 口径，ui 直接透出） */
 export const DRIFT_ERROR = '消息集已变化（导入过新数据），请删除任务后重新生成';
 
-/** FNV-1a 32 位哈希（末条消息键原料；datasource 同算法本地实现——该模块不导出） */
-function hash32(s: string): string {
+/**
+ * 消息集内容哈希指纹（466 / ADR-0197 决策 5）：对组装素材全量链式哈希（条数 + 逐条 ts|归属|文本）。
+ * 取代旧「条数 + 末条派生键」——upsert 让「条数不变、内容变了」成为常态（转写 / 描述回写升级），
+ * 旧指纹察觉不到会静默续跑旧素材；内容哈希**条数不变也能判出**，中间条目变了同样判得出。
+ */
+export function fingerprintOf(msgs: UnifiedMessage[]): { msgCount: number; contentHash: string } {
   let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(36);
-}
-
-/** 消息集指纹：条数 + 末条派生键（ts|文本哈希；对 UnifiedMessage / PreviewMsg 同样可推导） */
-export function fingerprintOf(msgs: UnifiedMessage[]): { msgCount: number; lastMsgKey: string } {
-  const last = msgs[msgs.length - 1];
-  return { msgCount: msgs.length, lastMsgKey: last ? `${last.ts}|${hash32(last.text)}` : '' };
+  const mix = (s: string): void => {
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+  };
+  mix(`n:${msgs.length};`);
+  for (const m of msgs) mix(`${m.ts}|${m.isSender ? 1 : 0}|${m.text}\n`);
+  return { msgCount: msgs.length, contentHash: (h >>> 0).toString(36) };
 }
 
 function nowIso(): string {
@@ -399,17 +403,17 @@ function importRecordOf(t: JobTarget, digestMsgs: UnifiedMessage[]): NonNullable
 
 /**
  * 复用判定（issue 453）：旧任务的已完成批次能不能接上本次目标。
- * 三项全同才算接得上——**指纹**（预览桶没动过）/ **模式**（提炼集口径一致）/**切批参数**
+ * 三项全同才算接得上——**指纹**（聊天仓没动过）/ **模式**（提炼集口径一致）/**切批参数**
  * （重切批边界一致，否则已完成批次对不上号）。只要没成果或已 done，就没有可继承的东西。
  */
 function reusableJob(
   prev: PersonJob,
-  fp: { msgCount: number; lastMsgKey: string },
+  fp: { msgCount: number; contentHash: string },
   mode: 'full' | 'incremental',
   opts: Required<ChunkOptions>
 ): boolean {
   if (prev.status === 'done' || prev.batchesDone <= 0) return false;
-  if (prev.msgCount !== fp.msgCount || prev.lastMsgKey !== fp.lastMsgKey) return false;
+  if (prev.msgCount !== fp.msgCount || prev.contentHash !== fp.contentHash) return false;
   if (prev.mode !== mode) return false;
   const po = { ...DEFAULTS, ...prev.chunkOpts };
   return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
@@ -500,7 +504,7 @@ export async function startJobs(
       // 手动档案段（issue 455）：入参优先，回落人物卡现有档案；排队时定稿（与 statsNote 同一语义）
       profileNote: buildProfileNote(t.profile ?? existing?.profile) || undefined,
     };
-    // 续跑而非重烧（issue 453 主修）：同人 + 预览桶未变 + 模式与切批参数一致 + 有已完成批次
+    // 续跑而非重烧（issue 453 主修）：同人 + 聊天仓未变 + 模式与切批参数一致 + 有已完成批次
     // ⇒ 复用旧任务对象，保留 results / batchesDone（error / interrupted 后重新点「画脸谱」
     // 走的正是这条——超大量人物唯一跑得完的方式；重建 = 从第 1 批重烧 AI）。
     if (prev && reusableJob(prev, fp, effective, chunkFull)) {
@@ -528,7 +532,7 @@ export async function startJobs(
       status: 'paused', // 排队待跑（与用户暂停同态：runner 按序拾起）
       stage: 'chunked',
       msgCount: fp.msgCount,
-      lastMsgKey: fp.lastMsgKey,
+      contentHash: fp.contentHash,
       chunkOpts: chunkFull,
       chunks: chunks.map(chunkMetaOf),
       batchesDone: 0,
@@ -686,13 +690,13 @@ async function runJob(job: PersonJob): Promise<void> {
     emit();
   };
   try {
-    // 1. 重读预览桶 + 指纹校验（漂移 = 中途导入过新数据 → 判废）
-    const pv = await new PreviewStore(st!.app).read();
+    // 1. 重读聊天仓 + 指纹校验（漂移 = 中途导入过新数据 / 素材内容升级 → 判废）
+    const store = await new MessageStore(st!.app).read();
     if (gone(job)) return;
-    const contact = pv.contacts[job.talker];
-    const bucketMsgs = contact ? previewToUnified(contact.msgs) : [];
+    const contact = store.contacts[job.talker];
+    const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
     const fp = fingerprintOf(bucketMsgs);
-    if (fp.msgCount !== job.msgCount || fp.lastMsgKey !== job.lastMsgKey) {
+    if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
       await finish({ status: 'error', error: DRIFT_ERROR, message: DRIFT_ERROR });
       return;
     }
@@ -789,7 +793,7 @@ async function runJob(job: PersonJob): Promise<void> {
       profileNote: job.material?.profileNote,
       sampleEvents: job.mode === 'incremental',
     });
-    // 样本警示（issue 455）：按全量预览桶消息数判（不是已提炼切片），两卷共用同一段
+    // 样本警示（issue 455）：按全量时间线消息数判（不是已提炼切片），两卷共用同一段
     const sampleWarn = sampleWarnOf(job.msgCount);
     await finish({
       stage: 'person',

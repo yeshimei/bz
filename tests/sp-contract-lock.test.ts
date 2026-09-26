@@ -26,7 +26,7 @@ const COUNT_BASELINE: Record<string, number> = {
   diary: 5,
   memo: 11,
   belongings: 6,
-  people: 8, // 2026-09-25 issue 447：数据源 2 + 预览 4（AI 提示 visibleWhen 门控不计）+ 隐私 2（清空按钮不计）；生成组与自动扫描键随自动链路退役
+  people: 11, // 2026-09-26 issue 456/466/462：数据源 3（462 增微信账号目录）+ 媒体 2（456 媒体文件夹 + 头像入库说明）+ 聊天仓 4 + 隐私 2（清空按钮不计）
   clipping: 11,
   favorites: 5,
   cinema: 8,
@@ -39,7 +39,7 @@ const COUNT_BASELINE: Record<string, number> = {
   encrypt: 5,
   'password-vault': 5,
   smartcat: 15,
-  knowledge: 22,
+  knowledge: 25, // 2026-09-26 issue 462：「外部工具」组回归知识盒页（Python/ffmpeg/ffprobe 三行，域无关键位）
 };
 
 describe('settings-panel 运行期契约锁', () => {
