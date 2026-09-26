@@ -34,7 +34,7 @@ vi.mock('obsidian', async (importOriginal) => {
 
 const CHG_HTML = '<!DOCTYPE html><html><body><script>\nconst DATA = {"current":"1.24.0","releases":[]};\n</script></body></html>';
 const CHG_HTML_V2 = CHG_HTML.replace('"current":"1.24.0"', '"current":"1.24.1"');
-const STORED = `.obsidian/plugins/bz/${CHANGELOG_FILENAME}`;
+const STORED = `.obsidian/plugins/bz/downloads/${CHANGELOG_FILENAME}`; // issue 480b：落 downloads 单独目录
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 

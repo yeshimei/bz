@@ -37,7 +37,7 @@ import type { DownloadManifest } from '../../src/core/download-manifest';
 const MANIFEST_CACHE_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 const MANIFEST_PATH = '.obsidian/plugins/bz/manifest.json';
 const REMOTE_MANIFEST = 'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/manifest.json';
-const OLD_INDEX_PATH = '.obsidian/plugins/bz/skins/index.json';
+const OLD_INDEX_PATH = '.obsidian/plugins/bz/skins/index.json'; // 旧落位（插件目录根），applySkinManifest 的幂等清扫目标
 
 const appOf = (vault: MockVault) => ({ vault, workspace: {} }) as any;
 
@@ -139,8 +139,8 @@ describe('skinStatus（三态计数：在线资源组按钮的数据源）', () 
     const noir = entryOf('noir', CSS_NOIR);
     const kraft = entryOf('kraft', CSS_KRAFT);
     const ghost = entryOf('ghost', '/* ghost */');
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR); // 就绪
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/kraft.css', '/* 被改过 */'); // hash 不符 → updated
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR); // 就绪
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/kraft.css', '/* 被改过 */'); // hash 不符 → updated
     const st = await skinStatus(appOf(vault), { version: 1, docs: [], skins: [noir, kraft, ghost] });
     expect(st).toEqual({ ready: 1, missing: 1, updated: 1 });
   });
@@ -157,20 +157,20 @@ describe('applySkinManifest（启动链：对比 + 清理 + 注入，绝不下�
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
     const ghost = entryOf('ghost', '/* ghost */');
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     routeFetch({}); // 任何请求都会抛 unmocked → 半自动铁则的守卫
 
     const res = await applySkinManifest(appOf(vault), { version: 1, docs: [], skins: [noir, ghost] }, null);
     expect(res).toMatchObject({ ready: 1, missing: 1, updated: 0, removed: 0 });
     expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(true);
     expect(injectedSkinPackCss()).toContain('.bz-bs-skin-noir');
-    expect(vault.files.has('.obsidian/plugins/bz/skins/bookshelf/ghost.css')).toBe(false);
+    expect(vault.files.has('.obsidian/plugins/bz/downloads/skins/bookshelf/ghost.css')).toBe(false);
   });
 
   it('文件被改写 → 不入就绪表但计入 updated（等用户点「更新」重下）', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', '/* 被改过 */');
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', '/* 被改过 */');
     routeFetch({});
 
     const res = await applySkinManifest(appOf(vault), { version: 1, docs: [], skins: [noir] }, null);
@@ -182,12 +182,12 @@ describe('applySkinManifest（启动链：对比 + 清理 + 注入，绝不下�
   it('下架 = previous 缓存清单有、新清单无 → 删本地文件', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     routeFetch({});
 
     const res = await applySkinManifest(appOf(vault), { version: 1, docs: [], skins: [] }, { version: 1, docs: [], skins: [noir] });
     expect(res.removed).toBe(1);
-    expect(vault.files.has('.obsidian/plugins/bz/skins/bookshelf/noir.css')).toBe(false);
+    expect(vault.files.has('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css')).toBe(false);
     expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(false);
     expect(injectedSkinPackCss()).toBe('');
   });
@@ -195,7 +195,7 @@ describe('applySkinManifest（启动链：对比 + 清理 + 注入，绝不下�
   it('版本区间外 → 不加载也不残留（previous 里有就一并清掉）', async () => {
     const vault = newVault('3.0.0');
     const noir = entryOf('noir', CSS_NOIR, { until: '2.0.0' });
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     routeFetch({});
 
     const res = await applySkinManifest(appOf(vault), { version: 1, docs: [], skins: [noir] }, { version: 1, docs: [], skins: [noir] });
@@ -226,7 +226,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
     const kraft = entryOf('kraft', CSS_KRAFT);
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR); // 已就绪 → 不拉
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR); // 已就绪 → 不拉
     routeFetch({
       [REMOTE_MANIFEST]: manifestText([noir, kraft]), // 混在请求里也无妨（真实流程先 refreshManifest）
       'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
@@ -234,7 +234,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
 
     const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [noir, kraft] });
     expect(res).toEqual({ downloaded: 1, failed: 0 });
-    expect(vault.files.get('.obsidian/plugins/bz/skins/bookshelf/kraft.css')).toBe(CSS_KRAFT);
+    expect(vault.files.get('.obsidian/plugins/bz/downloads/skins/bookshelf/kraft.css')).toBe(CSS_KRAFT);
     expect(isRemoteSkinReady('bookshelf', 'kraft')).toBe(true);
     expect(injectedSkinPackCss()).toContain('.bz-bs-skin-kraft');
     expect(injectedSkinPackCss()).toContain('.bz-bs-skin-noir');
@@ -251,7 +251,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
 
     const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [noir] });
     expect(res).toEqual({ downloaded: 0, failed: 1 });
-    expect(vault.files.has('.obsidian/plugins/bz/skins/bookshelf/noir.css')).toBe(false);
+    expect(vault.files.has('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css')).toBe(false);
     expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(false);
   });
 
@@ -260,7 +260,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     // 就绪表 = 旧清单条目（旧 hash、旧内容仍在生效）；新清单同一 file 换了 hash
     const stale = entryOf('noir', CSS_NOIR);
     seedSkinPackState([stale]);
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     const fresh = entryOf('noir', '/* noir v2 全新内容 */');
     routeFetch({
       'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/skins/bookshelf/noir.css': new Error('ENOTFOUND'),
@@ -296,7 +296,7 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
   it('全部就绪 → 零请求零下载', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     routeFetch({});
     const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [noir] });
     expect(res).toEqual({ downloaded: 0, failed: 0 });
@@ -308,7 +308,7 @@ describe('loadLocalSkinPack（启动即用缓存清单，不等 15 秒的启动�
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
     vault.files.set(MANIFEST_CACHE_PATH, manifestText([noir]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     const spy = vi.mocked(requestUrl); // 不配置任何 route：一旦发请求就会抛 unmocked
 
     await loadLocalSkinPack(appOf(vault));
@@ -321,7 +321,7 @@ describe('loadLocalSkinPack（启动即用缓存清单，不等 15 秒的启动�
     const vault = newVault('1.0.0');
     const ghost = entryOf('ghost', '/* ghost */', { since: '9.9.9' });
     vault.files.set(MANIFEST_CACHE_PATH, manifestText([ghost]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/ghost.css', '/* ghost */');
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/ghost.css', '/* ghost */');
 
     await loadLocalSkinPack(appOf(vault));
     expect(isRemoteSkinReady('bookshelf', 'ghost')).toBe(false);
@@ -343,7 +343,7 @@ describe('loadLocalSkinPack（启动即用缓存清单，不等 15 秒的启动�
     const vault = new MockVault(); // 无 manifest.json
     const noir = entryOf('noir', CSS_NOIR);
     vault.files.set(MANIFEST_CACHE_PATH, manifestText([noir]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
 
     await loadLocalSkinPack(appOf(vault));
     expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(false);

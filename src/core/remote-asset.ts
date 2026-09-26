@@ -4,7 +4,8 @@
  * 使用手册（core/manual.ts）、更新日志（core/changelog.ts）与下载清单
  * （core/download-manifest.ts）都走这一层：资产不随插件构建分发
  * （main.js 里不含它们），而是发布在 GitHub 仓库 downloads/ 目录下，
- * 写入**插件安装目录**（<configDir>/plugins/bz/）。
+ * 写入**插件安装目录的 downloads/ 单独目录**（<configDir>/plugins/bz/downloads/，
+ * issue 480b 拍板：全部下载资源一个目录，不散落插件目录根）。
  *
  * 为什么放插件目录而不是数据目录：这些是程序资产、跟版本走，
  * 放数据目录会跟「数据存储路径」这个用户键纠缠。
@@ -13,10 +14,12 @@
  * 的第二通道）；两路都 404/失败才报错。内容校验由调用方给的
  * validate 判定（防把 CDN 的错误页写进文件）。
  *
- * 路径口径（ADR-0203）：`fileName` 是**相对 `downloads/` 的路径**（可为多级，
- * 如 `skins/bookshelf/noir.css`）；本地落盘是插件安装目录内的同名路径——
- * 本地即远端 downloads/ 的镜像。仓库旧 `manual/` 目录是改名前的冻结过渡副本
- * （旧版插件还在读它，内容停更，若干版本后删除）。
+ * 路径口径（ADR-0203 / issue 480b）：`fileName` 是**相对 `downloads/` 的路径**
+ * （可为多级，如 `skins/bookshelf/noir.css`）；本地落盘是插件安装目录 downloads/
+ * 内的同名路径——本地 downloads/ 即远端 downloads/ 的逐字镜像。
+ * 仓库旧 `manual/` 目录是改名前的冻结过渡副本（旧版插件还在读它，内容停更，
+ * 若干版本后删除）。旧落位（插件目录根的文档、plugins/bz/skins/ 的皮肤）由
+ * skin-pack 做一次性惰性清扫，插件自身 manifest.json 不经本口径（版本区间校验直读）。
  *
  * 三条口径：`ensureAssetReady` 管「有没有」——无则下载、有则直接用；
  * `refreshAsset` 管「新不新」——入口先本地秒开，再后台核对一次，远端真变了才覆盖；
@@ -33,10 +36,18 @@ export function remotesFor(fileName: string): string[] {
   ];
 }
 
-/** 资产在 vault 里的相对路径（= 插件安装目录内同名路径） */
+/** 资产在 vault 里的相对路径（插件安装目录内；仅插件自身 manifest.json 等非下载资源用） */
 export function assetVaultPath(app: unknown, fileName: string): string {
   const configDir = String((app as { vault?: { configDir?: string } }).vault?.configDir || '.obsidian');
   return `${configDir}/plugins/bz/${fileName}`;
+}
+
+/** 统一资源目录名（远端仓库 downloads/ ↔ 本地插件安装目录 downloads/，逐字镜像） */
+export const DOWNLOADS_DIR = 'downloads';
+
+/** 下载资源的本地路径 = <插件安装目录>/downloads/<fileName>（fileName 相对 downloads/） */
+export function downloadsVaultPath(app: unknown, fileName: string): string {
+  return assetVaultPath(app, `${DOWNLOADS_DIR}/${fileName}`);
 }
 
 /**
@@ -55,7 +66,7 @@ async function ensureDir(app: unknown, relPath: string): Promise<void> {
   for (const part of relPath.slice(0, slash).split('/')) {
     cur = cur ? `${cur}/${part}` : part;
     try {
-      await adapter.mkdir(assetVaultPath(app, cur));
+      await adapter.mkdir(downloadsVaultPath(app, cur));
     } catch (e) {
       /* 已存在 / 不支持 mkdir → 继续下一级 */
     }
@@ -91,7 +102,7 @@ export async function fetchAssetText(
 export async function writeAssetText(app: unknown, fileName: string, text: string): Promise<void> {
   await ensureDir(app, fileName);
   await (app as { vault?: { adapter?: { write?: (p: string, data: string) => Promise<void> } } })
-    .vault!.adapter!.write!(assetVaultPath(app, fileName), text);
+    .vault!.adapter!.write!(downloadsVaultPath(app, fileName), text);
 }
 
 /**
@@ -132,7 +143,7 @@ export async function ensureAssetWithHash(
 export async function hasAsset(app: unknown, fileName: string): Promise<boolean> {
   try {
     return await (app as { vault?: { adapter?: { exists?: (p: string) => Promise<boolean> } } })
-      .vault!.adapter!.exists!(assetVaultPath(app, fileName));
+      .vault!.adapter!.exists!(downloadsVaultPath(app, fileName));
   } catch (e) {
     return false;
   }
@@ -159,7 +170,7 @@ export async function readAsset(app: unknown, fileName: string): Promise<string 
   try {
     if (!(await hasAsset(app, fileName))) return null;
     return await (app as { vault?: { adapter?: { read?: (p: string) => Promise<string> } } })
-      .vault!.adapter!.read!(assetVaultPath(app, fileName));
+      .vault!.adapter!.read!(downloadsVaultPath(app, fileName));
   } catch (e) {
     return null;
   }

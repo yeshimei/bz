@@ -17,7 +17,7 @@ import {
   refreshChangelog,
 } from '../../src/core/changelog';
 import {
-  assetVaultPath,
+  downloadsVaultPath,
   ensureAssetReady,
   hasAsset,
   readAsset,
@@ -26,7 +26,7 @@ import {
 import { MockVault } from '../mock-vault';
 
 const CHG_HTML = '<!DOCTYPE html><html><head><title>包仔更新日志</title></head><body><script>\nconst DATA = {"current":"1.24.0","releases":[]};\n</script></body></html>';
-const STORED = `.obsidian/plugins/bz/${CHANGELOG_FILENAME}`;
+const STORED = `.obsidian/plugins/bz/downloads/${CHANGELOG_FILENAME}`; // issue 480b：落 downloads 单独目录
 const REMOTE_RAW = 'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/bz-changelog.html';
 const REMOTE_CDN = 'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/bz-changelog.html';
 
@@ -47,9 +47,9 @@ describe('remotesFor / assetVaultPath（issue 474 共用内核）', () => {
   });
 
   it('落盘路径 = 插件安装目录（跟随 configDir），非数据目录', () => {
-    expect(assetVaultPath(appOf(newVault()), CHANGELOG_FILENAME)).toBe(STORED);
+    expect(downloadsVaultPath(appOf(newVault()), CHANGELOG_FILENAME)).toBe(STORED);
     expect(changelogVaultPath(appOf(newVault(), { vault: { configDir: '.myconfig' } }))).toBe(
-      `.myconfig/plugins/bz/${CHANGELOG_FILENAME}`,
+      `.myconfig/plugins/bz/downloads/${CHANGELOG_FILENAME}`,
     );
   });
 });

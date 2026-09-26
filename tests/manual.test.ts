@@ -16,7 +16,7 @@ import { MockVault } from './mock-vault';
 
 const MANUAL_HTML = '<!DOCTYPE html><html><head><title>包仔使用手册</title></head><body>目录</body></html>';
 const MANUAL_HTML_V2 = '<!DOCTYPE html><html><head><title>包仔使用手册</title></head><body>目录 v2</body></html>';
-const STORED = `.obsidian/plugins/bz/${MANUAL_FILENAME}`;
+const STORED = `.obsidian/plugins/bz/downloads/${MANUAL_FILENAME}`; // issue 480b：落 downloads 单独目录
 
 const newVault = () => new MockVault();
 const appOf = (vault: MockVault, extra: Record<string, unknown> = {}) =>
@@ -99,8 +99,8 @@ describe('readManual / ensureManualReady（issue 473 二次拍板：OB 内弹窗
   });
 
   it('manualVaultPath：跟随 vault.configDir，缺省兜底 .obsidian', () => {
-    expect(manualVaultPath({ vault: { configDir: '.obsidian' } })).toBe(`.obsidian/plugins/bz/${MANUAL_FILENAME}`);
-    expect(manualVaultPath({})).toBe(`.obsidian/plugins/bz/${MANUAL_FILENAME}`);
+    expect(manualVaultPath({ vault: { configDir: '.obsidian' } })).toBe(`.obsidian/plugins/bz/downloads/${MANUAL_FILENAME}`); // issue 480b
+    expect(manualVaultPath({})).toBe(`.obsidian/plugins/bz/downloads/${MANUAL_FILENAME}`);
   });
 });
 

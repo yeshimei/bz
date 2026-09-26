@@ -92,24 +92,24 @@ describe('三行状态机（有缓存清单）', () => {
   it('已最新 → 已下载禁用；有更新 → 更新；未下载 → 下载', async () => {
     const vault = newVault();
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson([docEntry('changelog', HTML_V1), docEntry('manual', HTML_V1)], []));
-    vault.files.set('.obsidian/plugins/bz/bz-changelog.html', HTML_V1); // ready
-    vault.files.set('.obsidian/plugins/bz/bz-manual.html', '<!DOCTYPE html><html>旧版</html>'); // updated
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', HTML_V1); // ready
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', '<!DOCTYPE html><html>旧版</html>'); // updated
     routeFetch({ [REMOTE_MANIFEST]: manifestJson([docEntry('changelog', HTML_V1), docEntry('manual', HTML_V1)], []) });
 
     const body = await renderGroup(vault);
-    expect([0, 1, 2].map((i) => rowName(body, i))).toEqual(['更新日志', '使用手册', '皮肤']);
+    expect([0, 1, 2].map((i) => rowName(body, i))).toEqual(['更新日志', '使用手册', '主题']);
     expect(rowBtn(body, 0).disabled).toBe(true);
     expect(rowBtn(body, 0).textContent).toBe('已下载');
     expect(rowBtn(body, 1).disabled).toBe(false);
     expect(rowBtn(body, 1).textContent).toBe('更新');
   });
 
-  it('皮肤：有缺失有更新 → 「更新 N」（更新优先，差额在描述里）；全缺 → 「下载 N」；全就绪 → 已下载禁用', async () => {
+  it('主题：有缺失有更新 → 「更新 N」（更新优先，差额在描述里）；全缺 → 「下载 N」；全就绪 → 已下载禁用', async () => {
     const vault = newVault();
     const noir = skinEntry('noir', CSS_NOIR);
     const ghost = skinEntry('ghost', '/* ghost */');
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson([], [noir, ghost]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', '/* 被改过 */'); // updated
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', '/* 被改过 */'); // updated
     // ghost 未下载 → missing；noir 已就绪的对照用例见下
     routeFetch({ [REMOTE_MANIFEST]: manifestJson([], [noir, ghost]) });
 
@@ -119,11 +119,11 @@ describe('三行状态机（有缓存清单）', () => {
     expect(body.querySelectorAll('.bz-sp-res-row')[2].textContent).toContain('另有 1 套未下载');
   });
 
-  it('皮肤全部就绪 → 「已下载」禁用，描述「全部皮肤已是最新」', async () => {
+  it('主题全部就绪 → 「已下载」禁用，描述「全部皮肤已是最新」', async () => {
     const vault = newVault();
     const noir = skinEntry('noir', CSS_NOIR);
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson([], [noir]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', CSS_NOIR);
     routeFetch({ [REMOTE_MANIFEST]: manifestJson([], [noir]) });
 
     const body = await renderGroup(vault);
@@ -149,7 +149,7 @@ describe('失败态（半自动铁则的 UI 面）', () => {
     const vault = newVault();
     const entry = docEntry('changelog', HTML_V1);
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
-    vault.files.set('.obsidian/plugins/bz/bz-changelog.html', HTML_V1);
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', HTML_V1);
     routeFetch({ [REMOTE_MANIFEST]: new Error('ENOTFOUND'), [BACKUP_MANIFEST]: new Error('ETIMEDOUT') });
 
     const body = await renderGroup(vault);
@@ -196,17 +196,17 @@ describe('动作（下载只听用户点）', () => {
 
     rowBtn(body, 0).click();
     await tick(60);
-    expect(vault.files.get('.obsidian/plugins/bz/bz-changelog.html')).toBe(HTML_V2);
+    expect(vault.files.get('.obsidian/plugins/bz/downloads/bz-changelog.html')).toBe(HTML_V2);
     expect(rowBtn(body, 0).textContent).toBe('已下载');
     expect(rowBtn(body, 0).disabled).toBe(true);
     expect(getNoticeMessages().some((m) => (m as string).includes('已下载'))).toBe(false);
   });
 
-  it('皮肤行点「更新 N」→ 只拉非就绪套数并注入；失败套数出 error 通知', async () => {
+  it('主题行点「更新 N」→ 只拉非就绪套数并注入；失败套数出 error 通知', async () => {
     const vault = newVault();
     const noir = skinEntry('noir', CSS_NOIR);
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson([], [noir]));
-    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', '/* 被改过 */');
+    vault.files.set('.obsidian/plugins/bz/downloads/skins/bookshelf/noir.css', '/* 被改过 */');
     // 双源都给坏内容 → failed=1 → error 通知
     routeFetch({
       [REMOTE_MANIFEST]: manifestJson([], [noir]),
@@ -218,7 +218,7 @@ describe('动作（下载只听用户点）', () => {
     expect(rowBtn(body, 2).textContent).toBe('更新 1');
     rowBtn(body, 2).click();
     await tick(60);
-    expect(getNoticeMessages().some((m) => (m as string).includes('1 套皮肤下载失败'))).toBe(true);
+    expect(getNoticeMessages().some((m) => (m as string).includes('1 套主题下载失败'))).toBe(true);
     // 内容仍是坏的 → 依旧不算就绪，按钮回到「更新 1」等下次
     expect(rowBtn(body, 2).textContent).toBe('更新 1');
   });
