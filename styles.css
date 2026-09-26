@@ -15292,6 +15292,10 @@ canvas { display: block; }
   width: 100%;
   display: flex;
   align-items: center;
+  /* 显式靠左：宿主 Obsidian 的 button 默认 justify-content: center，
+    域项靠 .bz-sp-nav-count 的 margin-left:auto 才没被居中，本项没有徽标兜底，
+    漏掉这行就会整块内容居中（2026-09-26 用户报「更新日志/使用手册没左对齐」） */
+  justify-content: flex-start;
   gap: 10px;
   padding: 6px 10px;
   border: 0;

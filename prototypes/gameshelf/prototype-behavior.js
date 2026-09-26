@@ -1,4 +1,4 @@
-/* 源指纹 d762a3f30759f026 · 仓内输入 282 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ef1021dd8e5f213e · 仓内输入 282 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -28516,6 +28516,64 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/core/sha256.ts
+  function toBytes(text) {
+    return new TextEncoder().encode(text);
+  }
+  function normalizeEol(text) {
+    return String(text != null ? text : "").replace(/\r\n?/g, "\n");
+  }
+  function sha256Hex(text) {
+    const bytes = toBytes(String(text != null ? text : ""));
+    const dataLen = bytes.length;
+    const padded = new Uint8Array((dataLen + 8 >> 6) + 1 << 6);
+    padded.set(bytes);
+    padded[dataLen] = 128;
+    const bitLen = dataLen * 8;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
+    view.setUint32(padded.length - 4, bitLen >>> 0, false);
+    let h0 = 1779033703, h1 = 3144134277, h2 = 1013904242, h3 = 2773480762;
+    let h4 = 1359893119, h5 = 2600822924, h6 = 528734635, h7 = 1541459225;
+    const w = new Uint32Array(64);
+    const rotr = (x, n) => (x >>> n | x << 32 - n) >>> 0;
+    for (let off = 0; off < padded.length; off += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4, false);
+      for (let i = 16; i < 64; i++) {
+        const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3) >>> 0;
+        const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10) >>> 0;
+        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
+      }
+      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+      for (let i = 0; i < 64; i++) {
+        const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+        const ch = (e & f ^ ~e & g) >>> 0;
+        const t1 = h + S1 + ch + K[i] + w[i] >>> 0;
+        const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+        const maj = (a & b ^ a & c ^ b & c) >>> 0;
+        const t2 = S0 + maj >>> 0;
+        h = g;
+        g = f;
+        f = e;
+        e = d + t1 >>> 0;
+        d = c;
+        c = b;
+        b = a;
+        a = t1 + t2 >>> 0;
+      }
+      h0 = h0 + a >>> 0;
+      h1 = h1 + b >>> 0;
+      h2 = h2 + c >>> 0;
+      h3 = h3 + d >>> 0;
+      h4 = h4 + e >>> 0;
+      h5 = h5 + f >>> 0;
+      h6 = h6 + g >>> 0;
+      h7 = h7 + h >>> 0;
+    }
+    return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, "0")).join("");
+  }
+  function textSha256(text) {
+    return sha256Hex(normalizeEol(text));
+  }
   var K;
   var init_sha256 = __esm({
     "src/core/sha256.ts"() {
@@ -28663,6 +28721,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
     return text;
+  }
+  async function refreshAsset(app, fileName, validate, label) {
+    try {
+      const text = await fetchAssetText(fileName, validate, label, "页");
+      const local = await readAsset(app, fileName);
+      if (local !== null && textSha256(text) === textSha256(local)) return null;
+      await writeAssetText(app, fileName, text);
+      return text;
+    } catch (e) {
+      return null;
+    }
   }
   var init_remote_asset = __esm({
     "src/core/remote-asset.ts"() {
@@ -63704,7 +63773,8 @@ ${n.content.slice(0, 2e3)}
     ensureManualReady: () => ensureManualReady,
     hasManual: () => hasManual,
     manualVaultPath: () => manualVaultPath,
-    readManual: () => readManual
+    readManual: () => readManual,
+    refreshManual: () => refreshManual
   });
   function manualVaultPath(app) {
     return assetVaultPath(app, MANUAL_FILENAME);
@@ -63725,6 +63795,9 @@ ${n.content.slice(0, 2e3)}
   function ensureManualReady(app) {
     return ensureAssetReady(app, MANUAL_FILENAME, looksLikeManual, "手册");
   }
+  function refreshManual(app) {
+    return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, "手册");
+  }
   var MANUAL_FILENAME;
   var init_manual = __esm({
     "src/core/manual.ts"() {
@@ -63736,6 +63809,7 @@ ${n.content.slice(0, 2e3)}
   // src/settings-panel/manual-viewer.ts
   var manual_viewer_exports = {};
   __export(manual_viewer_exports, {
+    isManualViewerOpen: () => isManualViewerOpen,
     openManualViewer: () => openManualViewer,
     unloadManualViewer: () => unloadManualViewer
   });
@@ -63747,6 +63821,9 @@ ${n.content.slice(0, 2e3)}
     overlay2.style.display = "none";
     const frame2 = overlay2.querySelector(`#${FRAME_ID2} iframe`);
     if (frame2) frame2.srcdoc = "";
+  }
+  function isManualViewerOpen() {
+    return isVisible();
   }
   function unloadManualViewer() {
     escHandle6 == null ? void 0 : escHandle6.unregister();
@@ -63807,7 +63884,8 @@ ${n.content.slice(0, 2e3)}
   __export(changelog_exports, {
     CHANGELOG_FILENAME: () => CHANGELOG_FILENAME,
     changelogVaultPath: () => changelogVaultPath,
-    ensureChangelogReady: () => ensureChangelogReady
+    ensureChangelogReady: () => ensureChangelogReady,
+    refreshChangelog: () => refreshChangelog
   });
   function changelogVaultPath(app) {
     return assetVaultPath(app, CHANGELOG_FILENAME);
@@ -63818,6 +63896,9 @@ ${n.content.slice(0, 2e3)}
   }
   function ensureChangelogReady(app) {
     return ensureAssetReady(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
+  }
+  function refreshChangelog(app) {
+    return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
   }
   var CHANGELOG_FILENAME;
   var init_changelog = __esm({
@@ -63830,6 +63911,7 @@ ${n.content.slice(0, 2e3)}
   // src/settings-panel/changelog.ts
   var changelog_exports2 = {};
   __export(changelog_exports2, {
+    isChangelogOpen: () => isChangelogOpen,
     openChangelogModal: () => openChangelogModal,
     unloadChangelog: () => unloadChangelog
   });
@@ -63841,6 +63923,9 @@ ${n.content.slice(0, 2e3)}
     overlay3.style.display = "none";
     const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
     if (frame2) frame2.srcdoc = "";
+  }
+  function isChangelogOpen() {
+    return isVisible2();
   }
   function unloadChangelog() {
     escHandle7 == null ? void 0 : escHandle7.unregister();
@@ -64812,7 +64897,10 @@ ${n.content.slice(0, 2e3)}
           motionBindPressFeel(popup);
           motionEnsureDust(popup);
         }
-        /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
+        /* 使用手册一键（issue 473；issue 476 加后台核对）：无手册先下载再打开，已下载直接打开
+         * （core/manual 单源）——本地内容**秒开**，随后后台向远端核对一次（不 await，阅读不被
+         * 网络拖住）：远端有新重出的手册才覆盖落盘，且弹窗还开着就热替换成新内容；已关闭则只落盘，
+         * 下次打开即新版。核对全程静默（不转圈、不通知，离线就是保持本地那一版）。
          * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
          * 完成/失败 finally 复原 book-open；就绪后在 Obsidian 内独立弹窗内嵌渲染
          * （manual-viewer，srcdoc 直灌，不走系统浏览器）；失败原因由 core/manual 的
@@ -64829,6 +64917,12 @@ ${n.content.slice(0, 2e3)}
             if (ic2) setIcon(ic2, "loader");
             const html = await core.ensureManualReady(getApp());
             viewer.openManualViewer(html);
+            void this.refreshDocInBackground(
+              () => core.refreshManual(getApp()),
+              (fresh) => {
+                if (viewer.isManualViewerOpen()) viewer.openManualViewer(fresh);
+              }
+            );
           } catch (e) {
             notice((e == null ? void 0 : e.message) || "手册下载失败", "error");
           } finally {
@@ -64839,7 +64933,8 @@ ${n.content.slice(0, 2e3)}
         /* 更新日志一键（issue 474）：与手册同口径——日志不随构建分发，现场从 GitHub 下载
          * manual/bz-changelog.html 再在 OB 内独立弹窗内嵌渲染（iframe srcdoc，与手册同范式）。
          * 下载期间按钮图标换 loader + .is-loading 转圈防重入；失败不兜底（用户拍板：
-         * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。 */
+         * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。
+         * issue 476 与手册同刀：本地版秒开后后台核对一次，有新重出的日志就热替换。 */
         async runChangelogOpen(btn) {
           if (btn.classList.contains("is-loading")) return;
           const ic2 = btn.querySelector(".bz-ic");
@@ -64852,11 +64947,27 @@ ${n.content.slice(0, 2e3)}
             if (ic2) setIcon(ic2, "loader");
             const html = await core.ensureChangelogReady(getApp());
             modal.openChangelogModal(html);
+            void this.refreshDocInBackground(
+              () => core.refreshChangelog(getApp()),
+              (fresh) => {
+                if (modal.isChangelogOpen()) modal.openChangelogModal(fresh);
+              }
+            );
           } catch (e) {
             notice((e == null ? void 0 : e.message) || "更新日志下载失败", "error");
           } finally {
             btn.classList.remove("is-loading");
             if (ic2) setIcon(ic2, "history");
+          }
+        }
+        /** 文档资产后台核对（issue 476）：`refresh` 返回新文本才调 `swap` 换内容；
+         *  同版 / 离线 / 任何异常一律静默——后台动作失败不是用户的操作失败，
+         *  不出通知、不转圈，保持本地已存的那一版即可。 */
+        async refreshDocInBackground(refresh2, swap) {
+          try {
+            const fresh = await refresh2();
+            if (fresh) swap(fresh);
+          } catch (e) {
           }
         }
         /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
