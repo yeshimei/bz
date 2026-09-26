@@ -54,20 +54,29 @@ function getIconIdSet(): Set<string> | string[] | null {
   }
 }
 
+/** 集合成员判定（兼容 Set 与数组两种返回形态） */
+function idHas(ids: Set<string> | string[], name: string): boolean {
+  if (typeof (ids as Set<string>).has === 'function') return (ids as Set<string>).has(name);
+  return Array.isArray(ids) && ids.includes(name);
+}
+
 /**
  * 未知图标名兜底：用 getIconIds() 做交集判断，不在集合内返回 fallback（组图标，再退 'package'）。
  * - getIconIds 不存在/抛错 → 原样返回 name（测试 mock 无此函数时不会丢图标）；
- * - getIconIds 存在但 name 不在集合 → 返回 fallback。
+ * - getIconIds 存在但两边形态都不在集合 → 返回 fallback。
+ *
+ * **前缀坑（务必保留两种形态的判定）**：Obsidian 的 `getIconIds()` 对内置 lucide 图标返回的是
+ * **带 `lucide-` 前缀**的 id——实测 1.13.4 实现为 `Object.keys(<内置表>).map(e => 'lucide-'+e)`
+ * 再拼上自定义图标。而分类表里存的是**不带前缀**的规范名（`setIcon` 两种都接受）。
+ * 只判一种形态会把整张表的图标全判成「未知」→ 全表静默退化成组图标，且不报错。
  */
 export function resolveIconName(name: string | undefined, fallback: string): string {
   const nm = name || '';
   if (!nm) return fallback;
   const ids = getIconIdSet();
   if (!ids) return nm; // 取不到 → 原样使用
-  if (typeof (ids as Set<string>).has === 'function') {
-    return (ids as Set<string>).has(nm) ? nm : fallback;
-  }
-  if (Array.isArray(ids)) return ids.includes(nm) ? nm : fallback;
+  if (idHas(ids, nm) || idHas(ids, 'lucide-' + nm)) return nm;
+  if (nm.startsWith('lucide-') && idHas(ids, nm.slice(7))) return nm;
   return fallback;
 }
 

@@ -279,4 +279,20 @@ describe('resolveIconName 图标兜底', () => {
     iconIdsImpl = () => ['x', 'home'];
     expect(resolveIconName('x', 'package')).toBe('x');
   });
+  // 回归（2026-09-27，实测 obsidian@1.13.4 的 app.js）：getIconIds() 对内置 lucide 返回
+  // **带 lucide- 前缀**的 id（Object.keys(内置表).map(e => 'lucide-'+e)），而表里存的是不带前缀的
+  // 规范名。只判一种形态会把整表判成未知 → 全表静默退化成组图标（不报错，最容易被当"就是这样"）。
+  it('真实形态：getIconIds 返回带 lucide- 前缀的 id → 不带前缀的表名仍判为存在', () => {
+    iconIdsImpl = () => new Set(['lucide-smartphone', 'lucide-home', 'my-custom']);
+    expect(resolveIconName('smartphone', 'package')).toBe('smartphone');
+    expect(resolveIconName('home', 'package')).toBe('home');
+    expect(resolveIconName('my-custom', 'package')).toBe('my-custom'); // 自定义图标不带前缀
+    expect(resolveIconName('nope', 'package')).toBe('package');
+  });
+  it('数组形态同理；带前缀入参也能判存在', () => {
+    iconIdsImpl = () => ['lucide-smartphone'];
+    expect(resolveIconName('smartphone', 'package')).toBe('smartphone');
+    expect(resolveIconName('lucide-smartphone', 'package')).toBe('lucide-smartphone');
+    expect(resolveIconName('lucide-nope', 'package')).toBe('package');
+  });
 });
