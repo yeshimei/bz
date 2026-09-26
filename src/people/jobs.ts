@@ -22,8 +22,29 @@
  */
 import { createAI } from '../core/ai';
 import { onDomainEvent } from '../core/domain-bus';
+import { tryGetSettings } from '../core/settings-provider';
+import type { ExternalToolCallbacks } from '../core/external-tool';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { getPeopleSafeStore, type PeopleSafeStore } from './safe-store';
+import {
+  abortPrepSession,
+  applyPrepProgress,
+  buildPrepSpec,
+  classifyPrepFailure,
+  clearPrepControl,
+  collectPrepInfo,
+  currentPrepSession,
+  newPrepProgress,
+  prepAllDone,
+  prepMediaTotals,
+  prepStageLine,
+  prepPhaseLabel,
+  readPrepSidecars,
+  resetPrepForTests,
+  startPrepSession,
+  writePrepControl,
+  type PrepProgress,
+} from './prep';
 import {
   buildBondPrompt,
   buildChroniclePrompt,
@@ -51,7 +72,14 @@ import { buildMediaNote } from './media';
 import { buildStatsNote, type InsightsSummary } from './insights';
 import { computeStats } from './stats';
 import { PeopleStore } from './data';
-import { storeToUnified } from './datasource';
+import {
+  applyImageMapToMsgs,
+  applyVoiceToMsgs,
+  normalizeOptionsFromSettings,
+  storeStatsOf,
+  storeToUnified,
+  type StoreContact,
+} from './datasource';
 import type {
   ContactStats,
   FaceDigest,
@@ -67,8 +95,11 @@ import type {
 // ---------------- 类型 ----------------
 
 export type JobStatus = 'running' | 'paused' | 'interrupted' | 'done' | 'error';
-/** 成文阶段四段对齐 digest.FaceProgress（issue 455）：person（其人）→ bond（我们）→ chronicle（时间线） */
-export type JobStage = 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
+/**
+ * 任务阶段：preprocess（469 工具段：媒体导出→派生档→图片关联→语音转写，词表与工具
+ * [bz-p].phase 同源）→ chunked → extracting → person（其人）→ bond（我们）→ chronicle（时间线）→ done
+ */
+export type JobStage = 'preprocess' | 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
 
 /** 批元数据（无对话原文；人可读的进度与续跑校验都用它） */
 export type JobChunkMeta = ChunkMeta;
@@ -120,6 +151,12 @@ export interface PersonJob {
   };
   /** 互动统计聚合（导入记录 stats 口径；聚合数字不含原文） */
   stats?: ContactStats;
+  /**
+   * 工具段进度（469 / ADR-0196 决策 2、4；纯元数据无原文）。存在 = 该任务带 prep 段；
+   * donePhases 即断点账本（「已完成段」），重启续跑据此判定工具是否还需起进程——
+   * prep 本身幂等（产物在即跳过、voice.json 即转写水位），进程没了重起只补缺口。
+   */
+  prep?: PrepProgress;
   /** 导入记录元数据（ui 层落 ImportRecord 所需；messageCount = 实际进提炼的条数） */
   importRecord?: { fileLabel: string; skippedCount: number; messageCount: number; timeFrom: string; timeTo: string };
   error?: string;
@@ -277,6 +314,12 @@ interface EngineState {
   retry: RetryPolicy;
   runningJob: string | null;
   pauseRequested: boolean;
+  /**
+   * 工具段暂停闸（469 协作式暂停）：prep 段运行中收到 pauseJobs（用户 / 上锁）时，
+   * pauseJobs 写控制文件让进程待命并触发本闸——runJob 从「等 prep 终结」的 await 里
+   * 醒来先落 paused；恢复时写 resume 控制文件并复用待命进程继续等。
+   */
+  prepGate: (() => void) | null;
 }
 
 /** 批级重试策略：失败后按 RETRY_BACKOFF_MS 逐档退避再试（网络抖动 / 限流自愈） */
@@ -331,6 +374,29 @@ function nowIso(): string {
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
+}
+
+/** 数据根（vault 外；工具段的工作目录与旁路表所在。未配置返回空串） */
+function dataRootOf(): string {
+  return String(tryGetSettings()?.peopleDataDir ?? '').trim();
+}
+
+let lastPrepEmit = 0;
+/** prep 段高频进度节流（工具每条媒体吐一次 [bz-p]——1631 条级的事件流不逐帧全量推快照） */
+function throttledEmit(): void {
+  const now = Date.now();
+  if (now - lastPrepEmit < 400) return;
+  lastPrepEmit = now;
+  emit();
+}
+
+/** job.prep 防御性归一（旧落盘 / 外部改动的坏结构不炸引擎） */
+function prepOf(job: PersonJob): PrepProgress | null {
+  const p = job.prep;
+  if (!p || typeof p !== 'object') return null;
+  if (!Array.isArray(p.donePhases)) p.donePhases = [];
+  if (!p.counts || typeof p.counts !== 'object') p.counts = {};
+  return p;
 }
 
 // ---------------- 进度文案（issue 450 口径冻结） ----------------
@@ -488,6 +554,7 @@ export async function startJobs(
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
       pauseRequested: false,
+      prepGate: null,
     };
   }
   st.app = app;
@@ -659,6 +726,7 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
     runningJob: null,
     pauseRequested: false,
+    prepGate: null,
   };
   wireLock();
   runPromise = null;
@@ -686,23 +754,61 @@ export function resume(talker: string): boolean {
   return true;
 }
 
-/** 暂停：当前批完成后停下（成文阶段的画像 / 时间线调用照常收尾），队列不再拾起后续任务 */
+/**
+ * 暂停：当前批完成后停下（成文阶段的画像 / 时间线调用照常收尾），队列不再拾起后续任务。
+ * 工具段（preprocess）运行中收到暂停 = 协作式让行（ADR-0196 决策 3）：写数据根
+ * `.bz-face/control.json` {action:"pause"} 让进程在本条媒体后待命（不硬杀——模型冷加载
+ * 按分钟计），并触发 prepGate 唤醒 runJob 先落 paused；恢复时写 resume 复用同一进程。
+ * 上锁走本函数（wireLock → pauseJobs）——工具段上锁同样让行而非杀进程。
+ */
 export function pauseJobs(): void {
-  if (st) st.pauseRequested = true;
+  if (!st) return;
+  st.pauseRequested = true;
+  const engine = st;
+  const job = engine.runningJob ? engine.queue.find((j) => j.talker === engine.runningJob) : null;
+  if (job && job.status === 'running' && job.stage === 'preprocess') {
+    const dataRoot = dataRootOf();
+    if (dataRoot) void writePrepControl(dataRoot, 'pause');
+    engine.prepGate?.();
+  }
 }
 
-/** 删除任务（运行中的也删：当前 AI 调用作废，不再落盘、不再出 done 事件）；落盘完成后 resolve */
+/** 删除任务（运行中的也删：AI 调用作废、prep 进程杀掉留状态，不再落盘、不再出 done 事件）；落盘完成后 resolve */
 export async function removeJob(talker: string): Promise<boolean> {
   if (!st) return false;
   const before = st.queue.length;
   st.queue = st.queue.filter((j) => j.talker !== talker);
-  if (st.runningJob === talker) st.runningJob = null;
+  if (st.runningJob === talker) {
+    abortPrepSession(talker); // 中断语义（ADR-0196）：杀进程留状态，产物幂等续
+    st.prepGate?.();
+    st.runningJob = null;
+  }
   if (st.queue.length < before) {
     await persist();
     emit();
     return true;
   }
   return false;
+}
+
+/**
+ * 重试 prep 失败项（469 失败分流：单条媒体 / 语音失败计 failed 继续，进度块给「重试失败项」）：
+ * 清掉 prep 断点账本让工具段重跑（工具幂等——已成功的产物在即跳过，只补失败项），AI 段
+ * 已完成的批次照常保留。返回是否受理。
+ */
+export function retryPrepFailures(talker: string): boolean {
+  if (!st || !st.safe?.unlocked) return false;
+  const job = st.queue.find((j) => j.talker === talker);
+  if (!job || job.status === 'running' || job.status === 'done') return false;
+  const prep = prepOf(job);
+  if (!prep || prep.failed <= 0) return false;
+  prep.donePhases = []; // 重跑 prep：幂等只补失败项
+  job.status = 'paused';
+  job.error = undefined;
+  job.updatedAt = nowIso();
+  void persist().then(emit);
+  kick();
+  return true;
 }
 
 /** 等当前队列跑空（引擎空闲即 resolve；从未启动过则立即 resolve） */
@@ -736,6 +842,161 @@ function gone(job: PersonJob): boolean {
   return !st || st.queue.indexOf(job) < 0;
 }
 
+// ---------------- 工具段 prep（issue 469 / ADR-0196 决策 1、3、7） ----------------
+
+/** prep 进程的协议回调（[bz-step]/[bz-p]/[bz-info] → job 进度；段完成即落盘断点账本） */
+function prepCallbacks(job: PersonJob): ExternalToolCallbacks {
+  return {
+    onStep: (t) => {
+      job.message = t;
+      throttledEmit();
+    },
+    onProgress: (phase, pct) => {
+      if (job.prep) applyPrepProgress(job.prep, phase, pct);
+      throttledEmit();
+    },
+    onInfo: (data) => {
+      const prep = job.prep;
+      if (!prep) return;
+      const before = prep.donePhases.length;
+      if (!collectPrepInfo(prep, data)) return;
+      if (prep.paused) {
+        job.message = typeof data.note === 'string' && data.note.trim() ? data.note.trim() : '已请求暂停——这一条做完就让行';
+      } else if (prep.donePhases.length > before) {
+        // 段完成：账本落盘（断点）+ 阶段行文案推进
+        job.message = prepStageLine(prep);
+        void persist();
+      }
+      emit();
+    },
+    onResult: () => {}, // [bz-result] 由 PrepSession 记账进终态，这里不用
+  };
+}
+
+/** prep 段的设置下发面（462 外部工具组 + AI 面板转写组 → 468 CLI 参数） */
+function buildPrepSpecFromSettings(job: PersonJob, dataRoot: string) {
+  const s = (tryGetSettings() ?? {}) as Record<string, unknown>;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v : undefined);
+  return buildPrepSpec({
+    dataRoot,
+    contact: job.talker,
+    asrEngine: str(s.asrEngine),
+    asrModel: str(s.asrWhisperModel),
+    src: str(s.peopleWxAccountDir),
+    python: str(s.pythonPath),
+    ffmpeg: str(s.ffmpegPath),
+  });
+}
+
+/**
+ * 工具段（469 / ADR-0196 决策 1、3、4、7）：跑 `bz-face prep` 四段。
+ *   - 零媒体联系人自动跳过全段（决策 9）；donePhases 齐四段 = 已完成，续跑不再起进程。
+ *   - 暂停 = 协作式让行：pauseJobs 写控制文件并触发 prepGate，本函数从「等进程终结」的
+ *     await 醒来落 paused——进程待命不退出，恢复时复用（模型冷加载不白付）。
+ *   - 失败分流（决策 7）：[bz-result]{ok:false} = 密钥 / 解密类硬失败，整链停给中文原因；
+ *     failed>0 = 单条媒体 / 语音失败计账继续（进度块给「重试失败项」，重跑 prep 只补缺口）。
+ * 返回 'skipped' | 'ok' | 'halted'（halted = runJob 立即返回，finish 已落状态）。
+ */
+async function runPrepStage(
+  job: PersonJob,
+  finish: (patch: Partial<PersonJob>) => Promise<void>,
+  store: StoreContact | null
+): Promise<'skipped' | 'ok' | 'halted'> {
+  const totals = prepMediaTotals(store?.kindCounts, store?.stats);
+  if (!totals) return 'skipped'; // 零媒体：不为 0 张图起一次进程（决策 9）
+  const prep = prepOf(job);
+  if (prep && prepAllDone(prep)) return 'skipped'; // 断点：prep 已齐段
+  if (!job.prep) job.prep = newPrepProgress(totals);
+
+  const dataRoot = dataRootOf();
+  if (!dataRoot) {
+    await finish({ status: 'error', error: '数据根未配置——媒体导出与语音转写没有可跑的目录', message: '数据根未配置' });
+    return 'halted';
+  }
+
+  job.stage = 'preprocess';
+  job.message = `预处理：${prepPhaseLabel('media')}、${prepPhaseLabel('transcribe')}…`;
+  await persist();
+  emit();
+
+  // 待命进程复用（暂停后恢复）或起新进程；起跑前写 resume 清掉陈旧 pause 指令
+  const existing = currentPrepSession();
+  const session = existing && existing.talker === job.talker ? existing : startPrepSession(job.talker, buildPrepSpecFromSettings(job, dataRoot), prepCallbacks(job));
+  await writePrepControl(dataRoot, 'resume');
+
+  // 等进程终结，或暂停请求先到（协作式让行：进程待命，runJob 先落 paused）
+  let gateFired = false;
+  const gate = new Promise<undefined>((r) => {
+    st!.prepGate = () => {
+      gateFired = true;
+      r(undefined);
+    };
+  });
+  const settled = await Promise.race([session.done, gate]);
+  st!.prepGate = null;
+  if (gateFired || !settled) {
+    await finish({ status: 'paused', message: `已暂停 · ${prepStageLine(job.prep)}` });
+    return 'halted';
+  }
+
+  // 终结分流（[bz-result] 是成果权威；stopped 优先——与 core/external-tool 同口径）
+  const { outcome, result } = settled;
+  if (outcome.stopped) {
+    // 中断（删除任务 / 换人跑）：杀进程留状态——产物幂等，续跑只补缺口
+    await finish({ status: 'paused', message: '预处理已中止——已完成的产物保留，可从断点继续' });
+    return 'halted';
+  }
+  if (result && result.ok === false) {
+    // 密钥 / 解密类硬失败（工具预检 [bz-result]{ok:false,error}）：整链停给中文原因
+    const msg = typeof result.error === 'string' && String(result.error).trim() ? String(result.error).trim() : '预处理失败：工具报错，没有给出原因';
+    await finish({ status: 'error', error: msg, message: msg });
+    return 'halted';
+  }
+  if (result && result.stopped === true) {
+    // 工具收到 stop 控制指令自己退的（控制文件被外部写 stop）：等同暂停，产物保留
+    await finish({ status: 'paused', message: '预处理已停止——已完成的产物保留，可从断点继续' });
+    return 'halted';
+  }
+  if (!outcome.ok || !result || result.ok !== true) {
+    const classified = classifyPrepFailure(outcome);
+    await finish({ status: 'error', error: classified.message, message: classified.message });
+    return 'halted';
+  }
+  const failed = Number(result.failed);
+  if (Number.isFinite(failed) && failed > 0 && job.prep) job.prep.failed = failed;
+  clearPrepControl(dataRoot); // 终态收尾：残留的 pause 会让下一次 prep 起跑即待命
+  return 'ok';
+}
+
+/**
+ * prep 产物合并进聊天仓（ADR-0197 决策 4：vault 的唯一写者是插件；幂等靶向升级）——
+ * voice.json（转写）与 image_map.json（图片↔消息关联）→ 保库记录 store 段的派生 text/img
+ * 字段，走 PeopleSafeStore.write 串行链；旁路表文件保留作兜底（readContactBundle extras
+ * 口径不变）。同 sid 重合并不重复（同键同值不计数）。470 图片描述段可复用同一入口。
+ * 返回升级条数；无产物 / 上锁返回 null。
+ */
+export async function mergePrepArtifactsIntoStore(
+  safe: PeopleSafeStore,
+  talker: string,
+  dataRoot: string,
+  opts?: { previewVoice?: boolean }
+): Promise<{ voice: number; images: number } | null> {
+  if (!safe.unlocked) return null;
+  const side = readPrepSidecars(dataRoot, talker);
+  if (!side || (!side.voice.length && !side.imageMap.length)) return null;
+  const previewVoice = opts?.previewVoice ?? normalizeOptionsFromSettings().previewVoice;
+  const counts = { voice: 0, images: 0 };
+  await safe.write(talker, (rec) => {
+    counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
+    counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+    if (counts.voice + counts.images > 0) {
+      rec.store.stats = storeStatsOf(rec.store.msgs); // 时间线变多 → 统计重算（口径单源 storeStatsOf）
+      rec.store.updatedAt = new Date().toISOString();
+    }
+  });
+  return counts;
+}
+
 async function runJob(job: PersonJob): Promise<void> {
   const asks = asksOf();
   st!.runningJob = job.talker;
@@ -750,19 +1011,43 @@ async function runJob(job: PersonJob): Promise<void> {
     emit();
   };
   try {
-    // 1. 重读保库记录的聊天仓段 + 指纹校验（漂移 = 中途导入过新数据 / 素材内容升级 → 判废）
+    // 1. 读保库记录的聊天仓段（合并前快照）+ 外部漂移粗校验：烧过批（AI 已付费）的素材
+    //    先验指纹，别为一份已经对不上的素材白跑几十分钟工具段
     const safe = st!.safe;
     if (!safe?.unlocked) return; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
-    const contact = (await safe.read(job.talker))?.store;
+    const storeBefore = (await safe.read(job.talker))?.store ?? null;
     if (gone(job)) return;
-    const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
-    const fp = fingerprintOf(bucketMsgs);
-    if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
+    const fp0 = fingerprintOf(storeToUnified(storeBefore?.msgs ?? []));
+    const externalDrift = fp0.msgCount !== job.msgCount || fp0.contentHash !== job.contentHash;
+    if (externalDrift && job.batchesDone > 0) {
       await finish({ status: 'error', error: DRIFT_ERROR, message: DRIFT_ERROR });
       return;
     }
 
-    // 2. 提炼集重推导（与 startJobs 同判定：bucket + 人物卡未变 ⇒ 结果确定）
+    // 2. 工具段 prep（469 / ADR-0196 决策 1）：媒体导出→派生档→图片关联→语音转写。
+    //    零媒体联系人自动跳过（决策 9）；暂停 = 协作式让行；硬失败整链停；单条失败计账继续。
+    const prepState = await runPrepStage(job, finish, storeBefore);
+    if (prepState === 'halted') return; // 暂停 / 硬失败（finish 已落状态）
+    if (prepState === 'ok') {
+      // prep 产物合并进聊天仓（ADR-0197 决策 4：插件是唯一写入者；幂等靶向升级）
+      const merged = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
+      if (gone(job)) return;
+      if (merged && merged.voice + merged.images > 0) {
+        job.message = `预处理完成${job.prep?.failed ? `（失败 ${job.prep.failed} 条，可用「重试失败项」补齐）` : ''}，开始组装素材…`;
+      }
+    }
+
+    // 3. 重读聊天仓 + 指纹判定（prep 合并把转写 / 图片关联升级进 text——指纹在合并后算）。
+    //    判废只认「外部漂移且烧过批」（上面已拦）；此处的指纹变化只能来自本任务自己的
+    //    prep 合并（AI 未烧批时还可能是中途导入的新素材）——预期内的素材升级，刷新落盘值继续。
+    const contact = (await safe.read(job.talker))?.store;
+    if (gone(job)) return;
+    const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
+    const fp = fingerprintOf(bucketMsgs);
+    const drifted = fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash;
+    const refresh = drifted;
+
+    // 4. 提炼集重推导（与 startJobs 同判定：bucket + 人物卡未变 ⇒ 结果确定）
     const existing = (await new PeopleStore(st!.app).list()).find((p) => p.id === job.talker);
     if (gone(job)) return;
     let digestMsgs: UnifiedMessage[];
@@ -777,7 +1062,8 @@ async function runJob(job: PersonJob): Promise<void> {
       digestMsgs = plan.msgs;
     }
 
-    // 3. 确定性重切批（与落盘批元数据比对；不一致同判漂移）
+    // 5. 确定性重切批（与落盘批元数据比对；不一致同判漂移——素材升级重切（refresh）除外，
+    //    那是本任务 prep 合并的预期结果，旧批元数据整体作废重切）
     const optsC: Required<ChunkOptions> = { ...DEFAULTS, ...job.chunkOpts };
     const all = chunkMessages(digestMsgs, { ...optsC, maxBatches: Number.MAX_SAFE_INTEGER });
     if (!all.length) {
@@ -787,13 +1073,38 @@ async function runJob(job: PersonJob): Promise<void> {
     const sampled = all.length > optsC.maxBatches;
     const chunks: DigestChunk[] = sampled ? evenlySample(all, optsC.maxBatches) : all;
     const metas = chunks.map(chunkMetaOf);
-    if (job.chunks.length && JSON.stringify(job.chunks) !== JSON.stringify(metas)) {
+    if (!refresh && job.chunks.length && JSON.stringify(job.chunks) !== JSON.stringify(metas)) {
       await finish({ status: 'error', error: DRIFT_ERROR, message: DRIFT_ERROR });
       return;
     }
     job.chunks = metas;
+    if (refresh) {
+      // 指纹刷新（469）：prep 合并升级 / 首跑即见新素材——把落盘值对齐当前聊天仓，
+      // 之后批级断点续跑的校验以升级后的素材为准
+      job.msgCount = fp.msgCount;
+      job.contentHash = fp.contentHash;
+      job.stats = computeStats(bucketMsgs, contact?.kindCounts ?? {});
+      job.material = {
+        ...(job.material ?? { traits: [], moments: [] }),
+        mediaNote:
+          buildMediaNote({
+            voiceCount: job.stats.voiceCount ?? 0,
+            voiceTotalSec: job.stats.voiceTotalSec ?? 0,
+            imageCount: job.stats.imageCount ?? 0,
+          }) || undefined,
+      };
+      if (bucketMsgs.length) {
+        job.importRecord = {
+          fileLabel: job.fileLabel,
+          skippedCount: job.importRecord?.skippedCount ?? 0,
+          messageCount: digestMsgs.length,
+          timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
+          timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString(),
+        };
+      }
+    }
 
-    // 4. 逐批采集（断点：跳过前 batchesDone 批，results 已存）
+    // 6. 逐批采集（断点：跳过前 batchesDone 批，results 已存）
     job.stage = 'extracting';
     const total = chunks.length;
     for (let i = job.batchesDone; i < total; i++) {
@@ -958,9 +1269,10 @@ function asksOf(): { extract: AskLLM; portrait: AskLLM } {
 
 // ---------------- 测试钩子 ----------------
 
-/** 清空引擎单例（跨用例隔离；不清则上一用例的队列与订阅串场） */
+/** 清空引擎单例（跨用例隔离；不清则上一用例的队列与订阅串场；prep 会话一并清） */
 export function __resetJobsForTests(): void {
   st = null;
   runPromise = null;
   subs.clear();
+  resetPrepForTests();
 }

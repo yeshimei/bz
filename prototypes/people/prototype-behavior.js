@@ -1,5 +1,5 @@
-/* 源指纹 efaf5413da43a0ba · 仓内输入 83 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 d60255fe8f36c881 · 仓内输入 84 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -14213,17 +14213,700 @@ var BZW_people = (() => {
     __resetJobsForTests: () => __resetJobsForTests,
     emptyJobsData: () => emptyJobsData,
     fingerprintOf: () => fingerprintOf2,
+    mergePrepArtifactsIntoStore: () => mergePrepArtifactsIntoStore,
     pauseJobs: () => pauseJobs,
     removeJob: () => removeJob,
     resume: () => resume,
     resumeJobs: () => resumeJobs,
+    retryPrepFailures: () => retryPrepFailures,
     snapshot: () => snapshot,
     startJobs: () => startJobs,
     subscribe: () => subscribe,
     whenIdle: () => whenIdle
   });
   init_domain_bus();
+  init_settings_provider();
   init_data();
+
+  // src/core/external-tool.ts
+  var BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
+  function parseBzLine(line) {
+    const text2 = line.endsWith("\r") ? line.slice(0, -1) : line;
+    const m = text2.match(BZ_LINE_PREFIX_RE);
+    if (!m) {
+      if (!text2.trim()) return null;
+      return { kind: "raw", text: text2 };
+    }
+    const body = text2.slice(m[0].length).trim();
+    switch (m[1]) {
+      case "step":
+        return body ? { kind: "step", text: body } : null;
+      case "p": {
+        const p = parseJsonObject(body);
+        if (!p) return null;
+        return {
+          kind: "progress",
+          phase: typeof p.phase === "string" ? p.phase : null,
+          // pct 允许 null = 该阶段不可估；缺失/非有限数一律归 null（绝不假报）
+          pct: Number.isFinite(p.pct) ? Number(p.pct) : null
+        };
+      }
+      case "info": {
+        const info = parseJsonObject(body);
+        return info ? { kind: "info", data: info } : null;
+      }
+      default: {
+        const r = parseJsonObject(body);
+        return r ? { kind: "result", data: r } : null;
+      }
+    }
+  }
+  function parseJsonObject(body) {
+    try {
+      const v = JSON.parse(body);
+      return v && typeof v === "object" && !Array.isArray(v) ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var MAX_LINE_BYTES = 1024 * 1024;
+  var BzLineSplitter = class {
+    constructor(maxLineBytes = MAX_LINE_BYTES) {
+      this.maxLineBytes = maxLineBytes;
+      this.parts = [];
+      this.len = 0;
+      this.overflowed = false;
+    }
+    /** 喂一段 stdout（Buffer 或 string），返回其中切出的完整行（不含行尾符） */
+    push(chunk) {
+      const buf = typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk;
+      const lines = [];
+      let pos = 0;
+      while (pos < buf.length) {
+        const nl = buf.indexOf(10, pos);
+        if (nl === -1) {
+          this.accumulate(buf.subarray(pos));
+          break;
+        }
+        this.accumulate(buf.subarray(pos, nl));
+        lines.push(this.takeLine());
+        pos = nl + 1;
+      }
+      return lines;
+    }
+    /** 进程终结时冲刷残留半行（无残留返回 null）——无尾换行的最后一行靠这里出列 */
+    flush() {
+      return this.len > 0 || this.overflowed ? this.takeLine() : null;
+    }
+    /** 累积字节；超出单行上限后丢弃后续字节（截断语义，待换行时一并出列） */
+    accumulate(part) {
+      if (this.overflowed) return;
+      const room = this.maxLineBytes - this.len;
+      if (part.length <= room) {
+        this.parts.push(part);
+        this.len += part.length;
+      } else {
+        this.parts.push(part.subarray(0, room));
+        this.len = this.maxLineBytes;
+        this.overflowed = true;
+      }
+    }
+    /** 出列一行（overflow 时为截断行）；CRLF 的 \r 在此剥除 */
+    takeLine() {
+      const s = Buffer.concat(this.parts).toString("utf8");
+      this.parts = [];
+      this.len = 0;
+      this.overflowed = false;
+      return s.endsWith("\r") ? s.slice(0, -1) : s;
+    }
+  };
+  var STDERR_TAIL_CHARS = 2048;
+  function defaultChildProcess() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("child_process");
+    } catch (e) {
+      return null;
+    }
+  }
+  function runExternalTool(spec, cb, deps) {
+    var _a2, _b2;
+    const cp = deps && deps.cp ? deps.cp : defaultChildProcess();
+    const splitter = new BzLineSplitter();
+    let stderrTail = "";
+    let settled = false;
+    let stopped = false;
+    let child = null;
+    let resolveDone;
+    const done = new Promise((r) => {
+      resolveDone = r;
+    });
+    const settle = (o) => {
+      if (settled) return;
+      settled = true;
+      resolveDone(o);
+    };
+    const collectStderr = (d) => {
+      stderrTail += String(d);
+      if (stderrTail.length > STDERR_TAIL_CHARS) stderrTail = stderrTail.slice(-STDERR_TAIL_CHARS);
+    };
+    const dispatchLine = (line) => {
+      const ev = parseBzLine(line);
+      if (!ev) return;
+      switch (ev.kind) {
+        case "step":
+          cb.onStep(ev.text);
+          break;
+        case "progress":
+          cb.onProgress(ev.phase, ev.pct);
+          break;
+        case "info":
+          cb.onInfo(ev.data);
+          break;
+        case "result":
+          cb.onResult(ev.data);
+          break;
+        case "raw":
+          if (cb.onRaw) cb.onRaw(ev.text);
+          break;
+      }
+    };
+    if (!cp) {
+      settle({ ok: false, stopped: false, code: null, stderr: "", error: new Error("仅桌面端可用：外部工具需要 Node.js 子进程") });
+      return { stop: () => {
+      }, done };
+    }
+    const spawnOpts = { shell: !!spec.shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] };
+    if (spec.cwd) spawnOpts.cwd = spec.cwd;
+    if (spec.env) spawnOpts.env = spec.env;
+    try {
+      child = cp.spawn(spec.cmd, spec.args || [], spawnOpts);
+    } catch (e) {
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${(e == null ? void 0 : e.message) || String(e)}`) });
+      return { stop: () => {
+      }, done };
+    }
+    (_a2 = child.stdout) == null ? void 0 : _a2.on("data", (d) => {
+      for (const line of splitter.push(d)) dispatchLine(line);
+    });
+    (_b2 = child.stderr) == null ? void 0 : _b2.on("data", collectStderr);
+    child.on("error", (e) => {
+      if (settled) return;
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
+    });
+    child.on("close", (code) => {
+      if (settled) return;
+      const rest = splitter.flush();
+      if (rest !== null) dispatchLine(rest);
+      const stderr = stderrTail.trim();
+      if (stopped) {
+        settle({ ok: false, stopped: true, code, stderr, error: null });
+        return;
+      }
+      if (code === 0) {
+        settle({ ok: true, stopped: false, code: 0, stderr, error: null });
+        return;
+      }
+      const err = new Error(code === null ? `外部工具异常退出（无退出码）${stderr ? "：" + stderr : ""}` : `外部工具异常退出（退出码 ${code}）${stderr ? "：" + stderr : ""}`);
+      err.stderr = stderr;
+      settle({ ok: false, stopped: false, code, stderr, error: err });
+    });
+    return {
+      stop: () => {
+        var _a3;
+        if (settled || stopped) return;
+        stopped = true;
+        try {
+          (_a3 = child == null ? void 0 : child.kill) == null ? void 0 : _a3.call(child);
+        } catch (e) {
+        }
+      },
+      done
+    };
+  }
+
+  // src/people/sync.ts
+  init_notice();
+  init_settings_provider();
+  var BZ_FACE_INSTALL_HINT = "未找到 bz-face 命令——先安装脸谱工具包（@jwbz/obsidian-face）：在仓库 tools/obsidian-face 目录下运行 npm link，或 npm install -g <仓库>/tools/obsidian-face，装好后重试";
+  var DOCTOR_HINT = "到终端运行 bz-face doctor 可自检环境";
+  var PHASE_LABELS = {
+    key: "取密钥",
+    decrypt: "解密数据库",
+    contacts: "导出聊天",
+    avatar: "头像源"
+  };
+  function syncPhaseLabel(phase) {
+    return phase && PHASE_LABELS[phase] || "";
+  }
+  function emptySyncStats() {
+    return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
+  }
+  function buildSyncSpec(opts) {
+    var _a2, _b2;
+    const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
+    const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
+    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
+    return {
+      cmd: "bz-face",
+      args: [
+        "sync",
+        "--data-root",
+        q(opts.dataRoot),
+        ...src ? ["--src", q(src)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function collectContactInfo(stats, data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return false;
+    if (data.status === "ok") {
+      stats.contacts++;
+      if (data.chat === "unchanged") stats.unchanged++;
+      else stats.written++;
+      if (Number.isFinite(data.msgs)) stats.msgTotal += Number(data.msgs);
+      if (Number.isFinite(data.named)) stats.named += Number(data.named);
+      return true;
+    }
+    if (data.status === "skipped") {
+      stats.skipped++;
+      return true;
+    }
+    if (data.status === "failed") {
+      stats.failed++;
+      stats.failures.push({ name: data.name, error: typeof data.error === "string" ? data.error : "导出失败" });
+      return true;
+    }
+    return false;
+  }
+  function statsFromResult(result, live2) {
+    const num = (v, fallback) => Number.isFinite(v) ? Number(v) : fallback;
+    const failures = Array.isArray(result.failures) ? result.failures.map((f) => {
+      const o = f;
+      if (!o || typeof o.name !== "string") return null;
+      return { name: o.name, error: typeof o.error === "string" ? o.error : "导出失败" };
+    }).filter((f) => f !== null) : live2.failures;
+    const written = num(result.written, live2.written);
+    const unchanged = num(result.unchanged, live2.unchanged);
+    return {
+      contacts: num(result.contacts, written + unchanged),
+      written,
+      unchanged,
+      skipped: num(result.skipped, live2.skipped),
+      failed: num(result.failed, live2.failed),
+      msgTotal: num(result.msgTotal, live2.msgTotal),
+      named: num(result.named, live2.named),
+      failures
+    };
+  }
+  function describeSyncStats(st2) {
+    const parts = [`更新 ${st2.written} 位`, `未变 ${st2.unchanged} 位`, `跳过 ${st2.skipped} 位`];
+    if (st2.failed > 0) parts.push(`${st2.failed} 位失败`);
+    return `同步完成：${parts.join(" · ")}，消息 ${st2.msgTotal} 条`;
+  }
+  function firstLine(text2, max = 200) {
+    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+    return line.length > max ? line.slice(0, max) + "…" : line;
+  }
+  function classifySyncFailure(outcome) {
+    var _a2, _b2;
+    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
+    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
+    const stderr = outcome.stderr || "";
+    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
+      return { message: "Python 缺少同步依赖", hint: `${DOCTOR_HINT}，按提示安装缺的依赖后重试` };
+    }
+    if (/微信/.test(msg)) return { message: firstLine(msg), hint: "" };
+    return {
+      message: firstLine(msg || "同步进程异常退出，没有给出原因"),
+      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
+    };
+  }
+  var state = {
+    outcome: "idle",
+    phase: null,
+    pct: null,
+    step: "",
+    message: "",
+    hint: "",
+    stats: emptySyncStats()
+  };
+  var handle = null;
+  var listeners = /* @__PURE__ */ new Set();
+  function setState(patch) {
+    state = { ...state, ...patch };
+    for (const fn of [...listeners]) fn(state);
+  }
+  function syncState() {
+    return state;
+  }
+  function isSyncing() {
+    return state.outcome === "running";
+  }
+  function subscribeSync(fn) {
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
+  }
+  var runner = runExternalTool;
+  function nonEmpty(v) {
+    const t = typeof v === "string" ? v.trim() : "";
+    return t || void 0;
+  }
+  function emitNotice(s) {
+    if (s.outcome === "ok") {
+      if (s.stats.failed > 0) {
+        const names = s.stats.failures.slice(0, 3).map((f) => f.name).join("、");
+        notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? "等" : ""}）` : ""}——重跑同步只补失败项`, "warning");
+      } else {
+        notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, "success");
+      }
+      return;
+    }
+    if (s.outcome === "error") notice(`同步失败：${firstLine(s.message)}`, "error");
+    if (s.outcome === "stopped") notice("同步已停止——已导出的部分保留，重跑可续传", "info");
+  }
+  function startSync() {
+    var _a2;
+    if (state.outcome === "running") return;
+    const s = tryGetSettings();
+    const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
+    if (!dataRoot) {
+      setState({
+        outcome: "error",
+        phase: null,
+        pct: null,
+        step: "",
+        message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
+        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步",
+        stats: emptySyncStats()
+      });
+      return;
+    }
+    const spec = buildSyncSpec({
+      dataRoot,
+      src: nonEmpty(s == null ? void 0 : s.peopleWxAccountDir),
+      python: nonEmpty(s == null ? void 0 : s.pythonPath)
+    });
+    const live2 = emptySyncStats();
+    let result = null;
+    const cbs = {
+      onStep: (text2) => setState({ step: text2 }),
+      onProgress: (phase, pct) => setState({ phase, pct }),
+      onInfo: (data) => {
+        if (collectContactInfo(live2, data)) setState({});
+      },
+      onResult: (data) => {
+        result = data;
+      }
+    };
+    handle = runner(spec, cbs);
+    setState({ outcome: "running", phase: null, pct: null, step: "", message: "", hint: "", stats: live2 });
+    void handle.done.then((outcome) => {
+      handle = null;
+      finishSync(outcome, result);
+    });
+  }
+  function finishSync(outcome, result) {
+    if (outcome.stopped) {
+      setState({
+        outcome: "stopped",
+        pct: null,
+        message: "已停止",
+        hint: "点「同步」重跑续传——已导出的部分不会重复搬"
+      });
+      emitNotice(state);
+      return;
+    }
+    if (result && result.ok === false) {
+      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
+      setState({ outcome: "error", phase: null, pct: null, message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
+      emitNotice(state);
+      return;
+    }
+    if (outcome.ok && result && result.ok === true) {
+      const st2 = statsFromResult(result, state.stats);
+      setState({ outcome: "ok", phase: null, pct: 100, step: "", message: describeSyncStats(st2), hint: "", stats: st2 });
+      emitNotice(state);
+      return;
+    }
+    const classified = classifySyncFailure(outcome);
+    setState({ outcome: "error", phase: null, pct: null, message: classified.message, hint: classified.hint });
+    emitNotice(state);
+  }
+  function stopSync() {
+    handle == null ? void 0 : handle.stop();
+  }
+
+  // src/people/prep.ts
+  var PREP_PHASE_LABELS = {
+    media: "媒体导出",
+    derive: "派生图片档",
+    map: "图片关联表",
+    transcribe: "语音转写"
+  };
+  var PREP_PHASES = ["media", "derive", "map", "transcribe"];
+  function prepPhaseLabel(phase) {
+    return phase && PREP_PHASE_LABELS[phase] || "";
+  }
+  function prepStageLine(prog) {
+    const label = prepPhaseLabel(prog.phase);
+    if (!label) return prog.donePhases.length >= PREP_PHASES.length ? "预处理完成" : "预处理中…";
+    const c = prog.counts[prog.phase];
+    if (c && c.total > 0) return `${label} ${c.done}/${c.total}`;
+    if (prog.pct != null) return `${label} ${Math.round(prog.pct)}%`;
+    return `${label}…`;
+  }
+  function newPrepProgress(totals) {
+    const counts = {};
+    if ((totals == null ? void 0 : totals.media) && totals.media > 0) counts.media = { done: 0, total: totals.media };
+    if ((totals == null ? void 0 : totals.map) && totals.map > 0) counts.map = { done: 0, total: totals.map };
+    if ((totals == null ? void 0 : totals.transcribe) && totals.transcribe > 0) counts.transcribe = { done: 0, total: totals.transcribe };
+    return { phase: null, pct: null, counts, donePhases: [], failed: 0 };
+  }
+  function prepAllDone(prog) {
+    return PREP_PHASES.every((p) => prog.donePhases.includes(p));
+  }
+  function applyPrepProgress(prog, phase, pct) {
+    prog.phase = phase;
+    prog.pct = pct;
+    if (phase && pct != null) {
+      const c = prog.counts[phase];
+      if (c && c.total > 0) c.done = Math.min(c.total, Math.max(c.done, Math.round(pct / 100 * c.total)));
+    }
+  }
+  function collectPrepInfo(prog, data) {
+    var _a2, _b2;
+    if (data.status === "paused") {
+      prog.paused = true;
+      return true;
+    }
+    if (data.status === "resumed") {
+      prog.paused = false;
+      return true;
+    }
+    const phase = typeof data.phase === "string" ? data.phase : "";
+    if (!phase || !PREP_PHASES.includes(phase)) return false;
+    let done = 0;
+    let total = 0;
+    if (phase === "media") {
+      const counts = data.counts && typeof data.counts === "object" ? data.counts : null;
+      for (const v of Object.values(counts != null ? counts : {})) {
+        const o = v;
+        if (!o || typeof o !== "object") continue;
+        const d = Number(o.done) || 0;
+        const s = Number(o.skip) || 0;
+        const f = Number(o.fail) || 0;
+        done += d + s;
+        total += d + s + f;
+      }
+    } else if (phase === "map") {
+      done = Number(data.mapped) || 0;
+      total = Number(data.refs) || 0;
+    } else {
+      const d = Number(data.done) || 0;
+      const s = Number(data.skip) || 0;
+      const f = Number(data.fail) || 0;
+      done = d + s;
+      total = d + s + f;
+    }
+    if (total > 0) prog.counts[phase] = { done, total };
+    else prog.counts[phase] = { done, total: (_b2 = (_a2 = prog.counts[phase]) == null ? void 0 : _a2.total) != null ? _b2 : 0 };
+    if (!prog.donePhases.includes(phase)) prog.donePhases.push(phase);
+    return true;
+  }
+  function prepOverallPct(prog) {
+    var _a2;
+    const cur = prog.phase && !prog.donePhases.includes(prog.phase) ? ((_a2 = prog.pct) != null ? _a2 : 0) / 100 : 0;
+    const ratio = Math.min(PREP_PHASES.length, prog.donePhases.length + cur) / PREP_PHASES.length;
+    return Math.min(100, Math.max(0, Math.round(ratio * 100)));
+  }
+  function prepMediaTotals(kindCounts, stats) {
+    const kc = kindCounts != null ? kindCounts : {};
+    const pick = (key) => Number.isFinite(kc[key]) ? Number(kc[key]) : 0;
+    let voice = pick("语音");
+    let image = pick("图片");
+    const video = pick("视频");
+    const file = pick("文件");
+    if (!voice && !image && stats) {
+      voice = Number(stats.voiceCount) || 0;
+      image = Number(stats.imageCount) || 0;
+    }
+    const media = voice + image + video + file;
+    if (media <= 0) return null;
+    return { media, transcribe: voice, map: image };
+  }
+  function buildPrepSpec(opts) {
+    var _a2, _b2, _c, _d;
+    const engine = opts.asrEngine === "faster-whisper" ? "faster-whisper" : "sensevoice";
+    const model = (_a2 = opts.asrModel) == null ? void 0 : _a2.trim();
+    const src = ((_b2 = opts.src) == null ? void 0 : _b2.trim()) || void 0;
+    const python = ((_c = opts.python) == null ? void 0 : _c.trim()) || void 0;
+    const ffmpeg = ((_d = opts.ffmpeg) == null ? void 0 : _d.trim()) || void 0;
+    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
+    return {
+      cmd: "bz-face",
+      args: [
+        "prep",
+        q(opts.contact),
+        "--data-root",
+        q(opts.dataRoot),
+        "--asr-engine",
+        engine,
+        ...engine === "faster-whisper" && model ? ["--asr-model", model] : [],
+        ...src ? ["--src", q(src)] : [],
+        ...ffmpeg ? ["--ffmpeg", q(ffmpeg)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function controlFilePath(dataRoot) {
+    const base = dataRoot.endsWith("\\") || dataRoot.endsWith("/") ? dataRoot : `${dataRoot}/`;
+    return `${base}.bz-face/control.json`;
+  }
+  function defaultPrepFs() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      const fs = w.require("fs");
+      return {
+        writeText: (p, d) => fs.writeFileSync(p, d),
+        readText: (p) => {
+          try {
+            return fs.readFileSync(p, "utf8");
+          } catch (e) {
+            return null;
+          }
+        },
+        exists: (p) => {
+          try {
+            return fs.existsSync(p);
+          } catch (e) {
+            return false;
+          }
+        },
+        unlink: (p) => {
+          try {
+            fs.unlinkSync(p);
+          } catch (e) {
+          }
+        }
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  var prepFsOverride = null;
+  function fso() {
+    return prepFsOverride != null ? prepFsOverride : defaultPrepFs();
+  }
+  async function writePrepControl(dataRoot, action) {
+    const fs = fso();
+    const path = controlFilePath(dataRoot);
+    if (!fs || !dataRoot) return false;
+    try {
+      fs.writeText(path, `${JSON.stringify({ action })}
+`);
+      return true;
+    } catch (e) {
+      console.warn("[people] 写控制文件失败:", e);
+      return false;
+    }
+  }
+  function clearPrepControl(dataRoot) {
+    const fs = fso();
+    if (!fs || !dataRoot) return;
+    fs.unlink(controlFilePath(dataRoot));
+  }
+  function readPrepSidecars(dataRoot, contact) {
+    const fs = fso();
+    if (!fs || !dataRoot || !contact) return null;
+    const readArray = (p) => {
+      const raw = fs.readText(p);
+      if (raw == null) return null;
+      try {
+        const parsed = JSON.parse(raw.replace(/^\uFEFF/, ""));
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    const norm = (s) => s.replace(/\\/g, "/");
+    const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
+    const voice = readArray(norm(`${base}/voice.json`));
+    const imageMap = readArray(norm(`${base}/image_map.json`));
+    if (!voice && !imageMap) return null;
+    return {
+      voice: (voice != null ? voice : []).filter((v) => !!v && typeof v === "object"),
+      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
+    };
+  }
+  function firstLine2(text2, max = 200) {
+    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+    return line.length > max ? line.slice(0, max) + "…" : line;
+  }
+  var DOCTOR_HINT2 = "到终端运行 bz-face doctor 可自检环境";
+  function classifyPrepFailure(outcome) {
+    var _a2, _b2;
+    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
+    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
+    const stderr = outcome.stderr || "";
+    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
+      return { message: "Python 缺少预处理依赖", hint: `${DOCTOR_HINT2}，按提示安装缺的依赖后重试` };
+    }
+    if (/微信|数据根|联系人不|chat\.json/.test(msg)) return { message: firstLine2(msg), hint: "" };
+    return {
+      message: firstLine2(msg || "预处理进程异常退出，没有给出原因"),
+      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT2
+    };
+  }
+  var session = null;
+  var sessionSettled = false;
+  var runner2 = runExternalTool;
+  function resetPrepForTests() {
+    session = null;
+    sessionSettled = false;
+  }
+  function currentPrepSession() {
+    return session && session.alive() ? session : null;
+  }
+  function startPrepSession(talker, spec, cbs) {
+    if (session && session.alive()) {
+      if (session.talker === talker) return session;
+      session.handle.stop();
+    }
+    let lastResult = null;
+    sessionSettled = false;
+    const handle2 = runner2(spec, {
+      ...cbs,
+      onResult: (data) => {
+        lastResult = data;
+        cbs.onResult(data);
+      }
+    });
+    const wrapped = {
+      talker,
+      handle: handle2,
+      done: handle2.done.then((outcome) => {
+        sessionSettled = true;
+        return { outcome, result: lastResult };
+      }),
+      alive: () => !sessionSettled
+    };
+    session = wrapped;
+    return wrapped;
+  }
+  function abortPrepSession(talker) {
+    if (session && session.alive() && (!talker || session.talker === talker)) session.handle.stop();
+  }
 
   // src/people/insights.ts
   var SESSION_GAP_MS2 = 30 * 60 * 1e3;
@@ -14752,6 +15435,81 @@ var BZW_people = (() => {
   function storeToUnified(msgs) {
     return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
+  function isFailedVoice(v) {
+    var _a2, _b2;
+    const t = String((_a2 = v.text) != null ? _a2 : "").trim();
+    return String((_b2 = v.emotion) != null ? _b2 : "").trim().toUpperCase() === "ERR" || t.startsWith("<转写失败");
+  }
+  function storeVoiceText(m, v) {
+    var _a2, _b2;
+    const durRaw = Number.isFinite(m.dur) && m.dur > 0 ? Math.round(m.dur) : Number(v.dur) || 0;
+    const dur = durRaw > 0 ? Math.round(durRaw) : 0;
+    const emo = emotionZh(String((_a2 = v.emotion) != null ? _a2 : ""));
+    const text2 = String((_b2 = v.text) != null ? _b2 : "").trim();
+    const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
+    return text2 ? `${head} ${text2}` : head;
+  }
+  function applyVoiceToMsgs(msgs, voice, opts) {
+    var _a2, _b2, _c;
+    if (!opts.previewVoice) return 0;
+    const byWav = /* @__PURE__ */ new Map();
+    const bySid = /* @__PURE__ */ new Map();
+    for (const v of voice) {
+      if (!v || isFailedVoice(v) || !String((_a2 = v.text) != null ? _a2 : "").trim()) continue;
+      const wav = String((_b2 = v.wav) != null ? _b2 : "").trim();
+      if (wav) {
+        byWav.set(wav, v);
+        const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
+        if (base) byWav.set(base, v);
+      }
+      const sid = typeof v.sid === "number" && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
+      if (sid) bySid.set(sid, v);
+    }
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 34) continue;
+      let v;
+      const wav = String((_c = m.wav) != null ? _c : "").trim();
+      if (wav) {
+        v = byWav.get(wav);
+        if (!v) {
+          const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
+          if (base) v = byWav.get(base);
+        }
+      }
+      if (!v && m.sid) v = bySid.get(m.sid);
+      if (!v) continue;
+      const next = storeVoiceText(m, v);
+      if (next && next !== m.text) {
+        m.text = next;
+        n++;
+      }
+    }
+    return n;
+  }
+  function applyImageMapToMsgs(msgs, map) {
+    var _a2, _b2;
+    const bySid = /* @__PURE__ */ new Map();
+    const byCt = /* @__PURE__ */ new Map();
+    for (const it of map) {
+      if (!it || !String((_a2 = it.file) != null ? _a2 : "").trim()) continue;
+      const sid = typeof it.sid === "number" && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
+      if (sid) bySid.set(sid, it);
+      else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct), it);
+    }
+    let n = 0;
+    for (const m of msgs) {
+      let it;
+      if (m.sid) it = bySid.get(m.sid);
+      if (!it && m.type === 3 && !m.img) it = byCt.get(Math.round(m.ts / 1e3));
+      const file = it ? String((_b2 = it.file) != null ? _b2 : "").trim() : "";
+      if (file && file !== m.img) {
+        m.img = file;
+        n++;
+      }
+    }
+    return n;
+  }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
     const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
@@ -14938,6 +15696,24 @@ var BZW_people = (() => {
   function errorMessage(e) {
     return e instanceof Error ? e.message : String(e);
   }
+  function dataRootOf() {
+    var _a2, _b2;
+    return String((_b2 = (_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleDataDir) != null ? _b2 : "").trim();
+  }
+  var lastPrepEmit = 0;
+  function throttledEmit() {
+    const now = Date.now();
+    if (now - lastPrepEmit < 400) return;
+    lastPrepEmit = now;
+    emit();
+  }
+  function prepOf(job) {
+    const p = job.prep;
+    if (!p || typeof p !== "object") return null;
+    if (!Array.isArray(p.donePhases)) p.donePhases = [];
+    if (!p.counts || typeof p.counts !== "object") p.counts = {};
+    return p;
+  }
   function chunkedMessage(msgCount, batchCount, opts) {
     return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 3} 次 AI 调用`;
   }
@@ -15031,7 +15807,8 @@ var BZW_people = (() => {
         injected: null,
         retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
         runningJob: null,
-        pauseRequested: false
+        pauseRequested: false,
+        prepGate: null
       };
     }
     st.app = app;
@@ -15187,7 +15964,8 @@ var BZW_people = (() => {
       injected: ai.askExtract || ai.askPortrait ? ai : null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
-      pauseRequested: false
+      pauseRequested: false,
+      prepGate: null
     };
     wireLock();
     runPromise = null;
@@ -15209,19 +15987,48 @@ var BZW_people = (() => {
     return true;
   }
   function pauseJobs() {
-    if (st) st.pauseRequested = true;
+    var _a2;
+    if (!st) return;
+    st.pauseRequested = true;
+    const engine = st;
+    const job = engine.runningJob ? engine.queue.find((j) => j.talker === engine.runningJob) : null;
+    if (job && job.status === "running" && job.stage === "preprocess") {
+      const dataRoot = dataRootOf();
+      if (dataRoot) void writePrepControl(dataRoot, "pause");
+      (_a2 = engine.prepGate) == null ? void 0 : _a2.call(engine);
+    }
   }
   async function removeJob(talker) {
+    var _a2;
     if (!st) return false;
     const before = st.queue.length;
     st.queue = st.queue.filter((j) => j.talker !== talker);
-    if (st.runningJob === talker) st.runningJob = null;
+    if (st.runningJob === talker) {
+      abortPrepSession(talker);
+      (_a2 = st.prepGate) == null ? void 0 : _a2.call(st);
+      st.runningJob = null;
+    }
     if (st.queue.length < before) {
       await persist();
       emit();
       return true;
     }
     return false;
+  }
+  function retryPrepFailures(talker) {
+    var _a2;
+    if (!st || !((_a2 = st.safe) == null ? void 0 : _a2.unlocked)) return false;
+    const job = st.queue.find((j) => j.talker === talker);
+    if (!job || job.status === "running" || job.status === "done") return false;
+    const prep = prepOf(job);
+    if (!prep || prep.failed <= 0) return false;
+    prep.donePhases = [];
+    job.status = "paused";
+    job.error = void 0;
+    job.updatedAt = nowIso();
+    void persist().then(emit);
+    kick();
+    return true;
   }
   function whenIdle() {
     return runPromise != null ? runPromise : Promise.resolve();
@@ -15246,8 +16053,122 @@ var BZW_people = (() => {
   function gone(job) {
     return !st || st.queue.indexOf(job) < 0;
   }
+  function prepCallbacks(job) {
+    return {
+      onStep: (t) => {
+        job.message = t;
+        throttledEmit();
+      },
+      onProgress: (phase, pct) => {
+        if (job.prep) applyPrepProgress(job.prep, phase, pct);
+        throttledEmit();
+      },
+      onInfo: (data) => {
+        const prep = job.prep;
+        if (!prep) return;
+        const before = prep.donePhases.length;
+        if (!collectPrepInfo(prep, data)) return;
+        if (prep.paused) {
+          job.message = typeof data.note === "string" && data.note.trim() ? data.note.trim() : "已请求暂停——这一条做完就让行";
+        } else if (prep.donePhases.length > before) {
+          job.message = prepStageLine(prep);
+          void persist();
+        }
+        emit();
+      },
+      onResult: () => {
+      }
+      // [bz-result] 由 PrepSession 记账进终态，这里不用
+    };
+  }
+  function buildPrepSpecFromSettings(job, dataRoot) {
+    var _a2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    const str2 = (v) => typeof v === "string" && v.trim() ? v : void 0;
+    return buildPrepSpec({
+      dataRoot,
+      contact: job.talker,
+      asrEngine: str2(s.asrEngine),
+      asrModel: str2(s.asrWhisperModel),
+      src: str2(s.peopleWxAccountDir),
+      python: str2(s.pythonPath),
+      ffmpeg: str2(s.ffmpegPath)
+    });
+  }
+  async function runPrepStage(job, finish, store2) {
+    const totals = prepMediaTotals(store2 == null ? void 0 : store2.kindCounts, store2 == null ? void 0 : store2.stats);
+    if (!totals) return "skipped";
+    const prep = prepOf(job);
+    if (prep && prepAllDone(prep)) return "skipped";
+    if (!job.prep) job.prep = newPrepProgress(totals);
+    const dataRoot = dataRootOf();
+    if (!dataRoot) {
+      await finish({ status: "error", error: "数据根未配置——媒体导出与语音转写没有可跑的目录", message: "数据根未配置" });
+      return "halted";
+    }
+    job.stage = "preprocess";
+    job.message = `预处理：${prepPhaseLabel("media")}、${prepPhaseLabel("transcribe")}…`;
+    await persist();
+    emit();
+    const existing = currentPrepSession();
+    const session2 = existing && existing.talker === job.talker ? existing : startPrepSession(job.talker, buildPrepSpecFromSettings(job, dataRoot), prepCallbacks(job));
+    await writePrepControl(dataRoot, "resume");
+    let gateFired = false;
+    const gate = new Promise((r) => {
+      st.prepGate = () => {
+        gateFired = true;
+        r(void 0);
+      };
+    });
+    const settled = await Promise.race([session2.done, gate]);
+    st.prepGate = null;
+    if (gateFired || !settled) {
+      await finish({ status: "paused", message: `已暂停 · ${prepStageLine(job.prep)}` });
+      return "halted";
+    }
+    const { outcome, result } = settled;
+    if (outcome.stopped) {
+      await finish({ status: "paused", message: "预处理已中止——已完成的产物保留，可从断点继续" });
+      return "halted";
+    }
+    if (result && result.ok === false) {
+      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "预处理失败：工具报错，没有给出原因";
+      await finish({ status: "error", error: msg, message: msg });
+      return "halted";
+    }
+    if (result && result.stopped === true) {
+      await finish({ status: "paused", message: "预处理已停止——已完成的产物保留，可从断点继续" });
+      return "halted";
+    }
+    if (!outcome.ok || !result || result.ok !== true) {
+      const classified = classifyPrepFailure(outcome);
+      await finish({ status: "error", error: classified.message, message: classified.message });
+      return "halted";
+    }
+    const failed = Number(result.failed);
+    if (Number.isFinite(failed) && failed > 0 && job.prep) job.prep.failed = failed;
+    clearPrepControl(dataRoot);
+    return "ok";
+  }
+  async function mergePrepArtifactsIntoStore(safe, talker, dataRoot, opts) {
+    var _a2;
+    if (!safe.unlocked) return null;
+    const side = readPrepSidecars(dataRoot, talker);
+    if (!side || !side.voice.length && !side.imageMap.length) return null;
+    const previewVoice = (_a2 = opts == null ? void 0 : opts.previewVoice) != null ? _a2 : normalizeOptionsFromSettings().previewVoice;
+    const counts = { voice: 0, images: 0 };
+    await safe.write(talker, (rec) => {
+      counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
+      counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+      if (counts.voice + counts.images > 0) {
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      }
+    });
+    return counts;
+  }
   async function runJob(job) {
-    var _a2, _b2, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -15263,14 +16184,29 @@ var BZW_people = (() => {
     try {
       const safe = st.safe;
       if (!(safe == null ? void 0 : safe.unlocked)) return;
-      const contact = (_a2 = await safe.read(job.talker)) == null ? void 0 : _a2.store;
+      const storeBefore = (_b2 = (_a2 = await safe.read(job.talker)) == null ? void 0 : _a2.store) != null ? _b2 : null;
       if (gone(job)) return;
-      const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
-      const fp = fingerprintOf2(bucketMsgs);
-      if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
+      const fp0 = fingerprintOf2(storeToUnified((_c = storeBefore == null ? void 0 : storeBefore.msgs) != null ? _c : []));
+      const externalDrift = fp0.msgCount !== job.msgCount || fp0.contentHash !== job.contentHash;
+      if (externalDrift && job.batchesDone > 0) {
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
+      const prepState = await runPrepStage(job, finish, storeBefore);
+      if (prepState === "halted") return;
+      if (prepState === "ok") {
+        const merged2 = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
+        if (gone(job)) return;
+        if (merged2 && merged2.voice + merged2.images > 0) {
+          job.message = `预处理完成${((_d = job.prep) == null ? void 0 : _d.failed) ? `（失败 ${job.prep.failed} 条，可用「重试失败项」补齐）` : ""}，开始组装素材…`;
+        }
+      }
+      const contact = (_e = await safe.read(job.talker)) == null ? void 0 : _e.store;
+      if (gone(job)) return;
+      const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
+      const fp = fingerprintOf2(bucketMsgs);
+      const drifted = fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash;
+      const refresh = drifted;
       const existing = (await new PeopleStore(st.app).list()).find((p) => p.id === job.talker);
       if (gone(job)) return;
       let digestMsgs;
@@ -15293,11 +16229,33 @@ var BZW_people = (() => {
       const sampled = all.length > optsC.maxBatches;
       const chunks = sampled ? evenlySample(all, optsC.maxBatches) : all;
       const metas = chunks.map(chunkMetaOf);
-      if (job.chunks.length && JSON.stringify(job.chunks) !== JSON.stringify(metas)) {
+      if (!refresh && job.chunks.length && JSON.stringify(job.chunks) !== JSON.stringify(metas)) {
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
       job.chunks = metas;
+      if (refresh) {
+        job.msgCount = fp.msgCount;
+        job.contentHash = fp.contentHash;
+        job.stats = computeStats(bucketMsgs, (_f = contact == null ? void 0 : contact.kindCounts) != null ? _f : {});
+        job.material = {
+          ...(_g = job.material) != null ? _g : { traits: [], moments: [] },
+          mediaNote: buildMediaNote({
+            voiceCount: (_h = job.stats.voiceCount) != null ? _h : 0,
+            voiceTotalSec: (_i = job.stats.voiceTotalSec) != null ? _i : 0,
+            imageCount: (_j = job.stats.imageCount) != null ? _j : 0
+          }) || void 0
+        };
+        if (bucketMsgs.length) {
+          job.importRecord = {
+            fileLabel: job.fileLabel,
+            skippedCount: (_l = (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _l : 0,
+            messageCount: digestMsgs.length,
+            timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
+            timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString()
+          };
+        }
+      }
       job.stage = "extracting";
       const total = chunks.length;
       for (let i = job.batchesDone; i < total; i++) {
@@ -15349,9 +16307,9 @@ var BZW_people = (() => {
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_b2 = job.material) == null ? void 0 : _b2.mediaNote,
-        statsNote: (_c = job.material) == null ? void 0 : _c.statsNote,
-        profileNote: (_d = job.material) == null ? void 0 : _d.profileNote,
+        mediaNote: (_m = job.material) == null ? void 0 : _m.mediaNote,
+        statsNote: (_n = job.material) == null ? void 0 : _n.statsNote,
+        profileNote: (_o = job.material) == null ? void 0 : _o.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -15423,7 +16381,7 @@ var BZW_people = (() => {
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_e = st == null ? void 0 : st.safe) == null ? void 0 : _e.unlocked)) {
+      if (!((_p = st == null ? void 0 : st.safe) == null ? void 0 : _p.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，任务已暂停（解锁后可继续）" });
         return;
       }
@@ -15447,6 +16405,7 @@ var BZW_people = (() => {
     st = null;
     runPromise = null;
     subs.clear();
+    resetPrepForTests();
   }
 
   // src/people/types.ts
@@ -15610,421 +16569,6 @@ var BZW_people = (() => {
     return { migrated, skipped, cleaned, keptBack };
   }
 
-  // src/core/external-tool.ts
-  var BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
-  function parseBzLine(line) {
-    const text2 = line.endsWith("\r") ? line.slice(0, -1) : line;
-    const m = text2.match(BZ_LINE_PREFIX_RE);
-    if (!m) {
-      if (!text2.trim()) return null;
-      return { kind: "raw", text: text2 };
-    }
-    const body = text2.slice(m[0].length).trim();
-    switch (m[1]) {
-      case "step":
-        return body ? { kind: "step", text: body } : null;
-      case "p": {
-        const p = parseJsonObject(body);
-        if (!p) return null;
-        return {
-          kind: "progress",
-          phase: typeof p.phase === "string" ? p.phase : null,
-          // pct 允许 null = 该阶段不可估；缺失/非有限数一律归 null（绝不假报）
-          pct: Number.isFinite(p.pct) ? Number(p.pct) : null
-        };
-      }
-      case "info": {
-        const info = parseJsonObject(body);
-        return info ? { kind: "info", data: info } : null;
-      }
-      default: {
-        const r = parseJsonObject(body);
-        return r ? { kind: "result", data: r } : null;
-      }
-    }
-  }
-  function parseJsonObject(body) {
-    try {
-      const v = JSON.parse(body);
-      return v && typeof v === "object" && !Array.isArray(v) ? v : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  var MAX_LINE_BYTES = 1024 * 1024;
-  var BzLineSplitter = class {
-    constructor(maxLineBytes = MAX_LINE_BYTES) {
-      this.maxLineBytes = maxLineBytes;
-      this.parts = [];
-      this.len = 0;
-      this.overflowed = false;
-    }
-    /** 喂一段 stdout（Buffer 或 string），返回其中切出的完整行（不含行尾符） */
-    push(chunk) {
-      const buf = typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk;
-      const lines = [];
-      let pos = 0;
-      while (pos < buf.length) {
-        const nl = buf.indexOf(10, pos);
-        if (nl === -1) {
-          this.accumulate(buf.subarray(pos));
-          break;
-        }
-        this.accumulate(buf.subarray(pos, nl));
-        lines.push(this.takeLine());
-        pos = nl + 1;
-      }
-      return lines;
-    }
-    /** 进程终结时冲刷残留半行（无残留返回 null）——无尾换行的最后一行靠这里出列 */
-    flush() {
-      return this.len > 0 || this.overflowed ? this.takeLine() : null;
-    }
-    /** 累积字节；超出单行上限后丢弃后续字节（截断语义，待换行时一并出列） */
-    accumulate(part) {
-      if (this.overflowed) return;
-      const room = this.maxLineBytes - this.len;
-      if (part.length <= room) {
-        this.parts.push(part);
-        this.len += part.length;
-      } else {
-        this.parts.push(part.subarray(0, room));
-        this.len = this.maxLineBytes;
-        this.overflowed = true;
-      }
-    }
-    /** 出列一行（overflow 时为截断行）；CRLF 的 \r 在此剥除 */
-    takeLine() {
-      const s = Buffer.concat(this.parts).toString("utf8");
-      this.parts = [];
-      this.len = 0;
-      this.overflowed = false;
-      return s.endsWith("\r") ? s.slice(0, -1) : s;
-    }
-  };
-  var STDERR_TAIL_CHARS = 2048;
-  function defaultChildProcess() {
-    if (typeof window === "undefined") return null;
-    const w = window;
-    if (!w.require) return null;
-    try {
-      return w.require("child_process");
-    } catch (e) {
-      return null;
-    }
-  }
-  function runExternalTool(spec, cb, deps) {
-    var _a2, _b2;
-    const cp = deps && deps.cp ? deps.cp : defaultChildProcess();
-    const splitter = new BzLineSplitter();
-    let stderrTail = "";
-    let settled = false;
-    let stopped = false;
-    let child = null;
-    let resolveDone;
-    const done = new Promise((r) => {
-      resolveDone = r;
-    });
-    const settle = (o) => {
-      if (settled) return;
-      settled = true;
-      resolveDone(o);
-    };
-    const collectStderr = (d) => {
-      stderrTail += String(d);
-      if (stderrTail.length > STDERR_TAIL_CHARS) stderrTail = stderrTail.slice(-STDERR_TAIL_CHARS);
-    };
-    const dispatchLine = (line) => {
-      const ev = parseBzLine(line);
-      if (!ev) return;
-      switch (ev.kind) {
-        case "step":
-          cb.onStep(ev.text);
-          break;
-        case "progress":
-          cb.onProgress(ev.phase, ev.pct);
-          break;
-        case "info":
-          cb.onInfo(ev.data);
-          break;
-        case "result":
-          cb.onResult(ev.data);
-          break;
-        case "raw":
-          if (cb.onRaw) cb.onRaw(ev.text);
-          break;
-      }
-    };
-    if (!cp) {
-      settle({ ok: false, stopped: false, code: null, stderr: "", error: new Error("仅桌面端可用：外部工具需要 Node.js 子进程") });
-      return { stop: () => {
-      }, done };
-    }
-    const spawnOpts = { shell: !!spec.shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] };
-    if (spec.cwd) spawnOpts.cwd = spec.cwd;
-    if (spec.env) spawnOpts.env = spec.env;
-    try {
-      child = cp.spawn(spec.cmd, spec.args || [], spawnOpts);
-    } catch (e) {
-      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${(e == null ? void 0 : e.message) || String(e)}`) });
-      return { stop: () => {
-      }, done };
-    }
-    (_a2 = child.stdout) == null ? void 0 : _a2.on("data", (d) => {
-      for (const line of splitter.push(d)) dispatchLine(line);
-    });
-    (_b2 = child.stderr) == null ? void 0 : _b2.on("data", collectStderr);
-    child.on("error", (e) => {
-      if (settled) return;
-      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
-    });
-    child.on("close", (code) => {
-      if (settled) return;
-      const rest = splitter.flush();
-      if (rest !== null) dispatchLine(rest);
-      const stderr = stderrTail.trim();
-      if (stopped) {
-        settle({ ok: false, stopped: true, code, stderr, error: null });
-        return;
-      }
-      if (code === 0) {
-        settle({ ok: true, stopped: false, code: 0, stderr, error: null });
-        return;
-      }
-      const err = new Error(code === null ? `外部工具异常退出（无退出码）${stderr ? "：" + stderr : ""}` : `外部工具异常退出（退出码 ${code}）${stderr ? "：" + stderr : ""}`);
-      err.stderr = stderr;
-      settle({ ok: false, stopped: false, code, stderr, error: err });
-    });
-    return {
-      stop: () => {
-        var _a3;
-        if (settled || stopped) return;
-        stopped = true;
-        try {
-          (_a3 = child == null ? void 0 : child.kill) == null ? void 0 : _a3.call(child);
-        } catch (e) {
-        }
-      },
-      done
-    };
-  }
-
-  // src/people/sync.ts
-  init_notice();
-  init_settings_provider();
-  var BZ_FACE_INSTALL_HINT = "未找到 bz-face 命令——先安装脸谱工具包（@jwbz/obsidian-face）：在仓库 tools/obsidian-face 目录下运行 npm link，或 npm install -g <仓库>/tools/obsidian-face，装好后重试";
-  var DOCTOR_HINT = "到终端运行 bz-face doctor 可自检环境";
-  var PHASE_LABELS = {
-    key: "取密钥",
-    decrypt: "解密数据库",
-    contacts: "导出聊天",
-    avatar: "头像源"
-  };
-  function syncPhaseLabel(phase) {
-    return phase && PHASE_LABELS[phase] || "";
-  }
-  function emptySyncStats() {
-    return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
-  }
-  function buildSyncSpec(opts) {
-    var _a2, _b2;
-    const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
-    const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
-    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
-    return {
-      cmd: "bz-face",
-      args: [
-        "sync",
-        "--data-root",
-        q(opts.dataRoot),
-        ...src ? ["--src", q(src)] : [],
-        ...python ? ["--python", python] : []
-      ],
-      shell: true
-    };
-  }
-  function collectContactInfo(stats, data) {
-    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return false;
-    if (data.status === "ok") {
-      stats.contacts++;
-      if (data.chat === "unchanged") stats.unchanged++;
-      else stats.written++;
-      if (Number.isFinite(data.msgs)) stats.msgTotal += Number(data.msgs);
-      if (Number.isFinite(data.named)) stats.named += Number(data.named);
-      return true;
-    }
-    if (data.status === "skipped") {
-      stats.skipped++;
-      return true;
-    }
-    if (data.status === "failed") {
-      stats.failed++;
-      stats.failures.push({ name: data.name, error: typeof data.error === "string" ? data.error : "导出失败" });
-      return true;
-    }
-    return false;
-  }
-  function statsFromResult(result, live2) {
-    const num = (v, fallback) => Number.isFinite(v) ? Number(v) : fallback;
-    const failures = Array.isArray(result.failures) ? result.failures.map((f) => {
-      const o = f;
-      if (!o || typeof o.name !== "string") return null;
-      return { name: o.name, error: typeof o.error === "string" ? o.error : "导出失败" };
-    }).filter((f) => f !== null) : live2.failures;
-    const written = num(result.written, live2.written);
-    const unchanged = num(result.unchanged, live2.unchanged);
-    return {
-      contacts: num(result.contacts, written + unchanged),
-      written,
-      unchanged,
-      skipped: num(result.skipped, live2.skipped),
-      failed: num(result.failed, live2.failed),
-      msgTotal: num(result.msgTotal, live2.msgTotal),
-      named: num(result.named, live2.named),
-      failures
-    };
-  }
-  function describeSyncStats(st2) {
-    const parts = [`更新 ${st2.written} 位`, `未变 ${st2.unchanged} 位`, `跳过 ${st2.skipped} 位`];
-    if (st2.failed > 0) parts.push(`${st2.failed} 位失败`);
-    return `同步完成：${parts.join(" · ")}，消息 ${st2.msgTotal} 条`;
-  }
-  function firstLine(text2, max = 200) {
-    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
-    return line.length > max ? line.slice(0, max) + "…" : line;
-  }
-  function classifySyncFailure(outcome) {
-    var _a2, _b2;
-    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
-    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
-    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
-    const stderr = outcome.stderr || "";
-    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
-      return { message: "Python 缺少同步依赖", hint: `${DOCTOR_HINT}，按提示安装缺的依赖后重试` };
-    }
-    if (/微信/.test(msg)) return { message: firstLine(msg), hint: "" };
-    return {
-      message: firstLine(msg || "同步进程异常退出，没有给出原因"),
-      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
-    };
-  }
-  var state = {
-    outcome: "idle",
-    phase: null,
-    pct: null,
-    step: "",
-    message: "",
-    hint: "",
-    stats: emptySyncStats()
-  };
-  var handle = null;
-  var listeners = /* @__PURE__ */ new Set();
-  function setState(patch) {
-    state = { ...state, ...patch };
-    for (const fn of [...listeners]) fn(state);
-  }
-  function syncState() {
-    return state;
-  }
-  function isSyncing() {
-    return state.outcome === "running";
-  }
-  function subscribeSync(fn) {
-    listeners.add(fn);
-    return () => {
-      listeners.delete(fn);
-    };
-  }
-  var runner = runExternalTool;
-  function nonEmpty(v) {
-    const t = typeof v === "string" ? v.trim() : "";
-    return t || void 0;
-  }
-  function emitNotice(s) {
-    if (s.outcome === "ok") {
-      if (s.stats.failed > 0) {
-        const names = s.stats.failures.slice(0, 3).map((f) => f.name).join("、");
-        notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? "等" : ""}）` : ""}——重跑同步只补失败项`, "warning");
-      } else {
-        notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, "success");
-      }
-      return;
-    }
-    if (s.outcome === "error") notice(`同步失败：${firstLine(s.message)}`, "error");
-    if (s.outcome === "stopped") notice("同步已停止——已导出的部分保留，重跑可续传", "info");
-  }
-  function startSync() {
-    var _a2;
-    if (state.outcome === "running") return;
-    const s = tryGetSettings();
-    const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
-    if (!dataRoot) {
-      setState({
-        outcome: "error",
-        phase: null,
-        pct: null,
-        step: "",
-        message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
-        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步",
-        stats: emptySyncStats()
-      });
-      return;
-    }
-    const spec = buildSyncSpec({
-      dataRoot,
-      src: nonEmpty(s == null ? void 0 : s.peopleWxAccountDir),
-      python: nonEmpty(s == null ? void 0 : s.pythonPath)
-    });
-    const live2 = emptySyncStats();
-    let result = null;
-    const cbs = {
-      onStep: (text2) => setState({ step: text2 }),
-      onProgress: (phase, pct) => setState({ phase, pct }),
-      onInfo: (data) => {
-        if (collectContactInfo(live2, data)) setState({});
-      },
-      onResult: (data) => {
-        result = data;
-      }
-    };
-    handle = runner(spec, cbs);
-    setState({ outcome: "running", phase: null, pct: null, step: "", message: "", hint: "", stats: live2 });
-    void handle.done.then((outcome) => {
-      handle = null;
-      finishSync(outcome, result);
-    });
-  }
-  function finishSync(outcome, result) {
-    if (outcome.stopped) {
-      setState({
-        outcome: "stopped",
-        pct: null,
-        message: "已停止",
-        hint: "点「同步」重跑续传——已导出的部分不会重复搬"
-      });
-      emitNotice(state);
-      return;
-    }
-    if (result && result.ok === false) {
-      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
-      setState({ outcome: "error", phase: null, pct: null, message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
-      emitNotice(state);
-      return;
-    }
-    if (outcome.ok && result && result.ok === true) {
-      const st2 = statsFromResult(result, state.stats);
-      setState({ outcome: "ok", phase: null, pct: 100, step: "", message: describeSyncStats(st2), hint: "", stats: st2 });
-      emitNotice(state);
-      return;
-    }
-    const classified = classifySyncFailure(outcome);
-    setState({ outcome: "error", phase: null, pct: null, message: classified.message, hint: classified.hint });
-    emitNotice(state);
-  }
-  function stopSync() {
-    handle == null ? void 0 : handle.stop();
-  }
-
   // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
@@ -16173,8 +16717,13 @@ var BZW_people = (() => {
     if (s.status === "error" && s.resumable === false) return { label: "删除任务", hook: "data-people-jobs-dismiss" };
     return JOBS_ACTIONS[s.status];
   }
+  function prepStagePart(s) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = s.prep) == null ? void 0 : _a2.stageText) != null ? _b2 : null;
+  }
   function progressBlock(s) {
-    const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+    const stagePart = prepStagePart(s);
+    const pct = stagePart ? s.prep.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
     const block = el("div", "bz-people-jobs", {
       "data-people-jobs": "",
       "data-people-jobs-talker": s.talker,
@@ -16190,11 +16739,14 @@ var BZW_people = (() => {
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
     const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? "已暂停" : s.status === "interrupted" ? "上次生成中断了" : s.status === "done" ? "脸谱已生成" : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : stagePart != null ? stagePart : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
     block.appendChild(el("div", "bz-people-jobs-main", text(main)));
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
+    if (s.prep && s.prep.failed > 0 && s.status !== "running" && s.status !== "done") {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试失败项", { "data-people-jobs-prep-retry": "" }));
+    }
     if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
@@ -16215,11 +16767,12 @@ var BZW_people = (() => {
     ]);
   }
   function foldSeal(p, job) {
+    var _a2;
     const name = p.name || p.id;
     if (job && job.status !== "done") {
       const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
       if (job.status === "running") {
-        const pct = jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+        const pct = (_a2 = job.prepPct) != null ? _a2 : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
         return {
           state: "running",
           text: `画谱中
@@ -17625,7 +18178,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return [...queue].map((job, i) => ({ job, i })).sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
   }
   function toBlockState(job) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
     const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
     const pos = queue.findIndex((j) => j.talker === job.talker);
     return {
@@ -17639,7 +18192,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       queueIndex: (_g = job.queueIndex) != null ? _g : pos + 1,
       queueTotal: (_h = job.queueTotal) != null ? _h : queue.length,
       errorText: job.error,
-      resumable: isResumable(job)
+      resumable: isResumable(job),
+      // 工具段进度（469）：阶段行 / 折算总进度只在 preprocess 阶段上屏（AI 段回落批口径）；
+      // 失败计账保留到任务终局（非 running 态出「重试失败项」）
+      prep: job.prep ? {
+        stageText: job.stage === "preprocess" ? prepStageLine(job.prep) : null,
+        overall: prepOverallPct(job.prep),
+        failed: (_i = job.prep.failed) != null ? _i : 0
+      } : void 0
     };
   }
   function isResumable(job) {
@@ -17654,7 +18214,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).some((j) => j.status === "running");
   }
   function jobsAction(kind) {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d, _e;
     const api = jobs();
     const talker = (_b2 = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a2.getAttribute("data-people-jobs-talker")) != null ? _b2 : "";
     if (kind === "pause") {
@@ -17662,12 +18222,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       notice("这一批做完就暂停", "info");
       return;
     }
+    if (kind === "prep-retry") {
+      const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
+      if (!who) return;
+      if ((_d = api.retryPrepFailures) == null ? void 0 : _d.call(api, who)) notice("重试失败项——已完成的产物与批次不重跑", "info");
+      return;
+    }
     if (kind === "resume") {
       if (isSyncing()) {
         notice("正在同步微信数据——同步完成后再继续生成", "info");
         return;
       }
-      const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
+      const who = talker || ((_e = currentJobsItem()) == null ? void 0 : _e.talker) || "";
       if (!who) return;
       api.resume(who);
       notice("继续生成——已完成的批次不重画", "info");
@@ -17693,7 +18259,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       batchesTotal: (_d = (_c = job.batchesTotal) != null ? _c : (_b2 = job.chunks) == null ? void 0 : _b2.length) != null ? _d : 0,
       stagesDone: jobsStagesDone(job.stage, job.status),
       // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
-      resumable: isResumable(job)
+      resumable: isResumable(job),
+      // 工具段总进度（469）：preprocess 阶段印章百分比按它算（AI 段回落批口径）
+      prepPct: job.prep && job.stage === "preprocess" ? prepOverallPct(job.prep) : void 0
     };
   }
   function syncWallSeals() {
@@ -17747,6 +18315,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     if (t.closest("[data-people-jobs-resume]")) {
       jobsAction("resume");
+      return;
+    }
+    if (t.closest("[data-people-jobs-prep-retry]")) {
+      jobsAction("prep-retry");
       return;
     }
     if (t.closest("[data-people-jobs-dismiss]")) {

@@ -236,6 +236,19 @@ export interface JobsBlockState {
   errorText?: string;
   /** error 态可否断点续跑（issue 453）：漂移判废（消息集已变）接不上，只能删除重来 */
   resumable?: boolean;
+  /** 工具段进度（469：preprocess 阶段；无 = 该任务不带 prep / 已完成） */
+  prep?: JobsPrepState;
+}
+
+/** 工具段进度视图（ui 从引擎 job.prep 映射；本层只管画） */
+export interface JobsPrepState {
+  /** 阶段行文案（ui 侧 prepStageLine 组装，如 `媒体导出 312/1631`）。非 null = 任务正处
+   * preprocess 段（阶段行上屏、进度条用 overall）；null = 工具段已过（AI 段暂停等不带阶段信息） */
+  stageText: string | null;
+  /** 整段总进度 0~100（进度条；四段均分折算） */
+  overall: number;
+  /** 单条媒体 / 语音失败累计（>0 且非 running 时出「重试失败项」） */
+  failed: number;
 }
 
 /** 进度百分比（issue 455 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 3)，钳 0~100 */
@@ -292,11 +305,22 @@ function jobsActionOf(s: JobsBlockState): { label: string; hook: string } | null
 }
 
 /**
+ * 工具段主行文案（469）：preprocess 阶段（或其暂停 / 中断面）的阶段行——带 `已完成/总数`
+ * （media/derive/transcribe 段末 [bz-info] 汇总校正，进行中按 [bz-p].pct 推算）。
+ */
+function prepStagePart(s: JobsBlockState): string | null {
+  return s.prep?.stageText ?? null;
+}
+
+/**
  * 进度块（面板头统计行下）：细进度条 + 引擎主文案 + 队列副文案 + 灰字说明 + 状态动作钮。
  * 主文案整句展示（切批 / 抽样说明可能是长句）：不截断、允许换行（样式 overflow-wrap）。
+ * 469：preprocess 阶段主行 = 阶段 + 计数（`媒体导出 312/1631`），进度条 = 工具段折算总进度；
+ * 暂停 / 中断面同样带阶段信息（`已暂停 · 语音转写 45/1289`）；AI 段的暂停 / 中断面不带。
  */
 export function progressBlock(s: JobsBlockState): HTMLElement {
-  const pct = jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+  const stagePart = prepStagePart(s);
+  const pct = stagePart ? s.prep!.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
   const block = el('div', 'bz-people-jobs', {
     'data-people-jobs': '',
     'data-people-jobs-talker': s.talker,
@@ -311,14 +335,19 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   const next = Math.min(s.batchesDone + 1, s.batchesTotal);
   const main = s.status === 'error'
     ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
-    : s.status === 'paused' ? '已暂停'
-    : s.status === 'interrupted' ? '上次生成中断了'
+    : s.status === 'paused' ? (stagePart ? `已暂停 · ${stagePart}` : '已暂停')
+    : s.status === 'interrupted' ? (stagePart ? `上次生成中断了 · ${stagePart}` : '上次生成中断了')
     : s.status === 'done' ? '脸谱已生成'
-    : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    : stagePart ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
   block.appendChild(el('div', 'bz-people-jobs-main', text(main)));
   const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
+  // 469 失败分流：prep 段有计账失败（单条媒体 / 语音）且任务不在跑 → 出「重试失败项」
+  // （工具幂等只补失败项；AI 段已完成的批次照常保留）
+  if (s.prep && s.prep.failed > 0 && s.status !== 'running' && s.status !== 'done') {
+    foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '重试失败项', { 'data-people-jobs-prep-retry': '' }));
+  }
   if (action) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
   if (foot.length) block.appendChild(el('div', 'bz-people-jobs-foot', foot));
   return block;
@@ -390,6 +419,8 @@ export interface FoldCardJob {
   stagesDone: number;
   /** 失败态可否断点续跑：漂移类失败（消息集已变）接不上，只能重新生成 */
   resumable: boolean;
+  /** 工具段总进度 0~100（469：preprocess 阶段的印章百分比；缺省按批口径算） */
+  prepPct?: number;
 }
 
 /**
@@ -402,7 +433,7 @@ export function foldSeal(p: PersonEntry, job: FoldCardJob | null): FoldSeal {
   if (job && job.status !== 'done') {
     const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : '尚未切批';
     if (job.status === 'running') {
-      const pct = jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+      const pct = job.prepPct ?? jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
       return {
         state: 'running',
         text: `画谱中\n${pct}%`,
