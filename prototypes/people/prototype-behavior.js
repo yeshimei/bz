@@ -1,4 +1,4 @@
-/* 源指纹 439d2b6c572036db · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2bbf5c53a79c32ad · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13029,12 +13029,23 @@ var BZW_people = (() => {
       this.cache.set(talker, rec);
       return rec;
     }
-    /** 读全部联系人记录（面板墙一次拉全量） */
-    async readAll() {
+    /** 是否整库热读（issue 483）：全部联系人记录都已在明文缓存——面板重开（缓存命中）不再出冷读加载态 */
+    isFullyCached() {
+      return this.talkers().every((t) => this.cache.has(t));
+    }
+    /**
+     * 读全部联系人记录（面板墙一次拉全量）。
+     * onProgress（issue 483）：逐人解密进度回调——开跑即报 (0, total)，每人完成报 (i+1, total)；
+     * 缓存命中时同步快速走完（面板热读路径不因此出加载态）。可选参数，既有调用点零漂移。
+     */
+    async readAll(onProgress) {
       const out = /* @__PURE__ */ new Map();
-      for (const t of this.talkers()) {
-        const rec = await this.read(t);
-        if (rec) out.set(t, rec);
+      const all = this.talkers();
+      onProgress == null ? void 0 : onProgress(0, all.length);
+      for (let i = 0; i < all.length; i++) {
+        const rec = await this.read(all[i]);
+        if (rec) out.set(all[i], rec);
+        onProgress == null ? void 0 : onProgress(i + 1, all.length);
       }
       return out;
     }
@@ -17366,6 +17377,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-ds-open": "" })
     ]);
   }
+  function loadBody(state2) {
+    const count = el(
+      "strong",
+      "bz-people-load-count",
+      { "data-people-load-count": "" },
+      text(state2.total != null ? `${state2.done}/${state2.total}` : "")
+    );
+    if (state2.total == null) count.hidden = true;
+    const wrap = el("div", "bz-people-loading", { "data-people-loading": "" }, [
+      el("div", "bz-people-load-line", [
+        el("span", "bz-people-load-spin", { "aria-hidden": "true" }),
+        el("span", "bz-people-load-text", text("正在解密联系人数据…")),
+        count
+      ])
+    ]);
+    const wall = el("div", "bz-people-load-wall", { "aria-hidden": "true" });
+    for (let i = 0; i < 6; i++) wall.appendChild(el("div", "bz-people-load-card"));
+    wrap.appendChild(wall);
+    return wrap;
+  }
   var FOLD_TITLES = [
     ["p", "其人", "卷一 · 人物画像与代表原话"],
     ["b", "相交", "卷二 · 关系画像"],
@@ -18101,6 +18132,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     stage = "list";
     listCache = [];
     recordCache = null;
+    loadActive = false;
+    loadDone = 0;
+    loadTotal = null;
     mergeFromId = null;
     mergeToId = null;
     profEditId = null;
@@ -19081,7 +19115,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     });
   }
   async function renderBody() {
-    var _a2, _b2;
+    var _a2, _b2, _c;
     const body = overlay == null ? void 0 : overlay.querySelector("[data-people-body]");
     if (!body || !store || !overlay) return;
     if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) {
@@ -19095,11 +19129,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       mountIcons(overlay);
       return;
     }
+    if (!recordCache && peopleSafe && !peopleSafe.isFullyCached()) {
+      body.replaceChildren(loadBody({ done: loadDone, total: loadTotal }));
+      (_b2 = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _b2.classList.toggle("bz-people-panel-detail", false);
+    }
     const people = await wallPeople();
     if (!overlay || !(peopleSafe == null ? void 0 : peopleSafe.unlocked)) return;
     if (stage === "list") await renderList(body, people);
     else await renderDetail(body, people);
-    (_b2 = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _b2.classList.toggle("bz-people-panel-detail", stage === "detail");
+    (_c = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _c.classList.toggle("bz-people-panel-detail", stage === "detail");
     renderDsLayer();
     renderPopLayer(people);
     renderJobs();
@@ -19151,16 +19189,47 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     );
   }
   var recordCache = null;
+  var loadActive = false;
+  var loadDone = 0;
+  var loadTotal = null;
+  var recordsInflight = null;
+  function paintLoadCount() {
+    if (!loadActive || !overlay) return;
+    const n = overlay.querySelector("[data-people-load-count]");
+    if (!n) return;
+    n.hidden = loadTotal == null;
+    n.textContent = loadTotal != null ? `${loadDone}/${loadTotal}` : "";
+  }
   async function records() {
     if (recordCache) return recordCache;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
-    try {
-      recordCache = await peopleSafe.readAll();
-    } catch (e) {
-      console.warn("[people] 读取保库记录失败:", e);
-      recordCache = /* @__PURE__ */ new Map();
+    if (recordsInflight) {
+      loadActive = true;
+      paintLoadCount();
+      return recordsInflight;
     }
-    return recordCache;
+    recordsInflight = (async () => {
+      try {
+        loadActive = true;
+        loadDone = 0;
+        loadTotal = null;
+        const map = await peopleSafe.readAll((done, total) => {
+          loadTotal = total;
+          loadDone = done;
+          paintLoadCount();
+        });
+        recordCache = map;
+        return map;
+      } catch (e) {
+        console.warn("[people] 读取保库记录失败:", e);
+        if (peopleSafe.unlocked) recordCache = /* @__PURE__ */ new Map();
+        return recordCache != null ? recordCache : /* @__PURE__ */ new Map();
+      } finally {
+        loadActive = false;
+        recordsInflight = null;
+      }
+    })();
+    return recordsInflight;
   }
   function poolRecord(id, contact) {
     var _a2, _b2, _c, _d, _e, _f, _g;
@@ -19185,8 +19254,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     };
   }
   async function wallPeople() {
-    const people = store ? await store.list() : [];
     const recs = await records();
+    const people = store ? await store.list() : [];
     const out = people.map((p) => {
       var _a2;
       const rec = p.imports.length ? null : poolRecord(p.id, (_a2 = recs.get(p.id)) == null ? void 0 : _a2.store);

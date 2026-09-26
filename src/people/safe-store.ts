@@ -212,12 +212,24 @@ export class PeopleSafeStore {
     return rec;
   }
 
-  /** 读全部联系人记录（面板墙一次拉全量） */
-  async readAll(): Promise<Map<string, PeopleSafeRecord>> {
+  /** 是否整库热读（issue 483）：全部联系人记录都已在明文缓存——面板重开（缓存命中）不再出冷读加载态 */
+  isFullyCached(): boolean {
+    return this.talkers().every((t) => this.cache.has(t));
+  }
+
+  /**
+   * 读全部联系人记录（面板墙一次拉全量）。
+   * onProgress（issue 483）：逐人解密进度回调——开跑即报 (0, total)，每人完成报 (i+1, total)；
+   * 缓存命中时同步快速走完（面板热读路径不因此出加载态）。可选参数，既有调用点零漂移。
+   */
+  async readAll(onProgress?: (done: number, total: number) => void): Promise<Map<string, PeopleSafeRecord>> {
     const out = new Map<string, PeopleSafeRecord>();
-    for (const t of this.talkers()) {
-      const rec = await this.read(t);
-      if (rec) out.set(t, rec);
+    const all = this.talkers();
+    onProgress?.(0, all.length);
+    for (let i = 0; i < all.length; i++) {
+      const rec = await this.read(all[i]);
+      if (rec) out.set(all[i], rec);
+      onProgress?.(i + 1, all.length);
     }
     return out;
   }
