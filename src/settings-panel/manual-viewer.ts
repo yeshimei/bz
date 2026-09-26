@@ -34,6 +34,11 @@ function hide(): void {
   if (frame) frame.srcdoc = '';
 }
 
+/** 弹窗是否正开着（issue 476：后台核对回来时判「还开着才热替换」） */
+export function isManualViewerOpen(): boolean {
+  return isVisible();
+}
+
 /** 插件卸载清理：拆弹窗、注销 ESC 层（unloadSettingsPanel 调用，幂等） */
 export function unloadManualViewer(): void {
   escHandle?.unregister();

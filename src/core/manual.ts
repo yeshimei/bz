@@ -20,6 +20,7 @@ import {
   ensureAssetReady,
   hasAsset,
   readAsset,
+  refreshAsset,
 } from './remote-asset';
 
 /** 手册文件名（写入插件目录时用；ASCII，避免 file:/// 转义麻烦） */
@@ -58,4 +59,14 @@ export function readManual(app: unknown): Promise<string | null> {
  */
 export function ensureManualReady(app: unknown): Promise<string> {
   return ensureAssetReady(app, MANUAL_FILENAME, looksLikeManual, '手册');
+}
+
+/**
+ * 后台核对手册是否有新版（issue 476）：远端与本地同版 → null（不动）；
+ * 有新版 → 覆盖落盘并返回新文本；离线/失败 → null（静默，保持本地已存版本）。
+ * 入口口径 = ensureManualReady 先本地秒开，再调本函数后台核对一遍
+ * ——手册重新生成推上 GitHub 而插件版本没动时，靠这层才能拿到新版。
+ */
+export function refreshManual(app: unknown): Promise<string | null> {
+  return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, '手册');
 }
