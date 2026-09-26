@@ -1,0 +1,42 @@
+# ADR-0019 移动端主窗口默认全屏——13 域开关 + 统一 ≤768 两态（保险箱更名同批）
+
+状态：已采纳（grilling 定稿）
+日期：2026-08
+
+## 背景
+
+移动端主窗口此前呈现三套割裂现状：8 处 JS 内联写死强制全屏（`window.innerWidth<=768`：密码本/收藏本/复习/归物本/保险箱/影视主面板/影视分析/阅读报告）、4 处 CSS 媒体规则强制或半强制全屏（书库主面板与读书笔记 ≤768、剪藏本 ≤768 !important、聚合讯 ≤640、日记 ≤480）、其余保持居中卡（备忘录/做题家/番茄钟/附件搬移）或专属抽屉（入口页）——断点各写各的（480/640/768），形制不统一，用户无法选择。全库无任何窗口内全屏切换按钮。
+
+用户需求（grilling 逐轮拍板）：**为所有有主窗口的功能增加「移动端默认全屏」设置项**；做题家、入口页明确排除；保险箱（原「加密保险箱」，encrypt 域）同时更名。
+
+## 决策
+
+1. **13 个有主窗口的域各 1 项布尔开关**「移动端默认全屏」，键 `<域前缀>MobileDefaultFullscreen`，落插件 data.json（ADR-0009 域行为设置通道，先例 pomodoroAutoPauseOnHide）。设置行挂在各域 ⚙️ 域设置弹窗末尾，**仅移动端（`Platform.isMobile`）显示**；桌面端不显示也不生效。无「设置项按平台隐藏」直接先例，采用 isMobileEnv() 条件挂行（先例组合：launcherShowTextMobile 平台分支 + bz-setting-hidden 条件显隐）。
+2. **统一 ≤768px 两态语义**（废止原 480/640/768 乱断点）：**开 = 真全屏**（覆盖视口 100vw×100vh、去圆角、头部避让 `max(34px, env(safe-area-inset-top))`、底部 `env(safe-area-inset-bottom)`，统一类 `.bz-win-mfs`）；**关 = 常规卡**（95%/90vh 圆角卡）。开关只决定每次打开的**初始形态**，不做窗口内手动切换按钮（Q4-A）。多窗口域（影视主面板+影视分析、书库主面板+读书笔记）一并对控制；筛选/批注等小弹窗不纳入。
+3. **默认值 = 行为保持**（老用户零感知；旧 data.json 缺字段由 DEFAULT_SETTINGS `Object.assign` 兜底）：默认开 11 域（日记/归物本/剪藏本/聚合讯/密码本/收藏本/书库/阅读报告/影视/复习/保险箱——原移动端即全屏），默认关 2 域（备忘录/番茄钟——原居中卡）。
+4. **解除既有强制全屏**：8 处 JS 内联强制全屏代码删除，改为打开时按开关挂/摘 `.bz-win-mfs` 类（顺带推进铁律 9 样式收敛）；4 处 CSS 强制规则改写为「≤768 常规卡基规则 + .bz-win-mfs 全屏覆写」两态。
+5. **保险箱更名**：用户可见文案（命令显示名/窗口标题/⚙️/解锁文案）与文档术语「加密保险箱 → 保险箱」；命令 id（bz-encrypt-*）、存储结构、历史 ADR 标题（0015-0018 存档文档）一律不动。
+6. **排除域**：做题家、入口页（用户拍板，即使移动端零适配也不纳入本 ticket）。
+
+## 权衡
+
+- **每域开关 vs 全局单开关 vs 两级**：全局满足不了「日记全屏、番茄钟不」的粒度；两级（全局+覆盖）设置表面积翻倍。取每域单开关，与「每个有主窗口的功能一个设置项」的需求表述一致。
+- **关=常规卡 vs 关=原样**：「原样」对现强制全屏域等于开关无效（关不掉），必须定义统一非全屏形态；取项目既有 ≤768 卡片惯例（memo/diary/clipping 的 95%/90vh 圆角卡）。
+- **统一断点 768**：项目已有 `(max-width:768px)` 媒体与 `innerWidth<=768` 判定惯例（通知 matchMedia 768），统一到 768 不引入新惯例。
+- **默认值不对称（11 开 2 关）**：镜像现状即零迁移；强制统一「全开」或「全关」都会改变至少 2/11 个域现有行为，违背行为保持原则。
+- **不写窗口内手动切换钮**：14 域头部加按钮是横切 UI 工程，会话内临时切换场景极低（开窗前改设置即可），范围最小化。
+
+## 已知限制
+
+- 关=常规卡对原「顶部圆角抽屉」形态（日记 480-768）有形态差异：中号屏从抽屉变为全圆角卡（已拍板接受）。
+- `.bz-win-mfs` 头部避让依赖各窗口头部结构的选择器覆写，个别窗口头部结构特殊需逐域微调。
+- 窗口内无手动切换按钮：会话中途切换需关窗→改设置→重开。
+
+## 修订（2026-08，ticket 68 后续用户反馈）
+
+1. **全屏顶距统一为 `max(34px, env(safe-area-inset-top))`**（首子元素避让规则成为全部主窗口的统一机制）：日记 ≤768 头排 `padding:16px 20px 12px !important`（id 特异性压制通用规则）改 `:not(.bz-win-mfs)` 让位；news 自垫例外由 58px 对齐 34px（其首子是绝对定位关闭钮，故弹窗自垫而非垫首子）；影视分析基样式残留 `padding-top:34px` 清除（原 mfs 下 34px 弹窗垫 + 34px 首子垫 = 68px 双重垫顶）。此前 32 行「首子避让依赖逐域选择器」的已知限制就此解除。
+2. **主窗口头部按钮统一去阴影去边框**（用户拍板，移动端/桌面通吃）：`.bz-icon-btn` 的 `box-shadow/border` 升 `!important`，另加 11 组头部容器/按钮选择器 `box-shadow:none !important; border:none !important`——压制 Obsidian 主题 `button:not(.clickable-icon)` 的默认样式（收藏本 `.fav-header` 先例推广到全部主窗口头部）。
+3. **主窗口头部行全页面统一**（用户反馈）：统一类 `.bz-win-head`（加到缺 CSS 钩子的 7 窗头部：password/review/belongings/clipping/movie 主/影视分析/阅读报告；diary/memo/favorites/library/encrypt 用既有头部类并入同一组选择器）——头行 `padding:16px 24px 10px`（头部↔底部列表间距统一 10px）、两端对齐、间距 8；头行按钮统一 22×26/14px、透明、无阴影无边框、圆角 4、`text-muted`、hover `background-secondary`（`!important` 统一压制内联/JS hover 与主题默认样式；news 浮动按钮与番茄钟 ⚙️ 同规格跟进；movie 分析 0.55rem 独家规格与 belongings 无 hover 一并收敛）。
+4. **设置按钮置关闭正前 + 关闭钮再小 2px + 非真全屏隐藏关闭**（用户反馈，含桌面端）：① 各窗口 ⚙️ 一律排在 ❌ 正前（favorites/encrypt/clipping 换序，余窗原本合规）；② 关闭按钮 22×26/14px → **20×24/12px**（新类 `.bz-win-close` 挂全部自定义关闭钮，createIconBtn 系用既有 `--close`，memo/news 用 `.todo-btn-close`/`.news-close-btn`）；③ **非真全屏一律隐藏关闭按钮（全平台，含桌面端）**——卡片态与桌面靠点遮罩/ESC 关闭，真全屏（`.bz-win-mfs`）时靠 ❌ 关闭；统一规则为全局 `display:none` + `.bz-win-mfs` 后代 `display:flex`（元素选择器提特异性，压过统一按钮组与主题样式）。
+5. **二级小弹窗关闭按钮全取消，统一靠遮罩/ESC**（用户反馈）：6 处小弹窗 ✕/❌ 挂 `.bz-win-close` 复用全局隐藏（library 筛选/批注编辑/读书笔记、movie 筛选/AI 推荐、encrypt 预览）；3 处原先只有 ESC+按钮的弹窗**补点遮罩关闭**——movie AI 推荐（overlay click）、encrypt 预览（createOverlay `onMaskClick`）、news 覆盖确认（遮罩=取消）；library 读书笔记外层 show 函数本已有点遮罩关闭。侦察确认全库无「仅按钮可关」的弹窗；launcher 编辑模式 RENAME ✕ 属入口页体系不在此列。
+6. **聚合讯/阅读报告取消独立开关与 ⚙️ 入口，跟随上游域**（2026-08 用户反馈）：聚合讯打开时改读剪藏本 `clippingMobileDefaultFullscreen`，阅读报告改读书库 `libraryMobileDefaultFullscreen`（影视分析/影视报告本就随影视键，未动）；删除 `newsMobileDefaultFullscreen`/`readingReportMobileDefaultFullscreen` 两键（接口 + DEFAULT_SETTINGS）与两窗口的 ⚙️ 按钮/设置弹窗及 `.news-settings-btn` 样式——旧 data.json 残留值由接口收窄自然忽略；独立开关域由 13 收敛为 11。
