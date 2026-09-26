@@ -61,8 +61,12 @@ export interface SyncPreflightProbes {
   dataRoot?: Record<string, any>;
 }
 
-/** sync 预检判定：微信未运行 / 版本被封堵 / 数据根缺失不可写 → {ok:false, error 中文} */
-export declare function judgeSyncPreflight(probes: SyncPreflightProbes): { ok: boolean; error?: string };
+/** sync 预检判定：微信未运行 / 版本被封堵 / 数据根缺失不可写 → {ok:false, error 中文}；
+ *  cachedKey = 数据根已缓存密钥（.bz-face/key.json 在）——解密链不依赖微信，跳过微信两道检查 */
+export declare function judgeSyncPreflight(
+  probes: SyncPreflightProbes,
+  opts?: { cachedKey?: boolean },
+): { ok: boolean; error?: string };
 
 /** 子进程启动失败归类（spawn error → 中文人话；ENOENT/EACCES/其它） */
 export declare function classifySyncSpawnFailure(

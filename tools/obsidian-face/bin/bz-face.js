@@ -46,6 +46,7 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const core = require('../lib/doctor-core');
 const sync = require('../lib/sync-core');
 const prep = require('../lib/prep-core');
@@ -145,12 +146,15 @@ async function cmdSync(opts) {
     if (line) console.log(line);
   };
 
-  // 1. 预检（探测层各自兜错绝不抛）：微信进程与版本、数据根存在可写
+  // 1. 预检（探测层各自兜错绝不抛）：微信进程与版本、数据根存在可写；
+  //    数据根有缓存密钥（.bz-face/key.json）→ 解密链不依赖微信，跳过微信两道检查
   const [wechat, dataRoot] = await Promise.all([
     probes.probeWeixin(),
     Promise.resolve(probes.probeDataRoot(opts.dataRoot)),
   ]);
-  const pre = sync.judgeSyncPreflight({ wechat, dataRoot });
+  const cachedKeyPath = path.join(opts.dataRoot || '', '.bz-face', 'key.json');
+  const cachedKey = !!opts.dataRoot && fs.existsSync(cachedKeyPath);
+  const pre = sync.judgeSyncPreflight({ wechat, dataRoot }, { cachedKey });
   if (!pre.ok) {
     // 硬失败：结果行（给插件）+ stderr（给人），退出码 1——绝不静默降级读旧目录
     emit(sync.formatBzLine('result', { ok: false, error: pre.error }));
