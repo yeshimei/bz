@@ -65,7 +65,7 @@ const KEYWORDS = [
   [/(设置|settings|面板)/i, 'settings-panel'], [/(AI|模型|deepseek)/i, 'ai'],
 ];
 const DOMAIN_NAMES = {
-  global: '通用', notice: '通知', ai: 'AI', 'settings-panel': '设置面板',
+  global: '通用', notice: '通知', ai: '人工智能', 'settings-panel': '设置面板',
   diary: '日记本', memo: '备忘录', belongings: '归物本', people: '脸谱',
   clipping: '剪藏本', favorites: '收藏本', 'reading-report': '阅读报告',
   cinema: '影院', bookshelf: '书库', gameshelf: '游戏库', review: '复习计划',
@@ -252,15 +252,13 @@ if (manifest.version !== current) {
 /** HTML 文本转义（title/属性位；正文数据走 JSON.stringify 无需转义） */
 const htmlEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** 版本号倒序安全性：生成器天然正序，这里原样给（前端读取时 reverse） */
 let shown = 0;
 for (const r of releases) for (const sec of ['added', 'fixed', 'improved']) shown += r[sec].length;
-const dates = releases.map((r) => r.date).sort();
-const span = dates.length ? `${dates[0].slice(0, 4)}.${dates[0].slice(5, 7)} – ${dates[dates.length - 1].slice(0, 4)}.${dates[dates.length - 1].slice(5, 7)}` : '';
 
 const payload = JSON.stringify({
   current,
   generatedAt,
+  domainNames: DOMAIN_NAMES,
   releases: releases.map((r) => ({
     version: r.version, date: r.date, current: r.current,
     added: r.added, fixed: r.fixed, improved: r.improved,
@@ -272,7 +270,7 @@ const html = `<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>包仔（bz）更新日志</title>
+<title>更新日志</title>
 <style>
 :root{--sp-bg:#f6f2e9;--sp-panel:#fffcf6;--sp-line:#e5dfcf;--sp-line-soft:#f2eee1;--sp-ink:#2c2924;
 --sp-ink-2:#7a7466;--sp-ink-3:#aca595;--sp-accent:#c95a28;--sp-accent-soft:#f7e8dd;--sp-on-accent:#fff;
@@ -289,12 +287,10 @@ body{background:var(--sp-bg);color:var(--sp-ink);font:14px/1.6 system-ui,'Segoe 
 border-bottom:1px solid var(--sp-line)}
 .cg-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
 .cg-title svg{width:17px;height:17px;color:var(--sp-accent)}
-.cg-sub{font-size:11.5px;color:var(--sp-ink-3);font-weight:400}
 .cg-spacer{flex:1}
 .cg-body{flex:1;display:flex;min-height:0}
 .cg-side{width:196px;flex:none;overflow-y:auto;padding:10px 8px 24px;background:var(--sp-panel);
 border-right:1px solid var(--sp-line);display:flex;flex-direction:column;gap:2px}
-.cg-sec{font-size:10.5px;letter-spacing:.1em;color:var(--sp-ink-3);font-weight:600;padding:10px 10px 5px}
 .cg-nav{width:100%;display:flex;align-items:center;gap:7px;padding:6px 10px;border:0;border-radius:9px;
 background:none;font:inherit;font-size:12.5px;color:var(--sp-ink);cursor:pointer;text-align:left}
 .cg-nav:hover{background:var(--sp-accent-soft)}
@@ -312,19 +308,17 @@ color:var(--sp-accent);flex:none}
 .cg-rel-ver{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
 .cg-rel-cur{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--sp-accent-soft);color:var(--sp-accent)}
 .cg-rel-date{font-size:11.5px;color:var(--sp-ink-3);font-variant-numeric:tabular-nums}
-.cg-kinds{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 2px}
-.cg-kind{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--sp-line);color:var(--sp-ink-2)}
-.cg-kind--add{border-color:var(--sp-accent);color:var(--sp-accent)}
 .cg-blk{margin-top:20px}
 .cg-blk-t{font-size:12px;font-weight:600;letter-spacing:.04em;padding-bottom:7px;border-bottom:1px solid var(--sp-line);
 margin-bottom:2px}
 .cg-blk-t--pri{color:var(--sp-accent)}
 .cg-blk-t--sec{color:var(--sp-ink-2)}
+/* 条目：域名标签固定宽 + 右对齐，后面描述文字从同一条竖线起（用户要求对齐） */
 .cg-it{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--sp-line-soft)}
 .cg-it:last-child{border-bottom:0}
-.cg-dom{flex:none;font-size:10.5px;line-height:1.55;padding:1px 7px;border-radius:999px;
-background:var(--sp-line-soft);color:var(--sp-ink-2);white-space:nowrap;height:fit-content}
-.cg-it--pri .cg-dom{background:var(--sp-accent-soft);color:var(--sp-accent)}
+.cg-dom{flex:none;width:76px;text-align:right;font-size:11.5px;line-height:1.55;
+color:var(--sp-ink-2);white-space:nowrap}
+.cg-it--pri .cg-dom{color:var(--sp-accent)}
 .cg-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.55;color:var(--sp-ink)}
 .cg-it--sec .cg-txt{font-size:12px;color:var(--sp-ink-2)}
 .cg-sub{font-size:11.5px;color:var(--sp-ink-3);margin-top:2px;line-height:1.5}
@@ -333,10 +327,11 @@ background:var(--sp-line-soft);color:var(--sp-ink-2);white-space:nowrap;height:f
 .cg-body{flex-direction:column}
 .cg-side{width:100%;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;
 padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
-.cg-sec{display:none}
 .cg-nav{width:auto;flex:none}
 .cg-nav .d{display:none}
 .cg-page{padding:16px 14px 40px}
+/* 窄屏收窄域名列，避免挤掉描述文字 */
+.cg-dom{width:62px;font-size:11px}
 }
 </style>
 </head>
@@ -346,9 +341,8 @@ padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
     <div class="cg-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
       stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
       <path d="M12 7v5l3 2"/></svg>
-      包仔（bz）更新日志 <span class="cg-sub">v${htmlEsc(current)} · ${releases.length} 个版本 · ${htmlEsc(span)}</span></div>
+      更新日志</div>
     <span class="cg-spacer"></span>
-    <span class="cg-sub">${htmlEsc(generatedAt)} 生成</span>
   </div>
   <div class="cg-body">
     <aside class="cg-side" id="side"></aside>
@@ -357,6 +351,7 @@ padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
 </div>
 <script>
 const DATA = ${payload};
+const DOMAIN_NAMES = DATA.domainNames;
 const SECTIONS = [
   { key: 'added', label: '新功能', tier: 'pri' },
   { key: 'fixed', label: '问题修复', tier: 'sec' },
@@ -368,7 +363,7 @@ for (const r of DATA.releases) BY_VER[r.version] = r;
 let cur = DATA.current;
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function renderRail(){
-  let h = '<div class="cg-sec">版本（最新在前）</div>';
+  let h = '';
   for (const r of RAIL){
     h += '<button class="cg-nav' + (r.version === cur ? ' on' : '') + '" data-v="' + esc(r.version) + '">' +
       '<span class="v">v' + esc(r.version) + '</span>' +
@@ -386,15 +381,13 @@ function renderPage(){
   let h = '<div class="cg-rel-head"><span class="cg-rel-ver">v' + esc(r.version) + '</span>' +
     (r.current ? '<span class="cg-rel-cur">当前版本</span>' : '') +
     '<span class="cg-rel-date">' + esc(r.date) + '</span></div>';
-  const kinds = [];
-  for (const s of SECTIONS) if (r[s.key].length) kinds.push('<span class="cg-kind' + (s.key === 'added' ? ' cg-kind--add' : '') + '">' + s.label + ' ' + r[s.key].length + '</span>');
-  h += '<div class="cg-kinds">' + (kinds.length ? kinds.join('') : '<span class="cg-kind">空版本</span>') + '</div>';
   for (const s of SECTIONS){
     const items = r[s.key];
     if (!items.length) continue;
     h += '<div class="cg-blk"><div class="cg-blk-t cg-blk-t--' + s.tier + '">' + s.label + '</div>';
     for (const it of items){
-      h += '<div class="cg-it cg-it--' + s.tier + '"><span class="cg-dom">' + esc(it.domain) + '</span>' +
+      const dom = DOMAIN_NAMES[it.domain] || it.domain;
+      h += '<div class="cg-it cg-it--' + s.tier + '"><span class="cg-dom">' + esc(dom) + '</span>' +
         '<div class="cg-txt">' + esc(it.text) +
         (it.sub ? '<div class="cg-sub">' + esc(it.sub) + '</div>' : '') + '</div></div>';
     }
