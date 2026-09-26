@@ -1,38 +1,34 @@
 /**
- * 更新日志弹窗（issue 472）：设置面板侧栏底部入口 → 独立子弹窗，与面板同皮（frame 挂 .bz-sp-skin
+ * 更新日志弹窗（issue 472 v2）：设置面板侧栏底部入口 → 独立子弹窗，与面板同皮（frame 挂 .bz-sp-skin
  * 即得亮/暗两套 --sp-* 令牌）。壳走样式库 .bz-panel-overlay/.bz-panel-frame（components.css A 段），
  * hide 型常驻层范式随 checkup：重开抬顶（ADR-0067 topifyZ），ESC 栈序随显示序重放注册，
- * 插件卸载经 unloadSettingsPanel → unloadChangelog 收口。内容 = scripts/_gen-changelog.mjs
- * 从 git 提交历史生成的 changelog-data.ts（以域为纲，域内日期倒序）。
+ * 插件卸载经 unloadSettingsPanel → unloadChangelog 收口。
+ * 内容 = scripts/_gen-changelog.mjs 从 git 提交历史生成的 changelog-data.ts：
+ * 以版本为纲（最新版回写 manifest），块内分「新功能 / 问题修复 / 体验优化」三段主次，
+ * 条目 = 域标签 + 主题句 + 弱化副行——写给人看，不写实现细节。
  */
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { uiIcon } from '../core/ui';
-import { iconSpan, esc } from '../core/ui/str';
+import { esc } from '../core/ui/str';
 import { mountIcons } from '../core/ui/icons';
-import { DOMAIN_ICONS } from '../core/domain-icons';
-import { CHANGELOG_DOMAINS, CHANGELOG_META } from './changelog-data';
-import type { ChangelogDomainData, ChangelogEntry, ChangelogType } from './changelog-data';
+import { CHANGELOG_RELEASES, CHANGELOG_META, CHANGELOG_DOMAIN_NAMES } from './changelog-data';
+import type { ChangelogRelease, ChangelogItem } from './changelog-data';
 
 const OVERLAY_ID = 'bz-changelog-overlay';
 const FRAME_ID = 'bz-changelog-popup';
 
-/** 域图标：功能域复用 DOMAIN_ICONS（与设置导航同源），横切组就地补缺 */
-const CHANGELOG_ICONS: Readonly<Record<string, string>> = {
-  ...DOMAIN_ICONS,
-  'settings-panel': DOMAIN_ICONS.global,
-  core: 'waypoints',
-  ui: 'monitor',
-  checkup: 'activity',
-  other: 'inbox',
-};
-
-const TYPE_LABEL: Readonly<Record<ChangelogType, string>> = { feat: '新增', fix: '修复', perf: '优化' };
+type SectionKey = 'added' | 'fixed' | 'improved';
+const SECTIONS: Array<{ key: SectionKey; label: string }> = [
+  { key: 'added', label: '新功能' },
+  { key: 'fixed', label: '问题修复' },
+  { key: 'improved', label: '体验优化' },
+];
 
 let overlay: HTMLElement | null = null;
 let escHandle: ReturnType<typeof escManager.register> | null = null;
-let activeId: string | null = null;
+let activeVersion: string | null = null;
 
 function isVisible(): boolean {
   return !!overlay && overlay.style.display === 'flex';
@@ -48,12 +44,12 @@ export function unloadChangelog(): void {
   escHandle = null;
   overlay?.remove();
   overlay = null;
-  activeId = null;
+  activeVersion = null;
 }
 
-/** 打开更新日志弹窗（重复打开 = 抬顶 + 恢复上次所在域） */
+/** 打开更新日志弹窗（重复打开 = 抬顶 + 恢复上次所在版本） */
 export function openChangelogModal(): void {
-  if (!CHANGELOG_DOMAINS.length) return;
+  if (!CHANGELOG_RELEASES.length) return;
   if (!overlay) build();
   topifyZ(overlay!); // ADR-0067：显示即发号（重开抬顶，谁后显示谁在上）
   overlay!.style.display = 'flex';
@@ -81,61 +77,75 @@ function build(): void {
   overlay = ov;
 }
 
-/** 弹窗骨架（头行复用 .bz-panel-head；主体 = 左域栏 + 右条目列表） */
+/** 弹窗骨架（头行复用 .bz-panel-head；主体 = 左版本栏 + 右版本内容） */
 function shellHtml(): string {
   return `<div class="bz-panel-head">` +
     `<div class="bz-panel-brand">${uiIcon('history')}</div>` +
     `<span class="bz-panel-title">更新日志</span>` +
     `<span class="bz-panel-head-pipe"></span>` +
-    `<span class="bz-panel-head-sub">共 ${CHANGELOG_META.total} 条 · ${CHANGELOG_META.generatedAt} 自提交历史生成</span>` +
+    `<span class="bz-panel-head-sub">v${CHANGELOG_META.current} · ${CHANGELOG_META.releases} 个版本 · ${CHANGELOG_META.generatedAt} 生成</span>` +
     `<span class="bz-panel-head-sp"></span></div>` +
     `<div class="bz-chg-body"><nav class="bz-chg-side"></nav><div class="bz-chg-main"></div></div>`;
 }
 
 function render(): void {
   if (!overlay) return;
-  if (!activeId || !CHANGELOG_DOMAINS.some((d) => d.id === activeId)) {
-    activeId = CHANGELOG_DOMAINS[0].id;
+  if (!activeVersion || !CHANGELOG_RELEASES.some((r) => r.version === activeVersion)) {
+    activeVersion = CHANGELOG_RELEASES[CHANGELOG_RELEASES.length - 1].version; // 默认最新
   }
   renderRail();
-  renderList();
+  renderRelease();
 }
 
 function renderRail(): void {
   const side = overlay!.querySelector('.bz-chg-side') as HTMLElement;
-  side.innerHTML = CHANGELOG_DOMAINS.map((d) => navItemHtml(d, d.id === activeId)).join('');
-  mountIcons(side);
-  side.querySelectorAll<HTMLElement>('[data-chg-domain]').forEach((b) => {
+  // 新版本在上（更新日志惯例：最新在前）
+  side.innerHTML = [...CHANGELOG_RELEASES].reverse().map((r) => navItemHtml(r, r.version === activeVersion)).join('');
+  side.querySelectorAll<HTMLElement>('[data-chg-version]').forEach((b) => {
     b.addEventListener('click', () => {
-      activeId = b.dataset.chgDomain!;
+      activeVersion = b.dataset.chgVersion!;
       render();
     });
   });
 }
 
-function navItemHtml(d: ChangelogDomainData, on: boolean): string {
-  return `<button type="button" class="bz-chg-nav-item${on ? ' on' : ''}" data-chg-domain="${esc(d.id)}">` +
-    `${iconSpan(CHANGELOG_ICONS[d.id] ?? 'inbox', 'bz-ic bz-chg-nav-ic')}` +
-    `<span class="bz-chg-nav-name">${esc(d.name)}</span>` +
-    `<span class="bz-chg-nav-count">${d.entries.length}</span></button>`;
+function navItemHtml(r: ChangelogRelease, on: boolean): string {
+  const date = r.date.slice(5); // MM-DD（完整日期在右栏版本头）
+  return `<button type="button" class="bz-chg-nav-item${on ? ' on' : ''}${r.current ? ' cur' : ''}" data-chg-version="${esc(r.version)}">` +
+    `<span class="bz-chg-nav-ver">v${esc(r.version)}</span>` +
+    (r.current ? `<span class="bz-chg-nav-cur">当前</span>` : '') +
+    `<span class="bz-chg-nav-date">${esc(date)}</span></button>`;
 }
 
-function renderList(): void {
+function renderRelease(): void {
   const main = overlay!.querySelector('.bz-chg-main') as HTMLElement;
-  const d = CHANGELOG_DOMAINS.find((x) => x.id === activeId);
-  main.innerHTML = d ? listHtml(d) : '';
+  const rel = CHANGELOG_RELEASES.find((x) => x.version === activeVersion);
+  main.innerHTML = rel ? releaseHtml(rel) : '';
   main.scrollTop = 0;
 }
 
-function listHtml(d: ChangelogDomainData): string {
-  return `<div class="bz-chg-list-head"><span class="bz-chg-list-name">${esc(d.name)}</span>` +
-    `<span class="bz-chg-list-count">${d.entries.length} 条</span></div>` +
-    d.entries.map(itemHtml).join('');
+function releaseHtml(r: ChangelogRelease): string {
+  return `<div class="bz-chg-rel-head">` +
+    `<span class="bz-chg-rel-ver">v${esc(r.version)}</span>` +
+    (r.current ? `<span class="bz-chg-rel-cur">当前版本</span>` : '') +
+    `<span class="bz-chg-rel-date">${esc(r.date)}</span></div>` +
+    SECTIONS.filter((s) => r[s.key].length)
+      .map((s) => sectionHtml(s.key, s.label, r[s.key]))
+      .join('');
 }
 
-function itemHtml(e: ChangelogEntry): string {
-  return `<div class="bz-chg-item">` +
-    `<span class="bz-chg-date">${e.date}</span>` +
-    `<span class="bz-chg-badge bz-chg-badge--${e.type}">${TYPE_LABEL[e.type]}</span>` +
-    `<span class="bz-chg-text">${esc(e.text)}</span></div>`;
+function sectionHtml(key: SectionKey, label: string, items: ChangelogItem[]): string {
+  const tier = key === 'added' ? 'pri' : 'sec';
+  return `<div class="bz-chg-sec"><div class="bz-chg-sec-t bz-chg-sec-t--${tier}">${label}</div>` +
+    items.map((it) => itemHtml(it, tier)).join('') +
+    `</div>`;
+}
+
+function itemHtml(it: ChangelogItem, tier: 'pri' | 'sec'): string {
+  const dom = CHANGELOG_DOMAIN_NAMES[it.domain] ?? '其他';
+  return `<div class="bz-chg-item bz-chg-item--${tier}">` +
+    `<span class="bz-chg-dom">${esc(dom)}</span>` +
+    `<div class="bz-chg-body"><div class="bz-chg-text">${esc(it.text)}</div>` +
+    (it.sub ? `<div class="bz-chg-sub">${esc(it.sub)}</div>` : '') +
+    `</div></div>`;
 }

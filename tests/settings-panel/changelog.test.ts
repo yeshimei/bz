@@ -1,9 +1,9 @@
 /**
- * 更新日志弹窗测试（issue 472，UI 层）
+ * 更新日志弹窗测试（issue 472 v2，UI 层）
  * 链路：设置面板侧栏 footer 入口（data-sp-changelog）→ 独立弹窗
- * （.bz-panel-frame 新壳 + .bz-sp-skin 同皮）→ 域栏切换 / 条目行契约 /
- * 遮罩与 ESC 关闭 / 重开恢复上次所在域 / 卸载清理。
- * 数据形状契约见 changelog-data.test.ts。
+ * （.bz-panel-frame 新壳 + .bz-sp-skin 同皮）→ 版本栏（最新在前，当前版带签）/
+ * 版本内容三段主次（新功能主、修复优化次）/ 版本切换 / 遮罩与 ESC 关闭 /
+ * 重开恢复上次所在版本 / 卸载清理。数据形状契约见 changelog-data.test.ts。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -11,7 +11,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { SettingsPanelUI } from '../../src/settings-panel/ui';
 import { unloadSettingsPanel } from '../../src/settings-panel';
 import { openChangelogModal, unloadChangelog } from '../../src/settings-panel/changelog';
-import { CHANGELOG_DOMAINS, CHANGELOG_META } from '../../src/settings-panel/changelog-data';
+import { CHANGELOG_RELEASES, CHANGELOG_META } from '../../src/settings-panel/changelog-data';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -31,8 +31,10 @@ vi.mock('obsidian', async (importOriginal) => {
 });
 
 const tick = () => new Promise((r) => setTimeout(r, 20));
+/** 版本栏 DOM 顺序 = 数据倒序（最新在前） */
+const railOrder = () => [...CHANGELOG_RELEASES].reverse();
 
-describe('更新日志弹窗（issue 472）', () => {
+describe('更新日志弹窗（issue 472 v2）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     mobileFlag = false;
@@ -54,7 +56,7 @@ describe('更新日志弹窗（issue 472）', () => {
     // footer 是 .bz-sp-nav 的兄弟节点：nav 随搜索/切域整树重渲，入口不被波及
     expect(footBtn.closest('.bz-sp-desk-side')).toBeTruthy();
     expect(footBtn.closest('.bz-sp-nav')).toBeNull();
-    // 不入 .bz-sp-nav-item 契约类（测试按它数导航项，footer 入列会污染计数）
+    // 不沾 .bz-sp-nav-item 契约类（测试按它数导航项，footer 入列会污染计数）
     expect(footBtn.classList.contains('bz-sp-nav-item')).toBe(false);
 
     footBtn.click();
@@ -64,53 +66,62 @@ describe('更新日志弹窗（issue 472）', () => {
     expect(popup.classList.contains('bz-sp-skin')).toBe(true);
   });
 
-  it('弹窗结构：头行汇总 + 域栏项数与数据一致 + 默认选中第一域', () => {
+  it('弹窗结构：头行汇总 + 版本栏最新在前 + 默认选中最新版', () => {
     openChangelogModal();
     const popup = document.getElementById('bz-changelog-popup')!;
-    expect(popup.querySelector('.bz-panel-head-sub')!.textContent).toContain(String(CHANGELOG_META.total));
-    const railItems = popup.querySelectorAll('.bz-chg-nav-item');
-    expect(railItems.length).toBe(CHANGELOG_DOMAINS.length);
-    expect(railItems[0].classList.contains('on')).toBe(true);
-    expect(railItems[0].querySelector('.bz-chg-nav-name')!.textContent).toBe(CHANGELOG_DOMAINS[0].name);
-    // 图标占位已物化（mock setIcon 记 data-icon）
-    expect(railItems[0].querySelector('[data-icon]')).toBeTruthy();
-    const first = CHANGELOG_DOMAINS[0];
-    expect(popup.querySelector('.bz-chg-list-name')!.textContent).toBe(first.name);
-    expect(popup.querySelectorAll('.bz-chg-item').length).toBe(first.entries.length);
+    expect(popup.querySelector('.bz-panel-head-sub')!.textContent).toContain(`v${CHANGELOG_META.current}`);
+    const items = popup.querySelectorAll('.bz-chg-nav-item');
+    expect(items.length).toBe(CHANGELOG_RELEASES.length);
+    // 最新在前且默认选中
+    expect(items[0].classList.contains('on')).toBe(true);
+    expect(items[0].querySelector('.bz-chg-nav-ver')!.textContent).toBe(`v${CHANGELOG_META.current}`);
+    // 最新版带「当前」签
+    expect(items[0].querySelector('.bz-chg-nav-cur')).toBeTruthy();
+    expect(items[1].querySelector('.bz-chg-nav-cur')).toBeNull();
+    // 右栏版本头 = 最新版 + 当前版本徽标
+    expect(popup.querySelector('.bz-chg-rel-ver')!.textContent).toBe(`v${CHANGELOG_META.current}`);
+    expect(popup.querySelector('.bz-chg-rel-cur')).toBeTruthy();
   });
 
-  it('域切换：高亮迁移，列表头与条目数随域更新', () => {
+  it('版本内容三段主次：新功能为主（--pri）、修复/优化为次（--sec）、空段不渲染', () => {
+    openChangelogModal();
+    const main = document.querySelector('.bz-chg-main')!;
+    const secTitles = [...main.querySelectorAll('.bz-chg-sec-t')].map((el) => el.textContent);
+    expect(secTitles).toEqual(['新功能', '问题修复', '体验优化'].filter((l) => secTitles.includes(l)));
+    expect(secTitles[0]).toBe('新功能');
+    // 新功能行为主层级，修复/优化行为次层级
+    expect(main.querySelector('.bz-chg-sec .bz-chg-item--pri')).toBeTruthy();
+    expect(main.querySelector('.bz-chg-sec .bz-chg-item--sec')).toBeTruthy();
+    // 域标签 chip 在行内
+    expect(main.querySelector('.bz-chg-item .bz-chg-dom')).toBeTruthy();
+    // 主题句有文本
+    expect((main.querySelector('.bz-chg-item .bz-chg-text')!.textContent ?? '').length).toBeGreaterThan(0);
+  });
+
+  it('版本切换：高亮迁移，版本头随切换更新；旧版本无「当前版本」徽标', () => {
     openChangelogModal();
     const popup = document.getElementById('bz-changelog-popup')!;
-    const second = CHANGELOG_DOMAINS[1];
+    const older = railOrder()[1]; // 栏内第二项 = 数据倒数第二版
     (popup.querySelectorAll('.bz-chg-nav-item')[1] as HTMLElement).click();
     const items = popup.querySelectorAll('.bz-chg-nav-item');
     expect(items[1].classList.contains('on')).toBe(true);
     expect(items[0].classList.contains('on')).toBe(false);
-    expect(popup.querySelector('.bz-chg-list-name')!.textContent).toBe(second.name);
-    expect(popup.querySelectorAll('.bz-chg-item').length).toBe(second.entries.length);
+    expect(popup.querySelector('.bz-chg-rel-ver')!.textContent).toBe(`v${older.version}`);
+    expect(popup.querySelector('.bz-chg-rel-cur')).toBeNull();
+    // 主栏有实际内容
+    expect(popup.querySelectorAll('.bz-chg-item').length).toBeGreaterThan(0);
   });
 
-  it('条目行契约：日期 + 类型徽标 + 正文三段结构', () => {
+  it('ESC 关闭后重开：恢复可见并停留在上次所在版本', () => {
     openChangelogModal();
-    const item = document.querySelector('.bz-chg-item') as HTMLElement;
-    expect(item.querySelector('.bz-chg-date')!.textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    const badge = item.querySelector('.bz-chg-badge')!;
-    expect(['新增', '修复', '优化']).toContain(badge.textContent);
-    expect(badge.className).toMatch(/^bz-chg-badge bz-chg-badge--(feat|fix|perf)$/);
-    expect((item.querySelector('.bz-chg-text')!.textContent ?? '').length).toBeGreaterThan(0);
-  });
-
-  it('ESC 关闭后重开：恢复可见并停留在上次所在域', () => {
-    openChangelogModal();
-    const second = CHANGELOG_DOMAINS[1];
+    const older = railOrder()[1];
     (document.querySelectorAll('.bz-chg-nav-item')[1] as HTMLElement).click();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     const overlay = document.getElementById('bz-changelog-overlay')!;
     expect(overlay.style.display).toBe('none');
     openChangelogModal();
     expect(overlay.style.display).toBe('flex');
-    expect(document.querySelector('.bz-chg-list-name')!.textContent).toBe(second.name);
+    expect(document.querySelector('.bz-chg-rel-ver')!.textContent).toBe(`v${older.version}`);
   });
 
   it('遮罩点击关闭；弹窗本体点击不关', () => {
