@@ -58,9 +58,8 @@
  *   旧 knowledgeWhisperModel 经 migrateAsrKeys 一次性迁移为 asrWhisperModel。
  */
 
-import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, testAIConnectivity, thinkingLevelsOf } from './ai';
+import { AI_PROVIDER_REGISTRY, DEFAULT_AI_PROVIDER, getProviderDescriptor, maxOutputCapOf, testAIConnectivity, thinkingLevelsOf } from './ai';
 import { JEV_PROVIDER_REGISTRY, DEFAULT_JEV_PROVIDER, getJevProviderDescriptor, fetchJevModels, testJevConnectivity } from './jev';
-import { resolveModelLimits } from './model-limits';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
@@ -116,8 +115,22 @@ function providerValue(kind: 'model' | 'maxTokens'): string {
   if (over !== undefined && over !== null && over !== '') return String(over);
   const d = getProviderDescriptor(id);
   if (kind === 'model') return d.model || '';
-  // 未填覆盖：按「当前模型名」取官方最大档（issue 342/ADR-0151 单一事实源，与 ai.ts 解析同源）
-  return String(resolveModelLimits(String(d.model || ''))?.maxOutput ?? d.defaultMaxTokens);
+  // 未填覆盖：按「当前生效模型名」取官方最大档（issue 342/ADR-0151 单一事实源，与 ai.ts 解析同源）。
+  // issue 457：改走 providerMaxOutputCap——原实现只看注册表默认模型名，一旦「模型名称」行覆盖了模型，
+  // 面板显示值与请求实际生效值就会分叉（显示 393216 / 实发 16384 这类缝）。
+  // 无护栏可依的通道（本地 Ollama）回落注册表兜底档，与 ai.ts 的 capped() 同口径
+  return String(providerMaxOutputCap() ?? d.defaultMaxTokens);
+}
+
+/**
+ * 当前 provider 的输出上限护栏（issue 457/ADR-0193）：= 该家当前生效模型（面板覆盖 > 注册表默认）
+ * 的官方最大输出。与 `ai.ts getAIProvider` 的封顶基准**同一个函数**（maxOutputCapOf）——上限是
+ * 模型属性，智谱 glm-5.3-flash 131072 与 DeepSeek 393216 各不同，面板输入上界必须按家算。
+ */
+function providerMaxOutputCap(): number | undefined {
+  const id = currentProviderId();
+  const over = (tryGetSettings() as any).aiModelOverrides?.[id];
+  return maxOutputCapOf(id, typeof over === 'string' && over ? over : undefined);
 }
 
 /** 读当前 provider 的思考档位：档位不在该服务商档位表内（含历史遗留值）→ 回落 auto。
@@ -217,6 +230,8 @@ function providerModelCustomRow(): SettingsRow {
  * 「上下文窗口」行已删（issue 342 后续，2026-09-16 用户拍板）：上下文窗口是模型固有属性、
  * 插件全链零消费点（纯展示），不是可调参数——aiContextOverrides 键一并退役。
  * issue 331 起归「模型配置」组——refreshKey 联动链是全 schema 级的，跨组不受影响。
+ * issue 457/ADR-0193：输入上界不再是全局硬编码常量，改为按家动态取（providerMaxOutputCap，
+ * 详见 max 字段处注释）。
  */
 function providerMaxTokensRow(): NumberRow {
   return {
@@ -225,10 +240,12 @@ function providerMaxTokensRow(): NumberRow {
     desc: '单次回复的长度上限',
     // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
     //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
-    // 2026-09-23 补上界：原只有 min，手滑多打几个 0 会直送服务商（400/超长请求）；
-    // 20 万是当前最大上下文模型的量级上沿，够用且拦得住误触
+    // 2026-09-23 补的上界是全局硬编码 20 万（本意只拦「手滑多打几个 0」）——那是个假上界：
+    // 智谱 glm-5.3-flash 真实上界 131072，填 20 万照样直送服务商（400 / 1210 参数非法），
+    // 且失败面是全域 AI 调用而非单次（2026-09-26 实测复现）。issue 457/ADR-0193 起按家取真上限
+    // （函数型 max 随 provider / 模型名联动）：= 当前 provider 当前模型的官方最大输出，与请求解析同源
     min: 0,
-    max: 200000,
+    max: () => providerMaxOutputCap(),
     binding: {
       // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
       get: () => {

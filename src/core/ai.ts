@@ -104,6 +104,16 @@ export interface AIProviderDescriptor {
    *  上限只是封顶、不是目标消耗（ADR-0148）；填超模型真实上限会被服务端拒绝，
    *  故此处只放「该服务商在售主力模型的官方最大档」，其余留给 model-limits 按模型名解析 */
   defaultMaxTokens: number;
+  /**
+   * 输出上限硬护栏（issue 457/ADR-0193）：官方文档核实过的该通道最大输出——面板填不超它、
+   * 解析层也封顶。**缺省 = 该通道无官方上限可依**（模型任意的本地 Ollama 即此例），
+   * 此时不设围栏、尊重面板设置值。
+   *
+   * 与 defaultMaxTokens 的差别是语义不是数值：后者是「未填时用多少」的兜底档，可被覆盖越过；
+   * 本字段是「最多能到多少」的墙。只有查不到模型档（model-limits 未收录）时才轮到它兜底，
+   * 故 deepseek 这类「默认模型名留空、实际模型由调用方传」的通道也必须显式填上。
+   */
+  maxOutputCap?: number;
   /** 密钥在 AISettingsLike 的键名 */
   apiKeyKey: keyof AISettingsLike;
   /** 设置页密钥行标题（注册表驱动生成密钥行；ticket 171 策略模式完整化） */
@@ -131,6 +141,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
     // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
     defaultMaxTokens: 393216,
+    // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
+    maxOutputCap: 393216,
     apiKeyKey: 'deepseekApiKey',
     apiKeyLabel: 'DeepSeek 密钥',
     apiKeyDesc: 'DeepSeek 官方的接口密钥',
@@ -153,6 +165,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     model: 'glm-5.3-flash',
     // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
     defaultMaxTokens: 131072,
+    maxOutputCap: 131072, // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
     apiKeyKey: 'zhipuPlanApiKey',
     apiKeyLabel: '智谱 Plan 密钥',
     apiKeyDesc: '智谱 Coding 套餐的接口密钥',
@@ -172,6 +185,9 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     endpoint: 'http://localhost:11434/v1',
     model: 'llama3.1',
     defaultMaxTokens: 8192,
+    // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
+    // 面板可自由调大（既有口径，不因本票收紧）
+
     apiKeyKey: 'ollamaApiKey',
     apiKeyLabel: 'Ollama 密钥',
     apiKeyDesc: '本地服务无需密钥',
@@ -200,6 +216,20 @@ export function getProviderDescriptor(id?: string): AIProviderDescriptor {
 /** 该 provider 的档位表（设置面板选项与请求注入同源；未知 id 回退缺省服务商档位表） */
 export function thinkingLevelsOf(providerId?: string): AIThinkingLevel[] {
   return getProviderDescriptor(providerId).thinking?.levels ?? [];
+}
+
+/**
+ * 输出上限护栏基准（issue 457/ADR-0193）：先按该 provider **当前生效模型**（面板覆盖 > 注册表
+ * 默认）查 model-limits 的官方最大输出；查不到再取注册表 `maxOutputCap`；两者皆无 → `undefined`，
+ * 表示**该通道无官方上限可依、不设围栏**（模型任意的本地 Ollama 即此例，面板可自由设值）。
+ *
+ * 上限是「模型」的属性，不是全局常量——智谱 glm-5.3-flash 131072 / DeepSeek 393216，写死一个数
+ * 必然对某家越界。设置面板的输入上界与请求解析共用此函数，禁留第二套判定。
+ */
+export function maxOutputCapOf(providerId?: string, modelName?: string): number | undefined {
+  const desc = getProviderDescriptor(providerId);
+  const hit = resolveModelLimits(modelName || desc.model || '');
+  return hit ? hit.maxOutput : desc.maxOutputCap;
 }
 
 /**
@@ -300,17 +330,31 @@ export async function getAIProvider(override?: string | AIOverrideObject): Promi
   }
   // ticket 172 per-provider 覆盖：用户设置的模型/上下文/max token 优先于注册表默认；
   // issue 342/ADR-0151 起，中间插入「按当前模型名查官方档位」（model-limits 单一事实源）——
-  // 覆盖 > 查表 > 注册表默认。查表输入只用面板可见的模型名（覆盖 > 注册表默认），
-  // 调用点临时传的模型名不参与（ADR-0148 面板独裁）
+  // 覆盖 > 查表 > 注册表默认，但覆盖值受「该模型官方上限」封顶（issue 457/ADR-0193 护栏）。
+  // 查表输入只用面板可见的模型名（覆盖 > 注册表默认），调用点临时传的模型名不参与（ADR-0148）
   const overrideModel = s.aiModelOverrides?.[name];
-  const overrideMaxTokens = s.aiMaxTokensOverrides?.[name];
-  const limits = resolveModelLimits(overrideModel || desc.model || '');
+  const effModel = overrideModel || desc.model || '';
+  const cap = maxOutputCapOf(name, effModel);
+  // 上界护栏（issue 457/ADR-0193）：面板输入框的 max 只是 UI 软拦——data.json 手改、旧版残留值、
+  // 跨 provider 换槽都能绕过它；超限值直送会被服务端拒绝（智谱 1210：max_tokens 需落在
+  // [1,131072]），且失败面是全域 AI 而非单次调用。故在唯一的解析出口就近封顶兜底。
+  // 未填覆盖：护栏基准优先（模型档 > 注册表 maxOutputCap），基准也没有才回落兜底档；
+  // 填了覆盖：`min(覆盖值, 基准)`，基准为 undefined（无官方上限可依的通道，如本地 Ollama）
+  // 则不封顶、尊重面板设置值。
+  // 0 / 负数 / 非数一律视为「未填」（与面板「填 0 即清除覆盖」语义一致）。
+  const requested = Number(s.aiMaxTokensOverrides?.[name]);
+  const defaultMaxTokens =
+    requested > 0
+      ? cap === undefined
+        ? requested
+        : Math.min(requested, cap)
+      : cap ?? desc.defaultMaxTokens;
   return cachePut({
     id: name,
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
-    model: overrideModel || desc.model || undefined,
-    defaultMaxTokens: overrideMaxTokens || limits?.maxOutput || desc.defaultMaxTokens,
+    model: effModel || undefined,
+    defaultMaxTokens,
   });
 }
 

@@ -1,4 +1,4 @@
-/* 源指纹 aae39f8ded7babf4 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 54b0c0cb2540e5e6 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -5469,6 +5469,8 @@ var BZW_people = (() => {
       // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
       // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
       defaultMaxTokens: 393216,
+      // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
+      maxOutputCap: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
       apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -5491,6 +5493,8 @@ var BZW_people = (() => {
       model: "glm-5.3-flash",
       // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
       defaultMaxTokens: 131072,
+      maxOutputCap: 131072,
+      // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
       apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -5510,6 +5514,8 @@ var BZW_people = (() => {
       endpoint: "http://localhost:11434/v1",
       model: "llama3.1",
       defaultMaxTokens: 8192,
+      // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
+      // 面板可自由调大（既有口径，不因本票收紧）
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
       apiKeyDesc: "本地服务无需密钥",
@@ -5531,6 +5537,11 @@ var BZW_people = (() => {
   function thinkingLevelsOf(providerId) {
     var _a2, _b2;
     return (_b2 = (_a2 = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a2.levels) != null ? _b2 : [];
+  }
+  function maxOutputCapOf(providerId, modelName) {
+    const desc = getProviderDescriptor(providerId);
+    const hit = resolveModelLimits(modelName || desc.model || "");
+    return hit ? hit.maxOutput : desc.maxOutputCap;
   }
   function thinkingBodyFor(providerId, level) {
     var _a2;
@@ -5583,14 +5594,16 @@ var BZW_people = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
-    const overrideMaxTokens = (_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    const effModel = overrideModel || desc.model || "";
+    const cap = maxOutputCapOf(name, effModel);
+    const requested = Number((_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name]);
+    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+      model: effModel || void 0,
+      defaultMaxTokens
     });
   }
   function abortError() {
@@ -6540,8 +6553,9 @@ var BZW_people = (() => {
       avatar: avatarFileOf(fs, `${dataDir}/${name}`)
     };
   }
+  var AVA_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
   function avatarFileOf(fs, dir) {
-    for (const ext of ["jpg", "jpeg", "png", "webp", "gif"]) {
+    for (const ext of AVA_EXTS) {
       const p = `${dir}/avatar.${ext}`;
       try {
         if (fs.existsSync(p)) return p;
@@ -6549,6 +6563,66 @@ var BZW_people = (() => {
       }
     }
     return null;
+  }
+  function peopleMediaDir() {
+    var _a2;
+    const s = tryGetSettings();
+    const dir = String((_a2 = s == null ? void 0 : s.peopleMediaDir) != null ? _a2 : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+    return dir || "CONFIG/FACES";
+  }
+  function mediaDirName(name) {
+    return String(name).replace(/[\\/:*?"<>|]/g, "_").replace(/^[\s.]+|[\s.]+$/g, "") || "未命名";
+  }
+  function isVaultRelativePath(p) {
+    const norm = String(p != null ? p : "").replace(/\\/g, "/");
+    return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith("/");
+  }
+  async function importAvatarToVault(app, name, externalPath) {
+    var _a2, _b2;
+    const adapter = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.adapter;
+    if (!adapter) return null;
+    const dir = `${peopleMediaDir()}/${mediaDirName(name)}`;
+    let vaultCopy = null;
+    for (const ext of AVA_EXTS) {
+      const p = `${dir}/avatar.${ext}`;
+      try {
+        if (await adapter.exists(p)) {
+          vaultCopy = p;
+          break;
+        }
+      } catch (e) {
+      }
+    }
+    const fs = getFs();
+    if (!fs || !externalPath) return vaultCopy;
+    let srcExt = "";
+    try {
+      if (!fs.existsSync(externalPath)) return vaultCopy;
+      srcExt = String((_b2 = externalPath.split(".").pop()) != null ? _b2 : "").toLowerCase();
+    } catch (e) {
+      return vaultCopy;
+    }
+    if (!AVA_EXTS.includes(srcExt)) return vaultCopy;
+    const target = `${dir}/avatar.${srcExt}`;
+    try {
+      const parts = dir.split("/");
+      let cur = "";
+      for (const seg of parts) {
+        cur = cur ? `${cur}/${seg}` : seg;
+        try {
+          await adapter.mkdir(cur);
+        } catch (e) {
+        }
+      }
+      const buf = fs.readFileSync(externalPath);
+      if (!buf || !buf.length) return vaultCopy;
+      const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+      await adapter.writeBinary(target, ab);
+      return target;
+    } catch (e) {
+      console.warn("[people] 头像入库失败:", name, e);
+      return vaultCopy != null ? vaultCopy : externalPath;
+    }
   }
   function getPreviewFilePath() {
     const s = tryGetSettings();
@@ -7202,14 +7276,25 @@ var BZW_people = (() => {
     return `${(sec / 3600).toFixed(1)} 时`;
   }
   function localResourceUri(path) {
+    var _a2, _b2;
     const norm = path.replace(/\\/g, "/");
+    const escape = (s) => s.replace(/#/g, "%23").replace(/\?/g, "%3F");
     if (typeof window !== "undefined") {
       const base = window.BZW_MEDIA_BASE;
-      if (base) return base + encodeURI(norm).replace(/#/g, "%23").replace(/\?/g, "%3F");
+      if (base) return base + escape(encodeURI(norm));
+      const w = window;
+      const adapter = (_b2 = (_a2 = w.app) == null ? void 0 : _a2.vault) == null ? void 0 : _b2.adapter;
+      const res = adapter == null ? void 0 : adapter.getResourcePath;
+      if (adapter && res && !/^[A-Za-z]:/.test(norm) && !/^(https?:)?\/\//.test(norm) && !norm.startsWith("/")) {
+        try {
+          return res.call(adapter, norm);
+        } catch (e) {
+        }
+      }
     }
     if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
     const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
-    return `app://local/${encodeURI(rel).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
+    return `app://local/${escape(encodeURI(rel))}`;
   }
   function iconButton(icon, cls, attrs) {
     const b = el("button", cls, attrs);
@@ -8204,7 +8289,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           previewCount: (_c = pv == null ? void 0 : pv.msgs.length) != null ? _c : 0,
           newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
           processedTs: (_d = entry == null ? void 0 : entry.lastProcessedTs) != null ? _d : null,
-          avatar: bundle.avatar
+          // 头像入库（456）：外部文件复制进库内媒体文件夹，列表/详情才加载得出来
+          avatar: await importAvatarToVault(getApp(), name, bundle.avatar)
         });
       }
     } catch (e) {
@@ -8255,7 +8341,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
         const existing = (await previewStore.read()).contacts[c.name];
         const { contact, added } = mergePreview(existing, norm, now);
-        if (bundle.avatar) contact.avatar = bundle.avatar;
+        const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
+        if (ava) contact.avatar = ava;
+        else delete contact.avatar;
         await previewStore.upsertContact(c.name, contact);
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
@@ -8912,7 +9000,29 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       console.warn("[people] 读取预览桶失败:", e);
       previewCache = { version: 1, contacts: {} };
     }
+    await migrateAvatars(previewCache);
     return previewCache;
+  }
+  async function migrateAvatars(pv) {
+    const app = getApp();
+    const store2 = new PreviewStore(app);
+    for (const [name, c] of Object.entries(pv.contacts)) {
+      const cur = c.avatar;
+      if (!cur || isVaultRelativePath(cur)) continue;
+      let vPath = null;
+      try {
+        vPath = await importAvatarToVault(app, name, cur);
+      } catch (e) {
+        vPath = null;
+      }
+      if (!vPath || vPath === cur) continue;
+      c.avatar = vPath;
+      try {
+        await store2.upsertContact(name, c);
+      } catch (e) {
+        console.warn("[people] 头像迁移回写失败:", name, e);
+      }
+    }
   }
   function poolRecord(id, contact) {
     var _a2, _b2, _c, _d, _e, _f, _g;
@@ -9328,6 +9438,24 @@ ${s}`).join("\n\n");
           ]
         },
         {
+          icon: "image",
+          name: "媒体",
+          rows: [
+            {
+              type: "text",
+              name: "媒体文件夹",
+              desc: "库内存放头像等媒体资源的文件夹（vault 相对路径，如 CONFIG/FACES）；导入时头像复制进来，库外文件在 Obsidian 里加载不出来。空 = 用默认值",
+              binding: { key: "peopleMediaDir" },
+              placeholder: "CONFIG/FACES"
+            },
+            {
+              type: "info",
+              name: "头像入库，其余媒体不入库",
+              desc: "只有头像会复制进库（几 KB 的小图）；聊天图片 / 语音 / 视频仍留在外部数据目录"
+            }
+          ]
+        },
+        {
           icon: "eye",
           name: "预览",
           rows: [
@@ -9368,7 +9496,7 @@ ${s}`).join("\n\n");
             {
               type: "info",
               name: "原始媒体不入库",
-              desc: "图片语音视频文件留在外部数据目录，不复制进库"
+              desc: "图片语音视频文件留在外部数据目录，不复制进库；头像例外——复制进库内媒体文件夹才能显示"
             },
             {
               type: "info",

@@ -159,8 +159,9 @@ export interface NumberRow extends RowBase, TextualCommit {
   binding: RowBinding<number>;
   /** 钳制下界（写入前钳制；同时落到输入框 min 属性） */
   min?: number;
-  /** 钳制上界 */
-  max?: number;
+  /** 钳制上界；函数形式 = 随快照联动（issue 457：AI「最大输出 token」按当前 provider/模型取真上限，
+   *  与 refreshKey 联动刷新同口径），返回 undefined = 本次不钳制 */
+  max?: number | ((snapshot: SettingsSnapshot) => number | undefined);
   /** 输入框步进（浏览器 spinner 口径；不参与写入钳制） */
   step?: number;
   /** 占位提示；函数形式 = 随快照联动（ticket 172） */
@@ -423,6 +424,21 @@ function currentSnapshot(): SettingsSnapshot {
   return tryGetSettings() as SettingsSnapshot;
 }
 
+/**
+ * number 行的 min/max 求值（issue 457/ADR-0193）：静态数值原样返回；函数形式随快照取当前值
+ * （如 AI「最大输出 token」的上界 = 当前 provider 当前模型的官方最大输出）。返回 undefined 即
+ * 本次不钳制——非有限数（NaN / Infinity）与 undefined 同路，宁可不动也不写脏值。
+ */
+export function resolveNumberBound(
+  bound: number | ((snapshot: SettingsSnapshot) => number | undefined) | undefined,
+  snapshot: SettingsSnapshot,
+): number | undefined {
+  if (bound === undefined) return undefined;
+  if (typeof bound !== 'function') return bound;
+  const v = bound(snapshot);
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
+
 /** 数字解析 + min/max 钳制；空串/非有限数返回 null（不写入，防脏值落盘） */
 export function parseClampedNumber(raw: string, min?: number, max?: number): number | null {
   const trimmed = raw.trim();
@@ -554,7 +570,12 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       // R9/效率#14：number 行非空非法输入——回显生效旧值并清报错态（内存未写入，落的是旧值；
       // 不再让「显示值 ≠ 生效值」的缝留给用户）。空串不回显（留空回落默认是有意义的状态）
       if (isNumber) {
-        const n = parseClampedNumber(raw, (row as NumberRow).min, (row as NumberRow).max);
+        const snap = currentSnapshot();
+        const n = parseClampedNumber(
+          raw,
+          resolveNumberBound((row as NumberRow).min, snap),
+          resolveNumberBound((row as NumberRow).max, snap),
+        );
         if (n === null && raw.trim() !== '') {
           dirty = false;
           if (currentText) currentText.setValue(String(acc.read() ?? ''));
@@ -585,7 +606,12 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         dirty = true; // 用户真实输入（程序化 setValue 不经过 onChange → 不置脏）
         if (isNumber) {
           raw = v;
-          const n = parseClampedNumber(v, (row as NumberRow).min, (row as NumberRow).max);
+          const snap = currentSnapshot();
+          const n = parseClampedNumber(
+            v,
+            resolveNumberBound((row as NumberRow).min, snap),
+            resolveNumberBound((row as NumberRow).max, snap),
+          );
           if (n === null) {
             // 空串/非数字不写入（防脏值落盘），已有计时照常走完；非空非法行内报错（效率#14）
             if (v.trim() !== '') markNumberError();
@@ -620,8 +646,20 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         if (isNumber) {
           const num = row as NumberRow;
           inputEl.type = 'number';
-          if (num.min !== undefined) inputEl.min = String(num.min);
-          if (num.max !== undefined) inputEl.max = String(num.max);
+          // issue 457/ADR-0193：max 可以是函数（随 provider / 模型联动）——初始求值一次，并挂进
+          // customRefreshes，在任意行变更（含切服务商、改模型名）后重设，防止上界停在上一条通道。
+          // 静态 max 无需刷新（老口径行为不变）。
+          const applyBounds = (): void => {
+            const snap = currentSnapshot();
+            const lo = resolveNumberBound(num.min, snap);
+            const hi = resolveNumberBound(num.max, snap);
+            // undefined = 本次不钳制 → 属性一并清空：否则切到「无上限可依」的通道（本地 Ollama）
+            // 时会残留上一个 provider 的上界
+            inputEl.min = lo === undefined ? '' : String(lo);
+            inputEl.max = hi === undefined ? '' : String(hi);
+          };
+          applyBounds();
+          if (typeof num.max === 'function') customRefreshes.push(applyBounds);
           if (num.step !== undefined) inputEl.step = String(num.step);
         }
         // 单行掩码（type:'secret'）：密码框 + 右侧眼睛切明文——与设置面板渲染器同口径

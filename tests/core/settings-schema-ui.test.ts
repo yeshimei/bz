@@ -11,7 +11,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
-import { renderSettingsInto } from '../../src/core/settings-schema';
+import { renderSettingsInto, resolveNumberBound } from '../../src/core/settings-schema';
 import type { SettingsSchema } from '../../src/core/settings-schema';
 import { mainSettingsSchema } from '../../src/core/settings-main-schema';
 import { closePathPicker } from '../../src/core/path-picker';
@@ -818,5 +818,54 @@ describe('最大输出 token 行 min 钳制（N4）', () => {
     // 0 经 setProviderValue 删键 = 回落注册表默认（口径自洽），而非存 -5 发给服务商
     expect((state.aiMaxTokensOverrides as Record<string, unknown>).openai).toBeUndefined();
     expect(text.inputEl.value).toBe('0'); // 钳制值回写（R9）
+  });
+});
+
+describe('最大输出 token 行上界按服务商动态取（issue 457/ADR-0193）', () => {
+  it('resolveNumberBound：静态原样、函数求值；undefined / 非有限数一律不钳制', () => {
+    const snap = {} as never;
+    expect(resolveNumberBound(10, snap)).toBe(10);
+    expect(resolveNumberBound(undefined, snap)).toBeUndefined();
+    expect(resolveNumberBound(() => 131072, snap)).toBe(131072);
+    expect(resolveNumberBound(() => undefined, snap)).toBeUndefined();
+    expect(resolveNumberBound(() => Number.NaN, snap)).toBeUndefined();
+  });
+
+  it('「最大输出 token」上界随服务商切换：DeepSeek 393216 ↔ 智谱 131072', () => {
+    state.aiProvider = 'deepseek';
+    const container = document.createElement('div');
+    const handle = renderSettingsInto(container, { groups: mainSettingsSchema().groups.slice(0, 1) });
+    const text = textControlOf(findRow(container, '最大输出 token'));
+    expect(text.inputEl.max).toBe('393216'); // 原来恒为硬编码 200000
+
+    state.aiProvider = 'zhipu-plan';
+    handle.refresh();
+    expect(text.inputEl.max).toBe('131072');
+    // 上界即真上限：20 万填不进去（原样直送会被服务端 400 / 1210 拒绝）
+    text.trigger('200000');
+    expect((state.aiMaxTokensOverrides as Record<string, number>)['zhipu-plan']).toBe(131072);
+  });
+
+  it('切到「无上限可依」的通道（本地 Ollama）后上界属性清空，不留上一条通道的数', () => {
+    state.aiProvider = 'deepseek';
+    const container = document.createElement('div');
+    const handle = renderSettingsInto(container, { groups: mainSettingsSchema().groups.slice(0, 1) });
+    const text = textControlOf(findRow(container, '最大输出 token'));
+    expect(text.inputEl.max).toBe('393216');
+
+    state.aiProvider = 'ollama';
+    handle.refresh();
+    expect(text.inputEl.max).toBe(''); // 不清空就会残留 393216，把本地通道的输入框框死
+  });
+
+  it('上界随「模型名称」覆盖联动：DeepSeek 换成 gpt-4o-mini → 16384', () => {
+    state.aiProvider = 'deepseek';
+    state.aiModelOverrides = { deepseek: 'gpt-4o-mini' };
+    const container = document.createElement('div');
+    renderSettingsInto(container, { groups: mainSettingsSchema().groups.slice(0, 1) });
+    const text = textControlOf(findRow(container, '最大输出 token'));
+    expect(text.inputEl.max).toBe('16384');
+    // 未填覆盖时的显示默认值也按同一个模型算（显示值 = 生效值，不留缝）
+    expect(text.value).toBe('16384');
   });
 });

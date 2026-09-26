@@ -20,7 +20,7 @@ import { openPathPicker } from '../core/path-picker';
 // 行为内核单源（ARCH-1）：safePersist（N5）/CommitWarn（H1）/parseClampedNumber（R9）/
 // TEXT_COMMIT_DELAY（防抖窗口）下沉 core 导出，两渲染器消费同一实现——core 历轮加固经此传导
 import {
-  bindValue, safePersist, CommitWarn, parseClampedNumber, TEXT_COMMIT_DELAY,
+  bindValue, safePersist, CommitWarn, parseClampedNumber, resolveNumberBound, TEXT_COMMIT_DELAY,
   selectOptionsOf, selectOptionsSignature, selectDisplayValue,
 } from '../core/settings-schema';
 import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext, SecretRow, SelectOption } from '../core/settings-schema';
@@ -490,20 +490,24 @@ function renderRow(
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
       // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义；fire 用原始输入值，同 core last 口径）
       const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
+      // issue 457/ADR-0193：min/max 可为函数（上界随 provider / 模型联动）——与 core 渲染器同内核
+      // （resolveNumberBound 单源）；非有限数与 undefined 一律不钳制
+      const bound = (b: number | ((s: SettingsSnapshot) => number | undefined) | undefined): number | undefined =>
+        resolveNumberBound(b, snapshot());
       const input = makeInput({
         value: String(acc.read() ?? ''),
         type: 'number',
         num: true,
         placeholder: ph,
-        min: row.min,
-        max: row.max,
+        min: bound(row.min),
+        max: bound(row.max),
         onCommit: (raw) => {
           // 空串不写不删键（对齐 core 渲染器 parseClampedNumber 空→null→不写语义）：
           // 显式「0」才触发删键回落默认（见 setProviderValue 0=删键）；空串仅清显示
           if (raw.trim() === '') return;
           // R9 口径对齐 core（parseClampedNumber 内核单源 ARCH-1）：非空非法输入不写入——
           // 回显生效旧值（返回值经 makeInput 回写输入框），不再 NaN→0 意外改写绑定
-          const v = parseClampedNumber(raw, row.min, row.max);
+          const v = parseClampedNumber(raw, bound(row.min), bound(row.max));
           if (v === null) {
             motionInputReject(input); // 动效：卡簧弹回（校验拒绝——摇头 + 红晕一闪）
             return String(acc.read() ?? '');
@@ -525,6 +529,15 @@ function renderRow(
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       regRefreshDisplay(regRefresh, row.refreshKey, input);
+      // 函数型上界（issue 457/ADR-0193）：同一批变更后重设 input 属性，避免上界停在上一条通道
+      // （与 core 渲染器 applyBounds 同口径）
+      if (typeof row.max === 'function') {
+        regRefresh?.(() => {
+          const hi = bound(row.max);
+          // undefined = 该通道无上限可依 → 属性清空（同 core 渲染器：不留上一条通道的上界）
+          (input as HTMLInputElement).max = hi === undefined ? '' : String(hi);
+        });
+      }
       break;
     }
     case 'select': {

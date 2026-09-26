@@ -1,4 +1,4 @@
-/* 源指纹 9515318b2b99d451 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 397e171161d345bc · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -4715,6 +4715,8 @@ var BZW_knowledge = (() => {
       // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
       // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
       defaultMaxTokens: 393216,
+      // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
+      maxOutputCap: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
       apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -4737,6 +4739,8 @@ var BZW_knowledge = (() => {
       model: "glm-5.3-flash",
       // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
       defaultMaxTokens: 131072,
+      maxOutputCap: 131072,
+      // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
       apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -4756,6 +4760,8 @@ var BZW_knowledge = (() => {
       endpoint: "http://localhost:11434/v1",
       model: "llama3.1",
       defaultMaxTokens: 8192,
+      // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
+      // 面板可自由调大（既有口径，不因本票收紧）
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
       apiKeyDesc: "本地服务无需密钥",
@@ -4777,6 +4783,11 @@ var BZW_knowledge = (() => {
   function thinkingLevelsOf(providerId) {
     var _a, _b;
     return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
+  }
+  function maxOutputCapOf(providerId, modelName) {
+    const desc = getProviderDescriptor(providerId);
+    const hit = resolveModelLimits(modelName || desc.model || "");
+    return hit ? hit.maxOutput : desc.maxOutputCap;
   }
   function thinkingBodyFor(providerId, level) {
     var _a;
@@ -4829,14 +4840,16 @@ var BZW_knowledge = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    const effModel = overrideModel || desc.model || "";
+    const cap = maxOutputCapOf(name, effModel);
+    const requested = Number((_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name]);
+    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key2 || "",
-      model: overrideModel || desc.model || void 0,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+      model: effModel || void 0,
+      defaultMaxTokens
     });
   }
   function abortError() {
