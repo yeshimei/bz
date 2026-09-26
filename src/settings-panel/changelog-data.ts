@@ -816,6 +816,7 @@ export const CHANGELOG_RELEASES: ChangelogRelease[] = [
     date: '2026-09-26',
     current: true,
     added: [
+      { domain: 'settings-panel', text: '二次拍板', sub: '手册改 OB 内独立弹窗内嵌打开' },
       { domain: 'settings-panel', text: 'v2 更新日志用户化', sub: '自动版本号，主次分层，内容改写' },
       { domain: 'settings-panel', text: '使用手册按钮下载，新版本自更新，域设置深化' },
       { domain: 'people', text: 'bz-face prep 子命令', sub: '单联系人媒体导出，派生图片档，关联表，语音转写' },
@@ -830,6 +831,7 @@ export const CHANGELOG_RELEASES: ChangelogRelease[] = [
       { domain: 'people', text: '详情页双折', sub: '其人，我们，统计与背景弹窗化' },
     ],
     fixed: [
+      { domain: 'settings-panel', text: '使用手册入口搬侧栏 footer，下载，打开链路重做' },
       { domain: 'core', text: 'AI 输出上限护栏', sub: '面板上界按 provider×模型动态取，解析出口封顶' },
       { domain: 'people', text: '头像入库', sub: '库外 avatar 复制进库内媒体文件夹（CONFIG，FACES），渲染走 vault getResourcePath' },
     ],
