@@ -16927,150 +16927,34 @@ canvas { display: block; }
 }
 
 
-/* ═══════════ 更新日志弹窗（issue 472 v2）：侧栏 footer 入口 → 独立弹窗，frame 挂 .bz-sp-skin 同皮 ═══════════ */
+/* ═══════════ 更新日志弹窗（issue 472 立，issue 474 改在线下载）：侧栏 footer 入口 → 独立弹窗，
+   frame 挂 .bz-sp-skin 同皮；内容 = 现场下载的 manual/bz-changelog.html，iframe srcdoc 内嵌。
+   日志自己的版本栏/三段排版/主题记忆都在那份 HTML 里（与手册同范式），此处只管壳。 ═══════════ */
 .bz-chg-popup {
   width: min(calc(100vw - 32px), 880px);
   height: min(86vh, 680px);
 }
+/* 主体只做容器：滚动交 iframe 内日志文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉）。
+   无头行形态（用户拍板，与手册弹窗对齐）：不留内边距，iframe 满铺——外壳不出标题，
+   日志文档自带内容即全部信息 */
 .bz-chg-body {
   flex: 1;
   min-height: 0;
   display: flex;
-}
-/* 左版本栏（最新在前；当前版带「当前」签） */
-.bz-chg-side {
-  width: 168px;
-  flex: none;
-  padding: 8px;
-  overflow-y: auto;
-  border-right: 1px solid var(--sp-line);
-  background: var(--sp-panel);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.bz-chg-nav-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border: 0;
-  background: transparent;
-  border-radius: 9px;
-  font-size: 12.5px;
-  color: var(--sp-ink-2);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-}
-@media (hover: hover) {
-  .bz-chg-nav-item:hover { background: var(--sp-accent-soft); color: var(--sp-ink); }
-}
-.bz-chg-nav-item.on { background: var(--sp-accent); color: var(--sp-on-accent); }
-.bz-chg-nav-ver { font-weight: 600; font-variant-numeric: tabular-nums; }
-.bz-chg-nav-cur {
-  flex: none;
-  font-size: 10px;
-  line-height: 15px;
-  padding: 0 5px;
-  border-radius: 99px;
-  background: var(--sp-accent-soft);
-  color: var(--sp-accent);
-}
-.bz-chg-nav-item.on .bz-chg-nav-cur { background: rgba(255, 255, 255, 0.25); color: inherit; }
-.theme-dark .bz-chg-nav-item.on .bz-chg-nav-cur { background: rgba(27, 27, 31, 0.25); }
-.bz-chg-nav-date {
-  margin-left: auto;
-  font-size: 10.5px;
-  color: var(--sp-ink-3);
-  font-variant-numeric: tabular-nums;
-}
-.bz-chg-nav-item.on .bz-chg-nav-date { color: inherit; opacity: 0.8; }
-/* 右版本内容：版本头 + 三段主次（新功能为主，修复/优化为次） */
-.bz-chg-main { flex: 1; min-width: 0; overflow-y: auto; padding: 16px 20px 24px; }
-.bz-chg-rel-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--sp-line);
-}
-.bz-chg-rel-ver { font-size: 17px; font-weight: 700; color: var(--sp-ink); font-variant-numeric: tabular-nums; }
-.bz-chg-rel-cur {
-  font-size: 10.5px;
-  line-height: 17px;
-  padding: 0 7px;
-  border-radius: 99px;
-  background: var(--sp-accent);
-  color: var(--sp-on-accent);
-}
-.bz-chg-rel-date { font-size: 11.5px; color: var(--sp-ink-3); }
-.bz-chg-sec { margin-top: 14px; }
-.bz-chg-sec-t {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  padding-bottom: 6px;
-  color: var(--sp-ink-3);
-}
-.bz-chg-sec-t--pri { color: var(--sp-accent); }
-.bz-chg-item {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--sp-line-soft);
-  overflow-wrap: anywhere;
-}
-.bz-chg-item:last-child { border-bottom: 0; }
-.bz-chg-dom {
-  flex: none;
-  max-width: 72px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10.5px;
-  line-height: 17px;
-  padding: 0 7px;
-  border-radius: 99px;
-  background: var(--sp-line-soft);
-  color: var(--sp-ink-2);
 }
-.bz-chg-item--pri .bz-chg-dom { background: var(--sp-accent-soft); color: var(--sp-accent); }
-/* 内层条目主体用独立类 bz-chg-entry：.bz-chg-body 已被外层「版本栏+内容」容器占用
-   （display:flex），同名会把主题句与副行挤成一行（2026-09-26 用户截图实报） */
-.bz-chg-entry { flex: 1; min-width: 0; display: block; }
-.bz-chg-text { font-size: 12.5px; line-height: 1.55; color: var(--sp-ink); }
-.bz-chg-item--sec .bz-chg-text { font-size: 12px; color: var(--sp-ink-2); }
-.bz-chg-sub {
-  margin-top: 1px;
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--sp-ink-3);
+.bz-chg-frame {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: var(--sp-panel);
 }
-/* ≤768：版本栏转顶部横向签排，内容占余下全高 */
 @media (max-width: 768px) {
   .bz-chg-popup {
     width: calc(100vw - 24px);
     height: 86vh;
     height: 86dvh;
   }
-  .bz-chg-body { flex-direction: column; }
-  .bz-chg-side {
-    width: 100%;
-    flex: none;
-    flex-direction: row;
-    gap: 4px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 8px 10px;
-    border-right: 0;
-    border-bottom: 1px solid var(--sp-line);
-  }
-  .bz-chg-nav-item { width: auto; flex: none; }
-  .bz-chg-nav-date { display: none; }
-  .bz-chg-main { padding: 12px 14px 20px; }
 }
 
 
