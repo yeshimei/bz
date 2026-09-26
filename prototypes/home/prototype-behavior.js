@@ -1,5 +1,5 @@
-/* 源指纹 bf1f22326493d5ad · 仓内输入 284 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 850cba831a003ad7 · 仓内输入 286 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/motion.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -6575,6 +6575,152 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/ui/help-tip.ts
+  function bodyNodes(text) {
+    const out = [];
+    for (const raw of String(text != null ? text : "").split("\n")) {
+      const line = raw.trim();
+      if (!line) continue;
+      const isItem = line.startsWith("- ");
+      const el = document.createElement("div");
+      el.className = isItem ? "bz-help-li" : "bz-help-p";
+      el.textContent = isItem ? line.slice(2).trim() : line;
+      out.push(el);
+    }
+    return out;
+  }
+  function attachHelpTip(anchor, opts) {
+    anchor.classList.add("bz-help-anchor");
+    let layer = null;
+    let escHandle7 = null;
+    let pinned = false;
+    let overAnchor = false;
+    let overLayer = false;
+    let openedAt2 = 0;
+    let closeTimer = null;
+    let openTimer = null;
+    const isOpen = () => !!layer;
+    const clearTimers = () => {
+      if (closeTimer !== null) {
+        window.clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+      if (openTimer !== null) {
+        window.clearTimeout(openTimer);
+        openTimer = null;
+      }
+    };
+    const onOutside = (e) => {
+      const t = e.target;
+      if (t && (anchor.contains(t) || (layer == null ? void 0 : layer.contains(t)))) return;
+      close();
+    };
+    const onScroll = () => close();
+    const place = () => {
+      if (!layer) return;
+      const r = anchor.getBoundingClientRect();
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const h = layer.offsetHeight;
+      const w = layer.offsetWidth;
+      const below = vh - r.bottom;
+      const up = below < h + 12 && r.top > below;
+      const top = Math.min(Math.max(12, up ? r.top - h - 8 : r.bottom + 8), Math.max(12, vh - h - 12));
+      const left = Math.min(Math.max(12, r.left), Math.max(12, vw - w - 12));
+      layer.style.top = `${top}px`;
+      layer.style.left = `${left}px`;
+      layer.classList.toggle("is-up", up);
+    };
+    function close() {
+      clearTimers();
+      pinned = false;
+      overAnchor = false;
+      overLayer = false;
+      document.removeEventListener("pointerdown", onOutside, true);
+      document.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", place);
+      escHandle7 == null ? void 0 : escHandle7.unregister();
+      escHandle7 = null;
+      layer == null ? void 0 : layer.remove();
+      layer = null;
+      anchor.classList.remove("is-open");
+      if (currentClose === close) currentClose = null;
+    }
+    function open() {
+      if (layer || !anchor.isConnected) return;
+      if (currentClose && currentClose !== close) currentClose();
+      const pop = document.createElement("div");
+      pop.className = "bz-help-pop" + (opts.skinClassName ? " " + opts.skinClassName : "");
+      pop.setAttribute("role", "tooltip");
+      for (const n of bodyNodes(opts.text)) pop.appendChild(n);
+      pop.addEventListener("mouseenter", () => {
+        overLayer = true;
+      });
+      pop.addEventListener("mouseleave", () => {
+        overLayer = false;
+        if (!pinned) scheduleClose();
+      });
+      document.body.appendChild(pop);
+      topifyZ(pop);
+      layer = pop;
+      openedAt2 = Date.now();
+      place();
+      anchor.classList.add("is-open");
+      document.addEventListener("pointerdown", onOutside, true);
+      document.addEventListener("scroll", onScroll, true);
+      window.addEventListener("resize", place);
+      escHandle7 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
+      currentClose = close;
+    }
+    function scheduleClose() {
+      if (pinned) return;
+      if (closeTimer !== null) window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        closeTimer = null;
+        if (!pinned && !overAnchor && !overLayer) close();
+      }, CLOSE_DELAY);
+    }
+    anchor.addEventListener("mouseenter", () => {
+      overAnchor = true;
+      if (isOpen() || openTimer !== null) return;
+      openTimer = window.setTimeout(() => {
+        openTimer = null;
+        if (overAnchor) open();
+      }, HOVER_OPEN_DELAY);
+    });
+    anchor.addEventListener("mouseleave", () => {
+      overAnchor = false;
+      if (openTimer !== null) {
+        window.clearTimeout(openTimer);
+        openTimer = null;
+      }
+      scheduleClose();
+    });
+    anchor.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (isOpen() && Date.now() - openedAt2 < SYNTHETIC_TAP_MS) {
+        pinned = true;
+        return;
+      }
+      if (isOpen()) close();
+      else {
+        open();
+        pinned = true;
+      }
+    });
+  }
+  var HOVER_OPEN_DELAY, CLOSE_DELAY, SYNTHETIC_TAP_MS, currentClose;
+  var init_help_tip = __esm({
+    "src/core/ui/help-tip.ts"() {
+      init_esc_manager();
+      init_z_order();
+      HOVER_OPEN_DELAY = 180;
+      CLOSE_DELAY = 140;
+      SYNTHETIC_TAP_MS = 400;
+      currentClose = null;
+    }
+  });
+
   // src/core/ui/suggest.ts
   function uiSuggest(opts) {
     var _a2;
@@ -7295,6 +7441,7 @@ var BZW_home = (() => {
   // src/core/ui/index.ts
   var ui_exports = {};
   __export(ui_exports, {
+    attachHelpTip: () => attachHelpTip,
     closeLightbox: () => closeLightbox,
     mountIcons: () => mountIcons,
     openLightbox: () => openLightbox,
@@ -7349,6 +7496,7 @@ var BZW_home = (() => {
       init_stat();
       init_progress();
       init_popover();
+      init_help_tip();
       init_suggest();
       init_lightbox();
       init_modal();
@@ -8217,6 +8365,9 @@ var BZW_home = (() => {
   function storageFile(name, base) {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
     return `${dir}/${name}`;
+  }
+  function encryptDir() {
+    return `${storageDir()}/.ENCRYPT`;
   }
   function enqueueFileTask(filePath, task) {
     var _a2;
@@ -13517,7 +13668,13 @@ ${n.content.slice(0, 2e3)}
           icon: "graduation-cap",
           name: "做题家",
           rows: [
-            { type: "toggle", name: "用做题测难度", desc: "开始复习即做题，按正确率自动定难度", binding: { key: "forceQuizForReview" } },
+            {
+              type: "toggle",
+              name: "用做题测难度",
+              desc: "开始复习即做题，按正确率自动定难度",
+              help: "打开后「开始复习」先出题，再按正确率定本次难度。下面多选、题量、打乱顺序、出题难度四行是它的子项，只在开着时显示；关掉则回到普通跳转复习。",
+              binding: { key: "forceQuizForReview" }
+            },
             // 出题子项：仅「用做题测难度」开启时显示（ticket 170 isChild 联动 + visibleWhen 兜底）
             { type: "toggle", name: "允许多选题", desc: "开启后 AI 可能出多选题，关闭则只出单选题", binding: { key: "enableMultipleChoice" }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
             // 数量语义行口径对齐全域（深审新-14①）：number 行 + min 钳制（原 text 行可输 -5/abc）。
@@ -13567,6 +13724,7 @@ ${n.content.slice(0, 2e3)}
               type: "number",
               name: "复习间隔缩放",
               desc: "数值越小复习越频繁，数值越大越宽松",
+              help: "作用在 FSRS 动态间隔上的乘数：间隔 = intervalDays × scale，只对已进入 FSRS 的复习生效；固定的阶梯间隔表（含进入 FSRS 那一步）不受影响。范围 0.1 到 5，填 0.5 更勤、填 2 更宽松。",
               binding: { key: "reviewIntervalScale" },
               min: 0.1,
               max: 5
@@ -13577,6 +13735,7 @@ ${n.content.slice(0, 2e3)}
               type: "number",
               name: "R 目标阈值",
               desc: "触发提前复习的保留度阈值，不改变排期间隔",
+              help: "R 是算法估计的记忆保留度，取值 0 到 1（1 = 完全记得）。低于这个阈值会触发一次提前复习，但不改变排期间隔本身，所以调它不会让整体节奏变快变慢。",
               binding: { key: "reviewRThreshold" },
               min: 0.5,
               max: 0.99
@@ -13588,7 +13747,13 @@ ${n.content.slice(0, 2e3)}
           name: "记忆算法",
           rows: [
             // ADR-0077：FSRS 参数自动拟合（全自动定期重算）
-            { type: "toggle", name: "参数自动拟合", desc: "按个人复习历史拟合记忆参数，优化复习节奏", binding: { key: "reviewEnableFit" } },
+            {
+              type: "toggle",
+              name: "参数自动拟合",
+              desc: "按个人复习历史拟合记忆参数，优化复习节奏",
+              help: "用你的复习记录重新拟合 FSRS 参数。样本少于 100 条直接跳过（沿用默认参数），100 到 300 条只拟合基础八参，300 条以上拟合全参——所以刚开始用看不出差别。",
+              binding: { key: "reviewEnableFit" }
+            },
             {
               type: "number",
               name: "每 N 次复习重算",
@@ -13612,6 +13777,7 @@ ${n.content.slice(0, 2e3)}
               mode: "multi",
               name: "监听文件夹",
               desc: "新笔记自动加入复习计划",
+              help: "目录里的新笔记自动加入复习计划。库根目录不支持监听，会被拦下。首次添加目录时会问是否把目录内已有笔记一并收编：取消 = 该目录不加入监听（新老笔记都不收），确认才加入。",
               binding: {
                 get: () => getSettings().reviewWatchedFolders || [],
                 set: () => {
@@ -13675,7 +13841,13 @@ ${n.content.slice(0, 2e3)}
           icon: "eye",
           name: "界面",
           rows: [
-            { type: "toggle", name: "文件树标记", desc: "文件树中标记复习笔记", binding: { key: "reviewTreeBadge" } }
+            {
+              type: "toggle",
+              name: "文件树标记",
+              desc: "文件树中标记复习笔记",
+              help: "在 Obsidian 文件树里给复习中的笔记染色并挂阶段徽标，不开复习面板也能看出哪些到期、处在哪个阶段。关掉只是不画这些视觉标记，排期计算与到期提醒都不受影响，文件树恢复宿主原样。",
+              binding: { key: "reviewTreeBadge" }
+            }
           ]
         }
       ]
@@ -17323,9 +17495,15 @@ ${n.content.slice(0, 2e3)}
       refreshSettingsGroupCounts(container);
       markSettingSplitRows(container);
     };
+    const attachHelp = (setting, help) => {
+      if (!help) return;
+      const nameEl = setting.nameEl;
+      if (nameEl) attachHelpTip(nameEl, { text: help });
+    };
     const newRowSetting = (body, row) => {
       const setting = new Setting(body).setName(row.name);
       if (row.desc) setting.setDesc(row.desc);
+      attachHelp(setting, row.help);
       if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
       return setting;
     };
@@ -17718,6 +17896,7 @@ ${n.content.slice(0, 2e3)}
           body.appendChild(wrap2);
           const setting = new Setting(wrap2).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
+          attachHelp(setting, row.help);
           if (row.visibleWhen) entries.push({ el: wrap2, visibleWhen: row.visibleWhen });
           const readItems = () => typeof row.items === "function" ? row.items() : row.items;
           const renderItems = () => {
@@ -18755,6 +18934,11 @@ ${n.content.slice(0, 2e3)}
       note: row.note
     });
     const el = holder.firstElementChild;
+    const helpText = row.help;
+    if (helpText) {
+      const nameEl = el.querySelector(".bz-sp-set-name");
+      if (nameEl) attachHelpTip(nameEl, { text: helpText, skinClassName: "bz-sp-skin" });
+    }
     const ctx = makeCtx(el, refresh2);
     ctx.rowEl = el;
     const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
@@ -21137,6 +21321,73 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/core/manual.ts
+  function manualVaultPath(app) {
+    var _a2;
+    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${MANUAL_FILENAME}`;
+  }
+  async function hasManual(app) {
+    try {
+      const p = manualVaultPath(app);
+      return await app.vault.adapter.exists(p);
+    } catch (e) {
+      return false;
+    }
+  }
+  function manualAbsPath(app) {
+    var _a2;
+    try {
+      const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+      return (adapter == null ? void 0 : adapter.getFullPath) ? adapter.getFullPath(manualVaultPath(app)) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function looksLikeManual(text) {
+    const t = String(text || "");
+    return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
+  }
+  async function downloadManual(app) {
+    let lastErr = "";
+    for (const url of MANUAL_REMOTES) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!looksLikeManual(text)) {
+          lastErr = `${url} 返回内容不是手册页`;
+          continue;
+        }
+        await app.vault.adapter.write(manualVaultPath(app), text);
+        return;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`手册下载失败：${lastErr}`);
+  }
+  function openManual(app) {
+    const abs = manualAbsPath(app);
+    if (!abs) {
+      notice(`手册已存放在插件目录：${manualVaultPath(app)}`, "info");
+      return;
+    }
+    openExternalUrl(app, `file:///${abs.replace(/\\/g, "/")}`);
+  }
+  var MANUAL_FILENAME, MANUAL_REMOTES;
+  var init_manual = __esm({
+    "src/core/manual.ts"() {
+      init_fake_obsidian();
+      init_notice();
+      init_utils();
+      MANUAL_FILENAME = "bz-manual.html";
+      MANUAL_REMOTES = [
+        "https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-manual.html",
+        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-manual.html"
+      ];
+    }
+  });
+
   // src/core/settings-main-schema.ts
   var settings_main_schema_exports = {};
   __export(settings_main_schema_exports, {
@@ -21227,6 +21478,7 @@ ${n.content.slice(0, 2e3)}
       type: "text",
       name: "模型名称",
       desc: "AI 生成使用的模型",
+      help: "生成通道用哪个模型，按服务商分别存储，切服务商互不覆盖；留空就用该服务商的注册表默认模型。「获取模型名」从当前服务商的模型列表接口拉取（Ollama 读本机 /api/tags，其余走 /models），选中即回填；拉取期间切了服务商，这批结果作废、需要重取。这一行是自由文本，不校验模型是否存在：名字写错面板不会拦，请求会被服务端直接拒绝。",
       placeholder: "默认模型",
       binding: {
         get: () => providerValue("model"),
@@ -21274,6 +21526,7 @@ ${n.content.slice(0, 2e3)}
       type: "number",
       name: "最大输出 token",
       desc: "单次回复的长度上限",
+      help: "请求里的 max_tokens，是封顶值，不是每次都消耗这么多。解析顺序：本行按服务商存的覆盖值 > 按当前模型名查内置档位表（各模型的官方最大档，8K 到 384K 不等）> 该服务商注册表默认值；留空或填 0 都按未填处理。输入框只做 0 到 200000 的格式钳制，与模型真实上限无关：填得比模型官方档位还大时插件不拦，由服务端以 400 拒绝整个请求。",
       // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
       //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
       // 2026-09-23 补的上界是全局硬编码 20 万（本意只拦「手滑多打几个 0」）——那是个假上界：
@@ -21304,6 +21557,7 @@ ${n.content.slice(0, 2e3)}
         type: "select",
         name: "AI 服务商",
         desc: "当前使用的 AI 服务商",
+        help: "切换服务商不影响已填内容：密钥、模型名、最大输出 token、思考档位都是按服务商分别存储（per-provider 覆盖），切回哪家就是哪家上次的值。当前只有 deepseek、智谱 Plan、Ollama 三条通道。",
         binding: { key: "aiProvider" },
         options: AI_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label }))
       }
@@ -21334,6 +21588,7 @@ ${n.content.slice(0, 2e3)}
       type: "select",
       name: "思考 reasoning",
       desc: "思考档位，随服务商不同",
+      help: "思考档位（reasoning effort），按服务商分别存储，切换服务商时选项表随之更换：DeepSeek 为关、低、高、最高；智谱 Plan 无关闭档（强制思考），只有低、高、最高；Ollama 为关、低、中、高。选「跟随」＝不注入任何思考参数，交由模型默认。",
       binding: {
         get: () => providerThinkingValue(),
         set: (v) => setProviderThinkingValue(v),
@@ -21362,6 +21617,7 @@ ${n.content.slice(0, 2e3)}
       type: "text",
       name: "Embedding 模型",
       desc: "向量化使用的嵌入模型",
+      help: "第二大脑向量化用的模型，留空回落 bge-m3。换模型会改变向量维度，已建索引全部失效：第二大脑下次打开时自动全量重建，重建期间周期性落盘，中途关掉下次自动续建。「获取模型」按 embedding 能力过滤，但只在 Ollama 返回 capabilities 字段时有效，旧版会把聊天模型一并列出。",
       placeholder: "bge-m3",
       binding: { key: "secondBrainEmbeddingModel" },
       actions: [{
@@ -21397,6 +21653,7 @@ ${n.content.slice(0, 2e3)}
       type: "text",
       name: "Ollama 本地 URL",
       desc: "本地 Ollama 服务地址",
+      help: "桌面端第二大脑连接的 Ollama 地址，留空回落 http://localhost:11434。移动端不读这一键：它读 secondBrainRemoteOllamaUrl，由桌面端启动时按本机 IP 自动维护。下面 Embedding 模型、重排模型两处「获取模型」就是去这个服务拉列表。",
       binding: { key: "secondBrainOllamaUrl" },
       inputMode: "url",
       // text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值）
@@ -21411,6 +21668,7 @@ ${n.content.slice(0, 2e3)}
         type: "select",
         name: "Jev 服务商",
         desc: "判定通道的服务商",
+        help: "Jev 是与生成通道并存的判定通道：输入状态与类型化问题，输出类型化答案与校准概率，不生成文本，知识盒的关联判定走它。可选 Typesafe 与博查两家，与上面生成内容用的 AI 服务商互不影响；切换后密钥与模型各自换成那一家。",
         binding: { key: "jevProvider" },
         options: JEV_PROVIDER_REGISTRY.map((p) => ({ value: p.id, label: p.label }))
       },
@@ -21466,6 +21724,7 @@ ${n.content.slice(0, 2e3)}
       type: "text",
       name: "Jev 模型",
       desc: "判定通道使用的模型",
+      help: "判定通道用哪个模型，按 Jev 服务商分别存储；留空就用该家的缺省模型（Typesafe 是 jev-latest，博查是 bocha-jev-v1）。「获取模型」调当前服务商的模型列表，拉取期间切了服务商则弃用结果、需要重取。与「模型名称」一样是自由文本，不做格式校验，名字写错由服务端报错。",
       placeholder: "jev-latest",
       binding: {
         get: () => jevScopedValue("model"),
@@ -21514,6 +21773,7 @@ ${n.content.slice(0, 2e3)}
       type: "toggle",
       name: "启用重排",
       desc: "召回结果再精排，相关笔记排序更准",
+      help: "检索分两段：先用向量召回一批候选，再用 rerank 模型对这批候选重新排序。只改顺序、不动向量索引，关掉照样搜得到，只是排序精度下降。它是下面「重排走 Jev」「重排模型」两行的总开关。",
       binding: { key: "secondBrainRerank" }
     };
   }
@@ -21522,6 +21782,7 @@ ${n.content.slice(0, 2e3)}
       type: "toggle",
       name: "重排走 Jev",
       desc: "改用 Jev 模型云端重排",
+      help: "重排有两个通道：本地 rerank 模型，或 Jev 判定通道（云端）。开启即改用 Jev，下面本地「重排模型」一行随之隐藏。Jev 未配密钥时运行期自动回落余弦相似度排序，不报错。",
       binding: { key: "secondBrainRerankJev" },
       visibleWhen: (snapshot2) => snapshot2.secondBrainRerank !== false
     };
@@ -21531,6 +21792,7 @@ ${n.content.slice(0, 2e3)}
       type: "text",
       name: "重排模型",
       desc: "重排通道使用的模型",
+      help: "本地 rerank 模型，留空回落内置的 Qwen3-Reranker-4B。本地重排只在嵌入模型是 Qwen3-Embedding-8B 时可用：换成别的嵌入模型后，即便总闸开着，重排通道判定为 off，这一行也不会出现。",
       placeholder: "dengcao/Qwen3-Reranker-4B:Q4_K_M",
       binding: { key: "secondBrainRerankModel" },
       visibleWhen: (snapshot2) => isQwen3Embedding8b(snapshot2.secondBrainEmbeddingModel) && snapshot2.secondBrainRerank !== false && snapshot2.secondBrainRerankJev !== true,
@@ -21570,6 +21832,7 @@ ${n.content.slice(0, 2e3)}
         type: "secret",
         name: "ApiZero Key",
         desc: "豆瓣字段接口的密钥",
+        help: "影院取豆瓣字段的密钥，用来补齐评分、导演、主演、类型、地区、片长这些字段。留空则不走这条通道，改由内置的演职员信息兜底，能取到多少算多少。它只影响影院条目的字段来源，不参与搜索，也不决定抓取本身能不能跑起来。",
         binding: { key: "cinemaApizeroKey" },
         placeholder: "粘贴密钥"
       },
@@ -21577,6 +21840,7 @@ ${n.content.slice(0, 2e3)}
         type: "secret",
         name: "B站 Cookie",
         desc: "视频录入解析清晰度用的凭据",
+        help: "录入 B 站视频时解析可用清晰度的登录凭据；没有它只回落固定清晰度列表。值可从浏览器登录后的请求头复制。桌面端有「从 CLI 导入」，读本机 ~/.bilibili-cookies.json 填进来；移动端没有这个按钮，因为读不到本机文件。",
         binding: { key: "bilibiliCookie" },
         placeholder: "粘贴从浏览器复制的 Cookie",
         actions: isDesktopShell() ? [{ text: "从 CLI 导入", onClick: () => importCliBilibiliCookie() }] : []
@@ -21585,6 +21849,7 @@ ${n.content.slice(0, 2e3)}
         type: "secret",
         name: "豆瓣 Cookie",
         desc: "豆瓣搜索被风控时用的登录凭据",
+        help: "豆瓣搜索的风控凭据：被风控后抓取失败，填上登录 Cookie 可缓解（三条检索链路都会带上）。拦截会由队列聚合通知与表单提示报出来，不会静默失败。",
         binding: { key: "cinemaDoubanCookie" },
         placeholder: "粘贴从浏览器复制的 Cookie"
       }
@@ -21596,6 +21861,7 @@ ${n.content.slice(0, 2e3)}
         type: "select",
         name: "转写引擎",
         desc: "视频转文字的识别引擎",
+        help: "知识盒把视频转成文字时用哪个引擎。SenseVoice-Small 是缺省档，走 funasr，中文识别更好；faster-whisper 是备选，选它之后才会多出「Whisper 档位」这一行。两者都通过外部 Python 执行，环境里缺对应的包时整批转写会失败，错误提示里会点名缺的是哪个。",
         binding: { key: "asrEngine" },
         options: [
           { value: "sensevoice", label: "SenseVoice-Small" },
@@ -21634,6 +21900,33 @@ ${n.content.slice(0, 2e3)}
     return {
       groups: [
         {
+          icon: "book-open",
+          name: "使用手册",
+          rows: [
+            {
+              type: "button",
+              name: "使用手册",
+              desc: "首次点击从 GitHub 拉取手册写入插件目录并自动打开，已下载则直接打开",
+              buttonText: "使用手册",
+              onClick: () => {
+                void (async () => {
+                  const app = getApp();
+                  try {
+                    if (!await hasManual(app)) {
+                      notice("正在从 GitHub 下载使用手册…", "info");
+                      await downloadManual(app);
+                      notice("手册已下载到插件目录", "success");
+                    }
+                    openManual(app);
+                  } catch (e) {
+                    notice((e == null ? void 0 : e.message) || "手册下载失败", "error");
+                  }
+                })();
+              }
+            }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "数据存储路径",
           rows: [
@@ -21642,6 +21935,7 @@ ${n.content.slice(0, 2e3)}
               mode: "single",
               name: "数据存储路径",
               desc: "全部 JSON 数据文件统一存放的目录",
+              help: "各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据",
               note: "改动仅改路径不迁移旧数据；重载插件后生效",
               binding: { key: "storagePath" },
               onCommit: () => {
@@ -21727,6 +22021,8 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_ai_models();
       init_settings_model_picker();
+      init_manual();
+      init_app();
       STORAGE_PATH_COMMIT_NOTICE = "存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。";
     }
   });
@@ -29399,7 +29695,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           icon: "link",
           name: "自动关联",
           rows: [
-            { type: "toggle", name: "自动关联", desc: "笔记改动后自动建关联", binding: boolDefaultOn("linkAgentEnabled"), onChange: warnReload },
+            {
+              type: "toggle",
+              name: "自动关联",
+              desc: "笔记改动后自动建关联",
+              help: "关联监听的注册发生在插件启动时，改这个开关需重载插件才生效（面板会提示）。参与范围固定为文献、卡片、主题三个文件夹，不可在此缩小；要排除只能把笔记移出这三个目录。",
+              binding: boolDefaultOn("linkAgentEnabled"),
+              onChange: warnReload
+            },
             // 2026-09-23：三行原为 text + 「三函数绑定 + onChange 钳制复写」——那是「number 键
             // （linkAgentTopK/MaxLinks/MinScore）在 text 行里被收窄到 string」逼出来的绕行。
             // 改标准 number 行后：键直绑（类型本就 number）；钳制交给输入框 min/max/step；
@@ -29420,7 +29723,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
             { type: "toggle", name: "保留视频原件", desc: "转文献后保留视频文件", binding: { key: "knowledgeKeepVideo" } },
             { type: "select", name: "下载清晰度", desc: "下载视频的清晰度", binding: { key: "knowledgeQuality" }, options: [{ value: "highest", label: "最高" }, { value: "1080", label: "1080P" }, { value: "720", label: "720P" }] },
             { type: "toggle", name: "遇错即停", desc: "失败即停止批量处理", binding: { key: "knowledgeStopOnFailure" } },
-            { type: "text", name: "输出文件夹", desc: "视频文件的输出文件夹", binding: { key: "knowledgeOutputDir" }, placeholder: "如 D:/videos" },
+            {
+              type: "text",
+              name: "输出文件夹",
+              desc: "视频文件的输出文件夹",
+              help: "知识盒处理视频时，下载或转录出来的视频文件落在哪个目录，填完整路径，可以填 vault 之外的位置。留空则不下发这一项，由外部 bili-dl 命令行按它自己的默认值决定。实际写文件的是那个外部进程，插件只把路径传下去、再记录回传的结果，所以这里填错的表现是外部侧落盘失败。",
+              binding: { key: "knowledgeOutputDir" },
+              placeholder: "如 D:/videos"
+            },
             { type: "toggle", name: "视频压缩", desc: "转文字前压缩视频", binding: { key: "knowledgeCompress" } },
             { type: "number", name: "压缩质量 CRF", desc: "压缩画质，越小越高", binding: { key: "knowledgeCrf" }, min: 18, max: 28, step: 1 }
           ]
@@ -38230,7 +38540,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           icon: "sliders-horizontal",
           name: "行为",
           rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render2() },
+            {
+              type: "toggle",
+              name: "强制专注模式",
+              desc: "专注进行中无法暂停跳过或重置",
+              help: "专注进行中 pause、重置、跳过三个动作被状态机直接拦下，按钮与命令面板里的同名操作同挡；未开始时可正常启动，不阻止开始。",
+              binding: { key: "pomodoroForceFocus" },
+              onChange: () => render2()
+            },
             { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render2() },
             { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render2() },
             { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render2() },
@@ -38258,6 +38575,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               type: "select",
               name: "打开时恢复方式",
               desc: "启动遇倒计时的处理方式",
+              help: "插件启动时遇到未走完的倒计时：background＝后台继续（默认），静默接着走；popup＝自动弹出计时盘。",
               binding: { key: "pomodoroRestoreMode" },
               options: [
                 { value: "background", label: "后台继续" },
@@ -49325,6 +49643,7 @@ ${c.trim()}
         desc: intervalDesc(),
         buttonText: "抓取",
         cta: true,
+        help: "立刻跑一轮抓取，不必等抓取间隔到点。范围是所有启用的源：知乎日报、果壳，以及名单非空的 B 站与 RSS——名单为空的源直接跳过。四个源并行抓，已经在抓的时候再点会提示稍候。这一步只发 HTTP 请求、不调 AI，不产生费用；被风控或抓取失败会弹通知，不静默。",
         onClick: async (ctx) => {
           const r = await fetchNowNews();
           notifyManualFetchResult(r);
@@ -49357,6 +49676,7 @@ ${c.trim()}
         desc: upListDesc(),
         buttonText: "管理",
         cta: true,
+        help: "要跟进的 B 站 UP 主名单，点「管理」增删，行描述里显示当前条数。名单为空时 B 站这一路直接跳过，不算报错，只是不抓。抓取时按名单逐个 UP 主翻最近投稿，每位抓多少条由下面的「B站抓取条数」决定。",
         onClick: (ctx) => openUpManagerModal({
           ups: [...box.bilibiliUps],
           upInfo: { ...box.bilibiliUpInfo },
@@ -49375,6 +49695,7 @@ ${c.trim()}
         desc: rssListDesc(),
         buttonText: "管理",
         cta: true,
+        help: "RSS 订阅列表，点「管理」增删，行描述里显示当前条数。名单为空时 RSS 这一路整个跳过，不报错。抓回来的文章走与其它源统一的入库流程：默认进未读流，要不要立刻生成摘要由上方的「自动摘要」设置决定。",
         onClick: (ctx) => openRssManagerModal({
           feeds: box.rssFeeds.map((f) => ({ ...f })),
           onChanged: async () => {
@@ -51727,6 +52048,7 @@ ${c.trim()}
               type: "toggle",
               name: "自动摘要",
               desc: "新剪藏的文章自动生成 AI 摘要",
+              help: "新入库的剪藏文章自动跑一遍 AI 摘要，每篇消耗一次 LLM 调用。关掉之后，摘要长度、生成标签、标签数量、摘要时机这几行会一起收起来（它们只在这个开关打开时才有意义）。已有摘要不受影响，之后再想要摘要得在文章里手动触发；它只管新进来的文章。",
               binding: { key: AUTO_SUMMARY_KEYS.enabled },
               onChange: (v) => {
                 if (v) ensureAutoSummary(getApp());
@@ -51744,6 +52066,7 @@ ${c.trim()}
               type: "select",
               name: "摘要时机",
               desc: "生成剪藏摘要的时机",
+              help: "immediate＝保存后立刻跑摘要；lazy＝懒触发，打开文章时才跑。前者进库即消耗一次 LLM 调用（批量导入就是 N 次），后者推迟到真正打开时。",
               binding: { key: AUTO_SUMMARY_KEYS.timing },
               options: [
                 { value: "immediate", label: "保存后立刻" },
@@ -54122,21 +54445,13 @@ GitHub 仓库：${ghInfo.title}
                 { value: "已看", label: "已看" }
               ]
             },
-            {
-              type: "number",
-              name: "网格每行列数",
-              desc: "海报墙每一行的列数",
-              binding: numStrBinding("cinemaGridColumns", 5),
-              min: 2,
-              max: 12,
-              step: 1
-            },
             // issue 376 / ADR-0168：剧集按季合并（纯渲染层分组；同一部剧 ≥2 季才合并，单季照旧一卡）。
             // 2026-09-20：缺省**开**（用户拍板），并入的「剧名：副标题」特别篇在卡片详情里单列
             {
               type: "toggle",
               name: "剧集按季合并",
               desc: "同一部剧的各季合并成一张卡片",
+              help: "同一个剧集或动漫的多个季，在海报墙上合并成一张卡片，点进去才展开各季；「剧名：副标题」这类特别篇也归进卡里单独一段。它只改变海报墙怎么分组，不碰笔记、不改文件名、不动目录；关掉立刻恢复成每季一张卡，数据层面没有任何变化。",
               binding: { key: "cinemaMergeSeasons" }
             }
           ]
@@ -54146,7 +54461,6 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings4 = __esm({
     "src/cinema/settings.ts"() {
-      init_settings_common();
       init_douban_fetcher();
     }
   });
@@ -54208,6 +54522,7 @@ GitHub 仓库：${ghInfo.title}
               type: "text",
               name: "SteamID64",
               desc: "Steam 的数字账号 ID",
+              help: "Steam 账号的固定数字 ID，用来拉已购游戏、累计时长（分钟）、最近游玩时间与成就进度。格式是 17 位纯数字、固定以 7656 开头，不符合就判定为未配置，不会发出请求。它和 Web API 密钥必须同时填好，同步才跑得起来；拉取走 Steam 官方接口，国内直连常被重置，需要系统代理。",
               binding: { key: "gameshelfSteamId" },
               placeholder: "76561198000000000"
             },
@@ -54218,6 +54533,7 @@ GitHub 仓库：${ghInfo.title}
               type: "secret",
               name: "Web API 密钥",
               desc: "在 Steam 官网开发者页免费申请",
+              help: "Steam Web API 的密钥，拉已购游戏、近期游玩与成就都要用它，在 Steam 官网开发者页免费申请。它与 SteamID64 是并列的必填项：任一为空，同步就停在未配置状态，不发出请求。密钥是账号级的，要跟上面的 SteamID64 对上——配成别人的 ID，拉回来的就是别人的库；接口在国内直连常被重置，需要系统代理。",
               binding: { key: "gameshelfSteamApiKey" },
               placeholder: "32 位十六进制串"
             },
@@ -56116,6 +56432,7 @@ GitHub 仓库：${ghInfo.title}
               mode: "multi",
               name: "额外检索目录",
               desc: "额外纳入检索的笔记文件夹",
+              help: "三个盒子（文献、卡片、主题）之外的额外检索范围，可填多个，用英文逗号分隔，按 vault 内相对路径解析。留空就是只检索三个盒子。加进来的目录在下一轮增量索引时进库，不需要重建整个索引；把目录摘掉也不会立刻清掉它已经建好的向量。",
               binding: pathsOf("secondBrainAllowPaths"),
               pickerTitle: "选择额外检索目录",
               pickerDesc: "目录前缀语义：勾选祖先目录即覆盖其下全部子目录",
@@ -56134,8 +56451,26 @@ GitHub 仓库：${ghInfo.title}
             // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值。
             // issue 424/ADR-0184：后四行（段落最小长度 / 上下文限制 / 防抖延迟毫秒 / 光标轮询毫秒）
             // 删除——前两者不再限制（分块全留），防抖 300ms 与轮询 500ms 固化为常量（config.ts）。
-            { type: "number", name: "参考结果数 TopK", desc: "参考侧返回的近邻条数", binding: numStrBinding("secondBrainTopK", 20), min: 1, max: 50, step: 1 },
-            { type: "number", name: "对话参考结果数", desc: "对话时注入上下文的参考条数", binding: numStrBinding("secondBrainChatTopK", 20), min: 1, max: 50, step: 1 }
+            {
+              type: "number",
+              name: "参考结果数 TopK",
+              desc: "参考侧返回的近邻条数",
+              help: "参考检索每次从向量库召回的近邻条数，1 到 50。它是重排之前的召回量：先按这个数把候选捞出来，再交给 rerank 重新排序，所以调大之后重排有更多可选，代价是每次检索的计算量更高。它只作用于参考面板，跟对话侧那一行各算各的，也不钳制对话的条数。",
+              binding: numStrBinding("secondBrainTopK", 20),
+              min: 1,
+              max: 50,
+              step: 1
+            },
+            {
+              type: "number",
+              name: "对话参考结果数",
+              desc: "对话时注入上下文的参考条数",
+              help: "和小橘对话时，往上下文里注入多少条检索结果，1 到 50。它与上面的参考结果数各自独立召回、互不钳制，也不共用候选池。调大模型能看到更多材料，每次提问消耗的 token 也更高；对话保留多少轮历史是另一个键，不受这里影响。",
+              binding: numStrBinding("secondBrainChatTopK", 20),
+              min: 1,
+              max: 50,
+              step: 1
+            }
           ]
         },
         {
@@ -59297,22 +59632,8 @@ GitHub 仓库：${ghInfo.title}
             { type: "choiceCards", name: "面板主题", binding: { key: "encryptSkinTheme" }, layoutKey: "encryptSkin", options: [{ value: "steel", label: "钢灰", layout: "default", prevClass: "bz-sp-prev-steel" }] }
           ]
         },
-        {
-          icon: "folder-open",
-          // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
-          name: "目录",
-          rows: [
-            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-            {
-              type: "path",
-              mode: "single",
-              name: "保险库根文件夹",
-              desc: "加密文件的存放位置",
-              binding: { key: "encryptRoot" },
-              onCommit: warnReload
-            }
-          ]
-        },
+        // 2026-09-26「目录」组整组退役：密文根目录固定 = <数据存储路径>/.ENCRYPT（core/storage 的
+        // encryptDir 单源），不再给用户单独配——面板少一行需要解释「为什么不跟着数据目录走」的设置。
         {
           icon: "shield",
           name: "安全",
@@ -59340,10 +59661,25 @@ GitHub 仓库：${ghInfo.title}
           icon: "image",
           name: "预览",
           rows: [
-            { type: "toggle", name: "生成压缩预览", desc: "加密时生成图片视频的压缩预览", binding: { key: "encryptPreviewEnabled" }, onChange: warnReload },
+            {
+              type: "toggle",
+              name: "生成压缩预览",
+              desc: "加密时生成图片视频的压缩预览",
+              help: "加密图片与视频时同时生成压缩预览层，之后不解密即可看缩略图。下面「预览长边」「预览质量」两行是它的子项，开关关闭时一并隐藏。",
+              binding: { key: "encryptPreviewEnabled" },
+              onChange: warnReload
+            },
             { type: "number", name: "预览长边", desc: "预览图目标长边像素", binding: numStrBinding("encryptPreviewSize", 384), min: 64, max: 1024, step: 16, onCommit: warnReload, isChild: true },
             { type: "number", name: "预览质量", desc: "JPEG 图像压缩质量", binding: numStrBinding("encryptPreviewQuality", 0.5), min: 0.1, max: 1, step: 0.1, onCommit: warnReload, isChild: true },
-            { type: "toggle", name: "预览自动加载原图", desc: "打开预览自动解密原图", binding: { key: "encryptAutoLoadOriginal" }, onChange: warnReload, isChild: true }
+            {
+              type: "toggle",
+              name: "预览自动加载原图",
+              desc: "打开预览自动解密原图",
+              help: "默认关。开启后打开预览即自动解密全部原图替换缩略图，因此明显变慢；明文以 Blob URL 形式短暂驻留内存，关闭预览时统一 revokeObjectURL 回收。",
+              binding: { key: "encryptAutoLoadOriginal" },
+              onChange: warnReload,
+              isChild: true
+            }
           ]
         }
       ]
@@ -61657,7 +61993,8 @@ GitHub 仓库：${ghInfo.title}
     if (!controller) {
       const s = getSettings();
       const config = {
-        root: (s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, ""),
+        // 密文根目录固定跟随数据存储路径（core/storage 的 encryptDir 单源；encryptRoot 键已退役）
+        root: encryptDir(),
         previewEnabled: s.encryptPreviewEnabled !== false,
         previewSize: parseInt(s.encryptPreviewSize) || 384,
         previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
@@ -61731,6 +62068,7 @@ GitHub 仓库：${ghInfo.title}
   var init_encrypt = __esm({
     "src/encrypt/index.ts"() {
       init_settings_provider();
+      init_storage();
       init_app();
       init_notice();
       init_ui11();
@@ -62389,7 +62727,13 @@ GitHub 仓库：${ghInfo.title}
               ]
             },
             // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
-            { type: "text", name: "向量化模型", desc: "跟随 AI 面板的嵌入模型", binding: bindBehavior("smartcatEmbeddingModel") },
+            {
+              type: "text",
+              name: "向量化模型",
+              desc: "跟随 AI 面板的嵌入模型",
+              help: "跟随 AI 面板的嵌入模型（此项留空即跟随），单独填不生效。换模型后须删除 smartcat-memory-vectors.vec 并重扫记忆目录重建向量，否则仍用旧维度。",
+              binding: bindBehavior("smartcatEmbeddingModel")
+            },
             { type: "number", name: "分块字符上限", desc: "长笔记分块的最大字符数", binding: bindBehavior("smartcatChunkLimitChars"), min: 200, max: 6e3, step: 100 }
           ]
         },
@@ -62405,6 +62749,7 @@ GitHub 仓库：${ghInfo.title}
               mode: "multi",
               name: "记忆文件夹",
               desc: "文件夹内笔记进入小橘的记忆库",
+              help: "目录内笔记进小橘记忆库；移除目录时，记忆目录增量同步器按引用清除该目录下的记忆条目，再加回来需重扫。",
               binding: {
                 get: () => normalizeMemoryDirectories(tryGetSettings().memoryDirectories),
                 set: () => {
@@ -62847,7 +63192,6 @@ GitHub 仓库：${ghInfo.title}
         cinemaFolderPath: "我的/影视",
         cinemaSortMode: "date",
         cinemaStatusFilter: "",
-        cinemaGridColumns: "5",
         // 剧集按季合并（issue 376 / ADR-0168）：2026-09-20 用户改默认**开**（合并已是常态视图）
         cinemaMergeSeasons: true,
         cinemaStyle: "midnight",
@@ -62927,8 +63271,7 @@ GitHub 仓库：${ghInfo.title}
         pomodoroVolume: 100,
         pomodoroRestoreMode: "background",
         pomodoroStatMode: "week",
-        // 加密保险箱（encrypt 域）
-        encryptRoot: "CONFIG/.ENCRYPT",
+        // 加密保险箱（encrypt 域）：根目录固定 = <数据存储路径>/.ENCRYPT（encryptRoot 键已退役）
         encryptPreviewEnabled: true,
         encryptPreviewSize: "384",
         encryptPreviewQuality: "0.5",
