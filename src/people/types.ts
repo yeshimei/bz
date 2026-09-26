@@ -33,6 +33,21 @@ export interface DescribeConfirmInfo {
   batchSize: number;
 }
 
+/** 画像生成确认信息（471 / ADR-0196 决策 8 第二次确认：只报素材条数 / 调用数，不报金额） */
+export interface PortraitConfirmInfo {
+  /** 服务商显示名（如 DeepSeek / 智谱 Plan / Ollama（本地）） */
+  provider: string;
+  /** 当前生效模型名 */
+  model: string;
+  /** 联系人称呼 */
+  name: string;
+  /** 素材条数（聊天仓派生文本非空的消息数；增量口径为本次计划提炼的条数） */
+  materials: number;
+  /** 本次约调用次数（采集批数 + 其人 + 我们 + 时间线） */
+  calls: number;
+}
+
+
 /** 交往事件（LLM 从聊天片段提炼；ts = 日期字符串 YYYY-MM-DD，字典序即时间序） */
 export interface FaceEvent {
   ts: string;

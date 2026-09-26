@@ -548,7 +548,7 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
   });
 });
 
-describe('在线资源组（issue 480 / ADR-0202 冒烟）', () => {
+describe('在线资源组（issue 480 / ADR-0203 冒烟）', () => {
   it('组渲染三行状态机；清单缺席时三行禁用 + 失败横条（隐式核对失败不炸渲染）', async () => {
     const { onlineResourcesGroup, resetOnlineResourcesState } = await import('../src/settings-panel/online-resources');
     const { setApp } = await import('../src/core/app');

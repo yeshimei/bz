@@ -1,5 +1,5 @@
 /* ============================================================
- * bz · 下载清单（core/download-manifest.ts，单源）——ADR-0202
+ * bz · 下载清单（core/download-manifest.ts，单源）——ADR-0203
  *
  * 全插件在线资源的**单一事实源**：仓库 downloads/manifest.json，
  * 内联 docs[]（更新日志/使用手册等单文件资源）与 skins[]（皮肤包条目）。
@@ -25,7 +25,7 @@ const MANIFEST_REMOTE = 'manifest.json';
 
 /**
  * 皮肤包清单条目（形状；构建脚本 build-manifest.mjs 产出）。
- * 原声明在 skin-pack.ts（ADR-0199）——它本质是**清单条目**概念，ADR-0202 清单统一后
+ * 原声明在 skin-pack.ts（ADR-0199）——它本质是**清单条目**概念，ADR-0203 清单统一后
  * 随校验逻辑上收到本层；skin-pack 转出类型仅供各域选择卡消费（type-only，零运行时边）。
  */
 export interface SkinPackEntry {

@@ -1,4 +1,4 @@
-// scripts/build-skin-pack.mjs — 皮肤包出版（issue 475 / ADR-0199；清单合并见 issue 480 / ADR-0202）
+// scripts/build-skin-pack.mjs — 皮肤包出版（issue 475 / ADR-0199；清单合并见 issue 480 / ADR-0203）
 //
 // 把 `src/<域>/skins/<id>.css`（远端皮肤源，**不进构建聚合**）出版为远端可分发的形态：
 //   downloads/skins/<域>/<id>.css —— 与源逐字相同（仅换行归一为 LF）

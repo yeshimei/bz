@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * 「在线资源」组（ADR-0202 / issue 480，UI 层）测试。
+ * 「在线资源」组（ADR-0203 / issue 480，UI 层）测试。
  *
  * 钉住五件事：
  *  1. 组形状：name「在线资源」+ 单 custom 行自绘（整组内容不走声明行体系）；

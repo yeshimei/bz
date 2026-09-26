@@ -46,7 +46,7 @@ export function ensureChangelogReady(app: unknown): Promise<string> {
  * 有新版 → 覆盖落盘并返回新文本；离线/失败 → null（静默，保持本地已存版本）。
  * 入口口径 = ensureChangelogReady 先本地秒开，再调本函数后台核对一遍
  * ——日志重出推上 GitHub 而插件版本没动时，靠这层才能拿到新版。
- * ADR-0202 省流：缓存下载清单里日志的 sha256 与本地一致 → 清单确认无新版，
+ * ADR-0203 省流：缓存下载清单里日志的 sha256 与本地一致 → 清单确认无新版，
  * 直接跳过远端拉取；清单缺席回落全量核对。
  */
 export async function refreshChangelog(app: unknown): Promise<string | null> {

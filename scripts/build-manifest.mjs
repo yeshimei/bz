@@ -1,4 +1,4 @@
-// scripts/build-manifest.mjs — 统一下载清单产出（issue 480 / ADR-0202）
+// scripts/build-manifest.mjs — 统一下载清单产出（issue 480 / ADR-0203）
 //
 // 汇总全部在线资源条目，写 `downloads/manifest.json`——插件端启动双源拉取的
 // 唯一事实源（src/core/download-manifest.ts 消费）：

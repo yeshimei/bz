@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * 下载清单（ADR-0202 / issue 480，core/download-manifest.ts）测试。
+ * 下载清单（ADR-0203 / issue 480，core/download-manifest.ts）测试。
  *
  * 钉住四件事：
  *  1. 清单解析够严——坏 JSON / CDN 错误页 / 缺段 / 坏条目 → null（静默跳过，不炸启动）；
@@ -181,7 +181,7 @@ describe('docStatus（三态：missing / updated / ready）', () => {
   });
 });
 
-describe('refreshAsset 的 expectedSha256 省流（ADR-0202）', () => {
+describe('refreshAsset 的 expectedSha256 省流（ADR-0203）', () => {
   const validate = (t: string) => /<html/i.test(t);
 
   it('本地与清单 hash 一致 → 直接 null，**零网络请求**', async () => {

@@ -3,7 +3,7 @@
 - 状态：进行中（2026-09-27）
 - 域：core（download-manifest 新增 / remote-asset / skin-pack / manual / changelog）+ settings-panel（通用 loader + 在线资源组 + 样式）+ main.ts（启动链）+ scripts（build-manifest 新增 / build-skin-pack / _gen-changelog）
 - 来源：用户要求把更新日志、使用手册、皮肤三个在线下载收进设置面板通用新组，维护英文命名下载清单，启动拉清单对比更新状态；皮肤由用户决定下载
-- 关联：ADR-0202（本票决策）· ADR-0199（皮肤包分发，加载策略被本票修订）· ADR-0200（文档资产新鲜度）· issue 473 / 474 / 475 / 476（在线下载三连的前史）
+- 关联：ADR-0203（本票决策）· ADR-0199（皮肤包分发，加载策略被本票修订）· ADR-0200（文档资产新鲜度）· issue 473 / 474 / 475 / 476（在线下载三连的前史）
 
 ## 需求与拍板（grilling 两轮，2026-09-27）
 

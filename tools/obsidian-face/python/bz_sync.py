@@ -133,7 +133,11 @@ def ensure_wechat_running() -> None:
 
 
 def take_key(key_path: Path) -> dict:
-    """从微信进程取密钥并落 key_path（每轮新取；取不到就硬失败）。"""
+    """从微信进程取密钥并落 key_path（优先每轮新取；现取失败且有缓存 → 回退已缓存密钥）。
+
+    回退依据：密钥是账号级的，旧密钥能解同账号新版本数据库（官方封堵 ≥4.0.3.36 内存取密钥
+    后，数据盘时代缓存过的 key 依旧可用——ADR-0195「缓存密钥解密链不依赖 yara/取密钥」口径）。
+    """
     step(f"取密钥：从微信进程内存提取（{WECHAT_PROCESS} 需已登录）")
     progress("key", None)
     try:
@@ -142,12 +146,27 @@ def take_key(key_path: Path) -> dict:
         old = None  # 还没有缓存 / 缓存损坏都不算错——本轮就是要新取
     try:
         info_ = bz_export.extract_key()
-    except SystemExit as e:
-        fail_hard(str(e))
-    except Exception as e:
+    except (SystemExit, Exception) as e:  # noqa: B014——上游把版本封堵做成 SystemExit，与普通异常同路
+        # 现取失败：有可用缓存就回退（绝不静默——step 说明改用缓存）；无缓存才硬失败
+        cached = None
+        try:
+            if key_path.exists():
+                cached = json.loads(key_path.read_text(encoding="utf-8"))
+        except Exception:
+            cached = None
+        if cached and cached.get("key"):
+            wxid = str(cached.get("wxid") or "未知账号")
+            step(f"微信内存取密钥不可用（{str(e)[:80]}）——改用已缓存密钥（{wxid}，密钥账号级可解新版库）")
+            return {
+                "wxid": wxid,
+                "source_dir": str(cached.get("source_dir") or ""),
+                "old_wxid": wxid,
+                "cached": True,
+            }
         fail_hard(
             f"取密钥失败：{e}。请确认微信已登录并停留在主界面；"
-            "环境缺依赖先跑 bz-face doctor 自检"
+            "环境缺依赖先跑 bz-face doctor 自检；"
+            f"微信为封堵版本时可将已知可用的 key.json 放到 {key_path} 再同步（缓存密钥可解同账号新版库）"
         )
     key_path.parent.mkdir(parents=True, exist_ok=True)
     key_path.write_text(

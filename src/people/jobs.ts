@@ -114,6 +114,7 @@ import type {
   InterestItem,
   MomentItem,
   PersonProfile,
+  PortraitConfirmInfo,
   QuoteItem,
   ThreadItem,
   UnifiedMessage,
@@ -190,6 +191,11 @@ export interface PersonJob {
    * 该图 text 非空），账本供进度展示与「确认过 / 跳过过」的记忆——续跑不再重复弹确认。
    */
   describe?: DescribeProgress;
+  /**
+   * 画像生成已确认（471 / ADR-0196 决策 8 第二次确认的记账）：重试 / 断点续跑不再二次弹窗
+   * ——用户已授权过这次花费。取消 = 任务整条移除，不会有「取消过」的残留态。
+   */
+  portraitConfirmed?: boolean;
   /** 导入记录元数据（ui 层落 ImportRecord 所需；messageCount = 实际进提炼的条数） */
   importRecord?: { fileLabel: string; skippedCount: number; messageCount: number; timeFrom: string; timeTo: string };
   error?: string;
@@ -258,6 +264,12 @@ export interface JobStartOptions {
    */
   askDescribeConfirm?: DescribeGate;
   /**
+   * 画像生成的确认门注入（471 / ADR-0196 决策 8 第二次确认）：采集批切定后、烧 AI 前回调，
+   * 返回 'start' | 'cancel'（取消 = 任务整条移除，与描述的跳过不同）。缺省（未注入）= 放行
+   * ——生产入口（ui.startGeneration）恒注入门，引擎直调（测试 / 编程消费）不为确认所阻。
+   */
+  askPortraitConfirm?: PortraitGate;
+  /**
    * 增量合并的旧脸谱引用覆盖（仅本次内存运行生效；断点续跑一律重读 PeopleStore 现有 digest——同源）。
    * 缺省读 PeopleStore 里该人物现有 digest。
    */
@@ -272,6 +284,8 @@ export interface JobResumeOptions {
   askDescribe?: AskDescribe;
   /** 图片描述的确认门注入（470；缺省 = 无授权通道按跳过处理） */
   askDescribeConfirm?: DescribeGate;
+  /** 画像生成的确认门注入（471；缺省 = 放行，生产入口恒注入） */
+  askPortraitConfirm?: PortraitGate;
 }
 
 /**
@@ -280,6 +294,13 @@ export interface JobResumeOptions {
  * 抛错 = 没拿到授权，按 skip 处理。
  */
 export type DescribeGate = (info: DescribeConfirmInfo) => Promise<'start' | 'skip'>;
+
+/**
+ * 画像生成确认门（471 / ADR-0196 决策 8）：引擎组装确认数据（PortraitConfirmInfo，只报
+ * 素材条数 / 调用数不报金额）交给宿主弹窗，解析 'start'（开跑）| 'cancel'（取消 = 任务整条
+ * 移除，不烧 AI）；抛错 = 没拿到授权，按 cancel 处理。
+ */
+export type PortraitGate = (info: PortraitConfirmInfo) => Promise<'start' | 'cancel'>;
 
 /** 引擎快照（subscribe 推送 / snapshot() 读取；queue 为深拷贝并附带展示用派生字段） */
 export interface JobsSnapshot {
@@ -363,7 +384,13 @@ interface EngineState {
   safe: PeopleSafeStore | null;
   queue: PersonJob[];
   /** 最近一次 startJobs / resumeJobs 注入的 AI 依赖（缺省 createAI()；describe 段缺省 ai.json 多模态） */
-  injected: { askExtract?: AskLLM; askPortrait?: AskLLM; askDescribe?: AskDescribe; askDescribeConfirm?: DescribeGate } | null;
+  injected: {
+    askExtract?: AskLLM;
+    askPortrait?: AskLLM;
+    askDescribe?: AskDescribe;
+    askDescribeConfirm?: DescribeGate;
+    askPortraitConfirm?: PortraitGate;
+  } | null;
   /** 批级重试参数（startJobs 注入；缺省 DEFAULT_MAX_RETRIES + 真实退避） */
   retry: RetryPolicy;
   runningJob: string | null;
@@ -619,12 +646,13 @@ export async function startJobs(
     return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
   }
   st.injected =
-    opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm
+    opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm
       ? {
           askExtract: opts.askExtract,
           askPortrait: opts.askPortrait,
           askDescribe: opts.askDescribe,
           askDescribeConfirm: opts.askDescribeConfirm,
+          askPortraitConfirm: opts.askPortraitConfirm,
         }
       : null;
   // 重试策略：只在显式传入时覆盖（不传 = 沿用当前，缺省 DEFAULT_MAX_RETRIES + 真实退避）
@@ -784,7 +812,7 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     store,
     safe,
     queue,
-    injected: ai.askExtract || ai.askPortrait || ai.askDescribe ? ai : null,
+    injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
     retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
     runningJob: null,
     pauseRequested: false,
@@ -1330,6 +1358,44 @@ async function runJob(job: PersonJob): Promise<void> {
           timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
           timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString(),
         };
+      }
+    }
+
+    // 5.5 画像生成确认门（471 / ADR-0196 决策 8 第二次确认，与图片描述确认互相独立——
+    //     跳过了描述这扇门照弹）：素材条数 / 约调用次数（采集批 + 其人 + 我们 + 时间线）在
+    //     切批定案后最准。取消 = 任务整条移除（画像不画，已同步的数据保留）；抛错 = 没拿到
+    //     授权，按取消处理。门未注入 = 放行（生产入口恒注入；引擎直调的测试 / 编程消费不阻）。
+    //     已确认过（重试 / 断点续跑）不再二次弹窗。
+    if (!job.portraitConfirmed) {
+      const gate = st!.injected?.askPortraitConfirm;
+      if (gate) {
+        const label = describeModelLabelOf();
+        job.stage = 'chunked';
+        job.message = '等待确认画像生成…';
+        await persist();
+        emit();
+        let answer: 'start' | 'cancel';
+        try {
+          answer = await gate({
+            provider: label.provider,
+            model: label.model,
+            name: job.name,
+            materials: digestMsgs.length,
+            calls: chunks.length + 3,
+          });
+        } catch (e) {
+          console.warn('[people] 画像生成确认门异常，按取消处理:', e);
+          answer = 'cancel';
+        }
+        if (gone(job)) return;
+        if (answer === 'cancel') {
+          await removeJob(job.talker);
+          return;
+        }
+        job.portraitConfirmed = true;
+        await persist();
+      } else {
+        job.portraitConfirmed = true;
       }
     }
 

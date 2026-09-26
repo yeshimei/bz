@@ -792,45 +792,12 @@ export function aiSettingsSchema(): SettingsSchema {
 /** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项）。
  *  2026-09-12：通知组拆出为独立面板页（noticeSettingsSchema），本组只剩数据存储路径。
  *  2026-09-26：「使用手册」组撤出（issue 473）——入口搬家至设置面板侧栏 footer
- *  （更新日志上方，一键下载+打开+图标转圈 loading），不再挤在通用域里双入口。 */
+ *  （更新日志上方，一键下载+打开+图标转圈 loading），不再挤在通用域里双入口。
+ *  2026-09-27：通知组合回本组（issue 479/ADR-0202，用户拍板撤销同日的拆分——通知就
+ *  四行横切偏好，不值单占一页导航；noticeSettingsSchema 退役）。组序 = 通知 → 数据存储路径：
+ *  面板侧再把「外观」组 unshift 至最前，通用页终序 = 外观 → 通知 → 存储（issue 297：
+ *  通知行型全 select，键与行为零变化）。 */
 export function generalSettingsSchema(): SettingsSchema {
-  return {
-    groups: [
-      {
-        icon: 'folder-open',
-        name: '数据存储路径',
-        rows: [
-          {
-            type: 'path',
-            mode: 'single',
-            name: '数据存储路径',
-            desc: '全部 JSON 数据文件统一存放的目录',
-            help:
-              '各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。' +
-              '\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本' +
-              '\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题' +
-              '\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量' +
-              '\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量' +
-              '\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务' +
-              '\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据',
-            note: '改动仅改路径不迁移旧数据；重载插件后生效',
-            binding: { key: 'storagePath' },
-            onCommit: () => {
-              notice(STORAGE_PATH_COMMIT_NOTICE, 'warning');
-            },
-          },
-        ],
-      },
-      // 通知组已拆出（2026-09-12 用户拍板）：见下方 noticeSettingsSchema ——
-      // 设置面板里独立成一页，不再挤在「通用」域里
-    ],
-  };
-}
-
-/** 通知设置组（2026-09-12 用户拍板：自「通用」域拆出，设置面板里独立成一页）。
- *  不建业务域——core notice toast 是横切偏好，schema 留 core，面板只多一个导航页。
- *  issue 297：行型全 select，原生设置页与面板双渲染器通用。 */
-export function noticeSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
@@ -885,16 +852,41 @@ export function noticeSettingsSchema(): SettingsSchema {
           },
         ],
       },
+      {
+        icon: 'folder-open',
+        name: '数据存储路径',
+        rows: [
+          {
+            type: 'path',
+            mode: 'single',
+            name: '数据存储路径',
+            desc: '全部 JSON 数据文件统一存放的目录',
+            help:
+              '各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。' +
+              '\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本' +
+              '\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题' +
+              '\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量' +
+              '\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量' +
+              '\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务' +
+              '\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据',
+            note: '改动仅改路径不迁移旧数据；重载插件后生效',
+            binding: { key: 'storagePath' },
+            onCommit: () => {
+              notice(STORAGE_PATH_COMMIT_NOTICE, 'warning');
+            },
+          },
+        ],
+      },
     ],
   };
 }
 
-/** 全局设置聚合视图（AI + 数据存储路径 + 通知；每次调用重建，visibleWhen 在渲染器内重求值）。
+/** 全局设置聚合视图（AI + 通用（含通知组）；每次调用重建，visibleWhen 在渲染器内重求值）。
  *  issue 345（2026-09-16 用户拍板）：原生设置页退役平铺（BzSettingTab 只留「打开设置面板」按钮），
- *  本聚合器不再有 UI 消费方——保留作测试与文案 lint 的全量断言入口；面板分页各用
- *  aiSettingsSchema / generalSettingsSchema / noticeSettingsSchema。 */
+ *  本聚合器不再有 UI 消费方——保留作测试与文案 lint 的全量断言入口；面板分页用
+ *  aiSettingsSchema / generalSettingsSchema（2026-09-27 issue 479 通知组并回通用）。 */
 export function mainSettingsSchema(): SettingsSchema {
   return {
-    groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups, ...noticeSettingsSchema().groups],
+    groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups],
   };
 }

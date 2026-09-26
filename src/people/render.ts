@@ -8,7 +8,7 @@
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
-import type { DescribeConfirmInfo, FaceEvent, ImportRecord, PersonEntry, PersonProfile } from './types';
+import type { DescribeConfirmInfo, FaceEvent, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
 
@@ -408,6 +408,40 @@ export function describeConfirmModal(info: DescribeConfirmInfo, onAnswer: (answe
     const t = e.target as HTMLElement;
     if (t.closest('[data-people-desc-start]')) onAnswer('start');
     else if (t.closest('[data-people-desc-skip]')) onAnswer('skip');
+  });
+  return wrap;
+}
+
+/**
+ * 画像生成确认弹窗（471 / ADR-0196 决策 8 第二次确认，与图片描述确认互相独立）：
+ * 文案按 ADR 口径 `用 <服务商>/<模型> 画《X》的脸谱，素材 M 条、约 K 次调用`，
+ * 按钮 **开始 / 取消**；只报素材条数 / 调用数，不报金额。遮罩点击 / Esc 归「取消」
+ * （不花钱的那条路）；跳过图片描述后本窗照弹。onAnswer 只回调一次，摘除弹层由宿主管。
+ */
+export function portraitConfirmModal(info: PortraitConfirmInfo, onAnswer: (answer: 'start' | 'cancel') => void): HTMLElement {
+  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-portrait-confirm': '' });
+  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-portrait-cancel': '' }));
+  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '画像生成确认' });
+  pop.appendChild(el('div', 'bz-people-pop-head', [
+    el('div', 'bz-people-pop-title', text('画脸谱')),
+  ]));
+  const body = el('div', 'bz-people-pop-body');
+  body.appendChild(el('div', 'bz-people-desc-line', text(
+    `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
+  )));
+  body.appendChild(el('div', 'bz-people-desc-note', text(
+    '其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。'
+  )));
+  body.appendChild(el('div', 'bz-people-desc-actions', [
+    button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-portrait-cancel': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始', { 'data-people-portrait-start': '' }),
+  ]));
+  pop.appendChild(body);
+  wrap.appendChild(pop);
+  wrap.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('[data-people-portrait-start]')) onAnswer('start');
+    else if (t.closest('[data-people-portrait-cancel]')) onAnswer('cancel');
   });
   return wrap;
 }

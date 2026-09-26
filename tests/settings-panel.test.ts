@@ -99,7 +99,7 @@ describe('设置面板（settings-panel）', () => {
     const deadline = Date.now() + 3000;
     for (;;) {
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline || (badges.length >= 19 && !badges.includes('·'))) break;
+      if (Date.now() > deadline || (badges.length >= 18 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 徽标契约承接（ARCH-5）：逐域硬编码数字退役（issue 186/194/201/246/250/293/331/342/368
@@ -116,12 +116,11 @@ describe('设置面板（settings-panel）', () => {
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）；按 data-sp-domain 契约定位
     //（ARCH-5：逐位下标断言退役，域清单插入/重排不再整段错位）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(20); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
+    expect(navIcons.length).toBe(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
     const iconOf = (id: string) =>
       popup.querySelector(`.bz-sp-nav-item[data-sp-domain="${id}"] .bz-sp-nav-ic`)?.getAttribute('data-icon');
-    expect(iconOf('global')).toBe('settings'); // 通用
-    expect(iconOf('notice')).toBe('bell'); // 通知（基础组第二位，2026-09-12 独立成页）
-    expect(iconOf('home')).toBe('layout-grid'); // 首页（基础组第三位）
+    expect(iconOf('global')).toBe('settings'); // 通用（issue 479：通知组并回，通知随通用渲染）
+    expect(iconOf('home')).toBe('layout-grid'); // 首页（基础组第二位）
     expect(iconOf('ai')).toBe('sparkles'); // AI（智能组首位）
     expect(iconOf('diary')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
     expect(iconOf('memo')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
@@ -165,14 +164,16 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用；2026-09-12：原「设置」域外观组并入 → 仍两组）
+    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用；2026-09-12：原「设置」域外观组并入；
+    // issue 479：通知组并回 → 三组）
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(3); // 2026-09-27：issue 480 增「在线资源」组（末尾）→ 外观 + 存储路径 + 在线资源
+    expect(groups.length).toBe(4); // issue 480：+「在线资源」组（末尾）→ 外观 + 通知 + 存储路径 + 在线资源
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
-    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
-    expect(groups[2].querySelector('.bz-sp-group-name')!.textContent).toBe('在线资源'); // issue 480：通用域最后一组
+    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('通知');
+    expect(groups[2].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
+    expect(groups[3].querySelector('.bz-sp-group-name')!.textContent).toBe('在线资源'); // issue 480：通用域最后一组
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -357,10 +358,10 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 通用域分组：外观（palette，原「设置」域并入）+ 数据存储路径（folder-open）
+    // 通用域分组：外观（palette，原「设置」域并入）+ 通知（bell，issue 479 并回）+ 数据存储路径（folder-open）
     // （issue 473：「使用手册」组撤出 → 入口搬侧栏 footer，不再占分组卡）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['palette', 'folder-open', 'cloud-download']); // issue 480：+ 在线资源组
+    expect(icons).toEqual(['palette', 'bell', 'folder-open', 'cloud-download']); // issue 480：+ 在线资源组
     // AI 域分组：LLM/Embedding/JEV/语音转写/数据源凭据（issue 422 四组重排；issue 444 增语音转写）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -772,12 +773,12 @@ describe('设置面板（settings-panel）', () => {
       // 只数域项（.bz-sp-nav-item）——末尾「文档」组（手册/日志）非域，不得入域计数
       names = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 20 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 19 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(20); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
-    expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
+    expect(names).toHaveLength(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
+    expect(names.slice(0, 2)).toEqual(['通用', '首页']); // 基础组：通用 → 首页（issue 479 通知页退役并回通用）
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
       expect(names).not.toContain(n);
@@ -813,12 +814,12 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       // 只数域项（.bz-sp-mob-item）——末尾「文档」组（手册/日志）非域，不得入域计数
       names = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-name')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || names.length === 20) break;
+      if (Date.now() > deadline0 || names.length === 19) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(20); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
-    expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
+    expect(names).toHaveLength(19); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
+    expect(names.slice(0, 2)).toEqual(['通用', '首页']); // 基础组：通用 → 首页（issue 479 通知页退役并回通用）
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
     expect(names).toContain('日记本'); // ADR-0115：回忆墙升格日记本，单条目在列
@@ -874,7 +875,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
     // 拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(20); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(19); // issue 368 补游戏架 → 19；issue 446 补脸谱 → 20；issue 479 通知页退役 → 19
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();

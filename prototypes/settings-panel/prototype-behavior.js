@@ -1,4 +1,4 @@
-/* 源指纹 ac1aba4efc8ec0b3 · 仓内输入 270 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 141920f8f003e8a4 · 仓内输入 270 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -11584,8 +11584,7 @@ var BZW_settings_panel = (() => {
     STORAGE_PATH_COMMIT_NOTICE: () => STORAGE_PATH_COMMIT_NOTICE,
     aiSettingsSchema: () => aiSettingsSchema,
     generalSettingsSchema: () => generalSettingsSchema,
-    mainSettingsSchema: () => mainSettingsSchema,
-    noticeSettingsSchema: () => noticeSettingsSchema
+    mainSettingsSchema: () => mainSettingsSchema
   });
   function isDesktopShell() {
     if (typeof window === "undefined") return false;
@@ -12090,32 +12089,6 @@ var BZW_settings_panel = (() => {
     return {
       groups: [
         {
-          icon: "folder-open",
-          name: "数据存储路径",
-          rows: [
-            {
-              type: "path",
-              mode: "single",
-              name: "数据存储路径",
-              desc: "全部 JSON 数据文件统一存放的目录",
-              help: "各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据",
-              note: "改动仅改路径不迁移旧数据；重载插件后生效",
-              binding: { key: "storagePath" },
-              onCommit: () => {
-                notice(STORAGE_PATH_COMMIT_NOTICE, "warning");
-              }
-            }
-          ]
-        }
-        // 通知组已拆出（2026-09-12 用户拍板）：见下方 noticeSettingsSchema ——
-        // 设置面板里独立成一页，不再挤在「通用」域里
-      ]
-    };
-  }
-  function noticeSettingsSchema() {
-    return {
-      groups: [
-        {
           icon: "bell",
           name: "通知",
           rows: [
@@ -12166,13 +12139,31 @@ var BZW_settings_panel = (() => {
               ]
             }
           ]
+        },
+        {
+          icon: "folder-open",
+          name: "数据存储路径",
+          rows: [
+            {
+              type: "path",
+              mode: "single",
+              name: "数据存储路径",
+              desc: "全部 JSON 数据文件统一存放的目录",
+              help: "各域的明文数据都在这里，一个域一份 JSON。加密密文放在本目录下的 .ENCRYPT 子目录里，剪藏的网页图片等媒体仍走 vault 附件目录。带 .vec 的是向量文件，二进制，打不开看。\n- belongings.json 归物本\n- clipbook.json 剪藏本侧写\n- news.json 剪藏未读流\n- favorites.json 收藏本\n- memo.json 备忘录\n- pomodoro.json 番茄钟\n- review.json 复习计划\n- review-fit.json 复习拟合参数\n- quiz.json 复习做题\n- knowledge.json 知识盒\n- mount-suggest.json 挂载建议缓存\n- secondbrain.json 第二大脑\n- secondbrain.vec 第二大脑向量\n- home.json 内容首页\n- smartcat.json 小橘\n- smartcat-memory.json 小橘记忆流\n- smartcat-memory-vectors.vec 小橘记忆向量\n- smartcat-behavior.json 小橘行为流\n- people.json 脸谱\n- people-preview.json 脸谱预览缓存\n- people-jobs.json 脸谱导入任务\n- lock-stats.json 锁屏统计\n- weave-data.json 书库阅读数据",
+              note: "改动仅改路径不迁移旧数据；重载插件后生效",
+              binding: { key: "storagePath" },
+              onCommit: () => {
+                notice(STORAGE_PATH_COMMIT_NOTICE, "warning");
+              }
+            }
+          ]
         }
       ]
     };
   }
   function mainSettingsSchema() {
     return {
-      groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups, ...noticeSettingsSchema().groups]
+      groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups]
     };
   }
   var STORAGE_PATH_COMMIT_NOTICE;
@@ -27291,16 +27282,13 @@ ${it.text}`).join("\n"));
         if (r.failed > 0) notice(`${r.failed} 套皮肤下载失败，可稍后重试`, "error");
       } else {
         const entry = manifest.docs.find((d) => d.id === st.id);
-        if (entry) await downloadAsset(app, entry.file, looksLikeHtml, entry.name);
+        if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
       }
     } catch (e) {
       notice(e instanceof Error ? e.message : String(e), "error");
     } finally {
       await renderGroupBody(body, ctx);
     }
-  }
-  function looksLikeHtml(text) {
-    return /<!DOCTYPE/i.test(String(text || "")) || /<html/i.test(String(text || ""));
   }
   var FALLBACK_ROWS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed;
   var init_online_resources = __esm({
@@ -63575,8 +63563,8 @@ ${n.content.slice(0, 2e3)}
       spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       DOC_ENTRY_NAMES = ["文档", "使用手册", "更新日志", "手册", "日志", "changelog"];
       schemaLoaders = {
-        // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
-        // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+        // 通用组：基础 schema（通知 + 存储路径，issue 479 通知组并回 core）+ 外观组（原「设置」页并入）
+        // +「数据体检」按钮行（D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
         general: async () => {
           var _a2;
           const schema = await (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).generalSettingsSchema();
@@ -63597,9 +63585,8 @@ ${n.content.slice(0, 2e3)}
           return schema;
         },
         ai: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).aiSettingsSchema(),
-        // 通知（2026-09-12 用户拍板）：自「通用」域拆出，面板里独立成一页
-        // （不建业务域——横切偏好，schema 留 core/settings-main-schema）
-        notice: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).noticeSettingsSchema(),
+        // 通知页已退役（2026-09-27 issue 479 用户拍板，撤销 2026-09-12 拆分）：通知组并回
+        // core generalSettingsSchema，随通用页渲染；搜索「通知」走通用页内的行命中
         // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
         home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
@@ -63676,9 +63663,8 @@ ${n.content.slice(0, 2e3)}
         }
       };
       DOMAINS2 = [
-        { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "面板外观、存储路径等跨域偏好", schemaLoader: schemaLoaders.general },
-        // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
-        { id: "notice", name: "通知", icon: DOMAIN_ICONS.notice, desc: "通知级别、时长与弹出位置", schemaLoader: schemaLoaders.notice },
+        // 通用含通知组（2026-09-27 issue 479：通知页退役并回，撤销 2026-09-12 拆分）
+        { id: "global", name: "通用", icon: DOMAIN_ICONS.global, desc: "面板外观、通知与存储路径等跨域偏好", schemaLoader: schemaLoaders.general },
         { id: "ai", name: "AI", icon: DOMAIN_ICONS.ai, desc: "AI 模型与凭据配置", schemaLoader: schemaLoaders.ai },
         // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
         { id: "diary", name: "日记本", icon: DOMAIN_ICONS.diary, desc: "日记目录与写日记口径", schemaLoader: schemaLoaders.diary },
@@ -63705,7 +63691,7 @@ ${n.content.slice(0, 2e3)}
         { id: "knowledge", name: "知识盒", icon: DOMAIN_ICONS.knowledge, desc: "文献录入、卡片与主题管理", schemaLoader: schemaLoaders.knowledge }
       ];
       NAV_SECS = [
-        { title: "基础", ids: ["global", "notice", "home"] },
+        { title: "基础", ids: ["global", "home"] },
         { title: "智能", ids: ["ai", "secondbrain"] },
         { title: "记录", ids: ["diary", "memo", "belongings", "people"] },
         { title: "收集", ids: ["clipping", "favorites"] },

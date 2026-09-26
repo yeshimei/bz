@@ -13,7 +13,7 @@
  * 的第二通道）；两路都 404/失败才报错。内容校验由调用方给的
  * validate 判定（防把 CDN 的错误页写进文件）。
  *
- * 路径口径（ADR-0202）：`fileName` 是**相对 `downloads/` 的路径**（可为多级，
+ * 路径口径（ADR-0203）：`fileName` 是**相对 `downloads/` 的路径**（可为多级，
  * 如 `skins/bookshelf/noir.css`）；本地落盘是插件安装目录内的同名路径——
  * 本地即远端 downloads/ 的镜像。仓库旧 `manual/` 目录是改名前的冻结过渡副本
  * （旧版插件还在读它，内容停更，若干版本后删除）。
@@ -199,7 +199,7 @@ export async function ensureAssetReady(
  * 比对用 sha256 且先过 `normalizeEol`（`textSha256` 内建）：Windows 本地 CRLF
  * 与仓库 LF 不会被误判成新版而触发一次无意义的重写。
  *
- * `expectedSha256`（ADR-0202 省流增补）：调用方从缓存下载清单取该文件的清单 hash
+ * `expectedSha256`（ADR-0203 省流增补）：调用方从缓存下载清单取该文件的清单 hash
  * 传入——本地内容与之相等即「清单确认无新版」，**直接返回 null 跳过远端拉取**
  * （手册 327KB 不必每次打开都白拉）。清单缺席（null/空串）回落全量拉取对比，行为只省不破。
  *
