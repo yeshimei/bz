@@ -99,7 +99,11 @@ describe('迁移/出版脚本自检', () => {
     expect(() => run('scripts/split-domain-skins.mjs')).not.toThrow();
   });
 
-  it('manual/skins/ 与皮肤源同步（build-skin-pack --check）', () => {
+  it('downloads/skins/ 与皮肤源同步（build-skin-pack --check）', () => {
     expect(() => run('scripts/build-skin-pack.mjs')).not.toThrow();
+  });
+
+  it('统一清单与产物同步（build-manifest --check，issue 480 / ADR-0203）', () => {
+    expect(() => run('scripts/build-manifest.mjs')).not.toThrow();
   });
 });

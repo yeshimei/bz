@@ -5,7 +5,7 @@
  * 皮肤这件事现在有**四处**必须对齐，任何一处漏改都是静默失效（选择卡空格 / 皮不生效）：
  *   1. `scripts/skins.catalog.json`   —— 远端皮肤清单（id / 中文名 / 预览类）
  *   2. `src/<域>/skins/<id>.css`      —— 皮肤源（不进构建聚合）
- *   3. `manual/skins/index.json`      —— 出版产物（插件实际读的清单，含 sha256）
+ *   3. `downloads/manifest.json`      —— 出版产物（插件实际读的统一清单，含 sha256；issue 480 起 skins 条目居此，manual/skins/index.json 已退役）
  *   4. 域内的「已知取值全集」          —— 取值校验用（缺了会把用户的选择判成非法）
  *
  * 本文件把 1↔2↔3↔4 的正反向关系全钉住；切分器残留由独立脚本守卫
@@ -23,7 +23,11 @@ import { ALL_APPEARANCES } from '../../src/smartcat/types';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const CATALOG = JSON.parse(fs.readFileSync(path.join(ROOT, 'scripts/skins.catalog.json'), 'utf8'));
-const INDEX = JSON.parse(fs.readFileSync(path.join(ROOT, 'manual/skins/index.json'), 'utf8'));
+const INDEX = (() => {
+  const m = JSON.parse(fs.readFileSync(path.join(ROOT, 'downloads/manifest.json'), 'utf8'));
+  if (!Array.isArray(m.skins)) throw new Error('downloads/manifest.json 缺 skins 段——跑 pnpm manifest 重出');
+  return m;
+})();
 
 const normalizeEol = (s: string) => s.replace(/\r\n?/g, '\n');
 const textSha256 = (s: string) => createHash('sha256').update(Buffer.from(normalizeEol(s), 'utf8')).digest('hex');
@@ -84,7 +88,7 @@ describe('皮肤目录：catalog ↔ 域内已知取值全集', () => {
   }
 });
 
-describe('皮肤目录：catalog ↔ 出版产物 index.json', () => {
+describe('皮肤目录：catalog ↔ 统一清单 downloads/manifest.json', () => {
   const flat = (cfg: any, domain: string) =>
     (cfg.skins as any[]).map((s) => ({ domain, id: s.id, name: s.name, previewClass: s.previewClass }));
 
@@ -98,7 +102,7 @@ describe('皮肤目录：catalog ↔ 出版产物 index.json', () => {
   it('每条 sha256 与源文件逐字匹配（产物没落后于源）', () => {
     for (const s of INDEX.skins as any[]) {
       const text = fs.readFileSync(path.join(ROOT, `src/${s.domain}/skins/${s.id}.css`), 'utf8');
-      expect(textSha256(text), `${s.domain}/${s.id} 的 sha256 与 manual/skins/index.json 不一致`).toBe(s.sha256);
+      expect(textSha256(text), `${s.domain}/${s.id} 的 sha256 与 downloads/manifest.json 不一致`).toBe(s.sha256);
     }
   });
 
@@ -108,11 +112,12 @@ describe('皮肤目录：catalog ↔ 出版产物 index.json', () => {
     }
   });
 
-  it('manual/skins/ 里没有多余文件（下架的皮不许留在远端）', () => {
+  it('downloads/skins/ 里没有多余文件（下架的皮不许留在远端）', () => {
     const onDisk: string[] = [];
-    for (const d of fs.readdirSync(path.join(ROOT, 'manual/skins'), { withFileTypes: true })) {
+    const outRoot = path.join(ROOT, 'downloads/skins');
+    for (const d of fs.readdirSync(outRoot, { withFileTypes: true })) {
       if (!d.isDirectory()) continue;
-      for (const f of fs.readdirSync(path.join(ROOT, 'manual/skins', d.name))) onDisk.push(`skins/${d.name}/${f}`);
+      for (const f of fs.readdirSync(path.join(outRoot, d.name))) onDisk.push(`skins/${d.name}/${f}`);
     }
     expect(onDisk.sort()).toEqual((INDEX.skins as any[]).map((s) => s.file).sort());
   });
@@ -120,7 +125,7 @@ describe('皮肤目录：catalog ↔ 出版产物 index.json', () => {
   it('出版产物与源逐字相同（换行已归一为 LF）', () => {
     for (const s of INDEX.skins as any[]) {
       const src = fs.readFileSync(path.join(ROOT, `src/${s.domain}/skins/${s.id}.css`), 'utf8');
-      const out = fs.readFileSync(path.join(ROOT, 'manual', s.file), 'utf8');
+      const out = fs.readFileSync(path.join(ROOT, 'downloads', s.file), 'utf8');
       expect(out).toBe(normalizeEol(src));
       expect(out.includes('\r')).toBe(false);
     }
