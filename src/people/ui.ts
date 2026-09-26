@@ -51,6 +51,7 @@ import {
 } from './datasource';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
+import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   dsModal,
@@ -812,6 +813,8 @@ export interface JobsApi {
   pauseJobs(): void;
   /** 删除任务（error 态「删除任务」；运行中的也删） */
   removeJob(talker: string): boolean;
+  /** 重试 prep 失败项（469：清工具段断点账本重跑，工具幂等只补失败项；可选——旧假件没有） */
+  retryPrepFailures?(talker: string): boolean;
   /** 进度快照推送（启动即推一次当前态），返回退订函数 */
   subscribe(fn: (s: EngineSnapshot) => void): () => void;
   snapshot(): EngineSnapshot;
@@ -1059,6 +1062,15 @@ function toBlockState(job: JobView): JobsBlockState {
     queueTotal: job.queueTotal ?? queue.length,
     errorText: job.error,
     resumable: isResumable(job),
+    // 工具段进度（469）：阶段行 / 折算总进度只在 preprocess 阶段上屏（AI 段回落批口径）；
+    // 失败计账保留到任务终局（非 running 态出「重试失败项」）
+    prep: job.prep
+      ? {
+          stageText: job.stage === 'preprocess' ? prepStageLine(job.prep) : null,
+          overall: prepOverallPct(job.prep),
+          failed: job.prep.failed ?? 0,
+        }
+      : undefined,
   };
 }
 
@@ -1078,12 +1090,18 @@ function jobsRunning(): boolean {
 }
 
 /** 进度块动作派发（talker 从块根 data 钩子读） */
-function jobsAction(kind: 'pause' | 'resume' | 'dismiss'): void {
+function jobsAction(kind: 'pause' | 'resume' | 'dismiss' | 'prep-retry'): void {
   const api = jobs();
   const talker = overlay?.querySelector<HTMLElement>('[data-people-jobs]')?.getAttribute('data-people-jobs-talker') ?? '';
   if (kind === 'pause') {
     api.pauseJobs();
     notice('这一批做完就暂停', 'info');
+    return;
+  }
+  if (kind === 'prep-retry') {
+    const who = talker || currentJobsItem()?.talker || '';
+    if (!who) return;
+    if (api.retryPrepFailures?.(who)) notice('重试失败项——已完成的产物与批次不重跑', 'info');
     return;
   }
   if (kind === 'resume') {
@@ -1119,6 +1137,8 @@ function sealJobOf(job: JobView | undefined): FoldCardJob | null {
     stagesDone: jobsStagesDone(job.stage, job.status),
     // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
     resumable: isResumable(job),
+    // 工具段总进度（469）：preprocess 阶段印章百分比按它算（AI 段回落批口径）
+    prepPct: job.prep && job.stage === 'preprocess' ? prepOverallPct(job.prep) : undefined,
   };
 }
 
@@ -1170,9 +1190,10 @@ async function sealAction(kind: string, id: string): Promise<void> {
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
-  // —— 生成进度块动作（450：暂停 / 继续 / 删除任务；块根带 talker 钩子） ——
+  // —— 生成进度块动作（450：暂停 / 继续 / 删除任务；块根带 talker 钩子；469 加重试失败项） ——
   if (t.closest('[data-people-jobs-pause]')) { jobsAction('pause'); return; }
   if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
+  if (t.closest('[data-people-jobs-prep-retry]')) { jobsAction('prep-retry'); return; }
   if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
   // —— 统计 / 档案弹窗（455：弹层在 body 之上，分支放前面；遮罩与关闭钮同一关闭钩子） ——
   if (t.closest('[data-people-stats-open]')) { openStatsPop(); return; }

@@ -56,9 +56,18 @@ export interface RawChatMsg {
 /** voice.json 条目（语音转写表；wav 文件名关联。兼容兜底：正常情况 chat.json 已回填转写） */
 export interface VoiceItem {
   wav?: string;
+  /** 消息 id（468 prep 起随表写入；旧表缺省按 wav 关联） */
+  sid?: number;
   dur?: number;
   text?: string;
   emotion?: string;
+}
+
+/** image_map.json 条目（468：图片↔消息关联旁路表；file 与 image_desc.file 同格式 `<月>/<文件名>`，ct 秒级，sid 可缺） */
+export interface ImageMapItem {
+  file?: string;
+  ct?: number;
+  sid?: number;
 }
 
 /** image_desc.json 条目（图片描述表；file 与 chat.json 的 img 字段同格式 `<月>/<文件名>`，ct 秒级。兼容兜底：正常情况 chat.json 的 img 已回写并按本表精确关联） */
@@ -581,6 +590,98 @@ export function storeToUnified(msgs: StoreMsg[]): UnifiedMessage[] {
   return msgs
     .filter((m) => m.text !== '')
     .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+}
+
+// ---------------- prep 旁路表 → 聊天仓靶向升级（issue 469 / ADR-0197 决策 4） ----------------
+
+/** 转写失败条目（468：工具把失败也写进 voice.json——text=`<转写失败:…>`、emotion=ERR） */
+function isFailedVoice(v: VoiceItem): boolean {
+  const t = String(v.text ?? '').trim();
+  return String(v.emotion ?? '').trim().toUpperCase() === 'ERR' || t.startsWith('<转写失败');
+}
+
+/** 语音标签合成（仓侧升级形态；与 normalizeChatJson 的 buildVoiceText 同构，情感同表翻中文） */
+function storeVoiceText(m: StoreMsg, v: VoiceItem): string {
+  const durRaw = Number.isFinite(m.dur) && (m.dur as number) > 0 ? Math.round(m.dur as number) : Number(v.dur) || 0;
+  const dur = durRaw > 0 ? Math.round(durRaw) : 0;
+  const emo = emotionZh(String(v.emotion ?? ''));
+  const text = String(v.text ?? '').trim();
+  const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ''}]` : '[语音]';
+  return text ? `${head} ${text}` : head;
+}
+
+/**
+ * voice.json → 仓内语音条目的 text 靶向升级（469 / ADR-0197：合并进聊天仓的动作由插件执行）。
+ * 仓内 type=34 按 wav（全路径 / 尾段文件名双键）→ sid 兜底匹配，text 升级为
+ * `[语音 N秒·情感] 转写`（同键同值 = 幂等不重计；升级后时间线自然多出该条）。
+ * previewVoice 关 = 不动 text（消费开关语义与 normalizeChatJson 一致）；转写失败条目跳过
+ * （该条保持原态，重跑 prep 即补齐）。返回升级条数。
+ */
+export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { previewVoice: boolean }): number {
+  if (!opts.previewVoice) return 0;
+  const byWav = new Map<string, VoiceItem>();
+  const bySid = new Map<number, VoiceItem>();
+  for (const v of voice) {
+    if (!v || isFailedVoice(v) || !String(v.text ?? '').trim()) continue;
+    const wav = String(v.wav ?? '').trim();
+    if (wav) {
+      byWav.set(wav, v);
+      const base = wav.includes('/') ? wav.slice(wav.lastIndexOf('/') + 1) : wav;
+      if (base) byWav.set(base, v);
+    }
+    const sid = typeof v.sid === 'number' && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
+    if (sid) bySid.set(sid, v);
+  }
+  let n = 0;
+  for (const m of msgs) {
+    if (m.type !== 34) continue;
+    let v: VoiceItem | undefined;
+    const wav = String(m.wav ?? '').trim();
+    if (wav) {
+      v = byWav.get(wav); // 全路径键
+      if (!v) {
+        const base = wav.includes('/') ? wav.slice(wav.lastIndexOf('/') + 1) : wav; // 尾段名退化（chat.json 与 voice.json 路径深度不一致的防御）
+        if (base) v = byWav.get(base);
+      }
+    }
+    if (!v && m.sid) v = bySid.get(m.sid);
+    if (!v) continue;
+    const next = storeVoiceText(m, v);
+    if (next && next !== m.text) {
+      m.text = next;
+      n++;
+    }
+  }
+  return n;
+}
+
+/**
+ * image_map.json → 仓内图片条目的 img 字段靶向关联（469；ADR-0197：工具只产旁路表不回写
+ * chat.json，img 进仓由插件在合并时叠上）。sid 精确匹配（可覆盖已有 img——原始字段按新值
+ * 更新，upsert 语义）；无 sid 的条目走 ct+type=3 秒级兜底（**只补缺**——img 已有的不再猜，
+ * 防同秒误配）。返回新关联条数。
+ */
+export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): number {
+  const bySid = new Map<number, ImageMapItem>();
+  const byCt = new Map<number, ImageMapItem>();
+  for (const it of map) {
+    if (!it || !String(it.file ?? '').trim()) continue;
+    const sid = typeof it.sid === 'number' && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
+    if (sid) bySid.set(sid, it);
+    else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct as number), it);
+  }
+  let n = 0;
+  for (const m of msgs) {
+    let it: ImageMapItem | undefined;
+    if (m.sid) it = bySid.get(m.sid);
+    if (!it && m.type === 3 && !m.img) it = byCt.get(Math.round(m.ts / 1000));
+    const file = it ? String(it.file ?? '').trim() : '';
+    if (file && file !== m.img) {
+      m.img = file;
+      n++;
+    }
+  }
+  return n;
 }
 
 // 447 退役：shouldGenerate 自动生成触发判定随自动链路一并移除——
