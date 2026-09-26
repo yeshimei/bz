@@ -158,7 +158,7 @@ describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）
     // 起了 bz-face sync，--data-root 下发数据根
     expect(tool.calls.length).toBe(1);
     expect(tool.calls[0].cmd).toBe('bz-face');
-    expect(tool.calls[0].args).toEqual(['sync', '--data-root', dataRoot]);
+    expect(tool.calls[0].args).toEqual(['sync', '--data-root', process.platform === 'win32' ? `"${dataRoot}"` : dataRoot]);
     // 右上角动作收敛：只有「停止」，没有「同步」
     expect(document.querySelector('[data-people-ds-sync-stop]')).toBeTruthy();
     expect(document.querySelector('[data-people-ds-sync-line]')!.querySelector('[data-people-ds-sync-stop]')).toBeNull();

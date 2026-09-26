@@ -100,19 +100,22 @@ export interface BuildSyncSpecOpts {
 }
 
 /**
- * 组装 `bz-face sync` 启动参数（照 bili-dl 先例：纯 PATH 找命令、.cmd shim 需 shell:true；
- * JSON 类参数不走这里，sync 参数都是路径 / 词，shell 安全）。src / python 空白视同未配置。
+ * 组装 `bz-face sync` 启动参数（照 bili-dl 先例：纯 PATH 找命令、.cmd shim 需 shell:true）。
+ * src / python 空白视同未配置。shell 会把参数按空格拆散（external-tool 头注的坑；bili-dl 的
+ * 解法是 JSON 走 b64，sync 参数是纯路径，包引号即可）——Windows 下路径类参数一律包引号
+ * （Win32 路径本身不允许含双引号，无损）；--python 是命令词不包（'py -3' 需拆成两个词）。
  */
 export function buildSyncSpec(opts: BuildSyncSpecOpts): ExternalToolSpec {
   const src = opts.src?.trim() || undefined;
   const python = opts.python?.trim() || undefined;
+  const q = (v: string): string => (process.platform === 'win32' ? `"${v}"` : v);
   return {
     cmd: 'bz-face',
     args: [
       'sync',
       '--data-root',
-      opts.dataRoot,
-      ...(src ? ['--src', src] : []),
+      q(opts.dataRoot),
+      ...(src ? ['--src', q(src)] : []),
       ...(python ? ['--python', python] : []),
     ],
     shell: true,

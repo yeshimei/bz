@@ -90,14 +90,28 @@ describe('纯函数：参数组装与协议映射', () => {
   it('buildSyncSpec：cmd=bz-face + sync + --data-root；shell:true（.cmd shim 先例）', () => {
     const spec = buildSyncSpec({ dataRoot: 'E:\\数据根' });
     expect(spec.cmd).toBe('bz-face');
-    expect(spec.args).toEqual(['sync', '--data-root', 'E:\\数据根']);
+    // shell:true 会把含空格路径按空格拆散（bili-dl b64 同源坑）——Windows 下路径参数包引号无损（Win32 路径不含双引号）
+    expect(spec.args).toEqual(['sync', '--data-root', process.platform === 'win32' ? '"E:\\数据根"' : 'E:\\数据根']);
+    expect(buildSyncSpec({ dataRoot: 'E:\\My Data\\根' }).args?.[2] ?? '').toMatch(process.platform === 'win32' ? /"/ : /^(?!").*$/);
     expect(spec.shell).toBe(true);
   });
 
-  it('buildSyncSpec：--src / --python 非空才下发（域无关键留空跟随工具默认）', () => {
+  it('buildSyncSpec：--src / --python 非空才下发（域无关键留空跟随工具默认；路径带引号、命令词不带）', () => {
     const full = buildSyncSpec({ dataRoot: 'D:\\根', src: 'wxid_x', python: 'py -3' });
-    expect(full.args).toEqual(['sync', '--data-root', 'D:\\根', '--src', 'wxid_x', '--python', 'py -3']);
-    expect(buildSyncSpec({ dataRoot: 'D:\\根', src: '  ', python: '' }).args).toEqual(['sync', '--data-root', 'D:\\根']);
+    expect(full.args).toEqual([
+      'sync',
+      '--data-root',
+      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+      '--src',
+      process.platform === 'win32' ? '"wxid_x"' : 'wxid_x',
+      '--python',
+      'py -3',
+    ]);
+    expect(buildSyncSpec({ dataRoot: 'D:\\根', src: '  ', python: '' }).args).toEqual([
+      'sync',
+      '--data-root',
+      process.platform === 'win32' ? '"D:\\根"' : 'D:\\根',
+    ]);
   });
 
   it('syncPhaseLabel：phase 词 → 中文阶段（与工具 SYNC_PHASES 同词汇）；未知 / null 给空', () => {
@@ -177,7 +191,15 @@ describe('状态机：startSync / stopSync 终态分流', () => {
     startSync();
     expect(isSyncing()).toBe(true);
     expect(tool.calls.length).toBe(1);
-    expect(tool.calls[0].args).toEqual(['sync', '--data-root', 'D:\\微信脸谱数据\\export_full', '--src', 'wxidacct', '--python', 'C:\\py\\python.exe']);
+    expect(tool.calls[0].args).toEqual([
+      'sync',
+      '--data-root',
+      process.platform === 'win32' ? '"D:\\微信脸谱数据\\export_full"' : 'D:\\微信脸谱数据\\export_full',
+      '--src',
+      process.platform === 'win32' ? '"wxidacct"' : 'wxidacct',
+      '--python',
+      'C:\\py\\python.exe',
+    ]);
     tool.step('正在解密数据库');
     tool.progress('decrypt', 40);
     expect(syncState().step).toBe('正在解密数据库');
