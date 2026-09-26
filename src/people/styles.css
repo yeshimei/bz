@@ -1869,6 +1869,38 @@
   }
 }
 
+/* ============ 解锁屏（共享骨架 · 脸谱口径，issue 482） ============
+ * 弹层挂 body，够不着 .bz-people-scope 根 —— 与日记锁屏同款教训：--ls-* 按值重声明
+ * （值取自本文件顶部变量组，改主题色时两处同步）。
+ * 风格 = 脸谱面板同款宣纸 + 朱砂；印章徽借折子印章语汇（朱砂描边 + 微旋）。
+ */
+.bz-lockscreen--people {
+  --ls-accent: #a8433c;
+  --ls-accent-soft: #a8433c;
+  --ls-seal-radius: 12px;
+  --ls-bg: #f7f2e8;
+  --ls-surface: #fffdf8;
+  --ls-line: #e8e2d4;
+  --ls-ink: #4a443a;
+  --ls-muted: #9a917d;
+}
+.theme-dark .bz-lockscreen--people {
+  --ls-accent: #c0645a;
+  --ls-accent-soft: #c0645a;
+  --ls-bg: #262320;
+  --ls-surface: #35312a;
+  --ls-line: #454036;
+  --ls-ink: #cfc7b4;
+  --ls-muted: #9a917d;
+}
+/* 印章徽：纸底 + 朱砂描边微旋（同封面折子印章的 6°；图标随之改朱砂） */
+.bz-lockscreen--people .bz-lockscreen-seal {
+  background: var(--ls-surface);
+  border: 2px solid var(--ls-accent);
+  color: var(--ls-accent);
+  transform: rotate(6deg);
+}
+
 /* ==================== 图片描述确认弹窗（issue 470 / ADR-0196 决策 8：body 级弹层，面板可不开） ==================== */
 .bz-people-desc-confirm {
   position: fixed;

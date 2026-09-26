@@ -213,12 +213,20 @@ export function isPeopleOpen(): boolean {
   return overlay !== null;
 }
 
-/** 解锁门禁（默认走 encrypt 公开入口；测试经 setUnlockGateForTests 注入假件——jsdom 锁不住真锁屏） */
-let unlockGate: () => Promise<boolean> = ensureSafeUnlocked;
+/**
+ * 脸谱口径解锁门禁（issue 482）：ensureSafeUnlocked 传 'people' 档——解锁屏标题 / 副文案 /
+ * 统计（联系人 / 随记录附件 / 附件密文）与朱砂配色走脸谱口径，不再借保险库的 'vault' 文案。
+ */
+export function peopleUnlockGate(): Promise<boolean> {
+  return ensureSafeUnlocked('people');
+}
+
+/** 解锁门禁（默认 = peopleUnlockGate；测试经 setUnlockGateForTests 注入假件——jsdom 锁不住真锁屏） */
+let unlockGate: () => Promise<boolean> = peopleUnlockGate;
 
 /** 测试注入缝：替换 / 还原解锁门禁假件 */
 export function setUnlockGateForTests(fn: (() => Promise<boolean>) | null): void {
-  unlockGate = fn ?? ensureSafeUnlocked;
+  unlockGate = fn ?? peopleUnlockGate;
 }
 
 /**
