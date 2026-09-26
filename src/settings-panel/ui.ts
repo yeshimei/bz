@@ -63,12 +63,13 @@ interface DomainDef {
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
 const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
-  // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
-  // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
+  // 通用组：基础 schema（通知 + 存储路径，issue 479 通知组并回 core）+ 外观组（原「设置」页并入）
+  // +「数据体检」按钮行（D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
   general: async () => {
     const schema = await (await import('../core/settings-main-schema')).generalSettingsSchema();
     const { openDataCheckup } = await import('../checkup');
-    // 外观组排最前（2026-09-12 用户拍板：「设置」页撤销，其外观组并入通用）
+    // 外观组排最前（2026-09-12 用户拍板：「设置」页撤销，其外观组并入通用），
+    // 通知组在 core schema 里排存储路径前 → 通用页终序 = 外观 → 通知 → 存储（issue 479）
     const { appearanceSettingsSchema } = await import('./schema');
     schema.groups.unshift(...appearanceSettingsSchema().groups);
     // 「数据体检」按钮挂「数据存储路径」组尾（按 name 定位防未来组序漂移）
@@ -84,9 +85,8 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
     return schema;
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),
-  // 通知（2026-09-12 用户拍板）：自「通用」域拆出，面板里独立成一页
-  // （不建业务域——横切偏好，schema 留 core/settings-main-schema）
-  notice: async () => (await import('../core/settings-main-schema')).noticeSettingsSchema(),
+  // 通知页已退役（2026-09-27 issue 479 用户拍板，撤销 2026-09-12 拆分）：通知组并回
+  // core generalSettingsSchema，随通用页渲染；搜索「通知」走通用页内的行命中
   // 内容首页（home 域，2026-09-10）：入口顺序与显隐 = 一个按钮开编辑弹窗
   home: async () => (await import('../home/settings')).homeSettingsSchema(),
   diary: async () => (await import('../diary/settings')).diarySettingsSchema(),
@@ -168,9 +168,8 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
  *  描述只写功能语义，不带「新域/ADR」开发黑话；徽标运行时动态计算，见 badgeOf）。
  *  导出供回归测试断言（图标映射一致性/历史重复图标错开）。 */
 export const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '面板外观、存储路径等跨域偏好', schemaLoader: schemaLoaders.general },
-  // 通知（2026-09-12）：自通用域拆出的独立面板页；「设置」页并入通用后 appearance 域退役
-  { id: 'notice', name: '通知', icon: DOMAIN_ICONS.notice, desc: '通知级别、时长与弹出位置', schemaLoader: schemaLoaders.notice },
+  // 通用含通知组（2026-09-27 issue 479：通知页退役并回，撤销 2026-09-12 拆分）
+  { id: 'global', name: '通用', icon: DOMAIN_ICONS.global, desc: '面板外观、通知与存储路径等跨域偏好', schemaLoader: schemaLoaders.general },
   { id: 'ai', name: 'AI', icon: DOMAIN_ICONS.ai, desc: 'AI 模型与凭据配置', schemaLoader: schemaLoaders.ai },
   // diary = ADR-0115 回忆墙升格正名（唯一日记 UI），diary-wall 域退役
   { id: 'diary', name: '日记本', icon: DOMAIN_ICONS.diary, desc: '日记目录与写日记口径', schemaLoader: schemaLoaders.diary },
@@ -200,9 +199,10 @@ export const DOMAINS: DomainDef[] = [
 
 /** 导航语义分组（拍板原型 P1：基础/记录/媒体与知识/工具 四组；不在表内的域归「其他」尾组）。
  *  id 口径 = DOMAINS 的 id（剪藏本在 DOMAINS 里叫 clipping）。导出供回归测试断言。
- *  2026-09-17：游戏库归「媒体与阅读」（此前不在表内 → 落「其他」尾组，用户点名要按语义归位）。 */
+ *  2026-09-17：游戏库归「媒体与阅读」（此前不在表内 → 落「其他」尾组，用户点名要按语义归位）；
+ *  2026-09-27（issue 479）：通知页退役并回通用，基础组只剩 通用/首页。 */
 export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
-  { title: '基础', ids: ['global', 'notice', 'home'] },
+  { title: '基础', ids: ['global', 'home'] },
   { title: '智能', ids: ['ai', 'secondbrain'] },
   { title: '记录', ids: ['diary', 'memo', 'belongings', 'people'] },
   { title: '收集', ids: ['clipping', 'favorites'] },

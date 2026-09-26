@@ -19,10 +19,11 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
 describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模型族分组；issue 444 增语音转写）', () => {
   const schema = mainSettingsSchema();
 
-  it('issue 444：七个分组卡片（带 icon）——LLM/Embedding/JEV/语音转写/数据源凭据 + 数据存储路径 + 通知', () => {
-    // issue 473：「使用手册」组撤出（入口搬设置面板侧栏 footer），恢复真·七个分组
-    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据', '数据存储路径', '通知']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round', 'folder-open', 'bell']);
+  it('issue 444：七个分组卡片（带 icon）——LLM/Embedding/JEV/语音转写/数据源凭据 + 通知 + 数据存储路径', () => {
+    // issue 473：「使用手册」组撤出（入口搬设置面板侧栏 footer），恢复真·七个分组；
+    // issue 479：通知组并回通用（core generalSettingsSchema 内排存储路径前）→ 聚合序 = AI 五组 + 通知 + 存储
+    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据', '通知', '数据存储路径']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round', 'bell', 'folder-open']);
   });
 
   it('LLM 组首部（前「服务商」组，issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {

@@ -1,9 +1,11 @@
 // @vitest-environment node
 /**
- * 域组 D 文案 lint（2026-09-12 补缺口批）：home/memo/bookshelf/knowledge/password-vault + 通知面板页。
+ * 域组 D 文案 lint（2026-09-12 补缺口批）：home/memo/bookshelf/knowledge/password-vault + gameshelf。
  * 原组 A/B/C 没覆盖这几个域 —— 首页「点评 ✦」符号组名（实为行名）就是这么漏网的。
  * 注册时零豁免；存量违规按 ticket 100 规范整改（标题/描述可改，键名/行为/通知文案不动），
  * 确实无法整改的才往 WHITELIST 加 id 并注明年/票与理由。
+ * （2026-09-27 issue 479：原「通知面板页」目标随通知组并回通用而撤——通知行文案改由
+ * settings-copy-lint.test.ts 的 main 聚合目标继续覆盖。）
  */
 import { describe, it, expect } from 'vitest';
 import { lintTargets } from './settings-copy-lint-engine';
@@ -12,7 +14,6 @@ import { memoSettingsSchema } from '../../src/memo/settings';
 import { bookshelfSettingsSchema } from '../../src/bookshelf/settings';
 import { knowledgeSettingsSchema } from '../../src/knowledge/ui';
 import { passwordVaultSettingsSchema } from '../../src/password-vault/settings';
-import { noticeSettingsSchema } from '../../src/core/settings-main-schema';
 import { gameshelfSettingsSchema } from '../../src/gameshelf/settings';
 
 const WHITELIST = new Set<string>([
@@ -28,13 +29,12 @@ const TARGETS = [
   { source: 'bookshelf', schema: bookshelfSettingsSchema() },
   { source: 'knowledge', schema: knowledgeSettingsSchema() },
   { source: 'password-vault', schema: passwordVaultSettingsSchema() },
-  { source: 'notice', schema: noticeSettingsSchema() },
   // 游戏库（2026-09-17 补纳管：issue 368 建域时漏登记；本次补外观组顺带入表）
   { source: 'gameshelf', schema: gameshelfSettingsSchema() },
 ];
 
 describe('域组 D 文案 lint（2026-09-12 补缺口批）', () => {
-  it('home/memo/bookshelf/knowledge/password-vault/notice/gameshelf 已注册 schema 无未豁免违规', () => {
+  it('home/memo/bookshelf/knowledge/password-vault/gameshelf 已注册 schema 无未豁免违规', () => {
     const violations = lintTargets(TARGETS, WHITELIST);
     expect(
       violations,
