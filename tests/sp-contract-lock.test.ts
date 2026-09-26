@@ -39,7 +39,7 @@ const COUNT_BASELINE: Record<string, number> = {
   encrypt: 5,
   'password-vault': 5,
   smartcat: 15,
-  knowledge: 22,
+  knowledge: 25, // 2026-09-26 issue 462：「外部工具」组回归知识盒页（Python/ffmpeg/ffprobe 三行，域无关键位）
 };
 
 describe('settings-panel 运行期契约锁', () => {

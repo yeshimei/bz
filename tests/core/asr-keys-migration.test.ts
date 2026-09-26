@@ -10,11 +10,11 @@ import { DEFAULT_SETTINGS, migrateAsrKeys } from '../../src/settings';
 
 describe('migrateAsrKeys · issue 444（knowledgeWhisperModel → asrWhisperModel）', () => {
   it('旧键有值 → 搬入新键并删除旧键，返回 true', () => {
-    const raw: Record<string, unknown> = { knowledgeWhisperModel: 'medium', knowledgePythonPath: 'py' };
+    const raw: Record<string, unknown> = { knowledgeWhisperModel: 'medium', storagePath: 'CONFIG/STORAGE' };
     expect(migrateAsrKeys(raw)).toBe(true);
     expect(raw.knowledgeWhisperModel).toBeUndefined();
     expect(raw.asrWhisperModel).toBe('medium');
-    expect(raw.knowledgePythonPath).toBe('py'); // 无关键不动（两引擎共用 Python 路径，继续沿用）
+    expect(raw.storagePath).toBe('CONFIG/STORAGE'); // 无关键不动
   });
 
   it('新键已有值 → 只删旧不覆盖（不踩用户改过的新值）', () => {
