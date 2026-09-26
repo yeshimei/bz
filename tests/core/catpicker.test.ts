@@ -6,9 +6,21 @@
  * jsdom 环境。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { openCatPicker, closeCatPicker, resolveIconName } from '../../src/core/ui/catpicker';
 import type { CategoryTable, CategoryItem } from '../../src/core/category-table';
+
+/** 真实分类表源（src/belongings/catalog/categories.json）：26 组 / 515 条 */
+function loadRealTable(): CategoryTable {
+  const p = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../src/belongings/catalog/categories.json',
+  );
+  return JSON.parse(fs.readFileSync(p, 'utf-8')) as CategoryTable;
+}
 
 // getIconIds 在测试 mock 中不存在 → 用可变闭包变量模拟「存在/不存在/抛错」三种分支
 let iconIdsImpl: (() => Set<string> | string[]) | undefined = undefined;
@@ -131,10 +143,21 @@ describe('搜索过滤（命中分类名 / 命中别名，大小写不敏感）'
   });
 });
 
-describe('渲染上限 300 条（照 path-picker LIMIT=300）', () => {
-  it('超过 300 条只渲染前 300 行 + 提示「输入关键词缩小范围」', () => {
+describe('渲染阈值（硬上限 HARD_CAP=1200 防呆，非搜索态全量）', () => {
+  it('真实表源：非搜索态全量渲染 —— 组分区数=26、条目数=515、不出现截断提示', () => {
+    const popup = openAndWait({ table: loadRealTable(), onConfirm: () => {} });
+    expect(popup.querySelectorAll(GROUP).length).toBe(26);
+    expect(popup.querySelectorAll(ROW).length).toBe(515);
+    // 515 ≤ 1200 → 不触发阈值，绝不出现「结果过多 / 已显示前 N 条」提示行
+    const hint = popup.querySelector('.bz-catpick-empty');
+    expect(hint).toBeNull();
+    expect(popup.textContent).not.toContain('结果过多');
+    expect(popup.textContent).not.toContain('已显示前');
+  });
+
+  it('超过 1200 条才启用截断 + 提示「结果过多，已显示前 1200 条」；搜索缩小后提示消失', () => {
     const items: CategoryItem[] = [];
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 1300; i++) {
       items.push({ id: `c${i}`, name: `物品${i}`, icon: 'package', aliases: [] });
     }
     const big: CategoryTable = {
@@ -142,14 +165,15 @@ describe('渲染上限 300 条（照 path-picker LIMIT=300）', () => {
       groups: [{ id: 'g1', name: '大组', icon: 'package', items }],
     };
     const popup = openAndWait({ table: big, onConfirm: () => {} });
-    expect(popup.querySelectorAll(ROW).length).toBe(300);
+    expect(popup.querySelectorAll(ROW).length).toBe(1200);
     const hint = popup.querySelector('.bz-catpick-empty');
-    expect(hint?.textContent).toContain('输入关键词缩小范围');
-    // 搜索缩小后提示消失
+    expect(hint?.textContent).toContain('结果过多');
+    expect(hint?.textContent).toContain('已显示前 1200 条');
+    // 搜索缩小到 < 1200 → 提示消失，全部命中渲染
     const s = popup.querySelector('.bz-catpick-search') as HTMLInputElement;
     s.value = '物品39';
     s.dispatchEvent(new Event('input'));
-    expect(popup.querySelectorAll(ROW).length).toBeLessThan(300);
+    expect(popup.querySelectorAll(ROW).length).toBeLessThan(1200);
     expect(popup.querySelector('.bz-catpick-empty')).toBeNull();
   });
 });

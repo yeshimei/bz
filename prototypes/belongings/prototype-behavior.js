@@ -1,4 +1,4 @@
-/* 源指纹 8e97a3729e38949c · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c11315b2c2170fe3 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/remote-asset.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/catpicker.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -5210,7 +5210,7 @@ var BZW_belongings = (() => {
 
   // src/core/ui/catpicker.ts
   var FALLBACK_ICON = "package";
-  var LIMIT = 300;
+  var HARD_CAP = 1200;
   function getIconIdSet() {
     try {
       const fn = void 0;
@@ -5334,7 +5334,7 @@ var BZW_belongings = (() => {
         for (const { items } of model) total += items.length;
         let n = 0;
         for (const { group, items } of model) {
-          if (n >= LIMIT) break;
+          if (n >= HARD_CAP) break;
           const header = document.createElement("div");
           header.className = "bz-catpick-group";
           const gIcon = document.createElement("i");
@@ -5349,7 +5349,7 @@ var BZW_belongings = (() => {
           header.append(gIcon, gName, gCount);
           listEl.appendChild(header);
           for (const it of items) {
-            if (n >= LIMIT) break;
+            if (n >= HARD_CAP) break;
             n++;
             const row = document.createElement("div");
             row.className = "bz-catpick-row";
@@ -5382,10 +5382,10 @@ var BZW_belongings = (() => {
           empty.className = "bz-catpick-empty";
           empty.textContent = "没有匹配的分类";
           listEl.appendChild(empty);
-        } else if (total > LIMIT) {
+        } else if (total > HARD_CAP) {
           const more = document.createElement("div");
           more.className = "bz-catpick-empty";
-          more.textContent = `已显示前 ${LIMIT} 条，输入关键词缩小范围`;
+          more.textContent = `结果过多，已显示前 ${HARD_CAP} 条`;
           listEl.appendChild(more);
         }
         mountIcons(listEl);

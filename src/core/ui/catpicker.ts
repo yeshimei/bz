@@ -35,8 +35,13 @@ export interface CatPickerOptions {
 
 /** 图标兜底：未知图标名 → 组图标 → 'package' */
 const FALLBACK_ICON = 'package';
-/** 渲染上限（照 path-picker LIMIT=300）：大表逐条建 DOM 会卡，只渲染前 LIMIT 条，提示缩小范围 */
-const LIMIT = 300;
+/**
+ * 硬上限（防呆阈值，非性能调优）：仅当总条数 > 1200 才启用截断 + 提示。
+ * 这不是渲染性能优化——515 条（约 1500 个 SVG 节点）对模态列表完全可接受，
+ * 「能不能看到第 16–26 组」是功能问题，优先级高于渲染开销。设 1200 只是防这张表未来被人
+ * 加厚到离谱量级（理论上限 65025 条）时不会一次性建出上万节点卡死；正常 26 组 515 条全量渲染。
+ */
+const HARD_CAP = 1200;
 
 /** 取 obsidian 的图标 id 集合（运行期权威）。mock/老环境无此函数 → 返回 null（调用方原样使用图标名） */
 function getIconIdSet(): Set<string> | string[] | null {
@@ -185,7 +190,7 @@ export function openCatPicker(opts: CatPickerOptions): void {
       for (const { items } of model) total += items.length;
       let n = 0;
       for (const { group, items } of model) {
-        if (n >= LIMIT) break; // 后续组条目全部超上限，不再渲染（头部与条目都不画）
+        if (n >= HARD_CAP) break; // 后续组条目全部超硬上限，不再渲染（头部与条目都不画）
         // 分组头：组图标 + 组名 + 条数（搜索态显示命中数）
         const header = document.createElement('div');
         header.className = 'bz-catpick-group';
@@ -201,7 +206,7 @@ export function openCatPicker(opts: CatPickerOptions): void {
         header.append(gIcon, gName, gCount);
         listEl.appendChild(header);
         for (const it of items) {
-          if (n >= LIMIT) break;
+          if (n >= HARD_CAP) break;
           n++;
           const row = document.createElement('div');
           row.className = 'bz-catpick-row';
@@ -234,10 +239,10 @@ export function openCatPicker(opts: CatPickerOptions): void {
         empty.className = 'bz-catpick-empty';
         empty.textContent = '没有匹配的分类';
         listEl.appendChild(empty);
-      } else if (total > LIMIT) {
+      } else if (total > HARD_CAP) {
         const more = document.createElement('div');
         more.className = 'bz-catpick-empty';
-        more.textContent = `已显示前 ${LIMIT} 条，输入关键词缩小范围`;
+        more.textContent = `结果过多，已显示前 ${HARD_CAP} 条`;
         listEl.appendChild(more);
       }
       mountIcons(listEl);
