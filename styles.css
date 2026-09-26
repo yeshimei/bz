@@ -16969,7 +16969,9 @@ canvas { display: block; }
   color: var(--sp-ink-2);
 }
 .bz-chg-item--pri .bz-chg-dom { background: var(--sp-accent-soft); color: var(--sp-accent); }
-.bz-chg-body { flex: 1; min-width: 0; }
+/* 内层条目主体用独立类 bz-chg-entry：.bz-chg-body 已被外层「版本栏+内容」容器占用
+   （display:flex），同名会把主题句与副行挤成一行（2026-09-26 用户截图实报） */
+.bz-chg-entry { flex: 1; min-width: 0; display: block; }
 .bz-chg-text { font-size: 12.5px; line-height: 1.55; color: var(--sp-ink); }
 .bz-chg-item--sec .bz-chg-text { font-size: 12px; color: var(--sp-ink-2); }
 .bz-chg-sub {
