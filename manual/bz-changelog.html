@@ -20,6 +20,11 @@ body{background:var(--sp-bg);color:var(--sp-ink);font:14px/1.6 system-ui,'Segoe 
 border-bottom:1px solid var(--sp-line)}
 .cg-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
 .cg-title svg{width:17px;height:17px;color:var(--sp-accent)}
+/* ☰ 版本抽屉开关：仅移动端出现（桌面版本栏常驻，不需要开关） */
+.cg-menu{display:none;flex:none;align-items:center;justify-content:center;
+width:40px;height:40px;margin-right:2px;border:0;background:none;color:var(--sp-ink-2);
+cursor:pointer}
+.cg-menu:active{color:var(--sp-ink)}
 .cg-spacer{flex:1}
 .cg-body{flex:1;display:flex;min-height:0}
 .cg-side{width:196px;flex:none;overflow-y:auto;padding:10px 8px 24px;background:var(--sp-panel);
@@ -57,11 +62,21 @@ color:var(--sp-ink-2);white-space:nowrap}
 .cg-sub{font-size:11.5px;color:var(--sp-ink-3);margin-top:2px;line-height:1.5}
 .cg-empty{padding:20px 0;color:var(--sp-ink-3);font-size:12.5px}
 @media (max-width:768px){
-.cg-body{flex-direction:column}
-.cg-side{width:100%;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;
-padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
-.cg-nav{width:auto;flex:none}
-.cg-nav .d{display:none}
+/* 标准移动端文档布局（用户 2026-09-26 拍板）：顶栏 = ☰ + 标题 + ✕ 三格同行；
+   版本栏收成左侧抽屉，点 ☰ 滑出、点遮罩/版本收回；正文独占整宽。
+   ✕ 由外壳给，定在顶栏中心线上（top:24px），故顶栏只需右侧留出它的宽度。 */
+.cg-bar{padding:0 48px 0 8px}
+.cg-menu{display:flex}
+.cg-body{position:relative}
+.cg-side{position:absolute;inset:0 auto 0 0;z-index:4;width:min(76vw,280px);
+flex:none;flex-direction:column;overflow-y:auto;gap:2px;padding:12px 8px 24px;
+border-right:1px solid var(--sp-line);box-shadow:8px 0 24px rgba(0,0,0,.16);
+transform:translateX(-102%);transition:transform .2s ease}
+body.toc-open .cg-side{transform:none}
+.cg-scrim{position:absolute;inset:0;z-index:3;background:rgba(0,0,0,.28);
+opacity:0;pointer-events:none;transition:opacity .2s ease}
+body.toc-open .cg-scrim{opacity:1;pointer-events:auto}
+.cg-nav{width:100%;padding:9px 10px;font-size:13px}
 .cg-page{padding:16px 14px 40px}
 /* 窄屏收窄域名列，避免挤掉描述文字 */
 .cg-dom{width:62px;font-size:11px}
@@ -71,6 +86,9 @@ padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
 <body>
 <div class="cg">
   <div class="cg-bar">
+    <button class="cg-menu" id="menu" type="button" aria-label="版本列表">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg></button>
     <div class="cg-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
       stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
       <path d="M12 7v5l3 2"/></svg>
@@ -78,6 +96,7 @@ padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
     <span class="cg-spacer"></span>
   </div>
   <div class="cg-body">
+    <div class="cg-scrim" id="scrim"></div>
     <aside class="cg-side" id="side"></aside>
     <main class="cg-main"><div class="cg-page" id="page"></div></main>
   </div>
@@ -105,8 +124,14 @@ function renderRail(){
   }
   const side = document.getElementById('side');
   side.innerHTML = h;
-  side.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { cur = b.dataset.v; render(); });
+  side.querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
+    cur = b.dataset.v;
+    setDrawer(false); // 选完版本就收回抽屉，让正文立刻可见
+    render();
+  });
 }
+/* 版本抽屉（移动端）：点 ☰ 开、点遮罩关；桌面上这些类名与 .cg-menu 都不生效 */
+function setDrawer(open){ document.body.classList.toggle('toc-open', !!open); }
 function renderPage(){
   const r = BY_VER[cur];
   const page = document.getElementById('page');
@@ -132,6 +157,8 @@ function renderPage(){
 function render(){ renderRail(); renderPage(); }
 document.addEventListener('DOMContentLoaded', () => {
   try { if (localStorage.getItem('bz-changelog-theme') === 'dark') document.documentElement.classList.add('theme-dark'); } catch(_){}
+  document.getElementById('menu').onclick = () => setDrawer(!document.body.classList.contains('toc-open'));
+  document.getElementById('scrim').onclick = () => setDrawer(false);
   render();
 });
 </script>

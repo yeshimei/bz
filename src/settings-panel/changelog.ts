@@ -13,6 +13,10 @@
  * （单文件自包含：样式 + 版本数据 + 版本栏脚本全内联），用 iframe srcdoc
  * 直灌——与使用手册（manual-viewer）同一套范式，版本栏/三段主次/主题记忆
  * 都随 HTML 走，主包不再内嵌日志数据。关闭即清 srcdoc 释放内存。
+ *
+ * 移动端（≤768px）真全屏（用户拍板，与手册弹窗同刀）：frame 挂 core .bz-panel-mtop
+ * 得 44px 顶部避让，右上 44px 见方关闭钮落在这条避让带里——全屏后遮罩点不到，
+ * 关闭只剩这一个出口（ESC 在手机上不可靠）。桌面端形态不变：居中弹窗、无头行、钮不出现。
  */
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
@@ -63,8 +67,9 @@ function build(): void {
   ov.className = 'bz-panel-overlay';
   const frame = document.createElement('div');
   frame.id = FRAME_ID;
-  frame.className = 'bz-panel-frame bz-sp-skin bz-chg-popup';
+  frame.className = 'bz-panel-frame bz-sp-skin bz-panel-mtop bz-chg-popup';
   frame.innerHTML = shellHtml();
+  frame.querySelector<HTMLElement>('.bz-chg-close')?.addEventListener('click', hide);
   ov.appendChild(frame);
   ov.addEventListener('click', (e) => {
     if (e.target === ov) hide();
@@ -73,7 +78,13 @@ function build(): void {
   overlay = ov;
 }
 
+/** ✕ 关闭钮（仅移动端可见：全屏后遮罩点不到，关闭得有实体出口；桌面走遮罩 / ESC） */
+const CLOSE_BTN = `<button class="bz-chg-close" type="button" aria-label="关闭更新日志" title="关闭">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+</button>`;
+
 /** 弹窗骨架（无头行——与手册弹窗同形态，用户拍板：外壳不出标题，零留白贴边） */
 function shellHtml(): string {
-  return `<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
+  return `${CLOSE_BTN}<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
 }

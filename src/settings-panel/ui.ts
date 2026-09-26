@@ -43,6 +43,10 @@ const SEARCH_DEBOUNCE_MS = 180;
 const spMatch = (hay: string, needle: string): boolean =>
   !needle || hay.toLowerCase().includes(needle.toLowerCase());
 
+/** 文档入口（使用手册 / 更新日志）参与搜索匹配的名目：搜「文档」「手册」「日志」都能命中。
+ *  它们不是域（无 data-sp-domain），不进 groupDomains，只在导航/列表末尾成组。 */
+const DOC_ENTRY_NAMES = ['文档', '使用手册', '更新日志', '手册', '日志', 'changelog'];
+
 /* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
 
 interface DomainDef {
@@ -419,16 +423,6 @@ export class SettingsPanelUI {
     popup.innerHTML = R.deskShellHtml();
     mountIcons(popup); // 头行搜索图标占位物化
 
-    // 更新日志入口（issue 472）：footer 静态壳内容，绑定一次（nav 重渲不波及）；
-    // issue 474 起与手册同刀——一键 = 无日志先下载再打开，已下载直接打开
-    const chgBtn = popup.querySelector<HTMLElement>('[data-sp-changelog]');
-    chgBtn?.addEventListener('click', () => void this.runChangelogOpen(chgBtn));
-
-    // 使用手册入口（issue 473）：一键 = 无手册先下载再打开，已下载直接打开；
-    // 下载期间按钮图标转圈（.is-loading + loader）防重入，完成/失败复原（见 runManualOpen）
-    const manBtn = popup.querySelector<HTMLElement>('[data-sp-manual]');
-    manBtn?.addEventListener('click', () => void this.runManualOpen(manBtn));
-
     const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
     this.navEl = nav;
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
@@ -477,7 +471,17 @@ export class SettingsPanelUI {
         });
         nav.insertAdjacentHTML('beforeend', R.navSecHtml(sec.title, itemsHtml));
       }
+      // 文档组挂导航末尾（2026-09-26 用户拍板：手册/日志不再常驻底缘）——
+      // 搜索时同样按词过滤，命中「手册/日志/文档」才出，否则搜「番茄」也挂着两条是噪音
+      if (!query || DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) {
+        nav.insertAdjacentHTML('beforeend', R.navDocSecHtml());
+      }
       mountIcons(nav); // 导航图标占位物化（mock setIcon 记 data-icon）
+      // 文档入口随 nav 整树重渲，故每次重渲后重绑（无搜索/切域/清词都走这里）
+      const manBtn = nav.querySelector<HTMLElement>('[data-sp-manual]');
+      manBtn?.addEventListener('click', () => void this.runManualOpen(manBtn));
+      const chgBtn = nav.querySelector<HTMLElement>('[data-sp-changelog]');
+      chgBtn?.addEventListener('click', () => void this.runChangelogOpen(chgBtn));
       nav.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
         b.tabIndex = -1; // E-4：域钮退出 Tab 序（roving 由容器接管）
         const id = b.dataset.spDomain!;
@@ -978,6 +982,8 @@ export class SettingsPanelUI {
           list.appendChild(secEl);
           sec.domains.forEach((d) => list.insertAdjacentHTML('beforeend', R.mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
         }
+        // 文档组挂列表末尾（与桌面导航同口径；2026-09-26 用户拍板撤掉常驻底栏）
+        list.insertAdjacentHTML('beforeend', R.mobDocSecHtml());
       } else {
         // 搜索：域段 + 设置项段（同样只搜列表可见域；UI-7：大小写不敏感归一）
         const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
@@ -994,6 +1000,7 @@ export class SettingsPanelUI {
           html += `<div class="bz-sp-mob-sec">域（${doms.length}）</div>`;
           doms.forEach((d) => { html += R.mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc }); });
         }
+        if (DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) html += R.mobDocSecHtml();
         if (rows.length) {
           html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
           // row = 行名（data-sp-row）：推入该域后据此滚动定位并高亮（2026-09-12 补）
@@ -1007,6 +1014,11 @@ export class SettingsPanelUI {
         // 设置项命中带 data-sp-row → 推入后定位到该行（2026-09-12 补）
         if (d) b.addEventListener('click', () => void this.pushDomain(d, b.dataset.spRow));
       });
+      // 文档入口随列表整树重渲，每次重渲后重绑（pushDomain 不适用——它们不是域）
+      const manBtn = list.querySelector<HTMLElement>('[data-sp-manual]');
+      manBtn?.addEventListener('click', () => void this.runManualOpen(manBtn));
+      const chgBtn = list.querySelector<HTMLElement>('[data-sp-changelog]');
+      chgBtn?.addEventListener('click', () => void this.runChangelogOpen(chgBtn));
       mountIcons(list); // 列表项图标占位物化（render 重绘后补挂）
       // 动效挂点：列表项轻浮接力（DOM 已就位的纯表现层，前 12 项，其余直达）
       spm.motionMobList(list);

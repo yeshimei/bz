@@ -761,7 +761,8 @@ describe('设置面板（settings-panel）', () => {
     const deadline0 = Date.now() + 3000;
     let names: (string | null)[];
     for (;;) {
-      names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
+      // 只数域项（.bz-sp-nav-item）——末尾「文档」组（手册/日志）非域，不得入域计数
+      names = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
       if (Date.now() > deadline0 || (names.length === 20 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
@@ -783,7 +784,7 @@ describe('设置面板（settings-panel）', () => {
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    const hitNames = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
+    const hitNames = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常
     search.value = '影院';
@@ -802,7 +803,8 @@ describe('设置面板（settings-panel）', () => {
     const deadline0 = Date.now() + 3000;
     let names: (string | null)[];
     for (;;) {
-      names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
+      // 只数域项（.bz-sp-mob-item）——末尾「文档」组（手册/日志）非域，不得入域计数
+      names = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-name')].map((b) => b.textContent);
       if (Date.now() > deadline0 || names.length === 20) break;
       await new Promise((r) => setTimeout(r, 30));
     }
@@ -818,7 +820,7 @@ describe('设置面板（settings-panel）', () => {
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    const hitNames = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
+    const hitNames = [...popup.querySelectorAll('.bz-sp-mob-item .bz-sp-mob-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常（「影院」命中：影院域 + 影视文件夹设置项——enh-sweep-a 起该行描述
     // 含「影院」区分说明，经预加载行缓存进设置项段，共 2 条）

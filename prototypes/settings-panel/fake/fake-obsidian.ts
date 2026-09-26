@@ -85,6 +85,14 @@ async function fetchAsset(file: string): Promise<string | null> {
   return assetCache[file];
 }
 
+/**
+ * 原型强制取新（issue 474 演示口径）：手册 / 更新日志一旦落进 localStorage，
+ * core/remote-asset 的 hasAsset 就短路不再重下 —— 改了产物，评审壳里看到的还是上一版。
+ * 这里让 exists 在本页会话**首次**查询时先答「没有」，逼走一次真实下载；
+ * 下载写入后放开，后续读命中刚写进去的那份。刷新页面（热重载必刷）即重新失效。
+ */
+const assetFreshPending = new Set<string>(['bz-manual.html', 'bz-changelog.html']);
+
 /** requestUrl（core/utils、core/ai 模块级 import 触及）：原型无网络，抛错让调用方走各自降级。
  *  三处例外（都按需抓真产物回放，评审壳里能真走完整链路）：
  *   - 判定端点（/v1/systemone）→ 交替的成功 / 401 canned，演示「测试」钮三态；
@@ -95,7 +103,10 @@ export async function requestUrl(opts?: { url?: string; method?: string }): Prom
   const asset = /\/manual\/(bz-(?:manual|changelog)\.html)(?:\?|$)/.exec(url);
   if (asset) {
     const text = await fetchAsset(asset[1]);
-    if (text) return { status: 200, text };
+    if (text) {
+      assetFreshPending.delete(asset[1]); // 已回放过一次，放开 exists 让落盘后可读
+      return { status: 200, text };
+    }
     throw new Error(`原型环境取不到 ${asset[1]}（manual/ 产物不可达）`);
   }
   if (opts?.method === 'POST' && /\/v1\/systemone$/.test(url)) {
@@ -636,6 +647,8 @@ export class FakeVault {
     // 存在性 / 读取 / 写入都落到同一份 KEY_PREFIX 键空间，与 vault 文件面共享存储。
     // 内容取封套内的 c 字段（与 toFile 同解码口径），写回走 encodeSeedFile 同一封套。
     exists: async (path: string): Promise<boolean> => {
+      const name = String(path).split('/').pop() || '';
+      if (assetFreshPending.has(name)) return false; // 原型强制取新：见 assetFreshPending 注释
       return localStorage.getItem(FakeVault.key(String(path))) != null;
     },
     read: async (path: string): Promise<string> => {

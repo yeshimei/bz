@@ -1,4 +1,4 @@
-/* 源指纹 5eac972cc2098ecc · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f9e434f05e67bcab · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -31,8 +31,10 @@ var BZR_settings_panel = (() => {
     iconSpan: () => iconSpan,
     loadingHtml: () => loadingHtml,
     miniHtml: () => miniHtml,
+    mobDocSecHtml: () => mobDocSecHtml,
     mobItemHtml: () => mobItemHtml,
     mobShellHtml: () => mobShellHtml,
+    navDocSecHtml: () => navDocSecHtml,
     navItemHtml: () => navItemHtml,
     navSecHtml: () => navSecHtml,
     pageHeadHtml: () => pageHeadHtml,
@@ -173,7 +175,7 @@ var BZR_settings_panel = (() => {
 
   // src/settings-panel/layouts/jingwei/render.ts
   function deskShellHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div><div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-manual>${iconSpan("book-open", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">使用手册</span></button><button type="button" class="bz-sp-foot-chg" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
   }
   function navSecHtml(title, itemsHtml) {
     return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
@@ -181,12 +183,18 @@ var BZR_settings_panel = (() => {
   function navItemHtml(opts) {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
   }
+  function navDocSecHtml() {
+    return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">文档</div><button type="button" class="bz-sp-nav-doc" data-sp-manual>${iconSpan("book-open", "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">使用手册</span></button><button type="button" class="bz-sp-nav-doc" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">更新日志</span></button></div>`;
+  }
   function mobShellHtml() {
     return `<div class="bz-sp-mob-viewport"><section class="bz-sp-mob-page bz-sp-mob-page--home"><div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools" data-sp-mob-tools="home"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div></section><section class="bz-sp-mob-page bz-sp-mob-page--domain"><div class="bz-sp-head"><span class="bz-sp-mob-nav" data-sp-mob-back></span><span class="bz-sp-mob-title"></span><span class="bz-sp-head-tools" data-sp-mob-tools="domain"></span></div><div class="bz-sp-settings-body bz-sp-mob-page-body"></div></section></div>`;
   }
   function mobItemHtml(opts) {
     const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
     return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"${opts.row ? ` data-sp-row="${esc(opts.row)}"` : ""}><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
+  }
+  function mobDocSecHtml() {
+    return `<div class="bz-sp-mob-sec">文档</div><button type="button" class="bz-sp-mob-doc" data-sp-manual><span class="bz-sp-mob-ic">${iconSpan("book-open")}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">使用手册</span><span class="bz-sp-mob-desc">完整功能说明，随时可查</span></span></button><button type="button" class="bz-sp-mob-doc" data-sp-changelog><span class="bz-sp-mob-ic">${iconSpan("history")}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">更新日志</span><span class="bz-sp-mob-desc">每个版本改了什么</span></span></button>`;
   }
   return __toCommonJS(render_exports);
 })();

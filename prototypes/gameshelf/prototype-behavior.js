@@ -1,4 +1,4 @@
-/* 源指纹 4a9dfd4902e2a2e6 · 仓内输入 279 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9f21ebbb3a811eff · 仓内输入 279 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -10757,7 +10757,7 @@ var BZW_gameshelf = (() => {
 
   // src/settings-panel/layouts/jingwei/render.ts
   function deskShellHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div><div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-manual>${iconSpan("book-open", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">使用手册</span></button><button type="button" class="bz-sp-foot-chg" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
   }
   function navSecHtml(title, itemsHtml) {
     return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
@@ -10765,12 +10765,18 @@ var BZW_gameshelf = (() => {
   function navItemHtml(opts) {
     return `<button type="button" class="bz-sp-nav-item${opts.on ? " on" : ""}" data-sp-domain="${esc(opts.id)}">${iconSpan(opts.icon, "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">${esc(opts.name)}</span><span class="bz-sp-nav-count">${esc(opts.count)}</span></button>`;
   }
+  function navDocSecHtml() {
+    return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">文档</div><button type="button" class="bz-sp-nav-doc" data-sp-manual>${iconSpan("book-open", "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">使用手册</span></button><button type="button" class="bz-sp-nav-doc" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-nav-ic")}<span class="bz-sp-nav-name">更新日志</span></button></div>`;
+  }
   function mobShellHtml() {
     return `<div class="bz-sp-mob-viewport"><section class="bz-sp-mob-page bz-sp-mob-page--home"><div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools" data-sp-mob-tools="home"></span></div><div class="bz-sp-mob-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索设置、域…" autocomplete="off"></div><div class="bz-sp-mob-list"></div></section><section class="bz-sp-mob-page bz-sp-mob-page--domain"><div class="bz-sp-head"><span class="bz-sp-mob-nav" data-sp-mob-back></span><span class="bz-sp-mob-title"></span><span class="bz-sp-head-tools" data-sp-mob-tools="domain"></span></div><div class="bz-sp-settings-body bz-sp-mob-page-body"></div></section></div>`;
   }
   function mobItemHtml(opts) {
     const tail = opts.kind ? `<span class="bz-sp-mob-kind">${esc(opts.kind)}</span>` : `<span class="bz-sp-mob-chev">${iconSpan("chevron-right")}</span>`;
     return `<button type="button" class="bz-sp-mob-item" data-sp-domain="${esc(opts.id)}"${opts.row ? ` data-sp-row="${esc(opts.row)}"` : ""}><span class="bz-sp-mob-ic">${iconSpan(opts.icon)}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">${esc(opts.name)}</span><span class="bz-sp-mob-desc">${esc(opts.desc)}</span></span>${tail}</button>`;
+  }
+  function mobDocSecHtml() {
+    return `<div class="bz-sp-mob-sec">文档</div><button type="button" class="bz-sp-mob-doc" data-sp-manual><span class="bz-sp-mob-ic">${iconSpan("book-open")}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">使用手册</span><span class="bz-sp-mob-desc">完整功能说明，随时可查</span></span></button><button type="button" class="bz-sp-mob-doc" data-sp-changelog><span class="bz-sp-mob-ic">${iconSpan("history")}</span><span class="bz-sp-mob-t"><span class="bz-sp-mob-name">更新日志</span><span class="bz-sp-mob-desc">每个版本改了什么</span></span></button>`;
   }
   var init_render = __esm({
     "src/settings-panel/layouts/jingwei/render.ts"() {
@@ -63588,13 +63594,15 @@ ${n.content.slice(0, 2e3)}
     frame2.srcdoc = html;
   }
   function build2() {
+    var _a2;
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID2;
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
     frame2.id = FRAME_ID2;
-    frame2.className = "bz-panel-frame bz-sp-skin bz-manv-popup";
+    frame2.className = "bz-panel-frame bz-sp-skin bz-panel-mtop bz-manv-popup";
     frame2.innerHTML = shellHtml();
+    (_a2 = frame2.querySelector(".bz-manv-close")) == null ? void 0 : _a2.addEventListener("click", hide2);
     ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide2();
@@ -63603,9 +63611,9 @@ ${n.content.slice(0, 2e3)}
     overlay2 = ov;
   }
   function shellHtml() {
-    return `<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+    return `${CLOSE_BTN}<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
   }
-  var OVERLAY_ID2, FRAME_ID2, overlay2, escHandle6;
+  var OVERLAY_ID2, FRAME_ID2, overlay2, escHandle6, CLOSE_BTN;
   var init_manual_viewer = __esm({
     "src/settings-panel/manual-viewer.ts"() {
       init_z_order();
@@ -63615,6 +63623,10 @@ ${n.content.slice(0, 2e3)}
       FRAME_ID2 = "bz-manual-popup";
       overlay2 = null;
       escHandle6 = null;
+      CLOSE_BTN = `<button class="bz-manv-close" type="button" aria-label="关闭使用手册" title="关闭">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+</button>`;
     }
   });
 
@@ -63676,13 +63688,15 @@ ${n.content.slice(0, 2e3)}
     frame2.srcdoc = html;
   }
   function build3() {
+    var _a2;
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID3;
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
     frame2.id = FRAME_ID3;
-    frame2.className = "bz-panel-frame bz-sp-skin bz-chg-popup";
+    frame2.className = "bz-panel-frame bz-sp-skin bz-panel-mtop bz-chg-popup";
     frame2.innerHTML = shellHtml2();
+    (_a2 = frame2.querySelector(".bz-chg-close")) == null ? void 0 : _a2.addEventListener("click", hide3);
     ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide3();
@@ -63691,9 +63705,9 @@ ${n.content.slice(0, 2e3)}
     overlay3 = ov;
   }
   function shellHtml2() {
-    return `<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
+    return `${CLOSE_BTN2}<div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
   }
-  var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7;
+  var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7, CLOSE_BTN2;
   var init_changelog2 = __esm({
     "src/settings-panel/changelog.ts"() {
       init_z_order();
@@ -63703,6 +63717,10 @@ ${n.content.slice(0, 2e3)}
       FRAME_ID3 = "bz-changelog-popup";
       overlay3 = null;
       escHandle7 = null;
+      CLOSE_BTN2 = `<button class="bz-chg-close" type="button" aria-label="关闭更新日志" title="关闭">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+</button>`;
     }
   });
 
@@ -64276,7 +64294,7 @@ ${n.content.slice(0, 2e3)}
     }
     return n;
   }
-  var SEARCH_DEBOUNCE_MS4, spMatch, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var SEARCH_DEBOUNCE_MS4, spMatch, DOC_ENTRY_NAMES, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui13 = __esm({
     "src/settings-panel/ui.ts"() {
       init_fake_obsidian();
@@ -64296,6 +64314,7 @@ ${n.content.slice(0, 2e3)}
       init_motion();
       SEARCH_DEBOUNCE_MS4 = 180;
       spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
+      DOC_ENTRY_NAMES = ["文档", "使用手册", "更新日志", "手册", "日志", "changelog"];
       schemaLoaders = {
         // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
         // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
@@ -64529,10 +64548,6 @@ ${n.content.slice(0, 2e3)}
           popup.classList.add("bz-sp-desk");
           popup.innerHTML = deskShellHtml();
           mountIcons(popup);
-          const chgBtn = popup.querySelector("[data-sp-changelog]");
-          chgBtn == null ? void 0 : chgBtn.addEventListener("click", () => void this.runChangelogOpen(chgBtn));
-          const manBtn = popup.querySelector("[data-sp-manual]");
-          manBtn == null ? void 0 : manBtn.addEventListener("click", () => void this.runManualOpen(manBtn));
           const nav = popup.querySelector(".bz-sp-nav");
           this.navEl = nav;
           const pane = popup.querySelector(".bz-sp-pane");
@@ -64569,7 +64584,14 @@ ${n.content.slice(0, 2e3)}
               });
               nav.insertAdjacentHTML("beforeend", navSecHtml(sec.title, itemsHtml));
             }
+            if (!query || DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) {
+              nav.insertAdjacentHTML("beforeend", navDocSecHtml());
+            }
             mountIcons(nav);
+            const manBtn = nav.querySelector("[data-sp-manual]");
+            manBtn == null ? void 0 : manBtn.addEventListener("click", () => void this.runManualOpen(manBtn));
+            const chgBtn = nav.querySelector("[data-sp-changelog]");
+            chgBtn == null ? void 0 : chgBtn.addEventListener("click", () => void this.runChangelogOpen(chgBtn));
             nav.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
               b.tabIndex = -1;
               const id = b.dataset.spDomain;
@@ -65001,6 +65023,7 @@ ${n.content.slice(0, 2e3)}
                 list.appendChild(secEl);
                 sec.domains.forEach((d) => list.insertAdjacentHTML("beforeend", mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
               }
+              list.insertAdjacentHTML("beforeend", mobDocSecHtml());
             } else {
               const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
               const rows = [];
@@ -65018,6 +65041,7 @@ ${n.content.slice(0, 2e3)}
                   html += mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc });
                 });
               }
+              if (DOC_ENTRY_NAMES.some((n) => spMatch(n, query))) html += mobDocSecHtml();
               if (rows.length) {
                 html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
                 rows.forEach((r) => {
@@ -65031,6 +65055,10 @@ ${n.content.slice(0, 2e3)}
               const d = DOMAINS2.find((x) => x.id === b.dataset.spDomain);
               if (d) b.addEventListener("click", () => void this.pushDomain(d, b.dataset.spRow));
             });
+            const manBtn = list.querySelector("[data-sp-manual]");
+            manBtn == null ? void 0 : manBtn.addEventListener("click", () => void this.runManualOpen(manBtn));
+            const chgBtn = list.querySelector("[data-sp-changelog]");
+            chgBtn == null ? void 0 : chgBtn.addEventListener("click", () => void this.runChangelogOpen(chgBtn));
             mountIcons(list);
             motionMobList(list);
           };

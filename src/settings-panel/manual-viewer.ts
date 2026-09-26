@@ -6,6 +6,11 @@
  * hide 型常驻层范式随 changelog：重开抬顶（ADR-0067 topifyZ）、ESC 栈序随显示序
  * 重放注册、插件卸载经 unloadSettingsPanel → unloadManualViewer 收口。
  * 关闭即清空 srcdoc 释放内存（327KB 文本 + 渲染树不值得常驻）。
+ *
+ * 移动端（≤768px）真全屏（用户拍板）：frame 挂 core .bz-panel-mtop 得 44px 顶部避让
+ * （避 Obsidian 移动端头部 + 刘海），右上 44px 见方关闭钮落在这条避让带里——
+ * 全屏后遮罩点不到了，关闭只剩这一个出口（ESC 在手机上不可靠）。
+ * 桌面端形态不变：居中弹窗、无头行、钮不出现（点遮罩 / ESC 关闭）。
  */
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
@@ -56,8 +61,9 @@ function build(): void {
   ov.className = 'bz-panel-overlay';
   const frame = document.createElement('div');
   frame.id = FRAME_ID;
-  frame.className = 'bz-panel-frame bz-sp-skin bz-manv-popup';
+  frame.className = 'bz-panel-frame bz-sp-skin bz-panel-mtop bz-manv-popup';
   frame.innerHTML = shellHtml();
+  frame.querySelector<HTMLElement>('.bz-manv-close')?.addEventListener('click', hide);
   ov.appendChild(frame);
   ov.addEventListener('click', (e) => {
     if (e.target === ov) hide();
@@ -66,8 +72,14 @@ function build(): void {
   overlay = ov;
 }
 
+/** ✕ 关闭钮（仅移动端可见：全屏后遮罩点不到，关闭得有实体出口；桌面走遮罩 / ESC） */
+const CLOSE_BTN = `<button class="bz-manv-close" type="button" aria-label="关闭使用手册" title="关闭">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+</button>`;
+
 /** 弹窗骨架（无头行——用户拍板：外壳不留标题，手册自带的内容已够自明；
  *  主体 = iframe 内嵌手册，零留白贴边，滚动全交 iframe 内文档） */
 function shellHtml(): string {
-  return `<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+  return `${CLOSE_BTN}<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
 }

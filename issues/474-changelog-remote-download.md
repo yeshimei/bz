@@ -93,3 +93,24 @@ OB 内弹窗 iframe srcdoc 内嵌」，更新日志仍是「生成器产 TS 常�
 死代码清理：`cg-kind` / `cg-kind--add` / `cg-sec` / `cg-kinds` 样式与 `dates` / `span` 局部变量一并删除。
 产物重出：`版本数=25 条目=514 当前=1.24.0`，`manual/bz-changelog.html` 70.5KB（72225 字节）。
 校验：28 个域名键，514 条条目**零未映射**（全中文覆盖）。
+
+### 连带修复（本次门禁暴露，均非 474 本票引入）
+
+主仓有另一并行改造（「手册/日志入口从底缘 footer 移入导航末尾『文档』组」+ 手册/日志移动端形态），
+合并后跑门禁暴露三处缺口，随本次一并补齐：
+
+1. **`src/settings-panel/render.ts` re-export 缺口** —— 布局层 `layouts/jingwei/render.ts` 已定义
+   `navDocSecHtml` / `mobDocSecHtml`，但域入口 `render.ts` 的转出清单漏了两个（`ui.ts:477` 调
+   `R.navDocSecHtml()` 直接 `TypeError`）。补进转出清单（纯加两个名字，两行）。
+2. **`:hover` 触屏粘滞破口** —— `.bz-chg-close:hover` / `.bz-manv-close:hover` 未包 `@media (hover: hover)`
+   （移动端关闭钮是本次新增，违反了 `tests/core/bd-paradigm-hover-isolation.test.ts` 的 F4 范式）。两处各包一层。
+3. **域计数断言选择器过宽** —— `tests/settings-panel.test.ts` 桌面/移动两条用例用 `.bz-sp-nav-name` /
+   `.bz-sp-mob-name` 数域项，而新「文档」组（手册/日志）复用同名 span，导致 20 被撑到 22。
+   改为 `.bz-sp-nav-item .bz-sp-nav-name` / `.bz-sp-mob-item .bz-sp-mob-name` —— 只数真域项，
+   与 `.bz-sp-nav-doc` 的设计意图（「手册/日志不是域，不得入列」）一致。语义比改数字更准。
+
+### 主仓产物污染处置
+
+合并时发现主仓工作区的 `manual/bz-changelog.html` 被注入 19 处 `data-page-node-id` 属性（外部编辑器所为），
+且内容仍是未打磨的旧版。已丢弃该版本（备份在 `D:/Obsidian/_bz474b/mainrepo-changelog-polluted.html`），
+以生成器重出的干净产物覆盖；`grep -c data-page-node-id` 现为 0。

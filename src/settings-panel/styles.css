@@ -580,7 +580,7 @@
   padding: 14px 10px 20px;
   border-right: 1px solid var(--sp-line);
   background: var(--sp-panel);
-  /* issue 472：侧栏转弹性列——导航区内滚，footer（更新日志入口）常驻底缘 */
+  /* 侧栏 = 弹性列：导航区内滚（手册/日志入口已并入导航末尾一组，不再常驻底缘） */
   display: flex;
   flex-direction: column;
 }
@@ -589,45 +589,6 @@
   min-height: 0;
   overflow-y: auto;
 }
-.bz-sp-side-foot {
-  flex-shrink: 0;
-  margin-top: 10px;
-  padding: 10px 0 0;
-  border-top: 1px solid var(--sp-line-soft);
-}
-/* 入口钮与导航项同观感但独立类：.bz-sp-nav-item 是契约类（测试按它数导航项），footer 不得入列 */
-.bz-sp-foot-chg {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border: 0;
-  background: transparent;
-  border-radius: 9px;
-  font-size: var(--bz-font-label);
-  color: var(--sp-ink-2);
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-}
-@media (hover: hover) {
-  .bz-sp-foot-chg:hover { background: var(--sp-accent-soft); color: var(--sp-ink); }
-}
-.bz-sp-foot-chg-ic { flex: none; width: 15px; height: 15px; color: var(--sp-ink-2); }
-.bz-sp-foot-chg-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@media (hover: hover) {
-  .bz-sp-foot-chg:hover .bz-sp-foot-chg-ic { color: var(--sp-accent); }
-}
-/* 使用手册下载中（issue 473）：图标换 loader 后整钮转圈 + 按压反馈收声（防重入靠 ui 层 is-loading 判断） */
-.bz-sp-foot-chg.is-loading { pointer-events: none; opacity: 0.72; }
-.bz-sp-foot-chg.is-loading .bz-sp-foot-chg-ic svg { animation: bz-sp-spin 0.8s linear infinite; }
 .bz-sp-nav-sec { margin-bottom: var(--bz-space-lg); }
 .bz-sp-nav-sec-t {
   font-size: 10.5px;
@@ -668,6 +629,35 @@
   padding: 0 7px;
   line-height: 17px;
 }
+/* 文档入口（使用手册 / 更新日志，2026-09-26 拍板挂导航末尾一组）：与域项同观感，
+   但不带徽标、不带选中态——它不是域，选中/切域语义不适用于它 */
+.bz-sp-nav-doc {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 9px;
+  font-size: var(--bz-font-label);
+  font-family: inherit;
+  color: var(--sp-ink);
+  cursor: pointer;
+  text-align: left;
+}@media (hover: hover) {
+
+.bz-sp-nav-doc:hover { background: var(--sp-accent-soft); }
+}
+.bz-sp-nav-doc .bz-sp-nav-ic { color: var(--sp-ink-2); }@media (hover: hover) {
+
+.bz-sp-nav-doc:hover .bz-sp-nav-ic { color: var(--sp-accent); }
+}
+/* 下载中（issue 473/474）：图标换 loader 后转圈 + 按压反馈收声（防重入靠 ui 层 is-loading 判断） */
+.bz-sp-nav-doc.is-loading,
+.bz-sp-mob-doc.is-loading { pointer-events: none; opacity: 0.72; }
+.bz-sp-nav-doc.is-loading .bz-ic svg,
+.bz-sp-mob-doc.is-loading .bz-ic svg { animation: bz-sp-spin 0.8s linear infinite; }
 
 /* ═══════════ 内容区（域页头 + 分组卡滚动域） ═══════════ */
 .bz-sp-desk-main {
@@ -1245,6 +1235,26 @@
   text-align: left;
 }
 .bz-sp-mob-item:active { background: var(--sp-accent-soft); }
+/* 文档入口（使用手册 / 更新日志）：与域项同卡片观感，但无 › 箭头（点了不推域页，
+   直接开弹窗），故右侧留白不补占位 */
+.bz-sp-mob-doc {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-md);
+  padding: 11px var(--bz-space-md);
+  margin-bottom: 6px;
+  border: 1px solid var(--sp-line);
+  border-radius: var(--bz-radius-md);
+  background: var(--sp-panel);
+  box-shadow: var(--sp-shadow);
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--sp-ink);
+  cursor: pointer;
+  text-align: left;
+}
+.bz-sp-mob-doc:active { background: var(--sp-accent-soft); }
 .bz-sp-mob-ic {
   width: 34px;
   height: 34px;
@@ -1682,20 +1692,60 @@
   border: 0;
   background: var(--sp-panel);
 }
+/* 移动端关闭钮（桌面不渲染——display:none，点遮罩 / ESC 关闭即可） */
+.bz-chg-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--sp-ink-2);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-chg-close:hover { color: var(--sp-ink); }
+}
 @media (max-width: 768px) {
+  /* 真全屏（用户拍板）：顶边齐刘海下沿，圆角与描边去掉——满屏再带框会显脏。 */
   .bz-chg-popup {
-    width: calc(100vw - 24px);
-    height: 86vh;
-    height: 86dvh;
+    box-sizing: border-box;
+    width: 100vw;
+    height: var(--bz-vvh, 100dvh);
+    border: 0;
+    border-radius: 0;
+  }
+  .bz-chg-close {
+    display: flex;
+    position: absolute;
+    /* ✕ 与文档顶栏（48px 高）同行：绝对定位的 top 从 frame 的 **padding box** 顶边起算，
+       而 .bz-panel-mtop 那 44px 是 frame 的**内顶距**（在内容之前、padding box 之内），
+       所以只写 top:24px 会落在避让带里、比顶栏高一整行。必须先跨过避让带再取顶栏中心：
+       44px（避让）+ 24px（顶栏半高）= 68px。safe-area 更大的刘海机同理跟进。 */
+    top: calc(max(44px, env(safe-area-inset-top, 0px)) + 24px);
+    right: 8px;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    z-index: 3;
+    color: var(--sp-ink-2);
   }
 }
 
 
-/* ═══════════ 使用手册弹窗（issue 473）：侧栏 footer 入口 → OB 内独立弹窗，iframe srcdoc 内嵌 ═══════════ */
+/* ═══════════ 使用手册弹窗（issue 473）：侧栏入口 → OB 内独立弹窗，iframe srcdoc 内嵌 ═══════════ */
 .bz-manv-popup {
   width: min(calc(100vw - 32px), 1080px);
   height: min(90vh, 860px);
 }
+/* 关闭钮在 ≥769px 不渲染（桌面走遮罩 / ESC）。放在这里而不是只在 @media 里，
+   是因为桌面段先声明、媒体查询段再放大即可 —— 两端同一条选择器，不会出现
+   「一处写了显示一处漏写」的漏网。 */
 /* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉）。
    无头行形态（用户拍板）：不留内边距，iframe 满铺——外壳不出标题，手册自带内容即全部信息 */
 .bz-manv-body {
@@ -1710,10 +1760,44 @@
   border: 0;
   background: var(--sp-panel);
 }
+/* 移动端关闭钮（桌面不渲染——display:none，点遮罩 / ESC 关闭即可） */
+.bz-manv-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--sp-ink-2);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-manv-close:hover { color: var(--sp-ink); }
+}
 @media (max-width: 768px) {
+  /* 真全屏（用户拍板）：与更新日志弹窗同口径。 */
   .bz-manv-popup {
-    width: calc(100vw - 24px);
-    height: 88vh;
-    height: 88dvh;
+    box-sizing: border-box;
+    width: 100vw;
+    height: var(--bz-vvh, 100dvh);
+    border: 0;
+    border-radius: 0;
+  }
+  .bz-manv-close {
+    display: flex;
+    position: absolute;
+    /* 手册顶栏 46px：跨过 44px 避让带 + 顶栏半高 23px（与日志同口径，见上） */
+    top: calc(max(44px, env(safe-area-inset-top, 0px)) + 23px);
+    right: 8px;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    z-index: 3;
+    color: var(--sp-ink-2);
   }
 }

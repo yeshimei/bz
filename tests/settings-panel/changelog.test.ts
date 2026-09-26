@@ -54,19 +54,20 @@ describe('更新日志弹窗（issue 472 立，issue 474 改在线下载）', ()
     vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: CHG_HTML } as any);
   });
 
-  it('侧栏底部入口：footer 按钮在 aside 内（nav 兄弟节点），不入导航契约类', async () => {
+  it('侧栏入口：日志挂在导航末尾「文档」组内（不再常驻底缘），不入域契约类', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
     const panel = document.getElementById('bz-settings-panel-popup')!;
-    const footBtn = panel.querySelector('[data-sp-changelog]') as HTMLElement;
-    expect(footBtn).toBeTruthy();
-    expect(footBtn.textContent).toContain('更新日志');
-    // footer 是 .bz-sp-nav 的兄弟节点：nav 随搜索/切域整树重渲，入口不被波及
-    expect(footBtn.closest('.bz-sp-desk-side')).toBeTruthy();
-    expect(footBtn.closest('.bz-sp-nav')).toBeNull();
-    // 不沾 .bz-sp-nav-item 契约类（测试按它数导航项，footer 入列会污染计数）
-    expect(footBtn.classList.contains('bz-sp-nav-item')).toBe(false);
+    const btn = panel.querySelector('[data-sp-changelog]') as HTMLElement;
+    expect(btn).toBeTruthy();
+    expect(btn.textContent).toContain('更新日志');
+    // 2026-09-26 用户拍板：手册/日志从底缘 footer 移入导航末尾「文档」组，随列表滚动、可被搜索命中
+    expect(btn.closest('.bz-sp-nav')).toBeTruthy();
+    expect(btn.closest('.bz-sp-nav-sec')).toBeTruthy();
+    // 必须是 .bz-sp-nav-doc 而非 .bz-sp-nav-item —— 后者是域契约类（切域 / 数域项按它走），日志不是域
+    expect(btn.classList.contains('bz-sp-nav-doc')).toBe(true);
+    expect(btn.classList.contains('bz-sp-nav-item')).toBe(false);
   });
 
   it('点击（未下载）→ 图标转 loading → 下载写入插件目录 → OB 内弹窗 srcdoc 内嵌 → 图标复原', async () => {
