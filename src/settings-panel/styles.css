@@ -1750,3 +1750,81 @@
     color: var(--sp-ink-2);
   }
 }
+
+/* ==================== 在线资源组（ADR-0202 / issue 480） ====================
+ * 通用域最后一组：三行资源状态机（更新日志/使用手册/皮肤）+ 条件提示行。
+ * 行视觉对齐面板组内行（左名右钮），状态全部就地可见，无通知。 */
+.bz-sp-res {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+.bz-sp-res-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+}
+.bz-sp-res-row + .bz-sp-res-row {
+  border-top: 1px solid var(--sp-line, var(--bz-border));
+}
+.bz-sp-res-info {
+  min-width: 0;
+}
+.bz-sp-res-name {
+  font-size: 14px;
+  color: var(--sp-ink, var(--bz-text));
+}
+.bz-sp-res-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--sp-ink-2, var(--bz-text-muted));
+}
+.bz-sp-res-btn {
+  flex: none;
+  min-width: 76px;
+}
+.bz-sp-res-btn.is-loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.bz-sp-res-btn--done:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* 核对失败且无缓存：横条形态（三行按钮已禁用，这里是唯一动作入口） */
+.bz-sp-res-fail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--bz-warning, var(--bz-border));
+  border-radius: 8px;
+  background: var(--bz-surface-2);
+}
+/* 核对失败但有缓存：细字降级提示（缓存状态照常可用） */
+.bz-sp-res-stale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--sp-ink-2, var(--bz-text-muted));
+}
+.bz-sp-res-fail-text {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--sp-ink-2, var(--bz-text-muted));
+}
+.bz-sp-res-fail-retry {
+  flex: none;
+}
+@media (max-width: 768px) {
+  .bz-sp-res-row {
+    flex-wrap: wrap;
+  }
+}

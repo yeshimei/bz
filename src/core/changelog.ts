@@ -16,6 +16,7 @@
  * 远端有没有新重出的日志——插件版本没动、日志单独重出推送时靠这层拿到新版。）
  * ============================================================ */
 import { assetVaultPath, ensureAssetReady, refreshAsset } from './remote-asset';
+import { cachedSha256For } from './download-manifest';
 
 /** 更新日志文件名（写入插件目录时用；ASCII，避免转义麻烦） */
 export const CHANGELOG_FILENAME = 'bz-changelog.html';
@@ -45,7 +46,9 @@ export function ensureChangelogReady(app: unknown): Promise<string> {
  * 有新版 → 覆盖落盘并返回新文本；离线/失败 → null（静默，保持本地已存版本）。
  * 入口口径 = ensureChangelogReady 先本地秒开，再调本函数后台核对一遍
  * ——日志重出推上 GitHub 而插件版本没动时，靠这层才能拿到新版。
+ * ADR-0202 省流：缓存下载清单里日志的 sha256 与本地一致 → 清单确认无新版，
+ * 直接跳过远端拉取；清单缺席回落全量核对。
  */
-export function refreshChangelog(app: unknown): Promise<string | null> {
-  return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, '更新日志');
+export async function refreshChangelog(app: unknown): Promise<string | null> {
+  return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, '更新日志', await cachedSha256For(app, CHANGELOG_FILENAME));
 }

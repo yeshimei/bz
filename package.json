@@ -8,6 +8,7 @@
     "build": "node esbuild.config.mjs production",
     "changelog": "node scripts/_gen-changelog.mjs",
     "skin-pack": "node scripts/build-skin-pack.mjs",
+    "manifest": "node scripts/build-manifest.mjs",
     "split-skins": "node scripts/split-domain-skins.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,10 +1,10 @@
 /**
  * 更新日志生成器（issue 472 立、issue 474 改为产出自包含 HTML）：从 git 提交历史生成
- * manual/bz-changelog.html，并把最新版本号回写 manifest.json（版本事实源 = 提交历史 + 本文件合成规则）。
+ * downloads/bz-changelog.html，并把最新版本号回写 manifest.json（版本事实源 = 提交历史 + 本文件合成规则）。
  *
  * 产物去向：更新日志不随插件构建打包（旧产物 src/settings-panel/changelog-data.ts 已退役），
  * 由插件在用户点「更新日志」时从 GitHub 现场下载（core/changelog.ts + settings-panel/changelog.ts
- * 的 iframe srcdoc 弹窗）——与使用手册（manual/bz-manual.html）同一套口径。
+ * 的 iframe srcdoc 弹窗）——与使用手册（downloads/bz-manual.html）同一套口径。
  *
  * 版本合成规则：
  *   - 版本切点 = 「主构建部署产物」提交日（部署即发版）；该约定（2026-09-08）之前按自然周归并；
@@ -17,7 +17,7 @@
  *   - 主题句 = 「——」前的部分，其后的细节作弱化副行（过长截断）；剥 issue/ticket/ADR/呈报 尾注与 emoji；
  *   - 内部工程条目过滤（评审/走查/收口/测试/守卫/契约/基准/单源/重构…）；块内按主题句去重。
  * 重跑：`pnpm changelog`（仓库根执行，**只在主仓库跑**——worktree 里跑会生成残缺版本）。
- * 只写 manual/bz-changelog.html 与 manifest.json。
+ * 只写 downloads/bz-changelog.html 与 manifest.json。
  */
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -244,9 +244,9 @@ if (manifest.version !== current) {
 
 /* ==================== 产出单文件 HTML（issue 474） ====================
  * 更新日志不再随构建打进 main.js（旧产物 changelog-data.ts 已退役）：改为发布
- * manual/bz-changelog.html——单文件自包含（样式 + 数据 + 脚本全内联），由插件在
+ * downloads/bz-changelog.html——单文件自包含（样式 + 数据 + 脚本全内联），由插件在
  * 用户点「更新日志」时从 GitHub 现场下载，弹窗用 iframe srcdoc 内嵌渲染。
- * 与使用手册（manual/bz-manual.html）同一套口径与同一套 token。
+ * 与使用手册（downloads/bz-manual.html）同一套口径与同一套 token。
  * ==================================================================== */
 
 /** HTML 文本转义（title/属性位；正文数据走 JSON.stringify 无需转义） */
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </html>
 `;
 
-writeFileSync(join(ROOT, 'manual', 'bz-changelog.html'), html, 'utf8');
+writeFileSync(join(ROOT, 'downloads', 'bz-changelog.html'), html, 'utf8');
 console.log(`版本数=${releases.length} 条目=${shown} 当前=${current}${manifestSynced ? '（manifest 已回写）' : ''}`);
-console.log(`产出 manual/bz-changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
+console.log(`产出 downloads/bz-changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
 console.log(releases.slice(-6).map((r) => `v${r.version}(${r.date}): +${r.added.length} !${r.fixed.length} ^${r.improved.length}`).join('  '));

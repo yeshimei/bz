@@ -1,0 +1,29 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/neon（霓虹灯）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/neon.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+@keyframes neonPulse {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.4); }
+}
+@keyframes neonTail {
+  0%, 100% { transform: rotate(0deg); opacity: 0.8; }
+  50% { transform: rotate(-20deg); opacity: 1; }
+}
+
+/* 高级皮肤（原 AppearanceManager.advancedSkins：渐变/辉光/动画；风格静态化） */
+#smart-companion-cat.skin-neon .cat-body {
+  background: linear-gradient(135deg, #00FFFF, #FF00FF);
+  box-shadow: 0 0 20px #00FFFF, 0 0 40px #FF00FF, 0 0 60px #00FFFF;
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+#smart-companion-cat.skin-neon .cat-ear { background: #00FFFF; box-shadow: 0 0 10px #00FFFF; }
+#smart-companion-cat.skin-neon .cat-tail { background: #FF00FF; box-shadow: 0 0 15px #FF00FF; animation: neonTail 3s ease-in-out infinite; }
+.bz-sp-mini.bz-sc-prev-neon, .bz-cardpick-prev.bz-sc-prev-neon { background: linear-gradient(135deg, #00FFFF, #FF00FF);; }

@@ -1,0 +1,14 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/calico（三花猫）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/calico.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+#smart-companion-cat.skin-calico .cat-body { background: linear-gradient(135deg, #E74C3C, #F39C12); }
+#smart-companion-cat.skin-calico .cat-ear, #smart-companion-cat.skin-calico .cat-tail { background: #E74C3C; }
+.bz-sp-mini.bz-sc-prev-calico, .bz-cardpick-prev.bz-sc-prev-calico { background: linear-gradient(135deg, #E74C3C, #F39C12);; }

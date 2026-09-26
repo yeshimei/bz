@@ -1,10 +1,14 @@
 /* ============================================================
- * bz · 皮肤包（core/skin-pack.ts，单源）——ADR-0199
+ * bz · 皮肤包（core/skin-pack.ts，单源）——ADR-0199，加载策略经 ADR-0202 修订
  *
- * 皮肤（主题轴）的**云端分发**层：清单 `manual/skins/index.json` +
- * 每皮肤一个 `.css`，落 `<configDir>/plugins/bz/skins/`，启动时静默同步
- * （串在自更新检查之后——自更新会覆写 manifest.json 改掉插件版本号，
- * 而皮肤的版本区间校验正是拿这个版本号算的）。
+ * 皮肤（主题轴）的**云端分发**层：条目来自统一下载清单（downloads/manifest.json
+ * 的 skins[] 段，core/download-manifest.ts），每皮肤一个 `.css`，落
+ * `<configDir>/plugins/bz/skins/`。**下载/更新由用户决定**（设置面板「在线资源」
+ * 组按钮触发 downloadSkinUpdates）——ADR-0199 原「启动静默全量同步、不要按钮」
+ * 口径废止：启动链（串在自更新检查之后——自更新会覆写 manifest.json 改掉插件
+ * 版本号，而皮肤的版本区间校验正是拿这个版本号算的）只做**对比 + 下架清理 +
+ * 就绪注入**，绝不下载；已下载的皮肤有更新，用户不点就停在旧版（知情后果，
+ * 用户拍板接受）。
  *
  * ⚠️ 本文件是**全仓唯一的运行时样式注入点**（铁律 4 / ADR-0020 的例外，
  * 边界见 ADR-0199 决策 4）。任何其他文件要注入 `<style>` 都得另开 ADR；
@@ -13,43 +17,20 @@
  * 设计口径：
  * - **内置首套恒在**（留在 `src/<域>/styles.css`，构建进产物）——任何情况下
  *   面板都有皮肤样式，不允许断网裸奔；本层只管远端那几套。
- * - **不生效的东西不许出现在选择卡里**：只有「本地文件存在 + sha256 匹配 +
+ * - **不生效的东西不许出现在选择卡里**：只有「本地文件存在 + sha256 与清单匹配 +
  *   版本区间内」的皮肤才进就绪表，选择卡与 normalizeSkin 都只认就绪表。
+ *   （旧「本地就绪表 skins/index.json」文件已退役——就绪 = 缓存清单条目 + 文件实测。）
  * - **完整性**：远端是公开 raw 地址，谁有仓库写权限谁就能投毒——清单条目的
  *   sha256 不匹配一律拒绝注入（手册吃这个亏顶多少看一页，皮肤是被注入执行）。
- * - **失败一律静默**：启动期网络失败不该弹脸（照 self-update 范式）；本层
- *   不发任何通知，拉不到就等下次启动再拉（用户拍板：不要按钮、不要节流）。
+ * - **启动期失败一律静默**（照 self-update 范式）；「在线资源」组里的失败态由
+ *   UI 自己呈现（检查更新失败 + 重试），本层不发通知。
  * ============================================================ */
-import { assetVaultPath, ensureAssetWithHash, fetchAssetText, readAsset } from './remote-asset';
+import { assetVaultPath, ensureAssetWithHash, readAsset } from './remote-asset';
 import { textSha256 } from './sha256';
+import { cachedManifest, type DownloadManifest, type SkinPackEntry } from './download-manifest';
 
-/** 远端清单路径（相对插件安装目录，与 remote-asset 的 manual/ 口径一致） */
-export const SKIN_PACK_INDEX = 'skins/index.json';
-
-/** 单条皮肤条目（清单形状；构建脚本 `scripts/build-skin-pack.mjs` 产出） */
-export interface SkinPackEntry {
-  /** 皮肤 id（域内唯一，= CSS 类名后缀） */
-  id: string;
-  /** 所属域 id（= `src/<域>/` 目录名） */
-  domain: string;
-  /** 中文名（选择卡文案） */
-  name: string;
-  /** 相对插件安装目录的路径，如 `skins/bookshelf/noir.css` */
-  file: string;
-  /** 选择卡预览区附加类（预览规则随包下发，见 ADR-0199 决策 6） */
-  previewClass?: string;
-  /** 最低插件版本（含），空 = 不限 */
-  since?: string;
-  /** 最高插件版本（不含），空 = 不限 */
-  until?: string;
-  /** 归一换行后文本的 sha256（64 位小写） */
-  sha256: string;
-}
-
-export interface SkinPackManifest {
-  version: number;
-  skins: SkinPackEntry[];
-}
+/** 皮肤清单条目类型随清单统一上收 download-manifest（转出供各域选择卡消费，type-only） */
+export type { SkinPackEntry } from './download-manifest';
 
 /** 选择卡选项（域内 schema 的 choiceCards options 项形状；core 层不引 settings-schema，结构对齐即可） */
 export interface SkinOption {
@@ -67,8 +48,6 @@ interface ReadySkin {
 
 /** 就绪表：域 → 已就绪的远端皮肤（顺序 = 清单顺序 = 展示顺序） */
 let ready = new Map<string, ReadySkin[]>();
-/** 本地索引记录（用于「下架 → 删本地文件」的差集计算） */
-let localIndex: SkinPackEntry[] = [];
 /** 唯一注入节点 id */
 const STYLE_ID = 'bz-skin-pack-style';
 
@@ -90,39 +69,6 @@ export function isInVersionRange(entry: SkinPackEntry, pluginVersion: string): b
   if (entry.since && !versionAtLeast(ver, entry.since)) return false;
   if (entry.until && versionAtLeast(ver, entry.until)) return false;
   return true;
-}
-
-/** 清单解析（纯函数；形状不对/JSON 崩/错误页 → null，调用方静默跳过） */
-export function parseSkinPackManifest(text: string | null): SkinPackManifest | null {
-  if (!text) return null;
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (e) {
-    return null;
-  }
-  const obj = raw as { version?: unknown; skins?: unknown };
-  if (!obj || !Array.isArray(obj.skins)) return null;
-  const skins: SkinPackEntry[] = [];
-  for (const item of obj.skins as unknown[]) {
-    const e = item as Partial<SkinPackEntry>;
-    if (!e || typeof e.id !== 'string' || !e.id) return null;
-    if (typeof e.domain !== 'string' || !e.domain) return null;
-    if (typeof e.file !== 'string' || !e.file) return null;
-    if (typeof e.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(e.sha256.toLowerCase())) return null;
-    skins.push({
-      id: e.id,
-      domain: e.domain,
-      name: typeof e.name === 'string' && e.name ? e.name : e.id,
-      file: e.file,
-      previewClass: typeof e.previewClass === 'string' && e.previewClass ? e.previewClass : undefined,
-      since: typeof e.since === 'string' && e.since ? e.since : undefined,
-      until: typeof e.until === 'string' && e.until ? e.until : undefined,
-      sha256: e.sha256.toLowerCase(),
-    });
-  }
-  const version = typeof obj.version === 'number' ? obj.version : 1;
-  return { version, skins };
 }
 
 /** 就绪条目（域内 normalizeSkin / 选择卡消费） */
@@ -152,10 +98,9 @@ export function skinPackOptions(domain: string, builtins: SkinOption[]): SkinOpt
   return [...builtins, ...extra];
 }
 
-/** 就绪表重置（测试用；生产只在同步时改写） */
+/** 就绪表重置（测试用；生产只在应用清单/下载完成时改写） */
 export function resetSkinPackState(): void {
   ready = new Map();
-  localIndex = [];
 }
 
 /** 测试用：直接播种就绪表（免真读盘） */
@@ -220,33 +165,30 @@ async function readVerified(app: unknown, entries: SkinPackEntry[]): Promise<Rea
   for (const e of entries) {
     const text = await readAsset(app, e.file);
     if (text === null) continue;
-    if (textSha256(text) !== e.sha256) continue; // 半截/被改写的本地文件不入表（下次同步会重下）
+    if (textSha256(text) !== e.sha256) continue; // 半截/被改写的本地文件不入表（用户点「更新」会重下）
     out.push({ entry: e, text });
   }
   return out;
 }
 
-/** 读本地索引（顺带刷新 `localIndex`）+ 逐条验 hash → 就绪条目（网络前的那一半） */
-async function readLocalReady(app: unknown, pluginVersion: string): Promise<ReadySkin[]> {
-  const previous = parseSkinPackManifest(await readAsset(app, SKIN_PACK_INDEX));
-  localIndex = previous?.skins ?? [];
-  return readVerified(
-    app,
-    localIndex.filter((e) => isInVersionRange(e, pluginVersion)),
-  );
+/** 区间内条目（清单过滤单源） */
+function wantedEntries(manifest: DownloadManifest, pluginVersion: string): SkinPackEntry[] {
+  return manifest.skins.filter((e) => isInVersionRange(e, pluginVersion));
 }
 
 /**
- * 启动即用的**纯本地**入口（不碰网络）：读本地索引 + 验 hash → 就绪表 + 注入。
+ * 启动即用的**纯本地**入口（不碰网络）：读缓存清单 + 验 hash → 就绪表 + 注入。
  *
- * 存在的理由：`syncSkinPack` 排在自更新巡检之后（启动 15 秒），若只靠它，用户上次选好的
- * 远端皮肤会在**每次重启后的那十几秒**里回落首套——看着像「我的皮肤被重置了」。
- * 版本区间按**当下**的 `manifest.json` 判；自更新覆写版本号后由 `syncSkinPack` 重判一次。
+ * 存在的理由：启动链的清单对比排在自更新巡检之后（启动 15 秒），若只靠它，用户上次
+ * 选好的远端皮肤会在**每次重启后的那十几秒**里回落首套——看着像「我的皮肤被重置了」。
+ * 版本区间按**当下**的 `manifest.json` 判；自更新覆写版本号后由 `applySkinManifest` 重判一次。
  */
 export async function loadLocalSkinPack(app: unknown): Promise<void> {
   const pluginVersion = await readPluginVersion(app);
   if (!pluginVersion) return; // 读不到版本 → 区间无从判定，宁可不加载
-  applyReady(await readLocalReady(app, pluginVersion));
+  const cached = await cachedManifest(app);
+  if (!cached) return; // 无缓存清单（全新安装未联网过）→ 本地也没有皮肤文件，无事可注入
+  applyReady(await readVerified(app, wantedEntries(cached, pluginVersion)));
 }
 
 /** 限并发（几十套并发会打爆请求；失败不阻塞其余） */
@@ -273,92 +215,121 @@ async function removeSkinFile(app: unknown, file: string): Promise<void> {
   }
 }
 
-/** 同步结果（只给测试与日志用；生产不弹通知） */
-export interface SkinSyncResult {
-  /** 就绪条目数 */
+/** 皮肤三态计数（启动链统计 + 在线资源组按钮状态的数据源） */
+export interface SkinStatus {
+  /** 就绪条目数（区间内 + 文件 hash 匹配） */
   ready: number;
-  /** 下载/更新的文件数 */
-  downloaded: number;
-  /** 删除的本地文件数（下架或区间外） */
+  /** 区间内但本地无文件（未下载套数） */
+  missing: number;
+  /** 区间内、文件在但 hash 与清单不符（可更新套数） */
+  updated: number;
+}
+
+/** 区间内条目三态计数（纯读盘，无副作用、不注入不清理） */
+export async function skinStatus(app: unknown, manifest: DownloadManifest): Promise<SkinStatus> {
+  const pluginVersion = await readPluginVersion(app);
+  if (!pluginVersion) return { ready: 0, missing: 0, updated: 0 };
+  const wanted = wantedEntries(manifest, pluginVersion);
+  const verified = await readVerified(app, wanted);
+  const status: SkinStatus = { ready: verified.length, missing: 0, updated: 0 };
+  const goodFiles = new Set(verified.map((r) => r.entry.file));
+  for (const e of wanted) {
+    if (goodFiles.has(e.file)) continue;
+    // 文件在但 hash 不符 = 可更新；文件不在 = 未下载
+    if (await readAsset(app, e.file) !== null) status.updated++;
+    else status.missing++;
+  }
+  return status;
+}
+
+/** 应用清单结果（启动链统计） */
+export interface SkinApplyResult extends SkinStatus {
+  /** 本次清理的本地文件数（下架或区间外） */
   removed: number;
-  /** 拉不到远端清单（离线/被墙）——不是错误，等下次启动 */
-  offline: boolean;
 }
 
 /**
- * 启动同步入口（串在自更新检查之后调用；失败一律静默）。
- * 顺序：读本地就绪表并注入（离线也能用已有的）→ 拉远端清单 →
- * 补下缺失/变更的 → 删下架与区间外的 → 写本地索引 → 重注入。
+ * 应用清单（**不下载**，ADR-0202 启动链入口；失败语义由调用方定——启动链静默）。
+ * 顺序：区间过滤 → 逐条验 hash 算三态 → 就绪注入 → 下架/区间外清理。
+ *
+ * `previous` = 覆写前的缓存清单（refreshManifest 返回）：下架清理的差集基准——
+ * 它里面有的、新清单区间内没有的，说明远端下架或版本区间不再覆盖，删本地文件
+ * （沿用 ADR-0199「下架 = 清单移除 + 删本地」口径）。首次使用无缓存 → 无从谈下架，
+ * 顺带把旧格式的就绪表 skins/index.json 一并退役删除。
  */
-export async function syncSkinPack(app: unknown): Promise<SkinSyncResult> {
-  const result: SkinSyncResult = { ready: 0, downloaded: 0, removed: 0, offline: false };
-
+export async function applySkinManifest(
+  app: unknown,
+  manifest: DownloadManifest,
+  previous?: DownloadManifest | null,
+): Promise<SkinApplyResult> {
   const pluginVersion = await readPluginVersion(app);
   if (!pluginVersion) {
     // 读不到插件版本 → 区间无从判定，宁可不加载（防「按错版本放行」）
-    return result;
+    return { ready: 0, missing: 0, updated: 0, removed: 0 };
   }
 
-  // 1) 本地优先：离线也有皮可用（与 loadLocalSkinPack 共用同一条读盘路径；
-  //    localIndex 同时也由它按当前索引刷新——下面「下架删文件」用的就是它）
-  const localReady = await readLocalReady(app, pluginVersion);
-  applyReady(localReady);
-  result.ready = localReady.length;
-
-  // 2) 拉远端清单（双源；拉不到就到此为止，本地那份继续生效）
-  let remote: SkinPackManifest | null = null;
-  try {
-    remote = parseSkinPackManifest(
-      await fetchAssetText(SKIN_PACK_INDEX, (t) => parseSkinPackManifest(t) !== null, '皮肤包清单', ''),
-    );
-  } catch (e) {
-    console.warn('[bz] 皮肤包清单拉取失败（已静默，等下次启动）:', (e as Error)?.message || e);
-  }
-  if (!remote) {
-    result.offline = true;
-    return result;
+  // 1) 区间过滤 + 逐条验 hash → 三态计数 + 就绪注入（离线也可用已有的）
+  const wanted = wantedEntries(manifest, pluginVersion);
+  const verified = await readVerified(app, wanted);
+  applyReady(verified);
+  const result: SkinApplyResult = { ready: verified.length, missing: 0, updated: 0, removed: 0 };
+  const goodFiles = new Set(verified.map((r) => r.entry.file));
+  for (const e of wanted) {
+    if (goodFiles.has(e.file)) continue;
+    // 文件在但 hash 不符 = 可更新；文件不在 = 未下载
+    if (await readAsset(app, e.file) !== null) result.updated++;
+    else result.missing++;
   }
 
-  // 3) 差集：区间内且（本地缺 / 本地 hash 不符）→ 下载（限并发）
-  //    判据吃**第 1 步验过的结果**（localReady），不是本地索引：索引只记「上次写下的 hash」，
-  //    文件被改写/写了一半时索引仍说「已就绪」，会误跳过下载、要等下一次启动才自愈。
-  //    键用 file（= `skins/<域>/<id>.css`）而非 id：id 只保证域内唯一，全局可能撞车。
-  const wanted = remote.skins.filter((e) => isInVersionRange(e, pluginVersion));
-  const localGood = new Map(localReady.map((r) => [r.entry.file, r.entry.sha256]));
-  await mapLimit(
-    wanted.filter((e) => localGood.get(e.file) !== e.sha256),
-    4,
-    async (e) => {
-      try {
-        await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
-        result.downloaded++;
-      } catch (err) {
-        console.warn(`[bz] 皮肤包「${e.domain}/${e.id}」下载失败（已静默）:`, (err as Error)?.message || err);
-      }
-    },
-  );
-
-  // 4) 下架 / 区间外 → 删本地文件（用户拍板：下架 = 清单移除 + 删本地文件）
+  // 2) 下架 / 区间外 → 删本地文件（差集基准 = 覆写前缓存清单）
   const wantedFiles = new Set(wanted.map((e) => e.file));
-  for (const e of localIndex) {
-    if (wantedFiles.has(e.file)) continue;
-    await removeSkinFile(app, e.file);
+  const staleFiles = new Set((previous?.skins ?? []).map((e) => e.file));
+  for (const file of staleFiles) {
+    if (wantedFiles.has(file)) continue;
+    await removeSkinFile(app, file);
     result.removed++;
   }
+  // 旧版（ADR-0199 时代）的本地就绪表随清单统一退役（幂等，新版从不再写）
+  await removeSkinFile(app, 'skins/index.json');
 
-  // 5) 重新逐条验 hash（下载可能部分失败）→ 重注入 → 写本地索引
-  const nextReady = await readVerified(app, wanted);
-  applyReady(nextReady);
-  result.ready = nextReady.length;
-  try {
-    await (app as { vault?: { adapter?: { write?: (p: string, d: string) => Promise<void> } } })
-      .vault!.adapter!.write!(
-        assetVaultPath(app, SKIN_PACK_INDEX),
-        JSON.stringify({ version: remote.version, skins: nextReady.map((r) => r.entry) }, null, 2),
-      );
-  } catch (e) {
-    console.warn('[bz] 皮肤包本地索引写入失败（已静默）:', (e as Error)?.message || e);
-  }
+  return result;
+}
 
+/** 手动下载结果（在线资源组按钮消费） */
+export interface SkinDownloadResult {
+  /** 下载成功且过 hash 校验的套数 */
+  downloaded: number;
+  /** 双源都失败的套数（本地已有的不动，下次再试） */
+  failed: number;
+}
+
+/**
+ * 用户显式下载/更新（ADR-0202：皮肤分发的唯一下载入口）——
+ * 把「区间内且非就绪」（未下载 + 可更新）的全部套数拉一遍，限并发 4；
+ * 完成后重新逐条验 hash → 重注入（能选 = 能生效）。
+ * 已就绪的绝不动（用户已可用的皮肤不因一次点击承担被换内容的风险）。
+ */
+export async function downloadSkinUpdates(app: unknown, manifest: DownloadManifest): Promise<SkinDownloadResult> {
+  const result: SkinDownloadResult = { downloaded: 0, failed: 0 };
+
+  const pluginVersion = await readPluginVersion(app);
+  if (!pluginVersion) return result;
+
+  const wanted = wantedEntries(manifest, pluginVersion);
+  const verified = await readVerified(app, wanted);
+  const goodFiles = new Set(verified.map((r) => r.entry.file));
+  const todo = wanted.filter((e) => !goodFiles.has(e.file));
+
+  await mapLimit(todo, 4, async (e) => {
+    try {
+      await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+      result.downloaded++;
+    } catch (err) {
+      console.warn(`[bz] 皮肤「${e.domain}/${e.id}」下载失败:`, (err as Error)?.message || err);
+      result.failed++;
+    }
+  });
+
+  applyReady(await readVerified(app, wanted));
   return result;
 }

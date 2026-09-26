@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/moss（苔原）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/moss.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 4 苔原 moss */
+    --pz-moss-l:#f2f5ef; --pz-moss-d:#20261f; --pz-moss-a:#4c9e6c; --pz-moss-ad:#6fc08e;
+    --pz-moss-fgd:#e8eee6; --pz-moss-m:#6a7d6c; --pz-moss-md:#9db3a2; --pz-moss-f:#9aa79c; --pz-moss-fd:#7b8f80;
+    --pz-moss-bd:#2a3228; --pz-moss-bfd:#d3ddd0;
+}
+
+/* 4 苔原 · moss */
+    #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-l); --pz-accent:var(--pz-moss-a); --pz-muted:var(--pz-moss-m); --pz-faint:var(--pz-moss-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-d); --pz-accent:var(--pz-moss-ad); --pz-fg:var(--pz-moss-fgd); --pz-muted:var(--pz-moss-md); --pz-faint:var(--pz-moss-fd); --pz-btn:var(--pz-moss-bd); --pz-btn-fg:var(--pz-moss-bfd); --pz-on-accent:var(--pz-moss-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-moss {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-moss-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-moss-l) 0 50%, var(--pz-moss-d) 50% 100%);
+  border-radius: 3px;
+}

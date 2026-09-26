@@ -547,3 +547,50 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
     expect(FIT_PARAMS_VERSION.FULL).toBe(2);
   });
 });
+
+describe('在线资源组（issue 480 / ADR-0202 冒烟）', () => {
+  it('组渲染三行状态机；清单缺席时三行禁用 + 失败横条（隐式核对失败不炸渲染）', async () => {
+    const { onlineResourcesGroup, resetOnlineResourcesState } = await import('../src/settings-panel/online-resources');
+    const { setApp } = await import('../src/core/app');
+    const { requestUrl } = await import('obsidian');
+    resetOnlineResourcesState();
+    const vault = new MockVault();
+    vault.files.set('.obsidian/plugins/bz/manifest.json', JSON.stringify({ id: 'bz', version: '1.0.0' }));
+    setApp({ vault, workspace: {} } as any);
+    vi.mocked(requestUrl).mockReset();
+    vi.mocked(requestUrl).mockRejectedValue(new Error('ENOTFOUND'));
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const group = onlineResourcesGroup();
+    expect(group.name).toBe('在线资源');
+    expect(group.rows).toHaveLength(1);
+    expect(group.rows[0].type).toBe('custom');
+
+    const body = document.createElement('div');
+    document.body.appendChild(body);
+    (group.rows[0] as any).render(body, { rowEl: body, refreshVisibility: () => {} });
+    await vi.waitFor(() => {
+      expect(body.querySelectorAll('.bz-sp-res-row')).toHaveLength(3);
+      const btns = [...body.querySelectorAll('.bz-sp-res-row .bz-sp-res-btn')] as HTMLButtonElement[];
+      expect(btns.length).toBe(3);
+      // 清单缺席（拉取失败）→ 状态未知，三行全禁用（半自动铁则：不能在无清单时误导下载）
+      expect(btns.every((b) => b.disabled)).toBe(true);
+    });
+    expect(body.querySelector('.bz-sp-res-fail-text')?.textContent).toContain('检查更新失败');
+    warnSpy.mockRestore();
+  });
+
+  it('refreshManifest 拉到清单 → 缓存落 downloads/manifest.json（与远端镜像同构）', async () => {
+    const { refreshManifest, MANIFEST_FILE } = await import('../src/core/download-manifest');
+    const { setApp } = await import('../src/core/app');
+    const { requestUrl } = await import('obsidian');
+    const manifest = JSON.stringify({ version: 1, docs: [], skins: [] });
+    const vault = new MockVault();
+    setApp({ vault, workspace: {} } as any);
+    vi.mocked(requestUrl).mockReset();
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: manifest } as any);
+    const { manifest: got } = await refreshManifest({ vault, workspace: {} } as any);
+    expect(got.version).toBe(1);
+    expect(vault.files.get(`.obsidian/plugins/bz/${MANIFEST_FILE}`)).toBe(manifest);
+  });
+});

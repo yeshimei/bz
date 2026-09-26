@@ -22,6 +22,7 @@ import {
   readAsset,
   refreshAsset,
 } from './remote-asset';
+import { cachedSha256For } from './download-manifest';
 
 /** 手册文件名（写入插件目录时用；ASCII，避免 file:/// 转义麻烦） */
 export const MANUAL_FILENAME = 'bz-manual.html';
@@ -66,7 +67,9 @@ export function ensureManualReady(app: unknown): Promise<string> {
  * 有新版 → 覆盖落盘并返回新文本；离线/失败 → null（静默，保持本地已存版本）。
  * 入口口径 = ensureManualReady 先本地秒开，再调本函数后台核对一遍
  * ——手册重新生成推上 GitHub 而插件版本没动时，靠这层才能拿到新版。
+ * ADR-0202 省流：缓存下载清单里手册的 sha256 与本地一致 → 清单确认无新版，
+ * 直接跳过远端拉取（327KB 不必每次打开都白拉）；清单缺席回落全量核对。
  */
-export function refreshManual(app: unknown): Promise<string | null> {
-  return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, '手册');
+export async function refreshManual(app: unknown): Promise<string | null> {
+  return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, '手册', await cachedSha256For(app, MANUAL_FILENAME));
 }

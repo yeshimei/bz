@@ -27,8 +27,8 @@ import { MockVault } from '../mock-vault';
 
 const CHG_HTML = '<!DOCTYPE html><html><head><title>包仔更新日志</title></head><body><script>\nconst DATA = {"current":"1.24.0","releases":[]};\n</script></body></html>';
 const STORED = `.obsidian/plugins/bz/${CHANGELOG_FILENAME}`;
-const REMOTE_RAW = 'https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-changelog.html';
-const REMOTE_CDN = 'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-changelog.html';
+const REMOTE_RAW = 'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/bz-changelog.html';
+const REMOTE_CDN = 'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/bz-changelog.html';
 
 const newVault = () => new MockVault();
 const appOf = (vault: MockVault, extra: Record<string, unknown> = {}) =>

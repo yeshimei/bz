@@ -1,10 +1,10 @@
 /* ============================================================
  * bz · 远端单文件资产下载（core/remote-asset.ts，单源）
  *
- * 使用手册（core/manual.ts）与更新日志（core/changelog.ts）都走这一层：
- * 资产不随插件构建分发（main.js 里不含它们），而是发布在 GitHub 仓库
- * manual/ 目录下，用户点入口时现场拉取，写入**插件安装目录**
- * （<configDir>/plugins/bz/）。
+ * 使用手册（core/manual.ts）、更新日志（core/changelog.ts）与下载清单
+ * （core/download-manifest.ts）都走这一层：资产不随插件构建分发
+ * （main.js 里不含它们），而是发布在 GitHub 仓库 downloads/ 目录下，
+ * 写入**插件安装目录**（<configDir>/plugins/bz/）。
  *
  * 为什么放插件目录而不是数据目录：这些是程序资产、跟版本走，
  * 放数据目录会跟「数据存储路径」这个用户键纠缠。
@@ -13,12 +13,14 @@
  * 的第二通道）；两路都 404/失败才报错。内容校验由调用方给的
  * validate 判定（防把 CDN 的错误页写进文件）。
  *
- * 路径口径：`fileName` 是**相对 `manual/` 的路径**（可为多级，如
- * `skins/bookshelf/noir.css`）；落盘位置是**插件安装目录内的同名路径**。
- * 皮肤包（ADR-0199）复用本层，并额外用 `ensureAssetWithHash` 做 sha256 校验。
+ * 路径口径（ADR-0202）：`fileName` 是**相对 `downloads/` 的路径**（可为多级，
+ * 如 `skins/bookshelf/noir.css`）；本地落盘是插件安装目录内的同名路径——
+ * 本地即远端 downloads/ 的镜像。仓库旧 `manual/` 目录是改名前的冻结过渡副本
+ * （旧版插件还在读它，内容停更，若干版本后删除）。
  *
- * 两条口径（issue 476）：`ensureAssetReady` 管「有没有」——无则下载、有则直接用；
- * `refreshAsset` 管「新不新」——入口先本地秒开，再后台核对一次，远端真变了才覆盖。
+ * 三条口径：`ensureAssetReady` 管「有没有」——无则下载、有则直接用；
+ * `refreshAsset` 管「新不新」——入口先本地秒开，再后台核对一次，远端真变了才覆盖；
+ * `ensureAssetWithHash` 管「信不信」——下载内容 sha256 对不上清单声明就拒收。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
@@ -26,8 +28,8 @@ import { textSha256 } from './sha256';
 /** 远端 URL：主 GitHub raw → 备 jsDelivr（同仓库同路径，域名不同） */
 export function remotesFor(fileName: string): string[] {
   return [
-    `https://raw.githubusercontent.com/yeshimei/bz/master/manual/${fileName}`,
-    `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/${fileName}`,
+    `https://raw.githubusercontent.com/yeshimei/bz/master/downloads/${fileName}`,
+    `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/${fileName}`,
   ];
 }
 
@@ -197,6 +199,10 @@ export async function ensureAssetReady(
  * 比对用 sha256 且先过 `normalizeEol`（`textSha256` 内建）：Windows 本地 CRLF
  * 与仓库 LF 不会被误判成新版而触发一次无意义的重写。
  *
+ * `expectedSha256`（ADR-0202 省流增补）：调用方从缓存下载清单取该文件的清单 hash
+ * 传入——本地内容与之相等即「清单确认无新版」，**直接返回 null 跳过远端拉取**
+ * （手册 327KB 不必每次打开都白拉）。清单缺席（null/空串）回落全量拉取对比，行为只省不破。
+ *
  * @returns 新版文本（调用方据此决定是否热替换已打开的弹窗）；同版或失败 → null
  */
 export async function refreshAsset(
@@ -204,8 +210,14 @@ export async function refreshAsset(
   fileName: string,
   validate: (text: string) => boolean,
   label: string,
+  expectedSha256?: string | null,
 ): Promise<string | null> {
   try {
+    const want = String(expectedSha256 || '').toLowerCase();
+    if (want) {
+      const local = await readAsset(app, fileName);
+      if (local !== null && textSha256(local) === want) return null;
+    }
     const text = await fetchAssetText(fileName, validate, label, '页');
     const local = await readAsset(app, fileName);
     if (local !== null && textSha256(text) === textSha256(local)) return null;
