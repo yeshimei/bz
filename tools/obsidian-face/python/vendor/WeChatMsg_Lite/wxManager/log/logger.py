@@ -15,7 +15,9 @@ formatter = logging.Formatter(
     "%(levelname)s: %(message)s"
 )
 
-log_dir = Path.cwd() / "logs" / "wechat_msg_lite"
+# bz-face vendor 偏离：日志目录用本文件定位而非 CWD——插件派生本工具时 CWD 是 Obsidian
+# 安装目录（不可写），模块顶层 mkdir 会直接 WinError 5。语义不变，只换锚点。
+log_dir = Path(__file__).resolve().parents[2] / "logs" / "wechat_msg_lite"
 log_dir.mkdir(parents=True, exist_ok=True)
 
 file_handler = logging.FileHandler(
