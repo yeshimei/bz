@@ -29,6 +29,16 @@ function allSources(dir = path.join(ROOT, 'src'), out: string[] = []): string[] 
   return out;
 }
 
+/** 列出 src 下所有 .css（样式侧也是注入面：`@import` 能绕过 `<style>` 守卫拉远端样式） */
+function allStyles(dir = path.join(ROOT, 'src'), out: string[] = []): string[] {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const abs = path.join(dir, e.name);
+    if (e.isDirectory()) allStyles(abs, out);
+    else if (e.name.endsWith('.css')) out.push(path.relative(ROOT, abs).split(path.sep).join('/'));
+  }
+  return out;
+}
+
 /** 「构造/挂载 style 节点」的写法（注释里的字面量不算——先剥注释） */
 const STYLE_INJECTION = [
   /createElement\(\s*['"`]style['"`]\s*\)/,
@@ -65,6 +75,19 @@ describe('唯一注入点守卫（铁律 4 / ADR-0199）', () => {
       (rel) => rel !== INJECTION_OWNER && fs.readFileSync(path.join(ROOT, rel), 'utf8').includes('bz-skin-pack-style'),
     );
     expect(offenders).toEqual([]);
+  });
+
+  it('样式侧也没有第二通道（src/**/*.css 不得 @import 或 url() 引远端）', () => {
+    // `@import url(https://…)` 能绕过上面那条「不得注入 <style>」——样式照样是运行时拉的，
+    // 且**没有 sha256 校验**，比注入更坏。皮肤包必须走 skin-pack 的单一通道。
+    const offenders: string[] = [];
+    for (const rel of allStyles()) {
+      const css = fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      if (/@import\b[^;]*(\/\/|https?:)/i.test(css) || /url\(\s*['"]?https?:\/\//i.test(css)) {
+        offenders.push(rel);
+      }
+    }
+    expect(offenders, '远端样式只允许经 src/core/skin-pack.ts 注入（要第二通道请另开 ADR）').toEqual([]);
   });
 });
 

@@ -10,6 +10,7 @@
  *     下架即删本地文件、**没有插件版本就一概不加载**（防按错版本放行）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { requestUrl } from 'obsidian';
 import { resetObsidianMocks } from './../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
@@ -20,6 +21,7 @@ import {
   injectedSkinPackCss,
   isInVersionRange,
   isRemoteSkinReady,
+  loadLocalSkinPack,
   localSkinEntries,
   parseSkinPackManifest,
   remoteSkinIds,
@@ -83,6 +85,14 @@ describe('sha256（与构建脚本同口径）', () => {
   it('已知向量：空串与 abc', () => {
     expect(sha256Hex('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
     expect(sha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+  });
+
+  it('填充边界（55 / 56 / 64 / 1000 字节）与 node crypto 一致', () => {
+    // 55 = 恰好差一字节触发多块；56 = 正好跨块；64 = 整块；1000 = 多块 + 余数
+    expect(sha256Hex('a'.repeat(55))).toBe('9f4390f8d30c2dd92ec9f095b65e2b9ae9b0a925a5258e241c9f1e910f734318');
+    expect(sha256Hex('a'.repeat(56))).toBe('b35439a4ac6f0948b6d6f9e3c6af0f5f590ce20f1bde7090ef7970686ec6738a');
+    expect(sha256Hex('a'.repeat(64))).toBe('ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb');
+    expect(sha256Hex('a'.repeat(1000))).toBe(createHash('sha256').update('a'.repeat(1000), 'utf8').digest('hex'));
   });
 
   it('CRLF 与 LF 同 hash（textSha256 先归一换行）', () => {
@@ -212,6 +222,25 @@ describe('syncSkinPack（同步链路）', () => {
     expect(vault.files.has('.obsidian/plugins/bz/skins/bookshelf/noir.css')).toBe(false);
   });
 
+  it('本地文件被改写（索引仍说已就绪）→ 当次启动即重下，不等下次', async () => {
+    const vault = newVault();
+    const noir = entryOf('noir', CSS_NOIR);
+    vault.files.set(INDEX_PATH, indexText([noir])); // 索引记着 noir 已就绪…
+    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', '/* 被改过 */'); // …但盘上内容不符
+    routeFetch({
+      [REMOTE_INDEX]: indexText([noir]),
+      'https://raw.githubusercontent.com/yeshimei/bz/master/manual/skins/bookshelf/noir.css': CSS_NOIR,
+      'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/skins/bookshelf/noir.css': CSS_NOIR,
+    });
+
+    const res = await syncSkinPack(appOf(vault));
+    expect(res.downloaded, '按实际校验结果判差集，不被索引的旧 hash 骗过').toBe(1);
+    expect(res.ready).toBe(1);
+    expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(true);
+    expect(injectedSkinPackCss()).toContain('.bz-bs-skin-noir');
+    expect(vault.files.get('.obsidian/plugins/bz/skins/bookshelf/noir.css')).toBe(CSS_NOIR);
+  });
+
   it('主源不可信时换备源（jsDelivr）', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);
@@ -268,5 +297,51 @@ describe('syncSkinPack（同步链路）', () => {
     await syncSkinPack(appOf(vault));
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('多级目录逐级创建（skins 与 skins/<域> 都建出来，不赌 mkdir 递归）', async () => {
+    const vault = newVault();
+    const noir = entryOf('noir', CSS_NOIR);
+    routeFetch({
+      [REMOTE_INDEX]: indexText([noir]),
+      'https://raw.githubusercontent.com/yeshimei/bz/master/manual/skins/bookshelf/noir.css': CSS_NOIR,
+      'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/skins/bookshelf/noir.css': CSS_NOIR,
+    });
+
+    await syncSkinPack(appOf(vault));
+    expect(vault.dirs.has('.obsidian/plugins/bz/skins')).toBe(true);
+    expect(vault.dirs.has('.obsidian/plugins/bz/skins/bookshelf')).toBe(true);
+  });
+});
+
+describe('loadLocalSkinPack（启动即用本地缓存，不等 15 秒的自更新巡检）', () => {
+  it('本地已有索引 + 文件 → 立刻就绪并注入，且**不发任何网络请求**', async () => {
+    const vault = newVault();
+    const noir = entryOf('noir', CSS_NOIR);
+    vault.files.set(INDEX_PATH, indexText([noir]));
+    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    const spy = vi.mocked(requestUrl); // 不配置任何 route：一旦发请求就会抛 unmocked
+
+    await loadLocalSkinPack(appOf(vault));
+    expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(true);
+    expect(injectedSkinPackCss()).toContain('.bz-bs-skin-noir');
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('本地没有索引 → 静默什么都不做（首装/无缓存）', async () => {
+    const vault = newVault();
+    await expect(loadLocalSkinPack(appOf(vault))).resolves.toBeUndefined();
+    expect(remoteSkinIds('bookshelf')).toEqual([]);
+    expect(injectedSkinPackCss()).toBe('');
+  });
+
+  it('读不到插件版本 → 不加载（与 syncSkinPack 同口径）', async () => {
+    const vault = new MockVault(); // 无 manifest.json
+    const noir = entryOf('noir', CSS_NOIR);
+    vault.files.set(INDEX_PATH, indexText([noir]));
+    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+
+    await loadLocalSkinPack(appOf(vault));
+    expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(false);
   });
 });

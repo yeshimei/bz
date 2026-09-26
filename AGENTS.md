@@ -6,10 +6,12 @@
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
 - 构建产物直出 Obsidian 插件目录（esbuild 硬编码），根目录三件套用于 GitHub Release。
 - 测试用 vitest，alias 替换 obsidian 为 mock。
+- 皮肤包（ADR-0199）：`pnpm split-skins`（从域样式切出远端皮肤到 `src/<域>/skins/`）/ `pnpm skin-pack`（出版到 `manual/skins/` + 重算清单 sha256）。**两者都带 `--check`**，只校验不写盘。改了皮肤样式 = 改 `src/<域>/skins/<id>.css`，然后跑 `pnpm skin-pack`（清单 sha256 得跟着更新，否则插件下载后校验不过）。
 
 ## 架构
 - `src/main.ts`：命令注册、设置页、懒加载（命令量以代码为准；diary 两命令（bz-diary-open/bz-diary-write）均在 main.ts COMMANDS 表注册（ADR-0004 裸注册通道），域内仅出回调）。
 - `src/core/`：共享层；`src/<域>/`：index + data + ui + styles.css。
+- `src/<域>/skins/*.css`：**远端皮肤源，不进构建聚合**（`scripts/build-css.mjs` 的 SOURCES 不登记）。每域只有「首套」留在 `src/<域>/styles.css` 作离线兜底；皮肤清单唯一事实源 `scripts/skins.catalog.json`。
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。禁止模块顶层互访，函数级环引用须延迟解析。
 
 ## 铁律

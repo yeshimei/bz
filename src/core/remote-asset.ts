@@ -34,17 +34,26 @@ export function assetVaultPath(app: unknown, fileName: string): string {
   return `${configDir}/plugins/bz/${fileName}`;
 }
 
-/** 建目录（多级路径需要；失败静默——已存在的目录会抛，不当错误） */
+/**
+ * 建目录（**逐级**；失败静默）。
+ * 逐级的理由：皮肤包落在 `skins/<域>/<id>.css`——`skins/` 在全新安装时并不存在，
+ * 而 Obsidian `adapter.mkdir` 未文档化「递归建父级」，单次 `mkdir('skins/bookshelf')`
+ * 在非递归实现下会直接失败 → write 失败 → 远端皮肤永久静默回落首套（功能全失效）。
+ * 逐级 try/catch 幂等：目录已存在抛错也无所谓，最终由 write 决定成败。
+ */
 async function ensureDir(app: unknown, relPath: string): Promise<void> {
   const adapter = (app as { vault?: { adapter?: { mkdir?: (p: string) => Promise<void> } } }).vault?.adapter;
   if (!adapter?.mkdir) return;
   const slash = relPath.lastIndexOf('/');
   if (slash <= 0) return;
-  const dir = assetVaultPath(app, relPath.slice(0, slash));
-  try {
-    await adapter.mkdir(dir);
-  } catch (e) {
-    /* 目录已存在 / 不支持 mkdir → 由后续 write 决定成败 */
+  let cur = '';
+  for (const part of relPath.slice(0, slash).split('/')) {
+    cur = cur ? `${cur}/${part}` : part;
+    try {
+      await adapter.mkdir(assetVaultPath(app, cur));
+    } catch (e) {
+      /* 已存在 / 不支持 mkdir → 继续下一级 */
+    }
   }
 }
 

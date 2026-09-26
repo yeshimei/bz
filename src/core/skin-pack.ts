@@ -226,6 +226,29 @@ async function readVerified(app: unknown, entries: SkinPackEntry[]): Promise<Rea
   return out;
 }
 
+/** 读本地索引（顺带刷新 `localIndex`）+ 逐条验 hash → 就绪条目（网络前的那一半） */
+async function readLocalReady(app: unknown, pluginVersion: string): Promise<ReadySkin[]> {
+  const previous = parseSkinPackManifest(await readAsset(app, SKIN_PACK_INDEX));
+  localIndex = previous?.skins ?? [];
+  return readVerified(
+    app,
+    localIndex.filter((e) => isInVersionRange(e, pluginVersion)),
+  );
+}
+
+/**
+ * 启动即用的**纯本地**入口（不碰网络）：读本地索引 + 验 hash → 就绪表 + 注入。
+ *
+ * 存在的理由：`syncSkinPack` 排在自更新巡检之后（启动 15 秒），若只靠它，用户上次选好的
+ * 远端皮肤会在**每次重启后的那十几秒**里回落首套——看着像「我的皮肤被重置了」。
+ * 版本区间按**当下**的 `manifest.json` 判；自更新覆写版本号后由 `syncSkinPack` 重判一次。
+ */
+export async function loadLocalSkinPack(app: unknown): Promise<void> {
+  const pluginVersion = await readPluginVersion(app);
+  if (!pluginVersion) return; // 读不到版本 → 区间无从判定，宁可不加载
+  applyReady(await readLocalReady(app, pluginVersion));
+}
+
 /** 限并发（几十套并发会打爆请求；失败不阻塞其余） */
 async function mapLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
   let cursor = 0;
@@ -276,15 +299,9 @@ export async function syncSkinPack(app: unknown): Promise<SkinSyncResult> {
     return result;
   }
 
-  const indexText = await readAsset(app, SKIN_PACK_INDEX);
-  const previous = parseSkinPackManifest(indexText);
-  localIndex = previous?.skins ?? [];
-
-  // 1) 本地优先：离线也有皮可用
-  const localReady = await readVerified(
-    app,
-    localIndex.filter((e) => isInVersionRange(e, pluginVersion)),
-  );
+  // 1) 本地优先：离线也有皮可用（与 loadLocalSkinPack 共用同一条读盘路径；
+  //    localIndex 同时也由它按当前索引刷新——下面「下架删文件」用的就是它）
+  const localReady = await readLocalReady(app, pluginVersion);
   applyReady(localReady);
   result.ready = localReady.length;
 
@@ -302,12 +319,14 @@ export async function syncSkinPack(app: unknown): Promise<SkinSyncResult> {
     return result;
   }
 
-  // 3) 差集：区间内且（本地缺 / hash 不符）→ 下载（限并发）
+  // 3) 差集：区间内且（本地缺 / 本地 hash 不符）→ 下载（限并发）
+  //    判据吃**第 1 步验过的结果**（localReady），不是本地索引：索引只记「上次写下的 hash」，
+  //    文件被改写/写了一半时索引仍说「已就绪」，会误跳过下载、要等下一次启动才自愈。
   //    键用 file（= `skins/<域>/<id>.css`）而非 id：id 只保证域内唯一，全局可能撞车。
   const wanted = remote.skins.filter((e) => isInVersionRange(e, pluginVersion));
-  const localHash = new Map(localIndex.map((e) => [e.file, e.sha256]));
+  const localGood = new Map(localReady.map((r) => [r.entry.file, r.entry.sha256]));
   await mapLimit(
-    wanted.filter((e) => localHash.get(e.file) !== e.sha256),
+    wanted.filter((e) => localGood.get(e.file) !== e.sha256),
     4,
     async (e) => {
       try {
