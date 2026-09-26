@@ -1,10 +1,11 @@
 // ================================================================
-// bz-face doctor —— 真探测层（child_process / fs；Windows 优先口径）
+// bz-face —— 真探测与子进程管道层（child_process / fs；Windows 优先口径）
 //
-// 约定（与 lib/doctor-core.js 的判定面对齐）：
+// 约定（与 lib/doctor-core.js / lib/sync-core.js 的判定面对齐）：
 //   1. 每个探测自带兜错，失败折成 { ok:false, error } —— 绝不抛栈给 CLI；
 //   2. 只「读」不「装」：绝不调用 pip install 或任何安装动作，缺什么由判定层打命令；
-//   3. 探测子进程一律 windowsHide + 超时，避免卡死交互。
+//   3. 探测子进程一律 windowsHide + 超时，避免卡死交互；sync 长任务（runSyncProcess）
+//      是唯一无超时的例外——分钟级导出不许被掐。
 //
 // 版本探测做到哪档（issue 463 口径，README 同步说明）：
 //   ffmpeg/ffprobe —— 只查 PATH；接插件「外部工具」设置路径是后续票（ADR-0195 决策 6）。
@@ -13,7 +14,8 @@
 // ================================================================
 'use strict';
 
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
+const { StringDecoder } = require('string_decoder');
 const fs = require('fs');
 const path = require('path');
 
@@ -158,4 +160,85 @@ function probeDataRoot(dirPath) {
   }
 }
 
-module.exports = { runCmd, probePython, probeModules, probePathTool, probeWeixin, probeDataRoot, PROBE_TIMEOUT_MS };
+/**
+ * 跑 bz_sync.py 长任务（issue 464）：stdout 逐行回调（UTF-8 行缓冲、跨 chunk 多字节安全），
+ * stderr 留尾 2KB 滑窗，终结给 { code, stderr, error? }。**无超时**——分钟级导出不许被掐。
+ * 强制子进程 UTF-8（Windows 管道缺省 locale 编码会烂中文）：-X utf8 + PYTHONIOENCODING。
+ * 绝不抛：spawn 失败折成 { code:null, error }。协议解析不在这里——行原样交给 onLine，
+ * 由 lib/sync-core.js 的中继透传（与 463「探测层不做判定」同款切分）。
+ * @param {{ pythonCmd?: string, scriptPath: string, args?: string[],
+ *            onLine?: (line: string) => void }} opts
+ * @returns {Promise<{ code: number|null, stderr: string, error: Error|null }>}
+ */
+function runSyncProcess(opts) {
+  const pythonCmd = (opts && opts.pythonCmd) || 'python';
+  const onLine = (opts && opts.onLine) || null;
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (r) => {
+      if (settled) return;
+      settled = true;
+      resolve(r);
+    };
+    let child;
+    try {
+      child = spawn(
+        pythonCmd,
+        ['-X', 'utf8', opts.scriptPath].concat(opts.args || []),
+        {
+          windowsHide: true,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          env: Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' }),
+        },
+      );
+    } catch (e) {
+      done({ code: null, stderr: '', error: e });
+      return;
+    }
+    // StringDecoder 兜多字节字符被 chunk 劈开的场景（BzLineSplitter 同问题域，包内零依赖实现）
+    const decoder = new StringDecoder('utf8');
+    let buffer = '';
+    let stderrTail = '';
+    const drain = (flush) => {
+      for (;;) {
+        const nl = buffer.indexOf('\n');
+        if (nl === -1) break;
+        let line = buffer.slice(0, nl);
+        buffer = buffer.slice(nl + 1);
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (onLine) onLine(line);
+      }
+      if (flush && buffer) {
+        if (onLine) onLine(buffer); // 无尾换行的最后一行
+        buffer = '';
+      }
+    };
+    child.stdout.on('data', (d) => {
+      buffer += decoder.write(d);
+      drain(false);
+    });
+    child.stderr.on('data', (d) => {
+      stderrTail += decoder.write(d);
+      if (stderrTail.length > 2048) stderrTail = stderrTail.slice(-2048);
+    });
+    child.on('error', (e) => {
+      done({ code: null, stderr: stderrTail.trim(), error: e });
+    });
+    child.on('close', (code) => {
+      buffer += decoder.end();
+      drain(true);
+      done({ code, stderr: stderrTail.trim(), error: null });
+    });
+  });
+}
+
+module.exports = {
+  runCmd,
+  probePython,
+  probeModules,
+  probePathTool,
+  probeWeixin,
+  probeDataRoot,
+  runSyncProcess,
+  PROBE_TIMEOUT_MS,
+};

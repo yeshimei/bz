@@ -18,7 +18,10 @@
 【收编说明 · issue 463】原散装于数据盘 tools/（bz_export.py 与 WeChatMsg_Lite 同层），
 本票收编进 @jwbz/obsidian-face 包：唯一改动是上游库路径 → vendor/WeChatMsg_Lite
 （裁剪版：去 .git / 3.x 遗留模块 / ffmpeg.exe / emoji 等大资源，详见包内 ARCHIVE.md）。
-密钥与导出产物暂落脚本旁（HERE），后续票 464/468 接 sync/prep 时改走数据根。
+
+【464 接线】keyinfo / cmd_info / decrypt_db 增加 key_path 显式路径参数（缺省仍是脚本旁
+KEY_FILE，老用法零变化），bz_sync.py 据此把密钥 / 解密库落到数据根（--data-root）。
+本脚本不再被 sync 直接人肉串跑；解密 / 导出语义由 bz_sync.py 收编复用。
 """
 import argparse
 import json
@@ -57,9 +60,11 @@ def extract_key():
     return info
 
 
-def cmd_info():
+def cmd_info(key_path=None):
     info = extract_key()
-    KEY_FILE.write_text(
+    target = Path(key_path) if key_path else KEY_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
         json.dumps({"key": info.key, "source_dir": info.wx_dir, "wxid": info.wxid}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
@@ -68,14 +73,15 @@ def cmd_info():
         "nickname": info.nick_name,
         "version": info.version,
         "wx_dir": info.wx_dir,
-        "key_cached": str(KEY_FILE),
+        "key_cached": str(target),
     }, ensure_ascii=False, indent=2))
 
 
-def keyinfo():
-    if not KEY_FILE.exists():
-        raise SystemExit("还没有密钥缓存，先跑：python bz_export.py info")
-    return json.loads(KEY_FILE.read_text(encoding="utf-8"))
+def keyinfo(key_path=None):
+    p = Path(key_path) if key_path else KEY_FILE
+    if not p.exists():
+        raise SystemExit(f"还没有密钥缓存（{p}），先跑：python bz_export.py info")
+    return json.loads(p.read_text(encoding="utf-8"))
 
 
 def default_out_root(src: str) -> Path:
@@ -85,11 +91,11 @@ def default_out_root(src: str) -> Path:
     return HERE / ("decrypted41" if suffix else "decrypted")
 
 
-def decrypt_db(src: str | None = None, out_root: Path | None = None) -> str:
+def decrypt_db(src: str | None = None, out_root: Path | None = None, key_path=None) -> str:
     """用缓存密钥解密微信数据库，返回解密后 db_storage 目录"""
     from wxManager.decrypt_runner import decrypt_wechat_database
 
-    ki = keyinfo()
+    ki = keyinfo(key_path)
     src = src or ki["source_dir"]
     out_root = out_root or default_out_root(src)
     if not Path(src).exists():
