@@ -419,9 +419,10 @@ export class SettingsPanelUI {
     popup.innerHTML = R.deskShellHtml();
     mountIcons(popup); // 头行搜索图标占位物化
 
-    // 更新日志入口（issue 472）：footer 静态壳内容，绑定一次（nav 重渲不波及）
-    popup.querySelector<HTMLElement>('[data-sp-changelog]')
-      ?.addEventListener('click', () => openChangelogModal());
+    // 更新日志入口（issue 472）：footer 静态壳内容，绑定一次（nav 重渲不波及）；
+    // issue 474 起与手册同刀——一键 = 无日志先下载再打开，已下载直接打开
+    const chgBtn = popup.querySelector<HTMLElement>('[data-sp-changelog]');
+    chgBtn?.addEventListener('click', () => void this.runChangelogOpen(chgBtn));
 
     // 使用手册入口（issue 473）：一键 = 无手册先下载再打开，已下载直接打开；
     // 下载期间按钮图标转圈（.is-loading + loader）防重入，完成/失败复原（见 runManualOpen）
@@ -562,6 +563,30 @@ export class SettingsPanelUI {
     } finally {
       btn.classList.remove('is-loading');
       if (ic) setIcon(ic, 'book-open');
+    }
+  }
+
+  /* 更新日志一键（issue 474）：与手册同口径——日志不随构建分发，现场从 GitHub 下载
+   * manual/bz-changelog.html 再在 OB 内独立弹窗内嵌渲染（iframe srcdoc，与手册同范式）。
+   * 下载期间按钮图标换 loader + .is-loading 转圈防重入；失败不兜底（用户拍板：
+   * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。 */
+  private async runChangelogOpen(btn: HTMLElement): Promise<void> {
+    if (btn.classList.contains('is-loading')) return; // 下载中防重入
+    const ic = btn.querySelector<HTMLElement>('.bz-ic');
+    btn.classList.add('is-loading');
+    try {
+      const [core, modal] = await Promise.all([
+        import('../core/changelog'),
+        import('./changelog'),
+      ]);
+      if (ic) setIcon(ic, 'loader');
+      const html = await core.ensureChangelogReady(getApp());
+      modal.openChangelogModal(html);
+    } catch (e) {
+      notice((e as Error)?.message || '更新日志下载失败', 'error');
+    } finally {
+      btn.classList.remove('is-loading');
+      if (ic) setIcon(ic, 'history');
     }
   }
 

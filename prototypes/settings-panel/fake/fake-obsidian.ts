@@ -72,10 +72,32 @@ export type IconName = string;
  *  响应为真实 SystemOne 报文形态（noul 题），成功 / 失败（401）两态都能在原型里走到。 */
 let fakeSystemOneToggle = 0;
 
+/** 远端资产文本缓存（评审壳同源 fetch 真产物，各一次足够） */
+const assetCache: Record<string, string | null> = {};
+async function fetchAsset(file: string): Promise<string | null> {
+  if (assetCache[file] !== undefined) return assetCache[file];
+  try {
+    const res = await fetch(`/manual/${file}`);
+    assetCache[file] = res.ok ? await res.text() : null;
+  } catch {
+    assetCache[file] = null;
+  }
+  return assetCache[file];
+}
+
 /** requestUrl（core/utils、core/ai 模块级 import 触及）：原型无网络，抛错让调用方走各自降级。
- *  例外：判定端点（/v1/systemone）不抛——返回交替的成功 / 401 canned 响应，演示「测试」钮三态。 */
+ *  三处例外（都按需抓真产物回放，评审壳里能真走完整链路）：
+ *   - 判定端点（/v1/systemone）→ 交替的成功 / 401 canned，演示「测试」钮三态；
+ *   - 使用手册（core/manual 双远端）→ 回放 manual/bz-manual.html，点「使用手册」能真下载 + 弹窗；
+ *   - 更新日志（core/changelog 双远端）→ 回放 manual/bz-changelog.html（issue 474 同刀）。 */
 export async function requestUrl(opts?: { url?: string; method?: string }): Promise<{ status: number; text: string }> {
   const url = String(opts?.url || '');
+  const asset = /\/manual\/(bz-(?:manual|changelog)\.html)(?:\?|$)/.exec(url);
+  if (asset) {
+    const text = await fetchAsset(asset[1]);
+    if (text) return { status: 200, text };
+    throw new Error(`原型环境取不到 ${asset[1]}（manual/ 产物不可达）`);
+  }
   if (opts?.method === 'POST' && /\/v1\/systemone$/.test(url)) {
     await new Promise((r) => setTimeout(r, 900));
     const succeed = fakeSystemOneToggle++ % 2 === 0;

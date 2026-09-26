@@ -1,6 +1,10 @@
 /**
- * 更新日志生成器（issue 472 v2）：从 git 提交历史生成 src/settings-panel/changelog-data.ts，
- * 并把最新版本号回写 manifest.json（单一版本事实源 = 提交历史 + 本文件的合成规则）。
+ * 更新日志生成器（issue 472 立、issue 474 改为产出自包含 HTML）：从 git 提交历史生成
+ * manual/bz-changelog.html，并把最新版本号回写 manifest.json（版本事实源 = 提交历史 + 本文件合成规则）。
+ *
+ * 产物去向：更新日志不随插件构建打包（旧产物 src/settings-panel/changelog-data.ts 已退役），
+ * 由插件在用户点「更新日志」时从 GitHub 现场下载（core/changelog.ts + settings-panel/changelog.ts
+ * 的 iframe srcdoc 弹窗）——与使用手册（manual/bz-manual.html）同一套口径。
  *
  * 版本合成规则：
  *   - 版本切点 = 「主构建部署产物」提交日（部署即发版）；该约定（2026-09-08）之前按自然周归并；
@@ -12,7 +16,8 @@
  *   - 只收 feat/fix/perf 非 merge 提交；scope→域映射 + 关键词兜底（域降级为条目上的标签）；
  *   - 主题句 = 「——」前的部分，其后的细节作弱化副行（过长截断）；剥 issue/ticket/ADR/呈报 尾注与 emoji；
  *   - 内部工程条目过滤（评审/走查/收口/测试/守卫/契约/基准/单源/重构…）；块内按主题句去重。
- * 重跑：`pnpm changelog`（仓库根执行）。只写 changelog-data.ts 与 manifest.json。
+ * 重跑：`pnpm changelog`（仓库根执行，**只在主仓库跑**——worktree 里跑会生成残缺版本）。
+ * 只写 manual/bz-changelog.html 与 manifest.json。
  */
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -237,50 +242,178 @@ if (manifest.version !== current) {
   manifestSynced = true;
 }
 
-/* ==================== 产出 TS ==================== */
+/* ==================== 产出单文件 HTML（issue 474） ====================
+ * 更新日志不再随构建打进 main.js（旧产物 changelog-data.ts 已退役）：改为发布
+ * manual/bz-changelog.html——单文件自包含（样式 + 数据 + 脚本全内联），由插件在
+ * 用户点「更新日志」时从 GitHub 现场下载，弹窗用 iframe srcdoc 内嵌渲染。
+ * 与使用手册（manual/bz-manual.html）同一套口径与同一套 token。
+ * ==================================================================== */
 
-const ts = (s) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+/** HTML 文本转义（title/属性位；正文数据走 JSON.stringify 无需转义） */
+const htmlEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** 版本号倒序安全性：生成器天然正序，这里原样给（前端读取时 reverse） */
 let shown = 0;
-let out = `/** 由 scripts/_gen-changelog.mjs 从 git 提交历史生成——勿手改；更新跑 \`pnpm changelog\`。
- *  版本：部署日（约定前按周）为切点，前向合成（首版 1.0.0，含 feat +1 次版本），最新版回写 manifest。
- *  内容：feat/fix/perf 提交的主题句 + 弱化副行；内部工程条目已过滤；域为条目标签。生成于 ${generatedAt}。
- */
-export interface ChangelogItem {
-  domain: string;
-  text: string;
-  sub?: string;
+for (const r of releases) for (const sec of ['added', 'fixed', 'improved']) shown += r[sec].length;
+const dates = releases.map((r) => r.date).sort();
+const span = dates.length ? `${dates[0].slice(0, 4)}.${dates[0].slice(5, 7)} – ${dates[dates.length - 1].slice(0, 4)}.${dates[dates.length - 1].slice(5, 7)}` : '';
+
+const payload = JSON.stringify({
+  current,
+  generatedAt,
+  releases: releases.map((r) => ({
+    version: r.version, date: r.date, current: r.current,
+    added: r.added, fixed: r.fixed, improved: r.improved,
+  })),
+}).replace(/<\//g, '<\\/'); // 防数据里出现 </script> 提前闭合
+
+const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>包仔（bz）更新日志</title>
+<style>
+:root{--sp-bg:#f6f2e9;--sp-panel:#fffcf6;--sp-line:#e5dfcf;--sp-line-soft:#f2eee1;--sp-ink:#2c2924;
+--sp-ink-2:#7a7466;--sp-ink-3:#aca595;--sp-accent:#c95a28;--sp-accent-soft:#f7e8dd;--sp-on-accent:#fff;
+--sp-radius:12px;--sp-code:#f7f3ea;}
+.theme-dark{--sp-bg:#1b1b1f;--sp-panel:#242429;--sp-line:#35353c;--sp-line-soft:#2c2c32;--sp-ink:#e8e8ec;
+--sp-ink-2:#a2a2ac;--sp-ink-3:#6a6a74;--sp-accent:#eda75c;--sp-accent-soft:rgba(237,167,92,.14);
+--sp-on-accent:#1b1b1f;--sp-code:#1f1f24;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--sp-bg);color:var(--sp-ink);font:14px/1.6 system-ui,'Segoe UI','Microsoft YaHei',sans-serif}
+*{scrollbar-width:none}*::-webkit-scrollbar{display:none}
+.cg{display:flex;flex-direction:column;height:100%}
+.cg-bar{flex:none;display:flex;align-items:center;gap:12px;height:48px;padding:0 18px;background:var(--sp-panel);
+border-bottom:1px solid var(--sp-line)}
+.cg-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.cg-title svg{width:17px;height:17px;color:var(--sp-accent)}
+.cg-sub{font-size:11.5px;color:var(--sp-ink-3);font-weight:400}
+.cg-spacer{flex:1}
+.cg-body{flex:1;display:flex;min-height:0}
+.cg-side{width:196px;flex:none;overflow-y:auto;padding:10px 8px 24px;background:var(--sp-panel);
+border-right:1px solid var(--sp-line);display:flex;flex-direction:column;gap:2px}
+.cg-sec{font-size:10.5px;letter-spacing:.1em;color:var(--sp-ink-3);font-weight:600;padding:10px 10px 5px}
+.cg-nav{width:100%;display:flex;align-items:center;gap:7px;padding:6px 10px;border:0;border-radius:9px;
+background:none;font:inherit;font-size:12.5px;color:var(--sp-ink);cursor:pointer;text-align:left}
+.cg-nav:hover{background:var(--sp-accent-soft)}
+.cg-nav.on{background:var(--sp-accent);color:var(--sp-on-accent)}
+.cg-nav .v{font-weight:600;font-variant-numeric:tabular-nums;flex:none}
+.cg-nav .cur{font-size:10px;line-height:1;padding:3px 5px;border-radius:999px;background:var(--sp-accent-soft);
+color:var(--sp-accent);flex:none}
+.cg-nav.on .cur{background:rgba(255,255,255,.25);color:inherit}
+.theme-dark .cg-nav.on .cur{background:rgba(27,27,31,.25)}
+.cg-nav .d{margin-left:auto;font-size:11px;color:var(--sp-ink-3);font-variant-numeric:tabular-nums}
+.cg-nav.on .d{color:inherit;opacity:.8}
+.cg-main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--sp-bg)}
+.cg-page{flex:1;overflow-y:auto;padding:24px 30px 60px}
+.cg-rel-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.cg-rel-ver{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.cg-rel-cur{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--sp-accent-soft);color:var(--sp-accent)}
+.cg-rel-date{font-size:11.5px;color:var(--sp-ink-3);font-variant-numeric:tabular-nums}
+.cg-kinds{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 2px}
+.cg-kind{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--sp-line);color:var(--sp-ink-2)}
+.cg-kind--add{border-color:var(--sp-accent);color:var(--sp-accent)}
+.cg-blk{margin-top:20px}
+.cg-blk-t{font-size:12px;font-weight:600;letter-spacing:.04em;padding-bottom:7px;border-bottom:1px solid var(--sp-line);
+margin-bottom:2px}
+.cg-blk-t--pri{color:var(--sp-accent)}
+.cg-blk-t--sec{color:var(--sp-ink-2)}
+.cg-it{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--sp-line-soft)}
+.cg-it:last-child{border-bottom:0}
+.cg-dom{flex:none;font-size:10.5px;line-height:1.55;padding:1px 7px;border-radius:999px;
+background:var(--sp-line-soft);color:var(--sp-ink-2);white-space:nowrap;height:fit-content}
+.cg-it--pri .cg-dom{background:var(--sp-accent-soft);color:var(--sp-accent)}
+.cg-txt{flex:1;min-width:0;font-size:12.5px;line-height:1.55;color:var(--sp-ink)}
+.cg-it--sec .cg-txt{font-size:12px;color:var(--sp-ink-2)}
+.cg-sub{font-size:11.5px;color:var(--sp-ink-3);margin-top:2px;line-height:1.5}
+.cg-empty{padding:20px 0;color:var(--sp-ink-3);font-size:12.5px}
+@media (max-width:768px){
+.cg-body{flex-direction:column}
+.cg-side{width:100%;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;
+padding:8px;border-right:0;border-bottom:1px solid var(--sp-line)}
+.cg-sec{display:none}
+.cg-nav{width:auto;flex:none}
+.cg-nav .d{display:none}
+.cg-page{padding:16px 14px 40px}
 }
-
-export interface ChangelogRelease {
-  version: string;
-  date: string;
-  current: boolean;
-  added: ChangelogItem[];
-  fixed: ChangelogItem[];
-  improved: ChangelogItem[];
-}
-
-export const CHANGELOG_DOMAIN_NAMES: Readonly<Record<string, string>> = {
-`;
-for (const [id, name] of Object.entries(DOMAIN_NAMES)) out += `  '${id}': '${name}',\n`;
-out += `};
-
-export const CHANGELOG_META = { generatedAt: '${generatedAt}', current: '${current}', releases: ${releases.length} } as const;
-
-export const CHANGELOG_RELEASES: ChangelogRelease[] = [
-`;
-for (const r of releases) {
-  const item = (it) => `      { domain: '${it.domain}', text: '${ts(it.text)}'${it.sub ? `, sub: '${ts(it.sub)}'` : ''} },\n`;
-  out += `  {\n    version: '${r.version}',\n    date: '${r.date}',\n    current: ${r.current},\n`;
-  for (const sec of ['added', 'fixed', 'improved']) {
-    out += `    ${sec}: [\n`;
-    for (const it of r[sec]) { out += item(it); shown++; }
-    out += `    ],\n`;
+</style>
+</head>
+<body>
+<div class="cg">
+  <div class="cg-bar">
+    <div class="cg-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>
+      <path d="M12 7v5l3 2"/></svg>
+      包仔（bz）更新日志 <span class="cg-sub">v${htmlEsc(current)} · ${releases.length} 个版本 · ${htmlEsc(span)}</span></div>
+    <span class="cg-spacer"></span>
+    <span class="cg-sub">${htmlEsc(generatedAt)} 生成</span>
+  </div>
+  <div class="cg-body">
+    <aside class="cg-side" id="side"></aside>
+    <main class="cg-main"><div class="cg-page" id="page"></div></main>
+  </div>
+</div>
+<script>
+const DATA = ${payload};
+const SECTIONS = [
+  { key: 'added', label: '新功能', tier: 'pri' },
+  { key: 'fixed', label: '问题修复', tier: 'sec' },
+  { key: 'improved', label: '体验优化', tier: 'sec' }
+];
+const RAIL = DATA.releases.slice().reverse();
+const BY_VER = {};
+for (const r of DATA.releases) BY_VER[r.version] = r;
+let cur = DATA.current;
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function renderRail(){
+  let h = '<div class="cg-sec">版本（最新在前）</div>';
+  for (const r of RAIL){
+    h += '<button class="cg-nav' + (r.version === cur ? ' on' : '') + '" data-v="' + esc(r.version) + '">' +
+      '<span class="v">v' + esc(r.version) + '</span>' +
+      (r.current ? '<span class="cur">当前</span>' : '') +
+      '<span class="d">' + esc(r.date.slice(5)) + '</span></button>';
   }
-  out += `  },\n`;
+  const side = document.getElementById('side');
+  side.innerHTML = h;
+  side.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { cur = b.dataset.v; render(); });
 }
-out += `];\n`;
+function renderPage(){
+  const r = BY_VER[cur];
+  const page = document.getElementById('page');
+  if (!r){ page.innerHTML = '<div class="cg-empty">没有这一版</div>'; return; }
+  let h = '<div class="cg-rel-head"><span class="cg-rel-ver">v' + esc(r.version) + '</span>' +
+    (r.current ? '<span class="cg-rel-cur">当前版本</span>' : '') +
+    '<span class="cg-rel-date">' + esc(r.date) + '</span></div>';
+  const kinds = [];
+  for (const s of SECTIONS) if (r[s.key].length) kinds.push('<span class="cg-kind' + (s.key === 'added' ? ' cg-kind--add' : '') + '">' + s.label + ' ' + r[s.key].length + '</span>');
+  h += '<div class="cg-kinds">' + (kinds.length ? kinds.join('') : '<span class="cg-kind">空版本</span>') + '</div>';
+  for (const s of SECTIONS){
+    const items = r[s.key];
+    if (!items.length) continue;
+    h += '<div class="cg-blk"><div class="cg-blk-t cg-blk-t--' + s.tier + '">' + s.label + '</div>';
+    for (const it of items){
+      h += '<div class="cg-it cg-it--' + s.tier + '"><span class="cg-dom">' + esc(it.domain) + '</span>' +
+        '<div class="cg-txt">' + esc(it.text) +
+        (it.sub ? '<div class="cg-sub">' + esc(it.sub) + '</div>' : '') + '</div></div>';
+    }
+    h += '</div>';
+  }
+  page.innerHTML = h;
+  page.scrollTop = 0;
+}
+function render(){ renderRail(); renderPage(); }
+document.addEventListener('DOMContentLoaded', () => {
+  try { if (localStorage.getItem('bz-changelog-theme') === 'dark') document.documentElement.classList.add('theme-dark'); } catch(_){}
+  render();
+});
+</script>
+</body>
+</html>
+`;
 
-writeFileSync(join(ROOT, 'src', 'settings-panel', 'changelog-data.ts'), out, 'utf8');
+writeFileSync(join(ROOT, 'manual', 'bz-changelog.html'), html, 'utf8');
 console.log(`版本数=${releases.length} 条目=${shown} 当前=${current}${manifestSynced ? '（manifest 已回写）' : ''}`);
+console.log(`产出 manual/bz-changelog.html（${(Buffer.byteLength(html) / 1024).toFixed(1)}KB）`);
 console.log(releases.slice(-6).map((r) => `v${r.version}(${r.date}): +${r.added.length} !${r.fixed.length} ^${r.improved.length}`).join('  '));

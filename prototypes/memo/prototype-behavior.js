@@ -1,5 +1,5 @@
-/* 源指纹 6fec6ef149a12e72 · 仓内输入 268 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 2b51c07eeeee047c · 仓内输入 269 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -11606,7 +11606,7 @@ var BZW_memo = (() => {
         void apply(list);
       }
     });
-    const render3 = () => renderPathChips(chipsWrap, current2, (next) => {
+    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
       void apply(next);
     }, "", openPicker);
     let btn = null;
@@ -11628,7 +11628,7 @@ var BZW_memo = (() => {
     };
     const renderAll5 = () => {
       syncBtn();
-      render3();
+      render2();
     };
     const refresh2 = () => {
       current2 = readValue();
@@ -14168,915 +14168,6 @@ var BZW_memo = (() => {
       init_motion2();
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
-    }
-  });
-
-  // src/settings-panel/changelog-data.ts
-  var CHANGELOG_DOMAIN_NAMES, CHANGELOG_META, CHANGELOG_RELEASES;
-  var init_changelog_data = __esm({
-    "src/settings-panel/changelog-data.ts"() {
-      CHANGELOG_DOMAIN_NAMES = {
-        "global": "通用",
-        "notice": "通知",
-        "ai": "AI",
-        "settings-panel": "设置面板",
-        "diary": "日记本",
-        "memo": "备忘录",
-        "belongings": "归物本",
-        "people": "脸谱",
-        "clipping": "剪藏本",
-        "favorites": "收藏本",
-        "reading-report": "阅读报告",
-        "cinema": "影院",
-        "bookshelf": "书库",
-        "gameshelf": "游戏库",
-        "review": "复习计划",
-        "secondbrain": "第二大脑",
-        "auto-summary": "自动摘要",
-        "knowledge": "知识盒",
-        "home": "首页",
-        "pomodoro": "番茄钟",
-        "smartcat": "小橘陪伴猫",
-        "attach": "附件搬移",
-        "encrypt": "保险库",
-        "password-vault": "密码本",
-        "core": "核心",
-        "ui": "界面",
-        "checkup": "数据体检",
-        "other": "其他"
-      };
-      CHANGELOG_META = { generatedAt: "2026-09-26", current: "1.24.0", releases: 25 };
-      CHANGELOG_RELEASES = [
-        {
-          version: "1.0.0",
-          date: "2026-08-03",
-          current: false,
-          added: [
-            { domain: "cinema", text: "影视 海报抓取监听", sub: "创建影视笔记后轮询「海报」字段，非空即原地更新常驻 progress 通知为完成（不弹第二条通知）" },
-            { domain: "settings-panel", text: "设置归属模型完成", sub: "ADR-0009 全局设置页单页化（AI，共享 storagePath），10 域 设置弹窗，筛选，排序统一，storagePath 迁移（旧 7 字段兼…" },
-            { domain: "other", text: "入口页完成", sub: "全局唯一命令入口弹窗（单例，长按编辑模式，推挤拖拽，档位手柄，幽灵磁贴，自定义图标，命令选择器）" },
-            { domain: "auto-summary", text: "自动摘要 补充", sub: "调用 AI 时通知「正在为《xx》生成摘要…」" },
-            { domain: "auto-summary", text: "自动摘要 完成", sub: "create，open 双触发，缺字段 AI 补全（缺 title 重命名笔记），通知《title》，summary，#tags" },
-            { domain: "cinema", text: "影视 方案反转" },
-            { domain: "cinema", text: "影视 工具 README 重写", sub: "去掉 pm2 内容，补充绝对路径坑，风控重试，跳过逻辑，插件集成说明" },
-            { domain: "cinema", text: "影视 完成", sub: "海报抓取集成全局 npm 包" },
-            { domain: "memo", text: "收藏本数据路径固定文件名（设置只允许改目录，兼容旧完整路径值），复习，做题家联动契…" },
-            { domain: "memo", text: "主页改造，全量改名", sub: "主页.js 点击换 bz 命令，去 QuickAdd 降级链，插件目录 memo-suite，bz，30 命令统一 bz- 前缀（ADR-0004 修订）…" },
-            { domain: "diary", text: "日记本合并", sub: "插件更名「包仔」（日记本，备忘录同插件）——从历史恢复 diary-notebook 官方源码，open-panel 裸注册，ribbon，styles.…" },
-            { domain: "ui", text: "主面板，条目列表，弹窗族，滚轮选择器，写摘抄，设置页装配" },
-            { domain: "other", text: "数据层（加载，写回，增删，刷新监听）" },
-            { domain: "other", text: "工程骨架，core 共享层，标签配置，解析层" }
-          ],
-          fixed: [
-            { domain: "review", text: "通知系统修订", sub: "显式指定类型（删 emoji 自动归类），类型图标 emoji（ℹ，），桌面右侧弹出，移动端顶部居中，dedupe 同键存活期单框合并（可切类型，重置计时…" },
-            { domain: "other", text: "B站下载 裁切后可返回原视频重裁，压缩无收益保留原件", sub: "download 记录 originalPath，新增，api，revert 恢复下载原件（重置 trimmed，compressed，start，end…" },
-            { domain: "diary", text: "通知覆盖补全", sub: "日记条目删除，影视添加成功，收藏删除三处操作反馈（全仓操作点扫描确认其余均已有通知或 UI 即时反馈）" },
-            { domain: "encrypt", text: "通知补白", sub: "dedupeKey 30s 去重节流，z-index 100000 最顶，移动端适配（safe-area，34px 顶距，宽度 clamp 视口）；P0 …" },
-            { domain: "settings-panel", text: "入口页设置平台双套：文字显隐与手势拆分为桌面（launcherShowText，l…" },
-            { domain: "settings-panel", text: "设置弹窗 z-index 10030（盖过主面板 9999，面板内弹窗 10005…" },
-            { domain: "cinema", text: "迁移 QuickAdd《影视数据分析.js》，src，movie，analysis…" },
-            { domain: "cinema", text: "新增命令 bz-movie-report 影视分析报告（AI 品味分析推荐入口，原…" },
-            { domain: "other", text: "移动端判定改用 Obsidian 官方 Platform.isMobile（win…" },
-            { domain: "other", text: "图标渲染改 getIcon 判定（命令图标不在本地清单但 Obsidian 有效，…" },
-            { domain: "other", text: "添加命令默认固化命令自带图标（tile.icon 缺省填命令 icon；无图标命令…" },
-            { domain: "review", text: "新增命令 bz-review-start 开始复习（进入复习流程，包装 autoJ…" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.1.0",
-          date: "2026-08-10",
-          current: false,
-          added: [
-            { domain: "favorites", text: "收藏本 GitHub 增强", sub: "真实 GitHub API 拉取仓库名，简介(fetched 标志，8s超时，重试1次)，AI 整理联动(GitHub 链接标题预填，简介忠实翻译，标签兜…" },
-            { domain: "ai", text: "黑匣子全量提炼幂等与并发收敛（实测 opencode.ai 并发不稳）" },
-            { domain: "ai", text: "黑匣子全量提炼提速（用户反馈「50，1413 后无数据」）", sub: "批次 50，10，并发 4，ai-fail 重试 1 次，每轮保存（数据可见，中断不丢）" },
-            { domain: "notice", text: "黑匣子提炼进度通知（用户反馈）", sub: "完成汇总通知（新增人物，事件），全失败 warning 且不推进 cursor（下次重试），AI 失败 console 可见，provider 精确检查" },
-            { domain: "favorites", text: "黑匣子设置，样式，装配完成", sub: "设置弹窗 6 项（含词表增删），Ollama 接入，styles.css v4 收敛（删 v3 1300 行），构建直出 vault" },
-            { domain: "diary", text: "黑匣子对话完成", sub: "三层记忆（日记 TF-IDF，画像概要，历史 maxHistory），包仔人设常量，AI 降级" },
-            { domain: "other", text: "黑匣子复盘完成", sub: "手动四段报告（事实锚定）JSON 落盘，对话流可见，新人物提示，画像观察聚合 ≤5 裁旧" },
-            { domain: "other", text: "黑匣子人物画像完成", sub: "画像卡（印象，观察，情绪，事件数），详情采纳移除，mentions 候选，humanEdited 锁" },
-            { domain: "settings-panel", text: "黑匣子提炼链路完成", sub: "vault 监听 30 分钟防抖，一次 AI 调用批量提炼，首次全量分批 50，三标签面板骨架" },
-            { domain: "diary", text: "黑匣子 v4 设计落盘", sub: "容器改日记分析层" },
-            { domain: "memo", text: "memo 样式提取完成" },
-            { domain: "memo", text: "memo 代码精简完成", sub: "按钮工厂，标签常量，建议列表泛型化，设置项辅助，1936，1739 行，全量" },
-            { domain: "notice", text: "黑匣子完成", sub: "打开秒开（立即渲染，扫描提示条，水合缓存只扫一次，vault 事件失效），录入确认即关（AI 标题后台生成，重命名，注入，关联后台补全，成功通知）" },
-            { domain: "other", text: "黑匣子 目录迁移" }
-          ],
-          fixed: [
-            { domain: "review", text: "做题进度题号不递增修复（用户反馈）" },
-            { domain: "review", text: "做题选项长文本两头截断修复（用户反馈）" },
-            { domain: "review", text: "复习批量出题秒失败修复（用户反馈）" },
-            { domain: "review", text: "复习「做题家未初始化」误报修复" },
-            { domain: "review", text: "复习计划「做题决定难度」生效修复（用户反馈）" },
-            { domain: "memo", text: "备忘录长文本换行修复（用户反馈）", sub: ".todo-content-span 加 min-width:0 允许 flex 收缩，移动端去掉 flex-basis:auto 覆盖（flex-wra…" },
-            { domain: "other", text: "删除黑匣子域（用户决策：功能失败，不留痕迹）", sub: "删 src，blackbox 13 文件，tests，blackbox 9 文件，ADR 0013-0017，CONTEXT，AGENTS 术语，styl…" },
-            { domain: "notice", text: "黑匣子诊断日志（用户反馈排查）", sub: "blackbox-debug.log 落盘自动提炼每一步与异常，启动异常不再静默（warning 通知）" },
-            { domain: "diary", text: "黑匣子情绪落盘（用户反馈修复）", sub: "日记条目情绪推断 entryEmotions 落盘，情绪分布条合并日记情绪，完成通知含情绪统计" },
-            { domain: "ai", text: "黑匣子启动自动提炼（用户反馈修复）", sub: "重启后 cursor 空自动全量，待处理自动增量，AI 未配置 warning 提示" },
-            { domain: "pomodoro", text: "番茄钟开始，暂停提醒与声音" },
-            { domain: "other", text: "blackbox.json 移除 index 字段（2026-08-12 用户决策）", sub: "index 改为运行时内存映射，load 全量扫描黑匣子，笔记构建（id，路径），不再持久化；save 只写派生层（entries 已不写，index 也…" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.2.0",
-          date: "2026-08-17",
-          current: false,
-          added: [
-            { domain: "cinema", text: "修订2 smartcat 影视观察改走方法监听", sub: "UI 确认回调 notify 一次动作一条根治打字刷屏，ADR-0027，全量" },
-            { domain: "cinema", text: "smartcat 影视动作感知观察完成", sub: "快照 diff 动作文案，UI 影评与正文剥海报双链，delete 监听与去弹跳豁免" },
-            { domain: "cinema", text: "影视抽屉想看态新增「标记已看」（在看动作下方，直跳已看），标记在看，标记已看均把观…" },
-            { domain: "diary", text: "smartcat 云端打分范围", sub: "智能默认（日记，反省，闪念恒 LLM，长内容按 30 字，聊天，域事件本地）" },
-            { domain: "smartcat", text: "smartcat 数据面板 完成", sub: "bz-smartcat-dashboard 四页签只读可视化（总览，情绪，人格，记忆），作息直方图与成长轨迹，moodLevelFromPad 纯函数抽取" },
-            { domain: "smartcat", text: "smartcat 懂你闭环", sub: "情绪温和共振，全通道上下文，数据诚实化" },
-            { domain: "smartcat", text: "smartcat 认知接入", sub: "Bandit 选臂优化主动关心话术，聊天 reward 回填，元认知矛盾检测提示，情绪趋势注入聊天，周报上下文" },
-            { domain: "smartcat", text: "smartcat 认知基础模块", sub: "参考 cognitive-engine 自研：情绪趋势，波动度(VAD，EMA)，Thompson Bandit 自适应，元认知矛盾检测，零依赖纯函数" },
-            { domain: "smartcat", text: "smartcat 每周懂你报告", sub: "周统计，LLM 个性化总结写回流，设置弹窗查看入口" },
-            { domain: "smartcat", text: "smartcat 作息模型，主动关心", sub: "24h 活跃画像判定搭话时机，每周 1-2 次温和关心，设置开关" },
-            { domain: "smartcat", text: "smartcat 睡前巩固", sub: "每日 digest 当日观察 LLM 归纳日小结写回流，驱动人格微漂移" },
-            { domain: "smartcat", text: "smartcat RAG 增强", sub: "检索 query 结合情绪及时段，记忆注入带来源，相对时间" },
-            { domain: "diary", text: "smartcat 完成", sub: "数据接入面扩展（用户拍板：日记读正文，关键词，闪念全文，影视全影评，书库划线想法书评，现代诗，信，反省新源，全内容 LLM 云端打分，词法情绪；CONFI…" },
-            { domain: "secondbrain", text: "smartcat 人格对齐 MATE（ADR-0023）", sub: "删预设 5 选 1，OCEAN 随机种子，30 特质 9 群组成长（seed，transition，周更新，反思），trust，attachment 关系…" }
-          ],
-          fixed: [
-            { domain: "clipping", text: "聚合讯，阅读报告移动端默认全屏跟随剪藏本，书库，移除两窗口 设置入口" },
-            { domain: "smartcat", text: "smartcat 设置，聊天面板开着时不再锁死拖拽", sub: "面板仅抑制点触与长按手势，移动照常（鼠标，触屏）" },
-            { domain: "smartcat", text: "smartcat 移动端长按开设置关闭后无法拖拽", sub: "core 设置弹窗补 onClose 复位交互锁；外观改平铺色块选择器即时换肤；移动端删人格数据列表" },
-            { domain: "smartcat", text: "smartcat 桌面拖拽松开后仍跟随鼠标", sub: "document 监听改一次性 bind 稳定引用，isMousePressed 守卫，dispose 补摘监听" },
-            { domain: "smartcat", text: "smartcat 去掉气泡 emoji 抽离到独立指示器（用户要求）" },
-            { domain: "smartcat", text: "smartcat 删 30 分钟空闲跟随（用户要求），修气泡堆叠", sub: "去 transform 手动推挤改纯 flex 自然堆叠（原双重位移错位）" },
-            { domain: "smartcat", text: "smartcat 小橘样式修复", sub: "脸宽高致双眼重叠正中（删 cat-face 宽高还原原版 shrink-to-fit），耳朵 10px，气泡上移 95px 补细节与暗色适配，happy，…" },
-            { domain: "other", text: "解密还原后主动重读日期文件并并回列表（refreshFile 导出复用，不再依赖文…" },
-            { domain: "diary", text: "加密入口收敛到抽屉" },
-            { domain: "settings-panel", text: "修复抽屉遮罩 z-index 缺失被主面板压盖", sub: "遮罩完整覆盖全屏（10999），点遮罩只关抽屉不连带主面板；按钮高特异性抗 Obsidian 默认样式，顶部间距放宽" },
-            { domain: "other", text: "修复触屏列表滚动被长按禁掉，菜单紧凑化", sub: "core longPress 改被动监听（滚动恢复，长按吞合成 click 防穿透），跟手菜单小尺寸无底色简洁风" },
-            { domain: "diary", text: "手势统一试点（memo），移动端样式修复（diary，favorites）", sub: "core，item-actions 统一操作条与长按跟手菜单，memo 收敛标签长按暗语；移动端类型栏多行平铺与滚动条收敛" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.3.0",
-          date: "2026-08-24",
-          current: false,
-          added: [
-            { domain: "smartcat", text: "洞察条数上限，来源分布按追查目录，小橘对我的称呼", sub: "新增 smartcatReflectMaxInsights（默认 3，记忆巩固组可调，反思 prompt 声明最多 N 条，LLM 返回按序截断兜底）与 …" },
-            { domain: "smartcat", text: "巩固语义重定义" },
-            { domain: "smartcat", text: "三层记忆流水线，巩固参数设置面板" },
-            { domain: "review", text: "答对 0.8s 亮绿自动跳题，去头部对错统计，逾期复习出新题" },
-            { domain: "knowledge", text: "术语窗口自动生成，输入行重跑，底部总结按钮" },
-            { domain: "secondbrain", text: "Syncthing 冲突文件自动自愈" },
-            { domain: "settings-panel", text: "Python 路径填 python 即可" },
-            { domain: "knowledge", text: "视频录入批量按钮纯 emoji" },
-            { domain: "knowledge", text: "主面板列表间距，相对日期，视频录入批量按钮单钮态机" },
-            { domain: "other", text: "压缩回退" },
-            { domain: "favorites", text: "收藏本 UX 批次", sub: "分页，排序，搜索空态区分，删除可撤销，保存防假死，脏表单拦截，样式收敛" },
-            { domain: "knowledge", text: "文献盒桌面窗口简洁布局", sub: "主面板，视频录入保留标题，历史去标题（ 计数，）且组头去 UP主前缀与条数，笔记行去目录去 .md，时间 formatRelativeTime 相对显示；…" },
-            { domain: "knowledge", text: "术语生成面板简洁版", sub: "删弹窗标题，术语 label，placeholder，状态行（加载并入按钮），预览只读：上属性卡（术语，领域，日期）下内容卡，无输入框不可编辑；「重新生成…" },
-            { domain: "review", text: "UX 批次第一波", sub: "core 撤销，写盘失败 helper，toast action 减重，复习域规范收敛，做题家纯复习会话语义" }
-          ],
-          fixed: [
-            { domain: "review", text: "开始复习双 progress 通知合并为一条", sub: "review，app.ts 外层框 dedupeKey 'review-generate' 统一为 'quiz-generate'，与 quiz，ui.t…" },
-            { domain: "notice", text: "桌面端 toast 位置下移", sub: "#bz-notice-container top 16px，56px，避开 Obsidian 顶部栏与标题区；移动端断点 34px 不动；ADR-0067…" },
-            { domain: "notice", text: "通知操作按钮改 span 消除高度撑高", sub: "Obsidian 核心 button 默认 height 32px 硬撑，.bz-notice-action 只覆盖 padding；改 span，rol…" },
-            { domain: "smartcat", text: "设置面板数字滑杆改输入框", sub: "17 处 slider 行改 number 行（schema 既有行类型，min，max 钳制，防抖落盘语义不变），消除下滑误触滑杆；issues，161…" },
-            { domain: "smartcat", text: "备忘录删除行为流落盘时序加固", sub: "实证事件链路完整（emit，notifyMemoAction，memo:deleted 路由，三套注册表齐）而真实数据 deleted 恒 0 ⇒ 30s…" },
-            { domain: "smartcat", text: "反思，日小结，周报记忆流断粮饿死修复" },
-            { domain: "other", text: "移动端长按不松手直接拖拽图标" },
-            { domain: "review", text: "通知「去复习」走做题流程分流，答题答对自动跳下一题" },
-            { domain: "knowledge", text: "生成的文献笔记补回视频双链" },
-            { domain: "knowledge", text: "文献盒「留空跟随工具配置」键留空时不下发，修复转写环节 rc 兜底被空串覆盖" },
-            { domain: "other", text: "--batch 经 shell 启动改 base64 传输，修复批量处理整批 JS…" },
-            { domain: "smartcat", text: "归档行为流措辞补全与来源标签统一", sub: "补 archived 行为文案与徽标词（此前缺失注册），归档观察文案去「收藏」前缀与前者统一，行为来源标签齐名「收藏本，归物本」" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.4.0",
-          date: "2026-08-31",
-          current: false,
-          added: [
-            { domain: "belongings", text: "移动端整页迭代", sub: "印章头，等宽状态条，输入聚焦去环——移动 hero 顶行三轮收敛至 H8 印章头：墨章「64 在库」赤橙标签，「归物本」，投入，日均小字，右对齐（rend…" },
-            { domain: "belongings", text: "P20 原型落域方向纠正", sub: "p20-full 定稿评审壳，域向原型对齐——用户点名『把原型写进 bz』返工：prototype.html 重建为拍板原型定稿（共用 styles.cs…" },
-            { domain: "favorites", text: "原型评审壳共用 styles.css，全域 emoji 换 lucide 图标，布…" },
-            { domain: "belongings", text: "P20 瑞士大字报完全原型化", sub: "海报 hero，筛选 chips，大字网格，详情弹窗" },
-            { domain: "bookshelf", text: "头行行内标题「书库」，十肤全量补全，设置预览重画", sub: "木匾退场标题与标签同行居左，分类卡轻缩一档保纸标造型，九肤结构层自原型移植，dark 补墙映射，--bsw-title，.bz-skinprev-bs-*…" },
-            { domain: "favorites", text: "头区 1:1 原型", sub: "标题粗黑款删副题，磁贴全白底，右键菜单，表单亚麻皮肤" },
-            { domain: "favorites", text: "头部彻底原型化" },
-            { domain: "bookshelf", text: "分类细拆 20 类单一概念定稿，EPUB 分类接 subjects 通道" },
-            { domain: "bookshelf", text: "借书卡只读化", sub: "详情卡纯展示：移除状态，进度，日期，书评编辑与删除，保存，进度改静态条纹条，状态圆点，字数行；persistBook，rollbackBook，openB…" },
-            { domain: "favorites", text: "完全原型化", sub: "删 rail，主头行，工具行，头区，磁贴行，卡墙" },
-            { domain: "clipping", text: "rail 按 site 分类，中右栏分割线拖宽，拖拽误关闭 core 修复" },
-            { domain: "favorites", text: "亚麻记事板换血", sub: "C5 白卡墙，胶带磁点，置顶金圈，归档褪色" },
-            { domain: "diary", text: "长文跨栏卡", sub: "≥800字整卡跨全宽，卡内分栏，媒体横排网格" },
-            { domain: "bookshelf", text: "书脊墙 1:1 复刻换血，旧网格布局全退役" }
-          ],
-          fixed: [
-            { domain: "belongings", text: "宿主样式两边差异三修" },
-            { domain: "favorites", text: "头行固定仅卡墙滚动，关闭钮压回 reset", sub: "面板改 flex 列 overflow:hidden，head，tags flex:none，board flex:1 min-height:0 over…" },
-            { domain: "favorites", text: "移动端面板显式 100vw，100vh，卡墙防撑爆", sub: "overlay 弹性子项不定宽被 line-clamp 卡片 max-content 撑到两倍屏宽（右列出屏），mob 面板补视口宽高；grid 轨道 m…" },
-            { domain: "favorites", text: "图标挂载补全，窄屏适配", sub: "renderTags，头行关闭钮 mountIcons 补挂（新收藏，移动此前永不渲染），表单 min(430px,100vw-32px) 留边，面板 c…" },
-            { domain: "favorites", text: "右键菜单，移动抽屉图标缺失修复", sub: "mountIcons 未调用致 <i data-lucide> 占位残留，菜单与抽屉渲染后补挂；ctx，sheet 按钮补 justify-content…" },
-            { domain: "favorites", text: "桌面固定 900×620 面板，移动关闭钮进 head 行", sub: "面板补边框，圆角，投影对齐原型 .frame，.bz-fav-mob-close 改 head 行内静态位，移动头行两端对齐 padding-top 4px" },
-            { domain: "favorites", text: "C5 原型后轮改动回灌", sub: "主背景 #fffcf6，面板去底部内边距，头行 20px，标题 14px，磁贴行 20px，卡墙顶垫 6px，移动磁贴单行横滑新收藏置首，关闭钮 24×24" },
-            { domain: "bookshelf", text: "木匾复位逐肤换脸，筛选弱化对齐原型，工具行逐行对齐，报告残留，书脊起伏修复", sub: "小号匾额「书库，LIBRARY」九肤换脸；全馆点击清状态，分类；.off 弱化口径（无筛选全亮，激活弱化，全馆恒亮）；.bz-bs-view displa…" },
-            { domain: "favorites", text: "标题字号 21px，14px" },
-            { domain: "favorites", text: "头行样式用户直供版照抄，副题只留白卡计数，磁贴 0,2,0 抗 reset，底色 …" },
-            { domain: "favorites", text: "CSS 逐值 1:1 抄原型", sub: "底色去黄，标题 21px，副题灰字加回，磁贴胶囊白底，磁点浅白" },
-            { domain: "clipping", text: "在读让位移动端同序，保留天数两键合一" }
-          ],
-          improved: [
-            { domain: "diary", text: "章节栏小图缓存根治开墙原图解码冻结" }
-          ]
-        },
-        {
-          version: "1.5.0",
-          date: "2026-09-07",
-          current: false,
-          added: [
-            { domain: "belongings", text: "年份，移动排序原生 select 退役换自绘海报菜单（并行会话批次收尾入库）" },
-            { domain: "belongings", text: "年份，排序下拉换自绘海报菜单", sub: "原生 select 弹层退役（纸面墨框方角，赤橙当前项）" },
-            { domain: "settings-panel", text: "设置行 note 补充提示，体检按钮 cta 强调" },
-            { domain: "cinema", text: "影院风格化落域", sub: "午夜场完整版进插件" },
-            { domain: "settings-panel", text: "设置面板重设计落域", sub: "P1 系统面板，S1，S3 双皮，外观独立「设置」域" },
-            { domain: "cinema", text: "三风格原型壳1:1回灌，午夜场完整功能版（原型批）" },
-            { domain: "bookshelf", text: "五肤×亮暗双模式，移动端头行，借书卡迭代" },
-            { domain: "home", text: "周历倒排，今天显「今」，移动端关闭钮修复" },
-            { domain: "home", text: "周历头，按日时间线同步落域" },
-            { domain: "bookshelf", text: "移动端头行一行横滑，原型迭代流程落规" },
-            { domain: "bookshelf", text: "原型落域", sub: "域内评审壳补齐" },
-            { domain: "home", text: "首页活动河全域入口版落域" },
-            { domain: "belongings", text: "分类图标化，预设退役" }
-          ],
-          fixed: [
-            { domain: "memo", text: "四域 review P2 收尾", sub: "影院壳长按，状态兼容，首页 memoIdOf 归一，设置面板演示壳 api 引用与回归锚点" },
-            { domain: "cinema", text: "review 修复", sub: "status 串，数兼容回退，壳长按随渲染重挂，selftest 回归锚点补强" },
-            { domain: "belongings", text: "头行副题去同义重复，补品牌 token 覆盖；scripts 增原型热更新服务器" },
-            { domain: "home", text: "周历倒排最新在前，今日标「今」，关闭钮选择器加面板前缀" },
-            { domain: "settings-panel", text: "空面板热修", sub: ".bz-sp-desk 撤 position:relative 复原 core 居中链" },
-            { domain: "home", text: "头行关闭钮图标空白" },
-            { domain: "home", text: "活动河四项调优" },
-            { domain: "belongings", text: "归物本审查 B1，B3-B8 七修", sub: "关面板清陈旧库，搜索词，出离内流转保留封口，写盘失败回滚提示，ESC 层序，命令路径加载失败提示，表单防叠开" },
-            { domain: "favorites", text: "命令直开表单注册 ESC 层，ESC 关抽屉改 closeSheet 整体移除", sub: "openForm 抽 ensureFavoritesEsc（openPanel 原位与 openForm 开头各调一次，对照 belongings 同款）…" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.6.0",
-          date: "2026-09-08",
-          current: false,
-          added: [
-            { domain: "clipping", text: "会话冻结序", sub: "桌面打开即读，原位不重排，两端已读，已收双折叠" },
-            { domain: "clipping", text: "视频正文链接可跳转，标题下状态章退役，阅读字号改设置面板项" },
-            { domain: "clipping", text: "全局去在读，打开即已读即时让位，已读进折叠段，删除，确认弹窗纸墨化，去查看原文" },
-            { domain: "clipping", text: "移动端 m3 原型逐字覆盖" },
-            { domain: "clipping", text: "移动端目录化", sub: "site 章，已收折叠" },
-            { domain: "global", text: "待办，书架墙外观组标准化", sub: "置顶双行（布局占位卡，主题 layoutKey 联动）" },
-            { domain: "settings-panel", text: "移动端重写全屏推入式两页，移动端默认全屏特性全链退役" },
-            { domain: "settings-panel", text: "设置面板UI修复批（采样参数组全链退役，路径行拍板，移动端搜索，custom行范式）" },
-            { domain: "settings-panel", text: "演示种子补全各域外观键默认值（并行会话批；外观组键须与 src，settings.…" },
-            { domain: "settings-panel", text: "移动端域设置弹窗改底部抽屉（原型与 ui.ts 同步，拍板样式落地）" },
-            { domain: "clipping", text: "原型落域" },
-            { domain: "other", text: "原型热重载服务导航主页（仓库根 index.html）" },
-            { domain: "settings-panel", text: "外观组范式铺开全面板域" },
-            { domain: "settings-panel", text: "外观组范式落归物本", sub: "占位单卡（布局，大字报，主题，暖白）" }
-          ],
-          fixed: [
-            { domain: "clipping", text: "移动搜索，关闭，读下一则失灵，字号分段编辑部皮恢复" },
-            { domain: "clipping", text: "头行检索 flex:0 0 250px 定宽落地" },
-            { domain: "other", text: "uiSelect 菜单贴视口右缘溢出兜底（实测右缘左移收进，极窄视口交由 elli…" },
-            { domain: "favorites", text: "prototype-view CSS 链路径修正（..，core，一级，同 bel…" },
-            { domain: "belongings", text: "prototype-view CSS 链路径修正（..，core，一级；selft…" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.7.0",
-          date: "2026-09-09",
-          current: false,
-          added: [
-            { domain: "knowledge", text: "术语录入可选「来源」source，sourceTitle 键，单框智能分流" },
-            { domain: "secondbrain", text: "移动端整体滚动模型，抽屉重排到新设计语言" },
-            { domain: "cinema", text: "豆瓣抓取插件直调", sub: "内存队列 spawn CLI，卡片 loading，守护退役" },
-            { domain: "home", text: "首页域入口加第二大脑磁贴" },
-            { domain: "home", text: "导航首页卡片中文名，一句话说明（新域自动纳入，未知 id 回退）" },
-            { domain: "cinema", text: "豆瓣盲区补全", sub: "打开触碰协议，工具补全分支" },
-            { domain: "secondbrain", text: "定稿原型三界面落域" },
-            { domain: "password-vault", text: "密码本自统一保险库拆回独立域" }
-          ],
-          fixed: [
-            { domain: "cinema", text: "直调队列三连败修复" },
-            { domain: "cinema", text: "直调架构合并前审查修复批" },
-            { domain: "secondbrain", text: "对话弹窗摘模型徽标，输入行防溢出；移动抽屉同皮米白红棕" },
-            { domain: "cinema", text: "审查修复批" },
-            { domain: "review", text: "移动端三区队列自然展开不内滚，区列头吸顶" },
-            { domain: "secondbrain", text: "对话弹窗尺寸锁定 760×600，灵感参考窗口几何找回" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.8.0",
-          date: "2026-09-10",
-          current: false,
-          added: [
-            { domain: "memo", text: "移动端评审两轮六改，切换链路三修" },
-            { domain: "home", text: "入口顺序，显隐按端独立，域快捷菜单，首页外观组；设置面板侧栏七组" },
-            { domain: "home", text: "原型外景尺寸全固定，撤掉高度调节条" },
-            { domain: "home", text: "原型 1:1 宽度固化为实测基准 118mm，撤掉测量 UI" },
-            { domain: "home", text: "原型移动外景高度改自由可调（滑块 650~1000 CSS px）" },
-            { domain: "home", text: "原型移动外景高度加满屏，内容区两档，修 1:1 长度对不上" },
-            { domain: "home", text: "原型移动外景支持 1:1 真机物理尺寸（小米13U 屏宽 70.15mm，可尺量校…" },
-            { domain: "clipping", text: "剪藏本 UI 五改，刊物刊名呼吸光标，暗色皮" },
-            { domain: "clipping", text: "每日简报产出定为「要点列表，每条要点一句话」" },
-            { domain: "clipping", text: "每日简报产出改为一句话总结" },
-            { domain: "clipping", text: "每日简报", sub: "B站 UP 视频字幕，转写，AI 要点" },
-            { domain: "diary", text: "日记本方向探索", sub: "五版概念稿，三版皮肤，原型主页（本轮未采纳）" },
-            { domain: "smartcat", text: "小橘行为流接线补齐，文案人性化" },
-            { domain: "knowledge", text: "移动端头部章回式重排，三部统一预览弹层" }
-          ],
-          fixed: [
-            { domain: "cinema", text: "移动端抽屉统一到 core 手势，浮层，并修 core 合成 mousedown …" },
-            { domain: "cinema", text: "移动端三修", sub: "面板真全屏，长按只出抽屉，方形钮钉死宿主 padding" },
-            { domain: "cinema", text: "通栏按钮左对齐并修 chips 不回落列表" },
-            { domain: "memo", text: "修复 styles.css 被，* 全局替换损毁（布局全乱）" },
-            { domain: "home", text: "重出滞后的原型行为产物", sub: "首页退役「回忆墙」独立入口" },
-            { domain: "home", text: "原型 1:1 校准改为基准线绝对公式，修掉连点累乘" },
-            { domain: "home", text: "移动原型外景改用小米13U 真机视口 412×827" },
-            { domain: "memo", text: "移动端真全屏补关闭，新建入口并修键盘遮挡输入条" },
-            { domain: "settings-panel", text: "模型选择器弹窗暗色皮断链，移动端 44px 错位" },
-            { domain: "clipping", text: "简报条目归一丢 transcriptPath", sub: "转录稿链接被插件回写抹掉" },
-            { domain: "diary", text: "章节栏取帧根治，弹窗，粘顶，头行等 9 项精修" },
-            { domain: "knowledge", text: "术语来源链接与标题净化", sub: "剥追踪参数，站点尾巴" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.9.0",
-          date: "2026-09-11",
-          current: false,
-          added: [
-            { domain: "encrypt", text: "三域共用解锁屏（保险库，密码本，加密日记）" },
-            { domain: "pomodoro", text: "番茄钟接入预览管线，弹窗降噪，10 套皮肤（亮，暗）" },
-            { domain: "bookshelf", text: "借书卡固定高，在读「继续」不折行" },
-            { domain: "bookshelf", text: "借书卡详情改版", sub: "去钮，卡内分区滚动，印章随内容，在读可继续" },
-            { domain: "home", text: "时间线六项设置，修入口拖拽两个 bug" },
-            { domain: "diary", text: "移动端主界面关闭钮「复位优先」", sub: "先收列表再关面板" },
-            { domain: "home", text: "入口彩点五条件点亮（剪藏未读，专注中，复习逾期，影院在看，重要备忘）" },
-            { domain: "cinema", text: "标记已看改走编辑窗（评分影评用户输入）" },
-            { domain: "diary", text: "抽屉收编 core，item-actions，setIcon 缺键真因修复" },
-            { domain: "clipping", text: "已读，已收正文保留不清空" },
-            { domain: "clipping", text: "v1.3.0 RSS 订阅源抓取（rss-parser，turndown），每日简…" },
-            { domain: "diary", text: "移动端六档字号体系，抽屉长按唯一入口，头行关闭钮，视频首帧海报" },
-            { domain: "secondbrain", text: "主面板移动端全屏化，头行关闭钮" },
-            { domain: "global", text: "移动端全屏页顶部 44px 统一，弹窗关闭钮全域退役" }
-          ],
-          fixed: [
-            { domain: "knowledge", text: "文献，剪藏标题生成收敛为完整陈述句" },
-            { domain: "bookshelf", text: "借书卡固定高降档 82vh，700，72vh，600" },
-            { domain: "cinema", text: "海报 loading 完成信号双通道，AI 荐片方案 A，视图切换高亮口径" },
-            { domain: "home", text: "首页域自检改用面板自绘组件选择器（.bz-select，.bz-sw，data-k…" },
-            { domain: "memo", text: "抽屉头勾选圈补 44px 触控热区并对齐列表尺寸" },
-            { domain: "other", text: "writeNewsData 剥离 missing 读兜底标记（八段契约约定外段）" },
-            { domain: "review", text: "quiz-core 会话弹窗样式恢复" },
-            { domain: "reading-report", text: "报告去内联样式收编域 CSS，暗色指标色提亮" },
-            { domain: "secondbrain", text: "补暗色模式，37 处硬编码色收编 token" },
-            { domain: "knowledge", text: "补齐品牌区，批量处理钮，取消钮三处无样式 UI" },
-            { domain: "belongings", text: "poster 皮肤补暗色模式（夜版海报 token 组，推翻双主题恒定旧口径）" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.10.0",
-          date: "2026-09-12",
-          current: false,
-          added: [
-            { domain: "settings-panel", text: "通知入基础组，设置页并入通用，搜索即过滤与重置本域，全域分组文案统一" },
-            { domain: "encrypt", text: "锁屏统计明文落盘", sub: "冷启动回落上次快照而非「—」" },
-            { domain: "secondbrain", text: "文献笔记生成即跑", sub: "知识盒生成落盘后立即建链" },
-            { domain: "knowledge", text: "领域词表与 AI 领域提示去示例枚举" },
-            { domain: "notice", text: "通知设置四项", sub: "级别，停留档位，弹出位置，同屏上限" },
-            { domain: "favorites", text: "设置补两项", sub: "打开默认筛选，默认排序" },
-            { domain: "belongings", text: "设置补三项", sub: "默认排序，新记默认状态，金额单位" },
-            { domain: "settings-panel", text: "剪藏本设置精简，管理弹窗通用组件化，uiSetlist 组件入库" },
-            { domain: "memo", text: "退役「到期时间格式」设置", sub: "到期文案口径固定相对" },
-            { domain: "ui", text: "全域子弹窗统一", sub: "一套浮层壳，域皮贯通" },
-            { domain: "home", text: "秒开三件套", sub: "首次骨架秒开，关闭保留 DOM，重开复用动态刷新" },
-            { domain: "review", text: "移动端字号体系", sub: "按视觉层级放大（队列，冲刺，结算，评级条，统计历史）" },
-            { domain: "encrypt", text: "保险库面板收敛为只管加密笔记，销毁二次确认（vault-pwstyle 落域第二片）" },
-            { domain: "knowledge", text: "视频录入 URL 净化与标题，UP主 自动回填" }
-          ],
-          fixed: [
-            { domain: "clipping", text: "文章标题字号降档", sub: "桌面 24px，display 档，移动 33px，27px" },
-            { domain: "ui", text: "危险中性语义补全（第二轮评审）", sub: "17 处破坏性确认，域皮不变量守门" },
-            { domain: "ui", text: "危险中性补全", sub: "8 处破坏性确认补 danger，core 整套中性形制复位" },
-            { domain: "clipping", text: "F3 守卫收窄", sub: "已读未收补收可升级 saved 且不重复计已读（review 收编）" },
-            { domain: "home", text: "入口编辑器 blur 监听挂 AbortController，触屏滚动仲裁重写" },
-            { domain: "cinema", text: "补问期间保持运行态，随机抽一部先整刷已开面板" },
-            { domain: "diary", text: "修复写盘 runFix 包进同路径队列（D4 diary 半边）" },
-            { domain: "memo", text: "提醒监听自持 app 真正卸载（E7）；搜索残留，composer 防双提交保草稿…" },
-            { domain: "password-vault", text: "确认框监听器单绑定防删错条目（E1）；共锁感知，E6 移动页重建，E5 密码掩码，…" },
-            { domain: "encrypt", text: "锁家族修复批", sub: "E3 资产校验，E4 回发解锁态，E9 孤儿容器，E10 单例复位，E11 通知收敛，E12 损坏分支，E13 opQueue 串行，E14 删前重读，E…" },
-            { domain: "diary", text: "日记家族审查修复批 D1–D15，R1（15 项，附回归 21 例）" },
-            { domain: "core", text: "共享基座修复批 C1-C12" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.11.0",
-          date: "2026-09-13",
-          current: false,
-          added: [
-            { domain: "home", text: "时间线痕迹源整体替换为小橘行为流" },
-            { domain: "diary", text: "diary-split.mjs 迁移脚本", sub: "dry-run 默认，同刻让位，memory 引用重写，归档，Obsidian 运行拦截" },
-            { domain: "diary", text: "encrypt mergeDiaryBlock v2，smartcat 四面，re…" },
-            { domain: "diary", text: "条目文件格式落地", sub: "store 重写条目粒度，parser，encrypt v2，体检只读化" },
-            { domain: "cinema", text: "ApiZero 字段扩展", sub: "上映日期，year，季集，episodes，热门短评" },
-            { domain: "cinema", text: "影院豆瓣抓取迁入插件，字段走 ApiZero" },
-            { domain: "clipping", text: "聚合讯抓取迁入插件内" }
-          ],
-          fixed: [
-            { domain: "clipping", text: "UI 收尾 10 条评审修复（C11，C16，C17，C18，C19，C20，C2…" },
-            { domain: "clipping", text: "设置，弹窗侧 2 条评审修复（C4，C25）" },
-            { domain: "clipping", text: "存储，数据侧 7 条评审修复（C9，C10，C12，C27，C28，C30，C31）" },
-            { domain: "clipping", text: "UI 核心 8 条评审修复（C1，C5，C6，C7，C8，C13，C14，C15）" },
-            { domain: "diary", text: "diary-split 重跑幂等", sub: "盘上同内容条目视为已迁移，不再让位产重复" },
-            { domain: "review", text: "日记迁移 review 修复" },
-            { domain: "clipping", text: "抓取侧修复五项（review C2，C3，C23，C24，C26）" },
-            { domain: "other", text: "空日期文件改判直接归档（无内容可拆零丢失），与未解析行人工清单分离" },
-            { domain: "cinema", text: "豆瓣抓取写回链路修复十项（review C1-C10）" },
-            { domain: "clipping", text: "review 修复批", sub: "窗口裁剪落盘，lastFetchAt 语义，通知收窄" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.12.0",
-          date: "2026-09-14",
-          current: false,
-          added: [
-            { domain: "knowledge", text: "卡列表引用计数徽标与孤儿筛选（320）" },
-            { domain: "knowledge", text: "挂载树入口与命令（319）" },
-            { domain: "knowledge", text: "挂载树白板（317）" },
-            { domain: "knowledge", text: "MountNode 补 parent 字段：同名文献挂所属卡片，可沿链回到主卡" },
-            { domain: "knowledge", text: "挂载树 AI 语义建议链路" },
-            { domain: "knowledge", text: "挂载树数据层：双链解析，三源汇总与树构建（issues 314，315）" },
-            { domain: "knowledge", text: "挂载树连线路由与几何原语（issues 316 连线侧）" },
-            { domain: "knowledge", text: "挂载树力导向布局（issues，316 前半）" },
-            { domain: "knowledge", text: "挂载树共享契约 mount-types（模块间唯一接口，只放类型）" },
-            { domain: "knowledge", text: "录入四名词，关联行显式双链，影像两界面，AI 多模态，图版（issues 309-…" },
-            { domain: "knowledge", text: "视频录入改链接解析式（解析按钮，分P，时长，档位，双把手进度条）" }
-          ],
-          fixed: [
-            { domain: "knowledge", text: "裁判改走 prompt 纯文本通道（json_object 会吐空壳），思考回默认…" },
-            { domain: "knowledge", text: "挂载建议认得出模型的真实回答（标签编号，包壳），思考拉满 128K" },
-            { domain: "knowledge", text: "整库扫描每轮只走一遍，自链不计被引（320 审查）" },
-            { domain: "knowledge", text: "挂载树白板审查修复（317，319 改后合并）" },
-            { domain: "knowledge", text: "建议幽灵节点补 parent（MountNode.parent 落地后的集成点）" },
-            { domain: "knowledge", text: "端点桩不再插进邻卡（审查阻断项，issues 316 连线侧）" },
-            { domain: "knowledge", text: "b23.tv 短链解析补全元信息并写回规范链接" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.13.0",
-          date: "2026-09-15",
-          current: false,
-          added: [
-            { domain: "knowledge", text: "图版逐图描述与录入预填，预览直达，来源升级 API" },
-            { domain: "clipping", text: "划选工具框与知识盒划词锚定，保存图片本地化" },
-            { domain: "knowledge", text: "名词录入防重名", sub: "输入实时提醒，确认硬拦截" },
-            { domain: "knowledge", text: "关联行三改", sub: "确认写入不回退，分析不锁按钮，真中断与后台分支" },
-            { domain: "knowledge", text: "段落，图版快捷命令，四入口关闭二次确认，生成后开笔记" },
-            { domain: "core", text: "新增智谱 Plan 服务商", sub: "Coding 套餐专用端点（glm-5.3-flash）" },
-            { domain: "knowledge", text: "自动关联迁入知识盒，范围恒为三个盒子" },
-            { domain: "knowledge", text: "挂载白板空板，重跑口径，建议锚点句高亮，固定改套整句" },
-            { domain: "knowledge", text: "挂载建议三段式，白板渐进渲染与进度，卡片列表性能" }
-          ],
-          fixed: [
-            { domain: "secondbrain", text: "review 修正" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.14.0",
-          date: "2026-09-16",
-          current: false,
-          added: [
-            { domain: "review", text: "裁剪复习评级四命令" },
-            { domain: "global", text: "原生设置页退役平铺，只留「打开设置面板」按钮" },
-            { domain: "knowledge", text: "知识盒清理批", sub: "删提炼成卡，来源与领域统一，反链走缓存，属性行可编辑" },
-            { domain: "knowledge", text: "录入面板界面修订", sub: "日期沉底，生成入口移交底部，属性区 loading 统一，总结退役" },
-            { domain: "knowledge", text: "录入草稿流式成形", sub: "点下即开界面，正文逐字长出" },
-            { domain: "ai", text: "模型档位表", sub: "默认值按当前模型取官方最大档，删除上下文窗口设置行" },
-            { domain: "core", text: "AI 输出上限面板独裁", sub: "调用点私有 max_tokens 全拆除" },
-            { domain: "global", text: "设置 AI 页拆三组（服务商，模型配置，数据源凭据），Cookie 行换多行文本框" },
-            { domain: "ai", text: "思考档位设置与自动关联候选相似度下限" },
-            { domain: "clipping", text: "保存剪藏全量图片本地化，图片命名去标题，条目菜单补复制链接" }
-          ],
-          fixed: [
-            { domain: "knowledge", text: "录入面板关联预演检索不可达如实报 queued（此前死分支冒充「暂无关联」）" },
-            { domain: "clipping", text: "撤销移动端划选工具框的 48px 系统菜单让位" },
-            { domain: "clipping", text: "正文屏蔽移动端原生长按选择菜单" },
-            { domain: "knowledge", text: "知识盒×剪藏引用同步", sub: "删除降级回外链，断链摘除，knowledge，clipbook.json 路径 file-sync" },
-            { domain: "core", text: "引用同步补漏", sub: "secondbrain rename rekey，diary 内存同步，checkup 孤儿扩展" },
-            { domain: "encrypt", text: "加密附件他引保护", sub: "共享原件保留，还原跳过" },
-            { domain: "cinema", text: "海报路径 rename 联动，抓取队列存在性守卫" },
-            { domain: "clipping", text: "锚定双链裸 basename 解析换正牌 API", sub: "getFirstLinkfileDest 在 Obsidian 1.12，1.13 不存在致拦截恒失效" },
-            { domain: "auto-summary", text: "AI 起标题改名改走 fileManager.renameFile，联动更新全库双链" },
-            { domain: "clipping", text: "B站条目去除保存入口（ADR-0147），已存按钮置灰，保留策略清侧写，锚定链接捕…" },
-            { domain: "clipping", text: "保存，标读后自动前进的下一篇补换篇语义", sub: "打开即已读，滚动归零（memo zrurtk）" },
-            { domain: "clipping", text: "移动详情已收剪藏正文可读，正文长词防撑破" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.15.0",
-          date: "2026-09-17",
-          current: false,
-          added: [
-            { domain: "gameshelf", text: "移动端去掉海报头，搜索行改「固定」（用户两条）" },
-            { domain: "gameshelf", text: "域落位，外观组，首页快捷命令（用户三条）" },
-            { domain: "gameshelf", text: "移动端按钮序，吸顶留白，媒体全部本地化（用户四条）" },
-            { domain: "gameshelf", text: "展示中文名，头行收敛，遮罩毛玻璃（用户评审四条）" },
-            { domain: "gameshelf", text: "游戏架 UI v3", sub: "V1 海报墙落域，数据统计面板，详情全量数据" },
-            { domain: "gameshelf", text: "属性中文化，海报本地缓存，成就详情弹窗" },
-            { domain: "gameshelf", text: "游戏架域" },
-            { domain: "secondbrain", text: "周报主面板入口，弹层移动规范" },
-            { domain: "memo", text: "月历视图" },
-            { domain: "memo", text: "周期性重复备忘" },
-            { domain: "secondbrain", text: "本周知识动态" },
-            { domain: "review", text: "做题家独立面板" },
-            { domain: "review", text: "FSRS 拟合放开全 19 参数" },
-            { domain: "clipping", text: "剪藏阅读报告页" }
-          ],
-          fixed: [
-            { domain: "gameshelf", text: "appdetails 解析按 appid 外层键取", sub: "修真机「商店数据解析不出，没有中文名」" },
-            { domain: "gameshelf", text: "面板挂回遮罩内", sub: "修真机「只有遮罩层，没有主窗口」" },
-            { domain: "pomodoro", text: "审查修复批（归档固化先落盘，统计呈现）" },
-            { domain: "diary", text: "审查修复批（码点截断，文字卡角标与行长，加密直测）" },
-            { domain: "belongings", text: "审查修复批（纯离场年空态，千分位，截至今日，重入刷新，days0）" },
-            { domain: "review", text: "审查修复批（w[4] 既有缺陷，拟合分片让出，做题面板取消，批量）" },
-            { domain: "clipping", text: "审查修复批（打开即已读时长 P1，移动计时，弹层健壮性，空态两态）" },
-            { domain: "memo", text: "审查修复批（周期锚点漂移 P1，restore 撤链，排期入口，月历语义与热区）" },
-            { domain: "secondbrain", text: "审查修复批（周报弹层遮罩，z 序 P1，数据口径）" },
-            { domain: "clipping", text: "报告空态图标，统计与移动端规范" },
-            { domain: "memo", text: "月历数据链与空月统计提示" },
-            { domain: "belongings", text: "年度资产报告暗色 token 全覆盖，移动端面板规范" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.16.0",
-          date: "2026-09-18",
-          current: false,
-          added: [
-            { domain: "diary", text: "创建日记成功后打开新笔记并收起主窗口 (item-1789672493967-y1…" },
-            { domain: "gameshelf", text: "头行退役海报头顶格，卡片悬浮截图轮播，成就进度条，奖杯" },
-            { domain: "cinema", text: "季圆点悬浮预览", sub: "正脸换成该季海报与信息" },
-            { domain: "cinema", text: "季进度改「海报右下角一排圆点」，去掉注释文字" },
-            { domain: "cinema", text: "剧集按季合并", sub: "季进度条卡片，设置开关" },
-            { domain: "gameshelf", text: "全量落盘，媒体全本地化（用户拍板：所有数据，全量，完整，都在本地）" },
-            { domain: "home", text: "时间线新到旧，退役生成今日总结，入口行灰字补四域统计" },
-            { domain: "cinema", text: "豆瓣抓取海报目录设置，抓取队列调整（并行会话 WIP）" }
-          ],
-          fixed: [
-            { domain: "cinema", text: "想看落盘编码 -1，编辑不再弹回在看 (item-1789722741019-t8…" },
-            { domain: "cinema", text: "季圆点改到海报左下角（用户订正方位）" },
-            { domain: "gameshelf", text: "截图本地化真因修复，成就图标路径进属性" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.17.0",
-          date: "2026-09-19",
-          current: false,
-          added: [
-            { domain: "diary", text: "打开先面板后内容", sub: "首帧让位读盘与整墙渲染" },
-            { domain: "diary", text: "墙数据启动后台预热，四目录并行加载" },
-            { domain: "knowledge", text: "术语文献退役 term 冗余键" },
-            { domain: "memo", text: "退役清单型子任务 UI" },
-            { domain: "core", text: "uiModal 补 dialog 读屏语义并新增 bindFormSubmit 回…" },
-            { domain: "core", text: "uiModal 内置焦点管理，trapFocus 三壳圈闭；stat，sugges…" },
-            { domain: "core", text: "触控热区修饰类自带热区；.bz-field 补定位锚定；通知常驻帧关闭钮样式" },
-            { domain: "core", text: "路径选择器新建文件夹与键盘闭环，回调容错回滚（效率#10，#11，R7，N6）" }
-          ],
-          fixed: [
-            { domain: "clipping", text: "保存图片后自动复制嵌入 wikilink 到剪贴板（memo item-17897…" },
-            { domain: "review", text: "批 B 命令与监听链修复" },
-            { domain: "review", text: "批 B 出题链与编排修复" },
-            { domain: "review", text: "批 E 深审修复", sub: "统计 UI 与设置与样式与文档" },
-            { domain: "review", text: "冲刺会话与渲染层深审批 D 九项修复" },
-            { domain: "review", text: "非法日期容错，数据层 bulk API，注释如实（F7，A11，A13-E4）" },
-            { domain: "clipping", text: "修复既存红×2" },
-            { domain: "diary", text: "review 修正" },
-            { domain: "clipping", text: "rail 行内 钮退役，报告层，划选浮框补 topifyZ 发号，搜索框 hove…" },
-            { domain: "gameshelf", text: "工具行单行化收紧，卡片去悬浮 title，全成就角标换 字符（2026-09-19…" },
-            { domain: "clipping", text: "批 D 视图层修复（列表，检索，移动端，报告，样式）" },
-            { domain: "clipping", text: "批B数据写链，抓取，扫描，锚定九项修复" }
-          ],
-          improved: [
-            { domain: "core", text: "file-sync rename 引用判定挪进去抖批次按路径去重" }
-          ]
-        },
-        {
-          version: "1.18.0",
-          date: "2026-09-20",
-          current: false,
-          added: [
-            { domain: "core", text: "大面板打开即入焦，Tab 圈闭范式 trapPanelFocus 全域接线" },
-            { domain: "core", text: "触屏悬浮隔离范式", sub: "全量 :hover 规则包进 @media (hover: hover)" },
-            { domain: "review", text: "悬浮评级条键盘化", sub: "数字键 1-4 评级，ESC 归还焦点（呈报#12-R8）" },
-            { domain: "cinema", text: "详情弹窗补齐笔记已有字段（片长，季集，完整上映日期，热门短评）" },
-            { domain: "smartcat", text: "小橘「更智能」批", sub: "关系阶段，她自己的事，情绪惯性，记忆自动纠错，追问线" }
-          ],
-          fixed: [
-            { domain: "home", text: "番茄钟菜单 focusing 文案对齐「暂停专注」（PM2 残款，呈报#63 半边）" },
-            { domain: "review", text: "六条复习命令 name 括号式改动宾式（呈报#56，R12）" },
-            { domain: "settings-panel", text: "搜索键盘闭环，命中词高亮，会话滚位记忆（呈报#17，#26，#49）" },
-            { domain: "home", text: "骨架期标题不再闪现，裁「R1 生活周报」死代码（呈报#31，#53）" },
-            { domain: "favorites", text: "卡墙点按反馈与外链标识，磁贴行限高（呈报#24，#25，#61）" },
-            { domain: "review", text: "统计弹窗按影院现行形制重刷，排名行键盘可达（呈报#55，#12-R7）" },
-            { domain: "attach", text: "拍板修复批", sub: "动词统一「搬移」，跳过预览快捷出口，上次目标前置预告" },
-            { domain: "review", text: "题面 emoji 换 lucide，冲刺头行模式副标题，假可达与空态口径（呈报#5…" },
-            { domain: "review", text: "轮次互斥提示，翻篇轮询降频命中才读盘（呈报#4，#38）" },
-            { domain: "reading-report", text: "恒可见返回钮显式规则，旧走查守卫随 RR-U1 新拍板翻转" },
-            { domain: "settings-panel", text: "面板重开放重挂 ESC 层，栈序随 z 序同步（checkup 深审 ui P2-…" },
-            { domain: "checkup", text: "数据体检深审修复批" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.19.0",
-          date: "2026-09-21",
-          current: false,
-          added: [
-            { domain: "cinema", text: "动效整合批" },
-            { domain: "cinema", text: "季圆点悬浮换季改「涟漪揭示」", sub: "来片层从被悬浮的圆点圆形扩散" },
-            { domain: "cinema", text: "保存即齐（海报落库，不再后台抓取），侧栏，排序钮滑动高亮" },
-            { domain: "cinema", text: "合集共享元素", sub: "合集卡同款过渡，合集行钻入" },
-            { domain: "cinema", text: "抽离升级为整卡离场，列表 FLIP 补位，让位" },
-            { domain: "cinema", text: "详情弹窗共享元素过渡", sub: "海报抽出飞入，面板从海报生长，关闭返程" },
-            { domain: "cinema", text: "添加影视改「解析，豆瓣预取，双面翻转卡片」" },
-            { domain: "cinema", text: "关联判定与影院类型判定接入 Jev 决策通道（issues 391，392，393）" },
-            { domain: "core", text: "Jev 决策通道封装" },
-            { domain: "memo", text: "移动端编辑弹窗键盘适配", sub: "vvh 收缩，顶对齐，保存钮钉底" },
-            { domain: "memo", text: "「今日」「重要」伪场景空态专属文案" },
-            { domain: "memo", text: "完成动作反馈", sub: "勾选圈待定态与折叠条去向轻反馈" },
-            { domain: "home", text: "入口菜单末尾统一「设置」直达该域设置页（issues 388）" },
-            { domain: "gameshelf", text: "设置面板「密钥型」输入档位，Steam API 密钥接入（呈报#48 GS3）" }
-          ],
-          fixed: [
-            { domain: "cinema", text: "返程落点被源卡纠正动画污染", sub: "FLIP 集合排除源卡本体" },
-            { domain: "cinema", text: "表单重名反馈（红边框，锁保存），撤销影院 Jev 接入，移除 TED 分类" },
-            { domain: "memo", text: "搜索体验四连", sub: "ESC 先清词，一键清词，命中高亮，网址可搜" },
-            { domain: "memo", text: "样式清理与触控热区对齐" },
-            { domain: "memo", text: "编辑器表单与交互杂项八件" },
-            { domain: "memo", text: "删除，完成，场景收尾链对齐全域口径" },
-            { domain: "memo", text: "读路径错误面，渲染省算与滚位保持" },
-            { domain: "cinema", text: "右键菜单桌面分流改悬浮能力判定，与季圆点悬浮统一 hoverCapable 单出口" },
-            { domain: "memo", text: "数据层读入守卫，公开课检索边界与会话缓存" },
-            { domain: "bookshelf", text: "报告视图宿主搜索行为收窄，消灭「只刷隐藏墙」假动作（RR-U13）" },
-            { domain: "belongings", text: "自绘下拉键盘导航，ESC 二段语义（呈报#12 B5）" },
-            { domain: "core", text: "uiChip 切换型缺省挂 aria-pressed（深审 gameshelf 段…" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.20.0",
-          date: "2026-09-22",
-          current: false,
-          added: [
-            { domain: "gameshelf", text: "成就图标改远端直取，不再本地化" },
-            { domain: "clipping", text: "添加 UP 主即直查资料（名字，头像），开弹窗补缺资料" },
-            { domain: "settings-panel", text: "复合行窄屏两行排版，UP 名单去头像" },
-            { domain: "cinema", text: "观影分析镶进影院面板（覆盖层，点遮罩关），影院交互四修" },
-            { domain: "cinema", text: "观影分析整篇重写为《观影志》26 幕（issues 406-408）" },
-            { domain: "cinema", text: "观影分析整页重做为滚动放映室", sub: "四本 22 幕，幕单元放映" }
-          ],
-          fixed: [
-            { domain: "core", text: "列表头像取图去 Referer", sub: "修移动端 UP 名单不显示头像" },
-            { domain: "clipping", text: "添加 UP 主支持长 uid（纯数字位数不设上限）" },
-            { domain: "cinema", text: "新增背面加回「我的记录」段（评分，影评已看显示），观影分析引擎根解析修复", sub: "面板根 closest 落空致整页静止" },
-            { domain: "cinema", text: "季圆点悬浮正脸那一季", sub: "只换文案不建层，滑回正脸一次落回静息态" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.21.0",
-          date: "2026-09-23",
-          current: false,
-          added: [
-            { domain: "cinema", text: "不可用一律回落 LLM，判定编排抽 core，jev-fallback（影院补回落）" },
-            { domain: "pomodoro", text: "特效批九味", sub: "进度四味，世界退后，收工钟，倒数滴答，过渡音" },
-            { domain: "global", text: "数据源凭据三行统一单行掩码，行序调整（Key 在前）" },
-            { domain: "pomodoro", text: "退役「后台自动暂停」", sub: "窗口 hidden 不再暂停计时" },
-            { domain: "review", text: "记忆分析特刊", sub: "全屏逐幕分析层（16 幕）" },
-            { domain: "clipping", text: "「我读了什么」全屏读报特刊层，头行电传纸带，期号戳章重做" },
-            { domain: "favorites", text: "el clic en tarjeta ya no navega — fuera i…" },
-            { domain: "home", text: "周历头改台历卡样式", sub: "色带，星期，大数字，波浪入场" },
-            { domain: "home", text: "首页动效层", sub: "开场编排，河道描线常流，事件揭出迸光，切天接力" }
-          ],
-          fixed: [
-            { domain: "other", text: "review-414 四改", sub: "越界算畸形走回落，闭集按自有键判，回落接 signal，AbortError 归一" },
-            { domain: "pomodoro", text: "环光被 SVG 元素框硬切", sub: "显式 overflow:visible" },
-            { domain: "favorites", text: "设置面板评审壳三处裸奔", sub: "样式链缺收藏本，图标表缺 11 键，自检卡在已退役的 appearance 域" },
-            { domain: "settings-panel", text: "萤标坐标帧差一个 scrollTop", sub: "滚动后点靠下的侧栏项，光晕留在上面几行" },
-            { domain: "home", text: "预览壳补游戏库图标 gamepad-2", sub: "「全部域」里该行此前渲染成空白" },
-            { domain: "home", text: "预告卡倾斜绑定随静默刷新丢失", sub: "绑定件从 boot 档提到 boot 判据外" },
-            { domain: "other", text: "全域搜索框清除钮对齐效率#12 口径", sub: "有词才现，清空即隐" },
-            { domain: "home", text: "关后再开整屏不可见但可点" },
-            { domain: "cinema", text: "检索改三路兜底链", sub: "suggest 软拒绝不再误报没找到" },
-            { domain: "cinema", text: "豆瓣检索弃搜索页改 subject_suggest", sub: "治解析风控误报" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.22.0",
-          date: "2026-09-24",
-          current: false,
-          added: [
-            { domain: "password-vault", text: "快速生成密码，添加弹窗关闭二次确认" },
-            { domain: "core", text: "Jev 服务商新增博查", sub: "SystemOne 同构直连，模型缺省按服务商各配" },
-            { domain: "secondbrain", text: "检索只查最新，空行不查询，重排模型可选" },
-            { domain: "secondbrain", text: "接入 Qwen3-Reranker-4B 交叉编码重排" },
-            { domain: "secondbrain", text: "设置项瘦身与 JEV 常开自动配置" },
-            { domain: "secondbrain", text: "Ollama 地址两行迁 AI 面板，桌面端远程地址自动补全，模型选择器回填时机修复" },
-            { domain: "secondbrain", text: "向量化模型配置迁入 AI 面板", sub: "LLM，Embedding，JEV 三组化，Qwen3-Embedding 支持与换模型维度守卫" },
-            { domain: "cinema", text: "观影分析收尾批", sub: "开卷流场萤火 v4 上岸，移动竖屏软横屏，滚轮一滚一幕" },
-            { domain: "pomodoro", text: "重置，跳过改按钮内二次确认（替代确认弹窗），hover 一律不换底色" }
-          ],
-          fixed: [
-            { domain: "cinema", text: "观影分析桌面端开卷聚合错位", sub: "层框换算非旋转态减原点" },
-            { domain: "secondbrain", text: "review 后续", sub: "移动端去掉死初始化，超长列表用例真区分早退与回退" },
-            { domain: "secondbrain", text: "重排打分不做 0，1 降级", sub: "缺 top_logprobs 判失败，非有限 logprob 跳过" },
-            { domain: "global", text: "换算标记随 DEFAULT_SETTINGS 落盘", sub: "默认值不再被当旧尺二次换算" },
-            { domain: "core", text: "模型选择器行长说明把模型名挤成逐字竖排" },
-            { domain: "secondbrain", text: "检索层改精确全扫余弦，坏向量双重防线，分数去锐化" },
-            { domain: "core", text: "JEV 模型选择器服务商名取注册表，清理陈旧注释" },
-            { domain: "knowledge", text: "零秒截段误判，原型评审 UI 迭代", sub: "居中直弹，处理面板垫底，预览去头行，图版蓝签" },
-            { domain: "pomodoro", text: "两个计时重叠", sub: "动效打在隐藏层上顶掉了 opacity:0；翻牌层转为唯一可见层并放大字号" },
-            { domain: "pomodoro", text: "review 三改" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.23.0",
-          date: "2026-09-25",
-          current: false,
-          added: [
-            { domain: "people", text: "封面墙成员补上预览桶", sub: "导入过预览但没画过的人也能上墙" },
-            { domain: "people", text: "折子印章四态", sub: "未画谱，画谱中，画谱中断，已画谱均可从卡上继续" },
-            { domain: "people", text: "画脸谱进度续跑", sub: "生成引擎后台化，批级落盘与进度块" },
-            { domain: "people", text: "脸谱语义深化与首页入口" },
-            { domain: "people", text: "脸谱折子改版" },
-            { domain: "people", text: "脸谱数据源设置面板", sub: "预处理导出目录直连，两段增量进画像" },
-            { domain: "people", text: "全模态媒体素材进画像管线", sub: "语音转写，图片描述解析，统计与媒体徽章" },
-            { domain: "knowledge", text: "语音转写引擎二选一", sub: "SenseVoice-Small 主力，faster-whisper 备选" },
-            { domain: "people", text: "互动统计", sub: "客观数据侧纯本地计算与详情页展示" },
-            { domain: "people", text: "增量提炼，导入前成本预告" },
-            { domain: "people", text: "详情页人物档案与随手记手动输入路径" },
-            { domain: "people", text: "卡墙排序筛选搜索，导出笔记，合并重复人物" },
-            { domain: "people", text: "画像深度移植（distilly 分层），关系时间线" },
-            { domain: "people", text: "多联系人勾选导入，主页面视觉重做" }
-          ],
-          fixed: [
-            { domain: "people", text: "收起折整片可点修折页切换死区", sub: "切换钩子挪到 leaf 元素" },
-            { domain: "global", text: "面板体系令牌重定向", sub: "子弹窗与组件库件回面板皮，删日记维护组与格式体检弹窗" },
-            { domain: "password-vault", text: "review 后续" }
-          ],
-          improved: []
-        },
-        {
-          version: "1.24.0",
-          date: "2026-09-26",
-          current: true,
-          added: [
-            { domain: "settings-panel", text: "v2 更新日志用户化", sub: "自动版本号，主次分层，内容改写" },
-            { domain: "settings-panel", text: "使用手册按钮下载，新版本自更新，域设置深化" },
-            { domain: "people", text: "bz-face prep 子命令", sub: "单联系人媒体导出，派生图片档，关联表，语音转写" },
-            { domain: "people", text: "保库记录", sub: "脸谱数据整体入保险库，每联系人一条加密记录" },
-            { domain: "people", text: "bz-face sync 子命令", sub: "取密钥，解密，逐联系人 chat.json 与头像源" },
-            { domain: "settings-panel", text: "更新日志弹窗", sub: "侧栏底部入口，按域分类（git 历史生成）" },
-            { domain: "people", text: "脸谱工具包骨架与 bz-face doctor 自检" },
-            { domain: "core", text: "四行协议解析与外部工具调用壳抽入核心层" },
-            { domain: "global", text: "外部工具路径升格域无关组，微信账号目录键" },
-            { domain: "people", text: "聊天仓 v2" },
-            { domain: "people", text: "双卷画像管线", sub: "其人，我们，6 类素材，密度，档案，样本警示" },
-            { domain: "people", text: "详情页双折", sub: "其人，我们，统计与背景弹窗化" }
-          ],
-          fixed: [
-            { domain: "core", text: "AI 输出上限护栏", sub: "面板上界按 provider×模型动态取，解析出口封顶" },
-            { domain: "people", text: "头像入库", sub: "库外 avatar 复制进库内媒体文件夹（CONFIG，FACES），渲染走 vault getResourcePath" }
-          ],
-          improved: []
-        }
-      ];
-    }
-  });
-
-  // src/settings-panel/changelog.ts
-  function isVisible() {
-    return !!overlay && overlay.style.display === "flex";
-  }
-  function hide() {
-    if (overlay) overlay.style.display = "none";
-  }
-  function unloadChangelog() {
-    escHandle2 == null ? void 0 : escHandle2.unregister();
-    escHandle2 = null;
-    overlay == null ? void 0 : overlay.remove();
-    overlay = null;
-    activeVersion = null;
-  }
-  function openChangelogModal() {
-    var _a2;
-    if (!CHANGELOG_RELEASES.length) return;
-    if (!overlay) build();
-    topifyZ(overlay);
-    overlay.style.display = "flex";
-    trapPanelFocus((_a2 = overlay.querySelector(`#${FRAME_ID}`)) != null ? _a2 : overlay);
-    escHandle2 == null ? void 0 : escHandle2.unregister();
-    escHandle2 = escManager.register("bz-changelog", { isVisible, close: hide });
-    render2();
-  }
-  function build() {
-    const ov = document.createElement("div");
-    ov.id = OVERLAY_ID;
-    ov.className = "bz-panel-overlay";
-    const frame2 = document.createElement("div");
-    frame2.id = FRAME_ID;
-    frame2.className = "bz-panel-frame bz-sp-skin bz-chg-popup";
-    frame2.innerHTML = shellHtml();
-    mountIcons(frame2);
-    ov.appendChild(frame2);
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov) hide();
-    });
-    document.body.appendChild(ov);
-    overlay = ov;
-  }
-  function shellHtml() {
-    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("history")}</div><span class="bz-panel-title">更新日志</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">v${CHANGELOG_META.current} · ${CHANGELOG_META.releases} 个版本 · ${CHANGELOG_META.generatedAt} 生成</span><span class="bz-panel-head-sp"></span></div><div class="bz-chg-body"><nav class="bz-chg-side"></nav><div class="bz-chg-main"></div></div>`;
-  }
-  function render2() {
-    if (!overlay) return;
-    if (!activeVersion || !CHANGELOG_RELEASES.some((r) => r.version === activeVersion)) {
-      activeVersion = CHANGELOG_RELEASES[CHANGELOG_RELEASES.length - 1].version;
-    }
-    renderRail();
-    renderRelease();
-  }
-  function renderRail() {
-    const side = overlay.querySelector(".bz-chg-side");
-    side.innerHTML = [...CHANGELOG_RELEASES].reverse().map((r) => navItemHtml2(r, r.version === activeVersion)).join("");
-    side.querySelectorAll("[data-chg-version]").forEach((b) => {
-      b.addEventListener("click", () => {
-        activeVersion = b.dataset.chgVersion;
-        render2();
-      });
-    });
-  }
-  function navItemHtml2(r, on) {
-    const date = r.date.slice(5);
-    return `<button type="button" class="bz-chg-nav-item${on ? " on" : ""}${r.current ? " cur" : ""}" data-chg-version="${esc(r.version)}"><span class="bz-chg-nav-ver">v${esc(r.version)}</span>` + (r.current ? `<span class="bz-chg-nav-cur">当前</span>` : "") + `<span class="bz-chg-nav-date">${esc(date)}</span></button>`;
-  }
-  function renderRelease() {
-    const main = overlay.querySelector(".bz-chg-main");
-    const rel = CHANGELOG_RELEASES.find((x) => x.version === activeVersion);
-    main.innerHTML = rel ? releaseHtml(rel) : "";
-    main.scrollTop = 0;
-  }
-  function releaseHtml(r) {
-    return `<div class="bz-chg-rel-head"><span class="bz-chg-rel-ver">v${esc(r.version)}</span>` + (r.current ? `<span class="bz-chg-rel-cur">当前版本</span>` : "") + `<span class="bz-chg-rel-date">${esc(r.date)}</span></div>` + SECTIONS.filter((s) => r[s.key].length).map((s) => sectionHtml(s.key, s.label, r[s.key])).join("");
-  }
-  function sectionHtml(key, label, items) {
-    const tier = key === "added" ? "pri" : "sec";
-    return `<div class="bz-chg-sec"><div class="bz-chg-sec-t bz-chg-sec-t--${tier}">${label}</div>` + items.map((it) => itemHtml(it, tier)).join("") + `</div>`;
-  }
-  function itemHtml(it, tier) {
-    var _a2;
-    const dom = (_a2 = CHANGELOG_DOMAIN_NAMES[it.domain]) != null ? _a2 : "其他";
-    return `<div class="bz-chg-item bz-chg-item--${tier}"><span class="bz-chg-dom">${esc(dom)}</span><div class="bz-chg-entry"><div class="bz-chg-text">${esc(it.text)}</div>` + (it.sub ? `<div class="bz-chg-sub">${esc(it.sub)}</div>` : "") + `</div></div>`;
-  }
-  var OVERLAY_ID, FRAME_ID, SECTIONS, overlay, escHandle2, activeVersion;
-  var init_changelog = __esm({
-    "src/settings-panel/changelog.ts"() {
-      init_z_order();
-      init_esc_manager();
-      init_focus_trap();
-      init_ui();
-      init_str();
-      init_icons();
-      init_changelog_data();
-      OVERLAY_ID = "bz-changelog-overlay";
-      FRAME_ID = "bz-changelog-popup";
-      SECTIONS = [
-        { key: "added", label: "新功能" },
-        { key: "fixed", label: "问题修复" },
-        { key: "improved", label: "体验优化" }
-      ];
-      overlay = null;
-      escHandle2 = null;
-      activeVersion = null;
     }
   });
 
@@ -29840,19 +28931,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
 
   // src/checkup/ui.ts
   function isPanelVisible() {
-    return !!overlay2 && overlay2.style.display === "flex";
+    return !!overlay && overlay.style.display === "flex";
   }
   function openDataCheckup(app) {
     var _a2;
     hostApp = app;
-    if (!overlay2) build2(app);
-    topifyZ(overlay2);
-    overlay2.style.display = "flex";
-    trapPanelFocus((_a2 = overlay2.querySelector(`#${FRAME_ID2}`)) != null ? _a2 : overlay2);
-    escHandle3 == null ? void 0 : escHandle3.unregister();
-    escHandle3 = escManager.register("bz-checkup", {
+    if (!overlay) build(app);
+    topifyZ(overlay);
+    overlay.style.display = "flex";
+    trapPanelFocus((_a2 = overlay.querySelector(`#${FRAME_ID}`)) != null ? _a2 : overlay);
+    escHandle2 == null ? void 0 : escHandle2.unregister();
+    escHandle2 = escManager.register("bz-checkup", {
       isVisible: isPanelVisible,
-      close: () => hide2()
+      close: () => hide()
     });
     renderBody();
   }
@@ -29861,18 +28952,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     running = false;
     fixing = false;
     hostApp = null;
-    escHandle3 == null ? void 0 : escHandle3.unregister();
-    escHandle3 = null;
+    escHandle2 == null ? void 0 : escHandle2.unregister();
+    escHandle2 = null;
     progressCtl = null;
-    overlay2 == null ? void 0 : overlay2.remove();
-    overlay2 = null;
+    overlay == null ? void 0 : overlay.remove();
+    overlay = null;
   }
-  function build2(app) {
+  function build(app) {
     const ov = document.createElement("div");
-    ov.id = OVERLAY_ID2;
+    ov.id = OVERLAY_ID;
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
-    frame2.id = FRAME_ID2;
+    frame2.id = FRAME_ID;
     frame2.className = "bz-panel-frame bz-checkup-popup";
     const head = document.createElement("div");
     head.className = "bz-panel-head";
@@ -29892,22 +28983,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     frame2.append(head, body, foot);
     ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
-      if (e.target === ov) hide2();
+      if (e.target === ov) hide();
     });
     document.body.appendChild(ov);
-    overlay2 = ov;
+    overlay = ov;
   }
-  function hide2() {
-    if (overlay2) overlay2.style.display = "none";
+  function hide() {
+    if (overlay) overlay.style.display = "none";
   }
   function bodyEl() {
-    return overlay2.querySelector(".bz-checkup-body");
+    return overlay.querySelector(".bz-checkup-body");
   }
   function footEl() {
-    return overlay2.querySelector(".bz-checkup-foot");
+    return overlay.querySelector(".bz-checkup-foot");
   }
   function renderBody() {
-    if (!overlay2) return;
+    if (!overlay) return;
     if (running) {
       renderRunning();
       return;
@@ -30007,12 +29098,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     body.appendChild(list);
   }
   function updateProgress(index, total, label, subDone, subTotal) {
-    if (!overlay2) return;
-    const progress = overlay2.querySelector(".bz-checkup-progress");
+    if (!overlay) return;
+    const progress = overlay.querySelector(".bz-checkup-progress");
     if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
     const sub = subTotal && subTotal > 0 ? Math.min(1, Math.max(0, subDone || 0) / subTotal) : 0;
     progressCtl == null ? void 0 : progressCtl.setValue((index + sub) / total * 100);
-    overlay2.querySelectorAll(".bz-checkup-step").forEach((row) => {
+    overlay.querySelectorAll(".bz-checkup-step").forEach((row) => {
       const i = Number(row.dataset.step);
       row.classList.toggle("is-done", i < index);
       row.classList.toggle("is-current", i === index);
@@ -30169,8 +29260,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function setFixing(on) {
     fixing = on;
-    if (!overlay2) return;
-    overlay2.querySelectorAll("button").forEach((b) => {
+    if (!overlay) return;
+    overlay.querySelectorAll("button").forEach((b) => {
       b.disabled = on;
     });
     renderFoot();
@@ -30225,7 +29316,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     setFixing(false);
     await startRun();
   }
-  var overlay2, escHandle3, runSeq, running, fixing, progressCtl, hostApp, OVERLAY_ID2, FRAME_ID2, FIX_DOMAINS;
+  var overlay, escHandle2, runSeq, running, fixing, progressCtl, hostApp, OVERLAY_ID, FRAME_ID, FIX_DOMAINS;
   var init_ui4 = __esm({
     "src/checkup/ui.ts"() {
       init_z_order();
@@ -30235,15 +29326,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_ui();
       init_flow_dialog();
       init_run();
-      overlay2 = null;
-      escHandle3 = null;
+      overlay = null;
+      escHandle2 = null;
       runSeq = 0;
       running = false;
       fixing = false;
       progressCtl = null;
       hostApp = null;
-      OVERLAY_ID2 = "bz-checkup-mask";
-      FRAME_ID2 = "bz-checkup-popup";
+      OVERLAY_ID = "bz-checkup-mask";
+      FRAME_ID = "bz-checkup-popup";
       FIX_DOMAINS = [
         { label: "收藏本", groups: ["favorites"] },
         { label: "剪藏本", groups: ["clipbook", "clipbook-marks", "clipbook-source"] },
@@ -30640,12 +29731,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (!active2) return;
       suppressClickUntil = Date.now() + 300;
       if (!order || to === from || !id) {
-        render3();
+        render2();
         return;
       }
       setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
       persist();
-      render3(id || void 0);
+      render2(id || void 0);
     }
     function attachDrag(el, listEl2, rows) {
       const total = rows.length;
@@ -30691,7 +29782,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
       return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
     }
-    function render3(refocusId) {
+    function render2(refocusId) {
       if (!order) return;
       const ids = hiddenOf(order, scope);
       const visible = visibleDomains(order[scope], ids);
@@ -30721,7 +29812,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       e.preventDefault();
       setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
       persist();
-      render3(id);
+      render2(id);
     });
     root.addEventListener("contextmenu", (e) => {
       if (drag) e.preventDefault();
@@ -30748,7 +29839,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (id && !ids.includes(id)) {
           setHidden([...ids, id]);
           persist();
-          render3(id);
+          render2(id);
         }
         return;
       }
@@ -30757,13 +29848,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const id = rs.dataset.entRestore || "";
         setHidden(hiddenOf(order, scope).filter((x) => x !== id));
         persist();
-        render3(id);
+        render2(id);
       }
     });
-    render3();
+    render2();
     void loadHomeOrder(app).then((o) => {
       order = o;
-      render3();
+      render2();
     });
   }
   var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
@@ -37260,12 +36351,12 @@ ${bodyText.substring(0, 6e3)}`;
   function unloadClipbookReport() {
     closeClipbookReport();
     period = "week";
-    if (escHandle4) {
+    if (escHandle3) {
       try {
-        escHandle4.unregister();
+        escHandle3.unregister();
       } catch (e) {
       }
-      escHandle4 = null;
+      escHandle3 = null;
     }
     if (overlayEl) {
       overlayEl.remove();
@@ -37328,7 +36419,7 @@ ${bodyText.substring(0, 6e3)}`;
         }
       }
     });
-    escHandle4 = escManager.register("bz-clipbook-report", {
+    escHandle3 = escManager.register("bz-clipbook-report", {
       isVisible: () => !!overlayEl && overlayEl.style.display !== "none",
       close: closeClipbookReport
     });
@@ -37455,7 +36546,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (alive()) body.innerHTML = ERROR_HTML2;
     }
   }
-  var overlayEl, escHandle4, period, logCache, renderSeq2, progressToastSeq2, activeProgress2, reportApp, YIELD_MS, QUIET_TOAST_MIN_ENTRIES, ERROR_HTML2;
+  var overlayEl, escHandle3, period, logCache, renderSeq2, progressToastSeq2, activeProgress2, reportApp, YIELD_MS, QUIET_TOAST_MIN_ENTRIES, ERROR_HTML2;
   var init_report_ui = __esm({
     "src/clipbook/report-ui.ts"() {
       init_notice();
@@ -37476,7 +36567,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_clipbook();
       init_ui6();
       overlayEl = null;
-      escHandle4 = null;
+      escHandle3 = null;
       period = "week";
       logCache = null;
       renderSeq2 = 0;
@@ -41218,12 +40309,12 @@ ${c.trim()}
     pauseReadingSession();
     void flushReadingSession();
     closeItemMenu();
-    if (escHandle5) {
+    if (escHandle4) {
       try {
-        escHandle5.unregister();
+        escHandle4.unregister();
       } catch (e) {
       }
-      escHandle5 = null;
+      escHandle4 = null;
     }
     document.removeEventListener("selectionchange", onSelectionChanged);
     document.removeEventListener("mousedown", onDocMouseDown, true);
@@ -41460,7 +40551,7 @@ ${c.trim()}
     document.addEventListener("mousedown", onDocMouseDown, true);
     overlayEl2.addEventListener("contextmenu", onReaderContextMenu, true);
     escKey = "bz-clipbook";
-    escHandle5 = escManager.register(escKey, {
+    escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
         if (M9.mobDetailOpen) {
@@ -41545,7 +40636,7 @@ ${c.trim()}
     syncDeskSearchClear();
     renderMood = "search";
     renderList();
-    renderRail2();
+    renderRail();
     renderMood = "mute";
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
@@ -41562,7 +40653,7 @@ ${c.trim()}
   function renderAllNow() {
     if (!M9.open) return;
     renderHeadIssue();
-    renderRail2();
+    renderRail();
     renderList();
     renderReader();
     renderMobToc();
@@ -41657,7 +40748,7 @@ ${c.trim()}
     if (!kw) return true;
     return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.body.toLowerCase().includes(kw) || a.url.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
-  function renderRail2() {
+  function renderRail() {
     renderRailNow();
     if (railListEl) motionRailRendered(railListEl, renderMood);
   }
@@ -42453,7 +41544,7 @@ ${c.trim()}
       if (res && res.changed && res.stats) M9.stats = res.stats;
       if (M9.open && !M9.mobDetailOpen) {
         renderList();
-        renderRail2();
+        renderRail();
       }
     }).catch(() => {
     });
@@ -43021,7 +42112,7 @@ ${c.trim()}
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle5, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -43068,7 +42159,7 @@ ${c.trim()}
       deskSearchEl = null;
       mobSearchEl = null;
       escKey = "";
-      escHandle5 = null;
+      escHandle4 = null;
       loading = false;
       dirty = false;
       loaded2 = false;
@@ -43092,7 +42183,7 @@ ${c.trim()}
         setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
         renderMood = "search";
         renderList();
-        renderRail2();
+        renderRail();
         renderMood = "mute";
       }, SEARCH_DEBOUNCE_MS2);
       panelResizeDetach = null;
@@ -54711,7 +53802,7 @@ ${n.content.slice(0, 2e3)}
           jump(el.dataset.path);
         }
       });
-      escHandle6 = escManager.register("bz-sb-weekly-modal", {
+      escHandle5 = escManager.register("bz-sb-weekly-modal", {
         isVisible: () => !!overlayEl3 && overlayEl3.style.display === "flex" && overlayEl3.isConnected,
         close: () => closeWeeklyDigest()
       });
@@ -54835,7 +53926,7 @@ ${n.content.slice(0, 2e3)}
       });
     }
   }
-  var overlayEl3, maskEl3, escHandle6, appRef2, renderSeq3, motionSeq, WEEKLY_UI_LIST_CAP;
+  var overlayEl3, maskEl3, escHandle5, appRef2, renderSeq3, motionSeq, WEEKLY_UI_LIST_CAP;
   var init_weekly_ui = __esm({
     "src/secondbrain/weekly-ui.ts"() {
       init_dom();
@@ -54851,7 +53942,7 @@ ${n.content.slice(0, 2e3)}
       init_motion9();
       overlayEl3 = null;
       maskEl3 = null;
-      escHandle6 = null;
+      escHandle5 = null;
       appRef2 = null;
       renderSeq3 = 0;
       motionSeq = 0;
@@ -59998,7 +59089,7 @@ ${n.content.slice(0, 2e3)}
           const component = new Component();
           this._previewComponent = component;
           let finished = false;
-          const render3 = MarkdownRenderer.render(app, text, el, path, component).then(
+          const render2 = MarkdownRenderer.render(app, text, el, path, component).then(
             () => {
               finished = true;
             },
@@ -60006,7 +59097,7 @@ ${n.content.slice(0, 2e3)}
               finished = true;
             }
           );
-          await Promise.race([render3, new Promise((r) => setTimeout(r, timeoutMs))]);
+          await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
           if (!finished) return { ok: false, el: document.createElement("div"), component };
           return { ok: true, el, component };
         }
@@ -61712,6 +60803,66 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/core/remote-asset.ts
+  function remotesFor(fileName) {
+    return [
+      `https://raw.githubusercontent.com/yeshimei/bz/master/manual/${fileName}`,
+      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/${fileName}`
+    ];
+  }
+  function assetVaultPath(app, fileName) {
+    var _a2;
+    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function downloadAsset(app, fileName, validate, label) {
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!validate(text)) {
+          lastErr = `${url} 返回内容不是${label}页`;
+          continue;
+        }
+        await app.vault.adapter.write(assetVaultPath(app, fileName), text);
+        return;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(assetVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ensureAssetReady(app, fileName, validate, label) {
+    let text = await readAsset(app, fileName);
+    if (!text) {
+      await downloadAsset(app, fileName, validate, label);
+      text = await readAsset(app, fileName);
+    }
+    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
+    return text;
+  }
+  var init_remote_asset = __esm({
+    "src/core/remote-asset.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/manual.ts
   var manual_exports = {};
   __export(manual_exports, {
@@ -61723,66 +60874,29 @@ ${n.content.slice(0, 2e3)}
     readManual: () => readManual
   });
   function manualVaultPath(app) {
-    var _a2;
-    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
-    return `${configDir}/plugins/bz/${MANUAL_FILENAME}`;
-  }
-  async function hasManual(app) {
-    try {
-      const p = manualVaultPath(app);
-      return await app.vault.adapter.exists(p);
-    } catch (e) {
-      return false;
-    }
+    return assetVaultPath(app, MANUAL_FILENAME);
   }
   function looksLikeManual(text) {
     const t = String(text || "");
     return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
   }
-  async function downloadManual(app) {
-    let lastErr = "";
-    for (const url of MANUAL_REMOTES) {
-      try {
-        const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (!looksLikeManual(text)) {
-          lastErr = `${url} 返回内容不是手册页`;
-          continue;
-        }
-        await app.vault.adapter.write(manualVaultPath(app), text);
-        return;
-      } catch (e) {
-        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
-      }
-    }
-    throw new Error(`手册下载失败：${lastErr}`);
+  function hasManual(app) {
+    return hasAsset(app, MANUAL_FILENAME);
   }
-  async function readManual(app) {
-    try {
-      if (!await hasManual(app)) return null;
-      return await app.vault.adapter.read(manualVaultPath(app));
-    } catch (e) {
-      return null;
-    }
+  function downloadManual(app) {
+    return downloadAsset(app, MANUAL_FILENAME, looksLikeManual, "手册");
   }
-  async function ensureManualReady(app) {
-    let text = await readManual(app);
-    if (!text) {
-      await downloadManual(app);
-      text = await readManual(app);
-    }
-    if (!text) throw new Error("手册下载后读取失败：插件目录写入异常");
-    return text;
+  function readManual(app) {
+    return readAsset(app, MANUAL_FILENAME);
   }
-  var MANUAL_FILENAME, MANUAL_REMOTES;
+  function ensureManualReady(app) {
+    return ensureAssetReady(app, MANUAL_FILENAME, looksLikeManual, "手册");
+  }
+  var MANUAL_FILENAME;
   var init_manual = __esm({
     "src/core/manual.ts"() {
-      init_fake_obsidian();
+      init_remote_asset();
       MANUAL_FILENAME = "bz-manual.html";
-      MANUAL_REMOTES = [
-        "https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-manual.html",
-        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-manual.html"
-      ];
     }
   });
 
@@ -61791,6 +60905,97 @@ ${n.content.slice(0, 2e3)}
   __export(manual_viewer_exports, {
     openManualViewer: () => openManualViewer,
     unloadManualViewer: () => unloadManualViewer
+  });
+  function isVisible() {
+    return !!overlay2 && overlay2.style.display === "flex";
+  }
+  function hide2() {
+    if (!overlay2) return;
+    overlay2.style.display = "none";
+    const frame2 = overlay2.querySelector(`#${FRAME_ID2} iframe`);
+    if (frame2) frame2.srcdoc = "";
+  }
+  function unloadManualViewer() {
+    escHandle6 == null ? void 0 : escHandle6.unregister();
+    escHandle6 = null;
+    overlay2 == null ? void 0 : overlay2.remove();
+    overlay2 = null;
+  }
+  function openManualViewer(html) {
+    var _a2;
+    if (!overlay2) build2();
+    topifyZ(overlay2);
+    overlay2.style.display = "flex";
+    trapPanelFocus((_a2 = overlay2.querySelector(`#${FRAME_ID2}`)) != null ? _a2 : overlay2);
+    escHandle6 == null ? void 0 : escHandle6.unregister();
+    escHandle6 = escManager.register("bz-manual-viewer", { isVisible, close: hide2 });
+    const frame2 = overlay2.querySelector(`#${FRAME_ID2} iframe`);
+    frame2.srcdoc = html;
+  }
+  function build2() {
+    const ov = document.createElement("div");
+    ov.id = OVERLAY_ID2;
+    ov.className = "bz-panel-overlay";
+    const frame2 = document.createElement("div");
+    frame2.id = FRAME_ID2;
+    frame2.className = "bz-panel-frame bz-sp-skin bz-manv-popup";
+    frame2.innerHTML = shellHtml();
+    mountIcons(frame2);
+    ov.appendChild(frame2);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) hide2();
+    });
+    document.body.appendChild(ov);
+    overlay2 = ov;
+  }
+  function shellHtml() {
+    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("book-open")}</div><span class="bz-panel-title">使用手册</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">包仔 · 完整使用说明</span><span class="bz-panel-head-sp"></span></div><div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+  }
+  var OVERLAY_ID2, FRAME_ID2, overlay2, escHandle6;
+  var init_manual_viewer = __esm({
+    "src/settings-panel/manual-viewer.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_focus_trap();
+      init_ui();
+      init_icons();
+      OVERLAY_ID2 = "bz-manual-overlay";
+      FRAME_ID2 = "bz-manual-popup";
+      overlay2 = null;
+      escHandle6 = null;
+    }
+  });
+
+  // src/core/changelog.ts
+  var changelog_exports = {};
+  __export(changelog_exports, {
+    CHANGELOG_FILENAME: () => CHANGELOG_FILENAME,
+    changelogVaultPath: () => changelogVaultPath,
+    ensureChangelogReady: () => ensureChangelogReady
+  });
+  function changelogVaultPath(app) {
+    return assetVaultPath(app, CHANGELOG_FILENAME);
+  }
+  function looksLikeChangelog(text) {
+    const t = String(text || "");
+    return (/<!DOCTYPE/i.test(t) || /<html/i.test(t)) && t.includes("const DATA =");
+  }
+  function ensureChangelogReady(app) {
+    return ensureAssetReady(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
+  }
+  var CHANGELOG_FILENAME;
+  var init_changelog = __esm({
+    "src/core/changelog.ts"() {
+      init_remote_asset();
+      CHANGELOG_FILENAME = "bz-changelog.html";
+    }
+  });
+
+  // src/settings-panel/changelog.ts
+  var changelog_exports2 = {};
+  __export(changelog_exports2, {
+    openChangelogModal: () => openChangelogModal,
+    unloadChangelog: () => unloadChangelog
   });
   function isVisible2() {
     return !!overlay3 && overlay3.style.display === "flex";
@@ -61801,20 +61006,20 @@ ${n.content.slice(0, 2e3)}
     const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
     if (frame2) frame2.srcdoc = "";
   }
-  function unloadManualViewer() {
+  function unloadChangelog() {
     escHandle7 == null ? void 0 : escHandle7.unregister();
     escHandle7 = null;
     overlay3 == null ? void 0 : overlay3.remove();
     overlay3 = null;
   }
-  function openManualViewer(html) {
+  function openChangelogModal(html) {
     var _a2;
     if (!overlay3) build3();
     topifyZ(overlay3);
     overlay3.style.display = "flex";
     trapPanelFocus((_a2 = overlay3.querySelector(`#${FRAME_ID3}`)) != null ? _a2 : overlay3);
     escHandle7 == null ? void 0 : escHandle7.unregister();
-    escHandle7 = escManager.register("bz-manual-viewer", { isVisible: isVisible2, close: hide3 });
+    escHandle7 = escManager.register("bz-changelog", { isVisible: isVisible2, close: hide3 });
     const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
     frame2.srcdoc = html;
   }
@@ -61824,7 +61029,7 @@ ${n.content.slice(0, 2e3)}
     ov.className = "bz-panel-overlay";
     const frame2 = document.createElement("div");
     frame2.id = FRAME_ID3;
-    frame2.className = "bz-panel-frame bz-sp-skin bz-manv-popup";
+    frame2.className = "bz-panel-frame bz-sp-skin bz-chg-popup";
     frame2.innerHTML = shellHtml2();
     mountIcons(frame2);
     ov.appendChild(frame2);
@@ -61835,18 +61040,18 @@ ${n.content.slice(0, 2e3)}
     overlay3 = ov;
   }
   function shellHtml2() {
-    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("book-open")}</div><span class="bz-panel-title">使用手册</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">包仔 · 完整使用说明</span><span class="bz-panel-head-sp"></span></div><div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("history")}</div><span class="bz-panel-title">更新日志</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">包仔 · 逐版本变更记录</span><span class="bz-panel-head-sp"></span></div><div class="bz-chg-body"><iframe class="bz-chg-frame" title="更新日志"></iframe></div>`;
   }
   var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7;
-  var init_manual_viewer = __esm({
-    "src/settings-panel/manual-viewer.ts"() {
+  var init_changelog2 = __esm({
+    "src/settings-panel/changelog.ts"() {
       init_z_order();
       init_esc_manager();
       init_focus_trap();
       init_ui();
       init_icons();
-      OVERLAY_ID3 = "bz-manual-overlay";
-      FRAME_ID3 = "bz-manual-popup";
+      OVERLAY_ID3 = "bz-changelog-overlay";
+      FRAME_ID3 = "bz-changelog-popup";
       overlay3 = null;
       escHandle7 = null;
     }
@@ -62440,7 +61645,6 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       init_render4();
       init_motion2();
-      init_changelog();
       SEARCH_DEBOUNCE_MS3 = 180;
       spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       schemaLoaders = {
@@ -62672,11 +61876,12 @@ ${n.content.slice(0, 2e3)}
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
-          var _a2, _b2;
+          var _a2;
           popup.classList.add("bz-sp-desk");
           popup.innerHTML = deskShellHtml();
           mountIcons(popup);
-          (_a2 = popup.querySelector("[data-sp-changelog]")) == null ? void 0 : _a2.addEventListener("click", () => openChangelogModal());
+          const chgBtn = popup.querySelector("[data-sp-changelog]");
+          chgBtn == null ? void 0 : chgBtn.addEventListener("click", () => void this.runChangelogOpen(chgBtn));
           const manBtn = popup.querySelector("[data-sp-manual]");
           manBtn == null ? void 0 : manBtn.addEventListener("click", () => void this.runManualOpen(manBtn));
           const nav = popup.querySelector(".bz-sp-nav");
@@ -62734,7 +61939,7 @@ ${n.content.slice(0, 2e3)}
           }, SEARCH_DEBOUNCE_MS3);
           searchIn.addEventListener("input", () => applySearch());
           searchIn.addEventListener("keydown", (e) => {
-            var _a3, _b3;
+            var _a3, _b2;
             const q3 = searchIn.value.trim();
             if (e.key === "Escape" && q3) {
               e.preventDefault();
@@ -62753,13 +61958,13 @@ ${n.content.slice(0, 2e3)}
               this.activeDomainId = first.id;
               renderNav2(searchIn.value);
               void this.renderDomain(pane, first);
-              (_b3 = (_a3 = this.navEl) == null ? void 0 : _a3.querySelector(`.bz-sp-nav-item[data-sp-domain="${first.id}"]`)) == null ? void 0 : _b3.scrollIntoView({ block: "nearest" });
+              (_b2 = (_a3 = this.navEl) == null ? void 0 : _a3.querySelector(`.bz-sp-nav-item[data-sp-domain="${first.id}"]`)) == null ? void 0 : _b2.scrollIntoView({ block: "nearest" });
             }
           });
           renderNav2("");
           motionBindNavFeel(nav);
           this.rerenderList = () => renderNav2(searchIn.value);
-          void this.renderDomain(pane, (_b2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _b2 : DOMAINS2[0]);
+          void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
           motionPanelIn(popup, this.mask);
           motionBindPressFeel(popup);
           motionEnsureDust(popup);
@@ -62786,6 +61991,29 @@ ${n.content.slice(0, 2e3)}
           } finally {
             btn.classList.remove("is-loading");
             if (ic2) setIcon(ic2, "book-open");
+          }
+        }
+        /* 更新日志一键（issue 474）：与手册同口径——日志不随构建分发，现场从 GitHub 下载
+         * manual/bz-changelog.html 再在 OB 内独立弹窗内嵌渲染（iframe srcdoc，与手册同范式）。
+         * 下载期间按钮图标换 loader + .is-loading 转圈防重入；失败不兜底（用户拍板：
+         * 不退回内置快照），core/changelog 的人话原因出 notice，弹窗不开。 */
+        async runChangelogOpen(btn) {
+          if (btn.classList.contains("is-loading")) return;
+          const ic2 = btn.querySelector(".bz-ic");
+          btn.classList.add("is-loading");
+          try {
+            const [core, modal] = await Promise.all([
+              Promise.resolve().then(() => (init_changelog(), changelog_exports)),
+              Promise.resolve().then(() => (init_changelog2(), changelog_exports2))
+            ]);
+            if (ic2) setIcon(ic2, "loader");
+            const html = await core.ensureChangelogReady(getApp());
+            modal.openChangelogModal(html);
+          } catch (e) {
+            notice((e == null ? void 0 : e.message) || "更新日志下载失败", "error");
+          } finally {
+            btn.classList.remove("is-loading");
+            if (ic2) setIcon(ic2, "history");
           }
         }
         /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
@@ -63111,7 +62339,7 @@ ${n.content.slice(0, 2e3)}
           mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
-          const render3 = (q3) => {
+          const render2 = (q3) => {
             const query = q3.trim();
             list.innerHTML = "";
             if (!query) {
@@ -63157,7 +62385,7 @@ ${n.content.slice(0, 2e3)}
             mountIcons(list);
             motionMobList(list);
           };
-          const applySearch = debounce(() => render3(searchIn.value), SEARCH_DEBOUNCE_MS3);
+          const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS3);
           searchIn.addEventListener("input", () => applySearch());
           searchIn.addEventListener("keydown", (e) => {
             const q3 = searchIn.value.trim();
@@ -63165,7 +62393,7 @@ ${n.content.slice(0, 2e3)}
               e.preventDefault();
               e.stopImmediatePropagation();
               searchIn.value = "";
-              render3("");
+              render2("");
               searchIn.focus();
               return;
             }
@@ -63191,12 +62419,12 @@ ${n.content.slice(0, 2e3)}
               }
             }
           });
-          render3("");
+          render2("");
           motionPanelIn(popup, this.mask);
           motionBindPressFeel(popup);
           motionEnsureDust(popup);
           this.rerenderList = () => {
-            if (!this.mobPushed) render3(searchIn.value);
+            if (!this.mobPushed) render2(searchIn.value);
           };
         }
         /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
@@ -63323,7 +62551,7 @@ ${n.content.slice(0, 2e3)}
     "src/settings-panel/index.ts"() {
       init_ui12();
       init_motion2();
-      init_changelog();
+      init_changelog2();
       init_manual_viewer();
       initialized7 = false;
       ui = null;
