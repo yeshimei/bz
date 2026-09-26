@@ -3,7 +3,7 @@
  *
  * 手册不随插件构建分发（main.js/styles.css 不含它），而是发布在
  * GitHub 仓库 manual/bz-manual.html；用户点「使用手册」按钮时
- * 现场拉取，写入**插件安装目录**（<configDir>/plugins/bz/），再打开。
+ * 现场拉取，写入**插件安装目录**（<configDir>/plugins/bz/）。
  *
  * 为什么放插件目录而不是数据目录：手册是程序资产、跟版本走，
  * 放数据目录会跟「数据存储路径」这个用户键纠缠。
@@ -12,19 +12,13 @@
  * 的第二通道）；两路都 404/失败才报错。内容校验取最宽口径（<!DOCTYPE
  * 或 <html 或含「包仔」），防把 CDN 的错误页写进文件。
  *
- * 打开（issue 473 重做）：绝对路径优先走 electron shell.openPath——
- * 专开本地文件、失败直接返回原因串（原 file:/// 走 openExternalUrl 的
- * openUrl 链，Windows 上 reject 只落 Uncaught (in promise)，用户看到
- * 0x2 却无提示）；openPath 不可用才落 openExternalUrl 的 file:/// 兜底。
- * 打开前先 hasManual 实查文件在不在，不在引导下载，不盲开。
- *
- * UI 消费口径（settings-panel footer 入口）：ensureManualOpen 一把梭——
- * 已下载直接打开；没有则先下载（调用方把按钮图标切成转圈 loading，
- * 完成/失败再复原，失败原因经本模块 Error 消息/notice 出人话）。
+ * 打开（issue 473 二次拍板）：**在 Obsidian 内独立弹窗打开**——
+ * ensureManualReady 确保手册在本地并返回文本，弹窗层（settings-panel
+ * manual-viewer）用 iframe srcdoc 内嵌渲染（327KB 单文件自包含，
+ * 不走 file:// 免系统开程序与路径转义整条坑链；原 shell.openPath /
+ * openExternalUrl file:/// 方案随「0x2 找不到文件」报障一并退役）。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
-import { notice } from './notice';
-import { openExternalUrl } from './utils';
 
 /** 手册文件名（写入插件目录时用；ASCII，避免 file:/// 转义麻烦） */
 export const MANUAL_FILENAME = 'bz-manual.html';
@@ -50,27 +44,6 @@ export async function hasManual(app: unknown): Promise<boolean> {
       .vault!.adapter!.exists!(p);
   } catch (e) {
     return false;
-  }
-}
-
-/** 手册绝对路径（桌面端 FileSystemAdapter 有 getFullPath；取不到返回 null） */
-function manualAbsPath(app: unknown): string | null {
-  try {
-    const adapter = (app as { vault?: { adapter?: { getFullPath?: (p: string) => string } } }).vault?.adapter;
-    return adapter?.getFullPath ? adapter.getFullPath(manualVaultPath(app)) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-/** electron 模块（桌面端 renderer 可 require；移动端/jsdom 无 → null） */
-function electronShell(): { openPath?: (p: string) => Promise<string> } | null {
-  try {
-    const req = (window as { require?: (id: string) => unknown }).require;
-    const electron = req ? (req('electron') as { shell?: { openPath?: (p: string) => Promise<string> } }) : null;
-    return electron?.shell ?? null;
-  } catch (e) {
-    return null;
   }
 }
 
@@ -104,44 +77,28 @@ export async function downloadManual(app: unknown): Promise<void> {
   throw new Error(`手册下载失败：${lastErr}`);
 }
 
-/**
- * 打开已下载的手册（系统默认程序）。未下载 → 引导下载（warn）；打不开 → 报原因（error）。
- * @returns 是否成功发起打开（调用方据此决定是否提示成功）
- */
-export async function openManual(app: unknown): Promise<boolean> {
-  if (!(await hasManual(app))) {
-    notice('手册尚未下载，请再点一次「使用手册」完成下载', 'warning');
-    return false;
+/** 读已下载的手册文本；未下载/读失败 → null（调用方决定引导下载） */
+export async function readManual(app: unknown): Promise<string | null> {
+  try {
+    if (!(await hasManual(app))) return null;
+    return await (app as { vault?: { adapter?: { read?: (p: string) => Promise<string> } } })
+      .vault!.adapter!.read!(manualVaultPath(app));
+  } catch (e) {
+    return null;
   }
-  const abs = manualAbsPath(app);
-  if (!abs) {
-    notice(`手册已存放在插件目录：${manualVaultPath(app)}`, 'info');
-    return false;
-  }
-  // 桌面首选 shell.openPath：专开本地文件，失败返回原因串（空串 = 成功）
-  const shell = electronShell();
-  if (shell?.openPath) {
-    try {
-      const err = await shell.openPath(abs);
-      if (!err) return true;
-      notice(`手册打开失败：${err}`, 'error');
-      return false;
-    } catch (e) {
-      notice(`手册打开失败：${(e as Error)?.message || String(e)}`, 'error');
-      return false;
-    }
-  }
-  // 兜底：file:/// 走 openExternalUrl 三级链（openUrl → shell.openExternal → window.open）。
-  // 反斜杠归一 + 去开头多余斜杠（POSIX 绝对路径以 / 开头，直拼会出 file://// 四斜杠）
-  openExternalUrl(app, `file:///${abs.replace(/\\/g, '/').replace(/^\/+/, '')}`);
-  return true;
 }
 
 /**
- * 确保手册在本地并打开（footer 入口一键口径）：已下载直接打开；没有则先下载。
- * 下载/打开失败都经本模块 notice 出人话原因；@returns 是否已成功打开。
+ * 确保手册在本地并返回文本（footer 入口一键口径，issue 473）：
+ * 本地没有 → 从 GitHub 下载；然后读出 HTML 交给弹窗层内嵌渲染。
+ * 下载失败抛人话 Error；本地读取异常视同未下载走重下（自愈陈旧半截文件）。
  */
-export async function ensureManualOpen(app: unknown): Promise<boolean> {
-  if (!(await hasManual(app))) await downloadManual(app);
-  return openManual(app);
+export async function ensureManualReady(app: unknown): Promise<string> {
+  let text = await readManual(app);
+  if (!text) {
+    await downloadManual(app);
+    text = await readManual(app);
+  }
+  if (!text) throw new Error('手册下载后读取失败：插件目录写入异常');
+  return text;
 }

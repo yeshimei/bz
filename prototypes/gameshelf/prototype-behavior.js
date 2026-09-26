@@ -1,5 +1,5 @@
-/* 源指纹 6cc2ad058eb4f7e8 · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4d61524004c48719 · 仓内输入 278 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -2940,9 +2940,9 @@ var BZW_gameshelf = (() => {
   });
 
   // src/core/esc-manager.ts
-  function registerPanelEsc(id, isVisible2, close) {
+  function registerPanelEsc(id, isVisible3, close) {
     if (panelEscHandles.has(id)) return;
-    panelEscHandles.set(id, escManager.register(id, { isVisible: isVisible2, close }));
+    panelEscHandles.set(id, escManager.register(id, { isVisible: isVisible3, close }));
   }
   function unregisterPanelEsc(id) {
     var _a2;
@@ -7879,7 +7879,7 @@ var BZW_gameshelf = (() => {
     el.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
-    let escHandle7 = null;
+    let escHandle8 = null;
     const labelOf = (v) => {
       const o = opts.options.find((x) => x.value === v);
       return o ? o.label : "";
@@ -7894,9 +7894,9 @@ var BZW_gameshelf = (() => {
         menu.remove();
         menu = null;
       }
-      if (escHandle7) {
-        escHandle7.unregister();
-        escHandle7 = null;
+      if (escHandle8) {
+        escHandle8.unregister();
+        escHandle8 = null;
       }
       el.classList.remove("open");
       el.setAttribute("aria-expanded", "false");
@@ -7956,7 +7956,7 @@ var BZW_gameshelf = (() => {
       if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
         m.classList.add("is-flip-up");
       }
-      escHandle7 = escManager.register("bz-ui-select", {
+      escHandle8 = escManager.register("bz-ui-select", {
         isVisible: () => !!menu && menu.isConnected,
         close: () => close()
       });
@@ -8354,7 +8354,7 @@ var BZW_gameshelf = (() => {
     let current2 = (_a2 = opts.value) != null ? _a2 : "";
     let items = opts.options;
     let layer = null;
-    let escHandle7 = null;
+    let escHandle8 = null;
     const onDocClick = (e) => {
       if (!layer) return;
       const t = e.target;
@@ -8403,7 +8403,7 @@ var BZW_gameshelf = (() => {
         m.classList.add("is-flip-up");
       }
       document.addEventListener("click", onDocClick);
-      escHandle7 = escManager.register("bz-ui-popover", {
+      escHandle8 = escManager.register("bz-ui-popover", {
         isVisible: () => !!layer && layer.isConnected,
         close: () => close()
       });
@@ -8413,9 +8413,9 @@ var BZW_gameshelf = (() => {
       layer.remove();
       layer = null;
       document.removeEventListener("click", onDocClick);
-      if (escHandle7) {
-        escHandle7.unregister();
-        escHandle7 = null;
+      if (escHandle8) {
+        escHandle8.unregister();
+        escHandle8 = null;
       }
     };
     const setValue = (id) => {
@@ -8474,7 +8474,7 @@ var BZW_gameshelf = (() => {
   function attachHelpTip(anchor, opts) {
     anchor.classList.add("bz-help-anchor");
     let layer = null;
-    let escHandle7 = null;
+    let escHandle8 = null;
     let pinned = false;
     let overAnchor = false;
     let overLayer = false;
@@ -8521,8 +8521,8 @@ var BZW_gameshelf = (() => {
       document.removeEventListener("pointerdown", onOutside, true);
       document.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", place);
-      escHandle7 == null ? void 0 : escHandle7.unregister();
-      escHandle7 = null;
+      escHandle8 == null ? void 0 : escHandle8.unregister();
+      escHandle8 = null;
       layer == null ? void 0 : layer.remove();
       layer = null;
       anchor.classList.remove("is-open");
@@ -8551,7 +8551,7 @@ var BZW_gameshelf = (() => {
       document.addEventListener("pointerdown", onOutside, true);
       document.addEventListener("scroll", onScroll, true);
       window.addEventListener("resize", place);
-      escHandle7 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
+      escHandle8 = escManager.register("bz-help-tip", { isVisible: isOpen, close });
       currentClose = close;
     }
     function scheduleClose() {
@@ -8793,20 +8793,20 @@ var BZW_gameshelf = (() => {
     mask.appendChild(foot);
     document.body.appendChild(mask);
     lockBodyScroll(true);
-    let escHandle7 = null;
+    let escHandle8 = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
-      escHandle7 == null ? void 0 : escHandle7.unregister();
-      if (currentEscHandle === escHandle7) currentEscHandle = null;
+      escHandle8 == null ? void 0 : escHandle8.unregister();
+      if (currentEscHandle === escHandle8) currentEscHandle = null;
       current = null;
       lockBodyScroll(false);
     }
-    escHandle7 = escManager.register("bz-lightbox", {
+    escHandle8 = escManager.register("bz-lightbox", {
       isVisible: () => mask.isConnected,
       close
     });
-    currentEscHandle = escHandle7;
+    currentEscHandle = escHandle8;
     mask.addEventListener("click", (e) => {
       if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
     });
@@ -8882,7 +8882,7 @@ var BZW_gameshelf = (() => {
     popup.appendChild(body);
     mask.appendChild(popup);
     let closed = false;
-    let escHandle7 = null;
+    let escHandle8 = null;
     const releaseTrap = focusEnabled ? trapFocus(popup) : null;
     function close() {
       var _a3;
@@ -8891,7 +8891,7 @@ var BZW_gameshelf = (() => {
       liveModals.delete(close);
       releaseTrap == null ? void 0 : releaseTrap();
       mask.remove();
-      escHandle7 == null ? void 0 : escHandle7.unregister();
+      escHandle8 == null ? void 0 : escHandle8.unregister();
       if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
         prevActive.focus();
       }
@@ -8904,7 +8904,7 @@ var BZW_gameshelf = (() => {
     mask.addEventListener("click", (e) => {
       if (e.target === mask) attemptClose();
     });
-    escHandle7 = escManager.register("bz-modal", {
+    escHandle8 = escManager.register("bz-modal", {
       isVisible: () => mask.isConnected,
       close: attemptClose
     });
@@ -9315,7 +9315,7 @@ var BZW_gameshelf = (() => {
       popup.innerHTML = parts.html;
       mask.appendChild(popup);
       document.body.appendChild(mask);
-      const escHandle7 = escManager.register("q3-confirm", {
+      const escHandle8 = escManager.register("q3-confirm", {
         isVisible: () => mask.isConnected,
         close: () => settle(void 0)
       });
@@ -9331,7 +9331,7 @@ var BZW_gameshelf = (() => {
         settled = true;
         if (activeSettle === settle) activeSettle = null;
         releaseFocusTrap();
-        escHandle7.unregister();
+        escHandle8.unregister();
         mask.remove();
         restoreFocus2();
         resolve2(v);
@@ -28616,8 +28616,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
   }
   function visibleDomains(order, hidden, domains = DOMAINS) {
-    const hide3 = new Set(hidden != null ? hidden : []);
-    return applyOrder(order, domains.filter((d) => !hide3.has(d.id)));
+    const hide4 = new Set(hidden != null ? hidden : []);
+    return applyOrder(order, domains.filter((d) => !hide4.has(d.id)));
   }
   function settingsMenuAction(id) {
     var _a2;
@@ -32534,13 +32534,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       enterLayer(c, 20 + i * 34, 14);
     });
   }
-  function playPanelExit(overlay3) {
+  function playPanelExit(overlay4) {
     const wrap = document.createElement("div");
     wrap.className = "bz-memo-exit";
     const mask = document.createElement("div");
     mask.className = "bz-memo-exit-mask";
     wrap.appendChild(mask);
-    const panel2 = overlay3.querySelector(".bz-memo-panel");
+    const panel2 = overlay4.querySelector(".bz-memo-panel");
     if (panel2) {
       const r = panel2.getBoundingClientRect();
       if (r.width >= 4 && r.height >= 4) {
@@ -32610,9 +32610,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function renderMainHead(items) {
-    const overlay3 = M7.overlay;
-    const titleEl = overlay3.querySelector("[data-memo-main-title]");
-    const countEl = overlay3.querySelector("[data-memo-main-count]");
+    const overlay4 = M7.overlay;
+    const titleEl = overlay4.querySelector("[data-memo-main-title]");
+    const countEl = overlay4.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
     titleEl.textContent = sceneLabel(M7.activeScene);
     const undone = items.filter((i) => !i.completed).length;
@@ -32934,9 +32934,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay3 = M7.overlay;
-    const card = (_a2 = overlay3 == null ? void 0 : overlay3.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
-    if (!overlay3 || !card) return;
+    const overlay4 = M7.overlay;
+    const card = (_a2 = overlay4 == null ? void 0 : overlay4.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
+    if (!overlay4 || !card) return;
     const cr = card.getBoundingClientRect();
     if (cr.width < 4 || cr.height < 4) return;
     const EASE_FLY = "cubic-bezier(.4, 0, .3, 1)";
@@ -32960,7 +32960,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }, 240);
       });
     });
-    overlay3.appendChild(card);
+    overlay4.appendChild(card);
     card.classList.add("bz-memo-rollcard");
     card.style.left = `${cr.left}px`;
     card.style.top = `${cr.top}px`;
@@ -32994,7 +32994,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           const g = document.createElement("div");
           g.className = "bz-memo-rollghost";
           g.style.cssText = `left:${cr.right - ROLL_CURL_W}px;top:${cr.top}px;width:${ROLL_CURL_W}px;height:${cr.height}px;opacity:${0.34 - i * 0.13};filter:blur(${(i + 1) * 1.5}px)`;
-          overlay3.appendChild(g);
+          overlay4.appendChild(g);
           const ga = safeAnimate(g, [
             { transform: `translate(0px, 0px) scaleY(1)`, opacity: 0.34 - i * 0.13 },
             { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleY(1.14)`, opacity: 0.22 - i * 0.13 },
@@ -33005,7 +33005,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         });
         window.setTimeout(() => {
           var _a3, _b2, _c;
-          const panel2 = overlay3.querySelector(".bz-memo-panel");
+          const panel2 = overlay4.querySelector(".bz-memo-panel");
           const bar = (_a3 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar]")) != null ? _a3 : null;
           if (bar) {
             bar.classList.remove("bz-memo-donebar-hit");
@@ -33017,7 +33017,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           rp.className = "bz-memo-ripple";
           rp.style.left = `${Math.round(target.x)}px`;
           rp.style.top = `${Math.round(target.y)}px`;
-          overlay3.appendChild(rp);
+          overlay4.appendChild(rp);
           window.setTimeout(() => rp.remove(), 620);
           const cntEl = (_b2 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt")) != null ? _b2 : null;
           const shown = Number(((_c = cntEl == null ? void 0 : cntEl.textContent) != null ? _c : "").trim());
@@ -35028,8 +35028,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     host.appendChild(d);
     return d;
   }
-  function motionPanelIn2(overlay3) {
-    const panel2 = overlay3.querySelector(".bz-bel-panel");
+  function motionPanelIn2(overlay4) {
+    const panel2 = overlay4.querySelector(".bz-bel-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
     panel2.style.transform = "";
@@ -35042,8 +35042,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       { duration: M9.base + 140, easing: E5.out }
     );
   }
-  function motionPanelOut2(overlay3, done) {
-    const panel2 = overlay3.querySelector(".bz-bel-panel");
+  function motionPanelOut2(overlay4, done) {
+    const panel2 = overlay4.querySelector(".bz-bel-panel");
     if (!panel2) {
       done();
       return;
@@ -36388,17 +36388,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     M10.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
     M10.year = "";
     M10.db = await loadDatabase();
-    const overlay3 = document.createElement("div");
-    overlay3.className = "bz-panel-overlay";
-    overlay3.innerHTML = panelHtml();
-    document.body.appendChild(overlay3);
-    topifyZ(overlay3);
-    M10.overlay = overlay3;
+    const overlay4 = document.createElement("div");
+    overlay4.className = "bz-panel-overlay";
+    overlay4.innerHTML = panelHtml();
+    document.body.appendChild(overlay4);
+    topifyZ(overlay4);
+    M10.overlay = overlay4;
     M10.renderFn = () => renderAll2();
-    mountIcons(overlay3);
-    motionPanelIn2(overlay3);
+    mountIcons(overlay4);
+    motionPanelIn2(overlay4);
     ensureBelongingsEsc();
-    trapPanelFocus((_a2 = overlay3.querySelector(".bz-bel-panel")) != null ? _a2 : overlay3);
+    trapPanelFocus((_a2 = overlay4.querySelector(".bz-bel-panel")) != null ? _a2 : overlay4);
     const moveDropActive = (wrap, delta) => {
       const items = [...wrap.querySelectorAll(".bz-bel-dropopt")];
       if (!items.length) return;
@@ -36439,7 +36439,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const onDropKey = (e) => {
       var _a3;
       const t = e.target;
-      const openWrap = overlay3.querySelector(".bz-bel-yearsel.is-open");
+      const openWrap = overlay4.querySelector(".bz-bel-yearsel.is-open");
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
         if (openWrap) {
           e.preventDefault();
@@ -36465,11 +36465,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     };
     document.addEventListener("click", onDocClick);
-    overlay3.addEventListener("keydown", onDropKey);
+    overlay4.addEventListener("keydown", onDropKey);
     dropDocClick = onDocClick;
-    overlay3.addEventListener("click", (e) => {
+    overlay4.addEventListener("click", (e) => {
       const t = e.target;
-      if (e.target === overlay3) {
+      if (e.target === overlay4) {
         closePanel();
         return;
       }
@@ -36506,11 +36506,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M10.overlay !== overlay3) return;
+        if (M10.overlay !== overlay4) return;
         M10.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
-      const clearBtn = overlay3.querySelector("[data-bel-search-clear]");
+      const clearBtn = overlay4.querySelector("[data-bel-search-clear]");
       const syncClear = () => {
         if (clearBtn) clearBtn.hidden = !inp.value;
       };
@@ -36536,8 +36536,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         inp.blur();
       });
     };
-    bindSearch(overlay3.querySelector("[data-bel-search]"));
-    const content = overlay3.querySelector("[data-bel-content]");
+    bindSearch(overlay4.querySelector("[data-bel-search]"));
+    const content = overlay4.querySelector("[data-bel-content]");
     content.addEventListener("click", (e) => {
       const cell = e.target.closest("[data-bel-id]");
       if (!cell) return;
@@ -39319,8 +39319,8 @@ ${bodyText.substring(0, 6e3)}`;
       }
     }
   }
-  function motionPanelIn3(overlay3, reopen) {
-    const frame2 = overlay3.querySelector(".bz-clip-frame");
+  function motionPanelIn3(overlay4, reopen) {
+    const frame2 = overlay4.querySelector(".bz-clip-frame");
     if (!frame2) return;
     try {
       panelAnim == null ? void 0 : panelAnim.cancel();
@@ -39328,12 +39328,12 @@ ${bodyText.substring(0, 6e3)}`;
     }
     panelAnim = null;
     cancelAnimsBy(frame2, [EXIT_ANIM_ID2]);
-    cancelAnimsBy(overlay3, [EXIT_MASK_ANIM_ID]);
+    cancelAnimsBy(overlay4, [EXIT_MASK_ANIM_ID]);
     frame2.style.opacity = "";
     frame2.style.transform = "";
     frame2.style.filter = "";
-    if (!overlay3.style.opacity) overlay3.style.opacity = "0";
-    waapi6(overlay3, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
+    if (!overlay4.style.opacity) overlay4.style.opacity = "0";
+    waapi6(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
     const a = waapi6(
       frame2,
       [
@@ -39346,19 +39346,19 @@ ${bodyText.substring(0, 6e3)}`;
       panelAnim = a;
       a.finished.then(() => {
         if (panelAnim === a) panelAnim = null;
-        overlay3.style.opacity = "";
+        overlay4.style.opacity = "";
         frame2.style.opacity = "";
         frame2.style.transform = "";
         frame2.style.filter = "";
       }).catch(() => {
-        overlay3.style.opacity = "";
+        overlay4.style.opacity = "";
       });
     } else {
-      overlay3.style.opacity = "";
+      overlay4.style.opacity = "";
     }
   }
-  function motionPanelOut3(overlay3, done) {
-    const frame2 = overlay3.querySelector(".bz-clip-frame");
+  function motionPanelOut3(overlay4, done) {
+    const frame2 = overlay4.querySelector(".bz-clip-frame");
     if (!frame2) {
       done();
       return;
@@ -39392,28 +39392,28 @@ ${bodyText.substring(0, 6e3)}`;
       { duration: M12.move + 40, easing: E6.out, fill: "forwards", id: EXIT_ANIM_ID2 }
     );
     maskAnim = waapi6(
-      overlay3,
+      overlay4,
       [{ opacity: 1 }, { opacity: 0 }],
       { duration: M12.move + 40, easing: E6.out, id: EXIT_MASK_ANIM_ID }
     );
     if (!a) {
-      overlay3.style.opacity = "";
+      overlay4.style.opacity = "";
       finish();
       return;
     }
     panelAnim = a;
     a.finished.then(() => {
-      overlay3.style.opacity = "";
+      overlay4.style.opacity = "";
       finish();
     }).catch(() => {
-      overlay3.style.opacity = "";
+      overlay4.style.opacity = "";
       finish();
     });
     after6(M12.move + 200, finish);
   }
-  function motionHeadRevealed(overlay3) {
+  function motionHeadRevealed(overlay4) {
     var _a2, _b2, _c;
-    const head = overlay3.querySelector(".bz-clip-desk .bz-panel-head");
+    const head = overlay4.querySelector(".bz-clip-desk .bz-panel-head");
     if (!head || head.offsetParent === null) return;
     const wire = head.querySelector("[data-clip-title-wire]");
     const strip = head.querySelector(".bz-clip-head-strip");
@@ -39782,11 +39782,11 @@ ${bodyText.substring(0, 6e3)}`;
     if (a) a.finished.then(remove).catch(remove);
     else after6(M12.impulse, remove);
   }
-  function motionReportIn(overlay3) {
-    const frame2 = overlay3.querySelector(".bz-clip-report-frame");
+  function motionReportIn(overlay4) {
+    const frame2 = overlay4.querySelector(".bz-clip-report-frame");
     if (!frame2) return;
-    if (!overlay3.style.opacity) overlay3.style.opacity = "0";
-    waapi6(overlay3, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
+    if (!overlay4.style.opacity) overlay4.style.opacity = "0";
+    waapi6(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M12.fast + 40, easing: E6.out });
     const a = waapi6(
       frame2,
       [
@@ -39796,7 +39796,7 @@ ${bodyText.substring(0, 6e3)}`;
       { duration: M12.base + 60, easing: E6.out }
     );
     const clear = () => {
-      overlay3.style.opacity = "";
+      overlay4.style.opacity = "";
     };
     if (a) a.finished.then(clear).catch(clear);
     else clear();
@@ -46382,15 +46382,15 @@ ${c.trim()}
       }
     }
   }
-  function motionPanelIn4(overlay3) {
-    const panel2 = overlay3.querySelector(".bz-fav-panel");
+  function motionPanelIn4(overlay4) {
+    const panel2 = overlay4.querySelector(".bz-fav-panel");
     if (!panel2) return;
     cancelAnimsBy2(panel2, [EXIT_ANIM_ID3]);
-    cancelAnimsBy2(overlay3, [EXIT_MASK_ANIM_ID2]);
+    cancelAnimsBy2(overlay4, [EXIT_MASK_ANIM_ID2]);
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi7(overlay3, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move + 40, easing: E7.out });
+    waapi7(overlay4, [{ opacity: 0 }, { opacity: 1 }], { duration: M13.move + 40, easing: E7.out });
     waapi7(
       panel2,
       [
@@ -46401,8 +46401,8 @@ ${c.trim()}
       { duration: 460, easing: E7.out }
     );
   }
-  function motionPanelOut4(overlay3, done) {
-    const panel2 = overlay3.querySelector(".bz-fav-panel");
+  function motionPanelOut4(overlay4, done) {
+    const panel2 = overlay4.querySelector(".bz-fav-panel");
     if (!panel2) {
       done();
       return;
@@ -46422,7 +46422,7 @@ ${c.trim()}
       done();
     };
     let maskAnim = waapi7(
-      overlay3,
+      overlay4,
       [{ opacity: 1 }, { opacity: 0 }],
       { duration: M13.fast + 40, easing: E7.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
     );
@@ -46441,12 +46441,12 @@ ${c.trim()}
     a.finished.then(finish).catch(finish);
     setTimeout(finish, M13.fast + 120);
   }
-  function motionRendered4(overlay3, boot) {
+  function motionRendered4(overlay4, boot) {
     var _a2, _b2;
     cancelPending6();
-    const panel2 = overlay3.querySelector(".bz-fav-panel");
+    const panel2 = overlay4.querySelector(".bz-fav-panel");
     if (!panel2) return;
-    const board = overlay3.querySelector("[data-fav-content]");
+    const board = overlay4.querySelector("[data-fav-content]");
     if (!boot) {
       if (board) ensureEmptyFloat(board);
       return;
@@ -47066,12 +47066,12 @@ ${c.trim()}
       closePanel3();
       return;
     }
-    const overlay3 = document.createElement("div");
-    overlay3.className = "bz-panel-overlay";
-    overlay3.innerHTML = panelHtml3(isMobileEnv());
-    document.body.appendChild(overlay3);
-    topifyZ(overlay3);
-    M14.overlay = overlay3;
+    const overlay4 = document.createElement("div");
+    overlay4.className = "bz-panel-overlay";
+    overlay4.innerHTML = panelHtml3(isMobileEnv());
+    document.body.appendChild(overlay4);
+    topifyZ(overlay4);
+    M14.overlay = overlay4;
     M14.renderFn = (reveal2) => renderAll4(reveal2);
     M14.stage = "placeholder";
     motionTeardown7();
@@ -47079,19 +47079,19 @@ ${c.trim()}
     M14.tag = openFilter.tag;
     M14.archived = openFilter.archived;
     M14.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
-    mountIcons(overlay3);
+    mountIcons(overlay4);
     ensureFavoritesEsc();
-    trapPanelFocus((_b2 = overlay3.querySelector(".bz-fav-panel")) != null ? _b2 : overlay3);
-    motionPanelIn4(overlay3);
+    trapPanelFocus((_b2 = overlay4.querySelector(".bz-fav-panel")) != null ? _b2 : overlay4);
+    motionPanelIn4(overlay4);
     window.__bzFavReplay = () => {
-      if (M14.overlay !== overlay3) return;
-      motionPanelIn4(overlay3);
+      if (M14.overlay !== overlay4) return;
+      motionPanelIn4(overlay4);
       M14.stage = "boot";
       renderAll4();
     };
-    overlay3.addEventListener("click", (e) => {
+    overlay4.addEventListener("click", (e) => {
       const t = e.target;
-      if (e.target === overlay3) {
+      if (e.target === overlay4) {
         closePanel3();
         return;
       }
@@ -47104,13 +47104,13 @@ ${c.trim()}
         return;
       }
     });
-    const stickers = overlay3.querySelector("[data-fav-tags]");
+    const stickers = overlay4.querySelector("[data-fav-tags]");
     stickers.addEventListener("click", (e) => {
       const b = e.target.closest("[data-fav-tag]");
       if (!b) return;
       applyTagFilter(b.dataset.favTag);
     });
-    const content = overlay3.querySelector("[data-fav-content]");
+    const content = overlay4.querySelector("[data-fav-content]");
     const openCardDefault = (it, card) => {
       if (card) motionCardPick(card);
       if (isMobileEnv()) {
@@ -57174,16 +57174,16 @@ ${n.content.slice(0, 2e3)}
       { duration: M16.base + 60, easing: E9.out }
     );
   }
-  function motionWeeklyShellIn(overlay3) {
-    if (!overlay3) return;
-    overlay3.style.opacity = "";
-    overlay3.style.transform = "";
-    overlay3.style.filter = "";
-    cancelExit(overlay3, WEEKLY_EXIT);
-    const base = baseTransformOf(overlay3);
+  function motionWeeklyShellIn(overlay4) {
+    if (!overlay4) return;
+    overlay4.style.opacity = "";
+    overlay4.style.transform = "";
+    overlay4.style.filter = "";
+    cancelExit(overlay4, WEEKLY_EXIT);
+    const base = baseTransformOf(overlay4);
     const withBase = (extra) => base ? `${base} ${extra}` : extra;
     waapi9(
-      overlay3,
+      overlay4,
       [
         { opacity: 0, transform: withBase("scale(.965) translateY(10px)"), filter: "blur(6px)" },
         { opacity: 1, transform: base || "none", filter: "blur(0px)" }
@@ -57271,15 +57271,15 @@ ${n.content.slice(0, 2e3)}
       });
     });
   }
-  function motionWeeklyOut(overlay3, done) {
-    if (!overlay3) {
+  function motionWeeklyOut(overlay4, done) {
+    if (!overlay4) {
       done();
       return;
     }
-    const base = baseTransformOf(overlay3);
+    const base = baseTransformOf(overlay4);
     const withBase = (extra) => base ? `${base} ${extra}` : extra;
     playExit(
-      overlay3,
+      overlay4,
       WEEKLY_EXIT,
       [
         { opacity: 1, transform: base || "none", filter: "blur(0px)" },
@@ -64372,10 +64372,10 @@ ${n.content.slice(0, 2e3)}
   __export(manual_exports, {
     MANUAL_FILENAME: () => MANUAL_FILENAME,
     downloadManual: () => downloadManual,
-    ensureManualOpen: () => ensureManualOpen,
+    ensureManualReady: () => ensureManualReady,
     hasManual: () => hasManual,
     manualVaultPath: () => manualVaultPath,
-    openManual: () => openManual
+    readManual: () => readManual
   });
   function manualVaultPath(app) {
     var _a2;
@@ -64388,25 +64388,6 @@ ${n.content.slice(0, 2e3)}
       return await app.vault.adapter.exists(p);
     } catch (e) {
       return false;
-    }
-  }
-  function manualAbsPath(app) {
-    var _a2;
-    try {
-      const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
-      return (adapter == null ? void 0 : adapter.getFullPath) ? adapter.getFullPath(manualVaultPath(app)) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  function electronShell() {
-    var _a2;
-    try {
-      const req = window.require;
-      const electron = req ? req("electron") : null;
-      return (_a2 = electron == null ? void 0 : electron.shell) != null ? _a2 : null;
-    } catch (e) {
-      return null;
     }
   }
   function looksLikeManual(text) {
@@ -64431,46 +64412,98 @@ ${n.content.slice(0, 2e3)}
     }
     throw new Error(`手册下载失败：${lastErr}`);
   }
-  async function openManual(app) {
-    if (!await hasManual(app)) {
-      notice("手册尚未下载，请再点一次「使用手册」完成下载", "warning");
-      return false;
+  async function readManual(app) {
+    try {
+      if (!await hasManual(app)) return null;
+      return await app.vault.adapter.read(manualVaultPath(app));
+    } catch (e) {
+      return null;
     }
-    const abs = manualAbsPath(app);
-    if (!abs) {
-      notice(`手册已存放在插件目录：${manualVaultPath(app)}`, "info");
-      return false;
-    }
-    const shell = electronShell();
-    if (shell == null ? void 0 : shell.openPath) {
-      try {
-        const err = await shell.openPath(abs);
-        if (!err) return true;
-        notice(`手册打开失败：${err}`, "error");
-        return false;
-      } catch (e) {
-        notice(`手册打开失败：${(e == null ? void 0 : e.message) || String(e)}`, "error");
-        return false;
-      }
-    }
-    openExternalUrl(app, `file:///${abs.replace(/\\/g, "/").replace(/^\/+/, "")}`);
-    return true;
   }
-  async function ensureManualOpen(app) {
-    if (!await hasManual(app)) await downloadManual(app);
-    return openManual(app);
+  async function ensureManualReady(app) {
+    let text = await readManual(app);
+    if (!text) {
+      await downloadManual(app);
+      text = await readManual(app);
+    }
+    if (!text) throw new Error("手册下载后读取失败：插件目录写入异常");
+    return text;
   }
   var MANUAL_FILENAME, MANUAL_REMOTES;
   var init_manual = __esm({
     "src/core/manual.ts"() {
       init_fake_obsidian();
-      init_notice();
-      init_utils();
       MANUAL_FILENAME = "bz-manual.html";
       MANUAL_REMOTES = [
         "https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-manual.html",
         "https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-manual.html"
       ];
+    }
+  });
+
+  // src/settings-panel/manual-viewer.ts
+  var manual_viewer_exports = {};
+  __export(manual_viewer_exports, {
+    openManualViewer: () => openManualViewer,
+    unloadManualViewer: () => unloadManualViewer
+  });
+  function isVisible2() {
+    return !!overlay3 && overlay3.style.display === "flex";
+  }
+  function hide3() {
+    if (!overlay3) return;
+    overlay3.style.display = "none";
+    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
+    if (frame2) frame2.srcdoc = "";
+  }
+  function unloadManualViewer() {
+    escHandle7 == null ? void 0 : escHandle7.unregister();
+    escHandle7 = null;
+    overlay3 == null ? void 0 : overlay3.remove();
+    overlay3 = null;
+  }
+  function openManualViewer(html) {
+    var _a2;
+    if (!overlay3) build3();
+    topifyZ(overlay3);
+    overlay3.style.display = "flex";
+    trapPanelFocus((_a2 = overlay3.querySelector(`#${FRAME_ID3}`)) != null ? _a2 : overlay3);
+    escHandle7 == null ? void 0 : escHandle7.unregister();
+    escHandle7 = escManager.register("bz-manual-viewer", { isVisible: isVisible2, close: hide3 });
+    const frame2 = overlay3.querySelector(`#${FRAME_ID3} iframe`);
+    frame2.srcdoc = html;
+  }
+  function build3() {
+    const ov = document.createElement("div");
+    ov.id = OVERLAY_ID3;
+    ov.className = "bz-panel-overlay";
+    const frame2 = document.createElement("div");
+    frame2.id = FRAME_ID3;
+    frame2.className = "bz-panel-frame bz-sp-skin bz-manv-popup";
+    frame2.innerHTML = shellHtml2();
+    mountIcons(frame2);
+    ov.appendChild(frame2);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) hide3();
+    });
+    document.body.appendChild(ov);
+    overlay3 = ov;
+  }
+  function shellHtml2() {
+    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("book-open")}</div><span class="bz-panel-title">使用手册</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">包仔 · 完整使用说明</span><span class="bz-panel-head-sp"></span></div><div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+  }
+  var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7;
+  var init_manual_viewer = __esm({
+    "src/settings-panel/manual-viewer.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_focus_trap();
+      init_ui();
+      init_icons();
+      OVERLAY_ID3 = "bz-manual-overlay";
+      FRAME_ID3 = "bz-manual-popup";
+      overlay3 = null;
+      escHandle7 = null;
     }
   });
 
@@ -65388,17 +65421,21 @@ ${n.content.slice(0, 2e3)}
         }
         /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
          * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
-         * 完成/失败 finally 复原 book-open；失败原因由 core/manual 的 Error 消息出人话 notice，
-         * 打不开（openPath 报因）同样落在 core/manual 的 notice 里——本层只兜下载抛错。 */
+         * 完成/失败 finally 复原 book-open；就绪后在 Obsidian 内独立弹窗内嵌渲染
+         * （manual-viewer，srcdoc 直灌，不走系统浏览器）；失败原因由 core/manual 的
+         * Error 消息出人话 notice——本层只兜下载/读取抛错。 */
         async runManualOpen(btn) {
           if (btn.classList.contains("is-loading")) return;
           const ic2 = btn.querySelector(".bz-ic");
           btn.classList.add("is-loading");
           try {
-            const core = await Promise.resolve().then(() => (init_manual(), manual_exports));
+            const [core, viewer] = await Promise.all([
+              Promise.resolve().then(() => (init_manual(), manual_exports)),
+              Promise.resolve().then(() => (init_manual_viewer(), manual_viewer_exports))
+            ]);
             if (ic2) setIcon(ic2, "loader");
-            const opened = await core.ensureManualOpen(getApp());
-            if (opened) notice("手册已打开", "success");
+            const html = await core.ensureManualReady(getApp());
+            viewer.openManualViewer(html);
           } catch (e) {
             notice((e == null ? void 0 : e.message) || "手册下载失败", "error");
           } finally {
@@ -65931,6 +65968,7 @@ ${n.content.slice(0, 2e3)}
   function unloadSettingsPanel() {
     motionTeardown2();
     unloadChangelog();
+    unloadManualViewer();
     if (ui) ui.cleanup();
     ui = null;
     initialized7 = false;
@@ -65941,6 +65979,7 @@ ${n.content.slice(0, 2e3)}
       init_ui13();
       init_motion();
       init_changelog();
+      init_manual_viewer();
       initialized7 = false;
       ui = null;
     }

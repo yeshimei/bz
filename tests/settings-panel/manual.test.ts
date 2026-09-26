@@ -1,8 +1,10 @@
 /**
- * 使用手册 footer 入口测试（issue 473，UI 层）
+ * 使用手册 footer 入口 + OB 内弹窗测试（issue 473，UI 层）
  * 链路：设置面板侧栏 footer 入口（data-sp-manual，更新日志上方）→ 点击一键
  * （无手册先下载再打开，已下载直接打开）→ 下载期 .is-loading + 图标换 loader
- * 转圈（防重入），完成/失败复原图标；失败原因经 notice 出人话。
+ * 转圈（防重入），完成/失败复原图标；就绪后 openManualViewer 在 OB 内独立
+ * 弹窗内嵌渲染（iframe srcdoc 直灌，无「浏览器打开」钮——用户拍板）；失败原因经
+ * notice 出人话。弹窗本体（ESC/遮罩/内容注入/卸载清理）随本文件覆盖。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -10,6 +12,7 @@ import { requestUrl } from 'obsidian';
 import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { SettingsPanelUI } from '../../src/settings-panel/ui';
 import { unloadSettingsPanel } from '../../src/settings-panel';
+import { openManualViewer, unloadManualViewer } from '../../src/settings-panel/manual-viewer';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -33,17 +36,8 @@ const STORED = '.obsidian/plugins/bz/bz-manual.html';
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 
-/** mock 桌面端 electron shell（openPath 空串=成功） */
-function mockElectron(openPath: (p: string) => Promise<string>): void {
-  (window as unknown as { require: (id: string) => unknown }).require = (id: string) => {
-    if (id === 'electron') return { shell: { openPath } };
-    throw new Error('module not found: ' + id);
-  };
-}
-
-describe('使用手册 footer 入口（issue 473）', () => {
+describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
   let vault: MockVault;
-  let openPath: ReturnType<typeof vi.fn<(p: string) => Promise<string>>>;
 
   beforeEach(() => {
     resetObsidianMocks();
@@ -51,11 +45,10 @@ describe('使用手册 footer 入口（issue 473）', () => {
     mobileFlag = false;
     document.body.innerHTML = '';
     unloadSettingsPanel();
+    unloadManualViewer();
     setSettingsProvider(() => ({}) as any);
     vault = new MockVault();
     setApp({ vault, workspace: {} } as any);
-    openPath = vi.fn<(p: string) => Promise<string>>(async () => '');
-    mockElectron(openPath);
     vi.mocked(requestUrl).mockReset();
     vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: MANUAL_HTML } as any);
   });
@@ -75,7 +68,7 @@ describe('使用手册 footer 入口（issue 473）', () => {
     expect(man.classList.contains('bz-sp-nav-item')).toBe(false);
   });
 
-  it('点击（未下载）→ 图标转 loading → 下载写入插件目录 → openPath 打开 → 图标复原', async () => {
+  it('点击（未下载）→ 图标转 loading → 下载写入插件目录 → OB 内弹窗 srcdoc 内嵌 → 图标复原', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     await tick();
@@ -85,10 +78,14 @@ describe('使用手册 footer 入口（issue 473）', () => {
     expect(man.classList.contains('is-loading')).toBe(true);
     await tick(50);
     expect(vault.files.get(STORED)).toBe(MANUAL_HTML);
-    expect(openPath).toHaveBeenCalledTimes(1);
-    expect(openPath.mock.calls[0][0]).toContain(STORED);
+    const popup = document.getElementById('bz-manual-popup')!;
+    expect(popup.classList.contains('bz-panel-frame')).toBe(true);
+    expect(popup.classList.contains('bz-sp-skin')).toBe(true);
+    const frame = popup.querySelector('iframe.bz-manv-frame') as HTMLIFrameElement;
+    expect(frame.srcdoc).toBe(MANUAL_HTML); // srcdoc 直灌，无 file:// 中转
     expect(man.classList.contains('is-loading')).toBe(false);
-    expect(hasNotice('手册已打开')).toBe(true);
+    // 用户拍板：不留「浏览器打开」类系统打开通道
+    expect(popup.textContent).not.toContain('浏览器');
   });
 
   it('点击（已下载）→ 直接打开不再下载；loading 期重复点击防重入', async () => {
@@ -101,11 +98,11 @@ describe('使用手册 footer 入口（issue 473）', () => {
     man.click(); // 途中的第二次点击应被吞掉
     await tick(50);
     expect(requestUrl).not.toHaveBeenCalled();
-    expect(openPath).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('bz-manual-popup')).toBeTruthy();
     expect(man.classList.contains('is-loading')).toBe(false);
   });
 
-  it('下载失败 → notice 出人话原因，loading 复原', async () => {
+  it('下载失败 → notice 出人话原因，loading 复原，不弹窗', async () => {
     vi.mocked(requestUrl).mockRejectedValue(new Error('getaddrinfo ENOTFOUND'));
     const ui = new SettingsPanelUI();
     ui.open();
@@ -115,6 +112,44 @@ describe('使用手册 footer 入口（issue 473）', () => {
     await tick(50);
     expect(man.classList.contains('is-loading')).toBe(false);
     expect(hasNotice(/手册下载失败.*ENOTFOUND/s)).toBe(true);
-    expect(openPath).not.toHaveBeenCalled();
+    expect(document.getElementById('bz-manual-popup')).toBeNull();
+  });
+
+  it('弹窗：ESC 关闭并清空 srcdoc；重开抬顶且注入新内容', () => {
+    openManualViewer(MANUAL_HTML);
+    const overlay = document.getElementById('bz-manual-overlay')!;
+    expect(overlay.style.display).toBe('flex');
+    const popup = document.getElementById('bz-manual-popup')!;
+    expect(popup.querySelector('.bz-panel-title')!.textContent).toBe('使用手册');
+    expect((popup.querySelector('iframe') as HTMLIFrameElement).srcdoc).toBe(MANUAL_HTML);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(overlay.style.display).toBe('none');
+    expect((popup.querySelector('iframe') as HTMLIFrameElement).srcdoc).toBe(''); // 释放渲染树
+
+    const v2 = MANUAL_HTML.replace('包仔手册', '包仔手册 v2');
+    openManualViewer(v2);
+    expect(overlay.style.display).toBe('flex');
+    expect((popup.querySelector('iframe') as HTMLIFrameElement).srcdoc).toBe(v2);
+  });
+
+  it('弹窗：遮罩点击关闭，弹窗本体点击不关', () => {
+    openManualViewer(MANUAL_HTML);
+    const overlay = document.getElementById('bz-manual-overlay')!;
+    (overlay.querySelector('.bz-manv-popup') as HTMLElement).click();
+    expect(overlay.style.display).toBe('flex');
+    overlay.click();
+    expect(overlay.style.display).toBe('none');
+  });
+
+  it('unloadManualViewer：拆弹窗（幂等），再开可重建', () => {
+    openManualViewer(MANUAL_HTML);
+    expect(document.getElementById('bz-manual-overlay')).toBeTruthy();
+    unloadManualViewer();
+    expect(document.getElementById('bz-manual-overlay')).toBeNull();
+    unloadManualViewer(); // 幂等
+    openManualViewer(MANUAL_HTML);
+    expect(document.getElementById('bz-manual-overlay')).toBeTruthy();
+    unloadManualViewer();
   });
 });

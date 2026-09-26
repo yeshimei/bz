@@ -542,17 +542,21 @@ export class SettingsPanelUI {
 
   /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
    * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
-   * 完成/失败 finally 复原 book-open；失败原因由 core/manual 的 Error 消息出人话 notice，
-   * 打不开（openPath 报因）同样落在 core/manual 的 notice 里——本层只兜下载抛错。 */
+   * 完成/失败 finally 复原 book-open；就绪后在 Obsidian 内独立弹窗内嵌渲染
+   * （manual-viewer，srcdoc 直灌，不走系统浏览器）；失败原因由 core/manual 的
+   * Error 消息出人话 notice——本层只兜下载/读取抛错。 */
   private async runManualOpen(btn: HTMLElement): Promise<void> {
     if (btn.classList.contains('is-loading')) return; // 下载中防重入
     const ic = btn.querySelector<HTMLElement>('.bz-ic');
     btn.classList.add('is-loading');
     try {
-      const core = await import('../core/manual');
+      const [core, viewer] = await Promise.all([
+        import('../core/manual'),
+        import('./manual-viewer'),
+      ]);
       if (ic) setIcon(ic, 'loader');
-      const opened = await core.ensureManualOpen(getApp());
-      if (opened) notice('手册已打开', 'success');
+      const html = await core.ensureManualReady(getApp());
+      viewer.openManualViewer(html);
     } catch (e) {
       notice((e as Error)?.message || '手册下载失败', 'error');
     } finally {
