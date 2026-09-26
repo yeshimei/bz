@@ -1,8 +1,11 @@
-# ADR-0202：归物本分类表——远端可下载的物品分类表 + 两次 Jev 归类
+# ADR-0203：归物本分类表——远端可下载的物品分类表 + 两次 Jev 归类
 
 - 日期：2026-09-27
 - 状态：已采纳（实现见 issue 478）
-- 相关：ADR-0201（**本票限定**：分类仍是自由字符串，表只是建议来源，不推翻其结论）/ ADR-0173（Jev 决策通道：Jev 优先、失败当次回落 LLM）/ ADR-0181 / ADR-0199（皮肤包远端分发——本票照其「源在 `src/`、出版到 `manual/`、清单带 sha256」范式）/ ADR-0200（文档资产新鲜度）/ ADR-0122（滚动条界面级单源）/ ADR-0002（依赖方向）/ `src/core/category-table.ts` / `src/belongings/catalog-suggest.ts` / `src/core/ui/catpicker.ts` / `src/settings-panel/ui.ts`
+- 相关：ADR-0201（**本票限定**：分类仍是自由字符串，表只是建议来源，不推翻其结论）/ ADR-0173（Jev 决策通道：Jev 优先、失败当次回落 LLM）/ ADR-0199（皮肤包远端分发——本票照其「源在 `src/`、出版到 `manual/`、清单带 sha256」范式）/ ADR-0200（文档资产新鲜度）/ **ADR-0202（本票修订其「通用页 = 三组」的构成：追加「数据资产」组）** / ADR-0122（滚动条界面级单源）/ ADR-0002（依赖方向）/ `src/core/category-table.ts` / `src/belongings/catalog-suggest.ts` / `src/core/ui/catpicker.ts` / `src/settings-panel/ui.ts`
+
+> **编号说明**：本 ADR 原拟 0202，落回主仓时发现并行会话（issue 479 通知组并回通用）已占 0202，按 `AGENTS.md`「并行会话占号前先查主仓最新号，防撞车重编号」让号改为 0203。
+
 
 ## 背景
 
