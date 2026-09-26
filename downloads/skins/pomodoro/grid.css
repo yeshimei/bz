@@ -1,0 +1,32 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/grid（方格纸）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/grid.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 3 方格纸 grid */
+    --pz-grid-l:#fdfcf8; --pz-grid-d:#22231f; --pz-grid-a:#4a4a46; --pz-grid-ad:#d7d3c8;
+    --pz-grid-fgd:#eceae2; --pz-grid-m:#6b6558; --pz-grid-md:#a8a49c; --pz-grid-f:#a8a294; --pz-grid-fd:#7d7a72;
+    --pz-grid-bd:#2c2e29; --pz-grid-bfd:#d6d3cc;
+}
+
+/* 3 方格纸 · grid（亮/暗各一道格纹线色，背景图唯一例外块） */
+    #pomodoro-popup.pomodoro-skin-grid {
+      --pz-bg:var(--pz-grid-l); --pz-accent:var(--pz-grid-a); --pz-muted:var(--pz-grid-m); --pz-faint:var(--pz-grid-f); --pz-on-accent:#fff;
+      --pz-grid-ln:rgba(23,21,18,.05);
+      background-image: linear-gradient(var(--pz-grid-ln) 1px, transparent 1px), linear-gradient(90deg, var(--pz-grid-ln) 1px, transparent 1px);
+      background-size: 16px 16px; background-position: -1px -1px;
+    }
+    .theme-dark #pomodoro-popup.pomodoro-skin-grid { --pz-bg:var(--pz-grid-d); --pz-accent:var(--pz-grid-ad); --pz-fg:var(--pz-grid-fgd); --pz-muted:var(--pz-grid-md); --pz-faint:var(--pz-grid-fd); --pz-btn:var(--pz-grid-bd); --pz-btn-fg:var(--pz-grid-bfd); --pz-on-accent:var(--pz-grid-d); --pz-line:rgba(255,255,255,.14); --pz-grid-ln:rgba(255,255,255,.05); }
+.bz-sp-mini.bz-sp-prev-pomo-grid {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-grid-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-grid-l) 0 50%, var(--pz-grid-d) 50% 100%);
+  border-radius: 3px;
+}

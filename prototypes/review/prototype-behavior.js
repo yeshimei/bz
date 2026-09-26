@@ -1,5 +1,5 @@
-/* 源指纹 5d2120fff8abfe05 · 仓内输入 268 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 1945a61aaaf84334 · 仓内输入 270 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -33476,6 +33476,629 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
+  // src/core/sha256.ts
+  function toBytes(text) {
+    return new TextEncoder().encode(text);
+  }
+  function normalizeEol(text) {
+    return String(text != null ? text : "").replace(/\r\n?/g, "\n");
+  }
+  function sha256Hex(text) {
+    const bytes = toBytes(String(text != null ? text : ""));
+    const dataLen = bytes.length;
+    const padded = new Uint8Array((dataLen + 8 >> 6) + 1 << 6);
+    padded.set(bytes);
+    padded[dataLen] = 128;
+    const bitLen = dataLen * 8;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
+    view.setUint32(padded.length - 4, bitLen >>> 0, false);
+    let h0 = 1779033703, h1 = 3144134277, h2 = 1013904242, h3 = 2773480762;
+    let h4 = 1359893119, h5 = 2600822924, h6 = 528734635, h7 = 1541459225;
+    const w = new Uint32Array(64);
+    const rotr = (x, n) => (x >>> n | x << 32 - n) >>> 0;
+    for (let off = 0; off < padded.length; off += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4, false);
+      for (let i = 16; i < 64; i++) {
+        const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3) >>> 0;
+        const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10) >>> 0;
+        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
+      }
+      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+      for (let i = 0; i < 64; i++) {
+        const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+        const ch = (e & f ^ ~e & g) >>> 0;
+        const t1 = h + S1 + ch + K[i] + w[i] >>> 0;
+        const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+        const maj = (a & b ^ a & c ^ b & c) >>> 0;
+        const t2 = S0 + maj >>> 0;
+        h = g;
+        g = f;
+        f = e;
+        e = d + t1 >>> 0;
+        d = c;
+        c = b;
+        b = a;
+        a = t1 + t2 >>> 0;
+      }
+      h0 = h0 + a >>> 0;
+      h1 = h1 + b >>> 0;
+      h2 = h2 + c >>> 0;
+      h3 = h3 + d >>> 0;
+      h4 = h4 + e >>> 0;
+      h5 = h5 + f >>> 0;
+      h6 = h6 + g >>> 0;
+      h7 = h7 + h >>> 0;
+    }
+    return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, "0")).join("");
+  }
+  function textSha256(text) {
+    return sha256Hex(normalizeEol(text));
+  }
+  var K;
+  var init_sha256 = __esm({
+    "src/core/sha256.ts"() {
+      K = new Uint32Array([
+        1116352408,
+        1899447441,
+        3049323471,
+        3921009573,
+        961987163,
+        1508970993,
+        2453635748,
+        2870763221,
+        3624381080,
+        310598401,
+        607225278,
+        1426881987,
+        1925078388,
+        2162078206,
+        2614888103,
+        3248222580,
+        3835390401,
+        4022224774,
+        264347078,
+        604807628,
+        770255983,
+        1249150122,
+        1555081692,
+        1996064986,
+        2554220882,
+        2821834349,
+        2952996808,
+        3210313671,
+        3336571891,
+        3584528711,
+        113926993,
+        338241895,
+        666307205,
+        773529912,
+        1294757372,
+        1396182291,
+        1695183700,
+        1986661051,
+        2177026350,
+        2456956037,
+        2730485921,
+        2820302411,
+        3259730800,
+        3345764771,
+        3516065817,
+        3600352804,
+        4094571909,
+        275423344,
+        430227734,
+        506948616,
+        659060556,
+        883997877,
+        958139571,
+        1322822218,
+        1537002063,
+        1747873779,
+        1955562222,
+        2024104815,
+        2227730452,
+        2361852424,
+        2428436474,
+        2756734187,
+        3204031479,
+        3329325298
+      ]);
+    }
+  });
+
+  // src/core/remote-asset.ts
+  function remotesFor(fileName) {
+    return [
+      `https://raw.githubusercontent.com/yeshimei/bz/master/downloads/${fileName}`,
+      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/${fileName}`
+    ];
+  }
+  function assetVaultPath(app, fileName) {
+    var _a2;
+    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  async function ensureDir(app, relPath) {
+    var _a2;
+    const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+    if (!(adapter == null ? void 0 : adapter.mkdir)) return;
+    const slash = relPath.lastIndexOf("/");
+    if (slash <= 0) return;
+    let cur = "";
+    for (const part of relPath.slice(0, slash).split("/")) {
+      cur = cur ? `${cur}/${part}` : part;
+      try {
+        await adapter.mkdir(assetVaultPath(app, cur));
+      } catch (e) {
+      }
+    }
+  }
+  async function fetchAssetText(fileName, validate, label, unit = "页") {
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!validate(text)) {
+          lastErr = `${url} 返回内容不是${label}${unit}`;
+          continue;
+        }
+        return text;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function writeAssetText(app, fileName, text) {
+    await ensureDir(app, fileName);
+    await app.vault.adapter.write(assetVaultPath(app, fileName), text);
+  }
+  async function ensureAssetWithHash(app, fileName, expected, label) {
+    const want = String(expected || "").toLowerCase();
+    const cached = await readAsset(app, fileName);
+    if (cached !== null && (!want || textSha256(cached) === want)) return cached;
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (want && textSha256(text) !== want) {
+          lastErr = `${url} 内容 sha256 不匹配（可能被篡改或版本错位）`;
+          continue;
+        }
+        await writeAssetText(app, fileName, text);
+        return text;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function downloadAsset(app, fileName, validate, label) {
+    const text = await fetchAssetText(fileName, validate, label, "页");
+    await writeAssetText(app, fileName, text);
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(assetVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ensureAssetReady(app, fileName, validate, label) {
+    let text = await readAsset(app, fileName);
+    if (!text) {
+      await downloadAsset(app, fileName, validate, label);
+      text = await readAsset(app, fileName);
+    }
+    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
+    return text;
+  }
+  async function refreshAsset(app, fileName, validate, label, expectedSha256) {
+    try {
+      const want = String(expectedSha256 || "").toLowerCase();
+      if (want) {
+        const local2 = await readAsset(app, fileName);
+        if (local2 !== null && textSha256(local2) === want) return null;
+      }
+      const text = await fetchAssetText(fileName, validate, label, "页");
+      const local = await readAsset(app, fileName);
+      if (local !== null && textSha256(text) === textSha256(local)) return null;
+      await writeAssetText(app, fileName, text);
+      return text;
+    } catch (e) {
+      return null;
+    }
+  }
+  var init_remote_asset = __esm({
+    "src/core/remote-asset.ts"() {
+      init_fake_obsidian();
+      init_sha256();
+    }
+  });
+
+  // src/core/download-manifest.ts
+  function normalizeSkinEntry(item) {
+    const e = item;
+    if (!e || typeof e.id !== "string" || !e.id) return null;
+    if (typeof e.domain !== "string" || !e.domain) return null;
+    if (typeof e.file !== "string" || !e.file) return null;
+    if (typeof e.sha256 !== "string" || !SHA_RE.test(e.sha256.toLowerCase())) return null;
+    return {
+      id: e.id,
+      domain: e.domain,
+      name: typeof e.name === "string" && e.name ? e.name : e.id,
+      file: e.file,
+      previewClass: typeof e.previewClass === "string" && e.previewClass ? e.previewClass : void 0,
+      since: typeof e.since === "string" && e.since ? e.since : void 0,
+      until: typeof e.until === "string" && e.until ? e.until : void 0,
+      sha256: e.sha256.toLowerCase()
+    };
+  }
+  function parseDownloadManifest(text) {
+    if (!text) return null;
+    let raw;
+    try {
+      raw = JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+    const obj = raw;
+    if (!obj || !Array.isArray(obj.docs) || !Array.isArray(obj.skins)) return null;
+    const docs = [];
+    for (const item of obj.docs) {
+      const e = item;
+      if (!e || typeof e.id !== "string" || !e.id) return null;
+      if (typeof e.name !== "string" || !e.name) return null;
+      if (typeof e.file !== "string" || !e.file) return null;
+      if (typeof e.sha256 !== "string" || !SHA_RE.test(e.sha256.toLowerCase())) return null;
+      docs.push({ id: e.id, name: e.name, file: e.file, sha256: e.sha256.toLowerCase() });
+    }
+    const skins = [];
+    for (const item of obj.skins) {
+      const e = normalizeSkinEntry(item);
+      if (!e) return null;
+      skins.push(e);
+    }
+    const version = typeof obj.version === "number" ? obj.version : 1;
+    return { version, docs, skins };
+  }
+  async function cachedManifest(app) {
+    return parseDownloadManifest(await readAsset(app, MANIFEST_FILE));
+  }
+  async function cachedSha256For(app, file) {
+    var _a2, _b2, _c, _d;
+    const m = await cachedManifest(app);
+    if (!m) return null;
+    return (_d = (_c = (_a2 = m.docs.find((d) => d.file === file)) == null ? void 0 : _a2.sha256) != null ? _c : (_b2 = m.skins.find((s) => s.file === file)) == null ? void 0 : _b2.sha256) != null ? _d : null;
+  }
+  async function refreshManifest(app) {
+    const previous = await cachedManifest(app);
+    const text = await fetchAssetText(
+      MANIFEST_REMOTE,
+      (t) => parseDownloadManifest(t) !== null,
+      "下载清单",
+      ""
+    );
+    const manifest = parseDownloadManifest(text);
+    await writeAssetText(app, MANIFEST_FILE, text);
+    return { manifest, previous };
+  }
+  async function docStatus(app, entry) {
+    const local = await readAsset(app, entry.file);
+    if (local === null) return "missing";
+    return textSha256(local) === entry.sha256 ? "ready" : "updated";
+  }
+  var MANIFEST_FILE, MANIFEST_REMOTE, SHA_RE;
+  var init_download_manifest = __esm({
+    "src/core/download-manifest.ts"() {
+      init_remote_asset();
+      init_sha256();
+      MANIFEST_FILE = "downloads/manifest.json";
+      MANIFEST_REMOTE = "manifest.json";
+      SHA_RE = /^[0-9a-f]{64}$/;
+    }
+  });
+
+  // src/core/skin-pack.ts
+  function versionAtLeast(ver, min) {
+    const pa = String(ver || "").split(".").map((x) => parseInt(x, 10) || 0);
+    const pb = String(min || "").split(".").map((x) => parseInt(x, 10) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const d = (pa[i] || 0) - (pb[i] || 0);
+      if (d !== 0) return d > 0;
+    }
+    return true;
+  }
+  function isInVersionRange(entry, pluginVersion) {
+    const ver = String(pluginVersion || "");
+    if (!ver) return false;
+    if (entry.since && !versionAtLeast(ver, entry.since)) return false;
+    if (entry.until && versionAtLeast(ver, entry.until)) return false;
+    return true;
+  }
+  function localSkinEntries(domain) {
+    var _a2;
+    return ((_a2 = ready.get(domain)) != null ? _a2 : []).map((r) => r.entry);
+  }
+  function isRemoteSkinReady(domain, id) {
+    var _a2;
+    const v = String(id != null ? id : "");
+    return !!v && ((_a2 = ready.get(domain)) != null ? _a2 : []).some((r) => r.entry.id === v);
+  }
+  function skinPackOptions(domain, builtins) {
+    const extra = localSkinEntries(domain).filter((e) => !builtins.some((b) => b.value === e.id)).map((e) => {
+      var _a2, _b2;
+      return { value: e.id, label: e.name, layout: (_b2 = (_a2 = builtins[0]) == null ? void 0 : _a2.layout) != null ? _b2 : "default", prevClass: e.previewClass };
+    });
+    return [...builtins, ...extra];
+  }
+  function injectSkinPackStyles(css) {
+    const existing = document.getElementById(STYLE_ID);
+    if (!css) {
+      if (existing) existing.remove();
+      return;
+    }
+    if (existing) {
+      existing.textContent = css;
+      return;
+    }
+    const el = document.createElement("style");
+    el.id = STYLE_ID;
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
+  async function readPluginVersion(app) {
+    var _a2;
+    try {
+      const text = await readAsset(app, "manifest.json");
+      return String(((_a2 = JSON.parse(text || "{}")) == null ? void 0 : _a2.version) || "");
+    } catch (e) {
+      return "";
+    }
+  }
+  function applyReady(items) {
+    var _a2;
+    ready = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const arr = (_a2 = ready.get(it.entry.domain)) != null ? _a2 : [];
+      arr.push(it);
+      ready.set(it.entry.domain, arr);
+    }
+    injectSkinPackStyles(items.map((it) => `/* bz skin-pack · ${it.entry.domain}/${it.entry.id} */
+${it.text}`).join("\n"));
+  }
+  async function readVerified(app, entries) {
+    const out = [];
+    for (const e of entries) {
+      const text = await readAsset(app, e.file);
+      if (text === null) continue;
+      if (textSha256(text) !== e.sha256) continue;
+      out.push({ entry: e, text });
+    }
+    return out;
+  }
+  function wantedEntries(manifest, pluginVersion) {
+    return manifest.skins.filter((e) => isInVersionRange(e, pluginVersion));
+  }
+  async function mapLimit(items, limit, fn) {
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+      for (; ; ) {
+        const i = cursor++;
+        if (i >= items.length) return;
+        await fn(items[i]);
+      }
+    });
+    await Promise.all(workers);
+  }
+  async function skinStatus(app, manifest) {
+    const pluginVersion = await readPluginVersion(app);
+    if (!pluginVersion) return { ready: 0, missing: 0, updated: 0 };
+    const wanted = wantedEntries(manifest, pluginVersion);
+    const verified = await readVerified(app, wanted);
+    const status = { ready: verified.length, missing: 0, updated: 0 };
+    const goodFiles = new Set(verified.map((r) => r.entry.file));
+    for (const e of wanted) {
+      if (goodFiles.has(e.file)) continue;
+      if (await readAsset(app, e.file) !== null) status.updated++;
+      else status.missing++;
+    }
+    return status;
+  }
+  async function downloadSkinUpdates(app, manifest) {
+    const result = { downloaded: 0, failed: 0 };
+    const pluginVersion = await readPluginVersion(app);
+    if (!pluginVersion) return result;
+    const wanted = wantedEntries(manifest, pluginVersion);
+    const verified = await readVerified(app, wanted);
+    const goodFiles = new Set(verified.map((r) => r.entry.file));
+    const todo = wanted.filter((e) => !goodFiles.has(e.file));
+    await mapLimit(todo, 4, async (e) => {
+      try {
+        await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+        result.downloaded++;
+      } catch (err) {
+        console.warn(`[bz] 皮肤「${e.domain}/${e.id}」下载失败:`, (err == null ? void 0 : err.message) || err);
+        result.failed++;
+      }
+    });
+    applyReady(await readVerified(app, wanted));
+    return result;
+  }
+  var ready, STYLE_ID;
+  var init_skin_pack = __esm({
+    "src/core/skin-pack.ts"() {
+      init_remote_asset();
+      init_sha256();
+      init_download_manifest();
+      ready = /* @__PURE__ */ new Map();
+      STYLE_ID = "bz-skin-pack-style";
+    }
+  });
+
+  // src/settings-panel/online-resources.ts
+  var online_resources_exports = {};
+  __export(online_resources_exports, {
+    onlineResourcesGroup: () => onlineResourcesGroup,
+    resetOnlineResourcesState: () => resetOnlineResourcesState
+  });
+  function resetOnlineResourcesState() {
+    lastCheckAt = 0;
+    checkFailed = false;
+  }
+  async function computeRowStates(app) {
+    var _a2, _b2;
+    const manifest = await cachedManifest(app);
+    const rows = [];
+    for (const fb of FALLBACK_ROWS) {
+      if (fb.id === "skins") {
+        rows.push({ id: fb.id, name: fb.name, doc: null, skin: manifest ? await skinStatus(app, manifest) : null });
+      } else {
+        const entry = (_a2 = manifest == null ? void 0 : manifest.docs.find((d) => d.id === fb.id)) != null ? _a2 : null;
+        rows.push({
+          id: fb.id,
+          name: (_b2 = entry == null ? void 0 : entry.name) != null ? _b2 : fb.name,
+          doc: entry ? await docStatus(app, entry) : null,
+          skin: null
+        });
+      }
+    }
+    return { rows, manifest };
+  }
+  function rowDesc(st) {
+    if (st.skin) {
+      const { ready: ready2, missing, updated } = st.skin;
+      if (updated > 0) return missing > 0 ? `${updated} 套皮肤有更新，另有 ${missing} 套未下载` : `${updated} 套皮肤有更新`;
+      if (missing > 0) return `${missing} 套皮肤可下载，已就绪 ${ready2} 套`;
+      return "全部皮肤已是最新";
+    }
+    if (st.doc === "missing") return "尚未下载，下载后即可查看";
+    if (st.doc === "updated") return "有新版本，可更新到最新";
+    if (st.doc === "ready") return "已是最新版本";
+    return "等待检查更新";
+  }
+  function rowButton(st, hasManifest) {
+    if (st.skin) {
+      const { missing, updated } = st.skin;
+      if (updated > 0) return { text: `更新 ${updated}`, disabled: false, action: true };
+      if (missing > 0) return { text: missing > 1 ? `下载 ${missing}` : "下载", disabled: false, action: true };
+      return { text: "已下载", disabled: true, action: false };
+    }
+    if (st.doc === "missing") return { text: "下载", disabled: false, action: true };
+    if (st.doc === "updated") return { text: "更新", disabled: false, action: true };
+    if (st.doc === "ready") return { text: "已下载", disabled: true, action: false };
+    return { text: "下载", disabled: !hasManifest ? true : false, action: false };
+  }
+  function onlineResourcesGroup() {
+    const row = {
+      type: "custom",
+      render: (body, ctx) => {
+        void renderGroupBody(body, ctx);
+      }
+    };
+    return { name: "在线资源", icon: "cloud-download", rows: [row] };
+  }
+  async function renderGroupBody(body, ctx) {
+    const app = getApp();
+    const { rows, manifest } = await computeRowStates(app);
+    body.empty();
+    body.className = "bz-sp-res";
+    if (!manifest || checkFailed) {
+      const fail = body.createDiv({ cls: manifest ? "bz-sp-res-stale" : "bz-sp-res-fail" });
+      fail.createSpan({
+        cls: "bz-sp-res-fail-text",
+        text: checkFailed ? "检查更新失败，可能是网络不可用" : "尚未检查更新"
+      });
+      const retry = fail.createEl("button", {
+        cls: "bz-btn bz-sp-res-fail-retry",
+        text: checkFailed ? "重试" : "检查更新"
+      });
+      retry.addEventListener("click", () => {
+        retry.disabled = true;
+        retry.textContent = "检查中";
+        void checkInBackground(body, ctx);
+      });
+    }
+    for (const st of rows) {
+      const line = body.createDiv({ cls: "bz-sp-res-row" });
+      const info = line.createDiv({ cls: "bz-sp-res-info" });
+      info.createDiv({ cls: "bz-sp-res-name", text: st.name });
+      info.createDiv({ cls: "bz-sp-res-desc", text: rowDesc(st) });
+      const btn = rowButton(st, !!manifest);
+      const el = line.createEl("button", { cls: "bz-btn bz-sp-res-btn", text: btn.text });
+      el.disabled = btn.disabled;
+      const isReady = st.skin ? st.skin.missing === 0 && st.skin.updated === 0 : st.doc === "ready";
+      if (isReady) el.classList.add("bz-sp-res-btn--done");
+      if (btn.action) {
+        el.addEventListener("click", () => {
+          el.disabled = true;
+          el.textContent = "下载中";
+          el.classList.add("is-loading");
+          void runAction(el, body, ctx, st, manifest);
+        });
+      }
+    }
+    if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) {
+      void checkInBackground(body, ctx);
+    }
+  }
+  async function checkInBackground(body, ctx) {
+    lastCheckAt = Date.now();
+    try {
+      await refreshManifest(getApp());
+      checkFailed = false;
+    } catch (e) {
+      checkFailed = true;
+      console.warn("[bz] 在线资源清单核对失败:", (e == null ? void 0 : e.message) || e);
+    }
+    await renderGroupBody(body, ctx);
+  }
+  async function runAction(el, body, ctx, st, manifest) {
+    const app = getApp();
+    try {
+      if (st.skin) {
+        const r = await downloadSkinUpdates(app, manifest);
+        if (r.failed > 0) notice(`${r.failed} 套皮肤下载失败，可稍后重试`, "error");
+      } else {
+        const entry = manifest.docs.find((d) => d.id === st.id);
+        if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+      }
+    } catch (e) {
+      notice(e instanceof Error ? e.message : String(e), "error");
+    } finally {
+      await renderGroupBody(body, ctx);
+    }
+  }
+  var FALLBACK_ROWS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed;
+  var init_online_resources = __esm({
+    "src/settings-panel/online-resources.ts"() {
+      init_app();
+      init_notice();
+      init_download_manifest();
+      init_skin_pack();
+      init_remote_asset();
+      FALLBACK_ROWS = [
+        { id: "changelog", name: "更新日志" },
+        { id: "manual", name: "使用手册" },
+        { id: "skins", name: "皮肤" }
+      ];
+      CHECK_THROTTLE_MS = 6e4;
+      lastCheckAt = 0;
+      checkFailed = false;
+    }
+  });
+
   // src/home/shared.ts
   function applyOrder(order, domains = DOMAINS) {
     if (!order || !order.length) return domains;
@@ -34313,257 +34936,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     "src/diary/settings.ts"() {
       init_settings_provider();
       init_config2();
-    }
-  });
-
-  // src/core/sha256.ts
-  function toBytes(text) {
-    return new TextEncoder().encode(text);
-  }
-  function normalizeEol(text) {
-    return String(text != null ? text : "").replace(/\r\n?/g, "\n");
-  }
-  function sha256Hex(text) {
-    const bytes = toBytes(String(text != null ? text : ""));
-    const dataLen = bytes.length;
-    const padded = new Uint8Array((dataLen + 8 >> 6) + 1 << 6);
-    padded.set(bytes);
-    padded[dataLen] = 128;
-    const bitLen = dataLen * 8;
-    const view = new DataView(padded.buffer);
-    view.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
-    view.setUint32(padded.length - 4, bitLen >>> 0, false);
-    let h0 = 1779033703, h1 = 3144134277, h2 = 1013904242, h3 = 2773480762;
-    let h4 = 1359893119, h5 = 2600822924, h6 = 528734635, h7 = 1541459225;
-    const w = new Uint32Array(64);
-    const rotr = (x, n) => (x >>> n | x << 32 - n) >>> 0;
-    for (let off = 0; off < padded.length; off += 64) {
-      for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4, false);
-      for (let i = 16; i < 64; i++) {
-        const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3) >>> 0;
-        const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10) >>> 0;
-        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
-      }
-      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
-      for (let i = 0; i < 64; i++) {
-        const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
-        const ch = (e & f ^ ~e & g) >>> 0;
-        const t1 = h + S1 + ch + K[i] + w[i] >>> 0;
-        const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
-        const maj = (a & b ^ a & c ^ b & c) >>> 0;
-        const t2 = S0 + maj >>> 0;
-        h = g;
-        g = f;
-        f = e;
-        e = d + t1 >>> 0;
-        d = c;
-        c = b;
-        b = a;
-        a = t1 + t2 >>> 0;
-      }
-      h0 = h0 + a >>> 0;
-      h1 = h1 + b >>> 0;
-      h2 = h2 + c >>> 0;
-      h3 = h3 + d >>> 0;
-      h4 = h4 + e >>> 0;
-      h5 = h5 + f >>> 0;
-      h6 = h6 + g >>> 0;
-      h7 = h7 + h >>> 0;
-    }
-    return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, "0")).join("");
-  }
-  function textSha256(text) {
-    return sha256Hex(normalizeEol(text));
-  }
-  var K;
-  var init_sha256 = __esm({
-    "src/core/sha256.ts"() {
-      K = new Uint32Array([
-        1116352408,
-        1899447441,
-        3049323471,
-        3921009573,
-        961987163,
-        1508970993,
-        2453635748,
-        2870763221,
-        3624381080,
-        310598401,
-        607225278,
-        1426881987,
-        1925078388,
-        2162078206,
-        2614888103,
-        3248222580,
-        3835390401,
-        4022224774,
-        264347078,
-        604807628,
-        770255983,
-        1249150122,
-        1555081692,
-        1996064986,
-        2554220882,
-        2821834349,
-        2952996808,
-        3210313671,
-        3336571891,
-        3584528711,
-        113926993,
-        338241895,
-        666307205,
-        773529912,
-        1294757372,
-        1396182291,
-        1695183700,
-        1986661051,
-        2177026350,
-        2456956037,
-        2730485921,
-        2820302411,
-        3259730800,
-        3345764771,
-        3516065817,
-        3600352804,
-        4094571909,
-        275423344,
-        430227734,
-        506948616,
-        659060556,
-        883997877,
-        958139571,
-        1322822218,
-        1537002063,
-        1747873779,
-        1955562222,
-        2024104815,
-        2227730452,
-        2361852424,
-        2428436474,
-        2756734187,
-        3204031479,
-        3329325298
-      ]);
-    }
-  });
-
-  // src/core/remote-asset.ts
-  function remotesFor(fileName) {
-    return [
-      `https://raw.githubusercontent.com/yeshimei/bz/master/manual/${fileName}`,
-      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/${fileName}`
-    ];
-  }
-  function assetVaultPath(app, fileName) {
-    var _a2;
-    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
-    return `${configDir}/plugins/bz/${fileName}`;
-  }
-  async function ensureDir(app, relPath) {
-    var _a2;
-    const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
-    if (!(adapter == null ? void 0 : adapter.mkdir)) return;
-    const slash = relPath.lastIndexOf("/");
-    if (slash <= 0) return;
-    let cur = "";
-    for (const part of relPath.slice(0, slash).split("/")) {
-      cur = cur ? `${cur}/${part}` : part;
-      try {
-        await adapter.mkdir(assetVaultPath(app, cur));
-      } catch (e) {
-      }
-    }
-  }
-  async function fetchAssetText(fileName, validate, label, unit = "页") {
-    let lastErr = "";
-    for (const url of remotesFor(fileName)) {
-      try {
-        const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (!validate(text)) {
-          lastErr = `${url} 返回内容不是${label}${unit}`;
-          continue;
-        }
-        return text;
-      } catch (e) {
-        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
-      }
-    }
-    throw new Error(`${label}下载失败：${lastErr}`);
-  }
-  async function writeAssetText(app, fileName, text) {
-    await ensureDir(app, fileName);
-    await app.vault.adapter.write(assetVaultPath(app, fileName), text);
-  }
-  async function hasAsset(app, fileName) {
-    try {
-      return await app.vault.adapter.exists(assetVaultPath(app, fileName));
-    } catch (e) {
-      return false;
-    }
-  }
-  async function downloadAsset(app, fileName, validate, label) {
-    const text = await fetchAssetText(fileName, validate, label, "页");
-    await writeAssetText(app, fileName, text);
-  }
-  async function readAsset(app, fileName) {
-    try {
-      if (!await hasAsset(app, fileName)) return null;
-      return await app.vault.adapter.read(assetVaultPath(app, fileName));
-    } catch (e) {
-      return null;
-    }
-  }
-  async function ensureAssetReady(app, fileName, validate, label) {
-    let text = await readAsset(app, fileName);
-    if (!text) {
-      await downloadAsset(app, fileName, validate, label);
-      text = await readAsset(app, fileName);
-    }
-    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
-    return text;
-  }
-  async function refreshAsset(app, fileName, validate, label) {
-    try {
-      const text = await fetchAssetText(fileName, validate, label, "页");
-      const local = await readAsset(app, fileName);
-      if (local !== null && textSha256(text) === textSha256(local)) return null;
-      await writeAssetText(app, fileName, text);
-      return text;
-    } catch (e) {
-      return null;
-    }
-  }
-  var init_remote_asset = __esm({
-    "src/core/remote-asset.ts"() {
-      init_fake_obsidian();
-      init_sha256();
-    }
-  });
-
-  // src/core/skin-pack.ts
-  function localSkinEntries(domain) {
-    var _a2;
-    return ((_a2 = ready.get(domain)) != null ? _a2 : []).map((r) => r.entry);
-  }
-  function isRemoteSkinReady(domain, id) {
-    var _a2;
-    const v = String(id != null ? id : "");
-    return !!v && ((_a2 = ready.get(domain)) != null ? _a2 : []).some((r) => r.entry.id === v);
-  }
-  function skinPackOptions(domain, builtins) {
-    const extra = localSkinEntries(domain).filter((e) => !builtins.some((b) => b.value === e.id)).map((e) => {
-      var _a2, _b2;
-      return { value: e.id, label: e.name, layout: (_b2 = (_a2 = builtins[0]) == null ? void 0 : _a2.layout) != null ? _b2 : "default", prevClass: e.previewClass };
-    });
-    return [...builtins, ...extra];
-  }
-  var ready;
-  var init_skin_pack = __esm({
-    "src/core/skin-pack.ts"() {
-      init_remote_asset();
-      init_sha256();
-      ready = /* @__PURE__ */ new Map();
     }
   });
 
@@ -51857,7 +52229,7 @@ ${c.trim()}
   function itemById2(id) {
     return M13.items.find((i) => i.id === id);
   }
-  function runAction(it, spec) {
+  function runAction2(it, spec) {
     const rawUrl = (it.url || "").trim();
     if (spec.act === "open") {
       openExternal(normalizeUrl(rawUrl));
@@ -51889,7 +52261,7 @@ ${c.trim()}
       icon: a.icon,
       label: a.label,
       kind: a.danger ? "danger" : void 0,
-      onClick: () => runAction(it, a)
+      onClick: () => runAction2(it, a)
     }));
   }
   function openRowMenuAt2(it, x, y) {
@@ -55346,7 +55718,7 @@ GitHub 仓库：${ghInfo.title}
   function genNoteId() {
     return "enc-" + Date.now() + "-" + randToken(6);
   }
-  async function mapLimit(items, limit, fn) {
+  async function mapLimit2(items, limit, fn) {
     const out = new Array(items.length);
     let next = 0;
     const workers = [];
@@ -56053,7 +56425,7 @@ GitHub 仓库：${ghInfo.title}
           let manifestSaved = false;
           const skippedStale = [];
           try {
-            const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
+            const results = await mapLimit2(input.attachments, BLOB_CONCURRENCY, async (a) => {
               const fp = await fingerprintOf(a.data);
               const enc = await CryptoService.encrypt(a.data, password);
               const blobRef = flatName();
@@ -56182,7 +56554,7 @@ GitHub 仓库：${ghInfo.title}
           const conflicts = [];
           const total = note.attachments.length + 1;
           let done = 0;
-          const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) => {
+          const plainAttachments = await mapLimit2(note.attachments, BLOB_CONCURRENCY, async (a) => {
             if (a.keptShared) {
               done += 1;
               onProgress == null ? void 0 : onProgress({ done, total, current: a.path });
@@ -56294,7 +56666,7 @@ GitHub 仓库：${ghInfo.title}
             if (target !== note.path) note.path = target;
           }
           const conflicts = [];
-          const plainAttachments = await mapLimit(
+          const plainAttachments = await mapLimit2(
             note.attachments,
             BLOB_CONCURRENCY,
             async (a) => a.keptShared ? null : this.prepareRestoreAttachment(a)
@@ -61581,13 +61953,14 @@ GitHub 仓库：${ghInfo.title}
   function ensureManualReady(app) {
     return ensureAssetReady(app, MANUAL_FILENAME, looksLikeManual, "手册");
   }
-  function refreshManual(app) {
-    return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, "手册");
+  async function refreshManual(app) {
+    return refreshAsset(app, MANUAL_FILENAME, looksLikeManual, "手册", await cachedSha256For(app, MANUAL_FILENAME));
   }
   var MANUAL_FILENAME;
   var init_manual = __esm({
     "src/core/manual.ts"() {
       init_remote_asset();
+      init_download_manifest();
       MANUAL_FILENAME = "bz-manual.html";
     }
   });
@@ -61683,13 +62056,14 @@ GitHub 仓库：${ghInfo.title}
   function ensureChangelogReady(app) {
     return ensureAssetReady(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
   }
-  function refreshChangelog(app) {
-    return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志");
+  async function refreshChangelog(app) {
+    return refreshAsset(app, CHANGELOG_FILENAME, looksLikeChangelog, "更新日志", await cachedSha256For(app, CHANGELOG_FILENAME));
   }
   var CHANGELOG_FILENAME;
   var init_changelog = __esm({
     "src/core/changelog.ts"() {
       init_remote_asset();
+      init_download_manifest();
       CHANGELOG_FILENAME = "bz-changelog.html";
     }
   });
@@ -62377,6 +62751,8 @@ GitHub 仓库：${ghInfo.title}
             desc: "各域数据文件的只读体检",
             onClick: () => void openDataCheckup2(getApp())
           });
+          const { onlineResourcesGroup: onlineResourcesGroup2 } = await Promise.resolve().then(() => (init_online_resources(), online_resources_exports));
+          schema.groups.push(onlineResourcesGroup2());
           return schema;
         },
         ai: async () => (await Promise.resolve().then(() => (init_settings_main_schema(), settings_main_schema_exports))).aiSettingsSchema(),

@@ -1,5 +1,5 @@
-/* 源指纹 3afe7261aed37eaa · 仓内输入 28 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 6bf4da2512805440 · 仓内输入 29 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4846,6 +4846,14 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/core/download-manifest.ts
+  var init_download_manifest = __esm({
+    "src/core/download-manifest.ts"() {
+      init_remote_asset();
+      init_sha256();
+    }
+  });
+
   // src/core/skin-pack.ts
   function isRemoteSkinReady(domain, id) {
     var _a;
@@ -4857,6 +4865,7 @@ var BZW_pomodoro = (() => {
     "src/core/skin-pack.ts"() {
       init_remote_asset();
       init_sha256();
+      init_download_manifest();
       ready = /* @__PURE__ */ new Map();
     }
   });

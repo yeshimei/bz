@@ -1,0 +1,53 @@
+/* ============================================================
+ * bz 皮肤包 · bookshelf/velvet（丝绒剧院）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/bookshelf/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/bookshelf/velvet.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+.bz-bs-skin-velvet {
+  --bz-surface-0: #2c0e18; --bz-surface-1: #33121d; --bz-surface-2: #241018; --bz-surface-3: #331722; --bz-surface-4: #401d2b;
+  --bz-surface-hover: #331722; --bz-surface-active: #401d2b;
+  --bz-text-1: #ecd9bc; --bz-text-2: #c09a78; --bz-text-3: #8a6a58; --bz-text-invert: #241018;
+  --bz-brand: #d9b45f; --bz-brand-hover: #e6c67c; --bz-brand-soft: rgba(217, 180, 95, 0.15); --bz-on-brand: #241018;
+  --bz-border: rgba(217, 180, 95, 0.3); --bz-border-strong: rgba(217, 180, 95, 0.5); --bz-border-hover: rgba(217, 180, 95, 0.7);
+  --bsw-wall: #3a1420; --bsw-wall-dark: #2c0e18; --bsw-shelf: #33121d; --bsw-brass: #d9b45f;
+  --bsw-paper: #241018; --bsw-ink: #ecd9bc; --bsw-muted: #a87e6e; --bsw-line: rgba(217, 180, 95, 0.3);
+  --bsw-accent: #d9b45f; --bsw-reading: #d9b45f;
+}
+
+/* 丝绒剧院：酒红丝绒竖条纹墙，金边深匾，深底金边书脊 */
+.bz-bs-skin-velvet .bz-bs-plaque { background: #2c0e18; border-color: #d9b45f; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5); }
+.bz-bs-skin-velvet .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 6px, transparent 6px 14px), linear-gradient(180deg, #451826, #2c0e18); }
+.bz-bs-skin-velvet .bz-bs-zone { border-image: linear-gradient(180deg, #5c2436, #33121d) 1; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5); }
+.bz-bs-skin-velvet .bz-bs-bookend { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
+.bz-bs-skin-velvet .bz-bs-bookend::before { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
+.bz-bs-skin-velvet .bz-bs-spine { background: linear-gradient(90deg, #241018, #331722 60%, #241018); color: #e8c987; border-left: 2px solid rgba(217, 180, 95, 0.5); border-right: 2px solid rgba(217, 180, 95, 0.5); }
+.bz-bs-skin-velvet .bz-bs-spine::before, .bz-bs-skin-velvet .bz-bs-spine::after { background: rgba(217, 180, 95, 0.35); }
+.bz-bs-skin-velvet .bz-bs-spine.unread { filter: brightness(0.55); }
+.bz-bs-skin-velvet .bz-bs-wallnote, .bz-bs-skin-velvet .bz-bs-hint { color: #a87e6e; }
+.bz-bs-skin-velvet .bz-bs-seg button { color: #d9b45f; }
+.bz-bs-skin-velvet .bz-bs-seg button.on { background: #d9b45f; color: #2c0e18; }
+
+/* —— 丝绒剧院 · 日场（奶油日场：奶油墙，酒红书脊金边不变） —— */
+.bz-bs-skin-velvet.bz-bs-mode-light {
+  --bz-surface-0: #efe4d4; --bz-surface-1: #f5ecdd; --bz-surface-2: #fbf5e9; --bz-surface-3: #f5ecdd; --bz-surface-4: #fffaf0;
+  --bz-surface-hover: #ece1cf; --bz-surface-active: #e1d3bc;
+  --bz-text-1: #33202a; --bz-text-2: #74585f; --bz-text-3: #a08890; --bz-text-invert: #fbf5e9;
+  --bz-brand: #8a2f4a; --bz-brand-hover: #9c3c58; --bz-brand-soft: rgba(138, 47, 74, 0.12); --bz-on-brand: #ffffff;
+  --bz-border: #d9c9bd; --bz-border-strong: #bb9f92; --bz-border-hover: #9c7f72;
+  --bsw-wall: #f0e6d5; --bsw-wall-dark: #e0d2ba; --bsw-shelf: #c6b39a; --bsw-brass: #a8853f;
+  --bsw-paper: #fbf5e9; --bsw-ink: #3a2430; --bsw-muted: #95808a; --bsw-line: #d9c9bd;
+  --bsw-accent: #8a2f4a; --bsw-reading: #b98a2f;
+}
+.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 6px, transparent 6px 14px), linear-gradient(180deg, #f2e8d7, #e4d5c0); }
+.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-zone { border-image: linear-gradient(180deg, #a8853f, #7c5c38) 1; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18); }
+.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-seg button { color: #8a6a3e; }
+.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-seg button.on { background: #a8853f; color: #fffaf0; }
+.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-hint { color: #95808a; }
+.bz-skinprev-bs-velvet { background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 4px, transparent 4px 9px), linear-gradient(180deg, #451826, #2c0e18); }
+.bz-skinprev-bs-velvet::before, .bz-skinprev-bs-velvet::after { background: linear-gradient(90deg, #241018, #331722); border: 1px solid rgba(217, 180, 95, 0.55); }

@@ -1,0 +1,44 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/liquidMetal（液态金属）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/liquidMetal.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+@keyframes liquidFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shine {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(50%); }
+}
+@keyframes metalTail {
+  0%, 100% { transform: rotate(0deg); filter: brightness(1); }
+  50% { transform: rotate(-18deg); filter: brightness(1.2); }
+}
+#smart-companion-cat.skin-liquidMetal .cat-body {
+  background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%);
+  background-size: 400% 400%;
+  animation: liquidFlow 6s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-liquidMetal .cat-ear { background: linear-gradient(45deg, #bdc3c7, #95a5a6); box-shadow: inset 0 0 10px rgba(255,255,255,0.5); }
+#smart-companion-cat.skin-liquidMetal .cat-tail { background: linear-gradient(90deg, #bdc3c7, #95a5a6); animation: metalTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-liquidMetal .cat-body::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  animation: shine 3s ease-in-out infinite;
+}
+.bz-sp-mini.bz-sc-prev-liquidMetal, .bz-cardpick-prev.bz-sc-prev-liquidMetal { background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%);; }
