@@ -32,6 +32,7 @@ import { BZ_FACE_INSTALL_HINT, setSyncRunnerForTests, stopSync, type SyncRunner 
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { SafeManager } from '../../src/encrypt/data';
 import type { PersonEntry } from '../../src/people/types';
+import type { JobView, PersonJob } from '../../src/people/jobs';
 
 const require = createRequire(import.meta.url);
 const PW = 'sync-test-pw';
@@ -78,8 +79,12 @@ class FakeTool {
   }
 }
 
-/** 假引擎：空队列（同步守卫 jobsBusy 走这条）；只记录调用 */
-function fakeEngine(): JobsApi {
+/** 假引擎：队列可注（空队列 = 无任务；486 起可喂 paused / running 任务验守卫口径）；只记录调用 */
+function fakeJob(partial: Partial<PersonJob>): JobView {
+  return { batchesTotal: 3, queueIndex: 1, queueTotal: 1, stage: 'chunked', batchesDone: 0, ...partial } as JobView;
+}
+
+function fakeEngine(queue: JobView[] = []): JobsApi {
   return {
     startJobs: async () => ({ queued: [], skipped: [], resumed: [] }),
     resumeJobs: async () => {},
@@ -87,7 +92,7 @@ function fakeEngine(): JobsApi {
     pauseJobs: () => {},
     removeJob: () => false,
     subscribe: () => () => {},
-    snapshot: () => ({ queue: [], currentIndex: -1, running: false }),
+    snapshot: () => ({ queue, currentIndex: queue.length ? 0 : -1, running: false }),
   };
 }
 
@@ -99,7 +104,7 @@ let tool: FakeTool;
 let dataRoot: string;
 let lastSafe: PeopleSafeStore | null = null;
 
-async function boot(seed?: PersonEntry[], cfg: Record<string, unknown> = {}): Promise<void> {
+async function boot(seed?: PersonEntry[], cfg: Record<string, unknown> = {}, queue: JobView[] = []): Promise<void> {
   const vault = new MockVault();
   setApp(makeApp(vault));
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', peopleDataDir: dataRoot, ...cfg }) as never);
@@ -112,13 +117,13 @@ async function boot(seed?: PersonEntry[], cfg: Record<string, unknown> = {}): Pr
       rec.person = p;
     });
   }
-  setJobsModuleForTests(fakeEngine());
+  setJobsModuleForTests(fakeEngine(queue));
   setSyncRunnerForTests(tool.runner);
 }
 
 /** 开面板 + 开数据源弹窗并等首轮扫描完成（临时数据根里有联系人） */
-async function bootWithDsOpen(seed?: PersonEntry[], cfg: Record<string, unknown> = {}): Promise<void> {
-  await boot(seed, cfg);
+async function bootWithDsOpen(seed?: PersonEntry[], cfg: Record<string, unknown> = {}, queue: JobView[] = []): Promise<void> {
+  await boot(seed, cfg, queue);
   openPeoplePanel(getApp());
   await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
   openDataSource();
@@ -295,5 +300,27 @@ describe('错误面：弹窗内中文原因与下一步动作，不抛栈', () =
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')?.textContent).toContain('先在下方配置数据根目录'));
     expect(tool.calls.length).toBe(callsBefore); // 没起进程
     expect(document.querySelector('[data-people-ds-sync-line]')!.textContent).toContain('设置');
+  });
+});
+
+describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成才拦', () => {
+  it('引擎只剩 paused 任务：数据源弹窗照常打开，无「正在生成脸谱」拦截通知', async () => {
+    await bootWithDsOpen([], {}, [fakeJob({ status: 'paused', talker: '梨花花' })]);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeTruthy());
+    expect(getNoticeMessages().join('\n')).not.toContain('正在生成脸谱');
+    // paused 也不拦导入：守卫同口径
+    click('[data-people-ds-import]');
+    await tick();
+    expect(getNoticeMessages().join('\n')).toContain('还没有勾选联系人'); // 走到了业务分支 = 未被忙守卫吞掉
+  });
+
+  it('引擎有 running 任务：仍然拦截并给中文通知', async () => {
+    await boot([], {}, [fakeJob({ status: 'running', talker: '梨花花', batchesDone: 2 })]);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
+    openDataSource();
+    await tick();
+    expect(document.querySelector('[data-people-ds-pop]')).toBeNull();
+    expect(getNoticeMessages().join('\n')).toContain('正在生成脸谱');
   });
 });

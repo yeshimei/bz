@@ -368,12 +368,16 @@ export function openDataSource(): void {
   void openDsIfIdle();
 }
 
-/** 生成进行中不开弹窗：导入会动聊天仓，正在跑的任务指纹会漂移判废（450 沿用 447 守卫） */
+/**
+ * 数据源弹窗开闭守卫（issue 486 收窄）：只有真在跑（running）的生成才拦——导入会动聊天仓，
+ * 跑动中任务指纹会漂移判废（450 沿用 447）。**暂停任务不再拦**：暂停可跨会话遗留，
+ * 过去会永久锁死弹窗；继续跑时的指纹漂移判废（resumeExisting）已兜底消息集变化。
+ */
 async function openDsIfIdle(): Promise<void> {
   await ensureJobsBoot();
   await ensureJobsWatch();
   if (!overlay) return;
-  if (jobsBusy()) { notice('正在生成脸谱，请等这批结束再开数据源', 'info'); return; }
+  if (jobsRunning()) { notice('正在生成脸谱，请等这批结束再开数据源', 'info'); return; }
   openDs();
 }
 
@@ -518,7 +522,7 @@ function updateSyncLine(): boolean {
 /** 点「同步」（数据根未配置等错误面由 startSync 落状态，经订阅回调渲染） */
 function handleSyncClick(): void {
   if (isSyncing()) return;
-  if (jobsBusy()) { notice('正在生成脸谱——等这批结束再同步', 'info'); return; }
+  if (jobsRunning()) { notice('正在生成脸谱——等这批结束再同步', 'info'); return; }
   if (!isDesktop()) {
     dsNotice = '同步仅桌面端支持（需要调用外部工具 bz-face）。';
     renderBody();
@@ -555,7 +559,7 @@ function applySyncLockdown(): void {
 async function runScan(force = false): Promise<void> {
   const dataDir = dsDataDir();
   // 同步进行中不扫（issue 465）：数据根正在被工具写，扫到的会是半成品；完成后会自动重扫
-  if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy() || isSyncing()) return;
+  if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsRunning() || isSyncing()) return;
   if (!isDesktop()) {
     dsNotice = '';
     renderBody();
@@ -619,7 +623,7 @@ async function runScan(force = false): Promise<void> {
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
   // 同步进行中不导入（issue 465）：数据根正在变，页脚按钮也置灰——这是双保险
-  if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy() || isSyncing()) return;
+  if (!overlay || !dataDir || dsImporting || dsScanning || jobsRunning() || isSyncing()) return;
   // 群聊能出现在 dsContacts = 设置已放开（runScan 按 peopleIncludeGroups 筛过），导入照单全收
   const chosen = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
   if (!chosen.length) { notice('还没有勾选联系人', 'warning'); return; }

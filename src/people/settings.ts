@@ -8,6 +8,7 @@
  * 467 退役：「媒体」组（peopleMediaDir 媒体文件夹 + 头像入库说明）随明文媒体目录一并退役——
  * 头像作为密文附件随保库记录走，库内不再有明文头像目录。
  */
+import { openFlowDialog } from '../core/flow-dialog';
 import type { SettingsSchema } from '../core/settings-schema';
 
 export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promise<void> }): SettingsSchema {
@@ -104,7 +105,19 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             buttonText: '清空',
             cta: true,
             desc: '清掉各加密记录里的消息数据（需先解锁），不动已生成的脸谱',
-            onClick: () => void opts?.onClearStore?.(),
+            // issue 486：清空是不可恢复的批量数据删除，先弹确认——过去一键直通，误点即全清
+            onClick: () => {
+              void openFlowDialog({
+                title: '清空聊天数据',
+                message: '将清空所有联系人的聊天消息，不可恢复；人物卡与已生成的脸谱保留。',
+                actions: [
+                  { label: '取消', value: 'cancel' },
+                  { label: '清空', value: 'ok', cta: true, danger: true },
+                ],
+              }).then((v) => {
+                if (v === 'ok') void opts?.onClearStore?.();
+              });
+            },
           },
         ],
       },
