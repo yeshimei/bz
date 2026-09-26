@@ -8,6 +8,7 @@
 import type { App } from 'obsidian';
 import { SettingsPanelUI } from './ui';
 import { motionTeardown } from './motion';
+import { unloadChangelog } from './changelog';
 
 let initialized = false;
 let ui: SettingsPanelUI | null = null;
@@ -33,6 +34,7 @@ export function openSettingsPanel(app: App, domainId?: string): void {
 /** 卸载清理（main.ts onunload 调用，幂等） */
 export function unloadSettingsPanel(): void {
   motionTeardown(); // 动效层全清（泵/定时器/注入件状态；幂等，面板未开时同样安全）
+  unloadChangelog(); // 更新日志弹窗（issue 472）：body 级常驻层，随本域卸载一并收口
   if (ui) ui.cleanup();
   ui = null;
   initialized = false;

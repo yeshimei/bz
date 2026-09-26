@@ -1,4 +1,4 @@
-/* 源指纹 a92428e8f3ed9352 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 17fef012ad3bec1d · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -9459,6 +9459,15 @@ ${s}`).join("\n\n");
               desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口",
               binding: { key: "peopleDataDir" },
               placeholder: "例如 D:\\微信备份\\export_full"
+            },
+            // 微信账号目录（issue 462）：多账号数据目录下指定用哪个账号；空 = 自动探测
+            // （探测与覆盖逻辑由后续票接入，本票只加键位与文案）
+            {
+              type: "text",
+              name: "微信账号目录",
+              desc: "数据目录下的微信账号文件夹，留空自动探测",
+              binding: { key: "peopleWxAccountDir" },
+              placeholder: "空 = 自动探测"
             },
             {
               type: "toggle",
