@@ -1,0 +1,19 @@
+# 解密组依赖 —— 取密钥 → 解密 → 读库 → 导 CSV/JSON（bz_export.py + vendor/WeChatMsg_Lite）
+# 安装：python -m pip install -r <本文件路径>
+# 自检：bz-face doctor（缺哪几项就只提示哪几项的安装命令）
+# 版本约束照抄收编源（WeChatMsg_Lite/requirements.txt）在用口径；未标约束的为上游也未锁。
+pymem==1.14.0        # 内存取密钥（decrypt/wx_info_v4，微信需登录运行）
+psutil~=6.1.1        # 微信进程探测（decrypt/__init__、decrypt/common）
+pywin32==308         # win32api：进程句柄 / exe 版本读取（decrypt/common）
+pycryptodome         # AES / PBKDF2 / SHA512 数据库解密（decrypt_v4、decrypt_dat、wx_info_v4）
+zstandard~=0.23.0    # 4.x 消息体 zstd 解压（manager_v4、bz_export）
+protobuf==4.25.1     # parser/util/protocbuf 生成码（*_pb2 必须与生成版本同大版本）
+pillow==11.0.0       # 头像库读取（db_v4/head_image 的 PIL.Image）
+xmltodict~=0.14.2    # 消息 XML 解析（parser）
+lxml~=5.3.1          # 硬链接信息解析（db_v4/hardlink）
+dateparser~=1.2.1    # 链接消息时间解析（parser/link_parser）
+aiofiles~=24.1.0     # 解密中间层异步读（decrypt/decrypt_dat）
+yara-python          # 内存密钥扫描规则（decrypt/wx_info_v4）。
+                     # 注意：Python 3.14 暂无预编译 wheel（收编日 2026-09 核实），
+                     # 3.12 / 3.13 可直接装；装不上时仅「取密钥」不可用，
+                     # 用已缓存 key.json 的解密链不受影响。

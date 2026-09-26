@@ -1,0 +1,8 @@
+# 转写组依赖 —— 语音转写 + silk 解码（本票 463 仅 doctor 自检；468 接线 prep）
+# 安装：python -m pip install -r <本文件路径>
+# 自检：bz-face doctor（缺哪几项就只提示哪几项的安装命令）
+funasr               # SenseVoice-Small 转写引擎（会连带装 torch / torchaudio，体积大属正常；
+                     # 首次运行还会自动下载模型权重，数百 MB，也不算依赖问题）
+pysilk-mod==1.6.4    # 微信 silk 语音解码（媒体导出里的语音段，exporter 音频转换用）
+# 另需系统 ffmpeg / ffprobe 在 PATH（不随 pip 安装；bz-face doctor 会查，
+# 后续票接插件「外部工具」设置的自定义路径）。

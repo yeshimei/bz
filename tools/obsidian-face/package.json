@@ -1,0 +1,33 @@
+{
+  "name": "@jwbz/obsidian-face",
+  "version": "0.1.0",
+  "description": "包仔脸谱工具包（bz-face）——微信 4.x 聊天「取密钥 → 解密 → 原始导出 → 转写」外部工具：Node 外壳 + 随包 vendored Python（自写脚本 + 裁剪版 WeChatMsg_Lite）。本版（issue 463）= 包骨架 + bz-face doctor 环境自检；sync / prep 由后续票接线（464 / 468）",
+  "main": "lib/doctor-core.js",
+  "bin": {
+    "bz-face": "bin/bz-face.js"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "python/",
+    "README.md",
+    "ARCHIVE.md"
+  ],
+  "scripts": {
+    "doctor": "node bin/bz-face.js doctor"
+  },
+  "keywords": [
+    "obsidian",
+    "wechat",
+    "decrypt",
+    "sensevoice",
+    "doctor"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
