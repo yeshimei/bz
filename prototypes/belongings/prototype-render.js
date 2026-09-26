@@ -1,4 +1,4 @@
-/* 源指纹 357d877f81927f20 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fd78385cbb4bb95f · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -136,6 +136,7 @@ var BZR_belongings = (() => {
     { v: "price", label: "投入最高" },
     { v: "daily", label: "日均最高" }
   ];
+  var EMPTY_CATEGORY_ICON = "package";
   function moneyUnitLabel(unit = "cny") {
     return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
   }
@@ -160,7 +161,6 @@ var BZR_belongings = (() => {
   function catNameOf(cat) {
     return String(cat || "").replace(/^\p{Extended_Pictographic}\s*/u, "");
   }
-  var EMPTY_CATEGORY_ICON = "package";
   function catEmHtml(cat) {
     if (!cat) return iconSpan(EMPTY_CATEGORY_ICON);
     return esc(catEmoji(cat));

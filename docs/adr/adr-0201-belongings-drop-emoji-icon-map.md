@@ -2,7 +2,7 @@
 
 - 日期：2026-09-26
 - 状态：已采纳（实现见 issue 477）
-- 相关：ADR-0102（**本票修订**：其引入的 445 条映射表退役）/ ADR-0100 / ADR-0104（渲染单源纯度契约——其白名单示例中的 `./emoji-icon-map` 随本票同步移除）/ ADR-0009 / `src/belongings/category.ts` / `src/belongings/shared.ts` / `src/belongings/ai.ts`
+- 相关：ADR-0102（**本票修订**：其引入的 445 条映射表退役）/ ADR-0100 / ADR-0104（渲染单源纯度契约——该 ADR 正文里的白名单示例属**历史记录不改**；活化契约以 `CONTEXT.md` 为准，已随本票同步去掉 `./emoji-icon-map`）/ ADR-0009 / `src/belongings/category.ts` / `src/belongings/shared.ts` / `src/belongings/ai.ts`
 
 ## 背景
 
@@ -44,7 +44,7 @@ ADR-0102（issue 231，2026-09-07）拍板「数据 emoji 全转 lucide 图标 +
 
 ## 后果
 
-- **用户可见变化仅一处**：未迁移的遗留 emoji 分类（无 `icon` 字段）不再转 lucide，**原样显示 emoji 字形**。已迁移数据（`icon` 已落盘）零变化；空分类仍为 `package` 图标。
+- **用户可见变化 ≈ 零**：理论上「未迁移的遗留 emoji 分类（无 `icon` 字段）」不再转 lucide、改为原样显示 emoji；但 `loadDatabase` 每次载入都把 emoji 前缀剥成纯文字（`data.ts` 迁移块），**已落盘数据本就碰不到这条链**——该变化只对绕过迁移的内存项成立。空分类仍为 `package` 图标，视觉不变。
 - **包体减小**：`main.js` 少约 7 KB；原型产物 `prototype-icons.js` 少 447 行。
 - **AI 归类行为零变化**：`AI_ICON_MENU` 仍是 118 条冻结字面量，`AI_FALLBACK_ICON`（`package`）不变。
 - **不可逆性**：删除后无法再为「未迁移的老条目」自动补图标。若日后确有此类数据回流，需人工补 `icon`，或从 git 历史取回映射表重跑一次性转换脚本。

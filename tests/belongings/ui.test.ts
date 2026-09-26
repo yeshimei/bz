@@ -512,6 +512,17 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
     expect(cB.querySelector('.bz-bel-cell-idx')!.textContent).toContain('未分类');
   });
 
+  it('遗留 emoji 前缀分类端到端（issue 477）：载入剥前缀 → 无 icon 回退首字文本，不再转 lucide', async () => {
+    // 旧形状种子（emoji 前缀 + 无 icon）——锁「载入迁移 → 渲染兜底」整链，
+    // 映射表退役后这条链的终点是首字文本，而非旧的 lucide 图标
+    seed(vault, { item_legacy: makeItem({ id: 'item_legacy', name: '旧手机', category: '📱 智能手机', icon: null }) });
+    await open(vault);
+    const c = cells().find((x) => x.dataset.belId === 'item_legacy')!;
+    expect(c.querySelector('.bz-bel-cell-idx')!.textContent).toContain('智能手机'); // 前缀已剥
+    expect(c.querySelector('.bz-bel-cell-em [data-icon]')).toBeNull(); // 不再出 lucide
+    expect(c.querySelector('.bz-bel-cell-em')!.textContent).toBe('智'); // 回退首字文本
+  });
+
   it('hero 大字标题 = 筛选名（issue 208 语义）；筛选后标语切 FILTERED VIEW', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '甲' }),

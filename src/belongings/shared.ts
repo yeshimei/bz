@@ -65,6 +65,10 @@ export const SORT_OPTS: { v: string; label: string }[] = [
   { v: 'daily', label: '日均最高' },
 ];
 
+/** 空分类兜底图标名。原经 445 条映射表的 `📦 → package` 表达，映射表退役后（issue 477/ADR-0201）
+ *  由本常量单点承接——空分类的视觉不变，且不因此复活任何表。 */
+const EMPTY_CATEGORY_ICON = 'package';
+
 /** 视图状态切片（面板内会话态；ui.ts 的 BelState 与评审壳的 M 均结构兼容于此） */
 export interface BelViewState {
   /** 状态筛选 key（null = 全部；asset = 在库合成） */
@@ -105,7 +109,8 @@ export function moneyShort(n: number, unit: MoneyUnit = 'cny'): string {
 export function todayStr(): string {
   return localDayKey();
 }
-/** 分类 emoji（取首段 emoji；无 emoji 显示首字） */
+/** 分类 emoji（取首段 emoji；无 emoji 显示首字。空串的 📦 兜底仅防御性保留——
+ *  catEmHtml 已先行短路空分类走 EMPTY_CATEGORY_ICON，插件侧此分支不可达） */
 export function catEmoji(cat: string): string {
   const m = String(cat || '').match(/^(\p{Extended_Pictographic})/u);
   return m ? m[1] : String(cat || '')[0] || '📦';
@@ -113,8 +118,6 @@ export function catEmoji(cat: string): string {
 export function catNameOf(cat: string): string {
   return String(cat || '').replace(/^\p{Extended_Pictographic}\s*/u, '');
 }
-/** 空分类兜底图标（原经 📦 → package 映射；映射表退役后由本常量单点承接，视觉不变） */
-const EMPTY_CATEGORY_ICON = 'package';
 /** 分类视觉 HTML：空分类兜底 package 图标，其余回退 emoji/首字文本
  *  （issue 477/ADR-0201：映射表删除后遗留 emoji 分类不再转 lucide，原样显示 emoji） */
 export function catEmHtml(cat: string): string {
