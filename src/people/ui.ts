@@ -11,7 +11,7 @@
  *
  * 生成链（issue 450 / 451）：本层不再内联跑生成循环——组装 targets 交给 jobs.ts 生成引擎
  * （模块级单例，独立于面板生命周期），面板只订阅快照渲染进度块；done 产物在本层
- * 落 people.json（PeopleStore / ImportRecord 口径沿用 446 收编形态）。关面板转后台，
+ * 落人物卡（PeopleStore 门面 / ImportRecord 口径沿用 446 收编形态，467 起写入保库记录）。关面板转后台，
  * 重开面板 snapshot+resume 渲染当前任务态，中断任务出「继续生成」。
  * 451：折子封面卡的印章升级为四态（未画谱 / 画谱中 / 画谱中断 / 已画谱）且本身就是动作入口
  * （画脸谱 / 暂停 / 继续生成 / 补画），快照每帧原位只换印章节点。
@@ -23,6 +23,9 @@ import { topifyZ } from '../core/z-order';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { getApp } from '../core/app';
+import { onDomainEvent } from '../core/domain-bus';
+import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
+import { ensureSafeUnlocked } from '../encrypt';
 import { PeopleStore } from './data';
 import { extractJsonLoose } from './digest';
 import { createAI } from '../core/ai';
@@ -34,21 +37,20 @@ import type { JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapsho
 import type { ContactStats, FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
-  MessageStore,
-  importAvatarToVault,
-  isGroupChat,
-  isVaultRelativePath,
   listContactDirs,
   mergeStore,
   normalizeChatJson,
   normalizeOptionsFromSettings,
+  readAvatarInput,
   storeMediaBadge,
   storeToUnified,
   readContactBundle,
-  type MessageStoreData,
+  isGroupChat,
   type StoreContact,
   type StoreStats,
 } from './datasource';
+import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
+import { migrateLegacyPeopleData } from './migrate';
 import {
   dsModal,
   duoBar,
@@ -94,6 +96,12 @@ type Stage = 'list' | 'detail';
 
 let overlay: HTMLElement | null = null;
 let store: PeopleStore | null = null;
+/** 保库记录读写器（面板会话内共享；openPeoplePanel 解锁门禁后赋值） */
+let peopleSafe: PeopleSafeStore | null = null;
+/** 解锁门禁进行中（防双击重复弹解锁） */
+let opening = false;
+/** 解锁态订阅退订（面板开着才订；上锁即清明文并转不可读态） */
+let offUnlockWatch: (() => void) | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 详情当前展开的折（换人回落画像折） */
@@ -117,7 +125,7 @@ let jobsCache: EngineSnapshot | null = null;
 const targetsInFlight = new Map<string, GenTarget>();
 /** 已落过盘的任务（防引擎保留的 done 任务重复推送重复落盘；重新生成时按 talker 清除） */
 const jobsPersisted = new Set<string>();
-/** 引擎本会话是否已从 people-jobs.json 重建（resumeJobs 只做一次，防覆盖运行中的内存队列） */
+/** 引擎本会话是否已从保库记录的 job 段重建（resumeJobs 只做一次，防覆盖运行中的内存队列） */
 let jobsBooted = false;
 
 // ---------------- 数据源弹窗（issue 447） ----------------
@@ -197,12 +205,56 @@ export function isPeopleOpen(): boolean {
   return overlay !== null;
 }
 
-/** 打开面板（已开则聚到前台；不自动开弹窗、不自动扫描——447 拍板） */
+/** 解锁门禁（默认走 encrypt 公开入口；测试经 setUnlockGateForTests 注入假件——jsdom 锁不住真锁屏） */
+let unlockGate: () => Promise<boolean> = ensureSafeUnlocked;
+
+/** 测试注入缝：替换 / 还原解锁门禁假件 */
+export function setUnlockGateForTests(fn: (() => Promise<boolean>) | null): void {
+  unlockGate = fn ?? ensureSafeUnlocked;
+}
+
+/**
+ * 打开面板（已开则聚到前台；不自动开弹窗、不自动扫描——447 拍板）。
+ * **解锁门禁前置（467 / ADR-0194 决策 3）**：脸谱数据整体在保险库里（索引也加密）——
+ * 未解锁先弹主密码；取消 / 失败不开面板、不展示任何数据。
+ */
 export function openPeoplePanel(app?: unknown): void {
   if (overlay) {
     topifyZ(overlay);
     return;
   }
+  if (opening) return;
+  opening = true;
+  void (async () => {
+    try {
+      const safe = await getPeopleSafeStore();
+      if (!safe.unlocked) {
+        const ok = await unlockGate();
+        if (!ok) {
+          notice('脸谱数据在保险库里——解锁后才能查看', 'info');
+          return;
+        }
+      }
+      peopleSafe = safe;
+      buildPanelShell(app);
+      // 存量迁移（幂等）：明文三件（people.json / people-preview.json / people-jobs.json）
+      // 每人拆进保库记录；全部校验通过才清理旧明文。半途崩溃重跑自动收敛。
+      await runLegacyMigration();
+      void renderBody();
+      // 状态恢复（issue 450）：面板打开即拉引擎快照 + 订阅——运行中 / 暂停 / 中断 / done 都有对应呈现
+      await restoreJobsView();
+    } catch (e) {
+      console.warn('[people] 打开面板失败:', e);
+      notice('脸谱面板打开失败，请重试', 'error');
+    } finally {
+      opening = false;
+    }
+  })();
+}
+
+/** 面板壳与事件接线（解锁门禁通过后调；DOM 挂载与订阅集中在这里） */
+function buildPanelShell(app?: unknown): void {
+  if (overlay) return;
   store = new PeopleStore(app ?? getApp());
   overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay bz-people-scope';
@@ -227,15 +279,44 @@ export function openPeoplePanel(app?: unknown): void {
     if (input.hasAttribute('data-people-prof-tag-input')) addTagChip();
     else void saveManualNote();
   });
-  void renderBody();
-  // 状态恢复（issue 450）：面板打开即拉引擎快照 + 订阅——运行中 / 暂停 / 中断 / done 都有对应呈现
-  void restoreJobsView();
+  // 解锁态跟帧（ADR-0194 决策 5）：任意路径上锁（面板/锁屏/安全模式）→ 面板立即转不可读；
+  // 重新解锁 → 恢复渲染
+  offUnlockWatch = onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+    if (!overlay) return;
+    if (evt?.unlocked === false) {
+      peopleSafe?.clearPlainCaches();
+      recordCache = null;
+      void renderBody(); // renderBody 检查解锁态，渲染锁定占位
+    } else if (evt?.unlocked === true) {
+      void renderBody();
+    }
+  });
+}
+
+/** 存量迁移（467 / ADR-0194；幂等，明文三件 → 保库记录；旧文件清理失败不阻断面板） */
+async function runLegacyMigration(): Promise<void> {
+  if (!peopleSafe?.unlocked) return;
+  try {
+    const out = await migrateLegacyPeopleData(getApp(), peopleSafe);
+    if (out.migrated > 0) {
+      recordCache = null;
+      const extra = out.keptBack.length
+        ? '。旧明文文件校验未全部通过，暂未删除（下次打开自动重试）'
+        : '，旧明文文件已清理';
+      notice(`已把 ${out.migrated} 位联系人的数据迁入保险库加密记录${extra}`, 'success');
+    }
+  } catch (e) {
+    console.warn('[people] 存量迁移失败:', e);
+    notice('存量数据迁移没有完成，将在下次打开时重试', 'warning');
+  }
 }
 
 export function closePeoplePanel(): void {
   // 关面板转后台（issue 450）：引擎照跑；有正在跑的任务才提示，只剩暂停 / 排队不打扰
   const backgrounded = jobsRunning();
   unregisterPanelEsc(ESC_ID);
+  offUnlockWatch?.();
+  offUnlockWatch = null;
   overlay?.remove();
   overlay = null;
   store = null;
@@ -243,7 +324,7 @@ export function closePeoplePanel(): void {
   detailFold = 'p';
   stage = 'list';
   listCache = [];
-  storeCache = null; // 452：聊天仓缓存随面板关闭失效（下次打开重读，导入在别的会话改过也能看到）
+  recordCache = null; // 452 缓存语义沿用：保库记录快照随面板关闭失效（下次打开重读）
   mergeFromId = null;
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
@@ -291,6 +372,14 @@ function dsDataDir(): string {
 
 function isDesktop(): boolean {
   return typeof window !== 'undefined' && Boolean((window as unknown as { require?: unknown }).require);
+}
+
+/** 头像字节 → 内存 data URL（数据源弹窗行预览；记录里的头像走 safe.avatarDataUrl） */
+function dataUrlOf(a: { base64: string; ext: string } | null): string | null {
+  if (!a) return null;
+  const mime =
+    a.ext === 'png' ? 'image/png' : a.ext === 'webp' ? 'image/webp' : a.ext === 'gif' ? 'image/gif' : 'image/jpeg';
+  return `data:${mime};base64,${a.base64}`;
 }
 
 function openDs(): void {
@@ -366,8 +455,7 @@ async function runScan(force = false): Promise<void> {
     const dirNames = listContactDirs(dataDir);
     const includeGroups = tryGetSettings()?.peopleIncludeGroups === true;
     const opts = normalizeOptionsFromSettings();
-    const msgStore = new MessageStore(getApp());
-    const [storeData, people] = await Promise.all([msgStore.read(), store.list()]);
+    const [storeData, people] = await Promise.all([records(), store.list()]);
     for (const name of dirNames) {
       if (!overlay) return; // 面板已关，放弃本次扫描
       const bundle = readContactBundle(dataDir, name);
@@ -375,7 +463,7 @@ async function runScan(force = false): Promise<void> {
       const group = isGroupChat(bundle.raws);
       if (group && !includeGroups) { hidden++; continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-      const pv = storeData.contacts[name];
+      const pv = storeData.get(name)?.store;
       const keys = new Set((pv?.msgs ?? []).map((m) => m.key));
       const entry = people.find((p) => p.id === name);
       contacts.push({
@@ -386,8 +474,8 @@ async function runScan(force = false): Promise<void> {
         previewCount: pv?.msgs.length ?? 0,
         newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
         processedTs: entry?.lastProcessedTs ?? null,
-        // 头像入库（456）：外部文件复制进库内媒体文件夹，列表/详情才加载得出来
-        avatar: await importAvatarToVault(getApp(), name, bundle.avatar),
+        // 头像预览（467）：直接读数据根字节解成内存 data URL（不再复制进库内明文目录）
+        avatar: dataUrlOf(readAvatarInput(bundle.avatar)),
       });
     }
   } catch (e) {
@@ -409,7 +497,7 @@ async function runScan(force = false): Promise<void> {
 
 /**
  * 导入所选（第一段：原始→聊天仓增量）：逐人读 chat.json → normalizeChatJson → mergeStore
- * upsert 合并（同键覆盖升级）→ 落 people-preview.json。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
+ * upsert 合并（同键覆盖升级）→ 写进该联系人的保库记录（467 / ADR-0194）。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
  */
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
@@ -427,7 +515,6 @@ async function importDsSelected(): Promise<void> {
   dsNotice = '正在导入聊天仓…';
   renderBody();
   const opts = normalizeOptionsFromSettings();
-  const msgStore = new MessageStore(getApp());
   const now = new Date().toISOString();
   const addedOf = new Map<string, number>();
   const readFail: string[] = [];
@@ -437,13 +524,15 @@ async function importDsSelected(): Promise<void> {
       const bundle = readContactBundle(dataDir, c.name);
       if (!bundle) { readFail.push(c.name); continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-      const existing = (await msgStore.read()).contacts[c.name];
+      const existing = (await records()).get(c.name)?.store;
       const { contact, added } = mergeStore(existing, norm, now);
-      // 头像入库（456）：复制进库内媒体文件夹后存 vault 相对路径；外部文件删了导入后即清
-      const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
-      if (ava) contact.avatar = ava;
-      else delete contact.avatar;
-      await msgStore.upsertContact(c.name, contact);
+      // 头像（467）：字节直接进保库记录附件（渲染时解密成内存 data URL，不落明文文件）；
+      // 外部头像已删 → 记录侧一并移除。路径字段退役，不再进密文记录。
+      const avatar = readAvatarInput(bundle.avatar);
+      delete contact.avatar;
+      await peopleSafe!.write(c.name, (rec) => {
+        rec.store = contact;
+      }, { avatar });
       addedOf.set(c.name, added);
       // 快照同步（水位行即时反映，不重扫）
       c.previewCount = contact.msgs.length;
@@ -458,7 +547,6 @@ async function importDsSelected(): Promise<void> {
     return;
   }
   dsImporting = false;
-  storeCache = null; // 452：聊天仓已变——刚导入的人立刻以「待画」折子上墙
   const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
   const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
@@ -477,19 +565,19 @@ async function generateFromDs(): Promise<void> {
   if (!names.length) { notice('还没有勾选联系人', 'warning'); return; }
   const targets: GenTarget[] = [];
   try {
-    const storeData = await new MessageStore(getApp()).read();
+    const storeData = await records();
     for (const name of names) {
-      const pv = storeData.contacts[name];
+      const pv = storeData.get(name)?.store;
       const unified = storeToUnified(pv?.msgs ?? []);
       if (!unified.length) continue;
       targets.push({
         talker: name,
         name,
         msgs: unified,
-        kindCounts: pv.kindCounts ?? {},
+        kindCounts: pv?.kindCounts ?? {},
         skippedCount: 0, // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
         fileLabel: `数据源:${name}`,
-        insights: pv.insights,
+        insights: pv?.insights,
       });
     }
   } catch (e) {
@@ -524,17 +612,17 @@ async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   let target: GenTarget | null = null;
   try {
-    const pv = (await new MessageStore(getApp()).read()).contacts[name];
+    const pv = (await records()).get(name)?.store;
     const unified = storeToUnified(pv?.msgs ?? []);
     if (unified.length) {
       target = {
         talker: name,
         name,
         msgs: unified,
-        kindCounts: pv.kindCounts ?? {},
+        kindCounts: pv?.kindCounts ?? {},
         skippedCount: 0,
         fileLabel: `数据源:${name}`,
-        insights: pv.insights,
+        insights: pv?.insights,
       };
     }
   } catch (e) {
@@ -600,7 +688,7 @@ export function mergedMonthlyOf(imports: Array<{ stats?: Partial<ContactStats> }
  */
 export interface JobsApi {
   startJobs(app: unknown, targets: JobTarget[], opts?: JobStartOptions): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }>;
-  /** 读 people-jobs.json 重建队列；崩溃遗留 running → interrupted（本会话只调一次） */
+  /** 从保库记录的 job 段重建队列；崩溃遗留 running → interrupted（本会话只调一次） */
   resumeJobs(app: unknown): Promise<void>;
   /** 从断点继续指定人物（已完成批次不重烧） */
   resume(talker: string): boolean;
@@ -638,7 +726,7 @@ function applySnapshot(s: EngineSnapshot | null): void {
 }
 
 /**
- * 面板打开时恢复任务态（openPeoplePanel 调）：先从 people-jobs.json 重建引擎队列
+ * 面板打开时恢复任务态（openPeoplePanel 调）：先从保库记录的 job 段重建引擎队列
  * （崩溃遗留 running → interrupted，出「继续生成」），再订阅快照渲染。
  */
 async function restoreJobsView(): Promise<void> {
@@ -647,9 +735,12 @@ async function restoreJobsView(): Promise<void> {
   await ensureJobsWatch();
 }
 
-/** 引擎启动扫描（每会话一次；resumeJobs 会整体重建内存队列，不能在运行中重放） */
+/** 引擎启动扫描（每会话一次；resumeJobs 会整体重建内存队列，不能在运行中重放）。
+ *  上锁期不落 boot 旗标（任务队列在保库记录里读不到——等解锁后重试，防空引擎占位） */
 async function ensureJobsBoot(): Promise<void> {
   if (jobsBooted) return;
+  const safe = peopleSafe ?? (await getPeopleSafeStore());
+  if (!safe.unlocked) return;
   jobsBooted = true;
   await jobs().resumeJobs(getApp());
 }
@@ -660,7 +751,7 @@ async function ensureJobsWatch(): Promise<void> {
   applySnapshot(jobs().snapshot());
 }
 
-/** 快照处理：done 任务落 people.json（每任务恰好一次）+ 进度块原位刷新 */
+/** 快照处理：done 任务落保库记录（每任务恰好一次）+ 进度块原位刷新 */
 function handleJobsSnapshot(s: EngineSnapshot): void {
   for (const job of s.queue) {
     if (job.status !== 'done') continue;
@@ -752,7 +843,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
  * done 落盘（沿用 446 收编形态的 PeopleStore / ImportRecord 口径）：
  * 会话内任务用 targetsInFlight 里的原始入参（时间跨度 / 统计 / 锚点全量可算）；
  * 重启续跑完成的任务走引擎落盘的 importRecord / stats（批元数据口径，不含原文）。
- * 成功后把 done 任务从引擎队列清掉（产物已安全入 people.json，进度块不再挂旧账）。
+ * 成功后把 done 任务从引擎队列清掉（产物已安全入保库记录，进度块不再挂旧账）。
  */
 async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
   const talker = target?.talker ?? job.talker;
@@ -797,7 +888,7 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, lastTs));
     }
     notice(`「${name}」的脸谱已生成`, 'success');
-    jobs().removeJob(talker); // 产物已入 people.json：done 任务清出队列，进度块自然收起
+    jobs().removeJob(talker); // 产物已入保库记录：done 任务清出队列，进度块自然收起
     if (overlay) void renderBody(); // 封面墙 / 详情立即可见新脸谱
   } catch (e) {
     if (target) targetsInFlight.set(talker, target); // 落盘失败放回：下个快照重试
@@ -1109,9 +1200,19 @@ function updateDsFooter(): void {
 async function renderBody(): Promise<void> {
   const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
   if (!body || !store || !overlay) return;
+  // 上锁不可读（ADR-0194）：解锁态被任何路径翻掉 → 面板只剩锁定占位，不渲染任何联系人数据
+  if (!peopleSafe?.unlocked) {
+    listCache = [];
+    recordCache = null;
+    body.replaceChildren(lockedBody());
+    overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', false);
+    renderDsLayer();
+    renderJobs();
+    mountIcons(overlay);
+    return;
+  }
   const people = await wallPeople(); // 一次拉全量：列表 / 详情 / 弹窗三处同源（455 弹窗正文也要人物卡）
-  // await 途中面板可能被关（closePeoplePanel 置空 overlay/store）——late 回调不得再触碰已拆 DOM
-  if (!overlay || !store) return;
+  if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
   if (stage === 'list') await renderList(body, people);
   else await renderDetail(body, people);
   // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式
@@ -1120,6 +1221,28 @@ async function renderBody(): Promise<void> {
   renderPopLayer(people);
   renderJobs();
   mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
+}
+
+/** 锁定占位（上锁后的面板体；不显示任何数据，给出解锁入口） */
+function lockedBody(): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-people-locked';
+  const tip = document.createElement('div');
+  tip.className = 'bz-people-locked-tip';
+  tip.textContent = '保险库已上锁——脸谱数据已加密，解锁后才能查看。';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bz-people-locked-btn';
+  btn.textContent = '解锁保险库';
+  btn.addEventListener('click', () => {
+    void (async () => {
+      if (!peopleSafe && overlay) peopleSafe = await getPeopleSafeStore();
+      if (peopleSafe?.unlocked || (await unlockGate())) void renderBody();
+    })();
+  });
+  wrap.appendChild(tip);
+  wrap.appendChild(btn);
+  return wrap;
 }
 
 /** 数据源弹层（独立容器；关着只置 hidden） */
@@ -1159,38 +1282,21 @@ function renderPopLayer(people: PersonEntry[]): void {
 
 // ---------------- 列表（折子封面墙） ----------------
 
-/** 聊天仓会话缓存（issue 452：墙要聊天仓算素材水位；18k 条的仓每次切视图重读会卡） */
-let storeCache: MessageStoreData | null = null;
+/** 保库记录快照缓存（issue 452 语义沿用：墙要记录算素材水位；18k 条的仓每次切视图重解会卡；
+ *  记录对象与 PeopleSafeStore 缓存同引用——写入路径原地 mutate，快照天然跟新） */
+let recordCache: Map<string, PeopleSafeRecord> | null = null;
 
-/** 聊天仓读取（缓存到「导入成功」「关闭面板」失效；读不到按空仓兜底，照常出已有卡） */
-async function storeData(): Promise<MessageStoreData> {
-  if (storeCache) return storeCache;
+/** 保库记录读取（缓存到「面板关闭」「上锁」失效；读不到按空表兜底，照常出已有卡） */
+async function records(): Promise<Map<string, PeopleSafeRecord>> {
+  if (recordCache) return recordCache;
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
   try {
-    storeCache = await new MessageStore(getApp()).read();
+    recordCache = await peopleSafe.readAll();
   } catch (e) {
-    console.warn('[people] 读取聊天仓失败:', e);
-    storeCache = { version: 2, contacts: {} };
+    console.warn('[people] 读取保库记录失败:', e);
+    recordCache = new Map();
   }
-  await migrateAvatars(storeCache);
-  return storeCache;
-}
-
-/**
- * 旧桶头像迁移（456）：455 落盘的是库外绝对路径，渲染端 app://local 已经加载不了（裂图根因）。
- * 读到即复制进库内媒体文件夹并回写聊天仓；已是库内路径（或外部文件已删且无库内副本）直接跳过——幂等。
- */
-async function migrateAvatars(pv: MessageStoreData): Promise<void> {
-  const app = getApp();
-  const store = new MessageStore(app);
-  for (const [name, c] of Object.entries(pv.contacts)) {
-    const cur = c.avatar;
-    if (!cur || isVaultRelativePath(cur)) continue;
-    let vPath: string | null = null;
-    try { vPath = await importAvatarToVault(app, name, cur); } catch { vPath = null; }
-    if (!vPath || vPath === cur) continue;
-    c.avatar = vPath;
-    try { await store.upsertContact(name, c); } catch (e) { console.warn('[people] 头像迁移回写失败:', name, e); }
-  }
+  return recordCache;
 }
 
 /**
@@ -1222,24 +1328,22 @@ function poolRecord(id: string, contact: StoreContact | undefined): ImportRecord
 }
 
 /**
- * 墙上人员 = 人物卡 ∪ 聊天仓联系人（issue 452）。
- * 447 定的「导入所选只进仓」、「画脸谱」才建卡，会让「导入了素材但没画过」的人在面板上彻底不可见
- * （452 实例：大琳 18477 条只在聊天仓里）。这里给无卡者合成一张占位卡——**纯内存，people.json 不动**。
- * 卡上已有导入记录时不覆盖（那时的「聊天仓更新」归数据源弹窗的「有更新」水位管）。
+ * 墙上人员 = 保库记录的人物卡全集（issue 452 语义沿用：有仓没卡者由迁移 / 导入补卡，
+ * 面板侧兜底仍保留——记录里没有导入记录时用聊天仓素材合成「待画」占位卡，**纯内存**）。
  */
 async function wallPeople(): Promise<PersonEntry[]> {
   const people = store ? await store.list() : [];
-  const contacts = (await storeData()).contacts ?? {};
+  const recs = await records();
   const out: PersonEntry[] = people.map((p) => {
-    const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
+    const rec = p.imports.length ? null : poolRecord(p.id, recs.get(p.id)?.store);
     return rec ? { ...p, imports: [rec] } : p;
   });
   const known = new Set(people.map((p) => p.id));
-  for (const [id, contact] of Object.entries(contacts)) {
+  for (const [id, r] of recs) {
     if (known.has(id)) continue;
-    const rec = poolRecord(id, contact);
-    if (!rec) continue;
-    out.push({ id, name: id, createdAt: rec.importedAt, imports: [rec] });
+    const pool = poolRecord(id, r.store);
+    if (!pool) continue;
+    out.push({ ...r.person, id, name: r.person.name || id, imports: [...r.person.imports, pool] });
   }
   return out;
 }
@@ -1271,8 +1375,15 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
     body.appendChild(mergeBar(from.name, to?.name ?? null));
   }
   const wall = foldWall();
-  const preview = await storeData();
-  applyWall(people, wall, (name) => preview.contacts[name]?.avatar);
+  // 头像（467）：从加密记录解出内存 data URL（id 定位——记录键是 talker，不随改名漂移）
+  const avaMap = new Map<string, string>();
+  if (peopleSafe?.unlocked) {
+    for (const id of await peopleSafe.talkers()) {
+      const url = await peopleSafe.avatarDataUrl(id);
+      if (url) avaMap.set(id, url);
+    }
+  }
+  applyWall(people, wall, (id) => avaMap.get(id));
   body.appendChild(wall);
 }
 
@@ -1311,9 +1422,9 @@ async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<v
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body, people); return; }
   const media = personMedia(p);
-  // 头像：数据目录 avatar.<ext> 的绝对路径随聊天仓走（导入时刷新）；没有回落首字印章
-  const avatar = (await storeData()).contacts[p.name]?.avatar;
-  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
+  // 头像（467）：保库记录附件解密成内存 data URL；没有回落首字印章
+  const avatar = peopleSafe?.unlocked ? await peopleSafe.avatarDataUrl(p.id) : null;
+  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar: avatar ?? undefined }));
 
   // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊
   const person = personOf(p.digest); // 旧单卷数据（只有 portrait）由此兼容读进卷一

@@ -17,6 +17,7 @@ import {
   removeJob,
   whenIdle,
   fingerprintOf,
+  JobStore,
   DRIFT_ERROR,
   __resetJobsForTests,
   type JobTarget,
@@ -24,8 +25,10 @@ import {
 } from '../../src/people/jobs';
 import { chunkMessages, chunkMetaOf, DEFAULTS, type DigestChunk } from '../../src/people/digest';
 import { computeInsights, emptyInsightSignals } from '../../src/people/insights';
-import { MessageStore, storeStatsOf, storeToUnified, type StoreMsg } from '../../src/people/datasource';
+import { storeStatsOf, storeToUnified, type StoreMsg } from '../../src/people/datasource';
 import { PeopleStore } from '../../src/people/data';
+import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import { SafeManager } from '../../src/encrypt/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -63,15 +66,27 @@ function makeAsks() {
 
 let vault: MockVault;
 let app: any;
+let sm: SafeManager;
+let safe: PeopleSafeStore;
+const PW = 'jobs-test-pw';
 
+/** 聊天仓播种（467）：写进该联系人的保库记录 store 段（不再有 people-preview.json） */
 async function seedPreview(msgs: StoreMsg[], name = TALKER): Promise<void> {
-  const store = new MessageStore(app);
-  await store.upsertContact(name, {
-    msgs,
-    watermarkSid: 0,
-    stats: storeStatsOf(msgs),
-    kindCounts: { 文本: msgs.length },
-    updatedAt: '2026-09-25T00:00:00.000Z',
+  await safe.write(name, (rec) => {
+    rec.store = {
+      msgs,
+      watermarkSid: 0,
+      stats: storeStatsOf(msgs),
+      kindCounts: { 文本: msgs.length },
+      updatedAt: '2026-09-25T00:00:00.000Z',
+    };
+  });
+}
+
+/** 任务播种（崩溃现场构造用）：直接把任务挂进保库记录 job 段 */
+async function seedJob(name: string, j: PersonJob): Promise<void> {
+  await safe.write(name, (rec) => {
+    rec.job = j;
   });
 }
 
@@ -87,38 +102,49 @@ function target(msgs: StoreMsg[], over: Partial<JobTarget> = {}): JobTarget {
   };
 }
 
-const JOBS_PATH = 'CONFIG/STORAGE/people-jobs.json';
-
-function fileRaw(): string {
-  return vault.files.get(JOBS_PATH) ?? '';
+/** vault 内全部明文内容拼串（467 隐私断言用：加密库外不得出现任何聊天数据） */
+function allVaultText(): string {
+  return [...vault.files.entries()].map(([p, c]) => `${p}:${c}`).join('\n');
 }
 
-function readQueue(): PersonJob[] {
-  const raw = fileRaw();
-  return raw ? (JSON.parse(raw).queue ?? []) : [];
+/** 读盘上全部任务（各保库记录 job 段；JobStore.read 同口径排序） */
+async function readQueue(): Promise<PersonJob[]> {
+  return (await new JobStore(app).read()).queue;
 }
 
-/** 轮询等待（引擎是后台 promise，测试以落盘文件 / 调用计数为条件） */
-async function until(cond: () => boolean): Promise<void> {
+/** 轮询等待（引擎是后台 promise，测试以落盘记录 / 调用计数为条件） */
+async function until(cond: () => boolean | Promise<boolean>): Promise<void> {
   for (let i = 0; i < 2000; i++) {
-    if (cond()) return;
+    if (await cond()) return;
     await new Promise((r) => setTimeout(r, 5));
   }
   throw new Error('jobs.test: 等待条件超时');
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vault = new MockVault();
   app = mockAppWithVault(vault);
   setApp(app);
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
   resetObsidianMocks();
   __resetJobsForTests();
+  // 保库注入缝（467）：MockVault 上的真 SafeManager，先解锁再交给引擎 / 门面共用
+  sm = new SafeManager('CONFIG/.ENCRYPT');
+  await sm.unlock(PW);
+  safe = new PeopleSafeStore(sm);
+  setPeopleSafeStoreForTests(safe);
 });
 
 afterEach(() => {
   __resetJobsForTests();
+  setPeopleSafeStoreForTests(null);
+  sm.lock();
 });
+
+/** 盘上某位联系人的记录（断言用） */
+function recordOf(talker: string): Promise<{ job: PersonJob | null } | null> {
+  return safe.read(talker).then((r) => (r ? { job: r.job ?? null } : null));
+}
 
 describe('startJobs：任务创建与逐批落盘', () => {
   it('排队跑完：双卷产物挂 job、批次计数正确、文件结构与隐私红线', async () => {
@@ -151,26 +177,26 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(snap.running).toBe(false);
     expect(snap.currentIndex).toBe(-1);
 
-    // 落盘结构：{ version: 1, queue: [...] }
-    const data = JSON.parse(fileRaw());
-    expect(data.version).toBe(1);
-    const saved = data.queue[0];
-    expect(saved.status).toBe('done');
-    expect(saved.batchesDone).toBe(2);
+    // 落盘结构（467）：任务落在该联系人保库记录的 job 段
+    const saved = (await recordOf(TALKER))?.job;
+    expect(saved?.status).toBe('done');
+    expect(saved?.batchesDone).toBe(2);
     // 导入记录元数据（ui 层落 ImportRecord 所需）
-    expect(saved.importRecord).toEqual({
+    expect(saved?.importRecord).toEqual({
       fileLabel: `数据源:${TALKER}`,
       skippedCount: 0,
       messageCount: 4,
       timeFrom: new Date(msgs[0].ts).toISOString(),
       timeTo: new Date(msgs[3].ts).toISOString(),
     });
-    expect(saved.stats).toBeTruthy();
+    expect(saved?.stats).toBeTruthy();
 
-    // 隐私红线（ADR-0191）：消息原文与批内对话行不落盘
-    expect(fileRaw()).not.toContain('构造消息');
-    expect(fileRaw()).not.toContain('"lines"');
-    expect(fileRaw()).not.toContain('[2024-');
+    // 隐私口径（ADR-0194 取代 ADR-0191 §2）：消息原文与批内对话行不落盘，
+    // 且 467 起任务 / 提炼产物整体只进加密库——vault 任何明文角落都搜不到
+    expect(allVaultText()).not.toContain('构造消息');
+    expect(allVaultText()).not.toContain('"lines"');
+    expect(allVaultText()).not.toContain('[2024-');
+    expect(vault.files.has('CONFIG/STORAGE/people-jobs.json')).toBe(false);
   });
 
   it('切批说明（缺省双限 = digest.DEFAULTS，成文三次调用）与逐批 / 四阶段文案经 subscribe 推送；每批完成即落盘', async () => {
@@ -194,12 +220,12 @@ describe('startJobs：任务创建与逐批落盘', () => {
       if (s.queue[0]?.stage) stages.push(s.queue[0].stage);
     });
     void startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 2 }, askExtract, askPortrait });
-    await until(() => readQueue()[0]?.batchesDone === 1);
+    await until(async () => (await readQueue())[0]?.batchesDone === 1);
 
     // 第一批完成即原子落盘（任务仍在跑）
-    expect(readQueue()[0].status).toBe('running');
-    expect(readQueue()[0].stage).toBe('extracting');
-    expect(readQueue()[0].results).toHaveLength(1);
+    expect((await readQueue())[0].status).toBe('running');
+    expect((await readQueue())[0].stage).toBe('extracting');
+    expect((await readQueue())[0].results).toHaveLength(1);
     release();
     await whenIdle();
 
@@ -221,7 +247,7 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(r.queued).toEqual(['构造对象']);
     expect(r.skipped).toEqual(['空仓']);
     await whenIdle();
-    expect(readQueue()).toHaveLength(1);
+    expect(await readQueue()).toHaveLength(1);
   });
 
   it('monthly / profile 透传（issue 455）：statsNote 带「消息密度」段、素材〇随 material 落盘', async () => {
@@ -235,7 +261,7 @@ describe('startJobs：任务创建与逐批落盘', () => {
       { chunkOpts: { maxCount: 1 }, askExtract, askPortrait }
     );
     await whenIdle();
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     // 密度段按月升序进 statsNote（buildStatsNote 第二参）
     expect(job.material?.statsNote).toContain('消息密度：2026-03 6221 条、2026-04 4239 条');
     // 档案段排队时定稿并落 material（重启续跑不用重算）
@@ -259,7 +285,7 @@ describe('抽样说明（超大记录）', () => {
     await startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1, maxBatches: 2 }, askExtract, askPortrait });
     await whenIdle();
 
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('done');
     expect(job.chunks).toHaveLength(2);
     expect(job.batchesDone).toBe(2);
@@ -293,7 +319,7 @@ describe('暂停与断点续跑', () => {
     release();
     await started;
     await whenIdle();
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('paused');
     expect(job.batchesDone).toBe(2);
     expect(job.results).toHaveLength(2);
@@ -307,7 +333,7 @@ describe('暂停与断点续跑', () => {
     expect(resume(TALKER)).toBe(true);
     await whenIdle();
 
-    const done = readQueue()[0];
+    const done = (await readQueue())[0];
     expect(done.status).toBe('done');
     expect(done.stage).toBe('done');
     expect(done.batchesDone).toBe(3);
@@ -317,18 +343,18 @@ describe('暂停与断点续跑', () => {
 
   it('指纹漂移判废：暂停期间导入过新数据 → error + 冻结文案；判废后不可续、可删除', async () => {
     const { msgs } = await setupPaused();
-    // 中途导入新数据：预览桶多一条 → 指纹漂移
+    // 中途导入新数据：聊天仓多一条 → 指纹漂移
     await seedPreview([...msgs, pm(9)]);
     resume(TALKER);
     await whenIdle();
 
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('error');
     expect(job.error).toBe(DRIFT_ERROR);
     expect(job.error).toBe('消息集已变化（导入过新数据），请删除任务后重新生成');
     expect(resume(TALKER)).toBe(false); // 判废任务不可再续
     await expect(removeJob(TALKER)).resolves.toBe(true);
-    expect(readQueue()).toEqual([]);
+    expect(await readQueue()).toEqual([]);
     expect(snapshot().queue).toEqual([]);
   });
 
@@ -338,7 +364,7 @@ describe('暂停与断点续跑', () => {
     await seedPreview([pm(0, '构造消息0（升级后）'), ...msgs.slice(1)]);
     resume(TALKER);
     await whenIdle();
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('error');
     expect(job.error).toBe(DRIFT_ERROR);
   });
@@ -360,7 +386,7 @@ describe('暂停与断点续跑', () => {
     await started;
     await whenIdle();
 
-    const failed = readQueue()[0];
+    const failed = (await readQueue())[0];
     expect(failed.status).toBe('error');
     expect(failed.error).toBe('AI 调用超时');
     expect(failed.batchesDone).toBe(1);
@@ -370,7 +396,7 @@ describe('暂停与断点续跑', () => {
     fail = false;
     expect(resume(TALKER)).toBe(true); // 451：AI 调用类失败受理（漂移判废仍不受理，见上一条）
     await whenIdle();
-    const done = readQueue()[0];
+    const done = (await readQueue())[0];
     expect(done.status).toBe('done');
     expect(done.batchesDone).toBe(3);
     expect(done.results).toHaveLength(3);
@@ -399,7 +425,7 @@ describe('暂停与断点续跑', () => {
     });
     await whenIdle();
 
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('done');
     expect(job.batchesDone).toBe(3); // 重试自愈，任务不停
     expect(calls).toBe(4); // 批 1 + 批 2（失败）+ 批 2 重试 + 批 3
@@ -427,7 +453,7 @@ describe('暂停与断点续跑', () => {
     });
     await whenIdle();
 
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('error');
     expect(job.batchesDone).toBe(1); // 第 1 批成果保留
     expect(job.results).toHaveLength(1);
@@ -450,7 +476,7 @@ describe('暂停与断点续跑', () => {
     const opts = { chunkOpts: { maxCount: 1 }, askExtract, askPortrait, maxRetries: 0 };
     await startJobs(app, [target(msgs)], opts);
     await whenIdle();
-    expect(readQueue()[0].status).toBe('error');
+    expect((await readQueue())[0].status).toBe('error');
     const paid = (askExtract as any).mock.calls.length;
     expect(paid).toBe(2);
 
@@ -461,7 +487,7 @@ describe('暂停与断点续跑', () => {
     expect(again.queued).toEqual(['构造对象']);
     await whenIdle();
 
-    const done = readQueue()[0];
+    const done = (await readQueue())[0];
     expect(done.status).toBe('done');
     expect(done.batchesDone).toBe(3);
     expect(done.results).toHaveLength(3);
@@ -481,14 +507,14 @@ describe('暂停与断点续跑', () => {
     const opts = { chunkOpts: { maxCount: 1 }, askExtract, askPortrait, maxRetries: 0 };
     await startJobs(app, [target(msgs)], opts);
     await whenIdle();
-    expect(readQueue()[0].status).toBe('error');
+    expect((await readQueue())[0].status).toBe('error');
 
     const grown = [...msgs, pm(9)]; // 中途导入过新数据
     await seedPreview(grown);
     const again = await startJobs(app, [target(grown)], opts);
     expect(again.resumed).toEqual([]); // 接不上：不复用
     await whenIdle();
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.status).toBe('done');
     expect(job.batchesDone).toBe(4); // 新靶 4 批全跑
   });
@@ -512,7 +538,7 @@ describe('暂停与断点续跑', () => {
     await expect(removeJob(TALKER)).resolves.toBe(true);
     release();
     await whenIdle();
-    expect(readQueue()).toEqual([]);
+    expect(await readQueue()).toEqual([]);
     expect(snapshot().queue).toEqual([]);
   });
 });
@@ -540,17 +566,17 @@ describe('resumeJobs：中断标记与重启续跑', () => {
       startedAt: '2026-09-25T00:00:00.000Z',
       updatedAt: '2026-09-25T00:00:00.000Z',
     };
-    vault.files.set(JOBS_PATH, JSON.stringify({ version: 1, queue: [crashed] }));
+    await seedJob(TALKER, crashed); // 崩溃现场：任务挂在保库记录 job 段（467）
 
     const { askExtract, askPortrait } = makeAsks();
     await resumeJobs(app, { askExtract, askPortrait });
-    expect(readQueue()[0].status).toBe('interrupted'); // running → interrupted
-    expect(readQueue()[0].results).toHaveLength(1); // 已付批次保留
-    expect(readQueue()[0].message).toBe('上次未完成，可从断点继续');
+    expect((await readQueue())[0].status).toBe('interrupted'); // running → interrupted
+    expect((await readQueue())[0].results).toHaveLength(1); // 已付批次保留
+    expect((await readQueue())[0].message).toBe('上次未完成，可从断点继续');
 
     expect(resume(TALKER)).toBe(true);
     await whenIdle();
-    const done = readQueue()[0];
+    const done = (await readQueue())[0];
     expect(done.status).toBe('done');
     expect(done.batchesDone).toBe(2);
     expect(done.results).toHaveLength(2); // 断点前 1 批不重烧
@@ -582,16 +608,16 @@ describe('resumeJobs：中断标记与重启续跑', () => {
       startedAt: '2026-09-25T00:00:00.000Z',
       updatedAt: '2026-09-25T00:00:00.000Z',
     };
-    vault.files.set(JOBS_PATH, JSON.stringify({ version: 1, queue: [legacy] }));
+    await seedJob(TALKER, legacy as unknown as PersonJob);
 
     const { askExtract, askPortrait } = makeAsks();
     await resumeJobs(app, { askExtract, askPortrait });
-    expect(readQueue()[0].person).toBe('## 画像速写\n旧单卷画像'); // portrait → person 映射
-    expect(readQueue()[0].results).toHaveLength(2); // 已付批次保留
+    expect((await readQueue())[0].person).toBe('## 画像速写\n旧单卷画像'); // portrait → person 映射
+    expect((await readQueue())[0].results).toHaveLength(2); // 已付批次保留
 
     expect(resume(TALKER)).toBe(true);
     await whenIdle();
-    const done = readQueue()[0];
+    const done = (await readQueue())[0];
     expect(done.status).toBe('done');
     expect(done.batchesDone).toBe(3);
     expect(done.results).toHaveLength(3);
@@ -667,7 +693,7 @@ describe('增量模式与 skip 跳过', () => {
     expect(r.queued).toEqual(['构造对象']);
     await whenIdle();
 
-    const job = readQueue()[0];
+    const job = (await readQueue())[0];
     expect(job.mode).toBe('incremental'); // 有锚点 + 有新消息
     // 同秒容差：锚点同秒的 msgs[1] 也算新素材 → 提炼集 = msgs[1..3] 共 3 条
     expect(job.importRecord?.messageCount).toBe(3);
@@ -705,7 +731,7 @@ describe('增量模式与 skip 跳过', () => {
     expect(r.queued).toEqual([]);
     expect(r.skipped).toEqual(['构造对象']);
     await whenIdle();
-    expect(readQueue()).toEqual([]);
+    expect(await readQueue()).toEqual([]);
     expect(askExtract).not.toHaveBeenCalled();
   });
 });
@@ -726,9 +752,8 @@ describe('fingerprintOf 内容哈希指纹（466）', () => {
   });
 });
 
-describe('多人队列与路径覆盖', () => {
-  it('多人按序跑完；storagePath 设置键覆盖基目录', async () => {
-    setSettingsProvider(() => ({ storagePath: '我的数据' }) as any);
+describe('多人队列（467：任务按人各归各的保库记录）', () => {
+  it('多人按序跑完；任务与素材各自落在对应联系人的记录里，明文任务文件不再出现', async () => {
     await seedPreview([pm(0), pm(1)]);
     await seedPreview([pm(0, '乙的构造消息')], 'wxid_b');
     const { askExtract, askPortrait } = makeAsks();
@@ -739,11 +764,51 @@ describe('多人队列与路径覆盖', () => {
     );
     expect(r.queued).toEqual(['构造对象', '构造乙']);
     await whenIdle();
-    expect(vault.files.has('我的数据/people-jobs.json')).toBe(true);
-    const queue = JSON.parse(vault.files.get('我的数据/people-jobs.json')!).queue as PersonJob[];
-    expect(queue.map((j) => j.status)).toEqual(['done', 'done']);
-    expect(queue.map((j) => j.talker)).toEqual([TALKER, 'wxid_b']);
-    expect(queue.map((j) => j.batchesDone)).toEqual([2, 1]); // 各自按消息量切批
+    // 各自记录里的任务互不串扰（status / 批数按人断言，不依赖队列序）
+    const queue = await readQueue();
+    expect(queue).toHaveLength(2);
+    const byTalker = new Map(queue.map((j) => [j.talker, j]));
+    expect(byTalker.get(TALKER)?.status).toBe('done');
+    expect(byTalker.get(TALKER)?.batchesDone).toBe(2);
+    expect(byTalker.get('wxid_b')?.status).toBe('done');
+    expect(byTalker.get('wxid_b')?.batchesDone).toBe(1); // 各自按消息量切批
+    expect(vault.files.has('CONFIG/STORAGE/people-jobs.json')).toBe(false);
+  });
+
+  it('上锁协作暂停（ADR-0194 决策 5）：上锁 → 当前批完成即停；解锁 → kick 续跑到完', async () => {
+    const msgs = [pm(0), pm(1), pm(2)]; // maxCount 1 → 3 批
+    await seedPreview(msgs);
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2) await gate; // 卡住第 2 批
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    const started = startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1 }, askExtract, askPortrait });
+    await until(async () => calls >= 2);
+    sm.lock(); // 第 2 批 AI 调用窗口内上锁：解锁态广播 → 引擎协作暂停（wireLock 接线），批级断点保留
+    release();
+    await started;
+    await whenIdle();
+    // 协作暂停落在内存（上锁期落盘被拒——密文库不可写）：批级断点 2/3 保留、不再烧第 3 批
+    const paused = snapshot().queue[0];
+    expect(paused.status).toBe('paused');
+    expect(paused.batchesDone).toBe(2);
+    expect(vault.files.has('CONFIG/STORAGE/people-jobs.json')).toBe(false);
+    // 解锁 → 广播驱动 kick → 从第 3 批续跑到完（无需手动 resume）
+    await sm.unlock(PW);
+    await until(async () => (snapshot().queue[0]?.status ?? '') === 'done');
+    const done = snapshot().queue[0];
+    expect(done.batchesDone).toBe(3);
+    expect((askExtract as any).mock.calls.length).toBe(3); // 第 3 批补跑，不重烧
+    // 落盘收敛：任务连同成果回到保库记录
+    await until(async () => ((await readQueue())[0]?.status ?? '') === 'done');
+    expect((await recordOf(TALKER))?.job?.batchesDone).toBe(3);
   });
 });
 

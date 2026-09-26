@@ -34,6 +34,9 @@ export interface JsonScanTarget {
  * 豁免边界（有意不在清单）：encrypt 加密 manifest（CONFIG/.ENCRYPT/ 密文域，由保险库域
  * 自己的体检覆盖，明文巡检不碰密文）；secondbrain.vec（向量文件，非 json）；
  * gameshelf（数据在条目 frontmatter，无根 json——指向缺失归检查三孤儿面）。
+ * 脸谱（467 / ADR-0194）：people.json / people-preview.json / people-jobs.json 明文三件已退役，
+ * 脸谱数据整体在保库记录（SafeNote.kind='people'，密文域内）——**未解锁读不到、解锁也不进
+ * 明文巡检**（未解锁跳过脸谱域不报错；契约锁见 tests/checkup/contract.test.ts）。
  */
 export function jsonScanTargets(app: App): JsonScanTarget[] {
   const s = tryGetSettings() as any;

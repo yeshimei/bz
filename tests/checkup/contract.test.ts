@@ -71,6 +71,19 @@ describe('段级契约：SEGMENT_FIELDS × 域写侧形状', () => {
       expect(targetNames).toContain(name);
     }
   });
+
+  it('脸谱域豁免（issue 467 / ADR-0194）：明文三件退役、保库记录不进明文巡检——未解锁跳过脸谱不报错', () => {
+    const targets = jsonScanTargets({ vault: { getAbstractFileByPath: () => null } } as never);
+    const targetNames = targets.map((t) => t.file.split('/').pop() || t.file);
+    // 明文时代的脸谱数据文件不再巡检（已迁移删除；残留检查归迁移侧，不归体检）
+    for (const name of ['people.json', 'people-preview.json', 'people-jobs.json']) {
+      expect(targetNames).not.toContain(name);
+    }
+    // 密文域整体豁免（与 .safe.enc 同边界）：保库记录条目在 .safe.enc 清单里，未解锁本就读不到
+    for (const t of targets) {
+      expect(t.file).not.toContain('.ENCRYPT');
+    }
+  });
 });
 
 /** 条目级契约：字段集 × 域归一函数恒等（升格原「仅长度断言」为逐键） */

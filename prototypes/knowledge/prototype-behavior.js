@@ -1,4 +1,4 @@
-/* 源指纹 d1b1c0b76ddbd058 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1e012af786da3233 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5807,33 +5807,18 @@ var BZW_knowledge = (() => {
   }
   function openExternalUrl(app, url) {
     try {
-      const r = app.openUrl(url);
-      if (r && typeof r.catch === "function") {
-        r.catch(() => {
-          if (!openViaElectron(url)) openViaWindow(url);
-        });
-        return;
-      }
+      app.openUrl(url);
       return;
     } catch (e) {
     }
-    if (!openViaElectron(url)) openViaWindow(url);
-  }
-  function openViaElectron(url) {
     try {
       const electron = window.require && window.require("electron");
       if (electron && electron.shell) {
-        const p = electron.shell.openExternal(url);
-        if (p && typeof p.catch === "function") {
-          p.catch(() => openViaWindow(url));
-        }
-        return true;
+        electron.shell.openExternal(url);
+        return;
       }
     } catch (e) {
     }
-    return false;
-  }
-  function openViaWindow(url) {
     try {
       const w = window.open(url, "_blank");
       if (w) return;

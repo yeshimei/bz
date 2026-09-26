@@ -23,14 +23,18 @@ import {
   type JobsApi,
 } from '../../src/people/ui';
 import { DRIFT_ERROR, type PersonJob, type JobView, type JobsSnapshot } from '../../src/people/jobs';
-import { getPeopleFilePath } from '../../src/people/data';
-import { getStoreFilePath } from '../../src/people/datasource';
+import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import { SafeManager } from '../../src/encrypt/data';
 import type { PersonEntry, UnifiedMessage } from '../../src/people/types';
+import type { StoreContact } from '../../src/people/datasource';
 
 const T0 = new Date('2026-09-25T08:00:00').getTime();
+const PW = 'gen-test-pw';
 const tick = (ms = 0) => new Promise((r) => setTimeout(r, ms));
-const disk = (vault: MockVault): { people: PersonEntry[] } =>
-  JSON.parse(vault.files.get(getPeopleFilePath()) ?? '{ "people": [] }');
+/** 盘上人物卡（467）：保库记录 person 段投影（供 disk() 断言） */
+let lastSafe: PeopleSafeStore | null = null;
+const disk = async (): Promise<{ people: PersonEntry[] }> =>
+  lastSafe ? { people: [...(await lastSafe.readAll()).values()].map((r) => r.person) } : { people: [] };
 
 function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -140,12 +144,33 @@ class FakeEngine implements JobsApi {
 
 const inject = (engine: FakeEngine): void => setJobsModuleForTests(engine);
 
-async function boot(seed?: PersonEntry[]): Promise<MockVault> {
+async function boot(seed?: PersonEntry[]): Promise<{ vault: MockVault; safe: PeopleSafeStore; sm: SafeManager }> {
   const vault = new MockVault();
-  if (seed) vault.files.set(getPeopleFilePath(), JSON.stringify({ version: 1, people: seed }));
   setApp(makeApp(vault));
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
-  return vault;
+  const sm = new SafeManager('CONFIG/.ENCRYPT');
+  await sm.unlock(PW);
+  lastSafe = new PeopleSafeStore(sm);
+  setPeopleSafeStoreForTests(lastSafe);
+  for (const p of seed ?? []) {
+    await lastSafe.write(p.id, (rec) => {
+      rec.person = p;
+    });
+  }
+  return { vault, safe: lastSafe, sm };
+}
+
+/** 聊天仓种子（467：写进保库记录 store 段） */
+async function seedStore(safe: PeopleSafeStore, talker = 'wxid_a', count = 2): Promise<void> {
+  const store: StoreContact = {
+    msgs: Array.from({ length: count }, (_, i) => ({ key: `s${i + 1}:${T0 + i * 60_000}`, ts: T0 + i * 60_000, isSender: i % 2 === 0, type: 1, text: i === 0 ? '早' : '早呀' })),
+    watermarkSid: count,
+    stats: { msgCount: count, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+    updatedAt: new Date(T0).toISOString(),
+  };
+  await safe.write(talker, (rec) => {
+    rec.store = store;
+  });
 }
 
 beforeEach(() => {
@@ -156,6 +181,8 @@ beforeEach(() => {
 afterEach(() => {
   try { closePeoplePanel(); } catch { /* 幂等 */ }
   setJobsModuleForTests(null);
+  setPeopleSafeStoreForTests(null);
+  lastSafe = null;
 });
 
 describe('开面板恢复任务态（450 状态恢复）', () => {
@@ -221,7 +248,7 @@ describe('订阅驱动渲染（450 后台化）', () => {
 
 describe('startGeneration → 引擎 → done 落盘', () => {
   it('targets 交 startJobs；done 推送写 people.json（导入记录 / 脸谱 / 锚点）+ 完成通知 + 清队列', async () => {
-    const vault = await boot();
+    await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -243,8 +270,9 @@ describe('startGeneration → 引擎 → done 落盘', () => {
       material: { traits: ['简短'], moments: [{ ts: '2026-09-25', summary: '午饭决策现场' }] },
       chronicle: '## 时间线\n2026-09 仍常聊。',
     })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toContain('陈默说话简短'));
-    const p = disk(vault).people[0];
+    await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 锚点是落盘链最后一环，等它落地
+    expect((await disk()).people[0]?.digest?.person).toContain('陈默说话简短');
+    const p = (await disk()).people[0];
     const d = p.digest!;
     expect(p.name).toBe('陈默');
     expect(p.imports).toHaveLength(1);
@@ -263,7 +291,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
   });
 
   it('引擎保留 done 任务重复推送 → 不重复落导入记录（幂等）', async () => {
-    const vault = await boot();
+    await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -271,10 +299,11 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     await startGeneration([target()]);
     const done = fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '画像', events: [] });
     engine.push([done]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('画像'));
+    await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
+    expect((await disk()).people[0]?.digest?.person).toBe('画像');
     engine.push([done]); // 引擎侧若仍带着 done 任务再推一帧
     await tick(); await tick();
-    expect(disk(vault).people[0].imports).toHaveLength(1);
+    expect((await disk()).people[0].imports).toHaveLength(1);
     expect(engine.calls.remove).toHaveLength(1);
   });
 
@@ -288,14 +317,14 @@ describe('startGeneration → 引擎 → done 落盘', () => {
       imports: [{ file: '数据源:陈默', importedAt: '2026-09-01T00:00:00.000Z', messageCount: 3, skippedCount: 0, timeFrom: from, timeTo: to }],
       lastProcessedTs: T0 + 120_000,
     };
-    const vault = await boot([existing]);
+    await boot([existing]);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
     await startGeneration([target({ name: '陈默' })]); // 同一条数 + 同跨度 → 指纹命中
     expect(engine.calls.start).toHaveLength(0); // 全员 skip → 引擎根本不启动
-    const p = disk(vault).people[0];
+    const p = (await disk()).people[0];
     expect(p.name).toBe('陈默'); // skip 也应用改名（441 语义保留）
     expect(p.imports).toHaveLength(1);
     expect(getNoticeMessages().some((m) => m.includes('没有新消息、无需重画'))).toBe(true);
@@ -363,7 +392,7 @@ describe('关面板转后台（450）', () => {
   });
 
   it('面板关着时 done → 照常落盘（引擎独立于面板生命周期）', async () => {
-    const vault = await boot();
+    await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -371,7 +400,8 @@ describe('关面板转后台（450）', () => {
     await startGeneration([target()]);
     closePeoplePanel();
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '后台画完', events: [] })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('后台画完'));
+    await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
+    expect((await disk()).people[0]?.digest?.person).toBe('后台画完');
     expect(getNoticeMessages().some((m) => m.includes('陈默」的脸谱已生成'))).toBe(true);
   });
 });
@@ -431,21 +461,8 @@ describe('折子印章四态（451）', () => {
   });
 
   it('未画谱印章「画脸谱」：有仓内素材即交引擎（talker 与素材条数对齐）', async () => {
-    const vault = await boot([undrawn()]);
-    vault.files.set(getStoreFilePath(), JSON.stringify({
-      version: 2,
-      contacts: {
-        wxid_a: {
-          msgs: [
-            { key: 's1:1', ts: T0, isSender: true, type: 1, text: '早' },
-            { key: 's2:2', ts: T0 + 60_000, isSender: false, type: 1, text: '早呀' },
-          ],
-          watermarkSid: 2,
-          stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
-          updatedAt: new Date(T0).toISOString(),
-        },
-      },
-    }));
+    const { safe } = await boot([undrawn()]);
+    await seedStore(safe);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -473,21 +490,8 @@ describe('折子印章四态（451）', () => {
 describe('生成入口不重烧（453）', () => {
   const undrawn = (): PersonEntry => ({ id: 'wxid_a', name: '陈默', createdAt: '2026-01-01T00:00:00.000Z', imports: [] });
   const batches = (n: number) => Array.from({ length: n }, () => meta());
-  const seedPreview = (vault: MockVault): void => {
-    vault.files.set(getStoreFilePath(), JSON.stringify({
-      version: 2,
-      contacts: {
-        wxid_a: {
-          msgs: [
-            { key: 's1:1', ts: T0, isSender: true, type: 1, text: '早' },
-            { key: 's2:2', ts: T0 + 60_000, isSender: false, type: 1, text: '早呀' },
-          ],
-          watermarkSid: 2,
-          stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
-          updatedAt: new Date(T0).toISOString(),
-        },
-      },
-    }));
+  const seedPreview = async (safe: PeopleSafeStore): Promise<void> => {
+    await seedStore(safe);
   };
   /** 大琳量级的中断任务：47 批、已完成 29 批、AI 调用类失败（可续） */
   const failing = (over: Partial<PersonJob> = {}): Partial<PersonJob> => ({
@@ -531,8 +535,8 @@ describe('生成入口不重烧（453）', () => {
   });
 
   it('漂移判废（接不上）：印章出「重新生成」，点它才真重画（走 startJobs，不是 resume）', async () => {
-    const vault = await boot([undrawn()]);
-    seedPreview(vault);
+    const { safe } = await boot([undrawn()]);
+    await seedPreview(safe);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -580,7 +584,7 @@ function drawnPerson(over: Partial<PersonEntry> = {}): PersonEntry {
 
 describe('双卷落盘（455）', () => {
   it('新引擎 done（person/bond）：各归其卷写入 digest，旧 portrait 字段不再写', async () => {
-    const vault = await boot();
+    await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
@@ -590,23 +594,23 @@ describe('双卷落盘（455）', () => {
       status: 'done', stage: 'done', message: '', batchesDone: 1,
       person: '## 其人\n慢热。', bond: '## 我们\n老友。', events: [],
     })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toContain('慢热'));
-    const d = disk(vault).people[0].digest!;
+    await vi.waitFor(async () => expect((await disk()).people[0]?.digest?.person).toContain('慢热'));
+    const d = (await disk()).people[0].digest!;
     expect(d.person).toContain('其人');
     expect(d.bond).toContain('我们');
     expect(d.portrait).toBeUndefined();
   });
 
   it('done 只有 person（无 bond）：卷一写入、卷二缺省（旧 portrait→person 映射归引擎 resumeJobs）', async () => {
-    const vault = await boot();
+    await boot();
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
     await startGeneration([target()]);
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '旧单卷画像', events: [] })]);
-    await vi.waitFor(() => expect(disk(vault).people[0]?.digest?.person).toBe('旧单卷画像'));
-    expect(disk(vault).people[0].digest!.bond).toBeUndefined();
+    await vi.waitFor(async () => expect((await disk()).people[0]?.digest?.person).toBe('旧单卷画像'));
+    expect((await disk()).people[0].digest!.bond).toBeUndefined();
   });
 });
 
@@ -647,14 +651,13 @@ describe('生成入参带档案与月度（455）', () => {
 
 describe('详情折册四折与弹窗（455）', () => {
   /** 开面板 → 进详情（折册可见） */
-  async function openDetail(seed: PersonEntry[]): Promise<MockVault> {
-    const vault = await boot(seed);
+  async function openDetail(seed: PersonEntry[]): Promise<void> {
+    await boot(seed);
     inject(new FakeEngine());
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(document.querySelector('[data-people-card]')).toBeTruthy());
     click('[data-people-card="wxid_a"]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-book]')).toBeTruthy());
-    return vault;
   }
 
   it('三折渲染：其人折展开显旧画像（兼容读）；相交折收起，点书脊展开显空态', async () => {
@@ -688,7 +691,7 @@ describe('详情折册四折与弹窗（455）', () => {
   });
 
   it('补充背景弹窗：空档出补档入口，编辑保存落盘且弹窗留查看态；Esc 先关弹窗不关面板', async () => {
-    const vault = await openDetail([drawnPerson()]);
+    await openDetail([drawnPerson()]);
     click('[data-people-prof-open]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-prof-pop]')).toBeTruthy());
     expect(document.querySelector('[data-people-prof-pop] [role="dialog"]')!.getAttribute('aria-label')).toBe('补充背景');
@@ -697,7 +700,7 @@ describe('详情折册四折与弹窗（455）', () => {
     const note = document.querySelector<HTMLInputElement>('[data-people-prof-field="note"]')!;
     note.value = '小学同学';
     click('[data-people-prof-save]');
-    await vi.waitFor(() => expect(disk(vault).people[0].profile?.note).toBe('小学同学'));
+    await vi.waitFor(async () => expect((await disk()).people[0].profile?.note).toBe('小学同学'));
     expect(document.querySelector('[data-people-prof-pop]')).toBeTruthy(); // 弹窗仍开
     expect(document.querySelector('[data-people-prof-pop] [data-people-prof-edit]')).toBeTruthy(); // 回查看态
 

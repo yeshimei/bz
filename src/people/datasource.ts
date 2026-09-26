@@ -1,8 +1,8 @@
 /**
- * 脸谱数据源层（issue 446 / 449；聊天仓 v2 = issue 466 / ADR-0197）：消费微信全模态预处理管线
- * （skill wechat-media-preprocess）的按联系人数据文件夹——`<数据根>/<联系人>/chat.json`
- * （消息流 [{ct,type,who,msg,sid,dur,wav,img?}]，语音已回填 `[语音 N秒·情感] 文本`、
- * 图片可带 img:"月/文件" 字段、表情开始回填 `[表情·名]`）。
+ * 脸谱数据源层（issue 446 / 449；聊天仓 v2 = issue 466 / ADR-0197；467 入保库）：
+ * 消费微信全模态预处理管线（skill wechat-media-preprocess）的按联系人数据根目录——
+ * `<数据根>/<联系人>/chat.json`（消息流 [{ct,type,who,msg,sid,dur,wav,img?}]，语音已回填
+ * `[语音 N秒·情感] 文本`、图片可带 img:"月/文件" 字段、表情开始回填 `[表情·名]`）。
  * `voice.json` / `image_desc.json` 为**兼容兜底**（正常情况 chat.json 已回填，单文件即可；
  * 旧数据目录缺回填时仍按 wav / img 关联补齐）。
  *
@@ -16,20 +16,21 @@
  *   `[语音 N秒·情感] 转写` / `[表情·名]`…），**空串 = 不进时间线**（展示与素材组装只读
  *   「text 非空」这一行过滤，存储完整可重算——466 / ADR-0197，取代 449「不进时间线就丢出
  *   消息流」）。按替代键（sid / ct+msg 哈希）**upsert** 合并：同键新文本覆盖、原始字段按新值
- *   更新（取代旧 append-only，修「源 28 条表情带名 / 仓 52 条」永远对不上的事故），落
- *   CONFIG/STORAGE/people-preview.json（vault 内；**文件名保留，概念改称聊天仓**）。
+ *   更新（取代旧 append-only，修「源 28 条表情带名 / 仓 52 条」永远对不上的事故）。
+ *   467 起归一结果由调用方写进**保库记录**（safe-store.ts，SafeNote.kind='people'）——
+ *   明文 people-preview.json 落盘通道退役（类型保留供迁移读旧文件）。
  *   顺带产出互动画像汇总 insights（insights.ts，供提炼 prompt 的「互动统计」素材段）。
  * - 聊天仓→脸谱：由 ui 层接既有 digest / planIncremental 增量管线（441 机制不动），本层不管。
  *
- * 纯函数（normalizeChatJson / mergeStore 等）与 IO（fs 读数据目录、MessageStore）分离：
+ * 纯函数（normalizeChatJson / mergeStore 等）与 IO（fs 读数据目录）分离：
  * 核心判定全部可单测，fs 仅桌面端可得（window.require，knowledge 同款）。
  */
-import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { collectMediaStats, parseMediaTag, emptyMediaStats, type MediaStats } from './media';
 import { normalizeKind } from './parse';
 import { computeInsights, emptyInsightSignals, type InsightsSummary } from './insights';
 import type { UnifiedMessage } from './types';
+import type { AvatarInput } from './safe-store';
 
 // ---------------- 类型 ----------------
 
@@ -129,20 +130,17 @@ export interface StoreContact {
   kindCounts?: Record<string, number>;
   /** 互动画像汇总（449；normalize 全量重算覆盖。旧数据无此字段照常读） */
   insights?: InsightsSummary;
-  /** 头像文件路径（456 起存 vault 相对路径：导入时自外部数据目录复制进库内媒体文件夹，渲染走 vault getResourcePath——app://local 解析不了库外路径是 455 头像裂图根因） */
+  /** 头像文件路径（**字段退役**，467：头像本体走保库记录附件——明文「文件夹名=人名」目录
+   *  CONFIG/FACES 已停止使用；迁移时本字段被剥除，新导入不再写。类型保留供迁移读旧文件） */
   avatar?: string;
   /** 最近一次导入时间 ISO */
   updatedAt: string;
 }
 
-/** people-preview.json 根结构（聊天仓；文件名保留旧名，466 / ADR-0197） */
+/** people-preview.json 根结构（**明文文件已退役**，467 / ADR-0194——类型保留供存量迁移读旧文件） */
 export interface MessageStoreData {
   version: 2;
   contacts: Record<string, StoreContact>;
-}
-
-export function emptyMessageStore(): MessageStoreData {
-  return { version: 2, contacts: {} };
 }
 
 export interface NormalizeResult {
@@ -656,7 +654,7 @@ export function readContactBundle(
   };
 }
 
-/** 头像文件扩展名探测序（数据目录与库内媒体文件夹同序） */
+/** 头像文件扩展名探测序（数据目录 avatar.<ext> 同序） */
 const AVA_EXTS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
 
 /** 联系人目录里的头像文件（avatar.<扩展名>，按序探测；绝对路径，缺省 null） */
@@ -670,126 +668,47 @@ function avatarFileOf(fs: any, dir: string): string | null {
   return null;
 }
 
-// ---------------- IO：库内媒体文件夹（头像入库，456） ----------------
-
-/** 库内媒体文件夹（vault 相对路径；peopleMediaDir 设置键，空 = CONFIG/FACES） */
-export function peopleMediaDir(): string {
-  const s = tryGetSettings() as { peopleMediaDir?: string } | null;
-  const dir = String(s?.peopleMediaDir ?? '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-  return dir || 'CONFIG/FACES';
-}
-
-/** 联系人名 → 媒体文件夹内的安全目录名（文件系统非法字符与首尾点空格压成 '_'） */
-function mediaDirName(name: string): string {
-  return String(name).replace(/[\\/:*?"<>|]/g, '_').replace(/^[\s.]+|[\s.]+$/g, '') || '未命名';
-}
-
-/** 判定头像路径是否已是库内相对路径（无盘符、无根斜杠、非协议地址） */
-export function isVaultRelativePath(p: string): boolean {
-  const norm = String(p ?? '').replace(/\\/g, '/');
-  return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith('/');
-}
+// ---------------- IO：头像字节（467：保库记录附件的源读取；不再复制进库内明文目录） ----------------
 
 /**
- * 头像入库（455 头像裂图修正）：外部数据目录的 avatar.<ext> 复制进 vault
- * `<媒体文件夹>/<联系人>/avatar.<ext>`，返回 vault 相对路径——库内文件渲染走
- * vault getResourcePath 必可加载。外部文件已删 → 回落库内已有副本；两头都没有 → null。
- * 复制幂等：每次导入/扫描都按外部文件覆盖（头像改了重导即新）。
+ * 库外头像文件 → base64（数据源导入写保库记录附件、扫描行预览共用）。
+ * 仅接受 avatar.<已知扩展名>；文件缺失 / 类型不符 / 读不动返回 null。纯 fs 读取，不写库。
  */
-export async function importAvatarToVault(
-  app: any,
-  name: string,
-  externalPath: string | null | undefined
-): Promise<string | null> {
-  const adapter = app?.vault?.adapter;
-  if (!adapter) return null;
-  const dir = `${peopleMediaDir()}/${mediaDirName(name)}`;
-  // 库内已有副本先探测（外部文件删了也能继续用）
-  let vaultCopy: string | null = null;
-  for (const ext of AVA_EXTS) {
-    const p = `${dir}/avatar.${ext}`;
-    try {
-      if (await adapter.exists(p)) { vaultCopy = p; break; }
-    } catch { /* 探测失败当没有 */ }
-  }
+export function readAvatarInput(absolutePath: string | null | undefined): AvatarInput | null {
   const fs = getFs();
-  if (!fs || !externalPath) return vaultCopy;
+  const p = String(absolutePath ?? '').trim();
+  if (!fs || !p) return null;
   let srcExt = '';
   try {
-    if (!fs.existsSync(externalPath)) return vaultCopy;
-    srcExt = String(externalPath.split('.').pop() ?? '').toLowerCase();
-  } catch { return vaultCopy; }
-  if (!AVA_EXTS.includes(srcExt)) return vaultCopy;
-  const target = `${dir}/avatar.${srcExt}`;
+    if (!fs.existsSync(p)) return null;
+    srcExt = String(p.split('.').pop() ?? '').toLowerCase();
+  } catch {
+    return null;
+  }
+  if (!AVA_EXTS.includes(srcExt)) return null;
   try {
-    const parts = dir.split('/');
-    let cur = '';
-    for (const seg of parts) {
-      cur = cur ? `${cur}/${seg}` : seg;
-      try { await adapter.mkdir(cur); } catch { /* 已存在即失败，忽略 */ }
-    }
-    const buf = fs.readFileSync(externalPath) as Uint8Array;
-    if (!buf || !buf.length) return vaultCopy;
-    // 转 ArrayBuffer 交给 vault（adapter.writeBinary 的官方入参形态）
-    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-    await adapter.writeBinary(target, ab);
-    return target;
-  } catch (e) {
-    console.warn('[people] 头像入库失败:', name, e);
-    return vaultCopy ?? externalPath; // 入库失败退回外部路径（旧渲染路径，至少语义不变）
+    const buf = fs.readFileSync(p) as Uint8Array;
+    if (!buf || !buf.length) return null;
+    return { base64: bytesToBase64Of(buf), ext: srcExt };
+  } catch {
+    return null;
   }
 }
 
-// ---------------- IO：people-preview.json（vault 内；聊天仓，466 / ADR-0197） ----------------
-
-/** 聊天仓文件路径（文件名保留旧名 people-preview.json；storagePath 设置键可覆盖基目录） */
-export function getStoreFilePath(): string {
-  const s = tryGetSettings() as { storagePath?: string } | null;
-  return storageFile('people-preview.json', (s && s.storagePath) || 'CONFIG/STORAGE');
+/** Uint8Array → base64（分块；与 encrypt/data.bytesToBase64 同实现——不引域外运行时依赖） */
+function bytesToBase64Of(bytes: Uint8Array): string {
+  const CHUNK = 0x8000;
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as unknown as number[]);
+  }
+  return btoa(bin);
 }
 
-/** 聊天仓读写（jsonFileStore + 串行写队列，PeopleStore 同款防并发覆盖） */
-export class MessageStore {
-  private readonly app: unknown;
-  private readonly filePath: string;
-
-  constructor(app: unknown) {
-    this.app = app;
-    this.filePath = getStoreFilePath();
-  }
-
-  private open() {
-    return jsonFileStore<MessageStoreData>(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
-  }
-
-  /**
-   * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
-   * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
-   */
-  async read(): Promise<MessageStoreData> {
-    const data = await enqueueFileTask(this.filePath, async () => this.open().read());
-    if (!data || data.version !== 2) return emptyMessageStore();
-    return data;
-  }
-
-  /** 合并写回一位联系人（读→改→写整体入队） */
-  async upsertContact(name: string, contact: StoreContact): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      const data = await store.read();
-      data.contacts[name] = contact;
-      await store.write(data);
-    });
-  }
-
-  /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
-  async clear(): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      await store.write(emptyMessageStore());
-    });
-  }
-}
+// ---------------- 旧明文通道（已退役，类型与空结构仅供迁移 / 测试引用） ----------------
+// people-preview.json 明文落盘（MessageStore / getStoreFilePath）与库内媒体文件夹
+// （peopleMediaDir / importAvatarToVault）随 467 / ADR-0194 一并退役：聊天仓与头像
+// 现在都活在保库记录里（safe-store.ts）。
 
 /** 聊天仓统计 → 445 徽章口径（零素材返回 null 不渲染） */
 export function storeMediaBadge(stats: StoreStats | undefined): MediaStats | null {

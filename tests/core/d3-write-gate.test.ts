@@ -35,10 +35,6 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     sentinel: true,
   },
   {
-    file: /^src\/people\/datasource\.ts$/,
-    reason: '头像入库（2026-09-26）：avatar.<ext> 二进制媒体复制进 vault，属用户文档写（与 encrypt 解密产出同口径）',
-  },
-  {
     file: /^src\/core\/self-update\.ts$/,
     reason: '自更新（2026-09-26）：覆盖插件目录 main.js/styles.css/manifest.json 三件套，升级协议自有顺序，非域数据文件',
   },
@@ -114,10 +110,8 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     file: /^src\/auto-summary\/processor\.ts$/,
     reason: '剪藏 frontmatter md 写回：写前重读最新内容仅合并目标字段（P1-21 防盲写），md 文件操作不套 json 原语（D3 拍板保留）',
   },
-  {
-    file: /^src\/people\/datasource\.ts$/,
-    reason: '脸谱头像入库（issue 456）：数据目录 avatar.<ext> 二进制复制进库内媒体文件夹（adapter.writeBinary，用户头像附件非插件私有数据，同 gameshelf/posters、cinema/douban-queue 先例）；people-preview.json 数据写已走 jsonFileStore',
-  },
+  // 467：src/people/datasource.ts 的 writeBinary 豁免随「头像入库明文目录」一并退役——
+  // 头像现在作为密文附件进保库记录（写路径全在 SafeManager 内，encrypt/data.ts 自有豁免）。
 ];
 
 /** 读真实 src（POSIX 相对路径，src/ 前缀） */

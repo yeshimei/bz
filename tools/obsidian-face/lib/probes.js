@@ -161,8 +161,36 @@ function probeDataRoot(dirPath) {
 }
 
 /**
- * 跑 bz_sync.py 长任务（issue 464）：stdout 逐行回调（UTF-8 行缓冲、跨 chunk 多字节安全），
- * stderr 留尾 2KB 滑窗，终结给 { code, stderr, error? }。**无超时**——分钟级导出不许被掐。
+ * 探测联系人目录在位性（prep 预检，issue 468）：目录存在且 chat.json 已落位——prep 的
+ * 语音定位与图片关联全靠 sync 产出的 chat.json 对齐，没有它就没有可导出的东西。
+ * @param {string|undefined} dirPath 数据根路径
+ * @param {string|undefined} name 联系人目录名
+ * @returns {{ configured:boolean, path?:string, exists?:boolean, hasChat?:boolean, error?:string }}
+ */
+function probeContactDir(dirPath, name) {
+  if (!dirPath || !name) return { configured: false };
+  const dir = path.join(dirPath, name);
+  try {
+    const st = fs.statSync(dir);
+    if (!st.isDirectory()) {
+      return { configured: true, path: dir, exists: false, error: '路径存在但不是目录' };
+    }
+  } catch {
+    return { configured: true, path: dir, exists: false };
+  }
+  let hasChat = false;
+  try {
+    hasChat = fs.statSync(path.join(dir, 'chat.json')).isFile();
+  } catch {
+    hasChat = false;
+  }
+  return { configured: true, path: dir, exists: true, hasChat };
+}
+
+/**
+ * 跑 bz_sync.py / bz_prep.py 长任务（464 sync / 468 prep）：stdout 逐行回调（UTF-8 行缓冲、
+ * 跨 chunk 多字节安全），stderr 留尾 2KB 滑窗，终结给 { code, stderr, error? }。
+ * **无超时**——分钟级导出不许被掐。
  * 强制子进程 UTF-8（Windows 管道缺省 locale 编码会烂中文）：-X utf8 + PYTHONIOENCODING。
  * 绝不抛：spawn 失败折成 { code:null, error }。协议解析不在这里——行原样交给 onLine，
  * 由 lib/sync-core.js 的中继透传（与 463「探测层不做判定」同款切分）。
@@ -239,6 +267,7 @@ module.exports = {
   probePathTool,
   probeWeixin,
   probeDataRoot,
+  probeContactDir,
   runSyncProcess,
   PROBE_TIMEOUT_MS,
 };
