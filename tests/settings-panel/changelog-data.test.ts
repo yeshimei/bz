@@ -23,6 +23,8 @@ describe('更新日志数据（changelog-data 生成产物契约）', () => {
   });
 
   it('条目字段契约：日期格式 / 类型枚举 / 文本非空且已剥 issue 号前缀', () => {
+    // emoji 区间（bz 界面无 emoji 风格，生成器 norm() 剥离；同 tests/settings-panel.test.ts 口径）
+    const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
     const types = new Set(['feat', 'fix', 'perf']);
     for (const d of CHANGELOG_DOMAINS) {
       for (const e of d.entries) {
@@ -30,6 +32,7 @@ describe('更新日志数据（changelog-data 生成产物契约）', () => {
         expect(types.has(e.type)).toBe(true);
         expect(e.text.length).toBeGreaterThanOrEqual(8);
         expect(e.text).not.toMatch(/^(issue|ticket)\s*\d+/i);
+        expect(e.text).not.toMatch(EMOJI_RE);
       }
     }
   });

@@ -86,6 +86,8 @@ const TYPES = new Set(['feat', 'fix', 'perf']);
 const norm = (t) => t
   .replace(/^(issue|ticket)\s*\d+\s*[-—:：]?\s*/i, '')
   .replace(/^评审\s*\d+\s*/, '')
+  // 剥历史提交原文带入的 emoji（bz 界面无 emoji 风格；区间与 tests 的 EMOJI_RE 同口径）
+  .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, '')
   .replace(/\s+/g, ' ')
   .trim();
 
