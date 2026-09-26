@@ -402,7 +402,6 @@ export interface PrepSession {
 export type PrepRunner = typeof runExternalTool;
 
 let session: PrepSession | null = null;
-let sessionSettled = false;
 
 /** 进程壳注入缝（测试打桩；生产 = runExternalTool） */
 let runner: PrepRunner = runExternalTool;
@@ -411,13 +410,11 @@ let runner: PrepRunner = runExternalTool;
 export function setPrepRunnerForTests(fn: PrepRunner | null): void {
   runner = fn ?? runExternalTool;
   session = null;
-  sessionSettled = false;
 }
 
 /** 清会话（测试隔离） */
 export function resetPrepForTests(): void {
   session = null;
-  sessionSettled = false;
 }
 
 /** 当前活会话（有待命进程可复用时非空） */
@@ -436,7 +433,9 @@ export function startPrepSession(talker: string, spec: ExternalToolSpec, cbs: Ex
     session.handle.stop(); // 换人跑：上一家的进程不留（至多一个 prep）
   }
   let lastResult: Record<string, unknown> | null = null;
-  sessionSettled = false;
+  // settled 必须每会话私有：模块级标志会让「换人跑后被 stop 的旧会话」把新会话误标为已死，
+  // 恢复时复用判定落空 → 同一联系人双起进程（协作式暂停下必然踩到）
+  let settled = false;
   const handle = runner(spec, {
     ...cbs,
     onResult: (data) => {
@@ -448,10 +447,11 @@ export function startPrepSession(talker: string, spec: ExternalToolSpec, cbs: Ex
     talker,
     handle,
     done: handle.done.then((outcome) => {
-      sessionSettled = true;
+      settled = true;
+      if (session === wrapped) session = null; // 终结即让位（复用判定不再误命中）
       return { outcome, result: lastResult };
     }),
-    alive: () => !sessionSettled,
+    alive: () => !settled,
   };
   session = wrapped;
   return wrapped;

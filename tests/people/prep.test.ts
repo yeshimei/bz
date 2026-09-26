@@ -340,6 +340,16 @@ describe('进程会话（暂停待命复用同一进程）', () => {
     expect(tool.calls).toHaveLength(2);
   });
 
+  it('换人跑：被 stop 的旧会话终结回调不得把新会话误标已死（否则恢复时同一联系人双起进程）', async () => {
+    startPrepSession('大琳', spec(), noopCbs());
+    const b = startPrepSession('陈默', spec(), noopCbs()); // 换人：大琳进程被 stop
+    expect(tool.calls).toHaveLength(2);
+    await new Promise((r) => setTimeout(r, 0)); // 让大琳的终结回调跑完——旧缺陷在此置脏共享标志
+    const reused = startPrepSession('陈默', spec(), noopCbs());
+    expect(reused).toBe(b); // 陈默会话仍活着：复用，不重起第三个进程
+    expect(tool.calls).toHaveLength(2);
+  });
+
   it('[bz-result] 由会话记账进终态（PrepOutcome.result）；stop 走 handle（中断语义）', async () => {
     const seen: Record<string, unknown>[] = [];
     const s = startPrepSession('大琳', spec(), { ...noopCbs(), onResult: (d) => seen.push(d) });
