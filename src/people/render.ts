@@ -132,8 +132,9 @@ export function formatDuration(sec: number): string {
 
 /** 路径 → 可加载的资源 URI。
  *  - 评审壳：window.BZW_MEDIA_BASE 有值时（预览服务注入）走服务路由；
- *  - 库内相对路径（CONFIG/FACES/... 头像入库后）：走 vault getResourcePath（app://<id>/...，必可加载）；
- *  - 库外绝对路径：app://local/ 兜底（456 头像裂图根因——新版 Obsidian 已不解库外文件，故头像一律先入库）。 */
+ *  - 库内相对路径：走 vault getResourcePath（app://<id>/...，必可加载）；
+ *  - 库外绝对路径：app://local/ 兜底（467 起库内不再存明文头像——保库记录头像走 avatarUri 的 data URL，
+ *    本兜底仅供数据源行的库外字节路径等历史形态）。 */
 export function localResourceUri(path: string): string {
   const norm = path.replace(/\\/g, '/');
   const escape = (s: string): string => s.replace(/#/g, '%23').replace(/\?/g, '%3F');
@@ -152,6 +153,11 @@ export function localResourceUri(path: string): string {
   if (/^(https?:)?\/\//.test(norm) || norm.startsWith('/')) return norm;
   const rel = norm.replace(/^[A-Za-z]:/, '').replace(/^\/+/, '');
   return `app://local/${escape(encodeURI(rel))}`;
+}
+
+/** 头像 URI（467）：保库记录解出的 data URL / 数据根字节直读的 data URL 原样用；其余走 localResourceUri */
+export function avatarUri(a: string): string {
+  return a.startsWith('data:') ? a : localResourceUri(a);
 }
 
 /** markdown 去饰取纯文本（折脊引文用）：剥 #/>/-/** 与围栏，压成一行 */
@@ -459,7 +465,7 @@ function foldAvaNode(p: PersonEntry, seal: ReturnType<typeof foldSeal>, avatar: 
     title: seal.title,
   }) as HTMLButtonElement;
   b.type = 'button';
-  b.appendChild(el('img', '', { src: localResourceUri(avatar), alt: p.name }));
+  b.appendChild(el('img', '', { src: avatarUri(avatar), alt: p.name }));
   return b;
 }
 
@@ -570,7 +576,7 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
   ]);
   return el('div', 'bz-people-dt-head', [
     opts.avatar
-      ? el('img', 'bz-people-dt-avatar', { src: localResourceUri(opts.avatar), alt: p.name })
+      ? el('img', 'bz-people-dt-avatar', { src: avatarUri(opts.avatar), alt: p.name })
       : el('div', 'bz-people-dt-seal', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
     id,
     el('div', 'bz-people-dt-actions', [
@@ -717,7 +723,7 @@ export function statsPopBody(card: HTMLElement | null, p: PersonEntry): HTMLElem
   const out: HTMLElement[] = [];
   if (card) out.push(card);
   else if (p.imports.length) {
-    // 有导入记录但没有明细统计，分两种：合成记录（452 只带媒体三项，预览桶没算月度分布）→
+    // 有导入记录但没有明细统计，分两种：合成记录（452 只带媒体三项，聊天仓没算月度分布）→
     // 画完脸谱落盘时才算得出来；真·旧版数据（无 stats）→ 再导一次即可（issue 454）
     const poolOnly = p.imports.some((r) => r.stats && !r.stats.monthly?.length);
     out.push(el('div', 'bz-people-empty-hint', { 'data-people-data-hint': '' }, text(poolOnly
@@ -1099,7 +1105,7 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   return el('label', cls, [
     cb,
     row.avatar
-      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: localResourceUri(row.avatar), alt: row.name })
+      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: avatarUri(row.avatar), alt: row.name })
       : el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
     el('div', 'bz-people-ds-main', [
       el('div', 'bz-people-ds-name', text(row.name + (row.isGroup ? '（群）' : ''))),
@@ -1129,19 +1135,19 @@ export function dsModal(s: DsModalState): HTMLElement {
     iconButton('refresh-cw', `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? ' bz-people-spin' : ''}`,
       { 'data-people-ds-scan': '', 'aria-label': s.scanning ? '扫描中' : '重扫', title: s.scanning ? '扫描中…' : '重扫' }),
   ]));
-  pop.appendChild(el('div', 'bz-people-ds-path', text(s.dataDir || '尚未配置数据文件夹——到「设置 → 脸谱」粘贴预处理导出目录。' + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''))));
+  pop.appendChild(el('div', 'bz-people-ds-path', text(s.dataDir || '尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。' + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''))));
 
   if (s.desktopOnly) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text('数据源扫描仅桌面端支持（需要读取库外文件夹）。')));
   } else if (s.scanning) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('正在扫描数据文件夹…')));
+    pop.appendChild(el('div', 'bz-people-ds-empty', text('正在扫描数据根目录…')));
   } else if (!s.rows) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上刷新图标读取数据文件夹里的联系人。')));
+    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上刷新图标读取数据根目录里的联系人。')));
   } else if (!s.rows.length) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text(
       s.hiddenGroups > 0
         ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。`
-        : '数据文件夹里没有找到联系人（各联系人目录下需有 chat.json）。'
+        : '数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。'
     )));
   } else {
     const list = el('div', 'bz-people-ds-list');

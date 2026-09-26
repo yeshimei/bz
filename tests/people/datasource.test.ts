@@ -2,13 +2,11 @@
  * 脸谱聊天仓测试（issue 446/449；聊天仓 v2 = issue 466 / ADR-0197）：替代键（sid / ct+msg 哈希）、
  * chat.json 归一化矩阵（**全量入仓** + 派生 text 空串语义 / 语音转写回退 / 图片描述命中与缺失 /
  * 视频与系统消息开关 / 群聊判定 / 原始字段保留）、聊天仓合并（首导 / 部分新增 / **同键 upsert 覆盖** /
- * 完全重复 / stats 重算）、MessageStore 落盘结构与 v1 判废（MockVault）。
+ * 完全重复 / stats 重算）、保库记录写侧（467 / ADR-0194：明文 people-preview.json 通道退役）。
  * 隐私口径：全部构造数据，不含真实聊天内容。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  MessageStore,
-  emptyMessageStore,
   isGroupChat,
   mergeStore,
   msgKey,
@@ -21,10 +19,12 @@ import {
   type StoreContact,
   type VoiceItem,
 } from '../../src/people/datasource';
+import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { SafeManager } from '../../src/encrypt/data';
 
 const BASE = 1700000000; // 秒级 ct（构造值）
 
@@ -536,23 +536,30 @@ describe('storeStatsOf（时间线口径重算，466 验收：与改前一致）
   });
 });
 
-describe('MessageStore（people-preview.json 落盘；聊天仓 v2）', () => {
+describe('保库记录写侧（467 / ADR-0194：聊天仓入保险库；mergeStore 产物经 PeopleSafeStore 落盘）', () => {
   let vault: MockVault;
-  let store: MessageStore;
+  let sm: SafeManager;
+  let safe: PeopleSafeStore;
+  const PW = 'ds-test-pw';
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vault = new MockVault();
     setApp({ vault } as any);
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     resetObsidianMocks();
-    store = new MessageStore({ vault });
+    sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock(PW);
+    safe = new PeopleSafeStore(sm);
+    setPeopleSafeStoreForTests(safe);
   });
 
   afterEach(() => {
+    setPeopleSafeStoreForTests(null);
+    sm.lock();
     vi.restoreAllMocks();
   });
 
-  const contactOf = (name: string, n: number): StoreContact => {
+  const recordOf = (name: string, n: number): StoreContact => {
     const norm = normalizeChatJson(
       Array.from({ length: n }, (_, i) => raw({ ct: BASE + i, msg: `构造 ${i}`, sid: 1000 + i })),
       opts()
@@ -560,46 +567,31 @@ describe('MessageStore（people-preview.json 落盘；聊天仓 v2）', () => {
     return mergeStore(undefined, norm, '2026-09-25T00:00:00.000Z').contact;
   };
 
-  it('空仓读出默认结构（version 2）；upsertContact 落盘后可读回', async () => {
-    expect(await store.read()).toEqual(emptyMessageStore());
-    await store.upsertContact('构造者甲', contactOf('甲', 3));
-    const data = await store.read();
-    expect(Object.keys(data.contacts)).toEqual(['构造者甲']);
-    expect(data.version).toBe(2);
-    expect(data.contacts['构造者甲'].msgs).toHaveLength(3);
-    expect(data.contacts['构造者甲'].stats.msgCount).toBe(3);
-    expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(true);
+  it('导入链落保库记录：每联系人一条、数据可读回；people-preview.json 明文文件不再产生', async () => {
+    await safe.write('构造者甲', (rec) => {
+      rec.store = recordOf('甲', 3);
+    });
+    const data = await safe.read('构造者甲');
+    expect(data?.store.msgs).toHaveLength(3);
+    expect(data?.store.stats.msgCount).toBe(3);
+    expect(safe.talkers()).toEqual(['构造者甲']);
+    expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(false);
+    // 库内无该联系人消息明文
+    const allText = [...vault.files.entries()].map(([, c]) => c).join('|');
+    expect(allText).not.toContain('构造');
   });
 
-  it('同一人重导覆盖同槽位（不堆重复联系人键）', async () => {
-    await store.upsertContact('甲', contactOf('甲', 2));
-    await store.upsertContact('甲', contactOf('甲', 5));
-    const data = await store.read();
-    expect(Object.keys(data.contacts)).toHaveLength(1);
-    expect(data.contacts['甲'].msgs).toHaveLength(5);
-  });
-
-  it('结构版本门禁（466 / ADR-0197 决策 6）：盘上 v1 旧桶判废返回空仓，从数据根重导', async () => {
-    vault.files.set(
-      'CONFIG/STORAGE/people-preview.json',
-      JSON.stringify({
-        version: 1,
-        contacts: { 甲: { msgs: [{ key: 'k', ts: 1, isSender: true, text: '旧结构' }], watermarkSid: 0, stats: { msgCount: 1, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '' } },
-      })
-    );
-    const data = await store.read();
-    expect(data).toEqual(emptyMessageStore()); // 旧结构就地判废（无升级路径）
-    expect(Object.keys(data.contacts)).toHaveLength(0);
-  });
-
-  it('clear 清空整仓并保留文件框架（不动其他域文件）', async () => {
-    await store.upsertContact('甲', contactOf('甲', 2));
-    await store.upsertContact('乙', contactOf('乙', 2));
-    await store.clear();
-    const data = await store.read();
-    expect(data).toEqual(emptyMessageStore());
-    expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(true);
-    expect(vault.files.has('CONFIG/STORAGE/people.json')).toBe(false); // PersonEntry 不受影响
+  it('同一人重导覆盖同条记录（不堆重复条目；updateNotePayload 覆盖同一密文镜像）', async () => {
+    await safe.write('甲', (rec) => {
+      rec.store = recordOf('甲', 2);
+    });
+    const refBefore = sm.manifest.notes[0].contentRef;
+    await safe.write('甲', (rec) => {
+      rec.store = recordOf('甲', 5);
+    });
+    expect(safe.talkers()).toEqual(['甲']);
+    expect((await safe.read('甲'))?.store.msgs).toHaveLength(5);
+    expect(sm.manifest.notes[0].contentRef).toBe(refBefore); // 不堆积新镜像
   });
 });
 

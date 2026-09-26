@@ -390,10 +390,37 @@ _Avoid_: 三路分数并入 GA 加法分空间（污染 RL 校准资产）、8 �
 **RL 校准配方 (RL Calibration)**: 正式强化学习收敛后的动力学默认值（ADR-0024，2026-08-23）——以「真实库事件流（过去 365 天真实使用）」环境最优配方为生产新默认：`characterTransition` 默认 δbase 0.003→0.00083（合成配方 0.0096 作对照）、`trustUpdate` 温暖增益 0.01→0.0082/侵蚀 0.003→0.0029（**ticket 027 追加决策：TRUST_CAP=0.85 软收拢**，`v=cap+K(v−cap)` K=0.98 平衡点≈0.91；**ticket 072 校正：K 0.98→0.85——旧系数不动点 cap+49·gain 在现增益下越过硬顶致 trust 饱和 0.999，新不动点 v\*=cap+gain/(1−K)（聊天档≈0.88），存量饱和值被缓慢拉回**；**ADR-0025：中性事件 neutral 短路连软收拢也不动 trust**）；记忆流 GA 三因子 α 1.0→0.5/0.73/0.5、decay 0.995→0.986（**进化第 3 轮 rMem 接回周检索项后重标定：α=0.66/0.95/1.5、decay=0.982，相关度权重上调最猛**）；模拟器独有旋钮（effectScale/emoGain/charSens/decayScale）不迁移生产。**ticket 025**：写日记/闪念以轻质量 0.15 计入信任成长（`developBasedOnInteraction(kind,0.3,0.02,0.15)`，vault 事件挂钩）+ 笔记库内容为信息来源（`context-source.ts`：diary/flash/clipping/movie/reading 实时分类 + 观察文本，**ticket 029 用户拍板扩展为全内容读取 + LLM 云端打分 + 词法情绪**，AI 未配置降级本地规则分，`config.noteSource` 开关默认开）。
 _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已删除）
 
-### 脸谱域（people，ADR-0191/ADR-0192）
+### 脸谱域（people，ADR-0191/0192/0194–0197）
 
-**脸谱 (FaceDigest)**: 给每个人一张卡——手动档案 + 交往事件 + AI 提炼的画像（数据 `CONFIG/STORAGE/people.json`，ADR-0191）。**双卷画像（issue 455 / ADR-0192）**起画像拆两卷：`person` 卷一《其人》（人物画像 7 节：画像速写须含一组矛盾感 / 性格与思维「当 X 时 TA Y」/ 表达 DNA 每条跟 `> ` 原话证据且称呼不在此节 / 兴趣爱好三层要具体名目 / 价值观与红线全推断层「看来 / 似乎」起头 / 习惯 / 情感倾向）+ `bond` 卷二《我们》（关系画像 8 节：关系定性（手动档案优先冲突以档案为准）/ 互动结构（不罗列数字写解读）/ 演变阶段（末句写「现在」）/ 我们的语言（称呼演变 + 梗与暗语词典）/ 共同记忆 / 冲突与修复（和解信号单独写——和解≠道歉；收尾雷区清单）/ 未竟之事（对照 events 判兑现）/ 经营建议）；旧单卷字段 `portrait` 兼容保留（只读不写），**读侧一律走 `personOf(d)` / `bondOf(d)` 兼容读单源**（`src/people/types.ts`），不直摸字段。两卷受限语法 markdown（`##` 小节 / `-` 列表 / `**粗体**` / `> ` 引用块），各 ≤1200 字。管线 = 切批逐批采集 → 合并去重 → **三次文本调用**（其人 → 我们 → 编年史 best-effort），批采集六类素材：events / traits / quotes / moments + `interests`（兴趣信号：分享 / 安利内容、反复话题，topic ≤15 字，MATERIAL_LIMITS 40）+ `threads`（未竟之事：约定 / 邀约 / 半截话题，text ≤30 字，MATERIAL_LIMITS 30，只采集不落「是否兑现」结论）。样本警示：消息 < 200 条（`SAMPLE_WARN_THRESHOLD`）两卷 prompt 头注「素材偏少，证据不足写（素材不足）」；手动档案经 `buildProfileNote` 转「素材〇」段进两卷头部；`buildStatsNote(i, monthly?)` 第二参喂月度消息密度段（>12 个月按年合并求和）。任务引擎（people-jobs.json）job 阶段 `person`/`bond`，旧落盘 `portrait` 读入映射为 `person` 续跑（issue 453 批级复用不回退）。隐私口径沿用 ADR-0191 §2：聊天原文不落盘， interest/thread 是聚合提炼产物。
+**脸谱 (FaceDigest)**: 给每个人一张卡——手动档案 + 交往事件 + AI 提炼的画像（数据 = **加密保库记录，每联系人一条**，ADR-0194）。**双卷画像（issue 455 / ADR-0192）**起画像拆两卷：`person` 卷一《其人》（人物画像 7 节：画像速写须含一组矛盾感 / 性格与思维「当 X 时 TA Y」/ 表达 DNA 每条跟 `> ` 原话证据且称呼不在此节 / 兴趣爱好三层要具体名目 / 价值观与红线全推断层「看来 / 似乎」起头 / 习惯 / 情感倾向）+ `bond` 卷二《我们》（关系画像 8 节：关系定性（手动档案优先冲突以档案为准）/ 互动结构（不罗列数字写解读）/ 演变阶段（末句写「现在」）/ 我们的语言（称呼演变 + 梗与暗语词典）/ 共同记忆 / 冲突与修复（和解信号单独写——和解≠道歉；收尾雷区清单）/ 未竟之事（对照 events 判兑现）/ 经营建议）；旧单卷字段 `portrait` 兼容保留（只读不写），**读侧一律走 `personOf(d)` / `bondOf(d)` 兼容读单源**（`src/people/types.ts`），不直摸字段。两卷受限语法 markdown（`##` 小节 / `-` 列表 / `**粗体**` / `> ` 引用块），各 ≤1200 字。管线 = 切批逐批采集 → 合并去重 → **三次文本调用**（其人 → 我们 → 编年史 best-effort），批采集六类素材：events / traits / quotes / moments + `interests`（兴趣信号：分享 / 安利内容、反复话题，topic ≤15 字，MATERIAL_LIMITS 40）+ `threads`（未竟之事：约定 / 邀约 / 半截话题，text ≤30 字，MATERIAL_LIMITS 30，只采集不落「是否兑现」结论）。样本警示：消息 < 200 条（`SAMPLE_WARN_THRESHOLD`）两卷 prompt 头注「素材偏少，证据不足写（素材不足）」；手动档案经 `buildProfileNote` 转「素材〇」段进两卷头部；`buildStatsNote(i, monthly?)` 第二参喂月度消息密度段（>12 个月按年合并求和）。任务引擎（people-jobs.json）job 阶段 `person`/`bond`，旧落盘 `portrait` 读入映射为 `person` 续跑（issue 453 批级复用不回退）。隐私口径见 ADR-0194（**取代 ADR-0191 §2**）：聊天原文**落盘但只落加密库**，与 encrypt / 密码本共锁同库；interest/thread 是聚合提炼产物。
 _Avoid_: 单卷画像（指旧 portrait 形态，兼容读保留）、「画像」单指卷一（现指双卷整体）、称呼进表达 DNA（归卷二「我们的语言」）
+
+**同步 (Sync)**: 脸谱从微信账套重新取数的一次动作——取密钥 → 解密 → 导出原始数据 → 逐联系人导出 `chat.json` → 头像源落位；由数据源弹窗右上角按钮发起，要求微信已登录运行（4.0.3.36 起内存取密钥已被官方封堵）。**不是**「只重读数据目录」。
+_Avoid_: 重扫（旧名，仅重读目录）、刷新、扫描、导入（导入是「原始→预览」的另一段增量）
+
+**转写 (Transcription)**: 语音条 → 文字的本地模型过程（SenseVoice-Small 缺省 / faster-whisper 备选，共用 AI 面板「语音转写」组）。脸谱与知识盒共用本词；脸谱侧产物形态是 `[语音 N秒·情感] 文本`。
+_Avoid_: 转录（知识盒链路的「转录稿」是具体产物名，不作流程动词）、识别
+
+**画脸谱 (FaceDigest Drawing)**: 为一位联系人生成双卷画像的整条链路（媒体导出 → 语音转写 → 图片描述 → 画像生成），可暂停、可中断续跑、逐步报进度。用户面板上唯一用词。
+_Avoid_: 生成脸谱、提炼、跑画像、补画（补画仅指对已有卡片的局部重画）
+
+**数据根 (Data Root)**: 脸谱域的唯一数据入口目录（设置键 `peopleDataDir`，在 vault 外）——`<数据根>/<联系人>/` 下放 `chat.json` 与该人的媒体。同步的产出目录与画脸谱的读入目录是同一个。
+_Avoid_: 数据文件夹、导出目录、素材库
+
+**聊天仓 (Message Store)**: 脸谱的**唯一权威存储**（ADR-0197）——每个联系人一条**加密保库记录**，内含该人的**全量原始消息流**（保留 `type`（4.x 原始码）/ `who` / `sid` / `dur` / `wav` / `img`，`raws` 侧）+ 派生字段 `text`（合成后的消费文本 `[图片] 描述` / `[语音 N秒·情感] 转写` / `[表情·名]`；**空串 = 不进时间线**）+ 水位 `watermarkSid` + 统计 `stats` + `kindCounts` + 互动画像 `insights` + 头像 + `updatedAt`。**一人一条**，按 `key` upsert（同键新文本覆盖）。它同时是面板展示层的数据源与「画脸谱」的素材源。（旧名「预览桶」/ 旧文件 `CONFIG/STORAGE/people-preview.json`——**文件名保留，概念改称**。）
+_Avoid_: 预览桶（旧名，暗示"派生的、可丢的"，已不成立）；把 `chat.json` 也叫「仓」（那是数据根里的工具产物，只读、不再被回写）；缓存
+
+**保库记录 (Safe Record)**: 脸谱落在保险库里的存储单元（`SafeNote.kind = 'people'`）——**每条 = 一位联系人**，把人物卡（原 `people.json` 一条）+ 聊天仓（原预览桶一只）+ 该人任务条目 + 头像附件合并成**一个 `.enc` 文件**（`CONFIG/STORAGE/.ENCRYPT/`）。改一人只重写他那一份。与 encrypt / 密码本**共锁同库**（同一 `SafeManager` 单例、同一主密码、同一 `.safe.enc` 清单）；上锁即清明文缓存并暂停后台任务。
+_Avoid_: 加密桶、保险库条目（那是 encrypt 域的通用说法，本词特指脸谱的合并单元）
+
+**旁路表 (Sidecar Table)**: 工具在数据根产出的**非消息流派生表**——`voice.json`（转写结果）、`image_desc.json`（图片描述）、`image_map.json`（图片↔消息关联）。**权威是聊天仓**；旁路表保留作工具侧产物、`img` 关联输入端与缺失时的兜底（`readContactBundle` 的 extras 通道）。
+_Avoid_: 中间文件、缓存表
+
+**派生档 `desc/` (Desc Tier)**: 工具为 AI 描述专门生成的图片档（`<联系人>/desc/<月>/<名>.jpg`，长边 1280、JPEG q80，约 100–200KB）——`thumb/` 实测仅 115×120px 读不出截图里的字，原图 1920px/440KB 上行太慢。可删可重建。
+_Avoid_: 缩略图（那是 WeChat 自带的 `thumb/`，120px，不能拿来描述）、预览图
+
+**脸谱工具 (Face Toolkit)**: 脸谱外部流程的单包 `@jwbz/obsidian-face`（bin `bz-face`，仓库 `tools/obsidian-face/`）——承担取密钥、解密、原始导出、`chat.json`（含表情命名）、媒体导出（含 `desc/` 派生档）、语音转写；**边界到此为止**：不含 AI（图片描述与画像生成在插件侧，服务商凭据不进外部进程）。**不发布公开 registry**（与 bili-downloader 有意不同：本包核心能力是解密微信数据库），重物（Python 依赖与 SenseVoice 权重）由用户自装 + `bz-face doctor` 自检。**只写数据根，永不写 vault、不碰加密库。**
+_Avoid_: 微信工具、导出脚本、wechat-face
 
 ### 移动端窗口（ticket 68，跨域）
 

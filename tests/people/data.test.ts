@@ -1,10 +1,13 @@
 /**
- * 脸谱域数据层测试（issue 435）：people.json 读写、upsert 增改、导入记录与脸谱写入、
- * 删除与不存在人物报错（MockVault + 串行写队列）；
+ * 脸谱域数据层测试（issue 435 建域；467 / ADR-0194 改走保库记录）：PeopleStore 门面（同 API）
+ * 的 upsert 增改、导入记录与脸谱写入、删除与不存在人物报错；明文 people.json 不再产生；
  * 双卷画像数据契约（issue 455）：FaceDigest person/bond/interests/threads 落盘读回 + personOf/bondOf 兼容读。
+ * 存储 = 注入 SafeManager（MockVault 内存假库 + 真加密，密码本域注入式同款）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PeopleStore, getPeopleFilePath } from '../../src/people/data';
+import { PeopleStore } from '../../src/people/data';
+import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import { SafeManager } from '../../src/encrypt/data';
 import { bondOf, personOf } from '../../src/people/types';
 import type { FaceDigest, ImportRecord, ManualEvent, PersonEntry } from '../../src/people/types';
 import { setApp } from '../../src/core/app';
@@ -12,43 +15,60 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
-function setup(vault: MockVault, settings: any = { storagePath: 'CONFIG/STORAGE' }) {
-  setApp({ vault } as any);
+const PW = 'data-test-pw';
+let vault: MockVault;
+let sm: SafeManager;
+let safe: PeopleSafeStore;
+
+function setup(vaultRef: MockVault, settings: any = { storagePath: 'CONFIG/STORAGE' }) {
+  setApp({ vault: vaultRef } as any);
   setSettingsProvider(() => settings as any);
   resetObsidianMocks();
+}
+
+/** 共享装配：解锁保库并注入（门面与断言共用同一 PeopleSafeStore） */
+async function setupSafe(vaultRef: MockVault): Promise<PeopleSafeStore> {
+  setup(vaultRef);
+  sm = new SafeManager('CONFIG/.ENCRYPT');
+  await sm.unlock(PW);
+  safe = new PeopleSafeStore(sm);
+  setPeopleSafeStoreForTests(safe);
+  return safe;
 }
 
 function person(id: string, name = id): PersonEntry {
   return { id, name, createdAt: '2026-09-25T00:00:00.000Z', imports: [] };
 }
 
-describe('PeopleStore', () => {
-  let vault: MockVault;
+describe('PeopleStore（保库记录门面）', () => {
   let store: PeopleStore;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vault = new MockVault();
-    setup(vault);
-    store = new PeopleStore({ vault });
+    await setupSafe(vault);
+    store = new PeopleStore(vault);
   });
 
   afterEach(() => {
+    setPeopleSafeStoreForTests(null);
+    sm.lock();
     vi.restoreAllMocks();
   });
 
-  it('路径解析：storagePath 基目录 + people.json', () => {
-    expect(getPeopleFilePath()).toBe('CONFIG/STORAGE/people.json');
-    setSettingsProvider(() => ({ storagePath: 'CUSTOM/DIR' }) as any);
-    expect(getPeopleFilePath()).toBe('CUSTOM/DIR/people.json');
-  });
-
-  it('空库 list → [];upsert 新增后可查（缺失建文件）', async () => {
+  it('明文退役（467）：人物卡写进保库记录，people.json 明文文件不再产生', async () => {
     expect(await store.list()).toEqual([]);
     await store.upsert(person('wxid_a', '老王'));
     const people = await store.list();
     expect(people).toHaveLength(1);
     expect(people[0].name).toBe('老王');
-    expect(vault.files.has('CONFIG/STORAGE/people.json')).toBe(true);
+    expect(vault.files.has('CONFIG/STORAGE/people.json')).toBe(false);
+    expect(vault.files.has('CONFIG/STORAGE/people-preview.json')).toBe(false);
+    expect(vault.files.has('CONFIG/STORAGE/people-jobs.json')).toBe(false);
+    // 记录在保险库清单里：kind=people、虚拟索引路径
+    expect(safe.talkers()).toEqual(['wxid_a']);
+    const note = sm.manifest.notes.find((n) => n.path === 'CONFIG/STORAGE/people/wxid_a');
+    expect(note).toBeTruthy();
+    expect((note as any).kind).toBe('people');
   });
 
   it('upsert 同 id 整卡替换（改名不换 id）', async () => {
@@ -89,16 +109,17 @@ describe('PeopleStore', () => {
 });
 
 describe('PeopleStore.mergeInto（评审 443 补测）', () => {
-  let vault: MockVault;
   let store: PeopleStore;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vault = new MockVault();
-    setup(vault);
-    store = new PeopleStore({ vault });
+    await setupSafe(vault);
+    store = new PeopleStore(vault);
   });
 
   afterEach(() => {
+    setPeopleSafeStoreForTests(null);
+    sm.lock();
     vi.restoreAllMocks();
   });
 
@@ -156,16 +177,17 @@ describe('PeopleStore.mergeInto（评审 443 补测）', () => {
 });
 
 describe('FaceDigest 双卷契约与兼容读（issue 455）', () => {
-  let vault: MockVault;
   let store: PeopleStore;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vault = new MockVault();
-    setup(vault);
-    store = new PeopleStore({ vault });
+    await setupSafe(vault);
+    store = new PeopleStore(vault);
   });
 
   afterEach(() => {
+    setPeopleSafeStoreForTests(null);
+    sm.lock();
     vi.restoreAllMocks();
   });
 
@@ -190,9 +212,9 @@ describe('FaceDigest 双卷契约与兼容读（issue 455）', () => {
     expect(p?.digest?.threads).toEqual([{ ts: '2024-05-01', text: '下次一起爬山' }]);
     // 旧字段 portrait 不再写入（重画后缺席即新形态）
     expect('portrait' in (p?.digest ?? {})).toBe(false);
-    // JSON 落盘带全部新字段
-    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/people.json')!);
-    const digest = raw.people[0].digest;
+    // 加密记录体带全部新字段（解密回读）
+    const rec = await safe.read('wxid_dual');
+    const digest = rec?.person.digest!;
     expect(digest.person).toContain('其人卷');
     expect(digest.bond).toContain('我们卷');
     expect(digest.interests).toHaveLength(1);

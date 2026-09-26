@@ -39,8 +39,9 @@
 | auto-summary（自动摘要） | 剪藏 frontmatter |
 | pomodoro（番茄钟） | pomodoro.json |
 | attach（附件） | 搬附件 |
-| encrypt（保险库） | `CONFIG/.ENCRYPT/` |
-| password-vault（密码本） | `CONFIG/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
+| encrypt（保险库） | `CONFIG/STORAGE/.ENCRYPT/`（清单 `.safe.enc`；注意：旧文档写的 `CONFIG/.ENCRYPT/` 已不存在） |
+| password-vault（密码本） | `CONFIG/STORAGE/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
+| people（脸谱） | 加密保库记录，每联系人一条（kind=people SafeNote，与 encrypt 共锁同库，ADR-0194）；读数据根 `<peopleDataDir>/<联系人>/`（vault 外，明文） |
 | bookshelf（书库） | `书库/*.md`、EPUB |
 | cinema（影院） | `我的/影视/*.md` |
 | gameshelf（游戏库） | `我的/游戏/*.md` |

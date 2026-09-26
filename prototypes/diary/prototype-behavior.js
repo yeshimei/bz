@@ -1,5 +1,5 @@
-/* 源指纹 082439c0c399ab22 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 71f72a3384fd9f4d · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -5881,152 +5881,6 @@ var BZW_diary = (() => {
     }
   });
 
-  // src/core/ui/help-tip.ts
-  function bodyNodes(text) {
-    const out = [];
-    for (const raw of String(text != null ? text : "").split("\n")) {
-      const line = raw.trim();
-      if (!line) continue;
-      const isItem = line.startsWith("- ");
-      const el = document.createElement("div");
-      el.className = isItem ? "bz-help-li" : "bz-help-p";
-      el.textContent = isItem ? line.slice(2).trim() : line;
-      out.push(el);
-    }
-    return out;
-  }
-  function attachHelpTip(anchor, opts) {
-    anchor.classList.add("bz-help-anchor");
-    let layer = null;
-    let escHandle = null;
-    let pinned = false;
-    let overAnchor = false;
-    let overLayer = false;
-    let openedAt = 0;
-    let closeTimer = null;
-    let openTimer = null;
-    const isOpen = () => !!layer;
-    const clearTimers = () => {
-      if (closeTimer !== null) {
-        window.clearTimeout(closeTimer);
-        closeTimer = null;
-      }
-      if (openTimer !== null) {
-        window.clearTimeout(openTimer);
-        openTimer = null;
-      }
-    };
-    const onOutside = (e) => {
-      const t = e.target;
-      if (t && (anchor.contains(t) || (layer == null ? void 0 : layer.contains(t)))) return;
-      close();
-    };
-    const onScroll = () => close();
-    const place = () => {
-      if (!layer) return;
-      const r = anchor.getBoundingClientRect();
-      const vw = window.innerWidth || document.documentElement.clientWidth;
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const h = layer.offsetHeight;
-      const w = layer.offsetWidth;
-      const below = vh - r.bottom;
-      const up = below < h + 12 && r.top > below;
-      const top = Math.min(Math.max(12, up ? r.top - h - 8 : r.bottom + 8), Math.max(12, vh - h - 12));
-      const left = Math.min(Math.max(12, r.left), Math.max(12, vw - w - 12));
-      layer.style.top = `${top}px`;
-      layer.style.left = `${left}px`;
-      layer.classList.toggle("is-up", up);
-    };
-    function close() {
-      clearTimers();
-      pinned = false;
-      overAnchor = false;
-      overLayer = false;
-      document.removeEventListener("pointerdown", onOutside, true);
-      document.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", place);
-      escHandle == null ? void 0 : escHandle.unregister();
-      escHandle = null;
-      layer == null ? void 0 : layer.remove();
-      layer = null;
-      anchor.classList.remove("is-open");
-      if (currentClose === close) currentClose = null;
-    }
-    function open() {
-      if (layer || !anchor.isConnected) return;
-      if (currentClose && currentClose !== close) currentClose();
-      const pop = document.createElement("div");
-      pop.className = "bz-help-pop" + (opts.skinClassName ? " " + opts.skinClassName : "");
-      pop.setAttribute("role", "tooltip");
-      for (const n of bodyNodes(opts.text)) pop.appendChild(n);
-      pop.addEventListener("mouseenter", () => {
-        overLayer = true;
-      });
-      pop.addEventListener("mouseleave", () => {
-        overLayer = false;
-        if (!pinned) scheduleClose();
-      });
-      document.body.appendChild(pop);
-      topifyZ(pop);
-      layer = pop;
-      openedAt = Date.now();
-      place();
-      anchor.classList.add("is-open");
-      document.addEventListener("pointerdown", onOutside, true);
-      document.addEventListener("scroll", onScroll, true);
-      window.addEventListener("resize", place);
-      escHandle = escManager.register("bz-help-tip", { isVisible: isOpen, close });
-      currentClose = close;
-    }
-    function scheduleClose() {
-      if (pinned) return;
-      if (closeTimer !== null) window.clearTimeout(closeTimer);
-      closeTimer = window.setTimeout(() => {
-        closeTimer = null;
-        if (!pinned && !overAnchor && !overLayer) close();
-      }, CLOSE_DELAY);
-    }
-    anchor.addEventListener("mouseenter", () => {
-      overAnchor = true;
-      if (isOpen() || openTimer !== null) return;
-      openTimer = window.setTimeout(() => {
-        openTimer = null;
-        if (overAnchor) open();
-      }, HOVER_OPEN_DELAY);
-    });
-    anchor.addEventListener("mouseleave", () => {
-      overAnchor = false;
-      if (openTimer !== null) {
-        window.clearTimeout(openTimer);
-        openTimer = null;
-      }
-      scheduleClose();
-    });
-    anchor.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (isOpen() && Date.now() - openedAt < SYNTHETIC_TAP_MS) {
-        pinned = true;
-        return;
-      }
-      if (isOpen()) close();
-      else {
-        open();
-        pinned = true;
-      }
-    });
-  }
-  var HOVER_OPEN_DELAY, CLOSE_DELAY, SYNTHETIC_TAP_MS, currentClose;
-  var init_help_tip = __esm({
-    "src/core/ui/help-tip.ts"() {
-      init_esc_manager();
-      init_z_order();
-      HOVER_OPEN_DELAY = 180;
-      CLOSE_DELAY = 140;
-      SYNTHETIC_TAP_MS = 400;
-      currentClose = null;
-    }
-  });
-
   // src/core/ui/suggest.ts
   var init_suggest = __esm({
     "src/core/ui/suggest.ts"() {
@@ -6229,7 +6083,6 @@ var BZW_diary = (() => {
       init_stat();
       init_progress();
       init_popover();
-      init_help_tip();
       init_suggest();
       init_lightbox();
       init_modal();
@@ -6926,9 +6779,6 @@ var BZW_diary = (() => {
   function storageFile(name, base) {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
     return `${dir}/${name}`;
-  }
-  function encryptDir() {
-    return `${storageDir()}/.ENCRYPT`;
   }
   function enqueueFileTask(filePath, task) {
     var _a;
@@ -7647,6 +7497,12 @@ var BZW_diary = (() => {
   function currentSnapshot() {
     return tryGetSettings();
   }
+  function resolveNumberBound(bound, snapshot) {
+    if (bound === void 0) return void 0;
+    if (typeof bound !== "function") return bound;
+    const v = bound(snapshot);
+    return typeof v === "number" && Number.isFinite(v) ? v : void 0;
+  }
   function parseClampedNumber(raw, min, max) {
     const trimmed = raw.trim();
     if (trimmed === "") return null;
@@ -7690,15 +7546,9 @@ var BZW_diary = (() => {
       refreshSettingsGroupCounts(container);
       markSettingSplitRows(container);
     };
-    const attachHelp = (setting, help) => {
-      if (!help) return;
-      const nameEl = setting.nameEl;
-      if (nameEl) attachHelpTip(nameEl, { text: help });
-    };
     const newRowSetting = (body, row) => {
       const setting = new Setting(body).setName(row.name);
       if (row.desc) setting.setDesc(row.desc);
-      attachHelp(setting, row.help);
       if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
       return setting;
     };
@@ -7739,7 +7589,12 @@ var BZW_diary = (() => {
         }
         if (!dirty) return;
         if (isNumber) {
-          const n = parseClampedNumber(raw, row.min, row.max);
+          const snap = currentSnapshot();
+          const n = parseClampedNumber(
+            raw,
+            resolveNumberBound(row.min, snap),
+            resolveNumberBound(row.max, snap)
+          );
           if (n === null && raw.trim() !== "") {
             dirty = false;
             if (currentText) currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
@@ -7766,7 +7621,12 @@ var BZW_diary = (() => {
           dirty = true;
           if (isNumber) {
             raw = v;
-            const n = parseClampedNumber(v, row.min, row.max);
+            const snap = currentSnapshot();
+            const n = parseClampedNumber(
+              v,
+              resolveNumberBound(row.min, snap),
+              resolveNumberBound(row.max, snap)
+            );
             if (n === null) {
               if (v.trim() !== "") markNumberError();
               return;
@@ -7797,8 +7657,15 @@ var BZW_diary = (() => {
           if (isNumber) {
             const num = row;
             inputEl.type = "number";
-            if (num.min !== void 0) inputEl.min = String(num.min);
-            if (num.max !== void 0) inputEl.max = String(num.max);
+            const applyBounds = () => {
+              const snap = currentSnapshot();
+              const lo = resolveNumberBound(num.min, snap);
+              const hi = resolveNumberBound(num.max, snap);
+              inputEl.min = lo === void 0 ? "" : String(lo);
+              inputEl.max = hi === void 0 ? "" : String(hi);
+            };
+            applyBounds();
+            if (typeof num.max === "function") customRefreshes.push(applyBounds);
             if (num.step !== void 0) inputEl.step = String(num.step);
           }
           if (row.type === "secret") {
@@ -8074,7 +7941,6 @@ var BZW_diary = (() => {
           body.appendChild(wrap);
           const setting = new Setting(wrap).setName(row.name);
           if (row.desc) setting.setDesc(row.desc);
-          attachHelp(setting, row.help);
           if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
           const readItems = () => typeof row.items === "function" ? row.items() : row.items;
           const renderItems = () => {
@@ -9249,7 +9115,7 @@ var BZW_diary = (() => {
                 deleteFailed.push(a.path);
               }
             }
-            if (input.kind !== "diary-entry" && input.kind !== "password-vault") {
+            if (input.kind !== "diary-entry" && input.kind !== "password-vault" && input.kind !== "people") {
               let stale = false;
               try {
                 const f = getApp().vault.getAbstractFileByPath(input.path);
@@ -11057,8 +10923,22 @@ var BZW_diary = (() => {
             { type: "choiceCards", name: "面板主题", binding: { key: "encryptSkinTheme" }, layoutKey: "encryptSkin", options: [{ value: "steel", label: "钢灰", layout: "default", prevClass: "bz-sp-prev-steel" }] }
           ]
         },
-        // 2026-09-26「目录」组整组退役：密文根目录固定 = <数据存储路径>/.ENCRYPT（core/storage 的
-        // encryptDir 单源），不再给用户单独配——面板少一行需要解释「为什么不跟着数据目录走」的设置。
+        {
+          icon: "folder-open",
+          // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
+          name: "目录",
+          rows: [
+            // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+            {
+              type: "path",
+              mode: "single",
+              name: "保险库根文件夹",
+              desc: "加密文件的存放位置",
+              binding: { key: "encryptRoot" },
+              onCommit: warnReload
+            }
+          ]
+        },
         {
           icon: "shield",
           name: "安全",
@@ -11086,25 +10966,10 @@ var BZW_diary = (() => {
           icon: "image",
           name: "预览",
           rows: [
-            {
-              type: "toggle",
-              name: "生成压缩预览",
-              desc: "加密时生成图片视频的压缩预览",
-              help: "加密图片与视频时同时生成压缩预览层，之后不解密即可看缩略图。下面「预览长边」「预览质量」两行是它的子项，开关关闭时一并隐藏。",
-              binding: { key: "encryptPreviewEnabled" },
-              onChange: warnReload
-            },
+            { type: "toggle", name: "生成压缩预览", desc: "加密时生成图片视频的压缩预览", binding: { key: "encryptPreviewEnabled" }, onChange: warnReload },
             { type: "number", name: "预览长边", desc: "预览图目标长边像素", binding: numStrBinding("encryptPreviewSize", 384), min: 64, max: 1024, step: 16, onCommit: warnReload, isChild: true },
             { type: "number", name: "预览质量", desc: "JPEG 图像压缩质量", binding: numStrBinding("encryptPreviewQuality", 0.5), min: 0.1, max: 1, step: 0.1, onCommit: warnReload, isChild: true },
-            {
-              type: "toggle",
-              name: "预览自动加载原图",
-              desc: "打开预览自动解密原图",
-              help: "默认关。开启后打开预览即自动解密全部原图替换缩略图，因此明显变慢；明文以 Blob URL 形式短暂驻留内存，关闭预览时统一 revokeObjectURL 回收。",
-              binding: { key: "encryptAutoLoadOriginal" },
-              onChange: warnReload,
-              isChild: true
-            }
+            { type: "toggle", name: "预览自动加载原图", desc: "打开预览自动解密原图", binding: { key: "encryptAutoLoadOriginal" }, onChange: warnReload, isChild: true }
           ]
         }
       ]
@@ -12056,7 +11921,7 @@ var BZW_diary = (() => {
         counts() {
           const notes = this.dataManager.manifest.notes;
           return {
-            note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault").length,
+            note: notes.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").length,
             diary: notes.filter((n) => n.kind === "diary-entry").length
           };
         }
@@ -12076,7 +11941,7 @@ var BZW_diary = (() => {
               return [{ num: String(list.length), label: labels[0] }, { num: String(atts), label: labels[1] }, { num: kb(bytes), label: labels[2] }];
             };
             this.lockStatsCache.vault = stat(
-              all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault"),
+              all.filter((n) => n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people"),
               ["笔记条目", "随库附件", "附件密文"]
             );
             this.lockStatsCache.diary = stat(
@@ -12133,7 +11998,7 @@ var BZW_diary = (() => {
         /** 概览统计（供 overviewHTML；口径与 captureLockStats 的 vault 档一致：附件/字节只算纯笔记） */
         overviewStats() {
           const c = this.counts();
-          const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== "password-vault");
+          const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== "password-vault" && n.kind !== "people");
           const pureNotes = vaultNotes.filter((n) => n.kind !== "diary-entry");
           const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
           const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
@@ -12235,7 +12100,7 @@ var BZW_diary = (() => {
           const list = this.desk.list;
           const detail = this.desk.detail;
           const kw = this.searchKw;
-          let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+          let notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           this.setVaultHead(kind === "note" ? "笔记" : "加密日记");
           if (kw) {
             const lower = kw.toLowerCase();
@@ -12535,7 +12400,7 @@ var BZW_diary = (() => {
             return;
           }
           const kind = this.asset;
-          const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+          const notes = [...this.dataManager.manifest.notes].filter((n) => kind === "diary" ? n.kind === "diary-entry" : n.kind !== "diary-entry" && n.kind !== "password-vault" && n.kind !== "people").sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
           const kw = this.searchKw;
           const filtered = kw ? notes.filter((n) => (n.title || "").toLowerCase().includes(kw.toLowerCase()) || (n.path || "").toLowerCase().includes(kw.toLowerCase())) : notes;
           if (!filtered.length) {
@@ -13265,8 +13130,7 @@ var BZW_diary = (() => {
     if (!controller) {
       const s = getSettings();
       const config = {
-        // 密文根目录固定跟随数据存储路径（core/storage 的 encryptDir 单源；encryptRoot 键已退役）
-        root: encryptDir(),
+        root: (s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, ""),
         previewEnabled: s.encryptPreviewEnabled !== false,
         previewSize: parseInt(s.encryptPreviewSize) || 384,
         previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
@@ -13340,7 +13204,6 @@ var BZW_diary = (() => {
   var init_encrypt = __esm({
     "src/encrypt/index.ts"() {
       init_settings_provider();
-      init_storage();
       init_app();
       init_notice();
       init_ui2();

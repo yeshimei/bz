@@ -26,7 +26,7 @@ const COUNT_BASELINE: Record<string, number> = {
   diary: 5,
   memo: 11,
   belongings: 6,
-  people: 11, // 2026-09-26 issue 456/466/462：数据源 3（462 增微信账号目录）+ 媒体 2（456 媒体文件夹 + 头像入库说明）+ 聊天仓 4 + 隐私 2（清空按钮不计）
+  people: 9, // 2026-09-26 issue 467+462：媒体组两行随 peopleMediaDir 退役、数据源保留 3 行（462 微信账号目录）——头像改走保库记录附件；数据源 3 + 聊天仓 4 + 隐私 2（清空按钮不计）
   clipping: 11,
   favorites: 5,
   cinema: 8,

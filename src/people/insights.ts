@@ -1,7 +1,7 @@
 /**
  * 互动画像聚合（issue 449 A 部分）：从归一化后的时间线（过滤后 msgs，与 stats.ts 同口径）
  * 与 normalize 过程采集的语义信号（表情 / 分享 / 通话 / 撤回 / 语音情感）汇总出
- * InsightsSummary——数据源层随导入落盘到预览桶，提炼层把 buildStatsNote 的文案拼进
+ * InsightsSummary——数据源层随导入落盘到聊天仓（保库记录），提炼层把 buildStatsNote 的文案拼进
  * prompt 的「互动统计」素材段喂 AI。只产聚合数字与一段中文自然句，不含聊天原文
  * （与 ADR-0191 §2 隐私口径一致）。纯函数、零 DOM。
  */
@@ -58,7 +58,7 @@ export function emptyInsightSignals(): InsightSignals {
   };
 }
 
-/** 互动画像汇总（供预览桶落盘与提炼 prompt 消费；数字口径见各字段注释） */
+/** 互动画像汇总（随导入落聊天仓与提炼 prompt 消费；数字口径见各字段注释） */
 export interface InsightsSummary {
   /** 我发起的会话数（30 分钟切分，首条开启会话者计数） */
   sessionStartedByMe: number;
