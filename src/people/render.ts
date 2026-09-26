@@ -8,7 +8,7 @@
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
-import type { FaceEvent, ImportRecord, PersonEntry, PersonProfile } from './types';
+import type { DescribeConfirmInfo, FaceEvent, ImportRecord, PersonEntry, PersonProfile } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
 
@@ -238,6 +238,8 @@ export interface JobsBlockState {
   resumable?: boolean;
   /** 工具段进度（469：preprocess 阶段；无 = 该任务不带 prep / 已完成） */
   prep?: JobsPrepState;
+  /** 图片描述段进度（470：describe 阶段；无 = 该任务不在该段） */
+  describe?: JobsDescribeState;
 }
 
 /** 工具段进度视图（ui 从引擎 job.prep 映射；本层只管画） */
@@ -249,6 +251,14 @@ export interface JobsPrepState {
   overall: number;
   /** 单条媒体 / 语音失败累计（>0 且非 running 时出「重试失败项」） */
   failed: number;
+}
+
+/** 图片描述段进度视图（470；ui 从引擎 job.describe × stage 映射，本层只管画） */
+export interface JobsDescribeState {
+  /** 阶段行文案（ui 侧 describeStageLine 组装，如 `图片描述 3/82 批`） */
+  stageText: string;
+  /** 段内总进度 0~100（进度条） */
+  overall: number;
 }
 
 /** 进度百分比（issue 455 口径）：(已完成批 + 已完成成文阶段) / (总批数 + 3)，钳 0~100 */
@@ -312,15 +322,22 @@ function prepStagePart(s: JobsBlockState): string | null {
   return s.prep?.stageText ?? null;
 }
 
+/** 图片描述段主行文案（470）：describe 阶段（或其暂停 / 中断面）的阶段行 */
+function describeStagePart(s: JobsBlockState): string | null {
+  return s.describe?.stageText ?? null;
+}
+
 /**
  * 进度块（面板头统计行下）：细进度条 + 引擎主文案 + 队列副文案 + 灰字说明 + 状态动作钮。
  * 主文案整句展示（切批 / 抽样说明可能是长句）：不截断、允许换行（样式 overflow-wrap）。
  * 469：preprocess 阶段主行 = 阶段 + 计数（`媒体导出 312/1631`），进度条 = 工具段折算总进度；
- * 暂停 / 中断面同样带阶段信息（`已暂停 · 语音转写 45/1289`）；AI 段的暂停 / 中断面不带。
+ * 470：describe 阶段主行 = `图片描述 3/82 批`，进度条 = 描述批进度（工具段之后、批口径之前）；
+ * 暂停 / 中断面同样带阶段信息（`已暂停 · 语音转写 45/1289` / `已暂停 · 图片描述 3/82 批`）。
  */
 export function progressBlock(s: JobsBlockState): HTMLElement {
   const stagePart = prepStagePart(s);
-  const pct = stagePart ? s.prep!.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+  const descPart = describeStagePart(s);
+  const pct = stagePart ? s.prep!.overall : descPart ? s.describe!.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
   const block = el('div', 'bz-people-jobs', {
     'data-people-jobs': '',
     'data-people-jobs-talker': s.talker,
@@ -334,11 +351,17 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   // 455 评审：状态一行说清，不读引擎长文案（批次细节归进度条，错误细节归错误行）
   const next = Math.min(s.batchesDone + 1, s.batchesTotal);
   const main = s.status === 'error'
-    ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
-    : s.status === 'paused' ? (stagePart ? `已暂停 · ${stagePart}` : '已暂停')
-    : s.status === 'interrupted' ? (stagePart ? `上次生成中断了 · ${stagePart}` : '上次生成中断了')
-    : s.status === 'done' ? '脸谱已生成'
-    : stagePart ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    ? stagePart
+      ? `生成失败 · ${stagePart}`
+      : descPart
+        ? `生成失败 · ${descPart}`
+        : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
+    : s.status === 'paused'
+      ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : '已暂停'
+      : s.status === 'interrupted'
+        ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : '上次生成中断了'
+        : s.status === 'done' ? '脸谱已生成'
+        : stagePart ?? descPart ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
   block.appendChild(el('div', 'bz-people-jobs-main', text(main)));
   const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
@@ -351,6 +374,42 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   if (action) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
   if (foot.length) block.appendChild(el('div', 'bz-people-jobs-foot', foot));
   return block;
+}
+
+// ---------------- 图片描述确认弹窗（issue 470 / ADR-0196 决策 8） ----------------
+
+/**
+ * 图片描述确认弹窗（面板外的 body 级弹层——引擎后台跑，确认时面板可能没开）：
+ * 文案按 ADR 口径 `用 <服务商>/<模型> 描述 N 张图片，约 M 次调用；已完成 X 张，本次从第
+ * X+1 张开始`，按钮 **开始 / 跳过图片描述**；只报张数 / 批数 / 调用数，不报金额。
+ * 遮罩点击 = 跳过（不花钱的那条路）；onAnswer 只回调一次，摘除弹层由宿主管。
+ */
+export function describeConfirmModal(info: DescribeConfirmInfo, onAnswer: (answer: 'start' | 'skip') => void): HTMLElement {
+  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-desc-confirm': '' });
+  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-desc-skip': '' }));
+  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '图片描述确认' });
+  pop.appendChild(el('div', 'bz-people-pop-head', [
+    el('div', 'bz-people-pop-title', text('图片描述')),
+  ]));
+  const body = el('div', 'bz-people-pop-body');
+  body.appendChild(el('div', 'bz-people-desc-line', text(
+    `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
+  )));
+  body.appendChild(el('div', 'bz-people-desc-note', text(
+    `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+  )));
+  body.appendChild(el('div', 'bz-people-desc-actions', [
+    button('bz-people-btn bz-people-btn-ghost', '跳过图片描述', { 'data-people-desc-skip': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始', { 'data-people-desc-start': '' }),
+  ]));
+  pop.appendChild(body);
+  wrap.appendChild(pop);
+  wrap.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('[data-people-desc-start]')) onAnswer('start');
+    else if (t.closest('[data-people-desc-skip]')) onAnswer('skip');
+  });
+  return wrap;
 }
 
 // ---------------- 列表（折子封面墙） ----------------
@@ -421,6 +480,8 @@ export interface FoldCardJob {
   resumable: boolean;
   /** 工具段总进度 0~100（469：preprocess 阶段的印章百分比；缺省按批口径算） */
   prepPct?: number;
+  /** 图片描述段总进度 0~100（470：describe 阶段的印章百分比；优先于 prepPct） */
+  describePct?: number;
 }
 
 /**
@@ -433,7 +494,7 @@ export function foldSeal(p: PersonEntry, job: FoldCardJob | null): FoldSeal {
   if (job && job.status !== 'done') {
     const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : '尚未切批';
     if (job.status === 'running') {
-      const pct = job.prepPct ?? jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+      const pct = job.describePct ?? job.prepPct ?? jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
       return {
         state: 'running',
         text: `画谱中\n${pct}%`,

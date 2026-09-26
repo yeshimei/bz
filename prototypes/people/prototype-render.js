@@ -1,4 +1,4 @@
-/* 源指纹 8a8d730a925c82ef · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9a41c4dd9b40d124 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -26,6 +26,7 @@ var BZR_people = (() => {
     avatarColor: () => avatarColor,
     avatarUri: () => avatarUri,
     button: () => button,
+    describeConfirmModal: () => describeConfirmModal,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
     dsSyncLineNode: () => dsSyncLineNode,
@@ -264,9 +265,15 @@ var BZR_people = (() => {
     var _a, _b;
     return (_b = (_a = s.prep) == null ? void 0 : _a.stageText) != null ? _b : null;
   }
+  function describeStagePart(s) {
+    var _a, _b;
+    return (_b = (_a = s.describe) == null ? void 0 : _a.stageText) != null ? _b : null;
+  }
   function progressBlock(s) {
+    var _a;
     const stagePart = prepStagePart(s);
-    const pct = stagePart ? s.prep.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
+    const descPart = describeStagePart(s);
+    const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
     const block = el("div", "bz-people-jobs", {
       "data-people-jobs": "",
       "data-people-jobs-talker": s.talker,
@@ -282,7 +289,7 @@ var BZR_people = (() => {
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
     const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : stagePart != null ? stagePart : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_a = stagePart != null ? stagePart : descPart) != null ? _a : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
     block.appendChild(el("div", "bz-people-jobs-main", text(main)));
     const action = jobsActionOf(s);
     const foot = [];
@@ -293,6 +300,33 @@ var BZR_people = (() => {
     if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
+  }
+  function describeConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-desc-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-desc-skip": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "图片描述确认" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("图片描述"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-desc-line", text(
+      `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-note", text(
+      `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+    )));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "跳过图片描述", { "data-people-desc-skip": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-desc-start": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-desc-start]")) onAnswer("start");
+      else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
+    });
+    return wrap;
   }
   function statsText(people) {
     const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
@@ -310,12 +344,12 @@ var BZR_people = (() => {
     ]);
   }
   function foldSeal(p, job) {
-    var _a;
+    var _a, _b;
     const name = p.name || p.id;
     if (job && job.status !== "done") {
       const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
       if (job.status === "running") {
-        const pct = (_a = job.prepPct) != null ? _a : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
+        const pct = (_b = (_a = job.describePct) != null ? _a : job.prepPct) != null ? _b : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
         return {
           state: "running",
           text: `画谱中
