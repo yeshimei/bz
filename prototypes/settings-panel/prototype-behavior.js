@@ -1,4 +1,4 @@
-/* 源指纹 7a840c28b3c53fe9 · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9010d817d89231ff · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -5897,18 +5897,33 @@ var BZW_settings_panel = (() => {
   }
   function openExternalUrl(app, url) {
     try {
-      app.openUrl(url);
+      const r = app.openUrl(url);
+      if (r && typeof r.catch === "function") {
+        r.catch(() => {
+          if (!openViaElectron(url)) openViaWindow(url);
+        });
+        return;
+      }
       return;
     } catch (e) {
     }
+    if (!openViaElectron(url)) openViaWindow(url);
+  }
+  function openViaElectron(url) {
     try {
       const electron = window.require && window.require("electron");
       if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
+        const p = electron.shell.openExternal(url);
+        if (p && typeof p.catch === "function") {
+          p.catch(() => openViaWindow(url));
+        }
+        return true;
       }
     } catch (e) {
     }
+    return false;
+  }
+  function openViaWindow(url) {
     try {
       const w = window.open(url, "_blank");
       if (w) return;
@@ -9007,7 +9022,7 @@ var BZW_settings_panel = (() => {
 
   // src/settings-panel/layouts/jingwei/render.ts
   function deskShellHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div><div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div><div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-manual>${iconSpan("book-open", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">使用手册</span></button><button type="button" class="bz-sp-foot-chg" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
   }
   function navSecHtml(title, itemsHtml) {
     return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
@@ -12424,73 +12439,6 @@ var BZW_settings_panel = (() => {
     }
   });
 
-  // src/core/manual.ts
-  function manualVaultPath(app) {
-    var _a2;
-    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
-    return `${configDir}/plugins/bz/${MANUAL_FILENAME}`;
-  }
-  async function hasManual(app) {
-    try {
-      const p = manualVaultPath(app);
-      return await app.vault.adapter.exists(p);
-    } catch (e) {
-      return false;
-    }
-  }
-  function manualAbsPath(app) {
-    var _a2;
-    try {
-      const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
-      return (adapter == null ? void 0 : adapter.getFullPath) ? adapter.getFullPath(manualVaultPath(app)) : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  function looksLikeManual(text) {
-    const t = String(text || "");
-    return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
-  }
-  async function downloadManual(app) {
-    let lastErr = "";
-    for (const url of MANUAL_REMOTES) {
-      try {
-        const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (!looksLikeManual(text)) {
-          lastErr = `${url} 返回内容不是手册页`;
-          continue;
-        }
-        await app.vault.adapter.write(manualVaultPath(app), text);
-        return;
-      } catch (e) {
-        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
-      }
-    }
-    throw new Error(`手册下载失败：${lastErr}`);
-  }
-  function openManual(app) {
-    const abs = manualAbsPath(app);
-    if (!abs) {
-      notice(`手册已存放在插件目录：${manualVaultPath(app)}`, "info");
-      return;
-    }
-    openExternalUrl(app, `file:///${abs.replace(/\\/g, "/")}`);
-  }
-  var MANUAL_FILENAME, MANUAL_REMOTES;
-  var init_manual = __esm({
-    "src/core/manual.ts"() {
-      init_fake_obsidian();
-      init_notice();
-      init_utils();
-      MANUAL_FILENAME = "bz-manual.html";
-      MANUAL_REMOTES = [
-        "https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-manual.html",
-        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-manual.html"
-      ];
-    }
-  });
-
   // src/core/settings-main-schema.ts
   var settings_main_schema_exports = {};
   __export(settings_main_schema_exports, {
@@ -13003,33 +12951,6 @@ var BZW_settings_panel = (() => {
     return {
       groups: [
         {
-          icon: "book-open",
-          name: "使用手册",
-          rows: [
-            {
-              type: "button",
-              name: "使用手册",
-              desc: "首次点击从 GitHub 拉取手册写入插件目录并自动打开，已下载则直接打开",
-              buttonText: "使用手册",
-              onClick: () => {
-                void (async () => {
-                  const app = getApp();
-                  try {
-                    if (!await hasManual(app)) {
-                      notice("正在从 GitHub 下载使用手册…", "info");
-                      await downloadManual(app);
-                      notice("手册已下载到插件目录", "success");
-                    }
-                    openManual(app);
-                  } catch (e) {
-                    notice((e == null ? void 0 : e.message) || "手册下载失败", "error");
-                  }
-                })();
-              }
-            }
-          ]
-        },
-        {
           icon: "folder-open",
           name: "数据存储路径",
           rows: [
@@ -13124,8 +13045,6 @@ var BZW_settings_panel = (() => {
       init_settings_provider();
       init_ai_models();
       init_settings_model_picker();
-      init_manual();
-      init_app();
       STORAGE_PATH_COMMIT_NOTICE = "存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。";
     }
   });
@@ -63498,6 +63417,113 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/core/manual.ts
+  var manual_exports = {};
+  __export(manual_exports, {
+    MANUAL_FILENAME: () => MANUAL_FILENAME,
+    downloadManual: () => downloadManual,
+    ensureManualOpen: () => ensureManualOpen,
+    hasManual: () => hasManual,
+    manualVaultPath: () => manualVaultPath,
+    openManual: () => openManual
+  });
+  function manualVaultPath(app) {
+    var _a2;
+    const configDir = String(((_a2 = app.vault) == null ? void 0 : _a2.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${MANUAL_FILENAME}`;
+  }
+  async function hasManual(app) {
+    try {
+      const p = manualVaultPath(app);
+      return await app.vault.adapter.exists(p);
+    } catch (e) {
+      return false;
+    }
+  }
+  function manualAbsPath(app) {
+    var _a2;
+    try {
+      const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
+      return (adapter == null ? void 0 : adapter.getFullPath) ? adapter.getFullPath(manualVaultPath(app)) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function electronShell() {
+    var _a2;
+    try {
+      const req = window.require;
+      const electron = req ? req("electron") : null;
+      return (_a2 = electron == null ? void 0 : electron.shell) != null ? _a2 : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function looksLikeManual(text) {
+    const t = String(text || "");
+    return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
+  }
+  async function downloadManual(app) {
+    let lastErr = "";
+    for (const url of MANUAL_REMOTES) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!looksLikeManual(text)) {
+          lastErr = `${url} 返回内容不是手册页`;
+          continue;
+        }
+        await app.vault.adapter.write(manualVaultPath(app), text);
+        return;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`手册下载失败：${lastErr}`);
+  }
+  async function openManual(app) {
+    if (!await hasManual(app)) {
+      notice("手册尚未下载，请再点一次「使用手册」完成下载", "warning");
+      return false;
+    }
+    const abs = manualAbsPath(app);
+    if (!abs) {
+      notice(`手册已存放在插件目录：${manualVaultPath(app)}`, "info");
+      return false;
+    }
+    const shell = electronShell();
+    if (shell == null ? void 0 : shell.openPath) {
+      try {
+        const err = await shell.openPath(abs);
+        if (!err) return true;
+        notice(`手册打开失败：${err}`, "error");
+        return false;
+      } catch (e) {
+        notice(`手册打开失败：${(e == null ? void 0 : e.message) || String(e)}`, "error");
+        return false;
+      }
+    }
+    openExternalUrl(app, `file:///${abs.replace(/\\/g, "/").replace(/^\/+/, "")}`);
+    return true;
+  }
+  async function ensureManualOpen(app) {
+    if (!await hasManual(app)) await downloadManual(app);
+    return openManual(app);
+  }
+  var MANUAL_FILENAME, MANUAL_REMOTES;
+  var init_manual = __esm({
+    "src/core/manual.ts"() {
+      init_fake_obsidian();
+      init_notice();
+      init_utils();
+      MANUAL_FILENAME = "bz-manual.html";
+      MANUAL_REMOTES = [
+        "https://raw.githubusercontent.com/yeshimei/bz/master/manual/bz-manual.html",
+        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master/manual/bz-manual.html"
+      ];
+    }
+  });
+
   // src/settings.ts
   var settings_exports9 = {};
   __export(settings_exports9, {
@@ -64071,6 +64097,7 @@ ${n.content.slice(0, 2e3)}
   var SEARCH_DEBOUNCE_MS4, spMatch, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui13 = __esm({
     "src/settings-panel/ui.ts"() {
+      init_fake_obsidian();
       init_dom();
       init_esc_manager();
       init_mobile();
@@ -64322,6 +64349,8 @@ ${n.content.slice(0, 2e3)}
           popup.innerHTML = deskShellHtml();
           mountIcons(popup);
           (_a2 = popup.querySelector("[data-sp-changelog]")) == null ? void 0 : _a2.addEventListener("click", () => openChangelogModal());
+          const manBtn = popup.querySelector("[data-sp-manual]");
+          manBtn == null ? void 0 : manBtn.addEventListener("click", () => void this.runManualOpen(manBtn));
           const nav = popup.querySelector(".bz-sp-nav");
           this.navEl = nav;
           const pane = popup.querySelector(".bz-sp-pane");
@@ -64406,6 +64435,26 @@ ${n.content.slice(0, 2e3)}
           motionPanelIn(popup, this.mask);
           motionBindPressFeel(popup);
           motionEnsureDust(popup);
+        }
+        /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
+         * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
+         * 完成/失败 finally 复原 book-open；失败原因由 core/manual 的 Error 消息出人话 notice，
+         * 打不开（openPath 报因）同样落在 core/manual 的 notice 里——本层只兜下载抛错。 */
+        async runManualOpen(btn) {
+          if (btn.classList.contains("is-loading")) return;
+          const ic2 = btn.querySelector(".bz-ic");
+          btn.classList.add("is-loading");
+          try {
+            const core = await Promise.resolve().then(() => (init_manual(), manual_exports));
+            if (ic2) setIcon(ic2, "loader");
+            const opened = await core.ensureManualOpen(getApp());
+            if (opened) notice("手册已打开", "success");
+          } catch (e) {
+            notice((e == null ? void 0 : e.message) || "手册下载失败", "error");
+          } finally {
+            btn.classList.remove("is-loading");
+            if (ic2) setIcon(ic2, "book-open");
+          }
         }
         /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
          *  新轮被收敛不重跑——缓存重算保证「重开即重算」新鲜度；visibleWhen 按当前设置实时求值） */
