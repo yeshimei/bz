@@ -1,5 +1,5 @@
-/* 源指纹 d688b2e00f49f0b2 · 仓内输入 263 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/datasource.ts","src/people/insights.ts","src/people/media.ts","src/people/parse.ts","src/people/settings.ts","src/people/stats.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4ee32fb9a5a5f2c2 · 仓内输入 259 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -10534,11 +10534,11 @@ var BZW_settings_panel = (() => {
       "Authorization": `Bearer ${provider.apiKey}`,
       ...provider.extraHeaders || {}
     };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
+    const controller2 = new AbortController();
+    const onOuterAbort = () => controller2.abort();
     let outerLinked = false;
     if (signal) {
-      if (signal.aborted) controller.abort();
+      if (signal.aborted) controller2.abort();
       else {
         signal.addEventListener("abort", onOuterAbort);
         outerLinked = true;
@@ -10547,7 +10547,7 @@ var BZW_settings_panel = (() => {
     let idleTimer = null;
     const armIdle = () => {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), idleMs);
+      idleTimer = setTimeout(() => controller2.abort(), idleMs);
     };
     try {
       armIdle();
@@ -10555,7 +10555,7 @@ var BZW_settings_panel = (() => {
         method: "POST",
         headers,
         body: JSON.stringify(body),
-        signal: controller.signal
+        signal: controller2.signal
       });
       if (!resp.ok) {
         let msg = `API ${resp.status}`;
@@ -10607,7 +10607,7 @@ var BZW_settings_panel = (() => {
       }
       return full;
     } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
+      if (controller2.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
       throw e;
     } finally {
       if (idleTimer !== null) clearTimeout(idleTimer);
@@ -11125,12 +11125,12 @@ var BZW_settings_panel = (() => {
     };
     let attempt;
     {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const controller2 = new AbortController();
+      const timer = setTimeout(() => controller2.abort(), timeoutMs);
       try {
-        attempt = await fetchAttempt(controller.signal);
+        attempt = await fetchAttempt(controller2.signal);
       } catch (e) {
-        if (controller.signal.aborted) {
+        if (controller2.signal.aborted) {
           throw new Error(`${label} 无响应（超过 ${timeoutMs / 1e3}s 未应答）`);
         }
         attempt = await requestUrlAttempt();
@@ -23917,7 +23917,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
 
   // src/core/file-sync.ts
   function createFileSync(config) {
-    let initialized7 = false;
+    let initialized8 = false;
     let _refs = [];
     let _cancelled = false;
     let _flushers = [];
@@ -24010,8 +24010,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return {
       /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
       ensure(app) {
-        if (initialized7) return;
-        initialized7 = true;
+        if (initialized8) return;
+        initialized8 = true;
         _cancelled = false;
         createAgent(app);
       },
@@ -24033,7 +24033,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         _refs = [];
-        initialized7 = false;
+        initialized8 = false;
         queue = Promise.resolve();
       }
     };
@@ -24741,7 +24741,7 @@ ${body}`;
     const saved = savedUrls || /* @__PURE__ */ new Set();
     const byUrl = clipUrls || /* @__PURE__ */ new Set();
     const rows = /* @__PURE__ */ new Map();
-    const bump2 = (rawSite, unread) => {
+    const bump = (rawSite, unread) => {
       const site = normSite(rawSite);
       let r = rows.get(site);
       if (!r) {
@@ -24751,12 +24751,12 @@ ${body}`;
       r.total++;
       if (unread) r.unread++;
     };
-    for (const n of clipNotes || []) bump2(String(n && n.site || ""), false);
+    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
     for (const a of articles || []) {
       if (!a || a.read) continue;
       if (saved.has(String(a.url || ""))) continue;
       if (a.url && byUrl.has(String(a.url))) continue;
-      bump2(siteName(a), true);
+      bump(siteName(a), true);
     }
     return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
   }
@@ -36269,9 +36269,9 @@ ${bodyText.substring(0, 6e3)}`;
     try {
       const ok = await writeClipNote(raw);
       if (!ok) return false;
-      const bump2 = await markHandledAndBump(raw, "saved");
+      const bump = await markHandledAndBump(raw, "saved");
       const evt = buildReadEvt(raw, "saved");
-      if (bump2.changed) emitDomainEvent("news", { kind: "read", evt });
+      if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
       emitDomainEvent("news", { kind: "saved", evt, clipPath: clipFilePathOf(raw.title) });
       void flushReadingSession();
       return true;
@@ -38046,16 +38046,16 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function titleWords(titles, limit) {
     const map = /* @__PURE__ */ new Map();
-    const bump2 = (w) => {
+    const bump = (w) => {
       if (CN_STOPWORDS.has(w)) return;
       map.set(w, (map.get(w) || 0) + 1);
     };
     for (const t of titles) {
       for (const seg of String(t).match(/[\u4e00-\u9fa5]{2,}/g) || []) {
-        for (let i = 0; i + 2 <= seg.length; i++) bump2(seg.slice(i, i + 2));
+        for (let i = 0; i + 2 <= seg.length; i++) bump(seg.slice(i, i + 2));
       }
       for (const w of String(t).match(/[A-Za-z]{3,}/g) || []) {
-        bump2(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
+        bump(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
       }
     }
     return [...map.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit).map(([w, n]) => ({ w, n }));
@@ -58495,7 +58495,7 @@ ${n.content.slice(0, 2e3)}
       const name = p.slice(p.lastIndexOf("/") + 1);
       if (name && !byName.has(name)) byName.set(name, p);
     }
-    const shared = /* @__PURE__ */ new Set();
+    const shared2 = /* @__PURE__ */ new Set();
     for (const o of others) {
       if (!o || o.path === notePath) continue;
       for (const l of o.links || []) {
@@ -58513,10 +58513,10 @@ ${n.content.slice(0, 2e3)}
             }
           }
         }
-        if (hit) shared.add(hit);
+        if (hit) shared2.add(hit);
       }
     }
-    return [...shared];
+    return [...shared2];
   }
   function collectSharedAttachmentPaths(app, notePath, attPaths) {
     var _a2, _b2, _c;
@@ -60905,7 +60905,7 @@ ${n.content.slice(0, 2e3)}
           rows: [
             {
               type: "text",
-              name: "数据文件夹",
+              name: "数据根目录",
               desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口",
               binding: { key: "peopleDataDir" },
               placeholder: "例如 D:\\微信备份\\export_full"
@@ -60915,24 +60915,6 @@ ${n.content.slice(0, 2e3)}
               name: "群聊纳入列表",
               desc: "多位发送者的会话也进勾选列表",
               binding: { key: "peopleIncludeGroups" }
-            }
-          ]
-        },
-        {
-          icon: "image",
-          name: "媒体",
-          rows: [
-            {
-              type: "text",
-              name: "媒体文件夹",
-              desc: "库内存放头像等媒体资源的文件夹（vault 相对路径，如 CONFIG/FACES）；导入时头像复制进来，库外文件在 Obsidian 里加载不出来。空 = 用默认值",
-              binding: { key: "peopleMediaDir" },
-              placeholder: "CONFIG/FACES"
-            },
-            {
-              type: "info",
-              name: "头像入库，其余媒体不入库",
-              desc: "只有头像会复制进库（几 KB 的小图）；聊天图片 / 语音 / 视频仍留在外部数据目录"
             }
           ]
         },
@@ -60976,20 +60958,20 @@ ${n.content.slice(0, 2e3)}
           rows: [
             {
               type: "info",
-              name: "原始媒体不入库",
-              desc: "图片语音视频文件留在外部数据目录，不复制进库；头像例外——复制进库内媒体文件夹才能显示"
+              name: "数据在保险库里",
+              desc: "人物卡、聊天数据、任务与头像按联系人各存一条保险库加密记录，与保险库共用主密码；上锁即不可读"
             },
             {
               type: "info",
-              name: "完整聊天数据入库",
-              desc: "全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径"
+              name: "媒体本体不入库",
+              desc: "图片语音视频文件留在外部数据目录，加密记录只存消息与路径；头像以密文附件随记录走"
             },
             {
               type: "button",
-              name: "清空聊天仓",
+              name: "清空聊天数据",
               buttonText: "清空",
               cta: true,
-              desc: "清掉全部导入的消息记录，不动已生成的脸谱",
+              desc: "清掉各加密记录里的消息数据（需先解锁），不动已生成的脸谱",
               onClick: () => {
                 var _a2;
                 return void ((_a2 = opts == null ? void 0 : opts.onClearStore) == null ? void 0 : _a2.call(opts));
@@ -61005,761 +60987,391 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // src/people/media.ts
-  function parseMediaTag(msg) {
-    let s = String(msg != null ? msg : "").trim();
-    const stripped = s.replace(/^\[(?!(?:语音|图片|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, "");
-    if (stripped !== s && /^\[(语音|图片)\s*([^\]]*)\]/.test(stripped)) s = stripped;
-    const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
-    if (!m) return null;
-    const body = m[3].trim();
-    if (!body) return null;
-    const kind = m[1] === "语音" ? "voice" : "image";
-    const out = { kind, text: body };
-    if (kind === "voice") {
-      let durationSec;
-      const emos = [];
-      for (const part of m[2].split("·")) {
-        const t = part.trim();
-        if (!t) continue;
-        const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t);
-        if (dm) {
-          if (durationSec === void 0) durationSec = Number(dm[1]);
-        } else {
-          emos.push(t);
-        }
-      }
-      if (durationSec !== void 0) out.durationSec = durationSec;
-      const emotion = emos.join("·").trim();
-      if (emotion) out.emotion = emotion;
-    }
-    return out;
-  }
-  function emptyMediaStats() {
-    return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
-  }
-  function collectMediaStats(messages) {
-    var _a2;
-    const out = emptyMediaStats();
-    for (const m of messages) {
-      const mat = parseMediaTag((_a2 = m == null ? void 0 : m.text) != null ? _a2 : "");
-      if (!mat) continue;
-      if (mat.kind === "voice") {
-        out.voiceCount++;
-        if (mat.durationSec !== void 0 && Number.isFinite(mat.durationSec)) out.voiceTotalSec += mat.durationSec;
-      } else {
-        out.imageCount++;
-      }
-    }
-    return out;
-  }
-  var init_media = __esm({
-    "src/people/media.ts"() {
-    }
+  // src/encrypt/index.ts
+  var encrypt_exports = {};
+  __export(encrypt_exports, {
+    encryptCurrentNote: () => encryptCurrentNote,
+    ensureEncrypt: () => ensureEncrypt,
+    ensureSafeUnlocked: () => ensureSafeUnlocked,
+    getSafeManager: () => getSafeManager,
+    lockEncrypt: () => lockEncrypt,
+    lockSafe: () => lockSafe,
+    mountEncryptStatusBar: () => mountEncryptStatusBar,
+    openEncrypt: () => openEncrypt,
+    unloadEncrypt: () => unloadEncrypt,
+    unmountEncryptStatusBar: () => unmountEncryptStatusBar
   });
-
-  // src/people/parse.ts
-  function normalizeKind(typeName, typeNum, text) {
-    if (typeName !== void 0 && typeName !== "") return kindFromTypeName(typeName);
-    if (typeNum !== void 0 && typeNum !== "") {
-      const k = kindFromTypeNum(typeNum, text);
-      if (k) return k;
-    }
-    return kindFromLabel(text);
-  }
-  function kindFromTypeName(raw) {
-    const n = raw.trim();
-    if (!n) return "其他";
-    if (/^(文本|文字|text)$/i.test(n)) return "文本";
-    if (n.includes("通话")) return "通话";
-    if (n.includes("撤回") || n.includes("系统")) return "系统";
-    if (n.includes("引用")) return "引用";
-    if (n.includes("表情")) return "表情";
-    if (n.includes("图片")) return "图片";
-    if (n.includes("视频")) return "视频";
-    if (n.includes("语音")) return "语音";
-    if (n.includes("文件")) return "文件";
-    if (n.includes("分享") || n.includes("链接")) return "分享";
-    return "其他";
-  }
-  function kindFromTypeNum(raw, text) {
-    const s = raw.trim();
-    if (!/^\d+$/.test(s)) return null;
-    switch (Number(s)) {
-      case 1:
-        return "文本";
-      case 3:
-        return "图片";
-      case 34:
-        return "语音";
-      case 43:
-        return "视频";
-      case 47:
-        return "表情";
-      case 50:
-        return "通话";
-      case 49:
-        if (text.startsWith("[引用")) return "引用";
-        if (text.startsWith("[文件")) return "文件";
-        return "分享";
-      case 1e4:
-      case 10002:
-        return "系统";
-      default:
-        return "其他";
-    }
-  }
-  function kindFromLabel(text) {
-    const t = text.trim();
-    if (t.startsWith("[图片")) return "图片";
-    if (t.startsWith("[视频")) return "视频";
-    if (t.startsWith("[语音")) return "语音";
-    if (t.startsWith("[通话") || t.includes("通话时长")) return "通话";
-    if (t.startsWith("[表情")) return "表情";
-    if (t.startsWith("[文件")) return "文件";
-    if (t.startsWith("[引用")) return "引用";
-    if (t.startsWith("[分享") || t.startsWith("[链接")) return "分享";
-    if (t.startsWith("[撤回")) return "系统";
-    return "文本";
-  }
-  var init_parse = __esm({
-    "src/people/parse.ts"() {
-    }
-  });
-
-  // src/people/stats.ts
-  function medianOf(samples) {
-    if (!samples.length) return 0;
-    const s = [...samples].sort((a, b) => a - b);
-    const mid = Math.floor(s.length / 2);
-    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-  }
-  var SESSION_GAP_MS;
-  var init_stats4 = __esm({
-    "src/people/stats.ts"() {
-      init_media();
-      SESSION_GAP_MS = 30 * 60 * 1e3;
-    }
-  });
-
-  // src/people/insights.ts
-  function emptyInsightSignals() {
-    return {
-      shareCount: 0,
-      emojiCount: 0,
-      emojiNamedCount: 0,
-      callCount: 0,
-      callTotalSec: 0,
-      callMissedCount: 0,
-      recantByMe: 0,
-      recantByOther: 0,
-      voiceEmotion: {}
-    };
-  }
-  function dateKeyOf(ts) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
-  function computeInsights(msgs, signals) {
-    const sorted = msgs.filter((m) => m && Number.isFinite(m.ts)).sort((a, b) => a.ts - b.ts);
-    let sessionStartedByMe = 0;
-    let sessionStartedByOther = 0;
-    const mySamples = [];
-    const otherSamples = [];
-    let night = 0;
-    const gaps = [];
-    let prev = null;
-    for (const m of sorted) {
-      if (NIGHT_HOURS.has(new Date(m.ts).getHours())) night++;
-      if (!prev) {
-        if (m.isSender) sessionStartedByMe++;
-        else sessionStartedByOther++;
-        prev = m;
-        continue;
-      }
-      const gapMs = m.ts - prev.ts;
-      if (gapMs >= SESSION_GAP_MS2) {
-        if (m.isSender) sessionStartedByMe++;
-        else sessionStartedByOther++;
-      } else if (m.isSender !== prev.isSender) {
-        const sec = gapMs / 1e3;
-        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
-      }
-      if (gapMs >= SILENCE_GAP_MS) {
-        gaps.push({
-          from: dateKeyOf(prev.ts),
-          to: dateKeyOf(m.ts),
-          // 日历日差（与 from/to 字面日期自洽；24h 时段的 floor 会出现「01-05 至 01-20（14 天）」式矛盾）
-          days: Math.round((Date.parse(dateKeyOf(m.ts)) - Date.parse(dateKeyOf(prev.ts))) / (24 * 3600 * 1e3))
-        });
-      }
-      prev = m;
-    }
-    const silenceGaps = gaps.sort((a, b) => b.days - a.days).slice(0, SILENCE_GAP_MAX).sort((a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to));
-    return {
-      sessionStartedByMe,
-      sessionStartedByOther,
-      myReplyMedianSec: medianOf(mySamples),
-      otherReplyMedianSec: medianOf(otherSamples),
-      nightSharePct: sorted.length ? Math.round(night / sorted.length * 1e3) / 10 : 0,
-      callCount: signals.callCount,
-      callTotalSec: signals.callTotalSec,
-      callMissedCount: signals.callMissedCount,
-      recantByMe: signals.recantByMe,
-      recantByOther: signals.recantByOther,
-      voiceEmotion: { ...signals.voiceEmotion },
-      silenceGaps,
-      shareCount: signals.shareCount,
-      emojiCount: signals.emojiCount,
-      emojiNamedCount: signals.emojiNamedCount
-    };
-  }
-  var SESSION_GAP_MS2, REPLY_CAP_SEC, SILENCE_GAP_MS, SILENCE_GAP_MAX, NIGHT_HOURS;
-  var init_insights = __esm({
-    "src/people/insights.ts"() {
-      init_stats4();
-      SESSION_GAP_MS2 = 30 * 60 * 1e3;
-      REPLY_CAP_SEC = 3600;
-      SILENCE_GAP_MS = 14 * 24 * 3600 * 1e3;
-      SILENCE_GAP_MAX = 12;
-      NIGHT_HOURS = /* @__PURE__ */ new Set([0, 1, 2, 3, 4, 5]);
-    }
-  });
-
-  // src/people/datasource.ts
-  var datasource_exports = {};
-  __export(datasource_exports, {
-    MessageStore: () => MessageStore,
-    emptyMessageStore: () => emptyMessageStore,
-    getStoreFilePath: () => getStoreFilePath,
-    importAvatarToVault: () => importAvatarToVault,
-    isGroupChat: () => isGroupChat,
-    isSelfWho: () => isSelfWho,
-    isVaultRelativePath: () => isVaultRelativePath,
-    listContactDirs: () => listContactDirs,
-    mergeStore: () => mergeStore,
-    msgKey: () => msgKey,
-    normalizeChatJson: () => normalizeChatJson,
-    normalizeOptionsFromSettings: () => normalizeOptionsFromSettings,
-    peopleMediaDir: () => peopleMediaDir,
-    readContactBundle: () => readContactBundle,
-    storeMediaBadge: () => storeMediaBadge,
-    storeStatsOf: () => storeStatsOf,
-    storeToUnified: () => storeToUnified
-  });
-  function emptyMessageStore() {
-    return { version: 2, contacts: {} };
-  }
-  function hash32(s) {
-    let h = 2166136261;
-    for (let i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return (h >>> 0).toString(36);
-  }
-  function msgKey(raw) {
-    var _a2, _b2, _c;
-    const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
-    if (sid) return `s${sid}:${(_a2 = raw.ct) != null ? _a2 : 0}`;
-    return `h${hash32(`${(_b2 = raw.ct) != null ? _b2 : 0}|${String((_c = raw.msg) != null ? _c : "")}`)}`;
-  }
-  function isSelfWho(who) {
-    return String(who != null ? who : "").trim() === SELF_WHO;
-  }
-  function matchImageDesc(raw, descByFile, descByMonth, descUsed) {
-    var _a2, _b2, _c, _d;
-    const img = String((_a2 = raw.img) != null ? _a2 : "").trim();
-    if (img) {
-      const exact = descByFile.get(img);
-      return exact ? String((_b2 = exact.desc) != null ? _b2 : "").trim() : "";
-    }
-    const ct = Number(raw.ct);
-    if (!Number.isFinite(ct)) return "";
-    const list = descByMonth.get(monthOf(ct));
-    if (!(list == null ? void 0 : list.length)) return "";
-    let best = null;
-    let bestDiff = Infinity;
-    for (const it of list) {
-      const ict = Number(it.ct);
-      if (!Number.isFinite(ict)) continue;
-      const diff = Math.abs(ict - ct);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        best = it;
-      }
-    }
-    if (!best || bestDiff > IMG_DESC_NEAREST_SEC) return "";
-    const file = String((_c = best.file) != null ? _c : "").trim();
-    const usedKey = file || `ct:${Number(best.ct)}`;
-    if (descUsed.has(usedKey)) return "";
-    descUsed.add(usedKey);
-    return String((_d = best.desc) != null ? _d : "").trim();
-  }
-  function isGroupChat(raws) {
-    var _a2;
-    const others = /* @__PURE__ */ new Set();
-    for (const r of raws) {
-      if (!r || typeof r !== "object") continue;
-      const who = String((_a2 = r.who) != null ? _a2 : "").trim();
-      if (!who || isSelfWho(who)) continue;
-      others.add(who);
-      if (others.size > 1) return true;
-    }
-    return false;
-  }
-  function monthOf(sec) {
-    const d = new Date(sec * 1e3);
-    if (Number.isNaN(d.getTime())) return "";
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-  function emotionZh(emotion) {
-    var _a2;
-    const e = emotion.trim();
-    return (_a2 = EMOTION_ZH[e.toUpperCase()]) != null ? _a2 : e;
-  }
-  function buildVoiceText(raw, voice) {
-    var _a2, _b2;
-    const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-    const emo = emotionZh(String((_a2 = voice == null ? void 0 : voice.emotion) != null ? _a2 : ""));
-    const text = String((_b2 = voice == null ? void 0 : voice.text) != null ? _b2 : "").trim();
-    const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
-    return text ? `${head} ${text}` : head;
-  }
-  function truncateChars(s, max) {
-    return s.length <= max ? s : `${s.slice(0, max - 1)}…`;
-  }
-  function truncateQuoteHead(text) {
-    const m = /^(\[引用「)([\s\S]*?)(」[\s\S]*)$/.exec(text);
-    if (!m) return text;
-    const quote = m[2];
-    if (quote.length <= QUOTE_HEAD_MAX_CHARS) return text;
-    return `${m[1]}${quote.slice(0, QUOTE_HEAD_MAX_CHARS)}…」${m[3].slice(1)}`;
-  }
-  function parseCallDurationSec(text) {
-    var _a2, _b2, _c;
-    const colon = /\[通话(?:中断)?(?:时长)?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*\]/.exec(text);
-    if (colon) {
-      const [a, b, c] = [Number(colon[1]), Number(colon[2]), Number((_a2 = colon[3]) != null ? _a2 : 0)];
-      return colon[3] !== void 0 ? a * 3600 + b * 60 + c : a * 60 + b;
-    }
-    const zh = /\[通话(?:中断)?(?:时长)?\s+(?:(\d+)\s*分)?(?:(\d+)\s*秒)?\s*\]/.exec(text);
-    if (zh && (zh[1] || zh[2])) return Number((_b2 = zh[1]) != null ? _b2 : 0) * 60 + Number((_c = zh[2]) != null ? _c : 0);
-    return null;
-  }
-  function formatCallDur(totalSec) {
-    const sec = Math.max(0, Math.round(totalSec));
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor(sec % 3600 / 60);
-    const s = sec % 60;
-    if (h > 0) return `${h}时${m}分`;
-    if (m > 0) return `${m}分${s}秒`;
-    return `${s}秒`;
-  }
-  function missedCallReason(text) {
-    for (const r of CALL_MISSED_REASONS) {
-      if (text.includes(r)) return r;
-    }
-    return null;
-  }
-  function normalizeChatJson(raws, opts, extras) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
-    const voiceByWav = /* @__PURE__ */ new Map();
-    for (const v of (_a2 = extras == null ? void 0 : extras.voice) != null ? _a2 : []) {
-      if (!v || typeof v !== "object") continue;
-      const wav = String((_b2 = v.wav) != null ? _b2 : "").trim();
-      if (!wav) continue;
-      voiceByWav.set(wav, v);
-      const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
-      if (base) voiceByWav.set(base, v);
-    }
-    const descByFile = /* @__PURE__ */ new Map();
-    const descByMonth = /* @__PURE__ */ new Map();
-    for (const it of (_c = extras == null ? void 0 : extras.imageDesc) != null ? _c : []) {
-      if (!it || typeof it !== "object") continue;
-      const desc = String((_d = it.desc) != null ? _d : "").trim();
-      if (!desc) continue;
-      const file = String((_e = it.file) != null ? _e : "").trim();
-      if (file) descByFile.set(file, it);
-      const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
-      if (!month) continue;
-      let list = descByMonth.get(month);
-      if (!list) {
-        list = [];
-        descByMonth.set(month, list);
-      }
-      list.push(it);
-    }
-    for (const list of descByMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
-    const descUsed = /* @__PURE__ */ new Set();
-    const group = isGroupChat(raws);
-    const signals = emptyInsightSignals();
-    const bumpEmotion = (emo) => {
-      var _a3;
-      const k = String(emo != null ? emo : "").trim();
-      if (k) signals.voiceEmotion[k] = ((_a3 = signals.voiceEmotion[k]) != null ? _a3 : 0) + 1;
-    };
-    const kindCounts = {};
-    const msgs = [];
-    let maxSid = 0;
-    let rawTotal = 0;
-    for (const item of raws) {
-      rawTotal++;
-      if (!item || typeof item !== "object") {
-        kindCounts["其他"] = ((_f = kindCounts["其他"]) != null ? _f : 0) + 1;
-        continue;
-      }
-      const raw = item;
-      const typeNum = String((_g = raw.type) != null ? _g : "");
-      const text = String((_h = raw.msg) != null ? _h : "").trim();
-      bump(kindCounts, normalizeKind(void 0, typeNum, text));
-      const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
-      if (sid && sid > maxSid) maxSid = sid;
-      const ts = Number.isFinite(raw.ct) ? Math.round(raw.ct * 1e3) : NaN;
-      if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue;
-      let out = "";
-      switch (raw.type) {
-        case 1:
-          out = text;
-          break;
-        case 34: {
-          if (opts.previewVoice) {
-            const tagged = text ? parseMediaTag(text) : null;
-            if (tagged) {
-              out = text;
-              bumpEmotion(tagged.emotion);
-            } else {
-              const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-              const merged = buildVoiceText(raw, v);
-              const parsed = parseMediaTag(merged);
-              if (parsed) {
-                out = merged;
-                bumpEmotion(parsed.emotion);
-              }
-            }
-          }
-          break;
-        }
-        case 3: {
-          if (opts.imageDescMode === "file") {
-            const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-            if (hit) out = `[图片] ${hit}`;
-          }
-          break;
-        }
-        case 43: {
-          if (opts.previewVideo) {
-            const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-            if (dur) out = `[视频 ${dur}秒]`;
-          }
-          break;
-        }
-        case 47: {
-          signals.emojiCount++;
-          if (EMOJI_NAMED_RE.test(text)) {
-            out = text;
-            signals.emojiNamedCount++;
-          }
-          break;
-        }
-        case 49: {
-          if (text.startsWith("[分享]") || text.startsWith("[小程序]")) {
-            signals.shareCount++;
-            out = truncateChars(text, SHARE_MAX_CHARS);
-          } else if (text.startsWith("[引用「")) {
-            out = truncateQuoteHead(text);
-          } else {
-            out = text;
-          }
-          break;
-        }
-        case 50: {
-          signals.callCount++;
-          const missed = missedCallReason(text);
-          if (missed) {
-            signals.callMissedCount++;
-            out = `[未接通·${missed}]`;
-            break;
-          }
-          const sec = parseCallDurationSec(text);
-          if (sec === null) {
-            out = text;
-            break;
-          }
-          signals.callTotalSec += sec;
-          out = `[${text.startsWith("[通话中断") ? "通话中断" : "通话"} ${formatCallDur(sec)}]`;
-          break;
-        }
-        case 1e4: {
-          if (text.includes("撤回")) {
-            if (isSelfWho(raw.who)) signals.recantByMe++;
-            else signals.recantByOther++;
-          }
-          if (opts.keepSystem) out = text;
-          break;
-        }
-        default:
-          break;
-      }
-      if (out) {
-        const who = String((_j = raw.who) != null ? _j : "").trim();
-        if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
-        out = out.replace(/\r\n?/g, "\n");
-      }
-      msgs.push({
-        key: msgKey(raw),
-        ts,
-        isSender: isSelfWho(raw.who),
-        type: typeof raw.type === "number" && Number.isFinite(raw.type) ? raw.type : 0,
-        ...raw.who !== void 0 && { who: raw.who },
-        ...sid !== 0 && { sid },
-        ...typeof raw.dur === "number" && Number.isFinite(raw.dur) && raw.dur > 0 && { dur: raw.dur },
-        ...typeof raw.wav === "string" && raw.wav && { wav: raw.wav },
-        ...typeof raw.img === "string" && raw.img && { img: raw.img },
-        text: out
-      });
-    }
-    msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    const stats = storeStatsOf(msgs);
-    const insights = computeInsights(msgs.filter((m) => m.text !== ""), signals);
-    return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
-  }
-  function bump(counts, kind) {
-    var _a2;
-    counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
-  }
-  function storeStatsOf(msgs) {
-    const unified = msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
-    const media = collectMediaStats(unified);
-    return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
-  }
-  function mergeStore(existing, incoming, nowIso) {
-    var _a2, _b2, _c;
-    const prev = new Map(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => [m.key, m]));
-    let added = 0;
-    let updated = 0;
-    for (const m of incoming.msgs) {
-      if (prev.has(m.key)) updated++;
-      else added++;
-      prev.set(m.key, m);
-    }
-    const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    const contact = {
-      msgs,
-      watermarkSid: Math.max((_b2 = existing == null ? void 0 : existing.watermarkSid) != null ? _b2 : 0, incoming.maxSid),
-      stats: storeStatsOf(msgs),
-      // 全量形态计数 / 互动画像每次导入重算或合并覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
-      kindCounts: { ...(_c = existing == null ? void 0 : existing.kindCounts) != null ? _c : {}, ...incoming.kindCounts },
-      insights: incoming.insights,
-      updatedAt: nowIso
-    };
-    return { contact, added, updated };
-  }
-  function storeToUnified(msgs) {
-    return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
-  }
-  function normalizeOptionsFromSettings() {
-    var _a2, _b2;
-    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
-    const mode = String((_b2 = s.peopleImageDescMode) != null ? _b2 : "file");
-    return {
-      previewVoice: s.peoplePreviewVoice !== false,
-      imageDescMode: mode === "off" ? "off" : "file",
-      previewVideo: s.peoplePreviewVideo !== false,
-      keepSystem: s.peopleKeepSystem !== false
-    };
-  }
-  function getFs2() {
-    const w = window;
-    if (!w || !w.require) return null;
-    try {
-      return w.require("fs");
-    } catch (e) {
-      return null;
-    }
-  }
-  function listContactDirs(dataDir) {
-    const fs = getFs2();
-    if (!fs || !dataDir) return [];
-    try {
-      return fs.readdirSync(dataDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => String(d.name)).filter((name) => {
-        try {
-          return fs.existsSync(`${dataDir}/${name}/chat.json`);
-        } catch (e) {
-          return false;
-        }
-      }).sort((a, b) => a.localeCompare(b, "zh"));
-    } catch (e) {
-      return [];
-    }
-  }
-  function readContactBundle(dataDir, name) {
-    var _a2, _b2;
-    const fs = getFs2();
-    if (!fs) return null;
-    const readJson = (path) => {
-      try {
-        const parsed = JSON.parse(String(fs.readFileSync(path, "utf8")).replace(/^\uFEFF/, ""));
-        return Array.isArray(parsed) ? parsed : null;
-      } catch (e) {
-        return null;
-      }
-    };
-    const raws = readJson(`${dataDir}/${name}/chat.json`);
-    if (!raws) return null;
-    return {
-      raws,
-      voice: (_a2 = readJson(`${dataDir}/${name}/voice.json`)) != null ? _a2 : [],
-      imageDesc: (_b2 = readJson(`${dataDir}/${name}/image_desc.json`)) != null ? _b2 : [],
-      avatar: avatarFileOf(fs, `${dataDir}/${name}`)
-    };
-  }
-  function avatarFileOf(fs, dir) {
-    for (const ext of AVA_EXTS) {
-      const p = `${dir}/avatar.${ext}`;
-      try {
-        if (fs.existsSync(p)) return p;
-      } catch (e) {
-      }
-    }
-    return null;
-  }
-  function peopleMediaDir() {
-    var _a2;
-    const s = tryGetSettings();
-    const dir = String((_a2 = s == null ? void 0 : s.peopleMediaDir) != null ? _a2 : "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-    return dir || "CONFIG/FACES";
-  }
-  function mediaDirName(name) {
-    return String(name).replace(/[\\/:*?"<>|]/g, "_").replace(/^[\s.]+|[\s.]+$/g, "") || "未命名";
-  }
-  function isVaultRelativePath(p) {
-    const norm = String(p != null ? p : "").replace(/\\/g, "/");
-    return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith("/");
-  }
-  async function importAvatarToVault(app, name, externalPath) {
-    var _a2, _b2;
-    const adapter = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.adapter;
-    if (!adapter) return null;
-    const dir = `${peopleMediaDir()}/${mediaDirName(name)}`;
-    let vaultCopy = null;
-    for (const ext of AVA_EXTS) {
-      const p = `${dir}/avatar.${ext}`;
-      try {
-        if (await adapter.exists(p)) {
-          vaultCopy = p;
-          break;
-        }
-      } catch (e) {
-      }
-    }
-    const fs = getFs2();
-    if (!fs || !externalPath) return vaultCopy;
-    let srcExt = "";
-    try {
-      if (!fs.existsSync(externalPath)) return vaultCopy;
-      srcExt = String((_b2 = externalPath.split(".").pop()) != null ? _b2 : "").toLowerCase();
-    } catch (e) {
-      return vaultCopy;
-    }
-    if (!AVA_EXTS.includes(srcExt)) return vaultCopy;
-    const target = `${dir}/avatar.${srcExt}`;
-    try {
-      const parts = dir.split("/");
-      let cur = "";
-      for (const seg of parts) {
-        cur = cur ? `${cur}/${seg}` : seg;
-        try {
-          await adapter.mkdir(cur);
-        } catch (e) {
-        }
-      }
-      const buf = fs.readFileSync(externalPath);
-      if (!buf || !buf.length) return vaultCopy;
-      const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-      await adapter.writeBinary(target, ab);
-      return target;
-    } catch (e) {
-      console.warn("[people] 头像入库失败:", name, e);
-      return vaultCopy != null ? vaultCopy : externalPath;
-    }
-  }
-  function getStoreFilePath() {
-    const s = tryGetSettings();
-    return storageFile("people-preview.json", s && s.storagePath || "CONFIG/STORAGE");
-  }
-  function storeMediaBadge(stats) {
-    var _a2, _b2, _c;
-    if (!stats) return null;
-    const acc = emptyMediaStats();
-    acc.voiceCount = (_a2 = stats.voiceCount) != null ? _a2 : 0;
-    acc.voiceTotalSec = (_b2 = stats.voiceTotalSec) != null ? _b2 : 0;
-    acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
-    return acc.voiceCount || acc.imageCount ? acc : null;
-  }
-  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, EMOJI_NAMED_RE, SHARE_MAX_CHARS, QUOTE_HEAD_MAX_CHARS, CALL_MISSED_REASONS, AVA_EXTS, MessageStore;
-  var init_datasource = __esm({
-    "src/people/datasource.ts"() {
-      init_storage();
-      init_settings_provider();
-      init_media();
-      init_parse();
-      init_insights();
-      SELF_WHO = "我";
-      IMG_DESC_NEAREST_SEC = 12 * 3600;
-      EMOTION_ZH = {
-        NEUTRAL: "平静",
-        HAPPY: "开心",
-        ANGRY: "生气",
-        SAD: "难过"
+  function getController() {
+    if (!controller) {
+      const s = getSettings();
+      const config = {
+        root: (s.encryptRoot || "CONFIG/.ENCRYPT").replace(/\/+$/, ""),
+        previewEnabled: s.encryptPreviewEnabled !== false,
+        previewSize: parseInt(s.encryptPreviewSize) || 384,
+        previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
+        autoLoadOriginal: !!s.encryptAutoLoadOriginal,
+        securityMode: !!s.encryptSecurityMode
       };
-      EMOJI_NAMED_RE = /^\[表情·[^\]]+\]/;
-      SHARE_MAX_CHARS = 80;
-      QUOTE_HEAD_MAX_CHARS = 60;
-      CALL_MISSED_REASONS = [
-        "对方已拒绝",
-        "未应答",
-        "对方无应答",
-        "对方已取消",
-        "已取消",
-        "对方忙线中",
-        "忙线未接听"
-      ];
-      AVA_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
-      MessageStore = class {
-        constructor(app) {
-          this.app = app;
-          this.filePath = getStoreFilePath();
+      controller = EncryptAppController.getInstance(config);
+    }
+    return controller;
+  }
+  async function ensureEncrypt(app) {
+    if (initialized6) return;
+    await getController().init();
+    initialized6 = true;
+  }
+  function mountEncryptStatusBar(container) {
+    if (statusBarEl) return;
+    const el = document.createElement("span");
+    el.className = "bz-encrypt-statusbar";
+    el.title = "保险库：点击打开";
+    el.innerHTML = statusbarHtml(false);
+    mountIcons(el);
+    el.addEventListener("click", () => openEncrypt(getApp()));
+    container.appendChild(el);
+    statusBarEl = el;
+    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el)).catch(() => {
+    });
+  }
+  function unmountEncryptStatusBar() {
+    if (statusBarEl) {
+      statusBarEl.remove();
+      statusBarEl = null;
+    }
+  }
+  function openEncrypt(app) {
+    void ensureEncrypt(app).then(() => getController().openManager()).catch(() => notice("保险库初始化失败，请重试", "error"));
+  }
+  function encryptCurrentNote(app) {
+    void ensureEncrypt(app).then(() => getController().lockCurrentNote()).catch(() => notice("保险库初始化失败，请重试", "error"));
+  }
+  function getSafeManager() {
+    return getController().dataManager;
+  }
+  async function lockSafe(app) {
+    try {
+      await ensureEncrypt(app);
+    } catch (e) {
+      return false;
+    }
+    if (!getSafeManager().unlocked) return false;
+    getController().uiManager.lockNow(true);
+    return true;
+  }
+  async function lockEncrypt(app) {
+    const ok = await lockSafe(app);
+    if (ok) notice("保险库已锁定", "success");
+    else notice("保险库本来就是锁着的", "warning");
+  }
+  async function ensureSafeUnlocked(kind = "vault") {
+    const controller2 = getController();
+    if (controller2.dataManager.unlocked) return true;
+    const ok = await controller2.uiManager.showPasswordDialog(kind);
+    return ok;
+  }
+  function unloadEncrypt() {
+    if (controller) controller.cleanup();
+    controller = null;
+    initialized6 = false;
+  }
+  var initialized6, controller, statusBarEl;
+  var init_encrypt = __esm({
+    "src/encrypt/index.ts"() {
+      init_settings_provider();
+      init_app();
+      init_notice();
+      init_ui11();
+      init_vault_assets_view();
+      init_ui();
+      initialized6 = false;
+      controller = null;
+      statusBarEl = null;
+    }
+  });
+
+  // src/people/safe-store.ts
+  var safe_store_exports = {};
+  __export(safe_store_exports, {
+    PEOPLE_KIND: () => PEOPLE_KIND,
+    PEOPLE_NOTE_PATH_PREFIX: () => PEOPLE_NOTE_PATH_PREFIX,
+    PeopleSafeStore: () => PeopleSafeStore,
+    emptyPersonEntry: () => emptyPersonEntry,
+    emptyStoreContact: () => emptyStoreContact,
+    getPeopleSafeStore: () => getPeopleSafeStore,
+    peopleNotePath: () => peopleNotePath,
+    setPeopleSafeStoreForTests: () => setPeopleSafeStoreForTests
+  });
+  function peopleNotePath(talker) {
+    return PEOPLE_NOTE_PATH_PREFIX + talker;
+  }
+  function talkerOfPath(path) {
+    if (!path || !path.startsWith(PEOPLE_NOTE_PATH_PREFIX)) return null;
+    const talker = path.slice(PEOPLE_NOTE_PATH_PREFIX.length);
+    return talker || null;
+  }
+  function emptyStoreContact(nowIso = (/* @__PURE__ */ new Date()).toISOString()) {
+    return { msgs: [], watermarkSid: 0, stats: { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: nowIso };
+  }
+  function emptyPersonEntry(id, name, nowIso) {
+    return { id, name, createdAt: nowIso, imports: [] };
+  }
+  function normalizeRecord(talker, parsed) {
+    var _a2, _b2, _c, _d, _e;
+    const raw = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    const personRaw = raw.person && typeof raw.person === "object" ? raw.person : {};
+    const person = {
+      ...personRaw,
+      id: String((_a2 = personRaw.id) != null ? _a2 : talker),
+      name: String((_b2 = personRaw.name) != null ? _b2 : talker),
+      createdAt: String((_c = personRaw.createdAt) != null ? _c : (/* @__PURE__ */ new Date()).toISOString()),
+      imports: Array.isArray(personRaw.imports) ? personRaw.imports : []
+    };
+    const storeRaw = raw.store && typeof raw.store === "object" ? raw.store : {};
+    const store2 = {
+      ...storeRaw,
+      msgs: Array.isArray(storeRaw.msgs) ? storeRaw.msgs : [],
+      watermarkSid: Number((_d = storeRaw.watermarkSid) != null ? _d : 0) || 0,
+      stats: storeRaw.stats && typeof storeRaw.stats === "object" ? storeRaw.stats : emptyStoreContact().stats,
+      updatedAt: String((_e = storeRaw.updatedAt) != null ? _e : "")
+    };
+    const job = raw.job && typeof raw.job === "object" ? raw.job : null;
+    return { version: 1, person, store: store2, job };
+  }
+  function setPeopleSafeStoreForTests(store2) {
+    shared == null ? void 0 : shared.destroy();
+    shared = store2;
+  }
+  async function getPeopleSafeStore() {
+    if (!shared) {
+      const enc = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
+      shared = new PeopleSafeStore(enc.getSafeManager());
+    }
+    return shared;
+  }
+  var PEOPLE_KIND, PEOPLE_NOTE_PATH_PREFIX, PeopleSafeStore, PEOPLE_KIND_SAFE, shared;
+  var init_safe_store = __esm({
+    "src/people/safe-store.ts"() {
+      init_domain_bus();
+      init_data13();
+      PEOPLE_KIND = "people";
+      PEOPLE_NOTE_PATH_PREFIX = "CONFIG/STORAGE/people/";
+      PeopleSafeStore = class {
+        constructor(safe) {
+          /** 解密记录缓存（明文）；上锁 / 外部清单变更即清 */
+          this.cache = /* @__PURE__ */ new Map();
+          /** 头像 data URL 缓存；同上 */
+          this.avatarUrls = /* @__PURE__ */ new Map();
+          /** per-talker 写串行链（读→改→写整体入队，防并发互吞） */
+          this.chains = /* @__PURE__ */ new Map();
+          this.offUnlock = null;
+          this.offChanged = null;
+          this.safe = safe;
+          this.offUnlock = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+            if ((evt == null ? void 0 : evt.unlocked) !== false) return;
+            this.clearPlainCaches();
+          });
+          this.offChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL, () => {
+            this.clearPlainCaches();
+          });
         }
-        open() {
-          return jsonFileStore(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
+        /** 底层 SafeManager（解锁态判定 / 测试断言用） */
+        get safeManager() {
+          return this.safe;
+        }
+        /** 解锁态 = 共锁保险库的解锁态 */
+        get unlocked() {
+          return this.safe.unlocked;
+        }
+        /** 清明文缓存（记录 + 头像 data URL）；上锁事件与外部变更订阅共用同一收口 */
+        clearPlainCaches() {
+          this.cache.clear();
+          this.avatarUrls.clear();
+        }
+        /** 退订域事件（测试隔离 / 卸载清理用） */
+        destroy() {
+          var _a2, _b2;
+          (_a2 = this.offUnlock) == null ? void 0 : _a2.call(this);
+          this.offUnlock = null;
+          (_b2 = this.offChanged) == null ? void 0 : _b2.call(this);
+          this.offChanged = null;
+        }
+        noteOf(talker) {
+          return this.safe.manifest.notes.find((n) => n.kind === PEOPLE_KIND && n.path === peopleNotePath(talker)) || null;
+        }
+        requireUnlocked() {
+          if (!this.safe.unlocked) throw new Error("保险库未解锁，脸谱数据不可读");
+        }
+        /** 全部联系人 talker（清单级定位，不解密正文；未解锁抛错——索引也不可读） */
+        talkers() {
+          this.requireUnlocked();
+          const out = [];
+          for (const n of this.safe.manifest.notes) {
+            if (n.kind !== PEOPLE_KIND) continue;
+            const t = talkerOfPath(n.path);
+            if (t) out.push(t);
+          }
+          return out.sort((a, b) => a.localeCompare(b, "zh"));
+        }
+        /** 是否已有该联系人的保库记录（迁移幂等键；不解密正文） */
+        has(talker) {
+          this.requireUnlocked();
+          return this.noteOf(talker) !== null;
+        }
+        /** 该人记录的附件数（头像存在性校验用；不解密） */
+        attachmentCount(talker) {
+          var _a2, _b2, _c;
+          this.requireUnlocked();
+          return (_c = (_b2 = (_a2 = this.noteOf(talker)) == null ? void 0 : _a2.attachments) == null ? void 0 : _b2.length) != null ? _c : 0;
+        }
+        /** 读一位联系人的保库记录（缓存优先；无记录返回 null） */
+        async read(talker) {
+          this.requireUnlocked();
+          const hit = this.cache.get(talker);
+          if (hit) return hit;
+          const note = this.noteOf(talker);
+          if (!note) return null;
+          const plain = await this.safe.decryptNoteBody(note);
+          if (plain === null) throw new Error("保库记录解密失败");
+          let parsed;
+          try {
+            parsed = JSON.parse(plain);
+          } catch (e) {
+            throw new Error("保库记录损坏（解密成功但解析失败）");
+          }
+          const rec = normalizeRecord(talker, parsed);
+          this.cache.set(talker, rec);
+          return rec;
+        }
+        /** 读全部联系人记录（面板墙一次拉全量） */
+        async readAll() {
+          const out = /* @__PURE__ */ new Map();
+          for (const t of this.talkers()) {
+            const rec = await this.read(t);
+            if (rec) out.set(t, rec);
+          }
+          return out;
         }
         /**
-         * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
-         * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
+         * 头像 → 内存 data URL（渲染用；不解密正文，只解附件原始层）。
+         * 无头像 / 解密失败返回 null；不落任何明文文件。
          */
-        async read() {
-          const data = await enqueueFileTask(this.filePath, async () => this.open().read());
-          if (!data || data.version !== 2) return emptyMessageStore();
-          return data;
+        async avatarDataUrl(talker) {
+          var _a2;
+          this.requireUnlocked();
+          const hit = this.avatarUrls.get(talker);
+          if (hit !== void 0) return hit;
+          const note = this.noteOf(talker);
+          const att = (_a2 = note == null ? void 0 : note.attachments) == null ? void 0 : _a2[0];
+          if (!att) {
+            this.avatarUrls.set(talker, "");
+            return null;
+          }
+          const b64 = await this.safe.decryptAttachmentOriginal(att);
+          if (!b64) {
+            this.avatarUrls.set(talker, "");
+            return null;
+          }
+          const ext = (att.path.split(".").pop() || "jpg").toLowerCase();
+          const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : ext === "gif" ? "image/gif" : "image/jpeg";
+          const url = `data:${mime};base64,${b64}`;
+          this.avatarUrls.set(talker, url);
+          return url;
         }
-        /** 合并写回一位联系人（读→改→写整体入队） */
-        async upsertContact(name, contact) {
-          await enqueueFileTask(this.filePath, async () => {
-            const store2 = this.open();
-            const data = await store2.read();
-            data.contacts[name] = contact;
-            await store2.write(data);
-          });
+        /**
+         * 读改写一位联系人的记录（per-talker 串行）：
+         * mutate 在最新记录上就地改（无记录则先落空骨架）；opts.avatar 传 AvatarInput 为设置头像、
+         * 传 null 为移除头像、不传为不动。头像字节与既有密文指纹一致时零重写。
+         * 返回 'created' | 'updated' | 'unchanged'（头像一致且无其他变化语义由调用方自行判定，
+         * 这里只区分记录级动作）。
+         */
+        write(talker, mutate, opts) {
+          var _a2;
+          const prev = (_a2 = this.chains.get(talker)) != null ? _a2 : Promise.resolve();
+          const run = prev.catch(() => void 0).then(() => this.writeSerial(talker, mutate, opts));
+          this.chains.set(talker, run);
+          return run;
         }
-        /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
-        async clear() {
-          await enqueueFileTask(this.filePath, async () => {
-            const store2 = this.open();
-            await store2.write(emptyMessageStore());
-          });
+        async writeSerial(talker, mutate, opts) {
+          var _a2, _b2;
+          this.requireUnlocked();
+          const existing = this.noteOf(talker);
+          let rec;
+          if (existing) {
+            const cur = await this.read(talker);
+            if (!cur) throw new Error("保库记录读取失败");
+            rec = cur;
+          } else {
+            const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+            rec = { version: 1, person: emptyPersonEntry(talker, talker, nowIso), store: emptyStoreContact(nowIso), job: null };
+          }
+          await mutate(rec);
+          let avatar = opts == null ? void 0 : opts.avatar;
+          let avatarChanged = false;
+          const oldAtt = (_a2 = existing == null ? void 0 : existing.attachments) == null ? void 0 : _a2[0];
+          if (avatar !== void 0) {
+            const newFp = avatar ? await fingerprintOf(avatar.base64) : null;
+            const oldFp = (_b2 = oldAtt == null ? void 0 : oldAtt.fingerprint) != null ? _b2 : null;
+            avatarChanged = newFp !== oldFp;
+            if (avatar && !avatarChanged) avatar = void 0;
+          }
+          if (!existing) {
+            await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+            this.cache.set(talker, rec);
+            return "created";
+          }
+          if (avatarChanged) {
+            await this.safe.removeNote(existing.id);
+            await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+            this.cache.set(talker, rec);
+            return "updated";
+          }
+          const json = JSON.stringify(rec);
+          await this.safe.updateNotePayload(existing.id, json);
+          this.cache.set(talker, rec);
+          if (avatar === null) this.avatarUrls.delete(talker);
+          return "updated";
+        }
+        /** 首建 / 重建整条记录（含头像附件；keptShared 置真——脸谱不删任何源文件） */
+        async lockNoteFresh(talker, rec, avatar) {
+          const input = {
+            path: peopleNotePath(talker),
+            title: `脸谱：${rec.person.name || talker}`,
+            kind: PEOPLE_KIND_SAFE,
+            content: JSON.stringify(rec),
+            attachments: avatar ? [
+              {
+                path: `${peopleNotePath(talker)}/avatar.${avatar.ext}`,
+                kind: "image",
+                data: avatar.base64,
+                // 不删源：存量明文头像目录退役不删文件；新头像源在 vault 外数据根（issue 338 他引保护通道复用）
+                keptShared: true
+              }
+            ] : []
+          };
+          await this.safe.lockNote(input);
+          this.avatarUrls.delete(talker);
+        }
+        /** 删除一位联系人的整条保库记录（连同头像镜像；二次确认由 UI 层管） */
+        async removeContact(talker) {
+          this.requireUnlocked();
+          const note = this.noteOf(talker);
+          if (note) await this.safe.removeNote(note.id);
+          this.cache.delete(talker);
+          this.avatarUrls.delete(talker);
+        }
+        /** 清空全部联系人的聊天仓（设置页「清空聊天仓」；不动人物卡与任务——原 MessageStore.clear 同语义） */
+        async clearStores() {
+          this.requireUnlocked();
+          for (const talker of this.talkers()) {
+            await this.write(talker, (rec) => {
+              rec.store = emptyStoreContact();
+            });
+          }
         }
       };
+      PEOPLE_KIND_SAFE = PEOPLE_KIND;
+      shared = null;
     }
   });
 
@@ -63061,8 +62673,6 @@ ${n.content.slice(0, 2e3)}
         peopleImageDescMode: "file",
         peoplePreviewVideo: true,
         peopleKeepSystem: true,
-        // 库内媒体文件夹（456 头像入库）：默认 CONFIG/FACES
-        peopleMediaDir: "CONFIG/FACES",
         // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
         settingsPanelLayout: "jingwei",
         settingsPanelSkin: "chenhun",
@@ -63227,18 +62837,23 @@ ${n.content.slice(0, 2e3)}
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings7(), settings_exports7))).passwordVaultSettingsSchema(),
-        // 脸谱（issue 446/466）：「清空聊天仓」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+        // 脸谱（issue 446/466/467）：「清空聊天数据」清各保库记录的聊天仓段（confirm 在域内 notice 层做，不动人物卡）
         people: async () => {
           const { peopleSettingsSchema: peopleSettingsSchema2 } = await Promise.resolve().then(() => (init_settings8(), settings_exports8));
-          const { MessageStore: MessageStore2 } = await Promise.resolve().then(() => (init_datasource(), datasource_exports));
+          const { getPeopleSafeStore: getPeopleSafeStore2 } = await Promise.resolve().then(() => (init_safe_store(), safe_store_exports));
           const { notifyActionError: notifyActionError2 } = await Promise.resolve().then(() => (init_notice(), notice_exports));
           return peopleSettingsSchema2({
             onClearStore: async () => {
               try {
-                await new MessageStore2(getApp()).clear();
-                notice("聊天仓已清空", "delete");
+                const safe = await getPeopleSafeStore2();
+                if (!safe.unlocked) {
+                  notice("保险库未解锁，先解锁再清空", "warning");
+                  return;
+                }
+                await safe.clearStores();
+                notice("聊天数据已清空", "delete");
               } catch (e) {
-                notifyActionError2(e, "清空聊天仓");
+                notifyActionError2(e, "清空聊天数据");
               }
             }
           });
@@ -64006,8 +63621,8 @@ ${n.content.slice(0, 2e3)}
     return ui;
   }
   async function ensureSettingsPanel(_app3) {
-    if (initialized6) return;
-    initialized6 = true;
+    if (initialized7) return;
+    initialized7 = true;
   }
   function openSettingsPanel(app, domainId) {
     void ensureSettingsPanel(app).then(() => getUI().open(domainId));
@@ -64016,14 +63631,14 @@ ${n.content.slice(0, 2e3)}
     motionTeardown();
     if (ui) ui.cleanup();
     ui = null;
-    initialized6 = false;
+    initialized7 = false;
   }
-  var initialized6, ui;
+  var initialized7, ui;
   var init_settings_panel = __esm({
     "src/settings-panel/index.ts"() {
       init_ui13();
       init_motion();
-      initialized6 = false;
+      initialized7 = false;
       ui = null;
     }
   });

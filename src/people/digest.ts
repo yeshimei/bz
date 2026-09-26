@@ -57,7 +57,7 @@ export interface PortraitMaterial {
   threads: ThreadItem[];
   /** 素材清单说明：媒体计数 + 情感标记含义（无媒体素材时缺省，issue 445） */
   mediaNote?: string;
-  /** 素材五：互动统计叙述段（谁先开口 / 回复快慢 / 深夜比 / 通话时长等；ui 层由预览桶 insights 生成，issue 449） */
+  /** 素材五：互动统计叙述段（谁先开口 / 回复快慢 / 深夜比 / 通话时长等；ui 层由聊天仓 insights 生成，issue 449） */
   statsNote?: string;
   /** 素材〇：手动档案文本段（buildProfileNote 产出；无档案时缺省，issue 455） */
   profileNote?: string;
@@ -563,7 +563,7 @@ export interface FaceRunOptions {
   chunkOpts?: ChunkOptions;
   /** 媒体素材清单说明（缺省由本次消息流自算） */
   mediaNote?: string;
-  /** 互动统计叙述段（ui 层由预览桶 insights 生成后透传） */
+  /** 互动统计叙述段（ui 层由聊天仓 insights 生成后透传） */
   statsNote?: string;
   /** 手动档案（issue 455：经 buildProfileNote 转档案段进两卷 prompt 头部） */
   profile?: PersonProfile;

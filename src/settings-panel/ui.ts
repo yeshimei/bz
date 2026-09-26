@@ -106,18 +106,23 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   'password-vault': async () => (await import('../password-vault/settings')).passwordVaultSettingsSchema(),
-  // 脸谱（issue 446/466）：「清空聊天仓」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+  // 脸谱（issue 446/466/467）：「清空聊天数据」清各保库记录的聊天仓段（confirm 在域内 notice 层做，不动人物卡）
   people: async () => {
     const { peopleSettingsSchema } = await import('../people/settings');
-    const { MessageStore } = await import('../people/datasource');
+    const { getPeopleSafeStore } = await import('../people/safe-store');
     const { notifyActionError } = await import('../core/notice');
     return peopleSettingsSchema({
       onClearStore: async () => {
         try {
-          await new MessageStore(getApp()).clear();
-          notice('聊天仓已清空', 'delete');
+          const safe = await getPeopleSafeStore();
+          if (!safe.unlocked) {
+            notice('保险库未解锁，先解锁再清空', 'warning');
+            return;
+          }
+          await safe.clearStores();
+          notice('聊天数据已清空', 'delete');
         } catch (e) {
-          notifyActionError(e, '清空聊天仓');
+          notifyActionError(e, '清空聊天数据');
         }
       },
     });

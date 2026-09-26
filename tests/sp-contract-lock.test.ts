@@ -26,7 +26,7 @@ const COUNT_BASELINE: Record<string, number> = {
   diary: 5,
   memo: 11,
   belongings: 6,
-  people: 10, // 2026-09-26 issue 456/466：数据源 2 + 媒体 2（456 媒体文件夹 + 头像入库说明）+ 聊天仓 4 + 隐私 2（清空按钮不计）；issue 447 基线 8 未含媒体组
+  people: 8, // 2026-09-26 issue 467：媒体组两行随 peopleMediaDir 退役（10→8）——头像改走保库记录附件；数据源 2 + 聊天仓 4 + 隐私 2（清空按钮不计）
   clipping: 11,
   favorites: 5,
   cinema: 8,

@@ -80,7 +80,7 @@ export function mergeWithOld(merged: MergedMaterial, old: FaceDigest | undefined
  * 落盘的 digest.events 保持全量，抽样只影响送 prompt 与落盘的 moments / traits / quotes / interests / threads 口径
  * （issue 449 缺陷修复：moments / traits 此前只吃新批且不落盘，增量一次旧「共同记忆 / 表达 DNA」全丢）。
  * mediaNote（issue 445）：媒体素材清单说明，ui 层传跨导入累计口径（本层消息只是新切片，自算会少算）；
- * statsNote（issue 449）：互动统计叙述段，同样由 ui 层按预览桶最新 insights 生成后透传；
+ * statsNote（issue 449）：互动统计叙述段，同样由 ui 层按聊天仓最新 insights 生成后透传；
  * profile（issue 455）：手动档案，转档案段进两卷 prompt；sampleWarn（issue 455）缺省按本层消息量自算，
  * 增量场景建议调用方按全量消息数覆盖（本层只见到新切片）。
  * opts（issue 450 收拢旧位置参数）：onProgress 阶段化进度、onMaterial 中间计数（合并后、抽样前）。

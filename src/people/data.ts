@@ -1,49 +1,35 @@
 /**
- * 脸谱域数据层（issue 435）：CONFIG/STORAGE/people.json，jsonFileStore 读写 +
- * enqueueFileTask 串行写队列（读→改→写事务整体入队，防并发写互相覆盖——review 同款）。
- * 聊天原文不落盘（ADR-0191）：本文件只有人物卡 / 事件 / 画像 / 导入元数据。
+ * 脸谱域人物卡数据层（issue 435 建域；issue 467 / ADR-0194 改造为保库记录门面）：
+ * 明文 people.json 已退役——人物卡现在是保险库里每位联系人一条加密记录（SafeNote.kind =
+ * 'people'）的 `person` 段，读写全部经 PeopleSafeStore（共锁同库，上锁即不可读）。
+ * 本类保留 446 收编形态的方法面（list / upsert / appendImport / setDigest / …），
+ * ui / jobs 两侧调用点零漂移；「人物不存在抛错」语义沿用（静默丢失比失败更糟）。
  */
-import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
-import { tryGetSettings } from '../core/settings-provider';
-import type { FaceDigest, ImportRecord, ManualEvent, PeopleData, PersonEntry, PersonProfile } from './types';
-import { emptyPeopleData } from './types';
-
-/** 数据文件路径（storagePath 设置键可覆盖基目录，缺省 CONFIG/STORAGE） */
-export function getPeopleFilePath(): string {
-  const s = tryGetSettings() as { storagePath?: string } | null;
-  return storageFile('people.json', (s && s.storagePath) || 'CONFIG/STORAGE');
-}
+import { getPeopleSafeStore, type PeopleSafeStore } from './safe-store';
+import type { FaceDigest, ImportRecord, ManualEvent, PersonEntry, PersonProfile } from './types';
 
 export class PeopleStore {
-  private readonly app: unknown;
-  private readonly filePath: string;
-
-  constructor(app: unknown) {
-    this.app = app;
-    this.filePath = getPeopleFilePath();
+  constructor(_app?: unknown) {
+    // app 参数保留（历史调用点 new PeopleStore(app) 兼容）；存储已迁入保库记录，不再落 vault 明文层
+    void _app;
   }
 
-  private open() {
-    return jsonFileStore<PeopleData>(this.filePath, { defaultValue: emptyPeopleData, app: this.app });
+  private async safe(): Promise<PeopleSafeStore> {
+    return getPeopleSafeStore();
   }
 
-  /** 人物列表（建卡时间升序） */
+  /** 人物列表（建卡时间升序；未解锁抛错——门禁在面板入口） */
   async list(): Promise<PersonEntry[]> {
-    return enqueueFileTask(this.filePath, async () => {
-      const data = await this.open().read();
-      return [...data.people].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    });
+    const safe = await this.safe();
+    const all = await safe.readAll();
+    return [...all.values()].map((r) => r.person).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
-  /** 新增或整体替换人物卡（按 id） */
+  /** 新增或整体替换人物卡（按 id；无记录自动落骨架） */
   async upsert(entry: PersonEntry): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      const data = await store.read();
-      const i = data.people.findIndex((p) => p.id === entry.id);
-      if (i >= 0) data.people[i] = entry;
-      else data.people.push(entry);
-      await store.write(data);
+    const safe = await this.safe();
+    await safe.write(entry.id, (rec) => {
+      rec.person = entry;
     });
   }
 
@@ -105,41 +91,35 @@ export class PeopleStore {
    */
   async mergeInto(fromId: string, toId: string): Promise<void> {
     if (fromId === toId) return;
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      const data = await store.read();
-      const from = data.people.find((p) => p.id === fromId);
-      const to = data.people.find((p) => p.id === toId);
-      if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
-      to.imports.push(...from.imports);
-      to.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
-      to.manualEvents = [...(to.manualEvents ?? []), ...(from.manualEvents ?? [])].sort((a, b) => a.ts.localeCompare(b.ts));
-      if (!to.profile && from.profile) to.profile = from.profile;
-      if (!to.digest && from.digest) to.digest = from.digest;
-      to.lastProcessedTs = Math.max(to.lastProcessedTs ?? 0, from.lastProcessedTs ?? 0);
-      data.people = data.people.filter((p) => p.id !== fromId);
-      await store.write(data);
+    const safe = await this.safe();
+    const all = await safe.readAll();
+    const from = all.get(fromId)?.person;
+    const to = all.get(toId)?.person;
+    if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
+    await safe.write(toId, (rec) => {
+      const t = rec.person;
+      t.imports.push(...from.imports);
+      t.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
+      t.manualEvents = [...(t.manualEvents ?? []), ...(from.manualEvents ?? [])].sort((a, b) => a.ts.localeCompare(b.ts));
+      if (!t.profile && from.profile) t.profile = from.profile;
+      if (!t.digest && from.digest) t.digest = from.digest;
+      t.lastProcessedTs = Math.max(t.lastProcessedTs ?? 0, from.lastProcessedTs ?? 0);
     });
+    await safe.removeContact(fromId);
   }
 
   async remove(id: string): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      const data = await store.read();
-      data.people = data.people.filter((p) => p.id !== id);
-      await store.write(data);
-    });
+    const safe = await this.safe();
+    if (!(await safe.read(id))) throw new Error(`人物不存在: ${id}`);
+    await safe.removeContact(id);
   }
 
-  /** 队列内单人物变更（不存在抛错——静默丢失比失败更糟） */
+  /** 单人物卡变更（不存在抛错——静默丢失比失败更糟） */
   private async mutate(id: string, fn: (p: PersonEntry) => void): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      const store = this.open();
-      const data = await store.read();
-      const p = data.people.find((x) => x.id === id);
-      if (!p) throw new Error(`人物不存在: ${id}`);
-      fn(p);
-      await store.write(data);
+    const safe = await this.safe();
+    if (!(await safe.read(id))) throw new Error(`人物不存在: ${id}`);
+    await safe.write(id, (rec) => {
+      fn(rec.person);
     });
   }
 }

@@ -1,27 +1,29 @@
 /**
- * 脸谱生成任务引擎（issue 450 E1；双卷画像 issue 455）：生成与面板生命周期解耦——模块级单例，
- * 关面板转后台继续、重启从断点续跑（已完成批次不重烧 AI）。
+ * 脸谱生成任务引擎（issue 450 E1；双卷画像 issue 455；issue 467 / ADR-0194 入保库）：
+ * 生成与面板生命周期解耦——模块级单例，关面板转后台继续、重启从断点续跑（已完成批次不重烧 AI）。
  *
- * 持久化：CONFIG/STORAGE/people-jobs.json（storagePath 设置键可覆盖基目录），
- * 每批 AI 采集完成后原子落盘（jsonFileStore + enqueueFileTask 串行写，MessageStore 同款）。
- * **隐私红线（ADR-0191）**：批内对话行、消息原文一律不进这个文件——只落批元数据
- * （from/to/count/媒体数）、已完成批的提炼结果（events/quotes/moments/traits/interests/threads JSON）、
- * 双卷画像 / 时间线成品、互动统计聚合与消息集指纹。
+ * 持久化（467）：people-jobs.json 明文文件退役——每个任务条目落进该联系人的**保库记录**
+ * （SafeNote.kind='people' 的 job 段，见 safe-store.ts），与人物卡 / 聊天仓同一条 .enc；
+ * 每批 AI 采集完成后原子落盘（updateNotePayload 覆盖同一密文镜像）。
+ * **隐私口径（ADR-0194 取代 ADR-0191 §2）**：任务数据只进加密库——批内对话行、消息原文一律不落盘
+ * （只落批元数据、已完成批的提炼结果、双卷画像 / 时间线成品、互动统计聚合与消息集指纹），
+ * 且现在连同提炼产物一起进了密文。
  *
  * 断点续跑判定（466 / ADR-0197 决策 5）：指纹 = 组装素材的**内容哈希**（条数 + 逐条 ts|归属|文本
- * 链式哈希）。取代旧「条数 + 末条派生键」——聊天仓 upsert 让「条数不变、内容变了」（转写 /
- * 描述回写升级）成为常态，旧指纹察觉不到，会拿旧素材静默续跑；内容哈希条数不变也判得出。
- * resume(talker) 重读聊天仓重算指纹：一致 → chunkMessages 确定性重切（跳过已完成批）→ 续跑；
- * 漂移（中途导入过新数据）→ 任务判废（status error），提示删除后重新生成。
- * 落盘兼容（issue 455）：旧版 in-flight job 的单卷 `portrait` 字段读入视作 `person`，
- * 已缓存批次照常复用，从《其人》阶段起重画双卷。
+ * 链式哈希）。resume(talker) 重读聊天仓（保库记录 store 段）重算指纹：一致 → chunkMessages
+ * 确定性重切（跳过已完成批）→ 续跑；漂移 → 任务判废（status error），提示删除后重新生成。
+ * 落盘兼容（issue 455）：旧版 in-flight job 的单卷 `portrait` 字段读入视作 `person`。
+ *
+ * 上锁协作暂停（ADR-0194 决策 5）：订阅 encrypt:unlock-changed——任意路径上锁即 pauseJobs()
+ * （当前批完成后停，批级断点保留）；解锁后 kick() 续跑。引擎运行全程要求共锁保险库处于解锁态。
  *
  * 分工口径：引擎只负责跑到 status done 并把 BuildFace 等价产物挂在 job 上；
- * people.json 写回（PeopleStore / ImportRecord / 面板刷新）由 ui 层（E2）订阅 done 完成。
+ * 人物卡写回（PeopleStore / ImportRecord / 面板刷新）由 ui 层（E2）订阅 done 完成。
  */
 import { createAI } from '../core/ai';
-import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
-import { tryGetSettings } from '../core/settings-provider';
+import { onDomainEvent } from '../core/domain-bus';
+import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
+import { getPeopleSafeStore, type PeopleSafeStore } from './safe-store';
 import {
   buildBondPrompt,
   buildChroniclePrompt,
@@ -49,7 +51,7 @@ import { buildMediaNote } from './media';
 import { buildStatsNote, type InsightsSummary } from './insights';
 import { computeStats } from './stats';
 import { PeopleStore } from './data';
-import { MessageStore, storeToUnified } from './datasource';
+import { storeToUnified } from './datasource';
 import type {
   ContactStats,
   FaceDigest,
@@ -205,36 +207,59 @@ export type JobView = PersonJob & {
   queueTotal: number;
 };
 
-// ---------------- 持久化（MessageStore 同款：jsonFileStore + 串行写队列） ----------------
-
-/** 任务文件路径（storagePath 设置键可覆盖基目录，缺省 CONFIG/STORAGE） */
-export function getJobsFilePath(): string {
-  const s = tryGetSettings() as { storagePath?: string } | null;
-  return storageFile('people-jobs.json', (s && s.storagePath) || 'CONFIG/STORAGE');
-}
+// ---------------- 持久化（保库记录的 job 段；引擎外经 PeopleSafeStore 串行写） ----------------
 
 export class JobStore {
   private readonly app: unknown;
-  private readonly filePath: string;
 
   constructor(app: unknown) {
     this.app = app;
-    this.filePath = getJobsFilePath();
+    void this.app;
   }
 
-  private open() {
-    return jsonFileStore<JobsData>(this.filePath, { defaultValue: emptyJobsData, app: this.app });
-  }
-
+  /**
+   * 读全队列：各保库记录的 job 段按 startedAt 组装（引擎拾起顺序与旧文件数组序等价——
+   * 同人至多一任务，跨人按开始时间先后）。上锁期返回空队列（无明文可读；引擎此时也已暂停）。
+   */
   async read(): Promise<JobsData> {
-    return enqueueFileTask(this.filePath, async () => this.open().read());
+    const safe = await getPeopleSafeStore();
+    if (!safe.unlocked) return emptyJobsData();
+    const all = await safe.readAll();
+    const queue = [...all.values()]
+      .map((r) => r.job)
+      .filter((j): j is PersonJob => !!j)
+      .sort(
+        (a, b) =>
+          (a.startedAt || '').localeCompare(b.startedAt || '') || (a.updatedAt || '').localeCompare(b.updatedAt || '')
+      );
+    return { version: 1, queue };
   }
 
-  /** 整文件写回（引擎是本会话唯一写方；队列整体在内存，读→改→写整体入队） */
+  /**
+   * 整队列对账写回（引擎是本会话唯一写方）：队列里有的任务按 talker 写进对应记录的 job 段；
+   * 记录里有而队列里没有的任务摘除（done 清队 / 删除任务）。未变零重写。
+   * 未解锁抛错（persist 侧只告警不阻断——内存队列不丢，解锁后下一 checkpoint 补落）。
+   */
   async write(data: JobsData): Promise<void> {
-    await enqueueFileTask(this.filePath, async () => {
-      await this.open().write(data);
-    });
+    const safe = await getPeopleSafeStore();
+    if (!safe.unlocked) throw new Error('未解锁，无法保存任务');
+    const all = await safe.readAll();
+    const want = new Map<string, PersonJob>();
+    for (const j of data.queue) if (j?.talker) want.set(String(j.talker), j);
+    for (const [talker, rec] of all) {
+      const job = want.get(talker) ?? null;
+      if (JSON.stringify(rec.job ?? null) === JSON.stringify(job)) continue; // 未变零重写（批间checkpoint 大多数只动一人）
+      await safe.write(talker, (r) => {
+        r.job = job;
+      });
+    }
+    for (const [talker, job] of want) {
+      if (all.has(talker)) continue;
+      // 任务先于记录存在理论不达（任务必由聊天仓素材发起）——落最小骨架防丢
+      await safe.write(talker, (r) => {
+        r.job = job;
+      });
+    }
   }
 }
 
@@ -243,6 +268,8 @@ export class JobStore {
 interface EngineState {
   app: unknown;
   store: JobStore;
+  /** 共锁保库记录读写器（素材重读 / 上锁判定 / job 落盘都走它） */
+  safe: PeopleSafeStore | null;
   queue: PersonJob[];
   /** 最近一次 startJobs / resumeJobs 注入的 AI 依赖（缺省 createAI()） */
   injected: { askExtract?: AskLLM; askPortrait?: AskLLM } | null;
@@ -420,10 +447,31 @@ function reusableJob(
 }
 
 /**
+ * 上锁协作暂停（ADR-0194 决策 5）：订阅共锁保险库的解锁态广播（本会话装一次）——
+ * 任意路径上锁（面板「立即上锁」/ 锁屏 / 安全模式）→ pauseJobs()，当前批完成后停，
+ * 批级断点保留、绝不带着明文继续吐 AI；解锁 → kick() 从断点续跑。
+ */
+let lockWired = false;
+function wireLock(): void {
+  if (lockWired) return;
+  lockWired = true;
+  onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+    if (evt?.unlocked === false) pauseJobs();
+    else if (evt?.unlocked === true) kick();
+  });
+}
+
+/** 引擎可跑判定：已启动 && 未请求暂停 && 共锁保险库处于解锁态 */
+function runnable(): boolean {
+  return !!st && !st.pauseRequested && !!st.safe?.unlocked;
+}
+
+/**
  * 排队生成（多人顺序跑）：逐人建任务（预切批元数据 + 进度说明）→ 立即返回，
  * 引擎后台顺序执行；每批完成原子落盘。返回排队 / 跳过 / **续跑**名单
  * （skip = 无新消息或无可提炼文本；resumed = 接了上次没跑完的任务，已完成批次不重烧）。
  * 想等整批跑完：`await startJobs(...); await whenIdle();`
+ * 上锁期调用：全部目标记跳过（面板解锁门禁保证正常路径不会走到这里）。
  */
 export async function startJobs(
   app: unknown,
@@ -434,6 +482,7 @@ export async function startJobs(
     st = {
       app,
       store: new JobStore(app),
+      safe: null,
       queue: [],
       injected: null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
@@ -443,6 +492,11 @@ export async function startJobs(
   }
   st.app = app;
   st.store = new JobStore(app);
+  st.safe = await getPeopleSafeStore();
+  wireLock();
+  if (!st.safe.unlocked) {
+    return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
+  }
   st.injected = opts.askExtract || opts.askPortrait ? { askExtract: opts.askExtract, askPortrait: opts.askPortrait } : null;
   // 重试策略：只在显式传入时覆盖（不传 = 沿用当前，缺省 DEFAULT_MAX_RETRIES + 真实退避）
   if (opts.maxRetries !== undefined) st.retry.maxRetries = opts.maxRetries;
@@ -561,15 +615,19 @@ export async function startJobs(
 }
 
 /**
- * 启动扫描（插件加载 / 面板首开时调一次）：读 people-jobs.json 重建队列，
+ * 启动扫描（面板首开时调一次，解锁门禁之后）：从保库记录的 job 段重建队列，
  * 把上次崩溃遗留的 running 标为 interrupted（出「继续生成」），不自动续跑。
  * 本会话已启动过引擎时直接返回（不覆盖运行中的内存队列——重复调用安全）。
+ * 上锁期调用：不动引擎单例（等解锁后面板重试——st 保持未建，队列不会被空数据覆盖）。
  */
 export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promise<void> {
   if (st) {
     st.app = app;
+    st.safe = st.safe ?? (await getPeopleSafeStore());
     return;
   }
+  const safe = await getPeopleSafeStore();
+  if (!safe.unlocked) return; // 上锁期不建引擎（门禁保证面板路径先解锁；此处兜底）
   const store = new JobStore(app);
   const data = await store.read();
   const queue = Array.isArray(data?.queue) ? data.queue : [];
@@ -595,12 +653,14 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
   st = {
     app,
     store,
+    safe,
     queue,
     injected: ai.askExtract || ai.askPortrait ? ai : null,
     retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
     runningJob: null,
     pauseRequested: false,
   };
+  wireLock();
   runPromise = null;
   if (dirty) await store.write({ version: 1, queue });
   emit();
@@ -613,7 +673,7 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
  * 漂移判废（DRIFT_ERROR）是终局，仍不受理——消息集已变，续跑必然再判废。
  */
 export function resume(talker: string): boolean {
-  if (!st) return false;
+  if (!st || !st.safe?.unlocked) return false; // 上锁期不受理（解锁后 UI 重试 / kick 自续）
   const job = st.queue.find((j) => j.talker === talker);
   if (!job) return false;
   if (job.status === 'error' && job.error === DRIFT_ERROR) return false;
@@ -663,7 +723,7 @@ function kick(): Promise<void> {
 
 async function runQueue(): Promise<void> {
   for (;;) {
-    if (!st || st.pauseRequested) break;
+    if (!st || !runnable()) break; // 暂停请求 / 共锁保险库上锁（ADR-0194）都停在这里
     const job = st.queue.find((j) => j.status === 'paused');
     if (!job) break;
     await runJob(job);
@@ -690,10 +750,11 @@ async function runJob(job: PersonJob): Promise<void> {
     emit();
   };
   try {
-    // 1. 重读聊天仓 + 指纹校验（漂移 = 中途导入过新数据 / 素材内容升级 → 判废）
-    const store = await new MessageStore(st!.app).read();
+    // 1. 重读保库记录的聊天仓段 + 指纹校验（漂移 = 中途导入过新数据 / 素材内容升级 → 判废）
+    const safe = st!.safe;
+    if (!safe?.unlocked) return; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
+    const contact = (await safe.read(job.talker))?.store;
     if (gone(job)) return;
-    const contact = store.contacts[job.talker];
     const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
     const fp = fingerprintOf(bucketMsgs);
     if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
@@ -872,6 +933,11 @@ async function runJob(job: PersonJob): Promise<void> {
     });
   } catch (e) {
     if (gone(job)) return;
+    // 上锁竞态（读记录 / 落盘被锁打断）：协作暂停而非判错——批级断点保留，解锁后可续
+    if (!st?.safe?.unlocked) {
+      await finish({ status: 'paused', message: '保险库已上锁，任务已暂停（解锁后可继续）' });
+      return;
+    }
     await finish({ status: 'error', error: errorMessage(e), message: `生成失败：${errorMessage(e)}` });
   } finally {
     if (st && st.runningJob === job.talker) st.runningJob = null;

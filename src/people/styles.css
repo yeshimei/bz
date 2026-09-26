@@ -1773,3 +1773,32 @@
 .bz-people-ds-ava-img {
   object-fit: cover;
 }
+
+/* 上锁占位（467：脸谱入保库——上锁即面板不可读，只留解锁入口） */
+.bz-people-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 64px 24px;
+  min-height: 240px;
+  color: var(--ink-mut);
+}
+.bz-people-locked-tip {
+  font-size: 13px;
+}
+.bz-people-locked-btn {
+  border: 1px solid var(--ink-line, var(--background-modifier-border));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  padding: 6px 18px;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .bz-people-locked-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+}

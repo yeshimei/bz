@@ -518,12 +518,8 @@ export default interface BzSettings {
   peoplePreviewVideo: boolean;
   /** type=10000 系统消息保留（默认开：撤回 / 打招呼锚点） */
   peopleKeepSystem: boolean;
-  /**
-   * 库内媒体文件夹（头像入库目标，vault 相对路径；空 = CONFIG/FACES，456）。
-   * 库外文件在 Obsidian 里加载不出来（app://local 已不解库外路径），故头像一律复制进库内再渲染。
-   */
-  peopleMediaDir: string;
   // 447 退役：peopleScanOnOpen（开弹窗即扫）/ peopleGenTrigger / peopleGenThreshold（画脸谱一律弹窗内手动）
+  // 467 退役：peopleMediaDir（库内明文媒体文件夹）——头像随保库记录进保险库，「文件夹名=人名」的明文目录停止使用
 
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
@@ -1070,8 +1066,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   peopleImageDescMode: 'file',
   peoplePreviewVideo: true,
   peopleKeepSystem: true,
-  // 库内媒体文件夹（456 头像入库）：默认 CONFIG/FACES
-  peopleMediaDir: 'CONFIG/FACES',
 
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',

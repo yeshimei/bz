@@ -1,10 +1,12 @@
 /**
- * 脸谱域（people）设置 schema（issue 446/447；聊天仓口径 issue 466 / ADR-0197）：
- * 数据源 / 聊天仓 / 隐私 三组，声明式（ADR-0064 渲染器）。数据文件夹在 vault 外（预处理线产出），
- * 故用文本行粘贴路径而非 vault 内选择器；「清空聊天仓」经 loader 回调接线（core 不反向依赖域，
- * knowledge 同款）。
+ * 脸谱域（people）设置 schema（issue 446/447；聊天仓口径 issue 466 / ADR-0197；
+ * 467 / ADR-0194 入保库）：数据源 / 聊天仓 / 隐私 三组，声明式（ADR-0064 渲染器）。
+ * 数据根目录在 vault 外（预处理线产出），故用文本行粘贴路径而非 vault 内选择器；
+ * 「清空聊天数据」经 loader 回调接线（core 不反向依赖域，knowledge 同款）。
  * 447 拍板：「打开时自动扫描」与「生成」组（GenTrigger/GenThreshold）随自动链路一并退役——
  * 扫描在打开数据源弹窗时进行，生成由弹窗内「画脸谱」手动触发。
+ * 467 退役：「媒体」组（peopleMediaDir 媒体文件夹 + 头像入库说明）随明文媒体目录一并退役——
+ * 头像作为密文附件随保库记录走，库内不再有明文头像目录。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 
@@ -17,7 +19,7 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
         rows: [
           {
             type: 'text',
-            name: '数据文件夹',
+            name: '数据根目录',
             desc: '预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口',
             binding: { key: 'peopleDataDir' },
             placeholder: '例如 D:\\微信备份\\export_full',
@@ -27,24 +29,6 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             name: '群聊纳入列表',
             desc: '多位发送者的会话也进勾选列表',
             binding: { key: 'peopleIncludeGroups' },
-          },
-        ],
-      },
-      {
-        icon: 'image',
-        name: '媒体',
-        rows: [
-          {
-            type: 'text',
-            name: '媒体文件夹',
-            desc: '库内存放头像等媒体资源的文件夹（vault 相对路径，如 CONFIG/FACES）；导入时头像复制进来，库外文件在 Obsidian 里加载不出来。空 = 用默认值',
-            binding: { key: 'peopleMediaDir' },
-            placeholder: 'CONFIG/FACES',
-          },
-          {
-            type: 'info',
-            name: '头像入库，其余媒体不入库',
-            desc: '只有头像会复制进库（几 KB 的小图）；聊天图片 / 语音 / 视频仍留在外部数据目录',
           },
         ],
       },
@@ -88,20 +72,20 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
         rows: [
           {
             type: 'info',
-            name: '原始媒体不入库',
-            desc: '图片语音视频文件留在外部数据目录，不复制进库；头像例外——复制进库内媒体文件夹才能显示',
+            name: '数据在保险库里',
+            desc: '人物卡、聊天数据、任务与头像按联系人各存一条保险库加密记录，与保险库共用主密码；上锁即不可读',
           },
           {
             type: 'info',
-            name: '完整聊天数据入库',
-            desc: '全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径',
+            name: '媒体本体不入库',
+            desc: '图片语音视频文件留在外部数据目录，加密记录只存消息与路径；头像以密文附件随记录走',
           },
           {
             type: 'button',
-            name: '清空聊天仓',
+            name: '清空聊天数据',
             buttonText: '清空',
             cta: true,
-            desc: '清掉全部导入的消息记录，不动已生成的脸谱',
+            desc: '清掉各加密记录里的消息数据（需先解锁），不动已生成的脸谱',
             onClick: () => void opts?.onClearStore?.(),
           },
         ],
