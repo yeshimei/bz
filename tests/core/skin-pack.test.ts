@@ -255,6 +255,44 @@ describe('downloadSkinUpdates（用户显式下载：只拉非就绪）', () => 
     expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(false);
   });
 
+  it('就绪表停在旧清单口径时，一次失败的更新不得把在用皮肤摘出选择卡（review P1 回归）', async () => {
+    const vault = newVault();
+    // 就绪表 = 旧清单条目（旧 hash、旧内容仍在生效）；新清单同一 file 换了 hash
+    const stale = entryOf('noir', CSS_NOIR);
+    seedSkinPackState([stale]);
+    vault.files.set('.obsidian/plugins/bz/skins/bookshelf/noir.css', CSS_NOIR);
+    const fresh = entryOf('noir', '/* noir v2 全新内容 */');
+    routeFetch({
+      'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/skins/bookshelf/noir.css': new Error('ENOTFOUND'),
+      'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/skins/bookshelf/noir.css': new Error('ETIMEDOUT'),
+    });
+
+    const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [fresh] });
+    expect(res).toEqual({ downloaded: 0, failed: 1 });
+    // 在用皮肤原样保留：仍就绪、注入内容不变（seedSkinPackState 的文本 = /* noir */）
+    expect(isRemoteSkinReady('bookshelf', 'noir')).toBe(true);
+    expect(injectedSkinPackCss()).toContain('/* noir */');
+  });
+
+  it('下载成功后按新清单条目覆盖就绪表（顺序 = 新清单顺序）', async () => {
+    const vault = newVault();
+    const stale = entryOf('noir', CSS_NOIR);
+    seedSkinPackState([stale]);
+    const fresh = entryOf('noir', '/* noir v2 全新内容 */');
+    const kraft = entryOf('kraft', CSS_KRAFT);
+    routeFetch({
+      'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/skins/bookshelf/noir.css': '/* noir v2 全新内容 */',
+      'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/skins/bookshelf/noir.css': '/* noir v2 全新内容 */',
+      'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
+      'https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/skins/bookshelf/kraft.css': CSS_KRAFT,
+    });
+
+    const res = await downloadSkinUpdates(appOf(vault), { version: 1, docs: [], skins: [kraft, fresh] });
+    expect(res).toEqual({ downloaded: 2, failed: 0 });
+    expect(injectedSkinPackCss()).toContain('/* noir v2 全新内容 */');
+    expect(injectedSkinPackCss()).toContain('.bz-bs-skin-kraft');
+  });
+
   it('全部就绪 → 零请求零下载', async () => {
     const vault = newVault();
     const noir = entryOf('noir', CSS_NOIR);

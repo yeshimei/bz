@@ -306,8 +306,11 @@ export interface SkinDownloadResult {
 /**
  * 用户显式下载/更新（ADR-0203：皮肤分发的唯一下载入口）——
  * 把「区间内且非就绪」（未下载 + 可更新）的全部套数拉一遍，限并发 4；
- * 完成后重新逐条验 hash → 重注入（能选 = 能生效）。
  * 已就绪的绝不动（用户已可用的皮肤不因一次点击承担被换内容的风险）。
+ *
+ * 就绪表以**当前注入的集合为底**、只覆盖「本次下载且过验」的条目：若就绪表还停在
+ * 旧清单口径（启动链刷新失败后组内核对才成功刷了缓存清单），一次**失败**的更新点击
+ * 不能把本地仍在生效的旧内容皮肤按新清单 hash 摘出选择卡——失败即维持现状，只报 failed。
  */
 export async function downloadSkinUpdates(app: unknown, manifest: DownloadManifest): Promise<SkinDownloadResult> {
   const result: SkinDownloadResult = { downloaded: 0, failed: 0 };
@@ -320,9 +323,16 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
   const goodFiles = new Set(verified.map((r) => r.entry.file));
   const todo = wanted.filter((e) => !goodFiles.has(e.file));
 
+  // 底座两层：盘上验过的（新清单口径，冷启动首次注入的兜底）先铺；
+  // 当前就绪表的在用条目后铺覆盖（旧清单口径的也保留——内容仍在生效）
+  const byFile = new Map<string, ReadySkin>();
+  for (const r of verified) byFile.set(r.entry.file, r);
+  for (const arr of ready.values()) for (const r of arr) byFile.set(r.entry.file, r);
+
   await mapLimit(todo, 4, async (e) => {
     try {
-      await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+      const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+      if (text !== null) byFile.set(e.file, { entry: e, text });
       result.downloaded++;
     } catch (err) {
       console.warn(`[bz] 皮肤「${e.domain}/${e.id}」下载失败:`, (err as Error)?.message || err);
@@ -330,6 +340,7 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
     }
   });
 
-  applyReady(await readVerified(app, wanted));
+  // 按清单顺序重灌：旧口径的保留、新下载成功的覆盖（能选 = 能生效）
+  applyReady(wanted.map((e) => byFile.get(e.file)).filter((r): r is ReadySkin => r !== undefined));
   return result;
 }

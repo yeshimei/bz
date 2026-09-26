@@ -75,7 +75,6 @@ for (const w of writes) {
 
 // 下架清理：downloads/skins/ 里已不在清单中的文件要删（否则远端仍能拿到已下架的皮）
 
-// 下架清理：manual/skins/ 里已不在清单中的文件要删（否则远端仍能拿到已下架的皮）
 const stale = [];
 if (fs.existsSync(OUT_DIR)) {
   for (const domain of fs.readdirSync(OUT_DIR, { withFileTypes: true }).filter((d) => d.isDirectory())) {

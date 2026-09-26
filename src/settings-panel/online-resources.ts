@@ -98,8 +98,8 @@ function rowButton(st: RowState, hasManifest: boolean): { text: string; disabled
   if (st.doc === 'missing') return { text: '下载', disabled: false, action: true };
   if (st.doc === 'updated') return { text: '更新', disabled: false, action: true };
   if (st.doc === 'ready') return { text: '已下载', disabled: true, action: false };
-  // 无清单 = 状态未知：按钮保持下载字样但禁用（等信息到位，不误导「已是最新」）
-  return { text: '下载', disabled: !hasManifest ? true : false, action: false };
+  // 清单在但该 id 未登记（或无清单）= 状态未知：按钮禁用（等信息到位，不误导「已是最新」）
+  return { text: '下载', disabled: true, action: false };
 }
 
 /**
@@ -211,4 +211,3 @@ async function runAction(
   }
 }
 
-/** doc 行下载走 ensureAssetWithHash 的清单 sha256 校验，内容校验由 hash 承担（无遗留函数） */
