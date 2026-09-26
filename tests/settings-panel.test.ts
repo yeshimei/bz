@@ -169,10 +169,11 @@ describe('设置面板（settings-panel）', () => {
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
-    // issue 479：通知组并回通用 → 外观 + 通知 + 存储路径；issue 478：追加「数据资产」组（归物分类表下载行）
+    // issue 479：通知组并回通用；issue 480：末尾追加「在线资源」组；issue 478：归物分类表作为
+    // doc 条目并入「在线资源」组（不再单开「数据资产」组，见 ADR-0204）
     expect(groups.length).toBe(4);
     expect([...groups].map((g) => g.querySelector('.bz-sp-group-name')!.textContent)).toEqual([
-      '外观', '通知', '数据存储路径', '数据资产',
+      '外观', '通知', '数据存储路径', '在线资源',
     ]);
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
@@ -361,7 +362,7 @@ describe('设置面板（settings-panel）', () => {
     // 通用域分组：外观（palette，原「设置」域并入）+ 通知（bell，issue 479 并回）+ 数据存储路径（folder-open）
     // （issue 473：「使用手册」组撤出 → 入口搬侧栏 footer，不再占分组卡）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['palette', 'bell', 'folder-open']);
+    expect(icons).toEqual(['palette', 'bell', 'folder-open', 'cloud-download']); // issue 480：+ 在线资源组
     // AI 域分组：LLM/Embedding/JEV/语音转写/数据源凭据（issue 422 四组重排；issue 444 增语音转写）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')

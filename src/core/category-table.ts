@@ -2,35 +2,34 @@
  * bz · 归物本物品分类表（core/category-table.ts，单源）——issue 478 阶段 A
  *
  * 两层分类表（组 → 分类）的**资产层**运行时：下载 / 校验 / 查询。
- * 表不随插件构建分发（main.js 里不含它），发布在 `manual/`，用户点在
- * 通用设置页的按钮现场拉取，落盘插件安装目录（<configDir>/plugins/bz/）。
+ * 表不随插件构建分发（main.js 里不含它），发布在仓库 `downloads/`，用户在设置面板
+ * 「在线资源」组点按钮现场拉取，落盘插件安装目录（<configDir>/plugins/bz/）。
  *
  * 下载 / 落盘 / hash 校验全部复用 `remote-asset.ts`（与手册、皮肤包同一条路），
  * 不另造一套——这是铁律口径（issue 476：local-asset 单源）。
+ *
+ * **sha256 与版本来自统一清单**（issue 480 / ADR-0203 之后）：本表作为一条 doc 条目
+ * 登记在 `downloads/manifest.json`（`core/download-manifest.ts` 是「全插件在线资源的
+ * 单一事实源」）。本模块**不再自出私有清单**——那正是统一清单要消灭的重复事实源；
+ * 「有没有更新」也交给清单的 docStatus 三态，不在本层另立一套判定。
  *
  * 本模块**只做资产层**：不碰 UI、不接 Jev。阶段 B 的两段 Jev choice 与阶段 C
  * 的文件选择器在别处编排；这里只产出纯数据查询与菜单形状（无业务哨兵）。
  *
  * 设计口径：
- * - 文件名用扁平名（remote-asset 的 remotesFor 只支持 flat）：数据本体
- *   `belongings-categories.json`、清单 `belongings-categories.index.json`。
+ * - 文件名是**相对 `downloads/` 的路径**（ADR-0203 口径），本地落盘同路径镜像。
  * - `validateCategoryTable` 只校验**形状 + id/name 唯一性**（不读图标池——
  *   池是构建期产物，运行期不随包下发）；不合法返回 null，绝不抛。
  * - `downloadCategoryTable` 任一步失败**原文抛错**（调用方决定怎么提示），
  *   不静默返回空表。
- * - `refreshCategoryTable` 是后台口径（照 `refreshAsset`）：失败静默，只认
- *   版本号或 sha256 变化才落盘，返回是否更新。
  * ============================================================ */
-import {
-  ensureAssetWithHash,
-  fetchAssetText,
-  readAsset,
-} from './remote-asset';
+import { ensureAssetWithHash, readAsset } from './remote-asset';
+import { cachedManifest, refreshManifest } from './download-manifest';
 
-/** 数据本体文件名（相对插件安装目录；与 remote-asset 的 manual/ 口径一致） */
+/** 数据本体文件名（相对 `downloads/`；本地落盘为插件目录内同路径） */
 export const CATEGORY_TABLE_FILE = 'belongings-categories.json';
-/** 清单文件名（相对插件安装目录） */
-export const CATEGORY_INDEX_FILE = 'belongings-categories.index.json';
+/** 本资源在统一清单里的条目 id（与 scripts/build-manifest.mjs 的 DOCS 表一致） */
+export const CATEGORY_MANIFEST_ID = 'belongings-categories';
 
 /** 分类条目（表源形状；构建脚本 `scripts/build-catalog.mjs` 产出） */
 export interface CategoryItem {
@@ -62,14 +61,12 @@ export interface CategoryTable {
   groups: CategoryGroup[];
 }
 
-/** 清单（与 `manual/belongings-categories.index.json` 形状对齐） */
-export interface CategoryIndex {
-  version: string;
+/** 清单条目形状（摘自 `download-manifest.ts` 的 ManifestDocEntry；这里只声明用到的字段） */
+interface CatalogManifestEntry {
+  id: string;
+  name: string;
   file: string;
-  /** 归一换行后数据文本的 sha256（64 位小写） */
   sha256: string;
-  count: number;
-  groups: number;
 }
 
 /** 内存缓存（同一次会话内不重复读盘；测试用 resetCategoryTableCache 清） */
@@ -80,26 +77,21 @@ export function resetCategoryTableCache(): void {
   memCache = null;
 }
 
-/** 清单解析（纯函数；形状不对/JSON 崩 → null，调用方静默跳过） */
-export function parseCategoryIndex(text: string | null): CategoryIndex | null {
-  if (!text) return null;
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (e) {
-    return null;
+/**
+ * 统一清单里本表的条目：先读缓存清单，没有（从未核对过）就现场拉一次清单。
+ * 拉不到/未登记 → null（调用方给「网络不通」类的人话提示）。
+ */
+async function manifestEntry(app: unknown): Promise<CatalogManifestEntry | null> {
+  let m = await cachedManifest(app);
+  if (!m) {
+    try {
+      await refreshManifest(app);
+      m = await cachedManifest(app);
+    } catch {
+      return null;
+    }
   }
-  const o = raw as Partial<CategoryIndex> & Record<string, unknown>;
-  if (!o || typeof o.version !== 'string' || typeof o.file !== 'string') return null;
-  if (typeof o.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(o.sha256.toLowerCase())) return null;
-  if (typeof o.count !== 'number' || typeof o.groups !== 'number') return null;
-  return {
-    version: o.version,
-    file: o.file,
-    sha256: o.sha256.toLowerCase(),
-    count: o.count,
-    groups: o.groups,
-  };
+  return m?.docs.find((d) => d && d.id === CATEGORY_MANIFEST_ID) ?? null;
 }
 
 /**
@@ -171,60 +163,30 @@ export async function loadCategoryTable(app: unknown): Promise<CategoryTable | n
 }
 
 /**
- * 拉清单 → 校验 sha256 → 拉数据（顺带落盘）→ validate → 更新缓存。
+ * 从统一清单取本表条目的 sha256 → `ensureAssetWithHash`（本地已匹配则复用，
+ * 否则双源下载并校验 sha256 后落盘）→ validate → 更新缓存。
  * 任一步失败**原文抛错**（调用方决定怎么提示），不静默返回空表。
  * @returns 已落盘并校验通过的表
  */
 export async function downloadCategoryTable(app: unknown): Promise<CategoryTable> {
-  const indexText = await fetchAssetText(
-    CATEGORY_INDEX_FILE,
-    (t) => parseCategoryIndex(t) !== null,
-    '物品分类表清单',
-    '',
-  );
-  const index = parseCategoryIndex(indexText);
-  if (!index) throw new Error('物品分类表清单解析失败（远端内容可疑）');
+  const entry = await manifestEntry(app);
+  if (!entry) {
+    throw new Error('归物分类表尚未登记到下载清单（可能网络不通，或插件版本过旧）');
+  }
 
   // ensureAssetWithHash：本地已匹配 sha 则复用，否则双源下载并校验 sha256 后落盘
-  const dataText = await ensureAssetWithHash(app, CATEGORY_TABLE_FILE, index.sha256, '物品分类表');
-  if (dataText === null) throw new Error('物品分类表数据拉取失败');
+  const dataText = await ensureAssetWithHash(app, entry.file, entry.sha256, '归物分类表');
+  if (dataText === null) throw new Error('归物分类表数据拉取失败');
   let parsed: unknown;
   try {
     parsed = JSON.parse(dataText);
   } catch (e) {
-    throw new Error('物品分类表数据解析失败：' + ((e as Error)?.message || String(e)));
+    throw new Error('归物分类表数据解析失败：' + ((e as Error)?.message || String(e)));
   }
   const table = validateCategoryTable(parsed);
-  if (!table) throw new Error('物品分类表数据校验失败（结构或 id/name 不唯一）');
+  if (!table) throw new Error('归物分类表数据校验失败（结构或 id/name 不唯一）');
   memCache = table;
   return table;
-}
-
-/**
- * 后台核对新版（版本号或 sha256 变化才落盘），失败静默（照 refreshAsset 取舍）。
- * @returns 是否更新了本地表
- */
-export async function refreshCategoryTable(app: unknown): Promise<boolean> {
-  try {
-    const localIndex = parseCategoryIndex(await readAsset(app, CATEGORY_INDEX_FILE));
-    const remoteText = await fetchAssetText(
-      CATEGORY_INDEX_FILE,
-      (t) => parseCategoryIndex(t) !== null,
-      '物品分类表清单',
-      '',
-    );
-    const remote = parseCategoryIndex(remoteText);
-    if (!remote) return false;
-    const localSha = localIndex?.sha256;
-    const localVer = localIndex?.version;
-    const needUpdate =
-      !localIndex || localVer !== remote.version || (localSha && localSha !== remote.sha256);
-    if (!needUpdate) return false;
-    await downloadCategoryTable(app); // 内部已落盘 + 更新缓存；失败向上抛 → 下面吞
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 /**

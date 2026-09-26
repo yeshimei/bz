@@ -5,8 +5,8 @@
  *  - matchByAlias 精确命中 / 最长别名优先 / 多义确定性 / 未命中；
  *  - groupMenu / itemMenu 形状与条数；
  *  - iconOf；
- *  - downloadCategoryTable 的 sha256 不符抛错（mock，不真联网）+ 成功落盘路径；
- *  - refreshCategoryTable 静默（无变化返回 false）。
+ *  - downloadCategoryTable 走统一清单（issue 480 / ADR-0203）：清单未登记抛错、
+ *    sha256 不符抛错（mock，不真联网）、匹配则落盘 + 写缓存。
  *
  * 钉死一件关键事：下载链路 sha256 与构建脚本同口径（对归一换行后的文本取值）。
  */
@@ -19,15 +19,13 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
 import { textSha256 } from '../../src/core/sha256';
 import {
-  CATEGORY_INDEX_FILE,
   CATEGORY_TABLE_FILE,
+  CATEGORY_MANIFEST_ID,
   downloadCategoryTable,
   groupMenu,
   iconOf,
   itemMenu,
   matchByAlias,
-  parseCategoryIndex,
-  refreshCategoryTable,
   resetCategoryTableCache,
   validateCategoryTable,
   type CategoryTable,
@@ -35,7 +33,7 @@ import {
 
 const appOf = (vault: MockVault) => ({ vault }) as any;
 const TABLE_PATH = `.obsidian/plugins/bz/${CATEGORY_TABLE_FILE}`;
-const INDEX_PATH = `.obsidian/plugins/bz/${CATEGORY_INDEX_FILE}`;
+const MANIFEST_PATH = '.obsidian/plugins/bz/downloads/manifest.json';
 
 /** 小表（用于单元断言，不引 515 行真源） */
 function smallTable(): CategoryTable {
@@ -64,14 +62,25 @@ function smallTable(): CategoryTable {
   };
 }
 
-/** requestUrl 桩：按 URL 是否含 .index.json 分发到 index / data 文本 */
-function routeFetch(indexText: string, dataText: string): void {
+/** requestUrl 桩：按 URL 分发到 统一清单 / 数据 文本（清单 sha256 由调用方按 dataText 算） */
+function routeFetch(manifestText: string | null, dataText: string): void {
   vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
     const url = req.url;
-    const body = url.includes('.index.json') ? indexText : url.includes('belongings-categories.json') ? dataText : null;
+    let body: string | null = null;
+    if (url.includes('manifest.json')) body = manifestText;
+    else if (url.includes('belongings-categories.json')) body = dataText;
     if (body === null) throw new Error('unmocked url: ' + url);
     return { status: 200, text: body } as any;
   }) as any);
+}
+
+/** 造统一清单文本（docs 只放本表条目；sha256 由调用方对 dataText 算） */
+function manifestTextFor(sha256: string): string {
+  return JSON.stringify({
+    version: 1,
+    docs: [{ id: CATEGORY_MANIFEST_ID, name: '归物分类表', file: CATEGORY_TABLE_FILE, sha256 }],
+    skins: [],
+  });
 }
 
 beforeEach(() => {
@@ -206,71 +215,49 @@ describe('groupMenu / itemMenu / iconOf', () => {
   });
 });
 
-describe('downloadCategoryTable', () => {
-  it('sha256 不符 → 抛错（不静默返回空表）', async () => {
+describe('downloadCategoryTable（走统一清单）', () => {
+  it('清单未登记本表条目 → 抛「尚未登记」（不静默返回空表）', async () => {
+    const noEntry = JSON.stringify({ version: 1, docs: [], skins: [] });
+    routeFetch(noEntry, JSON.stringify(smallTable()));
+    const app = appOf(new MockVault());
+    await expect(downloadCategoryTable(app)).rejects.toThrow(/尚未登记/);
+  });
+
+  it('清单 sha256 与产物不符 → 抛错（不静默返回空表）', async () => {
     const dataText = JSON.stringify(smallTable(), null, 2);
-    const badIndex = JSON.stringify(
-      { version: '0.1.0', file: CATEGORY_TABLE_FILE, sha256: '0'.repeat(64), count: 4, groups: 2 },
-      null,
-      2,
-    );
-    routeFetch(badIndex, dataText);
+    routeFetch(manifestTextFor('0'.repeat(64)), dataText);
     const app = appOf(new MockVault());
     await expect(downloadCategoryTable(app)).rejects.toThrow();
   });
 
-  it('sha256 匹配 → 落盘 + 返回已校验表 + 写入缓存', async () => {
+  it('清单 sha256 匹配 → 落盘 + 返回已校验表 + 写入缓存', async () => {
     const dataText = JSON.stringify(smallTable(), null, 2);
-    const sha = textSha256(dataText);
-    const index = JSON.stringify(
-      { version: '0.1.0', file: CATEGORY_TABLE_FILE, sha256: sha, count: 4, groups: 2 },
-      null,
-      2,
-    );
-    routeFetch(index, dataText);
+    routeFetch(manifestTextFor(textSha256(dataText)), dataText);
     const vault = new MockVault();
     const app = appOf(vault);
     const t = await downloadCategoryTable(app);
     expect(t.groups.length).toBe(2);
-    // 落盘
+    // 落盘（数据 + 清单镜像）
     expect(vault.files.get(TABLE_PATH)).toBe(dataText);
-    // 缓存命中：二次读取不重下（requestUrl 仍被 index 命中，但数据从盘读）
+    expect(vault.files.get(MANIFEST_PATH)).toBeTruthy();
+    // 缓存命中：二次读取走内存缓存（mock 数据源清空也拿得到）
+    vi.mocked(requestUrl).mockImplementation((async () => {
+      throw new Error('缓存命中后不应再联网');
+    }) as any);
     const again = await (await import('../../src/core/category-table')).loadCategoryTable(app);
     expect(again).not.toBeNull();
     expect(again!.groups[1].items[0].name).toBe('螺丝刀');
   });
-});
 
-describe('refreshCategoryTable', () => {
-  it('远端与本地一致 → 返回 false（不落盘、不抛）', async () => {
+  it('本地已就绪且 sha 匹配 → 不联网直接复用（ensureAssetWithHash 的缓存口径）', async () => {
     const dataText = JSON.stringify(smallTable(), null, 2);
     const sha = textSha256(dataText);
-    const index = JSON.stringify(
-      { version: '0.1.0', file: CATEGORY_TABLE_FILE, sha256: sha, count: 4, groups: 2 },
-      null,
-      2,
-    );
     const vault = new MockVault();
     vault.files.set(TABLE_PATH, dataText);
-    vault.files.set(INDEX_PATH, index);
-    routeFetch(index, dataText);
+    vault.files.set(MANIFEST_PATH, manifestTextFor(sha));
+    // 不挂 requestUrl 桩：任何联网都会抛 unmocked/网络错 —— 若走了网络即失败
     const app = appOf(vault);
-    const updated = await refreshCategoryTable(app);
-    expect(updated).toBe(false);
-  });
-});
-
-describe('parseCategoryIndex', () => {
-  it('合法清单解析', () => {
-    const idx = parseCategoryIndex(
-      JSON.stringify({ version: '0.1.0', file: CATEGORY_TABLE_FILE, sha256: 'a'.repeat(64), count: 4, groups: 2 }),
-    );
-    expect(idx).not.toBeNull();
-    expect(idx!.sha256).toBe('a'.repeat(64));
-  });
-  it('坏 sha 形状 / 坏 JSON → null', () => {
-    expect(parseCategoryIndex('not json')).toBeNull();
-    expect(parseCategoryIndex(JSON.stringify({ version: '0.1.0', file: 'x', sha256: 'zzz', count: 1, groups: 1 }))).toBeNull();
-    expect(parseCategoryIndex(null)).toBeNull();
+    const t = await downloadCategoryTable(app);
+    expect(t.groups.length).toBe(2);
   });
 });

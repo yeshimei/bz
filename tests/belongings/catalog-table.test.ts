@@ -102,13 +102,13 @@ describe('分类表源 · 别名', () => {
   });
 });
 
-// ═══════ 出版产物 ⇄ 表源 ⇄ 运行时校验器 的一致性（交付前核验时补） ═══════
+// ═══════ 出版产物 ⇄ 表源 ⇄ 统一清单 ⇄ 运行时校验器 的一致性（交付前核验时补） ═══════
 // 盯的是「发布链路与运行时会不会悄悄漂移」：出版脚本写出一个运行时 `validateCategoryTable`
-// 不认的东西（或清单里的 sha256 与产物不符），插件端就是「下载成功但表不可用」——
+// 不认的东西（或统一清单里的 sha256 与产物不符），插件端就是「下载成功但表不可用」——
 // 且因为失败发生在用户机器上，构建期不查就没人查。
-describe('出版产物一致性（manual/ ⇄ 表源 ⇄ 运行时校验器）', () => {
-  const PUB = resolve(here, '../../manual/belongings-categories.json');
-  const PUBIDX = resolve(here, '../../manual/belongings-categories.index.json');
+describe('出版产物一致性（downloads/ ⇄ 表源 ⇄ 统一清单 ⇄ 运行时校验器）', () => {
+  const PUB = resolve(here, '../../downloads/belongings-categories.json');
+  const MANIFEST = resolve(here, '../../downloads/manifest.json');
   const pubText = readFileSync(PUB, 'utf8');
 
   it('产物经运行时 validateCategoryTable 通过，且与表源同构（26 组 / 515 条）', async () => {
@@ -120,16 +120,17 @@ describe('出版产物一致性（manual/ ⇄ 表源 ⇄ 运行时校验器）',
     expect(t!.version).toBe(cat.version);
   });
 
-  it('清单 sha256（换行归一后）与产物一致，count/groups/version 对得上', async () => {
-    const { parseCategoryIndex } = await import('../../src/core/category-table');
+  it('统一清单已登记本表且 sha256（换行归一后）与产物一致', async () => {
+    const { CATEGORY_MANIFEST_ID } = await import('../../src/core/category-table');
     const { createHash } = await import('node:crypto');
-    const idx = parseCategoryIndex(readFileSync(PUBIDX, 'utf8'));
-    expect(idx).not.toBeNull();
+    const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8')) as {
+      docs: Array<{ id: string; file: string; sha256: string }>;
+    };
+    const entry = manifest.docs.find((d) => d.id === CATEGORY_MANIFEST_ID);
+    expect(entry, 'downloads/manifest.json 缺少 belongings-categories 条目——跑 pnpm manifest').toBeTruthy();
+    expect(entry!.file).toBe('belongings-categories.json');
     const sha = createHash('sha256').update(pubText.replace(/\r\n/g, '\n'), 'utf8').digest('hex');
-    expect(sha).toBe(idx!.sha256);
-    expect(idx!.count).toBe(515);
-    expect(idx!.groups).toBe(26);
-    expect(idx!.version).toBe(cat.version);
+    expect(sha).toBe(entry!.sha256);
   });
 
   it('产物里的图标同样 ∈ 图标池（产出侧也守一遍）', async () => {

@@ -1,19 +1,23 @@
 // scripts/build-catalog.mjs — 归物本物品分类表出版（issue 478 / 阶段 A）
 //
 // 把 `src/belongings/catalog/categories.json`（表源，进仓可 diff）出版为远端
-// 可分发形态，落 `manual/`：
-//   manual/belongings-categories.json        —— 数据本体（缩进 2、末尾换行、UTF-8）
-//   manual/belongings-categories.index.json  —— 清单：版本 / 文件名 / sha256 / 条数 / 组数
-// 插件在设置页点按钮下载，校验 sha256 后落盘插件目录。
+// 可分发形态，落 **`downloads/belongings-categories.json`**。
 //
-// 为什么产物进 git：远端读的就是仓库里的 `manual/`（与 manual/bz-changelog.html、
-// manual/skins/ 同一条路）。为什么 sha256 在这里算：它是**构建期**产物，
-// 插件端只做比对——两侧都对「归一换行后的文本」取 SHA-256（src/core/sha256.ts），
-// 免得 Windows CRLF 与仓库 LF 算出两个值。口径照搬皮肤包脚本。
+// sha256 不再自出一份私有清单：issue 480 / ADR-0203 后，**全插件在线资源的单一
+// 事实源是 `downloads/manifest.json`**（`src/core/download-manifest.ts`），分类表作为
+// 一条 doc 条目登记在里面（id `belongings-categories`，由 `pnpm manifest` 对已出版
+// 产物算 hash）。本脚本只负责出产物 + 校验；清单同步由 `pnpm manifest` 收口。
+// 发布顺序：pnpm catalog → pnpm manifest（与 skin-pack / changelog 同一条链）。
+//
+// 为什么产物进 git：远端读的就是仓库里的 `downloads/`（与 bz-changelog.html、
+// skins/ 同一条路；`remotesFor` 的基址自 ADR-0203 起是 downloads/，旧 manual/ 是
+// 改名前的冻结过渡副本）。为什么 sha256 在这里算：它是**构建期**产物，插件端只做
+// 比对——两侧都对「归一换行后的文本」取 SHA-256（src/core/sha256.ts），免得
+// Windows CRLF 与仓库 LF 算出两个值。口径照搬皮肤包脚本。
 //
 // 用法：
-//   node scripts/build-catalog.mjs          # 出版（写 manual/）
-//   node scripts/build-catalog.mjs --check  # 只校验源与产物同步（守卫测试复用）
+//   node scripts/build-catalog.mjs          # 出版（写 downloads/）
+//   node scripts/build-catalog.mjs --check  # 只校验源 ⇄ 产物 ⇄ 清单同步（守卫测试复用）
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -24,9 +28,11 @@ const CHECK_ONLY = process.argv.includes('--check');
 
 const SRC_CAT = path.join(ROOT, 'src/belongings/catalog/categories.json');
 const SRC_POOL = path.join(ROOT, 'src/belongings/catalog/icon-pool.json');
-const OUT_DIR = path.join(ROOT, 'manual');
+const OUT_DIR = path.join(ROOT, 'downloads');
 const DATA_FILE = 'belongings-categories.json';
-const INDEX_FILE = 'belongings-categories.index.json';
+/** 清单里本资源的条目 id（与 build-manifest.mjs 的 DOCS 表一致） */
+const MANIFEST_ID = 'belongings-categories';
+const MANIFEST_PATH = path.join(ROOT, 'downloads/manifest.json');
 
 /** 换行归一（与 src/core/sha256.ts 的 normalizeEol 同口径） */
 const normalizeEol = (s) => String(s).replace(/\r\n?/g, '\n');
@@ -121,21 +127,33 @@ const groups = cat.groups.length;
 
 const dataText = JSON.stringify(cat, null, 2) + '\n';
 const sha = textSha256(dataText);
-const index = { version, file: DATA_FILE, sha256: sha, count, groups };
-const indexText = JSON.stringify(index, null, 2) + '\n';
 
 const dataPath = path.join(OUT_DIR, DATA_FILE);
-const indexPath = path.join(OUT_DIR, INDEX_FILE);
+
+/** 清单里本资源的条目（单一事实源；没有 = 尚未登记） */
+function manifestEntry() {
+  if (!fs.existsSync(MANIFEST_PATH)) return null;
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8'));
+    return (m?.docs ?? []).find((d) => d && d.id === MANIFEST_ID) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 if (CHECK_ONLY) {
   const prevData = fs.existsSync(dataPath) ? fs.readFileSync(dataPath, 'utf8') : null;
-  const prevIndex = fs.existsSync(indexPath) ? fs.readFileSync(indexPath, 'utf8') : null;
   if (prevData !== dataText) {
-    console.error(`manual/${DATA_FILE} 与源不同步——跑 pnpm catalog 重出版`);
+    console.error(`downloads/${DATA_FILE} 与源不同步——跑 pnpm catalog 重出版`);
     process.exit(1);
   }
-  if (prevIndex !== indexText) {
-    console.error(`manual/${INDEX_FILE} 与源不同步——跑 pnpm catalog 重出版`);
+  const entry = manifestEntry();
+  if (!entry) {
+    console.error(`downloads/manifest.json 未登记「${MANIFEST_ID}」条目——跑 pnpm manifest`);
+    process.exit(1);
+  }
+  if (String(entry.sha256 || '').toLowerCase() !== sha) {
+    console.error(`清单里「${MANIFEST_ID}」的 sha256 与产物不符——跑 pnpm manifest 重算`);
     process.exit(1);
   }
   console.log(`分类表产物与源同步 ✓（${groups} 组 / ${count} 条，sha256 ${sha.slice(0, 12)}）`);
@@ -144,5 +162,10 @@ if (CHECK_ONLY) {
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(dataPath, dataText, 'utf8');
-fs.writeFileSync(indexPath, indexText, 'utf8');
-console.log(`出版 ${groups} 组 / ${count} 条分类表 → manual/（sha256 ${sha.slice(0, 12)}）`);
+
+const entry = manifestEntry();
+const synced = entry && String(entry.sha256 || '').toLowerCase() === sha;
+console.log(
+  `出版 ${groups} 组 / ${count} 条分类表 → downloads/${DATA_FILE}（sha256 ${sha.slice(0, 12)}）` +
+    (synced ? '；清单已同步' : '；**清单待重出：跑 pnpm manifest**'),
+);

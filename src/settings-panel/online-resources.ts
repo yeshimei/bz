@@ -21,12 +21,14 @@ import {
 } from '../core/download-manifest';
 import { downloadSkinUpdates, skinStatus, type SkinStatus } from '../core/skin-pack';
 import { ensureAssetWithHash } from '../core/remote-asset';
+import { loadCategoryTable } from '../core/category-table';
 
-/** 无缓存清单时的行骨架（行名内置；有清单后以清单 name 为准） */
+/** 无缓存清单时的行骨架（行名内置；有清单后以清单 name 为准）。分类表排皮肤之后（数据表跟在文档/皮肤后面，行序稳定） */
 const FALLBACK_ROWS: Array<{ id: string; name: string }> = [
   { id: 'changelog', name: '更新日志' },
   { id: 'manual', name: '使用手册' },
   { id: 'skins', name: '皮肤' },
+  { id: 'belongings-categories', name: '归物分类表' },
 ];
 
 /** 打开组时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
@@ -51,6 +53,8 @@ interface RowState {
   doc: DocStatus | null;
   /** 皮肤行三态计数；doc 行/无清单 null */
   skin: SkinStatus | null;
+  /** 分类表行专用：本地已就绪表的规模（归物本 AI 归类与选择器的候选池），其余行 null */
+  catInfo: { groups: number; items: number } | null;
 }
 
 /** 组内容一次性算齐（缓存清单 + 本地文件实测） */
@@ -59,14 +63,22 @@ async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manif
   const rows: RowState[] = [];
   for (const fb of FALLBACK_ROWS) {
     if (fb.id === 'skins') {
-      rows.push({ id: fb.id, name: fb.name, doc: null, skin: manifest ? await skinStatus(app, manifest) : null });
+      rows.push({ id: fb.id, name: fb.name, doc: null, skin: manifest ? await skinStatus(app, manifest) : null, catInfo: null });
     } else {
       const entry = manifest?.docs.find((d) => d.id === fb.id) ?? null;
+      const doc = entry ? await docStatus(app, entry) : null;
+      // 分类表行：就绪时把表规模读出来（loadCategoryTable 有内存缓存，二次打开零读盘）
+      let catInfo: RowState['catInfo'] = null;
+      if (fb.id === 'belongings-categories' && doc === 'ready') {
+        const t = await loadCategoryTable(app);
+        if (t) catInfo = { groups: t.groups.length, items: t.groups.reduce((n, g) => n + g.items.length, 0) };
+      }
       rows.push({
         id: fb.id,
         name: entry?.name ?? fb.name,
-        doc: entry ? await docStatus(app, entry) : null,
+        doc,
         skin: null,
+        catInfo,
       });
     }
   }
@@ -83,7 +95,9 @@ function rowDesc(st: RowState): string {
   }
   if (st.doc === 'missing') return '尚未下载，下载后即可查看';
   if (st.doc === 'updated') return '有新版本，可更新到最新';
-  if (st.doc === 'ready') return '已是最新版本';
+  if (st.doc === 'ready') {
+    return st.catInfo ? `已是最新版本（${st.catInfo.groups} 组 ${st.catInfo.items} 条）` : '已是最新版本';
+  }
   return '等待检查更新';
 }
 

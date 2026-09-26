@@ -202,6 +202,39 @@ describe('动作（下载只听用户点）', () => {
     expect(getNoticeMessages().some((m) => (m as string).includes('已下载'))).toBe(false);
   });
 
+  it('归物分类表（issue 478）：作为 doc 条目走同一状态机——下载落盘、描述带组条数', async () => {
+    const vault = newVault();
+    const tableText =
+      JSON.stringify(
+        {
+          version: '0.1.0',
+          groups: [
+            { id: 'g001', name: '数码影音', icon: 'smartphone', items: [{ id: 'c0001', name: '智能手机', icon: 'smartphone', aliases: ['手机'] }] },
+          ],
+        },
+        null,
+        2,
+      ) + '\n';
+    const entry = { id: 'belongings-categories', name: '归物分类表', file: 'belongings-categories.json', sha256: textSha256(tableText) };
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
+    routeFetch({
+      [REMOTE_MANIFEST]: manifestJson([entry], []),
+      'https://raw.githubusercontent.com/yeshimei/bz/master/downloads/belongings-categories.json': tableText,
+    });
+
+    const body = await renderGroup(vault);
+    expect(rowName(body, 3)).toBe('归物分类表'); // 排在皮肤之后
+    expect(rowBtn(body, 3).textContent).toBe('下载');
+
+    rowBtn(body, 3).click();
+    await tick(60);
+    expect(vault.files.get('.obsidian/plugins/bz/belongings-categories.json')).toBe(tableText);
+    expect(rowBtn(body, 3).textContent).toBe('已下载');
+    expect(rowBtn(body, 3).disabled).toBe(true);
+    // 就绪描述带表规模（loadCategoryTable 实测，不硬编码）
+    expect(body.querySelectorAll('.bz-sp-res-row')[3].textContent).toContain('1 组 1 条');
+  });
+
   it('皮肤行点「更新 N」→ 只拉非就绪套数并注入；失败套数出 error 通知', async () => {
     const vault = newVault();
     const noir = skinEntry('noir', CSS_NOIR);
