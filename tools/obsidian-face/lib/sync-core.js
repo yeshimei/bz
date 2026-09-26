@@ -212,13 +212,18 @@ function createSyncRelay() {
 
 /**
  * sync 预检：注入 probeWeixin / probeDataRoot 的探测结果，判这条 sync 该不该起跑。
- *   微信明确未在跑（running===false）→ 硬失败（绝不静默降级读旧目录，票 464 验收）；
- *   微信版本 ≥ 封堵线 → 硬失败 + 退回指引（复用 doctor 的常量与比较，不另立口径）；
- *   微信探测自身失败 / 版本读不出 → 不挡（Python 取密钥兜底，doctor 负责环境报告）；
- *   数据根必须存在且可写（sync 没有可写的落点就没有意义）。
+ *   数据根必须存在且可写（sync 没有可写的落点就没有意义）；
+ *   数据根有缓存密钥（.bz-face/key.json）→ 微信在跑与版本两道检查整体跳过——纯解密
+ *   不需要微信在场，旧密钥可解同账号新版库（Python 侧 take_key 失败时也自动回退缓存）；
+ *   无缓存时：微信明确未在跑 → 硬失败（票 464 验收：绝不静默降级读旧目录）；
+ *   微信版本 ≥ 封堵线 → 硬失败 + 退回指引，并提示缓存密钥这条替代路；
+ *   微信探测自身失败 / 版本读不出 → 不挡（Python 取密钥兜底，doctor 负责环境报告）。
+ * @param {Record<string, any>} probes 探测结果（wechat / dataRoot）
+ * @param {{ cachedKey?: boolean }} [opts] cachedKey = 数据根缓存密钥存在（bin 用 fs 探测后传入）
  * @returns {{ ok: boolean, error?: string }}
  */
-function judgeSyncPreflight(probes) {
+function judgeSyncPreflight(probes, opts) {
+  const cachedKey = !!(opts && opts.cachedKey);
   const w = (probes && probes.wechat) || {};
   const d = (probes && probes.dataRoot) || {};
   if (!d.configured) {
@@ -230,6 +235,7 @@ function judgeSyncPreflight(probes) {
   if (d.writable === false) {
     return { ok: false, error: `数据根不可写：${d.path || ''}——检查目录权限或被占用后重试` };
   }
+  if (cachedKey) return { ok: true }; // 有缓存密钥：解密链不依赖微信进程与版本
   if (w.running === false) {
     const saw3x = w.wx3Running ? '（检测到微信 3.x 在跑，本工具只支持 4.x）' : '';
     return {
@@ -240,7 +246,7 @@ function judgeSyncPreflight(probes) {
   if (w.running === true && w.version && doctor.compareDotVersions(w.version, doctor.versionLabel(doctor.WECHAT_BLOCKED_VERSION)) >= 0) {
     return {
       ok: false,
-      error: `微信 ${w.version}：官方已封堵内存取密钥（≥ ${doctor.versionLabel(doctor.WECHAT_BLOCKED_VERSION)}），请退回安装微信 ${doctor.WECHAT_ROLLBACK_VERSION} 后再同步`,
+      error: `微信 ${w.version}：官方已封堵内存取密钥（≥ ${doctor.versionLabel(doctor.WECHAT_BLOCKED_VERSION)}）——退回安装微信 ${doctor.WECHAT_ROLLBACK_VERSION}，或把已知可用的 key.json 放到数据根 .bz-face/key.json（缓存密钥可解同账号新版库）后再同步`,
     };
   }
   return { ok: true };

@@ -23,7 +23,6 @@ from multiprocessing import freeze_support
 import pymem
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA512
-import yara
 
 from wxManager.decrypt.common import WeChatInfo
 from wxManager.decrypt.common import get_version
@@ -302,6 +301,7 @@ def get_key_inner(pid, process_infos):
                 all of them
         }
         '''
+    import yara
     rules = yara.compile(source=rules_v4_key)
     pre_addresses = []
     for base_address, region_size in process_infos:
@@ -368,6 +368,7 @@ def get_wx_dir(process_handle):
             $a
     }
     '''
+    import yara
     rules = yara.compile(source=rules_v4_dir)
     process_infos = get_memory_regions(process_handle)
     wx_dir_cnt = {}
@@ -410,6 +411,7 @@ def get_nickname(pid):
     nick_name = ''
     phone = ''
     account_name = ''
+    import yara
     rules = yara.compile(source=rules_v4_phone)
     for base_address, region_size in process_infos:
         memory = read_process_memory(process_handle, base_address, region_size)

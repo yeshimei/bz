@@ -76,5 +76,12 @@
   / `DatabaseConnection` / `exporter.exporter_csv.CSVExporter` 全部可导入
   （Python 3.14.6 实测；进程内临时垫 `sys.modules['yara']` 验证闭包完整，垫片未随包分发）。
 - 包内无 `.git`、无 `.db`、无 `.exe`、无 HTML 模板；无任何真实聊天数据。
+- **有据可查的最小偏离（2026-09-27，缓存密钥同步线）**：`wxManager/decrypt/wx_info_v4.py`
+  顶层 `import yara` 改为三个取密钥扫描函数内的惰性 import——上游把 yara 作为模块级硬依赖，
+  但 yara 只在内存取密钥的扫描规则里用；`wxManager/decrypt/__init__` 一拉全包，导致
+  **纯解密路径（已缓存密钥）也被迫装 yara**，且 Python 3.14 无 yara-python wheel、
+  multiprocessing 子进程的 sys.modules 垫片又不可靠。改惰性 import 后：装了真 yara-python
+  的环境照常取密钥；没装的环境解密链照常跑、真去取密钥才报 ModuleNotFoundError。
+  升级上游版本时重新套用此补丁。
 - 已知上游瑕疵（原样收编、不代改）：若干 `return` 出现在 `finally` 块，
   Python 3.14 下有 SyntaxWarning，不影响行为；升级上游版本时一并消化。

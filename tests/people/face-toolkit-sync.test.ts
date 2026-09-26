@@ -176,14 +176,31 @@ describe('bz-face sync 判定层（issue 464）', () => {
       expect(wx3.error).toContain('3.x');
     });
 
-    it('微信版本 ≥ 封堵线 → 硬失败 + 退回指引（复用 doctor 常量，不另立口径）', () => {
+    it('微信版本 ≥ 封堵线 → 硬失败 + 退回指引 + 缓存密钥替代路（复用 doctor 常量，不另立口径）', () => {
       const blocked = judgeSyncPreflight({ wechat: { ok: true, running: true, version: '4.0.3.36' }, dataRoot: okDataRoot });
       expect(blocked.ok).toBe(false);
       expect(blocked.error).toContain('封堵');
       expect(blocked.error).toContain(WECHAT_ROLLBACK_VERSION);
+      expect(blocked.error).toContain('key.json'); // 封堵版的替代路：放缓存密钥
 
       const fine = judgeSyncPreflight({ wechat: { ok: true, running: true, version: '4.0.3.19' }, dataRoot: okDataRoot });
       expect(fine.ok).toBe(true);
+    });
+
+    it('数据根有缓存密钥（cachedKey）→ 微信未跑 / 版本封堵两道检查整体跳过（解密不依赖微信）', () => {
+      const opts = { cachedKey: true };
+      expect(
+        judgeSyncPreflight({ wechat: { ok: true, running: false }, dataRoot: okDataRoot }, opts).ok,
+      ).toBe(true);
+      expect(
+        judgeSyncPreflight({ wechat: { ok: true, running: true, version: '4.1.0.30' }, dataRoot: okDataRoot }, opts).ok,
+      ).toBe(true);
+      // 缓存密钥不豁免数据根三道：目录缺失 / 不可写照样拦
+      const missing = judgeSyncPreflight(
+        { wechat: { ok: true, running: false }, dataRoot: { configured: true, path: 'X:\\缺失', exists: false } },
+        opts,
+      );
+      expect(missing.ok).toBe(false);
     });
 
     it('微信探测自身失败 / 版本读不出 → 不挡（Python 取密钥兜底）', () => {
