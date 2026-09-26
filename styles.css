@@ -15826,6 +15826,9 @@ canvas { display: block; }
 @media (hover: hover) {
   .bz-sp-foot-chg:hover .bz-sp-foot-chg-ic { color: var(--sp-accent); }
 }
+/* 使用手册下载中（issue 473）：图标换 loader 后整钮转圈 + 按压反馈收声（防重入靠 ui 层 is-loading 判断） */
+.bz-sp-foot-chg.is-loading { pointer-events: none; opacity: 0.72; }
+.bz-sp-foot-chg.is-loading .bz-sp-foot-chg-ic svg { animation: bz-sp-spin 0.8s linear infinite; }
 .bz-sp-nav-sec { margin-bottom: var(--bz-space-lg); }
 .bz-sp-nav-sec-t {
   font-size: 10.5px;
