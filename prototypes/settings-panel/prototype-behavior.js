@@ -1,4 +1,4 @@
-/* 源指纹 605fcd54601ce37e · 仓内输入 264 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e96777977efc6cd8 · 仓内输入 264 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog-data.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -4047,8 +4047,22 @@ var BZW_settings_panel = (() => {
     svg.innerHTML = d;
     container.replaceChildren(svg);
   }
+  async function fetchManualText() {
+    if (manualText != null) return manualText;
+    try {
+      const res = await fetch("/manual/bz-manual.html");
+      if (res.ok) manualText = await res.text();
+    } catch (e) {
+    }
+    return manualText;
+  }
   async function requestUrl(opts) {
     const url = String((opts == null ? void 0 : opts.url) || "");
+    if (/bz-manual\.html(\?|$)/.test(url)) {
+      const text = await fetchManualText();
+      if (text) return { status: 200, text };
+      throw new Error("原型环境取不到手册文本（manual/bz-manual.html 不可达）");
+    }
     if ((opts == null ? void 0 : opts.method) === "POST" && /\/v1\/systemone$/.test(url)) {
       await new Promise((r) => setTimeout(r, 900));
       const succeed = fakeSystemOneToggle++ % 2 === 0;
@@ -4112,13 +4126,14 @@ var BZW_settings_panel = (() => {
     }
     return fm;
   }
-  var import_moment, Platform, fakeSystemOneToggle, Setting, TFile, MarkdownRenderer, MarkdownView, Component, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
+  var import_moment, Platform, manualText, fakeSystemOneToggle, Setting, TFile, MarkdownRenderer, MarkdownView, Component, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
   var init_fake_obsidian = __esm({
     "prototypes/settings-panel/fake/fake-obsidian.ts"() {
       import_moment = __toESM(require_moment());
       Platform = {
         isMobile: typeof window !== "undefined" && window.innerWidth <= 768
       };
+      manualText = null;
       fakeSystemOneToggle = 0;
       Setting = class {
         constructor(container) {
@@ -4383,6 +4398,25 @@ var BZW_settings_panel = (() => {
                 else files.push(rest);
               }
               return { folders: [...dirs].sort(), files };
+            },
+            // 手册链路（core/manual）经 adapter 直读写插件目录文件——评审壳同契约补齐三方法：
+            // 存在性 / 读取 / 写入都落到同一份 KEY_PREFIX 键空间，与 vault 文件面共享存储。
+            // 内容取封套内的 c 字段（与 toFile 同解码口径），写回走 encodeSeedFile 同一封套。
+            exists: async (path) => {
+              return localStorage.getItem(_FakeVault.key(String(path))) != null;
+            },
+            read: async (path) => {
+              const raw = localStorage.getItem(_FakeVault.key(String(path)));
+              if (raw == null) throw new Error("ENOENT: " + path);
+              try {
+                const env = JSON.parse(raw);
+                if (env && typeof env === "object" && typeof env.c === "string") return env.c;
+              } catch (e) {
+              }
+              return raw;
+            },
+            write: async (path, data) => {
+              localStorage.setItem(_FakeVault.key(String(path)), encodeSeedFile(data));
             }
           };
           if (typeof window !== "undefined") {
@@ -11230,6 +11264,7 @@ var BZW_settings_panel = (() => {
           date: "2026-09-26",
           current: true,
           added: [
+            { domain: "settings-panel", text: "二次拍板", sub: "手册改 OB 内独立弹窗内嵌打开" },
             { domain: "settings-panel", text: "v2 更新日志用户化", sub: "自动版本号，主次分层，内容改写" },
             { domain: "settings-panel", text: "使用手册按钮下载，新版本自更新，域设置深化" },
             { domain: "people", text: "bz-face prep 子命令", sub: "单联系人媒体导出，派生图片档，关联表，语音转写" },
@@ -11244,6 +11279,7 @@ var BZW_settings_panel = (() => {
             { domain: "people", text: "详情页双折", sub: "其人，我们，统计与背景弹窗化" }
           ],
           fixed: [
+            { domain: "settings-panel", text: "使用手册入口搬侧栏 footer，下载，打开链路重做" },
             { domain: "core", text: "AI 输出上限护栏", sub: "面板上界按 provider×模型动态取，解析出口封顶" },
             { domain: "people", text: "头像入库", sub: "库外 avatar 复制进库内媒体文件夹（CONFIG，FACES），渲染走 vault getResourcePath" }
           ],
@@ -63531,7 +63567,6 @@ ${n.content.slice(0, 2e3)}
     frame2.id = FRAME_ID3;
     frame2.className = "bz-panel-frame bz-sp-skin bz-manv-popup";
     frame2.innerHTML = shellHtml2();
-    mountIcons(frame2);
     ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide3();
@@ -63540,7 +63575,7 @@ ${n.content.slice(0, 2e3)}
     overlay3 = ov;
   }
   function shellHtml2() {
-    return `<div class="bz-panel-head"><div class="bz-panel-brand">${uiIcon("book-open")}</div><span class="bz-panel-title">使用手册</span><span class="bz-panel-head-pipe"></span><span class="bz-panel-head-sub">包仔 · 完整使用说明</span><span class="bz-panel-head-sp"></span></div><div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+    return `<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
   }
   var OVERLAY_ID3, FRAME_ID3, overlay3, escHandle7;
   var init_manual_viewer = __esm({
@@ -63548,8 +63583,6 @@ ${n.content.slice(0, 2e3)}
       init_z_order();
       init_esc_manager();
       init_focus_trap();
-      init_ui();
-      init_icons();
       OVERLAY_ID3 = "bz-manual-overlay";
       FRAME_ID3 = "bz-manual-popup";
       overlay3 = null;

@@ -68,14 +68,34 @@ export function setIcon(container: HTMLElement, iconId: string): void {
 
 export type IconName = string;
 
+/** 手册文本缓存（评审壳同源 fetch 真手册，一次足够） */
+let manualText: string | null = null;
+async function fetchManualText(): Promise<string | null> {
+  if (manualText != null) return manualText;
+  try {
+    const res = await fetch('/manual/bz-manual.html');
+    if (res.ok) manualText = await res.text();
+  } catch {
+    /* 取不到就留 null，调用方走失败降级 */
+  }
+  return manualText;
+}
+
 /** 判定端点模拟（issue 434「测试」钮原型演示）：绿→红交替，~900ms 延迟让转圈可见。
  *  响应为真实 SystemOne 报文形态（noul 题），成功 / 失败（401）两态都能在原型里走到。 */
 let fakeSystemOneToggle = 0;
 
 /** requestUrl（core/utils、core/ai 模块级 import 触及）：原型无网络，抛错让调用方走各自降级。
- *  例外：判定端点（/v1/systemone）不抛——返回交替的成功 / 401 canned 响应，演示「测试」钮三态。 */
+ *  两处例外：
+ *   - 判定端点（/v1/systemone）→ 交替的成功 / 401 canned，演示「测试」钮三态；
+ *   - 使用手册（core/manual 的双远端）→ 按需抓真手册文本回放，评审壳点「使用手册」能真下载+弹窗。 */
 export async function requestUrl(opts?: { url?: string; method?: string }): Promise<{ status: number; text: string }> {
   const url = String(opts?.url || '');
+  if (/bz-manual\.html(\?|$)/.test(url)) {
+    const text = await fetchManualText();
+    if (text) return { status: 200, text };
+    throw new Error('原型环境取不到手册文本（manual/bz-manual.html 不可达）');
+  }
   if (opts?.method === 'POST' && /\/v1\/systemone$/.test(url)) {
     await new Promise((r) => setTimeout(r, 900));
     const succeed = fakeSystemOneToggle++ % 2 === 0;
@@ -609,6 +629,26 @@ export class FakeVault {
         else files.push(rest);
       }
       return { folders: [...dirs].sort(), files };
+    },
+    // 手册链路（core/manual）经 adapter 直读写插件目录文件——评审壳同契约补齐三方法：
+    // 存在性 / 读取 / 写入都落到同一份 KEY_PREFIX 键空间，与 vault 文件面共享存储。
+    // 内容取封套内的 c 字段（与 toFile 同解码口径），写回走 encodeSeedFile 同一封套。
+    exists: async (path: string): Promise<boolean> => {
+      return localStorage.getItem(FakeVault.key(String(path))) != null;
+    },
+    read: async (path: string): Promise<string> => {
+      const raw = localStorage.getItem(FakeVault.key(String(path)));
+      if (raw == null) throw new Error('ENOENT: ' + path);
+      try {
+        const env = JSON.parse(raw) as Envelope | null;
+        if (env && typeof env === 'object' && typeof env.c === 'string') return env.c;
+      } catch {
+        /* 纯文本内容原样 */
+      }
+      return raw;
+    },
+    write: async (path: string, data: string): Promise<void> => {
+      localStorage.setItem(FakeVault.key(String(path)), encodeSeedFile(data));
     },
   };
 
