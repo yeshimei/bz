@@ -330,11 +330,12 @@ function batchRetryMessage(i: number, total: number, attempt: number, maxRetries
 }
 
 /**
- * 批失败终局（issue 453）：必须让用户知道**已完成的批次还在**——
- * 450 的错误文案只说「第 N 批失败」，用户以为整张脸谱废了，于是重新点「画脸谱」从第 1 批重烧。
+ * 批失败终局（issue 453）：一行说清「已完成批次保留、可续跑」；具体错误与「继续生成」
+ * 动作由进度块的错误行 / 按钮承担，不再叠第二份说明（455 评审：精简显示）。
  */
 function batchFailMessage(i: number, total: number, done: number, err: string): string {
-  return `第 ${i + 1}/${total} 批提炼失败：${err}；已完成 ${done}/${total} 批（点「继续生成」从这批重试，不会从头重烧）`;
+  void err;
+  return `第 ${i + 1}/${total} 批提炼失败（已完成 ${done} 批保留，可从失败批续跑）`;
 }
 
 // ---------------- 快照 / 订阅 ----------------

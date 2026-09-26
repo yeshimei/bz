@@ -24,6 +24,8 @@ import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { getApp } from '../core/app';
 import { PeopleStore } from './data';
+import { extractJsonLoose } from './digest';
+import { createAI } from '../core/ai';
 import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
@@ -51,9 +53,8 @@ import {
   foldBondBody,
   foldBook,
   foldCard,
-  foldChronicleBody,
-  foldDetailHead,
   foldEventsBody,
+  foldDetailHead,
   foldPersonBody,
   foldSealNode,
   foldWall,
@@ -63,13 +64,13 @@ import {
   mergeBar,
   miniMarkdown,
   monthlyChart,
+  noteAddRow,
   panelShell,
   popShell,
   profilePopBody,
   progressBlock,
   replyLatencySec,
   socialRow,
-  spillOf,
   statsPopBody,
   statsText,
   tagChip,
@@ -133,6 +134,8 @@ interface DsContact {
   newCount: number;
   /** 已画到的提炼锚点（PersonEntry.lastProcessedTs） */
   processedTs: number | null;
+  /** 头像文件绝对路径（数据目录 avatar.<ext>；无则 null） */
+  avatar: string | null;
 }
 
 let dsOpen = false;
@@ -152,11 +155,14 @@ let dsScannedAt = '';
 let statsOpen = false;
 /** 「补充背景」弹窗开着（编辑态仍由 profEditId 管，宿主从折册换成弹窗） */
 let profOpen = false;
+/** 「记一笔」独立弹窗开着（455 评审：随手记自纪事折抽出，入口进详情头工具条） */
+let noteOpen = false;
 
 /** 开统计弹窗（另一只开着则换页） */
 function openStatsPop(): void {
   statsOpen = true;
   profOpen = false;
+  noteOpen = false;
   void renderBody();
 }
 
@@ -164,14 +170,24 @@ function openStatsPop(): void {
 function openProfPop(): void {
   profOpen = true;
   statsOpen = false;
+  noteOpen = false;
+  void renderBody();
+}
+
+/** 开记一笔弹窗（另一只开着则换页） */
+function openNotePop(): void {
+  noteOpen = true;
+  statsOpen = false;
+  profOpen = false;
   void renderBody();
 }
 
 /** 关掉统计 / 档案弹窗（都不开着则免渲染） */
 function closePops(): void {
-  if (!statsOpen && !profOpen) return;
+  if (!statsOpen && !profOpen && !noteOpen) return;
   statsOpen = false;
   profOpen = false;
+  noteOpen = false;
   void renderBody();
 }
 
@@ -230,8 +246,9 @@ export function closePeoplePanel(): void {
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
   noteAddId = null;
-  statsOpen = false; // 455：统计 / 档案弹窗同样不随面板存续
+  statsOpen = false; // 455：统计 / 档案 / 记一笔弹窗同样不随面板存续
   profOpen = false;
+  noteOpen = false;
   disarmDelete();
   closeDsState();
   if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
@@ -301,6 +318,7 @@ function dsRowStates(): DsRowState[] {
       previewCount: c.previewCount,
       newCount: c.newCount,
       processedTs: c.processedTs,
+      avatar: c.avatar,
     };
   });
 }
@@ -366,6 +384,7 @@ async function runScan(force = false): Promise<void> {
         previewCount: pv?.msgs.length ?? 0,
         newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
         processedTs: entry?.lastProcessedTs ?? null,
+        avatar: bundle.avatar,
       });
     }
   } catch (e) {
@@ -417,6 +436,7 @@ async function importDsSelected(): Promise<void> {
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
       const existing = (await previewStore.read()).contacts[c.name];
       const { contact, added } = mergePreview(existing, norm, now);
+      if (bundle.avatar) contact.avatar = bundle.avatar; // 头像随数据目录走（导入时刷新；文件删了导入后即清）
       await previewStore.upsertContact(c.name, contact);
       addedOf.set(c.name, added);
       // 快照同步（水位行即时反映，不重扫）
@@ -783,13 +803,17 @@ function renderJobs(): void {
   const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
   if (!slot) return;
   const item = currentJobsItem();
-  if (item) {
+  // 455 评审：进度块只在「生成中那个人」的详情页显示（done 不再展示——完成时有通知），
+  // 封面墙与其他联系人详情不再被进度 / 报错糊脸；折子印章的状态环照常跟帧。
+  const show = Boolean(item && item.status !== 'done' && stage === 'detail' && detailId === item.talker);
+  if (show && item) {
     slot.hidden = false;
     slot.replaceChildren(progressBlock(toBlockState(item)));
   } else {
     slot.hidden = true;
     slot.replaceChildren();
   }
+  overlay?.querySelector('.bz-people-panel')?.classList.toggle('bz-people-jobs-showing', show);
   syncWallSeals(); // 451：折子印章四态跟帧刷新（原位只换印章节点）
 }
 
@@ -991,6 +1015,16 @@ function onOverlayClick(e: MouseEvent): void {
     }
     return;
   }
+  // —— 事件折月组开合：就地切类，不重渲染 ——
+  const evMonHead = t.closest<HTMLElement>('[data-people-ev-mon]');
+  if (evMonHead) {
+    const group = evMonHead.closest<HTMLElement>('.bz-people-ev-mon');
+    if (group) {
+      const on = group.classList.toggle('bz-people-ev-mon-on');
+      evMonHead.setAttribute('aria-label', `${on ? '收起' : '展开'} ${evMonHead.querySelector('.bz-people-ev-mon-name')?.textContent ?? ''}`);
+    }
+    return;
+  }
   const card = t.closest<HTMLElement>('[data-people-card]');
   if (card) {
     detailId = card.dataset.peopleCard ?? null;
@@ -1003,6 +1037,7 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-prof-new]') || t.closest('[data-people-prof-edit]')) { profEditId = detailId; void renderBody(); return; }
   if (t.closest('[data-people-prof-cancel]')) { profEditId = null; void renderBody(); return; }
   if (t.closest('[data-people-prof-save]')) { void saveProfile(); return; }
+  if (t.closest('[data-people-prof-ai]')) { void aiFillProfile(); return; }
   if (t.closest('[data-people-prof-add-social]')) {
     overlay?.querySelector<HTMLElement>('[data-people-prof-social-list]')?.appendChild(socialRow('', ''));
     return;
@@ -1010,8 +1045,8 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-prof-tag-add]')) { addTagChip(); return; }
   if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-prof-tag')?.remove(); return; }
   if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
-  if (t.closest('[data-people-note-add]')) { noteAddId = detailId; void renderBody(); return; }
-  if (t.closest('[data-people-note-cancel]')) { noteAddId = null; void renderBody(); return; }
+  if (t.closest('[data-people-note-open]')) { openNotePop(); return; }
+  if (t.closest('[data-people-note-cancel]')) { noteOpen = false; void renderBody(); return; }
   if (t.closest('[data-people-note-save]')) { void saveManualNote(); return; }
   const evDel = t.closest<HTMLElement>('[data-people-ev-del]');
   if (evDel) { void removeManualNote(evDel.dataset.peopleEvDel ?? ''); return; }
@@ -1092,10 +1127,11 @@ function renderDsLayer(): void {
 function renderPopLayer(people: PersonEntry[]): void {
   const layer = overlay?.querySelector<HTMLElement>('[data-people-pop-layer]');
   if (!layer) return;
-  const p = statsOpen || profOpen ? people.find((x) => x.id === detailId) : null;
+  const p = statsOpen || profOpen || noteOpen ? people.find((x) => x.id === detailId) : null;
   if (!p) {
     statsOpen = false;
     profOpen = false;
+    noteOpen = false;
     layer.hidden = true;
     layer.replaceChildren();
     return;
@@ -1104,7 +1140,9 @@ function renderPopLayer(people: PersonEntry[]): void {
   layer.replaceChildren(
     statsOpen
       ? popShell('互动统计', 'data-people-stats-pop', statsPopBody(buildInsightsCard(p), p))
-      : popShell('补充背景', 'data-people-prof-pop', profilePopBody(p, profEditId === p.id))
+      : profOpen
+        ? popShell('补充背景', 'data-people-prof-pop', profilePopBody(p, profEditId === p.id))
+        : popShell('记一笔', 'data-people-note-pop', [noteAddRow(todayStr())])
   );
 }
 
@@ -1202,7 +1240,8 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
     body.appendChild(mergeBar(from.name, to?.name ?? null));
   }
   const wall = foldWall();
-  applyWall(people, wall);
+  const preview = await previewData();
+  applyWall(people, wall, (name) => preview.contacts[name]?.avatar);
   body.appendChild(wall);
 }
 
@@ -1241,26 +1280,19 @@ async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<v
   body.replaceChildren();
   if (!p) { stage = 'list'; await renderList(body, people); return; }
   const media = personMedia(p);
-  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)) }));
+  // 头像：数据目录 avatar.<ext> 的绝对路径随预览桶走（导入时刷新）；没有回落首字印章
+  const avatar = (await previewData()).contacts[p.name]?.avatar;
+  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
 
-  // 四折（issue 455 双卷拆折）：展开折渲染正文，收起折只渲染竖排引文；统计与档案已改详情头弹窗
+  // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊
   const person = personOf(p.digest); // 旧单卷数据（只有 portrait）由此兼容读进卷一
   const bond = bondOf(p.digest);
-  const quoteOf: Record<FoldId, string> = {
-    p: person ? spillOf(person) : '还没有其人画像。从数据源导入一次即可生成。',
-    b: bond ? spillOf(bond) : '还没有关系画像。从数据源导入一次即可生成。',
-    e: p.digest?.events.length
-      ? spillOf(p.digest.events[0].summary)
-      : (p.manualEvents?.length ? spillOf(p.manualEvents[0].summary) : '还没有交往事件与随手记。'),
-    c: p.digest?.chronicle ? spillOf(p.digest.chronicle) : '还没有关系时间线。',
-  };
   const bodies: Record<FoldId, HTMLElement[]> = {
     p: detailFold === 'p' ? foldPersonBody(person ? miniMarkdown(person) : null, p) : [],
     b: detailFold === 'b' ? foldBondBody(bond ? miniMarkdown(bond) : null) : [],
-    e: detailFold === 'e' ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
-    c: detailFold === 'c' ? foldChronicleBody(p.digest?.chronicle ? miniMarkdown(p.digest.chronicle) : null) : [],
+    e: detailFold === 'e' ? foldEventsBody(p) : [],
   };
-  body.appendChild(foldBook(p, { fold: detailFold }, bodies, quoteOf));
+  body.appendChild(foldBook(p, { fold: detailFold }, bodies));
 }
 
 // ---------------- 互动数据（issue 440：纯本地统计展示；447 收进「数据」折） ----------------
@@ -1332,7 +1364,7 @@ function sortPeople(list: PersonEntry[]): PersonEntry[] {
 }
 
 /** 按最近互动排序刷封面墙（merge 状态也在这里反映为卡片样式） */
-function applyWall(people: PersonEntry[], wall: HTMLElement): void {
+function applyWall(people: PersonEntry[], wall: HTMLElement, avatarOf: (name: string) => string | undefined): void {
   wall.replaceChildren();
   const map = jobViews();
   for (const p of sortPeople(people)) {
@@ -1341,6 +1373,7 @@ function applyWall(people: PersonEntry[], wall: HTMLElement): void {
       mergeFrom: p.id === mergeFromId,
       mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
       job: sealJobOf(map.get(p.id)), // 451：印章四态（任务态压过脸谱水位）
+      avatar: avatarOf(p.name),
     }));
   }
 }
@@ -1386,6 +1419,75 @@ function addTagChip(): void {
 }
 
 /** 读编辑卡全量输入 → updateProfile；整卡为空 = 清档案（落盘 undefined） */
+/** AI 补充背景进行中（防双击；完成/失败都复位） */
+let profAiBusy = false;
+
+/**
+ * AI 补充背景（455 评审）：读交往素材（事件 / 原话 / 场景）推断缺失档案字段，
+ * 只填编辑表单里的**空白**项——手填的绝不覆盖，填完停在编辑态等用户检查保存。
+ * 隐私口径不变：只喂已落盘的提炼素材，不送聊天原文。
+ */
+async function aiFillProfile(): Promise<void> {
+  if (profAiBusy || !store || !detailId || !overlay) return;
+  const p = listCache.find((x) => x.id === detailId);
+  if (!p) return;
+  const dg = p.digest;
+  if (!dg) { notice('还没有脸谱素材——先导入并画脸谱，AI 才有据可依', 'warning'); return; }
+  if (profEditId !== detailId) { profEditId = detailId; await renderBody(); } // 表单在编辑卡里，先进入编辑态
+  profAiBusy = true;
+  notice('AI 正在读交往素材补充背景…', 'info');
+  try {
+    const majors = dg.events.filter((e) => e.kind === 'major');
+    const mat = [
+      ['交往事件', [...majors, ...dg.events.filter((e) => e.kind !== 'major')].slice(0, 200).map((e) => `${e.ts} ${e.summary}`).join('\n')],
+      ...(dg.quotes?.length ? [['代表性原话', dg.quotes.slice(0, 40).map((q) => `${q.who}：${q.text}`).join('\n')]] : []),
+      ...(dg.moments?.length ? [['场景细节', dg.moments.slice(0, 30).map((m) => `${m.ts} ${m.summary}`).join('\n')]] : []),
+    ].map(([t, s]) => `【${t}】\n${s}`).join('\n\n');
+    const known = [
+      p.profile?.birthday ? `生日 ${p.profile.birthday}` : '',
+      p.profile?.hometown ? `家乡/现居 ${p.profile.hometown}` : '',
+      p.profile?.job ? `职业 ${p.profile.job}` : '',
+      p.profile?.metVia ? `认识方式 ${p.profile.metVia}` : '',
+      p.profile?.metAt ? `认识时间 ${p.profile.metAt}` : '',
+      p.profile?.tags?.length ? `标签 ${p.profile.tags.join('、')}` : '',
+    ].filter(Boolean).join('；');
+    const prompt = [
+      `你在帮用户完善好友「${p.name}」的档案。以下是已落盘的交往提炼素材。`,
+      ...(known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : []),
+      '',
+      mat,
+      '',
+      '请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：',
+      '{"birthday":"","hometown":"","job":"","metVia":"","metAt":"","tags":[],"note":""}',
+      '规则：',
+      '- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。',
+      '- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。',
+      '- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。',
+      '- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。',
+    ].join('\n');
+    const data = extractJsonLoose(await createAI().json(prompt)) as Record<string, unknown>;
+    let filled = 0;
+    for (const f of ['birthday', 'metVia', 'metAt', 'hometown', 'job', 'note'] as const) {
+      const v = String(data[f] ?? '').trim();
+      if (!v) continue;
+      const inp = overlay.querySelector<HTMLInputElement>(`[data-people-prof-field="${f}"]`);
+      if (inp && !inp.value.trim()) { inp.value = v; filled++; }
+    }
+    const tags = Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [];
+    const tagList = overlay.querySelector('[data-people-prof-tag-list]');
+    if (tagList && tagList.children.length === 0 && tags.length) {
+      for (const t of tags.slice(0, 3)) tagList.appendChild(tagChip(t));
+      filled++;
+    }
+    if (filled > 0) notice(`AI 已补 ${filled} 项，请检查后点「保存档案」`, 'success');
+    else notice('素材里没有能支撑的档案信息，未作补充', 'info');
+  } catch (e) {
+    notifyActionError(e, 'AI 补充背景');
+  } finally {
+    profAiBusy = false;
+  }
+}
+
 async function saveProfile(): Promise<void> {
   if (!store || !detailId || !overlay) return;
   await ensureEntry(detailId); // 452：占位卡（预览桶合成，盘上还没卡）先落一张空卡
@@ -1440,6 +1542,7 @@ async function saveManualNote(): Promise<void> {
     await ensureEntry(detailId); // 452：占位卡先落一张空卡，再记（mutate 对不存在的 id 会抛）
     await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: new Date().toISOString() });
     noteAddId = null;
+    noteOpen = false;
     notice('已记一笔', 'success');
   } catch (e) {
     notifyActionError(e, '记随手记');

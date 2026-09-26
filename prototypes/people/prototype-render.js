@@ -1,5 +1,5 @@
-/* 源指纹 73adca92877db9f4 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
+/* 源指纹 aa08dba5119a94ad · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
   var __defProp = Object.defineProperty;
@@ -33,7 +33,6 @@ var BZR_people = (() => {
     foldBondBody: () => foldBondBody,
     foldBook: () => foldBook,
     foldCard: () => foldCard,
-    foldChronicleBody: () => foldChronicleBody,
     foldDetailHead: () => foldDetailHead,
     foldEventsBody: () => foldEventsBody,
     foldHint: () => foldHint,
@@ -56,6 +55,7 @@ var BZR_people = (() => {
     jobsQueueLabel: () => jobsQueueLabel,
     jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
+    localResourceUri: () => localResourceUri,
     mdPlain: () => mdPlain,
     mediaLabel: () => mediaLabel,
     mergeBar: () => mergeBar,
@@ -80,18 +80,6 @@ var BZR_people = (() => {
     vtName: () => vtName,
     wallEmpty: () => wallEmpty
   });
-
-  // src/people/types.ts
-  function personOf(d) {
-    var _a, _b;
-    return (_b = (_a = d == null ? void 0 : d.person) != null ? _a : d == null ? void 0 : d.portrait) != null ? _b : "";
-  }
-  function bondOf(d) {
-    var _a;
-    return (_a = d == null ? void 0 : d.bond) != null ? _a : "";
-  }
-
-  // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
     const flat = (ns) => ns.flatMap((n) => Array.isArray(n) ? n : [n]);
@@ -169,6 +157,16 @@ var BZR_people = (() => {
     if (sec < 60) return `${Math.round(sec)} 秒`;
     if (sec < 3600) return `${Math.round(sec / 60)} 分`;
     return `${(sec / 3600).toFixed(1)} 时`;
+  }
+  function localResourceUri(path) {
+    const norm = path.replace(/\\/g, "/");
+    if (typeof window !== "undefined") {
+      const base = window.BZW_MEDIA_BASE;
+      if (base) return base + encodeURI(norm).replace(/#/g, "%23").replace(/\?/g, "%3F");
+    }
+    if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
+    const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
+    return `app://local/${encodeURI(rel).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
   }
   function mdPlain(md) {
     return String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
@@ -262,9 +260,9 @@ var BZR_people = (() => {
       ),
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
-    block.appendChild(el("div", "bz-people-jobs-main", text(s.message || jobsFallbackMessage(s.status, s.name))));
-    block.appendChild(el("div", "bz-people-jobs-queue", text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
-    block.appendChild(el("div", "bz-people-jobs-note", text("生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。")));
+    const next = Math.min(s.batchesDone + 1, s.batchesTotal);
+    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? "已暂停" : s.status === "interrupted" ? "上次生成中断了" : s.status === "done" ? "脸谱已生成" : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    block.appendChild(el("div", "bz-people-jobs-main", text(main)));
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
@@ -344,23 +342,35 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     b.textContent = seal.text;
     return b;
   }
+  function foldAvaNode(p, seal, avatar) {
+    const b = el("button", `bz-people-seal bz-people-seal-${seal.state} bz-people-fold-ava`, {
+      "data-people-seal-act": seal.action.kind,
+      "aria-label": `${seal.action.label}：${p.name || p.id}`,
+      title: seal.title
+    });
+    b.type = "button";
+    b.appendChild(el("img", "", { src: localResourceUri(avatar), alt: p.name }));
+    return b;
+  }
   function foldCard(p, opts) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const from = p.imports.map((r) => r.timeFrom).sort()[0];
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
     const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
     const label = mediaLabel(opts.media);
+    const seal = foldSeal(p, (_d = opts.job) != null ? _d : null);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
-        foldSealNode(p, (_d = opts.job) != null ? _d : null),
+        opts.avatar ? foldAvaNode(p, seal, opts.avatar) : foldSealNode(p, (_e = opts.job) != null ? _e : null),
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
         // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
         el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
         el("div", "bz-people-fold-meta", text([
           total ? `${formatCount(total)} 条` : "尚无消息",
-          label
+          label,
+          seal.state === "done" && p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs).slice(2)}` : ""
         ].filter(Boolean).join(" · ")))
       ])
     ]);
@@ -381,40 +391,40 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   var FOLD_TITLES = [
-    ["p", "其人", "卷一 · 其人画像与代表原话"],
-    ["b", "我们", "卷二 · 我们关系画像"],
-    ["e", "事件", "交往事件与随手记"],
-    ["c", "大事记", "关系时间线"]
+    ["p", "其人", "卷一 · 人物画像与代表原话"],
+    ["b", "相交", "卷二 · 关系画像"],
+    ["e", "纪事", "关系时间线（编年）+ 交往事件（按月）"]
   ];
   function foldDetailHead(p, media, opts) {
     var _a, _b;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-    const label = mediaLabel(media);
-    const voice = (_a = media == null ? void 0 : media.voiceCount) != null ? _a : 0;
     const job = opts.job && opts.job.status !== "done" ? opts.job : null;
     const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
       "data-people-generate-one": "",
       "aria-label": job.status === "running" ? "正在生成" : "继续生成",
       title: job.status === "running" ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部` : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`
     }) : opts.canGenerate ? iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" }) : null;
+    const tags = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean).slice(0, 3);
+    const meta = el("div", "bz-people-card-meta");
+    if (total) {
+      meta.appendChild(textEl("b", formatCount(total)));
+      meta.appendChild(text(` 条消息 · ${p.imports.length} 次导入`));
+      if (p.digest) meta.appendChild(text(` · 脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}`));
+    } else meta.appendChild(text("尚无导入"));
+    const id = el("div", "bz-people-dt-id", [
+      el("div", "bz-people-dt-name", [
+        text(p.name),
+        ...tags.length ? [el("span", "bz-people-dt-tags", tags.map((t) => el("span", "bz-people-dt-tag", [text(t)])))] : []
+      ]),
+      meta
+    ]);
     return el("div", "bz-people-dt-head", [
-      el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-      el("div", "bz-people-dt-id", [
-        el("div", "bz-people-dt-name", text(p.name)),
-        el("div", "bz-people-card-meta", text([
-          total ? `${formatCount(total)} 条消息 · ${p.imports.length} 次导入` : "尚无导入",
-          p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : "脸谱未生成"
-        ].join(" · "))),
-        ...label ? [el("div", "bz-people-media-badge", text(label))] : []
-      ]),
-      el("div", "bz-people-dt-nums", [
-        el("div", "", [el("div", "bz-people-dt-n", text(formatCount(total))), el("div", "bz-people-dt-t", text("消息"))]),
-        el("div", "", [el("div", "bz-people-dt-n", text(voice ? String(voice) : "—")), el("div", "bz-people-dt-t", text(voice ? `语音 · ${formatDuration((_b = media == null ? void 0 : media.voiceTotalSec) != null ? _b : 0)}` : "语音"))]),
-        el("div", "", [el("div", "bz-people-dt-n", text((media == null ? void 0 : media.imageCount) ? String(media.imageCount) : "—")), el("div", "bz-people-dt-t", text("图片"))])
-      ]),
-      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
+      opts.avatar ? el("img", "bz-people-dt-avatar", { src: localResourceUri(opts.avatar), alt: p.name }) : el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
+      id,
       el("div", "bz-people-dt-actions", [
         ...action ? [action] : [],
+        // 455 评审：记一笔自纪事折抽出，独立弹窗，入口在互动统计之前
+        iconButton("pencil", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-note-open": "", "aria-label": "记一笔", title: "记一笔" }),
         // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
@@ -422,7 +432,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ])
     ]);
   }
-  function foldBook(p, opts, bodies, spills) {
+  function foldBook(p, opts, bodies) {
     var _a;
     const book = el("div", "bz-people-book", { "data-people-book": "" });
     for (const [id, title] of FOLD_TITLES) {
@@ -430,32 +440,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const leaf = el("div", `bz-people-leaf${on ? " bz-people-leaf-on" : ""}`, on ? { "data-people-leaf": id } : { "data-people-leaf": id, "data-people-leaf-head": id });
       leaf.appendChild(el("div", "bz-people-leaf-spine", { "aria-hidden": "true" }));
       leaf.appendChild(el("div", "bz-people-leaf-head", [
-        el("span", "bz-people-leaf-zh", text(title)),
-        el("span", "bz-people-leaf-cnt", text(spillMeta(p, id)))
+        el("span", "bz-people-leaf-zh", text(title))
       ]));
       if (on) {
         const body = el("div", "bz-people-leaf-body");
         for (const node of (_a = bodies[id]) != null ? _a : []) body.appendChild(node);
         leaf.appendChild(body);
-      } else {
-        leaf.appendChild(el("div", "bz-people-leaf-spill vt", text(spills[id] || title)));
       }
       book.appendChild(leaf);
     }
     return book;
-  }
-  function spillMeta(p, id) {
-    var _a, _b, _c, _d, _e;
-    switch (id) {
-      case "p":
-        return personOf(p.digest) ? "修" : "空";
-      case "b":
-        return bondOf(p.digest) ? "修" : "空";
-      case "e":
-        return `${(_b = (_a = p.digest) == null ? void 0 : _a.events.length) != null ? _b : 0} 事${((_d = (_c = p.manualEvents) == null ? void 0 : _c.length) != null ? _d : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
-      case "c":
-        return ((_e = p.digest) == null ? void 0 : _e.chronicle) ? "编年" : "空";
-    }
   }
   function profileFilled(prof) {
     var _a, _b, _c, _d, _e, _f;
@@ -492,24 +486,46 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function foldBondBody(mdRoot) {
     return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
   }
-  function foldEventsBody(p, noteAdd, today) {
-    var _a, _b;
+  function foldEventsBody(p) {
+    var _a, _b, _c;
     const out = [];
-    if ((_a = p.digest) == null ? void 0 : _a.events.length) {
-      const events = el("div", "bz-people-events");
-      for (const ev of p.digest.events) {
-        events.appendChild(el("div", `bz-people-event${ev.kind === "major" ? " bz-people-event-major" : ""}`, [
-          el("span", "bz-people-event-ts", text(ev.ts)),
-          el("span", "bz-people-event-dot"),
-          el("span", "bz-people-event-summary", text(ev.summary))
-        ]));
-      }
-      out.push(events);
-    } else {
-      out.push(el("div", "bz-people-empty-hint", text("还没有交往事件。导入聊天生成脸谱后会提炼出来。")));
+    if ((_a = p.digest) == null ? void 0 : _a.chronicle) {
+      out.push(el("div", "bz-people-chronicle", [miniMarkdown(p.digest.chronicle)]));
+      out.push(el("div", "bz-people-ev-divider", [el("span", "", [text("纪事 · 按月")])]));
     }
-    const evs = (_b = p.manualEvents) != null ? _b : [];
-    if (noteAdd) out.push(noteAddRow(today));
+    if ((_b = p.digest) == null ? void 0 : _b.events.length) {
+      const byMonth = /* @__PURE__ */ new Map();
+      for (const ev of p.digest.events) {
+        const month = ev.ts.slice(0, 7);
+        const list = byMonth.get(month);
+        if (list) list.push(ev);
+        else byMonth.set(month, [ev]);
+      }
+      const months = el("div", "bz-people-ev-months");
+      for (const [month, evs2] of [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+        evs2.sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
+        const group = el("div", "bz-people-ev-mon");
+        group.appendChild(el("button", "bz-people-ev-mon-head", { "data-people-ev-mon": "", "aria-label": `展开 ${month}` }, [
+          el("span", "bz-people-ev-mon-plus", text("+")),
+          el("span", "bz-people-ev-mon-name", text(month)),
+          el("span", "bz-people-ev-mon-cnt", text(`${evs2.length} 条`))
+        ]));
+        const body = el("div", "bz-people-ev-mon-body");
+        for (const ev of evs2) {
+          body.appendChild(el("div", `bz-people-event${ev.kind === "major" ? " bz-people-event-major" : ""}`, [
+            el("span", "bz-people-event-ts", text(ev.ts)),
+            el("span", "bz-people-event-dot"),
+            el("span", "bz-people-event-summary", text(ev.summary))
+          ]));
+        }
+        group.appendChild(body);
+        months.appendChild(group);
+      }
+      out.push(months);
+    } else if (!out.length) {
+      out.push(el("div", "bz-people-empty-hint", text("还没有交往纪事。导入聊天生成脸谱后会提炼出来。")));
+    }
+    const evs = (_c = p.manualEvents) != null ? _c : [];
     if (evs.length) {
       out.push(el("div", "bz-people-section-title", text("随手记")));
       const list = el("div", "bz-people-notes");
@@ -522,13 +538,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       }
       out.push(list);
     }
-    out.push(el("div", "bz-people-prof-entry", [
-      ...noteAdd ? [] : [button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "记一笔", { "data-people-note-add": "" })]
-    ]));
     return out;
-  }
-  function foldChronicleBody(mdRoot) {
-    return mdRoot ? [mdRoot] : [el("div", "bz-people-empty-hint", text("还没有关系时间线。重画脸谱后会生成。"))];
   }
   function statsPopBody(card, p) {
     const out = [];
@@ -631,7 +641,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     if ((_h = prof == null ? void 0 : prof.note) == null ? void 0 : _h.trim()) addRow("备注", prof.note.trim());
     rows.push(el("div", "bz-people-prof-actions", [
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "编辑档案", { "data-people-prof-edit": "" })
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "编辑档案", { "data-people-prof-edit": "" }),
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 读交往素材推断缺失字段，填进表单待你确认" })
     ]));
     return el("div", "bz-people-prof", rows);
   }
@@ -692,6 +703,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]),
       grid("备注", profInput((_h = prof == null ? void 0 : prof.note) != null ? _h : "", "一句话备注", ["data-people-prof-field", "note"])),
       el("div", "bz-people-prof-actions", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 只填空白字段，填完你可检查再保存" }),
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "保存档案", { "data-people-prof-save": "" }),
         button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-prof-cancel": "" })
       ])
@@ -704,7 +716,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (!hasProf && !editing) {
       out.push(el("div", "bz-people-prof-entry bz-people-prof-entry-solo", [
         el("span", "bz-people-prof-entry-hint", text("聊天之外的也可以记：")),
-        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "补人物档案", { "data-people-prof-new": "" })
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "补人物档案", { "data-people-prof-new": "" }),
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 读交往素材推断档案，填进表单待你确认" })
       ]));
     }
     return out;
@@ -737,10 +750,32 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-note-cancel": "" })
     ]);
   }
+  var MD_SEALS = {
+    画像速写: "速",
+    性格与思维: "性",
+    "表达 DNA": "言",
+    兴趣爱好: "趣",
+    价值观与红线: "则",
+    习惯: "常",
+    情感倾向: "情",
+    关系定性: "定",
+    互动结构: "动",
+    演变阶段: "变",
+    我们的语言: "语",
+    共同记忆: "忆",
+    冲突与修复: "克",
+    未竟之事: "未",
+    经营建议: "营"
+  };
+  var MD_CN_NO = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+  var MD_DATE_RE = /^（([-\d至~\/\s年]+?)）\s*/;
   function miniMarkdown(md) {
     const root = el("div", "bz-people-portrait");
+    let sec = null;
+    let body = null;
     let list = null;
     let quote = null;
+    let no = 0;
     const appendInline = (elm, str) => {
       const parts = str.split(/\*\*(.+?)\*\*/g);
       parts.forEach((part, i) => {
@@ -749,6 +784,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         else elm.appendChild(document.createTextNode(part));
       });
     };
+    const openSec = (title) => {
+      var _a, _b;
+      sec = document.createElement("section");
+      sec.className = "bz-md-sec";
+      const head = document.createElement("div");
+      head.className = "bz-md-sec-h";
+      const seal = document.createElement("span");
+      seal.className = "bz-md-seal";
+      seal.textContent = (_b = (_a = MD_SEALS[title]) != null ? _a : MD_CN_NO[no]) != null ? _b : "·";
+      const rule = document.createElement("i");
+      rule.className = "bz-md-rule";
+      head.append(seal, textEl("h4", title), rule);
+      body = document.createElement("div");
+      body.className = "bz-md-sec-b";
+      sec.append(head, body);
+      root.appendChild(sec);
+      list = null;
+      quote = null;
+      no++;
+    };
     for (const raw of String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/)) {
       const line = raw.trim();
       if (!line) {
@@ -756,34 +811,46 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         quote = null;
         continue;
       }
+      if (line.startsWith("## ")) {
+        openSec(line.slice(3).trim());
+        continue;
+      }
+      if (!sec) openSec("概述");
       if (line.startsWith("### ")) {
         list = null;
         quote = null;
-        root.appendChild(textEl("h5", line.slice(4)));
-        continue;
-      }
-      if (line.startsWith("## ")) {
-        list = null;
-        quote = null;
-        root.appendChild(textEl("h4", line.slice(3)));
+        body.appendChild(textEl("h5", line.slice(4)));
         continue;
       }
       if (line.startsWith("- ")) {
         quote = null;
         if (!list) {
-          list = document.createElement("ul");
-          root.appendChild(list);
+          list = document.createElement("div");
+          list.className = "bz-md-items";
+          body.appendChild(list);
         }
-        const li = document.createElement("li");
-        appendInline(li, line.slice(2));
-        list.appendChild(li);
+        const it = document.createElement("div");
+        it.className = "bz-md-it";
+        it.appendChild(el("span", "bz-md-mk"));
+        let rest = line.slice(2).trim();
+        const m = rest.match(MD_DATE_RE);
+        if (m) {
+          it.appendChild(el("span", "bz-md-date", [text(m[1])]));
+          rest = rest.slice(m[0].length);
+        }
+        const tx = document.createElement("span");
+        tx.className = "bz-md-tx";
+        appendInline(tx, rest);
+        it.appendChild(tx);
+        list.appendChild(it);
         continue;
       }
       if (line.startsWith(">")) {
         list = null;
         if (!quote) {
-          quote = document.createElement("blockquote");
-          root.appendChild(quote);
+          quote = document.createElement("div");
+          quote.className = "bz-md-quote";
+          body.appendChild(quote);
         }
         const p2 = document.createElement("p");
         appendInline(p2, line.slice(1).replace(/^\s/, ""));
@@ -794,7 +861,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       quote = null;
       const p = document.createElement("p");
       appendInline(p, line);
-      root.appendChild(p);
+      body.appendChild(p);
     }
     return root;
   }
@@ -813,7 +880,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
     return el("label", cls, [
       cb,
-      el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: localResourceUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
       el("div", "bz-people-ds-main", [
         el("div", "bz-people-ds-name", text(row.name + (row.isGroup ? "（群）" : ""))),
         el("div", "bz-people-ds-meta", text([

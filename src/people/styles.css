@@ -68,6 +68,8 @@
   border-radius: 16px;
   border: 1px solid var(--frame-bd);
   background:
+    radial-gradient(1200px 500px at 85% -10%, rgba(176, 138, 62, 0.08), transparent 60%),
+    radial-gradient(900px 420px at -10% 110%, rgba(168, 67, 60, 0.05), transparent 60%),
     repeating-linear-gradient(45deg, var(--bg-weave1) 0 2px, transparent 2px 4px),
     repeating-linear-gradient(-45deg, var(--bg-weave2) 0 2px, transparent 2px 4px),
     var(--bg);
@@ -134,17 +136,25 @@
   letter-spacing: 0.3px;
 }
 
-/* —— 生成进度块（issue 450：阶段化进度 + 后台化；画脸谱关弹窗回面板看进度） —— */
+/* —— 生成进度块（issue 450：阶段化进度 + 后台化；画脸谱关弹窗回面板看进度） ——
+   455 评审：只在对应联系人的详情页显示；显示时贴住面板顶（抵消详情体 padding） */
 .bz-people-jobs-slot {
   margin: 0 24px 8px;
 }
 .bz-people-jobs-slot[hidden] {
   display: none;
 }
+.bz-people-panel.bz-people-jobs-showing .bz-people-jobs-slot {
+  margin: 0 24px 10px;
+}
+.bz-people-panel.bz-people-jobs-showing .bz-people-body {
+  padding-top: 0;
+}
 .bz-people-jobs {
   display: grid;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 5px;
+  margin-top: 20px;
+  padding: 8px 12px;
   border: 1px solid var(--card-bd);
   border-left: 3px solid var(--acc);
   border-radius: 8px;
@@ -483,16 +493,7 @@
   background: var(--soft-neutral);
   color: var(--ink-mut);
 }
-/* 媒体徽章（issue 445）：「语音 26 条 · 4 分 · 图片 14 张」；空数据不渲染元素 */
-.bz-people-media-badge {
-  margin-top: 4px;
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 11px;
-  background: rgba(74, 125, 158, 0.14);
-  color: var(--ink-mut);
-}
+/* 媒体徽章（issue 445）退役于 455 评审：详情头不再出灰底小字，媒体计数归 dt-nums */
 
 /* —— 合并流程（issue 442） —— */
 .bz-people-merge-bar {
@@ -524,9 +525,9 @@
 .bz-people-panel-detail .bz-people-body {
   display: flex;
   flex-direction: column;
-  padding-top: 14px; /* 与详情头 margin-bottom 同值：头部上下间距一致（448） */
+  padding-top: 10px; /* 与详情头 margin-bottom 同值：头部上下间距一致（448） */
 }
-/* 详情头置顶：粘性定位（初始即在顶，内容溢出滚动时钉住不动） */
+/* 详情头置顶：粘性定位（初始即在顶，内容溢出滚动时钉住不动）；455 评审后压扁——图标右上、去水位印 */
 .bz-people-dt-head {
   position: sticky;
   top: 0;
@@ -535,80 +536,91 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-bottom: 14px;
-  padding: 12px 14px;
+  gap: 6px 14px;
+  margin: 15px 0 10px;
+  padding: 14px 18px;
   background: var(--card);
   border: 1px solid var(--card-bd);
   border-radius: 12px;
   box-shadow: 0 2px 8px var(--card-shadow);
 }
 .bz-people-dt-seal {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 50%;
   color: #fff;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
+  border: 2px solid var(--gold);
   box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
+}
+/* 头像（数据目录 avatar.<ext>；无文件回落首字印章）：圆形 + 金环 */
+.bz-people-dt-avatar {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--gold);
 }
 .bz-people-dt-id {
   min-width: 0;
 }
 .bz-people-dt-name {
-  font-size: 18px;
-  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 900;
   color: var(--ink-strong);
   letter-spacing: 1px;
   word-break: break-all;
 }
-.bz-people-dt-nums {
-  margin-left: auto;
-  display: flex;
-  gap: 20px;
-  text-align: center;
-}
-.bz-people-dt-n {
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-dt-t {
-  margin-top: 1px;
-  font-size: 10px;
-  color: var(--ink-mut);
-}
-.bz-people-dt-watermark {
-  flex: none;
-  padding: 4px 11px;
-  border: 2px solid var(--seal-ink);
-  border-radius: 6px;
-  color: var(--seal-ink);
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  transform: rotate(-3deg);
-  opacity: 0.85;
-}
-.bz-people-dt-watermark-todo {
-  border-style: dashed;
-  color: var(--ink-mut);
-  border-color: var(--ink-mut);
-  opacity: 0.7;
-}
-.bz-people-dt-actions {
-  flex-basis: 100%;
-  display: flex;
-  justify-content: flex-end;
+/* 名旁印签：手动档案的关系标签（无档案不出） */
+.bz-people-dt-tags {
+  display: inline-flex;
   gap: 6px;
 }
+.bz-people-dt-tag {
+  font-size: 11px;
+  color: var(--acc-deep);
+  border: 1px solid var(--acc);
+  opacity: 0.85;
+  border-radius: 99px;
+  padding: 1px 9px;
+  white-space: nowrap;
+}
+.bz-people-dt-id .bz-people-card-meta {
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--ink-mut);
+}
+.bz-people-dt-id .bz-people-card-meta b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* 图标工具条：右上角（不占整行）；朱色底 */
+.bz-people-dt-actions {
+  align-self: center;
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.bz-people-dt-actions .bz-people-icon-btn {
+  color: var(--acc-deep);
+  background: var(--soft);
+}
+@media (hover: hover) {
+  .bz-people-dt-actions .bz-people-icon-btn:hover {
+    background: var(--soft-neutral);
+  }
+}
 
-/* —— 折页册：展开折占主幅，收起折只露折脊 + 竖排引文（点折脊切换） ——
+/* —— 折页册：收起折只剩竖排书脊窄条，展开折占主幅（点书脊切换） ——
    详情态 body 是纵 flex：折页册 flex:1 拉长占满详情头以下的全部高度 */
 .bz-people-book {
   display: flex;
@@ -617,10 +629,10 @@
   min-height: 0;
 }
 .bz-people-leaf {
-  flex: 1;
+  flex: 0 0 44px; /* 收起折：窄书脊条（竖排折题） */
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   position: relative;
   background: var(--paper-fold);
   border: 1px solid var(--card-bd);
@@ -637,7 +649,7 @@
   border-radius: 0 10px 10px 0;
 }
 .bz-people-leaf-on {
-  flex: 2.8;
+  flex: 1 1 auto;
   cursor: default;
   background: var(--card);
   box-shadow: 0 6px 18px var(--card-shadow);
@@ -661,19 +673,23 @@
 .bz-people-leaf-on .bz-people-leaf-spine {
   background: linear-gradient(90deg, var(--paper-fold-2), transparent);
 }
+/* 折题竖排书脊（只留标题、顶对齐；展开折同样竖排） */
 .bz-people-leaf-head {
   flex: none;
+  width: 44px;
   display: flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 12px 10px 8px 20px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px 0 8px;
 }
 .bz-people-leaf-zh {
   font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink-2);
-  letter-spacing: 3px;
+  letter-spacing: 7px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
   white-space: nowrap;
 }
 .bz-people-leaf-on .bz-people-leaf-zh {
@@ -682,80 +698,150 @@
 .theme-dark .bz-people-leaf-on .bz-people-leaf-zh {
   color: var(--acc);
 }
-.bz-people-leaf-cnt {
-  font-size: 10px;
-  color: var(--ink-mut);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* 收起折的竖排引文（STKaiti 竖排；溢出裁切——全文展开后可见） */
-.bz-people-leaf-spill {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 10px 6px 12px 20px;
-  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
-  font-size: 13px;
-  line-height: 2.1;
-  letter-spacing: 0.2em;
-  color: var(--ink-2);
-  opacity: 0.85;
-}
 /* 展开折正文 */
 .bz-people-leaf-body {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   overflow-y: auto;
-  padding: 4px 16px 16px 20px;
+  padding: 10px 16px 16px 12px;
   font-size: 13px;
 }
 
-/* —— 画像 / 时间线（mini markdown 卡底；折内不再加卡片盒，直接排） —— */
-.bz-people-portrait {
+/* —— 画像 / 时间线（mini markdown 卡底；折内不再加卡片盒，直接排） ——
+   长文层次（455 评审拍板）：bz-md-* —— 印章小节头 / 条目行（日期签）/ 引文卡 */
+.bz-people-portrait,
+.bz-people-chronicle {
   font-size: 13px;
   line-height: 1.85;
   color: var(--ink);
 }
-.bz-people-portrait h4 {
-  margin: 12px 0 4px;
-  font-size: 14px;
+.bz-people-portrait .bz-md-sec,
+.bz-people-chronicle .bz-md-sec {
+  margin: 0 0 16px;
+}
+.bz-people-portrait .bz-md-sec-h,
+.bz-people-chronicle .bz-md-sec-h {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+.bz-people-portrait .bz-md-seal,
+.bz-people-chronicle .bz-md-seal {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--acc);
+  color: var(--on-acc);
+  font-family: 'STKaiti', 'KaiTi', serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.35), 0 1px 3px rgba(138, 52, 46, 0.3);
+}
+.bz-people-portrait .bz-md-sec-h h4,
+.bz-people-chronicle .bz-md-sec-h h4 {
+  margin: 0;
+  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+  font-size: 16px;
+  color: var(--ink-strong);
+  letter-spacing: 1px;
+}
+.theme-dark .bz-people-portrait .bz-md-sec-h h4,
+.theme-dark .bz-people-chronicle .bz-md-sec-h h4 {
+  color: var(--ink-strong);
+}
+.bz-people-portrait .bz-md-rule,
+.bz-people-chronicle .bz-md-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--card-bd);
+}
+.bz-people-portrait h5,
+.bz-people-chronicle h5 {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--acc-deep);
   letter-spacing: 0.5px;
 }
-.theme-dark .bz-people-portrait h4 {
-  color: var(--acc);
+.bz-people-portrait .bz-md-items,
+.bz-people-chronicle .bz-md-items {
+  display: flex;
+  flex-direction: column;
 }
-.bz-people-portrait h4:first-child {
-  margin-top: 0;
-}
-.bz-people-portrait h5 {
-  margin: 8px 0 4px;
+.bz-people-portrait .bz-md-it,
+.bz-people-chronicle .bz-md-it {
+  display: flex;
+  gap: 9px;
+  padding: 5px 0;
   font-size: 13px;
-  color: var(--ink-strong);
+  line-height: 1.75;
+  color: var(--ink);
+  align-items: baseline;
 }
-.bz-people-portrait ul {
-  margin: 4px 0;
-  padding-left: 18px;
+.bz-people-portrait .bz-md-it + .bz-md-it,
+.bz-people-chronicle .bz-md-it + .bz-md-it {
+  border-top: 1px dashed var(--card-bd);
 }
-.bz-people-portrait li {
-  margin: 2px 0;
+.bz-people-portrait .bz-md-mk,
+.bz-people-chronicle .bz-md-mk {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--acc);
+  opacity: 0.75;
 }
-.bz-people-portrait strong {
-  color: var(--ink-strong);
-}
-/* 画像「表达 DNA」的原话例句（issue 438 移植：模式后面跟证据） */
-.bz-people-portrait blockquote {
-  margin: 5px 0 9px;
-  padding: 6px 12px;
-  border-left: 3px solid var(--acc);
-  border-radius: 0 6px 6px 0;
-  background: var(--bg-weave2);
-}
-.bz-people-portrait blockquote p {
-  margin: 2px 0;
-  font-size: 12.5px;
+.bz-people-portrait .bz-md-date,
+.bz-people-chronicle .bz-md-date {
+  flex: none;
+  font-size: 11px;
   color: var(--ink-mut);
+  background: var(--soft);
+  border-radius: 99px;
+  padding: 1px 8px;
+  transform: translateY(-1px);
+}
+.bz-people-portrait .bz-md-tx b,
+.bz-people-portrait .bz-md-tx strong,
+.bz-people-chronicle .bz-md-tx b,
+.bz-people-chronicle .bz-md-tx strong,
+.bz-people-portrait > p strong,
+.bz-people-chronicle > p strong {
+  color: var(--acc-deep);
+}
+/* 原话例句卡（issue 438 移植：模式后面跟证据；455 改引文卡 + 大引号） */
+.bz-people-portrait .bz-md-quote,
+.bz-people-chronicle .bz-md-quote {
+  position: relative;
+  margin: 8px 0 8px 14px;
+  padding: 8px 12px 8px 14px;
+  border-left: 3px solid var(--acc);
+  background: var(--soft);
+  border-radius: 0 9px 9px 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.bz-people-portrait .bz-md-quote::before,
+.bz-people-chronicle .bz-md-quote::before {
+  content: '「';
+  position: absolute;
+  left: -14px;
+  top: -6px;
+  font-family: 'STKaiti', 'KaiTi', serif;
+  font-size: 20px;
+  color: var(--acc);
+  opacity: 0.8;
+}
+.bz-people-portrait .bz-md-quote p,
+.bz-people-chronicle .bz-md-quote p {
+  margin: 2px 0;
 }
 .bz-people-section-title {
   margin: 16px 0 6px;
@@ -792,6 +878,55 @@
   display: flex;
   flex-direction: column;
 }
+/* 交往事件按月折叠（455 评审）：月头收起，点开正文；月内大事件在上 */
+.bz-people-ev-months {
+  display: flex;
+  flex-direction: column;
+}
+.bz-people-ev-mon {
+  border-bottom: 1px solid var(--card-bd);
+}
+.bz-people-ev-mon:last-child {
+  border-bottom: none;
+}
+.bz-people-ev-mon-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.bz-people-ev-mon-plus {
+  color: var(--acc);
+  font-size: 14px;
+  font-weight: 700;
+  transition: transform 0.15s ease;
+}
+.bz-people-ev-mon-on .bz-people-ev-mon-plus {
+  transform: rotate(45deg);
+}
+.bz-people-ev-mon-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+.bz-people-ev-mon-cnt {
+  font-size: 11px;
+  color: var(--ink-mut);
+}
+.bz-people-ev-mon-body {
+  display: none;
+  padding: 0 2px 8px;
+}
+.bz-people-ev-mon-on .bz-people-ev-mon-body {
+  display: block;
+}
 .bz-people-event {
   display: flex;
   align-items: center;
@@ -824,41 +959,7 @@
   color: var(--ink-strong);
   font-weight: 600;
 }
-/* 关系时间线（大事记折；chronicle mini markdown 卡底） */
-.bz-people-chronicle {
-  font-size: 13px;
-  line-height: 1.85;
-  color: var(--ink);
-}
-.bz-people-chronicle h4 {
-  margin: 12px 0 4px;
-  font-size: 14px;
-  color: var(--acc-deep);
-  letter-spacing: 0.5px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--card-bd);
-}
-.theme-dark .bz-people-chronicle h4 {
-  color: var(--acc);
-}
-.bz-people-chronicle h4:first-child {
-  margin-top: 0;
-}
-.bz-people-chronicle h5 {
-  margin: 8px 0 4px;
-  font-size: 13px;
-  color: var(--ink-strong);
-}
-.bz-people-chronicle ul {
-  margin: 4px 0;
-  padding-left: 18px;
-}
-.bz-people-chronicle li {
-  margin: 2px 0;
-}
-.bz-people-chronicle strong {
-  color: var(--ink-strong);
-}
+/* 关系时间线（纪事折上半；排版与画像共用 bz-md-* 层次体系） */
 
 /* —— 互动数据（issue 440；447 收进「数据」折） —— */
 .bz-people-insights {
@@ -1514,16 +1615,21 @@
   .bz-people-leaf-spine {
     display: none;
   }
-  .bz-people-leaf-head {
-    padding: 10px 14px 8px;
-  }
-  .bz-people-leaf-spill {
-    display: none; /* 窄容器不显引文，折脊行即 tab */
+  /* 窄容器退化纵向手风琴：折仍是横排（竖排折题条在左），收起折即窄条行 */
+  .bz-people-leaf,
+  .bz-people-leaf-on {
+    flex: none;
   }
   .bz-people-leaf:not(.bz-people-leaf-on) {
     cursor: pointer;
   }
+  .bz-people-leaf-head {
+    padding: 8px 0;
+  }
   .bz-people-leaf-on {
+    display: flex;
+  }
+  .bz-people-leaf-on .bz-people-leaf-body {
     flex: 1;
   }
   .bz-people-leaf-body {
@@ -1580,13 +1686,6 @@
     padding: 10px 12px;
     gap: 10px;
   }
-  .bz-people-dt-nums {
-    flex-basis: 100%;
-    justify-content: flex-start;
-  }
-  .bz-people-dt-watermark {
-    order: 3;
-  }
   .bz-people-dt-actions {
     gap: 6px;
   }
@@ -1597,4 +1696,80 @@
   .bz-people-ds-row {
     flex-wrap: wrap;
   }
+}
+
+/* ==================== 朱砂戏台 · 皮肤（455 评审采纳） ====================
+ * 晕染纸面 + 金线缝脊 + 展开折朱带；详情头印章落影。 */
+
+/* 书脊缝线：金线虚缀沿收起折内缘 */
+.bz-people-leaf .bz-people-leaf-spine::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: repeating-linear-gradient(180deg, var(--gold) 0 5px, transparent 5px 11px);
+  opacity: 0.4;
+}
+
+/* 展开折朱带：折首一线朱红渐隐（压在正文顶部） */
+.bz-people-leaf-on .bz-people-leaf-body::before {
+  content: '';
+  display: block;
+  height: 3px;
+  margin: -10px -16px 12px -12px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--acc), rgba(168, 67, 60, 0));
+}
+
+/* 详情头印章落影 */
+.bz-people-dt-seal {
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 1px 4px rgba(138, 52, 46, 0.35);
+}
+
+/* 纪事折分隔题头：编年时间线 ↓ 按月纪事 */
+.bz-people-ev-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 6px;
+  color: var(--ink-mut);
+  font-size: 11.5px;
+  letter-spacing: 2px;
+}
+.bz-people-ev-divider::before,
+.bz-people-ev-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--card-bd);
+}
+
+/* 头像章（455 评审）：封面卡右上以照片为印——印环四态沿用印章语义（金环已画 / 虚环待画） */
+.bz-people-fold-ava {
+  width: 42px;
+  height: 42px;
+  max-width: none;
+  padding: 0;
+  border-radius: 50%;
+  border-color: var(--gold);
+  overflow: hidden;
+  transform: rotate(0deg);
+  opacity: 1;
+}
+.bz-people-fold-ava img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bz-people-fold-ava.bz-people-seal-todo {
+  border-style: dashed;
+  border-color: var(--ink-mut);
+  opacity: 0.8;
+}
+/* 数据源行头像照片变体 */
+.bz-people-ds-ava-img {
+  object-fit: cover;
 }

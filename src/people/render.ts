@@ -8,8 +8,7 @@
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
-import { bondOf, personOf } from './types';
-import type { ImportRecord, PersonEntry, PersonProfile } from './types';
+import type { FaceEvent, ImportRecord, PersonEntry, PersonProfile } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
 
@@ -129,6 +128,19 @@ export function formatDuration(sec: number): string {
   if (sec < 60) return `${Math.round(sec)} 秒`;
   if (sec < 3600) return `${Math.round(sec / 60)} 分`;
   return `${(sec / 3600).toFixed(1)} 时`;
+}
+
+/** 库外路径 → 可加载的资源 URI。插件端：绝对路径走 app://local/（Obsidian 桌面协议）；
+ *  评审壳：window.BZW_MEDIA_BASE 有值时（预览服务注入）走服务路由，浏览器才能加载库外图片。 */
+export function localResourceUri(path: string): string {
+  const norm = path.replace(/\\/g, '/');
+  if (typeof window !== 'undefined') {
+    const base = (window as { BZW_MEDIA_BASE?: string }).BZW_MEDIA_BASE;
+    if (base) return base + encodeURI(norm).replace(/#/g, '%23').replace(/\?/g, '%3F');
+  }
+  if (/^(https?:)?\/\//.test(norm) || norm.startsWith('/')) return norm;
+  const rel = norm.replace(/^[A-Za-z]:/, '').replace(/^\/+/, '');
+  return `app://local/${encodeURI(rel).replace(/#/g, '%23').replace(/\?/g, '%3F')}`;
 }
 
 /** markdown 去饰取纯文本（折脊引文用）：剥 #/>/-/** 与围栏，压成一行 */
@@ -278,9 +290,15 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
       el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })),
     el('span', 'bz-people-jobs-pct', text(`${pct}%`)),
   ]));
-  block.appendChild(el('div', 'bz-people-jobs-main', text(s.message || jobsFallbackMessage(s.status, s.name))));
-  block.appendChild(el('div', 'bz-people-jobs-queue', text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
-  block.appendChild(el('div', 'bz-people-jobs-note', text('生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。')));
+  // 455 评审：状态一行说清，不读引擎长文案（批次细节归进度条，错误细节归错误行）
+  const next = Math.min(s.batchesDone + 1, s.batchesTotal);
+  const main = s.status === 'error'
+    ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
+    : s.status === 'paused' ? '已暂停'
+    : s.status === 'interrupted' ? '上次生成中断了'
+    : s.status === 'done' ? '脸谱已生成'
+    : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+  block.appendChild(el('div', 'bz-people-jobs-main', text(main)));
   const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
@@ -321,6 +339,8 @@ export interface FoldCardOpts {
   mergePick: boolean;
   /** 生成引擎任务（issue 451）：印章四态的来源；无任务 = 按脸谱水位判已画 / 未画 */
   job?: FoldCardJob | null;
+  /** 头像文件路径（有则卡面右上出照片章，无则文字印） */
+  avatar?: string;
 }
 
 // ---------------- 折子印章四态（issue 451：未画谱 / 画谱中 / 画谱中断 / 已画谱） ----------------
@@ -420,8 +440,20 @@ export function foldSealNode(p: PersonEntry, job: FoldCardJob | null): HTMLEleme
   return b;
 }
 
+/** 头像章（455 评审）：封面卡右上以照片为印，四态走印环（金环 = 已画，虚环 = 待画）——动作语义与 foldSealNode 同一单源 */
+function foldAvaNode(p: PersonEntry, seal: ReturnType<typeof foldSeal>, avatar: string): HTMLElement {
+  const b = el('button', `bz-people-seal bz-people-seal-${seal.state} bz-people-fold-ava`, {
+    'data-people-seal-act': seal.action.kind,
+    'aria-label': `${seal.action.label}：${p.name || p.id}`,
+    title: seal.title,
+  }) as HTMLButtonElement;
+  b.type = 'button';
+  b.appendChild(el('img', '', { src: localResourceUri(avatar), alt: p.name }));
+  return b;
+}
+
 /**
- * 折子封面卡（issue 447 / 451）：竖排姓名 + 关系标签 + 消息量 + 修复印章（四态）。
+ * 折子封面卡（issue 447 / 451）：竖排姓名 + 关系标签 + 消息量 + 印章（四态；有头像时印章即照片章）。
  * 水位 = lastProcessedTs（已画到的提炼锚点）；印章四态与动作见 foldSeal。
  * 卡面不放动作（448：合并 / 删除收进详情头图标工具条）——印章本身即入口，不新增元素。
  */
@@ -432,15 +464,17 @@ export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
   const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
   const rel = (p.profile?.tags ?? []).filter(Boolean)[0] ?? '';
   const label = mediaLabel(opts.media);
+  const seal = foldSeal(p, opts.job ?? null);
   const card = el('div', 'bz-people-fold', [
     el('div', 'bz-people-fold-inner', [
-      foldSealNode(p, opts.job ?? null),
+      opts.avatar ? foldAvaNode(p, seal, opts.avatar) : foldSealNode(p, opts.job ?? null),
       el('div', 'bz-people-fold-title vt', { title: p.name }, text(vtName(p.name))),
       // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
       el('div', 'bz-people-fold-who', text(rel || (span ? span : '新折'))),
       el('div', 'bz-people-fold-meta', text([
         total ? `${formatCount(total)} 条` : '尚无消息',
         label,
+        seal.state === 'done' && p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs).slice(2)}` : '',
       ].filter(Boolean).join(' · '))),
     ]),
   ]);
@@ -467,14 +501,13 @@ export function wallEmpty(): HTMLElement {
 
 // ---------------- 详情（折页册） ----------------
 
-/** 折 id（issue 455 四折）：p = 卷一《其人》，b = 卷二《我们》；数据统计与档案已改独立弹窗 */
-export type FoldId = 'p' | 'b' | 'e' | 'c';
+/** 折 id（issue 455 三折，评审拍板合并）：p = 卷一《其人》，b = 卷二《相交》，e = 《纪事》（编年 + 按月事件）；统计与档案为详情头弹窗 */
+export type FoldId = 'p' | 'b' | 'e';
 
 const FOLD_TITLES: Array<[FoldId, string, string]> = [
-  ['p', '其人', '卷一 · 其人画像与代表原话'],
-  ['b', '我们', '卷二 · 我们关系画像'],
-  ['e', '事件', '交往事件与随手记'],
-  ['c', '大事记', '关系时间线'],
+  ['p', '其人', '卷一 · 人物画像与代表原话'],
+  ['b', '相交', '卷二 · 关系画像'],
+  ['e', '纪事', '关系时间线（编年）+ 交往事件（按月）'],
 ];
 
 export interface FoldDetailOpts {
@@ -489,13 +522,13 @@ export interface FoldDetailHeadOpts {
    * 点它不再从第 1 批重烧——详情头本来就是把用户引向重烧的入口之一。
    */
   job?: FoldCardJob | null;
+  /** 头像文件绝对路径（数据目录 avatar.<ext>；缺省回落首字印章） */
+  avatar?: string;
 }
 
-/** 详情头：印章字 + 名 + meta + 统计 + 水位印 + 图标工具条（画脸谱 / 继续生成 / 互动统计 / 补充背景 / 返回列表） */
+/** 详情头（455 评审采纳「居家档案型」）：圆照金环（无则首字印）+ 名 + 档案印签 + 数字下地的一行 meta + 朱色图标工具条 */
 export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-  const label = mediaLabel(media);
-  const voice = media?.voiceCount ?? 0;
   const job = opts.job && opts.job.status !== 'done' ? opts.job : null;
   const action = job
     ? iconButton('refresh-cw', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', {
@@ -508,26 +541,31 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
     : opts.canGenerate
       ? iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })
       : null;
+  // 名旁印签：手动档案的关系标签（无档案不出，绝不拿 AI 编）
+  const tags = (p.profile?.tags ?? []).filter(Boolean).slice(0, 3);
+  // meta 一行：数字下地加重（H1 拍板），语音/图片等明细归「互动统计」弹窗
+  const meta = el('div', 'bz-people-card-meta');
+  if (total) {
+    meta.appendChild(textEl('b', formatCount(total)));
+    meta.appendChild(text(` 条消息 · ${p.imports.length} 次导入`));
+    if (p.digest) meta.appendChild(text(` · 脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}`));
+  } else meta.appendChild(text('尚无导入'));
+  const id = el('div', 'bz-people-dt-id', [
+    el('div', 'bz-people-dt-name', [
+      text(p.name),
+      ...(tags.length ? [el('span', 'bz-people-dt-tags', tags.map((t) => el('span', 'bz-people-dt-tag', [text(t)])))] : []),
+    ]),
+    meta,
+  ]);
   return el('div', 'bz-people-dt-head', [
-    el('div', 'bz-people-dt-seal', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-    el('div', 'bz-people-dt-id', [
-      el('div', 'bz-people-dt-name', text(p.name)),
-      el('div', 'bz-people-card-meta', text([
-        total ? `${formatCount(total)} 条消息 · ${p.imports.length} 次导入` : '尚无导入',
-        p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : '脸谱未生成',
-      ].join(' · '))),
-      ...(label ? [el('div', 'bz-people-media-badge', text(label))] : []),
-    ]),
-    el('div', 'bz-people-dt-nums', [
-      el('div', '', [el('div', 'bz-people-dt-n', text(formatCount(total))), el('div', 'bz-people-dt-t', text('消息'))]),
-      el('div', '', [el('div', 'bz-people-dt-n', text(voice ? String(voice) : '—')), el('div', 'bz-people-dt-t', text(voice ? `语音 · ${formatDuration(media?.voiceTotalSec ?? 0)}` : '语音'))]),
-      el('div', '', [el('div', 'bz-people-dt-n', text(media?.imageCount ? String(media.imageCount) : '—')), el('div', 'bz-people-dt-t', text('图片'))]),
-    ]),
-    p.lastProcessedTs
-      ? el('div', 'bz-people-dt-watermark', { title: '脸谱已提炼到这天的消息；之后的新消息再导入会增量补画' }, text(`已画到 ${formatDay(p.lastProcessedTs)}`))
-      : el('div', 'bz-people-dt-watermark bz-people-dt-watermark-todo', text('未画脸谱')),
+    opts.avatar
+      ? el('img', 'bz-people-dt-avatar', { src: localResourceUri(opts.avatar), alt: p.name })
+      : el('div', 'bz-people-dt-seal', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
+    id,
     el('div', 'bz-people-dt-actions', [
       ...(action ? [action] : []),
+      // 455 评审：记一笔自纪事折抽出，独立弹窗，入口在互动统计之前
+      iconButton('pencil', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-note-open': '', 'aria-label': '记一笔', title: '记一笔' }),
       // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
       iconButton('bar-chart-3', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-stats-open': '', 'aria-label': '互动统计', title: '互动统计' }),
       iconButton('contact', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-prof-open': '', 'aria-label': '补充背景', title: '补充背景' }),
@@ -536,40 +574,27 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
   ]);
 }
 
-/** 折页册（issue 455 四折）；fold = 当前展开折，其余收起显竖排引文 */
-export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<FoldId, HTMLElement[]>, spills: Record<FoldId, string>): HTMLElement {
+/** 折页册（issue 455 四折）；折题竖排成窄书脊条，展开折正文占主幅（点书脊切换） */
+export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<FoldId, HTMLElement[]>): HTMLElement {
   const book = el('div', 'bz-people-book', { 'data-people-book': '' });
   for (const [id, title] of FOLD_TITLES) {
     const on = opts.fold === id;
-    // 切换钩子挂整片折页（收起折点竖排引文区也能切）；展开折不带——防吞折内按钮点击
+    // 切换钩子挂整片折页（收起折点书脊也能切）；展开折不带——防吞折内按钮点击
     const leaf = el('div', `bz-people-leaf${on ? ' bz-people-leaf-on' : ''}`, on
       ? { 'data-people-leaf': id }
       : { 'data-people-leaf': id, 'data-people-leaf-head': id });
     leaf.appendChild(el('div', 'bz-people-leaf-spine', { 'aria-hidden': 'true' }));
     leaf.appendChild(el('div', 'bz-people-leaf-head', [
       el('span', 'bz-people-leaf-zh', text(title)),
-      el('span', 'bz-people-leaf-cnt', text(spillMeta(p, id))),
     ]));
     if (on) {
       const body = el('div', 'bz-people-leaf-body');
       for (const node of bodies[id] ?? []) body.appendChild(node);
       leaf.appendChild(body);
-    } else {
-      leaf.appendChild(el('div', 'bz-people-leaf-spill vt', text(spills[id] || title)));
     }
     book.appendChild(leaf);
   }
   return book;
-}
-
-/** 折脊 meta 小字（各折条数概览） */
-function spillMeta(p: PersonEntry, id: FoldId): string {
-  switch (id) {
-    case 'p': return personOf(p.digest) ? '修' : '空';
-    case 'b': return bondOf(p.digest) ? '修' : '空';
-    case 'e': return `${p.digest?.events.length ?? 0} 事${(p.manualEvents?.length ?? 0) ? ` · ${p.manualEvents!.length} 记` : ''}`;
-    case 'c': return p.digest?.chronicle ? '编年' : '空';
-  }
 }
 
 /** 档案是否至少填了一项（决定档案折内容） */
@@ -620,24 +645,47 @@ export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
   return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
 }
 
-/** 事件折正文：交往事件 + 随手记（含录入行；today = 录入行默认日期） */
-export function foldEventsBody(p: PersonEntry, noteAdd: boolean, today: string): HTMLElement[] {
+/** 纪事折正文（455 评审拍板合并）：编年时间线在前，按月交往事件在后，随手记列表收尾（录入行已抽成详情头「记一笔」弹窗） */
+export function foldEventsBody(p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = [];
+  if (p.digest?.chronicle) {
+    out.push(el('div', 'bz-people-chronicle', [miniMarkdown(p.digest.chronicle)]));
+    out.push(el('div', 'bz-people-ev-divider', [el('span', '', [text('纪事 · 按月')])]));
+  }
   if (p.digest?.events.length) {
-    const events = el('div', 'bz-people-events');
+    // 按月分组（升序）：月内大事件（major）在上、日常在下；月组默认收起，点头部展开
+    const byMonth = new Map<string, FaceEvent[]>();
     for (const ev of p.digest.events) {
-      events.appendChild(el('div', `bz-people-event${ev.kind === 'major' ? ' bz-people-event-major' : ''}`, [
-        el('span', 'bz-people-event-ts', text(ev.ts)),
-        el('span', 'bz-people-event-dot'),
-        el('span', 'bz-people-event-summary', text(ev.summary)),
-      ]));
+      const month = ev.ts.slice(0, 7);
+      const list = byMonth.get(month);
+      if (list) list.push(ev);
+      else byMonth.set(month, [ev]);
     }
-    out.push(events);
-  } else {
-    out.push(el('div', 'bz-people-empty-hint', text('还没有交往事件。导入聊天生成脸谱后会提炼出来。')));
+    const months = el('div', 'bz-people-ev-months');
+    for (const [month, evs] of [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      evs.sort((a, b) => (a.kind === 'major' ? 0 : 1) - (b.kind === 'major' ? 0 : 1));
+      const group = el('div', 'bz-people-ev-mon');
+      group.appendChild(el('button', 'bz-people-ev-mon-head', { 'data-people-ev-mon': '', 'aria-label': `展开 ${month}` }, [
+        el('span', 'bz-people-ev-mon-plus', text('+')),
+        el('span', 'bz-people-ev-mon-name', text(month)),
+        el('span', 'bz-people-ev-mon-cnt', text(`${evs.length} 条`)),
+      ]));
+      const body = el('div', 'bz-people-ev-mon-body');
+      for (const ev of evs) {
+        body.appendChild(el('div', `bz-people-event${ev.kind === 'major' ? ' bz-people-event-major' : ''}`, [
+          el('span', 'bz-people-event-ts', text(ev.ts)),
+          el('span', 'bz-people-event-dot'),
+          el('span', 'bz-people-event-summary', text(ev.summary)),
+        ]));
+      }
+      group.appendChild(body);
+      months.appendChild(group);
+    }
+    out.push(months);
+  } else if (!out.length) {
+    out.push(el('div', 'bz-people-empty-hint', text('还没有交往纪事。导入聊天生成脸谱后会提炼出来。')));
   }
   const evs = p.manualEvents ?? [];
-  if (noteAdd) out.push(noteAddRow(today));
   if (evs.length) {
     out.push(el('div', 'bz-people-section-title', text('随手记')));
     const list = el('div', 'bz-people-notes');
@@ -650,15 +698,7 @@ export function foldEventsBody(p: PersonEntry, noteAdd: boolean, today: string):
     }
     out.push(list);
   }
-  out.push(el('div', 'bz-people-prof-entry', [
-    ...(noteAdd ? [] : [button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '记一笔', { 'data-people-note-add': '' })]),
-  ]));
   return out;
-}
-
-/** 大事记折正文：chronicle mini markdown（空态兜底） */
-export function foldChronicleBody(mdRoot: HTMLElement | null): HTMLElement[] {
-  return mdRoot ? [mdRoot] : [el('div', 'bz-people-empty-hint', text('还没有关系时间线。重画脸谱后会生成。'))];
 }
 
 /** 统计弹窗正文（issue 455 自「数据」折迁来）：互动数据卡 + 占位（含导入记录 meta 与旧数据提示） */
@@ -774,6 +814,7 @@ export function profileView(prof: PersonProfile | undefined): HTMLElement {
   if (prof?.note?.trim()) addRow('备注', prof.note.trim());
   rows.push(el('div', 'bz-people-prof-actions', [
     button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '编辑档案', { 'data-people-prof-edit': '' }),
+    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', 'AI 补充', { 'data-people-prof-ai': '', title: 'AI 读交往素材推断缺失字段，填进表单待你确认' }),
   ]));
   return el('div', 'bz-people-prof', rows);
 }
@@ -839,13 +880,14 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
     ]),
     grid('备注', profInput(prof?.note ?? '', '一句话备注', ['data-people-prof-field', 'note'])),
     el('div', 'bz-people-prof-actions', [
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', 'AI 补充', { 'data-people-prof-ai': '', title: 'AI 只填空白字段，填完你可检查再保存' }),
       button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '保存档案', { 'data-people-prof-save': '' }),
       button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '取消', { 'data-people-prof-cancel': '' }),
     ]),
   ]);
 }
 
-/** 补充背景弹窗正文（issue 455 自「档案」折迁来）：编辑态/有档显卡，全空给入口行 */
+/** 补充背景弹窗正文（issue 455 自「档案」折迁来）：编辑态/有档显卡，全空给入口行；AI 补充按钮三态常驻 */
 export function profilePopBody(p: PersonEntry, editing: boolean): HTMLElement[] {
   const out: HTMLElement[] = [];
   const hasProf = profileFilled(p.profile);
@@ -854,6 +896,7 @@ export function profilePopBody(p: PersonEntry, editing: boolean): HTMLElement[] 
     out.push(el('div', 'bz-people-prof-entry bz-people-prof-entry-solo', [
       el('span', 'bz-people-prof-entry-hint', text('聊天之外的也可以记：')),
       button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '补人物档案', { 'data-people-prof-new': '' }),
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', 'AI 补充', { 'data-people-prof-ai': '', title: 'AI 读交往素材推断档案，填进表单待你确认' }),
     ]));
   }
   return out;
@@ -899,10 +942,24 @@ export function noteAddRow(today: string): HTMLElement {
 // ---------------- 迷你 markdown（受限语法，ADR-0191 §4；纯 DOM 构建） ----------------
 
 /** 只认：## / ### 小节、- 列表、> 引用块、**粗体**、普通段落。其余语法原样输出文本。 */
+/** 长文层次（455 评审拍板）：## 小节印章字——按小节语义取字，未登记的按序号章 */
+const MD_SEALS: Record<string, string> = {
+  画像速写: '速', 性格与思维: '性', '表达 DNA': '言', 兴趣爱好: '趣', 价值观与红线: '则',
+  习惯: '常', 情感倾向: '情', 关系定性: '定', 互动结构: '动', 演变阶段: '变',
+  我们的语言: '语', 共同记忆: '忆', 冲突与修复: '克', 未竟之事: '未', 经营建议: '营',
+};
+const MD_CN_NO = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+/** 条目行首日期签：`（2026-03-05）` / `（2026-03-05 至 03-07）` 之类整体抽成签 */
+const MD_DATE_RE = /^（([-\d至~\/\s年]+?)）\s*/;
+
 export function miniMarkdown(md: string): HTMLElement {
   const root = el('div', 'bz-people-portrait');
-  let list: HTMLUListElement | null = null;
-  let quote: HTMLQuoteElement | null = null;
+  let sec: HTMLElement | null = null;
+  let body: HTMLElement | null = null;
+  let list: HTMLElement | null = null;
+  let quote: HTMLElement | null = null;
+  let no = 0;
   const appendInline = (elm: HTMLElement, str: string): void => {
     const parts = str.split(/\*\*(.+?)\*\*/g);
     parts.forEach((part, i) => {
@@ -911,22 +968,58 @@ export function miniMarkdown(md: string): HTMLElement {
       else elm.appendChild(document.createTextNode(part));
     });
   };
+  // `## 标题` → 小节块：印章字 + 标题 + 渐隐细线，长文切成可扫读的段
+  const openSec = (title: string): void => {
+    sec = document.createElement('section');
+    sec.className = 'bz-md-sec';
+    const head = document.createElement('div');
+    head.className = 'bz-md-sec-h';
+    const seal = document.createElement('span');
+    seal.className = 'bz-md-seal';
+    seal.textContent = MD_SEALS[title] ?? MD_CN_NO[no] ?? '·';
+    const rule = document.createElement('i');
+    rule.className = 'bz-md-rule';
+    head.append(seal, textEl('h4', title), rule);
+    body = document.createElement('div');
+    body.className = 'bz-md-sec-b';
+    sec.append(head, body);
+    root.appendChild(sec);
+    list = null;
+    quote = null;
+    no++;
+  };
   for (const raw of String(md ?? '').replace(/```+/g, '').split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) { list = null; quote = null; continue; }
-    if (line.startsWith('### ')) { list = null; quote = null; root.appendChild(textEl('h5', line.slice(4))); continue; }
-    if (line.startsWith('## ')) { list = null; quote = null; root.appendChild(textEl('h4', line.slice(3))); continue; }
+    if (line.startsWith('## ')) { openSec(line.slice(3).trim()); continue; }
+    if (!sec) openSec('概述');
+    if (line.startsWith('### ')) {
+      list = null; quote = null;
+      body!.appendChild(textEl('h5', line.slice(4)));
+      continue;
+    }
     if (line.startsWith('- ')) {
       quote = null;
-      if (!list) { list = document.createElement('ul'); root.appendChild(list); }
-      const li = document.createElement('li');
-      appendInline(li, line.slice(2));
-      list.appendChild(li);
+      if (!list) { list = document.createElement('div'); list.className = 'bz-md-items'; body!.appendChild(list); }
+      const it = document.createElement('div');
+      it.className = 'bz-md-it';
+      it.appendChild(el('span', 'bz-md-mk'));
+      let rest = line.slice(2).trim();
+      const m = rest.match(MD_DATE_RE);
+      if (m) {
+        it.appendChild(el('span', 'bz-md-date', [text(m[1])]));
+        rest = rest.slice(m[0].length);
+      }
+      const tx = document.createElement('span');
+      tx.className = 'bz-md-tx';
+      appendInline(tx, rest);
+      it.appendChild(tx);
+      list.appendChild(it);
       continue;
     }
     if (line.startsWith('>')) {
       list = null;
-      if (!quote) { quote = document.createElement('blockquote'); root.appendChild(quote); }
+      if (!quote) { quote = document.createElement('div'); quote.className = 'bz-md-quote'; body!.appendChild(quote); }
       const p = document.createElement('p');
       appendInline(p, line.slice(1).replace(/^\s/, ''));
       quote.appendChild(p);
@@ -936,7 +1029,7 @@ export function miniMarkdown(md: string): HTMLElement {
     quote = null;
     const p = document.createElement('p');
     appendInline(p, line);
-    root.appendChild(p);
+    body!.appendChild(p);
   }
   return root;
 }
@@ -952,6 +1045,8 @@ export interface DsRowState {
   previewCount: number;
   newCount: number;
   processedTs: number | null;
+  /** 头像文件路径（有则行首出照片，无则首字圆章） */
+  avatar?: string | null;
 }
 
 export interface DsModalState {
@@ -992,7 +1087,9 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}`;
   return el('label', cls, [
     cb,
-    el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+    row.avatar
+      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: localResourceUri(row.avatar), alt: row.name })
+      : el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
     el('div', 'bz-people-ds-main', [
       el('div', 'bz-people-ds-name', text(row.name + (row.isGroup ? '（群）' : ''))),
       el('div', 'bz-people-ds-meta', text([

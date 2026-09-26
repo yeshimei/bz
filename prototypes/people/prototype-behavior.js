@@ -1,4 +1,4 @@
-/* 源指纹 6fcb701f404cee2e · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aae39f8ded7babf4 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -4044,8 +4044,8 @@ var BZW_people = (() => {
     isMobile: typeof window !== "undefined" && window.innerWidth <= 768
   };
   function setIcon(container, iconId) {
-    var _a;
-    const d = typeof window !== "undefined" && ((_a = window.BZW_PEOPLE_ICONS) == null ? void 0 : _a[iconId]) || "";
+    var _a2;
+    const d = typeof window !== "undefined" && ((_a2 = window.BZW_PEOPLE_ICONS) == null ? void 0 : _a2[iconId]) || "";
     if (!d) return;
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -4125,8 +4125,8 @@ var BZW_people = (() => {
       this.listeners.clear();
     }
     emit(evt, ...args) {
-      var _a;
-      for (const cb of (_a = this.listeners.get(evt)) != null ? _a : []) cb(...args);
+      var _a2;
+      for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(...args);
     }
   };
   var FakeWorkspace = class {
@@ -4144,9 +4144,9 @@ var BZW_people = (() => {
     }
     /** 触发 file-open（壳演示钩子） */
     fileOpen(path) {
-      var _a;
+      var _a2;
       const file = path ? { path } : null;
-      for (const cb of (_a = this.handlers.get("file-open")) != null ? _a : []) cb(file);
+      for (const cb of (_a2 = this.handlers.get("file-open")) != null ? _a2 : []) cb(file);
     }
   };
   var FakeApp = class {
@@ -4211,10 +4211,10 @@ var BZW_people = (() => {
     return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
   }
   function collectMediaStats(messages) {
-    var _a;
+    var _a2;
     const out = emptyMediaStats();
     for (const m of messages) {
-      const mat = parseMediaTag((_a = m == null ? void 0 : m.text) != null ? _a : "");
+      const mat = parseMediaTag((_a2 = m == null ? void 0 : m.text) != null ? _a2 : "");
       if (!mat) continue;
       if (mat.kind === "voice") {
         out.voiceCount++;
@@ -4325,9 +4325,9 @@ var BZW_people = (() => {
     shake: "bz-notice--out-fade"
   };
   function noticePref(key) {
-    var _a;
+    var _a2;
     try {
-      const v = (_a = tryGetSettings()) == null ? void 0 : _a[key];
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
       return typeof v === "string" ? v : void 0;
     } catch (e) {
       return void 0;
@@ -4669,8 +4669,8 @@ var BZW_people = (() => {
     panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
   }
   function unregisterPanelEsc(id) {
-    var _a;
-    (_a = panelEscHandles.get(id)) == null ? void 0 : _a.unregister();
+    var _a2;
+    (_a2 = panelEscHandles.get(id)) == null ? void 0 : _a2.unregister();
     panelEscHandles.delete(id);
   }
 
@@ -4738,8 +4738,8 @@ var BZW_people = (() => {
   }
   var fileTaskQueues = /* @__PURE__ */ new Map();
   function enqueueFileTask(filePath, task) {
-    var _a;
-    const prev = (_a = fileTaskQueues.get(filePath)) != null ? _a : Promise.resolve();
+    var _a2;
+    const prev = (_a2 = fileTaskQueues.get(filePath)) != null ? _a2 : Promise.resolve();
     const run = prev.then(task, task);
     const tail = run.then(
       () => void 0,
@@ -4790,9 +4790,9 @@ var BZW_people = (() => {
     }
   }
   function notifyBackup(filePath, backupPath, cause) {
-    var _a;
+    var _a2;
     const now = Date.now();
-    if (now - ((_a = corruptNotifyAt.get(filePath)) != null ? _a : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
+    if (now - ((_a2 = corruptNotifyAt.get(filePath)) != null ? _a2 : 0) < CORRUPT_NOTIFY_DEDUPE_MS) return;
     corruptNotifyAt.set(filePath, now);
     try {
       const name = baseNameOf(filePath);
@@ -4825,8 +4825,8 @@ var BZW_people = (() => {
       }
     }
     async function handleCorrupt(app, err, raw) {
-      var _a;
-      if (((_a = opts.onCorrupt) == null ? void 0 : _a.call(opts, filePath, err)) === false) {
+      var _a2;
+      if (((_a2 = opts.onCorrupt) == null ? void 0 : _a2.call(opts, filePath, err)) === false) {
         return null;
       }
       const backupPath = await backupOriginal(app, filePath, raw);
@@ -4896,12 +4896,12 @@ var BZW_people = (() => {
 
   // src/people/types.ts
   function personOf(d) {
-    var _a, _b;
-    return (_b = (_a = d == null ? void 0 : d.person) != null ? _a : d == null ? void 0 : d.portrait) != null ? _b : "";
+    var _a2, _b2;
+    return (_b2 = (_a2 = d == null ? void 0 : d.person) != null ? _a2 : d == null ? void 0 : d.portrait) != null ? _b2 : "";
   }
   function bondOf(d) {
-    var _a;
-    return (_a = d == null ? void 0 : d.bond) != null ? _a : "";
+    var _a2;
+    return (_a2 = d == null ? void 0 : d.bond) != null ? _a2 : "";
   }
   function emptyPeopleData() {
     return { version: 1, people: [] };
@@ -4966,16 +4966,16 @@ var BZW_people = (() => {
     /** 追加一条随手记（按日期序保持有序） */
     async addManualEvent(id, ev) {
       await this.mutate(id, (p) => {
-        var _a;
-        ((_a = p.manualEvents) != null ? _a : p.manualEvents = []).push(ev);
+        var _a2;
+        ((_a2 = p.manualEvents) != null ? _a2 : p.manualEvents = []).push(ev);
         p.manualEvents.sort((a, b) => a.ts.localeCompare(b.ts));
       });
     }
     /** 删除一条随手记 */
     async removeManualEvent(id, evId) {
       await this.mutate(id, (p) => {
-        var _a;
-        p.manualEvents = ((_a = p.manualEvents) != null ? _a : []).filter((e) => e.id !== evId);
+        var _a2;
+        p.manualEvents = ((_a2 = p.manualEvents) != null ? _a2 : []).filter((e) => e.id !== evId);
       });
     }
     /** 记录增量提炼锚点（毫秒时间戳） */
@@ -4992,7 +4992,7 @@ var BZW_people = (() => {
     async mergeInto(fromId, toId) {
       if (fromId === toId) return;
       await enqueueFileTask(this.filePath, async () => {
-        var _a, _b, _c, _d;
+        var _a2, _b2, _c, _d;
         const store2 = this.open();
         const data = await store2.read();
         const from = data.people.find((p) => p.id === fromId);
@@ -5000,7 +5000,7 @@ var BZW_people = (() => {
         if (!from || !to) throw new Error(`人物不存在: ${!from ? fromId : toId}`);
         to.imports.push(...from.imports);
         to.imports.sort((a, b) => a.importedAt.localeCompare(b.importedAt));
-        to.manualEvents = [...(_a = to.manualEvents) != null ? _a : [], ...(_b = from.manualEvents) != null ? _b : []].sort((a, b) => a.ts.localeCompare(b.ts));
+        to.manualEvents = [...(_a2 = to.manualEvents) != null ? _a2 : [], ...(_b2 = from.manualEvents) != null ? _b2 : []].sort((a, b) => a.ts.localeCompare(b.ts));
         if (!to.profile && from.profile) to.profile = from.profile;
         if (!to.digest && from.digest) to.digest = from.digest;
         to.lastProcessedTs = Math.max((_c = to.lastProcessedTs) != null ? _c : 0, (_d = from.lastProcessedTs) != null ? _d : 0);
@@ -5033,7 +5033,7 @@ var BZW_people = (() => {
   var DEFAULTS = { maxChars: 12e3, maxCount: 400, maxBatches: 60 };
   var MATERIAL_LIMITS = { quotes: 60, moments: 40, traits: 30, interests: 40, threads: 30, chronicle: 300 };
   function chunkMessages(messages, opts = {}) {
-    var _a;
+    var _a2;
     const { maxChars, maxCount, maxBatches } = { ...DEFAULTS, ...opts };
     const chunks = [];
     let lines = [];
@@ -5041,7 +5041,7 @@ var BZW_people = (() => {
     let voice = 0;
     let image = 0;
     for (const m of messages) {
-      const text2 = ((_a = m.text) != null ? _a : "").trim();
+      const text2 = ((_a2 = m.text) != null ? _a2 : "").trim();
       if (!text2) continue;
       const line = renderLine(m.ts, m.isSender, text2);
       const fits = lines.length === 0 || lines.length < maxCount && chars + line.length <= maxChars;
@@ -5069,9 +5069,9 @@ var BZW_people = (() => {
     return picked.filter((v, i, a) => i === 0 || v !== a[i - 1]);
   }
   function makeChunk(lines, voice = 0, image = 0) {
-    var _a, _b;
-    const first = (_a = lines[0]) != null ? _a : "";
-    const last = (_b = lines[lines.length - 1]) != null ? _b : "";
+    var _a2, _b2;
+    const first = (_a2 = lines[0]) != null ? _a2 : "";
+    const last = (_b2 = lines[lines.length - 1]) != null ? _b2 : "";
     const chunk = { from: first.slice(1, 11), to: last.slice(1, 11), count: lines.length, lines };
     if (voice || image) chunk.media = { voice, image };
     return chunk;
@@ -5166,7 +5166,7 @@ var BZW_people = (() => {
     ].join("\n");
   }
   function buildProfileNote(profile) {
-    var _a;
+    var _a2;
     if (!profile) return "";
     const lines = [];
     if (profile.birthday) lines.push(`生日：${profile.birthday}`);
@@ -5174,7 +5174,7 @@ var BZW_people = (() => {
     if (profile.hometown) lines.push(`家乡：${profile.hometown}`);
     if (profile.metVia) lines.push(`怎么认识：${profile.metVia}`);
     if (profile.metAt) lines.push(`什么时候认识：${profile.metAt}`);
-    if ((_a = profile.tags) == null ? void 0 : _a.length) lines.push(`关系标签：${profile.tags.join("、")}`);
+    if ((_a2 = profile.tags) == null ? void 0 : _a2.length) lines.push(`关系标签：${profile.tags.join("、")}`);
     if (profile.note) lines.push(`备注：${profile.note}`);
     return lines.join("\n");
   }
@@ -5403,146 +5403,6 @@ var BZW_people = (() => {
     return out;
   }
 
-  // src/people/incremental.ts
-  function planIncremental(msgs, existing) {
-    const anchor = existing == null ? void 0 : existing.lastProcessedTs;
-    if (!anchor) return { mode: "full", msgs, olderCount: 0 };
-    const from = new Date(msgs[0].ts).toISOString();
-    const to = new Date(msgs[msgs.length - 1].ts).toISOString();
-    const dup = existing.imports.some((r) => r.messageCount === msgs.length && r.timeFrom === from && r.timeTo === to);
-    if (dup) return { mode: "skip", msgs: [], olderCount: msgs.length };
-    const newer = msgs.filter((m) => m.ts > anchor - 1);
-    if (newer.length) return { mode: "newer", msgs: newer, olderCount: msgs.length - newer.length };
-    return { mode: "older", msgs, olderCount: 0 };
-  }
-  function mergeWithOld(merged, old) {
-    var _a, _b, _c, _d, _e, _f;
-    return {
-      events: dedupeEvents([...(_a = old == null ? void 0 : old.events) != null ? _a : [], ...merged.events]),
-      quotes: dedupeByText([...(_b = old == null ? void 0 : old.quotes) != null ? _b : [], ...merged.quotes], (q) => q.text),
-      moments: dedupeByText([...(_c = old == null ? void 0 : old.moments) != null ? _c : [], ...merged.moments], (m) => m.summary),
-      traits: dedupeByText([...(_d = old == null ? void 0 : old.traits) != null ? _d : [], ...merged.traits], (t) => t),
-      interests: dedupeByText([...(_e = old == null ? void 0 : old.interests) != null ? _e : [], ...merged.interests], (i) => i.topic),
-      threads: dedupeByText([...(_f = old == null ? void 0 : old.threads) != null ? _f : [], ...merged.threads], (t) => t.text)
-    };
-  }
-  function dedupeEvents(events) {
-    const byKey = /* @__PURE__ */ new Map();
-    for (const e of events) {
-      const key = `${e.ts}|${e.summary}`;
-      const prev = byKey.get(key);
-      if (!prev) byKey.set(key, e);
-      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
-    }
-    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
-  }
-  function dedupeByText(items, key) {
-    const seen = /* @__PURE__ */ new Set();
-    const out = [];
-    for (const item of items) {
-      const k = key(item);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(item);
-    }
-    return out;
-  }
-  function mergeManualEvents(events, manual) {
-    if (!(manual == null ? void 0 : manual.length)) return events;
-    const seen = new Set(events.map((e) => `${e.ts}|${e.summary}`));
-    const extra = manual.map((m) => ({ ts: m.ts, summary: m.summary })).filter((e) => e.ts && e.summary && !seen.has(`${e.ts}|${e.summary}`));
-    if (!extra.length) return events;
-    return [...events, ...extra].sort((a, b) => a.ts.localeCompare(b.ts));
-  }
-
-  // src/people/stats.ts
-  var SESSION_GAP_MS = 30 * 60 * 1e3;
-  var REPLY_CAP_SEC = 3600;
-  function monthKey(ts) {
-    const d = new Date(ts);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  }
-  function avgOf(samples) {
-    if (!samples.length) return 0;
-    return samples.reduce((a, b) => a + b, 0) / samples.length;
-  }
-  function medianOf(samples) {
-    if (!samples.length) return 0;
-    const s = [...samples].sort((a, b) => a - b);
-    const mid = Math.floor(s.length / 2);
-    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-  }
-  function computeStats(messages, kindCounts) {
-    var _a;
-    const msgs = [...messages].sort((a, b) => a.ts - b.ts);
-    const monthly = /* @__PURE__ */ new Map();
-    const myHourly = new Array(24).fill(0);
-    const otherHourly = new Array(24).fill(0);
-    let initiatedByMe = 0;
-    let initiatedByOther = 0;
-    const mySamples = [];
-    const otherSamples = [];
-    let prev = null;
-    for (const m of msgs) {
-      if (!Number.isFinite(m.ts)) continue;
-      const d = new Date(m.ts);
-      monthly.set(monthKey(m.ts), ((_a = monthly.get(monthKey(m.ts))) != null ? _a : 0) + 1);
-      myHourly[d.getHours()] += m.isSender ? 1 : 0;
-      otherHourly[d.getHours()] += m.isSender ? 0 : 1;
-      if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
-        if (m.isSender) initiatedByMe++;
-        else initiatedByOther++;
-      } else if (m.isSender !== prev.isSender) {
-        const sec = (m.ts - prev.ts) / 1e3;
-        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
-      }
-      prev = m;
-    }
-    const media = collectMediaStats(msgs);
-    return {
-      monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
-      initiatedByMe,
-      initiatedByOther,
-      myAvgReplySec: avgOf(mySamples),
-      otherAvgReplySec: avgOf(otherSamples),
-      myMedianReplySec: medianOf(mySamples),
-      otherMedianReplySec: medianOf(otherSamples),
-      myHourly,
-      otherHourly,
-      kindCounts: { ...kindCounts },
-      // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
-      voiceCount: media.voiceCount,
-      voiceTotalSec: media.voiceTotalSec,
-      imageCount: media.imageCount
-    };
-  }
-  function formatReplySec(sec) {
-    if (!Number.isFinite(sec) || sec <= 0) return "无样本";
-    if (sec < 60) return `${Math.max(1, Math.round(sec))} 秒`;
-    if (sec < 3600) return `${Math.max(1, Math.round(sec / 60))} 分钟`;
-    return `${Math.max(1, Math.round(sec / 3600))} 小时`;
-  }
-
-  // src/people/jobs.ts
-  var jobs_exports = {};
-  __export(jobs_exports, {
-    DEFAULT_MAX_RETRIES: () => DEFAULT_MAX_RETRIES,
-    DRIFT_ERROR: () => DRIFT_ERROR,
-    JobStore: () => JobStore,
-    __resetJobsForTests: () => __resetJobsForTests,
-    emptyJobsData: () => emptyJobsData,
-    fingerprintOf: () => fingerprintOf,
-    getJobsFilePath: () => getJobsFilePath,
-    pauseJobs: () => pauseJobs,
-    removeJob: () => removeJob,
-    resume: () => resume,
-    resumeJobs: () => resumeJobs,
-    snapshot: () => snapshot,
-    startJobs: () => startJobs,
-    subscribe: () => subscribe,
-    whenIdle: () => whenIdle
-  });
-
   // src/core/model-limits.ts
   var MODEL_LIMITS = [
     // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
@@ -5669,21 +5529,21 @@ var BZW_people = (() => {
     return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === DEFAULT_AI_PROVIDER) || AI_PROVIDER_REGISTRY[0];
   }
   function thinkingLevelsOf(providerId) {
-    var _a, _b;
-    return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
+    var _a2, _b2;
+    return (_b2 = (_a2 = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a2.levels) != null ? _b2 : [];
   }
   function thinkingBodyFor(providerId, level) {
-    var _a;
+    var _a2;
     if (!providerId || !level || level === "auto") return null;
     const hit = thinkingLevelsOf(providerId).find((l) => l.value === level);
-    return (_a = hit == null ? void 0 : hit.body) != null ? _a : null;
+    return (_a2 = hit == null ? void 0 : hit.body) != null ? _a2 : null;
   }
   function hasExplicitThinkingOption(mo) {
     return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
   }
   var _aiProviderCache = null;
   async function getAIProvider(override) {
-    var _a, _b;
+    var _a2, _b2;
     if (!override && _aiProviderCache) return _aiProviderCache;
     const cacheable = !override;
     const cachePut = (p) => {
@@ -5722,8 +5582,8 @@ var BZW_people = (() => {
     if (!key && name !== "ollama") {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
-    const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
+    const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
+    const overrideMaxTokens = (_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name];
     const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
@@ -5874,9 +5734,9 @@ var BZW_people = (() => {
   }
   var AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
   function buildUserContent(input) {
-    var _a;
+    var _a2;
     if (typeof input === "string") return input;
-    const text2 = String((_a = input == null ? void 0 : input.text) != null ? _a : "");
+    const text2 = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
     const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
     if (!images.length) return text2;
     return [
@@ -5901,7 +5761,7 @@ var BZW_people = (() => {
      *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
      *  既有调用（不传这两项）行为零变化 */
     async prompt(input, model = this.defaultModel, options = {}) {
-      var _a;
+      var _a2;
       const mergedOptions = this._mergeOptions(options);
       const provider = await getAIProvider(mergedOptions.provider);
       const s = getQ3Settings();
@@ -5920,7 +5780,7 @@ var BZW_people = (() => {
         body[k] = mo[k];
       }
       if (!hasExplicitThinkingOption(mo)) {
-        const thinking = thinkingBodyFor(provider.id, (_a = s.aiThinkingOverrides) == null ? void 0 : _a[provider.id || ""]);
+        const thinking = thinkingBodyFor(provider.id, (_a2 = s.aiThinkingOverrides) == null ? void 0 : _a2[provider.id || ""]);
         if (thinking) Object.assign(body, thinking);
       }
       const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
@@ -5978,6 +5838,146 @@ var BZW_people = (() => {
   function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
     return new AIService(params, defaultModel, defaultOptions);
   }
+
+  // src/people/incremental.ts
+  function planIncremental(msgs, existing) {
+    const anchor = existing == null ? void 0 : existing.lastProcessedTs;
+    if (!anchor) return { mode: "full", msgs, olderCount: 0 };
+    const from = new Date(msgs[0].ts).toISOString();
+    const to = new Date(msgs[msgs.length - 1].ts).toISOString();
+    const dup = existing.imports.some((r) => r.messageCount === msgs.length && r.timeFrom === from && r.timeTo === to);
+    if (dup) return { mode: "skip", msgs: [], olderCount: msgs.length };
+    const newer = msgs.filter((m) => m.ts > anchor - 1);
+    if (newer.length) return { mode: "newer", msgs: newer, olderCount: msgs.length - newer.length };
+    return { mode: "older", msgs, olderCount: 0 };
+  }
+  function mergeWithOld(merged, old) {
+    var _a2, _b2, _c, _d, _e, _f;
+    return {
+      events: dedupeEvents([...(_a2 = old == null ? void 0 : old.events) != null ? _a2 : [], ...merged.events]),
+      quotes: dedupeByText([...(_b2 = old == null ? void 0 : old.quotes) != null ? _b2 : [], ...merged.quotes], (q) => q.text),
+      moments: dedupeByText([...(_c = old == null ? void 0 : old.moments) != null ? _c : [], ...merged.moments], (m) => m.summary),
+      traits: dedupeByText([...(_d = old == null ? void 0 : old.traits) != null ? _d : [], ...merged.traits], (t) => t),
+      interests: dedupeByText([...(_e = old == null ? void 0 : old.interests) != null ? _e : [], ...merged.interests], (i) => i.topic),
+      threads: dedupeByText([...(_f = old == null ? void 0 : old.threads) != null ? _f : [], ...merged.threads], (t) => t.text)
+    };
+  }
+  function dedupeEvents(events) {
+    const byKey = /* @__PURE__ */ new Map();
+    for (const e of events) {
+      const key = `${e.ts}|${e.summary}`;
+      const prev = byKey.get(key);
+      if (!prev) byKey.set(key, e);
+      else if (!prev.kind && e.kind) byKey.set(key, { ...prev, kind: e.kind });
+    }
+    return [...byKey.values()].sort((a, b) => a.ts.localeCompare(b.ts));
+  }
+  function dedupeByText(items, key) {
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const item of items) {
+      const k = key(item);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(item);
+    }
+    return out;
+  }
+  function mergeManualEvents(events, manual) {
+    if (!(manual == null ? void 0 : manual.length)) return events;
+    const seen = new Set(events.map((e) => `${e.ts}|${e.summary}`));
+    const extra = manual.map((m) => ({ ts: m.ts, summary: m.summary })).filter((e) => e.ts && e.summary && !seen.has(`${e.ts}|${e.summary}`));
+    if (!extra.length) return events;
+    return [...events, ...extra].sort((a, b) => a.ts.localeCompare(b.ts));
+  }
+
+  // src/people/stats.ts
+  var SESSION_GAP_MS = 30 * 60 * 1e3;
+  var REPLY_CAP_SEC = 3600;
+  function monthKey(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+  function avgOf(samples) {
+    if (!samples.length) return 0;
+    return samples.reduce((a, b) => a + b, 0) / samples.length;
+  }
+  function medianOf(samples) {
+    if (!samples.length) return 0;
+    const s = [...samples].sort((a, b) => a - b);
+    const mid = Math.floor(s.length / 2);
+    return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  }
+  function computeStats(messages, kindCounts) {
+    var _a2;
+    const msgs = [...messages].sort((a, b) => a.ts - b.ts);
+    const monthly = /* @__PURE__ */ new Map();
+    const myHourly = new Array(24).fill(0);
+    const otherHourly = new Array(24).fill(0);
+    let initiatedByMe = 0;
+    let initiatedByOther = 0;
+    const mySamples = [];
+    const otherSamples = [];
+    let prev = null;
+    for (const m of msgs) {
+      if (!Number.isFinite(m.ts)) continue;
+      const d = new Date(m.ts);
+      monthly.set(monthKey(m.ts), ((_a2 = monthly.get(monthKey(m.ts))) != null ? _a2 : 0) + 1);
+      myHourly[d.getHours()] += m.isSender ? 1 : 0;
+      otherHourly[d.getHours()] += m.isSender ? 0 : 1;
+      if (!prev || m.ts - prev.ts >= SESSION_GAP_MS) {
+        if (m.isSender) initiatedByMe++;
+        else initiatedByOther++;
+      } else if (m.isSender !== prev.isSender) {
+        const sec = (m.ts - prev.ts) / 1e3;
+        if (sec <= REPLY_CAP_SEC) (m.isSender ? mySamples : otherSamples).push(sec);
+      }
+      prev = m;
+    }
+    const media = collectMediaStats(msgs);
+    return {
+      monthly: [...monthly.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+      initiatedByMe,
+      initiatedByOther,
+      myAvgReplySec: avgOf(mySamples),
+      otherAvgReplySec: avgOf(otherSamples),
+      myMedianReplySec: medianOf(mySamples),
+      otherMedianReplySec: medianOf(otherSamples),
+      myHourly,
+      otherHourly,
+      kindCounts: { ...kindCounts },
+      // 浅拷贝：与调用方数据脱钩，改返回值不伤原对象
+      voiceCount: media.voiceCount,
+      voiceTotalSec: media.voiceTotalSec,
+      imageCount: media.imageCount
+    };
+  }
+  function formatReplySec(sec) {
+    if (!Number.isFinite(sec) || sec <= 0) return "无样本";
+    if (sec < 60) return `${Math.max(1, Math.round(sec))} 秒`;
+    if (sec < 3600) return `${Math.max(1, Math.round(sec / 60))} 分钟`;
+    return `${Math.max(1, Math.round(sec / 3600))} 小时`;
+  }
+
+  // src/people/jobs.ts
+  var jobs_exports = {};
+  __export(jobs_exports, {
+    DEFAULT_MAX_RETRIES: () => DEFAULT_MAX_RETRIES,
+    DRIFT_ERROR: () => DRIFT_ERROR,
+    JobStore: () => JobStore,
+    __resetJobsForTests: () => __resetJobsForTests,
+    emptyJobsData: () => emptyJobsData,
+    fingerprintOf: () => fingerprintOf,
+    getJobsFilePath: () => getJobsFilePath,
+    pauseJobs: () => pauseJobs,
+    removeJob: () => removeJob,
+    resume: () => resume,
+    resumeJobs: () => resumeJobs,
+    snapshot: () => snapshot,
+    startJobs: () => startJobs,
+    subscribe: () => subscribe,
+    whenIdle: () => whenIdle
+  });
 
   // src/people/insights.ts
   var SESSION_GAP_MS2 = 30 * 60 * 1e3;
@@ -6096,13 +6096,13 @@ var BZW_people = (() => {
     return parts.length ? `互动画像：${parts.join("；")}。` : "";
   }
   function monthlyDensity(monthly) {
-    var _a;
+    var _a2;
     const asc = [...monthly].sort((a, b) => a[0].localeCompare(b[0]));
     if (asc.length > 12) {
       const byYear = /* @__PURE__ */ new Map();
       for (const [m, n] of asc) {
         const y = m.slice(0, 4);
-        byYear.set(y, ((_a = byYear.get(y)) != null ? _a : 0) + n);
+        byYear.set(y, ((_a2 = byYear.get(y)) != null ? _a2 : 0) + n);
       }
       return `消息密度：${[...byYear.entries()].map(([y, n]) => `${y} 年合计 ${n} 条`).join("、")}`;
     }
@@ -6187,10 +6187,10 @@ var BZW_people = (() => {
     return (h >>> 0).toString(36);
   }
   function msgKey(raw) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const sid = typeof raw.sid === "number" && Number.isFinite(raw.sid) && raw.sid !== 0 ? raw.sid : 0;
-    if (sid) return `s${sid}:${(_a = raw.ct) != null ? _a : 0}`;
-    return `h${hash32(`${(_b = raw.ct) != null ? _b : 0}|${String((_c = raw.msg) != null ? _c : "")}`)}`;
+    if (sid) return `s${sid}:${(_a2 = raw.ct) != null ? _a2 : 0}`;
+    return `h${hash32(`${(_b2 = raw.ct) != null ? _b2 : 0}|${String((_c = raw.msg) != null ? _c : "")}`)}`;
   }
   var SELF_WHO = "我";
   function isSelfWho(who) {
@@ -6198,11 +6198,11 @@ var BZW_people = (() => {
   }
   var IMG_DESC_NEAREST_SEC = 12 * 3600;
   function matchImageDesc(raw, descByFile, descByMonth, descUsed) {
-    var _a, _b, _c, _d;
-    const img = String((_a = raw.img) != null ? _a : "").trim();
+    var _a2, _b2, _c, _d;
+    const img = String((_a2 = raw.img) != null ? _a2 : "").trim();
     if (img) {
       const exact = descByFile.get(img);
-      return exact ? String((_b = exact.desc) != null ? _b : "").trim() : "";
+      return exact ? String((_b2 = exact.desc) != null ? _b2 : "").trim() : "";
     }
     const ct = Number(raw.ct);
     if (!Number.isFinite(ct)) return "";
@@ -6227,11 +6227,11 @@ var BZW_people = (() => {
     return String((_d = best.desc) != null ? _d : "").trim();
   }
   function isGroupChat(raws) {
-    var _a;
+    var _a2;
     const others = /* @__PURE__ */ new Set();
     for (const r of raws) {
       if (!r || typeof r !== "object") continue;
-      const who = String((_a = r.who) != null ? _a : "").trim();
+      const who = String((_a2 = r.who) != null ? _a2 : "").trim();
       if (!who || isSelfWho(who)) continue;
       others.add(who);
       if (others.size > 1) return true;
@@ -6250,15 +6250,15 @@ var BZW_people = (() => {
     SAD: "难过"
   };
   function emotionZh(emotion) {
-    var _a;
+    var _a2;
     const e = emotion.trim();
-    return (_a = EMOTION_ZH[e.toUpperCase()]) != null ? _a : e;
+    return (_a2 = EMOTION_ZH[e.toUpperCase()]) != null ? _a2 : e;
   }
   function buildVoiceText(raw, voice) {
-    var _a, _b;
+    var _a2, _b2;
     const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-    const emo = emotionZh(String((_a = voice == null ? void 0 : voice.emotion) != null ? _a : ""));
-    const text2 = String((_b = voice == null ? void 0 : voice.text) != null ? _b : "").trim();
+    const emo = emotionZh(String((_a2 = voice == null ? void 0 : voice.emotion) != null ? _a2 : ""));
+    const text2 = String((_b2 = voice == null ? void 0 : voice.text) != null ? _b2 : "").trim();
     const head = dur ? `[语音 ${dur}秒${emo ? `·${emo}` : ""}]` : "[语音]";
     return text2 ? `${head} ${text2}` : head;
   }
@@ -6285,14 +6285,14 @@ var BZW_people = (() => {
     return `${m[1]}${quote.slice(0, QUOTE_HEAD_MAX_CHARS)}…」${m[3].slice(1)}`;
   }
   function parseCallDurationSec(text2) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const colon = /\[通话(?:中断)?(?:时长)?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*\]/.exec(text2);
     if (colon) {
-      const [a, b, c] = [Number(colon[1]), Number(colon[2]), Number((_a = colon[3]) != null ? _a : 0)];
+      const [a, b, c] = [Number(colon[1]), Number(colon[2]), Number((_a2 = colon[3]) != null ? _a2 : 0)];
       return colon[3] !== void 0 ? a * 3600 + b * 60 + c : a * 60 + b;
     }
     const zh = /\[通话(?:中断)?(?:时长)?\s+(?:(\d+)\s*分)?(?:(\d+)\s*秒)?\s*\]/.exec(text2);
-    if (zh && (zh[1] || zh[2])) return Number((_b = zh[1]) != null ? _b : 0) * 60 + Number((_c = zh[2]) != null ? _c : 0);
+    if (zh && (zh[1] || zh[2])) return Number((_b2 = zh[1]) != null ? _b2 : 0) * 60 + Number((_c = zh[2]) != null ? _c : 0);
     return null;
   }
   function formatCallDur(totalSec) {
@@ -6311,11 +6311,11 @@ var BZW_people = (() => {
     return null;
   }
   function normalizeChatJson(raws, opts, extras) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
     const voiceByWav = /* @__PURE__ */ new Map();
-    for (const v of (_a = extras == null ? void 0 : extras.voice) != null ? _a : []) {
+    for (const v of (_a2 = extras == null ? void 0 : extras.voice) != null ? _a2 : []) {
       if (!v || typeof v !== "object") continue;
-      const wav = String((_b = v.wav) != null ? _b : "").trim();
+      const wav = String((_b2 = v.wav) != null ? _b2 : "").trim();
       if (!wav) continue;
       voiceByWav.set(wav, v);
       const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
@@ -6343,9 +6343,9 @@ var BZW_people = (() => {
     const group = isGroupChat(raws);
     const signals = emptyInsightSignals();
     const bumpEmotion = (emo) => {
-      var _a2;
+      var _a3;
       const k = String(emo != null ? emo : "").trim();
-      if (k) signals.voiceEmotion[k] = ((_a2 = signals.voiceEmotion[k]) != null ? _a2 : 0) + 1;
+      if (k) signals.voiceEmotion[k] = ((_a3 = signals.voiceEmotion[k]) != null ? _a3 : 0) + 1;
     };
     const kindCounts = {};
     const msgs = [];
@@ -6457,8 +6457,8 @@ var BZW_people = (() => {
     return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
-    var _a;
-    counts[kind] = ((_a = counts[kind]) != null ? _a : 0) + 1;
+    var _a2;
+    counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
   }
   function previewStatsOf(msgs) {
     const unified = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
@@ -6466,10 +6466,10 @@ var BZW_people = (() => {
     return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
   }
   function mergePreview(existing, incoming, nowIso2) {
-    var _a, _b, _c, _d;
-    const seen = new Set(((_a = existing == null ? void 0 : existing.msgs) != null ? _a : []).map((m) => m.key));
+    var _a2, _b2, _c, _d;
+    const seen = new Set(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => m.key));
     const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
-    const msgs = [...(_b = existing == null ? void 0 : existing.msgs) != null ? _b : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+    const msgs = [...(_b2 = existing == null ? void 0 : existing.msgs) != null ? _b2 : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const contact = {
       msgs,
       watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
@@ -6485,9 +6485,9 @@ var BZW_people = (() => {
     return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
   function normalizeOptionsFromSettings() {
-    var _a, _b;
-    const s = (_a = tryGetSettings()) != null ? _a : {};
-    const mode = String((_b = s.peopleImageDescMode) != null ? _b : "file");
+    var _a2, _b2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    const mode = String((_b2 = s.peopleImageDescMode) != null ? _b2 : "file");
     return {
       previewVoice: s.peoplePreviewVoice !== false,
       imageDescMode: mode === "off" ? "off" : "file",
@@ -6520,7 +6520,7 @@ var BZW_people = (() => {
     }
   }
   function readContactBundle(dataDir, name) {
-    var _a, _b;
+    var _a2, _b2;
     const fs = getFs();
     if (!fs) return null;
     const readJson = (path) => {
@@ -6535,9 +6535,20 @@ var BZW_people = (() => {
     if (!raws) return null;
     return {
       raws,
-      voice: (_a = readJson(`${dataDir}/${name}/voice.json`)) != null ? _a : [],
-      imageDesc: (_b = readJson(`${dataDir}/${name}/image_desc.json`)) != null ? _b : []
+      voice: (_a2 = readJson(`${dataDir}/${name}/voice.json`)) != null ? _a2 : [],
+      imageDesc: (_b2 = readJson(`${dataDir}/${name}/image_desc.json`)) != null ? _b2 : [],
+      avatar: avatarFileOf(fs, `${dataDir}/${name}`)
     };
+  }
+  function avatarFileOf(fs, dir) {
+    for (const ext of ["jpg", "jpeg", "png", "webp", "gif"]) {
+      const p = `${dir}/avatar.${ext}`;
+      try {
+        if (fs.existsSync(p)) return p;
+      } catch (e) {
+      }
+    }
+    return null;
   }
   function getPreviewFilePath() {
     const s = tryGetSettings();
@@ -6572,11 +6583,11 @@ var BZW_people = (() => {
     }
   };
   function previewMediaBadge(stats) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     if (!stats) return null;
     const acc = emptyMediaStats();
-    acc.voiceCount = (_a = stats.voiceCount) != null ? _a : 0;
-    acc.voiceTotalSec = (_b = stats.voiceTotalSec) != null ? _b : 0;
+    acc.voiceCount = (_a2 = stats.voiceCount) != null ? _a2 : 0;
+    acc.voiceTotalSec = (_b2 = stats.voiceTotalSec) != null ? _b2 : 0;
     acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
     return acc.voiceCount || acc.imageCount ? acc : null;
   }
@@ -6653,7 +6664,7 @@ var BZW_people = (() => {
     return `第 ${i + 1}/${total} 批失败（${err}）——正在重试 ${attempt}/${maxRetries}…`;
   }
   function batchFailMessage(i, total, done, err) {
-    return `第 ${i + 1}/${total} 批提炼失败：${err}；已完成 ${done}/${total} 批（点「继续生成」从这批重试，不会从头重烧）`;
+    return `第 ${i + 1}/${total} 批提炼失败（已完成 ${done} 批保留，可从失败批续跑）`;
   }
   function snapshot() {
     if (!st) return { queue: [], currentIndex: -1, running: false };
@@ -6690,10 +6701,10 @@ var BZW_people = (() => {
     }
   }
   function importRecordOf(t, digestMsgs) {
-    var _a;
+    var _a2;
     return {
       fileLabel: t.fileLabel,
-      skippedCount: (_a = t.skippedCount) != null ? _a : 0,
+      skippedCount: (_a2 = t.skippedCount) != null ? _a2 : 0,
       messageCount: digestMsgs.length,
       timeFrom: new Date(t.msgs[0].ts).toISOString(),
       timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString()
@@ -6707,7 +6718,7 @@ var BZW_people = (() => {
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
   }
   async function startJobs(app, targets, opts = {}) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a2, _b2, _c, _d, _e, _f;
     if (!st) {
       st = {
         app,
@@ -6763,9 +6774,9 @@ var BZW_people = (() => {
       const sampled = all.length > chunkFull.maxBatches;
       const chunks = sampled ? evenlySample(all, chunkFull.maxBatches) : all;
       const fp = fingerprintOf(t.msgs);
-      const stats = computeStats(t.msgs, (_a = t.kindCounts) != null ? _a : {});
+      const stats = computeStats(t.msgs, (_a2 = t.kindCounts) != null ? _a2 : {});
       const mediaNote = buildMediaNote({
-        voiceCount: (_b = stats.voiceCount) != null ? _b : 0,
+        voiceCount: (_b2 = stats.voiceCount) != null ? _b2 : 0,
         voiceTotalSec: (_c = stats.voiceTotalSec) != null ? _c : 0,
         imageCount: (_d = stats.imageCount) != null ? _d : 0
       });
@@ -6920,7 +6931,7 @@ var BZW_people = (() => {
     return !st || st.queue.indexOf(job) < 0;
   }
   async function runJob(job) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -7021,8 +7032,8 @@ var BZW_people = (() => {
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_a = job.material) == null ? void 0 : _a.mediaNote,
-        statsNote: (_b = job.material) == null ? void 0 : _b.statsNote,
+        mediaNote: (_a2 = job.material) == null ? void 0 : _a2.mediaNote,
+        statsNote: (_b2 = job.material) == null ? void 0 : _b2.statsNote,
         profileNote: (_c = job.material) == null ? void 0 : _c.profileNote,
         sampleEvents: job.mode === "incremental"
       });
@@ -7101,13 +7112,13 @@ var BZW_people = (() => {
     }
   }
   function asksOf() {
-    var _a, _b, _c, _d, _e;
-    if (((_a = st == null ? void 0 : st.injected) == null ? void 0 : _a.askExtract) && st.injected.askPortrait) {
+    var _a2, _b2, _c, _d, _e;
+    if (((_a2 = st == null ? void 0 : st.injected) == null ? void 0 : _a2.askExtract) && st.injected.askPortrait) {
       return { extract: st.injected.askExtract, portrait: st.injected.askPortrait };
     }
     const ai = createAI();
     return {
-      extract: (_c = (_b = st == null ? void 0 : st.injected) == null ? void 0 : _b.askExtract) != null ? _c : (p) => ai.json(p),
+      extract: (_c = (_b2 = st == null ? void 0 : st.injected) == null ? void 0 : _b2.askExtract) != null ? _c : (p) => ai.json(p),
       portrait: (_e = (_d = st == null ? void 0 : st.injected) == null ? void 0 : _d.askPortrait) != null ? _e : (p) => ai.chat(p)
     };
   }
@@ -7168,8 +7179,8 @@ var BZW_people = (() => {
     return n.toLocaleString("en-US");
   }
   function replyLatencySec(median, avg) {
-    var _a;
-    return (_a = median != null ? median : avg) != null ? _a : 0;
+    var _a2;
+    return (_a2 = median != null ? median : avg) != null ? _a2 : 0;
   }
   function vtName(name) {
     const s = String(name != null ? name : "").trim();
@@ -7190,12 +7201,15 @@ var BZW_people = (() => {
     if (sec < 3600) return `${Math.round(sec / 60)} 分`;
     return `${(sec / 3600).toFixed(1)} 时`;
   }
-  function mdPlain(md) {
-    return String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
-  }
-  function spillOf(s, n = 40) {
-    const t = mdPlain(s);
-    return [...t].length <= n ? t : `${[...t].slice(0, n).join("")}…`;
+  function localResourceUri(path) {
+    const norm = path.replace(/\\/g, "/");
+    if (typeof window !== "undefined") {
+      const base = window.BZW_MEDIA_BASE;
+      if (base) return base + encodeURI(norm).replace(/#/g, "%23").replace(/\?/g, "%3F");
+    }
+    if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
+    const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
+    return `app://local/${encodeURI(rel).replace(/#/g, "%23").replace(/\?/g, "%3F")}`;
   }
   function iconButton(icon, cls, attrs) {
     const b = el("button", cls, attrs);
@@ -7235,24 +7249,6 @@ var BZW_people = (() => {
     if (stage2 === "bond") return 1;
     return 0;
   }
-  function jobsQueueLabel(queueIndex, queueTotal, name) {
-    const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
-    return `${pos}当前：${name}`;
-  }
-  function jobsFallbackMessage(status, name) {
-    switch (status) {
-      case "running":
-        return `正在生成「${name}」的脸谱…`;
-      case "paused":
-        return "已暂停——点「继续生成」接着画";
-      case "interrupted":
-        return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
-      case "error":
-        return `「${name}」生成失败`;
-      case "done":
-        return `「${name}」的脸谱已生成`;
-    }
-  }
   var JOBS_ACTIONS = {
     running: { label: "暂停", hook: "data-people-jobs-pause" },
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
@@ -7282,9 +7278,9 @@ var BZW_people = (() => {
       ),
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
-    block.appendChild(el("div", "bz-people-jobs-main", text(s.message || jobsFallbackMessage(s.status, s.name))));
-    block.appendChild(el("div", "bz-people-jobs-queue", text(jobsQueueLabel(s.queueIndex, s.queueTotal, s.name))));
-    block.appendChild(el("div", "bz-people-jobs-note", text("生成在后台继续，关掉面板不会中断；重开面板回到这里看进度。")));
+    const next = Math.min(s.batchesDone + 1, s.batchesTotal);
+    const main = s.status === "error" ? `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? "已暂停" : s.status === "interrupted" ? "上次生成中断了" : s.status === "done" ? "脸谱已生成" : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    block.appendChild(el("div", "bz-people-jobs-main", text(main)));
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
@@ -7364,23 +7360,35 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     b.textContent = seal.text;
     return b;
   }
+  function foldAvaNode(p, seal, avatar) {
+    const b = el("button", `bz-people-seal bz-people-seal-${seal.state} bz-people-fold-ava`, {
+      "data-people-seal-act": seal.action.kind,
+      "aria-label": `${seal.action.label}：${p.name || p.id}`,
+      title: seal.title
+    });
+    b.type = "button";
+    b.appendChild(el("img", "", { src: localResourceUri(avatar), alt: p.name }));
+    return b;
+  }
   function foldCard(p, opts) {
-    var _a, _b, _c, _d;
+    var _a2, _b2, _c, _d, _e;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const from = p.imports.map((r) => r.timeFrom).sort()[0];
     const to = p.imports.map((r) => r.timeTo).sort().pop();
     const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
-    const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
+    const rel = (_c = ((_b2 = (_a2 = p.profile) == null ? void 0 : _a2.tags) != null ? _b2 : []).filter(Boolean)[0]) != null ? _c : "";
     const label = mediaLabel(opts.media);
+    const seal = foldSeal(p, (_d = opts.job) != null ? _d : null);
     const card = el("div", "bz-people-fold", [
       el("div", "bz-people-fold-inner", [
-        foldSealNode(p, (_d = opts.job) != null ? _d : null),
+        opts.avatar ? foldAvaNode(p, seal, opts.avatar) : foldSealNode(p, (_e = opts.job) != null ? _e : null),
         el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
         // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
         el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
         el("div", "bz-people-fold-meta", text([
           total ? `${formatCount(total)} 条` : "尚无消息",
-          label
+          label,
+          seal.state === "done" && p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs).slice(2)}` : ""
         ].filter(Boolean).join(" · ")))
       ])
     ]);
@@ -7401,40 +7409,40 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   var FOLD_TITLES = [
-    ["p", "其人", "卷一 · 其人画像与代表原话"],
-    ["b", "我们", "卷二 · 我们关系画像"],
-    ["e", "事件", "交往事件与随手记"],
-    ["c", "大事记", "关系时间线"]
+    ["p", "其人", "卷一 · 人物画像与代表原话"],
+    ["b", "相交", "卷二 · 关系画像"],
+    ["e", "纪事", "关系时间线（编年）+ 交往事件（按月）"]
   ];
   function foldDetailHead(p, media, opts) {
-    var _a, _b;
+    var _a2, _b2;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-    const label = mediaLabel(media);
-    const voice = (_a = media == null ? void 0 : media.voiceCount) != null ? _a : 0;
     const job = opts.job && opts.job.status !== "done" ? opts.job : null;
     const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
       "data-people-generate-one": "",
       "aria-label": job.status === "running" ? "正在生成" : "继续生成",
       title: job.status === "running" ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部` : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`
     }) : opts.canGenerate ? iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" }) : null;
+    const tags = ((_b2 = (_a2 = p.profile) == null ? void 0 : _a2.tags) != null ? _b2 : []).filter(Boolean).slice(0, 3);
+    const meta = el("div", "bz-people-card-meta");
+    if (total) {
+      meta.appendChild(textEl("b", formatCount(total)));
+      meta.appendChild(text(` 条消息 · ${p.imports.length} 次导入`));
+      if (p.digest) meta.appendChild(text(` · 脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}`));
+    } else meta.appendChild(text("尚无导入"));
+    const id = el("div", "bz-people-dt-id", [
+      el("div", "bz-people-dt-name", [
+        text(p.name),
+        ...tags.length ? [el("span", "bz-people-dt-tags", tags.map((t) => el("span", "bz-people-dt-tag", [text(t)])))] : []
+      ]),
+      meta
+    ]);
     return el("div", "bz-people-dt-head", [
-      el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-      el("div", "bz-people-dt-id", [
-        el("div", "bz-people-dt-name", text(p.name)),
-        el("div", "bz-people-card-meta", text([
-          total ? `${formatCount(total)} 条消息 · ${p.imports.length} 次导入` : "尚无导入",
-          p.digest ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : "脸谱未生成"
-        ].join(" · "))),
-        ...label ? [el("div", "bz-people-media-badge", text(label))] : []
-      ]),
-      el("div", "bz-people-dt-nums", [
-        el("div", "", [el("div", "bz-people-dt-n", text(formatCount(total))), el("div", "bz-people-dt-t", text("消息"))]),
-        el("div", "", [el("div", "bz-people-dt-n", text(voice ? String(voice) : "—")), el("div", "bz-people-dt-t", text(voice ? `语音 · ${formatDuration2((_b = media == null ? void 0 : media.voiceTotalSec) != null ? _b : 0)}` : "语音"))]),
-        el("div", "", [el("div", "bz-people-dt-n", text((media == null ? void 0 : media.imageCount) ? String(media.imageCount) : "—")), el("div", "bz-people-dt-t", text("图片"))])
-      ]),
-      p.lastProcessedTs ? el("div", "bz-people-dt-watermark", { title: "脸谱已提炼到这天的消息；之后的新消息再导入会增量补画" }, text(`已画到 ${formatDay(p.lastProcessedTs)}`)) : el("div", "bz-people-dt-watermark bz-people-dt-watermark-todo", text("未画脸谱")),
+      opts.avatar ? el("img", "bz-people-dt-avatar", { src: localResourceUri(opts.avatar), alt: p.name }) : el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
+      id,
       el("div", "bz-people-dt-actions", [
         ...action ? [action] : [],
+        // 455 评审：记一笔自纪事折抽出，独立弹窗，入口在互动统计之前
+        iconButton("pencil", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-note-open": "", "aria-label": "记一笔", title: "记一笔" }),
         // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
@@ -7442,46 +7450,30 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ])
     ]);
   }
-  function foldBook(p, opts, bodies, spills) {
-    var _a;
+  function foldBook(p, opts, bodies) {
+    var _a2;
     const book = el("div", "bz-people-book", { "data-people-book": "" });
     for (const [id, title] of FOLD_TITLES) {
       const on = opts.fold === id;
       const leaf = el("div", `bz-people-leaf${on ? " bz-people-leaf-on" : ""}`, on ? { "data-people-leaf": id } : { "data-people-leaf": id, "data-people-leaf-head": id });
       leaf.appendChild(el("div", "bz-people-leaf-spine", { "aria-hidden": "true" }));
       leaf.appendChild(el("div", "bz-people-leaf-head", [
-        el("span", "bz-people-leaf-zh", text(title)),
-        el("span", "bz-people-leaf-cnt", text(spillMeta(p, id)))
+        el("span", "bz-people-leaf-zh", text(title))
       ]));
       if (on) {
         const body = el("div", "bz-people-leaf-body");
-        for (const node of (_a = bodies[id]) != null ? _a : []) body.appendChild(node);
+        for (const node of (_a2 = bodies[id]) != null ? _a2 : []) body.appendChild(node);
         leaf.appendChild(body);
-      } else {
-        leaf.appendChild(el("div", "bz-people-leaf-spill vt", text(spills[id] || title)));
       }
       book.appendChild(leaf);
     }
     return book;
   }
-  function spillMeta(p, id) {
-    var _a, _b, _c, _d, _e;
-    switch (id) {
-      case "p":
-        return personOf(p.digest) ? "修" : "空";
-      case "b":
-        return bondOf(p.digest) ? "修" : "空";
-      case "e":
-        return `${(_b = (_a = p.digest) == null ? void 0 : _a.events.length) != null ? _b : 0} 事${((_d = (_c = p.manualEvents) == null ? void 0 : _c.length) != null ? _d : 0) ? ` · ${p.manualEvents.length} 记` : ""}`;
-      case "c":
-        return ((_e = p.digest) == null ? void 0 : _e.chronicle) ? "编年" : "空";
-    }
-  }
   function profileFilled(prof) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a2, _b2, _c, _d, _e, _f;
     if (!prof) return false;
     return Boolean(
-      prof.socials && prof.socials.length || prof.tags && prof.tags.length || ((_a = prof.birthday) != null ? _a : "").trim() || ((_b = prof.metVia) != null ? _b : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim()
+      prof.socials && prof.socials.length || prof.tags && prof.tags.length || ((_a2 = prof.birthday) != null ? _a2 : "").trim() || ((_b2 = prof.metVia) != null ? _b2 : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim()
     );
   }
   function foldHint(msg, action) {
@@ -7494,9 +7486,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return d;
   }
   function foldPersonBody(mdRoot, p) {
-    var _a, _b;
+    var _a2, _b2;
     const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
-    if ((_b = (_a = p.digest) == null ? void 0 : _a.quotes) == null ? void 0 : _b.length) {
+    if ((_b2 = (_a2 = p.digest) == null ? void 0 : _a2.quotes) == null ? void 0 : _b2.length) {
       out.push(el("div", "bz-people-section-title", text("代表原话")));
       const quotes = el("div", "bz-people-quotes");
       for (const q of p.digest.quotes) {
@@ -7512,24 +7504,46 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function foldBondBody(mdRoot) {
     return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
   }
-  function foldEventsBody(p, noteAdd, today) {
-    var _a, _b;
+  function foldEventsBody(p) {
+    var _a2, _b2, _c;
     const out = [];
-    if ((_a = p.digest) == null ? void 0 : _a.events.length) {
-      const events = el("div", "bz-people-events");
-      for (const ev of p.digest.events) {
-        events.appendChild(el("div", `bz-people-event${ev.kind === "major" ? " bz-people-event-major" : ""}`, [
-          el("span", "bz-people-event-ts", text(ev.ts)),
-          el("span", "bz-people-event-dot"),
-          el("span", "bz-people-event-summary", text(ev.summary))
-        ]));
-      }
-      out.push(events);
-    } else {
-      out.push(el("div", "bz-people-empty-hint", text("还没有交往事件。导入聊天生成脸谱后会提炼出来。")));
+    if ((_a2 = p.digest) == null ? void 0 : _a2.chronicle) {
+      out.push(el("div", "bz-people-chronicle", [miniMarkdown(p.digest.chronicle)]));
+      out.push(el("div", "bz-people-ev-divider", [el("span", "", [text("纪事 · 按月")])]));
     }
-    const evs = (_b = p.manualEvents) != null ? _b : [];
-    if (noteAdd) out.push(noteAddRow(today));
+    if ((_b2 = p.digest) == null ? void 0 : _b2.events.length) {
+      const byMonth = /* @__PURE__ */ new Map();
+      for (const ev of p.digest.events) {
+        const month = ev.ts.slice(0, 7);
+        const list = byMonth.get(month);
+        if (list) list.push(ev);
+        else byMonth.set(month, [ev]);
+      }
+      const months2 = el("div", "bz-people-ev-months");
+      for (const [month, evs2] of [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+        evs2.sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
+        const group = el("div", "bz-people-ev-mon");
+        group.appendChild(el("button", "bz-people-ev-mon-head", { "data-people-ev-mon": "", "aria-label": `展开 ${month}` }, [
+          el("span", "bz-people-ev-mon-plus", text("+")),
+          el("span", "bz-people-ev-mon-name", text(month)),
+          el("span", "bz-people-ev-mon-cnt", text(`${evs2.length} 条`))
+        ]));
+        const body = el("div", "bz-people-ev-mon-body");
+        for (const ev of evs2) {
+          body.appendChild(el("div", `bz-people-event${ev.kind === "major" ? " bz-people-event-major" : ""}`, [
+            el("span", "bz-people-event-ts", text(ev.ts)),
+            el("span", "bz-people-event-dot"),
+            el("span", "bz-people-event-summary", text(ev.summary))
+          ]));
+        }
+        group.appendChild(body);
+        months2.appendChild(group);
+      }
+      out.push(months2);
+    } else if (!out.length) {
+      out.push(el("div", "bz-people-empty-hint", text("还没有交往纪事。导入聊天生成脸谱后会提炼出来。")));
+    }
+    const evs = (_c = p.manualEvents) != null ? _c : [];
     if (evs.length) {
       out.push(el("div", "bz-people-section-title", text("随手记")));
       const list = el("div", "bz-people-notes");
@@ -7542,21 +7556,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       }
       out.push(list);
     }
-    out.push(el("div", "bz-people-prof-entry", [
-      ...noteAdd ? [] : [button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "记一笔", { "data-people-note-add": "" })]
-    ]));
     return out;
-  }
-  function foldChronicleBody(mdRoot) {
-    return mdRoot ? [mdRoot] : [el("div", "bz-people-empty-hint", text("还没有关系时间线。重画脸谱后会生成。"))];
   }
   function statsPopBody(card, p) {
     const out = [];
     if (card) out.push(card);
     else if (p.imports.length) {
       const poolOnly = p.imports.some((r) => {
-        var _a;
-        return r.stats && !((_a = r.stats.monthly) == null ? void 0 : _a.length);
+        var _a2;
+        return r.stats && !((_a2 = r.stats.monthly) == null ? void 0 : _a2.length);
       });
       out.push(el("div", "bz-people-empty-hint", { "data-people-data-hint": "" }, text(poolOnly ? "这些消息还没画过脸谱——画完脸谱后这里会有完整的互动统计（月度分布 / 回复时延 / 活跃时段）。" : "这次导入还没有互动统计（旧版数据）。从数据源再导入一次即可生成。")));
     } else out.push(el("div", "bz-people-empty-hint", { "data-people-data-hint": "" }, text("还没有导入记录。")));
@@ -7608,7 +7616,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return el("div", "bz-people-kinds", kinds.map(([k, n]) => el("span", "bz-people-kind", text(`${k} ${formatCount(n)} · ${Math.round(n / total * 100)}%`))));
   }
   function profileView(prof) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const rows = [];
     const addRow = (label, value) => {
       rows.push(el("div", "bz-people-prof-row", [
@@ -7616,13 +7624,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         el("span", "bz-people-prof-value", text(value))
       ]));
     };
-    if ((_a = prof == null ? void 0 : prof.socials) == null ? void 0 : _a.length) {
+    if ((_a2 = prof == null ? void 0 : prof.socials) == null ? void 0 : _a2.length) {
       rows.push(el("div", "bz-people-prof-row", [
         el("span", "bz-people-prof-label", text("社交账号")),
         el("span", "bz-people-prof-value", text(prof.socials.map((s) => [s.platform, s.handle].filter(Boolean).join(" ")).filter(Boolean).join(" · ")))
       ]));
     }
-    if ((_b = prof == null ? void 0 : prof.birthday) == null ? void 0 : _b.trim()) addRow("生日", prof.birthday.trim());
+    if ((_b2 = prof == null ? void 0 : prof.birthday) == null ? void 0 : _b2.trim()) addRow("生日", prof.birthday.trim());
     if ((_c = prof == null ? void 0 : prof.metVia) == null ? void 0 : _c.trim()) addRow("认识方式", prof.metVia.trim());
     if ((_d = prof == null ? void 0 : prof.metAt) == null ? void 0 : _d.trim()) addRow("认识时间", prof.metAt.trim());
     if ((_e = prof == null ? void 0 : prof.hometown) == null ? void 0 : _e.trim()) addRow("家乡 / 现居", prof.hometown.trim());
@@ -7635,7 +7643,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     if ((_h = prof == null ? void 0 : prof.note) == null ? void 0 : _h.trim()) addRow("备注", prof.note.trim());
     rows.push(el("div", "bz-people-prof-actions", [
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "编辑档案", { "data-people-prof-edit": "" })
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "编辑档案", { "data-people-prof-edit": "" }),
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 读交往素材推断缺失字段，填进表单待你确认" })
     ]));
     return el("div", "bz-people-prof", rows);
   }
@@ -7662,12 +7671,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   function profileEditor(prof) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const grid = (label, input) => el("div", "bz-people-prof-row", [el("span", "bz-people-prof-label", text(label)), input]);
     const socialList = el("div", "bz-people-prof-social-list", { "data-people-prof-social-list": "" });
-    for (const s of (_a = prof == null ? void 0 : prof.socials) != null ? _a : []) socialList.appendChild(socialRow(s.platform, s.handle));
+    for (const s of (_a2 = prof == null ? void 0 : prof.socials) != null ? _a2 : []) socialList.appendChild(socialRow(s.platform, s.handle));
     const tagList = el("div", "bz-people-prof-tag-list", { "data-people-prof-tag-list": "" });
-    for (const t of (_b = prof == null ? void 0 : prof.tags) != null ? _b : []) tagList.appendChild(tagChip(t));
+    for (const t of (_b2 = prof == null ? void 0 : prof.tags) != null ? _b2 : []) tagList.appendChild(tagChip(t));
     const tagInput = profInput("", "加标签…", ["data-people-prof-tag-input", ""], "bz-people-prof-input bz-people-prof-tag-input");
     return el("div", "bz-people-prof bz-people-prof-edit", [
       el("div", "bz-people-prof-row", [
@@ -7696,6 +7705,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]),
       grid("备注", profInput((_h = prof == null ? void 0 : prof.note) != null ? _h : "", "一句话备注", ["data-people-prof-field", "note"])),
       el("div", "bz-people-prof-actions", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 只填空白字段，填完你可检查再保存" }),
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "保存档案", { "data-people-prof-save": "" }),
         button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-prof-cancel": "" })
       ])
@@ -7708,7 +7718,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (!hasProf && !editing) {
       out.push(el("div", "bz-people-prof-entry bz-people-prof-entry-solo", [
         el("span", "bz-people-prof-entry-hint", text("聊天之外的也可以记：")),
-        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "补人物档案", { "data-people-prof-new": "" })
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "补人物档案", { "data-people-prof-new": "" }),
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 读交往素材推断档案，填进表单待你确认" })
       ]));
     }
     return out;
@@ -7741,10 +7752,32 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-note-cancel": "" })
     ]);
   }
+  var MD_SEALS = {
+    画像速写: "速",
+    性格与思维: "性",
+    "表达 DNA": "言",
+    兴趣爱好: "趣",
+    价值观与红线: "则",
+    习惯: "常",
+    情感倾向: "情",
+    关系定性: "定",
+    互动结构: "动",
+    演变阶段: "变",
+    我们的语言: "语",
+    共同记忆: "忆",
+    冲突与修复: "克",
+    未竟之事: "未",
+    经营建议: "营"
+  };
+  var MD_CN_NO = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+  var MD_DATE_RE = /^（([-\d至~\/\s年]+?)）\s*/;
   function miniMarkdown(md) {
     const root = el("div", "bz-people-portrait");
+    let sec = null;
+    let body = null;
     let list = null;
     let quote = null;
+    let no = 0;
     const appendInline = (elm, str2) => {
       const parts = str2.split(/\*\*(.+?)\*\*/g);
       parts.forEach((part, i) => {
@@ -7753,6 +7786,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         else elm.appendChild(document.createTextNode(part));
       });
     };
+    const openSec = (title) => {
+      var _a2, _b2;
+      sec = document.createElement("section");
+      sec.className = "bz-md-sec";
+      const head = document.createElement("div");
+      head.className = "bz-md-sec-h";
+      const seal = document.createElement("span");
+      seal.className = "bz-md-seal";
+      seal.textContent = (_b2 = (_a2 = MD_SEALS[title]) != null ? _a2 : MD_CN_NO[no]) != null ? _b2 : "·";
+      const rule = document.createElement("i");
+      rule.className = "bz-md-rule";
+      head.append(seal, textEl("h4", title), rule);
+      body = document.createElement("div");
+      body.className = "bz-md-sec-b";
+      sec.append(head, body);
+      root.appendChild(sec);
+      list = null;
+      quote = null;
+      no++;
+    };
     for (const raw of String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/)) {
       const line = raw.trim();
       if (!line) {
@@ -7760,34 +7813,46 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         quote = null;
         continue;
       }
+      if (line.startsWith("## ")) {
+        openSec(line.slice(3).trim());
+        continue;
+      }
+      if (!sec) openSec("概述");
       if (line.startsWith("### ")) {
         list = null;
         quote = null;
-        root.appendChild(textEl("h5", line.slice(4)));
-        continue;
-      }
-      if (line.startsWith("## ")) {
-        list = null;
-        quote = null;
-        root.appendChild(textEl("h4", line.slice(3)));
+        body.appendChild(textEl("h5", line.slice(4)));
         continue;
       }
       if (line.startsWith("- ")) {
         quote = null;
         if (!list) {
-          list = document.createElement("ul");
-          root.appendChild(list);
+          list = document.createElement("div");
+          list.className = "bz-md-items";
+          body.appendChild(list);
         }
-        const li = document.createElement("li");
-        appendInline(li, line.slice(2));
-        list.appendChild(li);
+        const it = document.createElement("div");
+        it.className = "bz-md-it";
+        it.appendChild(el("span", "bz-md-mk"));
+        let rest = line.slice(2).trim();
+        const m = rest.match(MD_DATE_RE);
+        if (m) {
+          it.appendChild(el("span", "bz-md-date", [text(m[1])]));
+          rest = rest.slice(m[0].length);
+        }
+        const tx = document.createElement("span");
+        tx.className = "bz-md-tx";
+        appendInline(tx, rest);
+        it.appendChild(tx);
+        list.appendChild(it);
         continue;
       }
       if (line.startsWith(">")) {
         list = null;
         if (!quote) {
-          quote = document.createElement("blockquote");
-          root.appendChild(quote);
+          quote = document.createElement("div");
+          quote.className = "bz-md-quote";
+          body.appendChild(quote);
         }
         const p2 = document.createElement("p");
         appendInline(p2, line.slice(1).replace(/^\s/, ""));
@@ -7798,7 +7863,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       quote = null;
       const p = document.createElement("p");
       appendInline(p, line);
-      root.appendChild(p);
+      body.appendChild(p);
     }
     return root;
   }
@@ -7817,7 +7882,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
     return el("label", cls, [
       cb,
-      el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: localResourceUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
       el("div", "bz-people-ds-main", [
         el("div", "bz-people-ds-name", text(row.name + (row.isGroup ? "（群）" : ""))),
         el("div", "bz-people-ds-meta", text([
@@ -7938,27 +8003,37 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var dsScannedAt = "";
   var statsOpen = false;
   var profOpen = false;
+  var noteOpen = false;
   function openStatsPop() {
     statsOpen = true;
     profOpen = false;
+    noteOpen = false;
     void renderBody();
   }
   function openProfPop() {
     profOpen = true;
     statsOpen = false;
+    noteOpen = false;
+    void renderBody();
+  }
+  function openNotePop() {
+    noteOpen = true;
+    statsOpen = false;
+    profOpen = false;
     void renderBody();
   }
   function closePops() {
-    if (!statsOpen && !profOpen) return;
+    if (!statsOpen && !profOpen && !noteOpen) return;
     statsOpen = false;
     profOpen = false;
+    noteOpen = false;
     void renderBody();
   }
   function isPeopleOpen() {
     return overlay !== null;
   }
   function openPeoplePanel(app) {
-    var _a;
+    var _a2;
     if (overlay) {
       topifyZ(overlay);
       return;
@@ -7974,7 +8049,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       else if (dsOpen) closeDs();
       else closePeoplePanel();
     });
-    trapPanelFocus((_a = overlay.querySelector(".bz-people-panel")) != null ? _a : overlay);
+    trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("change", onOverlayChange);
     overlay.addEventListener("keydown", (e) => {
@@ -8005,6 +8080,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     noteAddId = null;
     statsOpen = false;
     profOpen = false;
+    noteOpen = false;
     disarmDelete();
     closeDsState();
     if (backgrounded) notice("已转后台继续生成，重开面板查看进度", "info");
@@ -8035,8 +8111,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     openDs();
   }
   function dsDataDir() {
-    var _a, _b;
-    return String((_b = (_a = tryGetSettings()) == null ? void 0 : _a.peopleDataDir) != null ? _b : "").trim();
+    var _a2, _b2;
+    return String((_b2 = (_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleDataDir) != null ? _b2 : "").trim();
   }
   function isDesktop() {
     return typeof window !== "undefined" && Boolean(window.require);
@@ -8063,7 +8139,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         media: badge ? formatMediaCount(badge) : "",
         previewCount: c.previewCount,
         newCount: c.newCount,
-        processedTs: c.processedTs
+        processedTs: c.processedTs,
+        avatar: c.avatar
       };
     });
   }
@@ -8085,7 +8162,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     };
   }
   async function runScan(force = false) {
-    var _a, _b, _c, _d;
+    var _a2, _b2, _c, _d;
     const dataDir = dsDataDir();
     if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy()) return;
     if (!isDesktop()) {
@@ -8102,7 +8179,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     let hidden = 0;
     try {
       const dirNames = listContactDirs(dataDir);
-      const includeGroups = ((_a = tryGetSettings()) == null ? void 0 : _a.peopleIncludeGroups) === true;
+      const includeGroups = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleIncludeGroups) === true;
       const opts = normalizeOptionsFromSettings();
       const previewStore = new PreviewStore(getApp());
       const [previewData2, people] = await Promise.all([previewStore.read(), store.list()]);
@@ -8117,7 +8194,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
         const pv = previewData2.contacts[name];
-        const keys = new Set(((_b = pv == null ? void 0 : pv.msgs) != null ? _b : []).map((m) => m.key));
+        const keys = new Set(((_b2 = pv == null ? void 0 : pv.msgs) != null ? _b2 : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
           name,
@@ -8126,7 +8203,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           stats: norm.stats,
           previewCount: (_c = pv == null ? void 0 : pv.msgs.length) != null ? _c : 0,
           newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
-          processedTs: (_d = entry == null ? void 0 : entry.lastProcessedTs) != null ? _d : null
+          processedTs: (_d = entry == null ? void 0 : entry.lastProcessedTs) != null ? _d : null,
+          avatar: bundle.avatar
         });
       }
     } catch (e) {
@@ -8177,6 +8255,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
         const existing = (await previewStore.read()).contacts[c.name];
         const { contact, added } = mergePreview(existing, norm, now);
+        if (bundle.avatar) contact.avatar = bundle.avatar;
         await previewStore.upsertContact(c.name, contact);
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
@@ -8199,7 +8278,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     renderBody();
   }
   async function generateFromDs() {
-    var _a;
+    var _a2;
     if (!overlay || !store || dsImporting || dsScanning) return;
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
@@ -8220,7 +8299,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           talker: name,
           name,
           msgs: previewToUnified(pv.msgs),
-          kindCounts: (_a = pv.kindCounts) != null ? _a : {},
+          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
           skippedCount: 0,
           // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
           fileLabel: `数据源:${name}`,
@@ -8242,7 +8321,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     await startGeneration(targets);
   }
   async function generateOne(id, opts = {}) {
-    var _a;
+    var _a2;
     const name = id != null ? id : detailId;
     if (!store || !name) return;
     if (!opts.force && resumeExisting(name)) return;
@@ -8258,7 +8337,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           talker: name,
           name,
           msgs: previewToUnified(pv.msgs),
-          kindCounts: (_a = pv.kindCounts) != null ? _a : {},
+          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
           skippedCount: 0,
           fileLabel: `数据源:${name}`,
           insights: pv.insights
@@ -8274,8 +8353,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     await startGeneration([target]);
   }
   function resumeExisting(name) {
-    var _a;
-    const pending = ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).find((j) => j.talker === name);
+    var _a2;
+    const pending = ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).find((j) => j.talker === name);
     if (!pending || pending.status === "running" || pending.status === "done") return false;
     if (jobs().resume(name)) {
       notice(`「${name}」从第 ${pending.batchesDone + 1} 批继续——已完成的 ${pending.batchesDone} 批不重画`, "info");
@@ -8285,10 +8364,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return true;
   }
   function mergedMonthlyOf(imports) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const acc = /* @__PURE__ */ new Map();
     for (const r of imports) {
-      for (const [month, n] of (_b = (_a = r.stats) == null ? void 0 : _a.monthly) != null ? _b : []) acc.set(month, ((_c = acc.get(month)) != null ? _c : 0) + n);
+      for (const [month, n] of (_b2 = (_a2 = r.stats) == null ? void 0 : _a2.monthly) != null ? _b2 : []) acc.set(month, ((_c = acc.get(month)) != null ? _c : 0) + n);
     }
     if (!acc.size) return void 0;
     return [...acc.entries()].sort((a, b) => a[0].localeCompare(b[0]));
@@ -8332,7 +8411,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     renderJobs();
   }
   async function startGeneration(targets) {
-    var _a;
+    var _a2;
     const { runnable, skipped } = await planTargets(targets);
     for (const t of runnable) {
       targetsInFlight.set(t.talker, t);
@@ -8343,7 +8422,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (runnable.length) {
       const res = await jobs().startJobs(getApp(), runnable, {});
       engineSkipped = res.skipped.length;
-      resumed = (_a = res.resumed) != null ? _a : [];
+      resumed = (_a2 = res.resumed) != null ? _a2 : [];
       await ensureJobsWatch();
     }
     const started = runnable.length - engineSkipped;
@@ -8356,7 +8435,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     renderJobs();
   }
   async function planTargets(targets) {
-    var _a;
+    var _a2;
     const store2 = new PeopleStore(getApp());
     const people = await store2.list();
     const runnable = [];
@@ -8383,14 +8462,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       } else if (plan.olderCount > 0) {
         notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      runnable.push({ ...t, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a = existing == null ? void 0 : existing.imports) != null ? _a : []) });
+      runnable.push({ ...t, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
     }
     return { runnable, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
-    const talker = (_a = target == null ? void 0 : target.talker) != null ? _a : job.talker;
-    const name = (_b = target == null ? void 0 : target.name) != null ? _b : job.name;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+    const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
+    const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
       const person = job.person;
       if (!person) {
@@ -8441,34 +8520,37 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
   }
   function renderJobs() {
+    var _a2;
     const slot = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs-slot]");
     if (!slot) return;
     const item = currentJobsItem();
-    if (item) {
+    const show = Boolean(item && item.status !== "done" && stage === "detail" && detailId === item.talker);
+    if (show && item) {
       slot.hidden = false;
       slot.replaceChildren(progressBlock(toBlockState(item)));
     } else {
       slot.hidden = true;
       slot.replaceChildren();
     }
+    (_a2 = overlay == null ? void 0 : overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a2.classList.toggle("bz-people-jobs-showing", show);
     syncWallSeals();
   }
   function currentJobsItem() {
-    var _a;
-    const queue = (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : [];
+    var _a2;
+    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
     if (!queue.length) return null;
     const rank = { running: 0, paused: 1, interrupted: 1, error: 2, done: 3 };
     return [...queue].map((job, i) => ({ job, i })).sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
   }
   function toBlockState(job) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    const queue = (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : [];
+    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
     const pos = queue.findIndex((j) => j.talker === job.talker);
     return {
       talker: job.talker,
       name: job.name || job.talker,
       status: job.status,
-      message: (_b = job.message) != null ? _b : "",
+      message: (_b2 = job.message) != null ? _b2 : "",
       batchesDone: (_c = job.batchesDone) != null ? _c : 0,
       batchesTotal: (_f = (_e = job.batchesTotal) != null ? _e : (_d = job.chunks) == null ? void 0 : _d.length) != null ? _f : 0,
       stagesDone: jobsStagesDone(job.stage, job.status),
@@ -8482,17 +8564,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return job.error !== DRIFT_ERROR;
   }
   function jobsBusy() {
-    var _a;
-    return ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).some((j) => j.status === "running" || j.status === "paused");
+    var _a2;
+    return ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).some((j) => j.status === "running" || j.status === "paused");
   }
   function jobsRunning() {
-    var _a;
-    return ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).some((j) => j.status === "running");
+    var _a2;
+    return ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).some((j) => j.status === "running");
   }
   function jobsAction(kind) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const api = jobs();
-    const talker = (_b = (_a = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a.getAttribute("data-people-jobs-talker")) != null ? _b : "";
+    const talker = (_b2 = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a2.getAttribute("data-people-jobs-talker")) != null ? _b2 : "";
     if (kind === "pause") {
       api.pauseJobs();
       notice("这一批做完就暂停", "info");
@@ -8511,38 +8593,38 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
   }
   function jobViews() {
-    var _a;
+    var _a2;
     const m = /* @__PURE__ */ new Map();
-    for (const j of (_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []) m.set(j.talker, j);
+    for (const j of (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []) m.set(j.talker, j);
     return m;
   }
   function sealJobOf(job) {
-    var _a, _b, _c, _d;
+    var _a2, _b2, _c, _d;
     if (!job) return null;
     return {
       status: job.status,
-      batchesDone: (_a = job.batchesDone) != null ? _a : 0,
-      batchesTotal: (_d = (_c = job.batchesTotal) != null ? _c : (_b = job.chunks) == null ? void 0 : _b.length) != null ? _d : 0,
+      batchesDone: (_a2 = job.batchesDone) != null ? _a2 : 0,
+      batchesTotal: (_d = (_c = job.batchesTotal) != null ? _c : (_b2 = job.chunks) == null ? void 0 : _b2.length) != null ? _d : 0,
       stagesDone: jobsStagesDone(job.stage, job.status),
       // 漂移类失败（消息集已变）接不上——印章改出「重新生成」
       resumable: isResumable(job)
     };
   }
   function syncWallSeals() {
-    var _a;
+    var _a2;
     const wall = overlay == null ? void 0 : overlay.querySelector("[data-people-wall]");
     if (!wall) return;
     const map = jobViews();
     const byId = new Map(listCache.map((p) => [p.id, p]));
     for (const card of Array.from(wall.querySelectorAll("[data-people-card]"))) {
-      const p = byId.get((_a = card.dataset.peopleCard) != null ? _a : "");
+      const p = byId.get((_a2 = card.dataset.peopleCard) != null ? _a2 : "");
       const old = card.querySelector(".bz-people-seal");
       if (!p || !old) continue;
       old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
     }
   }
   async function sealAction(kind, id) {
-    var _a;
+    var _a2;
     const api = jobs();
     if (kind === "pause") {
       api.pauseJobs();
@@ -8550,7 +8632,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     if (kind === "resume") {
-      const pending = ((_a = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a : []).find((j) => j.talker === id);
+      const pending = ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).find((j) => j.talker === id);
       if (!api.resume(id)) {
         notice("这个任务接不上了，请点「重新生成」", "info");
         return;
@@ -8562,7 +8644,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -8658,12 +8740,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const del = t.closest("[data-people-del]");
     if (del) {
-      void handleDelete((_a = del.dataset.peopleDel) != null ? _a : "");
+      void handleDelete((_a2 = del.dataset.peopleDel) != null ? _a2 : "");
       return;
     }
     const seal = t.closest("[data-people-seal-act]");
     if (seal) {
-      const id = (_c = (_b = seal.closest("[data-people-card]")) == null ? void 0 : _b.dataset.peopleCard) != null ? _c : "";
+      const id = (_c = (_b2 = seal.closest("[data-people-card]")) == null ? void 0 : _b2.dataset.peopleCard) != null ? _c : "";
       if (id) void sealAction((_d = seal.dataset.peopleSealAct) != null ? _d : "", id);
       return;
     }
@@ -8678,9 +8760,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       }
       return;
     }
+    const evMonHead = t.closest("[data-people-ev-mon]");
+    if (evMonHead) {
+      const group = evMonHead.closest(".bz-people-ev-mon");
+      if (group) {
+        const on = group.classList.toggle("bz-people-ev-mon-on");
+        evMonHead.setAttribute("aria-label", `${on ? "收起" : "展开"} ${(_f = (_e = evMonHead.querySelector(".bz-people-ev-mon-name")) == null ? void 0 : _e.textContent) != null ? _f : ""}`);
+      }
+      return;
+    }
     const card = t.closest("[data-people-card]");
     if (card) {
-      detailId = (_e = card.dataset.peopleCard) != null ? _e : null;
+      detailId = (_g = card.dataset.peopleCard) != null ? _g : null;
       detailFold = "p";
       stage = "detail";
       void renderBody();
@@ -8700,8 +8791,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       void saveProfile();
       return;
     }
+    if (t.closest("[data-people-prof-ai]")) {
+      void aiFillProfile();
+      return;
+    }
     if (t.closest("[data-people-prof-add-social]")) {
-      (_f = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _f.appendChild(socialRow("", ""));
+      (_h = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _h.appendChild(socialRow("", ""));
       return;
     }
     if (t.closest("[data-people-prof-tag-add]")) {
@@ -8709,20 +8804,19 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     if (t.closest("[data-people-prof-tag-del]")) {
-      (_g = t.closest(".bz-people-prof-tag")) == null ? void 0 : _g.remove();
+      (_i = t.closest(".bz-people-prof-tag")) == null ? void 0 : _i.remove();
       return;
     }
     if (t.closest("[data-people-prof-social-del]")) {
-      (_h = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _h.remove();
+      (_j = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _j.remove();
       return;
     }
-    if (t.closest("[data-people-note-add]")) {
-      noteAddId = detailId;
-      void renderBody();
+    if (t.closest("[data-people-note-open]")) {
+      openNotePop();
       return;
     }
     if (t.closest("[data-people-note-cancel]")) {
-      noteAddId = null;
+      noteOpen = false;
       void renderBody();
       return;
     }
@@ -8732,15 +8826,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const evDel = t.closest("[data-people-ev-del]");
     if (evDel) {
-      void removeManualNote((_i = evDel.dataset.peopleEvDel) != null ? _i : "");
+      void removeManualNote((_k = evDel.dataset.peopleEvDel) != null ? _k : "");
       return;
     }
   }
   function onOverlayChange(e) {
-    var _a;
+    var _a2;
     const el2 = e.target;
     if (el2.matches("[data-people-ds-check]")) {
-      const name = (_a = el2.dataset.peopleDsCheck) != null ? _a : "";
+      const name = (_a2 = el2.dataset.peopleDsCheck) != null ? _a2 : "";
       if (el2.checked) dsSelected.add(name);
       else dsSelected.delete(name);
       updateDsFooter();
@@ -8754,10 +8848,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function syncDsChecks() {
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-ds-check]").forEach((cb) => {
-      var _a, _b;
-      const name = (_a = cb.dataset.peopleDsCheck) != null ? _a : "";
+      var _a2, _b2;
+      const name = (_a2 = cb.dataset.peopleDsCheck) != null ? _a2 : "";
       cb.checked = dsSelected.has(name);
-      (_b = cb.closest(".bz-people-ds-row")) == null ? void 0 : _b.classList.toggle("bz-people-ds-on", cb.checked);
+      (_b2 = cb.closest(".bz-people-ds-row")) == null ? void 0 : _b2.classList.toggle("bz-people-ds-on", cb.checked);
     });
     updateDsFooter();
   }
@@ -8768,18 +8862,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const count = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-count]");
     if (count) count.textContent = label;
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-ds-check]").forEach((cb) => {
-      var _a;
-      (_a = cb.closest(".bz-people-ds-row")) == null ? void 0 : _a.classList.toggle("bz-people-ds-on", cb.checked);
+      var _a2;
+      (_a2 = cb.closest(".bz-people-ds-row")) == null ? void 0 : _a2.classList.toggle("bz-people-ds-on", cb.checked);
     });
   }
   async function renderBody() {
-    var _a;
+    var _a2;
     const body = overlay == null ? void 0 : overlay.querySelector("[data-people-body]");
     if (!body || !store || !overlay) return;
     const people = await wallPeople();
     if (stage === "list") await renderList(body, people);
     else await renderDetail(body, people);
-    (_a = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a.classList.toggle("bz-people-panel-detail", stage === "detail");
+    (_a2 = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a2.classList.toggle("bz-people-panel-detail", stage === "detail");
     renderDsLayer();
     renderPopLayer(people);
     renderJobs();
@@ -8795,17 +8889,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function renderPopLayer(people) {
     const layer = overlay == null ? void 0 : overlay.querySelector("[data-people-pop-layer]");
     if (!layer) return;
-    const p = statsOpen || profOpen ? people.find((x) => x.id === detailId) : null;
+    const p = statsOpen || profOpen || noteOpen ? people.find((x) => x.id === detailId) : null;
     if (!p) {
       statsOpen = false;
       profOpen = false;
+      noteOpen = false;
       layer.hidden = true;
       layer.replaceChildren();
       return;
     }
     layer.hidden = false;
     layer.replaceChildren(
-      statsOpen ? popShell("互动统计", "data-people-stats-pop", statsPopBody(buildInsightsCard(p), p)) : popShell("补充背景", "data-people-prof-pop", profilePopBody(p, profEditId === p.id))
+      statsOpen ? popShell("互动统计", "data-people-stats-pop", statsPopBody(buildInsightsCard(p), p)) : profOpen ? popShell("补充背景", "data-people-prof-pop", profilePopBody(p, profEditId === p.id)) : popShell("记一笔", "data-people-note-pop", [noteAddRow(todayStr())])
     );
   }
   var previewCache = null;
@@ -8820,9 +8915,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return previewCache;
   }
   function poolRecord(id, contact) {
-    var _a, _b, _c, _d, _e, _f, _g;
+    var _a2, _b2, _c, _d, _e, _f, _g;
     if (!contact) return null;
-    const msgs = (_a = contact.msgs) != null ? _a : [];
+    const msgs = (_a2 = contact.msgs) != null ? _a2 : [];
     if (!msgs.length) return null;
     return {
       file: `数据源:${id}`,
@@ -8835,16 +8930,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       // 缺了它，合成卡与详情头的「语音 / 图片」永远是「—」（大琳 1289 条语音 / 1615 张图看不见）。
       // 只带媒体三项：月度 / 时段明细预览桶没有，不在这编造——「数据」折见无 monthly 即出占位。
       stats: {
-        voiceCount: (_c = (_b = contact.stats) == null ? void 0 : _b.voiceCount) != null ? _c : 0,
+        voiceCount: (_c = (_b2 = contact.stats) == null ? void 0 : _b2.voiceCount) != null ? _c : 0,
         voiceTotalSec: (_e = (_d = contact.stats) == null ? void 0 : _d.voiceTotalSec) != null ? _e : 0,
         imageCount: (_g = (_f = contact.stats) == null ? void 0 : _f.imageCount) != null ? _g : 0
       }
     };
   }
   async function wallPeople() {
-    var _a;
+    var _a2;
     const people = store ? await store.list() : [];
-    const contacts = (_a = (await previewData()).contacts) != null ? _a : {};
+    const contacts = (_a2 = (await previewData()).contacts) != null ? _a2 : {};
     const out = people.map((p) => {
       const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
       return rec ? { ...p, imports: [rec] } : p;
@@ -8859,14 +8954,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return out;
   }
   async function ensureEntry(id) {
-    var _a, _b;
+    var _a2, _b2;
     if (!store || !id) return;
     if ((await store.list()).some((p) => p.id === id)) return;
-    const name = (_b = (_a = listCache.find((x) => x.id === id)) == null ? void 0 : _a.name) != null ? _b : id;
+    const name = (_b2 = (_a2 = listCache.find((x) => x.id === id)) == null ? void 0 : _a2.name) != null ? _b2 : id;
     await store.upsert({ id, name, createdAt: (/* @__PURE__ */ new Date()).toISOString(), imports: [] });
   }
   async function renderList(body, people) {
-    var _a;
+    var _a2;
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     listCache = people;
@@ -8881,10 +8976,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       mergeToId = null;
     } else if (from) {
       const to = mergeToId && mergeToId !== mergeFromId ? people.find((x) => x.id === mergeToId) : null;
-      body.appendChild(mergeBar(from.name, (_a = to == null ? void 0 : to.name) != null ? _a : null));
+      body.appendChild(mergeBar(from.name, (_a2 = to == null ? void 0 : to.name) != null ? _a2 : null));
     }
     const wall = foldWall();
-    applyWall(people, wall);
+    const preview = await previewData();
+    applyWall(people, wall, (name) => {
+      var _a3;
+      return (_a3 = preview.contacts[name]) == null ? void 0 : _a3.avatar;
+    });
     body.appendChild(wall);
   }
   async function handleDelete(id) {
@@ -8918,7 +9017,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     deleteArmTimer = null;
   }
   async function renderDetail(body, people) {
-    var _a, _b, _c, _d;
+    var _a2;
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
     const p = people.find((x) => x.id === detailId);
@@ -8929,40 +9028,34 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     const media = personMedia(p);
-    body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)) }));
+    const avatar = (_a2 = (await previewData()).contacts[p.name]) == null ? void 0 : _a2.avatar;
+    body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
     const person = personOf(p.digest);
     const bond = bondOf(p.digest);
-    const quoteOf = {
-      p: person ? spillOf(person) : "还没有其人画像。从数据源导入一次即可生成。",
-      b: bond ? spillOf(bond) : "还没有关系画像。从数据源导入一次即可生成。",
-      e: ((_a = p.digest) == null ? void 0 : _a.events.length) ? spillOf(p.digest.events[0].summary) : ((_b = p.manualEvents) == null ? void 0 : _b.length) ? spillOf(p.manualEvents[0].summary) : "还没有交往事件与随手记。",
-      c: ((_c = p.digest) == null ? void 0 : _c.chronicle) ? spillOf(p.digest.chronicle) : "还没有关系时间线。"
-    };
     const bodies = {
       p: detailFold === "p" ? foldPersonBody(person ? miniMarkdown(person) : null, p) : [],
       b: detailFold === "b" ? foldBondBody(bond ? miniMarkdown(bond) : null) : [],
-      e: detailFold === "e" ? foldEventsBody(p, noteAddId === p.id, todayStr()) : [],
-      c: detailFold === "c" ? foldChronicleBody(((_d = p.digest) == null ? void 0 : _d.chronicle) ? miniMarkdown(p.digest.chronicle) : null) : []
+      e: detailFold === "e" ? foldEventsBody(p) : []
     };
-    body.appendChild(foldBook(p, { fold: detailFold }, bodies, quoteOf));
+    body.appendChild(foldBook(p, { fold: detailFold }, bodies));
   }
   function buildInsightsCard(p) {
-    var _a, _b, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e;
     if (!p.imports.length) return null;
     const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
     const s = latest.stats;
-    if (!((_a = s == null ? void 0 : s.monthly) == null ? void 0 : _a.length)) return null;
+    if (!((_a2 = s == null ? void 0 : s.monthly) == null ? void 0 : _a2.length)) return null;
     const totalMsg = s.monthly.reduce((a, [, n]) => a + n, 0);
     const rows = document.createElement("div");
     rows.className = "bz-people-ins-rows";
-    const byMe = (_b = s.initiatedByMe) != null ? _b : 0;
+    const byMe = (_b2 = s.initiatedByMe) != null ? _b2 : 0;
     const byOther = (_c = s.initiatedByOther) != null ? _c : 0;
     const initiated = byMe + byOther;
     rows.appendChild(insRow("谁主动", initiated ? duoBar(Math.round(byMe / initiated * 100), Math.round(byOther / initiated * 100)) : duoBar(0, 0), initiated ? `我 ${byMe} · 对方 ${byOther}` : "暂无会话"));
     rows.appendChild(insRow("回复时延", "", `我 ${formatReplySec(replyLatencySec(s.myMedianReplySec, s.myAvgReplySec))} · 对方 ${formatReplySec(replyLatencySec(s.otherMedianReplySec, s.otherAvgReplySec))}`));
     const hourly = ((_d = s.myHourly) != null ? _d : []).map((n, i) => {
-      var _a2, _b2;
-      return n + ((_b2 = (_a2 = s.otherHourly) == null ? void 0 : _a2[i]) != null ? _b2 : 0);
+      var _a3, _b3;
+      return n + ((_b3 = (_a3 = s.otherHourly) == null ? void 0 : _a3[i]) != null ? _b3 : 0);
     });
     const max = hourly.length ? Math.max(...hourly) : 0;
     const total = hourly.reduce((a, n) => a + n, 0);
@@ -8983,13 +9076,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   function personMedia(p) {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     const acc = emptyMediaStats();
     for (const r of p.imports) {
       const s = r.stats;
       if (!s) continue;
-      acc.voiceCount += (_a = s.voiceCount) != null ? _a : 0;
-      acc.voiceTotalSec += (_b = s.voiceTotalSec) != null ? _b : 0;
+      acc.voiceCount += (_a2 = s.voiceCount) != null ? _a2 : 0;
+      acc.voiceTotalSec += (_b2 = s.voiceTotalSec) != null ? _b2 : 0;
       acc.imageCount += (_c = s.imageCount) != null ? _c : 0;
     }
     return acc.voiceCount || acc.imageCount ? acc : null;
@@ -8998,7 +9091,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const lastSeen = (p) => p.imports.reduce((m, r) => r.timeTo > m ? r.timeTo : m, "");
     return [...list].sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
   }
-  function applyWall(people, wall) {
+  function applyWall(people, wall, avatarOf) {
     wall.replaceChildren();
     const map = jobViews();
     for (const p of sortPeople(people)) {
@@ -9006,13 +9099,14 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         media: personMedia(p),
         mergeFrom: p.id === mergeFromId,
         mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
-        job: sealJobOf(map.get(p.id))
+        job: sealJobOf(map.get(p.id)),
         // 451：印章四态（任务态压过脸谱水位）
+        avatar: avatarOf(p.name)
       }));
     }
   }
   async function handleMergeConfirm() {
-    var _a, _b;
+    var _a2, _b2;
     const fromId = mergeFromId;
     const toId = mergeToId;
     if (!store || !fromId || !toId || fromId === toId) return;
@@ -9020,7 +9114,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const to = listCache.find((x) => x.id === toId);
     try {
       await store.mergeInto(fromId, toId);
-      notice(`已把「${(_a = from == null ? void 0 : from.name) != null ? _a : fromId}」的导入记录与随手记并到「${(_b = to == null ? void 0 : to.name) != null ? _b : toId}」，原人物已删除。要更新脸谱可从数据源补画`, "success");
+      notice(`已把「${(_a2 = from == null ? void 0 : from.name) != null ? _a2 : fromId}」的导入记录与随手记并到「${(_b2 = to == null ? void 0 : to.name) != null ? _b2 : toId}」，原人物已删除。要更新脸谱可从数据源补画`, "success");
     } catch (e) {
       notifyActionError(e, "合并人物");
     }
@@ -9031,40 +9125,112 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var profEditId = null;
   var noteAddId = null;
   function addTagChip() {
-    var _a;
+    var _a2;
     const input = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-tag-input]");
     const list = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-tag-list]");
-    const v = ((_a = input == null ? void 0 : input.value) != null ? _a : "").trim();
+    const v = ((_a2 = input == null ? void 0 : input.value) != null ? _a2 : "").trim();
     if (!input || !list || !v) return;
     const dupes = new Set(
       Array.from(list.querySelectorAll(".bz-people-prof-tag-text")).map((n) => {
-        var _a2;
-        return ((_a2 = n.textContent) != null ? _a2 : "").trim();
+        var _a3;
+        return ((_a3 = n.textContent) != null ? _a3 : "").trim();
       })
     );
     if (!dupes.has(v)) list.appendChild(tagChip(v));
     input.value = "";
     input.focus();
   }
+  var profAiBusy = false;
+  async function aiFillProfile() {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
+    if (profAiBusy || !store || !detailId || !overlay) return;
+    const p = listCache.find((x) => x.id === detailId);
+    if (!p) return;
+    const dg = p.digest;
+    if (!dg) {
+      notice("还没有脸谱素材——先导入并画脸谱，AI 才有据可依", "warning");
+      return;
+    }
+    if (profEditId !== detailId) {
+      profEditId = detailId;
+      await renderBody();
+    }
+    profAiBusy = true;
+    notice("AI 正在读交往素材补充背景…", "info");
+    try {
+      const majors = dg.events.filter((e) => e.kind === "major");
+      const mat = [
+        ["交往事件", [...majors, ...dg.events.filter((e) => e.kind !== "major")].slice(0, 200).map((e) => `${e.ts} ${e.summary}`).join("\n")],
+        ...((_a2 = dg.quotes) == null ? void 0 : _a2.length) ? [["代表性原话", dg.quotes.slice(0, 40).map((q) => `${q.who}：${q.text}`).join("\n")]] : [],
+        ...((_b2 = dg.moments) == null ? void 0 : _b2.length) ? [["场景细节", dg.moments.slice(0, 30).map((m) => `${m.ts} ${m.summary}`).join("\n")]] : []
+      ].map(([t, s]) => `【${t}】
+${s}`).join("\n\n");
+      const known = [
+        ((_c = p.profile) == null ? void 0 : _c.birthday) ? `生日 ${p.profile.birthday}` : "",
+        ((_d = p.profile) == null ? void 0 : _d.hometown) ? `家乡/现居 ${p.profile.hometown}` : "",
+        ((_e = p.profile) == null ? void 0 : _e.job) ? `职业 ${p.profile.job}` : "",
+        ((_f = p.profile) == null ? void 0 : _f.metVia) ? `认识方式 ${p.profile.metVia}` : "",
+        ((_g = p.profile) == null ? void 0 : _g.metAt) ? `认识时间 ${p.profile.metAt}` : "",
+        ((_i = (_h = p.profile) == null ? void 0 : _h.tags) == null ? void 0 : _i.length) ? `标签 ${p.profile.tags.join("、")}` : ""
+      ].filter(Boolean).join("；");
+      const prompt = [
+        `你在帮用户完善好友「${p.name}」的档案。以下是已落盘的交往提炼素材。`,
+        ...known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : [],
+        "",
+        mat,
+        "",
+        "请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：",
+        '{"birthday":"","hometown":"","job":"","metVia":"","metAt":"","tags":[],"note":""}',
+        "规则：",
+        "- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。",
+        "- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。",
+        "- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。",
+        "- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。"
+      ].join("\n");
+      const data = extractJsonLoose(await createAI().json(prompt));
+      let filled = 0;
+      for (const f of ["birthday", "metVia", "metAt", "hometown", "job", "note"]) {
+        const v = String((_j = data[f]) != null ? _j : "").trim();
+        if (!v) continue;
+        const inp = overlay.querySelector(`[data-people-prof-field="${f}"]`);
+        if (inp && !inp.value.trim()) {
+          inp.value = v;
+          filled++;
+        }
+      }
+      const tags = Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [];
+      const tagList = overlay.querySelector("[data-people-prof-tag-list]");
+      if (tagList && tagList.children.length === 0 && tags.length) {
+        for (const t of tags.slice(0, 3)) tagList.appendChild(tagChip(t));
+        filled++;
+      }
+      if (filled > 0) notice(`AI 已补 ${filled} 项，请检查后点「保存档案」`, "success");
+      else notice("素材里没有能支撑的档案信息，未作补充", "info");
+    } catch (e) {
+      notifyActionError(e, "AI 补充背景");
+    } finally {
+      profAiBusy = false;
+    }
+  }
   async function saveProfile() {
     if (!store || !detailId || !overlay) return;
     await ensureEntry(detailId);
     const val = (sel) => {
-      var _a, _b, _c;
-      return (_c = (_b = (_a = overlay.querySelector(sel)) == null ? void 0 : _a.value) == null ? void 0 : _b.trim()) != null ? _c : "";
+      var _a2, _b2, _c;
+      return (_c = (_b2 = (_a2 = overlay.querySelector(sel)) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "";
     };
     const rows = Array.from(overlay.querySelectorAll(".bz-people-prof-social-row"));
     const socials = rows.map((row) => {
-      var _a, _b, _c, _d, _e, _f;
+      var _a2, _b2, _c, _d, _e, _f;
       return {
-        platform: (_c = (_b = (_a = row.querySelector("[data-people-prof-social-platform]")) == null ? void 0 : _a.value) == null ? void 0 : _b.trim()) != null ? _c : "",
+        platform: (_c = (_b2 = (_a2 = row.querySelector("[data-people-prof-social-platform]")) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "",
         handle: (_f = (_e = (_d = row.querySelector("[data-people-prof-social-handle]")) == null ? void 0 : _d.value) == null ? void 0 : _e.trim()) != null ? _f : ""
       };
     }).filter((s) => s.platform && s.handle);
     const partial = rows.length - socials.length;
     const tagTexts = Array.from(overlay.querySelectorAll("[data-people-prof-tag-list] .bz-people-prof-tag-text")).map((n) => {
-      var _a;
-      return ((_a = n.textContent) != null ? _a : "").trim();
+      var _a2;
+      return ((_a2 = n.textContent) != null ? _a2 : "").trim();
     }).filter(Boolean);
     const tags = [...new Set(tagTexts)];
     const profile = {};
@@ -9096,9 +9262,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     void renderBody();
   }
   async function saveManualNote() {
-    var _a, _b, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e;
     if (!store || !detailId || !overlay) return;
-    const summary = (_c = (_b = (_a = overlay.querySelector("[data-people-note-text]")) == null ? void 0 : _a.value) == null ? void 0 : _b.trim()) != null ? _c : "";
+    const summary = (_c = (_b2 = (_a2 = overlay.querySelector("[data-people-note-text]")) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "";
     if (!summary) {
       notice("随手记还没写内容", "warning");
       return;
@@ -9108,6 +9274,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       await ensureEntry(detailId);
       await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: (/* @__PURE__ */ new Date()).toISOString() });
       noteAddId = null;
+      noteOpen = false;
       notice("已记一笔", "success");
     } catch (e) {
       notifyActionError(e, "记随手记");
@@ -9115,10 +9282,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     void renderBody();
   }
   async function removeManualNote(evId) {
-    var _a, _b;
+    var _a2, _b2;
     if (!store || !detailId || !evId) return;
     try {
-      const found = (_b = (_a = (await store.list()).find((p) => p.id === detailId)) == null ? void 0 : _a.manualEvents) == null ? void 0 : _b.find((m) => m.id === evId);
+      const found = (_b2 = (_a2 = (await store.list()).find((p) => p.id === detailId)) == null ? void 0 : _a2.manualEvents) == null ? void 0 : _b2.find((m) => m.id === evId);
       await store.removeManualEvent(detailId, evId);
       const brief = (found == null ? void 0 : found.summary) ? `：${[...found.summary].slice(0, 20).join("")}${[...found.summary].length > 20 ? "…" : ""}` : "";
       notice(`已删除随手记${brief}`, "delete");
@@ -9215,8 +9382,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
               cta: true,
               desc: "清掉全部导入预览缓存，不动已生成的脸谱",
               onClick: () => {
-                var _a;
-                return void ((_a = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a.call(opts));
+                var _a2;
+                return void ((_a2 = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a2.call(opts));
               }
             }
           ]
@@ -9396,12 +9563,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const build = (name, take) => {
       const raws = read(name).slice(0, take);
       const msgs = raws.map((m) => {
-        var _a;
+        var _a2;
         return {
           key: `s${m.sid}:${m.ct}`,
           ts: m.ct * 1e3,
           isSender: m.who === "我",
-          text: String((_a = m.msg) != null ? _a : "")
+          text: String((_a2 = m.msg) != null ? _a2 : "")
         };
       });
       const media = collectMediaStats(msgs);
@@ -9449,9 +9616,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       };
     };
   }
+  var _a, _b;
   var demoSettings = {
     storagePath: "CONFIG/STORAGE",
-    peopleDataDir: DS_ROOT,
+    // 数据目录可由壳启动钩子覆盖（window.BZW_PEOPLE.SEED.DATA_DIR，评审页注入真实目录用）；缺省演示目录
+    peopleDataDir: typeof window !== "undefined" && ((_b = (_a = window.BZW_PEOPLE) == null ? void 0 : _a.SEED) == null ? void 0 : _b.DATA_DIR) || DS_ROOT,
     peopleIncludeGroups: false,
     peoplePreviewVoice: true,
     peopleImageDescMode: "file",
@@ -9460,13 +9629,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   };
   var booted = false;
   function bootPeopleSim() {
-    var _a, _b, _c;
+    var _a2, _b2, _c;
     if (booted) return;
     booted = true;
     const app = new FakeApp();
     setApp(app);
     if (localStorage.getItem(PEOPLE_KEY) == null) localStorage.setItem(PEOPLE_KEY, seedPeople());
-    const dsFiles = (_c = (_b = (_a = window.BZW_PEOPLE) == null ? void 0 : _a.SEED) == null ? void 0 : _b.DS_FILES) != null ? _c : buildDsFiles();
+    const dsFiles = (_c = (_b2 = (_a2 = window.BZW_PEOPLE) == null ? void 0 : _a2.SEED) == null ? void 0 : _b2.DS_FILES) != null ? _c : buildDsFiles();
     window.BZW_PEOPLE = { SEED: { DS_FILES: dsFiles } };
     if (localStorage.getItem(PREVIEW_KEY) == null) localStorage.setItem(PREVIEW_KEY, seedPreview(dsFiles));
     installFakeFs(dsFiles);

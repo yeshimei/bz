@@ -108,6 +108,8 @@ export interface PreviewContact {
   kindCounts?: Record<string, number>;
   /** 互动画像汇总（449；normalize 全量重算覆盖。旧桶无此字段照常读） */
   insights?: InsightsSummary;
+  /** 头像文件绝对路径（数据目录 avatar.<ext>；只存路径不复制入库，隐私口径同 ADR-0191 §2） */
+  avatar?: string;
   /** 最近一次导入时间 ISO */
   updatedAt: string;
 }
@@ -584,7 +586,7 @@ export function listContactDirs(dataDir: string): string[] {
 export function readContactBundle(
   dataDir: string,
   name: string
-): { raws: RawChatMsg[]; voice: VoiceItem[]; imageDesc: ImageDescItem[] } | null {
+): { raws: RawChatMsg[]; voice: VoiceItem[]; imageDesc: ImageDescItem[]; avatar: string | null } | null {
   const fs = getFs();
   if (!fs) return null;
   const readJson = (path: string): unknown[] | null => {
@@ -601,7 +603,19 @@ export function readContactBundle(
     raws: raws as RawChatMsg[],
     voice: (readJson(`${dataDir}/${name}/voice.json`) as VoiceItem[]) ?? [],
     imageDesc: (readJson(`${dataDir}/${name}/image_desc.json`) as ImageDescItem[]) ?? [],
+    avatar: avatarFileOf(fs, `${dataDir}/${name}`),
   };
+}
+
+/** 联系人目录里的头像文件（avatar.<扩展名>，按序探测；绝对路径，缺省 null） */
+function avatarFileOf(fs: any, dir: string): string | null {
+  for (const ext of ['jpg', 'jpeg', 'png', 'webp', 'gif']) {
+    const p = `${dir}/avatar.${ext}`;
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch { /* 探测失败按无头像 */ }
+  }
+  return null;
 }
 
 // ---------------- IO：people-preview.json（vault 内） ----------------

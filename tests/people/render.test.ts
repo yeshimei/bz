@@ -178,33 +178,31 @@ describe('面板壳与统计行', () => {
   });
 });
 
-describe('详情折页册（foldBook，issue 455 四折）', () => {
-  const bodies = { p: [], b: [], e: [], c: [] } as Record<string, never[]>;
-  const spills = { p: '其人引文', b: '我们引文', e: '事件引文', c: '大事记引文' };
+describe('详情折页册（foldBook，455 评审三折：其人/相交/纪事）', () => {
+  const bodies = { p: [], b: [], e: [] } as Record<string, never[]>;
 
-  it('四折齐全（其人/我们/事件/时间线）；展开折有正文容器，收起折出竖排引文', () => {
-    const book = foldBook(person(), { fold: 'p' }, bodies, spills);
+  it('三折齐全（其人/相交/纪事）；展开折有正文容器，收起折只剩竖排书脊（引文与灰色小字已移除）', () => {
+    const book = foldBook(person(), { fold: 'p' }, bodies);
     const leaves = [...book.querySelectorAll('[data-people-leaf]')];
-    expect(leaves.map((l) => l.getAttribute('data-people-leaf'))).toEqual(['p', 'b', 'e', 'c']);
+    expect(leaves.map((l) => l.getAttribute('data-people-leaf'))).toEqual(['p', 'b', 'e']);
     const pLeaf = book.querySelector('[data-people-leaf="p"]')!;
     expect(pLeaf.classList.contains('bz-people-leaf-on')).toBe(true);
     expect(pLeaf.querySelector('.bz-people-leaf-body')).toBeTruthy();
     const eLeaf = book.querySelector('[data-people-leaf="e"]')!;
-    expect(eLeaf.querySelector('.bz-people-leaf-spill')!.textContent).toBe('事件引文');
+    expect(eLeaf.querySelector('.bz-people-leaf-spill')).toBeNull();
+    expect(eLeaf.querySelector('.bz-people-leaf-cnt')).toBeNull();
     expect(eLeaf.querySelector('.bz-people-leaf-body')).toBeNull();
   });
 
-  it('卷一《其人》+ 卷二《我们》：折脊 meta 走兼容读——旧单卷 portrait 只进其人折', () => {
+  it('三折折题（其人/相交/纪事）；书脊不另出 meta 小字', () => {
     const p = person({ digest: { portrait: '旧画像', events: [], generatedAt: '2026-03-12T00:00:00.000Z' } });
-    const book = foldBook(p, { fold: 'b' }, bodies, spills);
-    expect([...book.querySelectorAll('.bz-people-leaf-zh')].map((n) => n.textContent)).toEqual(['其人', '我们', '事件', '大事记']);
-    const metas = [...book.querySelectorAll('.bz-people-leaf-cnt')].map((n) => n.textContent);
-    expect(metas[0]).toBe('修'); // personOf 回落旧 portrait
-    expect(metas[1]).toBe('空'); // bondOf：旧数据没有 bond
+    const book = foldBook(p, { fold: 'b' }, bodies);
+    expect([...book.querySelectorAll('.bz-people-leaf-zh')].map((n) => n.textContent)).toEqual(['其人', '相交', '纪事']);
+    expect(book.querySelector('.bz-people-leaf-cnt')).toBeNull();
   });
 
-  it('折页切换钩子挂整片收起折（点竖排引文区也能切）；展开折不带——防吞折内按钮', () => {
-    const book = foldBook(person(), { fold: 'p' }, bodies, spills);
+  it('折页切换钩子挂整片收起折；展开折不带——防吞折内按钮', () => {
+    const book = foldBook(person(), { fold: 'p' }, bodies);
     const eLeaf = book.querySelector('[data-people-leaf="e"]')!;
     expect(eLeaf.hasAttribute('data-people-leaf-head')).toBe(true);
     const pLeaf = book.querySelector('[data-people-leaf="p"]')!;
@@ -237,8 +235,9 @@ describe('折正文：其人 / 我们（issue 455）', () => {
     expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
   });
 
-  it('我们折：markdown；空态引导导入（旧单卷 portrait 不进我们折）', () => {
-    expect(foldBondBody(miniMarkdown('## 我们\n- 常聊'))[0].querySelectorAll('li')).toHaveLength(1);
+  it('相交折：markdown；空态引导导入（旧单卷 portrait 不进相交折）', () => {
+    const body = foldBondBody(miniMarkdown('## 相交\n- 常聊'));
+    expect(body[0].querySelectorAll('.bz-md-it')).toHaveLength(1); // 455：层次化条目（不再出 ul/li）
     const empty = foldBondBody(null);
     expect(empty[0].textContent).toContain('还没有关系画像。从数据源导入一次即可生成。');
     expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
@@ -247,17 +246,18 @@ describe('折正文：其人 / 我们（issue 455）', () => {
 
 // ---------------- 详情头弹窗入口与统计 / 档案弹窗（issue 455） ----------------
 
-describe('详情头弹窗入口图标（issue 455）', () => {
-  it('互动统计 / 补充背景两图标在返回按钮前（DOM 序居其前）；生成钮仍在最前', () => {
+describe('详情头弹窗入口图标（issue 455，评审后加「记一笔」）', () => {
+  it('记一笔在互动统计前；统计 / 补充背景两图标在返回按钮前；生成钮仍在最前', () => {
     const withGen = foldDetailHead(person(), null, { canGenerate: true });
     expect([...withGen.querySelector('.bz-people-dt-actions')!.children].map((n) => n.getAttribute('aria-label')))
-      .toEqual(['画脸谱', '互动统计', '补充背景', '返回列表']);
+      .toEqual(['画脸谱', '记一笔', '互动统计', '补充背景', '返回列表']);
     const noGen = foldDetailHead(person(), null, { canGenerate: false });
     const order = [...noGen.querySelector('.bz-people-dt-actions')!.children];
-    expect(order.map((n) => n.getAttribute('aria-label'))).toEqual(['互动统计', '补充背景', '返回列表']);
-    expect(order[0].getAttribute('data-people-stats-open')).toBe('');
-    expect(order[1].getAttribute('data-people-prof-open')).toBe('');
-    expect(order[2].getAttribute('data-people-back-btn')).toBe('');
+    expect(order.map((n) => n.getAttribute('aria-label'))).toEqual(['记一笔', '互动统计', '补充背景', '返回列表']);
+    expect(order[0].getAttribute('data-people-note-open')).toBe('');
+    expect(order[1].getAttribute('data-people-stats-open')).toBe('');
+    expect(order[2].getAttribute('data-people-prof-open')).toBe('');
+    expect(order[3].getAttribute('data-people-back-btn')).toBe('');
   });
 });
 
@@ -410,22 +410,23 @@ describe('progressBlock 状态机（450）', () => {
     ...over,
   });
 
-  it('运行中：细条宽度 = 百分比、主文案整句保留、队列副文案、出「暂停」不出「继续」', () => {
+  it('运行中：细条宽度 = 百分比、主文案一行状态（455 评审不读引擎长文案）、出「暂停」不出「继续」', () => {
     const b = progressBlock(state());
     expect(b.getAttribute('data-people-jobs-talker')).toBe('wxid_a');
     expect(b.querySelector('.bz-people-jobs-fill')!.getAttribute('style')).toBe('width:19%');
     expect(b.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%');
-    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
-    expect(b.querySelector('.bz-people-jobs-queue')!.textContent).toBe('（2/5 人）当前：陈默');
-    expect(b.querySelector('.bz-people-jobs-note')!.textContent).toContain('后台');
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 13/60 批'); // 引擎长文案不再上屏
+    expect(b.querySelector('.bz-people-jobs-queue')).toBeNull(); // 队列副文案移除
+    expect(b.querySelector('.bz-people-jobs-note')).toBeNull(); // 后台说明移除
     expect(b.querySelector('[data-people-jobs-pause]')).toBeTruthy();
     expect(b.querySelector('[data-people-jobs-resume]')).toBeNull();
   });
 
-  it('主文案不截断：超长抽样说明整句保留在 DOM（换行交给样式）', () => {
+  it('错误行与主行分工：主行短状态，具体错误只在错误行出现一次', () => {
     const long = '消息 91234 条 → 300 批超上限，均匀抽样 60 批（覆盖全时段，首尾必保），共 62 次 AI 调用';
-    const b = progressBlock(state({ message: long }));
-    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe(long);
+    const b = progressBlock(state({ status: 'error', message: long, errorText: 'AI 调用超时' }));
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('生成失败 · 已完成 12/60 批'); // 不回显长文案
+    expect(b.querySelector('.bz-people-jobs-err')!.textContent).toBe('AI 调用超时');
   });
 
   it('暂停 / 中断 / 可续 error 出「继续生成」；接不上的 error 出「删除任务」+ 错误说明；done 无动作钮', () => {

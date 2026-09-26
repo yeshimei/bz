@@ -177,7 +177,7 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
 
   // ---------------- issue 454：合成记录的媒体数 ----------------
 
-  it('合成卡带媒体数（454）：语音 / 图片取预览桶侧写——卡面徽章与详情数字格都出得来', async () => {
+  it('合成卡带媒体数（454）：卡面徽章出语音 / 图片；详情头 H1 精简后媒体明细归统计弹窗', async () => {
     const vault = await boot();
     seedPreview(vault, '大琳', 9, '2026-09-25T08:00:00.000Z', { voiceCount: 1289, voiceTotalSec: 8464, imageCount: 1615 });
     openPeoplePanel(getApp());
@@ -188,9 +188,9 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     expect(meta).toContain('图片 1615 张'); // 卡面 meta 行（9 条 · 语音… · 图片…）
 
     click('[data-people-card="大琳"]'); // 进详情
-    await vi.waitFor(() => expect(document.querySelector('.bz-people-dt-nums')).toBeTruthy());
-    const nums = [...document.querySelectorAll('.bz-people-dt-n')].map((n) => n.textContent);
-    expect(nums).toEqual(['9', '1289', '1615']); // 消息 / 语音 / 图片——过去后两格都是「—」
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-dt-head')).toBeTruthy());
+    expect(document.querySelector('.bz-people-card-meta')!.textContent).toContain('9 条消息'); // H1 一行 meta
+    expect(document.querySelector('.bz-people-dt-nums')).toBeNull(); // 数字格已随 H1 移除
   });
 
   it('合成卡只有媒体三项（454）：统计弹窗出占位并引导画脸谱，不画全 0 的空统计卡（455 数据页改弹窗）', async () => {

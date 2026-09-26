@@ -258,7 +258,11 @@ function installFakeFs(files: Record<string, string>): void {
 
 const demoSettings: Record<string, unknown> = {
 	storagePath: 'CONFIG/STORAGE',
-	peopleDataDir: DS_ROOT,
+	// 数据目录可由壳启动钩子覆盖（window.BZW_PEOPLE.SEED.DATA_DIR，评审页注入真实目录用）；缺省演示目录
+	peopleDataDir:
+		(typeof window !== 'undefined' &&
+			(window as unknown as { BZW_PEOPLE?: { SEED?: { DATA_DIR?: string } } }).BZW_PEOPLE?.SEED?.DATA_DIR) ||
+		DS_ROOT,
 	peopleIncludeGroups: false,
 	peoplePreviewVoice: true,
 	peopleImageDescMode: 'file',

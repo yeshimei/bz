@@ -159,36 +159,40 @@ afterEach(() => {
 });
 
 describe('开面板恢复任务态（450 状态恢复）', () => {
-  it('打开面板：resumeJobs 重建一次 + 快照渲染进度块（主文案 / 百分比 / 队列副文案 / 暂停钮）', async () => {
-    await boot();
+  it('打开面板：resumeJobs 重建一次；进度块只在对应联系人的详情页显示（455 评审），主文案一行 + 暂停钮', async () => {
+    await boot([drawnPerson()]);
     const engine = new FakeEngine();
     engine.items = [
       fakeJob({ talker: 'wxid_x', name: '占位甲', status: 'paused', message: '已暂停（0/1 批）' }),
-      fakeJob({ talker: 'wxid_b', name: '大琳', message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条', chunks: Array.from({ length: 60 }, () => meta()), batchesDone: 12 }),
+      fakeJob({ talker: 'wxid_a', name: '陈默', message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条', chunks: Array.from({ length: 60 }, () => meta()), batchesDone: 12 }),
       fakeJob({ talker: 'wxid_y', name: '占位乙', status: 'paused', message: '' }),
     ];
     inject(engine);
     openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    expect(document.querySelector('[data-people-jobs]')).toBeNull(); // 墙上不显示进度块
+    click('[data-people-card="wxid_a"]'); // 进陈默详情
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(engine.calls.resumeJobs).toBe(1); // 每会话只重建一次
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 13/60 批'); // 455 评审：状态一行
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%'); // 12/63（455 三段成文分母 +3）
-    expect(document.querySelector('.bz-people-jobs-queue')!.textContent).toBe('（2/3 人）当前：大琳');
     expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy();
   });
 
   it('中断任务恢复：出「继续生成」按钮，块根带 talker', async () => {
-    await boot();
+    await boot([drawnPerson()]);
     const engine = new FakeEngine();
     engine.items = [fakeJob({ status: 'interrupted', message: '上次未完成，可从断点继续' })];
     inject(engine);
     openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-resume]')).toBeTruthy());
     expect(document.querySelector('[data-people-jobs]')!.getAttribute('data-people-jobs-talker')).toBe('wxid_a');
     expect(document.querySelector('[data-people-jobs-resume]')!.textContent).toBe('继续生成');
   });
 
-  it('无任务时进度块隐藏', async () => {
+  it('无任务时进度块隐藏；done 任务也不再出块（完成时有通知）', async () => {
     await boot();
     inject(new FakeEngine());
     openPeoplePanel(getApp());
@@ -199,18 +203,19 @@ describe('开面板恢复任务态（450 状态恢复）', () => {
 });
 
 describe('订阅驱动渲染（450 后台化）', () => {
-  it('引擎推快照 → 进度块原位刷新（文案与百分比跟帧走）', async () => {
-    await boot();
+  it('引擎推快照 → 进度块原位刷新（百分比跟帧走，主文案一行）', async () => {
+    await boot([drawnPerson()]);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
-    await tick();
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]'); // 455 评审：进度块只在该联系人详情页显示
     engine.push([fakeJob({ batchesDone: 1, chunks: [meta(), meta()], message: '第 1/2 批 · 2026-01-01 ~ 2026-06-30 · 400 条' })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('20%'); // 1/5（455 分母 +3）
     engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'person', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》' })]);
     await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('40%')); // 2/5
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toContain('正在生成《其人》');
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 2/2 批');
   });
 });
 
@@ -299,11 +304,12 @@ describe('startGeneration → 引擎 → done 落盘', () => {
 
 describe('进度块按钮派发（450）', () => {
   it('运行中「暂停」→ pauseJobs；暂停「继续」→ resume；可续 error「继续生成」→ resume；接不上的 error「删除任务」→ removeJob', async () => {
-    await boot();
+    await boot([drawnPerson()]);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
-    await tick();
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]'); // 455 评审：进度块只在详情页，先进详情
     engine.push([fakeJob()]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy());
     click('[data-people-jobs-pause]');
@@ -333,12 +339,13 @@ describe('进度块按钮派发（450）', () => {
 });
 
 describe('关面板转后台（450）', () => {
-  it('生成中关面板：面板关闭 + 转后台通知；订阅仍在，重开面板渲染最新快照', async () => {
-    await boot();
+  it('生成中关面板：面板关闭 + 转后台通知；订阅仍在，重开面板进详情仍渲染最新快照', async () => {
+    await boot([drawnPerson()]);
     const engine = new FakeEngine();
     inject(engine);
     openPeoplePanel(getApp());
-    await tick();
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]'); // 455 评审：进度块在详情页
     engine.push([fakeJob({ message: '第 1/2 批', chunks: [meta(), meta()] })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     closePeoplePanel();
@@ -347,8 +354,11 @@ describe('关面板转后台（450）', () => {
     // 面板关着引擎照推（不抛错、快照留在缓存）
     engine.push([fakeJob({ message: '第 2/2 批', batchesDone: 2, chunks: [meta(), meta()] })]);
     await tick();
-    openPeoplePanel(getApp());
-    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 2/2 批'));
+    openPeoplePanel(getApp()); // 重开回落封面墙，进度块不糊墙
+    expect(document.querySelector('[data-people-jobs]')).toBeNull();
+    await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
+    click('[data-people-card="wxid_a"]');
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 2/2 批'));
     expect(engine.calls.resumeJobs).toBe(1); // 重开不重建引擎（内存队列还在跑）
   });
 
@@ -647,20 +657,19 @@ describe('详情折册四折与弹窗（455）', () => {
     return vault;
   }
 
-  it('四折渲染：其人折展开显旧画像（兼容读）；我们折收起、引文为空态文案，点折脊展开显空态', async () => {
+  it('三折渲染：其人折展开显旧画像（兼容读）；相交折收起，点书脊展开显空态', async () => {
     await openDetail([drawnPerson()]);
     expect([...document.querySelectorAll('[data-people-leaf]')].map((l) => l.getAttribute('data-people-leaf')))
-      .toEqual(['p', 'b', 'e', 'c']);
+      .toEqual(['p', 'b', 'e']);
     expect(document.querySelector('[data-people-leaf="p"]')!.classList.contains('bz-people-leaf-on')).toBe(true);
     expect(document.querySelector('[data-people-leaf="p"] .bz-people-portrait')!.textContent).toContain('旧画像');
     expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(false);
-    expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-spill')!.textContent).toContain('还没有关系画像');
     click('[data-people-leaf-head="b"]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(true));
     expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-body')!.textContent).toContain('还没有关系画像');
   });
 
-  it('新 digest 双卷：其人 / 我们两折各显各卷', async () => {
+  it('新 digest 双卷：其人 / 相交两折各显各卷', async () => {
     await openDetail([drawnPerson({ digest: { person: '## 其人卷', bond: '## 我们卷', events: [], generatedAt: '2026-09-01T00:00:00.000Z' } })]);
     expect(document.querySelector('[data-people-leaf="p"] .bz-people-portrait')!.textContent).toContain('其人卷');
     click('[data-people-leaf-head="b"]');

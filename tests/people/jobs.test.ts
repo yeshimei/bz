@@ -421,8 +421,7 @@ describe('暂停与断点续跑', () => {
     expect(job.batchesDone).toBe(1); // 第 1 批成果保留
     expect(job.results).toHaveLength(1);
     expect(calls).toBe(4); // 批 1 + 批 2 的 1 次 + 2 次重试
-    expect(job.message).toContain('已完成 1/3 批');
-    expect(job.message).toContain('不会从头重烧');
+    expect(job.message).toContain('已完成 1 批保留'); // 455 评审：精简文案（具体错误归进度块错误行）
     expect(resume(TALKER)).toBe(true); // 仍可续（451 口径）
   });
 

@@ -69,8 +69,21 @@ function vaultIndex() {
 }
 
 /** vault 媒体流（Range 支持：视频拖拽/逐段加载必需） */
-function serveVaultMedia(req, res, rawName) {
-  const name = decodeURIComponent(rawName);
+/** 真实数据目录媒体（BZ_REAL_MEDIA_DIR 开启）：rest 允许「目录内相对路径」或「盘符绝对路径」，越界 403 */
+function serveRealMedia(res, rawRest) {
+  const root = process.env.BZ_REAL_MEDIA_DIR || '';
+  if (!root) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('real media disabled'); return; }
+  let rel = rawRest.replace(/\\/g, '/');
+  const base = path.normalize(root);
+  const target = path.normalize(/^[A-Za-z]:\//.test(rel) ? rel : path.join(base, rel));
+  if (!target.toLowerCase().startsWith(base.toLowerCase())) { res.writeHead(403).end('forbidden'); return; }
+  if (!fs.existsSync(target) || !fs.statSync(target).isFile()) { res.writeHead(404).end('not found'); return; }
+  const type = MIME[path.extname(target).toLowerCase()] || 'application/octet-stream';
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+  fs.createReadStream(target).pipe(res);
+}
+
+function serveVaultMedia(req, res, rawName) {  const name = decodeURIComponent(rawName);
   const file = vaultIndex().get(name.toLowerCase());
   if (!file || !fs.existsSync(file)) {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -267,6 +280,13 @@ a.card.off{opacity:.45}
     serveVaultMedia(req, res, url.pathname.slice('/__vault-media/'.length));
     return;
   }
+  // 真实数据目录媒体（BZ_REAL_MEDIA_DIR 环境变量开启；脸谱评审壳的库外头像/图片走这里）
+  if (url.pathname.startsWith('/__real-media/')) {
+    let rest = url.pathname.slice('/__real-media/'.length);
+    try { rest = decodeURIComponent(rest); } catch { /* 已是原始字节则原样用 */ }
+    serveRealMedia(res, rest);
+    return;
+  }
   let file = path.normalize(path.join(ROOT, decodeURIComponent(url.pathname)));
   if (!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
   if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
@@ -274,8 +294,10 @@ a.card.off{opacity:.45}
   const ext = path.extname(file).toLowerCase();
   res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store' });
   if (ext === '.html') {
-    // 注入 SSE 热刷新客户端
-    res.end(fs.readFileSync(file).toString().replace('</body>', '<script>new EventSource("/__reload").onmessage=()=>location.reload()</script></body>'));
+    // 注入 SSE 热刷新客户端；脸谱壳在行为脚本前注入真实数据引导（同步种入，壳启动即真实数据）
+    let html = fs.readFileSync(file).toString();
+    html = html.replace(/(<script[^>]*src="[^"]*prototype-behavior\.js">)/, '<script src="/.scratch/people-detail-layouts/auto-seed.js"></script>$1');
+    res.end(html.replace('</body>', '<script>new EventSource("/__reload").onmessage=()=>location.reload()</script></body>'));
   } else {
     fs.createReadStream(file).pipe(res);
   }
