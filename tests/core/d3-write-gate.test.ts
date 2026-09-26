@@ -35,6 +35,14 @@ const WHITELIST: Array<{ file: RegExp; reason: string; /** 防回归哨兵：预
     sentinel: true,
   },
   {
+    file: /^src\/people\/datasource\.ts$/,
+    reason: '头像入库（2026-09-26）：avatar.<ext> 二进制媒体复制进 vault，属用户文档写（与 encrypt 解密产出同口径）',
+  },
+  {
+    file: /^src\/core\/self-update\.ts$/,
+    reason: '自更新（2026-09-26）：覆盖插件目录 main.js/styles.css/manifest.json 三件套，升级协议自有顺序，非域数据文件',
+  },
+  {
     file: /^src\/encrypt\/data\.ts$/,
     reason: 'D2 已收编域：.safe.enc/staging 密文走 adapter 自有原子写协议（tmp 写成后替换，防半截密文）；解密产出 md/附件为用户文档写',
   },

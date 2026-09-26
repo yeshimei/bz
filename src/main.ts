@@ -16,6 +16,7 @@ import { closeLightbox } from './core/ui/lightbox';
 import { closeAllModals } from './core/ui/modal';
 import { closeAllOverlays } from './core/dom';
 import { setApp, getApp } from './core/app';
+import { scheduleSelfUpdateCheck } from './core/self-update';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
 import { bindMobileViewport, unbindMobileViewport } from './core/viewport';
@@ -361,6 +362,8 @@ export default class BzPlugin extends Plugin {
       // 引用同步无条件常驻（issue 187：原 aiAgentEnabled 开关随旧 AIAgent 退役——
       // 备忘录/收藏本笔记 rename/delete 引用同步是数据完整性功能，不设开关）
       ensureFileSync(this.app);
+      // 新版本自更新巡检（24h 节流、启动 15s 后静默跑；有新版才弹通知，失败不吵）
+      scheduleSelfUpdateCheck(getApp, () => this.unloaded);
       // 知识盒/剪藏本引用同步无条件常驻（issue 336 / ADR-0149：knowledge.json、clipbook.json
       // 路径 file-sync + 卡片 source 断链摘除——同属数据完整性功能，不设开关）
       ensureKnowledgeFileSync(this.app);

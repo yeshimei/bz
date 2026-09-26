@@ -166,9 +166,9 @@ describe('设置面板（settings-panel）', () => {
     // 首次动态 import 冷加载可能超过 tick 的 20ms：改轮询等分组出现，消除时序脆断（原 await tick()）
     expect(await waitGroups(popup, 1)).toBe(true);
     let groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBe(2);
+    expect(groups.length).toBe(3); // 2026-09-26：+「使用手册」组（手册不随构建分发，按钮即入口）
     expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('外观');
-    expect(groups[1].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
+    expect(groups[2].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径'); // [0]=外观 [1]=使用手册
     // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')
@@ -355,7 +355,7 @@ describe('设置面板（settings-panel）', () => {
     await tick();
     // 通用域分组：外观（palette，原「设置」域并入）+ 数据存储路径（folder-open）
     let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons).toEqual(['palette', 'folder-open']);
+    expect(icons).toEqual(['palette', 'book-open', 'folder-open']);
     // AI 域分组：LLM/Embedding/JEV/语音转写/数据源凭据（issue 422 四组重排；issue 444 增语音转写）
     const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
       (el) => el.textContent?.includes('AI')

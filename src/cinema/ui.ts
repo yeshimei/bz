@@ -221,11 +221,10 @@ export function openAddModalDirect(app: App): void {
 function listTitle(): string {
   return (M.typeFilter || '全部') + (M.statusFilter ? ` · ${M.statusFilter}` : '');
 }
-/** 网格每行列数（设置 cinemaGridColumns；空值/非法回退 5，钳制 2~12） */
+/** 网格每行列数：2026-09-26 用户拍板固定 5 列，面板不再暴露该设置（cinemaGridColumns 键退役）。
+ *  窄屏另有自适应（移动端 3 列，见本文件网格渲染处），与这里无关。 */
 export function gridColumns(): number {
-  const raw = Number((tryGetSettings() as Record<string, unknown>).cinemaGridColumns);
-  if (!Number.isFinite(raw) || raw <= 0) return 5;
-  return Math.min(12, Math.max(2, Math.round(raw)));
+  return 5;
 }
 
 /** 剧集按季合并（设置 cinemaMergeSeasons；缺省开）。渲染前实时读——设置面板一改即生效 */

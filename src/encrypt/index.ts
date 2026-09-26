@@ -5,6 +5,7 @@
  */
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
+import { encryptDir } from '../core/storage';
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { EncryptAppController } from './ui';
@@ -19,7 +20,8 @@ function getController(): EncryptAppController {
   if (!controller) {
     const s = getSettings() as any;
     const config = {
-      root: (s.encryptRoot || 'CONFIG/.ENCRYPT').replace(/\/+$/, ''),
+      // 密文根目录固定跟随数据存储路径（core/storage 的 encryptDir 单源；encryptRoot 键已退役）
+      root: encryptDir(),
       previewEnabled: s.encryptPreviewEnabled !== false,
       previewSize: parseInt(s.encryptPreviewSize) || 384,
       previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,

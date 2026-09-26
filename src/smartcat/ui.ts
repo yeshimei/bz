@@ -289,7 +289,11 @@ export function smartcatSettingsSchema(opts: {
             ],
           },
           // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
-          { type: 'text', name: '向量化模型', desc: '跟随 AI 面板的嵌入模型', binding: bindBehavior('smartcatEmbeddingModel') },
+          { type: 'text', name: '向量化模型', desc: '跟随 AI 面板的嵌入模型',
+            help:
+              '跟随 AI 面板的嵌入模型（此项留空即跟随），单独填不生效。' +
+              '换模型后须删除 smartcat-memory-vectors.vec 并重扫记忆目录重建向量，否则仍用旧维度。',
+            binding: bindBehavior('smartcatEmbeddingModel') },
           { type: 'number', name: '分块字符上限', desc: '长笔记分块的最大字符数', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },
@@ -305,6 +309,9 @@ export function smartcatSettingsSchema(opts: {
             mode: 'multi',
             name: '记忆文件夹',
             desc: '文件夹内笔记进入小橘的记忆库',
+            help:
+              '目录内笔记进小橘记忆库；移除目录时，记忆目录增量同步器按引用清除该目录下的记忆条目，再加回来需重扫。' +
+              '',
             binding: {
               get: () => normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
               set: () => {},

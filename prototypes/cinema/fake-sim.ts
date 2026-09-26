@@ -150,7 +150,6 @@ const settingsStore: Record<string, unknown> = {
   cinemaFolderPath: FOLDER,
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
-  cinemaGridColumns: '5',
   cinemaMergeSeasons: true,
   // 「解析」链路（issue 395）：原型走 fake requestUrl 的罐头网关，
   // 这里的密钥非空只为让 isJevConfigured / ApiZero 分支成立（issue 424 起 Jev 常开、只看密钥），

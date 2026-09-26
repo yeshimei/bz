@@ -1,5 +1,5 @@
-/* 源指纹 17fef012ad3bec1d · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 7f5e76858367b464 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -4170,8 +4170,18 @@ var BZW_people = (() => {
 
   // src/core/settings-provider.ts
   var _provider = null;
+  var _saver = null;
   function setSettingsProvider(fn) {
     _provider = fn;
+  }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
@@ -5469,8 +5479,6 @@ var BZW_people = (() => {
       // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
       // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
       defaultMaxTokens: 393216,
-      // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
-      maxOutputCap: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
       apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -5493,8 +5501,6 @@ var BZW_people = (() => {
       model: "glm-5.3-flash",
       // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
       defaultMaxTokens: 131072,
-      maxOutputCap: 131072,
-      // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
       apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -5514,8 +5520,6 @@ var BZW_people = (() => {
       endpoint: "http://localhost:11434/v1",
       model: "llama3.1",
       defaultMaxTokens: 8192,
-      // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
-      // 面板可自由调大（既有口径，不因本票收紧）
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
       apiKeyDesc: "本地服务无需密钥",
@@ -5537,11 +5541,6 @@ var BZW_people = (() => {
   function thinkingLevelsOf(providerId) {
     var _a2, _b2;
     return (_b2 = (_a2 = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a2.levels) != null ? _b2 : [];
-  }
-  function maxOutputCapOf(providerId, modelName) {
-    const desc = getProviderDescriptor(providerId);
-    const hit = resolveModelLimits(modelName || desc.model || "");
-    return hit ? hit.maxOutput : desc.maxOutputCap;
   }
   function thinkingBodyFor(providerId, level) {
     var _a2;
@@ -5594,16 +5593,14 @@ var BZW_people = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
-    const effModel = overrideModel || desc.model || "";
-    const cap = maxOutputCapOf(name, effModel);
-    const requested = Number((_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name]);
-    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
+    const overrideMaxTokens = (_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: effModel || void 0,
-      defaultMaxTokens
+      model: overrideModel || desc.model || void 0,
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
     });
   }
   function abortError() {
@@ -6188,8 +6185,8 @@ var BZW_people = (() => {
   }
 
   // src/people/datasource.ts
-  function emptyMessageStore() {
-    return { version: 2, contacts: {} };
+  function emptyPreviewData() {
+    return { version: 1, contacts: {} };
   }
   function hash32(s) {
     let h = 2166136261;
@@ -6378,49 +6375,45 @@ var BZW_people = (() => {
       if (sid && sid > maxSid) maxSid = sid;
       const ts = Number.isFinite(raw.ct) ? Math.round(raw.ct * 1e3) : NaN;
       if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue;
-      let out = "";
+      let out = null;
       switch (raw.type) {
         case 1:
-          out = text2;
+          out = text2 || null;
           break;
         case 34: {
-          if (opts.previewVoice) {
-            const tagged = text2 ? parseMediaTag(text2) : null;
-            if (tagged) {
-              out = text2;
-              bumpEmotion(tagged.emotion);
-            } else {
-              const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-              const merged = buildVoiceText(raw, v);
-              const parsed = parseMediaTag(merged);
-              if (parsed) {
-                out = merged;
-                bumpEmotion(parsed.emotion);
-              }
-            }
+          if (!opts.previewVoice) continue;
+          const tagged = text2 ? parseMediaTag(text2) : null;
+          if (tagged) {
+            out = text2;
+            bumpEmotion(tagged.emotion);
+            break;
           }
+          const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
+          const merged = buildVoiceText(raw, v);
+          const parsed = parseMediaTag(merged);
+          if (!parsed) continue;
+          out = merged;
+          bumpEmotion(parsed.emotion);
           break;
         }
         case 3: {
-          if (opts.imageDescMode === "file") {
-            const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-            if (hit) out = `[图片] ${hit}`;
-          }
+          if (opts.imageDescMode !== "file") continue;
+          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+          out = hit ? `[图片] ${hit}` : null;
           break;
         }
         case 43: {
-          if (opts.previewVideo) {
-            const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-            if (dur) out = `[视频 ${dur}秒]`;
-          }
+          if (!opts.previewVideo) continue;
+          const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
+          if (!dur) continue;
+          out = `[视频 ${dur}秒]`;
           break;
         }
         case 47: {
           signals.emojiCount++;
-          if (EMOJI_NAMED_RE.test(text2)) {
-            out = text2;
-            signals.emojiNamedCount++;
-          }
+          if (!EMOJI_NAMED_RE.test(text2)) continue;
+          out = text2;
+          signals.emojiNamedCount++;
           break;
         }
         case 49: {
@@ -6444,7 +6437,7 @@ var BZW_people = (() => {
           }
           const sec = parseCallDurationSec(text2);
           if (sec === null) {
-            out = text2;
+            out = text2 || null;
             break;
           }
           signals.callTotalSec += sec;
@@ -6456,68 +6449,50 @@ var BZW_people = (() => {
             if (isSelfWho(raw.who)) signals.recantByMe++;
             else signals.recantByOther++;
           }
-          if (opts.keepSystem) out = text2;
+          if (!opts.keepSystem) continue;
+          out = text2 || null;
           break;
         }
         default:
-          break;
+          continue;
       }
-      if (out) {
-        const who = String((_j = raw.who) != null ? _j : "").trim();
-        if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
-        out = out.replace(/\r\n?/g, "\n");
-      }
-      msgs.push({
-        key: msgKey(raw),
-        ts,
-        isSender: isSelfWho(raw.who),
-        type: typeof raw.type === "number" && Number.isFinite(raw.type) ? raw.type : 0,
-        ...raw.who !== void 0 && { who: raw.who },
-        ...sid !== 0 && { sid },
-        ...typeof raw.dur === "number" && Number.isFinite(raw.dur) && raw.dur > 0 && { dur: raw.dur },
-        ...typeof raw.wav === "string" && raw.wav && { wav: raw.wav },
-        ...typeof raw.img === "string" && raw.img && { img: raw.img },
-        text: out
-      });
+      if (!out) continue;
+      const who = String((_j = raw.who) != null ? _j : "").trim();
+      if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
+      msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    const stats = storeStatsOf(msgs);
-    const insights = computeInsights(msgs.filter((m) => m.text !== ""), signals);
+    const stats = previewStatsOf(msgs);
+    const insights = computeInsights(msgs, signals);
     return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
     var _a2;
     counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
   }
-  function storeStatsOf(msgs) {
-    const unified = msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function previewStatsOf(msgs) {
+    const unified = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
     const media = collectMediaStats(unified);
-    return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+    return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
   }
-  function mergeStore(existing, incoming, nowIso2) {
-    var _a2, _b2, _c;
-    const prev = new Map(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => [m.key, m]));
-    let added = 0;
-    let updated = 0;
-    for (const m of incoming.msgs) {
-      if (prev.has(m.key)) updated++;
-      else added++;
-      prev.set(m.key, m);
-    }
-    const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  function mergePreview(existing, incoming, nowIso2) {
+    var _a2, _b2, _c, _d;
+    const seen = new Set(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => m.key));
+    const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
+    const msgs = [...(_b2 = existing == null ? void 0 : existing.msgs) != null ? _b2 : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const contact = {
       msgs,
-      watermarkSid: Math.max((_b2 = existing == null ? void 0 : existing.watermarkSid) != null ? _b2 : 0, incoming.maxSid),
-      stats: storeStatsOf(msgs),
-      // 全量形态计数 / 互动画像每次导入重算或合并覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
-      kindCounts: { ...(_c = existing == null ? void 0 : existing.kindCounts) != null ? _c : {}, ...incoming.kindCounts },
+      watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
+      stats: previewStatsOf(msgs),
+      // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
       insights: incoming.insights,
       updatedAt: nowIso2
     };
-    return { contact, added, updated };
+    return { contact, added: fresh.length };
   }
-  function storeToUnified(msgs) {
-    return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function previewToUnified(msgs) {
+    return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
@@ -6646,26 +6621,20 @@ var BZW_people = (() => {
       return vaultCopy != null ? vaultCopy : externalPath;
     }
   }
-  function getStoreFilePath() {
+  function getPreviewFilePath() {
     const s = tryGetSettings();
     return storageFile("people-preview.json", s && s.storagePath || "CONFIG/STORAGE");
   }
-  var MessageStore = class {
+  var PreviewStore = class {
     constructor(app) {
       this.app = app;
-      this.filePath = getStoreFilePath();
+      this.filePath = getPreviewFilePath();
     }
     open() {
-      return jsonFileStore(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
+      return jsonFileStore(this.filePath, { defaultValue: emptyPreviewData, app: this.app });
     }
-    /**
-     * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
-     * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
-     */
     async read() {
-      const data = await enqueueFileTask(this.filePath, async () => this.open().read());
-      if (!data || data.version !== 2) return emptyMessageStore();
-      return data;
+      return enqueueFileTask(this.filePath, async () => this.open().read());
     }
     /** 合并写回一位联系人（读→改→写整体入队） */
     async upsertContact(name, contact) {
@@ -6676,15 +6645,15 @@ var BZW_people = (() => {
         await store2.write(data);
       });
     }
-    /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
+    /** 清空全部预览（保留文件框架；不动 people.json 的 PersonEntry） */
     async clear() {
       await enqueueFileTask(this.filePath, async () => {
         const store2 = this.open();
-        await store2.write(emptyMessageStore());
+        await store2.write(emptyPreviewData());
       });
     }
   };
-  function storeMediaBadge(stats) {
+  function previewMediaBadge(stats) {
     var _a2, _b2, _c;
     if (!stats) return null;
     const acc = emptyMediaStats();
@@ -6732,18 +6701,17 @@ var BZW_people = (() => {
   var runPromise = null;
   var subs = /* @__PURE__ */ new Set();
   var DRIFT_ERROR = "消息集已变化（导入过新数据），请删除任务后重新生成";
-  function fingerprintOf(msgs) {
+  function hash322(s) {
     let h = 2166136261;
-    const mix = (s) => {
-      for (let i = 0; i < s.length; i++) {
-        h ^= s.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-    };
-    mix(`n:${msgs.length};`);
-    for (const m of msgs) mix(`${m.ts}|${m.isSender ? 1 : 0}|${m.text}
-`);
-    return { msgCount: msgs.length, contentHash: (h >>> 0).toString(36) };
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+  function fingerprintOf(msgs) {
+    const last = msgs[msgs.length - 1];
+    return { msgCount: msgs.length, lastMsgKey: last ? `${last.ts}|${hash322(last.text)}` : "" };
   }
   function nowIso() {
     return (/* @__PURE__ */ new Date()).toISOString();
@@ -6815,7 +6783,7 @@ var BZW_people = (() => {
   }
   function reusableJob(prev, fp, mode, opts) {
     if (prev.status === "done" || prev.batchesDone <= 0) return false;
-    if (prev.msgCount !== fp.msgCount || prev.contentHash !== fp.contentHash) return false;
+    if (prev.msgCount !== fp.msgCount || prev.lastMsgKey !== fp.lastMsgKey) return false;
     if (prev.mode !== mode) return false;
     const po = { ...DEFAULTS, ...prev.chunkOpts };
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
@@ -6919,7 +6887,7 @@ var BZW_people = (() => {
         // 排队待跑（与用户暂停同态：runner 按序拾起）
         stage: "chunked",
         msgCount: fp.msgCount,
-        contentHash: fp.contentHash,
+        lastMsgKey: fp.lastMsgKey,
         chunkOpts: chunkFull,
         chunks: chunks.map(chunkMetaOf),
         batchesDone: 0,
@@ -7048,12 +7016,12 @@ var BZW_people = (() => {
       emit();
     };
     try {
-      const store2 = await new MessageStore(st.app).read();
+      const pv = await new PreviewStore(st.app).read();
       if (gone(job)) return;
-      const contact = store2.contacts[job.talker];
-      const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
+      const contact = pv.contacts[job.talker];
+      const bucketMsgs = contact ? previewToUnified(contact.msgs) : [];
       const fp = fingerprintOf(bucketMsgs);
-      if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
+      if (fp.msgCount !== job.msgCount || fp.lastMsgKey !== job.lastMsgKey) {
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
@@ -8187,7 +8155,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     detailFold = "p";
     stage = "list";
     listCache = [];
-    storeCache = null;
+    previewCache = null;
     mergeFromId = null;
     mergeToId = null;
     profEditId = null;
@@ -8245,7 +8213,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function dsRowStates() {
     return (dsContacts != null ? dsContacts : []).map((c) => {
-      const badge = storeMediaBadge(c.stats);
+      const badge = previewMediaBadge(c.stats);
       return {
         name: c.name,
         rawCount: c.rawCount,
@@ -8295,8 +8263,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const dirNames = listContactDirs(dataDir);
       const includeGroups = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleIncludeGroups) === true;
       const opts = normalizeOptionsFromSettings();
-      const msgStore = new MessageStore(getApp());
-      const [storeData2, people] = await Promise.all([msgStore.read(), store.list()]);
+      const previewStore = new PreviewStore(getApp());
+      const [previewData2, people] = await Promise.all([previewStore.read(), store.list()]);
       for (const name of dirNames) {
         if (!overlay) return;
         const bundle = readContactBundle(dataDir, name);
@@ -8307,7 +8275,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const pv = storeData2.contacts[name];
+        const pv = previewData2.contacts[name];
         const keys = new Set(((_b2 = pv == null ? void 0 : pv.msgs) != null ? _b2 : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
@@ -8352,10 +8320,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     dsImporting = true;
     dsGenerateable = false;
-    dsNotice = "正在导入聊天仓…";
+    dsNotice = "正在导入预览…";
     renderBody();
     const opts = normalizeOptionsFromSettings();
-    const msgStore = new MessageStore(getApp());
+    const previewStore = new PreviewStore(getApp());
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const addedOf = /* @__PURE__ */ new Map();
     const readFail = [];
@@ -8368,34 +8336,34 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const existing = (await msgStore.read()).contacts[c.name];
-        const { contact, added } = mergeStore(existing, norm, now);
+        const existing = (await previewStore.read()).contacts[c.name];
+        const { contact, added } = mergePreview(existing, norm, now);
         const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
         if (ava) contact.avatar = ava;
         else delete contact.avatar;
-        await msgStore.upsertContact(c.name, contact);
+        await previewStore.upsertContact(c.name, contact);
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
         c.newCount = 0;
         c.stats = contact.stats;
       }
     } catch (e) {
-      console.warn("[people] 聊天仓导入失败:", e);
+      console.warn("[people] 预览导入失败:", e);
       dsNotice = "导入失败：读数据文件时出错。";
       dsImporting = false;
       renderBody();
       return;
     }
     dsImporting = false;
-    storeCache = null;
+    previewCache = null;
     const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
-    const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
+    const summary = `已导入预览（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
     dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
     dsGenerateable = fresh > 0 && !readFail.length;
     renderBody();
   }
   async function generateFromDs() {
-    var _a2, _b2;
+    var _a2;
     if (!overlay || !store || dsImporting || dsScanning) return;
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
@@ -8408,25 +8376,24 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const targets = [];
     try {
-      const storeData2 = await new MessageStore(getApp()).read();
+      const previewData2 = await new PreviewStore(getApp()).read();
       for (const name of names) {
-        const pv = storeData2.contacts[name];
-        const unified = storeToUnified((_a2 = pv == null ? void 0 : pv.msgs) != null ? _a2 : []);
-        if (!unified.length) continue;
+        const pv = previewData2.contacts[name];
+        if (!(pv == null ? void 0 : pv.msgs.length)) continue;
         targets.push({
           talker: name,
           name,
-          msgs: unified,
-          kindCounts: (_b2 = pv.kindCounts) != null ? _b2 : {},
+          msgs: previewToUnified(pv.msgs),
+          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
           skippedCount: 0,
-          // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
+          // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
           fileLabel: `数据源:${name}`,
           insights: pv.insights
         });
       }
     } catch (e) {
-      console.warn("[people] 读取聊天仓失败:", e);
-      dsNotice = "生成失败：读不到聊天仓。";
+      console.warn("[people] 读取预览桶失败:", e);
+      dsNotice = "生成失败：读不到预览缓存。";
       renderBody();
       return;
     }
@@ -8439,7 +8406,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     await startGeneration(targets);
   }
   async function generateOne(id, opts = {}) {
-    var _a2, _b2;
+    var _a2;
     const name = id != null ? id : detailId;
     if (!store || !name) return;
     if (!opts.force && resumeExisting(name)) return;
@@ -8449,21 +8416,20 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     let target = null;
     try {
-      const pv = (await new MessageStore(getApp()).read()).contacts[name];
-      const unified = storeToUnified((_a2 = pv == null ? void 0 : pv.msgs) != null ? _a2 : []);
-      if (unified.length) {
+      const pv = (await new PreviewStore(getApp()).read()).contacts[name];
+      if (pv == null ? void 0 : pv.msgs.length) {
         target = {
           talker: name,
           name,
-          msgs: unified,
-          kindCounts: (_b2 = pv.kindCounts) != null ? _b2 : {},
+          msgs: previewToUnified(pv.msgs),
+          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
           skippedCount: 0,
           fileLabel: `数据源:${name}`,
           insights: pv.insights
         };
       }
     } catch (e) {
-      console.warn("[people] 读取聊天仓失败:", e);
+      console.warn("[people] 读取预览桶失败:", e);
     }
     if (!target) {
       notice("还没有可画的消息素材——点右上「数据源」导入后再画", "warning");
@@ -8586,7 +8552,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return { runnable, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
@@ -8626,9 +8592,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         generatedAt: now
       };
       await store2.setDigest(talker, digest);
-      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_v = (_u = job.importRecord) == null ? void 0 : _u.timeTo) != null ? _v : "");
+      const lastTs = msgs ? msgs[msgs.length - 1].ts : Number(String((_u = job.lastMsgKey) != null ? _u : "").split("|")[0]);
       if (Number.isFinite(lastTs)) {
-        await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
+        await store2.setLastProcessedTs(talker, Math.max((_v = existing == null ? void 0 : existing.lastProcessedTs) != null ? _v : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
       jobs().removeJob(talker);
@@ -9022,21 +8988,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       statsOpen ? popShell("互动统计", "data-people-stats-pop", statsPopBody(buildInsightsCard(p), p)) : profOpen ? popShell("补充背景", "data-people-prof-pop", profilePopBody(p, profEditId === p.id)) : popShell("记一笔", "data-people-note-pop", [noteAddRow(todayStr())])
     );
   }
-  var storeCache = null;
-  async function storeData() {
-    if (storeCache) return storeCache;
+  var previewCache = null;
+  async function previewData() {
+    if (previewCache) return previewCache;
     try {
-      storeCache = await new MessageStore(getApp()).read();
+      previewCache = await new PreviewStore(getApp()).read();
     } catch (e) {
-      console.warn("[people] 读取聊天仓失败:", e);
-      storeCache = { version: 2, contacts: {} };
+      console.warn("[people] 读取预览桶失败:", e);
+      previewCache = { version: 1, contacts: {} };
     }
-    await migrateAvatars(storeCache);
-    return storeCache;
+    await migrateAvatars(previewCache);
+    return previewCache;
   }
   async function migrateAvatars(pv) {
     const app = getApp();
-    const store2 = new MessageStore(app);
+    const store2 = new PreviewStore(app);
     for (const [name, c] of Object.entries(pv.contacts)) {
       const cur = c.avatar;
       if (!cur || isVaultRelativePath(cur)) continue;
@@ -9058,7 +9024,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function poolRecord(id, contact) {
     var _a2, _b2, _c, _d, _e, _f, _g;
     if (!contact) return null;
-    const msgs = storeToUnified((_a2 = contact.msgs) != null ? _a2 : []);
+    const msgs = (_a2 = contact.msgs) != null ? _a2 : [];
     if (!msgs.length) return null;
     return {
       file: `数据源:${id}`,
@@ -9067,9 +9033,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       skippedCount: 0,
       timeFrom: new Date(msgs[0].ts).toISOString(),
       timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
-      // issue 454：媒体计数取聊天仓侧写（导入时从原始消息算的，语音总时长只有它知道）——
+      // issue 454：媒体计数取预览桶侧写（导入时从原始消息算的，语音总时长只有它知道）——
       // 缺了它，合成卡与详情头的「语音 / 图片」永远是「—」（大琳 1289 条语音 / 1615 张图看不见）。
-      // 只带媒体三项：月度 / 时段明细聊天仓没有，不在这编造——「数据」折见无 monthly 即出占位。
+      // 只带媒体三项：月度 / 时段明细预览桶没有，不在这编造——「数据」折见无 monthly 即出占位。
       stats: {
         voiceCount: (_c = (_b2 = contact.stats) == null ? void 0 : _b2.voiceCount) != null ? _c : 0,
         voiceTotalSec: (_e = (_d = contact.stats) == null ? void 0 : _d.voiceTotalSec) != null ? _e : 0,
@@ -9080,7 +9046,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   async function wallPeople() {
     var _a2;
     const people = store ? await store.list() : [];
-    const contacts = (_a2 = (await storeData()).contacts) != null ? _a2 : {};
+    const contacts = (_a2 = (await previewData()).contacts) != null ? _a2 : {};
     const out = people.map((p) => {
       const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
       return rec ? { ...p, imports: [rec] } : p;
@@ -9120,7 +9086,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       body.appendChild(mergeBar(from.name, (_a2 = to == null ? void 0 : to.name) != null ? _a2 : null));
     }
     const wall = foldWall();
-    const preview = await storeData();
+    const preview = await previewData();
     applyWall(people, wall, (name) => {
       var _a3;
       return (_a3 = preview.contacts[name]) == null ? void 0 : _a3.avatar;
@@ -9169,7 +9135,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     const media = personMedia(p);
-    const avatar = (_a2 = (await storeData()).contacts[p.name]) == null ? void 0 : _a2.avatar;
+    const avatar = (_a2 = (await previewData()).contacts[p.name]) == null ? void 0 : _a2.avatar;
     body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
     const person = personOf(p.digest);
     const bond = bondOf(p.digest);
@@ -9445,6 +9411,98 @@ ${s}`).join("\n\n");
     return `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
+  // src/core/path-picker.ts
+  var systemPickerImpl = null;
+  function requireNode(moduleName) {
+    var _a2;
+    try {
+      const w = window;
+      return w.require ? (_a2 = w.require(moduleName)) != null ? _a2 : null : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function normalizeSystemPath(p) {
+    const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
+    return s.length > 1 ? s.replace(/\/+$/, "") : s;
+  }
+  function parentDirOf(filePath) {
+    const s = String(filePath).replace(/\\/g, "/");
+    const i = s.lastIndexOf("/");
+    return i <= 0 ? s : s.slice(0, i);
+  }
+  function fileDiskPath(f) {
+    var _a2, _b2;
+    const legacy = f.path;
+    if (typeof legacy === "string" && legacy) return legacy;
+    const webUtils = (_a2 = requireNode("electron")) == null ? void 0 : _a2.webUtils;
+    if (webUtils == null ? void 0 : webUtils.getPathForFile) {
+      try {
+        return String((_b2 = webUtils.getPathForFile(f)) != null ? _b2 : "");
+      } catch (e) {
+      }
+    }
+    return "";
+  }
+  function pickDirViaInput() {
+    return new Promise((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.setAttribute("webkitdirectory", "");
+      input.setAttribute("directory", "");
+      input.style.display = "none";
+      document.body.appendChild(input);
+      let settled = false;
+      const finish = (v) => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener("focus", onFocus);
+        input.remove();
+        resolve(v);
+      };
+      const onFocus = () => {
+        window.setTimeout(() => {
+          var _a2;
+          const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+          if (!f) finish(null);
+        }, 200);
+      };
+      input.addEventListener("change", () => {
+        var _a2;
+        const f = (_a2 = input.files) == null ? void 0 : _a2[0];
+        const p = f ? fileDiskPath(f) : "";
+        finish(p ? parentDirOf(p) : null);
+      });
+      window.addEventListener("focus", onFocus);
+      input.click();
+    });
+  }
+  async function nativePickSystemFolder() {
+    var _a2, _b2, _c, _d;
+    const remote = (_c = (_b2 = requireNode("@electron/remote")) != null ? _b2 : (_a2 = requireNode("electron")) == null ? void 0 : _a2.remote) != null ? _c : null;
+    const dialog = remote == null ? void 0 : remote.dialog;
+    if (dialog == null ? void 0 : dialog.showOpenDialog) {
+      const res = await dialog.showOpenDialog({
+        title: "选择文件夹",
+        properties: ["openDirectory", "dontAddToRecent"]
+      });
+      const picked = (_d = res == null ? void 0 : res.filePaths) == null ? void 0 : _d[0];
+      if (picked && !(res == null ? void 0 : res.canceled)) return normalizeSystemPath(picked);
+      return null;
+    }
+    return pickDirViaInput();
+  }
+  async function pickSystemFolder() {
+    try {
+      const pick = systemPickerImpl != null ? systemPickerImpl : nativePickSystemFolder;
+      const dir = await pick();
+      return dir ? normalizeSystemPath(dir) : null;
+    } catch (e) {
+      notifyActionError(e, "选择文件夹");
+      return null;
+    }
+  }
+
   // src/people/settings.ts
   function peopleSettingsSchema(opts) {
     return {
@@ -9456,23 +9514,30 @@ ${s}`).join("\n\n");
             {
               type: "text",
               name: "数据文件夹",
-              desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口",
+              desc: "微信聊天导出的联系人数据目录",
+              help: "外部数据根目录，结构为 <数据根>/<联系人>/chat.json，voice.json 与 image_desc.json 为兼容兜底。留空则面板不显示数据源入口。换目录后要在数据源弹窗点刷新重新扫描，不会自动重扫。",
               binding: { key: "peopleDataDir" },
-              placeholder: "例如 D:\\微信备份\\export_full"
-            },
-            // 微信账号目录（issue 462）：多账号数据目录下指定用哪个账号；空 = 自动探测
-            // （探测与覆盖逻辑由后续票接入，本票只加键位与文案）
-            {
-              type: "text",
-              name: "微信账号目录",
-              desc: "数据目录下的微信账号文件夹，留空自动探测",
-              binding: { key: "peopleWxAccountDir" },
-              placeholder: "空 = 自动探测"
+              placeholder: "例如 D:\\微信备份\\export_full",
+              actions: [
+                {
+                  text: "选择…",
+                  onClick: async () => {
+                    const dir = await pickSystemFolder();
+                    if (!dir) return;
+                    try {
+                      getSettings().peopleDataDir = dir;
+                      await saveSettings();
+                    } catch (e) {
+                      notifyActionError(e, "保存数据文件夹");
+                    }
+                  }
+                }
+              ]
             },
             {
               type: "toggle",
               name: "群聊纳入列表",
-              desc: "多位发送者的会话也进勾选列表",
+              desc: "群聊会话也进勾选列表",
               binding: { key: "peopleIncludeGroups" }
             }
           ]
@@ -9482,33 +9547,34 @@ ${s}`).join("\n\n");
           name: "媒体",
           rows: [
             {
-              type: "text",
+              type: "path",
+              mode: "single",
               name: "媒体文件夹",
-              desc: "库内存放头像等媒体资源的文件夹（vault 相对路径，如 CONFIG/FACES）；导入时头像复制进来，库外文件在 Obsidian 里加载不出来。空 = 用默认值",
+              desc: "库内存放头像的文件夹",
               binding: { key: "peopleMediaDir" },
-              placeholder: "CONFIG/FACES"
+              fallbackValue: () => peopleMediaDir()
             },
             {
               type: "info",
-              name: "头像入库，其余媒体不入库",
-              desc: "只有头像会复制进库（几 KB 的小图）；聊天图片 / 语音 / 视频仍留在外部数据目录"
+              name: "头像入库",
+              desc: "只有头像复制进库，其余媒体留在外部数据目录"
             }
           ]
         },
         {
           icon: "eye",
-          name: "聊天仓",
+          name: "预览",
           rows: [
             {
               type: "toggle",
               name: "语音转写",
-              desc: "语音消息以转写文本进时间线",
+              desc: "语音消息以转写文本进预览",
               binding: { key: "peoplePreviewVoice" }
             },
             {
               type: "select",
               name: "图片描述",
-              desc: "有描述的图片以描述文本进时间线（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
+              desc: "有描述的图片以描述文本进预览",
               binding: { key: "peopleImageDescMode" },
               options: [
                 { value: "file", label: "文件描述" },
@@ -9518,13 +9584,13 @@ ${s}`).join("\n\n");
             {
               type: "toggle",
               name: "视频标签",
-              desc: "视频消息以时长标签进时间线",
+              desc: "视频消息以时长标签进预览",
               binding: { key: "peoplePreviewVideo" }
             },
             {
               type: "toggle",
               name: "系统消息",
-              desc: "撤回与打招呼等锚点消息保留",
+              desc: "撤回与打招呼等消息保留",
               binding: { key: "peopleKeepSystem" }
             }
           ]
@@ -9534,24 +9600,14 @@ ${s}`).join("\n\n");
           name: "隐私",
           rows: [
             {
-              type: "info",
-              name: "原始媒体不入库",
-              desc: "图片语音视频文件留在外部数据目录，不复制进库；头像例外——复制进库内媒体文件夹才能显示"
-            },
-            {
-              type: "info",
-              name: "完整聊天数据入库",
-              desc: "全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径"
-            },
-            {
               type: "button",
-              name: "清空聊天仓",
+              name: "清空预览",
               buttonText: "清空",
               cta: true,
-              desc: "清掉全部导入的消息记录，不动已生成的脸谱",
+              desc: "清掉全部导入预览缓存，不动已生成的脸谱",
               onClick: () => {
                 var _a2;
-                return void ((_a2 = opts == null ? void 0 : opts.onClearStore) == null ? void 0 : _a2.call(opts));
+                return void ((_a2 = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a2.call(opts));
               }
             }
           ]
@@ -9731,13 +9787,12 @@ ${s}`).join("\n\n");
     const build = (name, take) => {
       const raws = read(name).slice(0, take);
       const msgs = raws.map((m) => {
-        var _a2, _b2;
+        var _a2;
         return {
           key: `s${m.sid}:${m.ct}`,
           ts: m.ct * 1e3,
           isSender: m.who === "我",
-          type: (_a2 = m.type) != null ? _a2 : 1,
-          text: String((_b2 = m.msg) != null ? _b2 : "")
+          text: String((_a2 = m.msg) != null ? _a2 : "")
         };
       });
       const media = collectMediaStats(msgs);
@@ -9752,7 +9807,7 @@ ${s}`).join("\n\n");
     build("林晚", read("林晚").length);
     build("周远山", read("周远山").length);
     build("苏黎", read("苏黎").length);
-    return JSON.stringify({ version: 2, contacts });
+    return JSON.stringify({ version: 1, contacts });
   }
   function buildDsFiles() {
     const files = {};

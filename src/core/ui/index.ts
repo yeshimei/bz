@@ -41,6 +41,8 @@ export { uiMobStrip } from './mobstrip';
 export { uiStat } from './stat';
 export { uiProgress } from './progress';
 export { uiPopover } from './popover';
+export { attachHelpTip } from './help-tip';
+export type { BzHelpTipOpts } from './help-tip';
 export { uiSuggest } from './suggest';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';

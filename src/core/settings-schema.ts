@@ -20,7 +20,7 @@ import { ROW_BTN_RESET_MS, armRowBtnReset, setRowBtnState, shortFailReason } fro
 import { getSettings, saveSettings, tryGetSettings } from './settings-provider';
 import { renderPathSettingRow } from './path-picker';
 import { createSettingsGroup, markSettingSplitRows, refreshSettingsGroupCounts } from './settings-modal';
-import { uiCardChoice, uiSetlist } from './ui';
+import { uiCardChoice, uiSetlist, attachHelpTip } from './ui';
 import { notifySaveError } from './notice';
 
 /** 设置快照：visibleWhen 条件函数的入参（键直绑行的当前值；外部数据行请自行闭包捕获）。 */
@@ -59,6 +59,13 @@ export interface SettingsRowContext {
 interface RowBase {
   /** 描述（ticket 100 文案规范：约 20 字自然句） */
   desc?: string;
+  /**
+   * 用法说明（issue 457）：把**行标题**变成说明入口 —— 桌面鼠标停在标题上出浮窗，
+   * 触屏点标题开合（标题不挂图标，静态零痕迹）。就是把一句 desc 说不完的那点补充说清楚
+   * ——**一段普通文字，两三句为限**（要分段用 `\n`，不要写成清单/小标题/注意事项专栏）。
+   * 与 desc/note 的分工：desc/note 是常驻一两行副文案。
+   */
+  help?: string;
   /** 声明式显隐条件：初始渲染与任意行变更后重求值（省略 = 恒显示） */
   visibleWhen?: (snapshot: SettingsSnapshot) => boolean;
   /**
@@ -517,10 +524,19 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     markSettingSplitRows(container);
   };
 
+  /** 用法说明（issue 457）：入口 = 行标题本身（悬停/点击出浮窗；组件库 attachHelpTip，
+   *  浮窗挂 body 不受行内裁剪） */
+  const attachHelp = (setting: Setting, help?: string): void => {
+    if (!help) return;
+    const nameEl = (setting as unknown as { nameEl?: HTMLElement }).nameEl;
+    if (nameEl) attachHelpTip(nameEl, { text: help });
+  };
+
   /** 行 Setting 统一构建：名称 + 可选描述 + visibleWhen 显隐登记（七类行共用样板收口） */
   const newRowSetting = (body: HTMLElement, row: RowBase & { name: string }): Setting => {
     const setting = new Setting(body).setName(row.name);
     if (row.desc) setting.setDesc(row.desc);
+    attachHelp(setting, row.help);
     if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
     return setting;
   };
@@ -976,6 +992,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         body.appendChild(wrap);
         const setting = new Setting(wrap).setName(row.name);
         if (row.desc) setting.setDesc(row.desc);
+        attachHelp(setting, row.help);
         if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
         const readItems = () => (typeof row.items === 'function' ? row.items() : row.items);
         const renderItems = (): void => {

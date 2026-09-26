@@ -278,7 +278,7 @@ describe('管线：related 幂等写入与可达性门', () => {
 
   it('encrypt 目录内文件一律跳过', async () => {
     const { agent } = makeWorld({});
-    const r = await agent.processNote('CONFIG/.ENCRYPT/x.md');
+    const r = await agent.processNote('CONFIG/STORAGE/.ENCRYPT/x.md');
     expect(r).toEqual({ status: 'skipped' });
   });
 
@@ -291,7 +291,7 @@ describe('管线：related 幂等写入与可达性门', () => {
         { path: '其他/X.md', chunk: 'X', score: 0.8 }, // 盒外 → 过滤
         { path: '书库/Y.md', chunk: 'Y', score: 0.78 }, // 盒外 → 过滤
         { path: '文献盒/A.md', chunk: '自身', score: 0.99 }, // 自身剔除
-        { path: 'CONFIG/.ENCRYPT/E.md', chunk: 'E', score: 0.7 }, // encrypt 锁定剔除
+        { path: 'CONFIG/STORAGE/.ENCRYPT/E.md', chunk: 'E', score: 0.7 }, // encrypt 锁定剔除
         { path: '文献盒/GONE.md', chunk: 'G', score: 0.6 }, // 文件不存在剔除
       ],
     });
@@ -506,7 +506,7 @@ describe('正文大改自动重跑（v1.4/ticket 119）', () => {
     vault.files.set('文献盒/C.md', '---\nrelated: ["[[文献盒/B]]"]\n---\n\n老笔记，升级前已连接但无基准。');
     expect(await agent.filterChangedForRelink(['文献盒/C.md'])).toEqual(['文献盒/C.md']);
     // ④ 文件缺失 / 非 md / encrypt 锁定 → 剔除
-    expect(await agent.filterChangedForRelink(['文献盒/GONE.md', '文献盒/notes.txt', 'CONFIG/.ENCRYPT/e.md'])).toEqual([]);
+    expect(await agent.filterChangedForRelink(['文献盒/GONE.md', '文献盒/notes.txt', 'CONFIG/STORAGE/.ENCRYPT/e.md'])).toEqual([]);
   });
 
   it('删除事件清基准：dropLinkBaseline 移除条目', async () => {
@@ -651,7 +651,7 @@ describe('通知触发条件（自绘 toast）', () => {
 
   it('死链清理：encrypt 锁定态（保险箱清单存在且未解锁）一律跳过', async () => {
     const { vault, agent } = makeWorld({});
-    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', 'cipher');
+    vault.files.set('CONFIG/STORAGE/.ENCRYPT/.safe.enc', 'cipher');
     vault.files.set('文献盒/C.md', '---\nrelated:\n  - "[[文献盒/GONE.md]]"\n---\n\n正文');
     // 范围恒为三盒（ADR-0141 §2）：文献盒在盒内，其他/ 在盒外
     const n = await agent.cleanDeadLinks();
@@ -1270,8 +1270,8 @@ describe('范围卫：盒外一律拒绝（ADR-0141 §2：手动亦无豁免）'
     vault.files.set('文献盒/白板.canvas', '{}');
     expect(await both('文献盒/白板.canvas')).toEqual({ process: 'skipped', apply: 'skipped' });
     // encrypt 锁定（盒内盒外都算）→ 两处都 skipped：硬跳过先于盒界，这是唯一的顺序
-    vault.files.set('CONFIG/.ENCRYPT/E.md', 'x');
-    expect(await both('CONFIG/.ENCRYPT/E.md')).toEqual({ process: 'skipped', apply: 'skipped' });
+    vault.files.set('CONFIG/STORAGE/.ENCRYPT/E.md', 'x');
+    expect(await both('CONFIG/STORAGE/.ENCRYPT/E.md')).toEqual({ process: 'skipped', apply: 'skipped' });
   });
 
   it('队列消费：盒外条目就地清理，不留滞留（范围不再可配，它永远跑不了）', async () => {

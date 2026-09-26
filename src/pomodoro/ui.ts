@@ -782,7 +782,11 @@ export function pomodoroSettingsSchema(): SettingsSchema {
         icon: 'sliders-horizontal',
         name: '行为',
         rows: [
-          { type: 'toggle', name: '强制专注模式', desc: '专注进行中无法暂停跳过或重置', binding: { key: 'pomodoroForceFocus' }, onChange: () => render() },
+          { type: 'toggle', name: '强制专注模式', desc: '专注进行中无法暂停跳过或重置',
+            help:
+              '专注进行中 pause、重置、跳过三个动作被状态机直接拦下，按钮与命令面板里的同名操作同挡；未开始时可正常启动，不阻止开始。' +
+              '',
+            binding: { key: 'pomodoroForceFocus' }, onChange: () => render() },
           { type: 'toggle', name: '自动循环', desc: '阶段结束后自动开始下一阶段', binding: { key: 'pomodoroAutoCycle' }, onChange: () => render() },
           { type: 'toggle', name: '自动跳过休息', desc: '专注结束后直接进入下一个专注', binding: { key: 'pomodoroAutoSkipBreak' }, onChange: () => render() },
           { type: 'toggle', name: '声音提醒', desc: '阶段切换时播放提示音', binding: soundToggle, onChange: () => render() },
@@ -796,6 +800,9 @@ export function pomodoroSettingsSchema(): SettingsSchema {
             type: 'select',
             name: '打开时恢复方式',
             desc: '启动遇倒计时的处理方式',
+            help:
+              '插件启动时遇到未走完的倒计时：background＝后台继续（默认），静默接着走；popup＝自动弹出计时盘。' +
+              '',
             binding: { key: 'pomodoroRestoreMode' },
             options: [
               { value: 'background', label: '后台继续' },

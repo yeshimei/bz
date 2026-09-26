@@ -1,5 +1,5 @@
-/* 源指纹 a36d3287674e2e4c · 仓内输入 97 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank-jev.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
+/* 源指纹 f6be38df2ce9049d · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank-jev.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
   var __create = Object.create;
@@ -292,11 +292,6 @@ var BZW_secondbrain = (() => {
     var _a2, _b2;
     return (_b2 = (_a2 = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a2.levels) != null ? _b2 : [];
   }
-  function maxOutputCapOf(providerId, modelName) {
-    const desc = getProviderDescriptor(providerId);
-    const hit = resolveModelLimits(modelName || desc.model || "");
-    return hit ? hit.maxOutput : desc.maxOutputCap;
-  }
   function thinkingBodyFor(providerId, level) {
     var _a2;
     if (!providerId || !level || level === "auto") return null;
@@ -347,16 +342,14 @@ var BZW_secondbrain = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a2 = s.aiModelOverrides) == null ? void 0 : _a2[name];
-    const effModel = overrideModel || desc.model || "";
-    const cap = maxOutputCapOf(name, effModel);
-    const requested = Number((_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name]);
-    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
+    const overrideMaxTokens = (_b2 = s.aiMaxTokensOverrides) == null ? void 0 : _b2[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: effModel || void 0,
-      defaultMaxTokens
+      model: overrideModel || desc.model || void 0,
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
     });
   }
   function abortError() {
@@ -541,8 +534,6 @@ var BZW_secondbrain = (() => {
           // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
           // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
           defaultMaxTokens: 393216,
-          // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
-          maxOutputCap: 393216,
           apiKeyKey: "deepseekApiKey",
           apiKeyLabel: "DeepSeek 密钥",
           apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -565,8 +556,6 @@ var BZW_secondbrain = (() => {
           model: "glm-5.3-flash",
           // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
           defaultMaxTokens: 131072,
-          maxOutputCap: 131072,
-          // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
           apiKeyKey: "zhipuPlanApiKey",
           apiKeyLabel: "智谱 Plan 密钥",
           apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -586,8 +575,6 @@ var BZW_secondbrain = (() => {
           endpoint: "http://localhost:11434/v1",
           model: "llama3.1",
           defaultMaxTokens: 8192,
-          // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
-          // 面板可自由调大（既有口径，不因本票收紧）
           apiKeyKey: "ollamaApiKey",
           apiKeyLabel: "Ollama 密钥",
           apiKeyDesc: "本地服务无需密钥",
@@ -1276,6 +1263,14 @@ var BZW_secondbrain = (() => {
     }
   });
 
+  // src/core/ui/help-tip.ts
+  var init_help_tip = __esm({
+    "src/core/ui/help-tip.ts"() {
+      init_esc_manager();
+      init_z_order();
+    }
+  });
+
   // src/core/ui/suggest.ts
   var init_suggest = __esm({
     "src/core/ui/suggest.ts"() {
@@ -1441,6 +1436,7 @@ var BZW_secondbrain = (() => {
       init_stat();
       init_progress();
       init_popover();
+      init_help_tip();
       init_suggest();
       init_lightbox();
       init_modal();

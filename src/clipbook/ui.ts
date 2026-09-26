@@ -2404,7 +2404,11 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         name: '自动摘要',
         rows: [
           {
-            type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要', binding: { key: AUTO_SUMMARY_KEYS.enabled },
+            type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要',
+            help:
+              '新入库的剪藏文章自动跑一遍 AI 摘要，每篇消耗一次 LLM 调用。关掉之后，摘要长度、生成标签、标签数量、摘要时机这几行会一起收起来（它们只在这个开关打开时才有意义）。' +
+              '已有摘要不受影响，之后再想要摘要得在文章里手动触发；它只管新进来的文章。',
+            binding: { key: AUTO_SUMMARY_KEYS.enabled },
             onChange: (v: boolean) => {
               if (v) ensureAutoSummary(getApp());
               else stopAutoSummary();
@@ -2417,7 +2421,11 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
           ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: AUTO_SUMMARY_KEYS.tagsEnabled }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
           { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: AUTO_SUMMARY_KEYS.tagCount }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true && s[AUTO_SUMMARY_KEYS.tagsEnabled] === true, isChild: true },
-          { type: 'select', name: '摘要时机', desc: '生成剪藏摘要的时机', binding: { key: AUTO_SUMMARY_KEYS.timing }, options: [
+          { type: 'select', name: '摘要时机', desc: '生成剪藏摘要的时机',
+            help:
+              'immediate＝保存后立刻跑摘要；lazy＝懒触发，打开文章时才跑。' +
+              '前者进库即消耗一次 LLM 调用（批量导入就是 N 次），后者推迟到真正打开时。',
+            binding: { key: AUTO_SUMMARY_KEYS.timing }, options: [
             { value: 'immediate', label: '保存后立刻' },
             { value: 'lazy', label: '懒触发（打开时）' },
           ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true,

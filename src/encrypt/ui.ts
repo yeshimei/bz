@@ -442,22 +442,8 @@ export function encryptSettingsSchema(): SettingsSchema {
           { type: 'choiceCards', name: '面板主题', binding: { key: 'encryptSkinTheme' }, layoutKey: 'encryptSkin', options: [{ value: 'steel', label: '钢灰', layout: 'default', prevClass: 'bz-sp-prev-steel' }] },
         ],
       },
-      {
-        icon: 'folder-open',
-        // 2026-09-12：组名「存储」→「目录」并提前到「安全」前（全域路径组统一范式：外观 → 目录 → 行为）
-        name: '目录',
-        rows: [
-          // ticket 128：保险库根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-          {
-            type: 'path',
-            mode: 'single',
-            name: '保险库根文件夹',
-            desc: '加密文件的存放位置',
-            binding: { key: 'encryptRoot' },
-            onCommit: warnReload,
-          },
-        ],
-      },
+      // 2026-09-26「目录」组整组退役：密文根目录固定 = <数据存储路径>/.ENCRYPT（core/storage 的
+      // encryptDir 单源），不再给用户单独配——面板少一行需要解释「为什么不跟着数据目录走」的设置。
       {
         icon: 'shield',
         name: '安全',
@@ -485,10 +471,18 @@ export function encryptSettingsSchema(): SettingsSchema {
         icon: 'image',
         name: '预览',
         rows: [
-          { type: 'toggle', name: '生成压缩预览', desc: '加密时生成图片视频的压缩预览', binding: { key: 'encryptPreviewEnabled' }, onChange: warnReload },
+          { type: 'toggle', name: '生成压缩预览', desc: '加密时生成图片视频的压缩预览',
+            help:
+              '加密图片与视频时同时生成压缩预览层，之后不解密即可看缩略图。' +
+              '下面「预览长边」「预览质量」两行是它的子项，开关关闭时一并隐藏。',
+            binding: { key: 'encryptPreviewEnabled' }, onChange: warnReload },
           { type: 'number', name: '预览长边', desc: '预览图目标长边像素', binding: numStrBinding('encryptPreviewSize', 384), min: 64, max: 1024, step: 16, onCommit: warnReload, isChild: true },
           { type: 'number', name: '预览质量', desc: 'JPEG 图像压缩质量', binding: numStrBinding('encryptPreviewQuality', 0.5), min: 0.1, max: 1, step: 0.1, onCommit: warnReload, isChild: true },
-          { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图', binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload, isChild: true },
+          { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图',
+            help:
+              '默认关。' +
+              '开启后打开预览即自动解密全部原图替换缩略图，因此明显变慢；明文以 Blob URL 形式短暂驻留内存，关闭预览时统一 revokeObjectURL 回收。',
+            binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload, isChild: true },
         ],
       },
     ],

@@ -1,5 +1,5 @@
-/* 源指纹 a3575265e7432829 · 仓内输入 73 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 918ab982c6a3447d · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -4658,8 +4658,6 @@ var BZW_cinema = (() => {
       // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
       // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
       defaultMaxTokens: 393216,
-      // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
-      maxOutputCap: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
       apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -4682,8 +4680,6 @@ var BZW_cinema = (() => {
       model: "glm-5.3-flash",
       // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
       defaultMaxTokens: 131072,
-      maxOutputCap: 131072,
-      // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
       apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -4703,8 +4699,6 @@ var BZW_cinema = (() => {
       endpoint: "http://localhost:11434/v1",
       model: "llama3.1",
       defaultMaxTokens: 8192,
-      // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
-      // 面板可自由调大（既有口径，不因本票收紧）
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
       apiKeyDesc: "本地服务无需密钥",
@@ -4726,11 +4720,6 @@ var BZW_cinema = (() => {
   function thinkingLevelsOf(providerId) {
     var _a, _b;
     return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
-  }
-  function maxOutputCapOf(providerId, modelName) {
-    const desc = getProviderDescriptor(providerId);
-    const hit = resolveModelLimits(modelName || desc.model || "");
-    return hit ? hit.maxOutput : desc.maxOutputCap;
   }
   function thinkingBodyFor(providerId, level) {
     var _a;
@@ -4783,16 +4772,14 @@ var BZW_cinema = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const effModel = overrideModel || desc.model || "";
-    const cap = maxOutputCapOf(name, effModel);
-    const requested = Number((_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name]);
-    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
+    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: effModel || void 0,
-      defaultMaxTokens
+      model: overrideModel || desc.model || void 0,
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
     });
   }
   function abortError() {
@@ -11465,9 +11452,7 @@ tags:
     return (M.typeFilter || "全部") + (M.statusFilter ? ` · ${M.statusFilter}` : "");
   }
   function gridColumns() {
-    const raw = Number(tryGetSettings().cinemaGridColumns);
-    if (!Number.isFinite(raw) || raw <= 0) return 5;
-    return Math.min(12, Math.max(2, Math.round(raw)));
+    return 5;
   }
   function mergeSeasonsOn() {
     return tryGetSettings().cinemaMergeSeasons === true;
@@ -13396,7 +13381,6 @@ tags:
     cinemaFolderPath: FOLDER,
     cinemaSortMode: "date",
     cinemaStatusFilter: "",
-    cinemaGridColumns: "5",
     cinemaMergeSeasons: true,
     // 「解析」链路（issue 395）：原型走 fake requestUrl 的罐头网关，
     // 这里的密钥非空只为让 isJevConfigured / ApiZero 分支成立（issue 424 起 Jev 常开、只看密钥），

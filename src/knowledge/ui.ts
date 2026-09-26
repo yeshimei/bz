@@ -360,7 +360,11 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         // 没有「关联范围」行——范围恒为上面三个文件夹，不再可配（ADR-0141 §2）。
         icon: 'link', name: '自动关联',
         rows: [
-          { type: 'toggle', name: '自动关联', desc: '笔记改动后自动建关联', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
+          { type: 'toggle', name: '自动关联', desc: '笔记改动后自动建关联',
+            help:
+              '关联监听的注册发生在插件启动时，改这个开关需重载插件才生效（面板会提示）。' +
+              '参与范围固定为文献、卡片、主题三个文件夹，不可在此缩小；要排除只能把笔记移出这三个目录。',
+            binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
           // 2026-09-23：三行原为 text + 「三函数绑定 + onChange 钳制复写」——那是「number 键
           // （linkAgentTopK/MaxLinks/MinScore）在 text 行里被收窄到 string」逼出来的绕行。
           // 改标准 number 行后：键直绑（类型本就 number）；钳制交给输入框 min/max/step；
@@ -380,7 +384,13 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
           { type: 'toggle', name: '保留视频原件', desc: '转文献后保留视频文件', binding: { key: 'knowledgeKeepVideo' } },
           { type: 'select', name: '下载清晰度', desc: '下载视频的清晰度', binding: { key: 'knowledgeQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
           { type: 'toggle', name: '遇错即停', desc: '失败即停止批量处理', binding: { key: 'knowledgeStopOnFailure' } },
-          { type: 'text', name: '输出文件夹', desc: '视频文件的输出文件夹', binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos' },
+          {
+            type: 'text', name: '输出文件夹', desc: '视频文件的输出文件夹',
+            help:
+              '知识盒处理视频时，下载或转录出来的视频文件落在哪个目录，填完整路径，可以填 vault 之外的位置。留空则不下发这一项，由外部 bili-dl 命令行按它自己的默认值决定。' +
+              '实际写文件的是那个外部进程，插件只把路径传下去、再记录回传的结果，所以这里填错的表现是外部侧落盘失败。',
+            binding: { key: 'knowledgeOutputDir' }, placeholder: '如 D:/videos',
+          },
           { type: 'toggle', name: '视频压缩', desc: '转文字前压缩视频', binding: { key: 'knowledgeCompress' } },
           { type: 'number', name: '压缩质量 CRF', desc: '压缩画质，越小越高', binding: { key: 'knowledgeCrf' }, min: 18, max: 28, step: 1 },
         ],
