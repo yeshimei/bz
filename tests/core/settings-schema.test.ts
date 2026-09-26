@@ -20,8 +20,9 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
   const schema = mainSettingsSchema();
 
   it('issue 444：七个分组卡片（带 icon）——LLM/Embedding/JEV/语音转写/数据源凭据 + 数据存储路径 + 通知', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据', '使用手册', '数据存储路径', '通知']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round', 'book-open', 'folder-open', 'bell']);
+    // issue 473：「使用手册」组撤出（入口搬设置面板侧栏 footer），恢复真·七个分组
+    expect(schema.groups.map((g) => g.name)).toEqual(['LLM', 'Embedding', 'JEV', '语音转写', '数据源凭据', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['cpu', 'binary', 'route', 'mic', 'key-round', 'folder-open', 'bell']);
   });
 
   it('LLM 组首部（前「服务商」组，issue 411/ADR-0179 收敛三条通道）：服务商下拉 + 每家一行密钥（visibleWhen 随 aiProvider）', () => {

@@ -29,14 +29,14 @@ const COUNT_BASELINE: Record<string, number> = {
   people: 9, // 2026-09-26 issue 467+462：媒体组两行随 peopleMediaDir 退役、数据源保留 3 行（462 微信账号目录）——头像改走保库记录附件；数据源 3 + 聊天仓 4 + 隐私 2（清空按钮不计）
   clipping: 11,
   favorites: 5,
-  cinema: 8,
+  cinema: 7, // 2026-09-26：网格每行列数退役（列数固定 5）
   bookshelf: 5,
   gameshelf: 7,
   review: 12,
   secondbrain: 6, // 2026-09-24 issue 424：检索组四行删（不限制 + 固化）、服务组两行 IP 自查/提示删
   home: 12,
   pomodoro: 11, // 2026-09-23：后台自动暂停退役（-1）、特效批「倒数滴答」新增（+1）
-  encrypt: 5,
+  encrypt: 4, // 2026-09-26：目录组退役（密文根固定 <数据存储路径>/.ENCRYPT）
   'password-vault': 5,
   smartcat: 15,
   knowledge: 25, // 2026-09-26 issue 462：「外部工具」组回归知识盒页（Python/ffmpeg/ffprobe 三行，域无关键位）
