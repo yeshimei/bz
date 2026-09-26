@@ -1518,7 +1518,7 @@ export class UIManager {
   private counts(): { note: number; diary: number } {
     const notes = this.dataManager.manifest.notes;
     return {
-      note: notes.filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault').length,
+      note: notes.filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault' && n.kind !== 'people').length,
       diary: notes.filter((n) => n.kind === 'diary-entry').length,
     };
   }
@@ -1538,7 +1538,7 @@ export class UIManager {
         return [{ num: String(list.length), label: labels[0] }, { num: String(atts), label: labels[1] }, { num: kb(bytes), label: labels[2] }];
       };
       this.lockStatsCache.vault = stat(
-        all.filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault'),
+        all.filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault' && n.kind !== 'people'),
         ['笔记条目', '随库附件', '附件密文'],
       );
       this.lockStatsCache.diary = stat(
@@ -1610,7 +1610,7 @@ export class UIManager {
   /** 概览统计（供 overviewHTML；口径与 captureLockStats 的 vault 档一致：附件/字节只算纯笔记） */
   private overviewStats(): OverviewStats {
     const c = this.counts();
-    const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== 'password-vault');
+    const vaultNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== 'password-vault' && n.kind !== 'people');
     const pureNotes = vaultNotes.filter((n) => n.kind !== 'diary-entry');
     const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
     const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
@@ -1722,7 +1722,7 @@ export class UIManager {
     const detail = this.desk.detail;
     const kw = this.searchKw;
     let notes = [...this.dataManager.manifest.notes]
-      .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault'))
+      .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault' && n.kind !== 'people'))
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     // 顶栏只留标题；列表头按评审再去掉「全部加密笔记 · N 项」，只留搜索框（仅笔记资产）
     this.setVaultHead(kind === 'note' ? '笔记' : '加密日记');
@@ -2085,7 +2085,7 @@ export class UIManager {
     // 笔记/日记
     const kind = this.asset;
     const notes = [...this.dataManager.manifest.notes]
-      .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault'))
+      .filter((n) => (kind === 'diary' ? n.kind === 'diary-entry' : n.kind !== 'diary-entry' && n.kind !== 'password-vault' && n.kind !== 'people'))
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     const kw = this.searchKw;
     const filtered = kw

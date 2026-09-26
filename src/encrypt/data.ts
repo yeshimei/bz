@@ -65,9 +65,10 @@ export interface SafeNote {
   /**
    * 来源类型：缺省=普通加密笔记；
    * 'diary-entry'=加密日记条目（ADR-0017，保险库面板过滤，日记面板单独读）；
-   * 'password-vault'=密码本整表（与保险库共享主密码/解锁态，密码本面板单独读写）。
+   * 'password-vault'=密码本整表（与保险库共享主密码/解锁态，密码本面板单独读写）；
+   * 'people'=脸谱保库记录（ADR-0194，每联系人一条，脸谱面板单独读；保险库面板过滤，path 为虚拟占位）。
    */
-  kind?: 'diary-entry' | 'password-vault';
+  kind?: 'diary-entry' | 'password-vault' | 'people';
   /** 原笔记路径（如 我的/日记/2025-06-01.md） */
   path: string;
   /** 列表展示标题 */
@@ -137,8 +138,8 @@ export interface LockNoteInput {
   /** 原笔记路径 */
   path: string;
   title: string;
-  /** 来源类型：'diary-entry'=加密日记条目（ADR-0017）；'password-vault'=密码本整表 */
-  kind?: 'diary-entry' | 'password-vault';
+  /** 来源类型：'diary-entry'=加密日记条目（ADR-0017）；'password-vault'=密码本整表；'people'=脸谱保库记录（ADR-0194） */
+  kind?: 'diary-entry' | 'password-vault' | 'people';
   /** 笔记正文（明文） */
   content: string;
   attachments: LockAttachmentInput[];
@@ -1141,9 +1142,9 @@ export class SafeManager {
           deleteFailed.push(a.path);
         }
       }
-      // 普通加密笔记删除整篇原文件；diary-entry/password-vault 无整文件可删
-      //（日记条目块移除由日记域自行处理 ADR-0017 Q6-b；密码本无原文件，path 为虚拟占位）
-      if (input.kind !== 'diary-entry' && input.kind !== 'password-vault') {
+      // 普通加密笔记删除整篇原文件；diary-entry/password-vault/people 无整文件可删
+      //（日记条目块移除由日记域自行处理 ADR-0017 Q6-b；密码本与脸谱保库记录无原文件，path 为虚拟占位）
+      if (input.kind !== 'diary-entry' && input.kind !== 'password-vault' && input.kind !== 'people') {
         // E14：删前重读比对——加密耗时窗口（确认框/附件加密/PBKDF2）内用户继续编辑，
         // 增量只存在于原文件，直接删 = 保险库存旧快照 + 新增量永久丢失。
         // 与加密正文不一致（归一化行尾）→ 保留原文件不删，经 onSkippedStale 上报提示重做。

@@ -16,10 +16,9 @@
  * **内存 data URL**，不落明文文件；keptShared 置真——脸谱不删源（存量明文头像目录退役但
  * 不删文件，新头像源在 vault 外数据根，本就不归保库删）。
  *
- * encrypt 边界说明（票约束「不动 src/encrypt/」）：SafeNote.kind / LockNoteInput.kind 的
- * 联合类型尚未纳入 'people'，此处以**一处收口断言**过墙（PEOPLE_KIND_SAFE）——运行时
- * SafeManager 只透传该字段，语义与 'password-vault' 先例（7568f0db3）完全一致；主线程收口
- * 时把 'people' 并入 encrypt 侧两个联合类型后撤掉断言即可。
+ * encrypt 边界（主线程收口完成）：SafeNote.kind / LockNoteInput.kind 联合类型已并入 'people'，
+ * removeNote 的删原文件守卫同样排除 'people'（虚拟占位无原文件），保险库面板四处资产过滤
+ * （计数/锁屏统计/概览/笔记列表桌面+移动端）已排除脸谱记录—— 与 'password-vault' 先例同款口径。
  */
 import { onDomainEvent } from '../core/domain-bus';
 import {
@@ -321,7 +320,7 @@ export class PeopleSafeStore {
     const input: LockNoteInput = {
       path: peopleNotePath(talker),
       title: `脸谱：${rec.person.name || talker}`,
-      kind: PEOPLE_KIND_SAFE,
+      kind: PEOPLE_KIND,
       content: JSON.stringify(rec),
       attachments: avatar
         ? [
@@ -358,12 +357,6 @@ export class PeopleSafeStore {
     }
   }
 }
-
-/**
- * kind 过墙断言（唯一收口，见文件头「encrypt 边界说明」）：
- * encrypt 侧联合类型并入 'people' 后应删除本常量并直传 PEOPLE_KIND。
- */
-const PEOPLE_KIND_SAFE = PEOPLE_KIND as unknown as LockNoteInput['kind'];
 
 // ---------------- 共享实例（注入缝） ----------------
 

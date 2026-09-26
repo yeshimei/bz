@@ -123,6 +123,23 @@ describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 
     expect(rows[0].textContent).toContain('笔记A');
   });
 
+  it('脸谱保库记录 SafeNote（kind=people）不进 encrypt 面板任何资产列表（ADR-0194 收口）', async () => {
+    await sm.lockNote({ path: '笔记/a.md', title: '笔记A', content: '# a', attachments: [] });
+    await sm.lockNote({ path: 'CONFIG/STORAGE/people/talker_a', title: '脸谱：张三', kind: 'people', content: '{}', attachments: [] });
+    ui.show();
+    await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));
+    // 概览/笔记计数只算库内加密资产（笔记 + 日记），不含脸谱保库记录
+    expect(document.querySelector('[data-cnt="overview"]')!.textContent).toBe('1');
+    expect(document.querySelector('[data-cnt="note"]')!.textContent).toBe('1');
+    // 笔记列表不含脸谱记录（无「脸谱：张三」条目）
+    (ui as any).setAssetFromNav('note');
+    await new Promise((r) => setTimeout(r, 30));
+    const rows = [...document.querySelectorAll('.bz-vault-listcol .bz-vault-row')];
+    expect(rows.length).toBe(1);
+    expect(rows[0].textContent).toContain('笔记A');
+    expect(document.querySelector('.bz-vault-listcol')!.textContent).not.toContain('张三');
+  });
+
   it('加密笔记视图：show 后点「笔记」→ 空态提示（无笔记）', async () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
