@@ -92,7 +92,7 @@ export interface InsightsSummary {
   emojiNamedCount: number;
 }
 
-/** computeInsights 输入消息的最小结构（PreviewMsg / UnifiedMessage 均满足） */
+/** computeInsights 输入消息的最小结构（StoreMsg / UnifiedMessage 均满足） */
 export interface InsightMsgLike {
   /** 毫秒时间戳 */
   ts: number;

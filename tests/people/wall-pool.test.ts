@@ -1,6 +1,6 @@
 /**
- * 封面墙成员口径测试（issue 452）：墙 = 人物卡 ∪ 预览桶联系人。
- * 522 的实例是「导入所选只进预览」（447）导致「导入了预览但没画过」的人在面板上彻底不可见
+ * 封面墙成员口径测试（issue 452）：墙 = 人物卡 ∪ 聊天仓联系人。
+ * 522 的实例是「导入所选只进仓」（447）导致「导入了素材但没画过」的人在面板上彻底不可见
  * （真实数据：大琳 18477 条只在 people-preview.json 里）——本轮给无卡者合成内存占位卡，
  * 并对占位卡上的档案 / 随手记写入做「先建空卡」兜底。
  * 引擎用假件注入（setJobsModuleForTests）；数据全构造。
@@ -14,7 +14,7 @@ import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closePeoplePanel, openPeoplePanel, setJobsModuleForTests, type JobsApi } from '../../src/people/ui';
 import { getPeopleFilePath } from '../../src/people/data';
-import { getPreviewFilePath } from '../../src/people/datasource';
+import { getStoreFilePath } from '../../src/people/datasource';
 import type { PersonEntry } from '../../src/people/types';
 
 const T0 = new Date('2026-09-25T08:00:00').getTime();
@@ -41,7 +41,7 @@ class FakeEngine implements JobsApi {
   snapshot = () => ({ queue: [], currentIndex: -1, running: false });
 }
 
-/** 预览桶种子（某人的素材：条数 / 首尾跨度即卡面水位口径；media = 侧写媒体计数，454 用） */
+/** 聊天仓种子（某人的素材：条数 / 首尾跨度即卡面水位口径；media = 侧写媒体计数，454 用） */
 function seedPreview(
   vault: MockVault,
   id: string,
@@ -49,10 +49,10 @@ function seedPreview(
   updatedAt = '2026-09-25T08:00:00.000Z',
   media: { voiceCount?: number; voiceTotalSec?: number; imageCount?: number } = {}
 ): void {
-  const raw = vault.files.get(getPreviewFilePath());
-  const data = raw ? JSON.parse(raw) : { version: 1, contacts: {} };
+  const raw = vault.files.get(getStoreFilePath());
+  const data = raw ? JSON.parse(raw) : { version: 2, contacts: {} };
   data.contacts[id] = {
-    msgs: Array.from({ length: count }, (_, i) => ({ key: `s${i}`, ts: T0 + i * 60_000, isSender: i % 2 === 1, text: `构造消息${i}` })),
+    msgs: Array.from({ length: count }, (_, i) => ({ key: `s${i}`, ts: T0 + i * 60_000, isSender: i % 2 === 1, type: 1, text: `构造消息${i}` })),
     watermarkSid: count,
     stats: {
       msgCount: count,
@@ -62,7 +62,7 @@ function seedPreview(
     },
     updatedAt,
   };
-  vault.files.set(getPreviewFilePath(), JSON.stringify(data));
+  vault.files.set(getStoreFilePath(), JSON.stringify(data));
 }
 
 const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-card="${id}"]`);
@@ -77,7 +77,7 @@ function entry(over: Partial<PersonEntry> = {}): PersonEntry {
 async function boot(seed?: PersonEntry[]): Promise<MockVault> {
   const vault = new MockVault();
   vault.files.set(getPeopleFilePath(), JSON.stringify({ version: 1, people: seed ?? [] }));
-  vault.files.set(getPreviewFilePath(), JSON.stringify({ version: 1, contacts: {} }));
+  vault.files.set(getStoreFilePath(), JSON.stringify({ version: 2, contacts: {} }));
   setApp(makeApp(vault));
   setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
   return vault;
@@ -94,15 +94,15 @@ afterEach(() => {
   setJobsModuleForTests(null);
 });
 
-describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
-  it('预览桶有素材、people.json 没卡 → 上墙为「待画」折子，条数与跨度取预览桶口径', async () => {
+describe('墙成员 = 人物卡 ∪ 聊天仓（452）', () => {
+  it('聊天仓有素材、people.json 没卡 → 上墙为「待画」折子，条数与跨度取时间线口径', async () => {
     const vault = await boot([entry({ imports: [{ file: '数据源:莫莫', importedAt: '2026-09-25T02:57:37.341Z', messageCount: 126, skippedCount: 0, timeFrom: '2026-03-03T17:55:24.000Z', timeTo: '2026-03-27T12:58:06.000Z' }] })]);
     seedPreview(vault, '大琳', 3);
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
 
     expect(card('大琳')!.querySelector('.bz-people-seal')!.textContent).toBe('待画'); // 451 四态的未画谱
-    expect(cardMeta('大琳')).toBe('3 条'); // 预览桶口径，不是「尚无消息」
+    expect(cardMeta('大琳')).toBe('3 条'); // 聊天仓时间线口径，不是「尚无消息」
     expect(cardMeta('莫莫')).toBe('126 条'); // 有卡者走导入记录口径
     expect(document.querySelectorAll('[data-people-card]')).toHaveLength(2);
   });
@@ -114,10 +114,10 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
     await tick();
     expect(disk(vault).people).toEqual([]); // 盘上零变更
-    expect(cardWho('大琳')).toBe('2026-09 ~ 2026-09'); // 跨度来自预览桶首尾
+    expect(cardWho('大琳')).toBe('2026-09 ~ 2026-09'); // 跨度来自聊天仓首尾
   });
 
-  it('有卡但还没有导入记录（手写档案建的卡）→ 卡面水位用预览桶兜底', async () => {
+  it('有卡但还没有导入记录（手写档案建的卡）→ 卡面水位用聊天仓兜底', async () => {
     const vault = await boot([entry({ id: '大琳', name: '大琳' })]);
     seedPreview(vault, '大琳', 7);
     openPeoplePanel(getApp());
@@ -126,19 +126,19 @@ describe('墙成员 = 人物卡 ∪ 预览桶（452）', () => {
     expect(document.querySelectorAll('[data-people-card]')).toHaveLength(1); // 不重复出卡
   });
 
-  it('预览桶无素材的残留桶不建占位卡；读不到预览桶照常出已有卡', async () => {
+  it('聊天仓无素材的残留空仓不建占位卡；读不到聊天仓照常出已有卡', async () => {
     const vault = await boot([entry()]);
-    vault.files.set(getPreviewFilePath(), JSON.stringify({
-      version: 1,
-      contacts: { 空桶: { msgs: [], watermarkSid: 0, stats: { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '2026-09-25T00:00:00.000Z' } },
+    vault.files.set(getStoreFilePath(), JSON.stringify({
+      version: 2,
+      contacts: { 空仓: { msgs: [], watermarkSid: 0, stats: { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '2026-09-25T00:00:00.000Z' } },
     }));
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
-    expect(card('空桶')).toBeNull();
+    expect(card('空仓')).toBeNull();
     expect(document.querySelectorAll('[data-people-card]')).toHaveLength(1);
   });
 
-  it('点占位卡的印章「待画」→ 用预览桶素材交引擎画脸谱（451 × 452 接上）', async () => {
+  it('点占位卡的印章「待画」→ 用聊天仓素材交引擎画脸谱（451 × 452 接上）', async () => {
     const vault = await boot();
     seedPreview(vault, '大琳', 4);
     const engine = new FakeEngine();

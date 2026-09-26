@@ -1,4 +1,4 @@
-/* 源指纹 dca52854ad604d4d · 仓内输入 267 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6a37b5a6ba8b64ef · 仓内输入 267 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/datasource.ts","src/people/insights.ts","src/people/media.ts","src/people/parse.ts","src/people/settings.ts","src/people/stats.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -59237,18 +59237,18 @@ ${n.content.slice(0, 2e3)}
         },
         {
           icon: "eye",
-          name: "预览",
+          name: "聊天仓",
           rows: [
             {
               type: "toggle",
               name: "语音转写",
-              desc: "语音消息以转写文本进预览",
+              desc: "语音消息以转写文本进时间线",
               binding: { key: "peoplePreviewVoice" }
             },
             {
               type: "select",
               name: "图片描述",
-              desc: "有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
+              desc: "有描述的图片以描述文本进时间线（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
               binding: { key: "peopleImageDescMode" },
               options: [
                 { value: "file", label: "文件描述" },
@@ -59258,7 +59258,7 @@ ${n.content.slice(0, 2e3)}
             {
               type: "toggle",
               name: "视频标签",
-              desc: "视频消息以时长标签进预览",
+              desc: "视频消息以时长标签进时间线",
               binding: { key: "peoplePreviewVideo" }
             },
             {
@@ -59280,18 +59280,18 @@ ${n.content.slice(0, 2e3)}
             },
             {
               type: "info",
-              name: "预览只存文本",
-              desc: "语音转写与图片描述以文本进预览缓存"
+              name: "完整聊天数据入库",
+              desc: "全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径"
             },
             {
               type: "button",
-              name: "清空预览",
+              name: "清空聊天仓",
               buttonText: "清空",
               cta: true,
-              desc: "清掉全部导入预览缓存，不动已生成的脸谱",
+              desc: "清掉全部导入的消息记录，不动已生成的脸谱",
               onClick: () => {
                 var _a2;
-                return void ((_a2 = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a2.call(opts));
+                return void ((_a2 = opts == null ? void 0 : opts.onClearStore) == null ? void 0 : _a2.call(opts));
               }
             }
           ]
@@ -59528,30 +59528,26 @@ ${n.content.slice(0, 2e3)}
   // src/people/datasource.ts
   var datasource_exports = {};
   __export(datasource_exports, {
-    PreviewStore: () => PreviewStore,
-    emptyPreviewData: () => emptyPreviewData,
-    emptyPreviewStats: () => emptyPreviewStats,
-    getPreviewFilePath: () => getPreviewFilePath,
+    MessageStore: () => MessageStore,
+    emptyMessageStore: () => emptyMessageStore,
+    getStoreFilePath: () => getStoreFilePath,
     importAvatarToVault: () => importAvatarToVault,
     isGroupChat: () => isGroupChat,
     isSelfWho: () => isSelfWho,
     isVaultRelativePath: () => isVaultRelativePath,
     listContactDirs: () => listContactDirs,
-    mergePreview: () => mergePreview,
+    mergeStore: () => mergeStore,
     msgKey: () => msgKey,
     normalizeChatJson: () => normalizeChatJson,
     normalizeOptionsFromSettings: () => normalizeOptionsFromSettings,
     peopleMediaDir: () => peopleMediaDir,
-    previewMediaBadge: () => previewMediaBadge,
-    previewStatsOf: () => previewStatsOf,
-    previewToUnified: () => previewToUnified,
-    readContactBundle: () => readContactBundle
+    readContactBundle: () => readContactBundle,
+    storeMediaBadge: () => storeMediaBadge,
+    storeStatsOf: () => storeStatsOf,
+    storeToUnified: () => storeToUnified
   });
-  function emptyPreviewData() {
-    return { version: 1, contacts: {} };
-  }
-  function emptyPreviewStats() {
-    return { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+  function emptyMessageStore() {
+    return { version: 2, contacts: {} };
   }
   function hash32(s) {
     let h = 2166136261;
@@ -59720,45 +59716,49 @@ ${n.content.slice(0, 2e3)}
       if (sid && sid > maxSid) maxSid = sid;
       const ts = Number.isFinite(raw.ct) ? Math.round(raw.ct * 1e3) : NaN;
       if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue;
-      let out = null;
+      let out = "";
       switch (raw.type) {
         case 1:
-          out = text || null;
+          out = text;
           break;
         case 34: {
-          if (!opts.previewVoice) continue;
-          const tagged = text ? parseMediaTag(text) : null;
-          if (tagged) {
-            out = text;
-            bumpEmotion(tagged.emotion);
-            break;
+          if (opts.previewVoice) {
+            const tagged = text ? parseMediaTag(text) : null;
+            if (tagged) {
+              out = text;
+              bumpEmotion(tagged.emotion);
+            } else {
+              const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
+              const merged = buildVoiceText(raw, v);
+              const parsed = parseMediaTag(merged);
+              if (parsed) {
+                out = merged;
+                bumpEmotion(parsed.emotion);
+              }
+            }
           }
-          const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-          const merged = buildVoiceText(raw, v);
-          const parsed = parseMediaTag(merged);
-          if (!parsed) continue;
-          out = merged;
-          bumpEmotion(parsed.emotion);
           break;
         }
         case 3: {
-          if (opts.imageDescMode !== "file") continue;
-          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-          out = hit ? `[图片] ${hit}` : null;
+          if (opts.imageDescMode === "file") {
+            const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+            if (hit) out = `[图片] ${hit}`;
+          }
           break;
         }
         case 43: {
-          if (!opts.previewVideo) continue;
-          const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-          if (!dur) continue;
-          out = `[视频 ${dur}秒]`;
+          if (opts.previewVideo) {
+            const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
+            if (dur) out = `[视频 ${dur}秒]`;
+          }
           break;
         }
         case 47: {
           signals.emojiCount++;
-          if (!EMOJI_NAMED_RE.test(text)) continue;
-          out = text;
-          signals.emojiNamedCount++;
+          if (EMOJI_NAMED_RE.test(text)) {
+            out = text;
+            signals.emojiNamedCount++;
+          }
           break;
         }
         case 49: {
@@ -59782,7 +59782,7 @@ ${n.content.slice(0, 2e3)}
           }
           const sec = parseCallDurationSec(text);
           if (sec === null) {
-            out = text || null;
+            out = text;
             break;
           }
           signals.callTotalSec += sec;
@@ -59794,50 +59794,68 @@ ${n.content.slice(0, 2e3)}
             if (isSelfWho(raw.who)) signals.recantByMe++;
             else signals.recantByOther++;
           }
-          if (!opts.keepSystem) continue;
-          out = text || null;
+          if (opts.keepSystem) out = text;
           break;
         }
         default:
-          continue;
+          break;
       }
-      if (!out) continue;
-      const who = String((_j = raw.who) != null ? _j : "").trim();
-      if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
-      msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
+      if (out) {
+        const who = String((_j = raw.who) != null ? _j : "").trim();
+        if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
+        out = out.replace(/\r\n?/g, "\n");
+      }
+      msgs.push({
+        key: msgKey(raw),
+        ts,
+        isSender: isSelfWho(raw.who),
+        type: typeof raw.type === "number" && Number.isFinite(raw.type) ? raw.type : 0,
+        ...raw.who !== void 0 && { who: raw.who },
+        ...sid !== 0 && { sid },
+        ...typeof raw.dur === "number" && Number.isFinite(raw.dur) && raw.dur > 0 && { dur: raw.dur },
+        ...typeof raw.wav === "string" && raw.wav && { wav: raw.wav },
+        ...typeof raw.img === "string" && raw.img && { img: raw.img },
+        text: out
+      });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    const stats = previewStatsOf(msgs);
-    const insights = computeInsights(msgs, signals);
+    const stats = storeStatsOf(msgs);
+    const insights = computeInsights(msgs.filter((m) => m.text !== ""), signals);
     return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
     var _a2;
     counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
   }
-  function previewStatsOf(msgs) {
-    const unified = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function storeStatsOf(msgs) {
+    const unified = msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
     const media = collectMediaStats(unified);
-    return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+    return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
   }
-  function mergePreview(existing, incoming, nowIso) {
-    var _a2, _b2, _c, _d;
-    const seen = new Set(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => m.key));
-    const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
-    const msgs = [...(_b2 = existing == null ? void 0 : existing.msgs) != null ? _b2 : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  function mergeStore(existing, incoming, nowIso) {
+    var _a2, _b2, _c;
+    const prev = new Map(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => [m.key, m]));
+    let added = 0;
+    let updated = 0;
+    for (const m of incoming.msgs) {
+      if (prev.has(m.key)) updated++;
+      else added++;
+      prev.set(m.key, m);
+    }
+    const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const contact = {
       msgs,
-      watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
-      stats: previewStatsOf(msgs),
-      // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
-      kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
+      watermarkSid: Math.max((_b2 = existing == null ? void 0 : existing.watermarkSid) != null ? _b2 : 0, incoming.maxSid),
+      stats: storeStatsOf(msgs),
+      // 全量形态计数 / 互动画像每次导入重算或合并覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      kindCounts: { ...(_c = existing == null ? void 0 : existing.kindCounts) != null ? _c : {}, ...incoming.kindCounts },
       insights: incoming.insights,
       updatedAt: nowIso
     };
-    return { contact, added: fresh.length };
+    return { contact, added, updated };
   }
-  function previewToUnified(msgs) {
-    return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function storeToUnified(msgs) {
+    return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
@@ -59965,11 +59983,11 @@ ${n.content.slice(0, 2e3)}
       return vaultCopy != null ? vaultCopy : externalPath;
     }
   }
-  function getPreviewFilePath() {
+  function getStoreFilePath() {
     const s = tryGetSettings();
     return storageFile("people-preview.json", s && s.storagePath || "CONFIG/STORAGE");
   }
-  function previewMediaBadge(stats) {
+  function storeMediaBadge(stats) {
     var _a2, _b2, _c;
     if (!stats) return null;
     const acc = emptyMediaStats();
@@ -59978,7 +59996,7 @@ ${n.content.slice(0, 2e3)}
     acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
     return acc.voiceCount || acc.imageCount ? acc : null;
   }
-  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, EMOJI_NAMED_RE, SHARE_MAX_CHARS, QUOTE_HEAD_MAX_CHARS, CALL_MISSED_REASONS, AVA_EXTS, PreviewStore;
+  var SELF_WHO, IMG_DESC_NEAREST_SEC, EMOTION_ZH, EMOJI_NAMED_RE, SHARE_MAX_CHARS, QUOTE_HEAD_MAX_CHARS, CALL_MISSED_REASONS, AVA_EXTS, MessageStore;
   var init_datasource = __esm({
     "src/people/datasource.ts"() {
       init_storage();
@@ -60007,16 +60025,22 @@ ${n.content.slice(0, 2e3)}
         "忙线未接听"
       ];
       AVA_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
-      PreviewStore = class {
+      MessageStore = class {
         constructor(app) {
           this.app = app;
-          this.filePath = getPreviewFilePath();
+          this.filePath = getStoreFilePath();
         }
         open() {
-          return jsonFileStore(this.filePath, { defaultValue: emptyPreviewData, app: this.app });
+          return jsonFileStore(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
         }
+        /**
+         * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
+         * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
+         */
         async read() {
-          return enqueueFileTask(this.filePath, async () => this.open().read());
+          const data = await enqueueFileTask(this.filePath, async () => this.open().read());
+          if (!data || data.version !== 2) return emptyMessageStore();
+          return data;
         }
         /** 合并写回一位联系人（读→改→写整体入队） */
         async upsertContact(name, contact) {
@@ -60027,11 +60051,11 @@ ${n.content.slice(0, 2e3)}
             await store2.write(data);
           });
         }
-        /** 清空全部预览（保留文件框架；不动 people.json 的 PersonEntry） */
+        /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
         async clear() {
           await enqueueFileTask(this.filePath, async () => {
             const store2 = this.open();
-            await store2.write(emptyPreviewData());
+            await store2.write(emptyMessageStore());
           });
         }
       };
@@ -61502,18 +61526,18 @@ ${n.content.slice(0, 2e3)}
         pomodoro: async () => (await Promise.resolve().then(() => (init_ui2(), ui_exports2))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings7(), settings_exports7))).passwordVaultSettingsSchema(),
-        // 脸谱（issue 446）：「清空预览」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
+        // 脸谱（issue 446/466）：「清空聊天仓」清 people-preview.json（confirm 在域内 notice 层做，不动 PersonEntry）
         people: async () => {
           const { peopleSettingsSchema: peopleSettingsSchema2 } = await Promise.resolve().then(() => (init_settings8(), settings_exports8));
-          const { PreviewStore: PreviewStore2 } = await Promise.resolve().then(() => (init_datasource(), datasource_exports));
+          const { MessageStore: MessageStore2 } = await Promise.resolve().then(() => (init_datasource(), datasource_exports));
           const { notifyActionError: notifyActionError2 } = await Promise.resolve().then(() => (init_notice(), notice_exports));
           return peopleSettingsSchema2({
-            onClearPreview: async () => {
+            onClearStore: async () => {
               try {
-                await new PreviewStore2(getApp()).clear();
-                notice("预览缓存已清空", "delete");
+                await new MessageStore2(getApp()).clear();
+                notice("聊天仓已清空", "delete");
               } catch (e) {
-                notifyActionError2(e, "清空预览缓存");
+                notifyActionError2(e, "清空聊天仓");
               }
             }
           });

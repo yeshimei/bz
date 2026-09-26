@@ -1,13 +1,14 @@
 /**
- * 脸谱域（people）设置 schema（issue 446/447）：数据源 / 预览 / 隐私 三组，声明式
- * （ADR-0064 渲染器）。数据文件夹在 vault 外（预处理线产出），故用文本行粘贴路径而非
- * vault 内选择器；「清空预览」经 loader 回调接线（core 不反向依赖域，knowledge 同款）。
+ * 脸谱域（people）设置 schema（issue 446/447；聊天仓口径 issue 466 / ADR-0197）：
+ * 数据源 / 聊天仓 / 隐私 三组，声明式（ADR-0064 渲染器）。数据文件夹在 vault 外（预处理线产出），
+ * 故用文本行粘贴路径而非 vault 内选择器；「清空聊天仓」经 loader 回调接线（core 不反向依赖域，
+ * knowledge 同款）。
  * 447 拍板：「打开时自动扫描」与「生成」组（GenTrigger/GenThreshold）随自动链路一并退役——
  * 扫描在打开数据源弹窗时进行，生成由弹窗内「画脸谱」手动触发。
  */
 import type { SettingsSchema } from '../core/settings-schema';
 
-export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Promise<void> }): SettingsSchema {
+export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promise<void> }): SettingsSchema {
   return {
     groups: [
       {
@@ -58,18 +59,18 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
       },
       {
         icon: 'eye',
-        name: '预览',
+        name: '聊天仓',
         rows: [
           {
             type: 'toggle',
             name: '语音转写',
-            desc: '语音消息以转写文本进预览',
+            desc: '语音消息以转写文本进时间线',
             binding: { key: 'peoplePreviewVoice' },
           },
           {
             type: 'select',
             name: '图片描述',
-            desc: '有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数',
+            desc: '有描述的图片以描述文本进时间线（chat.json 已回填，读文件为兼容兜底）；无描述只计数',
             binding: { key: 'peopleImageDescMode' },
             options: [
               { value: 'file', label: '文件描述' },
@@ -79,7 +80,7 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
           {
             type: 'toggle',
             name: '视频标签',
-            desc: '视频消息以时长标签进预览',
+            desc: '视频消息以时长标签进时间线',
             binding: { key: 'peoplePreviewVideo' },
           },
           {
@@ -101,16 +102,16 @@ export function peopleSettingsSchema(opts?: { onClearPreview?: () => void | Prom
           },
           {
             type: 'info',
-            name: '预览只存文本',
-            desc: '语音转写与图片描述以文本进预览缓存',
+            name: '完整聊天数据入库',
+            desc: '全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径',
           },
           {
             type: 'button',
-            name: '清空预览',
+            name: '清空聊天仓',
             buttonText: '清空',
             cta: true,
-            desc: '清掉全部导入预览缓存，不动已生成的脸谱',
-            onClick: () => void opts?.onClearPreview?.(),
+            desc: '清掉全部导入的消息记录，不动已生成的脸谱',
+            onClick: () => void opts?.onClearStore?.(),
           },
         ],
       },

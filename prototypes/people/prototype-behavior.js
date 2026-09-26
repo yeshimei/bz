@@ -1,4 +1,4 @@
-/* 源指纹 54b0c0cb2540e5e6 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a92428e8f3ed9352 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/esc-manager.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/z-order.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -6188,8 +6188,8 @@ var BZW_people = (() => {
   }
 
   // src/people/datasource.ts
-  function emptyPreviewData() {
-    return { version: 1, contacts: {} };
+  function emptyMessageStore() {
+    return { version: 2, contacts: {} };
   }
   function hash32(s) {
     let h = 2166136261;
@@ -6378,45 +6378,49 @@ var BZW_people = (() => {
       if (sid && sid > maxSid) maxSid = sid;
       const ts = Number.isFinite(raw.ct) ? Math.round(raw.ct * 1e3) : NaN;
       if (!Number.isFinite(ts) || !Number.isFinite(raw.ct)) continue;
-      let out = null;
+      let out = "";
       switch (raw.type) {
         case 1:
-          out = text2 || null;
+          out = text2;
           break;
         case 34: {
-          if (!opts.previewVoice) continue;
-          const tagged = text2 ? parseMediaTag(text2) : null;
-          if (tagged) {
-            out = text2;
-            bumpEmotion(tagged.emotion);
-            break;
+          if (opts.previewVoice) {
+            const tagged = text2 ? parseMediaTag(text2) : null;
+            if (tagged) {
+              out = text2;
+              bumpEmotion(tagged.emotion);
+            } else {
+              const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
+              const merged = buildVoiceText(raw, v);
+              const parsed = parseMediaTag(merged);
+              if (parsed) {
+                out = merged;
+                bumpEmotion(parsed.emotion);
+              }
+            }
           }
-          const v = voiceByWav.get(String((_i = raw.wav) != null ? _i : "").trim());
-          const merged = buildVoiceText(raw, v);
-          const parsed = parseMediaTag(merged);
-          if (!parsed) continue;
-          out = merged;
-          bumpEmotion(parsed.emotion);
           break;
         }
         case 3: {
-          if (opts.imageDescMode !== "file") continue;
-          const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
-          out = hit ? `[图片] ${hit}` : null;
+          if (opts.imageDescMode === "file") {
+            const hit = matchImageDesc(raw, descByFile, descByMonth, descUsed);
+            if (hit) out = `[图片] ${hit}`;
+          }
           break;
         }
         case 43: {
-          if (!opts.previewVideo) continue;
-          const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
-          if (!dur) continue;
-          out = `[视频 ${dur}秒]`;
+          if (opts.previewVideo) {
+            const dur = Number.isFinite(raw.dur) && raw.dur > 0 ? Math.round(raw.dur) : 0;
+            if (dur) out = `[视频 ${dur}秒]`;
+          }
           break;
         }
         case 47: {
           signals.emojiCount++;
-          if (!EMOJI_NAMED_RE.test(text2)) continue;
-          out = text2;
-          signals.emojiNamedCount++;
+          if (EMOJI_NAMED_RE.test(text2)) {
+            out = text2;
+            signals.emojiNamedCount++;
+          }
           break;
         }
         case 49: {
@@ -6440,7 +6444,7 @@ var BZW_people = (() => {
           }
           const sec = parseCallDurationSec(text2);
           if (sec === null) {
-            out = text2 || null;
+            out = text2;
             break;
           }
           signals.callTotalSec += sec;
@@ -6452,50 +6456,68 @@ var BZW_people = (() => {
             if (isSelfWho(raw.who)) signals.recantByMe++;
             else signals.recantByOther++;
           }
-          if (!opts.keepSystem) continue;
-          out = text2 || null;
+          if (opts.keepSystem) out = text2;
           break;
         }
         default:
-          continue;
+          break;
       }
-      if (!out) continue;
-      const who = String((_j = raw.who) != null ? _j : "").trim();
-      if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
-      msgs.push({ key: msgKey(raw), ts, isSender: isSelfWho(raw.who), text: out.replace(/\r\n?/g, "\n") });
+      if (out) {
+        const who = String((_j = raw.who) != null ? _j : "").trim();
+        if (group && who && !isSelfWho(who) && raw.type !== 1e4) out = `[${who}] ${out}`;
+        out = out.replace(/\r\n?/g, "\n");
+      }
+      msgs.push({
+        key: msgKey(raw),
+        ts,
+        isSender: isSelfWho(raw.who),
+        type: typeof raw.type === "number" && Number.isFinite(raw.type) ? raw.type : 0,
+        ...raw.who !== void 0 && { who: raw.who },
+        ...sid !== 0 && { sid },
+        ...typeof raw.dur === "number" && Number.isFinite(raw.dur) && raw.dur > 0 && { dur: raw.dur },
+        ...typeof raw.wav === "string" && raw.wav && { wav: raw.wav },
+        ...typeof raw.img === "string" && raw.img && { img: raw.img },
+        text: out
+      });
     }
     msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    const stats = previewStatsOf(msgs);
-    const insights = computeInsights(msgs, signals);
+    const stats = storeStatsOf(msgs);
+    const insights = computeInsights(msgs.filter((m) => m.text !== ""), signals);
     return { msgs, kindCounts, stats, insights, maxSid, skippedCount: Math.max(0, rawTotal - msgs.length) };
   }
   function bump(counts, kind) {
     var _a2;
     counts[kind] = ((_a2 = counts[kind]) != null ? _a2 : 0) + 1;
   }
-  function previewStatsOf(msgs) {
-    const unified = msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function storeStatsOf(msgs) {
+    const unified = msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
     const media = collectMediaStats(unified);
-    return { msgCount: msgs.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+    return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
   }
-  function mergePreview(existing, incoming, nowIso2) {
-    var _a2, _b2, _c, _d;
-    const seen = new Set(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => m.key));
-    const fresh = incoming.msgs.filter((m) => !seen.has(m.key));
-    const msgs = [...(_b2 = existing == null ? void 0 : existing.msgs) != null ? _b2 : [], ...fresh].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  function mergeStore(existing, incoming, nowIso2) {
+    var _a2, _b2, _c;
+    const prev = new Map(((_a2 = existing == null ? void 0 : existing.msgs) != null ? _a2 : []).map((m) => [m.key, m]));
+    let added = 0;
+    let updated = 0;
+    for (const m of incoming.msgs) {
+      if (prev.has(m.key)) updated++;
+      else added++;
+      prev.set(m.key, m);
+    }
+    const msgs = [...prev.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
     const contact = {
       msgs,
-      watermarkSid: Math.max((_c = existing == null ? void 0 : existing.watermarkSid) != null ? _c : 0, incoming.maxSid),
-      stats: previewStatsOf(msgs),
-      // 全量形态计数 / 互动画像每次导入重算覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
-      kindCounts: { ...(_d = existing == null ? void 0 : existing.kindCounts) != null ? _d : {}, ...incoming.kindCounts },
+      watermarkSid: Math.max((_b2 = existing == null ? void 0 : existing.watermarkSid) != null ? _b2 : 0, incoming.maxSid),
+      stats: storeStatsOf(msgs),
+      // 全量形态计数 / 互动画像每次导入重算或合并覆盖（normalize 按原始消息全量跑，幂等；不随增量累加）
+      kindCounts: { ...(_c = existing == null ? void 0 : existing.kindCounts) != null ? _c : {}, ...incoming.kindCounts },
       insights: incoming.insights,
       updatedAt: nowIso2
     };
-    return { contact, added: fresh.length };
+    return { contact, added, updated };
   }
-  function previewToUnified(msgs) {
-    return msgs.map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  function storeToUnified(msgs) {
+    return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
@@ -6624,20 +6646,26 @@ var BZW_people = (() => {
       return vaultCopy != null ? vaultCopy : externalPath;
     }
   }
-  function getPreviewFilePath() {
+  function getStoreFilePath() {
     const s = tryGetSettings();
     return storageFile("people-preview.json", s && s.storagePath || "CONFIG/STORAGE");
   }
-  var PreviewStore = class {
+  var MessageStore = class {
     constructor(app) {
       this.app = app;
-      this.filePath = getPreviewFilePath();
+      this.filePath = getStoreFilePath();
     }
     open() {
-      return jsonFileStore(this.filePath, { defaultValue: emptyPreviewData, app: this.app });
+      return jsonFileStore(this.filePath, { defaultValue: emptyMessageStore, app: this.app });
     }
+    /**
+     * 读仓（结构版本门禁，466 / ADR-0197 决策 6）：v1 桶缺的正是回溯原料（原始字段全丢）、
+     * 无就地升级路径——判废返回空仓，从数据根重导。旧文件不删：下次导入即以 v2 覆盖同槽位。
+     */
     async read() {
-      return enqueueFileTask(this.filePath, async () => this.open().read());
+      const data = await enqueueFileTask(this.filePath, async () => this.open().read());
+      if (!data || data.version !== 2) return emptyMessageStore();
+      return data;
     }
     /** 合并写回一位联系人（读→改→写整体入队） */
     async upsertContact(name, contact) {
@@ -6648,15 +6676,15 @@ var BZW_people = (() => {
         await store2.write(data);
       });
     }
-    /** 清空全部预览（保留文件框架；不动 people.json 的 PersonEntry） */
+    /** 清空整仓（保留文件框架；不动 people.json 的 PersonEntry） */
     async clear() {
       await enqueueFileTask(this.filePath, async () => {
         const store2 = this.open();
-        await store2.write(emptyPreviewData());
+        await store2.write(emptyMessageStore());
       });
     }
   };
-  function previewMediaBadge(stats) {
+  function storeMediaBadge(stats) {
     var _a2, _b2, _c;
     if (!stats) return null;
     const acc = emptyMediaStats();
@@ -6704,17 +6732,18 @@ var BZW_people = (() => {
   var runPromise = null;
   var subs = /* @__PURE__ */ new Set();
   var DRIFT_ERROR = "消息集已变化（导入过新数据），请删除任务后重新生成";
-  function hash322(s) {
-    let h = 2166136261;
-    for (let i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return (h >>> 0).toString(36);
-  }
   function fingerprintOf(msgs) {
-    const last = msgs[msgs.length - 1];
-    return { msgCount: msgs.length, lastMsgKey: last ? `${last.ts}|${hash322(last.text)}` : "" };
+    let h = 2166136261;
+    const mix = (s) => {
+      for (let i = 0; i < s.length; i++) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+    };
+    mix(`n:${msgs.length};`);
+    for (const m of msgs) mix(`${m.ts}|${m.isSender ? 1 : 0}|${m.text}
+`);
+    return { msgCount: msgs.length, contentHash: (h >>> 0).toString(36) };
   }
   function nowIso() {
     return (/* @__PURE__ */ new Date()).toISOString();
@@ -6786,7 +6815,7 @@ var BZW_people = (() => {
   }
   function reusableJob(prev, fp, mode, opts) {
     if (prev.status === "done" || prev.batchesDone <= 0) return false;
-    if (prev.msgCount !== fp.msgCount || prev.lastMsgKey !== fp.lastMsgKey) return false;
+    if (prev.msgCount !== fp.msgCount || prev.contentHash !== fp.contentHash) return false;
     if (prev.mode !== mode) return false;
     const po = { ...DEFAULTS, ...prev.chunkOpts };
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
@@ -6890,7 +6919,7 @@ var BZW_people = (() => {
         // 排队待跑（与用户暂停同态：runner 按序拾起）
         stage: "chunked",
         msgCount: fp.msgCount,
-        lastMsgKey: fp.lastMsgKey,
+        contentHash: fp.contentHash,
         chunkOpts: chunkFull,
         chunks: chunks.map(chunkMetaOf),
         batchesDone: 0,
@@ -7019,12 +7048,12 @@ var BZW_people = (() => {
       emit();
     };
     try {
-      const pv = await new PreviewStore(st.app).read();
+      const store2 = await new MessageStore(st.app).read();
       if (gone(job)) return;
-      const contact = pv.contacts[job.talker];
-      const bucketMsgs = contact ? previewToUnified(contact.msgs) : [];
+      const contact = store2.contacts[job.talker];
+      const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
       const fp = fingerprintOf(bucketMsgs);
-      if (fp.msgCount !== job.msgCount || fp.lastMsgKey !== job.lastMsgKey) {
+      if (fp.msgCount !== job.msgCount || fp.contentHash !== job.contentHash) {
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
@@ -8158,7 +8187,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     detailFold = "p";
     stage = "list";
     listCache = [];
-    previewCache = null;
+    storeCache = null;
     mergeFromId = null;
     mergeToId = null;
     profEditId = null;
@@ -8216,7 +8245,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function dsRowStates() {
     return (dsContacts != null ? dsContacts : []).map((c) => {
-      const badge = previewMediaBadge(c.stats);
+      const badge = storeMediaBadge(c.stats);
       return {
         name: c.name,
         rawCount: c.rawCount,
@@ -8266,8 +8295,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const dirNames = listContactDirs(dataDir);
       const includeGroups = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleIncludeGroups) === true;
       const opts = normalizeOptionsFromSettings();
-      const previewStore = new PreviewStore(getApp());
-      const [previewData2, people] = await Promise.all([previewStore.read(), store.list()]);
+      const msgStore = new MessageStore(getApp());
+      const [storeData2, people] = await Promise.all([msgStore.read(), store.list()]);
       for (const name of dirNames) {
         if (!overlay) return;
         const bundle = readContactBundle(dataDir, name);
@@ -8278,7 +8307,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const pv = previewData2.contacts[name];
+        const pv = storeData2.contacts[name];
         const keys = new Set(((_b2 = pv == null ? void 0 : pv.msgs) != null ? _b2 : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
@@ -8323,10 +8352,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     dsImporting = true;
     dsGenerateable = false;
-    dsNotice = "正在导入预览…";
+    dsNotice = "正在导入聊天仓…";
     renderBody();
     const opts = normalizeOptionsFromSettings();
-    const previewStore = new PreviewStore(getApp());
+    const msgStore = new MessageStore(getApp());
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const addedOf = /* @__PURE__ */ new Map();
     const readFail = [];
@@ -8339,34 +8368,34 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const existing = (await previewStore.read()).contacts[c.name];
-        const { contact, added } = mergePreview(existing, norm, now);
+        const existing = (await msgStore.read()).contacts[c.name];
+        const { contact, added } = mergeStore(existing, norm, now);
         const ava = await importAvatarToVault(getApp(), c.name, bundle.avatar);
         if (ava) contact.avatar = ava;
         else delete contact.avatar;
-        await previewStore.upsertContact(c.name, contact);
+        await msgStore.upsertContact(c.name, contact);
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
         c.newCount = 0;
         c.stats = contact.stats;
       }
     } catch (e) {
-      console.warn("[people] 预览导入失败:", e);
+      console.warn("[people] 聊天仓导入失败:", e);
       dsNotice = "导入失败：读数据文件时出错。";
       dsImporting = false;
       renderBody();
       return;
     }
     dsImporting = false;
-    previewCache = null;
+    storeCache = null;
     const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
-    const summary = `已导入预览（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
+    const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
     dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
     dsGenerateable = fresh > 0 && !readFail.length;
     renderBody();
   }
   async function generateFromDs() {
-    var _a2;
+    var _a2, _b2;
     if (!overlay || !store || dsImporting || dsScanning) return;
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
@@ -8379,24 +8408,25 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const targets = [];
     try {
-      const previewData2 = await new PreviewStore(getApp()).read();
+      const storeData2 = await new MessageStore(getApp()).read();
       for (const name of names) {
-        const pv = previewData2.contacts[name];
-        if (!(pv == null ? void 0 : pv.msgs.length)) continue;
+        const pv = storeData2.contacts[name];
+        const unified = storeToUnified((_a2 = pv == null ? void 0 : pv.msgs) != null ? _a2 : []);
+        if (!unified.length) continue;
         targets.push({
           talker: name,
           name,
-          msgs: previewToUnified(pv.msgs),
-          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
+          msgs: unified,
+          kindCounts: (_b2 = pv.kindCounts) != null ? _b2 : {},
           skippedCount: 0,
-          // 预览桶内全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
+          // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
           fileLabel: `数据源:${name}`,
           insights: pv.insights
         });
       }
     } catch (e) {
-      console.warn("[people] 读取预览桶失败:", e);
-      dsNotice = "生成失败：读不到预览缓存。";
+      console.warn("[people] 读取聊天仓失败:", e);
+      dsNotice = "生成失败：读不到聊天仓。";
       renderBody();
       return;
     }
@@ -8409,7 +8439,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     await startGeneration(targets);
   }
   async function generateOne(id, opts = {}) {
-    var _a2;
+    var _a2, _b2;
     const name = id != null ? id : detailId;
     if (!store || !name) return;
     if (!opts.force && resumeExisting(name)) return;
@@ -8419,20 +8449,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     let target = null;
     try {
-      const pv = (await new PreviewStore(getApp()).read()).contacts[name];
-      if (pv == null ? void 0 : pv.msgs.length) {
+      const pv = (await new MessageStore(getApp()).read()).contacts[name];
+      const unified = storeToUnified((_a2 = pv == null ? void 0 : pv.msgs) != null ? _a2 : []);
+      if (unified.length) {
         target = {
           talker: name,
           name,
-          msgs: previewToUnified(pv.msgs),
-          kindCounts: (_a2 = pv.kindCounts) != null ? _a2 : {},
+          msgs: unified,
+          kindCounts: (_b2 = pv.kindCounts) != null ? _b2 : {},
           skippedCount: 0,
           fileLabel: `数据源:${name}`,
           insights: pv.insights
         };
       }
     } catch (e) {
-      console.warn("[people] 读取预览桶失败:", e);
+      console.warn("[people] 读取聊天仓失败:", e);
     }
     if (!target) {
       notice("还没有可画的消息素材——点右上「数据源」导入后再画", "warning");
@@ -8555,7 +8586,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return { runnable, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
@@ -8595,9 +8626,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         generatedAt: now
       };
       await store2.setDigest(talker, digest);
-      const lastTs = msgs ? msgs[msgs.length - 1].ts : Number(String((_u = job.lastMsgKey) != null ? _u : "").split("|")[0]);
+      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_v = (_u = job.importRecord) == null ? void 0 : _u.timeTo) != null ? _v : "");
       if (Number.isFinite(lastTs)) {
-        await store2.setLastProcessedTs(talker, Math.max((_v = existing == null ? void 0 : existing.lastProcessedTs) != null ? _v : 0, lastTs));
+        await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
       jobs().removeJob(talker);
@@ -8991,21 +9022,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       statsOpen ? popShell("互动统计", "data-people-stats-pop", statsPopBody(buildInsightsCard(p), p)) : profOpen ? popShell("补充背景", "data-people-prof-pop", profilePopBody(p, profEditId === p.id)) : popShell("记一笔", "data-people-note-pop", [noteAddRow(todayStr())])
     );
   }
-  var previewCache = null;
-  async function previewData() {
-    if (previewCache) return previewCache;
+  var storeCache = null;
+  async function storeData() {
+    if (storeCache) return storeCache;
     try {
-      previewCache = await new PreviewStore(getApp()).read();
+      storeCache = await new MessageStore(getApp()).read();
     } catch (e) {
-      console.warn("[people] 读取预览桶失败:", e);
-      previewCache = { version: 1, contacts: {} };
+      console.warn("[people] 读取聊天仓失败:", e);
+      storeCache = { version: 2, contacts: {} };
     }
-    await migrateAvatars(previewCache);
-    return previewCache;
+    await migrateAvatars(storeCache);
+    return storeCache;
   }
   async function migrateAvatars(pv) {
     const app = getApp();
-    const store2 = new PreviewStore(app);
+    const store2 = new MessageStore(app);
     for (const [name, c] of Object.entries(pv.contacts)) {
       const cur = c.avatar;
       if (!cur || isVaultRelativePath(cur)) continue;
@@ -9027,7 +9058,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function poolRecord(id, contact) {
     var _a2, _b2, _c, _d, _e, _f, _g;
     if (!contact) return null;
-    const msgs = (_a2 = contact.msgs) != null ? _a2 : [];
+    const msgs = storeToUnified((_a2 = contact.msgs) != null ? _a2 : []);
     if (!msgs.length) return null;
     return {
       file: `数据源:${id}`,
@@ -9036,9 +9067,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       skippedCount: 0,
       timeFrom: new Date(msgs[0].ts).toISOString(),
       timeTo: new Date(msgs[msgs.length - 1].ts).toISOString(),
-      // issue 454：媒体计数取预览桶侧写（导入时从原始消息算的，语音总时长只有它知道）——
+      // issue 454：媒体计数取聊天仓侧写（导入时从原始消息算的，语音总时长只有它知道）——
       // 缺了它，合成卡与详情头的「语音 / 图片」永远是「—」（大琳 1289 条语音 / 1615 张图看不见）。
-      // 只带媒体三项：月度 / 时段明细预览桶没有，不在这编造——「数据」折见无 monthly 即出占位。
+      // 只带媒体三项：月度 / 时段明细聊天仓没有，不在这编造——「数据」折见无 monthly 即出占位。
       stats: {
         voiceCount: (_c = (_b2 = contact.stats) == null ? void 0 : _b2.voiceCount) != null ? _c : 0,
         voiceTotalSec: (_e = (_d = contact.stats) == null ? void 0 : _d.voiceTotalSec) != null ? _e : 0,
@@ -9049,7 +9080,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   async function wallPeople() {
     var _a2;
     const people = store ? await store.list() : [];
-    const contacts = (_a2 = (await previewData()).contacts) != null ? _a2 : {};
+    const contacts = (_a2 = (await storeData()).contacts) != null ? _a2 : {};
     const out = people.map((p) => {
       const rec = p.imports.length ? null : poolRecord(p.id, contacts[p.id]);
       return rec ? { ...p, imports: [rec] } : p;
@@ -9089,7 +9120,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       body.appendChild(mergeBar(from.name, (_a2 = to == null ? void 0 : to.name) != null ? _a2 : null));
     }
     const wall = foldWall();
-    const preview = await previewData();
+    const preview = await storeData();
     applyWall(people, wall, (name) => {
       var _a3;
       return (_a3 = preview.contacts[name]) == null ? void 0 : _a3.avatar;
@@ -9138,7 +9169,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     const media = personMedia(p);
-    const avatar = (_a2 = (await previewData()).contacts[p.name]) == null ? void 0 : _a2.avatar;
+    const avatar = (_a2 = (await storeData()).contacts[p.name]) == null ? void 0 : _a2.avatar;
     body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar }));
     const person = personOf(p.digest);
     const bond = bondOf(p.digest);
@@ -9457,18 +9488,18 @@ ${s}`).join("\n\n");
         },
         {
           icon: "eye",
-          name: "预览",
+          name: "聊天仓",
           rows: [
             {
               type: "toggle",
               name: "语音转写",
-              desc: "语音消息以转写文本进预览",
+              desc: "语音消息以转写文本进时间线",
               binding: { key: "peoplePreviewVoice" }
             },
             {
               type: "select",
               name: "图片描述",
-              desc: "有描述的图片以描述文本进预览（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
+              desc: "有描述的图片以描述文本进时间线（chat.json 已回填，读文件为兼容兜底）；无描述只计数",
               binding: { key: "peopleImageDescMode" },
               options: [
                 { value: "file", label: "文件描述" },
@@ -9478,7 +9509,7 @@ ${s}`).join("\n\n");
             {
               type: "toggle",
               name: "视频标签",
-              desc: "视频消息以时长标签进预览",
+              desc: "视频消息以时长标签进时间线",
               binding: { key: "peoplePreviewVideo" }
             },
             {
@@ -9500,18 +9531,18 @@ ${s}`).join("\n\n");
             },
             {
               type: "info",
-              name: "预览只存文本",
-              desc: "语音转写与图片描述以文本进预览缓存"
+              name: "完整聊天数据入库",
+              desc: "全量原始消息与合成文本存入聊天仓（people-preview.json）；媒体本体不入库，只存路径"
             },
             {
               type: "button",
-              name: "清空预览",
+              name: "清空聊天仓",
               buttonText: "清空",
               cta: true,
-              desc: "清掉全部导入预览缓存，不动已生成的脸谱",
+              desc: "清掉全部导入的消息记录，不动已生成的脸谱",
               onClick: () => {
                 var _a2;
-                return void ((_a2 = opts == null ? void 0 : opts.onClearPreview) == null ? void 0 : _a2.call(opts));
+                return void ((_a2 = opts == null ? void 0 : opts.onClearStore) == null ? void 0 : _a2.call(opts));
               }
             }
           ]
@@ -9691,12 +9722,13 @@ ${s}`).join("\n\n");
     const build = (name, take) => {
       const raws = read(name).slice(0, take);
       const msgs = raws.map((m) => {
-        var _a2;
+        var _a2, _b2;
         return {
           key: `s${m.sid}:${m.ct}`,
           ts: m.ct * 1e3,
           isSender: m.who === "我",
-          text: String((_a2 = m.msg) != null ? _a2 : "")
+          type: (_a2 = m.type) != null ? _a2 : 1,
+          text: String((_b2 = m.msg) != null ? _b2 : "")
         };
       });
       const media = collectMediaStats(msgs);
@@ -9711,7 +9743,7 @@ ${s}`).join("\n\n");
     build("林晚", read("林晚").length);
     build("周远山", read("周远山").length);
     build("苏黎", read("苏黎").length);
-    return JSON.stringify({ version: 1, contacts });
+    return JSON.stringify({ version: 2, contacts });
   }
   function buildDsFiles() {
     const files = {};
