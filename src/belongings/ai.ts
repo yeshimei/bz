@@ -7,9 +7,10 @@
  * 未配置/网络失败原样抛错，由表单内联降级提示（不阻塞手填）。
  */
 import { createAI } from '../core/ai';
-import { splitEmojiCategory } from './emoji-icon-map';
+import { splitEmojiCategory } from './category';
 
-/** 图标菜单： possessions 高频语义（从 emoji-icon-map 全集挑选，全部已验证） */
+/** 图标菜单：possessions 高频语义（118 条冻结字面量；全部经 Obsidian 内置 lucide 表验证存在。
+ *  issue 477/ADR-0201 起与 emoji 映射表无任何运行时依赖——原「从映射表全集挑选」仅为历史来路） */
 export const AI_ICON_MENU: readonly string[] = [
   // 数码影音
   'smartphone', 'laptop', 'monitor', 'watch', 'headphones', 'speaker', 'printer', 'camera',

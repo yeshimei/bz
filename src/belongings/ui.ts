@@ -12,8 +12,8 @@
  *   点卡片 = 详情弹窗（字段全览 + 四态流转条 + 编辑/删除）；操作菜单仍走右键（issue 202）。
  *   设置无域内 ⚙（已退役），四设置键挂统一设置面板（issue 294/ADR-0105）。
  * 移动 ≤768：真全屏；印章头 + 常驻工具行（搜索/年份/排序/记一笔）；hero 压缩 2×2；
- *   网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide；数据 emoji 走
- *   emoji-icon-map 全量映射（issue 231 拍板全转），未入表 emoji 原样兜底。
+ *   网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide；分类图标走 `item.icon`
+ *   字段（issue 231/ADR-0102），未设回落 emoji/首字文本（issue 477/ADR-0201 起映射表已退役）。
  *
  * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
  *   belongingsDefaultStatus 设置键；命令路径 openForm（面板未开可弹）；

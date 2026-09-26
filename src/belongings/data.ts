@@ -1,11 +1,12 @@
 /**
  * 归物本数据层（归物本.js loadDatabase/saveDatabase/工具函数 逐字移植）
  * 数据：CONFIG/STORAGE/belongings.json（dataFolder 可配置）
- * 历史分类派生 + emoji 分类迁移（issue 231/ADR-0102：内置预设 1226 条退役）
+ * 历史分类派生 + emoji 前缀剥离（issue 231/ADR-0102：内置预设 1226 条退役；
+ * issue 477/ADR-0201：emoji→图标映射表删除，迁移只剥前缀、不再补 icon）
  */
 import { notice } from '../core/notice';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
-import { splitEmojiCategory } from './emoji-icon-map';
+import { splitEmojiCategory } from './category';
 import type { BelongingsDatabase } from './types';
 
 /** 数据文件路径（ADR-0009）——arch N2 收敛：兜底表达式不再域内复写，
@@ -52,15 +53,15 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
     db.items = {};
   }
 
-  // ----- 迁移（issue 231/ADR-0102）：emoji 前缀分类 → 纯文字分类 + icon 字段 -----
-  // 内存迁移、幂等（无 emoji 前缀即跳过）；icon 只在未设时由映射表补，已有值不覆写；
-  // 落盘随下一次自然保存发生，不在读取路径写盘
+  // ----- 迁移（issue 231/ADR-0102）：emoji 前缀分类 → 纯文字分类 -----
+  // 内存迁移、幂等（无 emoji 前缀即跳过）；落盘随下一次自然保存发生，不在读取路径写盘。
+  // issue 477/ADR-0201：图标补写随映射表退役——迁移只剥 emoji 前缀，`icon` 一律由字段承载；
+  // 未迁移的老条目不再转 lucide，回落 emoji 原样显示（shared.ts catEmHtml 口径）
   for (const it of Object.values(db.items)) {
     if (!it || typeof it !== 'object') continue;
     const split = splitEmojiCategory(it.category);
     if (!split.emoji) continue;
     it.category = split.name;
-    if (split.icon && (it.icon == null || it.icon === '')) it.icon = split.icon;
   }
 
   // ----- 历史分类派生（issue 231：内置预设退役，联想 = 自己的历史分类）-----

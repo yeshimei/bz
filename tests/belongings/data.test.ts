@@ -37,7 +37,7 @@ describe('loadDatabase', () => {
     expect(vault.files.has('CONFIG/STORAGE/belongings.json')).toBe(true); // 统一读写语义：缺失建文件
   });
 
-  it('迁移（issue 231/ADR-0102）：emoji 前缀分类拆为纯文字 + icon；未映射/无 emoji/已有 icon 各归其位', async () => {
+  it('迁移（issue 231/ADR-0102）：emoji 前缀分类剥为纯文字；已有 icon 原样保留（issue 477 起不再补 icon）', async () => {
     setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const item = (id: string, category: string, icon?: string) => ({
       id, name: '物' + id, category,
@@ -56,8 +56,9 @@ describe('loadDatabase', () => {
       },
     }));
     const db = await loadDatabase();
-    expect(db.items['item_1']).toMatchObject({ category: '智能手机', icon: 'smartphone' });
-    expect(db.items['item_2'].category).toBe('护身符'); // 未映射 emoji：剥前缀、不写 icon
+    expect(db.items['item_1']).toMatchObject({ category: '智能手机' }); // 剥 emoji 前缀
+    expect(db.items['item_1'].icon ?? null).toBeNull(); // issue 477/ADR-0201：映射表退役，迁移不再补 icon
+    expect(db.items['item_2'].category).toBe('护身符'); // 未知 emoji：同样剥前缀
     expect(db.items['item_2'].icon ?? null).toBeNull();
     expect(db.items['item_3'].category).toBe('键盘周边'); // 无 emoji：原样
     expect(db.items['item_4']).toMatchObject({ category: '笔记本电脑', icon: 'laptop' }); // 已有 icon 不覆写
@@ -134,7 +135,7 @@ describe('loadDatabase', () => {
     warnSpy.mockRestore();
   });
 
-  it('读取已有数据（issue 231 起载入迁移：emoji 分类 → 纯文字 + icon）', async () => {
+  it('读取已有数据（issue 231 起载入迁移：emoji 前缀剥为纯文字；issue 477 起不再补 icon）', async () => {
     setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const existing = {
       version: '1.0',
@@ -157,11 +158,11 @@ describe('loadDatabase', () => {
     const db = await loadDatabase();
     expect(db.items['item_1']).toMatchObject({
       name: '机械键盘',
-      category: '机械键盘', // issue 231：emoji 前缀迁移为纯文字 + icon
-      icon: 'keyboard',
+      category: '机械键盘', // issue 231：emoji 前缀迁移为纯文字
       purchase_price: 399,
       current_status: '使用中',
     });
+    expect(db.items['item_1'].icon ?? null).toBeNull(); // issue 477/ADR-0201：映射表退役，迁移不再补 icon
   });
 });
 

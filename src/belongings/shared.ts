@@ -9,7 +9,7 @@
  *     prototype.html 壳脚本消费同一批函数。
  *
  * 纯度契约（tests/core/render-purity.test.ts 守卫，违者门禁红）：
- *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./types`、`./emoji-icon-map`；
+ *   - import 白名单：`../core/ui/str`（零依赖字符串工具）、`./types`；
  *   - 禁 obsidian / moment / core 服务 / 组件库 barrel；
  *   - 禁模块级可变状态：数据与视图状态一律显式入参（items + BelViewState）；
  *   - 禁 DOM 副作用（唯一例外 renderPanelView 胶水：对入参 root 做 innerHTML 赋值与量列）。
@@ -20,11 +20,8 @@
  * Σ售价）/ 累计持有天数；单件日均 = 价格/已用天数（0 天 = 全价）；出离条目天数封口 exit_date。
  */
 import { esc, iconSpan, localDayKey } from '../core/ui/str';
-import { EMOJI_ICON } from './emoji-icon-map';
 import type { BelongingsItem } from './types';
 
-/** splitEmojiCategory 原样再导出：评审壳迁移演示数据复用（剥 emoji 前缀 + 补 icon） */
-export { splitEmojiCategory } from './emoji-icon-map';
 /** esc/iconSpan 再导出：评审壳演示层 markup（toast/确认框/菜单/抽屉动作串）与插件同源 */
 export { esc, iconSpan } from '../core/ui/str';
 
@@ -116,24 +113,20 @@ export function catEmoji(cat: string): string {
 export function catNameOf(cat: string): string {
   return String(cat || '').replace(/^\p{Extended_Pictographic}\s*/u, '');
 }
-/** 分类图标名（首字符 emoji 查映射表；未入表返回 null，调用方回退 emoji/首字文本） */
-export function catIconOf(cat: string): string | null {
-  const m = String(cat || '').match(/^(\p{Extended_Pictographic})/u);
-  return m ? (EMOJI_ICON[m[1]] ?? null) : null;
-}
-/** 分类视觉 HTML：emoji（含空分类 📦 兜底）查映射出 lucide 占位，未映射回退 emoji/首字文本 */
+/** 空分类兜底图标（原经 📦 → package 映射；映射表退役后由本常量单点承接，视觉不变） */
+const EMPTY_CATEGORY_ICON = 'package';
+/** 分类视觉 HTML：空分类兜底 package 图标，其余回退 emoji/首字文本
+ *  （issue 477/ADR-0201：映射表删除后遗留 emoji 分类不再转 lucide，原样显示 emoji） */
 export function catEmHtml(cat: string): string {
-  const em = catEmoji(cat);
-  const name = catIconOf(cat) || (EMOJI_ICON[em] ?? null);
-  return name ? iconSpan(name) : esc(em);
+  if (!cat) return iconSpan(EMPTY_CATEGORY_ICON);
+  return esc(catEmoji(cat));
 }
-/** 物品图标名优先级：icon 字段（issue 231）→ 遗留 emoji 分类映射（含 📦 兜底）→ null（文本兜底） */
+/** 物品图标名：只认 icon 字段（issue 231）——字段未设/非法 → null（文本兜底） */
 export function itemIconOf(it: BelongingsItem): string | null {
   const raw = String(it.icon || '').trim();
-  if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
-  return catIconOf(it.category) || (EMOJI_ICON[catEmoji(it.category)] ?? null);
+  return raw && /^[a-z0-9-]+$/i.test(raw) ? raw : null;
 }
-/** 物品分类视觉 HTML：优先 icon 字段，遗留 emoji 走映射，未映射回退 emoji/首字文本 */
+/** 物品分类视觉 HTML：优先 icon 字段，未设回退分类 emoji/首字文本 */
 export function itemEmHtml(it: BelongingsItem): string {
   const name = itemIconOf(it);
   return name ? iconSpan(name) : catEmHtml(it.category);

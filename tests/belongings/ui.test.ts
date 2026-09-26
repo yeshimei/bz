@@ -36,7 +36,10 @@ function makeItem(partial: Partial<any> = {}): any {
   const base: any = {
     id: 'item_x',
     name: '机械键盘',
-    category: '⌨ 机械键盘',
+    // issue 477/ADR-0201：夹具改用 ADR-0102 迁移后的正典形状——分类纯文字 + icon 字段显式
+    // （映射表退役后，emoji 前缀分类不再转 lucide，「emoji 前缀无 icon」不再是常态形状）
+    category: '机械键盘',
+    icon: 'keyboard',
     purchase_price: 399,
     purchase_date: '2024-06-01T12:00:00',
     current_status: '使用中',
@@ -387,8 +390,8 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
     vi.setSystemTime(new Date('2024-08-01T12:00:00'));
     try {
       seed(vault, {
-        item_old: makeItem({ id: 'item_old', name: '老键盘', category: '⌨ 机械键盘', purchase_price: 399, purchase_date: '2023-03-15T12:00:00', current_status: '使用中' }),
-        item_new: makeItem({ id: 'item_new', name: '新鼠标', category: '🖱 鼠标', purchase_price: 121, purchase_date: '2024-06-01T12:00:00', current_status: '使用中' }),
+        item_old: makeItem({ id: 'item_old', name: '老键盘', category: '机械键盘', icon: 'keyboard', purchase_price: 399, purchase_date: '2023-03-15T12:00:00', current_status: '使用中' }),
+        item_new: makeItem({ id: 'item_new', name: '新鼠标', category: '鼠标', icon: 'mouse', purchase_price: 121, purchase_date: '2024-06-01T12:00:00', current_status: '使用中' }),
       });
       await open(vault);
       const cs = cells();
@@ -495,8 +498,8 @@ describe('归物本渲染（KPI / 网格卡字段 / 脏数据容错）', () => {
   it('闲置卡：accent 价格类（bz-bel-cell--idle）；无 emoji 分类显示首字；空分类兜底 package 图标（issue 231）', async () => {
     seed(vault, {
       item_i: makeItem({ id: 'item_i', name: '闲置物', current_status: '闲置' }),
-      item_a: makeItem({ id: 'item_a', name: '无emoji', category: '键盘周边' }),
-      item_b: makeItem({ id: 'item_b', name: '空分类', category: '' }),
+      item_a: makeItem({ id: 'item_a', name: '无emoji', category: '键盘周边', icon: null }),
+      item_b: makeItem({ id: 'item_b', name: '空分类', category: '', icon: null }),
     });
     await open(vault);
     const cI = cells().find((x) => x.dataset.belId === 'item_i')!;
@@ -1296,7 +1299,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   });
 
   it('分类下拉：输入过滤 + 选项点击回填（弹层收起；候选 = 历史分类，issue 231）', async () => {
-    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '智能手机', icon: 'smartphone' }) });
     await open(vault);
     openAddForm(panel()!);
     // 惰性弹出（issue 202 跟进）：开表单不弹，聚焦/输入才弹
@@ -1362,7 +1365,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   });
 
   it('选历史分类自动带馆内图标（issue 231）：联想点选回填 icon chip', async () => {
-    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '智能手机', icon: 'smartphone' }) });
     await open(vault);
     openAddForm(panel()!);
     catInp().dispatchEvent(new FocusEvent('focus'));
@@ -1375,7 +1378,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
   });
 
   it('分类下拉收起时 Esc 不拦（落回表单层）；弹出后 Esc 只收下拉不关表单', async () => {
-    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '📱 智能手机' }) });
+    seed(vault, { item_h: makeItem({ id: 'item_h', name: '旧手机', category: '智能手机', icon: 'smartphone' }) });
     await open(vault);
     openAddForm(panel()!);
     // 收起态：不冒泡 Esc 只到输入框，下拉不吞键、表单不被关

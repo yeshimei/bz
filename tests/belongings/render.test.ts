@@ -225,10 +225,11 @@ describe('markup 构建器（钩子契约 = 两侧绑定与测试断言的共同
     expect(specs[4].danger).toBe(true);
   });
 
-  it('图标兜底链（issue 231）：icon 字段优先；未映射 emoji 回退文本；空分类 📦 兜底 package', () => {
+  it('图标兜底链（issue 231；issue 477 去映射表）：icon 字段优先；无 icon 回退 emoji/首字文本；空分类兜底 package', () => {
     expect(itemEmHtml(it0({ icon: 'lamp' }))).toContain('data-lucide="lamp"');
-    expect(itemEmHtml(it0({ icon: null, category: '灯具' }))).toBe('灯'); // 无 icon/emoji → 首字文本兜底（裸文本无标签）
-    expect(catEmHtml('📦')).toContain('package'); // 空分类 📦 → 映射 package（ui.test 同款口径）
+    expect(itemEmHtml(it0({ icon: null, category: '灯具' }))).toBe('灯'); // 无 icon → 首字文本兜底（裸文本无标签）
+    expect(itemEmHtml(it0({ icon: null, category: '💡 灯具' }))).toBe('💡'); // 映射表退役 → 遗留 emoji 分类原样显示
+    expect(catEmHtml('')).toContain('package'); // 空分类 → 单点常量兜底 package（视觉与旧 📦→package 映射一致）
     expect(catNameOf('💡 灯具')).toBe('灯具');
     expect(moneyShort(12345)).toBe('￥12,345');
   });
