@@ -7200,432 +7200,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-composer .bz-input { height: 40px; }
 }
 
-/* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════
-   面板根挂 .bz-memo-skin-{paper|editorial}；二级弹窗（uiModal popup）同挂皮肤类。
-   三层：
-   - token 层（.bz-memo-skin-* 单类）：就近覆盖 --bz-*，面板与弹窗通吃（组件 !important
-     均消费 token，零对抗）；
-   - 壳层（.bz-memo-panel / .bz-overlay-popup 复合）：点阵底/墨边/硬阴影等壳专属；
-   - 后代层（.bz-memo-skin-* .xxx）：结构覆盖，面板与弹窗通吃。
-   皮肤 = 固定明度风格化视觉，不随 Obsidian 明暗；色值皮肤专属域内直给。 */
-
-/* ─── 纸感手账 ─── */
-/* token 层（面板 + 弹窗通用） */
-.bz-memo-skin-paper {
-  /* 字重黑档（M3-9）：core tokens 字重档止于 bold，皮肤 900 与色值同属
-     「皮肤专属域内直给」豁免口径，域内单源成 token（十处消费） */
-  --bz-weight-black: 900;
-  --bz-skin-ink: #2a2318;
-  --bz-skin-serif: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
-  --bz-surface-1: #fbf7ea;
-  --bz-surface-2: #ffffff;
-  --bz-surface-3: #f6efdd;
-  --bz-surface-hover: #f3ecd9;
-  --bz-text-1: #2a2318;
-  --bz-text-2: #6f6450;
-  --bz-text-3: #a99d84;
-  --bz-border: rgba(42, 35, 24, 0.18);
-  --bz-border-strong: rgba(42, 35, 24, 0.75);
-  --bz-brand: #e8590c;
-  --bz-brand-hover: #c94b08;
-  --bz-brand-soft: #ffe8d6;
-}
-/* 面板壳：米纸点阵 + 墨边 + 硬偏移阴影 */
-.bz-memo-panel.bz-memo-skin-paper {
-  background:
-    radial-gradient(rgba(160, 140, 100, 0.18) 1px, transparent 1px) 0 0 / 22px 22px,
-    #fffdf6;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 18px;
-  box-shadow: 9px 10px 0 rgba(42, 35, 24, 0.88);
-}
-/* 弹窗壳（uiModal popup 同挂皮肤类） */
-.bz-overlay-popup.bz-memo-skin-paper {
-  background: #fffdf6;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 14px;
-  box-shadow: 6px 6px 0 rgba(42, 35, 24, 0.88);
-}
-
-/* 头行：米色斜纹 + 2px 墨底边 + 衬线大标题 + 墨边硬阴影品牌块 */
-.bz-memo-skin-paper .bz-panel-head {
-  border-bottom: 2px solid var(--bz-skin-ink);
-  background: repeating-linear-gradient(-45deg, rgba(42, 35, 24, 0.045) 0 14px, transparent 14px 28px);
-}
-.bz-memo-skin-paper .bz-panel-brand {
-  width: 28px;
-  height: 28px;
-  background: var(--bz-brand);
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 9px;
-  box-shadow: 2px 2px 0 var(--bz-skin-ink);
-}
-.bz-memo-skin-paper .bz-panel-title {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  font-size: var(--bz-font-title);
-  letter-spacing: 0.22em;
-}
-
-/* 主头行：衬线大标题 + 计数数字橙色（.bz-memo-cnt-num 由 ui.ts 包裹） */
-.bz-memo-skin-paper .bz-main-title {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  font-size: 24px;
-  letter-spacing: 0.02em;
-}
-.bz-memo-skin-paper .bz-memo-section-label {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  color: var(--bz-text-1);
-}
-.bz-memo-skin-paper .bz-main-count .bz-memo-cnt-num {
-  color: var(--bz-brand);
-  font-weight: var(--bz-weight-bold);
-}
-
-/* 场景栏：墨色右缘 + 黑底「场景」贴纸标签 + 激活行描边硬阴影 + 大墨描边色点 */
-.bz-memo-skin-paper .bz-rail { border-right: 2px solid var(--bz-skin-ink); }
-.bz-memo-skin-paper .bz-rail-label {
-  align-self: flex-start;
-  background: var(--bz-skin-ink);
-  color: #fffdf6;
-  font-weight: var(--bz-weight-bold);
-  letter-spacing: 0.3em;
-  padding: 3px var(--bz-space-sm) 3px 11px;
-  border-radius: 3px;
-  transform: rotate(-1.6deg);
-  margin: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-md);
-}
-/* 选中贴纸的整块（底色 + 墨边 + 错位实心投影）画在滑动底片上：滑过去时整块跟着走，
-   而不是只有底色在动、描边留在原地瞬跳 */
-.bz-memo-skin-paper [data-memo-nav] .bz-slide-pill {
-  background: var(--bz-brand-soft);
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 2px var(--bz-skin-ink), 3px 3px 0 var(--bz-skin-ink);
-}
-.bz-memo-skin-paper .bz-rail-item.on {
-  color: var(--bz-text-1);
-}
-.bz-memo-skin-paper .bz-rail-item.on .bz-ic { color: var(--bz-brand); }
-.bz-memo-skin-paper .bz-rail-item.on .bz-rail-count {
-  color: var(--bz-brand);
-  font-weight: var(--bz-weight-bold);
-  opacity: 1;
-}
-.bz-memo-skin-paper .bz-rail-dot {
-  width: 10px;
-  height: 10px;
-  margin: 0 2px;
-  border: 1.5px solid var(--bz-skin-ink);
-  background: var(--bz-rail-tint, var(--bz-text-3));
-}
-.bz-memo-skin-paper .bz-memo-side-add { border: 2px dashed rgba(42, 35, 24, 0.5); border-radius: 10px; }@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-side-add:hover {
-  border-color: var(--bz-skin-ink); color: var(--bz-text-1); background: var(--bz-surface-1);
-}
-}
-
-
-/* 按钮：贴纸硬阴影（面板 + 弹窗通用） */
-.bz-memo-skin-paper .bz-btn--primary {
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  box-shadow: 3px 3px 0 var(--bz-skin-ink);
-  font-weight: var(--bz-weight-bold);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-btn--primary:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--bz-skin-ink); }
-}
-
-.bz-memo-skin-paper .bz-btn--primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--bz-skin-ink); }
-
-/* 输入：墨边白底 inset（搜索/录入/弹窗表单通用） */
-.bz-memo-skin-paper .bz-input {
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  background: var(--bz-surface-2);
-  box-shadow: inset 2px 2px 0 rgba(42, 35, 24, 0.1);
-}
-
-/* 选择控件统一原型 segmented（用户拍板：排序/弹窗场景/优先级全部不用浮岛）——
-   拼接格子式：白底墨框容器、项间分隔线、选中项黑底白字填满整格。
-   覆盖皮肤作用域内一切 .bz-choice（主头行排序 float + 弹窗表单场景/优先级 float）。 */
-.bz-memo-skin-paper .bz-choice--float {
-  background: var(--bz-surface-2);
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  padding: 0;
-  overflow: hidden;
-}
-.bz-memo-skin-paper .bz-choice-seg { display: none; }
-/* 按钮规则带 .bz-choice 复合（0,3,0 ≥ 组件浮岛档），皮肤段后加载同特异性胜出 */
-.bz-memo-skin-paper .bz-choice .bz-choice-btn {
-  border-radius: 0;
-  height: auto;
-  padding: 7px 14px;
-  background: var(--bz-surface-2) !important;
-  color: var(--bz-text-2) !important;
-  border-left: 1px solid rgba(42, 35, 24, 0.16);
-}
-.bz-memo-skin-paper .bz-choice .bz-choice-btn:first-child { border-left: none; }@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-choice .bz-choice-btn:hover {
-  background: var(--bz-surface-hover) !important;
-  color: var(--bz-text-1) !important;
-}
-}
-
-.bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on {
-  background: var(--bz-skin-ink) !important;
-  color: #fffdf6 !important;
-  font-weight: var(--bz-weight-bold);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on:hover {
-  background: var(--bz-skin-ink) !important;
-  color: #fffdf6 !important;
-}
-}
-
-
-/* 头行右侧设置/关闭钮：纸感皮肤下去掉（用户拍板，原型无此二钮） */
-.bz-memo-skin-paper .bz-panel-head-btns { display: none; }
-
-/* 工具行间距对齐原型（搜索框与排序之间 12px；用 margin——gap 覆盖在此环境不稳定） */
-.bz-memo-skin-paper .bz-memo-sort { margin-left: var(--bz-space-md); }
-
-/* 排序下拉（issue 268）：与搜索框同款墨边白底贴纸，收起态 + 展开菜单两态都进皮肤——
-   组件库 .bz-select / .bz-select-menu 的默认取值（surface-4 底、细描边、6px 圆角）
-   与纸感贴纸语汇不搭，故整组就地换装；菜单是 .bz-select 的绝对定位子节点。 */
-.bz-memo-skin-paper .bz-memo-sort .bz-select {
-  height: 32px; padding: 0 9px 0 var(--bz-space-md); gap: 6px;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  background: var(--bz-surface-2);
-  color: var(--bz-text-1);
-  font-weight: var(--bz-weight-semibold);
-  box-shadow: 2px 2px 0 rgba(42, 35, 24, 0.85);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-sort .bz-select:hover { border-color: var(--bz-skin-ink); background: var(--bz-surface-hover); }
-}
-
-.bz-memo-skin-paper .bz-memo-sort .bz-select.open { border-color: var(--bz-brand); box-shadow: 2px 2px 0 var(--bz-brand); }
-.bz-memo-skin-paper .bz-memo-sort .bz-select-car { color: var(--bz-text-1); width: 13px; height: 13px; }
-.bz-memo-skin-paper .bz-memo-sort .bz-select-menu {
-  margin-top: 2px; padding: var(--bz-space-xs);
-  background: #fffdf6;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  box-shadow: 4px 4px 0 rgba(42, 35, 24, 0.85);
-}
-.bz-memo-skin-paper .bz-memo-sort .bz-select-item {
-  border-radius: var(--bz-radius-sm); font-weight: var(--bz-weight-medium); color: var(--bz-text-1);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-sort .bz-select-item:hover { background: var(--bz-brand-soft); }
-}
-
-.bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on {
-  background: var(--bz-skin-ink); color: #fffdf6; font-weight: var(--bz-weight-bold);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on:hover { background: var(--bz-skin-ink); color: #fffdf6; }
-}
-
-
-/* 移动场景条平铺 chip（issue 269「平铺的场景也风格化」）：收起态 = 白底贴纸
-   （1.5px 墨框，无阴影——十条并排各自带硬阴影会吵），选中 = 品牌橙贴纸 + 墨框 + 硬阴影。 */
-.bz-memo-skin-paper .bz-mobstrip-chip {
-  background: var(--bz-surface-2);
-  border: 1.5px solid var(--bz-skin-ink);
-  color: var(--bz-text-1);
-  font-weight: var(--bz-weight-semibold);
-}
-.bz-memo-skin-paper .bz-mobstrip-chip .bz-ic { color: var(--bz-text-2); }@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-mobstrip-chip:hover { background: var(--bz-surface-hover); }
-}
-
-.bz-memo-skin-paper .bz-mobstrip-chip.is-on {
-  background: var(--bz-brand);
-  border-color: var(--bz-skin-ink);
-  color: #fffdf6;
-  font-weight: var(--bz-weight-bold);
-  box-shadow: 2px 2px 0 var(--bz-skin-ink);
-}
-.bz-memo-skin-paper .bz-mobstrip-chip.is-on .bz-ic { color: inherit; }
-.bz-memo-skin-paper .bz-mobstrip-chip.is-on .bz-mobstrip-dot { border: 1px solid rgba(255, 253, 246, 0.75); }
-
-/* 「添加场景」虚线 chip：纸感 = 墨色虚线框。放在通用 chip 段**之后**——同特异性
-   （0,2,0）靠后写者赢，否则会被上面的实框白底规则吃掉虚线。 */
-.bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add {
-  border: 2px dashed rgba(42, 35, 24, 0.5);
-  background: transparent;
-  color: var(--bz-text-2);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add:hover {
-  border-color: var(--bz-skin-ink); color: var(--bz-text-1); background: var(--bz-surface-1);
-}
-}
-
-
-/* 任务列表：行间虚线分隔 + 大复选框（勾位随尺寸重定位） */
-.bz-memo-skin-paper .bz-memo-card + .bz-memo-card { border-top: 1.5px dashed rgba(42, 35, 24, 0.16); }
-.bz-memo-skin-paper .bz-memo-check {
-  width: 19px;
-  height: 19px;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 5px;
-  background: var(--bz-surface-2);
-}@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-check:hover { background: var(--bz-brand-soft); }
-}
-
-.bz-memo-skin-paper .bz-memo-check.bz-memo-checked { border-color: var(--bz-skin-ink); }
-.bz-memo-skin-paper .bz-memo-check.bz-memo-checked::after { left: 5.5px; top: 2.5px; }
-
-/* meta 标签分级（对齐原型）：仅课程 chip 是贴纸；引用/场景/链接等 = 无框色字；
-   语义 tag（重要红底/逾期/今日/未来软底）保留底色。 */
-.bz-memo-skin-paper .bz-memo-tag {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  padding: 0 1px;
-  color: var(--bz-text-2);
-  font-weight: var(--bz-weight-semibold);
-}
-.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-course {
-  padding: 0 9px;
-  background: #fff4e0;
-  border: 1.5px solid var(--bz-skin-ink);
-  border-radius: 6px;
-  box-shadow: 2px 2px 0 rgba(42, 35, 24, 0.8);
-  color: var(--bz-text-1);
-  font-weight: var(--bz-weight-medium);
-}
-.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-important {
-  background: var(--bz-danger);
-  color: var(--bz-on-danger);
-  border-radius: var(--bz-radius-full);
-}
-.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-overdue {
-  background: color-mix(in srgb, var(--bz-danger) 14%, transparent);
-  color: var(--bz-danger);
-}
-.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-today {
-  background: color-mix(in srgb, var(--bz-brand) 14%, transparent);
-  color: var(--bz-brand);
-}
-.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-future {
-  background: color-mix(in srgb, var(--bz-success) 12%, transparent);
-  color: var(--bz-success);
-}
-
-/* 已完成条 + 录入行 + 弹窗标题 */
-.bz-memo-skin-paper .bz-memo-donebar { border: 2px dashed rgba(42, 35, 24, 0.5); border-radius: 10px; }@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-memo-donebar:hover { color: var(--bz-text-1); border-color: var(--bz-skin-ink); }
-}
-
-.bz-memo-skin-paper .bz-memo-donebar-cnt {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  font-size: var(--bz-font-body);
-}
-.bz-memo-skin-paper .bz-memo-composer { border-top: 2px solid var(--bz-skin-ink); }
-.bz-memo-skin-paper .bz-dialog-title {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  letter-spacing: 0.06em;
-}
-
-/* ─── 纸感手账 · 夜（issue 270：推翻「固定明度」旧拍板补暗色；照 cinema 先例
-   纯 CSS——.theme-dark 挂 body，面板 / uiModal 弹窗 / 右键菜单根均挂 document.body
-   树内，后代选择器可达）───
-   暗色 = 深纸底 + 浅墨边 + 黑硬阴影：token 整组覆盖后，各结构位消费 var 的声明
-   （墨边/输入墨框/激活描边等）自动随档；仅亮色段硬编码位需就地覆盖。小钮与贴纸的
-   var(--bz-skin-ink) 硬偏移阴影随墨转浅，暗底上读作「粉笔描边」，与浅墨边同一
-   语言；大壳层阴影显式转黑保深度。亮色侧零改动。 */
-.theme-dark .bz-memo-skin-paper {
-  --bz-skin-ink: #ece2ca;
-  --bz-surface-1: #211d13;
-  --bz-surface-2: #2b2617;
-  --bz-surface-3: #342e1d;
-  --bz-surface-hover: #38311f;
-  --bz-text-1: #ede4cd;
-  --bz-text-2: #b5a98a;
-  --bz-text-3: #7e7559;
-  --bz-border: rgba(236, 226, 202, 0.16);
-  --bz-border-strong: rgba(236, 226, 202, 0.72);
-  --bz-brand: #f27b28;
-  --bz-brand-hover: #fb8f42;
-  --bz-brand-soft: rgba(242, 123, 40, 0.2);
-}
-/* 三壳（面板/uiModal 弹窗/右键菜单）：米纸点阵转暗点阵，墨影转黑影；
-   墨边消费 ink 自动转浅 */
-.theme-dark .bz-memo-panel.bz-memo-skin-paper {
-  background:
-    radial-gradient(rgba(236, 226, 202, 0.1) 1px, transparent 1px) 0 0 / 22px 22px,
-    #1b1710;
-  box-shadow: 9px 10px 0 rgba(0, 0, 0, 0.6);
-}
-.theme-dark .bz-overlay-popup.bz-memo-skin-paper {
-  background: #1b1710;
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
-}
-.theme-dark .bz-item-menu.bz-memo-skin-paper {
-  background: #1b1710;
-  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6);
-}
-/* 头行斜纹：墨纹转浅墨纹 */
-.theme-dark .bz-memo-skin-paper .bz-panel-head {
-  background: repeating-linear-gradient(-45deg, rgba(236, 226, 202, 0.05) 0 14px, transparent 14px 28px);
-}
-/* 墨底纸字反转位（场景贴纸标签 / 表单格子选中项 / 排序选中项）：ink 转浅后
-   纸白字不可读，字转深纸色（底色消费 ink 自动转浅） */
-.theme-dark .bz-memo-skin-paper .bz-rail-label { color: #1b1710; }
-.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn { border-left-color: rgba(236, 226, 202, 0.16); }
-.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on { color: #1b1710 !important; }@media (hover: hover) {
-
-.theme-dark .bz-memo-skin-paper .bz-choice .bz-choice-btn.is-on:hover { color: #1b1710 !important; }
-}
-
-.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on { color: #1b1710; }@media (hover: hover) {
-
-.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-item.is-on:hover { color: #1b1710; }
-}
-
-/* 硬编码纸白底位：排序菜单转深纸档；触发器/菜单/课程贴纸的墨影转黑影 */
-.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select-menu {
-  background: #1b1710;
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6);
-}
-.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55); }
-/* open 态恢复品牌橙阴影：上条 (0,4,0) 与亮色 .open 档同特异性且更靠后，须显式压回 */
-.theme-dark .bz-memo-skin-paper .bz-memo-sort .bz-select.open { box-shadow: 2px 2px 0 var(--bz-brand); }
-.theme-dark .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-course {
-  background: #3a2f18;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
-}
-/* 输入 inset 影转黑；卡间虚线与三处虚线框转浅墨（base 覆盖会以同特异性压住
-   亮色段的 :hover 恢复档，故 hover 位显式补回——声明与亮色一致，var 随档） */
-.theme-dark .bz-memo-skin-paper .bz-input { box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.35); }
-.theme-dark .bz-memo-skin-paper .bz-memo-card + .bz-memo-card { border-top-color: rgba(236, 226, 202, 0.14); }
-.theme-dark .bz-memo-skin-paper .bz-memo-side-add,
-.theme-dark .bz-memo-skin-paper .bz-memo-donebar,
-.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add { border-color: rgba(236, 226, 202, 0.4); }@media (hover: hover) {
-
-.theme-dark .bz-memo-skin-paper .bz-memo-side-add:hover,
-.theme-dark .bz-memo-skin-paper .bz-memo-donebar:hover,
-.theme-dark .bz-memo-skin-paper .bz-mobstrip-chip.bz-mobstrip-add:hover { border-color: var(--bz-skin-ink); }
-}
-
 
 /* ─── 编辑部 ─── */
 /* token 层 */
@@ -7846,21 +7420,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: var(--bz-weight-bold);
 }
 
-/* 右键菜单（core .bz-item-menu 根挂皮肤类；issue 210 四轮用户拍板两风格都要） */
-.bz-item-menu.bz-memo-skin-paper {
-  background: #fffdf6;
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: var(--bz-radius-md);
-  box-shadow: 5px 5px 0 rgba(42, 35, 24, 0.85);
-}
-.bz-memo-skin-paper .bz-item-menu-item { border-radius: var(--bz-radius-sm); font-weight: var(--bz-weight-medium); }@media (hover: hover) {
-
-.bz-memo-skin-paper .bz-item-menu-item:hover {
-  background: var(--bz-brand-soft);
-  color: var(--bz-text-1);
-}
-}
-
 .bz-item-menu.bz-memo-skin-editorial {
   background: #ffffff;
   border: 1.5px solid var(--bz-skin-ink);
@@ -7947,37 +7506,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 }
 
-
-/* ---- 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ----
-   删除备忘录 / 删除场景两个确认框经 openFlowDialog({className: skinClass()}) 挂皮肤类。
-   壳层（底色/描边/圆角/阴影）由上方 `.bz-overlay-popup.bz-memo-skin-*` 复合规则自动命中
-   （流程框与 uiModal 同挂 .bz-overlay-popup 共享壳），token 层（--bz-surface-2/--bz-brand/
-   --bz-text-2）也随皮肤走；这里只补皮肤特有的文字与主动作按钮形制——与编辑弹窗里
-   的 `.bz-btn--primary`/`.bz-dialog-title` 逐值同源，保证两处按钮长得一样。 */
-#__shared_confirm_popup__.bz-memo-skin-paper h4 {
-  font-family: var(--bz-skin-serif);
-  font-weight: var(--bz-weight-black);
-  letter-spacing: 0.06em;
-}
-/* 纸感主钮形制（凸起墨章）。danger 态必须**整条让位**：本域两个流程框（删除备忘录 / 删除场景）
-   都是危险主动作，core 的 `.bz-flow-dialog--danger` 会把主钮整套压回中性次级形制
-   （底/文字/描边/圆角/阴影 + 字重回 medium），与同框「取消」同形制。
-   两条规则都带 `:not(.bz-flow-dialog--danger)` 守卫，**不能只靠特异性**：hover 那条特异性 (2,2,0)
-   与 core 危险规则相同，而域文件在 CSS 聚合序中后到 → 删除钮一悬停就会把 4px 硬阴影找回来
-   （issue 291 评审自审发现）。守卫写法与 password-vault / secondbrain 的 OK 钮规则同范式。
-   本块只在非 danger 场景（将来新增的说明框等）生效。 */
-#__shared_confirm_popup__.bz-memo-skin-paper:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
-  border: 2px solid var(--bz-skin-ink);
-  border-radius: 11px;
-  box-shadow: 3px 3px 0 var(--bz-skin-ink);
-  font-weight: var(--bz-weight-bold);
-}@media (hover: hover) {
-
-#__shared_confirm_popup__.bz-memo-skin-paper:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
-  box-shadow: 4px 4px 0 var(--bz-skin-ink);
-}
-}
-
 #__shared_confirm_popup__.bz-memo-skin-editorial h4 {
   font-family: var(--bz-skin-serif);
   font-weight: var(--bz-weight-black);
@@ -7987,26 +7515,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-weight: var(--bz-weight-semibold);
   letter-spacing: 0.1em;
 }
-
-/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态）
-   （.bz-skinprev-default 三条规则已随 memo2-consistency 新-7 / memo2-ui M3-8 退役——
-   默认皮肤 issue 210 下线后生产代码零引用的死规则） ---- */
-.bz-skinprev-paper {
-  background:
-    radial-gradient(rgba(160, 140, 100, 0.3) 1px, transparent 1px) 0 0 / 10px 10px,
-    #fffdf6;
-  border: 1.5px solid #2a2318;
-  box-shadow: 3px 3px 0 #2a2318;
-}
-.bz-skinprev-paper::before {
-  content: ''; position: absolute; left: 10%; top: 16%; width: 42%; height: 26%;
-  border-radius: 6px; background: #e8590c; border: 1.5px solid #2a2318;
-  box-shadow: 2px 2px 0 #2a2318;
-}
-.bz-skinprev-paper::after {
-  content: ''; position: absolute; left: 10%; top: 60%; width: 72%; height: 10%;
-  border: 1px dashed rgba(42, 35, 24, 0.45); background: #ffffff;
-}
+/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体，复刻各皮肤面板迷你形态）。
+   **仅首套「编辑部」留这里**；「纸感手账」的预览随其皮肤包下发
+   （src/memo/skins/paper.css，ADR-0199 决策 6）。 ---- */
 .bz-skinprev-editorial { background: #ffffff; border: 1.5px solid #141414; }
 .bz-skinprev-editorial::before {
   content: ''; position: absolute; left: 0; top: 0; width: 7%; height: 100%;
@@ -12773,13 +12284,15 @@ canvas { display: block; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--pz-faint, var(--text-faint)); }
 
-/* ==================== 面板主题（皮肤）· 10 套 × 亮/暗两版 ====================
+/* ==================== 面板主题（皮肤）· 首套内置 + 九套远端（ADR-0199） ====================
    口径（2026-09-11 用户拍板「全都要，每套都要亮色和暗色」）：
    - 皮肤类由 ui.ts::applySkinClass 挂在 #pomodoro-popup 上，取值 = 设置 pomodoroSkinTheme；
-   - 清单单源 = src/pomodoro/render.ts::POMODORO_SKIN_THEMES（设置面板选项同表生成）；
-   - **色值单源 = 下方 :root 的 --pz-<id>-* 表**（唯一色值出处；设置面板预览卡
-     src/settings-panel/styles.css 引用同一批变量，加皮/改色两处自动同步）；
-   - 每套皮只剩两行「消费变量声明」：亮色一行 + .theme-dark 暗色一行，把表值赋给
+   - 清单单源 = src/pomodoro/render.ts::POMODORO_SKIN_THEMES（内置首套 + core/skin-pack 就绪表）；
+   - **首套「番茄」留在这里**（离线兜底）：色值 = 下方 :root 的 --pz-tomato-*，消费 = pomodoro-skin-tomato 两行；
+     其余九套（墨白/方格纸/苔原/海雾/暖沙/蜜柑/樱粉/咖啡/夜航）已远端化——
+     源在 src/pomodoro/skins/<id>.css（含各自的 `:root` 变量表、两行消费声明、设置面板预览卡），
+     不进构建聚合，启动时同步后经 core/skin-pack.ts 注入；
+   - 每套皮两行「消费变量声明」：亮色一行 + .theme-dark 暗色一行，把表值赋给
      --pz-bg/accent/fg/muted/faint/btn/btn-fg/on-accent（暗色再加 --pz-line），
      消费全走上方基础段的 var 兜底链（无皮肤 = 完全回落 Obsidian 主题变量）；
    - 槽位：l/d=亮·暗面 a/ad=亮·暗强调 fg/fgd=亮·暗时间字 m/md=亮·暗阶段·今日字
@@ -12793,78 +12306,10 @@ canvas { display: block; }
     --pz-tomato-l:#fdf7f3; --pz-tomato-d:#2a2320; --pz-tomato-a:#e5534b; --pz-tomato-ad:#f2705e;
     --pz-tomato-fgd:#f5ece8; --pz-tomato-m:#8b6f68; --pz-tomato-md:#b9a49c; --pz-tomato-f:#b09a94; --pz-tomato-fd:#8d7a74;
     --pz-tomato-b:#f3ece6; --pz-tomato-bf:#3d332f; --pz-tomato-bd:#352d29; --pz-tomato-bfd:#d9ccc5;
-    /* 2 墨白 ink */
-    --pz-ink-l:#ffffff; --pz-ink-d:#1f1f1e; --pz-ink-a:#171512; --pz-ink-ad:#f2f0ea;
-    --pz-ink-fgd:#f2f0ea; --pz-ink-m:#6b6558; --pz-ink-md:#a8a49c; --pz-ink-f:#a8a294; --pz-ink-fd:#7d7a72;
-    --pz-ink-bd:#2b2b29; --pz-ink-bfd:#d6d3cc;
-    /* 3 方格纸 grid */
-    --pz-grid-l:#fdfcf8; --pz-grid-d:#22231f; --pz-grid-a:#4a4a46; --pz-grid-ad:#d7d3c8;
-    --pz-grid-fgd:#eceae2; --pz-grid-m:#6b6558; --pz-grid-md:#a8a49c; --pz-grid-f:#a8a294; --pz-grid-fd:#7d7a72;
-    --pz-grid-bd:#2c2e29; --pz-grid-bfd:#d6d3cc;
-    /* 4 苔原 moss */
-    --pz-moss-l:#f2f5ef; --pz-moss-d:#20261f; --pz-moss-a:#4c9e6c; --pz-moss-ad:#6fc08e;
-    --pz-moss-fgd:#e8eee6; --pz-moss-m:#6a7d6c; --pz-moss-md:#9db3a2; --pz-moss-f:#9aa79c; --pz-moss-fd:#7b8f80;
-    --pz-moss-bd:#2a3228; --pz-moss-bfd:#d3ddd0;
-    /* 5 海雾 mist */
-    --pz-mist-l:#f1f4f8; --pz-mist-d:#1e2229; --pz-mist-a:#3d7bd6; --pz-mist-ad:#6fa0ef;
-    --pz-mist-fgd:#e6ecf5; --pz-mist-m:#66768f; --pz-mist-md:#9aa9c2; --pz-mist-f:#96a3b6; --pz-mist-fd:#78859c;
-    --pz-mist-bd:#272c35; --pz-mist-bfd:#d2dbe9;
-    /* 6 暖沙 sand */
-    --pz-sand-l:#f8f2e8; --pz-sand-d:#26221c; --pz-sand-a:#c27a48; --pz-sand-ad:#e0a373;
-    --pz-sand-fgd:#f1e9dc; --pz-sand-m:#7d6a55; --pz-sand-md:#b8a692; --pz-sand-f:#a8947c; --pz-sand-fd:#8d7f6d;
-    --pz-sand-bd:#322c25; --pz-sand-bfd:#dcd2c4;
-    /* 7 蜜柑 citrus */
-    --pz-citrus-l:#fffaf0; --pz-citrus-d:#272319; --pz-citrus-a:#e6951d; --pz-citrus-ad:#f2b544;
-    --pz-citrus-fgd:#f7efdf; --pz-citrus-m:#7d6a40; --pz-citrus-md:#bab192; --pz-citrus-f:#ab9a6c; --pz-citrus-fd:#8f876c;
-    --pz-citrus-bd:#332e20; --pz-citrus-bfd:#e0d9c2;
-    /* 8 樱粉 sakura */
-    --pz-sakura-l:#fdf3f6; --pz-sakura-d:#2a2026; --pz-sakura-a:#d64d8f; --pz-sakura-ad:#ef77b4;
-    --pz-sakura-fgd:#f6e9ef; --pz-sakura-m:#8a5f74; --pz-sakura-md:#bd9aab; --pz-sakura-f:#b394a4; --pz-sakura-fd:#917a87;
-    --pz-sakura-bd:#352830; --pz-sakura-bfd:#e0cfd8;
-    /* 9 咖啡 latte */
-    --pz-latte-l:#f6f0e6; --pz-latte-d:#241f19; --pz-latte-a:#8a5a3b; --pz-latte-ad:#c08a63;
-    --pz-latte-fg:#4a3628; --pz-latte-fgd:#f1e9dc; --pz-latte-m:#7a6553; --pz-latte-md:#b39d8c; --pz-latte-f:#a8947c; --pz-latte-fd:#8a7a6b;
-    --pz-latte-bd:#302920; --pz-latte-bfd:#dcd2c4;
-    /* 10 夜航 night */
-    --pz-night-l:#eceff3; --pz-night-d:#23262b; --pz-night-a:#b5801f; --pz-night-ad:#f0b429;
-    --pz-night-fgd:#f2efe6; --pz-night-m:#5f6a78; --pz-night-md:#a7b0bd; --pz-night-f:#8d97a5; --pz-night-fd:#7d8794;
-    --pz-night-b:#e4e9ef; --pz-night-bf:#3a4250; --pz-night-bd:#2e323a; --pz-night-bfd:#dfe3ea;
 }
 /* 1 番茄 · tomato（默认；暗色主按钮字=暗面深底，非白） */
     #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-l); --pz-accent:var(--pz-tomato-a); --pz-muted:var(--pz-tomato-m); --pz-faint:var(--pz-tomato-f); --pz-btn:var(--pz-tomato-b); --pz-btn-fg:var(--pz-tomato-bf); --pz-on-accent:#fff; }
     .theme-dark #pomodoro-popup.pomodoro-skin-tomato { --pz-bg:var(--pz-tomato-d); --pz-accent:var(--pz-tomato-ad); --pz-fg:var(--pz-tomato-fgd); --pz-muted:var(--pz-tomato-md); --pz-faint:var(--pz-tomato-fd); --pz-btn:var(--pz-tomato-bd); --pz-btn-fg:var(--pz-tomato-bfd); --pz-on-accent:var(--pz-tomato-d); --pz-line:rgba(255,255,255,.14); }
-/* 2 墨白 · ink（无彩色；仅此皮有专属阴影一档） */
-    #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-l); --pz-accent:var(--pz-ink-a); --pz-muted:var(--pz-ink-m); --pz-faint:var(--pz-ink-f); --pz-on-accent:#fff; box-shadow: 0 6px 30px rgba(0,0,0,.14); }
-    .theme-dark #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-d); --pz-accent:var(--pz-ink-ad); --pz-fg:var(--pz-ink-fgd); --pz-muted:var(--pz-ink-md); --pz-faint:var(--pz-ink-fd); --pz-btn:var(--pz-ink-bd); --pz-btn-fg:var(--pz-ink-bfd); --pz-on-accent:var(--pz-ink-d); --pz-line:rgba(255,255,255,.14); }
-/* 3 方格纸 · grid（亮/暗各一道格纹线色，背景图唯一例外块） */
-    #pomodoro-popup.pomodoro-skin-grid {
-      --pz-bg:var(--pz-grid-l); --pz-accent:var(--pz-grid-a); --pz-muted:var(--pz-grid-m); --pz-faint:var(--pz-grid-f); --pz-on-accent:#fff;
-      --pz-grid-ln:rgba(23,21,18,.05);
-      background-image: linear-gradient(var(--pz-grid-ln) 1px, transparent 1px), linear-gradient(90deg, var(--pz-grid-ln) 1px, transparent 1px);
-      background-size: 16px 16px; background-position: -1px -1px;
-    }
-    .theme-dark #pomodoro-popup.pomodoro-skin-grid { --pz-bg:var(--pz-grid-d); --pz-accent:var(--pz-grid-ad); --pz-fg:var(--pz-grid-fgd); --pz-muted:var(--pz-grid-md); --pz-faint:var(--pz-grid-fd); --pz-btn:var(--pz-grid-bd); --pz-btn-fg:var(--pz-grid-bfd); --pz-on-accent:var(--pz-grid-d); --pz-line:rgba(255,255,255,.14); --pz-grid-ln:rgba(255,255,255,.05); }
-/* 4 苔原 · moss */
-    #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-l); --pz-accent:var(--pz-moss-a); --pz-muted:var(--pz-moss-m); --pz-faint:var(--pz-moss-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-moss { --pz-bg:var(--pz-moss-d); --pz-accent:var(--pz-moss-ad); --pz-fg:var(--pz-moss-fgd); --pz-muted:var(--pz-moss-md); --pz-faint:var(--pz-moss-fd); --pz-btn:var(--pz-moss-bd); --pz-btn-fg:var(--pz-moss-bfd); --pz-on-accent:var(--pz-moss-d); --pz-line:rgba(255,255,255,.14); }
-/* 5 海雾 · mist */
-    #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-l); --pz-accent:var(--pz-mist-a); --pz-muted:var(--pz-mist-m); --pz-faint:var(--pz-mist-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-d); --pz-accent:var(--pz-mist-ad); --pz-fg:var(--pz-mist-fgd); --pz-muted:var(--pz-mist-md); --pz-faint:var(--pz-mist-fd); --pz-btn:var(--pz-mist-bd); --pz-btn-fg:var(--pz-mist-bfd); --pz-on-accent:var(--pz-mist-d); --pz-line:rgba(255,255,255,.14); }
-/* 6 暖沙 · sand */
-    #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-l); --pz-accent:var(--pz-sand-a); --pz-muted:var(--pz-sand-m); --pz-faint:var(--pz-sand-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-d); --pz-accent:var(--pz-sand-ad); --pz-fg:var(--pz-sand-fgd); --pz-muted:var(--pz-sand-md); --pz-faint:var(--pz-sand-fd); --pz-btn:var(--pz-sand-bd); --pz-btn-fg:var(--pz-sand-bfd); --pz-on-accent:var(--pz-sand-d); --pz-line:rgba(255,255,255,.14); }
-/* 7 蜜柑 · citrus */
-    #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-l); --pz-accent:var(--pz-citrus-a); --pz-muted:var(--pz-citrus-m); --pz-faint:var(--pz-citrus-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-citrus { --pz-bg:var(--pz-citrus-d); --pz-accent:var(--pz-citrus-ad); --pz-fg:var(--pz-citrus-fgd); --pz-muted:var(--pz-citrus-md); --pz-faint:var(--pz-citrus-fd); --pz-btn:var(--pz-citrus-bd); --pz-btn-fg:var(--pz-citrus-bfd); --pz-on-accent:var(--pz-citrus-d); --pz-line:rgba(255,255,255,.14); }
-/* 8 樱粉 · sakura */
-    #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-l); --pz-accent:var(--pz-sakura-a); --pz-muted:var(--pz-sakura-m); --pz-faint:var(--pz-sakura-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-sakura { --pz-bg:var(--pz-sakura-d); --pz-accent:var(--pz-sakura-ad); --pz-fg:var(--pz-sakura-fgd); --pz-muted:var(--pz-sakura-md); --pz-faint:var(--pz-sakura-fd); --pz-btn:var(--pz-sakura-bd); --pz-btn-fg:var(--pz-sakura-bfd); --pz-on-accent:var(--pz-sakura-d); --pz-line:rgba(255,255,255,.14); }
-/* 9 咖啡 · latte（仅此皮亮色时间字有专属值） */
-    #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-l); --pz-accent:var(--pz-latte-a); --pz-fg:var(--pz-latte-fg); --pz-muted:var(--pz-latte-m); --pz-faint:var(--pz-latte-f); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-latte { --pz-bg:var(--pz-latte-d); --pz-accent:var(--pz-latte-ad); --pz-fg:var(--pz-latte-fgd); --pz-muted:var(--pz-latte-md); --pz-faint:var(--pz-latte-fd); --pz-btn:var(--pz-latte-bd); --pz-btn-fg:var(--pz-latte-bfd); --pz-on-accent:var(--pz-latte-d); --pz-line:rgba(255,255,255,.14); }
-/* 10 夜航 · night（亮面压深保证浅底可读） */
-    #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-l); --pz-accent:var(--pz-night-a); --pz-muted:var(--pz-night-m); --pz-faint:var(--pz-night-f); --pz-btn:var(--pz-night-b); --pz-btn-fg:var(--pz-night-bf); --pz-on-accent:#fff; }
-    .theme-dark #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-d); --pz-accent:var(--pz-night-ad); --pz-fg:var(--pz-night-fgd); --pz-muted:var(--pz-night-md); --pz-faint:var(--pz-night-fd); --pz-btn:var(--pz-night-bd); --pz-btn-fg:var(--pz-night-bfd); --pz-on-accent:var(--pz-night-d); --pz-line:rgba(255,255,255,.14); }
 
 /* ==================== 世界退后（2026-09-23 特效批采纳 9）· 休息相位专用 ====================
    休息不再只是「弹窗里变暗」：整个外部世界也后退一档，弹窗自己极缓地呼吸一下。
@@ -15675,67 +15120,12 @@ canvas { display: block; }
     linear-gradient(90deg, #2a2c34 0 50%, #111218 50% 100%);
   border-radius: 3px;
 }
-/* ── 番茄钟 10 套皮肤预览（2026-09-11 同构图异色：左亮块/右暗块 + 域色圆点；
-      色值引用 src/pomodoro/styles.css :root 的 --pz-<id>-* 表（同聚合进根 styles.css），
-      本文件不持有番茄钟色值——加皮/改色只在 pomodoro 侧改表） ── */
+/* ── 番茄钟皮肤预览 · **仅首套（番茄）留这里**；九套远端的预览随各自皮肤包下发
+      （ADR-0199 决策 6：预览规则跟皮肤走，源在 src/pomodoro/skins/<id>.css）。 ── */
 .bz-sp-mini.bz-sp-prev-pomo-tomato {
   background:
     radial-gradient(circle at 50% 50%, var(--pz-tomato-a) 0 4px, #fff 4px 6px, transparent 6px),
     linear-gradient(90deg, var(--pz-tomato-l) 0 50%, var(--pz-tomato-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-ink {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-ink-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-ink-l) 0 50%, var(--pz-ink-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-grid {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-grid-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-grid-l) 0 50%, var(--pz-grid-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-moss {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-moss-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-moss-l) 0 50%, var(--pz-moss-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-mist {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-mist-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-mist-l) 0 50%, var(--pz-mist-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-sand {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-sand-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-sand-l) 0 50%, var(--pz-sand-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-citrus {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-citrus-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-citrus-l) 0 50%, var(--pz-citrus-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-sakura {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-sakura-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-sakura-l) 0 50%, var(--pz-sakura-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-latte {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-latte-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-latte-l) 0 50%, var(--pz-latte-d) 50% 100%);
-  border-radius: 3px;
-}
-.bz-sp-mini.bz-sp-prev-pomo-night {
-  background:
-    radial-gradient(circle at 50% 50%, var(--pz-night-a) 0 4px, #fff 4px 6px, transparent 6px),
-    linear-gradient(90deg, var(--pz-night-l) 0 50%, var(--pz-night-d) 50% 100%);
   border-radius: 3px;
 }
 
@@ -20461,10 +19851,11 @@ canvas { display: block; }
    头行/关闭钮/内容区样式归 reading-report/styles.css（walkthrough C-4 单一事实源），本域只留容器。 */
 .bz-bs-view-report { min-height: 0; }
 
-/* ==================== 面板皮肤（五肤×亮暗双模式，本轮拍板收敛） ====================
+/* ==================== 面板皮肤（首套内置 + 四套远端，ADR-0199） ====================
    三层：--bz-* token 覆盖（弹窗/组件库件通吃）+ --bsw-* 墙变量映射（墙/纸/铜墨随肤换）
    + 结构层（墙纹理/书脊做法/书挡/隔板/检索/排序/标签随肤）。
-   五肤：雪松白(亮) / 黑金夜曲(暗) / 牛皮手帐(亮) / 丝绒剧院(暗) / 极简黑白(亮)；
+   **首套「雪松白」留在这里**（离线兜底，恒在、恒首位）；黑金夜曲 / 牛皮手帐 / 丝绒剧院 /
+   极简黑白四套已远端化：源在 src/bookshelf/skins/<id>.css，不进构建聚合，启动时同步。
    每肤另一侧由 bz-bs-mode-light/dark 变体层补齐（见「亮暗模式变体」节），Obsidian 主题切模式。 */
 .bz-bs-skin-nordic {
   --bz-surface-0: #e9e2d2; --bz-surface-1: #efe9db; --bz-surface-2: #f6f2e7; --bz-surface-3: #efe9db; --bz-surface-4: #fbf8f0;
@@ -20475,46 +19866,6 @@ canvas { display: block; }
   --bsw-wall: #e9e2d2; --bsw-wall-dark: #f3eee1; --bsw-shelf: #bfb49a; --bsw-brass: #8a8371;
   --bsw-paper: #f6f2e7; --bsw-ink: #3a352c; --bsw-muted: #9a8f78; --bsw-line: #ded6c2;
   --bsw-accent: #b5502f; --bsw-reading: #b5502f;
-}
-.bz-bs-skin-noir {
-  --bz-surface-0: #0b0b0d; --bz-surface-1: #101013; --bz-surface-2: #141418; --bz-surface-3: #232329; --bz-surface-4: #2c2c34;
-  --bz-surface-hover: #1d1d23; --bz-surface-active: #26262e;
-  --bz-text-1: #e9dfc4; --bz-text-2: #b3a679; --bz-text-3: #7a6f4e; --bz-text-invert: #141418;
-  --bz-brand: #d9b45f; --bz-brand-hover: #e6c67c; --bz-brand-soft: rgba(217, 180, 95, 0.15); --bz-on-brand: #141418;
-  --bz-border: rgba(217, 180, 95, 0.25); --bz-border-strong: rgba(217, 180, 95, 0.45); --bz-border-hover: rgba(217, 180, 95, 0.65);
-  --bsw-wall: #0b0b0d; --bsw-wall-dark: #101013; --bsw-shelf: #191510; --bsw-brass: #d9b45f;
-  --bsw-paper: #141418; --bsw-ink: #e9dfc4; --bsw-muted: #8a7a55; --bsw-line: rgba(217, 180, 95, 0.3);
-  --bsw-accent: #d9b45f; --bsw-reading: #d9b45f;
-}
-.bz-bs-skin-kraft {
-  --bz-surface-0: #ab8c5e; --bz-surface-1: #b99a6b; --bz-surface-2: #d6bd8e; --bz-surface-3: #c6ab78; --bz-surface-4: #e2cd9f;
-  --bz-surface-hover: #ccb37f; --bz-surface-active: #bfa468;
-  --bz-text-1: #4c3a22; --bz-text-2: #6b5232; --bz-text-3: #8f7448; --bz-text-invert: #f0e2c4;
-  --bz-brand: #c04a2f; --bz-brand-hover: #d05a3d; --bz-brand-soft: rgba(192, 74, 47, 0.16); --bz-on-brand: #f0e2c4;
-  --bz-border: rgba(76, 58, 34, 0.35); --bz-border-strong: rgba(76, 58, 34, 0.6); --bz-border-hover: rgba(76, 58, 34, 0.8);
-  --bsw-wall: #b99a6b; --bsw-wall-dark: #8a6a3e; --bsw-shelf: #4c3a1e; --bsw-brass: #8a5a2b;
-  --bsw-paper: #d6bd8e; --bsw-ink: #4c3a22; --bsw-muted: #6b5232; --bsw-line: rgba(76, 58, 34, 0.35);
-  --bsw-accent: #c04a2f; --bsw-reading: #c04a2f;
-}
-.bz-bs-skin-velvet {
-  --bz-surface-0: #2c0e18; --bz-surface-1: #33121d; --bz-surface-2: #241018; --bz-surface-3: #331722; --bz-surface-4: #401d2b;
-  --bz-surface-hover: #331722; --bz-surface-active: #401d2b;
-  --bz-text-1: #ecd9bc; --bz-text-2: #c09a78; --bz-text-3: #8a6a58; --bz-text-invert: #241018;
-  --bz-brand: #d9b45f; --bz-brand-hover: #e6c67c; --bz-brand-soft: rgba(217, 180, 95, 0.15); --bz-on-brand: #241018;
-  --bz-border: rgba(217, 180, 95, 0.3); --bz-border-strong: rgba(217, 180, 95, 0.5); --bz-border-hover: rgba(217, 180, 95, 0.7);
-  --bsw-wall: #3a1420; --bsw-wall-dark: #2c0e18; --bsw-shelf: #33121d; --bsw-brass: #d9b45f;
-  --bsw-paper: #241018; --bsw-ink: #ecd9bc; --bsw-muted: #a87e6e; --bsw-line: rgba(217, 180, 95, 0.3);
-  --bsw-accent: #d9b45f; --bsw-reading: #d9b45f;
-}
-.bz-bs-skin-mono {
-  --bz-surface-0: #f0f0f0; --bz-surface-1: #fafafa; --bz-surface-2: #ffffff; --bz-surface-3: #fafafa; --bz-surface-4: #ffffff;
-  --bz-surface-hover: #f2f2f2; --bz-surface-active: #e8e8e8;
-  --bz-text-1: #111111; --bz-text-2: #555555; --bz-text-3: #999999; --bz-text-invert: #ffffff;
-  --bz-brand: #111111; --bz-brand-hover: #333333; --bz-brand-soft: rgba(17, 17, 17, 0.08); --bz-on-brand: #ffffff;
-  --bz-border: #c8c8c8; --bz-border-strong: #111111; --bz-border-hover: #111111;
-  --bsw-wall: #fafafa; --bsw-wall-dark: #ffffff; --bsw-shelf: #111111; --bsw-brass: #111111;
-  --bsw-paper: #ffffff; --bsw-ink: #111111; --bsw-muted: #999999; --bsw-line: #c8c8c8;
-  --bsw-accent: #111111; --bsw-reading: #d9a441;
 }
 
 /* ---- 结构层（issue 225 全量补全；逐肤自原型 build-themes.js 移植，类名映射：
@@ -20541,82 +19892,6 @@ canvas { display: block; }
 .bz-bs-skin-nordic .bz-bs-seg button { color: #7c7360; }
 .bz-bs-skin-nordic .bz-bs-seg button.on { background: #8a8371; color: #fff; }
 
-/* 黑金夜曲：碳黑墙，碳黑书脊 + 烫金书名 + hover 金辉 */
-.bz-bs-skin-noir .bz-bs-plaque { background: #0f0f12; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9); }
-.bz-bs-skin-noir .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 2px, transparent 2px 90px), linear-gradient(180deg, #101013, #08080a); }
-.bz-bs-skin-noir .bz-bs-zone { border-image: linear-gradient(180deg, #3a3222, #191510) 1; }
-.bz-bs-skin-noir .bz-bs-bookend { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
-.bz-bs-skin-noir .bz-bs-bookend::before { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
-.bz-bs-skin-noir .bz-bs-spine { background: linear-gradient(90deg, #141418, #232329 60%, #141418); color: #d9b45f; border-left: 1px solid rgba(217, 180, 95, 0.25); border-right: 1px solid rgba(217, 180, 95, 0.25); }
-.bz-bs-skin-noir .bz-bs-spine::before, .bz-bs-skin-noir .bz-bs-spine::after { background: rgba(217, 180, 95, 0.28); }
-.bz-bs-skin-noir .bz-bs-spine-title { text-shadow: 0 0 8px rgba(217, 180, 95, 0.25); }@media (hover: hover) {
-
-.bz-bs-skin-noir .bz-bs-spine:hover { box-shadow: 0 14px 26px rgba(0, 0, 0, 0.8), 0 0 18px rgba(217, 180, 95, 0.12); }
-}
-.bz-bs-skin-noir .bz-bs-spine.unread { filter: brightness(0.55); }@media (hover: hover) {
-
-.bz-bs-skin-noir .bz-bs-spine.unread:hover { filter: brightness(0.9); }
-}
-.bz-bs-skin-noir .bz-bs-wallnote, .bz-bs-skin-noir .bz-bs-hint { color: #8a7a55; }
-.bz-bs-skin-noir .bz-bs-seg button { color: #8a7a55; }
-.bz-bs-skin-noir .bz-bs-seg button.on { background: #d9b45f; color: #0b0b0d; }
-
-/* 牛皮手帐：牛皮纸墙纤维纹，深棕匾，纸质书脊 + 蜡笔顶带，标签统一歪贴 */
-.bz-bs-skin-kraft .bz-bs-plaque { background: #8a6a3e; border-color: #5f4826; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2); }
-.bz-bs-skin-kraft .bz-bs-plaque h1 { color: #f0e2c4; }
-.bz-bs-skin-kraft .bz-bs-wallpage { background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0 1px, transparent 1px 4px), linear-gradient(180deg, #c2a476, #ab8c5e); }
-.bz-bs-skin-kraft .bz-bs-taglabel { background: #e8d9b8; transform: rotate(-1.4deg); }
-.bz-bs-skin-kraft .bz-bs-zone { border-image: linear-gradient(180deg, #7c5c32, #4c3a1e) 1; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
-.bz-bs-skin-kraft .bz-bs-bookend { background: linear-gradient(90deg, #d8b985, #8a5a2b); box-shadow: none; }
-.bz-bs-skin-kraft .bz-bs-bookend::before { background: linear-gradient(90deg, #d8b985, #8a5a2b); }
-.bz-bs-skin-kraft .bz-bs-spine { background: linear-gradient(90deg, #d6bd8e, #c6ab78 60%, #d6bd8e); color: #4c3a22; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25); }
-.bz-bs-skin-kraft .bz-bs-spine::before { background: var(--c1); height: 5px; opacity: 0.85; }
-.bz-bs-skin-kraft .bz-bs-spine::after { display: none; }
-.bz-bs-skin-kraft .bz-bs-spine-title { text-shadow: none; }
-.bz-bs-skin-kraft .bz-bs-spine.unread { filter: sepia(0.2) brightness(0.8); }
-.bz-bs-skin-kraft .bz-bs-wallnote, .bz-bs-skin-kraft .bz-bs-hint { color: #6b5232; }
-.bz-bs-skin-kraft .bz-bs-seg button { color: #6b5232; }
-.bz-bs-skin-kraft .bz-bs-seg button.on { background: #8a5a2b; color: #f0e2c4; }
-
-/* 丝绒剧院：酒红丝绒竖条纹墙，金边深匾，深底金边书脊 */
-.bz-bs-skin-velvet .bz-bs-plaque { background: #2c0e18; border-color: #d9b45f; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5); }
-.bz-bs-skin-velvet .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 6px, transparent 6px 14px), linear-gradient(180deg, #451826, #2c0e18); }
-.bz-bs-skin-velvet .bz-bs-zone { border-image: linear-gradient(180deg, #5c2436, #33121d) 1; box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5); }
-.bz-bs-skin-velvet .bz-bs-bookend { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
-.bz-bs-skin-velvet .bz-bs-bookend::before { background: linear-gradient(90deg, #f0d78a, #8a6f3c); }
-.bz-bs-skin-velvet .bz-bs-spine { background: linear-gradient(90deg, #241018, #331722 60%, #241018); color: #e8c987; border-left: 2px solid rgba(217, 180, 95, 0.5); border-right: 2px solid rgba(217, 180, 95, 0.5); }
-.bz-bs-skin-velvet .bz-bs-spine::before, .bz-bs-skin-velvet .bz-bs-spine::after { background: rgba(217, 180, 95, 0.35); }
-.bz-bs-skin-velvet .bz-bs-spine.unread { filter: brightness(0.55); }
-.bz-bs-skin-velvet .bz-bs-wallnote, .bz-bs-skin-velvet .bz-bs-hint { color: #a87e6e; }
-.bz-bs-skin-velvet .bz-bs-seg button { color: #d9b45f; }
-.bz-bs-skin-velvet .bz-bs-seg button.on { background: #d9b45f; color: #2c0e18; }
-
-/* 极简黑白：纯白墙 + 细黑条头行，白匾黑框，白书脊细灰线黑字，状态靠底部状态线 */
-.bz-bs-skin-mono .bz-bs-plaque { background: #ffffff; border: 2px solid #111111; box-shadow: none; }
-.bz-bs-skin-mono .bz-bs-plaque h1 { color: #111111; }
-.bz-bs-skin-mono .bz-bs-plaque p { color: #888888; }
-.bz-bs-skin-mono .bz-bs-wallpage { background-image: none; }
-.bz-bs-skin-mono .bz-bs-header { border-bottom: 2px solid #111111; padding-bottom: 10px; }
-.bz-bs-skin-mono .bz-bs-taglabel { background: #ffffff; border: 1px solid #dddddd; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
-.bz-bs-skin-mono .bz-bs-zone { border-image: linear-gradient(180deg, #333333, #000000) 1; box-shadow: none; }
-.bz-bs-skin-mono .bz-bs-bookend { background: #111111; box-shadow: none; }
-.bz-bs-skin-mono .bz-bs-bookend::before { background: #111111; }
-.bz-bs-skin-mono .bz-bs-divider { background: #ffffff; border: none; border-left: 2px solid #111111; border-right: 2px solid #111111; color: #111111; }
-.bz-bs-skin-mono .bz-bs-spine { background: #ffffff; color: #111111; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14); border: 1px solid #c8c8c8; }
-.bz-bs-skin-mono .bz-bs-spine::before { display: none; }
-.bz-bs-skin-mono .bz-bs-spine::after { background: #111111; height: 3px; bottom: 0; opacity: 1; }
-.bz-bs-skin-mono .bz-bs-spine-title { text-shadow: none; }
-.bz-bs-skin-mono .bz-bs-spine.read .stamp { color: #111111; border-color: #111111; }
-.bz-bs-skin-mono .bz-bs-spine.reading::after { background: #d9a441; }
-.bz-bs-skin-mono .bz-bs-spine.unread { filter: none; border-style: dashed; opacity: 0.55; }@media (hover: hover) {
-
-.bz-bs-skin-mono .bz-bs-spine.unread:hover { opacity: 1; }
-}
-.bz-bs-skin-mono .bz-bs-wallnote, .bz-bs-skin-mono .bz-bs-hint { color: #999999; }
-.bz-bs-skin-mono .bz-bs-seg button { color: #111111; border-color: #111111; }
-.bz-bs-skin-mono .bz-bs-seg button.on { background: #111111; color: #ffffff; }
-.bz-bs-skin-mono .bz-bs-search { border: 1px solid #cccccc; }
-
 /* ==================== 亮暗模式变体（bz-bs-mode-light/dark；Obsidian 主题切模式） ====================
    五肤基础观感即其招牌侧（雪松白/牛皮/极简=亮，黑金/丝绒=暗），变体层只补另一侧：
    token 整组覆盖 + 墙纹/匾/书挡/排序档等结构位随肤微调；书脊主做法两模式共用（夜色墙亮书脊更出彩）。 */
@@ -20641,88 +19916,6 @@ canvas { display: block; }
 .bz-bs-skin-nordic.bz-bs-mode-dark .bz-bs-seg button { color: #a8b193; }
 .bz-bs-skin-nordic.bz-bs-mode-dark .bz-bs-seg button.on { background: #a8b193; color: #1b201a; }
 .bz-bs-skin-nordic.bz-bs-mode-dark .bz-bs-hint { color: #939b88; }
-
-/* —— 黑金夜曲 · 昼（象牙墙：碳黑书脊金字不变，墙转象牙纸感） —— */
-.bz-bs-skin-noir.bz-bs-mode-light {
-  --bz-surface-0: #efe9dc; --bz-surface-1: #f5f0e4; --bz-surface-2: #fbf8ef; --bz-surface-3: #f5f0e4; --bz-surface-4: #fffdf6;
-  --bz-surface-hover: #eee7d8; --bz-surface-active: #e4dcc9;
-  --bz-text-1: #262115; --bz-text-2: #6b6250; --bz-text-3: #99907a; --bz-text-invert: #fbf8ef;
-  --bz-brand: #a8842f; --bz-brand-hover: #bd9740; --bz-brand-soft: rgba(168, 132, 47, 0.14); --bz-on-brand: #ffffff;
-  --bz-border: #d8d0ba; --bz-border-strong: #b8ab88; --bz-border-hover: #9a8c66;
-  --bsw-wall: #efe9dc; --bsw-wall-dark: #e2d9c4; --bsw-shelf: #cfc4a8; --bsw-brass: #a8842f;
-  --bsw-paper: #fbf8ef; --bsw-ink: #262115; --bsw-muted: #8a7f66; --bsw-line: #d8d0ba;
-  --bsw-accent: #a8842f; --bsw-reading: #a8842f;
-}
-.bz-bs-skin-noir.bz-bs-mode-light .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 90px), linear-gradient(180deg, #f2ecdf, #e6ddc9); }
-.bz-bs-skin-noir.bz-bs-mode-light .bz-bs-zone { border-image: linear-gradient(180deg, #b8ab88, #8a7f66) 1; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15); }
-
-/* —— 牛皮手帐 · 夜（深夜皮帐：深咖啡皮墙，牛皮纸签/纸脊不变） —— */
-.bz-bs-skin-kraft.bz-bs-mode-dark {
-  --bz-surface-0: #2b2114; --bz-surface-1: #332718; --bz-surface-2: #3d2f1d; --bz-surface-3: #463622; --bz-surface-4: #524028;
-  --bz-surface-hover: #463622; --bz-surface-active: #524028;
-  --bz-text-1: #efe0c2; --bz-text-2: #c2a878; --bz-text-3: #8f7a56; --bz-text-invert: #332718;
-  --bz-brand: #d05a3d; --bz-brand-hover: #dd6a4c; --bz-brand-soft: rgba(208, 90, 61, 0.18); --bz-on-brand: #ffffff;
-  --bz-border: rgba(194, 168, 120, 0.3); --bz-border-strong: rgba(194, 168, 120, 0.55); --bz-border-hover: rgba(194, 168, 120, 0.75);
-  --bsw-wall: #332718; --bsw-wall-dark: #241b0f; --bsw-shelf: #241a0e; --bsw-brass: #c2a878;
-  --bsw-paper: #d6bd8e; --bsw-ink: #3a2c18; --bsw-muted: #a58c62; --bsw-line: rgba(194, 168, 120, 0.35);
-  --bsw-accent: #d05a3d; --bsw-reading: #d9a441;
-}
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-plaque { background: #241b0f; border-color: #5a4526; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.45); }
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-wallpage { background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px), linear-gradient(180deg, #3d2f1d, #2a1f12); }
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-zone { border-image: linear-gradient(180deg, #5a4526, #241a0e) 1; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); }
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-bookend { background: linear-gradient(90deg, #c2a878, #6b5232); box-shadow: none; }
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-bookend::before { background: linear-gradient(90deg, #c2a878, #6b5232); }
-.bz-bs-skin-kraft.bz-bs-mode-dark .bz-bs-seg button { color: #c2a878; }
-
-/* —— 丝绒剧院 · 日场（奶油日场：奶油墙，酒红书脊金边不变） —— */
-.bz-bs-skin-velvet.bz-bs-mode-light {
-  --bz-surface-0: #efe4d4; --bz-surface-1: #f5ecdd; --bz-surface-2: #fbf5e9; --bz-surface-3: #f5ecdd; --bz-surface-4: #fffaf0;
-  --bz-surface-hover: #ece1cf; --bz-surface-active: #e1d3bc;
-  --bz-text-1: #33202a; --bz-text-2: #74585f; --bz-text-3: #a08890; --bz-text-invert: #fbf5e9;
-  --bz-brand: #8a2f4a; --bz-brand-hover: #9c3c58; --bz-brand-soft: rgba(138, 47, 74, 0.12); --bz-on-brand: #ffffff;
-  --bz-border: #d9c9bd; --bz-border-strong: #bb9f92; --bz-border-hover: #9c7f72;
-  --bsw-wall: #f0e6d5; --bsw-wall-dark: #e0d2ba; --bsw-shelf: #c6b39a; --bsw-brass: #a8853f;
-  --bsw-paper: #fbf5e9; --bsw-ink: #3a2430; --bsw-muted: #95808a; --bsw-line: #d9c9bd;
-  --bsw-accent: #8a2f4a; --bsw-reading: #b98a2f;
-}
-.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-wallpage { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 6px, transparent 6px 14px), linear-gradient(180deg, #f2e8d7, #e4d5c0); }
-.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-zone { border-image: linear-gradient(180deg, #a8853f, #7c5c38) 1; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18); }
-.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-seg button { color: #8a6a3e; }
-.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-seg button.on { background: #a8853f; color: #fffaf0; }
-.bz-bs-skin-velvet.bz-bs-mode-light .bz-bs-hint { color: #95808a; }
-
-/* —— 极简黑白 · 夜（反转：黑墙黑纸白脊，黑白互换） —— */
-.bz-bs-skin-mono.bz-bs-mode-dark {
-  --bz-surface-0: #111111; --bz-surface-1: #161616; --bz-surface-2: #1c1c1c; --bz-surface-3: #222222; --bz-surface-4: #2a2a2a;
-  --bz-surface-hover: #222222; --bz-surface-active: #2a2a2a;
-  --bz-text-1: #f0f0f0; --bz-text-2: #aaaaaa; --bz-text-3: #777777; --bz-text-invert: #111111;
-  --bz-brand: #f0f0f0; --bz-brand-hover: #ffffff; --bz-brand-soft: rgba(255, 255, 255, 0.1); --bz-on-brand: #111111;
-  --bz-border: #333333; --bz-border-strong: #eeeeee; --bz-border-hover: #dddddd;
-  --bsw-wall: #161616; --bsw-wall-dark: #050505; --bsw-shelf: #2e2e2e; --bsw-brass: #eeeeee;
-  --bsw-paper: #1a1a1a; --bsw-ink: #f0f0f0; --bsw-muted: #888888; --bsw-line: #333333;
-  --bsw-accent: #f0f0f0; --bsw-reading: #d9a441;
-}
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque { background: #111111; border: 2px solid #eeeeee; box-shadow: none; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque h1 { color: #f0f0f0; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque p { color: #888888; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-wallpage { background-image: none; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-header { border-bottom: 2px solid #eeeeee; padding-bottom: 10px; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-taglabel { background: #1a1a1a; border: 1px solid #333333; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-zone { border-image: linear-gradient(180deg, #444444, #000000) 1; box-shadow: none; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-bookend { background: #eeeeee; box-shadow: none; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-bookend::before { background: #eeeeee; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-divider { background: #111111; border: none; border-left: 2px solid #eeeeee; border-right: 2px solid #eeeeee; color: #eeeeee; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine { background: #111111; color: #f0f0f0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); border: 1px solid #333333; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine::after { background: #eeeeee; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.read .stamp { color: #f0f0f0; border-color: #f0f0f0; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.reading::after { background: #d9a441; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.unread { filter: none; border-style: dashed; opacity: 0.6; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-wallnote, .bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-hint { color: #888888; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg { border-color: #eeeeee; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg button { color: #f0f0f0; border-color: #eeeeee; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg button.on { background: #f0f0f0; color: #111111; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search { background: #1a1a1a; color: #f0f0f0; border: 1px solid #333333; }
-.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search::placeholder { color: #777777; }
 
 /* ==================== 动效层辅助（src/bookshelf/motion.ts 注入件；bz-bsm-*） ====================
    只服务 motion.ts 的注入表现件：绝对定位 / 不吃事件 / aria-hidden / 演出完自移除，
@@ -20758,20 +19951,12 @@ canvas { display: block; }
 
 /* ==================== 设置页皮肤预览（.bz-cardpick-prev 变体；全局作用域——
    域 CSS 经 esbuild 聚合为全局样式，但预览卡不吃面板皮肤类，故用顶层 .bz-skinprev-bs-* 独立成画；
-   预览 = 各肤招牌侧（亮肤即亮、暗肤即暗），亮暗变体不单独出预览卡） ==================== */
+   预览 = 各肤招牌侧（亮肤即亮、暗肤即暗），亮暗变体不单独出预览卡）。
+   **首套的预览留这里；四套远端的预览随各自皮肤文件下发**（ADR-0199 决策 6），下面这组
+   公共壳（竖条定位）特意保留——它的选择器把五肤都列上了，源恒在，远端皮不必各带一份。 */
 .bz-skinprev-bs-nordic { background: linear-gradient(180deg, #ede6d6, #e2dac8); }
 .bz-skinprev-bs-nordic::before { background: linear-gradient(180deg, #8f4a3a 0 7px, #f6f2e7 7px); border: 1px solid #ded6c2; }
 .bz-skinprev-bs-nordic::after { background: #f6f2e7; border: 1px solid #ded6c2; }
-.bz-skinprev-bs-noir { background: linear-gradient(180deg, #101013, #08080a); }
-.bz-skinprev-bs-noir::before, .bz-skinprev-bs-noir::after { background: linear-gradient(90deg, #141418, #232329); border: 1px solid rgba(217, 180, 95, 0.45); }
-.bz-skinprev-bs-kraft { background: linear-gradient(180deg, #c2a476, #ab8c5e); }
-.bz-skinprev-bs-kraft::before { background: linear-gradient(180deg, #c04a2f 0 4px, #d6bd8e 4px); transform: rotate(-3deg); }
-.bz-skinprev-bs-kraft::after { background: #c6ab78; transform: rotate(2deg); }
-.bz-skinprev-bs-velvet { background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.22) 0 4px, transparent 4px 9px), linear-gradient(180deg, #451826, #2c0e18); }
-.bz-skinprev-bs-velvet::before, .bz-skinprev-bs-velvet::after { background: linear-gradient(90deg, #241018, #331722); border: 1px solid rgba(217, 180, 95, 0.55); }
-.bz-skinprev-bs-mono { background: #fafafa; }
-.bz-skinprev-bs-mono::before { background: #ffffff; border: 1px solid #c8c8c8; border-bottom: 3px solid #111111; }
-.bz-skinprev-bs-mono::after { background: #ffffff; border: 1px dashed #c8c8c8; opacity: 0.7; }
 /* 迷你书脊公共壳：两根竖条立在墙纸前 */
 .bz-skinprev-bs-nordic::before, .bz-skinprev-bs-noir::before, .bz-skinprev-bs-kraft::before,
 .bz-skinprev-bs-velvet::before, .bz-skinprev-bs-mono::before {
@@ -25479,7 +24664,8 @@ canvas { display: block; }
 /**
  * smartcat 域样式（小橘陪伴猫）
  * 用户拍板：css 文件放到域中——构建时由 esbuild.config.mjs 合并进产物 styles.css。
- * 铁律 9 收敛：仅在 styles.css（含域内文件合并）静态定义，禁运行时注入。
+ * 样式静态单源，禁运行时注入——**唯一例外**是远端皮肤包（core/skin-pack.ts 注入，
+ * AGENTS.md 铁律 4 / ADR-0199）；皮肤本身在 src/smartcat/skins/<id>.css，不进构建聚合。
  */
 
 
@@ -25570,144 +24756,13 @@ canvas { display: block; }
   animation: tailSway 3s ease-in-out infinite;
 }
 
-/* 基础皮肤色（原 getBasicSkin 5 色；渐变 + 耳尾同色） */
+/* 基础皮肤色 = 内置首套「橘猫」（原 getBasicSkin 默认色；渐变 + 耳尾同色）。
+   其余 12 套（灰/黑/白/三花/霓虹/银河/液态金属/火焰/水晶/赛博/彩虹/全息）已远端化：
+   源在 src/smartcat/skins/<id>.css，启动时同步（ADR-0199）。 */
 #smart-companion-cat .cat-body {
   background: linear-gradient(135deg, #FF6B35, #F7931E);
 }
-#smart-companion-cat.skin-gray .cat-body { background: linear-gradient(135deg, #95A5A6, #7F8C8D); }
-#smart-companion-cat.skin-black .cat-body { background: linear-gradient(135deg, #2C3E50, #34495E); }
-#smart-companion-cat.skin-white .cat-body { background: linear-gradient(135deg, #ECF0F1, #BDC3C7); }
-#smart-companion-cat.skin-calico .cat-body { background: linear-gradient(135deg, #E74C3C, #F39C12); }
-#smart-companion-cat.skin-gray .cat-ear, #smart-companion-cat.skin-gray .cat-tail { background: #95A5A6; }
-#smart-companion-cat.skin-black .cat-ear, #smart-companion-cat.skin-black .cat-tail { background: #2C3E50; }
-#smart-companion-cat.skin-white .cat-ear, #smart-companion-cat.skin-white .cat-tail { background: #ECF0F1; }
-#smart-companion-cat.skin-calico .cat-ear, #smart-companion-cat.skin-calico .cat-tail { background: #E74C3C; }
 #smart-companion-cat .cat-ear, #smart-companion-cat .cat-tail { background: #FF6B35; }
-
-/* 高级皮肤（原 AppearanceManager.advancedSkins：渐变/辉光/动画；风格静态化） */
-#smart-companion-cat.skin-neon .cat-body {
-  background: linear-gradient(135deg, #00FFFF, #FF00FF);
-  box-shadow: 0 0 20px #00FFFF, 0 0 40px #FF00FF, 0 0 60px #00FFFF;
-  animation: neonPulse 2s ease-in-out infinite alternate;
-}
-#smart-companion-cat.skin-neon .cat-ear { background: #00FFFF; box-shadow: 0 0 10px #00FFFF; }
-#smart-companion-cat.skin-neon .cat-tail { background: #FF00FF; box-shadow: 0 0 15px #FF00FF; animation: neonTail 3s ease-in-out infinite; }
-#smart-companion-cat.skin-galaxy .cat-body {
-  background: radial-gradient(circle at 30% 30%, #1a1a2e, #16213e, #0f3460);
-  position: relative;
-  overflow: hidden;
-}
-#smart-companion-cat.skin-galaxy .cat-ear { background: linear-gradient(45deg, #533483, #e94560); }
-#smart-companion-cat.skin-galaxy .cat-tail { background: linear-gradient(90deg, #533483, #e94560); animation: galaxyTail 4s ease-in-out infinite; }
-#smart-companion-cat.skin-galaxy .cat-body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 20%, #fff 1px, transparent 1px),
-    radial-gradient(circle at 80% 30%, #fff 1px, transparent 1px),
-    radial-gradient(circle at 40% 70%, #fff 1px, transparent 1px),
-    radial-gradient(circle at 60% 80%, #fff 2px, transparent 2px);
-  background-size: 50px 50px;
-  animation: twinkle 8s linear infinite;
-}
-#smart-companion-cat.skin-liquidMetal .cat-body {
-  background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%);
-  background-size: 400% 400%;
-  animation: liquidFlow 6s ease-in-out infinite;
-  position: relative;
-  overflow: hidden;
-}
-#smart-companion-cat.skin-liquidMetal .cat-ear { background: linear-gradient(45deg, #bdc3c7, #95a5a6); box-shadow: inset 0 0 10px rgba(255,255,255,0.5); }
-#smart-companion-cat.skin-liquidMetal .cat-tail { background: linear-gradient(90deg, #bdc3c7, #95a5a6); animation: metalTail 3s ease-in-out infinite; }
-#smart-companion-cat.skin-liquidMetal .cat-body::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-  animation: shine 3s ease-in-out infinite;
-}
-#smart-companion-cat.skin-fire .cat-body {
-  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #ff8c00 50%, #ff4500 75%, #dc143c 100%);
-  background-size: 200% 200%;
-  animation: fireBurn 4s ease-in-out infinite;
-  position: relative;
-}
-#smart-companion-cat.skin-fire .cat-ear { background: linear-gradient(45deg, #ff6b35, #ff4500); box-shadow: 0 0 15px #ff6b35; }
-#smart-companion-cat.skin-fire .cat-tail { background: linear-gradient(90deg, #ff6b35, #ff4500); animation: fireTail 2s ease-in-out infinite; }
-#smart-companion-cat.skin-fire .cat-body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 30% 20%, #ff8c00 2px, transparent 2px),
-    radial-gradient(circle at 70% 30%, #ff4500 3px, transparent 3px),
-    radial-gradient(circle at 40% 70%, #dc143c 2px, transparent 2px);
-  animation: emberFloat 5s ease-in-out infinite;
-}
-#smart-companion-cat.skin-crystal .cat-body {
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.2);
-  position: relative;
-  overflow: hidden;
-}
-#smart-companion-cat.skin-crystal .cat-ear { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
-#smart-companion-cat.skin-crystal .cat-tail { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); animation: crystalTail 4s ease-in-out infinite; }
-#smart-companion-cat.skin-crystal .cat-body::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
-  animation: crystalShine 6s ease-in-out infinite;
-}
-#smart-companion-cat.skin-cyberpunk .cat-body {
-  background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%);
-  background-size: 300% 300%;
-  animation: cyberGlitch 5s ease-in-out infinite;
-  position: relative;
-  overflow: hidden;
-}
-#smart-companion-cat.skin-cyberpunk .cat-ear { background: #00ff88; box-shadow: 0 0 10px #00ff88, 0 0 20px #0088ff; }
-#smart-companion-cat.skin-cyberpunk .cat-tail { background: linear-gradient(90deg, #00ff88, #0088ff); animation: cyberTail 3s ease-in-out infinite; }
-#smart-companion-cat.skin-cyberpunk .cat-body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(0,255,136,0.1) 2px, rgba(0,255,136,0.1) 4px),
-    repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,136,255,0.1) 2px, rgba(0,136,255,0.1) 4px);
-  animation: gridScan 4s linear infinite;
-}
-#smart-companion-cat.skin-rainbow .cat-body {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%);
-  background-size: 400% 400%;
-  animation: rainbowFlow 8s ease-in-out infinite;
-}
-#smart-companion-cat.skin-rainbow .cat-ear { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
-#smart-companion-cat.skin-rainbow .cat-tail { background: linear-gradient(90deg, #ff6b6b, #4ecdc4); animation: rainbowTail 4s ease-in-out infinite; }
-#smart-companion-cat.skin-hologram .cat-body {
-  background: linear-gradient(135deg, rgba(0,255,255,0.3) 0%, rgba(255,0,255,0.3) 50%, rgba(255,255,0,0.3) 100%);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255,255,255,0.1);
-  position: relative;
-  overflow: hidden;
-}
-#smart-companion-cat.skin-hologram .cat-ear { background: rgba(0,255,255,0.5); backdrop-filter: blur(5px); }
-#smart-companion-cat.skin-hologram .cat-tail { background: rgba(255,0,255,0.5); animation: hologramTail 3s ease-in-out infinite; }
-#smart-companion-cat.skin-hologram .cat-body::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  animation: hologramScan 3s ease-in-out infinite;
-}
 
 /* 思考指示器（原 thinking-indicator：顶部绿点）；z 为猫层叠上下文内局部小档（压过气泡容器） */
 #smart-companion-cat .thinking-indicator {
@@ -25913,18 +24968,6 @@ canvas { display: block; }
 /* 皮肤平铺选择器（设置弹窗「外观」：13 皮肤平铺，色块对应各皮肤主渐变） */
 /* 皮肤色块（choiceCards prevClass）：面板 .bz-sp-mini 与 ⚙️ 卡片 .bz-cardpick-prev 同类挂载 */
 .bz-sp-mini.bz-sc-prev-orange, .bz-cardpick-prev.bz-sc-prev-orange { background: linear-gradient(135deg, #FF6B35, #F7931E);; }
-.bz-sp-mini.bz-sc-prev-gray, .bz-cardpick-prev.bz-sc-prev-gray { background: linear-gradient(135deg, #95A5A6, #7F8C8D);; }
-.bz-sp-mini.bz-sc-prev-black, .bz-cardpick-prev.bz-sc-prev-black { background: linear-gradient(135deg, #2C3E50, #34495E);; }
-.bz-sp-mini.bz-sc-prev-white, .bz-cardpick-prev.bz-sc-prev-white { background: linear-gradient(135deg, #ECF0F1, #BDC3C7);; }
-.bz-sp-mini.bz-sc-prev-calico, .bz-cardpick-prev.bz-sc-prev-calico { background: linear-gradient(135deg, #E74C3C, #F39C12);; }
-.bz-sp-mini.bz-sc-prev-neon, .bz-cardpick-prev.bz-sc-prev-neon { background: linear-gradient(135deg, #00FFFF, #FF00FF);; }
-.bz-sp-mini.bz-sc-prev-galaxy, .bz-cardpick-prev.bz-sc-prev-galaxy { background: radial-gradient(circle at 30% 30%, #1a1a2e, #16213e, #0f3460);; }
-.bz-sp-mini.bz-sc-prev-liquidMetal, .bz-cardpick-prev.bz-sc-prev-liquidMetal { background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%);; }
-.bz-sp-mini.bz-sc-prev-fire, .bz-cardpick-prev.bz-sc-prev-fire { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #ff8c00 50%, #ff4500 75%, #dc143c 100%);; }
-.bz-sp-mini.bz-sc-prev-crystal, .bz-cardpick-prev.bz-sc-prev-crystal { background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(179,217,255,0.5));; }
-.bz-sp-mini.bz-sc-prev-cyberpunk, .bz-cardpick-prev.bz-sc-prev-cyberpunk { background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%);; }
-.bz-sp-mini.bz-sc-prev-rainbow, .bz-cardpick-prev.bz-sc-prev-rainbow { background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%);; }
-.bz-sp-mini.bz-sc-prev-hologram, .bz-cardpick-prev.bz-sc-prev-hologram { background: linear-gradient(135deg, rgba(0,255,255,0.65), rgba(255,0,255,0.65), rgba(255,255,0,0.65));; }
 
 /* keyframes（原 SmartCatStyles.js 156 个搬运核心；移动/语音/基础/皮肤动画） */
 @keyframes catFloat {
@@ -26047,85 +25090,6 @@ canvas { display: block; }
 @keyframes surpriseJump {
   0%, 100% { transform: translateY(0); }
   40% { transform: translateY(-10px); }
-}
-@keyframes neonPulse {
-  from { filter: brightness(1); }
-  to { filter: brightness(1.4); }
-}
-@keyframes neonTail {
-  0%, 100% { transform: rotate(0deg); opacity: 0.8; }
-  50% { transform: rotate(-20deg); opacity: 1; }
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-@keyframes galaxyTail {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(25deg); }
-}
-@keyframes liquidFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes shine {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(50%); }
-}
-@keyframes metalTail {
-  0%, 100% { transform: rotate(0deg); filter: brightness(1); }
-  50% { transform: rotate(-18deg); filter: brightness(1.2); }
-}
-@keyframes fireBurn {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes emberFloat {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-@keyframes fireTail {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-22deg); }
-}
-@keyframes crystalShine {
-  0% { transform: translateX(-60%); }
-  100% { transform: translateX(60%); }
-}
-@keyframes crystalTail {
-  0%, 100% { transform: rotate(0deg); opacity: 0.7; }
-  50% { transform: rotate(20deg); opacity: 1; }
-}
-@keyframes cyberGlitch {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-@keyframes gridScan {
-  0% { background-position: 0 0; }
-  100% { background-position: 40px 40px; }
-}
-@keyframes cyberTail {
-  0%, 100% { transform: rotate(0deg); filter: hue-rotate(0deg); }
-  50% { transform: rotate(-20deg); filter: hue-rotate(90deg); }
-}
-@keyframes rainbowFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes rainbowTail {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(25deg); }
-}
-@keyframes hologramScan {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-@keyframes hologramTail {
-  0%, 100% { transform: rotate(0deg); opacity: 0.8; }
-  50% { transform: rotate(20deg); opacity: 1; }
 }
 
 /* 72 小动作 keyframes（原 generateAnimationCSS 引用全集；轻量通用实现） */
