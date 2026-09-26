@@ -1,0 +1,36 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/crystal（水晶透明）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/crystal.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+@keyframes crystalShine {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(60%); }
+}
+@keyframes crystalTail {
+  0%, 100% { transform: rotate(0deg); opacity: 0.7; }
+  50% { transform: rotate(20deg); opacity: 1; }
+}
+#smart-companion-cat.skin-crystal .cat-body {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-crystal .cat-ear { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
+#smart-companion-cat.skin-crystal .cat-tail { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); animation: crystalTail 4s ease-in-out infinite; }
+#smart-companion-cat.skin-crystal .cat-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
+  animation: crystalShine 6s ease-in-out infinite;
+}
+.bz-sp-mini.bz-sc-prev-crystal, .bz-cardpick-prev.bz-sc-prev-crystal { background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(179,217,255,0.5));; }

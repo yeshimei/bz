@@ -1,0 +1,28 @@
+/* ============================================================
+ * bz 皮肤包 · smartcat/rainbow（彩虹渐变）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/smartcat/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/smartcat/rainbow.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+@keyframes rainbowFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes rainbowTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(25deg); }
+}
+#smart-companion-cat.skin-rainbow .cat-body {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%);
+  background-size: 400% 400%;
+  animation: rainbowFlow 8s ease-in-out infinite;
+}
+#smart-companion-cat.skin-rainbow .cat-ear { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
+#smart-companion-cat.skin-rainbow .cat-tail { background: linear-gradient(90deg, #ff6b6b, #4ecdc4); animation: rainbowTail 4s ease-in-out infinite; }
+.bz-sp-mini.bz-sc-prev-rainbow, .bz-cardpick-prev.bz-sc-prev-rainbow { background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%);; }

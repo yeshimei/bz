@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/sand（暖沙）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/sand.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 6 暖沙 sand */
+    --pz-sand-l:#f8f2e8; --pz-sand-d:#26221c; --pz-sand-a:#c27a48; --pz-sand-ad:#e0a373;
+    --pz-sand-fgd:#f1e9dc; --pz-sand-m:#7d6a55; --pz-sand-md:#b8a692; --pz-sand-f:#a8947c; --pz-sand-fd:#8d7f6d;
+    --pz-sand-bd:#322c25; --pz-sand-bfd:#dcd2c4;
+}
+
+/* 6 暖沙 · sand */
+    #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-l); --pz-accent:var(--pz-sand-a); --pz-muted:var(--pz-sand-m); --pz-faint:var(--pz-sand-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-sand { --pz-bg:var(--pz-sand-d); --pz-accent:var(--pz-sand-ad); --pz-fg:var(--pz-sand-fgd); --pz-muted:var(--pz-sand-md); --pz-faint:var(--pz-sand-fd); --pz-btn:var(--pz-sand-bd); --pz-btn-fg:var(--pz-sand-bfd); --pz-on-accent:var(--pz-sand-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-sand {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-sand-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-sand-l) 0 50%, var(--pz-sand-d) 50% 100%);
+  border-radius: 3px;
+}

@@ -1,0 +1,83 @@
+/* ============================================================
+ * bz 皮肤包 · bookshelf/mono（极简黑白）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/bookshelf/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/bookshelf/mono.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+.bz-bs-skin-mono {
+  --bz-surface-0: #f0f0f0; --bz-surface-1: #fafafa; --bz-surface-2: #ffffff; --bz-surface-3: #fafafa; --bz-surface-4: #ffffff;
+  --bz-surface-hover: #f2f2f2; --bz-surface-active: #e8e8e8;
+  --bz-text-1: #111111; --bz-text-2: #555555; --bz-text-3: #999999; --bz-text-invert: #ffffff;
+  --bz-brand: #111111; --bz-brand-hover: #333333; --bz-brand-soft: rgba(17, 17, 17, 0.08); --bz-on-brand: #ffffff;
+  --bz-border: #c8c8c8; --bz-border-strong: #111111; --bz-border-hover: #111111;
+  --bsw-wall: #fafafa; --bsw-wall-dark: #ffffff; --bsw-shelf: #111111; --bsw-brass: #111111;
+  --bsw-paper: #ffffff; --bsw-ink: #111111; --bsw-muted: #999999; --bsw-line: #c8c8c8;
+  --bsw-accent: #111111; --bsw-reading: #d9a441;
+}
+
+/* 极简黑白：纯白墙 + 细黑条头行，白匾黑框，白书脊细灰线黑字，状态靠底部状态线 */
+.bz-bs-skin-mono .bz-bs-plaque { background: #ffffff; border: 2px solid #111111; box-shadow: none; }
+.bz-bs-skin-mono .bz-bs-plaque h1 { color: #111111; }
+.bz-bs-skin-mono .bz-bs-plaque p { color: #888888; }
+.bz-bs-skin-mono .bz-bs-wallpage { background-image: none; }
+.bz-bs-skin-mono .bz-bs-header { border-bottom: 2px solid #111111; padding-bottom: 10px; }
+.bz-bs-skin-mono .bz-bs-taglabel { background: #ffffff; border: 1px solid #dddddd; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.bz-bs-skin-mono .bz-bs-zone { border-image: linear-gradient(180deg, #333333, #000000) 1; box-shadow: none; }
+.bz-bs-skin-mono .bz-bs-bookend { background: #111111; box-shadow: none; }
+.bz-bs-skin-mono .bz-bs-bookend::before { background: #111111; }
+.bz-bs-skin-mono .bz-bs-divider { background: #ffffff; border: none; border-left: 2px solid #111111; border-right: 2px solid #111111; color: #111111; }
+.bz-bs-skin-mono .bz-bs-spine { background: #ffffff; color: #111111; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14); border: 1px solid #c8c8c8; }
+.bz-bs-skin-mono .bz-bs-spine::before { display: none; }
+.bz-bs-skin-mono .bz-bs-spine::after { background: #111111; height: 3px; bottom: 0; opacity: 1; }
+.bz-bs-skin-mono .bz-bs-spine-title { text-shadow: none; }
+.bz-bs-skin-mono .bz-bs-spine.read .stamp { color: #111111; border-color: #111111; }
+.bz-bs-skin-mono .bz-bs-spine.reading::after { background: #d9a441; }
+.bz-bs-skin-mono .bz-bs-spine.unread { filter: none; border-style: dashed; opacity: 0.55; }@media (hover: hover) {
+
+.bz-bs-skin-mono .bz-bs-spine.unread:hover { opacity: 1; }
+}
+.bz-bs-skin-mono .bz-bs-wallnote, .bz-bs-skin-mono .bz-bs-hint { color: #999999; }
+.bz-bs-skin-mono .bz-bs-seg button { color: #111111; border-color: #111111; }
+.bz-bs-skin-mono .bz-bs-seg button.on { background: #111111; color: #ffffff; }
+.bz-bs-skin-mono .bz-bs-search { border: 1px solid #cccccc; }
+
+/* —— 极简黑白 · 夜（反转：黑墙黑纸白脊，黑白互换） —— */
+.bz-bs-skin-mono.bz-bs-mode-dark {
+  --bz-surface-0: #111111; --bz-surface-1: #161616; --bz-surface-2: #1c1c1c; --bz-surface-3: #222222; --bz-surface-4: #2a2a2a;
+  --bz-surface-hover: #222222; --bz-surface-active: #2a2a2a;
+  --bz-text-1: #f0f0f0; --bz-text-2: #aaaaaa; --bz-text-3: #777777; --bz-text-invert: #111111;
+  --bz-brand: #f0f0f0; --bz-brand-hover: #ffffff; --bz-brand-soft: rgba(255, 255, 255, 0.1); --bz-on-brand: #111111;
+  --bz-border: #333333; --bz-border-strong: #eeeeee; --bz-border-hover: #dddddd;
+  --bsw-wall: #161616; --bsw-wall-dark: #050505; --bsw-shelf: #2e2e2e; --bsw-brass: #eeeeee;
+  --bsw-paper: #1a1a1a; --bsw-ink: #f0f0f0; --bsw-muted: #888888; --bsw-line: #333333;
+  --bsw-accent: #f0f0f0; --bsw-reading: #d9a441;
+}
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque { background: #111111; border: 2px solid #eeeeee; box-shadow: none; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque h1 { color: #f0f0f0; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-plaque p { color: #888888; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-wallpage { background-image: none; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-header { border-bottom: 2px solid #eeeeee; padding-bottom: 10px; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-taglabel { background: #1a1a1a; border: 1px solid #333333; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-zone { border-image: linear-gradient(180deg, #444444, #000000) 1; box-shadow: none; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-bookend { background: #eeeeee; box-shadow: none; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-bookend::before { background: #eeeeee; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-divider { background: #111111; border: none; border-left: 2px solid #eeeeee; border-right: 2px solid #eeeeee; color: #eeeeee; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine { background: #111111; color: #f0f0f0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); border: 1px solid #333333; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine::after { background: #eeeeee; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.read .stamp { color: #f0f0f0; border-color: #f0f0f0; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.reading::after { background: #d9a441; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-spine.unread { filter: none; border-style: dashed; opacity: 0.6; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-wallnote, .bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-hint { color: #888888; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg { border-color: #eeeeee; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg button { color: #f0f0f0; border-color: #eeeeee; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-seg button.on { background: #f0f0f0; color: #111111; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search { background: #1a1a1a; color: #f0f0f0; border: 1px solid #333333; }
+.bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search::placeholder { color: #777777; }
+.bz-skinprev-bs-mono { background: #fafafa; }
+.bz-skinprev-bs-mono::before { background: #ffffff; border: 1px solid #c8c8c8; border-bottom: 3px solid #111111; }
+.bz-skinprev-bs-mono::after { background: #ffffff; border: 1px dashed #c8c8c8; opacity: 0.7; }

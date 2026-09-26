@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/mist（海雾）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/mist.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 5 海雾 mist */
+    --pz-mist-l:#f1f4f8; --pz-mist-d:#1e2229; --pz-mist-a:#3d7bd6; --pz-mist-ad:#6fa0ef;
+    --pz-mist-fgd:#e6ecf5; --pz-mist-m:#66768f; --pz-mist-md:#9aa9c2; --pz-mist-f:#96a3b6; --pz-mist-fd:#78859c;
+    --pz-mist-bd:#272c35; --pz-mist-bfd:#d2dbe9;
+}
+
+/* 5 海雾 · mist */
+    #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-l); --pz-accent:var(--pz-mist-a); --pz-muted:var(--pz-mist-m); --pz-faint:var(--pz-mist-f); --pz-on-accent:#fff; }
+    .theme-dark #pomodoro-popup.pomodoro-skin-mist { --pz-bg:var(--pz-mist-d); --pz-accent:var(--pz-mist-ad); --pz-fg:var(--pz-mist-fgd); --pz-muted:var(--pz-mist-md); --pz-faint:var(--pz-mist-fd); --pz-btn:var(--pz-mist-bd); --pz-btn-fg:var(--pz-mist-bfd); --pz-on-accent:var(--pz-mist-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-mist {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-mist-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-mist-l) 0 50%, var(--pz-mist-d) 50% 100%);
+  border-radius: 3px;
+}

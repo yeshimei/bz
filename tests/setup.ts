@@ -39,6 +39,16 @@ if (typeof HTMLElement !== 'undefined' && !(HTMLElement.prototype as any).create
   (HTMLElement.prototype as any).empty = function () {
     this.innerHTML = '';
   };
+  (HTMLElement.prototype as any).createEl = function (tag: string, opts: any = {}) {
+    const el = document.createElement(tag);
+    if (opts.cls) el.className = opts.cls;
+    if (opts.text) el.textContent = opts.text;
+    this.appendChild(el);
+    return el;
+  };
+  (HTMLElement.prototype as any).createSpan = function (opts: any = {}) {
+    return (this as any).createEl('span', opts);
+  };
   (HTMLElement.prototype as any).addClass = function (c: string) {
     this.classList.add(c);
   };

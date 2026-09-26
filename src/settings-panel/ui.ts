@@ -82,54 +82,10 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       desc: '各域数据文件的只读体检',
       onClick: () => void openDataCheckup(getApp()),
     });
-
-    // 「数据资产」组（issue 478）：远端可下载的数据表——当前只有归物本的分类表。
-    // 与手册/日志那种「打开即后台静默核对」不同：用户拍板（2026-09-27）分类表**只在点按钮时联网**
-    // （「设置面板里自行下载」原话）。状态从本地文件现推，不新增设置键；组数/条数现算不硬编码，
-    // 表加厚时这里自动跟上。失败不动本地已有的表（downloadCategoryTable 内部按既有策略覆盖）。
-    const { loadCategoryTable, downloadCategoryTable } = await import('../core/category-table');
-    const { notice, notifyActionError } = await import('../core/notice');
-    const { setRowBtnState, armRowBtnReset, shortFailReason } = await import('../core/settings-btn-state');
-    /** 状态行文案（未下载 / 已下载 v<版本> · N 组 M 条） */
-    const catalogDesc = (t: Awaited<ReturnType<typeof loadCategoryTable>>): string => {
-      const items = t ? t.groups.reduce((n, g) => n + g.items.length, 0) : 0;
-      const state = t ? `已下载 · v${t.version} · ${t.groups.length} 组 ${items} 条` : '未下载';
-      return `${state} · 供归物本 AI 归类与分类选择器使用`;
-    };
-    const catalogNow = await loadCategoryTable(getApp());
-    const runCatalogDownload = async (ctx: unknown): Promise<void> => {
-      const rowEl = (ctx as { rowEl?: HTMLElement } | undefined)?.rowEl;
-      const btn = rowEl?.querySelector<HTMLElement>('.bz-sp-btn') ?? undefined;
-      const idleLabel = catalogNow ? '重新下载' : '下载';
-      setRowBtnState(btn, 'busy', idleLabel); // busy 期间禁点 = 防重入
-      try {
-        await downloadCategoryTable(getApp());
-        const t = await loadCategoryTable(getApp());
-        const items = t ? t.groups.reduce((n, g) => n + g.items.length, 0) : 0;
-        notice(`归物分类表已更新（${t?.groups.length ?? 0} 组 ${items} 条）`, 'success');
-        // 就地刷新状态行与按钮文案（不整页重渲：面板重开时 schema 会重算，两条路都对）
-        const descEl = rowEl?.querySelector<HTMLElement>('.bz-sp-set-desc');
-        if (descEl) descEl.textContent = catalogDesc(t);
-        setRowBtnState(btn, 'idle', '重新下载');
-      } catch (e) {
-        notifyActionError(e, '下载归物分类表');
-        setRowBtnState(btn, 'fail', idleLabel, shortFailReason(e));
-        armRowBtnReset(btn, idleLabel);
-      }
-    };
-    schema.groups.push({
-      name: '数据资产',
-      rows: [
-        {
-          type: 'button',
-          name: '归物分类表',
-          buttonText: catalogNow ? '重新下载' : '下载',
-          cta: true,
-          desc: catalogDesc(catalogNow),
-          onClick: (ctx) => void runCatalogDownload(ctx),
-        },
-      ],
-    });
+    // 「在线资源」组排最后（2026-09-27 用户拍板，ADR-0203）：更新日志/手册/皮肤
+    // 三项下载状态机；下载动作收口在这里与文档导航入口两处
+    const { onlineResourcesGroup } = await import('./online-resources');
+    schema.groups.push(onlineResourcesGroup());
     return schema;
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),

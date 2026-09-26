@@ -1,0 +1,27 @@
+/* ============================================================
+ * bz 皮肤包 · pomodoro/ink（墨白）——ADR-0199
+ *
+ * 本文件是**远端皮肤源**：不进构建聚合（scripts/build-css.mjs 不登记
+ * src/pomodoro/skins/），由 scripts/build-skin-pack.mjs 出版到
+ * manual/skins/pomodoro/ink.css，插件启动时同步到
+ * <configDir>/plugins/bz/skins/ 后经 core/skin-pack.ts 注入。
+ *
+ * 改样式＝改这里；改完跑 pnpm skin-pack 重出版（清单 sha256 随之更新）。
+ * ============================================================ */
+
+:root {
+    /* 2 墨白 ink */
+    --pz-ink-l:#ffffff; --pz-ink-d:#1f1f1e; --pz-ink-a:#171512; --pz-ink-ad:#f2f0ea;
+    --pz-ink-fgd:#f2f0ea; --pz-ink-m:#6b6558; --pz-ink-md:#a8a49c; --pz-ink-f:#a8a294; --pz-ink-fd:#7d7a72;
+    --pz-ink-bd:#2b2b29; --pz-ink-bfd:#d6d3cc;
+}
+
+/* 2 墨白 · ink（无彩色；仅此皮有专属阴影一档） */
+    #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-l); --pz-accent:var(--pz-ink-a); --pz-muted:var(--pz-ink-m); --pz-faint:var(--pz-ink-f); --pz-on-accent:#fff; box-shadow: 0 6px 30px rgba(0,0,0,.14); }
+    .theme-dark #pomodoro-popup.pomodoro-skin-ink { --pz-bg:var(--pz-ink-d); --pz-accent:var(--pz-ink-ad); --pz-fg:var(--pz-ink-fgd); --pz-muted:var(--pz-ink-md); --pz-faint:var(--pz-ink-fd); --pz-btn:var(--pz-ink-bd); --pz-btn-fg:var(--pz-ink-bfd); --pz-on-accent:var(--pz-ink-d); --pz-line:rgba(255,255,255,.14); }
+.bz-sp-mini.bz-sp-prev-pomo-ink {
+  background:
+    radial-gradient(circle at 50% 50%, var(--pz-ink-a) 0 4px, #fff 4px 6px, transparent 6px),
+    linear-gradient(90deg, var(--pz-ink-l) 0 50%, var(--pz-ink-d) 50% 100%);
+  border-radius: 3px;
+}
