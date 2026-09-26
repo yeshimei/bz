@@ -2,10 +2,12 @@
 
 微信 4.x 聊天「**取密钥 → 解密 → 原始导出 → 转写**」的外部工具包：Node 外壳 +
 随包 vendored Python（自写脚本 + 裁剪版 [WeChatMsg_Lite](#许可证与上游)，MIT）。
-为 Obsidian 插件「包仔」的脸谱域服务（issue 463 / ADR-0195）。
+为 Obsidian 插件「包仔」的脸谱域服务（issue 463/464 / ADR-0195/0196）。
 
-**本版只做两件事**：包能装、`bz-face doctor` 能自检。`sync`（全量同步）与
-`prep <联系人>`（按人预处理）是后续票（464 / 468），CLI 尚未开放。
+**本版（issue 464）新增 `bz-face sync`**：微信登录状态下一键取数——取密钥 → 解密 →
+逐联系人生成 `chat.json`（文本 + `[表情·名]` + 图片定位 + 语音时长）→ 头像源落位，
+进度走四行协议供插件编排消费。`bz-face doctor`（463）照旧；`prep <联系人>`
+（媒体导出 / 语音转写）是后续票（468）。
 
 ## 为什么不发公开 registry（也永远不会自动发布）
 
@@ -54,6 +56,40 @@ python -m pip install -r <包目录>/python/requirements-transcribe.txt   # 还�
 已知坑：`yara-python` 在 Python 3.14 暂无预编译 wheel（3.12 / 3.13 可直装）；
 装不上时仅「取密钥」不可用，用已缓存密钥的解密链不受影响。
 
+## `bz-face sync` —— 一次从微信取数（issue 464）
+
+```bash
+bz-face sync --data-root "E:\Obsidian\微信脸谱数据\export_full"
+bz-face sync --data-root "E:\根" --python "C:\Python312\python.exe"  # 指定 Python
+bz-face sync --data-root "E:\根" --limit 3    # 调试：只处理前 3 位联系人
+```
+
+微信登录运行状态下一次跑完四步：**取密钥 → 解密数据库（增量）→ 逐联系人导出
+`chat.json` → 头像源落位**。产物全落数据根：
+
+```
+<数据根>/<联系人>/chat.json     消息流 [{ct,type,who,msg,sid,dur?,img?}]（4.x 原始码）
+<数据根>/<联系人>/avatar.<ext>  头像源（微信头像库原样字节；无头像不落文件）
+<数据根>/.bz-face/key.json      密钥缓存（每轮从微信进程新取）
+<数据根>/.bz-face/decrypted/    解密库（增量：已解密的库自动跳过）
+```
+
+`chat.json` 只含「从微信解出来的事实」：语音保持 `[语音 N秒]`（时长入 `dur`）、
+图片保持 `[图片]`（定位入 `img` = `<月>/<文件名>`，文件名是库内 32hex，媒体解码是
+468 的事）、表情**当场命名** `[表情·名]`（命不中保持 `[表情]`）——没有转写、没有图片
+描述、没有独立回写步骤（460 spec）。
+
+行为约定：
+
+| 项 | 口径 |
+|---|---|
+| 幂等 | 可重复跑：`chat.json` / 头像按字节比对，没变不写；解密走上游缓存，不重复搬 |
+| 微信未运行 | **立即硬失败** + 中文引导，绝不静默降级成读旧目录（否则会误以为同步成功） |
+| 微信 ≥ 4.0.3.36 | 预检即失败并给退回 4.0.3.19 指引（同 doctor 口径） |
+| 单联系人失败 | 不中断整体，末尾 `[bz-result]` 报 `failed:N` 与失败名单；重跑即只补失败项 |
+| stdout | **只有四行协议**（`[bz-step]`/`[bz-p]`/`[bz-info]`/`[bz-result]`），供插件编排消费（465 数据源同步按钮）；人读环境报告请用 `doctor` |
+| 退出码 | 0 = 跑完（单联系人失败也算——看结果行 `failed:N`）；1 = 硬失败；2 = 用法错误 |
+
 ## `bz-face doctor` —— 环境自检
 
 ```bash
@@ -88,12 +124,12 @@ bz-face doctor --python "C:\Python312\python.exe" # 指定 Python（缺省 PATH 
     → 请先打开并登录微信（登录后停在主界面），再重跑 bz-face doctor
 ```
 
-### 为什么输出是纯文本、不走 [bz-*] 四行协议
+### 为什么 doctor 输出纯文本、sync 走 [bz-*] 四行协议
 
 四行协议（`src/core/external-tool.ts`）是给**插件编排长任务**消费进度/结果用的；
-doctor 是用户自己在终端跑的一次性自检，产出是多行判定 + 修复命令，人读优先。
-后续票若插件要内嵌 doctor（如 465 数据源面板），届时给 CLI 加 `--json` 输出结构化行，
-由调用壳包协议层——本票不做。
+`sync` 正是这种长任务（465 数据源同步按钮驱动），所以 stdout 全程协议行，Python 侧
+（`bz_sync.py`）直接产出、Node 原样透传只补预检行与兜底结果行。doctor 则是用户自己
+在终端跑的一次性自检，产出是多行判定 + 修复命令，人读优先。
 
 ## 目录结构
 
@@ -106,17 +142,20 @@ tools/obsidian-face/
 └── lib/
     ├── doctor-core.js      # doctor 判定层：纯函数、零依赖、注入探测结果即可单测
     ├── doctor-core.d.ts    # 类型声明（仓库 tests/ 消费；使包内 JS 不进 tsc 检查面）
-    └── probes.js           # 真探测：child_process / fs，逐项兜错绝不抛栈
+    ├── sync-core.js        # sync 判定层：阶段计划 / 参数解析 / 协议行格式化 / 转发中继 / 预检判定（纯函数）
+    ├── sync-core.d.ts
+    └── probes.js           # 真探测与子进程管道：child_process / fs，逐项兜错绝不抛栈
 └── python/
-    ├── bz_export.py        # 解密链本体（收编自数据盘 tools/，仅改 vendor 路径）
+    ├── bz_export.py        # 解密链本体（收编自数据盘 tools/；464 起 keyinfo/decrypt_db 可显式指路径）
+    ├── bz_sync.py          # sync 本体：取密钥 → 解密 → 逐联系人 chat.json + 头像源（四行协议）
     ├── requirements-decrypt.txt
     ├── requirements-transcribe.txt
     └── vendor/WeChatMsg_Lite/   # 裁剪版上游库（236MB → 368KB，LICENSE 保留）
 ```
 
-设计约定：判定层（`doctor-core.js`）与真探测（`probes.js`）分离——判定层只吃
-探测结果对象，仓库 `tests/` 注入假件即可覆盖「单项缺失 → 对应修复命令」「微信版本
-判定」「探测抛异常不中断」等分支，不真跑子进程。
+设计约定：判定层（`doctor-core.js` / `sync-core.js`）与真探测（`probes.js`）分离——
+判定层只吃探测结果对象与预录协议行，仓库 `tests/` 注入假件即可覆盖「单项缺失 → 对应
+修复命令」「微信版本判定」「协议行往返」「无结果行兜底」等分支，不真跑子进程。
 
 ## 隐私边界
 

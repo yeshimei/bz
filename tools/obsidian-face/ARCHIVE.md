@@ -1,23 +1,24 @@
-# ARCHIVE —— 数据盘散装工具收编去向表（issue 463）
+# ARCHIVE —— 数据盘散装工具收编去向表（issue 463 / 464）
 
-收编源：`E:\Obsidian\微信脸谱数据\tools\`（只读原样保留，本票未动其中任何文件）。
-本票（463）只收「解密链条」（取密钥 → 解密 → 读库 → 导 CSV/JSON）+ `doctor` 自检；
-`sync` / `prep` 的 CLI 接线是后续票（464 / 468）。
+收编源：`E:\Obsidian\微信脸谱数据\tools\`（只读原样保留，收编未动其中任何文件）。
+463 收「解密链条」（取密钥 → 解密 → 读库 → 导 CSV/JSON）+ `doctor` 自检；
+464 收 `sync`（取密钥 → 解密 → 逐联系人 chat.json + 头像源，四行协议）；
+`prep` 的 CLI 接线是后续票（468）。
 
 ## 散装脚本去向
 
 | 原文件 | 去向 | 说明 |
 |---|---|---|
-| `bz_export.py` | **已收编** → `python/bz_export.py` | 解密链本体（info/decrypt/contacts/export/dump）。唯一改动：上游库路径 → `vendor/WeChatMsg_Lite`；密钥与产物暂落脚本旁，464/468 接数据根 |
-| `export_all.py` | 留给 **464**（sync） | text/voice/media 三段原始导出；自带 yara 空模块注入与独立 decrypt_dat 装载器，接线时按包内正规路径重整 |
+| `bz_export.py` | **已收编** → `python/bz_export.py` | 解密链本体（info/decrypt/contacts/export/dump）。463 改动：上游库路径 → `vendor/WeChatMsg_Lite`；464 改动：`keyinfo` / `cmd_info` / `decrypt_db` 增 `key_path` 显式路径参数（缺省仍脚本旁，老用法零变化），供 sync 把密钥 / 解密库落数据根 |
+| `export_all.py` | **已收编（464，语义并入 `python/bz_sync.py`）** | text 段（ct/type/who/msg/sid/dur 消息流、zstd 解压与解压失败跳过、字段口径）逐条落实；**voice / media 段留给 468**（媒体导出）。重组点：按「联系人 → 表」预规划以逐人吐进度；重名联系人的目录名去重改为顺序无关（重名全部加 wxid 后缀，保幂等）；幂等从「存在即跳过」升级为「字节比对，没变不写」（可感知上游变化） |
 | `voice_transcribe_all.py` | 留给 **468**（prep） | SenseVoice 全量转写（funasr），断点续跑语义保留 |
-| `wxgf_decode.py` | 留给 **464**（sync） | wxgf(.bin) → jpg/gif（ffmpeg 解 HEVC），媒体导出段 |
-| `image_ct_map.py` | 留给 **464**（sync） | 图片消息 ↔ 磁盘文件关联（packed_info_data 32hex = 文件名 md5） |
-| `voice_writeback.py` | 留给 **464/468** | voice.json 回填 chat.json；按 460 spec，「语音/表情标签化」并入包内 chat.json 生成的正规实现 |
-| `emoticon_writeback.py` | 留给 **464** | 表情命名回填；同上，并入 chat.json 生成（修 460 记录的「两侧对不上」事故的正解） |
-| `synthesize.py` | **不收** | 连发归组（120s 合并）已确认退役（460 Out of Scope） |
+| `wxgf_decode.py` | 留给 **468** | wxgf(.bin) → jpg/gif（ffmpeg 解 HEVC），媒体导出段；464 按票口径只做图片**定位**、不收解码 |
+| `image_ct_map.py` | **已收编（464，语义并入 `bz_sync.py` 生成）** | packed_info_data 32hex = 文件名 md5 → 图片定位，改在 chat.json 生成时一次写入（`img = <月>/<hex>`，月取消息本地时间；老库无 server_id 退回纯 ct 匹配的兜底保留；独立「回写」步骤退役）。旁路表 image_map.json 随 468 媒体导出落（其语义 = 已落盘文件表，无文件时无表可落） |
+| `voice_writeback.py` | 留给 **468** | wav 路径写回随语音导出进行；「转写文本回写 chat.json」按 460 spec 退役（chat.json 是只读一次性产物，转写只进聊天仓旁路表） |
+| `emoticon_writeback.py` | **已收编（464，语义并入 `bz_sync.py` 生成）** | 表情命名（商店名优先 / 收藏名兜底、caption 清洗、md5 负向后顾防子串误配）改在 chat.json 生成时一次写入——修 460 记录的「chat.json 28 条 vs 仓 52 条对不上且修不回来」事故的正解；独立回写步骤退役。emoticon_map.json（收藏表情底表）随画脸谱侧需要时再收 |
+| `synthesize.py` | **不收** | 连发归组（120s 合并）已确认退役（460 Out of Scope）；chat.json 一条条存 |
 | `yara.py`（空垫片） | **不收** | 见下节 |
-| `key.json` | **绝不收** | 真实账号密钥缓存（包内不得出现任何真实数据） |
+| `key.json` | **绝不收** | 真实账号密钥缓存（包内不得出现任何真实数据；sync 的密钥落 `<数据根>/.bz-face/key.json`，不入包不入 git） |
 | `decrypted/`、`media_out/`、`tmp/`、`__pycache__/` | **不收** | 解密产物 / 导出产物 / 一次性脚本与缓存（tmp/ 内 89 个文件按 460 留原地当历史；其中被验证过的「上下文批次格式、批合并」逻辑由 468 收进包的正规实现） |
 
 ### yara.py 空垫片为何不收编
