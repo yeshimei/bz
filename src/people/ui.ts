@@ -1110,6 +1110,8 @@ async function renderBody(): Promise<void> {
   const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
   if (!body || !store || !overlay) return;
   const people = await wallPeople(); // 一次拉全量：列表 / 详情 / 弹窗三处同源（455 弹窗正文也要人物卡）
+  // await 途中面板可能被关（closePeoplePanel 置空 overlay/store）——late 回调不得再触碰已拆 DOM
+  if (!overlay || !store) return;
   if (stage === 'list') await renderList(body, people);
   else await renderDetail(body, people);
   // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式

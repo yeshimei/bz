@@ -2,7 +2,7 @@
  * bz · 使用手册下载（core/manual.ts，单源）
  *
  * 手册不随插件构建分发（main.js/styles.css 不含它），而是发布在
- * GitHub 仓库 docs/manual/bz-manual.html；用户点「使用手册」按钮时
+ * GitHub 仓库 manual/bz-manual.html；用户点「使用手册」按钮时
  * 现场拉取，写入**插件安装目录**（<configDir>/plugins/bz/），再打开。
  *
  * 为什么放插件目录而不是数据目录：手册是程序资产、跟版本走，
@@ -11,8 +11,16 @@
  * 下载链路：raw.githubusercontent 主 → cdn.jsdelivr 备（国内被墙时
  * 的第二通道）；两路都 404/失败才报错。内容校验取最宽口径（<!DOCTYPE
  * 或 <html 或含「包仔」），防把 CDN 的错误页写进文件。
- * 打开：绝对路径 file:/// URL 走 core openExternalUrl 单源
- * （app.openUrl → electron shell → window.open 三级兜底，utils.ts）。
+ *
+ * 打开（issue 473 重做）：绝对路径优先走 electron shell.openPath——
+ * 专开本地文件、失败直接返回原因串（原 file:/// 走 openExternalUrl 的
+ * openUrl 链，Windows 上 reject 只落 Uncaught (in promise)，用户看到
+ * 0x2 却无提示）；openPath 不可用才落 openExternalUrl 的 file:/// 兜底。
+ * 打开前先 hasManual 实查文件在不在，不在引导下载，不盲开。
+ *
+ * UI 消费口径（settings-panel footer 入口）：ensureManualOpen 一把梭——
+ * 已下载直接打开；没有则先下载（调用方把按钮图标切成转圈 loading，
+ * 完成/失败再复原，失败原因经本模块 Error 消息/notice 出人话）。
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { notice } from './notice';
@@ -55,6 +63,17 @@ function manualAbsPath(app: unknown): string | null {
   }
 }
 
+/** electron 模块（桌面端 renderer 可 require；移动端/jsdom 无 → null） */
+function electronShell(): { openPath?: (p: string) => Promise<string> } | null {
+  try {
+    const req = (window as { require?: (id: string) => unknown }).require;
+    const electron = req ? (req('electron') as { shell?: { openPath?: (p: string) => Promise<string> } }) : null;
+    return electron?.shell ?? null;
+  } catch (e) {
+    return null;
+  }
+}
+
 /** 内容是否像手册页（最宽校验：HTML 文档头或含产品名即可，防 CDN 错误页） */
 function looksLikeManual(text: string): boolean {
   const t = String(text || '');
@@ -85,12 +104,44 @@ export async function downloadManual(app: unknown): Promise<void> {
   throw new Error(`手册下载失败：${lastErr}`);
 }
 
-/** 打开已下载的手册（系统浏览器）。未下载 → 提示去下载；取不到绝对路径 → 提示路径。 */
-export function openManual(app: unknown): void {
+/**
+ * 打开已下载的手册（系统默认程序）。未下载 → 引导下载（warn）；打不开 → 报原因（error）。
+ * @returns 是否成功发起打开（调用方据此决定是否提示成功）
+ */
+export async function openManual(app: unknown): Promise<boolean> {
+  if (!(await hasManual(app))) {
+    notice('手册尚未下载，请再点一次「使用手册」完成下载', 'warning');
+    return false;
+  }
   const abs = manualAbsPath(app);
   if (!abs) {
     notice(`手册已存放在插件目录：${manualVaultPath(app)}`, 'info');
-    return;
+    return false;
   }
-  openExternalUrl(app, `file:///${abs.replace(/\\/g, '/')}`);
+  // 桌面首选 shell.openPath：专开本地文件，失败返回原因串（空串 = 成功）
+  const shell = electronShell();
+  if (shell?.openPath) {
+    try {
+      const err = await shell.openPath(abs);
+      if (!err) return true;
+      notice(`手册打开失败：${err}`, 'error');
+      return false;
+    } catch (e) {
+      notice(`手册打开失败：${(e as Error)?.message || String(e)}`, 'error');
+      return false;
+    }
+  }
+  // 兜底：file:/// 走 openExternalUrl 三级链（openUrl → shell.openExternal → window.open）。
+  // 反斜杠归一 + 去开头多余斜杠（POSIX 绝对路径以 / 开头，直拼会出 file://// 四斜杠）
+  openExternalUrl(app, `file:///${abs.replace(/\\/g, '/').replace(/^\/+/, '')}`);
+  return true;
+}
+
+/**
+ * 确保手册在本地并打开（footer 入口一键口径）：已下载直接打开；没有则先下载。
+ * 下载/打开失败都经本模块 notice 出人话原因；@returns 是否已成功打开。
+ */
+export async function ensureManualOpen(app: unknown): Promise<boolean> {
+  if (!(await hasManual(app))) await downloadManual(app);
+  return openManual(app);
 }

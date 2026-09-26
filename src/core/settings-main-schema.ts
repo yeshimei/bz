@@ -64,7 +64,6 @@ import { notice } from './notice';
 import { tryGetSettings, saveSettings, getSettings } from './settings-provider';
 import { fetchEmbeddingModels, fetchProviderModels, fetchRerankModels, hasRerankNamed, isQwen3Embedding8b, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
-import { downloadManual, hasManual, openManual } from './manual';
 import { getApp } from './app';
 import type { NumberRow, RowAction, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
@@ -792,38 +791,11 @@ export function aiSettingsSchema(): SettingsSchema {
 
 /** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项）。
  *  2026-09-12：通知组拆出为独立面板页（noticeSettingsSchema），本组只剩数据存储路径。
- *  2026-09-26：补「使用手册」按钮（core/manual 单源）——手册不随构建分发，
- *  点按钮从 GitHub 拉取写进插件安装目录，已下载则直接打开（一个控件按状态分岔）。 */
+ *  2026-09-26：「使用手册」组撤出（issue 473）——入口搬家至设置面板侧栏 footer
+ *  （更新日志上方，一键下载+打开+图标转圈 loading），不再挤在通用域里双入口。 */
 export function generalSettingsSchema(): SettingsSchema {
   return {
     groups: [
-      {
-        icon: 'book-open',
-        name: '使用手册',
-        rows: [
-          {
-            type: 'button',
-            name: '使用手册',
-            desc: '首次点击从 GitHub 拉取手册写入插件目录并自动打开，已下载则直接打开',
-            buttonText: '使用手册',
-            onClick: () => {
-              void (async () => {
-                const app = getApp();
-                try {
-                  if (!(await hasManual(app))) {
-                    notice('正在从 GitHub 下载使用手册…', 'info');
-                    await downloadManual(app);
-                    notice('手册已下载到插件目录', 'success');
-                  }
-                  openManual(app);
-                } catch (e) {
-                  notice((e as Error)?.message || '手册下载失败', 'error');
-                }
-              })();
-            },
-          },
-        ],
-      },
       {
         icon: 'folder-open',
         name: '数据存储路径',

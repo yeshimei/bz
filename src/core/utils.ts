@@ -399,24 +399,47 @@ export async function copySensitiveWithFallback(text: string): Promise<boolean> 
  * memo/ui openItem、favorites/ui openExternal、knowledge/ui _openExternal 三份私有副本
  * 收编至此，域内不再自留副本。行为口径（与 favorites 版逐字等价——三份中最完整的一份）：
  * - app.openUrl(url)（Obsidian 原生，桌面/移动均可用）成功 → 完成；
- * - openUrl 缺失/抛错（故意不带 ?.，缺失须落 TypeError 才进兜底链）→ electron shell.openExternal；
+ * - openUrl 缺失/同步抛错（故意不带 ?.，缺失须落 TypeError 才进兜底链）→ electron shell.openExternal；
+ *   issue 473 补：openUrl 的**异步 rejection** 同样落兜底链（此前只接同步抛错，
+ *   Windows 打不开 file:/// 时 reject 无人接 → Uncaught (in promise)，用户只见 0x2 无提示）；
  * - 无 electron（移动端/jsdom）→ window.open 兜底（favorites F14：不再静默）；
+ *   openExternal 的异步 rejection 同口径落 window.open；
  * - 全链失败 → 人话提示（error）。
  * app 由调用方注入（memo 传 M.appRef，favorites 传 appOf()，knowledge 传 getApp()），
  * 本函数不自取——调用时机多在面板闭包里，appRef 与面板生命周期一致更稳。
  */
 export function openExternalUrl(app: unknown, url: string): void {
   try {
-    (app as any).openUrl(url);
+    const r = (app as any).openUrl(url);
+    if (r && typeof (r as Promise<void>).catch === 'function') {
+      (r as Promise<void>).catch(() => {
+        if (!openViaElectron(url)) openViaWindow(url);
+      });
+      return;
+    }
     return;
   } catch (e) { /* 落 electron 兜底 */ }
+  if (!openViaElectron(url)) openViaWindow(url);
+}
+
+/** electron shell.openExternal 一级兜底：已发起返回 true；openExternal 的异步
+ *  rejection 落 window.open（返回的 true 只代表「已发起」）。无 electron → false。 */
+function openViaElectron(url: string): boolean {
   try {
     const electron = (window as any).require && (window as any).require('electron');
     if (electron && electron.shell) {
-      electron.shell.openExternal(url);
-      return;
+      const p = electron.shell.openExternal(url);
+      if (p && typeof (p as Promise<void>).catch === 'function') {
+        (p as Promise<void>).catch(() => openViaWindow(url));
+      }
+      return true;
     }
   } catch (e) { /* 落 window.open 兜底 */ }
+  return false;
+}
+
+/** window.open 末级兜底（favorites F14：失败不再静默） */
+function openViaWindow(url: string): void {
   try {
     const w = window.open(url, '_blank');
     if (w) return;

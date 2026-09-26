@@ -1,4 +1,4 @@
-/* 源指纹 712b01b320c0ddbe · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 236da878b57e77a4 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -5094,6 +5094,8 @@ var BZW_favorites = (() => {
       // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
       // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
       defaultMaxTokens: 393216,
+      // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
+      maxOutputCap: 393216,
       apiKeyKey: "deepseekApiKey",
       apiKeyLabel: "DeepSeek 密钥",
       apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -5116,6 +5118,8 @@ var BZW_favorites = (() => {
       model: "glm-5.3-flash",
       // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
       defaultMaxTokens: 131072,
+      maxOutputCap: 131072,
+      // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
       apiKeyKey: "zhipuPlanApiKey",
       apiKeyLabel: "智谱 Plan 密钥",
       apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -5135,6 +5139,8 @@ var BZW_favorites = (() => {
       endpoint: "http://localhost:11434/v1",
       model: "llama3.1",
       defaultMaxTokens: 8192,
+      // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
+      // 面板可自由调大（既有口径，不因本票收紧）
       apiKeyKey: "ollamaApiKey",
       apiKeyLabel: "Ollama 密钥",
       apiKeyDesc: "本地服务无需密钥",
@@ -5156,6 +5162,11 @@ var BZW_favorites = (() => {
   function thinkingLevelsOf(providerId) {
     var _a, _b;
     return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
+  }
+  function maxOutputCapOf(providerId, modelName) {
+    const desc = getProviderDescriptor(providerId);
+    const hit = resolveModelLimits(modelName || desc.model || "");
+    return hit ? hit.maxOutput : desc.maxOutputCap;
   }
   function thinkingBodyFor(providerId, level) {
     var _a;
@@ -5208,14 +5219,16 @@ var BZW_favorites = (() => {
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    const effModel = overrideModel || desc.model || "";
+    const cap = maxOutputCapOf(name, effModel);
+    const requested = Number((_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name]);
+    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+      model: effModel || void 0,
+      defaultMaxTokens
     });
   }
   function abortError() {
@@ -5762,18 +5775,33 @@ var BZW_favorites = (() => {
   }
   function openExternalUrl(app, url) {
     try {
-      app.openUrl(url);
+      const r = app.openUrl(url);
+      if (r && typeof r.catch === "function") {
+        r.catch(() => {
+          if (!openViaElectron(url)) openViaWindow(url);
+        });
+        return;
+      }
       return;
     } catch (e) {
     }
+    if (!openViaElectron(url)) openViaWindow(url);
+  }
+  function openViaElectron(url) {
     try {
       const electron = window.require && window.require("electron");
       if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
+        const p = electron.shell.openExternal(url);
+        if (p && typeof p.catch === "function") {
+          p.catch(() => openViaWindow(url));
+        }
+        return true;
       }
     } catch (e) {
     }
+    return false;
+  }
+  function openViaWindow(url) {
     try {
       const w = window.open(url, "_blank");
       if (w) return;

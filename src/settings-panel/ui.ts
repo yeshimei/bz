@@ -12,6 +12,7 @@
  * - 桌面导航徽标动态计算（无设置=— / 其余初始=·，schema 加载后回填设置项总数）。
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
+import { setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
@@ -417,6 +418,11 @@ export class SettingsPanelUI {
     popup.querySelector<HTMLElement>('[data-sp-changelog]')
       ?.addEventListener('click', () => openChangelogModal());
 
+    // 使用手册入口（issue 473）：一键 = 无手册先下载再打开，已下载直接打开；
+    // 下载期间按钮图标转圈（.is-loading + loader）防重入，完成/失败复原（见 runManualOpen）
+    const manBtn = popup.querySelector<HTMLElement>('[data-sp-manual]');
+    manBtn?.addEventListener('click', () => void this.runManualOpen(manBtn));
+
     const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
     this.navEl = nav;
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
@@ -527,6 +533,27 @@ export class SettingsPanelUI {
     spm.motionPanelIn(popup, this.mask);
     spm.motionBindPressFeel(popup);
     spm.motionEnsureDust(popup);
+  }
+
+  /* 使用手册一键（issue 473）：无手册先下载再打开，已下载直接打开（core/manual 单源）。
+   * 下载期间按钮图标换 loader + .is-loading 转圈（用户拍板：不弹窗不要进度条），
+   * 完成/失败 finally 复原 book-open；失败原因由 core/manual 的 Error 消息出人话 notice，
+   * 打不开（openPath 报因）同样落在 core/manual 的 notice 里——本层只兜下载抛错。 */
+  private async runManualOpen(btn: HTMLElement): Promise<void> {
+    if (btn.classList.contains('is-loading')) return; // 下载中防重入
+    const ic = btn.querySelector<HTMLElement>('.bz-ic');
+    btn.classList.add('is-loading');
+    try {
+      const core = await import('../core/manual');
+      if (ic) setIcon(ic, 'loader');
+      const opened = await core.ensureManualOpen(getApp());
+      if (opened) notice('手册已打开', 'success');
+    } catch (e) {
+      notice((e as Error)?.message || '手册下载失败', 'error');
+    } finally {
+      btn.classList.remove('is-loading');
+      if (ic) setIcon(ic, 'book-open');
+    }
   }
 
   /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，

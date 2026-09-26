@@ -10,15 +10,21 @@ import { esc, iconSpan } from '../../../core/ui/str';
 /* ==================== 桌面：B 侧栏工作台 ==================== */
 
 /** 桌面面板骨架（头行 = 面包屑「设置」+ 搜索框 + 工具位；左导航 + 右内容区）——原型 mount desk 分支。
- *  侧栏 footer = 更新日志入口（issue 472）：nav 随搜索/切域整树重渲，入口须是其兄弟节点才常驻底缘。 */
+ *  侧栏 footer = 使用手册 + 更新日志入口（issue 473/472）：nav 随搜索/切域整树重渲，
+ *  入口须是其兄弟节点才常驻底缘；手册在上、日志在下（2026-09-26 用户拍板）。
+ *  手册按钮：下载期间加 .is-loading，首个 .bz-ic 图标 setIcon 换 loader 转圈（行为在 ui.ts）。 */
 export function deskShellHtml(): string {
   return `<div class="bz-sp-head">` +
     `<div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div>` +
     `<div class="bz-sp-search bz-sp-head-search">${iconSpan('search')}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div>` +
     `<span class="bz-sp-head-tools"></span></div>` +
     `<div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div>` +
-    `<div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-changelog>` +
-    `${iconSpan('history', 'bz-ic bz-sp-foot-chg-ic')}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside>` +
+    `<div class="bz-sp-side-foot">` +
+    `<button type="button" class="bz-sp-foot-chg" data-sp-manual>` +
+    `${iconSpan('book-open', 'bz-ic bz-sp-foot-chg-ic')}<span class="bz-sp-foot-chg-name">使用手册</span></button>` +
+    `<button type="button" class="bz-sp-foot-chg" data-sp-changelog>` +
+    `${iconSpan('history', 'bz-ic bz-sp-foot-chg-ic')}<span class="bz-sp-foot-chg-name">更新日志</span></button>` +
+    `</div></aside>` +
     `<main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
 }
 

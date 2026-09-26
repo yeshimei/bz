@@ -1,4 +1,4 @@
-/* 源指纹 942b89e92db84376 · 仓内输入 117 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 88c4c52cad570779 · 仓内输入 117 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5017,18 +5017,33 @@ var BZW_clipbook = (() => {
   }
   function openExternalUrl(app, url) {
     try {
-      app.openUrl(url);
+      const r = app.openUrl(url);
+      if (r && typeof r.catch === "function") {
+        r.catch(() => {
+          if (!openViaElectron(url)) openViaWindow(url);
+        });
+        return;
+      }
       return;
     } catch (e) {
     }
+    if (!openViaElectron(url)) openViaWindow(url);
+  }
+  function openViaElectron(url) {
     try {
       const electron = window.require && window.require("electron");
       if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
+        const p = electron.shell.openExternal(url);
+        if (p && typeof p.catch === "function") {
+          p.catch(() => openViaWindow(url));
+        }
+        return true;
       }
     } catch (e) {
     }
+    return false;
+  }
+  function openViaWindow(url) {
     try {
       const w = window.open(url, "_blank");
       if (w) return;
@@ -7174,6 +7189,11 @@ ${c.trim()}
     var _a, _b;
     return (_b = (_a = getProviderDescriptor(providerId).thinking) == null ? void 0 : _a.levels) != null ? _b : [];
   }
+  function maxOutputCapOf(providerId, modelName) {
+    const desc = getProviderDescriptor(providerId);
+    const hit = resolveModelLimits(modelName || desc.model || "");
+    return hit ? hit.maxOutput : desc.maxOutputCap;
+  }
   function thinkingBodyFor(providerId, level) {
     var _a;
     if (!providerId || !level || level === "auto") return null;
@@ -7224,14 +7244,16 @@ ${c.trim()}
       throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
     }
     const overrideModel = (_a = s.aiModelOverrides) == null ? void 0 : _a[name];
-    const overrideMaxTokens = (_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    const effModel = overrideModel || desc.model || "";
+    const cap = maxOutputCapOf(name, effModel);
+    const requested = Number((_b = s.aiMaxTokensOverrides) == null ? void 0 : _b[name]);
+    const defaultMaxTokens = requested > 0 ? cap === void 0 ? requested : Math.min(requested, cap) : cap != null ? cap : desc.defaultMaxTokens;
     return cachePut({
       id: name,
       endpoint: desc.endpoint,
       apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+      model: effModel || void 0,
+      defaultMaxTokens
     });
   }
   function abortError() {
@@ -7436,6 +7458,8 @@ ${c.trim()}
           // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
           // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
           defaultMaxTokens: 393216,
+          // 硬护栏同值：此家缺省模型名留空（由调用方传），model-limits 兜不到，须显式声明
+          maxOutputCap: 393216,
           apiKeyKey: "deepseekApiKey",
           apiKeyLabel: "DeepSeek 密钥",
           apiKeyDesc: "DeepSeek 官方的接口密钥",
@@ -7458,6 +7482,8 @@ ${c.trim()}
           model: "glm-5.3-flash",
           // glm-5.3 / 5.3-flash 官方最大输出 131072（默认 65536，上下文 1M）
           defaultMaxTokens: 131072,
+          maxOutputCap: 131072,
+          // 硬护栏：glm-5.3 系官方最大输出（填超即服务端 400 / 1210）
           apiKeyKey: "zhipuPlanApiKey",
           apiKeyLabel: "智谱 Plan 密钥",
           apiKeyDesc: "智谱 Coding 套餐的接口密钥",
@@ -7477,6 +7503,8 @@ ${c.trim()}
           endpoint: "http://localhost:11434/v1",
           model: "llama3.1",
           defaultMaxTokens: 8192,
+          // 有意不设 maxOutputCap：本地模型输出上限因所装模型而异、无官方档位可依；8192 只是兜底档，
+          // 面板可自由调大（既有口径，不因本票收紧）
           apiKeyKey: "ollamaApiKey",
           apiKeyLabel: "Ollama 密钥",
           apiKeyDesc: "本地服务无需密钥",
@@ -9665,9 +9693,9 @@ ${sample}`
                 compress: !s || s.knowledgeCompress !== false,
                 crf: s && s.knowledgeCrf || 23,
                 vaultPath: getVaultBasePath(),
-                ffmpegPath: nonEmpty(s && s.knowledgeFfmpegPath),
-                ffprobePath: nonEmpty(s && s.knowledgeFfprobePath),
-                pythonPath: nonEmpty(s && s.knowledgePythonPath),
+                ffmpegPath: nonEmpty(s && s.ffmpegPath),
+                ffprobePath: nonEmpty(s && s.ffprobePath),
+                pythonPath: nonEmpty(s && s.pythonPath),
                 engine: asrEngine,
                 whisperModel: asrEngine === "faster-whisper" ? nonEmpty(s && s.asrWhisperModel) : void 0,
                 cacheDir: nonEmpty(s && s.knowledgeCacheDir),
@@ -20051,6 +20079,12 @@ ${body}`;
   function currentSnapshot() {
     return tryGetSettings();
   }
+  function resolveNumberBound(bound, snapshot2) {
+    if (bound === void 0) return void 0;
+    if (typeof bound !== "function") return bound;
+    const v = bound(snapshot2);
+    return typeof v === "number" && Number.isFinite(v) ? v : void 0;
+  }
   function parseClampedNumber(raw, min, max) {
     const trimmed = raw.trim();
     if (trimmed === "") return null;
@@ -20143,7 +20177,12 @@ ${body}`;
         }
         if (!dirty2) return;
         if (isNumber) {
-          const n = parseClampedNumber(raw, row.min, row.max);
+          const snap = currentSnapshot();
+          const n = parseClampedNumber(
+            raw,
+            resolveNumberBound(row.min, snap),
+            resolveNumberBound(row.max, snap)
+          );
           if (n === null && raw.trim() !== "") {
             dirty2 = false;
             if (currentText) currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
@@ -20170,7 +20209,12 @@ ${body}`;
           dirty2 = true;
           if (isNumber) {
             raw = v;
-            const n = parseClampedNumber(v, row.min, row.max);
+            const snap = currentSnapshot();
+            const n = parseClampedNumber(
+              v,
+              resolveNumberBound(row.min, snap),
+              resolveNumberBound(row.max, snap)
+            );
             if (n === null) {
               if (v.trim() !== "") markNumberError();
               return;
@@ -20201,8 +20245,15 @@ ${body}`;
           if (isNumber) {
             const num2 = row;
             inputEl.type = "number";
-            if (num2.min !== void 0) inputEl.min = String(num2.min);
-            if (num2.max !== void 0) inputEl.max = String(num2.max);
+            const applyBounds = () => {
+              const snap = currentSnapshot();
+              const lo = resolveNumberBound(num2.min, snap);
+              const hi = resolveNumberBound(num2.max, snap);
+              inputEl.min = lo === void 0 ? "" : String(lo);
+              inputEl.max = hi === void 0 ? "" : String(hi);
+            };
+            applyBounds();
+            if (typeof num2.max === "function") customRefreshes.push(applyBounds);
             if (num2.step !== void 0) inputEl.step = String(num2.step);
           }
           if (row.type === "secret") {
@@ -22055,17 +22106,18 @@ ${bodyText.substring(0, 6e3)}`;
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
         const warn = new CommitWarn(String((_g = acc.read()) != null ? _g : ""), row.onCommit);
+        const bound = (b) => resolveNumberBound(b, snapshot());
         const input = makeInput({
           value: String((_h = acc.read()) != null ? _h : ""),
           type: "number",
           num: true,
           placeholder: ph,
-          min: row.min,
-          max: row.max,
+          min: bound(row.min),
+          max: bound(row.max),
           onCommit: (raw) => {
             var _a2, _b2;
             if (raw.trim() === "") return;
-            const v = parseClampedNumber(raw, row.min, row.max);
+            const v = parseClampedNumber(raw, bound(row.min), bound(row.max));
             if (v === null) {
               motionInputReject(input);
               return String((_a2 = acc.read()) != null ? _a2 : "");
@@ -22084,6 +22136,12 @@ ${bodyText.substring(0, 6e3)}`;
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
+        if (typeof row.max === "function") {
+          regRefresh == null ? void 0 : regRefresh(() => {
+            const hi = bound(row.max);
+            input.max = hi === void 0 ? "" : String(hi);
+          });
+        }
         break;
       }
       case "select": {
