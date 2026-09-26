@@ -25,7 +25,7 @@
  * - **启动期失败一律静默**（照 self-update 范式）；「在线资源」组里的失败态由
  *   UI 自己呈现（检查更新失败 + 重试），本层不发通知。
  * ============================================================ */
-import { assetVaultPath, ensureAssetWithHash, readAsset } from './remote-asset';
+import { assetVaultPath, downloadsVaultPath, ensureAssetWithHash, readAsset } from './remote-asset';
 import { textSha256 } from './sha256';
 import { cachedManifest, type DownloadManifest, type SkinPackEntry } from './download-manifest';
 
@@ -138,10 +138,14 @@ export function injectSkinPackStyles(css: string): void {
   document.head.appendChild(el);
 }
 
-/** 插件当前版本（自更新完成后读，才是有效版本号；读不到 → 空） */
+/** 插件当前版本（自更新完成后读，才是有效版本号；读不到 → 空）。
+ *  插件自身的 Obsidian 清单在插件目录根（不在 downloads/），必须直读——
+ *  readAsset 已是 downloads 口径，误用会把下载清单缓存当版本事实源。 */
 async function readPluginVersion(app: unknown): Promise<string> {
   try {
-    const text = await readAsset(app, 'manifest.json');
+    const adapter = (app as { vault?: { adapter?: { read?: (p: string) => Promise<string> } } }).vault?.adapter;
+    if (!adapter?.read) return '';
+    const text = await adapter.read(assetVaultPath(app, 'manifest.json'));
     return String(JSON.parse(text || '{}')?.version || '');
   } catch (e) {
     return '';
@@ -206,6 +210,17 @@ async function mapLimit<T>(items: T[], limit: number, fn: (item: T) => Promise<v
 
 /** 删本地皮肤文件（下架 / 区间外；失败静默） */
 async function removeSkinFile(app: unknown, file: string): Promise<void> {
+  const adapter = (app as { vault?: { adapter?: { remove?: (p: string) => Promise<void> } } }).vault?.adapter;
+  if (!adapter?.remove) return;
+  try {
+    await adapter.remove(downloadsVaultPath(app, file));
+  } catch (e) {
+    /* 文件本就不在 → 静默 */
+  }
+}
+
+/** 删**旧落位**文件（issue 480b 前文档在插件目录根、皮肤在 plugins/bz/skins/；幂等惰性清扫） */
+async function removeLegacyFile(app: unknown, file: string): Promise<void> {
   const adapter = (app as { vault?: { adapter?: { remove?: (p: string) => Promise<void> } } }).vault?.adapter;
   if (!adapter?.remove) return;
   try {
@@ -289,8 +304,10 @@ export async function applySkinManifest(
     await removeSkinFile(app, file);
     result.removed++;
   }
-  // 旧版（ADR-0199 时代）的本地就绪表随清单统一退役（幂等，新版从不再写）
-  await removeSkinFile(app, 'skins/index.json');
+  // 旧落位惰性清扫（issue 480b 前的形态，幂等）：旧就绪表 + 插件目录根的文档副本
+  await removeLegacyFile(app, 'skins/index.json');
+  await removeLegacyFile(app, 'bz-changelog.html');
+  await removeLegacyFile(app, 'bz-manual.html');
 
   return result;
 }
@@ -332,7 +349,10 @@ export async function downloadSkinUpdates(app: unknown, manifest: DownloadManife
   await mapLimit(todo, 4, async (e) => {
     try {
       const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
-      if (text !== null) byFile.set(e.file, { entry: e, text });
+      if (text !== null) {
+        byFile.set(e.file, { entry: e, text });
+        await removeLegacyFile(app, e.file); // 旧落位副本（plugins/bz/skins/ 时代）顺手清掉
+      }
       result.downloaded++;
     } catch (err) {
       console.warn(`[bz] 皮肤「${e.domain}/${e.id}」下载失败:`, (err as Error)?.message || err);

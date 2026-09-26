@@ -15,7 +15,6 @@
  * openExternalUrl file:/// 方案随「0x2 找不到文件」报障一并退役）。
  * ============================================================ */
 import {
-  assetVaultPath,
   downloadAsset,
   ensureAssetReady,
   hasAsset,
@@ -23,13 +22,14 @@ import {
   refreshAsset,
 } from './remote-asset';
 import { cachedSha256For } from './download-manifest';
+import { downloadsVaultPath } from './remote-asset';
 
 /** 手册文件名（写入插件目录时用；ASCII，避免 file:/// 转义麻烦） */
 export const MANUAL_FILENAME = 'bz-manual.html';
 
 /** 手册在 vault 里的相对路径（= 插件安装目录内） */
 export function manualVaultPath(app: unknown): string {
-  return assetVaultPath(app, MANUAL_FILENAME);
+  return downloadsVaultPath(app, MANUAL_FILENAME);
 }
 
 /** 内容是否像手册页（最宽校验：HTML 文档头或含产品名即可，防 CDN 错误页） */

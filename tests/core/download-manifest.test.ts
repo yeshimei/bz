@@ -174,9 +174,9 @@ describe('docStatus（三态：missing / updated / ready）', () => {
     const vault = new MockVault();
     const entry = { id: 'changelog', name: '更新日志', file: 'bz-changelog.html', sha256: textSha256(HTML) };
     expect(await docStatus(appOf(vault), entry)).toBe('missing');
-    vault.files.set('.obsidian/plugins/bz/bz-changelog.html', '<!DOCTYPE html><html>旧版</html>');
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', '<!DOCTYPE html><html>旧版</html>');
     expect(await docStatus(appOf(vault), entry)).toBe('updated');
-    vault.files.set('.obsidian/plugins/bz/bz-changelog.html', HTML);
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', HTML);
     expect(await docStatus(appOf(vault), entry)).toBe('ready');
   });
 });
@@ -186,7 +186,7 @@ describe('refreshAsset 的 expectedSha256 省流（ADR-0203）', () => {
 
   it('本地与清单 hash 一致 → 直接 null，**零网络请求**', async () => {
     const vault = new MockVault();
-    vault.files.set('.obsidian/plugins/bz/bz-manual.html', HTML);
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', HTML);
     routeFetch({});
 
     const r = await refreshAsset(appOf(vault), 'bz-manual.html', validate, '手册', textSha256(HTML));
@@ -196,17 +196,17 @@ describe('refreshAsset 的 expectedSha256 省流（ADR-0203）', () => {
 
   it('清单 hash 与本地不符 → 回落全量拉取对比，有新版则覆盖并返回新文本', async () => {
     const vault = new MockVault();
-    vault.files.set('.obsidian/plugins/bz/bz-manual.html', '<!DOCTYPE html><html>旧版</html>');
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', '<!DOCTYPE html><html>旧版</html>');
     routeFetch({ [REMOTE_HTML('bz-manual.html')]: HTML, [BACKUP_HTML('bz-manual.html')]: HTML });
 
     const r = await refreshAsset(appOf(vault), 'bz-manual.html', validate, '手册', textSha256(HTML));
     expect(r).toBe(HTML);
-    expect(vault.files.get('.obsidian/plugins/bz/bz-manual.html')).toBe(HTML);
+    expect(vault.files.get('.obsidian/plugins/bz/downloads/bz-manual.html')).toBe(HTML);
   });
 
   it('清单缺席（null）→ 保持旧口径全量拉取；同版 → null 不写盘', async () => {
     const vault = new MockVault();
-    vault.files.set('.obsidian/plugins/bz/bz-manual.html', HTML);
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', HTML);
     routeFetch({ [REMOTE_HTML('bz-manual.html')]: HTML });
 
     const r = await refreshAsset(appOf(vault), 'bz-manual.html', validate, '手册', null);
@@ -215,7 +215,7 @@ describe('refreshAsset 的 expectedSha256 省流（ADR-0203）', () => {
 
   it('远端拉挂 → null 静默（保持本地已存版本）', async () => {
     const vault = new MockVault();
-    vault.files.set('.obsidian/plugins/bz/bz-manual.html', HTML);
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', HTML);
     routeFetch({
       [REMOTE_HTML('bz-manual.html')]: new Error('ENOTFOUND'),
       [BACKUP_HTML('bz-manual.html')]: new Error('ETIMEDOUT'),

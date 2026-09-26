@@ -33,7 +33,7 @@ vi.mock('obsidian', async (importOriginal) => {
 
 const MANUAL_HTML = '<!DOCTYPE html><html><body>包仔手册</body></html>';
 const MANUAL_HTML_V2 = '<!DOCTYPE html><html><body>包仔手册</body><p>新版</p></html>';
-const STORED = '.obsidian/plugins/bz/bz-manual.html';
+const STORED = '.obsidian/plugins/bz/downloads/bz-manual.html'; // issue 480b：落 downloads 单独目录
 
 const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 

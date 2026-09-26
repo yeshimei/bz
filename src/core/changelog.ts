@@ -15,7 +15,7 @@
  * （issue 476 补：本地已有版本时，入口先秒开本地版，再后台 refreshChangelog 核对
  * 远端有没有新重出的日志——插件版本没动、日志单独重出推送时靠这层拿到新版。）
  * ============================================================ */
-import { assetVaultPath, ensureAssetReady, refreshAsset } from './remote-asset';
+import { downloadsVaultPath, ensureAssetReady, refreshAsset } from './remote-asset';
 import { cachedSha256For } from './download-manifest';
 
 /** 更新日志文件名（写入插件目录时用；ASCII，避免转义麻烦） */
@@ -23,7 +23,7 @@ export const CHANGELOG_FILENAME = 'bz-changelog.html';
 
 /** 更新日志在 vault 里的相对路径（= 插件安装目录内） */
 export function changelogVaultPath(app: unknown): string {
-  return assetVaultPath(app, CHANGELOG_FILENAME);
+  return downloadsVaultPath(app, CHANGELOG_FILENAME);
 }
 
 /** 内容是否像更新日志页（HTML 文档头 + 版本数据锚点，防 CDN 错误页/半截文件） */

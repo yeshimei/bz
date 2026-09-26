@@ -18,10 +18,8 @@
 import { fetchAssetText, readAsset, writeAssetText } from './remote-asset';
 import { textSha256 } from './sha256';
 
-/** 统一清单的本地路径（相对插件安装目录；与远端 downloads/ 镜像同构） */
-export const MANIFEST_FILE = 'downloads/manifest.json';
-/** 清单的远端路径（相对 downloads/；remotesFor 的口径是「相对 downloads/」拼 URL） */
-const MANIFEST_REMOTE = 'manifest.json';
+/** 统一清单的路径（相对 downloads/；远端 downloads/manifest.json ↔ 本地插件目录 downloads/manifest.json） */
+export const MANIFEST_FILE = 'manifest.json';
 
 /**
  * 皮肤包清单条目（形状；构建脚本 build-manifest.mjs 产出）。
@@ -144,7 +142,7 @@ export interface ManifestRefresh {
 export async function refreshManifest(app: unknown): Promise<ManifestRefresh> {
   const previous = await cachedManifest(app);
   const text = await fetchAssetText(
-    MANIFEST_REMOTE,
+    MANIFEST_FILE,
     (t) => parseDownloadManifest(t) !== null,
     '下载清单',
     '',

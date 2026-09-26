@@ -1,7 +1,7 @@
 /* ============================================================
  * bz · 设置面板「在线资源」组（settings-panel/online-resources.ts）——ADR-0203
  *
- * 通用域最后一组：更新日志 / 使用手册 / 皮肤三行统一状态机
+ * 通用域最后一组：更新日志 / 使用手册 / 主题三行统一状态机
  * （未下载 → 下载 [N]；有更新 → 更新 N；已最新 → 已下载 禁用；动作中转圈禁用）。
  * 状态永远从**磁盘单源**现算（缓存清单 + 本地文件 sha256），组内不持久任何状态；
  * 打开时顺手后台核对一次清单（60s 节流），失败有缓存沿用缓存渲染 + 细字提示，
@@ -26,7 +26,7 @@ import { ensureAssetWithHash } from '../core/remote-asset';
 const FALLBACK_ROWS: Array<{ id: string; name: string }> = [
   { id: 'changelog', name: '更新日志' },
   { id: 'manual', name: '使用手册' },
-  { id: 'skins', name: '皮肤' },
+  { id: 'skins', name: '主题' },
 ];
 
 /** 打开组时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
@@ -77,9 +77,9 @@ async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manif
 function rowDesc(st: RowState): string {
   if (st.skin) {
     const { ready, missing, updated } = st.skin;
-    if (updated > 0) return missing > 0 ? `${updated} 套皮肤有更新，另有 ${missing} 套未下载` : `${updated} 套皮肤有更新`;
-    if (missing > 0) return `${missing} 套皮肤可下载，已就绪 ${ready} 套`;
-    return '全部皮肤已是最新';
+    if (updated > 0) return missing > 0 ? `${updated} 套主题有更新，另有 ${missing} 套未下载` : `${updated} 套主题有更新`;
+    if (missing > 0) return `${missing} 套主题可下载，已就绪 ${ready} 套`;
+    return '全部主题已是最新';
   }
   if (st.doc === 'missing') return '尚未下载，下载后即可查看';
   if (st.doc === 'updated') return '有新版本，可更新到最新';
@@ -197,7 +197,7 @@ async function runAction(
   try {
     if (st.skin) {
       const r = await downloadSkinUpdates(app, manifest);
-      if (r.failed > 0) notice(`${r.failed} 套皮肤下载失败，可稍后重试`, 'error');
+      if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, 'error');
     } else {
       const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === st.id);
       // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
