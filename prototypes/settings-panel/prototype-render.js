@@ -1,4 +1,4 @@
-/* 源指纹 1ff75f1ae27264dd · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 877d6dd5bfd89169 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -173,7 +173,7 @@ var BZR_settings_panel = (() => {
 
   // src/settings-panel/layouts/jingwei/render.ts
   function deskShellHtml() {
-    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
+    return `<div class="bz-sp-head"><div class="bz-sp-crumb"><span class="bz-sp-head-title bz-sp-crumb-cur">设置</span></div><div class="bz-sp-search bz-sp-head-search">${iconSpan("search")}<input class="bz-input" placeholder="搜索域与设置项" autocomplete="off"></div><span class="bz-sp-head-tools"></span></div><div class="bz-sp-desk-body"><aside class="bz-sp-desk-side"><div class="bz-sp-nav"></div><div class="bz-sp-side-foot"><button type="button" class="bz-sp-foot-chg" data-sp-changelog>${iconSpan("history", "bz-ic bz-sp-foot-chg-ic")}<span class="bz-sp-foot-chg-name">更新日志</span></button></div></aside><main class="bz-sp-desk-main"><div class="bz-sp-pane"></div></main></div>`;
   }
   function navSecHtml(title, itemsHtml) {
     return `<div class="bz-sp-nav-sec"><div class="bz-sp-nav-sec-t">${esc(title)}</div>${itemsHtml}</div>`;
