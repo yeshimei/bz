@@ -24,6 +24,15 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             binding: { key: 'peopleDataDir' },
             placeholder: '例如 D:\\微信备份\\export_full',
           },
+          // 微信账号目录（issue 462）：多账号数据目录下指定用哪个账号；空 = 自动探测
+          // （探测与覆盖逻辑由后续票接入，本票只加键位与文案）
+          {
+            type: 'text',
+            name: '微信账号目录',
+            desc: '数据目录下的微信账号文件夹，留空自动探测',
+            binding: { key: 'peopleWxAccountDir' },
+            placeholder: '空 = 自动探测',
+          },
           {
             type: 'toggle',
             name: '群聊纳入列表',

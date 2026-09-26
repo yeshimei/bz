@@ -46,11 +46,22 @@ export default interface BzSettings {
 
   // ===== 🎙 语音转写（issue 444：AI 面板「语音转写」组；知识盒视频录入转文字消费，工具侧 bili-dl）=====
   /** 转写引擎：'sensevoice'（缺省，SenseVoice-Small，funasr）/ 'faster-whisper'（备选）。
-   *  两种引擎共用 knowledgePythonPath 的 Python 路径 */
+   *  两种引擎共用「外部工具」组 pythonPath 的 Python 路径（issue 462/ADR-0195 升格共享） */
   asrEngine: string;
   /** Whisper 档位（仅 faster-whisper 引擎消费）：tiny/base/small/medium/large-v2/large-v3，缺省 small。
    *  旧键 knowledgeWhisperModel 已一次性迁移到本键（migrateAsrKeys） */
   asrWhisperModel: string;
+
+  // ===== 🔧 外部工具（issue 462/ADR-0195：域无关运行时路径组，知识盒与脸谱共用同一套）=====
+  /** Python 可执行文件路径；空 = 跟随系统 PATH / 工具侧兜底。
+   *  旧键 knowledgePythonPath 已一次性迁移到本键（migrateExternalToolKeys） */
+  pythonPath: string;
+  /** ffmpeg 可执行文件路径；缺省 'ffmpeg' = 走 PATH。
+   *  旧键 knowledgeFfmpegPath 已一次性迁移到本键（migrateExternalToolKeys） */
+  ffmpegPath: string;
+  /** ffprobe 可执行文件路径；缺省 'ffprobe' = 走 PATH。
+   *  旧键 knowledgeFfprobePath 已一次性迁移到本键（migrateExternalToolKeys） */
+  ffprobePath: string;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -451,12 +462,9 @@ export default interface BzSettings {
   knowledgeImageFolder: string;
   /** 文献盒：领域词表（逗号分隔；空 = AI 自由写，ticket 136/ADR-0073） */
   knowledgeDomainList: string;
-  /** 文献盒：ffmpeg 路径（原工具 rc ffmpegPath，ticket 136 全并进设置） */
-  knowledgeFfmpegPath: string;
-  /** 文献盒：ffprobe 路径（原工具 rc ffprobePath） */
-  knowledgeFfprobePath: string;
-  /** 文献盒：Python 路径（转写引擎共用——SenseVoice 与 faster-whisper 都经它执行，原工具 rc pythonPath） */
-  knowledgePythonPath: string;
+  // 退役（issue 462/ADR-0195）：knowledgeFfmpegPath / knowledgeFfprobePath / knowledgePythonPath
+  // 三键升格为域无关「外部工具」组的 ffmpegPath / ffprobePath / pythonPath（migrateExternalToolKeys
+  // 一次性搬值），data.json 残留旧值由迁移清除
   // 退役：knowledgeWhisperModel（Whisper 档位）——issue 444 升格为 AI 面板「语音转写」组的
   // asrWhisperModel（migrateAsrKeys 一次性搬值），data.json 残留旧值由迁移清除
   /** 文献盒：缓存目录（原工具 rc cacheDir；留空=系统临时目录/bili-dl-cache） */
@@ -508,6 +516,9 @@ export default interface BzSettings {
   // ===== 🎭 脸谱数据源（people 域，issue 446/447：微信全模态预处理导出目录直连，两段增量）=====
   /** 数据文件夹路径（vault 外，预处理线按联系人一级目录产出 chat.json 等）；空 = 面板不显示数据源入口 */
   peopleDataDir: string;
+  /** 微信账号目录（issue 462）：数据目录下的账号子目录（wxid 目录名或完整路径）；空 = 自动探测
+   *  （单账号直取、多账号按规则挑选——探测与覆盖逻辑由后续票接入，本票只加键位） */
+  peopleWxAccountDir: string;
   /** 群聊纳入勾选列表（默认关：非「我」发送者多于一人判为群聊） */
   peopleIncludeGroups: boolean;
   /** 预览消费语音转写（默认开；无转写的保持 [语音 N秒] 标签） */
@@ -700,6 +711,35 @@ export function migrateAsrKeys(raw: unknown): boolean {
   return true;
 }
 
+/** 外部工具路径键映射（issue 462/ADR-0195）：旧 knowledge* 键 → 域无关「外部工具」组新键 */
+const EXTERNAL_TOOL_KEY_MIGRATIONS: Array<[string, string]> = [
+  ['knowledgePythonPath', 'pythonPath'],
+  ['knowledgeFfmpegPath', 'ffmpegPath'],
+  ['knowledgeFfprobePath', 'ffprobePath'],
+];
+
+/**
+ * 外部工具键一次性迁移（issue 462/ADR-0195）：知识盒名下的 Python / ffmpeg / ffprobe 三个路径键
+ * 升格为域无关「外部工具」组（脸谱与知识盒共用同一套，migrateAsrKeys 同款读旧写新删旧）。
+ * 旧值为空串不搬（搬进去等于噪音，新键走默认）；新键已有值时只删旧不覆盖（不踩用户改过的新值）。
+ * 幂等：无旧键即不改动，调用方据此调度落盘（C16 口径）。
+ */
+export function migrateExternalToolKeys(raw: unknown): boolean {
+  if (!raw || typeof raw !== 'object') return false;
+  const rec = raw as Record<string, unknown>;
+  let migrated = false;
+  for (const [from, to] of EXTERNAL_TOOL_KEY_MIGRATIONS) {
+    if (rec[from] === undefined) continue;
+    const legacy = rec[from];
+    delete rec[from];
+    migrated = true;
+    if (rec[to] === undefined && typeof legacy === 'string' && legacy.trim() !== '') {
+      rec[to] = legacy;
+    }
+  }
+  return migrated;
+}
+
 /** Jev 通道一次性迁移（issue 424/ADR-0184；issue 433/ADR-0190 起键按服务商分存）：
  * 1) **总开关键退役**（`jevEnabled`）——常开：填了密钥即接管判定，清空即回落 LLM；
  * 2) **端点 / 超时两键退役**——端点由「Jev 服务商」决定（`JEV_PROVIDER_REGISTRY`），超时固定十秒；
@@ -815,6 +855,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 语音转写（issue 444：AI 面板「语音转写」组；知识盒视频录入转文字消费）
   asrEngine: 'sensevoice',
   asrWhisperModel: 'small',
+
+  // 外部工具（issue 462/ADR-0195：域无关运行时路径组，知识盒与脸谱共用；默认值=原 knowledge 三键缺省）
+  pythonPath: '',
+  ffmpegPath: 'ffmpeg',
+  ffprobePath: 'ffprobe',
 
   // Jev 决策通道（ADR-0173；issue 424/ADR-0184 常开；issue 433/ADR-0190 起按服务商分存）：未填密钥时不接管任何判定
   jevProvider: 'typesafe',
@@ -1050,9 +1095,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   knowledgeDirectory: '文献盒',
   knowledgeImageFolder: '',
   knowledgeDomainList: '',
-  knowledgeFfmpegPath: 'ffmpeg',
-  knowledgeFfprobePath: 'ffprobe',
-  knowledgePythonPath: '',
+  // knowledgeFfmpegPath / knowledgeFfprobePath / knowledgePythonPath 已退役（issue 462 迁移为
+  // 外部工具组的 ffmpegPath / ffprobePath / pythonPath，默认值随新组走，见接口注释区）
   // knowledgeWhisperModel 已退役（issue 444 迁移为 asrWhisperModel，见接口注释区）
   knowledgeCacheDir: '',
   knowledgeCacheRetentionDays: 7,
@@ -1061,6 +1105,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 脸谱数据源（issue 446/447）：目录空 = 不显示数据源入口
   peopleDataDir: '',
+  // 微信账号目录（issue 462）：空 = 自动探测（键位先行，探测逻辑后续票接）
+  peopleWxAccountDir: '',
   peopleIncludeGroups: false,
   peoplePreviewVoice: true,
   peopleImageDescMode: 'file',

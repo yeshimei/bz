@@ -30,6 +30,8 @@ import { debounce } from '../core/utils';
 import * as R from './render';
 // 动效层（校准台语义世界，见 motion.ts 文件头）：只在生命周期挂点被调用，markup 契约不变
 import * as spm from './motion';
+// 更新日志弹窗（issue 472）：侧栏底部入口的独立子弹窗，同皮 .bz-sp-skin
+import { openChangelogModal } from './changelog';
 
 /** 搜索输入防抖窗口（E-5）：纯 UI 重绘无数据丢失面，每键全量重建导航/列表 + 图标物化 + 全行
  *  重扫收敛为一停顿一次（core debounce 先例口径 180ms）。 */
@@ -415,6 +417,10 @@ export class SettingsPanelUI {
     // 壳结构单源（R.deskShellHtml：头行 + 左导航 + 右内容区，逐字原型）
     popup.innerHTML = R.deskShellHtml();
     mountIcons(popup); // 头行搜索图标占位物化
+
+    // 更新日志入口（issue 472）：footer 静态壳内容，绑定一次（nav 重渲不波及）
+    popup.querySelector<HTMLElement>('[data-sp-changelog]')
+      ?.addEventListener('click', () => openChangelogModal());
 
     const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
     this.navEl = nav;

@@ -1,4 +1,4 @@
-/* 源指纹 4dff88550f1ebd2c · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9323374b4d989555 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -24,7 +24,6 @@ var BZR_people = (() => {
   var render_exports = {};
   __export(render_exports, {
     avatarColor: () => avatarColor,
-    avatarUri: () => avatarUri,
     button: () => button,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
@@ -179,9 +178,6 @@ var BZR_people = (() => {
     if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
     const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
     return `app://local/${escape(encodeURI(rel))}`;
-  }
-  function avatarUri(a) {
-    return a.startsWith("data:") ? a : localResourceUri(a);
   }
   function mdPlain(md) {
     return String(md != null ? md : "").replace(/```+/g, "").split(/\r?\n/).map((l) => l.replace(/^#{1,6}\s*/, "").replace(/^>\s?/, "").replace(/^-\s*/, "").replace(/\*\*/g, "").trim()).filter(Boolean).join(" ");
@@ -364,7 +360,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       title: seal.title
     });
     b.type = "button";
-    b.appendChild(el("img", "", { src: avatarUri(avatar), alt: p.name }));
+    b.appendChild(el("img", "", { src: localResourceUri(avatar), alt: p.name }));
     return b;
   }
   function foldCard(p, opts) {
@@ -434,7 +430,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       meta
     ]);
     return el("div", "bz-people-dt-head", [
-      opts.avatar ? el("img", "bz-people-dt-avatar", { src: avatarUri(opts.avatar), alt: p.name }) : el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
+      opts.avatar ? el("img", "bz-people-dt-avatar", { src: localResourceUri(opts.avatar), alt: p.name }) : el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
       id,
       el("div", "bz-people-dt-actions", [
         ...action ? [action] : [],
@@ -895,7 +891,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
     return el("label", cls, [
       cb,
-      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: localResourceUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
       el("div", "bz-people-ds-main", [
         el("div", "bz-people-ds-name", text(row.name + (row.isGroup ? "（群）" : ""))),
         el("div", "bz-people-ds-meta", text([
@@ -925,16 +921,16 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         { "data-people-ds-scan": "", "aria-label": s.scanning ? "扫描中" : "重扫", title: s.scanning ? "扫描中…" : "重扫" }
       )
     ]));
-    pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
+    pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据文件夹——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
     if (s.desktopOnly) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("数据源扫描仅桌面端支持（需要读取库外文件夹）。")));
     } else if (s.scanning) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据根目录…")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据文件夹…")));
     } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据根目录里的联系人。")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据文件夹里的联系人。")));
     } else if (!s.rows.length) {
       pop.appendChild(el("div", "bz-people-ds-empty", text(
-        s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。"
+        s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据文件夹里没有找到联系人（各联系人目录下需有 chat.json）。"
       )));
     } else {
       const list = el("div", "bz-people-ds-list");

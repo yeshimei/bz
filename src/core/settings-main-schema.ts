@@ -683,8 +683,8 @@ function credentialGroupRows(): SettingsRow[] {
 
 /**
  * 「语音转写」组行（issue 444）：知识盒视频录入转文字的引擎二选一——SenseVoice-Small（缺省，
- * funasr 识别，中文效果更好）/ faster-whisper（备选）。两种引擎共用文献盒的 Python 路径
- * （knowledgePythonPath，原「工具」组 2026-09-16 移除后键保留、值继续生效）。
+ * funasr 识别，中文效果更好）/ faster-whisper（备选）。两种引擎共用「外部工具」组的 Python 路径
+ * （pythonPath，issue 462/ADR-0195 自知识盒三键升格共享，脸谱工具包同用一套）。
  * - 「Whisper 档位」行仅 faster-whisper 引擎时显示（visibleWhen）——SenseVoice 模型固定
  *   iic/SenseVoiceSmall，无档位可调；
  * - 下发链路（knowledge/processor.ts）：engine 恒下发，whisperModel 仅 faster-whisper 时下发。

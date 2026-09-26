@@ -469,14 +469,15 @@ ${failures.join('\n')}`).toEqual([]);
     expect(plugin.settings.asrWhisperModel).toBe('small');
     expect((plugin.settings as any).knowledgeWhisperModel).toBeUndefined();
 
-    // 存量 data.json 带旧键 → onload 迁移（读旧写新删旧），Python 路径键不受影响
+    // 存量 data.json 带旧键 → onload 迁移（读旧写新删旧）；issue 462 起 Python 路径键同迁外部工具组
     delete diskData['bz'];
     diskData['bz'] = { knowledgeWhisperModel: 'medium', knowledgePythonPath: 'py' };
     const plugin2 = await createPlugin(makeMockApp());
     expect(plugin2.settings.asrWhisperModel).toBe('medium');
     expect(plugin2.settings.asrEngine).toBe('sensevoice'); // 引擎键新增，无旧可迁走缺省
     expect((plugin2.settings as any).knowledgeWhisperModel).toBeUndefined();
-    expect(plugin2.settings.knowledgePythonPath).toBe('py'); // 两引擎共用，迁移零扰动
+    expect(plugin2.settings.pythonPath).toBe('py'); // issue 462：旧 Python 路径键搬入外部工具组
+    expect((plugin2.settings as any).knowledgePythonPath).toBeUndefined(); // 旧键清理
     delete diskData['bz'];
   });
 

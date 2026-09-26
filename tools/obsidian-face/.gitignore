@@ -1,0 +1,3 @@
+# Python 字节码缓存不入库（vendor 源码与自写脚本都保持干净）
+__pycache__/
+*.pyc
