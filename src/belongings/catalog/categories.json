@@ -1,0 +1,4355 @@
+{
+  "version": "0.1.0",
+  "note": "归物本物品分类表 · 可下载资产（远端分发，用户在设置页点击下载）",
+  "groups": [
+    {
+      "id": "g001",
+      "name": "数码影音",
+      "icon": "smartphone",
+      "items": [
+        {
+          "id": "c0001",
+          "name": "智能手机",
+          "icon": "smartphone",
+          "aliases": [
+            "手机",
+            "phone"
+          ]
+        },
+        {
+          "id": "c0002",
+          "name": "平板电脑",
+          "icon": "tablet",
+          "aliases": [
+            "平板",
+            "ipad"
+          ]
+        },
+        {
+          "id": "c0003",
+          "name": "笔记本电脑",
+          "icon": "laptop",
+          "aliases": [
+            "notebook"
+          ]
+        },
+        {
+          "id": "c0004",
+          "name": "台式主机",
+          "icon": "monitor",
+          "aliases": [
+            "台式机",
+            "主机"
+          ]
+        },
+        {
+          "id": "c0005",
+          "name": "显示器",
+          "icon": "monitor",
+          "aliases": [
+            "显示屏"
+          ]
+        },
+        {
+          "id": "c0006",
+          "name": "电视机",
+          "icon": "tv",
+          "aliases": []
+        },
+        {
+          "id": "c0007",
+          "name": "投影仪",
+          "icon": "projector",
+          "aliases": [
+            "投影",
+            "投影机"
+          ]
+        },
+        {
+          "id": "c0008",
+          "name": "数码相机",
+          "icon": "camera",
+          "aliases": [
+            "相机",
+            "dc"
+          ]
+        },
+        {
+          "id": "c0009",
+          "name": "运动相机",
+          "icon": "camera",
+          "aliases": [
+            "运动摄像机",
+            "gopro"
+          ]
+        },
+        {
+          "id": "c0010",
+          "name": "网络摄像头",
+          "icon": "webcam",
+          "aliases": [
+            "摄像头"
+          ]
+        },
+        {
+          "id": "c0011",
+          "name": "有线耳机",
+          "icon": "headphones",
+          "aliases": [
+            "耳麦"
+          ]
+        },
+        {
+          "id": "c0012",
+          "name": "头戴耳机",
+          "icon": "headphones",
+          "aliases": [
+            "大耳机"
+          ]
+        },
+        {
+          "id": "c0013",
+          "name": "蓝牙耳机",
+          "icon": "headphones",
+          "aliases": [
+            "无线耳机",
+            "tws"
+          ]
+        },
+        {
+          "id": "c0014",
+          "name": "蓝牙音箱",
+          "icon": "speaker",
+          "aliases": [
+            "音箱",
+            "音响"
+          ]
+        },
+        {
+          "id": "c0015",
+          "name": "麦克风",
+          "icon": "mic",
+          "aliases": [
+            "话筒"
+          ]
+        },
+        {
+          "id": "c0016",
+          "name": "收音机",
+          "icon": "radio",
+          "aliases": [
+            "广播"
+          ]
+        },
+        {
+          "id": "c0017",
+          "name": "游戏手柄",
+          "icon": "gamepad",
+          "aliases": [
+            "手柄"
+          ]
+        },
+        {
+          "id": "c0018",
+          "name": "机械手表",
+          "icon": "watch",
+          "aliases": [
+            "机械表"
+          ]
+        },
+        {
+          "id": "c0019",
+          "name": "智能手表",
+          "icon": "watch",
+          "aliases": [
+            "电子表",
+            "运动表"
+          ]
+        },
+        {
+          "id": "c0020",
+          "name": "挂钟",
+          "icon": "clock",
+          "aliases": [
+            "壁钟"
+          ]
+        },
+        {
+          "id": "c0021",
+          "name": "闹钟",
+          "icon": "alarm-clock",
+          "aliases": [
+            "闹表"
+          ]
+        },
+        {
+          "id": "c0022",
+          "name": "航拍无人机",
+          "icon": "drone",
+          "aliases": [
+            "无人机",
+            "drone"
+          ]
+        },
+        {
+          "id": "c0023",
+          "name": "录音笔",
+          "icon": "mic",
+          "aliases": [
+            "数码录音器"
+          ]
+        },
+        {
+          "id": "c0024",
+          "name": "移动电源",
+          "icon": "battery",
+          "aliases": [
+            "充电宝",
+            "power bank"
+          ]
+        },
+        {
+          "id": "c0025",
+          "name": "数据线",
+          "icon": "cable",
+          "aliases": [
+            "充电线"
+          ]
+        },
+        {
+          "id": "c0026",
+          "name": "电子书阅读器",
+          "icon": "book",
+          "aliases": [
+            "电纸书",
+            "kindle"
+          ]
+        },
+        {
+          "id": "c0027",
+          "name": "唱片机",
+          "icon": "disc-3",
+          "aliases": [
+            "黑胶机"
+          ]
+        },
+        {
+          "id": "c0028",
+          "name": "便携音箱",
+          "icon": "speaker",
+          "aliases": [
+            "小音箱"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g002",
+      "name": "电脑外设",
+      "icon": "keyboard",
+      "items": [
+        {
+          "id": "c0029",
+          "name": "机械键盘",
+          "icon": "keyboard",
+          "aliases": [
+            "键盘"
+          ]
+        },
+        {
+          "id": "c0030",
+          "name": "无线鼠标",
+          "icon": "mouse",
+          "aliases": [
+            "鼠标"
+          ]
+        },
+        {
+          "id": "c0031",
+          "name": "触控板",
+          "icon": "mouse-pointer",
+          "aliases": [
+            "轨迹板"
+          ]
+        },
+        {
+          "id": "c0032",
+          "name": "显示器支架",
+          "icon": "monitor",
+          "aliases": [
+            "屏架"
+          ]
+        },
+        {
+          "id": "c0033",
+          "name": "网络路由器",
+          "icon": "router",
+          "aliases": [
+            "路由器"
+          ]
+        },
+        {
+          "id": "c0034",
+          "name": "无线网卡",
+          "icon": "wifi",
+          "aliases": [
+            "wifi卡"
+          ]
+        },
+        {
+          "id": "c0035",
+          "name": "打印机",
+          "icon": "printer",
+          "aliases": [
+            "打印器"
+          ]
+        },
+        {
+          "id": "c0036",
+          "name": "扫描仪",
+          "icon": "scan",
+          "aliases": [
+            "扫描机"
+          ]
+        },
+        {
+          "id": "c0037",
+          "name": "电脑摄像头",
+          "icon": "webcam",
+          "aliases": [
+            "电脑相机"
+          ]
+        },
+        {
+          "id": "c0038",
+          "name": "外接硬盘",
+          "icon": "hard-drive",
+          "aliases": [
+            "移动硬盘"
+          ]
+        },
+        {
+          "id": "c0039",
+          "name": "优盘",
+          "icon": "usb",
+          "aliases": [
+            "u盘"
+          ]
+        },
+        {
+          "id": "c0040",
+          "name": "存储卡",
+          "icon": "memory-stick",
+          "aliases": [
+            "sd卡",
+            "tf卡"
+          ]
+        },
+        {
+          "id": "c0041",
+          "name": "读卡器",
+          "icon": "usb",
+          "aliases": [
+            "tf读卡器"
+          ]
+        },
+        {
+          "id": "c0042",
+          "name": "数位板",
+          "icon": "tablet",
+          "aliases": [
+            "绘画板"
+          ]
+        },
+        {
+          "id": "c0043",
+          "name": "转接器",
+          "icon": "plug",
+          "aliases": [
+            "转接头"
+          ]
+        },
+        {
+          "id": "c0044",
+          "name": "集线器",
+          "icon": "plug",
+          "aliases": [
+            "分线器",
+            "hub"
+          ]
+        },
+        {
+          "id": "c0045",
+          "name": "电竞椅",
+          "icon": "armchair",
+          "aliases": [
+            "游戏椅"
+          ]
+        },
+        {
+          "id": "c0046",
+          "name": "桌面麦克风",
+          "icon": "mic",
+          "aliases": [
+            "直播麦"
+          ]
+        },
+        {
+          "id": "c0047",
+          "name": "调音台",
+          "icon": "sliders-horizontal",
+          "aliases": [
+            "混音器"
+          ]
+        },
+        {
+          "id": "c0048",
+          "name": "声卡",
+          "icon": "audio-lines",
+          "aliases": [
+            "外置声卡"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g003",
+      "name": "家具家纺",
+      "icon": "sofa",
+      "items": [
+        {
+          "id": "c0049",
+          "name": "沙发",
+          "icon": "sofa",
+          "aliases": [
+            "长沙发"
+          ]
+        },
+        {
+          "id": "c0050",
+          "name": "单人椅",
+          "icon": "armchair",
+          "aliases": [
+            "扶手椅"
+          ]
+        },
+        {
+          "id": "c0051",
+          "name": "餐桌",
+          "icon": "table",
+          "aliases": [
+            "饭桌"
+          ]
+        },
+        {
+          "id": "c0052",
+          "name": "书桌",
+          "icon": "table",
+          "aliases": [
+            "写字台"
+          ]
+        },
+        {
+          "id": "c0053",
+          "name": "办公椅",
+          "icon": "armchair",
+          "aliases": [
+            "电脑椅"
+          ]
+        },
+        {
+          "id": "c0054",
+          "name": "床架",
+          "icon": "bed",
+          "aliases": [
+            "床"
+          ]
+        },
+        {
+          "id": "c0055",
+          "name": "床垫",
+          "icon": "bed-double",
+          "aliases": [
+            "席梦思"
+          ]
+        },
+        {
+          "id": "c0056",
+          "name": "衣柜",
+          "icon": "shelving-unit",
+          "aliases": [
+            "衣橱",
+            "大衣柜"
+          ]
+        },
+        {
+          "id": "c0057",
+          "name": "书架",
+          "icon": "library-big",
+          "aliases": [
+            "书柜"
+          ]
+        },
+        {
+          "id": "c0058",
+          "name": "储物柜",
+          "icon": "shelving-unit",
+          "aliases": [
+            "收纳柜"
+          ]
+        },
+        {
+          "id": "c0059",
+          "name": "鞋柜",
+          "icon": "shelving-unit",
+          "aliases": [
+            "鞋橱"
+          ]
+        },
+        {
+          "id": "c0060",
+          "name": "茶几",
+          "icon": "table-2",
+          "aliases": [
+            "茶桌"
+          ]
+        },
+        {
+          "id": "c0061",
+          "name": "电视柜",
+          "icon": "shelving-unit",
+          "aliases": [
+            "视听柜"
+          ]
+        },
+        {
+          "id": "c0062",
+          "name": "梳妆台",
+          "icon": "mirror-round",
+          "aliases": [
+            "化妆台"
+          ]
+        },
+        {
+          "id": "c0063",
+          "name": "换鞋凳",
+          "icon": "armchair",
+          "aliases": [
+            "穿鞋凳"
+          ]
+        },
+        {
+          "id": "c0064",
+          "name": "地毯",
+          "icon": "sheet",
+          "aliases": [
+            "地垫"
+          ]
+        },
+        {
+          "id": "c0065",
+          "name": "窗帘",
+          "icon": "blinds",
+          "aliases": [
+            "窗纱"
+          ]
+        },
+        {
+          "id": "c0066",
+          "name": "抱枕",
+          "icon": "sheet",
+          "aliases": [
+            "靠垫"
+          ]
+        },
+        {
+          "id": "c0067",
+          "name": "床品四件套",
+          "icon": "sheet",
+          "aliases": [
+            "床单被套"
+          ]
+        },
+        {
+          "id": "c0068",
+          "name": "毛毯",
+          "icon": "sheet",
+          "aliases": [
+            "毯子",
+            "盖毯"
+          ]
+        },
+        {
+          "id": "c0069",
+          "name": "凉席",
+          "icon": "sheet",
+          "aliases": [
+            "竹席",
+            "草席"
+          ]
+        },
+        {
+          "id": "c0070",
+          "name": "蚊帐",
+          "icon": "tent",
+          "aliases": [
+            "纱帐"
+          ]
+        },
+        {
+          "id": "c0071",
+          "name": "穿衣镜",
+          "icon": "mirror-rectangular",
+          "aliases": [
+            "落地镜"
+          ]
+        },
+        {
+          "id": "c0072",
+          "name": "衣帽架",
+          "icon": "shelving-unit",
+          "aliases": [
+            "挂衣架"
+          ]
+        },
+        {
+          "id": "c0073",
+          "name": "置物架",
+          "icon": "shelving-unit",
+          "aliases": [
+            "层架"
+          ]
+        },
+        {
+          "id": "c0074",
+          "name": "折叠桌",
+          "icon": "table-2",
+          "aliases": [
+            "便携桌"
+          ]
+        },
+        {
+          "id": "c0075",
+          "name": "摇椅",
+          "icon": "rocking-chair",
+          "aliases": [
+            "躺椅"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g004",
+      "name": "厨房餐茶",
+      "icon": "utensils",
+      "items": [
+        {
+          "id": "c0076",
+          "name": "炒锅",
+          "icon": "cooking-pot",
+          "aliases": [
+            "锅",
+            "wok"
+          ]
+        },
+        {
+          "id": "c0077",
+          "name": "电饭煲",
+          "icon": "cooking-pot",
+          "aliases": [
+            "饭锅"
+          ]
+        },
+        {
+          "id": "c0078",
+          "name": "汤锅",
+          "icon": "utensils",
+          "aliases": [
+            "煮锅"
+          ]
+        },
+        {
+          "id": "c0079",
+          "name": "平底锅",
+          "icon": "cooking-pot",
+          "aliases": [
+            "煎锅",
+            "煎盘"
+          ]
+        },
+        {
+          "id": "c0080",
+          "name": "蒸锅",
+          "icon": "cooking-pot",
+          "aliases": [
+            "蒸笼"
+          ]
+        },
+        {
+          "id": "c0081",
+          "name": "砂锅",
+          "icon": "cooking-pot",
+          "aliases": [
+            "陶锅"
+          ]
+        },
+        {
+          "id": "c0082",
+          "name": "刀具套装",
+          "icon": "pocket-knife",
+          "aliases": [
+            "菜刀",
+            "厨刀"
+          ]
+        },
+        {
+          "id": "c0083",
+          "name": "砧板",
+          "icon": "sheet",
+          "aliases": [
+            "菜板",
+            "案板"
+          ]
+        },
+        {
+          "id": "c0084",
+          "name": "饭碗",
+          "icon": "utensils",
+          "aliases": [
+            "碗"
+          ]
+        },
+        {
+          "id": "c0085",
+          "name": "盘子",
+          "icon": "hand-platter",
+          "aliases": [
+            "餐盘",
+            "碟子"
+          ]
+        },
+        {
+          "id": "c0086",
+          "name": "筷子",
+          "icon": "utensils",
+          "aliases": [
+            "快子"
+          ]
+        },
+        {
+          "id": "c0087",
+          "name": "汤勺",
+          "icon": "utensils",
+          "aliases": [
+            "勺子",
+            "汤匙"
+          ]
+        },
+        {
+          "id": "c0088",
+          "name": "叉子",
+          "icon": "utensils",
+          "aliases": [
+            "西餐叉"
+          ]
+        },
+        {
+          "id": "c0089",
+          "name": "杯子",
+          "icon": "glass-water",
+          "aliases": [
+            "水杯",
+            "玻璃杯"
+          ]
+        },
+        {
+          "id": "c0090",
+          "name": "马克杯",
+          "icon": "cup-soda",
+          "aliases": [
+            "咖啡杯"
+          ]
+        },
+        {
+          "id": "c0091",
+          "name": "保温杯",
+          "icon": "flask-round",
+          "aliases": [
+            "焖烧杯"
+          ]
+        },
+        {
+          "id": "c0092",
+          "name": "茶壶",
+          "icon": "coffee",
+          "aliases": [
+            "煮水壶"
+          ]
+        },
+        {
+          "id": "c0093",
+          "name": "电热水壶",
+          "icon": "coffee",
+          "aliases": [
+            "电水壶"
+          ]
+        },
+        {
+          "id": "c0094",
+          "name": "咖啡机",
+          "icon": "coffee",
+          "aliases": [
+            "咖啡壶"
+          ]
+        },
+        {
+          "id": "c0095",
+          "name": "微波炉",
+          "icon": "microwave",
+          "aliases": [
+            "微波"
+          ]
+        },
+        {
+          "id": "c0096",
+          "name": "烤箱",
+          "icon": "microwave",
+          "aliases": [
+            "烤炉"
+          ]
+        },
+        {
+          "id": "c0097",
+          "name": "吐司机",
+          "icon": "croissant",
+          "aliases": [
+            "烤面包机"
+          ]
+        },
+        {
+          "id": "c0098",
+          "name": "料理机",
+          "icon": "blend",
+          "aliases": [
+            "搅拌机",
+            "破壁机"
+          ]
+        },
+        {
+          "id": "c0103",
+          "name": "保鲜盒",
+          "icon": "container",
+          "aliases": [
+            "饭盒",
+            "便当盒"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g005",
+      "name": "衣物鞋帽",
+      "icon": "shirt",
+      "items": [
+        {
+          "id": "c0105",
+          "name": "圆领衫",
+          "icon": "shirt",
+          "aliases": [
+            "T恤",
+            "短袖"
+          ]
+        },
+        {
+          "id": "c0106",
+          "name": "衬衫",
+          "icon": "shirt",
+          "aliases": [
+            "衬衣"
+          ]
+        },
+        {
+          "id": "c0107",
+          "name": "卫衣",
+          "icon": "shirt",
+          "aliases": [
+            "帽衫"
+          ]
+        },
+        {
+          "id": "c0108",
+          "name": "毛衣",
+          "icon": "shirt",
+          "aliases": [
+            "针织衫"
+          ]
+        },
+        {
+          "id": "c0109",
+          "name": "外套",
+          "icon": "shirt",
+          "aliases": [
+            "外衣"
+          ]
+        },
+        {
+          "id": "c0110",
+          "name": "羽绒服",
+          "icon": "snowflake",
+          "aliases": [
+            "羽绒衣"
+          ]
+        },
+        {
+          "id": "c0111",
+          "name": "西装",
+          "icon": "shirt",
+          "aliases": [
+            "西服"
+          ]
+        },
+        {
+          "id": "c0112",
+          "name": "连衣裙",
+          "icon": "shirt",
+          "aliases": [
+            "裙子"
+          ]
+        },
+        {
+          "id": "c0113",
+          "name": "牛仔裤",
+          "icon": "shirt",
+          "aliases": [
+            "仔裤"
+          ]
+        },
+        {
+          "id": "c0114",
+          "name": "休闲裤",
+          "icon": "shirt",
+          "aliases": [
+            "长裤"
+          ]
+        },
+        {
+          "id": "c0115",
+          "name": "短裤",
+          "icon": "shirt",
+          "aliases": [
+            "热裤"
+          ]
+        },
+        {
+          "id": "c0116",
+          "name": "运动裤",
+          "icon": "shirt",
+          "aliases": [
+            "卫裤"
+          ]
+        },
+        {
+          "id": "c0117",
+          "name": "内衣",
+          "icon": "shirt",
+          "aliases": [
+            "内裤",
+            "底裤"
+          ]
+        },
+        {
+          "id": "c0118",
+          "name": "袜子",
+          "icon": "footprints",
+          "aliases": [
+            "短袜"
+          ]
+        },
+        {
+          "id": "c0119",
+          "name": "运动鞋",
+          "icon": "sport-shoe",
+          "aliases": [
+            "跑鞋",
+            "球鞋"
+          ]
+        },
+        {
+          "id": "c0120",
+          "name": "皮鞋",
+          "icon": "sport-shoe",
+          "aliases": [
+            "正装鞋"
+          ]
+        },
+        {
+          "id": "c0121",
+          "name": "靴子",
+          "icon": "sport-shoe",
+          "aliases": [
+            "长靴"
+          ]
+        },
+        {
+          "id": "c0122",
+          "name": "凉鞋",
+          "icon": "sport-shoe",
+          "aliases": [
+            "拖鞋",
+            "夏鞋"
+          ]
+        },
+        {
+          "id": "c0123",
+          "name": "帽子",
+          "icon": "hat-glasses",
+          "aliases": [
+            "鸭舌帽",
+            "cap"
+          ]
+        },
+        {
+          "id": "c0124",
+          "name": "围巾",
+          "icon": "shirt",
+          "aliases": [
+            "脖套"
+          ]
+        },
+        {
+          "id": "c0125",
+          "name": "手套",
+          "icon": "hand",
+          "aliases": [
+            "分指手套"
+          ]
+        },
+        {
+          "id": "c0126",
+          "name": "腰带",
+          "icon": "shirt",
+          "aliases": [
+            "皮带"
+          ]
+        },
+        {
+          "id": "c0127",
+          "name": "领带",
+          "icon": "shirt",
+          "aliases": [
+            "领结"
+          ]
+        },
+        {
+          "id": "c0128",
+          "name": "太阳镜",
+          "icon": "glasses",
+          "aliases": [
+            "墨镜",
+            "sunglasses"
+          ]
+        },
+        {
+          "id": "c0129",
+          "name": "雨衣",
+          "icon": "umbrella",
+          "aliases": [
+            "雨披"
+          ]
+        },
+        {
+          "id": "c0130",
+          "name": "泳衣",
+          "icon": "droplet",
+          "aliases": [
+            "游泳衣"
+          ]
+        },
+        {
+          "id": "c0131",
+          "name": "背包",
+          "icon": "backpack",
+          "aliases": [
+            "双肩包"
+          ]
+        },
+        {
+          "id": "c0132",
+          "name": "手提包",
+          "icon": "handbag",
+          "aliases": [
+            "女包",
+            "挎包"
+          ]
+        },
+        {
+          "id": "c0133",
+          "name": "钱包",
+          "icon": "wallet",
+          "aliases": [
+            "皮夹"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g006",
+      "name": "饰品配件",
+      "icon": "gem",
+      "items": [
+        {
+          "id": "c0134",
+          "name": "项链",
+          "icon": "gem",
+          "aliases": [
+            "颈链"
+          ]
+        },
+        {
+          "id": "c0135",
+          "name": "手链",
+          "icon": "gem",
+          "aliases": [
+            "手镯"
+          ]
+        },
+        {
+          "id": "c0136",
+          "name": "戒指",
+          "icon": "gem",
+          "aliases": [
+            "婚戒",
+            "指环"
+          ]
+        },
+        {
+          "id": "c0137",
+          "name": "耳环",
+          "icon": "star",
+          "aliases": [
+            "耳钉"
+          ]
+        },
+        {
+          "id": "c0138",
+          "name": "胸针",
+          "icon": "gem",
+          "aliases": [
+            "胸花"
+          ]
+        },
+        {
+          "id": "c0139",
+          "name": "手表",
+          "icon": "watch",
+          "aliases": [
+            "腕表"
+          ]
+        },
+        {
+          "id": "c0140",
+          "name": "眼镜",
+          "icon": "glasses",
+          "aliases": [
+            "近视镜"
+          ]
+        },
+        {
+          "id": "c0141",
+          "name": "发饰",
+          "icon": "gem",
+          "aliases": [
+            "发卡",
+            "头饰"
+          ]
+        },
+        {
+          "id": "c0142",
+          "name": "袖扣",
+          "icon": "gem",
+          "aliases": [
+            "cufflinks"
+          ]
+        },
+        {
+          "id": "c0143",
+          "name": "钥匙扣",
+          "icon": "key-round",
+          "aliases": [
+            "钥匙链"
+          ]
+        },
+        {
+          "id": "c0144",
+          "name": "卡包",
+          "icon": "wallet",
+          "aliases": [
+            "卡片包"
+          ]
+        },
+        {
+          "id": "c0145",
+          "name": "徽章",
+          "icon": "medal",
+          "aliases": [
+            "奖章"
+          ]
+        },
+        {
+          "id": "c0146",
+          "name": "丝巾",
+          "icon": "shirt",
+          "aliases": [
+            "纱巾"
+          ]
+        },
+        {
+          "id": "c0147",
+          "name": "阳伞",
+          "icon": "umbrella",
+          "aliases": [
+            "晴伞"
+          ]
+        },
+        {
+          "id": "c0148",
+          "name": "脚链",
+          "icon": "link",
+          "aliases": [
+            "脚饰"
+          ]
+        },
+        {
+          "id": "c0149",
+          "name": "鼻钉",
+          "icon": "star",
+          "aliases": [
+            "鼻饰"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g007",
+      "name": "个护美妆",
+      "icon": "spray-can",
+      "items": [
+        {
+          "id": "c0150",
+          "name": "洗面奶",
+          "icon": "spray-can",
+          "aliases": [
+            "洁面乳"
+          ]
+        },
+        {
+          "id": "c0151",
+          "name": "爽肤水",
+          "icon": "spray-can",
+          "aliases": [
+            "化妆水"
+          ]
+        },
+        {
+          "id": "c0152",
+          "name": "乳液",
+          "icon": "droplet",
+          "aliases": [
+            "润肤乳"
+          ]
+        },
+        {
+          "id": "c0153",
+          "name": "面霜",
+          "icon": "droplet",
+          "aliases": [
+            "护肤霜"
+          ]
+        },
+        {
+          "id": "c0154",
+          "name": "防晒霜",
+          "icon": "spray-can",
+          "aliases": [
+            "防晒"
+          ]
+        },
+        {
+          "id": "c0155",
+          "name": "口红",
+          "icon": "spray-can",
+          "aliases": [
+            "唇膏"
+          ]
+        },
+        {
+          "id": "c0156",
+          "name": "粉底",
+          "icon": "spray-can",
+          "aliases": [
+            "粉饼",
+            "bb霜"
+          ]
+        },
+        {
+          "id": "c0157",
+          "name": "香水",
+          "icon": "bottle-wine",
+          "aliases": [
+            "香氛"
+          ]
+        },
+        {
+          "id": "c0158",
+          "name": "洗发水",
+          "icon": "droplet",
+          "aliases": [
+            "洗发露"
+          ]
+        },
+        {
+          "id": "c0159",
+          "name": "沐浴露",
+          "icon": "droplet",
+          "aliases": [
+            "沐浴乳"
+          ]
+        },
+        {
+          "id": "c0160",
+          "name": "牙膏",
+          "icon": "pill-bottle",
+          "aliases": [
+            "牙粉"
+          ]
+        },
+        {
+          "id": "c0161",
+          "name": "牙刷",
+          "icon": "brush",
+          "aliases": [
+            "齿刷"
+          ]
+        },
+        {
+          "id": "c0162",
+          "name": "梳子",
+          "icon": "brush",
+          "aliases": [
+            "头梳"
+          ]
+        },
+        {
+          "id": "c0163",
+          "name": "吹风机",
+          "icon": "fan",
+          "aliases": [
+            "电吹风"
+          ]
+        },
+        {
+          "id": "c0164",
+          "name": "卷发棒",
+          "icon": "fan",
+          "aliases": [
+            "直发器"
+          ]
+        },
+        {
+          "id": "c0165",
+          "name": "剃须刀",
+          "icon": "spray-can",
+          "aliases": [
+            "刮胡刀"
+          ]
+        },
+        {
+          "id": "c0166",
+          "name": "镜子",
+          "icon": "mirror-round",
+          "aliases": [
+            "化妆镜"
+          ]
+        },
+        {
+          "id": "c0167",
+          "name": "美甲套装",
+          "icon": "gem",
+          "aliases": [
+            "指甲油"
+          ]
+        },
+        {
+          "id": "c0168",
+          "name": "体重秤",
+          "icon": "scale",
+          "aliases": [
+            "体脂秤",
+            "秤"
+          ]
+        },
+        {
+          "id": "c0169",
+          "name": "化妆包",
+          "icon": "handbag",
+          "aliases": [
+            "美容包"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g008",
+      "name": "清洁洗涤",
+      "icon": "brush",
+      "items": [
+        {
+          "id": "c0170",
+          "name": "扫帚",
+          "icon": "brush",
+          "aliases": [
+            "扫把"
+          ]
+        },
+        {
+          "id": "c0171",
+          "name": "拖把",
+          "icon": "brush",
+          "aliases": [
+            "拖布"
+          ]
+        },
+        {
+          "id": "c0172",
+          "name": "簸箕",
+          "icon": "brush",
+          "aliases": [
+            "畚箕"
+          ]
+        },
+        {
+          "id": "c0173",
+          "name": "垃圾桶",
+          "icon": "shopping-basket",
+          "aliases": [
+            "废纸篓",
+            "垃圾筒"
+          ]
+        },
+        {
+          "id": "c0174",
+          "name": "垃圾袋",
+          "icon": "shopping-bag",
+          "aliases": [
+            "塑料袋"
+          ]
+        },
+        {
+          "id": "c0175",
+          "name": "洗衣液",
+          "icon": "droplet",
+          "aliases": [
+            "洗衣露"
+          ]
+        },
+        {
+          "id": "c0176",
+          "name": "洗洁精",
+          "icon": "droplet",
+          "aliases": [
+            "餐具净"
+          ]
+        },
+        {
+          "id": "c0177",
+          "name": "消毒液",
+          "icon": "droplet",
+          "aliases": [
+            "消毒水"
+          ]
+        },
+        {
+          "id": "c0178",
+          "name": "抹布",
+          "icon": "brush",
+          "aliases": [
+            "擦布"
+          ]
+        },
+        {
+          "id": "c0179",
+          "name": "海绵",
+          "icon": "soap-dispenser-droplet",
+          "aliases": [
+            "清洁棉"
+          ]
+        },
+        {
+          "id": "c0180",
+          "name": "马桶刷",
+          "icon": "brush",
+          "aliases": [
+            "洁厕刷"
+          ]
+        },
+        {
+          "id": "c0181",
+          "name": "肥皂",
+          "icon": "soap-dispenser-droplet",
+          "aliases": [
+            "香皂",
+            "肥皂块"
+          ]
+        },
+        {
+          "id": "c0182",
+          "name": "洗衣盆",
+          "icon": "cup-soda",
+          "aliases": [
+            "洗脚盆"
+          ]
+        },
+        {
+          "id": "c0183",
+          "name": "晾衣架",
+          "icon": "shirt",
+          "aliases": [
+            "衣架"
+          ]
+        },
+        {
+          "id": "c0184",
+          "name": "除螨仪",
+          "icon": "washing-machine",
+          "aliases": [
+            "除螨机"
+          ]
+        },
+        {
+          "id": "c0185",
+          "name": "清洁喷雾",
+          "icon": "droplet",
+          "aliases": [
+            "消毒喷雾"
+          ]
+        },
+        {
+          "id": "c0476",
+          "name": "毛巾架",
+          "icon": "towel-rack",
+          "aliases": [
+            "浴巾架"
+          ]
+        },
+        {
+          "id": "c0480",
+          "name": "皂液器",
+          "icon": "soap-dispenser-droplet",
+          "aliases": [
+            "洗手液瓶"
+          ]
+        },
+        {
+          "id": "c0481",
+          "name": "漱口杯",
+          "icon": "cup-soda",
+          "aliases": [
+            "牙杯"
+          ]
+        },
+        {
+          "id": "c0482",
+          "name": "浴巾",
+          "icon": "sheet",
+          "aliases": [
+            "大毛巾"
+          ]
+        },
+        {
+          "id": "c0483",
+          "name": "马桶清洁刷",
+          "icon": "brush",
+          "aliases": [
+            "厕刷"
+          ]
+        },
+        {
+          "id": "c0484",
+          "name": "浴室秤",
+          "icon": "scale",
+          "aliases": [
+            "体重计"
+          ]
+        },
+        {
+          "id": "c0485",
+          "name": "洗澡拖",
+          "icon": "sport-shoe",
+          "aliases": [
+            "沐浴拖"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g009",
+      "name": "工具五金",
+      "icon": "wrench",
+      "items": [
+        {
+          "id": "c0186",
+          "name": "螺丝刀",
+          "icon": "wrench",
+          "aliases": [
+            "起子"
+          ]
+        },
+        {
+          "id": "c0187",
+          "name": "扳手",
+          "icon": "wrench",
+          "aliases": [
+            "扳子"
+          ]
+        },
+        {
+          "id": "c0188",
+          "name": "锤子",
+          "icon": "hammer",
+          "aliases": [
+            "榔头"
+          ]
+        },
+        {
+          "id": "c0189",
+          "name": "钳子",
+          "icon": "wrench",
+          "aliases": [
+            "老虎钳"
+          ]
+        },
+        {
+          "id": "c0190",
+          "name": "美工刀",
+          "icon": "pocket-knife",
+          "aliases": [
+            "裁纸刀"
+          ]
+        },
+        {
+          "id": "c0191",
+          "name": "卷尺",
+          "icon": "ruler",
+          "aliases": [
+            "软尺"
+          ]
+        },
+        {
+          "id": "c0192",
+          "name": "电钻",
+          "icon": "drill",
+          "aliases": [
+            "手电钻"
+          ]
+        },
+        {
+          "id": "c0193",
+          "name": "锯子",
+          "icon": "scissors",
+          "aliases": [
+            "手锯"
+          ]
+        },
+        {
+          "id": "c0194",
+          "name": "梯子",
+          "icon": "ruler",
+          "aliases": [
+            "爬梯"
+          ]
+        },
+        {
+          "id": "c0195",
+          "name": "钳工台",
+          "icon": "table",
+          "aliases": [
+            "工作台"
+          ]
+        },
+        {
+          "id": "c0196",
+          "name": "工具箱",
+          "icon": "toolbox",
+          "aliases": [
+            "工具盒"
+          ]
+        },
+        {
+          "id": "c0197",
+          "name": "钉枪",
+          "icon": "hammer",
+          "aliases": [
+            "钉钉器"
+          ]
+        },
+        {
+          "id": "c0198",
+          "name": "水平仪",
+          "icon": "triangle",
+          "aliases": [
+            "平水尺"
+          ]
+        },
+        {
+          "id": "c0199",
+          "name": "电笔",
+          "icon": "pencil",
+          "aliases": [
+            "测电笔"
+          ]
+        },
+        {
+          "id": "c0200",
+          "name": "胶枪",
+          "icon": "spray-can",
+          "aliases": [
+            "热熔胶枪"
+          ]
+        },
+        {
+          "id": "c0201",
+          "name": "扳手套装",
+          "icon": "wrench",
+          "aliases": [
+            "套筒"
+          ]
+        },
+        {
+          "id": "c0202",
+          "name": "锁具",
+          "icon": "lock",
+          "aliases": [
+            "门锁",
+            "挂锁"
+          ]
+        },
+        {
+          "id": "c0203",
+          "name": "钥匙",
+          "icon": "key",
+          "aliases": [
+            "钥匙串"
+          ]
+        },
+        {
+          "id": "c0204",
+          "name": "膨胀螺丝",
+          "icon": "triangle",
+          "aliases": [
+            "胀栓"
+          ]
+        },
+        {
+          "id": "c0205",
+          "name": "砂纸",
+          "icon": "brush",
+          "aliases": [
+            "打磨纸"
+          ]
+        },
+        {
+          "id": "c0206",
+          "name": "胶带",
+          "icon": "link",
+          "aliases": [
+            "双面胶"
+          ]
+        },
+        {
+          "id": "c0207",
+          "name": "电源插排",
+          "icon": "plug",
+          "aliases": [
+            "排插",
+            "插线板"
+          ]
+        },
+        {
+          "id": "c0208",
+          "name": "手电筒",
+          "icon": "flashlight",
+          "aliases": [
+            "电筒"
+          ]
+        },
+        {
+          "id": "c0209",
+          "name": "万用表",
+          "icon": "gauge",
+          "aliases": [
+            "电表"
+          ]
+        },
+        {
+          "id": "c0210",
+          "name": "自行车打气筒",
+          "icon": "gauge",
+          "aliases": [
+            "气筒"
+          ]
+        },
+        {
+          "id": "c0211",
+          "name": "电线",
+          "icon": "cable",
+          "aliases": [
+            "电缆"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g010",
+      "name": "文具书籍",
+      "icon": "book",
+      "items": [
+        {
+          "id": "c0212",
+          "name": "笔记本",
+          "icon": "notebook",
+          "aliases": [
+            "本子"
+          ]
+        },
+        {
+          "id": "c0213",
+          "name": "日记本",
+          "icon": "book",
+          "aliases": [
+            "手帐"
+          ]
+        },
+        {
+          "id": "c0214",
+          "name": "钢笔",
+          "icon": "pencil",
+          "aliases": [
+            "墨水笔"
+          ]
+        },
+        {
+          "id": "c0215",
+          "name": "签字笔",
+          "icon": "pencil",
+          "aliases": [
+            "中性笔"
+          ]
+        },
+        {
+          "id": "c0216",
+          "name": "铅笔",
+          "icon": "pencil",
+          "aliases": [
+            "木杆笔"
+          ]
+        },
+        {
+          "id": "c0217",
+          "name": "马克笔",
+          "icon": "highlighter",
+          "aliases": [
+            "记号笔"
+          ]
+        },
+        {
+          "id": "c0218",
+          "name": "橡皮",
+          "icon": "eraser",
+          "aliases": [
+            "橡皮擦"
+          ]
+        },
+        {
+          "id": "c0219",
+          "name": "尺子",
+          "icon": "ruler",
+          "aliases": [
+            "三角板"
+          ]
+        },
+        {
+          "id": "c0220",
+          "name": "订书机",
+          "icon": "scissors",
+          "aliases": [
+            "订书器"
+          ]
+        },
+        {
+          "id": "c0221",
+          "name": "回形针",
+          "icon": "paperclip",
+          "aliases": [
+            "曲别针"
+          ]
+        },
+        {
+          "id": "c0222",
+          "name": "文件夹",
+          "icon": "files",
+          "aliases": [
+            "资料册"
+          ]
+        },
+        {
+          "id": "c0223",
+          "name": "文件袋",
+          "icon": "file-box",
+          "aliases": [
+            "档案袋"
+          ]
+        },
+        {
+          "id": "c0224",
+          "name": "便利贴",
+          "icon": "bookmark",
+          "aliases": [
+            "便签",
+            "n次贴"
+          ]
+        },
+        {
+          "id": "c0225",
+          "name": "胶棒",
+          "icon": "pencil",
+          "aliases": [
+            "固体胶"
+          ]
+        },
+        {
+          "id": "c0226",
+          "name": "剪刀",
+          "icon": "scissors",
+          "aliases": [
+            "剪子"
+          ]
+        },
+        {
+          "id": "c0227",
+          "name": "印章",
+          "icon": "stamp",
+          "aliases": [
+            "图章"
+          ]
+        },
+        {
+          "id": "c0228",
+          "name": "信封",
+          "icon": "mail",
+          "aliases": [
+            "信壳"
+          ]
+        },
+        {
+          "id": "c0229",
+          "name": "日历",
+          "icon": "calendar",
+          "aliases": [
+            "台历",
+            "挂历"
+          ]
+        },
+        {
+          "id": "c0230",
+          "name": "图画书",
+          "icon": "book-open",
+          "aliases": [
+            "绘本"
+          ]
+        },
+        {
+          "id": "c0231",
+          "name": "字典",
+          "icon": "book",
+          "aliases": [
+            "辞典"
+          ]
+        },
+        {
+          "id": "c0232",
+          "name": "杂志",
+          "icon": "newspaper",
+          "aliases": [
+            "刊物"
+          ]
+        },
+        {
+          "id": "c0233",
+          "name": "名片盒",
+          "icon": "id-card",
+          "aliases": [
+            "名片夹"
+          ]
+        },
+        {
+          "id": "c0234",
+          "name": "书签",
+          "icon": "bookmark",
+          "aliases": [
+            "藏书票"
+          ]
+        },
+        {
+          "id": "c0235",
+          "name": "卷笔刀",
+          "icon": "pencil",
+          "aliases": [
+            "削笔器"
+          ]
+        },
+        {
+          "id": "c0236",
+          "name": "画板",
+          "icon": "paintbrush",
+          "aliases": [
+            "画夹"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g011",
+      "name": "玩具娱乐",
+      "icon": "puzzle",
+      "items": [
+        {
+          "id": "c0237",
+          "name": "积木",
+          "icon": "toy-brick",
+          "aliases": [
+            "乐高"
+          ]
+        },
+        {
+          "id": "c0238",
+          "name": "拼图",
+          "icon": "puzzle",
+          "aliases": [
+            "拼板"
+          ]
+        },
+        {
+          "id": "c0239",
+          "name": "魔方",
+          "icon": "boxes",
+          "aliases": [
+            "魔方块"
+          ]
+        },
+        {
+          "id": "c0240",
+          "name": "玩偶",
+          "icon": "gift",
+          "aliases": [
+            "娃娃"
+          ]
+        },
+        {
+          "id": "c0241",
+          "name": "毛绒玩具",
+          "icon": "paw-print",
+          "aliases": [
+            "公仔"
+          ]
+        },
+        {
+          "id": "c0242",
+          "name": "棋类",
+          "icon": "chess-pawn",
+          "aliases": [
+            "象棋",
+            "围棋"
+          ]
+        },
+        {
+          "id": "c0243",
+          "name": "扑克",
+          "icon": "dice-5",
+          "aliases": [
+            "纸牌"
+          ]
+        },
+        {
+          "id": "c0244",
+          "name": "桌游",
+          "icon": "ticket",
+          "aliases": [
+            "游戏牌"
+          ]
+        },
+        {
+          "id": "c0245",
+          "name": "遥控车",
+          "icon": "car",
+          "aliases": [
+            "rc车"
+          ]
+        },
+        {
+          "id": "c0246",
+          "name": "风筝",
+          "icon": "wind",
+          "aliases": [
+            "纸鸢"
+          ]
+        },
+        {
+          "id": "c0247",
+          "name": "滑板玩具",
+          "icon": "bike",
+          "aliases": []
+        },
+        {
+          "id": "c0248",
+          "name": "泡泡机",
+          "icon": "droplet",
+          "aliases": [
+            "吹泡器"
+          ]
+        },
+        {
+          "id": "c0249",
+          "name": "气球",
+          "icon": "balloon",
+          "aliases": [
+            "汽球"
+          ]
+        },
+        {
+          "id": "c0250",
+          "name": "弹珠",
+          "icon": "diamond",
+          "aliases": [
+            "玻璃球"
+          ]
+        },
+        {
+          "id": "c0251",
+          "name": "沙包",
+          "icon": "bean",
+          "aliases": [
+            "丢沙"
+          ]
+        },
+        {
+          "id": "c0252",
+          "name": "飞盘",
+          "icon": "disc",
+          "aliases": [
+            "飞碟"
+          ]
+        },
+        {
+          "id": "c0253",
+          "name": "拼装玩具",
+          "icon": "toy-brick",
+          "aliases": [
+            "拼装件"
+          ]
+        },
+        {
+          "id": "c0254",
+          "name": "游戏卡带",
+          "icon": "cassette-tape",
+          "aliases": [
+            "卡带"
+          ]
+        },
+        {
+          "id": "c0256",
+          "name": "摇铃",
+          "icon": "bell",
+          "aliases": [
+            "摇铃器"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g012",
+      "name": "运动健身",
+      "icon": "dumbbell",
+      "items": [
+        {
+          "id": "c0257",
+          "name": "哑铃",
+          "icon": "dumbbell",
+          "aliases": [
+            "举重铃"
+          ]
+        },
+        {
+          "id": "c0258",
+          "name": "跑步机",
+          "icon": "bike",
+          "aliases": [
+            "跑台"
+          ]
+        },
+        {
+          "id": "c0259",
+          "name": "瑜伽垫",
+          "icon": "sheet",
+          "aliases": [
+            "瑜珈垫"
+          ]
+        },
+        {
+          "id": "c0260",
+          "name": "跳绳",
+          "icon": "cable",
+          "aliases": [
+            "健身绳"
+          ]
+        },
+        {
+          "id": "c0261",
+          "name": "篮球",
+          "icon": "volleyball",
+          "aliases": [
+            "蓝球"
+          ]
+        },
+        {
+          "id": "c0262",
+          "name": "足球",
+          "icon": "volleyball",
+          "aliases": [
+            "蹴鞠"
+          ]
+        },
+        {
+          "id": "c0263",
+          "name": "羽毛球",
+          "icon": "volleyball",
+          "aliases": [
+            "羽球"
+          ]
+        },
+        {
+          "id": "c0264",
+          "name": "网球",
+          "icon": "volleyball",
+          "aliases": [
+            "网拍球"
+          ]
+        },
+        {
+          "id": "c0265",
+          "name": "乒乓球",
+          "icon": "circle-dot",
+          "aliases": [
+            "乒乓"
+          ]
+        },
+        {
+          "id": "c0266",
+          "name": "泳镜",
+          "icon": "glasses",
+          "aliases": [
+            "游泳镜"
+          ]
+        },
+        {
+          "id": "c0267",
+          "name": "泳帽",
+          "icon": "hat-glasses",
+          "aliases": [
+            "游泳帽"
+          ]
+        },
+        {
+          "id": "c0268",
+          "name": "护膝",
+          "icon": "shield",
+          "aliases": [
+            "护肘"
+          ]
+        },
+        {
+          "id": "c0269",
+          "name": "运动水壶",
+          "icon": "bottle-wine",
+          "aliases": [
+            "健身水壶"
+          ]
+        },
+        {
+          "id": "c0270",
+          "name": "健身手套",
+          "icon": "shield",
+          "aliases": [
+            "训练手套"
+          ]
+        },
+        {
+          "id": "c0271",
+          "name": "拉力器",
+          "icon": "dumbbell",
+          "aliases": [
+            "弹力带"
+          ]
+        },
+        {
+          "id": "c0272",
+          "name": "握力器",
+          "icon": "dumbbell",
+          "aliases": [
+            "握力圈"
+          ]
+        },
+        {
+          "id": "c0273",
+          "name": "健身自行车",
+          "icon": "bike",
+          "aliases": [
+            "锻炼车"
+          ]
+        },
+        {
+          "id": "c0274",
+          "name": "滑板",
+          "icon": "disc",
+          "aliases": [
+            "刷板"
+          ]
+        },
+        {
+          "id": "c0275",
+          "name": "登山杖",
+          "icon": "tent",
+          "aliases": [
+            "登山手杖"
+          ]
+        },
+        {
+          "id": "c0276",
+          "name": "护腕",
+          "icon": "shield",
+          "aliases": [
+            "护踝"
+          ]
+        },
+        {
+          "id": "c0277",
+          "name": "计步器",
+          "icon": "watch",
+          "aliases": [
+            "运动手环"
+          ]
+        },
+        {
+          "id": "c0278",
+          "name": "拳击手套",
+          "icon": "shield",
+          "aliases": [
+            "拳套"
+          ]
+        },
+        {
+          "id": "c0279",
+          "name": "瑜伽球",
+          "icon": "dumbbell",
+          "aliases": [
+            "健身球"
+          ]
+        },
+        {
+          "id": "c0280",
+          "name": "呼啦圈",
+          "icon": "circle-dot",
+          "aliases": [
+            "健身圈"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g013",
+      "name": "户外露营",
+      "icon": "tent",
+      "items": [
+        {
+          "id": "c0281",
+          "name": "帐篷",
+          "icon": "tent",
+          "aliases": [
+            "帐棚"
+          ]
+        },
+        {
+          "id": "c0282",
+          "name": "睡袋",
+          "icon": "bed",
+          "aliases": [
+            "保暖袋"
+          ]
+        },
+        {
+          "id": "c0283",
+          "name": "防潮垫",
+          "icon": "bed-double",
+          "aliases": [
+            "地席"
+          ]
+        },
+        {
+          "id": "c0284",
+          "name": "营地灯",
+          "icon": "flashlight",
+          "aliases": [
+            "露营灯"
+          ]
+        },
+        {
+          "id": "c0285",
+          "name": "折叠椅",
+          "icon": "shopping-bag",
+          "aliases": [
+            "克米特椅"
+          ]
+        },
+        {
+          "id": "c0286",
+          "name": "露营桌",
+          "icon": "table",
+          "aliases": [
+            "野餐桌"
+          ]
+        },
+        {
+          "id": "c0287",
+          "name": "登山包",
+          "icon": "backpack",
+          "aliases": [
+            "徒步包"
+          ]
+        },
+        {
+          "id": "c0288",
+          "name": "水壶",
+          "icon": "bottle-wine",
+          "aliases": [
+            "军用水壶"
+          ]
+        },
+        {
+          "id": "c0289",
+          "name": "保温瓶",
+          "icon": "flask-round",
+          "aliases": [
+            "焖烧罐"
+          ]
+        },
+        {
+          "id": "c0290",
+          "name": "炉具",
+          "icon": "flame",
+          "aliases": [
+            "汽炉",
+            "卡式炉"
+          ]
+        },
+        {
+          "id": "c0291",
+          "name": "气罐",
+          "icon": "flame",
+          "aliases": [
+            "燃料罐"
+          ]
+        },
+        {
+          "id": "c0292",
+          "name": "餐具套装",
+          "icon": "utensils",
+          "aliases": [
+            "露营餐具"
+          ]
+        },
+        {
+          "id": "c0293",
+          "name": "砍刀",
+          "icon": "pocket-knife",
+          "aliases": [
+            "开路刀"
+          ]
+        },
+        {
+          "id": "c0294",
+          "name": "指南针",
+          "icon": "compass",
+          "aliases": [
+            "指北针"
+          ]
+        },
+        {
+          "id": "c0295",
+          "name": "头灯",
+          "icon": "flashlight",
+          "aliases": [
+            "头戴灯"
+          ]
+        },
+        {
+          "id": "c0296",
+          "name": "急救包",
+          "icon": "briefcase-medical",
+          "aliases": [
+            "救生包"
+          ]
+        },
+        {
+          "id": "c0297",
+          "name": "登山绳",
+          "icon": "cable",
+          "aliases": [
+            "攀爬绳"
+          ]
+        },
+        {
+          "id": "c0298",
+          "name": "望远镜",
+          "icon": "telescope",
+          "aliases": [
+            "观景镜"
+          ]
+        },
+        {
+          "id": "c0299",
+          "name": "钓鱼竿",
+          "icon": "fishing-rod",
+          "aliases": [
+            "鱼竿"
+          ]
+        },
+        {
+          "id": "c0300",
+          "name": "溯溪鞋",
+          "icon": "sport-shoe",
+          "aliases": [
+            "涉水鞋"
+          ]
+        },
+        {
+          "id": "c0301",
+          "name": "防潮箱",
+          "icon": "luggage",
+          "aliases": [
+            "干燥箱"
+          ]
+        },
+        {
+          "id": "c0302",
+          "name": "营地车",
+          "icon": "luggage",
+          "aliases": [
+            "拖车"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g014",
+      "name": "旅行箱包",
+      "icon": "luggage",
+      "items": [
+        {
+          "id": "c0303",
+          "name": "行李箱",
+          "icon": "luggage",
+          "aliases": [
+            "拉杆箱",
+            "旅行箱"
+          ]
+        },
+        {
+          "id": "c0304",
+          "name": "登机箱",
+          "icon": "luggage",
+          "aliases": [
+            "小箱子"
+          ]
+        },
+        {
+          "id": "c0305",
+          "name": "双肩背包",
+          "icon": "backpack",
+          "aliases": [
+            "旅游包"
+          ]
+        },
+        {
+          "id": "c0306",
+          "name": "单肩包",
+          "icon": "handbag",
+          "aliases": [
+            "斜挎包"
+          ]
+        },
+        {
+          "id": "c0307",
+          "name": "腰包",
+          "icon": "handbag",
+          "aliases": [
+            "胸前包"
+          ]
+        },
+        {
+          "id": "c0308",
+          "name": "洗漱包",
+          "icon": "shopping-bag",
+          "aliases": [
+            "洗漱袋"
+          ]
+        },
+        {
+          "id": "c0309",
+          "name": "护照包",
+          "icon": "badge",
+          "aliases": [
+            "证件包"
+          ]
+        },
+        {
+          "id": "c0310",
+          "name": "行李牌",
+          "icon": "ticket",
+          "aliases": [
+            "托运牌"
+          ]
+        },
+        {
+          "id": "c0311",
+          "name": "折叠行李车",
+          "icon": "luggage",
+          "aliases": [
+            "拖行李车"
+          ]
+        },
+        {
+          "id": "c0312",
+          "name": "旅行枕",
+          "icon": "bed",
+          "aliases": [
+            "u型枕"
+          ]
+        },
+        {
+          "id": "c0313",
+          "name": "眼罩",
+          "icon": "eye-closed",
+          "aliases": [
+            "睡眠罩"
+          ]
+        },
+        {
+          "id": "c0314",
+          "name": "耳塞",
+          "icon": "ear-off",
+          "aliases": [
+            "隔音塞"
+          ]
+        },
+        {
+          "id": "c0315",
+          "name": "保温壶",
+          "icon": "flask-round",
+          "aliases": [
+            "旅行壶"
+          ]
+        },
+        {
+          "id": "c0316",
+          "name": "转换插头",
+          "icon": "plug",
+          "aliases": [
+            "旅行插头"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g015",
+      "name": "交通载具",
+      "icon": "car",
+      "items": [
+        {
+          "id": "c0317",
+          "name": "汽车",
+          "icon": "car",
+          "aliases": [
+            "轿车"
+          ]
+        },
+        {
+          "id": "c0318",
+          "name": "电动车",
+          "icon": "car",
+          "aliases": [
+            "电瓶车"
+          ]
+        },
+        {
+          "id": "c0319",
+          "name": "摩托车",
+          "icon": "motorbike",
+          "aliases": [
+            "机车"
+          ]
+        },
+        {
+          "id": "c0320",
+          "name": "自行车",
+          "icon": "bike",
+          "aliases": [
+            "单车",
+            "脚踏车"
+          ]
+        },
+        {
+          "id": "c0321",
+          "name": "公交车",
+          "icon": "bus",
+          "aliases": [
+            "巴士"
+          ]
+        },
+        {
+          "id": "c0322",
+          "name": "地铁卡",
+          "icon": "credit-card",
+          "aliases": [
+            "交通卡"
+          ]
+        },
+        {
+          "id": "c0323",
+          "name": "火车票",
+          "icon": "ticket",
+          "aliases": [
+            "高铁票"
+          ]
+        },
+        {
+          "id": "c0324",
+          "name": "飞机票",
+          "icon": "tickets-plane",
+          "aliases": [
+            "机票"
+          ]
+        },
+        {
+          "id": "c0325",
+          "name": "汽车钥匙",
+          "icon": "key-round",
+          "aliases": [
+            "车钥匙"
+          ]
+        },
+        {
+          "id": "c0326",
+          "name": "头盔",
+          "icon": "hard-hat",
+          "aliases": [
+            "安全帽"
+          ]
+        },
+        {
+          "id": "c0327",
+          "name": "行车记录仪",
+          "icon": "camera",
+          "aliases": [
+            "记录仪"
+          ]
+        },
+        {
+          "id": "c0328",
+          "name": "导航仪",
+          "icon": "navigation",
+          "aliases": [
+            "gps"
+          ]
+        },
+        {
+          "id": "c0329",
+          "name": "车载充电器",
+          "icon": "plug",
+          "aliases": [
+            "车充"
+          ]
+        },
+        {
+          "id": "c0330",
+          "name": "备用轮胎",
+          "icon": "car",
+          "aliases": [
+            "备胎"
+          ]
+        },
+        {
+          "id": "c0331",
+          "name": "打气筒",
+          "icon": "gauge",
+          "aliases": [
+            "充气筒"
+          ]
+        },
+        {
+          "id": "c0332",
+          "name": "自行车锁",
+          "icon": "lock",
+          "aliases": [
+            "车锁"
+          ]
+        },
+        {
+          "id": "c0333",
+          "name": "船只",
+          "icon": "ship",
+          "aliases": [
+            "游船"
+          ]
+        },
+        {
+          "id": "c0334",
+          "name": "滑板车",
+          "icon": "bike",
+          "aliases": [
+            "滑行车"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g016",
+      "name": "宠物用品",
+      "icon": "dog",
+      "items": [
+        {
+          "id": "c0335",
+          "name": "狗粮",
+          "icon": "dog",
+          "aliases": [
+            "犬粮"
+          ]
+        },
+        {
+          "id": "c0336",
+          "name": "猫粮",
+          "icon": "cat",
+          "aliases": [
+            "猫食"
+          ]
+        },
+        {
+          "id": "c0337",
+          "name": "宠物零食",
+          "icon": "bone",
+          "aliases": [
+            "磨牙棒"
+          ]
+        },
+        {
+          "id": "c0338",
+          "name": "宠物碗",
+          "icon": "hand-platter",
+          "aliases": [
+            "食盆"
+          ]
+        },
+        {
+          "id": "c0339",
+          "name": "牵引绳",
+          "icon": "link",
+          "aliases": [
+            "狗绳"
+          ]
+        },
+        {
+          "id": "c0340",
+          "name": "猫砂",
+          "icon": "shopping-basket",
+          "aliases": [
+            "猫沙"
+          ]
+        },
+        {
+          "id": "c0341",
+          "name": "猫砂盆",
+          "icon": "shopping-basket",
+          "aliases": [
+            "猫厕所"
+          ]
+        },
+        {
+          "id": "c0342",
+          "name": "宠物窝",
+          "icon": "bed",
+          "aliases": [
+            "狗窝",
+            "猫窝"
+          ]
+        },
+        {
+          "id": "c0343",
+          "name": "宠物笼",
+          "icon": "birdhouse",
+          "aliases": [
+            "运输笼"
+          ]
+        },
+        {
+          "id": "c0344",
+          "name": "宠物梳",
+          "icon": "brush",
+          "aliases": [
+            "毛梳"
+          ]
+        },
+        {
+          "id": "c0345",
+          "name": "宠物玩具",
+          "icon": "toy-brick",
+          "aliases": [
+            "逗猫棒"
+          ]
+        },
+        {
+          "id": "c0346",
+          "name": "鱼缸",
+          "icon": "fish",
+          "aliases": [
+            "水族箱"
+          ]
+        },
+        {
+          "id": "c0347",
+          "name": "鸟笼",
+          "icon": "birdhouse",
+          "aliases": [
+            "禽笼"
+          ]
+        },
+        {
+          "id": "c0348",
+          "name": "宠物背包",
+          "icon": "backpack",
+          "aliases": [
+            "猫包"
+          ]
+        },
+        {
+          "id": "c0349",
+          "name": "除毛器",
+          "icon": "brush",
+          "aliases": [
+            "粘毛器"
+          ]
+        },
+        {
+          "id": "c0350",
+          "name": "宠物饮水机",
+          "icon": "droplet",
+          "aliases": [
+            "喂水器"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g017",
+      "name": "植物园艺",
+      "icon": "flower",
+      "items": [
+        {
+          "id": "c0351",
+          "name": "盆栽",
+          "icon": "flower-2",
+          "aliases": [
+            "盆景"
+          ]
+        },
+        {
+          "id": "c0352",
+          "name": "多肉植物",
+          "icon": "flower",
+          "aliases": [
+            "肉肉"
+          ]
+        },
+        {
+          "id": "c0353",
+          "name": "绿萝",
+          "icon": "leaf",
+          "aliases": [
+            "垂萝"
+          ]
+        },
+        {
+          "id": "c0354",
+          "name": "兰花",
+          "icon": "flower",
+          "aliases": [
+            "兰草"
+          ]
+        },
+        {
+          "id": "c0355",
+          "name": "观叶植物",
+          "icon": "tree-deciduous",
+          "aliases": [
+            "阔叶"
+          ]
+        },
+        {
+          "id": "c0356",
+          "name": "花瓶",
+          "icon": "flower",
+          "aliases": [
+            "花插"
+          ]
+        },
+        {
+          "id": "c0357",
+          "name": "花架",
+          "icon": "shelving-unit",
+          "aliases": [
+            "置花架"
+          ]
+        },
+        {
+          "id": "c0358",
+          "name": "浇水壶",
+          "icon": "droplets",
+          "aliases": [
+            "喷壶"
+          ]
+        },
+        {
+          "id": "c0359",
+          "name": "铲子",
+          "icon": "shovel",
+          "aliases": [
+            "花铲"
+          ]
+        },
+        {
+          "id": "c0360",
+          "name": "修枝剪",
+          "icon": "scissors",
+          "aliases": [
+            "枝剪"
+          ]
+        },
+        {
+          "id": "c0361",
+          "name": "花盆",
+          "icon": "flower-2",
+          "aliases": [
+            "陶盆"
+          ]
+        },
+        {
+          "id": "c0362",
+          "name": "营养土",
+          "icon": "leaf",
+          "aliases": [
+            "花土"
+          ]
+        },
+        {
+          "id": "c0363",
+          "name": "肥料",
+          "icon": "leaf",
+          "aliases": [
+            "花肥"
+          ]
+        },
+        {
+          "id": "c0364",
+          "name": "种子",
+          "icon": "sprout",
+          "aliases": [
+            "花种"
+          ]
+        },
+        {
+          "id": "c0365",
+          "name": "草坪机",
+          "icon": "tractor",
+          "aliases": [
+            "割草机"
+          ]
+        },
+        {
+          "id": "c0366",
+          "name": "园艺手套",
+          "icon": "hand",
+          "aliases": [
+            "劳保手套"
+          ]
+        },
+        {
+          "id": "c0367",
+          "name": "遮阳网",
+          "icon": "umbrella",
+          "aliases": [
+            "防晒网"
+          ]
+        },
+        {
+          "id": "c0368",
+          "name": "捕虫板",
+          "icon": "bug",
+          "aliases": [
+            "粘虫板"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g018",
+      "name": "母婴用品",
+      "icon": "baby",
+      "items": [
+        {
+          "id": "c0369",
+          "name": "奶瓶",
+          "icon": "bottle-wine",
+          "aliases": [
+            "奶壶"
+          ]
+        },
+        {
+          "id": "c0370",
+          "name": "安抚奶嘴",
+          "icon": "baby",
+          "aliases": [
+            "奶嘴",
+            "安抚嘴"
+          ]
+        },
+        {
+          "id": "c0371",
+          "name": "婴儿车",
+          "icon": "baby",
+          "aliases": [
+            "推车",
+            "童车"
+          ]
+        },
+        {
+          "id": "c0372",
+          "name": "儿童座椅",
+          "icon": "armchair",
+          "aliases": [
+            "安全座椅"
+          ]
+        },
+        {
+          "id": "c0373",
+          "name": "纸尿裤",
+          "icon": "baby",
+          "aliases": [
+            "尿不湿"
+          ]
+        },
+        {
+          "id": "c0374",
+          "name": "湿巾",
+          "icon": "baby",
+          "aliases": [
+            "湿纸巾"
+          ]
+        },
+        {
+          "id": "c0375",
+          "name": "辅食机",
+          "icon": "blend",
+          "aliases": [
+            "料理棒"
+          ]
+        },
+        {
+          "id": "c0376",
+          "name": "宝宝餐具",
+          "icon": "utensils",
+          "aliases": [
+            "儿童碗"
+          ]
+        },
+        {
+          "id": "c0377",
+          "name": "牙胶",
+          "icon": "baby",
+          "aliases": [
+            "磨牙胶"
+          ]
+        },
+        {
+          "id": "c0378",
+          "name": "童装",
+          "icon": "shirt",
+          "aliases": [
+            "小孩衣服"
+          ]
+        },
+        {
+          "id": "c0379",
+          "name": "婴儿床",
+          "icon": "bed",
+          "aliases": [
+            "宝宝床"
+          ]
+        },
+        {
+          "id": "c0380",
+          "name": "玩具收纳",
+          "icon": "shopping-basket",
+          "aliases": [
+            "玩具箱"
+          ]
+        },
+        {
+          "id": "c0381",
+          "name": "背带",
+          "icon": "backpack",
+          "aliases": [
+            "腰凳"
+          ]
+        },
+        {
+          "id": "c0382",
+          "name": "洗澡盆",
+          "icon": "bath",
+          "aliases": [
+            "浴盆"
+          ]
+        },
+        {
+          "id": "c0383",
+          "name": "理发器",
+          "icon": "scissors",
+          "aliases": [
+            "推剪"
+          ]
+        },
+        {
+          "id": "c0384",
+          "name": "温奶器",
+          "icon": "thermometer",
+          "aliases": [
+            "暖奶机"
+          ]
+        },
+        {
+          "id": "c0385",
+          "name": "早教机",
+          "icon": "music",
+          "aliases": [
+            "故事机"
+          ]
+        },
+        {
+          "id": "c0386",
+          "name": "防走失绳",
+          "icon": "cable",
+          "aliases": [
+            "防丢绳"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g019",
+      "name": "药品医疗",
+      "icon": "pill",
+      "items": [
+        {
+          "id": "c0387",
+          "name": "感冒药",
+          "icon": "pill",
+          "aliases": [
+            "伤风药"
+          ]
+        },
+        {
+          "id": "c0388",
+          "name": "退烧药",
+          "icon": "pill",
+          "aliases": [
+            "退热药"
+          ]
+        },
+        {
+          "id": "c0389",
+          "name": "止痛药",
+          "icon": "pill",
+          "aliases": [
+            "镇痛药"
+          ]
+        },
+        {
+          "id": "c0390",
+          "name": "肠胃药",
+          "icon": "pill",
+          "aliases": [
+            "胃药"
+          ]
+        },
+        {
+          "id": "c0391",
+          "name": "创可贴",
+          "icon": "bandage",
+          "aliases": [
+            "创口贴"
+          ]
+        },
+        {
+          "id": "c0392",
+          "name": "纱布",
+          "icon": "bandage",
+          "aliases": [
+            "包扎布"
+          ]
+        },
+        {
+          "id": "c0393",
+          "name": "碘伏",
+          "icon": "droplet",
+          "aliases": [
+            "碘酒"
+          ]
+        },
+        {
+          "id": "c0394",
+          "name": "体温计",
+          "icon": "thermometer",
+          "aliases": [
+            "测温计"
+          ]
+        },
+        {
+          "id": "c0395",
+          "name": "血压计",
+          "icon": "gauge",
+          "aliases": [
+            "血压仪"
+          ]
+        },
+        {
+          "id": "c0396",
+          "name": "血糖仪",
+          "icon": "gauge",
+          "aliases": [
+            "血糖计"
+          ]
+        },
+        {
+          "id": "c0397",
+          "name": "听诊器",
+          "icon": "stethoscope",
+          "aliases": [
+            "听筒"
+          ]
+        },
+        {
+          "id": "c0398",
+          "name": "注射器",
+          "icon": "syringe",
+          "aliases": [
+            "针管"
+          ]
+        },
+        {
+          "id": "c0399",
+          "name": "棉签",
+          "icon": "brush",
+          "aliases": [
+            "棉棒"
+          ]
+        },
+        {
+          "id": "c0400",
+          "name": "口罩",
+          "icon": "shield",
+          "aliases": [
+            "防护口罩"
+          ]
+        },
+        {
+          "id": "c0401",
+          "name": "轮椅",
+          "icon": "armchair",
+          "aliases": [
+            "代步车"
+          ]
+        },
+        {
+          "id": "c0402",
+          "name": "拐杖",
+          "icon": "pill",
+          "aliases": [
+            "拐仗"
+          ]
+        },
+        {
+          "id": "c0403",
+          "name": "药箱",
+          "icon": "briefcase-medical",
+          "aliases": [
+            "急救箱"
+          ]
+        },
+        {
+          "id": "c0404",
+          "name": "保健锤",
+          "icon": "hammer",
+          "aliases": [
+            "按摩锤"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g020",
+      "name": "食品调料",
+      "icon": "apple",
+      "items": [
+        {
+          "id": "c0405",
+          "name": "大米",
+          "icon": "wheat",
+          "aliases": [
+            "白米"
+          ]
+        },
+        {
+          "id": "c0406",
+          "name": "面粉",
+          "icon": "wheat",
+          "aliases": [
+            "面"
+          ]
+        },
+        {
+          "id": "c0407",
+          "name": "面条",
+          "icon": "wheat",
+          "aliases": [
+            "挂面"
+          ]
+        },
+        {
+          "id": "c0408",
+          "name": "食用油",
+          "icon": "droplet",
+          "aliases": [
+            "菜油"
+          ]
+        },
+        {
+          "id": "c0409",
+          "name": "食盐",
+          "icon": "utensils",
+          "aliases": [
+            "盐"
+          ]
+        },
+        {
+          "id": "c0410",
+          "name": "白糖",
+          "icon": "snowflake",
+          "aliases": [
+            "砂糖"
+          ]
+        },
+        {
+          "id": "c0411",
+          "name": "酱油",
+          "icon": "utensils",
+          "aliases": [
+            "生抽"
+          ]
+        },
+        {
+          "id": "c0412",
+          "name": "食醋",
+          "icon": "droplet",
+          "aliases": [
+            "醋",
+            "香醋"
+          ]
+        },
+        {
+          "id": "c0414",
+          "name": "咖啡豆",
+          "icon": "coffee",
+          "aliases": [
+            "咖啡"
+          ]
+        },
+        {
+          "id": "c0415",
+          "name": "饼干",
+          "icon": "cookie",
+          "aliases": [
+            "曲奇"
+          ]
+        },
+        {
+          "id": "c0416",
+          "name": "糖果",
+          "icon": "candy",
+          "aliases": [
+            "糖"
+          ]
+        },
+        {
+          "id": "c0417",
+          "name": "巧克力",
+          "icon": "candy",
+          "aliases": [
+            "朱古力"
+          ]
+        },
+        {
+          "id": "c0418",
+          "name": "坚果",
+          "icon": "nut",
+          "aliases": [
+            "干果"
+          ]
+        },
+        {
+          "id": "c0419",
+          "name": "蜜饯",
+          "icon": "apple",
+          "aliases": [
+            "果脯"
+          ]
+        },
+        {
+          "id": "c0420",
+          "name": "罐头",
+          "icon": "can",
+          "aliases": [
+            "罐头食品"
+          ]
+        },
+        {
+          "id": "c0421",
+          "name": "蜂蜜",
+          "icon": "droplet",
+          "aliases": [
+            "蜜"
+          ]
+        },
+        {
+          "id": "c0422",
+          "name": "牛奶",
+          "icon": "milk",
+          "aliases": [
+            "牛乳"
+          ]
+        },
+        {
+          "id": "c0423",
+          "name": "白酒",
+          "icon": "wine",
+          "aliases": [
+            "烈酒"
+          ]
+        },
+        {
+          "id": "c0424",
+          "name": "方便面",
+          "icon": "wheat",
+          "aliases": [
+            "泡面"
+          ]
+        },
+        {
+          "id": "c0425",
+          "name": "干香菇",
+          "icon": "leaf",
+          "aliases": [
+            "香菇"
+          ]
+        },
+        {
+          "id": "c0426",
+          "name": "海带",
+          "icon": "leaf",
+          "aliases": [
+            "紫菜"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g021",
+      "name": "收藏纪念",
+      "icon": "trophy",
+      "items": [
+        {
+          "id": "c0428",
+          "name": "邮票",
+          "icon": "stamp",
+          "aliases": [
+            "邮花"
+          ]
+        },
+        {
+          "id": "c0429",
+          "name": "钱币",
+          "icon": "coins",
+          "aliases": [
+            "纪念币"
+          ]
+        },
+        {
+          "id": "c0430",
+          "name": "奖牌",
+          "icon": "medal",
+          "aliases": [
+            "功勋"
+          ]
+        },
+        {
+          "id": "c0431",
+          "name": "奖杯",
+          "icon": "trophy",
+          "aliases": [
+            "杯"
+          ]
+        },
+        {
+          "id": "c0432",
+          "name": "手办",
+          "icon": "toy-brick",
+          "aliases": [
+            "人偶"
+          ]
+        },
+        {
+          "id": "c0433",
+          "name": "明信片",
+          "icon": "mail",
+          "aliases": [
+            "风景片"
+          ]
+        },
+        {
+          "id": "c0434",
+          "name": "相册",
+          "icon": "book",
+          "aliases": [
+            "照片册"
+          ]
+        },
+        {
+          "id": "c0435",
+          "name": "纪念章",
+          "icon": "badge",
+          "aliases": [
+            "勋章"
+          ]
+        },
+        {
+          "id": "c0436",
+          "name": "字画",
+          "icon": "scroll",
+          "aliases": [
+            "画卷"
+          ]
+        },
+        {
+          "id": "c0437",
+          "name": "唱片",
+          "icon": "disc-3",
+          "aliases": [
+            "黑胶"
+          ]
+        },
+        {
+          "id": "c0438",
+          "name": "老照片",
+          "icon": "book",
+          "aliases": [
+            "旧照"
+          ]
+        },
+        {
+          "id": "c0439",
+          "name": "香薰",
+          "icon": "flame",
+          "aliases": [
+            "熏香"
+          ]
+        },
+        {
+          "id": "c0440",
+          "name": "摆件",
+          "icon": "gem",
+          "aliases": [
+            "装饰品"
+          ]
+        },
+        {
+          "id": "c0441",
+          "name": "礼盒",
+          "icon": "gift",
+          "aliases": [
+            "礼物盒"
+          ]
+        },
+        {
+          "id": "c0442",
+          "name": "证书",
+          "icon": "scroll",
+          "aliases": [
+            "文凭"
+          ]
+        },
+        {
+          "id": "c0443",
+          "name": "盲盒",
+          "icon": "gift",
+          "aliases": [
+            "惊喜盒"
+          ]
+        },
+        {
+          "id": "c0255",
+          "name": "模型",
+          "icon": "toy-brick",
+          "aliases": [
+            "模型摆件"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g022",
+      "name": "灯具照明",
+      "icon": "lamp",
+      "items": [
+        {
+          "id": "c0444",
+          "name": "吊灯",
+          "icon": "lamp-ceiling",
+          "aliases": [
+            "顶灯"
+          ]
+        },
+        {
+          "id": "c0445",
+          "name": "吸顶灯",
+          "icon": "lamp-ceiling",
+          "aliases": [
+            "平顶灯"
+          ]
+        },
+        {
+          "id": "c0446",
+          "name": "台灯",
+          "icon": "lamp-desk",
+          "aliases": [
+            "书桌灯"
+          ]
+        },
+        {
+          "id": "c0447",
+          "name": "落地灯",
+          "icon": "lamp-floor",
+          "aliases": [
+            "立灯"
+          ]
+        },
+        {
+          "id": "c0448",
+          "name": "壁灯",
+          "icon": "lamp-wall-up",
+          "aliases": [
+            "墙灯"
+          ]
+        },
+        {
+          "id": "c0449",
+          "name": "筒灯",
+          "icon": "lightbulb",
+          "aliases": [
+            "射灯"
+          ]
+        },
+        {
+          "id": "c0450",
+          "name": "灯带",
+          "icon": "lightbulb",
+          "aliases": [
+            "led带"
+          ]
+        },
+        {
+          "id": "c0451",
+          "name": "夜灯",
+          "icon": "flashlight",
+          "aliases": [
+            "小夜灯"
+          ]
+        },
+        {
+          "id": "c0452",
+          "name": "烛台",
+          "icon": "flame",
+          "aliases": [
+            "蜡烛台"
+          ]
+        },
+        {
+          "id": "c0453",
+          "name": "应急灯",
+          "icon": "flashlight",
+          "aliases": [
+            "逃生灯"
+          ]
+        },
+        {
+          "id": "c0454",
+          "name": "灭蚊灯",
+          "icon": "lightbulb",
+          "aliases": [
+            "诱蚊灯"
+          ]
+        },
+        {
+          "id": "c0455",
+          "name": "氛围灯",
+          "icon": "lamp",
+          "aliases": [
+            "彩灯"
+          ]
+        },
+        {
+          "id": "c0456",
+          "name": "廊灯",
+          "icon": "lamp",
+          "aliases": [
+            "过道灯"
+          ]
+        },
+        {
+          "id": "c0457",
+          "name": "镜前灯",
+          "icon": "lamp-wall-down",
+          "aliases": [
+            "化妆灯"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g023",
+      "name": "门窗遮蔽",
+      "icon": "door-closed",
+      "items": [
+        {
+          "id": "c0458",
+          "name": "入户门",
+          "icon": "door-closed",
+          "aliases": [
+            "大门"
+          ]
+        },
+        {
+          "id": "c0459",
+          "name": "室内门",
+          "icon": "door-closed",
+          "aliases": [
+            "房门"
+          ]
+        },
+        {
+          "id": "c0460",
+          "name": "推拉门",
+          "icon": "door-open",
+          "aliases": [
+            "移门"
+          ]
+        },
+        {
+          "id": "c0461",
+          "name": "防盗门",
+          "icon": "shield",
+          "aliases": [
+            "安全门"
+          ]
+        },
+        {
+          "id": "c0462",
+          "name": "窗扇",
+          "icon": "app-window",
+          "aliases": [
+            "窗户"
+          ]
+        },
+        {
+          "id": "c0463",
+          "name": "纱窗",
+          "icon": "app-window",
+          "aliases": [
+            "防蚊窗"
+          ]
+        },
+        {
+          "id": "c0464",
+          "name": "遮光帘",
+          "icon": "blinds",
+          "aliases": [
+            "窗布"
+          ]
+        },
+        {
+          "id": "c0465",
+          "name": "百叶窗",
+          "icon": "blinds",
+          "aliases": [
+            "叶窗"
+          ]
+        },
+        {
+          "id": "c0466",
+          "name": "门帘",
+          "icon": "blinds",
+          "aliases": [
+            "挡门帘"
+          ]
+        },
+        {
+          "id": "c0467",
+          "name": "屏风",
+          "icon": "blinds",
+          "aliases": [
+            "隔断"
+          ]
+        },
+        {
+          "id": "c0468",
+          "name": "猫眼",
+          "icon": "eye",
+          "aliases": [
+            "门镜"
+          ]
+        },
+        {
+          "id": "c0469",
+          "name": "门吸",
+          "icon": "lock",
+          "aliases": [
+            "门止"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g024",
+      "name": "水暖卫浴",
+      "icon": "shower-head",
+      "items": [
+        {
+          "id": "c0470",
+          "name": "花洒",
+          "icon": "shower-head",
+          "aliases": [
+            "淋浴头"
+          ]
+        },
+        {
+          "id": "c0471",
+          "name": "马桶",
+          "icon": "toilet",
+          "aliases": [
+            "坐便器"
+          ]
+        },
+        {
+          "id": "c0472",
+          "name": "洗手盆",
+          "icon": "bath",
+          "aliases": [
+            "面盆"
+          ]
+        },
+        {
+          "id": "c0473",
+          "name": "水龙头",
+          "icon": "droplets",
+          "aliases": [
+            "水咀"
+          ]
+        },
+        {
+          "id": "c0474",
+          "name": "浴霸",
+          "icon": "heater",
+          "aliases": [
+            "暖风机"
+          ]
+        },
+        {
+          "id": "c0475",
+          "name": "浴帘",
+          "icon": "blinds",
+          "aliases": [
+            "洗澡帘"
+          ]
+        },
+        {
+          "id": "c0477",
+          "name": "浴室置物架",
+          "icon": "shelving-unit",
+          "aliases": [
+            "浴室架"
+          ]
+        },
+        {
+          "id": "c0478",
+          "name": "地漏",
+          "icon": "droplets",
+          "aliases": [
+            "排水口"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g025",
+      "name": "家用电器",
+      "icon": "refrigerator",
+      "items": [
+        {
+          "id": "c0486",
+          "name": "冰箱",
+          "icon": "refrigerator",
+          "aliases": [
+            "冰柜"
+          ]
+        },
+        {
+          "id": "c0487",
+          "name": "洗衣机",
+          "icon": "washing-machine",
+          "aliases": [
+            "洗衣烘干"
+          ]
+        },
+        {
+          "id": "c0488",
+          "name": "空调",
+          "icon": "air-vent",
+          "aliases": [
+            "冷气"
+          ]
+        },
+        {
+          "id": "c0489",
+          "name": "电视",
+          "icon": "tv",
+          "aliases": [
+            "彩电"
+          ]
+        },
+        {
+          "id": "c0490",
+          "name": "电烤箱",
+          "icon": "microwave",
+          "aliases": [
+            "烘烤"
+          ]
+        },
+        {
+          "id": "c0491",
+          "name": "净水器",
+          "icon": "droplets",
+          "aliases": [
+            "滤水器"
+          ]
+        },
+        {
+          "id": "c0492",
+          "name": "加湿器",
+          "icon": "droplets",
+          "aliases": [
+            "湿器"
+          ]
+        },
+        {
+          "id": "c0493",
+          "name": "除湿机",
+          "icon": "droplets",
+          "aliases": [
+            "抽湿机"
+          ]
+        },
+        {
+          "id": "c0494",
+          "name": "电风扇",
+          "icon": "fan",
+          "aliases": [
+            "风扇"
+          ]
+        },
+        {
+          "id": "c0495",
+          "name": "取暖器",
+          "icon": "heater",
+          "aliases": [
+            "暖气片"
+          ]
+        },
+        {
+          "id": "c0496",
+          "name": "电熨斗",
+          "icon": "heater",
+          "aliases": [
+            "熨斗"
+          ]
+        },
+        {
+          "id": "c0497",
+          "name": "吸尘器",
+          "icon": "washing-machine",
+          "aliases": [
+            "吸尘机"
+          ]
+        },
+        {
+          "id": "c0498",
+          "name": "扫地机器人",
+          "icon": "washing-machine",
+          "aliases": [
+            "扫拖机"
+          ]
+        },
+        {
+          "id": "c0499",
+          "name": "豆浆机",
+          "icon": "blend",
+          "aliases": [
+            "豆奶机"
+          ]
+        },
+        {
+          "id": "c0500",
+          "name": "面包机",
+          "icon": "croissant",
+          "aliases": [
+            "烤面包"
+          ]
+        },
+        {
+          "id": "c0501",
+          "name": "空气炸锅",
+          "icon": "flame",
+          "aliases": [
+            "炸锅"
+          ]
+        },
+        {
+          "id": "c0502",
+          "name": "电动牙刷",
+          "icon": "brush",
+          "aliases": [
+            "刷牙机"
+          ]
+        },
+        {
+          "id": "c0503",
+          "name": "饮水机",
+          "icon": "bottle-wine",
+          "aliases": [
+            "水桶机"
+          ]
+        },
+        {
+          "id": "c0504",
+          "name": "电热水器",
+          "icon": "heater",
+          "aliases": [
+            "热水器"
+          ]
+        },
+        {
+          "id": "c0505",
+          "name": "榨汁机",
+          "icon": "blend",
+          "aliases": [
+            "榨汁器"
+          ]
+        },
+        {
+          "id": "c0506",
+          "name": "空气净化器",
+          "icon": "air-vent",
+          "aliases": [
+            "净化器"
+          ]
+        },
+        {
+          "id": "c0507",
+          "name": "电压力锅",
+          "icon": "cooking-pot",
+          "aliases": [
+            "压力锅"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g026",
+      "name": "办公设备",
+      "icon": "printer",
+      "items": [
+        {
+          "id": "c0508",
+          "name": "家用打印机",
+          "icon": "printer",
+          "aliases": [
+            "列印"
+          ]
+        },
+        {
+          "id": "c0509",
+          "name": "碎纸机",
+          "icon": "scissors",
+          "aliases": [
+            "碎纸器"
+          ]
+        },
+        {
+          "id": "c0510",
+          "name": "办公投影仪",
+          "icon": "projector",
+          "aliases": [
+            "投影设备"
+          ]
+        },
+        {
+          "id": "c0511",
+          "name": "文档扫描仪",
+          "icon": "scan",
+          "aliases": [
+            "扫描器"
+          ]
+        },
+        {
+          "id": "c0512",
+          "name": "传真机",
+          "icon": "mail",
+          "aliases": [
+            "传真"
+          ]
+        },
+        {
+          "id": "c0513",
+          "name": "电话机",
+          "icon": "phone",
+          "aliases": [
+            "座机"
+          ]
+        },
+        {
+          "id": "c0514",
+          "name": "计算器",
+          "icon": "calculator",
+          "aliases": [
+            "计算机"
+          ]
+        },
+        {
+          "id": "c0515",
+          "name": "重型订书机",
+          "icon": "scissors",
+          "aliases": [
+            "重型订书"
+          ]
+        },
+        {
+          "id": "c0516",
+          "name": "打孔机",
+          "icon": "scissors",
+          "aliases": [
+            "打洞器"
+          ]
+        },
+        {
+          "id": "c0517",
+          "name": "白板",
+          "icon": "presentation",
+          "aliases": [
+            "书写板"
+          ]
+        },
+        {
+          "id": "c0518",
+          "name": "白板笔",
+          "icon": "pencil",
+          "aliases": [
+            "记号水"
+          ]
+        },
+        {
+          "id": "c0519",
+          "name": "档案柜",
+          "icon": "shelving-unit",
+          "aliases": [
+            "文件柜"
+          ]
+        },
+        {
+          "id": "c0520",
+          "name": "名片册",
+          "icon": "id-card",
+          "aliases": [
+            "名片本"
+          ]
+        },
+        {
+          "id": "c0521",
+          "name": "装订机",
+          "icon": "paperclip",
+          "aliases": [
+            "胶装机"
+          ]
+        },
+        {
+          "id": "c0522",
+          "name": "点钞机",
+          "icon": "coins",
+          "aliases": [
+            "数钞机"
+          ]
+        },
+        {
+          "id": "c0523",
+          "name": "标签机",
+          "icon": "bookmark",
+          "aliases": [
+            "打标机"
+          ]
+        }
+      ]
+    }
+  ]
+}
