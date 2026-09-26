@@ -684,6 +684,67 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
   return n;
 }
 
+/**
+ * 图片描述 → 仓内图片条目的派生 text 靶向升级（470 / ADR-0197 决策 4：描述是插件侧 AI 产物，
+ * 合并进聊天仓的动作由插件执行）。按 img 精确匹配（`月/文件名`，与 image_desc.file 同格式），
+ * img 没对上的条目走同月 ct 最近邻（±12h、只补缺）兜底——与 normalizeChatJson 的
+ * matchImageDesc 同一匹配口径。**只升级 text 为空的条目**（描述已并仓的不重写；跳过语义 =
+ * 该条保持空文本不进时间线），文本形态 `[图片] 描述`，空描述跳过。幂等：同键同值不重复计数。
+ * 返回升级条数。
+ */
+export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): number {
+  const byFile = new Map<string, ImageDescItem>();
+  const byMonth = new Map<string, ImageDescItem[]>();
+  for (const it of descs) {
+    if (!it || typeof it !== 'object') continue;
+    if (!String(it.desc ?? '').trim()) continue;
+    const file = String(it.file ?? '').trim();
+    if (file) byFile.set(file, it);
+    const month = file.includes('/') ? file.slice(0, file.indexOf('/')) : monthOf(Number(it.ct));
+    if (!month) continue;
+    let list = byMonth.get(month);
+    if (!list) { list = []; byMonth.set(month, list); }
+    list.push(it);
+  }
+  for (const list of byMonth.values()) list.sort((a, b) => (Number(a.ct) || 0) - (Number(b.ct) || 0));
+  const used = new Set<string>(); // 最近邻消费防串：一张描述只配一条消息
+  let n = 0;
+  for (const m of msgs) {
+    if (m.type !== 3 || m.text !== '') continue;
+    const img = String(m.img ?? '').trim();
+    const ctSec = Math.round(m.ts / 1000);
+    let desc = '';
+    const exact = img ? byFile.get(img) : undefined;
+    if (exact) {
+      desc = String(exact.desc ?? '').trim();
+    } else {
+      const list = byMonth.get(monthOf(ctSec));
+      if (list?.length) {
+        let best: ImageDescItem | null = null;
+        let bestDiff = Infinity;
+        for (const it of list) {
+          const ict = Number(it.ct);
+          if (!Number.isFinite(ict)) continue;
+          const diff = Math.abs(ict - ctSec);
+          if (diff < bestDiff) { bestDiff = diff; best = it; }
+        }
+        if (best && bestDiff <= IMG_DESC_NEAREST_SEC) {
+          const key = String(best.file ?? '').trim() || `ct:${Number(best.ct)}`;
+          if (!used.has(key)) {
+            used.add(key);
+            desc = String(best.desc ?? '').trim();
+          }
+        }
+      }
+    }
+    if (desc && m.text !== `[图片] ${desc}`) {
+      m.text = `[图片] ${desc}`;
+      n++;
+    }
+  }
+  return n;
+}
+
 // 447 退役：shouldGenerate 自动生成触发判定随自动链路一并移除——
 // 画脸谱一律由数据源弹窗「画脸谱」手动触发（无门槛，选了就画）。
 

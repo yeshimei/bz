@@ -12,6 +12,42 @@ export interface UnifiedMessage {
   text: string;
 }
 
+/**
+ * 图片描述确认窗数据（issue 470 / ADR-0196 决策 8）：引擎在 describe 段开始前组装、
+ * 经注入的确认门（askDescribeConfirm）交给 UI 弹窗。只报张数 / 批数 / 调用数，**不报金额**。
+ */
+export interface DescribeConfirmInfo {
+  /** 服务商显示名（如 DeepSeek / 智谱 Plan / Ollama（本地）） */
+  provider: string;
+  /** 当前生效模型名 */
+  model: string;
+  /** 联系人称呼 */
+  name: string;
+  /** 该人图片总数（聊天仓 type=3 且已关联 img 的口径） */
+  totalImages: number;
+  /** 已完成张数（描述已合并进聊天仓的；本次从第 doneImages+1 张开始） */
+  doneImages: number;
+  /** 本次约调用次数（有剩余工作的批数；每批一次调用） */
+  calls: number;
+  /** 每批张数 */
+  batchSize: number;
+}
+
+/** 画像生成确认信息（471 / ADR-0196 决策 8 第二次确认：只报素材条数 / 调用数，不报金额） */
+export interface PortraitConfirmInfo {
+  /** 服务商显示名（如 DeepSeek / 智谱 Plan / Ollama（本地）） */
+  provider: string;
+  /** 当前生效模型名 */
+  model: string;
+  /** 联系人称呼 */
+  name: string;
+  /** 素材条数（聊天仓派生文本非空的消息数；增量口径为本次计划提炼的条数） */
+  materials: number;
+  /** 本次约调用次数（采集批数 + 其人 + 我们 + 时间线） */
+  calls: number;
+}
+
+
 /** 交往事件（LLM 从聊天片段提炼；ts = 日期字符串 YYYY-MM-DD，字典序即时间序） */
 export interface FaceEvent {
   ts: string;

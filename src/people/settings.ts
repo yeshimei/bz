@@ -62,6 +62,15 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             ],
           },
           {
+            type: 'number',
+            name: '每批图片数',
+            desc: '画脸谱时图片描述每批的张数，一次 AI 调用一批（默认 20）',
+            binding: { key: 'peopleDescBatchSize' },
+            min: 1,
+            max: 100,
+            step: 5,
+          },
+          {
             type: 'toggle',
             name: '视频标签',
             desc: '视频消息以时长标签进时间线',

@@ -1868,3 +1868,32 @@
     color: var(--gold);
   }
 }
+
+/* ==================== 图片描述确认弹窗（issue 470 / ADR-0196 决策 8：body 级弹层，面板可不开） ==================== */
+.bz-people-desc-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 60; /* 兜底档；topifyZ 显示时另发动态档 */
+}
+.bz-people-desc-confirm .bz-people-pop-panel {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100% - 40px);
+}
+.bz-people-desc-line {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-strong);
+  overflow-wrap: anywhere;
+}
+.bz-people-desc-note {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-mut);
+}
+.bz-people-desc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}

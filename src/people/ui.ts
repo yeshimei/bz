@@ -33,8 +33,8 @@ import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
-import type { JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
-import type { ContactStats, FaceDigest, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
+import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
+import type { ContactStats, DescribeConfirmInfo, FaceDigest, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
   listContactDirs,
@@ -51,9 +51,12 @@ import {
 } from './datasource';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
+import { describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
+  describeConfirmModal,
+  portraitConfirmModal,
   dsModal,
   duoBar,
   foldBondBody,
@@ -806,7 +809,7 @@ export function mergedMonthlyOf(imports: Array<{ stats?: Partial<ContactStats> }
 export interface JobsApi {
   startJobs(app: unknown, targets: JobTarget[], opts?: JobStartOptions): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }>;
   /** 从保库记录的 job 段重建队列；崩溃遗留 running → interrupted（本会话只调一次） */
-  resumeJobs(app: unknown): Promise<void>;
+  resumeJobs(app: unknown, ai?: JobResumeOptions): Promise<void>;
   /** 从断点继续指定人物（已完成批次不重烧） */
   resume(talker: string): boolean;
   /** 当前批完成后暂停 */
@@ -861,7 +864,7 @@ async function ensureJobsBoot(): Promise<void> {
   const safe = peopleSafe ?? (await getPeopleSafeStore());
   if (!safe.unlocked) return;
   jobsBooted = true;
-  await jobs().resumeJobs(getApp());
+  await jobs().resumeJobs(getApp(), { askDescribeConfirm: askDescribeConfirm }); // 470：确认门随引擎重建注入
 }
 
 /** 订阅引擎快照（整个会话只订一次；关面板不退订——引擎推送照收，重开面板即时恢复） */
@@ -904,7 +907,12 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   let engineSkipped = 0;
   let resumed: string[] = [];
   if (runnable.length) {
-    const res = await jobs().startJobs(getApp(), runnable, {}); // mode 缺省 auto：引擎逐人按增量计划判定
+    // 470/471：两道确认门随 startJobs 注入（ADR-0196 决策 8——图片描述与画像生成是两个
+    // 独立弹窗；引擎在各自烧 AI 前回调征求授权，跳过描述不影响画像这扇门照弹）
+    const res = await jobs().startJobs(getApp(), runnable, {
+      askDescribeConfirm: askDescribeConfirm,
+      askPortraitConfirm: askPortraitConfirm,
+    }); // mode 缺省 auto：引擎逐人按增量计划判定
     engineSkipped = res.skipped.length;
     resumed = res.resumed ?? [];
     await ensureJobsWatch();
@@ -1071,6 +1079,14 @@ function toBlockState(job: JobView): JobsBlockState {
           failed: job.prep.failed ?? 0,
         }
       : undefined,
+    // 图片描述段进度（470）：阶段行 / 折算总进度只在 describe 阶段上屏（批口径）
+    describe:
+      job.describe && job.stage === 'describe'
+        ? {
+            stageText: describeStageLine(job.describe.doneBatches, job.describe.totalBatches),
+            overall: describeOverallPct(job.describe.doneBatches, job.describe.totalBatches),
+          }
+        : undefined,
   };
 }
 
@@ -1087,6 +1103,64 @@ function jobsBusy(): boolean {
 /** 是否有正在跑的任务（关面板转后台提示用；仅剩暂停 / 排队时关面板不打扰） */
 function jobsRunning(): boolean {
   return (jobsCache?.queue ?? []).some((j) => j.status === 'running');
+}
+
+// ---------------- 图片描述确认门（issue 470 / ADR-0196 决策 8） ----------------
+
+/** 确认弹窗开着（引擎串行跑任务，理论同时只弹一只；防串保证不叠窗） */
+let descConfirmOpen = false;
+
+/**
+ * 图片描述确认门（注入引擎的 askDescribe 依赖）：describe 段开始前由引擎回调，
+ * 弹 body 级确认窗（面板可能没开——引擎后台跑）。解析值：开始 / 跳过图片描述；
+ * Esc 与遮罩点击都归「跳过」——那是唯一不花钱的路，关闭弹层不该被理解成授权。
+ */
+function askDescribeConfirm(info: DescribeConfirmInfo): Promise<'start' | 'skip'> {
+  if (descConfirmOpen) return Promise.resolve('skip'); // 已有窗开着：不叠窗，按未授权处理
+  descConfirmOpen = true;
+  return new Promise((resolve) => {
+    const done = (answer: 'start' | 'skip'): void => {
+      descConfirmOpen = false;
+      document.removeEventListener('keydown', onKey, true);
+      node.remove();
+      resolve(answer);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') done('skip');
+    };
+    const node = describeConfirmModal(info, done);
+    document.body.appendChild(node);
+    topifyZ(node);
+    document.addEventListener('keydown', onKey, true);
+  });
+}
+
+/** 画像生成确认窗开着（引擎串行跑任务，理论同时只弹一只；与描述确认互斥防叠窗） */
+let portraitConfirmOpen = false;
+
+/**
+ * 画像生成确认门（注入引擎的 askPortraitConfirm 依赖，471 / ADR-0196 决策 8 第二次确认）：
+ * 采集批切定后引擎回调，弹 body 级确认窗（面板可能没开）。解析值：开始 / 取消；
+ * Esc 与遮罩点击都归「取消」——那是唯一不花钱的路。跳过图片描述后本窗照弹（两次确认独立）。
+ */
+function askPortraitConfirm(info: PortraitConfirmInfo): Promise<'start' | 'cancel'> {
+  if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未授权处理
+  portraitConfirmOpen = true;
+  return new Promise((resolve) => {
+    const done = (answer: 'start' | 'cancel'): void => {
+      portraitConfirmOpen = false;
+      document.removeEventListener('keydown', onKey, true);
+      node.remove();
+      resolve(answer);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') done('cancel');
+    };
+    const node = portraitConfirmModal(info, done);
+    document.body.appendChild(node);
+    topifyZ(node);
+    document.addEventListener('keydown', onKey, true);
+  });
 }
 
 /** 进度块动作派发（talker 从块根 data 钩子读） */
@@ -1139,6 +1213,11 @@ function sealJobOf(job: JobView | undefined): FoldCardJob | null {
     resumable: isResumable(job),
     // 工具段总进度（469）：preprocess 阶段印章百分比按它算（AI 段回落批口径）
     prepPct: job.prep && job.stage === 'preprocess' ? prepOverallPct(job.prep) : undefined,
+    // 图片描述段总进度（470）：describe 阶段印章百分比按它算
+    describePct:
+      job.describe && job.stage === 'describe'
+        ? describeOverallPct(job.describe.doneBatches, job.describe.totalBatches)
+        : undefined,
   };
 }
 

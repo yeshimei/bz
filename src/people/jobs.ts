@@ -9,9 +9,17 @@
  * （只落批元数据、已完成批的提炼结果、双卷画像 / 时间线成品、互动统计聚合与消息集指纹），
  * 且现在连同提炼产物一起进了密文。
  *
+ * 阶段机（469 工具段 + 470 图片描述段 / ADR-0196）：
+ * preprocess（bz-face prep：媒体导出→派生档→图片关联→语音转写）→ describe（插件 AI 段：图片
+ * 描述——确认门一次，跳过 ≠ 取消；批级断点，逐批合并回聊天仓派生 text）→ chunked → extracting
+ * → person（其人）→ bond（我们）→ chronicle（时间线）→ done。零媒体 / 零图片的联系人按决策 9
+ * 自动跳过对应段且不弹确认。
+ *
  * 断点续跑判定（466 / ADR-0197 决策 5）：指纹 = 组装素材的**内容哈希**（条数 + 逐条 ts|归属|文本
  * 链式哈希）。resume(talker) 重读聊天仓（保库记录 store 段）重算指纹：一致 → chunkMessages
  * 确定性重切（跳过已完成批）→ 续跑；漂移 → 任务判废（status error），提示删除后重新生成。
+ * 「合并后重算指纹」豁免路径（469 起）：prep 旁路表合并与 describe 描述合并都会升级派生 text——
+ * 两段合并都发生在指纹重算之前，素材升级按 refresh 对齐落盘值，不判废。
  * 落盘兼容（issue 455）：旧版 in-flight job 的单卷 `portrait` 字段读入视作 `person`。
  *
  * 上锁协作暂停（ADR-0194 决策 5）：订阅 encrypt:unlock-changed——任意路径上锁即 pauseJobs()
@@ -73,20 +81,40 @@ import { buildStatsNote, type InsightsSummary } from './insights';
 import { computeStats } from './stats';
 import { PeopleStore } from './data';
 import {
+  applyImageDescToMsgs,
   applyImageMapToMsgs,
   applyVoiceToMsgs,
   normalizeOptionsFromSettings,
   storeStatsOf,
   storeToUnified,
+  type ImageDescItem,
   type StoreContact,
 } from './datasource';
+import {
+  batchSizeFromSettings,
+  buildDescribePrompt,
+  contextWindowOf,
+  describeBatches,
+  describeOf,
+  describeStageLine,
+  descDataUrlOf,
+  imageRefsOf,
+  newDescribeProgress,
+  parseDescribeReply,
+  describeModelLabelOf,
+  type AskDescribe,
+  type DescribeImageRef,
+  type DescribeProgress,
+} from './describe';
 import type {
   ContactStats,
+  DescribeConfirmInfo,
   FaceDigest,
   FaceEvent,
   InterestItem,
   MomentItem,
   PersonProfile,
+  PortraitConfirmInfo,
   QuoteItem,
   ThreadItem,
   UnifiedMessage,
@@ -97,9 +125,10 @@ import type {
 export type JobStatus = 'running' | 'paused' | 'interrupted' | 'done' | 'error';
 /**
  * 任务阶段：preprocess（469 工具段：媒体导出→派生档→图片关联→语音转写，词表与工具
- * [bz-p].phase 同源）→ chunked → extracting → person（其人）→ bond（我们）→ chronicle（时间线）→ done
+ * [bz-p].phase 同源）→ describe（470 图片描述段：插件 AI 段，确认门 + 批级断点）→
+ * chunked → extracting → person（其人）→ bond（我们）→ chronicle（时间线）→ done
  */
-export type JobStage = 'preprocess' | 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
+export type JobStage = 'preprocess' | 'describe' | 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
 
 /** 批元数据（无对话原文；人可读的进度与续跑校验都用它） */
 export type JobChunkMeta = ChunkMeta;
@@ -157,6 +186,16 @@ export interface PersonJob {
    * prep 本身幂等（产物在即跳过、voice.json 即转写水位），进程没了重起只补缺口。
    */
   prep?: PrepProgress;
+  /**
+   * 图片描述段进度（470 / ADR-0196 决策 8；纯元数据无原文）。权威在聊天仓（描述已合并 =
+   * 该图 text 非空），账本供进度展示与「确认过 / 跳过过」的记忆——续跑不再重复弹确认。
+   */
+  describe?: DescribeProgress;
+  /**
+   * 画像生成已确认（471 / ADR-0196 决策 8 第二次确认的记账）：重试 / 断点续跑不再二次弹窗
+   * ——用户已授权过这次花费。取消 = 任务整条移除，不会有「取消过」的残留态。
+   */
+  portraitConfirmed?: boolean;
   /** 导入记录元数据（ui 层落 ImportRecord 所需；messageCount = 实际进提炼的条数） */
   importRecord?: { fileLabel: string; skippedCount: number; messageCount: number; timeFrom: string; timeTo: string };
   error?: string;
@@ -215,6 +254,22 @@ export interface JobStartOptions {
   askExtract?: AskLLM;
   askPortrait?: AskLLM;
   /**
+   * 图片描述的 AI 注入（470：`{text, images}` 多模态通道，走 AI 面板当前服务商与模型）。
+   * 缺省 createAI().json。与 askExtract / askPortrait 一样供测试打桩。
+   */
+  askDescribe?: AskDescribe;
+  /**
+   * 图片描述的确认门注入（470 / ADR-0196 决策 8）：describe 段开始前回调，返回 'start' | 'skip'
+   * （生产 = ui 的确认弹窗；测试注入假门）。缺省（未注入）= 无授权通道，一律按跳过处理。
+   */
+  askDescribeConfirm?: DescribeGate;
+  /**
+   * 画像生成的确认门注入（471 / ADR-0196 决策 8 第二次确认）：采集批切定后、烧 AI 前回调，
+   * 返回 'start' | 'cancel'（取消 = 任务整条移除，与描述的跳过不同）。缺省（未注入）= 放行
+   * ——生产入口（ui.startGeneration）恒注入门，引擎直调（测试 / 编程消费）不为确认所阻。
+   */
+  askPortraitConfirm?: PortraitGate;
+  /**
    * 增量合并的旧脸谱引用覆盖（仅本次内存运行生效；断点续跑一律重读 PeopleStore 现有 digest——同源）。
    * 缺省读 PeopleStore 里该人物现有 digest。
    */
@@ -225,7 +280,27 @@ export interface JobResumeOptions {
   /** AI 依赖注入（重启后 resumeJobs 重建引擎时注入；缺省 createAI()） */
   askExtract?: AskLLM;
   askPortrait?: AskLLM;
+  /** 图片描述的 AI 注入（470；缺省 createAI().json 多模态通道） */
+  askDescribe?: AskDescribe;
+  /** 图片描述的确认门注入（470；缺省 = 无授权通道按跳过处理） */
+  askDescribeConfirm?: DescribeGate;
+  /** 画像生成的确认门注入（471；缺省 = 放行，生产入口恒注入） */
+  askPortraitConfirm?: PortraitGate;
 }
+
+/**
+ * 图片描述确认门（470 / ADR-0196 决策 8）：引擎组装确认数据（DescribeConfirmInfo，只报
+ * 张数 / 批数 / 调用数不报金额）交给宿主弹窗，解析 'start'（开跑）| 'skip'（跳过 ≠ 取消）；
+ * 抛错 = 没拿到授权，按 skip 处理。
+ */
+export type DescribeGate = (info: DescribeConfirmInfo) => Promise<'start' | 'skip'>;
+
+/**
+ * 画像生成确认门（471 / ADR-0196 决策 8）：引擎组装确认数据（PortraitConfirmInfo，只报
+ * 素材条数 / 调用数不报金额）交给宿主弹窗，解析 'start'（开跑）| 'cancel'（取消 = 任务整条
+ * 移除，不烧 AI）；抛错 = 没拿到授权，按 cancel 处理。
+ */
+export type PortraitGate = (info: PortraitConfirmInfo) => Promise<'start' | 'cancel'>;
 
 /** 引擎快照（subscribe 推送 / snapshot() 读取；queue 为深拷贝并附带展示用派生字段） */
 export interface JobsSnapshot {
@@ -308,8 +383,14 @@ interface EngineState {
   /** 共锁保库记录读写器（素材重读 / 上锁判定 / job 落盘都走它） */
   safe: PeopleSafeStore | null;
   queue: PersonJob[];
-  /** 最近一次 startJobs / resumeJobs 注入的 AI 依赖（缺省 createAI()） */
-  injected: { askExtract?: AskLLM; askPortrait?: AskLLM } | null;
+  /** 最近一次 startJobs / resumeJobs 注入的 AI 依赖（缺省 createAI()；describe 段缺省 ai.json 多模态） */
+  injected: {
+    askExtract?: AskLLM;
+    askPortrait?: AskLLM;
+    askDescribe?: AskDescribe;
+    askDescribeConfirm?: DescribeGate;
+    askPortraitConfirm?: PortraitGate;
+  } | null;
   /** 批级重试参数（startJobs 注入；缺省 DEFAULT_MAX_RETRIES + 真实退避） */
   retry: RetryPolicy;
   runningJob: string | null;
@@ -564,7 +645,16 @@ export async function startJobs(
   if (!st.safe.unlocked) {
     return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
   }
-  st.injected = opts.askExtract || opts.askPortrait ? { askExtract: opts.askExtract, askPortrait: opts.askPortrait } : null;
+  st.injected =
+    opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm
+      ? {
+          askExtract: opts.askExtract,
+          askPortrait: opts.askPortrait,
+          askDescribe: opts.askDescribe,
+          askDescribeConfirm: opts.askDescribeConfirm,
+          askPortraitConfirm: opts.askPortraitConfirm,
+        }
+      : null;
   // 重试策略：只在显式传入时覆盖（不传 = 沿用当前，缺省 DEFAULT_MAX_RETRIES + 真实退避）
   if (opts.maxRetries !== undefined) st.retry.maxRetries = opts.maxRetries;
   if (opts.sleep) st.retry.sleep = opts.sleep;
@@ -722,7 +812,7 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     store,
     safe,
     queue,
-    injected: ai.askExtract || ai.askPortrait ? ai : null,
+    injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
     retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
     runningJob: null,
     pauseRequested: false,
@@ -997,6 +1087,168 @@ export async function mergePrepArtifactsIntoStore(
   return counts;
 }
 
+// ---------------- 图片描述段 describe（issue 470 / ADR-0196 决策 8、9） ----------------
+
+/**
+ * 图片描述段（470 / ADR-0196 决策 8）：prep 产物（img 关联 + desc/ 派生档）就位后、素材切批前，
+ * 用 AI 面板当前模型给图片出描述，逐批合并进聊天仓派生 text（`[图片] 描述`）。
+ *   - 零图片 / 已全部描述 / 已确认过跳过：直接跳过且不弹确认（决策 9；确认只为花钱的事而弹）。
+ *   - 确认门一次（决策 8）：`用 <服务商>/<模型> 描述 N 张图片，约 M 次调用；已完成 X 张，
+ *     本次从第 X+1 张开始`，按钮 开始 / 跳过图片描述；跳过 ≠ 取消——图片保持空文本继续走画像。
+ *     门未注入（无法征求授权）或门抛错 = 没拿到授权 → 一律按跳过处理，绝不静默烧钱。
+ *   - 批级断点：批切分由图片集（ts 升序）确定性重导；「该批是否已完成」以聊天仓 text 为权威，
+ *     已完成批零调用跳过；单批失败只废该批（重试退避后 error 落账，resume 从失败批续跑）。
+ *   - 暂停 = 批间自然断点（批完成后停）；批级 checkpoint 逐批落保库记录（job.describe 账本）。
+ * 返回 'skipped' | 'ok' | 'halted'（halted = runJob 立即返回，finish 已落状态）。
+ */
+async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted'> {
+  const safe = st!.safe;
+  if (!safe?.unlocked) return 'halted'; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
+  const ledger = describeOf(job);
+  if (ledger?.skipped) return 'skipped'; // 已跳过：续跑不再问（跳过 ≠ 取消，整链继续）
+  const dataRoot = dataRootOf();
+  if (!dataRoot) return 'skipped'; // 没有数据根就没有派生档可读——描述无从谈起，不弹确认
+
+  const rec = await safe.read(job.talker);
+  if (gone(job)) return 'halted';
+  const msgs = rec?.store.msgs ?? [];
+  const refs = imageRefsOf(msgs);
+  if (!refs.length) return 'skipped'; // 零图片：不为 0 张图弹一次确认（决策 9）
+  const byKey = new Map(msgs.map((m) => [m.key, m]));
+  const isDone = (ref: DescribeImageRef): boolean => (byKey.get(ref.key)?.text ?? '') !== '';
+  const batchSize = ledger?.batchSize ?? batchSizeFromSettings();
+  const batches = describeBatches(refs, batchSize);
+  const doneBatches = batches.filter((b) => b.every(isDone)).length;
+  const pendingCount = refs.filter((r) => !isDone(r)).length;
+  if (!ledger) job.describe = newDescribeProgress(refs.length, batchSize);
+  const led = job.describe!;
+  led.imgCount = refs.length;
+  led.batchSize = batchSize;
+  led.totalBatches = batches.length;
+  led.doneBatches = Math.max(led.doneBatches, doneBatches);
+  if (pendingCount <= 0) {
+    // 全部描述过（上一轮已并仓 / 旁路表兜底命中）：零调用直接过
+    await finish({ describe: led, message: describeStageLine(doneBatches, batches.length) });
+    return 'skipped';
+  }
+
+  // 确认门（决策 8）：同一任务只问一次（confirmed 记账——重试 / 续跑不重复弹）
+  if (!led.confirmed) {
+    const gate = st!.injected?.askDescribeConfirm;
+    if (!gate) {
+      led.skipped = true;
+      await finish({ describe: led, message: '已跳过图片描述，继续生成画像' });
+      return 'skipped';
+    }
+    const label = describeModelLabelOf();
+    job.stage = 'describe';
+    job.message = '等待确认图片描述…';
+    await persist();
+    emit();
+    let answer: 'start' | 'skip';
+    try {
+      answer = await gate({
+        provider: label.provider,
+        model: label.model,
+        name: job.name,
+        totalImages: refs.length,
+        doneImages: refs.length - pendingCount,
+        calls: batches.filter((b) => b.some((r) => !isDone(r))).length, // 有剩余工作的批 = 约调用次数
+        batchSize,
+      });
+    } catch (e) {
+      console.warn('[people] 图片描述确认门异常，按跳过处理:', e);
+      answer = 'skip';
+    }
+    if (gone(job)) return 'halted';
+    if (answer === 'skip') {
+      // 跳过 ≠ 取消（ADR-0196 决策 8）：图片以空文本在仓（不进时间线），整链继续走到画像生成
+      led.skipped = true;
+      await finish({ describe: led, message: '已跳过图片描述，继续生成画像' });
+      return 'skipped';
+    }
+    led.confirmed = true;
+    await persist();
+  }
+
+  // 逐批描述（批级断点：聊天仓 text 是权威，已完成批零调用跳过）
+  job.stage = 'describe';
+  await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
+  const ask = asksOf().describe;
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const pending = batch.filter((r) => !isDone(r));
+    if (!pending.length) {
+      if (led.doneBatches < i + 1) led.doneBatches = i + 1;
+      continue;
+    }
+    if (st!.pauseRequested) {
+      await finish({ status: 'paused', message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+      return 'halted';
+    }
+    if (gone(job)) return 'halted';
+    // 组批：读派生档换 data URL；读不动的剔除（单条失败不废整批），绝不回落原图 / 微信缩略图
+    const images: Array<{ ref: DescribeImageRef; url: string }> = [];
+    for (const ref of pending) {
+      const url = descDataUrlOf(dataRoot, job.talker, ref.img);
+      if (url) images.push({ ref, url });
+    }
+    if (!images.length) {
+      led.doneBatches = i + 1; // 批内派生档全读不动：不烧调用，计完成跳过
+      await persist();
+      continue;
+    }
+    led.doneBatches = i; // 进行中口径（当前批未完，断点落在本批开头）
+    job.message = `图片描述 第 ${i + 1}/${batches.length} 批（${images.length} 张）`;
+    emit();
+    // 批级重试（issue 453 同款）：退避再试，重试期间推快照；耗尽 → error 落账（可从失败批续跑）
+    const context = contextWindowOf(msgs, batch[0].ts, batch[batch.length - 1].ts);
+    const prompt = buildDescribePrompt(images.length, context);
+    let descs: string[];
+    let attempt = 0;
+    for (;;) {
+      try {
+        descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
+        break;
+      } catch (e) {
+        if (gone(job)) return 'halted';
+        const err = errorMessage(e);
+        if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
+          await finish({
+            status: 'error',
+            error: err,
+            message: `图片描述第 ${i + 1}/${batches.length} 批失败（已完成 ${led.doneBatches} 批保留，可从失败批续跑）`,
+          });
+          return 'halted';
+        }
+        attempt += 1;
+        job.message = `图片描述第 ${i + 1}/${batches.length} 批失败（${err}）——正在重试 ${attempt}/${st!.retry.maxRetries}…`;
+        emit();
+        await st!.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
+        if (gone(job)) return 'halted';
+        if (st!.pauseRequested) {
+          await finish({ status: 'paused', message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+          return 'halted';
+        }
+      }
+    }
+    // 本批合并进聊天仓（ADR-0197：插件是唯一写入者；走 safe.write 串行链，批级 checkpoint）
+    const items: ImageDescItem[] = images.map((x, j) => ({ file: x.ref.img, ct: Math.round(x.ref.ts / 1000), desc: descs[j] ?? '' }));
+    await safe.write(job.talker, (rec2) => {
+      const n = applyImageDescToMsgs(rec2.store.msgs, items);
+      if (n > 0) {
+        rec2.store.stats = storeStatsOf(rec2.store.msgs); // 描述进时间线 → 统计重算（图片数变化）
+        rec2.store.updatedAt = new Date().toISOString();
+      }
+    });
+    if (gone(job)) return 'halted';
+    led.doneBatches = i + 1;
+    await persist();
+    emit();
+  }
+  return 'ok';
+}
+
 async function runJob(job: PersonJob): Promise<void> {
   const asks = asksOf();
   st!.runningJob = job.talker;
@@ -1037,9 +1289,14 @@ async function runJob(job: PersonJob): Promise<void> {
       }
     }
 
-    // 3. 重读聊天仓 + 指纹判定（prep 合并把转写 / 图片关联升级进 text——指纹在合并后算）。
-    //    判废只认「外部漂移且烧过批」（上面已拦）；此处的指纹变化只能来自本任务自己的
-    //    prep 合并（AI 未烧批时还可能是中途导入的新素材）——预期内的素材升级，刷新落盘值继续。
+    // 2.5 图片描述段（470 / ADR-0196 决策 8、9）：确认门一次、跳过 ≠ 取消、批级断点，
+    //     描述逐批合并进聊天仓派生 text。零图片 / 已跳过 / 已描述完的自动跳过且不弹确认。
+    const descState = await runDescribeStage(job, finish);
+    if (descState === 'halted') return; // 确认 / 暂停 / 批失败（finish 已落状态）
+
+    // 3. 重读聊天仓 + 指纹判定（prep 合并与 describe 合并把转写 / 关联 / 描述升级进 text——
+    //    指纹在合并后算）。判废只认「外部漂移且烧过批」（上面已拦）；此处的指纹变化只能来自
+    //    本任务自己的合并（AI 未烧批时还可能是中途导入的新素材）——预期内的素材升级，刷新落盘值继续。
     const contact = (await safe.read(job.talker))?.store;
     if (gone(job)) return;
     const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
@@ -1101,6 +1358,44 @@ async function runJob(job: PersonJob): Promise<void> {
           timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
           timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString(),
         };
+      }
+    }
+
+    // 5.5 画像生成确认门（471 / ADR-0196 决策 8 第二次确认，与图片描述确认互相独立——
+    //     跳过了描述这扇门照弹）：素材条数 / 约调用次数（采集批 + 其人 + 我们 + 时间线）在
+    //     切批定案后最准。取消 = 任务整条移除（画像不画，已同步的数据保留）；抛错 = 没拿到
+    //     授权，按取消处理。门未注入 = 放行（生产入口恒注入；引擎直调的测试 / 编程消费不阻）。
+    //     已确认过（重试 / 断点续跑）不再二次弹窗。
+    if (!job.portraitConfirmed) {
+      const gate = st!.injected?.askPortraitConfirm;
+      if (gate) {
+        const label = describeModelLabelOf();
+        job.stage = 'chunked';
+        job.message = '等待确认画像生成…';
+        await persist();
+        emit();
+        let answer: 'start' | 'cancel';
+        try {
+          answer = await gate({
+            provider: label.provider,
+            model: label.model,
+            name: job.name,
+            materials: digestMsgs.length,
+            calls: chunks.length + 3,
+          });
+        } catch (e) {
+          console.warn('[people] 画像生成确认门异常，按取消处理:', e);
+          answer = 'cancel';
+        }
+        if (gone(job)) return;
+        if (answer === 'cancel') {
+          await removeJob(job.talker);
+          return;
+        }
+        job.portraitConfirmed = true;
+        await persist();
+      } else {
+        job.portraitConfirmed = true;
       }
     }
 
@@ -1255,15 +1550,13 @@ async function runJob(job: PersonJob): Promise<void> {
   }
 }
 
-/** AI 依赖解析：最近一次注入优先，缺省 createAI()（提炼 .json / 画像 .chat 通道，ui 同款） */
-function asksOf(): { extract: AskLLM; portrait: AskLLM } {
-  if (st?.injected?.askExtract && st.injected.askPortrait) {
-    return { extract: st.injected.askExtract, portrait: st.injected.askPortrait };
-  }
+/** AI 依赖解析：注入项逐字段优先，缺省 createAI()（提炼 .json / 画像 .chat / 描述 .json 多模态） */
+function asksOf(): { extract: AskLLM; portrait: AskLLM; describe: AskDescribe } {
   const ai = createAI();
   return {
     extract: st?.injected?.askExtract ?? ((p: string) => ai.json(p)),
     portrait: st?.injected?.askPortrait ?? ((p: string) => ai.chat(p)),
+    describe: st?.injected?.askDescribe ?? ((input) => ai.json(input)),
   };
 }
 
