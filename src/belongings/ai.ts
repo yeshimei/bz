@@ -7,7 +7,9 @@
  * 未配置/网络失败原样抛错，由表单内联降级提示（不阻塞手填）。
  */
 import { createAI } from '../core/ai';
+import { getApp } from '../core/app';
 import { splitEmojiCategory } from './category';
+import { suggestCategoryByCatalog } from './catalog-suggest';
 
 /** 图标菜单：possessions 高频语义（118 条冻结字面量；全部经 Obsidian 内置 lucide 表验证存在。
  *  issue 477/ADR-0201 起与 emoji 映射表无任何运行时依赖——原「从映射表全集挑选」仅为历史来路） */
@@ -79,6 +81,24 @@ export function parseCategorySuggestion(raw: string): { category: string; icon: 
 
 /** AI 归类入口：失败/未配置抛错（表单内联降级），成功返回校验过的建议 */
 export async function aiSuggestCategory(name: string, history: string[]): Promise<{ category: string; icon: string }> {
+  // 阶段 B（issue 478）：有表 → 走表内编排（两次 Jev + 哨兵回落）；返回非 null 即采用。
+  // 取 app 走既有通道 core/app 的 getApp，不在本文件硬 import 全局。app 未就绪按无表处理。
+  let app: unknown = null;
+  try {
+    app = getApp();
+  } catch {
+    app = null;
+  }
+  if (app) {
+    try {
+      const fromTable = await suggestCategoryByCatalog(app, name, history);
+      if (fromTable) return fromTable;
+    } catch (e) {
+      // 有表但这轮没成功（含用户取消）→ 原样向上抛，UI 已有内联降级提示
+      throw e;
+    }
+  }
+  // 无表（或 app 未就绪）：保留原有 LLM 自由生成路径（最后兜底，一字不改）
   const ai = createAI();
   const raw = await ai.json(buildCategoryPrompt(name, history), {});
   const parsed = parseCategorySuggestion(raw);

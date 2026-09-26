@@ -7,7 +7,7 @@
 //
 // sha256 一律对 **downloads/ 里的已出版产物**算（ skins 对 css、docs 对 html），
 // 不从 src 源重算——清单永与产物一致，不会出现「清单说 A、产物是 B」。
-// 因此发布顺序固定：pnpm skin-pack → pnpm changelog → pnpm manifest。
+// 因此发布顺序固定：pnpm skin-pack → pnpm changelog → pnpm catalog → pnpm manifest。
 //
 // 换行口径与插件端一致（src/core/sha256.ts：normalizeEol 后取 SHA-256），
 // Windows CRLF 与仓库 LF 不会算出两个值。
@@ -34,7 +34,7 @@ const textSha256 = (s) => createHash('sha256').update(Buffer.from(normalizeEol(s
 function fileSha256(rel) {
   const abs = path.join(ROOT, 'downloads', rel);
   if (!fs.existsSync(abs)) {
-    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm changelog 出产物，再跑 pnpm manifest`);
+    console.error(`downloads/${rel} 不存在——先跑 pnpm skin-pack / pnpm changelog / pnpm catalog 出产物，再跑 pnpm manifest`);
     process.exit(1);
   }
   return textSha256(fs.readFileSync(abs, 'utf8'));
@@ -46,6 +46,8 @@ const problems = [];
 const DOCS = [
   { id: 'changelog', name: '更新日志', file: 'bz-changelog.html' },
   { id: 'manual', name: '使用手册', file: 'bz-manual.html' },
+  // issue 478：归物本物品分类表（数据表，不是文档；产物由 pnpm catalog 出，故发布顺序里 catalog 在 manifest 之前）
+  { id: 'belongings-categories', name: '归物分类表', file: 'belongings-categories.json' },
 ];
 const docs = DOCS.map((d) => ({ ...d, sha256: fileSha256(d.file) }));
 

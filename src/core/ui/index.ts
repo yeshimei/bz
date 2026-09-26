@@ -52,3 +52,5 @@ export { uiResizable } from './resize';
 export type { BzResizableOpts, BzResizablePersist } from './resize';
 export { uiVSplitter } from './splitter';
 export type { BzVSplitterOpts, BzVSplitterPersist } from './splitter';
+export { openCatPicker, closeCatPicker, resolveIconName } from './catpicker';
+export type { CategoryPick, CatPickerOptions } from './catpicker';

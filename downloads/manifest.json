@@ -12,6 +12,12 @@
       "name": "使用手册",
       "file": "bz-manual.html",
       "sha256": "cadef4b1d050194c4ee65a952e1efc0d69e36dba21d41ca8d69379fea4a5843c"
+    },
+    {
+      "id": "belongings-categories",
+      "name": "归物分类表",
+      "file": "belongings-categories.json",
+      "sha256": "5033b95d806e155d9eb7368be69edd0e7ba9c367897ca13c3d46ac5d3747e46e"
     }
   ],
   "skins": [

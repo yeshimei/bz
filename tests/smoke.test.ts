@@ -549,7 +549,7 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
 });
 
 describe('在线资源组（issue 480 / ADR-0203 冒烟）', () => {
-  it('组渲染三行状态机；清单缺席时三行禁用（行名：主题） + 失败横条（隐式核对失败不炸渲染）', async () => {
+  it('组渲染四行状态机；清单缺席时四行禁用（行名：主题） + 失败横条（隐式核对失败不炸渲染）', async () => {
     const { onlineResourcesGroup, resetOnlineResourcesState } = await import('../src/settings-panel/online-resources');
     const { setApp } = await import('../src/core/app');
     const { requestUrl } = await import('obsidian');
@@ -570,10 +570,10 @@ describe('在线资源组（issue 480 / ADR-0203 冒烟）', () => {
     document.body.appendChild(body);
     (group.rows[0] as any).render(body, { rowEl: body, refreshVisibility: () => {} });
     await vi.waitFor(() => {
-      expect(body.querySelectorAll('.bz-sp-res-row')).toHaveLength(3);
+      expect(body.querySelectorAll('.bz-sp-res-row')).toHaveLength(4);
       const btns = [...body.querySelectorAll('.bz-sp-res-row .bz-sp-res-btn')] as HTMLButtonElement[];
-      expect(btns.length).toBe(3);
-      // 清单缺席（拉取失败）→ 状态未知，三行全禁用（半自动铁则：不能在无清单时误导下载）
+      expect(btns.length).toBe(4);
+      // 清单缺席（拉取失败）→ 状态未知，四行全禁用（半自动铁则：不能在无清单时误导下载）
       expect(btns.every((b) => b.disabled)).toBe(true);
     });
     expect(body.querySelector('.bz-sp-res-fail-text')?.textContent).toContain('检查更新失败');

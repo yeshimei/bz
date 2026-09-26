@@ -33,7 +33,7 @@ import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { confirmDiscard } from '../core/flow-dialog';
-import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
+import { mountIcons, uiModal, uiSuggest, uiIconSpan, openCatPicker } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -52,6 +52,7 @@ import {
 } from './render';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 import { aiSuggestCategory } from './ai';
+import { loadCategoryTable } from '../core/category-table';
 import {
   motionBeforePaint, motionRendered, motionCellFlow, motionCellStamp, motionCellStrike,
   motionDetailIn, motionDropOpen, motionFormIn, motionPanelIn, motionPanelOut,
@@ -1044,6 +1045,34 @@ export function openForm(it: BelongingsItem | null): void {
       if (name) { formIcon = name; drawIconChip(); }
     },
   });
+  // 分类选择器（issue 478 阶段 C）：按组浏览/可搜/带图标，复用同一张分类表（与 AI 归类共用）。
+  // 选中 → 复用 AI 按钮的回填通道（catInput.value / formIcon / drawIconChip）；取消（null）/抛错不阻断手填。
+  const catPickBtn = mask.querySelector('#bm-catpick') as HTMLButtonElement | null;
+  if (catPickBtn) {
+    catPickBtn.addEventListener('click', () => {
+      if (catPickBtn.disabled) return;
+      void (async () => {
+        try {
+          const table = await loadCategoryTable(getApp());
+          openCatPicker({
+            table,
+            title: '选择分类',
+            onConfirm: (sel) => {
+              if (!sel) return; // 取消：不动既有输入
+              catInput.value = sel.category;
+              formIcon = sel.icon;
+              drawIconChip();
+              errEl.textContent = '';
+            },
+          });
+        } catch (e: any) {
+          // 选择器抛错 → 内联提示（照 #bm-err 既有形态），不弹 notice 阻断手填
+          const eEl = mask.querySelector('#bm-err') as HTMLElement | null;
+          if (eEl) eEl.textContent = '分类表加载失败：' + (e?.message || '未知错误');
+        }
+      })();
+    });
+  }
   // 状态单选（平铺胶囊，markup = render.statusPickHtml）；出离态展开出离记录行（ADR-0089）
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
   const exitRow = mask.querySelector('#bm-exit') as HTMLElement;
