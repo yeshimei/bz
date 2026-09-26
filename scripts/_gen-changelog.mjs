@@ -80,6 +80,11 @@ const ROLE_START_RE = /^(评审|走查|深审|收口|收编|守卫|测试|基准
 // 强内部标记（正文出现即丢）
 const STRONG_INTERNAL_RE = /(单测|单源|mock|fake|行尾|指纹|白名单|重构|门禁|tsconfig|esbuild|eslint|vitest|CRLF|渲染纯层|upsert|内容哈希|回归测试|基线|sp-contract)/i;
 const DETAIL_MAX = 78;
+// 符号清理（用户要求：一句话，分隔只用逗号）——加号/箭头/斜杠/间隔点/竖线/顿号一律转逗号
+const SYMBOL_COMMA_RE = /[+＋→←↔⇄\/／·•｜|、]/g;
+function toSentence(s) {
+  return s.replace(SYMBOL_COMMA_RE, '，').replace(/\s*，\s*/g, '，').replace(/，{2,}/g, '，').replace(/^，+|，+$/g, '').trim();
+}
 
 function cleanTail(t) {
   let prev;
@@ -108,6 +113,8 @@ function rewrite(subject) {
     text = t.slice(0, dash).trim();
     sub = cleanTail(t.slice(dash + 2));
   }
+  text = toSentence(text);
+  sub = toSentence(sub);
   if (text.length > 42) text = text.slice(0, 41) + '…';
   if (!ROLE_START_RE.test(text) && !STRONG_INTERNAL_RE.test(text) && text.length >= 4) {
     if (sub && (STRONG_INTERNAL_RE.test(sub) || sub.length < 6)) sub = '';

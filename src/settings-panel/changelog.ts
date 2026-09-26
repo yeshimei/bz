@@ -145,7 +145,7 @@ function itemHtml(it: ChangelogItem, tier: 'pri' | 'sec'): string {
   const dom = CHANGELOG_DOMAIN_NAMES[it.domain] ?? '其他';
   return `<div class="bz-chg-item bz-chg-item--${tier}">` +
     `<span class="bz-chg-dom">${esc(dom)}</span>` +
-    `<div class="bz-chg-body"><div class="bz-chg-text">${esc(it.text)}</div>` +
+    `<div class="bz-chg-entry"><div class="bz-chg-text">${esc(it.text)}</div>` +
     (it.sub ? `<div class="bz-chg-sub">${esc(it.sub)}</div>` : '') +
     `</div></div>`;
 }

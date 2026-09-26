@@ -49,17 +49,21 @@ describe('更新日志数据（changelog-data 生成产物契约 v2）', () => {
 
   it('条目为用户视角表达：域合法、无 emoji、无 issue/ticket 号、无测试计数、长度有界', () => {
     const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+    // 用户要求：一句话表达，分隔只用逗号——加号/箭头/斜杠/间隔点/竖线/顿号不得出现
+    const SYMBOL_RE = /[+＋→←↔⇄\/／·•｜|、]/;
     for (const r of CHANGELOG_RELEASES) {
       for (const sec of ['added', 'fixed', 'improved'] as const) {
         for (const it of r[sec]) {
           expect(CHANGELOG_DOMAIN_NAMES[it.domain]).toBeTruthy();
           expect(it.text).not.toMatch(EMOJI_RE);
+          expect(it.text).not.toMatch(SYMBOL_RE);
           expect(it.text).not.toMatch(/(issue|ticket)\s*\d+/i);
           expect(it.text.length).toBeGreaterThanOrEqual(4);
           expect(it.text.length).toBeLessThanOrEqual(42);
           if (it.sub !== undefined) {
             expect(it.sub.length).toBeLessThanOrEqual(78);
             expect(it.sub).not.toMatch(EMOJI_RE);
+            expect(it.sub).not.toMatch(SYMBOL_RE);
             expect(it.sub).not.toMatch(/\d+\s*新?测试|测试全绿|测试全过/);
           }
         }
