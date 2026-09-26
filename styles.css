@@ -17006,6 +17006,35 @@ canvas { display: block; }
   .bz-chg-nav-date { display: none; }
   .bz-chg-main { padding: 12px 14px 20px; }
 }
+
+
+/* ═══════════ 使用手册弹窗（issue 473）：侧栏 footer 入口 → OB 内独立弹窗，iframe srcdoc 内嵌 ═══════════ */
+.bz-manv-popup {
+  width: min(calc(100vw - 32px), 1080px);
+  height: min(90vh, 860px);
+}
+/* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉） */
+.bz-manv-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 10px 14px 14px;
+}
+.bz-manv-frame {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--sp-line);
+  border-radius: 10px;
+  background: var(--sp-panel);
+}
+@media (max-width: 768px) {
+  .bz-manv-popup {
+    width: calc(100vw - 24px);
+    height: 88vh;
+    height: 88dvh;
+  }
+  .bz-manv-body { padding: 8px 10px 12px; }
+}
 /* ==================== 归物本域样式（src/belongings/styles.css，P20「瑞士大字报」） ====================
  * 单源：本文件同时是域内 prototype.html（评审壳）的唯一组件样式来源——先改原型评审、再落这里。
  * 视觉基准 = 拍板原型 .zcode/ui-prototypes/belongings-redesign20/p20-full.html（issue 230 方向纠正：
