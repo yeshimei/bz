@@ -1,5 +1,5 @@
-/* 源指纹 acedbaeb70594584 · 仓内输入 81 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 efaf5413da43a0ba · 仓内输入 83 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -7628,17 +7628,17 @@ var BZW_people = (() => {
       resetTimers.delete(el2);
     }
   }
-  function setRowBtnState(el2, state, label, failText) {
+  function setRowBtnState(el2, state2, label, failText) {
     if (!el2) return;
     el2.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
-    el2.disabled = state === "busy";
-    if (state === "busy") {
+    el2.disabled = state2 === "busy";
+    if (state2 === "busy") {
       el2.classList.add("bz-rowbtn--busy");
       clearResetTimer(el2);
-    } else if (state === "ok") {
+    } else if (state2 === "ok") {
       el2.classList.add("bz-rowbtn--ok");
       el2.textContent = ROW_BTN_OK_TEXT;
-    } else if (state === "fail") {
+    } else if (state2 === "fail") {
       el2.classList.add("bz-rowbtn--fail");
       el2.textContent = (failText || "失败").slice(0, 6);
     } else {
@@ -7918,7 +7918,7 @@ var BZW_people = (() => {
     search.setAttribute("aria-label", "搜索目录");
     const listEl = document.createElement("div");
     listEl.className = "bz-path-picker-list";
-    const state = { folders: [], q: "" };
+    const state2 = { folders: [], q: "" };
     const foot = document.createElement("div");
     foot.className = "bz-path-picker-foot";
     const selinfo = document.createElement("span");
@@ -7947,14 +7947,14 @@ var BZW_people = (() => {
     };
     const newBtn = mkBtn("新建文件夹", false, () => {
       var _a3;
-      const name = state.q.trim().replace(/^\/+|\/+$/g, "");
+      const name = state2.q.trim().replace(/^\/+|\/+$/g, "");
       if (!name) return;
       const parent = (_a3 = [...selected][0]) != null ? _a3 : "";
       const full = parent ? `${parent}/${name}` : name;
       void (async () => {
-        if (!state.folders.includes(full)) {
+        if (!state2.folders.includes(full)) {
           await app.vault.createFolder(full);
-          if (!state.folders.includes(full)) state.folders.push(full);
+          if (!state2.folders.includes(full)) state2.folders.push(full);
         }
         if (mode === "single") selected.clear();
         selected.add(full);
@@ -7962,13 +7962,13 @@ var BZW_people = (() => {
         updateSel();
       })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
     });
-    newBtn.disabled = !state.q.trim();
+    newBtn.disabled = !state2.q.trim();
     mkBtn(opts.okText || "下一步", true, submit);
     function orderedList() {
       const pinned = [];
       const rest = [];
       const pinSet = new Set(pinnedAtOpen);
-      for (const f of state.folders) {
+      for (const f of state2.folders) {
         if (pinSet.has(f)) pinned.push(f);
         else rest.push(f);
       }
@@ -7979,8 +7979,8 @@ var BZW_people = (() => {
     }
     function renderList2() {
       listEl.innerHTML = "";
-      const q = state.q.trim().toLowerCase();
-      const exact = !!q && state.folders.includes(q);
+      const q = state2.q.trim().toLowerCase();
+      const exact = !!q && state2.folders.includes(q);
       const LIMIT = 300;
       let n = 0;
       let total = 0;
@@ -8052,8 +8052,8 @@ var BZW_people = (() => {
       }
     }
     search.oninput = () => {
-      state.q = search.value;
-      newBtn.disabled = !state.q.trim();
+      state2.q = search.value;
+      newBtn.disabled = !state2.q.trim();
       renderList2();
     };
     search.addEventListener("keydown", (ev) => {
@@ -8066,12 +8066,12 @@ var BZW_people = (() => {
     });
     try {
       const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      state.folders = foldersFromFiles(files);
+      state2.folders = foldersFromFiles(files);
     } catch (e) {
     }
     void collectVaultFolders(app).then((folders) => {
       if (!mask.isConnected) return;
-      state.folders = folders;
+      state2.folders = folders;
       popup.dataset.ready = "1";
       renderList2();
     });
@@ -8803,7 +8803,7 @@ var BZW_people = (() => {
     });
     if (firstFocusable2) firstFocusable2.focus();
     const releaseFocusTrap = trapFocus(popup);
-    const handle = escManager.register("bz-settings-modal", {
+    const handle2 = escManager.register("bz-settings-modal", {
       isVisible: () => !!currentModal,
       close: () => closeSettingsModal()
     });
@@ -8815,7 +8815,7 @@ var BZW_people = (() => {
         releaseFocusTrap();
         mask.remove();
         popup.remove();
-        handle.unregister();
+        handle2.unregister();
         if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
           prevActive.focus();
         }
@@ -15610,6 +15610,421 @@ var BZW_people = (() => {
     return { migrated, skipped, cleaned, keptBack };
   }
 
+  // src/core/external-tool.ts
+  var BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
+  function parseBzLine(line) {
+    const text2 = line.endsWith("\r") ? line.slice(0, -1) : line;
+    const m = text2.match(BZ_LINE_PREFIX_RE);
+    if (!m) {
+      if (!text2.trim()) return null;
+      return { kind: "raw", text: text2 };
+    }
+    const body = text2.slice(m[0].length).trim();
+    switch (m[1]) {
+      case "step":
+        return body ? { kind: "step", text: body } : null;
+      case "p": {
+        const p = parseJsonObject(body);
+        if (!p) return null;
+        return {
+          kind: "progress",
+          phase: typeof p.phase === "string" ? p.phase : null,
+          // pct 允许 null = 该阶段不可估；缺失/非有限数一律归 null（绝不假报）
+          pct: Number.isFinite(p.pct) ? Number(p.pct) : null
+        };
+      }
+      case "info": {
+        const info = parseJsonObject(body);
+        return info ? { kind: "info", data: info } : null;
+      }
+      default: {
+        const r = parseJsonObject(body);
+        return r ? { kind: "result", data: r } : null;
+      }
+    }
+  }
+  function parseJsonObject(body) {
+    try {
+      const v = JSON.parse(body);
+      return v && typeof v === "object" && !Array.isArray(v) ? v : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var MAX_LINE_BYTES = 1024 * 1024;
+  var BzLineSplitter = class {
+    constructor(maxLineBytes = MAX_LINE_BYTES) {
+      this.maxLineBytes = maxLineBytes;
+      this.parts = [];
+      this.len = 0;
+      this.overflowed = false;
+    }
+    /** 喂一段 stdout（Buffer 或 string），返回其中切出的完整行（不含行尾符） */
+    push(chunk) {
+      const buf = typeof chunk === "string" ? Buffer.from(chunk, "utf8") : chunk;
+      const lines = [];
+      let pos = 0;
+      while (pos < buf.length) {
+        const nl = buf.indexOf(10, pos);
+        if (nl === -1) {
+          this.accumulate(buf.subarray(pos));
+          break;
+        }
+        this.accumulate(buf.subarray(pos, nl));
+        lines.push(this.takeLine());
+        pos = nl + 1;
+      }
+      return lines;
+    }
+    /** 进程终结时冲刷残留半行（无残留返回 null）——无尾换行的最后一行靠这里出列 */
+    flush() {
+      return this.len > 0 || this.overflowed ? this.takeLine() : null;
+    }
+    /** 累积字节；超出单行上限后丢弃后续字节（截断语义，待换行时一并出列） */
+    accumulate(part) {
+      if (this.overflowed) return;
+      const room = this.maxLineBytes - this.len;
+      if (part.length <= room) {
+        this.parts.push(part);
+        this.len += part.length;
+      } else {
+        this.parts.push(part.subarray(0, room));
+        this.len = this.maxLineBytes;
+        this.overflowed = true;
+      }
+    }
+    /** 出列一行（overflow 时为截断行）；CRLF 的 \r 在此剥除 */
+    takeLine() {
+      const s = Buffer.concat(this.parts).toString("utf8");
+      this.parts = [];
+      this.len = 0;
+      this.overflowed = false;
+      return s.endsWith("\r") ? s.slice(0, -1) : s;
+    }
+  };
+  var STDERR_TAIL_CHARS = 2048;
+  function defaultChildProcess() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      return w.require("child_process");
+    } catch (e) {
+      return null;
+    }
+  }
+  function runExternalTool(spec, cb, deps) {
+    var _a2, _b2;
+    const cp = deps && deps.cp ? deps.cp : defaultChildProcess();
+    const splitter = new BzLineSplitter();
+    let stderrTail = "";
+    let settled = false;
+    let stopped = false;
+    let child = null;
+    let resolveDone;
+    const done = new Promise((r) => {
+      resolveDone = r;
+    });
+    const settle = (o) => {
+      if (settled) return;
+      settled = true;
+      resolveDone(o);
+    };
+    const collectStderr = (d) => {
+      stderrTail += String(d);
+      if (stderrTail.length > STDERR_TAIL_CHARS) stderrTail = stderrTail.slice(-STDERR_TAIL_CHARS);
+    };
+    const dispatchLine = (line) => {
+      const ev = parseBzLine(line);
+      if (!ev) return;
+      switch (ev.kind) {
+        case "step":
+          cb.onStep(ev.text);
+          break;
+        case "progress":
+          cb.onProgress(ev.phase, ev.pct);
+          break;
+        case "info":
+          cb.onInfo(ev.data);
+          break;
+        case "result":
+          cb.onResult(ev.data);
+          break;
+        case "raw":
+          if (cb.onRaw) cb.onRaw(ev.text);
+          break;
+      }
+    };
+    if (!cp) {
+      settle({ ok: false, stopped: false, code: null, stderr: "", error: new Error("仅桌面端可用：外部工具需要 Node.js 子进程") });
+      return { stop: () => {
+      }, done };
+    }
+    const spawnOpts = { shell: !!spec.shell, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] };
+    if (spec.cwd) spawnOpts.cwd = spec.cwd;
+    if (spec.env) spawnOpts.env = spec.env;
+    try {
+      child = cp.spawn(spec.cmd, spec.args || [], spawnOpts);
+    } catch (e) {
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${(e == null ? void 0 : e.message) || String(e)}`) });
+      return { stop: () => {
+      }, done };
+    }
+    (_a2 = child.stdout) == null ? void 0 : _a2.on("data", (d) => {
+      for (const line of splitter.push(d)) dispatchLine(line);
+    });
+    (_b2 = child.stderr) == null ? void 0 : _b2.on("data", collectStderr);
+    child.on("error", (e) => {
+      if (settled) return;
+      settle({ ok: false, stopped: false, code: null, stderr: stderrTail.trim(), error: new Error(`外部工具启动失败：${e.message}`) });
+    });
+    child.on("close", (code) => {
+      if (settled) return;
+      const rest = splitter.flush();
+      if (rest !== null) dispatchLine(rest);
+      const stderr = stderrTail.trim();
+      if (stopped) {
+        settle({ ok: false, stopped: true, code, stderr, error: null });
+        return;
+      }
+      if (code === 0) {
+        settle({ ok: true, stopped: false, code: 0, stderr, error: null });
+        return;
+      }
+      const err = new Error(code === null ? `外部工具异常退出（无退出码）${stderr ? "：" + stderr : ""}` : `外部工具异常退出（退出码 ${code}）${stderr ? "：" + stderr : ""}`);
+      err.stderr = stderr;
+      settle({ ok: false, stopped: false, code, stderr, error: err });
+    });
+    return {
+      stop: () => {
+        var _a3;
+        if (settled || stopped) return;
+        stopped = true;
+        try {
+          (_a3 = child == null ? void 0 : child.kill) == null ? void 0 : _a3.call(child);
+        } catch (e) {
+        }
+      },
+      done
+    };
+  }
+
+  // src/people/sync.ts
+  init_notice();
+  init_settings_provider();
+  var BZ_FACE_INSTALL_HINT = "未找到 bz-face 命令——先安装脸谱工具包（@jwbz/obsidian-face）：在仓库 tools/obsidian-face 目录下运行 npm link，或 npm install -g <仓库>/tools/obsidian-face，装好后重试";
+  var DOCTOR_HINT = "到终端运行 bz-face doctor 可自检环境";
+  var PHASE_LABELS = {
+    key: "取密钥",
+    decrypt: "解密数据库",
+    contacts: "导出聊天",
+    avatar: "头像源"
+  };
+  function syncPhaseLabel(phase) {
+    return phase && PHASE_LABELS[phase] || "";
+  }
+  function emptySyncStats() {
+    return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
+  }
+  function buildSyncSpec(opts) {
+    var _a2, _b2;
+    const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
+    const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
+    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
+    return {
+      cmd: "bz-face",
+      args: [
+        "sync",
+        "--data-root",
+        q(opts.dataRoot),
+        ...src ? ["--src", q(src)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function collectContactInfo(stats, data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return false;
+    if (data.status === "ok") {
+      stats.contacts++;
+      if (data.chat === "unchanged") stats.unchanged++;
+      else stats.written++;
+      if (Number.isFinite(data.msgs)) stats.msgTotal += Number(data.msgs);
+      if (Number.isFinite(data.named)) stats.named += Number(data.named);
+      return true;
+    }
+    if (data.status === "skipped") {
+      stats.skipped++;
+      return true;
+    }
+    if (data.status === "failed") {
+      stats.failed++;
+      stats.failures.push({ name: data.name, error: typeof data.error === "string" ? data.error : "导出失败" });
+      return true;
+    }
+    return false;
+  }
+  function statsFromResult(result, live2) {
+    const num = (v, fallback) => Number.isFinite(v) ? Number(v) : fallback;
+    const failures = Array.isArray(result.failures) ? result.failures.map((f) => {
+      const o = f;
+      if (!o || typeof o.name !== "string") return null;
+      return { name: o.name, error: typeof o.error === "string" ? o.error : "导出失败" };
+    }).filter((f) => f !== null) : live2.failures;
+    const written = num(result.written, live2.written);
+    const unchanged = num(result.unchanged, live2.unchanged);
+    return {
+      contacts: num(result.contacts, written + unchanged),
+      written,
+      unchanged,
+      skipped: num(result.skipped, live2.skipped),
+      failed: num(result.failed, live2.failed),
+      msgTotal: num(result.msgTotal, live2.msgTotal),
+      named: num(result.named, live2.named),
+      failures
+    };
+  }
+  function describeSyncStats(st2) {
+    const parts = [`更新 ${st2.written} 位`, `未变 ${st2.unchanged} 位`, `跳过 ${st2.skipped} 位`];
+    if (st2.failed > 0) parts.push(`${st2.failed} 位失败`);
+    return `同步完成：${parts.join(" · ")}，消息 ${st2.msgTotal} 条`;
+  }
+  function firstLine(text2, max = 200) {
+    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+    return line.length > max ? line.slice(0, max) + "…" : line;
+  }
+  function classifySyncFailure(outcome) {
+    var _a2, _b2;
+    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
+    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
+    const stderr = outcome.stderr || "";
+    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
+      return { message: "Python 缺少同步依赖", hint: `${DOCTOR_HINT}，按提示安装缺的依赖后重试` };
+    }
+    if (/微信/.test(msg)) return { message: firstLine(msg), hint: "" };
+    return {
+      message: firstLine(msg || "同步进程异常退出，没有给出原因"),
+      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
+    };
+  }
+  var state = {
+    outcome: "idle",
+    phase: null,
+    pct: null,
+    step: "",
+    message: "",
+    hint: "",
+    stats: emptySyncStats()
+  };
+  var handle = null;
+  var listeners = /* @__PURE__ */ new Set();
+  function setState(patch) {
+    state = { ...state, ...patch };
+    for (const fn of [...listeners]) fn(state);
+  }
+  function syncState() {
+    return state;
+  }
+  function isSyncing() {
+    return state.outcome === "running";
+  }
+  function subscribeSync(fn) {
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
+  }
+  var runner = runExternalTool;
+  function nonEmpty(v) {
+    const t = typeof v === "string" ? v.trim() : "";
+    return t || void 0;
+  }
+  function emitNotice(s) {
+    if (s.outcome === "ok") {
+      if (s.stats.failed > 0) {
+        const names = s.stats.failures.slice(0, 3).map((f) => f.name).join("、");
+        notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? "等" : ""}）` : ""}——重跑同步只补失败项`, "warning");
+      } else {
+        notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, "success");
+      }
+      return;
+    }
+    if (s.outcome === "error") notice(`同步失败：${firstLine(s.message)}`, "error");
+    if (s.outcome === "stopped") notice("同步已停止——已导出的部分保留，重跑可续传", "info");
+  }
+  function startSync() {
+    var _a2;
+    if (state.outcome === "running") return;
+    const s = tryGetSettings();
+    const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
+    if (!dataRoot) {
+      setState({
+        outcome: "error",
+        phase: null,
+        pct: null,
+        step: "",
+        message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
+        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步",
+        stats: emptySyncStats()
+      });
+      return;
+    }
+    const spec = buildSyncSpec({
+      dataRoot,
+      src: nonEmpty(s == null ? void 0 : s.peopleWxAccountDir),
+      python: nonEmpty(s == null ? void 0 : s.pythonPath)
+    });
+    const live2 = emptySyncStats();
+    let result = null;
+    const cbs = {
+      onStep: (text2) => setState({ step: text2 }),
+      onProgress: (phase, pct) => setState({ phase, pct }),
+      onInfo: (data) => {
+        if (collectContactInfo(live2, data)) setState({});
+      },
+      onResult: (data) => {
+        result = data;
+      }
+    };
+    handle = runner(spec, cbs);
+    setState({ outcome: "running", phase: null, pct: null, step: "", message: "", hint: "", stats: live2 });
+    void handle.done.then((outcome) => {
+      handle = null;
+      finishSync(outcome, result);
+    });
+  }
+  function finishSync(outcome, result) {
+    if (outcome.stopped) {
+      setState({
+        outcome: "stopped",
+        pct: null,
+        message: "已停止",
+        hint: "点「同步」重跑续传——已导出的部分不会重复搬"
+      });
+      emitNotice(state);
+      return;
+    }
+    if (result && result.ok === false) {
+      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
+      setState({ outcome: "error", phase: null, pct: null, message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
+      emitNotice(state);
+      return;
+    }
+    if (outcome.ok && result && result.ok === true) {
+      const st2 = statsFromResult(result, state.stats);
+      setState({ outcome: "ok", phase: null, pct: 100, step: "", message: describeSyncStats(st2), hint: "", stats: st2 });
+      emitNotice(state);
+      return;
+    }
+    const classified = classifySyncFailure(outcome);
+    setState({ outcome: "error", phase: null, pct: null, message: classified.message, hint: classified.hint });
+    emitNotice(state);
+  }
+  function stopSync() {
+    handle == null ? void 0 : handle.stop();
+  }
+
   // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
@@ -16153,10 +16568,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     inp.setAttribute(attr[0], attr[1]);
     return inp;
   }
-  function socialRow(platform, handle) {
+  function socialRow(platform, handle2) {
     return el("div", "bz-people-prof-social-row", [
       profInput(platform, "平台（微信 / 微博…）", ["data-people-prof-social-platform", ""], "bz-people-prof-input bz-people-prof-social-platform"),
-      profInput(handle, "账号", ["data-people-prof-social-handle", ""], "bz-people-prof-input bz-people-prof-social-handle"),
+      profInput(handle2, "账号", ["data-people-prof-social-handle", ""], "bz-people-prof-input bz-people-prof-social-handle"),
       button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-social-del": "", "aria-label": "删除这条社交账号" })
     ]);
   }
@@ -16396,25 +16811,31 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const wrap = el("div", "bz-people-ds-pop", { "data-people-ds-pop": "" });
     wrap.appendChild(el("div", "bz-people-ds-dim", { "data-people-ds-dim": "" }));
     const pop = el("div", "bz-people-ds-panel", { role: "dialog", "aria-label": "数据源" });
+    const syncBtn = s.syncing ? button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "停止", {
+      "data-people-ds-sync-stop": "",
+      "aria-label": "停止同步",
+      title: "停止同步——已导出的部分保留，重跑可续传"
+    }) : button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "同步", {
+      "data-people-ds-sync": "",
+      "aria-label": "同步",
+      title: "从微信重新解密并导出，需要微信已登录"
+    });
     pop.appendChild(el("div", "bz-people-ds-head", [
       el("div", "bz-people-ds-title", text("数据源")),
       el("div", "bz-people-ds-headmeta", text([
-        s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
+        s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
         s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : ""
       ].filter(Boolean).join(" · "))),
-      iconButton(
-        "refresh-cw",
-        `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? " bz-people-spin" : ""}`,
-        { "data-people-ds-scan": "", "aria-label": s.scanning ? "扫描中" : "重扫", title: s.scanning ? "扫描中…" : "重扫" }
-      )
+      syncBtn
     ]));
     pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
+    if (s.sync) pop.appendChild(dsSyncLineNode(s.sync));
     if (s.desktopOnly) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("数据源扫描仅桌面端支持（需要读取库外文件夹）。")));
     } else if (s.scanning) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据根目录…")));
     } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据根目录里的联系人。")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else if (!s.rows.length) {
       pop.appendChild(el("div", "bz-people-ds-empty", text(
         s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。"
@@ -16433,13 +16854,33 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const foot = el("div", "bz-people-ds-foot", [
       el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))),
-      ...s.generateable && !s.importing ? [button("bz-people-btn bz-people-btn-acc", "画脸谱", { "data-people-ds-generate": "", title: "关闭弹窗，用预览素材生成脸谱" })] : [],
-      button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", { "data-people-ds-import": "" })
+      ...s.generateable && !s.importing ? [button("bz-people-btn bz-people-btn-acc", "画脸谱", s.syncing ? { "data-people-ds-generate": "", disabled: "", title: "同步进行中——完成后可画脸谱" } : { "data-people-ds-generate": "", title: "关闭弹窗，用预览素材生成脸谱" })] : [],
+      button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", s.syncing ? { "data-people-ds-import": "", disabled: "", title: "同步进行中——完成后可导入" } : { "data-people-ds-import": "" })
     ]);
     pop.appendChild(foot);
     if (s.notice) pop.appendChild(el("div", "bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
     wrap.appendChild(pop);
     return wrap;
+  }
+  function dsSyncLineNode(line) {
+    const mod = line.status === "running" ? "run" : line.status === "error" ? "err" : line.status === "stopped" ? "stop" : "done";
+    const row = el("div", `bz-people-ds-syncline bz-people-ds-syncline-${mod}`, { "data-people-ds-sync-line": "" });
+    row.appendChild(el("div", "bz-people-ds-sync-head", [
+      el("span", "bz-people-ds-sync-text", { "data-people-ds-sync-text": "" }, text(line.text + (line.pct != null ? ` ${line.pct}%` : "")))
+    ]));
+    if (line.status === "running" && line.pct != null) {
+      row.appendChild(el("div", "bz-people-ds-sync-track", [
+        el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
+      ]));
+    }
+    const subNode = el("div", "bz-people-ds-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
+    if (!line.sub) subNode.hidden = true;
+    row.appendChild(subNode);
+    const shown = line.failures.slice(0, 3);
+    for (const f of shown) row.appendChild(el("div", "bz-people-ds-sync-fail", text(f)));
+    if (line.failures.length > 3) row.appendChild(el("div", "bz-people-ds-sync-fail", text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
+    if (line.hint) row.appendChild(el("div", "bz-people-ds-sync-hint", text(line.hint)));
+    return row;
   }
   function footerLabel(s) {
     if (!s.rows) return "";
@@ -16459,6 +16900,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var peopleSafe = null;
   var opening = false;
   var offUnlockWatch = null;
+  var offSyncWatch = null;
   var stage = "list";
   var detailId = null;
   var detailFold = "p";
@@ -16578,6 +17020,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         void renderBody();
       }
     });
+    offSyncWatch = subscribeSync(onSyncState);
   }
   async function runLegacyMigration() {
     if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) return;
@@ -16598,6 +17041,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     unregisterPanelEsc(ESC_ID);
     offUnlockWatch == null ? void 0 : offUnlockWatch();
     offUnlockWatch = null;
+    offSyncWatch == null ? void 0 : offSyncWatch();
+    offSyncWatch = null;
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
     store = null;
@@ -16695,13 +17140,99 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       notice: dsNotice,
       generateable: dsGenerateable,
       desktopOnly: !isDesktop(),
-      scannedAt: dsScannedAt
+      scannedAt: dsScannedAt,
+      syncing: isSyncing(),
+      sync: dsSyncLine()
     };
+  }
+  function dsSyncLine() {
+    const s = syncState();
+    if (s.outcome === "idle") return null;
+    if (s.outcome === "running") {
+      const phase = syncPhaseLabel(s.phase) || "正在同步";
+      return { status: "running", text: phase, sub: s.step, pct: s.pct, hint: "", failures: [] };
+    }
+    if (s.outcome === "ok") {
+      return {
+        status: "ok",
+        text: s.stats.failed > 0 ? `同步完成（${s.stats.failed} 位失败）` : "同步完成",
+        sub: s.message || describeSyncStats(s.stats),
+        pct: 100,
+        hint: "",
+        failures: s.stats.failures.map((f) => `${f.name}：${f.error}`)
+      };
+    }
+    if (s.outcome === "stopped") {
+      return {
+        status: "stopped",
+        text: "已停止",
+        sub: `已导出的部分保留——本次已更新 ${s.stats.written} 位，重跑可续传`,
+        pct: null,
+        hint: s.hint,
+        failures: []
+      };
+    }
+    return { status: "error", text: "同步失败", sub: s.message, pct: null, hint: s.hint, failures: [] };
+  }
+  function onSyncState(s) {
+    if (!overlay) return;
+    if (s.outcome === "running") {
+      if (!updateSyncLine()) void renderBody();
+      return;
+    }
+    if (s.outcome === "ok") {
+      void runScan(true);
+      return;
+    }
+    void renderBody();
+  }
+  function updateSyncLine() {
+    const line = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-sync-line]");
+    if (!line) return false;
+    const view = dsSyncLine();
+    if (!view) return false;
+    const main = line.querySelector("[data-people-ds-sync-text]");
+    const sub = line.querySelector("[data-people-ds-sync-sub]");
+    const bar = line.querySelector("[data-people-ds-sync-bar]");
+    if (main) main.textContent = view.text + (view.pct != null ? ` ${view.pct}%` : "");
+    if (sub) {
+      sub.textContent = view.sub;
+      sub.hidden = !view.sub;
+    }
+    if (bar && view.pct != null) bar.style.width = `${Math.max(0, Math.min(100, view.pct))}%`;
+    return true;
+  }
+  function handleSyncClick() {
+    if (isSyncing()) return;
+    if (jobsBusy()) {
+      notice("正在生成脸谱——等这批结束再同步", "info");
+      return;
+    }
+    if (!isDesktop()) {
+      dsNotice = "同步仅桌面端支持（需要调用外部工具 bz-face）。";
+      renderBody();
+      return;
+    }
+    dsNotice = "";
+    startSync();
+  }
+  function applySyncLockdown() {
+    const lock = isSyncing();
+    overlay == null ? void 0 : overlay.querySelectorAll("[data-people-seal-act], [data-people-generate-one]").forEach((b) => {
+      if (lock) {
+        b.disabled = true;
+        b.setAttribute("data-people-sync-lock", "1");
+        b.title = "同步进行中——等同步完成再画脸谱";
+      } else if (b.hasAttribute("data-people-sync-lock")) {
+        b.disabled = false;
+        b.removeAttribute("data-people-sync-lock");
+      }
+    });
   }
   async function runScan(force = false) {
     var _a2, _b2, _c, _d, _e;
     const dataDir = dsDataDir();
-    if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy()) return;
+    if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy() || isSyncing()) return;
     if (!isDesktop()) {
       dsNotice = "";
       renderBody();
@@ -16762,7 +17293,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   async function importDsSelected() {
     var _a2;
     const dataDir = dsDataDir();
-    if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy()) return;
+    if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy() || isSyncing()) return;
     const chosen = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name));
     if (!chosen.length) {
       notice("还没有勾选联系人", "warning");
@@ -16819,6 +17350,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   async function generateFromDs() {
     var _a2, _b2, _c;
     if (!overlay || !store || dsImporting || dsScanning) return;
+    if (isSyncing()) {
+      notice("正在同步微信数据——同步完成后再画脸谱", "info");
+      return;
+    }
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
       return;
@@ -16864,6 +17399,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     var _a2, _b2, _c;
     const name = id != null ? id : detailId;
     if (!store || !name) return;
+    if (isSyncing()) {
+      notice("正在同步微信数据——同步完成后再画脸谱", "info");
+      return;
+    }
     if (!opts.force && resumeExisting(name)) return;
     if (jobsBusy()) {
       notice("已有生成在进行——等它完成或暂停后再画", "info");
@@ -17124,6 +17663,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     if (kind === "resume") {
+      if (isSyncing()) {
+        notice("正在同步微信数据——同步完成后再继续生成", "info");
+        return;
+      }
       const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
       if (!who) return;
       api.resume(who);
@@ -17165,10 +17708,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       if (!p || !old) continue;
       old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
     }
+    applySyncLockdown();
   }
   async function sealAction(kind, id) {
     var _a2;
     const api = jobs();
+    if (isSyncing()) {
+      notice("正在同步微信数据——同步完成后再操作脸谱", "info");
+      return;
+    }
     if (kind === "pause") {
       api.pauseJobs();
       notice("这一批做完就暂停", "info");
@@ -17225,8 +17773,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       closeDs();
       return;
     }
-    if (t.closest("[data-people-ds-scan]")) {
-      void runScan(true);
+    if (t.closest("[data-people-ds-sync]")) {
+      handleSyncClick();
+      return;
+    }
+    if (t.closest("[data-people-ds-sync-stop]")) {
+      stopSync();
       return;
     }
     if (t.closest("[data-people-ds-pickfresh]")) {
@@ -17420,6 +17972,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       (_a2 = overlay.querySelector(".bz-people-panel")) == null ? void 0 : _a2.classList.toggle("bz-people-panel-detail", false);
       renderDsLayer();
       renderJobs();
+      applySyncLockdown();
       mountIcons(overlay);
       return;
     }
@@ -17431,6 +17984,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     renderDsLayer();
     renderPopLayer(people);
     renderJobs();
+    applySyncLockdown();
     mountIcons(overlay);
   }
   function lockedBody() {

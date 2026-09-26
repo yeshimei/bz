@@ -317,6 +317,8 @@ describe('数据源弹窗（dsModal 四态）', () => {
     generateable: false,
     desktopOnly: false,
     scannedAt: '10:32',
+    syncing: false,
+    sync: null,
     ...over,
   });
 

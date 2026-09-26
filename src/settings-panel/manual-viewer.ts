@@ -10,8 +10,6 @@
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
-import { uiIcon } from '../core/ui';
-import { mountIcons } from '../core/ui/icons';
 
 const OVERLAY_ID = 'bz-manual-overlay';
 const FRAME_ID = 'bz-manual-popup';
@@ -60,7 +58,6 @@ function build(): void {
   frame.id = FRAME_ID;
   frame.className = 'bz-panel-frame bz-sp-skin bz-manv-popup';
   frame.innerHTML = shellHtml();
-  mountIcons(frame);
   ov.appendChild(frame);
   ov.addEventListener('click', (e) => {
     if (e.target === ov) hide();
@@ -69,13 +66,8 @@ function build(): void {
   overlay = ov;
 }
 
-/** 弹窗骨架（头行复用 .bz-panel-head；主体 = iframe 内嵌手册，无工具钮——用户拍板不留浏览器打开） */
+/** 弹窗骨架（无头行——用户拍板：外壳不留标题，手册自带的内容已够自明；
+ *  主体 = iframe 内嵌手册，零留白贴边，滚动全交 iframe 内文档） */
 function shellHtml(): string {
-  return `<div class="bz-panel-head">` +
-    `<div class="bz-panel-brand">${uiIcon('book-open')}</div>` +
-    `<span class="bz-panel-title">使用手册</span>` +
-    `<span class="bz-panel-head-pipe"></span>` +
-    `<span class="bz-panel-head-sub">包仔 · 完整使用说明</span>` +
-    `<span class="bz-panel-head-sp"></span></div>` +
-    `<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
+  return `<div class="bz-manv-body"><iframe class="bz-manv-frame" title="使用手册"></iframe></div>`;
 }

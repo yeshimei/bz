@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，21 功能域（详见领域清单）。**使用中文输出**。
+独立 Obsidian 插件，21 功能域 + `core` 共享层（详见领域清单）。**使用中文输出**。
 
 ## 命令与构建
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm exec tsc --noEmit`（依赖用 pnpm，勿用 npm）
@@ -26,32 +26,31 @@
    门禁（全量测试 / 壳自检 / freshness / tsc）一律推迟到他说「同步」时一次性补。
    （注：改到类型边界时可顺手一次 `tsc --noEmit` 防编译崩——它不是验证步骤，不得据此延后交付。）
 
-## 领域清单（数据均在 CONFIG/STORAGE/）
+## 领域清单（域 id = `src/<域>/` 目录名；未注明者数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
 |---|---|
-| diary（日记本） | `我的/日记/*.md` |
+| diary（日记本） | 四目录：`我的/日记`、`我的/信`（本域设置键）+ `我的/影视`、`书库`（跨域读影院/书库设置）；条目为 vault 内 md |
 | memo（备忘录） | memo.json |
 | belongings（归物本） | belongings.json |
+| people（脸谱） | 加密保库记录，每联系人一条（kind=people SafeNote，与 encrypt 共锁同库，ADR-0194；原 people.json/people-jobs.json 已并入）；读数据根 `<peopleDataDir>/<联系人>/`（vault 外，明文）；头像为密文附件（`CONFIG/FACES` 明文目录只退役不删） |
 | clipbook（剪藏本） | news.json（未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
-| favorites（收藏夹） | favorites.json |
-| review（复习） | review.json |
-| secondbrain（第二大脑） | secondbrain.json + secondbrain.vec |
-| auto-summary（自动摘要） | 剪藏 frontmatter |
+| favorites（收藏本） | favorites.json |
+| review（复习计划） | review.json、quiz.json（做题家出题）、review-fit.json（FSRS 拟合） |
+| secondbrain（第二大脑） | secondbrain.json（meta/panel/队列/链接状态段）+ secondbrain.vec（向量二进制） |
+| auto-summary（自动摘要） | 无自有数据文件——写剪藏 frontmatter（摘要/标签）；键名单源 `src/auto-summary/keys.ts` |
 | pomodoro（番茄钟） | pomodoro.json |
-| attach（附件） | 搬附件 |
-| encrypt（保险库） | `CONFIG/STORAGE/.ENCRYPT/`（清单 `.safe.enc`；注意：旧文档写的 `CONFIG/.ENCRYPT/` 已不存在） |
-| password-vault（密码本） | `CONFIG/STORAGE/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
-| people（脸谱） | 加密保库记录，每联系人一条（kind=people SafeNote，与 encrypt 共锁同库，ADR-0194）；读数据根 `<peopleDataDir>/<联系人>/`（vault 外，明文） |
-| bookshelf（书库） | `书库/*.md`、EPUB |
-| cinema（影院） | `我的/影视/*.md` |
-| gameshelf（游戏库） | `我的/游戏/*.md` |
-| home（首页） | 各域命令入口 |
-| literature（知识盒） |  |
-| settings-panel（设置面板） | 插件设置键（域内 schema.ts 定义） |
+| attach（附件搬移） | 无自有数据——搬移 vault 内附件；仅记忆上次目标目录（设置键） |
+| encrypt（保险库） | `<storagePath>/.ENCRYPT/`（清单 `.safe.enc` + 平铺随机名密文镜像；注意：旧文档写的 `CONFIG/.ENCRYPT/` 已不存在） |
+| password-vault（密码本） | 同上 `.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
+| bookshelf（书库） | `书库/*.md`（frontmatter tags 含 bookTag；目录可配）+ EPUB 元数据 weave-data.json |
+| cinema（影院） | `我的/影视/*.md`（日记本跨域共用同目录）；海报落 `CONFIG/MOVIE POSTER`（可配 cinemaPosterFolder） |
+| gameshelf（游戏库） | `我的/游戏/《名》.md`（同名消歧加 appid）+ `CONFIG/游戏海报`（可配 gameshelfPosterFolder） |
+| knowledge（知识盒） | 三盒：`文献盒/`、`卡片盒/`、`主题盒/`（三键可配，单源 `core/knowledge-boxes.ts`；三盒恒含索引）+ knowledge.json（知识卡片）、mount-suggest.json（挂载建议缓存）；图版图片落 `<文献目录>/assets`（可配 knowledgeImageFolder） |
+| smartcat（小橘陪伴猫） | smartcat.json（主数据）、smartcat-memory.json + smartcat-memory-vectors.vec（记忆库）、smartcat-behavior.json（行为流） |
+| home（首页） | home.json（入口顺序与显隐）；域入口无独立数据 |
+| settings-panel（设置面板） | 插件设置键（域内 schema.ts 定义）；changelog-data.ts 为提交历史生成物 |
 | checkup（数据体检） | 全域 json 只读巡检（无独立数据文件） |
 | reading-report（阅读报告） | 书库墙面板内视图（ADR-0091，借宿主数据无独立文件） |
-| recap（回顾） | ADR-0157 面板已退役（summary 纯函数库保留，供 home 消费） |
-| smartcat（小橘） | STORAGE/smartcat |
 
 ## 测试与质量门禁
 - 新功能必须包含数据层+UI层测试，smoke.test.ts 同步验证。
@@ -60,9 +59,10 @@
 
 ## Git / 工作流
 
-- 主分支 `master`，提交遵循 Conventional Commits。
+- 主分支 `master`，提交遵循 Conventional Commits（**提交信息即更新日志正文**，写法见 `docs/changelog.md`）。
 - worktree 建在主仓库父级外（如 `../.dsh-worktrees/`），从最新 master 分叉。
 - 工作流：worktree 开发 → `git merge master` 同步底 → `pnpm test`/tsc/自审/diff 审查全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署 -> 子代理 review。
+- **每次提交后必写更新日志**：commit 完立刻跑 `pnpm changelog`（重出 changelog-data.ts + 回写 manifest 版本），不得攒着补——规范见 `docs/changelog.md`。
 - 严禁在 worktree 内构建。
 - 部署后清理 worktree。
 - 并行会话占号（issues/ADR 编号）前先查主仓库最新号，防撞车重编号。

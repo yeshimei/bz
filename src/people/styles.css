@@ -1337,6 +1337,72 @@
   word-break: break-all;
 }
 
+/* 同步按钮与进度行（issue 465：弹窗内一条进度行，不占画像生成的进度块） */
+.bz-people-ds-syncbtn {
+  flex: none;
+  padding: 4px 14px;
+  font-size: 12.5px;
+}
+.bz-people-ds-syncline {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 16px;
+  border-bottom: 1px dashed var(--card-bd);
+  font-size: 12px;
+}
+.bz-people-ds-sync-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.bz-people-ds-sync-text {
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+.bz-people-ds-syncline-run .bz-people-ds-sync-text {
+  color: var(--acc);
+}
+.bz-people-ds-syncline-err .bz-people-ds-sync-text {
+  color: var(--danger);
+}
+.bz-people-ds-syncline-stop .bz-people-ds-sync-text {
+  color: var(--ink-mut);
+}
+.bz-people-ds-sync-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--card-bd);
+  overflow: hidden;
+}
+.bz-people-ds-sync-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--acc);
+  transition: width 0.25s ease;
+}
+.bz-people-ds-sync-sub {
+  color: var(--ink-mut);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bz-people-ds-syncline-err .bz-people-ds-sync-sub {
+  color: var(--ink);
+}
+.bz-people-ds-sync-fail {
+  color: var(--danger);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.bz-people-ds-sync-hint {
+  color: var(--ink-mut);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
 /* ==================== 统计 / 档案弹窗（issue 455：详情头入口，壳沿数据源弹窗形制） ==================== */
 .bz-people-pop-layer {
   position: absolute;

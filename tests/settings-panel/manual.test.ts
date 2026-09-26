@@ -115,12 +115,13 @@ describe('使用手册 footer 入口 + OB 内弹窗（issue 473）', () => {
     expect(document.getElementById('bz-manual-popup')).toBeNull();
   });
 
-  it('弹窗：ESC 关闭并清空 srcdoc；重开抬顶且注入新内容', () => {
+  it('弹窗：无头行（用户拍板：外壳不出标题，手册自带内容即全部信息）；ESC 关闭并清空 srcdoc；重开抬顶且注入新内容', () => {
     openManualViewer(MANUAL_HTML);
     const overlay = document.getElementById('bz-manual-overlay')!;
     expect(overlay.style.display).toBe('flex');
     const popup = document.getElementById('bz-manual-popup')!;
-    expect(popup.querySelector('.bz-panel-title')!.textContent).toBe('使用手册');
+    expect(popup.querySelector('.bz-panel-head')).toBeNull(); // 无头行形态
+    expect(popup.querySelector('iframe.bz-manv-frame')).toBeTruthy();
     expect((popup.querySelector('iframe') as HTMLIFrameElement).srcdoc).toBe(MANUAL_HTML);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

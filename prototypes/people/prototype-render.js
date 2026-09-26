@@ -1,4 +1,4 @@
-/* 源指纹 4dff88550f1ebd2c · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 27d21e333c61278f · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -28,6 +28,7 @@ var BZR_people = (() => {
     button: () => button,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
+    dsSyncLineNode: () => dsSyncLineNode,
     dsWatermark: () => dsWatermark,
     duoBar: () => duoBar,
     el: () => el,
@@ -913,25 +914,31 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const wrap = el("div", "bz-people-ds-pop", { "data-people-ds-pop": "" });
     wrap.appendChild(el("div", "bz-people-ds-dim", { "data-people-ds-dim": "" }));
     const pop = el("div", "bz-people-ds-panel", { role: "dialog", "aria-label": "数据源" });
+    const syncBtn = s.syncing ? button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "停止", {
+      "data-people-ds-sync-stop": "",
+      "aria-label": "停止同步",
+      title: "停止同步——已导出的部分保留，重跑可续传"
+    }) : button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "同步", {
+      "data-people-ds-sync": "",
+      "aria-label": "同步",
+      title: "从微信重新解密并导出，需要微信已登录"
+    });
     pop.appendChild(el("div", "bz-people-ds-head", [
       el("div", "bz-people-ds-title", text("数据源")),
       el("div", "bz-people-ds-headmeta", text([
-        s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
+        s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
         s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : ""
       ].filter(Boolean).join(" · "))),
-      iconButton(
-        "refresh-cw",
-        `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? " bz-people-spin" : ""}`,
-        { "data-people-ds-scan": "", "aria-label": s.scanning ? "扫描中" : "重扫", title: s.scanning ? "扫描中…" : "重扫" }
-      )
+      syncBtn
     ]));
     pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
+    if (s.sync) pop.appendChild(dsSyncLineNode(s.sync));
     if (s.desktopOnly) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("数据源扫描仅桌面端支持（需要读取库外文件夹）。")));
     } else if (s.scanning) {
       pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据根目录…")));
     } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上刷新图标读取数据根目录里的联系人。")));
+      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else if (!s.rows.length) {
       pop.appendChild(el("div", "bz-people-ds-empty", text(
         s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。"
@@ -950,13 +957,33 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const foot = el("div", "bz-people-ds-foot", [
       el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))),
-      ...s.generateable && !s.importing ? [button("bz-people-btn bz-people-btn-acc", "画脸谱", { "data-people-ds-generate": "", title: "关闭弹窗，用预览素材生成脸谱" })] : [],
-      button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", { "data-people-ds-import": "" })
+      ...s.generateable && !s.importing ? [button("bz-people-btn bz-people-btn-acc", "画脸谱", s.syncing ? { "data-people-ds-generate": "", disabled: "", title: "同步进行中——完成后可画脸谱" } : { "data-people-ds-generate": "", title: "关闭弹窗，用预览素材生成脸谱" })] : [],
+      button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", s.syncing ? { "data-people-ds-import": "", disabled: "", title: "同步进行中——完成后可导入" } : { "data-people-ds-import": "" })
     ]);
     pop.appendChild(foot);
     if (s.notice) pop.appendChild(el("div", "bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
     wrap.appendChild(pop);
     return wrap;
+  }
+  function dsSyncLineNode(line) {
+    const mod = line.status === "running" ? "run" : line.status === "error" ? "err" : line.status === "stopped" ? "stop" : "done";
+    const row = el("div", `bz-people-ds-syncline bz-people-ds-syncline-${mod}`, { "data-people-ds-sync-line": "" });
+    row.appendChild(el("div", "bz-people-ds-sync-head", [
+      el("span", "bz-people-ds-sync-text", { "data-people-ds-sync-text": "" }, text(line.text + (line.pct != null ? ` ${line.pct}%` : "")))
+    ]));
+    if (line.status === "running" && line.pct != null) {
+      row.appendChild(el("div", "bz-people-ds-sync-track", [
+        el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
+      ]));
+    }
+    const subNode = el("div", "bz-people-ds-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
+    if (!line.sub) subNode.hidden = true;
+    row.appendChild(subNode);
+    const shown = line.failures.slice(0, 3);
+    for (const f of shown) row.appendChild(el("div", "bz-people-ds-sync-fail", text(f)));
+    if (line.failures.length > 3) row.appendChild(el("div", "bz-people-ds-sync-fail", text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
+    if (line.hint) row.appendChild(el("div", "bz-people-ds-sync-hint", text(line.hint)));
+    return row;
   }
   function footerLabel(s) {
     if (!s.rows) return "";

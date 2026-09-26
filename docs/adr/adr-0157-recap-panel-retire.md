@@ -1,0 +1,59 @@
+# ADR-0157 · recap 独立面板退役：「生成今日总结」并入 home
+
+日期：2026-09-16 · 关联：issue 364、ADR-0132（home 时间线换行为流源）、ADR-0091（reading-report 内嵌化先例）、ADR-0093（launcher 退役先例）
+
+## 背景
+
+recap（今日回顾）面板 = 当天摘要 + 当天时间轴 + AI 总结写日记三件事，但可达性先天不足：
+全插件 63 条命令里唯一「仅命令面板可达」的面板类命令（无 home 磁贴、无 ribbon、无域内入口）。
+同时它的时间轴还在用 ADR-0132 已整体退役的 ctime/mtime 推导口径——该口径在批量编辑下
+出过 441+ 文件误报事故，home 时间线当时已换行为流源，recap 时间轴是同一套脆弱口径的
+最后全量消费方（ADR-0132 自认「收敛到摘要计数」，未处理面板侧）。
+
+而 home 的今日摘要卡 / 周历 / 日记连击早已直接消费 `collectRecap`（home/river.ts），
+两者的「今天发生了什么」职责实质重叠。
+
+## 决策
+
+1. **recap 独立面板退役**：`bz-recap-today` 命令、面板 UI（ui.ts/state.ts/styles.css）
+   随批删除，main.ts 摘除 import 与 unloadRecap 接线；ctime/mtime 时间轴 UI 一并消失
+   （脆弱口径的最后消费方随之清零）。
+2. **「生成今日总结」并入 home 今日摘要卡**：AI 总结写日记（summarize 链路）是 recap
+   独有价值，迁入 home 今日摘要卡作为一行动作；home 本就持有 collectRecap 数据，零新依赖。
+3. **recap 域降级为数据库**：`collectRecap`/`aggregate` 作为纯函数库保留（home 周历、
+   连击、摘要数字的数据源），与 reading-report 内嵌化（ADR-0091）同范式：域存、面板亡。
+
+## 后果
+
++ 消灭全插件可达性最差的面板与最后一份 ctime/mtime 全量消费口径。
++ 「生成今日总结」落到用户每天真的会打开的 home 上，功能不退役只搬家。
+− 习惯命令面板直达今日回顾的用户失去独立入口（摘要信息 home 已覆盖）。
+− recap 作为「域」名义仍存（数据库），域清单语境应按「home 的当日数据源」表述。
+
+## 后续（2026-09-17）：迁入的那行动作也退役
+
+用户点名「去掉生成今日总结」——迁入 home 时间线卡后的这行动作一并摘除
+（render 层不再出动作行按钮，ui.ts 的生成/通知/按钮态同步与 `H.aiGenerating` 全部删掉，
+`tests/home/summary-action.test.ts` 随之退役，其中「recap 不是首页域」的守卫挪到
+`tests/home/domain-order.test.ts`）。
+
+取舍沿用 issue 343 对 `summarizeTermSummary` 的处理：**只拆 UI 出口，不动数据层**——
+`src/recap/summarize.ts`（generateRecapContent / writeRecapEntry / hasRecapEntry…）保留纯函数
+与全套单测，日后要再挂入口不必重写。`collectRecap` 仍是 home 摘要数字/周历/连击的数据源。
+
+同时（另一条用户点名）首页时间线改**新 → 旧**排序：翻转只在 render 层
+（`layouts/river/render.ts::flowHtml`），数据层 `days[].events` 保持升序——
+`buildNotes` 的点评锚点 index、`firstTs`、`summary` 派生都按升序写，动数据层会把点评挂错行。
+
+## 补记（2026-09-19）：diary parser 时分口径收尾，「ctime 清零」表述达成
+
+正文「脆弱口径的最后消费方随之清零」在定稿时与代码有出入：diary parser 对影视/信/书
+三类特殊条目的 HH:mm（展示时间标签 + 同日混排序）仍从 `file.stat.ctime` 派生，且信件
+frontmatter `date` 的 `YYYY-MM-DD HH:mm` 时间半段被解析后丢弃。本次收尾
+（diary 深查 A1）：
+
+1. **信件**：`parseLetterFile` 时分改取 frontmatter `date` 的时间半段（结构化来源）；
+2. **影视/书**：对端域（影院/书库）补结构化时间（如 `watchedAt`/`readAt`）前，短期回落
+   固定 `00:00`——展示 00:00 比随文件复制/迁移漂移的 ctime 诚实（过渡口径）；
+3. `getFileTimeParts`（ctime → 时分）随之删除。至此 ADR-0132 定性退役的
+   ctime/mtime 推导口径在 diary 侧也无消费方，「清零」表述与代码一致。

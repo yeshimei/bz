@@ -1084,6 +1084,25 @@ export interface DsModalState {
   desktopOnly: boolean;
   /** 本次扫描完成时刻（HH:MM 展示；'' = 未扫） */
   scannedAt: string;
+  /** 同步进行中（issue 465）：右上角只出「停止」、页脚「导入所选 / 画脸谱」置灰 */
+  syncing: boolean;
+  /** 同步进度行（弹窗内一条，不占画像生成进度块——ADR-0196 决策 6；null = 无同步动态） */
+  sync: DsSyncLine | null;
+}
+
+/** 同步进度行（ui 层从 sync.ts 状态映射而来；render 只管形状） */
+export interface DsSyncLine {
+  status: 'running' | 'ok' | 'stopped' | 'error';
+  /** 主文案（阶段标签 / 终态词；百分比由渲染层追加） */
+  text: string;
+  /** 副文案（[bz-step] 步骤行 / 完成摘要 / 错误原因） */
+  sub: string;
+  /** 百分比（null = 该阶段不可估，绝不假报） */
+  pct: number | null;
+  /** 错误 / 停止面的下一步动作（空 = 工具文案已含） */
+  hint: string;
+  /** 失败明细（「名：原因」，最多展示 3 行 + 汇总） */
+  failures: string[];
 }
 
 /** 水位行文案：未导入 / 已导 N 条 · 画到日期 / · 未画脸谱 */
@@ -1126,23 +1145,37 @@ export function dsModal(s: DsModalState): HTMLElement {
   const wrap = el('div', 'bz-people-ds-pop', { 'data-people-ds-pop': '' });
   wrap.appendChild(el('div', 'bz-people-ds-dim', { 'data-people-ds-dim': '' }));
   const pop = el('div', 'bz-people-ds-panel', { role: 'dialog', 'aria-label': '数据源' });
+  // 右上角动作位（issue 465：语义从「重读目录」升级为「同步——从微信重新取数」；
+  // 运行中该位置只出「停止」，绝不与「同步」并列——互斥动作不并列）
+  const syncBtn = s.syncing
+    ? button('bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn', '停止', {
+      'data-people-ds-sync-stop': '',
+      'aria-label': '停止同步',
+      title: '停止同步——已导出的部分保留，重跑可续传',
+    })
+    : button('bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn', '同步', {
+      'data-people-ds-sync': '',
+      'aria-label': '同步',
+      title: '从微信重新解密并导出，需要微信已登录',
+    });
   pop.appendChild(el('div', 'bz-people-ds-head', [
     el('div', 'bz-people-ds-title', text('数据源')),
     el('div', 'bz-people-ds-headmeta', text([
-      s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人` : '',
+      s.syncing ? '正在同步…' : s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人` : '',
       s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : '',
     ].filter(Boolean).join(' · '))),
-    iconButton('refresh-cw', `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-ds-rescan${s.scanning ? ' bz-people-spin' : ''}`,
-      { 'data-people-ds-scan': '', 'aria-label': s.scanning ? '扫描中' : '重扫', title: s.scanning ? '扫描中…' : '重扫' }),
+    syncBtn,
   ]));
   pop.appendChild(el('div', 'bz-people-ds-path', text(s.dataDir || '尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。' + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''))));
+  // 同步进度行（弹窗内一条：主文案 + 百分比条 + 副文案 + 失败明细 + 下一步动作）
+  if (s.sync) pop.appendChild(dsSyncLineNode(s.sync));
 
   if (s.desktopOnly) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text('数据源扫描仅桌面端支持（需要读取库外文件夹）。')));
   } else if (s.scanning) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text('正在扫描数据根目录…')));
   } else if (!s.rows) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上刷新图标读取数据根目录里的联系人。')));
+    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
   } else if (!s.rows.length) {
     pop.appendChild(el('div', 'bz-people-ds-empty', text(
       s.hiddenGroups > 0
@@ -1162,17 +1195,50 @@ export function dsModal(s: DsModalState): HTMLElement {
     ]));
   }
 
+  // 页脚（issue 465：同步进行中「导入所选 / 画脸谱」置灰——数据根与聊天仓的输入都在变）
   const foot = el('div', 'bz-people-ds-foot', [
     el('span', 'bz-people-ds-count', { 'data-people-ds-count': '' }, text(footerLabel(s))),
     ...(s.generateable && !s.importing
-      ? [button('bz-people-btn bz-people-btn-acc', '画脸谱', { 'data-people-ds-generate': '', title: '关闭弹窗，用预览素材生成脸谱' })]
+      ? [button('bz-people-btn bz-people-btn-acc', '画脸谱', s.syncing
+        ? { 'data-people-ds-generate': '', disabled: '', title: '同步进行中——完成后可画脸谱' }
+        : { 'data-people-ds-generate': '', title: '关闭弹窗，用预览素材生成脸谱' })]
       : []),
-    button('bz-people-btn bz-people-btn-acc', s.importing ? '导入中…' : '导入所选', { 'data-people-ds-import': '' }),
+    button('bz-people-btn bz-people-btn-acc', s.importing ? '导入中…' : '导入所选', s.syncing
+      ? { 'data-people-ds-import': '', disabled: '', title: '同步进行中——完成后可导入' }
+      : { 'data-people-ds-import': '' }),
   ]);
   pop.appendChild(foot);
   if (s.notice) pop.appendChild(el('div', 'bz-people-ds-notice', { 'data-people-ds-notice': '' }, text(s.notice)));
   wrap.appendChild(pop);
   return wrap;
+}
+
+/**
+ * 同步进度行（issue 465 / ADR-0196 决策 6：弹窗内一条进度行，不占画像生成的进度块）。
+ * 主行带原位更新钩子（data-people-ds-sync-line / -text / -sub / -bar）：运行中逐帧只换
+ * 文本与条宽，不重建弹窗。钩子与右上角「同步」按钮（data-people-ds-sync）刻意区分——
+ * 按钮钩子归属点击委托，进度行不该命中它。
+ */
+export function dsSyncLineNode(line: DsSyncLine): HTMLElement {
+  const mod = line.status === 'running' ? 'run' : line.status === 'error' ? 'err' : line.status === 'stopped' ? 'stop' : 'done';
+  const row = el('div', `bz-people-ds-syncline bz-people-ds-syncline-${mod}`, { 'data-people-ds-sync-line': '' });
+  row.appendChild(el('div', 'bz-people-ds-sync-head', [
+    el('span', 'bz-people-ds-sync-text', { 'data-people-ds-sync-text': '' }, text(line.text + (line.pct != null ? ` ${line.pct}%` : ''))),
+  ]));
+  if (line.status === 'running' && line.pct != null) {
+    row.appendChild(el('div', 'bz-people-ds-sync-track', [
+      el('div', 'bz-people-ds-sync-bar', { 'data-people-ds-sync-bar': '', style: `width:${Math.max(0, Math.min(100, line.pct))}%` }),
+    ]));
+  }
+  // 副文案节点恒渲染（空时 hidden）：运行中原位更新要能找到它——首帧 sub 为空也会来帧
+  const subNode = el('div', 'bz-people-ds-sync-sub', { 'data-people-ds-sync-sub': '' }, text(line.sub));
+  if (!line.sub) subNode.hidden = true;
+  row.appendChild(subNode);
+  const shown = line.failures.slice(0, 3);
+  for (const f of shown) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(f)));
+  if (line.failures.length > 3) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
+  if (line.hint) row.appendChild(el('div', 'bz-people-ds-sync-hint', text(line.hint)));
+  return row;
 }
 
 function footerLabel(s: DsModalState): string {

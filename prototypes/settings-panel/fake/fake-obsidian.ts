@@ -632,6 +632,26 @@ export class FakeVault {
       }
       return { folders: [...dirs].sort(), files };
     },
+    // 手册链路（core/manual）经 adapter 直读写插件目录文件——评审壳同契约补齐三方法：
+    // 存在性 / 读取 / 写入都落到同一份 KEY_PREFIX 键空间，与 vault 文件面共享存储。
+    // 内容取封套内的 c 字段（与 toFile 同解码口径），写回走 encodeSeedFile 同一封套。
+    exists: async (path: string): Promise<boolean> => {
+      return localStorage.getItem(FakeVault.key(String(path))) != null;
+    },
+    read: async (path: string): Promise<string> => {
+      const raw = localStorage.getItem(FakeVault.key(String(path)));
+      if (raw == null) throw new Error('ENOENT: ' + path);
+      try {
+        const env = JSON.parse(raw) as Envelope | null;
+        if (env && typeof env === 'object' && typeof env.c === 'string') return env.c;
+      } catch {
+        /* 纯文本内容原样 */
+      }
+      return raw;
+    },
+    write: async (path: string, data: string): Promise<void> => {
+      localStorage.setItem(FakeVault.key(String(path)), encodeSeedFile(data));
+    },
   };
 
   /** 事件订阅（core/app vault.on/offref 同形） */

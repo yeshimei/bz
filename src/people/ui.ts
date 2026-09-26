@@ -51,6 +51,7 @@ import {
 } from './datasource';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
+import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   dsModal,
   duoBar,
@@ -81,6 +82,7 @@ import {
   wallEmpty,
   jobsStagesDone,
   type DsRowState,
+  type DsSyncLine,
   type FoldCardJob,
   type FoldId,
   type JobsBlockState,
@@ -102,6 +104,8 @@ let peopleSafe: PeopleSafeStore | null = null;
 let opening = false;
 /** 解锁态订阅退订（面板开着才订；上锁即清明文并转不可读态） */
 let offUnlockWatch: (() => void) | null = null;
+/** 同步状态订阅退订（面板开着才订；同步进程独立于面板——关面板照跑，重开即恢复进度行） */
+let offSyncWatch: (() => void) | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 详情当前展开的折（换人回落画像折） */
@@ -291,6 +295,9 @@ function buildPanelShell(app?: unknown): void {
       void renderBody();
     }
   });
+  // 同步状态跟帧（issue 465）：运行中进度行原位推进；终态刷新列表 / 错误面。
+  // 同步进程独立于面板：关面板不退订同步本身（模块级单例照跑），只退本面板的渲染订阅。
+  offSyncWatch = subscribeSync(onSyncState);
 }
 
 /** 存量迁移（467 / ADR-0194；幂等，明文三件 → 保库记录；旧文件清理失败不阻断面板） */
@@ -317,6 +324,8 @@ export function closePeoplePanel(): void {
   unregisterPanelEsc(ESC_ID);
   offUnlockWatch?.();
   offUnlockWatch = null;
+  offSyncWatch?.();
+  offSyncWatch = null;
   overlay?.remove();
   overlay = null;
   store = null;
@@ -386,7 +395,7 @@ function openDs(): void {
   if (dsOpen) return;
   dsOpen = true;
   renderBody();
-  // 打开即扫（拍板 Q3）；已有快照不重扫，重扫走按钮
+  // 打开即扫（拍板 Q3）；已有快照不重扫（465：数据根刷新走「同步」，完成后自动重扫）
   if (dsContacts === null) void runScan();
 }
 
@@ -429,7 +438,110 @@ function dsModalState() {
     generateable: dsGenerateable,
     desktopOnly: !isDesktop(),
     scannedAt: dsScannedAt,
+    syncing: isSyncing(),
+    sync: dsSyncLine(),
   };
+}
+
+// ---------------- 同步（issue 465：bz-face sync 驱动，弹窗内一条进度行） ----------------
+
+/**
+ * 同步状态 → 弹窗进度行（DsSyncLine）。idle 不出（null）；运行中主行 = 阶段标签 +
+ * 百分比（不可估不给）、副行 = [bz-step] 文案；终态各自有文案与下一步动作。
+ */
+function dsSyncLine(): DsSyncLine | null {
+  const s = syncState();
+  if (s.outcome === 'idle') return null;
+  if (s.outcome === 'running') {
+    const phase = syncPhaseLabel(s.phase) || '正在同步';
+    return { status: 'running', text: phase, sub: s.step, pct: s.pct, hint: '', failures: [] };
+  }
+  if (s.outcome === 'ok') {
+    return {
+      status: 'ok',
+      text: s.stats.failed > 0 ? `同步完成（${s.stats.failed} 位失败）` : '同步完成',
+      sub: s.message || describeSyncStats(s.stats),
+      pct: 100,
+      hint: '',
+      failures: s.stats.failures.map((f) => `${f.name}：${f.error}`),
+    };
+  }
+  if (s.outcome === 'stopped') {
+    return {
+      status: 'stopped',
+      text: '已停止',
+      sub: `已导出的部分保留——本次已更新 ${s.stats.written} 位，重跑可续传`,
+      pct: null,
+      hint: s.hint,
+      failures: [],
+    };
+  }
+  return { status: 'error', text: '同步失败', sub: s.message, pct: null, hint: s.hint, failures: [] };
+}
+
+/** 同步状态跟帧：运行中优先原位推进进度行（不重建弹窗），首帧 / 终态走整渲染 */
+function onSyncState(s: PeopleSyncState): void {
+  if (!overlay) return;
+  if (s.outcome === 'running') {
+    if (!updateSyncLine()) void renderBody(); // 进度行还没渲染出来（开跑首帧）→ 整渲染出停止钮与进度行
+    return;
+  }
+  if (s.outcome === 'ok') {
+    void runScan(true); // 完成后重读数据根：列表刷新并按聊天仓水位标出更新数（不自动导入）
+    return;
+  }
+  void renderBody(); // stopped / error：进度行落终态文案，右上角恢复「同步」
+}
+
+/** 进度行原位更新（data-people-ds-sync-line 钩子；弹窗没渲染返回 false） */
+function updateSyncLine(): boolean {
+  const line = overlay?.querySelector<HTMLElement>('[data-people-ds-sync-line]');
+  if (!line) return false;
+  const view = dsSyncLine();
+  if (!view) return false;
+  const main = line.querySelector<HTMLElement>('[data-people-ds-sync-text]');
+  const sub = line.querySelector<HTMLElement>('[data-people-ds-sync-sub]');
+  const bar = line.querySelector<HTMLElement>('[data-people-ds-sync-bar]');
+  if (main) main.textContent = view.text + (view.pct != null ? ` ${view.pct}%` : '');
+  if (sub) {
+    sub.textContent = view.sub;
+    sub.hidden = !view.sub;
+  }
+  if (bar && view.pct != null) bar.style.width = `${Math.max(0, Math.min(100, view.pct))}%`;
+  return true;
+}
+
+/** 点「同步」（数据根未配置等错误面由 startSync 落状态，经订阅回调渲染） */
+function handleSyncClick(): void {
+  if (isSyncing()) return;
+  if (jobsBusy()) { notice('正在生成脸谱——等这批结束再同步', 'info'); return; }
+  if (!isDesktop()) {
+    dsNotice = '同步仅桌面端支持（需要调用外部工具 bz-face）。';
+    renderBody();
+    return;
+  }
+  dsNotice = '';
+  startSync();
+}
+
+/**
+ * 同步运行中把「画脸谱」类动作全部置灰（ADR-0196 决策 10：数据正在变，不画半截素材）。
+ * 覆盖封面墙印章（draw / redraw / resume 等一切开画动作）与详情头「画脸谱」；
+ * 弹窗页脚的置灰在 dsModal 里按 syncing 渲染。渲染后调用（renderBody / 印章原位刷新）。
+ */
+function applySyncLockdown(): void {
+  const lock = isSyncing();
+  overlay?.querySelectorAll<HTMLButtonElement>('[data-people-seal-act], [data-people-generate-one]').forEach((b) => {
+    if (lock) {
+      b.disabled = true;
+      b.setAttribute('data-people-sync-lock', '1');
+      b.title = '同步进行中——等同步完成再画脸谱';
+    } else if (b.hasAttribute('data-people-sync-lock')) {
+      // 解锁（同步终态后）：恢复可点。title 由下一次节点重建还原（印章原位刷新 / renderBody）。
+      b.disabled = false;
+      b.removeAttribute('data-people-sync-lock');
+    }
+  });
 }
 
 /**
@@ -438,7 +550,8 @@ function dsModalState() {
  */
 async function runScan(force = false): Promise<void> {
   const dataDir = dsDataDir();
-  if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy()) return;
+  // 同步进行中不扫（issue 465）：数据根正在被工具写，扫到的会是半成品；完成后会自动重扫
+  if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsBusy() || isSyncing()) return;
   if (!isDesktop()) {
     dsNotice = '';
     renderBody();
@@ -501,7 +614,8 @@ async function runScan(force = false): Promise<void> {
  */
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
-  if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy()) return;
+  // 同步进行中不导入（issue 465）：数据根正在变，页脚按钮也置灰——这是双保险
+  if (!overlay || !dataDir || dsImporting || dsScanning || jobsBusy() || isSyncing()) return;
   // 群聊能出现在 dsContacts = 设置已放开（runScan 按 peopleIncludeGroups 筛过），导入照单全收
   const chosen = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
   if (!chosen.length) { notice('还没有勾选联系人', 'warning'); return; }
@@ -560,6 +674,7 @@ async function importDsSelected(): Promise<void> {
  */
 async function generateFromDs(): Promise<void> {
   if (!overlay || !store || dsImporting || dsScanning) return;
+  if (isSyncing()) { notice('正在同步微信数据——同步完成后再画脸谱', 'info'); return; } // ADR-0196 决策 10
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   const names = (dsContacts ?? []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
   if (!names.length) { notice('还没有勾选联系人', 'warning'); return; }
@@ -608,6 +723,7 @@ async function generateFromDs(): Promise<void> {
 async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise<void> {
   const name = id ?? detailId;
   if (!store || !name) return;
+  if (isSyncing()) { notice('正在同步微信数据——同步完成后再画脸谱', 'info'); return; } // ADR-0196 决策 10
   if (!opts.force && resumeExisting(name)) return;
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
   let target: GenTarget | null = null;
@@ -971,6 +1087,7 @@ function jobsAction(kind: 'pause' | 'resume' | 'dismiss'): void {
     return;
   }
   if (kind === 'resume') {
+    if (isSyncing()) { notice('正在同步微信数据——同步完成后再继续生成', 'info'); return; } // ADR-0196 决策 10
     const who = talker || currentJobsItem()?.talker || '';
     if (!who) return;
     api.resume(who);
@@ -1017,6 +1134,7 @@ function syncWallSeals(): void {
     if (!p || !old) continue;
     old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
   }
+  applySyncLockdown(); // 印章换新后保持同步置灰态（issue 465 / ADR-0196 决策 10）
 }
 
 /**
@@ -1026,6 +1144,8 @@ function syncWallSeals(): void {
  */
 async function sealAction(kind: string, id: string): Promise<void> {
   const api = jobs();
+  // 同步运行中印章全灰（applySyncLockdown）——这里拦程序路径（ADR-0196 决策 10）
+  if (isSyncing()) { notice('正在同步微信数据——同步完成后再操作脸谱', 'info'); return; }
   if (kind === 'pause') {
     api.pauseJobs();
     notice('这一批做完就暂停', 'info');
@@ -1061,7 +1181,9 @@ function onOverlayClick(e: MouseEvent): void {
   // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
   if (t.closest('[data-people-ds-open]')) { void openDsIfIdle(); return; }
   if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
-  if (t.closest('[data-people-ds-scan]')) { void runScan(true); return; }
+  // issue 465：「同步」= 从微信重新取数（bz-face sync 整条链）；运行中同位置只出「停止」
+  if (t.closest('[data-people-ds-sync]')) { handleSyncClick(); return; }
+  if (t.closest('[data-people-ds-sync-stop]')) { stopSync(); return; }
   if (t.closest('[data-people-ds-pickfresh]')) { pickFresh(); return; }
   if (t.closest('[data-people-ds-import]')) { void importDsSelected(); return; }
   if (t.closest('[data-people-ds-generate]')) { void generateFromDs(); return; }
@@ -1208,6 +1330,7 @@ async function renderBody(): Promise<void> {
     overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', false);
     renderDsLayer();
     renderJobs();
+    applySyncLockdown();
     mountIcons(overlay);
     return;
   }
@@ -1220,6 +1343,7 @@ async function renderBody(): Promise<void> {
   renderDsLayer();
   renderPopLayer(people);
   renderJobs();
+  applySyncLockdown(); // 同步运行中「画脸谱」入口置灰（印章 / 详情头；弹窗页脚在 dsModal 里）
   mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
 }
 

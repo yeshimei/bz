@@ -1696,18 +1696,18 @@
   width: min(calc(100vw - 32px), 1080px);
   height: min(90vh, 860px);
 }
-/* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉） */
+/* 主体只做容器：滚动交 iframe 内手册文档自己的滚动（bz 滚动条单源管不到 iframe 内部，铁律 4 无涉）。
+   无头行形态（用户拍板）：不留内边距，iframe 满铺——外壳不出标题，手册自带内容即全部信息 */
 .bz-manv-body {
   flex: 1;
   min-height: 0;
   display: flex;
-  padding: 10px 14px 14px;
+  overflow: hidden;
 }
 .bz-manv-frame {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--sp-line);
-  border-radius: 10px;
+  border: 0;
   background: var(--sp-panel);
 }
 @media (max-width: 768px) {
@@ -1716,5 +1716,4 @@
     height: 88vh;
     height: 88dvh;
   }
-  .bz-manv-body { padding: 8px 10px 12px; }
 }
