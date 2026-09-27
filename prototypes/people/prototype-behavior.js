@@ -1,4 +1,4 @@
-/* 源指纹 658d31078b3bb3ea · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 acca2939e8649567 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -12911,6 +12911,7 @@ var BZW_people = (() => {
   init_domain_bus();
   init_data();
   init_encrypt();
+  init_lock_screen();
 
   // src/people/safe-store.ts
   init_domain_bus();
@@ -17791,10 +17792,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ["b", "相交", "卷二 · 关系画像"],
     ["e", "纪事", "编年 + 按月交往事件"]
   ];
+  function deleteTierOf(p, job) {
+    const d = p.digest;
+    if (personOf(d) || bondOf(d) || (d == null ? void 0 : d.chronicle)) return "drawn";
+    return job && job.status !== "done" ? "unfinished" : "undrawn";
+  }
+  function deleteTitleOf(tier) {
+    if (tier === "drawn") return "删除这个联系人（已有脸谱，需重输主密码）";
+    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完，二次确认即可）";
+    return "删除这个联系人（还没画过脸谱，二次确认即可）";
+  }
   function foldDetailHead(p, media, opts) {
     var _a2, _b2;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const job = opts.job && opts.job.status !== "done" ? opts.job : null;
+    const tier = deleteTierOf(p, job);
     const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
       "data-people-generate-one": "",
       "aria-label": job.status === "running" ? "正在生成" : "继续生成",
@@ -17824,6 +17836,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
+        // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
+        iconButton("trash-2", `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? " bz-people-del-arm" : ""}`, {
+          "data-people-del": p.id,
+          "aria-label": opts.deleteArm ? "再点确认删除" : "删除",
+          title: opts.deleteArm ? "再点一次确认删除" : deleteTitleOf(tier)
+        }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);
@@ -19893,6 +19911,23 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     body.appendChild(wall);
   }
   async function handleDelete(id) {
+    var _a2;
+    if (!store) {
+      notice("保险库未解锁——先解锁再删", "info");
+      return;
+    }
+    const p = (_a2 = (await store.list()).find((x) => x.id === id)) != null ? _a2 : null;
+    if (!p) {
+      notice("这位联系人已不在库里", "info");
+      await renderBody();
+      return;
+    }
+    const tier = deleteTierOf(p, jobViews().get(id));
+    if (tier === "drawn") {
+      disarmDelete();
+      confirmDeleteWithPassword(p, () => void deletePerson(p));
+      return;
+    }
     if (deleteArmId !== id) {
       disarmDelete();
       deleteArmId = id;
@@ -19900,22 +19935,90 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         disarmDelete();
         void renderBody();
       }, 3e3);
+      notice(
+        tier === "unfinished" ? `再点一次「删除」确认——「${p.name}」的脸谱还没画完，删了要从头画` : `再点一次「删除」确认——「${p.name}」还没画过脸谱`,
+        "warning"
+      );
       void renderBody();
       return;
     }
     disarmDelete();
-    if (!store) return;
+    await deletePerson(p);
+  }
+  async function deletePerson(p) {
     try {
-      await store.remove(id);
-      if (detailId === id) {
+      const stopped = await Promise.resolve(jobs().removeJob(p.id));
+      await store.remove(p.id);
+      if (detailId === p.id) {
         detailId = null;
         stage = "list";
+        detailFold = "p";
       }
-      notice("已删除", "delete");
+      notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, "delete");
     } catch (e) {
-      notifyActionError(e, "删除脸谱");
+      notifyActionError(e, "删除联系人");
     }
-    void renderBody();
+    await renderBody();
+  }
+  function confirmDeleteWithPassword(p, onConfirmed) {
+    var _a2;
+    const at = ((_a2 = p.digest) == null ? void 0 : _a2.generatedAt) ? `（脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}）` : "";
+    const ls = uiLockScreen({
+      kind: "people",
+      icon: "trash-2",
+      title: "删除确认",
+      sub: `「${p.name}」已有脸谱${at}——重输主密码确认删除，脸谱与聊天仓一并销毁`,
+      placeholder: "重输主密码确认",
+      action: "确认删除",
+      secText: "已画脸谱不可恢复；数据源目录与聊天原文不受影响",
+      secTone: "bad"
+    });
+    topifyZ(ls.el);
+    document.body.appendChild(ls.el);
+    let closed = false;
+    const done = (ok) => {
+      if (closed) return;
+      closed = true;
+      unregisterPanelEsc("bz-people-del-confirm");
+      ls.close();
+      if (ok) onConfirmed();
+    };
+    unregisterPanelEsc("bz-people-del-confirm");
+    registerPanelEsc("bz-people-del-confirm", () => !!ls.el.isConnected, () => done(false));
+    const setErr = (m) => {
+      ls.setError(m);
+      setTimeout(() => {
+        if (ls.input.value) ls.setError("");
+      }, 2600);
+    };
+    const submit = async () => {
+      const pw = ls.input.value;
+      if (!pw) {
+        setErr("请输入主密码确认");
+        ls.focus();
+        return;
+      }
+      ls.setBusy(true);
+      try {
+        if (await getSafeManager().verifyPassword(pw)) {
+          done(true);
+          return;
+        }
+        ls.setBusy(false);
+        setErr("主密码错误，未删除");
+        ls.input.value = "";
+        ls.focus();
+      } catch (e) {
+        ls.setBusy(false);
+        setErr(`校验失败：${e instanceof Error ? e.message : String(e)}`);
+      }
+    };
+    ls.actionBtn.addEventListener("click", () => void submit());
+    ls.el.addEventListener("click", (e) => {
+      if (e.target === ls.el) done(false);
+    });
+    ls.focus();
+    setTimeout(() => ls.focus(), 150);
   }
   function disarmDelete() {
     deleteArmId = null;
@@ -19934,7 +20037,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const media = personMedia(p);
     const avatar = (peopleSafe == null ? void 0 : peopleSafe.unlocked) ? await peopleSafe.avatarDataUrl(p.id) : null;
-    body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar: avatar != null ? avatar : void 0 }));
+    body.appendChild(foldDetailHead(p, media, {
+      canGenerate: !p.digest,
+      job: sealJobOf(jobViews().get(p.id)),
+      avatar: avatar != null ? avatar : void 0,
+      deleteArm: deleteArmId === p.id
+    }));
     const person = personOf(p.digest);
     const bond = bondOf(p.digest);
     const bodies = {

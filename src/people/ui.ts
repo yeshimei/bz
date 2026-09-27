@@ -25,7 +25,8 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
-import { ensureSafeUnlocked } from '../encrypt';
+import { ensureSafeUnlocked, getSafeManager } from '../encrypt';
+import { uiLockScreen } from '../core/ui/lock-screen';
 import { PeopleStore } from './data';
 import {
   PROFILE_LIST_FIELDS,
@@ -70,6 +71,7 @@ import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, s
 import {
   generationConfirmModal,
   dateRow,
+  deleteTierOf,
   dsModal,
   duoBar,
   foldBondBody,
@@ -1837,24 +1839,108 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
   body.appendChild(wall);
 }
 
+/**
+ * 详情头「删除」（issue 500）：先按 {@link deleteTierOf} 判档，再走对应门禁——
+ *   已画谱（有画像正文）→ 重输主密码（不可逆产物，同密文销毁防护）；
+ *   未画谱 / 画谱未完成 → 二次点击确认（红灯武装态 3 秒回落）。
+ * 只删保库记录（人物卡 + 聊天仓 + 脸谱 + 随手记 + 头像附件）；数据源目录与聊天原文不动，可重新导入。
+ */
 async function handleDelete(id: string): Promise<void> {
+  if (!store) { notice('保险库未解锁——先解锁再删', 'info'); return; }
+  const p = (await store.list()).find((x) => x.id === id) ?? null;
+  if (!p) { notice('这位联系人已不在库里', 'info'); await renderBody(); return; }
+  const tier = deleteTierOf(p, jobViews().get(id));
+  if (tier === 'drawn') {
+    disarmDelete();
+    confirmDeleteWithPassword(p, () => void deletePerson(p));
+    return;
+  }
   if (deleteArmId !== id) {
     disarmDelete();
     deleteArmId = id;
     deleteArmTimer = setTimeout(() => { disarmDelete(); void renderBody(); }, 3000);
+    notice(
+      tier === 'unfinished'
+        ? `再点一次「删除」确认——「${p.name}」的脸谱还没画完，删了要从头画`
+        : `再点一次「删除」确认——「${p.name}」还没画过脸谱`,
+      'warning'
+    );
     void renderBody();
     return;
   }
   disarmDelete();
-  if (!store) return;
+  await deletePerson(p);
+}
+
+/**
+ * 落地删除（issue 500）：先停该人未完成的任务——引擎是保库记录的唯一写方，
+ * 任务还在队列里会把 job 段（乃至 done 产物）写回来，删了等于白删。
+ */
+async function deletePerson(p: PersonEntry): Promise<void> {
   try {
-    await store.remove(id);
-    if (detailId === id) { detailId = null; stage = 'list'; }
-    notice('已删除', 'delete');
+    const stopped = await Promise.resolve(jobs().removeJob(p.id));
+    await store!.remove(p.id);
+    if (detailId === p.id) { detailId = null; stage = 'list'; detailFold = 'p'; }
+    notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, 'delete');
   } catch (e) {
-    notifyActionError(e, '删除脸谱');
+    notifyActionError(e, '删除联系人');
   }
-  void renderBody();
+  await renderBody();
+}
+
+/**
+ * 已画谱的删除门禁（issue 500）：复用核心解锁屏骨架（kind = people，与面板解锁屏同皮同语汇），
+ * 重输主密码走 `SafeManager.verifyPassword` 只读校验——通过才执行 onConfirmed。
+ * 这是防误触确认而非解锁，不进解锁冷却节流（同 encrypt 域密文销毁口径）。
+ */
+function confirmDeleteWithPassword(p: PersonEntry, onConfirmed: () => void): void {
+  const at = p.digest?.generatedAt ? `（脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}）` : '';
+  const ls = uiLockScreen({
+    kind: 'people',
+    icon: 'trash-2',
+    title: '删除确认',
+    sub: `「${p.name}」已有脸谱${at}——重输主密码确认删除，脸谱与聊天仓一并销毁`,
+    placeholder: '重输主密码确认',
+    action: '确认删除',
+    secText: '已画脸谱不可恢复；数据源目录与聊天原文不受影响',
+    secTone: 'bad',
+  });
+  topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
+  document.body.appendChild(ls.el);
+  let closed = false;
+  const done = (ok: boolean) => {
+    if (closed) return;
+    closed = true;
+    unregisterPanelEsc('bz-people-del-confirm');
+    ls.close();
+    if (ok) onConfirmed();
+  };
+  unregisterPanelEsc('bz-people-del-confirm'); // 上一屏若异常走失，先清层再注册（registerPanelEsc 同 id 幂等跳过）
+  registerPanelEsc('bz-people-del-confirm', () => !!ls.el.isConnected, () => done(false));
+  const setErr = (m: string) => {
+    ls.setError(m);
+    setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
+  };
+  const submit = async () => {
+    const pw = ls.input.value;
+    if (!pw) { setErr('请输入主密码确认'); ls.focus(); return; }
+    ls.setBusy(true);
+    try {
+      if (await getSafeManager().verifyPassword(pw)) { done(true); return; }
+      ls.setBusy(false);
+      setErr('主密码错误，未删除');
+      ls.input.value = '';
+      ls.focus();
+    } catch (e) {
+      ls.setBusy(false);
+      setErr(`校验失败：${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+  ls.actionBtn.addEventListener('click', () => void submit());
+  // 输入框回车提交已由 uiLockScreen 内置；点遮罩（非内容区）关闭 = 取消（同解锁屏语义）
+  ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
+  ls.focus();
+  setTimeout(() => ls.focus(), 150);
 }
 
 function disarmDelete(): void {
@@ -1874,7 +1960,12 @@ async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<v
   const media = personMedia(p);
   // 头像（467）：保库记录附件解密成内存 data URL；没有回落首字印章
   const avatar = peopleSafe?.unlocked ? await peopleSafe.avatarDataUrl(p.id) : null;
-  body.appendChild(foldDetailHead(p, media, { canGenerate: !p.digest, job: sealJobOf(jobViews().get(p.id)), avatar: avatar ?? undefined }));
+  body.appendChild(foldDetailHead(p, media, {
+    canGenerate: !p.digest,
+    job: sealJobOf(jobViews().get(p.id)),
+    avatar: avatar ?? undefined,
+    deleteArm: deleteArmId === p.id,
+  }));
 
   // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊
   const person = personOf(p.digest); // 旧单卷数据（只有 portrait）由此兼容读进卷一

@@ -1,5 +1,5 @@
-/* 源指纹 fd0ae9198fe78b8a · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/people/render.ts"]*/
+/* 源指纹 502cddff3e87a53d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
   var __defProp = Object.defineProperty;
@@ -27,6 +27,7 @@ var BZR_people = (() => {
     avatarUri: () => avatarUri,
     button: () => button,
     dateRow: () => dateRow,
+    deleteTierOf: () => deleteTierOf,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
     dsSyncLineNode: () => dsSyncLineNode,
@@ -87,6 +88,18 @@ var BZR_people = (() => {
     vtName: () => vtName,
     wallEmpty: () => wallEmpty
   });
+
+  // src/people/types.ts
+  function personOf(d) {
+    var _a, _b;
+    return (_b = (_a = d == null ? void 0 : d.person) != null ? _a : d == null ? void 0 : d.portrait) != null ? _b : "";
+  }
+  function bondOf(d) {
+    var _a;
+    return (_a = d == null ? void 0 : d.bond) != null ? _a : "";
+  }
+
+  // src/people/render.ts
   var AVATAR_COLORS = ["#b5534a", "#5a8f6d", "#4a7d9e", "#8a6bb0", "#b08a3e", "#7a8b4a", "#a05d7a", "#5f6b7a"];
   function el(tag, cls, arg, ...rest) {
     const flat = (ns) => ns.flatMap((n) => Array.isArray(n) ? n : [n]);
@@ -507,10 +520,21 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ["b", "相交", "卷二 · 关系画像"],
     ["e", "纪事", "编年 + 按月交往事件"]
   ];
+  function deleteTierOf(p, job) {
+    const d = p.digest;
+    if (personOf(d) || bondOf(d) || (d == null ? void 0 : d.chronicle)) return "drawn";
+    return job && job.status !== "done" ? "unfinished" : "undrawn";
+  }
+  function deleteTitleOf(tier) {
+    if (tier === "drawn") return "删除这个联系人（已有脸谱，需重输主密码）";
+    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完，二次确认即可）";
+    return "删除这个联系人（还没画过脸谱，二次确认即可）";
+  }
   function foldDetailHead(p, media, opts) {
     var _a, _b;
     const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
     const job = opts.job && opts.job.status !== "done" ? opts.job : null;
+    const tier = deleteTierOf(p, job);
     const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
       "data-people-generate-one": "",
       "aria-label": job.status === "running" ? "正在生成" : "继续生成",
@@ -540,6 +564,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
+        // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
+        iconButton("trash-2", `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? " bz-people-del-arm" : ""}`, {
+          "data-people-del": p.id,
+          "aria-label": opts.deleteArm ? "再点确认删除" : "删除",
+          title: opts.deleteArm ? "再点一次确认删除" : deleteTitleOf(tier)
+        }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
     ]);

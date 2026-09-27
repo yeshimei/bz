@@ -9,6 +9,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import {
+  deleteTierOf,
   dsModal,
   dsRow,
   dsSyncLineNode,
@@ -38,6 +39,7 @@ import {
   type DsSyncLine,
   type FoldCardJob,
   type JobsBlockState,
+  type JobsUiStatus,
 } from '../../src/people/render';
 import { bondOf, personOf } from '../../src/people/types';
 import type { ImportRecord, PersonEntry } from '../../src/people/types';
@@ -248,18 +250,63 @@ describe('折正文：其人 / 我们（issue 455）', () => {
 
 // ---------------- 详情头弹窗入口与统计 / 档案弹窗（issue 455） ----------------
 
-describe('详情头弹窗入口图标（issue 455，评审后加「记一笔」）', () => {
-  it('记一笔在互动统计前；统计 / 补充背景两图标在返回按钮前；生成钮仍在最前', () => {
+describe('详情头弹窗入口图标（issue 455，评审后加「记一笔」；issue 500 加「删除」）', () => {
+  it('记一笔在互动统计前；统计 / 补充背景 / 删除三图标在返回按钮前；生成钮仍在最前', () => {
     const withGen = foldDetailHead(person(), null, { canGenerate: true });
     expect([...withGen.querySelector('.bz-people-dt-actions')!.children].map((n) => n.getAttribute('aria-label')))
-      .toEqual(['画脸谱', '记一笔', '互动统计', '补充背景', '返回列表']);
+      .toEqual(['画脸谱', '记一笔', '互动统计', '补充背景', '删除', '返回列表']);
     const noGen = foldDetailHead(person(), null, { canGenerate: false });
     const order = [...noGen.querySelector('.bz-people-dt-actions')!.children];
-    expect(order.map((n) => n.getAttribute('aria-label'))).toEqual(['记一笔', '互动统计', '补充背景', '返回列表']);
+    expect(order.map((n) => n.getAttribute('aria-label'))).toEqual(['记一笔', '互动统计', '补充背景', '删除', '返回列表']);
     expect(order[0].getAttribute('data-people-note-open')).toBe('');
     expect(order[1].getAttribute('data-people-stats-open')).toBe('');
     expect(order[2].getAttribute('data-people-prof-open')).toBe('');
-    expect(order[3].getAttribute('data-people-back-btn')).toBe('');
+    expect(order[3].getAttribute('data-people-del')).toBe('wxid_a');
+    expect(order[4].getAttribute('data-people-back-btn')).toBe('');
+  });
+});
+
+// ---------------- 删除门禁档（issue 500） ----------------
+
+describe('详情头删除钮与门禁档（issue 500）', () => {
+  const drawn = (): PersonEntry => person({ digest: { person: '## 速写\n- 话少', events: [], generatedAt: '2026-09-01T02:03:04.000Z' } });
+  const job = (status: JobsUiStatus): FoldCardJob => ({ status, batchesDone: 1, batchesTotal: 3, stagesDone: 0, resumable: true });
+
+  it('deleteTierOf：有画像正文 = 已画谱；无正文但有未完成任务 = 画谱未完成；都无 = 未画谱', () => {
+    expect(deleteTierOf(person(), null)).toBe('undrawn');
+    expect(deleteTierOf(person(), job('running'))).toBe('unfinished');
+    expect(deleteTierOf(person(), job('paused'))).toBe('unfinished');
+    expect(deleteTierOf(drawn(), null)).toBe('drawn');
+    // 任务已完成 / 已画谱者带任务：以「手上有不成脸谱」为准，仍算已画谱
+    expect(deleteTierOf(drawn(), job('done'))).toBe('drawn');
+    expect(deleteTierOf(drawn(), job('running'))).toBe('drawn');
+  });
+
+  it('卷二 / 纪事有正文也算已画谱（旧单卷 portrait 同样兼容读进来）', () => {
+    expect(deleteTierOf(person({ digest: { bond: '## 相交\n- 常聊', events: [], generatedAt: '' } }), null)).toBe('drawn');
+    expect(deleteTierOf(person({ digest: { chronicle: '## 一\n- 认识', events: [], generatedAt: '' } }), null)).toBe('drawn');
+    expect(deleteTierOf(person({ digest: { portrait: '旧单卷正文', events: [], generatedAt: '' } }), null)).toBe('drawn');
+  });
+
+  it('空 digest（字段全空）不算已画谱——不给用户上无谓的密码门', () => {
+    expect(deleteTierOf(person({ digest: { events: [], generatedAt: '2026-09-01T00:00:00.000Z' } }), null)).toBe('undrawn');
+  });
+
+  it('删除钮：undrawn / unfinished 提示二次确认，drawn 提示要密码', () => {
+    const titleOf = (p: PersonEntry, j: FoldCardJob | null) =>
+      foldDetailHead(p, null, { canGenerate: false, job: j }).querySelector('[data-people-del]')!.getAttribute('title')!;
+    expect(titleOf(person(), null)).toContain('还没画过脸谱，二次确认即可');
+    expect(titleOf(person(), job('interrupted'))).toContain('脸谱还没画完，二次确认即可');
+    expect(titleOf(drawn(), null)).toContain('已有脸谱，需重输主密码');
+  });
+
+  it('武装态：deleteArm 出红灯类 + 「再点确认删除」文案（数据钩子不变，仍是同一位）', () => {
+    const btn = foldDetailHead(person(), null, { canGenerate: false, deleteArm: true }).querySelector('[data-people-del]')!;
+    expect(btn.classList.contains('bz-people-del')).toBe(true);
+    expect(btn.classList.contains('bz-people-del-arm')).toBe(true);
+    expect(btn.getAttribute('aria-label')).toBe('再点确认删除');
+    expect(btn.getAttribute('title')).toBe('再点一次确认删除');
+    expect(btn.getAttribute('data-people-del')).toBe('wxid_a');
   });
 });
 

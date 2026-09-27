@@ -9,6 +9,7 @@
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
 import type { FaceEvent, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile } from './types';
+import { bondOf, personOf } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
 
@@ -696,12 +697,39 @@ export interface FoldDetailHeadOpts {
   job?: FoldCardJob | null;
   /** 头像文件绝对路径（数据目录 avatar.<ext>；缺省回落首字印章） */
   avatar?: string;
+  /** 删除武装态（issue 500）：未画谱 / 画谱未完成档的二次确认——红灯 + 再点确认文案 */
+  deleteArm?: boolean;
+}
+
+/**
+ * 删除门禁档（issue 500）：按「手上有没有画成的脸谱」分三档——
+ *   drawn（已画谱）      = 有画像正文 → 删前重输主密码（不可逆产物，与密文销毁同防护）；
+ *   unfinished（画谱未完成）= 无画像但有未完成任务 → 二次确认即可；
+ *   undrawn（未画谱）     = 都没 → 二次确认即可。
+ * 「有画像」判据：卷一 / 卷二 / 纪事任一有正文。卷一《其人》是必达产物，重画中断不会留下空卷，
+ * 所以「有 digest 正文」等价于「手上有一份看得的脸谱」。
+ */
+export type DeleteTier = 'undrawn' | 'unfinished' | 'drawn';
+
+/** job 只读 status 一字段（FoldCardJob / JobView 皆可传，免得为判档造一个假件） */
+export function deleteTierOf(p: PersonEntry, job?: { status: string } | null): DeleteTier {
+  const d = p.digest;
+  if (personOf(d) || bondOf(d) || d?.chronicle) return 'drawn';
+  return job && job.status !== 'done' ? 'unfinished' : 'undrawn';
+}
+
+/** 详情头删除钮的 hover 文案（按档说清代价与门禁） */
+function deleteTitleOf(tier: DeleteTier): string {
+  if (tier === 'drawn') return '删除这个联系人（已有脸谱，需重输主密码）';
+  if (tier === 'unfinished') return '删除这个联系人（脸谱还没画完，二次确认即可）';
+  return '删除这个联系人（还没画过脸谱，二次确认即可）';
 }
 
 /** 详情头（455 评审采纳「居家档案型」）：圆照金环（无则首字印）+ 名 + 档案印签 + 数字下地的一行 meta + 朱色图标工具条 */
 export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
   const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
   const job = opts.job && opts.job.status !== 'done' ? opts.job : null;
+  const tier = deleteTierOf(p, job);
   const action = job
     ? iconButton('refresh-cw', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', {
       'data-people-generate-one': '',
@@ -741,6 +769,12 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
       // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
       iconButton('bar-chart-3', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-stats-open': '', 'aria-label': '互动统计', title: '互动统计' }),
       iconButton('contact', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-prof-open': '', 'aria-label': '补充背景', title: '补充背景' }),
+      // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
+      iconButton('trash-2', `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? ' bz-people-del-arm' : ''}`, {
+        'data-people-del': p.id,
+        'aria-label': opts.deleteArm ? '再点确认删除' : '删除',
+        title: opts.deleteArm ? '再点一次确认删除' : deleteTitleOf(tier),
+      }),
       iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
     ]),
   ]);
