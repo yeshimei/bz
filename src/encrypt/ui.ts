@@ -1534,6 +1534,15 @@ export class UIManager {
    * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
    * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
    */
+  /**
+   * 卸载前统计快照兜底（issue 492）：直接关 Obsidian / 重载插件不走 lockNow——解锁态下本次
+   * 会话的统计从未落盘，下次解锁屏（含 482 的 people 档）冷启动只能回落旧值或「—」。
+   * T12 同款守卫：仅解锁态补拍（锁定态清单已清，拍了也是零值）。
+   */
+  captureForUnload(): void {
+    if (this.dataManager.unlocked) this.captureLockStats();
+  }
+
   private captureLockStats(): void {
     try {
       const all = this.dataManager.manifest?.notes || [];
@@ -2907,6 +2916,9 @@ export class EncryptAppController {
 
   /** 卸载清理 */
   cleanup() {
+    // issue 492：卸载路径不走 lockNow——解锁态下先把锁屏统计快照落盘（lock-stats.json），
+    // 否则「解锁态直接关 Obsidian / 重载插件」会丢掉本次会话的快照，下次解锁屏回落旧值或「—」
+    this.uiManager.captureForUnload();
     const ids = ['bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup', 'bz-encrypt-health-mask', 'bz-encrypt-health-popup'];
     for (const id of ids) {
       const el = document.getElementById(id);

@@ -121,6 +121,12 @@ export class PeopleSafeStore {
   private chains = new Map<string, Promise<unknown>>();
   private offUnlock: (() => void) | null = null;
   private offChanged: (() => void) | null = null;
+  /**
+   * 自写抑制（issue 492）：头像写入走 removeNote→lockNote 重建，会**同步**广播
+   * ENCRYPT_CHANGED——那是自己刚写完的数据，不能把自己的明文缓存全清。计数 > 0 时
+   * 变更事件不触发 clearPlainCaches（外部改动照清）；写链 finally 归零。
+   */
+  private suppressClear = 0;
 
   constructor(safe: SafeManager) {
     this.safe = safe;
@@ -130,8 +136,11 @@ export class PeopleSafeStore {
       if (evt?.unlocked !== false) return;
       this.clearPlainCaches();
     });
-    // 外部清单变化（保险库面板增删 / 日记域写清单）：记录条目可能被增删，缓存一律作废
+    // 外部清单变化（保险库面板增删 / 日记域写清单）：记录条目可能被增删，缓存一律作废；
+    // 本域自写（removeNote→lockNote 头像重建）期间的广播跳过——否则重建后 read 回来的
+    // 新对象会顶掉 recordCache 里的旧引用，面板当帧读 store 读到导入前的空仓（492 实案）
     this.offChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL, () => {
+      if (this.suppressClear > 0) return;
       this.clearPlainCaches();
     });
   }
@@ -308,15 +317,27 @@ export class PeopleSafeStore {
     }
 
     if (!existing) {
-      await this.lockNoteFresh(talker, rec, avatar ?? null);
+      this.suppressClear++;
+      try {
+        await this.lockNoteFresh(talker, rec, avatar ?? null);
+      } finally {
+        this.suppressClear--;
+      }
       this.cache.set(talker, rec);
       return 'created';
     }
     if (avatarChanged) {
       // 无公开 API 替换单个附件 → 整条重建（removeNote 删旧镜像 + lockNote 重加密；
       // 头像只在同步导入时变化，低频路径）。重建前记录体已是最新（mutate 已跑）。
-      await this.safe.removeNote(existing.id);
-      await this.lockNoteFresh(talker, rec, avatar ?? null);
+      // 重建期间的 ENCRYPT_CHANGED 广播是自己的写入——抑制清缓存（492：否则其他联系人
+      // 的缓存记录被重新解密成新对象，面板 recordCache 旧引用读到导入前的空仓）
+      this.suppressClear++;
+      try {
+        await this.safe.removeNote(existing.id);
+        await this.lockNoteFresh(talker, rec, avatar ?? null);
+      } finally {
+        this.suppressClear--;
+      }
       this.cache.set(talker, rec);
       return 'updated';
     }
