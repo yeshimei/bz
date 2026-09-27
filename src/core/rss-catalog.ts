@@ -43,9 +43,16 @@ export interface RssCatalogFeed {
   tags: string[];
   /** 固定大类（出版期关键词映射 / RSSHub 官方分类直映射；非空且 ⊆ categories） */
   cats: string[];
-  /** 路由型源的路由路径（如 `/bilibili/platform/-1`，ADR-0209）——url 已用默认实例拼好
-   *  （校验与「已订阅匹配」零改动），via 是订阅时按用户实例设置重拼的素材；直连源恒缺省 */
+  /** 路由型源的完整路由模板（含 ns 前缀与 :参数段，如 `/bilibili/user/video/:uid/:embed?`，
+   *  ADR-0209）——url 出版期已用默认实例拼好（校验与全表唯一性零改动）；无 :参数段 = 开箱直订
+   *  （订阅时按实例重拼），有 :参数段 = 走参数表单（buildRouteUrl 产出订阅地址） */
   via?: string;
+  /** 带参数路由的示例路径（上游文档演示值，参数表单的预填素材；仅带参数条目携带） */
+  viaExample?: string;
+  /** 带参数路由的参数说明表（参数名 → 中文说明；表单输入框的 placeholder 素材） */
+  params?: Record<string, string>;
+  /** 路由描述（上游文档截断 200 字；表单顶部提示素材） */
+  desc?: string;
 }
 
 /** 上游来源署名（许可证合规：MIT 再分发须保留署名，ADR-0208） */
@@ -104,9 +111,91 @@ export function joinRssHubUrl(instance: string, routePath: string): string {
   return base + p;
 }
 
+/** 路由模板的 :参数段（`{...}` 正则尾巴与 `?` 可选标记一并解析）。
+ *  与出版脚本 lib.mjs 同口径（测试对齐）。 */
+export interface RouteTemplateParam {
+  name: string;
+  optional: boolean;
+}
+
+export function parseRouteTemplate(template: string): RouteTemplateParam[] {
+  const params: RouteTemplateParam[] = [];
+  const re = /:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(String(template || '')))) params.push({ name: m[1], optional: m[3] === '?' });
+  return params;
+}
+
+/** 模板是否含 :参数段（含 = 订阅必须走参数表单，不能直订） */
+export function isParametrizedRoute(template: string): boolean {
+  return parseRouteTemplate(template).length > 0;
+}
+
 /**
- * 源库条目 → 订阅地址（订阅动作唯一入口，ADR-0209 决策 5「订阅=拷贝当时 URL」）：
- * 路由型（via）按传入实例重拼——重拼失败（实例键损坏）回退出版期 url；直连源原样。
+ * 实例 + 路由模板 + 参数值 → 完整 feed 地址（ADR-0209 全参数化：订阅=拷贝用户自己拼出的 URL）。
+ * 参数值按段 encode（值内 / 保留段结构——RSSHub 通配段如 category=sy/gzdt_210283 合法）；
+ * 可选参数空值整段剥掉；必选参数空值拼不出 → 返回空串交调用方拦。
+ */
+export function buildRouteUrl(instance: string, template: string, values: Record<string, string>): string {
+  const base = String(instance || '').trim().replace(/\/+$/, '');
+  const tpl = String(template || '').trim();
+  if (!/^https?:\/\//i.test(base) || !tpl.startsWith('/') || /\s/.test(tpl)) return '';
+  const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+  const out: string[] = [];
+  for (const seg of tpl.split('/')) {
+    if (!seg) continue;
+    const m = seg.match(segRe);
+    if (!m) {
+      out.push(seg);
+      continue;
+    }
+    const v = String(values?.[m[1]] ?? '').trim();
+    if (v) {
+      out.push(v.split('/').map((part) => encodeURIComponent(part)).join('/'));
+      continue;
+    }
+    if (m[3] === '?') continue;
+    return '';
+  }
+  return `${base}/${out.join('/')}`;
+}
+
+/** 从 example 反解参数预填值（表单默认值）：模板段与示例段按 / 对位取值。
+ *  尾部连续可选段在示例里被省略（如 :embed? 没填）时逐个剥离后对齐；
+ *  字面段不一致或段数仍不齐 → 回空对象（预填不全无伤，不猜）。
+ *  与出版脚本 lib.mjs 同口径（测试对齐）。 */
+export function reverseTemplateExample(template: string, example: string): Record<string, string> {
+  const tplSegs = String(template || '').split('/').filter(Boolean);
+  const exSegs = String(example || '').split('?')[0].split('/').filter(Boolean);
+  const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+  const align = (tpl: string[], ex: string[]): Record<string, string> | null => {
+    if (tpl.length !== ex.length) return null;
+    const values: Record<string, string> = {};
+    for (let i = 0; i < tpl.length; i++) {
+      const m = tpl[i].match(segRe);
+      if (!m) {
+        if (tpl[i] !== ex[i]) return null; // 字面段不一致 = 不是同一路由的示例
+        continue;
+      }
+      if (!ex[i] || ex[i].startsWith(':')) return null;
+      values[m[1]] = decodeURIComponent(ex[i]);
+    }
+    return values;
+  };
+  if (tplSegs.length === exSegs.length) return align(tplSegs, exSegs) || {};
+  const t = [...tplSegs];
+  while (t.length > exSegs.length) {
+    const m = t[t.length - 1].match(segRe);
+    if (!m || m[3] !== '?') return {}; // 缺的不是可选段，不对位
+    t.pop();
+  }
+  return align(t, exSegs) || {};
+}
+
+/**
+ * 源库条目 → 订阅地址。**只对无参数路由有意义**（ADR-0209 全参数化：带参数条目的
+ * 订阅地址由参数表单产出，走 buildRouteUrl；此处对带参数模板原样拼是形状地址，调用方
+ * 不得直接入库）——无参数按实例重拼；重拼失败（实例键损坏）回退出版期 url；直连源原样。
  */
 export function resolveCatalogFeedUrl(feed: Pick<RssCatalogFeed, 'url' | 'via'>, instance: string): string {
   if (!feed.via) return String(feed.url || '').trim();
@@ -163,11 +252,25 @@ export function validateRssCatalog(raw: unknown): RssCatalog | null {
     }
     const feed: RssCatalogFeed = { url, title: ff.title, site: ff.site, tags: ff.tags as string[], cats: ff.cats as string[] };
     if (typeof ff.via === 'string' && ff.via) {
-      // via 形状门（ADR-0209）：必须是以 / 开头的路由路径且无空白——它是订阅时重拼 URL 的素材，
-      // 坏形状会让 resolveCatalogFeedUrl 拼出垃圾地址直插 rssFeeds
+      // via 形状门（ADR-0209）：必须是以 / 开头的路由模板且无空白——它是订阅重拼/填参的素材，
+      // 坏形状会让表单产出垃圾地址直插 rssFeeds
       if (!/^\/\S*$/.test(ff.via)) return null;
       feed.via = ff.via;
     }
+    // 表单素材三件套（仅带参数条目携带）：示例路径同形状门；params 键非空值字符串；desc 字符串
+    if (typeof ff.viaExample === 'string' && ff.viaExample) {
+      if (!/^\/\S*$/.test(ff.viaExample)) return null;
+      feed.viaExample = ff.viaExample;
+    }
+    if (ff.params && typeof ff.params === 'object' && !Array.isArray(ff.params)) {
+      const params: Record<string, string> = {};
+      for (const [k, v] of Object.entries(ff.params as Record<string, unknown>)) {
+        if (!k.trim() || typeof v !== 'string') return null;
+        params[k.trim()] = v;
+      }
+      if (Object.keys(params).length > 0) feed.params = params;
+    }
+    if (typeof ff.desc === 'string' && ff.desc) feed.desc = ff.desc;
     feeds.push(feed);
   }
   return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories as string[], feeds };

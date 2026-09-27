@@ -189,8 +189,8 @@ describe('源库页签面板（createRssCatalogPane，ADR-0208）', () => {
   });
 });
 
-describe('路由型源（ADR-0209：via 重拼 + 徽标 + 实例键）', () => {
-  /** 带 RSSHub 路由条目的小库（自建数据，不与上面 describe 共用 smallCatalog——避免既有断言计数漂移） */
+describe('路由型源（ADR-0209 全参数化：via 重拼 + 表单 + 实例键）', () => {
+  /** 带参数 + 无参数混合的小库（自建数据，不与上面 describe 共用 smallCatalog——避免既有断言计数漂移） */
   function viaCatalog() {
     return {
       version: 1,
@@ -198,6 +198,7 @@ describe('路由型源（ADR-0209：via 重拼 + 徽标 + 实例键）', () => {
       meta: { sources: [{ id: 'r', name: 'RSSHub 路由目录', url: 'https://github.com/DIYgod/RSSHub-Docs', license: 'AGPL-3.0' }] },
       categories: ['新闻资讯', '综合'],
       feeds: [
+        { url: 'https://rsshub.rssforever.com/bilibili/user/video/:uid/:embed?', title: '哔哩哔哩 · UP 主投稿', site: 'https://www.bilibili.com', tags: ['bilibili'], cats: ['新闻资讯'], via: '/bilibili/user/video/:uid/:embed?', viaExample: '/bilibili/user/video/2267573', params: { uid: '用户 id, 可在 UP 主主页中找到', embed: '默认开启内嵌' }, desc: '投稿视频' },
         { url: 'https://rsshub.rssforever.com/bilibili/hot-search', title: '哔哩哔哩 · 热搜', site: 'https://www.bilibili.com', tags: ['bilibili'], cats: ['新闻资讯'], via: '/bilibili/hot-search' },
         { url: 'https://d.example/feed.xml', title: 'D 直连', site: 'https://d.example', tags: [], cats: ['综合'] },
       ],
@@ -212,30 +213,89 @@ describe('路由型源（ADR-0209：via 重拼 + 徽标 + 实例键）', () => {
       sources: { zhihu: true, guokr: true, bilibili: true, rss: true }, rssFeeds: feeds, ...newsExtra,
     }));
   }
+  const feedXml = () => '<?xml version="1.0"?><rss version="2.0"><channel><title>我的UP</title></channel></rss>';
 
-  it('路由条目带 RSSHub 徽标；news.json 无实例段时按默认实例判定已订阅', async () => {
+  it('无参数路由带 RSSHub 徽标、按重拼 URL 判已订阅；带参数路由按钮为「填参数订阅」恒可再订', async () => {
     const vault = seedVault();
     seedVia(vault, {}, [{ url: 'https://rsshub.rssforever.com/bilibili/hot-search', title: '旧' }]);
     const root = document.createElement('div');
     const pane = createRssCatalogPane(root, { onChanged: () => {} });
     await pane.reload();
-    const rowB = rowByName(root, '哔哩哔哩 · 热搜')!;
-    expect(rowB.querySelector('.bz-rss-cat-via')!.textContent).toBe('RSSHub');
-    expect(rowB.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!.disabled).toBe(true); // 按重拼（=默认实例）URL 匹配
-    expect(rowByName(root, 'D 直连')!.querySelector('.bz-rss-cat-via')).toBeNull(); // 直连条目无徽标
+    const hot = rowByName(root, '哔哩哔哩 · 热搜')!;
+    expect(hot.querySelector('.bz-rss-cat-via')!.textContent).toBe('RSSHub');
+    expect(hot.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!.disabled).toBe(true); // 无参数：重拼=默认实例，已订阅
+    const up = rowByName(root, '哔哩哔哩 · UP 主投稿')!;
+    expect(up.querySelector('.bz-rss-cat-via')!.textContent).toBe('RSSHub');
+    const subUp = up.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!;
+    expect(subUp.textContent).toBe('填参数订阅');
+    expect(subUp.disabled).toBe(false); // 带参数：无单一已订阅态，恒可再订
+    expect(rowByName(root, 'D 直连')!.querySelector('.bz-rss-cat-via')).toBeNull();
   });
 
-  it('订阅路由条目：按 news.json rsshubInstance 段重拼 URL 入库（订阅=拷贝当时 URL）', async () => {
+  it('参数表单：预填示例、实时预览、试拉成功入库用户 URL（订阅=拷贝当时实例+参数）', async () => {
     const vault = seedVault();
-    seedVia(vault, { rsshubInstance: 'https://my.rsshub.example/' });
+    seedVia(vault, { rsshubInstance: 'https://my.rsshub.example' });
+    vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
+      if (req.url.includes('my.rsshub.example/bilibili/user/video/%E5%BC%A0%E4%B8%89')) return { status: 200, text: feedXml() } as any;
+      throw new Error('unmocked url: ' + req.url);
+    }) as any);
+    const root = document.createElement('div');
+    const onChanged = vi.fn();
+    const pane = createRssCatalogPane(root, { onChanged });
+    await pane.reload();
+    rowByName(root, '哔哩哔哩 · UP 主投稿')!.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!.click();
+    const mask = document.getElementById('bz-rss-route-popup')!;
+    expect(mask).toBeTruthy();
+    expect(mask.querySelector('.bz-rss-route-tpl')!.textContent).toBe('/bilibili/user/video/:uid/:embed?');
+    const uidInput = [...mask.querySelectorAll<HTMLInputElement>('.bz-rss-route-input')][0];
+    expect(uidInput.placeholder).toBe('用户 id, 可在 UP 主主页中找到'); // params 说明进 placeholder
+    expect(uidInput.value).toBe('2267573'); // viaExample 反解预填
+    uidInput.value = '张三';
+    uidInput.dispatchEvent(new Event('input'));
+    await flush();
+    expect(mask.querySelector('.bz-rss-route-preview')!.textContent)
+      .toBe('https://my.rsshub.example/bilibili/user/video/%E5%BC%A0%E4%B8%89'); // 实例键 + 按段 encode
+    mask.querySelector<HTMLButtonElement>('.bz-rss-route-btns .bz-sp-btn')!.click(); // 试拉并订阅
+    await vi.waitFor(() => expect(document.getElementById('bz-rss-route-mask')).toBeNull()); // 成功关窗
+    const st = await readDataSourceState();
+    expect(st.rssFeeds.map((f) => f.url)).toEqual(['https://my.rsshub.example/bilibili/user/video/%E5%BC%A0%E4%B8%89']);
+    expect(st.rssFeeds[0].title).toBe('我的UP'); // feed 自带标题优先
+    expect(onChanged).toHaveBeenCalled();
+  });
+
+  it('必选参数空 → 预览缺失提示 + 确认禁用；试拉失败出「仍要订阅」', async () => {
+    const vault = seedVault();
+    seedVia(vault);
+    vi.mocked(requestUrl).mockImplementation((async () => {
+      throw new Error('network down');
+    }) as any);
     const root = document.createElement('div');
     const pane = createRssCatalogPane(root, { onChanged: () => {} });
     await pane.reload();
-    const sub = rowByName(root, '哔哩哔哩 · 热搜')!.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!;
-    sub.click();
-    await vi.waitFor(() => expect(sub.textContent).toBe('已订阅'));
+    rowByName(root, '哔哩哔哩 · UP 主投稿')!.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!.click();
+    const mask = document.getElementById('bz-rss-route-popup')!;
+    const preview = mask.querySelector<HTMLElement>('.bz-rss-route-preview')!;
+    const confirm = [...mask.querySelectorAll<HTMLButtonElement>('.bz-rss-route-btns .bz-sp-btn')][0];
+    // viaExample 预填了 uid，清空它验证必选拦截
+    const uidInput = [...mask.querySelectorAll<HTMLInputElement>('.bz-rss-route-input')][0];
+    uidInput.value = '';
+    uidInput.dispatchEvent(new Event('input'));
+    await flush();
+    expect(preview.textContent).toContain('必填参数');
+    expect(preview.classList.contains('is-missing')).toBe(true);
+    expect(confirm.disabled).toBe(true);
+    uidInput.value = '2267573';
+    uidInput.dispatchEvent(new Event('input'));
+    await flush();
+    expect(confirm.disabled).toBe(false);
+    confirm.click();
+    await vi.waitFor(() => expect(preview.ownerDocument.body.textContent).toContain('仍要订阅'));
+    // 仍要订阅：跳过试拉直接入库
+    const still = [...document.querySelectorAll<HTMLButtonElement>('.bz-rss-route-btns .bz-sp-btn')]
+      .find((b) => b.textContent === '仍要订阅')!;
+    still.click();
+    await vi.waitFor(() => expect(document.getElementById('bz-rss-route-mask')).toBeNull());
     const st = await readDataSourceState();
-    expect(st.rssFeeds.map((f) => f.url)).toEqual(['https://my.rsshub.example/bilibili/hot-search']); // 重拼 + 实例尾斜杠已去
-    expect(st.rssFeeds[0].title).toBe('哔哩哔哩 · 热搜');
+    expect(st.rssFeeds.map((f) => f.url)).toEqual(['https://rsshub.rssforever.com/bilibili/user/video/2267573']);
   });
 });

@@ -168,8 +168,91 @@ export function joinRssHubUrl(instance, routePath) {
   return base + p;
 }
 
-/** RSSHub routes.json 原始数据 → 蒸馏快照（只留出版所需字段，8.5MB → 约 1MB 入库）。
- *  全量命名空间/路由都留（不含筛选——筛选口径在 parseRssHubRoutes，可随报告迭代）。 */
+/** 路由模板的 :参数段解析：`/bilibili/user/video/:uid/:embed?/:category{.+}?`
+ *  → [{ name:'uid', optional:false }, { name:'embed', optional:true }, { name:'category', optional:true }]
+ *  （`{...}` 是路径正则尾巴，剥掉不参与拼参；`?` 是可选标记） */
+export function parseRouteTemplate(template) {
+  const params = [];
+  const re = /:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?/g;
+  let m;
+  while ((m = re.exec(String(template || '')))) params.push({ name: m[1], optional: m[3] === '?' });
+  return params;
+}
+
+/** 模板是否含 :参数段（含 = 订阅必须走参数表单，不能直订） */
+export function isParametrizedTemplate(template) {
+  return parseRouteTemplate(template).length > 0;
+}
+
+/**
+ * 实例 + 路由模板 + 参数值 → 完整 feed 地址（ADR-0209 全参数化：订阅=拷贝用户自己拼出的 URL）。
+ * 参数值按段 encode（值内的 / 保留段结构——RSSHub 通配段如 category=sy/gzdt_210283 合法）；
+ * 可选参数空值整段剥掉；必选参数空值拼不出 → 返回空串交调用方拦。
+ */
+export function buildRouteUrl(instance, template, values) {
+  const base = String(instance || '').trim().replace(/\/+$/, '');
+  const tpl = String(template || '').trim();
+  if (!/^https?:\/\//i.test(base) || !tpl.startsWith('/') || /\s/.test(tpl)) return '';
+  const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+  const out = [];
+  for (const seg of tpl.split('/')) {
+    if (!seg) continue;
+    const m = seg.match(segRe);
+    if (!m) {
+      out.push(seg);
+      continue;
+    }
+    const v = String(values?.[m[1]] ?? '').trim();
+    if (v) {
+      out.push(v.split('/').map((part) => encodeURIComponent(part)).join('/'));
+      continue;
+    }
+    if (m[3] === '?') continue;
+    return '';
+  }
+  return `${base}/${out.join('/')}`;
+}
+
+/** 从 example 反解参数预填值（表单默认值）：模板段与示例段按 / 对位取值。
+ *  尾部连续可选段在示例里被省略（如 :embed? 没填）时逐个剥离后对齐；
+ *  字面段不一致或段数仍不齐 → 回空对象（预填不全无伤，不猜）。 */
+export function reverseTemplateExample(template, example) {
+  const tplSegs = String(template || '').split('/').filter(Boolean);
+  const exSegs = String(example || '').split('?')[0].split('/').filter(Boolean);
+  const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+  const align = (tpl, ex) => {
+    if (tpl.length !== ex.length) return null;
+    const values = {};
+    for (let i = 0; i < tpl.length; i++) {
+      const m = tpl[i].match(segRe);
+      if (!m) {
+        if (tpl[i] !== ex[i]) return null; // 字面段不一致 = 不是同一路由的示例
+        continue;
+      }
+      if (!ex[i] || ex[i].startsWith(':')) return null;
+      values[m[1]] = decodeURIComponent(ex[i]);
+    }
+    return values;
+  };
+  if (tplSegs.length === exSegs.length) return align(tplSegs, exSegs) || {};
+  const t = [...tplSegs];
+  while (t.length > exSegs.length) {
+    const m = t[t.length - 1].match(segRe);
+    if (!m || m[3] !== '?') return {}; // 缺的不是可选段，不对位
+    t.pop();
+  }
+  return align(t, exSegs) || {};
+}
+
+/** description 截断（表单提示用，控产物体积）：超长截断加省略号 */
+export function truncateDesc(text, max = 200) {
+  const t = String(text || '').trim();
+  return t.length > max ? t.slice(0, max) + '…' : t;
+}
+
+/** RSSHub routes.json 原始数据 → 蒸馏快照（只留出版所需字段，8.5MB → 约 1.2MB 入库）。
+ *  全量命名空间/路由都留（不含筛选——筛选口径在 parseRssHubRoutes，可随报告迭代）。
+ *  ADR-0209 全参数化：路由级加回 parameters（表单说明）/ heat（排序）/ description 截断。 */
 export function distillRssHub(data) {
   const out = {};
   for (const [nsId, ns] of Object.entries(data || {})) {
@@ -184,6 +267,11 @@ export function distillRssHub(data) {
         example: String(r.example || ''),
         categories: Array.isArray(r.categories) ? r.categories.map((c) => String(c)).filter(Boolean) : [],
         features: { requireConfig: !!feat.requireConfig, requirePuppeteer: !!feat.requirePuppeteer, antiCrawler: !!feat.antiCrawler },
+        parameters: r.parameters && typeof r.parameters === 'object' && !Array.isArray(r.parameters)
+          ? Object.fromEntries(Object.entries(r.parameters).map(([k, v]) => [String(k), String(v)]))
+          : {},
+        heat: Number(r.heat) || 0,
+        desc: truncateDesc(r.description),
       };
     }
     out[nsId] = { name: String(ns.name || ''), url: String(ns.url || ''), heat: Number(ns.heat) || 0, routes };
@@ -192,13 +280,15 @@ export function distillRssHub(data) {
 }
 
 /**
- * 蒸馏快照 → 目录条目（ADR-0209 决策 2：三免全收——免 requireConfig/requirePuppeteer/
- * antiCrawler，example 存在且不含 `:参数` 占位；参数没填的地址不能直接订阅）。
- * 条目 url 用默认实例拼好（插件侧校验零改动），via 存路由路径作订阅时重拼素材。
+ * 蒸馏快照 → 目录条目（ADR-0209 全参数化，用户拍板 2026-09-27）：
+ * 三免（免 requireConfig/requirePuppeteer/antiCrawler）全收，**不再依赖 example**——
+ * 无参数路由开箱直订；带参数路由 via 存模板、parameters 作表单说明、example 作预填，
+ * 订阅 = 用户在表单里填自己的参数拼 URL（示例标本不当源卖）。
+ * 条目按路由 heat 降序（黄页浏览序 = 热度粗排）。
  */
 export function parseRssHubRoutes(data) {
   const entries = [];
-  const dropped = { needConfig: 0, needPuppeteer: 0, antiCrawler: 0, noExample: 0, paramExample: 0, malformed: 0 };
+  const dropped = { needConfig: 0, needPuppeteer: 0, antiCrawler: 0, malformed: 0 };
   if (!data || typeof data !== 'object') return { entries, dropped };
   for (const [nsId, ns] of Object.entries(data)) {
     if (!ns || typeof ns !== 'object' || !ns.routes || typeof ns.routes !== 'object') {
@@ -207,8 +297,15 @@ export function parseRssHubRoutes(data) {
     }
     const nsName = String(ns.name || nsId).trim() || nsId;
     const nsSite = String(ns.url || '').trim();
-    for (const r of Object.values(ns.routes)) {
+    for (const [routeKey, r] of Object.entries(ns.routes)) {
       if (!r || typeof r !== 'object') {
+        dropped.malformed++;
+        continue;
+      }
+      // 模板用 routes 的键：它是含 ns 前缀的完整路由（如 /81/81rc/:category{.+}?）；
+      // r.path 字段是省略 ns 的子路径（/81rc/...），拿它拼 url 会跨命名空间互相撞车
+      const template = String(routeKey || '').trim();
+      if (!template.startsWith('/')) {
         dropped.malformed++;
         continue;
       }
@@ -225,27 +322,30 @@ export function parseRssHubRoutes(data) {
         dropped.antiCrawler++;
         continue;
       }
-      const example = String(r.example || '').trim();
-      if (!example) {
-        dropped.noExample++;
-        continue;
-      }
-      if (example.split('/').some((seg) => seg.startsWith(':'))) {
-        dropped.paramExample++;
-        continue;
-      }
       const routeName = String(r.name || '').trim();
       const cats = Array.isArray(r.categories) ? r.categories.map((c) => String(c).trim()).filter(Boolean) : [];
-      entries.push({
-        url: joinRssHubUrl(RSS_HUB_DEFAULT_INSTANCE, example),
+      const example = String(r.example || '').trim();
+      const params = r.parameters && typeof r.parameters === 'object' ? r.parameters : {};
+      const entry = {
+        url: joinRssHubUrl(RSS_HUB_DEFAULT_INSTANCE, template),
         title: routeName ? `${nsName} · ${routeName}` : nsName,
         site: nsSite,
         tags: [nsId, ...cats],
         cats: mapRssHubCategories(cats),
-        via: example,
-      });
+        via: template,
+        heat: Number(r.heat) || 0,
+      };
+      // 带参数路由：表单素材三件套（示例预填 / 参数说明 / 描述提示）。
+      // example 上游偶见未编码的空格/查询串（如 linkedin 职位示例），脏形状不预填
+      if (isParametrizedTemplate(template)) {
+        if (example && /^\/\S*$/.test(example)) entry.viaExample = example;
+        if (Object.keys(params).length > 0) entry.params = params;
+        if (r.desc) entry.desc = r.desc;
+      }
+      entries.push(entry);
     }
   }
+  entries.sort((a, b) => b.heat - a.heat);
   return { entries, dropped };
 }
 
@@ -279,6 +379,12 @@ export function buildCatalog({ entries, updatedAt, version = 1, upstreams = UPST
     const cats = Array.isArray(e.cats) && e.cats.length > 0 ? e.cats.map((c) => String(c).trim()).filter(Boolean) : mapCategories(tags);
     const feed = { url, title, site, tags, cats: cats.length > 0 ? cats : [FALLBACK_CATEGORY] };
     if (e.via) feed.via = String(e.via).trim();
+    // 全参数化表单素材（ADR-0209）：示例预填路径 / 参数说明表 / 截断描述——仅带参数路由携带
+    if (e.viaExample) feed.viaExample = String(e.viaExample).trim();
+    if (e.params && typeof e.params === 'object' && !Array.isArray(e.params) && Object.keys(e.params).length > 0) {
+      feed.params = Object.fromEntries(Object.entries(e.params).map(([k, v]) => [String(k).trim(), String(v)]).filter(([k]) => k));
+    }
+    if (e.desc) feed.desc = String(e.desc).trim();
     feeds.push(feed);
   }
   return {

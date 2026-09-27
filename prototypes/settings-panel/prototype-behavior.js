@@ -1,4 +1,4 @@
-/* 源指纹 2cc0b44787873711 · 仓内输入 274 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1441ce5695f3149c · 仓内输入 274 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -27357,6 +27357,67 @@ ${it.text}`).join("\n"));
     if (!/^https?:\/\//i.test(base) || !p.startsWith("/") || /\s/.test(p)) return "";
     return base + p;
   }
+  function parseRouteTemplate(template) {
+    const params = [];
+    const re = /:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?/g;
+    let m;
+    while (m = re.exec(String(template || ""))) params.push({ name: m[1], optional: m[3] === "?" });
+    return params;
+  }
+  function isParametrizedRoute(template) {
+    return parseRouteTemplate(template).length > 0;
+  }
+  function buildRouteUrl(instance, template, values) {
+    var _a2;
+    const base = String(instance || "").trim().replace(/\/+$/, "");
+    const tpl = String(template || "").trim();
+    if (!/^https?:\/\//i.test(base) || !tpl.startsWith("/") || /\s/.test(tpl)) return "";
+    const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+    const out = [];
+    for (const seg of tpl.split("/")) {
+      if (!seg) continue;
+      const m = seg.match(segRe);
+      if (!m) {
+        out.push(seg);
+        continue;
+      }
+      const v = String((_a2 = values == null ? void 0 : values[m[1]]) != null ? _a2 : "").trim();
+      if (v) {
+        out.push(v.split("/").map((part) => encodeURIComponent(part)).join("/"));
+        continue;
+      }
+      if (m[3] === "?") continue;
+      return "";
+    }
+    return `${base}/${out.join("/")}`;
+  }
+  function reverseTemplateExample(template, example) {
+    const tplSegs = String(template || "").split("/").filter(Boolean);
+    const exSegs = String(example || "").split("?")[0].split("/").filter(Boolean);
+    const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
+    const align = (tpl, ex) => {
+      if (tpl.length !== ex.length) return null;
+      const values = {};
+      for (let i = 0; i < tpl.length; i++) {
+        const m = tpl[i].match(segRe);
+        if (!m) {
+          if (tpl[i] !== ex[i]) return null;
+          continue;
+        }
+        if (!ex[i] || ex[i].startsWith(":")) return null;
+        values[m[1]] = decodeURIComponent(ex[i]);
+      }
+      return values;
+    };
+    if (tplSegs.length === exSegs.length) return align(tplSegs, exSegs) || {};
+    const t = [...tplSegs];
+    while (t.length > exSegs.length) {
+      const m = t[t.length - 1].match(segRe);
+      if (!m || m[3] !== "?") return {};
+      t.pop();
+    }
+    return align(t, exSegs) || {};
+  }
   function resolveCatalogFeedUrl(feed, instance) {
     if (!feed.via) return String(feed.url || "").trim();
     return joinRssHubUrl(instance, feed.via) || String(feed.url).trim();
@@ -27406,6 +27467,19 @@ ${it.text}`).join("\n"));
         if (!/^\/\S*$/.test(ff.via)) return null;
         feed.via = ff.via;
       }
+      if (typeof ff.viaExample === "string" && ff.viaExample) {
+        if (!/^\/\S*$/.test(ff.viaExample)) return null;
+        feed.viaExample = ff.viaExample;
+      }
+      if (ff.params && typeof ff.params === "object" && !Array.isArray(ff.params)) {
+        const params = {};
+        for (const [k, v] of Object.entries(ff.params)) {
+          if (!k.trim() || typeof v !== "string") return null;
+          params[k.trim()] = v;
+        }
+        if (Object.keys(params).length > 0) feed.params = params;
+      }
+      if (typeof ff.desc === "string" && ff.desc) feed.desc = ff.desc;
       feeds.push(feed);
     }
     return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
@@ -42681,6 +42755,17 @@ ${c.trim()}
   async function addRssFeedUrl(raw, box, opts) {
     const input = String(raw || "").trim();
     if (!input) return;
+    if (input.startsWith("/") && !/^https?:\/\//i.test(input)) {
+      const catalog = await loadRssCatalog(getApp());
+      const hit = catalog == null ? void 0 : catalog.feeds.find((f) => f.via === input);
+      if (!hit) {
+        notice("源库未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选", "error");
+        return;
+      }
+      const st = await readDataSourceState();
+      openRssRouteFormModal({ feed: hit, instance: st.rsshubInstance, onSubscribed: opts.onChanged });
+      return;
+    }
     const url = normalizeRssFeedUrl(input);
     if (!url) {
       notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
@@ -42714,6 +42799,156 @@ ${c.trim()}
         notifyWriteFailed("添加 RSS 源");
         return;
     }
+  }
+  function routeFormPreview(instance, feed, values) {
+    const missing = parseRouteTemplate(feed.via || "").filter((p) => !p.optional && !String(values[p.name] || "").trim()).map((p) => p.name);
+    return { url: missing.length ? "" : buildRouteUrl(instance, feed.via || "", values), missing };
+  }
+  function openRssRouteFormModal(opts) {
+    var _a2, _b2;
+    if (rssRouteOpen || document.getElementById("bz-rss-route-mask")) return;
+    const { feed } = opts;
+    if (!feed.via) return;
+    rssRouteOpen = true;
+    let handle = null;
+    let stillBtn = null;
+    function close() {
+      rssRouteClose = null;
+      mask.remove();
+      popup.remove();
+      if (handle) handle.unregister();
+      rssRouteOpen = false;
+    }
+    const { mask, popup, registerClose } = createOverlay({
+      maskId: "bz-rss-route-mask",
+      popupId: "bz-rss-route-popup",
+      maxWidth: 560,
+      onMaskClick: close
+    });
+    rssRouteClose = close;
+    registerClose(close);
+    const instance = (_a2 = normalizeRsshubInstance(opts.instance)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE;
+    const templateParams = parseRouteTemplate(feed.via);
+    const defaults = feed.viaExample ? reverseTemplateExample(feed.via, feed.viaExample) : {};
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = `订阅 RSSHub 路由 · ${feed.title || feed.url}`;
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content bz-rss-route";
+    const tpl = document.createElement("div");
+    tpl.className = "bz-rss-route-tpl";
+    tpl.textContent = feed.via;
+    content.appendChild(tpl);
+    if (feed.desc) {
+      const desc = document.createElement("div");
+      desc.className = "bz-rss-route-desc";
+      desc.textContent = feed.desc;
+      content.appendChild(desc);
+    }
+    const values = {};
+    const preview = document.createElement("div");
+    preview.className = "bz-rss-route-preview";
+    const renderPreview = () => {
+      const r = routeFormPreview(instance, feed, values);
+      preview.textContent = r.url || `必填参数：${r.missing.join("、")}`;
+      preview.classList.toggle("is-missing", !r.url);
+      confirmBtn.disabled = !r.url;
+      if (stillBtn) stillBtn.disabled = !r.url;
+    };
+    for (const p of templateParams) {
+      const field = document.createElement("div");
+      field.className = "bz-rss-route-field";
+      const label = document.createElement("label");
+      label.className = "bz-rss-route-label";
+      label.textContent = p.optional ? `${p.name}（可选）` : p.name;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "bz-rss-route-input";
+      input.placeholder = ((_b2 = feed.params) == null ? void 0 : _b2[p.name]) || "参数值";
+      input.value = defaults[p.name] || "";
+      values[p.name] = input.value;
+      input.addEventListener("input", () => {
+        values[p.name] = input.value;
+        renderPreview();
+      });
+      field.append(label, input);
+      content.appendChild(field);
+    }
+    const inst = document.createElement("div");
+    inst.className = "bz-rss-route-inst";
+    inst.textContent = `实例：${instance}（可在设置 · 剪藏本 · 数据源里修改；公共实例部分路由可能拉不到，自建更稳）`;
+    content.appendChild(inst);
+    const previewLabel = document.createElement("div");
+    previewLabel.className = "bz-rss-route-label";
+    previewLabel.textContent = "订阅地址预览";
+    content.appendChild(previewLabel);
+    content.appendChild(preview);
+    const btns = document.createElement("div");
+    btns.className = "bz-rss-route-btns";
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = "bz-sp-btn";
+    confirmBtn.textContent = "试拉并订阅";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "bz-sp-btn";
+    cancelBtn.textContent = "取消";
+    cancelBtn.addEventListener("click", close);
+    btns.append(confirmBtn, cancelBtn);
+    content.appendChild(btns);
+    const doSubscribe = async (url, title2) => {
+      const outcome = await addRssFeed(url, title2 || void 0);
+      if (outcome === "added" || outcome === "exists") {
+        notice(outcome === "exists" ? "该 RSS 源已在订阅列表中" : `已订阅 ${title2 || url}`, outcome === "exists" ? "info" : "success");
+        opts.onSubscribed();
+        close();
+        return true;
+      }
+      if (outcome === "invalid") notice("拼出的地址不合法，请检查参数值", "error");
+      else notifyWriteFailed(`订阅 ${title2 || url}`);
+      return false;
+    };
+    confirmBtn.addEventListener("click", () => {
+      const r = routeFormPreview(instance, feed, values);
+      if (!r.url || confirmBtn.disabled) return;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = "试拉中…";
+      void (async () => {
+        const fetched = await fetchRssFeedTitle(r.url);
+        if (fetched !== null) {
+          await doSubscribe(r.url, fetched || feed.title);
+          return;
+        }
+        confirmBtn.textContent = "试拉并订阅";
+        confirmBtn.disabled = false;
+        if (!stillBtn) {
+          notice("试拉失败：参数可能不对，或该路由在当前实例上不可用", "error");
+          stillBtn = document.createElement("button");
+          stillBtn.type = "button";
+          stillBtn.className = "bz-sp-btn";
+          stillBtn.textContent = "仍要订阅";
+          stillBtn.addEventListener("click", () => {
+            const rr = routeFormPreview(instance, feed, values);
+            if (rr.url) void doSubscribe(rr.url, feed.title);
+          });
+          btns.insertBefore(stillBtn, cancelBtn);
+        }
+      })();
+    });
+    renderPreview();
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    handle = escManager.register("bz-rss-route", {
+      isVisible: () => true,
+      close
+    });
   }
   function createRssCatalogPane(root, deps) {
     let catalog = null;
@@ -42783,11 +43018,20 @@ ${c.trim()}
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "bz-sp-btn bz-rss-cat-sub";
+      const parametrized = !!feed.via && isParametrizedRoute(feed.via);
       const finalUrl = resolveCatalogFeedUrl(feed, instance);
-      const isSub = subscribed3.has(finalUrl);
-      btn.textContent = isSub ? "已订阅" : "订阅";
+      const isSub = !parametrized && subscribed3.has(finalUrl);
+      btn.textContent = parametrized ? "填参数订阅" : isSub ? "已订阅" : "订阅";
       btn.disabled = isSub;
-      if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
+      if (!isSub) {
+        btn.addEventListener("click", () => {
+          if (parametrized) {
+            openRssRouteFormModal({ feed, instance, onSubscribed: deps.onChanged });
+            return;
+          }
+          void subscribeFeed(feed, btn);
+        });
+      }
       row.append(info, tags, btn);
       return row;
     };
@@ -43030,7 +43274,7 @@ ${c.trim()}
     upManagerClose == null ? void 0 : upManagerClose();
     rssManagerClose == null ? void 0 : rssManagerClose();
   }
-  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose, RSS_CAT_RENDER_LIMIT, RSS_CAT_SEARCH_DEBOUNCE_MS;
+  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose, RSS_CAT_RENDER_LIMIT, RSS_CAT_SEARCH_DEBOUNCE_MS, rssRouteOpen, rssRouteClose;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_http();
@@ -43052,6 +43296,8 @@ ${c.trim()}
       rssManagerClose = null;
       RSS_CAT_RENDER_LIMIT = 200;
       RSS_CAT_SEARCH_DEBOUNCE_MS = 200;
+      rssRouteOpen = false;
+      rssRouteClose = null;
     }
   });
 

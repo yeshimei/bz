@@ -24,8 +24,9 @@ import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
 import {
-  catalogCategoryCounts, downloadRssCatalog, feedDomainOf, filterCatalogFeeds,
-  loadRssCatalog, resolveCatalogFeedUrl, subscribedUrlSet, RSS_CATALOG_FILE, RSS_HUB_DEFAULT_INSTANCE,
+  buildRouteUrl, catalogCategoryCounts, downloadRssCatalog, feedDomainOf, filterCatalogFeeds,
+  isParametrizedRoute, loadRssCatalog, parseRouteTemplate, resolveCatalogFeedUrl,
+  reverseTemplateExample, subscribedUrlSet, RSS_CATALOG_FILE, RSS_HUB_DEFAULT_INSTANCE,
   type RssCatalog, type RssCatalogFeed,
 } from '../core/rss-catalog';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
@@ -502,10 +503,24 @@ export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): Setting
   };
 }
 
-/** 添加 RSS 源动作：url 归一 → 去重 → 试拉校验预取名 → 入库并回填字盒 */
+/** 添加 RSS 源动作：url 归一 → 去重 → 试拉校验预取名 → 入库并回填字盒。
+ *  ADR-0209 路由识别：`/` 开头的输入视为 RSSHub 路由路径——在源库里按 via 匹配模板，
+ *  命中即开参数表单（弹窗内完成订阅，本框不动）；未命中提示（不收源库外的裸路由，
+ *  拼完整 URL 的能力本来就有——粘贴完整地址照常走下方流程）。 */
 async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: RssManagerSchemaOptions): Promise<void> {
   const input = String(raw || '').trim();
   if (!input) return;
+  if (input.startsWith('/') && !/^https?:\/\//i.test(input)) {
+    const catalog = await loadRssCatalog(getApp());
+    const hit = catalog?.feeds.find((f) => f.via === input);
+    if (!hit) {
+      notice('源库未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选', 'error');
+      return;
+    }
+    const st = await readDataSourceState();
+    openRssRouteFormModal({ feed: hit, instance: st.rsshubInstance, onSubscribed: opts.onChanged });
+    return;
+  }
   const url = normalizeRssFeedUrl(input);
   if (!url) {
     notice('无效的 RSS 地址，请粘贴 http/https 开头的订阅链接', 'error');
@@ -551,6 +566,196 @@ let rssManagerClose: (() => void) | null = null;
 const RSS_CAT_RENDER_LIMIT = 200;
 /** 源库搜索防抖（敲键不逐字全列表重算） */
 const RSS_CAT_SEARCH_DEBOUNCE_MS = 200;
+
+// ===== RSSHub 路由参数表单（ADR-0209 全参数化：带参数路由的订阅 = 填自己的参数拼 URL）=====
+// 自绘小表单（独立 overlay，同 UP 主/RSS 管理范式）：参数说明与示例预填来自源库条目
+// （params/viaExample/desc，出版管线蒸馏），地址预览实时拼，试拉成功才入库（失败可「仍要订阅」——
+// 公共实例上游挂不代表参数错）。
+
+/** 路由表单弹窗入参：feed 为源库条目（带参数 via）；instance 为当前 RSSHub 实例地址 */
+export interface RssRouteFormOptions {
+  feed: RssCatalogFeed;
+  instance: string;
+  onSubscribed: () => void;
+}
+
+/** C25：路由表单单例标志（语义同 rssManagerOpen） */
+let rssRouteOpen = false;
+/** close 句柄外提（CB10/A1）：域卸载兜底可达 */
+let rssRouteClose: (() => void) | null = null;
+
+/** 必填参数缺 → null；拼出完整地址 */
+function routeFormPreview(instance: string, feed: RssCatalogFeed, values: Record<string, string>): { url: string; missing: string[] } {
+  const missing = parseRouteTemplate(feed.via || '')
+    .filter((p) => !p.optional && !String(values[p.name] || '').trim())
+    .map((p) => p.name);
+  return { url: missing.length ? '' : buildRouteUrl(instance, feed.via || '', values), missing };
+}
+
+/**
+ * RSSHub 路由参数表单弹窗（导出供 UI 测试直驱；生产由源库行内「填参数订阅」与添加框路由识别消费）。
+ * 订阅=拷贝表单拼出的 URL（黄页口径不变）；试拉校验复用 fetchRssFeedTitle（10s，feed 结构标记）。
+ */
+export function openRssRouteFormModal(opts: RssRouteFormOptions): void {
+  if (rssRouteOpen || document.getElementById('bz-rss-route-mask')) return;
+  const { feed } = opts;
+  if (!feed.via) return;
+  rssRouteOpen = true;
+  let handle: { unregister(): void } | null = null;
+  let stillBtn: HTMLButtonElement | null = null;
+  function close(): void {
+    rssRouteClose = null;
+    mask.remove();
+    popup.remove();
+    if (handle) handle.unregister();
+    rssRouteOpen = false;
+  }
+  const { mask, popup, registerClose } = createOverlay({
+    maskId: 'bz-rss-route-mask',
+    popupId: 'bz-rss-route-popup',
+    maxWidth: 560,
+    onMaskClick: close,
+  });
+  rssRouteClose = close;
+  registerClose(close);
+
+  const instance = normalizeRsshubInstance(opts.instance) ?? RSS_HUB_DEFAULT_INSTANCE;
+  const templateParams = parseRouteTemplate(feed.via);
+  const defaults = feed.viaExample ? reverseTemplateExample(feed.via, feed.viaExample) : {};
+
+  const header = document.createElement('div');
+  header.className = 'bz-settings-header';
+  const title = document.createElement('h3');
+  title.className = 'bz-settings-title';
+  title.textContent = `订阅 RSSHub 路由 · ${feed.title || feed.url}`;
+  header.appendChild(title);
+
+  const content = document.createElement('div');
+  content.className = 'bz-settings-content bz-rss-route';
+
+  const tpl = document.createElement('div');
+  tpl.className = 'bz-rss-route-tpl';
+  tpl.textContent = feed.via;
+  content.appendChild(tpl);
+
+  if (feed.desc) {
+    const desc = document.createElement('div');
+    desc.className = 'bz-rss-route-desc';
+    desc.textContent = feed.desc;
+    content.appendChild(desc);
+  }
+
+  const values: Record<string, string> = {};
+  const preview = document.createElement('div');
+  preview.className = 'bz-rss-route-preview';
+  const renderPreview = (): void => {
+    const r = routeFormPreview(instance, feed, values);
+    preview.textContent = r.url || `必填参数：${r.missing.join('、')}`;
+    preview.classList.toggle('is-missing', !r.url);
+    confirmBtn.disabled = !r.url;
+    if (stillBtn) stillBtn.disabled = !r.url;
+  };
+
+  for (const p of templateParams) {
+    const field = document.createElement('div');
+    field.className = 'bz-rss-route-field';
+    const label = document.createElement('label');
+    label.className = 'bz-rss-route-label';
+    label.textContent = p.optional ? `${p.name}（可选）` : p.name;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'bz-rss-route-input';
+    input.placeholder = feed.params?.[p.name] || '参数值';
+    input.value = defaults[p.name] || '';
+    values[p.name] = input.value;
+    input.addEventListener('input', () => {
+      values[p.name] = input.value;
+      renderPreview();
+    });
+    field.append(label, input);
+    content.appendChild(field);
+  }
+
+  const inst = document.createElement('div');
+  inst.className = 'bz-rss-route-inst';
+  inst.textContent = `实例：${instance}（可在设置 · 剪藏本 · 数据源里修改；公共实例部分路由可能拉不到，自建更稳）`;
+  content.appendChild(inst);
+
+  const previewLabel = document.createElement('div');
+  previewLabel.className = 'bz-rss-route-label';
+  previewLabel.textContent = '订阅地址预览';
+  content.appendChild(previewLabel);
+  content.appendChild(preview);
+
+  const btns = document.createElement('div');
+  btns.className = 'bz-rss-route-btns';
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'bz-sp-btn';
+  confirmBtn.textContent = '试拉并订阅';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'bz-sp-btn';
+  cancelBtn.textContent = '取消';
+  cancelBtn.addEventListener('click', close);
+  btns.append(confirmBtn, cancelBtn);
+  content.appendChild(btns);
+
+  /** 入库 + 收尾（试拉成功与「仍要订阅」共用） */
+  const doSubscribe = async (url: string, title: string): Promise<boolean> => {
+    const outcome = await addRssFeed(url, title || undefined);
+    if (outcome === 'added' || outcome === 'exists') {
+      notice(outcome === 'exists' ? '该 RSS 源已在订阅列表中' : `已订阅 ${title || url}`, outcome === 'exists' ? 'info' : 'success');
+      opts.onSubscribed();
+      close();
+      return true;
+    }
+    if (outcome === 'invalid') notice('拼出的地址不合法，请检查参数值', 'error');
+    else notifyWriteFailed(`订阅 ${title || url}`);
+    return false;
+  };
+
+  confirmBtn.addEventListener('click', () => {
+    const r = routeFormPreview(instance, feed, values);
+    if (!r.url || confirmBtn.disabled) return;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '试拉中…';
+    void (async () => {
+      const fetched = await fetchRssFeedTitle(r.url);
+      if (fetched !== null) {
+        await doSubscribe(r.url, fetched || feed.title); // feed 自带标题优先，回退目录名
+        return;
+      }
+      confirmBtn.textContent = '试拉并订阅';
+      confirmBtn.disabled = false;
+      if (!stillBtn) {
+        notice('试拉失败：参数可能不对，或该路由在当前实例上不可用', 'error');
+        stillBtn = document.createElement('button');
+        stillBtn.type = 'button';
+        stillBtn.className = 'bz-sp-btn';
+        stillBtn.textContent = '仍要订阅';
+        stillBtn.addEventListener('click', () => {
+          const rr = routeFormPreview(instance, feed, values);
+          if (rr.url) void doSubscribe(rr.url, feed.title);
+        });
+        btns.insertBefore(stillBtn, cancelBtn);
+      }
+    })();
+  });
+  renderPreview();
+
+  popup.appendChild(header);
+  popup.appendChild(content);
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+
+  handle = escManager.register('bz-rss-route', {
+    isVisible: () => true,
+    close,
+  });
+}
 
 /** 源库页签面板控制器（弹窗内单实例；导出供 UI 测试直驱） */
 export interface RssCatalogPane {
@@ -644,12 +849,22 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'bz-sp-btn bz-rss-cat-sub';
-    // 已订阅按重拼后的最终 URL 匹配（黄页口径的地基是「订阅时拷进去的那个地址」）
+    const parametrized = !!feed.via && isParametrizedRoute(feed.via);
+    // 已订阅按重拼后的最终 URL 匹配（黄页口径的地基是「订阅时拷进去的那个地址」）；
+    // 带参数条目的订阅地址由表单产出（用户参数各异），没有单一「已订阅态」，恒可再订
     const finalUrl = resolveCatalogFeedUrl(feed, instance);
-    const isSub = subscribed.has(finalUrl);
-    btn.textContent = isSub ? '已订阅' : '订阅';
+    const isSub = !parametrized && subscribed.has(finalUrl);
+    btn.textContent = parametrized ? '填参数订阅' : isSub ? '已订阅' : '订阅';
     btn.disabled = isSub;
-    if (!isSub) btn.addEventListener('click', () => void subscribeFeed(feed, btn));
+    if (!isSub) {
+      btn.addEventListener('click', () => {
+        if (parametrized) {
+          openRssRouteFormModal({ feed, instance, onSubscribed: deps.onChanged });
+          return;
+        }
+        void subscribeFeed(feed, btn);
+      });
+    }
     row.append(info, tags, btn);
     return row;
   };

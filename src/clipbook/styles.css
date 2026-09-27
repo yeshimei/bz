@@ -1430,5 +1430,20 @@
 
 .bz-rss-cat-more, .bz-rss-cat-none { padding: 12px; font-size: var(--font-ui-small); color: var(--text-faint); text-align: center; }
 
+/* RSSHub 路由参数表单（ADR-0209 全参数化） */
+.bz-rss-route { display: flex; flex-direction: column; gap: 10px; }
+.bz-rss-route-tpl { font-family: var(--font-monospace); font-size: var(--font-ui-smaller);
+  color: var(--text-muted); background: var(--background-secondary); border-radius: 6px; padding: 6px 10px;
+  word-break: break-all; }
+.bz-rss-route-desc { font-size: var(--font-ui-small); color: var(--text-muted); line-height: 1.5; }
+.bz-rss-route-field { display: flex; flex-direction: column; gap: 4px; }
+.bz-rss-route-label { font-size: var(--font-ui-small); color: var(--text-normal); }
+.bz-rss-route-input { width: 100%; }
+.bz-rss-route-inst { font-size: var(--font-ui-smaller); color: var(--text-faint); line-height: 1.5; }
+.bz-rss-route-preview { font-family: var(--font-monospace); font-size: var(--font-ui-smaller);
+  color: var(--text-success, var(--text-normal)); word-break: break-all; }
+.bz-rss-route-preview.is-missing { color: var(--text-faint); }
+.bz-rss-route-btns { display: flex; gap: 8px; justify-content: flex-end; }
+
 .bz-rss-cat-empty { padding: 28px 12px; text-align: center; }
 .bz-rss-cat-empty-text { font-size: var(--font-ui-small); color: var(--text-muted); margin: 0 0 14px; }
