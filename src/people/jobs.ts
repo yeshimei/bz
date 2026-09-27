@@ -12,8 +12,8 @@
  * 阶段机（469 工具段 + 470 图片描述段 / ADR-0196）：
  * preprocess（bz-face prep：媒体导出→派生档→图片关联→语音转写）→ describe（插件 AI 段：图片
  * 描述——确认门一次，跳过 ≠ 取消；批级断点，逐批合并回聊天仓派生 text）→ chunked → extracting
- * → person（其人）→ bond（我们）→ chronicle（时间线）→ done。零媒体 / 零图片的联系人按决策 9
- * 自动跳过对应段且不弹确认。
+ * → person（其人）→ bond（我们）→ chronicle（时间线 + 人物档案提炼，issue 487；档案是次要
+ * 产物，失败不阻断）→ done。零媒体 / 零图片的联系人按决策 9 自动跳过对应段且不弹确认。
  *
  * 断点续跑判定（466 / ADR-0197 决策 5）：指纹 = 组装素材的**内容哈希**（条数 + 逐条 ts|归属|文本
  * 链式哈希）。resume(talker) 重读聊天仓（保库记录 store 段）重算指纹：一致 → chunkMessages
@@ -57,12 +57,16 @@ import {
   buildBondPrompt,
   buildChroniclePrompt,
   buildPersonPrompt,
+  buildProfileExtractPrompt,
   buildProfileNote,
   chunkMetaOf,
   chunkMessages,
   evenlySample,
   extractBatch,
+  knownProfileText,
   mergeBatches,
+  parseProfileReply,
+  profileExtractMaterial,
   sampleWarnOf,
   toPortraitMaterial,
   DEFAULTS,
@@ -162,6 +166,11 @@ export interface PersonJob {
   /** 卷二《我们》成品（issue 455） */
   bond?: string;
   chronicle?: string;
+  /**
+   * 人物档案提炼（issue 487）：时间线之后按素材回填的档案建议——ui 落盘时经 fillProfile
+   * **只填空白字段**，手填值绝不覆盖。提炼失败或素材不支撑时缺省（不阻断主流程）。
+   */
+  aiProfile?: PersonProfile;
   /** 合并去重后的全量事件（随手记并入由 ui 层写回时处理） */
   events?: FaceEvent[];
   quotes?: QuoteItem[];
@@ -1519,11 +1528,29 @@ async function runJob(job: PersonJob): Promise<void> {
     }
     if (gone(job)) return;
 
+    // 6.5 人物档案提炼（issue 487，时间线之后的次要产物）：按合并素材回填档案建议，
+    //     stage 仍报 chronicle（不新增阶段）；四类素材（事件 / 原话 / 场景 / 特质）全空则整段跳过；
+    //     任何失败不阻断画谱主流程——job.aiProfile 拿不到就留空。手填档案以「已知档案」进
+    //     prompt 声明不要覆盖；落盘侧（ui.persistJobDone）再用 fillProfile 只填空白兜一道。
+    if (merged.events.length || merged.quotes.length || merged.moments.length || merged.traits.length) {
+      await finish({ message: '时间线完成，正在提炼人物档案…' });
+      try {
+        const aiProfile = parseProfileReply(
+          await asks.portrait(buildProfileExtractPrompt(job.name, profileExtractMaterial(merged), knownProfileText(existing?.profile)))
+        );
+        if (Object.keys(aiProfile).length) job.aiProfile = aiProfile;
+      } catch (e) {
+        console.warn('[people] 档案提炼失败（不阻断画谱）:', e);
+      }
+    }
+    if (gone(job)) return;
+
     // 7. 终局：产物挂 job（people.json 写回由 ui 层订阅 done 完成）
     await finish({
       stage: 'done',
       status: 'done',
       chronicle,
+      aiProfile: job.aiProfile,
       events: merged.events,
       quotes: material.quotes,
       material: {

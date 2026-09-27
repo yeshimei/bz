@@ -89,8 +89,9 @@ export interface ThreadItem {
 }
 
 /**
- * 人物档案（手动填写）。ADR-0191 背景即写明「聊天记录是素材来源**之一**而非全部」，
- * 本结构承载聊天之外的信息：社交账号、生日、怎么认识的、标签、备注。
+ * 人物档案（手动填写；issue 487 起扩展 10 个可选维度并支持画谱时 AI 按证据回填）。
+ * ADR-0191 背景即写明「聊天记录是素材来源**之一**而非全部」，
+ * 本结构承载聊天之外的信息：社交账号、生日、怎么认识的、标签、备注等。
  */
 export interface PersonProfile {
   /** 社交账号：平台 + 账号（微信 / QQ / 微博 / 小红书 / Telegram…） */
@@ -109,6 +110,26 @@ export interface PersonProfile {
   tags?: string[];
   /** 一句话备注 */
   note?: string;
+  /** 性格特点（一段话；issue 487） */
+  personality?: string;
+  /** 兴趣爱好（issue 487） */
+  interests?: string[];
+  /** 作息 / 生活习惯（issue 487） */
+  habits?: string;
+  /** 近况（issue 487） */
+  recentLife?: string;
+  /** 称呼偏好（issue 487） */
+  nickname?: string;
+  /** 口头禅 / 代表句（issue 487） */
+  quote?: string;
+  /** 喜欢：话题 / 送礼参考（issue 487） */
+  likes?: string[];
+  /** 反感 / 雷点（issue 487） */
+  dislikes?: string[];
+  /** 提到的身边人：谁 + 关系（issue 487） */
+  relationships?: Array<{ who: string; relation: string }>;
+  /** 重要日子：日子 + 是什么（issue 487） */
+  importantDates?: Array<{ date: string; what: string }>;
 }
 
 /** 随手记的一笔（手动事件；重画画像时与导入提炼的事件合并） */

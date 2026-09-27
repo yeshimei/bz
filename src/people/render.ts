@@ -770,14 +770,21 @@ export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<Fo
   return book;
 }
 
-/** 档案是否至少填了一项（决定档案折内容） */
+/** 档案是否至少填了一项（决定档案折内容；issue 487 扩十维后同步覆盖） */
 export function profileFilled(prof: PersonProfile | undefined): boolean {
   if (!prof) return false;
   return Boolean(
     (prof.socials && prof.socials.length) ||
     (prof.tags && prof.tags.length) ||
+    (prof.interests && prof.interests.length) ||
+    (prof.likes && prof.likes.length) ||
+    (prof.dislikes && prof.dislikes.length) ||
+    (prof.relationships && prof.relationships.length) ||
+    (prof.importantDates && prof.importantDates.length) ||
     (prof.birthday ?? '').trim() || (prof.metVia ?? '').trim() || (prof.metAt ?? '').trim() ||
-    (prof.hometown ?? '').trim() || (prof.job ?? '').trim() || (prof.note ?? '').trim()
+    (prof.hometown ?? '').trim() || (prof.job ?? '').trim() || (prof.note ?? '').trim() ||
+    (prof.personality ?? '').trim() || (prof.habits ?? '').trim() || (prof.recentLife ?? '').trim() ||
+    (prof.nickname ?? '').trim() || (prof.quote ?? '').trim()
   );
 }
 
@@ -958,7 +965,7 @@ export function kindChips(kinds: Array<[string, number]>): HTMLElement {
 
 // ---------------- 档案与随手记（markup） ----------------
 
-/** 档案展示卡：只列填过的字段 */
+/** 档案展示卡：只列填过的字段（issue 487 扩十维，顺序与编辑卡一致） */
 export function profileView(prof: PersonProfile | undefined): HTMLElement {
   const rows: HTMLElement[] = [];
   const addRow = (label: string, value: string) => {
@@ -967,6 +974,7 @@ export function profileView(prof: PersonProfile | undefined): HTMLElement {
       el('span', 'bz-people-prof-value', text(value)),
     ]));
   };
+  const listText = (arr?: string[]) => (arr ?? []).filter(Boolean).join('、');
   if (prof?.socials?.length) {
     rows.push(el('div', 'bz-people-prof-row', [
       el('span', 'bz-people-prof-label', text('社交账号')),
@@ -974,10 +982,30 @@ export function profileView(prof: PersonProfile | undefined): HTMLElement {
     ]));
   }
   if (prof?.birthday?.trim()) addRow('生日', prof.birthday.trim());
+  if (prof?.nickname?.trim()) addRow('称呼', prof.nickname.trim());
   if (prof?.metVia?.trim()) addRow('认识方式', prof.metVia.trim());
   if (prof?.metAt?.trim()) addRow('认识时间', prof.metAt.trim());
   if (prof?.hometown?.trim()) addRow('家乡 / 现居', prof.hometown.trim());
   if (prof?.job?.trim()) addRow('职业', prof.job.trim());
+  if (prof?.personality?.trim()) addRow('性格', prof.personality.trim());
+  if (prof?.interests?.length) addRow('兴趣爱好', listText(prof.interests));
+  if (prof?.habits?.trim()) addRow('作息 / 习惯', prof.habits.trim());
+  if (prof?.quote?.trim()) addRow('口头禅', prof.quote.trim());
+  if (prof?.likes?.length) addRow('喜欢', listText(prof.likes));
+  if (prof?.dislikes?.length) addRow('反感 / 雷点', listText(prof.dislikes));
+  if (prof?.recentLife?.trim()) addRow('近况', prof.recentLife.trim());
+  if (prof?.relationships?.length) {
+    addRow('身边人', prof.relationships
+      .map((r) => (r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation))
+      .filter(Boolean)
+      .join('、'));
+  }
+  if (prof?.importantDates?.length) {
+    addRow('重要日子', prof.importantDates
+      .map((d) => [d.date, d.what].filter(Boolean).join(' '))
+      .filter(Boolean)
+      .join('、'));
+  }
   if (prof?.tags?.length) {
     rows.push(el('div', 'bz-people-prof-row', [
       el('span', 'bz-people-prof-label', text('标签')),
@@ -1010,6 +1038,24 @@ export function socialRow(platform: string, handle: string): HTMLElement {
   ]);
 }
 
+/** 身边人行（issue 487：复用 socials 的行模式与 data 钩子风格）：who + relation */
+export function relationRow(who: string, relation: string): HTMLElement {
+  return el('div', 'bz-people-prof-social-row', [
+    profInput(who, '称呼（如 老妈）', ['data-people-prof-rel-who', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
+    profInput(relation, '关系（如 母亲）', ['data-people-prof-rel-relation', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
+    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-rel-del': '', 'aria-label': '删除这条身边人' }),
+  ]);
+}
+
+/** 重要日子行（issue 487：复用 socials 的行模式与 data 钩子风格）：date + what */
+export function dateRow(date: string, what: string): HTMLElement {
+  return el('div', 'bz-people-prof-social-row', [
+    profInput(date, '日子（如 05-20 / 每年立冬）', ['data-people-prof-date-date', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
+    profInput(what, '是什么日子', ['data-people-prof-date-what', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
+    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-date-del': '', 'aria-label': '删除这条重要日子' }),
+  ]);
+}
+
 export function tagChip(t: string): HTMLElement {
   return el('span', 'bz-people-prof-tag', [
     el('span', 'bz-people-prof-tag-text', text(t)),
@@ -1017,12 +1063,18 @@ export function tagChip(t: string): HTMLElement {
   ]);
 }
 
-/** 档案编辑卡：行内增删只动 DOM，点「保存档案」才读全量写盘 */
+/** 档案编辑卡：行内增删只动 DOM，点「保存档案」才读全量写盘（issue 487 扩十维） */
 export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
   const grid = (label: string, input: HTMLElement) =>
     el('div', 'bz-people-prof-row', [el('span', 'bz-people-prof-label', text(label)), input]);
+  /** 数组维度 → 顿号串（编辑态一格格输入，保存时切分） */
+  const listText = (arr?: string[]) => (arr ?? []).join('、');
   const socialList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-social-list': '' });
   for (const s of prof?.socials ?? []) socialList.appendChild(socialRow(s.platform, s.handle));
+  const relList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-rel-list': '' });
+  for (const r of prof?.relationships ?? []) relList.appendChild(relationRow(r.who, r.relation));
+  const dateList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-date-list': '' });
+  for (const d of prof?.importantDates ?? []) dateList.appendChild(dateRow(d.date, d.what));
   const tagList = el('div', 'bz-people-prof-tag-list', { 'data-people-prof-tag-list': '' });
   for (const t of prof?.tags ?? []) tagList.appendChild(tagChip(t));
   const tagInput = profInput('', '加标签…', ['data-people-prof-tag-input', ''], 'bz-people-prof-input bz-people-prof-tag-input');
@@ -1037,10 +1089,36 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
       ]),
     ]),
     grid('生日', profInput(prof?.birthday ?? '', 'YYYY-MM-DD 或 MM-DD', ['data-people-prof-field', 'birthday'])),
+    grid('称呼', profInput(prof?.nickname ?? '', 'TA 喜欢被怎么称呼', ['data-people-prof-field', 'nickname'])),
     grid('认识方式', profInput(prof?.metVia ?? '', '怎么认识的', ['data-people-prof-field', 'metVia'])),
     grid('认识时间', profInput(prof?.metAt ?? '', '比如 2023 年夏天', ['data-people-prof-field', 'metAt'])),
     grid('家乡 / 现居', profInput(prof?.hometown ?? '', '家乡 · 现居', ['data-people-prof-field', 'hometown'])),
     grid('职业', profInput(prof?.job ?? '', '职业', ['data-people-prof-field', 'job'])),
+    grid('性格', profInput(prof?.personality ?? '', '性格特点，一段话', ['data-people-prof-field', 'personality'])),
+    grid('兴趣爱好', profInput(listText(prof?.interests), '顿号分隔，如 爬山、摇滚、推理小说', ['data-people-prof-field', 'interests'])),
+    grid('口头禅', profInput(prof?.quote ?? '', '口头禅 / 代表句', ['data-people-prof-field', 'quote'])),
+    grid('喜欢', profInput(listText(prof?.likes), '顿号分隔：话题 / 送礼参考', ['data-people-prof-field', 'likes'])),
+    grid('反感 / 雷点', profInput(listText(prof?.dislikes), '顿号分隔：反感的事 / 雷点', ['data-people-prof-field', 'dislikes'])),
+    grid('作息 / 习惯', profInput(prof?.habits ?? '', '作息 / 生活习惯', ['data-people-prof-field', 'habits'])),
+    grid('近况', profInput(prof?.recentLife ?? '', '最近在忙什么 / 状态', ['data-people-prof-field', 'recentLife'])),
+    el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('身边人')),
+      el('div', 'bz-people-prof-social', [
+        relList,
+        el('div', 'bz-people-prof-social-tools', [
+          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 身边人', { 'data-people-prof-add-rel': '' }),
+        ]),
+      ]),
+    ]),
+    el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text('重要日子')),
+      el('div', 'bz-people-prof-social', [
+        dateList,
+        el('div', 'bz-people-prof-social-tools', [
+          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 重要日子', { 'data-people-prof-add-date': '' }),
+        ]),
+      ]),
+    ]),
     el('div', 'bz-people-prof-row', [
       el('span', 'bz-people-prof-label', text('标签')),
       el('div', 'bz-people-prof-tags-edit', [
