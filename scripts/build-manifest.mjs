@@ -51,6 +51,17 @@ const DOCS = [
 ];
 const docs = DOCS.map((d) => ({ ...d, sha256: fileSha256(d.file) }));
 
+// ── 反向守卫（issue 490）：downloads/ 顶层不允许存在清单外的文件 ──
+// 新产物进目录但忘了登记 DOCS → 构建期就炸，而不是发布后插件端校验才失败
+// （那些失败发生在用户机器上，构建期不查就没人查）。清单文件自身与皮肤子目录豁免。
+const MANIFEST_GUARD_IGNORE = new Set(['manifest.json', ...DOCS.map((d) => d.file)]);
+for (const name of fs.readdirSync(path.join(ROOT, 'downloads'), { withFileTypes: true })) {
+  if (!name.isFile() || MANIFEST_GUARD_IGNORE.has(name.name)) continue;
+  problems.push(
+    `downloads/${name.name} 未登记进清单——要么在上方 DOCS 登记一行（连同插件端行名），要么删掉该文件`,
+  );
+}
+
 // skins：条目元数据来自 catalog，file/sha256 对已出版 css 算
 const skins = [];
 for (const [domain, cfg] of Object.entries(CATALOG.domains)) {

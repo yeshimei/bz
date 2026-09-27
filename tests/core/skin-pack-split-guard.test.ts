@@ -106,4 +106,21 @@ describe('迁移/出版脚本自检', () => {
   it('统一清单与产物同步（build-manifest --check，issue 480 / ADR-0203）', () => {
     expect(() => run('scripts/build-manifest.mjs')).not.toThrow();
   });
+
+  it('downloads/ 顶层不允许清单外文件——未登记文件让 build-manifest 报错（issue 490 反向守卫）', () => {
+    const rogue = path.join(ROOT, 'downloads', 'guard-probe-unregistered.tmp');
+    fs.writeFileSync(rogue, 'probe', 'utf8');
+    try {
+      let err = '';
+      try {
+        run('scripts/build-manifest.mjs');
+      } catch (e: any) {
+        err = String(e.stderr || e.message || e);
+      }
+      expect(err).toContain('未登记进清单');
+      expect(err).toContain('guard-probe-unregistered.tmp');
+    } finally {
+      fs.rmSync(rogue, { force: true });
+    }
+  });
 });
