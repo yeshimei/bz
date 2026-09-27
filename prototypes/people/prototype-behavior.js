@@ -1,4 +1,4 @@
-/* 源指纹 e9aaba4ec32b2e91 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7117f3f13ec87b32 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -11517,6 +11517,14 @@ var BZW_people = (() => {
          * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
          * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
          */
+        /**
+         * 卸载前统计快照兜底（issue 492）：直接关 Obsidian / 重载插件不走 lockNow——解锁态下本次
+         * 会话的统计从未落盘，下次解锁屏（含 482 的 people 档）冷启动只能回落旧值或「—」。
+         * T12 同款守卫：仅解锁态补拍（锁定态清单已清，拍了也是零值）。
+         */
+        captureForUnload() {
+          if (this.dataManager.unlocked) this.captureLockStats();
+        }
         captureLockStats() {
           var _a2;
           try {
@@ -12675,6 +12683,7 @@ var BZW_people = (() => {
         }
         /** 卸载清理 */
         cleanup() {
+          this.uiManager.captureForUnload();
           const ids = ["bz-encrypt-mask", "bz-encrypt-popup", "bz-encrypt-preview-mask", "bz-encrypt-preview-popup", "bz-encrypt-health-mask", "bz-encrypt-health-popup"];
           for (const id of ids) {
             const el2 = document.getElementById(id);
@@ -12952,12 +12961,19 @@ var BZW_people = (() => {
       this.chains = /* @__PURE__ */ new Map();
       this.offUnlock = null;
       this.offChanged = null;
+      /**
+       * 自写抑制（issue 492）：头像写入走 removeNote→lockNote 重建，会**同步**广播
+       * ENCRYPT_CHANGED——那是自己刚写完的数据，不能把自己的明文缓存全清。计数 > 0 时
+       * 变更事件不触发 clearPlainCaches（外部改动照清）；写链 finally 归零。
+       */
+      this.suppressClear = 0;
       this.safe = safe;
       this.offUnlock = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
         if ((evt == null ? void 0 : evt.unlocked) !== false) return;
         this.clearPlainCaches();
       });
       this.offChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL, () => {
+        if (this.suppressClear > 0) return;
         this.clearPlainCaches();
       });
     }
@@ -13113,13 +13129,23 @@ var BZW_people = (() => {
         if (avatar && !avatarChanged) avatar = void 0;
       }
       if (!existing) {
-        await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+        this.suppressClear++;
+        try {
+          await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+        } finally {
+          this.suppressClear--;
+        }
         this.cache.set(talker, rec);
         return "created";
       }
       if (avatarChanged) {
-        await this.safe.removeNote(existing.id);
-        await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+        this.suppressClear++;
+        try {
+          await this.safe.removeNote(existing.id);
+          await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+        } finally {
+          this.suppressClear--;
+        }
         this.cache.set(talker, rec);
         return "updated";
       }
@@ -18647,6 +18673,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       return;
     }
     dsImporting = false;
+    recordCache = null;
     const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
     const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
     dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;

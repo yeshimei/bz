@@ -220,3 +220,40 @@ describe('保库记录存储缝（PeopleSafeStore × 注入 SafeManager）', () 
     expect(rec?.job?.talker).toBe('wxid_a');
   });
 });
+
+describe('自写抑制（issue 492）：头像重建的变更广播不清自己的明文缓存', () => {
+  let vault: MockVault;
+  let sm: SafeManager;
+  let safe: PeopleSafeStore;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp({ vault, metadataCache: { trigger: vi.fn() } } as never);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
+    sm = new SafeManager('CONFIG/.ENCRYPT');
+    safe = new PeopleSafeStore(sm);
+  });
+
+  it('甲头像重建（removeNote→lockNote 同步广播）后，乙的缓存记录保持同一对象且内容完整', async () => {
+    await sm.unlock(PW);
+    await safe.write('wxid_a', (rec) => {
+      rec.person = card('wxid_a', '阿琳');
+      rec.store.msgs.push(msg(1, '甲的消息'));
+    });
+    await safe.write('wxid_b', (rec) => {
+      rec.person = card('wxid_b', '阿乙');
+      rec.store.msgs.push(msg(2, '乙的消息'));
+    });
+    const bBefore = await safe.read('wxid_b');
+    // 甲带新头像写入 → avatarChanged → removeNote+lockNote 重建 → ENCRYPT_CHANGED 同步广播
+    await safe.write('wxid_a', (rec) => {
+      rec.store.msgs.push(msg(3, '甲再导入一条'));
+    }, { avatar: { base64: 'aGk=', ext: 'jpg' } });
+    const a = await safe.read('wxid_a');
+    const b = await safe.read('wxid_b');
+    expect(b).toBe(bBefore); // 同一对象：自写广播没有把明文缓存清掉重解
+    expect(b?.store.msgs.map((m) => m.text)).toContain('乙的消息');
+    expect(a?.store.msgs).toHaveLength(2); // 甲的写入照常落地
+    expect(a?.person.name).toBe('阿琳');
+  });
+});

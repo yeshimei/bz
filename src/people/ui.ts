@@ -691,6 +691,10 @@ async function importDsSelected(): Promise<void> {
     return;
   }
   dsImporting = false;
+  // issue 492：导入写了保库记录——面板记录快照（recordCache）失效重读。写入虽经
+  // peopleSafe 缓存原地 mutate（引用同源），但详情 / 画谱等后手路径一律走 records()，
+  // 置空重读是兜底：快照与新写入永不脱钩（徐雯静实案：导入后同会话画谱读空仓）。
+  recordCache = null;
   const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
   const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;

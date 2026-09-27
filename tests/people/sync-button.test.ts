@@ -84,9 +84,15 @@ function fakeJob(partial: Partial<PersonJob>): JobView {
   return { batchesTotal: 3, queueIndex: 1, queueTotal: 1, stage: 'chunked', batchesDone: 0, ...partial } as JobView;
 }
 
+/** startJobs 捕获（492 回归用）：记录每次引擎收到的 (app, targets) */
+let engineStarted: Array<[unknown, { talker: string; msgs: unknown[] }[]]> = [];
+
 function fakeEngine(queue: JobView[] = []): JobsApi {
   return {
-    startJobs: async () => ({ queued: [], skipped: [], resumed: [] }),
+    startJobs: async (app, targets) => {
+      engineStarted.push([app, targets as { talker: string; msgs: unknown[] }[]]);
+      return { queued: [], skipped: [], resumed: [] };
+    },
     resumeJobs: async () => {},
     resume: () => false,
     pauseJobs: () => {},
@@ -136,6 +142,7 @@ beforeEach(() => {
   document.body.innerHTML = '';
   (window as unknown as { require?: unknown }).require = require; // datasource 读库外目录用
   tool = new FakeTool();
+  engineStarted = [];
   dataRoot = mkdtempSync(join(tmpdir(), 'bz-people-sync-'));
   mkdirSync(join(dataRoot, '陈默'), { recursive: true });
   writeFileSync(join(dataRoot, '陈默', 'chat.json'), JSON.stringify([
@@ -322,5 +329,20 @@ describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成�
     await tick();
     expect(document.querySelector('[data-people-ds-pop]')).toBeNull();
     expect(getNoticeMessages().join('\n')).toContain('正在生成脸谱');
+  });
+});
+
+describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => {
+  it('导入所选后直接点「画脸谱」：引擎拿到非空 msgs，同会话不再读导入前的空仓', async () => {
+    await bootWithDsOpen([person()]);
+    click('[data-people-ds-check]'); // 勾上陈默（jsdom 合成 click 触发勾选激活）
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
+    expect(document.querySelector('[data-people-ds-generate]')).toBeTruthy();
+    click('[data-people-ds-generate]');
+    await vi.waitFor(() => expect(engineStarted.length).toBe(1));
+    const targets = engineStarted[0][1];
+    expect(targets[0]?.talker).toBe('陈默');
+    expect(targets[0]?.msgs.length).toBeGreaterThan(0); // 492 前：此处读到导入前空仓，引擎空手而归
   });
 });
