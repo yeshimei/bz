@@ -9703,19 +9703,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   white-space: normal;
   overflow-wrap: anywhere;
 }
-/* 引擎细文案副行（497）：批的日期段与条数、素材统计、prep 步骤——小号灰字紧跟主行 */
-.bz-people-jobs-sub {
+/* 引擎细节（497 副行 → 现同行内次级字）：跟在主行尾，比主行弱一档但不另起一行 */
+.bz-people-jobs-detail {
+  font-weight: 400;
   font-size: 11.5px;
   color: var(--ink-mut);
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.bz-people-jobs-queue {
-  color: var(--ink-mut);
-}
-.bz-people-jobs-note {
-  font-size: 11.5px;
-  color: var(--ink-mut);
 }
 .bz-people-jobs-foot {
   display: flex;

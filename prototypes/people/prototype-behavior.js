@@ -1,4 +1,4 @@
-/* 源指纹 242eeac6176466e4 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 df093e28346d36d9 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -15772,6 +15772,7 @@ ${lines.join("\n")}`);
   function newPrepProgress(totals) {
     const counts = {};
     if ((totals == null ? void 0 : totals.media) && totals.media > 0) counts.media = { done: 0, total: totals.media };
+    if ((totals == null ? void 0 : totals.derive) && totals.derive > 0) counts.derive = { done: 0, total: totals.derive };
     if ((totals == null ? void 0 : totals.map) && totals.map > 0) counts.map = { done: 0, total: totals.map };
     if ((totals == null ? void 0 : totals.transcribe) && totals.transcribe > 0) counts.transcribe = { done: 0, total: totals.transcribe };
     return { phase: null, pct: null, counts, donePhases: [], failed: 0 };
@@ -15846,7 +15847,7 @@ ${lines.join("\n")}`);
     }
     const media = voice + image + video + file;
     if (media <= 0) return null;
-    return { media, transcribe: voice, map: image };
+    return { media, derive: image, transcribe: voice, map: image };
   }
   function buildPrepSpec(opts) {
     var _a2, _b2, _c, _d;
@@ -16270,23 +16271,20 @@ ${lines.join("\n")}`);
     if (!p.counts || typeof p.counts !== "object") p.counts = {};
     return p;
   }
-  function chunkedMessage(msgCount, batchCount, opts) {
-    return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 3} 次 AI 调用`;
+  function chunkedMessage(msgCount, batchCount) {
+    return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + 3} 次 AI 调用`;
   }
-  function sampledMessage(msgCount, allCount, kept, spanFrom, spanTo) {
-    return `消息 ${msgCount} 条 → ${allCount} 批超上限，均匀抽样 ${kept} 批（覆盖 ${spanFrom} ~ ${spanTo} 全时段，首尾必保，未抽中的批次不送 AI）`;
+  function sampledMessage(msgCount, kept) {
+    return `消息 ${msgCount} 条 → 均匀抽样 ${kept} 批`;
   }
   function batchMessage(i, total, c) {
     return `第 ${i}/${total} 批 · ${c.from} ~ ${c.to} · ${c.count} 条`;
   }
   function materialMessage(c) {
-    return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成《其人》`;
+    return `素材：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits}`;
   }
-  function batchRetryMessage(i, total, attempt, maxRetries, err) {
-    return `第 ${i + 1}/${total} 批失败（${err}）——正在重试 ${attempt}/${maxRetries}…`;
-  }
-  function batchFailMessage(i, total, done, err) {
-    return `第 ${i + 1}/${total} 批提炼失败（已完成 ${done} 批保留，可从失败批续跑）`;
+  function batchRetryMessage(i, total, attempt, maxRetries) {
+    return `第 ${i + 1}/${total} 批失败，重试 ${attempt}/${maxRetries}…`;
   }
   function snapshot() {
     if (!st) return { queue: [], currentIndex: -1, running: false };
@@ -16483,7 +16481,7 @@ ${lines.join("\n")}`);
         },
         stats,
         importRecord,
-        message: sampled ? sampledMessage(t.msgs.length, all.length, chunks.length, all[0].from, all[all.length - 1].to) : chunkedMessage(t.msgs.length, chunks.length, chunkFull),
+        message: sampled ? sampledMessage(t.msgs.length, chunks.length) : chunkedMessage(t.msgs.length, chunks.length),
         startedAt: now,
         updatedAt: now
       });
@@ -16638,7 +16636,7 @@ ${lines.join("\n")}`);
         const before = prep.donePhases.length;
         if (!collectPrepInfo(prep, data)) return;
         if (prep.paused) {
-          job.message = typeof data.note === "string" && data.note.trim() ? data.note.trim() : "已请求暂停——这一条做完就让行";
+          job.message = typeof data.note === "string" && data.note.trim() ? data.note.trim() : "本条做完即停";
         } else if (prep.donePhases.length > before) {
           job.message = prepStageLine(prep);
           void persist();
@@ -16676,7 +16674,6 @@ ${lines.join("\n")}`);
       return "halted";
     }
     job.stage = "preprocess";
-    job.message = `预处理：${prepPhaseLabel("media")}、${prepPhaseLabel("transcribe")}…`;
     await persist();
     emit();
     const existing = currentPrepSession();
@@ -16697,7 +16694,7 @@ ${lines.join("\n")}`);
     }
     const { outcome, result } = settled;
     if (outcome.stopped) {
-      await finish({ status: "paused", message: "预处理已中止——已完成的产物保留，可从断点继续" });
+      await finish({ status: "paused", message: "已完成的部分保留" });
       return "halted";
     }
     if (result && result.ok === false) {
@@ -16706,7 +16703,7 @@ ${lines.join("\n")}`);
       return "halted";
     }
     if (result && result.stopped === true) {
-      await finish({ status: "paused", message: "预处理已停止——已完成的产物保留，可从断点继续" });
+      await finish({ status: "paused", message: "已完成的部分保留" });
       return "halted";
     }
     if (!outcome.ok || !result || result.ok !== true) {
@@ -16831,7 +16828,7 @@ ${lines.join("\n")}`);
         continue;
       }
       led.doneBatches = i;
-      job.message = `图片描述 第 ${i + 1}/${batches.length} 批（${images.length} 张）`;
+      job.message = `本批 ${images.length} 张`;
       emit();
       const context = contextWindowOf(msgs, batch[0].ts, batch[batch.length - 1].ts);
       const prompt = buildDescribePrompt(images.length, context);
@@ -16845,15 +16842,11 @@ ${lines.join("\n")}`);
           if (gone(job)) return "halted";
           const err = errorMessage(e);
           if (isAbortError(e) || attempt >= st.retry.maxRetries) {
-            await finish({
-              status: "error",
-              error: err,
-              message: `图片描述第 ${i + 1}/${batches.length} 批失败（已完成 ${led.doneBatches} 批保留，可从失败批续跑）`
-            });
+            await finish({ status: "error", error: err });
             return "halted";
           }
           attempt += 1;
-          job.message = `图片描述第 ${i + 1}/${batches.length} 批失败（${err}）——正在重试 ${attempt}/${st.retry.maxRetries}…`;
+          job.message = `第 ${i + 1}/${batches.length} 批失败，重试 ${attempt}/${st.retry.maxRetries}…`;
           emit();
           await st.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
           if (gone(job)) return "halted";
@@ -16912,7 +16905,7 @@ ${lines.join("\n")}`);
         const merged2 = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
         if (gone(job)) return;
         if (merged2 && merged2.voice + merged2.images > 0) {
-          job.message = `预处理完成${((_d = job.prep) == null ? void 0 : _d.failed) ? `（失败 ${job.prep.failed} 条，可用「重试失败项」补齐）` : ""}，开始组装素材…`;
+          job.message = `预处理完成${((_d = job.prep) == null ? void 0 : _d.failed) ? `，${job.prep.failed} 条失败待补齐` : ""}，开始组装素材…`;
         }
       }
       const descState = await runDescribeStage(job, finish);
@@ -17008,7 +17001,7 @@ ${lines.join("\n")}`);
       const total = chunks.length;
       for (let i = job.batchesDone; i < total; i++) {
         if (st.pauseRequested) {
-          await finish({ status: "paused", message: `已暂停（${job.batchesDone}/${total} 批）` });
+          await finish({ status: "paused", message: `${job.batchesDone}/${total} 批` });
           return;
         }
         if (gone(job)) return;
@@ -17025,16 +17018,16 @@ ${lines.join("\n")}`);
             if (gone(job)) return;
             const err = errorMessage(e);
             if (isAbortError(e) || attempt >= st.retry.maxRetries) {
-              await finish({ status: "error", error: err, message: batchFailMessage(i, total, job.batchesDone, err) });
+              await finish({ status: "error", error: err });
               return;
             }
             attempt += 1;
-            job.message = batchRetryMessage(i, total, attempt, st.retry.maxRetries, err);
+            job.message = batchRetryMessage(i, total, attempt, st.retry.maxRetries);
             emit();
             await st.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
             if (gone(job)) return;
             if (st.pauseRequested) {
-              await finish({ status: "paused", message: `已暂停（${job.batchesDone}/${total} 批）` });
+              await finish({ status: "paused", message: `${job.batchesDone}/${total} 批` });
               return;
             }
           }
@@ -17069,12 +17062,12 @@ ${lines.join("\n")}`);
       try {
         person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
       } catch (e) {
-        await finish({ status: "error", error: errorMessage(e), message: `《其人》生成失败：${errorMessage(e)}` });
+        await finish({ status: "error", error: errorMessage(e) });
         return;
       }
       if (gone(job)) return;
       if (!person) {
-        await finish({ status: "error", error: "卷一《其人》生成为空", message: "卷一《其人》生成为空" });
+        await finish({ status: "error", error: "卷一《其人》生成为空" });
         return;
       }
       job.person = person;
@@ -17086,19 +17079,19 @@ ${lines.join("\n")}`);
       try {
         bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
       } catch (e) {
-        await finish({ status: "error", error: errorMessage(e), message: `《相交》生成失败：${errorMessage(e)}` });
+        await finish({ status: "error", error: errorMessage(e) });
         return;
       }
       if (gone(job)) return;
       if (!bond) {
-        await finish({ status: "error", error: "卷二《相交》生成为空", message: "卷二《相交》生成为空" });
+        await finish({ status: "error", error: "卷二《相交》生成为空" });
         return;
       }
       job.bond = bond;
       job.updatedAt = nowIso();
       await persist();
       emit();
-      await finish({ stage: "chronicle", message: "双卷完成，正在生成《纪事》…" });
+      await finish({ stage: "chronicle", message: "《相交》完成，正在生成《纪事》…" });
       let chronicle = "";
       if (merged.events.length) {
         try {
@@ -17137,16 +17130,16 @@ ${lines.join("\n")}`);
           mediaNote: material.mediaNote,
           statsNote: material.statsNote,
           profileNote: material.profileNote
-        },
-        message: `「${job.name}」脸谱已生成`
+        }
+        // 终局不再写 message：done 态进度块不上屏（完成靠通知与折页），留一句没人看的句子只会误导
       });
     } catch (e) {
       if (gone(job)) return;
       if (!((_q = st == null ? void 0 : st.safe) == null ? void 0 : _q.unlocked)) {
-        await finish({ status: "paused", message: "保险库已上锁，任务已暂停（解锁后可继续）" });
+        await finish({ status: "paused", message: "保险库已上锁，解锁后继续" });
         return;
       }
-      await finish({ status: "error", error: errorMessage(e), message: `生成失败：${errorMessage(e)}` });
+      await finish({ status: "error", error: errorMessage(e) });
     } finally {
       if (st && st.runningJob === job.talker) st.runningJob = null;
     }
@@ -17584,8 +17577,60 @@ ${lines.join("\n")}`);
         return null;
     }
   }
+  function jobsStatusPrefix(status) {
+    switch (status) {
+      case "paused":
+        return "已暂停";
+      case "interrupted":
+        return "上次中断";
+      case "error":
+        return "生成失败";
+      default:
+        return "";
+    }
+  }
+  function jobsAnchor(s) {
+    const prep = prepStagePart(s);
+    if (prep) return prep;
+    const desc = describeStagePart(s);
+    if (desc) return desc;
+    if (s.status === "error") return `已完成 ${s.batchesDone}/${s.batchesTotal} 批`;
+    if (s.status === "interrupted") return "";
+    const stage2 = jobsStageLabel(s.stage);
+    if (stage2) return stage2;
+    if (s.status === "paused") return "";
+    return s.batchesTotal > 0 ? `第 ${Math.min(s.batchesDone + 1, s.batchesTotal)}/${s.batchesTotal} 批` : "";
+  }
+  function skeleton(line) {
+    return line.replace(/正在|生成|·|\s/g, "").replace(/…$/, "");
+  }
+  function stripStatusWord(detail, status) {
+    const word = jobsStatusPrefix(status);
+    if (!detail || !word || !detail.startsWith(word)) return detail;
+    const rest = detail.slice(word.length).replace(/^[ ·：:，,、—-]+/, "").trim();
+    return /^[（(][^）)]*[）)]$/.test(rest) ? rest.slice(1, -1).trim() : rest;
+  }
+  function mergeAnchorDetail(anchor, detail) {
+    if (!detail) return { anchor, detail: "" };
+    if (!anchor) return { anchor: "", detail };
+    const key = skeleton(anchor);
+    const bare = skeleton(detail);
+    if (key && bare.includes(key)) return { anchor: detail, detail: "" };
+    if (key && key.includes(bare)) return { anchor, detail: "" };
+    const tag = anchor.split(" ")[0];
+    if (tag && detail.startsWith(tag)) return { anchor: detail, detail: "" };
+    return { anchor, detail };
+  }
+  function jobsMainLine(s) {
+    var _a2;
+    if (s.status === "done") return { head: "脸谱已生成", detail: "" };
+    const anchor = jobsAnchor(s);
+    const detail = s.status === "error" ? "" : stripStatusWord(((_a2 = s.message) != null ? _a2 : "").trim(), s.status);
+    const merged = mergeAnchorDetail(anchor, detail);
+    const head = [jobsStatusPrefix(s.status), merged.anchor].filter(Boolean).join(" · ");
+    return { head: head || "正在生成", detail: merged.detail };
+  }
   function progressBlock(s) {
-    var _a2, _b2, _c;
     const stagePart = prepStagePart(s);
     const descPart = describeStagePart(s);
     const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -17603,14 +17648,10 @@ ${lines.join("\n")}`);
       ),
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
-    const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const stageFallback = jobsStageLabel(s.stage);
-    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_b2 = (_a2 = stagePart != null ? stagePart : descPart) != null ? _a2 : stageFallback) != null ? _b2 : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
-    block.appendChild(el("div", "bz-people-jobs-main", text(main)));
-    const msg = ((_c = s.message) != null ? _c : "").trim();
-    if (msg && s.status !== "done" && s.status !== "error" && msg !== main) {
-      block.appendChild(el("div", "bz-people-jobs-sub", { "data-people-jobs-sub": "" }, text(msg)));
-    }
+    const line = jobsMainLine(s);
+    const mainEl = el("div", "bz-people-jobs-main", text(line.head));
+    if (line.detail) mainEl.appendChild(el("span", "bz-people-jobs-detail", text(` · ${line.detail}`)));
+    block.appendChild(mainEl);
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));

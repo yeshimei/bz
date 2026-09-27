@@ -1,4 +1,4 @@
-/* 源指纹 fbc5a82d684c2729 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c5b89bd17d9aac52 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -55,9 +55,8 @@ var BZR_people = (() => {
     initials: () => initials,
     insRow: () => insRow,
     insightsCard: () => insightsCard,
-    jobsFallbackMessage: () => jobsFallbackMessage,
+    jobsMainLine: () => jobsMainLine,
     jobsPercent: () => jobsPercent,
-    jobsQueueLabel: () => jobsQueueLabel,
     jobsStageLabel: () => jobsStageLabel,
     jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
@@ -247,24 +246,6 @@ var BZR_people = (() => {
     if (stage === "bond") return 1;
     return 0;
   }
-  function jobsQueueLabel(queueIndex, queueTotal, name) {
-    const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : "";
-    return `${pos}当前：${name}`;
-  }
-  function jobsFallbackMessage(status, name) {
-    switch (status) {
-      case "running":
-        return `正在生成「${name}」的脸谱…`;
-      case "paused":
-        return "已暂停——点「继续生成」接着画";
-      case "interrupted":
-        return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
-      case "error":
-        return `「${name}」生成失败`;
-      case "done":
-        return `「${name}」的脸谱已生成`;
-    }
-  }
   var JOBS_ACTIONS = {
     running: { label: "暂停", hook: "data-people-jobs-pause" },
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
@@ -300,8 +281,60 @@ var BZR_people = (() => {
         return null;
     }
   }
+  function jobsStatusPrefix(status) {
+    switch (status) {
+      case "paused":
+        return "已暂停";
+      case "interrupted":
+        return "上次中断";
+      case "error":
+        return "生成失败";
+      default:
+        return "";
+    }
+  }
+  function jobsAnchor(s) {
+    const prep = prepStagePart(s);
+    if (prep) return prep;
+    const desc = describeStagePart(s);
+    if (desc) return desc;
+    if (s.status === "error") return `已完成 ${s.batchesDone}/${s.batchesTotal} 批`;
+    if (s.status === "interrupted") return "";
+    const stage = jobsStageLabel(s.stage);
+    if (stage) return stage;
+    if (s.status === "paused") return "";
+    return s.batchesTotal > 0 ? `第 ${Math.min(s.batchesDone + 1, s.batchesTotal)}/${s.batchesTotal} 批` : "";
+  }
+  function skeleton(line) {
+    return line.replace(/正在|生成|·|\s/g, "").replace(/…$/, "");
+  }
+  function stripStatusWord(detail, status) {
+    const word = jobsStatusPrefix(status);
+    if (!detail || !word || !detail.startsWith(word)) return detail;
+    const rest = detail.slice(word.length).replace(/^[ ·：:，,、—-]+/, "").trim();
+    return /^[（(][^）)]*[）)]$/.test(rest) ? rest.slice(1, -1).trim() : rest;
+  }
+  function mergeAnchorDetail(anchor, detail) {
+    if (!detail) return { anchor, detail: "" };
+    if (!anchor) return { anchor: "", detail };
+    const key = skeleton(anchor);
+    const bare = skeleton(detail);
+    if (key && bare.includes(key)) return { anchor: detail, detail: "" };
+    if (key && key.includes(bare)) return { anchor, detail: "" };
+    const tag = anchor.split(" ")[0];
+    if (tag && detail.startsWith(tag)) return { anchor: detail, detail: "" };
+    return { anchor, detail };
+  }
+  function jobsMainLine(s) {
+    var _a;
+    if (s.status === "done") return { head: "脸谱已生成", detail: "" };
+    const anchor = jobsAnchor(s);
+    const detail = s.status === "error" ? "" : stripStatusWord(((_a = s.message) != null ? _a : "").trim(), s.status);
+    const merged = mergeAnchorDetail(anchor, detail);
+    const head = [jobsStatusPrefix(s.status), merged.anchor].filter(Boolean).join(" · ");
+    return { head: head || "正在生成", detail: merged.detail };
+  }
   function progressBlock(s) {
-    var _a, _b, _c;
     const stagePart = prepStagePart(s);
     const descPart = describeStagePart(s);
     const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -319,14 +352,10 @@ var BZR_people = (() => {
       ),
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
-    const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const stageFallback = jobsStageLabel(s.stage);
-    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_b = (_a = stagePart != null ? stagePart : descPart) != null ? _a : stageFallback) != null ? _b : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
-    block.appendChild(el("div", "bz-people-jobs-main", text(main)));
-    const msg = ((_c = s.message) != null ? _c : "").trim();
-    if (msg && s.status !== "done" && s.status !== "error" && msg !== main) {
-      block.appendChild(el("div", "bz-people-jobs-sub", { "data-people-jobs-sub": "" }, text(msg)));
-    }
+    const line = jobsMainLine(s);
+    const mainEl = el("div", "bz-people-jobs-main", text(line.head));
+    if (line.detail) mainEl.appendChild(el("span", "bz-people-jobs-detail", text(` · ${line.detail}`)));
+    block.appendChild(mainEl);
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
