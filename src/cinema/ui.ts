@@ -23,7 +23,7 @@ import { fitRotatedBox } from '../core/landscape';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
-import { mountIcons, openLightbox } from '../core/ui';
+import { mountIcons, openLightbox, uiSuggest } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { iconSpan } from '../core/ui/str';
 import { openExternalUrl } from '../core/utils';
@@ -33,6 +33,7 @@ import {
   getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
+import { loadDoubanNameIndex, searchDoubanNameIndex, type DoubanIndexRow } from '../core/douban-name-index';
 import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
@@ -1223,6 +1224,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   let classifying = false;
   let parsed: DoubanQuery | null = null;
   let userPickedTag = false; // 2026-09-21 拍板：用户手点过 chip → 解析出的分类不覆盖他的选择
+  /** 名称索引命中携带的豆瓣 sid（issue 498）：下拉选中时记、手输改动即失效、
+   *  解析时交给 queryDoubanForPreview 跳过按名搜索直取 ApiZero。 */
+  let pickedSid: string | null = null;
   const nameInput = el.querySelector<HTMLInputElement>('.j-name');
   const parseBtn = el.querySelector<HTMLButtonElement>('.j-parse');
   const saveBtn = el.querySelector<HTMLButtonElement>('.j-save');
@@ -1354,7 +1358,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     if (hasIllegalNameChar(name)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
     phase = 'parsing';
     refreshFormState();
-    const q = await queryDoubanForPreview(app, name);
+    // 名称索引命中的精确 sid → 解析直取 ApiZero 跳过按名搜索（issue 498）；
+    // 直取失败在 queryDoubanForPreview 内部回落按名全链，调用方无感
+    const q = await queryDoubanForPreview(app, name, pickedSid ?? undefined);
     if (!q.ok) {
       phase = 'idle';
       refreshFormState();
@@ -1434,7 +1440,54 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     applyStOn();
   };
 
-  nameInput?.addEventListener('input', refreshFormState);
+  /** 名称联想（issue 498 / ADR-0209）：本地名称索引命中 → 下拉选片 → 携带 sid 解析直取。
+   *  索引未下载/校验不过 → loadDoubanNameIndex 返回 null → source 恒空 → 下拉静默缺席，
+   *  一切回落既有手输+按名检索；下载入口在设置面板在线资源组（ADR-0207 通用行，零新 UI）。
+   *  同名条目（不同年份各占一行）在候选取最优评分一行作为 sid 载体——其余同名片
+   *  仍可手输名称走按名检索（ADR-0209 决策 5）。 */
+  const nameDropRows = new Map<string, DoubanIndexRow>();
+  let nameSuggest: { close: () => void; detach: () => void } | null = null;
+  if (!editing && nameInput) {
+    void loadDoubanNameIndex(app).then((index) => {
+      if (!index || !el.isConnected || phase !== 'idle') return;
+      nameSuggest = uiSuggest({
+        anchor: nameInput,
+        max: 12,
+        source: (): string[] => {
+          if (!index) return [];
+          const q = nameInput.value.trim();
+          if (!q) return []; // 空查询不开壳（uiSuggest 无匹配即收）
+          const hits = searchDoubanNameIndex(index, q, 12);
+          nameDropRows.clear();
+          const out: string[] = [];
+          const seenNames = new Set<string>();
+          for (const r of hits) {
+            if (seenNames.has(r.n)) continue; // 同名去重：候选取排名最优一行做 sid 载体（ADR-0209 决策 5）
+            seenNames.add(r.n);
+            nameDropRows.set(r.n, r);
+            out.push(r.n);
+          }
+          return out;
+        },
+        /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值） */
+        hintOf: (n) => {
+          const r = nameDropRows.get(n);
+          if (!r) return '';
+          return [r.y, r.s ? `评分 ${r.s}` : '', r.k].filter(Boolean).join(' · ');
+        },
+        onPick: (n) => {
+          const r = nameDropRows.get(n);
+          pickedSid = r ? r.id : null;
+          refreshFormState();
+        },
+      });
+    });
+  }
+
+  nameInput?.addEventListener('input', () => {
+    pickedSid = null; // 手输任何改动都使索引携带的 sid 失效（回填后的名称是精确的，改动就不是了）
+    refreshFormState();
+  });
   refreshFormState();
   applyStOn();
   // 分类/状态走事件委托（绑 el，不绑具体按钮）：背面是 innerHTML 动态生成的，逐个绑定必然漏一半；

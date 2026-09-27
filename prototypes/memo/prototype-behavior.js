@@ -1,5 +1,5 @@
-/* 源指纹 c43527a9347e01c6 · 仓内输入 278 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 b231912252e83f20 · 仓内输入 279 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -30203,6 +30203,81 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
+  // src/core/douban-name-index.ts
+  function subscribeOnce2() {
+    if (subscribed2) return;
+    subscribed2 = true;
+    onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName === DOUBAN_NAME_INDEX_FILE) {
+        memCache3 = null;
+        normCache = /* @__PURE__ */ new WeakMap();
+      }
+    });
+  }
+  function validateDoubanNameIndex(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw;
+    if (typeof o.version !== "number" || !Number.isFinite(o.version)) return null;
+    if (typeof o.updatedAt !== "string" || !o.updatedAt) return null;
+    const stats = o.stats;
+    if (!stats || typeof stats !== "object") return null;
+    if (typeof stats.total !== "number" || !Number.isFinite(stats.total)) return null;
+    if (!Array.isArray(stats.kinds)) return null;
+    for (const pair of stats.kinds) {
+      if (!Array.isArray(pair) || pair.length !== 2) return null;
+      if (typeof pair[0] !== "string" || typeof pair[1] !== "number") return null;
+    }
+    if (!Array.isArray(o.rows)) return null;
+    const rows = [];
+    const ids = /* @__PURE__ */ new Set();
+    for (const r of o.rows) {
+      if (!Array.isArray(r) || r.length !== 5) return null;
+      if (!r.every((cell) => typeof cell === "string")) return null;
+      const id = r[4];
+      if (ids.has(id)) return null;
+      ids.add(id);
+      rows.push({ n: r[0], y: r[1], s: r[2], k: r[3], id });
+    }
+    if (rows.length !== stats.total) return null;
+    return {
+      version: o.version,
+      updatedAt: o.updatedAt,
+      stats: { total: stats.total, kinds: stats.kinds },
+      rows
+    };
+  }
+  async function readLocalValidated3(app) {
+    const text = await readAsset(app, DOUBAN_NAME_INDEX_FILE);
+    if (text === null) return null;
+    try {
+      return validateDoubanNameIndex(JSON.parse(text));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function loadDoubanNameIndex(app) {
+    subscribeOnce2();
+    if (memCache3) return memCache3;
+    const idx = await readLocalValidated3(app);
+    if (idx) memCache3 = idx;
+    return idx;
+  }
+  function indexKindCounts(index) {
+    return index.stats.kinds.map(([k, count]) => ({ k, count }));
+  }
+  var DOUBAN_NAME_INDEX_FILE, memCache3, subscribed2, normCache;
+  var init_douban_name_index = __esm({
+    "src/core/douban-name-index.ts"() {
+      init_remote_asset();
+      init_download_manifest();
+      init_domain_bus();
+      DOUBAN_NAME_INDEX_FILE = "cinema-douban-index.json";
+      memCache3 = null;
+      subscribed2 = false;
+      normCache = /* @__PURE__ */ new WeakMap();
+    }
+  });
+
   // src/settings-panel/online-resources.ts
   var online_resources_exports = {};
   __export(online_resources_exports, {
@@ -30366,13 +30441,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       meta.entries.push({ id: st.id, row });
     }
     currentGroup = meta;
-    subscribeOnce2();
+    subscribeOnce3();
     if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) void checkInBackground();
     return { name: "在线资源", icon: "cloud-download", rows: meta.rows };
   }
-  function subscribeOnce2() {
-    if (subscribed2) return;
-    subscribed2 = true;
+  function subscribeOnce3() {
+    if (subscribed3) return;
+    subscribed3 = true;
     onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncLogged());
   }
   function syncLogged() {
@@ -30546,7 +30621,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     setRowBtnState(btn, "idle", (_d = allRow == null ? void 0 : allRow.buttonText) != null ? _d : "全部更新");
     patchRenderedGroup();
   }
-  var SKINS_ROW_NAME, ALL_BUSY_ID, DESC_EXTRAS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed2;
+  var thousand, SKINS_ROW_NAME, ALL_BUSY_ID, DESC_EXTRAS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed3;
   var init_online_resources = __esm({
     "src/settings-panel/online-resources.ts"() {
       init_app();
@@ -30559,6 +30634,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_remote_asset();
       init_category_table();
       init_rss_catalog();
+      init_douban_name_index();
+      thousand = (n) => n.toLocaleString("en-US");
       SKINS_ROW_NAME = "主题";
       ALL_BUSY_ID = "__all__";
       DESC_EXTRAS = {
@@ -30574,6 +30651,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           if (!catalog) return null;
           const cats = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
           return `${cats} 类 ${catalog.feeds.length} 源`;
+        },
+        // issue 498：豆瓣影视索引就绪描述捎带「N 条 · 各类型条数」（用户点名按类型给量级参考）
+        "cinema-douban-index": async (app) => {
+          const idx = await loadDoubanNameIndex(app);
+          if (!idx) return null;
+          const parts = indexKindCounts(idx).map(({ k, count }) => `${k} ${thousand(count)}`);
+          return `${thousand(idx.stats.total)} 条 · ${parts.join(" / ")}`;
         }
       };
       CHECK_THROTTLE_MS = 6e4;
@@ -30583,7 +30667,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       syncRunning = null;
       syncDirty = false;
       busyIds = /* @__PURE__ */ new Set();
-      subscribed2 = false;
+      subscribed3 = false;
     }
   });
 
@@ -40971,27 +41055,27 @@ ${c.trim()}
   }
   function createRssCatalogPane(root, deps) {
     let catalog = null;
-    let subscribed3 = /* @__PURE__ */ new Set();
+    let subscribed4 = /* @__PURE__ */ new Set();
     let query = "";
     let activeCat = "";
     let searchTimer = null;
     const readSubscribed = async () => {
       const st = await readDataSourceState();
-      subscribed3 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+      subscribed4 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
     };
     const subscribeFeed = async (feed, btn) => {
       btn.disabled = true;
       btn.textContent = "订阅中…";
       const outcome = await addRssFeed(feed.url, feed.title || void 0);
       if (outcome === "added") {
-        subscribed3.add(feed.url);
+        subscribed4.add(feed.url);
         btn.textContent = "已订阅";
         notice(`已订阅 ${feed.title || feed.url}`, "success");
         deps.onChanged();
         return;
       }
       if (outcome === "exists") {
-        subscribed3.add(feed.url);
+        subscribed4.add(feed.url);
         btn.textContent = "已订阅";
         return;
       }
@@ -41023,7 +41107,7 @@ ${c.trim()}
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "bz-sp-btn bz-rss-cat-sub";
-      const isSub = subscribed3.has(feed.url);
+      const isSub = subscribed4.has(feed.url);
       btn.textContent = isSub ? "已订阅" : "订阅";
       btn.disabled = isSub;
       if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));

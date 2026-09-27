@@ -13,7 +13,7 @@ import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
 import { rebuildItems } from './data';
-import { fetchNoteDouban, queryDoubanByName, downloadPosterToVault, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
+import { fetchNoteDouban, queryDoubanByName, queryDoubanBySid, downloadPosterToVault, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
 
 /** 查询结果类型再导出：测试注入 `configureFetchQueue({ preview })` 时要用 */
 export type { DoubanQueryOutcome };
@@ -100,16 +100,23 @@ function fetchDepsFromSettings(app: App): DoubanFetchDeps {
   };
 }
 
-/** 表单「解析」查询器类型（测试注入面） */
-export type PreviewQuery = (app: App, name: string) => Promise<DoubanQueryOutcome>;
+/** 表单「解析」查询器类型（测试注入面）。sid 可选：本地名称索引命中时携带（issue 498） */
+export type PreviewQuery = (app: App, name: string, sid?: string) => Promise<DoubanQueryOutcome>;
 /** 测试注入：解析查询器（默认走真 queryDoubanByName） */
 let previewFn: PreviewQuery | null = null;
 
 /** 表单「解析」入口（issue 395）：按片名查询豆瓣字段。
  *  复用队列的 deps 组装（ApiZero Key / 豆瓣 Cookie / requestUrl 通道）——单一来源，
- *  表单不自己拼一份 HTTP 层。 */
-export async function queryDoubanForPreview(app: App, name: string): Promise<DoubanQueryOutcome> {
-  return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
+ *  表单不自己拼一份 HTTP 层。
+ *  sid 直取（issue 498 / ADR-0209）：名称索引命中时携带 sid，跳过三路检索直接
+ *  ApiZero 按 ID 取；**失败回落按名全链**（key 缺失/额度尽/网络抖动都不该让
+ *  索引命中反而比手输多绕一步），回落语义与无 sid 完全一致。 */
+export async function queryDoubanForPreview(app: App, name: string, sid?: string): Promise<DoubanQueryOutcome> {
+  if (!previewFn && sid) {
+    const bySid = await queryDoubanBySid(sid, name, fetchDepsFromSettings(app));
+    if (bySid.ok) return bySid;
+  }
+  return previewFn ? previewFn(app, name, sid) : queryDoubanByName(name, fetchDepsFromSettings(app));
 }
 
 /** 保存海报的注入面（测试用；默认走真下载） */

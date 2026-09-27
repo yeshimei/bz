@@ -11,6 +11,7 @@
     "catalog": "node scripts/build-catalog.mjs",
     "rss-upstream": "node scripts/rss-catalog/fetch-upstream.mjs",
     "rss-catalog": "node scripts/rss-catalog/build.mjs",
+    "cinema-index": "node scripts/build-cinema-index.mjs",
     "manifest": "node scripts/build-manifest.mjs",
     "split-skins": "node scripts/split-domain-skins.mjs",
     "test": "vitest run",
