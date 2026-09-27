@@ -799,6 +799,22 @@ export interface DataSourceStats {
   syncedAt?: string;
 }
 
+/**
+ * 目录名 → 界面显示名（issue 501）：sync 落目录时给重名联系人加的唯一键后缀
+ * `名字 (wxid_…)` / `名字 (m754831096)` / `名字 (xxx@weclaw)` 只用于**目录唯一**，
+ * 不该进用户视野——面板、数据源列表、同步进度一律显示纯名（重名就并排同名）。
+ * 只剥「括号里长得像联系人 id」的那种后缀：真名叫「小明 (同学)」不受影响。
+ * 目录名本身仍是聊天仓键 / PersonEntry.id，不因显示名而变。
+ */
+export function plainNameOf(dirName: string): string {
+  const m = /^(.*?)\s*[(（]([^()（）]*)[)）]\s*$/.exec(dirName);
+  if (!m) return dirName;
+  const inner = m[2].trim();
+  const looksLikeId = /^wxid_/i.test(inner) || inner.includes('@') || /^m\d{5,}$/.test(inner);
+  if (!looksLikeId) return dirName;
+  return m[1].trim() || dirName;
+}
+
 /** 数据目录里含 chat.json 或 stats.json 的联系人目录名（按名字序；目录不存在返回空）。
  *  485：sync 轮只产 stats.json，chat.json 是 export 轮按需产物——两者任一即视为联系人目录。 */
 export function listContactDirs(dataDir: string): string[] {

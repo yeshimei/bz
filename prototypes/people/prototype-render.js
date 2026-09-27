@@ -1,4 +1,4 @@
-/* 源指纹 502cddff3e87a53d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fbc5a82d684c2729 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -527,8 +527,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function deleteTitleOf(tier) {
     if (tier === "drawn") return "删除这个联系人（已有脸谱，需重输主密码）";
-    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完，二次确认即可）";
-    return "删除这个联系人（还没画过脸谱，二次确认即可）";
+    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完）";
+    return "删除这个联系人";
   }
   function foldDetailHead(p, media, opts) {
     var _a, _b;
@@ -565,10 +565,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
         // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
-        iconButton("trash-2", `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? " bz-people-del-arm" : ""}`, {
+        iconButton("trash-2", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del", {
           "data-people-del": p.id,
-          "aria-label": opts.deleteArm ? "再点确认删除" : "删除",
-          title: opts.deleteArm ? "再点一次确认删除" : deleteTitleOf(tier)
+          "aria-label": "删除",
+          title: deleteTitleOf(tier)
         }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
@@ -1082,9 +1082,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
     return el("label", cls, [
       cb,
-      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.displayName }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.displayName))),
       el("div", "bz-people-ds-main", [
-        el("div", "bz-people-ds-name", text(row.name + (row.isGroup ? "（群）" : ""))),
+        el("div", "bz-people-ds-name", text(row.displayName + (row.isGroup ? "（群）" : ""))),
         el("div", "bz-people-ds-meta", text([
           `${formatCount(row.rawCount)} 条`,
           row.media

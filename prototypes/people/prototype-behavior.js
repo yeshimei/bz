@@ -1,4 +1,4 @@
-/* 源指纹 acca2939e8649567 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 242eeac6176466e4 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -4652,6 +4652,190 @@ var BZW_people = (() => {
     }
   });
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml2(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
+    }
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text2) {
+    try {
+      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text2) {
+    try {
+      await copySensitiveText(text2);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text2;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -4709,6 +4893,108 @@ var BZW_people = (() => {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       PANEL_FOCUS_CLASS = "bz-panel-focushost";
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a2;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function cancelActiveFlowDialog() {
+    if (activeSettle) activeSettle(void 0);
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
     }
   });
 
@@ -6317,292 +6603,6 @@ var BZW_people = (() => {
           return CryptoService.decrypt(cipher, this.password);
         }
       };
-    }
-  });
-
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function relTime(s, now = Date.now()) {
-    if (!s) return "";
-    const d = new Date(s.replace(" ", "T"));
-    if (isNaN(d.getTime())) return s;
-    const diff = now - d.getTime();
-    const m = 6e4, h = 36e5, day = 864e5;
-    if (diff < m) return "刚刚";
-    if (diff < h) return Math.floor(diff / m) + " 分钟前";
-    if (diff < day) return Math.floor(diff / h) + " 小时前";
-    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-  }
-  function emptyHtmlStr(icon, title, desc) {
-    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    if (target.isSame(nowMoment.startOf("day"), "day")) {
-      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function debounce(fn, ms) {
-    let t;
-    const wrapped = (...args) => {
-      if (t !== void 0) clearTimeout(t);
-      t = setTimeout(() => {
-        t = void 0;
-        fn(...args);
-      }, ms);
-    };
-    wrapped.cancel = () => {
-      if (t !== void 0) {
-        clearTimeout(t);
-        t = void 0;
-      }
-    };
-    return wrapped;
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text2) {
-    try {
-      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  async function copySensitiveWithFallback(text2) {
-    try {
-      await copySensitiveText(text2);
-      return true;
-    } catch (e) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text2;
-        ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      init_notice();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a2;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function cancelActiveFlowDialog() {
-    if (activeSettle) activeSettle(void 0);
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
     }
   });
 
@@ -12904,6 +12904,7 @@ var BZW_people = (() => {
 
   // src/people/ui.ts
   init_notice();
+  init_flow_dialog();
   init_z_order();
   init_esc_manager();
   init_focus_trap();
@@ -14683,518 +14684,73 @@ ${lines.join("\n")}`);
   // src/people/sync.ts
   init_notice();
   init_settings_provider();
-  var BZ_FACE_INSTALL_HINT = "未找到 bz-face 命令——先安装脸谱工具包（@jwbz/obsidian-face）：在仓库 tools/obsidian-face 目录下运行 npm link，或 npm install -g <仓库>/tools/obsidian-face，装好后重试";
-  var DOCTOR_HINT = "到终端运行 bz-face doctor 可自检环境";
-  var PHASE_LABELS = {
-    key: "取密钥",
-    decrypt: "解密数据库",
-    contacts: "统计联系人",
-    avatar: "头像源"
-  };
-  function syncPhaseLabel(phase) {
-    return phase && PHASE_LABELS[phase] || "";
-  }
-  function emptySyncStats() {
-    return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
-  }
-  function freshState() {
-    return {
-      outcome: "idle",
-      phase: null,
-      pct: null,
-      step: "",
-      message: "",
-      hint: "",
-      stats: emptySyncStats(),
-      startedAt: null,
-      contactsTotal: null,
-      contactsDone: 0,
-      lastContact: ""
-    };
-  }
-  function formatSyncElapsed(ms) {
-    const sec = Math.max(0, Math.floor(ms / 1e3));
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`;
-  }
-  function contactLineOf(data) {
-    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return "";
-    if (data.status === "ok") {
-      return Number.isFinite(data.msgs) ? `${data.name} · ${Number(data.msgs).toLocaleString("en-US")} 条` : data.name;
-    }
-    if (data.status === "failed") return `${data.name} · 失败`;
-    return "";
-  }
-  function quotePathArg(v) {
-    return process.platform === "win32" ? `"${v}"` : v;
-  }
-  function buildSyncSpec(opts) {
-    var _a2, _b2;
-    const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
-    const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
-    return {
-      cmd: "bz-face",
-      args: [
-        "sync",
-        "--data-root",
-        quotePathArg(opts.dataRoot),
-        ...src ? ["--src", quotePathArg(src)] : [],
-        ...python ? ["--python", python] : []
-      ],
-      shell: true
-    };
-  }
-  function collectContactInfo(stats, data) {
-    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return false;
-    if (data.status === "ok") {
-      stats.contacts++;
-      if (data.chat === "unchanged") stats.unchanged++;
-      else stats.written++;
-      if (Number.isFinite(data.msgs)) stats.msgTotal += Number(data.msgs);
-      if (Number.isFinite(data.named)) stats.named += Number(data.named);
-      return true;
-    }
-    if (data.status === "skipped") {
-      stats.skipped++;
-      return true;
-    }
-    if (data.status === "failed") {
-      stats.failed++;
-      stats.failures.push({ name: data.name, error: typeof data.error === "string" ? data.error : "导出失败" });
-      return true;
-    }
-    return false;
-  }
-  function statsFromResult(result, live2) {
-    const num = (v, fallback) => Number.isFinite(v) ? Number(v) : fallback;
-    const failures = Array.isArray(result.failures) ? result.failures.map((f) => {
-      const o = f;
-      if (!o || typeof o.name !== "string") return null;
-      return { name: o.name, error: typeof o.error === "string" ? o.error : "导出失败" };
-    }).filter((f) => f !== null) : live2.failures;
-    const written = num(result.written, live2.written);
-    const unchanged = num(result.unchanged, live2.unchanged);
-    return {
-      contacts: num(result.contacts, written + unchanged),
-      written,
-      unchanged,
-      skipped: num(result.skipped, live2.skipped),
-      failed: num(result.failed, live2.failed),
-      msgTotal: num(result.msgTotal, live2.msgTotal),
-      named: num(result.named, live2.named),
-      failures
-    };
-  }
-  function describeSyncStats(st2) {
-    const parts = [`更新 ${st2.written} 位`, `未变 ${st2.unchanged} 位`, `跳过 ${st2.skipped} 位`];
-    if (st2.failed > 0) parts.push(`${st2.failed} 位失败`);
-    return `同步完成：${parts.join(" · ")}，消息 ${st2.msgTotal} 条`;
-  }
-  function firstLine(text2, max = 200) {
-    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
-    return line.length > max ? line.slice(0, max) + "…" : line;
-  }
-  function classifySyncFailure(outcome) {
-    var _a2, _b2;
-    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
-    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
-    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
-    const stderr = outcome.stderr || "";
-    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
-      return { message: "Python 缺少同步依赖", hint: `${DOCTOR_HINT}，按提示安装缺的依赖后重试` };
-    }
-    if (/微信/.test(msg)) return { message: firstLine(msg), hint: "" };
-    return {
-      message: firstLine(msg || "同步进程异常退出，没有给出原因"),
-      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
-    };
-  }
-  var state = freshState();
-  var handle = null;
-  var listeners = /* @__PURE__ */ new Set();
-  function setState(patch) {
-    state = { ...state, ...patch };
-    for (const fn of [...listeners]) fn(state);
-  }
-  function syncState() {
-    return state;
-  }
-  function isSyncing() {
-    return state.outcome === "running";
-  }
-  function subscribeSync(fn) {
-    listeners.add(fn);
-    return () => {
-      listeners.delete(fn);
-    };
-  }
-  var runner = runExternalTool;
-  function nonEmpty(v) {
-    const t = typeof v === "string" ? v.trim() : "";
-    return t || void 0;
-  }
-  function emitNotice(s) {
-    if (s.outcome === "ok") {
-      if (s.stats.failed > 0) {
-        const names = s.stats.failures.slice(0, 3).map((f) => f.name).join("、");
-        notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? "等" : ""}）` : ""}——重跑同步只补失败项`, "warning");
-      } else {
-        notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, "success");
-      }
-      return;
-    }
-    if (s.outcome === "error") notice(`同步失败：${firstLine(s.message)}`, "error");
-    if (s.outcome === "stopped") notice("同步已停止——已导出的部分保留，重跑可续传", "info");
-  }
-  function startSync() {
-    var _a2;
-    if (state.outcome === "running") return;
-    const s = tryGetSettings();
-    const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
-    if (!dataRoot) {
-      setState({
-        ...freshState(),
-        outcome: "error",
-        message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
-        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步"
-      });
-      return;
-    }
-    const spec = buildSyncSpec({
-      dataRoot,
-      src: nonEmpty(s == null ? void 0 : s.peopleWxAccountDir),
-      python: nonEmpty(s == null ? void 0 : s.pythonPath)
-    });
-    const live2 = emptySyncStats();
-    let result = null;
-    const cbs = {
-      onStep: (text2) => setState({ step: text2 }),
-      onProgress: (phase, pct) => setState({ phase, pct }),
-      onInfo: (data) => {
-        if (data.phase === "contacts" && Number.isFinite(data.total)) {
-          setState({ contactsTotal: Math.max(1, Number(data.total)) });
-          return;
-        }
-        if (collectContactInfo(live2, data)) {
-          const line = contactLineOf(data);
-          setState({
-            contactsDone: live2.contacts + live2.skipped + live2.failed,
-            ...line ? { lastContact: line } : {}
-          });
-        }
-      },
-      onResult: (data) => {
-        result = data;
-      }
-    };
-    handle = runner(spec, cbs);
-    setState({
-      ...freshState(),
-      outcome: "running",
-      stats: live2,
-      startedAt: Date.now()
-      // 484：已耗时心跳的计时源
-    });
-    void handle.done.then((outcome) => {
-      handle = null;
-      finishSync(outcome, result);
-    });
-  }
-  function finishSync(outcome, result) {
-    if (outcome.stopped) {
-      setState({
-        outcome: "stopped",
-        pct: null,
-        step: "",
-        message: "已停止",
-        hint: "点「同步」重跑续传——已导出的部分不会重复搬"
-      });
-      emitNotice(state);
-      return;
-    }
-    if (result && result.ok === false) {
-      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
-      setState({ outcome: "error", phase: null, pct: null, step: "", message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
-      emitNotice(state);
-      return;
-    }
-    if (outcome.ok && result && result.ok === true) {
-      const st2 = statsFromResult(result, state.stats);
-      setState({ outcome: "ok", phase: null, pct: 100, step: "", message: describeSyncStats(st2), hint: "", stats: st2 });
-      emitNotice(state);
-      return;
-    }
-    const classified = classifySyncFailure(outcome);
-    setState({ outcome: "error", phase: null, pct: null, step: "", message: classified.message, hint: classified.hint });
-    emitNotice(state);
-  }
-  function stopSync() {
-    handle == null ? void 0 : handle.stop();
-  }
 
-  // src/people/prep.ts
-  var PREP_PHASE_LABELS = {
-    media: "媒体导出",
-    derive: "派生图片档",
-    map: "图片关联表",
-    transcribe: "语音转写"
-  };
-  var PREP_PHASES = ["media", "derive", "map", "transcribe"];
-  function prepPhaseLabel(phase) {
-    return phase && PREP_PHASE_LABELS[phase] || "";
+  // src/people/datasource.ts
+  init_settings_provider();
+
+  // src/people/parse.ts
+  function normalizeKind(typeName, typeNum, text2) {
+    if (typeName !== void 0 && typeName !== "") return kindFromTypeName(typeName);
+    if (typeNum !== void 0 && typeNum !== "") {
+      const k = kindFromTypeNum(typeNum, text2);
+      if (k) return k;
+    }
+    return kindFromLabel(text2);
   }
-  function prepStageLine(prog) {
-    const label = prepPhaseLabel(prog.phase);
-    if (!label) return prog.donePhases.length >= PREP_PHASES.length ? "预处理完成" : "预处理中…";
-    const c = prog.counts[prog.phase];
-    if (c && c.total > 0) return `${label} ${c.done}/${c.total}`;
-    if (prog.pct != null) return `${label} ${Math.round(prog.pct)}%`;
-    return `${label}…`;
+  function kindFromTypeName(raw) {
+    const n = raw.trim();
+    if (!n) return "其他";
+    if (/^(文本|文字|text)$/i.test(n)) return "文本";
+    if (n.includes("通话")) return "通话";
+    if (n.includes("撤回") || n.includes("系统")) return "系统";
+    if (n.includes("引用")) return "引用";
+    if (n.includes("表情")) return "表情";
+    if (n.includes("图片")) return "图片";
+    if (n.includes("视频")) return "视频";
+    if (n.includes("语音")) return "语音";
+    if (n.includes("文件")) return "文件";
+    if (n.includes("分享") || n.includes("链接")) return "分享";
+    return "其他";
   }
-  function newPrepProgress(totals) {
-    const counts = {};
-    if ((totals == null ? void 0 : totals.media) && totals.media > 0) counts.media = { done: 0, total: totals.media };
-    if ((totals == null ? void 0 : totals.map) && totals.map > 0) counts.map = { done: 0, total: totals.map };
-    if ((totals == null ? void 0 : totals.transcribe) && totals.transcribe > 0) counts.transcribe = { done: 0, total: totals.transcribe };
-    return { phase: null, pct: null, counts, donePhases: [], failed: 0 };
-  }
-  function prepAllDone(prog) {
-    return PREP_PHASES.every((p) => prog.donePhases.includes(p));
-  }
-  function applyPrepProgress(prog, phase, pct) {
-    prog.phase = phase;
-    prog.pct = pct;
-    if (phase && pct != null) {
-      const c = prog.counts[phase];
-      if (c && c.total > 0) c.done = Math.min(c.total, Math.max(c.done, Math.round(pct / 100 * c.total)));
+  function kindFromTypeNum(raw, text2) {
+    const s = raw.trim();
+    if (!/^\d+$/.test(s)) return null;
+    switch (Number(s)) {
+      case 1:
+        return "文本";
+      case 3:
+        return "图片";
+      case 34:
+        return "语音";
+      case 43:
+        return "视频";
+      case 47:
+        return "表情";
+      case 50:
+        return "通话";
+      case 49:
+        if (text2.startsWith("[引用")) return "引用";
+        if (text2.startsWith("[文件")) return "文件";
+        return "分享";
+      case 1e4:
+      case 10002:
+        return "系统";
+      default:
+        return "其他";
     }
   }
-  function collectPrepInfo(prog, data) {
-    var _a2, _b2;
-    if (data.status === "paused") {
-      prog.paused = true;
-      return true;
-    }
-    if (data.status === "resumed") {
-      prog.paused = false;
-      return true;
-    }
-    const phase = typeof data.phase === "string" ? data.phase : "";
-    if (!phase || !PREP_PHASES.includes(phase)) return false;
-    let done = 0;
-    let total = 0;
-    if (phase === "media") {
-      const counts = data.counts && typeof data.counts === "object" ? data.counts : null;
-      for (const v of Object.values(counts != null ? counts : {})) {
-        const o = v;
-        if (!o || typeof o !== "object") continue;
-        const d = Number(o.done) || 0;
-        const s = Number(o.skip) || 0;
-        const f = Number(o.fail) || 0;
-        done += d + s;
-        total += d + s + f;
-      }
-    } else if (phase === "map") {
-      done = Number(data.mapped) || 0;
-      total = Number(data.refs) || 0;
-    } else {
-      const d = Number(data.done) || 0;
-      const s = Number(data.skip) || 0;
-      const f = Number(data.fail) || 0;
-      done = d + s;
-      total = d + s + f;
-    }
-    if (total > 0) prog.counts[phase] = { done, total };
-    else prog.counts[phase] = { done, total: (_b2 = (_a2 = prog.counts[phase]) == null ? void 0 : _a2.total) != null ? _b2 : 0 };
-    if (!prog.donePhases.includes(phase)) prog.donePhases.push(phase);
-    return true;
-  }
-  function prepOverallPct(prog) {
-    var _a2;
-    const cur = prog.phase && !prog.donePhases.includes(prog.phase) ? ((_a2 = prog.pct) != null ? _a2 : 0) / 100 : 0;
-    const ratio = Math.min(PREP_PHASES.length, prog.donePhases.length + cur) / PREP_PHASES.length;
-    return Math.min(100, Math.max(0, Math.round(ratio * 100)));
-  }
-  function prepMediaTotals(kindCounts, stats) {
-    const kc = kindCounts != null ? kindCounts : {};
-    const pick = (key) => Number.isFinite(kc[key]) ? Number(kc[key]) : 0;
-    let voice = pick("语音");
-    let image = pick("图片");
-    const video = pick("视频");
-    const file = pick("文件");
-    if (!voice && !image && stats) {
-      voice = Number(stats.voiceCount) || 0;
-      image = Number(stats.imageCount) || 0;
-    }
-    const media = voice + image + video + file;
-    if (media <= 0) return null;
-    return { media, transcribe: voice, map: image };
-  }
-  function buildPrepSpec(opts) {
-    var _a2, _b2, _c, _d;
-    const engine = opts.asrEngine === "faster-whisper" ? "faster-whisper" : "sensevoice";
-    const model = (_a2 = opts.asrModel) == null ? void 0 : _a2.trim();
-    const src = ((_b2 = opts.src) == null ? void 0 : _b2.trim()) || void 0;
-    const python = ((_c = opts.python) == null ? void 0 : _c.trim()) || void 0;
-    const ffmpeg = ((_d = opts.ffmpeg) == null ? void 0 : _d.trim()) || void 0;
-    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
-    return {
-      cmd: "bz-face",
-      args: [
-        "prep",
-        q(opts.contact),
-        "--data-root",
-        q(opts.dataRoot),
-        "--asr-engine",
-        engine,
-        ...engine === "faster-whisper" && model ? ["--asr-model", model] : [],
-        ...src ? ["--src", q(src)] : [],
-        ...ffmpeg ? ["--ffmpeg", q(ffmpeg)] : [],
-        ...python ? ["--python", python] : []
-      ],
-      shell: true
-    };
-  }
-  function controlFilePath(dataRoot) {
-    const base = dataRoot.endsWith("\\") || dataRoot.endsWith("/") ? dataRoot : `${dataRoot}/`;
-    return `${base}.bz-face/control.json`;
-  }
-  function defaultPrepFs() {
-    if (typeof window === "undefined") return null;
-    const w = window;
-    if (!w.require) return null;
-    try {
-      const fs = w.require("fs");
-      return {
-        writeText: (p, d) => fs.writeFileSync(p, d),
-        readText: (p) => {
-          try {
-            return fs.readFileSync(p, "utf8");
-          } catch (e) {
-            return null;
-          }
-        },
-        exists: (p) => {
-          try {
-            return fs.existsSync(p);
-          } catch (e) {
-            return false;
-          }
-        },
-        unlink: (p) => {
-          try {
-            fs.unlinkSync(p);
-          } catch (e) {
-          }
-        }
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-  var prepFsOverride = null;
-  function fso() {
-    return prepFsOverride != null ? prepFsOverride : defaultPrepFs();
-  }
-  async function writePrepControl(dataRoot, action) {
-    const fs = fso();
-    const path = controlFilePath(dataRoot);
-    if (!fs || !dataRoot) return false;
-    try {
-      fs.writeText(path, `${JSON.stringify({ action })}
-`);
-      return true;
-    } catch (e) {
-      console.warn("[people] 写控制文件失败:", e);
-      return false;
-    }
-  }
-  function clearPrepControl(dataRoot) {
-    const fs = fso();
-    if (!fs || !dataRoot) return;
-    fs.unlink(controlFilePath(dataRoot));
-  }
-  function readPrepSidecars(dataRoot, contact) {
-    const fs = fso();
-    if (!fs || !dataRoot || !contact) return null;
-    const readArray = (p) => {
-      const raw = fs.readText(p);
-      if (raw == null) return null;
-      try {
-        const parsed = JSON.parse(raw.replace(/^\uFEFF/, ""));
-        return Array.isArray(parsed) ? parsed : null;
-      } catch (e) {
-        return null;
-      }
-    };
-    const norm = (s) => s.replace(/\\/g, "/");
-    const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
-    const voice = readArray(norm(`${base}/voice.json`));
-    const imageMap = readArray(norm(`${base}/image_map.json`));
-    if (!voice && !imageMap) return null;
-    return {
-      voice: (voice != null ? voice : []).filter((v) => !!v && typeof v === "object"),
-      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
-    };
-  }
-  function firstLine2(text2, max = 200) {
-    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
-    return line.length > max ? line.slice(0, max) + "…" : line;
-  }
-  var DOCTOR_HINT2 = "到终端运行 bz-face doctor 可自检环境";
-  function classifyPrepFailure(outcome) {
-    var _a2, _b2;
-    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
-    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
-    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
-    const stderr = outcome.stderr || "";
-    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
-      return { message: "Python 缺少预处理依赖", hint: `${DOCTOR_HINT2}，按提示安装缺的依赖后重试` };
-    }
-    if (/微信|数据根|联系人不|chat\.json/.test(msg)) return { message: firstLine2(msg), hint: "" };
-    return {
-      message: firstLine2(msg || "预处理进程异常退出，没有给出原因"),
-      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT2
-    };
-  }
-  var session = null;
-  var runner2 = runExternalTool;
-  function resetPrepForTests() {
-    session = null;
-  }
-  function currentPrepSession() {
-    return session && session.alive() ? session : null;
-  }
-  function startPrepSession(talker, spec, cbs) {
-    if (session && session.alive()) {
-      if (session.talker === talker) return session;
-      session.handle.stop();
-    }
-    let lastResult = null;
-    let settled = false;
-    const handle2 = runner2(spec, {
-      ...cbs,
-      onResult: (data) => {
-        lastResult = data;
-        cbs.onResult(data);
-      }
-    });
-    const wrapped = {
-      talker,
-      handle: handle2,
-      done: handle2.done.then((outcome) => {
-        settled = true;
-        if (session === wrapped) session = null;
-        return { outcome, result: lastResult };
-      }),
-      alive: () => !settled
-    };
-    session = wrapped;
-    return wrapped;
-  }
-  function abortPrepSession(talker) {
-    if (session && session.alive() && (!talker || session.talker === talker)) session.handle.stop();
+  function kindFromLabel(text2) {
+    const t = text2.trim();
+    if (t.startsWith("[图片")) return "图片";
+    if (t.startsWith("[视频")) return "视频";
+    if (t.startsWith("[语音")) return "语音";
+    if (t.startsWith("[通话") || t.includes("通话时长")) return "通话";
+    if (t.startsWith("[表情")) return "表情";
+    if (t.startsWith("[文件")) return "文件";
+    if (t.startsWith("[引用")) return "引用";
+    if (t.startsWith("[分享") || t.startsWith("[链接")) return "分享";
+    if (t.startsWith("[撤回")) return "系统";
+    return "文本";
   }
 
   // src/people/insights.ts
@@ -15325,74 +14881,6 @@ ${lines.join("\n")}`);
       return `消息密度：${[...byYear.entries()].map(([y, n]) => `${y} 年合计 ${n} 条`).join("、")}`;
     }
     return `消息密度：${asc.map(([m, n]) => `${m} ${n} 条`).join("、")}`;
-  }
-
-  // src/people/datasource.ts
-  init_settings_provider();
-
-  // src/people/parse.ts
-  function normalizeKind(typeName, typeNum, text2) {
-    if (typeName !== void 0 && typeName !== "") return kindFromTypeName(typeName);
-    if (typeNum !== void 0 && typeNum !== "") {
-      const k = kindFromTypeNum(typeNum, text2);
-      if (k) return k;
-    }
-    return kindFromLabel(text2);
-  }
-  function kindFromTypeName(raw) {
-    const n = raw.trim();
-    if (!n) return "其他";
-    if (/^(文本|文字|text)$/i.test(n)) return "文本";
-    if (n.includes("通话")) return "通话";
-    if (n.includes("撤回") || n.includes("系统")) return "系统";
-    if (n.includes("引用")) return "引用";
-    if (n.includes("表情")) return "表情";
-    if (n.includes("图片")) return "图片";
-    if (n.includes("视频")) return "视频";
-    if (n.includes("语音")) return "语音";
-    if (n.includes("文件")) return "文件";
-    if (n.includes("分享") || n.includes("链接")) return "分享";
-    return "其他";
-  }
-  function kindFromTypeNum(raw, text2) {
-    const s = raw.trim();
-    if (!/^\d+$/.test(s)) return null;
-    switch (Number(s)) {
-      case 1:
-        return "文本";
-      case 3:
-        return "图片";
-      case 34:
-        return "语音";
-      case 43:
-        return "视频";
-      case 47:
-        return "表情";
-      case 50:
-        return "通话";
-      case 49:
-        if (text2.startsWith("[引用")) return "引用";
-        if (text2.startsWith("[文件")) return "文件";
-        return "分享";
-      case 1e4:
-      case 10002:
-        return "系统";
-      default:
-        return "其他";
-    }
-  }
-  function kindFromLabel(text2) {
-    const t = text2.trim();
-    if (t.startsWith("[图片")) return "图片";
-    if (t.startsWith("[视频")) return "视频";
-    if (t.startsWith("[语音")) return "语音";
-    if (t.startsWith("[通话") || t.includes("通话时长")) return "通话";
-    if (t.startsWith("[表情")) return "表情";
-    if (t.startsWith("[文件")) return "文件";
-    if (t.startsWith("[引用")) return "引用";
-    if (t.startsWith("[分享") || t.startsWith("[链接")) return "分享";
-    if (t.startsWith("[撤回")) return "系统";
-    return "文本";
   }
 
   // src/people/datasource.ts
@@ -15878,6 +15366,14 @@ ${lines.join("\n")}`);
       return null;
     }
   }
+  function plainNameOf(dirName) {
+    const m = /^(.*?)\s*[(（]([^()（）]*)[)）]\s*$/.exec(dirName);
+    if (!m) return dirName;
+    const inner = m[2].trim();
+    const looksLikeId = /^wxid_/i.test(inner) || inner.includes("@") || /^m\d{5,}$/.test(inner);
+    if (!looksLikeId) return dirName;
+    return m[1].trim() || dirName;
+  }
   function listContactDirs(dataDir) {
     const fs = getFs();
     if (!fs || !dataDir) return [];
@@ -16000,6 +15496,522 @@ ${lines.join("\n")}`);
     acc.voiceTotalSec = (_b2 = stats.voiceTotalSec) != null ? _b2 : 0;
     acc.imageCount = (_c = stats.imageCount) != null ? _c : 0;
     return acc.voiceCount || acc.imageCount ? acc : null;
+  }
+
+  // src/people/sync.ts
+  var BZ_FACE_INSTALL_HINT = "未找到 bz-face 命令——先安装脸谱工具包（@jwbz/obsidian-face）：在仓库 tools/obsidian-face 目录下运行 npm link，或 npm install -g <仓库>/tools/obsidian-face，装好后重试";
+  var DOCTOR_HINT = "到终端运行 bz-face doctor 可自检环境";
+  var PHASE_LABELS = {
+    key: "取密钥",
+    decrypt: "解密数据库",
+    contacts: "统计联系人",
+    avatar: "头像源"
+  };
+  function syncPhaseLabel(phase) {
+    return phase && PHASE_LABELS[phase] || "";
+  }
+  function emptySyncStats() {
+    return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
+  }
+  function freshState() {
+    return {
+      outcome: "idle",
+      phase: null,
+      pct: null,
+      step: "",
+      message: "",
+      hint: "",
+      stats: emptySyncStats(),
+      startedAt: null,
+      contactsTotal: null,
+      contactsDone: 0,
+      lastContact: ""
+    };
+  }
+  function formatSyncElapsed(ms) {
+    const sec = Math.max(0, Math.floor(ms / 1e3));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`;
+  }
+  function contactLineOf(data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return "";
+    const who = plainNameOf(data.name);
+    if (data.status === "ok") {
+      return Number.isFinite(data.msgs) ? `${who} · ${Number(data.msgs).toLocaleString("en-US")} 条` : who;
+    }
+    if (data.status === "failed") return `${who} · 失败`;
+    return "";
+  }
+  function quotePathArg(v) {
+    return process.platform === "win32" ? `"${v}"` : v;
+  }
+  function buildSyncSpec(opts) {
+    var _a2, _b2;
+    const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
+    const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
+    return {
+      cmd: "bz-face",
+      args: [
+        "sync",
+        "--data-root",
+        quotePathArg(opts.dataRoot),
+        ...src ? ["--src", quotePathArg(src)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function collectContactInfo(stats, data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return false;
+    if (data.status === "ok") {
+      stats.contacts++;
+      if (data.chat === "unchanged") stats.unchanged++;
+      else stats.written++;
+      if (Number.isFinite(data.msgs)) stats.msgTotal += Number(data.msgs);
+      if (Number.isFinite(data.named)) stats.named += Number(data.named);
+      return true;
+    }
+    if (data.status === "skipped") {
+      stats.skipped++;
+      return true;
+    }
+    if (data.status === "failed") {
+      stats.failed++;
+      stats.failures.push({ name: data.name, error: typeof data.error === "string" ? data.error : "导出失败" });
+      return true;
+    }
+    return false;
+  }
+  function statsFromResult(result, live2) {
+    const num = (v, fallback) => Number.isFinite(v) ? Number(v) : fallback;
+    const failures = Array.isArray(result.failures) ? result.failures.map((f) => {
+      const o = f;
+      if (!o || typeof o.name !== "string") return null;
+      return { name: o.name, error: typeof o.error === "string" ? o.error : "导出失败" };
+    }).filter((f) => f !== null) : live2.failures;
+    const written = num(result.written, live2.written);
+    const unchanged = num(result.unchanged, live2.unchanged);
+    return {
+      contacts: num(result.contacts, written + unchanged),
+      written,
+      unchanged,
+      skipped: num(result.skipped, live2.skipped),
+      failed: num(result.failed, live2.failed),
+      msgTotal: num(result.msgTotal, live2.msgTotal),
+      named: num(result.named, live2.named),
+      failures
+    };
+  }
+  function describeSyncStats(st2) {
+    const parts = [`更新 ${st2.written} 位`, `未变 ${st2.unchanged} 位`, `跳过 ${st2.skipped} 位`];
+    if (st2.failed > 0) parts.push(`${st2.failed} 位失败`);
+    return `同步完成：${parts.join(" · ")}，消息 ${st2.msgTotal} 条`;
+  }
+  function firstLine(text2, max = 200) {
+    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+    return line.length > max ? line.slice(0, max) + "…" : line;
+  }
+  function classifySyncFailure(outcome) {
+    var _a2, _b2;
+    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
+    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
+    const stderr = outcome.stderr || "";
+    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
+      return { message: "Python 缺少同步依赖", hint: `${DOCTOR_HINT}，按提示安装缺的依赖后重试` };
+    }
+    if (/微信/.test(msg)) return { message: firstLine(msg), hint: "" };
+    return {
+      message: firstLine(msg || "同步进程异常退出，没有给出原因"),
+      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
+    };
+  }
+  var state = freshState();
+  var handle = null;
+  var listeners = /* @__PURE__ */ new Set();
+  function setState(patch) {
+    state = { ...state, ...patch };
+    for (const fn of [...listeners]) fn(state);
+  }
+  function syncState() {
+    return state;
+  }
+  function isSyncing() {
+    return state.outcome === "running";
+  }
+  function subscribeSync(fn) {
+    listeners.add(fn);
+    return () => {
+      listeners.delete(fn);
+    };
+  }
+  var runner = runExternalTool;
+  function nonEmpty(v) {
+    const t = typeof v === "string" ? v.trim() : "";
+    return t || void 0;
+  }
+  function emitNotice(s) {
+    if (s.outcome === "ok") {
+      if (s.stats.failed > 0) {
+        const names = s.stats.failures.slice(0, 3).map((f) => plainNameOf(f.name)).join("、");
+        notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? "等" : ""}）` : ""}——重跑同步只补失败项`, "warning");
+      } else {
+        notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, "success");
+      }
+      return;
+    }
+    if (s.outcome === "error") notice(`同步失败：${firstLine(s.message)}`, "error");
+    if (s.outcome === "stopped") notice("同步已停止——已导出的部分保留，重跑可续传", "info");
+  }
+  function startSync() {
+    var _a2;
+    if (state.outcome === "running") return;
+    const s = tryGetSettings();
+    const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
+    if (!dataRoot) {
+      setState({
+        ...freshState(),
+        outcome: "error",
+        message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
+        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步"
+      });
+      return;
+    }
+    const spec = buildSyncSpec({
+      dataRoot,
+      src: nonEmpty(s == null ? void 0 : s.peopleWxAccountDir),
+      python: nonEmpty(s == null ? void 0 : s.pythonPath)
+    });
+    const live2 = emptySyncStats();
+    let result = null;
+    const cbs = {
+      onStep: (text2) => setState({ step: text2 }),
+      onProgress: (phase, pct) => setState({ phase, pct }),
+      onInfo: (data) => {
+        if (data.phase === "contacts" && Number.isFinite(data.total)) {
+          setState({ contactsTotal: Math.max(1, Number(data.total)) });
+          return;
+        }
+        if (collectContactInfo(live2, data)) {
+          const line = contactLineOf(data);
+          setState({
+            contactsDone: live2.contacts + live2.skipped + live2.failed,
+            ...line ? { lastContact: line } : {}
+          });
+        }
+      },
+      onResult: (data) => {
+        result = data;
+      }
+    };
+    handle = runner(spec, cbs);
+    setState({
+      ...freshState(),
+      outcome: "running",
+      stats: live2,
+      startedAt: Date.now()
+      // 484：已耗时心跳的计时源
+    });
+    void handle.done.then((outcome) => {
+      handle = null;
+      finishSync(outcome, result);
+    });
+  }
+  function finishSync(outcome, result) {
+    if (outcome.stopped) {
+      setState({
+        outcome: "stopped",
+        pct: null,
+        step: "",
+        message: "已停止",
+        hint: "点「同步」重跑续传——已导出的部分不会重复搬"
+      });
+      emitNotice(state);
+      return;
+    }
+    if (result && result.ok === false) {
+      const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
+      setState({ outcome: "error", phase: null, pct: null, step: "", message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
+      emitNotice(state);
+      return;
+    }
+    if (outcome.ok && result && result.ok === true) {
+      const st2 = statsFromResult(result, state.stats);
+      setState({ outcome: "ok", phase: null, pct: 100, step: "", message: describeSyncStats(st2), hint: "", stats: st2 });
+      emitNotice(state);
+      return;
+    }
+    const classified = classifySyncFailure(outcome);
+    setState({ outcome: "error", phase: null, pct: null, step: "", message: classified.message, hint: classified.hint });
+    emitNotice(state);
+  }
+  function stopSync() {
+    handle == null ? void 0 : handle.stop();
+  }
+
+  // src/people/prep.ts
+  var PREP_PHASE_LABELS = {
+    media: "媒体导出",
+    derive: "派生图片档",
+    map: "图片关联表",
+    transcribe: "语音转写"
+  };
+  var PREP_PHASES = ["media", "derive", "map", "transcribe"];
+  function prepPhaseLabel(phase) {
+    return phase && PREP_PHASE_LABELS[phase] || "";
+  }
+  function prepStageLine(prog) {
+    const label = prepPhaseLabel(prog.phase);
+    if (!label) return prog.donePhases.length >= PREP_PHASES.length ? "预处理完成" : "预处理中…";
+    const c = prog.counts[prog.phase];
+    if (c && c.total > 0) return `${label} ${c.done}/${c.total}`;
+    if (prog.pct != null) return `${label} ${Math.round(prog.pct)}%`;
+    return `${label}…`;
+  }
+  function newPrepProgress(totals) {
+    const counts = {};
+    if ((totals == null ? void 0 : totals.media) && totals.media > 0) counts.media = { done: 0, total: totals.media };
+    if ((totals == null ? void 0 : totals.map) && totals.map > 0) counts.map = { done: 0, total: totals.map };
+    if ((totals == null ? void 0 : totals.transcribe) && totals.transcribe > 0) counts.transcribe = { done: 0, total: totals.transcribe };
+    return { phase: null, pct: null, counts, donePhases: [], failed: 0 };
+  }
+  function prepAllDone(prog) {
+    return PREP_PHASES.every((p) => prog.donePhases.includes(p));
+  }
+  function applyPrepProgress(prog, phase, pct) {
+    prog.phase = phase;
+    prog.pct = pct;
+    if (phase && pct != null) {
+      const c = prog.counts[phase];
+      if (c && c.total > 0) c.done = Math.min(c.total, Math.max(c.done, Math.round(pct / 100 * c.total)));
+    }
+  }
+  function collectPrepInfo(prog, data) {
+    var _a2, _b2;
+    if (data.status === "paused") {
+      prog.paused = true;
+      return true;
+    }
+    if (data.status === "resumed") {
+      prog.paused = false;
+      return true;
+    }
+    const phase = typeof data.phase === "string" ? data.phase : "";
+    if (!phase || !PREP_PHASES.includes(phase)) return false;
+    let done = 0;
+    let total = 0;
+    if (phase === "media") {
+      const counts = data.counts && typeof data.counts === "object" ? data.counts : null;
+      for (const v of Object.values(counts != null ? counts : {})) {
+        const o = v;
+        if (!o || typeof o !== "object") continue;
+        const d = Number(o.done) || 0;
+        const s = Number(o.skip) || 0;
+        const f = Number(o.fail) || 0;
+        done += d + s;
+        total += d + s + f;
+      }
+    } else if (phase === "map") {
+      done = Number(data.mapped) || 0;
+      total = Number(data.refs) || 0;
+    } else {
+      const d = Number(data.done) || 0;
+      const s = Number(data.skip) || 0;
+      const f = Number(data.fail) || 0;
+      done = d + s;
+      total = d + s + f;
+    }
+    if (total > 0) prog.counts[phase] = { done, total };
+    else prog.counts[phase] = { done, total: (_b2 = (_a2 = prog.counts[phase]) == null ? void 0 : _a2.total) != null ? _b2 : 0 };
+    if (!prog.donePhases.includes(phase)) prog.donePhases.push(phase);
+    return true;
+  }
+  function prepOverallPct(prog) {
+    var _a2;
+    const cur = prog.phase && !prog.donePhases.includes(prog.phase) ? ((_a2 = prog.pct) != null ? _a2 : 0) / 100 : 0;
+    const ratio = Math.min(PREP_PHASES.length, prog.donePhases.length + cur) / PREP_PHASES.length;
+    return Math.min(100, Math.max(0, Math.round(ratio * 100)));
+  }
+  function prepMediaTotals(kindCounts, stats) {
+    const kc = kindCounts != null ? kindCounts : {};
+    const pick = (key) => Number.isFinite(kc[key]) ? Number(kc[key]) : 0;
+    let voice = pick("语音");
+    let image = pick("图片");
+    const video = pick("视频");
+    const file = pick("文件");
+    if (!voice && !image && stats) {
+      voice = Number(stats.voiceCount) || 0;
+      image = Number(stats.imageCount) || 0;
+    }
+    const media = voice + image + video + file;
+    if (media <= 0) return null;
+    return { media, transcribe: voice, map: image };
+  }
+  function buildPrepSpec(opts) {
+    var _a2, _b2, _c, _d;
+    const engine = opts.asrEngine === "faster-whisper" ? "faster-whisper" : "sensevoice";
+    const model = (_a2 = opts.asrModel) == null ? void 0 : _a2.trim();
+    const src = ((_b2 = opts.src) == null ? void 0 : _b2.trim()) || void 0;
+    const python = ((_c = opts.python) == null ? void 0 : _c.trim()) || void 0;
+    const ffmpeg = ((_d = opts.ffmpeg) == null ? void 0 : _d.trim()) || void 0;
+    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
+    return {
+      cmd: "bz-face",
+      args: [
+        "prep",
+        q(opts.contact),
+        "--data-root",
+        q(opts.dataRoot),
+        "--asr-engine",
+        engine,
+        ...engine === "faster-whisper" && model ? ["--asr-model", model] : [],
+        ...src ? ["--src", q(src)] : [],
+        ...ffmpeg ? ["--ffmpeg", q(ffmpeg)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function controlFilePath(dataRoot) {
+    const base = dataRoot.endsWith("\\") || dataRoot.endsWith("/") ? dataRoot : `${dataRoot}/`;
+    return `${base}.bz-face/control.json`;
+  }
+  function defaultPrepFs() {
+    if (typeof window === "undefined") return null;
+    const w = window;
+    if (!w.require) return null;
+    try {
+      const fs = w.require("fs");
+      return {
+        writeText: (p, d) => fs.writeFileSync(p, d),
+        readText: (p) => {
+          try {
+            return fs.readFileSync(p, "utf8");
+          } catch (e) {
+            return null;
+          }
+        },
+        exists: (p) => {
+          try {
+            return fs.existsSync(p);
+          } catch (e) {
+            return false;
+          }
+        },
+        unlink: (p) => {
+          try {
+            fs.unlinkSync(p);
+          } catch (e) {
+          }
+        }
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  var prepFsOverride = null;
+  function fso() {
+    return prepFsOverride != null ? prepFsOverride : defaultPrepFs();
+  }
+  async function writePrepControl(dataRoot, action) {
+    const fs = fso();
+    const path = controlFilePath(dataRoot);
+    if (!fs || !dataRoot) return false;
+    try {
+      fs.writeText(path, `${JSON.stringify({ action })}
+`);
+      return true;
+    } catch (e) {
+      console.warn("[people] 写控制文件失败:", e);
+      return false;
+    }
+  }
+  function clearPrepControl(dataRoot) {
+    const fs = fso();
+    if (!fs || !dataRoot) return;
+    fs.unlink(controlFilePath(dataRoot));
+  }
+  function readPrepSidecars(dataRoot, contact) {
+    const fs = fso();
+    if (!fs || !dataRoot || !contact) return null;
+    const readArray = (p) => {
+      const raw = fs.readText(p);
+      if (raw == null) return null;
+      try {
+        const parsed = JSON.parse(raw.replace(/^\uFEFF/, ""));
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    const norm = (s) => s.replace(/\\/g, "/");
+    const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
+    const voice = readArray(norm(`${base}/voice.json`));
+    const imageMap = readArray(norm(`${base}/image_map.json`));
+    if (!voice && !imageMap) return null;
+    return {
+      voice: (voice != null ? voice : []).filter((v) => !!v && typeof v === "object"),
+      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
+    };
+  }
+  function firstLine2(text2, max = 200) {
+    const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+    return line.length > max ? line.slice(0, max) + "…" : line;
+  }
+  var DOCTOR_HINT2 = "到终端运行 bz-face doctor 可自检环境";
+  function classifyPrepFailure(outcome) {
+    var _a2, _b2;
+    const msg = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+    if (/ENOENT/.test(msg)) return { message: "未找到 bz-face 命令", hint: BZ_FACE_INSTALL_HINT };
+    if (/EACCES|权限/.test(msg)) return { message: "bz-face 命令没有执行权限", hint: "检查命令权限，或重新 link 后重试" };
+    const stderr = outcome.stderr || "";
+    if (/ModuleNotFoundError|ImportError/.test(stderr) || /ModuleNotFoundError|ImportError/.test(msg)) {
+      return { message: "Python 缺少预处理依赖", hint: `${DOCTOR_HINT2}，按提示安装缺的依赖后重试` };
+    }
+    if (/微信|数据根|联系人不|chat\.json/.test(msg)) return { message: firstLine2(msg), hint: "" };
+    return {
+      message: firstLine2(msg || "预处理进程异常退出，没有给出原因"),
+      hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT2
+    };
+  }
+  var session = null;
+  var runner2 = runExternalTool;
+  function resetPrepForTests() {
+    session = null;
+  }
+  function currentPrepSession() {
+    return session && session.alive() ? session : null;
+  }
+  function startPrepSession(talker, spec, cbs) {
+    if (session && session.alive()) {
+      if (session.talker === talker) return session;
+      session.handle.stop();
+    }
+    let lastResult = null;
+    let settled = false;
+    const handle2 = runner2(spec, {
+      ...cbs,
+      onResult: (data) => {
+        lastResult = data;
+        cbs.onResult(data);
+      }
+    });
+    const wrapped = {
+      talker,
+      handle: handle2,
+      done: handle2.done.then((outcome) => {
+        settled = true;
+        if (session === wrapped) session = null;
+        return { outcome, result: lastResult };
+      }),
+      alive: () => !settled
+    };
+    session = wrapped;
+    return wrapped;
+  }
+  function abortPrepSession(talker) {
+    if (session && session.alive() && (!talker || session.talker === talker)) session.handle.stop();
   }
 
   // src/people/describe.ts
@@ -17799,8 +17811,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function deleteTitleOf(tier) {
     if (tier === "drawn") return "删除这个联系人（已有脸谱，需重输主密码）";
-    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完，二次确认即可）";
-    return "删除这个联系人（还没画过脸谱，二次确认即可）";
+    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完）";
+    return "删除这个联系人";
   }
   function foldDetailHead(p, media, opts) {
     var _a2, _b2;
@@ -17837,10 +17849,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
         iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
         // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
-        iconButton("trash-2", `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? " bz-people-del-arm" : ""}`, {
+        iconButton("trash-2", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del", {
           "data-people-del": p.id,
-          "aria-label": opts.deleteArm ? "再点确认删除" : "删除",
-          title: opts.deleteArm ? "再点一次确认删除" : deleteTitleOf(tier)
+          "aria-label": "删除",
+          title: deleteTitleOf(tier)
         }),
         iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
       ])
@@ -18338,9 +18350,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
     return el("label", cls, [
       cb,
-      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.name }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.displayName }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.displayName))),
       el("div", "bz-people-ds-main", [
-        el("div", "bz-people-ds-name", text(row.name + (row.isGroup ? "（群）" : ""))),
+        el("div", "bz-people-ds-name", text(row.displayName + (row.isGroup ? "（群）" : ""))),
         el("div", "bz-people-ds-meta", text([
           `${formatCount(row.rawCount)} 条`,
           row.media
@@ -18456,8 +18468,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var stage = "list";
   var detailId = null;
   var detailFold = "p";
-  var deleteArmId = null;
-  var deleteArmTimer = null;
   var listCache = [];
   var mergeFromId = null;
   var mergeToId = null;
@@ -18619,7 +18629,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     statsOpen = false;
     profOpen = false;
     noteOpen = false;
-    disarmDelete();
     closeDsState();
     if (backgrounded) notice("已转后台继续生成，重开面板查看进度", "info");
   }
@@ -18677,6 +18686,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const badge = storeMediaBadge(c.stats);
       return {
         name: c.name,
+        displayName: c.displayName,
         rawCount: c.rawCount,
         isGroup: c.isGroup,
         media: badge ? formatMediaCount(badge) : "",
@@ -18733,7 +18743,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         contact: "",
         pct: 100,
         hint: "",
-        failures: s.stats.failures.map((f) => `${f.name}：${f.error}`)
+        failures: s.stats.failures.map((f) => `${plainNameOf(f.name)}：${f.error}`)
       };
     }
     if (s.outcome === "stopped") {
@@ -18854,6 +18864,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           const entry2 = people.find((p) => p.id === name);
           contacts.push({
             name,
+            displayName: plainNameOf(name),
             rawCount: stats.msgs,
             isGroup: stats.group,
             // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
@@ -18879,6 +18890,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         const entry = people.find((p) => p.id === name);
         contacts.push({
           name,
+          displayName: plainNameOf(name),
           rawCount: bundle.raws.length,
           isGroup: group,
           stats: norm.stats,
@@ -19863,14 +19875,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const out = people.map((p) => {
       var _a2;
       const rec = p.imports.length ? null : poolRecord(p.id, (_a2 = recs.get(p.id)) == null ? void 0 : _a2.store);
-      return rec ? { ...p, imports: [rec] } : p;
+      const named = { ...p, name: plainNameOf(p.name || p.id) };
+      return rec ? { ...named, imports: [rec] } : named;
     });
     const known = new Set(people.map((p) => p.id));
     for (const [id, r] of recs) {
       if (known.has(id)) continue;
       const pool = poolRecord(id, r.store);
       if (!pool) continue;
-      out.push({ ...r.person, id, name: r.person.name || id, imports: [...r.person.imports, pool] });
+      out.push({ ...r.person, id, name: plainNameOf(r.person.name || id), imports: [...r.person.imports, pool] });
     }
     return out;
   }
@@ -19924,31 +19937,28 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const tier = deleteTierOf(p, jobViews().get(id));
     if (tier === "drawn") {
-      disarmDelete();
       confirmDeleteWithPassword(p, () => void deletePerson(p));
       return;
     }
-    if (deleteArmId !== id) {
-      disarmDelete();
-      deleteArmId = id;
-      deleteArmTimer = setTimeout(() => {
-        disarmDelete();
-        void renderBody();
-      }, 3e3);
-      notice(
-        tier === "unfinished" ? `再点一次「删除」确认——「${p.name}」的脸谱还没画完，删了要从头画` : `再点一次「删除」确认——「${p.name}」还没画过脸谱`,
-        "warning"
-      );
-      void renderBody();
-      return;
-    }
-    disarmDelete();
-    await deletePerson(p);
+    const v = await openFlowDialog({
+      title: "删除联系人",
+      message: tier === "unfinished" ? `确定删除「${p.name}」吗？
+这个人的脸谱还没画完，删了要从头画，未完成的任务会一并停掉。
+数据源目录与聊天原文不动，之后可以重新导入。` : `确定删除「${p.name}」吗？
+数据源目录与聊天原文不动，之后可以重新导入。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "ok", cta: true, danger: true }
+      ]
+    });
+    if (v === "ok") await deletePerson(p);
   }
   async function deletePerson(p) {
     try {
       const stopped = await Promise.resolve(jobs().removeJob(p.id));
       await store.remove(p.id);
+      recordCache == null ? void 0 : recordCache.delete(p.id);
+      listCache = listCache.filter((x) => x.id !== p.id);
       if (detailId === p.id) {
         detailId = null;
         stage = "list";
@@ -20020,11 +20030,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ls.focus();
     setTimeout(() => ls.focus(), 150);
   }
-  function disarmDelete() {
-    deleteArmId = null;
-    if (deleteArmTimer) clearTimeout(deleteArmTimer);
-    deleteArmTimer = null;
-  }
   async function renderDetail(body, people) {
     const statsEl = overlay == null ? void 0 : overlay.querySelector("[data-people-stats]");
     if (statsEl) statsEl.textContent = statsText(people);
@@ -20040,8 +20045,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     body.appendChild(foldDetailHead(p, media, {
       canGenerate: !p.digest,
       job: sealJobOf(jobViews().get(p.id)),
-      avatar: avatar != null ? avatar : void 0,
-      deleteArm: deleteArmId === p.id
+      avatar: avatar != null ? avatar : void 0
     }));
     const person = personOf(p.digest);
     const bond = bondOf(p.digest);

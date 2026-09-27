@@ -19,6 +19,7 @@
  * （合成占位卡纯内存零写盘；占位卡上写档案 / 随手记前先 ensureEntry 落一张空卡）。
  */
 import { notice, notifyActionError } from '../core/notice';
+import { openFlowDialog } from '../core/flow-dialog';
 import { topifyZ } from '../core/z-order';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
@@ -52,6 +53,7 @@ import {
   mergeStore,
   normalizeChatJson,
   normalizeOptionsFromSettings,
+  plainNameOf,
   readAvatarInput,
   readContactAvatarPath,
   readContactBundle,
@@ -131,9 +133,6 @@ let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 详情当前展开的折（换人回落画像折） */
 let detailFold: FoldId = 'p';
-/** 删除二次确认（第一次点进入武装态，3 秒回落） */
-let deleteArmId: string | null = null;
-let deleteArmTimer: ReturnType<typeof setTimeout> | null = null;
 /** 最近一次 renderList 拉到的人物（合并确认取名用） */
 let listCache: PersonEntry[] = [];
 /** 合并流程（issue 442）：mergeFromId = 待并出的人物；mergeToId = 已点选、待二次确认的目标 */
@@ -159,6 +158,8 @@ let jobsBooted = false;
 interface DsContact {
   /** 目录名（即聊天仓键 / PersonEntry.id） */
   name: string;
+  /** 界面显示名（issue 501：剥掉重名唯一键后缀的纯名；目录名仍是 name） */
+  displayName: string;
   rawCount: number;
   isGroup: boolean;
   /** 归一化后的时间线口径统计（按当前聊天仓开关）；stats 路径为原始口径聚合（485） */
@@ -379,7 +380,6 @@ export function closePeoplePanel(): void {
   statsOpen = false; // 455：统计 / 档案 / 记一笔弹窗同样不随面板存续
   profOpen = false;
   noteOpen = false;
-  disarmDelete();
   closeDsState();
   if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
 }
@@ -454,6 +454,7 @@ function dsRowStates(): DsRowState[] {
     const badge = storeMediaBadge(c.stats);
     return {
       name: c.name,
+      displayName: c.displayName,
       rawCount: c.rawCount,
       isGroup: c.isGroup,
       media: badge ? formatMediaCount(badge) : '',
@@ -522,7 +523,7 @@ function dsSyncLine(): DsSyncLine | null {
       contact: '',
       pct: 100,
       hint: '',
-      failures: s.stats.failures.map((f) => `${f.name}：${f.error}`),
+      failures: s.stats.failures.map((f) => `${plainNameOf(f.name)}：${f.error}`),
     };
   }
   if (s.outcome === 'stopped') {
@@ -661,6 +662,7 @@ async function runScan(force = false): Promise<void> {
         const entry = people.find((p) => p.id === name);
         contacts.push({
           name,
+          displayName: plainNameOf(name),
           rawCount: stats.msgs,
           isGroup: stats.group,
           // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
@@ -683,6 +685,7 @@ async function runScan(force = false): Promise<void> {
       const entry = people.find((p) => p.id === name);
       contacts.push({
         name,
+        displayName: plainNameOf(name),
         rawCount: bundle.raws.length,
         isGroup: group,
         stats: norm.stats,
@@ -1786,16 +1789,19 @@ function poolRecord(id: string, contact: StoreContact | undefined): ImportRecord
 async function wallPeople(): Promise<PersonEntry[]> {
   const recs = await records();
   const people = store ? await store.list() : [];
+  // 501：记录里的 name 是导入当时的目录名（可能带重名唯一键后缀）——出墙前统一成纯名，
+  // 列表 / 详情 / 生成提示词 / 印章都只看这一个 displayName；id 不动，仍是目录键
   const out: PersonEntry[] = people.map((p) => {
     const rec = p.imports.length ? null : poolRecord(p.id, recs.get(p.id)?.store);
-    return rec ? { ...p, imports: [rec] } : p;
+    const named = { ...p, name: plainNameOf(p.name || p.id) };
+    return rec ? { ...named, imports: [rec] } : named;
   });
   const known = new Set(people.map((p) => p.id));
   for (const [id, r] of recs) {
     if (known.has(id)) continue;
     const pool = poolRecord(id, r.store);
     if (!pool) continue;
-    out.push({ ...r.person, id, name: r.person.name || id, imports: [...r.person.imports, pool] });
+    out.push({ ...r.person, id, name: plainNameOf(r.person.name || id), imports: [...r.person.imports, pool] });
   }
   return out;
 }
@@ -1840,9 +1846,9 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
 }
 
 /**
- * 详情头「删除」（issue 500）：先按 {@link deleteTierOf} 判档，再走对应门禁——
+ * 详情头「删除」（issue 500 / 501）：先按 {@link deleteTierOf} 判档，再走对应门禁——
  *   已画谱（有画像正文）→ 重输主密码（不可逆产物，同密文销毁防护）；
- *   未画谱 / 画谱未完成 → 二次点击确认（红灯武装态 3 秒回落）。
+ *   未画谱 / 画谱未完成 → 弹确认框二次确认（issue 501：原先的「图标灯光 + 通知」看不懂，改真弹窗）。
  * 只删保库记录（人物卡 + 聊天仓 + 脸谱 + 随手记 + 头像附件）；数据源目录与聊天原文不动，可重新导入。
  */
 async function handleDelete(id: string): Promise<void> {
@@ -1851,35 +1857,35 @@ async function handleDelete(id: string): Promise<void> {
   if (!p) { notice('这位联系人已不在库里', 'info'); await renderBody(); return; }
   const tier = deleteTierOf(p, jobViews().get(id));
   if (tier === 'drawn') {
-    disarmDelete();
     confirmDeleteWithPassword(p, () => void deletePerson(p));
     return;
   }
-  if (deleteArmId !== id) {
-    disarmDelete();
-    deleteArmId = id;
-    deleteArmTimer = setTimeout(() => { disarmDelete(); void renderBody(); }, 3000);
-    notice(
-      tier === 'unfinished'
-        ? `再点一次「删除」确认——「${p.name}」的脸谱还没画完，删了要从头画`
-        : `再点一次「删除」确认——「${p.name}」还没画过脸谱`,
-      'warning'
-    );
-    void renderBody();
-    return;
-  }
-  disarmDelete();
-  await deletePerson(p);
+  const v = await openFlowDialog({
+    title: '删除联系人',
+    message: tier === 'unfinished'
+      ? `确定删除「${p.name}」吗？\n这个人的脸谱还没画完，删了要从头画，未完成的任务会一并停掉。\n数据源目录与聊天原文不动，之后可以重新导入。`
+      : `确定删除「${p.name}」吗？\n数据源目录与聊天原文不动，之后可以重新导入。`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'ok', cta: true, danger: true },
+    ],
+  });
+  if (v === 'ok') await deletePerson(p);
 }
 
 /**
  * 落地删除（issue 500）：先停该人未完成的任务——引擎是保库记录的唯一写方，
  * 任务还在队列里会把 job 段（乃至 done 产物）写回来，删了等于白删。
+ * issue 501：删完还要把面板的记录快照里的这一条摘掉——{@link wallPeople} 会把
+ * 「记录里有、人物卡里没有」的 id 拿聊天仓素材合成「待画」占位卡，不摘的话
+ * 卡片会一直挂在墙上，要等关面板（快照失效）才消失。
  */
 async function deletePerson(p: PersonEntry): Promise<void> {
   try {
     const stopped = await Promise.resolve(jobs().removeJob(p.id));
     await store!.remove(p.id);
+    recordCache?.delete(p.id);
+    listCache = listCache.filter((x) => x.id !== p.id);
     if (detailId === p.id) { detailId = null; stage = 'list'; detailFold = 'p'; }
     notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, 'delete');
   } catch (e) {
@@ -1943,12 +1949,6 @@ function confirmDeleteWithPassword(p: PersonEntry, onConfirmed: () => void): voi
   setTimeout(() => ls.focus(), 150);
 }
 
-function disarmDelete(): void {
-  deleteArmId = null;
-  if (deleteArmTimer) clearTimeout(deleteArmTimer);
-  deleteArmTimer = null;
-}
-
 // ---------------- 详情（折页册） ----------------
 
 async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<void> {
@@ -1964,7 +1964,6 @@ async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<v
     canGenerate: !p.digest,
     job: sealJobOf(jobViews().get(p.id)),
     avatar: avatar ?? undefined,
-    deleteArm: deleteArmId === p.id,
   }));
 
   // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊

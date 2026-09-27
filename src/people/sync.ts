@@ -25,6 +25,7 @@
 import { runExternalTool, type ExternalToolCallbacks, type ExternalToolHandle, type ExternalToolSpec, type ExternalToolOutcome } from '../core/external-tool';
 import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
+import { plainNameOf } from './datasource';
 
 /** 同步进行到哪了（idle = 从未跑过；终态保留在弹窗进度行里直到下次开跑） */
 export type SyncOutcome = 'idle' | 'running' | 'ok' | 'stopped' | 'error';
@@ -130,10 +131,11 @@ export function formatSyncElapsed(ms: number): string {
  */
 export function contactLineOf(data: Record<string, unknown>): string {
   if (data.phase !== 'contact' || typeof data.name !== 'string' || !data.name) return '';
+  const who = plainNameOf(data.name); // 501：目录唯一键后缀不上屏
   if (data.status === 'ok') {
-    return Number.isFinite(data.msgs) ? `${data.name} · ${Number(data.msgs).toLocaleString('en-US')} 条` : data.name;
+    return Number.isFinite(data.msgs) ? `${who} · ${Number(data.msgs).toLocaleString('en-US')} 条` : who;
   }
-  if (data.status === 'failed') return `${data.name} · 失败`;
+  if (data.status === 'failed') return `${who} · 失败`;
   return '';
 }
 
@@ -304,7 +306,7 @@ function nonEmpty(v: unknown): string | undefined {
 function emitNotice(s: PeopleSyncState): void {
   if (s.outcome === 'ok') {
     if (s.stats.failed > 0) {
-      const names = s.stats.failures.slice(0, 3).map((f) => f.name).join('、');
+      const names = s.stats.failures.slice(0, 3).map((f) => plainNameOf(f.name)).join('、');
       notice(`同步完成，${s.stats.failed} 位联系人失败${names ? `（${names}${s.stats.failures.length > 3 ? '等' : ''}）` : ''}——重跑同步只补失败项`, 'warning');
     } else {
       notice(`同步完成：更新 ${s.stats.written} 位、未变 ${s.stats.unchanged} 位联系人`, 'success');

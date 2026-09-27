@@ -17,6 +17,7 @@ import {
   mergeStore,
   msgKey,
   normalizeChatJson,
+  plainNameOf,
   readContactAvatarPath,
   readStatsJson,
   storeStatsOf,
@@ -639,6 +640,20 @@ describe('stats.json 数据源扫描（issue 485：sync 只产统计，扫描优
     const names = listContactDirs(dataRoot);
     expect(names).toEqual(['存量全量', '只有统计']); // 名字序（zh locale）
     expect(listContactDirs(join(dataRoot, '不存在'))).toEqual([]);
+  });
+
+  it('plainNameOf：只剥「括号里像联系人 id」的重名唯一键后缀（issue 501）', () => {
+    // sync 重名加的后缀三种形态（wxid_ / m+数字 / xxx@weclaw）都剥掉
+    expect(plainNameOf('点点 (wxid_7470574705922)')).toBe('点点');
+    expect(plainNameOf('清风 (m754831096)')).toBe('清风');
+    expect(plainNameOf('某人 (mmo9cq804CMvfyUF07L3D9WptYzTA0@weclaw)')).toBe('某人');
+    expect(plainNameOf('点点（wxid_bzs1ljsuqgu912）')).toBe('点点'); // 全角括号
+    // 真名里的括号不动：不像 id 的一律原样
+    expect(plainNameOf('小明 (同学)')).toBe('小明 (同学)');
+    expect(plainNameOf('林晚')).toBe('林晚');
+    expect(plainNameOf('老周家（3 人）')).toBe('老周家（3 人）');
+    expect(plainNameOf('')).toBe('');
+    expect(plainNameOf('(wxid_only)')).toBe('(wxid_only)'); // 剥完只剩空串 → 保原样
   });
 
   it('readStatsJson：形状齐全才认；缺主字段 / 坏 JSON / 非对象回落 null（兼容存量走 chat.json）', () => {

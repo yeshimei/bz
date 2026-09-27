@@ -52,7 +52,7 @@ function person(over: Partial<PersonEntry> = {}): PersonEntry {
 }
 
 const dsRowBase: DsRowState = {
-  name: '林晚', rawCount: 1204, isGroup: false, media: '语音 98 条 · 图片 156 张',
+  name: '林晚', displayName: '林晚', rawCount: 1204, isGroup: false, media: '语音 98 条 · 图片 156 张',
   previewCount: 1159, newCount: 45, processedTs: new Date('2026-03-01T00:00:00').getTime(),
 };
 
@@ -292,20 +292,19 @@ describe('详情头删除钮与门禁档（issue 500）', () => {
     expect(deleteTierOf(person({ digest: { events: [], generatedAt: '2026-09-01T00:00:00.000Z' } }), null)).toBe('undrawn');
   });
 
-  it('删除钮：undrawn / unfinished 提示二次确认，drawn 提示要密码', () => {
+  it('删除钮：drawn 提示要密码，未画 / 未完成只提示删除（确认交给弹窗）', () => {
     const titleOf = (p: PersonEntry, j: FoldCardJob | null) =>
       foldDetailHead(p, null, { canGenerate: false, job: j }).querySelector('[data-people-del]')!.getAttribute('title')!;
-    expect(titleOf(person(), null)).toContain('还没画过脸谱，二次确认即可');
-    expect(titleOf(person(), job('interrupted'))).toContain('脸谱还没画完，二次确认即可');
+    expect(titleOf(person(), null)).toBe('删除这个联系人');
+    expect(titleOf(person(), job('interrupted'))).toContain('脸谱还没画完');
     expect(titleOf(drawn(), null)).toContain('已有脸谱，需重输主密码');
   });
 
-  it('武装态：deleteArm 出红灯类 + 「再点确认删除」文案（数据钩子不变，仍是同一位）', () => {
-    const btn = foldDetailHead(person(), null, { canGenerate: false, deleteArm: true }).querySelector('[data-people-del]')!;
+  it('删除钮常态：不带武装态类与「再点确认」文案（501 改弹窗确认，武装态已删）', () => {
+    const btn = foldDetailHead(person(), null, { canGenerate: false }).querySelector('[data-people-del]')!;
     expect(btn.classList.contains('bz-people-del')).toBe(true);
-    expect(btn.classList.contains('bz-people-del-arm')).toBe(true);
-    expect(btn.getAttribute('aria-label')).toBe('再点确认删除');
-    expect(btn.getAttribute('title')).toBe('再点一次确认删除');
+    expect(btn.classList.contains('bz-people-del-arm')).toBe(false);
+    expect(btn.getAttribute('aria-label')).toBe('删除');
     expect(btn.getAttribute('data-people-del')).toBe('wxid_a');
   });
 });
@@ -381,10 +380,17 @@ describe('数据源弹窗（dsModal 四态）', () => {
     const none = dsRow({ ...dsRowBase, previewCount: 0, newCount: 0, processedTs: null }, false);
     expect(none.querySelector('.bz-people-ds-mark')!.textContent).toBe('未导入');
 
-    const group = dsRow({ ...dsRowBase, name: '老周家', isGroup: true }, false);
+    const group = dsRow({ ...dsRowBase, name: '老周家', displayName: '老周家', isGroup: true }, false);
     expect(group.classList.contains('bz-people-ds-off')).toBe(true);
     expect((group.querySelector('input') as HTMLInputElement).disabled).toBe(true);
     expect(group.querySelector('.bz-people-ds-name')!.textContent).toContain('（群）');
+  });
+
+  it('显示名与目录键分离（issue 501）：带重名唯一键后缀的目录，行上只显示纯名', () => {
+    const row = dsRow({ ...dsRowBase, name: '点点 (wxid_7470574705922)', displayName: '点点' }, false);
+    expect(row.querySelector('.bz-people-ds-name')!.textContent).toBe('点点');
+    // 勾选钩子仍是目录键（定位 / 传输都靠它）
+    expect(row.querySelector('input')!.getAttribute('data-people-ds-check')).toBe('点点 (wxid_7470574705922)');
   });
 
   it('导入完成出「画脸谱」；未勾选页脚提示；勾选计数含新素材', () => {

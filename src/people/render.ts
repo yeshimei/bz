@@ -697,15 +697,13 @@ export interface FoldDetailHeadOpts {
   job?: FoldCardJob | null;
   /** 头像文件绝对路径（数据目录 avatar.<ext>；缺省回落首字印章） */
   avatar?: string;
-  /** 删除武装态（issue 500）：未画谱 / 画谱未完成档的二次确认——红灯 + 再点确认文案 */
-  deleteArm?: boolean;
 }
 
 /**
  * 删除门禁档（issue 500）：按「手上有没有画成的脸谱」分三档——
  *   drawn（已画谱）      = 有画像正文 → 删前重输主密码（不可逆产物，与密文销毁同防护）；
- *   unfinished（画谱未完成）= 无画像但有未完成任务 → 二次确认即可；
- *   undrawn（未画谱）     = 都没 → 二次确认即可。
+ *   unfinished（画谱未完成）= 无画像但有未完成任务 → 弹确认框二次确认；
+ *   undrawn（未画谱）     = 都没 → 弹确认框二次确认。
  * 「有画像」判据：卷一 / 卷二 / 纪事任一有正文。卷一《其人》是必达产物，重画中断不会留下空卷，
  * 所以「有 digest 正文」等价于「手上有一份看得的脸谱」。
  */
@@ -721,8 +719,8 @@ export function deleteTierOf(p: PersonEntry, job?: { status: string } | null): D
 /** 详情头删除钮的 hover 文案（按档说清代价与门禁） */
 function deleteTitleOf(tier: DeleteTier): string {
   if (tier === 'drawn') return '删除这个联系人（已有脸谱，需重输主密码）';
-  if (tier === 'unfinished') return '删除这个联系人（脸谱还没画完，二次确认即可）';
-  return '删除这个联系人（还没画过脸谱，二次确认即可）';
+  if (tier === 'unfinished') return '删除这个联系人（脸谱还没画完）';
+  return '删除这个联系人';
 }
 
 /** 详情头（455 评审采纳「居家档案型」）：圆照金环（无则首字印）+ 名 + 档案印签 + 数字下地的一行 meta + 朱色图标工具条 */
@@ -770,10 +768,10 @@ export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: F
       iconButton('bar-chart-3', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-stats-open': '', 'aria-label': '互动统计', title: '互动统计' }),
       iconButton('contact', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-prof-open': '', 'aria-label': '补充背景', title: '补充背景' }),
       // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
-      iconButton('trash-2', `bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del${opts.deleteArm ? ' bz-people-del-arm' : ''}`, {
+      iconButton('trash-2', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del', {
         'data-people-del': p.id,
-        'aria-label': opts.deleteArm ? '再点确认删除' : '删除',
-        title: opts.deleteArm ? '再点一次确认删除' : deleteTitleOf(tier),
+        'aria-label': '删除',
+        title: deleteTitleOf(tier),
       }),
       iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
     ]),
@@ -1322,6 +1320,8 @@ export function miniMarkdown(md: string): HTMLElement {
 
 export interface DsRowState {
   name: string;
+  /** 界面显示名（issue 501：纯名；name 仍是目录键，勾选 / 定位都用它） */
+  displayName: string;
   rawCount: number;
   isGroup: boolean;
   /** 归一化口径媒体徽章文案（'' = 不显示） */
@@ -1398,10 +1398,10 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   return el('label', cls, [
     cb,
     row.avatar
-      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: avatarUri(row.avatar), alt: row.name })
-      : el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.name))),
+      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: avatarUri(row.avatar), alt: row.displayName })
+      : el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.displayName))),
     el('div', 'bz-people-ds-main', [
-      el('div', 'bz-people-ds-name', text(row.name + (row.isGroup ? '（群）' : ''))),
+      el('div', 'bz-people-ds-name', text(row.displayName + (row.isGroup ? '（群）' : ''))),
       el('div', 'bz-people-ds-meta', text([
         `${formatCount(row.rawCount)} 条`,
         row.media,
