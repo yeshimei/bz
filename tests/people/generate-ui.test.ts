@@ -207,7 +207,8 @@ describe('开面板恢复任务态（450 状态恢复）', () => {
     click('[data-people-card="wxid_a"]'); // 进陈默详情
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(engine.calls.resumeJobs).toBe(1); // 每会话只重建一次
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 13/60 批'); // 455 评审：状态一行
+    // 一行到底：批位锚点与批明细同义 → 只留明细（批号 + 日期段 + 条数）
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%'); // 12/63（455 三段成文分母 +3）
     expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy();
   });
@@ -246,10 +247,11 @@ describe('订阅驱动渲染（450 后台化）', () => {
     engine.push([fakeJob({ batchesDone: 1, chunks: [meta(), meta()], message: '第 1/2 批 · 2026-01-01 ~ 2026-06-30 · 400 条' })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('20%'); // 1/5（455 分母 +3）
-    engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'person', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》' })]);
+    engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'person', message: '素材：事件 214 · 原话 63 · 场景 88 · 特质 41' })]);
     await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('40%')); // 2/5
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》…'); // 497：阶段有名有姓
-    expect(document.querySelector('[data-people-jobs-sub]')!.textContent).toContain('素材采集完成'); // 497：引擎细文案上屏
+    // 497 阶段有名有姓 + 引擎细节（素材统计）挂同一行尾
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》… · 素材：事件 214 · 原话 63 · 场景 88 · 特质 41');
+    expect(document.querySelector('.bz-people-jobs-detail')!.textContent).toContain('素材：事件 214');
   });
 });
 
@@ -398,7 +400,7 @@ describe('关面板转后台（450）', () => {
     expect(document.querySelector('[data-people-jobs]')).toBeNull();
     await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
     click('[data-people-card="wxid_a"]');
-    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 2/2 批'));
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 2/2 批'));
     expect(engine.calls.resumeJobs).toBe(1); // 重开不重建引擎（内存队列还在跑）
   });
 

@@ -270,7 +270,8 @@ describe('describe 段编排（470）', () => {
     await until(() => jobOf()?.status === 'error');
     let job = jobOf();
     expect(job?.error).toBe('构造视觉调用失败');
-    expect(job?.message).toContain('图片描述第 2/2 批失败');
+    // error 面不再叠失败说明（归进度块错误行 / 底部红字）：message 停在批开始的「本批 N 张」
+    expect(job?.message).toBe('本批 1 张');
     expect(job?.describe).toMatchObject({ doneBatches: 1, totalBatches: 2, confirmed: true });
     expect(askBox.calls.length).toBe(2);
     // 批 1 的成果已逐批落仓（checkpoint：p1 / p2 都在批 1）

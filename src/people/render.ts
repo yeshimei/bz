@@ -3,8 +3,8 @@
  * 数据源弹窗 / 统计与档案弹窗 / 档案与随手记 / 互动数据的 markup 全部在此，ui.ts 与评审壳共用同一份。
  * 纯度：import 图只进域内零依赖模块（types.ts 兼容读单源 personOf/bondOf；render-purity 守卫同口径）——
  * DOM 构建走本文件自持 helper；时间文案由调用方算好注入，本层只拼字符串。
- * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情折页册 issue 455 起为四折
- * （卷一《其人》/ 卷二《相交》/ 事件 / 时间线；原画像折拆双卷，数据与档案两页改独立弹窗），
+ * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情折页册 issue 455 起为三折
+ * （卷一《其人》/ 卷二《相交》/ 《纪事》；原画像折拆双卷、编年史并入纪事折，数据与档案两页改独立弹窗），
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
@@ -283,23 +283,6 @@ export function jobsStagesDone(stage: string | undefined, status: JobsUiStatus):
   return 0;
 }
 
-/** 队列副文案：多人生成 `（2/5 人）当前：大琳`；单人生成 `当前：大琳` */
-export function jobsQueueLabel(queueIndex: number, queueTotal: number, name: string): string {
-  const pos = queueTotal > 1 ? `（${Math.max(1, queueIndex)}/${queueTotal} 人）` : '';
-  return `${pos}当前：${name}`;
-}
-
-/** 无引擎文案时的状态兜底（讲清下一步） */
-export function jobsFallbackMessage(status: JobsUiStatus, name: string): string {
-  switch (status) {
-    case 'running': return `正在生成「${name}」的脸谱…`;
-    case 'paused': return '已暂停——点「继续生成」接着画';
-    case 'interrupted': return `上次「${name}」生成中断了——点「继续生成」接着画（已完成的批次不重画）`;
-    case 'error': return `「${name}」生成失败`;
-    case 'done': return `「${name}」的脸谱已生成`;
-  }
-}
-
 /** 状态 → 动作钮（label + data 钩子）；done 无动作 */
 const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null> = {
   running: { label: '暂停', hook: 'data-people-jobs-pause' },
@@ -333,6 +316,8 @@ function describeStagePart(s: JobsBlockState): string | null {
 /**
  * 后段阶段键 → 主行标签（497）：person / bond / chronicle 各自有名有姓，
  * 不再回落成过期的「第 N/M 批」；prep / describe 段自有阶段行，不在此列。
+ * 三名与详情折页名逐字对齐（其人 / 相交 / 纪事，issue 455 拍板）——引擎侧旧词
+ * 「我们」「关系时间线」不再上屏。
  */
 export function jobsStageLabel(stage: string | undefined): string | null {
   switch (stage) {
@@ -344,11 +329,90 @@ export function jobsStageLabel(stage: string | undefined): string | null {
   }
 }
 
+/** 状态词段（主行头；running 无词） */
+function jobsStatusPrefix(status: JobsUiStatus): string {
+  switch (status) {
+    case 'paused': return '已暂停';
+    case 'interrupted': return '上次中断';
+    case 'error': return '生成失败';
+    default: return '';
+  }
+}
+
 /**
- * 进度块（面板头统计行下）：细进度条 + 主行 + 引擎细文案副行 + 状态动作钮（497）。
- * 主行 = 当前段的一句话状态（prep/describe 阶段行 → 后段阶段标签 → 批次位置）；
- * 副行 = 引擎 job.message 原文（批的日期段与条数、素材采集统计、《其人》完成…、
- * prep 的「加载转写引擎…」等步骤细节全部上屏；与主行同文时隐藏）。
+ * 进度锚点（主行中段）：prep 阶段行 → describe 阶段行 → 后段阶段标签 → 批位。
+ * 状态面口径同 497：error 无阶段信息时回落「已完成 N/M 批」，interrupted 不挂后段标签（只说中断）。
+ */
+function jobsAnchor(s: JobsBlockState): string {
+  const prep = prepStagePart(s);
+  if (prep) return prep;
+  const desc = describeStagePart(s);
+  if (desc) return desc;
+  if (s.status === 'error') return `已完成 ${s.batchesDone}/${s.batchesTotal} 批`;
+  if (s.status === 'interrupted') return '';
+  const stage = jobsStageLabel(s.stage);
+  if (stage) return stage;
+  // 暂停面不报批位：批号只在运行中当锚点（批位随 message 细节补，避免与「第 N 批」各说一遍）
+  if (s.status === 'paused') return '';
+  return s.batchesTotal > 0 ? `第 ${Math.min(s.batchesDone + 1, s.batchesTotal)}/${s.batchesTotal} 批` : '';
+}
+
+/** 骨架化（判重用的粗比对：状态语 / 连接符 / 省略号不参与，`正在生成《纪事》…` ≡ `《纪事》`） */
+function skeleton(line: string): string {
+  return line.replace(/正在|生成|·|\s/g, '').replace(/…$/, '');
+}
+
+/**
+ * 细节文案去状态词：`已暂停（12/60 批）` → `12/60 批`——主行已写状态，细节不再念一遍。
+ */
+function stripStatusWord(detail: string, status: JobsUiStatus): string {
+  const word = jobsStatusPrefix(status);
+  if (!detail || !word || !detail.startsWith(word)) return detail;
+  const rest = detail.slice(word.length).replace(/^[ ·：:，,、—-]+/, '').trim();
+  return /^[（(][^）)]*[）)]$/.test(rest) ? rest.slice(1, -1).trim() : rest;
+}
+
+/**
+ * 锚点与细节合并——同一件事只留更详尽的一条，避免并排重复念：
+ *   `正在生成《纪事》…` + `《纪事》完成，正在提炼人物档案…` → 留后者（细节已含锚点信息）；
+ *   `第 12/60 批` + `第 12/60 批 · 2026-05-01 ~ …`   → 留后者；
+ *   `正在切批组装素材…` + `消息 20773 条 → 35 批 · 共 38 次 AI 调用` → 两段都留（各说一层）。
+ */
+function mergeAnchorDetail(anchor: string, detail: string): { anchor: string; detail: string } {
+  if (!detail) return { anchor, detail: '' };
+  if (!anchor) return { anchor: '', detail };
+  const key = skeleton(anchor);
+  const bare = skeleton(detail);
+  if (key && bare.includes(key)) return { anchor: detail, detail: '' };
+  if (key && key.includes(bare)) return { anchor, detail: '' };
+  const tag = anchor.split(' ')[0];
+  if (tag && detail.startsWith(tag)) return { anchor: detail, detail: '' };
+  return { anchor, detail };
+}
+
+/** 主行两段（head = 状态 · 锚点，粗体；detail = 引擎细节，同行内次级灰字） */
+export interface JobsMainLine {
+  head: string;
+  detail: string;
+}
+
+/**
+ * 主行文案（497 两行版 → 现口径「一行到底」）：`状态词 · 进度锚点 · 引擎细节`。
+ * 副行已取消——引擎细节改挂主行尾部（`.bz-people-jobs-detail`，同行内次级灰字），
+ * 用户不等也能看见整条链在流动：批号与日期段、素材统计、阶段推进句、prep 等待句。
+ * error 面不挂细节（原因由底部错误行承担）；done 只有一句（该态不上屏，见 ui.renderJobs）。
+ */
+export function jobsMainLine(s: JobsBlockState): JobsMainLine {
+  if (s.status === 'done') return { head: '脸谱已生成', detail: '' };
+  const anchor = jobsAnchor(s);
+  const detail = s.status === 'error' ? '' : stripStatusWord((s.message ?? '').trim(), s.status);
+  const merged = mergeAnchorDetail(anchor, detail);
+  const head = [jobsStatusPrefix(s.status), merged.anchor].filter(Boolean).join(' · ');
+  return { head: head || '正在生成', detail: merged.detail };
+}
+
+/**
+ * 进度块（面板头统计行下）：细进度条 + 主行（状态 · 锚点 · 细节）+ 状态动作钮。
  * 469：preprocess 阶段进度条 = 工具段折算总进度；470：describe 阶段 = 描述批进度。
  */
 export function progressBlock(s: JobsBlockState): HTMLElement {
@@ -365,27 +429,11 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
       el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })),
     el('span', 'bz-people-jobs-pct', text(`${pct}%`)),
   ]));
-  const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-  const stageFallback = jobsStageLabel(s.stage);
-  const main = s.status === 'error'
-    ? stagePart
-      ? `生成失败 · ${stagePart}`
-      : descPart
-        ? `生成失败 · ${descPart}`
-        : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
-    : s.status === 'paused'
-      ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : '已暂停'
-      : s.status === 'interrupted'
-        ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : '上次生成中断了'
-        : s.status === 'done' ? '脸谱已生成'
-        : stagePart ?? descPart ?? stageFallback ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
-  block.appendChild(el('div', 'bz-people-jobs-main', text(main)));
-  // 引擎细文案副行（497）：运行 / 暂停 / 中断面显示 job.message 原文——每步在处理什么可见；
-  // 与主行同文（prep/describe 段 message 就是阶段行）时隐藏，不重复念一遍
-  const msg = (s.message ?? '').trim();
-  if (msg && s.status !== 'done' && s.status !== 'error' && msg !== main) {
-    block.appendChild(el('div', 'bz-people-jobs-sub', { 'data-people-jobs-sub': '' }, text(msg)));
-  }
+  // 主行：状态 · 锚点（粗体）+ 引擎细节（同行内次级灰字，不另起第二行）
+  const line = jobsMainLine(s);
+  const mainEl = el('div', 'bz-people-jobs-main', text(line.head));
+  if (line.detail) mainEl.appendChild(el('span', 'bz-people-jobs-detail', text(` · ${line.detail}`)));
+  block.appendChild(mainEl);
   const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
@@ -851,7 +899,7 @@ export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTML
   return out;
 }
 
-/** 我们折正文（卷二《相交》，issue 455）：markdown；空态引导导入 */
+/** 相交折正文（卷二《相交》，issue 455）：markdown；空态引导导入 */
 export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
   return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
 }

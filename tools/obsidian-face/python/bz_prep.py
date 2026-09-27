@@ -116,7 +116,7 @@ def checkpoint(control_path: Path, phase: str) -> str:
     if a == "stop":
         return "stop"
     info(phase=phase, status="paused",
-         note="收到暂停指令：进程待命（控制文件改 resume 或删除即继续，绝不丢进度）")
+         note="本条做完即停")
     while True:
         time.sleep(CONTROL_POLL_SECONDS)
         a = read_action(control_path)
@@ -361,7 +361,7 @@ def load_transcribe_engine(engine: str, asr_model: str):
     """按 --asr-engine 显式传参加载本地引擎（绝不回读插件设置文件）。缺依赖 / 加载失败返回
     None（issue 492 续：转写段软跳过，不再一票否决整场画谱——媒体 / 派生档 / 关联产物照常
     保留，装好后重跑 bz-face prep 只补转写；模型权重首次运行由引擎自行下载）。"""
-    step(f"加载转写引擎：{engine}（本地模型冷加载按分钟计，转写一个进程吃完全量）")
+    step(f"加载转写引擎 {engine}…")
     try:
         if engine == "faster-whisper":
             from faster_whisper import WhisperModel
@@ -369,10 +369,7 @@ def load_transcribe_engine(engine: str, asr_model: str):
         from funasr import AutoModel
         return AutoModel(model="iic/SenseVoiceSmall", disable_update=True, device="cpu")
     except Exception as e:
-        step(
-            f"转写引擎（{engine}）加载失败：{e}。本轮跳过转写（语音暂无文字）——"
-            "缺依赖先跑 bz-face doctor（转写组）；装好后重跑 bz-face prep 只补转写"
-        )
+        step(f"转写引擎加载失败（{e}），本轮跳过转写")
         return None
 
 
@@ -452,7 +449,7 @@ def main() -> int:
         kattach = Path(ksrc) / "msg" / "attach" if ksrc else None
         if kattach and kattach.exists():
             if src:
-                step(f"--src 下没有 msg/attach——媒体目录改用 key.json 账号目录：{ksrc}")
+                step("媒体目录改用账号目录")
             src, attach = ksrc, kattach
     if not attach or not attach.exists():
         fail_hard(f"找不到媒体目录：{attach or '（key.json 里没有账号目录）'}——多账号 / 旧备份用 --src 指定账号目录")
@@ -474,7 +471,8 @@ def main() -> int:
 
     try:
         # ================= 段 1：媒体导出（media）=================
-        step("媒体导出：语音 wav、图片（wxgf 就地转 jpg/gif）、视频、文件、缩略图（仅留档，绝不当 AI 输入）")
+        # 段级 step 已删（文案口径）：进度块主行就是「动作 + 数量」（`媒体导出 312/1631`），
+        # 再打一句纯动词的 step 只会与它同帧重复念；有计数可跟的段一律只留 progress 打点
         progress("media", 0)
         voices = [m for m in flow if m.get("type") == 34 and m.get("sid")]
         attach_dir = attach / hashlib.md5(hit["wxid"].encode("utf-8")).hexdigest()
@@ -630,7 +628,6 @@ def main() -> int:
         info(phase="media", counts=media)
 
         # ================= 段 2：派生图片档（derive）=================
-        step(f"派生图片档：原图 → desc/（长边 {args.derive_edge}、JPEG 质量 {args.derive_quality}）；缩略图绝不作源")
         progress("derive", 0)
         img_root = cdir / "image"
         sources = sorted(q for q in img_root.rglob("*")
@@ -653,8 +650,9 @@ def main() -> int:
         info(phase="derive", **derive)
 
         # ================= 段 3：图片关联表（map，旁路表——不写回 chat.json）=================
-        step("图片关联表：image_map.json（图片↔消息，ct 升序；chat.json 只读不动）")
-        progress("map", None)
+        # map 段原只打 0 / 100（中间无打点 → 进度行整段静止在「图片关联表 0/1631」；
+        # 插件侧 applyPrepProgress 拿 pct × 预存总数推算已完成数，没 pct 就推不动）
+        progress("map", 0)
         disk = {}  # hex → "<月>/<文件名>"（image_ct_map 同款：只收解码产物，.bin 不算可消费）
         img_root = cdir / "image"
         if img_root.exists():
@@ -663,7 +661,15 @@ def main() -> int:
                     disk.setdefault(q.stem, f"{q.parent.name}/{q.name}")
         seen = set()
         refs = 0
-        for m in flow:
+        flow_total = len(flow)
+        last_pct = -1
+        for idx, m in enumerate(flow):
+            # 扫描进度按百分比变化打点（逐条打会刷出几万行协议行）
+            if flow_total:
+                pct = round(idx * 100 / flow_total)
+                if pct != last_pct:
+                    last_pct = pct
+                    progress("map", pct)
             if m.get("type") != 3:
                 continue
             refs += 1
@@ -683,7 +689,6 @@ def main() -> int:
         info(phase="map", refs=refs, mapped=len(entries), file="image_map.json")
 
         # ================= 段 4：语音转写（transcribe）=================
-        step(f"语音转写：{args.asr_engine} → voice.json（已完成音频幂等跳过，每条转完立即落盘）")
         progress("transcribe", 0)
         vjson = cdir / "voice.json"
         recs = []
@@ -743,7 +748,7 @@ def main() -> int:
         info(phase="transcribe", engine=args.asr_engine, file="voice.json", **transcribe)
     except StopRun:
         stopped = True
-        step("收到停止指令：留状态退出——已完成的媒体 / 派生档 / 转写全保留，重跑只补缺口")
+        step("收到停止，已完成产物保留")
 
     payload = {
         "ok": True,

@@ -81,9 +81,10 @@ export interface PrepProgress {
 }
 
 /** 建 prep 段进度（totals = 建任务时聊天仓口径的预存总数；null 段位不预存——绝不编数） */
-export function newPrepProgress(totals?: { media?: number; transcribe?: number; map?: number }): PrepProgress {
+export function newPrepProgress(totals?: { media?: number; derive?: number; transcribe?: number; map?: number }): PrepProgress {
   const counts: Record<string, PrepCount> = {};
   if (totals?.media && totals.media > 0) counts.media = { done: 0, total: totals.media };
+  if (totals?.derive && totals.derive > 0) counts.derive = { done: 0, total: totals.derive };
   if (totals?.map && totals.map > 0) counts.map = { done: 0, total: totals.map };
   if (totals?.transcribe && totals.transcribe > 0) counts.transcribe = { done: 0, total: totals.transcribe };
   return { phase: null, pct: null, counts, donePhases: [], failed: 0 };
@@ -169,7 +170,7 @@ export function prepOverallPct(prog: PrepProgress): number {
 export function prepMediaTotals(
   kindCounts?: Record<string, number>,
   stats?: { voiceCount?: number; imageCount?: number }
-): { media: number; transcribe: number; map: number } | null {
+): { media: number; derive: number; transcribe: number; map: number } | null {
   const kc = kindCounts ?? {};
   const pick = (key: string): number => (Number.isFinite(kc[key]) ? Number(kc[key]) : 0);
   let voice = pick('语音');
@@ -182,7 +183,9 @@ export function prepMediaTotals(
   }
   const media = voice + image + video + file;
   if (media <= 0) return null; // 零媒体：不为 0 张图起一次工具进程（决策 9）
-  return { media, transcribe: voice, map: image };
+  // derive（派生图片档）的源与其他段同口径是「图片」条数：建任务时就把分母预存上，
+  // 段内按 [bz-p].pct 推算——否则该段只能退成百分比，四段里唯一不报「N/M」的缺口
+  return { media, derive: image, transcribe: voice, map: image };
 }
 
 // ---------------- 参数组装（468 prep-core CLI 参数面；引号口径同 sync.ts） ----------------

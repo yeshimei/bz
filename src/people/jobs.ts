@@ -12,8 +12,10 @@
  * 阶段机（469 工具段 + 470 图片描述段 / ADR-0196）：
  * preprocess（bz-face prep：媒体导出→派生档→图片关联→语音转写）→ describe（插件 AI 段：图片
  * 描述——确认门一次，跳过 ≠ 取消；批级断点，逐批合并回聊天仓派生 text）→ chunked → extracting
- * → person（其人）→ bond（我们）→ chronicle（时间线 + 人物档案提炼，issue 487；档案是次要
+ * → person（其人）→ bond（相交）→ chronicle（纪事 + 人物档案提炼，issue 487；档案是次要
  * 产物，失败不阻断）→ done。零媒体 / 零图片的联系人按决策 9 自动跳过对应段且不弹确认。
+ * 上屏名与详情折页名逐字对齐（其人 / 相交 / 纪事，issue 455 拍板）：引擎内部阶段键仍是
+ * person / bond / chronicle，只换文案不换键。
  *
  * 断点续跑判定（466 / ADR-0197 决策 5）：指纹 = 组装素材的**内容哈希**（条数 + 逐条 ts|归属|文本
  * 链式哈希）。resume(talker) 重读聊天仓（保库记录 store 段）重算指纹：一致 → chunkMessages
@@ -46,7 +48,6 @@ import {
   prepAllDone,
   prepMediaTotals,
   prepStageLine,
-  prepPhaseLabel,
   readPrepSidecars,
   resetPrepForTests,
   startPrepSession,
@@ -130,7 +131,7 @@ export type JobStatus = 'running' | 'paused' | 'interrupted' | 'done' | 'error';
 /**
  * 任务阶段：preprocess（469 工具段：媒体导出→派生档→图片关联→语音转写，词表与工具
  * [bz-p].phase 同源）→ describe（470 图片描述段：插件 AI 段，确认门 + 批级断点）→
- * chunked → extracting → person（其人）→ bond（我们）→ chronicle（时间线）→ done
+ * chunked → extracting → person（其人）→ bond（相交）→ chronicle（纪事）→ done
  */
 export type JobStage = 'preprocess' | 'describe' | 'chunked' | 'extracting' | 'person' | 'bond' | 'chronicle' | 'done';
 
@@ -491,14 +492,14 @@ function prepOf(job: PersonJob): PrepProgress | null {
 
 // ---------------- 进度文案（issue 450 口径冻结） ----------------
 
-/** 切批说明：`消息 20773 条 → 35 批（每批 ≤400 条 · ≤12000 字），共 38 次 AI 调用`（issue 455 起成文 = 其人 + 我们 + 时间线 3 次） */
-function chunkedMessage(msgCount: number, batchCount: number, opts: Required<ChunkOptions>): string {
-  return `消息 ${msgCount} 条 → ${batchCount} 批（每批 ≤${opts.maxCount} 条 · ≤${opts.maxChars} 字），共 ${batchCount + 3} 次 AI 调用`;
+/** 切批说明：`消息 20773 条 → 35 批 · 共 38 次 AI 调用`（成文 = 其人 + 相交 + 纪事 3 次；每批条数 / 字数上限不上屏） */
+function chunkedMessage(msgCount: number, batchCount: number): string {
+  return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + 3} 次 AI 调用`;
 }
 
-/** 抽样说明：`消息 91234 条 → 300 批超上限，均匀抽样 60 批（覆盖 … 全时段，首尾必保，未抽中的批次不送 AI）` */
-function sampledMessage(msgCount: number, allCount: number, kept: number, spanFrom: string, spanTo: string): string {
-  return `消息 ${msgCount} 条 → ${allCount} 批超上限，均匀抽样 ${kept} 批（覆盖 ${spanFrom} ~ ${spanTo} 全时段，首尾必保，未抽中的批次不送 AI）`;
+/** 抽样说明：`消息 91234 条 → 均匀抽样 60 批`（原批数 / 时段范围 / 首尾必保等机制说明不上屏） */
+function sampledMessage(msgCount: number, kept: number): string {
+  return `消息 ${msgCount} 条 → 均匀抽样 ${kept} 批`;
 }
 
 /** 逐批：`第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条` */
@@ -506,23 +507,14 @@ function batchMessage(i: number, total: number, c: ChunkMeta): string {
   return `第 ${i}/${total} 批 · ${c.from} ~ ${c.to} · ${c.count} 条`;
 }
 
-/** 成文：`素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》`（issue 455 双卷口径） */
+/** 成文：`素材：事件 214 · 原话 63 · 场景 88 · 特质 41`（尾段「→ 正在生成《其人》」与主行锚点重复，不再念一遍） */
 function materialMessage(c: MaterialCounts): string {
-  return `素材采集完成：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits} → 正在生成《其人》`;
+  return `素材：事件 ${c.events} · 原话 ${c.quotes} · 场景 ${c.moments} · 特质 ${c.traits}`;
 }
 
-/** 批失败重试中：`第 30/47 批失败（<原因>）——正在重试 1/2…` */
-function batchRetryMessage(i: number, total: number, attempt: number, maxRetries: number, err: string): string {
-  return `第 ${i + 1}/${total} 批失败（${err}）——正在重试 ${attempt}/${maxRetries}…`;
-}
-
-/**
- * 批失败终局（issue 453）：一行说清「已完成批次保留、可续跑」；具体错误与「继续生成」
- * 动作由进度块的错误行 / 按钮承担，不再叠第二份说明（455 评审：精简显示）。
- */
-function batchFailMessage(i: number, total: number, done: number, err: string): string {
-  void err;
-  return `第 ${i + 1}/${total} 批提炼失败（已完成 ${done} 批保留，可从失败批续跑）`;
+/** 批失败重试中：`第 30/47 批失败，重试 1/2…`（具体原因进底部错误行，不在这句里念） */
+function batchRetryMessage(i: number, total: number, attempt: number, maxRetries: number): string {
+  return `第 ${i + 1}/${total} 批失败，重试 ${attempt}/${maxRetries}…`;
 }
 
 // ---------------- 快照 / 订阅 ----------------
@@ -784,8 +776,8 @@ export async function startJobs(
       stats,
       importRecord,
       message: sampled
-        ? sampledMessage(t.msgs.length, all.length, chunks.length, all[0].from, all[all.length - 1].to)
-        : chunkedMessage(t.msgs.length, chunks.length, chunkFull),
+        ? sampledMessage(t.msgs.length, chunks.length)
+        : chunkedMessage(t.msgs.length, chunks.length),
       startedAt: now,
       updatedAt: now,
     });
@@ -979,7 +971,7 @@ function prepCallbacks(job: PersonJob): ExternalToolCallbacks {
       const before = prep.donePhases.length;
       if (!collectPrepInfo(prep, data)) return;
       if (prep.paused) {
-        job.message = typeof data.note === 'string' && data.note.trim() ? data.note.trim() : '已请求暂停——这一条做完就让行';
+        job.message = typeof data.note === 'string' && data.note.trim() ? data.note.trim() : '本条做完即停';
       } else if (prep.donePhases.length > before) {
         // 段完成：账本落盘（断点）+ 阶段行文案推进
         job.message = prepStageLine(prep);
@@ -1032,8 +1024,9 @@ async function runPrepStage(
     return 'halted';
   }
 
+  // 预处理起跑：不另写「预处理：媒体导出、语音转写…」这种只看一帧的句子——进程第一行
+  // [bz-p]/{step} 一到，主行进度行（`媒体导出 312/1631`）就接管（步短语与阶段行重复念是噪音）
   job.stage = 'preprocess';
-  job.message = `预处理：${prepPhaseLabel('media')}、${prepPhaseLabel('transcribe')}…`;
   await persist();
   emit();
 
@@ -1061,7 +1054,7 @@ async function runPrepStage(
   const { outcome, result } = settled;
   if (outcome.stopped) {
     // 中断（删除任务 / 换人跑）：杀进程留状态——产物幂等，续跑只补缺口
-    await finish({ status: 'paused', message: '预处理已中止——已完成的产物保留，可从断点继续' });
+    await finish({ status: 'paused', message: '已完成的部分保留' });
     return 'halted';
   }
   if (result && result.ok === false) {
@@ -1072,7 +1065,7 @@ async function runPrepStage(
   }
   if (result && result.stopped === true) {
     // 工具收到 stop 控制指令自己退的（控制文件被外部写 stop）：等同暂停，产物保留
-    await finish({ status: 'paused', message: '预处理已停止——已完成的产物保留，可从断点继续' });
+    await finish({ status: 'paused', message: '已完成的部分保留' });
     return 'halted';
   }
   if (!outcome.ok || !result || result.ok !== true) {
@@ -1227,7 +1220,7 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
       continue;
     }
     led.doneBatches = i; // 进行中口径（当前批未完，断点落在本批开头）
-    job.message = `图片描述 第 ${i + 1}/${batches.length} 批（${images.length} 张）`;
+    job.message = `本批 ${images.length} 张`; // 批号与主行锚点（`图片描述 3/82 批`）同义，这里只补本批张数
     emit();
     // 批级重试（issue 453 同款）：退避再试，重试期间推快照；耗尽 → error 落账（可从失败批续跑）
     const context = contextWindowOf(msgs, batch[0].ts, batch[batch.length - 1].ts);
@@ -1242,15 +1235,12 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
         if (gone(job)) return 'halted';
         const err = errorMessage(e);
         if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
-          await finish({
-            status: 'error',
-            error: err,
-            message: `图片描述第 ${i + 1}/${batches.length} 批失败（已完成 ${led.doneBatches} 批保留，可从失败批续跑）`,
-          });
+          // error 面不带 message：原因与「继续生成」由进度块的错误行 / 按钮承担（说了两遍是噪音）
+          await finish({ status: 'error', error: err });
           return 'halted';
         }
         attempt += 1;
-        job.message = `图片描述第 ${i + 1}/${batches.length} 批失败（${err}）——正在重试 ${attempt}/${st!.retry.maxRetries}…`;
+        job.message = `第 ${i + 1}/${batches.length} 批失败，重试 ${attempt}/${st!.retry.maxRetries}…`;
         emit();
         await st!.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
         if (gone(job)) return 'halted';
@@ -1313,7 +1303,7 @@ async function runJob(job: PersonJob): Promise<void> {
       const merged = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
       if (gone(job)) return;
       if (merged && merged.voice + merged.images > 0) {
-        job.message = `预处理完成${job.prep?.failed ? `（失败 ${job.prep.failed} 条，可用「重试失败项」补齐）` : ''}，开始组装素材…`;
+        job.message = `预处理完成${job.prep?.failed ? `，${job.prep.failed} 条失败待补齐` : ''}，开始组装素材…`;
       }
     }
 
@@ -1432,7 +1422,8 @@ async function runJob(job: PersonJob): Promise<void> {
     const total = chunks.length;
     for (let i = job.batchesDone; i < total; i++) {
       if (st!.pauseRequested) {
-        await finish({ status: 'paused', message: `已暂停（${job.batchesDone}/${total} 批）` });
+        // 状态词由主行承担（`已暂停 · …`），message 只留批位
+        await finish({ status: 'paused', message: `${job.batchesDone}/${total} 批` });
         return;
       }
       if (gone(job)) return;
@@ -1451,16 +1442,17 @@ async function runJob(job: PersonJob): Promise<void> {
           if (gone(job)) return;
           const err = errorMessage(e);
           if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
-            await finish({ status: 'error', error: err, message: batchFailMessage(i, total, job.batchesDone, err) });
+            // error 面不带 message：原因与「继续生成」由底部错误行 / 按钮承担
+            await finish({ status: 'error', error: err });
             return;
           }
           attempt += 1;
-          job.message = batchRetryMessage(i, total, attempt, st!.retry.maxRetries, err);
+          job.message = batchRetryMessage(i, total, attempt, st!.retry.maxRetries);
           emit();
           await st!.retry.sleep(RETRY_BACKOFF_MS[Math.min(attempt - 1, RETRY_BACKOFF_MS.length - 1)]);
           if (gone(job)) return;
           if (st!.pauseRequested) {
-            await finish({ status: 'paused', message: `已暂停（${job.batchesDone}/${total} 批）` });
+            await finish({ status: 'paused', message: `${job.batchesDone}/${total} 批` });
             return;
           }
         }
@@ -1499,12 +1491,12 @@ async function runJob(job: PersonJob): Promise<void> {
     try {
       person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
     } catch (e) {
-      await finish({ status: 'error', error: errorMessage(e), message: `《其人》生成失败：${errorMessage(e)}` });
+      await finish({ status: 'error', error: errorMessage(e) });
       return;
     }
     if (gone(job)) return;
     if (!person) {
-      await finish({ status: 'error', error: '卷一《其人》生成为空', message: '卷一《其人》生成为空' });
+      await finish({ status: 'error', error: '卷一《其人》生成为空' });
       return;
     }
     job.person = person;
@@ -1512,18 +1504,20 @@ async function runJob(job: PersonJob): Promise<void> {
     await persist();
     emit();
 
-    // 5.5 卷二《相交》（必产：空则判 error，批次成果保留可续跑）
+    // 5.5 卷二《相交》（必产：空则判 error，批次成果保留可续跑）——引擎侧阶段键仍为 bond，
+    //     上屏名与详情折页名逐字对齐（其人 / 相交 / 纪事）
     await finish({ stage: 'bond', message: '《其人》完成，正在生成《相交》…' });
     let bond = '';
     try {
       bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
     } catch (e) {
-      await finish({ status: 'error', error: errorMessage(e), message: `《相交》生成失败：${errorMessage(e)}` });
+      // error 面 message 不上屏（原因由底部错误行承担）——不写第二份
+      await finish({ status: 'error', error: errorMessage(e) });
       return;
     }
     if (gone(job)) return;
     if (!bond) {
-      await finish({ status: 'error', error: '卷二《相交》生成为空', message: '卷二《相交》生成为空' });
+      await finish({ status: 'error', error: '卷二《相交》生成为空' });
       return;
     }
     job.bond = bond;
@@ -1531,8 +1525,8 @@ async function runJob(job: PersonJob): Promise<void> {
     await persist();
     emit();
 
-    // 6. 《纪事》（次要产物：失败不阻断）
-    await finish({ stage: 'chronicle', message: '双卷完成，正在生成《纪事》…' });
+    // 6. 纪事（次要产物：失败不阻断；编年时间线 + 按月交往事件，落进《纪事》折）
+    await finish({ stage: 'chronicle', message: '《相交》完成，正在生成《纪事》…' });
     let chronicle = '';
     if (merged.events.length) {
       try {
@@ -1581,16 +1575,16 @@ async function runJob(job: PersonJob): Promise<void> {
         statsNote: material.statsNote,
         profileNote: material.profileNote,
       },
-      message: `「${job.name}」脸谱已生成`,
+      // 终局不再写 message：done 态进度块不上屏（完成靠通知与折页），留一句没人看的句子只会误导
     });
   } catch (e) {
     if (gone(job)) return;
     // 上锁竞态（读记录 / 落盘被锁打断）：协作暂停而非判错——批级断点保留，解锁后可续
     if (!st?.safe?.unlocked) {
-      await finish({ status: 'paused', message: '保险库已上锁，任务已暂停（解锁后可继续）' });
+      await finish({ status: 'paused', message: '保险库已上锁，解锁后继续' });
       return;
     }
-    await finish({ status: 'error', error: errorMessage(e), message: `生成失败：${errorMessage(e)}` });
+    await finish({ status: 'error', error: errorMessage(e) });
   } finally {
     if (st && st.runningJob === job.talker) st.runningJob = null;
   }

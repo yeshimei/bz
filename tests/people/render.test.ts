@@ -22,9 +22,8 @@ import {
   foldSeal,
   foldSealNode,
   formatCount,
-  jobsFallbackMessage,
+  jobsMainLine,
   jobsPercent,
-  jobsQueueLabel,
   jobsStagesDone,
   miniMarkdown,
   panelShell,
@@ -492,17 +491,17 @@ describe('进度块纯函数（455 四阶段口径）', () => {
     expect(jobsStagesDone(undefined, 'done')).toBe(3);
   });
 
-  it('队列副文案：多人生成「（2/5 人）当前：大琳」；单人省略队列段', () => {
-    expect(jobsQueueLabel(2, 5, '大琳')).toBe('（2/5 人）当前：大琳');
-    expect(jobsQueueLabel(1, 1, '陈默')).toBe('当前：陈默');
-  });
-
-  it('无引擎文案时的状态兜底：各态都讲清下一步', () => {
-    expect(jobsFallbackMessage('running', '陈默')).toContain('正在生成');
-    expect(jobsFallbackMessage('paused', '陈默')).toContain('继续生成');
-    expect(jobsFallbackMessage('interrupted', '陈默')).toContain('中断');
-    expect(jobsFallbackMessage('error', '陈默')).toContain('失败');
-    expect(jobsFallbackMessage('done', '陈默')).toContain('已生成');
+  it('主行合并口径（jobsMainLine）：状态词 · 锚点 · 细节；同义时只留详尽的一条，各说一层则两段都留', () => {
+    const base = { talker: 'a', name: '陈默', status: 'running' as const, batchesDone: 12, batchesTotal: 60, stagesDone: 0, queueIndex: 1, queueTotal: 1 };
+    // 批位锚点 + 明细（同义）→ 只留明细
+    expect(jobsMainLine({ ...base, message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条' }))
+      .toEqual({ head: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条', detail: '' });
+    // 阶段标签《相交》+ 推进句（同义）→ 只留推进句，不并排念两遍
+    expect(jobsMainLine({ ...base, stage: 'bond', message: '《其人》完成，正在生成《相交》…' }))
+      .toEqual({ head: '《其人》完成，正在生成《相交》…', detail: '' });
+    // 切批锚点 + 切批说明（各说一层）→ 两段都留
+    expect(jobsMainLine({ ...base, stage: 'chunked', message: '消息 20773 条 → 35 批 · 共 38 次 AI 调用' }))
+      .toEqual({ head: '正在切批组装素材…', detail: '消息 20773 条 → 35 批 · 共 38 次 AI 调用' });
   });
 });
 
@@ -525,7 +524,8 @@ describe('progressBlock 状态机（450）', () => {
     expect(b.getAttribute('data-people-jobs-talker')).toBe('wxid_a');
     expect(b.querySelector('.bz-people-jobs-fill')!.getAttribute('style')).toBe('width:19%');
     expect(b.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%');
-    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 13/60 批'); // 引擎长文案不再上屏
+    // 主行一行到底：批位锚点被同义的明细（批号 + 日期段 + 条数）顶替，不并排念两遍
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
     expect(b.querySelector('.bz-people-jobs-queue')).toBeNull(); // 队列副文案移除
     expect(b.querySelector('.bz-people-jobs-note')).toBeNull(); // 后台说明移除
     expect(b.querySelector('[data-people-jobs-pause]')).toBeTruthy();

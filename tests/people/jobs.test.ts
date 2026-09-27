@@ -171,7 +171,8 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(job.material?.moments).toEqual([{ ts: '2024-05-01', summary: '构造场景' }]);
     expect(job.material?.interests).toEqual([{ ts: '2024-05-01', topic: '构造话题' }]); // issue 455 新素材落盘
     expect(job.material?.threads).toEqual([{ ts: '2024-05-01', text: '下次一起构造' }]);
-    expect(job.message).toBe('「构造对象」脸谱已生成');
+    // done 不再写终局 message（该态进度块不上屏）：message 停在最后一条推进句
+    expect(job.message).toBe('《纪事》完成，正在提炼人物档案…');
     expect(askExtract).toHaveBeenCalledTimes(2);
     expect(askPortrait).toHaveBeenCalledTimes(4); // 其人 + 我们 + 时间线 + 档案提炼（issue 487）
     expect(snap.running).toBe(false);
@@ -229,14 +230,14 @@ describe('startJobs：任务创建与逐批落盘', () => {
     release();
     await whenIdle();
 
-    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 3：其人 / 我们 / 时间线）
-    expect(messages).toContain(`消息 4 条 → 2 批（每批 ≤2 条 · ≤12000 字），共 5 次 AI 调用`);
+    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 3：其人 / 相交 / 纪事；每批上限不上屏）
+    expect(messages).toContain('消息 4 条 → 2 批 · 共 5 次 AI 调用');
     expect(messages.some((m) => /^第 1\/2 批 · \d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2} · 2 条$/.test(m))).toBe(true);
     expect(messages.some((m) => /^第 2\/2 批 · /.test(m))).toBe(true);
-    // 成文阶段四段（issue 455）：素材 → 《其人》 → 《相交》 → 《纪事》
-    expect(messages).toContain('素材采集完成：事件 1 · 原话 1 · 场景 1 · 特质 1 → 正在生成《其人》');
+    // 成文阶段四段（issue 455）：素材 → 《其人》 → 《相交》 → 《纪事》（上屏名与折页名同源）
+    expect(messages).toContain('素材：事件 1 · 原话 1 · 场景 1 · 特质 1');
     expect(messages).toContain('《其人》完成，正在生成《相交》…');
-    expect(messages).toContain('双卷完成，正在生成《纪事》…');
+    expect(messages).toContain('《相交》完成，正在生成《纪事》…');
     expect(stages).toEqual(expect.arrayContaining(['extracting', 'person', 'bond', 'chronicle', 'done']));
   });
 
@@ -292,7 +293,7 @@ describe('抽样说明（超大记录）', () => {
     expect(job.results).toHaveLength(2);
     expect(askExtract).toHaveBeenCalledTimes(2); // 6 批只送抽中的 2 批
     expect(messages).toContain(
-      `消息 6 条 → 6 批超上限，均匀抽样 2 批（覆盖 2024-05-01 ~ 2024-05-01 全时段，首尾必保，未抽中的批次不送 AI）`
+      `消息 6 条 → 均匀抽样 2 批`
     );
   });
 });
@@ -323,7 +324,7 @@ describe('暂停与断点续跑', () => {
     expect(job.status).toBe('paused');
     expect(job.batchesDone).toBe(2);
     expect(job.results).toHaveLength(2);
-    expect(job.message).toBe('已暂停（2/3 批）');
+    expect(job.message).toBe('2/3 批');
     return { askExtract, msgs };
   }
 
@@ -430,8 +431,7 @@ describe('暂停与断点续跑', () => {
     expect(job.batchesDone).toBe(3); // 重试自愈，任务不停
     expect(calls).toBe(4); // 批 1 + 批 2（失败）+ 批 2 重试 + 批 3
     expect(waits).toHaveLength(1); // 只重试了一次
-    expect(waits[0]).toContain('正在重试 1/2');
-    expect(waits[0]).toContain('AI 调用超时');
+    expect(waits[0]).toContain('重试 1/2'); // 具体原因不再进重试句（归底部错误行），只报「哪批失败、第几次重试」
   });
 
   it('批级重试（453）：重试耗尽 → error，已完成批次保留、文案说清不必从头重来', async () => {
@@ -458,7 +458,9 @@ describe('暂停与断点续跑', () => {
     expect(job.batchesDone).toBe(1); // 第 1 批成果保留
     expect(job.results).toHaveLength(1);
     expect(calls).toBe(4); // 批 1 + 批 2 的 1 次 + 2 次重试
-    expect(job.message).toContain('已完成 1 批保留'); // 455 评审：精简文案（具体错误归进度块错误行）
+    // error 面不再叠第二份说明：原因与「继续生成」由进度块错误行 / 按钮承担
+    expect(job.message).toContain('重试 2/2');
+    expect(job.error).toContain('AI 调用超时');
     expect(resume(TALKER)).toBe(true); // 仍可续（451 口径）
   });
 

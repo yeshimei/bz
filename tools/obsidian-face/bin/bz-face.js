@@ -288,7 +288,8 @@ async function cmdPrep(opts) {
   }
 
   // 2. 起子进程：stdout 逐行透传（协议行原样），stderr 留尾由终结兜底用
-  emit(prep.formatBzLine('step', '预检通过：数据根可写、联系人 chat.json 在位，启动预处理'));
+  // 不再打「预检通过：…启动预处理」这类 step：它只活一帧，紧接着就被工具侧
+  // 第一行 [bz-p]（`媒体导出 0/1631`）接管——进度行本身就是「动作 + 数量」
   const run = await probes.runSyncProcess({
     pythonCmd: opts.python,
     scriptPath: path.join(__dirname, '..', 'python', 'bz_prep.py'),

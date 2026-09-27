@@ -181,7 +181,7 @@ describe('进度块与印章的 describe 段呈现', () => {
       talker: 'wxid_a',
       name: '陈默',
       status: 'running',
-      message: '图片描述 第 4/82 批（20 张）',
+      message: '本批 20 张',
       batchesDone: 0,
       batchesTotal: 35,
       stagesDone: 0,
@@ -192,42 +192,44 @@ describe('进度块与印章的 describe 段呈现', () => {
     };
   }
 
-  it('running 主行 = `图片描述 3/82 批`，进度条走段内批进度（不用批口径的 0%）', () => {
+  it('running 主行 = `图片描述 3/82 批`（细节挂尾），进度条走段内批进度（不用批口径的 0%）', () => {
     const node = progressBlock(blockState());
-    expect(node.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('图片描述 3/82 批');
+    expect(node.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('图片描述 3/82 批 · 本批 20 张');
     expect((node.querySelector<HTMLElement>('.bz-people-jobs-fill')!.getAttribute('style'))).toBe('width:4%');
   });
 
-  it('引擎细文案副行（497）：批详情 / 素材统计上屏；与主行同文时隐藏', () => {
+  it('引擎细节（497 副行 → 同行内次级字）：批详情 / 素材统计挂在主行尾；与主行同文时不出', () => {
     const node = progressBlock(blockState());
-    expect(node.querySelector<HTMLElement>('[data-people-jobs-sub]')!.textContent).toBe('图片描述 第 4/82 批（20 张）');
-    // prep 段：message 就是阶段行 → 副行隐藏不重复念
+    expect(node.querySelector<HTMLElement>('.bz-people-jobs-detail')!.textContent).toBe(' · 本批 20 张');
+    // prep 段：message 就是阶段行 → 细节不出，不重复念
     const prepNode = progressBlock(blockState({
       describe: undefined,
       prep: { stageText: '媒体导出 3/16', overall: 12, failed: 0 },
       message: '媒体导出 3/16',
     }));
-    expect(prepNode.querySelector('[data-people-jobs-sub]')).toBeNull();
+    expect(prepNode.querySelector('.bz-people-jobs-detail')).toBeNull();
   });
 
   it('后段主行走阶段标签（497）：不再停留在过期批号', () => {
-    const person = progressBlock(blockState({ describe: undefined, stage: 'person', message: '素材采集完成：事件 214 · 原话 63' }));
-    expect(person.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》…');
-    expect(person.querySelector<HTMLElement>('[data-people-jobs-sub]')!.textContent).toContain('素材采集完成');
+    const person = progressBlock(blockState({ describe: undefined, stage: 'person', message: '素材：事件 214 · 原话 63' }));
+    // 阶段标签《其人》与素材统计各说一层 → 同行两段都留（一行到底）
+    expect(person.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》… · 素材：事件 214 · 原话 63');
     expect(jobsStageLabel('bond')).toBe('正在生成《相交》…');
     expect(jobsStageLabel('chronicle')).toBe('正在生成《纪事》…');
     expect(jobsStageLabel('chunked')).toBe('正在切批组装素材…');
     expect(jobsStageLabel('extracting')).toBeNull();
     const extracting = progressBlock(blockState({ describe: undefined, stage: 'extracting', message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条' }));
-    expect(extracting.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 1/35 批');
-    expect(extracting.querySelector<HTMLElement>('[data-people-jobs-sub]')!.textContent).toContain('2026-05-01 ~ 2026-05-31 · 397 条');
+    // 批位锚点与批明细同义 → 只留更详尽的明细那条
+    expect(extracting.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
   });
 
   it('暂停 / 失败断面同样带阶段信息', () => {
     const paused = progressBlock(blockState({ status: 'paused' }));
-    expect(paused.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('已暂停 · 图片描述 3/82 批');
+    expect(paused.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('已暂停 · 图片描述 3/82 批 · 本批 20 张');
     const failed = progressBlock(blockState({ status: 'error', errorText: '构造失败' }));
+    // error 面不挂细节：原因与「继续生成」由底部错误行 / 按钮承担
     expect(failed.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('生成失败 · 图片描述 3/82 批');
+    expect(failed.querySelector('.bz-people-jobs-detail')).toBeNull();
     // 后段暂停也有名有姓（497）
     const pausedPerson = progressBlock(blockState({ status: 'paused', describe: undefined, stage: 'person', message: '' }));
     expect(pausedPerson.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('已暂停 · 正在生成《其人》…');

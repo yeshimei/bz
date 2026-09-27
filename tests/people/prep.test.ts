@@ -218,10 +218,10 @@ describe('纯函数：阶段词汇表与计数账本', () => {
     expect(prepStageLine(prog)).toBe('媒体导出 312/1631');
   });
 
-  it('prepMediaTotals：kindCounts 中文形态键求和；零媒体返回 null（决策 9 自动跳过）；缺键回落 stats', () => {
-    expect(prepMediaTotals({ 文本: 5, 语音: 12, 图片: 3, 视频: 1, 文件: 2 })).toEqual({ media: 18, transcribe: 12, map: 3 });
+  it('prepMediaTotals：kindCounts 中文形态键求和；derive 与 map 同取图片数（派生档的源）；零媒体返回 null（决策 9 自动跳过）；缺键回落 stats', () => {
+    expect(prepMediaTotals({ 文本: 5, 语音: 12, 图片: 3, 视频: 1, 文件: 2 })).toEqual({ media: 18, derive: 3, transcribe: 12, map: 3 });
     expect(prepMediaTotals({ 文本: 5 })).toBeNull();
-    expect(prepMediaTotals(undefined, { voiceCount: 4, imageCount: 2 })).toEqual({ media: 6, transcribe: 4, map: 2 });
+    expect(prepMediaTotals(undefined, { voiceCount: 4, imageCount: 2 })).toEqual({ media: 6, derive: 2, transcribe: 4, map: 2 });
     expect(prepMediaTotals({}, { voiceCount: 0, imageCount: 0 })).toBeNull();
   });
 });
@@ -399,7 +399,8 @@ describe('进度块 prep 渲染契约（469）', () => {
 
   it('无 prep 段的任务渲染与改前一致（回归：455 契约不漂移）', () => {
     const b = progressBlock(state({ batchesDone: 3, message: '第 4/12 批' }));
-    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 4/12 批');
+    // 主行现口径「一行到底」：message 与批位锚点同义 → 只留 message 那条
+    expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 4/12 批');
     expect(b.querySelector('[data-people-jobs-prep-retry]')).toBeNull();
   });
 });
