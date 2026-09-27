@@ -10,7 +10,7 @@
  *  3. 版本区间：doc 条目带 since / until 时按插件版本过滤（区间外不呈现该行）；
  *  4. 体积：清单条目带 size 时，就绪描述捎带体积（doc 单文件 / 皮肤合计）；
  *  5. 状态机：未下载 → 下载（皮肤带套数）、有更新 → 更新 N、已最新 → 已下载 禁用；
- *  6. 全部更新行：有待办 → 全部更新 N / 全部下载 N；无待办 → 已是最新（禁用）；无清单 → 等待检查更新（禁用）；
+ *  6. 全部更新行：有待办 → 全部更新 N / 全部下载 N；无待办 → 全部更新（禁用，字面不换状态词）；无清单 → 等待检查更新（禁用）；
  *  7. 无缓存清单 → 只剩两行操作行并禁用 + 检查更新行（未检查/失败文案 + 重试）；核对失败但有缓存 → 缓存状态照常；
  *  8. 动作：下载完成后磁盘事实变了，按钮就地翻转成「已下载」（可感知性原则，不发成功通知）；
  *  9. 跨入口同步（issue 492）：下载事件（导航入口更新文档，经 writeAssetText 落盘）后已渲染行态跟着翻；
@@ -328,7 +328,7 @@ describe('状态机（有缓存清单）', () => {
 });
 
 describe('全部更新行（组级动作）', () => {
-  it('有待办 → 全部更新 N／只未下载 → 全部下载 N；全部就绪 → 已是最新 禁用', async () => {
+  it('有待办 → 全部更新 N／只未下载 → 全部下载 N；全部就绪 → 仍写「全部更新」但禁用', async () => {
     const vault = newVault();
     const entries = [docEntry('changelog', HTML_V1), docEntry('manual', HTML_V1)];
     vault.files.set(MANIFEST_CACHE_PATH, manifestJson(entries, []));
@@ -340,12 +340,12 @@ describe('全部更新行（组级动作）', () => {
     expect(rowBtn(el, 1).textContent).toBe('全部更新 2');
     expect(rowBtn(el, 1).disabled).toBe(false);
 
-    // 全部补齐 → 无待办 → 「已是最新」禁用
+    // 全部补齐 → 无待办 → 字面仍是动作词（不换成「已是最新」），靠禁用态表达没得做
     vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', HTML_V1);
     vault.files.set('.obsidian/plugins/bz/downloads/bz-manual.html', HTML_V1);
     await writeAssetText({ vault } as any, 'manifest.json', manifestJson(entries, []));
     await tick(40);
-    expect(rowBtn(el, 1).textContent).toBe('已是最新');
+    expect(rowBtn(el, 1).textContent).toBe('全部更新');
     expect(rowBtn(el, 1).disabled).toBe(true);
   });
 
@@ -359,7 +359,7 @@ describe('全部更新行（组级动作）', () => {
     expect(rowBtn(el, 1).textContent).toBe('全部下载 2');
   });
 
-  it('无清单 → 「等待检查更新」禁用（状态未知，不假装已是最新）', async () => {
+  it('无清单 → 「等待检查更新」禁用（状态未知，不假装没得做）', async () => {
     const vault = newVault();
     routeFetch({ [REMOTE_MANIFEST]: new Error('ENOTFOUND'), [BACKUP_MANIFEST]: new Error('ETIMEDOUT') });
 
@@ -395,7 +395,7 @@ describe('全部更新行（组级动作）', () => {
       expect(resBtn(el, i).textContent).toBe('已下载');
       expect(resBtn(el, i).disabled).toBe(true);
     }
-    expect(rowBtn(el, 1).textContent).toBe('已是最新');
+    expect(rowBtn(el, 1).textContent).toBe('全部更新');
     expect(rowBtn(el, 1).classList.contains('bz-rowbtn--busy')).toBe(false); // 转圈摘干净
   });
 
@@ -421,7 +421,7 @@ describe('全部更新行（组级动作）', () => {
     btn.click(); // 第二击落在首个 await 之前/之内
     await tick(120);
     expect(fetches).toBe(1);
-    expect(btn.textContent).toBe('已是最新');
+    expect(btn.textContent).toBe('全部更新');
   });
 });
 

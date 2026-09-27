@@ -234,12 +234,14 @@ function pendingOf(states: RowState[]): { pending: number; updatable: number } {
   return { pending, updatable };
 }
 
-/** 全部更新行的按钮态：无待办 → 已是最新（禁用）；有更新 → 全部更新 N；只有未下载 → 全部下载 N。
- *  无清单 → 等待检查更新（状态未知，不假装「已是最新」）。 */
+/** 全部更新行的按钮态：字面**恒为动作词**（与行名同源，钮上不换成状态词——
+ *  行名说动作、钮说状态，用户读到的就是「没有这个按钮」）。待办数只在有得做时缀上：
+ *  无待办 → 全部更新（禁用；「没得做」由禁用态表达，就绪事实由各行自述）；有更新 → 全部更新 N；
+ *  只有未下载 → 全部下载 N。无清单 → 等待检查更新（状态未知，不假装没得做）。 */
 function allButton(states: RowState[], hasManifest: boolean): { text: string; disabled: boolean } {
   if (!hasManifest) return { text: '等待检查更新', disabled: true };
   const { pending, updatable } = pendingOf(states);
-  if (pending === 0) return { text: '已是最新', disabled: true };
+  if (pending === 0) return { text: '全部更新', disabled: true };
   return { text: updatable > 0 ? `全部更新 ${pending}` : `全部下载 ${pending}`, disabled: false };
 }
 
