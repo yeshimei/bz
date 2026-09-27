@@ -26,8 +26,8 @@
       "id": "rss-catalog",
       "name": "RSS 源库",
       "file": "rss-catalog.json",
-      "sha256": "a8ad4ac8bcac3f297566d7f52fb8f06fd63479050886851fa96ff7a1854bb221",
-      "size": 343644
+      "sha256": "67da40941a03f2f6c2a12c081647911024ba1b06699f238b8334f71ab4dd4753",
+      "size": 2004021
     }
   ],
   "skins": [
