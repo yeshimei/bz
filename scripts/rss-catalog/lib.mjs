@@ -82,14 +82,21 @@ export function parseTimqianTable(md) {
   return { entries, noFeed, malformed };
 }
 
-/** 标签 → 固定大类（一个条目可属多个大类；未命中 → [综合]）。比对不区分大小写：
- *  标签精确等于关键词，或标签包含关键词（「前端开发」含「前端」）。 */
+/** 单标签 × 单关键词命中判定：中文关键词按包含（「前端开发」含「前端」）；
+ *  ASCII 关键词按词边界（防 linux⊃ux、ai⊃aimless 这类巧合包含——出版报告复核发现的真实误挂） */
+function tagHasKeyword(tag, kw) {
+  if (tag === kw) return true;
+  if (!/[a-z0-9]/.test(kw)) return tag.includes(kw);
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?=[^a-z0-9]|$)`).test(tag);
+}
+
+/** 标签 → 固定大类（一个条目可属多个大类；未命中 → [综合]）。比对不区分大小写 */
 export function mapCategories(tags) {
   const lowered = (tags || []).map((t) => String(t || '').trim().toLowerCase()).filter(Boolean);
   const cats = [];
   for (const rule of CATEGORY_RULES) {
-    const kws = rule.keywords;
-    if (lowered.some((t) => kws.some((k) => t === k || t.includes(k)))) cats.push(rule.cat);
+    if (lowered.some((t) => rule.keywords.some((k) => tagHasKeyword(t, k)))) cats.push(rule.cat);
   }
   return cats.length > 0 ? cats : [FALLBACK_CATEGORY];
 }

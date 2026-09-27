@@ -1,6 +1,13 @@
 # 495 · RSS 源库：社区清单出版为在线资源 + RSS 管理弹窗大改（我的订阅 / 源库双页签）
 
-- 状态：已实现（2026-09-27；worktree 门禁：tsc 绿 + 547 文件 8179 用例全绿；出版定稿：解析 1349 / 剔除 197 / 存疑保留 315 / 收录 1152，归类覆盖 97.7%；pomodoro 392Hz 一条全量并行下计时抖动为存量 flake，单跑 80/80 过）
+- 状态：已实现 + 复检修正（2026-09-27；worktree 门禁终值：tsc 绿 + 548 文件 8192 用例全绿；出版定稿：解析 1349 / 剔除 197 / 存疑保留 313 / 收录 1152，归类覆盖 97.3%）
+
+## 复检修正（子代理评审，无 P0 / 2 P1 / 7 P2；P1 全修 + P2 修五记二）
+
+- **P1-1 缓存跨入口不失效（修）**：`core/rss-catalog.ts` 增 `downloads:asset-changed` 单例订阅——`fileName === RSS_CATALOG_FILE` 即弃 memCache。此前设置面板行走 `ensureAssetWithHash` 直写磁盘不经 `downloadRssCatalog`，「更新」后整条会话命中旧缓存，事件同步被击穿。
+- **P1-2 出版管线测试从未真跑（修）**：vitest `include` 不含 `.mjs`，`rss-catalog-lib.test.mjs` 被静默跳过（全仓唯一 mjs 测试）；且 import 路径错（`./lib.mjs` → `../../scripts/...`）。挂上即抓到真 bug——**ASCII 关键词裸包含误归类**（`'linux'.includes('ux')` 误挂设计创意）：`mapCategories` 改 ASCII 词边界匹配 + 中文维持包含；归类修正后产物重出。
+- P2 修五：测活 4KB 截断口径入注（XML 前言超 4KB 活源误判死，已接受口径可审计）；校验 url 去重改去尾斜杠 key（与出版脚本同口径，尾斜杠孪生拒收）；条目内 cats 重复拒收（防计数虚高）；`activateMy` 渲染链 catch 收口（免 unhandled rejection）；asset-changed 按 `fileName` 过滤 + `searchTimer` 随 close 清理 + build.mjs 死变量清除。
+- P2 记二不修：sha 相符但结构非法的坏产物无客户端自愈（出版侧由「真源校验」测试把关，报错文案已指引用反馈）；测活并发池等实现经复核无问题。
 - 域：scripts（`rss-catalog/` 出版管线新增）+ core（`rss-catalog` 资产层新增）+ clipbook（RSS 管理弹窗大改）+ settings-panel（在线资源组描述补充）
 - 来源：用户提案「内置 RSS 源，社区有相关维护项目，评估作为在线资源提供下载」→ grill-with-docs 两轮拍板
 - 关联：ADR-0208（黄页订阅模型，本票决策）· ADR-0203 / 0205 / 0207（在线资源与清单驱动行集合）· ADR-0121（RSS 订阅源）· ADR-0128（抓取内置）· issue 494（清单驱动机制——本票第五行零代码直接受益）

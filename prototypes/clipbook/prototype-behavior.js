@@ -1,4 +1,4 @@
-/* 源指纹 fabcdb093bba9959 · 仓内输入 122 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7f896861a89ee990 · 仓内输入 122 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -21759,6 +21759,13 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/core/rss-catalog.ts
+  function subscribeOnce() {
+    if (subscribed) return;
+    subscribed = true;
+    onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName === RSS_CATALOG_FILE) memCache = null;
+    });
+  }
   function isValidFeedUrl(url) {
     return /^https?:\/\/\S+$/i.test(url);
   }
@@ -21792,11 +21799,13 @@ ${bodyText.substring(0, 6e3)}`;
       const ff = f;
       if (typeof ff.url !== "string" || !isValidFeedUrl(ff.url.trim())) return null;
       const url = ff.url.trim();
-      if (urls.has(url)) return null;
-      urls.add(url);
+      const urlKey = url.replace(/\/+$/, "");
+      if (urls.has(urlKey)) return null;
+      urls.add(urlKey);
       if (typeof ff.title !== "string" || typeof ff.site !== "string") return null;
       if (!Array.isArray(ff.tags) || !ff.tags.every((t) => typeof t === "string")) return null;
       if (!Array.isArray(ff.cats) || ff.cats.length === 0) return null;
+      if (new Set(ff.cats).size !== ff.cats.length) return null;
       for (const c of ff.cats) {
         if (typeof c !== "string" || !cats.has(c)) return null;
       }
@@ -21816,6 +21825,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   async function loadRssCatalog(app) {
+    subscribeOnce();
     if (memCache) return memCache;
     const c = await readLocalValidated(app);
     if (c) memCache = c;
@@ -21835,6 +21845,7 @@ ${bodyText.substring(0, 6e3)}`;
     return (_a = m == null ? void 0 : m.docs.find((d) => d && d.id === RSS_CATALOG_MANIFEST_ID)) != null ? _a : null;
   }
   async function downloadRssCatalog(app) {
+    subscribeOnce();
     const entry = await manifestEntry(app);
     if (!entry) {
       throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
@@ -21848,7 +21859,7 @@ ${bodyText.substring(0, 6e3)}`;
       throw new Error("RSS 源库数据解析失败：" + ((e == null ? void 0 : e.message) || String(e)));
     }
     const catalog = validateRssCatalog(parsed);
-    if (!catalog) throw new Error("RSS 源库数据校验失败（结构或条目不合法）");
+    if (!catalog) throw new Error("RSS 源库数据校验失败（产物异常或本地文件损坏）；重装下载仍失败请反馈");
     memCache = catalog;
     return catalog;
   }
@@ -21884,14 +21895,16 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return set;
   }
-  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache;
+  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache, subscribed;
   var init_rss_catalog = __esm({
     "src/core/rss-catalog.ts"() {
       init_remote_asset();
       init_download_manifest();
+      init_domain_bus();
       RSS_CATALOG_FILE = "rss-catalog.json";
       RSS_CATALOG_MANIFEST_ID = "rss-catalog";
       memCache = null;
+      subscribed = false;
     }
   });
 
@@ -23481,27 +23494,27 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function createRssCatalogPane(root, deps) {
     let catalog = null;
-    let subscribed = /* @__PURE__ */ new Set();
+    let subscribed2 = /* @__PURE__ */ new Set();
     let query = "";
     let activeCat = "";
     let searchTimer = null;
     const readSubscribed = async () => {
       const st = await readDataSourceState();
-      subscribed = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+      subscribed2 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
     };
     const subscribeFeed = async (feed, btn) => {
       btn.disabled = true;
       btn.textContent = "订阅中…";
       const outcome = await addRssFeed(feed.url, feed.title || void 0);
       if (outcome === "added") {
-        subscribed.add(feed.url);
+        subscribed2.add(feed.url);
         btn.textContent = "已订阅";
         notice(`已订阅 ${feed.title || feed.url}`, "success");
         deps.onChanged();
         return;
       }
       if (outcome === "exists") {
-        subscribed.add(feed.url);
+        subscribed2.add(feed.url);
         btn.textContent = "已订阅";
         return;
       }
@@ -23533,7 +23546,7 @@ ${bodyText.substring(0, 6e3)}`;
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "bz-sp-btn bz-rss-cat-sub";
-      const isSub = subscribed.has(feed.url);
+      const isSub = subscribed2.has(feed.url);
       btn.textContent = isSub ? "已订阅" : "订阅";
       btn.disabled = isSub;
       if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
@@ -23661,6 +23674,12 @@ ${bodyText.substring(0, 6e3)}`;
           const list = root.querySelector(".bz-rss-cat-list");
           if (hit && list) renderList2(hit, list);
         }
+      },
+      dispose: () => {
+        if (searchTimer) {
+          clearTimeout(searchTimer);
+          searchTimer = null;
+        }
       }
     };
   }
@@ -23673,6 +23692,7 @@ ${bodyText.substring(0, 6e3)}`;
     let offAsset = null;
     function close() {
       rssManagerClose = null;
+      catPane == null ? void 0 : catPane.dispose();
       if (offAsset) {
         offAsset();
         offAsset = null;
@@ -23716,6 +23736,9 @@ ${bodyText.substring(0, 6e3)}`;
       opts.onChanged();
       void (catPane == null ? void 0 : catPane.refreshSubscribed());
     };
+    const activate = (next) => {
+      void next().catch((e) => console.warn("[bz] RSS 订阅弹窗页签渲染失败:", (e == null ? void 0 : e.message) || e));
+    };
     const activateMy = async () => {
       activeTab = "my";
       tabMy.classList.add("active");
@@ -23737,9 +23760,10 @@ ${bodyText.substring(0, 6e3)}`;
       if (!catPane) catPane = createRssCatalogPane(paneCat, { onChanged: onMyChanged });
       await catPane.reload();
     };
-    tabMy.addEventListener("click", () => void activateMy());
-    tabCat.addEventListener("click", () => void activateCatalog());
-    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+    tabMy.addEventListener("click", () => activate(activateMy));
+    tabCat.addEventListener("click", () => activate(activateCatalog));
+    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName && evt.fileName !== RSS_CATALOG_FILE) return;
       if (rssManagerOpen && activeTab === "catalog") void (catPane == null ? void 0 : catPane.reload());
     });
     try {
@@ -23762,7 +23786,7 @@ ${bodyText.substring(0, 6e3)}`;
       close
     });
     handle = handleReg;
-    void activateMy();
+    activate(activateMy);
   }
   function unloadManagerModals() {
     upManagerClose == null ? void 0 : upManagerClose();
