@@ -46,6 +46,12 @@
       （`commit 30f93a9e` → 主仓部署 `936cca87`，同时刷新 changelog / manifest）
 - [x] 门禁（复检修正）：`tsc` 0 错 + 全量 **545 文件 / 8156 用例、8155 绿**——唯一一例
       `tests/pomodoro/ui.test.ts`「第 4 个专注完成 → 长休开始声（392Hz）」仍是已知环境计时抖动（隔离复跑 6.2s 通过）
+- [x] 复检修正二（用户反馈）：组标题下凭空多一条线——行分隔线是行的 `border-top`，首行靠
+      `.bz-sp-group-body .bz-sp-set-row:first-child { border-top: 0 }` 抑制；当**首位是看不见的门控行**
+      （本组「检查更新」恒在首位且按需隐藏）时，抑制落在隐藏行头上，下面那行就把线画到了标题底下。
+      补一条同族规则：`…:first-child[style*="display: none"] + .bz-sp-set-row { border-top: 0 }`——
+      **只治「首位被隐藏」这一种情形**，中间行被搜索过滤藏起来时分隔线照旧保留（那正是该有的样子）。
+      根 `styles.css` 由 `scripts/build-css.mjs` 聚合，已重出
 
 
 ## Issue 325 — 自动关联迁入知识盒：三盒为界、三盒恒含索引（ADR-0141 / ADR-0142）
