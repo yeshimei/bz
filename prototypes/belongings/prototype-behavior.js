@@ -1,4 +1,4 @@
-/* 源指纹 dc70243ee5c4b76e · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 72c10ff092ef69a3 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/remote-asset.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -8014,6 +8014,14 @@ var BZW_belongings = (() => {
     for (const it of g.items) menu[it.id] = it.name;
     return menu;
   }
+  function iconOf(table, categoryName) {
+    for (const g of table.groups) {
+      for (const it of g.items) {
+        if (it.name === categoryName) return it.icon;
+      }
+    }
+    return null;
+  }
 
   // src/belongings/catalog-suggest.ts
   var SENTINEL = "__other__";
@@ -8150,6 +8158,7 @@ var BZW_belongings = (() => {
     return { category: item.name, icon: item.icon };
   }
   function buildCatSuggest(history, historyIconOf, table) {
+    var _a;
     const icon = /* @__PURE__ */ new Map();
     const keywords = /* @__PURE__ */ new Map();
     const aliasHint = /* @__PURE__ */ new Map();
@@ -8165,7 +8174,10 @@ var BZW_belongings = (() => {
         aliasHint.set(name, aliases.join("、"));
       }
     };
-    for (const name of history) push(name, historyIconOf(name), []);
+    for (const name of history) {
+      const icon2 = historyIconOf(name) || (table ? iconOf(table, name) || ((_a = matchByAlias(name, table)) == null ? void 0 : _a.icon) || "" : "");
+      push(name, icon2, []);
+    }
     if (table) {
       for (const g of table.groups) {
         for (const it of g.items) push(it.name, it.icon, it.aliases);
@@ -8174,16 +8186,16 @@ var BZW_belongings = (() => {
     return {
       list,
       iconOf: (name) => {
-        var _a;
-        return (_a = icon.get(name)) != null ? _a : "";
+        var _a2;
+        return (_a2 = icon.get(name)) != null ? _a2 : "";
       },
       keywordsOf: (name) => {
-        var _a;
-        return (_a = keywords.get(name)) != null ? _a : [];
+        var _a2;
+        return (_a2 = keywords.get(name)) != null ? _a2 : [];
       },
       aliasHintOf: (name) => {
-        var _a;
-        return (_a = aliasHint.get(name)) != null ? _a : "";
+        var _a2;
+        return (_a2 = aliasHint.get(name)) != null ? _a2 : "";
       },
       hasTable: !!table
     };

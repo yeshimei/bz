@@ -222,3 +222,30 @@ describe('buildCatSuggest 联想源', () => {
     expect(src.hasTable).toBe(false);
   });
 });
+
+// ═══════ issue 489：历史条目图标继承表内（同名 > 别名直配 > 无命中留空） ═══════
+describe('buildCatSuggest 历史条目图标继承（issue 489）', () => {
+  const mkTable = {
+    version: '0.1.0',
+    groups: [
+      {
+        id: 'g1', name: '数码影音', icon: 'smartphone',
+        items: [
+          { id: 'c1', name: '移动电源', icon: 'battery-charging', aliases: ['充电宝'] },
+        ],
+      },
+    ],
+  } as any;
+
+  it('历史记档缺失但命中表内同名 → 继承表图标；别名直配同样继承；无命中留空', () => {
+    const src = buildCatSuggest(['移动电源', '充电宝', '手办'], () => '', mkTable);
+    expect(src.iconOf('移动电源')).toBe('battery-charging'); // 同名
+    expect(src.iconOf('充电宝')).toBe('battery-charging'); // 别名直配（值仍是「充电宝」，只补视觉）
+    expect(src.iconOf('手办')).toBe(''); // 表内无命中 → 不造图标
+  });
+
+  it('历史记档优先于表内图标', () => {
+    const src = buildCatSuggest(['移动电源'], () => 'my-icon', mkTable);
+    expect(src.iconOf('移动电源')).toBe('my-icon');
+  });
+});

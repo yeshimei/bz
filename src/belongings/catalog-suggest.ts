@@ -23,6 +23,7 @@ import {
   matchByAlias,
   groupMenu,
   itemMenu,
+  iconOf,
   type CategoryItem,
   type CategoryTable,
 } from '../core/category-table';
@@ -285,7 +286,14 @@ export function buildCatSuggest(
     }
   };
 
-  for (const name of history) push(name, historyIconOf(name), []);
+  // 历史条目图标优先级：历史记档（馆内首个已设图标）> 表内同名 > 表内别名直配 > 空（issue 489）。
+  // 值不动（历史分类原样保留），只补视觉——馆里没设过图标的历史分类在下载表后也能带上图标。
+  for (const name of history) {
+    const icon =
+      historyIconOf(name) ||
+      (table ? iconOf(table, name) || matchByAlias(name, table)?.icon || '' : '');
+    push(name, icon, []);
+  }
   if (table) {
     for (const g of table.groups) {
       for (const it of g.items) push(it.name, it.icon, it.aliases);
