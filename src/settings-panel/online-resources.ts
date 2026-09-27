@@ -128,7 +128,7 @@ function rowDesc(st: RowState): string {
 }
 
 /** 行状态 → 按钮文案与禁用态（更新优先于下载；两者并存的差额在描述里说清） */
-function rowButton(st: RowState, hasManifest: boolean): { text: string; disabled: boolean } {
+function rowButton(st: RowState): { text: string; disabled: boolean } {
   if (st.skin) {
     const { missing, updated } = st.skin;
     if (updated > 0) return { text: `更新 ${updated}`, disabled: false };
@@ -168,7 +168,7 @@ export async function onlineResourcesGroup(): Promise<GroupDecl> {
   meta.rows.push(retryRow);
 
   for (const st of states) {
-    const btn = rowButton(st, hasManifest);
+    const btn = rowButton(st);
     const row: BtnRow = {
       type: 'button',
       name: st.name,
@@ -235,7 +235,7 @@ async function syncGroupRows(): Promise<void> {
   for (const { id, row } of meta.entries) {
     const st = states.find((s) => s.id === id);
     if (!st) continue;
-    const btn = rowButton(st, hasManifest);
+    const btn = rowButton(st);
     row.name = st.name;
     row.desc = rowDesc(st);
     row.buttonText = btn.text;
