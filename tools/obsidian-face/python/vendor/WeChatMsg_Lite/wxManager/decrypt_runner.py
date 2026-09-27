@@ -463,6 +463,28 @@ def _normalize_source_root(path: str | os.PathLike) -> Path:
     return source_path
 
 
+def _source_fingerprint(db_storage_dir: str | os.PathLike) -> dict[str, list[int]]:
+    """bz-face 增量偏离（issue 498）：源库指纹 relpath → [mtime_ns, size]。
+
+    只看 .db 主文件（-wal / -shm / *.material 不算）；微信写进新消息必然带动
+    mtime 变化，指纹不一致即该库需要重解。"""
+    files: dict[str, list[int]] = {}
+    root_path = Path(db_storage_dir)
+    if not root_path.is_dir():
+        return files
+    for root, _dirs, names in os.walk(root_path):
+        for name in names:
+            if not name.lower().endswith(".db"):
+                continue
+            file_path = Path(root) / name
+            try:
+                st = file_path.stat()
+            except OSError:
+                continue
+            files[file_path.relative_to(root_path).as_posix()] = [st.st_mtime_ns, st.st_size]
+    return files
+
+
 def _same_path(
     path1: str | os.PathLike | None,
     path2: str | os.PathLike | None,
@@ -500,9 +522,21 @@ def _get_cached_db_dir(
         return None
 
     cached_db_dir = cache.get("db_dir")
-    if _db_dir_is_ready(cached_db_dir):
-        return str(Path(cached_db_dir).resolve())
-    return None
+    if not _db_dir_is_ready(cached_db_dir):
+        return None
+
+    # bz-face 增量偏离（issue 498）：第一层缓存还要源库指纹一致才命中——
+    # 上游只认路径，微信写入新消息后缓存永久有效（统计数据停在解密那一刻）。
+    # 缓存没有 files 段（旧缓存）同样视为失效，走一轮增量重建指纹后恢复秒级。
+    cached_files = cache.get("files")
+    if source_dir and not isinstance(cached_files, dict):
+        return None
+    if source_dir and isinstance(cached_files, dict):
+        src_db_storage = _normalize_source_root(source_dir) / "db_storage"
+        if src_db_storage.is_dir() and _source_fingerprint(src_db_storage) != cached_files:
+            return None
+
+    return str(Path(cached_db_dir).resolve())
 
 
 def _get_cached_key_info(
@@ -600,16 +634,51 @@ def _dump_v4_with_key(
     if temp_output_dir.exists():
         shutil.rmtree(temp_output_dir)
 
-    try:
-        summary = decrypt_v4.decrypt_db_files(
-            normalized_key,
-            src_dir=str(wx_dir_path),
-            dest_dir=str(temp_output_dir),
-        )
-    except Exception as e:
-        if temp_output_dir.exists():
-            shutil.rmtree(temp_output_dir, ignore_errors=True)
-        return _fail(f"批量解密数据库失败：{e}")
+    # bz-face 增量偏离（issue 498）：源库没变的直接复用上次解密产物，只重解
+    # mtime/size 变化的库——日常收发消息只动 message 等小库，整库全量重解是分钟级。
+    # 指纹在解密成功后随缓存写回（_finalize_success），下一轮据此判定可复用集。
+    current_files = _source_fingerprint(db_storage_dir)
+    reuse_map: dict[str, list[int]] = {}
+    cached_files = _load_cache(output_root).get("files")
+    if isinstance(cached_files, dict) and cached_files and final_output_dir.is_dir():
+        for rel, fp in cached_files.items():
+            if current_files.get(rel) != fp:
+                continue
+            old_file = final_output_dir / "db_storage" / rel
+            if not old_file.is_file():
+                continue
+            new_file = temp_output_dir / "db_storage" / rel
+            new_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(old_file, new_file)
+            reuse_map[rel] = fp
+    if reuse_map:
+        print(f"[decrypt cache] 复用 {len(reuse_map)} 个未变库，重解 {len(current_files) - len(reuse_map)} 个")
+
+    if len(reuse_map) == len(current_files) and current_files:
+        # 全部复用：key 已在上面 validate_key_v4 校验过，无需再起解密进程
+        summary: dict[str, Any] = {
+            "ok": True,
+            "key_valid": True,
+            "total_count": len(current_files),
+            "success_count": 0,
+            "reused_count": len(reuse_map),
+            "failed_count": 0,
+            "failed_files": [],
+            "message": f"Reused {len(reuse_map)} unchanged database files",
+        }
+    else:
+        try:
+            summary = decrypt_v4.decrypt_db_files(
+                normalized_key,
+                src_dir=str(wx_dir_path),
+                dest_dir=str(temp_output_dir),
+                reuse=set(reuse_map) if reuse_map else None,
+            )
+            summary["reused_count"] = len(reuse_map)
+        except Exception as e:
+            if temp_output_dir.exists():
+                shutil.rmtree(temp_output_dir, ignore_errors=True)
+            return _fail(f"批量解密数据库失败：{e}")
 
     if not summary.get("ok"):
         shutil.rmtree(temp_output_dir, ignore_errors=True)
@@ -645,6 +714,7 @@ def _dump_v4_with_key(
         wxid=wxid,
         source_dir=str(wx_dir_path),
         decrypt_summary=summary,
+        files=current_files,
     )
 
 
@@ -801,6 +871,11 @@ def _finalize_success(
         db_dir=_norm_path(result.get("db_dir")),
         key=normalized_key,
     )
+    # bz-face 增量偏离（issue 498）：解密产物对应的源库指纹随缓存落盘，
+    # 下一轮第一层缓存据此判定「源没变 → 直接用」，变了则按库增量重解
+    files = result.get("files")
+    if isinstance(files, dict) and files:
+        _update_cache(output_root, files=files)
 
     result["from_cache_db"] = False
     result["from_cache_key"] = from_cache_key

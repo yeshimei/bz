@@ -83,6 +83,17 @@
   multiprocessing 子进程的 sys.modules 垫片又不可靠。改惰性 import 后：装了真 yara-python
   的环境照常取密钥；没装的环境解密链照常跑、真去取密钥才报 ModuleNotFoundError。
   升级上游版本时重新套用此补丁。
+- **有据可查的最小偏离（2026-09-27，解密增量线，issue 498）**：`wxManager/decrypt_runner.py`
+  与 `wxManager/decrypt/decrypt_v4.py`。上游解密缓存第一层只按 source_dir **路径**判定命中，
+  完全不看源库内容——微信写进新消息后缓存依旧命中（sync 统计永远停在首次解密那刻）；
+  而一旦路径不匹配（如 `--src` 填了账号父目录）就落到手动 key 链**整库全量重解密**（分钟级）。
+  改动：`decrypt_runner` 新增 `_source_fingerprint`（源 db_storage 逐 `.db` 的
+  relpath → `[mtime_ns, size]`），缓存 JSON 新增 `files` 段，第一层命中要求指纹一致；
+  `_dump_v4_with_key` 把源库没变的文件直接 `copy2` 上次解密产物进临时目录，只把变化的库
+  交给 `decrypt_db_files`（新增可选 `reuse` relpath 集合参数，默认 None 行为不变），
+  全部复用时跳过解密调用（key 已先经 `validate_key_v4` 校验）；指纹经 `_finalize_success`
+  随缓存写回。效果：新消息真实可见，日常同步解密从分钟级回到秒级。
+  升级上游版本时重新套用此补丁。
 - **有据可查的最小偏离（2026-09-26，日志目录线）**：`wxManager/log/logger.py` 模块顶层
   `log_dir = Path.cwd() / "logs" / …` 改为 `Path(__file__).resolve().parents[2] / "logs" / …`——
   上游把日志目录锚在 CWD，插件派生本工具时 CWD 是 Obsidian 安装目录（不可写），import 即

@@ -263,8 +263,12 @@ def decrypt_db_files(
     key: str,
     src_dir: str,
     dest_dir: str,
+    reuse: set[str] | None = None,
 ) -> dict[str, Any]:
-    """Decrypt all .db files and return a structured summary."""
+    """Decrypt all .db files and return a structured summary.
+
+    bz-face 增量偏离（issue 498）：``reuse`` 是相对 src_dir 的 posix relpath 集合，
+    命中的文件调用方已把上次解密产物放进 dest_dir，这里跳过不重解（省分钟级全量）。"""
     normalized_key = _normalize_hex_key(key)
     if normalized_key is None:
         return {
@@ -299,6 +303,11 @@ def decrypt_db_files(
             relative_path = os.path.relpath(root, src_dir)
             dest_sub_dir = os.path.join(dest_dir, relative_path)
             dest_file_path = os.path.join(dest_sub_dir, file_name)
+
+            if reuse:
+                rel_key = os.path.join(relative_path, file_name).replace(os.sep, "/")
+                if rel_key in reuse:
+                    continue
 
             decrypt_tasks.append(
                 (

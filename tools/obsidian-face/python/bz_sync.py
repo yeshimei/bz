@@ -201,9 +201,20 @@ def decrypt_all(key_path: Path, data_root: Path, src_override=None) -> Path:
     step("解密数据库（增量：已解密的库自动跳过）")
     progress("decrypt", None)
     out_root = data_root / ".bz-face" / "decrypted"
-    src = src_override or json.loads(key_path.read_text(encoding="utf-8")).get("source_dir")
+    key_info = json.loads(key_path.read_text(encoding="utf-8"))
+    src = src_override or key_info.get("source_dir")
     if src and not Path(src).exists():
         fail_hard(f"微信数据目录不存在：{src}（多账号 / 旧备份可用 --src 指定账号目录）")
+    # 498：--src 填的是微信根目录（多账号父目录，如 …\xwechat_files）时落回 key.json 的
+    # 账号目录——解密缓存按账号目录精确匹配，父目录会让缓存每轮失效、整库重解（分钟级）
+    key_src = key_info.get("source_dir")
+    if (
+        src and key_src and Path(key_src).exists()
+        and Path(src).resolve() != Path(key_src).resolve()
+        and not (Path(src) / "db_storage").is_dir()
+    ):
+        step(f"--src 是微信根目录，解密按 key.json 落到账号目录：{key_src}")
+        src = key_src
     try:
         db_dir = bz_export.decrypt_db(src, str(out_root), key_path=str(key_path))
     except SystemExit as e:
