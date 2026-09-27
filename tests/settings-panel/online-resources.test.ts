@@ -422,4 +422,86 @@ describe('补丁边界（issue 492 review：与动作态/搜索态的交界）',
     expect(rowBtn(el2, 1).textContent).toBe('已下载'); // 动作收尾按新落定的行态写回
     expect(rowBtn(el2, 1).disabled).toBe(true);
   });
+
+  it('动作重入拦下：读缓存清单的让位点（慢盘）上再点一次，也只跑一轮下载', async () => {
+    const vault = newVault();
+    const entry = docEntry('changelog', HTML_V2);
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
+    let fetches = 0;
+    vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
+      if (req.url === REMOTE_MANIFEST) return { status: 200, text: manifestJson([entry], []) } as any;
+      if (req.url.includes('bz-changelog.html')) {
+        fetches++;
+        return { status: 200, text: HTML_V2 } as any;
+      }
+      throw new Error('unmocked url: ' + req.url);
+    }) as any);
+
+    const el = await renderGroup();
+    const btn = rowBtn(el, 1);
+    expect(btn.textContent).toBe('下载');
+
+    // 武装慢盘：动作里那次「读缓存清单」挂住（renderGroup 的构建期读已过，不影响）
+    const origRead = vault.adapter.read.bind(vault.adapter);
+    let release: () => void = () => {};
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    let gated = false;
+    (vault.adapter as { read: (p: string) => Promise<string> }).read = async (p: string) => {
+      if (!gated && p.endsWith('downloads/manifest.json')) {
+        gated = true;
+        await gate;
+      }
+      return origRead(p);
+    };
+
+    btn.click();
+    await tick(5); // 第一轮停在让位点上
+    btn.click(); // 第二击落在这个窗口里（置忙若晚于首个 await 落定，这里就是并发第二轮）
+    release();
+    await tick(60);
+    expect(fetches).toBe(1);
+    expect(btn.textContent).toBe('已下载');
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('检查更新行动作中重渲：重试钮按 schema 禁用态重建，收尾后回到可再点', async () => {
+    const vault = newVault();
+    let hung = false;
+    let release: () => void = () => {};
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
+      if (hung) await gate; // 重试期间挂住：动作停在 busy 窗口内
+      throw new Error('ENOTFOUND'); // 双源都失败 → checkFailed（无缓存 → 检查更新行置顶）
+    }) as any);
+
+    const group = await onlineResourcesGroup();
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    renderPanelSchema(el, { groups: [group] });
+    await tick(40);
+    expect(rowVisible(el, 0)).toBe(true);
+    expect(rowBtn(el, 0).textContent).toBe('重试');
+
+    hung = true;
+    rowBtn(el, 0).click();
+    await tick(20);
+    expect(rowBtn(el, 0).classList.contains('bz-rowbtn--busy')).toBe(true);
+
+    // 切域再回来 = 重渲：新钮的禁用态必须来自行对象（busy 类只是 DOM 瞬态，不在新 DOM 上）
+    const el2 = document.createElement('div');
+    document.body.appendChild(el2);
+    renderPanelSchema(el2, { groups: [group] });
+    await tick(20);
+    expect(rowBtn(el2, 0).classList.contains('bz-rowbtn--busy')).toBe(false);
+    expect(rowBtn(el2, 0).disabled).toBe(true);
+
+    release();
+    await tick(80);
+    expect(rowBtn(el2, 0).textContent).toBe('重试'); // 失败态照旧可再点，不留下永久禁用
+    expect(rowBtn(el2, 0).disabled).toBe(false);
+  });
 });

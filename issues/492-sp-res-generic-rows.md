@@ -98,19 +98,31 @@ issue 480 把三项在线下载收进设置面板通用域时，组内用 `type:
    写回被跳过的钮（busy 期间全程禁用，摘与落定同一轮完成，零窗口）。另：`.catch(() => {})`
    改 `syncLogged()`——失败留一条 `console.warn`，不再全静默。
 
+### 三轮补（部署后复审）
+
+6. **动作重入窗口**：`runAction` 先 `await cachedManifest` 再置忙——慢盘上读缓存清单是个
+   让位点，让位点上的第二击（busy 类没上、`busyIds` 还空）会并发跑第二轮下载（同资产下两遍、
+   落盘事件翻倍）。修法：**置忙提到首个 await 之前** + 入口 `if (busyIds.has(id)) return`——
+   只加后者等于没加（拦的是自己尚未写入的状态）。清单缺席的早退分支随之并入尾段（同样按
+   磁盘事实就地校正）。新增用例钉住：慢读清单窗口内的双击只发一次下载请求；重试行动作中
+   重渲的新钮按 schema 禁用（删 `retryRow.disabled = true` 即红）——两处均以「改坏即红」验过。
+
 ## 已知边界（二轮复检，已知不修）
 
 - 清单自身的落盘事件（`download-manifest.ts` 核对成功写缓存）也触发一轮全量重扫——
   有 60s 节流 + 单飞合流兜着，不按 payload 过筛；
 - 描述真变更时仍写 `textContent`（搜索高亮的 `<mark>` 拍平到下个按键；文案本身已同源刷新）；
-- 补丁不写行名 DOM（清单改名要等下次重渲）。
+- 补丁不写行名 DOM（清单改名要等下次重渲）；
+- 搜索过滤态下点「检查更新」→ 收尾的 `ctx.refreshVisibility()` 会把被过滤藏掉的行重新显示
+  （面板 `visibleWhen` 与搜索过滤的通用交界，凡 `visibleWhen` 行皆然，非本组特有，未修）。
 
 ## 测试
 
-- `tests/settings-panel/online-resources.test.ts` 重写（15 例）：真渲染器 `renderPanelSchema`
+- `tests/settings-panel/online-resources.test.ts` 重写（17 例）：真渲染器 `renderPanelSchema`
   验组形状（5 button 行）/ 状态机各态 / 失败态与重试恢复（含「重试再失败不卡 busy」）/
   动作后翻转 / 主题行套数描述 / 跨入口同步（`writeAssetText` 落盘 → 行按钮翻「已下载」）/
-  补丁边界（busy 转圈不被事件拍掉、动作中重渲按 schema 禁用、描述变更同源刷新高亮快照）。
+  补丁边界（busy 转圈不被事件拍掉、动作中重渲按 schema 禁用、检查更新行重渲同款、
+  慢读清单窗口内双击只下载一次、描述变更同源刷新高亮快照）。
 - `tests/core/settings-schema-ui.test.ts`：button 行 `disabled` 落位（禁用钮点不动）；
 - `tests/sp-contract-lock.test.ts`：通用域可见项数 8 → 7（button 行不计）。
 - `tests/smoke.test.ts`：在线资源组冒烟改 button 行口径（5 行；清单拉取失败 → 四资源行禁用

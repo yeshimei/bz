@@ -322,25 +322,27 @@ function patchRenderedGroup(): void {
 
 /** 行动作：doc → ensureAssetWithHash（覆盖写）；皮肤 → downloadSkinUpdates（拉全部非就绪） */
 async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
-  const app = getApp();
-  const manifest = await cachedManifest(app);
-  if (!manifest) {
-    await syncLogged(); // 清单已不可用（禁用态理论不可达）→ 就地校正
-    return;
-  }
+  // 拦重入要在首个 await 之前：读缓存清单是个让位点（慢盘），让位点上再来的第二击
+  // 此时 busy 类还没上、busyIds 也还空着——只拦不置忙等于没拦，两击会并发跑两轮下载。
+  if (busyIds.has(id)) return;
+  busyIds.add(id);
   const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
   const row = currentGroup?.entries.find((e) => e.id === id)?.row;
   setRowBtnState(btn, 'busy', btn?.textContent ?? '下载');
   if (row) row.disabled = true; // schema 面同步置忙：动作中重开的钮也点不动（busy 类只是 DOM 瞬态）
-  busyIds.add(id); // 置忙期间重算不得改写本行（批量下载逐条事件扑面，见 syncOnce）
   try {
-    if (id === 'skins') {
-      const r = await downloadSkinUpdates(app, manifest);
-      if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, 'error');
-    } else {
-      const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === id);
-      // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
-      if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+    const app = getApp();
+    // 清单已不可用（禁用态理论不可达）→ 不动作，尾段按磁盘事实就地校正
+    const manifest = await cachedManifest(app);
+    if (manifest) {
+      if (id === 'skins') {
+        const r = await downloadSkinUpdates(app, manifest);
+        if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, 'error');
+      } else {
+        const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === id);
+        // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
+        if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+      }
     }
   } catch (e) {
     notice(e instanceof Error ? e.message : String(e), 'error');
