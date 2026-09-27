@@ -1043,7 +1043,8 @@ export function openForm(it: BelongingsItem | null): void {
     source: () => catSrc.list,
     max: 60,
     iconOf: (raw: string) => {
-      const name = catSrc.iconOf(raw) || historyIconOf(raw);
+      // 展示走 displayIconOf（历史无记档时兜底 tag）；点选落值走真实图标，兜底不写进物品
+      const name = catSrc.displayIconOf(raw) || historyIconOf(raw);
       return name ? uiIconSpan(name) : '';
     },
     keywordsOf: (raw: string) => catSrc.keywordsOf(raw),

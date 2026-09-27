@@ -249,3 +249,22 @@ describe('buildCatSuggest 历史条目图标继承（issue 489）', () => {
     expect(src.iconOf('移动电源')).toBe('my-icon');
   });
 });
+
+// ═══════ issue 491：历史条目展示兜底 tag 图标——每行都有图标可看，点选不落兜底值 ═══════
+describe('buildCatSuggest 展示兜底图标（issue 491）', () => {
+  it('无任何真实图标来源的历史条目 → displayIconOf 兜底 tag，iconOf 仍为空', () => {
+    const src = buildCatSuggest(['手办', '镜头'], () => '', null);
+    expect(src.displayIconOf('手办')).toBe('tag');
+    expect(src.iconOf('手办')).toBe(''); // 点选落值不受兜底污染
+    expect(src.displayIconOf('镜头')).toBe('tag'); // 历史条目一律兜底（表未下载同样适用）
+  });
+
+  it('有真实图标的候选（历史记档/表内/表外人工映射走 iconOf）→ displayIconOf 与 iconOf 一致', () => {
+    const table = {
+      version: '0.1.0',
+      groups: [{ id: 'g1', name: '数码影音', icon: 'smartphone', items: [{ id: 'c1', name: '移动电源', icon: 'battery-charging', aliases: [] }] }],
+    } as any;
+    const src = buildCatSuggest(['移动电源'], () => '', table);
+    expect(src.displayIconOf('移动电源')).toBe('battery-charging');
+  });
+});
