@@ -1,4 +1,4 @@
-/* 源指纹 ab33549200df8fcb · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 93615739f1bfdb3a · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -27,7 +27,6 @@ var BZR_people = (() => {
     avatarUri: () => avatarUri,
     button: () => button,
     dateRow: () => dateRow,
-    describeConfirmModal: () => describeConfirmModal,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
     dsSyncLineNode: () => dsSyncLineNode,
@@ -48,6 +47,7 @@ var BZR_people = (() => {
     formatDay: () => formatDay,
     formatDuration: () => formatDuration,
     formatReplySec: () => formatReplySec,
+    generationConfirmModal: () => generationConfirmModal,
     hourStrip: () => hourStrip,
     iconButton: () => iconButton,
     importMeta: () => importMeta,
@@ -57,6 +57,7 @@ var BZR_people = (() => {
     jobsFallbackMessage: () => jobsFallbackMessage,
     jobsPercent: () => jobsPercent,
     jobsQueueLabel: () => jobsQueueLabel,
+    jobsStageLabel: () => jobsStageLabel,
     jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
     loadBody: () => loadBody,
@@ -69,7 +70,6 @@ var BZR_people = (() => {
     noteAddRow: () => noteAddRow,
     panelShell: () => panelShell,
     popShell: () => popShell,
-    portraitConfirmModal: () => portraitConfirmModal,
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
     profilePopBody: () => profilePopBody,
@@ -273,8 +273,22 @@ var BZR_people = (() => {
     var _a, _b;
     return (_b = (_a = s.describe) == null ? void 0 : _a.stageText) != null ? _b : null;
   }
+  function jobsStageLabel(stage) {
+    switch (stage) {
+      case "chunked":
+        return "正在切批组装素材…";
+      case "person":
+        return "正在生成《其人》…";
+      case "bond":
+        return "正在生成《我们》…";
+      case "chronicle":
+        return "正在生成关系时间线…";
+      default:
+        return null;
+    }
+  }
   function progressBlock(s) {
-    var _a;
+    var _a, _b, _c;
     const stagePart = prepStagePart(s);
     const descPart = describeStagePart(s);
     const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -293,8 +307,13 @@ var BZR_people = (() => {
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
     const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_a = stagePart != null ? stagePart : descPart) != null ? _a : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    const stageFallback = jobsStageLabel(s.stage);
+    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_b = (_a = stagePart != null ? stagePart : descPart) != null ? _a : stageFallback) != null ? _b : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
     block.appendChild(el("div", "bz-people-jobs-main", text(main)));
+    const msg = ((_c = s.message) != null ? _c : "").trim();
+    if (msg && s.status !== "done" && s.status !== "error" && msg !== main) {
+      block.appendChild(el("div", "bz-people-jobs-sub", { "data-people-jobs-sub": "" }, text(msg)));
+    }
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
@@ -305,57 +324,40 @@ var BZR_people = (() => {
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
   }
-  function describeConfirmModal(info, onAnswer) {
-    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-desc-confirm": "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-desc-skip": "" }));
-    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "图片描述确认" });
+  function generationConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-gen-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-gen-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "开始生成脸谱" });
     pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text("图片描述"))
+      el("div", "bz-people-pop-title", text("开始生成脸谱"))
     ]));
     const body = el("div", "bz-people-pop-body");
-    body.appendChild(el("div", "bz-people-desc-line", text(
-      `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
-    )));
+    const segs = [`为 ${info.items.length} 位联系人生成脸谱`];
+    if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
+    if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
+    segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
+    body.appendChild(el("div", "bz-people-desc-line", text(`${segs.join("；")}。`)));
+    const list = el("ul", "bz-people-gen-list");
+    for (const it of info.items) {
+      const bits = [`素材 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」· ${bits.join(" · ")}`)));
+    }
+    body.appendChild(list);
     body.appendChild(el("div", "bz-people-desc-note", text(
-      `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+      "确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。"
     )));
     body.appendChild(el("div", "bz-people-desc-actions", [
-      button("bz-people-btn bz-people-btn-ghost", "跳过图片描述", { "data-people-desc-skip": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-desc-start": "" })
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-gen-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
     ]));
     pop.appendChild(body);
     wrap.appendChild(pop);
     wrap.addEventListener("click", (e) => {
       const t = e.target;
-      if (t.closest("[data-people-desc-start]")) onAnswer("start");
-      else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
-    });
-    return wrap;
-  }
-  function portraitConfirmModal(info, onAnswer) {
-    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-portrait-confirm": "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-portrait-cancel": "" }));
-    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "画像生成确认" });
-    pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text("画脸谱"))
-    ]));
-    const body = el("div", "bz-people-pop-body");
-    body.appendChild(el("div", "bz-people-desc-line", text(
-      `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
-    )));
-    body.appendChild(el("div", "bz-people-desc-note", text(
-      "其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。"
-    )));
-    body.appendChild(el("div", "bz-people-desc-actions", [
-      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-portrait-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-portrait-start": "" })
-    ]));
-    pop.appendChild(body);
-    wrap.appendChild(pop);
-    wrap.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t.closest("[data-people-portrait-start]")) onAnswer("start");
-      else if (t.closest("[data-people-portrait-cancel]")) onAnswer("cancel");
+      if (t.closest("[data-people-gen-start]")) onAnswer("start");
+      else if (t.closest("[data-people-gen-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }

@@ -26,6 +26,12 @@ function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
+/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+async function confirmGen(): Promise<void> {
+  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  click('[data-people-gen-start]');
+}
+
 /** 空引擎：只记调用（本轮测的是墙，不测生成） */
 class FakeEngine implements JobsApi {
   calls = { start: [] as unknown[], pause: 0, resume: [] as string[], remove: [] as string[] };
@@ -156,6 +162,7 @@ describe('墙成员 = 人物卡 ∪ 聊天仓（452）', () => {
     await vi.waitFor(() => expect(card('大琳')).toBeTruthy());
 
     click('[data-people-card="大琳"] [data-people-seal-act="draw"]');
+    await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
     const targets = engine.calls.start[0] as Array<{ talker: string; msgs: unknown[] }>;
     expect(targets[0].talker).toBe('大琳');

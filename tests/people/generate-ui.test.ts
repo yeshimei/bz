@@ -40,6 +40,12 @@ function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
+/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+async function confirmGen(): Promise<void> {
+  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  click('[data-people-gen-start]');
+}
+
 /** 三条消息的构造素材（ts 升序；kindCounts 对齐文本口径） */
 function msgs(): UnifiedMessage[] {
   return [
@@ -242,7 +248,8 @@ describe('订阅驱动渲染（450 后台化）', () => {
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('20%'); // 1/5（455 分母 +3）
     engine.push([fakeJob({ batchesDone: 2, chunks: [meta(), meta()], stage: 'person', message: '素材采集完成：事件 214 · 原话 63 · 场景 88 · 特质 41 → 正在生成《其人》' })]);
     await vi.waitFor(() => expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('40%')); // 2/5
-    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成 · 第 2/2 批');
+    expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》…'); // 497：阶段有名有姓
+    expect(document.querySelector('[data-people-jobs-sub]')!.textContent).toContain('素材采集完成'); // 497：引擎细文案上屏
   });
 });
 
@@ -253,7 +260,9 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     expect(engine.calls.start).toHaveLength(1);
     expect(engine.calls.start[0].targets).toHaveLength(1);
     expect(engine.calls.start[0].targets[0].talker).toBe('wxid_a');
@@ -296,7 +305,9 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     const done = fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '画像', events: [] });
     engine.push([done]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
@@ -397,7 +408,9 @@ describe('关面板转后台（450）', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     closePeoplePanel();
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '后台画完', events: [] })]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 等落盘链走完
@@ -468,6 +481,7 @@ describe('折子印章四态（451）', () => {
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(document.querySelector('[data-people-seal-act="draw"]')).toBeTruthy());
     click('[data-people-seal-act="draw"]');
+    await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
     expect(engine.calls.start[0].targets[0].talker).toBe('wxid_a');
     expect(engine.calls.start[0].targets[0].msgs).toHaveLength(2);
@@ -546,6 +560,7 @@ describe('生成入口不重烧（453）', () => {
     expect(document.querySelector<HTMLElement>('[data-people-seal-act]')!.dataset.peopleSealAct).toBe('redraw');
 
     click('[data-people-seal-act="redraw"]');
+    await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engine.calls.start).toHaveLength(1));
     expect(engine.calls.resume).toEqual([]);
   });
@@ -589,7 +604,9 @@ describe('双卷落盘（455）', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     engine.push([fakeJob({
       status: 'done', stage: 'done', message: '', batchesDone: 1,
       person: '## 其人\n慢热。', bond: '## 我们\n老友。', events: [],
@@ -607,7 +624,9 @@ describe('双卷落盘（455）', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     engine.push([fakeJob({ status: 'done', stage: 'done', message: '', batchesDone: 1, person: '旧单卷画像', events: [] })]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.digest?.person).toBe('旧单卷画像'));
     expect((await disk()).people[0].digest!.bond).toBeUndefined();
@@ -641,7 +660,9 @@ describe('生成入参带档案与月度（455）', () => {
     inject(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen();
+    await gen;
     expect(engine.calls.start).toHaveLength(1);
     const t0 = engine.calls.start[0].targets[0];
     expect(t0.monthly).toEqual([['2026-01', 42], ['2026-02', 5], ['2026-03', 7]]);

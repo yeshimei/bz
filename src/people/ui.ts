@@ -41,8 +41,9 @@ import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
+import { estimateDescribeCallsOf, estimatePortraitCallsOf } from './jobs';
 import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
-import type { ContactStats, DescribeConfirmInfo, FaceDigest, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo, UnifiedMessage } from './types';
+import type { ContactStats, FaceDigest, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
   hasChatJson,
@@ -63,12 +64,11 @@ import {
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
-import { describeOverallPct, describeStageLine } from './describe';
+import { batchSizeFromSettings, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
-  describeConfirmModal,
-  portraitConfirmModal,
+  generationConfirmModal,
   dateRow,
   dsModal,
   duoBar,
@@ -1011,7 +1011,8 @@ async function ensureJobsBoot(): Promise<void> {
   const safe = peopleSafe ?? (await getPeopleSafeStore());
   if (!safe.unlocked) return;
   jobsBooted = true;
-  await jobs().resumeJobs(getApp(), { askDescribeConfirm: askDescribeConfirm }); // 470：确认门随引擎重建注入
+  // 497：续跑的任务在入队时已过总确认——两道门自动放行，不再打断
+  await jobs().resumeJobs(getApp(), { askDescribeConfirm: autoApproveDescribe, askPortraitConfirm: autoApprovePortrait });
 }
 
 /** 订阅引擎快照（整个会话只订一次；关面板不退订——引擎推送照收，重开面板即时恢复） */
@@ -1042,28 +1043,36 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
  * 生成入口（数据源弹窗 / 详情「画脸谱」共用）：
  * 1) 本地预筛——同一导出再导（指纹命中）不进引擎不烧 AI（441 语义原样保留，顺带应用改名
  *    与旧记录 stats 补齐）；补录 / 增量的提示条数沿用原口径；
- * 2) targets 交 startJobs（引擎内部切批 / 逐批采集 / 画像 / 时间线，每批原子落盘）；
- * 3) 订阅快照渲染进度块——独立于面板生命周期，关面板照跑。
+ * 2) **总确认一次**（497，用户拍板）：起跑前弹一次总览（逐人素材 / 图片 / 语音、服务商模型
+ *    与约调用数），确认后两道引擎门自动放行，中途不再弹任何窗，一直到完成；
+ * 3) targets 交 startJobs（引擎内部切批 / 逐批采集 / 画像 / 时间线，每批原子落盘）；
+ * 4) 订阅快照渲染进度块——独立于面板生命周期，关面板照跑。
  */
 export async function startGeneration(targets: GenTarget[]): Promise<void> {
   const { runnable, skipped } = await planTargets(targets);
+  if (!runnable.length) {
+    if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, 'info');
+    return;
+  }
+  const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable));
+  if (answer !== 'start') {
+    notice('已取消，本次不生成', 'info');
+    return;
+  }
   for (const t of runnable) {
     targetsInFlight.set(t.talker, t);
     jobsPersisted.delete(t.talker); // 同人重新生成：上一次的落盘幂等标记不复用
   }
   let engineSkipped = 0;
   let resumed: string[] = [];
-  if (runnable.length) {
-    // 470/471：两道确认门随 startJobs 注入（ADR-0196 决策 8——图片描述与画像生成是两个
-    // 独立弹窗；引擎在各自烧 AI 前回调征求授权，跳过描述不影响画像这扇门照弹）
-    const res = await jobs().startJobs(getApp(), runnable, {
-      askDescribeConfirm: askDescribeConfirm,
-      askPortraitConfirm: askPortraitConfirm,
-    }); // mode 缺省 auto：引擎逐人按增量计划判定
-    engineSkipped = res.skipped.length;
-    resumed = res.resumed ?? [];
-    await ensureJobsWatch();
-  }
+  // 497：总确认已在上面完成——引擎两道门注入自动放行，起跑后一路到底
+  const res = await jobs().startJobs(getApp(), runnable, {
+    askDescribeConfirm: autoApproveDescribe,
+    askPortraitConfirm: autoApprovePortrait,
+  }); // mode 缺省 auto：引擎逐人按增量计划判定
+  engineSkipped = res.skipped.length;
+  resumed = res.resumed ?? [];
+  await ensureJobsWatch();
   const started = runnable.length - engineSkipped;
   const fresh = Math.max(0, started - resumed.length);
   const parts: string[] = [];
@@ -1072,6 +1081,27 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
   if (parts.length) notice(parts.join('，'), 'success');
   renderJobs();
+}
+
+/** 总确认 → 引擎起跑的入参（497）：逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数 */
+function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInfo {
+  const label = describeModelLabelOf();
+  const items = runnable.map((t) => {
+    const pick = (k: string): number => (Number.isFinite(t.kindCounts?.[k]) ? Number(t.kindCounts[k]) : 0);
+    return { name: t.name, materials: t.msgs.length, images: pick('图片'), voices: pick('语音') };
+  });
+  const images = items.reduce((s, it) => s + it.images, 0);
+  const voices = items.reduce((s, it) => s + it.voices, 0);
+  return {
+    provider: label.provider,
+    model: label.model,
+    items,
+    images,
+    describeCalls: estimateDescribeCallsOf(images),
+    batchSize: batchSizeFromSettings(),
+    voices,
+    portraitCalls: runnable.reduce((s, t) => s + estimatePortraitCallsOf(t.msgs), 0),
+  };
 }
 
 /**
@@ -1216,6 +1246,7 @@ function toBlockState(job: JobView): JobsBlockState {
     name: job.name || job.talker,
     status: job.status,
     message: job.message ?? '',
+    stage: job.stage,
     batchesDone: job.batchesDone ?? 0,
     batchesTotal: job.batchesTotal ?? job.chunks?.length ?? 0,
     stagesDone: jobsStagesDone(job.stage, job.status),
@@ -1258,50 +1289,25 @@ function jobsRunning(): boolean {
   return (jobsCache?.queue ?? []).some((j) => j.status === 'running');
 }
 
-// ---------------- 图片描述确认门（issue 470 / ADR-0196 决策 8） ----------------
+// ---------------- 画谱总确认（issue 497：两次确认合一，确认后不再弹窗） ----------------
 
-/** 确认弹窗开着（引擎串行跑任务，理论同时只弹一只；防串保证不叠窗） */
-let descConfirmOpen = false;
+/** 引擎两道门的自动放行件（497）：授权已在总确认一次拿齐，起跑后一路到底不再打断 */
+const autoApproveDescribe = (): Promise<'start' | 'skip'> => Promise.resolve('start');
+const autoApprovePortrait = (): Promise<'start' | 'cancel'> => Promise.resolve('start');
 
-/**
- * 图片描述确认门（注入引擎的 askDescribe 依赖）：describe 段开始前由引擎回调，
- * 弹 body 级确认窗（面板可能没开——引擎后台跑）。解析值：开始 / 跳过图片描述；
- * Esc 与遮罩点击都归「跳过」——那是唯一不花钱的路，关闭弹层不该被理解成授权。
- */
-function askDescribeConfirm(info: DescribeConfirmInfo): Promise<'start' | 'skip'> {
-  if (descConfirmOpen) return Promise.resolve('skip'); // 已有窗开着：不叠窗，按未授权处理
-  descConfirmOpen = true;
-  return new Promise((resolve) => {
-    const done = (answer: 'start' | 'skip'): void => {
-      descConfirmOpen = false;
-      document.removeEventListener('keydown', onKey, true);
-      node.remove();
-      resolve(answer);
-    };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') done('skip');
-    };
-    const node = describeConfirmModal(info, done);
-    document.body.appendChild(node);
-    topifyZ(node);
-    document.addEventListener('keydown', onKey, true);
-  });
-}
-
-/** 画像生成确认窗开着（引擎串行跑任务，理论同时只弹一只；与描述确认互斥防叠窗） */
-let portraitConfirmOpen = false;
+/** 总确认窗开着标记（防叠窗；Esc 与遮罩点击都归「取消」——那是唯一不花钱的路） */
+let genConfirmOpen = false;
 
 /**
- * 画像生成确认门（注入引擎的 askPortraitConfirm 依赖，471 / ADR-0196 决策 8 第二次确认）：
- * 采集批切定后引擎回调，弹 body 级确认窗（面板可能没开）。解析值：开始 / 取消；
- * Esc 与遮罩点击都归「取消」——那是唯一不花钱的路。跳过图片描述后本窗照弹（两次确认独立）。
+ * 画谱总确认（startGeneration 起引擎前唯一一次询问）：弹 body 级总览窗（面板可能没开），
+ * 逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数一次报清。解析值：开始生成 / 取消。
  */
-function askPortraitConfirm(info: PortraitConfirmInfo): Promise<'start' | 'cancel'> {
-  if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未授权处理
-  portraitConfirmOpen = true;
+function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'cancel'> {
+  if (genConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未授权处理
+  genConfirmOpen = true;
   return new Promise((resolve) => {
     const done = (answer: 'start' | 'cancel'): void => {
-      portraitConfirmOpen = false;
+      genConfirmOpen = false;
       document.removeEventListener('keydown', onKey, true);
       node.remove();
       resolve(answer);
@@ -1309,7 +1315,7 @@ function askPortraitConfirm(info: PortraitConfirmInfo): Promise<'start' | 'cance
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') done('cancel');
     };
-    const node = portraitConfirmModal(info, done);
+    const node = generationConfirmModal(info, done);
     document.body.appendChild(node);
     topifyZ(node);
     document.addEventListener('keydown', onKey, true);

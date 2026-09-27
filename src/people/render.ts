@@ -8,7 +8,7 @@
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
-import type { DescribeConfirmInfo, FaceEvent, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo } from './types';
+import type { FaceEvent, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
 
@@ -225,6 +225,8 @@ export interface JobsBlockState {
   status: JobsUiStatus;
   /** 引擎主文案（切批 / 抽样 / 第 N 批 / 素材汇总）；空串回落状态兜底文案 */
   message: string;
+  /** 当前阶段键（497：后段主行按阶段标签显示，不再停在过期批号） */
+  stage?: string;
   batchesDone: number;
   batchesTotal: number;
   /** 已完成成文阶段数（其人 / 我们 / 编年史，0~3；issue 455 四阶段） */
@@ -328,11 +330,25 @@ function describeStagePart(s: JobsBlockState): string | null {
 }
 
 /**
- * 进度块（面板头统计行下）：细进度条 + 引擎主文案 + 队列副文案 + 灰字说明 + 状态动作钮。
- * 主文案整句展示（切批 / 抽样说明可能是长句）：不截断、允许换行（样式 overflow-wrap）。
- * 469：preprocess 阶段主行 = 阶段 + 计数（`媒体导出 312/1631`），进度条 = 工具段折算总进度；
- * 470：describe 阶段主行 = `图片描述 3/82 批`，进度条 = 描述批进度（工具段之后、批口径之前）；
- * 暂停 / 中断面同样带阶段信息（`已暂停 · 语音转写 45/1289` / `已暂停 · 图片描述 3/82 批`）。
+ * 后段阶段键 → 主行标签（497）：person / bond / chronicle 各自有名有姓，
+ * 不再回落成过期的「第 N/M 批」；prep / describe 段自有阶段行，不在此列。
+ */
+export function jobsStageLabel(stage: string | undefined): string | null {
+  switch (stage) {
+    case 'chunked': return '正在切批组装素材…';
+    case 'person': return '正在生成《其人》…';
+    case 'bond': return '正在生成《我们》…';
+    case 'chronicle': return '正在生成关系时间线…';
+    default: return null;
+  }
+}
+
+/**
+ * 进度块（面板头统计行下）：细进度条 + 主行 + 引擎细文案副行 + 状态动作钮（497）。
+ * 主行 = 当前段的一句话状态（prep/describe 阶段行 → 后段阶段标签 → 批次位置）；
+ * 副行 = 引擎 job.message 原文（批的日期段与条数、素材采集统计、《其人》完成…、
+ * prep 的「加载转写引擎…」等步骤细节全部上屏；与主行同文时隐藏）。
+ * 469：preprocess 阶段进度条 = 工具段折算总进度；470：describe 阶段 = 描述批进度。
  */
 export function progressBlock(s: JobsBlockState): HTMLElement {
   const stagePart = prepStagePart(s);
@@ -348,8 +364,8 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
       el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })),
     el('span', 'bz-people-jobs-pct', text(`${pct}%`)),
   ]));
-  // 455 评审：状态一行说清，不读引擎长文案（批次细节归进度条，错误细节归错误行）
   const next = Math.min(s.batchesDone + 1, s.batchesTotal);
+  const stageFallback = jobsStageLabel(s.stage);
   const main = s.status === 'error'
     ? stagePart
       ? `生成失败 · ${stagePart}`
@@ -357,12 +373,18 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
         ? `生成失败 · ${descPart}`
         : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批`
     : s.status === 'paused'
-      ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : '已暂停'
+      ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : '已暂停'
       : s.status === 'interrupted'
         ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : '上次生成中断了'
         : s.status === 'done' ? '脸谱已生成'
-        : stagePart ?? descPart ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+        : stagePart ?? descPart ?? stageFallback ?? `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
   block.appendChild(el('div', 'bz-people-jobs-main', text(main)));
+  // 引擎细文案副行（497）：运行 / 暂停 / 中断面显示 job.message 原文——每步在处理什么可见；
+  // 与主行同文（prep/describe 段 message 就是阶段行）时隐藏，不重复念一遍
+  const msg = (s.message ?? '').trim();
+  if (msg && s.status !== 'done' && s.status !== 'error' && msg !== main) {
+    block.appendChild(el('div', 'bz-people-jobs-sub', { 'data-people-jobs-sub': '' }, text(msg)));
+  }
   const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
@@ -376,72 +398,49 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   return block;
 }
 
-// ---------------- 图片描述确认弹窗（issue 470 / ADR-0196 决策 8） ----------------
+// ---------------- 画谱总确认弹窗（issue 497：两次确认合一，确认后一路到底不再弹窗） ----------------
 
 /**
- * 图片描述确认弹窗（面板外的 body 级弹层——引擎后台跑，确认时面板可能没开）：
- * 文案按 ADR 口径 `用 <服务商>/<模型> 描述 N 张图片，约 M 次调用；已完成 X 张，本次从第
- * X+1 张开始`，按钮 **开始 / 跳过图片描述**；只报张数 / 批数 / 调用数，不报金额。
- * 遮罩点击 = 跳过（不花钱的那条路）；onAnswer 只回调一次，摘除弹层由宿主管。
+ * 画谱总确认弹窗（面板外的 body 级弹层——startGeneration 起引擎前弹**一次**）：
+ * 一次报清全部要花钱 / 花时间的事——逐人素材 / 图片 / 语音、图片描述与画像的服务商 / 模型
+ * 与约调用数、语音本地转写免费；说明行讲明「确认后中途不再询问」。按钮 **开始生成 / 取消**；
+ * 遮罩点击 / Esc 归「取消」（不花钱的那条路）。只报条数 / 调用数，不报金额。
+ * onAnswer 只回调一次，摘除弹层由宿主管。
  */
-export function describeConfirmModal(info: DescribeConfirmInfo, onAnswer: (answer: 'start' | 'skip') => void): HTMLElement {
-  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-desc-confirm': '' });
-  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-desc-skip': '' }));
-  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '图片描述确认' });
+export function generationConfirmModal(info: GenerationConfirmInfo, onAnswer: (answer: 'start' | 'cancel') => void): HTMLElement {
+  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-gen-confirm': '' });
+  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-gen-cancel': '' }));
+  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '开始生成脸谱' });
   pop.appendChild(el('div', 'bz-people-pop-head', [
-    el('div', 'bz-people-pop-title', text('图片描述')),
+    el('div', 'bz-people-pop-title', text('开始生成脸谱')),
   ]));
   const body = el('div', 'bz-people-pop-body');
-  body.appendChild(el('div', 'bz-people-desc-line', text(
-    `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
-  )));
+  const segs: string[] = [`为 ${info.items.length} 位联系人生成脸谱`];
+  if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
+  if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
+  segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
+  body.appendChild(el('div', 'bz-people-desc-line', text(`${segs.join('；')}。`)));
+  const list = el('ul', 'bz-people-gen-list');
+  for (const it of info.items) {
+    const bits = [`素材 ${it.materials} 条`];
+    if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+    if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+    list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」· ${bits.join(' · ')}`)));
+  }
+  body.appendChild(list);
   body.appendChild(el('div', 'bz-people-desc-note', text(
-    `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+    '确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。'
   )));
   body.appendChild(el('div', 'bz-people-desc-actions', [
-    button('bz-people-btn bz-people-btn-ghost', '跳过图片描述', { 'data-people-desc-skip': '' }),
-    button('bz-people-btn bz-people-btn-acc', '开始', { 'data-people-desc-start': '' }),
+    button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-gen-cancel': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
   ]));
   pop.appendChild(body);
   wrap.appendChild(pop);
   wrap.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest('[data-people-desc-start]')) onAnswer('start');
-    else if (t.closest('[data-people-desc-skip]')) onAnswer('skip');
-  });
-  return wrap;
-}
-
-/**
- * 画像生成确认弹窗（471 / ADR-0196 决策 8 第二次确认，与图片描述确认互相独立）：
- * 文案按 ADR 口径 `用 <服务商>/<模型> 画《X》的脸谱，素材 M 条、约 K 次调用`，
- * 按钮 **开始 / 取消**；只报素材条数 / 调用数，不报金额。遮罩点击 / Esc 归「取消」
- * （不花钱的那条路）；跳过图片描述后本窗照弹。onAnswer 只回调一次，摘除弹层由宿主管。
- */
-export function portraitConfirmModal(info: PortraitConfirmInfo, onAnswer: (answer: 'start' | 'cancel') => void): HTMLElement {
-  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-portrait-confirm': '' });
-  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-portrait-cancel': '' }));
-  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '画像生成确认' });
-  pop.appendChild(el('div', 'bz-people-pop-head', [
-    el('div', 'bz-people-pop-title', text('画脸谱')),
-  ]));
-  const body = el('div', 'bz-people-pop-body');
-  body.appendChild(el('div', 'bz-people-desc-line', text(
-    `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
-  )));
-  body.appendChild(el('div', 'bz-people-desc-note', text(
-    '其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。'
-  )));
-  body.appendChild(el('div', 'bz-people-desc-actions', [
-    button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-portrait-cancel': '' }),
-    button('bz-people-btn bz-people-btn-acc', '开始', { 'data-people-portrait-start': '' }),
-  ]));
-  pop.appendChild(body);
-  wrap.appendChild(pop);
-  wrap.addEventListener('click', (e) => {
-    const t = e.target as HTMLElement;
-    if (t.closest('[data-people-portrait-start]')) onAnswer('start');
-    else if (t.closest('[data-people-portrait-cancel]')) onAnswer('cancel');
+    if (t.closest('[data-people-gen-start]')) onAnswer('start');
+    else if (t.closest('[data-people-gen-cancel]')) onAnswer('cancel');
   });
   return wrap;
 }
