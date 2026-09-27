@@ -4582,6 +4582,90 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 50%;
   background: var(--bz-text-3);
 }
+
+/* ═══════════ 归物本分类选择器 .bz-catpick（issue 478 阶段 C） ═══════════
+   以 path-picker 为模板，补分组头与每行图标；类名 bz-catpick-* 前缀 → 自动隐条（ADR-0122）。
+   深色下用 1px 边框 + 亮一档底色立层级，无过度动效。 */
+.bz-catpick {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--background-modifier-border);
+  max-height: min(560px, 82vh);
+}
+.bz-catpick-head {
+  padding: var(--bz-space-md) var(--bz-space-lg) 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-catpick-title {
+  margin: 0;
+  font-size: var(--bz-font-emphasis);
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.bz-catpick-search {
+  flex-shrink: 0;
+  margin: var(--bz-space-md) var(--bz-space-lg) 0;
+  padding: var(--bz-space-sm) 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
+  /* 与设置面板输入框同底色（--input-bg） */
+  background: var(--input-bg, var(--background-primary));
+  color: var(--text-normal);
+}
+.bz-catpick-search:focus { outline: none; border-color: var(--interactive-accent); }
+.bz-catpick-list {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;        /* .bz- 前缀自动隐条（ADR-0122），不自绘 thumb */
+  margin: 10px var(--bz-space-sm);
+  padding: var(--bz-space-xs);
+}
+.bz-catpick-group {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: 10px 10px 4px;
+}
+.bz-catpick-group .bz-catpick-ic { width: 14px; height: 14px; color: var(--text-muted); flex: none; }
+.bz-catpick-group-name { font-size: var(--bz-font-label); font-weight: 600; color: var(--text-normal); }
+.bz-catpick-group-count { margin-left: auto; font-size: var(--bz-font-meta); color: var(--text-muted); }
+.bz-catpick-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+  padding: 9px 10px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
+  color: var(--text-normal);
+  cursor: pointer;
+  user-select: none;
+}@media (hover: hover) {
+  .bz-catpick-row:hover { background: var(--background-modifier-hover); }
+}
+.bz-catpick-ic { width: 16px; height: 16px; flex: none; color: var(--text-muted); }
+.bz-catpick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-catpick-alias {
+  flex: none;
+  font-size: var(--bz-font-meta);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 45%;
+}
+.bz-catpick-empty {
+  padding: var(--bz-space-xl) var(--bz-space-lg);
+  text-align: center;
+  font-size: var(--bz-font-label);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.bz-catpick-empty--full { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.bz-catpick-empty-title { font-weight: 600; color: var(--text-normal); }
+.bz-catpick-empty-desc { font-size: var(--bz-font-meta); }
 /* ==================== 日记本域样式（src/diary/styles.css）—— 原回忆墙升格正名（ADR-0115） ==================== */
 /* ==================== 日记本（媒体墙原型 v5：章节固定 + 滚动高亮 + 性能优化） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。
