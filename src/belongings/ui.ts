@@ -33,7 +33,7 @@ import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { confirmDiscard } from '../core/flow-dialog';
-import { mountIcons, uiModal, uiSuggest, uiIconSpan, openCatPicker } from '../core/ui';
+import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -53,6 +53,7 @@ import {
 import type { BelongingsDatabase, BelongingsItem } from './types';
 import { aiSuggestCategory } from './ai';
 import { loadCategoryTable } from '../core/category-table';
+import { buildCatSuggest } from './catalog-suggest';
 import {
   motionBeforePaint, motionRendered, motionCellFlow, motionCellStamp, motionCellStrike,
   motionDetailIn, motionDropOpen, motionFormIn, motionPanelIn, motionPanelOut,
@@ -1021,7 +1022,8 @@ export function openForm(it: BelongingsItem | null): void {
   };
 
   // 分类搜索联想（组件库 uiSuggest，issue 203）+ 表单图标状态（issue 231/ADR-0102）：
-  // 候选 = 历史分类；点选历史分类自动带上馆内图标；AI 归类同写 formIcon，随保存入 item.icon
+  // 候选 = 历史分类（在前）+ 分类表（在后，issue 488——表直接作下拉，模态选择器退役）；
+  // 点选带图标（历史记档 > 表内）；表未下载 = 纯历史模式，加载失败不阻断手填。
   const catInput = mask.querySelector('#bm-cat') as HTMLInputElement;
   let formIcon: string | null = it?.icon || null;
   const iconChip = mask.querySelector('#bm-icon') as HTMLElement;
@@ -1032,47 +1034,25 @@ export function openForm(it: BelongingsItem | null): void {
   };
   drawIconChip();
   const historyIconOf = (cat: string): string => (M.db?.categoryIcons?.[cat] as string) || '';
+  let catSrc = buildCatSuggest(M.db?.categories ?? [], historyIconOf, null);
+  void loadCategoryTable(getApp())
+    .then((t) => { if (t) catSrc = buildCatSuggest(M.db?.categories ?? [], historyIconOf, t); })
+    .catch(() => { /* 表读取失败 → 保持纯历史候选（下载走设置页，此处不联网） */ });
   uiSuggest({
     anchor: catInput,
-    source: () => M.db?.categories ?? [],
+    source: () => catSrc.list,
     max: 60,
     iconOf: (raw: string) => {
-      const name = historyIconOf(raw);
+      const name = catSrc.iconOf(raw) || historyIconOf(raw);
       return name ? uiIconSpan(name) : '';
     },
+    keywordsOf: (raw: string) => catSrc.keywordsOf(raw),
+    hintOf: (raw: string) => catSrc.aliasHintOf(raw),
     onPick: (raw: string) => {
-      const name = historyIconOf(raw);
+      const name = catSrc.iconOf(raw) || historyIconOf(raw);
       if (name) { formIcon = name; drawIconChip(); }
     },
   });
-  // 分类选择器（issue 478 阶段 C）：按组浏览/可搜/带图标，复用同一张分类表（与 AI 归类共用）。
-  // 选中 → 复用 AI 按钮的回填通道（catInput.value / formIcon / drawIconChip）；取消（null）/抛错不阻断手填。
-  const catPickBtn = mask.querySelector('#bm-catpick') as HTMLButtonElement | null;
-  if (catPickBtn) {
-    catPickBtn.addEventListener('click', () => {
-      if (catPickBtn.disabled) return;
-      void (async () => {
-        try {
-          const table = await loadCategoryTable(getApp());
-          openCatPicker({
-            table,
-            title: '选择分类',
-            onConfirm: (sel) => {
-              if (!sel) return; // 取消：不动既有输入
-              catInput.value = sel.category;
-              formIcon = sel.icon;
-              drawIconChip();
-              errEl.textContent = '';
-            },
-          });
-        } catch (e: any) {
-          // 选择器抛错 → 内联提示（照 #bm-err 既有形态），不弹 notice 阻断手填
-          const eEl = mask.querySelector('#bm-err') as HTMLElement | null;
-          if (eEl) eEl.textContent = '分类表加载失败：' + (e?.message || '未知错误');
-        }
-      })();
-    });
-  }
   // 状态单选（平铺胶囊，markup = render.statusPickHtml）；出离态展开出离记录行（ADR-0089）
   const statusPick = mask.querySelector('#bm-status') as HTMLElement;
   const exitRow = mask.querySelector('#bm-exit') as HTMLElement;

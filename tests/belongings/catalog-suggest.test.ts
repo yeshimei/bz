@@ -5,7 +5,7 @@
  * mock 掉 core/jev（askJev / isJevConfigured）与 core/ai（createAI），不真联网。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { suggestCategoryByCatalog } from '../../src/belongings/catalog-suggest';
+import { suggestCategoryByCatalog, buildCatSuggest } from '../../src/belongings/catalog-suggest';
 import * as jev from '../../src/core/jev';
 import * as aiMod from '../../src/core/ai';
 import * as categoryTable from '../../src/core/category-table';
@@ -171,5 +171,54 @@ describe('suggestCategoryByCatalog', () => {
     expect(err.name).toBe('AbortError');
     expect(jsonMock).not.toHaveBeenCalled();
     expect(askJev).not.toHaveBeenCalled();
+  });
+});
+
+// ═══════════ 联想源组装 buildCatSuggest（issue 488） ═══════════
+// 纯函数：历史在前（频次序由调用方派生）、表内在后（组序=表序）、同名历史优先去重、
+// 别名只作搜索关键词与副文本（不产生独立候选行）。
+describe('buildCatSuggest 联想源', () => {
+  const mkTable = {
+    version: '0.1.0',
+    groups: [
+      {
+        id: 'g1', name: '数码影音', icon: 'smartphone',
+        items: [
+          { id: 'c1', name: '移动电源', icon: 'battery-charging', aliases: ['充电宝'] },
+          { id: 'c2', name: '智能手机', icon: 'smartphone', aliases: [] },
+        ],
+      },
+      {
+        id: 'g2', name: '工具五金', icon: 'wrench',
+        items: [{ id: 'c3', name: '螺丝刀', icon: 'screwdriver-wrench', aliases: ['起子'] }],
+      },
+    ],
+  } as any;
+
+  it('历史在前 + 表内补齐；同名去重（历史优先）；图标历史 > 表', () => {
+    const src = buildCatSuggest(
+      ['自用电子', '移动电源'],
+      (n) => (n === '移动电源' ? 'my-icon' : ''),
+      mkTable,
+    );
+    expect(src.list).toEqual(['自用电子', '移动电源', '智能手机', '螺丝刀']); // 移动电源不重复；组序=表序
+    expect(src.iconOf('移动电源')).toBe('my-icon'); // 历史记档优先
+    expect(src.iconOf('螺丝刀')).toBe('screwdriver-wrench');
+    expect(src.iconOf('自用电子')).toBe('');
+    expect(src.hasTable).toBe(true);
+  });
+
+  it('别名 → keywordsOf / aliasHintOf；无别名候选为空', () => {
+    const src = buildCatSuggest([], () => '', mkTable);
+    expect(src.keywordsOf('移动电源')).toEqual(['充电宝']);
+    expect(src.aliasHintOf('移动电源')).toBe('充电宝');
+    expect(src.keywordsOf('智能手机')).toEqual([]);
+    expect(src.aliasHintOf('智能手机')).toBe('');
+  });
+
+  it('未下载表（null）→ 纯历史模式，hasTable=false', () => {
+    const src = buildCatSuggest(['手办'], () => '', null);
+    expect(src.list).toEqual(['手办']);
+    expect(src.hasTable).toBe(false);
   });
 });

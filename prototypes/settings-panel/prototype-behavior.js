@@ -1,5 +1,5 @@
-/* 源指纹 7eaad55cee944fc3 · 仓内输入 273 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/catpicker.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 866e1d4172d2ba08 · 仓内输入 272 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -7747,14 +7747,20 @@ var BZW_settings_panel = (() => {
       if (!layer) return;
       const cur = anchor.value.trim();
       const q3 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q3 || s.toLowerCase().includes(q3))).slice(0, max);
+      const matched = opts.source().filter((s) => {
+        var _a3, _b2, _c;
+        if (opts.excludeCurrent && s === cur) return false;
+        if (!q3) return true;
+        if (s.toLowerCase().includes(q3)) return true;
+        return (_c = (_b2 = (_a3 = opts.keywordsOf) == null ? void 0 : _a3.call(opts, s)) == null ? void 0 : _b2.some((k) => k.toLowerCase().includes(q3))) != null ? _c : false;
+      }).slice(0, max);
       if (!matched.length) {
         close();
         return;
       }
       layer.replaceChildren();
       matched.forEach((raw) => {
-        var _a3;
+        var _a3, _b2;
         const b = document.createElement("button");
         b.type = "button";
         b.className = "bz-popover-item";
@@ -7773,6 +7779,13 @@ var BZW_settings_panel = (() => {
         const label = document.createElement("span");
         label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
         b.appendChild(label);
+        const hint = (_b2 = opts.hintOf) == null ? void 0 : _b2.call(opts, raw);
+        if (hint) {
+          const h = document.createElement("span");
+          h.className = "bz-suggest-hint";
+          h.textContent = hint;
+          b.appendChild(h);
+        }
         b.addEventListener("click", () => pick(raw));
         layer.appendChild(b);
       });
@@ -8300,249 +8313,13 @@ var BZW_settings_panel = (() => {
     }
   });
 
-  // src/core/ui/catpicker.ts
-  function getIconIdSet() {
-    try {
-      const fn = void 0;
-      if (typeof fn !== "function") return null;
-      return fn();
-    } catch (e) {
-      return null;
-    }
-  }
-  function idHas(ids, name) {
-    if (typeof ids.has === "function") return ids.has(name);
-    return Array.isArray(ids) && ids.includes(name);
-  }
-  function resolveIconName(name, fallback) {
-    const nm = name || "";
-    if (!nm) return fallback;
-    const ids = getIconIdSet();
-    if (!ids) return nm;
-    if (idHas(ids, nm) || idHas(ids, "lucide-" + nm)) return nm;
-    if (nm.startsWith("lucide-") && idHas(ids, nm.slice(7))) return nm;
-    return fallback;
-  }
-  function closeCatPicker() {
-    if (currentMask2) {
-      currentMask2.remove();
-      currentMask2 = null;
-    }
-    if (currentPopup2) {
-      currentPopup2.remove();
-      currentPopup2 = null;
-    }
-    if (currentHandle2) {
-      currentHandle2.unregister();
-      currentHandle2 = null;
-    }
-    if (focusTimer2 !== null) {
-      window.clearTimeout(focusTimer2);
-      focusTimer2 = null;
-    }
-    if (focusRestore2) {
-      const el = focusRestore2;
-      focusRestore2 = null;
-      if (el.isConnected) el.focus();
-    }
-  }
-  function openCatPicker(opts) {
-    closeCatPicker();
-    focusRestore2 = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const table = opts.table;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-catpick-mask",
-      popupId: "bz-catpick-popup",
-      width: "min(calc(100vw - 32px), 440px)",
-      maxWidth: 440,
-      onMaskClick: () => cancel()
-    });
-    currentMask2 = mask;
-    currentPopup2 = popup;
-    popup.classList.add("bz-catpick");
-    popup.style.height = "min(560px, 82vh)";
-    const head = document.createElement("div");
-    head.className = "bz-catpick-head";
-    const title = document.createElement("h3");
-    title.className = "bz-catpick-title";
-    title.textContent = opts.title || "选择分类";
-    head.appendChild(title);
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-catpick-list";
-    const confirm = (it) => {
-      closeCatPicker();
-      opts.onConfirm({ category: it.name, icon: it.icon });
-    };
-    const cancel = () => {
-      closeCatPicker();
-      opts.onConfirm(null);
-    };
-    if (!table) {
-      const empty = document.createElement("div");
-      empty.className = "bz-catpick-empty bz-catpick-empty--full";
-      const t1 = document.createElement("div");
-      t1.className = "bz-catpick-empty-title";
-      t1.textContent = opts.emptyText || "尚未下载分类表";
-      const t2 = document.createElement("div");
-      t2.className = "bz-catpick-empty-desc";
-      t2.textContent = "可在 设置 → 通用 里下载分类表后使用";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "bz-btn bz-btn--primary";
-      btn.textContent = "去下载（打开设置面板）";
-      btn.onclick = () => {
-        var _a2, _b2;
-        try {
-          const app = getApp();
-          (_b2 = (_a2 = app.commands) == null ? void 0 : _a2.executeCommandById) == null ? void 0 : _b2.call(_a2, "bz-settings-panel-open");
-        } catch (e) {
-        }
-      };
-      empty.append(t1, t2, btn);
-      listEl2.appendChild(empty);
-      popup.append(head, listEl2);
-    } else {
-      let buildModel = function() {
-        const q3 = state3.q.trim().toLowerCase();
-        const out = [];
-        for (const g of table.groups) {
-          const items = q3 ? g.items.filter(
-            (it) => it.name.toLowerCase().includes(q3) || it.aliases.some((a) => a.toLowerCase().includes(q3))
-          ) : g.items;
-          if (q3 && items.length === 0) continue;
-          out.push({ group: g, items });
-        }
-        return out;
-      }, renderList2 = function() {
-        listEl2.innerHTML = "";
-        const q3 = state3.q.trim().toLowerCase();
-        const model = buildModel();
-        let total = 0;
-        for (const { items } of model) total += items.length;
-        let n = 0;
-        for (const { group, items } of model) {
-          if (n >= HARD_CAP) break;
-          const header = document.createElement("div");
-          header.className = "bz-catpick-group";
-          const gIcon = document.createElement("i");
-          gIcon.className = "bz-catpick-ic";
-          gIcon.setAttribute("data-lucide", resolveIconName(group.icon, FALLBACK_ICON));
-          const gName = document.createElement("span");
-          gName.className = "bz-catpick-group-name";
-          gName.textContent = group.name;
-          const gCount = document.createElement("span");
-          gCount.className = "bz-catpick-group-count";
-          gCount.textContent = q3 ? `${items.length}` : `${group.items.length}`;
-          header.append(gIcon, gName, gCount);
-          listEl2.appendChild(header);
-          for (const it of items) {
-            if (n >= HARD_CAP) break;
-            n++;
-            const row = document.createElement("div");
-            row.className = "bz-catpick-row";
-            row.dataset.cat = it.name;
-            row.dataset.icon = it.icon;
-            row.setAttribute("role", "option");
-            const ic2 = document.createElement("i");
-            ic2.className = "bz-catpick-ic";
-            ic2.setAttribute("data-lucide", resolveIconName(it.icon, group.icon));
-            const name = document.createElement("span");
-            name.className = "bz-catpick-name";
-            name.textContent = it.name;
-            const alias = document.createElement("span");
-            alias.className = "bz-catpick-alias";
-            if (it.aliases.length) alias.textContent = it.aliases.join("、");
-            row.append(ic2, name, alias);
-            row.tabIndex = 0;
-            row.onclick = () => confirm(it);
-            row.addEventListener("keydown", (ev) => {
-              if (ev.key === "Enter" || ev.key === " ") {
-                ev.preventDefault();
-                confirm(it);
-              }
-            });
-            listEl2.appendChild(row);
-          }
-        }
-        if (total === 0) {
-          const empty = document.createElement("div");
-          empty.className = "bz-catpick-empty";
-          empty.textContent = "没有匹配的分类";
-          listEl2.appendChild(empty);
-        } else if (total > HARD_CAP) {
-          const more = document.createElement("div");
-          more.className = "bz-catpick-empty";
-          more.textContent = `结果过多，已显示前 ${HARD_CAP} 条`;
-          listEl2.appendChild(more);
-        }
-        mountIcons(listEl2);
-      };
-      const search = document.createElement("input");
-      search.type = "text";
-      search.className = "bz-catpick-search";
-      search.placeholder = "搜索分类或别名…";
-      search.spellcheck = false;
-      search.setAttribute("aria-label", "搜索分类");
-      const state3 = { q: "" };
-      search.oninput = () => {
-        state3.q = search.value;
-        renderList2();
-      };
-      search.addEventListener("keydown", (ev) => {
-        if (ev.key !== "Enter") return;
-        const first = listEl2.querySelector(".bz-catpick-row");
-        if (first) {
-          ev.preventDefault();
-          first.click();
-        }
-      });
-      renderList2();
-      popup.append(head, search, listEl2);
-    }
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle2 = escManager.register("bz-catpick", {
-      isVisible: () => !!currentMask2,
-      close: () => cancel()
-    });
-    focusTimer2 = window.setTimeout(() => {
-      var _a2;
-      focusTimer2 = null;
-      if (!mask.isConnected) return;
-      const focusEl = (_a2 = popup.querySelector(".bz-catpick-search")) != null ? _a2 : popup.querySelector(".bz-catpick-empty .bz-btn");
-      focusEl == null ? void 0 : focusEl.focus();
-    }, 30);
-  }
-  var FALLBACK_ICON, HARD_CAP, currentMask2, currentPopup2, currentHandle2, focusTimer2, focusRestore2;
-  var init_catpicker = __esm({
-    "src/core/ui/catpicker.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_icons();
-      init_app();
-      init_fake_obsidian();
-      FALLBACK_ICON = "package";
-      HARD_CAP = 1200;
-      currentMask2 = null;
-      currentPopup2 = null;
-      currentHandle2 = null;
-      focusTimer2 = null;
-      focusRestore2 = null;
-    }
-  });
-
   // src/core/ui/index.ts
   var ui_exports = {};
   __export(ui_exports, {
     attachHelpTip: () => attachHelpTip,
-    closeCatPicker: () => closeCatPicker,
     closeLightbox: () => closeLightbox,
     mountIcons: () => mountIcons,
-    openCatPicker: () => openCatPicker,
     openLightbox: () => openLightbox,
-    resolveIconName: () => resolveIconName,
     uiBtn: () => uiBtn,
     uiBtnRow: () => uiBtnRow,
     uiCardChoice: () => uiCardChoice,
@@ -8600,7 +8377,6 @@ var BZW_settings_panel = (() => {
       init_modal();
       init_resize();
       init_splitter();
-      init_catpicker();
     }
   });
 
@@ -33392,7 +33168,7 @@ ${it.text}`).join("\n"));
     <div class="bz-bel-form-title">${editing ? "编辑物品" : "记一笔"}</div>
     <div class="bz-bel-form-body">
       <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-catpick" title="从分类表选择（按组浏览、可搜、带图标）">${iconSpan("list-tree", "bz-ic--sm")}</button><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从分类表选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
       <div class="bz-bel-form-row">
         <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
         <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
@@ -34822,6 +34598,45 @@ ${it.text}`).join("\n"));
     const item = findItem(table, groupId, itemId3);
     return { category: item.name, icon: item.icon };
   }
+  function buildCatSuggest(history2, historyIconOf, table) {
+    const icon = /* @__PURE__ */ new Map();
+    const keywords = /* @__PURE__ */ new Map();
+    const aliasHint = /* @__PURE__ */ new Map();
+    const list = [];
+    const seen = /* @__PURE__ */ new Set();
+    const push = (name, iconName, aliases) => {
+      if (!name || seen.has(name)) return;
+      seen.add(name);
+      list.push(name);
+      if (iconName) icon.set(name, iconName);
+      if (aliases.length) {
+        keywords.set(name, [...aliases]);
+        aliasHint.set(name, aliases.join("、"));
+      }
+    };
+    for (const name of history2) push(name, historyIconOf(name), []);
+    if (table) {
+      for (const g of table.groups) {
+        for (const it of g.items) push(it.name, it.icon, it.aliases);
+      }
+    }
+    return {
+      list,
+      iconOf: (name) => {
+        var _a2;
+        return (_a2 = icon.get(name)) != null ? _a2 : "";
+      },
+      keywordsOf: (name) => {
+        var _a2;
+        return (_a2 = keywords.get(name)) != null ? _a2 : [];
+      },
+      aliasHintOf: (name) => {
+        var _a2;
+        return (_a2 = aliasHint.get(name)) != null ? _a2 : "";
+      },
+      hasTable: !!table
+    };
+  }
   var SENTINEL, SENTINEL_LABEL;
   var init_catalog_suggest = __esm({
     "src/belongings/catalog-suggest.ts"() {
@@ -35754,7 +35569,7 @@ ${it.text}`).join("\n"));
     else closeBelForm();
   }
   function openForm(it) {
-    var _a2, _b2, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e, _f, _g;
     const existing = document.querySelector(".bz-bel-form");
     if (existing) {
       const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
@@ -35817,50 +35632,30 @@ ${it.text}`).join("\n"));
       var _a3, _b3;
       return ((_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
+    let catSrc = buildCatSuggest((_f = (_e = M8.db) == null ? void 0 : _e.categories) != null ? _f : [], historyIconOf, null);
+    void loadCategoryTable(getApp()).then((t) => {
+      var _a3, _b3;
+      if (t) catSrc = buildCatSuggest((_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categories) != null ? _b3 : [], historyIconOf, t);
+    }).catch(() => {
+    });
     uiSuggest({
       anchor: catInput,
-      source: () => {
-        var _a3, _b3;
-        return (_b3 = (_a3 = M8.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
-      },
+      source: () => catSrc.list,
       max: 60,
       iconOf: (raw) => {
-        const name = historyIconOf(raw);
+        const name = catSrc.iconOf(raw) || historyIconOf(raw);
         return name ? uiIconSpan(name) : "";
       },
+      keywordsOf: (raw) => catSrc.keywordsOf(raw),
+      hintOf: (raw) => catSrc.aliasHintOf(raw),
       onPick: (raw) => {
-        const name = historyIconOf(raw);
+        const name = catSrc.iconOf(raw) || historyIconOf(raw);
         if (name) {
           formIcon = name;
           drawIconChip();
         }
       }
     });
-    const catPickBtn = mask.querySelector("#bm-catpick");
-    if (catPickBtn) {
-      catPickBtn.addEventListener("click", () => {
-        if (catPickBtn.disabled) return;
-        void (async () => {
-          try {
-            const table = await loadCategoryTable(getApp());
-            openCatPicker({
-              table,
-              title: "选择分类",
-              onConfirm: (sel) => {
-                if (!sel) return;
-                catInput.value = sel.category;
-                formIcon = sel.icon;
-                drawIconChip();
-                errEl.textContent = "";
-              }
-            });
-          } catch (e) {
-            const eEl = mask.querySelector("#bm-err");
-            if (eEl) eEl.textContent = "分类表加载失败：" + ((e == null ? void 0 : e.message) || "未知错误");
-          }
-        })();
-      });
-    }
     const statusPick = mask.querySelector("#bm-status");
     const exitRow = mask.querySelector("#bm-exit");
     const soldField = mask.querySelector("#bm-soldfield");
@@ -35912,7 +35707,7 @@ ${it.text}`).join("\n"));
         }
       })();
     });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
+    (_g = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _g.addEventListener("click", () => requestCloseBelForm());
     saveBtn.addEventListener("click", () => {
       if (saving) return;
       const name = mask.querySelector("#bm-name").value.trim();
@@ -36059,6 +35854,7 @@ ${it.text}`).join("\n"));
       init_render6();
       init_ai2();
       init_category_table();
+      init_catalog_suggest();
       init_motion4();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;

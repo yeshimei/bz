@@ -50,7 +50,13 @@ export function uiSuggest(opts: BzSuggestOpts): {
     const cur = anchor.value.trim();
     const q = cur.toLowerCase();
     const matched = opts.source()
-      .filter((s) => (!opts.excludeCurrent || s !== cur) && (!q || s.toLowerCase().includes(q)))
+      .filter((s) => {
+        if (opts.excludeCurrent && s === cur) return false;
+        if (!q) return true;
+        if (s.toLowerCase().includes(q)) return true;
+        // 额外搜索关键词（issue 488）：别名命中也算匹配（搜「充电宝」出「移动电源」）
+        return opts.keywordsOf?.(s)?.some((k) => k.toLowerCase().includes(q)) ?? false;
+      })
       .slice(0, max);
     if (!matched.length) { close(); return; } // 无匹配即收（不开空壳）
     layer.replaceChildren();
@@ -73,6 +79,13 @@ export function uiSuggest(opts: BzSuggestOpts): {
       const label = document.createElement('span');
       label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
       b.appendChild(label);
+      const hint = opts.hintOf?.(raw);
+      if (hint) {
+        const h = document.createElement('span');
+        h.className = 'bz-suggest-hint';
+        h.textContent = hint;
+        b.appendChild(h);
+      }
       b.addEventListener('click', () => pick(raw));
       layer!.appendChild(b);
     });

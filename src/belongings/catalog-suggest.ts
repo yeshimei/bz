@@ -231,3 +231,71 @@ export async function suggestCategoryByCatalog(
   const item = findItem(table, groupId, itemId)!;
   return { category: item.name, icon: item.icon };
 }
+
+/* ═══════════════════════════════════════════════════════════════
+ * 表单联想源（issue 488）：分类表直接作为 #bm-cat 输入框的下拉候选
+ *
+ * 形态 = 「历史分类在前、表内分类在后」的单一候选串（uiSuggest 消费）：
+ * - 历史分类是用户真实用过的（频次降序派生），永远排最前；
+ * - 表内分类补齐「没写过但表里有」的部分，组序 = 表序（人类整理的语义序）；
+ * - 同名去重（历史优先），图标同理：历史记过的图标 > 表内图标；
+ * - 别名作为**搜索关键词**（keywordsOf）而非独立候选——搜「充电宝」能出
+ *   「移动电源」，但下拉里不出现重复行。
+ * ═══════════════════════════════════════════════════════════════ */
+
+/** 联想源的完整形状（uiSuggest 各槽位的取数闭包都已备好） */
+export interface CatSuggestSource {
+  /** 候选串（历史 + 表内，去重保序） */
+  list: string[];
+  /** 候选 → 图标名（历史 > 表 > ''） */
+  iconOf: (name: string) => string;
+  /** 候选 → 额外搜索关键词（= 表内别名；历史分类与无别名候选为空数组） */
+  keywordsOf: (name: string) => string[];
+  /** 候选 → 别名提示（下拉小字；无别名 = ''） */
+  aliasHintOf: (name: string) => string;
+  /** 表是否参与本次联想（false = 未下载，纯历史模式） */
+  hasTable: boolean;
+}
+
+/**
+ * 组装联想源（纯函数，不碰 app/网络）。
+ * @param history 历史分类（调用方传派生好的频次降序串）
+ * @param historyIconOf 历史分类 → 图标（用户用过的记档；命中优先于表）
+ * @param table 分类表（null = 未下载 → 纯历史模式）
+ */
+export function buildCatSuggest(
+  history: string[],
+  historyIconOf: (name: string) => string,
+  table: CategoryTable | null,
+): CatSuggestSource {
+  const icon = new Map<string, string>();
+  const keywords = new Map<string, string[]>();
+  const aliasHint = new Map<string, string>();
+  const list: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (name: string, iconName: string, aliases: string[]): void => {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    list.push(name);
+    if (iconName) icon.set(name, iconName);
+    if (aliases.length) {
+      keywords.set(name, [...aliases]);
+      aliasHint.set(name, aliases.join('、'));
+    }
+  };
+
+  for (const name of history) push(name, historyIconOf(name), []);
+  if (table) {
+    for (const g of table.groups) {
+      for (const it of g.items) push(it.name, it.icon, it.aliases);
+    }
+  }
+  return {
+    list,
+    iconOf: (name) => icon.get(name) ?? '',
+    keywordsOf: (name) => keywords.get(name) ?? [],
+    aliasHintOf: (name) => aliasHint.get(name) ?? '',
+    hasTable: !!table,
+  };
+}

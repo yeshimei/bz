@@ -1,4 +1,4 @@
-/* 源指纹 d1b1c0b76ddbd058 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9ab1b746fecd0f91 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -6792,14 +6792,20 @@ var BZW_knowledge = (() => {
       if (!layer) return;
       const cur = anchor.value.trim();
       const q2 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      const matched = opts.source().filter((s) => {
+        var _a2, _b, _c;
+        if (opts.excludeCurrent && s === cur) return false;
+        if (!q2) return true;
+        if (s.toLowerCase().includes(q2)) return true;
+        return (_c = (_b = (_a2 = opts.keywordsOf) == null ? void 0 : _a2.call(opts, s)) == null ? void 0 : _b.some((k) => k.toLowerCase().includes(q2))) != null ? _c : false;
+      }).slice(0, max);
       if (!matched.length) {
         close();
         return;
       }
       layer.replaceChildren();
       matched.forEach((raw) => {
-        var _a2;
+        var _a2, _b;
         const b = document.createElement("button");
         b.type = "button";
         b.className = "bz-popover-item";
@@ -6818,6 +6824,13 @@ var BZW_knowledge = (() => {
         const label = document.createElement("span");
         label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
         b.appendChild(label);
+        const hint = (_b = opts.hintOf) == null ? void 0 : _b.call(opts, raw);
+        if (hint) {
+          const h = document.createElement("span");
+          h.className = "bz-suggest-hint";
+          h.textContent = hint;
+          b.appendChild(h);
+        }
         b.addEventListener("click", () => pick(raw));
         layer.appendChild(b);
       });

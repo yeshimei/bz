@@ -218,6 +218,8 @@ export interface BzSuggestOpts {
   excludeCurrent?: boolean;          // 排除与现值完全相同的候选（点选回焦不复弹自身）
   iconOf?: (value: string) => string | HTMLElement;  // 候选前缀符（emoji 文本或图标元素；缺省无）
   labelOf?: (value: string) => string; // 候选主文本（缺省原串）
+  keywordsOf?: (value: string) => string[]; // 额外搜索关键词（如别名；输入命中关键词也算匹配，issue 488）
+  hintOf?: (value: string) => string;  // 候选副文本（下拉行尾小字，如别名提示；缺省无）
   onPick?: (value: string) => void;  // 点选/回车选定回调（回填后触发）
 }
 

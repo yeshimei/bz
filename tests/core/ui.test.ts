@@ -1497,3 +1497,37 @@ describe('bz ui 组件库', () => {
     });
   });
 });
+
+describe('uiSuggest 关键词与副文本（issue 488）', () => {
+  function build(extra: Partial<Parameters<typeof uiSuggest>[0]> = {}) {
+    const wrap = document.createElement('div');
+    wrap.style.position = 'relative';
+    const input = document.createElement('input');
+    wrap.appendChild(input);
+    document.body.appendChild(wrap);
+    const sug = uiSuggest({ anchor: input, source: () => ['移动电源', '智能手机'], ...extra });
+    return { wrap, input, sug };
+  }
+
+  it('keywordsOf：别名命中也算匹配（搜「充电宝」出「移动电源」）', () => {
+    const { wrap, input, sug } = build({ keywordsOf: (v) => (v === '移动电源' ? ['充电宝', 'power bank'] : []) });
+    input.value = '充电宝';
+    input.dispatchEvent(new Event('input'));
+    const items = [...wrap.querySelectorAll('.bz-popover-item')] as HTMLElement[];
+    expect(items.map((o) => o.dataset.value)).toEqual(['移动电源']);
+    // 关键词不含查询串、主串也不含 → 无匹配即收
+    input.value = '耳机';
+    input.dispatchEvent(new Event('input'));
+    expect(wrap.querySelector('.bz-popover')).toBeNull();
+    sug.close();
+  });
+
+  it('hintOf：行尾副文本 .bz-suggest-hint；不提供时不渲染', () => {
+    const { wrap, input, sug } = build({ hintOf: (v) => (v === '智能手机' ? '手机、iPhone' : '') });
+    input.dispatchEvent(new Event('focus'));
+    const items = [...wrap.querySelectorAll('.bz-popover-item')] as HTMLElement[];
+    expect(items[0].querySelector('.bz-suggest-hint')).toBeNull(); // 移动电源无别名提示
+    expect(items[1].querySelector('.bz-suggest-hint')!.textContent).toBe('手机、iPhone');
+    sug.close();
+  });
+});
