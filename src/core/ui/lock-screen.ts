@@ -1,6 +1,6 @@
 /* ============================================================
  * bz 组件库 · 解锁屏（src/core/ui/lock-screen.ts）
- * 三域共用骨架（ADR-0002：core 不反向依赖任何域，故共享壳只能落 core）：
+ * 四域共用骨架（ADR-0002：core 不反向依赖任何域，故共享壳只能落 core）：
  *   印章徽 + 标题 + 副题 + 统计卡 + 主密码输入 + 主按钮 + 安全提示行。
  * 组件只给结构与槽位：
  *   - 文案 / 统计数字由调用域注入（各域口径不同）；
@@ -16,8 +16,8 @@ export interface LockScreenStat {
   label: string;
 }
 
-/** 域标识：决定作用域类与注入的统计口径 */
-export type LockScreenKind = 'vault' | 'password-vault' | 'diary';
+/** 域标识：决定作用域类与注入的统计口径（people = 脸谱，issue 482） */
+export type LockScreenKind = 'vault' | 'password-vault' | 'diary' | 'people';
 
 export interface LockScreenOpts {
   kind: LockScreenKind;
@@ -64,7 +64,7 @@ export interface LockScreenHandle {
   close(): void;
 }
 
-/** 生成解锁屏（结构同源，三域各自注入内容与风格） */
+/** 生成解锁屏（结构同源，四域各自注入内容与风格） */
 export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   const el = document.createElement('div');
   el.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? ' bz-lockscreen--inline' : ' bz-lockscreen--mask');

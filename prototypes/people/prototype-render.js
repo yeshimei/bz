@@ -1,4 +1,4 @@
-/* 源指纹 622fb9518cd30b26 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7745b2e4704853f1 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -58,6 +58,7 @@ var BZR_people = (() => {
     jobsQueueLabel: () => jobsQueueLabel,
     jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
+    loadBody: () => loadBody,
     localResourceUri: () => localResourceUri,
     mdPlain: () => mdPlain,
     mediaLabel: () => mediaLabel,
@@ -476,6 +477,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       el("div", "bz-people-empty-hint", text("打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。")),
       button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-ds-open": "" })
     ]);
+  }
+  function loadBody(state) {
+    const count = el(
+      "strong",
+      "bz-people-load-count",
+      { "data-people-load-count": "" },
+      text(state.total != null ? `${state.done}/${state.total}` : "")
+    );
+    if (state.total == null) count.hidden = true;
+    const wrap = el("div", "bz-people-loading", { "data-people-loading": "" }, [
+      el("div", "bz-people-load-line", [
+        el("span", "bz-people-load-spin", { "aria-hidden": "true" }),
+        el("span", "bz-people-load-text", text("正在解密联系人数据…")),
+        count
+      ])
+    ]);
+    const wall = el("div", "bz-people-load-wall", { "aria-hidden": "true" });
+    for (let i = 0; i < 6; i++) wall.appendChild(el("div", "bz-people-load-card"));
+    wrap.appendChild(wall);
+    return wrap;
   }
   var FOLD_TITLES = [
     ["p", "其人", "卷一 · 人物画像与代表原话"],

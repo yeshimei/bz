@@ -1869,6 +1869,84 @@
   }
 }
 
+/* ============ 解锁屏（共享骨架 · 脸谱口径，issue 482） ============
+ * 弹层挂 body，够不着 .bz-people-scope 根 —— 与日记锁屏同款教训：--ls-* 按值重声明
+ * （值取自本文件顶部变量组，改主题色时两处同步）。
+ * 风格 = 脸谱面板同款宣纸 + 朱砂；印章徽借折子印章语汇（朱砂描边 + 微旋）。
+ */
+.bz-lockscreen--people {
+  --ls-accent: #a8433c;
+  --ls-accent-soft: #a8433c;
+  --ls-seal-radius: 12px;
+  --ls-bg: #f7f2e8;
+  --ls-surface: #fffdf8;
+  --ls-line: #e8e2d4;
+  --ls-ink: #4a443a;
+  --ls-muted: #9a917d;
+}
+.theme-dark .bz-lockscreen--people {
+  --ls-accent: #c0645a;
+  --ls-accent-soft: #c0645a;
+  --ls-bg: #262320;
+  --ls-surface: #35312a;
+  --ls-line: #454036;
+  --ls-ink: #cfc7b4;
+  --ls-muted: #9a917d;
+}
+/* 印章徽：纸底 + 朱砂描边微旋（同封面折子印章的 6°；图标随之改朱砂） */
+.bz-lockscreen--people .bz-lockscreen-seal {
+  background: var(--ls-surface);
+  border: 2px solid var(--ls-accent);
+  color: var(--ls-accent);
+  transform: rotate(6deg);
+}
+
+/* ============ 冷读加载占位（issue 483：解锁后首开面板，readAll 逐人解密期不再白屏） ============
+ * 进度行（转圈 + 文案 + N/M 计数）+ 折子墙骨架；加载完由 ui 层整体替换成真实数据。
+ * 转圈复用 bzPeopleSpin（既有生成进度 spin）；脉冲属加载类循环（同日记灯箱等待占位口径，不入动效台账）。 */
+.bz-people-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 8px;
+}
+.bz-people-load-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-mut);
+  font-size: 13px;
+}
+.bz-people-load-spin {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--soft-neutral);
+  border-top-color: var(--acc);
+  animation: bzPeopleSpin 0.9s linear infinite;
+}
+.bz-people-load-count {
+  color: var(--acc);
+  font-variant-numeric: tabular-nums;
+}
+.bz-people-load-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 14px;
+}
+.bz-people-load-card {
+  height: 84px;
+  border-radius: 12px;
+  border: 1px dashed var(--card-bd);
+  background: var(--paper-fold);
+  animation: bzPeoplePulse 1.2s ease-in-out infinite;
+}
+@keyframes bzPeoplePulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
 /* ==================== 图片描述确认弹窗（issue 470 / ADR-0196 决策 8：body 级弹层，面板可不开） ==================== */
 .bz-people-desc-confirm {
   position: fixed;

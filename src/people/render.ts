@@ -642,6 +642,36 @@ export function wallEmpty(): HTMLElement {
   ]);
 }
 
+// ---------------- 冷读加载占位（issue 483：解锁后首开面板，readAll 逐人解密期不再白屏） ----------------
+
+/** 冷读加载态（ui 层从 readAll 进度回调喂入；total 未知 = 清单尚未读到，不出 N/M） */
+export interface LoadState {
+  done: number;
+  total: number | null;
+}
+
+/**
+ * 冷读加载占位：进度行（文案 + N/M 计数）+ 折子墙骨架。
+ * 计数带原位更新钩子（data-people-loading / data-people-load-count）：运行中逐人只换数字，
+ * 不重建骨架；加载完由调用方整体替换成真实数据（单次 replaceChildren，无二次闪动）。
+ */
+export function loadBody(state: LoadState): HTMLElement {
+  const count = el('strong', 'bz-people-load-count', { 'data-people-load-count': '' },
+    text(state.total != null ? `${state.done}/${state.total}` : ''));
+  if (state.total == null) count.hidden = true;
+  const wrap = el('div', 'bz-people-loading', { 'data-people-loading': '' }, [
+    el('div', 'bz-people-load-line', [
+      el('span', 'bz-people-load-spin', { 'aria-hidden': 'true' }),
+      el('span', 'bz-people-load-text', text('正在解密联系人数据…')),
+      count,
+    ]),
+  ]);
+  const wall = el('div', 'bz-people-load-wall', { 'aria-hidden': 'true' });
+  for (let i = 0; i < 6; i++) wall.appendChild(el('div', 'bz-people-load-card'));
+  wrap.appendChild(wall);
+  return wrap;
+}
+
 // ---------------- 详情（折页册） ----------------
 
 /** 折 id（issue 455 三折，评审拍板合并）：p = 卷一《其人》，b = 卷二《相交》，e = 《纪事》（编年 + 按月事件）；统计与档案为详情头弹窗 */

@@ -2533,7 +2533,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-setlist--dense .bz-setlist-item:hover { background: var(--bz-surface-2); }
 }
 
-/* ═══════════ 解锁屏（三域共用骨架：保险库 / 密码本 / 加密日记） ═══════════
+/* ═══════════ 解锁屏（四域共用骨架：保险库 / 密码本 / 加密日记 / 脸谱） ═══════════
  * 结构同源、槽位驱动：文案与统计由调用域注入，风格由各域按 --ls-accent 等变量覆盖。
  * 组件变量（各域可覆盖）：--ls-accent / --ls-accent-soft / --ls-seal-radius
  */

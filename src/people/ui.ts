@@ -70,6 +70,7 @@ import {
   importMeta,
   insightsCard,
   kindChips,
+  loadBody,
   mergeBar,
   miniMarkdown,
   monthlyChart,
@@ -213,12 +214,20 @@ export function isPeopleOpen(): boolean {
   return overlay !== null;
 }
 
-/** 解锁门禁（默认走 encrypt 公开入口；测试经 setUnlockGateForTests 注入假件——jsdom 锁不住真锁屏） */
-let unlockGate: () => Promise<boolean> = ensureSafeUnlocked;
+/**
+ * 脸谱口径解锁门禁（issue 482）：ensureSafeUnlocked 传 'people' 档——解锁屏标题 / 副文案 /
+ * 统计（联系人 / 随记录附件 / 附件密文）与朱砂配色走脸谱口径，不再借保险库的 'vault' 文案。
+ */
+export function peopleUnlockGate(): Promise<boolean> {
+  return ensureSafeUnlocked('people');
+}
+
+/** 解锁门禁（默认 = peopleUnlockGate；测试经 setUnlockGateForTests 注入假件——jsdom 锁不住真锁屏） */
+let unlockGate: () => Promise<boolean> = peopleUnlockGate;
 
 /** 测试注入缝：替换 / 还原解锁门禁假件 */
 export function setUnlockGateForTests(fn: (() => Promise<boolean>) | null): void {
-  unlockGate = fn ?? ensureSafeUnlocked;
+  unlockGate = fn ?? peopleUnlockGate;
 }
 
 /**
@@ -338,6 +347,9 @@ export function closePeoplePanel(): void {
   stage = 'list';
   listCache = [];
   recordCache = null; // 452 缓存语义沿用：保库记录快照随面板关闭失效（下次打开重读）
+  loadActive = false; // 483：冷读指示态不随面板存续（进行中的 readAll 照常完成，落盘缓存供热读）
+  loadDone = 0;
+  loadTotal = null;
   mergeFromId = null;
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
@@ -1438,6 +1450,12 @@ async function renderBody(): Promise<void> {
     mountIcons(overlay);
     return;
   }
+  // 冷读加载占位（issue 483）：记录缓存不在且保库记录非全量热读（重开面板的缓存命中不出加载态）→
+  // 先出骨架与「正在解密联系人数据… N/M」进度行，wallPeople 返回后下方 replaceChildren 原地替换成真实数据
+  if (!recordCache && peopleSafe && !peopleSafe.isFullyCached()) {
+    body.replaceChildren(loadBody({ done: loadDone, total: loadTotal }));
+    overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', false);
+  }
   const people = await wallPeople(); // 一次拉全量：列表 / 详情 / 弹窗三处同源（455 弹窗正文也要人物卡）
   if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
   if (stage === 'list') await renderList(body, people);
@@ -1514,17 +1532,60 @@ function renderPopLayer(people: PersonEntry[]): void {
  *  记录对象与 PeopleSafeStore 缓存同引用——写入路径原地 mutate，快照天然跟新） */
 let recordCache: Map<string, PeopleSafeRecord> | null = null;
 
-/** 保库记录读取（缓存到「面板关闭」「上锁」失效；读不到按空表兜底，照常出已有卡） */
+// —— 冷读加载态（issue 483）：解锁后首开面板 readAll 逐人解密期，骨架 + 「N/M」进度行 ——
+/** 冷读进行中（进度回调窗口内为真；paintLoadCount 只在此窗口上屏） */
+let loadActive = false;
+/** 冷读进度（readAll 逐人回调喂入；total null = 清单尚未读到） */
+let loadDone = 0;
+let loadTotal: number | null = null;
+/** 冷读去重：并发 records() 复用同一次 readAll（渲染跟帧 / 引擎订阅撞进同一窗口不再重复解密） */
+let recordsInflight: Promise<Map<string, PeopleSafeRecord>> | null = null;
+
+/** 进度原位刷新（issue 483）：只换计数数字，不重建骨架；面板没开 / 骨架已被真实数据替换则静默 */
+function paintLoadCount(): void {
+  if (!loadActive || !overlay) return;
+  const n = overlay.querySelector<HTMLElement>('[data-people-load-count]');
+  if (!n) return;
+  n.hidden = loadTotal == null;
+  n.textContent = loadTotal != null ? `${loadDone}/${loadTotal}` : '';
+}
+
+/** 保库记录读取（缓存到「面板关闭」「上锁」失效；读不到按空表兜底，照常出已有卡）。
+ *  冷读（issue 483）：缓存不在时走 readAll 逐人解密，进度经回调刷进骨架的 N/M 计数；
+ *  全库热读（重开面板缓存命中）不置加载态，渲染跟帧无感。 */
 async function records(): Promise<Map<string, PeopleSafeRecord>> {
   if (recordCache) return recordCache;
   if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
-  try {
-    recordCache = await peopleSafe.readAll();
-  } catch (e) {
-    console.warn('[people] 读取保库记录失败:', e);
-    recordCache = new Map();
+  if (recordsInflight) {
+    // 复用在途冷读（483）：面板关了又开撞进同一窗口时重新武装指示态，进度行继续跟帧
+    loadActive = true;
+    paintLoadCount();
+    return recordsInflight;
   }
-  return recordCache;
+  recordsInflight = (async () => {
+    try {
+      loadActive = true;
+      loadDone = 0;
+      loadTotal = null;
+      const map = await peopleSafe!.readAll((done, total) => {
+        loadTotal = total;
+        loadDone = done;
+        paintLoadCount();
+      });
+      recordCache = map;
+      return map;
+    } catch (e) {
+      console.warn('[people] 读取保库记录失败:', e);
+      // 解锁态下的读失败按空表兜底（照旧，止住逐帧重试）；因上锁中途被打断则保持缓存失效——
+      // 再解锁后按冷读重走（记录缓存已被上锁清掉，旧空表会把再解锁的首屏钉成假空墙）
+      if (peopleSafe!.unlocked) recordCache = new Map();
+      return recordCache ?? new Map();
+    } finally {
+      loadActive = false;
+      recordsInflight = null;
+    }
+  })();
+  return recordsInflight;
 }
 
 /**
@@ -1558,10 +1619,12 @@ function poolRecord(id: string, contact: StoreContact | undefined): ImportRecord
 /**
  * 墙上人员 = 保库记录的人物卡全集（issue 452 语义沿用：有仓没卡者由迁移 / 导入补卡，
  * 面板侧兜底仍保留——记录里没有导入记录时用聊天仓素材合成「待画」占位卡，**纯内存**）。
+ * records() 在前（issue 483）：冷读集中在带进度回调的那次 readAll，骨架的 N/M 跟的是
+ * 真实解密慢阶段；随后 store.list() 全走缓存命中，不再有第二遍解密。
  */
 async function wallPeople(): Promise<PersonEntry[]> {
-  const people = store ? await store.list() : [];
   const recs = await records();
+  const people = store ? await store.list() : [];
   const out: PersonEntry[] = people.map((p) => {
     const rec = p.imports.length ? null : poolRecord(p.id, recs.get(p.id)?.store);
     return rec ? { ...p, imports: [rec] } : p;

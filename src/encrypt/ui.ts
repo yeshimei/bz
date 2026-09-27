@@ -50,16 +50,17 @@ import {
 } from './motion';
 
 /**
- * 解锁屏三域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
+ * 解锁屏四域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
  * 模块常量（T15 降级：无外部消费，不再导出——解锁屏语义只归本域 showPasswordDialog）。
  * 统计口径：
  *   - vault：笔记条目 / 随库附件 / 附件密文（正文 .enc 大小清单未记，故只统计附件镜像）
  *   - password-vault：平台 / 口令条目 / 收藏
  *   - diary：加密条目 / 随库附件 / 附件密文
+ *   - people（issue 482）：联系人 / 随记录附件 / 附件密文（附件 = 头像；清单级计数，不解密正文）
  */
 const LOCK_KIND_META: Record<
   LockScreenKind,
-  { icon: 'shield' | 'key' | 'lock'; title: string; sub: string; action: string; stats: LockScreenStat[] }
+  { icon: 'shield' | 'key' | 'lock' | 'contact'; title: string; sub: string; action: string; stats: LockScreenStat[] }
 > = {
   vault: {
     icon: 'shield',
@@ -91,6 +92,17 @@ const LOCK_KIND_META: Record<
     stats: [
       { num: '—', label: '加密条目' },
       { num: '—', label: '随库附件' },
+      { num: '—', label: '附件密文' },
+    ],
+  },
+  people: {
+    icon: 'contact',
+    title: '脸谱已上锁',
+    sub: '解锁前，联系人卡片与聊天记录均以密文保存',
+    action: '解锁',
+    stats: [
+      { num: '—', label: '联系人' },
+      { num: '—', label: '随记录附件' },
       { num: '—', label: '附件密文' },
     ],
   },
@@ -1518,7 +1530,7 @@ export class UIManager {
   }
 
   /**
-   * 快照解锁屏统计项（三域各一份）。
+   * 快照解锁屏统计项（四域各一份）。
    * 清单本身是密文，锁定态无法读计数 —— 故只在解锁期间快照，供下次上锁后的解锁屏显示；
    * 快照同时写明文档 lock-stats.json（core/lock-stats），冷启动回落上次快照而非「—」。
    */
@@ -1539,6 +1551,12 @@ export class UIManager {
         all.filter((n) => n.kind === 'diary-entry'),
         ['加密条目', '随库附件', '附件密文'],
       );
+      // people 档（issue 482）：脸谱解锁屏统计 = 联系人数 / 随记录附件（头像）/ 附件密文。
+      // 清单级计数不解密正文；脸谱面板只经 ensureSafeUnlocked('people') 走到解锁，快照在此顺带刷新
+      this.lockStatsCache.people = stat(
+        all.filter((n) => n.kind === 'people'),
+        ['联系人', '随记录附件', '附件密文'],
+      );
       const plats = this.pwDataManager.platforms();
       // password-vault 档 = 共享锁解锁屏统计（密码本域锁屏同款口径）；encrypt 侧代为快照：
       // 只经保险库解锁的会话也能刷新该档（ADR-0158 后密码视图已摘，快照链路保留）
@@ -1548,7 +1566,7 @@ export class UIManager {
         { num: String(plats.filter((p) => this.pwDataManager.hasFav(p.platform)).length), label: '收藏' },
       ];
       // 快照即落明文档（fire-and-forget：统计丢一拍不伤数据，下次解锁会重写）
-      for (const k of ['vault', 'diary', 'password-vault'] as LockScreenKind[]) {
+      for (const k of ['vault', 'diary', 'password-vault', 'people'] as LockScreenKind[]) {
         void writeLockStats(k, this.lockStatsCache[k]!).catch(() => {});
       }
     } catch (e) {
