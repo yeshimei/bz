@@ -1,4 +1,4 @@
-# 504 memo-code-fix 核账批：剪藏 UI 三连实现对账 + 备忘录代码条目全量清账回写
+# 504 memo-code-fix 核账批：剪藏 UI 三连实现对账 + 备忘录代码条目全量清账回写（40 真积压 + 6 误报）
 
 - 状态：已交付（2026-09-27，memo-code-fix 流程）
 - 提出：2026-09-27 用户「执行 Skills Memo Code Fix」
@@ -6,7 +6,8 @@
 
 ## 背景
 
-用户备忘录 scene=代码 未完成条目积压 46 条，其中相当一部分实际已交付但流程未回写
+用户备忘录 scene=代码 未完成条目积压 46 条（后核实为 40 条真积压 + 6 条旧 `done` 字段残留
+误报），其中相当一部分实际已交付但流程未回写
 `completed`（历史各轮 memo-code-fix 均只修代码不勾条目，包括 issue 332/379/384/385 各票）。
 本轮无新增代码缺陷——逐条对账后补开票存档 + 批量回写。
 
@@ -43,17 +44,22 @@
   memo 编辑保存 finalTitle（ui.ts edited 事件）、剪藏备忘 url 独立字段、clipTitleHint 切场景清空、
   统一抽屉重构（长按日期删除/场景标签编辑旧交互随之退役，f3171fd0f 同批口径）
 
-保留不勾的 6 条（未实现或非本项目）：
+「积压 46 条」实为 40 + 6 误报：初筛按旧域残留字段 `done` 过滤，而 memo 域完成标记是
+`completed`（types.ts 14 字段规范）。以下 6 条用户 2026-07~08 已自行勾掉，`done: null` 系
+残留脏字段造成未完成假象，本轮未重复动：
 
-1. todo-1788095674787 密码本搜索框点两次才打开——现状未见对应修复，待复核
-2. todo-1785302102709 备忘录关窗/切场景留存输入——无草稿机制，未实现
-3. todo-1785119750376 备忘录 github 平台识别——无痕迹，未实现
-4. todo-1785033020537 auto_git commit 标题追加 README 时间轴——`.git/hooks/post-commit` 仅
-   Qoder tracker，未实现（仓库外脚本需求）
-5. todo-1785032966554 auto_git >100MB 自动 .gitignore——同上未实现
-6. todo-1784823833765 dataview 内联改脚本——外部 Obsidian 剪藏插件配置，非本仓库
+1. todo-1788095674787 密码本搜索框点两次才打开——completed 2026-08-31
+2. todo-1785302102709 备忘录关窗/切场景留存输入——completed 2026-07-29
+3. todo-1785119750376 备忘录 github 平台识别——completed 2026-07-27
+4. todo-1785033020537 auto_git commit 标题追加 README 时间轴——completed 2026-07-26
+5. todo-1785032966554 auto_git >100MB 自动 .gitignore——completed 2026-07-26
+6. todo-1784823833765 dataview 内联改脚本——外部 Obsidian 剪藏插件配置，completed 2026-07-22
+
+回写后 scene=代码 未完成条目清零。遗留观察（非条目）：若旧 `done` 字段确认无读者，可在
+memo 域后续数据卫生批里考虑剥离。
 
 ## 交付物
 
 - issues/504（本文件，存档对账）
-- memo.json 40 条 `completed` 回写（vault 数据，不入 git）
+- memo.json 40 条 `completed` 回写（vault 数据，不入 git；改动前备份
+  `.scratch/memo-backup-20260927.json`）
