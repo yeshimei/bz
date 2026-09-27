@@ -1,6 +1,6 @@
 # 492 · 在线资源组回归通用声明行 + 跨入口状态同步
 
-- 状态：进行中（2026-09-27）
+- 状态：已完成（2026-09-27 部署 1.25.0）
 - 域：settings-panel（online-resources 重写 / renderer / styles）+ core（settings-schema ButtonRow / remote-asset 落盘事件）+ ui.ts loader
 - 来源：用户看图指出「在线资源」组视觉偏离通用行（左边多 16px 幽灵缩进、字号偏大），要求对齐、
   不许再用自绘；追加两条需求：主题行描述带上已下载套数；导航入口更新文档后组内按钮要翻「已下载」
