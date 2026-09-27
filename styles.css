@@ -9787,11 +9787,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   width: 16px;
   height: 16px;
 }
-/* 删除武装态：红描边示意再点确认 */
-.bz-people-del-arm {
-  border-color: var(--danger);
-  color: var(--danger);
-}
 /* 扫描中：图标转圈（复用生成进度 spin） */
 .bz-people-spin svg {
   animation: bzPeopleSpin 0.9s linear infinite;
