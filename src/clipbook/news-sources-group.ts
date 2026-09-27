@@ -20,6 +20,14 @@ import { notice, notifySaveError } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
+import { getApp } from '../core/app';
+import { onDomainEvent } from '../core/domain-bus';
+import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
+import {
+  catalogCategoryCounts, downloadRssCatalog, feedDomainOf, filterCatalogFeeds,
+  loadRssCatalog, subscribedUrlSet,
+  type RssCatalog, type RssCatalogFeed,
+} from '../core/rss-catalog';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp, writeBilibiliUpInfo,
@@ -393,10 +401,11 @@ async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, 
   handle = handleReg;
 }
 
-// ===== RSS 订阅管理弹窗（ADR-0121）=====
+// ===== RSS 订阅管理弹窗（ADR-0121；issue 495 大改：我的订阅 / 源库 双页签）=====
 // 与 UP 主管理同范式的独立 overlay（bz-rss-manager-mask/-popup，z-index 经 core createOverlay
-// 动态发号 ADR-0067，不再是静态档）；
-// 添加源时 requestUrl 试拉校验并预取 feed 自带标题（守护 30 分钟才拉一轮，坏 URL 当场拦截）。
+// 动态发号 ADR-0067，不再是静态档）；宽度 720（源库列表要放「名称 + 域名 + 标签 + 订阅钮」一行）。
+// 「我的订阅」页签 = 原 schema 原样搬入（添加源时 requestUrl 试拉校验并预取 feed 自带标题）；
+// 「源库」页签 = 域内自绘面板（createRssCatalogPane，黄页模型 ADR-0208：订阅即拷贝进 rssFeeds）。
 
 /** RSS 弹窗 schema 构建入参（lint 注册时以最小参数调用即可） */
 export interface RssManagerSchemaOptions {
@@ -458,7 +467,7 @@ export function rssManagerSettingsSchema(opts: RssManagerSchemaOptions): Setting
               label: f.title || f.url,
               sub: f.title ? f.url : '',
             })),
-            emptyText: '暂无订阅源，在上方粘贴 RSS 地址添加',
+            emptyText: '暂无订阅源，在上方粘贴 RSS 地址添加，或切到「源库」页签挑选',
             onChange: (keys) => (async () => {
               const removed = box.feeds.filter((f) => !keys.includes(f.url));
               let changed = false;
@@ -526,14 +535,245 @@ let rssManagerOpen = false;
 /** close 句柄外提（CB10/A1）：语义同 upManagerClose */
 let rssManagerClose: (() => void) | null = null;
 
-/** 打开 RSS 订阅管理弹窗：自建 overlay + 面板通用组件渲染（范式同 UP 主管理弹窗）。
+/** 源库列表单次渲染上限：千级条目全量上 DOM 移动端会卡，超出部分提示缩小范围 */
+const RSS_CAT_RENDER_LIMIT = 200;
+/** 源库搜索防抖（敲键不逐字全列表重算） */
+const RSS_CAT_SEARCH_DEBOUNCE_MS = 200;
+
+/** 源库页签面板控制器（弹窗内单实例；导出供 UI 测试直驱） */
+export interface RssCatalogPane {
+  /** 从磁盘重载（库 + 订阅集）并整面板重渲：首次切入本页签 / 下载落盘事件走这里 */
+  reload(): Promise<void>;
+  /** 只刷新「已订阅」标记（我的订阅页签有增删后调用；列表结构不动） */
+  refreshSubscribed(): Promise<void>;
+}
+
+/**
+ * 源库页签面板构建（导出供 UI 测试直驱；生产仅 openRssManagerModal 消费）。
+ * 黄页模型 ADR-0208；域内自绘——搜索 / 分类 / 订阅态是交互密集 UI，
+ * 超出声明行渲染器的行型；视觉沿用设置面板语言，订阅钮直接复用 .bz-sp-btn。
+ * 两态：未下载（空态引导 + 就地下载，走 downloadRssCatalog 统一清单通道）→
+ * 就绪（搜索框 + 分类 chips + 列表）。订阅 = addRssFeed 拷贝入库：出版期已测活，
+ * 免试拉即时反馈；已订阅态按归一 URL 匹配（subscribedUrlSet），删库/更新库不影响已订阅。
+ */
+export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () => void }): RssCatalogPane {
+  let catalog: RssCatalog | null = null;
+  let subscribed = new Set<string>();
+  let query = '';
+  let activeCat = ''; // '' = 全部
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const readSubscribed = async (): Promise<void> => {
+    const st = await readDataSourceState();
+    subscribed = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+  };
+
+  /** 订阅动作（行内按钮态机：订阅 → 订阅中… → 已订阅/还原）。C4：数据层结果分型各给准确反馈 */
+  const subscribeFeed = async (feed: RssCatalogFeed, btn: HTMLButtonElement): Promise<void> => {
+    btn.disabled = true;
+    btn.textContent = '订阅中…';
+    const outcome = await addRssFeed(feed.url, feed.title || undefined);
+    if (outcome === 'added') {
+      subscribed.add(feed.url);
+      btn.textContent = '已订阅';
+      notice(`已订阅 ${feed.title || feed.url}`, 'success');
+      deps.onChanged(); // 数据源组行描述计数 + 我的订阅页签跟上
+      return;
+    }
+    if (outcome === 'exists') {
+      subscribed.add(feed.url); // 已订阅态就地校正，不打扰
+      btn.textContent = '已订阅';
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = '订阅';
+    if (outcome === 'invalid') notice('无效的源地址，未能订阅', 'error');
+    else notifyWriteFailed(`订阅 ${feed.title || feed.url}`);
+  };
+
+  const catalogRowEl = (feed: RssCatalogFeed): HTMLElement => {
+    const row = document.createElement('div');
+    row.className = 'bz-rss-cat-row';
+    const info = document.createElement('div');
+    info.className = 'bz-rss-cat-info';
+    const name = document.createElement('div');
+    name.className = 'bz-rss-cat-name';
+    name.textContent = feed.title || feed.url;
+    const domain = document.createElement('div');
+    domain.className = 'bz-rss-cat-domain';
+    domain.textContent = feedDomainOf(feed.url);
+    info.append(name, domain);
+    const tags = document.createElement('div');
+    tags.className = 'bz-rss-cat-tags';
+    for (const t of feed.tags.slice(0, 3)) {
+      const tag = document.createElement('span');
+      tag.className = 'bz-rss-cat-tag';
+      tag.textContent = t;
+      tags.appendChild(tag);
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bz-sp-btn bz-rss-cat-sub';
+    const isSub = subscribed.has(feed.url);
+    btn.textContent = isSub ? '已订阅' : '订阅';
+    btn.disabled = isSub;
+    if (!isSub) btn.addEventListener('click', () => void subscribeFeed(feed, btn));
+    row.append(info, tags, btn);
+    return row;
+  };
+
+  const renderList = (hit: HTMLElement, list: HTMLElement): void => {
+    if (!catalog) return;
+    const all = filterCatalogFeeds(catalog, { query, cat: activeCat });
+    hit.textContent = all.length === catalog.feeds.length
+      ? `共 ${all.length} 个源`
+      : `命中 ${all.length} / ${catalog.feeds.length} 个源`;
+    const shown = all.slice(0, RSS_CAT_RENDER_LIMIT);
+    if (all.length === 0) {
+      const none = document.createElement('div');
+      none.className = 'bz-rss-cat-none';
+      none.textContent = '没有匹配的源，换个关键词或分类试试';
+      list.replaceChildren(none);
+      return;
+    }
+    const rows = shown.map((f) => catalogRowEl(f));
+    if (all.length > shown.length) {
+      const more = document.createElement('div');
+      more.className = 'bz-rss-cat-more';
+      more.textContent = `仅显示前 ${shown.length} 条，请搜索或选分类缩小范围`;
+      rows.push(more);
+    }
+    list.replaceChildren(...rows);
+  };
+
+  const renderEmpty = (): void => {
+    const wrap = document.createElement('div');
+    wrap.className = 'bz-rss-cat-empty';
+    const p = document.createElement('p');
+    p.className = 'bz-rss-cat-empty-text';
+    p.textContent = '源库还没下载。下载后可按分类浏览、搜索并一键订阅上千个中文 RSS 源（数据来自社区维护的开源清单）。';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bz-sp-btn bz-rss-cat-download';
+    btn.textContent = '下载源库';
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = '下载中…';
+      void (async () => {
+        try {
+          const c = await downloadRssCatalog(getApp());
+          catalog = c;
+          await readSubscribed();
+          notice(`源库已就绪，共收录 ${c.feeds.length} 个源`, 'success');
+          render();
+        } catch (e) {
+          notice(e instanceof Error ? e.message : String(e), 'error');
+          btn.disabled = false;
+          btn.textContent = '下载源库';
+        }
+      })();
+    });
+    wrap.append(p, btn);
+    root.replaceChildren(wrap);
+  };
+
+  const renderReady = (): void => {
+    if (!catalog) return;
+    const meta = document.createElement('div');
+    meta.className = 'bz-rss-cat-meta';
+    const catCount = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
+    meta.textContent = `已收录 ${catalog.feeds.length} 个源 · ${catCount} 个分类 · 更新于 ${catalog.updatedAt}`;
+    const src = document.createElement('div');
+    src.className = 'bz-rss-cat-src';
+    src.textContent = `来源：${catalog.meta.sources.map((s) => `${s.name}（${s.license}）`).join('、')}`;
+    src.title = catalog.meta.sources.map((s) => s.url).join('\n');
+
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'bz-rss-cat-search';
+    search.placeholder = '搜索名称、域名或标签…';
+    search.value = query;
+    search.addEventListener('input', () => {
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        searchTimer = null;
+        query = search.value;
+        renderList(hit, list);
+      }, RSS_CAT_SEARCH_DEBOUNCE_MS);
+    });
+
+    const chips = document.createElement('div');
+    chips.className = 'bz-rss-cat-chips';
+    const hit = document.createElement('div');
+    hit.className = 'bz-rss-cat-hit';
+    const list = document.createElement('div');
+    list.className = 'bz-rss-cat-list';
+
+    const renderChips = (): void => {
+      chips.replaceChildren();
+      const mkChip = (label: string, cat: string, count: number): void => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'bz-rss-cat-chip' + (activeCat === cat ? ' active' : '');
+        chip.textContent = `${label} ${count}`;
+        chip.addEventListener('click', () => {
+          activeCat = cat;
+          renderChips();
+          renderList(hit, list);
+        });
+        chips.appendChild(chip);
+      };
+      mkChip('全部', '', catalog!.feeds.length);
+      for (const { cat, count } of catalogCategoryCounts(catalog!)) {
+        if (count > 0) mkChip(cat, cat, count);
+      }
+    };
+    renderChips();
+    renderList(hit, list);
+    root.replaceChildren(meta, src, search, chips, hit, list);
+  };
+
+  const render = (): void => {
+    if (catalog) renderReady();
+    else renderEmpty();
+  };
+
+  return {
+    reload: async () => {
+      catalog = await loadRssCatalog(getApp());
+      await readSubscribed();
+      render();
+    },
+    refreshSubscribed: async () => {
+      await readSubscribed();
+      if (catalog) {
+        // 已订阅标记散在列表按钮上，整列表重渲最省心（限 200 行，开销可忽略）
+        const hit = root.querySelector<HTMLElement>('.bz-rss-cat-hit');
+        const list = root.querySelector<HTMLElement>('.bz-rss-cat-list');
+        if (hit && list) renderList(hit, list);
+      }
+    },
+  };
+}
+
+/** 打开 RSS 订阅管理弹窗（issue 495 大改）：自建 overlay + 双页签——
+ *  「我的订阅」= 原 schema（renderPanelSchema 渲染，每次切入按磁盘现值重建）；
+ *  「源库」= createRssCatalogPane 自绘面板。
  *  C25：单例守卫——已开或正在打开即直接返回，消灭连点叠层 */
 async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => void }): Promise<void> {
   if (rssManagerOpen || document.getElementById('bz-rss-manager-mask')) return;
   rssManagerOpen = true;
   let handle: { unregister(): void } | null = null;
+  let activeTab: 'my' | 'catalog' = 'my';
+  let catPane: RssCatalogPane | null = null;
+  let offAsset: (() => void) | null = null;
   function close(): void {
     rssManagerClose = null;
+    if (offAsset) {
+      offAsset();
+      offAsset = null;
+    }
     mask.remove();
     popup.remove();
     if (handle) handle.unregister();
@@ -542,7 +782,7 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
   const { mask, popup, registerClose } = createOverlay({
     maskId: 'bz-rss-manager-mask',
     popupId: 'bz-rss-manager-popup',
-    maxWidth: 560,
+    maxWidth: 720,
     onMaskClick: close,
   });
   // CB10/A1：同 UP 主弹窗——close 登记 core 存活表 + 域卸载外提句柄
@@ -556,22 +796,76 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
   title.textContent = 'RSS 订阅管理';
   header.appendChild(title);
 
-  const content = document.createElement('div');
-  content.className = 'bz-settings-content';
+  const tabs = document.createElement('div');
+  tabs.className = 'bz-rss-cat-tabs';
+  const tabMy = document.createElement('button');
+  tabMy.type = 'button';
+  tabMy.className = 'bz-rss-cat-tab active';
+  tabMy.textContent = '我的订阅';
+  const tabCat = document.createElement('button');
+  tabCat.type = 'button';
+  tabCat.className = 'bz-rss-cat-tab';
+  tabCat.textContent = '源库';
+  tabs.append(tabMy, tabCat);
+
+  const paneMy = document.createElement('div');
+  paneMy.className = 'bz-settings-content bz-rss-pane';
+  const paneCat = document.createElement('div');
+  paneCat.className = 'bz-settings-content bz-rss-pane';
+  paneCat.style.display = 'none';
+
+  // 我的订阅页签有增删 → 数据源组行计数 + 源库页签的已订阅标记跟上
+  const onMyChanged = (): void => {
+    opts.onChanged();
+    void catPane?.refreshSubscribed();
+  };
+
+  const activateMy = async (): Promise<void> => {
+    activeTab = 'my';
+    tabMy.classList.add('active');
+    tabCat.classList.remove('active');
+    paneCat.style.display = 'none';
+    paneMy.style.display = '';
+    // 每次切入按磁盘现值重建（源库订阅、别处增删后，回到本页签即最新）
+    paneMy.replaceChildren();
+    const st = await readDataSourceState();
+    if (!rssManagerOpen || activeTab !== 'my') return; // 渲染期间弹窗已关/已切页
+    const { renderPanelSchema } = await import('../settings-panel/renderer');
+    renderPanelSchema(paneMy, rssManagerSettingsSchema({ feeds: st.rssFeeds, onChanged: onMyChanged }));
+  };
+
+  const activateCatalog = async (): Promise<void> => {
+    activeTab = 'catalog';
+    tabCat.classList.add('active');
+    tabMy.classList.remove('active');
+    paneMy.style.display = 'none';
+    paneCat.style.display = '';
+    if (!catPane) catPane = createRssCatalogPane(paneCat, { onChanged: onMyChanged });
+    await catPane.reload();
+  };
+
+  tabMy.addEventListener('click', () => void activateMy());
+  tabCat.addEventListener('click', () => void activateCatalog());
+  // 跨入口同步：设置面板在线资源行下载/更新源库落盘后，开着的源库页签就地跟上（ADR-0205 同款事件）
+  offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+    if (rssManagerOpen && activeTab === 'catalog') void catPane?.reload();
+  });
 
   try {
-    const { renderPanelSchema } = await import('../settings-panel/renderer');
-    renderPanelSchema(content, rssManagerSettingsSchema(opts));
+    // 渲染器懒加载解析跨域环（settings-panel schemaLoaders ←→ 本域管理弹窗，函数级延迟解析）
+    await import('../settings-panel/renderer');
   } catch (e) {
-    // 打开失败：close 复位守卫并清理半成品（同 UP 主弹窗口径）
+    // 打开失败（动态加载）：close 复位守卫并清理半成品——否则单例标志滞留，「管理」此后无响应
     close();
     throw e;
   }
 
-  // 渲染期间域已收口 → 不挂载 DOM/esc（同 UP 主弹窗口径）
+  // 渲染期间域已收口（unloadClipbook/closeAllOverlays 走过 close）→ 不再挂载 DOM/esc 层
   if (!rssManagerOpen) return;
   popup.appendChild(header);
-  popup.appendChild(content);
+  popup.appendChild(tabs);
+  popup.appendChild(paneMy);
+  popup.appendChild(paneCat);
   document.body.appendChild(mask);
   document.body.appendChild(popup);
   mask.style.display = 'block';
@@ -582,6 +876,7 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     close,
   });
   handle = handleReg;
+  void activateMy();
 }
 
 /**

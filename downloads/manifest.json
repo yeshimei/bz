@@ -21,6 +21,13 @@
       "file": "belongings-categories.json",
       "sha256": "5033b95d806e155d9eb7368be69edd0e7ba9c367897ca13c3d46ac5d3747e46e",
       "size": 88114
+    },
+    {
+      "id": "rss-catalog",
+      "name": "RSS 源库",
+      "file": "rss-catalog.json",
+      "sha256": "fc1c5c334236ef4c318a324a9330da7ed83c004abda55a406aae377d028fc2b0",
+      "size": 344854
     }
   ],
   "skins": [
@@ -263,6 +270,7 @@
     "changelog",
     "manual",
     "skins",
-    "belongings-categories"
+    "belongings-categories",
+    "rss-catalog"
   ]
 }

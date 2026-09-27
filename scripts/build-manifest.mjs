@@ -58,12 +58,15 @@ const DOCS = [
   { id: 'manual', name: '使用手册', file: 'bz-manual.html' },
   // issue 478：归物本物品分类表（数据表，不是文档；产物由 pnpm catalog 出，故发布顺序里 catalog 在 manifest 之前）
   { id: 'belongings-categories', name: '归物分类表', file: 'belongings-categories.json' },
+  // issue 495：RSS 源库（社区源清单出版物，黄页模型见 ADR-0208；产物由 pnpm rss-catalog 出，
+  // 故发布顺序里 rss-catalog 也在 manifest 之前）
+  { id: 'rss-catalog', name: 'RSS 源库', file: 'rss-catalog.json' },
 ];
 const docs = DOCS.map((d) => ({ ...d, sha256: fileSha256(d.file), size: fileSize(d.file) }));
 
 // 行序（在线资源组内的行顺序）：'skins' 是皮肤聚合行的保留 id，不是 doc 条目。
 // 新增资源 = DOCS 加一行 + 本表加一个 id；漏登记由下方守卫拦下。
-const ROW_ORDER = ['changelog', 'manual', 'skins', 'belongings-categories'];
+const ROW_ORDER = ['changelog', 'manual', 'skins', 'belongings-categories', 'rss-catalog'];
 
 // ── 反向守卫（issue 490）：downloads/ 顶层不允许存在清单外的文件 ──
 // 新产物进目录但忘了登记 DOCS → 构建期就炸，而不是发布后插件端校验才失败

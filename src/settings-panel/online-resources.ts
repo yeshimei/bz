@@ -40,6 +40,7 @@ import {
 } from '../core/skin-pack';
 import { ensureAssetWithHash } from '../core/remote-asset';
 import { loadCategoryTable } from '../core/category-table';
+import { loadRssCatalog, catalogCategoryCounts } from '../core/rss-catalog';
 
 /** 皮肤聚合行的行名（它不是 doc 条目、清单里没有 name，只能内置；各域选择卡叫法不变） */
 const SKINS_ROW_NAME = '主题';
@@ -57,6 +58,13 @@ const DESC_EXTRAS: Record<string, (app: unknown, entry: ManifestDocEntry) => Pro
     if (!table) return null; // 读不出表 → 只说「已是最新版本」，不编规模
     const items = table.groups.reduce((n, g) => n + g.items.length, 0);
     return `${table.groups.length} 组 ${items} 条`;
+  },
+  // issue 495：RSS 源库就绪描述捎带「N 类 M 源」（只数非空大类，0 条的分类不冒充规模）
+  'rss-catalog': async (app) => {
+    const catalog = await loadRssCatalog(app);
+    if (!catalog) return null;
+    const cats = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
+    return `${cats} 类 ${catalog.feeds.length} 源`;
   },
 };
 
