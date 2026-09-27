@@ -256,6 +256,17 @@ export interface MemoryStream {
 }
 
 /**
+ * 消息池段（ADR-0206）：pet/connected/welcomeBack/thinking 四类型 AI 预生成弹药房，
+ * 消费 = 用一条删一条；setup 无池恒走兜底语料（message-pool.ts）
+ */
+export interface MessagePoolData {
+  pet: string[];
+  connected: string[];
+  welcomeBack: string[];
+  thinking: string[];
+}
+
+/**
  * smartcat.json 全量数据（用户拍板：所有数据单 json——
  * 原 localStorage 3 个 key + 原 CONFIG/SMART CAT 3 文件 + 原 memories 4 层，全部收纳）
  */
@@ -268,6 +279,8 @@ export interface SmartCatData {
    *  ceBandit（Bandit 臂参数）/lastPresenceAt（在场口径，ticket 088：观察/聊天/主动关心统一刷新，旧数据缺省容忍） */
   editingData: any;
   memory: MemoryStream;
+  /** 消息池（ADR-0206；可选字段旧数据容忍，normalizeData 补齐） */
+  messagePool?: MessagePoolData;
 }
 
 /**

@@ -20,7 +20,8 @@ import { MoodSystem, PersonalityGrowth } from './mood';
 import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
-import { getSmartCatMessage } from './messages';
+import { MessagePoolSystem } from './message-pool';
+import type { PoolKey } from './message-pool';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
@@ -75,6 +76,7 @@ let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
 let absenceSystem: AbsenceSystem | null = null; // 缺席状态机（ticket 093，ADR-0040）
 let quietGateSystem: QuietGateSystem | null = null; // 心情门控（ticket 095，ADR-0042；无自有定时器）
+let messagePool: MessagePoolSystem | null = null; // 消息池（ADR-0206；无自有定时器，30s tick 挂点）
 let animation: SmartCatAnimation | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
@@ -262,6 +264,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
   memorySystem.onSchedulerTick = () => {
     void maybeMemoDueScan();
     void absenceSystem?.onSchedulerTick();
+    // 消息池（ADR-0206）：脏池防抖落盘 + 补货门复检（随既有 30s tick，不自建定时器）
+    void messagePool?.onTick();
     // p2 收敛：常驻长周期轮询随同一 30s tick 按节拍分派
     dispatchResidentTick();
     // ADR-0069 R4：节流期合并的笔记变更到期重入库（随既有 30s tick 分派，不自建定时器）
@@ -306,6 +310,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
       return true;
     },
   });
+
+  // 消息池（ADR-0206）：消费+补货系统（无自有定时器；落盘复用 dataSaver，30s tick 防抖合并写）
+  messagePool = new MessagePoolSystem(dataProvider, dataSaver);
 
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
@@ -361,8 +368,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
     // ADR-0023：prompt 状态向量数据（性格系统 traits/OCEAN）
     characterData: () => data,
+    // ADR-0206：消息池消费注入（抚摸/连接欢迎/思考占位/无 key 兜底统一走池，池空回落兜底语料）
+    poolMessage: (key: PoolKey) => messagePool?.consume(key) ?? '',
   });
   interaction.setupInteractions();
+  // ADR-0206：启动补货检查（冷启动池空 → 走一次兜底；首批生成经冷却与单飞锁节流）
+  void messagePool?.maybeRestock();
 
   // 移动端输入法适配
   mobileAdapter = new MobileInputAdapter(container);
@@ -455,17 +466,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     onLeaveLong: () => { /* 允许回程语 */ },
     onBack: () => {
       if (!appRef) return;
-      const hour = new Date().getHours();
-      let timeBasedMessages: string[] = [];
-      if (hour >= 5 && hour < 12) timeBasedMessages = ['早晨好！新的一天开始啦！🌅', '早安！今天也要元气满满哦！', '清晨的阳光迎接你的归来~', '早上好！思维最清晰的时刻到了！'];
-      else if (hour >= 12 && hour < 18) timeBasedMessages = ['下午好！继续上午的创作吧！', '午安~ 休息后思路更清晰！', '下午时光，正是创作好时节~', '日正当中，灵感正盛！'];
-      else timeBasedMessages = ['晚上好！宁静的夜晚适合思考~', '晚安前的创作时间到了！', '星空下的灵感特别美丽~', '夜晚是思维最活跃的时候呢！'];
-      let msg: string;
-      if (Math.random() > 0.5) {
-        msg = timeBasedMessages[Math.floor(Math.random() * timeBasedMessages.length)];
-      } else {
-        msg = getSmartCatMessage('WELCOME_BACK_MESSAGES');
-      }
+      // ADR-0206：时段死文案删除（时段改为消息池生成上下文信号），欢迎回来走消息池
+      let msg: string = messagePool ? messagePool.consume('welcomeBack') : '';
       // ADR-0025 B 面：欢迎回来也「懂你」——作息有数据时掺入作息感知话
       if (data && data.memory.memoryStream.length >= 3 && Math.random() > 0.6) {
         try {
@@ -1294,6 +1296,10 @@ export function unloadSmartCat(): void {
   registerInsightPatchChannel(null); // P1-29：常驻通道随实例卸载一并清除
   unmountCatContainer();
   __resetVisibilityForTests();
+  if (messagePool) {
+    void messagePool.flushIfDirty().catch(() => { /* 卸载落盘失败静默 */ }); // ADR-0206：脏池兜底落一次
+  }
+  messagePool = null;
   bubbleManager = null;
   moodSystem = null;
   absenceSystem = null; // 缺席状态机（ticket 093）：无自有定时器，随装配整体置空
@@ -1309,7 +1315,7 @@ export function unloadSmartCat(): void {
 
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
-  return { data, bubbleManager, moodSystem, memorySystem, absenceSystem, quietGateSystem, animation, interaction, panels, initialized };
+  return { data, bubbleManager, moodSystem, memorySystem, absenceSystem, quietGateSystem, messagePool, animation, interaction, panels, initialized };
 }
 
 // ------------- 影视动作观察（ticket 074 修订：方法监听，ADR-0026） -------------
