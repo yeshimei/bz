@@ -1,4 +1,4 @@
-/* 源指纹 60d009a81bd418c0 · 仓内输入 274 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6932acbdc943e8d7 · 仓内输入 274 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -20313,7 +20313,9 @@ ${countsToText(s.missing)}
       ];
       POMODORO_HISTORY_FIELDS = ["ts", "duration", "task"];
       OPTIONAL_SEGMENTS = {
-        "pomodoro.json": ["archived"]
+        "pomodoro.json": ["archived"],
+        // ADR-0209：RSSHub 实例地址——段级合并只在用户保存过实例设置时落盘，没配过即缺席（正常形态）
+        "news.json": ["rsshubInstance"]
       };
       OPTIONAL_ITEM_FIELDS = {
         "favorites.json": ["archived", "archivedAt"],
@@ -20326,7 +20328,8 @@ ${countsToText(s.missing)}
         // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
         // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
         "clipbook.json": ["articleOverrides", "savedArchive", "order", "marks", "savedImages", "pendingSource", "readLog"],
-        // news 10 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2）
+        // news 11 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2；
+        // ADR-0209 rsshubInstance 扩段，缺席属「未配置过」正常形态 → OPTIONAL_SEGMENTS 豁免）
         "news.json": [
           "articles",
           "stats",
@@ -20337,7 +20340,8 @@ ${countsToText(s.missing)}
           "sources",
           "rssFeeds",
           "lastFetchAt",
-          "fetchIntervalMin"
+          "fetchIntervalMin",
+          "rsshubInstance"
         ],
         // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
         "home.json": ["version", "desk", "mob", "hiddenDesk", "hiddenMob"],
@@ -34137,6 +34141,16 @@ ${it.text}`).join("\n"));
   function isValidFeedUrl(url) {
     return /^https?:\/\/\S+$/i.test(url);
   }
+  function joinRssHubUrl(instance, routePath) {
+    const base = String(instance || "").trim().replace(/\/+$/, "");
+    const p = String(routePath || "").trim();
+    if (!/^https?:\/\//i.test(base) || !p.startsWith("/") || /\s/.test(p)) return "";
+    return base + p;
+  }
+  function resolveCatalogFeedUrl(feed, instance) {
+    if (!feed.via) return String(feed.url || "").trim();
+    return joinRssHubUrl(instance, feed.via) || String(feed.url).trim();
+  }
   function validateRssCatalog(raw) {
     if (!raw || typeof raw !== "object") return null;
     const o = raw;
@@ -34178,7 +34192,10 @@ ${it.text}`).join("\n"));
         if (typeof c !== "string" || !cats.has(c)) return null;
       }
       const feed = { url, title: ff.title, site: ff.site, tags: ff.tags, cats: ff.cats };
-      if (typeof ff.via === "string" && ff.via) feed.via = ff.via;
+      if (typeof ff.via === "string" && ff.via) {
+        if (!/^\/\S*$/.test(ff.via)) return null;
+        feed.via = ff.via;
+      }
       feeds.push(feed);
     }
     return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
@@ -34252,6 +34269,7 @@ ${it.text}`).join("\n"));
       if (f.title.toLowerCase().includes(q3)) return true;
       if (f.site.toLowerCase().includes(q3)) return true;
       if (f.url.toLowerCase().includes(q3)) return true;
+      if (f.via && f.via.toLowerCase().includes(q3)) return true;
       return f.tags.some((t) => t.toLowerCase().includes(q3));
     });
   }
@@ -34263,7 +34281,7 @@ ${it.text}`).join("\n"));
     }
     return set;
   }
-  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache2, subscribed;
+  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, RSS_HUB_DEFAULT_INSTANCE, memCache2, subscribed;
   var init_rss_catalog = __esm({
     "src/core/rss-catalog.ts"() {
       init_remote_asset();
@@ -34271,6 +34289,7 @@ ${it.text}`).join("\n"));
       init_domain_bus();
       RSS_CATALOG_FILE = "rss-catalog.json";
       RSS_CATALOG_MANIFEST_ID = "rss-catalog";
+      RSS_HUB_DEFAULT_INSTANCE = "https://rsshub.rssforever.com";
       memCache2 = null;
       subscribed = false;
     }
@@ -43100,7 +43119,7 @@ ${it.text}`).join("\n"));
     return storageFile("news.json");
   }
   function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE };
   }
   function parseRssFeeds(raw) {
     var _a2, _b2;
@@ -43151,6 +43170,17 @@ ${it.text}`).join("\n"));
     const n = Math.floor(Number(raw));
     return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
   }
+  function normalizeRsshubInstance(raw) {
+    let t = String(raw != null ? raw : "").trim();
+    if (!t) return null;
+    if (!/^https?:\/\//i.test(t)) {
+      if (/^\/\/\S+$/.test(t)) t = "https:" + t;
+      else if (/^[a-z0-9][a-z0-9.-]*\S*$/i.test(t) && !/\s/.test(t)) t = "https://" + t;
+      else return null;
+    }
+    t = t.replace(/\/+$/, "");
+    return /^https?:\/\/\S+$/i.test(t) ? t : null;
+  }
   function wrapArrayToNewsData(articles) {
     const data = emptyData();
     data.articles = Array.isArray(articles) ? articles : [];
@@ -43176,6 +43206,7 @@ ${it.text}`).join("\n"));
     return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
   }
   function parseNewsFileContent(raw) {
+    var _a2;
     let parsed;
     try {
       parsed = JSON.parse(raw);
@@ -43195,7 +43226,8 @@ ${it.text}`).join("\n"));
         sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
         rssFeeds: parseRssFeeds(obj.rssFeeds),
         lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
-        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
+        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin),
+        rsshubInstance: (_a2 = normalizeRsshubInstance(obj.rsshubInstance)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE
       };
     }
     return null;
@@ -43254,7 +43286,7 @@ ${it.text}`).join("\n"));
       }
       next.articles = merged;
     }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin", "rsshubInstance"]) {
       if (intent2.set[seg] !== void 0) {
         next[seg] = intent2.set[seg];
       }
@@ -43372,6 +43404,7 @@ ${it.text}`).join("\n"));
       init_storage();
       init_http();
       init_constants();
+      init_rss_catalog();
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
       DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
       DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
@@ -43404,10 +43437,11 @@ ${it.text}`).join("\n"));
     writeBilibiliMaxItems: () => writeBilibiliMaxItems,
     writeBilibiliUpInfo: () => writeBilibiliUpInfo,
     writeFetchInterval: () => writeFetchInterval,
+    writeRsshubInstance: () => writeRsshubInstance,
     writeSources: () => writeSources
   });
   function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE };
   }
   async function readDataSourceState() {
     const res = await readNewsData();
@@ -43427,7 +43461,8 @@ ${it.text}`).join("\n"));
       totalArticles: res.data.articles.length,
       rssFeeds: [...res.data.rssFeeds],
       lastFetchAt: res.data.lastFetchAt,
-      fetchIntervalMin: res.data.fetchIntervalMin
+      fetchIntervalMin: res.data.fetchIntervalMin,
+      rsshubInstance: res.data.rsshubInstance
     };
   }
   async function writeSources(sources) {
@@ -43488,6 +43523,16 @@ ${it.text}`).join("\n"));
       return true;
     });
   }
+  async function writeRsshubInstance(v) {
+    var _a2;
+    const inst = (_a2 = normalizeRsshubInstance(v)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { rsshubInstance: inst } });
+      return true;
+    });
+  }
   async function addRssFeed(url, title) {
     const u = normalizeRssFeedUrl(url);
     if (!u) return "invalid";
@@ -43526,6 +43571,7 @@ ${it.text}`).join("\n"));
   var init_news_source_settings = __esm({
     "src/clipbook/news-source-settings.ts"() {
       init_news_data();
+      init_rss_catalog();
       init_write_queue();
     }
   });
@@ -49034,6 +49080,24 @@ ${c.trim()}
         })
       },
       {
+        type: "text",
+        name: "RSSHub 实例",
+        desc: "源库里 RSSHub 路由源订阅时使用的实例地址",
+        placeholder: RSS_HUB_DEFAULT_INSTANCE,
+        binding: {
+          get: () => box.rsshubInstance,
+          set: (v) => {
+            box.rsshubInstance = v;
+          },
+          save: async () => {
+            var _a2;
+            const normalized = (_a2 = normalizeRsshubInstance(box.rsshubInstance)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE;
+            if (await writeRsshubInstance(box.rsshubInstance)) box.rsshubInstance = normalized;
+            else notifyWriteFailed("RSSHub 实例");
+          }
+        }
+      },
+      {
         type: "number",
         name: "B站抓取条数",
         desc: "每位 UP 主抓取的动态条数上限",
@@ -49353,46 +49417,60 @@ ${c.trim()}
   function createRssCatalogPane(root, deps) {
     let catalog = null;
     let subscribed3 = /* @__PURE__ */ new Set();
+    let instance = RSS_HUB_DEFAULT_INSTANCE;
     let query = "";
     let activeCat = "";
     let searchTimer = null;
     const readSubscribed = async () => {
+      var _a2;
       const st = await readDataSourceState();
       subscribed3 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+      instance = (_a2 = normalizeRsshubInstance(st.rsshubInstance)) != null ? _a2 : RSS_HUB_DEFAULT_INSTANCE;
     };
     const subscribeFeed = async (feed, btn) => {
       btn.disabled = true;
       btn.textContent = "订阅中…";
-      const outcome = await addRssFeed(feed.url, feed.title || void 0);
+      const url = resolveCatalogFeedUrl(feed, instance);
+      const outcome = await addRssFeed(url, feed.title || void 0);
       if (outcome === "added") {
-        subscribed3.add(feed.url);
+        subscribed3.add(url);
         btn.textContent = "已订阅";
-        notice(`已订阅 ${feed.title || feed.url}`, "success");
+        notice(`已订阅 ${feed.title || url}`, "success");
         deps.onChanged();
         return;
       }
       if (outcome === "exists") {
-        subscribed3.add(feed.url);
+        subscribed3.add(url);
         btn.textContent = "已订阅";
         return;
       }
       btn.disabled = false;
       btn.textContent = "订阅";
       if (outcome === "invalid") notice("无效的源地址，未能订阅", "error");
-      else notifyWriteFailed(`订阅 ${feed.title || feed.url}`);
+      else notifyWriteFailed(`订阅 ${feed.title || url}`);
     };
     const catalogRowEl = (feed) => {
       const row = document.createElement("div");
       row.className = "bz-rss-cat-row";
       const info = document.createElement("div");
       info.className = "bz-rss-cat-info";
+      const nameline = document.createElement("div");
+      nameline.className = "bz-rss-cat-nameline";
       const name = document.createElement("div");
       name.className = "bz-rss-cat-name";
       name.textContent = feed.title || feed.url;
+      nameline.appendChild(name);
+      if (feed.via) {
+        const via = document.createElement("span");
+        via.className = "bz-rss-cat-via";
+        via.textContent = "RSSHub";
+        via.title = `路由 ${feed.via}，订阅地址按 RSSHub 实例「${instance}」拼出；公共实例对部分路由可能拉不到，自建实例更稳`;
+        nameline.appendChild(via);
+      }
       const domain = document.createElement("div");
       domain.className = "bz-rss-cat-domain";
       domain.textContent = feedDomainOf(feed.url);
-      info.append(name, domain);
+      info.append(nameline, domain);
       const tags = document.createElement("div");
       tags.className = "bz-rss-cat-tags";
       for (const t of feed.tags.slice(0, 3)) {
@@ -49404,7 +49482,8 @@ ${c.trim()}
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "bz-sp-btn bz-rss-cat-sub";
-      const isSub = subscribed3.has(feed.url);
+      const finalUrl = resolveCatalogFeedUrl(feed, instance);
+      const isSub = subscribed3.has(finalUrl);
       btn.textContent = isSub ? "已订阅" : "订阅";
       btn.disabled = isSub;
       if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
@@ -49476,7 +49555,7 @@ ${c.trim()}
       const search = document.createElement("input");
       search.type = "text";
       search.className = "bz-rss-cat-search";
-      search.placeholder = "搜索名称、域名或标签…";
+      search.placeholder = "搜索名称、域名、标签或路由…";
       search.value = query;
       search.addEventListener("input", () => {
         if (searchTimer) clearTimeout(searchTimer);

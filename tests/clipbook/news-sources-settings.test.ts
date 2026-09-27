@@ -53,8 +53,9 @@ describe('数据源组 schema 形态（声明式重写）', () => {
     const rows = dataSourceGroupRows(state);
     expect(rows.length).toBeGreaterThanOrEqual(6);
     expect(rows.some((r) => r.type === 'custom')).toBe(false);
-    // ADR-0121 后 RSS 管理行入组；2026-09-12 B站/RSS 开关退役；issue 302 头部插入立即抓取按钮 + 抓取间隔 select
-    expect(rows.map((r) => r.type)).toEqual(['button', 'select', 'toggle', 'toggle', 'button', 'button', 'number', 'number']);
+    // ADR-0121 后 RSS 管理行入组；2026-09-12 B站/RSS 开关退役；issue 302 头部插入立即抓取按钮 + 抓取间隔 select；
+    // ADR-0209 RSS 订阅源行后插入「RSSHub 实例」text 行
+    expect(rows.map((r) => r.type)).toEqual(['button', 'select', 'toggle', 'toggle', 'button', 'button', 'text', 'number', 'number']);
     expect(rowByName(rows, '每日简报名单')).toBeUndefined();
     expect(rowByName(rows, 'RSS 订阅源').buttonText).toBe('管理');
   });
@@ -123,6 +124,19 @@ describe('数据源组三函数绑定（news.json 落盘）', () => {
     b.set(45);
     await b.save();
     expect(savedDataJson).toBe(1); // 落 data.json 而非 news.json
+  });
+
+  it('RSSHub 实例：set/save 落盘 rsshubInstance（补协议/去尾斜杠归一；非法回退默认；ADR-0209）', async () => {
+    const vault = seedDisk();
+    const rows = dataSourceGroupRows(await readDataSourceState());
+    const b = rowByName(rows, 'RSSHub 实例').binding;
+    expect(b.get()).toBe('https://rsshub.rssforever.com'); // 磁盘无该段 → 回退默认
+    b.set(' my.example.org//');
+    await b.save();
+    expect(diskJson(vault).rsshubInstance).toBe('https://my.example.org');
+    b.set('不是网址!');
+    await b.save();
+    expect(diskJson(vault).rsshubInstance).toBe('https://rsshub.rssforever.com'); // 非法回退默认
   });
 });
 

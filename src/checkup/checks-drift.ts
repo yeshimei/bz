@@ -34,6 +34,8 @@ export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
  */
 export const OPTIONAL_SEGMENTS: Record<string, string[]> = {
   'pomodoro.json': ['archived'],
+  // ADR-0209：RSSHub 实例地址——段级合并只在用户保存过实例设置时落盘，没配过即缺席（正常形态）
+  'news.json': ['rsshubInstance'],
 };
 
 /**
@@ -55,10 +57,11 @@ export const SEGMENT_FIELDS: Record<string, string[]> = {
   // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
   // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order', 'marks', 'savedImages', 'pendingSource', 'readLog'],
-  // news 10 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2）
+  // news 11 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2；
+  // ADR-0209 rsshubInstance 扩段，缺席属「未配置过」正常形态 → OPTIONAL_SEGMENTS 豁免）
   'news.json': [
     'articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds',
-    'lastFetchAt', 'fetchIntervalMin',
+    'lastFetchAt', 'fetchIntervalMin', 'rsshubInstance',
   ],
   // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
   'home.json': ['version', 'desk', 'mob', 'hiddenDesk', 'hiddenMob'],

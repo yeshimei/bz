@@ -9,6 +9,7 @@ import { getApp } from '../core/app';
 import { jsonFileStore, storageFile } from '../core/storage';
 import { httpGetText, requestUrlAsFetch } from '../core/http';
 import { articleKeyOf } from './constants';
+import { RSS_HUB_DEFAULT_INSTANCE } from '../core/rss-catalog';
 
 export const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
 export const STATS_JSON_PATH = 'CONFIG/STORAGE/news-stats.json';
@@ -58,6 +59,8 @@ export interface NewsData {
   lastFetchAt: number;
   /** 抓取间隔档位（分钟，合法 30/60/120/360，issue 302 / ADR-0128） */
   fetchIntervalMin: number;
+  /** RSSHub 实例地址（ADR-0209）：源库路由型条目订阅时按它重拼 URL；默认值见 core/rss-catalog RSS_HUB_DEFAULT_INSTANCE */
+  rsshubInstance: string;
 }
 
 /** 读取失败 / 文件缺失的区分（首用引导 vs 错误态沿用 reader 语义） */
@@ -73,7 +76,7 @@ export interface ReadNewsResult {
 
 /** news.json 空数据形状单源（导出供 checkup 白名单契约锁引用，防段集漂移） */
 export function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE };
 }
 
 /** 纯函数：RSS 订阅列表容错解析（ADR-0121）：非数组 → []；条目须含合法 url，title 去空白可缺省 */
@@ -149,6 +152,20 @@ export function normalizeFetchIntervalMin(raw: unknown): number {
   return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
 }
 
+/** RSSHub 实例地址容错归一（ADR-0209）：trim、补 http(s) 前缀（用户漏敲协议时兜底）、
+ *  去尾斜杠；形状仍不合法（含空白/非 http 开头）→ null（调用方回退默认） */
+export function normalizeRsshubInstance(raw: unknown): string | null {
+  let t = String(raw ?? '').trim();
+  if (!t) return null;
+  if (!/^https?:\/\//i.test(t)) {
+    if (/^\/\/\S+$/.test(t)) t = 'https:' + t;
+    else if (/^[a-z0-9][a-z0-9.-]*\S*$/i.test(t) && !/\s/.test(t)) t = 'https://' + t;
+    else return null;
+  }
+  t = t.replace(/\/+$/, '');
+  return /^https?:\/\/\S+$/i.test(t) ? t : null;
+}
+
 /** 纯函数：旧纯数组 → 四段包裹（articles 原样，stats 默认，名单空，源全开） */
 export function wrapArrayToNewsData(articles: any[]): NewsData {
   const data = emptyData();
@@ -208,6 +225,7 @@ export function parseNewsFileContent(raw: string): NewsData | null {
       rssFeeds: parseRssFeeds(obj.rssFeeds),
       lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
       fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin),
+      rsshubInstance: normalizeRsshubInstance(obj.rsshubInstance) ?? RSS_HUB_DEFAULT_INSTANCE,
     };
   }
   return null;
@@ -305,7 +323,7 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
     }
     next.articles = merged;
   }
-  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds', 'lastFetchAt', 'fetchIntervalMin'] as const) {
+  for (const seg of ['stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds', 'lastFetchAt', 'fetchIntervalMin', 'rsshubInstance'] as const) {
     if (intent.set[seg] !== undefined) {
       (next as any)[seg] = intent.set[seg];
     }

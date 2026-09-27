@@ -3,7 +3,8 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipbook/news-sources-group.ts 设置组调用。
  */
-import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, normalizeRssFeedUrl, normalizeFetchIntervalMin, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { readNewsData, writeNewsDataMerged, DEFAULT_SOURCES, normalizeRssFeedUrl, normalizeFetchIntervalMin, normalizeRsshubInstance, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { RSS_HUB_DEFAULT_INSTANCE } from '../core/rss-catalog';
 import { enqueueNewsWrite } from './write-queue';
 
 export interface DataSourceState {
@@ -24,11 +25,13 @@ export interface DataSourceState {
   lastFetchAt: number;
   /** 抓取间隔档位（分钟，30/60/120/360） */
   fetchIntervalMin: number;
+  /** RSSHub 实例地址（ADR-0209）：源库路由型条目订阅时按它重拼 URL */
+  rsshubInstance: string;
 }
 
 /** 空数据源状态（news.json 缺失/损坏时的回退值；schema 构建与测试共用） */
 export function emptyDataSourceState(exists = false): DataSourceState {
-  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: RSS_HUB_DEFAULT_INSTANCE };
 }
 
 /** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
@@ -51,6 +54,7 @@ export async function readDataSourceState(): Promise<DataSourceState> {
     rssFeeds: [...res.data.rssFeeds],
     lastFetchAt: res.data.lastFetchAt,
     fetchIntervalMin: res.data.fetchIntervalMin,
+    rsshubInstance: res.data.rsshubInstance,
   };
 }
 
@@ -137,6 +141,18 @@ export async function writeFetchInterval(v: string | number): Promise<boolean> {
     const res = await readNewsData();
     if (!res.ok) return false;
     await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
+    return true;
+  });
+}
+
+/** 写 RSSHub 实例地址（ADR-0209；归一去尾斜杠，非法/空回退默认实例；串行队列 + 段级合并）。
+ *  C4：返回是否落盘（news.json 损坏/读盘失败 → false，调用方须提示） */
+export async function writeRsshubInstance(v: string): Promise<boolean> {
+  const inst = normalizeRsshubInstance(v) ?? RSS_HUB_DEFAULT_INSTANCE;
+  return enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return false;
+    await writeNewsDataMerged({ set: { rsshubInstance: inst } });
     return true;
   });
 }

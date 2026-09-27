@@ -1,11 +1,17 @@
 // @vitest-environment node
 /**
- * RSS 源库出版管线纯函数测试（issue 495 / ADR-0208）——scripts/rss-catalog/lib.mjs：
- * 上游表格解析（[Feed] 行 / None 行 / 坏行 / markdown 转义 / 中西分号标签）、
- * 固定大类映射（大小写不敏感、可多类、未命中兜底「综合」）、目录组装（url 去重、坏址剔除）。
+ * RSS 源库出版管线纯函数测试（issue 495 / ADR-0208；issue 497 / ADR-0209 扩 RSSHub）——
+ * scripts/rss-catalog/lib.mjs：上游表格解析（[Feed] 行 / None 行 / 坏行 / markdown 转义 / 中西分号标签）、
+ * 固定大类映射（大小写不敏感、可多类、未命中兜底「综合」）、目录组装（url 去重、坏址剔除）、
+ * RSSHub 路由解析（三免筛选 / example 无参数占位 / 官方分类直映射 / 默认实例拼接 / via 透传）、
+ * 蒸馏（只留必要字段）。
  */
 import { describe, it, expect } from 'vitest';
-import { buildCatalog, CATEGORIES, FALLBACK_CATEGORY, mapCategories, parseTimqianTable } from '../../scripts/rss-catalog/lib.mjs';
+import {
+  buildCatalog, CATEGORIES, FALLBACK_CATEGORY, mapCategories, parseTimqianTable,
+  parseRssHubRoutes, distillRssHub, mapRssHubCategories, joinRssHubUrl,
+  RSS_HUB_DEFAULT_INSTANCE, RSS_HUB_CATEGORY_MAP, UPSTREAMS,
+} from '../../scripts/rss-catalog/lib.mjs';
 
 const SAMPLE = [
   '| RSS feed | Introduction | Address | tags |',
@@ -93,5 +99,102 @@ describe('buildCatalog', () => {
   it('version 缺省 1', () => {
     const { catalog } = buildCatalog({ entries: [], updatedAt: 'x' });
     expect(catalog.version).toBe(1);
+  });
+
+  it('via 条目透传路由路径 + 预映射 cats 直通（不走关键词映射）', () => {
+    const { catalog } = buildCatalog({
+      entries: [
+        { url: `${RSS_HUB_DEFAULT_INSTANCE}/bilibili/hot-search`, title: '哔哩哔哩 · 热搜', site: 'https://www.bilibili.com', tags: ['bilibili'], cats: ['新闻资讯'], via: '/bilibili/hot-search' },
+        { url: 'https://x.example/feed', title: 'X', site: '', tags: [] },
+      ],
+      updatedAt: '2026-09-27',
+    });
+    expect(catalog.feeds).toHaveLength(2);
+    expect(catalog.feeds[0].via).toBe('/bilibili/hot-search');
+    expect(catalog.feeds[0].cats).toEqual(['新闻资讯']); // 预映射直通，tags 里的 'bilibili' 不触发关键词映射
+    expect(catalog.feeds[1].via).toBeUndefined(); // 直连源恒缺省
+  });
+});
+
+// ===== RSSHub 路由（issue 497 / ADR-0209）=====
+
+/** 蒸馏快照样例（与 distillRssHub 产物同形状） */
+const ROUTES_SAMPLE = {
+  bilibili: {
+    name: '哔哩哔哩 bilibili',
+    url: 'https://www.bilibili.com',
+    heat: 220330,
+    routes: {
+      '/bilibili/hot-search': { path: '/bilibili/hot-search', name: '热搜', example: '/bilibili/hot-search', categories: ['new-media'], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: false } },
+      '/bilibili/user/video/:uid': { path: '/bilibili/user/video/:uid', name: 'UP 主动态', example: '/bilibili/user/video/2267573', categories: ['social-media'], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: false } },
+      '/bilibili/need-cookie': { path: '/bilibili/need-cookie', name: '要配置', example: '/bilibili/need-cookie', categories: [], features: { requireConfig: true, requirePuppeteer: false, antiCrawler: false } },
+      '/bilibili/need-pptr': { path: '/bilibili/need-pptr', name: '要无头', example: '/bilibili/need-pptr', categories: [], features: { requireConfig: false, requirePuppeteer: true, antiCrawler: false } },
+      '/bilibili/anti': { path: '/bilibili/anti', name: '易反爬', example: '/bilibili/anti', categories: [], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: true } },
+      '/bilibili/no-example': { path: '/bilibili/no-example', name: '无示例', example: '', categories: [], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: false } },
+      '/bilibili/param-example': { path: '/bilibili/param/:p', name: '参数没填', example: '/bilibili/param/:p', categories: [], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: false } },
+    },
+  },
+  other: {
+    name: 'other 分类命名空间',
+    url: '',
+    heat: 1,
+    routes: {
+      '/other/thing': { path: '/other/thing', name: '未分类', example: '/other/thing', categories: ['other'], features: { requireConfig: false, requirePuppeteer: false, antiCrawler: false } },
+    },
+  },
+};
+
+describe('parseRssHubRoutes', () => {
+  it('三免 + example 无参数占位的路由全收，url 用默认实例拼好，via 存路径，tags 带 ns id', () => {
+    const { entries, dropped } = parseRssHubRoutes(ROUTES_SAMPLE);
+    expect(entries).toHaveLength(3); // hot-search / user/video / other/thing
+    expect(entries[0].url).toBe(`${RSS_HUB_DEFAULT_INSTANCE}/bilibili/hot-search`);
+    expect(entries[0].via).toBe('/bilibili/hot-search');
+    expect(entries[0].title).toBe('哔哩哔哩 bilibili · 热搜');
+    expect(entries[0].site).toBe('https://www.bilibili.com');
+    expect(entries[0].tags).toEqual(['bilibili', 'new-media']);
+    expect(entries[2].title).toBe('other 分类命名空间 · 未分类');
+    expect(dropped).toMatchObject({ needConfig: 1, needPuppeteer: 1, antiCrawler: 1, noExample: 1, paramExample: 1 });
+  });
+
+  it('官方分类直映射；未列出分类落「综合」', () => {
+    const { entries } = parseRssHubRoutes(ROUTES_SAMPLE);
+    expect(entries[0].cats).toEqual(['新闻资讯']); // new-media
+    expect(entries[1].cats).toEqual(['数字生活']); // social-media
+    expect(entries[2].cats).toEqual([FALLBACK_CATEGORY]); // other 不在映射表
+  });
+
+  it('空/坏输入 → 0 条目全零计数', () => {
+    expect(parseRssHubRoutes(null).entries).toHaveLength(0);
+    expect(parseRssHubRoutes({ bad: 42 }).dropped.malformed).toBe(1);
+  });
+});
+
+describe('mapRssHubCategories / joinRssHubUrl / 蒸馏', () => {
+  it('官方分类映射覆盖三免池实际出现的全部分类（新官方分类加入时此断言提醒补映射）', () => {
+    for (const c of Object.keys(RSS_HUB_CATEGORY_MAP)) expect(CATEGORIES).toContain(RSS_HUB_CATEGORY_MAP[c]);
+  });
+
+  it('joinRssHubUrl：去尾斜杠拼接；坏形状返回空串', () => {
+    expect(joinRssHubUrl('https://a.example/', '/x')).toBe('https://a.example/x');
+    expect(joinRssHubUrl('ftp://a.example', '/x')).toBe('');
+    expect(joinRssHubUrl('https://a.example', 'x')).toBe('');
+    expect(joinRssHubUrl('https://a.example', '/x y')).toBe('');
+  });
+
+  it('distillRssHub 只留必要字段；features 三布尔收拢', () => {
+    const d = distillRssHub({ bilibili: { ...ROUTES_SAMPLE.bilibili, description: '多余字段', routes: { '/x': { path: '/x', name: 'X', example: '/x', categories: ['game'], features: { requireConfig: false, requirePuppeteer: true, antiCrawler: false, supportRadar: true } } } }, bad: null });
+    expect(Object.keys(d)).toEqual(['bilibili']);
+    expect(d.bilibili.heat).toBe(220330);
+    const r = d.bilibili.routes['/x'];
+    expect(r.features).toEqual({ requireConfig: false, requirePuppeteer: true, antiCrawler: false });
+    expect(Object.keys(r)).toEqual(['path', 'name', 'example', 'categories', 'features']);
+  });
+
+  it('上游登记含 RSSHub-Docs，且出版侧默认实例与 core 常量同值（真源对齐由 core 测试锁）', () => {
+    const rsshub = UPSTREAMS.find((u) => u.id === 'rsshub-docs-routes');
+    expect(rsshub).toBeTruthy();
+    expect(rsshub.format).toBe('json');
+    expect(RSS_HUB_DEFAULT_INSTANCE).toBe('https://rsshub.rssforever.com');
   });
 });

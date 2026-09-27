@@ -188,3 +188,54 @@ describe('源库页签面板（createRssCatalogPane，ADR-0208）', () => {
     expect(subC.textContent).toBe('已订阅');
   });
 });
+
+describe('路由型源（ADR-0209：via 重拼 + 徽标 + 实例键）', () => {
+  /** 带 RSSHub 路由条目的小库（自建数据，不与上面 describe 共用 smallCatalog——避免既有断言计数漂移） */
+  function viaCatalog() {
+    return {
+      version: 1,
+      updatedAt: '2026-09-27',
+      meta: { sources: [{ id: 'r', name: 'RSSHub 路由目录', url: 'https://github.com/DIYgod/RSSHub-Docs', license: 'AGPL-3.0' }] },
+      categories: ['新闻资讯', '综合'],
+      feeds: [
+        { url: 'https://rsshub.rssforever.com/bilibili/hot-search', title: '哔哩哔哩 · 热搜', site: 'https://www.bilibili.com', tags: ['bilibili'], cats: ['新闻资讯'], via: '/bilibili/hot-search' },
+        { url: 'https://d.example/feed.xml', title: 'D 直连', site: 'https://d.example', tags: [], cats: ['综合'] },
+      ],
+    };
+  }
+  function seedVia(vault: MockVault, newsExtra: Record<string, unknown> = {}, feeds: RssFeed[] = []): void {
+    const data = JSON.stringify(viaCatalog(), null, 2);
+    vault.files.set(CATALOG_PATH, data);
+    vault.files.set(MANIFEST_PATH, manifestTextFor(textSha256(data)));
+    vault.files.set(getNewsFilePath(), JSON.stringify({
+      articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
+      sources: { zhihu: true, guokr: true, bilibili: true, rss: true }, rssFeeds: feeds, ...newsExtra,
+    }));
+  }
+
+  it('路由条目带 RSSHub 徽标；news.json 无实例段时按默认实例判定已订阅', async () => {
+    const vault = seedVault();
+    seedVia(vault, {}, [{ url: 'https://rsshub.rssforever.com/bilibili/hot-search', title: '旧' }]);
+    const root = document.createElement('div');
+    const pane = createRssCatalogPane(root, { onChanged: () => {} });
+    await pane.reload();
+    const rowB = rowByName(root, '哔哩哔哩 · 热搜')!;
+    expect(rowB.querySelector('.bz-rss-cat-via')!.textContent).toBe('RSSHub');
+    expect(rowB.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!.disabled).toBe(true); // 按重拼（=默认实例）URL 匹配
+    expect(rowByName(root, 'D 直连')!.querySelector('.bz-rss-cat-via')).toBeNull(); // 直连条目无徽标
+  });
+
+  it('订阅路由条目：按 news.json rsshubInstance 段重拼 URL 入库（订阅=拷贝当时 URL）', async () => {
+    const vault = seedVault();
+    seedVia(vault, { rsshubInstance: 'https://my.rsshub.example/' });
+    const root = document.createElement('div');
+    const pane = createRssCatalogPane(root, { onChanged: () => {} });
+    await pane.reload();
+    const sub = rowByName(root, '哔哩哔哩 · 热搜')!.querySelector<HTMLButtonElement>('.bz-rss-cat-sub')!;
+    sub.click();
+    await vi.waitFor(() => expect(sub.textContent).toBe('已订阅'));
+    const st = await readDataSourceState();
+    expect(st.rssFeeds.map((f) => f.url)).toEqual(['https://my.rsshub.example/bilibili/hot-search']); // 重拼 + 实例尾斜杠已去
+    expect(st.rssFeeds[0].title).toBe('哔哩哔哩 · 热搜');
+  });
+});

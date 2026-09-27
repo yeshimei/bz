@@ -25,16 +25,16 @@ import { onDomainEvent } from '../core/domain-bus';
 import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
 import {
   catalogCategoryCounts, downloadRssCatalog, feedDomainOf, filterCatalogFeeds,
-  loadRssCatalog, subscribedUrlSet, RSS_CATALOG_FILE,
+  loadRssCatalog, resolveCatalogFeedUrl, subscribedUrlSet, RSS_CATALOG_FILE, RSS_HUB_DEFAULT_INSTANCE,
   type RssCatalog, type RssCatalogFeed,
 } from '../core/rss-catalog';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp, writeBilibiliUpInfo,
-  writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, type DataSourceState,
+  writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, writeRsshubInstance, type DataSourceState,
 } from './news-source-settings';
 import { fetchNowNews, notifyManualFetchResult, localDatetime } from './news-fetcher';
-import { resolveUidFromInputDetailed, fetchUpProfile, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { resolveUidFromInputDetailed, fetchUpProfile, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, normalizeRsshubInstance, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -129,6 +129,18 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
           ctx.refreshVisibility();
         },
       }) },
+    { type: 'text', name: 'RSSHub 实例', desc: '源库里 RSSHub 路由源订阅时使用的实例地址',
+      placeholder: RSS_HUB_DEFAULT_INSTANCE,
+      binding: {
+        get: () => box.rsshubInstance,
+        set: (v) => { box.rsshubInstance = v; },
+        save: async () => {
+          // 保存成功后字盒回填归一值（trim/补协议/去尾斜杠；非法回退默认），下次打开显示的就是真值
+          const normalized = normalizeRsshubInstance(box.rsshubInstance) ?? RSS_HUB_DEFAULT_INSTANCE;
+          if (await writeRsshubInstance(box.rsshubInstance)) box.rsshubInstance = normalized;
+          else notifyWriteFailed('RSSHub 实例');
+        },
+      } },
     { type: 'number', name: 'B站抓取条数', desc: '每位 UP 主抓取的动态条数上限', min: 1, max: 50, step: 1,
       binding: {
         get: () => box.bilibiliMaxItems,
@@ -561,6 +573,8 @@ export interface RssCatalogPane {
 export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () => void }): RssCatalogPane {
   let catalog: RssCatalog | null = null;
   let subscribed = new Set<string>();
+  /** RSSHub 实例地址（ADR-0209）：readSubscribed 随订阅集一起刷；路由条目订阅/已订阅匹配都用它 */
+  let instance = RSS_HUB_DEFAULT_INSTANCE;
   let query = '';
   let activeCat = ''; // '' = 全部
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
@@ -568,29 +582,32 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
   const readSubscribed = async (): Promise<void> => {
     const st = await readDataSourceState();
     subscribed = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+    instance = normalizeRsshubInstance(st.rsshubInstance) ?? RSS_HUB_DEFAULT_INSTANCE;
   };
 
-  /** 订阅动作（行内按钮态机：订阅 → 订阅中… → 已订阅/还原）。C4：数据层结果分型各给准确反馈 */
+  /** 订阅动作（行内按钮态机：订阅 → 订阅中… → 已订阅/还原）。C4：数据层结果分型各给准确反馈。
+   *  路由条目按当前实例重拼（订阅=拷贝当时 URL，ADR-0209：改实例不影响已订阅）；重拼失败回退出版期 url */
   const subscribeFeed = async (feed: RssCatalogFeed, btn: HTMLButtonElement): Promise<void> => {
     btn.disabled = true;
     btn.textContent = '订阅中…';
-    const outcome = await addRssFeed(feed.url, feed.title || undefined);
+    const url = resolveCatalogFeedUrl(feed, instance);
+    const outcome = await addRssFeed(url, feed.title || undefined);
     if (outcome === 'added') {
-      subscribed.add(feed.url);
+      subscribed.add(url);
       btn.textContent = '已订阅';
-      notice(`已订阅 ${feed.title || feed.url}`, 'success');
+      notice(`已订阅 ${feed.title || url}`, 'success');
       deps.onChanged(); // 数据源组行描述计数 + 我的订阅页签跟上
       return;
     }
     if (outcome === 'exists') {
-      subscribed.add(feed.url); // 已订阅态就地校正，不打扰
+      subscribed.add(url); // 已订阅态就地校正，不打扰
       btn.textContent = '已订阅';
       return;
     }
     btn.disabled = false;
     btn.textContent = '订阅';
     if (outcome === 'invalid') notice('无效的源地址，未能订阅', 'error');
-    else notifyWriteFailed(`订阅 ${feed.title || feed.url}`);
+    else notifyWriteFailed(`订阅 ${feed.title || url}`);
   };
 
   const catalogRowEl = (feed: RssCatalogFeed): HTMLElement => {
@@ -598,13 +615,24 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
     row.className = 'bz-rss-cat-row';
     const info = document.createElement('div');
     info.className = 'bz-rss-cat-info';
+    const nameline = document.createElement('div');
+    nameline.className = 'bz-rss-cat-nameline';
     const name = document.createElement('div');
     name.className = 'bz-rss-cat-name';
     name.textContent = feed.title || feed.url;
+    nameline.appendChild(name);
+    if (feed.via) {
+      // 路由型徽标（ADR-0209 决策 7）：区分来源形态、管理「公共实例上可能拉不到」的预期
+      const via = document.createElement('span');
+      via.className = 'bz-rss-cat-via';
+      via.textContent = 'RSSHub';
+      via.title = `路由 ${feed.via}，订阅地址按 RSSHub 实例「${instance}」拼出；公共实例对部分路由可能拉不到，自建实例更稳`;
+      nameline.appendChild(via);
+    }
     const domain = document.createElement('div');
     domain.className = 'bz-rss-cat-domain';
     domain.textContent = feedDomainOf(feed.url);
-    info.append(name, domain);
+    info.append(nameline, domain);
     const tags = document.createElement('div');
     tags.className = 'bz-rss-cat-tags';
     for (const t of feed.tags.slice(0, 3)) {
@@ -616,7 +644,9 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'bz-sp-btn bz-rss-cat-sub';
-    const isSub = subscribed.has(feed.url);
+    // 已订阅按重拼后的最终 URL 匹配（黄页口径的地基是「订阅时拷进去的那个地址」）
+    const finalUrl = resolveCatalogFeedUrl(feed, instance);
+    const isSub = subscribed.has(finalUrl);
     btn.textContent = isSub ? '已订阅' : '订阅';
     btn.disabled = isSub;
     if (!isSub) btn.addEventListener('click', () => void subscribeFeed(feed, btn));
@@ -694,7 +724,7 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
     const search = document.createElement('input');
     search.type = 'text';
     search.className = 'bz-rss-cat-search';
-    search.placeholder = '搜索名称、域名或标签…';
+    search.placeholder = '搜索名称、域名、标签或路由…';
     search.value = query;
     search.addEventListener('input', () => {
       if (searchTimer) clearTimeout(searchTimer);

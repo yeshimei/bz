@@ -1,27 +1,46 @@
 {
-  "generatedAt": "2026-09-27T05:19:59.000Z",
-  "upstream": {
-    "id": "timqian-chinese-independent-blogs",
-    "page": "https://github.com/timqian/chinese-independent-blogs",
-    "license": "MIT"
-  },
+  "generatedAt": "2026-09-27T06:27:48.347Z",
+  "upstream": [
+    {
+      "id": "timqian-chinese-independent-blogs",
+      "page": "https://github.com/timqian/chinese-independent-blogs",
+      "license": "MIT"
+    },
+    {
+      "id": "rsshub-docs-routes",
+      "page": "https://github.com/DIYgod/RSSHub-Docs",
+      "license": "AGPL-3.0（RSSHub 项目数据；路由路径与参数描述为功能性事实数据，出版署名保留）"
+    }
+  ],
   "parse": {
-    "entries": 1349,
+    "entries": 4652,
     "noFeedRows": 140,
     "malformedRows": 2,
-    "duplicates": 0,
-    "invalidUrl": 0
+    "duplicates": 1,
+    "invalidUrl": 2,
+    "rsshub": {
+      "parsed": 3303,
+      "dropped": {
+        "needConfig": 210,
+        "needPuppeteer": 101,
+        "antiCrawler": 246,
+        "noExample": 1,
+        "paramExample": 1,
+        "malformed": 0
+      }
+    }
   },
   "liveness": {
     "skipped": false,
     "checked": 1349,
-    "culled": 197,
-    "keptUnsure": 313
+    "culled": 198,
+    "keptUnsure": 318
   },
-  "kept": 1152,
+  "kept": 4451,
+  "keptVia": 3300,
   "categoryCoverage": {
-    "withCategory": 1121,
-    "fallbackOnly": 31
+    "withCategory": 4247,
+    "fallbackOnly": 204
   },
   "culled": [
     {
@@ -40,13 +59,13 @@
       "reason": "HTTP 404"
     },
     {
-      "url": "http://www.ideawu.net/blog/feed",
-      "title": "idea's blog",
+      "url": "http://xiaix.me/rss/",
+      "title": "xiaix's Blog",
       "reason": "200 但无 feed 结构（疑似普通网页）"
     },
     {
-      "url": "http://xiaix.me/rss/",
-      "title": "xiaix's Blog",
+      "url": "https://www.jdon.com/jivejdon/rss",
+      "title": "解道jdon.com",
       "reason": "200 但无 feed 结构（疑似普通网页）"
     },
     {
@@ -525,6 +544,11 @@
       "reason": "HTTP 404"
     },
     {
+      "url": "https://blog.yuanpei.me/atom.xml",
+      "title": "素履独行",
+      "reason": "HTTP 404"
+    },
+    {
       "url": "https://itcharge.cn/feed/",
       "title": "程序员充电站",
       "reason": "HTTP 404"
@@ -605,8 +629,8 @@
       "reason": "200 但无 feed 结构（疑似普通网页）"
     },
     {
-      "url": "http://starfury.tech/feed",
-      "title": "Starfury",
+      "url": "https://cubik65536.top/atom.xml",
+      "title": "Cubik的小站",
       "reason": "HTTP 404"
     },
     {
@@ -1037,11 +1061,6 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://www.phodal.com/blog/feeds/rss/",
-      "title": "全栈应用开发:精益实践",
-      "reason": "ENOTFOUND（重试仍未确认，保留）"
-    },
-    {
       "url": "https://www.lichong.work/atom.xml",
       "title": "Ric's Blog",
       "reason": "超时（重试仍未确认，保留）"
@@ -1082,6 +1101,11 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
+      "url": "http://www.ideawu.net/blog/feed",
+      "title": "idea's blog",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "http://teddy-chen-tw.blogspot.com/feeds/posts/default",
       "title": "搞笑談軟工",
       "reason": "超时（重试仍未确认，保留）"
@@ -1095,11 +1119,6 @@
       "url": "http://www.techug.com/feed",
       "title": "程序师",
       "reason": "HTTP 412（重试仍未确认，保留）"
-    },
-    {
-      "url": "https://www.jdon.com/jivejdon/rss",
-      "title": "解道jdon.com",
-      "reason": "ETIMEDOUT（重试仍未确认，保留）"
     },
     {
       "url": "http://feed.immmmm.com/",
@@ -1187,6 +1206,11 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
+      "url": "https://wujunze.com/index.xml",
+      "title": "Wujunze's Blog",
+      "reason": "ECONNRESET（重试仍未确认，保留）"
+    },
+    {
       "url": "http://feeds.feedburner.com/initiative",
       "title": "Est's Blog",
       "reason": "超时（重试仍未确认，保留）"
@@ -1210,11 +1234,6 @@
       "url": "https://livid.v2ex.com/feed.xml",
       "title": "Livid",
       "reason": "超时（重试仍未确认，保留）"
-    },
-    {
-      "url": "https://seo.g2soft.net/atom.xml",
-      "title": "SEO 网站优化及网站推广",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
     },
     {
       "url": "https://xilidou.com/atom.xml",
@@ -1327,11 +1346,6 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://wangyi.ai/atom.xml",
-      "title": "Yi's blog",
-      "reason": "超时（重试仍未确认，保留）"
-    },
-    {
       "url": "https://www.inevitable.tech/atom.xml",
       "title": "Inevitable",
       "reason": "ECONNRESET（重试仍未确认，保留）"
@@ -1364,7 +1378,7 @@
     {
       "url": "https://www.bobjiang.com/index.xml",
       "title": "Bob Jiang's Blog",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://plausistory.blog/feed/",
@@ -1452,6 +1466,11 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
+      "url": "https://chegva.com/feed/",
+      "title": "安志合的学习博客",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://blog.happyhack.io/atom.xml",
       "title": "HappyHack",
       "reason": "ENOTFOUND（重试仍未确认，保留）"
@@ -1502,11 +1521,6 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://cdjax.com/?feed=rss2",
-      "title": "jax - 走在路上",
-      "reason": "超时（重试仍未确认，保留）"
-    },
-    {
       "url": "https://www.geekzl.com/feed",
       "title": "极客中心",
       "reason": "ECONNREFUSED（重试仍未确认，保留）"
@@ -1532,24 +1546,19 @@
       "reason": "ECONNREFUSED（重试仍未确认，保留）"
     },
     {
-      "url": "https://teobler.com/rss.xml",
-      "title": "teobler",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
-    },
-    {
       "url": "https://blog.winterchen.com/atom.xml",
       "title": "winter's Blog",
       "reason": "ENOTFOUND（重试仍未确认，保留）"
     },
     {
+      "url": "https://chengpeiquan.com/feed/",
+      "title": "程沛权 - 养了三只猫",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://enoch2090.me/atom.xml",
       "title": "Enoch2090",
       "reason": "fetch failed（重试仍未确认，保留）"
-    },
-    {
-      "url": "https://shenyongfan.com/rss/",
-      "title": "乌托邦是个理想国",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
     },
     {
       "url": "https://moshou.me/?feed=rss2",
@@ -1719,7 +1728,7 @@
     {
       "url": "https://gyrojeff.top/index.php/feed",
       "title": "gyro永不抽风！",
-      "reason": "HTTP 502（重试仍未确认，保留）"
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://xqrp.com/feed",
@@ -1732,14 +1741,14 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://qianguyihao.com/atom.xml",
-      "title": "千古壹号",
+      "url": "https://blog.didispace.com/atom.xml",
+      "title": "程序猿DD",
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://blog.yuanpei.me/atom.xml",
-      "title": "素履独行",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
+      "url": "https://qianguyihao.com/atom.xml",
+      "title": "千古壹号",
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://www.domon.cn/rss/",
@@ -1847,14 +1856,14 @@
       "reason": "ENOTFOUND（重试仍未确认，保留）"
     },
     {
-      "url": "https://cubik65536.top/atom.xml",
-      "title": "Cubik的小站",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
-    },
-    {
       "url": "https://wumanho.cn/index.xml",
       "title": "OK Computer「好电脑」",
       "reason": "CERT_HAS_EXPIRED（重试仍未确认，保留）"
+    },
+    {
+      "url": "http://starfury.tech/feed",
+      "title": "Starfury",
+      "reason": "HTTP 503（重试仍未确认，保留）"
     },
     {
       "url": "https://blog.woyou.cool/feed",
@@ -1865,6 +1874,11 @@
       "url": "https://www.226yzy.com/atom.xml",
       "title": "星空下的YZY",
       "reason": "ECONNREFUSED（重试仍未确认，保留）"
+    },
+    {
+      "url": "https://blog.ursb.me/feed.xml",
+      "title": "Airing's Blog",
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://moc.1tlt1.com/index.php/feed",
@@ -1879,7 +1893,7 @@
     {
       "url": "https://chestnutheng.cn/index.xml",
       "title": "子恒的博客",
-      "reason": "超时（重试仍未确认，保留）"
+      "reason": "ETIMEDOUT（重试仍未确认，保留）"
     },
     {
       "url": "https://www.huhangfei.com/feed/",
@@ -1905,6 +1919,11 @@
       "url": "https://maie.name/feed",
       "title": "流浪天下",
       "reason": "UNABLE_TO_VERIFY_LEAF_SIGNATURE（重试仍未确认，保留）"
+    },
+    {
+      "url": "https://yanhaijing.com/rss.xml",
+      "title": "颜海镜",
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "http://www.zhangningle.top/rss.xml",
@@ -2002,6 +2021,11 @@
       "reason": "HTTP 403（重试仍未确认，保留）"
     },
     {
+      "url": "https://lmmsoft.github.io/feed.atom",
+      "title": "明明如月的博客",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://blog.ismisv.com/feed.xml",
       "title": "类库大魔王的挖井日记",
       "reason": "HTTP 403（重试仍未确认，保留）"
@@ -2039,7 +2063,7 @@
     {
       "url": "https://www.cyrilstudio.top/feed",
       "title": "梦溪博客",
-      "reason": "超时（重试仍未确认，保留）"
+      "reason": "ECONNREFUSED（重试仍未确认，保留）"
     },
     {
       "url": "https://icooper.cc/feed/",
@@ -2227,6 +2251,11 @@
       "reason": "ENOTFOUND（重试仍未确认，保留）"
     },
     {
+      "url": "https://lihan3238.github.io/index.xml",
+      "title": "李寒的小窝",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://blog.gaoran.xyz/rss/feed.xml",
       "title": "Ryan' Lab",
       "reason": "ECONNRESET（重试仍未确认，保留）"
@@ -2240,6 +2269,11 @@
       "url": "https://upsangel.com/feed/",
       "title": "by Upsangel",
       "reason": "ENOENT（重试仍未确认，保留）"
+    },
+    {
+      "url": "https://darksair.org/blog/feed.xml",
+      "title": "Sky Watch",
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://booop.net/feed/",
@@ -2387,6 +2421,11 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
+      "url": "https://i.hsfzxjy.site/rss.xml",
+      "title": "hsfzxjy 的博客",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://inote.xyz/zh/rss.xml",
       "title": "iNote",
       "reason": "EAI_AGAIN（重试仍未确认，保留）"
@@ -2394,7 +2433,7 @@
     {
       "url": "https://xeonzilla.top/index.xml",
       "title": "Xeonzilla's Note",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://blog.luijp.cn/rss.xml",
@@ -2437,6 +2476,11 @@
       "reason": "ENOTFOUND（重试仍未确认，保留）"
     },
     {
+      "url": "https://blog.thedoga.tech/feed",
+      "title": "栖木的网络日志",
+      "reason": "超时（重试仍未确认，保留）"
+    },
+    {
       "url": "https://blog.ytmc.fun/rss.xml",
       "title": "一桐のBlog",
       "reason": "ENOTFOUND（重试仍未确认，保留）"
@@ -2445,6 +2489,11 @@
       "url": "https://yvling.cn/rss",
       "title": "喻灵的博客",
       "reason": "ENOTFOUND（重试仍未确认，保留）"
+    },
+    {
+      "url": "https://blog.zhilu.cyou/atom.xml",
+      "title": "纸鹿摸鱼处",
+      "reason": "ECONNRESET（重试仍未确认，保留）"
     },
     {
       "url": "https://cuipengfei.me/atom.xml",
@@ -2482,8 +2531,8 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://blog.goodboyboy.top/atom.xml",
-      "title": "GoodBoyboy 's Blog",
+      "url": "https://www.glowisle.me/atom.xml",
+      "title": "映屿",
       "reason": "ECONNRESET（重试仍未确认，保留）"
     },
     {
@@ -2537,11 +2586,6 @@
       "reason": "超时（重试仍未确认，保留）"
     },
     {
-      "url": "https://wklken.me/posts/index.xml",
-      "title": "wklken",
-      "reason": "超时（重试仍未确认，保留）"
-    },
-    {
       "url": "https://jaketao.com/feed/",
       "title": "Jake Blog",
       "reason": "HTTP 403（重试仍未确认，保留）"
@@ -2550,6 +2594,11 @@
       "url": "https://fivsevn.com/rss",
       "title": "五月七日的思考札记",
       "reason": "HTTP 403（重试仍未确认，保留）"
+    },
+    {
+      "url": "https://blog.moran.im/rss.xml",
+      "title": "廊桥遗梦",
+      "reason": "ECONNRESET（重试仍未确认，保留）"
     },
     {
       "url": "https://blog.notlove.me/feed.xml",
@@ -2567,9 +2616,9 @@
       "reason": "ENOTFOUND（重试仍未确认，保留）"
     },
     {
-      "url": "https://www.feifun.cn/feed.xml",
-      "title": "Fei's Tours and Tales",
-      "reason": "ECONNRESET（重试仍未确认，保留）"
+      "url": "https://imsuk.cn/feed/",
+      "title": "SukのBlog",
+      "reason": "超时（重试仍未确认，保留）"
     },
     {
       "url": "https://moyuin.top/rss.xml",

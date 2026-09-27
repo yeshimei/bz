@@ -1,14 +1,15 @@
-// scripts/rss-catalog/lib.mjs — RSS 源库出版管线纯函数（issue 495 / ADR-0208）
+// scripts/rss-catalog/lib.mjs — RSS 源库出版管线纯函数（issue 495 / ADR-0208；issue 497 / ADR-0209 扩 RSSHub 上游）
 //
-// 上游 markdown 表格 → 目录条目 → 固定大类归类 → 目录对象组装。
+// 上游 markdown 表格 / RSSHub 路由目录 → 目录条目 → 固定大类归类 → 目录对象组装。
 // 全部纯函数（无 IO、无时钟），vitest 直测（tests/scripts/rss-catalog-lib.test.mjs）；
 // fetch-upstream.mjs / build.mjs 是它的两个 IO 壳。
 //
-// 归类口径（ADR-0208 拍板）：上游是自由打标（实测 810 个去重标签，656 个只出现一两次），
+// 归类口径（ADR-0208 拍板）：timqian 上游是自由打标（实测 810 个去重标签，656 个只出现一两次），
 // 不能直接当分类导航；固定大类 + 关键词映射（首中归类、一个条目可属多个大类），
 // 原始标签全保留只作搜索词；未命中的进「综合」。
+// RSSHub 路由（ADR-0209）不走关键词映射：官方 categories 直映射（见 RSS_HUB_CATEGORY_MAP）。
 
-/** 上游登记（首期只接 timqian 一家；二期候选 awesome-rss-feeds-list，CC0） */
+/** 上游登记（format：markdown 表格 | json 路由目录；destExt 随 format 定快照扩展名） */
 export const UPSTREAMS = [
   {
     id: 'timqian-chinese-independent-blogs',
@@ -16,19 +17,38 @@ export const UPSTREAMS = [
     page: 'https://github.com/timqian/chinese-independent-blogs',
     raw: 'https://raw.githubusercontent.com/timqian/chinese-independent-blogs/master/README.md',
     license: 'MIT',
+    format: 'markdown',
+  },
+  {
+    id: 'rsshub-docs-routes',
+    name: 'RSSHub 路由目录',
+    page: 'https://github.com/DIYgod/RSSHub-Docs',
+    raw: 'https://raw.githubusercontent.com/DIYgod/RSSHub-Docs/master/src/public/routes.json',
+    license: 'AGPL-3.0（RSSHub 项目数据；路由路径与参数描述为功能性事实数据，出版署名保留）',
+    format: 'json',
   },
 ];
 
-/** 固定大类（顺序即 UI chips 顺序）；最后一位是未命中兜底 */
+/** RSSHub 路由条目 url 的出版期默认实例（ADR-0209 用户拍板：实测国内可达的社区公共实例）。
+ *  运行时默认值以 src/core/rss-catalog.ts 的同名常量为插件侧单源，两侧同值由测试对齐。 */
+export const RSS_HUB_DEFAULT_INSTANCE = 'https://rsshub.rssforever.com';
+
+/** 固定大类（顺序即 UI chips 顺序）；最后一位是未命中兜底。
+ *  ADR-0209 扩 3 类（新闻资讯/校园学术/财经）：RSSHub 路由的三大块（new-media 488 /
+ *  university 487 / finance 153）在 495 按独立博客画像设计的 12 类里没有着落；
+ *  timqian 既有归类不受影响（新增类只接 RSSHub 直映射）。 */
 export const FALLBACK_CATEGORY = '综合';
 export const CATEGORIES = [
+  '新闻资讯',
   '编程技术',
   '前端与移动',
   'AI 与数据',
   '产品与创业',
+  '财经',
   '设计创意',
   '数字生活',
   '读书学习',
+  '校园学术',
   '生活随笔',
   '摄影影像',
   '旅行户外',
@@ -101,12 +121,141 @@ export function mapCategories(tags) {
   return cats.length > 0 ? cats : [FALLBACK_CATEGORY];
 }
 
+/** RSSHub 官方分类 → 固定大类直映射（ADR-0209 决策 6：官方分类比自由打标可靠，不走关键词；
+ *  未列出的分类（如 other）不映射 → 落 [综合] 兜底。sport 只有 13 条，归「新闻资讯」（赛事资讯）。 */
+export const RSS_HUB_CATEGORY_MAP = {
+  'new-media': '新闻资讯',
+  'traditional-media': '新闻资讯',
+  government: '新闻资讯',
+  popular: '新闻资讯',
+  sport: '新闻资讯',
+  programming: '编程技术',
+  'program-update': '编程技术',
+  design: '设计创意',
+  'social-media': '数字生活',
+  bbs: '数字生活',
+  shopping: '数字生活',
+  forecast: '数字生活',
+  study: '读书学习',
+  reading: '读书学习',
+  university: '校园学术',
+  journal: '校园学术',
+  blog: '生活随笔',
+  picture: '摄影影像',
+  travel: '旅行户外',
+  game: '游戏娱乐',
+  multimedia: '游戏娱乐',
+  anime: '游戏娱乐',
+  live: '游戏娱乐',
+  finance: '财经',
+};
+
+/** RSSHub 官方分类数组 → 固定大类（保持官方分类遍历序去重；未命中 → [综合]） */
+export function mapRssHubCategories(rssCats) {
+  const cats = [];
+  for (const c of rssCats || []) {
+    const mapped = RSS_HUB_CATEGORY_MAP[String(c || '').trim().toLowerCase()];
+    if (mapped && !cats.includes(mapped)) cats.push(mapped);
+  }
+  return cats.length > 0 ? cats : [FALLBACK_CATEGORY];
+}
+
+/** 实例地址 + 路由路径 → 完整 feed 地址（实例去尾斜杠；形状不对返回空串交上游校验剔除） */
+export function joinRssHubUrl(instance, routePath) {
+  const base = String(instance || '').trim().replace(/\/+$/, '');
+  const p = String(routePath || '').trim();
+  if (!/^https?:\/\//i.test(base) || !p.startsWith('/') || /\s/.test(p)) return '';
+  return base + p;
+}
+
+/** RSSHub routes.json 原始数据 → 蒸馏快照（只留出版所需字段，8.5MB → 约 1MB 入库）。
+ *  全量命名空间/路由都留（不含筛选——筛选口径在 parseRssHubRoutes，可随报告迭代）。 */
+export function distillRssHub(data) {
+  const out = {};
+  for (const [nsId, ns] of Object.entries(data || {})) {
+    if (!ns || typeof ns !== 'object' || !ns.routes || typeof ns.routes !== 'object') continue;
+    const routes = {};
+    for (const [key, r] of Object.entries(ns.routes)) {
+      if (!r || typeof r !== 'object') continue;
+      const feat = r.features && typeof r.features === 'object' ? r.features : {};
+      routes[key] = {
+        path: String(r.path || key),
+        name: String(r.name || ''),
+        example: String(r.example || ''),
+        categories: Array.isArray(r.categories) ? r.categories.map((c) => String(c)).filter(Boolean) : [],
+        features: { requireConfig: !!feat.requireConfig, requirePuppeteer: !!feat.requirePuppeteer, antiCrawler: !!feat.antiCrawler },
+      };
+    }
+    out[nsId] = { name: String(ns.name || ''), url: String(ns.url || ''), heat: Number(ns.heat) || 0, routes };
+  }
+  return out;
+}
+
+/**
+ * 蒸馏快照 → 目录条目（ADR-0209 决策 2：三免全收——免 requireConfig/requirePuppeteer/
+ * antiCrawler，example 存在且不含 `:参数` 占位；参数没填的地址不能直接订阅）。
+ * 条目 url 用默认实例拼好（插件侧校验零改动），via 存路由路径作订阅时重拼素材。
+ */
+export function parseRssHubRoutes(data) {
+  const entries = [];
+  const dropped = { needConfig: 0, needPuppeteer: 0, antiCrawler: 0, noExample: 0, paramExample: 0, malformed: 0 };
+  if (!data || typeof data !== 'object') return { entries, dropped };
+  for (const [nsId, ns] of Object.entries(data)) {
+    if (!ns || typeof ns !== 'object' || !ns.routes || typeof ns.routes !== 'object') {
+      dropped.malformed++;
+      continue;
+    }
+    const nsName = String(ns.name || nsId).trim() || nsId;
+    const nsSite = String(ns.url || '').trim();
+    for (const r of Object.values(ns.routes)) {
+      if (!r || typeof r !== 'object') {
+        dropped.malformed++;
+        continue;
+      }
+      const feat = r.features && typeof r.features === 'object' ? r.features : {};
+      if (feat.requireConfig) {
+        dropped.needConfig++;
+        continue;
+      }
+      if (feat.requirePuppeteer) {
+        dropped.needPuppeteer++;
+        continue;
+      }
+      if (feat.antiCrawler) {
+        dropped.antiCrawler++;
+        continue;
+      }
+      const example = String(r.example || '').trim();
+      if (!example) {
+        dropped.noExample++;
+        continue;
+      }
+      if (example.split('/').some((seg) => seg.startsWith(':'))) {
+        dropped.paramExample++;
+        continue;
+      }
+      const routeName = String(r.name || '').trim();
+      const cats = Array.isArray(r.categories) ? r.categories.map((c) => String(c).trim()).filter(Boolean) : [];
+      entries.push({
+        url: joinRssHubUrl(RSS_HUB_DEFAULT_INSTANCE, example),
+        title: routeName ? `${nsName} · ${routeName}` : nsName,
+        site: nsSite,
+        tags: [nsId, ...cats],
+        cats: mapRssHubCategories(cats),
+        via: example,
+      });
+    }
+  }
+  return { entries, dropped };
+}
+
 /** 合法 feed 地址（与插件端 normalizeRssFeedUrl 同口径：http/https 且无空白） */
 export function isValidFeedUrl(url) {
   return /^https?:\/\/\S+$/i.test(String(url || '').trim());
 }
 
-/** 目录组装：url 去重（去尾斜杠比对、首见为准、不改写原串）、坏址剔除、归类、序沿用上游（订阅量粗排）。 */
+/** 目录组装：url 去重（去尾斜杠比对、首见为准、不改写原串）、坏址剔除、归类、序沿用上游（订阅量粗排）。
+ *  条目带预映射 cats（RSSHub 直映射产物）则不跑关键词映射；带 via（路由路径）原样透传。 */
 export function buildCatalog({ entries, updatedAt, version = 1, upstreams = UPSTREAMS }) {
   const seen = new Set();
   const feeds = [];
@@ -127,7 +276,10 @@ export function buildCatalog({ entries, updatedAt, version = 1, upstreams = UPST
     const title = String(e.title || '').trim();
     const site = String(e.site || '').trim();
     const tags = (e.tags || []).map((t) => String(t).trim()).filter(Boolean);
-    feeds.push({ url, title, site, tags, cats: mapCategories(tags) });
+    const cats = Array.isArray(e.cats) && e.cats.length > 0 ? e.cats.map((c) => String(c).trim()).filter(Boolean) : mapCategories(tags);
+    const feed = { url, title, site, tags, cats: cats.length > 0 ? cats : [FALLBACK_CATEGORY] };
+    if (e.via) feed.via = String(e.via).trim();
+    feeds.push(feed);
   }
   return {
     catalog: {

@@ -69,7 +69,7 @@ describe('CB2 writeNewsData 写失败透传', () => {
     const vault = seedDisk([{ platform: '果壳科学人', title: '甲', url: 'https://gk.com/1' }]);
     const before = vault.files.get(getNewsFilePath());
     vi.spyOn(vault, 'modify').mockRejectedValue(new Error('disk full'));
-    await expect(writeNewsData({ articles: [], stats: { totalRead: 9, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { zhihu: true, guokr: true, bilibili: true, rss: true }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 }))
+    await expect(writeNewsData({ articles: [], stats: { totalRead: 9, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { zhihu: true, guokr: true, bilibili: true, rss: true }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30, rsshubInstance: 'https://rsshub.rssforever.com' }))
       .rejects.toThrow('disk full');
     expect(vault.files.get(getNewsFilePath())).toBe(before); // 原文件未被静默替换
   });

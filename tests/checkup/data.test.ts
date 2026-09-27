@@ -275,12 +275,23 @@ describe('检查二：字段漂移', () => {
     expect(warn!.title).toContain('ghost');
   });
 
-  it('func P2-2 翻版：news.json 10 键齐全（emptyData 派生，含抓取元数据）→ 零 warn', async () => {
+  it('func P2-2 翻版：news.json 11 键齐全（emptyData 派生，含抓取元数据）→ 零 warn', async () => {
     const { app } = makeApp({
       [`${DIR}/news.json`]: JSON.stringify(emptyData()),
     });
     const sec = await checkFieldDrift(app);
     expect(sec!.issues.filter((i) => i.severity === 'warn' && i.title.includes('剪藏本'))).toEqual([]);
+  });
+
+  it('ADR-0209：news.json 缺 rsshubInstance 段（未配置过实例）→ 不报「缺少数据段」（可选段豁免）', async () => {
+    const noRsshub = emptyData() as unknown as Record<string, unknown>;
+    delete noRsshub.rsshubInstance;
+    const { app } = makeApp({
+      [`${DIR}/news.json`]: JSON.stringify(noRsshub),
+    });
+    const sec = await checkFieldDrift(app);
+    const miss = sec!.issues.find((i) => i.title.includes('缺少数据段') && i.title.includes('rsshubInstance'));
+    expect(miss).toBeUndefined();
   });
 
   it('func P2-4 翻版：belongings.json 3 键落盘形状（ADR-0102 派生段不落盘）→ 零 info「缺少数据段」', async () => {

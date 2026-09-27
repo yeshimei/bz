@@ -15,7 +15,7 @@
  * SEGMENT_FIELDS 保持 string[] 不改生产类型。
  */
 import { describe, it, expect } from 'vitest';
-import { SEGMENT_FIELDS, MEMO_ITEM_FIELDS, FAVORITES_ITEM_FIELDS } from '../../src/checkup/checks-drift';
+import { SEGMENT_FIELDS, MEMO_ITEM_FIELDS, FAVORITES_ITEM_FIELDS, OPTIONAL_SEGMENTS } from '../../src/checkup/checks-drift';
 import { jsonScanTargets } from '../../src/checkup/files';
 import { emptySidecar } from '../../src/clipbook/data';
 import { emptyData } from '../../src/clipbook/news-data';
@@ -35,8 +35,15 @@ describe('段级契约：SEGMENT_FIELDS × 域写侧形状', () => {
     expect(SEGMENT_FIELDS['clipbook.json']).toHaveLength(7);
   });
 
-  it('news.json = emptyData() 10 键（func P2-2：lastFetchAt/fetchIntervalMin 不得再漏）', () => {
+  it('news.json = emptyData() 11 键（func P2-2：lastFetchAt/fetchIntervalMin 不得再漏；ADR-0209 rsshubInstance）', () => {
     expect(sorted(SEGMENT_FIELDS['news.json'])).toEqual(sorted(Object.keys(emptyData())));
+    expect(SEGMENT_FIELDS['news.json']).toHaveLength(11);
+  });
+
+  it('news.json：rsshubInstance 属「功能未用到就不写」可选段（ADR-0209，缺席豁免 missing）', () => {
+    expect(OPTIONAL_SEGMENTS['news.json']).toEqual(['rsshubInstance']);
+    // 白名单仍完整登记可选键（防「约定外」误报）
+    for (const k of OPTIONAL_SEGMENTS['news.json']) expect(SEGMENT_FIELDS['news.json']).toContain(k);
   });
 
   it('home.json = emptyHomeOrder() v3 五键（home 批 1d26c797 交接）', () => {

@@ -18,11 +18,14 @@ import {
   downloadRssCatalog,
   feedDomainOf,
   filterCatalogFeeds,
+  joinRssHubUrl,
   loadRssCatalog,
   resetRssCatalogCache,
+  resolveCatalogFeedUrl,
   RSS_CATALOG_FILE,
   RSS_CATALOG_FALLBACK_CATEGORY,
   RSS_CATALOG_MANIFEST_ID,
+  RSS_HUB_DEFAULT_INSTANCE,
   subscribedUrlSet,
   validateRssCatalog,
   catalogCategoryCounts,
@@ -81,10 +84,13 @@ describe('validateRssCatalog', () => {
     expect(c!.categories).toHaveLength(3);
   });
 
-  it('真源（downloads/rss-catalog.json，1150 条）也通过——插件端与出版脚本同口径', () => {
+  it('真源（downloads/rss-catalog.json，直连 + RSSHub 路由混编）也通过——插件端与出版脚本同口径', () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const real = JSON.parse(readFileSync(resolve(here, '../../downloads/rss-catalog.json'), 'utf8'));
-    expect(validateRssCatalog(real)).not.toBeNull();
+    const c = validateRssCatalog(real);
+    expect(c).not.toBeNull();
+    expect(c!.feeds.length).toBeGreaterThan(4000); // 497 出版：直连 1151 + 路由 3300
+    expect(c!.feeds.filter((f) => f.via).length).toBeGreaterThan(3000);
   });
 
   it('version 非数值 / 缺 categories / categories 空数组 → null', () => {
@@ -146,6 +152,18 @@ describe('validateRssCatalog', () => {
     expect(validateRssCatalog(c2)).toBeNull();
     expect(validateRssCatalog(null)).toBeNull();
     expect(validateRssCatalog('garbage')).toBeNull();
+  });
+
+  it('via 形状门（ADR-0209）：非 / 开头或含空白 → null（坏路径会在订阅重拼时产出垃圾地址）', () => {
+    const c = smallCatalog();
+    c.feeds[0].via = '/bilibili/hot-search';
+    expect(validateRssCatalog(c)).not.toBeNull(); // 合法路由路径
+    const bad = smallCatalog();
+    (bad.feeds[0] as any).via = 'bilibili/hot-search';
+    expect(validateRssCatalog(bad)).toBeNull();
+    const spaced = smallCatalog();
+    (spaced.feeds[0] as any).via = '/has space';
+    expect(validateRssCatalog(spaced)).toBeNull();
   });
 });
 
@@ -248,5 +266,30 @@ describe('查询纯函数', () => {
     const set = subscribedUrlSet([' https://a.example/feed.xml ', '', '  ']);
     expect(set.has('https://a.example/feed.xml')).toBe(true);
     expect(set.size).toBe(1);
+  });
+});
+
+describe('RSSHub 路由纯函数（ADR-0209）', () => {
+  const viaFeed = { url: 'https://rsshub.rssforever.com/bilibili/hot-search', via: '/bilibili/hot-search' };
+
+  it('joinRssHubUrl 与出版脚本同口径；插件侧默认实例与 lib.mjs 常量同值', async () => {
+    expect(joinRssHubUrl('https://my.example/inst/', '/x/y')).toBe('https://my.example/inst/x/y');
+    expect(joinRssHubUrl('not-url', '/x')).toBe('');
+    expect(joinRssHubUrl('https://a.example', 'no-slash')).toBe('');
+    const lib = await import('../../scripts/rss-catalog/lib.mjs');
+    expect(RSS_HUB_DEFAULT_INSTANCE).toBe(lib.RSS_HUB_DEFAULT_INSTANCE);
+  });
+
+  it('resolveCatalogFeedUrl：via 按实例重拼，直连原样；实例损坏回退出版期 url', () => {
+    expect(resolveCatalogFeedUrl(viaFeed, 'https://my.example/')).toBe('https://my.example/bilibili/hot-search');
+    expect(resolveCatalogFeedUrl({ url: 'https://a.example/feed.xml' }, 'https://my.example/')).toBe('https://a.example/feed.xml');
+    expect(resolveCatalogFeedUrl(viaFeed, '垃圾')).toBe('https://rsshub.rssforever.com/bilibili/hot-search');
+  });
+
+  it('filterCatalogFeeds：via 路由路径纳入搜索命中', () => {
+    const c = smallCatalog();
+    c.feeds[2].via = '/zhihu/hot';
+    expect(filterCatalogFeeds(c, { query: '/zhihu' }).map((f) => f.url)).toEqual(['https://c.example/atom.xml']);
+    expect(filterCatalogFeeds(c, { query: '不存在的路由' })).toHaveLength(0); // 其余条目不因 via 误命中
   });
 });

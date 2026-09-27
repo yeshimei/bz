@@ -13,7 +13,8 @@
  * 产物形状（scripts/rss-catalog/build.mjs 产出）：
  *   { version, updatedAt, meta: { sources[{id,name,url,license}] },
  *     categories[], feeds[{url, title, site, tags[], cats[], via?}] }
- * `via` 为 RSSHub 路由型源预留（本期恒缺省，ADR-0208 决策 3）。
+ * `via` 为路由型源的路由路径（ADR-0209 RSSHub 上游）：url 出版期已用默认实例拼好，
+ * 订阅时经 resolveCatalogFeedUrl 按用户实例设置重拼（订阅=拷贝当时 URL）。
  * ============================================================ */
 import { ensureAssetWithHash, readAsset, DOWNLOADS_CHANGED_EVENT } from './remote-asset';
 import { cachedManifest, refreshManifest } from './download-manifest';
@@ -26,6 +27,10 @@ export const RSS_CATALOG_MANIFEST_ID = 'rss-catalog';
 /** 未命中任何固定大类时的兜底分类（与出版脚本 lib.mjs 的 FALLBACK_CATEGORY 同值） */
 export const RSS_CATALOG_FALLBACK_CATEGORY = '综合';
 
+/** RSSHub 路由条目 url 的出版期默认实例（ADR-0209 用户拍板）——插件侧单源，
+ *  与出版脚本 lib.mjs 同名常量同值（测试对齐）；用户可在 news.json rsshubInstance 段改自建实例 */
+export const RSS_HUB_DEFAULT_INSTANCE = 'https://rsshub.rssforever.com';
+
 /** 源库条目 */
 export interface RssCatalogFeed {
   /** feed 地址（出版期已过测活门禁与 http(s) 形状校验） */
@@ -36,9 +41,10 @@ export interface RssCatalogFeed {
   site: string;
   /** 上游原始标签（自由打标，810 个；只作搜索词，不作导航） */
   tags: string[];
-  /** 固定大类（出版期关键词映射；非空且 ⊆ categories） */
+  /** 固定大类（出版期关键词映射 / RSSHub 官方分类直映射；非空且 ⊆ categories） */
   cats: string[];
-  /** 路由型源预留（RSSHub 路由路径；本期恒缺省，ADR-0208 决策 3） */
+  /** 路由型源的路由路径（如 `/bilibili/platform/-1`，ADR-0209）——url 已用默认实例拼好
+   *  （校验与「已订阅匹配」零改动），via 是订阅时按用户实例设置重拼的素材；直连源恒缺省 */
   via?: string;
 }
 
@@ -87,6 +93,24 @@ function subscribeOnce(): void {
 /** 合法 feed 地址（与 clipbook news-data 的 normalizeRssFeedUrl 同口径：http/https 且无空白） */
 function isValidFeedUrl(url: string): boolean {
   return /^https?:\/\/\S+$/i.test(url);
+}
+
+/** 实例地址 + 路由路径 → 完整 feed 地址（实例去尾斜杠；形状不对返回空串）。
+ *  与出版脚本 lib.mjs 的同名纯函数同口径（测试对齐）。 */
+export function joinRssHubUrl(instance: string, routePath: string): string {
+  const base = String(instance || '').trim().replace(/\/+$/, '');
+  const p = String(routePath || '').trim();
+  if (!/^https?:\/\//i.test(base) || !p.startsWith('/') || /\s/.test(p)) return '';
+  return base + p;
+}
+
+/**
+ * 源库条目 → 订阅地址（订阅动作唯一入口，ADR-0209 决策 5「订阅=拷贝当时 URL」）：
+ * 路由型（via）按传入实例重拼——重拼失败（实例键损坏）回退出版期 url；直连源原样。
+ */
+export function resolveCatalogFeedUrl(feed: Pick<RssCatalogFeed, 'url' | 'via'>, instance: string): string {
+  if (!feed.via) return String(feed.url || '').trim();
+  return joinRssHubUrl(instance, feed.via) || String(feed.url).trim();
 }
 
 /**
@@ -138,7 +162,12 @@ export function validateRssCatalog(raw: unknown): RssCatalog | null {
       if (typeof c !== 'string' || !cats.has(c)) return null; // cats ⊆ categories
     }
     const feed: RssCatalogFeed = { url, title: ff.title, site: ff.site, tags: ff.tags as string[], cats: ff.cats as string[] };
-    if (typeof ff.via === 'string' && ff.via) feed.via = ff.via;
+    if (typeof ff.via === 'string' && ff.via) {
+      // via 形状门（ADR-0209）：必须是以 / 开头的路由路径且无空白——它是订阅时重拼 URL 的素材，
+      // 坏形状会让 resolveCatalogFeedUrl 拼出垃圾地址直插 rssFeeds
+      if (!/^\/\S*$/.test(ff.via)) return null;
+      feed.via = ff.via;
+    }
     feeds.push(feed);
   }
   return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories as string[], feeds };
@@ -229,7 +258,7 @@ export function catalogCategoryCounts(catalog: RssCatalog): Array<{ cat: string;
   return catalog.categories.map((cat) => ({ cat, count: counts.get(cat) || 0 }));
 }
 
-/** 搜索过滤（纯函数）：query 命中 title / site / url / 任一标签（不区分大小写的包含匹配），
+/** 搜索过滤（纯函数）：query 命中 title / site / url / 任一标签 / 路由路径 via（不区分大小写的包含匹配），
  *  cat 非空时再按大类过滤；序沿用库内原序（上游订阅量粗排）。 */
 export function filterCatalogFeeds(catalog: RssCatalog, opts?: { query?: string; cat?: string }): RssCatalogFeed[] {
   const q = String(opts?.query || '').trim().toLowerCase();
@@ -240,6 +269,7 @@ export function filterCatalogFeeds(catalog: RssCatalog, opts?: { query?: string;
     if (f.title.toLowerCase().includes(q)) return true;
     if (f.site.toLowerCase().includes(q)) return true;
     if (f.url.toLowerCase().includes(q)) return true;
+    if (f.via && f.via.toLowerCase().includes(q)) return true;
     return f.tags.some((t) => t.toLowerCase().includes(q));
   });
 }
