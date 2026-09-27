@@ -52,7 +52,8 @@ export interface SyncRelay {
 }
 
 /** stdout 逐行转发中继：透传 + 结果行兜底（插件永远能拿到一个确定的结果事件） */
-export declare function createSyncRelay(): SyncRelay;
+/** toolLabel 进兜底结果行的命令名（485：export 轮复用中继，传 'bz-face export --contact'） */
+export declare function createSyncRelay(toolLabel?: string): SyncRelay;
 
 export interface SyncPreflightProbes {
   /** probeWeixin() 结果：running/version/wx3Running…；探测自身失败时不挡 */

@@ -312,6 +312,7 @@ describe('数据源弹窗（dsModal 四态）', () => {
     selectedCount: 0,
     selected: [],
     freshCount: 0,
+    freshApprox: 0,
     hiddenGroups: 0,
     notice: '',
     generateable: false,

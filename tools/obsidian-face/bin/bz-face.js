@@ -19,14 +19,22 @@
 //
 //   bz-face sync --data-root <路径> [--python <命令>] [--src <账号目录>]
 //                [--min-messages N] [--limit N]
-//     一次跑完（issue 464 / ADR-0196 决策 1）：取密钥 → 解密数据库 →
-//     逐联系人导出 chat.json（文本 + [表情·名] + 图片定位 + 语音时长）→
-//     头像源落位。转写 / 媒体导出 / 图片描述不在 sync（468 的 prep 接管）。
+//     一次跑完（issue 464 / ADR-0196 决策 1；485 变轻）：取密钥 → 解密数据库 →
+//     逐联系人统计（消息 / 语音 / 图片 / 语音时长 / 最新消息，SQL 聚合写 stats.json，
+//     不读消息正文）→ 头像源落位。**不再产出 chat.json**——全量消息由 export 子命令
+//     按需导出。转写 / 媒体导出 / 图片描述不在 sync（468 的 prep 接管）。
 //     stdout 只产 [bz-step]/[bz-p]/[bz-info]/[bz-result] 四行协议——本命令是给
 //     插件编排消费的长任务（465 数据源同步按钮驱动），Python 的行原样透传，
 //     Node 只补预检行与兜底结果行；退出码 0 = 跑完（单联系人失败看结果行 failed:N）、
 //     1 = 硬失败（微信未运行 / 版本被封堵 / 解密失败，绝不静默降级读旧目录）、
 //     2 = 用法错误。幂等可重复跑（产物字节比对，没变不写）。
+//
+//   bz-face export --data-root <路径> --contact <目录名> [--contact <目录名> …]
+//                  [--python <命令>] [--src <账号目录>]
+//     按需全量导出（issue 485）：对指定联系人走既有 export_flow 生成 chat.json + 头像。
+//     不取密钥（只用数据根缓存 key.json）、不要求微信在跑；解密照跑（增量缓存全命中时秒过）。
+//     供插件在「导入所选」时只对勾选者起本命令——单人两万条量级秒级完成。
+//     协议 / 退出码同 sync；结果行带 mode:"export"（sync 轮为 mode:"stats"）。
 //
 //   bz-face doctor [--data-root <路径>] [--python <命令>]
 //     环境自检：Python 版本 / 解密组与转写组依赖 / ffmpeg / ffprobe /
@@ -50,6 +58,7 @@ const fs = require('fs');
 const core = require('../lib/doctor-core');
 const sync = require('../lib/sync-core');
 const prep = require('../lib/prep-core');
+const exportCore = require('../lib/export-core');
 const probes = require('../lib/probes');
 
 const pkg = require('../package.json');
@@ -72,10 +81,17 @@ const USAGE = [
   '                [--min-messages N] [--limit N]',
   '      从微信一次取数（微信需已登录）：',
   SYNC_STEPS_TEXT,
-  '      产物全落数据根：<数据根>/<联系人>/chat.json、avatar.<ext>，',
+  '      产物全落数据根：<数据根>/<联系人>/stats.json（统计）、avatar.<ext>；',
+  '      全量 chat.json 由 bz-face export 按需导出。',
   '      密钥与解密库在 <数据根>/.bz-face/ 下。幂等可重复跑。',
   '      stdout 为四行协议（[bz-step]/[bz-p]/[bz-info]/[bz-result]），供插件编排消费；',
   '      微信未运行 / 版本被封堵 / 解密失败 → 立即失败并给中文引导，不静默降级。',
+  '  bz-face export --data-root <路径> --contact <目录名> [--contact <目录名> …]',
+  '                  [--python <命令>] [--src <账号目录>]',
+  '      按需全量导出（不需要微信在跑，吃 sync 的缓存密钥与解密库）：',
+  '      对指定联系人生成 chat.json（文本 / [表情·名] / 图片定位 / 语音时长）+ 头像源。',
+  '      --contact 可重复传多个——插件在「导入所选」时只对勾选者起本命令。',
+  '      幂等可重复跑（chat.json / 头像字节比对，没变不写）。',
   '  bz-face prep <联系人> --data-root <路径> [--python <命令>] [--src <账号目录>]',
   '                [--ffmpeg <路径>] [--derive-edge N] [--derive-quality N]',
   '                [--asr-engine sensevoice|faster-whisper] [--asr-model <名>] [--limit N]',
@@ -93,10 +109,11 @@ const USAGE = [
   '  bz-face --version',
   '',
   '选项：',
-  '  --data-root, -d <路径>   数据根路径（sync / prep 必填；doctor 不给则显示「未配置」）',
+  '  --data-root, -d <路径>   数据根路径（sync / export / prep 必填；doctor 不给则显示「未配置」）',
   '  --python, -p <命令>      Python 命令覆盖（缺省 python；含空格命令请用 python.exe 完整路径）',
-  '  --src <账号目录>         sync / prep：微信账号目录覆盖（sync 默认当前微信数据目录；',
-  '                           prep 默认取 .bz-face/key.json 的 source_dir）',
+  '  --src <账号目录>         sync / export / prep：微信账号目录覆盖（sync 默认当前微信数据目录；',
+  '                           export / prep 默认取 .bz-face/key.json 的 source_dir）',
+  '  --contact <目录名>       export：联系人目录名（可重复传多个；来自 sync 产物的数据根目录）',
   '  --min-messages N         sync：少于该条数的联系人不落盘（默认 1 = 全量非空）',
   '  --limit N                sync / prep：调试用限制处理量（sync 限联系人数；prep 限各段条数；',
   '                           默认 0 = 不限）',
@@ -191,6 +208,65 @@ async function cmdSync(opts) {
   return run.code === 0 ? 0 : 1;
 }
 
+async function cmdExport(opts) {
+  // 485 按需导出：与 sync 同一套中继 / 管道，预检换成 export 口径（不探微信——
+  // export 不取密钥，只吃数据根缓存；缺密钥 / 缺解密库 / 目录名缺席都硬失败给中文引导）。
+  const relay = sync.createSyncRelay('bz-face export --contact');
+  const emit = (line) => {
+    if (line) console.log(line);
+  };
+
+  const dataRoot = probes.probeDataRoot(opts.dataRoot);
+  const cachedKey = !!opts.dataRoot && fs.existsSync(path.join(opts.dataRoot, '.bz-face', 'key.json'));
+  const hasDecrypted = !!opts.dataRoot && fs.existsSync(path.join(opts.dataRoot, '.bz-face', 'decrypted'));
+  const missingContacts = (opts.contacts || []).filter(
+    (c) => {
+      try {
+        return !fs.statSync(path.join(opts.dataRoot || '', c)).isDirectory();
+      } catch {
+        return true;
+      }
+    },
+  );
+  const pre = exportCore.judgeExportPreflight(
+    { dataRoot },
+    { contacts: opts.contacts || [], cachedKey, hasDecrypted, missingContacts },
+  );
+  if (!pre.ok) {
+    // 硬失败：结果行（给插件）+ stderr（给人），退出码 1——没有前置产物就没有可导出的东西
+    emit(sync.formatBzLine('result', { ok: false, error: pre.error }));
+    console.error(`bz-face export：${pre.error}`);
+    return 1;
+  }
+
+  // 起子进程：stdout 逐行透传（协议行原样），stderr 留尾由终结兜底用
+  emit(sync.formatBzLine('step', `预检通过：数据根可写、缓存密钥与解密库在位，导出 ${opts.contacts.length} 位联系人`));
+  const run = await probes.runSyncProcess({
+    pythonCmd: opts.python,
+    scriptPath: path.join(__dirname, '..', 'python', 'bz_sync.py'),
+    args: [
+      '--data-root',
+      opts.dataRoot,
+      ...(opts.src ? ['--src', opts.src] : []),
+      ...opts.contacts.flatMap((c) => ['--contact', c]),
+    ],
+    onLine: (line) => {
+      for (const l of relay.write(line)) emit(l);
+    },
+  });
+
+  // 终结：Python 没吐结果行（崩溃 / 起不动）→ 中继补兜底结果行
+  for (const l of relay.finish(
+    run.code,
+    run.stderr,
+    run.error ? sync.classifySyncSpawnFailure(run.error, opts.python) : undefined,
+  )) {
+    emit(l);
+  }
+  // 0 = 跑完（单人失败看 [bz-result].failed，与 sync 同口径）；非 0 归一成 1（2 留给用法错误）
+  return run.code === 0 ? 0 : 1;
+}
+
 async function cmdPrep(opts) {
   const relay = prep.createPrepRelay();
   const emit = (line) => {
@@ -277,6 +353,27 @@ async function main() {
       asrEngine: parsed.asrEngine,
       asrModel: parsed.asrModel,
       limit: parsed.limit,
+    });
+  }
+  if (first === 'export') {
+    const parsed = exportCore.parseExportArgv(argv);
+    if (parsed.error) {
+      console.error(`bz-face：${parsed.error}\n\n${USAGE}`);
+      return 2;
+    }
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdExport({
+      dataRoot: parsed.dataRoot,
+      contacts: parsed.contacts,
+      python: parsed.python,
+      src: parsed.src,
     });
   }
   if (first === 'sync') {

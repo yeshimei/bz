@@ -45,18 +45,22 @@ import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapsho
 import type { ContactStats, DescribeConfirmInfo, FaceDigest, ImportRecord, PersonEntry, PersonProfile, PortraitConfirmInfo, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
+  hasChatJson,
   listContactDirs,
   mergeStore,
   normalizeChatJson,
   normalizeOptionsFromSettings,
   readAvatarInput,
+  readContactAvatarPath,
+  readContactBundle,
+  readStatsJson,
   storeMediaBadge,
   storeToUnified,
-  readContactBundle,
   isGroupChat,
   type StoreContact,
   type StoreStats,
 } from './datasource';
+import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
 import { describeOverallPct, describeStageLine } from './describe';
@@ -155,12 +159,14 @@ interface DsContact {
   name: string;
   rawCount: number;
   isGroup: boolean;
-  /** 归一化后的时间线口径统计（按当前聊天仓开关） */
+  /** 归一化后的时间线口径统计（按当前聊天仓开关）；stats 路径为原始口径聚合（485） */
   stats: StoreStats;
   /** 聊天仓已有条数（全量原始消息口径） */
   previewCount: number;
   /** 扫描时发现的新消息条数（原始 keys − 仓内 keys） */
   newCount: number;
+  /** true = newCount 是「有无新」哨兵（stats 路径拿不到键集合，只能按 maxSid 对水位判定；485） */
+  newApprox: boolean;
   /** 已画到的提炼锚点（PersonEntry.lastProcessedTs） */
   processedTs: number | null;
   /** 头像文件绝对路径（数据目录 avatar.<ext>；无则 null） */
@@ -177,6 +183,8 @@ let dsNotice = '';
 /** 导入完成且新增 >0 → 弹窗出「画脸谱」 */
 let dsGenerateable = false;
 let dsScannedAt = '';
+/** 在跑的按需导出（485「导入所选」前置段；面板关闭即 stop——导出生命周期跟着导入走） */
+let exportRun: ContactsExportHandle | null = null;
 
 // ---------------- 统计 / 档案弹窗（issue 455：自折册改独立弹窗，同时只开一只） ----------------
 
@@ -352,6 +360,8 @@ export function closePeoplePanel(): void {
   overlay?.remove();
   overlay = null;
   store = null;
+  exportRun?.stop(); // 在跑的按需导出跟着导入一起中止（485：导出生命周期不独立于面板）
+  exportRun = null;
   detailId = null;
   detailFold = 'p';
   stage = 'list';
@@ -447,6 +457,7 @@ function dsRowStates(): DsRowState[] {
       media: badge ? formatMediaCount(badge) : '',
       previewCount: c.previewCount,
       newCount: c.newCount,
+      newApprox: c.newApprox,
       processedTs: c.processedTs,
       avatar: c.avatar,
     };
@@ -462,7 +473,9 @@ function dsModalState() {
     rows: dsContacts === null ? null : dsRowStates(),
     selectedCount: sel.length,
     selected: sel.map((c) => c.name),
-    freshCount: sel.reduce((s, c) => s + c.newCount, 0),
+    freshCount: sel.reduce((s, c) => s + (c.newApprox ? 0 : c.newCount), 0),
+    // stats 路径的「有新」只能按位计（哨兵无法精确到条，485）
+    freshApprox: sel.filter((c) => c.newApprox && c.newCount > 0).length,
     hiddenGroups: dsHiddenGroups,
     notice: dsNotice,
     generateable: dsGenerateable,
@@ -575,8 +588,10 @@ function applySyncLockdown(): void {
 }
 
 /**
- * 扫描数据源：列目录 → 逐人读 chat.json 归一化 → 对照聊天仓算新素材 → 落快照
- * （不导入、不自动勾选——447 拍板：默认不选任何联系人）。
+ * 扫描数据源：列目录 → 逐人读 stats.json（485 优先；缺文件回落 chat.json 归一化，兼容存量）
+ * → 对照聊天仓算新素材 → 落快照（不导入、不自动勾选——447 拍板：默认不选任何联系人）。
+ * stats 路径没有键集合，「新 N 条」退化成「有无新」哨兵（maxSid 对聊天仓 watermarkSid），
+ * newCount=1 且 newApprox=true；chat.json 回落路径照旧精确计数。
  */
 async function runScan(force = false): Promise<void> {
   const dataDir = dsDataDir();
@@ -601,6 +616,26 @@ async function runScan(force = false): Promise<void> {
     const [storeData, people] = await Promise.all([records(), store.list()]);
     for (const name of dirNames) {
       if (!overlay) return; // 面板已关，放弃本次扫描
+      // 485：sync 轮只产 stats.json——优先读统计；缺文件回落 chat.json（存量兼容）
+      const stats = readStatsJson(dataDir, name);
+      if (stats) {
+        if (stats.group && !includeGroups) { hidden++; continue; }
+        const pv = storeData.get(name)?.store;
+        const entry = people.find((p) => p.id === name);
+        contacts.push({
+          name,
+          rawCount: stats.msgs,
+          isGroup: stats.group,
+          // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
+          stats: { msgCount: stats.msgs, voiceCount: stats.voices, voiceTotalSec: Math.round(stats.voiceSec), imageCount: stats.images },
+          previewCount: pv?.msgs.length ?? 0,
+          newCount: stats.maxSid > (pv?.watermarkSid ?? 0) ? 1 : 0,
+          newApprox: true,
+          processedTs: entry?.lastProcessedTs ?? null,
+          avatar: dataUrlOf(readAvatarInput(readContactAvatarPath(dataDir, name))),
+        });
+        continue;
+      }
       const bundle = readContactBundle(dataDir, name);
       if (!bundle) continue;
       const group = isGroupChat(bundle.raws);
@@ -616,6 +651,7 @@ async function runScan(force = false): Promise<void> {
         stats: norm.stats,
         previewCount: pv?.msgs.length ?? 0,
         newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
+        newApprox: false,
         processedTs: entry?.lastProcessedTs ?? null,
         // 头像预览（467）：直接读数据根字节解成内存 data URL（不再复制进库内明文目录）
         avatar: dataUrlOf(readAvatarInput(bundle.avatar)),
@@ -639,8 +675,26 @@ async function runScan(force = false): Promise<void> {
 }
 
 /**
- * 导入所选（第一段：原始→聊天仓增量）：逐人读 chat.json → normalizeChatJson → mergeStore
- * upsert 合并（同键覆盖升级）→ 写进该联系人的保库记录（467 / ADR-0194）。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
+ * 导入进度行原位刷新（[data-people-ds-notice] 钩子；按需导出段逐联系人更新时
+ * 不重建弹窗——节点不在（首帧未渲染）才走整渲染）。
+ */
+function updateImportNotice(text: string): void {
+  dsNotice = text;
+  const n = overlay?.querySelector<HTMLElement>('[data-people-ds-notice]');
+  if (n) {
+    n.textContent = text;
+    return;
+  }
+  renderBody();
+}
+
+/**
+ * 导入所选（第一段：原始→聊天仓增量）：
+ * ① 按需导出（485）：缺 chat.json 的勾选者先起一条 `bz-face export --contact …`
+ *    拉全量消息（进度行显示当前联系人）；存量已有 chat.json 的直接用，不强制重导出。
+ * ② 归一合并：逐人 readContactBundle → normalizeChatJson → mergeStore upsert（同键覆盖升级）
+ *    → 写进该联系人的保库记录（467 / ADR-0194）。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
+ * 画谱路径不重复导出：「画脸谱」只吃保库记录里的聊天仓素材（storeToUnified），不碰数据根。
  */
 async function importDsSelected(): Promise<void> {
   const dataDir = dsDataDir();
@@ -663,6 +717,33 @@ async function importDsSelected(): Promise<void> {
   const addedOf = new Map<string, number>();
   const readFail: string[] = [];
   try {
+    // ① 按需导出（485）：只对缺 chat.json 的勾选者起工具（一条命令带全部名单，工具侧逐人导出）
+    const missing = chosen.filter((c) => !hasChatJson(dataDir, c.name)).map((c) => c.name);
+    if (missing.length) {
+      updateImportNotice('正在导出所选联系人的完整聊天…');
+      const run = startContactsExport({ dataRoot: dataDir, contacts: missing }, (ev) => {
+        updateImportNotice(`正在导出「${ev.name}」的完整聊天（${ev.idx}/${ev.total}）…`);
+      });
+      exportRun = run; // 面板关闭时中止（closePeoplePanel）
+      const res = await run.done;
+      exportRun = null;
+      if (!overlay) return; // 面板已关，中止导入
+      if (res.stopped) {
+        dsNotice = '导出已停止——已完成的部分保留，重新点「导入所选」可续';
+        dsImporting = false;
+        renderBody();
+        return;
+      }
+      if (!res.ok) {
+        dsNotice = `导出失败：${res.error}`;
+        if (res.hint) notice(res.hint, 'warning');
+        dsImporting = false;
+        renderBody();
+        return;
+      }
+      updateImportNotice('正在导入聊天仓…');
+    }
+    // ② 归一合并（存量 chat.json 直接用；导出轮写好的也在此读）
     for (const c of chosen) {
       if (!overlay) return; // 面板已关，中止
       const bundle = readContactBundle(dataDir, c.name);
@@ -681,6 +762,7 @@ async function importDsSelected(): Promise<void> {
       // 快照同步（水位行即时反映，不重扫）
       c.previewCount = contact.msgs.length;
       c.newCount = 0;
+      c.newApprox = false;
       c.stats = contact.stats;
     }
   } catch (e) {
@@ -1451,11 +1533,16 @@ function syncDsChecks(): void {
 
 function updateDsFooter(): void {
   const sel = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
-  const fresh = sel.reduce((s, c) => s + c.newCount, 0);
+  const fresh = sel.reduce((s, c) => s + (c.newApprox ? 0 : c.newCount), 0);
+  const approx = sel.filter((c) => c.newApprox && c.newCount > 0).length;
+  const bits = [
+    ...(fresh ? [`新素材 ${fresh} 条`] : []),
+    ...(approx ? [`${approx} 位有新消息`] : []),
+  ];
   const label = !sel.length
     ? '未勾选联系人'
-    : fresh
-      ? `已选 ${sel.length} 位 · 新素材 ${fresh} 条`
+    : bits.length
+      ? `已选 ${sel.length} 位 · ${bits.join(' · ')}`
       : `已选 ${sel.length} 位 · 所选暂无新素材`;
   const count = overlay?.querySelector<HTMLElement>('[data-people-ds-count]');
   if (count) count.textContent = label;

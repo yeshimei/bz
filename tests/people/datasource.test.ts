@@ -6,11 +6,19 @@
  * 隐私口径：全部构造数据，不含真实聊天内容。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { createRequire } from 'node:module';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
+  hasChatJson,
   isGroupChat,
+  listContactDirs,
   mergeStore,
   msgKey,
   normalizeChatJson,
+  readContactAvatarPath,
+  readStatsJson,
   storeStatsOf,
   storeToUnified,
   type ImageDescItem,
@@ -602,3 +610,82 @@ function ctOf(date: string): number {
   const iso = date.includes('T') ? date : `${date}T12:00:00`;
   return Math.floor(new Date(iso).getTime() / 1000);
 }
+
+// ---------------- IO：stats.json 扫描口径（issue 485） ----------------
+
+describe('stats.json 数据源扫描（issue 485：sync 只产统计，扫描优先读它）', () => {
+  const req = createRequire(import.meta.url);
+
+  let dataRoot = '';
+  beforeEach(() => {
+    (window as unknown as { require?: unknown }).require = req; // datasource 读库外目录走 window.require
+    dataRoot = mkdtempSync(join(tmpdir(), 'bz-ds-stats-'));
+  });
+  afterEach(() => {
+    try { rmSync(dataRoot, { recursive: true, force: true }); } catch { /* 临时目录尽力清 */ }
+  });
+
+  const statsOf = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+    msgs: 120, voices: 9, images: 15, voiceSec: 234.5, lastCt: BASE + 99, maxSid: 777, group: false,
+    syncedAt: '2026-09-27T10:00:00', ...over,
+  });
+
+  it('listContactDirs：chat.json 或 stats.json 任一即认（485 后 sync 轮只落 stats.json）', () => {
+    mkdirSync(join(dataRoot, '只有统计'), { recursive: true });
+    writeFileSync(join(dataRoot, '只有统计', 'stats.json'), JSON.stringify(statsOf()));
+    mkdirSync(join(dataRoot, '存量全量'), { recursive: true });
+    writeFileSync(join(dataRoot, '存量全量', 'chat.json'), '[]');
+    mkdirSync(join(dataRoot, '空目录'), { recursive: true });
+    const names = listContactDirs(dataRoot);
+    expect(names).toEqual(['存量全量', '只有统计']); // 名字序（zh locale）
+    expect(listContactDirs(join(dataRoot, '不存在'))).toEqual([]);
+  });
+
+  it('readStatsJson：形状齐全才认；缺主字段 / 坏 JSON / 非对象回落 null（兼容存量走 chat.json）', () => {
+    mkdirSync(join(dataRoot, '甲'), { recursive: true });
+    writeFileSync(join(dataRoot, '甲', 'stats.json'), JSON.stringify(statsOf()));
+    const st = readStatsJson(dataRoot, '甲');
+    expect(st).toMatchObject({ msgs: 120, voices: 9, images: 15, voiceSec: 234.5, lastCt: BASE + 99, maxSid: 777, group: false });
+
+    mkdirSync(join(dataRoot, '缺主字段'), { recursive: true });
+    writeFileSync(join(dataRoot, '缺主字段', 'stats.json'), JSON.stringify({ voices: 1 }));
+    expect(readStatsJson(dataRoot, '缺主字段')).toBeNull();
+
+    mkdirSync(join(dataRoot, '坏JSON'), { recursive: true });
+    writeFileSync(join(dataRoot, '坏JSON', 'stats.json'), '{oops');
+    expect(readStatsJson(dataRoot, '坏JSON')).toBeNull();
+
+    mkdirSync(join(dataRoot, '是数组'), { recursive: true });
+    writeFileSync(join(dataRoot, '是数组', 'stats.json'), '[]');
+    expect(readStatsJson(dataRoot, '是数组')).toBeNull();
+
+    expect(readStatsJson(dataRoot, '不存在的人')).toBeNull();
+  });
+
+  it('readStatsJson：数字字段缺省归 0（容忍工具旧版少字段）；group 只认 true', () => {
+    mkdirSync(join(dataRoot, '精简'), { recursive: true });
+    writeFileSync(join(dataRoot, '精简', 'stats.json'), JSON.stringify({ msgs: 3 }));
+    expect(readStatsJson(dataRoot, '精简')).toEqual({
+      msgs: 3, voices: 0, images: 0, voiceSec: 0, lastCt: 0, maxSid: 0, group: false,
+    });
+  });
+
+  it('hasChatJson / readContactAvatarPath：免重复导出判定与 stats 路径头像预览', () => {
+    mkdirSync(join(dataRoot, '全量在'), { recursive: true });
+    writeFileSync(join(dataRoot, '全量在', 'chat.json'), '[]');
+    writeFileSync(join(dataRoot, '全量在', 'avatar.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    mkdirSync(join(dataRoot, '只有统计'), { recursive: true });
+    writeFileSync(join(dataRoot, '只有统计', 'stats.json'), JSON.stringify(statsOf()));
+    expect(hasChatJson(dataRoot, '全量在')).toBe(true);
+    expect(hasChatJson(dataRoot, '只有统计')).toBe(false);
+    expect(hasChatJson(dataRoot, '不存在的人')).toBe(false);
+    expect(readContactAvatarPath(dataRoot, '全量在')).toBe(`${dataRoot}/全量在/avatar.png`); // datasource 用正斜杠拼路径
+    expect(readContactAvatarPath(dataRoot, '只有统计')).toBeNull();
+  });
+
+  it('stats.json 带 BOM 也能读（与 chat.json 同款容错）', () => {
+    mkdirSync(join(dataRoot, '带BOM'), { recursive: true });
+    writeFileSync(join(dataRoot, '带BOM', 'stats.json'), '\uFEFF' + JSON.stringify(statsOf({ msgs: 7 })));
+    expect(readStatsJson(dataRoot, '带BOM')?.msgs).toBe(7);
+  });
+});

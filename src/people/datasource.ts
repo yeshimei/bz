@@ -6,6 +6,10 @@
  * `voice.json` / `image_desc.json` 为**兼容兜底**（正常情况 chat.json 已回填，单文件即可；
  * 旧数据目录缺回填时仍按 wav / img 关联补齐）。
  *
+ * 485 两轮口径：sync 轮只产 `<联系人>/stats.json`（SQL 聚合统计，readStatsJson 读它），
+ * chat.json 挪到 `bz-face export --contact` 按需导出——扫描优先读 stats.json（缺文件回落
+ * chat.json 兼容存量），「导入所选」对缺 chat.json 的勾选者先起 export 再走归一合并。
+ *
  * 449 语义分流：47 表情按命名分流、49 分享/文件/引用逐条进时间线（带截断上限）、
  * 50 通话换轻标签；无转写语音 / 无描述图片 / 关开关的媒体**不进时间线只计数**。
  * 群聊（多位非我发送者）非我消息加 `[成员名] ` 前缀，单聊不变。
@@ -771,7 +775,32 @@ function getFs(): any {
   try { return w.require('fs'); } catch { return null; }
 }
 
-/** 数据目录里含 chat.json 的联系人目录名（按名字序；目录不存在返回空） */
+/**
+ * sync 轮统计（issue 485；工具侧 bz_sync.py contact_stats 同字段）：
+ * SQL 聚合口径（消息 / 语音 / 图片为原始条数，语音时长秒，最新消息时间与最大 sid，
+ * 是否群聊由工具按「去我之外多个发送者」判定）。扫描优先读它——sync 不再产出 chat.json。
+ */
+export interface DataSourceStats {
+  /** 消息条数（近似 export_flow 的 label 命中面：类型白名单 + 非空系统消息） */
+  msgs: number;
+  /** 语音条数（原始口径，不随插件预览开关变） */
+  voices: number;
+  /** 图片条数 */
+  images: number;
+  /** 语音总时长（秒） */
+  voiceSec: number;
+  /** 最新消息时间（秒级 ct；0 = 无） */
+  lastCt: number;
+  /** 已见最大 sid（与聊天仓 watermarkSid 对口径——「有无新消息」的增量判定源） */
+  maxSid: number;
+  /** 群聊（工具侧判定：去我之外多个发送者） */
+  group: boolean;
+  /** 本轮统计落盘时间（工具写入；仅排查用） */
+  syncedAt?: string;
+}
+
+/** 数据目录里含 chat.json 或 stats.json 的联系人目录名（按名字序；目录不存在返回空）。
+ *  485：sync 轮只产 stats.json，chat.json 是 export 轮按需产物——两者任一即视为联系人目录。 */
 export function listContactDirs(dataDir: string): string[] {
   const fs = getFs();
   if (!fs || !dataDir) return [];
@@ -781,12 +810,54 @@ export function listContactDirs(dataDir: string): string[] {
       .filter((d: any) => d.isDirectory())
       .map((d: any) => String(d.name))
       .filter((name: string) => {
-        try { return fs.existsSync(`${dataDir}/${name}/chat.json`); } catch { return false; }
+        try {
+          return fs.existsSync(`${dataDir}/${name}/chat.json`) || fs.existsSync(`${dataDir}/${name}/stats.json`);
+        } catch { return false; }
       })
       .sort((a: string, b: string) => a.localeCompare(b, 'zh'));
   } catch {
     return [];
   }
+}
+
+/** 联系人目录下是否有全量消息文件（chat.json）——「导入所选」免重复导出的判定源（485） */
+export function hasChatJson(dataDir: string, name: string): boolean {
+  const fs = getFs();
+  if (!fs || !dataDir || !name) return false;
+  try {
+    return fs.existsSync(`${dataDir}/${name}/chat.json`);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 读一位联系人的 sync 轮统计（stats.json；485）。字段齐全且类型正确才认——
+ * 读失败 / 形状不对返回 null（调用方回落读 chat.json 兼容存量）。
+ */
+export function readStatsJson(dataDir: string, name: string): DataSourceStats | null {
+  const fs = getFs();
+  if (!fs || !dataDir || !name) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(String(fs.readFileSync(`${dataDir}/${name}/stats.json`, 'utf8')).replace(/^\uFEFF/, ''));
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  const o = parsed as Record<string, unknown>;
+  const num = (v: unknown): number => (Number.isFinite(v) ? (v as number) : 0);
+  if (!Number.isFinite(o.msgs)) return null; // 主字段缺失 = 不是本工具产的 stats.json
+  return {
+    msgs: num(o.msgs),
+    voices: num(o.voices),
+    images: num(o.images),
+    voiceSec: num(o.voiceSec),
+    lastCt: num(o.lastCt),
+    maxSid: num(o.maxSid),
+    group: o.group === true,
+    ...(typeof o.syncedAt === 'string' && o.syncedAt ? { syncedAt: o.syncedAt } : {}),
+  };
 }
 
 /** 读一个联系人的数据束（chat.json 必读；voice.json / image_desc.json 为兼容兜底——
@@ -828,6 +899,13 @@ function avatarFileOf(fs: any, dir: string): string | null {
     } catch { /* 探测失败按无头像 */ }
   }
   return null;
+}
+
+/** 只读一位联系人的头像路径（stats 路径扫描用——不读 chat.json 也能出头像预览；485） */
+export function readContactAvatarPath(dataDir: string, name: string): string | null {
+  const fs = getFs();
+  if (!fs || !dataDir || !name) return null;
+  return avatarFileOf(fs, `${dataDir}/${name}`);
 }
 
 // ---------------- IO：头像字节（467：保库记录附件的源读取；不再复制进库内明文目录） ----------------

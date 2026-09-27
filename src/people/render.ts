@@ -1295,6 +1295,8 @@ export interface DsRowState {
   media: string;
   previewCount: number;
   newCount: number;
+  /** true = newCount 是「有无新」哨兵（stats 路径无键集合，显示「有新消息」不带条数；485） */
+  newApprox?: boolean;
   processedTs: number | null;
   /** 头像文件路径（有则行首出照片，无则首字圆章） */
   avatar?: string | null;
@@ -1309,7 +1311,10 @@ export interface DsModalState {
   selectedCount: number;
   /** 勾选名单快照：弹层重渲染时回显复选框（448 评审 P1：重建层不丢视觉勾选） */
   selected: string[];
+  /** 精确新素材条数合计（chat.json 回落路径；485） */
   freshCount: number;
+  /** 「有新」按位计的联系人人数（stats 路径哨兵无法精确到条；485） */
+  freshApprox: number;
   hiddenGroups: number;
   notice: string;
   /** 导入完成有新素材 → 出「画脸谱」 */
@@ -1368,7 +1373,7 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
       ].filter(Boolean).join(' · '))),
     ]),
     el('div', 'bz-people-ds-side', [
-      ...(fresh ? [el('span', 'bz-people-ds-new', text(`新 ${row.newCount} 条`))] : []),
+      ...(fresh ? [el('span', 'bz-people-ds-new', text(row.newApprox ? '有新消息' : `新 ${row.newCount} 条`))] : []),
       el('span', 'bz-people-ds-mark', text(dsWatermark(row))),
     ]),
   ]);
@@ -1478,8 +1483,13 @@ export function dsSyncLineNode(line: DsSyncLine): HTMLElement {
 function footerLabel(s: DsModalState): string {
   if (!s.rows) return '';
   if (!s.selectedCount) return '未勾选联系人';
-  return s.freshCount
-    ? `已选 ${s.selectedCount} 位 · 新素材 ${s.freshCount} 条`
+  // 485：stats 路径「有新」按位计（freshApprox），chat.json 回落路径按条计（freshCount）
+  const bits = [
+    ...(s.freshCount > 0 ? [`新素材 ${s.freshCount} 条`] : []),
+    ...(s.freshApprox > 0 ? [`${s.freshApprox} 位有新消息`] : []),
+  ];
+  return bits.length
+    ? `已选 ${s.selectedCount} 位 · ${bits.join(' · ')}`
     : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
 }
 

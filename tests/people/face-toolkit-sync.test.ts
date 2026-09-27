@@ -27,9 +27,9 @@ import { parseBzLine } from '../../src/core/external-tool';
 
 describe('bz-face sync 判定层（issue 464）', () => {
   describe('阶段计划（步骤词汇表）', () => {
-    it('四步按序：取密钥 → 解密 → 导出聊天 → 头像源；id 是 [bz-p] 的 phase 词', () => {
+    it('四步按序：取密钥 → 解密 → 统计联系人 → 头像源；id 是 [bz-p] 的 phase 词（485 变轻后词汇）', () => {
       expect(SYNC_PHASES.map((p) => p.id)).toEqual(['key', 'decrypt', 'contacts', 'avatar']);
-      expect(SYNC_PHASES.map((p) => p.label)).toEqual(['取密钥', '解密数据库', '导出聊天', '头像源']);
+      expect(SYNC_PHASES.map((p) => p.label)).toEqual(['取密钥', '解密数据库', '统计联系人', '头像源']);
       for (const p of SYNC_PHASES) {
         expect(p.detail.trim()).not.toBe('');
       }

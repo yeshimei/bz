@@ -1,40 +1,55 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-bz-face sync 本体（issue 464）：取密钥 → 解密数据库 → 逐联系人导出 chat.json → 头像源落位。
+bz-face sync 本体（issue 464；485 改轻）：取密钥 → 解密数据库 → 逐联系人统计 → 头像源落位。
 
 【与数据盘散装脚本的关系】语义收编自 export_all.py 的 text 段（ct/type/who/msg/sid/dur
 消息流）、image_ct_map.py（packed_info_data 32hex = 本地文件名 md5 → 图片定位）、
-emoticon_writeback.py（表情命名）——三者**并入 chat.json 的一次性生成**，不再有独立
-回写步骤（460 spec / 票 464；修 460 记录的「chat.json 28 条 vs 仓 52 条对不上」事故）。
-媒体导出（.dat 解码 / wav 导出 / wxgf 解码）与语音转写**不在本票**：chat.json 只含
+emoticon_writeback.py（表情命名）——三者并入 export 轮的 chat.json 生成（460 spec / 票 464）。
+媒体导出（.dat 解码 / wav 导出 / wxgf 解码）与语音转写**不在本脚本**：chat.json 只含
 「从微信解出来的事实」——语音保持 `[语音 N秒]`（时长入 dur）、图片保持 `[图片]`
 （定位入 img）、表情当场命名 `[表情·名]`（命不中保持 `[表情]`）。
 
+【两轮口径（issue 485）】全量同步的大头是逐人重读全量消息并序列化 chat.json——
+而同步本身只需要统计数字。拍板拆两轮：
+
+  sync 轮（不带 --contact，给插件的「同步」按钮）：
+    取密钥 → 解密（增量秒过）→ 逐联系人 **SQL 聚合统计**（消息数 / 语音数 / 图片数 /
+    语音时长 / 最新消息时间 / 最大 sid / 是否群聊，无人读消息正文）写
+    `<联系人>/stats.json`，头像源照旧落位。**不再产出 chat.json**——全量消息挪到
+    export 轮按需导出。实测 5 分 21 秒（57 人 / 7.2 万条）的大头就此打掉，日常同步
+    进入十秒级。
+  export 轮（--contact <目录名> 可多值，给插件的「导入所选」）：
+    不取密钥（只用缓存 key.json，不要求微信在跑）→ 解密（增量秒过）→ 对指定联系人
+    走既有 export_flow 全量导出 chat.json + 头像。单人两万条量级秒级完成。
+
 产物（全部落数据根，不再落脚本旁）：
-  <数据根>/<联系人>/chat.json     消息流 [{ct,type,who,msg,sid,dur?,img?}]，type 为 4.x 原始码
+  <数据根>/<联系人>/stats.json    sync 轮统计 {msgs,voices,images,voiceSec,lastCt,maxSid,group,syncedAt}
+  <数据根>/<联系人>/chat.json     export 轮消息流 [{ct,type,who,msg,sid,dur?,img?}]，type 为 4.x 原始码
   <数据根>/<联系人>/avatar.<ext>  头像源（微信头像库 head_image 原样字节；无头像不落文件）
-  <数据根>/.bz-face/key.json      密钥缓存（每轮从微信进程新取，绝不静默用旧密钥）
+  <数据根>/.bz-face/key.json      密钥缓存（sync 轮每轮从微信进程新取；export 轮只读缓存）
   <数据根>/.bz-face/decrypted/    解密库（增量：已解密的库由上游缓存自动跳过）
 
 img 字段格式与插件侧既有约定一致（src/people/datasource.ts RawChatMsg.img）：`<月>/<文件名>`。
 月取消息本地时间；文件名是 packed_info_data 里的 32hex（解码前不知道扩展名，468 媒体导出
 解码后按同 hex 补全）。
 
-幂等：chat.json / 头像按字节比对，内容没变不写（不破坏已正确的产物）；解密走上游缓存。
-微信未运行 / 取密钥失败 / 解密失败 = 硬失败：立即退出码 1 + 中文原因，绝不静默降级读旧
-目录；单联系人导出失败计入 failed 继续，末尾 [bz-result] 报失败数（此时退出码仍 0——
-命令本身跑完了，失败数看结果行）。
+幂等：stats.json / chat.json / 头像按字节比对，内容没变不写（不破坏已正确的产物）；解密走
+上游缓存。微信未运行 / 取密钥失败 / 解密失败 = 硬失败：立即退出码 1 + 中文原因，绝不静默
+降级读旧目录；单联系人导出失败计入 failed 继续，末尾 [bz-result] 报失败数（此时退出码仍
+0——命令本身跑完了，失败数看结果行）。
 
 进度走四行协议（与 src/core/external-tool.ts 同口径）：
   [bz-step] <文案>
   [bz-p] {"phase":"key|decrypt|contacts","pct":0-100|null}   ← 头像随 contacts 逐人进行，不单开阶段
+  [bz-info] {"phase":"contacts","total":N}                   ← contacts 段开始时报总人数（484 进度换算）
   [bz-info] {"phase":"contact",...}                          ← 逐人结果明细
-  [bz-result] 成功 {ok:true,contacts,written,unchanged,failed,skipped,msgTotal,named,failures:[…]}
+  [bz-result] 成功 {ok:true,mode,contacts,written,unchanged,failed,skipped,msgTotal,named,failures:[…]}
               失败 {ok:false,error:"中文原因"}
 
-用法（微信登录运行状态下）：
+用法（sync 轮需微信登录运行状态下；export 轮不需要微信）：
   python bz_sync.py --data-root <数据根> [--src <账号目录>] [--min-messages N] [--limit N]
+  python bz_sync.py --data-root <数据根> [--src <账号目录>] --contact <目录名> [--contact <目录名> …]
 """
 import argparse
 import hashlib
@@ -316,7 +331,7 @@ def avatar_ext(buf: bytes) -> str:
     return "png"  # 上游 set_avatar_buffer 一律存 PNG，兜底 png
 
 
-# ---------------- 单联系人导出 ----------------
+# ---------------- 单联系人导出（export 轮本体） ----------------
 
 def export_flow(db_dir: Path, tables: list, name_of, my_wxid: str, captions: dict, talker_name: str):
     """一位联系人的消息流。返回 (flow, named, imgs)。
@@ -427,6 +442,105 @@ def export_flow(db_dir: Path, tables: list, name_of, my_wxid: str, captions: dic
     return flow, named, imgs
 
 
+# ---------------- 统计聚合（sync 轮本体，485） ----------------
+
+# describe_message 会给出非空 label 的消息类型白名单（统计口径近似 export_flow 的
+# flow 命中面；10000 系统消息需有内容——空系统消息不出 label。zstd 解压失败的条目
+# 两侧都进不来，误差只剩罕见的空 10000，可接受）。
+STATS_TYPE_WHITELIST_SQL = "(1,3,34,43,47,49,50,42,48)"
+
+
+def contact_stats(db_dir: Path, tables: list, my_wxid: str) -> dict:
+    """一位联系人的统计聚合（sync 轮；无人读消息正文）。
+    消息 / 语音 / 图片 / 最新消息时间 / 最大 sid 全走 SQL 聚合；群聊 = 去掉我之后
+    还有多个不同发送者（与插件侧 datasource.isGroupChat 的 who 口径同语义）；语音
+    时长的 voicelength 在 zstd 压缩的 XML 里，SQL 聚合不了——只解语音条（千条级，
+    比全量消息便宜两个数量级）。返回 {msgs,voices,images,voiceSec,lastCt,maxSid,group}。"""
+    msgs = voices = images = 0
+    last_ct = 0
+    max_sid = 0
+    senders = set()
+    voice_sec = 0.0
+    for dbp, table in tables:
+        con = open_ro(dbp)
+        try:
+            cols = {d[1] for d in con.execute(f'pragma table_info("{table}")')}
+            sidcol = "msg_svrid" if "msg_svrid" in cols else ("server_id" if "server_id" in cols else "")
+            has_sender = "real_sender_id" in cols
+            # Name2Id 缺失（异常库 / 拆分库变体）：sender 不可得，join 一并省掉——
+            # 统计照出（群聊按单聊处理），不让整人 failed（export_flow 同款左连接的容错缺口在这补上）
+            has_name2id = con.execute(
+                "select 1 from sqlite_master where type='table' and name='Name2Id'"
+            ).fetchone() is not None
+            join = " left join Name2Id n on m.real_sender_id = n.rowid" if has_name2id else ""
+            sexpr = "n.user_name" if (has_sender and has_name2id) else "''"
+            iexpr = f"m.{sidcol}" if sidcol else "0"
+            where = (
+                f"((m.local_type & 0xFFFFFFFF) in {STATS_TYPE_WHITELIST_SQL})"
+                " or ((m.local_type & 0xFFFFFFFF)=10000 and m.message_content is not null)"
+            )
+            row = con.execute(
+                f'select count(*), sum((m.local_type & 0xFFFFFFFF)=34),'
+                f' sum((m.local_type & 0xFFFFFFFF)=3), max(m.create_time), max({iexpr})'
+                f' from "{table}" m{join}'
+                f" where {where}"
+            ).fetchone()
+            msgs += int(row[0] or 0)
+            voices += int(row[1] or 0)
+            images += int(row[2] or 0)
+            last_ct = max(last_ct, int(row[3] or 0))
+            max_sid = max(max_sid, int(row[4] or 0))
+            if sexpr != "''":
+                for (s,) in con.execute(
+                    f'select distinct {sexpr} from "{table}" m{join}'
+                    f" where {sexpr} != '' and {sexpr} != ?",
+                    (my_wxid,),
+                ):
+                    senders.add(s)
+            # 语音时长：只取 type=34 的内容解 zstd 抽 voicelength
+            for (content,) in con.execute(
+                f'select message_content from "{table}" where (local_type & 0xFFFFFFFF)=34'
+            ):
+                ms = bz_export._attr(bz_export._cell_text(content), "voicelength")
+                if ms.isdigit() and int(ms) > 0:
+                    voice_sec += int(ms) / 1000
+        finally:
+            con.close()
+    return {
+        "msgs": msgs,
+        "voices": voices,
+        "images": images,
+        "voiceSec": round(voice_sec, 1),
+        "lastCt": last_ct,
+        "maxSid": max_sid,
+        "group": len(senders) > 1,
+    }
+
+
+def write_stats_json(cdir: Path, st: dict) -> str:
+    """stats.json 原子写 + 字节比对幂等。返回 new / updated / unchanged（同 chat.json 口径）。"""
+    payload = json.dumps(st, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    target = cdir / "stats.json"
+    old = target.read_bytes() if target.exists() else None
+    if old == payload:
+        return "unchanged"
+    atomic_write(target, payload)
+    return "new" if old is None else "updated"
+
+
+def write_avatar(cdir: Path, db_dir: Path, wxid: str) -> str:
+    """头像源落位（两轮共用；微信头像库原样字节 + 字节比对幂等）。返回状态词。"""
+    buf = avatar_buffer(db_dir, wxid)
+    if not buf:
+        return "none"
+    apath = cdir / f"avatar.{avatar_ext(buf)}"
+    old_av = apath.read_bytes() if apath.exists() else None
+    if old_av == buf:
+        return "unchanged"
+    atomic_write(apath, buf)
+    return "new" if old_av is None else "updated"
+
+
 # ---------------- 主流程 ----------------
 
 def main() -> int:
@@ -436,17 +550,25 @@ def main() -> int:
     except Exception:
         pass
 
-    ap = argparse.ArgumentParser(description="bz-face sync：微信 → chat.json 与头像源（四行协议）", add_help=True)
+    ap = argparse.ArgumentParser(description="bz-face sync：微信 → 统计与按需导出（四行协议）", add_help=True)
     ap.add_argument("--data-root", help="数据根（必填：密钥 / 解密库 / 联系人目录都落这里）")
     ap.add_argument("--src", help="账号目录（默认当前微信数据目录）")
     ap.add_argument("--min-messages", type=int, default=1, help="少于该条数的联系人不落盘（默认 1 = 全量）")
     ap.add_argument("--limit", type=int, default=0, help="调试：限制处理联系人数（0 = 不限）")
+    ap.add_argument(
+        "--contact",
+        action="append",
+        default=[],
+        help="export 轮：指定联系人目录名（可多值）——全量导出这些人的 chat.json + 头像；缺省 = sync 轮全量统计",
+    )
     args = ap.parse_args()
 
     if not args.data_root:
         fail_hard("缺少 --data-root <数据根>——同步产物（密钥 / 解密库 / 联系人目录）都落在这里")
     if args.min_messages < 1:
         fail_hard("--min-messages 需要 ≥1 的整数")
+    if args.contact and args.limit:
+        fail_hard("export 轮按 --contact 精确指定，不需要 --limit")
     data_root = Path(args.data_root)
     bz_dir = data_root / ".bz-face"
     key_path = bz_dir / "key.json"
@@ -455,6 +577,14 @@ def main() -> int:
     except OSError as e:
         fail_hard(f"数据根不可写：{e}")
 
+    if args.contact:
+        return export_round(args, data_root, key_path)
+    return sync_round(args, data_root, key_path)
+
+
+def sync_round(args, data_root: Path, key_path: Path) -> int:
+    """sync 轮（485 变轻）：取密钥 → 解密（增量）→ 逐联系人 SQL 聚合统计写 stats.json → 头像源。
+    不再产出 chat.json——全量消息由 export 轮按需导出。"""
     # 1. 预检 + 取密钥（微信未运行在 ensure_wechat_running / extract_key 里硬失败）
     ensure_wechat_running()
     ki = take_key(key_path)
@@ -464,24 +594,17 @@ def main() -> int:
     # 2. 解密（增量）
     db_dir = decrypt_all(key_path, data_root, args.src)
 
-    # 3. 逐联系人导出 chat.json + 头像源
-    step("导出聊天与头像源：逐联系人生成 chat.json（文本 / [表情·名] / 图片定位 / 语音时长）")
+    # 3. 逐联系人统计（SQL 聚合，无人读消息正文）+ 头像源
+    step("统计联系人：逐人聚合消息 / 语音 / 图片 / 语音时长 / 最新消息（chat.json 改为按需导出）")
     people = load_people(db_dir)
     targets = plan_targets(people)
     tables = locate_tables(db_dir, [t["wxid"] for t in targets])
-    captions = load_emoticon_captions(db_dir)
     if args.limit and args.limit > 0:
         targets = targets[: args.limit]
-
-    name_map = {t["wxid"]: t["name"] for t in targets}
-
-    def name_of(wxid):
-        if wxid is None:
-            return "_"
-        return name_map.get(wxid) or (people.get(wxid, {}).get("name") or wxid)
+    info(phase="contacts", total=len(targets))
 
     written = unchanged = failed = skipped = 0
-    msg_total = named_total = 0
+    msg_total = 0
     failures = []
     total = len(targets)
     for i, t in enumerate(targets):
@@ -492,12 +615,104 @@ def main() -> int:
                 skipped += 1
                 info(phase="contact", name=t["name"], status="skipped", reason="没有消息记录")
                 continue
-            flow, named, imgs = export_flow(db_dir, tbls, name_of, my_wxid, captions, t["name"])
-            cdir = data_root / t["name"]
-            if len(flow) < args.min_messages:
+            st = contact_stats(db_dir, tbls, my_wxid)
+            if st["msgs"] < args.min_messages:
                 skipped += 1
-                info(phase="contact", name=t["name"], status="skipped", reason=f"消息 {len(flow)} 条少于下限 {args.min_messages}")
+                info(phase="contact", name=t["name"], status="skipped", reason=f"消息 {st['msgs']} 条少于下限 {args.min_messages}")
                 continue
+            cdir = data_root / t["name"]
+            cdir.mkdir(parents=True, exist_ok=True)
+
+            # stats.json：字节比对幂等——没变不写（不破坏已正确的产物）
+            stats_status = write_stats_json(cdir, {**st, "syncedAt": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            if stats_status != "unchanged":
+                written += 1
+            else:
+                unchanged += 1
+            msg_total += st["msgs"]
+
+            # 头像源照旧随统计逐人落位（一条 SQL + 字节写，不在 485 打掉的大头里）
+            avatar_status = write_avatar(cdir, db_dir, t["wxid"])
+
+            info(
+                phase="contact", name=t["name"], status="ok", msgs=st["msgs"],
+                imgs=st["images"], voices=st["voices"], voiceSec=st["voiceSec"],
+                chat=stats_status, avatar=avatar_status,
+            )
+        except Exception as e:  # 单联系人失败不中断整体
+            failed += 1
+            msg = str(e)[:200] or e.__class__.__name__
+            failures.append({"name": t["name"], "error": msg})
+            info(phase="contact", name=t["name"], status="failed", error=msg)
+    progress("contacts", 100)
+
+    exported = written + unchanged
+    result({
+        "ok": True,
+        "mode": "stats",
+        "contacts": exported,
+        "written": written,
+        "unchanged": unchanged,
+        "failed": failed,
+        "skipped": skipped,
+        "msgTotal": msg_total,
+        "named": 0,  # 表情命名要读正文，归 export 轮口径；sync 轮恒 0
+        "failures": failures,
+        "dataRoot": str(data_root),
+    })
+    tail = f"同步完成：联系人 {exported}，写入 {written}，未变 {unchanged}，跳过 {skipped}，失败 {failed}；消息 {msg_total} 条（统计口径，chat.json 按需导出）"
+    if failed:
+        tail += "（失败名单见 [bz-result].failures，重跑即只补失败项）"
+    print(tail)
+    return 0
+
+
+def export_round(args, data_root: Path, key_path: Path) -> int:
+    """export 轮（485 新增）：--contact 指定的联系人走既有 export_flow 全量导出 chat.json + 头像。
+    不取密钥（只用缓存 key.json）、不预检微信进程——导入/画谱发生时微信未必在跑；
+    解密照跑（增量缓存全命中时秒过）。--min-messages 对 export 轮不生效（点名导出即全量）。"""
+    if not key_path.exists():
+        fail_hard("还没有缓存的解密密钥（数据根 .bz-face/key.json）——先跑一次 bz-face sync，再按需导出")
+    db_dir = decrypt_all(key_path, data_root, args.src)
+
+    wanted = list(dict.fromkeys(args.contact))  # 去重保序
+    step(f"导出聊天与头像：{len(wanted)} 位联系人生成 chat.json（文本 / [表情·名] / 图片定位 / 语音时长）")
+
+    people = load_people(db_dir)
+    by_name = {t["name"]: t for t in plan_targets(people)}
+    tables = locate_tables(db_dir, [by_name[nm]["wxid"] for nm in wanted if nm in by_name])
+    captions = load_emoticon_captions(db_dir)
+    try:
+        my_wxid = str(json.loads(key_path.read_text(encoding="utf-8")).get("wxid") or "")
+    except Exception:
+        my_wxid = ""  # wxid 读不出只影响「我」的归属判定兜底，不挡导出
+    info(phase="contacts", total=len(wanted))
+
+    name_map = {t["wxid"]: t["name"] for t in by_name.values()}
+
+    def name_of(wxid):
+        if wxid is None:
+            return "_"
+        return name_map.get(wxid) or (people.get(wxid, {}).get("name") or wxid)
+
+    written = unchanged = failed = skipped = 0
+    msg_total = named_total = 0
+    failures = []
+    total = len(wanted)
+    for i, nm in enumerate(wanted):
+        progress("contacts", round(i * 100 / total) if total else 100)
+        t = by_name.get(nm)
+        try:
+            if t is None:
+                # 目录名在微信联系人里反查不到（手改 / 已删 / 重名目录被动过）：单人失败不中断整体
+                raise RuntimeError("数据根里没有这个联系人目录对应的微信联系人（重跑 sync 可重建映射）")
+            tbls = tables.get(t["wxid"]) or []
+            if not tbls:
+                skipped += 1
+                info(phase="contact", name=nm, status="skipped", reason="没有消息记录")
+                continue
+            flow, named, imgs = export_flow(db_dir, tbls, name_of, my_wxid, captions, t["name"])
+            cdir = data_root / nm
             cdir.mkdir(parents=True, exist_ok=True)
 
             # chat.json：字节比对幂等——没变不写（不破坏已正确的产物）
@@ -513,32 +728,22 @@ def main() -> int:
             msg_total += len(flow)
             named_total += named
 
-            # 头像源：微信头像库原样字节落位，同样字节比对幂等
-            buf = avatar_buffer(db_dir, t["wxid"])
-            avatar_status = "none"
-            if buf:
-                apath = cdir / f"avatar.{avatar_ext(buf)}"
-                old_av = apath.read_bytes() if apath.exists() else None
-                if old_av != buf:
-                    atomic_write(apath, buf)
-                    avatar_status = "new" if old_av is None else "updated"
-                else:
-                    avatar_status = "unchanged"
-
+            avatar_status = write_avatar(cdir, db_dir, t["wxid"])
             info(
-                phase="contact", name=t["name"], status="ok", msgs=len(flow),
+                phase="contact", name=nm, status="ok", msgs=len(flow),
                 named=named, imgs=imgs, chat=chat_status, avatar=avatar_status,
             )
         except Exception as e:  # 单联系人失败不中断整体
             failed += 1
             msg = str(e)[:200] or e.__class__.__name__
-            failures.append({"name": t["name"], "error": msg})
-            info(phase="contact", name=t["name"], status="failed", error=msg)
+            failures.append({"name": nm, "error": msg})
+            info(phase="contact", name=nm, status="failed", error=msg)
     progress("contacts", 100)
 
     exported = written + unchanged
     result({
         "ok": True,
+        "mode": "export",
         "contacts": exported,
         "written": written,
         "unchanged": unchanged,
@@ -549,7 +754,7 @@ def main() -> int:
         "failures": failures,
         "dataRoot": str(data_root),
     })
-    tail = f"同步完成：联系人 {exported}，写入 {written}，未变 {unchanged}，跳过 {skipped}，失败 {failed}；消息 {msg_total} 条，表情命名 {named_total} 条"
+    tail = f"导出完成：联系人 {exported}，写入 {written}，未变 {unchanged}，跳过 {skipped}，失败 {failed}；消息 {msg_total} 条"
     if failed:
         tail += "（失败名单见 [bz-result].failures，重跑即只补失败项）"
     print(tail)

@@ -29,6 +29,7 @@ import {
 } from '../../src/people/ui';
 import type { ExternalToolCallbacks, ExternalToolOutcome, ExternalToolSpec } from '../../src/core/external-tool';
 import { BZ_FACE_INSTALL_HINT, setSyncRunnerForTests, stopSync, type SyncRunner } from '../../src/people/sync';
+import { setExportRunnerForTests } from '../../src/people/export';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { SafeManager } from '../../src/encrypt/data';
 import type { PersonEntry } from '../../src/people/types';
@@ -344,5 +345,72 @@ describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => 
     const targets = engineStarted[0][1];
     expect(targets[0]?.talker).toBe('陈默');
     expect(targets[0]?.msgs.length).toBeGreaterThan(0); // 492 前：此处读到导入前空仓，引擎空手而归
+  });
+});
+
+describe('导入所选按需导出（issue 485）', () => {
+  /** 数据根换成「只有 stats.json」的联系人目录（485 后 sync 轮产物形态） */
+  function seedStatsOnly(name: string, stats: Record<string, unknown>): void {
+    mkdirSync(join(dataRoot, name), { recursive: true });
+    writeFileSync(join(dataRoot, name, 'stats.json'), JSON.stringify({
+      msgs: 2, voices: 0, images: 0, voiceSec: 0, lastCt: T0 + 60, maxSid: 0, group: false, ...stats,
+    }));
+  }
+
+  it('缺 chat.json 的勾选者先起 bz-face export --contact，完成后走既有归一合并落保库记录', async () => {
+    rmSync(join(dataRoot, '陈默', 'chat.json'));
+    seedStatsOnly('陈默', {});
+    const exportTool = new FakeTool();
+    setExportRunnerForTests(exportTool.runner);
+    await bootWithDsOpen([person()]);
+    click('[data-people-ds-check]');
+    click('[data-people-ds-import]');
+    // 先对勾选者起 export（不是 sync！），--contact 下发目录名
+    await vi.waitFor(() => expect(exportTool.calls.length).toBe(1));
+    expect(exportTool.calls[0].cmd).toBe('bz-face');
+    expect(exportTool.calls[0].args?.[0]).toBe('export');
+    expect(exportTool.calls[0].args).toContain('--contact');
+    expect(tool.calls.length).toBe(0); // sync 驱动不被误用
+    // export 假件按工具语义落 chat.json（模拟工具产物），逐人事件 + 结果行
+    writeFileSync(join(dataRoot, '陈默', 'chat.json'), JSON.stringify([
+      { ct: T0, type: 1, msg: '早' },
+      { ct: T0 + 60, type: 1, who: '我', msg: '吃了没' },
+    ]));
+    exportTool.info({ phase: 'contact', name: '陈默', status: 'ok', msgs: 2, chat: 'new' });
+    exportTool.result({ ok: true, mode: 'export', contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 2, named: 0, failures: [] });
+    await exportTool.settle({ ok: true, code: 0 });
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
+    const rec = await lastSafe!.readAll().then((m) => m.get('陈默'));
+    expect(rec?.store?.msgs?.length).toBe(2); // 归一合并落保库记录
+  });
+
+  it('存量 chat.json 直接导入：不起 export（免重复导出），也不起 sync', async () => {
+    const exportTool = new FakeTool();
+    setExportRunnerForTests(exportTool.runner);
+    await bootWithDsOpen([person()]);
+    click('[data-people-ds-check]');
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
+    expect(exportTool.calls.length).toBe(0);
+    expect(tool.calls.length).toBe(0);
+    const rec = await lastSafe!.readAll().then((m) => m.get('陈默')); // 保库记录键 = 数据根目录名
+    expect(rec?.store?.msgs?.length).toBe(2);
+  });
+
+  it('export 轮硬失败（无缓存密钥）：导入中止，进度行给中文原因，保库记录不动', async () => {
+    rmSync(join(dataRoot, '陈默', 'chat.json'));
+    seedStatsOnly('陈默', {});
+    const exportTool = new FakeTool();
+    setExportRunnerForTests(exportTool.runner);
+    await bootWithDsOpen([person()]);
+    click('[data-people-ds-check]');
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(exportTool.calls.length).toBe(1));
+    exportTool.result({ ok: false, error: '还没有缓存的解密密钥（数据根 .bz-face/key.json）——先跑一次 bz-face sync，再按需导出' });
+    await exportTool.settle({ ok: false, code: 1 });
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('导出失败'));
+    expect(document.querySelector('[data-people-ds-notice]')!.textContent).toContain('key.json');
+    const rec = await lastSafe!.readAll().then((m) => m.get('陈默'));
+    expect(rec?.store?.msgs?.length ?? 0).toBe(0);
   });
 });

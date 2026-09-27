@@ -57,7 +57,7 @@ python -m pip install -r <包目录>/python/requirements-transcribe.txt   # 还�
 已知坑：`yara-python` 在 Python 3.14 暂无预编译 wheel（3.12 / 3.13 可直装）；
 装不上时仅「取密钥」不可用，用已缓存密钥的解密链不受影响。
 
-## `bz-face sync` —— 一次从微信取数（issue 464）
+## `bz-face sync` —— 一次从微信取数（issue 464；485 变轻为统计轮）
 
 ```bash
 bz-face sync --data-root "E:\Obsidian\微信脸谱数据\export_full"
@@ -65,14 +65,45 @@ bz-face sync --data-root "E:\根" --python "C:\Python312\python.exe"  # 指定 P
 bz-face sync --data-root "E:\根" --limit 3    # 调试：只处理前 3 位联系人
 ```
 
-微信登录运行状态下一次跑完四步：**取密钥 → 解密数据库（增量）→ 逐联系人导出
-`chat.json` → 头像源落位**。产物全落数据根：
+微信登录运行状态下一次跑完四步：**取密钥 → 解密数据库（增量）→ 逐联系人统计 → 头像源
+落位**。485 起 sync **只出统计不出 `chat.json`**——实测全量同步 5 分 21 秒（57 人 /
+7.2 万条）的大头是逐人重读全量消息并序列化，而同步本身只需要统计数字；全量消息由
+`bz-face export`（下节）对勾选者按需导出，日常同步进入十秒级。产物全落数据根：
+
+```
+<数据根>/<联系人>/stats.json    统计 {msgs,voices,images,voiceSec,lastCt,maxSid,group,syncedAt}（SQL 聚合，无人读消息正文）
+<数据根>/<联系人>/avatar.<ext>  头像源（微信头像库原样字节；无头像不落文件）
+<数据根>/.bz-face/key.json      密钥缓存（每轮从微信进程新取，取不到回退已缓存密钥）
+<数据根>/.bz-face/decrypted/    解密库（增量：已解密的库自动跳过）
+```
+
+行为约定：
+
+| 项 | 口径 |
+|---|---|
+| 幂等 | 可重复跑：`stats.json` / 头像按字节比对，没变不写；解密走上游缓存，不重复搬 |
+| 微信未运行 | **立即硬失败** + 中文引导，绝不静默降级成读旧目录（否则会误以为同步成功） |
+| 微信 ≥ 4.0.3.36 | 预检即失败并给退回 4.0.3.19 指引（同 doctor 口径）；有缓存密钥（`key.json`）时解密链不依赖微信，预检整体跳过这两道 |
+| 单联系人失败 | 不中断整体，末尾 `[bz-result]` 报 `failed:N` 与失败名单；重跑即只补失败项 |
+| stdout | **只有四行协议**（`[bz-step]`/`[bz-p]`/`[bz-info]`/`[bz-result]`），供插件编排消费（465 数据源同步按钮）；结果行带 `mode:"stats"`；人读环境报告请用 `doctor` |
+| 退出码 | 0 = 跑完（单联系人失败也算——看结果行 `failed:N`）；1 = 硬失败；2 = 用法错误 |
+
+## `bz-face export` —— 按需全量导出（issue 485）
+
+```bash
+bz-face export --data-root "E:\根" --contact "大琳"
+bz-face export --data-root "E:\根" --contact "大琳" --contact "老周"   # 可多值
+bz-face export --data-root "E:\根" --contact "大琳" --python "C:\Python312\python.exe"
+```
+
+对**指定联系人**（目录名来自 sync 产物的数据根）走既有 export_flow 全量导出 `chat.json`
++ 头像。**不需要微信在跑**——不取密钥，只吃 sync 已落盘的缓存 `key.json` 与解密库
+（解密照跑，增量缓存全命中时秒过）。供插件在「导入所选」时只对勾选者起本命令，单人
+两万条量级秒级完成。
 
 ```
 <数据根>/<联系人>/chat.json     消息流 [{ct,type,who,msg,sid,dur?,img?}]（4.x 原始码）
-<数据根>/<联系人>/avatar.<ext>  头像源（微信头像库原样字节；无头像不落文件）
-<数据根>/.bz-face/key.json      密钥缓存（每轮从微信进程新取）
-<数据根>/.bz-face/decrypted/    解密库（增量：已解密的库自动跳过）
+<数据根>/<联系人>/avatar.<ext>  头像源（已一致则字节比对跳过）
 ```
 
 `chat.json` 只含「从微信解出来的事实」：语音保持 `[语音 N秒]`（时长入 `dur`）、
@@ -84,12 +115,10 @@ bz-face sync --data-root "E:\根" --limit 3    # 调试：只处理前 3 位联�
 
 | 项 | 口径 |
 |---|---|
-| 幂等 | 可重复跑：`chat.json` / 头像按字节比对，没变不写；解密走上游缓存，不重复搬 |
-| 微信未运行 | **立即硬失败** + 中文引导，绝不静默降级成读旧目录（否则会误以为同步成功） |
-| 微信 ≥ 4.0.3.36 | 预检即失败并给退回 4.0.3.19 指引（同 doctor 口径） |
-| 单联系人失败 | 不中断整体，末尾 `[bz-result]` 报 `failed:N` 与失败名单；重跑即只补失败项 |
-| stdout | **只有四行协议**（`[bz-step]`/`[bz-p]`/`[bz-info]`/`[bz-result]`），供插件编排消费（465 数据源同步按钮）；人读环境报告请用 `doctor` |
-| 退出码 | 0 = 跑完（单联系人失败也算——看结果行 `failed:N`）；1 = 硬失败；2 = 用法错误 |
+| 幂等 | 可重复跑：`chat.json` / 头像按字节比对，没变不写 |
+| 前置 | 数据根里没有缓存密钥（`.bz-face/key.json`）或解密库 → **硬失败**并引导先跑一次 `bz-face sync`；`--contact` 目录缺席 → 硬失败点名 |
+| 单联系人失败 | 不中断整体（目录名反查不到 wxid 等场景），末尾 `[bz-result]` 报 `failed:N` 与失败名单 |
+| stdout / 退出码 | 同 sync（四行协议；结果行带 `mode:"export"`）；0 = 跑完、1 = 硬失败、2 = 用法错误 |
 
 ## `bz-face prep <联系人>` —— 单联系人重活（issue 468）
 
@@ -196,7 +225,7 @@ tools/obsidian-face/
     └── probes.js           # 真探测与子进程管道：child_process / fs，逐项兜错绝不抛栈
 └── python/
     ├── bz_export.py        # 解密链本体（收编自数据盘 tools/；464 起 keyinfo/decrypt_db 可显式指路径）
-    ├── bz_sync.py          # sync 本体：取密钥 → 解密 → 逐联系人 chat.json + 头像源（四行协议）
+    ├── bz_sync.py          # sync 本体：取密钥 → 解密 → 逐联系人统计（stats.json）+ 头像源；--contact 走 export 轮（485）
     ├── bz_prep.py          # prep 本体（468）：媒体导出 + 派生图片档 + 关联表 + 语音转写（四行协议 + 协作式暂停）
     ├── requirements-decrypt.txt
     ├── requirements-transcribe.txt

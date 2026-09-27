@@ -1,8 +1,8 @@
 // ================================================================
 // bz-face sync —— 编排判定层（纯函数，零依赖，注入即可测）
 //
-// 职责切分（issue 464，照 463 doctor 的三层切分）：
-//   python/bz_sync.py  sync 本体（取密钥→解密→逐联系人导出+头像），自己吐四行协议行
+// 职责切分（issue 464，照 463 doctor 的三层切分；485 起 sync 变轻、export 轮见 lib/export-core.js）：
+//   python/bz_sync.py  sync 本体（取密钥→解密→逐联系人统计+头像；--contact 走 export 轮），自己吐四行协议行
 //   lib/sync-core.js   本文件——阶段计划 / 参数解析 / 协议行格式化 / 转发中继与结果兜底 /
 //                      预检判定 / 启动失败归类
 //   lib/probes.js      预检真探测（微信进程 / 数据根）与子进程管道（spawn / 行缓冲 / stderr 留尾）
@@ -25,13 +25,14 @@ const doctor = require('./doctor-core');
 // ---- 阶段计划（步骤词汇表；--help 渲染与测试同源，Python 侧 bz_sync.py 镜像同一顺序）----
 
 /**
- * sync 的一次跑完四步（票 464 / ADR-0196 决策 1）。id 同时是 [bz-p] 的 phase 词；
- * 头像不单开进度阶段——它随「导出聊天」逐联系人进行。
+ * sync 的一次跑完四步（票 464 / ADR-0196 决策 1；485 起第三步从「导出聊天」变「统计联系人」）。
+ * id 同时是 [bz-p] 的 phase 词（机器契约不变）；头像不单开进度阶段——它随「统计联系人」逐人进行。
+ * 全量 chat.json 由 `bz-face export --contact`（lib/export-core.js）按需导出，不再进 sync。
  */
 const SYNC_PHASES = [
   { id: 'key', label: '取密钥', detail: '从微信进程内存提取（微信需已登录运行；未运行立即失败，绝不静默降级）' },
   { id: 'decrypt', label: '解密数据库', detail: '增量解密到数据根 .bz-face/decrypted（已解密的库自动跳过）' },
-  { id: 'contacts', label: '导出聊天', detail: '逐联系人生成 chat.json：文本、[表情·名]（当场命名）、图片定位（月/文件名）、语音时长' },
+  { id: 'contacts', label: '统计联系人', detail: '逐人 SQL 聚合统计（消息 / 语音 / 图片 / 语音时长 / 最新消息）写 stats.json——不读消息正文；chat.json 由 bz-face export 按需导出' },
   { id: 'avatar', label: '头像源', detail: '从微信头像库抽头像落到各联系人目录（随上一步逐人进行）' },
 ];
 
@@ -164,12 +165,14 @@ function formatBzLine(kind, body) {
 // ---- 转发中继（结果汇总兜底）----
 
 /**
- * stdout 逐行转发中继。职责：
+ * stdout 逐行转发中继（sync / export 轮共用——485；toolLabel 只进兜底文案的命令名）。
+ * 职责：
  *   1. 子进程行原样透传（空行丢弃；协议 / 非协议都不改写——插件自己解析）；
  *   2. 记住是否见过 [bz-result]；进程终结仍没见过 → 补一条兜底失败结果行，
  *      让插件永远能拿到一个确定的结果事件（正常路径下 Python 自己的结果行唯一权威）。
  */
-function createSyncRelay() {
+function createSyncRelay(toolLabel) {
+  const label = String(toolLabel || 'bz-face sync');
   let sawResult = false;
   return {
     get sawResult() {
@@ -194,7 +197,7 @@ function createSyncRelay() {
       if (errorMessage) {
         error = String(errorMessage);
       } else if (code === 0) {
-        error = '导出进程正常结束但没有输出结果行——产物可能不完整，请重跑 bz-face sync';
+        error = `导出进程正常结束但没有输出结果行——产物可能不完整，请重跑 ${label}`;
       } else {
         const tail = String(stderr || '')
           .split('\n')

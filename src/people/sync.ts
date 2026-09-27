@@ -100,22 +100,28 @@ export interface BuildSyncSpecOpts {
 }
 
 /**
+ * Windows shell 路径参数引号（buildSyncSpec / buildExportSpec 共用；485 提出复用）：
+ * shell 会把参数按空格拆散（external-tool 头注的坑）——Windows 下路径类参数一律包引号
+ * （Win32 路径本身不允许含双引号，无损）；非 Windows 原样。
+ */
+export function quotePathArg(v: string): string {
+  return process.platform === 'win32' ? `"${v}"` : v;
+}
+
+/**
  * 组装 `bz-face sync` 启动参数（照 bili-dl 先例：纯 PATH 找命令、.cmd shim 需 shell:true）。
- * src / python 空白视同未配置。shell 会把参数按空格拆散（external-tool 头注的坑；bili-dl 的
- * 解法是 JSON 走 b64，sync 参数是纯路径，包引号即可）——Windows 下路径类参数一律包引号
- * （Win32 路径本身不允许含双引号，无损）；--python 是命令词不包（'py -3' 需拆成两个词）。
+ * src / python 空白视同未配置。--python 是命令词不包引号（'py -3' 需拆成两个词）。
  */
 export function buildSyncSpec(opts: BuildSyncSpecOpts): ExternalToolSpec {
   const src = opts.src?.trim() || undefined;
   const python = opts.python?.trim() || undefined;
-  const q = (v: string): string => (process.platform === 'win32' ? `"${v}"` : v);
   return {
     cmd: 'bz-face',
     args: [
       'sync',
       '--data-root',
-      q(opts.dataRoot),
-      ...(src ? ['--src', q(src)] : []),
+      quotePathArg(opts.dataRoot),
+      ...(src ? ['--src', quotePathArg(src)] : []),
       ...(python ? ['--python', python] : []),
     ],
     shell: true,
@@ -178,8 +184,8 @@ export function describeSyncStats(st: SyncStats): string {
   return `同步完成：${parts.join(' · ')}，消息 ${st.msgTotal} 条`;
 }
 
-/** 错误消息取首行并限长（stderr 尾可能带多行细节，弹窗一行放不下也不抛栈） */
-function firstLine(text: string, max = 200): string {
+/** 错误消息取首行并限长（stderr 尾可能带多行细节，弹窗一行放不下也不抛栈；export 驱动同用） */
+export function firstLine(text: string, max = 200): string {
   const line = String(text || '').split('\n').map((s) => s.trim()).filter(Boolean)[0] || '';
   return line.length > max ? line.slice(0, max) + '…' : line;
 }
