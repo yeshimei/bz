@@ -41,6 +41,10 @@ import {
 import { ensureAssetWithHash } from '../core/remote-asset';
 import { loadCategoryTable } from '../core/category-table';
 import { loadRssCatalog, catalogCategoryCounts } from '../core/rss-catalog';
+import { loadDoubanNameIndex, indexKindCounts } from '../core/douban-name-index';
+
+/** 千分位（8.5 万级的条数不加分隔没法读；en-US 固定/locale 无关） */
+const thousand = (n: number): string => n.toLocaleString('en-US');
 
 /** 皮肤聚合行的行名（它不是 doc 条目、清单里没有 name，只能内置；各域选择卡叫法不变） */
 const SKINS_ROW_NAME = '主题';
@@ -65,6 +69,13 @@ const DESC_EXTRAS: Record<string, (app: unknown, entry: ManifestDocEntry) => Pro
     if (!catalog) return null;
     const cats = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
     return `${cats} 类 ${catalog.feeds.length} 源`;
+  },
+  // issue 498：豆瓣影视索引就绪描述捎带「N 条 · 各类型条数」（用户点名按类型给量级参考）
+  'cinema-douban-index': async (app) => {
+    const idx = await loadDoubanNameIndex(app);
+    if (!idx) return null;
+    const parts = indexKindCounts(idx).map(({ k, count }) => `${k} ${thousand(count)}`);
+    return `${thousand(idx.stats.total)} 条 · ${parts.join(' / ')}`;
   },
 };
 

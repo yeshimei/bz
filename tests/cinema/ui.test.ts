@@ -20,6 +20,7 @@ import { configureFetchQueue, isFetching, shutdownDoubanQueue, type DoubanQueryO
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
+import { resetDoubanNameIndexCache } from '../../src/core/douban-name-index';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { emitDomainEvent, clearDomainEvents, onDomainEvent } from '../../src/core/domain-bus';
 
@@ -476,6 +477,79 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.items[0].name).toBe('新片A'); // 新增置首
     expect(M.items[0].typeTag).toBe('美剧'); // 下拉选的分类落盘
     await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(5)); // renderAll 落地
+  });
+
+
+  // issue 498 / ADR-0209：名称索引联想——候选带年份·评分·类别小注；选中携带 sid 解析直取。
+  // 同名条目取最优评分一行作为 sid 载体（onPick 只有名称串，重名不二选一，其余走手输检索）。
+  it('名称索引下拉：小注参考值 + 选中携带 sid 解析（索引未下载则静默缺席）', async () => {
+    const { app, vault } = seedVault();
+    vault.files.set('.obsidian/plugins/bz/downloads/cinema-douban-index.json', JSON.stringify({
+      version: 1,
+      updatedAt: '2026-09-27',
+      stats: { total: 3, kinds: [['电视剧', 2], ['电影', 1]] },
+      rows: [
+        ['星际穿越', '2014', '9.4', '电影', '1889243'],
+        ['三体', '2023', '8.7', '电视剧', '26647087'],
+        ['三体', '2011', '8.9', '电视剧', '5351484'],
+      ],
+    }));
+    resetDoubanNameIndexCache();
+    const seenSids: Array<string | undefined> = [];
+    configureFetchQueue({
+      preview: (a, name, sid) => {
+        seenSids.push(sid);
+        return cannedPreview(a, name);
+      },
+    });
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    const input = form.querySelector('.j-name') as HTMLInputElement;
+    // 输入触发联想（索引异步加载 → waitFor 轮询到候选出现为止）；同名去重取最优一行
+    await vi.waitFor(() => {
+      input.value = '三体';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      expect(form.querySelectorAll('.bz-popover-item').length).toBe(1);
+    });
+    // 小注 = 年份 · 评分 · 类别（用户点名的三件参考值）
+    const popover = form.querySelector('.bz-popover') as HTMLElement;
+    expect(popover.textContent).toContain('2011');
+    expect(popover.textContent).toContain('评分 8.9');
+    expect(popover.textContent).toContain('电视剧');
+    // 选中 → 名称回填 + 收下拉
+    clickEl(form.querySelector('.bz-popover-item'));
+    expect(input.value).toBe('三体');
+    expect(form.querySelector('.bz-popover')).toBeNull();
+    // 解析：罐头收到索引携带的 sid（生产侧据此跳过按名搜索直取 ApiZero）
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    expect(seenSids[0]).toBe('5351484');
+  });
+
+  it('名称索引未下载：联想静默缺席，手输+解析照常（回落既有三路检索）', async () => {
+    const { app } = seedVault(); // 不预置索引产物
+    resetDoubanNameIndexCache();
+    const seen: Array<string | undefined> = [];
+    configureFetchQueue({
+      preview: (a, name, sid) => {
+        seen.push(sid);
+        return cannedPreview(a, name);
+      },
+    });
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    const input = form.querySelector('.j-name') as HTMLInputElement;
+    input.value = '新片B';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 20)); // 给异步挂载/读盘留一拍
+    expect(form.querySelector('.bz-popover')).toBeNull(); // 静默：无下拉、无报错
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    expect(seen[0]).toBeUndefined(); // 无 sid → 走按名检索（现状语义）
   });
 
   // 2026-09-21 用户点名：点「已看」就要能当场填评分影评——字段在正面状态下方（不等解析翻面）

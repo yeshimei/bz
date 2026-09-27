@@ -470,6 +470,39 @@ export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Pr
 }
 
 /**
+ * 带 sid 直取（issue 498 / ADR-0209）：本地名称索引命中后跳过三路检索，ApiZero 按 ID 拿字段。
+ * 与 queryDoubanByName 的字段段完全同构（ApiZero → 缺导演/主演时 rexxar celebrities 兜底），
+ * 差异只有两点：sid 来自索引而非检索产物；海报 URL 恒空（ApiZero 无此字段）——
+ * 落到 `DoubanQuery.posterUrl = ''`，表单/保存路径对空海报已有兜底（保存后队列按名补抓）。
+ * ApiZero 不可用（key 未配/额度尽/网络空文）→ `{ ok: false, reason: 'notfound' }`，
+ * 调用方（queryDoubanForPreview）据此回落按名全链，不在本层静默吞掉。
+ */
+export async function queryDoubanBySid(sid: string, name: string, deps: DoubanFetchDeps): Promise<DoubanQueryOutcome> {
+  let az: ApizeroInfo | null = null;
+  try {
+    az = deps.apizeroKey ? await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet) : null;
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+  if (!az) return { ok: false, reason: 'notfound' };
+  let celebrities: CelebritiesInfo | null = null;
+  if (!az.director || !az.actor) {
+    celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+  }
+  return {
+    ok: true,
+    data: {
+      title: az.name || name,
+      detailUrl: `https://movie.douban.com/subject/${sid}/`,
+      sid,
+      posterUrl: '',
+      apizero: az,
+      celebrities,
+    },
+  };
+}
+
+/**
  * 海报下载落库（唯一实现）：高清 URL → 二进制 → 写盘，返回 vault 相对路径。
  * 两处共用：抓取队列 `fetchNoteDouban`，与「添加影视」保存（表单解析阶段已拿到远程 URL，
  * 保存即落盘 → 建档即齐、不再入队后台抓取；issue 397）。

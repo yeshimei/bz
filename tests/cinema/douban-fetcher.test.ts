@@ -23,7 +23,7 @@ import {
   parseSuggestResults, suggestLooksBlocked, parseRexxarSearch, parseSearchResults, searchPageLooksBlocked,
   upgradePosterUrl, extractSid, parseCelebrities,
   extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
-  fetchApizeroInfo, fetchNoteDouban, queryDoubanByName,
+  fetchApizeroInfo, fetchNoteDouban, queryDoubanByName, queryDoubanBySid,
   POSTER_FOLDER, type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
 
@@ -624,5 +624,63 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('豆瓣评分: 9.9');
     expect(content).toContain('导演: 用户手改');
     expect(content).toContain('主演: "用户 / 手选"');
+  });
+});
+
+// ---------- sid 直取（issue 498 / ADR-0209）：名称索引命中后跳过三路检索 ----------
+
+describe('queryDoubanBySid', () => {
+  const depsBase: DoubanFetchDeps = {
+    httpGet: async () => null,
+    downloadBinary: async () => null,
+    writeBinary: async () => {},
+    mkdir: async () => {},
+    apizeroKey: 'k',
+  };
+
+  it('ApiZero 命中 → 直拼 detailUrl、title 取 ApiZero 名', async () => {
+    const hits: string[] = [];
+    const deps: DoubanFetchDeps = {
+      ...depsBase,
+      httpGet: async (url) => {
+        hits.push(url);
+        if (url.includes('apizero.cn')) {
+          return JSON.stringify({ code: 0, data: { name: '肖申克的救赎', year: '1994', score: '9.7', director: '弗兰克·德拉邦特', actor: '蒂姆·罗宾斯', douban_url: 'https://movie.douban.com/subject/1292052/' } });
+        }
+        return null;
+      },
+    };
+    const q = await queryDoubanBySid('1292052', '肖申克', deps);
+    expect(q.ok).toBe(true);
+    if (q.ok) {
+      expect(q.data.sid).toBe('1292052');
+      expect(q.data.title).toBe('肖申克的救赎');
+      expect(q.data.detailUrl).toBe('https://movie.douban.com/subject/1292052/');
+      expect(q.data.posterUrl).toBe(''); // ApiZero 无海报字段，恒空（队列按名补抓兜底）
+    }
+    expect(hits.some((u) => u.includes('subject_suggest'))).toBe(false); // 不走三路检索
+  });
+
+  it('ApiZero 缺导演/主演 → rexxar celebrities 兜底', async () => {
+    const deps: DoubanFetchDeps = {
+      ...depsBase,
+      httpGet: async (url) => {
+        if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { score: '8.3' } });
+        if (url.includes('rexxar')) return JSON.stringify({ padding: 'x'.repeat(400), directors: [{ name: '郭帆' }], actors: [{ name: '吴京' }] });
+        return null;
+      },
+    };
+    const q = await queryDoubanBySid('4920399', '流浪地球2', deps);
+    expect(q.ok).toBe(true);
+    if (q.ok) {
+      expect(q.data.celebrities?.directors).toBe('郭帆');
+      expect(q.data.celebrities?.casts).toBe('吴京');
+    }
+  });
+
+  it('ApiZero null（key 未配/额度尽）→ notfound，交调用方回落按名链', async () => {
+    const deps: DoubanFetchDeps = { ...depsBase, apizeroKey: '' };
+    const q = await queryDoubanBySid('1292052', '肖申克', deps);
+    expect(q).toEqual({ ok: false, reason: 'notfound' });
   });
 });

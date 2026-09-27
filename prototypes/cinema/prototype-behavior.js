@@ -1,5 +1,5 @@
-/* 源指纹 fa7ff6f199de6140 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 2fde6ea3bc28f2d6 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -6052,6 +6052,30 @@ var BZW_cinema = (() => {
     }
     return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
   }
+  async function queryDoubanBySid(sid, name, deps) {
+    let az = null;
+    try {
+      az = deps.apizeroKey ? await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet) : null;
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    if (!az) return { ok: false, reason: "notfound" };
+    let celebrities = null;
+    if (!az.director || !az.actor) {
+      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    }
+    return {
+      ok: true,
+      data: {
+        title: az.name || name,
+        detailUrl: `https://movie.douban.com/subject/${sid}/`,
+        sid,
+        posterUrl: "",
+        apizero: az,
+        celebrities
+      }
+    };
+  }
   async function downloadPosterToVault(name, posterUrl2, deps) {
     var _a, _b;
     let buf;
@@ -6863,6 +6887,147 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/ui/suggest.ts
+  function uiSuggest(opts) {
+    var _a;
+    const anchor = opts.anchor;
+    const max = (_a = opts.max) != null ? _a : 30;
+    let layer = null;
+    let skipNextOpen = false;
+    const close = () => {
+      if (!layer) return;
+      layer.remove();
+      layer = null;
+      document.removeEventListener("mousedown", onDocDown, true);
+    };
+    const onDocDown = (e) => {
+      const t = e.target;
+      if (!anchor.isConnected) {
+        close();
+        return;
+      }
+      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
+      close();
+    };
+    const pick = (raw) => {
+      var _a2;
+      anchor.value = raw;
+      close();
+      (_a2 = opts.onPick) == null ? void 0 : _a2.call(opts, raw);
+      if (document.activeElement !== anchor) {
+        skipNextOpen = true;
+        anchor.focus();
+      }
+    };
+    const draw = () => {
+      if (!layer) return;
+      const cur = anchor.value.trim();
+      const q = cur.toLowerCase();
+      const matched = opts.source().filter((s) => {
+        var _a2, _b, _c;
+        if (opts.excludeCurrent && s === cur) return false;
+        if (!q) return true;
+        if (s.toLowerCase().includes(q)) return true;
+        return (_c = (_b = (_a2 = opts.keywordsOf) == null ? void 0 : _a2.call(opts, s)) == null ? void 0 : _b.some((k) => k.toLowerCase().includes(q))) != null ? _c : false;
+      }).slice(0, max);
+      if (!matched.length) {
+        close();
+        return;
+      }
+      layer.replaceChildren();
+      matched.forEach((raw) => {
+        var _a2, _b;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-popover-item";
+        b.dataset.value = raw;
+        b.setAttribute("role", "option");
+        const on = raw === cur;
+        if (on) b.classList.add("is-on");
+        const icon = (_a2 = opts.iconOf) == null ? void 0 : _a2.call(opts, raw);
+        if (icon) {
+          const ic = document.createElement("span");
+          ic.className = "bz-suggest-ic";
+          if (typeof icon === "string") ic.textContent = icon;
+          else ic.appendChild(icon);
+          b.appendChild(ic);
+        }
+        const label = document.createElement("span");
+        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
+        b.appendChild(label);
+        const hint = (_b = opts.hintOf) == null ? void 0 : _b.call(opts, raw);
+        if (hint) {
+          const h = document.createElement("span");
+          h.className = "bz-suggest-hint";
+          h.textContent = hint;
+          b.appendChild(h);
+        }
+        b.addEventListener("click", () => pick(raw));
+        layer.appendChild(b);
+      });
+    };
+    const open = () => {
+      if (skipNextOpen) {
+        skipNextOpen = false;
+        return;
+      }
+      if (layer) {
+        draw();
+        return;
+      }
+      const m = document.createElement("div");
+      m.className = "bz-popover";
+      m.setAttribute("role", "listbox");
+      (anchor.parentElement || anchor).appendChild(m);
+      layer = m;
+      document.addEventListener("mousedown", onDocDown, true);
+      draw();
+    };
+    const activeIdx = () => {
+      var _a2;
+      return [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []].findIndex((o) => o.classList.contains("is-on"));
+    };
+    const moveActive = (to) => {
+      var _a2, _b;
+      const items = [...(_a2 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a2 : []];
+      if (!items.length) return;
+      const next = items[Math.max(0, Math.min(items.length - 1, to))];
+      items.forEach((o) => o.classList.toggle("is-on", o === next));
+      (_b = next.scrollIntoView) == null ? void 0 : _b.call(next, { block: "nearest" });
+    };
+    anchor.addEventListener("focus", open);
+    anchor.addEventListener("input", () => {
+      skipNextOpen = false;
+      open();
+    });
+    anchor.addEventListener("keydown", (e) => {
+      if (!layer) return;
+      if (e.key === "ArrowDown") {
+        moveActive(activeIdx() + 1);
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
+        e.preventDefault();
+      } else if (e.key === "Enter") {
+        const on = layer.querySelector(".bz-popover-item.is-on");
+        if (on) {
+          pick(on.dataset.value);
+          e.preventDefault();
+        }
+      } else if (e.key === "Escape") {
+        close();
+        e.stopPropagation();
+      }
+    });
+    return {
+      close,
+      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
+      detach: () => {
+        close();
+      }
+    };
+  }
+
   // src/core/ui/lightbox.ts
   var current = null;
   var currentEscHandle = null;
@@ -7061,6 +7226,198 @@ var BZW_cinema = (() => {
     }
   }
 
+  // src/core/sha256.ts
+  var K = new Uint32Array([
+    1116352408,
+    1899447441,
+    3049323471,
+    3921009573,
+    961987163,
+    1508970993,
+    2453635748,
+    2870763221,
+    3624381080,
+    310598401,
+    607225278,
+    1426881987,
+    1925078388,
+    2162078206,
+    2614888103,
+    3248222580,
+    3835390401,
+    4022224774,
+    264347078,
+    604807628,
+    770255983,
+    1249150122,
+    1555081692,
+    1996064986,
+    2554220882,
+    2821834349,
+    2952996808,
+    3210313671,
+    3336571891,
+    3584528711,
+    113926993,
+    338241895,
+    666307205,
+    773529912,
+    1294757372,
+    1396182291,
+    1695183700,
+    1986661051,
+    2177026350,
+    2456956037,
+    2730485921,
+    2820302411,
+    3259730800,
+    3345764771,
+    3516065817,
+    3600352804,
+    4094571909,
+    275423344,
+    430227734,
+    506948616,
+    659060556,
+    883997877,
+    958139571,
+    1322822218,
+    1537002063,
+    1747873779,
+    1955562222,
+    2024104815,
+    2227730452,
+    2361852424,
+    2428436474,
+    2756734187,
+    3204031479,
+    3329325298
+  ]);
+
+  // src/core/remote-asset.ts
+  var DOWNLOADS_CHANGED_EVENT = "downloads:asset-changed";
+  function assetVaultPath(app, fileName) {
+    var _a;
+    const configDir = String(((_a = app.vault) == null ? void 0 : _a.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  var DOWNLOADS_DIR = "downloads";
+  function downloadsVaultPath(app, fileName) {
+    return assetVaultPath(app, `${DOWNLOADS_DIR}/${fileName}`);
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(downloadsVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(downloadsVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // src/core/douban-name-index.ts
+  var DOUBAN_NAME_INDEX_FILE = "cinema-douban-index.json";
+  var memCache = null;
+  var subscribed = false;
+  function subscribeOnce() {
+    if (subscribed) return;
+    subscribed = true;
+    onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName === DOUBAN_NAME_INDEX_FILE) {
+        memCache = null;
+        normCache = /* @__PURE__ */ new WeakMap();
+      }
+    });
+  }
+  function validateDoubanNameIndex(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw;
+    if (typeof o.version !== "number" || !Number.isFinite(o.version)) return null;
+    if (typeof o.updatedAt !== "string" || !o.updatedAt) return null;
+    const stats = o.stats;
+    if (!stats || typeof stats !== "object") return null;
+    if (typeof stats.total !== "number" || !Number.isFinite(stats.total)) return null;
+    if (!Array.isArray(stats.kinds)) return null;
+    for (const pair of stats.kinds) {
+      if (!Array.isArray(pair) || pair.length !== 2) return null;
+      if (typeof pair[0] !== "string" || typeof pair[1] !== "number") return null;
+    }
+    if (!Array.isArray(o.rows)) return null;
+    const rows = [];
+    const ids = /* @__PURE__ */ new Set();
+    for (const r of o.rows) {
+      if (!Array.isArray(r) || r.length !== 5) return null;
+      if (!r.every((cell) => typeof cell === "string")) return null;
+      const id = r[4];
+      if (ids.has(id)) return null;
+      ids.add(id);
+      rows.push({ n: r[0], y: r[1], s: r[2], k: r[3], id });
+    }
+    if (rows.length !== stats.total) return null;
+    return {
+      version: o.version,
+      updatedAt: o.updatedAt,
+      stats: { total: stats.total, kinds: stats.kinds },
+      rows
+    };
+  }
+  async function readLocalValidated(app) {
+    const text = await readAsset(app, DOUBAN_NAME_INDEX_FILE);
+    if (text === null) return null;
+    try {
+      return validateDoubanNameIndex(JSON.parse(text));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function loadDoubanNameIndex(app) {
+    subscribeOnce();
+    if (memCache) return memCache;
+    const idx = await readLocalValidated(app);
+    if (idx) memCache = idx;
+    return idx;
+  }
+  function normName(s) {
+    return s.toLowerCase().replace(/[\s:：·・（）()【】\[\]「」『』《》,_\-~～'""]+/g, "");
+  }
+  var normCache = /* @__PURE__ */ new WeakMap();
+  function normsOf(index) {
+    let norms = normCache.get(index);
+    if (!norms) {
+      norms = index.rows.map((r) => normName(r.n));
+      normCache.set(index, norms);
+    }
+    return norms;
+  }
+  function searchDoubanNameIndex(index, query, limit = 12) {
+    const q = normName(query);
+    if (!q) return [];
+    const norms = normsOf(index);
+    const prefix = [];
+    const contains = [];
+    for (let i = 0; i < index.rows.length; i++) {
+      const key = norms[i];
+      if (!key) continue;
+      if (key.startsWith(q)) prefix.push(index.rows[i]);
+      else if (key.includes(q)) contains.push(index.rows[i]);
+    }
+    const byRank = (a, b) => {
+      const sa = a.s ? Number(a.s) : -1;
+      const sb = b.s ? Number(b.s) : -1;
+      if (sb !== sa) return sb - sa;
+      return a.n.length - b.n.length;
+    };
+    prefix.sort(byRank);
+    contains.sort(byRank);
+    return [...prefix, ...contains].slice(0, limit);
+  }
+
   // src/cinema/douban-queue.ts
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
@@ -7118,8 +7475,12 @@ var BZW_cinema = (() => {
     };
   }
   var previewFn = null;
-  async function queryDoubanForPreview(app, name) {
-    return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
+  async function queryDoubanForPreview(app, name, sid) {
+    if (!previewFn && sid) {
+      const bySid = await queryDoubanBySid(sid, name, fetchDepsFromSettings(app));
+      if (bySid.ok) return bySid;
+    }
+    return previewFn ? previewFn(app, name, sid) : queryDoubanByName(name, fetchDepsFromSettings(app));
   }
   var posterFn = null;
   async function downloadPreviewPoster(app, name, posterUrl2) {
@@ -11087,7 +11448,7 @@ tags:
   function formModalHtml(opts) {
     const { editing } = opts;
     const initSt = opts.stText;
-    const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
+    const nameField = `<div class="f-field f-field--name"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
     const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
       <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
@@ -12257,6 +12618,7 @@ tags:
     let classifying = false;
     let parsed = null;
     let userPickedTag = false;
+    let pickedSid = null;
     const nameInput = el.querySelector(".j-name");
     const parseBtn = el.querySelector(".j-parse");
     const saveBtn = el.querySelector(".j-save");
@@ -12367,7 +12729,7 @@ tags:
       }
       phase = "parsing";
       refreshFormState();
-      const q = await queryDoubanForPreview(app, name);
+      const q = await queryDoubanForPreview(app, name, pickedSid != null ? pickedSid : void 0);
       if (!q.ok) {
         phase = "idle";
         refreshFormState();
@@ -12429,7 +12791,48 @@ tags:
       applyTagOn();
       applyStOn();
     };
-    nameInput == null ? void 0 : nameInput.addEventListener("input", refreshFormState);
+    const nameDropRows = /* @__PURE__ */ new Map();
+    let nameSuggest = null;
+    if (!editing && nameInput) {
+      void loadDoubanNameIndex(app).then((index) => {
+        if (!index || !el.isConnected || phase !== "idle") return;
+        nameSuggest = uiSuggest({
+          anchor: nameInput,
+          max: 12,
+          source: () => {
+            if (!index) return [];
+            const q = nameInput.value.trim();
+            if (!q) return [];
+            const hits = searchDoubanNameIndex(index, q, 12);
+            nameDropRows.clear();
+            const out = [];
+            const seenNames = /* @__PURE__ */ new Set();
+            for (const r of hits) {
+              if (seenNames.has(r.n)) continue;
+              seenNames.add(r.n);
+              nameDropRows.set(r.n, r);
+              out.push(r.n);
+            }
+            return out;
+          },
+          /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值） */
+          hintOf: (n) => {
+            const r = nameDropRows.get(n);
+            if (!r) return "";
+            return [r.y, r.s ? `评分 ${r.s}` : "", r.k].filter(Boolean).join(" · ");
+          },
+          onPick: (n) => {
+            const r = nameDropRows.get(n);
+            pickedSid = r ? r.id : null;
+            refreshFormState();
+          }
+        });
+      });
+    }
+    nameInput == null ? void 0 : nameInput.addEventListener("input", () => {
+      pickedSid = null;
+      refreshFormState();
+    });
     refreshFormState();
     applyStOn();
     el.addEventListener("click", (e) => {

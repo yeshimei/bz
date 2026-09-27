@@ -348,7 +348,8 @@ export function formChoicesHtml(values: string[], cur: string, attr: string): st
 export function formModalHtml(opts: { editing: boolean; name: string; typeTag: string; stText: string; rating: number; review: string }): string {
   const { editing } = opts;
   const initSt = opts.stText;
-  const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
+  // f-field--name：联想下拉（issue 498 uiSuggest）的定位锚——浮层绝对定位于本字段内，须 relative
+  const nameField = `<div class="f-field f-field--name"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
   const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(['想看', '在看', '已看'], initSt, 'f-st')}</div></div>`;
   const ratingField = `<div class="f-field j-rating" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">评 分</span>
       <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;

@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "00917972680dff2800c64a12c816b6fb0b91bbbd1d4d7a06c653d69a999b9300",
-      "size": 78092
+      "sha256": "873968ae6f5684263c3a41d422bf4cc8ca2030b26c6592020322f3a80061f8e7",
+      "size": 78006
     },
     {
       "id": "manual",
@@ -26,8 +26,20 @@
       "id": "rss-catalog",
       "name": "RSS 源库",
       "file": "rss-catalog.json",
+<<<<<<< HEAD
       "sha256": "67da40941a03f2f6c2a12c081647911024ba1b06699f238b8334f71ab4dd4753",
       "size": 2004021
+=======
+      "sha256": "a8ad4ac8bcac3f297566d7f52fb8f06fd63479050886851fa96ff7a1854bb221",
+      "size": 343644
+    },
+    {
+      "id": "cinema-douban-index",
+      "name": "豆瓣影视索引",
+      "file": "cinema-douban-index.json",
+      "sha256": "9149a79ec14246512f7573a3d249b388b094dffe2c590b02d2da452c837c3ac4",
+      "size": 4494333
+>>>>>>> feat/cinema-douban-index
     }
   ],
   "skins": [
@@ -271,6 +283,7 @@
     "manual",
     "skins",
     "belongings-categories",
-    "rss-catalog"
+    "rss-catalog",
+    "cinema-douban-index"
   ]
 }

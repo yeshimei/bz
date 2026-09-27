@@ -61,12 +61,15 @@ const DOCS = [
   // issue 495：RSS 源库（社区源清单出版物，黄页模型见 ADR-0208；产物由 pnpm rss-catalog 出，
   // 故发布顺序里 rss-catalog 也在 manifest 之前）
   { id: 'rss-catalog', name: 'RSS 源库', file: 'rss-catalog.json' },
+  // issue 498：豆瓣影视名称索引（影院输入联想，ADR-0209；产物由 pnpm cinema-index 出，
+  // 上游数据集不入 git，见该脚本头注）
+  { id: 'cinema-douban-index', name: '豆瓣影视索引', file: 'cinema-douban-index.json' },
 ];
 const docs = DOCS.map((d) => ({ ...d, sha256: fileSha256(d.file), size: fileSize(d.file) }));
 
 // 行序（在线资源组内的行顺序）：'skins' 是皮肤聚合行的保留 id，不是 doc 条目。
 // 新增资源 = DOCS 加一行 + 本表加一个 id；漏登记由下方守卫拦下。
-const ROW_ORDER = ['changelog', 'manual', 'skins', 'belongings-categories', 'rss-catalog'];
+const ROW_ORDER = ['changelog', 'manual', 'skins', 'belongings-categories', 'rss-catalog', 'cinema-douban-index'];
 
 // ── 反向守卫（issue 490）：downloads/ 顶层不允许存在清单外的文件 ──
 // 新产物进目录但忘了登记 DOCS → 构建期就炸，而不是发布后插件端校验才失败

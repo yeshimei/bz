@@ -107,6 +107,8 @@ _Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处�
 
 **海报抓取 (Douban Fetcher, ADR-0129 / ADR-0177 / ADR-0178)**: 影院海报与豆瓣信息抓取内置于插件（`src/cinema/douban-fetcher.ts`，ADR-0129 自 tools/obsidian-douban-poster 移植）——内存队列串行泵（15s 间隔、单条 3 分钟超时、卡片 loading、失败聚合通知、会话首轮补抓），**桌面/移动同源**。字段链（ADR-0178 三路检索链）：**①subject_suggest 补全接口**（JSON 一步拿 sid + 规范名 + 海报 URL，movie/tv 过滤、detailUrl 由 id 规范化）→ **②rexxar 移动搜索**（与①频控池独立；①有「200+空数组」软拒绝形态——频控不报错只回空，实测窗口以分钟计）→ **③www.douban.com/search 搜索页**（末路兜底，原正则复活）——命中即停，全空且有路被拦 → blocked、全空无拦 → notfound → **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长，key 设置项，缺导演/主演或需编剧时 rexxar 演职员兜底）→ 海报豆瓣 CDN（检索路提 URL + upgradePosterUrl 高清 + writeBinary 写 CONFIG/MOVIE POSTER）。字段契约收缩：语言/又名/IMDb/简介/上映日期不再抓取（存量不动）。_Avoid_: 单路检索（ADR-0178 撤回）、spawn CLI（已退役）、守护进程（已退役）
 
+**豆瓣影视名称索引 (Douban Name Index, ADR-0209)**: 可下载的在线资源（`downloads/cinema-douban-index.json`，统一清单 doc 条目「豆瓣影视索引」）——85,288 条影视名称事实元数据（`rows[[名称,年份,评分,类别,豆瓣ID]]`，上游自抓 2026 表 + Kaggle 豆瓣数据，**只收事实性元数据**，简介/海报/短评等血肉字段有意不收，ADR-0209 合规边界）。用途两件事：**添加影视输入联想**（core uiSuggest 挂表单名称框，候选小字 = 年份 · 评分 · 类别；同名条目取排名最优一行做 sid 载体）与**解析 sid 直取**（选中候选携带 sid → `queryDoubanForPreview` 跳过三路检索按 ID 直取 ApiZero，失败自动回落按名全链；海报 URL 恒空走队列按名补抓）。索引未下载 = 联想静默缺席，一切回落现状；下载入口 = 设置面板「在线资源 · 豆瓣影视索引」行（就绪小字显示总条数与各类型条数）。资产层 `core/douban-name-index.ts`（仿 ADR-0208 四件套），检索归一 = 小写+去空白标点、前缀优先于包含、评分降序。_Avoid_: 全量数据接入（血肉字段不分发，ADR-0209 决策 1）、离线填字段（血肉数据永远在线现取，索引只管找到片）
+
 **桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：文献盒批量处理等外部工具调用；影院海报抓取已迁插件内，ADR-0129）
 
 
