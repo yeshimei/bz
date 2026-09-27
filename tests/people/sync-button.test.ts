@@ -106,6 +106,12 @@ function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
+/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+async function confirmGen(): Promise<void> {
+  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  click('[data-people-gen-start]');
+}
+
 let tool: FakeTool;
 let dataRoot: string;
 let lastSafe: PeopleSafeStore | null = null;
@@ -340,6 +346,7 @@ describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => 
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
     expect(document.querySelector('[data-people-ds-generate]')).toBeTruthy();
     click('[data-people-ds-generate]');
+    await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engineStarted.length).toBe(1));
     const targets = engineStarted[0][1];
     expect(targets[0]?.talker).toBe('陈默');

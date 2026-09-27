@@ -1,4 +1,4 @@
-/* 源指纹 3e9140bc45ee32d7 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e6252200d7574d62 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -14435,6 +14435,8 @@ ${lines.join("\n")}`);
     JobStore: () => JobStore,
     __resetJobsForTests: () => __resetJobsForTests,
     emptyJobsData: () => emptyJobsData,
+    estimateDescribeCallsOf: () => estimateDescribeCallsOf,
+    estimatePortraitCallsOf: () => estimatePortraitCallsOf,
     fingerprintOf: () => fingerprintOf2,
     mergePrepArtifactsIntoStore: () => mergePrepArtifactsIntoStore,
     pauseJobs: () => pauseJobs,
@@ -16222,6 +16224,13 @@ ${lines.join("\n")}`);
     const po = { ...DEFAULTS, ...prev.chunkOpts };
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
   }
+  function estimatePortraitCallsOf(msgs) {
+    const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
+    return Math.min(all.length, DEFAULTS.maxBatches) + 3;
+  }
+  function estimateDescribeCallsOf(images) {
+    return Math.ceil(images / batchSizeFromSettings());
+  }
   var lockWired = false;
   function wireLock() {
     if (lockWired) return;
@@ -17360,8 +17369,22 @@ ${lines.join("\n")}`);
     var _a2, _b2;
     return (_b2 = (_a2 = s.describe) == null ? void 0 : _a2.stageText) != null ? _b2 : null;
   }
+  function jobsStageLabel(stage2) {
+    switch (stage2) {
+      case "chunked":
+        return "正在切批组装素材…";
+      case "person":
+        return "正在生成《其人》…";
+      case "bond":
+        return "正在生成《我们》…";
+      case "chronicle":
+        return "正在生成关系时间线…";
+      default:
+        return null;
+    }
+  }
   function progressBlock(s) {
-    var _a2;
+    var _a2, _b2, _c;
     const stagePart = prepStagePart(s);
     const descPart = describeStagePart(s);
     const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -17380,8 +17403,13 @@ ${lines.join("\n")}`);
       el("span", "bz-people-jobs-pct", text(`${pct}%`))
     ]));
     const next = Math.min(s.batchesDone + 1, s.batchesTotal);
-    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_a2 = stagePart != null ? stagePart : descPart) != null ? _a2 : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
+    const stageFallback = jobsStageLabel(s.stage);
+    const main = s.status === "error" ? stagePart ? `生成失败 · ${stagePart}` : descPart ? `生成失败 · ${descPart}` : `生成失败 · 已完成 ${s.batchesDone}/${s.batchesTotal} 批` : s.status === "paused" ? stagePart ? `已暂停 · ${stagePart}` : descPart ? `已暂停 · ${descPart}` : stageFallback ? `已暂停 · ${stageFallback}` : "已暂停" : s.status === "interrupted" ? stagePart ? `上次生成中断了 · ${stagePart}` : descPart ? `上次生成中断了 · ${descPart}` : "上次生成中断了" : s.status === "done" ? "脸谱已生成" : (_b2 = (_a2 = stagePart != null ? stagePart : descPart) != null ? _a2 : stageFallback) != null ? _b2 : `正在生成 · 第 ${next}/${s.batchesTotal} 批`;
     block.appendChild(el("div", "bz-people-jobs-main", text(main)));
+    const msg = ((_c = s.message) != null ? _c : "").trim();
+    if (msg && s.status !== "done" && s.status !== "error" && msg !== main) {
+      block.appendChild(el("div", "bz-people-jobs-sub", { "data-people-jobs-sub": "" }, text(msg)));
+    }
     const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
@@ -17392,57 +17420,40 @@ ${lines.join("\n")}`);
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
   }
-  function describeConfirmModal(info, onAnswer) {
-    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-desc-confirm": "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-desc-skip": "" }));
-    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "图片描述确认" });
+  function generationConfirmModal(info, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-gen-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-gen-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "开始生成脸谱" });
     pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text("图片描述"))
+      el("div", "bz-people-pop-title", text("开始生成脸谱"))
     ]));
     const body = el("div", "bz-people-pop-body");
-    body.appendChild(el("div", "bz-people-desc-line", text(
-      `用 ${info.provider} / ${info.model} 描述「${info.name}」的 ${info.totalImages} 张图片，约 ${info.calls} 次调用；已完成 ${info.doneImages} 张，本次从第 ${info.doneImages + 1} 张开始。`
-    )));
+    const segs = [`为 ${info.items.length} 位联系人生成脸谱`];
+    if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
+    if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
+    segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
+    body.appendChild(el("div", "bz-people-desc-line", text(`${segs.join("；")}。`)));
+    const list = el("ul", "bz-people-gen-list");
+    for (const it of info.items) {
+      const bits = [`素材 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」· ${bits.join(" · ")}`)));
+    }
+    body.appendChild(list);
     body.appendChild(el("div", "bz-people-desc-note", text(
-      `每批 ${info.batchSize} 张、一次调用一批；跳过则图片不带描述，画像照常生成。`
+      "确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。"
     )));
     body.appendChild(el("div", "bz-people-desc-actions", [
-      button("bz-people-btn bz-people-btn-ghost", "跳过图片描述", { "data-people-desc-skip": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-desc-start": "" })
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-gen-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
     ]));
     pop.appendChild(body);
     wrap.appendChild(pop);
     wrap.addEventListener("click", (e) => {
       const t = e.target;
-      if (t.closest("[data-people-desc-start]")) onAnswer("start");
-      else if (t.closest("[data-people-desc-skip]")) onAnswer("skip");
-    });
-    return wrap;
-  }
-  function portraitConfirmModal(info, onAnswer) {
-    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-portrait-confirm": "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-portrait-cancel": "" }));
-    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "画像生成确认" });
-    pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text("画脸谱"))
-    ]));
-    const body = el("div", "bz-people-pop-body");
-    body.appendChild(el("div", "bz-people-desc-line", text(
-      `用 ${info.provider} / ${info.model} 画《${info.name}》的脸谱，素材 ${info.materials} 条、约 ${info.calls} 次调用。`
-    )));
-    body.appendChild(el("div", "bz-people-desc-note", text(
-      "其人 / 我们 / 时间线三段逐步生成，每批原子落盘、可暂停续跑；取消则本次不画，已同步的数据保留。"
-    )));
-    body.appendChild(el("div", "bz-people-desc-actions", [
-      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-portrait-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始", { "data-people-portrait-start": "" })
-    ]));
-    pop.appendChild(body);
-    wrap.appendChild(pop);
-    wrap.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t.closest("[data-people-portrait-start]")) onAnswer("start");
-      else if (t.closest("[data-people-portrait-cancel]")) onAnswer("cancel");
+      if (t.closest("[data-people-gen-start]")) onAnswer("start");
+      else if (t.closest("[data-people-gen-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }
@@ -18806,7 +18817,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const safe = peopleSafe != null ? peopleSafe : await getPeopleSafeStore();
     if (!safe.unlocked) return;
     jobsBooted = true;
-    await jobs().resumeJobs(getApp(), { askDescribeConfirm });
+    await jobs().resumeJobs(getApp(), { askDescribeConfirm: autoApproveDescribe, askPortraitConfirm: autoApprovePortrait });
   }
   async function ensureJobsWatch() {
     if (!jobsUnsub) jobsUnsub = jobs().subscribe((s) => applySnapshot(s));
@@ -18830,21 +18841,28 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   async function startGeneration(targets) {
     var _a2;
     const { runnable: runnable2, skipped } = await planTargets(targets);
+    if (!runnable2.length) {
+      if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, "info");
+      return;
+    }
+    const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable2));
+    if (answer !== "start") {
+      notice("已取消，本次不生成", "info");
+      return;
+    }
     for (const t of runnable2) {
       targetsInFlight.set(t.talker, t);
       jobsPersisted.delete(t.talker);
     }
     let engineSkipped = 0;
     let resumed = [];
-    if (runnable2.length) {
-      const res = await jobs().startJobs(getApp(), runnable2, {
-        askDescribeConfirm,
-        askPortraitConfirm
-      });
-      engineSkipped = res.skipped.length;
-      resumed = (_a2 = res.resumed) != null ? _a2 : [];
-      await ensureJobsWatch();
-    }
+    const res = await jobs().startJobs(getApp(), runnable2, {
+      askDescribeConfirm: autoApproveDescribe,
+      askPortraitConfirm: autoApprovePortrait
+    });
+    engineSkipped = res.skipped.length;
+    resumed = (_a2 = res.resumed) != null ? _a2 : [];
+    await ensureJobsWatch();
     const started = runnable2.length - engineSkipped;
     const fresh = Math.max(0, started - resumed.length);
     const parts = [];
@@ -18853,6 +18871,28 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
     if (parts.length) notice(parts.join("，"), "success");
     renderJobs();
+  }
+  function buildGenerationConfirmInfo(runnable2) {
+    const label = describeModelLabelOf();
+    const items = runnable2.map((t) => {
+      const pick = (k) => {
+        var _a2;
+        return Number.isFinite((_a2 = t.kindCounts) == null ? void 0 : _a2[k]) ? Number(t.kindCounts[k]) : 0;
+      };
+      return { name: t.name, materials: t.msgs.length, images: pick("图片"), voices: pick("语音") };
+    });
+    const images = items.reduce((s, it) => s + it.images, 0);
+    const voices = items.reduce((s, it) => s + it.voices, 0);
+    return {
+      provider: label.provider,
+      model: label.model,
+      items,
+      images,
+      describeCalls: estimateDescribeCallsOf(images),
+      batchSize: batchSizeFromSettings(),
+      voices,
+      portraitCalls: runnable2.reduce((s, t) => s + estimatePortraitCallsOf(t.msgs), 0)
+    };
   }
   async function planTargets(targets) {
     var _a2;
@@ -18975,6 +19015,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       name: job.name || job.talker,
       status: job.status,
       message: (_b2 = job.message) != null ? _b2 : "",
+      stage: job.stage,
       batchesDone: (_c = job.batchesDone) != null ? _c : 0,
       batchesTotal: (_f = (_e = job.batchesTotal) != null ? _e : (_d = job.chunks) == null ? void 0 : _d.length) != null ? _f : 0,
       stagesDone: jobsStagesDone(job.stage, job.status),
@@ -19007,33 +19048,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     var _a2;
     return ((_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : []).some((j) => j.status === "running");
   }
-  var descConfirmOpen = false;
-  function askDescribeConfirm(info) {
-    if (descConfirmOpen) return Promise.resolve("skip");
-    descConfirmOpen = true;
+  var autoApproveDescribe = () => Promise.resolve("start");
+  var autoApprovePortrait = () => Promise.resolve("start");
+  var genConfirmOpen = false;
+  function askGenerationConfirm(info) {
+    if (genConfirmOpen) return Promise.resolve("cancel");
+    genConfirmOpen = true;
     return new Promise((resolve) => {
       const done = (answer) => {
-        descConfirmOpen = false;
-        document.removeEventListener("keydown", onKey, true);
-        node.remove();
-        resolve(answer);
-      };
-      const onKey = (e) => {
-        if (e.key === "Escape") done("skip");
-      };
-      const node = describeConfirmModal(info, done);
-      document.body.appendChild(node);
-      topifyZ(node);
-      document.addEventListener("keydown", onKey, true);
-    });
-  }
-  var portraitConfirmOpen = false;
-  function askPortraitConfirm(info) {
-    if (descConfirmOpen || portraitConfirmOpen) return Promise.resolve("cancel");
-    portraitConfirmOpen = true;
-    return new Promise((resolve) => {
-      const done = (answer) => {
-        portraitConfirmOpen = false;
+        genConfirmOpen = false;
         document.removeEventListener("keydown", onKey, true);
         node.remove();
         resolve(answer);
@@ -19041,7 +19064,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const onKey = (e) => {
         if (e.key === "Escape") done("cancel");
       };
-      const node = portraitConfirmModal(info, done);
+      const node = generationConfirmModal(info, done);
       document.body.appendChild(node);
       topifyZ(node);
       document.addEventListener("keydown", onKey, true);

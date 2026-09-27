@@ -25,7 +25,11 @@ import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/sa
 import { SafeManager } from '../../src/encrypt/data';
 import type { FaceDigest, PersonEntry } from '../../src/people/types';
 
-vi.mock('../../src/core/ai', () => ({ createAI: vi.fn() }));
+vi.mock('../../src/core/ai', () => ({
+  createAI: vi.fn(),
+  DEFAULT_AI_PROVIDER: 'zhipu',
+  getProviderDescriptor: () => ({ label: '智谱 Plan', model: 'glm-test' }),
+}));
 const createAI = vi.mocked(aiMod.createAI);
 const jsonMock = vi.fn();
 
@@ -38,6 +42,12 @@ const disk = async (): Promise<{ people: PersonEntry[] }> =>
 
 function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
+/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+async function confirmGen(): Promise<void> {
+  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  click('[data-people-gen-start]');
 }
 
 function inputVal(sel: string, value: string): void {
@@ -334,7 +344,9 @@ describe('persistJobDone 档案自动回填（issue 487）', () => {
     setJobsModuleForTests(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen(); // 497：总确认放行后才起引擎
+    await gen;
     engine.push([fakeJob({
       status: 'done',
       stage: 'done',
@@ -370,7 +382,9 @@ describe('persistJobDone 档案自动回填（issue 487）', () => {
     setJobsModuleForTests(engine);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen = startGeneration([target()]);
+    await confirmGen(); // 497：总确认放行后才起引擎
+    await gen;
     engine.push([fakeJob({ status: 'done', stage: 'done', batchesDone: 1, person: '画像', events: [] })]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.digest?.person).toBe('画像'));
     expect((await disk()).people[0]?.profile).toEqual({ birthday: '1990-01-01', job: '设计师' });
@@ -382,7 +396,9 @@ describe('persistJobDone 档案自动回填（issue 487）', () => {
     setJobsModuleForTests(engine2);
     openPeoplePanel(getApp());
     await tick();
-    await startGeneration([target()]);
+    const gen2 = startGeneration([target()]);
+    await confirmGen(); // 497：总确认放行后才起引擎
+    await gen2;
     engine2.push([fakeJob({ status: 'done', stage: 'done', batchesDone: 1, person: '画像', events: [], aiProfile: {} })]);
     await vi.waitFor(async () => expect((await disk()).people[0]?.digest?.person).toBe('画像'));
     expect((await disk()).people[0]?.profile).toBeUndefined();

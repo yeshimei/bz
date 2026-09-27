@@ -602,6 +602,25 @@ function reusableJob(
   return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
 }
 
+// ---------------- 画谱总确认估算（issue 497：一次报清全部要花钱 / 花时间的事） ----------------
+
+/**
+ * 单人画像调用估算：min(切批数, maxBatches 上限) + 其人 + 我们 + 时间线。
+ * 与引擎同口径（chunkMessages + DEFAULTS.maxBatches 截断），估算偏保守——上限截断时实际更少。
+ */
+export function estimatePortraitCallsOf(msgs: UnifiedMessage[]): number {
+  const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
+  return Math.min(all.length, DEFAULTS.maxBatches) + 3;
+}
+
+/**
+ * 单人描述调用估算：ceil(图片数 / 每批张数)。图片数取 kindCounts 全量口径（含已描述的——
+ * 总确认在起跑前给「约」数，宁粗不细；引擎 describe 段按聊天仓实际剩余张数精确切批）。
+ */
+export function estimateDescribeCallsOf(images: number): number {
+  return Math.ceil(images / batchSizeFromSettings());
+}
+
 /**
  * 上锁协作暂停（ADR-0194 决策 5）：订阅共锁保险库的解锁态广播（本会话装一次）——
  * 任意路径上锁（面板「立即上锁」/ 锁屏 / 安全模式）→ pauseJobs()，当前批完成后停，

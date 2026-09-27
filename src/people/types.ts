@@ -47,6 +47,40 @@ export interface PortraitConfirmInfo {
   calls: number;
 }
 
+/**
+ * 画谱总确认信息（issue 497，用户拍板：两次确认合并成开跑前的一次，确认后不再弹窗）：
+ * startGeneration 在起引擎前组装，一次报清全部要花钱 / 花时间的事，**不报金额**。
+ */
+export interface GenerationConfirmInfo {
+  /** 图片描述通道（服务商 / 模型；与画像同走 AI 面板当前通道） */
+  provider: string;
+  model: string;
+  /** 逐人明细（弹窗里一人一行） */
+  items: GenerationConfirmItem[];
+  /** 图片总数（合计；0 = 无图可描述，弹窗省略描述段） */
+  images: number;
+  /** 图片描述约调用次数（ceil(图片 / 每批张数)，已描述的不在你普查口径内——报「约」） */
+  describeCalls: number;
+  /** 每批张数（与引擎 describe 段同源 batchSizeFromSettings） */
+  batchSize: number;
+  /** 语音总数（合计；本地离线转写，不花钱） */
+  voices: number;
+  /** 画像约调用次数（采集批 + 其人 + 我们 + 时间线，逐人估算合计） */
+  portraitCalls: number;
+}
+
+/** 总确认逐人明细行 */
+export interface GenerationConfirmItem {
+  /** 联系人称呼 */
+  name: string;
+  /** 素材条数（本次计划提炼口径） */
+  materials: number;
+  /** 图片张数（全量口径） */
+  images: number;
+  /** 语音条数（全量口径） */
+  voices: number;
+}
+
 
 /** 交往事件（LLM 从聊天片段提炼；ts = 日期字符串 YYYY-MM-DD，字典序即时间序） */
 export interface FaceEvent {
