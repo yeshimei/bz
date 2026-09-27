@@ -1,4 +1,4 @@
-/* 源指纹 8fbe0496e114aa7d · 仓内输入 122 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4bde48c7692e6b20 · 仓内输入 122 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5811,22 +5811,34 @@ var BZW_clipbook = (() => {
     if (!/^https?:\/\//i.test(base) || !tpl.startsWith("/") || /\s/.test(tpl)) return "";
     const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
     const out = [];
+    let sawOptionalEmpty = false;
+    const filled = /* @__PURE__ */ new Set();
     for (const seg of tpl.split("/")) {
       if (!seg) continue;
       const m = seg.match(segRe);
       if (!m) {
+        if (seg.startsWith(":")) return "";
         out.push(seg);
         continue;
       }
       const v = String((_a = values == null ? void 0 : values[m[1]]) != null ? _a : "").trim();
       if (v) {
+        if (m[3] === "?" && sawOptionalEmpty) return "";
+        filled.add(m[1]);
         out.push(v.split("/").map((part) => encodeURIComponent(part)).join("/"));
         continue;
       }
-      if (m[3] === "?") continue;
+      if (m[3] === "?") {
+        sawOptionalEmpty = true;
+        continue;
+      }
       return "";
     }
-    return `${base}/${out.join("/")}`;
+    let result = `${base}/${out.join("/")}`;
+    for (const name of filled) {
+      if (result.includes(`:${name}`)) return "";
+    }
+    return result;
   }
   function reverseTemplateExample(template, example) {
     const tplSegs = String(template || "").split("/").filter(Boolean);
@@ -6077,7 +6089,7 @@ var BZW_clipbook = (() => {
     if (!t) return null;
     if (!/^https?:\/\//i.test(t)) {
       if (/^\/\/\S+$/.test(t)) t = "https:" + t;
-      else if (/^[a-z0-9][a-z0-9.-]*\S*$/i.test(t) && !/\s/.test(t)) t = "https://" + t;
+      else if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\d+)?(\/\S*)?$/i.test(t)) t = "https://" + t;
       else return null;
     }
     t = t.replace(/\/+$/, "");
@@ -23595,7 +23607,7 @@ ${bodyText.substring(0, 6e3)}`;
       const catalog = await loadRssCatalog(getApp());
       const hit = catalog == null ? void 0 : catalog.feeds.find((f) => f.via === input);
       if (!hit) {
-        notice("源库未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选", "error");
+        notice("源库尚未下载或未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选", "error");
         return;
       }
       const st = await readDataSourceState();
@@ -23640,6 +23652,11 @@ ${bodyText.substring(0, 6e3)}`;
     const missing = parseRouteTemplate(feed.via || "").filter((p) => !p.optional && !String(values[p.name] || "").trim()).map((p) => p.name);
     return { url: missing.length ? "" : buildRouteUrl(instance, feed.via || "", values), missing };
   }
+  function routePreviewText(r) {
+    if (r.url) return r.url;
+    if (r.missing.length) return `必填参数：${r.missing.join("、")}`;
+    return "请按模板顺序填写参数（可选参数只能连续省略尾段）";
+  }
   function openRssRouteFormModal(opts) {
     var _a, _b;
     if (rssRouteOpen || document.getElementById("bz-rss-route-mask")) return;
@@ -23648,7 +23665,10 @@ ${bodyText.substring(0, 6e3)}`;
     rssRouteOpen = true;
     let handle = null;
     let stillBtn = null;
+    let closed = false;
     function close() {
+      if (closed) return;
+      closed = true;
       rssRouteClose = null;
       mask.remove();
       popup.remove();
@@ -23689,7 +23709,7 @@ ${bodyText.substring(0, 6e3)}`;
     preview.className = "bz-rss-route-preview";
     const renderPreview = () => {
       const r = routeFormPreview(instance, feed, values);
-      preview.textContent = r.url || `必填参数：${r.missing.join("、")}`;
+      preview.textContent = routePreviewText(r);
       preview.classList.toggle("is-missing", !r.url);
       confirmBtn.disabled = !r.url;
       if (stillBtn) stillBtn.disabled = !r.url;
@@ -23736,7 +23756,9 @@ ${bodyText.substring(0, 6e3)}`;
     btns.append(confirmBtn, cancelBtn);
     content.appendChild(btns);
     const doSubscribe = async (url, title2) => {
+      if (closed) return false;
       const outcome = await addRssFeed(url, title2 || void 0);
+      if (closed) return false;
       if (outcome === "added" || outcome === "exists") {
         notice(outcome === "exists" ? "该 RSS 源已在订阅列表中" : `已订阅 ${title2 || url}`, outcome === "exists" ? "info" : "success");
         opts.onSubscribed();
@@ -23754,6 +23776,7 @@ ${bodyText.substring(0, 6e3)}`;
       confirmBtn.textContent = "试拉中…";
       void (async () => {
         const fetched = await fetchRssFeedTitle(r.url);
+        if (closed) return;
         if (fetched !== null) {
           await doSubscribe(r.url, fetched || feed.title);
           return;
@@ -24109,6 +24132,7 @@ ${bodyText.substring(0, 6e3)}`;
   function unloadManagerModals() {
     upManagerClose == null ? void 0 : upManagerClose();
     rssManagerClose == null ? void 0 : rssManagerClose();
+    rssRouteClose == null ? void 0 : rssRouteClose();
   }
   var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose, RSS_CAT_RENDER_LIMIT, RSS_CAT_SEARCH_DEBOUNCE_MS, rssRouteOpen, rssRouteClose;
   var init_news_sources_group = __esm({
