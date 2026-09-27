@@ -1,5 +1,5 @@
-/* 源指纹 b3502e567de9fb53 · 仓内输入 85 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 55ba0c0d40b49e45 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -14658,7 +14658,7 @@ ${lines.join("\n")}`);
   var PHASE_LABELS = {
     key: "取密钥",
     decrypt: "解密数据库",
-    contacts: "导出聊天",
+    contacts: "统计联系人",
     avatar: "头像源"
   };
   function syncPhaseLabel(phase) {
@@ -14667,18 +14667,49 @@ ${lines.join("\n")}`);
   function emptySyncStats() {
     return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
   }
+  function freshState() {
+    return {
+      outcome: "idle",
+      phase: null,
+      pct: null,
+      step: "",
+      message: "",
+      hint: "",
+      stats: emptySyncStats(),
+      startedAt: null,
+      contactsTotal: null,
+      contactsDone: 0,
+      lastContact: ""
+    };
+  }
+  function formatSyncElapsed(ms) {
+    const sec = Math.max(0, Math.floor(ms / 1e3));
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`;
+  }
+  function contactLineOf(data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return "";
+    if (data.status === "ok") {
+      return Number.isFinite(data.msgs) ? `${data.name} · ${Number(data.msgs).toLocaleString("en-US")} 条` : data.name;
+    }
+    if (data.status === "failed") return `${data.name} · 失败`;
+    return "";
+  }
+  function quotePathArg(v) {
+    return process.platform === "win32" ? `"${v}"` : v;
+  }
   function buildSyncSpec(opts) {
     var _a2, _b2;
     const src = ((_a2 = opts.src) == null ? void 0 : _a2.trim()) || void 0;
     const python = ((_b2 = opts.python) == null ? void 0 : _b2.trim()) || void 0;
-    const q = (v) => process.platform === "win32" ? `"${v}"` : v;
     return {
       cmd: "bz-face",
       args: [
         "sync",
         "--data-root",
-        q(opts.dataRoot),
-        ...src ? ["--src", q(src)] : [],
+        quotePathArg(opts.dataRoot),
+        ...src ? ["--src", quotePathArg(src)] : [],
         ...python ? ["--python", python] : []
       ],
       shell: true
@@ -14749,15 +14780,7 @@ ${lines.join("\n")}`);
       hint: /bz-face|doctor|pip|npm/.test(msg) ? "" : DOCTOR_HINT
     };
   }
-  var state = {
-    outcome: "idle",
-    phase: null,
-    pct: null,
-    step: "",
-    message: "",
-    hint: "",
-    stats: emptySyncStats()
-  };
+  var state = freshState();
   var handle = null;
   var listeners = /* @__PURE__ */ new Set();
   function setState(patch) {
@@ -14801,13 +14824,10 @@ ${lines.join("\n")}`);
     const dataRoot = String((_a2 = s == null ? void 0 : s.peopleDataDir) != null ? _a2 : "").trim();
     if (!dataRoot) {
       setState({
+        ...freshState(),
         outcome: "error",
-        phase: null,
-        pct: null,
-        step: "",
         message: "先在下方配置数据根目录——同步会把微信数据解密导出到那里",
-        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步",
-        stats: emptySyncStats()
+        hint: "到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步"
       });
       return;
     }
@@ -14822,14 +14842,30 @@ ${lines.join("\n")}`);
       onStep: (text2) => setState({ step: text2 }),
       onProgress: (phase, pct) => setState({ phase, pct }),
       onInfo: (data) => {
-        if (collectContactInfo(live2, data)) setState({});
+        if (data.phase === "contacts" && Number.isFinite(data.total)) {
+          setState({ contactsTotal: Math.max(1, Number(data.total)) });
+          return;
+        }
+        if (collectContactInfo(live2, data)) {
+          const line = contactLineOf(data);
+          setState({
+            contactsDone: live2.contacts + live2.skipped + live2.failed,
+            ...line ? { lastContact: line } : {}
+          });
+        }
       },
       onResult: (data) => {
         result = data;
       }
     };
     handle = runner(spec, cbs);
-    setState({ outcome: "running", phase: null, pct: null, step: "", message: "", hint: "", stats: live2 });
+    setState({
+      ...freshState(),
+      outcome: "running",
+      stats: live2,
+      startedAt: Date.now()
+      // 484：已耗时心跳的计时源
+    });
     void handle.done.then((outcome) => {
       handle = null;
       finishSync(outcome, result);
@@ -14840,6 +14876,7 @@ ${lines.join("\n")}`);
       setState({
         outcome: "stopped",
         pct: null,
+        step: "",
         message: "已停止",
         hint: "点「同步」重跑续传——已导出的部分不会重复搬"
       });
@@ -14848,7 +14885,7 @@ ${lines.join("\n")}`);
     }
     if (result && result.ok === false) {
       const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "同步失败：工具报错，没有给出原因";
-      setState({ outcome: "error", phase: null, pct: null, message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
+      setState({ outcome: "error", phase: null, pct: null, step: "", message: firstLine(msg), hint: /微信|数据根/.test(msg) ? "" : DOCTOR_HINT });
       emitNotice(state);
       return;
     }
@@ -14859,7 +14896,7 @@ ${lines.join("\n")}`);
       return;
     }
     const classified = classifySyncFailure(outcome);
-    setState({ outcome: "error", phase: null, pct: null, message: classified.message, hint: classified.hint });
+    setState({ outcome: "error", phase: null, pct: null, step: "", message: classified.message, hint: classified.hint });
     emitNotice(state);
   }
   function stopSync() {
@@ -15817,7 +15854,7 @@ ${lines.join("\n")}`);
     try {
       return fs.readdirSync(dataDir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => String(d.name)).filter((name) => {
         try {
-          return fs.existsSync(`${dataDir}/${name}/chat.json`);
+          return fs.existsSync(`${dataDir}/${name}/chat.json`) || fs.existsSync(`${dataDir}/${name}/stats.json`);
         } catch (e) {
           return false;
         }
@@ -15825,6 +15862,39 @@ ${lines.join("\n")}`);
     } catch (e) {
       return [];
     }
+  }
+  function hasChatJson(dataDir, name) {
+    const fs = getFs();
+    if (!fs || !dataDir || !name) return false;
+    try {
+      return fs.existsSync(`${dataDir}/${name}/chat.json`);
+    } catch (e) {
+      return false;
+    }
+  }
+  function readStatsJson(dataDir, name) {
+    const fs = getFs();
+    if (!fs || !dataDir || !name) return null;
+    let parsed;
+    try {
+      parsed = JSON.parse(String(fs.readFileSync(`${dataDir}/${name}/stats.json`, "utf8")).replace(/^\uFEFF/, ""));
+    } catch (e) {
+      return null;
+    }
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const o = parsed;
+    const num = (v) => Number.isFinite(v) ? v : 0;
+    if (!Number.isFinite(o.msgs)) return null;
+    return {
+      msgs: num(o.msgs),
+      voices: num(o.voices),
+      images: num(o.images),
+      voiceSec: num(o.voiceSec),
+      lastCt: num(o.lastCt),
+      maxSid: num(o.maxSid),
+      group: o.group === true,
+      ...typeof o.syncedAt === "string" && o.syncedAt ? { syncedAt: o.syncedAt } : {}
+    };
   }
   function readContactBundle(dataDir, name) {
     var _a2, _b2;
@@ -15857,6 +15927,11 @@ ${lines.join("\n")}`);
       }
     }
     return null;
+  }
+  function readContactAvatarPath(dataDir, name) {
+    const fs = getFs();
+    if (!fs || !dataDir || !name) return null;
+    return avatarFileOf(fs, `${dataDir}/${name}`);
   }
   function readAvatarInput(absolutePath) {
     var _a2;
@@ -17053,6 +17128,92 @@ ${lines.join("\n")}`);
     return (_a2 = d == null ? void 0 : d.bond) != null ? _a2 : "";
   }
 
+  // src/people/export.ts
+  init_settings_provider();
+  function buildExportSpec(opts) {
+    var _a2;
+    const python = ((_a2 = opts.python) == null ? void 0 : _a2.trim()) || void 0;
+    return {
+      cmd: "bz-face",
+      args: [
+        "export",
+        "--data-root",
+        quotePathArg(opts.dataRoot),
+        ...opts.contacts.flatMap((c) => ["--contact", quotePathArg(c)]),
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function exportContactEvent(data) {
+    if (data.phase !== "contact" || typeof data.name !== "string" || !data.name) return null;
+    if (data.status === "ok") {
+      return { name: data.name, status: "ok", ...Number.isFinite(data.msgs) ? { msgs: Number(data.msgs) } : {} };
+    }
+    if (data.status === "skipped") return { name: data.name, status: "skipped" };
+    if (data.status === "failed") return { name: data.name, status: "failed" };
+    return null;
+  }
+  var runner3 = runExternalTool;
+  function emptyResult() {
+    return { ok: false, stopped: false, error: "", hint: "", written: 0, unchanged: 0, failed: 0, skipped: 0, failures: [] };
+  }
+  function finishExport(outcome, result) {
+    if (outcome.stopped) return { ...emptyResult(), stopped: true };
+    if (result && result.ok === false) {
+      const msg = typeof result.error === "string" && result.error.trim() ? result.error.trim() : "导出失败：工具报错，没有给出原因";
+      return { ...emptyResult(), error: firstLine(msg), hint: /微信|数据根|key\.json/.test(msg) ? "" : "到终端运行 bz-face doctor 可自检环境" };
+    }
+    if (outcome.ok && result && result.ok === true) {
+      const st2 = statsFromResult(result, emptySyncStats());
+      return { ok: true, stopped: false, error: "", hint: "", written: st2.written, unchanged: st2.unchanged, failed: st2.failed, skipped: st2.skipped, failures: st2.failures };
+    }
+    const cls = classifySyncFailure(outcome);
+    return { ...emptyResult(), error: cls.message, hint: cls.hint };
+  }
+  function startContactsExport(opts, onEvent) {
+    var _a2;
+    const names = opts.contacts.filter((c) => c && c.trim());
+    if (!names.length) {
+      return {
+        done: Promise.resolve({ ...emptyResult(), error: "导出名单为空——先勾选联系人" }),
+        stop: () => {
+        }
+      };
+    }
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    const python = typeof s.pythonPath === "string" ? s.pythonPath.trim() : "";
+    const spec = buildExportSpec({ dataRoot: opts.dataRoot, contacts: names, python });
+    let result = null;
+    let total = names.length;
+    let done = 0;
+    const cbs = {
+      onStep: () => {
+      },
+      onProgress: () => {
+      },
+      onInfo: (data) => {
+        if (data.phase === "contacts" && Number.isFinite(data.total)) {
+          total = Math.max(1, Number(data.total));
+          return;
+        }
+        const ev = exportContactEvent(data);
+        if (ev) {
+          done += 1;
+          onEvent == null ? void 0 : onEvent({ ...ev, idx: done, total });
+        }
+      },
+      onResult: (data) => {
+        result = data;
+      }
+    };
+    const handle2 = runner3(spec, cbs);
+    return {
+      done: handle2.done.then((outcome) => finishExport(outcome, result)),
+      stop: () => handle2.stop()
+    };
+  }
+
   // src/people/migrate.ts
   init_data();
   init_storage();
@@ -18130,7 +18291,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         ].filter(Boolean).join(" · ")))
       ]),
       el("div", "bz-people-ds-side", [
-        ...fresh ? [el("span", "bz-people-ds-new", text(`新 ${row.newCount} 条`))] : [],
+        ...fresh ? [el("span", "bz-people-ds-new", text(row.newApprox ? "有新消息" : `新 ${row.newCount} 条`))] : [],
         el("span", "bz-people-ds-mark", text(dsWatermark(row)))
       ])
     ]);
@@ -18196,14 +18357,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     row.appendChild(el("div", "bz-people-ds-sync-head", [
       el("span", "bz-people-ds-sync-text", { "data-people-ds-sync-text": "" }, text(line.text + (line.pct != null ? ` ${line.pct}%` : "")))
     ]));
-    if (line.status === "running" && line.pct != null) {
+    if (line.status === "running") {
       row.appendChild(el("div", "bz-people-ds-sync-track", [
-        el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
+        line.pct != null ? el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` }) : el("div", "bz-people-ds-sync-indet", {})
       ]));
     }
     const subNode = el("div", "bz-people-ds-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
     if (!line.sub) subNode.hidden = true;
     row.appendChild(subNode);
+    const contactNode = el("div", "bz-people-ds-sync-contact", { "data-people-ds-sync-contact": "" }, text(line.contact));
+    if (!line.contact) contactNode.hidden = true;
+    if (line.status === "running") row.appendChild(contactNode);
     const shown = line.failures.slice(0, 3);
     for (const f of shown) row.appendChild(el("div", "bz-people-ds-sync-fail", text(f)));
     if (line.failures.length > 3) row.appendChild(el("div", "bz-people-ds-sync-fail", text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
@@ -18213,7 +18377,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function footerLabel(s) {
     if (!s.rows) return "";
     if (!s.selectedCount) return "未勾选联系人";
-    return s.freshCount ? `已选 ${s.selectedCount} 位 · 新素材 ${s.freshCount} 条` : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
+    const bits = [
+      ...s.freshCount > 0 ? [`新素材 ${s.freshCount} 条`] : [],
+      ...s.freshApprox > 0 ? [`${s.freshApprox} 位有新消息`] : []
+    ];
+    return bits.length ? `已选 ${s.selectedCount} 位 · ${bits.join(" · ")}` : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
   }
   function importMeta(rec, textMsgs) {
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
@@ -18251,6 +18419,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var dsNotice = "";
   var dsGenerateable = false;
   var dsScannedAt = "";
+  var exportRun = null;
   var statsOpen = false;
   var profOpen = false;
   var noteOpen = false;
@@ -18377,6 +18546,8 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
     store = null;
+    exportRun == null ? void 0 : exportRun.stop();
+    exportRun = null;
     detailId = null;
     detailFold = "p";
     stage = "list";
@@ -18455,6 +18626,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         media: badge ? formatMediaCount(badge) : "",
         previewCount: c.previewCount,
         newCount: c.newCount,
+        newApprox: c.newApprox,
         processedTs: c.processedTs,
         avatar: c.avatar
       };
@@ -18469,7 +18641,9 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       rows: dsContacts === null ? null : dsRowStates(),
       selectedCount: sel.length,
       selected: sel.map((c) => c.name),
-      freshCount: sel.reduce((s, c) => s + c.newCount, 0),
+      freshCount: sel.reduce((s, c) => s + (c.newApprox ? 0 : c.newCount), 0),
+      // stats 路径的「有新」只能按位计（哨兵无法精确到条，485）
+      freshApprox: sel.filter((c) => c.newApprox && c.newCount > 0).length,
       hiddenGroups: dsHiddenGroups,
       notice: dsNotice,
       generateable: dsGenerateable,
@@ -18479,18 +18653,28 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       sync: dsSyncLine()
     };
   }
+  var syncTickTimer = null;
+  function stopSyncTick() {
+    if (syncTickTimer) {
+      clearInterval(syncTickTimer);
+      syncTickTimer = null;
+    }
+  }
   function dsSyncLine() {
     const s = syncState();
     if (s.outcome === "idle") return null;
     if (s.outcome === "running") {
-      const phase = syncPhaseLabel(s.phase) || "正在同步";
-      return { status: "running", text: phase, sub: s.step, pct: s.pct, hint: "", failures: [] };
+      const label = syncPhaseLabel(s.phase) || "正在同步";
+      const pos = s.phase === "contacts" && s.contactsTotal ? ` ${s.contactsDone}/${s.contactsTotal}` : "";
+      const elapsed = s.startedAt != null ? ` · 已 ${formatSyncElapsed(Date.now() - s.startedAt)}` : "";
+      return { status: "running", text: label + pos + elapsed, sub: s.step, contact: s.lastContact, pct: s.pct, hint: "", failures: [] };
     }
     if (s.outcome === "ok") {
       return {
         status: "ok",
         text: s.stats.failed > 0 ? `同步完成（${s.stats.failed} 位失败）` : "同步完成",
         sub: s.message || describeSyncStats(s.stats),
+        contact: "",
         pct: 100,
         hint: "",
         failures: s.stats.failures.map((f) => `${f.name}：${f.error}`)
@@ -18501,16 +18685,27 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         status: "stopped",
         text: "已停止",
         sub: `已导出的部分保留——本次已更新 ${s.stats.written} 位，重跑可续传`,
+        contact: "",
         pct: null,
         hint: s.hint,
         failures: []
       };
     }
-    return { status: "error", text: "同步失败", sub: s.message, pct: null, hint: s.hint, failures: [] };
+    return { status: "error", text: "同步失败", sub: s.message, contact: "", pct: null, hint: s.hint, failures: [] };
   }
   function onSyncState(s) {
+    if (s.outcome !== "running") stopSyncTick();
     if (!overlay) return;
     if (s.outcome === "running") {
+      if (!syncTickTimer) {
+        syncTickTimer = setInterval(() => {
+          if (syncState().outcome !== "running") {
+            stopSyncTick();
+            return;
+          }
+          updateSyncLine();
+        }, 1e3);
+      }
       if (!updateSyncLine()) void renderBody();
       return;
     }
@@ -18527,12 +18722,19 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     if (!view) return false;
     const main = line.querySelector("[data-people-ds-sync-text]");
     const sub = line.querySelector("[data-people-ds-sync-sub]");
+    const contact = line.querySelector("[data-people-ds-sync-contact]");
     const bar = line.querySelector("[data-people-ds-sync-bar]");
     if (main) main.textContent = view.text + (view.pct != null ? ` ${view.pct}%` : "");
     if (sub) {
       sub.textContent = view.sub;
       sub.hidden = !view.sub;
     }
+    if (contact) {
+      contact.textContent = view.contact;
+      contact.hidden = !view.contact;
+    }
+    const indet = line.querySelector(".bz-people-ds-sync-indet");
+    if (view.pct != null !== Boolean(bar) || view.pct == null !== Boolean(indet)) return false;
     if (bar && view.pct != null) bar.style.width = `${Math.max(0, Math.min(100, view.pct))}%`;
     return true;
   }
@@ -18564,7 +18766,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     });
   }
   async function runScan(force = false) {
-    var _a2, _b2, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
     const dataDir = dsDataDir();
     if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsRunning() || isSyncing()) return;
     if (!isDesktop()) {
@@ -18586,6 +18788,28 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       const [storeData, people] = await Promise.all([records(), store.list()]);
       for (const name of dirNames) {
         if (!overlay) return;
+        const stats = readStatsJson(dataDir, name);
+        if (stats) {
+          if (stats.group && !includeGroups) {
+            hidden++;
+            continue;
+          }
+          const pv2 = (_b2 = storeData.get(name)) == null ? void 0 : _b2.store;
+          const entry2 = people.find((p) => p.id === name);
+          contacts.push({
+            name,
+            rawCount: stats.msgs,
+            isGroup: stats.group,
+            // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
+            stats: { msgCount: stats.msgs, voiceCount: stats.voices, voiceTotalSec: Math.round(stats.voiceSec), imageCount: stats.images },
+            previewCount: (_c = pv2 == null ? void 0 : pv2.msgs.length) != null ? _c : 0,
+            newCount: stats.maxSid > ((_d = pv2 == null ? void 0 : pv2.watermarkSid) != null ? _d : 0) ? 1 : 0,
+            newApprox: true,
+            processedTs: (_e = entry2 == null ? void 0 : entry2.lastProcessedTs) != null ? _e : null,
+            avatar: dataUrlOf(readAvatarInput(readContactAvatarPath(dataDir, name)))
+          });
+          continue;
+        }
         const bundle = readContactBundle(dataDir, name);
         if (!bundle) continue;
         const group = isGroupChat(bundle.raws);
@@ -18594,17 +18818,18 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const pv = (_b2 = storeData.get(name)) == null ? void 0 : _b2.store;
-        const keys = new Set(((_c = pv == null ? void 0 : pv.msgs) != null ? _c : []).map((m) => m.key));
+        const pv = (_f = storeData.get(name)) == null ? void 0 : _f.store;
+        const keys = new Set(((_g = pv == null ? void 0 : pv.msgs) != null ? _g : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
           name,
           rawCount: bundle.raws.length,
           isGroup: group,
           stats: norm.stats,
-          previewCount: (_d = pv == null ? void 0 : pv.msgs.length) != null ? _d : 0,
+          previewCount: (_h = pv == null ? void 0 : pv.msgs.length) != null ? _h : 0,
           newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
-          processedTs: (_e = entry == null ? void 0 : entry.lastProcessedTs) != null ? _e : null,
+          newApprox: false,
+          processedTs: (_i = entry == null ? void 0 : entry.lastProcessedTs) != null ? _i : null,
           // 头像预览（467）：直接读数据根字节解成内存 data URL（不再复制进库内明文目录）
           avatar: dataUrlOf(readAvatarInput(bundle.avatar))
         });
@@ -18623,6 +18848,15 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       dsScannedAt = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       renderBody();
     }
+  }
+  function updateImportNotice(text2) {
+    dsNotice = text2;
+    const n = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-notice]");
+    if (n) {
+      n.textContent = text2;
+      return;
+    }
+    renderBody();
   }
   async function importDsSelected() {
     var _a2;
@@ -18647,6 +18881,31 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const addedOf = /* @__PURE__ */ new Map();
     const readFail = [];
     try {
+      const missing = chosen.filter((c) => !hasChatJson(dataDir, c.name)).map((c) => c.name);
+      if (missing.length) {
+        updateImportNotice("正在导出所选联系人的完整聊天…");
+        const run = startContactsExport({ dataRoot: dataDir, contacts: missing }, (ev) => {
+          updateImportNotice(`正在导出「${ev.name}」的完整聊天（${ev.idx}/${ev.total}）…`);
+        });
+        exportRun = run;
+        const res = await run.done;
+        exportRun = null;
+        if (!overlay) return;
+        if (res.stopped) {
+          dsNotice = "导出已停止——已完成的部分保留，重新点「导入所选」可续";
+          dsImporting = false;
+          renderBody();
+          return;
+        }
+        if (!res.ok) {
+          dsNotice = `导出失败：${res.error}`;
+          if (res.hint) notice(res.hint, "warning");
+          dsImporting = false;
+          renderBody();
+          return;
+        }
+        updateImportNotice("正在导入聊天仓…");
+      }
       for (const c of chosen) {
         if (!overlay) return;
         const bundle = readContactBundle(dataDir, c.name);
@@ -18665,6 +18924,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         addedOf.set(c.name, added);
         c.previewCount = contact.msgs.length;
         c.newCount = 0;
+        c.newApprox = false;
         c.stats = contact.stats;
       }
     } catch (e) {
@@ -19376,8 +19636,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   function updateDsFooter() {
     const sel = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name));
-    const fresh = sel.reduce((s, c) => s + c.newCount, 0);
-    const label = !sel.length ? "未勾选联系人" : fresh ? `已选 ${sel.length} 位 · 新素材 ${fresh} 条` : `已选 ${sel.length} 位 · 所选暂无新素材`;
+    const fresh = sel.reduce((s, c) => s + (c.newApprox ? 0 : c.newCount), 0);
+    const approx = sel.filter((c) => c.newApprox && c.newCount > 0).length;
+    const bits = [
+      ...fresh ? [`新素材 ${fresh} 条`] : [],
+      ...approx ? [`${approx} 位有新消息`] : []
+    ];
+    const label = !sel.length ? "未勾选联系人" : bits.length ? `已选 ${sel.length} 位 · ${bits.join(" · ")}` : `已选 ${sel.length} 位 · 所选暂无新素材`;
     const count = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-count]");
     if (count) count.textContent = label;
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-ds-check]").forEach((cb) => {

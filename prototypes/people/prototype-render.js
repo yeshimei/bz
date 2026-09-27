@@ -1,4 +1,4 @@
-/* 源指纹 97c0483961302190 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ab33549200df8fcb · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1059,7 +1059,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         ].filter(Boolean).join(" · ")))
       ]),
       el("div", "bz-people-ds-side", [
-        ...fresh ? [el("span", "bz-people-ds-new", text(`新 ${row.newCount} 条`))] : [],
+        ...fresh ? [el("span", "bz-people-ds-new", text(row.newApprox ? "有新消息" : `新 ${row.newCount} 条`))] : [],
         el("span", "bz-people-ds-mark", text(dsWatermark(row)))
       ])
     ]);
@@ -1125,14 +1125,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     row.appendChild(el("div", "bz-people-ds-sync-head", [
       el("span", "bz-people-ds-sync-text", { "data-people-ds-sync-text": "" }, text(line.text + (line.pct != null ? ` ${line.pct}%` : "")))
     ]));
-    if (line.status === "running" && line.pct != null) {
+    if (line.status === "running") {
       row.appendChild(el("div", "bz-people-ds-sync-track", [
-        el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
+        line.pct != null ? el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` }) : el("div", "bz-people-ds-sync-indet", {})
       ]));
     }
     const subNode = el("div", "bz-people-ds-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
     if (!line.sub) subNode.hidden = true;
     row.appendChild(subNode);
+    const contactNode = el("div", "bz-people-ds-sync-contact", { "data-people-ds-sync-contact": "" }, text(line.contact));
+    if (!line.contact) contactNode.hidden = true;
+    if (line.status === "running") row.appendChild(contactNode);
     const shown = line.failures.slice(0, 3);
     for (const f of shown) row.appendChild(el("div", "bz-people-ds-sync-fail", text(f)));
     if (line.failures.length > 3) row.appendChild(el("div", "bz-people-ds-sync-fail", text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
@@ -1142,7 +1145,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function footerLabel(s) {
     if (!s.rows) return "";
     if (!s.selectedCount) return "未勾选联系人";
-    return s.freshCount ? `已选 ${s.selectedCount} 位 · 新素材 ${s.freshCount} 条` : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
+    const bits = [
+      ...s.freshCount > 0 ? [`新素材 ${s.freshCount} 条`] : [],
+      ...s.freshApprox > 0 ? [`${s.freshApprox} 位有新消息`] : []
+    ];
+    return bits.length ? `已选 ${s.selectedCount} 位 · ${bits.join(" · ")}` : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
   }
   function importMeta(rec, textMsgs) {
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
