@@ -31,8 +31,9 @@
 - [x] 原型产物重出（`node scripts/build-preview.mjs`）——`download-manifest` / `remote-asset` / `skin-pack` 是 8 个域
       `prototype-behavior.js` 的声明输入，改完必须重出，否则 `preview-freshness` 守卫红
 - [x] `downloads/manifest.json` 重出（新增 `size` 与 `rowOrder`）——不重出则体积与行序不生效，`pnpm manifest --check` 会标不同步
-- [x] 门禁（worktree）：`pnpm exec tsc --noEmit` 0 错 + 全量 **545 文件 / 8156 用例、8154 绿**——
-      2 例 `tests/pomodoro/ui.test.ts` 为**环境计时抖动**（同一文件单独跑 80/80 全绿；干净主仓同口径亦复现同类超时，与本票无关）
+- [x] 门禁（worktree）：`pnpm exec tsc --noEmit` 0 错 + 全量 **545 文件 / 8156 用例、8155 绿**——
+      1 例 `tests/memo/ui.test.ts`「行内勾选完成」为**环境计时抖动**（该文件单独跑 60/60 全绿，且不引用原型产物）；
+      前一轮全量同一位置落在 `tests/pomodoro/ui.test.ts` 超时、干净主仓亦可复现同型——**失败项每轮游走**，与源码无关
 - [ ] 收尾：合并回主仓 + `pnpm manifest` / `skin-pack` / `changelog` 重出 + 主仓构建部署（待用户确认）
 
 
