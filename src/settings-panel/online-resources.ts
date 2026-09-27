@@ -58,15 +58,18 @@ interface GroupMeta {
   retryVisible: boolean;
 }
 let currentGroup: GroupMeta | null = null;
-/** 同步序号（并发 sync 只认最后一次——下载事件 + 动作收尾可能叠发，防旧结果后到覆盖新态） */
-let syncSeq = 0;
+/** 单飞（single-flight）同步：并发请求合流——下载事件逐条扑面时不排队做 N 次全量重扫 */
+let syncRunning: Promise<void> | null = null;
+/** 合流窗内又来了请求（本轮跑完立刻补一轮：收尾态必须落在最后一次请求之后的磁盘事实上） */
+let syncDirty = false;
 
 /** 重置会话状态（测试用；生产进程内随会话存续无需重置） */
 export function resetOnlineResourcesState(): void {
   lastCheckAt = 0;
   checkFailed = false;
   currentGroup = null;
-  syncSeq = 0;
+  syncRunning = null;
+  syncDirty = false;
 }
 
 /** 行渲染所需的全部事实（一次算齐） */
@@ -194,7 +197,8 @@ let subscribed = false;
 function subscribeOnce(): void {
   if (subscribed) return;
   subscribed = true;
-  onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncGroupRows());
+  // 事件面是 fire-and-forget：重算失败吞掉（不冒未处理拒绝），下个刷新通道会再算
+  onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncGroupRows().catch(() => {}));
 }
 
 /** 后台核对清单；成败都 syncGroupRows——失败态就在补丁里呈现。
@@ -208,24 +212,46 @@ async function checkInBackground(): Promise<void> {
     checkFailed = true;
     console.warn('[bz] 在线资源清单核对失败:', (e as Error)?.message || e);
   }
-  await syncGroupRows();
+  await syncGroupRows().catch(() => {});
 }
 
 /** 检查更新行动作：转圈 → 核对 → 门控重求值（行按需消失/留下 + 组徽标重算） */
 async function retryCheck(ctx: SettingsRowContext): Promise<void> {
-  setRowBtnState(ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined, 'busy', '检查更新');
+  const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
+  setRowBtnState(btn, 'busy', '检查更新');
   await checkInBackground();
+  // 摘转圈：补丁刻意绕过 busy 钮（见 patchRenderedGroup），不摘会一直转
+  setRowBtnState(btn, 'idle', currentGroup?.retryRow.buttonText ?? '检查更新');
   ctx.refreshVisibility();
 }
 
-/** 重算四行状态 → 就地改写行对象（下次重渲即新值）+ 已渲染组卡 DOM 补丁（打开中即所见即所得）。
- *  后台核对落地、下载动作完成、下载事件三处共用此出口（磁盘事实变了，唯一刷新通道）。 */
+/** 重算四行状态（唯一刷新通道，单飞合流）：后台核对落地、下载动作完成、下载事件三处共用。
+ *  合流窗内再来的请求只置脏不排队——本轮跑完补一轮，收尾态落在最后一次请求之后的磁盘事实上。 */
 async function syncGroupRows(): Promise<void> {
+  if (!currentGroup) return;
+  if (syncRunning) {
+    syncDirty = true;
+    return syncRunning;
+  }
+  syncRunning = (async () => {
+    try {
+      do {
+        syncDirty = false;
+        await syncOnce();
+      } while (syncDirty && currentGroup);
+    } finally {
+      syncRunning = null;
+    }
+  })();
+  return syncRunning;
+}
+
+/** 单轮：读磁盘事实 → 就地改写行对象（下次重渲即新值）+ 已渲染组卡 DOM 补丁（打开中即所见即所得） */
+async function syncOnce(): Promise<void> {
   const meta = currentGroup;
   if (!meta) return;
-  const seq = ++syncSeq;
   const { rows: states, manifest } = await computeRowStates(getApp());
-  if (seq !== syncSeq) return; // 有更新的同步在跑，本次结果作废（防旧态后到覆盖新态）
+  if (currentGroup !== meta) return; // 等待期间面板重开换了组（行对象已换代）→ 本轮结果作废
 
   const hasManifest = !!manifest;
   meta.retryVisible = !hasManifest || checkFailed;
@@ -256,11 +282,21 @@ function patchRenderedGroup(): void {
       const el = domRows[i];
       if (!el) return;
       const btnRow = row as BtnRow;
-      if (row === meta.retryRow) el.style.display = meta.retryVisible ? '' : 'none';
+      // 搜索过滤亲手藏的行不碰 display（归 applyHitFilter 所有）
+      if (row === meta.retryRow && el.dataset.spHitHidden !== '1') el.style.display = meta.retryVisible ? '' : 'none';
       const desc = el.querySelector<HTMLElement>('.bz-sp-set-desc');
-      if (desc) desc.textContent = btnRow.desc ?? '';
+      if (desc) {
+        const text = btnRow.desc ?? '';
+        // 文案没变不写：写 textContent 会把搜索高亮的 <mark> 包裹拍平
+        if (desc.textContent !== text) {
+          desc.textContent = text;
+          // 高亮快照同源更新，否则下次敲键 markHitText 会按旧文还原（本次更新被吞）
+          if (desc.dataset.spOrig !== undefined) desc.dataset.spOrig = text;
+        }
+      }
       const btn = el.querySelector<HTMLButtonElement>('.bz-sp-btn');
-      if (btn) {
+      // 动作中的钮（busy 转圈）不接手：批量下载逐条事件扑面时别把转圈拍回 idle（成重复点击面）
+      if (btn && !btn.classList.contains('bz-rowbtn--busy')) {
         setRowBtnState(btn, 'idle', btnRow.buttonText); // 清 busy/ok/fail 残留 + 恢复文案
         btn.disabled = btnRow.disabled === true;
       }
@@ -273,7 +309,7 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   const app = getApp();
   const manifest = await cachedManifest(app);
   if (!manifest) {
-    await syncGroupRows(); // 清单已不可用（禁用态理论不可达）→ 就地校正
+    await syncGroupRows().catch(() => {}); // 清单已不可用（禁用态理论不可达）→ 就地校正
     return;
   }
   const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
@@ -290,5 +326,7 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   } catch (e) {
     notice(e instanceof Error ? e.message : String(e), 'error');
   }
-  await syncGroupRows(); // 动作完成（成败皆然）→ 磁盘事实已变，行对象与 DOM 一并翻转
+  // 摘转圈：补丁刻意绕过 busy 钮（见 patchRenderedGroup），不摘会一直转
+  setRowBtnState(btn, 'idle', btn?.textContent ?? '下载');
+  await syncGroupRows().catch(() => {}); // 动作完成（成败皆然）→ 磁盘事实已变，行对象与 DOM 一并翻转
 }

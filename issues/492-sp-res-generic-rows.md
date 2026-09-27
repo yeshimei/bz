@@ -46,7 +46,7 @@ issue 480 把三项在线下载收进设置面板通用域时，组内用 `type:
     `setRowBtnState(btn, 'busy', …)`（issue 434 三态助手）；
   - 行对象可变：`syncGroupRows()` 重算后**就地改写**行对象（面板 schema 会话内缓存，
     下次重渲即新值）**+ `patchRenderedGroup()` DOM 补丁**（打开中即所见即所得）；
-    `syncSeq` 序号防并发同步旧结果后到覆盖新态；
+    同步单飞合流（并发请求只置脏，本轮跑完补一轮）；
   - 后台核对 60s 节流（开面板顺手核对一次，失败也记窗防补丁链雪球）；核对失败
     `console.warn` 留档（UI 面走失败行，不重复弹通知）；
   - **跨入口同步**：`subscribeOnce()` 订阅 `DOWNLOADS_CHANGED_EVENT` → `syncGroupRows()`；
@@ -67,11 +67,31 @@ issue 480 把三项在线下载收进设置面板通用域时，组内用 `type:
   非本票新增），而本组五行全为操作行 → 计数恒 0 → 按既有口径隐藏徽标；
 - 打开面板顺手核对从「每次进入该组」变为「按面板会话 + 60s 节流」（schema 会话缓存所致）。
 
+## 复检修订（子代理 review，同日）
+
+首轮部署后子代理复检提出三条**本次改动新引入**的问题，当场修（不留给下一票）：
+
+1. **动作中的转圈被落盘事件拍掉**：批量下载皮肤时每注入一套就派发一次事件 → 补丁把
+   同行按钮拍回 idle（解禁）→ 成了重复点击面。修法：补丁**绕过 busy 钮**
+   （`bz-rowbtn--busy` 不接手文案与禁用态），转圈由动作收尾自己摘（`runAction` /
+   `retryCheck` 在收尾同步前 `setRowBtnState(btn, 'idle', …)`）。
+2. **逐条事件触发全量重扫（O(N²)）**：`syncSeq` 只丢结果不省工作。修法：改**单飞合流**
+   （`syncRunning` + `syncDirty` 脏标记），并发请求只置脏、跑完补一轮；等待期间面板重开
+   换了组（行对象换代）则本轮结果作废。
+3. **补丁与搜索态打架**：补丁无脑写 `textContent` 会拍平 `markHitText` 的高亮包裹，
+   且下次敲键按旧 `data-sp-orig` 还原会把更新吞掉；补丁写 `display` 还会放行被
+   搜索过滤亲手藏的行。修法：文案**没变不写**、变更时同源刷新 `data-sp-orig`、
+   `spHitHidden` 行不碰 display。
+
+另补：事件面/后台面的同步失败一律吞掉（不冒未处理拒绝，下个刷新通道再算）。
+
 ## 测试
 
-- `tests/settings-panel/online-resources.test.ts` 重写（11 例）：真渲染器 `renderPanelSchema`
+- `tests/settings-panel/online-resources.test.ts` 重写（13 例）：真渲染器 `renderPanelSchema`
   验组形状（5 button 行）/ 状态机各态 / 失败态与重试恢复 / 动作后翻转 / 主题行套数描述 /
-  跨入口同步（`writeAssetText` 落盘 → 行按钮翻「已下载」）。
+  跨入口同步（`writeAssetText` 落盘 → 行按钮翻「已下载」）/ 补丁边界（busy 转圈不被事件
+  拍掉、描述变更同源刷新高亮快照）。
+- `tests/core/settings-schema-ui.test.ts`：button 行 `disabled` 落位（禁用钮点不动）；
 - `tests/sp-contract-lock.test.ts`：通用域可见项数 8 → 7（button 行不计）。
 - `tests/smoke.test.ts`：在线资源组冒烟改 button 行口径（5 行；清单拉取失败 → 四资源行禁用
   + 检查更新行失败文案）。

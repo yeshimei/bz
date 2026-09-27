@@ -18,6 +18,7 @@ import { resetObsidianMocks, clearNotices, getNoticeMessages } from '../mock-obs
 import { onlineResourcesGroup, resetOnlineResourcesState } from '../../src/settings-panel/online-resources';
 import { renderPanelSchema } from '../../src/settings-panel/renderer';
 import { writeAssetText } from '../../src/core/remote-asset';
+import { setRowBtnState } from '../../src/core/settings-btn-state';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -305,5 +306,52 @@ describe('跨入口同步（issue 492：下载事件）', () => {
     expect(rowBtn(el, 1).textContent).toBe('已下载');
     expect(rowBtn(el, 1).disabled).toBe(true);
     expect(rowDesc(el, 1)).toBe('已是最新版本');
+  });
+});
+
+describe('补丁边界（issue 492 review：与动作态/搜索态的交界）', () => {
+  it('动作中转圈不被下载事件拍掉：busy 钮补丁绕过，摘转圈后下一次同步才落定', async () => {
+    const vault = newVault();
+    const entry = docEntry('changelog', HTML_V2);
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', '<!DOCTYPE html><html>旧版</html>'); // updated
+    routeFetch({ [REMOTE_MANIFEST]: manifestJson([entry], []) });
+
+    const el = await renderGroup();
+    const btn = rowBtn(el, 1);
+    expect(btn.textContent).toBe('更新');
+
+    // 动作进行中（点「更新」后转圈窗口）＋下载事件扑面：转圈与禁用必须保持，别成重复点击面
+    setRowBtnState(btn, 'busy', '更新');
+    await writeAssetText({ vault } as any, 'bz-changelog.html', HTML_V2);
+    await tick(40);
+    expect(btn.classList.contains('bz-rowbtn--busy')).toBe(true);
+    expect(btn.disabled).toBe(true);
+    expect(btn.textContent).toBe('更新'); // 文案没被补丁改写（磁盘已就绪，但补丁刻意绕过 busy 钮）
+
+    // 动作收尾摘转圈 → 再次落盘事件把新态落定（已下载 禁用）
+    setRowBtnState(btn, 'idle', '更新');
+    await writeAssetText({ vault } as any, 'bz-changelog.html', HTML_V2);
+    await tick(40);
+    expect(btn.classList.contains('bz-rowbtn--busy')).toBe(false);
+    expect(btn.textContent).toBe('已下载');
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('描述变更同源刷新高亮快照（data-sp-orig）：搜索还原底稿不吞掉本次更新', async () => {
+    const vault = newVault();
+    const entry = docEntry('changelog', HTML_V2);
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
+    vault.files.set('.obsidian/plugins/bz/downloads/bz-changelog.html', '<!DOCTYPE html><html>旧版</html>');
+    routeFetch({ [REMOTE_MANIFEST]: manifestJson([entry], []) });
+
+    const el = await renderGroup();
+    const desc = rowEl(el, 1).querySelector<HTMLElement>('.bz-sp-set-desc') as HTMLElement;
+    desc.dataset.spOrig = desc.textContent ?? ''; // 模拟搜索高亮已存快照（markHitText 语义）
+
+    await writeAssetText({ vault } as any, 'bz-changelog.html', HTML_V2);
+    await tick(40);
+    expect(desc.textContent).toBe('已是最新版本');
+    expect(desc.dataset.spOrig).toBe('已是最新版本'); // 快照跟着走：下次敲键按新文还原
   });
 });

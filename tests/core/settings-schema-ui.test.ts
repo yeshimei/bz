@@ -340,6 +340,31 @@ describe('visibleWhen 联动 + 徽标 + actionRow 豁免 + custom 插槽', () =>
     controlOf(btnRow).trigger();
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it('button 行 disabled 声明落到位：禁用钮点不动（在线资源「已下载」态；ADR-0205）', () => {
+    const container = document.createElement('div');
+    const onClick = vi.fn();
+    renderSettingsInto(container, {
+      groups: [
+        {
+          name: 'G',
+          rows: [
+            { type: 'button', name: '更新日志', desc: '已是最新版本', buttonText: '已下载', disabled: true, onClick },
+            { type: 'button', name: '使用手册', buttonText: '下载', onClick },
+          ],
+        },
+      ],
+    });
+    const off = controlOf(findRow(container, '更新日志'));
+    expect(off.buttonEl.disabled).toBe(true);
+    expect(off.buttonEl.textContent).toBe('已下载');
+    off.buttonEl.click(); // 禁用钮的点击不触发回调
+    expect(onClick).not.toHaveBeenCalled();
+    const on = controlOf(findRow(container, '使用手册'));
+    expect(on.buttonEl.disabled).toBe(false);
+    on.buttonEl.click();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('textarea 行与区块标题平铺形态', () => {
