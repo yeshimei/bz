@@ -173,7 +173,7 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(job.material?.threads).toEqual([{ ts: '2024-05-01', text: '下次一起构造' }]);
     expect(job.message).toBe('「构造对象」脸谱已生成');
     expect(askExtract).toHaveBeenCalledTimes(2);
-    expect(askPortrait).toHaveBeenCalledTimes(3); // 其人 + 我们 + 时间线
+    expect(askPortrait).toHaveBeenCalledTimes(4); // 其人 + 我们 + 时间线 + 档案提炼（issue 487）
     expect(snap.running).toBe(false);
     expect(snap.currentIndex).toBe(-1);
 
@@ -582,7 +582,7 @@ describe('resumeJobs：中断标记与重启续跑', () => {
     expect(done.results).toHaveLength(2); // 断点前 1 批不重烧
     expect(askExtract).toHaveBeenCalledTimes(1); // 只补第 2 批
     expect(done.person).toContain('画像速写');
-    expect(askPortrait).toHaveBeenCalledTimes(3); // 其人 + 我们 + 时间线
+    expect(askPortrait).toHaveBeenCalledTimes(4); // 其人 + 我们 + 时间线 + 档案提炼（issue 487）
   });
 
   it('旧落盘兼容（issue 455）：in-flight job 的 portrait 读入视作 person，续跑已缓存批次照常复用、重画双卷', async () => {
@@ -624,7 +624,7 @@ describe('resumeJobs：中断标记与重启续跑', () => {
     expect(askExtract).toHaveBeenCalledTimes(1); // 只补第 3 批——issue 453 批级复用语义不回退
     expect(done.person).toContain('构造画像'); // 从《其人》阶段起重画双卷
     expect(done.bond).toContain('构造我们');
-    expect(askPortrait).toHaveBeenCalledTimes(3);
+    expect(askPortrait).toHaveBeenCalledTimes(4); // 其人 + 我们 + 时间线 + 档案提炼（issue 487）
   });
 
   it('样本警示与档案段（issue 455）：msgCount < 200 两卷 prompt 头注样本警示；target.profile 进素材〇', async () => {

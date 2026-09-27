@@ -240,19 +240,38 @@ export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNot
 }
 
 /**
- * 手动档案 → 「素材〇」文本段（issue 455）：生日 / 职业 / 家乡 / 怎么认识 / 什么时候认识 /
- * 关系标签 / 备注，逐项成句；空 / 缺省返回空串（prompt 不加该段）。
+ * 手动档案 → 「素材〇」文本段（issue 455 建；issue 487 扩十维）：生日 / 称呼 / 职业 / 家乡 /
+ * 怎么认识 / 什么时候认识 / 关系标签 / 备注 / 性格 / 兴趣爱好 / 作息 / 近况 / 口头禅 /
+ * 喜欢 / 反感 / 身边人 / 重要日子，逐项成句；空 / 缺省返回空串（prompt 不加该段）。
  */
 export function buildProfileNote(profile?: PersonProfile): string {
   if (!profile) return '';
   const lines: string[] = [];
   if (profile.birthday) lines.push(`生日：${profile.birthday}`);
+  if (profile.nickname) lines.push(`称呼：${profile.nickname}`);
   if (profile.job) lines.push(`职业：${profile.job}`);
   if (profile.hometown) lines.push(`家乡：${profile.hometown}`);
   if (profile.metVia) lines.push(`怎么认识：${profile.metVia}`);
   if (profile.metAt) lines.push(`什么时候认识：${profile.metAt}`);
   if (profile.tags?.length) lines.push(`关系标签：${profile.tags.join('、')}`);
   if (profile.note) lines.push(`备注：${profile.note}`);
+  if (profile.personality) lines.push(`性格：${profile.personality}`);
+  if (profile.interests?.length) lines.push(`兴趣爱好：${profile.interests.join('、')}`);
+  if (profile.habits) lines.push(`作息 / 习惯：${profile.habits}`);
+  if (profile.recentLife) lines.push(`近况：${profile.recentLife}`);
+  if (profile.quote) lines.push(`口头禅：${profile.quote}`);
+  if (profile.likes?.length) lines.push(`喜欢：${profile.likes.join('、')}`);
+  if (profile.dislikes?.length) lines.push(`反感 / 雷点：${profile.dislikes.join('、')}`);
+  if (profile.relationships?.length) {
+    const rel = profile.relationships
+      .map((r) => (r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation))
+      .filter(Boolean)
+      .join('、');
+    lines.push(`身边人：${rel}`);
+  }
+  if (profile.importantDates?.length) {
+    lines.push(`重要日子：${profile.importantDates.map((d) => [d.date, d.what].filter(Boolean).join(' ')).filter(Boolean).join('、')}`);
+  }
   return lines.join('\n');
 }
 
@@ -457,6 +476,172 @@ function rawArr(v: unknown): unknown[] {
 
 function str(v: unknown): string {
   return String(v ?? '').trim();
+}
+
+// ---------------- 人物档案提炼（issue 487：画谱时 AI 按证据自动回填） ----------------
+
+/** PersonProfile 自由文本字段（AI 契约 / 表单回填 / 只填空合并三处共用的清单） */
+export const PROFILE_TEXT_FIELDS = [
+  'birthday', 'metVia', 'metAt', 'hometown', 'job', 'note',
+  'personality', 'habits', 'recentLife', 'nickname', 'quote',
+] as const;
+
+/** PersonProfile 字符串数组字段（同上三处共用） */
+export const PROFILE_LIST_FIELDS = ['tags', 'interests', 'likes', 'dislikes'] as const;
+
+/** 档案提炼的素材面（FaceDigest 与 MergedMaterial 的公共投影；只吃已落盘的提炼素材，不碰聊天原文） */
+export interface ProfileExtractMaterial {
+  events?: FaceEvent[];
+  quotes?: QuoteItem[];
+  moments?: MomentItem[];
+  traits?: string[];
+  interests?: InterestItem[];
+  threads?: ThreadItem[];
+}
+
+/**
+ * 提炼素材 → 档案提炼 prompt 的素材文本（ui 的「AI 补充」与 jobs 的画谱回填共用同一组装口径）：
+ * 大事前置的事件在前，其后原话 / 场景 / 特质 / 兴趣 / 未竟逐段成节；全空返回空串。
+ */
+export function profileExtractMaterial(m: ProfileExtractMaterial): string {
+  const events = m.events ?? [];
+  const majors = events.filter((e) => e.kind === 'major');
+  const sections: string[] = [];
+  const add = (title: string, lines: string[]): void => {
+    if (lines.length) sections.push(`【${title}】\n${lines.join('\n')}`);
+  };
+  add('交往事件', [...majors, ...events.filter((e) => e.kind !== 'major')].slice(0, 200).map((e) => `${e.ts} ${e.summary}`));
+  add('代表性原话', (m.quotes ?? []).slice(0, 40).map((q) => `${q.who}：${q.text}`));
+  add('场景细节', (m.moments ?? []).slice(0, 30).map((x) => `${x.ts} ${x.summary}`));
+  add('特质线索', (m.traits ?? []).slice(0, 30));
+  add('兴趣信号', (m.interests ?? []).slice(0, 40).map((i) => `${i.ts} ${i.topic}`));
+  add('未竟之事', (m.threads ?? []).slice(0, 30).map((t) => `${t.ts} ${t.text}`));
+  return sections.join('\n\n');
+}
+
+/** 已手填档案 → 「已知档案（不要覆盖）」声明文本（契约里全部可填字段都列举）；全空返回空串 */
+export function knownProfileText(profile?: PersonProfile): string {
+  if (!profile) return '';
+  const parts: string[] = [];
+  const push = (s: string): void => {
+    const t = s.trim();
+    if (t) parts.push(t);
+  };
+  push(profile.birthday ? `生日 ${profile.birthday}` : '');
+  push(profile.nickname ? `称呼 ${profile.nickname}` : '');
+  push(profile.metVia ? `认识方式 ${profile.metVia}` : '');
+  push(profile.metAt ? `认识时间 ${profile.metAt}` : '');
+  push(profile.hometown ? `家乡/现居 ${profile.hometown}` : '');
+  push(profile.job ? `职业 ${profile.job}` : '');
+  push(profile.tags?.length ? `标签 ${profile.tags.join('、')}` : '');
+  push(profile.note ? `备注 ${profile.note}` : '');
+  push(profile.personality ? `性格 ${profile.personality}` : '');
+  push(profile.interests?.length ? `兴趣爱好 ${profile.interests.join('、')}` : '');
+  push(profile.habits ? `作息/习惯 ${profile.habits}` : '');
+  push(profile.recentLife ? `近况 ${profile.recentLife}` : '');
+  push(profile.quote ? `口头禅 ${profile.quote}` : '');
+  push(profile.likes?.length ? `喜欢 ${profile.likes.join('、')}` : '');
+  push(profile.dislikes?.length ? `反感/雷点 ${profile.dislikes.join('、')}` : '');
+  push(profile.relationships?.length
+    ? `身边人 ${profile.relationships.map((r) => (r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation)).join('、')}`
+    : '');
+  push(profile.importantDates?.length ? `重要日子 ${profile.importantDates.map((d) => [d.date, d.what].filter(Boolean).join(' ')).filter(Boolean).join('、')}` : '');
+  return parts.join('；');
+}
+
+/**
+ * 档案提炼 prompt（issue 487）：JSON 契约覆盖全部维度；只许填素材能支撑的，无证据给空；
+ * 已有手填值（known 非空）声明「不要覆盖」。隐私口径不变：mat 只装已落盘的提炼素材。
+ */
+export function buildProfileExtractPrompt(name: string, mat: string, known?: string): string {
+  return [
+    `你在帮用户完善好友「${name}」的人物档案。以下是已落盘的交往提炼素材。`,
+    ...(known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : []),
+    '',
+    ...(mat ? [mat, ''] : []),
+    '请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：',
+    '{"birthday":"","nickname":"","metVia":"","metAt":"","hometown":"","job":"","tags":[],"note":"","personality":"","interests":[],"habits":"","recentLife":"","quote":"","likes":[],"dislikes":[],"relationships":[{"who":"","relation":""}],"importantDates":[{"date":"","what":""}]}',
+    '规则：',
+    '- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。',
+    '- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。',
+    '- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。',
+    '- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。',
+    '- personality 一段话写性格特点（要有行为证据，不写抽象形容词）；interests / likes / dislikes 每项不超过 10 字。',
+    '- habits 写作息 / 生活习惯；recentLife 写素材里能看出的近况；nickname 写对方习惯的称呼；quote 写口头禅或代表句（不改写）。',
+    '- relationships 收素材里提到的身边人（who = 称呼，relation = 与对方的关系）；importantDates 收对对方重要的日子（date 可为 YYYY-MM-DD 或 MM-DD）。',
+  ].join('\n');
+}
+
+/** 字符串数组归一：数组元素串化；单个字符串按顿号 / 逗号切分（宽容 AI 的形态偏差）；去空去重 */
+function strListOf(v: unknown): string[] {
+  let items: unknown[];
+  if (Array.isArray(v)) items = v;
+  else if (typeof v === 'string' && v.trim()) items = v.split(/[、,，;；\n]+/);
+  else return [];
+  return [
+    ...new Set(
+      items
+        .filter((x) => typeof x !== 'object' || x === null)
+        .map((x) => String(x).trim())
+        .filter(Boolean)
+    ),
+  ];
+}
+
+/**
+ * AI 档案回执 → PersonProfile（issue 487）：剥围栏 / 宽松 JSON / 逐字段防御归一——
+ * 自由文本串化去空；数组去空去重（宽容顿号串形态）；结构行残缺剔除；契约外的字段（如 socials）一律不收。
+ */
+export function parseProfileReply(raw: string): PersonProfile {
+  const data = extractJsonLoose(raw) as Record<string, unknown>;
+  const out: PersonProfile = {};
+  const rec = out as Record<string, unknown>;
+  for (const f of PROFILE_TEXT_FIELDS) {
+    const v = str(data[f]);
+    if (v) rec[f] = v;
+  }
+  for (const f of PROFILE_LIST_FIELDS) {
+    const arr = strListOf(data[f]);
+    if (arr.length) out[f] = arr;
+  }
+  const rels: Array<{ who: string; relation: string }> = [];
+  for (const r of arrOf(data.relationships)) {
+    const who = str(r.who);
+    const relation = str(r.relation);
+    if (who && relation) rels.push({ who, relation });
+  }
+  if (rels.length) out.relationships = rels;
+  const dates: Array<{ date: string; what: string }> = [];
+  for (const d of arrOf(data.importantDates)) {
+    const date = str(d.date);
+    const what = str(d.what);
+    if (date && what) dates.push({ date, what });
+  }
+  if (dates.length) out.importantDates = dates;
+  return out;
+}
+
+/**
+ * 档案合并（issue 487 语义铁则）：**只填空白字段**——undefined / 空串 / 空数组才收 AI 值，
+ * 手填的绝不覆盖（重新画谱也不会冲掉用户改过的字段）。数组做浅拷贝，不与 AI 结果共享引用。
+ */
+export function fillProfile(existing: PersonProfile | undefined, ai: PersonProfile): PersonProfile {
+  const out: PersonProfile = { ...(existing ?? {}) };
+  const rec = out as Record<string, unknown>;
+  const aiRec = ai as Record<string, unknown>;
+  for (const f of PROFILE_TEXT_FIELDS) {
+    const aiVal = str(aiRec[f]);
+    if (!aiVal) continue;
+    if (!str(rec[f])) rec[f] = aiVal;
+  }
+  for (const f of PROFILE_LIST_FIELDS) {
+    const aiArr = ai[f];
+    if (!aiArr?.length) continue;
+    if (!out[f]?.length) out[f] = [...aiArr];
+  }
+  if (ai.relationships?.length && !out.relationships?.length) out.relationships = ai.relationships.map((r) => ({ ...r }));
+  if (ai.importantDates?.length && !out.importantDates?.length) out.importantDates = ai.importantDates.map((d) => ({ ...d }));
+  return out;
 }
 
 export async function extractBatch(ask: AskLLM, chunk: DigestChunk, personName: string): Promise<BatchExtract> {

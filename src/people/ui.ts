@@ -27,7 +27,15 @@ import { onDomainEvent } from '../core/domain-bus';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { ensureSafeUnlocked } from '../encrypt';
 import { PeopleStore } from './data';
-import { extractJsonLoose } from './digest';
+import {
+  PROFILE_LIST_FIELDS,
+  PROFILE_TEXT_FIELDS,
+  buildProfileExtractPrompt,
+  fillProfile,
+  knownProfileText,
+  parseProfileReply,
+  profileExtractMaterial,
+} from './digest';
 import { createAI } from '../core/ai';
 import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
@@ -57,6 +65,7 @@ import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncP
 import {
   describeConfirmModal,
   portraitConfirmModal,
+  dateRow,
   dsModal,
   duoBar,
   foldBondBody,
@@ -79,6 +88,7 @@ import {
   popShell,
   profilePopBody,
   progressBlock,
+  relationRow,
   replyLatencySec,
   socialRow,
   statsPopBody,
@@ -1011,6 +1021,12 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       stats: target ? computeStats(msgs!, target.kindCounts) : job.stats,
     };
     const entry: PersonEntry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
+    // issue 487：画谱完成的档案自动回填——AI 只填空白字段（fillProfile），手填值原样保留；
+    // 归一后一个字段都没有则不动档案
+    if (job.aiProfile) {
+      const mergedProfile = fillProfile(existing?.profile, job.aiProfile);
+      if (Object.keys(mergedProfile).length) entry.profile = mergedProfile;
+    }
     await store.upsert(entry);
     await store.appendImport(talker, rec);
     const digest: FaceDigest = {
@@ -1380,6 +1396,17 @@ function onOverlayClick(e: MouseEvent): void {
     overlay?.querySelector<HTMLElement>('[data-people-prof-social-list]')?.appendChild(socialRow('', ''));
     return;
   }
+  // issue 487：身边人 / 重要日子行增删（复用 socials 行模式）
+  if (t.closest('[data-people-prof-add-rel]')) {
+    overlay?.querySelector<HTMLElement>('[data-people-prof-rel-list]')?.appendChild(relationRow('', ''));
+    return;
+  }
+  if (t.closest('[data-people-prof-add-date]')) {
+    overlay?.querySelector<HTMLElement>('[data-people-prof-date-list]')?.appendChild(dateRow('', ''));
+    return;
+  }
+  if (t.closest('[data-people-prof-rel-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
+  if (t.closest('[data-people-prof-date-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
   if (t.closest('[data-people-prof-tag-add]')) { addTagChip(); return; }
   if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-prof-tag')?.remove(); return; }
   if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
@@ -1856,9 +1883,10 @@ function addTagChip(): void {
 let profAiBusy = false;
 
 /**
- * AI 补充背景（455 评审）：读交往素材（事件 / 原话 / 场景）推断缺失档案字段，
- * 只填编辑表单里的**空白**项——手填的绝不覆盖，填完停在编辑态等用户检查保存。
- * 隐私口径不变：只喂已落盘的提炼素材，不送聊天原文。
+ * AI 补充背景（455 评审建；issue 487 契约扩到全部维度）：读交往素材（事件 / 原话 / 场景 /
+ * 特质 / 兴趣 / 未竟，全部已落盘的提炼素材）推断缺失档案字段，只填编辑表单里的**空白**项
+ * ——手填的绝不覆盖，填完停在编辑态等用户检查保存。prompt 与解析走 digest 单源
+ * （buildProfileExtractPrompt / parseProfileReply）。隐私口径不变：不送聊天原文。
  */
 async function aiFillProfile(): Promise<void> {
   if (profAiBusy || !store || !detailId || !overlay) return;
@@ -1870,46 +1898,40 @@ async function aiFillProfile(): Promise<void> {
   profAiBusy = true;
   notice('AI 正在读交往素材补充背景…', 'info');
   try {
-    const majors = dg.events.filter((e) => e.kind === 'major');
-    const mat = [
-      ['交往事件', [...majors, ...dg.events.filter((e) => e.kind !== 'major')].slice(0, 200).map((e) => `${e.ts} ${e.summary}`).join('\n')],
-      ...(dg.quotes?.length ? [['代表性原话', dg.quotes.slice(0, 40).map((q) => `${q.who}：${q.text}`).join('\n')]] : []),
-      ...(dg.moments?.length ? [['场景细节', dg.moments.slice(0, 30).map((m) => `${m.ts} ${m.summary}`).join('\n')]] : []),
-    ].map(([t, s]) => `【${t}】\n${s}`).join('\n\n');
-    const known = [
-      p.profile?.birthday ? `生日 ${p.profile.birthday}` : '',
-      p.profile?.hometown ? `家乡/现居 ${p.profile.hometown}` : '',
-      p.profile?.job ? `职业 ${p.profile.job}` : '',
-      p.profile?.metVia ? `认识方式 ${p.profile.metVia}` : '',
-      p.profile?.metAt ? `认识时间 ${p.profile.metAt}` : '',
-      p.profile?.tags?.length ? `标签 ${p.profile.tags.join('、')}` : '',
-    ].filter(Boolean).join('；');
-    const prompt = [
-      `你在帮用户完善好友「${p.name}」的档案。以下是已落盘的交往提炼素材。`,
-      ...(known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : []),
-      '',
-      mat,
-      '',
-      '请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：',
-      '{"birthday":"","hometown":"","job":"","metVia":"","metAt":"","tags":[],"note":""}',
-      '规则：',
-      '- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。',
-      '- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。',
-      '- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。',
-      '- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。',
-    ].join('\n');
-    const data = extractJsonLoose(await createAI().json(prompt)) as Record<string, unknown>;
+    const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
+    const data = parseProfileReply(await createAI().json(prompt));
     let filled = 0;
-    for (const f of ['birthday', 'metVia', 'metAt', 'hometown', 'job', 'note'] as const) {
-      const v = String(data[f] ?? '').trim();
+    // 自由文本字段：只填空白输入行
+    for (const f of PROFILE_TEXT_FIELDS) {
+      const v = String((data as Record<string, unknown>)[f] ?? '').trim();
       if (!v) continue;
       const inp = overlay.querySelector<HTMLInputElement>(`[data-people-prof-field="${f}"]`);
       if (inp && !inp.value.trim()) { inp.value = v; filled++; }
     }
-    const tags = Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [];
-    const tagList = overlay.querySelector('[data-people-prof-tag-list]');
-    if (tagList && tagList.children.length === 0 && tags.length) {
-      for (const t of tags.slice(0, 3)) tagList.appendChild(tagChip(t));
+    // 数组字段：tags 走标签片（列表空才补）；interests / likes / dislikes 回填顿号串（空白才填）
+    for (const f of PROFILE_LIST_FIELDS) {
+      const arr = data[f];
+      if (!arr?.length) continue;
+      if (f === 'tags') {
+        const tagList = overlay.querySelector('[data-people-prof-tag-list]');
+        if (tagList && tagList.children.length === 0) {
+          for (const t of arr.slice(0, 3)) tagList.appendChild(tagChip(t));
+          filled++;
+        }
+        continue;
+      }
+      const inp = overlay.querySelector<HTMLInputElement>(`[data-people-prof-field="${f}"]`);
+      if (inp && !inp.value.trim()) { inp.value = arr.join('、'); filled++; }
+    }
+    // 结构维度：行列表为空才补（手加过行就不动）
+    const relList = overlay.querySelector('[data-people-prof-rel-list]');
+    if (relList && relList.children.length === 0 && data.relationships?.length) {
+      for (const r of data.relationships.slice(0, 6)) relList.appendChild(relationRow(r.who, r.relation));
+      filled++;
+    }
+    const dateList = overlay.querySelector('[data-people-prof-date-list]');
+    if (dateList && dateList.children.length === 0 && data.importantDates?.length) {
+      for (const d of data.importantDates.slice(0, 6)) dateList.appendChild(dateRow(d.date, d.what));
       filled++;
     }
     if (filled > 0) notice(`AI 已补 ${filled} 项，请检查后点「保存档案」`, 'success');
@@ -1925,41 +1947,75 @@ async function saveProfile(): Promise<void> {
   if (!store || !detailId || !overlay) return;
   await ensureEntry(detailId); // 452：占位卡（聊天仓合成，盘上还没卡）先落一张空卡
   const val = (sel: string) => overlay!.querySelector<HTMLInputElement>(sel)?.value?.trim() ?? '';
-  const rows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
-  const socials = rows
-    .map((row) => ({
-      platform: row.querySelector<HTMLInputElement>('[data-people-prof-social-platform]')?.value?.trim() ?? '',
-      handle: row.querySelector<HTMLInputElement>('[data-people-prof-social-handle]')?.value?.trim() ?? '',
-    }))
+  // 三种结构行共用 socials 的行类名，按内嵌 data 钩子区分归属
+  const allRows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
+  const rowVal = (row: Element, hook: string) => row.querySelector<HTMLInputElement>(`[${hook}]`)?.value?.trim() ?? '';
+  const socialRows = allRows.filter((row) => row.querySelector('[data-people-prof-social-platform]'));
+  const relRows = allRows.filter((row) => row.querySelector('[data-people-prof-rel-who]'));
+  const dateRows = allRows.filter((row) => row.querySelector('[data-people-prof-date-date]'));
+  const socials = socialRows
+    .map((row) => ({ platform: rowVal(row, 'data-people-prof-social-platform'), handle: rowVal(row, 'data-people-prof-social-handle') }))
     .filter((s) => s.platform && s.handle);
-  const partial = rows.length - socials.length;
+  const relationships = relRows
+    .map((row) => ({ who: rowVal(row, 'data-people-prof-rel-who'), relation: rowVal(row, 'data-people-prof-rel-relation') }))
+    .filter((r) => r.who && r.relation);
+  const importantDates = dateRows
+    .map((row) => ({ date: rowVal(row, 'data-people-prof-date-date'), what: rowVal(row, 'data-people-prof-date-what') }))
+    .filter((d) => d.date && d.what);
+  const partial = socialRows.length - socials.length + relRows.length - relationships.length + dateRows.length - importantDates.length;
   const tagTexts = Array.from(overlay.querySelectorAll('[data-people-prof-tag-list] .bz-people-prof-tag-text'))
     .map((n) => (n.textContent ?? '').trim())
     .filter(Boolean);
   const tags = [...new Set(tagTexts)];
+  // 数组维度：顿号 / 逗号切分，去空去重（issue 487）
+  const splitList = (name: string): string[] => {
+    const raw = val(`[data-people-prof-field="${name}"]`);
+    if (!raw) return [];
+    return [...new Set(raw.split(/[、,，;；\n]+/).map((s) => s.trim()).filter(Boolean))];
+  };
+  const interests = splitList('interests');
+  const likes = splitList('likes');
+  const dislikes = splitList('dislikes');
   const profile: PersonProfile = {};
   const f = {
     birthday: val('[data-people-prof-field="birthday"]'),
+    nickname: val('[data-people-prof-field="nickname"]'),
     metVia: val('[data-people-prof-field="metVia"]'),
     metAt: val('[data-people-prof-field="metAt"]'),
     hometown: val('[data-people-prof-field="hometown"]'),
     job: val('[data-people-prof-field="job"]'),
+    personality: val('[data-people-prof-field="personality"]'),
+    quote: val('[data-people-prof-field="quote"]'),
+    habits: val('[data-people-prof-field="habits"]'),
+    recentLife: val('[data-people-prof-field="recentLife"]'),
     note: val('[data-people-prof-field="note"]'),
   };
   if (f.birthday) profile.birthday = f.birthday;
+  if (f.nickname) profile.nickname = f.nickname;
   if (f.metVia) profile.metVia = f.metVia;
   if (f.metAt) profile.metAt = f.metAt;
   if (f.hometown) profile.hometown = f.hometown;
   if (f.job) profile.job = f.job;
+  if (f.personality) profile.personality = f.personality;
+  if (f.quote) profile.quote = f.quote;
+  if (f.habits) profile.habits = f.habits;
+  if (f.recentLife) profile.recentLife = f.recentLife;
   if (f.note) profile.note = f.note;
   if (socials.length) profile.socials = socials;
   if (tags.length) profile.tags = tags;
-  const empty = !socials.length && !tags.length && !Object.keys(profile).length;
+  if (interests.length) profile.interests = interests;
+  if (likes.length) profile.likes = likes;
+  if (dislikes.length) profile.dislikes = dislikes;
+  if (relationships.length) profile.relationships = relationships;
+  if (importantDates.length) profile.importantDates = importantDates;
+  const empty =
+    !socials.length && !tags.length && !interests.length && !likes.length && !dislikes.length &&
+    !relationships.length && !importantDates.length && !Object.keys(profile).length;
   try {
     await store.updateProfile(detailId, empty ? undefined : profile);
     profEditId = null;
     notice(empty ? '档案已清空' : '档案已保存', 'success');
-    if (partial > 0) notice(`${partial} 行社交账号没填完整，已跳过`, 'warning');
+    if (partial > 0) notice(`${partial} 行没填完整，已跳过`, 'warning');
   } catch (e) {
     notifyActionError(e, '保存档案');
   }

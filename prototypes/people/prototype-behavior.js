@@ -1,4 +1,4 @@
-/* 源指纹 c75deb02366ddfa1 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aa8343622f3a649a · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/catpicker.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13431,16 +13431,31 @@ var BZW_people = (() => {
     ].join("\n");
   }
   function buildProfileNote(profile) {
-    var _a2;
+    var _a2, _b2, _c, _d, _e, _f;
     if (!profile) return "";
     const lines = [];
     if (profile.birthday) lines.push(`生日：${profile.birthday}`);
+    if (profile.nickname) lines.push(`称呼：${profile.nickname}`);
     if (profile.job) lines.push(`职业：${profile.job}`);
     if (profile.hometown) lines.push(`家乡：${profile.hometown}`);
     if (profile.metVia) lines.push(`怎么认识：${profile.metVia}`);
     if (profile.metAt) lines.push(`什么时候认识：${profile.metAt}`);
     if ((_a2 = profile.tags) == null ? void 0 : _a2.length) lines.push(`关系标签：${profile.tags.join("、")}`);
     if (profile.note) lines.push(`备注：${profile.note}`);
+    if (profile.personality) lines.push(`性格：${profile.personality}`);
+    if ((_b2 = profile.interests) == null ? void 0 : _b2.length) lines.push(`兴趣爱好：${profile.interests.join("、")}`);
+    if (profile.habits) lines.push(`作息 / 习惯：${profile.habits}`);
+    if (profile.recentLife) lines.push(`近况：${profile.recentLife}`);
+    if (profile.quote) lines.push(`口头禅：${profile.quote}`);
+    if ((_c = profile.likes) == null ? void 0 : _c.length) lines.push(`喜欢：${profile.likes.join("、")}`);
+    if ((_d = profile.dislikes) == null ? void 0 : _d.length) lines.push(`反感 / 雷点：${profile.dislikes.join("、")}`);
+    if ((_e = profile.relationships) == null ? void 0 : _e.length) {
+      const rel = profile.relationships.map((r) => r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation).filter(Boolean).join("、");
+      lines.push(`身边人：${rel}`);
+    }
+    if ((_f = profile.importantDates) == null ? void 0 : _f.length) {
+      lines.push(`重要日子：${profile.importantDates.map((d) => [d.date, d.what].filter(Boolean).join(" ")).filter(Boolean).join("、")}`);
+    }
     return lines.join("\n");
   }
   var HARD_RULES = [
@@ -13615,6 +13630,140 @@ var BZW_people = (() => {
   }
   function str(v) {
     return String(v != null ? v : "").trim();
+  }
+  var PROFILE_TEXT_FIELDS = [
+    "birthday",
+    "metVia",
+    "metAt",
+    "hometown",
+    "job",
+    "note",
+    "personality",
+    "habits",
+    "recentLife",
+    "nickname",
+    "quote"
+  ];
+  var PROFILE_LIST_FIELDS = ["tags", "interests", "likes", "dislikes"];
+  function profileExtractMaterial(m) {
+    var _a2, _b2, _c, _d, _e, _f;
+    const events = (_a2 = m.events) != null ? _a2 : [];
+    const majors = events.filter((e) => e.kind === "major");
+    const sections = [];
+    const add = (title, lines) => {
+      if (lines.length) sections.push(`【${title}】
+${lines.join("\n")}`);
+    };
+    add("交往事件", [...majors, ...events.filter((e) => e.kind !== "major")].slice(0, 200).map((e) => `${e.ts} ${e.summary}`));
+    add("代表性原话", ((_b2 = m.quotes) != null ? _b2 : []).slice(0, 40).map((q) => `${q.who}：${q.text}`));
+    add("场景细节", ((_c = m.moments) != null ? _c : []).slice(0, 30).map((x) => `${x.ts} ${x.summary}`));
+    add("特质线索", ((_d = m.traits) != null ? _d : []).slice(0, 30));
+    add("兴趣信号", ((_e = m.interests) != null ? _e : []).slice(0, 40).map((i) => `${i.ts} ${i.topic}`));
+    add("未竟之事", ((_f = m.threads) != null ? _f : []).slice(0, 30).map((t) => `${t.ts} ${t.text}`));
+    return sections.join("\n\n");
+  }
+  function knownProfileText(profile) {
+    var _a2, _b2, _c, _d, _e, _f;
+    if (!profile) return "";
+    const parts = [];
+    const push = (s) => {
+      const t = s.trim();
+      if (t) parts.push(t);
+    };
+    push(profile.birthday ? `生日 ${profile.birthday}` : "");
+    push(profile.nickname ? `称呼 ${profile.nickname}` : "");
+    push(profile.metVia ? `认识方式 ${profile.metVia}` : "");
+    push(profile.metAt ? `认识时间 ${profile.metAt}` : "");
+    push(profile.hometown ? `家乡/现居 ${profile.hometown}` : "");
+    push(profile.job ? `职业 ${profile.job}` : "");
+    push(((_a2 = profile.tags) == null ? void 0 : _a2.length) ? `标签 ${profile.tags.join("、")}` : "");
+    push(profile.note ? `备注 ${profile.note}` : "");
+    push(profile.personality ? `性格 ${profile.personality}` : "");
+    push(((_b2 = profile.interests) == null ? void 0 : _b2.length) ? `兴趣爱好 ${profile.interests.join("、")}` : "");
+    push(profile.habits ? `作息/习惯 ${profile.habits}` : "");
+    push(profile.recentLife ? `近况 ${profile.recentLife}` : "");
+    push(profile.quote ? `口头禅 ${profile.quote}` : "");
+    push(((_c = profile.likes) == null ? void 0 : _c.length) ? `喜欢 ${profile.likes.join("、")}` : "");
+    push(((_d = profile.dislikes) == null ? void 0 : _d.length) ? `反感/雷点 ${profile.dislikes.join("、")}` : "");
+    push(((_e = profile.relationships) == null ? void 0 : _e.length) ? `身边人 ${profile.relationships.map((r) => r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation).join("、")}` : "");
+    push(((_f = profile.importantDates) == null ? void 0 : _f.length) ? `重要日子 ${profile.importantDates.map((d) => [d.date, d.what].filter(Boolean).join(" ")).filter(Boolean).join("、")}` : "");
+    return parts.join("；");
+  }
+  function buildProfileExtractPrompt(name, mat, known) {
+    return [
+      `你在帮用户完善好友「${name}」的人物档案。以下是已落盘的交往提炼素材。`,
+      ...known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : [],
+      "",
+      ...mat ? [mat, ""] : [],
+      "请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：",
+      '{"birthday":"","nickname":"","metVia":"","metAt":"","hometown":"","job":"","tags":[],"note":"","personality":"","interests":[],"habits":"","recentLife":"","quote":"","likes":[],"dislikes":[],"relationships":[{"who":"","relation":""}],"importantDates":[{"date":"","what":""}]}',
+      "规则：",
+      "- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。",
+      "- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。",
+      "- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。",
+      "- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。",
+      "- personality 一段话写性格特点（要有行为证据，不写抽象形容词）；interests / likes / dislikes 每项不超过 10 字。",
+      "- habits 写作息 / 生活习惯；recentLife 写素材里能看出的近况；nickname 写对方习惯的称呼；quote 写口头禅或代表句（不改写）。",
+      "- relationships 收素材里提到的身边人（who = 称呼，relation = 与对方的关系）；importantDates 收对对方重要的日子（date 可为 YYYY-MM-DD 或 MM-DD）。"
+    ].join("\n");
+  }
+  function strListOf(v) {
+    let items;
+    if (Array.isArray(v)) items = v;
+    else if (typeof v === "string" && v.trim()) items = v.split(/[、,，;；\n]+/);
+    else return [];
+    return [
+      ...new Set(
+        items.filter((x) => typeof x !== "object" || x === null).map((x) => String(x).trim()).filter(Boolean)
+      )
+    ];
+  }
+  function parseProfileReply(raw) {
+    const data = extractJsonLoose(raw);
+    const out = {};
+    const rec = out;
+    for (const f of PROFILE_TEXT_FIELDS) {
+      const v = str(data[f]);
+      if (v) rec[f] = v;
+    }
+    for (const f of PROFILE_LIST_FIELDS) {
+      const arr = strListOf(data[f]);
+      if (arr.length) out[f] = arr;
+    }
+    const rels = [];
+    for (const r of arrOf(data.relationships)) {
+      const who = str(r.who);
+      const relation = str(r.relation);
+      if (who && relation) rels.push({ who, relation });
+    }
+    if (rels.length) out.relationships = rels;
+    const dates = [];
+    for (const d of arrOf(data.importantDates)) {
+      const date = str(d.date);
+      const what = str(d.what);
+      if (date && what) dates.push({ date, what });
+    }
+    if (dates.length) out.importantDates = dates;
+    return out;
+  }
+  function fillProfile(existing, ai) {
+    var _a2, _b2, _c, _d, _e;
+    const out = { ...existing != null ? existing : {} };
+    const rec = out;
+    const aiRec = ai;
+    for (const f of PROFILE_TEXT_FIELDS) {
+      const aiVal = str(aiRec[f]);
+      if (!aiVal) continue;
+      if (!str(rec[f])) rec[f] = aiVal;
+    }
+    for (const f of PROFILE_LIST_FIELDS) {
+      const aiArr = ai[f];
+      if (!(aiArr == null ? void 0 : aiArr.length)) continue;
+      if (!((_a2 = out[f]) == null ? void 0 : _a2.length)) out[f] = [...aiArr];
+    }
+    if (((_b2 = ai.relationships) == null ? void 0 : _b2.length) && !((_c = out.relationships) == null ? void 0 : _c.length)) out.relationships = ai.relationships.map((r) => ({ ...r }));
+    if (((_d = ai.importantDates) == null ? void 0 : _d.length) && !((_e = out.importantDates) == null ? void 0 : _e.length)) out.importantDates = ai.importantDates.map((d) => ({ ...d }));
+    return out;
   }
   async function extractBatch(ask, chunk, personName) {
     return parseBatchExtract(await ask(buildExtractPrompt(chunk, personName)));
@@ -16821,10 +16970,23 @@ var BZW_people = (() => {
         }
       }
       if (gone(job)) return;
+      if (merged.events.length || merged.quotes.length || merged.moments.length || merged.traits.length) {
+        await finish({ message: "时间线完成，正在提炼人物档案…" });
+        try {
+          const aiProfile = parseProfileReply(
+            await asks.portrait(buildProfileExtractPrompt(job.name, profileExtractMaterial(merged), knownProfileText(existing == null ? void 0 : existing.profile)))
+          );
+          if (Object.keys(aiProfile).length) job.aiProfile = aiProfile;
+        } catch (e) {
+          console.warn("[people] 档案提炼失败（不阻断画谱）:", e);
+        }
+      }
+      if (gone(job)) return;
       await finish({
         stage: "done",
         status: "done",
         chronicle,
+        aiProfile: job.aiProfile,
         events: merged.events,
         quotes: material.quotes,
         material: {
@@ -17471,10 +17633,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return book;
   }
   function profileFilled(prof) {
-    var _a2, _b2, _c, _d, _e, _f;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
     if (!prof) return false;
     return Boolean(
-      prof.socials && prof.socials.length || prof.tags && prof.tags.length || ((_a2 = prof.birthday) != null ? _a2 : "").trim() || ((_b2 = prof.metVia) != null ? _b2 : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim()
+      prof.socials && prof.socials.length || prof.tags && prof.tags.length || prof.interests && prof.interests.length || prof.likes && prof.likes.length || prof.dislikes && prof.dislikes.length || prof.relationships && prof.relationships.length || prof.importantDates && prof.importantDates.length || ((_a2 = prof.birthday) != null ? _a2 : "").trim() || ((_b2 = prof.metVia) != null ? _b2 : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim() || ((_g = prof.personality) != null ? _g : "").trim() || ((_h = prof.habits) != null ? _h : "").trim() || ((_i = prof.recentLife) != null ? _i : "").trim() || ((_j = prof.nickname) != null ? _j : "").trim() || ((_k = prof.quote) != null ? _k : "").trim()
     );
   }
   function foldHint(msg, action) {
@@ -17617,7 +17779,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return el("div", "bz-people-kinds", kinds.map(([k, n]) => el("span", "bz-people-kind", text(`${k} ${formatCount(n)} · ${Math.round(n / total * 100)}%`))));
   }
   function profileView(prof) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const rows = [];
     const addRow = (label, value) => {
       rows.push(el("div", "bz-people-prof-row", [
@@ -17625,6 +17787,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         el("span", "bz-people-prof-value", text(value))
       ]));
     };
+    const listText = (arr) => (arr != null ? arr : []).filter(Boolean).join("、");
     if ((_a2 = prof == null ? void 0 : prof.socials) == null ? void 0 : _a2.length) {
       rows.push(el("div", "bz-people-prof-row", [
         el("span", "bz-people-prof-label", text("社交账号")),
@@ -17632,17 +17795,31 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       ]));
     }
     if ((_b2 = prof == null ? void 0 : prof.birthday) == null ? void 0 : _b2.trim()) addRow("生日", prof.birthday.trim());
-    if ((_c = prof == null ? void 0 : prof.metVia) == null ? void 0 : _c.trim()) addRow("认识方式", prof.metVia.trim());
-    if ((_d = prof == null ? void 0 : prof.metAt) == null ? void 0 : _d.trim()) addRow("认识时间", prof.metAt.trim());
-    if ((_e = prof == null ? void 0 : prof.hometown) == null ? void 0 : _e.trim()) addRow("家乡 / 现居", prof.hometown.trim());
-    if ((_f = prof == null ? void 0 : prof.job) == null ? void 0 : _f.trim()) addRow("职业", prof.job.trim());
-    if ((_g = prof == null ? void 0 : prof.tags) == null ? void 0 : _g.length) {
+    if ((_c = prof == null ? void 0 : prof.nickname) == null ? void 0 : _c.trim()) addRow("称呼", prof.nickname.trim());
+    if ((_d = prof == null ? void 0 : prof.metVia) == null ? void 0 : _d.trim()) addRow("认识方式", prof.metVia.trim());
+    if ((_e = prof == null ? void 0 : prof.metAt) == null ? void 0 : _e.trim()) addRow("认识时间", prof.metAt.trim());
+    if ((_f = prof == null ? void 0 : prof.hometown) == null ? void 0 : _f.trim()) addRow("家乡 / 现居", prof.hometown.trim());
+    if ((_g = prof == null ? void 0 : prof.job) == null ? void 0 : _g.trim()) addRow("职业", prof.job.trim());
+    if ((_h = prof == null ? void 0 : prof.personality) == null ? void 0 : _h.trim()) addRow("性格", prof.personality.trim());
+    if ((_i = prof == null ? void 0 : prof.interests) == null ? void 0 : _i.length) addRow("兴趣爱好", listText(prof.interests));
+    if ((_j = prof == null ? void 0 : prof.habits) == null ? void 0 : _j.trim()) addRow("作息 / 习惯", prof.habits.trim());
+    if ((_k = prof == null ? void 0 : prof.quote) == null ? void 0 : _k.trim()) addRow("口头禅", prof.quote.trim());
+    if ((_l = prof == null ? void 0 : prof.likes) == null ? void 0 : _l.length) addRow("喜欢", listText(prof.likes));
+    if ((_m = prof == null ? void 0 : prof.dislikes) == null ? void 0 : _m.length) addRow("反感 / 雷点", listText(prof.dislikes));
+    if ((_n = prof == null ? void 0 : prof.recentLife) == null ? void 0 : _n.trim()) addRow("近况", prof.recentLife.trim());
+    if ((_o = prof == null ? void 0 : prof.relationships) == null ? void 0 : _o.length) {
+      addRow("身边人", prof.relationships.map((r) => r.who && r.relation ? `${r.who}（${r.relation}）` : r.who || r.relation).filter(Boolean).join("、"));
+    }
+    if ((_p = prof == null ? void 0 : prof.importantDates) == null ? void 0 : _p.length) {
+      addRow("重要日子", prof.importantDates.map((d) => [d.date, d.what].filter(Boolean).join(" ")).filter(Boolean).join("、"));
+    }
+    if ((_q = prof == null ? void 0 : prof.tags) == null ? void 0 : _q.length) {
       rows.push(el("div", "bz-people-prof-row", [
         el("span", "bz-people-prof-label", text("标签")),
         el("span", "bz-people-prof-tags", prof.tags.filter(Boolean).map((t) => el("span", "bz-people-chip", text(t))))
       ]));
     }
-    if ((_h = prof == null ? void 0 : prof.note) == null ? void 0 : _h.trim()) addRow("备注", prof.note.trim());
+    if ((_r = prof == null ? void 0 : prof.note) == null ? void 0 : _r.trim()) addRow("备注", prof.note.trim());
     rows.push(el("div", "bz-people-prof-actions", [
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "编辑档案", { "data-people-prof-edit": "" }),
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 读交往素材推断缺失字段，填进表单待你确认" })
@@ -17665,6 +17842,20 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-social-del": "", "aria-label": "删除这条社交账号" })
     ]);
   }
+  function relationRow(who, relation) {
+    return el("div", "bz-people-prof-social-row", [
+      profInput(who, "称呼（如 老妈）", ["data-people-prof-rel-who", ""], "bz-people-prof-input bz-people-prof-social-platform"),
+      profInput(relation, "关系（如 母亲）", ["data-people-prof-rel-relation", ""], "bz-people-prof-input bz-people-prof-social-handle"),
+      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-rel-del": "", "aria-label": "删除这条身边人" })
+    ]);
+  }
+  function dateRow(date, what) {
+    return el("div", "bz-people-prof-social-row", [
+      profInput(date, "日子（如 05-20 / 每年立冬）", ["data-people-prof-date-date", ""], "bz-people-prof-input bz-people-prof-social-platform"),
+      profInput(what, "是什么日子", ["data-people-prof-date-what", ""], "bz-people-prof-input bz-people-prof-social-handle"),
+      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-date-del": "", "aria-label": "删除这条重要日子" })
+    ]);
+  }
   function tagChip(t) {
     return el("span", "bz-people-prof-tag", [
       el("span", "bz-people-prof-tag-text", text(t)),
@@ -17672,12 +17863,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]);
   }
   function profileEditor(prof) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
     const grid = (label, input) => el("div", "bz-people-prof-row", [el("span", "bz-people-prof-label", text(label)), input]);
+    const listText = (arr) => (arr != null ? arr : []).join("、");
     const socialList = el("div", "bz-people-prof-social-list", { "data-people-prof-social-list": "" });
     for (const s of (_a2 = prof == null ? void 0 : prof.socials) != null ? _a2 : []) socialList.appendChild(socialRow(s.platform, s.handle));
+    const relList = el("div", "bz-people-prof-social-list", { "data-people-prof-rel-list": "" });
+    for (const r of (_b2 = prof == null ? void 0 : prof.relationships) != null ? _b2 : []) relList.appendChild(relationRow(r.who, r.relation));
+    const dateList = el("div", "bz-people-prof-social-list", { "data-people-prof-date-list": "" });
+    for (const d of (_c = prof == null ? void 0 : prof.importantDates) != null ? _c : []) dateList.appendChild(dateRow(d.date, d.what));
     const tagList = el("div", "bz-people-prof-tag-list", { "data-people-prof-tag-list": "" });
-    for (const t of (_b2 = prof == null ? void 0 : prof.tags) != null ? _b2 : []) tagList.appendChild(tagChip(t));
+    for (const t of (_d = prof == null ? void 0 : prof.tags) != null ? _d : []) tagList.appendChild(tagChip(t));
     const tagInput = profInput("", "加标签…", ["data-people-prof-tag-input", ""], "bz-people-prof-input bz-people-prof-tag-input");
     return el("div", "bz-people-prof bz-people-prof-edit", [
       el("div", "bz-people-prof-row", [
@@ -17689,11 +17885,37 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           ])
         ])
       ]),
-      grid("生日", profInput((_c = prof == null ? void 0 : prof.birthday) != null ? _c : "", "YYYY-MM-DD 或 MM-DD", ["data-people-prof-field", "birthday"])),
-      grid("认识方式", profInput((_d = prof == null ? void 0 : prof.metVia) != null ? _d : "", "怎么认识的", ["data-people-prof-field", "metVia"])),
-      grid("认识时间", profInput((_e = prof == null ? void 0 : prof.metAt) != null ? _e : "", "比如 2023 年夏天", ["data-people-prof-field", "metAt"])),
-      grid("家乡 / 现居", profInput((_f = prof == null ? void 0 : prof.hometown) != null ? _f : "", "家乡 · 现居", ["data-people-prof-field", "hometown"])),
-      grid("职业", profInput((_g = prof == null ? void 0 : prof.job) != null ? _g : "", "职业", ["data-people-prof-field", "job"])),
+      grid("生日", profInput((_e = prof == null ? void 0 : prof.birthday) != null ? _e : "", "YYYY-MM-DD 或 MM-DD", ["data-people-prof-field", "birthday"])),
+      grid("称呼", profInput((_f = prof == null ? void 0 : prof.nickname) != null ? _f : "", "TA 喜欢被怎么称呼", ["data-people-prof-field", "nickname"])),
+      grid("认识方式", profInput((_g = prof == null ? void 0 : prof.metVia) != null ? _g : "", "怎么认识的", ["data-people-prof-field", "metVia"])),
+      grid("认识时间", profInput((_h = prof == null ? void 0 : prof.metAt) != null ? _h : "", "比如 2023 年夏天", ["data-people-prof-field", "metAt"])),
+      grid("家乡 / 现居", profInput((_i = prof == null ? void 0 : prof.hometown) != null ? _i : "", "家乡 · 现居", ["data-people-prof-field", "hometown"])),
+      grid("职业", profInput((_j = prof == null ? void 0 : prof.job) != null ? _j : "", "职业", ["data-people-prof-field", "job"])),
+      grid("性格", profInput((_k = prof == null ? void 0 : prof.personality) != null ? _k : "", "性格特点，一段话", ["data-people-prof-field", "personality"])),
+      grid("兴趣爱好", profInput(listText(prof == null ? void 0 : prof.interests), "顿号分隔，如 爬山、摇滚、推理小说", ["data-people-prof-field", "interests"])),
+      grid("口头禅", profInput((_l = prof == null ? void 0 : prof.quote) != null ? _l : "", "口头禅 / 代表句", ["data-people-prof-field", "quote"])),
+      grid("喜欢", profInput(listText(prof == null ? void 0 : prof.likes), "顿号分隔：话题 / 送礼参考", ["data-people-prof-field", "likes"])),
+      grid("反感 / 雷点", profInput(listText(prof == null ? void 0 : prof.dislikes), "顿号分隔：反感的事 / 雷点", ["data-people-prof-field", "dislikes"])),
+      grid("作息 / 习惯", profInput((_m = prof == null ? void 0 : prof.habits) != null ? _m : "", "作息 / 生活习惯", ["data-people-prof-field", "habits"])),
+      grid("近况", profInput((_n = prof == null ? void 0 : prof.recentLife) != null ? _n : "", "最近在忙什么 / 状态", ["data-people-prof-field", "recentLife"])),
+      el("div", "bz-people-prof-row", [
+        el("span", "bz-people-prof-label", text("身边人")),
+        el("div", "bz-people-prof-social", [
+          relList,
+          el("div", "bz-people-prof-social-tools", [
+            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 身边人", { "data-people-prof-add-rel": "" })
+          ])
+        ])
+      ]),
+      el("div", "bz-people-prof-row", [
+        el("span", "bz-people-prof-label", text("重要日子")),
+        el("div", "bz-people-prof-social", [
+          dateList,
+          el("div", "bz-people-prof-social-tools", [
+            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 重要日子", { "data-people-prof-add-date": "" })
+          ])
+        ])
+      ]),
       el("div", "bz-people-prof-row", [
         el("span", "bz-people-prof-label", text("标签")),
         el("div", "bz-people-prof-tags-edit", [
@@ -17704,7 +17926,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
           ])
         ])
       ]),
-      grid("备注", profInput((_h = prof == null ? void 0 : prof.note) != null ? _h : "", "一句话备注", ["data-people-prof-field", "note"])),
+      grid("备注", profInput((_o = prof == null ? void 0 : prof.note) != null ? _o : "", "一句话备注", ["data-people-prof-field", "note"])),
       el("div", "bz-people-prof-actions", [
         button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "AI 补充", { "data-people-prof-ai": "", title: "AI 只填空白字段，填完你可检查再保存" }),
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "保存档案", { "data-people-prof-save": "" }),
@@ -18671,6 +18893,10 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         stats: target ? computeStats(msgs, target.kindCounts) : job.stats
       };
       const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
+      if (job.aiProfile) {
+        const mergedProfile = fillProfile(existing == null ? void 0 : existing.profile, job.aiProfile);
+        if (Object.keys(mergedProfile).length) entry.profile = mergedProfile;
+      }
       await store2.upsert(entry);
       await store2.appendImport(talker, rec);
       const digest = {
@@ -18896,7 +19122,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -19059,16 +19285,32 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       (_h = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _h.appendChild(socialRow("", ""));
       return;
     }
+    if (t.closest("[data-people-prof-add-rel]")) {
+      (_i = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-rel-list]")) == null ? void 0 : _i.appendChild(relationRow("", ""));
+      return;
+    }
+    if (t.closest("[data-people-prof-add-date]")) {
+      (_j = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-date-list]")) == null ? void 0 : _j.appendChild(dateRow("", ""));
+      return;
+    }
+    if (t.closest("[data-people-prof-rel-del]")) {
+      (_k = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _k.remove();
+      return;
+    }
+    if (t.closest("[data-people-prof-date-del]")) {
+      (_l = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _l.remove();
+      return;
+    }
     if (t.closest("[data-people-prof-tag-add]")) {
       addTagChip();
       return;
     }
     if (t.closest("[data-people-prof-tag-del]")) {
-      (_i = t.closest(".bz-people-prof-tag")) == null ? void 0 : _i.remove();
+      (_m = t.closest(".bz-people-prof-tag")) == null ? void 0 : _m.remove();
       return;
     }
     if (t.closest("[data-people-prof-social-del]")) {
-      (_j = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _j.remove();
+      (_n = t.closest(".bz-people-prof-social-row")) == null ? void 0 : _n.remove();
       return;
     }
     if (t.closest("[data-people-note-open]")) {
@@ -19086,7 +19328,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     const evDel = t.closest("[data-people-ev-del]");
     if (evDel) {
-      void removeManualNote((_k = evDel.dataset.peopleEvDel) != null ? _k : "");
+      void removeManualNote((_o = evDel.dataset.peopleEvDel) != null ? _o : "");
       return;
     }
   }
@@ -19473,7 +19715,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   }
   var profAiBusy = false;
   async function aiFillProfile() {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j;
+    var _a2, _b2, _c;
     if (profAiBusy || !store || !detailId || !overlay) return;
     const p = listCache.find((x) => x.id === detailId);
     if (!p) return;
@@ -19489,39 +19731,11 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     profAiBusy = true;
     notice("AI 正在读交往素材补充背景…", "info");
     try {
-      const majors = dg.events.filter((e) => e.kind === "major");
-      const mat = [
-        ["交往事件", [...majors, ...dg.events.filter((e) => e.kind !== "major")].slice(0, 200).map((e) => `${e.ts} ${e.summary}`).join("\n")],
-        ...((_a2 = dg.quotes) == null ? void 0 : _a2.length) ? [["代表性原话", dg.quotes.slice(0, 40).map((q) => `${q.who}：${q.text}`).join("\n")]] : [],
-        ...((_b2 = dg.moments) == null ? void 0 : _b2.length) ? [["场景细节", dg.moments.slice(0, 30).map((m) => `${m.ts} ${m.summary}`).join("\n")]] : []
-      ].map(([t, s]) => `【${t}】
-${s}`).join("\n\n");
-      const known = [
-        ((_c = p.profile) == null ? void 0 : _c.birthday) ? `生日 ${p.profile.birthday}` : "",
-        ((_d = p.profile) == null ? void 0 : _d.hometown) ? `家乡/现居 ${p.profile.hometown}` : "",
-        ((_e = p.profile) == null ? void 0 : _e.job) ? `职业 ${p.profile.job}` : "",
-        ((_f = p.profile) == null ? void 0 : _f.metVia) ? `认识方式 ${p.profile.metVia}` : "",
-        ((_g = p.profile) == null ? void 0 : _g.metAt) ? `认识时间 ${p.profile.metAt}` : "",
-        ((_i = (_h = p.profile) == null ? void 0 : _h.tags) == null ? void 0 : _i.length) ? `标签 ${p.profile.tags.join("、")}` : ""
-      ].filter(Boolean).join("；");
-      const prompt = [
-        `你在帮用户完善好友「${p.name}」的档案。以下是已落盘的交往提炼素材。`,
-        ...known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : [],
-        "",
-        mat,
-        "",
-        "请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：",
-        '{"birthday":"","hometown":"","job":"","metVia":"","metAt":"","tags":[],"note":""}',
-        "规则：",
-        "- 只填素材能明确支撑的；没有证据的字段给空串 / 空数组，绝不编造。",
-        "- birthday 仅当素材明确提到出生日期或生日时填（YYYY-MM-DD 或 MM-DD）。",
-        "- metVia 一句话写怎么认识的；metAt 写认识时间（如 2023 年夏天）。",
-        "- tags 2-3 个、每个不超过 6 字；note 一句话整体备注。"
-      ].join("\n");
-      const data = extractJsonLoose(await createAI().json(prompt));
+      const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
+      const data = parseProfileReply(await createAI().json(prompt));
       let filled = 0;
-      for (const f of ["birthday", "metVia", "metAt", "hometown", "job", "note"]) {
-        const v = String((_j = data[f]) != null ? _j : "").trim();
+      for (const f of PROFILE_TEXT_FIELDS) {
+        const v = String((_a2 = data[f]) != null ? _a2 : "").trim();
         if (!v) continue;
         const inp = overlay.querySelector(`[data-people-prof-field="${f}"]`);
         if (inp && !inp.value.trim()) {
@@ -19529,10 +19743,31 @@ ${s}`).join("\n\n");
           filled++;
         }
       }
-      const tags = Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [];
-      const tagList = overlay.querySelector("[data-people-prof-tag-list]");
-      if (tagList && tagList.children.length === 0 && tags.length) {
-        for (const t of tags.slice(0, 3)) tagList.appendChild(tagChip(t));
+      for (const f of PROFILE_LIST_FIELDS) {
+        const arr = data[f];
+        if (!(arr == null ? void 0 : arr.length)) continue;
+        if (f === "tags") {
+          const tagList = overlay.querySelector("[data-people-prof-tag-list]");
+          if (tagList && tagList.children.length === 0) {
+            for (const t of arr.slice(0, 3)) tagList.appendChild(tagChip(t));
+            filled++;
+          }
+          continue;
+        }
+        const inp = overlay.querySelector(`[data-people-prof-field="${f}"]`);
+        if (inp && !inp.value.trim()) {
+          inp.value = arr.join("、");
+          filled++;
+        }
+      }
+      const relList = overlay.querySelector("[data-people-prof-rel-list]");
+      if (relList && relList.children.length === 0 && ((_b2 = data.relationships) == null ? void 0 : _b2.length)) {
+        for (const r of data.relationships.slice(0, 6)) relList.appendChild(relationRow(r.who, r.relation));
+        filled++;
+      }
+      const dateList = overlay.querySelector("[data-people-prof-date-list]");
+      if (dateList && dateList.children.length === 0 && ((_c = data.importantDates) == null ? void 0 : _c.length)) {
+        for (const d of data.importantDates.slice(0, 6)) dateList.appendChild(dateRow(d.date, d.what));
         filled++;
       }
       if (filled > 0) notice(`AI 已补 ${filled} 项，请检查后点「保存档案」`, "success");
@@ -19550,43 +19785,69 @@ ${s}`).join("\n\n");
       var _a2, _b2, _c;
       return (_c = (_b2 = (_a2 = overlay.querySelector(sel)) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "";
     };
-    const rows = Array.from(overlay.querySelectorAll(".bz-people-prof-social-row"));
-    const socials = rows.map((row) => {
-      var _a2, _b2, _c, _d, _e, _f;
-      return {
-        platform: (_c = (_b2 = (_a2 = row.querySelector("[data-people-prof-social-platform]")) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "",
-        handle: (_f = (_e = (_d = row.querySelector("[data-people-prof-social-handle]")) == null ? void 0 : _d.value) == null ? void 0 : _e.trim()) != null ? _f : ""
-      };
-    }).filter((s) => s.platform && s.handle);
-    const partial = rows.length - socials.length;
+    const allRows = Array.from(overlay.querySelectorAll(".bz-people-prof-social-row"));
+    const rowVal = (row, hook) => {
+      var _a2, _b2, _c;
+      return (_c = (_b2 = (_a2 = row.querySelector(`[${hook}]`)) == null ? void 0 : _a2.value) == null ? void 0 : _b2.trim()) != null ? _c : "";
+    };
+    const socialRows = allRows.filter((row) => row.querySelector("[data-people-prof-social-platform]"));
+    const relRows = allRows.filter((row) => row.querySelector("[data-people-prof-rel-who]"));
+    const dateRows = allRows.filter((row) => row.querySelector("[data-people-prof-date-date]"));
+    const socials = socialRows.map((row) => ({ platform: rowVal(row, "data-people-prof-social-platform"), handle: rowVal(row, "data-people-prof-social-handle") })).filter((s) => s.platform && s.handle);
+    const relationships = relRows.map((row) => ({ who: rowVal(row, "data-people-prof-rel-who"), relation: rowVal(row, "data-people-prof-rel-relation") })).filter((r) => r.who && r.relation);
+    const importantDates = dateRows.map((row) => ({ date: rowVal(row, "data-people-prof-date-date"), what: rowVal(row, "data-people-prof-date-what") })).filter((d) => d.date && d.what);
+    const partial = socialRows.length - socials.length + relRows.length - relationships.length + dateRows.length - importantDates.length;
     const tagTexts = Array.from(overlay.querySelectorAll("[data-people-prof-tag-list] .bz-people-prof-tag-text")).map((n) => {
       var _a2;
       return ((_a2 = n.textContent) != null ? _a2 : "").trim();
     }).filter(Boolean);
     const tags = [...new Set(tagTexts)];
+    const splitList = (name) => {
+      const raw = val(`[data-people-prof-field="${name}"]`);
+      if (!raw) return [];
+      return [...new Set(raw.split(/[、,，;；\n]+/).map((s) => s.trim()).filter(Boolean))];
+    };
+    const interests = splitList("interests");
+    const likes = splitList("likes");
+    const dislikes = splitList("dislikes");
     const profile = {};
     const f = {
       birthday: val('[data-people-prof-field="birthday"]'),
+      nickname: val('[data-people-prof-field="nickname"]'),
       metVia: val('[data-people-prof-field="metVia"]'),
       metAt: val('[data-people-prof-field="metAt"]'),
       hometown: val('[data-people-prof-field="hometown"]'),
       job: val('[data-people-prof-field="job"]'),
+      personality: val('[data-people-prof-field="personality"]'),
+      quote: val('[data-people-prof-field="quote"]'),
+      habits: val('[data-people-prof-field="habits"]'),
+      recentLife: val('[data-people-prof-field="recentLife"]'),
       note: val('[data-people-prof-field="note"]')
     };
     if (f.birthday) profile.birthday = f.birthday;
+    if (f.nickname) profile.nickname = f.nickname;
     if (f.metVia) profile.metVia = f.metVia;
     if (f.metAt) profile.metAt = f.metAt;
     if (f.hometown) profile.hometown = f.hometown;
     if (f.job) profile.job = f.job;
+    if (f.personality) profile.personality = f.personality;
+    if (f.quote) profile.quote = f.quote;
+    if (f.habits) profile.habits = f.habits;
+    if (f.recentLife) profile.recentLife = f.recentLife;
     if (f.note) profile.note = f.note;
     if (socials.length) profile.socials = socials;
     if (tags.length) profile.tags = tags;
-    const empty = !socials.length && !tags.length && !Object.keys(profile).length;
+    if (interests.length) profile.interests = interests;
+    if (likes.length) profile.likes = likes;
+    if (dislikes.length) profile.dislikes = dislikes;
+    if (relationships.length) profile.relationships = relationships;
+    if (importantDates.length) profile.importantDates = importantDates;
+    const empty = !socials.length && !tags.length && !interests.length && !likes.length && !dislikes.length && !relationships.length && !importantDates.length && !Object.keys(profile).length;
     try {
       await store.updateProfile(detailId, empty ? void 0 : profile);
       profEditId = null;
       notice(empty ? "档案已清空" : "档案已保存", "success");
-      if (partial > 0) notice(`${partial} 行社交账号没填完整，已跳过`, "warning");
+      if (partial > 0) notice(`${partial} 行没填完整，已跳过`, "warning");
     } catch (e) {
       notifyActionError(e, "保存档案");
     }
