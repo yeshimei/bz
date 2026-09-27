@@ -40,6 +40,12 @@
       + 主仓构建部署（`pnpm run build`，同步 main.js）
 - [x] 顺带补齐：`package.json` 从来就没有 `manifest` 脚本（`skin-pack` / `catalog` / `changelog` 都有），
       而 ADR-0203 / 0204 / 0207 与 CONTEXT.md 一直写「跑 `pnpm manifest`」——补 `"manifest": "node scripts/build-manifest.mjs"`，让文档里的发布链真能跑
+- [x] 复检修正（用户反馈）：组级「全部更新」行按钮字面**恒为动作词**——全就绪时不再换成「已是最新」
+      （行名说动作、钮上却是状态词，读起来像状态提示而不是按钮；「没得做」改由禁用态表达，就绪事实由各行自述）。
+      同步 ADR-0207 §3 表、测试断言、「全部更新」行的 `allButton` 注释，5 个域原型产物重出
+      （`commit 30f93a9e` → 主仓部署 `936cca87`，同时刷新 changelog / manifest）
+- [x] 门禁（复检修正）：`tsc` 0 错 + 全量 **545 文件 / 8156 用例、8155 绿**——唯一一例
+      `tests/pomodoro/ui.test.ts`「第 4 个专注完成 → 长休开始声（392Hz）」仍是已知环境计时抖动（隔离复跑 6.2s 通过）
 
 
 ## Issue 325 — 自动关联迁入知识盒：三盒为界、三盒恒含索引（ADR-0141 / ADR-0142）
