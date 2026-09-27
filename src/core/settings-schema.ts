@@ -265,6 +265,8 @@ interface ButtonRow extends RowBase {
   buttonText: string;
   /** 强调色按钮（setCta） */
   cta?: boolean;
+  /** 禁用态（在线资源「已下载/状态未知」等：状态未到，动作不可点）；两渲染器同调 */
+  disabled?: boolean;
   onClick: (ctx: SettingsRowContext) => void;
 }
 
@@ -968,6 +970,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         const setting = newRowSetting(body, row);
         setting.addButton((b) => {
           if (row.cta) b.setCta();
+          b.setDisabled(row.disabled === true);
           b.setButtonText(row.buttonText).onClick(() => row.onClick(ctx));
         });
         setting.settingEl.classList.add('bz-setting-action-row'); // 豁免组徽标计数

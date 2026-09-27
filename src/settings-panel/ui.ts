@@ -82,10 +82,10 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
       desc: '各域数据文件的只读体检',
       onClick: () => void openDataCheckup(getApp()),
     });
-    // 「在线资源」组排最后（2026-09-27 用户拍板，ADR-0203）：更新日志/手册/皮肤
-    // 三项下载状态机；下载动作收口在这里与文档导航入口两处
+    // 「在线资源」组排最后（2026-09-27 用户拍板，ADR-0203；ADR-0205 回归通用声明行）：
+    // 更新日志/手册/主题/分类表四行下载状态机；下载动作收口在这里与文档导航入口两处
     const { onlineResourcesGroup } = await import('./online-resources');
-    schema.groups.push(onlineResourcesGroup());
+    schema.groups.push(await onlineResourcesGroup());
     return schema;
   },
   ai: async () => (await import('../core/settings-main-schema')).aiSettingsSchema(),

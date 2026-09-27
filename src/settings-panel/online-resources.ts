@@ -1,16 +1,23 @@
 /* ============================================================
- * bz · 设置面板「在线资源」组（settings-panel/online-resources.ts）——ADR-0203
+ * bz · 设置面板「在线资源」组（settings-panel/online-resources.ts）——ADR-0203 / ADR-0205
  *
- * 通用域最后一组：更新日志 / 使用手册 / 主题三行统一状态机
+ * 通用域最后一组：更新日志 / 使用手册 / 主题 / 归物分类表四行统一状态机
  * （未下载 → 下载 [N]；有更新 → 更新 N；已最新 → 已下载 禁用；动作中转圈禁用）。
+ * ADR-0205：整组为**通用声明行**（button 行 + visibleWhen 门控 + 行按钮三态助手），
+ * 自绘 bz-sp-res 骨架退役——行视觉与其余组零漂移。
  * 状态永远从**磁盘单源**现算（缓存清单 + 本地文件 sha256），组内不持久任何状态；
- * 打开时顺手后台核对一次清单（60s 节流），失败有缓存沿用缓存渲染 + 细字提示，
- * 无缓存三行禁用 + 失败横条 + 检查/重试按钮。**半自动铁则的 UI 面**：本组按钮
- * 与手册/日志导航入口是仅有的两个下载触发点。
+ * 构建期本地现算一次，打开面板顺手后台核对一次清单（60s 节流），
+ * 失败有缓存沿用缓存渲染 + 检查更新行留档；无缓存四行禁用 + 检查更新行置顶。
+ * **跨入口同步**：导航入口更新文档 / 分类表自动拉取落盘后，本组订阅下载事件把行态
+ * 同步成磁盘事实（issue 492 用户拍板：更新日志入口更新后组内按钮要翻「已下载」）。
+ * **半自动铁则的 UI 面**：本组按钮与手册/日志导航入口是仅有的两个下载触发点。
  * ============================================================ */
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
+import { onDomainEvent } from '../core/domain-bus';
+import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
 import type { GroupDecl, SettingsRow, SettingsRowContext } from '../core/settings-schema';
+import { setRowBtnState } from '../core/settings-btn-state';
 import {
   cachedManifest,
   docStatus,
@@ -31,19 +38,38 @@ const FALLBACK_ROWS: Array<{ id: string; name: string }> = [
   { id: 'belongings-categories', name: '归物分类表' },
 ];
 
-/** 打开组时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
+/** 打开面板时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
 const CHECK_THROTTLE_MS = 60_000;
 let lastCheckAt = 0;
-/** 本次会话最近一次核对是否失败（有缓存时以细字提示降级呈现） */
+/** 本次会话最近一次核对是否失败（检查更新行据此呈失败文案与「重试」） */
 let checkFailed = false;
+/** 组内行按钮（button 行窄档；行对象可变——syncGroupRows 就地改写，下次重渲即新值） */
+type BtnRow = Extract<SettingsRow, { type: 'button' }>;
 
-/** 重置节流与失败标记（测试用；生产进程内随会话存续无需重置） */
+/** 组行引用账（构建期建立；行对象是重渲真相源，已渲染 DOM 另走 patchRenderedGroup 补丁） */
+interface GroupMeta {
+  /** 与 group.rows 同引用（DOM 行序 = 此序，补丁按序对位） */
+  rows: SettingsRow[];
+  /** 检查更新行（恒在 rows[0]，visibleWhen 门控显隐；desc/buttonText 随核对结果就地翻转） */
+  retryRow: BtnRow;
+  /** 四资源行（id → 行对象） */
+  entries: Array<{ id: string; row: BtnRow }>;
+  /** 检查更新行显隐真相（visibleWhen 与本模块 DOM 补丁同读此位） */
+  retryVisible: boolean;
+}
+let currentGroup: GroupMeta | null = null;
+/** 同步序号（并发 sync 只认最后一次——下载事件 + 动作收尾可能叠发，防旧结果后到覆盖新态） */
+let syncSeq = 0;
+
+/** 重置会话状态（测试用；生产进程内随会话存续无需重置） */
 export function resetOnlineResourcesState(): void {
   lastCheckAt = 0;
   checkFailed = false;
+  currentGroup = null;
+  syncSeq = 0;
 }
 
-/** 行渲染所需的全部事实（一次算齐，渲染函数保持纯同步） */
+/** 行渲染所需的全部事实（一次算齐） */
 interface RowState {
   /** 清单条目 id（动作分发用） */
   id: string;
@@ -85,13 +111,13 @@ async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manif
   return { rows, manifest };
 }
 
-/** 行状态 → 描述文案（设置项文案规范：一句自然句，无符号花样） */
+/** 行状态 → 描述文案（设置项文案规范：一句自然句，无符号花样；皮肤行明示已下载套数） */
 function rowDesc(st: RowState): string {
   if (st.skin) {
     const { ready, missing, updated } = st.skin;
-    if (updated > 0) return missing > 0 ? `${updated} 套主题有更新，另有 ${missing} 套未下载` : `${updated} 套主题有更新`;
+    if (updated > 0) return missing > 0 ? `${updated} 套主题有更新，另有 ${missing} 套未下载` : `${updated} 套主题有更新，已就绪 ${ready} 套`;
     if (missing > 0) return `${missing} 套主题可下载，已就绪 ${ready} 套`;
-    return '全部主题已是最新';
+    return `全部主题已是最新（已下载 ${ready} 套）`;
   }
   if (st.doc === 'missing') return '尚未下载，下载后即可查看';
   if (st.doc === 'updated') return '有新版本，可更新到最新';
@@ -102,92 +128,78 @@ function rowDesc(st: RowState): string {
 }
 
 /** 行状态 → 按钮文案与禁用态（更新优先于下载；两者并存的差额在描述里说清） */
-function rowButton(st: RowState, hasManifest: boolean): { text: string; disabled: boolean; action: boolean } {
+function rowButton(st: RowState, hasManifest: boolean): { text: string; disabled: boolean } {
   if (st.skin) {
     const { missing, updated } = st.skin;
-    if (updated > 0) return { text: `更新 ${updated}`, disabled: false, action: true };
-    if (missing > 0) return { text: missing > 1 ? `下载 ${missing}` : '下载', disabled: false, action: true };
-    return { text: '已下载', disabled: true, action: false };
+    if (updated > 0) return { text: `更新 ${updated}`, disabled: false };
+    if (missing > 0) return { text: missing > 1 ? `下载 ${missing}` : '下载', disabled: false };
+    return { text: '已下载', disabled: true };
   }
-  if (st.doc === 'missing') return { text: '下载', disabled: false, action: true };
-  if (st.doc === 'updated') return { text: '更新', disabled: false, action: true };
-  if (st.doc === 'ready') return { text: '已下载', disabled: true, action: false };
+  if (st.doc === 'missing') return { text: '下载', disabled: false };
+  if (st.doc === 'updated') return { text: '更新', disabled: false };
+  if (st.doc === 'ready') return { text: '已下载', disabled: true };
   // 清单在但该 id 未登记（或无清单）= 状态未知：按钮禁用（等信息到位，不误导「已是最新」）
-  return { text: '下载', disabled: true, action: false };
+  return { text: '下载', disabled: true };
 }
 
 /**
- * 「在线资源」组（通用域 schema loader 尾部追加）。
- * 单 custom 行自绘整组内容：提示行（条件出现）+ 三行状态机。
+ * 「在线资源」组（通用域 schema loader 尾部追加；ADR-0205 起为 async——本地状态现算后建声明行）。
+ * 行序：检查更新（可视状态门控）+ 四资源行；全部 button 行，走两个渲染器的通用分支。
  */
-export function onlineResourcesGroup(): GroupDecl {
-  const row: SettingsRow = {
-    type: 'custom',
-    render: (body, ctx) => {
-      void renderGroupBody(body, ctx);
-    },
+export async function onlineResourcesGroup(): Promise<GroupDecl> {
+  const { rows: states, manifest } = await computeRowStates(getApp());
+  const hasManifest = !!manifest;
+
+  const meta: GroupMeta = {
+    rows: [],
+    retryRow: null as unknown as BtnRow,
+    entries: [],
+    retryVisible: !hasManifest || checkFailed,
   };
-  return { name: '在线资源', icon: 'cloud-download', rows: [row] };
+  const retryRow: BtnRow = {
+    type: 'button',
+    name: '检查更新',
+    desc: checkFailed ? '检查更新失败，可能是网络不可用' : '尚未检查更新',
+    buttonText: checkFailed ? '重试' : '检查更新',
+    visibleWhen: () => meta.retryVisible,
+    onClick: (ctx) => void retryCheck(ctx),
+  };
+  meta.retryRow = retryRow;
+  meta.rows.push(retryRow);
+
+  for (const st of states) {
+    const btn = rowButton(st, hasManifest);
+    const row: BtnRow = {
+      type: 'button',
+      name: st.name,
+      desc: rowDesc(st),
+      buttonText: btn.text,
+      disabled: btn.disabled,
+      onClick: (ctx) => void runAction(ctx, st.id),
+    };
+    meta.rows.push(row);
+    meta.entries.push({ id: st.id, row });
+  }
+  currentGroup = meta;
+  subscribeOnce();
+
+  // 打开面板顺手核对一次（60s 节流；无论成败都记窗——失败也补丁呈现，不记窗补丁链会雪球式重核）
+  if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) void checkInBackground();
+  return { name: '在线资源', icon: 'cloud-download', rows: meta.rows };
 }
 
-/** 渲染整组（每次全量重画——三行状态与提示行彼此联动，全量比局部 patch 简单可靠） */
-async function renderGroupBody(body: HTMLElement, ctx: SettingsRowContext): Promise<void> {
-  const app = getApp();
-  const { rows, manifest } = await computeRowStates(app);
-
-  body.empty();
-  body.className = 'bz-sp-res';
-
-  // 提示行：无缓存清单（从未成功拉到）→ 横条 + 检查/重试；有缓存但核对失败 → 细字提示 + 重试
-  if (!manifest || checkFailed) {
-    const fail = body.createDiv({ cls: manifest ? 'bz-sp-res-stale' : 'bz-sp-res-fail' });
-    fail.createSpan({
-      cls: 'bz-sp-res-fail-text',
-      text: checkFailed ? '检查更新失败，可能是网络不可用' : '尚未检查更新',
-    });
-    const retry = fail.createEl('button', {
-      cls: 'bz-btn bz-sp-res-fail-retry',
-      text: checkFailed ? '重试' : '检查更新',
-    });
-    retry.addEventListener('click', () => {
-      retry.disabled = true;
-      retry.textContent = '检查中';
-      void checkInBackground(body, ctx);
-    });
-  }
-
-  for (const st of rows) {
-    const line = body.createDiv({ cls: 'bz-sp-res-row' });
-    const info = line.createDiv({ cls: 'bz-sp-res-info' });
-    info.createDiv({ cls: 'bz-sp-res-name', text: st.name });
-    info.createDiv({ cls: 'bz-sp-res-desc', text: rowDesc(st) });
-
-    const btn = rowButton(st, !!manifest);
-    const el = line.createEl('button', { cls: 'bz-btn bz-sp-res-btn', text: btn.text });
-    el.disabled = btn.disabled;
-    const isReady = st.skin ? st.skin.missing === 0 && st.skin.updated === 0 : st.doc === 'ready';
-    if (isReady) el.classList.add('bz-sp-res-btn--done');
-    if (btn.action) {
-      el.addEventListener('click', () => {
-        el.disabled = true;
-        el.textContent = '下载中';
-        el.classList.add('is-loading');
-        void runAction(el, body, ctx, st, manifest!);
-      });
-    }
-  }
-
-  // 打开组顺手核对一次（60s 节流；节流窗在 checkInBackground 内**无论成败都记**，
-  // 失败重画不会滚雪球成无限核对）；只更新数据与重绘，不打扰用户
-  if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) {
-    void checkInBackground(body, ctx);
-  }
+/** 下载事件订阅（幂等单例）：任何下载资产落盘（导航入口更新文档、分类表自动拉取、皮肤注入）
+ *  都把已渲染行态同步成磁盘事实——派发方不感知本组存在（总线 fire-and-forget）。 */
+let subscribed = false;
+function subscribeOnce(): void {
+  if (subscribed) return;
+  subscribed = true;
+  onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncGroupRows());
 }
 
-/** 后台核对清单；成败都重画——失败态就在重画里呈现。
- *  节流窗**无论成败都记**：失败也重画，若不记窗，重画尾部会再次触发核对 → 无限循环；
+/** 后台核对清单；成败都 syncGroupRows——失败态就在补丁里呈现。
  *  「重试」按钮直调本函数（不经尾部节流判断），失败后立即可重试。 */
-async function checkInBackground(body: HTMLElement, ctx: SettingsRowContext): Promise<void> {
+async function checkInBackground(): Promise<void> {
   lastCheckAt = Date.now();
   try {
     await refreshManifest(getApp());
@@ -196,32 +208,87 @@ async function checkInBackground(body: HTMLElement, ctx: SettingsRowContext): Pr
     checkFailed = true;
     console.warn('[bz] 在线资源清单核对失败:', (e as Error)?.message || e);
   }
-  await renderGroupBody(body, ctx);
+  await syncGroupRows();
 }
 
-/** 行动作：doc → downloadAsset（覆盖写）；皮肤 → downloadSkinUpdates（拉全部非就绪） */
-async function runAction(
-  el: HTMLElement,
-  body: HTMLElement,
-  ctx: SettingsRowContext,
-  st: RowState,
-  manifest: DownloadManifest,
-): Promise<void> {
+/** 检查更新行动作：转圈 → 核对 → 门控重求值（行按需消失/留下 + 组徽标重算） */
+async function retryCheck(ctx: SettingsRowContext): Promise<void> {
+  setRowBtnState(ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined, 'busy', '检查更新');
+  await checkInBackground();
+  ctx.refreshVisibility();
+}
+
+/** 重算四行状态 → 就地改写行对象（下次重渲即新值）+ 已渲染组卡 DOM 补丁（打开中即所见即所得）。
+ *  后台核对落地、下载动作完成、下载事件三处共用此出口（磁盘事实变了，唯一刷新通道）。 */
+async function syncGroupRows(): Promise<void> {
+  const meta = currentGroup;
+  if (!meta) return;
+  const seq = ++syncSeq;
+  const { rows: states, manifest } = await computeRowStates(getApp());
+  if (seq !== syncSeq) return; // 有更新的同步在跑，本次结果作废（防旧态后到覆盖新态）
+
+  const hasManifest = !!manifest;
+  meta.retryVisible = !hasManifest || checkFailed;
+  meta.retryRow.desc = checkFailed ? '检查更新失败，可能是网络不可用' : '尚未检查更新';
+  meta.retryRow.buttonText = checkFailed ? '重试' : '检查更新';
+
+  for (const { id, row } of meta.entries) {
+    const st = states.find((s) => s.id === id);
+    if (!st) continue;
+    const btn = rowButton(st, hasManifest);
+    row.name = st.name;
+    row.desc = rowDesc(st);
+    row.buttonText = btn.text;
+    row.disabled = btn.disabled;
+  }
+  patchRenderedGroup();
+}
+
+/** 已渲染组卡的 DOM 补丁（行序 = meta.rows 序，检查更新行恒在首位）。
+ *  检查更新行显隐在此直接落地：后台核对落地路径没有 ctx.refreshVisibility 可借；
+ *  visibleWhen 已覆盖渲染/refresh 两条通用路径，这里同读 meta.retryVisible 不冲突。 */
+function patchRenderedGroup(): void {
+  const meta = currentGroup;
+  if (!meta) return;
+  document.querySelectorAll<HTMLElement>('[data-sp-group="在线资源"]').forEach((card) => {
+    const domRows = card.querySelectorAll<HTMLElement>('.bz-sp-group-body > .bz-sp-set-row');
+    meta.rows.forEach((row, i) => {
+      const el = domRows[i];
+      if (!el) return;
+      const btnRow = row as BtnRow;
+      if (row === meta.retryRow) el.style.display = meta.retryVisible ? '' : 'none';
+      const desc = el.querySelector<HTMLElement>('.bz-sp-set-desc');
+      if (desc) desc.textContent = btnRow.desc ?? '';
+      const btn = el.querySelector<HTMLButtonElement>('.bz-sp-btn');
+      if (btn) {
+        setRowBtnState(btn, 'idle', btnRow.buttonText); // 清 busy/ok/fail 残留 + 恢复文案
+        btn.disabled = btnRow.disabled === true;
+      }
+    });
+  });
+}
+
+/** 行动作：doc → ensureAssetWithHash（覆盖写）；皮肤 → downloadSkinUpdates（拉全部非就绪） */
+async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   const app = getApp();
+  const manifest = await cachedManifest(app);
+  if (!manifest) {
+    await syncGroupRows(); // 清单已不可用（禁用态理论不可达）→ 就地校正
+    return;
+  }
+  const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
+  setRowBtnState(btn, 'busy', btn?.textContent ?? '下载');
   try {
-    if (st.skin) {
+    if (id === 'skins') {
       const r = await downloadSkinUpdates(app, manifest);
       if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, 'error');
     } else {
-      const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === st.id);
+      const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === id);
       // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
       if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
     }
   } catch (e) {
     notice(e instanceof Error ? e.message : String(e), 'error');
-  } finally {
-    // 动作完成（成败皆然）→ 磁盘事实已变，全量重算重绘（按钮翻转成「已下载 / 更新 N」）
-    await renderGroupBody(body, ctx);
   }
+  await syncGroupRows(); // 动作完成（成败皆然）→ 磁盘事实已变，行对象与 DOM 一并翻转
 }
-

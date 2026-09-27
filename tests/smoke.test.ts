@@ -548,9 +548,10 @@ describe('复习拟合全参放开（issue 361 冒烟）', () => {
   });
 });
 
-describe('在线资源组（issue 480 / ADR-0203 冒烟）', () => {
-  it('组渲染四行状态机；清单缺席时四行禁用（行名：主题） + 失败横条（隐式核对失败不炸渲染）', async () => {
+describe('在线资源组（issue 480 / ADR-0203 / ADR-0205 冒烟）', () => {
+  it('组渲染为通用 button 声明行；清单缺席时四行禁用 + 检查更新行（隐式核对失败不炸渲染）', async () => {
     const { onlineResourcesGroup, resetOnlineResourcesState } = await import('../src/settings-panel/online-resources');
+    const { renderPanelSchema } = await import('../src/settings-panel/renderer');
     const { setApp } = await import('../src/core/app');
     const { requestUrl } = await import('obsidian');
     resetOnlineResourcesState();
@@ -561,22 +562,23 @@ describe('在线资源组（issue 480 / ADR-0203 冒烟）', () => {
     vi.mocked(requestUrl).mockRejectedValue(new Error('ENOTFOUND'));
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const group = onlineResourcesGroup();
+    const group = await onlineResourcesGroup();
     expect(group.name).toBe('在线资源');
-    expect(group.rows).toHaveLength(1);
-    expect(group.rows[0].type).toBe('custom');
+    // 检查更新 + 四资源行，全部通用声明行（ADR-0205：自绘退役）
+    expect(group.rows).toHaveLength(5);
+    expect(group.rows.every((r) => r.type === 'button')).toBe(true);
 
     const body = document.createElement('div');
     document.body.appendChild(body);
-    (group.rows[0] as any).render(body, { rowEl: body, refreshVisibility: () => {} });
+    renderPanelSchema(body, { groups: [group] });
     await vi.waitFor(() => {
-      expect(body.querySelectorAll('.bz-sp-res-row')).toHaveLength(4);
-      const btns = [...body.querySelectorAll('.bz-sp-res-row .bz-sp-res-btn')] as HTMLButtonElement[];
-      expect(btns.length).toBe(4);
-      // 清单缺席（拉取失败）→ 状态未知，四行全禁用（半自动铁则：不能在无清单时误导下载）
-      expect(btns.every((b) => b.disabled)).toBe(true);
+      const btns = [...body.querySelectorAll('.bz-sp-group-body > .bz-sp-set-row .bz-sp-btn')] as HTMLButtonElement[];
+      expect(btns.length).toBe(5);
+      // 清单缺席（拉取失败）→ 状态未知，四资源行全禁用（半自动铁则：不能在无清单时误导下载）
+      expect(btns.slice(1).every((b) => b.disabled)).toBe(true);
+      // 隐式核对失败落地后检查更新行翻失败文案（异步补丁，等它到位）
+      expect(body.querySelector('.bz-sp-set-desc')?.textContent).toContain('检查更新失败');
     });
-    expect(body.querySelector('.bz-sp-res-fail-text')?.textContent).toContain('检查更新失败');
     warnSpy.mockRestore();
   });
 

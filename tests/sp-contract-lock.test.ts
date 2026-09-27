@@ -20,7 +20,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 /** 每域可见设置项数基准（visibleItemCount 口径：visibleWhen/isChild 门控隐藏与 button 行不计）。
  *  变更属有意时同步更新本表——一处维护、失败报具体域（ARCH-5 定稿形态）。 */
 const COUNT_BASELINE: Record<string, number> = {
-  global: 8, // 2026-09-27 issue 479：通知组并回通用 = 7；issue 480：「在线资源」组 1 个 custom 行（+1）
+  global: 7, // 2026-09-27 issue 492：在线资源组回归通用声明行（button 行不计，-1；issue 480 自绘 custom 行曾 +1）
   ai: 15, // 2026-09-25 issue 444：「转写引擎」下拉（+1）；「Whisper 档位」visibleWhen 门控不计；issue 431 基线 14
   diary: 5,
   memo: 11,

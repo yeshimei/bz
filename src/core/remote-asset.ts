@@ -27,6 +27,11 @@
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
+import { emitDomainEvent } from './domain-bus';
+
+/** 下载资源落盘事件（issue 492）：派发收口在 writeAssetText（所有下载资产唯一落盘口），
+ *  消费 = 设置面板在线资源组把已渲染行态同步成磁盘事实（导航入口更新文档后组内按钮翻「已下载」）。 */
+export const DOWNLOADS_CHANGED_EVENT = 'downloads:asset-changed';
 
 /** 远端 URL：主 GitHub raw → 备 jsDelivr（同仓库同路径，域名不同） */
 export function remotesFor(fileName: string): string[] {
@@ -98,11 +103,12 @@ export async function fetchAssetText(
   throw new Error(`${label}下载失败：${lastErr}`);
 }
 
-/** 写资产文本（自动建目录；覆盖旧版） */
+/** 写资产文本（自动建目录；覆盖旧版）；成功落盘后广播事件（消费方自行兜底，fire-and-forget） */
 export async function writeAssetText(app: unknown, fileName: string, text: string): Promise<void> {
   await ensureDir(app, fileName);
   await (app as { vault?: { adapter?: { write?: (p: string, data: string) => Promise<void> } } })
     .vault!.adapter!.write!(downloadsVaultPath(app, fileName), text);
+  emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
 }
 
 /**

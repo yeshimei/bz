@@ -791,6 +791,7 @@ function renderRow(
       // 按钮结构单源（R.rowBtnHtml：bz-sp-btn；cta → accent 实底）
       ctrlEl.innerHTML = R.rowBtnHtml(row.buttonText, row.cta);
       const b2 = ctrlEl.querySelector('.bz-sp-btn')!;
+      if (row.disabled) (b2 as HTMLButtonElement).disabled = true;
       b2.addEventListener('click', () => row.onClick(ctx));
       break;
     }
