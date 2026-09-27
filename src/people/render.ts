@@ -1332,11 +1332,13 @@ export interface DsModalState {
 /** 同步进度行（ui 层从 sync.ts 状态映射而来；render 只管形状） */
 export interface DsSyncLine {
   status: 'running' | 'ok' | 'stopped' | 'error';
-  /** 主文案（阶段标签 / 终态词；百分比由渲染层追加） */
+  /** 主文案（阶段标签 / 终态词；段内位置与已耗时由 ui 层拼好，百分比由渲染层追加） */
   text: string;
   /** 副文案（[bz-step] 步骤行 / 完成摘要 / 错误原因） */
   sub: string;
-  /** 百分比（null = 该阶段不可估，绝不假报） */
+  /** 当前联系人副行（「大琳 · 20,773 条」；空 = 不显示。484：逐人事件滚动显示最近一位） */
+  contact: string;
+  /** 百分比（null = 该阶段不可估，绝不假报——进度条走不定态样式） */
   pct: number | null;
   /** 错误 / 停止面的下一步动作（空 = 工具文案已含） */
   hint: string;
@@ -1464,15 +1466,22 @@ export function dsSyncLineNode(line: DsSyncLine): HTMLElement {
   row.appendChild(el('div', 'bz-people-ds-sync-head', [
     el('span', 'bz-people-ds-sync-text', { 'data-people-ds-sync-text': '' }, text(line.text + (line.pct != null ? ` ${line.pct}%` : ''))),
   ]));
-  if (line.status === 'running' && line.pct != null) {
+  // 进度条（484）：确定态画宽度条；不可估阶段（pct=null）画不定态脉冲条——「在走」和「走到哪」分开表达
+  if (line.status === 'running') {
     row.appendChild(el('div', 'bz-people-ds-sync-track', [
-      el('div', 'bz-people-ds-sync-bar', { 'data-people-ds-sync-bar': '', style: `width:${Math.max(0, Math.min(100, line.pct))}%` }),
+      line.pct != null
+        ? el('div', 'bz-people-ds-sync-bar', { 'data-people-ds-sync-bar': '', style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
+        : el('div', 'bz-people-ds-sync-indet', {}),
     ]));
   }
   // 副文案节点恒渲染（空时 hidden）：运行中原位更新要能找到它——首帧 sub 为空也会来帧
   const subNode = el('div', 'bz-people-ds-sync-sub', { 'data-people-ds-sync-sub': '' }, text(line.sub));
   if (!line.sub) subNode.hidden = true;
   row.appendChild(subNode);
+  // 当前联系人副行（484）：逐人事件滚动显示最近一位（原位更新同款恒渲染 + hidden）
+  const contactNode = el('div', 'bz-people-ds-sync-contact', { 'data-people-ds-sync-contact': '' }, text(line.contact));
+  if (!line.contact) contactNode.hidden = true;
+  if (line.status === 'running') row.appendChild(contactNode);
   const shown = line.failures.slice(0, 3);
   for (const f of shown) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(f)));
   if (line.failures.length > 3) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));

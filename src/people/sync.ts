@@ -64,6 +64,14 @@ export interface PeopleSyncState {
   hint: string;
   /** 成果统计（running 期间为逐人事件实时累计；终态以 [bz-result] 为权威） */
   stats: SyncStats;
+  /** 本轮开跑时刻（Date.now()；null = 不在 running——484 已耗时的计时源） */
+  startedAt: number | null;
+  /** contacts 段总人数（[bz-info]{phase:"contacts",total} 上报；null = 工具未报） */
+  contactsTotal: number | null;
+  /** contacts 段已处理人数（ok + skipped + failed 逐人事件实时累计） */
+  contactsDone: number;
+  /** 最近一位联系人的副文案（「大琳 · 20,773 条」/「大琳 · 失败」；跳过者不上屏） */
+  lastContact: string;
 }
 
 /** 工具未装时的安装指引（ADR-0195 口径：不发公开 registry，本机 link / 全局装） */
@@ -76,7 +84,7 @@ const DOCTOR_HINT = '到终端运行 bz-face doctor 可自检环境';
 const PHASE_LABELS: Record<string, string> = {
   key: '取密钥',
   decrypt: '解密数据库',
-  contacts: '导出聊天',
+  contacts: '统计联系人',
   avatar: '头像源',
 };
 
@@ -87,6 +95,46 @@ export function syncPhaseLabel(phase: string | null): string {
 
 export function emptySyncStats(): SyncStats {
   return { contacts: 0, written: 0, unchanged: 0, skipped: 0, failed: 0, msgTotal: 0, named: 0, failures: [] };
+}
+
+/** 状态机干净起点（startSync / 测试注入缝共用；484 补新字段） */
+function freshState(): PeopleSyncState {
+  return {
+    outcome: 'idle',
+    phase: null,
+    pct: null,
+    step: '',
+    message: '',
+    hint: '',
+    stats: emptySyncStats(),
+    startedAt: null,
+    contactsTotal: null,
+    contactsDone: 0,
+    lastContact: '',
+  };
+}
+
+/**
+ * 已耗时格式（484 心跳）：≥1 时 `X 分 Y 秒`，不足 1 分 `Y 秒`——任何阶段都显示，慢不再像死。
+ */
+export function formatSyncElapsed(ms: number): string {
+  const sec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return m > 0 ? `${m} 分 ${s} 秒` : `${s} 秒`;
+}
+
+/**
+ * [bz-info]{phase:"contact"} → 当前联系人副文案（484）。ok 出「名 · N 条」（千分位），
+ * failed 出「名 · 失败」，**skipped 返回 ''**（跳过的空联系人不上屏，不顶掉上一位）。
+ */
+export function contactLineOf(data: Record<string, unknown>): string {
+  if (data.phase !== 'contact' || typeof data.name !== 'string' || !data.name) return '';
+  if (data.status === 'ok') {
+    return Number.isFinite(data.msgs) ? `${data.name} · ${Number(data.msgs).toLocaleString('en-US')} 条` : data.name;
+  }
+  if (data.status === 'failed') return `${data.name} · 失败`;
+  return '';
 }
 
 /** ---------- 纯函数（组装 / 归类 / 摘要，独立可测） ---------- */
@@ -208,15 +256,7 @@ export function classifySyncFailure(outcome: ExternalToolOutcome): { message: st
 
 /** ---------- 模块级状态机（单例，独立于面板生命周期） ---------- */
 
-let state: PeopleSyncState = {
-  outcome: 'idle',
-  phase: null,
-  pct: null,
-  step: '',
-  message: '',
-  hint: '',
-  stats: emptySyncStats(),
-};
+let state: PeopleSyncState = freshState();
 
 let handle: ExternalToolHandle | null = null;
 const listeners = new Set<(s: PeopleSyncState) => void>();
@@ -252,15 +292,7 @@ let runner: SyncRunner = runExternalTool;
 export function setSyncRunnerForTests(fn: SyncRunner | null): void {
   runner = fn ?? runExternalTool;
   handle = null;
-  state = {
-    outcome: 'idle',
-    phase: null,
-    pct: null,
-    step: '',
-    message: '',
-    hint: '',
-    stats: emptySyncStats(),
-  };
+  state = freshState();
 }
 
 function nonEmpty(v: unknown): string | undefined {
@@ -293,13 +325,10 @@ export function startSync(): void {
   const dataRoot = String(s?.peopleDataDir ?? '').trim();
   if (!dataRoot) {
     setState({
+      ...freshState(),
       outcome: 'error',
-      phase: null,
-      pct: null,
-      step: '',
       message: '先在下方配置数据根目录——同步会把微信数据解密导出到那里',
       hint: '到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点同步',
-      stats: emptySyncStats(),
     });
     return;
   }
@@ -314,14 +343,30 @@ export function startSync(): void {
     onStep: (text) => setState({ step: text }),
     onProgress: (phase, pct) => setState({ phase, pct }),
     onInfo: (data) => {
-      if (collectContactInfo(live, data)) setState({});
+      // 484：contacts 段总人数（工具上报）→ 主文案「统计 N/M」；逐人事件进当前联系人副文案
+      if (data.phase === 'contacts' && Number.isFinite(data.total)) {
+        setState({ contactsTotal: Math.max(1, Number(data.total)) });
+        return;
+      }
+      if (collectContactInfo(live, data)) {
+        const line = contactLineOf(data); // skipped 为空串不上屏（不顶掉上一位）
+        setState({
+          contactsDone: live.contacts + live.skipped + live.failed,
+          ...(line ? { lastContact: line } : {}),
+        });
+      }
     },
     onResult: (data) => {
       result = data;
     },
   };
   handle = runner(spec, cbs);
-  setState({ outcome: 'running', phase: null, pct: null, step: '', message: '', hint: '', stats: live });
+  setState({
+    ...freshState(),
+    outcome: 'running',
+    stats: live,
+    startedAt: Date.now(), // 484：已耗时心跳的计时源
+  });
   void handle.done.then((outcome) => {
     handle = null;
     finishSync(outcome, result);
@@ -334,6 +379,7 @@ function finishSync(outcome: ExternalToolOutcome, result: Record<string, unknown
     setState({
       outcome: 'stopped',
       pct: null,
+      step: '',
       message: '已停止',
       hint: '点「同步」重跑续传——已导出的部分不会重复搬',
     });
@@ -344,7 +390,7 @@ function finishSync(outcome: ExternalToolOutcome, result: Record<string, unknown
     const msg = typeof (result as Record<string, unknown>).error === 'string' && String((result as Record<string, unknown>).error).trim()
       ? String((result as Record<string, unknown>).error).trim()
       : '同步失败：工具报错，没有给出原因';
-    setState({ outcome: 'error', phase: null, pct: null, message: firstLine(msg), hint: /微信|数据根/.test(msg) ? '' : DOCTOR_HINT });
+    setState({ outcome: 'error', phase: null, pct: null, step: '', message: firstLine(msg), hint: /微信|数据根/.test(msg) ? '' : DOCTOR_HINT });
     emitNotice(state);
     return;
   }
@@ -355,7 +401,7 @@ function finishSync(outcome: ExternalToolOutcome, result: Record<string, unknown
     return;
   }
   const classified = classifySyncFailure(outcome);
-  setState({ outcome: 'error', phase: null, pct: null, message: classified.message, hint: classified.hint });
+  setState({ outcome: 'error', phase: null, pct: null, step: '', message: classified.message, hint: classified.hint });
   emitNotice(state);
 }
 

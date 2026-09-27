@@ -65,7 +65,7 @@ import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from 
 import { migrateLegacyPeopleData } from './migrate';
 import { describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
-import { describeSyncStats, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
+import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   describeConfirmModal,
   portraitConfirmModal,
@@ -488,22 +488,36 @@ function dsModalState() {
 
 // ---------------- 同步（issue 465：bz-face sync 驱动，弹窗内一条进度行） ----------------
 
+/** 已耗时心跳定时器（484：running 期间每秒原位刷主行；终态 / 面板无关自清） */
+let syncTickTimer: ReturnType<typeof setInterval> | null = null;
+
+function stopSyncTick(): void {
+  if (syncTickTimer) {
+    clearInterval(syncTickTimer);
+    syncTickTimer = null;
+  }
+}
+
 /**
  * 同步状态 → 弹窗进度行（DsSyncLine）。idle 不出（null）；运行中主行 = 阶段标签 +
- * 百分比（不可估不给）、副行 = [bz-step] 文案；终态各自有文案与下一步动作。
+ * 段内位置（统计 N/M，484）+ 已耗时（每秒心跳，慢不再像死）、副行 = [bz-step] 文案、
+ * 联系人行 = 最近一位处理完的联系人（484）；终态各自有文案与下一步动作。
  */
 function dsSyncLine(): DsSyncLine | null {
   const s = syncState();
   if (s.outcome === 'idle') return null;
   if (s.outcome === 'running') {
-    const phase = syncPhaseLabel(s.phase) || '正在同步';
-    return { status: 'running', text: phase, sub: s.step, pct: s.pct, hint: '', failures: [] };
+    const label = syncPhaseLabel(s.phase) || '正在同步';
+    const pos = s.phase === 'contacts' && s.contactsTotal ? ` ${s.contactsDone}/${s.contactsTotal}` : '';
+    const elapsed = s.startedAt != null ? ` · 已 ${formatSyncElapsed(Date.now() - s.startedAt)}` : '';
+    return { status: 'running', text: label + pos + elapsed, sub: s.step, contact: s.lastContact, pct: s.pct, hint: '', failures: [] };
   }
   if (s.outcome === 'ok') {
     return {
       status: 'ok',
       text: s.stats.failed > 0 ? `同步完成（${s.stats.failed} 位失败）` : '同步完成',
       sub: s.message || describeSyncStats(s.stats),
+      contact: '',
       pct: 100,
       hint: '',
       failures: s.stats.failures.map((f) => `${f.name}：${f.error}`),
@@ -514,18 +528,30 @@ function dsSyncLine(): DsSyncLine | null {
       status: 'stopped',
       text: '已停止',
       sub: `已导出的部分保留——本次已更新 ${s.stats.written} 位，重跑可续传`,
+      contact: '',
       pct: null,
       hint: s.hint,
       failures: [],
     };
   }
-  return { status: 'error', text: '同步失败', sub: s.message, pct: null, hint: s.hint, failures: [] };
+  return { status: 'error', text: '同步失败', sub: s.message, contact: '', pct: null, hint: s.hint, failures: [] };
 }
 
-/** 同步状态跟帧：运行中优先原位推进进度行（不重建弹窗），首帧 / 终态走整渲染 */
+/** 同步状态跟帧：运行中优先原位推进进度行（不重建弹窗）+ 心跳起表；首帧 / 终态走整渲染 */
 function onSyncState(s: PeopleSyncState): void {
+  if (s.outcome !== 'running') stopSyncTick(); // 终态（含面板关着收到终态）必须停表
   if (!overlay) return;
   if (s.outcome === 'running') {
+    if (!syncTickTimer) {
+      syncTickTimer = setInterval(() => {
+        // 面板关着时终态通知收不到（订阅随面板退订）——心跳自检收表，不空转
+        if (syncState().outcome !== 'running') {
+          stopSyncTick();
+          return;
+        }
+        updateSyncLine();
+      }, 1000);
+    }
     if (!updateSyncLine()) void renderBody(); // 进度行还没渲染出来（开跑首帧）→ 整渲染出停止钮与进度行
     return;
   }
@@ -536,7 +562,7 @@ function onSyncState(s: PeopleSyncState): void {
   void renderBody(); // stopped / error：进度行落终态文案，右上角恢复「同步」
 }
 
-/** 进度行原位更新（data-people-ds-sync-line 钩子；弹窗没渲染返回 false） */
+/** 进度行原位更新（data-people-ds-sync-line 钩子；弹窗没渲染返回 false；结构过期也返回 false 走整渲染） */
 function updateSyncLine(): boolean {
   const line = overlay?.querySelector<HTMLElement>('[data-people-ds-sync-line]');
   if (!line) return false;
@@ -544,12 +570,21 @@ function updateSyncLine(): boolean {
   if (!view) return false;
   const main = line.querySelector<HTMLElement>('[data-people-ds-sync-text]');
   const sub = line.querySelector<HTMLElement>('[data-people-ds-sync-sub]');
+  const contact = line.querySelector<HTMLElement>('[data-people-ds-sync-contact]');
   const bar = line.querySelector<HTMLElement>('[data-people-ds-sync-bar]');
   if (main) main.textContent = view.text + (view.pct != null ? ` ${view.pct}%` : '');
   if (sub) {
     sub.textContent = view.sub;
     sub.hidden = !view.sub;
   }
+  if (contact) {
+    contact.textContent = view.contact;
+    contact.hidden = !view.contact;
+  }
+  // 进度条结构跟 pct 对齐：不定态（null → 脉冲条）与确定态（有值 → 宽度条）互切时
+  // 原位换不了节点，返回 false 让 onSyncState 走整渲染重建（484）
+  const indet = line.querySelector<HTMLElement>('.bz-people-ds-sync-indet');
+  if ((view.pct != null) !== Boolean(bar) || (view.pct == null) !== Boolean(indet)) return false;
   if (bar && view.pct != null) bar.style.width = `${Math.max(0, Math.min(100, view.pct))}%`;
   return true;
 }

@@ -192,18 +192,23 @@ describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）
     await bootWithDsOpen();
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
-    const line = document.querySelector('[data-people-ds-sync-line]')!;
     tool.step('正在解密数据库');
     tool.progress('decrypt', 40);
     await tick();
-    expect(document.querySelector('[data-people-ds-sync-line]')!.isSameNode(line)).toBe(true); // 原位推进
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('解密数据库');
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('40%');
     expect(document.querySelector('[data-people-ds-sync-sub]')!.textContent).toBe('正在解密数据库');
-    // 不可估阶段不假报百分比
+    // 确定态间原位推进（484：不定态 → 确定态要重建进度条结构，是特例；此后不再重建）
+    const line = document.querySelector('[data-people-ds-sync-line]')!;
+    tool.progress('decrypt', 45);
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-line]')!.isSameNode(line)).toBe(true); // 原位推进
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('45%');
+    // 不可估阶段不假报百分比（不定态脉冲条替代）
     tool.progress('key', null);
     await tick();
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).not.toContain('%');
+    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeTruthy();
   });
 
   it('点停止：真的停下（handle.stop）、进度行给「已停止，可重跑续传」、动作全部恢复', async () => {
@@ -345,6 +350,56 @@ describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => 
     const targets = engineStarted[0][1];
     expect(targets[0]?.talker).toBe('陈默');
     expect(targets[0]?.msgs.length).toBeGreaterThan(0); // 492 前：此处读到导入前空仓，引擎空手而归
+  });
+});
+
+describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当前联系人副行', () => {
+  it('主文案跟阶段切换、contacts 段带 N/M、已耗时上屏；联系人副行滚动显示最近一位（跳过不上屏）', async () => {
+    await bootWithDsOpen();
+    click('[data-people-ds-sync]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
+    // 取密钥（pct=null）：主行给阶段词 + 已耗时，不定态条出 pulse 轨
+    tool.step('取密钥：从微信进程内存提取');
+    tool.progress('key', null);
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('取密钥');
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('已 ');
+    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeTruthy();
+    expect(document.querySelector('[data-people-ds-sync-bar]')).toBeNull();
+    // 解密 → contacts：阶段词切换 + N/M 位置；联系人事件滚动上屏，跳过的不顶掉
+    tool.progress('decrypt', null);
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('解密数据库');
+    tool.progress('contacts', 0);
+    tool.info({ phase: 'contacts', total: 57 });
+    tool.info({ phase: 'contact', name: '大琳', status: 'skipped', reason: '没有消息记录' });
+    await tick();
+    // skipped 也算处理过一位（工具逐人事件语义），主行位置计数 1/57
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('统计联系人 1/57');
+    expect((document.querySelector('[data-people-ds-sync-contact]') as HTMLElement).hidden).toBe(true);
+    tool.info({ phase: 'contact', name: '大琳', status: 'ok', msgs: 20773, chat: 'new', imgs: 3 });
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-contact]')!.textContent).toBe('大琳 · 20,773 条');
+    tool.info({ phase: 'contact', name: '阿坏', status: 'failed', error: '写盘失败' });
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-contact]')!.textContent).toBe('阿坏 · 失败');
+    // pct 来了 → 不定态让位确定态条（结构重建，走整渲染）
+    tool.progress('contacts', 5);
+    await tick();
+    expect(document.querySelector('[data-people-ds-sync-bar]')).toBeTruthy();
+    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeNull();
+    stopSync();
+    await tool.settle({ ok: false, stopped: true, code: null });
+  });
+
+  it('终态停表：进度行不再带「已」耗时，联系人副行收起', async () => {
+    await bootWithDsOpen();
+    click('[data-people-ds-sync]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
+    await tool.runHappy({ contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 2, named: 0, failures: [] });
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('同步完成'));
+    expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).not.toContain('已 ');
+    expect(document.querySelector('[data-people-ds-sync-contact]')).toBeNull(); // 终态不渲染联系人行
   });
 });
 

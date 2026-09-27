@@ -18,6 +18,8 @@ import {
   buildSyncSpec,
   classifySyncFailure,
   collectContactInfo,
+  contactLineOf,
+  formatSyncElapsed,
   describeSyncStats,
   emptySyncStats,
   isSyncing,
@@ -114,13 +116,29 @@ describe('纯函数：参数组装与协议映射', () => {
     ]);
   });
 
-  it('syncPhaseLabel：phase 词 → 中文阶段（与工具 SYNC_PHASES 同词汇）；未知 / null 给空', () => {
+  it('syncPhaseLabel：phase 词 → 中文阶段（与工具 SYNC_PHASES 同词汇；485 起 contacts 为统计联系人）；未知 / null 给空', () => {
     expect(syncPhaseLabel('key')).toBe('取密钥');
     expect(syncPhaseLabel('decrypt')).toBe('解密数据库');
-    expect(syncPhaseLabel('contacts')).toBe('导出聊天');
+    expect(syncPhaseLabel('contacts')).toBe('统计联系人');
     expect(syncPhaseLabel('avatar')).toBe('头像源');
     expect(syncPhaseLabel('wat')).toBe('');
     expect(syncPhaseLabel(null)).toBe('');
+  });
+
+  it('contactLineOf（issue 484）：ok 出「名 · N 条」千分位、failed 出「名 · 失败」、skipped 空串不上屏', () => {
+    expect(contactLineOf({ phase: 'contact', name: '大琳', status: 'ok', msgs: 20773 })).toBe('大琳 · 20,773 条');
+    expect(contactLineOf({ phase: 'contact', name: '陈默', status: 'ok' })).toBe('陈默');
+    expect(contactLineOf({ phase: 'contact', name: '阿坏', status: 'failed', error: '写盘失败' })).toBe('阿坏 · 失败');
+    expect(contactLineOf({ phase: 'contact', name: '群甲', status: 'skipped', reason: '没有消息记录' })).toBe('');
+    expect(contactLineOf({ phase: 'key', wxid: 'x' })).toBe('');
+    expect(contactLineOf({})).toBe('');
+  });
+
+  it('formatSyncElapsed（issue 484）：不足 1 分只报秒，超过进位「X 分 Y 秒」', () => {
+    expect(formatSyncElapsed(0)).toBe('0 秒');
+    expect(formatSyncElapsed(42_000)).toBe('42 秒');
+    expect(formatSyncElapsed(60_000)).toBe('1 分 0 秒');
+    expect(formatSyncElapsed(261_000)).toBe('4 分 21 秒');
   });
 
   it('collectContactInfo：逐人事件实时累计（ok→written/unchanged、skipped、failed 入名单）', () => {
@@ -205,7 +223,16 @@ describe('状态机：startSync / stopSync 终态分流', () => {
     expect(syncState().step).toBe('正在解密数据库');
     expect(syncState().pct).toBe(40);
     expect(syncState().phase).toBe('decrypt');
+    // issue 484：开跑即记 startedAt（已耗时心跳源）；工具报 contacts 总人数；逐人事件进当前联系人副文案
+    expect(syncState().startedAt).not.toBeNull();
+    tool.info({ phase: 'contacts', total: 57 });
+    expect(syncState().contactsTotal).toBe(57);
+    tool.info({ phase: 'contact', name: '大琳', status: 'skipped', reason: '没有消息记录' });
+    expect(syncState().lastContact).toBe(''); // 跳过的空联系人不上屏
+    expect(syncState().contactsDone).toBe(1);
     tool.info({ phase: 'contact', name: '陈默', status: 'ok', chat: 'unchanged', msgs: 9, named: 0 });
+    expect(syncState().lastContact).toBe('陈默 · 9 条');
+    expect(syncState().contactsDone).toBe(2);
     tool.result({ ok: true, contacts: 1, written: 0, unchanged: 1, failed: 0, skipped: 0, msgTotal: 9, named: 0, failures: [] });
     await tool.settle({ ok: true, code: 0 });
     const s = syncState();

@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   dsModal,
   dsRow,
+  dsSyncLineNode,
   el,
   foldBook,
   foldBondBody,
@@ -34,6 +35,7 @@ import {
   statsText,
   vtName,
   type DsRowState,
+  type DsSyncLine,
   type FoldCardJob,
   type JobsBlockState,
 } from '../../src/people/render';
@@ -361,6 +363,58 @@ describe('数据源弹窗（dsModal 四态）', () => {
     expect(dsModal(state({ rows: [], hiddenGroups: 2 })).textContent).toContain('2 个群聊未纳入');
     const noFresh = dsModal(state({ rows: [{ ...dsRowBase, newCount: 0 }] }));
     expect(noFresh.querySelector('[data-people-ds-pickfresh]')).toBeNull();
+  });
+
+  it('水位行（485）：stats 哨兵显示「有新消息」不带条数；页脚按位计「N 位有新消息」', () => {
+    const approx = dsRow({ ...dsRowBase, newCount: 1, newApprox: true }, false);
+    expect(approx.querySelector('.bz-people-ds-new')!.textContent).toBe('有新消息');
+    const precise = dsRow({ ...dsRowBase, newCount: 1, newApprox: false }, false);
+    expect(precise.querySelector('.bz-people-ds-new')!.textContent).toBe('新 1 条');
+    const m = dsModal(state({
+      rows: [dsRowBase],
+      selectedCount: 2,
+      freshCount: 3,
+      freshApprox: 2,
+    }));
+    expect(m.querySelector('[data-people-ds-count]')!.textContent).toBe('已选 2 位 · 新素材 3 条 · 2 位有新消息');
+  });
+});
+
+// ---------------- 同步进度行（issue 484：阶段主文案 + 已耗时 + 当前联系人副行 + 不定态条） ----------------
+
+describe('dsSyncLineNode（issue 484）', () => {
+  const line = (over: Partial<DsSyncLine> = {}): DsSyncLine => ({
+    status: 'running',
+    text: '统计联系人 12/57 · 已 4 分 21 秒',
+    sub: '统计联系人：逐人聚合消息 / 语音 / 图片',
+    contact: '',
+    pct: null,
+    hint: '',
+    failures: [],
+    ...over,
+  });
+
+  it('不可估阶段：不定态脉冲条替代宽度条，主行不加假百分比；联系人副行在（running 才渲染）', () => {
+    const node = dsSyncLineNode(line({ contact: '大琳 · 20,773 条' }));
+    expect(node.querySelector('[data-people-ds-sync-text]')!.textContent).not.toContain('%');
+    expect(node.querySelector('.bz-people-ds-sync-indet')).toBeTruthy();
+    expect(node.querySelector('[data-people-ds-sync-bar]')).toBeNull();
+    expect(node.querySelector('[data-people-ds-sync-contact]')!.textContent).toBe('大琳 · 20,773 条');
+  });
+
+  it('确定态：宽度条带百分比；联系人空串时副行隐藏（节点在，供原位更新）', () => {
+    const node = dsSyncLineNode(line({ pct: 35, contact: '' }));
+    expect(node.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('35%');
+    expect(node.querySelector('[data-people-ds-sync-bar]')).toBeTruthy();
+    expect(node.querySelector('.bz-people-ds-sync-indet')).toBeNull();
+    const c = node.querySelector<HTMLElement>('[data-people-ds-sync-contact]')!;
+    expect(c.hidden).toBe(true);
+  });
+
+  it('终态不渲染联系人行；副行空时隐藏', () => {
+    const done = dsSyncLineNode(line({ status: 'ok', text: '同步完成', sub: '同步完成：更新 2 位', pct: 100 }));
+    expect(done.querySelector('[data-people-ds-sync-contact]')).toBeNull();
+    expect(done.querySelector('[data-people-ds-sync-bar]')).toBeNull(); // 终态无进度条
   });
 });
 
