@@ -15,8 +15,9 @@
  *     categories[], feeds[{url, title, site, tags[], cats[], via?}] }
  * `via` 为 RSSHub 路由型源预留（本期恒缺省，ADR-0208 决策 3）。
  * ============================================================ */
-import { ensureAssetWithHash, readAsset } from './remote-asset';
+import { ensureAssetWithHash, readAsset, DOWNLOADS_CHANGED_EVENT } from './remote-asset';
 import { cachedManifest, refreshManifest } from './download-manifest';
+import { onDomainEvent } from './domain-bus';
 
 /** 数据本体文件名（相对 `downloads/`；本地落盘为插件目录内同路径） */
 export const RSS_CATALOG_FILE = 'rss-catalog.json';
@@ -68,6 +69,21 @@ export function resetRssCatalogCache(): void {
   memCache = null;
 }
 
+/**
+ * 缓存随落盘事件失效（幂等单例订阅）：下载资产统一从 `writeAssetText` 落盘并派发
+ * `downloads:asset-changed`，设置面板行的「下载/更新」走 `ensureAssetWithHash` 直写磁盘、
+ * **不经** downloadRssCatalog——没有这条失效链，更新后整条会话都会命中旧 memCache
+ * （issue 495 复检 P1-1）。
+ */
+let subscribed = false;
+function subscribeOnce(): void {
+  if (subscribed) return;
+  subscribed = true;
+  onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt: { fileName?: string }) => {
+    if (evt && evt.fileName === RSS_CATALOG_FILE) memCache = null;
+  });
+}
+
 /** 合法 feed 地址（与 clipbook news-data 的 normalizeRssFeedUrl 同口径：http/https 且无空白） */
 function isValidFeedUrl(url: string): boolean {
   return /^https?:\/\/\S+$/i.test(url);
@@ -108,11 +124,16 @@ export function validateRssCatalog(raw: unknown): RssCatalog | null {
     const ff = f as Record<string, unknown>;
     if (typeof ff.url !== 'string' || !isValidFeedUrl(ff.url.trim())) return null;
     const url = ff.url.trim();
-    if (urls.has(url)) return null; // url 全表唯一（黄页「已订阅」匹配依赖 url 口径干净）
-    urls.add(url);
+    // 唯一性按去尾斜杠比对（与出版脚本 lib.mjs 的去重 key 同口径）：尾斜杠孪生条目
+    // 会让订阅匹配各奔东西、同源双订。url 全表唯一是黄页「已订阅」匹配的口径地基。
+    const urlKey = url.replace(/\/+$/, '');
+    if (urls.has(urlKey)) return null;
+    urls.add(urlKey);
     if (typeof ff.title !== 'string' || typeof ff.site !== 'string') return null;
     if (!Array.isArray(ff.tags) || !ff.tags.every((t) => typeof t === 'string')) return null;
     if (!Array.isArray(ff.cats) || ff.cats.length === 0) return null;
+    // 条目内 cats 重复会让 catalogCategoryCounts 计数虚高，一并拦下
+    if (new Set(ff.cats).size !== ff.cats.length) return null;
     for (const c of ff.cats) {
       if (typeof c !== 'string' || !cats.has(c)) return null; // cats ⊆ categories
     }
@@ -138,6 +159,7 @@ async function readLocalValidated(app: unknown): Promise<RssCatalog | null> {
  * 读本地 → validate → 内存缓存（同一次会话内不重复读盘）；无库返回 null。
  */
 export async function loadRssCatalog(app: unknown): Promise<RssCatalog | null> {
+  subscribeOnce();
   if (memCache) return memCache;
   const c = await readLocalValidated(app);
   if (c) memCache = c;
@@ -170,6 +192,7 @@ async function manifestEntry(app: unknown): Promise<CatalogManifestEntry | null>
  * → validate → 更新缓存。任一步失败**原文抛错**（调用方决定怎么提示），不静默返回空库。
  */
 export async function downloadRssCatalog(app: unknown): Promise<RssCatalog> {
+  subscribeOnce();
   const entry = await manifestEntry(app);
   if (!entry) {
     throw new Error('RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）');
@@ -183,7 +206,7 @@ export async function downloadRssCatalog(app: unknown): Promise<RssCatalog> {
     throw new Error('RSS 源库数据解析失败：' + ((e as Error)?.message || String(e)));
   }
   const catalog = validateRssCatalog(parsed);
-  if (!catalog) throw new Error('RSS 源库数据校验失败（结构或条目不合法）');
+  if (!catalog) throw new Error('RSS 源库数据校验失败（产物异常或本地文件损坏）；重装下载仍失败请反馈');
   memCache = catalog;
   return catalog;
 }

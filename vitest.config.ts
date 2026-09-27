@@ -18,7 +18,7 @@ export default defineConfig({
     // 9 处断言级行为差异（style 序列化/CSS.escape 等），迁移需逐个重写断言，暂不采用。
     // 纯数据层测试用首行 `// @vitest-environment node` 标注跳过 DOM 环境（已有 53 个文件）。
     environment: 'jsdom',
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.mjs'],
     setupFiles: ['tests/setup.ts'],
     // threads 池：Windows 下比默认 forks 进程池启动成本低（全量 ~32s → ~22s）
     pool: 'threads',

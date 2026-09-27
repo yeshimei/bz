@@ -1,4 +1,4 @@
-/* 源指纹 27cdd09b38e57572 · 仓内输入 278 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 63b9114484ecbefe · 仓内输入 278 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -30054,6 +30054,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/core/rss-catalog.ts
+  function subscribeOnce() {
+    if (subscribed) return;
+    subscribed = true;
+    onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName === RSS_CATALOG_FILE) memCache2 = null;
+    });
+  }
   function isValidFeedUrl(url) {
     return /^https?:\/\/\S+$/i.test(url);
   }
@@ -30087,11 +30094,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const ff = f;
       if (typeof ff.url !== "string" || !isValidFeedUrl(ff.url.trim())) return null;
       const url = ff.url.trim();
-      if (urls.has(url)) return null;
-      urls.add(url);
+      const urlKey = url.replace(/\/+$/, "");
+      if (urls.has(urlKey)) return null;
+      urls.add(urlKey);
       if (typeof ff.title !== "string" || typeof ff.site !== "string") return null;
       if (!Array.isArray(ff.tags) || !ff.tags.every((t) => typeof t === "string")) return null;
       if (!Array.isArray(ff.cats) || ff.cats.length === 0) return null;
+      if (new Set(ff.cats).size !== ff.cats.length) return null;
       for (const c of ff.cats) {
         if (typeof c !== "string" || !cats.has(c)) return null;
       }
@@ -30111,6 +30120,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   async function loadRssCatalog(app) {
+    subscribeOnce();
     if (memCache2) return memCache2;
     const c = await readLocalValidated2(app);
     if (c) memCache2 = c;
@@ -30130,6 +30140,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return (_a2 = m == null ? void 0 : m.docs.find((d) => d && d.id === RSS_CATALOG_MANIFEST_ID)) != null ? _a2 : null;
   }
   async function downloadRssCatalog(app) {
+    subscribeOnce();
     const entry = await manifestEntry(app);
     if (!entry) {
       throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
@@ -30143,7 +30154,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       throw new Error("RSS 源库数据解析失败：" + ((e == null ? void 0 : e.message) || String(e)));
     }
     const catalog = validateRssCatalog(parsed);
-    if (!catalog) throw new Error("RSS 源库数据校验失败（结构或条目不合法）");
+    if (!catalog) throw new Error("RSS 源库数据校验失败（产物异常或本地文件损坏）；重装下载仍失败请反馈");
     memCache2 = catalog;
     return catalog;
   }
@@ -30179,14 +30190,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return set;
   }
-  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache2;
+  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache2, subscribed;
   var init_rss_catalog = __esm({
     "src/core/rss-catalog.ts"() {
       init_remote_asset();
       init_download_manifest();
+      init_domain_bus();
       RSS_CATALOG_FILE = "rss-catalog.json";
       RSS_CATALOG_MANIFEST_ID = "rss-catalog";
       memCache2 = null;
+      subscribed = false;
     }
   });
 
@@ -30353,13 +30366,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       meta.entries.push({ id: st.id, row });
     }
     currentGroup = meta;
-    subscribeOnce();
+    subscribeOnce2();
     if (Date.now() - lastCheckAt > CHECK_THROTTLE_MS) void checkInBackground();
     return { name: "在线资源", icon: "cloud-download", rows: meta.rows };
   }
-  function subscribeOnce() {
-    if (subscribed) return;
-    subscribed = true;
+  function subscribeOnce2() {
+    if (subscribed2) return;
+    subscribed2 = true;
     onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncLogged());
   }
   function syncLogged() {
@@ -30533,7 +30546,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     setRowBtnState(btn, "idle", (_d = allRow == null ? void 0 : allRow.buttonText) != null ? _d : "全部更新");
     patchRenderedGroup();
   }
-  var SKINS_ROW_NAME, ALL_BUSY_ID, DESC_EXTRAS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed;
+  var SKINS_ROW_NAME, ALL_BUSY_ID, DESC_EXTRAS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed2;
   var init_online_resources = __esm({
     "src/settings-panel/online-resources.ts"() {
       init_app();
@@ -30570,7 +30583,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       syncRunning = null;
       syncDirty = false;
       busyIds = /* @__PURE__ */ new Set();
-      subscribed = false;
+      subscribed2 = false;
     }
   });
 
@@ -40958,27 +40971,27 @@ ${c.trim()}
   }
   function createRssCatalogPane(root, deps) {
     let catalog = null;
-    let subscribed2 = /* @__PURE__ */ new Set();
+    let subscribed3 = /* @__PURE__ */ new Set();
     let query = "";
     let activeCat = "";
     let searchTimer = null;
     const readSubscribed = async () => {
       const st = await readDataSourceState();
-      subscribed2 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+      subscribed3 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
     };
     const subscribeFeed = async (feed, btn) => {
       btn.disabled = true;
       btn.textContent = "订阅中…";
       const outcome = await addRssFeed(feed.url, feed.title || void 0);
       if (outcome === "added") {
-        subscribed2.add(feed.url);
+        subscribed3.add(feed.url);
         btn.textContent = "已订阅";
         notice(`已订阅 ${feed.title || feed.url}`, "success");
         deps.onChanged();
         return;
       }
       if (outcome === "exists") {
-        subscribed2.add(feed.url);
+        subscribed3.add(feed.url);
         btn.textContent = "已订阅";
         return;
       }
@@ -41010,7 +41023,7 @@ ${c.trim()}
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "bz-sp-btn bz-rss-cat-sub";
-      const isSub = subscribed2.has(feed.url);
+      const isSub = subscribed3.has(feed.url);
       btn.textContent = isSub ? "已订阅" : "订阅";
       btn.disabled = isSub;
       if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
@@ -41138,6 +41151,12 @@ ${c.trim()}
           const list = root.querySelector(".bz-rss-cat-list");
           if (hit && list) renderList2(hit, list);
         }
+      },
+      dispose: () => {
+        if (searchTimer) {
+          clearTimeout(searchTimer);
+          searchTimer = null;
+        }
       }
     };
   }
@@ -41150,6 +41169,7 @@ ${c.trim()}
     let offAsset = null;
     function close() {
       rssManagerClose = null;
+      catPane == null ? void 0 : catPane.dispose();
       if (offAsset) {
         offAsset();
         offAsset = null;
@@ -41193,6 +41213,9 @@ ${c.trim()}
       opts.onChanged();
       void (catPane == null ? void 0 : catPane.refreshSubscribed());
     };
+    const activate = (next) => {
+      void next().catch((e) => console.warn("[bz] RSS 订阅弹窗页签渲染失败:", (e == null ? void 0 : e.message) || e));
+    };
     const activateMy = async () => {
       activeTab = "my";
       tabMy.classList.add("active");
@@ -41214,9 +41237,10 @@ ${c.trim()}
       if (!catPane) catPane = createRssCatalogPane(paneCat, { onChanged: onMyChanged });
       await catPane.reload();
     };
-    tabMy.addEventListener("click", () => void activateMy());
-    tabCat.addEventListener("click", () => void activateCatalog());
-    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+    tabMy.addEventListener("click", () => activate(activateMy));
+    tabCat.addEventListener("click", () => activate(activateCatalog));
+    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt) => {
+      if (evt && evt.fileName && evt.fileName !== RSS_CATALOG_FILE) return;
       if (rssManagerOpen && activeTab === "catalog") void (catPane == null ? void 0 : catPane.reload());
     });
     try {
@@ -41239,7 +41263,7 @@ ${c.trim()}
       close
     });
     handle = handleReg;
-    void activateMy();
+    activate(activateMy);
   }
   function unloadManagerModals() {
     upManagerClose == null ? void 0 : upManagerClose();
@@ -59313,6 +59337,7 @@ ${n.content.slice(0, 2e3)}
               if (success) {
                 this.resetUnlockThrottle();
                 motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
+                this.captureLockStats();
                 done(true);
                 const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
                 notice("解锁成功" + healMsg, "success");
@@ -60705,6 +60730,28 @@ ${n.content.slice(0, 2e3)}
               name: "语音转写",
               desc: "语音消息以转写文本进时间线",
               binding: { key: "peoplePreviewVoice" }
+            },
+            {
+              type: "select",
+              name: "转写引擎",
+              desc: "本地语音转文字模型（离线免费，与上方 AI 通道无关）；首次使用需 bz-face doctor 转写组装依赖，模型权重自动下载",
+              binding: { key: "asrEngine" },
+              options: [
+                { value: "sensevoice", label: "SenseVoice（中文效果佳）" },
+                { value: "faster-whisper", label: "faster-whisper" }
+              ]
+            },
+            {
+              type: "select",
+              name: "Whisper 档位",
+              desc: "仅 faster-whisper 引擎生效",
+              binding: { key: "asrWhisperModel" },
+              options: [
+                { value: "small", label: "small（默认）" },
+                { value: "base", label: "base（更快）" },
+                { value: "medium", label: "medium（更准更慢）" },
+                { value: "large-v3", label: "large-v3（最准最慢）" }
+              ]
             },
             {
               type: "select",

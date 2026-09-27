@@ -55,6 +55,8 @@ async function probe(feed) {
         headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' },
       });
       if (resp.status === 200) {
+        // 只看前 4KB：feed 根元素（<rss/<feed/<RDF）必在文档头部；XML 前言超 4KB 的活源
+        // 会被误判死——已接受的口径（有存疑保留兜不了它，但剔除会进报告可审计）。
         const head = (await resp.text()).slice(0, 4096);
         return FEED_MARK_RE.test(head)
           ? { state: 'ok' }
@@ -102,7 +104,6 @@ if (SKIP_LIVE) {
 }
 
 // ── 3. 产物 ──
-const outPath = path.join(ROOT, 'downloads', 'rss-catalog.json');
 fs.writeFileSync(path.join(ROOT, 'downloads', 'rss-catalog.json'), JSON.stringify(catalog, null, 2) + '\n', 'utf8');
 
 const assigned = catalog.feeds.filter((f) => !f.cats.includes('综合')).length;

@@ -116,6 +116,18 @@ describe('validateRssCatalog', () => {
     expect(validateRssCatalog(c)).toBeNull();
   });
 
+  it('feed url 去尾斜杠孪生 → null（与出版脚本去重 key 同口径，issue 495 复检 P2-3）', () => {
+    const c = smallCatalog();
+    c.feeds[1].url = 'https://a.example/feed.xml/';
+    expect(validateRssCatalog(c)).toBeNull();
+  });
+
+  it('条目内 cats 重复 → null（重复会让分类计数虚高，issue 495 复检 P2-3）', () => {
+    const c = smallCatalog();
+    c.feeds[0].cats = ['编程技术', '编程技术'];
+    expect(validateRssCatalog(c)).toBeNull();
+  });
+
   it('cats 空 / cats ⊄ categories → null', () => {
     const c = smallCatalog();
     c.feeds[0].cats = [];
@@ -175,6 +187,29 @@ describe('downloadRssCatalog（走统一清单）', () => {
     // 不挂 requestUrl 桩：任何联网都会抛——若走了网络即失败
     const c = await downloadRssCatalog(appOf(vault));
     expect(c.feeds).toHaveLength(3);
+  });
+
+  it('缓存随落盘事件失效（issue 495 复检 P1-1）：设置面板行直写磁盘不经 downloadRssCatalog 也能读到新库', async () => {
+    const { emitDomainEvent } = await import('../../src/core/domain-bus');
+    const { DOWNLOADS_CHANGED_EVENT } = await import('../../src/core/remote-asset');
+    const dataV1 = JSON.stringify(smallCatalog(), null, 2);
+    const vault = new MockVault();
+    vault.files.set(CATALOG_PATH, dataV1);
+    vault.files.set(MANIFEST_PATH, manifestTextFor(textSha256(dataV1)));
+    const app = appOf(vault);
+    expect((await loadRssCatalog(app))!.feeds).toHaveLength(3);
+    // 磁盘换 v2（两条款）——模拟设置面板行 ensureAssetWithHash 直写
+    const v2 = smallCatalog();
+    v2.feeds = v2.feeds.slice(0, 2);
+    vault.files.set(CATALOG_PATH, JSON.stringify(v2, null, 2));
+    expect((await loadRssCatalog(app))!.feeds).toHaveLength(3); // 事件前缓存仍旧
+    emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName: RSS_CATALOG_FILE });
+    expect((await loadRssCatalog(app))!.feeds).toHaveLength(2); // 事件后重读磁盘
+    // 别的资产落盘不失效本库缓存
+    const v3 = smallCatalog();
+    vault.files.set(CATALOG_PATH, JSON.stringify(v3, null, 2));
+    emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName: 'skins/clipbook/x.css' });
+    expect((await loadRssCatalog(app))!.feeds).toHaveLength(2); // 仍是 v2 缓存
   });
 });
 

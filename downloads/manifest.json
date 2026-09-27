@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "3bc7eabee56b836862a7abe8a8fff33c1ccf98d6b23b02af7a5ca4e155398228",
-      "size": 78003
+      "sha256": "ec47d0bf649b0f2441157a4fbe2a3509845850a30009b2b93bbef7caabe8f5eb",
+      "size": 78057
     },
     {
       "id": "manual",
@@ -26,8 +26,8 @@
       "id": "rss-catalog",
       "name": "RSS 源库",
       "file": "rss-catalog.json",
-      "sha256": "fc1c5c334236ef4c318a324a9330da7ed83c004abda55a406aae377d028fc2b0",
-      "size": 344854
+      "sha256": "a8ad4ac8bcac3f297566d7f52fb8f06fd63479050886851fa96ff7a1854bb221",
+      "size": 343644
     }
   ],
   "skins": [
