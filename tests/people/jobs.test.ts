@@ -57,7 +57,7 @@ function makeAsks() {
     askExtract: vi.fn(async () => BATCH_JSON),
     // 三次文本调用（issue 455）：其人 → 我们 → 时间线，按 prompt 特征分支
     askPortrait: vi.fn(async (p: string) => {
-      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('《纪事》')) return '## 2024 年';
       if (p.includes('要产出的卷二')) return '## 关系定性\n构造我们';
       return '## 画像速写\n构造画像';
     }),
@@ -163,7 +163,7 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(job.batchesDone).toBe(2);
     expect(job.results).toHaveLength(2);
     expect(job.person).toContain('画像速写'); // 卷一《其人》
-    expect(job.bond).toContain('关系定性'); // 卷二《我们》
+    expect(job.bond).toContain('关系定性'); // 卷二《相交》
     expect(job.chronicle).toBe('## 2024 年');
     expect(job.events).toEqual([{ ts: '2024-05-01', summary: '构造事件', kind: 'major' }]); // 跨批同事件去重 + kind 回填
     expect(job.quotes).toEqual([{ ts: '2024-05-01', who: '对方', text: '构造原话' }]);
@@ -233,10 +233,10 @@ describe('startJobs：任务创建与逐批落盘', () => {
     expect(messages).toContain(`消息 4 条 → 2 批（每批 ≤2 条 · ≤12000 字），共 5 次 AI 调用`);
     expect(messages.some((m) => /^第 1\/2 批 · \d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2} · 2 条$/.test(m))).toBe(true);
     expect(messages.some((m) => /^第 2\/2 批 · /.test(m))).toBe(true);
-    // 成文阶段四段（issue 455）：素材 → 《其人》 → 《我们》 → 时间线
+    // 成文阶段四段（issue 455）：素材 → 《其人》 → 《相交》 → 《纪事》
     expect(messages).toContain('素材采集完成：事件 1 · 原话 1 · 场景 1 · 特质 1 → 正在生成《其人》');
-    expect(messages).toContain('《其人》完成，正在生成《我们》…');
-    expect(messages).toContain('双卷完成，正在生成关系时间线…');
+    expect(messages).toContain('《其人》完成，正在生成《相交》…');
+    expect(messages).toContain('双卷完成，正在生成《纪事》…');
     expect(stages).toEqual(expect.arrayContaining(['extracting', 'person', 'bond', 'chronicle', 'done']));
   });
 

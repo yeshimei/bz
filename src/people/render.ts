@@ -4,7 +4,7 @@
  * 纯度：import 图只进域内零依赖模块（types.ts 兼容读单源 personOf/bondOf；render-purity 守卫同口径）——
  * DOM 构建走本文件自持 helper；时间文案由调用方算好注入，本层只拼字符串。
  * 折子语义（G 案拍板）：一人一册——封面竖排姓名 + 修复印章；详情折页册 issue 455 起为四折
- * （卷一《其人》/ 卷二《我们》/ 事件 / 时间线；原画像折拆双卷，数据与档案两页改独立弹窗），
+ * （卷一《其人》/ 卷二《相交》/ 事件 / 时间线；原画像折拆双卷，数据与档案两页改独立弹窗），
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
@@ -337,8 +337,8 @@ export function jobsStageLabel(stage: string | undefined): string | null {
   switch (stage) {
     case 'chunked': return '正在切批组装素材…';
     case 'person': return '正在生成《其人》…';
-    case 'bond': return '正在生成《我们》…';
-    case 'chronicle': return '正在生成关系时间线…';
+    case 'bond': return '正在生成《相交》…';
+    case 'chronicle': return '正在生成《纪事》…';
     default: return null;
   }
 }
@@ -679,7 +679,7 @@ export type FoldId = 'p' | 'b' | 'e';
 const FOLD_TITLES: Array<[FoldId, string, string]> = [
   ['p', '其人', '卷一 · 人物画像与代表原话'],
   ['b', '相交', '卷二 · 关系画像'],
-  ['e', '纪事', '关系时间线（编年）+ 交往事件（按月）'],
+  ['e', '纪事', '编年 + 按月交往事件'],
 ];
 
 export interface FoldDetailOpts {
@@ -819,7 +819,7 @@ export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTML
   return out;
 }
 
-/** 我们折正文（卷二《我们》，issue 455）：markdown；空态引导导入 */
+/** 我们折正文（卷二《相交》，issue 455）：markdown；空态引导导入 */
 export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
   return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
 }

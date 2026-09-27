@@ -111,7 +111,7 @@ function makeAsks(failFirst = false) {
       return BATCH_JSON;
     }),
     askPortrait: vi.fn(async (p: string) => {
-      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('《纪事》')) return '## 2024 年';
       if (p.includes('要产出的卷二')) return '## 关系定性\n构造我们';
       return '## 画像速写\n构造画像';
     }),

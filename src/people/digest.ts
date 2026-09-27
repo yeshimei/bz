@@ -1,7 +1,7 @@
 /**
  * 脸谱提炼管线（issue 435 / ADR-0191；双卷画像 issue 455 / ADR-0192）：
  * 统一消息流 → 分批 LLM 采集素材（事件 / 原话 / 场景 / 特质 / 兴趣 / 未竟之事，6 类）
- * → 汇总生成双卷画像：卷一《其人》（人物画像）+ 卷二《我们》（关系画像）+ 关系时间线。
+ * → 汇总生成双卷画像：卷一《其人》（人物画像）+ 卷二《相交》（关系画像）+ 《纪事》。
  *
  * 画像维度参考 distilly（titanwings/distilly）的 relationship persona 方法论：
  * 优先「行为模式」而非传记摘要、证据与推断分离、情绪落在具体说话方式上；
@@ -159,7 +159,7 @@ function renderLine(ts: number, isSender: boolean, text: string): string {
 export function buildExtractPrompt(chunk: DigestChunk, personName: string): string {
   const media = chunk.media;
   const head = [
-    `你在帮用户整理与好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 用户发出，[对方] = 好友发出）。`,
+    `我在整理我和好友「${personName}」的微信聊天记录。以下是 ${chunk.from} 至 ${chunk.to} 的片段（[我] = 我发出的，[对方] = 对方发出的）。`,
     // 新对话行的语义说明（issue 449）：分享 / 引用 / 通话 / 命名表情是口味审美与关系温度的证据来源
     '行首方括号标签说明：`[分享]…` 与 `[小程序]…` 是分享 / 安利的内容标题（口味与审美的证据，可进 moments 与 traits）；`[文件]…` 是发送的文件；`[引用「…」]` 开头的行是引用回复（引号内为被引内容，其后是回复）；`[通话 …]` / `[通话中断 …]` / `[未接通·…]` 是通话事件（通话时长是关系温度的直接证据，可进 events 与 moments）；`[表情·名]` 是带名称的表情。群聊导出的行首会多一层 `[成员名]`——那不是标签，是群成员的名字，忽略它，谁在说仍看后面的 [我] / [对方]。',
   ];
@@ -210,21 +210,21 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
 }
 
 /**
- * 关系时间线 prompt（第二个方向：共同经历 → 编年史）。
+ * 《纪事》 prompt（第二个方向：共同经历 → 编年史）。
  * 输入是全部交往事件（含小事），产出按年份分节的成文史——不是事件列表的复述，
  * 而是把碎片串成「这段关系怎么一步步走到今天」。
  */
 export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string, statsNote?: string): string {
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   return [
-    `你在帮用户整理与好友「${name}」的交往史。以下是按时间顺序排列的交往事件（从认识到现在）。`,
+    `我在整理我和「${name}」这些年的交往史，要写成一份《纪事》。下面是从认识到现在、按时间排的交往事件。`,
     ...(mediaNote ? ['', `素材说明：${mediaNote}`] : []),
     // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
     ...(statsNote ? ['', statsNote] : []),
     '',
     eventLines,
     '',
-    '请把这段关系写成一份「关系时间线」：',
+    '请把这段关系写成一份《纪事》：',
     '',
     '要求：',
     '- 按时间顺序组织，用 `## 2023 年` 这样的年份小节分隔；素材密集的年份可用 `### 上半年 / 下半年` 再分。',
@@ -236,6 +236,9 @@ export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNot
     '- 只写素材里有的事，**不要编造**；素材稀疏的时期宁可只写一两条，也不要为填充而杜撰。',
     '- 可以适度归纳（如「这阵子聊得最多的是那家店」），但事实必须来自素材。',
     '- 总长 1500 字以内，直接输出 markdown 正文，不要代码围栏。',
+    '- 下面的文体要求同样适用；其中「小节标题照抄给定的标题」在这里指年份小节固定用 `## 2023 年` 的写法。',
+    '',
+    TONE_RULES,
   ].join('\n');
 }
 
@@ -275,16 +278,49 @@ export function buildProfileNote(profile?: PersonProfile): string {
   return lines.join('\n');
 }
 
-/** 两卷共用的硬性要求块：沿用旧单卷画像的全部条目 + 「保留矛盾」一条（issue 455） */
+/**
+ * 两卷共用的硬性要求块：沿用旧单卷画像的全部条目 + 「保留矛盾」一条（issue 455）。
+ * 去 AI 味修订：模式条改「用事写」（原「当 X 时，TA Y」句式本身就是公式感的来源）、
+ * 补引用块全篇配比、字数 1200 → 1500（散笔比概括句吃长度）。
+ */
 const HARD_RULES = [
   '## 硬性要求',
   '- 输出 markdown，只允许这几种语法：`##` 二级小节、`-` 列表项、`**加粗**`、`> ` 引用块。不要一级标题、不要表格、不要代码块。',
-  '- 优先写模式，不要写传记：写「TA 习惯用玩笑化解尴尬」，不要写「TA 三月去了北京」。',
+  '- 写模式，但用事写，不要用规则写。不要「当 X 时，TA 会 Y」这种句式——改写成「那次我说要去，他回了句『随便』，过了两天自己订了票」。模式让读的人自己看出来，不要替他总结。',
   '- 证据与推断分开：有素材支撑的直接写；属于推断的用「看来」「似乎」起头。',
   '- 情绪要具体：不写抽象形容词（如「性格复杂」），写能看见的行为。',
   '- 保留矛盾：素材里相互张力的特征（如恋旧又独立、记仇又复盘）是特征不是噪声，如实保留，不许抹平。',
+  '- 全篇 3~6 处 `> ` 引用块，放在最像 TA 的原话上；没有原话可引就少写，不要凑数。',
   '- 素材不足以支撑的小节，写「（素材不足）」，绝不编造。',
-  '- 全文 1200 字以内，直接输出 markdown 正文，不要代码围栏。',
+  '- 全文 1500 字以内，直接输出 markdown 正文，不要代码围栏。',
+].join('\n');
+
+/**
+ * 三处成文 prompt 共用的文体块（去 AI 味：第一人称日记散笔）。
+ *
+ * 规则分两层，边界要守住：
+ * - **句法 / 语气层**（可搬社区去 AI 味口径）：人称、节奏量化、口语额度、禁词表、犹豫配额。
+ *   社区方案的共同经验是「像人写」这种定性要求不落地，得给可检查的数（句长区间、犹豫次数、
+ *   抽象结论后必须垫事）——定性只会让模型继续写它的平均人格。
+ * - **内容层**（不许搬）：社区普遍允许「没有细节时根据上下文合理虚构」，本条**绝不适用**——
+ *   脸谱素材是聊天记录里真实发生过的事，属事实层；为凑人味编一个细节，等于往一个人的关系档案
+ *   里塞假记忆，比 AI 味严重得多。故本块只管「怎么写」，一个字都不放松「写什么」。
+ */
+const TONE_RULES = [
+  '## 文体：日记散笔',
+  '- 这是我自己写给自己的笔记，不是交给别人看的报告。通篇用「我」，提到对方时用名字或「TA」；**正文里不许出现「用户」两个字**。',
+  '- 从具体的事开口。「上次他发来那首歌的时候」比「在互动中 TA 表现出」好。每节至少落一个素材里真实出现过的时刻、原话或物件。',
+  '- 长短句交替，别让每句一样长、每段一样长：连续两句都超过 18 字就拆开，连续两句都不到 10 字就并起来。',
+  '- 口语可以进来（「说真的」「其实」「后来才想起来」），每百字不超过 3 个；可以用语气词、破折号，用括号补一句心里话。',
+  '- 全篇至少出现一次犹豫或自我修正：「我记得」「也可能是我多想了」「这事儿我到现在也没想明白」。',
+  '- 每写一个抽象的结论，后面就跟一件能看见的事垫着，不要只给判断。',
+  '- 宁可写得像随手记，也不要写得像总结。**每节不要升华、不要收尾金句、不要排比三段。**',
+  '- 禁用这些套话：值得注意、整体而言、表现出……的特点、具有……的特质、从……来看、不难看出、这说明、某种程度上、既……又……、不仅……而且、首先其次最后、在当今、随着……的发展、具有重要意义、发挥积极作用。',
+  '- 小节标题照抄给定的标题，不要改写标题。',
+  '',
+  '同一个意思，两种写法（按后一种写）：',
+  '- 报告腔：TA 是一个性格复杂的人，既有独立的一面，也有恋旧的一面，在关系中常常表现出矛盾的情感。',
+  '- 散笔：她说自己一个人待着最舒服，转头又把我三个月前随口提的那家店记在备忘录里，发来问我什么时候去。',
 ].join('\n');
 
 /** 素材列表行：有条目逐行列出，无则写占位 */
@@ -295,13 +331,13 @@ function linesOrNone(lines: string[]): string {
 /**
  * 卷一《其人》prompt（issue 455：由旧单卷 buildPortraitPrompt 拆出的人物轴）。
  * 素材分段：档案（profileNote 若有）/ 事件 / 原话 / 场景 / 特质线索 / 兴趣信号 / 互动统计（statsNote 若有）；
- * 产出 7 节：画像速写（须含一组矛盾感）/ 性格与思维 / 表达 DNA（称呼归卷二）/ 兴趣爱好（三层）/
+ * 产出 7 节：画像速写（须含一组别扭处）/ 性格与思维 / 表达 DNA（称呼归卷二）/ 兴趣爱好（三层）/
  * 价值观与红线（全推断层）/ 习惯 / 情感倾向（语音情感计数直引）。样本警示 sampleWarn 非空时插头部。
  */
 export function buildPersonPrompt(name: string, material: PortraitMaterial, sampleWarn?: string): string {
   const { events, traits, quotes, moments, interests, mediaNote, statsNote, profileNote } = material;
   return [
-    `你在帮用户为好友「${name}」画一张「脸谱」的卷一《其人》——基于以下从聊天记录里提炼的素材，写出这个人本身的人物画像。人物与关系是两条轴：TA 是个什么样的人归本卷，「我们」怎么相处归卷二《我们》，本卷不写关系。`,
+    `我在给好友「${name}」画一张「脸谱」，这是卷一《其人》，写 TA 这个人本身。下面是我从我们的聊天记录里提炼出来的素材。人和关系分两条轴：TA 是个什么样的人归卷一，我们俩怎么相处归卷二《相交》，卷一只写 TA，不写关系。`,
     ...(sampleWarn ? [sampleWarn] : []),
     ...(mediaNote ? ['', `素材说明：${mediaNote}`, ''] : []),
     '',
@@ -325,19 +361,20 @@ export function buildPersonPrompt(name: string, material: PortraitMaterial, samp
     '## 要产出的卷一《其人》（按此顺序，每节用 ## 二级标题）',
     '',
     '## 画像速写',
-    '两三句话抓住这个人给人的整体感觉。必须写出一组矛盾感（相互张力的特征）——矛盾是特征不是噪声，不许抹平。',
+    '两三句话，像跟人介绍一个刚认识的朋友。必须带着一组别扭的地方（相互打架的特征）——别扭是特征不是噪声，不许抹平。',
+    '不要用「TA 是一个……的人」开头，从一个具体的事说起。',
     '',
     '## 性格与思维',
     '处事风格、脾气秉性、社交姿态，加上思维模式：怎么想问题、自我对话的方式、对尝试与第一次的态度。',
-    '写法用行为规则：「当 X 时，TA Y」。TA 对自己的描述（自嘲 / 自剖 / 人格梗）只当线索引述，不当下结论。',
+    'TA 自己怎么讲自己（自嘲 / 自剖 / 人格梗）只当线索引一句，后面接我实际看到的，不当下结论。',
     '',
     '## 表达 DNA',
     '口头禅、高频词、句式节奏、标点与语气习惯、表情使用习惯、「不想理人」的信号。',
-    '每条特征后面跟一个 `> ` 引用块，放素材里的真实原话当证据。称呼 / 昵称不写在这节（归卷二《我们》）。',
+    '挑两三条最能代表 TA 的说法，每条后面跟一个 `> ` 引用块放真实原话当证据。称呼 / 昵称不写在这节（归卷二《相交》）。',
     '',
     '## 兴趣爱好',
     '分三层写：实际投入（愿意花时间做的事）→ 内容口味（爱看什么听什么）→ 精神底色（审美取向）。',
-    '每层要有具体名目（作品名 / 活动名），不许只写形容词；没有的层写「（素材不足）」。',
+    '每层都要点到具体的作品名 / 活动名；想不起名目就写「（素材不足）」，不要拿形容词凑数。',
     '',
     '## 价值观与红线',
     '在乎什么、反感什么、评判人和事的角度、绝不做什么。本节全部属推断：每条必须以「看来」或「似乎」起头；素材不足整节写「（素材不足）」。',
@@ -347,13 +384,16 @@ export function buildPersonPrompt(name: string, material: PortraitMaterial, samp
     '',
     '## 情感倾向',
     '情绪基线（素材里的语音情感计数可直引）、表达情绪的方式（外露 / 憋着 / 反话）、什么能点亮 TA、什么让 TA 沉默。',
+    '不要用「情绪稳定」「内心丰富」这类词，写我见过的那一次。',
     '',
     HARD_RULES,
+    '',
+    TONE_RULES,
   ].join('\n');
 }
 
 /**
- * 卷二《我们》prompt（issue 455：由旧单卷 buildPortraitPrompt 拆出的关系轴）。
+ * 卷二《相交》prompt（issue 455：由旧单卷 buildPortraitPrompt 拆出的关系轴）。
  * 素材分段：档案（profileNote 若有）/ 事件 / 原话 / 场景 / 未竟之事线索（threads）/ 互动统计（statsNote 若有）；
  * 产出 8 节：关系定性 / 互动结构（不罗列数字）/ 演变阶段 / 我们的语言 / 共同记忆 /
  * 冲突与修复（和解信号单独写）/ 未竟之事（对照 events 判断兑现）/ 经营建议。样本警示同卷一。
@@ -361,7 +401,7 @@ export function buildPersonPrompt(name: string, material: PortraitMaterial, samp
 export function buildBondPrompt(name: string, material: PortraitMaterial, sampleWarn?: string): string {
   const { events, quotes, moments, threads, mediaNote, statsNote, profileNote } = material;
   return [
-    `你在帮用户为好友「${name}」画一张「脸谱」的卷二《我们》——基于以下从聊天记录里提炼的素材，写出「用户与 TA」这段关系的画像。TA 本身是个什么样的人归卷一《其人》，本卷只写这段关系。`,
+    `我在给好友「${name}」画一张「脸谱」，这是卷二《相交》，写我和 TA 这段关系。下面是我从我们的聊天记录里提炼出来的素材。TA 本身是个什么样的人归卷一，本卷只写我们俩怎么相处。`,
     ...(sampleWarn ? [sampleWarn] : []),
     ...(mediaNote ? ['', `素材说明：${mediaNote}`, ''] : []),
     '',
@@ -379,10 +419,11 @@ export function buildBondPrompt(name: string, material: PortraitMaterial, sample
     linesOrNone(threads.map((t) => `- ${t.ts}：${t.text}`)),
     ...(statsNote ? ['', '## 素材五：互动统计', statsNote] : []),
     '',
-    '## 要产出的卷二《我们》（按此顺序，每节用 ## 二级标题）',
+    '## 要产出的卷二《相交》（按此顺序，每节用 ## 二级标题）',
     '',
     '## 关系定性',
-    '一段什么关系、TA 在用户生活里的独特角色、现在处在什么阶段。手动档案（关系标签 / 怎么认识）优先；档案与聊天印象冲突时，以档案为准并注明。',
+    '这是一段什么关系、TA 在我这儿是什么角色、现在走到哪一步了。手填档案（关系标签 / 怎么认识）优先；档案和聊天印象打架时以档案为准，并写一句「档案里是这么记的」。',
+    '开头不要写「我们是一段……的关系」这种判断句，从一个具体的事说起。',
     '',
     '## 互动结构',
     '谁更常先开口、回复节奏差、活跃时段、语音文字视频偏好、通话密度。互动统计是事实依据，但不要罗列数字——写可感知的相处模式与解读。',
@@ -391,7 +432,7 @@ export function buildBondPrompt(name: string, material: PortraitMaterial, sample
     '按素材把这段关系划成几个阶段（如热络期 / 转折 / 渐冷 / 回联），每个阶段一句定性 + 转折点事件。转淡或沉默是怎么发生的、后来是谁先开口回联。最后一句写「现在」——这段关系此刻在哪。',
     '',
     '## 我们的语言',
-    '称呼演变：TA 怎么叫用户、用户怎么叫 TA、随情绪或亲密度的变化。再整理一份只属于这段关系的梗与暗语小词典。',
+    'TA 怎么叫我、我怎么叫 TA，随情绪和关系冷热怎么变。再列一份只有我们俩才懂的梗与暗语小词典。',
     '',
     '## 共同记忆',
     '反复出现的地点、物件、习惯、画面。要具体到能想起当时的场景。',
@@ -406,6 +447,8 @@ export function buildBondPrompt(name: string, material: PortraitMaterial, sample
     '怎么经营这段关系：什么能升温、什么会伤害、别踩什么。把档案标签翻译成具体的相处规则。',
     '',
     HARD_RULES,
+    '',
+    TONE_RULES,
   ].join('\n');
 }
 
@@ -519,7 +562,7 @@ export function profileExtractMaterial(m: ProfileExtractMaterial): string {
   return sections.join('\n\n');
 }
 
-/** 已手填档案 → 「已知档案（不要覆盖）」声明文本（契约里全部可填字段都列举）；全空返回空串 */
+/** 已手填档案 → 「我已经自己填过的档案（不要覆盖）」声明文本（契约里全部可填字段都列举）；全空返回空串 */
 export function knownProfileText(profile?: PersonProfile): string {
   if (!profile) return '';
   const parts: string[] = [];
@@ -555,8 +598,8 @@ export function knownProfileText(profile?: PersonProfile): string {
  */
 export function buildProfileExtractPrompt(name: string, mat: string, known?: string): string {
   return [
-    `你在帮用户完善好友「${name}」的人物档案。以下是已落盘的交往提炼素材。`,
-    ...(known ? [`已知档案（用户手填，不要覆盖也不要重复推断）：${known}`] : []),
+    `我在整理好友「${name}」的人物档案。以下是已经落盘的交往素材。`,
+    ...(known ? [`我已经自己填过的档案（不要覆盖也不要重复推断）：${known}`] : []),
     '',
     ...(mat ? [mat, ''] : []),
     '请推断档案缺失字段，只输出 JSON，不要解释、不要代码围栏：',
@@ -651,7 +694,7 @@ export async function extractBatch(ask: AskLLM, chunk: DigestChunk, personName: 
 export interface BuiltFace {
   /** 卷一《其人》（issue 455） */
   person: string;
-  /** 卷二《我们》（issue 455） */
+  /** 卷二《相交》（issue 455） */
   bond: string;
   events: FaceEvent[];
   quotes: QuoteItem[];
@@ -663,7 +706,7 @@ export interface BuiltFace {
   interests: InterestItem[];
   /** 未竟之事（同 interests，issue 455） */
   threads: ThreadItem[];
-  /** 关系时间线（编年史）；生成失败或素材不足时为空串，不阻断画像产出 */
+  /** 《纪事》（编年史）；生成失败或素材不足时为空串，不阻断画像产出 */
   chronicle: string;
 }
 
@@ -762,8 +805,8 @@ export interface FaceRunOptions {
 
 /**
  * 全流程（issue 455 双卷版）：切批 → 逐批采集（askExtract / JSON 通道）→ 合并去重
- * → 三次文本调用：卷一《其人》（必产，空则抛错）→ 卷二《我们》（必产，空则抛错）
- * → 关系时间线（best-effort 兜空串）。
+ * → 三次文本调用：卷一《其人》（必产，空则抛错）→ 卷二《相交》（必产，空则抛错）
+ * → 《纪事》（best-effort 兜空串）。
  * 任一批失败原样抛错（上层中止并报错）。
  * opts（issue 450 收拢旧位置参数）：chunkOpts 透传切批参数（缺省即 DEFAULTS 双限）；
  * onProgress 升级为阶段化进度（extracting 逐批带本批元数据 / person / bond / chronicle）；
@@ -799,7 +842,7 @@ export async function buildFace(
   if (!person) throw new Error('卷一《其人》生成为空');
   onProgress?.({ stage: 'bond', done: 0, total: 1 });
   const bond = (await askPortrait(buildBondPrompt(personName, material, sampleWarn))).trim();
-  if (!bond) throw new Error('卷二《我们》生成为空');
+  if (!bond) throw new Error('卷二《相交》生成为空');
   // 时间线是次要产物：它失败不该把已经画好的双卷一起丢掉，故单独兜住
   let chronicle = '';
   if (merged.events.length) {

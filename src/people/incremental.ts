@@ -116,7 +116,7 @@ export async function buildFaceIncremental(
   if (!person) throw new Error('卷一《其人》生成为空');
   onProgress?.({ stage: 'bond', done: 0, total: 1 });
   const bond = (await askPortrait(buildBondPrompt(name, material, sampleWarn))).trim();
-  if (!bond) throw new Error('卷二《我们》生成为空');
+  if (!bond) throw new Error('卷二《相交》生成为空');
   // 时间线是次要产物：失败不阻断双卷（与 digest.buildFace 同口径）
   let chronicle = '';
   if (merged.events.length) {

@@ -1182,7 +1182,7 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     await store.appendImport(talker, rec);
     const digest: FaceDigest = {
       person, // 卷一《其人》
-      bond: job.bond || undefined, // 卷二《我们》（旧引擎无此产物）
+      bond: job.bond || undefined, // 卷二《相交》（旧引擎无此产物）
       events: mergeManualEvents(job.events ?? [], existing?.manualEvents), // 439：手动随手记并入事件素材
       quotes: job.quotes,
       moments: job.material?.moments, // 449：场景 / 特质随生成落盘

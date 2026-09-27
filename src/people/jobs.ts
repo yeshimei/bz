@@ -163,7 +163,7 @@ export interface PersonJob {
   results: BatchExtract[];
   /** 卷一《其人》成品（issue 455；旧落盘字段 portrait 在 resumeJobs 读入时映射到此） */
   person?: string;
-  /** 卷二《我们》成品（issue 455） */
+  /** 卷二《相交》成品（issue 455） */
   bond?: string;
   chronicle?: string;
   /**
@@ -1512,18 +1512,18 @@ async function runJob(job: PersonJob): Promise<void> {
     await persist();
     emit();
 
-    // 5.5 卷二《我们》（必产：空则判 error，批次成果保留可续跑）
-    await finish({ stage: 'bond', message: '《其人》完成，正在生成《我们》…' });
+    // 5.5 卷二《相交》（必产：空则判 error，批次成果保留可续跑）
+    await finish({ stage: 'bond', message: '《其人》完成，正在生成《相交》…' });
     let bond = '';
     try {
       bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
     } catch (e) {
-      await finish({ status: 'error', error: errorMessage(e), message: `《我们》生成失败：${errorMessage(e)}` });
+      await finish({ status: 'error', error: errorMessage(e), message: `《相交》生成失败：${errorMessage(e)}` });
       return;
     }
     if (gone(job)) return;
     if (!bond) {
-      await finish({ status: 'error', error: '卷二《我们》生成为空', message: '卷二《我们》生成为空' });
+      await finish({ status: 'error', error: '卷二《相交》生成为空', message: '卷二《相交》生成为空' });
       return;
     }
     job.bond = bond;
@@ -1531,8 +1531,8 @@ async function runJob(job: PersonJob): Promise<void> {
     await persist();
     emit();
 
-    // 6. 关系时间线（次要产物：失败不阻断）
-    await finish({ stage: 'chronicle', message: '双卷完成，正在生成关系时间线…' });
+    // 6. 《纪事》（次要产物：失败不阻断）
+    await finish({ stage: 'chronicle', message: '双卷完成，正在生成《纪事》…' });
     let chronicle = '';
     if (merged.events.length) {
       try {
@@ -1552,7 +1552,7 @@ async function runJob(job: PersonJob): Promise<void> {
     //     任何失败不阻断画谱主流程——job.aiProfile 拿不到就留空。手填档案以「已知档案」进
     //     prompt 声明不要覆盖；落盘侧（ui.persistJobDone）再用 fillProfile 只填空白兜一道。
     if (merged.events.length || merged.quotes.length || merged.moments.length || merged.traits.length) {
-      await finish({ message: '时间线完成，正在提炼人物档案…' });
+      await finish({ message: '《纪事》完成，正在提炼人物档案…' });
       try {
         const aiProfile = parseProfileReply(
           await asks.portrait(buildProfileExtractPrompt(job.name, profileExtractMaterial(merged), knownProfileText(existing?.profile)))

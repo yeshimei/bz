@@ -214,8 +214,8 @@ describe('进度块与印章的 describe 段呈现', () => {
     const person = progressBlock(blockState({ describe: undefined, stage: 'person', message: '素材采集完成：事件 214 · 原话 63' }));
     expect(person.querySelector<HTMLElement>('.bz-people-jobs-main')!.textContent).toBe('正在生成《其人》…');
     expect(person.querySelector<HTMLElement>('[data-people-jobs-sub]')!.textContent).toContain('素材采集完成');
-    expect(jobsStageLabel('bond')).toBe('正在生成《我们》…');
-    expect(jobsStageLabel('chronicle')).toBe('正在生成关系时间线…');
+    expect(jobsStageLabel('bond')).toBe('正在生成《相交》…');
+    expect(jobsStageLabel('chronicle')).toBe('正在生成《纪事》…');
     expect(jobsStageLabel('chunked')).toBe('正在切批组装素材…');
     expect(jobsStageLabel('extracting')).toBeNull();
     const extracting = progressBlock(blockState({ describe: undefined, stage: 'extracting', message: '第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条' }));

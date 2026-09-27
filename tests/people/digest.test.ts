@@ -256,12 +256,12 @@ describe('buildPersonPrompt（卷一《其人》，issue 455）', () => {
     expect(prompt).toContain('深夜（0-6 点）消息占 18.0%');
   });
 
-  it('产出 7 节：速写须含矛盾感 / 行为规则 / 表达 DNA 引原话且称呼归卷二 / 兴趣三层 / 价值观全推断 / 习惯 / 情感倾向', () => {
+  it('产出 7 节：速写须含别扭处 / 用事写模式 / 表达 DNA 引原话且称呼归卷二 / 兴趣三层 / 价值观全推断 / 习惯 / 情感倾向', () => {
     const prompt = buildPersonPrompt('老王', baseMaterial());
     expect(prompt).toContain('## 画像速写');
-    expect(prompt).toContain('矛盾感');
+    expect(prompt).toContain('别扭的地方');
     expect(prompt).toContain('## 性格与思维');
-    expect(prompt).toContain('当 X 时，TA Y');
+    expect(prompt).toContain('用事写'); // 去 AI 味：模式用事写，禁用「当 X 时，TA 会 Y」句式
     expect(prompt).toContain('## 表达 DNA');
     expect(prompt).toContain('`> ` 引用块');
     expect(prompt).toContain('称呼 / 昵称不写在这节');
@@ -273,15 +273,18 @@ describe('buildPersonPrompt（卷一《其人》，issue 455）', () => {
     expect(prompt).toContain('## 习惯');
     expect(prompt).toContain('## 情感倾向');
     expect(prompt).toContain('语音情感计数可直引');
+    // 去 AI 味（issue 499）：文体块注入，旧版「你在帮用户…」开场不得回潮
+    expect(prompt).toContain('## 文体：日记散笔');
+    expect(prompt).not.toContain('你在帮用户');
   });
 
   it('硬性要求块沿用全部条目 + 保留矛盾；档案 / 统计缺省整段不渲染；样本警示插头部', () => {
     const warn = sampleWarnOf(132)!;
     const withWarn = buildPersonPrompt('老王', baseMaterial(), warn);
-    expect(withWarn.startsWith(`你在帮用户为好友「老王」`)).toBe(true);
+    expect(withWarn.startsWith('我在给好友「老王」')).toBe(true);
     expect(withWarn).toContain(warn);
     expect(withWarn).toContain('保留矛盾');
-    expect(withWarn).toContain('1200 字以内');
+    expect(withWarn).toContain('1500 字以内');
     expect(withWarn).toContain('（素材不足）');
     expect(withWarn).toContain('不要代码围栏');
 
@@ -300,7 +303,7 @@ describe('buildPersonPrompt（卷一《其人》，issue 455）', () => {
   });
 });
 
-describe('buildBondPrompt（卷二《我们》，issue 455）', () => {
+describe('buildBondPrompt（卷二《相交》，issue 455）', () => {
   it('素材分段含未竟之事线索；互动统计为素材五；未竟线索缺省写（无）', () => {
     const prompt = buildBondPrompt(
       '老王',
@@ -310,7 +313,7 @@ describe('buildBondPrompt（卷二《我们》，issue 455）', () => {
         statsNote: '互动画像：会话我发起 12 次。',
       })
     );
-    expect(prompt).toContain('卷二《我们》');
+    expect(prompt).toContain('卷二《相交》');
     expect(prompt).toContain('## 素材四：未竟之事线索');
     expect(prompt).toContain('说好一起去看海');
     expect(prompt).toContain('## 素材五：互动统计');
@@ -324,7 +327,7 @@ describe('buildBondPrompt（卷二《我们》，issue 455）', () => {
   it('产出 8 节：定性（档案优先）/ 互动结构（不罗列数字）/ 演变阶段 / 我们的语言 / 共同记忆 / 冲突与修复（和解单独写）/ 未竟之事（对照 events）/ 经营建议', () => {
     const prompt = buildBondPrompt('老王', baseMaterial({ profileNote: '关系标签：同学' }));
     expect(prompt).toContain('## 关系定性');
-    expect(prompt).toContain('以档案为准并注明');
+    expect(prompt).toContain('以档案为准');
     expect(prompt).toContain('## 互动结构');
     expect(prompt).toContain('不要罗列数字');
     expect(prompt).toContain('## 演变阶段');
@@ -342,13 +345,15 @@ describe('buildBondPrompt（卷二《我们》，issue 455）', () => {
     expect(prompt).toContain('关系标签：同学');
     expect(prompt).toContain('保留矛盾');
     expect(prompt).toContain('## 硬性要求');
+    expect(prompt).toContain('## 文体：日记散笔');
+    expect(prompt).not.toContain('你在帮用户');
   });
 
   it('样本警示插头部；硬性要求在场', () => {
     const warn = sampleWarnOf(132)!;
     const withWarn = buildBondPrompt('老王', baseMaterial(), warn);
     expect(withWarn).toContain(warn);
-    expect(withWarn).toContain('1200 字以内');
+    expect(withWarn).toContain('1500 字以内');
   });
 });
 
@@ -373,7 +378,7 @@ describe('buildFace 全流程（假 ask，双卷三调用）', () => {
         : '{"events":[{"ts":"2024-05-01","summary":"约饭"},{"ts":"2024-05-02","summary":"聊项目"}],"traits":["话痨"]}'
     );
     const askPortrait = vi.fn(async (prompt: string) => {
-      if (prompt.includes('关系时间线')) return '## 2024 年\n- 第一次说话（2024-05-01）';
+      if (prompt.includes('《纪事》')) return '## 2024 年\n- 第一次说话（2024-05-01）';
       if (prompt.includes('要产出的卷二')) return '## 关系定性\n老友';
       return '## 画像速写\n**热情**开朗\n> 「别熬夜」';
     });
@@ -407,7 +412,7 @@ describe('buildFace 全流程（假 ask，双卷三调用）', () => {
 
   it('时间线生成失败不阻断双卷（次要产物兜底）', async () => {
     const askPortrait = vi.fn(async (prompt: string) => {
-      if (prompt.includes('关系时间线')) throw new Error('模型抽风');
+      if (prompt.includes('《纪事》')) throw new Error('模型抽风');
       if (prompt.includes('要产出的卷二')) return '## 关系定性\n老友';
       return '## 画像速写\n稳';
     });
@@ -439,7 +444,7 @@ describe('buildFace 全流程（假 ask，双卷三调用）', () => {
         [msg(0)],
         '老王'
       )
-    ).rejects.toThrow('卷二《我们》生成为空');
+    ).rejects.toThrow('卷二《相交》生成为空');
   });
 
   it('prompt 携带人名与对话行；双卷 prompt 各吃对应素材段', async () => {
@@ -468,7 +473,7 @@ describe('buildFace 全流程（假 ask，双卷三调用）', () => {
 
     const chronicle = buildChroniclePrompt('老王', [{ ts: '2024-05-01', summary: '第一次说话' }]);
     expect(chronicle).toContain('2024-05-01：第一次说话');
-    expect(chronicle).toContain('关系时间线');
+    expect(chronicle).toContain('《纪事》');
   });
 
   it('样本警示：消息 < 200 条自动注入两卷 prompt 头部；opts.sampleWarn 可覆盖', async () => {
@@ -499,7 +504,7 @@ describe('buildFace 全流程（假 ask，双卷三调用）', () => {
     const seen: string[] = [];
     const face = await buildFace(
       async () => '{"events":[],"traits":[]}',
-      async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'),
+      async (p) => (seen.push(p), p.includes('《纪事》') ? '## 2024 年' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'),
       messages,
       '老王',
       { profile: { birthday: '1994-02-14', tags: ['同学'] } }
@@ -605,7 +610,7 @@ describe('媒体素材进提示词（issue 445）', () => {
       async () => '{"events":[{"ts":"2024-05-01","summary":"约饭"}],"traits":[]}',
       async (p) => (
         seen.push(p),
-        p.includes('关系时间线') ? '## 2024 年\n- 开头' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'
+        p.includes('《纪事》') ? '## 2024 年\n- 开头' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'
       ),
       [msg(0, false, '早')],
       '老王',
@@ -652,7 +657,7 @@ describe('双卷 prompt 的互动统计素材（issue 449 / 455）', () => {
     const seen: string[] = [];
     const face = await buildFace(
       async () => '{"events":[{"ts":"2024-05-01","summary":"约饭"}],"traits":["话痨"],"quotes":[],"moments":[{"ts":"2024-05-01","summary":"常去的那家店"}]}',
-      async (p) => (seen.push(p), p.includes('关系时间线') ? '## 2024 年' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'),
+      async (p) => (seen.push(p), p.includes('《纪事》') ? '## 2024 年' : p.includes('要产出的卷二') ? '## 关系定性\n老友' : '## 画像速写\n稳'),
       [msg(0, false, '早')],
       '老王',
       { statsNote }

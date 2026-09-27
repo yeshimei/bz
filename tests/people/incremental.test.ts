@@ -247,7 +247,7 @@ describe('buildFaceIncremental（假 ask，双卷三调用）', () => {
     // 三次文本调用：其人 → 我们 → 时间线（按 prompt 特征分支）
     const askPortrait = vi.fn(async (p: string) => {
       prompts.push(p);
-      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('《纪事》')) return '## 2024 年';
       if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
       return '## 画像速写\n稳';
     });
@@ -328,7 +328,7 @@ describe('buildFaceIncremental（假 ask，双卷三调用）', () => {
   it('时间线失败不阻断双卷；空消息 / 空卷一 / 空卷二抛错', async () => {
     const { askExtract, askPortrait } = setupAsk();
     const flaky = vi.fn(async (p: string) => {
-      if (p.includes('关系时间线')) throw new Error('模型抽风');
+      if (p.includes('《纪事》')) throw new Error('模型抽风');
       if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
       return '## 画像速写\n稳';
     });
@@ -341,7 +341,7 @@ describe('buildFaceIncremental（假 ask，双卷三调用）', () => {
     await expect(buildFaceIncremental(askExtract, async () => '   ', [msg(0)], '老王', undefined)).rejects.toThrow('卷一《其人》生成为空');
     await expect(
       buildFaceIncremental(askExtract, async (p) => (p.includes('要产出的卷二') ? '   ' : '## 画像速写\n稳'), [msg(0)], '老王', undefined)
-    ).rejects.toThrow('卷二《我们》生成为空');
+    ).rejects.toThrow('卷二《相交》生成为空');
   });
 
   it('mediaNote 传入其人 / 我们 / 时间线 prompt（issue 445）', async () => {
@@ -378,7 +378,7 @@ describe('buildFaceIncremental（假 ask，双卷三调用）', () => {
     );
     const askPortrait = vi.fn(async (p: string) => {
       prompts.push(p);
-      if (p.includes('关系时间线')) return '## 2024 年';
+      if (p.includes('《纪事》')) return '## 2024 年';
       if (p.includes('要产出的卷二')) return '## 关系定性\n稳';
       return '## 画像速写\n稳';
     });

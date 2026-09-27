@@ -1,4 +1,4 @@
-/* 源指纹 93615739f1bfdb3a · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fd0ae9198fe78b8a · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -280,9 +280,9 @@ var BZR_people = (() => {
       case "person":
         return "正在生成《其人》…";
       case "bond":
-        return "正在生成《我们》…";
+        return "正在生成《相交》…";
       case "chronicle":
-        return "正在生成关系时间线…";
+        return "正在生成《纪事》…";
       default:
         return null;
     }
@@ -505,7 +505,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   var FOLD_TITLES = [
     ["p", "其人", "卷一 · 人物画像与代表原话"],
     ["b", "相交", "卷二 · 关系画像"],
-    ["e", "纪事", "关系时间线（编年）+ 交往事件（按月）"]
+    ["e", "纪事", "编年 + 按月交往事件"]
   ];
   function foldDetailHead(p, media, opts) {
     var _a, _b;

@@ -1,9 +1,9 @@
 // @vitest-environment node
 /**
  * 画谱档案提炼编排测试（issue 487）：生成任务引擎（jobs.ts）在 chronicle 段内、
- * 关系时间线之后追加档案提炼的行为——
+ * 《纪事》之后追加档案提炼的行为——
  *   · 素材齐时提炼被调用（asks.portrait 通道），job.aiProfile 落值且随 job 段落保库记录；
- *   · 手填档案以「已知档案（不要覆盖）」进 prompt；
+ *   · 手填档案以「不要覆盖」声明进 prompt；
  *   · 提炼失败不阻断画谱主流程：任务仍 done，aiProfile 缺省；
  *   · 四类素材（事件 / 原话 / 场景 / 特质）全空则整段跳过，不烧那次调用。
  * 测试数据全构造，不含真实聊天内容。
@@ -57,7 +57,7 @@ function makeAskPortrait(opts: { profileReply?: string; profileFail?: boolean; s
       if (opts.profileFail) throw new Error('档案提炼崩了');
       return opts.profileReply ?? PROFILE_JSON;
     }
-    if (p.includes('关系时间线')) return '## 2024 年';
+    if (p.includes('《纪事》')) return '## 2024 年';
     if (p.includes('要产出的卷二')) return '## 关系定性\n构造我们';
     return '## 画像速写\n构造画像';
   });
@@ -147,7 +147,7 @@ describe('画谱档案提炼（issue 487）', () => {
     expect(job?.status).toBe('done');
     // 档案提炼走了画像通道，且排在时间线 prompt 之后
     const profIdx = seen.findIndex((p) => p.includes('请推断档案缺失字段'));
-    const chronIdx = seen.findIndex((p) => p.includes('关系时间线'));
+    const chronIdx = seen.findIndex((p) => p.includes('《纪事》'));
     expect(profIdx).toBeGreaterThan(chronIdx);
     expect(profIdx).toBeGreaterThanOrEqual(0);
     // aiProfile 落值（新维度齐全）+ 阶段仍报 chronicle 不新增
@@ -165,7 +165,7 @@ describe('画谱档案提炼（issue 487）', () => {
     expect(rec?.job?.aiProfile).toMatchObject({ nickname: '老猫' });
   });
 
-  it('手填档案以「已知档案（不要覆盖）」进提炼 prompt', async () => {
+  it('手填档案以「不要覆盖」声明进提炼 prompt', async () => {
     const msgs = [m(1), m(2), m(3)];
     await seedStore(msgs);
     await seedPerson({ birthday: '1990-01-01', job: '设计师' });
@@ -178,7 +178,7 @@ describe('画谱档案提炼（issue 487）', () => {
     });
     await whenIdle();
     const profPrompt = seen.find((p) => p.includes('请推断档案缺失字段'));
-    expect(profPrompt).toContain('已知档案（用户手填，不要覆盖也不要重复推断）：生日 1990-01-01；职业 设计师');
+    expect(profPrompt).toContain('我已经自己填过的档案（不要覆盖也不要重复推断）：生日 1990-01-01；职业 设计师');
   });
 
   it('提炼失败不阻断：任务仍 done、双卷照落，aiProfile 缺省', async () => {

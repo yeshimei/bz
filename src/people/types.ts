@@ -227,20 +227,20 @@ export interface ImportRecord {
 }
 
 /**
- * 脸谱（AI 生成产物，重新导入可覆盖重画；issue 455 起拆双卷：《其人》person + 《我们》bond）。
+ * 脸谱（AI 生成产物，重新导入可覆盖重画；issue 455 起拆双卷：《其人》person + 《相交》bond）。
  * 读侧一律走 personOf / bondOf 兼容读单源，不直摸字段。
  */
 export interface FaceDigest {
   /** 卷一《其人》人物画像 markdown——受限语法：## 小节 / - 列表 / **粗体** / > 引用块（ui 层迷你渲染器消费）；旧数据无此字段 */
   person?: string;
-  /** 卷二《我们》关系画像 markdown（语法同卷一）；旧数据无此字段 */
+  /** 卷二《相交》关系画像 markdown（语法同卷一）；旧数据无此字段 */
   bond?: string;
   /** 旧单卷画像（issue 455 前的形态）：兼容读保留，重画后不再写入 */
   portrait?: string;
   events: FaceEvent[];
   /** 画像引用的代表性原话（证据层；旧数据无此字段） */
   quotes?: QuoteItem[];
-  /** 关系时间线（编年史 markdown，从认识到现在；旧数据无此字段） */
+  /** 《纪事》（编年史 markdown，从认识到现在；旧数据无此字段） */
   chronicle?: string;
   /** 提炼出的特质标签（口头禅 / 典型说话方式等关键词；旧数据无此字段） */
   traits?: string[];

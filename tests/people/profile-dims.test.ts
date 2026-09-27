@@ -109,13 +109,13 @@ describe('buildProfileExtractPrompt 契约（issue 487）', () => {
       '{"birthday":"","nickname":"","metVia":"","metAt":"","hometown":"","job":"","tags":[],"note":"","personality":"","interests":[],"habits":"","recentLife":"","quote":"","likes":[],"dislikes":[],"relationships":[{"who":"","relation":""}],"importantDates":[{"date":"","what":""}]}'
     );
     expect(prompt).toContain('没有证据的字段给空串 / 空数组，绝不编造');
-    expect(prompt).toContain('已知档案（用户手填，不要覆盖也不要重复推断）：生日 1994-02-14；职业 设计师');
+    expect(prompt).toContain('我已经自己填过的档案（不要覆盖也不要重复推断）：生日 1994-02-14；职业 设计师');
     expect(prompt).toContain('【交往事件】'); // 素材原文进 prompt
   });
 
   it('无 known 不出声明段；素材为空仍出契约与规则', () => {
     const prompt = buildProfileExtractPrompt('老王', '', undefined);
-    expect(prompt).not.toContain('已知档案');
+    expect(prompt).not.toContain('我已经自己填过的档案');
     expect(prompt).toContain('请推断档案缺失字段');
     expect(prompt).toContain('绝不编造');
   });
