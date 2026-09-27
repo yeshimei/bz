@@ -152,14 +152,15 @@ export function normalizeFetchIntervalMin(raw: unknown): number {
   return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
 }
 
-/** RSSHub 实例地址容错归一（ADR-0209）：trim、补 http(s) 前缀（用户漏敲协议时兜底）、
- *  去尾斜杠；形状仍不合法（含空白/非 http 开头）→ null（调用方回退默认） */
+/** RSSHub 实例地址容错归一（ADR-0209）：trim、补 https 前缀（用户漏敲协议时兜底，须像 host）、
+ *  去尾斜杠；形状仍不合法（含空白/非 host 形状）→ null（调用方回退默认） */
 export function normalizeRsshubInstance(raw: unknown): string | null {
   let t = String(raw ?? '').trim();
   if (!t) return null;
   if (!/^https?:\/\//i.test(t)) {
     if (/^\/\/\S+$/.test(t)) t = 'https:' + t;
-    else if (/^[a-z0-9][a-z0-9.-]*\S*$/i.test(t) && !/\s/.test(t)) t = 'https://' + t;
+    // host 形状才补协议（防 ftp://x、mailto:a 之类被拼成 https://ftp://x 怪串）
+    else if (/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+(:\d+)?(\/\S*)?$/i.test(t)) t = 'https://' + t;
     else return null;
   }
   t = t.replace(/\/+$/, '');

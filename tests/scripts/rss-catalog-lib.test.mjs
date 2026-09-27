@@ -206,6 +206,11 @@ describe('模板解析与填参（全参数化核心）', () => {
       .toBe('https://a.example/bilibili/user/video/' + encodeURIComponent('张 三') + '/0');
     expect(buildRouteUrl('https://a.example', '/x/:must', {})).toBe(''); // 必选空 → 拼不出
     expect(buildRouteUrl('bad', '/x', {})).toBe('');
+    // 守卫（评审 P1-2/P2-5）：正则尾巴含 / 的参数段、乱序可选段
+    expect(buildRouteUrl('https://a.example', '/npm/package/:name{(@x/)?y}', { name: 'vue' })).toBe('');
+    expect(buildRouteUrl('https://a.example', '/x/:category?/:type?', { type: 'day' })).toBe('');
+    expect(buildRouteUrl('https://a.example', '/x/:category?/:type?', { category: 'a', type: 'day' }))
+      .toBe('https://a.example/x/a/day');
   });
 
   it('reverseTemplateExample：示例反解预填；段数不齐回空', () => {

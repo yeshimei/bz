@@ -514,7 +514,7 @@ async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: 
     const catalog = await loadRssCatalog(getApp());
     const hit = catalog?.feeds.find((f) => f.via === input);
     if (!hit) {
-      notice('源库未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选', 'error');
+      notice('源库尚未下载或未收录该路由，可粘贴完整订阅地址，或到「源库」页签挑选', 'error');
       return;
     }
     const st = await readDataSourceState();
@@ -584,12 +584,19 @@ let rssRouteOpen = false;
 /** close 句柄外提（CB10/A1）：域卸载兜底可达 */
 let rssRouteClose: (() => void) | null = null;
 
-/** 必填参数缺 → null；拼出完整地址 */
+/** 必填参数缺 → missing 列表；buildRouteUrl 拼不出（乱序可选/占位残留）→ url 空 */
 function routeFormPreview(instance: string, feed: RssCatalogFeed, values: Record<string, string>): { url: string; missing: string[] } {
   const missing = parseRouteTemplate(feed.via || '')
     .filter((p) => !p.optional && !String(values[p.name] || '').trim())
     .map((p) => p.name);
   return { url: missing.length ? '' : buildRouteUrl(instance, feed.via || '', values), missing };
+}
+
+/** 预览行文案：拼出 → 地址；必选缺 → 缺哪些；乱序/形状怪 → 按顺序重填提示 */
+function routePreviewText(r: { url: string; missing: string[] }): string {
+  if (r.url) return r.url;
+  if (r.missing.length) return `必填参数：${r.missing.join('、')}`;
+  return '请按模板顺序填写参数（可选参数只能连续省略尾段）';
 }
 
 /**
@@ -603,7 +610,10 @@ export function openRssRouteFormModal(opts: RssRouteFormOptions): void {
   rssRouteOpen = true;
   let handle: { unregister(): void } | null = null;
   let stillBtn: HTMLButtonElement | null = null;
+  let closed = false; // P1：试拉在途（最长 10s）关窗后，异步续体不得再写库/弹通知/动已摘除的 DOM
   function close(): void {
+    if (closed) return;
+    closed = true;
     rssRouteClose = null;
     mask.remove();
     popup.remove();
@@ -650,7 +660,7 @@ export function openRssRouteFormModal(opts: RssRouteFormOptions): void {
   preview.className = 'bz-rss-route-preview';
   const renderPreview = (): void => {
     const r = routeFormPreview(instance, feed, values);
-    preview.textContent = r.url || `必填参数：${r.missing.join('、')}`;
+    preview.textContent = routePreviewText(r);
     preview.classList.toggle('is-missing', !r.url);
     confirmBtn.disabled = !r.url;
     if (stillBtn) stillBtn.disabled = !r.url;
@@ -701,9 +711,11 @@ export function openRssRouteFormModal(opts: RssRouteFormOptions): void {
   btns.append(confirmBtn, cancelBtn);
   content.appendChild(btns);
 
-  /** 入库 + 收尾（试拉成功与「仍要订阅」共用） */
+  /** 入库 + 收尾（试拉成功与「仍要订阅」共用）。关窗后到达的续体静默放弃 */
   const doSubscribe = async (url: string, title: string): Promise<boolean> => {
+    if (closed) return false;
     const outcome = await addRssFeed(url, title || undefined);
+    if (closed) return false;
     if (outcome === 'added' || outcome === 'exists') {
       notice(outcome === 'exists' ? '该 RSS 源已在订阅列表中' : `已订阅 ${title || url}`, outcome === 'exists' ? 'info' : 'success');
       opts.onSubscribed();
@@ -722,6 +734,7 @@ export function openRssRouteFormModal(opts: RssRouteFormOptions): void {
     confirmBtn.textContent = '试拉中…';
     void (async () => {
       const fetched = await fetchRssFeedTitle(r.url);
+      if (closed) return; // 试拉在途被关窗：静默放弃
       if (fetched !== null) {
         await doSubscribe(r.url, fetched || feed.title); // feed 自带标题优先，回退目录名
         return;
@@ -1148,4 +1161,5 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
 export function unloadManagerModals(): void {
   upManagerClose?.();
   rssManagerClose?.();
+  rssRouteClose?.();
 }

@@ -333,6 +333,18 @@ describe('RSSHub 路由纯函数（ADR-0209 全参数化）', () => {
     expect(buildRouteUrl('https://my.example', template.via, {})).toBe(''); // uid 必选空
   });
 
+  it('buildRouteUrl 守卫（评审 P1-2/P2-5）：正则尾巴含 / 的参数段与乱序可选段拼不出', () => {
+    // npm 包名段：正则尾巴含 /，split 切断后无法替换 → 不得产出含占位的垃圾地址
+    const npm = '/npm/package/:name{(@[a-z0-9-~][a-z0-9-._~]*/)?[a-z0-9-~][a-z0-9-._~]*}';
+    expect(buildRouteUrl('https://my.example', npm, { name: 'vue' })).toBe('');
+    // 连续可选段乱序填：`/:category?/:type?` 只填 type 留空 category 会静默错绑
+    expect(buildRouteUrl('https://my.example', '/x/:category?/:type?', { type: 'day' })).toBe('');
+    // 填前空后（y 在 x 之后有值、x 也有值）合法；填 x 空 y 也空剥段合法
+    expect(buildRouteUrl('https://my.example', '/x/:category?/:type?', { category: 'a', type: 'day' }))
+      .toBe('https://my.example/x/a/day');
+    expect(buildRouteUrl('https://my.example', '/x/:category?/:type?', {})).toBe('https://my.example/x');
+  });
+
   it('reverseTemplateExample：示例反解预填值（表单默认值素材）', () => {
     expect(reverseTemplateExample(template.via, '/bilibili/user/video/2267573')).toEqual({ uid: '2267573' });
     expect(reverseTemplateExample('/a/:x', '/b/1')).toEqual({});

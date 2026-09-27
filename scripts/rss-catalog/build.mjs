@@ -154,7 +154,7 @@ fs.writeFileSync(path.join(HERE, 'liveness-report.json'), JSON.stringify(report,
 process.stdout.write(
   `出版 downloads/rss-catalog.json：收录 ${catalog.feeds.length} 条（直连 ${catalog.feeds.length - viaKept}，路由 ${viaKept}）` +
     `（剔除 ${culled.length}，存疑保留 ${unsure.length}，去重 ${duplicates}，上游无 RSS ${noFeed}）\n` +
-    `RSSHub 筛选剔除：要配置 ${rsshubDropped?.needConfig ?? 0}，要无头浏览器 ${rsshubDropped?.needPuppeteer ?? 0}，易反爬 ${rsshubDropped?.antiCrawler ?? 0}，无 example ${rsshubDropped?.noExample ?? 0}，example 含参数占位 ${rsshubDropped?.paramExample ?? 0}\n` +
+    `RSSHub 筛选剔除：要配置 ${rsshubDropped?.needConfig ?? 0}，要无头浏览器 ${rsshubDropped?.needPuppeteer ?? 0}，易反爬 ${rsshubDropped?.antiCrawler ?? 0}，形状异常 ${rsshubDropped?.malformed ?? 0}\n` +
     `归类覆盖：有明确大类 ${assigned}，仅综合 ${catalog.feeds.length - assigned}\n` +
     `报告：scripts/rss-catalog/liveness-report.json\n下一步：pnpm manifest 重出统一清单\n`,
 );

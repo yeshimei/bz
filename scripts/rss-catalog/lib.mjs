@@ -187,7 +187,9 @@ export function isParametrizedTemplate(template) {
 /**
  * 实例 + 路由模板 + 参数值 → 完整 feed 地址（ADR-0209 全参数化：订阅=拷贝用户自己拼出的 URL）。
  * 参数值按段 encode（值内的 / 保留段结构——RSSHub 通配段如 category=sy/gzdt_210283 合法）；
- * 可选参数空值整段剥掉；必选参数空值拼不出 → 返回空串交调用方拦。
+ * 可选参数空值整段剥掉；必选参数空值、可选参数乱序填（前空后有值——位置歧义静默错绑）、
+ * 正则尾巴含斜杠的参数段（split 切断后无法替换，如 npm 包名段的 `(@x/)?y` 形状）→ 返回空串交调用方拦。
+ * 与 src/core/rss-catalog.ts 的同名纯函数同口径（测试对齐）。
  */
 export function buildRouteUrl(instance, template, values) {
   const base = String(instance || '').trim().replace(/\/+$/, '');
@@ -195,22 +197,34 @@ export function buildRouteUrl(instance, template, values) {
   if (!/^https?:\/\//i.test(base) || !tpl.startsWith('/') || /\s/.test(tpl)) return '';
   const segRe = /^:([a-zA-Z_][a-zA-Z0-9_]*)(\{[^}]*\})?(\?)?$/;
   const out = [];
+  let sawOptionalEmpty = false;
+  const filled = new Set();
   for (const seg of tpl.split('/')) {
     if (!seg) continue;
     const m = seg.match(segRe);
     if (!m) {
+      if (seg.startsWith(':')) return ''; // 正则尾巴含 / 的参数段被切断
       out.push(seg);
       continue;
     }
     const v = String(values?.[m[1]] ?? '').trim();
     if (v) {
+      if (m[3] === '?' && sawOptionalEmpty) return ''; // 前可选空后有值：位置歧义静默错绑
+      filled.add(m[1]);
       out.push(v.split('/').map((part) => encodeURIComponent(part)).join('/'));
       continue;
     }
-    if (m[3] === '?') continue;
+    if (m[3] === '?') {
+      sawOptionalEmpty = true;
+      continue;
+    }
     return '';
   }
-  return `${base}/${out.join('/')}`;
+  const result = `${base}/${out.join('/')}`;
+  for (const name of filled) {
+    if (result.includes(`:${name}`)) return '';
+  }
+  return result;
 }
 
 /** 从 example 反解参数预填值（表单默认值）：模板段与示例段按 / 对位取值。
