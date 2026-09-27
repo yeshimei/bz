@@ -9,6 +9,7 @@
     "changelog": "node scripts/_gen-changelog.mjs",
     "skin-pack": "node scripts/build-skin-pack.mjs",
     "catalog": "node scripts/build-catalog.mjs",
+    "manifest": "node scripts/build-manifest.mjs",
     "split-skins": "node scripts/split-domain-skins.mjs",
     "test": "vitest run",
     "test:watch": "vitest",

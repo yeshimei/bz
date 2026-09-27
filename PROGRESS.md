@@ -4,7 +4,7 @@
 
 ## Issue 494 — 在线资源机制四改：清单驱动行集合 + 组级全部更新 + doc 版本区间 + 条目体积（ADR-0207）
 
-**状态：门禁**（2026-09-27，用户采纳 `review-online-resources.md` 第 1–5 条；收尾合并/主仓构建待用户确认）
+**状态：已交付**（2026-09-27，用户采纳 `review-online-resources.md` 第 1–5 条）
 
 - [x] 第 1 条（纲）：「在线资源」组改**清单驱动**——删 `FALLBACK_ROWS`（写死的四行），
       行集合与行序改由清单顶层 `rowOrder` 决定（保留 id `'skins'` = 皮肤聚合行）；
@@ -33,8 +33,13 @@
 - [x] `downloads/manifest.json` 重出（新增 `size` 与 `rowOrder`）——不重出则体积与行序不生效，`pnpm manifest --check` 会标不同步
 - [x] 门禁（worktree）：`pnpm exec tsc --noEmit` 0 错 + 全量 **545 文件 / 8156 用例、8155 绿**——
       1 例 `tests/memo/ui.test.ts`「行内勾选完成」为**环境计时抖动**（该文件单独跑 60/60 全绿，且不引用原型产物）；
-      前一轮全量同一位置落在 `tests/pomodoro/ui.test.ts` 超时、干净主仓亦可复现同型——**失败项每轮游走**，与源码无关
-- [ ] 收尾：合并回主仓 + `pnpm manifest` / `skin-pack` / `changelog` 重出 + 主仓构建部署（待用户确认）
+      前一轮全量同一位置落在 `tests/pomodoro/ui.test.ts` 超时、干净主仓亦可复现同型——**失败项每轮游走**，与源码无关；
+      主仓同口径复跑：`tsc` 0 错 + **545 文件 / 8156 用例、8155 绿**（该轮落在 `tests/people/generate-ui.test.ts`，单独跑 25/25 全绿）。
+      三轮全量的失败项分别是 pomodoro / memo / people，**互不相同且各自单独跑全绿**——据此定性为机器负载抖动
+- [x] 收尾：合并回主仓（fast-forward 至 `2b8a0551`）+ `skin-pack` / `changelog` / `catalog` / `manifest` 按序重出
+      + 主仓构建部署（`pnpm run build`，同步 main.js）
+- [x] 顺带补齐：`package.json` 从来就没有 `manifest` 脚本（`skin-pack` / `catalog` / `changelog` 都有），
+      而 ADR-0203 / 0204 / 0207 与 CONTEXT.md 一直写「跑 `pnpm manifest`」——补 `"manifest": "node scripts/build-manifest.mjs"`，让文档里的发布链真能跑
 
 
 ## Issue 325 — 自动关联迁入知识盒：三盒为界、三盒恒含索引（ADR-0141 / ADR-0142）
