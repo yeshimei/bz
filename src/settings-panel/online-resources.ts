@@ -62,6 +62,9 @@ let currentGroup: GroupMeta | null = null;
 let syncRunning: Promise<void> | null = null;
 /** 合流窗内又来了请求（本轮跑完立刻补一轮：收尾态必须落在最后一次请求之后的磁盘事实上） */
 let syncDirty = false;
+/** 动作进行中的资源 id（schema 面置忙，见 runAction）：重算不得把它们的行对象改写回可点——
+ *  批量下载逐条落盘、每套都触发重算，不禁写就把「动作中禁用」当场抹掉（切域重渲即重复点击面）。 */
+const busyIds = new Set<string>();
 
 /** 重置会话状态（测试用；生产进程内随会话存续无需重置） */
 export function resetOnlineResourcesState(): void {
@@ -70,6 +73,7 @@ export function resetOnlineResourcesState(): void {
   currentGroup = null;
   syncRunning = null;
   syncDirty = false;
+  busyIds.clear();
 }
 
 /** 行渲染所需的全部事实（一次算齐） */
@@ -197,8 +201,15 @@ let subscribed = false;
 function subscribeOnce(): void {
   if (subscribed) return;
   subscribed = true;
-  // 事件面是 fire-and-forget：重算失败吞掉（不冒未处理拒绝），下个刷新通道会再算
-  onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncGroupRows().catch(() => {}));
+  onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => void syncLogged());
+}
+
+/** 同步出口（失败只留档不上抛）：后台事件 / 面板开启 / 动作收尾三面都是「算了就好」——
+ *  吞掉未处理拒绝，但留一条 warn，别让「按钮没翻」变成无声谜案。 */
+function syncLogged(): Promise<void> {
+  return syncGroupRows().catch((e) => {
+    console.warn('[bz] 在线资源状态同步失败:', (e as Error)?.message || e);
+  });
 }
 
 /** 后台核对清单；成败都 syncGroupRows——失败态就在补丁里呈现。
@@ -212,16 +223,20 @@ async function checkInBackground(): Promise<void> {
     checkFailed = true;
     console.warn('[bz] 在线资源清单核对失败:', (e as Error)?.message || e);
   }
-  await syncGroupRows().catch(() => {});
+  await syncLogged();
 }
 
 /** 检查更新行动作：转圈 → 核对 → 门控重求值（行按需消失/留下 + 组徽标重算） */
 async function retryCheck(ctx: SettingsRowContext): Promise<void> {
   const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
+  const retryRow = currentGroup?.retryRow;
   setRowBtnState(btn, 'busy', '检查更新');
-  await checkInBackground();
-  // 摘转圈：补丁刻意绕过 busy 钮（见 patchRenderedGroup），不摘会一直转
-  setRowBtnState(btn, 'idle', currentGroup?.retryRow.buttonText ?? '检查更新');
+  if (retryRow) retryRow.disabled = true; // schema 面同步置忙：动作中重开的钮也点不动（busy 类只是 DOM 瞬态）
+  await checkInBackground(); // 内部走 syncLogged：显隐/文案此刻已落定
+  // 摘转圈 + 补一次补丁：上面那轮补丁把 busy 钮跳过了，摘后按刚落定的行态写回
+  if (retryRow) retryRow.disabled = undefined;
+  setRowBtnState(btn, 'idle', retryRow?.buttonText ?? '检查更新');
+  patchRenderedGroup();
   ctx.refreshVisibility();
 }
 
@@ -259,6 +274,7 @@ async function syncOnce(): Promise<void> {
   meta.retryRow.buttonText = checkFailed ? '重试' : '检查更新';
 
   for (const { id, row } of meta.entries) {
+    if (busyIds.has(id)) continue; // 动作中：行态留给动作收尾那一轮写（此时写会把置忙抹掉）
     const st = states.find((s) => s.id === id);
     if (!st) continue;
     const btn = rowButton(st);
@@ -309,11 +325,14 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   const app = getApp();
   const manifest = await cachedManifest(app);
   if (!manifest) {
-    await syncGroupRows().catch(() => {}); // 清单已不可用（禁用态理论不可达）→ 就地校正
+    await syncLogged(); // 清单已不可用（禁用态理论不可达）→ 就地校正
     return;
   }
   const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
+  const row = currentGroup?.entries.find((e) => e.id === id)?.row;
   setRowBtnState(btn, 'busy', btn?.textContent ?? '下载');
+  if (row) row.disabled = true; // schema 面同步置忙：动作中重开的钮也点不动（busy 类只是 DOM 瞬态）
+  busyIds.add(id); // 置忙期间重算不得改写本行（批量下载逐条事件扑面，见 syncOnce）
   try {
     if (id === 'skins') {
       const r = await downloadSkinUpdates(app, manifest);
@@ -326,7 +345,9 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   } catch (e) {
     notice(e instanceof Error ? e.message : String(e), 'error');
   }
-  // 摘转圈：补丁刻意绕过 busy 钮（见 patchRenderedGroup），不摘会一直转
-  setRowBtnState(btn, 'idle', btn?.textContent ?? '下载');
-  await syncGroupRows().catch(() => {}); // 动作完成（成败皆然）→ 磁盘事实已变，行对象与 DOM 一并翻转
+  busyIds.delete(id); // 撤忙要在同步之前：下面那轮才把本行按磁盘事实写回
+  await syncLogged(); // 动作完成（成败皆然）→ 磁盘事实已变，行对象落定真态（补丁此刻跳过 busy 钮）
+  // 摘转圈 + 补一次补丁：上面那轮补丁把动作钮跳过了，摘后按刚落定的行态写回（不留「旧文案可点」窗口）
+  setRowBtnState(btn, 'idle', row?.buttonText ?? '下载');
+  patchRenderedGroup();
 }

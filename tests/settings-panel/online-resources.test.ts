@@ -211,6 +211,27 @@ describe('失败态（半自动铁则的 UI 面）', () => {
     expect(rowBtn(el, 1).textContent).toBe('下载');
     expect(rowBtn(el, 1).disabled).toBe(false);
   });
+
+  it('重试再失败：转圈摘掉、按钮回到「重试」可再点（不卡 busy）', async () => {
+    const vault = newVault();
+    routeFetch({ [REMOTE_MANIFEST]: new Error('ENOTFOUND'), [BACKUP_MANIFEST]: new Error('ETIMEDOUT') });
+
+    const el = await renderGroup();
+    const btn = rowBtn(el, 0);
+    expect(btn.textContent).toBe('重试');
+
+    btn.click();
+    await tick(80);
+    expect(btn.classList.contains('bz-rowbtn--busy')).toBe(false);
+    expect(btn.textContent).toBe('重试');
+    expect(btn.disabled).toBe(false);
+
+    btn.click(); // 第二击同样失败：仍要回到可再点的「重试」，不能停成禁用
+    await tick(80);
+    expect(btn.classList.contains('bz-rowbtn--busy')).toBe(false);
+    expect(btn.textContent).toBe('重试');
+    expect(btn.disabled).toBe(false);
+  });
 });
 
 describe('动作（下载只听用户点）', () => {
@@ -353,5 +374,52 @@ describe('补丁边界（issue 492 review：与动作态/搜索态的交界）',
     await tick(40);
     expect(desc.textContent).toBe('已是最新版本');
     expect(desc.dataset.spOrig).toBe('已是最新版本'); // 快照跟着走：下次敲键按新文还原
+  });
+
+  it('动作中重渲（切域再回来）：新渲染的钮按 schema 禁用态重建，不给重复点击面', async () => {
+    const vault = newVault();
+    const entry = docEntry('changelog', HTML_V2);
+    vault.files.set(MANIFEST_CACHE_PATH, manifestJson([entry], []));
+    let release: () => void = () => {};
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    vi.mocked(requestUrl).mockImplementation((async (req: { url: string }) => {
+      if (req.url === REMOTE_MANIFEST) return { status: 200, text: manifestJson([entry], []) } as any;
+      if (req.url.includes('bz-changelog.html')) {
+        await gate; // 下载挂起：动作停在 busy 窗口内
+        return { status: 200, text: HTML_V2 } as any;
+      }
+      throw new Error('unmocked url: ' + req.url);
+    }) as any);
+
+    const group = await onlineResourcesGroup();
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    renderPanelSchema(el, { groups: [group] });
+    await tick(40);
+    expect(rowBtn(el, 1).textContent).toBe('下载');
+
+    rowBtn(el, 1).click();
+    await tick(20);
+    expect(rowBtn(el, 1).classList.contains('bz-rowbtn--busy')).toBe(true);
+
+    // 批量下载是逐条落盘：动作期间来一发事件（重算不得把置忙抹掉）
+    await writeAssetText({ vault } as any, 'bz-manual.html', HTML_V1);
+    await tick(40);
+    expect(rowBtn(el, 1).classList.contains('bz-rowbtn--busy')).toBe(true);
+
+    // 切域再回来 = 同一组对象重渲（新 DOM，busy 类不在）——禁用态必须来自行对象
+    const el2 = document.createElement('div');
+    document.body.appendChild(el2);
+    renderPanelSchema(el2, { groups: [group] });
+    await tick(20);
+    expect(rowBtn(el2, 1).classList.contains('bz-rowbtn--busy')).toBe(false);
+    expect(rowBtn(el2, 1).disabled).toBe(true);
+
+    release();
+    await tick(60);
+    expect(rowBtn(el2, 1).textContent).toBe('已下载'); // 动作收尾按新落定的行态写回
+    expect(rowBtn(el2, 1).disabled).toBe(true);
   });
 });

@@ -85,12 +85,32 @@ issue 480 把三项在线下载收进设置面板通用域时，组内用 `type:
 
 另补：事件面/后台面的同步失败一律吞掉（不冒未处理拒绝，下个刷新通道再算）。
 
+### 二轮复检（同日，子代理复审）
+
+三条修订本身通过（时序推演 + 实跑），但复审指出两条**中级残余**，一并堵：
+
+4. **busy 只是 DOM 瞬态**：「动作中切域再回来」按行对象重建按钮，busy 类不在 → 26 套皮肤
+   批量下载时仍有重复点击面。修法：动作开始即把**行对象 `disabled` 置忙**并登记 `busyIds`
+   （schema 面真相，重渲也点不动）；重算**跳过置忙行**——批量下载逐条事件扑面，光置忙不禁写
+   会当场被抹掉（自审时揪出，由「动作中重渲」用例钉住，删任一处即红）。
+5. **摘转圈早于同步落地**：旧序「摘转圈 → 同步」留有「旧文案可点」的窗口，同步若失败
+   （被 `.catch` 吞掉）旧态滞留。修法：**先同步落地再摘**，摘后补一次 `patchRenderedGroup()`
+   写回被跳过的钮（busy 期间全程禁用，摘与落定同一轮完成，零窗口）。另：`.catch(() => {})`
+   改 `syncLogged()`——失败留一条 `console.warn`，不再全静默。
+
+## 已知边界（二轮复检，已知不修）
+
+- 清单自身的落盘事件（`download-manifest.ts` 核对成功写缓存）也触发一轮全量重扫——
+  有 60s 节流 + 单飞合流兜着，不按 payload 过筛；
+- 描述真变更时仍写 `textContent`（搜索高亮的 `<mark>` 拍平到下个按键；文案本身已同源刷新）；
+- 补丁不写行名 DOM（清单改名要等下次重渲）。
+
 ## 测试
 
-- `tests/settings-panel/online-resources.test.ts` 重写（13 例）：真渲染器 `renderPanelSchema`
-  验组形状（5 button 行）/ 状态机各态 / 失败态与重试恢复 / 动作后翻转 / 主题行套数描述 /
-  跨入口同步（`writeAssetText` 落盘 → 行按钮翻「已下载」）/ 补丁边界（busy 转圈不被事件
-  拍掉、描述变更同源刷新高亮快照）。
+- `tests/settings-panel/online-resources.test.ts` 重写（15 例）：真渲染器 `renderPanelSchema`
+  验组形状（5 button 行）/ 状态机各态 / 失败态与重试恢复（含「重试再失败不卡 busy」）/
+  动作后翻转 / 主题行套数描述 / 跨入口同步（`writeAssetText` 落盘 → 行按钮翻「已下载」）/
+  补丁边界（busy 转圈不被事件拍掉、动作中重渲按 schema 禁用、描述变更同源刷新高亮快照）。
 - `tests/core/settings-schema-ui.test.ts`：button 行 `disabled` 落位（禁用钮点不动）；
 - `tests/sp-contract-lock.test.ts`：通用域可见项数 8 → 7（button 行不计）。
 - `tests/smoke.test.ts`：在线资源组冒烟改 button 行口径（5 行；清单拉取失败 → 四资源行禁用
