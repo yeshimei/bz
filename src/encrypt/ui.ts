@@ -1404,6 +1404,9 @@ export class UIManager {
         if (success) {
           this.resetUnlockThrottle();
           motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
+          // issue 492 续：解锁成功即快照落盘（清单此刻已在内存）——硬退 / 重载 / 上锁之后，
+          // 下次解锁屏都有真实数字，不再依赖「经历一次上锁或走控制器卸载」
+          this.captureLockStats();
           done(true);
           const healMsg = this.dataManager.selfHealRolledBack > 0 ? '；上次未完成的加密已自动回滚，原文未动' : '';
           notice('解锁成功' + healMsg, 'success');

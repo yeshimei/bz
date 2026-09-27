@@ -358,8 +358,9 @@ def clean_sensevoice(raw: str):
 
 
 def load_transcribe_engine(engine: str, asr_model: str):
-    """按 --asr-engine 显式传参加载本地引擎（绝不回读插件设置文件）。缺依赖 / 加载失败 = 硬失败
-    + doctor 指引（模型权重首次运行由引擎自行下载，不是本工具的安装动作）。"""
+    """按 --asr-engine 显式传参加载本地引擎（绝不回读插件设置文件）。缺依赖 / 加载失败返回
+    None（issue 492 续：转写段软跳过，不再一票否决整场画谱——媒体 / 派生档 / 关联产物照常
+    保留，装好后重跑 bz-face prep 只补转写；模型权重首次运行由引擎自行下载）。"""
     step(f"加载转写引擎：{engine}（本地模型冷加载按分钟计，转写一个进程吃完全量）")
     try:
         if engine == "faster-whisper":
@@ -368,10 +369,11 @@ def load_transcribe_engine(engine: str, asr_model: str):
         from funasr import AutoModel
         return AutoModel(model="iic/SenseVoiceSmall", disable_update=True, device="cpu")
     except Exception as e:
-        fail_hard(
-            f"转写引擎（{engine}）加载失败：{e}。缺依赖先跑 bz-face doctor（转写组）；"
-            "媒体导出与派生档产物已保留，装好后重跑 bz-face prep 只补转写"
+        step(
+            f"转写引擎（{engine}）加载失败：{e}。本轮跳过转写（语音暂无文字）——"
+            "缺依赖先跑 bz-face doctor（转写组）；装好后重跑 bz-face prep 只补转写"
         )
+        return None
 
 
 # ---------------- 主流程 ----------------
@@ -700,7 +702,11 @@ def main() -> int:
         if jobs:
             ck(control_path, "transcribe")  # stop 已在手就别起引擎——模型冷加载按分钟计，不白付
             engine = load_transcribe_engine(args.asr_engine, args.asr_model)
-            for wav in jobs:
+            if engine is None:
+                # issue 492 续：引擎缺失软跳过（不再硬失败）——本轮语音保持无文字，画谱链继续
+                transcribe["fail"] = len(jobs)
+                progress("transcribe", 100)
+            for wav in ([] if engine is None else jobs):
                 ck(control_path, "transcribe")
                 try:
                     dur = wav_duration(wav)

@@ -54,6 +54,28 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
           },
           {
             type: 'select',
+            name: '转写引擎',
+            desc: '本地语音转文字模型（离线免费，与上方 AI 通道无关）；首次使用需 bz-face doctor 转写组装依赖，模型权重自动下载',
+            binding: { key: 'asrEngine' },
+            options: [
+              { value: 'sensevoice', label: 'SenseVoice（中文效果佳）' },
+              { value: 'faster-whisper', label: 'faster-whisper' },
+            ],
+          },
+          {
+            type: 'select',
+            name: 'Whisper 档位',
+            desc: '仅 faster-whisper 引擎生效',
+            binding: { key: 'asrWhisperModel' },
+            options: [
+              { value: 'small', label: 'small（默认）' },
+              { value: 'base', label: 'base（更快）' },
+              { value: 'medium', label: 'medium（更准更慢）' },
+              { value: 'large-v3', label: 'large-v3（最准最慢）' },
+            ],
+          },
+          {
+            type: 'select',
             name: '图片描述',
             desc: '有描述的图片以描述文本进时间线（chat.json 已回填，读文件为兼容兜底）；无描述只计数',
             binding: { key: 'peopleImageDescMode' },
