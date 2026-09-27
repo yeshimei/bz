@@ -9,6 +9,8 @@
     "changelog": "node scripts/_gen-changelog.mjs",
     "skin-pack": "node scripts/build-skin-pack.mjs",
     "catalog": "node scripts/build-catalog.mjs",
+    "rss-upstream": "node scripts/rss-catalog/fetch-upstream.mjs",
+    "rss-catalog": "node scripts/rss-catalog/build.mjs",
     "manifest": "node scripts/build-manifest.mjs",
     "split-skins": "node scripts/split-domain-skins.mjs",
     "test": "vitest run",

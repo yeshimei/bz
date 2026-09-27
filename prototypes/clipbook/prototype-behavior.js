@@ -1,5 +1,5 @@
-/* 源指纹 dc09c5854b3b5175 · 仓内输入 117 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 fabcdb093bba9959 · 仓内输入 122 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -5321,12 +5321,12 @@ var BZW_clipbook = (() => {
       const d = opts.defaultValue;
       return typeof d === "function" ? d() : d === void 0 ? [] : d;
     };
-    async function ensureDir(app) {
+    async function ensureDir2(app) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
       if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
     }
     async function createIfMissing(app, content) {
-      await ensureDir(app);
+      await ensureDir2(app);
       try {
         await app.vault.create(filePath, content);
         return true;
@@ -21430,6 +21430,471 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/core/sha256.ts
+  function toBytes(text) {
+    return new TextEncoder().encode(text);
+  }
+  function normalizeEol(text) {
+    return String(text != null ? text : "").replace(/\r\n?/g, "\n");
+  }
+  function sha256Hex(text) {
+    const bytes = toBytes(String(text != null ? text : ""));
+    const dataLen = bytes.length;
+    const padded = new Uint8Array((dataLen + 8 >> 6) + 1 << 6);
+    padded.set(bytes);
+    padded[dataLen] = 128;
+    const bitLen = dataLen * 8;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, Math.floor(bitLen / 4294967296), false);
+    view.setUint32(padded.length - 4, bitLen >>> 0, false);
+    let h0 = 1779033703, h1 = 3144134277, h2 = 1013904242, h3 = 2773480762;
+    let h4 = 1359893119, h5 = 2600822924, h6 = 528734635, h7 = 1541459225;
+    const w = new Uint32Array(64);
+    const rotr = (x, n) => (x >>> n | x << 32 - n) >>> 0;
+    for (let off = 0; off < padded.length; off += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(off + i * 4, false);
+      for (let i = 16; i < 64; i++) {
+        const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3) >>> 0;
+        const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10) >>> 0;
+        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
+      }
+      let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7;
+      for (let i = 0; i < 64; i++) {
+        const S1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+        const ch = (e & f ^ ~e & g) >>> 0;
+        const t1 = h + S1 + ch + K[i] + w[i] >>> 0;
+        const S0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+        const maj = (a & b ^ a & c ^ b & c) >>> 0;
+        const t2 = S0 + maj >>> 0;
+        h = g;
+        g = f;
+        f = e;
+        e = d + t1 >>> 0;
+        d = c;
+        c = b;
+        b = a;
+        a = t1 + t2 >>> 0;
+      }
+      h0 = h0 + a >>> 0;
+      h1 = h1 + b >>> 0;
+      h2 = h2 + c >>> 0;
+      h3 = h3 + d >>> 0;
+      h4 = h4 + e >>> 0;
+      h5 = h5 + f >>> 0;
+      h6 = h6 + g >>> 0;
+      h7 = h7 + h >>> 0;
+    }
+    return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, "0")).join("");
+  }
+  function textSha256(text) {
+    return sha256Hex(normalizeEol(text));
+  }
+  var K;
+  var init_sha256 = __esm({
+    "src/core/sha256.ts"() {
+      K = new Uint32Array([
+        1116352408,
+        1899447441,
+        3049323471,
+        3921009573,
+        961987163,
+        1508970993,
+        2453635748,
+        2870763221,
+        3624381080,
+        310598401,
+        607225278,
+        1426881987,
+        1925078388,
+        2162078206,
+        2614888103,
+        3248222580,
+        3835390401,
+        4022224774,
+        264347078,
+        604807628,
+        770255983,
+        1249150122,
+        1555081692,
+        1996064986,
+        2554220882,
+        2821834349,
+        2952996808,
+        3210313671,
+        3336571891,
+        3584528711,
+        113926993,
+        338241895,
+        666307205,
+        773529912,
+        1294757372,
+        1396182291,
+        1695183700,
+        1986661051,
+        2177026350,
+        2456956037,
+        2730485921,
+        2820302411,
+        3259730800,
+        3345764771,
+        3516065817,
+        3600352804,
+        4094571909,
+        275423344,
+        430227734,
+        506948616,
+        659060556,
+        883997877,
+        958139571,
+        1322822218,
+        1537002063,
+        1747873779,
+        1955562222,
+        2024104815,
+        2227730452,
+        2361852424,
+        2428436474,
+        2756734187,
+        3204031479,
+        3329325298
+      ]);
+    }
+  });
+
+  // src/core/remote-base.ts
+  function downloadRemotesFor(fileName) {
+    return REPO_BASES.map((b) => `${b}/downloads/${fileName}`);
+  }
+  var REPO_BASES;
+  var init_remote_base = __esm({
+    "src/core/remote-base.ts"() {
+      REPO_BASES = [
+        "https://raw.githubusercontent.com/yeshimei/bz/master",
+        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master"
+      ];
+    }
+  });
+
+  // src/core/remote-asset.ts
+  function remotesFor(fileName) {
+    return downloadRemotesFor(fileName);
+  }
+  function assetVaultPath(app, fileName) {
+    var _a;
+    const configDir = String(((_a = app.vault) == null ? void 0 : _a.configDir) || ".obsidian");
+    return `${configDir}/plugins/bz/${fileName}`;
+  }
+  function downloadsVaultPath(app, fileName) {
+    return assetVaultPath(app, `${DOWNLOADS_DIR}/${fileName}`);
+  }
+  async function ensureDir(app, relPath) {
+    var _a;
+    const adapter = (_a = app.vault) == null ? void 0 : _a.adapter;
+    if (!(adapter == null ? void 0 : adapter.mkdir)) return;
+    const slash = relPath.lastIndexOf("/");
+    if (slash <= 0) return;
+    let cur = "";
+    for (const part of relPath.slice(0, slash).split("/")) {
+      cur = cur ? `${cur}/${part}` : part;
+      try {
+        await adapter.mkdir(downloadsVaultPath(app, cur));
+      } catch (e) {
+      }
+    }
+  }
+  async function fetchAssetText(fileName, validate, label, unit = "页") {
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (!validate(text)) {
+          lastErr = `${url} 返回内容不是${label}${unit}`;
+          continue;
+        }
+        return text;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function writeAssetText(app, fileName, text) {
+    await ensureDir(app, fileName);
+    await app.vault.adapter.write(downloadsVaultPath(app, fileName), text);
+    emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
+  }
+  async function ensureAssetWithHash(app, fileName, expected, label) {
+    const want = String(expected || "").toLowerCase();
+    const cached = await readAsset(app, fileName);
+    if (cached !== null && (!want || textSha256(cached) === want)) return cached;
+    let lastErr = "";
+    for (const url of remotesFor(fileName)) {
+      try {
+        const res = await requestUrl({ url, method: "GET", throw: true });
+        const text = String(res.text || "");
+        if (want && textSha256(text) !== want) {
+          lastErr = `${url} 内容 sha256 不匹配（可能被篡改或版本错位）`;
+          continue;
+        }
+        await writeAssetText(app, fileName, text);
+        return text;
+      } catch (e) {
+        lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
+      }
+    }
+    throw new Error(`${label}下载失败：${lastErr}`);
+  }
+  async function hasAsset(app, fileName) {
+    try {
+      return await app.vault.adapter.exists(downloadsVaultPath(app, fileName));
+    } catch (e) {
+      return false;
+    }
+  }
+  async function readAsset(app, fileName) {
+    try {
+      if (!await hasAsset(app, fileName)) return null;
+      return await app.vault.adapter.read(downloadsVaultPath(app, fileName));
+    } catch (e) {
+      return null;
+    }
+  }
+  var DOWNLOADS_CHANGED_EVENT, DOWNLOADS_DIR;
+  var init_remote_asset = __esm({
+    "src/core/remote-asset.ts"() {
+      init_fake_obsidian();
+      init_sha256();
+      init_domain_bus();
+      init_remote_base();
+      DOWNLOADS_CHANGED_EVENT = "downloads:asset-changed";
+      DOWNLOADS_DIR = "downloads";
+    }
+  });
+
+  // src/core/download-manifest.ts
+  function normalizeSkinEntry(item) {
+    const e = item;
+    if (!e || typeof e.id !== "string" || !e.id) return null;
+    if (typeof e.domain !== "string" || !e.domain) return null;
+    if (typeof e.file !== "string" || !e.file) return null;
+    if (typeof e.sha256 !== "string" || !SHA_RE.test(e.sha256.toLowerCase())) return null;
+    return {
+      id: e.id,
+      domain: e.domain,
+      name: typeof e.name === "string" && e.name ? e.name : e.id,
+      file: e.file,
+      previewClass: typeof e.previewClass === "string" && e.previewClass ? e.previewClass : void 0,
+      since: typeof e.since === "string" && e.since ? e.since : void 0,
+      until: typeof e.until === "string" && e.until ? e.until : void 0,
+      size: typeof e.size === "number" && Number.isFinite(e.size) && e.size > 0 ? e.size : void 0,
+      sha256: e.sha256.toLowerCase()
+    };
+  }
+  function parseDownloadManifest(text) {
+    if (!text) return null;
+    let raw;
+    try {
+      raw = JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+    const obj = raw;
+    if (!obj || !Array.isArray(obj.docs) || !Array.isArray(obj.skins)) return null;
+    const docs = [];
+    for (const item of obj.docs) {
+      const e = item;
+      if (!e || typeof e.id !== "string" || !e.id) return null;
+      if (typeof e.name !== "string" || !e.name) return null;
+      if (typeof e.file !== "string" || !e.file) return null;
+      if (typeof e.sha256 !== "string" || !SHA_RE.test(e.sha256.toLowerCase())) return null;
+      docs.push({
+        id: e.id,
+        name: e.name,
+        file: e.file,
+        sha256: e.sha256.toLowerCase(),
+        since: typeof e.since === "string" && e.since ? e.since : void 0,
+        until: typeof e.until === "string" && e.until ? e.until : void 0,
+        size: typeof e.size === "number" && Number.isFinite(e.size) && e.size > 0 ? e.size : void 0
+      });
+    }
+    const skins = [];
+    for (const item of obj.skins) {
+      const e = normalizeSkinEntry(item);
+      if (!e) return null;
+      skins.push(e);
+    }
+    const version = typeof obj.version === "number" ? obj.version : 1;
+    let rowOrder;
+    if (obj.rowOrder !== void 0) {
+      if (Array.isArray(obj.rowOrder) && obj.rowOrder.every((x) => typeof x === "string" && x)) {
+        rowOrder = obj.rowOrder;
+      }
+    }
+    return { version, docs, skins, rowOrder };
+  }
+  async function cachedManifest(app) {
+    return parseDownloadManifest(await readAsset(app, MANIFEST_FILE));
+  }
+  async function refreshManifest(app) {
+    const previous = await cachedManifest(app);
+    const text = await fetchAssetText(
+      MANIFEST_FILE,
+      (t) => parseDownloadManifest(t) !== null,
+      "下载清单",
+      ""
+    );
+    const manifest = parseDownloadManifest(text);
+    await writeAssetText(app, MANIFEST_FILE, text);
+    return { manifest, previous };
+  }
+  var MANIFEST_FILE, SHA_RE;
+  var init_download_manifest = __esm({
+    "src/core/download-manifest.ts"() {
+      init_remote_asset();
+      init_sha256();
+      MANIFEST_FILE = "manifest.json";
+      SHA_RE = /^[0-9a-f]{64}$/;
+    }
+  });
+
+  // src/core/rss-catalog.ts
+  function isValidFeedUrl(url) {
+    return /^https?:\/\/\S+$/i.test(url);
+  }
+  function validateRssCatalog(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw;
+    if (typeof o.version !== "number" || !Number.isFinite(o.version)) return null;
+    if (typeof o.updatedAt !== "string" || !o.updatedAt) return null;
+    const meta = o.meta;
+    if (!meta || typeof meta !== "object" || !Array.isArray(meta.sources)) return null;
+    const sources = [];
+    for (const s of meta.sources) {
+      if (!s || typeof s !== "object") return null;
+      const ss = s;
+      if (typeof ss.id !== "string" || !ss.id) return null;
+      if (typeof ss.name !== "string" || !ss.name) return null;
+      if (typeof ss.url !== "string" || !ss.url) return null;
+      sources.push({ id: ss.id, name: ss.name, url: ss.url, license: typeof ss.license === "string" ? ss.license : "" });
+    }
+    if (!Array.isArray(o.categories) || o.categories.length === 0) return null;
+    const cats = /* @__PURE__ */ new Set();
+    for (const c of o.categories) {
+      if (typeof c !== "string" || !c || cats.has(c)) return null;
+      cats.add(c);
+    }
+    if (!Array.isArray(o.feeds)) return null;
+    const feeds = [];
+    const urls = /* @__PURE__ */ new Set();
+    for (const f of o.feeds) {
+      if (!f || typeof f !== "object") return null;
+      const ff = f;
+      if (typeof ff.url !== "string" || !isValidFeedUrl(ff.url.trim())) return null;
+      const url = ff.url.trim();
+      if (urls.has(url)) return null;
+      urls.add(url);
+      if (typeof ff.title !== "string" || typeof ff.site !== "string") return null;
+      if (!Array.isArray(ff.tags) || !ff.tags.every((t) => typeof t === "string")) return null;
+      if (!Array.isArray(ff.cats) || ff.cats.length === 0) return null;
+      for (const c of ff.cats) {
+        if (typeof c !== "string" || !cats.has(c)) return null;
+      }
+      const feed = { url, title: ff.title, site: ff.site, tags: ff.tags, cats: ff.cats };
+      if (typeof ff.via === "string" && ff.via) feed.via = ff.via;
+      feeds.push(feed);
+    }
+    return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
+  }
+  async function readLocalValidated(app) {
+    const text = await readAsset(app, RSS_CATALOG_FILE);
+    if (text === null) return null;
+    try {
+      return validateRssCatalog(JSON.parse(text));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function loadRssCatalog(app) {
+    if (memCache) return memCache;
+    const c = await readLocalValidated(app);
+    if (c) memCache = c;
+    return c;
+  }
+  async function manifestEntry(app) {
+    var _a;
+    let m = await cachedManifest(app);
+    if (!m) {
+      try {
+        await refreshManifest(app);
+        m = await cachedManifest(app);
+      } catch (e) {
+        return null;
+      }
+    }
+    return (_a = m == null ? void 0 : m.docs.find((d) => d && d.id === RSS_CATALOG_MANIFEST_ID)) != null ? _a : null;
+  }
+  async function downloadRssCatalog(app) {
+    const entry = await manifestEntry(app);
+    if (!entry) {
+      throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
+    }
+    const text = await ensureAssetWithHash(app, entry.file, entry.sha256, "RSS 源库");
+    if (text === null) throw new Error("RSS 源库数据拉取失败");
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      throw new Error("RSS 源库数据解析失败：" + ((e == null ? void 0 : e.message) || String(e)));
+    }
+    const catalog = validateRssCatalog(parsed);
+    if (!catalog) throw new Error("RSS 源库数据校验失败（结构或条目不合法）");
+    memCache = catalog;
+    return catalog;
+  }
+  function feedDomainOf(url) {
+    const m = String(url || "").trim().match(/^https?:\/\/([^/?#]+)/i);
+    if (!m) return "";
+    return m[1].toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+  }
+  function catalogCategoryCounts(catalog) {
+    const counts = new Map(catalog.categories.map((c) => [c, 0]));
+    for (const f of catalog.feeds) {
+      for (const c of f.cats) counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    return catalog.categories.map((cat) => ({ cat, count: counts.get(cat) || 0 }));
+  }
+  function filterCatalogFeeds(catalog, opts) {
+    const q3 = String((opts == null ? void 0 : opts.query) || "").trim().toLowerCase();
+    const cat = String((opts == null ? void 0 : opts.cat) || "").trim();
+    return catalog.feeds.filter((f) => {
+      if (cat && !f.cats.includes(cat)) return false;
+      if (!q3) return true;
+      if (f.title.toLowerCase().includes(q3)) return true;
+      if (f.site.toLowerCase().includes(q3)) return true;
+      if (f.url.toLowerCase().includes(q3)) return true;
+      return f.tags.some((t) => t.toLowerCase().includes(q3));
+    });
+  }
+  function subscribedUrlSet(urls) {
+    const set = /* @__PURE__ */ new Set();
+    for (const u of urls || []) {
+      const t = String(u || "").trim();
+      if (t) set.add(t);
+    }
+    return set;
+  }
+  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache;
+  var init_rss_catalog = __esm({
+    "src/core/rss-catalog.ts"() {
+      init_remote_asset();
+      init_download_manifest();
+      RSS_CATALOG_FILE = "rss-catalog.json";
+      RSS_CATALOG_MANIFEST_ID = "rss-catalog";
+      memCache = null;
+    }
+  });
+
   // src/clipbook/news-source-settings.ts
   function emptyDataSourceState(exists = false) {
     return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
@@ -22956,7 +23421,7 @@ ${bodyText.substring(0, 6e3)}`;
                 label: f.title || f.url,
                 sub: f.title ? f.url : ""
               })),
-              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
+              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加，或切到「源库」页签挑选",
               onChange: (keys) => (async () => {
                 const removed = box.feeds.filter((f) => !keys.includes(f.url));
                 let changed = false;
@@ -23014,12 +23479,204 @@ ${bodyText.substring(0, 6e3)}`;
         return;
     }
   }
+  function createRssCatalogPane(root, deps) {
+    let catalog = null;
+    let subscribed = /* @__PURE__ */ new Set();
+    let query = "";
+    let activeCat = "";
+    let searchTimer = null;
+    const readSubscribed = async () => {
+      const st = await readDataSourceState();
+      subscribed = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+    };
+    const subscribeFeed = async (feed, btn) => {
+      btn.disabled = true;
+      btn.textContent = "订阅中…";
+      const outcome = await addRssFeed(feed.url, feed.title || void 0);
+      if (outcome === "added") {
+        subscribed.add(feed.url);
+        btn.textContent = "已订阅";
+        notice(`已订阅 ${feed.title || feed.url}`, "success");
+        deps.onChanged();
+        return;
+      }
+      if (outcome === "exists") {
+        subscribed.add(feed.url);
+        btn.textContent = "已订阅";
+        return;
+      }
+      btn.disabled = false;
+      btn.textContent = "订阅";
+      if (outcome === "invalid") notice("无效的源地址，未能订阅", "error");
+      else notifyWriteFailed(`订阅 ${feed.title || feed.url}`);
+    };
+    const catalogRowEl = (feed) => {
+      const row = document.createElement("div");
+      row.className = "bz-rss-cat-row";
+      const info = document.createElement("div");
+      info.className = "bz-rss-cat-info";
+      const name = document.createElement("div");
+      name.className = "bz-rss-cat-name";
+      name.textContent = feed.title || feed.url;
+      const domain = document.createElement("div");
+      domain.className = "bz-rss-cat-domain";
+      domain.textContent = feedDomainOf(feed.url);
+      info.append(name, domain);
+      const tags = document.createElement("div");
+      tags.className = "bz-rss-cat-tags";
+      for (const t of feed.tags.slice(0, 3)) {
+        const tag = document.createElement("span");
+        tag.className = "bz-rss-cat-tag";
+        tag.textContent = t;
+        tags.appendChild(tag);
+      }
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bz-sp-btn bz-rss-cat-sub";
+      const isSub = subscribed.has(feed.url);
+      btn.textContent = isSub ? "已订阅" : "订阅";
+      btn.disabled = isSub;
+      if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
+      row.append(info, tags, btn);
+      return row;
+    };
+    const renderList2 = (hit, list) => {
+      if (!catalog) return;
+      const all = filterCatalogFeeds(catalog, { query, cat: activeCat });
+      hit.textContent = all.length === catalog.feeds.length ? `共 ${all.length} 个源` : `命中 ${all.length} / ${catalog.feeds.length} 个源`;
+      const shown = all.slice(0, RSS_CAT_RENDER_LIMIT);
+      if (all.length === 0) {
+        const none = document.createElement("div");
+        none.className = "bz-rss-cat-none";
+        none.textContent = "没有匹配的源，换个关键词或分类试试";
+        list.replaceChildren(none);
+        return;
+      }
+      const rows = shown.map((f) => catalogRowEl(f));
+      if (all.length > shown.length) {
+        const more = document.createElement("div");
+        more.className = "bz-rss-cat-more";
+        more.textContent = `仅显示前 ${shown.length} 条，请搜索或选分类缩小范围`;
+        rows.push(more);
+      }
+      list.replaceChildren(...rows);
+    };
+    const renderEmpty = () => {
+      const wrap = document.createElement("div");
+      wrap.className = "bz-rss-cat-empty";
+      const p = document.createElement("p");
+      p.className = "bz-rss-cat-empty-text";
+      p.textContent = "源库还没下载。下载后可按分类浏览、搜索并一键订阅上千个中文 RSS 源（数据来自社区维护的开源清单）。";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bz-sp-btn bz-rss-cat-download";
+      btn.textContent = "下载源库";
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = "下载中…";
+        void (async () => {
+          try {
+            const c = await downloadRssCatalog(getApp());
+            catalog = c;
+            await readSubscribed();
+            notice(`源库已就绪，共收录 ${c.feeds.length} 个源`, "success");
+            render();
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+            btn.disabled = false;
+            btn.textContent = "下载源库";
+          }
+        })();
+      });
+      wrap.append(p, btn);
+      root.replaceChildren(wrap);
+    };
+    const renderReady = () => {
+      if (!catalog) return;
+      const meta = document.createElement("div");
+      meta.className = "bz-rss-cat-meta";
+      const catCount = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
+      meta.textContent = `已收录 ${catalog.feeds.length} 个源 · ${catCount} 个分类 · 更新于 ${catalog.updatedAt}`;
+      const src = document.createElement("div");
+      src.className = "bz-rss-cat-src";
+      src.textContent = `来源：${catalog.meta.sources.map((s) => `${s.name}（${s.license}）`).join("、")}`;
+      src.title = catalog.meta.sources.map((s) => s.url).join("\n");
+      const search = document.createElement("input");
+      search.type = "text";
+      search.className = "bz-rss-cat-search";
+      search.placeholder = "搜索名称、域名或标签…";
+      search.value = query;
+      search.addEventListener("input", () => {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          searchTimer = null;
+          query = search.value;
+          renderList2(hit, list);
+        }, RSS_CAT_SEARCH_DEBOUNCE_MS);
+      });
+      const chips = document.createElement("div");
+      chips.className = "bz-rss-cat-chips";
+      const hit = document.createElement("div");
+      hit.className = "bz-rss-cat-hit";
+      const list = document.createElement("div");
+      list.className = "bz-rss-cat-list";
+      const renderChips = () => {
+        chips.replaceChildren();
+        const mkChip = (label, cat, count) => {
+          const chip2 = document.createElement("button");
+          chip2.type = "button";
+          chip2.className = "bz-rss-cat-chip" + (activeCat === cat ? " active" : "");
+          chip2.textContent = `${label} ${count}`;
+          chip2.addEventListener("click", () => {
+            activeCat = cat;
+            renderChips();
+            renderList2(hit, list);
+          });
+          chips.appendChild(chip2);
+        };
+        mkChip("全部", "", catalog.feeds.length);
+        for (const { cat, count } of catalogCategoryCounts(catalog)) {
+          if (count > 0) mkChip(cat, cat, count);
+        }
+      };
+      renderChips();
+      renderList2(hit, list);
+      root.replaceChildren(meta, src, search, chips, hit, list);
+    };
+    const render = () => {
+      if (catalog) renderReady();
+      else renderEmpty();
+    };
+    return {
+      reload: async () => {
+        catalog = await loadRssCatalog(getApp());
+        await readSubscribed();
+        render();
+      },
+      refreshSubscribed: async () => {
+        await readSubscribed();
+        if (catalog) {
+          const hit = root.querySelector(".bz-rss-cat-hit");
+          const list = root.querySelector(".bz-rss-cat-list");
+          if (hit && list) renderList2(hit, list);
+        }
+      }
+    };
+  }
   async function openRssManagerModal(opts) {
     if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
     rssManagerOpen = true;
     let handle = null;
+    let activeTab = "my";
+    let catPane = null;
+    let offAsset = null;
     function close() {
       rssManagerClose = null;
+      if (offAsset) {
+        offAsset();
+        offAsset = null;
+      }
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
@@ -23028,7 +23685,7 @@ ${bodyText.substring(0, 6e3)}`;
     const { mask, popup, registerClose } = createOverlay({
       maskId: "bz-rss-manager-mask",
       popupId: "bz-rss-manager-popup",
-      maxWidth: 560,
+      maxWidth: 720,
       onMaskClick: close
     });
     rssManagerClose = close;
@@ -23039,18 +23696,63 @@ ${bodyText.substring(0, 6e3)}`;
     title.className = "bz-settings-title";
     title.textContent = "RSS 订阅管理";
     header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    try {
+    const tabs = document.createElement("div");
+    tabs.className = "bz-rss-cat-tabs";
+    const tabMy = document.createElement("button");
+    tabMy.type = "button";
+    tabMy.className = "bz-rss-cat-tab active";
+    tabMy.textContent = "我的订阅";
+    const tabCat = document.createElement("button");
+    tabCat.type = "button";
+    tabCat.className = "bz-rss-cat-tab";
+    tabCat.textContent = "源库";
+    tabs.append(tabMy, tabCat);
+    const paneMy = document.createElement("div");
+    paneMy.className = "bz-settings-content bz-rss-pane";
+    const paneCat = document.createElement("div");
+    paneCat.className = "bz-settings-content bz-rss-pane";
+    paneCat.style.display = "none";
+    const onMyChanged = () => {
+      opts.onChanged();
+      void (catPane == null ? void 0 : catPane.refreshSubscribed());
+    };
+    const activateMy = async () => {
+      activeTab = "my";
+      tabMy.classList.add("active");
+      tabCat.classList.remove("active");
+      paneCat.style.display = "none";
+      paneMy.style.display = "";
+      paneMy.replaceChildren();
+      const st = await readDataSourceState();
+      if (!rssManagerOpen || activeTab !== "my") return;
       const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+      renderPanelSchema2(paneMy, rssManagerSettingsSchema({ feeds: st.rssFeeds, onChanged: onMyChanged }));
+    };
+    const activateCatalog = async () => {
+      activeTab = "catalog";
+      tabCat.classList.add("active");
+      tabMy.classList.remove("active");
+      paneMy.style.display = "none";
+      paneCat.style.display = "";
+      if (!catPane) catPane = createRssCatalogPane(paneCat, { onChanged: onMyChanged });
+      await catPane.reload();
+    };
+    tabMy.addEventListener("click", () => void activateMy());
+    tabCat.addEventListener("click", () => void activateCatalog());
+    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+      if (rssManagerOpen && activeTab === "catalog") void (catPane == null ? void 0 : catPane.reload());
+    });
+    try {
+      await Promise.resolve().then(() => (init_renderer(), renderer_exports));
     } catch (e) {
       close();
       throw e;
     }
     if (!rssManagerOpen) return;
     popup.appendChild(header);
-    popup.appendChild(content);
+    popup.appendChild(tabs);
+    popup.appendChild(paneMy);
+    popup.appendChild(paneCat);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
     mask.style.display = "block";
@@ -23060,12 +23762,13 @@ ${bodyText.substring(0, 6e3)}`;
       close
     });
     handle = handleReg;
+    void activateMy();
   }
   function unloadManagerModals() {
     upManagerClose == null ? void 0 : upManagerClose();
     rssManagerClose == null ? void 0 : rssManagerClose();
   }
-  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose;
+  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose, RSS_CAT_RENDER_LIMIT, RSS_CAT_SEARCH_DEBOUNCE_MS;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_http();
@@ -23073,6 +23776,10 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_common();
       init_dom();
       init_esc_manager();
+      init_app();
+      init_domain_bus();
+      init_remote_asset();
+      init_rss_catalog();
       init_news_source_settings();
       init_news_fetcher();
       init_news_data();
@@ -23081,6 +23788,8 @@ ${bodyText.substring(0, 6e3)}`;
       upManagerClose = null;
       rssManagerOpen = false;
       rssManagerClose = null;
+      RSS_CAT_RENDER_LIMIT = 200;
+      RSS_CAT_SEARCH_DEBOUNCE_MS = 200;
     }
   });
 

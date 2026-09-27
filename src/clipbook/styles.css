@@ -1381,3 +1381,48 @@
   opacity: 1 !important; transform: none !important; clip-path: none !important;
 }
 .bz-rp-scn.is-err .bz-rp-head-t { letter-spacing: normal !important; }
+
+/* ===== RSS 订阅管理弹窗 · 双页签与源库面板（issue 495，ADR-0208）=====
+   弹窗壳沿用 .bz-settings-*；此处只管页签条与源库面板。
+   订阅钮复用 .bz-sp-btn 继承设置面板按钮视觉；滚动条不自造（ADR-0122 core 通杀）。 */
+.bz-rss-cat-tabs { display: flex; gap: 4px; padding: 8px 16px 0; border-bottom: 1px solid var(--background-modifier-border); }
+.bz-rss-cat-tab { appearance: none; border: none; background: transparent; color: var(--text-muted);
+  font-size: var(--font-ui-medium); padding: 6px 14px; cursor: pointer; border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid transparent; }
+.bz-rss-cat-tab.active { color: var(--text-normal); font-weight: 600; border-bottom-color: var(--interactive-accent); }
+
+.bz-rss-pane { display: block; padding: 12px 16px 16px; }
+
+.bz-rss-cat-meta { font-size: var(--font-ui-small); color: var(--text-muted); margin-bottom: 2px; }
+.bz-rss-cat-src { font-size: var(--font-ui-smaller); color: var(--text-faint); margin-bottom: 10px; }
+
+.bz-rss-cat-search { width: 100%; margin-bottom: 8px; }
+
+.bz-rss-cat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.bz-rss-cat-chip { appearance: none; border: 1px solid var(--background-modifier-border); background: transparent;
+  color: var(--text-muted); border-radius: 999px; padding: 2px 10px; font-size: var(--font-ui-smaller); cursor: pointer; }
+@media (hover: hover) { .bz-rss-cat-chip:hover { border-color: var(--interactive-accent); color: var(--text-normal); } }
+.bz-rss-cat-chip.active { background: var(--interactive-accent); border-color: var(--interactive-accent);
+  color: var(--text-on-accent); }
+
+.bz-rss-cat-hit { font-size: var(--font-ui-smaller); color: var(--text-faint); margin-bottom: 6px; }
+
+.bz-rss-cat-list { overflow-y: auto; max-height: min(52vh, 520px); border: 1px solid var(--background-modifier-border);
+  border-radius: 8px; }
+.bz-rss-cat-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.bz-rss-cat-row + .bz-rss-cat-row { border-top: 1px solid var(--background-modifier-border); }
+.bz-rss-cat-info { flex: 1 1 auto; min-width: 0; }
+.bz-rss-cat-name { font-size: var(--font-ui-small); color: var(--text-normal);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-rss-cat-domain { font-size: var(--font-ui-smaller); color: var(--text-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bz-rss-cat-tags { display: flex; gap: 4px; flex-shrink: 0; }
+.bz-rss-cat-tag { font-size: var(--font-ui-smaller); color: var(--text-muted);
+  border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 0 6px; }
+.bz-rss-cat-sub { flex-shrink: 0; min-width: 64px; }
+.bz-rss-cat-sub:disabled { opacity: .55; cursor: default; }
+
+.bz-rss-cat-more, .bz-rss-cat-none { padding: 12px; font-size: var(--font-ui-small); color: var(--text-faint); text-align: center; }
+
+.bz-rss-cat-empty { padding: 28px 12px; text-align: center; }
+.bz-rss-cat-empty-text { font-size: var(--font-ui-small); color: var(--text-muted); margin: 0 0 14px; }

@@ -1,5 +1,5 @@
-/* 源指纹 b96ead840cd35c2f · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 27cdd09b38e57572 · 仓内输入 278 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -30053,6 +30053,143 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
+  // src/core/rss-catalog.ts
+  function isValidFeedUrl(url) {
+    return /^https?:\/\/\S+$/i.test(url);
+  }
+  function validateRssCatalog(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const o = raw;
+    if (typeof o.version !== "number" || !Number.isFinite(o.version)) return null;
+    if (typeof o.updatedAt !== "string" || !o.updatedAt) return null;
+    const meta = o.meta;
+    if (!meta || typeof meta !== "object" || !Array.isArray(meta.sources)) return null;
+    const sources = [];
+    for (const s of meta.sources) {
+      if (!s || typeof s !== "object") return null;
+      const ss = s;
+      if (typeof ss.id !== "string" || !ss.id) return null;
+      if (typeof ss.name !== "string" || !ss.name) return null;
+      if (typeof ss.url !== "string" || !ss.url) return null;
+      sources.push({ id: ss.id, name: ss.name, url: ss.url, license: typeof ss.license === "string" ? ss.license : "" });
+    }
+    if (!Array.isArray(o.categories) || o.categories.length === 0) return null;
+    const cats = /* @__PURE__ */ new Set();
+    for (const c of o.categories) {
+      if (typeof c !== "string" || !c || cats.has(c)) return null;
+      cats.add(c);
+    }
+    if (!Array.isArray(o.feeds)) return null;
+    const feeds = [];
+    const urls = /* @__PURE__ */ new Set();
+    for (const f of o.feeds) {
+      if (!f || typeof f !== "object") return null;
+      const ff = f;
+      if (typeof ff.url !== "string" || !isValidFeedUrl(ff.url.trim())) return null;
+      const url = ff.url.trim();
+      if (urls.has(url)) return null;
+      urls.add(url);
+      if (typeof ff.title !== "string" || typeof ff.site !== "string") return null;
+      if (!Array.isArray(ff.tags) || !ff.tags.every((t) => typeof t === "string")) return null;
+      if (!Array.isArray(ff.cats) || ff.cats.length === 0) return null;
+      for (const c of ff.cats) {
+        if (typeof c !== "string" || !cats.has(c)) return null;
+      }
+      const feed = { url, title: ff.title, site: ff.site, tags: ff.tags, cats: ff.cats };
+      if (typeof ff.via === "string" && ff.via) feed.via = ff.via;
+      feeds.push(feed);
+    }
+    return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
+  }
+  async function readLocalValidated2(app) {
+    const text = await readAsset(app, RSS_CATALOG_FILE);
+    if (text === null) return null;
+    try {
+      return validateRssCatalog(JSON.parse(text));
+    } catch (e) {
+      return null;
+    }
+  }
+  async function loadRssCatalog(app) {
+    if (memCache2) return memCache2;
+    const c = await readLocalValidated2(app);
+    if (c) memCache2 = c;
+    return c;
+  }
+  async function manifestEntry(app) {
+    var _a2;
+    let m = await cachedManifest(app);
+    if (!m) {
+      try {
+        await refreshManifest(app);
+        m = await cachedManifest(app);
+      } catch (e) {
+        return null;
+      }
+    }
+    return (_a2 = m == null ? void 0 : m.docs.find((d) => d && d.id === RSS_CATALOG_MANIFEST_ID)) != null ? _a2 : null;
+  }
+  async function downloadRssCatalog(app) {
+    const entry = await manifestEntry(app);
+    if (!entry) {
+      throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
+    }
+    const text = await ensureAssetWithHash(app, entry.file, entry.sha256, "RSS 源库");
+    if (text === null) throw new Error("RSS 源库数据拉取失败");
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      throw new Error("RSS 源库数据解析失败：" + ((e == null ? void 0 : e.message) || String(e)));
+    }
+    const catalog = validateRssCatalog(parsed);
+    if (!catalog) throw new Error("RSS 源库数据校验失败（结构或条目不合法）");
+    memCache2 = catalog;
+    return catalog;
+  }
+  function feedDomainOf(url) {
+    const m = String(url || "").trim().match(/^https?:\/\/([^/?#]+)/i);
+    if (!m) return "";
+    return m[1].toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+  }
+  function catalogCategoryCounts(catalog) {
+    const counts = new Map(catalog.categories.map((c) => [c, 0]));
+    for (const f of catalog.feeds) {
+      for (const c of f.cats) counts.set(c, (counts.get(c) || 0) + 1);
+    }
+    return catalog.categories.map((cat) => ({ cat, count: counts.get(cat) || 0 }));
+  }
+  function filterCatalogFeeds(catalog, opts) {
+    const q3 = String((opts == null ? void 0 : opts.query) || "").trim().toLowerCase();
+    const cat = String((opts == null ? void 0 : opts.cat) || "").trim();
+    return catalog.feeds.filter((f) => {
+      if (cat && !f.cats.includes(cat)) return false;
+      if (!q3) return true;
+      if (f.title.toLowerCase().includes(q3)) return true;
+      if (f.site.toLowerCase().includes(q3)) return true;
+      if (f.url.toLowerCase().includes(q3)) return true;
+      return f.tags.some((t) => t.toLowerCase().includes(q3));
+    });
+  }
+  function subscribedUrlSet(urls) {
+    const set = /* @__PURE__ */ new Set();
+    for (const u of urls || []) {
+      const t = String(u || "").trim();
+      if (t) set.add(t);
+    }
+    return set;
+  }
+  var RSS_CATALOG_FILE, RSS_CATALOG_MANIFEST_ID, memCache2;
+  var init_rss_catalog = __esm({
+    "src/core/rss-catalog.ts"() {
+      init_remote_asset();
+      init_download_manifest();
+      RSS_CATALOG_FILE = "rss-catalog.json";
+      RSS_CATALOG_MANIFEST_ID = "rss-catalog";
+      memCache2 = null;
+    }
+  });
+
   // src/settings-panel/online-resources.ts
   var online_resources_exports = {};
   __export(online_resources_exports, {
@@ -30408,6 +30545,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_skin_pack();
       init_remote_asset();
       init_category_table();
+      init_rss_catalog();
       SKINS_ROW_NAME = "主题";
       ALL_BUSY_ID = "__all__";
       DESC_EXTRAS = {
@@ -30416,6 +30554,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           if (!table) return null;
           const items = table.groups.reduce((n, g) => n + g.items.length, 0);
           return `${table.groups.length} 组 ${items} 条`;
+        },
+        // issue 495：RSS 源库就绪描述捎带「N 类 M 源」（只数非空大类，0 条的分类不冒充规模）
+        "rss-catalog": async (app) => {
+          const catalog = await loadRssCatalog(app);
+          if (!catalog) return null;
+          const cats = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
+          return `${cats} 类 ${catalog.feeds.length} 源`;
         }
       };
       CHECK_THROTTLE_MS = 6e4;
@@ -40753,7 +40898,7 @@ ${c.trim()}
                 label: f.title || f.url,
                 sub: f.title ? f.url : ""
               })),
-              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
+              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加，或切到「源库」页签挑选",
               onChange: (keys) => (async () => {
                 const removed = box.feeds.filter((f) => !keys.includes(f.url));
                 let changed = false;
@@ -40811,12 +40956,204 @@ ${c.trim()}
         return;
     }
   }
+  function createRssCatalogPane(root, deps) {
+    let catalog = null;
+    let subscribed2 = /* @__PURE__ */ new Set();
+    let query = "";
+    let activeCat = "";
+    let searchTimer = null;
+    const readSubscribed = async () => {
+      const st = await readDataSourceState();
+      subscribed2 = subscribedUrlSet(st.rssFeeds.map((f) => f.url));
+    };
+    const subscribeFeed = async (feed, btn) => {
+      btn.disabled = true;
+      btn.textContent = "订阅中…";
+      const outcome = await addRssFeed(feed.url, feed.title || void 0);
+      if (outcome === "added") {
+        subscribed2.add(feed.url);
+        btn.textContent = "已订阅";
+        notice(`已订阅 ${feed.title || feed.url}`, "success");
+        deps.onChanged();
+        return;
+      }
+      if (outcome === "exists") {
+        subscribed2.add(feed.url);
+        btn.textContent = "已订阅";
+        return;
+      }
+      btn.disabled = false;
+      btn.textContent = "订阅";
+      if (outcome === "invalid") notice("无效的源地址，未能订阅", "error");
+      else notifyWriteFailed(`订阅 ${feed.title || feed.url}`);
+    };
+    const catalogRowEl = (feed) => {
+      const row = document.createElement("div");
+      row.className = "bz-rss-cat-row";
+      const info = document.createElement("div");
+      info.className = "bz-rss-cat-info";
+      const name = document.createElement("div");
+      name.className = "bz-rss-cat-name";
+      name.textContent = feed.title || feed.url;
+      const domain = document.createElement("div");
+      domain.className = "bz-rss-cat-domain";
+      domain.textContent = feedDomainOf(feed.url);
+      info.append(name, domain);
+      const tags = document.createElement("div");
+      tags.className = "bz-rss-cat-tags";
+      for (const t of feed.tags.slice(0, 3)) {
+        const tag = document.createElement("span");
+        tag.className = "bz-rss-cat-tag";
+        tag.textContent = t;
+        tags.appendChild(tag);
+      }
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bz-sp-btn bz-rss-cat-sub";
+      const isSub = subscribed2.has(feed.url);
+      btn.textContent = isSub ? "已订阅" : "订阅";
+      btn.disabled = isSub;
+      if (!isSub) btn.addEventListener("click", () => void subscribeFeed(feed, btn));
+      row.append(info, tags, btn);
+      return row;
+    };
+    const renderList2 = (hit, list) => {
+      if (!catalog) return;
+      const all = filterCatalogFeeds(catalog, { query, cat: activeCat });
+      hit.textContent = all.length === catalog.feeds.length ? `共 ${all.length} 个源` : `命中 ${all.length} / ${catalog.feeds.length} 个源`;
+      const shown = all.slice(0, RSS_CAT_RENDER_LIMIT);
+      if (all.length === 0) {
+        const none = document.createElement("div");
+        none.className = "bz-rss-cat-none";
+        none.textContent = "没有匹配的源，换个关键词或分类试试";
+        list.replaceChildren(none);
+        return;
+      }
+      const rows = shown.map((f) => catalogRowEl(f));
+      if (all.length > shown.length) {
+        const more = document.createElement("div");
+        more.className = "bz-rss-cat-more";
+        more.textContent = `仅显示前 ${shown.length} 条，请搜索或选分类缩小范围`;
+        rows.push(more);
+      }
+      list.replaceChildren(...rows);
+    };
+    const renderEmpty = () => {
+      const wrap = document.createElement("div");
+      wrap.className = "bz-rss-cat-empty";
+      const p = document.createElement("p");
+      p.className = "bz-rss-cat-empty-text";
+      p.textContent = "源库还没下载。下载后可按分类浏览、搜索并一键订阅上千个中文 RSS 源（数据来自社区维护的开源清单）。";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bz-sp-btn bz-rss-cat-download";
+      btn.textContent = "下载源库";
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = "下载中…";
+        void (async () => {
+          try {
+            const c = await downloadRssCatalog(getApp());
+            catalog = c;
+            await readSubscribed();
+            notice(`源库已就绪，共收录 ${c.feeds.length} 个源`, "success");
+            render2();
+          } catch (e) {
+            notice(e instanceof Error ? e.message : String(e), "error");
+            btn.disabled = false;
+            btn.textContent = "下载源库";
+          }
+        })();
+      });
+      wrap.append(p, btn);
+      root.replaceChildren(wrap);
+    };
+    const renderReady = () => {
+      if (!catalog) return;
+      const meta = document.createElement("div");
+      meta.className = "bz-rss-cat-meta";
+      const catCount = catalogCategoryCounts(catalog).filter((c) => c.count > 0).length;
+      meta.textContent = `已收录 ${catalog.feeds.length} 个源 · ${catCount} 个分类 · 更新于 ${catalog.updatedAt}`;
+      const src = document.createElement("div");
+      src.className = "bz-rss-cat-src";
+      src.textContent = `来源：${catalog.meta.sources.map((s) => `${s.name}（${s.license}）`).join("、")}`;
+      src.title = catalog.meta.sources.map((s) => s.url).join("\n");
+      const search = document.createElement("input");
+      search.type = "text";
+      search.className = "bz-rss-cat-search";
+      search.placeholder = "搜索名称、域名或标签…";
+      search.value = query;
+      search.addEventListener("input", () => {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          searchTimer = null;
+          query = search.value;
+          renderList2(hit, list);
+        }, RSS_CAT_SEARCH_DEBOUNCE_MS);
+      });
+      const chips = document.createElement("div");
+      chips.className = "bz-rss-cat-chips";
+      const hit = document.createElement("div");
+      hit.className = "bz-rss-cat-hit";
+      const list = document.createElement("div");
+      list.className = "bz-rss-cat-list";
+      const renderChips = () => {
+        chips.replaceChildren();
+        const mkChip = (label, cat, count) => {
+          const chip2 = document.createElement("button");
+          chip2.type = "button";
+          chip2.className = "bz-rss-cat-chip" + (activeCat === cat ? " active" : "");
+          chip2.textContent = `${label} ${count}`;
+          chip2.addEventListener("click", () => {
+            activeCat = cat;
+            renderChips();
+            renderList2(hit, list);
+          });
+          chips.appendChild(chip2);
+        };
+        mkChip("全部", "", catalog.feeds.length);
+        for (const { cat, count } of catalogCategoryCounts(catalog)) {
+          if (count > 0) mkChip(cat, cat, count);
+        }
+      };
+      renderChips();
+      renderList2(hit, list);
+      root.replaceChildren(meta, src, search, chips, hit, list);
+    };
+    const render2 = () => {
+      if (catalog) renderReady();
+      else renderEmpty();
+    };
+    return {
+      reload: async () => {
+        catalog = await loadRssCatalog(getApp());
+        await readSubscribed();
+        render2();
+      },
+      refreshSubscribed: async () => {
+        await readSubscribed();
+        if (catalog) {
+          const hit = root.querySelector(".bz-rss-cat-hit");
+          const list = root.querySelector(".bz-rss-cat-list");
+          if (hit && list) renderList2(hit, list);
+        }
+      }
+    };
+  }
   async function openRssManagerModal(opts) {
     if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
     rssManagerOpen = true;
     let handle = null;
+    let activeTab = "my";
+    let catPane = null;
+    let offAsset = null;
     function close() {
       rssManagerClose = null;
+      if (offAsset) {
+        offAsset();
+        offAsset = null;
+      }
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
@@ -40825,7 +41162,7 @@ ${c.trim()}
     const { mask, popup, registerClose } = createOverlay({
       maskId: "bz-rss-manager-mask",
       popupId: "bz-rss-manager-popup",
-      maxWidth: 560,
+      maxWidth: 720,
       onMaskClick: close
     });
     rssManagerClose = close;
@@ -40836,18 +41173,63 @@ ${c.trim()}
     title.className = "bz-settings-title";
     title.textContent = "RSS 订阅管理";
     header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    try {
+    const tabs = document.createElement("div");
+    tabs.className = "bz-rss-cat-tabs";
+    const tabMy = document.createElement("button");
+    tabMy.type = "button";
+    tabMy.className = "bz-rss-cat-tab active";
+    tabMy.textContent = "我的订阅";
+    const tabCat = document.createElement("button");
+    tabCat.type = "button";
+    tabCat.className = "bz-rss-cat-tab";
+    tabCat.textContent = "源库";
+    tabs.append(tabMy, tabCat);
+    const paneMy = document.createElement("div");
+    paneMy.className = "bz-settings-content bz-rss-pane";
+    const paneCat = document.createElement("div");
+    paneCat.className = "bz-settings-content bz-rss-pane";
+    paneCat.style.display = "none";
+    const onMyChanged = () => {
+      opts.onChanged();
+      void (catPane == null ? void 0 : catPane.refreshSubscribed());
+    };
+    const activateMy = async () => {
+      activeTab = "my";
+      tabMy.classList.add("active");
+      tabCat.classList.remove("active");
+      paneCat.style.display = "none";
+      paneMy.style.display = "";
+      paneMy.replaceChildren();
+      const st = await readDataSourceState();
+      if (!rssManagerOpen || activeTab !== "my") return;
       const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+      renderPanelSchema2(paneMy, rssManagerSettingsSchema({ feeds: st.rssFeeds, onChanged: onMyChanged }));
+    };
+    const activateCatalog = async () => {
+      activeTab = "catalog";
+      tabCat.classList.add("active");
+      tabMy.classList.remove("active");
+      paneMy.style.display = "none";
+      paneCat.style.display = "";
+      if (!catPane) catPane = createRssCatalogPane(paneCat, { onChanged: onMyChanged });
+      await catPane.reload();
+    };
+    tabMy.addEventListener("click", () => void activateMy());
+    tabCat.addEventListener("click", () => void activateCatalog());
+    offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+      if (rssManagerOpen && activeTab === "catalog") void (catPane == null ? void 0 : catPane.reload());
+    });
+    try {
+      await Promise.resolve().then(() => (init_renderer(), renderer_exports));
     } catch (e) {
       close();
       throw e;
     }
     if (!rssManagerOpen) return;
     popup.appendChild(header);
-    popup.appendChild(content);
+    popup.appendChild(tabs);
+    popup.appendChild(paneMy);
+    popup.appendChild(paneCat);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
     mask.style.display = "block";
@@ -40857,12 +41239,13 @@ ${c.trim()}
       close
     });
     handle = handleReg;
+    void activateMy();
   }
   function unloadManagerModals() {
     upManagerClose == null ? void 0 : upManagerClose();
     rssManagerClose == null ? void 0 : rssManagerClose();
   }
-  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose;
+  var profileTried, upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose, RSS_CAT_RENDER_LIMIT, RSS_CAT_SEARCH_DEBOUNCE_MS;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_http();
@@ -40870,6 +41253,10 @@ ${c.trim()}
       init_settings_common();
       init_dom();
       init_esc_manager();
+      init_app();
+      init_domain_bus();
+      init_remote_asset();
+      init_rss_catalog();
       init_news_source_settings();
       init_news_fetcher();
       init_news_data();
@@ -40878,6 +41265,8 @@ ${c.trim()}
       upManagerClose = null;
       rssManagerOpen = false;
       rssManagerClose = null;
+      RSS_CAT_RENDER_LIMIT = 200;
+      RSS_CAT_SEARCH_DEBOUNCE_MS = 200;
     }
   });
 
