@@ -248,8 +248,10 @@ export async function suggestCategoryByCatalog(
 export interface CatSuggestSource {
   /** 候选串（历史 + 表内，去重保序） */
   list: string[];
-  /** 候选 → 图标名（历史 > 表 > ''） */
+  /** 候选 → 真实图标名（历史记档 > 表内同名/别名 > ''）——onPick 落值用这个，兜底图标不算数 */
   iconOf: (name: string) => string;
+  /** 候选 → 下拉展示图标（真实图标 > 历史兜底 TAG_ICON > ''）——保证每行都有图标可看（issue 491） */
+  displayIconOf: (name: string) => string;
   /** 候选 → 额外搜索关键词（= 表内别名；历史分类与无别名候选为空数组） */
   keywordsOf: (name: string) => string[];
   /** 候选 → 别名提示（下拉小字；无别名 = ''） */
@@ -257,6 +259,9 @@ export interface CatSuggestSource {
   /** 表是否参与本次联想（false = 未下载，纯历史模式） */
   hasTable: boolean;
 }
+
+/** 历史分类的展示兜底图标（lucide 内置 tag）——纯视觉，不随点选写入物品 icon */
+export const CAT_SUGGEST_TAG_ICON = 'tag';
 
 /**
  * 组装联想源（纯函数，不碰 app/网络）。
@@ -274,6 +279,8 @@ export function buildCatSuggest(
   const aliasHint = new Map<string, string>();
   const list: string[] = [];
   const seen = new Set<string>();
+  /** 历史条目里最终没拿到真实图标的——展示层兜底 tag 图标（不进 icon map，点选不落值） */
+  const tagOnly = new Set<string>();
 
   const push = (name: string, iconName: string, aliases: string[]): void => {
     if (!name || seen.has(name)) return;
@@ -286,12 +293,13 @@ export function buildCatSuggest(
     }
   };
 
-  // 历史条目图标优先级：历史记档（馆内首个已设图标）> 表内同名 > 表内别名直配 > 空（issue 489）。
-  // 值不动（历史分类原样保留），只补视觉——馆里没设过图标的历史分类在下载表后也能带上图标。
+  // 历史条目图标优先级：历史记档（馆内首个已设图标）> 表内同名 > 表内别名直配 > 兜底 tag（issue 489/491）。
+  // 值不动（历史分类原样保留），只补视觉；兜底仅展示用——点选不把 tag 写进物品 icon。
   for (const name of history) {
     const icon =
       historyIconOf(name) ||
       (table ? iconOf(table, name) || matchByAlias(name, table)?.icon || '' : '');
+    if (!icon) tagOnly.add(name);
     push(name, icon, []);
   }
   if (table) {
@@ -302,6 +310,7 @@ export function buildCatSuggest(
   return {
     list,
     iconOf: (name) => icon.get(name) ?? '',
+    displayIconOf: (name) => icon.get(name) ?? (tagOnly.has(name) ? CAT_SUGGEST_TAG_ICON : ''),
     keywordsOf: (name) => keywords.get(name) ?? [],
     aliasHintOf: (name) => aliasHint.get(name) ?? '',
     hasTable: !!table,
