@@ -14,6 +14,9 @@
  * 的第二通道）；两路都 404/失败才报错。内容校验由调用方给的
  * validate 判定（防把 CDN 的错误页写进文件）。
  *
+ * 双源基址的唯一事实源见 core/remote-base.ts（REPO_BASES / downloadRemotesFor）——
+ * 本层 `remotesFor` 仅作转发，不在此重述域名。
+ *
  * 路径口径（ADR-0203 / issue 480b）：`fileName` 是**相对 `downloads/` 的路径**
  * （可为多级，如 `skins/bookshelf/noir.css`）；本地落盘是插件安装目录 downloads/
  * 内的同名路径——本地 downloads/ 即远端 downloads/ 的逐字镜像。
@@ -28,17 +31,16 @@
 import { requestUrl } from 'obsidian';
 import { textSha256 } from './sha256';
 import { emitDomainEvent } from './domain-bus';
+import { downloadRemotesFor } from './remote-base';
 
 /** 下载资源落盘事件（issue 492）：派发收口在 writeAssetText（所有下载资产唯一落盘口），
  *  消费 = 设置面板在线资源组把已渲染行态同步成磁盘事实（导航入口更新文档后组内按钮翻「已下载」）。 */
 export const DOWNLOADS_CHANGED_EVENT = 'downloads:asset-changed';
 
-/** 远端 URL：主 GitHub raw → 备 jsDelivr（同仓库同路径，域名不同） */
+/** 远端 URL：主 GitHub raw → 备 jsDelivr（双源基址唯一事实源见 core/remote-base.ts）。
+ *  导出与签名不变（测试在用）；函数体直接转发 downloadRemotesFor。 */
 export function remotesFor(fileName: string): string[] {
-  return [
-    `https://raw.githubusercontent.com/yeshimei/bz/master/downloads/${fileName}`,
-    `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/${fileName}`,
-  ];
+  return downloadRemotesFor(fileName);
 }
 
 /** 资产在 vault 里的相对路径（插件安装目录内；仅插件自身 manifest.json 等非下载资源用） */

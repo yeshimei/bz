@@ -2,6 +2,40 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Issue 494 — 在线资源机制四改：清单驱动行集合 + 组级全部更新 + doc 版本区间 + 条目体积（ADR-0207）
+
+**状态：门禁**（2026-09-27，用户采纳 `review-online-resources.md` 第 1–5 条；收尾合并/主仓构建待用户确认）
+
+- [x] 第 1 条（纲）：「在线资源」组改**清单驱动**——删 `FALLBACK_ROWS`（写死的四行），
+      行集合与行序改由清单顶层 `rowOrder` 决定（保留 id `'skins'` = 皮肤聚合行）；
+      缺席回落「docs 顺序 + skins 末位」、漏提的 doc 与 `skins` 都补末尾；**无缓存清单则没有资源行**（只剩两行操作行）
+- [x] 第 2 条：新增组级「全部更新」行恒在 `rows[1]`（`rows[0]` 仍是 `visibleWhen` 门控的「检查更新」）——
+      有待办且有更新 → 全部更新 N（N = 待办**行数**）、只有未下载 → 全部下载 N、全部就绪 → 已是最新禁用、
+      无清单 → 等待检查更新禁用；按行序**串行**跑未就绪行、每条落盘后同步一次行态、失败聚合一条 error 通知、
+      `__all__` 哨兵拦重入（置忙提到首个 `await` 之前，与 issue 492 同口径）
+- [x] 第 3 条：`ManifestDocEntry` 补 `since` / `until`，判定复用 `skin-pack` 的 `isInVersionRange`
+      （首参泛化为 `{ since?: string; until?: string }`）；**区间外 = 该行不呈现**（旧版插件不误报可下载）；
+      `readPluginVersion` 加 `export` 供面板做过滤
+- [x] 第 4 条：清单 docs 与 skins 条目各加 `size`（构建期 `fileSize` 对 `downloads/` 已出版产物 `statSync` 现算，
+      与 `sha256` 同源）；行描述只在**已就绪**态捎带体积（doc 单文件 / 皮肤取区间内合计），
+      清单没登记 `size` 时逐字退回旧口径（不出空括号）
+- [x] 第 5 条：双源基址收成零依赖叶子模块 `core/remote-base.ts`（`REPO_BASES` / `repoRemotesFor` /
+      `downloadRemotesFor`），`remote-asset.ts` 的 `remotesFor` 与 `self-update.ts` 的 `REMOTE_BASES` 都改为消费它，行为逐字不变
+- [x] 构建期守卫：`build-manifest.mjs` 显式维护 `ROW_ORDER` 并守卫三件事——覆盖 `DOCS` 全部 id、
+      含保留 id `'skins'`、除 `'skins'` 外不得有 `DOCS` 没有的 id（漏登记后果是**资源在组里掉行**，只在用户机器可见，必须构建期炸）
+- [x] 解析宽容度：`since`/`until` 只认非空字符串、`size` 只认有限正数、`rowOrder` 必须是逐项非空字符串的数组——
+      任一不合格**只丢弃该字段**（回落默认），不让整份清单失效；故新旧清单**双向兼容、发布顺序无硬约束**
+- [x] 测试：`download-manifest.test.ts`（doc 的 since/until/size + skin 的 size + rowOrder 正常/坏形/缺席 +
+      必填字段缺失仍整份失效）、`online-resources.test.ts`（清单驱动行集合与顺序、版本区间过滤、体积、
+      全部更新行四态与组级动作、原有失败态/跨入口同步/补丁边界按新索引对齐，30 例）、`smoke.test.ts`（无清单只剩两行）
+- [x] 原型产物重出（`node scripts/build-preview.mjs`）——`download-manifest` / `remote-asset` / `skin-pack` 是 8 个域
+      `prototype-behavior.js` 的声明输入，改完必须重出，否则 `preview-freshness` 守卫红
+- [x] `downloads/manifest.json` 重出（新增 `size` 与 `rowOrder`）——不重出则体积与行序不生效，`pnpm manifest --check` 会标不同步
+- [x] 门禁（worktree）：`pnpm exec tsc --noEmit` 0 错 + 全量 **545 文件 / 8156 用例、8154 绿**——
+      2 例 `tests/pomodoro/ui.test.ts` 为**环境计时抖动**（同一文件单独跑 80/80 全绿；干净主仓同口径亦复现同类超时，与本票无关）
+- [ ] 收尾：合并回主仓 + `pnpm manifest` / `skin-pack` / `changelog` 重出 + 主仓构建部署（待用户确认）
+
+
 ## Issue 325 — 自动关联迁入知识盒：三盒为界、三盒恒含索引（ADR-0141 / ADR-0142）
 
 **状态：已交付**（worktree 门禁：tsc 0 错 + 全量 319 文件 5053 用例绿——仅原型产物新鲜度 8 项待主仓重出）

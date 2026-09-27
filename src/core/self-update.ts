@@ -15,18 +15,13 @@
  * ============================================================ */
 import { requestUrl } from 'obsidian';
 import { notice } from './notice';
+import { repoRemotesFor } from './remote-base';
 
 /** 巡检节流：24 小时 */
 const CHECK_INTERVAL_MS = 24 * 3600 * 1000;
 /** 启动后延迟巡检（躲开 Obsidian 启动高峰） */
 const CHECK_DELAY_MS = 15 * 1000;
 const LAST_CHECK_KEY = 'bz-selfupdate:last-check';
-
-/** 远端清单：主 GitHub raw → 备 jsDelivr（同仓库同路径） */
-const REMOTE_BASES = [
-  'https://raw.githubusercontent.com/yeshimei/bz/master',
-  'https://cdn.jsdelivr.net/gh/yeshimei/bz@master',
-];
 
 function pluginFile(app: unknown, name: string): string {
   const configDir = String((app as { vault?: { configDir?: string } }).vault?.configDir || '.obsidian');
@@ -38,12 +33,12 @@ async function fetchText(url: string): Promise<string> {
   return String(res.text || '');
 }
 
-/** 依序试两条通道，全失败抛最后一次错误 */
+/** 依序试两条通道（主 GitHub raw → 备 jsDelivr），全失败抛最后一次错误 */
 async function fetchViaBases(path: string): Promise<string> {
   let lastErr: unknown = null;
-  for (const base of REMOTE_BASES) {
+  for (const url of repoRemotesFor(path)) {
     try {
-      return await fetchText(`${base}/${path}`);
+      return await fetchText(url);
     } catch (e) {
       lastErr = e;
     }

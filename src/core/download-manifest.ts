@@ -41,6 +41,8 @@ export interface SkinPackEntry {
   since?: string;
   /** 最高插件版本（不含），空 = 不限 */
   until?: string;
+  /** 已出版产物（css）字节数；缺失 = 该条目未登记体积，UI 不提体积（构建期 statSync 现算） */
+  size?: number;
   /** 归一换行后文本的 sha256（64 位小写） */
   sha256: string;
 }
@@ -55,12 +57,25 @@ export interface ManifestDocEntry {
   file: string;
   /** 归一换行后文本的 sha256（64 位小写） */
   sha256: string;
+  /** 最低插件版本（含），空 = 不限；语义与 SkinPackEntry.since 完全一致 */
+  since?: string;
+  /** 最高插件版本（不含），空 = 不限；语义与 SkinPackEntry.until 完全一致 */
+  until?: string;
+  /** 已出版产物字节数；缺失 = 该条目未登记体积，UI 不提体积（构建期 statSync 现算） */
+  size?: number;
 }
+
+/** 行序（在线资源组内的行顺序）：'skins' 是皮肤聚合行的保留 id，它不是 doc 条目，
+ *  而是 skins[] 的聚合行——消费侧据此把 skins 收成一行放在 rowOrder 指定的位置。 */
+export const SKINS_ROW_ID = 'skins';
 
 export interface DownloadManifest {
   version: number;
   docs: ManifestDocEntry[];
   skins: SkinPackEntry[];
+  /** 行序（在线资源组内的行顺序）：docs id + 保留 id 'skins' 的排列；
+   *  缺席（旧清单）则回落「docs 顺序 + skins 末位」。 */
+  rowOrder?: string[];
 }
 
 const SHA_RE = /^[0-9a-f]{64}$/;
@@ -80,6 +95,7 @@ function normalizeSkinEntry(item: unknown): SkinPackEntry | null {
     previewClass: typeof e.previewClass === 'string' && e.previewClass ? e.previewClass : undefined,
     since: typeof e.since === 'string' && e.since ? e.since : undefined,
     until: typeof e.until === 'string' && e.until ? e.until : undefined,
+    size: typeof e.size === 'number' && Number.isFinite(e.size) && e.size > 0 ? e.size : undefined,
     sha256: e.sha256.toLowerCase(),
   };
 }
@@ -96,7 +112,7 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
   } catch (e) {
     return null;
   }
-  const obj = raw as { version?: unknown; docs?: unknown; skins?: unknown };
+  const obj = raw as { version?: unknown; docs?: unknown; skins?: unknown; rowOrder?: unknown };
   if (!obj || !Array.isArray(obj.docs) || !Array.isArray(obj.skins)) return null;
   const docs: ManifestDocEntry[] = [];
   for (const item of obj.docs as unknown[]) {
@@ -105,7 +121,15 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
     if (typeof e.name !== 'string' || !e.name) return null;
     if (typeof e.file !== 'string' || !e.file) return null;
     if (typeof e.sha256 !== 'string' || !SHA_RE.test(e.sha256.toLowerCase())) return null;
-    docs.push({ id: e.id, name: e.name, file: e.file, sha256: e.sha256.toLowerCase() });
+    docs.push({
+      id: e.id,
+      name: e.name,
+      file: e.file,
+      sha256: e.sha256.toLowerCase(),
+      since: typeof e.since === 'string' && e.since ? e.since : undefined,
+      until: typeof e.until === 'string' && e.until ? e.until : undefined,
+      size: typeof e.size === 'number' && Number.isFinite(e.size) && e.size > 0 ? e.size : undefined,
+    });
   }
   const skins: SkinPackEntry[] = [];
   for (const item of obj.skins as unknown[]) {
@@ -114,7 +138,20 @@ export function parseDownloadManifest(text: string | null): DownloadManifest | n
     skins.push(e);
   }
   const version = typeof obj.version === 'number' ? obj.version : 1;
-  return { version, docs, skins };
+
+  // 行序（在线资源组别内行顺序）：可选字段，旧清单没有它必须照常可用。
+  // 必须是数组、逐项非空字符串，任一不合格 → 整字段丢弃（rowOrder 变 undefined，
+  // 回落「docs 顺序 + skins 末位」），**不要让整份清单失效**。数组里允许出现清单
+  // docs 里没有的 id（如保留 id 'skins' 皮肤聚合行），由消费侧忽略。
+  let rowOrder: string[] | undefined;
+  if (obj.rowOrder !== undefined) {
+    if (Array.isArray(obj.rowOrder) && obj.rowOrder.every((x) => typeof x === 'string' && x)) {
+      rowOrder = obj.rowOrder as string[];
+    }
+    // 不合格（不是数组 / 含空串 / 含非字符串）→ 保持 undefined，不报错、不失效
+  }
+
+  return { version, docs, skins, rowOrder };
 }
 
 /** 读本地缓存的清单（上次成功拉取的镜像）；无缓存/坏形 → null */

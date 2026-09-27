@@ -1,16 +1,20 @@
 /* ============================================================
- * bz · 设置面板「在线资源」组（settings-panel/online-resources.ts）——ADR-0203 / ADR-0205
+ * bz · 设置面板「在线资源」组（settings-panel/online-resources.ts）——ADR-0203 / ADR-0205 / ADR-0207
  *
- * 通用域最后一组：更新日志 / 使用手册 / 主题 / 归物分类表四行统一状态机
- * （未下载 → 下载 [N]；有更新 → 更新 N；已最新 → 已下载 禁用；动作中转圈禁用）。
- * ADR-0205：整组为**通用声明行**（button 行 + visibleWhen 门控 + 行按钮三态助手），
- * 自绘 bz-sp-res 骨架退役——行视觉与其余组零漂移。
- * 状态永远从**磁盘单源**现算（缓存清单 + 本地文件 sha256），组内不持久任何状态；
- * 构建期本地现算一次，打开面板顺手后台核对一次清单（60s 节流），
- * 失败有缓存沿用缓存渲染 + 检查更新行留档；无缓存四行禁用 + 检查更新行置顶。
- * **跨入口同步**：导航入口更新文档 / 分类表自动拉取落盘后，本组订阅下载事件把行态
- * 同步成磁盘事实（issue 492 用户拍板：更新日志入口更新后组内按钮要翻「已下载」）。
+ * 通用域最后一组，**行集合由下载清单驱动**（ADR-0207）：
+ * 清单 `rowOrder` 决定行序（SKINS_ROW_ID 是皮肤聚合行的保留 id），每个 doc 条目一行；
+ * 内置的「检查更新」「全部更新」两行恒在组首（rows[0] / rows[1]）。
+ * 状态机（未下载 → 下载 N；有更新 → 更新 N；已最新 → 已下载 禁用；动作中转圈禁用）。
+ * ADR-0205：整组为**通用声明行**（button 行 + visibleWhen 门控 + 行按钮三态助手）。
+ *
+ * 状态永远从**磁盘单源**现算（缓存清单 + 本地文件 sha256），组内不持久状态；
+ * 构建期本地现算一次，打开面板顺手后台核对一次清单（60s 节流）；
+ * 核对失败有缓存沿用缓存渲染 + 检查更新行留档；无缓存则只留操作行并禁用。
+ * **跨入口同步**：导航入口更新文档 / 分类表拉取落盘后，本组订阅下载事件把行态同步成磁盘事实。
  * **半自动铁则的 UI 面**：本组按钮与手册/日志导航入口是仅有的两个下载触发点。
+ *
+ * 新增一条在线资源 = 出版产物 + `pnpm manifest` 登记 docs 条目与 rowOrder，本文件零改动
+ * （只用通用状态机的资源不必碰代码；要专属描述补规模才加一条 DESC_EXTRAS）。
  * ============================================================ */
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
@@ -22,21 +26,39 @@ import {
   cachedManifest,
   docStatus,
   refreshManifest,
+  SKINS_ROW_ID,
   type DocStatus,
   type DownloadManifest,
   type ManifestDocEntry,
 } from '../core/download-manifest';
-import { downloadSkinUpdates, skinStatus, type SkinStatus } from '../core/skin-pack';
+import {
+  downloadSkinUpdates,
+  isInVersionRange,
+  readPluginVersion,
+  skinStatus,
+  type SkinStatus,
+} from '../core/skin-pack';
 import { ensureAssetWithHash } from '../core/remote-asset';
 import { loadCategoryTable } from '../core/category-table';
 
-/** 无缓存清单时的行骨架（行名内置；有清单后以清单 name 为准）。分类表排皮肤之后（数据表跟在文档/皮肤后面，行序稳定） */
-const FALLBACK_ROWS: Array<{ id: string; name: string }> = [
-  { id: 'changelog', name: '更新日志' },
-  { id: 'manual', name: '使用手册' },
-  { id: 'skins', name: '主题' },
-  { id: 'belongings-categories', name: '归物分类表' },
-];
+/** 皮肤聚合行的行名（它不是 doc 条目、清单里没有 name，只能内置；各域选择卡叫法不变） */
+const SKINS_ROW_NAME = '主题';
+
+/** 全部更新行的忙碌哨兵：只用于拦重入与「补丁别覆盖」，不是任何资源 id */
+const ALL_BUSY_ID = '__all__';
+
+/**
+ * 行的专属描述补充（读本地产物算规模这类，塞进「已是最新版本（…）」的括号里）。
+ * 这是本组唯一的「按 id 特判」处——只用通用状态机的新资源什么都不用加。
+ */
+const DESC_EXTRAS: Record<string, (app: unknown, entry: ManifestDocEntry) => Promise<string | null>> = {
+  'belongings-categories': async (app) => {
+    const table = await loadCategoryTable(app);
+    if (!table) return null; // 读不出表 → 只说「已是最新版本」，不编规模
+    const items = table.groups.reduce((n, g) => n + g.items.length, 0);
+    return `${table.groups.length} 组 ${items} 条`;
+  },
+};
 
 /** 打开面板时后台核对的节流窗（快速开关面板不狂拉；启动链每次启动独立跑不受此限） */
 const CHECK_THROTTLE_MS = 60_000;
@@ -52,7 +74,9 @@ interface GroupMeta {
   rows: SettingsRow[];
   /** 检查更新行（恒在 rows[0]，visibleWhen 门控显隐；desc/buttonText 随核对结果就地翻转） */
   retryRow: BtnRow;
-  /** 四资源行（id → 行对象） */
+  /** 全部更新行（恒在 rows[1]；无待办时禁用，无清单时呈「等待检查更新」） */
+  allRow: BtnRow;
+  /** 资源行（id → 行对象；顺序 = 清单 rowOrder） */
   entries: Array<{ id: string; row: BtnRow }>;
   /** 检查更新行显隐真相（visibleWhen 与本模块 DOM 补丁同读此位） */
   retryVisible: boolean;
@@ -78,58 +102,102 @@ export function resetOnlineResourcesState(): void {
 
 /** 行渲染所需的全部事实（一次算齐） */
 interface RowState {
-  /** 清单条目 id（动作分发用） */
+  /** 清单条目 id（动作分发用）；皮肤聚合行是 SKINS_ROW_ID */
   id: string;
-  /** 行名（清单 name 优先，回退内置表） */
+  /** 行名（doc 行取清单 name；皮肤行取内置名） */
   name: string;
-  /** doc 行状态；皮肤行/无清单 null */
+  /** doc 行状态；皮肤行 null */
   doc: DocStatus | null;
-  /** 皮肤行三态计数；doc 行/无清单 null */
+  /** 皮肤行三态计数；doc 行 null */
   skin: SkinStatus | null;
-  /** 分类表行专用：本地已就绪表的规模（归物本 AI 归类与选择器的候选池），其余行 null */
-  catInfo: { groups: number; items: number } | null;
+  /** 描述里的规模补充（如「26 组 515 条」）；无则 null */
+  extra: string | null;
+  /** 该行资源的体积（doc = 清单 size；皮肤 = 区间内各套合计）；无信息 null */
+  size: number | null;
 }
 
-/** 组内容一次性算齐（缓存清单 + 本地文件实测） */
+/**
+ * 行序：清单 `rowOrder` 优先（SKINS_ROW_ID 是皮肤聚合行的保留 id）；缺失 = docs 顺序 + 皮肤末位。
+ * rowOrder 漏提的 doc 追加在末尾（清单是事实源，漏登记不该让条目凭空消失），漏提皮肤也补在末尾。
+ */
+function rowIdsOf(manifest: DownloadManifest): string[] {
+  const docIds = manifest.docs.map((d) => d.id);
+  const order = manifest.rowOrder;
+  if (!order || order.length === 0) return [...docIds, SKINS_ROW_ID];
+  const ids = order.filter((id) => id === SKINS_ROW_ID || docIds.includes(id));
+  if (!ids.includes(SKINS_ROW_ID)) ids.push(SKINS_ROW_ID);
+  const seen = new Set(ids);
+  for (const id of docIds) if (!seen.has(id)) ids.push(id);
+  return ids;
+}
+
+/** 皮肤总体积（区间内已登记 size 的条目合计）；一条都没登记 → null（不提体积） */
+function skinTotalSize(manifest: DownloadManifest, pluginVersion: string): number | null {
+  let sum = 0;
+  let any = false;
+  for (const e of manifest.skins) {
+    if (pluginVersion && !isInVersionRange(e, pluginVersion)) continue;
+    if (typeof e.size === 'number' && e.size > 0) {
+      sum += e.size;
+      any = true;
+    }
+  }
+  return any ? sum : null;
+}
+
+/** 体积文案（MB 一位小数 / KB 取整；不足 1 KB 折成 <1 KB） */
+function sizeText(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+  return '<1 KB';
+}
+
+/** 组内容一次性算齐（缓存清单 + 本地文件实测）；无清单 → 没有资源行（只剩操作行） */
 async function computeRowStates(app: unknown): Promise<{ rows: RowState[]; manifest: DownloadManifest | null }> {
   const manifest = await cachedManifest(app);
+  if (!manifest) return { rows: [], manifest: null };
+  // 插件版本：doc 版本区间过滤与皮肤区间计数共用（读不到 → 皮肤状态不可判，doc 不过滤）
+  const pluginVersion = await readPluginVersion(app);
+
   const rows: RowState[] = [];
-  for (const fb of FALLBACK_ROWS) {
-    if (fb.id === 'skins') {
-      rows.push({ id: fb.id, name: fb.name, doc: null, skin: manifest ? await skinStatus(app, manifest) : null, catInfo: null });
-    } else {
-      const entry = manifest?.docs.find((d) => d.id === fb.id) ?? null;
-      const doc = entry ? await docStatus(app, entry) : null;
-      // 分类表行：就绪时把表规模读出来（loadCategoryTable 有内存缓存，二次打开零读盘）
-      let catInfo: RowState['catInfo'] = null;
-      if (fb.id === 'belongings-categories' && doc === 'ready') {
-        const t = await loadCategoryTable(app);
-        if (t) catInfo = { groups: t.groups.length, items: t.groups.reduce((n, g) => n + g.items.length, 0) };
-      }
+  for (const id of rowIdsOf(manifest)) {
+    if (id === SKINS_ROW_ID) {
       rows.push({
-        id: fb.id,
-        name: entry?.name ?? fb.name,
-        doc,
-        skin: null,
-        catInfo,
+        id,
+        name: SKINS_ROW_NAME,
+        doc: null,
+        skin: pluginVersion ? await skinStatus(app, manifest) : null,
+        extra: null,
+        size: skinTotalSize(manifest, pluginVersion),
       });
+      continue;
     }
+    const entry = manifest.docs.find((d) => d.id === id);
+    if (!entry) continue;
+    // 版本区间外 → 该行不呈现（旧版插件看到「需新版」的资源不误报可下载）
+    if (pluginVersion && !isInVersionRange(entry, pluginVersion)) continue;
+    const doc = await docStatus(app, entry);
+    // 规模补充只在就绪态读（未下载时读本地产物无意义，白读盘）
+    const extra = doc === 'ready' && DESC_EXTRAS[id] ? await DESC_EXTRAS[id](app, entry) : null;
+    rows.push({ id, name: entry.name, doc, skin: null, extra, size: entry.size ?? null });
   }
   return { rows, manifest };
 }
 
-/** 行状态 → 描述文案（设置项文案规范：一句自然句，无符号花样；皮肤行明示已下载套数） */
+/** 行状态 → 描述文案（设置项文案规范：一句自然句，无符号花样；就绪态捎带规模与体积） */
 function rowDesc(st: RowState): string {
+  const size = st.size !== null ? sizeText(st.size) : '';
   if (st.skin) {
     const { ready, missing, updated } = st.skin;
     if (updated > 0) return missing > 0 ? `${updated} 套主题有更新，另有 ${missing} 套未下载` : `${updated} 套主题有更新，已就绪 ${ready} 套`;
     if (missing > 0) return `${missing} 套主题可下载，已就绪 ${ready} 套`;
-    return `全部主题已是最新（已下载 ${ready} 套）`;
+    return `全部主题已是最新（已下载 ${ready} 套${size ? `，共 ${size}` : ''}）`;
   }
   if (st.doc === 'missing') return '尚未下载，下载后即可查看';
   if (st.doc === 'updated') return '有新版本，可更新到最新';
   if (st.doc === 'ready') {
-    return st.catInfo ? `已是最新版本（${st.catInfo.groups} 组 ${st.catInfo.items} 条）` : '已是最新版本';
+    const inner = [st.extra, size].filter((x) => !!x).join('，');
+    return inner ? `已是最新版本（${inner}）` : '已是最新版本';
   }
   return '等待检查更新';
 }
@@ -145,13 +213,39 @@ function rowButton(st: RowState): { text: string; disabled: boolean } {
   if (st.doc === 'missing') return { text: '下载', disabled: false };
   if (st.doc === 'updated') return { text: '更新', disabled: false };
   if (st.doc === 'ready') return { text: '已下载', disabled: true };
-  // 清单在但该 id 未登记（或无清单）= 状态未知：按钮禁用（等信息到位，不误导「已是最新」）
   return { text: '下载', disabled: true };
+}
+
+/** 待办统计：整行口径（皮肤行按「有缺或有更」算一行），供全部更新行取数 */
+function pendingOf(states: RowState[]): { pending: number; updatable: number } {
+  let pending = 0;
+  let updatable = 0;
+  for (const st of states) {
+    if (st.skin) {
+      if (st.skin.missing + st.skin.updated > 0) pending++;
+      if (st.skin.updated > 0) updatable++;
+      continue;
+    }
+    if (st.doc === 'missing' || st.doc === 'updated') {
+      pending++;
+      if (st.doc === 'updated') updatable++;
+    }
+  }
+  return { pending, updatable };
+}
+
+/** 全部更新行的按钮态：无待办 → 已是最新（禁用）；有更新 → 全部更新 N；只有未下载 → 全部下载 N。
+ *  无清单 → 等待检查更新（状态未知，不假装「已是最新」）。 */
+function allButton(states: RowState[], hasManifest: boolean): { text: string; disabled: boolean } {
+  if (!hasManifest) return { text: '等待检查更新', disabled: true };
+  const { pending, updatable } = pendingOf(states);
+  if (pending === 0) return { text: '已是最新', disabled: true };
+  return { text: updatable > 0 ? `全部更新 ${pending}` : `全部下载 ${pending}`, disabled: false };
 }
 
 /**
  * 「在线资源」组（通用域 schema loader 尾部追加；ADR-0205 起为 async——本地状态现算后建声明行）。
- * 行序：检查更新（可视状态门控）+ 四资源行；全部 button 行，走两个渲染器的通用分支。
+ * 行序：检查更新（可视状态门控）→ 全部更新 → 资源行（清单 rowOrder）；全部 button 行。
  */
 export async function onlineResourcesGroup(): Promise<GroupDecl> {
   const { rows: states, manifest } = await computeRowStates(getApp());
@@ -160,6 +254,7 @@ export async function onlineResourcesGroup(): Promise<GroupDecl> {
   const meta: GroupMeta = {
     rows: [],
     retryRow: null as unknown as BtnRow,
+    allRow: null as unknown as BtnRow,
     entries: [],
     retryVisible: !hasManifest || checkFailed,
   };
@@ -173,6 +268,18 @@ export async function onlineResourcesGroup(): Promise<GroupDecl> {
   };
   meta.retryRow = retryRow;
   meta.rows.push(retryRow);
+
+  const ab = allButton(states, hasManifest);
+  const allRow: BtnRow = {
+    type: 'button',
+    name: '全部更新',
+    desc: '一次处理全部未下载与有更新的资源',
+    buttonText: ab.text,
+    disabled: ab.disabled,
+    onClick: (ctx) => void runAll(ctx),
+  };
+  meta.allRow = allRow;
+  meta.rows.push(allRow);
 
   for (const st of states) {
     const btn = rowButton(st);
@@ -240,7 +347,7 @@ async function retryCheck(ctx: SettingsRowContext): Promise<void> {
   ctx.refreshVisibility();
 }
 
-/** 重算四行状态（唯一刷新通道，单飞合流）：后台核对落地、下载动作完成、下载事件三处共用。
+/** 重算资源行状态（唯一刷新通道，单飞合流）：后台核对落地、下载动作完成、下载事件三处共用。
  *  合流窗内再来的请求只置脏不排队——本轮跑完补一轮，收尾态落在最后一次请求之后的磁盘事实上。 */
 async function syncGroupRows(): Promise<void> {
   if (!currentGroup) return;
@@ -272,6 +379,16 @@ async function syncOnce(): Promise<void> {
   meta.retryVisible = !hasManifest || checkFailed;
   meta.retryRow.desc = checkFailed ? '检查更新失败，可能是网络不可用' : '尚未检查更新';
   meta.retryRow.buttonText = checkFailed ? '重试' : '检查更新';
+
+  // 行集合变了（远端清单增删了条目、或 rowOrder 改了）= DOM 行数与行对象不再对位，硬补必然错位：
+  // 本轮直接不补，等面板重开按新清单重建整组。低频事件，不值得为它加一条重渲通道。
+  if (states.length !== meta.entries.length || states.some((st, i) => st.id !== meta.entries[i].id)) return;
+
+  if (!busyIds.has(ALL_BUSY_ID)) {
+    const ab = allButton(states, hasManifest);
+    meta.allRow.buttonText = ab.text;
+    meta.allRow.disabled = ab.disabled;
+  }
 
   for (const { id, row } of meta.entries) {
     if (busyIds.has(id)) continue; // 动作中：行态留给动作收尾那一轮写（此时写会把置忙抹掉）
@@ -320,7 +437,20 @@ function patchRenderedGroup(): void {
   });
 }
 
-/** 行动作：doc → ensureAssetWithHash（覆盖写）；皮肤 → downloadSkinUpdates（拉全部非就绪） */
+/** 单条资源的下载（皮肤聚合行走批量入口）；失败抛错，由调用方决定通知口径 */
+async function downloadOne(app: unknown, manifest: DownloadManifest, id: string): Promise<void> {
+  if (id === SKINS_ROW_ID) {
+    const r = await downloadSkinUpdates(app, manifest);
+    if (r.failed > 0) throw new Error(`${r.failed} 套主题下载失败，可稍后重试`);
+    return;
+  }
+  const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === id);
+  if (!entry) return;
+  // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
+  await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+}
+
+/** 单行动作：置忙 → 下载 → 收尾按磁盘事实落定 */
 async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   // 拦重入要在首个 await 之前：读缓存清单是个让位点（慢盘），让位点上再来的第二击
   // 此时 busy 类还没上、busyIds 也还空着——只拦不置忙等于没拦，两击会并发跑两轮下载。
@@ -334,16 +464,7 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
     const app = getApp();
     // 清单已不可用（禁用态理论不可达）→ 不动作，尾段按磁盘事实就地校正
     const manifest = await cachedManifest(app);
-    if (manifest) {
-      if (id === 'skins') {
-        const r = await downloadSkinUpdates(app, manifest);
-        if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, 'error');
-      } else {
-        const entry: ManifestDocEntry | undefined = manifest.docs.find((d) => d.id === id);
-        // 走 sha256 校验通道（与皮肤同口径）：清单 hash 对不上即拒收，不把坏内容写进本地
-        if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
-      }
-    }
+    if (manifest) await downloadOne(app, manifest, id);
   } catch (e) {
     notice(e instanceof Error ? e.message : String(e), 'error');
   }
@@ -351,5 +472,54 @@ async function runAction(ctx: SettingsRowContext, id: string): Promise<void> {
   await syncLogged(); // 动作完成（成败皆然）→ 磁盘事实已变，行对象落定真态（补丁此刻跳过 busy 钮）
   // 摘转圈 + 补一次补丁：上面那轮补丁把动作钮跳过了，摘后按刚落定的行态写回（不留「旧文案可点」窗口）
   setRowBtnState(btn, 'idle', row?.buttonText ?? '下载');
+  patchRenderedGroup();
+}
+
+/**
+ * 全部更新（组级动作）：按行序逐条跑未就绪行，每条落盘后同步一次——逐条可见进展，
+ * 而不是憋到最后一起翻。失败行聚合计数，收尾一条 error 通知；单行动作正在跑的行跳过不抢。
+ */
+async function runAll(ctx: SettingsRowContext): Promise<void> {
+  if (busyIds.has(ALL_BUSY_ID)) return; // 拦重入同单行：置忙提到首个 await 之前
+  busyIds.add(ALL_BUSY_ID);
+  const btn = ctx.rowEl.querySelector<HTMLButtonElement>('.bz-sp-btn') ?? undefined;
+  const allRow = currentGroup?.allRow;
+  setRowBtnState(btn, 'busy', btn?.textContent ?? '全部更新');
+  if (allRow) allRow.disabled = true;
+
+  let failed = 0;
+  try {
+    const app = getApp();
+    const manifest = await cachedManifest(app);
+    // 清单不可用（禁用态理论不可达）→ 不动作，尾段按磁盘事实就地校正
+    if (manifest) {
+      const { rows: states } = await computeRowStates(app);
+      for (const st of states) {
+        if (busyIds.has(st.id)) continue; // 单行动作正在跑 → 跳过，不抢
+        const isPending = st.skin ? st.skin.missing + st.skin.updated > 0 : st.doc === 'missing' || st.doc === 'updated';
+        if (!isPending) continue;
+        busyIds.add(st.id);
+        const row = currentGroup?.entries.find((e) => e.id === st.id)?.row;
+        if (row) row.disabled = true; // 逐行置忙：跑到的行在 schema 面也点不动
+        try {
+          await downloadOne(app, manifest, st.id);
+        } catch (e) {
+          failed++;
+          console.warn(`[bz] 在线资源「${st.name}」下载失败:`, (e as Error)?.message || e);
+        } finally {
+          busyIds.delete(st.id);
+        }
+        await syncLogged(); // 每条落盘即刷新（逐条可见，不是憋到最后）
+      }
+    }
+  } catch (e) {
+    notice(e instanceof Error ? e.message : String(e), 'error');
+  }
+
+  busyIds.delete(ALL_BUSY_ID);
+  await syncLogged();
+  if (failed > 0) notice(`${failed} 项下载失败，可稍后重试`, 'error');
+  // 摘转圈：补丁刻意绕过 busy 钮（见 patchRenderedGroup），不摘会一直转
+  setRowBtnState(btn, 'idle', allRow?.buttonText ?? '全部更新');
   patchRenderedGroup();
 }

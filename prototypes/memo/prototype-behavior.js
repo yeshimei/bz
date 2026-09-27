@@ -1,5 +1,5 @@
-/* 源指纹 8e37bf7381c1e0bf · 仓内输入 276 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 5ffd436274facdba · 仓内输入 277 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -6118,12 +6118,23 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/remote-base.ts
+  function downloadRemotesFor(fileName) {
+    return REPO_BASES.map((b) => `${b}/downloads/${fileName}`);
+  }
+  var REPO_BASES;
+  var init_remote_base = __esm({
+    "src/core/remote-base.ts"() {
+      REPO_BASES = [
+        "https://raw.githubusercontent.com/yeshimei/bz/master",
+        "https://cdn.jsdelivr.net/gh/yeshimei/bz@master"
+      ];
+    }
+  });
+
   // src/core/remote-asset.ts
   function remotesFor(fileName) {
-    return [
-      `https://raw.githubusercontent.com/yeshimei/bz/master/downloads/${fileName}`,
-      `https://cdn.jsdelivr.net/gh/yeshimei/bz@master/downloads/${fileName}`
-    ];
+    return downloadRemotesFor(fileName);
   }
   function assetVaultPath(app, fileName) {
     var _a2;
@@ -6241,6 +6252,7 @@ var BZW_memo = (() => {
       init_fake_obsidian();
       init_sha256();
       init_domain_bus();
+      init_remote_base();
       DOWNLOADS_CHANGED_EVENT = "downloads:asset-changed";
       DOWNLOADS_DIR = "downloads";
     }
@@ -6261,6 +6273,7 @@ var BZW_memo = (() => {
       previewClass: typeof e.previewClass === "string" && e.previewClass ? e.previewClass : void 0,
       since: typeof e.since === "string" && e.since ? e.since : void 0,
       until: typeof e.until === "string" && e.until ? e.until : void 0,
+      size: typeof e.size === "number" && Number.isFinite(e.size) && e.size > 0 ? e.size : void 0,
       sha256: e.sha256.toLowerCase()
     };
   }
@@ -6281,7 +6294,15 @@ var BZW_memo = (() => {
       if (typeof e.name !== "string" || !e.name) return null;
       if (typeof e.file !== "string" || !e.file) return null;
       if (typeof e.sha256 !== "string" || !SHA_RE.test(e.sha256.toLowerCase())) return null;
-      docs.push({ id: e.id, name: e.name, file: e.file, sha256: e.sha256.toLowerCase() });
+      docs.push({
+        id: e.id,
+        name: e.name,
+        file: e.file,
+        sha256: e.sha256.toLowerCase(),
+        since: typeof e.since === "string" && e.since ? e.since : void 0,
+        until: typeof e.until === "string" && e.until ? e.until : void 0,
+        size: typeof e.size === "number" && Number.isFinite(e.size) && e.size > 0 ? e.size : void 0
+      });
     }
     const skins = [];
     for (const item of obj.skins) {
@@ -6290,7 +6311,13 @@ var BZW_memo = (() => {
       skins.push(e);
     }
     const version = typeof obj.version === "number" ? obj.version : 1;
-    return { version, docs, skins };
+    let rowOrder;
+    if (obj.rowOrder !== void 0) {
+      if (Array.isArray(obj.rowOrder) && obj.rowOrder.every((x) => typeof x === "string" && x)) {
+        rowOrder = obj.rowOrder;
+      }
+    }
+    return { version, docs, skins, rowOrder };
   }
   async function cachedManifest(app) {
     return parseDownloadManifest(await readAsset(app, MANIFEST_FILE));
@@ -6318,12 +6345,13 @@ var BZW_memo = (() => {
     if (local === null) return "missing";
     return textSha256(local) === entry.sha256 ? "ready" : "updated";
   }
-  var MANIFEST_FILE, SHA_RE;
+  var MANIFEST_FILE, SKINS_ROW_ID, SHA_RE;
   var init_download_manifest = __esm({
     "src/core/download-manifest.ts"() {
       init_remote_asset();
       init_sha256();
       MANIFEST_FILE = "manifest.json";
+      SKINS_ROW_ID = "skins";
       SHA_RE = /^[0-9a-f]{64}$/;
     }
   });
@@ -30039,43 +30067,73 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     syncDirty = false;
     busyIds.clear();
   }
-  async function computeRowStates(app) {
-    var _a2, _b2;
-    const manifest = await cachedManifest(app);
-    const rows = [];
-    for (const fb of FALLBACK_ROWS) {
-      if (fb.id === "skins") {
-        rows.push({ id: fb.id, name: fb.name, doc: null, skin: manifest ? await skinStatus(app, manifest) : null, catInfo: null });
-      } else {
-        const entry = (_a2 = manifest == null ? void 0 : manifest.docs.find((d) => d.id === fb.id)) != null ? _a2 : null;
-        const doc = entry ? await docStatus(app, entry) : null;
-        let catInfo = null;
-        if (fb.id === "belongings-categories" && doc === "ready") {
-          const t = await loadCategoryTable(app);
-          if (t) catInfo = { groups: t.groups.length, items: t.groups.reduce((n, g) => n + g.items.length, 0) };
-        }
-        rows.push({
-          id: fb.id,
-          name: (_b2 = entry == null ? void 0 : entry.name) != null ? _b2 : fb.name,
-          doc,
-          skin: null,
-          catInfo
-        });
+  function rowIdsOf(manifest) {
+    const docIds = manifest.docs.map((d) => d.id);
+    const order = manifest.rowOrder;
+    if (!order || order.length === 0) return [...docIds, SKINS_ROW_ID];
+    const ids = order.filter((id) => id === SKINS_ROW_ID || docIds.includes(id));
+    if (!ids.includes(SKINS_ROW_ID)) ids.push(SKINS_ROW_ID);
+    const seen = new Set(ids);
+    for (const id of docIds) if (!seen.has(id)) ids.push(id);
+    return ids;
+  }
+  function skinTotalSize(manifest, pluginVersion) {
+    let sum = 0;
+    let any = false;
+    for (const e of manifest.skins) {
+      if (pluginVersion && !isInVersionRange(e, pluginVersion)) continue;
+      if (typeof e.size === "number" && e.size > 0) {
+        sum += e.size;
+        any = true;
       }
+    }
+    return any ? sum : null;
+  }
+  function sizeText(bytes) {
+    if (bytes >= 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+    return "<1 KB";
+  }
+  async function computeRowStates(app) {
+    var _a2;
+    const manifest = await cachedManifest(app);
+    if (!manifest) return { rows: [], manifest: null };
+    const pluginVersion = await readPluginVersion(app);
+    const rows = [];
+    for (const id of rowIdsOf(manifest)) {
+      if (id === SKINS_ROW_ID) {
+        rows.push({
+          id,
+          name: SKINS_ROW_NAME,
+          doc: null,
+          skin: pluginVersion ? await skinStatus(app, manifest) : null,
+          extra: null,
+          size: skinTotalSize(manifest, pluginVersion)
+        });
+        continue;
+      }
+      const entry = manifest.docs.find((d) => d.id === id);
+      if (!entry) continue;
+      if (pluginVersion && !isInVersionRange(entry, pluginVersion)) continue;
+      const doc = await docStatus(app, entry);
+      const extra = doc === "ready" && DESC_EXTRAS[id] ? await DESC_EXTRAS[id](app, entry) : null;
+      rows.push({ id, name: entry.name, doc, skin: null, extra, size: (_a2 = entry.size) != null ? _a2 : null });
     }
     return { rows, manifest };
   }
   function rowDesc(st) {
+    const size = st.size !== null ? sizeText(st.size) : "";
     if (st.skin) {
       const { ready: ready2, missing, updated } = st.skin;
       if (updated > 0) return missing > 0 ? `${updated} 套主题有更新，另有 ${missing} 套未下载` : `${updated} 套主题有更新，已就绪 ${ready2} 套`;
       if (missing > 0) return `${missing} 套主题可下载，已就绪 ${ready2} 套`;
-      return `全部主题已是最新（已下载 ${ready2} 套）`;
+      return `全部主题已是最新（已下载 ${ready2} 套${size ? `，共 ${size}` : ""}）`;
     }
     if (st.doc === "missing") return "尚未下载，下载后即可查看";
     if (st.doc === "updated") return "有新版本，可更新到最新";
     if (st.doc === "ready") {
-      return st.catInfo ? `已是最新版本（${st.catInfo.groups} 组 ${st.catInfo.items} 条）` : "已是最新版本";
+      const inner = [st.extra, size].filter((x) => !!x).join("，");
+      return inner ? `已是最新版本（${inner}）` : "已是最新版本";
     }
     return "等待检查更新";
   }
@@ -30091,12 +30149,35 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (st.doc === "ready") return { text: "已下载", disabled: true };
     return { text: "下载", disabled: true };
   }
+  function pendingOf(states) {
+    let pending = 0;
+    let updatable = 0;
+    for (const st of states) {
+      if (st.skin) {
+        if (st.skin.missing + st.skin.updated > 0) pending++;
+        if (st.skin.updated > 0) updatable++;
+        continue;
+      }
+      if (st.doc === "missing" || st.doc === "updated") {
+        pending++;
+        if (st.doc === "updated") updatable++;
+      }
+    }
+    return { pending, updatable };
+  }
+  function allButton(states, hasManifest) {
+    if (!hasManifest) return { text: "等待检查更新", disabled: true };
+    const { pending, updatable } = pendingOf(states);
+    if (pending === 0) return { text: "已是最新", disabled: true };
+    return { text: updatable > 0 ? `全部更新 ${pending}` : `全部下载 ${pending}`, disabled: false };
+  }
   async function onlineResourcesGroup() {
     const { rows: states, manifest } = await computeRowStates(getApp());
     const hasManifest = !!manifest;
     const meta = {
       rows: [],
       retryRow: null,
+      allRow: null,
       entries: [],
       retryVisible: !hasManifest || checkFailed
     };
@@ -30110,6 +30191,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
     meta.retryRow = retryRow;
     meta.rows.push(retryRow);
+    const ab = allButton(states, hasManifest);
+    const allRow = {
+      type: "button",
+      name: "全部更新",
+      desc: "一次处理全部未下载与有更新的资源",
+      buttonText: ab.text,
+      disabled: ab.disabled,
+      onClick: (ctx) => void runAll(ctx)
+    };
+    meta.allRow = allRow;
+    meta.rows.push(allRow);
     for (const st of states) {
       const btn = rowButton(st);
       const row = {
@@ -30188,6 +30280,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     meta.retryVisible = !hasManifest || checkFailed;
     meta.retryRow.desc = checkFailed ? "检查更新失败，可能是网络不可用" : "尚未检查更新";
     meta.retryRow.buttonText = checkFailed ? "重试" : "检查更新";
+    if (states.length !== meta.entries.length || states.some((st, i) => st.id !== meta.entries[i].id)) return;
+    if (!busyIds.has(ALL_BUSY_ID)) {
+      const ab = allButton(states, hasManifest);
+      meta.allRow.buttonText = ab.text;
+      meta.allRow.disabled = ab.disabled;
+    }
     for (const { id, row } of meta.entries) {
       if (busyIds.has(id)) continue;
       const st = states.find((s) => s.id === id);
@@ -30227,6 +30325,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       });
     });
   }
+  async function downloadOne(app, manifest, id) {
+    if (id === SKINS_ROW_ID) {
+      const r = await downloadSkinUpdates(app, manifest);
+      if (r.failed > 0) throw new Error(`${r.failed} 套主题下载失败，可稍后重试`);
+      return;
+    }
+    const entry = manifest.docs.find((d) => d.id === id);
+    if (!entry) return;
+    await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
+  }
   async function runAction(ctx, id) {
     var _a2, _b2, _c, _d;
     if (busyIds.has(id)) return;
@@ -30238,15 +30346,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     try {
       const app = getApp();
       const manifest = await cachedManifest(app);
-      if (manifest) {
-        if (id === "skins") {
-          const r = await downloadSkinUpdates(app, manifest);
-          if (r.failed > 0) notice(`${r.failed} 套主题下载失败，可稍后重试`, "error");
-        } else {
-          const entry = manifest.docs.find((d) => d.id === id);
-          if (entry) await ensureAssetWithHash(app, entry.file, entry.sha256, entry.name);
-        }
-      }
+      if (manifest) await downloadOne(app, manifest, id);
     } catch (e) {
       notice(e instanceof Error ? e.message : String(e), "error");
     }
@@ -30255,7 +30355,48 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     setRowBtnState(btn, "idle", (_d = row == null ? void 0 : row.buttonText) != null ? _d : "下载");
     patchRenderedGroup();
   }
-  var FALLBACK_ROWS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed;
+  async function runAll(ctx) {
+    var _a2, _b2, _c, _d;
+    if (busyIds.has(ALL_BUSY_ID)) return;
+    busyIds.add(ALL_BUSY_ID);
+    const btn = (_a2 = ctx.rowEl.querySelector(".bz-sp-btn")) != null ? _a2 : void 0;
+    const allRow = currentGroup == null ? void 0 : currentGroup.allRow;
+    setRowBtnState(btn, "busy", (_b2 = btn == null ? void 0 : btn.textContent) != null ? _b2 : "全部更新");
+    if (allRow) allRow.disabled = true;
+    let failed = 0;
+    try {
+      const app = getApp();
+      const manifest = await cachedManifest(app);
+      if (manifest) {
+        const { rows: states } = await computeRowStates(app);
+        for (const st of states) {
+          if (busyIds.has(st.id)) continue;
+          const isPending = st.skin ? st.skin.missing + st.skin.updated > 0 : st.doc === "missing" || st.doc === "updated";
+          if (!isPending) continue;
+          busyIds.add(st.id);
+          const row = (_c = currentGroup == null ? void 0 : currentGroup.entries.find((e) => e.id === st.id)) == null ? void 0 : _c.row;
+          if (row) row.disabled = true;
+          try {
+            await downloadOne(app, manifest, st.id);
+          } catch (e) {
+            failed++;
+            console.warn(`[bz] 在线资源「${st.name}」下载失败:`, (e == null ? void 0 : e.message) || e);
+          } finally {
+            busyIds.delete(st.id);
+          }
+          await syncLogged();
+        }
+      }
+    } catch (e) {
+      notice(e instanceof Error ? e.message : String(e), "error");
+    }
+    busyIds.delete(ALL_BUSY_ID);
+    await syncLogged();
+    if (failed > 0) notice(`${failed} 项下载失败，可稍后重试`, "error");
+    setRowBtnState(btn, "idle", (_d = allRow == null ? void 0 : allRow.buttonText) != null ? _d : "全部更新");
+    patchRenderedGroup();
+  }
+  var SKINS_ROW_NAME, ALL_BUSY_ID, DESC_EXTRAS, CHECK_THROTTLE_MS, lastCheckAt, checkFailed, currentGroup, syncRunning, syncDirty, busyIds, subscribed;
   var init_online_resources = __esm({
     "src/settings-panel/online-resources.ts"() {
       init_app();
@@ -30267,12 +30408,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_skin_pack();
       init_remote_asset();
       init_category_table();
-      FALLBACK_ROWS = [
-        { id: "changelog", name: "更新日志" },
-        { id: "manual", name: "使用手册" },
-        { id: "skins", name: "主题" },
-        { id: "belongings-categories", name: "归物分类表" }
-      ];
+      SKINS_ROW_NAME = "主题";
+      ALL_BUSY_ID = "__all__";
+      DESC_EXTRAS = {
+        "belongings-categories": async (app) => {
+          const table = await loadCategoryTable(app);
+          if (!table) return null;
+          const items = table.groups.reduce((n, g) => n + g.items.length, 0);
+          return `${table.groups.length} 组 ${items} 条`;
+        }
+      };
       CHECK_THROTTLE_MS = 6e4;
       lastCheckAt = 0;
       checkFailed = false;

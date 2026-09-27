@@ -20,6 +20,7 @@ import {
   docStatus,
   parseDownloadManifest,
   refreshManifest,
+  SKINS_ROW_ID,
   type DownloadManifest,
 } from '../../src/core/download-manifest';
 import { refreshAsset } from '../../src/core/remote-asset';
@@ -222,5 +223,125 @@ describe('refreshAsset 的 expectedSha256 省流（ADR-0203）', () => {
     });
     const r = await refreshAsset(appOf(vault), 'bz-manual.html', validate, '手册', null);
     expect(r).toBeNull();
+  });
+});
+
+describe('doc 条目版本区间与体积（第 3 / 4 条数据面）', () => {
+  it('doc 条目 since / until / size 正常解析', () => {
+    const base = goodManifest();
+    const m = parseDownloadManifest(
+      JSON.stringify({
+        ...base,
+        docs: [
+          { id: 'changelog', name: '更新日志', file: 'bz-changelog.html', sha256: 'a'.repeat(64), since: '1.2.0', until: '2.0.0', size: 12345 },
+        ],
+      }),
+    );
+    expect(m?.docs[0]).toMatchObject({
+      id: 'changelog',
+      since: '1.2.0',
+      until: '2.0.0',
+      size: 12345,
+    });
+  });
+
+  it('size 为 0 / 负数 / 字符串 / NaN → 丢弃为 undefined，且不影响清单有效性', () => {
+    const base = goodManifest();
+    for (const size of [0, -1, '123', NaN]) {
+      const m = parseDownloadManifest(
+        JSON.stringify({
+          ...base,
+          docs: [{ id: 'changelog', name: '更新日志', file: 'bz-changelog.html', sha256: 'a'.repeat(64), size }],
+        }),
+      );
+      expect(m).not.toBeNull();
+      expect(m?.docs[0].size).toBeUndefined();
+    }
+  });
+
+  it('必填字段缺失仍然整份失效（回归：新字段是可选的不背锅）', () => {
+    const base = goodManifest();
+    // size/since/until 给着玩，但 id 缺失 → 整份 null
+    expect(
+      parseDownloadManifest(
+        JSON.stringify({
+          ...base,
+          docs: [{ name: 'x', file: 'a', sha256: 'a'.repeat(64), size: 10, since: '1.0.0' }],
+        }),
+      ),
+    ).toBeNull();
+    // 缺 sha256 也照样 null
+    expect(
+      parseDownloadManifest(
+        JSON.stringify({
+          ...base,
+          docs: [{ id: 'x', name: 'x', file: 'a', size: 10 }],
+        }),
+      ),
+    ).toBeNull();
+  });
+});
+
+describe('皮肤条目体积（第 4 条数据面：skins[].size）', () => {
+  it('skins 条目 size 正常解析（与 doc 侧同口径）', () => {
+    const base = goodManifest();
+    const m = parseDownloadManifest(
+      JSON.stringify({ ...base, skins: [{ ...base.skins[0], size: 4096 }] }),
+    );
+    expect(m?.skins[0]).toMatchObject({ id: 'noir', size: 4096 });
+  });
+
+  it('skins 条目 size 为 0 / 负数 / 字符串 / NaN → 丢弃为 undefined，条目本身仍在', () => {
+    const base = goodManifest();
+    for (const size of [0, -1, '123', NaN]) {
+      const m = parseDownloadManifest(
+        JSON.stringify({ ...base, skins: [{ ...base.skins[0], size }] }),
+      );
+      expect(m).not.toBeNull();
+      expect(m?.skins).toHaveLength(1);
+      expect(m?.skins[0].size).toBeUndefined();
+    }
+  });
+
+  it('skins 条目不登记 size → undefined（旧清单照常可用，UI 不提体积）', () => {
+    const m = parseDownloadManifest(JSON.stringify(goodManifest()));
+    expect(m?.skins[0].size).toBeUndefined();
+  });
+});
+
+describe('rowOrder（行序字段：可选、宽容）', () => {
+  it('rowOrder 正常解析为字符串数组', () => {
+    const base = goodManifest();
+    const order = ['changelog', 'manual', SKINS_ROW_ID, 'belongings-categories'];
+    const m = parseDownloadManifest(JSON.stringify({ ...base, rowOrder: order }));
+    expect(m?.rowOrder).toEqual(order);
+  });
+
+  it('rowOrder 不是数组 → 整字段丢弃，清单仍有效', () => {
+    const base = goodManifest();
+    const m = parseDownloadManifest(JSON.stringify({ ...base, rowOrder: 'changelog,manual' }));
+    expect(m).not.toBeNull();
+    expect(m?.rowOrder).toBeUndefined();
+  });
+
+  it('rowOrder 含空串 → 整字段丢弃', () => {
+    const base = goodManifest();
+    const m = parseDownloadManifest(JSON.stringify({ ...base, rowOrder: ['changelog', '', 'manual'] }));
+    expect(m).not.toBeNull();
+    expect(m?.rowOrder).toBeUndefined();
+  });
+
+  it('rowOrder 含非字符串 → 整字段丢弃', () => {
+    const base = goodManifest();
+    const m = parseDownloadManifest(JSON.stringify({ ...base, rowOrder: ['changelog', 1 as unknown as string] }));
+    expect(m).not.toBeNull();
+    expect(m?.rowOrder).toBeUndefined();
+  });
+
+  it('缺 rowOrder 的旧清单照样解析成功，rowOrder === undefined', () => {
+    const m = parseDownloadManifest(JSON.stringify(goodManifest()));
+    expect(m).not.toBeNull();
+    expect(m?.rowOrder).toBeUndefined();
+    expect(m?.docs).toHaveLength(2);
   });
 });

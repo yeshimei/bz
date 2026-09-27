@@ -62,8 +62,10 @@ function versionAtLeast(ver: string, min: string): boolean {
   return true; // 相等
 }
 
-/** 版本区间判定：`since <= 插件版本 < until`（缺省侧不限） */
-export function isInVersionRange(entry: SkinPackEntry, pluginVersion: string): boolean {
+/** 版本区间判定：`since <= 插件版本 < until`（缺省侧不限）。
+ *  第 1 参数泛化为结构化类型 `{ since?: string; until?: string }`——SkinPackEntry 天然满足，
+ *  doc 条目（ManifestDocEntry）也借它判定版本区间，无需为 doc 另写一份。 */
+export function isInVersionRange(entry: { since?: string; until?: string }, pluginVersion: string): boolean {
   const ver = String(pluginVersion || '');
   if (!ver) return false;
   if (entry.since && !versionAtLeast(ver, entry.since)) return false;
@@ -140,8 +142,9 @@ export function injectSkinPackStyles(css: string): void {
 
 /** 插件当前版本（自更新完成后读，才是有效版本号；读不到 → 空）。
  *  插件自身的 Obsidian 清单在插件目录根（不在 downloads/），必须直读——
- *  readAsset 已是 downloads 口径，误用会把下载清单缓存当版本事实源。 */
-async function readPluginVersion(app: unknown): Promise<string> {
+ *  readAsset 已是 downloads 口径，误用会把下载清单缓存当版本事实源。
+ *  消费方 = 在线资源组对 doc 条目做版本区间过滤（isInVersionRange）。 */
+export async function readPluginVersion(app: unknown): Promise<string> {
   try {
     const adapter = (app as { vault?: { adapter?: { read?: (p: string) => Promise<string> } } }).vault?.adapter;
     if (!adapter?.read) return '';
