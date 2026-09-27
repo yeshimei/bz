@@ -10877,6 +10877,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--acc);
   transition: width 0.25s ease;
 }
+/* 不定态条（issue 484）：解密等不可估阶段 pct=null——脉冲横条只表达「在走」，不假报百分比 */
+.bz-people-ds-sync-indet {
+  height: 100%;
+  width: 36%;
+  border-radius: 2px;
+  background: var(--acc);
+  opacity: 0.65;
+  animation: bz-people-ds-indet 1.4s ease-in-out infinite;
+}
+@keyframes bz-people-ds-indet {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(290%);
+  }
+}
+.bz-people-ds-sync-contact {
+  color: var(--acc);
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+}
 .bz-people-ds-sync-sub {
   color: var(--ink-mut);
   line-height: 1.5;
