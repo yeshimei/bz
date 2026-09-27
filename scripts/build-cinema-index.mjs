@@ -1,4 +1,4 @@
-// scripts/build-cinema-index.mjs — 影院名称索引出版（issue 498 / ADR-0209）
+// scripts/build-cinema-index.mjs — 影院名称索引出版（issue 498 / ADR-0210）
 //
 // 把外部合并好的名称索引（[{n,y,s,k,id}] 数组，见 .scratch/douban-dataset/build_name_index.py
 // 的产物；上游 = 自抓 2026 影视表 + Kaggle 豆瓣数据，**不入 git**）规范成插件在线资源：
@@ -25,7 +25,7 @@ const KINDS = new Set(['电影', '电视剧', '综艺', '动画', '纪录片', '
 
 if (!fs.existsSync(INPUT)) {
   console.error(`输入不存在：${INPUT}`);
-  console.error('上游数据集不入 git（外部数据合规边界，ADR-0209）；在本机构建链上生成后重试，');
+  console.error('上游数据集不入 git（外部数据合规边界，ADR-0210）；在本机构建链上生成后重试，');
   console.error('或把既有产物 downloads/cinema-douban-index.json 原样保留（清单 sha256 仍有效）。');
   process.exit(1);
 }

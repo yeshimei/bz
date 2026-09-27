@@ -108,7 +108,7 @@ let previewFn: PreviewQuery | null = null;
 /** 表单「解析」入口（issue 395）：按片名查询豆瓣字段。
  *  复用队列的 deps 组装（ApiZero Key / 豆瓣 Cookie / requestUrl 通道）——单一来源，
  *  表单不自己拼一份 HTTP 层。
- *  sid 直取（issue 498 / ADR-0209）：名称索引命中时携带 sid，跳过三路检索直接
+ *  sid 直取（issue 498 / ADR-0210）：名称索引命中时携带 sid，跳过三路检索直接
  *  ApiZero 按 ID 取；**失败回落按名全链**（key 缺失/额度尽/网络抖动都不该让
  *  索引命中反而比手输多绕一步），回落语义与无 sid 完全一致。 */
 export async function queryDoubanForPreview(app: App, name: string, sid?: string): Promise<DoubanQueryOutcome> {

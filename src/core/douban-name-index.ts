@@ -1,19 +1,19 @@
 /* ============================================================
- * bz · 豆瓣影视名称索引（core/douban-name-index.ts，单源）——issue 498 / ADR-0209
+ * bz · 豆瓣影视名称索引（core/douban-name-index.ts，单源）——issue 498 / ADR-0210
  *
  * 影院「添加影视」输入框联想的**可下载名称索引**：85,288 条（名称/年份/评分/类别/豆瓣 ID），
- * 选中候选携带 sid → 解析链可跳过按名搜索直取 ApiZero（ADR-0209）。
+ * 选中候选携带 sid → 解析链可跳过按名搜索直取 ApiZero（ADR-0210）。
  *
  * 资产链路与 ADR-0204 归物分类表 / ADR-0208 RSS 源库同范本：发布在仓库
  * `downloads/cinema-douban-index.json`，作为一条 doc 条目登记统一清单
  * （build-manifest.mjs DOCS 表），下载 / 落盘 / sha256 校验复用 `remote-asset.ts`，
  * 「有没有更新」交给清单 docStatus，本层不自出私有清单。
  *
- * 产物形状（scripts/build-cinema-index.mjs 产出；rows 为定长数组省体积，ADR-0209 决策 2）：
+ * 产物形状（scripts/build-cinema-index.mjs 产出；rows 为定长数组省体积，ADR-0210 决策 2）：
  *   { version, updatedAt, stats: { total, kinds: [[类别, 条数]]（按条数降序） },
  *     rows: [[名称, 年份, 评分, 类别, 豆瓣ID], ...] }
  *
- * 合规注记（ADR-0209）：索引只含事实性元数据（名称/年份/评分/类别/ID），
+ * 合规注记（ADR-0210）：索引只含事实性元数据（名称/年份/评分/类别/ID），
  * 不含简介、海报、短评等血肉字段；上游为自抓 2026 表 + Kaggle 豆瓣数据（CC BY-NC-SA）。
  * ============================================================ */
 import { ensureAssetWithHash, readAsset, DOWNLOADS_CHANGED_EVENT } from './remote-asset';
@@ -55,10 +55,12 @@ export interface DoubanNameIndex {
 /** 内存缓存（同一次会话内不重复读盘；测试用 resetDoubanNameIndexCache 清） */
 let memCache: DoubanNameIndex | null = null;
 
-/** 测试用：清空内存缓存 */
+/** 测试用：清空内存缓存与订阅态（测试框架 clearDomainEvents 会拆掉已注册监听，
+ *  subscribed 旗标不同步复位的话，subscribeOnce 会以为还挂着而永久哑火） */
 export function resetDoubanNameIndexCache(): void {
   memCache = null;
   normCache = new WeakMap();
+  subscribed = false;
 }
 
 /** 缓存随落盘事件失效（与 rss-catalog 同款幂等单例订阅，issue 495 复检 P1-1 先例） */
@@ -99,6 +101,7 @@ export function validateDoubanNameIndex(raw: unknown): DoubanNameIndex | null {
     if (!Array.isArray(r) || r.length !== 5) return null;
     if (!r.every((cell) => typeof cell === 'string')) return null;
     const id = r[4];
+    if (!/^\d+$/.test(id)) return null;
     if (ids.has(id)) return null;
     ids.add(id);
     rows.push({ n: r[0], y: r[1], s: r[2], k: r[3], id });
@@ -157,8 +160,9 @@ async function manifestEntry(app: unknown): Promise<CatalogManifestEntry | null>
 }
 
 /**
- * 从统一清单取条目 sha256 → `ensureAssetWithHash`（本地已匹配则复用，否则双源下载并校验落盘）
- * → validate → 更新缓存。任一步失败**原文抛错**（设置行动作方决定怎么提示），不静默返回空库。
+ * 程序化下载（清单条目 → `ensureAssetWithHash` → validate → 热缓存）。与设置面板的
+ * 通用 `downloadOne → ensureAssetWithHash` 通道并存：那条不回读产物，读侧靠 load 兜底校验；
+ * 本函数供需要「下载即校验 + 立即可用」的调用方与测试使用。任一步失败**原文抛错**。
  */
 export async function downloadDoubanNameIndex(app: unknown): Promise<DoubanNameIndex> {
   subscribeOnce();
@@ -191,8 +195,8 @@ export function indexKindCounts(index: DoubanNameIndex): Array<{ k: string; coun
  * 名称归一（检索键）：小写 + 去空白与常见标点（全半角括号/引号/连接符/间隔号）。
  * 「三体（2023）」「三体 2023」「三体」都归到同一前缀。
  */
-function normName(s: string): string {
-  return s.toLowerCase().replace(/[\s:：·・（）()【】\[\]「」『』《》,_\-~～'""]+/g, '');
+export function normName(s: string): string {
+  return s.toLowerCase().replace(/[\s:：·・（）()【】\[\]「」『』《》,_\-~～，。！？''"""']+/g, '');
 }
 
 /** 归一名称缓存（loadDoubanNameIndex 失效时同步清；避免每次击键对 8.5 万行做正则） */
@@ -223,8 +227,8 @@ export function searchDoubanNameIndex(index: DoubanNameIndex, query: string, lim
     else if (key.includes(q)) contains.push(index.rows[i]);
   }
   const byRank = (a: DoubanIndexRow, b: DoubanIndexRow): number => {
-    const sa = a.s ? Number(a.s) : -1;
-    const sb = b.s ? Number(b.s) : -1;
+    const sa = a.s && Number.isFinite(Number(a.s)) ? Number(a.s) : -1;
+    const sb = b.s && Number.isFinite(Number(b.s)) ? Number(b.s) : -1;
     if (sb !== sa) return sb - sa;
     return a.n.length - b.n.length;
   };

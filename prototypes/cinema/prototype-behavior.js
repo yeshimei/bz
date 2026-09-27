@@ -1,4 +1,4 @@
-/* 源指纹 2fde6ea3bc28f2d6 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ca890937367e3bf4 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6047,8 +6047,12 @@ var BZW_cinema = (() => {
     let az = null;
     if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
     let celebrities = null;
-    if (!az || !az.director || !az.actor) {
-      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    try {
+      if (!az || !az.director || !az.actor) {
+        celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+      }
+    } catch (e) {
+      celebrities = null;
     }
     return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
   }
@@ -6061,8 +6065,12 @@ var BZW_cinema = (() => {
     }
     if (!az) return { ok: false, reason: "notfound" };
     let celebrities = null;
-    if (!az.director || !az.actor) {
-      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    try {
+      if (!az.director || !az.actor) {
+        celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+      }
+    } catch (e) {
+      celebrities = null;
     }
     return {
       ok: true,
@@ -6927,6 +6935,7 @@ var BZW_cinema = (() => {
         var _a2, _b, _c;
         if (opts.excludeCurrent && s === cur) return false;
         if (!q) return true;
+        if (opts.matchOf) return opts.matchOf(s, cur);
         if (s.toLowerCase().includes(q)) return true;
         return (_c = (_b = (_a2 = opts.keywordsOf) == null ? void 0 : _a2.call(opts, s)) == null ? void 0 : _b.some((k) => k.toLowerCase().includes(q))) != null ? _c : false;
       }).slice(0, max);
@@ -7355,6 +7364,7 @@ var BZW_cinema = (() => {
       if (!Array.isArray(r) || r.length !== 5) return null;
       if (!r.every((cell) => typeof cell === "string")) return null;
       const id = r[4];
+      if (!/^\d+$/.test(id)) return null;
       if (ids.has(id)) return null;
       ids.add(id);
       rows.push({ n: r[0], y: r[1], s: r[2], k: r[3], id });
@@ -7384,7 +7394,7 @@ var BZW_cinema = (() => {
     return idx;
   }
   function normName(s) {
-    return s.toLowerCase().replace(/[\s:：·・（）()【】\[\]「」『』《》,_\-~～'""]+/g, "");
+    return s.toLowerCase().replace(/[\s:：·・（）()【】\[\]「」『』《》,_\-~～，。！？''"""']+/g, "");
   }
   var normCache = /* @__PURE__ */ new WeakMap();
   function normsOf(index) {
@@ -7408,8 +7418,8 @@ var BZW_cinema = (() => {
       else if (key.includes(q)) contains.push(index.rows[i]);
     }
     const byRank = (a, b) => {
-      const sa = a.s ? Number(a.s) : -1;
-      const sb = b.s ? Number(b.s) : -1;
+      const sa = a.s && Number.isFinite(Number(a.s)) ? Number(a.s) : -1;
+      const sb = b.s && Number.isFinite(Number(b.s)) ? Number(b.s) : -1;
       if (sb !== sa) return sb - sa;
       return a.n.length - b.n.length;
     };
@@ -12729,7 +12739,15 @@ tags:
       }
       phase = "parsing";
       refreshFormState();
-      const q = await queryDoubanForPreview(app, name, pickedSid != null ? pickedSid : void 0);
+      let q;
+      try {
+        q = await queryDoubanForPreview(app, name, pickedSid != null ? pickedSid : void 0);
+      } catch (e) {
+        phase = "idle";
+        refreshFormState();
+        notice("网络不畅，未能获取豆瓣信息", "warning");
+        return;
+      }
       if (!q.ok) {
         phase = "idle";
         refreshFormState();
@@ -12792,11 +12810,10 @@ tags:
       applyStOn();
     };
     const nameDropRows = /* @__PURE__ */ new Map();
-    let nameSuggest = null;
     if (!editing && nameInput) {
       void loadDoubanNameIndex(app).then((index) => {
         if (!index || !el.isConnected || phase !== "idle") return;
-        nameSuggest = uiSuggest({
+        uiSuggest({
           anchor: nameInput,
           max: 12,
           source: () => {
@@ -12815,11 +12832,15 @@ tags:
             }
             return out;
           },
-          /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值） */
+          // source 层是归一化检索（去标点等），draw 层缺省原串 includes 会把归一命中误滤掉——
+          // 传同口径谓词（评审 P2-1）
+          matchOf: (candidate, rawQuery) => normName(candidate).includes(normName(rawQuery)),
+          /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值）；无评分（含 0）不冒充 */
           hintOf: (n) => {
             const r = nameDropRows.get(n);
             if (!r) return "";
-            return [r.y, r.s ? `评分 ${r.s}` : "", r.k].filter(Boolean).join(" · ");
+            const score = r.s && r.s !== "0" ? `评分 ${r.s}` : "";
+            return [r.y, score, r.k].filter(Boolean).join(" · ");
           },
           onPick: (n) => {
             const r = nameDropRows.get(n);

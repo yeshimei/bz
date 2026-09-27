@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * 豆瓣影视名称索引资产层测试（issue 498 / ADR-0209）——core/douban-name-index.ts：
+ * 豆瓣影视名称索引资产层测试（issue 498 / ADR-0210）——core/douban-name-index.ts：
  * validateDoubanNameIndex 合法/畸形矩阵（定长数组行、ID 唯一、total 一致）、
  * load/download 走统一清单（未登记抛错 / 匹配落盘 + 写缓存 / 本地就绪不联网）、
  * 查询纯函数（searchDoubanNameIndex 前缀优先/归一匹配/limit、indexKindCounts）。
@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 import { textSha256 } from '../../src/core/sha256';
 import {
@@ -63,6 +64,7 @@ function manifestTextFor(sha256: string): string {
 beforeEach(() => {
   resetObsidianMocks();
   resetDoubanNameIndexCache();
+  clearDomainEvents();
   vi.mocked(requestUrl).mockReset();
 });
 
@@ -129,6 +131,25 @@ describe('loadDoubanNameIndex / downloadDoubanNameIndex', () => {
     const got = await loadDoubanNameIndex(appOf(vault));
     expect(got?.stats.total).toBe(5);
   });
+  it('落盘事件失效缓存：重新下载后 load 读到新内容（issue 495 复检 P1-1 同款守卫）', async () => {
+    const vault = new MockVault();
+    const v1 = smallIndexRaw();
+    const v2 = JSON.parse(JSON.stringify(v1));
+    (v2.rows as unknown[][]).push(['新片', '2026', '8.0', '电影', '9999999']);
+    v2.stats.total = 6;
+
+    // 第一版下载落盘 + 热缓存
+    routeFetch(manifestTextFor(textSha256(JSON.stringify(v1))), JSON.stringify(v1));
+    await downloadDoubanNameIndex(appOf(vault));
+    expect((await loadDoubanNameIndex(appOf(vault)))!.rows).toHaveLength(5);
+
+    // 第二版直接写盘 + 派发落盘事件 → 缓存必须失效，load 重读到新内容
+    vault.files.set(`.obsidian/plugins/bz/downloads/${DOUBAN_NAME_INDEX_FILE}`, JSON.stringify(v2));
+    emitDomainEvent('downloads:asset-changed', { fileName: DOUBAN_NAME_INDEX_FILE });
+    const fresh = await loadDoubanNameIndex(appOf(vault));
+    expect(fresh!.rows).toHaveLength(6);
+  });
+
   it('本地文件被改坏 → load 返回 null（功能静默缺席，不报错）', async () => {
     const vault = new MockVault();
     vault.files.set(`.obsidian/plugins/bz/downloads/${DOUBAN_NAME_INDEX_FILE}`, '{"rows":[');

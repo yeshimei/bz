@@ -221,6 +221,10 @@ export interface BzSuggestOpts {
   keywordsOf?: (value: string) => string[]; // 额外搜索关键词（如别名；输入命中关键词也算匹配，issue 488）
   hintOf?: (value: string) => string;  // 候选副文本（下拉行尾小字，如别名提示；缺省无）
   onPick?: (value: string) => void;  // 点选/回车选定回调（回填后触发）
+  // 自定义匹配谓词（issue 498）：draw 层对 source 产物的二次过滤缺省是「原串 includes 原始输入」；
+  // 调用方若在 source 层做了归一化检索（如去标点/变体归一），原串过滤会把归一命中误滤掉——
+  // 传入 matchOf 以同口径判定。缺省维持原串 includes（既有消费方零影响）。
+  matchOf?: (candidate: string, rawQuery: string) => boolean;
 }
 
 

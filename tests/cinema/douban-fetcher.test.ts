@@ -627,7 +627,7 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
   });
 });
 
-// ---------- sid 直取（issue 498 / ADR-0209）：名称索引命中后跳过三路检索 ----------
+// ---------- sid 直取（issue 498 / ADR-0210）：名称索引命中后跳过三路检索 ----------
 
 describe('queryDoubanBySid', () => {
   const depsBase: DoubanFetchDeps = {

@@ -461,16 +461,21 @@ export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Pr
   // 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
   let az: ApizeroInfo | null = null;
   if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-  // rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
+  // rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）。
+  // 异常收口（评审 P1-2）：rexxar 网络异常不抬走整体——字段缺就缺，解析照常成功
   let celebrities: CelebritiesInfo | null = null;
-  if (!az || !az.director || !az.actor) {
-    celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+  try {
+    if (!az || !az.director || !az.actor) {
+      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    }
+  } catch {
+    celebrities = null;
   }
   return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
 }
 
 /**
- * 带 sid 直取（issue 498 / ADR-0209）：本地名称索引命中后跳过三路检索，ApiZero 按 ID 拿字段。
+ * 带 sid 直取（issue 498 / ADR-0210）：本地名称索引命中后跳过三路检索，ApiZero 按 ID 拿字段。
  * 与 queryDoubanByName 的字段段完全同构（ApiZero → 缺导演/主演时 rexxar celebrities 兜底），
  * 差异只有两点：sid 来自索引而非检索产物；海报 URL 恒空（ApiZero 无此字段）——
  * 落到 `DoubanQuery.posterUrl = ''`，表单/保存路径对空海报已有兜底（保存后队列按名补抓）。
@@ -486,8 +491,12 @@ export async function queryDoubanBySid(sid: string, name: string, deps: DoubanFe
   }
   if (!az) return { ok: false, reason: 'notfound' };
   let celebrities: CelebritiesInfo | null = null;
-  if (!az.director || !az.actor) {
-    celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+  try {
+    if (!az.director || !az.actor) {
+      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    }
+  } catch {
+    celebrities = null; // rexxar 腿异常不抬走整体：字段缺就缺（评审 P1-2），解析照常成功
   }
   return {
     ok: true,

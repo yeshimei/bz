@@ -31,5 +31,14 @@
 ## 决策记录
 
 - 同名条目候选**取排名最优一行**做 sid 载体（onPick 只有名称串）；其余同名片走手输检索。
-- 季集不进索引（总集数≠季数，C1 撤回口径）；简介/海报/短评等血肉字段**有意不收**（合规边界，ADR-0209）。
+- 季集不进索引（总集数≠季数，C1 撤回口径）；简介/海报/短评等血肉字段**有意不收**（合规边界，ADR-0210）。
 - 上游数据集（Kaggle CC BY-NC-SA + 自抓 2026 表）**不入 git**；产物入库，构建脚本可重跑。
+
+## 评审修复（2026-09-27，子代理评审采纳清单）
+
+- P1-1 ADR-0209 与 issue 497 撞号 → 让号重编 **ADR-0210**（文件名/内文/代码注记/测试全量扫引）
+- P1-2 queryDoubanBySid 与 queryDoubanByName 的 rexxar celebrities 腿异常收口（不再穿透卡死表单）+ runParse 异常兜底复位 phase
+- P2-1 core uiSuggest 增可选 matchOf 谓词（source 层归一化检索的调用方传同口径判定，缺省不变）
+- P2-2 normName 字符类补全（全角逗号/弯引号/句号等）
+- P2-3/P2-4 补测试：生产 sid 直取+回落三例、落盘事件失效缓存一例
+- P3 byRank 非数字评分防御 / validate 校验 ID 形态 / hintOf 「评分 0」不冒充 / nameSuggest 冗余句柄移除 / downloadDoubanNameIndex 头注如实

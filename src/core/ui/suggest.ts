@@ -53,6 +53,9 @@ export function uiSuggest(opts: BzSuggestOpts): {
       .filter((s) => {
         if (opts.excludeCurrent && s === cur) return false;
         if (!q) return true;
+        // 自定义匹配谓词（issue 498）：source 层做了归一化检索的调用方传同口径判定，
+        // 否则原串 includes 会把归一命中误滤掉；命中即不再走 keywordsOf
+        if (opts.matchOf) return opts.matchOf(s, cur);
         if (s.toLowerCase().includes(q)) return true;
         // 额外搜索关键词（issue 488）：别名命中也算匹配（搜「充电宝」出「移动电源」）
         return opts.keywordsOf?.(s)?.some((k) => k.toLowerCase().includes(q)) ?? false;

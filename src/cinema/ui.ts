@@ -33,7 +33,7 @@ import {
   getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
-import { loadDoubanNameIndex, searchDoubanNameIndex, type DoubanIndexRow } from '../core/douban-name-index';
+import { loadDoubanNameIndex, searchDoubanNameIndex, normName, type DoubanIndexRow } from '../core/douban-name-index';
 import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
@@ -1359,8 +1359,17 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     phase = 'parsing';
     refreshFormState();
     // 名称索引命中的精确 sid → 解析直取 ApiZero 跳过按名搜索（issue 498）；
-    // 直取失败在 queryDoubanForPreview 内部回落按名全链，调用方无感
-    const q = await queryDoubanForPreview(app, name, pickedSid ?? undefined);
+    // 直取失败在 queryDoubanForPreview 内部回落按名全链，调用方无感。
+    // 异常兜底（评审 P1-2）：网络层异常上抛时不复位 phase 会把表单永久锁在「解析中」
+    let q: Awaited<ReturnType<typeof queryDoubanForPreview>>;
+    try {
+      q = await queryDoubanForPreview(app, name, pickedSid ?? undefined);
+    } catch {
+      phase = 'idle';
+      refreshFormState();
+      notice('网络不畅，未能获取豆瓣信息', 'warning');
+      return;
+    }
     if (!q.ok) {
       phase = 'idle';
       refreshFormState();
@@ -1440,17 +1449,18 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     applyStOn();
   };
 
-  /** 名称联想（issue 498 / ADR-0209）：本地名称索引命中 → 下拉选片 → 携带 sid 解析直取。
+  /** 名称联想（issue 498 / ADR-0210）：本地名称索引命中 → 下拉选片 → 携带 sid 解析直取。
    *  索引未下载/校验不过 → loadDoubanNameIndex 返回 null → source 恒空 → 下拉静默缺席，
    *  一切回落既有手输+按名检索；下载入口在设置面板在线资源组（ADR-0207 通用行，零新 UI）。
    *  同名条目（不同年份各占一行）在候选取最优评分一行作为 sid 载体——其余同名片
-   *  仍可手输名称走按名检索（ADR-0209 决策 5）。 */
+   *  仍可手输名称走按名检索（ADR-0210 决策 5）。 */
   const nameDropRows = new Map<string, DoubanIndexRow>();
-  let nameSuggest: { close: () => void; detach: () => void } | null = null;
   if (!editing && nameInput) {
     void loadDoubanNameIndex(app).then((index) => {
       if (!index || !el.isConnected || phase !== 'idle') return;
-      nameSuggest = uiSuggest({
+      // 浮层生命周期自愈：挂表单 DOM 内随其消亡，document 外点监听按 isConnected 自清
+      //（core uiSuggest 既有语义，favorites/memo 同款）——无需存句柄做 detach
+      uiSuggest({
         anchor: nameInput,
         max: 12,
         source: (): string[] => {
@@ -1462,18 +1472,23 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
           const out: string[] = [];
           const seenNames = new Set<string>();
           for (const r of hits) {
-            if (seenNames.has(r.n)) continue; // 同名去重：候选取排名最优一行做 sid 载体（ADR-0209 决策 5）
+            if (seenNames.has(r.n)) continue; // 同名去重：候选取排名最优一行做 sid 载体（ADR-0210 决策 5）
             seenNames.add(r.n);
             nameDropRows.set(r.n, r);
             out.push(r.n);
           }
           return out;
         },
-        /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值） */
+        // source 层是归一化检索（去标点等），draw 层缺省原串 includes 会把归一命中误滤掉——
+        // 传同口径谓词（评审 P2-1）
+        matchOf: (candidate, rawQuery) =>
+          normName(candidate).includes(normName(rawQuery)),
+        /** 灰字小注：年份 · 评分 · 类别（issue 498 用户点名三件参考值）；无评分（含 0）不冒充 */
         hintOf: (n) => {
           const r = nameDropRows.get(n);
           if (!r) return '';
-          return [r.y, r.s ? `评分 ${r.s}` : '', r.k].filter(Boolean).join(' · ');
+          const score = r.s && r.s !== '0' ? `评分 ${r.s}` : '';
+          return [r.y, score, r.k].filter(Boolean).join(' · ');
         },
         onPick: (n) => {
           const r = nameDropRows.get(n);
