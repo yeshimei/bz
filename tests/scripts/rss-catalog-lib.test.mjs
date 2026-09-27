@@ -5,7 +5,7 @@
  * 固定大类映射（大小写不敏感、可多类、未命中兜底「综合」）、目录组装（url 去重、坏址剔除）。
  */
 import { describe, it, expect } from 'vitest';
-import { buildCatalog, CATEGORIES, FALLBACK_CATEGORY, mapCategories, parseTimqianTable } from './lib.mjs';
+import { buildCatalog, CATEGORIES, FALLBACK_CATEGORY, mapCategories, parseTimqianTable } from '../../scripts/rss-catalog/lib.mjs';
 
 const SAMPLE = [
   '| RSS feed | Introduction | Address | tags |',
@@ -25,7 +25,7 @@ describe('parseTimqianTable', () => {
     expect(entries[1].tags).toEqual(['生活', '随笔']);
     expect(entries[2].url).toBe('https://c.example/my_feed.xml');
     expect(noFeed).toBe(1);
-    expect(malformed).toBe(1);
+    expect(malformed).toBe(3); // 表头行 + 分隔行 + 半截行都计入（均非条目）
   });
 
   it('空输入 → 全零', () => {
@@ -38,7 +38,13 @@ describe('parseTimqianTable', () => {
 describe('mapCategories', () => {
   it('大小写不敏感（AI / ai 同命中）', () => {
     expect(mapCategories(['AI'])).toEqual(['AI 与数据']);
+    expect(mapCategories(['linux'])).toEqual(['编程技术']); // 词边界：linux 不得因含「ux」误挂设计创意
+  });
+
+  it('ASCII 关键词按词边界：巧合包含不命中（复检发现 linux⊃ux 误挂设计创意）', () => {
     expect(mapCategories(['linux'])).toEqual(['编程技术']);
+    expect(mapCategories(['aimless 随笔'])).toEqual(['生活随笔']); // ai 不因前缀命中「AI 与数据」
+    expect(mapCategories(['vue 组件'])).toEqual(['前端与移动']); // 独立出现的 ascii 词照常命中
   });
 
   it('包含匹配：标签含关键词即命中（前端开发 含 前端）', () => {

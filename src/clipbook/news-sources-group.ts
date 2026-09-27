@@ -25,7 +25,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { DOWNLOADS_CHANGED_EVENT } from '../core/remote-asset';
 import {
   catalogCategoryCounts, downloadRssCatalog, feedDomainOf, filterCatalogFeeds,
-  loadRssCatalog, subscribedUrlSet,
+  loadRssCatalog, subscribedUrlSet, RSS_CATALOG_FILE,
   type RssCatalog, type RssCatalogFeed,
 } from '../core/rss-catalog';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
@@ -546,6 +546,8 @@ export interface RssCatalogPane {
   reload(): Promise<void>;
   /** 只刷新「已订阅」标记（我的订阅页签有增删后调用；列表结构不动） */
   refreshSubscribed(): Promise<void>;
+  /** 弹窗关闭时清理（搜索防抖定时器） */
+  dispose(): void;
 }
 
 /**
@@ -754,6 +756,12 @@ export function createRssCatalogPane(root: HTMLElement, deps: { onChanged: () =>
         if (hit && list) renderList(hit, list);
       }
     },
+    dispose: () => {
+      if (searchTimer) {
+        clearTimeout(searchTimer);
+        searchTimer = null;
+      }
+    },
   };
 }
 
@@ -770,6 +778,7 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
   let offAsset: (() => void) | null = null;
   function close(): void {
     rssManagerClose = null;
+    catPane?.dispose();
     if (offAsset) {
       offAsset();
       offAsset = null;
@@ -820,6 +829,11 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     void catPane?.refreshSubscribed();
   };
 
+  // 页签激活统一静默收口：渲染链异常只留档不上抛（弹窗关闭/切换竞态下避免 unhandled rejection）
+  const activate = (next: () => Promise<void>): void => {
+    void next().catch((e) => console.warn('[bz] RSS 订阅弹窗页签渲染失败:', (e as Error)?.message || e));
+  };
+
   const activateMy = async (): Promise<void> => {
     activeTab = 'my';
     tabMy.classList.add('active');
@@ -844,10 +858,12 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     await catPane.reload();
   };
 
-  tabMy.addEventListener('click', () => void activateMy());
-  tabCat.addEventListener('click', () => void activateCatalog());
-  // 跨入口同步：设置面板在线资源行下载/更新源库落盘后，开着的源库页签就地跟上（ADR-0205 同款事件）
-  offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, () => {
+  tabMy.addEventListener('click', () => activate(activateMy));
+  tabCat.addEventListener('click', () => activate(activateCatalog));
+  // 跨入口同步：设置面板在线资源行下载/更新源库落盘后，开着的源库页签就地跟上
+  // （只对本资产落盘做出反应——皮肤/手册等落盘与源库无关；ADR-0205 同款事件）
+  offAsset = onDomainEvent(DOWNLOADS_CHANGED_EVENT, (evt: { fileName?: string }) => {
+    if (evt && evt.fileName && evt.fileName !== RSS_CATALOG_FILE) return;
     if (rssManagerOpen && activeTab === 'catalog') void catPane?.reload();
   });
 
@@ -876,7 +892,7 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     close,
   });
   handle = handleReg;
-  void activateMy();
+  activate(activateMy);
 }
 
 /**
