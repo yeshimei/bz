@@ -14,6 +14,7 @@ import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { USER_CONTENT_BOUNDARY } from '../../src/smartcat/memory';
 import { defaultPersonalityGrowth } from '../../src/smartcat/data';
+import { FALLBACK_MESSAGES } from '../../src/smartcat/message-pool';
 
 function mountCat(): HTMLElement {
   const existed = document.getElementById(CAT_CONTAINER_ID);
@@ -36,6 +37,8 @@ function makeDeps(overrides: Partial<InteractionDeps> = {}): InteractionDeps {
     mood: { pad: { pleasure: 55, arousal: 50, dominance: 50 }, currentMood: 'calm', getCurrentMoodEmoji: () => '😺', getCurrentEmotion: () => 'calm' },
     openChat: () => {},
     openSettings: () => {},
+    // ADR-0206：消息池消费桩——直接取兜底语料首条（池消费语义在 message-pool.test.ts 全测）
+    poolMessage: (key) => FALLBACK_MESSAGES[key][0],
     ...overrides,
   } as unknown as InteractionDeps;
 }
@@ -215,7 +218,7 @@ describe('陪伴模式（欢迎语 + 定时自言自语）', () => {
     expect(bubbles.length).toBe(1);
     manager.dispose();
 
-    // 概率 1：下一 tick 必触发；随机数同时决定语料取第 0 条（floor(0.2*4)=0）
+    // 概率 1：下一 tick 必触发（语料取兜底首条）
     vi.spyOn(Math, 'random').mockReturnValue(0.2);
     const deps = makeDeps() as any;
     deps.config = () => ({ speakInterval: 1, speakProbability: 1, contextLength: 500, contextSplitRatio: 0.5, conversationHistory: [], shortTermMemory: 50 });
@@ -223,7 +226,7 @@ describe('陪伴模式（欢迎语 + 定时自言自语）', () => {
     manager.setupInteractions();
     vi.advanceTimersByTime(60_000);
     await flush();
-    expect(bubbles).toContain('喵~ 继续加油写笔记哦！');
+    expect(bubbles).toContain(FALLBACK_MESSAGES.pet[0]);
   });
 });
 
@@ -245,7 +248,7 @@ describe('generateAutoCompanionMessage 四分支', () => {
     await flush();
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(bubbles.length).toBe(1);
-    expect(['喵~ 继续加油写笔记哦！', '笔记进展如何？需要我陪伴吗？', '保持专注，你做得很好！✨', '休息一下也不错哦~ 🐾🐾🐾']).toContain(bubbles[0]);
+    expect(FALLBACK_MESSAGES.pet).toContain(bubbles[0]);
   });
 
   it('AI 已配置 + 无上下文（auto_companion 分支）→ 思考态调用并展示回复', async () => {

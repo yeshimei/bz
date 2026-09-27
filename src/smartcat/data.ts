@@ -11,13 +11,15 @@ import type { App } from 'obsidian';
 import { jsonFileStore, storageDir } from '../core/storage';
 import { defaultConfig, normalizeConfig } from './config';
 import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';
-import type { SmartCatData, MemoryStream, MemoryStreamEntry, PersonalityGrowthData, BehaviorItem } from './types';
+import type { SmartCatData, MemoryStream, MemoryStreamEntry, PersonalityGrowthData, BehaviorItem, MessagePoolData } from './types';
 
 export const SMARTCAT_FILE = 'smartcat.json';
 /** 记忆向量文件（bge-m3 1024 维 float32 平铺，dim uint32 LE 头；行序对齐 stream） */
 export const SMARTCAT_VEC_FILE = 'smartcat-memory-vectors.vec';
 /** 一天毫秒数（getAbsenceDays 天数换算） */
 export const DAY_MS = 24 * 60 * 60 * 1000;
+/** 消息池单类型容量上限（ADR-0206；与 message-pool.ts POOL_CAP 同口径，防病态增长） */
+const MESSAGE_POOL_CAP = 20;
 
 /**
  * 刷新在场时间（ticket 088，H5 在场口径统一）：写入 Date.now() 到 editingData.lastPresenceAt。
@@ -78,6 +80,27 @@ export function defaultMemoryStream(): MemoryStream {
   };
 }
 
+/** 默认消息池段（四类型空池；ADR-0206） */
+export function defaultMessagePool(): MessagePoolData {
+  return { pet: [], connected: [], welcomeBack: [], thinking: [] };
+}
+
+/** 消息池归一化：四 key 逐项校验字符串数组（非串/空串剥除 + 容量截断），缺失/非法 → 空池 */
+function normalizeMessagePool(raw: any): MessagePoolData {
+  const def = defaultMessagePool();
+  if (!raw || typeof raw !== 'object') return def;
+  const pick = (v: any): string[] =>
+    Array.isArray(v)
+      ? v.filter((s: any) => typeof s === 'string' && s.trim()).slice(0, MESSAGE_POOL_CAP)
+      : [];
+  return {
+    pet: pick(raw.pet),
+    connected: pick(raw.connected),
+    welcomeBack: pick(raw.welcomeBack),
+    thinking: pick(raw.thinking),
+  };
+}
+
 /** 默认全量数据（config 默认 + PAD 心情默认 + 性格成长默认（MATE）+ 记忆流默认） */
 export function defaultSmartCatData(): SmartCatData {
   return {
@@ -91,6 +114,7 @@ export function defaultSmartCatData(): SmartCatData {
     personalityGrowth: defaultPersonalityGrowth(),
     editingData: null,
     memory: defaultMemoryStream(),
+    messagePool: defaultMessagePool(),
   };
 }
 
@@ -178,6 +202,7 @@ export function normalizeData(raw: any): SmartCatData {
       behaviorStream,
       reflection: memoryReflection,
     },
+    messagePool: normalizeMessagePool(raw.messagePool),
   };
 }
 

@@ -9,7 +9,8 @@
 import { allocZ } from '../core/z-order';
 import { eventSystem, startThinking, stopThinking, stopAllThinking } from './state';
 import { EVENTS } from './types';
-import { getSmartCatMessage } from './messages';
+import { pickSetupMessage } from './message-pool';
+import type { PoolKey } from './message-pool';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { buildRetrieveQuery, USER_CONTENT_BOUNDARY } from './memory';
@@ -49,6 +50,8 @@ export interface InteractionDeps {
   /** 上下文构建完成钩子（ADR-0172）：此时的 openThreads 已实际进了 prompt，
    *  由 index 记「已提供」冷却起点，防同一条线每轮复读。失败不影响主流程。 */
   onCompanionContextBuilt?: () => void;
+  /** 消息池消费（ADR-0206：用一条删一条；index 注入 MessagePoolSystem.consume，池空回落兜底语料） */
+  poolMessage?: (key: PoolKey) => string;
 }
 
 export class InteractionManager {
@@ -356,10 +359,15 @@ export class InteractionManager {
   /** 事件监听（原 setupEventListeners：聊天 send/Enter） */
   private setupEventListeners(): void { /* 聊天事件由 index 绑定面板回调；此处保留扩展点 */ }
 
-  /** 宠物消息（原 showPetMessage：50% PET_MESSAGES / 心情分支（悬空，保留原逻辑）） */
+  /** 消息池消费兜底（ADR-0206）：deps 未注入（旧测试构造）时空串，生产恒注入 */
+  private poolMsg(key: PoolKey): string {
+    return this.deps.poolMessage?.(key) ?? '';
+  }
+
+  /** 宠物消息（原 showPetMessage：抚摸触发，消息池消费） */
   showPetMessage(): void {
-    // 原版 window.smartCat.mood 悬空（铁律 4 保留）：永远走 getSmartCatMessage('PET_MESSAGES')
-    const message = getSmartCatMessage('PET_MESSAGES');
+    // ADR-0206：消息池消费（用一条删一条），池空回落兜底语料
+    const message = this.poolMsg('pet');
     this.deps.bubble.showBubble(message, this.deps.mood.getCurrentMoodEmoji());
     const catBody = this.catContainer.querySelector('#cat-body') as HTMLElement;
     const animations = ['scale(1.15)', 'scale(1.1) rotate(5deg)', 'scale(1.12) rotate(-3deg)', 'scale(1.08)', 'scale(1.2)'];
@@ -386,9 +394,10 @@ export class InteractionManager {
     setTimeout(() => {
       void (async () => {
         if (await isAIConfigured()) {
-          this.deps.bubble.showBubble(getSmartCatMessage('CONNECTED_MESSAGES'), this.deps.mood.getCurrentMoodEmoji());
+          // ADR-0206：已配 AI 走消息池（池空冷启动回落兜底）；未配 AI 恒兜底 setup 引导语（无池）
+          this.deps.bubble.showBubble(this.poolMsg('connected'), this.deps.mood.getCurrentMoodEmoji());
         } else {
-          this.deps.bubble.showBubble(getSmartCatMessage('SETUP_MESSAGES'));
+          this.deps.bubble.showBubble(pickSetupMessage());
         }
       })();
     }, 1000);
@@ -413,12 +422,12 @@ export class InteractionManager {
     // 深夜照发。安静期与深夜一律静默——「要么刷屏要么几天不吭声」的直接来源就是它。
     if (this.deps.shouldStayQuiet?.()) return;
     if (this.generateAutoCompanionMessageLock) {
-      this.deps.bubble.showBubble(getSmartCatMessage('THINKING_IN_PROGRESS_MESSAGES'));
+      this.deps.bubble.showBubble(this.poolMsg('thinking'));
       return;
     }
     if (!(await isAIConfigured())) {
-      const randomMessages = ['喵~ 继续加油写笔记哦！', '笔记进展如何？需要我陪伴吗？', '保持专注，你做得很好！✨', '休息一下也不错哦~ 🐾🐾🐾'];
-      this.deps.bubble.showBubble(randomMessages[Math.floor(Math.random() * randomMessages.length)]);
+      // ADR-0206 收编：原内联兜底 4 条删除，统一走消息池兜底语料
+      this.deps.bubble.showBubble(this.poolMsg('pet'));
       return;
     }
     try {

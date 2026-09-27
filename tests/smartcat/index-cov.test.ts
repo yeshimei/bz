@@ -507,7 +507,7 @@ describe('欢迎回来回程语（visibilitychange）', () => {
     await ensureSmartCat(app);
     const d: any = __getSmartcatInternals().data;
     d.memory.memoryStream = mkStream(4);
-    vi.spyOn(Math, 'random').mockReturnValue(0.95); // 走时段语料 + 作息分支双命中
+    vi.spyOn(Math, 'random').mockReturnValue(0.95); // 过消息池消费后仍命中作息分支（>0.6）
     vi.useFakeTimers();
     const restore = toggleHidden(true);
     fireVis();
