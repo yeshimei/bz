@@ -89,12 +89,25 @@
 ## 进度（跨轮次记录，完成即勾）
 
 - [x] 侦察 + 基线（tsc 绿；全量测试跑一遍取基线）
-- [ ] render.ts 相册 markup 新增（增量，不动现有调用）
-- [ ] styles.css 相册分节新增（增量）
-- [ ] ui.ts 切主界面（摊页 / 照片 / 翻摊 / 抽照片）
-- [ ] ui.ts 切详情跨页
-- [ ] 弹窗改册页（ds / gen / stats / prof / note / del / find）
-- [ ] 便签 / 横幅 / 封面 / 空态 / 加载
-- [ ] 原型壳图标 + selftest + 重出产物
-- [ ] 测试改锚 + 新测试
-- [ ] 门禁 → merge master → 提交 → 主仓库构建部署 → 清 worktree
+- [x] render.ts 相册 markup 新增（增量，不动现有调用）
+- [x] styles.css 相册分节新增（增量）
+- [x] ui.ts 切主界面（摊页 / 照片 / 翻摊 / 抽照片）
+- [x] ui.ts 切详情跨页
+- [x] 弹窗改册页（ds / gen / stats / prof / note / del / find）
+- [x] 便签 / 横幅 / 封面 / 空态 / 加载
+- [x] 原型壳图标 + selftest + 重出产物
+- [x] 测试改锚 + 新测试
+- [x] 门禁 → merge master → 提交 → 主仓库构建部署 → 清 worktree
+
+### 上岸收尾（2026-09-28）
+
+- 门禁：`tsc --noEmit` exit=0；`tests/people` 35 文件 / 575 例绿；全量 554 文件 / 8349 例绿（含 `preview-freshness`）
+- 顺手清掉 4 处 src 真 bug（均在 `ui.ts`，详见 `.scratch/people-album/HANDOFF.md` 第四节）：
+  印的暂停点不可达 / 空折正文被顶掉 / 空册时弹窗画不出 / 同步期置灰选择器失配
+- 9 个测试文件按新契约改锚，新增册页分页 / 翻摊 / 抽照片覆盖，未削弱既有断言
+- **评审裁决：`deleteTierOf` 恢复 issue 500 口径**。探稿上岸时把它写简了（`p.digest || p.lastProcessedTs` 判真值 + 未完成任务压过已画谱），
+  与 issue 500 第 24 行「空 digest 不算已画——不给用户上无谓的密码门」冲突，且让「已有完整脸谱 + 正在补画」这一态的删除
+  从「重输主密码」降成「二次确认」——那份画像删了不可逆。已还原为「卷一卷二纪事任一有正文才算已画谱，已画谱压过未完成任务」，
+  并把被吞掉的空壳 digest 断言、drawn×running 断言补回；删除钮的 hover 提示按新册页形态改锚成 `delPage` 的
+  `.bz-people-del-line` / `.bz-people-del-note` 档位文案断言（新增 4 例）。
+- 另清掉 2 处编辑残留（`ui.ts` 重复的 `/**` 与重复的「事件委托」分节线），修掉 1 处与断言打架的测试标题

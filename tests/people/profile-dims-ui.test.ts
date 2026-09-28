@@ -2,6 +2,8 @@
  * 人物档案扩维度 UI 测试（issue 487）：编辑器十维字段渲染与结构行增删、saveProfile 解析
  * （数组顿号 / 逗号切分去重去空、结构行半行过滤、全空清档案）、AI 补充回填新维度且手填不覆盖、
  * persistJobDone 把 job.aiProfile 合并回档案（fillProfile 只填空白）。
+ * issue 505 相册簿口径：墙上抓 [data-people-pocket] 抽出照片（240ms）翻到详情页，
+ * 补充背景 / 记一笔 / 统计是册子里的一页（[data-people-sub]）不再是浮层。
  * 引擎用假件注入（setJobsModuleForTests）；core/ai 打桩供 AI 补充；测试数据全构造。
  */
 // @vitest-environment jsdom
@@ -44,9 +46,9 @@ function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
-/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+/** 497：startGeneration 起引擎前翻一次开工单页（505：册子里的 `[data-people-sub="gen"]`）——等它出现并点「开始生成」放行 */
 async function confirmGen(): Promise<void> {
-  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  await vi.waitFor(() => expect(document.querySelector('[data-people-sub="gen"]')).toBeTruthy());
   click('[data-people-gen-start]');
 }
 
@@ -96,16 +98,16 @@ async function boot(seed?: PersonEntry[]): Promise<void> {
   }
 }
 
-/** 面板开到人物详情的补充背景编辑态 */
+/** 面板开到人物详情的补充背景编辑态（issue 505：抽照片 → 详情页「补充背景」小签 → 档案页） */
 async function openEditor(seed?: PersonEntry[]): Promise<void> {
   await boot(seed);
   setJobsModuleForTests(new FakeEngine());
   openPeoplePanel(getApp());
-  await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
-  click('[data-people-card="wxid_a"]');
-  await vi.waitFor(() => expect(document.querySelector('[data-people-prof-open]')).toBeTruthy());
-  click('[data-people-prof-open]');
-  await vi.waitFor(() => expect(document.querySelector('[data-people-prof-pop]')).toBeTruthy());
+  await vi.waitFor(() => expect(document.querySelector('[data-people-pocket="wxid_a"]')).toBeTruthy());
+  click('[data-people-pocket="wxid_a"]'); // 抽出照片（240ms 动画后详情页翻开在对面）
+  await vi.waitFor(() => expect(document.querySelector('[data-people-detail="wxid_a"]')).toBeTruthy());
+  click('[data-people-act="prof"]'); // 详情页「补充背景」小签 → 册子里翻出档案页
+  await vi.waitFor(() => expect(document.querySelector('[data-people-sub="prof"]')).toBeTruthy());
   // 有档案走「编辑档案」，无档案走入口行的「补人物档案」
   click('[data-people-prof-edit], [data-people-prof-new]');
   await vi.waitFor(() => expect(document.querySelector('.bz-people-prof-edit')).toBeTruthy());
@@ -229,14 +231,14 @@ describe('档案编辑器新字段渲染（issue 487）', () => {
     click('[data-people-prof-add-rel]');
     click('[data-people-prof-add-rel]');
     click('[data-people-prof-add-date]');
-    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-social-row')).toHaveLength(2);
-    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-social-row')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-subrow')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-subrow')).toHaveLength(1);
     // 删第一条身边人行
     document.querySelector('[data-people-prof-rel-list] [data-people-prof-rel-del]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-social-row')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-subrow')).toHaveLength(1);
     // 删重要日子行
     document.querySelector('[data-people-prof-date-list] [data-people-prof-date-del]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-social-row')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-subrow')).toHaveLength(0);
   });
 });
 
@@ -255,7 +257,7 @@ describe('saveProfile 解析新字段（issue 487）', () => {
     inputVal('[data-people-prof-rel-list] [data-people-prof-rel-who]', '阿珍');
     inputVal('[data-people-prof-rel-list] [data-people-prof-rel-relation]', '女朋友');
     click('[data-people-prof-add-rel]'); // 半行：只填 who
-    inputVal('[data-people-prof-rel-list] .bz-people-prof-social-row:nth-child(2) [data-people-prof-rel-who]', '老张');
+    inputVal('[data-people-prof-rel-list] .bz-people-prof-subrow:nth-child(2) [data-people-prof-rel-who]', '老张');
     click('[data-people-prof-add-date]');
     inputVal('[data-people-prof-date-list] [data-people-prof-date-date]', '05-20');
     inputVal('[data-people-prof-date-list] [data-people-prof-date-what]', '领养猫');
@@ -271,7 +273,8 @@ describe('saveProfile 解析新字段（issue 487）', () => {
     expect(prof.quote).toBe('问题不大');
     expect(prof.relationships).toEqual([{ who: '阿珍', relation: '女朋友' }]); // 半行（老张）被过滤
     expect(prof.importantDates).toEqual([{ date: '05-20', what: '领养猫' }]);
-    expect(getNoticeMessages().some((m) => m.includes('1 行没填完整'))).toBe(true);
+    // 落盘可见（保库记录缓存）先于保存流程收尾，通知等它落地再断言
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('1 行没填完整'))).toBe(true));
   });
 
   it('编辑卡全空 = 清档案（落盘 undefined）', async () => {
@@ -280,7 +283,7 @@ describe('saveProfile 解析新字段（issue 487）', () => {
     for (const inp of Array.from(document.querySelectorAll<HTMLInputElement>('[data-people-prof-field]'))) inp.value = '';
     click('[data-people-prof-save]');
     await vi.waitFor(async () => expect((await disk()).people[0]?.profile).toBeUndefined());
-    expect(getNoticeMessages().some((m) => m.includes('档案已清空'))).toBe(true);
+    await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('档案已清空'))).toBe(true));
   });
 });
 
@@ -311,8 +314,8 @@ describe('AI 补充回填新维度（issue 487）', () => {
     expect(document.querySelector<HTMLInputElement>('[data-people-prof-field="dislikes"]')!.value).toBe('香菜');
     expect(document.querySelector<HTMLInputElement>('[data-people-prof-field="quote"]')!.value).toBe('问题不大');
     expect(document.querySelectorAll('[data-people-prof-tag-list] .bz-people-prof-tag-text')).toHaveLength(1);
-    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-social-row')).toHaveLength(1);
-    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-social-row')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-subrow')).toHaveLength(1);
+    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-subrow')).toHaveLength(1);
     expect(getNoticeMessages().some((m) => m.includes('AI 已补'))).toBe(true);
     // 保存后全部落盘
     click('[data-people-prof-save]');
@@ -332,8 +335,8 @@ describe('AI 补充回填新维度（issue 487）', () => {
     click('[data-people-prof-ai]');
     await tick();
     await vi.waitFor(() => expect(getNoticeMessages().some((m) => m.includes('未作补充'))).toBe(true));
-    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-social-row')).toHaveLength(1); // 已有行不动
-    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-social-row')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-people-prof-rel-list] .bz-people-prof-subrow')).toHaveLength(1); // 已有行不动
+    expect(document.querySelectorAll('[data-people-prof-date-list] .bz-people-prof-subrow')).toHaveLength(0);
   });
 });
 

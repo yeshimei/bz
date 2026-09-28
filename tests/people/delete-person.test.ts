@@ -34,12 +34,13 @@ function click(sel: string): void {
   node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
-const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-card="${id}"]`);
+const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-pocket="${id}"]`);
 const lockMask = (): HTMLElement | null => document.querySelector<HTMLElement>('.bz-lockscreen--mask');
 const delBtn = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-del="${id}"]`);
-/** 二次确认走脸谱自有弹层（issue 502 续：`deleteConfirmModal`，不再借核心通用确认框）：data 钩子即契约 */
-const flowMask = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-del-confirm]');
-// 按钮助手收窄到 button：遮罩（.bz-people-pop-dim）也挂 data-people-del-cancel（点遮罩＝取消）
+/** 二次确认不再是浮层，是册子里翻出来的一页（issue 505）：页根钩子即契约 */
+const flowMask = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-sub="del"]');
+/** 「合上这页」＝取消语义（页眉的关页钮；册页没有遮罩层了） */
+const flowClose = (): HTMLElement | null => flowMask()?.querySelector<HTMLElement>('[data-people-close]') ?? null;
 const flowOk = (): HTMLElement | null => document.querySelector<HTMLElement>('button[data-people-del-ok]');
 const flowCancel = (): HTMLElement | null => document.querySelector<HTMLElement>('button[data-people-del-cancel]');
 
@@ -96,7 +97,7 @@ async function boot(seed: PersonEntry[], order: string[]): Promise<{ safe: Peopl
   setUnlockGateForTests(() => Promise.resolve(true));
   openPeoplePanel(getApp());
   await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
-  click('[data-people-card="莫莫"]');
+  click('[data-people-pocket="莫莫"]');
   await vi.waitFor(() => expect(delBtn('莫莫')).toBeTruthy());
   return { safe, sm };
 }
@@ -126,7 +127,7 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
 
     click('[data-people-del="莫莫"]');
     await vi.waitFor(() => expect(flowMask()).toBeTruthy());
-    expect(flowMask()!.querySelector('.bz-people-pop-title')!.textContent).toBe('删除联系人');
+    expect(flowMask()!.querySelector('.bz-people-head-label')!.textContent).toBe('删除联系人');
     expect(flowMask()!.querySelector('.bz-people-del-who')!.textContent).toContain('「莫莫」');
     expect(flowMask()!.querySelector('.bz-people-del-line')!.textContent).toContain('还没画过脸谱');
     expect(flowCancel()!.textContent).toBe('取消');
@@ -140,14 +141,13 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
     expect(order).toEqual([]);
   });
 
-  it('点遮罩（取消语义）同样不删', async () => {
+  it('点「合上这页」（取消语义）同样不删', async () => {
     const order: string[] = [];
     const { safe } = await boot([entry()], order);
 
     click('[data-people-del="莫莫"]');
     await vi.waitFor(() => expect(flowMask()).toBeTruthy());
-    // 点遮罩（.bz-people-pop-dim 带取消钩子）＝取消语义
-    document.querySelector('.bz-people-pop-dim')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    flowClose()!.dispatchEvent(new MouseEvent('click', { bubbles: true })); // 合上这页＝取消，不删
     await vi.waitFor(() => expect(flowMask()).toBeNull());
     await tick();
     expect(await safe.read('莫莫')).toBeTruthy();
@@ -166,7 +166,7 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
     expect(hasNotice(/已删除「莫莫」/)).toBe(true);
     // 关键：不等关面板 / 重启，删完这一帧墙上就得没有它
     // （记录快照没失效的话，这条会一直挂着，waitFor 超时即红）
-    await vi.waitFor(() => expect(document.querySelector('[data-people-card="莫莫"]')).toBeNull());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-pocket="莫莫"]')).toBeNull());
     expect(document.querySelector('[data-people-del="莫莫"]')).toBeNull(); // 详情已回墙
   });
 });
@@ -198,7 +198,7 @@ describe('已画谱档：重输主密码才可删（issue 500）', () => {
     await vi.waitFor(() => expect(order).toEqual(['removeJob:莫莫', 'removeContact:莫莫']));
     await vi.waitFor(async () => expect(await safe.read('莫莫')).toBeFalsy());
     expect(lockMask()).toBeNull(); // 通过即收场
-    expect(document.querySelector('[data-people-card="莫莫"]')).toBeNull(); // 卡片同样立刻消失
+    expect(document.querySelector('[data-people-pocket="莫莫"]')).toBeNull(); // 卡片同样立刻消失
   });
 
   it('密码门取消（点遮罩）→ 什么都不删', async () => {

@@ -1,10 +1,10 @@
 /**
- * 解锁后首开面板的冷读加载指示测试（issue 483）：
- * - 冷读（readAll 逐人解密）期间骨架 + 「正在解密联系人数据… N/M」立即可见，任何联系人数据不出现；
- * - 进度计数经 readAll 回调原位推进（0/2 → 1/2），不重建骨架；
- * - 加载完成原地替换成真实数据（replaceChildren 单次替换），加载态节点移除；
- * - 重开面板（保库记录缓存命中 = 整库热读）不出加载态；
- * - 上锁 → 再解锁的同一路径行为一致（记录缓存已清 → 再次出加载态 → 替换）。
+ * 解锁后首开面板的冷读加载指示测试（issue 483；505 起指示就写在相册簿的那一摊上）：
+ * - 冷读（readAll 逐人解密）期间「解密中」的那一摊 + 「N/M 位」立即可见，任何联系人数据不出现；
+ * - 进度计数经 readAll 回调原位推进（0/2 → 1/2），不重建那一摊；
+ * - 加载完成原地替换成真实册页（照片格 replace），加载那一摊移除；
+ * - 重开面板（保库记录缓存命中 = 整库热读）不出加载摊；
+ * - 上锁 → 再解锁的同一路径行为一致（记录缓存已清 → 再次出加载摊 → 替换）。
  * 引擎用假件注入；readAll 经实例包装放慢（不注入新缝，贴真链）；数据全构造。
  */
 // @vitest-environment jsdom
@@ -42,8 +42,10 @@ function entry(id: string): PersonEntry {
   return { id, name: id, createdAt: '2026-09-25T02:57:37.341Z', imports: [] };
 }
 
-const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-card="${id}"]`);
-const loadingEl = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-loading]');
+/** 那位贴在册页上的照片格（505 起墙上的卡就是相册里的一格） */
+const pocket = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-pocket="${id}"]`);
+/** 解密中的那一摊 */
+const loadingSpread = (): HTMLElement | null => document.querySelector<HTMLElement>('.bz-people-spread-load');
 const countEl = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-load-count]');
 
 /** 面板装配（467 范式）：解锁保库 + 注入共享 PeopleSafeStore；种子两位联系人 */
@@ -65,7 +67,7 @@ async function boot(): Promise<{ safe: PeopleSafeStore; sm: SafeManager }> {
 
 /**
  * readAll 放慢包装：真链保留（逐人解密照跑），用三道闸把进度切开观察——
- * openGate 放行前 readAll 不启动（骨架悬着）；midGate / lastGate 依次放行，逐段观察 0/2 → 1/2。
+ * openGate 放行前 readAll 不启动（解密摊悬着）；midGate / lastGate 依次放行，逐段观察 0/2 → 1/2。
  */
 function slowReadAll(safe: PeopleSafeStore): { releaseOpen: () => void; releaseMid: () => void; releaseLast: () => void } {
   let releaseOpen = () => undefined as void;
@@ -98,67 +100,69 @@ afterEach(() => {
   setPeopleSafeStoreForTests(null);
 });
 
-describe('冷读加载指示（issue 483）', () => {
-  it('解锁后首开：骨架 + 加载文案 + N/M 计数立即可见，解密完成原地替换成真实数据', async () => {
+describe('冷读加载指示（issue 483 / 505）', () => {
+  it('解锁后首开：解密摊 + 「N/M 位」立即可见，解密完成原地替换成真实册页', async () => {
     const { safe } = await boot();
     safe.clearPlainCaches(); // 模拟刚解锁的冷读（解锁事件本来就会清明文缓存）
     const g = slowReadAll(safe);
     openPeoplePanel(getApp());
     await tick();
     await tick();
-    // 骨架先出：加载行 + 计数 + 折子墙占位卡；真实卡片与联系人名一个都不出现
-    expect(loadingEl()).toBeTruthy();
-    expect(document.body.textContent).toContain('正在解密联系人数据…');
-    expect(document.querySelectorAll('.bz-people-load-card').length).toBeGreaterThan(0);
-    expect(card('莫莫')).toBeNull();
+    // 解密摊先出：页眉写「正在解密联系人数据」+ 空位格；真实照片格与联系人名一个都不出现
+    expect(loadingSpread()).toBeTruthy();
+    expect(document.body.textContent).toContain('正在解密联系人数据');
+    expect(document.querySelectorAll('.bz-people-cell.bz-people-wait').length).toBeGreaterThan(0);
+    expect(pocket('莫莫')).toBeNull();
     expect(document.body.textContent).not.toContain('莫莫'); // 名字（加密索引）不可见
 
-    // 放行开跑：计数原位推进 0/2 → 1/2（同一计数节点，只换文字不重建骨架）
+    // 放行开跑：计数原位推进 0/2 → 1/2（同一计数节点，只换文字不重建那一摊）
     g.releaseOpen();
-    await vi.waitFor(() => expect(countEl()!.textContent).toBe('0/2'));
-    expect(loadingEl()).toBeTruthy();
+    await vi.waitFor(() => expect(countEl()!.textContent).toBe('0/2 位'));
+    expect(loadingSpread()).toBeTruthy();
     g.releaseMid();
-    await vi.waitFor(() => expect(countEl()!.textContent).toBe('1/2'));
+    await vi.waitFor(() => expect(countEl()!.textContent).toBe('1/2 位'));
 
-    // 加载完成：真实数据原地呈现，加载态（含计数）随 replaceChildren 消失
+    // 加载完成：真实册页原地呈现，解密摊（含计数）随替换消失
     g.releaseLast();
-    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
-    expect(loadingEl()).toBeNull();
-    expect(card('大琳')).toBeTruthy();
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
+    expect(loadingSpread()).toBeNull();
+    expect(countEl()).toBeNull();
+    expect(pocket('大琳')).toBeTruthy();
   });
 
-  it('重开面板（保库记录缓存命中，整库热读）不出加载态', async () => {
+  it('重开面板（保库记录缓存命中，整库热读）不出解密摊', async () => {
     await boot(); // 首开前 write 已把记录写进保库（store 缓存温热）
     openPeoplePanel(getApp());
-    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
     closePeoplePanel();
 
-    // 重开：ui 级快照已随关闭失效，但 store 级缓存命中（isFullyCached）→ 不出骨架
+    // 重开：ui 级快照已随关闭失效，但 store 级缓存命中（isFullyCached）→ 不出解密摊
     openPeoplePanel(getApp());
     await tick();
     await tick();
-    expect(loadingEl()).toBeNull();
-    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
-    expect(loadingEl()).toBeNull();
+    expect(loadingSpread()).toBeNull();
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
+    expect(loadingSpread()).toBeNull();
   });
 
-  it('上锁 → 再解锁的同一路径行为一致：记录缓存已清，再解锁重新出加载态', async () => {
+  it('上锁 → 再解锁的同一路径行为一致：记录缓存已清，再解锁重新出解密摊', async () => {
     const { safe, sm } = await boot();
     openPeoplePanel(getApp());
-    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
 
-    sm.lock(); // 任意路径上锁 → 面板转锁定占位 + 明文缓存清空
+    sm.lock(); // 任意路径上锁 → 面板合上只剩封皮 + 明文缓存清空
     await vi.waitFor(() => expect(document.querySelector('.bz-people-locked')).toBeTruthy());
-    expect(card('莫莫')).toBeNull();
+    expect(document.querySelector('.bz-people-cover')).toBeTruthy();
+    expect(pocket('莫莫')).toBeNull();
 
-    const g = slowReadAll(safe); // 再解锁后的冷读放慢，观察加载态
+    const g = slowReadAll(safe); // 再解锁后的冷读放慢，观察加载摊
     sm.unlock(PW);
-    await vi.waitFor(() => expect(loadingEl()).toBeTruthy());
-    expect(card('莫莫')).toBeNull();
+    await vi.waitFor(() => expect(loadingSpread()).toBeTruthy());
+    expect(pocket('莫莫')).toBeNull();
     g.releaseOpen();
     g.releaseMid();
     g.releaseLast();
-    await vi.waitFor(() => expect(card('莫莫')).toBeTruthy());
-    expect(loadingEl()).toBeNull();
+    await vi.waitFor(() => expect(pocket('莫莫')).toBeTruthy());
+    expect(loadingSpread()).toBeNull();
   });
 });

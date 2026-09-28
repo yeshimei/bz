@@ -70,48 +70,67 @@ import { batchSizeFromSettings, describeModelLabelOf, describeOverallPct, descri
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
-  generationConfirmModal,
-  deleteConfirmModal,
+  AL_PER_PAGE,
+  PER_SPREAD,
+  albumEmpty,
+  albumGutter,
+  albumLoad,
+  albumPage,
+  albumSealNode,
+  albumSealOf,
+  albumSpread,
+  avatarNode,
   dateRow,
   deleteTierOf,
-  dsModal,
+  delPage,
+  detailPage,
+  dsPage,
+  dsSyncLineNode,
   duoBar,
+  findPage,
   foldBondBody,
-  foldBook,
-  foldCard,
   foldEventsBody,
-  foldDetailHead,
   foldPersonBody,
-  foldSealNode,
-  foldWall,
+  genPage,
   importMeta,
   insightsCard,
+  jobsStagesDone,
   kindChips,
-  loadBody,
-  mergeBar,
+  lastCur,
+  lockCover,
+  mergeBanner,
   miniMarkdown,
   monthlyChart,
   noteAddRow,
+  notePage,
+  pageTotal,
   panelShell,
-  popShell,
   profilePopBody,
-  progressBlock,
+  profPage,
+  jobsNote,
+  dueSoonOf,
   relationRow,
   replyLatencySec,
   socialRow,
+  statsPage,
   statsPopBody,
   statsText,
+  subPage,
   tagChip,
-  wallEmpty,
-  jobsStagesDone,
+  turnLoad,
+  type AlbumPhoto,
+  type DsModalState,
   type DsRowState,
   type DsSyncLine,
   type DeleteTier,
+  type DetailOpts,
+  type FindRow,
   type FoldCardJob,
   type FoldId,
   type JobsBlockState,
   type JobsUiStatus,
 } from './render';
+
 import { el, text, textEl } from './render';
 import { mountIcons } from '../core/ui';
 import { tryGetSettings } from '../core/settings-provider';
@@ -177,7 +196,6 @@ interface DsContact {
   avatar: string | null;
 }
 
-let dsOpen = false;
 let dsContacts: DsContact[] | null = null;
 let dsSelected = new Set<string>();
 let dsScanning = false;
@@ -187,49 +205,53 @@ let dsNotice = '';
 /** 导入完成且新增 >0 → 弹窗出「画脸谱」 */
 let dsGenerateable = false;
 let dsScannedAt = '';
+/** 这一趟导入真的并进了素材（合上数据源那页时让带「新」的照片飞回册页） */
+let dsImported = false;
+/** 这一趟已经导出过完整聊天的联系人（还没入库：水位签的「已导出 · 待入库」中间态） */
+const dsExported = new Set<string>();
+/** 「找一找」的关键字（空 = 提示与标签） */
+let findQuery = '';
+
 /** 在跑的按需导出（485「导入所选」前置段；面板关闭即 stop——导出生命周期跟着导入走） */
 let exportRun: ContactsExportHandle | null = null;
 
-// ---------------- 统计 / 档案弹窗（issue 455：自折册改独立弹窗，同时只开一只） ----------------
+// ---------------- 册子状态（issue 505：打开面板就是一本相册，弹窗也是册子里的一页） ----------------
 
-/** 「互动统计」弹窗开着（详情头图标 / Esc / 遮罩关闭） */
-let statsOpen = false;
-/** 「补充背景」弹窗开着（编辑态仍由 profEditId 管，宿主从折册换成弹窗） */
-let profOpen = false;
-/** 「记一笔」独立弹窗开着（455 评审：随手记自纪事折抽出，入口进详情头工具条） */
-let noteOpen = false;
+/** 册页弹窗：ds / gen / find 不靠人（单页摊满整册）；stats / prof / note / del 靠人（翻在详情那侧） */
+type DialogKind = 'ds' | 'gen' | 'find' | 'stats' | 'prof' | 'note' | 'del';
 
-/** 开统计弹窗（另一只开着则换页） */
-function openStatsPop(): void {
-  statsOpen = true;
-  profOpen = false;
-  noteOpen = false;
-  void renderBody();
+/** 当前摊的左页序号（0 基，恒偶数）：翻摊改它，重画按它摆左右两页 */
+let cur = 0;
+/** 抽出来的那张照片的主人（同时表示详情翻开在对面那页；null = 只摊册页） */
+let pulled: string | null = null;
+/** 册页弹窗（同时只开一页） */
+let dialog: { kind: DialogKind; tier?: DeleteTier } | null = null;
+
+// —— 一次性动效标志：只在「刚发生」那一次重画里放，重画后立刻清掉（同页后续重画不重放） ——
+let animBoot = true;      // 册子首次摊开（照片显影、纸边探出来）
+let animTurn: '' | 'next' | 'prev' = '';
+let animDetail = false;   // 详情那页转进来
+let animFold = false;     // 折页内容换页
+let animDrop = false;     // 导入完：带「新」的照片飞回册页
+let animDev = '';         // 刚画完的那位：照片从灰里洗出颜色
+let animNote = false;     // 进度便签落下来贴上
+
+/** 开一只册页弹窗（靠人的页要有人开着；另一只开着则换页） */
+function openDialog(kind: DialogKind, tier?: DeleteTier): void {
+  dialog = { kind, tier };
+  void renderAlbum();
 }
 
-/** 开补充背景弹窗（另一只开着则换页） */
-function openProfPop(): void {
-  profOpen = true;
-  statsOpen = false;
-  noteOpen = false;
-  void renderBody();
-}
-
-/** 开记一笔弹窗（另一只开着则换页） */
-function openNotePop(): void {
-  noteOpen = true;
-  statsOpen = false;
-  profOpen = false;
-  void renderBody();
-}
-
-/** 关掉统计 / 档案弹窗（都不开着则免渲染） */
-function closePops(): void {
-  if (!statsOpen && !profOpen && !noteOpen) return;
-  statsOpen = false;
-  profOpen = false;
-  noteOpen = false;
-  void renderBody();
+/** 合上弹窗：刚导入完就合上时，让带「新」的那几张飞回册页；开工单则按未授权结算（Esc 与「取消」同路） */
+function closeDialog(): void {
+  if (!dialog) return;
+  if (dialog.kind === 'gen') { answerGenConfirm('cancel'); return; }
+  dialog = null;
+  if (dsImported) {
+    dsImported = false;
+    animDrop = true;
+  }
+  void renderAlbum();
 }
 
 export function isPeopleOpen(): boolean {
@@ -279,7 +301,7 @@ export function openPeoplePanel(app?: unknown): void {
       // 存量迁移（幂等）：明文三件（people.json / people-preview.json / people-jobs.json）
       // 每人拆进保库记录；全部校验通过才清理旧明文。半途崩溃重跑自动收敛。
       await runLegacyMigration();
-      void renderBody();
+      void renderAlbum();
       // 状态恢复（issue 450）：面板打开即拉引擎快照 + 订阅——运行中 / 暂停 / 中断 / done 都有对应呈现
       await restoreJobsView();
     } catch (e) {
@@ -302,13 +324,11 @@ function buildPanelShell(app?: unknown): void {
   topifyZ(overlay);
   // ESC 分层（448 评审；455 弹窗再加一层）：统计/档案弹窗最上先关，其次数据源弹窗（保扫描快照与勾选），再层层关面板
   registerPanelEsc(ESC_ID, isPeopleOpen, () => {
-    if (statsOpen || profOpen) closePops();
-    else if (dsOpen) closeDs();
+    if (dialog) closeDialog();
     else closePeoplePanel();
   });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
-  overlay.addEventListener('change', onOverlayChange);
   // 输入框 Enter 直提交（448 评审 P3：标签 / 随手记连续录入免鼠标往返）
   overlay.addEventListener('keydown', (e) => {
     const input = e.target instanceof HTMLInputElement ? e.target : null;
@@ -325,9 +345,9 @@ function buildPanelShell(app?: unknown): void {
     if (evt?.unlocked === false) {
       peopleSafe?.clearPlainCaches();
       recordCache = null;
-      void renderBody(); // renderBody 检查解锁态，渲染锁定占位
+      void renderAlbum(); // renderBody 检查解锁态，渲染锁定占位
     } else if (evt?.unlocked === true) {
-      void renderBody();
+      void renderAlbum();
     }
   });
   // 同步状态跟帧（issue 465）：运行中进度行原位推进；终态刷新列表 / 错误面。
@@ -378,15 +398,14 @@ export function closePeoplePanel(): void {
   mergeToId = null;
   profEditId = null; // 编辑态不随面板存续（评审 P1-2：重开面板不落回编辑态）
   noteAddId = null;
-  statsOpen = false; // 455：统计 / 档案 / 记一笔弹窗同样不随面板存续
-  profOpen = false;
-  noteOpen = false;
+  dialog = null; // 弹窗不随面板存续（505：册页同样随面板关）
+  pulled = null;
+  cur = 0;
   closeDsState();
   if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
 }
 
 function closeDsState(): void {
-  dsOpen = false;
   dsContacts = null;
   dsSelected = new Set();
   dsScanning = false;
@@ -435,24 +454,28 @@ function dataUrlOf(a: { base64: string; ext: string } | null): string | null {
 }
 
 function openDs(): void {
-  if (dsOpen) return;
-  dsOpen = true;
-  renderBody();
+  if (dsOpen()) return;
+  openDialog('ds');
   // 打开即扫（拍板 Q3）；已有快照不重扫（465：数据根刷新走「同步」，完成后自动重扫）
   if (dsContacts === null) void runScan();
 }
 
 function closeDs(): void {
-  if (!dsOpen) return;
-  dsOpen = false;
+  if (!dsOpen()) return;
   dsGenerateable = false;
-  renderBody();
+  closeDialog();
+}
+
+/** 数据源册页开着（dialog 的单源视图） */
+function dsOpen(): boolean {
+  return dialog?.kind === 'ds';
 }
 
 /** 弹窗行状态（快照 + 水位 → 渲染入参） */
 function dsRowStates(): DsRowState[] {
   return (dsContacts ?? []).map((c) => {
     const badge = storeMediaBadge(c.stats);
+    const rec = recordCache?.get(c.name);
     return {
       name: c.name,
       displayName: c.displayName,
@@ -464,22 +487,21 @@ function dsRowStates(): DsRowState[] {
       newApprox: c.newApprox,
       processedTs: c.processedTs,
       avatar: c.avatar,
+      // 水位判定：保库记录里有聊天仓 = 已入库（导入只动记录，记录在即素材在）
+      imported: Boolean(rec?.store?.msgs?.length),
+      exported: dsExported.has(c.name),
     };
   });
 }
 
-function dsModalState() {
+function dsPageState(): DsModalState {
   const sel = (dsContacts ?? []).filter((c) => dsSelected.has(c.name));
   return {
     dataDir: dsDataDir(),
     scanning: dsScanning,
     importing: dsImporting,
     rows: dsContacts === null ? null : dsRowStates(),
-    selectedCount: sel.length,
     selected: sel.map((c) => c.name),
-    freshCount: sel.reduce((s, c) => s + (c.newApprox ? 0 : c.newCount), 0),
-    // stats 路径的「有新」只能按位计（哨兵无法精确到条，485）
-    freshApprox: sel.filter((c) => c.newApprox && c.newCount > 0).length,
     hiddenGroups: dsHiddenGroups,
     notice: dsNotice,
     generateable: dsGenerateable,
@@ -556,14 +578,14 @@ function onSyncState(s: PeopleSyncState): void {
         updateSyncLine();
       }, 1000);
     }
-    if (!updateSyncLine()) void renderBody(); // 进度行还没渲染出来（开跑首帧）→ 整渲染出停止钮与进度行
+    if (!updateSyncLine()) void renderAlbum(); // 进度行还没渲染出来（开跑首帧）→ 整渲染出停止钮与进度行
     return;
   }
   if (s.outcome === 'ok') {
     void runScan(true); // 完成后重读数据根：列表刷新并按聊天仓水位标出更新数（不自动导入）
     return;
   }
-  void renderBody(); // stopped / error：进度行落终态文案，右上角恢复「同步」
+  void renderAlbum(); // stopped / error：进度行落终态文案，右上角恢复「同步」
 }
 
 /** 进度行原位更新（data-people-ds-sync-line 钩子；弹窗没渲染返回 false；结构过期也返回 false 走整渲染） */
@@ -575,7 +597,6 @@ function updateSyncLine(): boolean {
   const main = line.querySelector<HTMLElement>('[data-people-ds-sync-text]');
   const sub = line.querySelector<HTMLElement>('[data-people-ds-sync-sub]');
   const contact = line.querySelector<HTMLElement>('[data-people-ds-sync-contact]');
-  const bar = line.querySelector<HTMLElement>('[data-people-ds-sync-bar]');
   if (main) main.textContent = view.text + (view.pct != null ? ` ${view.pct}%` : '');
   if (sub) {
     sub.textContent = view.sub;
@@ -587,7 +608,8 @@ function updateSyncLine(): boolean {
   }
   // 进度条结构跟 pct 对齐：不定态（null → 脉冲条）与确定态（有值 → 宽度条）互切时
   // 原位换不了节点，返回 false 让 onSyncState 走整渲染重建（484）
-  const indet = line.querySelector<HTMLElement>('.bz-people-ds-sync-indet');
+  const bar = line.querySelector<HTMLElement>('.bz-people-sync-bar');
+  const indet = line.querySelector<HTMLElement>('.bz-people-sync-indet');
   if ((view.pct != null) !== Boolean(bar) || (view.pct == null) !== Boolean(indet)) return false;
   if (bar && view.pct != null) bar.style.width = `${Math.max(0, Math.min(100, view.pct))}%`;
   return true;
@@ -599,7 +621,7 @@ function handleSyncClick(): void {
   if (jobsRunning()) { notice('正在生成脸谱——等这批结束再同步', 'info'); return; }
   if (!isDesktop()) {
     dsNotice = '同步仅桌面端支持（需要调用外部工具 bz-face）。';
-    renderBody();
+    renderAlbum();
     return;
   }
   dsNotice = '';
@@ -608,12 +630,12 @@ function handleSyncClick(): void {
 
 /**
  * 同步运行中把「画脸谱」类动作全部置灰（ADR-0196 决策 10：数据正在变，不画半截素材）。
- * 覆盖封面墙印章（draw / redraw / resume 等一切开画动作）与详情头「画脸谱」；
- * 弹窗页脚的置灰在 dsModal 里按 syncing 渲染。渲染后调用（renderBody / 印章原位刷新）。
+ * 覆盖详情页动作签（画脸谱 / 继续生成 / 重新生成共用一个钩子）、数据源页脚与（万一在跑的）印章；
+ * 渲染后调用（renderAlbum / 印章原位刷新）；程序路径另有 isSyncing 守卫兜底。
  */
 function applySyncLockdown(): void {
   const lock = isSyncing();
-  overlay?.querySelectorAll<HTMLButtonElement>('[data-people-seal-act], [data-people-generate-one]').forEach((b) => {
+  overlay?.querySelectorAll<HTMLButtonElement>('[data-people-act="generate"], [data-people-ds-generate], [data-people-seal-act]').forEach((b) => {
     if (lock) {
       b.disabled = true;
       b.setAttribute('data-people-sync-lock', '1');
@@ -638,14 +660,14 @@ async function runScan(force = false): Promise<void> {
   if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsRunning() || isSyncing()) return;
   if (!isDesktop()) {
     dsNotice = '';
-    renderBody();
+    renderAlbum();
     return;
   }
   dsScanning = true;
   dsGenerateable = false;
   if (force) dsContacts = null;
   dsNotice = '';
-  renderBody();
+  renderAlbum();
   const contacts: DsContact[] = [];
   let hidden = 0;
   try {
@@ -711,7 +733,7 @@ async function runScan(force = false): Promise<void> {
     dsSelected = new Set([...dsSelected].filter((n) => names.has(n)));
     const now = new Date();
     dsScannedAt = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    renderBody();
+    renderAlbum();
   }
 }
 
@@ -726,7 +748,12 @@ function updateImportNotice(text: string): void {
     n.textContent = text;
     return;
   }
-  renderBody();
+  renderAlbum();
+}
+
+/** 导出的水位落账（485）：已完成导出的联系人标记「已导出 · 待入库」，未导入水位于行上露出 */
+function markExported(names: string[], dataDir: string): void {
+  for (const n of names) if (hasChatJson(dataDir, n)) dsExported.add(n);
 }
 
 /**
@@ -746,13 +773,13 @@ async function importDsSelected(): Promise<void> {
   if (!chosen.length) { notice('还没有勾选联系人', 'warning'); return; }
   if (!isDesktop()) {
     dsNotice = '数据源导入仅桌面端支持（需要读取库外文件夹）。';
-    renderBody();
+    renderAlbum();
     return;
   }
   dsImporting = true;
   dsGenerateable = false;
   dsNotice = '正在导入聊天仓…';
-  renderBody();
+  renderAlbum();
   const opts = normalizeOptionsFromSettings();
   const now = new Date().toISOString();
   const addedOf = new Map<string, number>();
@@ -770,16 +797,18 @@ async function importDsSelected(): Promise<void> {
       exportRun = null;
       if (!overlay) return; // 面板已关，中止导入
       if (res.stopped) {
+        markExported(missing, dataDir); // 已导出的那几位落「已导出 · 待入库」水位
         dsNotice = '导出已停止——已完成的部分保留，重新点「导入所选」可续';
         dsImporting = false;
-        renderBody();
+        renderAlbum();
         return;
       }
       if (!res.ok) {
+        markExported(missing, dataDir);
         dsNotice = `导出失败：${res.error}`;
         if (res.hint) notice(res.hint, 'warning');
         dsImporting = false;
-        renderBody();
+        renderAlbum();
         return;
       }
       updateImportNotice('正在导入聊天仓…');
@@ -800,6 +829,7 @@ async function importDsSelected(): Promise<void> {
         rec.store = contact;
       }, { avatar });
       addedOf.set(c.name, added);
+      dsExported.delete(c.name); // 进了库就不算「待入库」
       // 快照同步（水位行即时反映，不重扫）
       c.previewCount = contact.msgs.length;
       c.newCount = 0;
@@ -810,7 +840,7 @@ async function importDsSelected(): Promise<void> {
     console.warn('[people] 聊天仓导入失败:', e);
     dsNotice = '导入失败：读数据文件时出错。';
     dsImporting = false;
-    renderBody();
+    renderAlbum();
     return;
   }
   dsImporting = false;
@@ -822,7 +852,8 @@ async function importDsSelected(): Promise<void> {
   const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
   dsGenerateable = fresh > 0 && !readFail.length;
-  renderBody();
+  if (dsGenerateable) dsImported = true; // 合上这页时新照片飞进册页
+  renderAlbum();
 }
 
 /**
@@ -855,12 +886,12 @@ async function generateFromDs(): Promise<void> {
   } catch (e) {
     console.warn('[people] 读取聊天仓失败:', e);
     dsNotice = '生成失败：读不到聊天仓。';
-    renderBody();
+    renderAlbum();
     return;
   }
   if (!targets.length) {
     dsNotice = '所选还没有预览数据，先「导入所选」。';
-    renderBody();
+    renderAlbum();
     return;
   }
   closeDs();
@@ -997,7 +1028,7 @@ export function setJobsModuleForTests(mod: JobsApi | null): void {
 function applySnapshot(s: EngineSnapshot | null): void {
   jobsCache = s;
   if (s) handleJobsSnapshot(s);
-  else renderJobs();
+  else renderNote();
 }
 
 /**
@@ -1042,7 +1073,7 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
       void persistJobDone(job);
     }
   }
-  renderJobs();
+  renderNote();
 }
 
 /**
@@ -1086,7 +1117,7 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   if (resumed.length) parts.push(`${resumed.join('、')} 接着上次没画完的批次继续（已完成的不重烧）`);
   if (skipped.length + engineSkipped > 0) parts.push(`${skipped.length + engineSkipped} 位没有新消息、无需重画`);
   if (parts.length) notice(parts.join('，'), 'success');
-  renderJobs();
+  renderNote();
 }
 
 /** 总确认 → 引擎起跑的入参（497）：逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数 */
@@ -1205,7 +1236,7 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     }
     notice(`「${name}」的脸谱已生成`, 'success');
     jobs().removeJob(talker); // 产物已入保库记录：done 任务清出队列，进度块自然收起
-    if (overlay) void renderBody(); // 封面墙 / 详情立即可见新脸谱
+    if (overlay) void renderAlbum(); // 封面墙 / 详情立即可见新脸谱
   } catch (e) {
     if (target) targetsInFlight.set(talker, target); // 落盘失败放回：下个快照重试
     notifyActionError(e, `写入「${name}」的脸谱`);
@@ -1213,25 +1244,6 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
 }
 
 // ---------------- 进度块渲染与动作（render.progressBlock 的 ui 侧） ----------------
-
-/** 面板进度块：无活跃任务隐藏；有则渲染当前任务态（running 优先，其次可续跑 / 出错 / done） */
-function renderJobs(): void {
-  const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
-  if (!slot) return;
-  const item = currentJobsItem();
-  // 455 评审：进度块只在「生成中那个人」的详情页显示（done 不再展示——完成时有通知），
-  // 封面墙与其他联系人详情不再被进度 / 报错糊脸；折子印章的状态环照常跟帧。
-  const show = Boolean(item && item.status !== 'done' && stage === 'detail' && detailId === item.talker);
-  if (show && item) {
-    slot.hidden = false;
-    slot.replaceChildren(progressBlock(toBlockState(item)));
-  } else {
-    slot.hidden = true;
-    slot.replaceChildren();
-  }
-  overlay?.querySelector('.bz-people-panel')?.classList.toggle('bz-people-jobs-showing', show);
-  syncWallSeals(); // 451：折子印章四态跟帧刷新（原位只换印章节点）
-}
 
 /** 当前展示的任务：running > paused/interrupted > error > done（同档取队列靠前） */
 function currentJobsItem(): JobView | null {
@@ -1295,41 +1307,44 @@ function jobsRunning(): boolean {
   return (jobsCache?.queue ?? []).some((j) => j.status === 'running');
 }
 
-// ---------------- 画谱总确认（issue 497：两次确认合一，确认后不再弹窗） ----------------
+// ---------------- 画谱总确认（issue 497 / 505：确认是册子里的一页） ----------------
 
 /** 引擎两道门的自动放行件（497）：授权已在总确认一次拿齐，起跑后一路到底不再打断 */
 const autoApproveDescribe = (): Promise<'start' | 'skip'> => Promise.resolve('start');
 const autoApprovePortrait = (): Promise<'start' | 'cancel'> => Promise.resolve('start');
 
-/** 总确认窗开着标记（防叠窗；Esc 与遮罩点击都归「取消」——那是唯一不花钱的路） */
+/** 总确认页开着标记（防叠页；Esc 与「取消」都归「取消」——那是唯一不花钱的路） */
 let genConfirmOpen = false;
+/** 当前待确认的开工单（画谱确认页的入参） */
+let pendingGenInfo: GenerationConfirmInfo | null = null;
+/** 确认页的答复（页上点「开始生成 / 取消」时结算） */
+let pendingGenAnswer: ((a: 'start' | 'cancel') => void) | null = null;
 
 /**
- * 画谱总确认（startGeneration 起引擎前唯一一次询问）：弹 body 级总览窗（面板可能没开），
+ * 画谱总确认（startGeneration 起引擎前唯一一次询问）：翻开开工单那一页，
  * 逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数一次报清。解析值：开始生成 / 取消。
  */
 function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'cancel'> {
-  if (genConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未授权处理
+  if (genConfirmOpen) return Promise.resolve('cancel'); // 已有页开着：不叠页，按未授权处理
   genConfirmOpen = true;
-  return new Promise((resolve) => {
-    const done = (answer: 'start' | 'cancel'): void => {
-      genConfirmOpen = false;
-      document.removeEventListener('keydown', onKey, true);
-      node.remove();
-      resolve(answer);
-    };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') done('cancel');
-    };
-    const node = generationConfirmModal(info, done);
-    document.body.appendChild(node);
-    topifyZ(node);
-    document.addEventListener('keydown', onKey, true);
-  });
+  pendingGenInfo = info;
+  dialog = { kind: 'gen' };
+  void renderAlbum();
+  return new Promise((resolve) => { pendingGenAnswer = resolve; });
+}
+
+function answerGenConfirm(answer: 'start' | 'cancel'): void {
+  const done = pendingGenAnswer;
+  pendingGenAnswer = null;
+  pendingGenInfo = null;
+  genConfirmOpen = false;
+  dialog = null;
+  void renderAlbum();
+  done?.(answer);
 }
 
 /**
- * 进度块动作派发（talker 从块根 data 钩子读）。
+ * 便签动作派发（talker 从便签根 data 钩子读）。
  * 502 续：运行中不再出「暂停」钮（画谱是一段想看完的连续过程），故本派发器无 pause 分支。
  */
 function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry'): void {
@@ -1351,7 +1366,7 @@ function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry'): void {
   }
   if (talker && api.removeJob(talker)) {
     notice('已删除该任务', 'delete');
-    renderJobs();
+    renderNote();
   }
 }
 
@@ -1384,19 +1399,45 @@ function sealJobOf(job: JobView | undefined): FoldCardJob | null {
   };
 }
 
-/** 封面墙印章原位刷新（快照每帧都来；重建整墙会打断合并点选态与滚动位置，只换印章节点） */
-function syncWallSeals(): void {
-  const wall = overlay?.querySelector<HTMLElement>('[data-people-wall]');
-  if (!wall) return;
+// ---------------- 照片角上的印 / 头像原位刷新（issue 451 / 505） ----------------
+
+/** 照片角上的印原位刷新（快照每帧都来；重画整册会打断抽照片 / 翻页动画，只换印节点） */
+function syncPhotoSeals(): void {
+  if (!overlay) return;
   const map = jobViews();
   const byId = new Map(listCache.map((p) => [p.id, p]));
-  for (const card of Array.from(wall.querySelectorAll<HTMLElement>('[data-people-card]'))) {
-    const p = byId.get(card.dataset.peopleCard ?? '');
-    const old = card.querySelector('.bz-people-seal');
-    if (!p || !old) continue;
-    old.replaceWith(foldSealNode(p, sealJobOf(map.get(p.id))));
+  for (const cell of Array.from(overlay.querySelectorAll<HTMLElement>('[data-people-pocket]'))) {
+    const p = byId.get(cell.dataset.peoplePocket ?? '');
+    if (!p) continue;
+    const next = albumSealNode(p, sealJobOf(map.get(p.id)));
+    const old = cell.querySelector('.bz-people-seal');
+    if (old) { if (next) old.replaceWith(next); else old.remove(); }
+    else if (next) cell.querySelector('.bz-people-print')?.appendChild(next);
   }
   applySyncLockdown(); // 印章换新后保持同步置灰态（issue 465 / ADR-0196 决策 10）
+}
+
+// ---------------- 详情页一眼账 ----------------
+
+/** 详情页那几张小纸片的数：谁先开口 / 最热的一月 / 素材水位（没有的项不贴那一片） */
+function detailFactsOf(p: PersonEntry): DetailOpts['facts'] {
+  const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
+  const s = latest?.stats;
+  const media = personMedia(p);
+  const images = media?.imageCount ?? 0;
+  const voices = media?.voiceCount ?? 0;
+  if (!s?.monthly?.length && !images && !voices) return null;
+  const byMe = s?.initiatedByMe ?? 0;
+  const byOther = s?.initiatedByOther ?? 0;
+  const initiated = byMe + byOther;
+  let month: [string, number] | null = null;
+  for (const m of s?.monthly ?? []) if (!month || m[1] > month[1]) month = m;
+  return {
+    mePct: initiated ? Math.round((byMe / initiated) * 100) : 50,
+    month,
+    images,
+    voices,
+  };
 }
 
 /**
@@ -1427,106 +1468,124 @@ async function sealAction(kind: string, id: string): Promise<void> {
   else if (kind === 'redraw') await generateOne(id, { force: true });
 }
 
-// ---------------- 事件委托 ----------------
+// ---------------- 事件委托（issue 505：册子单页的钩子全集） ----------------
 
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
-  // —— 生成进度块动作（450：继续 / 删除任务；469 加重试失败项；502 续：去掉运行中的暂停钮） ——
+  // 反光：点照片那一下也把反光带到那张
+  // —— 册子：抽照片 / 翻摊 / 合上（先于其它分支，照片在整个册面上） ——
+  const pocket = t.closest<HTMLElement>('[data-people-pocket]');
+  if (pocket) {
+    if (mergeFromId) {
+      const id = pocket.dataset.peoplePocket ?? '';
+      if (id && id !== mergeFromId) { mergeToId = id; void renderAlbum(); }
+      return;
+    }
+    // 印是照片格的子节点，须先于抽照片判定：画谱中那枚点一下 = 本批做完后暂停
+    const seal = t.closest<HTMLElement>('[data-people-seal-act]');
+    if (seal) {
+      const id = pocket.dataset.peoplePocket ?? '';
+      if (id) void sealAction(seal.dataset.peopleSealAct ?? '', id);
+      return;
+    }
+    const id = pocket.dataset.peoplePocket ?? '';
+    if (id) pullPhoto(id);
+    return;
+  }
+  const turn = t.closest<HTMLElement>('[data-people-turn]');
+  if (turn) { turnTo(turn.dataset.peopleTurn === 'prev' ? 'prev' : 'next'); return; }
+  // —— 生成进度便签动作（450：继续 / 删除任务；469 加重试失败项） ——
   if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
   if (t.closest('[data-people-jobs-prep-retry]')) { jobsAction('prep-retry'); return; }
   if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
-  // —— 统计 / 档案弹窗（455：弹层在 body 之上，分支放前面；遮罩与关闭钮同一关闭钩子） ——
-  if (t.closest('[data-people-stats-open]')) { openStatsPop(); return; }
-  if (t.closest('[data-people-prof-open]')) { openProfPop(); return; }
-  if (t.closest('[data-people-pop-close]')) { closePops(); return; }
-  // —— 数据源弹窗（弹层在 body 之上，分支放前面；遮罩点击 = 关闭） ——
-  if (t.closest('[data-people-ds-open]')) { void openDsIfIdle(); return; }
-  if (t.closest('[data-people-ds-close]') || t.closest('[data-people-ds-dim]')) { closeDs(); return; }
-  // issue 465：「同步」= 从微信重新取数（bz-face sync 整条链）；运行中同位置只出「停止」
+  // —— 小签 / 弹窗（数据源 / 找一找 / 统计 / 档案 / 记一笔 / 删除 / 开工单） ——
+  const dlg = t.closest<HTMLElement>('[data-people-dialog]');
+  if (dlg) { void openDialogByHook(dlg.dataset.peopleDialog ?? ''); return; }
+  if (t.closest('[data-people-close]')) { closeDialog(); return; }
+  if (t.closest('[data-people-banner-close]')) { banner = null; renderBanner(); return; }
+  // —— 数据源册页 ——
   if (t.closest('[data-people-ds-sync]')) { handleSyncClick(); return; }
   if (t.closest('[data-people-ds-sync-stop]')) { stopSync(); return; }
   if (t.closest('[data-people-ds-pickfresh]')) { pickFresh(); return; }
   if (t.closest('[data-people-ds-import]')) { void importDsSelected(); return; }
   if (t.closest('[data-people-ds-generate]')) { void generateFromDs(); return; }
-  // 生成已后台化（450）：详情返回列表不再被生成阻塞
-  if (t.closest('[data-people-back-btn]')) {
-    stage = 'list'; detailId = null; detailFold = 'p';
-    void renderBody();
+  const dsRow = t.closest<HTMLElement>('.bz-people-ds-row');
+  if (dsRow && t.closest('[data-people-ds-list]')) {
+    // 目录键从勾选框钩子取（issue 501：行上显示名与目录键已分离，显示名不可回推键）
+    const name = dsRow.querySelector<HTMLElement>('[data-people-ds-check]')?.dataset.peopleDsCheck ?? '';
+    if (name && !dsRow.classList.contains('bz-people-ds-off')) {
+      if (dsSelected.has(name)) dsSelected.delete(name); else dsSelected.add(name);
+      syncDsChecks();
+    }
     return;
   }
-  // —— 详情「画脸谱」（仅未生成时出） ——
-  if (t.closest('[data-people-generate-one]')) { void generateOne(detailId ?? undefined); return; }
-  // —— 合并 / 删除（详情头图标工具条；合并回列表点选目标） ——
-  const mergeBtn = t.closest<HTMLElement>('[data-people-merge]');
-  if (mergeBtn) {
-    mergeFromId = mergeBtn.dataset.peopleMerge || null;
-    mergeToId = null;
-    stage = 'list';
-    detailId = null;
-    detailFold = 'p';
-    void renderBody();
+  // —— 找一找 ——
+  if (t.closest('[data-people-find-clear]')) { findQuery = ''; void renderAlbum().then(() => focusFind()); return; }
+  const ftag = t.closest<HTMLElement>('[data-people-find-tag]');
+  if (ftag) { findQuery = ftag.dataset.peopleFindTag ?? ''; void renderAlbum().then(() => focusFind()); return; }
+  const frow = t.closest<HTMLElement>('[data-people-find-open]');
+  if (frow) {
+    const id = frow.dataset.peopleFindOpen ?? '';
+    const { sorted } = pagination(listCache);
+    const at = sorted.findIndex((p) => p.id === id);
+    if (at >= 0) cur = Math.floor(at / AL_PER_PAGE) - (Math.floor(at / AL_PER_PAGE) % PER_SPREAD);
+    closeDialog();
+    pullPhoto(id);
     return;
   }
-  if (t.closest('[data-people-merge-cancel]')) { mergeFromId = null; mergeToId = null; void renderBody(); return; }
-  if (t.closest('[data-people-merge-confirm]')) { void handleMergeConfirm(); return; }
-  const mergePick = mergeFromId ? t.closest<HTMLElement>('[data-people-card]') : null;
-  if (mergePick) {
-    // 合并模式：点其他折子 = 选目标；点自己这本不响应
-    const id = mergePick.dataset.peopleCard || '';
-    if (id && id !== mergeFromId) { mergeToId = id; void renderBody(); }
-    return;
+  // —— 详情页动作 ——
+  const act = t.closest<HTMLElement>('[data-people-act]');
+  if (act) {
+    const kind = act.dataset.peopleAct ?? '';
+    if (kind === 'back') { closePerson(); return; }
+    if (kind === 'generate') { void generateOne(detailId ?? undefined); return; }
+    if (kind === 'stats') { openDialog('stats'); return; }
+    if (kind === 'prof') { profEditId = null; openDialog('prof'); return; }
+    if (kind === 'note') { openDialog('note'); return; }
+    if (kind === 'del') { void handleDelete(act.dataset.peopleDel ?? detailId ?? ''); return; }
   }
-  const del = t.closest<HTMLElement>('[data-people-del]');
-  if (del) { void handleDelete(del.dataset.peopleDel ?? ''); return; }
-  // —— 折子印章动作（451：四态各自可继续；放在合并点选之后、开人物详情之前——
-  //    合并流程里点印章仍按卡片语义选目标，印章的出入由样式关掉） ——
-  const seal = t.closest<HTMLElement>('[data-people-seal-act]');
-  if (seal) {
-    const id = seal.closest<HTMLElement>('[data-people-card]')?.dataset.peopleCard ?? '';
-    if (id) void sealAction(seal.dataset.peopleSealAct ?? '', id);
-    return;
-  }
-  // —— 折脊切换（详情页）：点收起折的头展开该折 ——
-  const leafHead = t.closest<HTMLElement>('[data-people-leaf-head]');
-  if (leafHead) {
-    const id = leafHead.dataset.peopleLeafHead as FoldId | undefined;
+  // —— 折页切换 / 月组开合 / 撕掉随手记 ——
+  const foldTab = t.closest<HTMLElement>('[data-people-fold]');
+  if (foldTab) {
+    const id = foldTab.dataset.peopleFold as FoldId | undefined;
     if (id && id !== detailFold) {
       detailFold = id;
+      animFold = true;
       profEditId = null; // 切折退出编辑（编辑态内容不跨折保留）
       noteAddId = null;
-      void renderBody();
+      void renderAlbum();
     }
     return;
   }
-  // —— 事件折月组开合：就地切类，不重渲染 ——
-  const evMonHead = t.closest<HTMLElement>('[data-people-ev-mon]');
-  if (evMonHead) {
-    const group = evMonHead.closest<HTMLElement>('.bz-people-ev-mon');
-    if (group) {
-      const on = group.classList.toggle('bz-people-ev-mon-on');
-      evMonHead.setAttribute('aria-label', `${on ? '收起' : '展开'} ${evMonHead.querySelector('.bz-people-ev-mon-name')?.textContent ?? ''}`);
-    }
+  const mon = t.closest<HTMLElement>('[data-people-mon]');
+  if (mon) {
+    mon.closest<HTMLElement>('.bz-people-mon')?.classList.toggle('on');
     return;
   }
-  const card = t.closest<HTMLElement>('[data-people-card]');
-  if (card) {
-    detailId = card.dataset.peopleCard ?? null;
-    detailFold = 'p';
-    stage = 'detail';
-    void renderBody();
+  const noteDel = t.closest<HTMLElement>('[data-people-note-del]');
+  if (noteDel) { void removeManualNote(noteDel.dataset.peopleNoteDel ?? ''); return; }
+  // —— 合并 / 删除确认页 ——
+  if (t.closest('[data-people-merge-cancel]')) { mergeFromId = null; mergeToId = null; void renderAlbum(); return; }
+  if (t.closest('[data-people-merge-confirm]')) { void handleMergeConfirm(); return; }
+  if (t.closest('[data-people-del-cancel]')) { closeDialog(); return; }
+  if (t.closest('[data-people-del-ok]')) {
+    const p = listCache.find((x) => x.id === detailId) ?? null;
+    if (p) void deletePerson(p);
     return;
   }
-  // —— issue 439：档案与随手记（元素只在详情折内出现，属性名互不重叠） ——
-  if (t.closest('[data-people-prof-new]') || t.closest('[data-people-prof-edit]')) { profEditId = detailId; void renderBody(); return; }
-  if (t.closest('[data-people-prof-cancel]')) { profEditId = null; void renderBody(); return; }
+  // —— 开工单 ——
+  if (t.closest('[data-people-gen-cancel]')) { answerGenConfirm('cancel'); return; }
+  if (t.closest('[data-people-gen-start]')) { answerGenConfirm('start'); return; }
+  // —— 档案与随手记（编辑态行内增删） ——
+  if (t.closest('[data-people-prof-new]') || t.closest('[data-people-prof-edit]')) { profEditId = detailId; requestProfRender(); return; }
+  if (t.closest('[data-people-prof-cancel]')) { profEditId = null; requestProfRender(); return; }
   if (t.closest('[data-people-prof-save]')) { void saveProfile(); return; }
   if (t.closest('[data-people-prof-ai]')) { void aiFillProfile(); return; }
   if (t.closest('[data-people-prof-add-social]')) {
     overlay?.querySelector<HTMLElement>('[data-people-prof-social-list]')?.appendChild(socialRow('', ''));
     return;
   }
-  // issue 487：身边人 / 重要日子行增删（复用 socials 行模式）
   if (t.closest('[data-people-prof-add-rel]')) {
     overlay?.querySelector<HTMLElement>('[data-people-prof-rel-list]')?.appendChild(relationRow('', ''));
     return;
@@ -1535,26 +1594,35 @@ function onOverlayClick(e: MouseEvent): void {
     overlay?.querySelector<HTMLElement>('[data-people-prof-date-list]')?.appendChild(dateRow('', ''));
     return;
   }
-  if (t.closest('[data-people-prof-rel-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
-  if (t.closest('[data-people-prof-date-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
+  if (t.closest('[data-people-prof-rel-del]')) { t.closest('.bz-people-prof-subrow')?.remove(); return; }
+  if (t.closest('[data-people-prof-date-del]')) { t.closest('.bz-people-prof-subrow')?.remove(); return; }
+  if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-subrow')?.remove(); return; }
   if (t.closest('[data-people-prof-tag-add]')) { addTagChip(); return; }
-  if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-prof-tag')?.remove(); return; }
-  if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-social-row')?.remove(); return; }
-  if (t.closest('[data-people-note-open]')) { openNotePop(); return; }
-  if (t.closest('[data-people-note-cancel]')) { noteOpen = false; void renderBody(); return; }
+  if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-tag-chip')?.remove(); return; }
+  if (t.closest('[data-people-note-cancel]')) { closeDialog(); return; }
   if (t.closest('[data-people-note-save]')) { void saveManualNote(); return; }
-  const evDel = t.closest<HTMLElement>('[data-people-ev-del]');
-  if (evDel) { void removeManualNote(evDel.dataset.peopleEvDel ?? ''); return; }
+  // —— 上锁封面 ——
+  const lock = t.closest<HTMLElement>('[data-people-lock]');
+  if (lock) {
+    if (lock.dataset.peopleLock === 'cancel') { closePeoplePanel(); return; }
+    void (async () => {
+      if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+      if (peopleSafe?.unlocked || (await unlockGate())) void renderAlbum();
+    })();
+    return;
+  }
 }
 
-function onOverlayChange(e: Event): void {
-  const el = e.target as HTMLInputElement;
-  // —— 数据源联系人勾选（原位刷新页脚与行高亮，不重建列表） ——
-  if (el.matches('[data-people-ds-check]')) {
-    const name = el.dataset.peopleDsCheck ?? '';
-    if (el.checked) dsSelected.add(name); else dsSelected.delete(name);
-    updateDsFooter();
-  }
+/** 弹窗小签 → 开页（不靠人的直接开；靠人的要有人开着） */
+async function openDialogByHook(kind: string): Promise<void> {
+  if (kind === 'ds') { await openDsIfIdle(); return; }
+  if (kind === 'find') { openDialog('find'); return; }
+  if (kind === 'gen') { void generateFromDs(); return; }
+}
+
+/** 档案页的编辑态切换：只重画那一页（不动册子） */
+function requestProfRender(): void {
+  void renderAlbum();
 }
 
 /** 「勾有更新的」：一键勾上全部有新素材的单聊（弹窗内原位刷新） */
@@ -1565,13 +1633,16 @@ function pickFresh(): void {
   syncDsChecks();
 }
 
-/** 弹窗勾选集合 → DOM 复选框 + 行高亮 + 页脚（原位） */
+/** 弹窗勾选集合 → DOM 勾选框（aria-checked + 勾图标 + 行高亮，原位）与页脚账 */
 function syncDsChecks(): void {
-  overlay?.querySelectorAll<HTMLInputElement>('[data-people-ds-check]').forEach((cb) => {
-    const name = cb.dataset.peopleDsCheck ?? '';
-    cb.checked = dsSelected.has(name);
-    cb.closest('.bz-people-ds-row')?.classList.toggle('bz-people-ds-on', cb.checked);
+  if (!overlay) return;
+  overlay.querySelectorAll<HTMLElement>('[data-people-ds-check]').forEach((box) => {
+    const on = dsSelected.has(box.dataset.peopleDsCheck ?? '');
+    box.setAttribute('aria-checked', on ? 'true' : 'false');
+    box.replaceChildren(...(on ? [el('i', 'bz-ic', { 'data-lucide': 'check', 'aria-hidden': 'true' })] : []));
+    box.closest('.bz-people-ds-row')?.classList.toggle('bz-people-ds-on', on);
   });
+  mountIcons(overlay);
   updateDsFooter();
 }
 
@@ -1590,102 +1661,433 @@ function updateDsFooter(): void {
       : `已选 ${sel.length} 位 · 所选暂无新素材`;
   const count = overlay?.querySelector<HTMLElement>('[data-people-ds-count]');
   if (count) count.textContent = label;
-  overlay?.querySelectorAll<HTMLInputElement>('[data-people-ds-check]').forEach((cb) => {
-    cb.closest('.bz-people-ds-row')?.classList.toggle('bz-people-ds-on', cb.checked);
-  });
 }
 
-// ---------------- 渲染分发 ----------------
+// ---------------- 渲染分发（issue 505：打开面板就是这一册相册） ----------------
 
-async function renderBody(): Promise<void> {
-  const body = overlay?.querySelector<HTMLElement>('[data-people-body]');
-  if (!body || !store || !overlay) return;
-  // 上锁不可读（ADR-0194）：解锁态被任何路径翻掉 → 面板只剩锁定占位，不渲染任何联系人数据
+/** 一页贴几张（2 列 × 3 行）的排序分页：按「最近说过话」排完，每 6 位一页（渲染与翻页两边共用） */
+function pagination(people: PersonEntry[]): { sorted: PersonEntry[]; pages: PersonEntry[][] } {
+  const sorted = sortPeople(people);
+  const pages: PersonEntry[][] = [];
+  for (let i = 0; i < sorted.length; i += AL_PER_PAGE) pages.push(sorted.slice(i, i + AL_PER_PAGE));
+  return { sorted, pages };
+}
+
+/** 头像表：保库记录里的密文头像 → 内存 data URL（id 定位——记录键是 talker，不随改名漂移） */
+async function avatarMap(): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!peopleSafe?.unlocked) return out;
+  for (const id of await peopleSafe.talkers()) {
+    const url = await peopleSafe.avatarDataUrl(id);
+    if (url) out.set(id, url);
+  }
+  return out;
+}
+
+/** 这一位有没有新素材（数据源扫描快照里的「新条数」——导入 / 同步后那一趟的账） */
+function freshOf(id: string): number {
+  const c = (dsContacts ?? []).find((x) => x.name === id);
+  return c && !c.newApprox ? Math.max(0, c.newCount) : 0;
+}
+
+/** 一格照片的入参 */
+function photoOf(p: PersonEntry, index: number, avatars: Map<string, string>): AlbumPhoto {
+  return {
+    p,
+    avatar: avatars.get(p.id) ?? '',
+    index,
+    fresh: freshOf(p.id),
+    due: dueSoonOf(p),
+    job: sealJobOf(jobViews().get(p.id)),
+  };
+}
+
+/** 一页照片（按当前摊页序切好，缺位补空） */
+function pagePhotos(list: PersonEntry[], indexOf: Map<string, number>, avatars: Map<string, string>): Array<AlbumPhoto | null> {
+  return list.map((p, i) => photoOf(p, indexOf.get(p.id) ?? i, avatars));
+}
+
+/** 册子骨头：分页、当前摊、并页（详情 / 弹窗摆在哪一侧） */
+async function albumBody(people: PersonEntry[]): Promise<HTMLElement> {
+  const avatars = await avatarMap();
+  const { sorted, pages } = pagination(people);
+  const indexOf = new Map(sorted.map((p, i) => [p.id, i % AL_PER_PAGE]));
+  const total = pages.length;
+  const ledger = { faces: people.filter((p) => p.digest).length, msgs: people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0) };
+
+  // ① 不靠人的弹窗（数据源 / 画谱确认 / 找一找）：单页摊满整册
+  if (dialog && !pulled && dialog.kind !== 'stats' && dialog.kind !== 'prof' && dialog.kind !== 'note' && dialog.kind !== 'del') {
+    return albumSpread([dialogPage(null)], { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } }, { mod: 'bz-people-spread-one' });
+  }
+
+  // ② 详情：抽出来的那张留在被点的那一页，脸谱翻开在对面那页
+  if (pulled) {
+    const at = sorted.findIndex((p) => p.id === pulled);
+    const d = at >= 0 ? sorted[at] : null;
+    if (d) {
+      const pi = Math.min(Math.floor(at / AL_PER_PAGE), total - 1);
+      if (pi !== cur && pi !== cur + 1) cur = pi - (pi % PER_SPREAD);
+      const clickedLeft = pi === cur;
+      const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos(pages[pi] ?? [], indexOf, avatars), pi + 1, sorted.length, ledger);
+      const det = detailPage(d, detailOpts(d, clickedLeft ? 'right' : 'left', avatars));
+      const inner = clickedLeft ? [leaf, albumGutter(), det] : [det, albumGutter(), leaf];
+      return albumSpread(inner, { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } });
+    }
+    pulled = null; // 人没了（被删）：流程自愈
+  }
+
+  // ③ 摊开的册页
+  cur = Math.min(Math.max(0, cur), lastCur(total));
+  const halves: HTMLElement[] = [];
+  for (let h = 0; h < PER_SPREAD; h++) {
+    const idx = cur + h;
+    if (!pages[idx]) break;
+    if (h) halves.push(albumGutter());
+    halves.push(albumPage(pagePhotos(pages[idx], indexOf, avatars), idx + 1, sorted.length, ledger));
+  }
+  return albumSpread(halves, turnLoad(cur, total), { boot: animBoot, turn: animTurn });
+}
+
+/** 详情页入参 */
+function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string, string>): DetailOpts {
+  const person = personOf(p.digest);
+  const bond = bondOf(p.digest);
+  const md = person ? miniMarkdown(person) : null;
+  const bondMd = bond ? miniMarkdown(bond) : null;
+  return {
+    side,
+    fold: detailFold,
+    avatar: avatars.get(p.id) ?? '',
+    body: detailFold === 'p' ? foldPersonBody(md, p) : detailFold === 'b' ? foldBondBody(bondMd, p) : foldEventsBody(p),
+    job: sealJobOf(jobViews().get(p.id)),
+    facts: detailFactsOf(p),
+  };
+}
+
+/** 当前该翻开哪一页弹窗（靠人的 / 不靠人的都在里面） */
+function dialogPage(p: PersonEntry | null): HTMLElement {
+  const kind = dialog?.kind;
+  if (kind === 'ds') return dsPage(dsPageState());
+  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], images: 0, voices: 0, provider: '', model: '', describeCalls: 0, portraitCalls: 0, batchSize: 0 });
+  if (kind === 'find') return findPageState();
+  if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p), p));
+  if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
+  if (p && kind === 'note') return notePage(p, todayStr());
+  if (p && kind === 'del') return delPage(p, dialog?.tier ?? deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
+  return subPage({ title: '', hook: 'none' }, []);
+}
+
+/** 「找一找」册页：按名字 / 标签捞人（结果里写清在第几页，点一下翻过去把脸谱翻开） */
+function findPageState(): HTMLElement {
+  const q = findQuery.trim();
+  const { sorted } = pagination(listCache);
+  const rows: FindRow[] = [];
+  if (q) {
+    for (const p of sorted) {
+      const name = p.name || p.id;
+      const tags = (p.profile?.tags ?? []).filter(Boolean);
+      if (!name.includes(q) && !tags.some((t) => t.includes(q))) continue;
+      const at = sorted.indexOf(p);
+      const job = sealJobOf(jobViews().get(p.id));
+      const seal = albumSealOf(p, job);
+      rows.push({
+        p,
+        avatar: '',
+        page: Math.floor(at / AL_PER_PAGE) + 1,
+        half: at % PER_SPREAD === 0 ? '左' : '右',
+        state: seal.state === 'none' ? 'todo' : seal.state === 'drawn' || seal.state === 'legacy' ? 'drawn' : 'drawing',
+      });
+    }
+  }
+  const tagPool = [...new Set(listCache.flatMap((p) => (p.profile?.tags ?? []).filter(Boolean)))].slice(0, 6);
+  return findPage({ q, total: listCache.length, rows, tags: tagPool });
+}
+
+/** 渲染整册（唯一入口：面板重画全走这儿） */
+async function renderAlbum(): Promise<void> {
+  const panel = overlay?.querySelector<HTMLElement>('.bz-people-panel');
+  const wrap = overlay?.querySelector<HTMLElement>('[data-people-scroll]');
+  if (!panel || !wrap || !store || !overlay) return;
+  const scroll = scrollSnapshot();
+  // 上锁不可读（ADR-0194）：解锁态被任何路径翻掉 → 只剩一张合着的封面，不渲染任何联系人数据
   if (!peopleSafe?.unlocked) {
     listCache = [];
     recordCache = null;
-    body.replaceChildren(lockedBody());
-    overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', false);
-    renderDsLayer();
-    renderJobs();
+    panel.classList.add('bz-people-locked');
+    wrap.replaceWith(lockCover(animBoot));
+    renderNote();
+    renderBanner();
     applySyncLockdown();
     mountIcons(overlay);
+    clearAnim();
     return;
   }
-  // 冷读加载占位（issue 483）：记录缓存不在且保库记录非全量热读（重开面板的缓存命中不出加载态）→
-  // 先出骨架与「正在解密联系人数据… N/M」进度行，wallPeople 返回后下方 replaceChildren 原地替换成真实数据
+  panel.classList.remove('bz-people-locked');
+  // 冷读加载占位（issue 483）：记录缓存不在且保库记录非全量热读 → 先出解密中的册子
   if (!recordCache && peopleSafe && !peopleSafe.isFullyCached()) {
-    body.replaceChildren(loadBody({ done: loadDone, total: loadTotal }));
-    overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', false);
+    wrap.replaceWith(albumLoad(loadDone, loadTotal));
   }
-  const people = await wallPeople(); // 一次拉全量：列表 / 详情 / 弹窗三处同源（455 弹窗正文也要人物卡）
+  const people = await wallPeople(); // 一次拉全量：册页 / 详情 / 弹窗三处同源
   if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
-  if (stage === 'list') await renderList(body, people);
-  else await renderDetail(body, people);
-  // 详情态版式类在渲染后按最终 stage 归位——renderDetail 里人物消失回落列表时不再残留详情版式
-  overlay.querySelector('.bz-people-panel')?.classList.toggle('bz-people-panel-detail', stage === 'detail');
-  renderDsLayer();
-  renderPopLayer(people);
-  renderJobs();
-  applySyncLockdown(); // 同步运行中「画脸谱」入口置灰（印章 / 详情头；弹窗页脚在 dsModal 里）
-  mountIcons(overlay); // lucide 占位（头行/详情工具条/弹窗）→ SVG
+  listCache = people;
+  const next = people.length || dialog ? await albumBody(people) : albumEmpty();
+  if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
+  overlay.querySelector<HTMLElement>('[data-people-scroll]')?.replaceWith(next);
+  restoreScroll(scroll);
+  syncScrollEdges();
+  renderNote();
+  renderBanner();
+  applySyncLockdown();
+  mountIcons(overlay); // lucide 占位 → SVG
+  clearAnim();
 }
 
-/** 锁定占位（上锁后的面板体；不显示任何数据，给出解锁入口） */
-function lockedBody(): HTMLElement {
-  const wrap = document.createElement('div');
-  wrap.className = 'bz-people-locked';
-  const tip = document.createElement('div');
-  tip.className = 'bz-people-locked-tip';
-  tip.textContent = '保险库已上锁——脸谱数据已加密，解锁后才能查看。';
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'bz-people-locked-btn';
-  btn.textContent = '解锁保险库';
-  btn.addEventListener('click', () => {
-    void (async () => {
-      if (!peopleSafe && overlay) peopleSafe = await getPeopleSafeStore();
-      if (peopleSafe?.unlocked || (await unlockGate())) void renderBody();
-    })();
+/** 一次性动效标志：放完即清（同页后续重画不重放） */
+function clearAnim(): void {
+  animBoot = false;
+  animTurn = '';
+  animDetail = false;
+  animFold = false;
+  animDrop = false;
+  animDev = '';
+  animNote = false;
+}
+
+/** 能滚的那块：记下滚动位置，重画后放回去（切折 / 换页不跳回顶端） */
+function scrollSnapshot(): Record<string, number> {
+  const out: Record<string, number> = {};
+  overlay?.querySelectorAll<HTMLElement>('[data-people-scroll]').forEach((el) => {
+    out[el.getAttribute('data-people-scroll') ?? ''] = el.scrollTop;
   });
-  wrap.appendChild(tip);
-  wrap.appendChild(btn);
-  return wrap;
+  return out;
 }
 
-/** 数据源弹层（独立容器；关着只置 hidden） */
-function renderDsLayer(): void {
-  const layer = overlay?.querySelector<HTMLElement>('[data-people-ds-layer]');
-  if (!layer) return;
-  layer.hidden = !dsOpen;
-  layer.replaceChildren();
-  if (dsOpen) layer.appendChild(dsModal(dsModalState()));
+function restoreScroll(m: Record<string, number>): void {
+  overlay?.querySelectorAll<HTMLElement>('[data-people-scroll]').forEach((el) => {
+    const v = m[el.getAttribute('data-people-scroll') ?? ''];
+    if (typeof v === 'number') el.scrollTop = v;
+  });
 }
 
-/**
- * 统计 / 档案弹层（issue 455，独立容器；关着只置 hidden）。
- * 弹窗跟着详情人物走：人物没了（被删 / 回列表）弹窗自愈收起；补充背景的编辑态由 profEditId 决定。
- */
-function renderPopLayer(people: PersonEntry[]): void {
-  const layer = overlay?.querySelector<HTMLElement>('[data-people-pop-layer]');
-  if (!layer) return;
-  const p = statsOpen || profOpen || noteOpen ? people.find((x) => x.id === detailId) : null;
-  if (!p) {
-    statsOpen = false;
-    profOpen = false;
-    noteOpen = false;
-    layer.hidden = true;
-    layer.replaceChildren();
-    return;
+/** 滚到顶了就不该有上面那条内影、滚到底了不该有下面那条（内影是两条 sticky 伪元素） */
+function scrollEdges(el: Element): void {
+  const box = el as HTMLElement;
+  box.classList.toggle('sc-top', box.scrollTop <= 1);
+  box.classList.toggle('sc-bot', box.scrollTop + box.clientHeight >= box.scrollHeight - 1);
+}
+
+function syncScrollEdges(): void {
+  overlay?.querySelectorAll('.bz-people-pagebody').forEach(scrollEdges);
+}
+
+// ---------------- 册子交互：翻摊 / 抽照片 / 反光 ----------------
+
+/** 翻一摊：整册往那侧让一下，再让「那一页纸」从中缝掀过去 */
+function turnTo(dir: 'next' | 'prev'): void {
+  const total = pageTotal(listCache.length);
+  const to = dir === 'next' ? Math.min(lastCur(total), cur + PER_SPREAD) : Math.max(0, cur - PER_SPREAD);
+  if (to === cur) return;
+  const spread = overlay?.querySelector<HTMLElement>('.bz-people-spread');
+  const oldPages = overlay?.querySelectorAll<HTMLElement>('.bz-people-spread > .bz-people-page');
+  const oldR = oldPages && oldPages.length ? oldPages[oldPages.length - 1] : null;
+  const keep = spread?.getAttribute('style') ?? null;
+  if (spread) spread.style.transform = 'none'; // 量之前先收掉「随视线微转」的角度，不然纸会大一圈
+  const rect = oldR?.getBoundingClientRect();
+  if (spread) { if (keep === null) spread.removeAttribute('style'); else spread.setAttribute('style', keep); }
+  const sheet = rect && rect.width
+    ? {
+      face: dir === 'next' ? oldR!.outerHTML : (oldPages?.[0]?.outerHTML ?? ''),
+      back: '',
+      rect: { x: rect.left, y: rect.top, w: rect.width, h: rect.height },
+    }
+    : null;
+  cur = to;
+  animTurn = dir;
+  void renderAlbum().then(() => {
+    if (!sheet) return;
+    const pages = overlay?.querySelectorAll<HTMLElement>('.bz-people-spread > .bz-people-page');
+    if (pages?.length) sheet.back = (dir === 'next' ? pages[0] : pages[pages.length - 1]).outerHTML;
+    flipSheet(dir, sheet);
+  });
+}
+
+/** 掀纸：一块 position:fixed 的纸，绕自己的左边（中缝）转 180°，落地淡掉 */
+function flipSheet(mode: 'next' | 'prev', s: { face: string; back: string; rect: { x: number; y: number; w: number; h: number } }): void {
+  const el = document.createElement('div');
+  el.className = `bz-people-sheet bz-people-sheet-${mode}`;
+  el.setAttribute('aria-hidden', 'true');
+  el.style.left = `${s.rect.x}px`;
+  el.style.top = `${s.rect.y}px`;
+  el.style.width = `${s.rect.w}px`;
+  el.style.height = `${s.rect.h}px`;
+  for (const k of ['--fx', '--fy']) {
+    const v = overlay?.style.getPropertyValue(k);
+    if (v) el.style.setProperty(k, v);
   }
-  layer.hidden = false;
-  layer.replaceChildren(
-    statsOpen
-      ? popShell('互动统计', 'data-people-stats-pop', statsPopBody(buildInsightsCard(p), p))
-      : profOpen
-        ? popShell('补充背景', 'data-people-prof-pop', profilePopBody(p, profEditId === p.id))
-        : popShell('记一笔', 'data-people-note-pop', [noteAddRow(todayStr())])
-  );
+  const front = document.createElement('div');
+  front.className = 'bz-people-sheet-face bz-people-sheet-f';
+  front.innerHTML = noFocus(s.face);
+  const back = document.createElement('div');
+  back.className = 'bz-people-sheet-face bz-people-sheet-b';
+  back.innerHTML = noFocus(s.back);
+  el.append(front, back);
+  document.body.appendChild(el);
+  window.setTimeout(() => el.remove(), 900);
+}
+
+/** 纸上的两页是复制品：去掉键盘焦点，Tab 不进正在飞的纸 */
+function noFocus(html: string): string {
+  return String(html ?? '').replace(/ tabindex="0" role="button"/g, '');
+}
+
+/** 照片：先在膜下抽出来（.bz-people-out 起过渡），再看是哪一页抽的；再点同一张＝塞回去合上 */
+function pullPhoto(id: string): void {
+  if (pulled === id) { closePerson(); return; }
+  const cell = overlay?.querySelector<HTMLElement>(`[data-people-pocket="${cssEscape(id)}"]`);
+  const img = cell?.querySelector<HTMLImageElement>('.bz-people-photo img');
+  const txt = cell?.querySelector<HTMLElement>('.bz-people-photo .bz-people-ava-txt');
+  flyPending = { src: img?.getAttribute('src') ?? '', txt: txt?.textContent ?? '' };
+  cell?.classList.add('bz-people-out');
+  window.setTimeout(() => {
+    pulled = id;
+    detailId = id;
+    detailFold = 'p';
+    dialog = null;
+    animDetail = true;
+    void renderAlbum().then(() => runFly());
+  }, 240);
+}
+
+/** 合上：抽出来的那张反向塞回膜下，对面那页跟着收走 */
+function closePerson(): void {
+  if (!pulled) return;
+  overlay?.querySelector<HTMLElement>('.bz-people-cell.bz-people-out')?.classList.remove('bz-people-out');
+  const id = pulled;
+  const finish = (): void => {
+    pulled = null;
+    detailId = null;
+    dialog = null;
+    void renderAlbum().then(() => {
+      overlay?.querySelector<HTMLElement>(`[data-people-pocket="${cssEscape(id)}"]`)?.focus();
+    });
+  };
+  if (overlay?.querySelector('.bz-people-cell.bz-people-out')) window.setTimeout(finish, 200);
+  else finish();
+}
+
+/** 点照片那一下放下的哨：要飞的那张图（起飞点等抬到位了再量） */
+let flyPending: { src: string; txt: string } | null = null;
+
+/** 照片飞进对面页的相框：从抬起的那张起飞、落到对面页的相框里 */
+function runFly(): void {
+  const f = flyPending;
+  flyPending = null;
+  if (!f || !overlay) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const cell = overlay.querySelector<HTMLElement>('.bz-people-cell.bz-people-out');
+  const print = cell?.querySelector<HTMLElement>('.bz-people-print');
+  const box = print?.getBoundingClientRect();
+  const target = overlay.querySelector<HTMLElement>('.bz-people-bigphoto');
+  if (!box?.width || !target) return;
+  target.classList.add('bz-people-hold'); // 相框立刻空着，免得先亮一下再飞
+  const w = print!.offsetWidth || box.width;
+  const h = print!.offsetHeight || box.height;
+  const from = { x: box.left + box.width / 2 - w / 2, y: box.top + box.height / 2 - h / 2 };
+  window.setTimeout(() => {
+    const to = target.getBoundingClientRect();
+    if (!to.width) { target.classList.remove('bz-people-hold'); return; }
+    const fly = document.createElement('div');
+    fly.className = 'bz-people-fly';
+    if (f.src) fly.innerHTML = `<img src="${f.src}" alt="">`;
+    else fly.innerHTML = `<span class="bz-people-fly-txt"></span>`;
+    if (!f.src) (fly.firstElementChild as HTMLElement).textContent = f.txt;
+    fly.style.left = `${from.x}px`;
+    fly.style.top = `${from.y}px`;
+    fly.style.width = `${w}px`;
+    fly.style.height = `${h}px`;
+    fly.style.setProperty('--dx', `${to.left - from.x}px`);
+    fly.style.setProperty('--dy', `${to.top - from.y}px`);
+    fly.style.setProperty('--sx', (to.width / w).toFixed(3));
+    fly.style.setProperty('--sy', (to.height / h).toFixed(3));
+    document.body.appendChild(fly);
+    window.setTimeout(() => {
+      fly.remove();
+      target.classList.remove('bz-people-hold');
+      target.classList.add('bz-people-arrive');
+      window.setTimeout(() => target.classList.remove('bz-people-arrive'), 420);
+    }, 600);
+  }, 120);
+}
+
+/** 反光 / 视差：指针在册内移动时写变量（不动 DOM、不重画） */
+function setFx(x: number, y: number, box: DOMRect): void {
+  if (!overlay) return;
+  const px = Math.max(0, Math.min(1, (x - box.left) / Math.max(1, box.width)));
+  const py = Math.max(0, Math.min(1, (y - box.top) / Math.max(1, box.height)));
+  overlay.style.setProperty('--fx', `${(px * 100).toFixed(1)}%`);
+  overlay.style.setProperty('--fy', `${(py * 100).toFixed(1)}%`);
+  overlay.style.setProperty('--pnx', ((px - 0.5) * 2).toFixed(3));
+  overlay.style.setProperty('--pny', ((py - 0.5) * 2).toFixed(3));
+}
+
+/** 选择器转义（id 可能是 wxid 之外的任意目录名） */
+function cssEscape(s: string): string {
+  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(s) : s.replace(/["\\]/g, '\\$&');
+}
+
+// ---------------- 进度便签 / 合并横幅 ----------------
+
+/** 进度便签（issue 505）：贴在册子左下沿；无活跃任务不出现；画完撕下来 */
+function renderNote(): void {
+  const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
+  if (!slot) return;
+  const item = currentJobsItem();
+  if (!item) { slot.replaceChildren(); return; }
+  const note = jobsNote(toBlockState(item));
+  if (animNote) note.classList.add('bz-people-note-in');
+  const old = slot.querySelector<HTMLElement>('.bz-people-jobs');
+  if (old) old.replaceWith(note);
+  else slot.replaceChildren(note);
+  syncPhotoSeals(); // 451：照片角上的印跟帧刷新
+}
+
+/** 画完那一枚便签：揪着角撕下来，翻着个儿掉出册子 */
+function tearNote(): void {
+  const note = overlay?.querySelector<HTMLElement>('.bz-people-jobs');
+  const box = note?.getBoundingClientRect();
+  if (note && box?.width) {
+    const clone = note.cloneNode(true) as HTMLElement;
+    clone.classList.add('bz-people-tear');
+    clone.style.left = `${box.left}px`;
+    clone.style.top = `${box.top}px`;
+    clone.style.width = `${box.width}px`;
+    document.body.appendChild(clone);
+    window.setTimeout(() => clone.remove(), 720);
+  }
+  overlay?.querySelector('[data-people-jobs-slot]')?.replaceChildren();
+}
+
+/** 合并横幅：横贴在册子上沿的一条纸（9 秒自己收，也能点 × 收起） */
+let bannerSeq = 0;
+let banner: { id: number; text: string; calm: boolean } | null = null;
+
+function showBanner(text: string, calm = false): void {
+  const id = ++bannerSeq;
+  banner = { id, text, calm };
+  renderBanner();
+  window.setTimeout(() => {
+    if (banner?.id === id) { banner = null; renderBanner(); }
+  }, 9000);
+}
+
+function renderBanner(): void {
+  const slot = overlay?.querySelector<HTMLElement>('[data-people-banner-slot]');
+  if (!slot) return;
+  if (!banner) { slot.replaceChildren(); return; }
+  const node = mergeBanner(banner.text, banner.calm);
+  if (animNote) node.classList.add('bz-people-note-in');
+  slot.replaceChildren(node);
+  mountIcons(slot);
 }
 
 // ---------------- 列表（折子封面墙） ----------------
@@ -1708,8 +2110,8 @@ function paintLoadCount(): void {
   if (!loadActive || !overlay) return;
   const n = overlay.querySelector<HTMLElement>('[data-people-load-count]');
   if (!n) return;
-  n.hidden = loadTotal == null;
-  n.textContent = loadTotal != null ? `${loadDone}/${loadTotal}` : '';
+  n.hidden = loadTotal == null; // 清单未读到：只报已解锁几位，不编分母
+  n.textContent = loadTotal != null ? `${loadDone}/${loadTotal} 位` : `${loadDone} 位`;
 }
 
 /** 保库记录读取（缓存到「面板关闭」「上锁」失效；读不到按空表兜底，照常出已有卡）。
@@ -1815,99 +2217,62 @@ async function ensureEntry(id: string): Promise<void> {
   await store.upsert({ id, name, createdAt: new Date().toISOString(), imports: [] });
 }
 
-async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<void> {
-  const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
-  if (statsEl) statsEl.textContent = statsText(people);
-  listCache = people;
-  body.replaceChildren();
-  if (!people.length) {
-    body.appendChild(wallEmpty());
-    return;
-  }
-  const from = mergeFromId ? people.find((x) => x.id === mergeFromId) : null;
-  if (mergeFromId && !from) { mergeFromId = null; mergeToId = null; } // 人已删，流程自愈回落
-  else if (from) {
-    const to = mergeToId && mergeToId !== mergeFromId ? people.find((x) => x.id === mergeToId) : null;
-    body.appendChild(mergeBar(from.name, to?.name ?? null));
-  }
-  const wall = foldWall();
-  // 头像（467）：从加密记录解出内存 data URL（id 定位——记录键是 talker，不随改名漂移）
-  const avaMap = new Map<string, string>();
-  if (peopleSafe?.unlocked) {
-    for (const id of await peopleSafe.talkers()) {
-      const url = await peopleSafe.avatarDataUrl(id);
-      if (url) avaMap.set(id, url);
-    }
-  }
-  applyWall(people, wall, (id) => avaMap.get(id));
-  body.appendChild(wall);
-}
-
 /** 删除确认窗开着标记（防叠窗；Esc 与遮罩点击都归「取消」） */
-let delConfirmOpen = false;
-
-/**
- * 删除确认（502 续）：走脸谱自有弹层（`render.deleteConfirmModal`——宣纸 + 朱红 + 印色的同一套壳），
- * 不再用 core 的通用确认框（那个皮是通用灰，跟脸谱整套语汇对不上）。
- * 挂 body 级（面板可能压根没开），Esc 与遮罩点击归「取消」。
- */
-function askDeleteConfirm(p: PersonEntry, tier: DeleteTier): Promise<'delete' | 'cancel'> {
-  if (delConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未确认处理
-  delConfirmOpen = true;
-  return new Promise((resolve) => {
-    const done = (answer: 'delete' | 'cancel'): void => {
-      delConfirmOpen = false;
-      document.removeEventListener('keydown', onKey, true);
-      node.remove();
-      resolve(answer);
-    };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') done('cancel');
-    };
-    const node = deleteConfirmModal(p, tier, done);
-    document.body.appendChild(node);
-    topifyZ(node);
-    document.addEventListener('keydown', onKey, true);
-  });
+/** 排序（448：工具条退役，固定最近互动优先；无导入记录按建卡时间兜底）——分页与「找一找」共用 */
+function sortPeople(list: PersonEntry[]): PersonEntry[] {
+  const lastSeen = (p: PersonEntry) => p.imports.reduce((m, r) => (r.timeTo > m ? r.timeTo : m), '');
+  return [...list].sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
 }
 
+/** 「找一找」重画后把焦点交回输入框（连打字不丢位置） */
+function focusFind(): void {
+  overlay?.querySelector<HTMLInputElement>('[data-people-find]')?.focus();
+}
+
+// ---------------- 删除流程（issue 500 / 501 / 502 续：确认是册子里的一页） ----------------
+
 /**
- * 详情头「删除」（issue 500 / 501 / 502 续）：先按 {@link deleteTierOf} 判档，再走对应门禁——
+ * 详情「删除联系人」：先按 {@link deleteTierOf} 判档，再走对应门禁——
  *   已画谱（有画像正文）→ 重输主密码（不可逆产物，同密文销毁防护）；
- *   未画谱 / 画谱未完成 → 弹脸谱自有确认窗二次确认（501 换真弹窗，502 续换成本域皮肤）。
+ *   未画谱 / 画谱未完成 → 翻开确认页二次确认（501 换真弹窗，502 续换成本域皮肤，505 换册页）。
  * 只删保库记录（人物卡 + 聊天仓 + 脸谱 + 随手记 + 头像附件）；数据源目录与聊天原文不动，可重新导入。
  */
 async function handleDelete(id: string): Promise<void> {
   if (!store) { notice('保险库未解锁——先解锁再删', 'info'); return; }
   const p = (await store.list()).find((x) => x.id === id) ?? null;
-  if (!p) { notice('这位联系人已不在库里', 'info'); await renderBody(); return; }
-  const tier = deleteTierOf(p, jobViews().get(id));
+  if (!p) { notice('这位联系人已不在库里', 'info'); await renderAlbum(); return; }
+  const tier = deleteTierOf(p, jobViews().get(id) ?? null);
   if (tier === 'drawn') {
     confirmDeleteWithPassword(p, () => void deletePerson(p));
     return;
   }
-  if (await askDeleteConfirm(p, tier) === 'delete') await deletePerson(p);
+  openedTier = tier;
+  openDialog('del', tier);
 }
+
+/** 确认页当前那一档（页上点「删除」时读它） */
+let openedTier: DeleteTier = 'undrawn';
 
 /**
  * 落地删除（issue 500）：先停该人未完成的任务——引擎是保库记录的唯一写方，
  * 任务还在队列里会把 job 段（乃至 done 产物）写回来，删了等于白删。
- * issue 501：删完还要把面板的记录快照里的这一条摘掉——{@link wallPeople} 会把
+ * 501：删完还要把面板的记录快照里的这一条摘掉——{@link wallPeople} 会把
  * 「记录里有、人物卡里没有」的 id 拿聊天仓素材合成「待画」占位卡，不摘的话
- * 卡片会一直挂在墙上，要等关面板（快照失效）才消失。
+ * 卡片会一直挂在册子上，要等关面板（快照失效）才消失。
  */
 async function deletePerson(p: PersonEntry): Promise<void> {
   try {
     const stopped = await Promise.resolve(jobs().removeJob(p.id));
     await store!.remove(p.id);
     recordCache?.delete(p.id);
-    listCache = listCache.filter((x) => x.id !== p.id);
-    if (detailId === p.id) { detailId = null; stage = 'list'; detailFold = 'p'; }
+    if (pulled === p.id) pulled = null;
+    detailId = null;
+    dialog = null;
     notice(stopped ? `已删除「${p.name}」，未完成的任务一并停掉` : `已删除「${p.name}」`, 'delete');
+    void renderAlbum();
   } catch (e) {
-    notifyActionError(e, '删除联系人');
+    notifyActionError(e, `删除「${p.name}」`);
   }
-  await renderBody();
 }
 
 /**
@@ -1966,32 +2331,6 @@ function confirmDeleteWithPassword(p: PersonEntry, onConfirmed: () => void): voi
 }
 
 // ---------------- 详情（折页册） ----------------
-
-async function renderDetail(body: HTMLElement, people: PersonEntry[]): Promise<void> {
-  const statsEl = overlay?.querySelector<HTMLElement>('[data-people-stats]');
-  if (statsEl) statsEl.textContent = statsText(people);
-  const p = people.find((x) => x.id === detailId);
-  body.replaceChildren();
-  if (!p) { stage = 'list'; await renderList(body, people); return; }
-  const media = personMedia(p);
-  // 头像（467）：保库记录附件解密成内存 data URL；没有回落首字印章
-  const avatar = peopleSafe?.unlocked ? await peopleSafe.avatarDataUrl(p.id) : null;
-  body.appendChild(foldDetailHead(p, media, {
-    canGenerate: !p.digest,
-    job: sealJobOf(jobViews().get(p.id)),
-    avatar: avatar ?? undefined,
-  }));
-
-  // 三折（455 评审拍板：其人 / 相交 / 纪事——编年史并入纪事折）：展开折渲染正文，收起折只剩竖排书脊
-  const person = personOf(p.digest); // 旧单卷数据（只有 portrait）由此兼容读进卷一
-  const bond = bondOf(p.digest);
-  const bodies: Record<FoldId, HTMLElement[]> = {
-    p: detailFold === 'p' ? foldPersonBody(person ? miniMarkdown(person) : null, p) : [],
-    b: detailFold === 'b' ? foldBondBody(bond ? miniMarkdown(bond) : null) : [],
-    e: detailFold === 'e' ? foldEventsBody(p) : [],
-  };
-  body.appendChild(foldBook(p, { fold: detailFold }, bodies));
-}
 
 // ---------------- 互动数据（issue 440：纯本地统计展示；447 收进「数据」折） ----------------
 
@@ -2055,27 +2394,6 @@ export function personMedia(p: PersonEntry): MediaStats | null {
   return acc.voiceCount || acc.imageCount ? acc : null;
 }
 
-/** 封面墙排序（448：工具条退役，固定最近互动优先；无导入记录按建卡时间兜底） */
-function sortPeople(list: PersonEntry[]): PersonEntry[] {
-  const lastSeen = (p: PersonEntry) => p.imports.reduce((m, r) => (r.timeTo > m ? r.timeTo : m), '');
-  return [...list].sort((a, b) => (lastSeen(b) || b.createdAt).localeCompare(lastSeen(a) || a.createdAt));
-}
-
-/** 按最近互动排序刷封面墙（merge 状态也在这里反映为卡片样式） */
-function applyWall(people: PersonEntry[], wall: HTMLElement, avatarOf: (name: string) => string | undefined): void {
-  wall.replaceChildren();
-  const map = jobViews();
-  for (const p of sortPeople(people)) {
-    wall.appendChild(foldCard(p, {
-      media: personMedia(p),
-      mergeFrom: p.id === mergeFromId,
-      mergePick: Boolean(mergeFromId) && p.id !== mergeFromId,
-      job: sealJobOf(map.get(p.id)), // 451：印章四态（任务态压过脸谱水位）
-      avatar: avatarOf(p.name),
-    }));
-  }
-}
-
 // ---------------- 合并重复人物（issue 442） ----------------
 
 async function handleMergeConfirm(): Promise<void> {
@@ -2086,13 +2404,14 @@ async function handleMergeConfirm(): Promise<void> {
   const to = listCache.find((x) => x.id === toId);
   try {
     await store.mergeInto(fromId, toId);
-    notice(`已把「${from?.name ?? fromId}」的导入记录与随手记并到「${to?.name ?? toId}」，原人物已删除。要更新脸谱可从数据源补画`, 'success');
+    // 合并走横幅（横贴册沿的一条纸）：状态类告知不打断手上动作（原型定稿口径）
+    showBanner(`已把「${from?.name ?? fromId}」并到「${to?.name ?? toId}」——原人物已删除，要更新脸谱可从数据源补画`, true);
   } catch (e) {
     notifyActionError(e, '合并人物');
   }
   mergeFromId = null;
   mergeToId = null;
-  void renderBody();
+  void renderAlbum();
 }
 
 // ---------------- 档案与随手记（issue 439） ----------------
@@ -2132,7 +2451,7 @@ async function aiFillProfile(): Promise<void> {
   if (!p) return;
   const dg = p.digest;
   if (!dg) { notice('还没有脸谱素材——先导入并画脸谱，AI 才有据可依', 'warning'); return; }
-  if (profEditId !== detailId) { profEditId = detailId; await renderBody(); } // 表单在编辑卡里，先进入编辑态
+  if (profEditId !== detailId) { profEditId = detailId; await renderAlbum(); } // 表单在编辑卡里，先进入编辑态
   profAiBusy = true;
   notice('AI 正在读交往素材补充背景…', 'info');
   try {
@@ -2186,7 +2505,7 @@ async function saveProfile(): Promise<void> {
   await ensureEntry(detailId); // 452：占位卡（聊天仓合成，盘上还没卡）先落一张空卡
   const val = (sel: string) => overlay!.querySelector<HTMLInputElement>(sel)?.value?.trim() ?? '';
   // 三种结构行共用 socials 的行类名，按内嵌 data 钩子区分归属
-  const allRows = Array.from(overlay.querySelectorAll('.bz-people-prof-social-row'));
+  const allRows = Array.from(overlay.querySelectorAll('.bz-people-prof-subrow'));
   const rowVal = (row: Element, hook: string) => row.querySelector<HTMLInputElement>(`[${hook}]`)?.value?.trim() ?? '';
   const socialRows = allRows.filter((row) => row.querySelector('[data-people-prof-social-platform]'));
   const relRows = allRows.filter((row) => row.querySelector('[data-people-prof-rel-who]'));
@@ -2257,7 +2576,7 @@ async function saveProfile(): Promise<void> {
   } catch (e) {
     notifyActionError(e, '保存档案');
   }
-  void renderBody();
+  void renderAlbum();
 }
 
 async function saveManualNote(): Promise<void> {
@@ -2269,12 +2588,12 @@ async function saveManualNote(): Promise<void> {
     await ensureEntry(detailId); // 452：占位卡先落一张空卡，再记（mutate 对不存在的 id 会抛）
     await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: new Date().toISOString() });
     noteAddId = null;
-    noteOpen = false;
+    dialog = null;
     notice('已记一笔', 'success');
   } catch (e) {
     notifyActionError(e, '记随手记');
   }
-  void renderBody();
+  void renderAlbum();
 }
 
 async function removeManualNote(evId: string): Promise<void> {
@@ -2288,7 +2607,7 @@ async function removeManualNote(evId: string): Promise<void> {
   } catch (e) {
     notifyActionError(e, '删除随手记');
   }
-  void renderBody();
+  void renderAlbum();
 }
 
 /** 本地日期 YYYY-MM-DD（随手记默认值；FaceEvent.ts 同构） */

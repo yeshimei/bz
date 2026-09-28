@@ -14,8 +14,8 @@
   │   经 ./prototype-behavior.js（src/people/fake-sim.ts 构建，              │
   │   alias obsidian→公共假层）在下方两个 iframe 视图里跑真行为；               │
   │   桌面 iframe 920px 宽视口 = 桌面 920×660 本体；移动 iframe 412×915 =       │
-  │   styles.css 容器查询窄态。数据 = localStorage people.json（构造种子；      │
-  │   数据源弹窗跑真扫描管线——chat.json 为构造数据，四态可评审）。              │
+  │   styles.css 容器查询窄态。数据 = 壳内假保库记录（fake-sim 内存假保险库；    │
+  │   构造明文种子首启经真迁移落库）——所见即插件所见，生成路径需插件端 AI。      │
   │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
   └────────────────────────────────────────────────────────────────────────┘
 -->
@@ -70,14 +70,19 @@
   document.getElementById('btnReset').onclick = function () {
     var b = dt(); if (b) b.demoReset();
   };
-  // 自检：行为包挂载 + 种子落位
+  // 自检：行为包挂载 + 相册落位（构造明文种子首启经真迁移进壳内假保库，应见照片）
   window.addEventListener('load', function () {
-    setTimeout(function () {
-      var ok = !!(dt() && dtFrame.contentWindow.localStorage.getItem('bz-sim:CONFIG/STORAGE/people.json'));
-      var el = document.getElementById('selftest');
-      el.textContent = ok ? '✓ 行为包与种子就绪' : '✗ 行为包未挂载';
-      el.className = ok ? 'ok' : 'bad';
-    }, 400);
+    var tried = 0;
+    var el = document.getElementById('selftest');
+    (function poll() {
+      tried += 1;
+      var w = dtFrame.contentWindow;
+      var painted = !!(dt() && w.document && w.document.querySelector('[data-people-pocket]'));
+      if (painted) { el.textContent = '✓ 行为包与相册就绪'; el.className = 'ok'; return; }
+      if (tried < 25) { setTimeout(poll, 200); return; }
+      el.textContent = '✗ 行为包未挂载';
+      el.className = 'bad';
+    })();
   });
 </script>
 </body>
