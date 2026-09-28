@@ -43,7 +43,7 @@
 //     → blind）→ SenseVoice 逐轮转写带情感。phase 账本断点续跑：sidecar <录音>.turns.json
 //     逐阶段落账（vad / 声纹窗逐块 / 转写逐轮），中断续跑只补缺口；续跑时质心降级口径
 //     变了会整体重算声纹段（两种口径绝不混账）。协作式让行走 <数据根>/.bz-face/
-//     rec-control.json（与 prep 的 control.json 各自独立）——pause 在安全点待命（模型不卸载），
+//     rec-control/<联系人>/<文件名>.control.json（按任务独立，并发录音互不串台）——pause 在安全点待命（模型不卸载），
 //     stop 留账本退出（退出码 0）。
 //     **进度权威在 sidecar.progress**（插件轮询渲染；stdout 打印仅供人看，不走四行协议）；
 //     退出码 0 = 跑完 / 协作停止、1 = 硬失败（录音 / 联系人目录缺失、引擎加载失败）、2 = 用法错误。
@@ -143,8 +143,9 @@ const USAGE = [
   '      质心 = <数据根>/voiceprints/<联系人>.npz（bz-face refs 产；缺质心按降级阶梯照跑；',
   '      续跑时降级口径变了会重算声纹段）。sidecar <录音>.turns.json 逐阶段落账、断点续跑',
   '      只补缺口——进度权威在 sidecar，插件轮询渲染（stdout 仅供人看）。done 后由插件把',
-  '      轮次并进聊天仓。协作式暂停 / 停止走 <数据根>/.bz-face/rec-control.json（与 prep 的',
-  '      control.json 各自独立）：{"action":"pause"} 在安全点待命（模型不卸载），',
+  '      轮次并进聊天仓。协作式暂停 / 停止走 <数据根>/.bz-face/rec-control/<联系人>/',
+  '      <文件名>.control.json（按任务独立，并发录音互不串台，与 prep 的 control.json 无共享）：',
+  '      {"action":"pause"} 在安全点待命（模型不卸载），',
   '      {"action":"stop"} 留账本退出（退出码 0）。',
   '  bz-face refs --data-root <路径> --contact <目录名> [--contact <目录名> …] [--python <命令>]',
   '      构建联系人声纹参考质心（rec 的比对基准）：chat.json who 标签 × voice/*.wav 分池均值，',

@@ -26,19 +26,23 @@ funasr 连带 torch / librosa；质心构建要跑过 `bz-face prep` 留下的 v
   调用点没跟上双参签名（TypeError）。收编脚本此后有 **Python 冒烟门**（插件仓
   `tests/people/face-toolkit-python.test.ts`：py_compile + 真调关键函数）兜住同类缺陷。
 - rec：`--ffmpeg` 显式传参（对齐 prep）；协作式暂停 / 停止走**独立的**
-  `<数据根>/.bz-face/rec-control.json`（与 prep 的 control.json 各自独立，画谱与录音
-  并行不串台）；blind 盲聚段也落 sidecar 进度（中断仍整段重头，但 UI 进度可见）；
+  `<数据根>/.bz-face/rec-control/<联系人>/<文件名>.control.json`（**按任务派生**——并发
+  多条录音互不串台，与 prep 的 control.json 亦无共享）；blind 盲聚段也落 sidecar 进度（中断仍整段重头，但 UI 进度可见）；
   续跑时降级口径变了（如先 me-only、后来建了 dual 质心）→ 声纹段整体重算，两种口径
   绝不混账。
 - refs：质心 npz **原子写**；**增量构建**——meta 存全局输入指纹（全部联系人的
-  chat.json 哈希 + voice 清单 + 采样参数 / 模型名），没变逐人跳过，任一变化全体重建
-  （「我」池跨联系人采样）；同一联系人的 chat.json / voice 目录只读一遍。
+  chat.json 哈希 + voice 清单 + 采样参数 / 模型名），没变逐人跳过（全员命中时连 CAM++
+  冷加载都省掉），任一变化全体重建（「我」池跨联系人采样）；同一联系人的 chat.json /
+  voice 目录只读一遍。
 - vendored WeChatMsg_Lite 的运行日志静音（原先往包目录 `logs/` 写文件、DEBUG 流污染
   stderr 尾）；错误一律走协议行与工具自己的 stderr。
 - 新命令：`bz-face status <联系人>`（产物体检，纯 Node 读盘）、`bz-face capabilities`
   （机器可读能力声明，插件 spawn 前探测包版本）；`export --contacts-file <文件>`
   （名单文件绕 Windows 命令行长度上限）；doctor 补**录音环境**三项（声纹参考 ·
   补充素材录音体量 · 本地模型权重缓存——缺了 warn 不 fail）。
+- 已知边界：v0.4 及更早的 bz-face 没有 `capabilities` 命令 → 插件探测失败按「能力未知」
+  放行（不双重报错），旧版 rec 也不认 rec-control 文件——插件侧停止只能等 90 秒兜底杀。
+  本包不发公开 registry，升级请重新 `npm link` 或仓内路径重装（`npm update` 拉不到）。
 
 ## 为什么不发公开 registry（也永远不会自动发布）
 

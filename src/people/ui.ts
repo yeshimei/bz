@@ -1817,10 +1817,10 @@ function onOverlayClick(e: MouseEvent): void {
   const recStop = t.closest<HTMLElement>('[data-people-supp-rec-stop]');
   if (recStop) {
     // 510 修存量缺陷：注册表键是 sidecar 路径，此前把文件名当键传 → 停止按钮其实是 no-op；
-    // 现按 sidecar 路径寻键，并带 dataRoot 走协作式停止（写 rec-control.json，90s 未退兜底杀）
+    // 现按 sidecar 路径寻键，并带任务三参走协作式停止（写该任务专属 rec-control 文件，90s 未退兜底杀）
     const file = recStop.getAttribute('data-people-supp-rec-stop') ?? '';
     const root = suppDataRoot();
-    if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root });
+    if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
     void renderAlbum();
     return;
   }

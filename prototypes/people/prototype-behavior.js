@@ -1,4 +1,4 @@
-/* 源指纹 7e7ae31596d62fe1 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 66a5277453b380d7 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -18033,9 +18033,9 @@ ${lines.join("\n")}`);
       return null;
     }
   }
-  function recControlFilePath(dataRoot) {
+  function recControlFilePath(dataRoot, talker, file) {
     const base = String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "");
-    return `${base}/.bz-face/rec-control.json`;
+    return `${base}/.bz-face/rec-control/${talker}/${file}.control.json`;
   }
   var recFsOverride = null;
   function controlFs() {
@@ -18048,10 +18048,10 @@ ${lines.join("\n")}`);
       return null;
     }
   }
-  function writeRecControl(dataRoot, action) {
+  function writeRecControl(dataRoot, action, talker, file) {
     const fs2 = controlFs();
-    const p = recControlFilePath(dataRoot);
-    if (!fs2 || !dataRoot) return false;
+    const p = recControlFilePath(dataRoot, talker, file);
+    if (!fs2 || !dataRoot || !talker || !file) return false;
     try {
       fs2.mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
       fs2.writeFileSync(p, `${JSON.stringify({ action })}
@@ -18062,11 +18062,11 @@ ${lines.join("\n")}`);
       return false;
     }
   }
-  function clearRecControl(dataRoot) {
+  function clearRecControl(dataRoot, talker, file) {
     const fs2 = controlFs();
-    if (!fs2 || !dataRoot) return;
+    if (!fs2 || !dataRoot || !talker || !file) return;
     try {
-      fs2.rmSync(recControlFilePath(dataRoot), { force: true });
+      fs2.rmSync(recControlFilePath(dataRoot, talker, file), { force: true });
     } catch (e) {
     }
   }
@@ -18109,7 +18109,7 @@ ${lines.join("\n")}`);
     const [maj, min] = minorVersionOf(caps.version);
     const tooOld = maj === 0 && min < 5;
     if (tooOld || !caps.commands.includes("rec")) {
-      return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——在终端更新后重试：npm update -g @jwbz/obsidian-face（或重新 npm link）`;
+      return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——本包不发 registry，请在包目录 tools/obsidian-face 重新 npm link（或 npm install -g <仓库>/tools/obsidian-face）后重试`;
     }
     return null;
   }
@@ -18125,7 +18125,7 @@ ${lines.join("\n")}`);
   function startRecordingTask(spec, key, onExit, meta) {
     var _a2, _b2;
     if (running.has(key)) return;
-    if (meta == null ? void 0 : meta.dataRoot) clearRecControl(meta.dataRoot);
+    if ((meta == null ? void 0 : meta.dataRoot) && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
     const handle2 = runner3(spec, { onStep: () => {
     }, onProgress: () => {
     }, onInfo: () => {
@@ -18135,14 +18135,15 @@ ${lines.join("\n")}`);
     void handle2.done.then((outcome) => {
       var _a3, _b3;
       running.delete(key);
-      if (meta == null ? void 0 : meta.dataRoot) clearRecControl(meta.dataRoot);
+      if ((meta == null ? void 0 : meta.dataRoot) && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
       onExit == null ? void 0 : onExit({ ok: outcome.ok, stopped: outcome.stopped, error: (_b3 = (_a3 = outcome.error) == null ? void 0 : _a3.message) != null ? _b3 : "" });
     });
   }
   function stopRecordingTask(key, opts) {
     const entry = running.get(key);
     if (!entry) return;
-    if (!(opts == null ? void 0 : opts.dataRoot) || !writeRecControl(opts.dataRoot, "stop")) {
+    const coop = !!(opts == null ? void 0 : opts.dataRoot) && !!opts.talker && !!opts.file;
+    if (!coop || !writeRecControl(opts.dataRoot, "stop", opts.talker, opts.file)) {
       entry.handle.stop();
       return;
     }
@@ -21476,7 +21477,7 @@ ${lines.join("\n")}`);
     if (recStop) {
       const file = (_z = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _z : "";
       const root = suppDataRoot();
-      if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root });
+      if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
       void renderAlbum();
       return;
     }
