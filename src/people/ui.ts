@@ -1106,6 +1106,7 @@ export function setJobsModuleForTests(mod: JobsApi | null): void {
   jobsOverride = mod;
   jobsCache = null;
   jobsBooted = false;
+  lastJobsBusy = false; // 忙闲沿一并复位：上个用例收在忙态，下个用例首帧不再多放一次无谓重画
   targetsInFlight.clear();
   jobsPersisted.clear();
 }
