@@ -10301,10 +10301,17 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: #f7f0de; border: 1px solid #e6dcc2; color: #6f6047; box-shadow: var(--sh-1); }
 .bz-people-trait:nth-child(3n+1) { transform: rotate(calc(var(--t1) * -.5)); }
 .bz-people-trait:nth-child(3n+2) { transform: rotate(calc(var(--t1) * .45)); }
-.bz-people-trait-more { align-self: center; font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
-/* 兴趣 / 片刻两节比正文收窄一点，读起来像附注；「另有 N 条」这类尾注淡一档 */
+/* 兴趣 / 片刻两节比正文收窄一点，读起来像附注 */
 .bz-people-ints, .bz-people-moms { max-width: 620px; }
-.bz-people-mut { color: var(--ink-mut); font-style: italic; font-size: var(--f-aux); }
+/* 「另有 N 条」收口（issue 507）：多出来的先藏着（.bz-people-more-hide，ui 侧点一下摘掉），
+   末尾那枚是**点得开的小签**——不再是读不动的灰字尾注。六处列表同一套。
+   （旧的 `.bz-people-trait-more` / `.bz-people-mut` 两枚灰字尾注已随本次改动退役，代码里不再有人挂。） */
+.bz-people-more-hide { display: none; }
+/* align-self: flex-start 是给「代表原话」那类纵向 flex 列表用的：不写就会被拉满整行、虚线一路拖到边 */
+.bz-people-more { display: inline-block; align-self: flex-start; margin-top: 6px; padding: 0 1px 1px; font-size: var(--f-aux); font-family: var(--kai);
+  font-style: italic; letter-spacing: 1px; color: var(--acc); border-bottom: 1px dashed rgba(168,67,60,.5); cursor: pointer; }
+@media (hover: hover) { .bz-people-more:hover { color: var(--acc-deep); border-bottom-style: solid; } }
+.bz-people-traits .bz-people-more { align-self: center; margin-top: 0; }
 
 /* 纪事折：编年 + 按月 + 随手记 */
 .bz-people-chron { max-width: 660px; font-family: var(--song); }
@@ -10381,7 +10388,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-people-ds-w-skip { color: var(--ink-mut); }
 .bz-people-ds-w-exported { background: #eef0f5; border-color: #d2d7e2; color: #5a6377; }
 .bz-people-ds-w-export { background: rgba(168,67,60,.07); border-color: rgba(168,67,60,.34); color: var(--acc-deep); font-style: italic; }
-.bz-people-ds-off { opacity: .55; cursor: default; }
+/* 不可动的行：群聊（未纳入）与「已导入且无新素材」（issue 507：再导一遍等于白导） */
+.bz-people-ds-off, .bz-people-ds-skip { opacity: .55; cursor: default; }
 .bz-people-ds-legend { display: flex; align-items: center; gap: 14px; margin-top: 11px; font-size: var(--f-aux); color: var(--ink-mut); }
 .bz-people-ds-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
 .bz-people-ds-dot-ok { background: var(--acc); } .bz-people-ds-dot-idle { background: #c9c1ad; } .bz-people-ds-dot-none { background: #e3dccb; border: 1px solid #cfc7b2; }
