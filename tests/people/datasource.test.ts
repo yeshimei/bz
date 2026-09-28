@@ -530,7 +530,7 @@ describe('mergeStore 聊天仓合并（466 upsert）', () => {
 
 describe('storeStatsOf（时间线口径重算，466 验收：与改前一致）', () => {
   it('空流 → 全零', () => {
-    expect(storeStatsOf([])).toEqual({ msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 });
+    expect(storeStatsOf([])).toEqual({ msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0, recordingCount: 0, recordingTotalSec: 0 });
   });
   it('text 空的条目不进统计；带标签文本照 445 口径计数', () => {
     const msgs = normalizeChatJson(

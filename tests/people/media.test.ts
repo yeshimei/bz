@@ -12,7 +12,9 @@ import {
   emptyMediaStats,
   formatDuration,
   formatMediaCount,
+  formatRecordingDuration,
   parseMediaTag,
+  parseRecordingDurationSec,
 } from '../../src/people/media';
 import type { UnifiedMessage } from '../../src/people/types';
 
@@ -33,6 +35,19 @@ describe('parseMediaTag 解析矩阵', () => {
   it('缺情感：只有时长（小数秒也认）', () => {
     expect(parseMediaTag('[语音 12s] 在吗')).toEqual({ kind: 'voice', text: '在吗', durationSec: 12 });
     expect(parseMediaTag('[语音 3.5s] 嗯')).toEqual({ kind: 'voice', text: '嗯', durationSec: 3.5 });
+  });
+  it('录音标签：分秒时长 + 情感（509，与 [语音 N秒·情感] 同构）', () => {
+    expect(parseMediaTag('[录音 3分02秒·平静] 转写文本')).toEqual({
+      kind: 'recording',
+      text: '转写文本',
+      durationSec: 182,
+      emotion: '平静',
+    });
+    expect(parseMediaTag('[录音 45秒] 短轮')).toEqual({ kind: 'recording', text: '短轮', durationSec: 45 });
+    expect(parseMediaTag('[录音 2分] 整分')).toEqual({ kind: 'recording', text: '整分', durationSec: 120 });
+    expect(parseMediaTag('[录音] 无属性轮')).toEqual({ kind: 'recording', text: '无属性轮' });
+    expect(parseMediaTag('[录音]')).toBeNull();
+    expect(parseMediaTag('正文里 [录音 1分] 不算素材')).toBeNull();
   });
   it('纯标签：无时长无情感也有素材', () => {
     expect(parseMediaTag('[语音] 收到了')).toEqual({ kind: 'voice', text: '收到了' });
@@ -67,11 +82,13 @@ describe('collectMediaStats 聚合', () => {
       m('[语音] 三'), // 有素材但没时长：计条数不计时长
       m('[图片] 描述一'),
       m('[图片] 描述二'),
+      m('[录音 3分02秒·平静] 录音轮次'),
+      m('[录音 30秒] 短录音'),
       m('[图片]'),
       m('普通文本'),
       m(''),
     ]);
-    expect(stats).toEqual({ voiceCount: 3, voiceTotalSec: 42, imageCount: 2 });
+    expect(stats).toEqual({ voiceCount: 3, voiceTotalSec: 42, imageCount: 2, recordingCount: 2, recordingTotalSec: 212 });
   });
   it('空消息流 → 全零', () => {
     expect(collectMediaStats([])).toEqual(emptyMediaStats());
@@ -84,19 +101,31 @@ describe('展示与提示词文案', () => {
     expect(formatDuration(245)).toBe('4 分');
     expect(formatDuration(7200)).toBe('2 时');
   });
+  it('录音时长标签互转（509）', () => {
+    expect(formatRecordingDuration(182)).toBe('3分02秒');
+    expect(formatRecordingDuration(45)).toBe('45秒');
+    expect(formatRecordingDuration(60)).toBe('1分00秒');
+    expect(parseRecordingDurationSec('3分02秒')).toBe(182);
+    expect(parseRecordingDurationSec('2分')).toBe(120);
+    expect(parseRecordingDurationSec('45秒')).toBe(45);
+    expect(parseRecordingDurationSec('12s')).toBeUndefined();
+    expect(parseRecordingDurationSec('平静')).toBeUndefined();
+  });
   it('formatMediaCount：零项不出现，全零为空串', () => {
-    expect(formatMediaCount({ voiceCount: 26, voiceTotalSec: 245, imageCount: 14 })).toBe('语音 26 条 · 4 分 · 图片 14 张');
-    expect(formatMediaCount({ voiceCount: 3, voiceTotalSec: 0, imageCount: 0 })).toBe('语音 3 条');
-    expect(formatMediaCount({ voiceCount: 0, voiceTotalSec: 0, imageCount: 5 })).toBe('图片 5 张');
+    expect(formatMediaCount({ ...emptyMediaStats(), voiceCount: 26, voiceTotalSec: 245, imageCount: 14 })).toBe('语音 26 条 · 4 分 · 图片 14 张');
+    expect(formatMediaCount({ ...emptyMediaStats(), voiceCount: 3 })).toBe('语音 3 条');
+    expect(formatMediaCount({ ...emptyMediaStats(), imageCount: 5 })).toBe('图片 5 张');
+    expect(formatMediaCount({ ...emptyMediaStats(), recordingCount: 2, recordingTotalSec: 245 })).toBe('录音 2 段 · 4 分');
+    expect(formatMediaCount({ ...emptyMediaStats(), voiceCount: 1, recordingCount: 2, imageCount: 3 })).toBe('语音 1 条 · 录音 2 段 · 图片 3 张');
     expect(formatMediaCount(emptyMediaStats())).toBe('');
   });
   it('buildMediaNote：无媒体返回空串；有语音带情感标记说明', () => {
     expect(buildMediaNote(emptyMediaStats())).toBe('');
-    const note = buildMediaNote({ voiceCount: 26, voiceTotalSec: 245, imageCount: 14 });
+    const note = buildMediaNote({ ...emptyMediaStats(), voiceCount: 26, voiceTotalSec: 245, imageCount: 14 });
     expect(note).toContain('语音 26 条 · 4 分 · 图片 14 张');
     expect(note).toContain('情感识别');
     // 纯图片素材不提语音情感
-    const imageOnly = buildMediaNote({ voiceCount: 0, voiceTotalSec: 0, imageCount: 2 });
+    const imageOnly = buildMediaNote({ ...emptyMediaStats(), imageCount: 2 });
     expect(imageOnly).toContain('图片 2 张');
     expect(imageOnly).not.toContain('情感');
   });

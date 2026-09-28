@@ -30,7 +30,7 @@ describe('personMedia 跨导入累计', () => {
       rec({ monthly: [], initiatedByMe: 0, initiatedByOther: 0, myAvgReplySec: 0, otherAvgReplySec: 0, myHourly: [], otherHourly: [], kindCounts: {}, voiceCount: 20, voiceTotalSec: 200, imageCount: 8 }),
       rec({ monthly: [], initiatedByMe: 0, initiatedByOther: 0, myAvgReplySec: 0, otherAvgReplySec: 0, myHourly: [], otherHourly: [], kindCounts: {}, voiceCount: 6, voiceTotalSec: 45, imageCount: 6 }),
     ]);
-    expect(personMedia(p)).toEqual({ voiceCount: 26, voiceTotalSec: 245, imageCount: 14 });
+    expect(personMedia(p)).toEqual({ voiceCount: 26, voiceTotalSec: 245, imageCount: 14, recordingCount: 0, recordingTotalSec: 0 });
   });
 
   it('旧数据（无媒体字段 / 无 stats）→ null，徽章不渲染', () => {
@@ -42,7 +42,7 @@ describe('personMedia 跨导入累计', () => {
     const zero = { monthly: [], initiatedByMe: 0, initiatedByOther: 0, myAvgReplySec: 0, otherAvgReplySec: 0, myHourly: [], otherHourly: [], kindCounts: {} };
     expect(personMedia(person([rec(zero)]))).toBeNull();
     const imageOnly = person([rec({ ...zero, imageCount: 3 })]);
-    expect(personMedia(imageOnly)).toEqual({ voiceCount: 0, voiceTotalSec: 0, imageCount: 3 });
+    expect(personMedia(imageOnly)).toEqual({ voiceCount: 0, voiceTotalSec: 0, imageCount: 3, recordingCount: 0, recordingTotalSec: 0 });
   });
 });
 
