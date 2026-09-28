@@ -5,8 +5,8 @@
       "id": "changelog",
       "name": "更新日志",
       "file": "bz-changelog.html",
-      "sha256": "5f9e0d998ecbe74b59900f3b61f1a39c25b17fcbc084e971bd3b03157f80aebd",
-      "size": 77656
+      "sha256": "283f765fd6caf7ae061eaabee30a393a23f98c824614dabebfe7fefd5af90010",
+      "size": 77920
     },
     {
       "id": "manual",
@@ -33,8 +33,8 @@
       "id": "cinema-douban-index",
       "name": "豆瓣影视索引",
       "file": "cinema-douban-index.json",
-      "sha256": "9149a79ec14246512f7573a3d249b388b094dffe2c590b02d2da452c837c3ac4",
-      "size": 4494333
+      "sha256": "0a3ae062b78cecdc7d1f129303b130fe641bc80b8612794155ac031c96671260",
+      "size": 7505930
     }
   ],
   "skins": [
