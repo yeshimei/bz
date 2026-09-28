@@ -26,7 +26,6 @@ import { getApp } from '../core/app';
 import { onDomainEvent } from '../core/domain-bus';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { ensureSafeUnlocked, getSafeManager } from '../encrypt';
-import { uiLockScreen } from '../core/ui/lock-screen';
 import { PeopleStore } from './data';
 import {
   PROFILE_LIST_FIELDS,
@@ -329,14 +328,19 @@ function buildPanelShell(app?: unknown): void {
   });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
-  // 输入框 Enter 直提交（448 评审 P3：标签 / 随手记连续录入免鼠标往返）
+  // 输入框 Enter 直提交（448 评审 P3：标签 / 随手记连续录入免鼠标往返；506 补主密码框）
   overlay.addEventListener('keydown', (e) => {
     const input = e.target instanceof HTMLInputElement ? e.target : null;
     if (e.key !== 'Enter' || !input) return;
-    if (!input.hasAttribute('data-people-prof-tag-input') && !input.hasAttribute('data-people-note-text')) return;
+    if (!input.hasAttribute('data-people-prof-tag-input') && !input.hasAttribute('data-people-note-text')
+      && !input.hasAttribute('data-people-del-pw')) return;
     e.preventDefault();
     if (input.hasAttribute('data-people-prof-tag-input')) addTagChip();
-    else void saveManualNote();
+    else if (input.hasAttribute('data-people-del-pw')) {
+      const p = listCache.find((x) => x.id === detailId) ?? null;
+      const btn = overlay?.querySelector<HTMLButtonElement>('[data-people-del-ok]') ?? null;
+      if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
+    } else void saveManualNote();
   });
   // 解锁态跟帧（ADR-0194 决策 5）：任意路径上锁（面板/锁屏/安全模式）→ 面板立即转不可读；
   // 重新解锁 → 恢复渲染
@@ -1570,8 +1574,11 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-merge-confirm]')) { void handleMergeConfirm(); return; }
   if (t.closest('[data-people-del-cancel]')) { closeDialog(); return; }
   if (t.closest('[data-people-del-ok]')) {
+    const btn = t.closest<HTMLButtonElement>('[data-people-del-ok]')!;
     const p = listCache.find((x) => x.id === detailId) ?? null;
-    if (p) void deletePerson(p);
+    if (!p) return;
+    if (openedTier === 'drawn') void confirmDeleteFromPage(p, btn);
+    else void deletePerson(p);
     return;
   }
   // —— 开工单 ——
@@ -2232,26 +2239,58 @@ function focusFind(): void {
 // ---------------- 删除流程（issue 500 / 501 / 502 续：确认是册子里的一页） ----------------
 
 /**
- * 详情「删除联系人」：先按 {@link deleteTierOf} 判档，再走对应门禁——
- *   已画谱（有画像正文）→ 重输主密码（不可逆产物，同密文销毁防护）；
- *   未画谱 / 画谱未完成 → 翻开确认页二次确认（501 换真弹窗，502 续换成本域皮肤，505 换册页）。
+ * 详情「删除联系人」：先按 {@link deleteTierOf} 判档，三档统一翻成删除册页——
+ *   已画谱（有画像正文）→ 页内重输主密码（不可逆产物，同密文销毁防护）；
+ *   未画谱 / 画谱未完成 → 本页二次确认（501 换真弹窗，502 续换成本域皮肤，505 换册页，
+ *   506 已画谱那档也从宿主锁屏收进本页——一门到底，不再中途换屏）。
  * 只删保库记录（人物卡 + 聊天仓 + 脸谱 + 随手记 + 头像附件）；数据源目录与聊天原文不动，可重新导入。
  */
 async function handleDelete(id: string): Promise<void> {
   if (!store) { notice('保险库未解锁——先解锁再删', 'info'); return; }
   const p = (await store.list()).find((x) => x.id === id) ?? null;
   if (!p) { notice('这位联系人已不在库里', 'info'); await renderAlbum(); return; }
-  const tier = deleteTierOf(p, jobViews().get(id) ?? null);
-  if (tier === 'drawn') {
-    confirmDeleteWithPassword(p, () => void deletePerson(p));
-    return;
-  }
-  openedTier = tier;
-  openDialog('del', tier);
+  openedTier = deleteTierOf(p, jobViews().get(id) ?? null);
+  dialog = { kind: 'del', tier: openedTier };
+  void renderAlbum().then(focusDelPw);
+}
+
+/** 删除册页重画后把焦点交给主密码框（只有已画谱档有这枚框；没有就什么也不做） */
+function focusDelPw(): void {
+  overlay?.querySelector<HTMLInputElement>('[data-people-del-pw]')?.focus();
 }
 
 /** 确认页当前那一档（页上点「删除」时读它） */
 let openedTier: DeleteTier = 'undrawn';
+
+/** 删除页上的错误行（页内校验失败就地写，空串时 CSS 收起） */
+function setDelError(msg: string): void {
+  const box = overlay?.querySelector<HTMLElement>('[data-people-del-err]');
+  if (box) box.textContent = msg;
+}
+
+/**
+ * 已画谱的删除门禁（issue 500 / 506）：主密码就在删除册页里重输，走
+ * `SafeManager.verifyPassword` **只读**校验——通过才删，失败留在页上改。
+ * 这是防误触确认而非解锁，不改解锁态、不进解锁冷却节流（同 encrypt 域密文销毁口径）。
+ */
+async function confirmDeleteFromPage(p: PersonEntry, btn: HTMLButtonElement): Promise<void> {
+  const input = overlay?.querySelector<HTMLInputElement>('[data-people-del-pw]') ?? null;
+  const pw = input?.value ?? '';
+  if (!pw) { setDelError('请输入主密码确认'); input?.focus(); return; }
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '正在确认…';
+  try {
+    if (await getSafeManager().verifyPassword(pw)) { await deletePerson(p); return; }
+    setDelError('主密码不对，再试一次。');
+    if (input) { input.value = ''; input.focus(); }
+  } catch (e) {
+    setDelError(`校验失败：${e instanceof Error ? e.message : String(e)}`);
+  } finally {
+    // 删成功后本页连同详情一起销毁，这里的复位只对「失败留下」那条路有意义
+    if (btn.isConnected) { btn.disabled = false; btn.textContent = label; }
+  }
+}
 
 /**
  * 落地删除（issue 500）：先停该人未完成的任务——引擎是保库记录的唯一写方，
@@ -2273,61 +2312,6 @@ async function deletePerson(p: PersonEntry): Promise<void> {
   } catch (e) {
     notifyActionError(e, `删除「${p.name}」`);
   }
-}
-
-/**
- * 已画谱的删除门禁（issue 500）：复用核心解锁屏骨架（kind = people，与面板解锁屏同皮同语汇），
- * 重输主密码走 `SafeManager.verifyPassword` 只读校验——通过才执行 onConfirmed。
- * 这是防误触确认而非解锁，不进解锁冷却节流（同 encrypt 域密文销毁口径）。
- */
-function confirmDeleteWithPassword(p: PersonEntry, onConfirmed: () => void): void {
-  const at = p.digest?.generatedAt ? `（脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}）` : '';
-  const ls = uiLockScreen({
-    kind: 'people',
-    icon: 'trash-2',
-    title: '删除确认',
-    sub: `「${p.name}」已有脸谱${at}——重输主密码确认删除，脸谱与聊天仓一并销毁`,
-    placeholder: '重输主密码确认',
-    action: '确认删除',
-    secText: '已画脸谱不可恢复；数据源目录与聊天原文不受影响',
-    secTone: 'bad',
-  });
-  topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
-  document.body.appendChild(ls.el);
-  let closed = false;
-  const done = (ok: boolean) => {
-    if (closed) return;
-    closed = true;
-    unregisterPanelEsc('bz-people-del-confirm');
-    ls.close();
-    if (ok) onConfirmed();
-  };
-  unregisterPanelEsc('bz-people-del-confirm'); // 上一屏若异常走失，先清层再注册（registerPanelEsc 同 id 幂等跳过）
-  registerPanelEsc('bz-people-del-confirm', () => !!ls.el.isConnected, () => done(false));
-  const setErr = (m: string) => {
-    ls.setError(m);
-    setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
-  };
-  const submit = async () => {
-    const pw = ls.input.value;
-    if (!pw) { setErr('请输入主密码确认'); ls.focus(); return; }
-    ls.setBusy(true);
-    try {
-      if (await getSafeManager().verifyPassword(pw)) { done(true); return; }
-      ls.setBusy(false);
-      setErr('主密码错误，未删除');
-      ls.input.value = '';
-      ls.focus();
-    } catch (e) {
-      ls.setBusy(false);
-      setErr(`校验失败：${e instanceof Error ? e.message : String(e)}`);
-    }
-  };
-  ls.actionBtn.addEventListener('click', () => void submit());
-  // 输入框回车提交已由 uiLockScreen 内置；点遮罩（非内容区）关闭 = 取消（同解锁屏语义）
-  ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
-  ls.focus();
-  setTimeout(() => ls.focus(), 150);
 }
 
 // ---------------- 详情（折页册） ----------------

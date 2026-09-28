@@ -1614,8 +1614,10 @@ export function notePage(p: PersonEntry, today: string): HTMLElement {
 }
 
 /**
- * 删除联系人册页（issue 500 / 501 / 502 续）：两档——
- * 未画谱 / 画谱未完成：本页二次确认；已画谱：本页先说明，再由宿主管弹主密码门。
+ * 删除联系人册页（issue 500 / 501 / 502 续 / 506）：两档——
+ * 未画谱 / 画谱未完成：本页二次确认；
+ * 已画谱：主密码就在这一页里重输（不再是另弹一屏宿主锁屏）——密码框 + 错误行都归本页，
+ * 校验失败留在页上改，取消 / 合上这页就退出去，什么都不删。
  */
 export function delPage(p: PersonEntry, tier: DeleteTier): HTMLElement {
   const body: HTMLElement[] = [el('div', 'bz-people-del-who', text(`「${p.name}」`))];
@@ -1627,6 +1629,19 @@ export function delPage(p: PersonEntry, tier: DeleteTier): HTMLElement {
   body.push(el('div', 'bz-people-del-note', text(tier === 'drawn'
     ? '要删除，请重输主密码确认。'
     : '数据源目录与聊天原文不动，之后可以重新导入。')));
+  if (tier === 'drawn') {
+    const pw = document.createElement('input');
+    pw.type = 'password';
+    pw.className = 'bz-people-input bz-people-del-pw-input';
+    pw.placeholder = '主密码';
+    pw.autocomplete = 'off';
+    pw.setAttribute('data-people-del-pw', '');
+    body.push(el('div', 'bz-people-del-pw', [
+      pw,
+      // 错误行常驻 DOM（`data-people-del-err` 是 ui 侧写文案的锚），空串时靠 CSS 收起
+      el('div', 'bz-people-del-err', { 'data-people-del-err': '' }),
+    ]));
+  }
   const actions = el('div', 'bz-people-del-actions', [
     button('bz-people-btn', '取消', { 'data-people-del-cancel': '' }),
     button('bz-people-btn bz-people-btn-acc', '删除', { 'data-people-del-ok': '' }),

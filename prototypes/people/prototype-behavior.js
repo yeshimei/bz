@@ -1,4 +1,4 @@
-/* 源指纹 a4d18f35401abcca · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b3250a805947b92b · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -9462,8 +9462,16 @@ var BZW_people = (() => {
     actionBtn.className = "bz-lockscreen-action";
     actionBtn.dataset.ls = "go";
     actionBtn.textContent = opts.action;
+    let cancelBtn = null;
+    if (opts.cancel) {
+      cancelBtn = document.createElement("button");
+      cancelBtn.className = "bz-lockscreen-cancel";
+      cancelBtn.dataset.ls = "cancel";
+      cancelBtn.textContent = opts.cancel;
+    }
     row.appendChild(input);
     row.appendChild(input2);
+    if (cancelBtn) row.appendChild(cancelBtn);
     row.appendChild(actionBtn);
     box.appendChild(row);
     for (const inp of [input, input2]) {
@@ -9508,6 +9516,7 @@ var BZW_people = (() => {
       input2,
       ackBox,
       actionBtn,
+      cancelBtn,
       setTitle: (t) => {
         title.textContent = t;
       },
@@ -9528,6 +9537,7 @@ var BZW_people = (() => {
         actionBtn.disabled = !!busy;
         input.disabled = !!busy;
         input2.disabled = !!busy;
+        if (cancelBtn) cancelBtn.disabled = !!busy;
         if (busy) actionBtn.dataset.busyText = actionBtn.textContent || "";
         actionBtn.textContent = busy ? "处理中…" : actionBtn.dataset.busyText || opts.action;
       },
@@ -10661,10 +10671,10 @@ var BZW_people = (() => {
           ]
         },
         people: {
-          icon: "contact",
-          title: "脸谱已上锁",
-          sub: "解锁前，联系人卡片与聊天记录均以密文保存",
-          action: "解锁",
+          icon: "lock",
+          title: "脸谱",
+          sub: "人物消息脸谱",
+          action: "解锁保险库",
           stats: [
             { num: "—", label: "联系人" },
             { num: "—", label: "随记录附件" },
@@ -11387,7 +11397,9 @@ var BZW_people = (() => {
             ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
             secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
             secTone: "warn",
-            hint: exists ? "" : "建议使用密码本保存此密码"
+            hint: exists ? "" : "建议使用密码本保存此密码",
+            // 脸谱封面给一颗看得见的退出口（issue 506）：取消 = 不开面板 / 不展示任何数据（ADR-0194 决策 3）
+            cancel: kind === "people" ? "取消" : void 0
           });
           topifyZ(ls.el);
           document.body.appendChild(ls.el);
@@ -11409,6 +11421,7 @@ var BZW_people = (() => {
               if (ls.input.value) ls.setError("");
             }, 2600);
           };
+          if (ls.cancelBtn) ls.cancelBtn.onclick = () => done(false);
           ls.actionBtn.onclick = async () => {
             const pw = ls.input.value;
             if (!pw) {
@@ -12961,7 +12974,6 @@ var BZW_people = (() => {
   init_domain_bus();
   init_data();
   init_encrypt();
-  init_lock_screen();
 
   // src/people/safe-store.ts
   init_domain_bus();
@@ -18584,6 +18596,19 @@ ${lines.join("\n")}`);
     const body = [el("div", "bz-people-del-who", text(`「${p.name}」`))];
     body.push(el("div", "bz-people-del-line", text(tier === "drawn" ? "这个人已经有画成的脸谱——删除会连同脸谱正文、聊天仓、随手记与头像一起销毁，不可恢复。" : tier === "unfinished" ? "这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。" : "这个人还没画过脸谱——删掉之后要重新导入才能再画。")));
     body.push(el("div", "bz-people-del-note", text(tier === "drawn" ? "要删除，请重输主密码确认。" : "数据源目录与聊天原文不动，之后可以重新导入。")));
+    if (tier === "drawn") {
+      const pw = document.createElement("input");
+      pw.type = "password";
+      pw.className = "bz-people-input bz-people-del-pw-input";
+      pw.placeholder = "主密码";
+      pw.autocomplete = "off";
+      pw.setAttribute("data-people-del-pw", "");
+      body.push(el("div", "bz-people-del-pw", [
+        pw,
+        // 错误行常驻 DOM（`data-people-del-err` 是 ui 侧写文案的锚），空串时靠 CSS 收起
+        el("div", "bz-people-del-err", { "data-people-del-err": "" })
+      ]));
+    }
     const actions = el("div", "bz-people-del-actions", [
       button("bz-people-btn", "取消", { "data-people-del-cancel": "" }),
       button("bz-people-btn bz-people-btn-acc", "删除", { "data-people-del-ok": "" })
@@ -18971,12 +18996,17 @@ ${lines.join("\n")}`);
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("keydown", (e) => {
+      var _a3, _b2;
       const input = e.target instanceof HTMLInputElement ? e.target : null;
       if (e.key !== "Enter" || !input) return;
-      if (!input.hasAttribute("data-people-prof-tag-input") && !input.hasAttribute("data-people-note-text")) return;
+      if (!input.hasAttribute("data-people-prof-tag-input") && !input.hasAttribute("data-people-note-text") && !input.hasAttribute("data-people-del-pw")) return;
       e.preventDefault();
       if (input.hasAttribute("data-people-prof-tag-input")) addTagChip();
-      else void saveManualNote();
+      else if (input.hasAttribute("data-people-del-pw")) {
+        const p = (_a3 = listCache.find((x) => x.id === detailId)) != null ? _a3 : null;
+        const btn = (_b2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-ok]")) != null ? _b2 : null;
+        if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
+      } else void saveManualNote();
     });
     offUnlockWatch = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
       if (!overlay) return;
@@ -20067,8 +20097,11 @@ ${lines.join("\n")}`);
       return;
     }
     if (t.closest("[data-people-del-ok]")) {
+      const btn = t.closest("[data-people-del-ok]");
       const p = (_o = listCache.find((x) => x.id === detailId)) != null ? _o : null;
-      if (p) void deletePerson(p);
+      if (!p) return;
+      if (openedTier === "drawn") void confirmDeleteFromPage(p, btn);
+      else void deletePerson(p);
       return;
     }
     if (t.closest("[data-people-gen-cancel]")) {
@@ -20678,15 +20711,50 @@ ${lines.join("\n")}`);
       await renderAlbum();
       return;
     }
-    const tier = deleteTierOf(p, (_b2 = jobViews().get(id)) != null ? _b2 : null);
-    if (tier === "drawn") {
-      confirmDeleteWithPassword(p, () => void deletePerson(p));
-      return;
-    }
-    openedTier = tier;
-    openDialog("del", tier);
+    openedTier = deleteTierOf(p, (_b2 = jobViews().get(id)) != null ? _b2 : null);
+    dialog = { kind: "del", tier: openedTier };
+    void renderAlbum().then(focusDelPw);
+  }
+  function focusDelPw() {
+    var _a2;
+    (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-pw]")) == null ? void 0 : _a2.focus();
   }
   var openedTier = "undrawn";
+  function setDelError(msg) {
+    const box = overlay == null ? void 0 : overlay.querySelector("[data-people-del-err]");
+    if (box) box.textContent = msg;
+  }
+  async function confirmDeleteFromPage(p, btn) {
+    var _a2, _b2;
+    const input = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-pw]")) != null ? _a2 : null;
+    const pw = (_b2 = input == null ? void 0 : input.value) != null ? _b2 : "";
+    if (!pw) {
+      setDelError("请输入主密码确认");
+      input == null ? void 0 : input.focus();
+      return;
+    }
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "正在确认…";
+    try {
+      if (await getSafeManager().verifyPassword(pw)) {
+        await deletePerson(p);
+        return;
+      }
+      setDelError("主密码不对，再试一次。");
+      if (input) {
+        input.value = "";
+        input.focus();
+      }
+    } catch (e) {
+      setDelError(`校验失败：${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      if (btn.isConnected) {
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+    }
+  }
   async function deletePerson(p) {
     try {
       const stopped = await Promise.resolve(jobs().removeJob(p.id));
@@ -20700,66 +20768,6 @@ ${lines.join("\n")}`);
     } catch (e) {
       notifyActionError(e, `删除「${p.name}」`);
     }
-  }
-  function confirmDeleteWithPassword(p, onConfirmed) {
-    var _a2;
-    const at = ((_a2 = p.digest) == null ? void 0 : _a2.generatedAt) ? `（脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}）` : "";
-    const ls = uiLockScreen({
-      kind: "people",
-      icon: "trash-2",
-      title: "删除确认",
-      sub: `「${p.name}」已有脸谱${at}——重输主密码确认删除，脸谱与聊天仓一并销毁`,
-      placeholder: "重输主密码确认",
-      action: "确认删除",
-      secText: "已画脸谱不可恢复；数据源目录与聊天原文不受影响",
-      secTone: "bad"
-    });
-    topifyZ(ls.el);
-    document.body.appendChild(ls.el);
-    let closed = false;
-    const done = (ok) => {
-      if (closed) return;
-      closed = true;
-      unregisterPanelEsc("bz-people-del-confirm");
-      ls.close();
-      if (ok) onConfirmed();
-    };
-    unregisterPanelEsc("bz-people-del-confirm");
-    registerPanelEsc("bz-people-del-confirm", () => !!ls.el.isConnected, () => done(false));
-    const setErr = (m) => {
-      ls.setError(m);
-      setTimeout(() => {
-        if (ls.input.value) ls.setError("");
-      }, 2600);
-    };
-    const submit = async () => {
-      const pw = ls.input.value;
-      if (!pw) {
-        setErr("请输入主密码确认");
-        ls.focus();
-        return;
-      }
-      ls.setBusy(true);
-      try {
-        if (await getSafeManager().verifyPassword(pw)) {
-          done(true);
-          return;
-        }
-        ls.setBusy(false);
-        setErr("主密码错误，未删除");
-        ls.input.value = "";
-        ls.focus();
-      } catch (e) {
-        ls.setBusy(false);
-        setErr(`校验失败：${e instanceof Error ? e.message : String(e)}`);
-      }
-    };
-    ls.actionBtn.addEventListener("click", () => void submit());
-    ls.el.addEventListener("click", (e) => {
-      if (e.target === ls.el) done(false);
-    });
-    ls.focus();
-    setTimeout(() => ls.focus(), 150);
   }
   function buildInsightsCard(p) {
     var _a2, _b2, _c, _d, _e;

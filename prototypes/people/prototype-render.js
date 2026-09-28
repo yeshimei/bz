@@ -1,4 +1,4 @@
-/* 源指纹 3dfc113622bc7807 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 649c26d261046af0 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1298,6 +1298,19 @@ var BZR_people = (() => {
     const body = [el("div", "bz-people-del-who", text(`「${p.name}」`))];
     body.push(el("div", "bz-people-del-line", text(tier === "drawn" ? "这个人已经有画成的脸谱——删除会连同脸谱正文、聊天仓、随手记与头像一起销毁，不可恢复。" : tier === "unfinished" ? "这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。" : "这个人还没画过脸谱——删掉之后要重新导入才能再画。")));
     body.push(el("div", "bz-people-del-note", text(tier === "drawn" ? "要删除，请重输主密码确认。" : "数据源目录与聊天原文不动，之后可以重新导入。")));
+    if (tier === "drawn") {
+      const pw = document.createElement("input");
+      pw.type = "password";
+      pw.className = "bz-people-input bz-people-del-pw-input";
+      pw.placeholder = "主密码";
+      pw.autocomplete = "off";
+      pw.setAttribute("data-people-del-pw", "");
+      body.push(el("div", "bz-people-del-pw", [
+        pw,
+        // 错误行常驻 DOM（`data-people-del-err` 是 ui 侧写文案的锚），空串时靠 CSS 收起
+        el("div", "bz-people-del-err", { "data-people-del-err": "" })
+      ]));
+    }
     const actions = el("div", "bz-people-del-actions", [
       button("bz-people-btn", "取消", { "data-people-del-cancel": "" }),
       button("bz-people-btn bz-people-btn-acc", "删除", { "data-people-del-ok": "" })

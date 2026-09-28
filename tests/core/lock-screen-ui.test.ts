@@ -6,7 +6,9 @@
  * - setSec tone 先清后挂、空文案隐藏；
  * - inline 不挂 mask 类、close() 移除根节点；
  * - setStats 空数组隐藏；
- * - 内置回车提交（效率13）：input/input2 Enter → 主按钮，busy 期天然防重。
+ * - 内置回车提交（效率13）：input/input2 Enter → 主按钮，busy 期天然防重；
+ * - 可选次按钮（opts.cancel，issue 506）：不传则渲染逐字不变（cancelBtn === null），
+ *   传了就在主按钮左侧出钮，语义仍留给调用域。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { uiLockScreen } from '../../src/core/ui/lock-screen';
@@ -205,5 +207,54 @@ describe('uiLockScreen 内置回车提交（效率13）', () => {
     const { ls, clicks } = build();
     ls.input.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
     expect(clicks).not.toHaveBeenCalled();
+  });
+});
+
+
+describe('uiLockScreen 可选次按钮（opts.cancel，issue 506）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('不传 cancel：既有三档渲染逐字不变——无次按钮、cancelBtn 为 null、行内仍只有 p1/p2/go', () => {
+    const ls = uiLockScreen({ kind: 'vault', title: 't', action: '解锁' });
+    expect(ls.cancelBtn).toBeNull();
+    expect(ls.el.querySelector('[data-ls="cancel"]')).toBeNull();
+    const row = ls.el.querySelector('.bz-lockscreen-row')!;
+    expect([...row.children].map((n) => (n as HTMLElement).dataset.ls)).toEqual(['p1', 'p2', 'go']);
+    ls.close();
+  });
+
+  it('传 cancel：主按钮左侧出次按钮，槽位与 handle.cancelBtn 同步', () => {
+    const ls = uiLockScreen({ kind: 'people', title: '脸谱', action: '解锁保险库', cancel: '取消' });
+    const cancel = ls.el.querySelector('[data-ls="cancel"]') as HTMLButtonElement;
+    expect(cancel).not.toBeNull();
+    expect(ls.cancelBtn).toBe(cancel);
+    expect(cancel.textContent).toBe('取消');
+    expect(cancel.classList.contains('bz-lockscreen-cancel')).toBe(true);
+    const row = ls.el.querySelector('.bz-lockscreen-row')!;
+    expect([...row.children].map((n) => (n as HTMLElement).dataset.ls)).toEqual(['p1', 'p2', 'cancel', 'go']);
+    ls.close();
+  });
+
+  it('组件只出钮不接语义：onclick 归调用域；setBusy 期同步 disabled（点不动）', () => {
+    const ls = uiLockScreen({ kind: 'people', title: 't', action: 'a', cancel: '取消' });
+    const cancel = ls.cancelBtn!;
+    expect(() => cancel.click()).not.toThrow(); // 未挂 onclick 就只是颗不动的钮
+    const fn = vi.fn();
+    cancel.onclick = fn;
+    cancel.click();
+    expect(fn).toHaveBeenCalledTimes(1);
+    ls.setBusy(true);
+    expect(cancel.disabled).toBe(true);
+    cancel.click();
+    expect(fn).toHaveBeenCalledTimes(1); // busy 期不给退出（同主按钮）
+    ls.setBusy(false);
+    expect(cancel.disabled).toBe(false);
+    ls.close();
   });
 });

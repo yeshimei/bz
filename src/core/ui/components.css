@@ -2710,6 +2710,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* 次按钮（可选，opts.cancel）：与主按钮同排、样式从简——破坏性动作仍然只由主按钮承担 */
+.bz-lockscreen-cancel {
+  flex: none;
+  padding: 10px 16px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--ls-line);
+  background: transparent;
+  color: var(--ls-muted);
+  font-size: var(--bz-font-label);
+  cursor: pointer;
+}
+@media (hover: hover) {
+
+.bz-lockscreen-cancel:hover {
+  color: var(--ls-ink);
+  border-color: var(--ls-ink);
+}
+}
+.bz-lockscreen-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .bz-lockscreen-err {
   min-height: 18px;
   margin-top: 8px;
