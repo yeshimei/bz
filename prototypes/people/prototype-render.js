@@ -1,4 +1,4 @@
-/* 源指纹 add09ba1c75c19f9 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aedc37a9079c17eb · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -87,7 +87,6 @@ var BZR_people = (() => {
     miniMarkdown: () => miniMarkdown,
     monthlyChart: () => monthlyChart,
     noteAddRow: () => noteAddRow,
-    notePage: () => notePage,
     pageTotal: () => pageTotal,
     panelShell: () => panelShell,
     profPage: () => profPage,
@@ -95,6 +94,7 @@ var BZR_people = (() => {
     profileFilled: () => profileFilled,
     profilePopBody: () => profilePopBody,
     profileView: () => profileView,
+    recNote: () => recNote,
     relationRow: () => relationRow,
     replyLatencySec: () => replyLatencySec,
     socialRow: () => socialRow,
@@ -103,6 +103,7 @@ var BZR_people = (() => {
     statsPopBody: () => statsPopBody,
     statsText: () => statsText,
     subPage: () => subPage,
+    suppPage: () => suppPage,
     tagChip: () => tagChip,
     tagStk: () => tagStk,
     text: () => text,
@@ -847,8 +848,8 @@ var BZR_people = (() => {
         el("span", "bz-people-act-hint", text(gen.hint))
       ]),
       el("button", "bz-people-act", { "data-people-act": "note" }, [
-        el("i", "bz-ic", { "data-lucide": "pencil", "aria-hidden": "true" }),
-        el("span", "", text("记一笔"))
+        el("i", "bz-ic", { "data-lucide": "import", "aria-hidden": "true" }),
+        el("span", "", text("补充素材"))
       ]),
       el("button", "bz-people-act", { "data-people-act": "stats" }, [
         el("i", "bz-ic", { "data-lucide": "bar-chart-3", "aria-hidden": "true" }),
@@ -1336,11 +1337,147 @@ var BZR_people = (() => {
   function profPage(p, body, editing) {
     return subPage({ title: "补充背景", meta: editing ? `${p.name} · 编辑中` : p.name, hook: "prof" }, body);
   }
-  function notePage(p, today) {
-    return subPage({ title: "记一笔", meta: p.name, hook: "note" }, [
-      noteAddRow(today),
-      el("div", "bz-people-pop-note", text("随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。"))
-    ]);
+  var SUPP_TABS = [
+    ["text", "文本", "随手记一件事"],
+    ["image", "图片", "补画谱素材图"],
+    ["rec", "录音", "通话 / 见面录音"]
+  ];
+  var SUPP_REC_LABEL = {
+    pending: "待处理",
+    running: "转写中",
+    interrupted: "已中断",
+    failed: "失败",
+    merged: "已并入"
+  };
+  function suppPage(p, tab, image, rec, today) {
+    const body = [];
+    body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
+    if (tab === "text") {
+      body.push(noteAddRow(today));
+      body.push(el("div", "bz-people-pop-note", text("随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。")));
+    } else if (tab === "image") {
+      body.push(...suppImageBody(image));
+    } else {
+      body.push(...suppRecBody(rec));
+    }
+    return subPage({ title: "补充素材", meta: p.name, hook: "note" }, body);
+  }
+  function suppImageBody(s) {
+    const out = [];
+    out.push(el("div", "bz-people-pop-note", text("图片原件复制到数据根联系人目录（vault 外）；描述等派生文本才进加密保库记录，口径与导入一致。")));
+    out.push(el("div", "bz-people-supp-acts", [
+      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "选图片…", { "data-people-supp-img-pick": "" })
+    ]));
+    if (s.queue.length) {
+      const list = el("div", "bz-people-supp-qlist");
+      s.queue.forEach((it, i) => {
+        const row = el("div", "bz-people-supp-qrow");
+        row.appendChild(el("span", "bz-people-supp-qname", { title: it.path }, text(it.name)));
+        const ts = document.createElement("input");
+        ts.type = "datetime-local";
+        ts.className = "bz-people-input bz-people-supp-qts";
+        ts.value = suppLocalTsValue(it.ts);
+        ts.setAttribute("data-people-supp-img-ts", String(i));
+        row.appendChild(ts);
+        row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", it.peer ? "对方发的" : "我发的", {
+          "data-people-supp-img-peer": String(i),
+          title: "点一下换归属（默认对方发的）"
+        }));
+        row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "×", { "data-people-supp-img-drop": String(i), "aria-label": "移除" }));
+        list.appendChild(row);
+      });
+      out.push(list);
+      out.push(el("div", "bz-people-supp-acts", [
+        button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${s.queue.length} 张`, { "data-people-supp-img-import": "" })
+      ]));
+    }
+    out.push(el("div", "bz-people-supp-stat", text(
+      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}` : "还没补过图片。"
+    )));
+    if (s.imported > 0 && s.undescribed > 0) {
+      out.push(el("div", "bz-people-supp-acts", [
+        button("bz-people-btn bz-people-btn-sm", s.describeBusy ? "描述进行中…" : `生成描述（${s.modelLabel}）`, {
+          "data-people-supp-img-desc": "",
+          ...s.describeBusy ? { disabled: "" } : {},
+          title: "用 AI 面板当前模型给未描述的图片写画面描述，按张计费"
+        })
+      ]));
+      out.push(el("div", "bz-people-pop-note", text("描述完成自动并进时间线（[图片] 描述）；新导入的图片带扩展名可直接读派生档，旧库图片走旁路兜底。")));
+    }
+    return out;
+  }
+  function suppRecBody(s) {
+    const out = [];
+    out.push(el("div", "bz-people-pop-note", text("录音原件落数据根 recordings/（vault 外）；本地分离说话人与转写（不联网不花钱），转写轮次按归属并进时间线。")));
+    const refLine = el("div", "bz-people-supp-ref");
+    refLine.append(
+      text("声纹参考："),
+      textEl("b", s.ref === "building" ? "构建中…" : s.ref === "ready" ? "已建" : "未建"),
+      text(s.ref === "missing" ? "（没建也照跑——按「非我即对方」降级）" : s.ref === "ready" ? "（双人分离）" : "")
+    );
+    if (s.ref !== "building") {
+      refLine.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", s.ref === "ready" ? "重建质心" : "建质心", {
+        "data-people-supp-rec-ref": "",
+        title: "从该联系人的微信语音按归属建声纹参考（本地跑，几分钟）"
+      }));
+    }
+    out.push(refLine);
+    out.push(el("div", "bz-people-supp-acts", [
+      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "添加录音…", { "data-people-supp-rec-add": "" })
+    ]));
+    if (!s.rows.length) {
+      out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
+      return out;
+    }
+    const list = el("div", "bz-people-supp-list");
+    for (const r of s.rows) list.appendChild(suppRecRow(r));
+    out.push(list);
+    return out;
+  }
+  function suppRecRow(r) {
+    const row = el("div", "bz-people-supp-row", { "data-people-supp-row": r.file });
+    const head = el("div", "bz-people-supp-rowhead");
+    head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
+    head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
+    row.appendChild(head);
+    if (r.status === "running" || r.status === "interrupted") {
+      const meter = el("div", "bz-people-jobs-meter");
+      if (r.pct !== null) {
+        meter.appendChild(el("div", "bz-people-jobs-track", { "aria-hidden": "true" }, el("div", "bz-people-jobs-fill", { style: `width:${r.pct}%` })));
+        meter.appendChild(el("span", "bz-people-jobs-pct", text(`${r.pct}%`)));
+      }
+      row.appendChild(meter);
+    }
+    const bits = [];
+    if (r.phaseText) bits.push(r.phaseText);
+    if (r.mode === "me-only") bits.push("单质心：非我即对方");
+    if (r.mode === "blind") bits.push("无质心：盲分");
+    if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
+    if (bits.length) row.appendChild(el("div", "bz-people-supp-rowmeta", text(bits.join(" · "))));
+    const foot = [];
+    if (r.status === "failed" && r.errText) foot.push(el("span", "bz-people-jobs-err", text(r.errText)));
+    if (r.status === "pending") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "处理", { "data-people-supp-rec-run": r.file }));
+    if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
+    if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
+    if (r.status === "running") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file }));
+    if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
+    return row;
+  }
+  function suppLocalTsValue(ts) {
+    const d = new Date(ts);
+    const p2 = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  }
+  function recNote(rows) {
+    const block = el("div", "bz-people-jobs", { "data-people-rec-note": "", role: "status" });
+    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${rows.filter((r) => r.status === "running").length} 条在跑`)));
+    for (const r of rows) {
+      if (r.status !== "running" && r.status !== "interrupted") continue;
+      const line = el("div", "bz-people-jobs-main", text(r.file));
+      if (r.phaseText) line.appendChild(el("span", "bz-people-jobs-detail", text(` · ${r.phaseText}`)));
+      block.appendChild(line);
+    }
+    return block;
   }
   function delPage(p, tier) {
     const body = [el("div", "bz-people-del-who", text(`「${p.name}」`))];
