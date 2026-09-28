@@ -46,6 +46,7 @@ import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapsho
 import type { ContactStats, FaceDigest, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
 import {
+  applyRecordingTurnsToMsgs,
   hasChatJson,
   listContactDirs,
   mergeStore,
@@ -57,11 +58,27 @@ import {
   readContactBundle,
   readStatsJson,
   storeMediaBadge,
+  storeStatsOf,
   storeToUnified,
   isGroupChat,
   type StoreContact,
   type StoreStats,
 } from './datasource';
+import {
+  buildRecordingSpec,
+  buildVoiceprintSpec,
+  isRecordingRunning,
+  readRecordingSidecar,
+  recordingPhasePct,
+  recordingSidecarPath,
+  recordingTsOf,
+  recordingsDirOf,
+  runningRecordingItems,
+  startRecordingTask,
+  stopRecordingTask,
+  voiceprintRefStatus,
+} from './recording';
+import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
@@ -103,7 +120,8 @@ import {
   miniMarkdown,
   monthlyChart,
   noteAddRow,
-  notePage,
+  recNote,
+  suppPage,
   pageTotal,
   panelShell,
   profilePopBody,
@@ -130,6 +148,11 @@ import {
   type FoldId,
   type JobsBlockState,
   type JobsUiStatus,
+  type SuppImageQueueItem,
+  type SuppImageViewState,
+  type SuppRecRowState,
+  type SuppRecViewState,
+  type SuppTab,
 } from './render';
 
 import { el, text, textEl } from './render';
@@ -233,6 +256,21 @@ let pulled: string | null = null;
 /** 册页弹窗（同时只开一页） */
 let dialog: { kind: DialogKind; tier?: DeleteTier } | null = null;
 
+// —— 补充素材页状态（issue 509；hook 沿用 'note'） ——
+let suppTab: SuppTab = 'text';
+/** 图片页签的待落盘暂存（页内编辑归属 / 时间；关页不清——重开继续编） */
+let suppImages: SuppImageQueueItem[] = [];
+/** 落盘 / 加录音进行中（按钮防双击） */
+let suppBusy = false;
+/** 质心构建进行中 */
+let refBuilding = false;
+/** 页内改过的录音起点 ts（内存口径：重启回落文件名 / mtime） */
+const suppRecTs = new Map<string, number>();
+/** 聊天仓侧事实缓存（弹窗渲染是同步的：开页异步刷，刷完重画） */
+let suppStoreInfo: { imported: number; undescribed: number; mergedRecs: Set<string> } = { imported: 0, undescribed: 0, mergedRecs: new Set() };
+/** 录音页签的进度轮询（只在页签可见时跑） */
+let recPollTimer: number | null = null;
+
 // —— 一次性动效标志：只在「刚发生」那一次重画里放，重画后立刻清掉（同页后续重画不重放） ——
 let animBoot = true;      // 册子首次摊开（照片显影、纸边探出来）
 let animTurn: '' | 'next' | 'prev' = '';
@@ -247,6 +285,12 @@ let foldScrollTop = false;
 /** 开一只册页弹窗（靠人的页要有人开着；另一只开着则换页） */
 function openDialog(kind: DialogKind, tier?: DeleteTier): void {
   dialog = { kind, tier };
+  if (kind === 'note' && detailId) {
+    void refreshSuppStoreInfo(detailId);
+    startRecPolling();
+  } else {
+    stopRecPolling();
+  }
   void renderAlbum();
 }
 
@@ -255,6 +299,7 @@ function closeDialog(): void {
   if (!dialog) return;
   if (dialog.kind === 'gen') { answerGenConfirm('cancel'); return; }
   dialog = null;
+  stopRecPolling();
   if (dsImported) {
     dsImported = false;
     animDrop = dsLastImported.slice(); // 这一趟导进来的那几位飞回册页
@@ -403,6 +448,7 @@ export function closePeoplePanel(): void {
   overlay?.remove();
   overlay = null;
   store = null;
+  stopRecPolling();
   exportRun?.stop(); // 在跑的按需导出跟着导入一起中止（485：导出生命周期不独立于面板）
   exportRun = null;
   detailId = null;
@@ -1723,6 +1769,32 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-tag-chip')?.remove(); return; }
   if (t.closest('[data-people-note-cancel]')) { closeDialog(); return; }
   if (t.closest('[data-people-note-save]')) { void saveManualNote(); return; }
+  // —— 补充素材页（issue 509） ——
+  const suppTabBtn = t.closest<HTMLElement>('[data-people-supp-tab]');
+  if (suppTabBtn) {
+    suppTab = (suppTabBtn.getAttribute('data-people-supp-tab') as SuppTab | null) ?? 'text';
+    startRecPolling();
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-img-pick]')) { void suppPickImages(); return; }
+  const imgDrop = t.closest<HTMLElement>('[data-people-supp-img-drop]');
+  if (imgDrop) { suppImages.splice(Number(imgDrop.getAttribute('data-people-supp-img-drop')), 1); void renderAlbum(); return; }
+  const imgPeer = t.closest<HTMLElement>('[data-people-supp-img-peer]');
+  if (imgPeer) {
+    const it = suppImages[Number(imgPeer.getAttribute('data-people-supp-img-peer'))];
+    if (it) it.peer = !it.peer;
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-img-import]')) { void suppImportImages(); return; }
+  if (t.closest('[data-people-supp-img-desc]')) { void suppDescribe(); return; }
+  if (t.closest('[data-people-supp-rec-add]')) { void suppAddRecordings(); return; }
+  const recRun = t.closest<HTMLElement>('[data-people-supp-rec-run]');
+  if (recRun) { void suppRunRecording(recRun.getAttribute('data-people-supp-rec-run') ?? ''); return; }
+  const recStop = t.closest<HTMLElement>('[data-people-supp-rec-stop]');
+  if (recStop) { stopRecordingTask(recStop.getAttribute('data-people-supp-rec-stop') ?? ''); void renderAlbum(); return; }
+  if (t.closest('[data-people-supp-rec-ref]')) { void suppBuildVoiceprintRef(); return; }
   // —— 上锁封面 ——
   const lock = t.closest<HTMLElement>('[data-people-lock]');
   if (lock) {
@@ -1897,7 +1969,7 @@ function dialogPage(p: PersonEntry | null): HTMLElement {
   if (kind === 'find') return findPageState();
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
-  if (p && kind === 'note') return notePage(p, todayStr());
+  if (p && kind === 'note') return suppPage(p, suppTab, suppImageState(), suppRecState(p.id), todayStr());
   if (p && kind === 'del') return delPage(p, dialog?.tier ?? deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
   return subPage({ title: '', hook: 'none' }, []);
 }
@@ -2171,12 +2243,18 @@ function cssEscape(s: string): string {
 
 // ---------------- 进度便签 / 合并横幅 ----------------
 
-/** 进度便签（issue 505）：贴在册子左下沿；无活跃任务不出现；画完撕下来 */
+/** 进度便签（issue 505）：贴在册子左下沿；无活跃任务不出现；画完撕下来。
+ *  509：引擎队列空而录音在跑时，同一位置出录音处理块（UI 层渲染，不入引擎队列）。 */
 function renderNote(): void {
   const slot = overlay?.querySelector<HTMLElement>('[data-people-jobs-slot]');
   if (!slot) return;
   const item = currentJobsItem();
-  if (!item) { slot.replaceChildren(); return; }
+  if (!item) {
+    const recRows = recNoteRows();
+    if (recRows.length) slot.replaceChildren(recNote(recRows));
+    else slot.replaceChildren();
+    return;
+  }
   const note = jobsNote(toBlockState(item));
   // 落下来这一下是**一次性的**：用掉就清（每次快照都重画便签，不清就会一秒落一次）
   if (animNote) { note.classList.add('bz-people-note-in'); animNote = false; }
@@ -2509,8 +2587,10 @@ export function personMedia(p: PersonEntry): MediaStats | null {
     acc.voiceCount += s.voiceCount ?? 0;
     acc.voiceTotalSec += s.voiceTotalSec ?? 0;
     acc.imageCount += s.imageCount ?? 0;
+    acc.recordingCount = (acc.recordingCount ?? 0) + (s.recordingCount ?? 0);
+    acc.recordingTotalSec = (acc.recordingTotalSec ?? 0) + (s.recordingTotalSec ?? 0);
   }
-  return acc.voiceCount || acc.imageCount ? acc : null;
+  return acc.voiceCount || acc.imageCount || acc.recordingCount ? acc : null;
 }
 
 // ---------------- 合并重复人物（issue 442） ----------------
@@ -2727,6 +2807,395 @@ async function removeManualNote(evId: string): Promise<void> {
     notifyActionError(e, '删除随手记');
   }
   void renderAlbum();
+}
+
+// ---------------- 补充素材（issue 509 / ADR-0212：图片落盘并仓、录音任务、质心） ----------------
+
+/** 桌面端 fs（同 datasource 口径；非桌面端 null——补充素材整页只桌面可用） */
+function suppFs(): any {
+  const w = typeof window === 'undefined' ? null : (window as any);
+  if (!w || !w.require) return null;
+  try {
+    return w.require('fs');
+  } catch {
+    return null;
+  }
+}
+
+/** 数据根（未配置 = 空串；补充素材的落盘 / 工具脚本都挂它） */
+function suppDataRoot(): string {
+  return dsDataDir();
+}
+
+/** pythonPath 设置键（录音 / 质心工具用；空 = 跟随 PATH 上的 python） */
+function suppPython(): string {
+  const s = (tryGetSettings() ?? {}) as Record<string, unknown>;
+  return typeof s.pythonPath === 'string' ? s.pythonPath.trim() : '';
+}
+
+/** 开页 / 并仓后刷新聊天仓侧事实（图片统计 + 已并录音集合），刷完重画弹窗 */
+async function refreshSuppStoreInfo(talker: string): Promise<void> {
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  let imported = 0;
+  let undescribed = 0;
+  const mergedRecs = new Set<string>();
+  try {
+    const rec = await peopleSafe.read(talker);
+    for (const m of rec?.store.msgs ?? []) {
+      if (m.type === 3 && m.img) {
+        imported++;
+        if (m.text === '') undescribed++;
+      }
+      if (m.key.startsWith('rec:')) {
+        const end = m.key.lastIndexOf(':');
+        if (end > 4) mergedRecs.add(m.key.slice(4, end));
+      }
+    }
+  } catch {
+    /* 读不到按零值渲染 */
+  }
+  suppStoreInfo = { imported, undescribed, mergedRecs };
+  if (dialog?.kind === 'note') void renderAlbum();
+}
+
+function suppImageState(): SuppImageViewState {
+  const running = jobsApi.isDescribeOnlyBusy();
+  return {
+    queue: suppImages,
+    imported: suppStoreInfo.imported,
+    undescribed: suppStoreInfo.undescribed,
+    describeBusy: running,
+    modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
+  };
+}
+
+function suppRecState(talker: string): SuppRecViewState {
+  const rows: SuppRecRowState[] = [];
+  const root = suppDataRoot();
+  const ref: SuppRecViewState['ref'] = refBuilding ? 'building' : voiceprintRefStatus(root, talker);
+  const fs2 = suppFs();
+  if (!fs2 || !root) return { rows, ref };
+  const dir = recordingsDirOf(root, talker);
+  let files: string[] = [];
+  try {
+    files = fs2
+      .readdirSync(dir)
+      .filter((f: string) => !f.endsWith('.turns.json') && !f.endsWith('.tmp'))
+      .filter((f: string) => {
+        try {
+          return fs2.statSync(`${dir}/${f}`).isFile();
+        } catch {
+          return false;
+        }
+      })
+      .sort();
+  } catch {
+    return { rows, ref }; // 目录还没有 = 还没加过录音
+  }
+  for (const f of files) {
+    const key = recordingSidecarPath(root, talker, f);
+    const side = readRecordingSidecar(root, talker, f);
+    const merged = suppStoreInfo.mergedRecs.has(f) || side?.phase === 'done';
+    if (isRecordingRunning(key)) {
+      rows.push({ file: f, status: 'running', phaseText: side?.progress?.text ?? '启动模型…', pct: recordingPhasePct(side), ...(side?.mode ? { mode: side.mode } : {}), ...(side?.turns ? { turns: side.turns.length } : {}) });
+      continue;
+    }
+    if (merged) {
+      rows.push({ file: f, status: 'merged', phaseText: '', pct: null, ...(side?.mode ? { mode: side.mode } : {}), ...(side?.turns ? { turns: side.turns.length } : {}) });
+      continue;
+    }
+    if (!side) {
+      rows.push({ file: f, status: 'pending', phaseText: '', pct: null });
+      continue;
+    }
+    if (side.phase === 'error') {
+      rows.push({ file: f, status: 'failed', phaseText: '', pct: null, errText: side.error ?? '进程异常退出' });
+      continue;
+    }
+    rows.push({ file: f, status: 'interrupted', phaseText: side.progress?.text ?? '中断', pct: recordingPhasePct(side), ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
+  }
+  return { rows, ref };
+}
+
+async function suppPickImages(): Promise<void> {
+  const files = await pickSystemFiles('选择图片', [
+    { name: '图片', ext: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] },
+    { name: '全部文件', ext: ['*'] },
+  ]);
+  if (!files.length) return;
+  const fs2 = suppFs();
+  for (const p of files) {
+    if (suppImages.some((x) => x.path === p)) continue;
+    let mtime = Date.now();
+    try {
+      mtime = fs2.statSync(p).mtimeMs;
+    } catch {
+      /* 读不到 mtime 按 now */
+    }
+    suppImages.push({ path: p, name: p.slice(p.lastIndexOf('/') + 1), ts: Math.round(mtime), peer: true });
+  }
+  void renderAlbum();
+}
+
+async function suppImportImages(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || !peopleSafe || !suppImages.length || suppBusy) return;
+  if (!suppFs()?.existsSync(root)) {
+    notice('脸谱数据根不存在——先到设置里确认数据源目录', 'warning');
+    return;
+  }
+  // 页内可改的时间落选那一刻才读回（不逐键绑状态）
+  overlay?.querySelectorAll<HTMLInputElement>('[data-people-supp-img-ts]').forEach((inp) => {
+    const i = Number(inp.getAttribute('data-people-supp-img-ts'));
+    const v = inp.value ? new Date(inp.value).getTime() : NaN;
+    if (Number.isFinite(v) && suppImages[i]) suppImages[i].ts = v;
+  });
+  suppBusy = true;
+  try {
+    const fs2 = suppFs();
+    if (!fs2?.existsSync(root)) {
+      notice('脸谱数据根不存在——先到设置里确认数据源目录', 'warning');
+      return;
+    }
+    const imported: Array<{ file: string; ts: number; isSender: boolean }> = [];
+    for (const it of suppImages) {
+      const d = new Date(it.ts);
+      const p2 = (n: number): string => String(n).padStart(2, '0');
+      const month = `${d.getFullYear()}-${p2(d.getMonth() + 1)}`;
+      const dir = `${root}/${talker}/desc/${month}`;
+      fs2.mkdirSync(dir, { recursive: true });
+      const stamp = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}${p2(d.getHours())}${p2(d.getMinutes())}`;
+      const dot = it.name.lastIndexOf('.');
+      const ext = dot > 0 ? it.name.slice(dot).toLowerCase() : '.jpg';
+      let seq = 1;
+      let target = '';
+      for (;;) {
+        target = `${dir}/${stamp}_${p2(seq)}${ext}`;
+        if (!fs2.existsSync(target)) break;
+        seq++;
+      }
+      fs2.copyFileSync(it.path, target);
+      imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
+    }
+    // 并仓：type=3 消息（text 空 = 不进时间线，描述并仓后自然出现）+ 形态计数 + 统计重算
+    let n = 0;
+    await peopleSafe.write(talker, (rec) => {
+      for (const it of imported) {
+        const key = `img:${it.file}`;
+        if (rec.store.msgs.some((m) => m.key === key)) continue;
+        rec.store.msgs.push({ key, ts: it.ts, isSender: it.isSender, type: 3, img: it.file, text: '' });
+        n++;
+      }
+      if (n > 0) {
+        rec.store.msgs.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 图片: (rec.store.kindCounts?.图片 ?? 0) + n };
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = new Date().toISOString();
+      }
+    });
+    suppImages = [];
+    notice(n > 0 ? `已导入 ${n} 张图片——要进时间线就点「生成描述」` : '所选图片都已在库里', 'success');
+    await refreshSuppStoreInfo(talker);
+  } catch (e) {
+    notifyActionError(e, '导入图片');
+  } finally {
+    suppBusy = false;
+    void renderAlbum();
+  }
+}
+
+async function suppDescribe(): Promise<void> {
+  if (!detailId || jobsApi.isDescribeOnlyBusy()) return;
+  const r = await jobsApi.runDescribeOnly(getApp(), detailId);
+  if (!r.ok && r.reason) notice(`图片描述没有跑：${r.reason}`, 'warning');
+  else if (r.ok && r.skipped) notice('没有需要描述的图片（零图片或已全部描述）', 'info');
+  else if (r.ok) notice('图片描述完成，已并进时间线', 'success');
+  await refreshSuppStoreInfo(detailId);
+  void renderAlbum();
+}
+
+async function suppAddRecordings(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || suppBusy) return;
+  const files = await pickSystemFiles('选择录音', [
+    { name: '录音', ext: ['aac', 'm4a', 'mp3', 'wav', 'amr', 'flac', 'ogg', 'opus'] },
+    { name: '全部文件', ext: ['*'] },
+  ]);
+  if (!files.length) return;
+  suppBusy = true;
+  try {
+    const fs2 = suppFs();
+    const dir = recordingsDirOf(root, talker);
+    fs2.mkdirSync(dir, { recursive: true });
+    let n = 0;
+    for (const f of files) {
+      const base = f.slice(f.lastIndexOf('/') + 1);
+      const target = `${dir}/${base}`;
+      if (fs2.existsSync(target)) continue; // 同名不覆盖：重选不会重复落
+      fs2.copyFileSync(f, target);
+      n++;
+    }
+    notice(n > 0 ? `已添加 ${n} 条录音，点「处理」开始转写` : '所选录音都已在库里（同名不覆盖）', n > 0 ? 'success' : 'info');
+  } catch (e) {
+    notifyActionError(e, '添加录音');
+  } finally {
+    suppBusy = false;
+    void renderAlbum();
+  }
+}
+
+async function suppRunRecording(file: string): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || !file || !suppFs()) return;
+  const key = recordingSidecarPath(root, talker, file);
+  if (isRecordingRunning(key)) return;
+  if (voiceprintRefStatus(root, talker) === 'missing') {
+    notice('声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑', 'info');
+  }
+  startRecordingTask(
+    buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython() }),
+    key,
+    (o) => {
+      if (o.stopped) {
+        void renderAlbum();
+        return;
+      }
+      if (!o.ok) {
+        notice(`录音处理失败：${o.error || '进程异常退出'}（可点「重试」，账本续跑只补缺口）`, 'warning');
+        void renderAlbum();
+        return;
+      }
+      void suppMergeRecording(talker, file);
+    },
+    { talker, file },
+  );
+  startRecPolling();
+  void renderAlbum();
+}
+
+/** done sidecar → 聊天仓轮次并仓（插件是聊天仓唯一写入者；kindCounts / stats 同步重算） */
+async function suppMergeRecording(talker: string, file: string): Promise<void> {
+  const root = suppDataRoot();
+  if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
+  if (!peopleSafe?.unlocked) return; // 上锁期不并仓（sidecar 账本还在，解锁后重入补上）
+  const side = readRecordingSidecar(root, talker, file);
+  if (!side || side.phase !== 'done' || !side.turns?.length) {
+    void renderAlbum();
+    return;
+  }
+  const fs2 = suppFs();
+  let mtime: number | undefined;
+  try {
+    mtime = fs2.statSync(`${recordingsDirOf(root, talker)}/${file}`).mtimeMs;
+  } catch {
+    /* 读不到回落 now */
+  }
+  const base = suppRecTs.get(file) ?? recordingTsOf(file, mtime);
+  let added = 0;
+  try {
+    await peopleSafe.write(talker, (rec) => {
+      const r = applyRecordingTurnsToMsgs(rec.store.msgs, { file, ts: base, turns: side.turns! });
+      rec.store.msgs = r.msgs;
+      added = r.added;
+      if (added > 0) {
+        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: (rec.store.kindCounts?.录音 ?? 0) + added };
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = new Date().toISOString();
+      }
+    });
+    notice(`「${file}」已并入 ${added} 条转写轮次`, 'success');
+  } catch (e) {
+    notifyActionError(e, '并仓录音轮次');
+  }
+  await refreshSuppStoreInfo(talker);
+  void renderAlbum();
+}
+
+/** 质心构建（voiceprint_refs.py；语音样本不足时脚本自行降级 me-only） */
+async function suppBuildVoiceprintRef(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || refBuilding) return;
+  if (isRecordingRunning(`ref:${talker}`)) return;
+  refBuilding = true;
+  notice('开始构建声纹参考（本地跑，按语音量几分钟）……', 'info');
+  startRecordingTask(
+    buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
+    `ref:${talker}`,
+    (o) => {
+      refBuilding = false;
+      if (o.stopped) return;
+      if (o.ok) notice('声纹参考已建好——之后的录音按双人分离归属', 'success');
+      else notice(`质心构建失败：${o.error || '该联系人可能没有微信语音样本'}（没有质心也能处理录音，按降级阶梯归属）`, 'warning');
+      void renderAlbum();
+    },
+    { talker, file: 'voiceprint_refs' },
+  );
+  void renderAlbum();
+}
+
+/** 录音页签的进度轮询：只在页签可见时跑；行内原位更新（不整页重画，输入焦点不丢） */
+function startRecPolling(): void {
+  if (recPollTimer !== null) return;
+  recPollTimer = window.setInterval(() => {
+    if (dialog?.kind !== 'note' || suppTab !== 'rec') return;
+    tickRecRows();
+    renderNote();
+  }, 1000);
+}
+
+function stopRecPolling(): void {
+  if (recPollTimer !== null) {
+    window.clearInterval(recPollTimer);
+    recPollTimer = null;
+  }
+}
+
+/** 轮询帧：在跑的录音行原位刷新进度条与文案 */
+function tickRecRows(): void {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root) return;
+  overlay?.querySelectorAll<HTMLElement>('[data-people-supp-row]').forEach((rowEl) => {
+    const file = rowEl.getAttribute('data-people-supp-row') ?? '';
+    const key = recordingSidecarPath(root, talker, file);
+    if (!isRecordingRunning(key)) return;
+    const side = readRecordingSidecar(root, talker, file);
+    const pct = recordingPhasePct(side);
+    if (pct !== null) {
+      const fill = rowEl.querySelector<HTMLElement>('.bz-people-jobs-fill');
+      const pctEl = rowEl.querySelector<HTMLElement>('.bz-people-jobs-pct');
+      if (fill) fill.style.width = `${pct}%`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
+    }
+    const txt = side?.progress?.text ?? '';
+    if (txt) {
+      const meta = rowEl.querySelector<HTMLElement>('.bz-people-supp-rowmeta');
+      if (meta) meta.textContent = txt;
+      else rowEl.appendChild(el('div', 'bz-people-supp-rowmeta', text(txt)));
+    }
+  });
+}
+
+/** 录音处理进度块的数据面：手上在跑 / sidecar 停在中途的录音（面板重开也能列出来） */
+function recNoteRows(): SuppRecRowState[] {
+  const root = suppDataRoot();
+  if (!root) return [];
+  const rows: SuppRecRowState[] = [];
+  for (const it of runningRecordingItems()) {
+    if (it.file === 'voiceprint_refs') continue; // 质心构建不在进度块显（页签里有状态行）
+    const side = readRecordingSidecar(root, it.talker, it.file);
+    rows.push({
+      file: it.file,
+      status: 'running',
+      phaseText: side?.progress?.text ?? '启动模型…',
+      pct: recordingPhasePct(side),
+    });
+  }
+  return rows;
 }
 
 /** 本地日期 YYYY-MM-DD（随手记默认值；FaceEvent.ts 同构） */

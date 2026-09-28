@@ -738,3 +738,35 @@ export async function pickSystemFolder(): Promise<string | null> {
     return null;
   }
 }
+
+/** 文件多选过滤器（name = 组名，ext = 不带点的扩展名表） */
+export interface PickFilesFilter {
+  name: string;
+  ext: string[];
+}
+
+/**
+ * 弹出系统**文件**多选对话框（vault 内外都行；509 补充素材的图片 / 录音导入用）。
+ * 只走 Electron 原生链（多文件路径无 input 兜底——Electron ≥32 已删 File.path）；
+ * 取消 / 环境不支持返回空数组（不弹错）。路径正斜杠归一。
+ */
+export async function pickSystemFiles(title: string, filters: PickFilesFilter[]): Promise<string[]> {
+  const remote =
+    requireNode('@electron/remote') ??
+    (requireNode('electron') as { remote?: unknown } | null)?.remote ??
+    null;
+  const dialog = (remote as { dialog?: { showOpenDialog?: (o: unknown) => Promise<{ canceled?: boolean; filePaths?: string[] }> } } | null)?.dialog;
+  if (!dialog?.showOpenDialog) return [];
+  try {
+    const res = await dialog.showOpenDialog({
+      title,
+      properties: ['openFile', 'multiSelections', 'dontAddToRecent'],
+      filters,
+    });
+    if (res?.canceled) return [];
+    return (res?.filePaths ?? []).map((p) => normalizeSystemPath(p)).filter(Boolean);
+  } catch (e) {
+    notifyActionError(e, '选择文件');
+    return [];
+  }
+}

@@ -203,6 +203,10 @@ export interface ContactStats {
   voiceTotalSec?: number;
   /** 媒体素材：图片张数（带画面描述的） */
   imageCount?: number;
+  /** 媒体素材：录音轮次条数（509；旧数据无此字段） */
+  recordingCount?: number;
+  /** 媒体素材：录音总时长（秒；标签没写时长的不计入） */
+  recordingTotalSec?: number;
 }
 
 /** 一次导入的元数据 */

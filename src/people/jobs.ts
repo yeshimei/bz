@@ -645,6 +645,10 @@ export async function startJobs(
   targets: JobTarget[],
   opts: JobStartOptions = {}
 ): Promise<{ queued: string[]; skipped: string[]; resumed: string[] }> {
+  if (describeOnlyBusy) {
+    // 补充素材·描述单段在跑（509）：不与全链并发，本次目标全记跳过（重试即可）
+    return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
+  }
   if (!st) {
     st = {
       app,
@@ -852,6 +856,7 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
  */
 export function resume(talker: string): boolean {
   if (!st || !st.safe?.unlocked) return false; // 上锁期不受理（解锁后 UI 重试 / kick 自续）
+  if (describeOnlyBusy) return false; // 补充素材·描述单段在跑（509）：不与全链并发
   const job = st.queue.find((j) => j.talker === talker);
   if (!job) return false;
   if (job.status === 'error' && job.error === DRIFT_ERROR) return false;
@@ -1265,6 +1270,88 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     emit();
   }
   return 'ok';
+}
+
+// ---------------- 补充素材·描述单段入口（issue 509 / ADR-0212） ----------------
+
+let describeOnlyBusy = false;
+
+/** 是否有 describe-only 任务在跑（startJobs 互斥护栏的另一读法，测试用） */
+export function isDescribeOnlyBusy(): boolean {
+  return describeOnlyBusy;
+}
+
+/**
+ * 只跑图片描述段（509 补充素材·图片页签的「生成描述」）：计费授权由**按钮本身**承担
+ * （显式动作，不再二次弹确认门——注入恒 start 的 gate），批切分 / 批级断点 / 并仓
+ * 全部复用 runDescribeStage。零图片 / 已全部描述直接 ok（不烧调用）。
+ * 引擎忙（画谱排队 / 在跑 / 另一个 describe-only）拒绝——单段不与全链并发。
+ * 临时任务不入持久队列：入队跑、跑完摘（进度经 snapshot 推给 UI，与画谱 describe 同一套渲染）。
+ */
+export async function runDescribeOnly(app: unknown, talker: string): Promise<{ ok: boolean; skipped?: boolean; reason?: string }> {
+  if (describeOnlyBusy) return { ok: false, reason: '已有描述任务在跑' };
+  if (st && (st.runningJob || st.queue.some((j) => j.status === 'paused'))) {
+    return { ok: false, reason: '画谱任务进行中——等它跑完再补描述' };
+  }
+  if (!st) {
+    st = {
+      app,
+      store: new JobStore(app),
+      safe: null,
+      queue: [],
+      injected: null,
+      retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
+      runningJob: null,
+      pauseRequested: false,
+      prepGate: null,
+    };
+  }
+  st.app = app;
+  st.store = new JobStore(app);
+  st.safe = await getPeopleSafeStore();
+  wireLock();
+  if (!st.safe.unlocked) return { ok: false, reason: '保险库上锁' };
+  st.injected = { ...(st.injected ?? {}), askDescribeConfirm: async () => 'start' };
+
+  const entries = await new PeopleStore(app).list();
+  const name = entries.find((p) => p.id === talker)?.name ?? talker;
+  const now = nowIso();
+  const job: PersonJob = {
+    talker,
+    name,
+    mode: 'incremental',
+    fileLabel: '补充素材',
+    status: 'running',
+    stage: 'describe',
+    msgCount: 0,
+    contentHash: '',
+    chunks: [],
+    batchesDone: 0,
+    results: [],
+    message: '准备图片描述…',
+    startedAt: now,
+    updatedAt: now,
+  };
+  st.queue.push(job);
+  st.runningJob = talker;
+  describeOnlyBusy = true;
+  emit();
+  const finish = async (patch: Partial<PersonJob>): Promise<void> => {
+    Object.assign(job, patch, { updatedAt: nowIso() });
+    await persist();
+    emit();
+  };
+  try {
+    const r = await runDescribeStage(job, finish);
+    // 'ok' / 'skipped' 都是终态（halted 只在批失败 error 落账后出现）
+    return { ok: job.status !== 'error', skipped: r === 'skipped', ...(job.status === 'error' ? { reason: job.error } : {}) };
+  } finally {
+    st.queue = st.queue.filter((j) => j !== job);
+    if (st.runningJob === talker) st.runningJob = null;
+    describeOnlyBusy = false;
+    await persist();
+    emit();
+  }
 }
 
 async function runJob(job: PersonJob): Promise<void> {

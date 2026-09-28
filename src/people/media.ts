@@ -1,6 +1,6 @@
 /**
  * 媒体素材解析（issue 445）：消费预处理线产出的媒体标签化文本——
- * 语音 `[语音 12s·平静] 转写文本`、图片 `[图片] 描述文本`。
+ * 语音 `[语音 12s·平静] 转写文本`、图片 `[图片] 描述文本`、录音 `[录音 3分02秒·平静] 轮次转写`（509）。
  *
  * 标签约定（与预处理线对齐）：
  * - 时长（`12s`）与情感标签（SenseVoice 产出：平静 / 开心 / 生气 / 难过等）都可有可无；
@@ -15,12 +15,12 @@ import type { UnifiedMessage } from './types';
 
 /** 一条媒体素材（从消息文本解析；纯文本 / 旧空标签返回 null 无素材） */
 export interface MediaMaterial {
-  kind: 'voice' | 'image';
-  /** 语音转写文本 / 图片画面描述（多段保留换行；不含标签本身） */
+  kind: 'voice' | 'image' | 'recording';
+  /** 语音/录音转写文本 / 图片画面描述（多段保留换行；不含标签本身） */
   text: string;
-  /** 语音时长（秒；标签里没写就没有） */
+  /** 语音/录音时长（秒；标签里没写就没有） */
   durationSec?: number;
-  /** 语音情感标签（如 平静 / 开心） */
+  /** 语音/录音情感标签（如 平静 / 开心） */
   emotion?: string;
 }
 
@@ -32,6 +32,27 @@ export interface MediaStats {
   voiceTotalSec: number;
   /** 图片素材张数 */
   imageCount: number;
+  /** 录音轮次条数（509） */
+  recordingCount?: number;
+  /** 录音总时长（秒；标签没写时长的条目不计入） */
+  recordingTotalSec?: number;
+}
+
+/** 录音时长标签解析（509）：「3分02秒」/「2分」/「45秒」→ 秒；不认识返回 undefined */
+export function parseRecordingDurationSec(t: string): number | undefined {
+  const s = String(t ?? '').trim();
+  let m: RegExpExecArray | null;
+  if ((m = /^(\d+)分(\d{1,2}(?:\.\d+)?)秒$/.exec(s))) return Number(m[1]) * 60 + Number(m[2]);
+  if ((m = /^(\d+)分$/.exec(s))) return Number(m[1]) * 60;
+  if ((m = /^(\d+(?:\.\d+)?)秒$/.exec(s))) return Number(m[1]);
+  return undefined;
+}
+
+/** 录音时长标签文案（509）：182 → 「3分02秒」、45 → 「45秒」（整秒，与 [语音 N秒] 同构） */
+export function formatRecordingDuration(sec: number): string {
+  const s = Math.max(0, Math.round(sec || 0));
+  if (s < 60) return `${s}秒`;
+  return `${Math.floor(s / 60)}分${String(s % 60).padStart(2, '0')}秒`;
 }
 
 /**
@@ -42,23 +63,24 @@ export function parseMediaTag(msg: string): MediaMaterial | null {
   // 群聊语音/图片照常解析出素材（徽章统计 / mediaNote / 批内媒体计数同源受益）。
   // 前缀内容以已知标签名开头即不剥离（防 [引用「xx」] 这类真标签被当成员名吃掉），长度 ≤16（成员名口径）。
   let s = String(msg ?? '').trim();
-  const stripped = s.replace(/^\[(?!(?:语音|图片|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, '');
-  if (stripped !== s && /^\[(语音|图片)\s*([^\]]*)\]/.test(stripped)) s = stripped;
-  const m = /^\[(语音|图片)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
+  const stripped = s.replace(/^\[(?!(?:语音|图片|录音|视频|通话|文件|分享|引用|表情|链接|撤回|小程序))[^[\]]{1,16}\]\s*/, '');
+  if (stripped !== s && /^\[(语音|图片|录音)\s*([^\]]*)\]/.test(stripped)) s = stripped;
+  const m = /^\[(语音|图片|录音)\s*([^\]]*)\]\s*([\s\S]+)$/.exec(s);
   if (!m) return null;
   const body = m[3].trim();
   if (!body) return null; // 旧空标签 / 空描述：没有素材，保持现状
-  const kind = m[1] === '语音' ? ('voice' as const) : ('image' as const);
+  const kind = m[1] === '语音' ? ('voice' as const) : m[1] === '录音' ? ('recording' as const) : ('image' as const);
   const out: MediaMaterial = { kind, text: body };
-  if (kind === 'voice') {
+  if (kind === 'voice' || kind === 'recording') {
     let durationSec: number | undefined;
     const emos: string[] = [];
     for (const part of m[2].split('·')) {
       const t = part.trim();
       if (!t) continue;
-      const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t);
-      if (dm) {
-        if (durationSec === undefined) durationSec = Number(dm[1]);
+      const dm = /^(\d+(?:\.\d+)?)(?:s|秒)$/i.exec(t); // 语音口径：12s / 3.5秒
+      const dur = dm ? Number(dm[1]) : kind === 'recording' ? parseRecordingDurationSec(t) : undefined; // 录音口径：3分02秒 / 2分 / 45秒
+      if (dur !== undefined) {
+        if (durationSec === undefined) durationSec = dur;
       } else {
         emos.push(t);
       }
@@ -71,7 +93,7 @@ export function parseMediaTag(msg: string): MediaMaterial | null {
 }
 
 export function emptyMediaStats(): MediaStats {
-  return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0 };
+  return { voiceCount: 0, voiceTotalSec: 0, imageCount: 0, recordingCount: 0, recordingTotalSec: 0 };
 }
 
 /** 消息流 → 媒体聚合（旧空标签不算条数；时长只累计写了的） */
@@ -83,6 +105,9 @@ export function collectMediaStats(messages: UnifiedMessage[]): MediaStats {
     if (mat.kind === 'voice') {
       out.voiceCount++;
       if (mat.durationSec !== undefined && Number.isFinite(mat.durationSec)) out.voiceTotalSec += mat.durationSec;
+    } else if (mat.kind === 'recording') {
+      out.recordingCount = (out.recordingCount ?? 0) + 1;
+      if (mat.durationSec !== undefined && Number.isFinite(mat.durationSec)) out.recordingTotalSec = (out.recordingTotalSec ?? 0) + mat.durationSec;
     } else {
       out.imageCount++;
     }
@@ -98,12 +123,16 @@ export function formatDuration(sec: number): string {
   return `${Math.round(s / 3600)} 时`;
 }
 
-/** 徽章 / 概述用的计数文案：`语音 26 条 · 4 分 · 图片 14 张`（零项不出现；全零返回空串） */
+/** 徽章 / 概述用的计数文案：`语音 26 条 · 4 分 · 录音 2 段 · 图片 14 张`（零项不出现；全零返回空串） */
 export function formatMediaCount(s: MediaStats): string {
   const parts: string[] = [];
   if (s.voiceCount > 0) {
     parts.push(`语音 ${s.voiceCount} 条`);
     if (s.voiceTotalSec > 0) parts.push(formatDuration(s.voiceTotalSec));
+  }
+  if ((s.recordingCount ?? 0) > 0) {
+    parts.push(`录音 ${s.recordingCount} 段`);
+    if ((s.recordingTotalSec ?? 0) > 0) parts.push(formatDuration(s.recordingTotalSec ?? 0));
   }
   if (s.imageCount > 0) parts.push(`图片 ${s.imageCount} 张`);
   return parts.join(' · ');
@@ -116,6 +145,7 @@ export function formatMediaCount(s: MediaStats): string {
 export function buildMediaNote(s: MediaStats): string {
   const count = formatMediaCount(s);
   if (!count) return '';
-  const emo = s.voiceCount > 0 ? '；语音行内「·」后的标记是语音情感识别结果（如平静、开心），可作情绪判断的参考' : '';
-  return `聊天里还有${count}的媒体素材——语音已转写成文字并入对话（引用原话时只写转写文本，不带标签），图片以画面描述入列${emo}。`;
+  const hasVoice = s.voiceCount > 0 || (s.recordingCount ?? 0) > 0;
+  const emo = hasVoice ? '；语音/录音行内「·」后的标记是语音情感识别结果（如平静、开心），可作情绪判断的参考' : '';
+  return `聊天里还有${count}的媒体素材——语音与录音已转写成文字并入对话（引用原话时只写转写文本，不带标签），图片以画面描述入列${emo}。`;
 }

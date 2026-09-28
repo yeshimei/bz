@@ -1629,3 +1629,38 @@
 .theme-dark .bz-people-cover-hint { color: #c9b58a; }
 .theme-dark .bz-people-clasp { background: rgba(0, 0, 0, 0.3); border-color: rgba(214, 178, 116, 0.34); }
 .theme-dark .bz-people-decrypt { color: #c9b58a; }
+
+/* ---------------- 补充素材页（issue 509 / ADR-0212：文本 / 图片 / 录音三页签） ---------------- */
+
+.bz-people-supp-tabs { margin: 12px 0 4px; }
+.bz-people-supp-acts { display: flex; gap: 9px; align-items: center; margin: 12px 0 4px; flex-wrap: wrap; }
+.bz-people-supp-qlist { display: flex; flex-direction: column; gap: 7px; margin: 10px 0; }
+.bz-people-supp-qrow { display: flex; gap: 7px; align-items: center; background: var(--card); border: 1px solid rgba(148, 130, 100, 0.25);
+  border-radius: 8px; padding: 6px 9px; }
+.bz-people-supp-qname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--f-mid); color: var(--ink); }
+.bz-people-supp-qts { flex: 0 0 auto; width: 178px; font-size: var(--f-mid); }
+.bz-people-supp-stat { font-size: var(--f-mid); color: var(--ink-mut); margin: 10px 0 2px; }
+.bz-people-supp-ref { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: var(--f-mid);
+  color: var(--ink-mut); margin: 10px 0 0; }
+.bz-people-supp-ref b { color: var(--acc-deep); }
+.bz-people-supp-list { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.bz-people-supp-row { background: var(--card); border: 1px solid rgba(148, 130, 100, 0.25); border-radius: 10px; padding: 9px 11px; }
+.bz-people-supp-rowhead { display: flex; gap: 9px; align-items: center; min-width: 0; }
+.bz-people-supp-rowhead .bz-people-supp-qname { flex: 1 1 auto; }
+.bz-people-supp-badge { flex: none; font-size: var(--f-small, 12px); letter-spacing: 1px; padding: 2px 8px;
+  border-radius: 999px; background: rgba(148, 130, 100, 0.16); color: var(--ink-mut); }
+.bz-people-supp-badge-running { background: rgba(196, 146, 58, 0.2); color: var(--acc-deep); }
+.bz-people-supp-badge-interrupted { background: rgba(148, 130, 100, 0.16); color: var(--ink-mut); }
+.bz-people-supp-badge-failed { background: rgba(168, 74, 60, 0.16); color: #a84a3c; }
+.bz-people-supp-badge-merged { background: rgba(96, 128, 82, 0.18); color: #5c7a4e; }
+.bz-people-supp-row .bz-people-jobs-meter { margin: 8px 0 2px; }
+.bz-people-supp-rowmeta { font-size: var(--f-mid); color: var(--ink-mut); margin-top: 5px; overflow-wrap: anywhere; }
+.bz-people-supp-rowfoot { display: flex; gap: 8px; align-items: center; margin-top: 7px; flex-wrap: wrap; }
+.bz-people-supp-rowfoot .bz-people-jobs-err { overflow-wrap: anywhere; }
+
+.theme-dark .bz-people-supp-qrow, .theme-dark .bz-people-supp-row { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
+.theme-dark .bz-people-supp-badge-running { color: #d6b274; }
+.theme-dark .bz-people-supp-badge-failed { color: #cf8a7e; }
+.theme-dark .bz-people-supp-badge-merged { color: #9cb88a; }
+.theme-dark .bz-people-supp-ref b { color: #d6b274; }

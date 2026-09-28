@@ -268,6 +268,7 @@ function kindFromTypeNum(raw: string, text: string): string | null {
     case 1: return '文本';
     case 3: return '图片';
     case 34: return '语音';
+    case 9001: return '录音'; // 补充素材·录音轮次（509 自定号）
     case 43: return '视频';
     case 47: return '表情';
     case 50: return '通话';
@@ -288,6 +289,7 @@ function kindFromLabel(text: string): string {
   if (t.startsWith('[图片')) return '图片';
   if (t.startsWith('[视频')) return '视频';
   if (t.startsWith('[语音')) return '语音';
+  if (t.startsWith('[录音')) return '录音'; // 补充素材·录音轮次（509）
   if (t.startsWith('[通话') || t.includes('通话时长')) return '通话';
   if (t.startsWith('[表情')) return '表情';
   if (t.startsWith('[文件')) return '文件';

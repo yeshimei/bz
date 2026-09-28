@@ -30,7 +30,7 @@
  * 核心判定全部可单测，fs 仅桌面端可得（window.require，knowledge 同款）。
  */
 import { tryGetSettings } from '../core/settings-provider';
-import { collectMediaStats, parseMediaTag, emptyMediaStats, type MediaStats } from './media';
+import { collectMediaStats, parseMediaTag, emptyMediaStats, formatRecordingDuration, type MediaStats } from './media';
 import { normalizeKind } from './parse';
 import { computeInsights, emptyInsightSignals, type InsightsSummary } from './insights';
 import type { UnifiedMessage } from './types';
@@ -105,7 +105,7 @@ export interface StoreMsg {
   /** 毫秒时间戳 */
   ts: number;
   isSender: boolean;
-  /** 4.x 原始码：1 文本 / 3 图片 / 34 语音 / 43 视频 / 47 表情 / 49 appmsg / 50 通话 / 10000 系统 */
+  /** 4.x 原始码：1 文本 / 3 图片 / 34 语音 / 43 视频 / 47 表情 / 49 appmsg / 50 通话 / 10000 系统；9001 = 补充素材·录音轮次（509 自定号，避开微信原始码） */
   type: number;
   /** 发送者（预处理线还原：「我」或成员名） */
   who?: string;
@@ -127,6 +127,9 @@ export interface StoreStats {
   voiceCount: number;
   voiceTotalSec: number;
   imageCount: number;
+  /** 录音轮次条数与总时长（509；旧存档缺省读作 0） */
+  recordingCount?: number;
+  recordingTotalSec?: number;
 }
 
 /** 一位联系人的聊天仓 */
@@ -551,7 +554,14 @@ export function storeStatsOf(msgs: StoreMsg[]): StoreStats {
     .filter((m) => m.text !== '')
     .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   const media = collectMediaStats(unified);
-  return { msgCount: unified.length, voiceCount: media.voiceCount, voiceTotalSec: media.voiceTotalSec, imageCount: media.imageCount };
+  return {
+    msgCount: unified.length,
+    voiceCount: media.voiceCount,
+    voiceTotalSec: media.voiceTotalSec,
+    imageCount: media.imageCount,
+    recordingCount: media.recordingCount,
+    recordingTotalSec: media.recordingTotalSec,
+  };
 }
 
 // ---------------- 聊天仓合并（upsert） ----------------
@@ -751,6 +761,74 @@ export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): 
 
 // 447 退役：shouldGenerate 自动生成触发判定随自动链路一并移除——
 // 画脸谱一律由数据源弹窗「画脸谱」手动触发（无门槛，选了就画）。
+
+// ---------------- 补充素材·录音轮次 → 聊天仓（issue 509 / ADR-0212、0213） ----------------
+
+/** 录音分离管线 sidecar 的一条话轮（rec_slide_hmm.py 产 .turns.json 的 turns[] 元素） */
+export interface RecordingTurn {
+  /** 轮内起止偏移（秒，相对录音开头） */
+  start: number;
+  end: number;
+  /** 分离归属：「我」/ 联系人名 /「?」（质心降级时为 说话人0/1） */
+  speaker: string;
+  /** SenseVoice 情感标签（中文；缺省文本不带情感段） */
+  emotion?: string;
+  /** 逐轮转写文本（空轮不进仓） */
+  text: string;
+  /** 轮级平均 |llr|（诊断值，不进仓） */
+  meanAbsLlr?: number;
+}
+
+/** 单条录音的轮次并仓入参 */
+export interface RecordingTurnsInput {
+  /** 录音原文件名（recordings/ 下的键；key 前缀 `rec:<file>:` 由此而来） */
+  file: string;
+  /** 录音起点毫秒 ts（文件名解析优先 → mtime 回落，页内可改后的值） */
+  ts: number;
+  turns: RecordingTurn[];
+}
+
+/** 录音轮次文本：`[录音 3分02秒·平静] 转写`（与 `[语音 N秒·情感]` 同构；无情感不带段） */
+export function buildRecordingText(t: { durSec: number; emotion?: string; text: string }): string {
+  const head = `[录音 ${formatRecordingDuration(t.durSec)}${String(t.emotion ?? '').trim() ? `·${String(t.emotion).trim()}` : ''}]`;
+  const body = String(t.text ?? '').trim();
+  return body ? `${head} ${body}` : head;
+}
+
+/**
+ * 录音轮次 → 聊天仓消息（509；ADR-0212/0213：合并动作由插件执行，插件是聊天仓唯一写入者）。
+ * 每轮一条 type=9001 消息：key = `rec:<file>:<轮序>`，ts = 录音起点 + 轮内偏移，
+ * isSender 按「我」归属（其余一律对方侧），text = `[录音 N分NN秒·情感] 转写`（空转写轮跳过）。
+ * 同录音重跑幂等：先按 `rec:<file>:` 前缀清旧再追加（重跑后轮次划分可能变）。
+ * 返回新消息流（ts 升序）与并仓条数（供 kindCounts 增量与导入反馈）。
+ */
+export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsInput): { msgs: StoreMsg[]; added: number } {
+  const file = String(rec?.file ?? '').trim();
+  if (!file) return { msgs: [...msgs], added: 0 };
+  const base = Number.isFinite(rec.ts) ? Math.round(rec.ts) : 0;
+  const prefix = `rec:${file}:`;
+  const out = msgs.filter((m) => !m.key.startsWith(prefix));
+  let added = 0;
+  (rec.turns ?? []).forEach((t, i) => {
+    const body = String(t?.text ?? '').trim();
+    if (!body) return; // 空转写轮（静音 / 转写失败）：不进时间线
+    const speaker = String(t.speaker ?? '').trim();
+    const start = Number.isFinite(t?.start) ? Math.max(0, Number(t.start)) : 0;
+    const end = Number.isFinite(t?.end) ? Math.max(start, Number(t.end)) : start;
+    const durSec = Math.max(1, Math.round(end - start));
+    out.push({
+      key: `${prefix}${i}`,
+      ts: base + Math.round(start * 1000),
+      isSender: speaker === '我',
+      type: 9001,
+      dur: durSec,
+      text: buildRecordingText({ durSec, emotion: String(t.emotion ?? '').trim() || undefined, text: body }),
+    });
+    added++;
+  });
+  out.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
+  return { msgs: out, added };
+}
 
 // ---------------- 设置读取（预览组快照） ----------------
 
