@@ -1664,3 +1664,5 @@
 .theme-dark .bz-people-supp-badge-failed { color: #cf8a7e; }
 .theme-dark .bz-people-supp-badge-merged { color: #9cb88a; }
 .theme-dark .bz-people-supp-ref b { color: #d6b274; }
+.bz-people-supp-badge-awaiting-merge { background: rgba(196, 146, 58, 0.28); color: var(--acc-deep); }
+.theme-dark .bz-people-supp-badge-awaiting-merge { color: #d6b274; }

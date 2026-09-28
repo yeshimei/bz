@@ -76,19 +76,21 @@ describe('applyRecordingTurnsToMsgs 并仓', () => {
     expect(msgs.map((m) => m.key)).toEqual(['rec:r.m4a:2']);
   });
 
-  it('同录音重跑幂等：清旧追加（轮次划分变了也不残留）', () => {
+  it('同录音重跑幂等：清旧追加（轮次划分变了也不残留），removed 供 kindCounts 净增量', () => {
     const first = applyRecordingTurnsToMsgs([], {
       file: 'r.m4a',
       ts: 1700000000000,
       turns: [turn({ text: '旧划分一' }), turn({ start: 10, end: 20, text: '旧划分二' })],
     });
     expect(first.added).toBe(2);
+    expect(first.removed).toBe(0);
     const second = applyRecordingTurnsToMsgs(first.msgs, {
       file: 'r.m4a',
       ts: 1700000000000,
       turns: [turn({ start: 0, end: 25, speaker: '大琳', text: '新划分合并轮' })],
     });
     expect(second.added).toBe(1);
+    expect(second.removed).toBe(2); // 净增量 1 - 2 = -1：重并不翻倍
     expect(second.msgs.map((m) => m.key)).toEqual(['rec:r.m4a:0']);
     expect(second.msgs[0].text).toBe('[录音 25秒] 新划分合并轮');
     expect(second.msgs[0].isSender).toBe(false);

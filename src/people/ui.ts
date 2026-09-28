@@ -258,6 +258,8 @@ let dialog: { kind: DialogKind; tier?: DeleteTier } | null = null;
 
 // —— 补充素材页状态（issue 509；hook 沿用 'note'） ——
 let suppTab: SuppTab = 'text';
+/** 暂存属于哪位联系人（换人清队列——图片队列 / ts 覆盖不跨人带） */
+let suppOwnerId: string | null = null;
 /** 图片页签的待落盘暂存（页内编辑归属 / 时间；关页不清——重开继续编） */
 let suppImages: SuppImageQueueItem[] = [];
 /** 落盘 / 加录音进行中（按钮防双击） */
@@ -286,6 +288,13 @@ let foldScrollTop = false;
 function openDialog(kind: DialogKind, tier?: DeleteTier): void {
   dialog = { kind, tier };
   if (kind === 'note' && detailId) {
+    // 换人清页内暂存（509 评审 P0）：图片队列 / 录音 ts 覆盖都是上一人的，跟着人走
+    if (suppOwnerId !== detailId) {
+      suppOwnerId = detailId;
+      suppImages = [];
+      suppRecTs.clear();
+      suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set() };
+    }
     void refreshSuppStoreInfo(detailId);
     startRecPolling();
   } else {
@@ -382,6 +391,15 @@ function buildPanelShell(app?: unknown): void {
   });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
+  // 补充素材·图片行的时间改写即落状态（509 评审 P2：落盘才读回会被中途重画打回 mtime）
+  overlay.addEventListener('change', (e) => {
+    const inp = e.target instanceof HTMLInputElement ? e.target : null;
+    const idxRaw = inp?.getAttribute('data-people-supp-img-ts');
+    if (!inp || idxRaw === null) return;
+    const it = suppImages[Number(idxRaw)];
+    const v = inp.value ? new Date(inp.value).getTime() : NaN;
+    if (it && Number.isFinite(v)) it.ts = v;
+  });
   // 桌面端鼠标滚轮翻摊（issue 507）：与触摸手势同一口径——累积到位翻一幕、一次只翻一幕。
   // 详情正文 / 数据源列表这种真能滚的块里先让原生滚完，滚到边了才轮到翻摊（滚轮挂在 overlay 上：
   // 册页每次重画都换节点，挂在 overlay 才不会被一起换掉）。
@@ -1792,6 +1810,8 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-supp-rec-add]')) { void suppAddRecordings(); return; }
   const recRun = t.closest<HTMLElement>('[data-people-supp-rec-run]');
   if (recRun) { void suppRunRecording(recRun.getAttribute('data-people-supp-rec-run') ?? ''); return; }
+  const recMerge = t.closest<HTMLElement>('[data-people-supp-rec-merge]');
+  if (recMerge && detailId) { void suppMergeRecording(detailId, recMerge.getAttribute('data-people-supp-rec-merge') ?? ''); return; }
   const recStop = t.closest<HTMLElement>('[data-people-supp-rec-stop]');
   if (recStop) { stopRecordingTask(recStop.getAttribute('data-people-supp-rec-stop') ?? ''); void renderAlbum(); return; }
   if (t.closest('[data-people-supp-rec-ref]')) { void suppBuildVoiceprintRef(); return; }
@@ -2895,7 +2915,8 @@ function suppRecState(talker: string): SuppRecViewState {
   for (const f of files) {
     const key = recordingSidecarPath(root, talker, f);
     const side = readRecordingSidecar(root, talker, f);
-    const merged = suppStoreInfo.mergedRecs.has(f) || side?.phase === 'done';
+    // 并仓只认仓事实（mergedRecs）：sidecar done 但没并上（上锁竞态等）出「待并仓」，可手动补并
+    const merged = suppStoreInfo.mergedRecs.has(f);
     if (isRecordingRunning(key)) {
       rows.push({ file: f, status: 'running', phaseText: side?.progress?.text ?? '启动模型…', pct: recordingPhasePct(side), ...(side?.mode ? { mode: side.mode } : {}), ...(side?.turns ? { turns: side.turns.length } : {}) });
       continue;
@@ -2910,6 +2931,10 @@ function suppRecState(talker: string): SuppRecViewState {
     }
     if (side.phase === 'error') {
       rows.push({ file: f, status: 'failed', phaseText: '', pct: null, errText: side.error ?? '进程异常退出' });
+      continue;
+    }
+    if (side.phase === 'done') {
+      rows.push({ file: f, status: 'awaiting-merge', phaseText: side.turns?.length ? `转写完成 · ${side.turns.length} 轮` : '转写完成', pct: 100, ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
       continue;
     }
     rows.push({ file: f, status: 'interrupted', phaseText: side.progress?.text ?? '中断', pct: recordingPhasePct(side), ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
@@ -3080,7 +3105,10 @@ async function suppRunRecording(file: string): Promise<void> {
 async function suppMergeRecording(talker: string, file: string): Promise<void> {
   const root = suppDataRoot();
   if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
-  if (!peopleSafe?.unlocked) return; // 上锁期不并仓（sidecar 账本还在，解锁后重入补上）
+  if (!peopleSafe?.unlocked) {
+    notice('保险库上锁——解锁后在这条录音上点「并仓」补上', 'warning');
+    return;
+  }
   const side = readRecordingSidecar(root, talker, file);
   if (!side || side.phase !== 'done' || !side.turns?.length) {
     void renderAlbum();
@@ -3099,7 +3127,7 @@ async function suppMergeRecording(talker: string, file: string): Promise<void> {
     await peopleSafe.write(talker, (rec) => {
       const r = applyRecordingTurnsToMsgs(rec.store.msgs, { file, ts: base, turns: side.turns! });
       rec.store.msgs = r.msgs;
-      added = r.added;
+      added = Math.max(0, r.added - r.removed); // kindCounts 取净增量（重并不翻倍）
       if (added > 0) {
         rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: (rec.store.kindCounts?.录音 ?? 0) + added };
         rec.store.stats = storeStatsOf(rec.store.msgs);
@@ -3137,13 +3165,15 @@ async function suppBuildVoiceprintRef(): Promise<void> {
   void renderAlbum();
 }
 
-/** 录音页签的进度轮询：只在页签可见时跑；行内原位更新（不整页重画，输入焦点不丢） */
+/** 录音页签的进度轮询：只在页签可见且有任务在跑时跑；行内原位更新（不整页重画，输入焦点不丢） */
 function startRecPolling(): void {
   if (recPollTimer !== null) return;
   recPollTimer = window.setInterval(() => {
     if (dialog?.kind !== 'note' || suppTab !== 'rec') return;
-    tickRecRows();
-    renderNote();
+    const active = runningRecordingItems().length > 0;
+    if (active) tickRecRows();
+    // 引擎队列空时进度块由本轮询负责摘挂（有引擎任务时引擎快照自己会画，别抢）
+    if (active || !currentJobsItem()) renderNote();
   }, 1000);
 }
 

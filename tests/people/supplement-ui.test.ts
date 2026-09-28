@@ -91,6 +91,13 @@ describe('录音行五态', () => {
     expect(page.textContent).toContain('非我即对方');
   });
 
+  it('awaiting-merge：待并仓徽章 + 并仓按钮（sidecar done 但没并上，如上锁竞态）', () => {
+    const page = suppPage(p, 'rec', emptyImage, { ...base, rows: [row({ status: 'awaiting-merge', phaseText: '转写完成 · 579 轮', pct: 100, turns: 579 })] }, '2026-09-28');
+    expect(page.textContent).toContain('待并仓');
+    expect(page.querySelector('[data-people-supp-rec-merge="r.aac"]')?.textContent).toContain('并仓');
+    expect(page.querySelector('[data-people-supp-rec-run="r.aac"]')).toBeNull();
+  });
+
   it('failed：错误行 + 重试按钮', () => {
     const page = suppPage(p, 'rec', emptyImage, { ...base, rows: [row({ status: 'failed', errText: 'RuntimeError: boom' })] }, '2026-09-28');
     expect(page.querySelector('[data-people-supp-rec-run="r.aac"]')?.textContent).toContain('重试');

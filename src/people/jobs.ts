@@ -945,6 +945,7 @@ function kick(): Promise<void> {
 async function runQueue(): Promise<void> {
   for (;;) {
     if (!st || !runnable()) break; // 暂停请求 / 共锁保险库上锁（ADR-0194）都停在这里
+    if (describeOnlyBusy) break; // 补充素材·描述单段在跑（509）：全链等它，不并发
     const job = st.queue.find((j) => j.status === 'paused');
     if (!job) break;
     await runJob(job);
@@ -1293,64 +1294,75 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
   if (st && (st.runningJob || st.queue.some((j) => j.status === 'paused'))) {
     return { ok: false, reason: '画谱任务进行中——等它跑完再补描述' };
   }
-  if (!st) {
-    st = {
-      app,
-      store: new JobStore(app),
-      safe: null,
-      queue: [],
-      injected: null,
-      retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
-      runningJob: null,
-      pauseRequested: false,
-      prepGate: null,
-    };
-  }
-  st.app = app;
-  st.store = new JobStore(app);
-  st.safe = await getPeopleSafeStore();
-  wireLock();
-  if (!st.safe.unlocked) return { ok: false, reason: '保险库上锁' };
-  st.injected = { ...(st.injected ?? {}), askDescribeConfirm: async () => 'start' };
-
-  const entries = await new PeopleStore(app).list();
-  const name = entries.find((p) => p.id === talker)?.name ?? talker;
-  const now = nowIso();
-  const job: PersonJob = {
-    talker,
-    name,
-    mode: 'incremental',
-    fileLabel: '补充素材',
-    status: 'running',
-    stage: 'describe',
-    msgCount: 0,
-    contentHash: '',
-    chunks: [],
-    batchesDone: 0,
-    results: [],
-    message: '准备图片描述…',
-    startedAt: now,
-    updatedAt: now,
-  };
-  st.queue.push(job);
-  st.runningJob = talker;
-  describeOnlyBusy = true;
-  emit();
-  const finish = async (patch: Partial<PersonJob>): Promise<void> => {
-    Object.assign(job, patch, { updatedAt: nowIso() });
-    await persist();
-    emit();
-  };
+  describeOnlyBusy = true; // 同步占位（早于一切 await）：与 startJobs 入口检查互掐时不再双方过检
+  const prevInjected = st?.injected ?? null;
   try {
-    const r = await runDescribeStage(job, finish);
-    // 'ok' / 'skipped' 都是终态（halted 只在批失败 error 落账后出现）
-    return { ok: job.status !== 'error', skipped: r === 'skipped', ...(job.status === 'error' ? { reason: job.error } : {}) };
-  } finally {
-    st.queue = st.queue.filter((j) => j !== job);
-    if (st.runningJob === talker) st.runningJob = null;
-    describeOnlyBusy = false;
-    await persist();
+    if (!st) {
+      st = {
+        app,
+        store: new JobStore(app),
+        safe: null,
+        queue: [],
+        injected: null,
+        retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
+        runningJob: null,
+        pauseRequested: false,
+        prepGate: null,
+      };
+    }
+    st.app = app;
+    st.store = new JobStore(app);
+    st.safe = await getPeopleSafeStore();
+    wireLock();
+    if (!st.safe.unlocked) return { ok: false, reason: '保险库上锁' };
+    st.injected = { ...(st.injected ?? {}), askDescribeConfirm: async () => 'start' };
+
+    const entries = await new PeopleStore(app).list();
+    const name = entries.find((p) => p.id === talker)?.name ?? talker;
+    const now = nowIso();
+    const job: PersonJob = {
+      talker,
+      name,
+      mode: 'incremental',
+      fileLabel: '补充素材',
+      status: 'running',
+      stage: 'describe',
+      msgCount: 0,
+      contentHash: '',
+      chunks: [],
+      batchesDone: 0,
+      results: [],
+      message: '准备图片描述…',
+      startedAt: now,
+      updatedAt: now,
+    };
+    st.queue.push(job);
+    st.runningJob = talker;
     emit();
+    const finish = async (patch: Partial<PersonJob>): Promise<void> => {
+      Object.assign(job, patch, { updatedAt: nowIso() });
+      // 临时任务不落盘（checkpoint 只写正式队列，中途崩溃不留假任务在保库）
+      const engine = st;
+      if (!engine) return;
+      engine.queue = engine.queue.filter((j) => j !== job);
+      await persist();
+      engine.queue.push(job);
+      emit();
+    };
+    try {
+      const r = await runDescribeStage(job, finish);
+      if (job.status === 'error') return { ok: false, reason: job.error };
+      if (r === 'halted') return { ok: false, reason: '描述没有跑完（保险库上锁或任务被移除），稍后重试' };
+      return { ok: true, skipped: r === 'skipped' };
+    } finally {
+      st.queue = st.queue.filter((j) => j !== job);
+      if (st.runningJob === talker) st.runningJob = null;
+      await persist();
+      emit();
+    }
+  } finally {
+    describeOnlyBusy = false;
+    if (st) st.injected = prevInjected; // 确认门注入还原（不短路后续全链的确认门）
   }
 }
 
