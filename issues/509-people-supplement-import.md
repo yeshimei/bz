@@ -28,6 +28,7 @@
 
 ## 依赖与注
 
-- 方案 C 工具脚本已就位并经真值校准（`E:\Obsidian\微信脸谱数据\tools\rec_slide_hmm.py`、`voiceprint_refs.py`、`rec_groundtruth.py`）。
+- ~~方案 C 工具脚本已就位并经真值校准（`E:\Obsidian\微信脸谱数据\tools\rec_slide_hmm.py`、`voiceprint_refs.py`、`rec_groundtruth.py`）。~~
+  **ADR-0214 收编**：分离 / 质心脚本进 `@jwbz/obsidian-face` v0.4（`bz-face rec / refs`，`python/bz_rec.py / bz_refs.py`），插件不再 spawn 数据根脚本；质心随数据根（`<数据根>/voiceprints/`），数据根旧脚本保留作校准基准。
 - 引擎 describe 段读派生档依赖 img 带扩展名——**仅新导入图片满足**；旧库图片仍走旁路表兜底。
 - 鸩批量描述的 1301 排雷经验（frontier 跳过 + 「（描述跳过）」登记）是子代理批量描述线的运维口径，与本票无关但记录在案。
