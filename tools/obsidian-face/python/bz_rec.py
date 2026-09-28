@@ -25,10 +25,11 @@ bz-face rec —— 录音说话人分离 + 逐轮转写（issue 509 / ADR-0213�
   blind（npz 缺失，2-means 盲聚，不映射身份，speaker=说话人0/1）。续跑时 sidecar 记录的
   mode 与本次算出的不一致（如先 me-only 跑一半、后来建了 dual 质心）→ 声纹段整体重算，
   两种口径的分数绝不混一锅。
-- 协作式让行（v0.5，对齐 prep）：<数据根>/.bz-face/rec-control.json（与 prep 的
-  control.json 各自独立，画谱与录音并行不串台）出现 {"action":"pause"} 在启动前 /
-  每声纹窗 / 每转写轮之间待命（进程不退出，模型不卸载）；{"action":"stop"} 留账本退出
-  （退出码 0，phase 停在中途 = 插件侧「中断可续跑」）。坏 JSON / 未知 action 一律无指令。
+- 协作式让行（v0.5，对齐 prep）：<数据根>/.bz-face/rec-control/<联系人>/<文件名>.control.json
+  **按任务独立**（并发多条录音互不串台，也与 prep 的 control.json 无关）——出现
+  {"action":"pause"} 在启动前 / 每声纹窗 / 每转写轮之间待命（进程不退出，模型不卸载）；
+  {"action":"stop"} 留账本退出（退出码 0，phase 停在中途 = 插件侧「中断可续跑」）。
+  坏 JSON / 未知 action 一律无指令。
 - SenseVoice 逐轮转写带情感标签（轮内分片情感众数；分片 ≤25s）。
 - 依赖 = 转写组（requirements-transcribe.txt：funasr 连带 torch / librosa / numpy）
   + ffmpeg（PATH 或 --ffmpeg）。
@@ -197,11 +198,13 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
 
     me_c, peer_c, mode = load_refs(refs_dir, contact)
     if d.get("mode") not in (None, mode):
-        # 降级口径变了（如先 me-only 跑一半、后来建了 dual 质心）：llr 口径不可混，声纹段重算
+        # 降级口径变了（如先 me-only 跑一半、后来建了 dual 质心）：llr 口径不可混，声纹段重算。
+        # phase 拨回 voiceprint 强制轮次重建；turns 保留作 start 对齐回填源（重建分支按
+        # start±0.01 复用旧 text/emotion，边界变了自然丢弃重转，绝不张冠李戴）
         print(f"质心模式变更（{d.get('mode')} → {mode}），声纹段重算")
         old_wins = (d.get("llr") or {}).get("wins") or []
         d["llr"] = {"wins": old_wins, "values": []}
-        d.pop("turns", None)
+        d["phase"] = "voiceprint"
         d.pop("diag", None)
     d["mode"] = mode
 
@@ -377,13 +380,17 @@ def main():
     a = ap.parse_args()
 
     root = os.path.abspath(a.data_root)
+    if os.path.basename(a.file) != a.file or a.file in (".", ".."):
+        print(f"bz-face rec：--file 收文件名（recordings/ 下，不含路径分隔）：{a.file}", file=sys.stderr)
+        sys.exit(1)
     src = os.path.join(root, a.contact, "recordings", a.file)
     if not os.path.exists(src):
         print(f"bz-face rec：录音不存在：{src}", file=sys.stderr)
         sys.exit(1)
     out_json = os.path.splitext(src)[0] + ".turns.json"
     refs_dir = os.path.join(root, "voiceprints")
-    control_path = os.path.join(root, ".bz-face", "rec-control.json")
+    # 控制文件按任务独立（并发多条录音互不串台；联系人目录名本身是合法目录名）
+    control_path = os.path.join(root, ".bz-face", "rec-control", a.contact, f"{a.file}.control.json")
 
     d = {}
     if os.path.exists(out_json):

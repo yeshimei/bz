@@ -107,17 +107,19 @@ describe('bz-face status 判定层（issue 510）', () => {
       expect(formatStatusReport(TMP, '不存在的人', nope).missing).toBe(-1);
     });
 
-    it('录音 sidecar 坏 JSON → phase=? 不炸；voice.json 缺席但 voice/ 有货 → ✗ 引导 prep', () => {
+    it('录音 sidecar 坏 JSON → phase=? 不炸；.tmp 残留不计音频；voice.json 缺席但 voice/ 有货 → ✗ 引导 prep', () => {
       const name = '半截';
       fs.mkdirSync(path.join(TMP, name, 'voice'), { recursive: true });
       fs.mkdirSync(path.join(TMP, name, 'recordings'), { recursive: true });
       fs.writeFileSync(path.join(TMP, name, 'voice', 'a.wav'), 'x');
       fs.writeFileSync(path.join(TMP, name, 'recordings', 'r.m4a'), 'x');
       fs.writeFileSync(path.join(TMP, name, 'recordings', 'r.m4a.turns.json'), '{bad');
+      fs.writeFileSync(path.join(TMP, name, 'recordings', 'r.m4a.turns.json.tmp'), '{bad'); // 原子写残留
       const facts = collectStatusFacts(TMP, name);
       const { lines } = formatStatusReport(TMP, name, facts);
       const joined = lines.join('\n');
       expect(joined).toContain('r.m4a=?');
+      expect(joined).toContain('recordings/：音频 1 个'); // .tmp 不计
       expect(joined).toContain('voice.json：还没有转写');
     });
   });

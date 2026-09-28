@@ -147,31 +147,44 @@ def main():
     pairs_by_contact = {c: labeled_wavs(ROOT, c) for c in contacts}
     fingerprint = input_fingerprint(ROOT, contacts)
 
+    # 增量先判（在加载 CAM++ 之前）：全员命中指纹 → 连模型冷加载都省掉（分钟级白付）
+    metas = {c: existing_meta(os.path.join(OUT, f"{c}.npz")) for c in contacts}
+    fresh = [c for c in contacts if not (metas[c] and metas[c].get("fingerprint") == fingerprint)]
+    for c in contacts:
+        if c not in fresh:
+            print(f"✓ {c}: 输入未变化，跳过（mode={metas[c].get('mode')}）")
+
+    per_contact_report = []
+    for c in contacts:
+        pairs = pairs_by_contact[c]
+        mine = [p for p, w in pairs if w == "我"]
+        peer = [p for p, w in pairs if w == c]
+        per_contact_report.append((c, len(mine), len(peer)))
+    if not fresh:
+        print("各联系人语音样本量：", per_contact_report)
+        return
+
+    random.seed(42)
+
     from funasr import AutoModel
 
     print("加载 CAM++ …")
     model = AutoModel(model=EMBED_MODEL, disable_update=True, log_level="error")
 
-    mine_paths, per_contact_report = [], []
-    for contact in contacts:
-        pairs = pairs_by_contact[contact]
+    mine_paths = []
+    for c in contacts:
+        pairs = pairs_by_contact[c]
         mine = [p for p, w in pairs if w == "我"]
-        peer = [p for p, w in pairs if w == contact]
+        peer = [p for p, w in pairs if w == c]
         random.shuffle(mine)
         random.shuffle(peer)
         mine_paths += mine[:PER_CONTACT_SAMPLE]
-        per_contact_report.append((contact, len(mine), len(peer)))
 
     random.shuffle(mine_paths)
     mine_paths = mine_paths[:PER_SPEAKER_CAP]
     print(f"「我」参考池：{len(mine_paths)} 条（来自 {len(contacts)} 人）")
 
-    for contact in contacts:
-        out_path = os.path.join(OUT, f"{contact}.npz")
-        old_meta = existing_meta(out_path)
-        if old_meta and old_meta.get("fingerprint") == fingerprint:
-            print(f"✓ {contact}: 输入未变化，跳过（mode={old_meta.get('mode')}）")
-            continue
+    for contact in fresh:
         pairs = pairs_by_contact[contact]
         peer = [p for p, w in pairs if w == contact]
         random.shuffle(peer)

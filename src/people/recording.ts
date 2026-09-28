@@ -11,10 +11,11 @@
  * 同位置，不入引擎队列）；聊天仓合并由插件执行（applyRecordingTurnsToMsgs，
  * datasource 层——插件是聊天仓唯一写入者）。
  *
- * 会话口径：一录音一进程，句柄存模块级注册表；「停止」是协作式的——写
- * `<数据根>/.bz-face/rec-control.json`（独立于 prep 的 control.json，画谱与录音并行不串台），
- * 脚本在安全点留账本退出（模型不卸载也不丢进度），90 秒未退才兜底杀；Obsidian 重启会杀进程，
- * sidecar phase 停在中途 = 「中断可续跑」，续跑由脚本按账本只补缺口。
+ * 会话口径：一录音一进程，句柄存模块级注册表；「停止」是协作式的——写该任务专属的
+ * `<数据根>/.bz-face/rec-control/<联系人>/<文件名>.control.json`（按任务派生，并发录音
+ * 互不串台，与 prep 的 control.json 亦无共享），脚本在安全点留账本退出（模型不卸载也不丢
+ * 进度），90 秒未退才兜底杀；Obsidian 重启会杀进程，sidecar phase 停在中途 = 「中断可续跑」，
+ * 续跑由脚本按账本只补缺口。
  */
 import { runExternalTool, type ExternalToolHandle, type ExternalToolSpec } from '../core/external-tool';
 import { quotePathArg } from './sync';
@@ -295,12 +296,16 @@ export function hasRecordingTurns(msgs: Array<{ key: string }>, file: string): b
   return msgs.some((m) => m.key.startsWith(prefix));
 }
 
-// ---------------- 协作式控制文件（rec 专用通道；issue 510 对齐 prep） ----------------
+// ---------------- 协作式控制文件（按任务独立；issue 510 对齐 prep） ----------------
 
-/** 协作式控制文件：`<数据根>/.bz-face/rec-control.json`（独立于 prep 的 control.json——画谱与录音并行不串台） */
-export function recControlFilePath(dataRoot: string): string {
+/**
+ * 协作式控制文件：`<数据根>/.bz-face/rec-control/<联系人>/<文件名>.control.json`。
+ * **按任务派生**——并发多条录音互不串台（停 A 不动 B，B 的起跑清理也吞不掉 A 的 stop），
+ * 与 prep 的 control.json 亦无共享。
+ */
+export function recControlFilePath(dataRoot: string, talker: string, file: string): string {
   const base = String(dataRoot ?? '').replace(/[\\/]+$/, '');
-  return `${base}/.bz-face/rec-control.json`;
+  return `${base}/.bz-face/rec-control/${talker}/${file}.control.json`;
 }
 
 /** 测试注入缝（fs 读写；null 还原 = window.require('fs')） */
@@ -323,10 +328,10 @@ function controlFs(): any {
 }
 
 /** 写协作控制指令（stop；保留 resume/pause 形参以对齐 prep 契约）。写失败只告警返回 false——控制通道失联不中断任务，兜底杀在 stopRecordingTask 里等着。 */
-export function writeRecControl(dataRoot: string, action: 'pause' | 'resume' | 'stop'): boolean {
+export function writeRecControl(dataRoot: string, action: 'pause' | 'resume' | 'stop', talker: string, file: string): boolean {
   const fs2 = controlFs();
-  const p = recControlFilePath(dataRoot);
-  if (!fs2 || !dataRoot) return false;
+  const p = recControlFilePath(dataRoot, talker, file);
+  if (!fs2 || !dataRoot || !talker || !file) return false;
   try {
     fs2.mkdirSync(p.slice(0, p.lastIndexOf('/')), { recursive: true });
     fs2.writeFileSync(p, `${JSON.stringify({ action })}\n`, 'utf8');
@@ -338,11 +343,11 @@ export function writeRecControl(dataRoot: string, action: 'pause' | 'resume' | '
 }
 
 /** 清掉控制文件（起跑前防陈旧 stop、终结后防残留 pause）；缺文件 / IO 失败都算清完 */
-export function clearRecControl(dataRoot: string): void {
+export function clearRecControl(dataRoot: string, talker: string, file: string): void {
   const fs2 = controlFs();
-  if (!fs2 || !dataRoot) return;
+  if (!fs2 || !dataRoot || !talker || !file) return;
   try {
-    fs2.rmSync(recControlFilePath(dataRoot), { force: true });
+    fs2.rmSync(recControlFilePath(dataRoot, talker, file), { force: true });
   } catch {
     /* 尽力而为 */
   }
@@ -411,7 +416,8 @@ export function faceRecSupportError(caps: FaceCapabilities | null): string | nul
   const [maj, min] = minorVersionOf(caps.version);
   const tooOld = maj === 0 && min < 5; // v0.5 = 510 修复收编缺陷的起线；0.10 / 1.x 都不算旧
   if (tooOld || !caps.commands.includes('rec')) {
-    return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——在终端更新后重试：npm update -g @jwbz/obsidian-face（或重新 npm link）`;
+    // 本包不发公开 registry——npm update 拉不到，指 npm link / 仓内路径重装
+    return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——本包不发 registry，请在包目录 tools/obsidian-face 重新 npm link（或 npm install -g <仓库>/tools/obsidian-face）后重试`;
   }
   return null;
 }
@@ -449,8 +455,9 @@ const COOP_STOP_KILL_MS = 90000;
 
 /**
  * 起一条录音 / 质心构建进程（幂等护栏：同 key 已在跑则不起第二条）。
- * meta.dataRoot 给了就顺带管理控制文件：起跑前清陈旧指令（残留 stop 会让脚本一启动就退），
- * 终结后再清一次。onExit 在进程终结后回调（成功 / 失败 / 停止），注册表条目先摘除。
+ * meta 齐备（dataRoot + talker + file）就按任务管理控制文件：起跑前清陈旧指令（残留 stop
+ * 会让脚本一启动就退），终结后再清一次。onExit 在进程终结后回调（成功 / 失败 / 停止），
+ * 注册表条目先摘除。
  */
 export function startRecordingTask(
   spec: ExternalToolSpec,
@@ -459,25 +466,27 @@ export function startRecordingTask(
   meta?: { talker: string; file: string; dataRoot?: string }
 ): void {
   if (running.has(key)) return;
-  if (meta?.dataRoot) clearRecControl(meta.dataRoot);
+  if (meta?.dataRoot && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
   const handle = runner(spec, { onStep: () => {}, onProgress: () => {}, onInfo: () => {}, onResult: () => {} });
   running.set(key, { handle, talker: meta?.talker ?? '', file: meta?.file ?? '' });
   void handle.done.then((outcome) => {
     running.delete(key);
-    if (meta?.dataRoot) clearRecControl(meta.dataRoot);
+    if (meta?.dataRoot && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
     onExit?.({ ok: outcome.ok, stopped: outcome.stopped, error: outcome.error?.message ?? '' });
   });
 }
 
 /**
  * 停掉该键的在跑进程（幂等；不在跑 = no-op）。
- * opts.dataRoot 给了 → 协作式停止：写 rec-control.json 让脚本在安全点留账本退出
- * （模型不卸载、进度不丢），90 秒未退才兜底杀；没给（旧口径 / 无数据根）→ 直接杀。
+ * opts 齐备（dataRoot + talker + file）→ 协作式停止：写该任务专属的 rec-control 文件让
+ * 脚本在安全点留账本退出（模型不卸载、进度不丢，且并发录音互不波及），90 秒未退才兜底杀；
+ * 不齐备（旧口径 / refs / 无数据根）→ 直接杀。
  */
-export function stopRecordingTask(key: string, opts?: { dataRoot?: string }): void {
+export function stopRecordingTask(key: string, opts?: { dataRoot?: string; talker?: string; file?: string }): void {
   const entry = running.get(key);
   if (!entry) return;
-  if (!opts?.dataRoot || !writeRecControl(opts.dataRoot, 'stop')) {
+  const coop = !!opts?.dataRoot && !!opts.talker && !!opts.file;
+  if (!coop || !writeRecControl(opts!.dataRoot!, 'stop', opts!.talker!, opts!.file!)) {
     entry.handle.stop();
     return;
   }

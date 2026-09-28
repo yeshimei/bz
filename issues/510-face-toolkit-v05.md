@@ -12,7 +12,7 @@
 
 **优化（6 项）**
 - rec 认 `--ffmpeg`（对齐 prep；插件下发 `ffmpegPath` 设置键）。
-- rec 协作式暂停 / 停止（control 文件；独立 `<数据根>/.bz-face/rec-control.json`，不与 prep 的 control.json 串台）；插件「停止」先协作后兜底杀。
+- rec 协作式暂停 / 停止（control 文件；按任务派生 `<数据根>/.bz-face/rec-control/<联系人>/<文件名>.control.json`，与 prep 的 control.json 及并发录音互不串台）；插件「停止」先协作后兜底杀。
 - blind 降级模式声纹段照常落账进度（中断重头保持，但进度可见）。
 - refs 同一联系人只读一遍 chat.json / 列一遍 voice 目录（原三遍）。
 - 质心 npz 原子写（.tmp.npz → os.replace）；rec 续跑时 sidecar 的 mode 与本次算出的不一致 → 重置声纹段重算（防两种口径混一锅）。
@@ -24,7 +24,7 @@
 - `bz-face status <联系人> --data-root <路径>`：产物体检命令（chat/stats/voice/image/desc/map/recordings/质心各一行，人读纯文本，纯 Node 不起 Python）。
 - export `--contacts-file <文件>`：一行一个联系人（# 注释、空行忽略），绕 Windows 8191 字符命令行上限。
 - `bz-face capabilities`：一行 `[bz-result]` 报包版本与子命令支持面，供插件探测（旧版 bz-face 到点按钮才失败 → 改成提前人话提示）。
-- 插件侧：rec spawn 带 `--ffmpeg`；停止改协作式（写 rec-control.json，90s 未退兜底杀）；起跑前 capabilities 版本门（< 0.5 或缺 rec 子命令给人话引导）。
+- 插件侧：rec spawn 带 `--ffmpeg`；停止改协作式（写任务专属 rec-control 文件，90s 未退兜底杀）；起跑前 capabilities 版本门（< 0.5 或缺 rec 子命令给人话引导，指引 npm link——本包不发 registry）。
 
 ## 任务切分
 
@@ -37,5 +37,5 @@
 ## 依赖与注
 
 - 插件侧「我池跨人」语义：refs 指纹是全局的——任一联系人输入变了，所有人的 me 质心输入都变，故整体重建；只有全没变才跳。
-- rec-control.json 独立成文件的动机：prep 的 control.json 是共享通道（464 契约），画谱与录音并行时写 stop 会误杀画谱。
+- rec 控制文件按任务派生的动机（评审 P1 后改定）：prep 的 control.json 是共享通道（464 契约），且数据根级单文件在并发录音下「停 A 连停 B / B 起跑清理吞掉 A 的 stop」——按 <联系人>/<文件名> 派生后各任务各通道。
 - capabilities 探测缓存会话级；探测失败（bz-face 缺失/太旧无此命令）返回 null = 放行，让真实 spawn 自己报错，不双重报错。

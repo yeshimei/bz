@@ -240,22 +240,24 @@ describe('协作式控制文件与版本门（issue 510）', () => {
     expect(noFf.args ?? []).not.toContain('--ffmpeg');
   });
 
-  it('recControlFilePath 固定布局；writeRecControl 写 stop；clearRecControl 摘文件', () => {
-    expect(recControlFilePath('D:\\根')).toBe('D:\\根/.bz-face/rec-control.json');
+  it('recControlFilePath 按任务派生；writeRecControl 写 stop；clearRecControl 摘文件', () => {
+    expect(recControlFilePath('D:\\根', '大琳', 'r.m4a')).toBe('D:\\根/.bz-face/rec-control/大琳/r.m4a.control.json');
     const { calls, files, f } = fsStub();
     setRecordingFsForTests(f);
-    expect(writeRecControl('D:\\根', 'stop')).toBe(true);
-    const p = recControlFilePath('D:\\根');
+    expect(writeRecControl('D:\\根', 'stop', '大琳', 'r.m4a')).toBe(true);
+    const p = recControlFilePath('D:\\根', '大琳', 'r.m4a');
     expect(calls).toContain(`write:${p}`);
     expect(files.get(p)).toBe('{"action":"stop"}\n');
-    clearRecControl('D:\\根');
+    clearRecControl('D:\\根', '大琳', 'r.m4a');
     expect(calls).toContain(`rm:${p}`);
-    // 无 fs（非桌面端）→ 写失败返回 false，不抛
+    // 无 fs（非桌面端）/ 任务三参不齐 → 写失败返回 false，不抛
     setRecordingFsForTests(null);
-    expect(writeRecControl('D:\\根', 'stop')).toBe(false);
+    expect(writeRecControl('D:\\根', 'stop', '大琳', 'r.m4a')).toBe(false);
+    setRecordingFsForTests(f);
+    expect(writeRecControl('D:\\根', 'stop', '', 'r.m4a')).toBe(false);
   });
 
-  it('协作停止：写 rec-control.json、不立即杀；终结后自动清控制文件', async () => {
+  it('协作停止：写任务专属 rec-control、不立即杀；终结后自动清控制文件', async () => {
     let stopped = 0;
     setRecordingRunnerForTests(() => {
       let resolve!: (v: any) => void;
@@ -273,17 +275,17 @@ describe('协作式控制文件与版本门（issue 510）', () => {
     const root = 'D:\\根';
     const key = recordingSidecarPath(root, '大', 'r.m4a');
     startRecordingTask(buildRecordingSpec({ dataRoot: root, talker: '大', file: 'r.m4a' }), key, undefined, { talker: '大', file: 'r.m4a', dataRoot: root });
-    // 起跑即清陈旧控制文件
-    expect(calls.filter((c) => c.startsWith('rm:'))).toContain(`rm:${recControlFilePath(root)}`);
-    stopRecordingTask(key, { dataRoot: root });
-    expect(calls.filter((c) => c.startsWith('write:')).length).toBe(1); // 写了 stop
+    // 起跑即清本任务的陈旧控制文件
+    expect(calls.filter((c) => c.startsWith('rm:'))).toContain(`rm:${recControlFilePath(root, '大', 'r.m4a')}`);
+    stopRecordingTask(key, { dataRoot: root, talker: '大', file: 'r.m4a' });
+    expect(calls.filter((c) => c.startsWith('write:'))).toEqual([`write:${recControlFilePath(root, '大', 'r.m4a')}`]);
     expect(stopped).toBe(0); // 没有立刻杀——等脚本在安全点自己退
     // 90s 内脚本退了（done resolve）→ 定时器摘除，不再兜底杀
     await Promise.resolve();
     expect(stopped).toBe(0);
   });
 
-  it('无 dataRoot 的停止保持旧口径：直接杀', () => {
+  it('任务三参不齐的停止保持旧口径：直接杀', () => {
     let stopped = 0;
     setRecordingRunnerForTests(() => {
       let resolve!: (v: any) => void;
@@ -299,7 +301,8 @@ describe('协作式控制文件与版本门（issue 510）', () => {
     const key = recordingSidecarPath('D:\\根', '大', 'r.m4a');
     startRecordingTask(buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大', file: 'r.m4a' }), key);
     stopRecordingTask(key);
-    expect(stopped).toBe(1);
+    stopRecordingTask(key, { dataRoot: 'D:\\根' }); // 缺 talker/file → 直杀
+    expect(stopped).toBe(2);
   });
 
   it('capabilities 探测：[bz-result] 体解析 + 会话级缓存 + 探测失败返回 null', async () => {
@@ -332,9 +335,11 @@ describe('协作式控制文件与版本门（issue 510）', () => {
     expect(await probeFaceCapabilities()).toBeNull();
   });
 
-  it('faceRecSupportError：能力未知放行；< 0.5 或缺 rec 给升级指引；0.5+ 放行', () => {
+  it('faceRecSupportError：能力未知放行；< 0.5 或缺 rec 给升级指引（npm link 口径）；0.5+ 放行', () => {
     expect(faceRecSupportError(null)).toBeNull();
-    expect(faceRecSupportError({ version: '0.4.0', commands: ['rec'] })).toContain('过旧');
+    const old = faceRecSupportError({ version: '0.4.0', commands: ['rec'] });
+    expect(old).toContain('过旧');
+    expect(old).toContain('npm link'); // 本包不发 registry，指引不能是 npm update
     expect(faceRecSupportError({ version: '0.5.0', commands: ['sync'] })).toContain('过旧');
     expect(faceRecSupportError({ version: '0.5.0', commands: ['sync', 'rec', 'refs'] })).toBeNull();
     expect(faceRecSupportError({ version: '0.10.0', commands: ['rec'] })).toBeNull();

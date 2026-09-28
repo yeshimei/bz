@@ -212,7 +212,7 @@ function collectStatusFacts(dataRoot, contact) {
   if (recNames === null) {
     miss('recordings/：没有（详情页「补充素材 → 录音」导入后落位）');
   } else {
-    const audio = recNames.filter((n) => !n.endsWith('.turns.json') && !n.startsWith('.'));
+    const audio = recNames.filter((n) => !n.endsWith('.turns.json') && !n.endsWith('.tmp') && !n.startsWith('.'));
     const sidecars = recNames.filter((n) => n.endsWith('.turns.json'));
     if (!audio.length) warn('recordings/：空');
     else {
