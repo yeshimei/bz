@@ -35,7 +35,6 @@ function click(sel: string): void {
 }
 
 const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-pocket="${id}"]`);
-const lockMask = (): HTMLElement | null => document.querySelector<HTMLElement>('.bz-lockscreen--mask');
 const delBtn = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-del="${id}"]`);
 /** 二次确认不再是浮层，是册子里翻出来的一页（issue 505）：页根钩子即契约 */
 const flowMask = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-sub="del"]');
@@ -171,45 +170,62 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
   });
 });
 
-describe('已画谱档：重输主密码才可删（issue 500）', () => {
-  it('点删除弹密码门（不是确认框）；输错不删并提示，输对才删', async () => {
+describe('已画谱档：页内重输主密码才可删（issue 500 / 506）', () => {
+  it('点删除翻出的就是删除册页，页里有主密码框；输错不删、页上给话，输对才删', async () => {
     const order: string[] = [];
     const { safe } = await boot([DRAWN], order);
     await seedVaultPassword();
 
     click('[data-people-del="莫莫"]');
-    await vi.waitFor(() => expect(lockMask()).toBeTruthy());
-    expect(flowMask()).toBeNull(); // 已画谱走密码门，不走确认框
-    const mask = lockMask()!;
-    expect(mask.classList.contains('bz-lockscreen--people')).toBe(true);
-    expect(mask.querySelector('[data-ls="title"]')!.textContent).toBe('删除确认');
-    expect(mask.querySelector('[data-ls="sub"]')!.textContent).toContain('脸谱生成于 2026-09-26');
-    expect(mask.querySelector('[data-ls="go"]')!.textContent).toBe('确认删除');
+    await vi.waitFor(() => expect(flowMask()).toBeTruthy());
+    // 506：密码不再另弹一屏宿主锁屏，就在这一页里
+    expect(document.querySelector('.bz-lockscreen--mask')).toBeNull();
+    expect(flowMask()!.querySelector('.bz-people-del-note')!.textContent).toContain('要删除，请重输主密码确认。');
+    const input = flowMask()!.querySelector<HTMLInputElement>('input[data-people-del-pw]')!;
+    expect(input.type).toBe('password');
+    expect(input.placeholder).toBe('主密码');
+    expect(flowOk()!.textContent).toBe('删除');
 
-    const input = mask.querySelector<HTMLInputElement>('[data-ls="p1"]')!;
     input.value = 'wrong-pw';
-    mask.querySelector<HTMLButtonElement>('[data-ls="go"]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await vi.waitFor(() => expect(mask.querySelector('[data-ls="err"]')!.textContent).toContain('主密码错误，未删除'));
+    flowOk()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const err = flowMask()!.querySelector<HTMLElement>('[data-people-del-err]')!;
+    await vi.waitFor(() => expect(err.textContent).toBe('主密码不对，再试一次。'));
     expect(await safe.read('莫莫')).toBeTruthy(); // 没删
-    expect(lockMask()).toBeTruthy(); // 门还开着
+    expect(flowMask()).toBeTruthy(); // 页还开着
+    expect(flowMask()!.querySelector<HTMLInputElement>('input[data-people-del-pw]')!.value).toBe(''); // 清空重输
 
-    input.value = PW;
-    mask.querySelector<HTMLButtonElement>('[data-ls="go"]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    flowMask()!.querySelector<HTMLInputElement>('input[data-people-del-pw]')!.value = PW;
+    flowOk()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await vi.waitFor(() => expect(order).toEqual(['removeJob:莫莫', 'removeContact:莫莫']));
     await vi.waitFor(async () => expect(await safe.read('莫莫')).toBeFalsy());
-    expect(lockMask()).toBeNull(); // 通过即收场
+    expect(flowMask()).toBeNull(); // 删完这一页跟着收场
     expect(document.querySelector('[data-people-pocket="莫莫"]')).toBeNull(); // 卡片同样立刻消失
   });
 
-  it('密码门取消（点遮罩）→ 什么都不删', async () => {
+  it('密码框里按回车＝点删除', async () => {
     const order: string[] = [];
     const { safe } = await boot([DRAWN], order);
     await seedVaultPassword();
 
     click('[data-people-del="莫莫"]');
-    await vi.waitFor(() => expect(lockMask()).toBeTruthy());
-    lockMask()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await vi.waitFor(() => expect(lockMask()).toBeNull());
+    await vi.waitFor(() => expect(flowMask()).toBeTruthy());
+    const input = flowMask()!.querySelector<HTMLInputElement>('input[data-people-del-pw]')!;
+    input.value = PW;
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await vi.waitFor(() => expect(order).toEqual(['removeJob:莫莫', 'removeContact:莫莫']));
+    expect(await safe.read('莫莫')).toBeFalsy();
+  });
+
+  it('合上这页（取消语义）→ 什么都不删，密码框里的字也不作数', async () => {
+    const order: string[] = [];
+    const { safe } = await boot([DRAWN], order);
+    await seedVaultPassword();
+
+    click('[data-people-del="莫莫"]');
+    await vi.waitFor(() => expect(flowMask()).toBeTruthy());
+    flowMask()!.querySelector<HTMLInputElement>('input[data-people-del-pw]')!.value = PW;
+    flowClose()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await vi.waitFor(() => expect(flowMask()).toBeNull());
     await tick();
     expect(await safe.read('莫莫')).toBeTruthy();
     expect(order).toEqual([]);
@@ -221,10 +237,10 @@ describe('已画谱档：重输主密码才可删（issue 500）', () => {
     await seedVaultPassword();
 
     click('[data-people-del="莫莫"]');
-    await vi.waitFor(() => expect(lockMask()).toBeTruthy());
-    const mask = lockMask()!;
-    mask.querySelector<HTMLButtonElement>('[data-ls="go"]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await vi.waitFor(() => expect(mask.querySelector('[data-ls="err"]')!.textContent).toContain('请输入主密码确认'));
+    await vi.waitFor(() => expect(flowMask()).toBeTruthy());
+    flowOk()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const err = flowMask()!.querySelector<HTMLElement>('[data-people-del-err]')!;
+    await vi.waitFor(() => expect(err.textContent).toBe('请输入主密码确认'));
     expect(await safe.read('莫莫')).toBeTruthy();
     expect(order).toEqual([]);
   });

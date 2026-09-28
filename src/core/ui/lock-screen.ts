@@ -34,6 +34,13 @@ export interface LockScreenOpts {
   secText?: string;
   secTone?: 'ok' | 'warn' | 'bad';
   hint?: string;
+  /**
+   * 次按钮文案（可空）。给了就在主按钮左侧多出一颗次要动作钮——脸谱封面那把「取消」
+   * （issue 506：合着的册子封面要给一颗看得见的退出口，不只靠点空白/ESC）。
+   * 组件只出钮与槽位，**取消算什么语义由调用域接**：`cancelBtn.onclick` 不挂就只是颗不动的钮，
+   * 故不传 `cancel` 的域渲染与既有一模一样。
+   */
+  cancel?: string;
   /** 首设模式：双输入 + 风险告知 + 勾选确认 */
   firstSetup?: boolean;
   warningHtml?: string;
@@ -52,6 +59,8 @@ export interface LockScreenHandle {
   input2: HTMLInputElement;
   ackBox: HTMLInputElement | null;
   actionBtn: HTMLButtonElement;
+  /** 次按钮（未传 opts.cancel 时为 null）——语义由调用域挂 onclick */
+  cancelBtn: HTMLButtonElement | null;
   setTitle(text: string): void;
   setMessage(text: string): void;
   setError(text: string): void;
@@ -157,8 +166,17 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   actionBtn.className = 'bz-lockscreen-action';
   actionBtn.dataset.ls = 'go';
   actionBtn.textContent = opts.action;
+  // 次按钮（可选）：只出钮，语义留给调用域（见 LockScreenOpts.cancel 注释）
+  let cancelBtn: HTMLButtonElement | null = null;
+  if (opts.cancel) {
+    cancelBtn = document.createElement('button');
+    cancelBtn.className = 'bz-lockscreen-cancel';
+    cancelBtn.dataset.ls = 'cancel';
+    cancelBtn.textContent = opts.cancel;
+  }
   row.appendChild(input);
   row.appendChild(input2);
+  if (cancelBtn) row.appendChild(cancelBtn);
   row.appendChild(actionBtn);
   box.appendChild(row);
 
@@ -215,6 +233,7 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
     input2,
     ackBox,
     actionBtn,
+    cancelBtn,
     setTitle: (t) => { title.textContent = t; },
     setMessage: (t) => { sub.textContent = t; },
     setError: (t) => { err.textContent = t; },
@@ -229,6 +248,7 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
       actionBtn.disabled = !!busy;
       input.disabled = !!busy;
       input2.disabled = !!busy;
+      if (cancelBtn) cancelBtn.disabled = !!busy; // 提交窗口内不给退出（同主按钮）
       if (busy) actionBtn.dataset.busyText = actionBtn.textContent || '';
       actionBtn.textContent = busy ? '处理中…' : (actionBtn.dataset.busyText || opts.action);
     },

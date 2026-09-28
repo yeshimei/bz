@@ -96,10 +96,10 @@ const LOCK_KIND_META: Record<
     ],
   },
   people: {
-    icon: 'contact',
-    title: '脸谱已上锁',
-    sub: '解锁前，联系人卡片与聊天记录均以密文保存',
-    action: '解锁',
+    icon: 'lock',
+    title: '脸谱',
+    sub: '人物消息脸谱',
+    action: '解锁保险库',
     stats: [
       { num: '—', label: '联系人' },
       { num: '—', label: '随记录附件' },
@@ -1333,6 +1333,8 @@ export class UIManager {
       secText: exists ? '主密码不会存储 · 遗忘将无法恢复密文' : '',
       secTone: 'warn',
       hint: exists ? '' : '建议使用密码本保存此密码',
+      // 脸谱封面给一颗看得见的退出口（issue 506）：取消 = 不开面板 / 不展示任何数据（ADR-0194 决策 3）
+      cancel: kind === 'people' ? '取消' : undefined,
     });
     topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
     document.body.appendChild(ls.el);
@@ -1357,6 +1359,10 @@ export class UIManager {
       ls.setError(m);
       setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
     };
+
+    // 次按钮「取消」（脸谱封面那颗，issue 506）：与点空白 / ESC 同一条收场路——done(false)，
+    // 等待方自行决定后续（脸谱开面板那条会发一条「数据在保险库里」的通知）
+    if (ls.cancelBtn) ls.cancelBtn.onclick = () => done(false);
 
     ls.actionBtn.onclick = async () => {
       const pw = ls.input.value;

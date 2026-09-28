@@ -602,6 +602,17 @@ describe('删除联系人册页（delPage）：按档说清代价与门禁', () 
     expect(noteOf('drawn')).toBe('要删除，请重输主密码确认。');
   });
 
+  it('主密码框只在已画谱档出现（506：框与错误行都归本页，不再另弹一屏）', () => {
+    const pwOf = (tier: 'drawn' | 'unfinished' | 'undrawn') =>
+      page(tier).querySelector<HTMLInputElement>('input[data-people-del-pw]');
+    expect(pwOf('drawn')).not.toBeNull();
+    expect(pwOf('drawn')!.type).toBe('password');
+    expect(pwOf('drawn')!.placeholder).toBe('主密码');
+    expect(page('drawn').querySelector('[data-people-del-err]')!.textContent).toBe(''); // 错误行常驻、空串收起
+    expect(pwOf('unfinished')).toBeNull();
+    expect(pwOf('undrawn')).toBeNull();
+  });
+
   it('画谱未完成 / 未画谱：说清后果，并交代数据源与聊天原文不动', () => {
     expect(lineOf('unfinished')).toContain('脸谱还没画完');
     expect(noteOf('unfinished')).toBe('数据源目录与聊天原文不动，之后可以重新导入。');

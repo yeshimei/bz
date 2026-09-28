@@ -1,7 +1,8 @@
 /**
  * 脸谱专属解锁屏测试（issue 482）：
- * - LOCK_KIND_META people 档：脸谱标题 / 副文案 / 动作 + 统计口径（联系人 / 随记录附件 / 附件密文）
- *   + `bz-lockscreen--people` 作用域类（朱砂皮在域 styles.css，结构类在此钉死）+ contact 印章图标；
+ * - LOCK_KIND_META people 档：封面题字口径（脸谱 / 人物消息脸谱 / 解锁保险库，issue 506 与册内封面同一句话）
+ *   + 统计口径（联系人 / 随记录附件 / 附件密文）+ `bz-lockscreen--people` 作用域类
+ *   （皮在域 styles.css，结构类在此钉死）+ lock 印章图标 + 封面那颗「取消」次按钮；
  * - 冷启动统计回落 lock-stats.json 的 people 档上次快照（core/lock-stats 段级合并写）；
  * - 解锁期 captureLockStats 快照含 people 档（清单级计数，不解密正文；既有三档不受影响）；
  * - 脸谱面板门禁默认走 people 档：peopleUnlockGate → ensureSafeUnlocked('people')，
@@ -65,17 +66,19 @@ afterEach(() => {
 });
 
 describe('people 档解锁屏（LOCK_KIND_META，issue 482）', () => {
-  it('脸谱文案与统计口径：标题 / 副文案 / 动作 / 联系人三卡 + 朱砂作用域类 + contact 印章', async () => {
+  it('脸谱文案与统计口径：标题 / 副文案 / 动作 / 联系人三卡 + 朱砂作用域类 + lock 印章 + 取消钮', async () => {
     const { dm, ui } = await bootUi();
     await seedManifest(dm);
     const p = ui.showPasswordDialog('people');
     await waitFor(() => !!findLockMask());
     const mask = findLockMask()!;
     expect(mask.classList.contains('bz-lockscreen--people')).toBe(true);
-    expect(mask.querySelector('[data-ls="title"]')!.textContent).toBe('脸谱已上锁');
-    expect(mask.querySelector('[data-ls="sub"]')!.textContent).toContain('联系人卡片与聊天记录均以密文保存');
-    expect(mask.querySelector('[data-ls="go"]')!.textContent).toBe('解锁');
-    expect(mask.querySelector('.bz-lockscreen-seal-ic')!.getAttribute('data-icon')).toBe('contact');
+    expect(mask.querySelector('[data-ls="title"]')!.textContent).toBe('脸谱');
+    expect(mask.querySelector('[data-ls="sub"]')!.textContent).toContain('人物消息脸谱');
+    expect(mask.querySelector('[data-ls="go"]')!.textContent).toBe('解锁保险库');
+    expect(mask.querySelector('.bz-lockscreen-seal-ic')!.getAttribute('data-icon')).toBe('lock');
+    // issue 506：封面上那颗看得见的退出口（不只靠点空白 / ESC）
+    expect(mask.querySelector('[data-ls="cancel"]')!.textContent).toBe('取消');
     // 无快照时三卡回落「—」，口径即脸谱档
     const labels = [...mask.querySelectorAll('.bz-lockscreen-label')].map((n) => n.textContent);
     expect(labels).toEqual(['联系人', '随记录附件', '附件密文']);
@@ -84,6 +87,17 @@ describe('people 档解锁屏（LOCK_KIND_META，issue 482）', () => {
     // 点遮罩取消收场
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(await p).toBe(false);
+  });
+
+  it('封面那颗「取消」= 与点空白 / ESC 同一条收场路：点击即放行 false 并摘屏（issue 506）', async () => {
+    const { dm, ui } = await bootUi();
+    await seedManifest(dm);
+    const p = ui.showPasswordDialog('people');
+    await waitFor(() => !!findLockMask());
+    const cancel = findLockMask()!.querySelector<HTMLButtonElement>('[data-ls="cancel"]')!;
+    cancel.click();
+    expect(await p).toBe(false); // 等待方按取消放行（脸谱开面板那条会改发「数据在保险库里」通知）
+    expect(findLockMask()).toBeFalsy(); // 唯一出口 done() 收场即摘 DOM
   });
 
   it('冷启动统计回落 lock-stats.json 的 people 档上次快照', async () => {
@@ -143,7 +157,7 @@ describe('脸谱面板门禁默认走 people 档（issue 482）', () => {
     await waitFor(() => !!findLockMask());
     const mask = findLockMask()!;
     expect(mask.classList.contains('bz-lockscreen--people')).toBe(true);
-    expect(mask.querySelector('[data-ls="title"]')!.textContent).toBe('脸谱已上锁');
+    expect(mask.querySelector('[data-ls="title"]')!.textContent).toBe('脸谱');
     const labels = [...mask.querySelectorAll('.bz-lockscreen-label')].map((n) => n.textContent);
     expect(labels).toEqual(['联系人', '随记录附件', '附件密文']);
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
