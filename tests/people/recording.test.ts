@@ -32,8 +32,11 @@ describe('路径组装', () => {
   it('recordingsDirOf / sidecar / 脚本 / 质心 npz 的固定布局（ADR-0212）', () => {
     expect(recordingsDirOf('E:\\数据根', '大琳')).toBe('E:\\数据根/大琳/recordings');
     expect(recordingSidecarPath('E:\\数据根', '大琳', '周二.aac')).toBe('E:\\数据根/大琳/recordings/周二.aac.turns.json');
-    expect(recordingToolScriptPath('E:\\数据根/', 'rec_slide_hmm.py')).toBe('E:\\数据根/tools/rec_slide_hmm.py');
-    expect(voiceprintRefPath('E:\\数据根', '大琳')).toBe('E:\\数据根/tools/voiceprints/大琳.npz');
+    expect(recordingToolScriptPath('E:\\数据根/', 'rec_slide_hmm.py')).toBe('E:/tools/rec_slide_hmm.py');
+    expect(voiceprintRefPath('E:\\数据根', '大琳')).toBe('E:/tools/voiceprints/大琳.npz');
+    // 现实布局：peopleDataDir = …/微信脸谱数据/export_full，tools 与它平级（评审 P1-2：反斜杠同容）
+    expect(recordingToolScriptPath('E:\\Obsidian\\微信脸谱数据\\export_full', 'rec_slide_hmm.py')).toBe('E:/Obsidian/微信脸谱数据/tools/rec_slide_hmm.py');
+    expect(voiceprintRefPath('E:/Obsidian/微信脸谱数据/export_full', '大琳')).toBe('E:/Obsidian/微信脸谱数据/tools/voiceprints/大琳.npz');
   });
 
   it('buildRecordingSpec：python 空回落 python、参数四件套、不经 shell', () => {
@@ -41,7 +44,7 @@ describe('路径组装', () => {
     expect(spec.cmd).toBe('python');
     expect(spec.shell).toBe(false);
     expect(spec.args).toEqual([
-      'D:\\根/tools/rec_slide_hmm.py',
+      'D:/tools/rec_slide_hmm.py',
       'D:\\根/大琳/recordings/r.m4a',
       '大琳',
       'D:\\根/大琳/recordings/r.m4a.turns.json',
@@ -53,7 +56,7 @@ describe('路径组装', () => {
   it('buildVoiceprintSpec：python + 脚本 + 联系人', () => {
     const spec = buildVoiceprintSpec({ dataRoot: 'D:\\根', talker: '大琳', python: 'py -3' });
     expect(spec.cmd).toBe('py -3');
-    expect(spec.args).toEqual(['D:\\根/tools/voiceprint_refs.py', '大琳']);
+    expect(spec.args).toEqual(['D:/tools/voiceprint_refs.py', '大琳']);
   });
 });
 
@@ -138,6 +141,11 @@ describe('文件名时间解析', () => {
     expect(parseRecordingFilenameTs('大琳 周二 00点18分✔️.aac')).toBeNull();
     expect(parseRecordingFilenameTs('voice memo.m4a')).toBeNull();
     expect(parseRecordingFilenameTs('20261323_001830.aac')).toBeNull(); // 13 月
+  });
+  it('不存在的日子不滚进下月（20260230 → null）', () => {
+    expect(parseRecordingFilenameTs('20260230_100000.aac')).toBeNull();
+    expect(parseRecordingFilenameTs('20260431_a.aac')).toBeNull();
+    expect(parseRecordingFilenameTs('20260228_100000.aac')).not.toBeNull();
   });
   it('recordingTsOf 三级回落：文件名 → mtime → now', () => {
     const fromName = parseRecordingFilenameTs('20260923_001830.aac')!;

@@ -800,14 +800,15 @@ export function buildRecordingText(t: { durSec: number; emotion?: string; text: 
  * 每轮一条 type=9001 消息：key = `rec:<file>:<轮序>`，ts = 录音起点 + 轮内偏移，
  * isSender 按「我」归属（其余一律对方侧），text = `[录音 N分NN秒·情感] 转写`（空转写轮跳过）。
  * 同录音重跑幂等：先按 `rec:<file>:` 前缀清旧再追加（重跑后轮次划分可能变）。
- * 返回新消息流（ts 升序）与并仓条数（供 kindCounts 增量与导入反馈）。
+ * 返回新消息流（ts 升序）、追加 added 条与清掉的 removed 条（kindCounts 取净增量 added − removed）。
  */
-export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsInput): { msgs: StoreMsg[]; added: number } {
+export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsInput): { msgs: StoreMsg[]; added: number; removed: number } {
   const file = String(rec?.file ?? '').trim();
-  if (!file) return { msgs: [...msgs], added: 0 };
+  if (!file) return { msgs: [...msgs], added: 0, removed: 0 };
   const base = Number.isFinite(rec.ts) ? Math.round(rec.ts) : 0;
   const prefix = `rec:${file}:`;
   const out = msgs.filter((m) => !m.key.startsWith(prefix));
+  const removed = msgs.length - out.length;
   let added = 0;
   (rec.turns ?? []).forEach((t, i) => {
     const body = String(t?.text ?? '').trim();
@@ -827,7 +828,7 @@ export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsI
     added++;
   });
   out.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-  return { msgs: out, added };
+  return { msgs: out, added, removed };
 }
 
 // ---------------- 设置读取（预览组快照） ----------------

@@ -1,4 +1,4 @@
-/* 源指纹 aedc37a9079c17eb · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7c6d1657f31206d5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1347,6 +1347,7 @@ var BZR_people = (() => {
     running: "转写中",
     interrupted: "已中断",
     failed: "失败",
+    "awaiting-merge": "待并仓",
     merged: "已并入"
   };
   function suppPage(p, tab, image, rec, today) {
@@ -1440,7 +1441,7 @@ var BZR_people = (() => {
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
     head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
     row.appendChild(head);
-    if (r.status === "running" || r.status === "interrupted") {
+    if (r.status === "running" || r.status === "interrupted" || r.status === "awaiting-merge") {
       const meter = el("div", "bz-people-jobs-meter");
       if (r.pct !== null) {
         meter.appendChild(el("div", "bz-people-jobs-track", { "aria-hidden": "true" }, el("div", "bz-people-jobs-fill", { style: `width:${r.pct}%` })));
@@ -1460,6 +1461,7 @@ var BZR_people = (() => {
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "running") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file }));
+    if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }

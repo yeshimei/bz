@@ -1702,7 +1702,7 @@ export interface SuppImageViewState {
   modelLabel: string;
 }
 
-export type SuppRecRowStatus = 'pending' | 'running' | 'interrupted' | 'failed' | 'merged';
+export type SuppRecRowStatus = 'pending' | 'running' | 'interrupted' | 'failed' | 'awaiting-merge' | 'merged';
 
 export interface SuppRecRowState {
   file: string;
@@ -1728,6 +1728,7 @@ const SUPP_REC_LABEL: Record<SuppRecRowStatus, string> = {
   running: '转写中',
   interrupted: '已中断',
   failed: '失败',
+  'awaiting-merge': '待并仓',
   merged: '已并入',
 };
 
@@ -1829,7 +1830,7 @@ function suppRecRow(r: SuppRecRowState): HTMLElement {
   head.appendChild(el('span', 'bz-people-supp-qname', { title: r.file }, text(r.file)));
   head.appendChild(el('span', `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
   row.appendChild(head);
-  if (r.status === 'running' || r.status === 'interrupted') {
+  if (r.status === 'running' || r.status === 'interrupted' || r.status === 'awaiting-merge') {
     const meter = el('div', 'bz-people-jobs-meter');
     if (r.pct !== null) {
       meter.appendChild(el('div', 'bz-people-jobs-track', { 'aria-hidden': 'true' }, el('div', 'bz-people-jobs-fill', { style: `width:${r.pct}%` })));
@@ -1849,6 +1850,7 @@ function suppRecRow(r: SuppRecRowState): HTMLElement {
   if (r.status === 'interrupted') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '续跑', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'failed') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '重试', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'running') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '停止', { 'data-people-supp-rec-stop': r.file }));
+  if (r.status === 'awaiting-merge') foot.push(button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '并仓', { 'data-people-supp-rec-merge': r.file, title: '转写完成但还没进时间线——点这里按轮次并仓' }));
   if (foot.length) row.appendChild(el('div', 'bz-people-supp-rowfoot', foot));
   return row;
 }

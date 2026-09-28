@@ -28,7 +28,7 @@ export function recordingSidecarPath(dataRoot: string, talker: string, file: str
 
 /** 数据根的父目录（工具树所在：peopleDataDir = …/export_full，tools 与它平级——真值校准期的既定布局） */
 function dataRootParent(dataRoot: string): string {
-  const root = String(dataRoot ?? '').replace(/[\\/]+$/, '');
+  const root = String(dataRoot ?? '').trim().replace(/\\/g, '/').replace(/\/+$/, '');
   const cut = root.lastIndexOf('/');
   return cut > 0 ? root.slice(0, cut) : root;
 }
@@ -149,6 +149,7 @@ export function parseRecordingSidecar(text: string): RecordingSidecar | null {
   const phase = str(o.phase) as RecordingPhase | undefined;
   if (!phase || !['vad', 'voiceprint', 'transcribe', 'done', 'error'].includes(phase)) return null;
   const speakers = o.speakers_sec;
+  const turnsParsed = parseTurns(o.turns);
   return {
     ...(str(o.file) ? { file: str(o.file) } : {}),
     ...(str(o.contact) ? { contact: str(o.contact) } : {}),
@@ -160,7 +161,7 @@ export function parseRecordingSidecar(text: string): RecordingSidecar | null {
       ? { speakersSec: Object.fromEntries(Object.entries(speakers as Record<string, unknown>).filter(([, v]) => typeof v === 'number')) as Record<string, number> }
       : {}),
     ...(o.progress && typeof o.progress === 'object' ? { progress: o.progress as RecordingSidecarProgress } : {}),
-    ...(parseTurns(o.turns) ? { turns: parseTurns(o.turns) } : {}),
+    ...(turnsParsed ? { turns: turnsParsed } : {}),
   };
 }
 
@@ -233,7 +234,9 @@ export function parseRecordingFilenameTs(fileName: string): number | null {
 function composeTs(y: number, mo: number, d: number, h: number, mi: number, s: number): number | null {
   if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 59) return null;
   const t = new Date(y, mo - 1, d, h, mi, s).getTime();
-  return Number.isFinite(t) ? t : null;
+  // roundtrip 校验：20260230 这类不存在的日子会被 Date 滚进下月，按无效处理
+  if (!Number.isFinite(t) || new Date(t).getDate() !== d) return null;
+  return t;
 }
 
 /** 录音 ts 三级回落：文件名 → mtime → now（永不返回无效值） */

@@ -1,4 +1,4 @@
-/* 源指纹 03c335a1a251f904 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d5d6c03ddf471024 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -8412,7 +8412,8 @@ var BZW_people = (() => {
       const res = await dialog2.showOpenDialog({
         title,
         properties: ["openFile", "multiSelections", "dontAddToRecent"],
-        filters
+        // Electron 认 extensions 字段（PickFilesFilter.ext 是域侧叫法，这里做一次映射）
+        filters: filters.map((f) => ({ name: f.name, extensions: f.ext }))
       });
       if (res == null ? void 0 : res.canceled) return [];
       return ((_d = res == null ? void 0 : res.filePaths) != null ? _d : []).map((p) => normalizeSystemPath(p)).filter(Boolean);
@@ -15926,10 +15927,11 @@ ${lines.join("\n")}`);
   function applyRecordingTurnsToMsgs(msgs, rec) {
     var _a2, _b2;
     const file = String((_a2 = rec == null ? void 0 : rec.file) != null ? _a2 : "").trim();
-    if (!file) return { msgs: [...msgs], added: 0 };
+    if (!file) return { msgs: [...msgs], added: 0, removed: 0 };
     const base = Number.isFinite(rec.ts) ? Math.round(rec.ts) : 0;
     const prefix = `rec:${file}:`;
     const out = msgs.filter((m) => !m.key.startsWith(prefix));
+    const removed = msgs.length - out.length;
     let added = 0;
     ((_b2 = rec.turns) != null ? _b2 : []).forEach((t, i) => {
       var _a3, _b3, _c;
@@ -15950,7 +15952,7 @@ ${lines.join("\n")}`);
       added++;
     });
     out.sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
-    return { msgs: out, added };
+    return { msgs: out, added, removed };
   }
   function normalizeOptionsFromSettings() {
     var _a2, _b2;
@@ -17221,6 +17223,7 @@ ${lines.join("\n")}`);
   async function runQueue() {
     for (; ; ) {
       if (!st || !runnable()) break;
+      if (describeOnlyBusy) break;
       const job = st.queue.find((j) => j.status === "paused");
       if (!job) break;
       await runJob(job);
@@ -17489,67 +17492,78 @@ ${lines.join("\n")}`);
     return describeOnlyBusy;
   }
   async function runDescribeOnly(app, talker) {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d;
     if (describeOnlyBusy) return { ok: false, reason: "已有描述任务在跑" };
     if (st && (st.runningJob || st.queue.some((j) => j.status === "paused"))) {
       return { ok: false, reason: "画谱任务进行中——等它跑完再补描述" };
     }
-    if (!st) {
-      st = {
-        app,
-        store: new JobStore(app),
-        safe: null,
-        queue: [],
-        injected: null,
-        retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
-        runningJob: null,
-        pauseRequested: false,
-        prepGate: null
-      };
-    }
-    st.app = app;
-    st.store = new JobStore(app);
-    st.safe = await getPeopleSafeStore();
-    wireLock();
-    if (!st.safe.unlocked) return { ok: false, reason: "保险库上锁" };
-    st.injected = { ...(_a2 = st.injected) != null ? _a2 : {}, askDescribeConfirm: async () => "start" };
-    const entries = await new PeopleStore(app).list();
-    const name = (_c = (_b2 = entries.find((p) => p.id === talker)) == null ? void 0 : _b2.name) != null ? _c : talker;
-    const now = nowIso();
-    const job = {
-      talker,
-      name,
-      mode: "incremental",
-      fileLabel: "补充素材",
-      status: "running",
-      stage: "describe",
-      msgCount: 0,
-      contentHash: "",
-      chunks: [],
-      batchesDone: 0,
-      results: [],
-      message: "准备图片描述…",
-      startedAt: now,
-      updatedAt: now
-    };
-    st.queue.push(job);
-    st.runningJob = talker;
     describeOnlyBusy = true;
-    emit();
-    const finish = async (patch) => {
-      Object.assign(job, patch, { updatedAt: nowIso() });
-      await persist();
-      emit();
-    };
+    const prevInjected = (_a2 = st == null ? void 0 : st.injected) != null ? _a2 : null;
     try {
-      const r = await runDescribeStage(job, finish);
-      return { ok: job.status !== "error", skipped: r === "skipped", ...job.status === "error" ? { reason: job.error } : {} };
-    } finally {
-      st.queue = st.queue.filter((j) => j !== job);
-      if (st.runningJob === talker) st.runningJob = null;
-      describeOnlyBusy = false;
-      await persist();
+      if (!st) {
+        st = {
+          app,
+          store: new JobStore(app),
+          safe: null,
+          queue: [],
+          injected: null,
+          retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
+          runningJob: null,
+          pauseRequested: false,
+          prepGate: null
+        };
+      }
+      st.app = app;
+      st.store = new JobStore(app);
+      st.safe = await getPeopleSafeStore();
+      wireLock();
+      if (!st.safe.unlocked) return { ok: false, reason: "保险库上锁" };
+      st.injected = { ...(_b2 = st.injected) != null ? _b2 : {}, askDescribeConfirm: async () => "start" };
+      const entries = await new PeopleStore(app).list();
+      const name = (_d = (_c = entries.find((p) => p.id === talker)) == null ? void 0 : _c.name) != null ? _d : talker;
+      const now = nowIso();
+      const job = {
+        talker,
+        name,
+        mode: "incremental",
+        fileLabel: "补充素材",
+        status: "running",
+        stage: "describe",
+        msgCount: 0,
+        contentHash: "",
+        chunks: [],
+        batchesDone: 0,
+        results: [],
+        message: "准备图片描述…",
+        startedAt: now,
+        updatedAt: now
+      };
+      st.queue.push(job);
+      st.runningJob = talker;
       emit();
+      const finish = async (patch) => {
+        Object.assign(job, patch, { updatedAt: nowIso() });
+        const engine = st;
+        if (!engine) return;
+        engine.queue = engine.queue.filter((j) => j !== job);
+        await persist();
+        engine.queue.push(job);
+        emit();
+      };
+      try {
+        const r = await runDescribeStage(job, finish);
+        if (job.status === "error") return { ok: false, reason: job.error };
+        if (r === "halted") return { ok: false, reason: "描述没有跑完（保险库上锁或任务被移除），稍后重试" };
+        return { ok: true, skipped: r === "skipped" };
+      } finally {
+        st.queue = st.queue.filter((j) => j !== job);
+        if (st.runningJob === talker) st.runningJob = null;
+        await persist();
+        emit();
+      }
+    } finally {
+      describeOnlyBusy = false;
+      if (st) st.injected = prevInjected;
     }
   }
   async function runJob(job) {
@@ -17856,7 +17870,7 @@ ${lines.join("\n")}`);
     return `${recordingsDirOf(dataRoot, talker)}/${file}.turns.json`;
   }
   function dataRootParent(dataRoot) {
-    const root = String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "");
+    const root = String(dataRoot != null ? dataRoot : "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
     const cut = root.lastIndexOf("/");
     return cut > 0 ? root.slice(0, cut) : root;
   }
@@ -17925,6 +17939,7 @@ ${lines.join("\n")}`);
     const phase = str2(o.phase);
     if (!phase || !["vad", "voiceprint", "transcribe", "done", "error"].includes(phase)) return null;
     const speakers = o.speakers_sec;
+    const turnsParsed = parseTurns(o.turns);
     return {
       ...str2(o.file) ? { file: str2(o.file) } : {},
       ...str2(o.contact) ? { contact: str2(o.contact) } : {},
@@ -17934,7 +17949,7 @@ ${lines.join("\n")}`);
       ...str2(o.mode) ? { mode: str2(o.mode) } : {},
       ...speakers && typeof speakers === "object" && !Array.isArray(speakers) ? { speakersSec: Object.fromEntries(Object.entries(speakers).filter(([, v]) => typeof v === "number")) } : {},
       ...o.progress && typeof o.progress === "object" ? { progress: o.progress } : {},
-      ...parseTurns(o.turns) ? { turns: parseTurns(o.turns) } : {}
+      ...turnsParsed ? { turns: turnsParsed } : {}
     };
   }
   function recordingPhasePct(s) {
@@ -17976,7 +17991,8 @@ ${lines.join("\n")}`);
   function composeTs(y, mo, d, h, mi, s) {
     if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 59) return null;
     const t = new Date(y, mo - 1, d, h, mi, s).getTime();
-    return Number.isFinite(t) ? t : null;
+    if (!Number.isFinite(t) || new Date(t).getDate() !== d) return null;
+    return t;
   }
   function recordingTsOf(fileName, mtimeMs, nowMs) {
     const fromName = parseRecordingFilenameTs(fileName);
@@ -19450,6 +19466,7 @@ ${lines.join("\n")}`);
     running: "转写中",
     interrupted: "已中断",
     failed: "失败",
+    "awaiting-merge": "待并仓",
     merged: "已并入"
   };
   function suppPage(p, tab, image, rec, today) {
@@ -19543,7 +19560,7 @@ ${lines.join("\n")}`);
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
     head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
     row.appendChild(head);
-    if (r.status === "running" || r.status === "interrupted") {
+    if (r.status === "running" || r.status === "interrupted" || r.status === "awaiting-merge") {
       const meter = el("div", "bz-people-jobs-meter");
       if (r.pct !== null) {
         meter.appendChild(el("div", "bz-people-jobs-track", { "aria-hidden": "true" }, el("div", "bz-people-jobs-fill", { style: `width:${r.pct}%` })));
@@ -19563,6 +19580,7 @@ ${lines.join("\n")}`);
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "running") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file }));
+    if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }
@@ -19957,6 +19975,7 @@ ${lines.join("\n")}`);
   var pulled = null;
   var dialog = null;
   var suppTab = "text";
+  var suppOwnerId = null;
   var suppImages = [];
   var suppBusy = false;
   var refBuilding = false;
@@ -19974,6 +19993,12 @@ ${lines.join("\n")}`);
   function openDialog(kind, tier) {
     dialog = { kind, tier };
     if (kind === "note" && detailId) {
+      if (suppOwnerId !== detailId) {
+        suppOwnerId = detailId;
+        suppImages = [];
+        suppRecTs.clear();
+        suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set() };
+      }
       void refreshSuppStoreInfo(detailId);
       startRecPolling();
     } else {
@@ -20047,6 +20072,14 @@ ${lines.join("\n")}`);
     });
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
+    overlay.addEventListener("change", (e) => {
+      const inp = e.target instanceof HTMLInputElement ? e.target : null;
+      const idxRaw = inp == null ? void 0 : inp.getAttribute("data-people-supp-img-ts");
+      if (!inp || idxRaw === null) return;
+      const it = suppImages[Number(idxRaw)];
+      const v = inp.value ? new Date(inp.value).getTime() : NaN;
+      if (it && Number.isFinite(v)) it.ts = v;
+    });
     offWheelTurn = bindWheelTurn(overlay, (dir) => turnTo(dir > 0 ? "next" : "prev"));
     overlay.addEventListener("keydown", (e) => {
       var _a3, _b2;
@@ -21037,7 +21070,7 @@ ${lines.join("\n")}`);
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -21338,9 +21371,14 @@ ${lines.join("\n")}`);
       void suppRunRecording((_x = recRun.getAttribute("data-people-supp-rec-run")) != null ? _x : "");
       return;
     }
+    const recMerge = t.closest("[data-people-supp-rec-merge]");
+    if (recMerge && detailId) {
+      void suppMergeRecording(detailId, (_y = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _y : "");
+      return;
+    }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      stopRecordingTask((_y = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _y : "");
+      stopRecordingTask((_z = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _z : "");
       void renderAlbum();
       return;
     }
@@ -22279,7 +22317,7 @@ ${lines.join("\n")}`);
     };
   }
   function suppRecState(talker) {
-    var _a2, _b2, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e, _f;
     const rows = [];
     const root = suppDataRoot();
     const ref = refBuilding ? "building" : voiceprintRefStatus(root, talker);
@@ -22301,7 +22339,7 @@ ${lines.join("\n")}`);
     for (const f of files) {
       const key = recordingSidecarPath(root, talker, f);
       const side = readRecordingSidecar(root, talker, f);
-      const merged = suppStoreInfo.mergedRecs.has(f) || (side == null ? void 0 : side.phase) === "done";
+      const merged = suppStoreInfo.mergedRecs.has(f);
       if (isRecordingRunning(key)) {
         rows.push({ file: f, status: "running", phaseText: (_b2 = (_a2 = side == null ? void 0 : side.progress) == null ? void 0 : _a2.text) != null ? _b2 : "启动模型…", pct: recordingPhasePct(side), ...(side == null ? void 0 : side.mode) ? { mode: side.mode } : {}, ...(side == null ? void 0 : side.turns) ? { turns: side.turns.length } : {} });
         continue;
@@ -22318,7 +22356,11 @@ ${lines.join("\n")}`);
         rows.push({ file: f, status: "failed", phaseText: "", pct: null, errText: (_c = side.error) != null ? _c : "进程异常退出" });
         continue;
       }
-      rows.push({ file: f, status: "interrupted", phaseText: (_e = (_d = side.progress) == null ? void 0 : _d.text) != null ? _e : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+      if (side.phase === "done") {
+        rows.push({ file: f, status: "awaiting-merge", phaseText: ((_d = side.turns) == null ? void 0 : _d.length) ? `转写完成 · ${side.turns.length} 轮` : "转写完成", pct: 100, ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+        continue;
+      }
+      rows.push({ file: f, status: "interrupted", phaseText: (_f = (_e = side.progress) == null ? void 0 : _e.text) != null ? _f : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
     }
     return { rows, ref };
   }
@@ -22479,7 +22521,10 @@ ${lines.join("\n")}`);
     var _a2, _b2;
     const root = suppDataRoot();
     if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
-    if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) return;
+    if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) {
+      notice("保险库上锁——解锁后在这条录音上点「并仓」补上", "warning");
+      return;
+    }
     const side = readRecordingSidecar(root, talker, file);
     if (!side || side.phase !== "done" || !((_a2 = side.turns) == null ? void 0 : _a2.length)) {
       void renderAlbum();
@@ -22498,7 +22543,7 @@ ${lines.join("\n")}`);
         var _a3, _b3, _c;
         const r = applyRecordingTurnsToMsgs(rec.store.msgs, { file, ts: base, turns: side.turns });
         rec.store.msgs = r.msgs;
-        added = r.added;
+        added = Math.max(0, r.added - r.removed);
         if (added > 0) {
           rec.store.kindCounts = { ...(_a3 = rec.store.kindCounts) != null ? _a3 : {}, 录音: ((_c = (_b3 = rec.store.kindCounts) == null ? void 0 : _b3.录音) != null ? _c : 0) + added };
           rec.store.stats = storeStatsOf(rec.store.msgs);
@@ -22537,8 +22582,9 @@ ${lines.join("\n")}`);
     if (recPollTimer !== null) return;
     recPollTimer = window.setInterval(() => {
       if ((dialog == null ? void 0 : dialog.kind) !== "note" || suppTab !== "rec") return;
-      tickRecRows();
-      renderNote();
+      const active = runningRecordingItems().length > 0;
+      if (active) tickRecRows();
+      if (active || !currentJobsItem()) renderNote();
     }, 1e3);
   }
   function stopRecPolling() {

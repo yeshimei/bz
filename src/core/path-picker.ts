@@ -761,7 +761,8 @@ export async function pickSystemFiles(title: string, filters: PickFilesFilter[])
     const res = await dialog.showOpenDialog({
       title,
       properties: ['openFile', 'multiSelections', 'dontAddToRecent'],
-      filters,
+      // Electron 认 extensions 字段（PickFilesFilter.ext 是域侧叫法，这里做一次映射）
+      filters: filters.map((f) => ({ name: f.name, extensions: f.ext })),
     });
     if (res?.canceled) return [];
     return (res?.filePaths ?? []).map((p) => normalizeSystemPath(p)).filter(Boolean);
