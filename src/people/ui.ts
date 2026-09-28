@@ -71,6 +71,7 @@ import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, s
 import {
   AL_PER_PAGE,
   PER_SPREAD,
+  albumBlankPage,
   albumEmpty,
   albumGutter,
   albumLoad,
@@ -85,6 +86,7 @@ import {
   detailPage,
   dsPage,
   dsSyncLineNode,
+  dsWaterOf,
   duoBar,
   findPage,
   foldBondBody,
@@ -132,6 +134,7 @@ import {
 
 import { el, text, textEl } from './render';
 import { mountIcons } from '../core/ui';
+import { bindWheelTurn } from '../core/gesture';
 import { tryGetSettings } from '../core/settings-provider';
 
 const ESC_ID = 'people-panel';
@@ -148,6 +151,8 @@ let opening = false;
 let offUnlockWatch: (() => void) | null = null;
 /** 同步状态订阅退订（面板开着才订；同步进程独立于面板——关面板照跑，重开即恢复进度行） */
 let offSyncWatch: (() => void) | null = null;
+/** 滚轮翻页解绑（issue 507；桌面端鼠标滚轮翻摊，面板开着才挂） */
+let offWheelTurn: (() => void) | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 详情当前展开的折（换人回落画像折） */
@@ -203,6 +208,8 @@ let dsHiddenGroups = 0;
 let dsNotice = '';
 /** 导入完成且新增 >0 → 弹窗出「画脸谱」 */
 let dsGenerateable = false;
+/** 这一趟导入并进来的那几位（issue 507：导入后勾选就摘了，页脚「画脸谱」按这份名单走） */
+let dsLastImported: string[] = [];
 let dsScannedAt = '';
 /** 这一趟导入真的并进了素材（合上数据源那页时让带「新」的照片飞回册页） */
 let dsImported = false;
@@ -231,9 +238,11 @@ let animBoot = true;      // 册子首次摊开（照片显影、纸边探出来
 let animTurn: '' | 'next' | 'prev' = '';
 let animDetail = false;   // 详情那页转进来
 let animFold = false;     // 折页内容换页
-let animDrop = false;     // 导入完：带「新」的照片飞回册页
+let animDrop: string[] = []; // 导入完：这几位的照片飞回册页（id 名单——导入那刻 newCount 已清零，认角标认不出人）
 let animDev = '';         // 刚画完的那位：照片从灰里洗出颜色
 let animNote = false;     // 进度便签落下来贴上
+/** 换折之后详情正文要从头读（issue 507）：这一次重画别把滚动位置还回去 */
+let foldScrollTop = false;
 
 /** 开一只册页弹窗（靠人的页要有人开着；另一只开着则换页） */
 function openDialog(kind: DialogKind, tier?: DeleteTier): void {
@@ -248,7 +257,7 @@ function closeDialog(): void {
   dialog = null;
   if (dsImported) {
     dsImported = false;
-    animDrop = true;
+    animDrop = dsLastImported.slice(); // 这一趟导进来的那几位飞回册页
   }
   void renderAlbum();
 }
@@ -328,6 +337,10 @@ function buildPanelShell(app?: unknown): void {
   });
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
+  // 桌面端鼠标滚轮翻摊（issue 507）：与触摸手势同一口径——累积到位翻一幕、一次只翻一幕。
+  // 详情正文 / 数据源列表这种真能滚的块里先让原生滚完，滚到边了才轮到翻摊（滚轮挂在 overlay 上：
+  // 册页每次重画都换节点，挂在 overlay 才不会被一起换掉）。
+  offWheelTurn = bindWheelTurn(overlay, (dir) => turnTo(dir > 0 ? 'next' : 'prev'));
   // 输入框 Enter 直提交（448 评审 P3：标签 / 随手记连续录入免鼠标往返；506 补主密码框）
   overlay.addEventListener('keydown', (e) => {
     const input = e.target instanceof HTMLInputElement ? e.target : null;
@@ -385,6 +398,8 @@ export function closePeoplePanel(): void {
   offUnlockWatch = null;
   offSyncWatch?.();
   offSyncWatch = null;
+  offWheelTurn?.();
+  offWheelTurn = null;
   overlay?.remove();
   overlay = null;
   store = null;
@@ -417,6 +432,7 @@ function closeDsState(): void {
   dsHiddenGroups = 0;
   dsNotice = '';
   dsGenerateable = false;
+  dsLastImported = [];
   dsScannedAt = '';
 }
 
@@ -477,7 +493,7 @@ function dsOpen(): boolean {
 
 /** 弹窗行状态（快照 + 水位 → 渲染入参） */
 function dsRowStates(): DsRowState[] {
-  return (dsContacts ?? []).map((c) => {
+  const rows = (dsContacts ?? []).map((c) => {
     const badge = storeMediaBadge(c.stats);
     const rec = recordCache?.get(c.name);
     return {
@@ -496,6 +512,13 @@ function dsRowStates(): DsRowState[] {
       exported: dsExported.has(c.name),
     };
   });
+  // 排序在这里落（不是扫描时）：水位依赖 recordCache，导入后水位才落到「无新素材」——
+  // 排在渲染前算，关掉数据源页再打开就能看到刚导入的那几位沉到下面（issue 507）。
+  const rank = (r: DsRowState): number => {
+    const k = dsWaterOf(r)?.k;
+    return k === 'newer' ? 0 : k === 'skip' ? 2 : 1;
+  };
+  return rows.sort((a, b) => rank(a) - rank(b) || b.newCount - a.newCount || a.name.localeCompare(b.name, 'zh'));
 }
 
 function dsPageState(): DsModalState {
@@ -653,6 +676,38 @@ function applySyncLockdown(): void {
 }
 
 /**
+ * 画谱进行中把**别人**那页的「画脸谱」按下去（issue 507）。
+ * 口径：同时只画一位——引擎队列是单跑的，起第二位要等前一位收工。这条限制本身是既定行为，
+ * 缺的是**看得见**：过去点下去只弹一条一闪而过的通知，观感就是「点了没反应」。
+ * 所以照同步锁那条老规矩办——不可点的动作不装作能点，理由直接写在按钮上。
+ * 自己那一位留着（继续生成 / 补画 / 重画都走这枚钮，可续任务得能点），关锁由下一次重画自然还原。
+ */
+function applyJobsLockdown(): void {
+  const queue = jobsCache?.queue ?? [];
+  if (!jobsBusy()) return;
+  // 在跑的优先；只剩暂停 / 中断时理由换一句（那一位在等用户，不在等 AI）
+  const active = queue.find((j) => j.status === 'running')
+    ?? queue.find((j) => j.status === 'paused' || j.status === 'interrupted');
+  const who = active?.name || active?.talker || '';
+  const running = active?.status === 'running';
+  const why = running
+    ? `正在给「${who}」画谱——一位一位来，等它画完再画这位`
+    : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
+  const short = running ? `等「${who}」画完` : '先接上没画完的那位';
+  overlay?.querySelectorAll<HTMLElement>('[data-people-detail]').forEach((page) => {
+    const id = page.dataset.peopleDetail ?? '';
+    if (queue.some((j) => j.talker === id)) return; // 这一位自己有任务（在跑 / 排队 / 待续）：照旧可点
+    const btn = page.querySelector<HTMLButtonElement>('[data-people-act="generate"]');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.setAttribute('data-people-jobs-lock', '1');
+    btn.title = who ? why : '已有画谱在进行——等它收工再画这位';
+    const hint = btn.querySelector<HTMLElement>('.bz-people-act-hint');
+    if (hint) hint.textContent = who ? short : '等前一位收工';
+  });
+}
+
+/**
  * 扫描数据源：列目录 → 逐人读 stats.json（485 优先；缺文件回落 chat.json 归一化，兼容存量）
  * → 对照聊天仓算新素材 → 落快照（不导入、不自动勾选——447 拍板：默认不选任何联系人）。
  * stats 路径没有键集合，「新 N 条」退化成「有无新」哨兵（maxSid 对聊天仓 watermarkSid），
@@ -731,8 +786,9 @@ async function runScan(force = false): Promise<void> {
   dsScanning = false;
   dsHiddenGroups = hidden;
   if (overlay) {
-    // 有更新排最前，其余名字序（拍板 Q4）
-    dsContacts = contacts.sort((a, b) => b.newCount - a.newCount || a.name.localeCompare(b.name, 'zh'));
+    // 顺序不在这儿定：「有更新排最前」（拍板 Q4）与「已导入无新素材沉底」（issue 507）
+    // 都在 dsRowStates 渲染前算——水位依赖 recordCache，扫描这一刻还看不到最新水位
+    dsContacts = contacts;
     const names = new Set(dsContacts.map((c) => c.name));
     dsSelected = new Set([...dsSelected].filter((n) => names.has(n)));
     const now = new Date();
@@ -856,8 +912,15 @@ async function importDsSelected(): Promise<void> {
   const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ''}`;
   dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
   dsGenerateable = fresh > 0 && !readFail.length;
+  // 这一趟导进来的从勾选里摘掉（issue 507）：水位已经落到「无新素材」，留着勾选等于等着重复入账。
+  // 摘下后页脚那枚「画脸谱」改按这一趟导进来的几位走（见 dsLastImported），不丢批量画谱这条路。
+  dsLastImported = chosen.map((c) => c.name);
+  for (const c of chosen) dsSelected.delete(c.name);
   if (dsGenerateable) dsImported = true; // 合上这页时新照片飞进册页
-  renderAlbum();
+  // 导入完成即合上数据源这一页（issue 507）：新照片飞回册页，这一页留到下次要用再开
+  // （横幅走「不打断手上动作」那档：导入是状态告知，不该像出错那样抢眼）
+  showBanner(`${summary}——新照片飞回册页了`, true);
+  closeDialog();
 }
 
 /**
@@ -868,7 +931,10 @@ async function generateFromDs(): Promise<void> {
   if (!overlay || !store || dsImporting || dsScanning) return;
   if (isSyncing()) { notice('正在同步微信数据——同步完成后再画脸谱', 'info'); return; } // ADR-0196 决策 10
   if (jobsBusy()) { notice('已有生成在进行——等它完成或暂停后再画', 'info'); return; }
-  const names = (dsContacts ?? []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
+  // 勾选优先；刚导入完勾选已摘（issue 507）→ 按这一趟导进来的几位走（页脚那枚「画脸谱」的语义）
+  const picked = (dsContacts ?? []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
+  const known = new Set((dsContacts ?? []).map((c) => c.name));
+  const names = picked.length ? picked : dsLastImported.filter((n) => known.has(n));
   if (!names.length) { notice('还没有勾选联系人', 'warning'); return; }
   const targets: GenTarget[] = [];
   try {
@@ -1030,7 +1096,10 @@ export function setJobsModuleForTests(mod: JobsApi | null): void {
 
 /** 快照进场（订阅回调 / 打开面板恢复共用）：done 落盘 → 渲染进度块 */
 function applySnapshot(s: EngineSnapshot | null): void {
+  const hadNote = Boolean(jobsCache?.queue.length);
   jobsCache = s;
+  // 便签「落下来贴上」只放这一下（issue 507）：队列从空到有的那一次——505 之后这枚标志没人置位
+  if (!hadNote && s?.queue.length) animNote = true;
   if (s) handleJobsSnapshot(s);
   else renderNote();
 }
@@ -1240,7 +1309,10 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     }
     notice(`「${name}」的脸谱已生成`, 'success');
     jobs().removeJob(talker); // 产物已入保库记录：done 任务清出队列，进度块自然收起
-    if (overlay) void renderAlbum(); // 封面墙 / 详情立即可见新脸谱
+    if (overlay) {
+      animDev = talker; // 刚画完那位：照片从灰里洗出颜色（issue 507：505 之后这枚标志没人置位）
+      void renderAlbum(); // 封面墙 / 详情立即可见新脸谱
+    }
   } catch (e) {
     if (target) targetsInFlight.set(talker, target); // 落盘失败放回：下个快照重试
     notifyActionError(e, `写入「${name}」的脸谱`);
@@ -1518,7 +1590,9 @@ function onOverlayClick(e: MouseEvent): void {
   if (dsRow && t.closest('[data-people-ds-list]')) {
     // 目录键从勾选框钩子取（issue 501：行上显示名与目录键已分离，显示名不可回推键）
     const name = dsRow.querySelector<HTMLElement>('[data-people-ds-check]')?.dataset.peopleDsCheck ?? '';
-    if (name && !dsRow.classList.contains('bz-people-ds-off')) {
+    // 群聊（未纳入）与「已导入且无新素材」两档都不可勾（issue 507：后者原来还能勾，导了等于白导）
+    const inert = dsRow.classList.contains('bz-people-ds-off') || dsRow.classList.contains('bz-people-ds-skip');
+    if (name && !inert) {
       if (dsSelected.has(name)) dsSelected.delete(name); else dsSelected.add(name);
       syncDsChecks();
     }
@@ -1549,17 +1623,31 @@ function onOverlayClick(e: MouseEvent): void {
     if (kind === 'note') { openDialog('note'); return; }
     if (kind === 'del') { void handleDelete(act.dataset.peopleDel ?? detailId ?? ''); return; }
   }
-  // —— 折页切换 / 月组开合 / 撕掉随手记 ——
+  // —— 折页切换 / 「另有 N 条」摊开 / 月组开合 / 撕掉随手记 ——
   const foldTab = t.closest<HTMLElement>('[data-people-fold]');
   if (foldTab) {
     const id = foldTab.dataset.peopleFold as FoldId | undefined;
-    if (id && id !== detailFold) {
-      detailFold = id;
-      animFold = true;
-      profEditId = null; // 切折退出编辑（编辑态内容不跨折保留）
-      noteAddId = null;
-      void renderAlbum();
+    if (!id) return;
+    // 同一折再点一下 = 回到这一折的开头（折签贴在上沿，往下读远了就找它回来）
+    if (id === detailFold) {
+      const body = overlay?.querySelector<HTMLElement>('[data-people-scroll="detail"]');
+      if (body) body.scrollTop = 0;
+      return;
     }
+    detailFold = id;
+    animFold = true;
+    foldScrollTop = true; // 换折从头顶读起（issue 507：原来会接着上一折的滚动位置落进正文中间）
+    profEditId = null; // 切折退出编辑（编辑态内容不跨折保留）
+    noteAddId = null;
+    void renderAlbum();
+    return;
+  }
+  // 「另有 N 条」：原地把收着的那几条摊开，按钮自己退场（issue 507；六处列表同一套）
+  const more = t.closest<HTMLElement>('[data-people-more]');
+  if (more) {
+    const box = more.parentElement;
+    box?.querySelectorAll<HTMLElement>('.bz-people-more-hide').forEach((n) => n.classList.remove('bz-people-more-hide'));
+    more.remove();
     return;
   }
   const mon = t.closest<HTMLElement>('[data-people-mon]');
@@ -1735,7 +1823,7 @@ async function albumBody(people: PersonEntry[]): Promise<HTMLElement> {
       const pi = Math.min(Math.floor(at / AL_PER_PAGE), total - 1);
       if (pi !== cur && pi !== cur + 1) cur = pi - (pi % PER_SPREAD);
       const clickedLeft = pi === cur;
-      const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos(pages[pi] ?? [], indexOf, avatars), pi + 1, sorted.length, ledger);
+      const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos(pages[pi] ?? [], indexOf, avatars), pi + 1, sorted.length, ledger, { drop: animDrop, dev: animDev });
       const det = detailPage(d, detailOpts(d, clickedLeft ? 'right' : 'left', avatars));
       const inner = clickedLeft ? [leaf, albumGutter(), det] : [det, albumGutter(), leaf];
       return albumSpread(inner, { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } });
@@ -1748,9 +1836,11 @@ async function albumBody(people: PersonEntry[]): Promise<HTMLElement> {
   const halves: HTMLElement[] = [];
   for (let h = 0; h < PER_SPREAD; h++) {
     const idx = cur + h;
-    if (!pages[idx]) break;
     if (h) halves.push(albumGutter());
-    halves.push(albumPage(pagePhotos(pages[idx], indexOf, avatars), idx + 1, sorted.length, ledger));
+    // 照片没排到的那半张也照样摊开（issue 507）：册子不只剩半本，缺的那页出空位占位页
+    halves.push(pages[idx]
+      ? albumPage(pagePhotos(pages[idx], indexOf, avatars), idx + 1, sorted.length, ledger, { drop: animDrop, dev: animDev })
+      : albumBlankPage());
   }
   return albumSpread(halves, turnLoad(cur, total), { boot: animBoot, turn: animTurn });
 }
@@ -1764,6 +1854,7 @@ function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string,
   return {
     side,
     fold: detailFold,
+    foldIn: animFold, // 刚换折 → 正文放进动画（issue 507：505 之后这一支的类名没人挂了）
     avatar: avatars.get(p.id) ?? '',
     body: detailFold === 'p' ? foldPersonBody(md, p) : detailFold === 'b' ? foldBondBody(bondMd, p) : foldEventsBody(p),
     job: sealJobOf(jobViews().get(p.id)),
@@ -1841,10 +1932,16 @@ async function renderAlbum(): Promise<void> {
   if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
   overlay.querySelector<HTMLElement>('[data-people-scroll]')?.replaceWith(next);
   restoreScroll(scroll);
+  // 换折（issue 507）：别人都还回原处，只有详情正文从头读起——折签贴在上沿，切完该回到第一行
+  if (foldScrollTop) {
+    const body = overlay.querySelector<HTMLElement>('[data-people-scroll="detail"]');
+    if (body) body.scrollTop = 0;
+  }
   syncScrollEdges();
   renderNote();
   renderBanner();
   applySyncLockdown();
+  applyJobsLockdown();
   mountIcons(overlay); // lucide 占位 → SVG
   clearAnim();
 }
@@ -1855,9 +1952,10 @@ function clearAnim(): void {
   animTurn = '';
   animDetail = false;
   animFold = false;
-  animDrop = false;
+  animDrop = [];
   animDev = '';
   animNote = false;
+  foldScrollTop = false;
 }
 
 /** 能滚的那块：记下滚动位置，重画后放回去（切折 / 换页不跳回顶端） */
@@ -1920,6 +2018,8 @@ function turnTo(dir: 'next' | 'prev'): void {
 
 /** 掀纸：一块 position:fixed 的纸，绕自己的左边（中缝）转 180°，落地淡掉 */
 function flipSheet(mode: 'next' | 'prev', s: { face: string; back: string; rect: { x: number; y: number; w: number; h: number } }): void {
+  // 少动效（issue 507）：翻摊照翻，只是不掀这一张飞纸（与 runFly 同一口径）
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const el = document.createElement('div');
   el.className = `bz-people-sheet bz-people-sheet-${mode}`;
   el.setAttribute('aria-hidden', 'true');
@@ -2051,7 +2151,8 @@ function renderNote(): void {
   const item = currentJobsItem();
   if (!item) { slot.replaceChildren(); return; }
   const note = jobsNote(toBlockState(item));
-  if (animNote) note.classList.add('bz-people-note-in');
+  // 落下来这一下是**一次性的**：用掉就清（每次快照都重画便签，不清就会一秒落一次）
+  if (animNote) { note.classList.add('bz-people-note-in'); animNote = false; }
   const old = slot.querySelector<HTMLElement>('.bz-people-jobs');
   if (old) old.replaceWith(note);
   else slot.replaceChildren(note);
@@ -2247,11 +2348,18 @@ function focusFind(): void {
  */
 async function handleDelete(id: string): Promise<void> {
   if (!store) { notice('保险库未解锁——先解锁再删', 'info'); return; }
+  const open = (p: PersonEntry): void => {
+    openedTier = deleteTierOf(p, jobViews().get(id) ?? null);
+    dialog = { kind: 'del', tier: openedTier };
+    void renderAlbum().then(focusDelPw);
+  };
+  // 册子上摊着的这位就直接翻删除页——先出页、后读库（issue 507）：删除是册子里的一页，
+  // 点下去就该翻过去；把它挂在一次异步读库后面，读慢的那几秒观感就是「点了没反应」。
+  const here = listCache.find((x) => x.id === id) ?? null;
+  if (here) { open(here); return; }
   const p = (await store.list()).find((x) => x.id === id) ?? null;
   if (!p) { notice('这位联系人已不在库里', 'info'); await renderAlbum(); return; }
-  openedTier = deleteTierOf(p, jobViews().get(id) ?? null);
-  dialog = { kind: 'del', tier: openedTier };
-  void renderAlbum().then(focusDelPw);
+  open(p);
 }
 
 /** 删除册页重画后把焦点交给主密码框（只有已画谱档有这枚框；没有就什么也不做） */

@@ -1,4 +1,4 @@
-/* 源指纹 649c26d261046af0 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4bc38ae852c1fd74 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -26,6 +26,7 @@ var BZR_people = (() => {
     AL_PER_PAGE: () => AL_PER_PAGE,
     FOLD_TITLES: () => FOLD_TITLES,
     PER_SPREAD: () => PER_SPREAD,
+    albumBlankPage: () => albumBlankPage,
     albumEmpty: () => albumEmpty,
     albumGutter: () => albumGutter,
     albumLoad: () => albumLoad,
@@ -41,6 +42,7 @@ var BZR_people = (() => {
     avatarNode: () => avatarNode,
     avatarUri: () => avatarUri,
     button: () => button,
+    clipList: () => clipList,
     dateRow: () => dateRow,
     delPage: () => delPage,
     deleteTierOf: () => deleteTierOf,
@@ -532,8 +534,8 @@ var BZR_people = (() => {
   function msgsOf(p) {
     return p.imports.reduce((s, r) => s + r.messageCount, 0);
   }
-  function albumPhoto(ph) {
-    var _a, _b;
+  function albumPhoto(ph, opts = {}) {
+    var _a, _b, _c;
     const { p, avatar, index, fresh, due, job } = ph;
     const name = p.name || p.id;
     const seal = albumSealOf(p, job);
@@ -541,7 +543,9 @@ var BZR_people = (() => {
     const cell = el("div", [
       "bz-people-cell",
       todo ? "bz-people-todo" : "",
-      seal.state === "queued" ? "bz-people-wait" : ""
+      seal.state === "queued" ? "bz-people-wait" : "",
+      ((_a = opts.drop) == null ? void 0 : _a.includes(p.id)) ? "bz-people-drop" : "",
+      opts.dev && opts.dev === p.id ? "bz-people-dev" : ""
     ].filter(Boolean).join(" "), {
       "data-people-pocket": p.id,
       tabindex: "0",
@@ -556,7 +560,7 @@ var BZR_people = (() => {
     if (sealNode) print.appendChild(sealNode);
     if (fresh > 0) print.appendChild(el("div", "bz-people-fresh", text(`新 ${formatCount(fresh)}`)));
     if (due) print.appendChild(el("div", "bz-people-due", { title: `${due.what} · ${due.date}` }, text(`${due.what} ${due.days} 天`)));
-    const meta = job && job.status !== "done" ? job.queued ? "排队中" : job.status === "running" ? `画谱中 ${(_b = (_a = job.describePct) != null ? _a : job.prepPct) != null ? _b : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%` : job.status === "error" ? "失败待续" : "已暂停" : `${formatCount(msgsOf(p))} 条`;
+    const meta = job && job.status !== "done" ? job.queued ? "排队中" : job.status === "running" ? `画谱中 ${(_c = (_b = job.describePct) != null ? _b : job.prepPct) != null ? _c : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%` : job.status === "error" ? "失败待续" : "已暂停" : `${formatCount(msgsOf(p))} 条`;
     print.appendChild(el("div", "bz-people-cap", [
       el("span", "bz-people-name", text(vtName(name))),
       el("span", `bz-people-meta${job && job.status === "running" ? " bz-people-meta-run" : ""}`, text(meta))
@@ -568,6 +572,21 @@ var BZR_people = (() => {
     const s = el("span", "bz-people-vacs");
     s.append(text("空位"), el("br"), text("等新照片"));
     return el("div", "bz-people-cell bz-people-vacant", s);
+  }
+  function albumBlankPage() {
+    const rows = [];
+    for (let i = 0; i < AL_PER_PAGE; i += 2) {
+      const r = el("div", "bz-people-row");
+      r.append(albumVacant(), albumVacant(), el("div", "bz-people-row-note"));
+      rows.push(r);
+    }
+    return el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [
+        headChip("空页"),
+        el("span", "bz-people-head-right", el("span", "bz-people-head-note", text("还没贴到这一页")))
+      ]),
+      albumSleeve(rows)
+    ]);
   }
   function rowEra(a, b) {
     var _a, _b;
@@ -587,10 +606,10 @@ var BZR_people = (() => {
     if (ya && ya === yb) return `${ya} 年认识的`;
     return "";
   }
-  function albumRow(a, b) {
+  function albumRow(a, b, opts = {}) {
     const row = el("div", "bz-people-row", { "data-era": String(rowEra(a, b)) });
-    row.appendChild(a ? albumPhoto(a) : albumVacant());
-    row.appendChild(b ? albumPhoto(b) : albumVacant());
+    row.appendChild(a ? albumPhoto(a, opts) : albumVacant());
+    row.appendChild(b ? albumPhoto(b, opts) : albumVacant());
     row.appendChild(el("div", "bz-people-row-note", text(rowNote(a, b))));
     return row;
   }
@@ -602,11 +621,11 @@ var BZR_people = (() => {
       ])
     ]);
   }
-  function albumPage(cells, no, totalPeople, ledger) {
+  function albumPage(cells, no, totalPeople, ledger, opts = {}) {
     const slots = cells.slice(0, AL_PER_PAGE);
     while (slots.length < AL_PER_PAGE) slots.push(null);
     const rows = [];
-    for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1]));
+    for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1], opts));
     const head = el("div", "bz-people-page-head");
     head.appendChild(headChip(el("span", "bz-people-head-count-in", [
       textEl("b", String(no)),
@@ -855,7 +874,7 @@ var BZR_people = (() => {
     const title = (_g = (_f = FOLD_TITLES.find(([id]) => id === opts.fold)) == null ? void 0 : _f[2]) != null ? _g : "";
     body.appendChild(el("div", "bz-people-fsheet", [
       el("div", "bz-people-fsheet-head", el("span", "bz-people-fsheet-title", text(title))),
-      el("div", "bz-people-fsheet-body", opts.body)
+      el("div", `bz-people-fsheet-body${opts.foldIn ? " bz-people-in" : ""}`, opts.body)
     ]));
     page.appendChild(body);
     return page;
@@ -895,32 +914,56 @@ var BZR_people = (() => {
   function secTitle(t) {
     return el("div", "bz-people-sec-title", text(t));
   }
+  function clipList(cls, items, first, moreText) {
+    const box = el("div", cls);
+    items.forEach((n, i) => {
+      if (i >= first) n.classList.add("bz-people-more-hide");
+      box.appendChild(n);
+    });
+    if (items.length > first) box.appendChild(button("bz-people-more", moreText, { "data-people-more": "" }));
+    return box;
+  }
   function foldPersonBody(mdRoot, p) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     const out = [mdRoot != null ? mdRoot : foldHint("其人画像还没生成——画一次脸谱就会写出来。")];
     const traits = (_b = (_a = p.digest) == null ? void 0 : _a.traits) != null ? _b : [];
     if (traits.length) {
-      const box = el("div", "bz-people-traits", traits.slice(0, 12).map((t) => el("span", "bz-people-trait", text(t))));
-      if (traits.length > 12) box.appendChild(el("span", "bz-people-trait-more", text(`…另有 ${traits.length - 12} 条`)));
-      out.push(secTitle("性格特质"), box);
+      out.push(secTitle("性格特质"), clipList(
+        "bz-people-traits",
+        traits.map((t) => el("span", "bz-people-trait", text(t))),
+        12,
+        `…另有 ${traits.length - 12} 条`
+      ));
     }
     const quotes = (_d = (_c = p.digest) == null ? void 0 : _c.quotes) != null ? _d : [];
     if (quotes.length) {
-      const box = el("div", "bz-people-quotes", quotes.slice(0, 8).map((q) => el("div", "bz-people-quote-card", [
-        el("div", "bz-people-quote-text", text(`「${q.text}」`)),
-        el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
-      ])));
-      out.push(secTitle("代表原话"), box);
+      out.push(secTitle("代表原话"), clipList(
+        "bz-people-quotes",
+        quotes.map((q) => el("div", "bz-people-quote-card", [
+          el("div", "bz-people-quote-text", text(`「${q.text}」`)),
+          el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
+        ])),
+        8,
+        `…另有 ${quotes.length - 8} 条`
+      ));
     }
     const interests = (_f = (_e = p.digest) == null ? void 0 : _e.interests) != null ? _f : [];
     if (interests.length) {
-      out.push(secTitle("最近在聊什么"), el("div", "bz-people-md bz-people-ints", interests.slice(0, 10).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.topic))]))));
+      out.push(secTitle("最近在聊什么"), clipList(
+        "bz-people-md bz-people-ints",
+        interests.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.topic))])),
+        10,
+        `…另有 ${interests.length - 10} 条`
+      ));
     }
     const moments = (_h = (_g = p.digest) == null ? void 0 : _g.moments) != null ? _h : [];
     if (moments.length) {
-      const box = el("div", "bz-people-md bz-people-moms", moments.slice(0, 6).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.summary))])));
-      if (moments.length > 6) box.appendChild(el("div", "bz-people-it", [el("span", "bz-people-date"), el("span", "bz-people-mut", text(`…另有 ${moments.length - 6} 个片刻`))]));
-      out.push(secTitle("留下的片刻"), box);
+      out.push(secTitle("留下的片刻"), clipList(
+        "bz-people-md bz-people-moms",
+        moments.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.summary))])),
+        6,
+        `…另有 ${moments.length - 6} 个片刻`
+      ));
     }
     return out;
   }
@@ -929,7 +972,12 @@ var BZR_people = (() => {
     const out = [mdRoot != null ? mdRoot : foldHint("关系画像还没生成——画一次脸谱就会写出来。")];
     const threads = (_b = (_a = p.digest) == null ? void 0 : _a.threads) != null ? _b : [];
     if (threads.length) {
-      out.push(secTitle("未竟之事"), el("div", "bz-people-md", threads.slice(0, 8).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))]))));
+      out.push(secTitle("未竟之事"), clipList(
+        "bz-people-md",
+        threads.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))])),
+        8,
+        `…另有 ${threads.length - 8} 条`
+      ));
     }
     return out;
   }
@@ -955,11 +1003,10 @@ var BZR_people = (() => {
       months.forEach((m, i) => {
         var _a2;
         const evs = [...(_a2 = by.get(m)) != null ? _a2 : []].sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
-        const inner = el("div", "bz-people-mon-in", evs.slice(0, 14).map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
+        const inner = clipList("bz-people-mon-in", evs.map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
           el("span", "bz-people-ev-ts", text(e.ts)),
           el("span", "bz-people-ev-sum", text(e.summary))
-        ])));
-        if (evs.length > 14) inner.appendChild(el("div", "bz-people-ev", el("span", "bz-people-ev-sum bz-people-mut", text(`…同月另有 ${evs.length - 14} 条`))));
+        ])), 14, `…同月另有 ${evs.length - 14} 条`);
         const head = el("button", "bz-people-mon-head", { "data-people-mon": m });
         head.type = "button";
         head.append(el("span", "bz-people-mon-plus", text("+")), el("span", "bz-people-mon-chip", text(m)), el("span", "bz-people-mon-cnt", text(`${evs.length} 条`)));
@@ -1512,7 +1559,7 @@ var BZR_people = (() => {
     var _a;
     const fresh = row.newCount > 0 && row.imported;
     const water = dsWaterOf(row);
-    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
+    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}${(water == null ? void 0 : water.k) === "skip" ? " bz-people-ds-skip" : ""}`;
     const box = el(
       "span",
       "bz-people-ds-box",
