@@ -14,6 +14,8 @@
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault } from '../mock-vault';
 import { makeApp } from '../helpers/app';
@@ -357,5 +359,59 @@ describe('桌面端鼠标滚轮翻摊（item 9）', () => {
     wheel('.bz-people-spread', 120);
     await vi.waitFor(() => expect(pages()[0].querySelector('.bz-people-head-count-in')!.textContent).toBe('3 / 3'));
     expect(pages()).toHaveLength(2); // 末摊：第 3 页 + 补的占位页
+  });
+});
+
+describe('画谱锁跟帧（507 二审）：忙闲翻转那一下册子自己重画，不等下一次交互', () => {
+  const two = async (): Promise<PeopleSafeStore> => {
+    const safe = await boot([
+      entry('wxid_a', { name: '陈默', digest: digest() }),
+      entry('wxid_b', { name: '林晚' }),
+    ]);
+    await seedStore(safe, 'wxid_a');
+    await seedStore(safe, 'wxid_b');
+    return safe;
+  };
+  const otherBtn = (): HTMLButtonElement =>
+    document.querySelector<HTMLButtonElement>('[data-people-detail="wxid_b"] [data-people-act="generate"]')!;
+
+  it('收工那一下（队列清空）别人的「画脸谱」即时解锁', async () => {
+    await two();
+    engine.items = [jobFor('wxid_a', '陈默')];
+    await openAlbum();
+    await openDetail('wxid_b');
+    expect(otherBtn().disabled).toBe(true);
+    engine.push([]); // done 落盘出队列 / 便签上删任务——同一口径：队列空了
+    await vi.waitFor(() => expect(otherBtn().disabled).toBe(false));
+    expect(otherBtn().hasAttribute('data-people-jobs-lock')).toBe(false);
+  });
+
+  it('起跑那一下同理：别人的「画脸谱」即时按下去（原先要等一次手动交互才上锁）', async () => {
+    await two();
+    await openAlbum(); // 开面板时队列空：谁都画得动
+    await openDetail('wxid_b');
+    expect(otherBtn().disabled).toBe(false);
+    engine.push([jobFor('wxid_a', '陈默')]);
+    await vi.waitFor(() => expect(otherBtn().disabled).toBe(true));
+  });
+
+  it('任务翻成中断 / 出错也算收工（busy 只认 running / paused）：别人立即可画', async () => {
+    await two();
+    engine.items = [jobFor('wxid_a', '陈默')];
+    await openAlbum();
+    await openDetail('wxid_b');
+    expect(otherBtn().disabled).toBe(true);
+    engine.push([jobFor('wxid_a', '陈默', { status: 'interrupted' })]);
+    await vi.waitFor(() => expect(otherBtn().disabled).toBe(false));
+  });
+
+  it('折签吸顶、锁住的按钮亮理由：样式单在域 CSS 里（吸顶含暗色实底）', () => {
+    const css = readFileSync(join(process.cwd(), 'src/people/styles.css'), 'utf8');
+    expect(css).toMatch(/\.bz-people-pagebody \.bz-people-ftabs[^{]*\{[^}]*position: sticky/);
+    expect(css).toContain('.theme-dark .bz-people-pagebody .bz-people-ftabs');
+    expect(css).toContain('[data-people-jobs-lock] .bz-people-act-hint');
+    expect(css).toContain('[data-people-sync-lock] .bz-people-act-hint');
+    // 平时收着 hint 的收口仍在（不是把 hint 全放开，只放锁住的那两枚）
+    expect(css).toContain('.bz-people-pagebody .bz-people-act-hint { display: none; }');
   });
 });

@@ -667,6 +667,9 @@ function applySyncLockdown(): void {
       b.disabled = true;
       b.setAttribute('data-people-sync-lock', '1');
       b.title = '同步进行中——等同步完成再画脸谱';
+      // 理由亮在按钮上（507 二审与画谱锁同口径）：hint 平时收着，锁住时 CSS 放它出来
+      const hint = b.querySelector<HTMLElement>('.bz-people-act-hint');
+      if (hint) hint.textContent = '等同步完成';
     } else if (b.hasAttribute('data-people-sync-lock')) {
       // 解锁（同步终态后）：恢复可点。title 由下一次节点重建还原（印章原位刷新 / renderBody）。
       b.disabled = false;
@@ -917,6 +920,19 @@ async function importDsSelected(): Promise<void> {
   dsLastImported = chosen.map((c) => c.name);
   for (const c of chosen) dsSelected.delete(c.name);
   if (dsGenerateable) dsImported = true; // 合上这页时新照片飞进册页
+  // 飞回要看得见（507 review ③，方案①）：新人若不在当前摊，先把册子拨到含新人的那摊再合页。
+  // 位置必须按**导入后**的排序算（首导的新人旧 listCache 里根本没有；复导的也会跳到最前）——
+  // 落库后重拉一次上墙人群；算不出（面板已关 / 读库翻车）就不拨，合页照常。
+  if (dsGenerateable && overlay) {
+    try {
+      const people = await wallPeople();
+      const at = pagination(people).sorted.findIndex((p) => dsLastImported.includes(p.id));
+      if (at >= 0) {
+        const pi = Math.floor(at / AL_PER_PAGE);
+        if (pi !== cur && pi !== cur + 1) cur = pi - (pi % PER_SPREAD);
+      }
+    } catch { /* 位置算不出就不拨 */ }
+  }
   // 导入完成即合上数据源这一页（issue 507）：新照片飞回册页，这一页留到下次要用再开
   // （横幅走「不打断手上动作」那档：导入是状态告知，不该像出错那样抢眼）
   showBanner(`${summary}——新照片飞回册页了`, true);
@@ -1094,6 +1110,9 @@ export function setJobsModuleForTests(mod: JobsApi | null): void {
   jobsPersisted.clear();
 }
 
+/** 画谱锁的忙闲上次态（507 二审）：翻转那一下整渲染——锁挂在全量重画后，帧间只刷便签的话解不开 */
+let lastJobsBusy = false;
+
 /** 快照进场（订阅回调 / 打开面板恢复共用）：done 落盘 → 渲染进度块 */
 function applySnapshot(s: EngineSnapshot | null): void {
   const hadNote = Boolean(jobsCache?.queue.length);
@@ -1102,6 +1121,13 @@ function applySnapshot(s: EngineSnapshot | null): void {
   if (!hadNote && s?.queue.length) animNote = true;
   if (s) handleJobsSnapshot(s);
   else renderNote();
+  // 忙闲翻转（507 二审）：起跑 / 收工 / 中断 / 便签上删任务的当下把册子重画一遍——
+  // 「画脸谱」的锁是全量重画时挂的，平时快照只走 renderNote，任务翻脸了别人的按钮会灰到下一次交互
+  const busy = jobsBusy();
+  if (busy !== lastJobsBusy) {
+    lastJobsBusy = busy;
+    if (overlay) void renderAlbum();
+  }
 }
 
 /**

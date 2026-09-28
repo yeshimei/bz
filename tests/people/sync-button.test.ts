@@ -453,6 +453,41 @@ describe('导入完的收尾：这一页自己合上、勾选摘掉、无新素�
     tickRow('林晚');
     expect(rowOf('林晚').classList.contains('bz-people-ds-on')).toBe(true);
   });
+
+  it('导入的人不在当前摊时合页：册子拨到含新人的那摊，「飞回」才看得见（507 review ③ 方案①）', async () => {
+    // 17 位 = 3 页 = 两摊（每页 6 格）；建卡时间都早于导入消息的 timeTo——
+    // 新导入按最近互动排最前 → 必在第 1 页
+    const seed: PersonEntry[] = [];
+    for (let i = 1; i <= 17; i++) {
+      seed.push({
+        id: `wxid_${i}`,
+        name: `联系人${i}`,
+        createdAt: new Date((T0 - 10_000_000 - i * 86_400) * 1000).toISOString(),
+        imports: [],
+      });
+    }
+    await boot(seed);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-pocket]')).toBeTruthy());
+    // 翻到末摊（滚轮口径同 album-507：累积到位翻一摊）
+    const spread = () => document.querySelector('.bz-people-spread')!;
+    spread().dispatchEvent(new WheelEvent('wheel', { deltaY: 120, bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-head-count-in')!.textContent).toBe('3 / 3'));
+    // 数据根里放 wxid_1（与 beforeEach 的「陈默」并存两行），翻开数据源页勾上 wxid_1 那行导入
+    mkdirSync(join(dataRoot, 'wxid_1'), { recursive: true });
+    writeFileSync(join(dataRoot, 'wxid_1', 'chat.json'), JSON.stringify([{ ct: T0, type: 1, msg: '在吗' }]));
+    openDataSource();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-people-ds-row').length).toBe(2));
+    const rowOf = (id: string): HTMLElement =>
+      [...document.querySelectorAll<HTMLElement>('.bz-people-ds-row')].find((r) => r.textContent?.includes(id))!;
+    rowOf('wxid_1').querySelector<HTMLElement>('[data-people-ds-check]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    // 合上后册子自己拨回含新人的那摊：第 1 页在屏（旧行为停在末摊，飞回一次都看不见）
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-head-count-in')!.textContent).toBe('1 / 3'));
+    expect(document.querySelector('[data-people-pocket="wxid_1"]')).toBeTruthy();
+    expect(document.querySelector('[data-people-pocket="wxid_1"]')!.classList.contains('bz-people-drop')).toBe(true);
+  });
 });
 
 describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当前联系人副行', () => {
