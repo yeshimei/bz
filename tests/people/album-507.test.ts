@@ -173,22 +173,47 @@ afterEach(() => {
 });
 
 describe('「另有 N 条」点一下摊开（item 1）', () => {
-  it('性格特质超量：先摆 12 枚，其余收着，末尾一枚「…另有 2 条」；点完原地全摊开、按钮退场', async () => {
-    const safe = await boot([entry('wxid_a', { name: '陈默', digest: digest() })]);
+  /** 六处列表全塞到超量：可见条数保持原样（12 / 8 / 10 / 6 / 8 / 14），多出来的收着等点 */
+  const richDigest = (): FaceDigest => digest({
+    interests: Array.from({ length: 12 }, (_, i) => ({ ts: '2026-05-01', topic: `在聊${i + 1}` })),
+    threads: Array.from({ length: 10 }, (_, i) => ({ ts: '2026-05-01', text: `未竟${i + 1}` })),
+    events: Array.from({ length: 16 }, (_, i) => ({ ts: '2026-05-01', kind: 'minor' as const, summary: `事件${i + 1}` })),
+  });
+
+  /** 一处列表：条数对得上 → 超量的收着且签上写着条数 → 点一下全摊开、签退场 */
+  function expectFoldable(sel: string, total: number, first: number, moreText: string): void {
+    const box = document.querySelector<HTMLElement>(sel);
+    expect(box, `找不到列表 ${sel}`).toBeTruthy();
+    expect(box!.querySelectorAll('.bz-people-more-hide'), `${sel} 收着的条数`).toHaveLength(total - first);
+    const more = box!.querySelector<HTMLElement>('[data-people-more]');
+    expect(more, `${sel} 没有摊开签`).toBeTruthy();
+    expect(more!.textContent).toBe(moreText);
+    more!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(box!.querySelectorAll('.bz-people-more-hide'), `${sel} 点完还收着`).toHaveLength(0);
+    expect(box!.querySelector('[data-people-more]')).toBeNull();
+  }
+
+  it('六处列表都超量：先按原可见条数摆好，其余收着，末尾一枚签；点一下原地全摊开、签退场', async () => {
+    const safe = await boot([entry('wxid_a', { name: '陈默', digest: richDigest() })]);
     await seedStore(safe, 'wxid_a');
     await openAlbum();
     await openDetail('wxid_a');
-    const box = document.querySelector('.bz-people-traits')!;
-    expect(box.querySelectorAll('.bz-people-trait')).toHaveLength(14); // 全画出来（数据本来就有）
-    expect(box.querySelectorAll('.bz-people-more-hide')).toHaveLength(2); // 收着 2 枚
-    const more = box.querySelector<HTMLElement>('[data-people-more]')!;
-    expect(more.textContent).toBe('…另有 2 条');
-    click('[data-people-more]');
-    expect(box.querySelectorAll('.bz-people-more-hide')).toHaveLength(0);
-    expect(box.querySelector('[data-people-more]')).toBeNull();
+    // 卷一《其人》四处
+    expectFoldable('.bz-people-traits', 14, 12, '…另有 2 条'); // 性格特质
+    expectFoldable('.bz-people-quotes', 10, 8, '…另有 2 条'); // 代表原话（原来静默截断）
+    expectFoldable('.bz-people-ints', 12, 10, '…另有 2 条'); // 最近在聊什么（原来静默截断）
+    expectFoldable('.bz-people-moms', 8, 6, '…另有 2 个片刻'); // 留下的片刻
+    // 卷二《相交》
+    click('[data-people-fold="b"]');
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-ftab.on')!.textContent).toBe('相交'));
+    expectFoldable('.bz-people-thr', 10, 8, '…另有 2 条'); // 未竟之事（原来静默截断）
+    // 卷三《纪事》：同月纪事（16 条摆 14）
+    click('[data-people-fold="e"]');
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-ftab.on')!.textContent).toBe('纪事'));
+    expectFoldable('.bz-people-mon-in', 16, 14, '…同月另有 2 条');
   });
 
-  it('代表原话 / 留下的片刻同样可摊开（这两处原来静默截断，用户根本不知道后面还有）', async () => {
+  it('没超量的列表不画那枚签（数据本来就不够，别凭空长出一个入口）', async () => {
     const safe = await boot([entry('wxid_a', { name: '陈默', digest: digest() })]);
     await seedStore(safe, 'wxid_a');
     await openAlbum();
@@ -198,6 +223,17 @@ describe('「另有 N 条」点一下摊开（item 1）', () => {
     const quotes = document.querySelectorAll<HTMLElement>('.bz-people-quotes [data-people-more]');
     expect(quotes).toHaveLength(1);
     expect(quotes[0].textContent).toBe('…另有 2 条');
+  });
+
+  it('数据不够格的列表一点不挂（既没有收着的，也没有那枚签）', async () => {
+    const safe = await boot([entry('wxid_a', { name: '陈默', digest: digest({ traits: ['话少', '慢半拍'] }) })]);
+    await seedStore(safe, 'wxid_a');
+    await openAlbum();
+    await openDetail('wxid_a');
+    const box = document.querySelector<HTMLElement>('.bz-people-traits')!;
+    expect(box.querySelectorAll('.bz-people-trait')).toHaveLength(2);
+    expect(box.querySelectorAll('.bz-people-more-hide')).toHaveLength(0);
+    expect(box.querySelector('[data-people-more]')).toBeNull();
   });
 });
 

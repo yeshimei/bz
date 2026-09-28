@@ -115,7 +115,36 @@
   没包 `@media (hover: hover)`（呈报#9 F4 触屏粘滞范式）——改回包住，与同文件另 20 余条同一写法。
 - [x] `node scripts/build-preview.mjs` 重出原型产物（`src/people/render.ts` / `ui.ts` / `styles.css` + `src/core/gesture.ts`，
   12 份 `prototype-behavior.js` + people 的 `prototype-render.js` 跟着重算）
-- [ ] 提交 → merge 回主仓 → `_gen-changelog.mjs` + `build-manifest.mjs` → 主仓 `pnpm run build` 部署 → 清 worktree
+- [x] 独立子代理 review（只读）：**八条全落实，无阻断项**
+- [x] 提交 → merge 回主仓 → `_gen-changelog.mjs` + `build-manifest.mjs` → 主仓 `pnpm run build` 部署 → 清 worktree
+
+**满载下的门禁**：机器当时明显吃紧（同一条全量跑 100s 变 431s），复跑出现过 4 例红，逐条查过都不是本次引入：
+3 例是 `tests/pomodoro` 的计时用例 20s 超时（隔离重跑 13 文件 / 239 例全绿，同 506 那次的先例）；
+1 例是 `tests/people/generate-ui.test.ts` 的假红——「补充背景」保存后那条断言把 `waitFor` 架在**落盘**上（第 768 行），
+紧接着就断言**界面**已回查看态，而保存后的那次重画是异步的，满载下必然抢跑。已把该断言也放进 `waitFor`
+（**不是放宽**：真回不到查看态照样会等超时红）。随后用 `--testTimeout=60000` 复跑全量取最终结论。
+
+## 五、review 跟进（独立审查提了三条，两条动手、一条留待拍板）
+
+**① `scrollHostOf` 的 svg 落点（真 bug，已修）**：起跳写死了 `node instanceof HTMLElement ? node : null`，
+而滚轮常压在 `<svg>` 上（lucide 图标 / 印环 / 图标化的字）——SVGElement 不是 HTMLElement，判定当场落空，
+本该让给原生滚动的块（详情正文 / 数据源列表）被误判成「点里没有可滚块」而把摊翻过去。
+改成：碰到非 HTMLElement **只跳过它、继续往上走**（svg 的 `parentElement` 就是那个块）。
+新增 `tests/core/gesture-wheel.test.ts`（4 例）钉死：压在 svg 上还能滚 → 不拦默认不翻摊；块到底 → 让出来翻；
+起点是普通元素时口径一致；点里根本没有可滚块 → 照旧翻。
+
+**② 「六处列表」测试只实测了三处（已补）**：性格特质 / 代表原话 / 留下的片刻有断言，
+最近在聊什么 / 未竟之事 / 同月纪事只是共用 `clipList`、没实测。现补成一测走全六处
+（12 / 8 / 10 / 6 / 8 / 14 的可见条数逐处钉死，点完逐处验「收着的清零 + 签退场」），
+另加两例反向断言：没超量不画签、数据不够格一点不挂。
+顺带给「未竟之事」那处列表补上专有类名 `bz-people-thr`，与另两处同形列表（`bz-people-ints` / `bz-people-moms`）一致
+——原先是裸 `bz-people-md`，和 markdown 根节点撞名、锚不定（**样式零变化**）。
+
+**③ 导入者落在当前摊之外时「飞回」不播（留待拍板，未动）**：`animDrop` 在 `renderAlbum` 里一次性消费，
+而册子只渲染当前摊两页；导入的人若排在别的摊（新导入按「最近互动」排最前，所以是「你当时不在册首」那种情形），
+这一趟的飞回就看不见。三种改法各有取向 —— ①导入后自动跳回含新人的那摊（一定看得见，但会挪走用户当前的位置）；
+②名单留到真挂上那摊才清（不挪位置，但翻到那摊时照片才飞，有人会觉得是「迟到的乱飞」）；③维持现状。
+reviewer 明说这取决于产品对动效覆盖范围的要求，故**不擅自决定**。
 
 ## 备注：本轮刻意没动的
 

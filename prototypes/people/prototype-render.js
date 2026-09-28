@@ -1,4 +1,4 @@
-/* 源指纹 4bc38ae852c1fd74 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 add09ba1c75c19f9 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -973,7 +973,8 @@ var BZR_people = (() => {
     const threads = (_b = (_a = p.digest) == null ? void 0 : _a.threads) != null ? _b : [];
     if (threads.length) {
       out.push(secTitle("未竟之事"), clipList(
-        "bz-people-md",
+        // 与另两处同形列表（`bz-people-ints` / `bz-people-moms`）保持一致，给一枚专有类名好让调用方锚定
+        "bz-people-md bz-people-thr",
         threads.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))])),
         8,
         `…另有 ${threads.length - 8} 条`
