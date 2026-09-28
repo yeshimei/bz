@@ -599,7 +599,16 @@
 .bz-people-pagebody .bz-people-acts { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 16px; }
 .bz-people-pagebody .bz-people-act { padding: 5px 9px; font-size: var(--f-mid); gap: 6px; }
 .bz-people-pagebody .bz-people-act-hint { display: none; }
-.bz-people-pagebody .bz-people-ftabs { padding-left: 6px; margin-top: 14px; }
+/* 画谱 / 同步锁住的动作签：理由亮出来（hint 平时收着省地方，锁住时它就是那句「为什么点不动」——
+   507 二审：置灰不说话，观感还是「点了没反应」）。长昵称截断，理由挤不爆按钮 */
+.bz-people-pagebody .bz-people-act[data-people-jobs-lock] .bz-people-act-hint,
+.bz-people-pagebody .bz-people-act[data-people-sync-lock] .bz-people-act-hint {
+  display: inline; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 1 auto; }
+/* 折签贴在上沿（issue 507 二审）：往下读远了，「其人 / 相交 / 纪事」跟着钉在页顶——
+   同一折点一下回这一折开头（ui 侧），换折直接换。底要实：滚过的字不许从签缝里透上来 */
+.bz-people-pagebody .bz-people-ftabs { padding-left: 6px; margin-top: 14px;
+  position: sticky; top: 0; z-index: 4; background: #f7f2e6;
+  padding-top: 4px; padding-bottom: 5px; box-shadow: 0 1px 0 #ded3b8; }
 .bz-people-pagebody .bz-people-ftab { font-size: var(--f-body); padding: 6px 13px 5px; letter-spacing: 2px; }
 .bz-people-pagebody .bz-people-fsheet { flex: none; overflow: visible; border-radius: var(--r-tab); padding: 14px 16px 20px; margin: 0; }
 
@@ -1567,6 +1576,8 @@
 .theme-dark .bz-people-find-row, .theme-dark .bz-people-ds-ava, .theme-dark .bz-people-find-ava { background: #35312a; border-color: #454036; }
 .theme-dark .bz-people-ftab { background: #332e26; color: #a89c84; }
 .theme-dark .bz-people-ftab.on { background: var(--card); color: var(--acc); }
+/* 暗色下折签吸顶的实底（与暗色页底同色，滚过的字同样不许透上来） */
+.theme-dark .bz-people-pagebody .bz-people-ftabs { background: #2f2b24; box-shadow: 0 1px 0 #453f33; }
 .theme-dark .bz-people-fsheet { background: var(--card); border-color: var(--card-bd); }
 .theme-dark .bz-people-ins {
   background-color: #322e28;
