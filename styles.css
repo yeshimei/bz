@@ -4494,6 +4494,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   opacity: 0.55;
   cursor: not-allowed;
 }
+/* 次按钮（可选，opts.cancel）：与主按钮同排、样式从简——破坏性动作仍然只由主按钮承担 */
+.bz-lockscreen-cancel {
+  flex: none;
+  padding: 10px 16px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--ls-line);
+  background: transparent;
+  color: var(--ls-muted);
+  font-size: var(--bz-font-label);
+  cursor: pointer;
+}
+@media (hover: hover) {
+
+.bz-lockscreen-cancel:hover {
+  color: var(--ls-ink);
+  border-color: var(--ls-ink);
+}
+}
+.bz-lockscreen-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .bz-lockscreen-err {
   min-height: 18px;
   margin-top: 8px;
@@ -10466,8 +10488,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-people-del-line { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
 .bz-people-del-note { font-size: var(--f-aux); color: var(--ink-mut); margin-top: 8px; line-height: 1.8; font-style: italic; }
 .bz-people-del-actions { display: flex; gap: 9px; margin-top: 16px; }
-.bz-people-pw { margin-top: 12px; }
-.bz-people-pw .bz-people-input { font-size: var(--f-body); letter-spacing: 2px; }
+/* 已画谱档：主密码就在这一页里重输（issue 506）——框与错误行都归本页 */
+.bz-people-del-pw { margin-top: 12px; }
+.bz-people-del-pw-input { font-size: var(--f-body); letter-spacing: 2px; }
+.bz-people-del-err { font-size: var(--f-aux); color: var(--acc-deep); font-style: italic; margin-top: 5px; }
+.bz-people-del-err:empty { display: none; }
 
 /* ---------------- 找一找（36 位翻页嫌慢，按名字 / 标签把人捞出来） ---------------- */
 .bz-people-findbox { display: flex; align-items: center; gap: 9px; padding: 2px 4px 6px;
@@ -10724,20 +10749,35 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin: 2px 0;
 }
 
-/* ============ 解锁屏（共享骨架 · 脸谱口径，issue 482） ============
- * 弹层挂 body，够不着 .bz-people-scope 根 —— 与日记锁屏同款教训：--ls-* 按值重声明
- * （值取自本文件顶部变量组，改主题色时两处同步）。
- * 风格 = 脸谱面板同款宣纸 + 朱砂；印章徽借折子印章语汇（朱砂描边 + 微旋）。
+/* ============ 解锁屏 = 合着的册子封面（共享骨架 · 脸谱口径，issue 482 / 506） ============
+ * 骨架仍是 core/ui/lock-screen.ts 那套（校验 / 首设 / 冷却一律留在 encrypt 域），
+ * 脸谱只换皮：把内容盒画成**跟册内那张合着的封面同一本书**——同皮革、同书脊压带、
+ * 同烫金装订线、同铜搭扣、同封面文案口径（LOCK_KIND_META.people）。这样「面板里上锁」
+ * 与「开面板前的门禁」两处看到的是同一张封面，不再是一枚通用圆角卡。
+ * 弹层挂 body，够不着 .bz-people-scope 根 —— 与日记锁屏同款教训：值一律按字面重声明
+ * （取自本文件顶部变量组与 .bz-people-cover，改册皮时两处同步）。
+ * 索引：遮罩=桌面那层宣纸 / 盒=皮革封皮 / seal=搭扣 / title·sub=封面题字 / stats=烫金账 /
+ *      row=密码行与两颗钮 / err·sec·hint=封面下沿小字。
  */
 .bz-lockscreen--people {
   --ls-accent: #a8433c;
   --ls-accent-soft: #a8433c;
-  --ls-seal-radius: 12px;
+  --ls-seal-radius: 50%;
   --ls-bg: #f7f2e8;
   --ls-surface: #fffdf8;
   --ls-line: #e8e2d4;
   --ls-ink: #4a443a;
   --ls-muted: #9a917d;
+  /* 封面五件套（与 .bz-people-cover 同一组值） */
+  --lsp-paper: #f7f2e8;
+  --lsp-cover-ink: #ecdcc0;
+  --lsp-cover-mut: rgba(236, 220, 192, 0.6);
+  --lsp-gold: rgba(214, 178, 116, 0.5);
+  --lsp-clasp: #e8d3ab;
+  /* 圆角与字号也得重声明：弹层挂 body，.bz-people-scope 上那组变量够不着 */
+  --lsp-r: 2px;
+  --lsp-f-aux: 11px;
+  --lsp-f-head: 15px;
 }
 .theme-dark .bz-lockscreen--people {
   --ls-accent: #c0645a;
@@ -10747,14 +10787,152 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   --ls-line: #454036;
   --ls-ink: #cfc7b4;
   --ls-muted: #9a917d;
+  --lsp-paper: #262320;
+  --lsp-cover-ink: #e8d9b8;
+  --lsp-cover-mut: rgba(224, 210, 182, 0.58);
+  --lsp-gold: rgba(201, 162, 78, 0.5);
+  --lsp-clasp: #d8bd8e;
 }
-/* 印章徽：纸底 + 朱砂描边微旋（同封面折子印章的 6°；图标随之改朱砂） */
+/* 暗处同册内封面的三处改法（.theme-dark .bz-people-cover-* 那组）：装订线转暗、
+   副题与提示也跟着提亮一档、搭扣压深 —— 不然金线在黑皮上亮得跟明处一样，两种主题看着像两本书 */
+.theme-dark .bz-lockscreen--people .bz-lockscreen-box::after {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.1));
+}
+.theme-dark .bz-lockscreen--people .bz-lockscreen-sub { color: #e8d9b8; }
+.theme-dark .bz-lockscreen--people .bz-lockscreen-hint { color: #c9b58a; }
+.theme-dark .bz-lockscreen--people .bz-lockscreen-seal {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(214, 178, 116, 0.34);
+}
+/* 遮罩：不是通用那层深蒙——脸谱的锁是一本摊在桌上的书，底就是那张宣纸 */
+.bz-lockscreen--people.bz-lockscreen--mask {
+  background: radial-gradient(120% 90% at 50% -10%, rgba(255, 255, 255, 0.5), transparent 62%) var(--lsp-paper);
+  backdrop-filter: none;
+}
+.theme-dark .bz-lockscreen--people.bz-lockscreen--mask {
+  background: radial-gradient(120% 90% at 50% -10%, rgba(255, 255, 255, 0.05), transparent 62%) var(--lsp-paper);
+}
+/* 内容盒 = 皮革封皮（硬角、皮面纹、内阴影，跟册内合着那张一套） */
+.bz-lockscreen--people .bz-lockscreen-box {
+  position: relative;
+  width: 420px;
+  padding: 44px 30px 30px;
+  border: none;
+  border-radius: var(--lsp-r);
+  background:
+    repeating-linear-gradient(112deg, rgba(255, 238, 214, 0.032) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(22deg, rgba(18, 10, 5, 0.07) 0 3px, transparent 3px 9px),
+    radial-gradient(120% 80% at 30% -10%, rgba(255, 226, 190, 0.1), transparent 60%),
+    linear-gradient(155deg, #5f4f40, #4b3d31 60%, #3f332a);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset 0 0 60px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(40, 30, 18, 0.34);
+  color: var(--lsp-cover-ink);
+}
+/* 封面上的字与控件压在压带之上（伪元素是定位的，不抬一层就会被盖住） */
+.bz-lockscreen--people .bz-lockscreen-box > * { position: relative; }
+/* 书脊那道压带：竖着当中一条，与册内封面同一条 */
+.bz-lockscreen--people .bz-lockscreen-box::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  bottom: 14px;
+  width: 26px;
+  margin-left: -13px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.06) 40%, rgba(0, 0, 0, 0.06) 60%, rgba(0, 0, 0, 0.22));
+  border-radius: var(--lsp-r);
+}
+/* 顶沿烫金装订线（同 .bz-people-cover-band） */
+.bz-lockscreen--people .bz-lockscreen-box::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  top: 26px;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--lsp-gold) 0 9px, transparent 9px 15px);
+}
+/* 印章徽 → 封面上的铜搭扣 */
 .bz-lockscreen--people .bz-lockscreen-seal {
-  background: var(--ls-surface);
-  border: 2px solid var(--ls-accent);
-  color: var(--ls-accent);
-  transform: rotate(6deg);
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 12px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1.5px solid rgba(214, 178, 116, 0.4);
+  color: var(--lsp-clasp);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: none;
 }
+.bz-lockscreen--people .bz-lockscreen-seal-ic { width: 19px; height: 19px; }
+/* 标题 / 副题 = 封面题字（楷体大字 + 烫金小字，同 .bz-people-cover-title/sub） */
+.bz-lockscreen--people .bz-lockscreen-title {
+  margin: 0 0 7px;
+  font-family: 'STKaiti', 'KaiTi', 'Kaiti SC', 'Noto Serif SC', serif;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 12px;
+  color: var(--lsp-cover-ink);
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.42);
+}
+.bz-lockscreen--people .bz-lockscreen-sub {
+  margin: 0;
+  font-size: var(--lsp-f-aux);
+  letter-spacing: 6px;
+  color: var(--lsp-cover-mut);
+}
+/* 统计三格 → 封面下沿一行烫金账（去掉卡片底，别在皮面上贴三张纸） */
+.bz-lockscreen--people .bz-lockscreen-stats { justify-content: center; gap: 16px; margin: 12px 0 0; }
+.bz-lockscreen--people .bz-lockscreen-stat { flex: none; padding: 0; background: none; border: none; }
+.bz-lockscreen--people .bz-lockscreen-num {
+  display: inline;
+  font-family: 'STKaiti', 'KaiTi', 'Kaiti SC', 'Noto Serif SC', serif;
+  font-size: var(--lsp-f-head);
+  font-weight: 700;
+  color: var(--lsp-clasp);
+}
+.bz-lockscreen--people .bz-lockscreen-label { display: inline; margin: 0 0 0 4px; font-size: var(--lsp-f-aux); color: var(--lsp-cover-mut); }
+/* 密码行：框占一整行，取消与解锁并排在下（同原型封面那两颗钮） */
+.bz-lockscreen--people .bz-lockscreen-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 20px; }
+.bz-lockscreen--people .bz-lockscreen-input {
+  flex: 1 1 100%;
+  padding: 9px 11px;
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  border-radius: var(--lsp-r);
+  background: rgba(255, 253, 248, 0.94);
+  color: var(--ls-ink);
+  letter-spacing: 2px;
+}
+.theme-dark .bz-lockscreen--people .bz-lockscreen-input { border-color: rgba(0, 0, 0, 0.5); background: rgba(255, 253, 248, 0.88); }
+.bz-lockscreen--people .bz-lockscreen-input::placeholder { color: var(--ls-muted); font-style: italic; }
+.bz-lockscreen--people .bz-lockscreen-input:focus { border-color: var(--lsp-clasp); }
+.bz-lockscreen--people .bz-lockscreen-action {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: var(--lsp-r);
+  background: var(--ls-accent-soft);
+  letter-spacing: 2px;
+}
+.bz-lockscreen--people .bz-lockscreen-cancel {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid rgba(214, 178, 116, 0.45);
+  border-radius: var(--lsp-r);
+  background: rgba(0, 0, 0, 0.16);
+  color: var(--lsp-clasp);
+  letter-spacing: 2px;
+}
+/* 封面下沿小字：错误行 / 安全行 / 提示行 */
+.bz-lockscreen--people .bz-lockscreen-err { text-align: center; color: #f0c9a8; }
+.bz-lockscreen--people .bz-lockscreen-sec { color: var(--lsp-cover-mut); }
+.bz-lockscreen--people .bz-lockscreen-sec .bz-lockscreen-dot { background: var(--lsp-gold); }
+.bz-lockscreen--people .bz-lockscreen-hint { color: var(--lsp-cover-mut); }
+/* 首设那两件（风险告知 / 勾选）得看得清，仍走纸片 */
+.bz-lockscreen--people .bz-lockscreen-warning {
+  border-radius: var(--lsp-r);
+  background: rgba(255, 253, 248, 0.94);
+  border-color: rgba(0, 0, 0, 0.16);
+  color: #6b4a3a;
+}
+.bz-lockscreen--people .bz-lockscreen-ack { color: var(--lsp-cover-mut); }
 
 /* ============ 冷读加载占位（issue 483：解锁后首开面板，readAll 逐人解密期不再白屏） ============
  * 进度行（转圈 + 文案 + N/M 计数）+ 折子墙骨架；加载完由 ui 层整体替换成真实数据。
