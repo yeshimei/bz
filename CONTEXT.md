@@ -268,8 +268,14 @@ _Avoid_: 保险箱（对外旧称）、加密罐、保险柜、安全箱（指�
 **密码本 (Password Vault, password-vault 域)**: 密码条目管理 UI 域（ADR-0078 五版原型评审后的 v1「保险库」成型版，ADR-0109 自统一保险库拆回，ADR-0110 接入三层单源）——金色三栏工作台（平台导航/账号列表/详情）+ 移动端列表/详情/FAB + 自绘右键菜单/抽屉/确认/toast/金色印章锁屏；条目 8 字段（id/platform/url/account/password/note/createdAt/fav）。命令 `bz-password-vault-open`；数据 = 保险库容器 `kind=password-vault` SafeNote（与 encrypt **共锁同库**，`password-vault:changed`/`encrypt:changed` 双向同步）；生成器设置复用全局键 passwordCharset/passwordLength + securityMode（设置面板「密码本」条目）。**行为单源八域之一（ADR-0110）**：markup 出自 `render.ts`、行为真 `ui.ts` 打进评审壳（`prototype.html` 双 iframe，演示库主密码 demo，密文由真加密链离线生成）。
 _Avoid_: 保险库（指密码本域时——encrypt 域已占用该名）、密码库
 
-**加密清单 (Safe Manifest)**: `<encryptRoot>/.safe.enc`——整库唯一加密配置文件（点前缀，侧栏隐藏），记录每篇加密笔记的原路径、状态、正文/附件镜像引用与文件密钥（主密钥包裹）。清单本身整体 AES-GCM 加密，内部字段（含原路径）在解锁前不可见。
+**加密清单 (Safe Manifest)**: `<encryptRoot>/.safe.enc`——整库唯一加密配置文件（点前缀，侧栏隐藏），记录每篇加密笔记的原路径、状态、正文/附件镜像引用与文件密钥（信封结构，ADR-0211）。清单本身整体 AES-GCM 加密（主密码），内部字段（含原路径）在解锁前不可见。
 _Avoid_: 配置文件、清单文件（泛指时）
+
+**信封密钥结构 (Envelope Keys)**: 保险库密钥模型（ADR-0211，issue 508）——用户主密码只加密清单；每个密文镜像用各自独立随机 fileKey 加密；清单内 `keys[ref]` 记录每文件的 fileKey（经中间主密钥 masterKey 包裹），`masterWrap = Encrypt(masterKey, 主密码)` 随清单落盘。v1 旧清单（镜像直接主密码加密）解锁后由 `migrateToEnvelope` 自动升级：新镜像写暂存区 → promote 到顶层（清单仍 v1，旧镜像俱在）→ 清单切 v2 落盘（提交点）→ 删旧镜像；中断由清单版本裁决、残留孤儿体检可清，坏镜像中止保 v1 下次重试。
+_Avoid_: 双层加密（泛指时）、每文件独立密码（口语表述，实际是密钥）
+
+**修改主密码 (Change Password)**: 命令 `bz-encrypt-change-password` + 保险库面板右键菜单「修改主密码」（ADR-0211）——信封结构下只重包 masterWrap 并重加密清单，数据镜像零接触、亚秒级完成。两屏接力复用解锁屏骨架：先验证当前主密码（销毁确认同款「重验封印」语汇），再首设式双输入设置新密码（≥4 位 + 牢记勾选）；迁移未完成时数据层拒绝并提示稍后。
+_Avoid_: 改密码（泛指时）、重置密码（语义错误：无法找回，只能修改）
 
 **加密笔记 (Encrypted Note)**: 移入保险库的整篇笔记，清单内一条记录（SafeNote，kind 缺省）。正文 100% 密文化，保险库面板「笔记」视图管理（预览/还原/删除）。
 _Avoid_: 加密条目（指保险库内时，避免与 🔐 仅隐藏混淆）

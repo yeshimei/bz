@@ -553,7 +553,29 @@ export class UIManager {
     // 密码数据管理器缺省自建（同一 SafeManager 单例）——Controller 可注入；无视图（ADR-0158）
     this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
     // 外部写密码条目不再触发面板重绘（无密码视图）：数据层重载照常，统计在下一次 renderAll 取新值
+    // 信封迁移进度（ADR-0211，issue 508）：v1→v2 升级走顶部进度通知（同加密/还原语汇），
+    // 收场三态——成功转成功态、上锁中止/失败转警示文案；空库瞬时完成不出通知（0 进度不回调）
+    dataManager.onMigrationProgress = (done, total) => {
+      if (!this._migNotify) this._migNotify = progressNotify('加密结构升级');
+      updateProgress(this._migNotify, done, total, '重加密密文镜像');
+    };
+    dataManager.onMigrationEnd = (ok, reason) => {
+      if (!this._migNotify) return;
+      if (ok) {
+        this._migNotify.setMessage('加密结构升级完成，修改主密码已可用');
+        this._migNotify.setType('success');
+      } else if (reason === 'locked') {
+        this._migNotify.setMessage('加密结构升级已中止（保险库上锁）：下次解锁自动继续');
+        this._migNotify.setType('warning');
+      } else {
+        this._migNotify.setMessage('加密结构升级失败：数据未受影响，下次解锁自动重试');
+        this._migNotify.setType('error');
+      }
+      this._migNotify = null;
+    };
   }
+  /** 信封迁移进度通知句柄（迁移是解锁后一次性任务，句柄用完即清） */
+  private _migNotify: NoticeHandle | null = null;
 
   /** 解锁成功后复位节流状态 */
   private resetUnlockThrottle() {
@@ -1271,6 +1293,8 @@ export class UIManager {
     const actions: ItemAction[] = [
       { icon: 'settings', label: '保险库设置', onClick: () => this.openSettings() },
       { icon: 'stethoscope', label: '保险库体检', onClick: () => void this.openHealthDialog() },
+      // 修改主密码（ADR-0211）：未解锁不进（菜单本身只在解锁态面板内可达）；迁移中数据层拒绝并提示
+      { icon: 'key-round', label: '修改主密码', onClick: () => this.openChangePassword() },
     ];
     openItemMenu(x, y, actions, true, 'bz-vault-menu');
   }
@@ -1473,6 +1497,141 @@ export class UIManager {
     // 单例登记（N11）：进行中复用同一 Promise；cancel 供 closeAllDialogs 收场走正规取消链
     activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
     return promise;
+  }
+
+  // ---------- 修改主密码（ADR-0211，issue 508） ----------
+  /** 改密屏进行中句柄（两屏接力共用；进行中不重开） */
+  private activeChangePw: { el: HTMLElement | null } | null = null;
+
+  /**
+   * 修改主密码入口（面板右键菜单 / 命令）：信封结构下只重包清单内的密钥并重加密清单，
+   * 数据镜像零接触（ADR-0211）。两屏接力复用解锁屏骨架——屏1 验证当前主密码
+   * （同销毁确认语汇），屏2 双输入设置新密码（首设同款确认）。
+   */
+  openChangePassword(): void {
+    if (this.activeChangePw?.el?.isConnected) return; // 进行中不重开
+    if (!this.dataManager.unlocked) return; // 命令入口先走解锁屏；面板内调用双保险
+    this.activeChangePw = null;
+    this.openChangePwVerify();
+  }
+
+  /** 改密屏共通壳：挂 body + 动效入场 + ESC/点遮罩收场；返回收场函数（重入防抖句柄同清） */
+  private mountChangePwScreen(ls: ReturnType<typeof uiLockScreen>): () => void {
+    topifyZ(ls.el);
+    document.body.appendChild(ls.el);
+    mountIcons(ls.el);
+    motionLockScreenIn(ls.el);
+    const done = () => {
+      this.activeChangePw = null;
+      esc.unregister();
+      ls.close();
+    };
+    const esc = escManager.register('bz-vault-changepw', {
+      isVisible: () => ls.el.isConnected,
+      close: () => done(),
+    });
+    if (ls.cancelBtn) ls.cancelBtn.onclick = () => done();
+    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(); });
+    ls.focus();
+    setTimeout(() => ls.focus(), 150);
+    this.activeChangePw = { el: ls.el };
+    return done;
+  }
+
+  /** 屏1：验证当前主密码（只读 verifyPassword，不触解锁态；同销毁确认「重验封印」语汇） */
+  private openChangePwVerify(): void {
+    const ls = uiLockScreen({
+      kind: 'vault',
+      icon: 'key-round',
+      title: '修改主密码',
+      sub: '请先验证当前主密码',
+      action: '验证',
+      placeholder: '当前主密码',
+      secText: '修改只重加密清单 · 数据文件保持不变',
+      secTone: 'ok',
+      cancel: '取消',
+    });
+    const done = this.mountChangePwScreen(ls);
+    const setErr = (m: string) => {
+      ls.setError(m);
+      setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
+    };
+    ls.actionBtn.onclick = async () => {
+      const pw = ls.input.value;
+      if (!pw) { this.rejectInput('请输入当前主密码', setErr); return; }
+      ls.setBusy(true); // T7 busy 防重（同解锁屏先例）：PBKDF2 窗口内 Enter/连点不并发提交
+      try {
+        if (await this.dataManager.verifyPassword(pw)) {
+          // 深审 P1-2：busy 窗口内 ESC/点遮罩/closeAllDialogs 已收场 → 不再前进（防幽灵弹屏2）
+          if (!ls.el.isConnected) return;
+          done();
+          this.openChangePwNew(pw);
+        } else {
+          if (!ls.el.isConnected) return;
+          ls.setBusy(false);
+          this.rejectInput('当前主密码不正确', setErr, 'error');
+          ls.input.value = '';
+          ls.focus();
+        }
+      } catch (e: any) {
+        if (!ls.el.isConnected) return;
+        ls.setBusy(false);
+        notifyActionError(e, '验证主密码');
+      }
+    };
+  }
+
+  /** 屏2：设置新主密码（双输入 + 牢记勾选，首设同款确认）→ changePassword */
+  private openChangePwNew(currentPw: string): void {
+    const ls = uiLockScreen({
+      kind: 'vault',
+      icon: 'key-round',
+      title: '设置新主密码',
+      sub: '新主密码加密整库清单；各文件密钥随清单保存，数据文件不动',
+      action: '修改密码',
+      firstSetup: true,
+      placeholder: '新主密码',
+      warningHtml:
+        `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 新主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘新密码，保险库将无法解锁。`,
+      ackText: '我已牢记新主密码：遗忘将无法解锁保险库',
+      secText: '只重加密清单 · 亚秒级完成 · 数据文件不变',
+      secTone: 'ok',
+      cancel: '取消',
+    });
+    const done = this.mountChangePwScreen(ls);
+    const setErr = (m: string) => {
+      ls.setError(m);
+      setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
+    };
+    ls.actionBtn.onclick = async () => {
+      const pw = ls.input.value;
+      if (!pw) { this.rejectInput('请输入新主密码', setErr); return; }
+      if (pw !== ls.input2.value) { this.rejectInput('两次密码不一致', setErr); return; }
+      if (pw.length < 4) { this.rejectInput('主密码至少 4 位', setErr); return; }
+      if (pw === currentPw) { this.rejectInput('新密码不能与当前密码相同', setErr); return; }
+      if (!ls.ackBox?.checked) { this.rejectInput('请先勾选确认', setErr); return; }
+      ls.setBusy(true);
+      try {
+        const ok = await this.dataManager.changePassword(currentPw, pw);
+        // 深审 P1-2：等待窗口内已收场 → 静默终了（数据层已生效与否都不再动 UI）
+        if (!ls.el.isConnected) return;
+        if (ok) {
+          motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
+          done();
+          notice('主密码已修改，数据文件未变动', 'success');
+        } else {
+          ls.setBusy(false);
+          this.rejectInput('当前主密码不正确，未修改', setErr, 'error');
+          ls.input.value = '';
+          ls.focus();
+        }
+      } catch (e: any) {
+        // 迁移中/未就绪等数据层拒绝：如实透传文案，弹窗保留可重试
+        if (!ls.el.isConnected) return;
+        ls.setBusy(false);
+        notifyActionError(e, '修改主密码');
+      }
+    };
   }
 
   // ---------- 统一工作台渲染 ----------
@@ -1949,6 +2108,7 @@ export class UIManager {
    */
   closeAllDialogs(): void {
     if (activeUnlock && activeUnlock.el?.isConnected) activeUnlock.cancel();
+    this.activeChangePw = null; // 改密屏（bz-lockscreen--mask）：DOM 由下方统一摘除，句柄同清
     document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
     // ui 新-8：body 锁屏按 kind 过滤——只拆自家（vault）解锁屏/销毁确认，不越界代拆他域
     // （密码本快速取密 ensureSafeUnlocked / 日记域）挂在 body 的解锁屏。对齐 onExternalLock
