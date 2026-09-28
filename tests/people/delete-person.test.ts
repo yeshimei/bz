@@ -37,10 +37,11 @@ function click(sel: string): void {
 const card = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-card="${id}"]`);
 const lockMask = (): HTMLElement | null => document.querySelector<HTMLElement>('.bz-lockscreen--mask');
 const delBtn = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-del="${id}"]`);
-/** 二次确认走核心流程框（openFlowDialog）：遮罩 / 按钮 id 是冻结契约 */
-const flowMask = (): HTMLElement | null => document.querySelector<HTMLElement>('#__shared_confirm_mask__');
-const flowOk = (): HTMLElement | null => document.querySelector<HTMLElement>('#__shared_confirm_ok__');
-const flowCancel = (): HTMLElement | null => document.querySelector<HTMLElement>('#__shared_confirm_cancel__');
+/** 二次确认走脸谱自有弹层（issue 502 续：`deleteConfirmModal`，不再借核心通用确认框）：data 钩子即契约 */
+const flowMask = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-del-confirm]');
+// 按钮助手收窄到 button：遮罩（.bz-people-pop-dim）也挂 data-people-del-cancel（点遮罩＝取消）
+const flowOk = (): HTMLElement | null => document.querySelector<HTMLElement>('button[data-people-del-ok]');
+const flowCancel = (): HTMLElement | null => document.querySelector<HTMLElement>('button[data-people-del-cancel]');
 
 /** 假引擎：removeJob 记一笔调用序（真删顺序契约：先停任务、再删记录） */
 class FakeEngine implements JobsApi {
@@ -125,8 +126,9 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
 
     click('[data-people-del="莫莫"]');
     await vi.waitFor(() => expect(flowMask()).toBeTruthy());
-    expect(flowMask()!.querySelector('h4')!.textContent).toBe('删除联系人');
-    expect(flowMask()!.querySelector('p')!.textContent).toContain('确定删除「莫莫」吗？');
+    expect(flowMask()!.querySelector('.bz-people-pop-title')!.textContent).toBe('删除联系人');
+    expect(flowMask()!.querySelector('.bz-people-del-who')!.textContent).toContain('「莫莫」');
+    expect(flowMask()!.querySelector('.bz-people-del-line')!.textContent).toContain('还没画过脸谱');
     expect(flowCancel()!.textContent).toBe('取消');
     expect(flowOk()!.textContent).toBe('删除');
     expect(await safe.read('莫莫')).toBeTruthy(); // 还没删
@@ -144,7 +146,8 @@ describe('未画谱档：弹确认框二次确认（issue 500 / 501）', () => {
 
     click('[data-people-del="莫莫"]');
     await vi.waitFor(() => expect(flowMask()).toBeTruthy());
-    flowMask()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 点遮罩（.bz-people-pop-dim 带取消钩子）＝取消语义
+    document.querySelector('.bz-people-pop-dim')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await vi.waitFor(() => expect(flowMask()).toBeNull());
     await tick();
     expect(await safe.read('莫莫')).toBeTruthy();

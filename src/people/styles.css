@@ -1483,6 +1483,31 @@
   font-size: 13px;
 }
 
+/* —— 删除确认弹窗（502 续：脸谱自有弹层，替代 core 通用确认框；窄身、印色人名、朱红删除） —— */
+.bz-people-del-panel {
+  width: min(400px, calc(100% - 32px));
+}
+.bz-people-del-panel .bz-people-pop-body {
+  min-height: 0;
+}
+.bz-people-del-who {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--ink-strong);
+}
+.bz-people-del-line {
+  margin-top: 10px;
+  color: var(--ink);
+  line-height: 1.75;
+}
+.bz-people-del-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-mut);
+  line-height: 1.7;
+}
+
 /* —— 人物档案 + 随手记（issue 439；447 收进「档案」折） —— */
 .bz-people-prof {
   padding: 12px 16px;

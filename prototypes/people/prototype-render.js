@@ -1,4 +1,4 @@
-/* 源指纹 c5b89bd17d9aac52 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e65ac61154907904 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -27,6 +27,7 @@ var BZR_people = (() => {
     avatarUri: () => avatarUri,
     button: () => button,
     dateRow: () => dateRow,
+    deleteConfirmModal: () => deleteConfirmModal,
     deleteTierOf: () => deleteTierOf,
     dsModal: () => dsModal,
     dsRow: () => dsRow,
@@ -247,7 +248,9 @@ var BZR_people = (() => {
     return 0;
   }
   var JOBS_ACTIONS = {
-    running: { label: "暂停", hook: "data-people-jobs-pause" },
+    // 运行中不再给「暂停」钮（issue 502 续）：画谱是一次想看完的连续过程，
+    // 摆在眼前的暂停反而诱发误触；要中断就关面板 / 换人跑，任务本身留断点可续。
+    running: null,
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
     interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
     // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
@@ -400,6 +403,30 @@ var BZR_people = (() => {
       const t = e.target;
       if (t.closest("[data-people-gen-start]")) onAnswer("start");
       else if (t.closest("[data-people-gen-cancel]")) onAnswer("cancel");
+    });
+    return wrap;
+  }
+  function deleteConfirmModal(p, tier, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-del-confirm", { "data-people-del-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-del-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-del-panel", { role: "dialog", "aria-label": "删除联系人" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("删除联系人"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-del-who", text(`「${p.name}」`)));
+    body.appendChild(el("div", "bz-people-del-line", text(tier === "unfinished" ? "这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。" : "这个人还没画过脸谱——删掉之后要重新导入才能再画。")));
+    body.appendChild(el("div", "bz-people-del-note", text("数据源目录与聊天原文不动，之后可以重新导入。")));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-del-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "删除", { "data-people-del-ok": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-del-ok]")) onAnswer("delete");
+      else if (t.closest("[data-people-del-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }
@@ -629,18 +656,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       prof.socials && prof.socials.length || prof.tags && prof.tags.length || prof.interests && prof.interests.length || prof.likes && prof.likes.length || prof.dislikes && prof.dislikes.length || prof.relationships && prof.relationships.length || prof.importantDates && prof.importantDates.length || ((_a = prof.birthday) != null ? _a : "").trim() || ((_b = prof.metVia) != null ? _b : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim() || ((_g = prof.personality) != null ? _g : "").trim() || ((_h = prof.habits) != null ? _h : "").trim() || ((_i = prof.recentLife) != null ? _i : "").trim() || ((_j = prof.nickname) != null ? _j : "").trim() || ((_k = prof.quote) != null ? _k : "").trim()
     );
   }
-  function foldHint(msg, action) {
-    const d = el("div", "bz-people-empty-hint");
-    d.appendChild(text(msg));
-    if (action) {
-      d.appendChild(el("br"));
-      d.appendChild(button("bz-people-btn bz-people-btn-ghost", action, { "data-people-ds-open": "" }));
-    }
-    return d;
+  function foldHint(msg) {
+    return el("div", "bz-people-empty-hint", text(msg));
   }
   function foldPersonBody(mdRoot, p) {
     var _a, _b;
-    const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
+    const out = mdRoot ? [mdRoot] : [foldHint("其人画像还没生成——画一次脸谱就会写出来。")];
     if ((_b = (_a = p.digest) == null ? void 0 : _a.quotes) == null ? void 0 : _b.length) {
       out.push(el("div", "bz-people-section-title", text("代表原话")));
       const quotes = el("div", "bz-people-quotes");
@@ -655,7 +676,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return out;
   }
   function foldBondBody(mdRoot) {
-    return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
+    return mdRoot ? [mdRoot] : [foldHint("关系画像还没生成——画一次脸谱就会写出来。")];
   }
   function foldEventsBody(p) {
     var _a, _b, _c;
@@ -694,7 +715,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       }
       out.push(months);
     } else if (!out.length) {
-      out.push(el("div", "bz-people-empty-hint", text("还没有交往纪事。导入聊天生成脸谱后会提炼出来。")));
+      out.push(el("div", "bz-people-empty-hint", text("交往纪事还没生成——画一次脸谱就会排出来。")));
     }
     const evs = (_c = p.manualEvents) != null ? _c : [];
     if (evs.length) {

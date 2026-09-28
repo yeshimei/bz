@@ -285,7 +285,9 @@ export function jobsStagesDone(stage: string | undefined, status: JobsUiStatus):
 
 /** 状态 → 动作钮（label + data 钩子）；done 无动作 */
 const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null> = {
-  running: { label: '暂停', hook: 'data-people-jobs-pause' },
+  // 运行中不再给「暂停」钮（issue 502 续）：画谱是一次想看完的连续过程，
+  // 摆在眼前的暂停反而诱发误触；要中断就关面板 / 换人跑，任务本身留断点可续。
+  running: null,
   paused: { label: '继续生成', hook: 'data-people-jobs-resume' },
   interrupted: { label: '继续生成', hook: 'data-people-jobs-resume' },
   // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
@@ -490,6 +492,40 @@ export function generationConfirmModal(info: GenerationConfirmInfo, onAnswer: (a
     const t = e.target as HTMLElement;
     if (t.closest('[data-people-gen-start]')) onAnswer('start');
     else if (t.closest('[data-people-gen-cancel]')) onAnswer('cancel');
+  });
+  return wrap;
+}
+
+/**
+ * 删除确认弹窗（issue 502 续）：原先走 core 的通用确认框（`openFlowDialog`），皮是通用灰、
+ * 与脸谱整套宣纸 + 朱红 + 印色的语汇脱节。这里换成脸谱自有弹层——与「开始生成脸谱」同一套壳
+ * （`.bz-people-pop-*`），标题走印色字、主动作用朱红（域内 `--acc` 本就是朱红，删除即朱红）。
+ * 只用于「未画谱 / 画谱未完成」两档；已画谱档仍走密码门（`confirmDeleteWithPassword`，强度更高）。
+ * 遮罩点击 / Esc 归「取消」；onAnswer 只回调一次，摘除弹层由宿主管。
+ */
+export function deleteConfirmModal(p: PersonEntry, tier: DeleteTier, onAnswer: (answer: 'delete' | 'cancel') => void): HTMLElement {
+  const wrap = el('div', 'bz-people-scope bz-people-del-confirm', { 'data-people-del-confirm': '' });
+  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-del-cancel': '' }));
+  const pop = el('div', 'bz-people-pop-panel bz-people-del-panel', { role: 'dialog', 'aria-label': '删除联系人' });
+  pop.appendChild(el('div', 'bz-people-pop-head', [
+    el('div', 'bz-people-pop-title', text('删除联系人')),
+  ]));
+  const body = el('div', 'bz-people-pop-body');
+  body.appendChild(el('div', 'bz-people-del-who', text(`「${p.name}」`)));
+  body.appendChild(el('div', 'bz-people-del-line', text(tier === 'unfinished'
+    ? '这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。'
+    : '这个人还没画过脸谱——删掉之后要重新导入才能再画。')));
+  body.appendChild(el('div', 'bz-people-del-note', text('数据源目录与聊天原文不动，之后可以重新导入。')));
+  body.appendChild(el('div', 'bz-people-desc-actions', [
+    button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-del-cancel': '' }),
+    button('bz-people-btn bz-people-btn-acc', '删除', { 'data-people-del-ok': '' }),
+  ]));
+  pop.appendChild(body);
+  wrap.appendChild(pop);
+  wrap.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('[data-people-del-ok]')) onAnswer('delete');
+    else if (t.closest('[data-people-del-cancel]')) onAnswer('cancel');
   });
   return wrap;
 }
@@ -869,22 +905,20 @@ export function profileFilled(prof: PersonProfile | undefined): boolean {
 
 // ---------------- 详情折内容（纯 markup；数据由调用方备好） ----------------
 
-/** 折内空态提示：一句话 + 可选「打开数据源」动作（448 评审 P2 的入口内联习惯，markup 单源收进本层） */
-export function foldHint(msg: string, action?: string): HTMLElement {
-  const d = el('div', 'bz-people-empty-hint');
-  d.appendChild(text(msg));
-  if (action) {
-    d.appendChild(el('br'));
-    d.appendChild(button('bz-people-btn bz-people-btn-ghost', action, { 'data-people-ds-open': '' }));
-  }
-  return d;
+/**
+ * 折内空态提示（issue 502 续）：一句话说清「这一折为什么还空着」。
+ * 不带动作钮——折空的原因是这一折还没生成，动作（画脸谱 / 补画）在详情头画笔钮与卡面印章上；
+ * 空态里再挂一个「打开数据源」，会把用户从「画谱」岔到「导入」那条不相干的路上。
+ */
+export function foldHint(msg: string): HTMLElement {
+  return el('div', 'bz-people-empty-hint', text(msg));
 }
 
-/** 其人折正文（卷一《其人》，issue 455）：markdown + 代表原话；空态引导导入（旧单卷数据由 personOf 兼容读进来） */
+/** 其人折正文（卷一《其人》，issue 455）：markdown + 代表原话；空态说清成因（旧单卷数据由 personOf 兼容读进来） */
 export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = mdRoot
     ? [mdRoot]
-    : [foldHint('还没有其人画像。从数据源导入一次即可生成。', '打开数据源')];
+    : [foldHint('其人画像还没生成——画一次脸谱就会写出来。')];
   if (p.digest?.quotes?.length) {
     out.push(el('div', 'bz-people-section-title', text('代表原话')));
     const quotes = el('div', 'bz-people-quotes');
@@ -899,9 +933,9 @@ export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTML
   return out;
 }
 
-/** 相交折正文（卷二《相交》，issue 455）：markdown；空态引导导入 */
+/** 相交折正文（卷二《相交》，issue 455）：markdown；空态说清成因 */
 export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
-  return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
+  return mdRoot ? [mdRoot] : [foldHint('关系画像还没生成——画一次脸谱就会写出来。')];
 }
 
 /** 纪事折正文（455 评审拍板合并）：编年时间线在前，按月交往事件在后，随手记列表收尾（录入行已抽成详情头「记一笔」弹窗） */
@@ -942,7 +976,7 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
     }
     out.push(months);
   } else if (!out.length) {
-    out.push(el('div', 'bz-people-empty-hint', text('还没有交往纪事。导入聊天生成脸谱后会提炼出来。')));
+    out.push(el('div', 'bz-people-empty-hint', text('交往纪事还没生成——画一次脸谱就会排出来。')));
   }
   const evs = p.manualEvents ?? [];
   if (evs.length) {

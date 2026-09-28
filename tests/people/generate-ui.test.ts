@@ -192,7 +192,7 @@ afterEach(() => {
 });
 
 describe('开面板恢复任务态（450 状态恢复）', () => {
-  it('打开面板：resumeJobs 重建一次；进度块只在对应联系人的详情页显示（455 评审），主文案一行 + 暂停钮', async () => {
+  it('打开面板：resumeJobs 重建一次；进度块只在对应联系人的详情页显示（455 评审），主文案一行、运行中不给按钮（502 续）', async () => {
     await boot([drawnPerson()]);
     const engine = new FakeEngine();
     engine.items = [
@@ -210,7 +210,9 @@ describe('开面板恢复任务态（450 状态恢复）', () => {
     // 一行到底：批位锚点与批明细同义 → 只留明细（批号 + 日期段 + 条数）
     expect(document.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
     expect(document.querySelector('.bz-people-jobs-pct')!.textContent).toBe('19%'); // 12/63（455 三段成文分母 +3）
-    expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy();
+    // 502 续：运行中不摆暂停钮——要停有印章（本批做完后停）与关面板两条路
+    expect(document.querySelector('[data-people-jobs-pause]')).toBeNull();
+    expect(document.querySelector('[data-people-jobs-resume]')).toBeNull();
   });
 
   it('中断任务恢复：出「继续生成」按钮，块根带 talker', async () => {
@@ -281,7 +283,9 @@ describe('startGeneration → 引擎 → done 落盘', () => {
       material: { traits: ['简短'], moments: [{ ts: '2026-09-25', summary: '午饭决策现场' }] },
       chronicle: '## 时间线\n2026-09 仍常聊。',
     })]);
-    await vi.waitFor(async () => expect((await disk()).people[0]?.lastProcessedTs).toBe(T0 + 120_000)); // 锚点是落盘链最后一环，等它落地
+    // 等落盘链闭环：锚点落盘之后是同段的「通知 + 清队列」，全量并发跑时若只等中途的落盘
+    // 会被 waitFor 抢跑（断言比 handler 后续几行先执行）——盯最后一环 removeJob
+    await vi.waitFor(() => expect(engine.calls.remove).toEqual(['wxid_a']));
     expect((await disk()).people[0]?.digest?.person).toContain('陈默说话简短');
     const p = (await disk()).people[0];
     const d = p.digest!;
@@ -345,7 +349,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
 });
 
 describe('进度块按钮派发（450）', () => {
-  it('运行中「暂停」→ pauseJobs；暂停「继续」→ resume；可续 error「继续生成」→ resume；接不上的 error「删除任务」→ removeJob', async () => {
+  it('运行中不给按钮（502 续）；暂停「继续」→ resume；可续 error「继续生成」→ resume；接不上的 error「删除任务」→ removeJob', async () => {
     await boot([drawnPerson()]);
     const engine = new FakeEngine();
     inject(engine);
@@ -353,10 +357,11 @@ describe('进度块按钮派发（450）', () => {
     await vi.waitFor(() => expect(document.querySelector('[data-people-card="wxid_a"]')).toBeTruthy());
     click('[data-people-card="wxid_a"]'); // 455 评审：进度块只在详情页，先进详情
     engine.push([fakeJob()]);
-    await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-pause]')).toBeTruthy());
-    click('[data-people-jobs-pause]');
-    await tick(); // 动作经事件委托同步派发，通知走微任务
-    expect(engine.calls.pause).toBe(1);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-jobs]')).toBeTruthy());
+    // 502 续：运行中的块上一个按钮都没有（暂停改由印章「本批做完后暂停」承担）
+    expect(document.querySelector('[data-people-jobs-pause]')).toBeNull();
+    expect(document.querySelector('[data-people-jobs-resume]')).toBeNull();
+    expect(engine.calls.pause).toBe(0);
 
     engine.push([fakeJob({ status: 'paused', message: '已暂停（1/1 批）' })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-resume]')).toBeTruthy());
@@ -370,7 +375,7 @@ describe('进度块按钮派发（450）', () => {
     expect(document.querySelector('.bz-people-jobs-err')!.textContent).toBe('AI 调用超时');
     click('[data-people-jobs-resume]');
     await tick();
-    expect(engine.calls.resume).toEqual(['wxid_a', 'wxid_a']); // 暂停那次 + 这次
+    expect(engine.calls.resume).toEqual(['wxid_a', 'wxid_a']); // 暂停态那次 + error 这次
 
     engine.push([fakeJob({ status: 'error', message: DRIFT_ERROR, error: DRIFT_ERROR })]);
     await vi.waitFor(() => expect(document.querySelector('[data-people-jobs-dismiss]')).toBeTruthy());
@@ -692,7 +697,7 @@ describe('详情折册四折与弹窗（455）', () => {
     expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(false);
     click('[data-people-leaf-head="b"]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-leaf="b"]')!.classList.contains('bz-people-leaf-on')).toBe(true));
-    expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-body')!.textContent).toContain('还没有关系画像');
+    expect(document.querySelector('[data-people-leaf="b"] .bz-people-leaf-body')!.textContent).toContain('关系画像还没生成');
   });
 
   it('新 digest 双卷：其人 / 相交两折各显各卷', async () => {

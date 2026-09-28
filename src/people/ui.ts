@@ -19,7 +19,6 @@
  * （合成占位卡纯内存零写盘；占位卡上写档案 / 随手记前先 ensureEntry 落一张空卡）。
  */
 import { notice, notifyActionError } from '../core/notice';
-import { openFlowDialog } from '../core/flow-dialog';
 import { topifyZ } from '../core/z-order';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
@@ -72,6 +71,7 @@ import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   generationConfirmModal,
+  deleteConfirmModal,
   dateRow,
   deleteTierOf,
   dsModal,
@@ -106,6 +106,7 @@ import {
   jobsStagesDone,
   type DsRowState,
   type DsSyncLine,
+  type DeleteTier,
   type FoldCardJob,
   type FoldId,
   type JobsBlockState,
@@ -1327,15 +1328,13 @@ function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'c
   });
 }
 
-/** 进度块动作派发（talker 从块根 data 钩子读） */
-function jobsAction(kind: 'pause' | 'resume' | 'dismiss' | 'prep-retry'): void {
+/**
+ * 进度块动作派发（talker 从块根 data 钩子读）。
+ * 502 续：运行中不再出「暂停」钮（画谱是一段想看完的连续过程），故本派发器无 pause 分支。
+ */
+function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry'): void {
   const api = jobs();
   const talker = overlay?.querySelector<HTMLElement>('[data-people-jobs]')?.getAttribute('data-people-jobs-talker') ?? '';
-  if (kind === 'pause') {
-    api.pauseJobs();
-    notice('这一批做完就暂停', 'info');
-    return;
-  }
   if (kind === 'prep-retry') {
     const who = talker || currentJobsItem()?.talker || '';
     if (!who) return;
@@ -1433,8 +1432,7 @@ async function sealAction(kind: string, id: string): Promise<void> {
 function onOverlayClick(e: MouseEvent): void {
   const t = e.target as HTMLElement;
   if (e.target === overlay) { closePeoplePanel(); return; }
-  // —— 生成进度块动作（450：暂停 / 继续 / 删除任务；块根带 talker 钩子；469 加重试失败项） ——
-  if (t.closest('[data-people-jobs-pause]')) { jobsAction('pause'); return; }
+  // —— 生成进度块动作（450：继续 / 删除任务；469 加重试失败项；502 续：去掉运行中的暂停钮） ——
   if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
   if (t.closest('[data-people-jobs-prep-retry]')) { jobsAction('prep-retry'); return; }
   if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
@@ -1845,10 +1843,38 @@ async function renderList(body: HTMLElement, people: PersonEntry[]): Promise<voi
   body.appendChild(wall);
 }
 
+/** 删除确认窗开着标记（防叠窗；Esc 与遮罩点击都归「取消」） */
+let delConfirmOpen = false;
+
 /**
- * 详情头「删除」（issue 500 / 501）：先按 {@link deleteTierOf} 判档，再走对应门禁——
+ * 删除确认（502 续）：走脸谱自有弹层（`render.deleteConfirmModal`——宣纸 + 朱红 + 印色的同一套壳），
+ * 不再用 core 的通用确认框（那个皮是通用灰，跟脸谱整套语汇对不上）。
+ * 挂 body 级（面板可能压根没开），Esc 与遮罩点击归「取消」。
+ */
+function askDeleteConfirm(p: PersonEntry, tier: DeleteTier): Promise<'delete' | 'cancel'> {
+  if (delConfirmOpen) return Promise.resolve('cancel'); // 已有窗开着：不叠窗，按未确认处理
+  delConfirmOpen = true;
+  return new Promise((resolve) => {
+    const done = (answer: 'delete' | 'cancel'): void => {
+      delConfirmOpen = false;
+      document.removeEventListener('keydown', onKey, true);
+      node.remove();
+      resolve(answer);
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') done('cancel');
+    };
+    const node = deleteConfirmModal(p, tier, done);
+    document.body.appendChild(node);
+    topifyZ(node);
+    document.addEventListener('keydown', onKey, true);
+  });
+}
+
+/**
+ * 详情头「删除」（issue 500 / 501 / 502 续）：先按 {@link deleteTierOf} 判档，再走对应门禁——
  *   已画谱（有画像正文）→ 重输主密码（不可逆产物，同密文销毁防护）；
- *   未画谱 / 画谱未完成 → 弹确认框二次确认（issue 501：原先的「图标灯光 + 通知」看不懂，改真弹窗）。
+ *   未画谱 / 画谱未完成 → 弹脸谱自有确认窗二次确认（501 换真弹窗，502 续换成本域皮肤）。
  * 只删保库记录（人物卡 + 聊天仓 + 脸谱 + 随手记 + 头像附件）；数据源目录与聊天原文不动，可重新导入。
  */
 async function handleDelete(id: string): Promise<void> {
@@ -1860,17 +1886,7 @@ async function handleDelete(id: string): Promise<void> {
     confirmDeleteWithPassword(p, () => void deletePerson(p));
     return;
   }
-  const v = await openFlowDialog({
-    title: '删除联系人',
-    message: tier === 'unfinished'
-      ? `确定删除「${p.name}」吗？\n这个人的脸谱还没画完，删了要从头画，未完成的任务会一并停掉。\n数据源目录与聊天原文不动，之后可以重新导入。`
-      : `确定删除「${p.name}」吗？\n数据源目录与聊天原文不动，之后可以重新导入。`,
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'ok', cta: true, danger: true },
-    ],
-  });
-  if (v === 'ok') await deletePerson(p);
+  if (await askDeleteConfirm(p, tier) === 'delete') await deletePerson(p);
 }
 
 /**

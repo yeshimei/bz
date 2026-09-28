@@ -1,4 +1,4 @@
-/* 源指纹 df093e28346d36d9 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 609b2b3c5b5a0371 · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -4050,7 +4050,30 @@ var BZW_people = (() => {
   async function requestUrl() {
     throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
   }
-  var import_moment, Platform, Setting, MarkdownRenderer, Component, FakeVault, FakeWorkspace, FakeApp;
+  function fakeImageBytes(path) {
+    var _a2, _b2;
+    const key = String(path != null ? path : "").replace(/\\/g, "/");
+    if (!IMG_EXT.test(key)) return null;
+    const hit = imageBytesCache.get(key);
+    if (hit !== void 0) return hit;
+    const seed = typeof window !== "undefined" ? (_a2 = window.BZW_PEOPLE) == null ? void 0 : _a2.SEED : void 0;
+    const b64 = (_b2 = seed == null ? void 0 : seed.AVATAR_B64) == null ? void 0 : _b2[key];
+    if (!b64) {
+      imageBytesCache.set(key, null);
+      return null;
+    }
+    try {
+      const bin = atob(b64);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      imageBytesCache.set(key, out);
+      return out;
+    } catch (e) {
+      imageBytesCache.set(key, null);
+      return null;
+    }
+  }
+  var import_moment, Platform, Setting, MarkdownRenderer, Component, IMG_EXT, imageBytesCache, FakeVault, FakeWorkspace, FakeApp;
   var init_fake_obsidian = __esm({
     "prototypes/people/fake/fake-obsidian.ts"() {
       import_moment = __toESM(require_moment());
@@ -4066,10 +4089,37 @@ var BZW_people = (() => {
       };
       Component = class {
       };
+      IMG_EXT = /\.(jpg|jpeg|png|webp|gif)$/i;
+      imageBytesCache = /* @__PURE__ */ new Map();
       FakeVault = class _FakeVault {
         constructor() {
           this.listeners = /* @__PURE__ */ new Map();
           this.idSeq = 0;
+          /**
+           * Obsidian DataAdapter 面子集（migrate.ts 读旧明文三件 / 读旧头像字节用）。
+           * 后端同 localStorage：exists/read/remove 直落 bz-sim: 键；readBinary 走
+           * fakeImageBytes（真字节由评审引导注入）。不提供 getResourcePath——壳里图片一律走
+           * window.BZW_MEDIA_BASE 的服务路由，渲染层不会落到这一支。
+           */
+          this.adapter = {
+            exists: async (p) => localStorage.getItem(_FakeVault.key(p)) != null || fakeImageBytes(p) !== null,
+            read: async (p) => {
+              const raw = localStorage.getItem(_FakeVault.key(p));
+              if (raw == null) throw new Error(`fake adapter: ${p} 不存在`);
+              return raw;
+            },
+            readBinary: async (p) => {
+              const bytes = fakeImageBytes(p);
+              if (!bytes) throw new Error(`fake adapter: ${p} 无字节`);
+              return bytes.buffer;
+            },
+            write: async (p, data) => {
+              localStorage.setItem(_FakeVault.key(p), data);
+            },
+            remove: async (p) => {
+              localStorage.removeItem(_FakeVault.key(p));
+            }
+          };
           if (typeof window !== "undefined") {
             window.addEventListener("storage", (e) => {
               if (!e.key || !e.key.startsWith("bz-sim:")) return;
@@ -4652,190 +4702,6 @@ var BZW_people = (() => {
     }
   });
 
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function relTime(s, now = Date.now()) {
-    if (!s) return "";
-    const d = new Date(s.replace(" ", "T"));
-    if (isNaN(d.getTime())) return s;
-    const diff = now - d.getTime();
-    const m = 6e4, h = 36e5, day = 864e5;
-    if (diff < m) return "刚刚";
-    if (diff < h) return Math.floor(diff / m) + " 分钟前";
-    if (diff < day) return Math.floor(diff / h) + " 小时前";
-    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-  }
-  function emptyHtmlStr(icon, title, desc) {
-    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    if (target.isSame(nowMoment.startOf("day"), "day")) {
-      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function debounce(fn, ms) {
-    let t;
-    const wrapped = (...args) => {
-      if (t !== void 0) clearTimeout(t);
-      t = setTimeout(() => {
-        t = void 0;
-        fn(...args);
-      }, ms);
-    };
-    wrapped.cancel = () => {
-      if (t !== void 0) {
-        clearTimeout(t);
-        t = void 0;
-      }
-    };
-    return wrapped;
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text2) {
-    try {
-      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  async function copySensitiveWithFallback(text2) {
-    try {
-      await copySensitiveText(text2);
-      return true;
-    } catch (e) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text2;
-        ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      init_notice();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
-    }
-  });
-
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -4893,108 +4759,6 @@ var BZW_people = (() => {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       PANEL_FOCUS_CLASS = "bz-panel-focushost";
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a2;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function cancelActiveFlowDialog() {
-    if (activeSettle) activeSettle(void 0);
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
     }
   });
 
@@ -6603,6 +6367,292 @@ var BZW_people = (() => {
           return CryptoService.decrypt(cipher, this.password);
         }
       };
+    }
+  });
+
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml2(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
+    }
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text2) {
+    try {
+      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text2) {
+    try {
+      await copySensitiveText(text2);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text2;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a2;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function cancelActiveFlowDialog() {
+    if (activeSettle) activeSettle(void 0);
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
     }
   });
 
@@ -12904,7 +12954,6 @@ var BZW_people = (() => {
 
   // src/people/ui.ts
   init_notice();
-  init_flow_dialog();
   init_z_order();
   init_esc_manager();
   init_focus_trap();
@@ -13198,6 +13247,10 @@ var BZW_people = (() => {
     }
   };
   var shared = null;
+  function setPeopleSafeStoreForTests(store2) {
+    shared == null ? void 0 : shared.destroy();
+    shared = store2;
+  }
   async function getPeopleSafeStore() {
     if (!shared) {
       const enc = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
@@ -17543,7 +17596,9 @@ ${lines.join("\n")}`);
     return 0;
   }
   var JOBS_ACTIONS = {
-    running: { label: "暂停", hook: "data-people-jobs-pause" },
+    // 运行中不再给「暂停」钮（issue 502 续）：画谱是一次想看完的连续过程，
+    // 摆在眼前的暂停反而诱发误触；要中断就关面板 / 换人跑，任务本身留断点可续。
+    running: null,
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
     interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
     // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
@@ -17696,6 +17751,30 @@ ${lines.join("\n")}`);
       const t = e.target;
       if (t.closest("[data-people-gen-start]")) onAnswer("start");
       else if (t.closest("[data-people-gen-cancel]")) onAnswer("cancel");
+    });
+    return wrap;
+  }
+  function deleteConfirmModal(p, tier, onAnswer) {
+    const wrap = el("div", "bz-people-scope bz-people-del-confirm", { "data-people-del-confirm": "" });
+    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-del-cancel": "" }));
+    const pop = el("div", "bz-people-pop-panel bz-people-del-panel", { role: "dialog", "aria-label": "删除联系人" });
+    pop.appendChild(el("div", "bz-people-pop-head", [
+      el("div", "bz-people-pop-title", text("删除联系人"))
+    ]));
+    const body = el("div", "bz-people-pop-body");
+    body.appendChild(el("div", "bz-people-del-who", text(`「${p.name}」`)));
+    body.appendChild(el("div", "bz-people-del-line", text(tier === "unfinished" ? "这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。" : "这个人还没画过脸谱——删掉之后要重新导入才能再画。")));
+    body.appendChild(el("div", "bz-people-del-note", text("数据源目录与聊天原文不动，之后可以重新导入。")));
+    body.appendChild(el("div", "bz-people-desc-actions", [
+      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-del-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "删除", { "data-people-del-ok": "" })
+    ]));
+    pop.appendChild(body);
+    wrap.appendChild(pop);
+    wrap.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-people-del-ok]")) onAnswer("delete");
+      else if (t.closest("[data-people-del-cancel]")) onAnswer("cancel");
     });
     return wrap;
   }
@@ -17925,18 +18004,12 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       prof.socials && prof.socials.length || prof.tags && prof.tags.length || prof.interests && prof.interests.length || prof.likes && prof.likes.length || prof.dislikes && prof.dislikes.length || prof.relationships && prof.relationships.length || prof.importantDates && prof.importantDates.length || ((_a2 = prof.birthday) != null ? _a2 : "").trim() || ((_b2 = prof.metVia) != null ? _b2 : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim() || ((_g = prof.personality) != null ? _g : "").trim() || ((_h = prof.habits) != null ? _h : "").trim() || ((_i = prof.recentLife) != null ? _i : "").trim() || ((_j = prof.nickname) != null ? _j : "").trim() || ((_k = prof.quote) != null ? _k : "").trim()
     );
   }
-  function foldHint(msg, action) {
-    const d = el("div", "bz-people-empty-hint");
-    d.appendChild(text(msg));
-    if (action) {
-      d.appendChild(el("br"));
-      d.appendChild(button("bz-people-btn bz-people-btn-ghost", action, { "data-people-ds-open": "" }));
-    }
-    return d;
+  function foldHint(msg) {
+    return el("div", "bz-people-empty-hint", text(msg));
   }
   function foldPersonBody(mdRoot, p) {
     var _a2, _b2;
-    const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
+    const out = mdRoot ? [mdRoot] : [foldHint("其人画像还没生成——画一次脸谱就会写出来。")];
     if ((_b2 = (_a2 = p.digest) == null ? void 0 : _a2.quotes) == null ? void 0 : _b2.length) {
       out.push(el("div", "bz-people-section-title", text("代表原话")));
       const quotes = el("div", "bz-people-quotes");
@@ -17951,7 +18024,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return out;
   }
   function foldBondBody(mdRoot) {
-    return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
+    return mdRoot ? [mdRoot] : [foldHint("关系画像还没生成——画一次脸谱就会写出来。")];
   }
   function foldEventsBody(p) {
     var _a2, _b2, _c;
@@ -17990,7 +18063,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       }
       out.push(months2);
     } else if (!out.length) {
-      out.push(el("div", "bz-people-empty-hint", text("还没有交往纪事。导入聊天生成脸谱后会提炼出来。")));
+      out.push(el("div", "bz-people-empty-hint", text("交往纪事还没生成——画一次脸谱就会排出来。")));
     }
     const evs = (_c = p.manualEvents) != null ? _c : [];
     if (evs.length) {
@@ -19432,11 +19505,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     var _a2, _b2, _c, _d, _e;
     const api = jobs();
     const talker = (_b2 = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a2.getAttribute("data-people-jobs-talker")) != null ? _b2 : "";
-    if (kind === "pause") {
-      api.pauseJobs();
-      notice("这一批做完就暂停", "info");
-      return;
-    }
     if (kind === "prep-retry") {
       const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
       if (!who) return;
@@ -19524,10 +19592,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
-      return;
-    }
-    if (t.closest("[data-people-jobs-pause]")) {
-      jobsAction("pause");
       return;
     }
     if (t.closest("[data-people-jobs-resume]")) {
@@ -19964,6 +20028,26 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     applyWall(people, wall, (id) => avaMap.get(id));
     body.appendChild(wall);
   }
+  var delConfirmOpen = false;
+  function askDeleteConfirm(p, tier) {
+    if (delConfirmOpen) return Promise.resolve("cancel");
+    delConfirmOpen = true;
+    return new Promise((resolve) => {
+      const done = (answer) => {
+        delConfirmOpen = false;
+        document.removeEventListener("keydown", onKey, true);
+        node.remove();
+        resolve(answer);
+      };
+      const onKey = (e) => {
+        if (e.key === "Escape") done("cancel");
+      };
+      const node = deleteConfirmModal(p, tier, done);
+      document.body.appendChild(node);
+      topifyZ(node);
+      document.addEventListener("keydown", onKey, true);
+    });
+  }
   async function handleDelete(id) {
     var _a2;
     if (!store) {
@@ -19981,18 +20065,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       confirmDeleteWithPassword(p, () => void deletePerson(p));
       return;
     }
-    const v = await openFlowDialog({
-      title: "删除联系人",
-      message: tier === "unfinished" ? `确定删除「${p.name}」吗？
-这个人的脸谱还没画完，删了要从头画，未完成的任务会一并停掉。
-数据源目录与聊天原文不动，之后可以重新导入。` : `确定删除「${p.name}」吗？
-数据源目录与聊天原文不动，之后可以重新导入。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (v === "ok") await deletePerson(p);
+    if (await askDeleteConfirm(p, tier) === "delete") await deletePerson(p);
   }
   async function deletePerson(p) {
     try {
@@ -20707,21 +20780,113 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     files[`${DS_ROOT}/老周家/chat.json`] = JSON.stringify(group);
     return files;
   }
+  var IMG_EXT2 = /\.(jpg|jpeg|png|webp|gif)$/i;
   function installFakeFs(files) {
     if (typeof window === "undefined") return;
     const w = window;
+    const norm = (p) => p.replace(/\\/g, "/");
     w.require = (m) => {
       if (m !== "fs") return void 0;
       return {
-        readdirSync: (p, _opts) => Object.keys(files).filter((k) => k.startsWith(p.replace(/\\/g, "/") + "/")).map((k) => k.slice(p.length + 1).split("/")[0]).filter((v, i, a) => a.indexOf(v) === i).map((name) => ({ isDirectory: () => true, name })),
-        existsSync: (p) => Object.prototype.hasOwnProperty.call(files, p.replace(/\\/g, "/")),
-        readFileSync: (p) => {
-          const hit = files[p.replace(/\\/g, "/")];
+        readdirSync: (p, _opts) => Object.keys(files).filter((k) => k.startsWith(norm(p) + "/")).map((k) => k.slice(norm(p).length + 1).split("/")[0]).filter((v, i, a) => a.indexOf(v) === i).map((name) => ({ isDirectory: () => true, name })),
+        existsSync: (p) => {
+          const key = norm(p);
+          if (Object.prototype.hasOwnProperty.call(files, key)) return true;
+          return IMG_EXT2.test(key) && fakeImageBytes(key) !== null;
+        },
+        readFileSync: (p, enc) => {
+          const key = norm(p);
+          if (!enc && IMG_EXT2.test(key)) {
+            const bytes = fakeImageBytes(key);
+            if (bytes) return bytes;
+          }
+          const hit = files[key];
           if (hit === void 0) throw new Error(`fake fs: ${p} 不存在`);
           return hit;
         }
       };
     };
+  }
+  function installFakeSafe() {
+    const notes = [];
+    const bodies = /* @__PURE__ */ new Map();
+    const blobs = /* @__PURE__ */ new Map();
+    let seq = 0;
+    const safe = {
+      root: "CONFIG/STORAGE/.ENCRYPT",
+      password: "sim",
+      unlocked: true,
+      manifest: { version: 1, notes },
+      selfHealRolledBack: 0,
+      onUnlockChange: null,
+      manifestPath: "CONFIG/STORAGE/.ENCRYPT/.safe.enc",
+      resolveRef: (ref) => `CONFIG/STORAGE/.ENCRYPT/${ref}`,
+      async exists() {
+        return true;
+      },
+      async unlock() {
+        safe.unlocked = true;
+        return true;
+      },
+      lock() {
+        safe.unlocked = false;
+      },
+      async verifyPassword() {
+        return true;
+      },
+      async lockNote(input) {
+        var _a2;
+        seq += 1;
+        const id = `sim-${seq}`;
+        const attachments = ((_a2 = input.attachments) != null ? _a2 : []).map((a, i) => {
+          var _a3;
+          const blobRef = `sim/${id}-${i}`;
+          blobs.set(blobRef, a.data);
+          return {
+            path: a.path,
+            kind: (_a3 = a.kind) != null ? _a3 : "image",
+            blobRef,
+            blobSize: a.data.length,
+            fingerprint: `sim-fp-${id}-${i}`,
+            hasPreview: false,
+            previewRef: "",
+            keptShared: a.keptShared
+          };
+        });
+        const note = {
+          id,
+          kind: input.kind,
+          path: input.path,
+          title: input.title,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          contentRef: `sim/${id}.enc`,
+          attachments
+        };
+        notes.push(note);
+        bodies.set(id, input.content);
+        return note;
+      },
+      async removeNote(id) {
+        const i = notes.findIndex((n) => n.id === id);
+        if (i >= 0) {
+          for (const a of notes[i].attachments) blobs.delete(a.blobRef);
+          notes.splice(i, 1);
+        }
+        bodies.delete(id);
+      },
+      async updateNotePayload(id, plain) {
+        bodies.set(id, plain);
+      },
+      async decryptNoteBody(note) {
+        var _a2;
+        return (_a2 = bodies.get(note.id)) != null ? _a2 : null;
+      },
+      async decryptAttachmentOriginal(a) {
+        var _a2;
+        return (_a2 = blobs.get(a.blobRef)) != null ? _a2 : null;
+      }
+    };
+    setPeopleSafeStoreForTests(new PeopleSafeStore(safe));
   }
   var _a, _b;
   var demoSettings = {
@@ -20736,16 +20901,17 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   };
   var booted = false;
   function bootPeopleSim() {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d;
     if (booted) return;
     booted = true;
     const app = new FakeApp();
     setApp(app);
     if (localStorage.getItem(PEOPLE_KEY) == null) localStorage.setItem(PEOPLE_KEY, seedPeople());
     const dsFiles = (_c = (_b2 = (_a2 = window.BZW_PEOPLE) == null ? void 0 : _a2.SEED) == null ? void 0 : _b2.DS_FILES) != null ? _c : buildDsFiles();
-    window.BZW_PEOPLE = { SEED: { DS_FILES: dsFiles } };
+    window.BZW_PEOPLE = { SEED: { ...(_d = window.BZW_PEOPLE) == null ? void 0 : _d.SEED, DS_FILES: dsFiles } };
     if (localStorage.getItem(PREVIEW_KEY) == null) localStorage.setItem(PREVIEW_KEY, seedPreview(dsFiles));
     installFakeFs(dsFiles);
+    installFakeSafe();
     setSettingsProvider(() => demoSettings);
     void peopleSettingsSchema();
   }

@@ -228,22 +228,23 @@ describe('双卷兼容读（personOf / bondOf 单源）', () => {
 });
 
 describe('折正文：其人 / 我们（issue 455）', () => {
-  it('其人折：markdown + 代表原话；空态给引导与「打开数据源」动作', () => {
+  it('其人折：markdown + 代表原话；空态说清成因、不挂动作（502 续）', () => {
     const p = person({ digest: { events: [], generatedAt: '', quotes: [{ ts: '2026-03-01', who: '我', text: '行' }] } });
     const withBody = foldPersonBody(miniMarkdown('## 速写\n- 简短'), p);
     expect(withBody[0].classList.contains('bz-people-portrait')).toBe(true);
     expect(withBody.map((n) => n.textContent).join('')).toContain('代表原话');
     const empty = foldPersonBody(null, person());
-    expect(empty[0].textContent).toContain('还没有其人画像。从数据源导入一次即可生成。');
-    expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
+    expect(empty[0].textContent).toContain('其人画像还没生成——画一次脸谱就会写出来。');
+    // 动作（画脸谱）在详情头与卡面印章上；空态里不再岔一个「打开数据源」
+    expect(empty[0].querySelector('[data-people-ds-open]')).toBeNull();
   });
 
-  it('相交折：markdown；空态引导导入（旧单卷 portrait 不进相交折）', () => {
+  it('相交折：markdown；空态说清成因（旧单卷 portrait 不进相交折）', () => {
     const body = foldBondBody(miniMarkdown('## 相交\n- 常聊'));
     expect(body[0].querySelectorAll('.bz-md-it')).toHaveLength(1); // 455：层次化条目（不再出 ul/li）
     const empty = foldBondBody(null);
-    expect(empty[0].textContent).toContain('还没有关系画像。从数据源导入一次即可生成。');
-    expect(empty[0].querySelector('[data-people-ds-open]')).toBeTruthy();
+    expect(empty[0].textContent).toContain('关系画像还没生成——画一次脸谱就会写出来。');
+    expect(empty[0].querySelector('[data-people-ds-open]')).toBeNull();
   });
 });
 
@@ -519,7 +520,7 @@ describe('progressBlock 状态机（450）', () => {
     ...over,
   });
 
-  it('运行中：细条宽度 = 百分比、主文案一行状态（455 评审不读引擎长文案）、出「暂停」不出「继续」', () => {
+  it('运行中：细条宽度 = 百分比、主文案一行状态（455 评审不读引擎长文案）、不给任何按钮（502 续）', () => {
     const b = progressBlock(state());
     expect(b.getAttribute('data-people-jobs-talker')).toBe('wxid_a');
     expect(b.querySelector('.bz-people-jobs-fill')!.getAttribute('style')).toBe('width:19%');
@@ -528,8 +529,10 @@ describe('progressBlock 状态机（450）', () => {
     expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 12/60 批 · 2026-05-01 ~ 2026-05-31 · 397 条');
     expect(b.querySelector('.bz-people-jobs-queue')).toBeNull(); // 队列副文案移除
     expect(b.querySelector('.bz-people-jobs-note')).toBeNull(); // 后台说明移除
-    expect(b.querySelector('[data-people-jobs-pause]')).toBeTruthy();
+    // 502 续：运行中不摆暂停钮（画谱是一段想看完的连续过程，暂停留在印章 / 关面板两条路上）
+    expect(b.querySelector('[data-people-jobs-pause]')).toBeNull();
     expect(b.querySelector('[data-people-jobs-resume]')).toBeNull();
+    expect(b.querySelector('[data-people-jobs-dismiss]')).toBeNull();
   });
 
   it('错误行与主行分工：主行短状态，具体错误只在错误行出现一次', () => {
