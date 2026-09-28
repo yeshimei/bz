@@ -401,18 +401,57 @@ describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成�
 });
 
 describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => {
-  it('导入所选后直接点「画脸谱」：引擎拿到非空 msgs，同会话不再读导入前的空仓', async () => {
+  it('导入所选后重开数据源页点「画脸谱」：引擎拿到非空 msgs，同会话不再读导入前的空仓', async () => {
     await bootWithDsOpen([person()]);
     click('[data-people-ds-check]'); // 勾上陈默（jsdom 合成 click 触发勾选激活）
     click('[data-people-ds-import]');
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
-    expect(document.querySelector('[data-people-ds-generate]')).toBeTruthy();
+    // issue 507：导入完成即合上数据源这一页（新照片飞回册页），不再赖在页上
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    openDataSource(); // 再打开
+    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-generate]')).toBeTruthy());
     click('[data-people-ds-generate]');
     await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engineStarted.length).toBe(1));
     const targets = engineStarted[0][1];
     expect(targets[0]?.talker).toBe('陈默');
     expect(targets[0]?.msgs.length).toBeGreaterThan(0); // 492 前：此处读到导入前空仓，引擎空手而归
+  });
+});
+
+describe('导入完的收尾：这一页自己合上、勾选摘掉、无新素材沉底（issue 507）', () => {
+  /** 数据根里再加一位（列目录用；不导入） */
+  function seedDir(name: string): void {
+    mkdirSync(join(dataRoot, name), { recursive: true });
+    writeFileSync(join(dataRoot, name, 'chat.json'), JSON.stringify([{ ct: T0, type: 1, msg: '在吗' }]));
+  }
+  const rows = (): HTMLElement[] => [...document.querySelectorAll<HTMLElement>('.bz-people-ds-row')];
+  const rowOf = (name: string): HTMLElement => rows().find((r) => r.textContent?.includes(name))!;
+  const tickRow = (name: string): void => {
+    rowOf(name).querySelector<HTMLElement>('[data-people-ds-check]')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  };
+
+  it('导入所选后这一页自己合上；再打开时刚导入的那位已勾选摘掉、不可再勾，且沉到列表下面', async () => {
+    seedDir('林晚'); // 数据根里两位：陈默（要导入）+ 林晚（全新，不动）
+    await bootWithDsOpen([person()]);
+    expect(rows().length).toBe(2);
+    tickRow('陈默'); // 勾上陈默
+    expect(rowOf('陈默').classList.contains('bz-people-ds-on')).toBe(true);
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    // 合上这一页那一下：刚导进来的几位挂上「飞回册页」的类（issue 507：505 之后这枚动效没人挂）
+    expect(document.querySelector('[data-people-pocket="陈默"]')!.classList.contains('bz-people-drop')).toBe(true);
+    openDataSource();
+    await vi.waitFor(() => expect(rows().length).toBe(2));
+    // 水位落到「无新素材」：沉到最后、且行不可勾
+    expect(rows()[rows().length - 1].textContent).toContain('陈默');
+    const chen = rowOf('陈默');
+    expect(chen.classList.contains('bz-people-ds-skip')).toBe(true);
+    expect(chen.classList.contains('bz-people-ds-on')).toBe(false); // 取消选中状态
+    tickRow('陈默'); // 点它一下也不该勾上（jsdom 合成 click 走委托分支）
+    expect(rowOf('陈默').classList.contains('bz-people-ds-on')).toBe(false);
+    // 另一位（全新）照旧可勾——不可勾的只有「已导入且无新素材」
+    tickRow('林晚');
+    expect(rowOf('林晚').classList.contains('bz-people-ds-on')).toBe(true);
   });
 });
 
@@ -497,6 +536,9 @@ describe('导入所选按需导出（issue 485）', () => {
     exportTool.info({ phase: 'contact', name: '陈默', status: 'ok', msgs: 2, chat: 'new' });
     exportTool.result({ ok: true, mode: 'export', contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 2, named: 0, failures: [] });
     await exportTool.settle({ ok: true, code: 0 });
+    // issue 507：导入完成即合上数据源页 → 再打开看落账文案
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    openDataSource();
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
     const rec = await lastSafe!.readAll().then((m) => m.get('陈默'));
     expect(rec?.store?.msgs?.length).toBe(2); // 归一合并落保库记录
@@ -508,6 +550,8 @@ describe('导入所选按需导出（issue 485）', () => {
     await bootWithDsOpen([person()]);
     click('[data-people-ds-check]');
     click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull()); // 507：导完自己合上
+    openDataSource();
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-notice]')?.textContent).toContain('已导入'));
     expect(exportTool.calls.length).toBe(0);
     expect(tool.calls.length).toBe(0);

@@ -1,5 +1,5 @@
-/* 源指纹 b3250a805947b92b · 仓内输入 86 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 40432353becb4888 · 仓内输入 87 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -17851,8 +17851,8 @@ ${lines.join("\n")}`);
   function msgsOf(p) {
     return p.imports.reduce((s, r) => s + r.messageCount, 0);
   }
-  function albumPhoto(ph) {
-    var _a2, _b2;
+  function albumPhoto(ph, opts = {}) {
+    var _a2, _b2, _c;
     const { p, avatar, index, fresh, due, job } = ph;
     const name = p.name || p.id;
     const seal = albumSealOf(p, job);
@@ -17860,7 +17860,9 @@ ${lines.join("\n")}`);
     const cell = el("div", [
       "bz-people-cell",
       todo ? "bz-people-todo" : "",
-      seal.state === "queued" ? "bz-people-wait" : ""
+      seal.state === "queued" ? "bz-people-wait" : "",
+      ((_a2 = opts.drop) == null ? void 0 : _a2.includes(p.id)) ? "bz-people-drop" : "",
+      opts.dev && opts.dev === p.id ? "bz-people-dev" : ""
     ].filter(Boolean).join(" "), {
       "data-people-pocket": p.id,
       tabindex: "0",
@@ -17875,7 +17877,7 @@ ${lines.join("\n")}`);
     if (sealNode) print.appendChild(sealNode);
     if (fresh > 0) print.appendChild(el("div", "bz-people-fresh", text(`新 ${formatCount(fresh)}`)));
     if (due) print.appendChild(el("div", "bz-people-due", { title: `${due.what} · ${due.date}` }, text(`${due.what} ${due.days} 天`)));
-    const meta = job && job.status !== "done" ? job.queued ? "排队中" : job.status === "running" ? `画谱中 ${(_b2 = (_a2 = job.describePct) != null ? _a2 : job.prepPct) != null ? _b2 : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%` : job.status === "error" ? "失败待续" : "已暂停" : `${formatCount(msgsOf(p))} 条`;
+    const meta = job && job.status !== "done" ? job.queued ? "排队中" : job.status === "running" ? `画谱中 ${(_c = (_b2 = job.describePct) != null ? _b2 : job.prepPct) != null ? _c : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%` : job.status === "error" ? "失败待续" : "已暂停" : `${formatCount(msgsOf(p))} 条`;
     print.appendChild(el("div", "bz-people-cap", [
       el("span", "bz-people-name", text(vtName(name))),
       el("span", `bz-people-meta${job && job.status === "running" ? " bz-people-meta-run" : ""}`, text(meta))
@@ -17887,6 +17889,21 @@ ${lines.join("\n")}`);
     const s = el("span", "bz-people-vacs");
     s.append(text("空位"), el("br"), text("等新照片"));
     return el("div", "bz-people-cell bz-people-vacant", s);
+  }
+  function albumBlankPage() {
+    const rows = [];
+    for (let i = 0; i < AL_PER_PAGE; i += 2) {
+      const r = el("div", "bz-people-row");
+      r.append(albumVacant(), albumVacant(), el("div", "bz-people-row-note"));
+      rows.push(r);
+    }
+    return el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [
+        headChip("空页"),
+        el("span", "bz-people-head-right", el("span", "bz-people-head-note", text("还没贴到这一页")))
+      ]),
+      albumSleeve(rows)
+    ]);
   }
   function rowEra(a, b) {
     var _a2, _b2;
@@ -17906,10 +17923,10 @@ ${lines.join("\n")}`);
     if (ya && ya === yb) return `${ya} 年认识的`;
     return "";
   }
-  function albumRow(a, b) {
+  function albumRow(a, b, opts = {}) {
     const row = el("div", "bz-people-row", { "data-era": String(rowEra(a, b)) });
-    row.appendChild(a ? albumPhoto(a) : albumVacant());
-    row.appendChild(b ? albumPhoto(b) : albumVacant());
+    row.appendChild(a ? albumPhoto(a, opts) : albumVacant());
+    row.appendChild(b ? albumPhoto(b, opts) : albumVacant());
     row.appendChild(el("div", "bz-people-row-note", text(rowNote(a, b))));
     return row;
   }
@@ -17921,11 +17938,11 @@ ${lines.join("\n")}`);
       ])
     ]);
   }
-  function albumPage(cells, no, totalPeople, ledger) {
+  function albumPage(cells, no, totalPeople, ledger, opts = {}) {
     const slots = cells.slice(0, AL_PER_PAGE);
     while (slots.length < AL_PER_PAGE) slots.push(null);
     const rows = [];
-    for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1]));
+    for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1], opts));
     const head = el("div", "bz-people-page-head");
     head.appendChild(headChip(el("span", "bz-people-head-count-in", [
       textEl("b", String(no)),
@@ -18169,7 +18186,7 @@ ${lines.join("\n")}`);
     const title = (_g = (_f = FOLD_TITLES.find(([id]) => id === opts.fold)) == null ? void 0 : _f[2]) != null ? _g : "";
     body.appendChild(el("div", "bz-people-fsheet", [
       el("div", "bz-people-fsheet-head", el("span", "bz-people-fsheet-title", text(title))),
-      el("div", "bz-people-fsheet-body", opts.body)
+      el("div", `bz-people-fsheet-body${opts.foldIn ? " bz-people-in" : ""}`, opts.body)
     ]));
     page.appendChild(body);
     return page;
@@ -18209,32 +18226,56 @@ ${lines.join("\n")}`);
   function secTitle(t) {
     return el("div", "bz-people-sec-title", text(t));
   }
+  function clipList(cls, items, first, moreText) {
+    const box = el("div", cls);
+    items.forEach((n, i) => {
+      if (i >= first) n.classList.add("bz-people-more-hide");
+      box.appendChild(n);
+    });
+    if (items.length > first) box.appendChild(button("bz-people-more", moreText, { "data-people-more": "" }));
+    return box;
+  }
   function foldPersonBody(mdRoot, p) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const out = [mdRoot != null ? mdRoot : foldHint("其人画像还没生成——画一次脸谱就会写出来。")];
     const traits = (_b2 = (_a2 = p.digest) == null ? void 0 : _a2.traits) != null ? _b2 : [];
     if (traits.length) {
-      const box = el("div", "bz-people-traits", traits.slice(0, 12).map((t) => el("span", "bz-people-trait", text(t))));
-      if (traits.length > 12) box.appendChild(el("span", "bz-people-trait-more", text(`…另有 ${traits.length - 12} 条`)));
-      out.push(secTitle("性格特质"), box);
+      out.push(secTitle("性格特质"), clipList(
+        "bz-people-traits",
+        traits.map((t) => el("span", "bz-people-trait", text(t))),
+        12,
+        `…另有 ${traits.length - 12} 条`
+      ));
     }
     const quotes = (_d = (_c = p.digest) == null ? void 0 : _c.quotes) != null ? _d : [];
     if (quotes.length) {
-      const box = el("div", "bz-people-quotes", quotes.slice(0, 8).map((q) => el("div", "bz-people-quote-card", [
-        el("div", "bz-people-quote-text", text(`「${q.text}」`)),
-        el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
-      ])));
-      out.push(secTitle("代表原话"), box);
+      out.push(secTitle("代表原话"), clipList(
+        "bz-people-quotes",
+        quotes.map((q) => el("div", "bz-people-quote-card", [
+          el("div", "bz-people-quote-text", text(`「${q.text}」`)),
+          el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
+        ])),
+        8,
+        `…另有 ${quotes.length - 8} 条`
+      ));
     }
     const interests = (_f = (_e = p.digest) == null ? void 0 : _e.interests) != null ? _f : [];
     if (interests.length) {
-      out.push(secTitle("最近在聊什么"), el("div", "bz-people-md bz-people-ints", interests.slice(0, 10).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.topic))]))));
+      out.push(secTitle("最近在聊什么"), clipList(
+        "bz-people-md bz-people-ints",
+        interests.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.topic))])),
+        10,
+        `…另有 ${interests.length - 10} 条`
+      ));
     }
     const moments = (_h = (_g = p.digest) == null ? void 0 : _g.moments) != null ? _h : [];
     if (moments.length) {
-      const box = el("div", "bz-people-md bz-people-moms", moments.slice(0, 6).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.summary))])));
-      if (moments.length > 6) box.appendChild(el("div", "bz-people-it", [el("span", "bz-people-date"), el("span", "bz-people-mut", text(`…另有 ${moments.length - 6} 个片刻`))]));
-      out.push(secTitle("留下的片刻"), box);
+      out.push(secTitle("留下的片刻"), clipList(
+        "bz-people-md bz-people-moms",
+        moments.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.summary))])),
+        6,
+        `…另有 ${moments.length - 6} 个片刻`
+      ));
     }
     return out;
   }
@@ -18243,7 +18284,12 @@ ${lines.join("\n")}`);
     const out = [mdRoot != null ? mdRoot : foldHint("关系画像还没生成——画一次脸谱就会写出来。")];
     const threads = (_b2 = (_a2 = p.digest) == null ? void 0 : _a2.threads) != null ? _b2 : [];
     if (threads.length) {
-      out.push(secTitle("未竟之事"), el("div", "bz-people-md", threads.slice(0, 8).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))]))));
+      out.push(secTitle("未竟之事"), clipList(
+        "bz-people-md",
+        threads.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))])),
+        8,
+        `…另有 ${threads.length - 8} 条`
+      ));
     }
     return out;
   }
@@ -18269,11 +18315,10 @@ ${lines.join("\n")}`);
       months2.forEach((m, i) => {
         var _a3;
         const evs = [...(_a3 = by.get(m)) != null ? _a3 : []].sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
-        const inner = el("div", "bz-people-mon-in", evs.slice(0, 14).map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
+        const inner = clipList("bz-people-mon-in", evs.map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
           el("span", "bz-people-ev-ts", text(e.ts)),
           el("span", "bz-people-ev-sum", text(e.summary))
-        ])));
-        if (evs.length > 14) inner.appendChild(el("div", "bz-people-ev", el("span", "bz-people-ev-sum bz-people-mut", text(`…同月另有 ${evs.length - 14} 条`))));
+        ])), 14, `…同月另有 ${evs.length - 14} 条`);
         const head = el("button", "bz-people-mon-head", { "data-people-mon": m });
         head.type = "button";
         head.append(el("span", "bz-people-mon-plus", text("+")), el("span", "bz-people-mon-chip", text(m)), el("span", "bz-people-mon-cnt", text(`${evs.length} 条`)));
@@ -18810,7 +18855,7 @@ ${lines.join("\n")}`);
     var _a2;
     const fresh = row.newCount > 0 && row.imported;
     const water = dsWaterOf(row);
-    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
+    const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}${(water == null ? void 0 : water.k) === "skip" ? " bz-people-ds-skip" : ""}`;
     const box = el(
       "span",
       "bz-people-ds-box",
@@ -18885,6 +18930,51 @@ ${lines.join("\n")}`);
 
   // src/people/ui.ts
   init_ui();
+
+  // src/core/gesture.ts
+  function scrollHostOf(node) {
+    const start = node instanceof HTMLElement ? node : null;
+    for (let n = start; n && n !== document.body; n = n.parentElement) {
+      const oy = getComputedStyle(n).overflowY;
+      if ((oy === "auto" || oy === "scroll") && n.scrollHeight > n.clientHeight + 1) return n;
+    }
+    return null;
+  }
+  function canScroll(box, dy) {
+    return dy > 0 ? box.scrollTop + box.clientHeight < box.scrollHeight - 1 : box.scrollTop > 1;
+  }
+  function bindWheelTurn(el2, go, opts = {}) {
+    var _a2, _b2;
+    const TH = (_a2 = opts.gap) != null ? _a2 : 60;
+    const LOCK = (_b2 = opts.lock) != null ? _b2 : 620;
+    let acc = 0;
+    let last = 0;
+    let locked = false;
+    const onWheel = (e) => {
+      const host = scrollHostOf(e.target);
+      if (host && canScroll(host, e.deltaY)) return;
+      e.preventDefault();
+      const now = Date.now();
+      if (locked) {
+        if (now - last < LOCK) {
+          acc = 0;
+          return;
+        }
+        locked = false;
+      }
+      if (acc !== 0 && Math.sign(acc) !== Math.sign(e.deltaY)) acc = 0;
+      acc += e.deltaY;
+      if (Math.abs(acc) < TH) return;
+      go(acc > 0 ? 1 : -1);
+      acc = 0;
+      locked = true;
+      last = now;
+    };
+    el2.addEventListener("wheel", onWheel, { passive: false });
+    return () => el2.removeEventListener("wheel", onWheel);
+  }
+
+  // src/people/ui.ts
   init_settings_provider();
   var ESC_ID = "people-panel";
   var overlay = null;
@@ -18893,6 +18983,7 @@ ${lines.join("\n")}`);
   var opening = false;
   var offUnlockWatch = null;
   var offSyncWatch = null;
+  var offWheelTurn = null;
   var stage = "list";
   var detailId = null;
   var detailFold = "p";
@@ -18911,6 +19002,7 @@ ${lines.join("\n")}`);
   var dsHiddenGroups = 0;
   var dsNotice = "";
   var dsGenerateable = false;
+  var dsLastImported = [];
   var dsScannedAt = "";
   var dsImported = false;
   var dsExported = /* @__PURE__ */ new Set();
@@ -18923,9 +19015,10 @@ ${lines.join("\n")}`);
   var animTurn = "";
   var animDetail = false;
   var animFold = false;
-  var animDrop = false;
+  var animDrop = [];
   var animDev = "";
   var animNote = false;
+  var foldScrollTop = false;
   function openDialog(kind, tier) {
     dialog = { kind, tier };
     void renderAlbum();
@@ -18939,7 +19032,7 @@ ${lines.join("\n")}`);
     dialog = null;
     if (dsImported) {
       dsImported = false;
-      animDrop = true;
+      animDrop = dsLastImported.slice();
     }
     void renderAlbum();
   }
@@ -18995,6 +19088,7 @@ ${lines.join("\n")}`);
     });
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
+    offWheelTurn = bindWheelTurn(overlay, (dir) => turnTo(dir > 0 ? "next" : "prev"));
     overlay.addEventListener("keydown", (e) => {
       var _a3, _b2;
       const input = e.target instanceof HTMLInputElement ? e.target : null;
@@ -19041,6 +19135,8 @@ ${lines.join("\n")}`);
     offUnlockWatch = null;
     offSyncWatch == null ? void 0 : offSyncWatch();
     offSyncWatch = null;
+    offWheelTurn == null ? void 0 : offWheelTurn();
+    offWheelTurn = null;
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
     store = null;
@@ -19072,6 +19168,7 @@ ${lines.join("\n")}`);
     dsHiddenGroups = 0;
     dsNotice = "";
     dsGenerateable = false;
+    dsLastImported = [];
     dsScannedAt = "";
   }
   function openDataSource() {
@@ -19114,7 +19211,7 @@ ${lines.join("\n")}`);
     return (dialog == null ? void 0 : dialog.kind) === "ds";
   }
   function dsRowStates() {
-    return (dsContacts != null ? dsContacts : []).map((c) => {
+    const rows = (dsContacts != null ? dsContacts : []).map((c) => {
       var _a2, _b2;
       const badge = storeMediaBadge(c.stats);
       const rec = recordCache == null ? void 0 : recordCache.get(c.name);
@@ -19134,6 +19231,12 @@ ${lines.join("\n")}`);
         exported: dsExported.has(c.name)
       };
     });
+    const rank = (r) => {
+      var _a2;
+      const k = (_a2 = dsWaterOf(r)) == null ? void 0 : _a2.k;
+      return k === "newer" ? 0 : k === "skip" ? 2 : 1;
+    };
+    return rows.sort((a, b) => rank(a) - rank(b) || b.newCount - a.newCount || a.name.localeCompare(b.name, "zh"));
   }
   function dsPageState() {
     const sel = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name));
@@ -19264,6 +19367,28 @@ ${lines.join("\n")}`);
       }
     });
   }
+  function applyJobsLockdown() {
+    var _a2, _b2;
+    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
+    if (!jobsBusy()) return;
+    const active = (_b2 = queue.find((j) => j.status === "running")) != null ? _b2 : queue.find((j) => j.status === "paused" || j.status === "interrupted");
+    const who = (active == null ? void 0 : active.name) || (active == null ? void 0 : active.talker) || "";
+    const running = (active == null ? void 0 : active.status) === "running";
+    const why = running ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
+    const short = running ? `等「${who}」画完` : "先接上没画完的那位";
+    overlay == null ? void 0 : overlay.querySelectorAll("[data-people-detail]").forEach((page) => {
+      var _a3;
+      const id = (_a3 = page.dataset.peopleDetail) != null ? _a3 : "";
+      if (queue.some((j) => j.talker === id)) return;
+      const btn = page.querySelector('[data-people-act="generate"]');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.setAttribute("data-people-jobs-lock", "1");
+      btn.title = who ? why : "已有画谱在进行——等它收工再画这位";
+      const hint = btn.querySelector(".bz-people-act-hint");
+      if (hint) hint.textContent = who ? short : "等前一位收工";
+    });
+  }
   async function runScan(force = false) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
     const dataDir = dsDataDir();
@@ -19342,7 +19467,7 @@ ${lines.join("\n")}`);
     dsScanning = false;
     dsHiddenGroups = hidden;
     if (overlay) {
-      dsContacts = contacts.sort((a, b) => b.newCount - a.newCount || a.name.localeCompare(b.name, "zh"));
+      dsContacts = contacts;
       const names = new Set(dsContacts.map((c) => c.name));
       dsSelected = new Set([...dsSelected].filter((n) => names.has(n)));
       const now = /* @__PURE__ */ new Date();
@@ -19447,8 +19572,11 @@ ${lines.join("\n")}`);
     const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
     dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
     dsGenerateable = fresh > 0 && !readFail.length;
+    dsLastImported = chosen.map((c) => c.name);
+    for (const c of chosen) dsSelected.delete(c.name);
     if (dsGenerateable) dsImported = true;
-    renderAlbum();
+    showBanner(`${summary}——新照片飞回册页了`, true);
+    closeDialog();
   }
   async function generateFromDs() {
     var _a2, _b2, _c;
@@ -19461,7 +19589,9 @@ ${lines.join("\n")}`);
       notice("已有生成在进行——等它完成或暂停后再画", "info");
       return;
     }
-    const names = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
+    const picked = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
+    const known = new Set((dsContacts != null ? dsContacts : []).map((c) => c.name));
+    const names = picked.length ? picked : dsLastImported.filter((n) => known.has(n));
     if (!names.length) {
       notice("还没有勾选联系人", "warning");
       return;
@@ -19560,7 +19690,9 @@ ${lines.join("\n")}`);
     return jobsOverride != null ? jobsOverride : jobs_exports;
   }
   function applySnapshot(s) {
+    const hadNote = Boolean(jobsCache == null ? void 0 : jobsCache.queue.length);
     jobsCache = s;
+    if (!hadNote && (s == null ? void 0 : s.queue.length)) animNote = true;
     if (s) handleJobsSnapshot(s);
     else renderNote();
   }
@@ -19734,7 +19866,10 @@ ${lines.join("\n")}`);
       }
       notice(`「${name}」的脸谱已生成`, "success");
       jobs().removeJob(talker);
-      if (overlay) void renderAlbum();
+      if (overlay) {
+        animDev = talker;
+        void renderAlbum();
+      }
     } catch (e) {
       if (target) targetsInFlight.set(talker, target);
       notifyActionError(e, `写入「${name}」的脸谱`);
@@ -20003,7 +20138,8 @@ ${lines.join("\n")}`);
     const dsRow2 = t.closest(".bz-people-ds-row");
     if (dsRow2 && t.closest("[data-people-ds-list]")) {
       const name = (_g = (_f = dsRow2.querySelector("[data-people-ds-check]")) == null ? void 0 : _f.dataset.peopleDsCheck) != null ? _g : "";
-      if (name && !dsRow2.classList.contains("bz-people-ds-off")) {
+      const inert = dsRow2.classList.contains("bz-people-ds-off") || dsRow2.classList.contains("bz-people-ds-skip");
+      if (name && !inert) {
         if (dsSelected.has(name)) dsSelected.delete(name);
         else dsSelected.add(name);
         syncDsChecks();
@@ -20063,13 +20199,25 @@ ${lines.join("\n")}`);
     const foldTab = t.closest("[data-people-fold]");
     if (foldTab) {
       const id = foldTab.dataset.peopleFold;
-      if (id && id !== detailFold) {
-        detailFold = id;
-        animFold = true;
-        profEditId = null;
-        noteAddId = null;
-        void renderAlbum();
+      if (!id) return;
+      if (id === detailFold) {
+        const body = overlay == null ? void 0 : overlay.querySelector('[data-people-scroll="detail"]');
+        if (body) body.scrollTop = 0;
+        return;
       }
+      detailFold = id;
+      animFold = true;
+      foldScrollTop = true;
+      profEditId = null;
+      noteAddId = null;
+      void renderAlbum();
+      return;
+    }
+    const more = t.closest("[data-people-more]");
+    if (more) {
+      const box = more.parentElement;
+      box == null ? void 0 : box.querySelectorAll(".bz-people-more-hide").forEach((n) => n.classList.remove("bz-people-more-hide"));
+      more.remove();
       return;
     }
     const mon = t.closest("[data-people-mon]");
@@ -20283,7 +20431,7 @@ ${lines.join("\n")}`);
         const pi = Math.min(Math.floor(at / AL_PER_PAGE), total - 1);
         if (pi !== cur && pi !== cur + 1) cur = pi - pi % PER_SPREAD;
         const clickedLeft = pi === cur;
-        const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos((_a2 = pages[pi]) != null ? _a2 : [], indexOf, avatars), pi + 1, sorted.length, ledger);
+        const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos((_a2 = pages[pi]) != null ? _a2 : [], indexOf, avatars), pi + 1, sorted.length, ledger, { drop: animDrop, dev: animDev });
         const det = detailPage(d, detailOpts(d, clickedLeft ? "right" : "left", avatars));
         const inner = clickedLeft ? [leaf, albumGutter(), det] : [det, albumGutter(), leaf];
         return albumSpread(inner, { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } });
@@ -20294,9 +20442,8 @@ ${lines.join("\n")}`);
     const halves = [];
     for (let h = 0; h < PER_SPREAD; h++) {
       const idx = cur + h;
-      if (!pages[idx]) break;
       if (h) halves.push(albumGutter());
-      halves.push(albumPage(pagePhotos(pages[idx], indexOf, avatars), idx + 1, sorted.length, ledger));
+      halves.push(pages[idx] ? albumPage(pagePhotos(pages[idx], indexOf, avatars), idx + 1, sorted.length, ledger, { drop: animDrop, dev: animDev }) : albumBlankPage());
     }
     return albumSpread(halves, turnLoad(cur, total), { boot: animBoot, turn: animTurn });
   }
@@ -20309,6 +20456,8 @@ ${lines.join("\n")}`);
     return {
       side,
       fold: detailFold,
+      foldIn: animFold,
+      // 刚换折 → 正文放进动画（issue 507：505 之后这一支的类名没人挂了）
       avatar: (_a2 = avatars.get(p.id)) != null ? _a2 : "",
       body: detailFold === "p" ? foldPersonBody(md, p) : detailFold === "b" ? foldBondBody(bondMd, p) : foldEventsBody(p),
       job: sealJobOf(jobViews().get(p.id)),
@@ -20384,10 +20533,15 @@ ${lines.join("\n")}`);
     if (!overlay || !(peopleSafe == null ? void 0 : peopleSafe.unlocked)) return;
     (_a2 = overlay.querySelector("[data-people-scroll]")) == null ? void 0 : _a2.replaceWith(next);
     restoreScroll(scroll);
+    if (foldScrollTop) {
+      const body = overlay.querySelector('[data-people-scroll="detail"]');
+      if (body) body.scrollTop = 0;
+    }
     syncScrollEdges();
     renderNote();
     renderBanner();
     applySyncLockdown();
+    applyJobsLockdown();
     mountIcons(overlay);
     clearAnim();
   }
@@ -20396,9 +20550,10 @@ ${lines.join("\n")}`);
     animTurn = "";
     animDetail = false;
     animFold = false;
-    animDrop = false;
+    animDrop = [];
     animDev = "";
     animNote = false;
+    foldScrollTop = false;
   }
   function scrollSnapshot() {
     const out = {};
@@ -20453,6 +20608,8 @@ ${lines.join("\n")}`);
     });
   }
   function flipSheet(mode, s) {
+    var _a2;
+    if ((_a2 = window.matchMedia) == null ? void 0 : _a2.call(window, "(prefers-reduced-motion: reduce)").matches) return;
     const el2 = document.createElement("div");
     el2.className = `bz-people-sheet bz-people-sheet-${mode}`;
     el2.setAttribute("aria-hidden", "true");
@@ -20570,7 +20727,10 @@ ${lines.join("\n")}`);
       return;
     }
     const note = jobsNote(toBlockState(item));
-    if (animNote) note.classList.add("bz-people-note-in");
+    if (animNote) {
+      note.classList.add("bz-people-note-in");
+      animNote = false;
+    }
     const old = slot.querySelector(".bz-people-jobs");
     if (old) old.replaceWith(note);
     else slot.replaceChildren(note);
@@ -20705,15 +20865,24 @@ ${lines.join("\n")}`);
       notice("保险库未解锁——先解锁再删", "info");
       return;
     }
-    const p = (_a2 = (await store.list()).find((x) => x.id === id)) != null ? _a2 : null;
+    const open = (p2) => {
+      var _a3;
+      openedTier = deleteTierOf(p2, (_a3 = jobViews().get(id)) != null ? _a3 : null);
+      dialog = { kind: "del", tier: openedTier };
+      void renderAlbum().then(focusDelPw);
+    };
+    const here = (_a2 = listCache.find((x) => x.id === id)) != null ? _a2 : null;
+    if (here) {
+      open(here);
+      return;
+    }
+    const p = (_b2 = (await store.list()).find((x) => x.id === id)) != null ? _b2 : null;
     if (!p) {
       notice("这位联系人已不在库里", "info");
       await renderAlbum();
       return;
     }
-    openedTier = deleteTierOf(p, (_b2 = jobViews().get(id)) != null ? _b2 : null);
-    dialog = { kind: "del", tier: openedTier };
-    void renderAlbum().then(focusDelPw);
+    open(p);
   }
   function focusDelPw() {
     var _a2;

@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   AL_PER_PAGE,
+  albumBlankPage,
   albumEmpty,
   albumLoad,
   albumPage,
@@ -19,6 +20,7 @@ import {
   albumSealNode,
   albumSealOf,
   albumSpread,
+  clipList,
   delPage,
   deleteTierOf,
   detailPage,
@@ -46,6 +48,7 @@ import {
   statsPopBody,
   statsText,
   subPage,
+  text,
   turnLoad,
   vtName,
   type AlbumPhoto,
@@ -345,6 +348,51 @@ describe('一页（albumPage）与一行两张（albumRow）', () => {
     const recent = photo({ p: person({ imports: [rec({ timeFrom: '2025-05-01T00:00:00.000Z' })] }) });
     expect(albumRow(old, null).dataset.era).toBe('3');
     expect(albumRow(recent, null).dataset.era).toBe('0');
+  });
+
+  it('一次性动效按 id 名单挂类（issue 507）：飞回认名单、显影认那一位，别人不受累', () => {
+    const a = photo({ p: person({ id: 'wxid_a', name: '陈默' }) });
+    const b = photo({ p: person({ id: 'wxid_b', name: '林晚' }) });
+    const page = albumPage([a, b], 1, 2, { faces: 0, msgs: 0 }, { drop: ['wxid_b'], dev: 'wxid_a' });
+    const cellA = page.querySelector<HTMLElement>('[data-people-pocket="wxid_a"]')!;
+    const cellB = page.querySelector<HTMLElement>('[data-people-pocket="wxid_b"]')!;
+    expect(cellA.classList.contains('bz-people-dev')).toBe(true); // 刚画完那位显影
+    expect(cellA.classList.contains('bz-people-drop')).toBe(false);
+    expect(cellB.classList.contains('bz-people-drop')).toBe(true); // 刚导进来那位飞回
+    expect(cellB.classList.contains('bz-people-dev')).toBe(false);
+    // 不给名单 = 一点类都不挂（同页后续重画不重放）
+    const plain = albumPage([a], 1, 1, { faces: 0, msgs: 0 });
+    expect(plain.querySelector('[data-people-pocket="wxid_a"]')!.classList.contains('bz-people-dev')).toBe(false);
+    expect(plain.querySelector('[data-people-pocket="wxid_a"]')!.classList.contains('bz-people-drop')).toBe(false);
+  });
+
+  it('后半摊占位页（issue 507）：6 个空位 + 不报页码（免得出现「第 2 / 1 页」这种伪编号）', () => {
+    const blank = albumBlankPage();
+    expect(blank.querySelectorAll('.bz-people-vacant')).toHaveLength(AL_PER_PAGE);
+    expect(blank.querySelector('.bz-people-head-count-in')).toBeNull(); // 不编号（报页码就成伪编号了）
+    expect(blank.querySelector('.bz-people-head-count')!.textContent).toBe('空页');
+    expect(blank.querySelector('.bz-people-sleeve')).toBeTruthy(); // 是张「纸」，不是一块空 div
+  });
+});
+
+describe('「另有 N 条」的收口（clipList，issue 507）', () => {
+  const items = (n: number): HTMLElement[] => Array.from({ length: n }, (_, i) => el('div', 'x', text(`第${i + 1}条`)));
+
+  it('超量：可见的照旧站着、多出来的挂着 hide、末尾一枚点得开的小签', () => {
+    const box = clipList('bz-people-list', items(5), 2, '…另有 3 条');
+    expect(box.className).toBe('bz-people-list');
+    expect(box.querySelectorAll('.x')).toHaveLength(5); // 全量都在（数据本来就有）
+    expect(box.querySelectorAll('.bz-people-more-hide')).toHaveLength(3);
+    const more = box.querySelector<HTMLElement>('[data-people-more]')!;
+    expect(more.textContent).toBe('…另有 3 条');
+    expect(more.tagName).toBe('BUTTON');
+    expect((more as HTMLButtonElement).type).toBe('button'); // 册页里不该当 submit
+  });
+
+  it('不超量：一枚小签都不冒出来', () => {
+    const box = clipList('bz-people-list', items(2), 2, '…另有 0 条');
+    expect(box.querySelector('[data-people-more]')).toBeNull();
+    expect(box.querySelectorAll('.bz-people-more-hide')).toHaveLength(0);
   });
 });
 

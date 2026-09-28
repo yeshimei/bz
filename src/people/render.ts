@@ -674,6 +674,14 @@ export interface AlbumPhoto {
   job: FoldCardJob | null;
 }
 
+/** 这一摊的一次性动效入参（issue 507）：导入完飞回的那几位 + 刚画完的那位 */
+export interface AlbumCellOpts {
+  /** 刚导进来的那几位（人物 id 名单）→ 对应格子放「飞回」动画 */
+  drop?: string[];
+  /** 刚画完那一位（人物 id）→ 那一格从灰里显影 */
+  dev?: string;
+}
+
 /** 头像：有照片就是照片，没有走「首字印」（印色按名字取色，一页里不至于一片红） */
 export function avatarNode(name: string, avatar: string, sizeCls = ''): HTMLElement {
   if (avatar) return el('img', sizeCls, { src: avatarUri(avatar), alt: name });
@@ -694,8 +702,10 @@ function msgsOf(p: PersonEntry): number {
   return p.imports.reduce((s, r) => s + r.messageCount, 0);
 }
 
-/** 一张照片（膜下的一格）：照片 + 印 + 角上的贴纸 + 底下那张手写标签 */
-export function albumPhoto(ph: AlbumPhoto): HTMLElement {
+/** 一张照片（膜下的一格）：照片 + 印 + 角上的贴纸 + 底下那张手写标签。
+ *  `opts.drop` = 这一趟刚导进来的那几位 → 照片飞回册页；`opts.dev` = 刚画完那位 → 从灰里洗出颜色
+ *  （issue 507：两个一次性动效的类名，505 之后没人挂，CSS 白白候着） */
+export function albumPhoto(ph: AlbumPhoto, opts: AlbumCellOpts = {}): HTMLElement {
   const { p, avatar, index, fresh, due, job } = ph;
   const name = p.name || p.id;
   const seal = albumSealOf(p, job);
@@ -704,6 +714,8 @@ export function albumPhoto(ph: AlbumPhoto): HTMLElement {
     'bz-people-cell',
     todo ? 'bz-people-todo' : '',
     seal.state === 'queued' ? 'bz-people-wait' : '',
+    opts.drop?.includes(p.id) ? 'bz-people-drop' : '',
+    opts.dev && opts.dev === p.id ? 'bz-people-dev' : '',
   ].filter(Boolean).join(' '), {
     'data-people-pocket': p.id,
     tabindex: '0',
@@ -738,6 +750,24 @@ export function albumVacant(): HTMLElement {
   return el('div', 'bz-people-cell bz-people-vacant', s);
 }
 
+/** 后半摊的占位页（issue 507）：照片还没排到这一页，纸也照样摊开——别让册子只剩半本。
+ *  关键：这一页**不报页码**（报的话会出现「第 2 / 1 页」这种伪编号）。 */
+export function albumBlankPage(): HTMLElement {
+  const rows: HTMLElement[] = [];
+  for (let i = 0; i < AL_PER_PAGE; i += 2) {
+    const r = el('div', 'bz-people-row');
+    r.append(albumVacant(), albumVacant(), el('div', 'bz-people-row-note'));
+    rows.push(r);
+  }
+  return el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [
+      headChip('空页'),
+      el('span', 'bz-people-head-right', el('span', 'bz-people-head-note', text('还没贴到这一页'))),
+    ]),
+    albumSleeve(rows),
+  ]);
+}
+
 /** 这一行贴的是「哪几年的人」：起年越早，衬纸越黄一档（翻页时一眼看出时间段） */
 function rowEra(a: AlbumPhoto | null, b: AlbumPhoto | null): number {
   const from = a?.p.imports.map((r) => r.timeFrom).sort()[0] ?? b?.p.imports.map((r) => r.timeFrom).sort()[0] ?? '';
@@ -759,10 +789,10 @@ function rowNote(a: AlbumPhoto | null, b: AlbumPhoto | null): string {
 }
 
 /** 一行两张：两张照片 + 底下一行手写批注（一行一组，像同一张衬纸上的两个人） */
-export function albumRow(a: AlbumPhoto | null, b: AlbumPhoto | null): HTMLElement {
+export function albumRow(a: AlbumPhoto | null, b: AlbumPhoto | null, opts: AlbumCellOpts = {}): HTMLElement {
   const row = el('div', 'bz-people-row', { 'data-era': String(rowEra(a, b)) });
-  row.appendChild(a ? albumPhoto(a) : albumVacant());
-  row.appendChild(b ? albumPhoto(b) : albumVacant());
+  row.appendChild(a ? albumPhoto(a, opts) : albumVacant());
+  row.appendChild(b ? albumPhoto(b, opts) : albumVacant());
   row.appendChild(el('div', 'bz-people-row-note', text(rowNote(a, b))));
   return row;
 }
@@ -781,11 +811,11 @@ export function albumSleeve(rows: HTMLElement[]): HTMLElement {
  * 一页（页眉 + 贴相区）。第一页报总账（几位 / 多少条 / 几张脸谱），往后每页报这一页的说话跨度——
  * 「接着往前」「最近一次说话」这些字都省了，越简越不抢版面。
  */
-export function albumPage(cells: Array<AlbumPhoto | null>, no: number, totalPeople: number, ledger: { faces: number; msgs: number }): HTMLElement {
+export function albumPage(cells: Array<AlbumPhoto | null>, no: number, totalPeople: number, ledger: { faces: number; msgs: number }, opts: AlbumCellOpts = {}): HTMLElement {
   const slots: Array<AlbumPhoto | null> = cells.slice(0, AL_PER_PAGE);
   while (slots.length < AL_PER_PAGE) slots.push(null);
   const rows: HTMLElement[] = [];
-  for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1]));
+  for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1], opts));
   const head = el('div', 'bz-people-page-head');
   head.appendChild(headChip(el('span', 'bz-people-head-count-in', [
     textEl('b', String(no)),
@@ -950,6 +980,8 @@ export interface DetailOpts {
   /** 详情翻在哪一侧（点左页的照片 → 详情在右；点右页的 → 详情在左） */
   side: 'left' | 'right';
   fold: FoldId;
+  /** 这一折刚换过来 → 正文放进动画（issue 507：505 之后 `.bz-people-in` 没人挂，CSS 白候一版） */
+  foldIn?: boolean;
   /** 头像文件路径（空串走首字印） */
   avatar: string;
   /** 当前折的正文（ui 侧用 fold*Body 备好） */
@@ -1072,7 +1104,7 @@ export function detailPage(p: PersonEntry, opts: DetailOpts): HTMLElement {
   const title = FOLD_TITLES.find(([id]) => id === opts.fold)?.[2] ?? '';
   body.appendChild(el('div', 'bz-people-fsheet', [
     el('div', 'bz-people-fsheet-head', el('span', 'bz-people-fsheet-title', text(title))),
-    el('div', 'bz-people-fsheet-body', opts.body),
+    el('div', `bz-people-fsheet-body${opts.foldIn ? ' bz-people-in' : ''}`, opts.body),
   ]));
   page.appendChild(body);
   return page;
@@ -1123,34 +1155,63 @@ function secTitle(t: string): HTMLElement {
   return el('div', 'bz-people-sec-title', text(t));
 }
 
+/**
+ * 「另有 N 条」的收口（issue 507）：多出来的先收着（`.bz-people-more-hide`），末尾一枚
+ * 「…另有 N 条」，点一下原地摊开（ui 侧把收着的摘出来、按钮自己退场）。
+ * 六处列表同一套口径：性格特质 / 代表原话 / 最近在聊什么 / 留下的片刻 / 未竟之事 / 同月纪事——
+ * 可见条数与原来一模一样，变的是「后面还有的都点得开」。
+ */
+export function clipList(cls: string, items: HTMLElement[], first: number, moreText: string): HTMLElement {
+  const box = el('div', cls);
+  items.forEach((n, i) => {
+    if (i >= first) n.classList.add('bz-people-more-hide');
+    box.appendChild(n);
+  });
+  if (items.length > first) box.appendChild(button('bz-people-more', moreText, { 'data-people-more': '' }));
+  return box;
+}
+
 /** 其人折正文（卷一《其人》）：markdown + 性格特质 + 代表原话 + 最近在聊什么 + 留下的片刻 */
 export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
   const out: HTMLElement[] = [mdRoot ?? foldHint('其人画像还没生成——画一次脸谱就会写出来。')];
   const traits = p.digest?.traits ?? [];
   if (traits.length) {
-    const box = el('div', 'bz-people-traits', traits.slice(0, 12).map((t) => el('span', 'bz-people-trait', text(t))));
-    if (traits.length > 12) box.appendChild(el('span', 'bz-people-trait-more', text(`…另有 ${traits.length - 12} 条`)));
-    out.push(secTitle('性格特质'), box);
+    out.push(secTitle('性格特质'), clipList(
+      'bz-people-traits',
+      traits.map((t) => el('span', 'bz-people-trait', text(t))),
+      12,
+      `…另有 ${traits.length - 12} 条`,
+    ));
   }
   const quotes = p.digest?.quotes ?? [];
   if (quotes.length) {
-    const box = el('div', 'bz-people-quotes', quotes.slice(0, 8).map((q) => el('div', 'bz-people-quote-card', [
-      el('div', 'bz-people-quote-text', text(`「${q.text}」`)),
-      el('div', 'bz-people-quote-meta', text(`${q.who === '我' ? '我' : p.name} · ${q.ts}`)),
-    ])));
-    out.push(secTitle('代表原话'), box);
+    out.push(secTitle('代表原话'), clipList(
+      'bz-people-quotes',
+      quotes.map((q) => el('div', 'bz-people-quote-card', [
+        el('div', 'bz-people-quote-text', text(`「${q.text}」`)),
+        el('div', 'bz-people-quote-meta', text(`${q.who === '我' ? '我' : p.name} · ${q.ts}`)),
+      ])),
+      8,
+      `…另有 ${quotes.length - 8} 条`,
+    ));
   }
   const interests = p.digest?.interests ?? [];
   if (interests.length) {
-    out.push(secTitle('最近在聊什么'), el('div', 'bz-people-md bz-people-ints', interests.slice(0, 10).map((t) =>
-      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.topic))]))));
+    out.push(secTitle('最近在聊什么'), clipList(
+      'bz-people-md bz-people-ints',
+      interests.map((t) => el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.topic))])),
+      10,
+      `…另有 ${interests.length - 10} 条`,
+    ));
   }
   const moments = p.digest?.moments ?? [];
   if (moments.length) {
-    const box = el('div', 'bz-people-md bz-people-moms', moments.slice(0, 6).map((t) =>
-      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.summary))])));
-    if (moments.length > 6) box.appendChild(el('div', 'bz-people-it', [el('span', 'bz-people-date'), el('span', 'bz-people-mut', text(`…另有 ${moments.length - 6} 个片刻`))]));
-    out.push(secTitle('留下的片刻'), box);
+    out.push(secTitle('留下的片刻'), clipList(
+      'bz-people-md bz-people-moms',
+      moments.map((t) => el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.summary))])),
+      6,
+      `…另有 ${moments.length - 6} 个片刻`,
+    ));
   }
   return out;
 }
@@ -1160,8 +1221,12 @@ export function foldBondBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLEl
   const out: HTMLElement[] = [mdRoot ?? foldHint('关系画像还没生成——画一次脸谱就会写出来。')];
   const threads = p.digest?.threads ?? [];
   if (threads.length) {
-    out.push(secTitle('未竟之事'), el('div', 'bz-people-md', threads.slice(0, 8).map((t) =>
-      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.text))]))));
+    out.push(secTitle('未竟之事'), clipList(
+      'bz-people-md',
+      threads.map((t) => el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.text))])),
+      8,
+      `…另有 ${threads.length - 8} 条`,
+    ));
   }
   return out;
 }
@@ -1187,12 +1252,11 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
     const wrap = el('div', 'bz-people-months');
     months.forEach((m, i) => {
       const evs = [...(by.get(m) ?? [])].sort((a, b) => (a.kind === 'major' ? 0 : 1) - (b.kind === 'major' ? 0 : 1));
-      const inner = el('div', 'bz-people-mon-in', evs.slice(0, 14).map((e) =>
+      const inner = clipList('bz-people-mon-in', evs.map((e) =>
         el('div', `bz-people-ev${e.kind === 'major' ? ' bz-people-major' : ''}`, [
           el('span', 'bz-people-ev-ts', text(e.ts)),
           el('span', 'bz-people-ev-sum', text(e.summary)),
-        ])));
-      if (evs.length > 14) inner.appendChild(el('div', 'bz-people-ev', el('span', 'bz-people-ev-sum bz-people-mut', text(`…同月另有 ${evs.length - 14} 条`))));
+        ])), 14, `…同月另有 ${evs.length - 14} 条`);
       const head = el('button', 'bz-people-mon-head', { 'data-people-mon': m }) as HTMLButtonElement;
       head.type = 'button';
       head.append(el('span', 'bz-people-mon-plus', text('+')), el('span', 'bz-people-mon-chip', text(m)), el('span', 'bz-people-mon-cnt', text(`${evs.length} 条`)));
@@ -1905,7 +1969,8 @@ export function dsWatermark(row: DsRowState): string {
 export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   const fresh = row.newCount > 0 && row.imported;
   const water = dsWaterOf(row);
-  const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}`;
+  // 三档不可勾：群聊（未纳入）、「已导入且无新素材」（issue 507：再导一遍等于白导）
+  const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}${water?.k === 'skip' ? ' bz-people-ds-skip' : ''}`;
   const box = el('span', 'bz-people-ds-box', { 'data-people-ds-check': row.name, role: 'checkbox', 'aria-checked': on ? 'true' : 'false' },
     on ? el('i', 'bz-ic', { 'data-lucide': 'check', 'aria-hidden': 'true' }) : text(''));
   const name = row.displayName + (row.isGroup ? '（群）' : '');
