@@ -123,6 +123,8 @@ const EXPECTED_COMMAND_IDS = [
   // 锁定保险库（2026-09-11 首页入口菜单）另用 bz-encrypt-lock-vault，避免撞 id
   'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-encrypt-lock-vault',
+  // 修改主密码（ADR-0211 / issue 508：信封结构下亚秒改密，数据镜像零接触）
+  'bz-encrypt-change-password',
   // 密码本（password-vault 域，ADR-0109 拆回独立域）
   'bz-password-vault-open',
   // 快速取密（ADR-0158 统一流：fuzzy 列现有密码 + 顶部「生成新」；id 承接旧「快速生成密码」）

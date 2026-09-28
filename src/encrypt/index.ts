@@ -121,6 +121,26 @@ export async function lockEncrypt(app: App): Promise<void> {
 }
 
 /**
+ * 修改保险库主密码（命令 bz-encrypt-change-password，ADR-0211 / issue 508）：
+ * 未解锁先走解锁屏（同一把主密码，各共锁域同源）；就绪后弹改密两屏
+ * （验证当前密码 → 设置新密码）。信封结构下只重加密清单，数据镜像零接触。
+ */
+export async function changeSafePassword(app: App): Promise<void> {
+  try {
+    await ensureEncrypt(app);
+  } catch (e) {
+    notice('保险库初始化失败，请重试', 'error');
+    return;
+  }
+  const controller = getController();
+  if (!controller.dataManager.unlocked) {
+    const ok = await controller.uiManager.showPasswordDialog('vault');
+    if (!ok) return; // 取消解锁 = 放弃改密
+  }
+  controller.uiManager.openChangePassword();
+}
+
+/**
  * 确保保险库已解锁（供日记 / 脸谱等共锁域复用）：未解锁则弹主密码（首设两次确认+警告；与保险库同一把密码）。
  * @param kind 调用域口径：'vault'（默认）| 'password-vault' | 'diary' | 'people' —— 同一套解锁屏骨架，
  *             文案/统计/风格按域注入（日记域传 'diary' 即显示加密日记自己的口径与配色；脸谱传 'people'

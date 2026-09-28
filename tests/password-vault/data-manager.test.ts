@@ -31,11 +31,12 @@ describe('PasswordVaultDataManager', () => {
     await dm.addItem({ platform: 'GitHub', account: 'a', password: 'p' });
     expect(dm.pwData[0].fav).toBe(false);
     // 直接写旧 7 字段（无 fav）整表 → load 后补 false
+    // （ADR-0211 信封后镜像由 fileKey 加密：直写文件必须走 SafeManager 公共写路径换密文）
     const note = sm.manifest.notes[0];
     const oldData = JSON.stringify([
       { id: 'old-1', platform: 'GitHub', url: '', account: 'me', password: 'x', note: '', createdAt: '2026-01-01T00:00:00.000Z' },
     ]);
-    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, await (await import('../../src/core/crypto')).CryptoService.encrypt(oldData, 'pw'));
+    await sm.updateNotePayload(note.id, oldData);
     await dm.load();
     expect(dm.pwData[0].fav).toBe(false);
     expect(dm.pwData[0].id).toBe('old-1');

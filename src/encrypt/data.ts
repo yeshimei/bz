@@ -12,7 +12,12 @@
  * 点前缀目录/文件 Obsidian 侧栏一律隐藏（防误删）；还原/删除全靠清单 path+ref 映射，
  * 文件名不含任何可辨识信息。旧 附件/<原路径> 布局不再读取（ADR-0016：彻底不兼容）。
  *
- * 密钥：每个 blob 直接用主密码经 CryptoService.encrypt 独立加密（同 passwords.enc 模型）。
+ * 密钥（ADR-0211 信封结构，issue 508）：镜像本体用各自独立随机 fileKey 加密；清单内
+ * keys[ref] = Encrypt(fileKey, masterKey)（清单记住每个文件的密码）；masterKey 为随机中间
+ * 主密钥，masterWrap = Encrypt(masterKey, 主密码) 随清单落盘；清单本体仍用主密码加密——
+ * 修改主密码 = 重包 masterWrap + 重加密清单（亚秒级），镜像文件零接触。
+ * v1 旧清单（镜像直接用主密码加密）解锁后由 migrateToEnvelope 自动升级；迁移完成前的
+ * 运行态照旧按主密码解镜像（blobKey 兜底分支），迁移是唯一切换点。
  * 依赖方向（ADR-0002）：core ← 本层；不挂 window；import CryptoService 复用密码本。
  */
 import { getApp } from '../core/app';
@@ -82,6 +87,13 @@ export interface SafeNote {
 /** 清单明文结构（整体加密进 safe.enc） */
 export interface SafeManifest {
   version: number;
+  /**
+   * 信封结构（ADR-0211，v2 起）：Encrypt(masterKey, 主密码)。v1 清单无此字段，
+   * 解锁后由 migrateToEnvelope 自动升级（迁移完成前镜像按主密码解，blobKey 兜底）。
+   */
+  masterWrap?: string;
+  /** 信封结构（v2 起）：镜像 ref → Encrypt(fileKey, masterKey)；清单记住每个文件的密码 */
+  keys?: Record<string, string>;
   notes: SafeNote[];
 }
 
@@ -227,6 +239,15 @@ export function genNoteId(): string {
   return 'enc-' + Date.now() + '-' + randToken(6);
 }
 
+/**
+ * 生成镜像级随机密钥（ADR-0211 信封结构）：43 字符 64 字符表随机串 ≈ 258bit 熵，
+ * 直接作为 CryptoService 的「密码」入参——密文布局（salt+iv+ct）与派生缓存全部复用，
+ * 熵远超用户主密码，穷举不可行（这也是把主密码换成它后不降低单镜像安全性的依据）。
+ */
+export function genFileKey(): string {
+  return randToken(43);
+}
+
 /** 附件加密/还原准备阶段并发上限（独立 blob 互不依赖；并发放大 PBKDF2 吞吐，写盘由 adapter 队列兜底） */
 const BLOB_CONCURRENCY = 3;
 
@@ -268,7 +289,18 @@ export class SafeManager {
   /** 主密码（只存内存，锁定时清空） */
   password: string | null = null;
   unlocked = false;
-  manifest: SafeManifest = { version: 1, notes: [] };
+  /**
+   * 中间主密钥（ADR-0211 信封结构，只存内存，锁定时清空）：解锁 v2 清单时从 masterWrap
+   * 解出；wrap/清单加解密的中转密钥，修改主密码不需要触碰它（只换 masterWrap）。
+   */
+  masterKey: string | null = null;
+  /** v1→v2 信封迁移进行中（issue 508：UI 据此禁用修改密码入口；changePassword 亦拒绝） */
+  migrating = false;
+  /** 迁移进度回调（UI 发通知用；done/total 为镜像数，无进度不回调） */
+  onMigrationProgress: ((done: number, total: number) => void) | null = null;
+  /** 迁移收场回调（成功 / 上锁中止 / 失败三态；UI 收进度通知用，空库瞬时升级不回调） */
+  onMigrationEnd: ((ok: boolean, reason?: 'locked' | 'error') => void) | null = null;
+  manifest: SafeManifest = { version: 2, keys: {}, notes: [] };
   /**
    * 最近一次 unlock 发现的清单异常（解锁成功后清除）：
    * 'empty' = .safe.enc 存在但内容为空（半写崩溃/被截断）；
@@ -293,6 +325,59 @@ export class SafeManager {
   /** 清单文件完整路径（点前缀，侧栏隐藏） */
   get manifestPath(): string {
     return this.root + '/.safe.enc';
+  }
+
+  /** 信封结构是否就绪（v2 清单 + masterWrap 已解出）：就绪后镜像走 fileKey，否则兜底主密码 */
+  private get envelopeReady(): boolean {
+    return this.manifest.version >= 2 && !!this.manifest.masterWrap && !!this.masterKey && !!this.password;
+  }
+
+  /**
+   * 镜像密钥解析（读路径单源）：信封就绪时按 keys[ref] 用 masterKey 解出 fileKey；
+   * v1 运行态（迁移完成前）兜底主密码——迁移是唯一切换点，两条路径不混跑同一镜像
+   * （迁移会连清单引用一起切换，切换后 keys[ref] 必在）。
+   */
+  private async blobKey(ref: string): Promise<string> {
+    if (this.envelopeReady) {
+      const wrap = this.manifest.keys?.[ref];
+      if (wrap && this.masterKey) return CryptoService.decrypt(wrap, this.masterKey);
+    }
+    return this.password as string;
+  }
+
+  /**
+   * 镜像加密（写路径单源）：信封就绪时复用 ref 已登记的 fileKey（覆盖写不换钥，wrap 不变），
+   * 新 ref 生成 fileKey 并把 wrap 登记进清单（随下一次 saveManifest 落盘）；
+   * v1 运行态兜底主密码（迁移会统一转换）。
+   * @returns 密文。调用方须保证失败时清理本次新登记的 wrap（forgetKeys），防幽灵登记。
+   */
+  private async encryptForRef(ref: string, plain: string): Promise<string> {
+    if (this.envelopeReady) {
+      this.manifest.keys = this.manifest.keys || {};
+      let fileKey: string;
+      const wrap = this.manifest.keys[ref];
+      if (wrap && this.masterKey) {
+        fileKey = await CryptoService.decrypt(wrap, this.masterKey);
+      } else {
+        fileKey = genFileKey();
+        this.manifest.keys[ref] = await CryptoService.encrypt(fileKey, this.masterKey as string);
+      }
+      return CryptoService.encrypt(plain, fileKey);
+    }
+    return CryptoService.encrypt(plain, this.password as string);
+  }
+
+  /** 从清单 keys 摘除一组 ref 的 wrap（同步纯内存；随调用方的下一次 saveManifest 落盘） */
+  private forgetKeys(refs: Array<string | undefined | null>): void {
+    if (!this.manifest.keys) return;
+    for (const ref of refs) {
+      if (ref) delete this.manifest.keys[ref];
+    }
+  }
+
+  /** 条目从清单移除时同步摘除其全部镜像 wrap（正文 + 附件原始层/预览层；随 saveManifest 落盘） */
+  private forgetNoteKeys(note: SafeNote): void {
+    this.forgetKeys([note.contentRef, ...note.attachments.map((a) => a.blobRef), ...note.attachments.map((a) => (a.hasPreview ? a.previewRef : undefined))]);
   }
 
   /** 镜像相对路径 → vault 完整路径 */
@@ -353,6 +438,23 @@ export class SafeManager {
       }
       if (!Array.isArray(parsed.notes)) parsed.notes = [];
       parsed.version = parsed.version || 1;
+      // 信封结构（ADR-0211）：v2 清单必须先解出中间主密钥才可用——masterWrap/keys 缺失或
+      // 解不开（清单解密通过而信封损坏，极罕见）按清单损坏口径走 forceReset 流程
+      if (parsed.version >= 2) {
+        let masterKey: string | null = null;
+        try {
+          if (!parsed.masterWrap || typeof parsed.masterWrap !== 'string') throw new Error('masterWrap 缺失');
+          if (!parsed.keys || typeof parsed.keys !== 'object' || Array.isArray(parsed.keys)) throw new Error('keys 缺失');
+          masterKey = await CryptoService.decrypt(parsed.masterWrap, password);
+        } catch (e) {
+          this.manifestIssue = 'corrupt';
+          if (!forceReset) return false;
+          return this.firstTimeSetup(password);
+        }
+        this.masterKey = masterKey;
+      } else {
+        this.masterKey = null; // v1 运行态：镜像按主密码解（迁移是唯一切换点）
+      }
       this.manifest = parsed;
       this.password = password;
       this.unlocked = true;
@@ -367,6 +469,13 @@ export class SafeManager {
       }
       this.onUnlockChange?.(true);
       emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
+      // 信封迁移（issue 508）：v1 清单解锁后自动升级 v2；入 opQueue 与写操作串行，
+      // 异步触发不阻塞解锁返回（广播先落地，订阅方照常按 v1 路径读写）。
+      if (this.manifest.version < 2 || !this.manifest.masterWrap) {
+        void this.enqueueOp(() => this.migrateToEnvelope()).catch(() => {
+          /* 迁移失败保持 v1 运行态，下次解锁重试；中断残留孤儿由体检清理 */
+        });
+      }
       return true;
     } catch (e) {
       // GCM 认证失败：绝大多数是密码错误（数据损坏无法与密码错区分），
@@ -393,20 +502,23 @@ export class SafeManager {
     }
   }
 
-  /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
+  /** 首设/强制重设：生成信封密钥（masterKey + masterWrap）写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
   private async firstTimeSetup(password: string): Promise<boolean> {
+    const masterKey = genFileKey();
     this.password = password;
     this.unlocked = true;
+    this.masterKey = masterKey;
     this.onUnlockChange?.(true);
     emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
-    this.manifest = { version: 1, notes: [] };
+    this.manifest = { version: 2, keys: {}, notes: [], masterWrap: await CryptoService.encrypt(masterKey, password) };
     try {
       await this.saveManifest();
       return true;
     } catch (e) {
       this.unlocked = false;
       this.password = null;
-      this.manifest = { version: 1, notes: [] };
+      this.masterKey = null;
+      this.manifest = { version: 2, keys: {}, notes: [] };
       // E4：写失败回滚必须同步回发解锁态——此前只改内存，状态栏与密码本等订阅方卡在「已解锁」
       this.onUnlockChange?.(false);
       emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
@@ -421,7 +533,9 @@ export class SafeManager {
     if (!this.unlocked) return;
     this.unlocked = false;
     this.password = null;
-    this.manifest = { version: 1, notes: [] };
+    this.masterKey = null;
+    this.migrating = false;
+    this.manifest = { version: 2, keys: {}, notes: [] };
     this.onUnlockChange?.(false);
     emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
     clearCryptoKeyCache();
@@ -795,6 +909,7 @@ export class SafeManager {
         const note = this.manifest.notes[idx];
         await this.deleteNoteMirrors(note);
         this.manifest.notes.splice(idx, 1);
+        this.forgetNoteKeys(note); // ADR-0211：镜像随条目回滚，wrap 同步摘除（随下方 saveManifest 落盘）
         rolledBack += 1;
       }
       if (rolledBack > 0) await this.saveManifest();
@@ -885,7 +1000,6 @@ export class SafeManager {
     // 完整性段（需解锁）：逐个正文/附件原始层解密校验
     const integrityChecked = !!(this.unlocked && this.password);
     if (integrityChecked) {
-      const password = this.password as string;
       for (const n of this.manifest.notes) {
         // 正文：已失效（dead-entry）的条目跳过（镜像缺失无完整性可言）
         if (items.some((i) => i.cat === 'dead-entry' && i.noteId === n.id)) {
@@ -899,7 +1013,8 @@ export class SafeManager {
         const fresh: HealthItem[] = [];
         try {
           const cipher = await this.readMirror(n.contentRef);
-          if (cipher !== null) await CryptoService.decrypt(cipher, password);
+          // 密钥按清单结构解析（信封 v2=fileKey / v1=主密码，blobKey 单源）
+          if (cipher !== null) await CryptoService.decrypt(cipher, await this.blobKey(n.contentRef));
           // cipher === null：镜像缺失已由对账段报告
         } catch (e) {
           fresh.push({ cat: 'corrupted-body', key: 'body:' + n.id, label: n.title, noteId: n.id, ref: n.contentRef });
@@ -920,7 +1035,7 @@ export class SafeManager {
               // 附件原始层镜像缺失（正文可读 → 条目保留，还原时该附件不可用）
               fresh.push({ cat: 'missing-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
             } else {
-              const plain = await CryptoService.decrypt(cipher, password);
+              const plain = await CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
               const fp = await fingerprintOf(plain);
               if (fp !== a.fingerprint) {
                 fresh.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
@@ -967,6 +1082,7 @@ export class SafeManager {
         if (want.has('entry:' + n.id) && !bodyExists) {
           // 正文镜像已缺失（dead-entry 判定），deleteNoteMirrors 对缺失正文为无害空操作
           await this.deleteNoteMirrors(n);
+          this.forgetNoteKeys(n); // ADR-0211：wrap 同步摘除（随下方 saveManifest 落盘）
           notes += 1;
         } else {
           kept.push(n);
@@ -977,21 +1093,38 @@ export class SafeManager {
       // 2) 孤儿密文文件删除（形态校验与扫描共用 isOrphanEncName 单源：点前缀 + .enc，
       //    且绝非清单本体 .safe.enc——此前清理侧漏本体排除，上游 key 回归即可删整库清单；
       //    `../` 越界形态同样拦下，绝不越出加密根目录）
+      // 深审 P0（issue 508）：删除前用**当前**清单引用集复核——报告可能陈旧（迁移 P1 窗口
+      // promote 的新镜像在报告时尚无引用，报告生成后迁移完成引用即切换），盲删会把
+      // 「报告时无引用、现在已是唯一副本」的密文删光。仍被引用的 key 跳过。
+      const referencedNow = new Set<string>();
+      for (const n of this.manifest.notes) {
+        if (n.contentRef) referencedNow.add(n.contentRef);
+        for (const a of n.attachments) {
+          if (a.blobRef) referencedNow.add(a.blobRef);
+          if (a.hasPreview && a.previewRef) referencedNow.add(a.previewRef);
+        }
+      }
+      let keysTouched = false; // 孤儿清理摘了 keys 残留 wrap 时也要落盘一次清单
       for (const key of keys) {
         if (!key.startsWith('file:')) continue;
         const name = key.slice('file:'.length);
         if (!isOrphanEncName(name)) continue;
+        if (referencedNow.has(name)) continue; // 陈旧报告防护：现已被引用，绝不触碰
         try {
           if (await this.adapter.exists(this.resolveRef(name))) {
             await this.adapter.remove(this.resolveRef(name));
             files += 1;
+            if (this.manifest.keys?.[name]) {
+              this.forgetKeys([name]); // 孤儿清理顺手摘 keys 残留 wrap（P2-3）
+              keysTouched = true;
+            }
           }
         } catch (e) {
           /* 单文件失败继续 */
         }
       }
 
-      if (notes > 0) await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
+      if (notes > 0 || keysTouched) await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
       await this.clearStaging();
       return { files, notes };
     });
@@ -1046,13 +1179,13 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
     await this.ensureSafeRootDir();
     await this.ensureStagingDir();
-    const password = this.password; // 局部断言非空（箭头函数闭包内避免 TS 收窄失效）
     const total = input.attachments.length + 1;
     let done = 0;
 
     const attachments: SafeAttachment[] = [];
     const finalRefs: string[] = [];
     const stagedRefs: string[] = [];
+    const keyedRefs: string[] = []; // 本次新登记 wrap 的 ref（encryptForRef 信封分支；失败回滚用）
     let note: SafeNote | null = null;
     let manifestSaved = false; // S2 是否落盘成功（P1-5：未落盘的失败在内存回退幽灵条目）
     const skippedStale: string[] = []; // E14：加密期间被编辑、删除前重读不一致而保留的原文件
@@ -1066,16 +1199,19 @@ export class SafeManager {
       // catch 也能清理全部已写暂存（不再依赖成功返回后的结果归集填充）。
       const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
         const fp = await fingerprintOf(a.data);
-        const enc = await CryptoService.encrypt(a.data, password);
+        // ADR-0211 信封：先定 ref 再加密——encryptForRef 生成独立 fileKey 并把 wrap 登记进清单
         const blobRef = flatName();
+        keyedRefs.push(blobRef);
+        const enc = await this.encryptForRef(blobRef, a.data);
         await this.writeStaged(blobRef, enc);
         stagedRefs.push(blobRef);
         finalRefs.push(blobRef);
         let hasPreview = false;
         let previewRef = '';
         if (a.previewData) {
-          const encP = await CryptoService.encrypt(a.previewData, password);
           previewRef = flatName();
+          keyedRefs.push(previewRef);
+          const encP = await this.encryptForRef(previewRef, a.previewData);
           await this.writeStaged(previewRef, encP);
           stagedRefs.push(previewRef);
           finalRefs.push(previewRef);
@@ -1101,7 +1237,8 @@ export class SafeManager {
       onProgress?.({ done, total, current: input.path });
       // 正文同样写镜像文件（不内嵌进清单）
       const bodyRef = flatName();
-      const bodyCipher = await CryptoService.encrypt(input.content, this.password);
+      keyedRefs.push(bodyRef);
+      const bodyCipher = await this.encryptForRef(bodyRef, input.content);
       await this.writeStaged(bodyRef, bodyCipher);
       stagedRefs.push(bodyRef);
       finalRefs.push(bodyRef);
@@ -1180,6 +1317,9 @@ export class SafeManager {
           /* 幂等 */
         }
       }
+      // ADR-0211：同步摘除本次登记的镜像 wrap（S4 前的失败条目由自愈回滚并重落清单，
+      // 内存先清保证自愈落盘的清单不再携带幽灵 wrap；wrap 指向的暂存密文上面已一并清理）
+      this.forgetKeys(keyedRefs);
       // 清单尚未落盘成功（P1-5）：按 id 从内存清单回退本条目，防同会话内后续成功的
       // saveManifest 把幽灵条目固化；已落盘（S2 成功后）的失败不回退——交由挂起标记
       // 的自愈语义裁决（Q4-A：S4 前可自愈回滚，绝不在此处擅自改已提交清单）
@@ -1295,6 +1435,7 @@ export class SafeManager {
     // 孤儿密文（体检 orphan-file 可清，removed 已如实返回）。
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
+    this.forgetNoteKeys(note); // ADR-0211：wrap 随条目移除摘除（随下方 saveManifest 落盘）
     try {
       await this.saveManifest();
     } catch (e) {
@@ -1326,7 +1467,7 @@ export class SafeManager {
     if (!note.contentRef) return null;
     const cipher = await this.readMirror(note.contentRef);
     if (!cipher) return null;
-    return CryptoService.decrypt(cipher, this.password);
+    return CryptoService.decrypt(cipher, await this.blobKey(note.contentRef));
   }
 
   /**
@@ -1403,6 +1544,7 @@ export class SafeManager {
     // 已存在条目文件，收尾重做即收敛
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
+    this.forgetNoteKeys(note); // ADR-0211：wrap 随条目移除摘除（随下方 saveManifest 落盘）
     try {
       await this.saveManifest();
     } catch (e) {
@@ -1496,13 +1638,12 @@ export class SafeManager {
    * @returns 明文 base64；null = 镜像缺失 / 解密失败 / 完整性不符 / 目标被用户占用（整体不落盘）
    */
   private async prepareRestoreAttachment(a: SafeAttachment): Promise<string | null> {
-    const password = this.password;
-    if (!password) return null;
+    if (!this.unlocked || !this.password) return null;
     const cipher = await this.readMirror(a.blobRef);
     if (cipher === null) return null;
     let plainB64: string;
     try {
-      plainB64 = await CryptoService.decrypt(cipher, password);
+      plainB64 = await CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
     } catch (e) {
       return null;
     }
@@ -1557,6 +1698,7 @@ export class SafeManager {
       const note = this.manifest.notes[idx];
       await this.deleteNoteMirrors(note);
       this.manifest.notes.splice(idx, 1);
+      this.forgetNoteKeys(note); // ADR-0211：wrap 随条目移除摘除（随下方 saveManifest 落盘）
       await this.saveManifest();
     });
   }
@@ -1575,18 +1717,174 @@ export class SafeManager {
       if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存');
       const note = this.manifest.notes.find((n) => n.id === noteId);
       if (!note) throw new Error('未找到清单条目');
-      const encrypted = await CryptoService.encrypt(plainContent, this.password);
-      if (note.contentRef) {
-        await this.replaceMirrorAtomic(note.contentRef, encrypted); // 原子覆盖同一密文镜像
-        // 清单零变化，显式广播替代冗余 saveManifest（订阅方重载行为不变）
-        emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId });
-      } else {
-        const ref = flatName();
-        await this.replaceMirrorAtomic(ref, encrypted);
-        note.contentRef = ref;
-        await this.saveManifest(); // 清单结构变化（新分配 contentRef）才落盘，尾部自带 changed 广播
+      // 常规路径：wrap 在册 → 复用既有 fileKey 原子覆盖同一镜像，wrap/清单零变化（深审新-6）
+      if (note.contentRef && this.manifest.keys?.[note.contentRef]) {
+        const encrypted = await this.encryptForRef(note.contentRef, plainContent);
+        await this.replaceMirrorAtomic(note.contentRef, encrypted);
+        emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId }); // 订阅方重载行为不变
+        return;
       }
+      // 提交序路径（新分配 ref / wrap 缺失异常态；深审 P2-1）：换新 ref——wrap 换钥后旧镜像
+      // 即不可解，原地覆盖任何半途失败都会留下「清单指向的镜像解不开」死局，故对齐 lockNote
+      // 提交式：暂存 → promote（孤儿形态，体检防误删见 resolveHealth 当前引用复核）→
+      // 清单先行（提交点）→ 删旧镜像。
+      const oldRef = note.contentRef;
+      const newRef = flatName();
+      const encrypted = await this.encryptForRef(newRef, plainContent); // 登记新 wrap
+      try {
+        await this.writeStaged(newRef, encrypted);
+        await this.promoteStaged(newRef);
+        note.contentRef = newRef;
+        await this.saveManifest(); // 提交点，尾部自带 changed 广播
+      } catch (e) {
+        note.contentRef = oldRef; // 内存回滚（提交点未落盘成功，磁盘清单仍指 oldRef）
+        this.forgetKeys([newRef]); // 新登记的 wrap 摘除，防幽灵
+        await this.deleteSafeFile(newRef); // 全新 ref 无他人引用，已 promote 也照删（旧数据无损）
+        throw e;
+      }
+      if (oldRef) await this.deleteSafeFile(oldRef); // 提交点后删旧镜像（失败留孤儿，体检可清）
     });
+  }
+
+  // ---------- 修改主密码 / 信封迁移（ADR-0211，issue 508） ----------
+
+  /**
+   * 修改主密码（信封结构下亚秒级）：只重包 masterWrap + 重加密清单，镜像文件零接触。
+   * 整体入 opQueue 与迁移/写操作硬串行（migrating 旗标只作出队后快路径提示）；
+   * verifyPassword 二次校验（高危操作口径，同销毁确认；false = 当前密码错，清单未动）→
+   * 重包 → saveManifest → 清派生密钥缓存（旧主密码派生不残留；fileKey 派生随用随建）。
+   * 迁移未完成时抛错（UI 提示稍后）——迁移是密钥模型切换点，两者串行才可推理。
+   */
+  changePassword(oldPassword: string, newPassword: string): Promise<boolean> {
+    return this.enqueueOp(async () => {
+      if (!this.unlocked || !this.password) throw new Error('未解锁，无法修改密码');
+      if (this.migrating) throw new Error('加密结构升级进行中，请稍后再试');
+      if (!this.envelopeReady) throw new Error('加密结构升级尚未完成，请稍候片刻（或重新解锁）再试');
+      if (!(await this.verifyPassword(oldPassword))) return false;
+      // 深审 P1-1：verifyPassword 的 PBKDF2 窗口内可能被上锁（安全模式 hide→lockNow）——
+      // lock() 已清 password/masterKey 并重建空清单，此刻绝不继续改密、也绝不回写脏状态
+      if (!this.unlocked || !this.password) throw new Error('保险库已上锁，修改中止');
+      const prevWrap = this.manifest.masterWrap;
+      const prevPassword = this.password;
+      try {
+        this.manifest.masterWrap = await CryptoService.encrypt(this.masterKey as string, newPassword);
+        this.password = newPassword;
+        await this.saveManifest();
+      } catch (e) {
+        // 落盘失败回滚内存态（.safe.enc 三段式原子写保证磁盘仍是旧清单、旧密码仍可解锁）；
+        // 等待窗口内若被上锁，lock() 已重建空清单——保持锁定态，绝不把旧密码写回
+        if (this.unlocked) {
+          this.manifest.masterWrap = prevWrap;
+          this.password = prevPassword;
+        }
+        throw e;
+      }
+      clearCryptoKeyCache();
+      return true;
+    });
+  }
+
+  /**
+   * v1 → v2 信封迁移（解锁后自动触发，opQueue 串行；中断安全）：
+   * 逐镜像「主密码解 → 独立 fileKey 加密 → 写暂存区（新 ref；暂存区不在顶层，
+   * 体检孤儿扫描不可见，绝不误删）」，全部成功后提交——
+   *   P1 promote 全部新镜像到顶层（此刻清单仍 v1：旧镜像俱在，数据完整，新镜像暂成孤儿形态）
+   *   P2 清单切 v2（notes 改指新 ref + keys + masterWrap）落盘（提交点，失败则内存回滚保持 v1）
+   *   P3 删旧镜像 → 清暂存（失败只留孤儿，体检可清）
+   * 任意中断由清单版本裁决：v1 期 = 旧镜像有效（promote 残留孤儿可清）；v2 后 = 新镜像有效
+   * （旧镜像成孤儿可清）。下次解锁按版本重试或跳过，最终收敛。
+   * 任一镜像解密/缺失失败 → 中止保持 v1（完整性优先，绝不跳过——跳过即静默丢数据）。
+   */
+  private async migrateToEnvelope(): Promise<void> {
+    if (!this.unlocked || !this.password) return;
+    if (this.manifest.version >= 2 && this.manifest.masterWrap && this.manifest.keys) return;
+    this.migrating = true;
+    try {
+      const masterKey = genFileKey();
+      const keys: Record<string, string> = {};
+      const notes = this.manifest.notes;
+      // 收集全部镜像（正文 + 附件原始层/预览层）
+      const jobs: Array<{ oldRef: string; att?: SafeAttachment; part: 'contentRef' | 'blobRef' | 'previewRef' }> = [];
+      for (const n of notes) {
+        if (n.contentRef) jobs.push({ oldRef: n.contentRef, part: 'contentRef' });
+        for (const a of n.attachments) {
+          if (a.blobRef) jobs.push({ oldRef: a.blobRef, att: a, part: 'blobRef' });
+          if (a.hasPreview && a.previewRef) jobs.push({ oldRef: a.previewRef, att: a, part: 'previewRef' });
+        }
+      }
+      if (jobs.length === 0) {
+        // 空库瞬时升级：补信封字段直接落盘
+        this.masterKey = masterKey;
+        this.manifest.version = 2;
+        this.manifest.keys = keys;
+        this.manifest.masterWrap = await CryptoService.encrypt(masterKey, this.password);
+        await this.saveManifest();
+        return;
+      }
+      const total = jobs.length;
+      let done = 0;
+      const staged: Array<{ oldRef: string; newRef: string }> = [];
+      for (const job of jobs) {
+        if (!this.unlocked || !this.password) {
+          this.onMigrationEnd?.(false, 'locked'); // 迁移中被上锁：中止（暂存由 clearStaging 收尾）
+          return;
+        }
+        const cipher = await this.readMirror(job.oldRef);
+        if (cipher === null) throw new Error('迁移中止：镜像缺失 ' + job.oldRef);
+        const plain = await CryptoService.decrypt(cipher, this.password); // v1：主密码解
+        const fileKey = genFileKey();
+        const newRef = flatName();
+        keys[newRef] = await CryptoService.encrypt(fileKey, masterKey);
+        await this.writeStaged(newRef, await CryptoService.encrypt(plain, fileKey));
+        staged.push({ oldRef: job.oldRef, newRef: newRef });
+        done += 1;
+        this.onMigrationProgress?.(done, total);
+      }
+      // P1 promote（清单仍 v1：旧镜像俱在，此刻中断只多出可清孤儿）
+      for (const s of staged) await this.promoteStaged(s.newRef);
+      // P2 清单切 v2（提交点）：内存改写 → 落盘；落盘失败反向回滚内存，严格回到 v1 运行态
+      try {
+        const refMap = new Map(staged.map((s) => [s.oldRef, s.newRef]));
+        for (const n of notes) {
+          if (n.contentRef) n.contentRef = refMap.get(n.contentRef) || n.contentRef;
+          for (const a of n.attachments) {
+            if (a.blobRef) a.blobRef = refMap.get(a.blobRef) || a.blobRef;
+            if (a.hasPreview && a.previewRef) a.previewRef = refMap.get(a.previewRef) || a.previewRef;
+          }
+        }
+        this.masterKey = masterKey;
+        this.manifest.version = 2;
+        this.manifest.keys = keys;
+        this.manifest.masterWrap = await CryptoService.encrypt(masterKey, this.password);
+        await this.saveManifest();
+      } catch (e) {
+        // 反向回滚：内存清单严格回到磁盘 v1 态（P3 未跑，旧镜像俱在，v1 路径照常可用）
+        const backMap = new Map(staged.map((s) => [s.newRef, s.oldRef]));
+        for (const n of notes) {
+          if (n.contentRef) n.contentRef = backMap.get(n.contentRef) || n.contentRef;
+          for (const a of n.attachments) {
+            if (a.blobRef) a.blobRef = backMap.get(a.blobRef) || a.blobRef;
+            if (a.hasPreview && a.previewRef) a.previewRef = backMap.get(a.previewRef) || a.previewRef;
+          }
+        }
+        this.masterKey = null;
+        this.manifest.version = 1;
+        this.manifest.keys = undefined;
+        this.manifest.masterWrap = undefined;
+        await this.clearStaging();
+        throw e;
+      }
+      // P3 删旧镜像（deleteSafeFile 幂等全捕获，失败只留可清孤儿）
+      for (const s of staged) await this.deleteSafeFile(s.oldRef);
+      await this.clearStaging();
+      this.onMigrationEnd?.(true);
+    } catch (e) {
+      // 深审 P2-4：P1/P2 阶段被上锁（unlocked=false）如实报 locked，不误报 error
+      this.onMigrationEnd?.(false, this.unlocked ? 'error' : 'locked');
+      throw e;
+    } finally {
+      this.migrating = false;
+    }
   }
 
   /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
@@ -1595,7 +1893,7 @@ export class SafeManager {
     if (!a.hasPreview) return null;
     const cipher = await this.readMirror(a.previewRef);
     if (!cipher) return null;
-    return CryptoService.decrypt(cipher, this.password);
+    return CryptoService.decrypt(cipher, await this.blobKey(a.previewRef));
   }
 
   /**
@@ -1606,6 +1904,6 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁');
     const cipher = await this.readMirror(a.blobRef);
     if (!cipher) return null;
-    return CryptoService.decrypt(cipher, this.password);
+    return CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
   }
 }

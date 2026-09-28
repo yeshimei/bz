@@ -1,4 +1,4 @@
-/* 源指纹 264e193057f2353e · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3a111f2bc64df75e · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -7891,6 +7891,9 @@ var BZW_encrypt = (() => {
   function genNoteId() {
     return "enc-" + Date.now() + "-" + randToken(6);
   }
+  function genFileKey() {
+    return randToken(43);
+  }
   var BLOB_CONCURRENCY = 3;
   async function mapLimit(items, limit, fn) {
     const out = new Array(items.length);
@@ -7919,7 +7922,18 @@ var BZW_encrypt = (() => {
       /** 主密码（只存内存，锁定时清空） */
       this.password = null;
       this.unlocked = false;
-      this.manifest = { version: 1, notes: [] };
+      /**
+       * 中间主密钥（ADR-0211 信封结构，只存内存，锁定时清空）：解锁 v2 清单时从 masterWrap
+       * 解出；wrap/清单加解密的中转密钥，修改主密码不需要触碰它（只换 masterWrap）。
+       */
+      this.masterKey = null;
+      /** v1→v2 信封迁移进行中（issue 508：UI 据此禁用修改密码入口；changePassword 亦拒绝） */
+      this.migrating = false;
+      /** 迁移进度回调（UI 发通知用；done/total 为镜像数，无进度不回调） */
+      this.onMigrationProgress = null;
+      /** 迁移收场回调（成功 / 上锁中止 / 失败三态；UI 收进度通知用，空库瞬时升级不回调） */
+      this.onMigrationEnd = null;
+      this.manifest = { version: 2, keys: {}, notes: [] };
       /**
        * 最近一次解锁时自愈回滚的条目数（ADR-0018；UI 解锁成功提示用，无自愈为 0）。
        * unlock 入口复位，selfHeal 结束时写回本次实际回滚数。
@@ -7937,6 +7951,55 @@ var BZW_encrypt = (() => {
     /** 清单文件完整路径（点前缀，侧栏隐藏） */
     get manifestPath() {
       return this.root + "/.safe.enc";
+    }
+    /** 信封结构是否就绪（v2 清单 + masterWrap 已解出）：就绪后镜像走 fileKey，否则兜底主密码 */
+    get envelopeReady() {
+      return this.manifest.version >= 2 && !!this.manifest.masterWrap && !!this.masterKey && !!this.password;
+    }
+    /**
+     * 镜像密钥解析（读路径单源）：信封就绪时按 keys[ref] 用 masterKey 解出 fileKey；
+     * v1 运行态（迁移完成前）兜底主密码——迁移是唯一切换点，两条路径不混跑同一镜像
+     * （迁移会连清单引用一起切换，切换后 keys[ref] 必在）。
+     */
+    async blobKey(ref) {
+      var _a;
+      if (this.envelopeReady) {
+        const wrap = (_a = this.manifest.keys) == null ? void 0 : _a[ref];
+        if (wrap && this.masterKey) return CryptoService.decrypt(wrap, this.masterKey);
+      }
+      return this.password;
+    }
+    /**
+     * 镜像加密（写路径单源）：信封就绪时复用 ref 已登记的 fileKey（覆盖写不换钥，wrap 不变），
+     * 新 ref 生成 fileKey 并把 wrap 登记进清单（随下一次 saveManifest 落盘）；
+     * v1 运行态兜底主密码（迁移会统一转换）。
+     * @returns 密文。调用方须保证失败时清理本次新登记的 wrap（forgetKeys），防幽灵登记。
+     */
+    async encryptForRef(ref, plain) {
+      if (this.envelopeReady) {
+        this.manifest.keys = this.manifest.keys || {};
+        let fileKey;
+        const wrap = this.manifest.keys[ref];
+        if (wrap && this.masterKey) {
+          fileKey = await CryptoService.decrypt(wrap, this.masterKey);
+        } else {
+          fileKey = genFileKey();
+          this.manifest.keys[ref] = await CryptoService.encrypt(fileKey, this.masterKey);
+        }
+        return CryptoService.encrypt(plain, fileKey);
+      }
+      return CryptoService.encrypt(plain, this.password);
+    }
+    /** 从清单 keys 摘除一组 ref 的 wrap（同步纯内存；随调用方的下一次 saveManifest 落盘） */
+    forgetKeys(refs) {
+      if (!this.manifest.keys) return;
+      for (const ref of refs) {
+        if (ref) delete this.manifest.keys[ref];
+      }
+    }
+    /** 条目从清单移除时同步摘除其全部镜像 wrap（正文 + 附件原始层/预览层；随 saveManifest 落盘） */
+    forgetNoteKeys(note) {
+      this.forgetKeys([note.contentRef, ...note.attachments.map((a) => a.blobRef), ...note.attachments.map((a) => a.hasPreview ? a.previewRef : void 0)]);
     }
     /** 镜像相对路径 → vault 完整路径 */
     resolveRef(ref) {
@@ -7989,6 +8052,21 @@ var BZW_encrypt = (() => {
         }
         if (!Array.isArray(parsed.notes)) parsed.notes = [];
         parsed.version = parsed.version || 1;
+        if (parsed.version >= 2) {
+          let masterKey = null;
+          try {
+            if (!parsed.masterWrap || typeof parsed.masterWrap !== "string") throw new Error("masterWrap 缺失");
+            if (!parsed.keys || typeof parsed.keys !== "object" || Array.isArray(parsed.keys)) throw new Error("keys 缺失");
+            masterKey = await CryptoService.decrypt(parsed.masterWrap, password);
+          } catch (e) {
+            this.manifestIssue = "corrupt";
+            if (!forceReset) return false;
+            return this.firstTimeSetup(password);
+          }
+          this.masterKey = masterKey;
+        } else {
+          this.masterKey = null;
+        }
         this.manifest = parsed;
         this.password = password;
         this.unlocked = true;
@@ -7998,6 +8076,10 @@ var BZW_encrypt = (() => {
         }
         (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, true);
         emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
+        if (this.manifest.version < 2 || !this.manifest.masterWrap) {
+          void this.enqueueOp(() => this.migrateToEnvelope()).catch(() => {
+          });
+        }
         return true;
       } catch (e) {
         return false;
@@ -8019,21 +8101,24 @@ var BZW_encrypt = (() => {
         return false;
       }
     }
-    /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
+    /** 首设/强制重设：生成信封密钥（masterKey + masterWrap）写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
     async firstTimeSetup(password) {
       var _a, _b;
+      const masterKey = genFileKey();
       this.password = password;
       this.unlocked = true;
+      this.masterKey = masterKey;
       (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, true);
       emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
-      this.manifest = { version: 1, notes: [] };
+      this.manifest = { version: 2, keys: {}, notes: [], masterWrap: await CryptoService.encrypt(masterKey, password) };
       try {
         await this.saveManifest();
         return true;
       } catch (e) {
         this.unlocked = false;
         this.password = null;
-        this.manifest = { version: 1, notes: [] };
+        this.masterKey = null;
+        this.manifest = { version: 2, keys: {}, notes: [] };
         (_b = this.onUnlockChange) == null ? void 0 : _b.call(this, false);
         emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
         return false;
@@ -8045,7 +8130,9 @@ var BZW_encrypt = (() => {
       if (!this.unlocked) return;
       this.unlocked = false;
       this.password = null;
-      this.manifest = { version: 1, notes: [] };
+      this.masterKey = null;
+      this.migrating = false;
+      this.manifest = { version: 2, keys: {}, notes: [] };
       (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, false);
       emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
       clearCryptoKeyCache();
@@ -8369,6 +8456,7 @@ var BZW_encrypt = (() => {
           const note = this.manifest.notes[idx];
           await this.deleteNoteMirrors(note);
           this.manifest.notes.splice(idx, 1);
+          this.forgetNoteKeys(note);
           rolledBack += 1;
         }
         if (rolledBack > 0) await this.saveManifest();
@@ -8447,7 +8535,6 @@ var BZW_encrypt = (() => {
       }
       const integrityChecked = !!(this.unlocked && this.password);
       if (integrityChecked) {
-        const password = this.password;
         for (const n of this.manifest.notes) {
           if (items.some((i) => i.cat === "dead-entry" && i.noteId === n.id)) {
             emit(n.title + "（失效，跳过校验）", []);
@@ -8460,7 +8547,7 @@ var BZW_encrypt = (() => {
           const fresh = [];
           try {
             const cipher = await this.readMirror(n.contentRef);
-            if (cipher !== null) await CryptoService.decrypt(cipher, password);
+            if (cipher !== null) await CryptoService.decrypt(cipher, await this.blobKey(n.contentRef));
           } catch (e) {
             fresh.push({ cat: "corrupted-body", key: "body:" + n.id, label: n.title, noteId: n.id, ref: n.contentRef });
           }
@@ -8479,7 +8566,7 @@ var BZW_encrypt = (() => {
               if (cipher === null) {
                 fresh.push({ cat: "missing-attachment", key, label: a.path, noteId: n.id, ref: a.blobRef });
               } else {
-                const plain = await CryptoService.decrypt(cipher, password);
+                const plain = await CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
                 const fp = await fingerprintOf(plain);
                 if (fp !== a.fingerprint) {
                   fresh.push({ cat: "corrupted-attachment", key, label: a.path, noteId: n.id, ref: a.blobRef });
@@ -8504,6 +8591,7 @@ var BZW_encrypt = (() => {
      */
     async resolveHealth(keys) {
       return this.enqueueOp(async () => {
+        var _a;
         if (!this.unlocked) throw new Error("未解锁，无法清理");
         const want = new Set(keys);
         let notes = 0;
@@ -8520,25 +8608,40 @@ var BZW_encrypt = (() => {
           }
           if (want.has("entry:" + n.id) && !bodyExists) {
             await this.deleteNoteMirrors(n);
+            this.forgetNoteKeys(n);
             notes += 1;
           } else {
             kept.push(n);
           }
         }
         if (notes > 0) this.manifest.notes = kept;
+        const referencedNow = /* @__PURE__ */ new Set();
+        for (const n of this.manifest.notes) {
+          if (n.contentRef) referencedNow.add(n.contentRef);
+          for (const a of n.attachments) {
+            if (a.blobRef) referencedNow.add(a.blobRef);
+            if (a.hasPreview && a.previewRef) referencedNow.add(a.previewRef);
+          }
+        }
+        let keysTouched = false;
         for (const key of keys) {
           if (!key.startsWith("file:")) continue;
           const name = key.slice("file:".length);
           if (!isOrphanEncName(name)) continue;
+          if (referencedNow.has(name)) continue;
           try {
             if (await this.adapter.exists(this.resolveRef(name))) {
               await this.adapter.remove(this.resolveRef(name));
               files += 1;
+              if ((_a = this.manifest.keys) == null ? void 0 : _a[name]) {
+                this.forgetKeys([name]);
+                keysTouched = true;
+              }
             }
           } catch (e) {
           }
         }
-        if (notes > 0) await this.saveManifest();
+        if (notes > 0 || keysTouched) await this.saveManifest();
         await this.clearStaging();
         return { files, notes };
       });
@@ -8574,28 +8677,30 @@ var BZW_encrypt = (() => {
       if (!this.unlocked || !this.password) throw new Error("未解锁，无法加密笔记");
       await this.ensureSafeRootDir();
       await this.ensureStagingDir();
-      const password = this.password;
       const total = input.attachments.length + 1;
       let done = 0;
       const attachments = [];
       const finalRefs = [];
       const stagedRefs = [];
+      const keyedRefs = [];
       let note = null;
       let manifestSaved = false;
       const skippedStale = [];
       try {
         const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
           const fp = await fingerprintOf(a.data);
-          const enc = await CryptoService.encrypt(a.data, password);
           const blobRef = flatName();
+          keyedRefs.push(blobRef);
+          const enc = await this.encryptForRef(blobRef, a.data);
           await this.writeStaged(blobRef, enc);
           stagedRefs.push(blobRef);
           finalRefs.push(blobRef);
           let hasPreview = false;
           let previewRef = "";
           if (a.previewData) {
-            const encP = await CryptoService.encrypt(a.previewData, password);
             previewRef = flatName();
+            keyedRefs.push(previewRef);
+            const encP = await this.encryptForRef(previewRef, a.previewData);
             await this.writeStaged(previewRef, encP);
             stagedRefs.push(previewRef);
             finalRefs.push(previewRef);
@@ -8619,7 +8724,8 @@ var BZW_encrypt = (() => {
         done += 1;
         onProgress == null ? void 0 : onProgress({ done, total, current: input.path });
         const bodyRef = flatName();
-        const bodyCipher = await CryptoService.encrypt(input.content, this.password);
+        keyedRefs.push(bodyRef);
+        const bodyCipher = await this.encryptForRef(bodyRef, input.content);
         await this.writeStaged(bodyRef, bodyCipher);
         stagedRefs.push(bodyRef);
         finalRefs.push(bodyRef);
@@ -8681,6 +8787,7 @@ var BZW_encrypt = (() => {
           } catch (err) {
           }
         }
+        this.forgetKeys(keyedRefs);
         if (!manifestSaved && note) {
           const ghostId = note.id;
           const idx = this.manifest.notes.findIndex((n) => n.id === ghostId);
@@ -8766,6 +8873,7 @@ var BZW_encrypt = (() => {
       }
       const idx = this.manifest.notes.indexOf(note);
       if (idx !== -1) this.manifest.notes.splice(idx, 1);
+      this.forgetNoteKeys(note);
       try {
         await this.saveManifest();
       } catch (e) {
@@ -8792,7 +8900,7 @@ var BZW_encrypt = (() => {
       if (!note.contentRef) return null;
       const cipher = await this.readMirror(note.contentRef);
       if (!cipher) return null;
-      return CryptoService.decrypt(cipher, this.password);
+      return CryptoService.decrypt(cipher, await this.blobKey(note.contentRef));
     }
     /**
      * 读条目标题镜像的原始密文字符串（不解密，零 PBKDF2 开销）。
@@ -8856,6 +8964,7 @@ var BZW_encrypt = (() => {
       }
       const idx = this.manifest.notes.indexOf(note);
       if (idx !== -1) this.manifest.notes.splice(idx, 1);
+      this.forgetNoteKeys(note);
       try {
         await this.saveManifest();
       } catch (e) {
@@ -8940,13 +9049,12 @@ var BZW_encrypt = (() => {
      * @returns 明文 base64；null = 镜像缺失 / 解密失败 / 完整性不符 / 目标被用户占用（整体不落盘）
      */
     async prepareRestoreAttachment(a) {
-      const password = this.password;
-      if (!password) return null;
+      if (!this.unlocked || !this.password) return null;
       const cipher = await this.readMirror(a.blobRef);
       if (cipher === null) return null;
       let plainB64;
       try {
-        plainB64 = await CryptoService.decrypt(cipher, password);
+        plainB64 = await CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
       } catch (e) {
         return null;
       }
@@ -8997,6 +9105,7 @@ var BZW_encrypt = (() => {
         const note = this.manifest.notes[idx];
         await this.deleteNoteMirrors(note);
         this.manifest.notes.splice(idx, 1);
+        this.forgetNoteKeys(note);
         await this.saveManifest();
       });
     }
@@ -9011,20 +9120,160 @@ var BZW_encrypt = (() => {
      */
     updateNotePayload(noteId, plainContent) {
       return this.enqueueOp(async () => {
+        var _a;
         if (!this.unlocked || !this.password) throw new Error("未解锁，无法保存");
         const note = this.manifest.notes.find((n) => n.id === noteId);
         if (!note) throw new Error("未找到清单条目");
-        const encrypted = await CryptoService.encrypt(plainContent, this.password);
-        if (note.contentRef) {
-          await this.replaceMirrorAtomic(note.contentRef, encrypted);
+        if (note.contentRef && ((_a = this.manifest.keys) == null ? void 0 : _a[note.contentRef])) {
+          const encrypted2 = await this.encryptForRef(note.contentRef, plainContent);
+          await this.replaceMirrorAtomic(note.contentRef, encrypted2);
           emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId });
-        } else {
-          const ref = flatName();
-          await this.replaceMirrorAtomic(ref, encrypted);
-          note.contentRef = ref;
-          await this.saveManifest();
+          return;
         }
+        const oldRef = note.contentRef;
+        const newRef = flatName();
+        const encrypted = await this.encryptForRef(newRef, plainContent);
+        try {
+          await this.writeStaged(newRef, encrypted);
+          await this.promoteStaged(newRef);
+          note.contentRef = newRef;
+          await this.saveManifest();
+        } catch (e) {
+          note.contentRef = oldRef;
+          this.forgetKeys([newRef]);
+          await this.deleteSafeFile(newRef);
+          throw e;
+        }
+        if (oldRef) await this.deleteSafeFile(oldRef);
       });
+    }
+    // ---------- 修改主密码 / 信封迁移（ADR-0211，issue 508） ----------
+    /**
+     * 修改主密码（信封结构下亚秒级）：只重包 masterWrap + 重加密清单，镜像文件零接触。
+     * 整体入 opQueue 与迁移/写操作硬串行（migrating 旗标只作出队后快路径提示）；
+     * verifyPassword 二次校验（高危操作口径，同销毁确认；false = 当前密码错，清单未动）→
+     * 重包 → saveManifest → 清派生密钥缓存（旧主密码派生不残留；fileKey 派生随用随建）。
+     * 迁移未完成时抛错（UI 提示稍后）——迁移是密钥模型切换点，两者串行才可推理。
+     */
+    changePassword(oldPassword, newPassword) {
+      return this.enqueueOp(async () => {
+        if (!this.unlocked || !this.password) throw new Error("未解锁，无法修改密码");
+        if (this.migrating) throw new Error("加密结构升级进行中，请稍后再试");
+        if (!this.envelopeReady) throw new Error("加密结构升级尚未完成，请稍候片刻（或重新解锁）再试");
+        if (!await this.verifyPassword(oldPassword)) return false;
+        if (!this.unlocked || !this.password) throw new Error("保险库已上锁，修改中止");
+        const prevWrap = this.manifest.masterWrap;
+        const prevPassword = this.password;
+        try {
+          this.manifest.masterWrap = await CryptoService.encrypt(this.masterKey, newPassword);
+          this.password = newPassword;
+          await this.saveManifest();
+        } catch (e) {
+          if (this.unlocked) {
+            this.manifest.masterWrap = prevWrap;
+            this.password = prevPassword;
+          }
+          throw e;
+        }
+        clearCryptoKeyCache();
+        return true;
+      });
+    }
+    /**
+     * v1 → v2 信封迁移（解锁后自动触发，opQueue 串行；中断安全）：
+     * 逐镜像「主密码解 → 独立 fileKey 加密 → 写暂存区（新 ref；暂存区不在顶层，
+     * 体检孤儿扫描不可见，绝不误删）」，全部成功后提交——
+     *   P1 promote 全部新镜像到顶层（此刻清单仍 v1：旧镜像俱在，数据完整，新镜像暂成孤儿形态）
+     *   P2 清单切 v2（notes 改指新 ref + keys + masterWrap）落盘（提交点，失败则内存回滚保持 v1）
+     *   P3 删旧镜像 → 清暂存（失败只留孤儿，体检可清）
+     * 任意中断由清单版本裁决：v1 期 = 旧镜像有效（promote 残留孤儿可清）；v2 后 = 新镜像有效
+     * （旧镜像成孤儿可清）。下次解锁按版本重试或跳过，最终收敛。
+     * 任一镜像解密/缺失失败 → 中止保持 v1（完整性优先，绝不跳过——跳过即静默丢数据）。
+     */
+    async migrateToEnvelope() {
+      var _a, _b, _c, _d;
+      if (!this.unlocked || !this.password) return;
+      if (this.manifest.version >= 2 && this.manifest.masterWrap && this.manifest.keys) return;
+      this.migrating = true;
+      try {
+        const masterKey = genFileKey();
+        const keys = {};
+        const notes = this.manifest.notes;
+        const jobs = [];
+        for (const n of notes) {
+          if (n.contentRef) jobs.push({ oldRef: n.contentRef, part: "contentRef" });
+          for (const a of n.attachments) {
+            if (a.blobRef) jobs.push({ oldRef: a.blobRef, att: a, part: "blobRef" });
+            if (a.hasPreview && a.previewRef) jobs.push({ oldRef: a.previewRef, att: a, part: "previewRef" });
+          }
+        }
+        if (jobs.length === 0) {
+          this.masterKey = masterKey;
+          this.manifest.version = 2;
+          this.manifest.keys = keys;
+          this.manifest.masterWrap = await CryptoService.encrypt(masterKey, this.password);
+          await this.saveManifest();
+          return;
+        }
+        const total = jobs.length;
+        let done = 0;
+        const staged = [];
+        for (const job of jobs) {
+          if (!this.unlocked || !this.password) {
+            (_a = this.onMigrationEnd) == null ? void 0 : _a.call(this, false, "locked");
+            return;
+          }
+          const cipher = await this.readMirror(job.oldRef);
+          if (cipher === null) throw new Error("迁移中止：镜像缺失 " + job.oldRef);
+          const plain = await CryptoService.decrypt(cipher, this.password);
+          const fileKey = genFileKey();
+          const newRef = flatName();
+          keys[newRef] = await CryptoService.encrypt(fileKey, masterKey);
+          await this.writeStaged(newRef, await CryptoService.encrypt(plain, fileKey));
+          staged.push({ oldRef: job.oldRef, newRef });
+          done += 1;
+          (_b = this.onMigrationProgress) == null ? void 0 : _b.call(this, done, total);
+        }
+        for (const s of staged) await this.promoteStaged(s.newRef);
+        try {
+          const refMap = new Map(staged.map((s) => [s.oldRef, s.newRef]));
+          for (const n of notes) {
+            if (n.contentRef) n.contentRef = refMap.get(n.contentRef) || n.contentRef;
+            for (const a of n.attachments) {
+              if (a.blobRef) a.blobRef = refMap.get(a.blobRef) || a.blobRef;
+              if (a.hasPreview && a.previewRef) a.previewRef = refMap.get(a.previewRef) || a.previewRef;
+            }
+          }
+          this.masterKey = masterKey;
+          this.manifest.version = 2;
+          this.manifest.keys = keys;
+          this.manifest.masterWrap = await CryptoService.encrypt(masterKey, this.password);
+          await this.saveManifest();
+        } catch (e) {
+          const backMap = new Map(staged.map((s) => [s.newRef, s.oldRef]));
+          for (const n of notes) {
+            if (n.contentRef) n.contentRef = backMap.get(n.contentRef) || n.contentRef;
+            for (const a of n.attachments) {
+              if (a.blobRef) a.blobRef = backMap.get(a.blobRef) || a.blobRef;
+              if (a.hasPreview && a.previewRef) a.previewRef = backMap.get(a.previewRef) || a.previewRef;
+            }
+          }
+          this.masterKey = null;
+          this.manifest.version = 1;
+          this.manifest.keys = void 0;
+          this.manifest.masterWrap = void 0;
+          await this.clearStaging();
+          throw e;
+        }
+        for (const s of staged) await this.deleteSafeFile(s.oldRef);
+        await this.clearStaging();
+        (_c = this.onMigrationEnd) == null ? void 0 : _c.call(this, true);
+      } catch (e) {
+        (_d = this.onMigrationEnd) == null ? void 0 : _d.call(this, false, this.unlocked ? "error" : "locked");
+        throw e;
+      } finally {
+        this.migrating = false;
+      }
     }
     /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
     async decryptPreview(a) {
@@ -9032,7 +9281,7 @@ var BZW_encrypt = (() => {
       if (!a.hasPreview) return null;
       const cipher = await this.readMirror(a.previewRef);
       if (!cipher) return null;
-      return CryptoService.decrypt(cipher, this.password);
+      return CryptoService.decrypt(cipher, await this.blobKey(a.previewRef));
     }
     /**
      * 解附件原始层 → 原始 base64（预览窗缩略图点击按需加载原图/视频用）。
@@ -9042,7 +9291,7 @@ var BZW_encrypt = (() => {
       if (!this.unlocked || !this.password) throw new Error("未解锁");
       const cipher = await this.readMirror(a.blobRef);
       if (!cipher) return null;
-      return CryptoService.decrypt(cipher, this.password);
+      return CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
     }
   };
 
@@ -10571,6 +10820,8 @@ var BZW_encrypt = (() => {
       this.sessionTimer = null;
       /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
       this.idleLockTimer = null;
+      /** 信封迁移进度通知句柄（迁移是解锁后一次性任务，句柄用完即清） */
+      this._migNotify = null;
       /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
       this._lastRenderedAsset = null;
       /** 空闲计时 bump（document 捕获阶段；见 bindVaultShell 尾部） */
@@ -10579,6 +10830,9 @@ var BZW_encrypt = (() => {
       this._unlockOff = null;
       /** 体检进行中旗标（T9 重入守卫：扫描中「重新体检」/清理后自动复扫不再并发双扫） */
       this._scanning = false;
+      // ---------- 修改主密码（ADR-0211，issue 508） ----------
+      /** 改密屏进行中句柄（两屏接力共用；进行中不重开） */
+      this.activeChangePw = null;
       // ---------- 统一工作台渲染 ----------
       /**
        * 共享锁密码载荷装载旗标（效率整改 4：load 仅解锁后首次 renderList 执行——
@@ -10593,6 +10847,24 @@ var BZW_encrypt = (() => {
       this.dataManager = dataManager;
       this.config = config;
       this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
+      dataManager.onMigrationProgress = (done, total) => {
+        if (!this._migNotify) this._migNotify = progressNotify("加密结构升级");
+        updateProgress(this._migNotify, done, total, "重加密密文镜像");
+      };
+      dataManager.onMigrationEnd = (ok, reason) => {
+        if (!this._migNotify) return;
+        if (ok) {
+          this._migNotify.setMessage("加密结构升级完成，修改主密码已可用");
+          this._migNotify.setType("success");
+        } else if (reason === "locked") {
+          this._migNotify.setMessage("加密结构升级已中止（保险库上锁）：下次解锁自动继续");
+          this._migNotify.setType("warning");
+        } else {
+          this._migNotify.setMessage("加密结构升级失败：数据未受影响，下次解锁自动重试");
+          this._migNotify.setType("error");
+        }
+        this._migNotify = null;
+      };
     }
     /** 解锁成功后复位节流状态 */
     resetUnlockThrottle() {
@@ -11198,7 +11470,9 @@ var BZW_encrypt = (() => {
     openPanelMenu(x, y) {
       const actions = [
         { icon: "settings", label: "保险库设置", onClick: () => this.openSettings() },
-        { icon: "stethoscope", label: "保险库体检", onClick: () => void this.openHealthDialog() }
+        { icon: "stethoscope", label: "保险库体检", onClick: () => void this.openHealthDialog() },
+        // 修改主密码（ADR-0211）：未解锁不进（菜单本身只在解锁态面板内可达）；迁移中数据层拒绝并提示
+        { icon: "key-round", label: "修改主密码", onClick: () => this.openChangePassword() }
       ];
       openItemMenu(x, y, actions, true, "bz-vault-menu");
     }
@@ -11382,6 +11656,155 @@ var BZW_encrypt = (() => {
       setTimeout(() => ls.focus(), 150);
       activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
       return promise;
+    }
+    /**
+     * 修改主密码入口（面板右键菜单 / 命令）：信封结构下只重包清单内的密钥并重加密清单，
+     * 数据镜像零接触（ADR-0211）。两屏接力复用解锁屏骨架——屏1 验证当前主密码
+     * （同销毁确认语汇），屏2 双输入设置新密码（首设同款确认）。
+     */
+    openChangePassword() {
+      var _a, _b;
+      if ((_b = (_a = this.activeChangePw) == null ? void 0 : _a.el) == null ? void 0 : _b.isConnected) return;
+      if (!this.dataManager.unlocked) return;
+      this.activeChangePw = null;
+      this.openChangePwVerify();
+    }
+    /** 改密屏共通壳：挂 body + 动效入场 + ESC/点遮罩收场；返回收场函数（重入防抖句柄同清） */
+    mountChangePwScreen(ls) {
+      topifyZ(ls.el);
+      document.body.appendChild(ls.el);
+      mountIcons(ls.el);
+      motionLockScreenIn(ls.el);
+      const done = () => {
+        this.activeChangePw = null;
+        esc2.unregister();
+        ls.close();
+      };
+      const esc2 = escManager.register("bz-vault-changepw", {
+        isVisible: () => ls.el.isConnected,
+        close: () => done()
+      });
+      if (ls.cancelBtn) ls.cancelBtn.onclick = () => done();
+      ls.el.addEventListener("click", (e) => {
+        if (e.target === ls.el) done();
+      });
+      ls.focus();
+      setTimeout(() => ls.focus(), 150);
+      this.activeChangePw = { el: ls.el };
+      return done;
+    }
+    /** 屏1：验证当前主密码（只读 verifyPassword，不触解锁态；同销毁确认「重验封印」语汇） */
+    openChangePwVerify() {
+      const ls = uiLockScreen({
+        kind: "vault",
+        icon: "key-round",
+        title: "修改主密码",
+        sub: "请先验证当前主密码",
+        action: "验证",
+        placeholder: "当前主密码",
+        secText: "修改只重加密清单 · 数据文件保持不变",
+        secTone: "ok",
+        cancel: "取消"
+      });
+      const done = this.mountChangePwScreen(ls);
+      const setErr = (m) => {
+        ls.setError(m);
+        setTimeout(() => {
+          if (ls.input.value) ls.setError("");
+        }, 2600);
+      };
+      ls.actionBtn.onclick = async () => {
+        const pw = ls.input.value;
+        if (!pw) {
+          this.rejectInput("请输入当前主密码", setErr);
+          return;
+        }
+        ls.setBusy(true);
+        try {
+          if (await this.dataManager.verifyPassword(pw)) {
+            if (!ls.el.isConnected) return;
+            done();
+            this.openChangePwNew(pw);
+          } else {
+            if (!ls.el.isConnected) return;
+            ls.setBusy(false);
+            this.rejectInput("当前主密码不正确", setErr, "error");
+            ls.input.value = "";
+            ls.focus();
+          }
+        } catch (e) {
+          if (!ls.el.isConnected) return;
+          ls.setBusy(false);
+          notifyActionError(e, "验证主密码");
+        }
+      };
+    }
+    /** 屏2：设置新主密码（双输入 + 牢记勾选，首设同款确认）→ changePassword */
+    openChangePwNew(currentPw) {
+      const ls = uiLockScreen({
+        kind: "vault",
+        icon: "key-round",
+        title: "设置新主密码",
+        sub: "新主密码加密整库清单；各文件密钥随清单保存，数据文件不动",
+        action: "修改密码",
+        firstSetup: true,
+        placeholder: "新主密码",
+        warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 新主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘新密码，保险库将无法解锁。`,
+        ackText: "我已牢记新主密码：遗忘将无法解锁保险库",
+        secText: "只重加密清单 · 亚秒级完成 · 数据文件不变",
+        secTone: "ok",
+        cancel: "取消"
+      });
+      const done = this.mountChangePwScreen(ls);
+      const setErr = (m) => {
+        ls.setError(m);
+        setTimeout(() => {
+          if (ls.input.value) ls.setError("");
+        }, 2600);
+      };
+      ls.actionBtn.onclick = async () => {
+        var _a;
+        const pw = ls.input.value;
+        if (!pw) {
+          this.rejectInput("请输入新主密码", setErr);
+          return;
+        }
+        if (pw !== ls.input2.value) {
+          this.rejectInput("两次密码不一致", setErr);
+          return;
+        }
+        if (pw.length < 4) {
+          this.rejectInput("主密码至少 4 位", setErr);
+          return;
+        }
+        if (pw === currentPw) {
+          this.rejectInput("新密码不能与当前密码相同", setErr);
+          return;
+        }
+        if (!((_a = ls.ackBox) == null ? void 0 : _a.checked)) {
+          this.rejectInput("请先勾选确认", setErr);
+          return;
+        }
+        ls.setBusy(true);
+        try {
+          const ok = await this.dataManager.changePassword(currentPw, pw);
+          if (!ls.el.isConnected) return;
+          if (ok) {
+            motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
+            done();
+            notice("主密码已修改，数据文件未变动", "success");
+          } else {
+            ls.setBusy(false);
+            this.rejectInput("当前主密码不正确，未修改", setErr, "error");
+            ls.input.value = "";
+            ls.focus();
+          }
+        } catch (e) {
+          if (!ls.el.isConnected) return;
+          ls.setBusy(false);
+          notifyActionError(e, "修改主密码");
+        }
+      };
     }
     /** show/解锁/外部变更/资产切换统一入口：加载 → 全量重绘 */
     async renderList() {
@@ -11785,6 +12208,7 @@ var BZW_encrypt = (() => {
     closeAllDialogs() {
       var _a;
       if (activeUnlock && ((_a = activeUnlock.el) == null ? void 0 : _a.isConnected)) activeUnlock.cancel();
+      this.activeChangePw = null;
       document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
       document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => {
         if (el.classList.contains("bz-lockscreen--password-vault") || el.classList.contains("bz-lockscreen--diary")) return;
