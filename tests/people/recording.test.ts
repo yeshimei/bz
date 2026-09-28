@@ -18,7 +18,6 @@ import {
   recordingSidecarPath,
   recordingTsOf,
   recordingsDirOf,
-  recordingToolScriptPath,
   setRecordingRunnerForTests,
   startRecordingTask,
   stopRecordingTask,
@@ -29,34 +28,34 @@ import {
 import type { ExternalToolHandle } from '../../src/core/external-tool';
 
 describe('路径组装', () => {
-  it('recordingsDirOf / sidecar / 脚本 / 质心 npz 的固定布局（ADR-0212）', () => {
+  it('recordingsDirOf / sidecar / 质心 npz 的固定布局（ADR-0212；质心随数据根，0214）', () => {
     expect(recordingsDirOf('E:\\数据根', '大琳')).toBe('E:\\数据根/大琳/recordings');
     expect(recordingSidecarPath('E:\\数据根', '大琳', '周二.aac')).toBe('E:\\数据根/大琳/recordings/周二.aac.turns.json');
-    expect(recordingToolScriptPath('E:\\数据根/', 'rec_slide_hmm.py')).toBe('E:/tools/rec_slide_hmm.py');
-    expect(voiceprintRefPath('E:\\数据根', '大琳')).toBe('E:/tools/voiceprints/大琳.npz');
-    // 现实布局：peopleDataDir = …/微信脸谱数据/export_full，tools 与它平级（评审 P1-2：反斜杠同容）
-    expect(recordingToolScriptPath('E:\\Obsidian\\微信脸谱数据\\export_full', 'rec_slide_hmm.py')).toBe('E:/Obsidian/微信脸谱数据/tools/rec_slide_hmm.py');
-    expect(voiceprintRefPath('E:/Obsidian/微信脸谱数据/export_full', '大琳')).toBe('E:/Obsidian/微信脸谱数据/tools/voiceprints/大琳.npz');
+    expect(voiceprintRefPath('E:\\数据根', '大琳')).toBe('E:\\数据根/voiceprints/大琳.npz');
+    // 质心随数据根走（0214 收编 bz-face 包，不再依赖「数据根父目录有 tools」的布局）
+    expect(voiceprintRefPath('E:/Obsidian/微信脸谱数据/export_full', '大琳')).toBe('E:/Obsidian/微信脸谱数据/export_full/voiceprints/大琳.npz');
   });
 
-  it('buildRecordingSpec：python 空回落 python、参数四件套、不经 shell', () => {
+  it('buildRecordingSpec：bz-face rec、路径参数包引号、--python 非空才传（口径同 prep）', () => {
     const spec = buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大琳', file: 'r.m4a' });
-    expect(spec.cmd).toBe('python');
-    expect(spec.shell).toBe(false);
+    expect(spec.cmd).toBe('bz-face');
+    expect(spec.shell).toBe(true);
     expect(spec.args).toEqual([
-      'D:/tools/rec_slide_hmm.py',
-      'D:\\根/大琳/recordings/r.m4a',
-      '大琳',
-      'D:\\根/大琳/recordings/r.m4a.turns.json',
+      'rec',
+      '"r.m4a"',
+      '--data-root',
+      '"D:\\根"',
+      '--contact',
+      '"大琳"',
     ]);
     const withPy = buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大', file: 'r', python: 'C:\\Program Files\\py.exe ' });
-    expect(withPy.cmd).toBe('C:\\Program Files\\py.exe');
+    expect(withPy.args).toEqual(['rec', '"r"', '--data-root', '"D:\\根"', '--contact', '"大"', '--python', 'C:\\Program Files\\py.exe']);
   });
 
-  it('buildVoiceprintSpec：python + 脚本 + 联系人', () => {
+  it('buildVoiceprintSpec：bz-face refs、路径参数包引号', () => {
     const spec = buildVoiceprintSpec({ dataRoot: 'D:\\根', talker: '大琳', python: 'py -3' });
-    expect(spec.cmd).toBe('py -3');
-    expect(spec.args).toEqual(['D:/tools/voiceprint_refs.py', '大琳']);
+    expect(spec.cmd).toBe('bz-face');
+    expect(spec.args).toEqual(['refs', '--data-root', '"D:\\根"', '--contact', '"大琳"', '--python', 'py -3']);
   });
 });
 

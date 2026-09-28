@@ -36,6 +36,21 @@
 //     供插件在「导入所选」时只对勾选者起本命令——单人两万条量级秒级完成。
 //     协议 / 退出码同 sync；结果行带 mode:"export"（sync 轮为 mode:"stats"）。
 //
+//   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>]
+//     录音说话人分离 + 逐轮转写（issue 509 / ADR-0213、0214；方案 C，经真值校准）：
+//     对 <数据根>/<联系人>/recordings/<录音> 跑 VAD 门控 → CAM++ 密滑窗（1s/0.25s）+
+//     两状态 Viterbi（质心 = <数据根>/voiceprints/<联系人>.npz，降级阶梯 dual → me-only
+//     → blind）→ SenseVoice 逐轮转写带情感。phase 账本断点续跑：sidecar <录音>.turns.json
+//     逐阶段落账（vad / 声纹窗逐块 / 转写逐轮），中断续跑只补缺口。
+//     **进度权威在 sidecar.progress**（插件轮询渲染；stdout 打印仅供人看，不走四行协议）；
+//     退出码 0 = 跑完、1 = 硬失败（录音 / 联系人目录缺失、引擎加载失败）、2 = 用法错误。
+//
+//   bz-face refs --data-root <路径> --contact <目录名> [--contact <目录名> …] [--python <命令>]
+//     构建联系人声纹参考质心（rec 的比对基准）：chat.json type=34 的 who 标签 ×
+//     voice/*.wav 分池嵌入取均值，产 <数据根>/voiceprints/<联系人>.npz。缺 peer
+//     （联系人语音样本不足）只存 me = me-only，分离按「非我即对方」降级；两位都缺则跳过
+//     （stdout △ 行）。退出码 0 = 跑完（单人跳过不算失败）、1 = 硬失败、2 = 用法错误。
+//
 //   bz-face doctor [--data-root <路径>] [--python <命令>]
 //     环境自检：Python 版本 / 解密组与转写组依赖 / ffmpeg / ffprobe /
 //     微信进程与版本 / 数据根可写性。逐行打「✓ 通过 / ✗ 缺失 + 可直接粘贴的
@@ -59,6 +74,7 @@ const core = require('../lib/doctor-core');
 const sync = require('../lib/sync-core');
 const prep = require('../lib/prep-core');
 const exportCore = require('../lib/export-core');
+const rec = require('../lib/rec-core');
 const probes = require('../lib/probes');
 
 const pkg = require('../package.json');
@@ -103,6 +119,16 @@ const USAGE = [
   '      <数据根>/.bz-face/control.json：{"action":"pause"} 在安全点待命（进程不退出），',
   '      {"action":"stop"} 留状态退出（结果行带 stopped:true）。转写引擎 / ffmpeg /',
   '      派生档参数全部走 CLI 显式传参（插件侧接线时下发设置值）。',
+  '  bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>]',
+  '      录音说话人分离 + 逐轮转写（补充素材的录音；不需要微信在跑）：',
+  '      VAD 门控 → CAM++ 密滑窗 + 两状态 Viterbi → SenseVoice 逐轮转写带情感。',
+  '      质心 = <数据根>/voiceprints/<联系人>.npz（bz-face refs 产；缺质心按降级阶梯照跑）。',
+  '      sidecar <录音>.turns.json 逐阶段落账、断点续跑只补缺口——进度权威在 sidecar，',
+  '      插件轮询渲染（stdout 仅供人看）。done 后由插件把轮次并进聊天仓。',
+  '  bz-face refs --data-root <路径> --contact <目录名> [--contact <目录名> …] [--python <命令>]',
+  '      构建联系人声纹参考质心（rec 的比对基准）：chat.json who 标签 × voice/*.wav 分池均值，',
+  '      产 <数据根>/voiceprints/<联系人>.npz。缺 peer 只存 me（分离时非我即对方），',
+  '      两位都缺则跳过该联系人（不算硬失败）。',
   '  bz-face doctor [--data-root <路径>] [--python <命令>]',
   '      环境自检：Python / 解密组依赖 / 转写组依赖 / ffmpeg / ffprobe / 微信进程与版本 /',
   '      数据根可写性。逐行打「通过/缺失 + 可直接粘贴的修复命令」，单项缺失不中断。',
@@ -326,6 +352,62 @@ async function cmdPrep(opts) {
   return run.code === 0 ? 0 : 1;
 }
 
+/**
+ * rec / refs 共用：预检失败 = [bz-result] 一行 + stderr 一句 + 退出码 1；
+ * 预检过 = 起子进程，stdout 逐行透传（进度权威在 sidecar，行不解析只转发）。
+ */
+async function runRecLike(opts) {
+  const emit = (line) => {
+    if (line) console.log(line);
+  };
+  const dataRoot = probes.probeDataRoot(opts.dataRoot);
+  const pre = opts.kind === 'rec'
+    ? rec.judgeRecPreflight(
+        { dataRoot, contact: opts.contact, file: opts.file },
+        {
+          contactDirExists: rec.contactDirExists(opts.dataRoot, opts.contact),
+          recordingExists: rec.recordingExists(opts.dataRoot, opts.contact, opts.file),
+        },
+      )
+    : rec.judgeRefsPreflight(
+        { dataRoot },
+        {
+          contacts: opts.contacts || [],
+          missingContacts: (opts.contacts || []).filter((c) => !rec.contactDirExists(opts.dataRoot, c)),
+        },
+      );
+  if (!pre.ok) {
+    emit(sync.formatBzLine('result', { ok: false, error: pre.error }));
+    console.error(`bz-face ${opts.kind}：${pre.error}`);
+    return 1;
+  }
+  const scriptPath = path.join(__dirname, '..', 'python', opts.kind === 'rec' ? 'bz_rec.py' : 'bz_refs.py');
+  const args = opts.kind === 'rec'
+    ? [
+        '--data-root', opts.dataRoot,
+        '--contact', opts.contact,
+        '--file', opts.file,
+      ]
+    : [
+        '--data-root', opts.dataRoot,
+        ...(opts.contacts || []).flatMap((c) => ['--contact', c]),
+      ];
+  const run = await probes.runSyncProcess({ pythonCmd: opts.python, scriptPath, args, onLine: (line) => emit(line) });
+  // 脚本崩溃没交代 → 兜底结果行（进度权威在 sidecar，这行只是让插件进程终结有据可查）
+  if (run.code !== 0) {
+    emit(sync.formatBzLine('result', { ok: false, error: `bz-face ${opts.kind} 异常退出（退出码 ${run.code ?? '无'}）` }));
+  }
+  return run.code === 0 ? 0 : 1;
+}
+
+async function cmdRec(opts) {
+  return runRecLike({ ...opts, kind: 'rec' });
+}
+
+async function cmdRefs(opts) {
+  return runRecLike({ ...opts, kind: 'refs' });
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   const first = argv.find((a) => !String(a).startsWith('-'));
@@ -398,6 +480,38 @@ async function main() {
       minMessages: parsed.minMessages,
       limit: parsed.limit,
     });
+  }
+  if (first === 'rec') {
+    const parsed = rec.parseRecArgv(argv);
+    if (parsed.error) {
+      console.error(`bz-face：${parsed.error}\n\n${USAGE}`);
+      return 2;
+    }
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdRec({ file: parsed.file, dataRoot: parsed.dataRoot, contact: parsed.contact, python: parsed.python });
+  }
+  if (first === 'refs') {
+    const parsed = rec.parseRefsArgv(argv);
+    if (parsed.error) {
+      console.error(`bz-face：${parsed.error}\n\n${USAGE}`);
+      return 2;
+    }
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdRefs({ dataRoot: parsed.dataRoot, contacts: parsed.contacts, python: parsed.python });
   }
   const parsed = core.parseDoctorArgv(argv);
   if (parsed.error) {

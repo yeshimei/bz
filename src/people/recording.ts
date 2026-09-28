@@ -1,17 +1,20 @@
 /**
- * 补充素材·录音管线驱动（issue 509 / ADR-0212、0213）。
+ * 补充素材·录音管线驱动（issue 509 / ADR-0212、0213；0214 起工具收编 bz-face 包）。
  *
- * 分工（ADR-0213 后果条）：分离 / 转写在数据根 `tools/rec_slide_hmm.py`（方案 C，
- * funasr 全本地零 API 费），本层只负责——spawn 组装（pythonPath 设置键）、sidecar
+ * 分工（ADR-0214）：分离 / 转写在 `bz-face rec`、质心构建在 `bz-face refs`
+ * （@jwbz/obsidian-face v0.4+，python/bz_rec.py / bz_refs.py——方案 C，funasr 全本地零 API
+ * 费），本层只负责——spawn 组装（bz-face + pythonPath 设置键下发）、sidecar
  * （`recordings/<名>.turns.json`）解析与状态归并、文件名时间解析（→ mtime 回落）、
- * 质心参考存在性判断（降级阶梯提示）。进度不走 stdout 协议：脚本逐阶段把账本写进
- * sidecar，UI 轮询 sidecar 渲染（挂画谱任务进度块同位置，不入引擎队列）；
- * 聊天仓合并由插件执行（applyRecordingTurnsToMsgs，datasource 层——插件是聊天仓唯一写入者）。
+ * 质心参考存在性判断（`<数据根>/voiceprints/<联系人>.npz`，降级阶梯提示）。进度不走
+ * stdout 协议：脚本逐阶段把账本写进 sidecar，UI 轮询 sidecar 渲染（挂画谱任务进度块
+ * 同位置，不入引擎队列）；聊天仓合并由插件执行（applyRecordingTurnsToMsgs，
+ * datasource 层——插件是聊天仓唯一写入者）。
  *
  * 会话口径：一录音一进程，句柄存模块级注册表（stop 可杀）；Obsidian 重启会杀进程，
  * sidecar phase 停在中途 = 「中断可续跑」，续跑由脚本按账本只补缺口。
  */
 import { runExternalTool, type ExternalToolHandle, type ExternalToolSpec } from '../core/external-tool';
+import { quotePathArg } from './sync';
 import type { RecordingTurn } from './datasource';
 
 // ---------------- 路径 ----------------
@@ -26,21 +29,9 @@ export function recordingSidecarPath(dataRoot: string, talker: string, file: str
   return `${recordingsDirOf(dataRoot, talker)}/${file}.turns.json`;
 }
 
-/** 数据根的父目录（工具树所在：peopleDataDir = …/export_full，tools 与它平级——真值校准期的既定布局） */
-function dataRootParent(dataRoot: string): string {
-  const root = String(dataRoot ?? '').trim().replace(/\\/g, '/').replace(/\/+$/, '');
-  const cut = root.lastIndexOf('/');
-  return cut > 0 ? root.slice(0, cut) : root;
-}
-
-/** 数据根工具脚本：`<dataRoot>/../tools/<名>.py`（rec_slide_hmm / voiceprint_refs；不进插件构建） */
-export function recordingToolScriptPath(dataRoot: string, name: 'rec_slide_hmm.py' | 'voiceprint_refs.py'): string {
-  return `${dataRootParent(dataRoot)}/tools/${name}`;
-}
-
-/** 质心参考：`<dataRoot>/../tools/voiceprints/<talker>.npz`（voiceprint_refs.py 产） */
+/** 质心参考：`<dataRoot>/voiceprints/<talker>.npz`（bz-face refs 产，随数据根走） */
 export function voiceprintRefPath(dataRoot: string, talker: string): string {
-  return `${dataRootParent(dataRoot)}/tools/voiceprints/${talker}.npz`;
+  return `${String(dataRoot ?? '').replace(/[\\/]+$/, '')}/voiceprints/${talker}.npz`;
 }
 
 // ---------------- spawn 组装 ----------------
@@ -51,34 +42,42 @@ export interface BuildRecordingSpecOpts {
   talker: string;
   /** 录音文件名（recordings/ 下） */
   file: string;
-  /** Python 命令（pythonPath 设置键；空回落 'python'） */
+  /** Python 命令（pythonPath 设置键；非空才传，缺省跟随 bz-face 默认 python） */
   python?: string;
 }
 
-/**
- * `python rec_slide_hmm.py <录音> <联系人> <sidecar>`（shell:false——参数直传不经 shell
- * 解析，pythonPath 含空格路径也稳；脚本按 sidecar 账本续跑只补缺口）。
- */
+/** `bz-face rec <录音> --data-root … --contact …`（口径同 prep：路径参数包引号，--python 是命令词不包） */
 export function buildRecordingSpec(opts: BuildRecordingSpecOpts): ExternalToolSpec {
-  const root = String(opts.dataRoot ?? '').replace(/[\\/]+$/, '');
+  const python = opts.python?.trim() || undefined;
   return {
-    cmd: opts.python?.trim() || 'python',
+    cmd: 'bz-face',
     args: [
-      recordingToolScriptPath(root, 'rec_slide_hmm.py'),
-      `${root}/${opts.talker}/recordings/${opts.file}`,
-      opts.talker,
-      recordingSidecarPath(root, opts.talker, opts.file),
+      'rec',
+      quotePathArg(opts.file),
+      '--data-root',
+      quotePathArg(opts.dataRoot),
+      '--contact',
+      quotePathArg(opts.talker),
+      ...(python ? ['--python', python] : []),
     ],
-    shell: false,
+    shell: true,
   };
 }
 
-/** `python voiceprint_refs.py <联系人>`（质心构建；语音样本不足脚本自行跳过） */
+/** `bz-face refs --data-root … --contact …`（质心构建；语音样本不足脚本自行降级 / 跳过） */
 export function buildVoiceprintSpec(opts: { dataRoot: string; talker: string; python?: string }): ExternalToolSpec {
+  const python = opts.python?.trim() || undefined;
   return {
-    cmd: opts.python?.trim() || 'python',
-    args: [recordingToolScriptPath(opts.dataRoot, 'voiceprint_refs.py'), opts.talker],
-    shell: false,
+    cmd: 'bz-face',
+    args: [
+      'refs',
+      '--data-root',
+      quotePathArg(opts.dataRoot),
+      '--contact',
+      quotePathArg(opts.talker),
+      ...(python ? ['--python', python] : []),
+    ],
+    shell: true,
   };
 }
 

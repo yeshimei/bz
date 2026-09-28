@@ -6,6 +6,11 @@
 468 收 `prep <联系人>`（媒体导出 + wxgf 解码 + 派生图片档 + 图片关联表 + 语音转写，
 四行协议 + 协作式暂停 / 中断——控制文件 `.bz-face/control.json`，收编源里没有的机制，
 契约权威表述在 `lib/prep-core.js` 的 `parseControlAction` 与 Python 侧 `read_action`）。
+509 / ADR-0214 收 `rec <录音文件名>` 与 `refs`（补充素材录音的说话人分离转写 +
+声纹质心构建；sidecar 账本断点续跑，进度权威在 sidecar 不走四行协议——`lib/rec-core.js`
+只管参数解析与预检）。**注**：509 时收编源头部已加退役注记——数据根原脚本保留作
+校准基准（`rec_groundtruth.py` 按文件名调用三个方案脚本做真值比对，其中方案 C 即本包
+`bz_rec.py` 的前身 `rec_slide_hmm.py`）；插件自 0214 起只走 `bz-face rec / refs`。
 
 ## 散装脚本去向
 
@@ -101,3 +106,6 @@
   `vendor/WeChatMsg_Lite/logs/`（gitignore），行为不变。升级上游版本时重新套用此补丁。
 - 已知上游瑕疵（原样收编、不代改）：若干 `return` 出现在 `finally` 块，
   Python 3.14 下有 SyntaxWarning，不影响行为；升级上游版本时一并消化。
+
+| `rec_slide_hmm.py` | **已收编（509 / ADR-0214）→ `python/bz_rec.py`** | 方案 C 滑窗 Viterbi 分离 + SenseVoice 逐轮情感转写（真值 97.6%）。**收编改动**：① 路径全参数化（`--data-root / --contact / --file`，原硬编码 `export_full` 与脚本旁 `voiceprints/`）；② 质心改读 `<数据根>/voiceprints/<联系人>.npz`（随数据根走，数据根 tools/ 下的旧质心目录仅校准环境继续用）；③ sidecar 默认 `<录音>.turns.json` 固定落录音旁（原第三参可选）。phase 账本 / 降级阶梯 / 情感众数逐条照搬，管线零改动 |
+| `voiceprint_refs.py` | **已收编（509 / ADR-0214）→ `python/bz_refs.py`** | 质心构建（who 标签 × voice/*.wav 分池均值 + holdout 自校验 + me-only 降级落盘）。**收编改动**：① `--data-root / --contact`（可重复）参数化，样本源 = `<数据根>/<联系人>/`（不再假设 `export_full` 子目录名）；② 产 `<数据根>/voiceprints/`。构建口径零改动 |

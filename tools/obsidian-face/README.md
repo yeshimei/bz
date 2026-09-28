@@ -10,6 +10,15 @@ silk→wav、图片 .dat 解码 + wxgf 就地转 jpg/gif、视频、文件、缩
 关联 → 本地语音转写 → `voice.json` 转写表；幂等可续、协作式暂停 / 中断（控制文件），
 **绝不写回 `chat.json`**。`bz-face sync`（464）与 `bz-face doctor`（463）照旧。
 
+**v0.4（issue 509 / ADR-0214）新增 `bz-face rec <录音文件名>` 与 `bz-face refs`**：
+补充素材录音的**说话人分离 + 逐轮转写**（VAD 门控 → CAM++ 密滑窗 + 两状态 Viterbi →
+SenseVoice 逐轮情感转写，方案 C 经真值校准；sidecar `<录音>.turns.json` phase 账本
+断点续跑，进度权威在 sidecar 供插件轮询）与其**声纹参考质心构建**（chat.json who 标签
+× voice/*.wav 分池均值 → `<数据根>/voiceprints/<联系人>.npz`；缺 peer 自动降 me-only，
+分离按「非我即对方」降级）。原数据根散装脚本 `rec_slide_hmm.py` / `voiceprint_refs.py`
+收编为 `python/bz_rec.py` / `bz_refs.py`——管线零改动，只参数化路径（依赖同转写组：
+funasr 连带 torch / librosa；质心构建要跑过 `bz-face prep` 留下的 voice/*.wav）。
+
 ## 为什么不发公开 registry（也永远不会自动发布）
 
 本包的核心能力是**解密微信数据库**：公开分发容易被滥用、踩合规，且与微信版本强绑定
