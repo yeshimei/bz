@@ -11195,6 +11195,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .theme-dark .bz-people-supp-badge-failed { color: #cf8a7e; }
 .theme-dark .bz-people-supp-badge-merged { color: #9cb88a; }
 .theme-dark .bz-people-supp-ref b { color: #d6b274; }
+.bz-people-supp-badge-awaiting-merge { background: rgba(196, 146, 58, 0.28); color: var(--acc-deep); }
+.theme-dark .bz-people-supp-badge-awaiting-merge { color: #d6b274; }
 /* ==================== 复习计划域样式（src/review/styles.css） ====================
  * 2026-09-04 拍板形态：三区队列面板 + 整窗做题冲刺（非弹窗）。
  * 面板容器 / 难度弹窗 / watch·exclude 设置行 / 统计·历史弹窗为既有保留块；
