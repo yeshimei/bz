@@ -1,4 +1,4 @@
-/* 源指纹 d0379bdf725cd556 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7e7ae31596d62fe1 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -17873,8 +17873,9 @@ ${lines.join("\n")}`);
     return `${String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "")}/voiceprints/${talker}.npz`;
   }
   function buildRecordingSpec(opts) {
-    var _a2;
+    var _a2, _b2;
     const python = ((_a2 = opts.python) == null ? void 0 : _a2.trim()) || void 0;
+    const ffmpeg = ((_b2 = opts.ffmpeg) == null ? void 0 : _b2.trim()) || void 0;
     return {
       cmd: "bz-face",
       args: [
@@ -17884,6 +17885,7 @@ ${lines.join("\n")}`);
         quotePathArg(opts.dataRoot),
         "--contact",
         quotePathArg(opts.talker),
+        ...ffmpeg ? ["--ffmpeg", quotePathArg(ffmpeg)] : [],
         ...python ? ["--python", python] : []
       ],
       shell: true
@@ -18031,6 +18033,86 @@ ${lines.join("\n")}`);
       return null;
     }
   }
+  function recControlFilePath(dataRoot) {
+    const base = String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "");
+    return `${base}/.bz-face/rec-control.json`;
+  }
+  var recFsOverride = null;
+  function controlFs() {
+    if (recFsOverride) return recFsOverride;
+    const w = typeof window === "undefined" ? null : window;
+    if (!w || !w.require) return null;
+    try {
+      return w.require("fs");
+    } catch (e) {
+      return null;
+    }
+  }
+  function writeRecControl(dataRoot, action) {
+    const fs2 = controlFs();
+    const p = recControlFilePath(dataRoot);
+    if (!fs2 || !dataRoot) return false;
+    try {
+      fs2.mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+      fs2.writeFileSync(p, `${JSON.stringify({ action })}
+`, "utf8");
+      return true;
+    } catch (e) {
+      console.warn("[people] 写录音控制文件失败:", e);
+      return false;
+    }
+  }
+  function clearRecControl(dataRoot) {
+    const fs2 = controlFs();
+    if (!fs2 || !dataRoot) return;
+    try {
+      fs2.rmSync(recControlFilePath(dataRoot), { force: true });
+    } catch (e) {
+    }
+  }
+  var capsCache;
+  async function probeFaceCapabilities() {
+    if (capsCache !== void 0) return capsCache;
+    let resultBody = null;
+    const handle2 = runner3({ cmd: "bz-face", args: ["capabilities"], shell: true }, {
+      onStep: () => {
+      },
+      onProgress: () => {
+      },
+      onInfo: () => {
+      },
+      onResult: (data) => {
+        resultBody = data;
+      }
+    });
+    const outcome = await handle2.done;
+    if (!outcome.ok || !resultBody || typeof resultBody !== "object") {
+      capsCache = null;
+      return capsCache;
+    }
+    const body = resultBody;
+    const version = typeof body.version === "string" ? body.version : "";
+    const commands = Array.isArray(body.commands) ? body.commands.filter((c) => typeof c === "string") : [];
+    if (!version || !commands.length) {
+      capsCache = null;
+      return capsCache;
+    }
+    capsCache = { version, commands };
+    return capsCache;
+  }
+  function minorVersionOf(v) {
+    const parts = String(v != null ? v : "").split(".").map((x) => parseInt(x, 10) || 0);
+    return [parts[0] || 0, parts[1] || 0];
+  }
+  function faceRecSupportError(caps) {
+    if (!caps) return null;
+    const [maj, min] = minorVersionOf(caps.version);
+    const tooOld = maj === 0 && min < 5;
+    if (tooOld || !caps.commands.includes("rec")) {
+      return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——在终端更新后重试：npm update -g @jwbz/obsidian-face（或重新 npm link）`;
+    }
+    return null;
+  }
   var runner3 = runExternalTool;
   var running = /* @__PURE__ */ new Map();
   function isRecordingRunning(sidecarPath) {
@@ -18039,9 +18121,11 @@ ${lines.join("\n")}`);
   function runningRecordingItems() {
     return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file }));
   }
+  var COOP_STOP_KILL_MS = 9e4;
   function startRecordingTask(spec, key, onExit, meta) {
     var _a2, _b2;
     if (running.has(key)) return;
+    if (meta == null ? void 0 : meta.dataRoot) clearRecControl(meta.dataRoot);
     const handle2 = runner3(spec, { onStep: () => {
     }, onProgress: () => {
     }, onInfo: () => {
@@ -18051,12 +18135,21 @@ ${lines.join("\n")}`);
     void handle2.done.then((outcome) => {
       var _a3, _b3;
       running.delete(key);
+      if (meta == null ? void 0 : meta.dataRoot) clearRecControl(meta.dataRoot);
       onExit == null ? void 0 : onExit({ ok: outcome.ok, stopped: outcome.stopped, error: (_b3 = (_a3 = outcome.error) == null ? void 0 : _a3.message) != null ? _b3 : "" });
     });
   }
-  function stopRecordingTask(key) {
-    var _a2;
-    (_a2 = running.get(key)) == null ? void 0 : _a2.handle.stop();
+  function stopRecordingTask(key, opts) {
+    const entry = running.get(key);
+    if (!entry) return;
+    if (!(opts == null ? void 0 : opts.dataRoot) || !writeRecControl(opts.dataRoot, "stop")) {
+      entry.handle.stop();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (running.has(key)) entry.handle.stop();
+    }, COOP_STOP_KILL_MS);
+    void entry.handle.done.then(() => clearTimeout(timer));
   }
 
   // src/people/ui.ts
@@ -21381,7 +21474,9 @@ ${lines.join("\n")}`);
     }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      stopRecordingTask((_z = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _z : "");
+      const file = (_z = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _z : "";
+      const root = suppDataRoot();
+      if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root });
       void renderAlbum();
       return;
     }
@@ -22286,6 +22381,19 @@ ${lines.join("\n")}`);
     const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
     return typeof s.pythonPath === "string" ? s.pythonPath.trim() : "";
   }
+  function suppFfmpeg() {
+    var _a2;
+    const s = (_a2 = tryGetSettings()) != null ? _a2 : {};
+    return typeof s.ffmpegPath === "string" ? s.ffmpegPath.trim() : "";
+  }
+  async function suppFaceGate() {
+    const err = faceRecSupportError(await probeFaceCapabilities());
+    if (err) {
+      notice(err, "warning");
+      return false;
+    }
+    return true;
+  }
   async function refreshSuppStoreInfo(talker) {
     var _a2;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
@@ -22495,13 +22603,14 @@ ${lines.join("\n")}`);
     const talker = detailId;
     const root = suppDataRoot();
     if (!talker || !root || !file || !suppFs()) return;
+    if (!await suppFaceGate()) return;
     const key = recordingSidecarPath(root, talker, file);
     if (isRecordingRunning(key)) return;
     if (voiceprintRefStatus(root, talker) === "missing") {
       notice("声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑", "info");
     }
     startRecordingTask(
-      buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython() }),
+      buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
       key,
       (o) => {
         if (o.stopped) {
@@ -22515,7 +22624,7 @@ ${lines.join("\n")}`);
         }
         void suppMergeRecording(talker, file);
       },
-      { talker, file }
+      { talker, file, dataRoot: root }
     );
     startRecPolling();
     void renderAlbum();
@@ -22565,6 +22674,7 @@ ${lines.join("\n")}`);
     const root = suppDataRoot();
     if (!talker || !root || refBuilding) return;
     if (isRecordingRunning(`ref:${talker}`)) return;
+    if (!await suppFaceGate()) return;
     refBuilding = true;
     notice("开始构建声纹参考（本地跑，按语音量几分钟）……", "info");
     startRecordingTask(
@@ -22577,7 +22687,7 @@ ${lines.join("\n")}`);
         else notice(`质心构建失败：${o.error || "该联系人可能没有微信语音样本"}（没有质心也能处理录音，按降级阶梯归属）`, "warning");
         void renderAlbum();
       },
-      { talker, file: "voiceprint_refs" }
+      { talker, file: "voiceprint_refs", dataRoot: root }
     );
     void renderAlbum();
   }

@@ -16,6 +16,9 @@ import {
   runDoctorChecks,
   judgeWechat,
   judgeDataRoot,
+  judgeVoiceprints,
+  judgeRecordings,
+  judgeModelCache,
   parseDoctorArgv,
   formatDoctorLine,
   DECRYPT_DEPS,
@@ -251,6 +254,54 @@ describe('bz-face doctor 判定层（issue 463）', () => {
       expect(parseDoctorArgv([]).command).toBeNull();
       expect(parseDoctorArgv(['sync']).error).toContain('未知参数'); // sync 是后续票，本版必须拒
       expect(parseDoctorArgv(['doctor', '--data-root']).error).toContain('--data-root');
+    });
+  });
+
+  describe('录音环境三项（issue 510）：数据根配置了才出场，缺了 warn 不 fail', () => {
+    it('数据根未配置 → 三个新键一个都不出', () => {
+      const { lines } = runDoctorChecks(greenResults());
+      expect(lines.map((l) => l.key)).not.toContain('voiceprints');
+      expect(lines.map((l) => l.key)).not.toContain('recordings');
+      expect(lines.map((l) => l.key)).not.toContain('modelCache');
+    });
+
+    it('声纹参考：有 npz = pass；缺目录 / 空 = warn + refs 修复命令（不拦分离）', () => {
+      expect(judgeVoiceprints({ configured: true, exists: true, refs: ['大琳.npz', '老周.npz'] }).state).toBe('pass');
+      const missingDir = judgeVoiceprints({ configured: true, path: 'E:\\根\\voiceprints', exists: false });
+      expect(missingDir.state).toBe('warn');
+      expect(missingDir.fix).toContain('bz-face refs');
+      const empty = judgeVoiceprints({ configured: true, path: 'E:\\根\\voiceprints', exists: true, refs: [] });
+      expect(empty.state).toBe('warn');
+      expect(empty.fix).toContain('bz-face refs');
+    });
+
+    it('补充素材录音：0 个 = 中性常态；有货 = pass；探测失败 = warn', () => {
+      expect(judgeRecordings({ configured: true, contactsWith: 0, totalFiles: 0 }).state).toBe('neutral');
+      expect(judgeRecordings({ configured: true, contactsWith: 2, totalFiles: 5 }).state).toBe('pass');
+      expect(judgeRecordings({ configured: true, contactsWith: 0, totalFiles: 0, error: '盘没了' }).state).toBe('warn');
+    });
+
+    it('模型权重缓存：missing 哨兵与空数组的两义——空数组是真值陷阱，必须判 === true', () => {
+      // 回归：res.missing 在探测结果里是 []（真值），误判会永远撞「未检查」
+      expect(judgeModelCache({ checked: true, found: ['SenseVoiceSmall', 'CAM++', 'FSMN-VAD'], missing: [] }).state).toBe('pass');
+      expect(judgeModelCache({ checked: true, found: [], missing: ['SenseVoiceSmall'] }).state).toBe('warn');
+      expect(judgeModelCache({ checked: true, found: ['CAM++'], missing: ['SenseVoiceSmall', 'FSMN-VAD'] }).text).toContain('SenseVoiceSmall');
+      expect(judgeModelCache({ missing: true }).state).toBe('neutral');
+    });
+
+    it('配置了数据根 + 三项探测全绿 → 全 pass；allPass 不受 warn 影响', () => {
+      const { lines, failCount } = runDoctorChecks(
+        greenResults({
+          dataRoot: { configured: true, path: 'E:\\根', exists: true, writable: true },
+          voiceprints: { configured: true, exists: true, refs: ['大琳.npz'] },
+          recordings: { configured: true, contactsWith: 1, totalFiles: 3 },
+          modelCache: { checked: true, found: ['SenseVoiceSmall', 'CAM++', 'FSMN-VAD'], missing: [] },
+        }),
+      );
+      expect(lineOf(lines, 'voiceprints')?.state).toBe('pass');
+      expect(lineOf(lines, 'recordings')?.state).toBe('pass');
+      expect(lineOf(lines, 'modelCache')?.state).toBe('pass');
+      expect(failCount).toBe(0);
     });
   });
 

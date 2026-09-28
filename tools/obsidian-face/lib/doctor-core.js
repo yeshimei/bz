@@ -92,13 +92,14 @@ function versionLabel(arr) {
  * 逐项执行探测函数并兜错。任何探测抛异常都折成 { ok:false, error }，
  * 绝不让单项探测炸掉整轮采集——这是「单项缺失不中断其余检查」的第一道闸。
  * @param {Record<string, () => any>} probeFns 键与检查项同名：python/decryptDeps/
- *   transcribeDeps/ffmpeg/ffprobe/wechat/dataRoot；缺键的项得 { missing:true }
+ *   transcribeDeps/ffmpeg/ffprobe/wechat/dataRoot/voiceprints/recordings/modelCache
+ *   （后三项 = issue 510 录音环境，数据根未配置时判定层整体跳过）；缺键的项得 { missing:true }
  * @returns {Promise<Record<string, any>>} 每项一个结果对象（形状由判定层宽容消费）
  */
 async function collectDoctorProbes(probeFns) {
   const out = {};
   const fns = probeFns || {};
-  for (const key of ['python', 'decryptDeps', 'transcribeDeps', 'ffmpeg', 'ffprobe', 'wechat', 'dataRoot']) {
+  for (const key of ['python', 'decryptDeps', 'transcribeDeps', 'ffmpeg', 'ffprobe', 'wechat', 'dataRoot', 'voiceprints', 'recordings', 'modelCache']) {
     const fn = fns[key];
     if (typeof fn !== 'function') {
       out[key] = { missing: true };
@@ -215,6 +216,14 @@ function runDoctorChecks(results, opts) {
   // 7. 数据根（缺省=未配置，中性展示，不报错）
   lines.push(judgeDataRoot(results.dataRoot || {}));
 
+  // 8/9/10. 录音环境（issue 510）：数据根配置了才查——声纹参考 / 补充素材录音 / 模型权重缓存。
+  // 全是 warn/neutral 级：录音线缺什么都不挡 sync/prep，doctor 只负责把现状说清。
+  if (results.dataRoot && results.dataRoot.configured) {
+    lines.push(judgeVoiceprints(results.voiceprints || {}));
+    lines.push(judgeRecordings(results.recordings || {}));
+    lines.push(judgeModelCache(results.modelCache || {}));
+  }
+
   const passCount = lines.filter((l) => l.state === 'pass').length;
   const failCount = lines.filter((l) => l.state === 'fail').length;
   const warnCount = lines.filter((l) => l.state === 'warn').length;
@@ -293,6 +302,72 @@ function judgeDataRoot(res) {
     };
   }
   return { key: 'dataRoot', state: 'pass', text: `✓ 数据根可写：${res.path}` };
+}
+
+/** 声纹参考检查行（issue 510 录音环境；缺目录/空目录都 warn 不 fail——分离会按阶梯降级） */
+function judgeVoiceprints(res) {
+  if (res.missing || (res.error && !res.exists)) {
+    return { key: 'voiceprints', state: 'warn', text: `! 声纹参考检查失败${res.error ? '（' + res.error + '）' : ''}` };
+  }
+  if (!res.exists) {
+    return {
+      key: 'voiceprints',
+      state: 'warn',
+      text: `! 声纹参考目录不存在：${res.path}——分离将按「非我即对方 / 盲聚」降级`,
+      fix: `bz-face refs --data-root "${res.path.replace(/[\\/]voiceprints$/, '')}" --contact <联系人目录名>`,
+    };
+  }
+  const refs = Array.isArray(res.refs) ? res.refs : [];
+  if (!refs.length) {
+    return {
+      key: 'voiceprints',
+      state: 'warn',
+      text: `! 还没有声纹参考（${res.path} 为空）——分离将按「非我即对方 / 盲聚」降级`,
+      fix: `bz-face refs --data-root "${String(res.path || '').replace(/[\\/]voiceprints$/, '')}" --contact <联系人目录名>`,
+    };
+  }
+  const show = refs.slice(0, 3).map((n) => n.replace(/\.npz$/, '')).join('、');
+  return { key: 'voiceprints', state: 'pass', text: `✓ 声纹参考：${refs.length} 位（${show}${refs.length > 3 ? ' …' : ''}）` };
+}
+
+/** 补充素材录音检查行（issue 510；0 个 = neutral 常态，不是问题） */
+function judgeRecordings(res) {
+  if (res.missing) {
+    return { key: 'recordings', state: 'neutral', text: '· 补充素材录音：未检查（数据根未配置）' };
+  }
+  if (res.error) {
+    return { key: 'recordings', state: 'warn', text: `! 补充素材录音扫描失败（${res.error}）` };
+  }
+  if (!res.totalFiles) {
+    return { key: 'recordings', state: 'neutral', text: '· 补充素材录音：暂无（详情页「补充素材 → 录音」导入后这里会列出）' };
+  }
+  return { key: 'recordings', state: 'pass', text: `✓ 补充素材录音：${res.totalFiles} 个（${res.contactsWith} 位联系人）` };
+}
+
+/** 本地模型权重缓存检查行（issue 510；缺 = warn，首次运行自动下载，绝不替用户下载） */
+function judgeModelCache(res) {
+  // 注意 res.missing 有两义：采集层缺键的哨兵是布尔 true，探测结果里的 missing 是缺啥数组
+  // ——空数组在 JS 里是真值，不能用真值判断，否则永远撞「未检查」分支。
+  if (res.missing === true || !res.checked) {
+    return { key: 'modelCache', state: 'neutral', text: '· 模型权重缓存：未检查' };
+  }
+  const found = Array.isArray(res.found) ? res.found : [];
+  const missing = Array.isArray(res.missing) ? res.missing : [];
+  if (!missing.length && found.length) {
+    return { key: 'modelCache', state: 'pass', text: `✓ 本地模型权重已缓存（${found.join('、')}）` };
+  }
+  if (!found.length) {
+    return {
+      key: 'modelCache',
+      state: 'warn',
+      text: '! 模型权重未缓存——首次分离 / 转写会自动下载（约 1-2GB，需联网）',
+    };
+  }
+  return {
+    key: 'modelCache',
+    state: 'warn',
+    text: `! 模型权重部分缓存（缺 ${missing.join('、')}）——首次用到会自动下载`,
+  };
 }
 
 // ---- CLI 参数解析（薄壳用；放判定层以便单测） ----
@@ -382,6 +457,9 @@ module.exports = {
   runDoctorChecks,
   judgeWechat,
   judgeDataRoot,
+  judgeVoiceprints,
+  judgeRecordings,
+  judgeModelCache,
   parseDoctorArgv,
   formatDoctorLine,
 };

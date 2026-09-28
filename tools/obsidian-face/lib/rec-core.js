@@ -24,10 +24,11 @@ const fs = require('fs');
 
 /**
  * 解析 bz-face rec 的 argv：
- *   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>] [--help|--version]
- * 录音文件名 / --data-root / --contact 必填；文件名是 recordings/ 下的名字（含扩展名）。
+ *   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>] [--ffmpeg <路径>] [--help|--version]
+ * 录音文件名 / --data-root / --contact 必填；文件名是 recordings/ 下的名字（含扩展名）；
+ * --ffmpeg 音频转 16k wav 用（非空才传给 Python，缺省跟随脚本默认 ffmpeg）。
  * @returns {{ command:'rec'|null, file?:string, dataRoot?:string, contact?:string,
- *            python?:string, help?:boolean, version?:boolean, error?:string }}
+ *            python?:string, ffmpeg?:string, help?:boolean, version?:boolean, error?:string }}
  */
 function parseRecArgv(argv) {
   const out = { command: 'rec' };
@@ -64,6 +65,12 @@ function parseRecArgv(argv) {
         const v = takeValue();
         if (v === undefined) return { command: null, error: '--python 需要一个命令参数' };
         out.python = v;
+        break;
+      }
+      case '--ffmpeg': {
+        const v = takeValue();
+        if (v === undefined) return { command: null, error: '--ffmpeg 需要一个路径参数' };
+        out.ffmpeg = v;
         break;
       }
       case '--contact': {

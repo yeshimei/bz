@@ -76,6 +76,7 @@ sys.path.insert(0, str(HERE / "vendor" / "WeChatMsg_Lite"))
 sys.path.insert(0, str(HERE))
 
 import bz_sync  # noqa: E402  复用协议输出 / 原子写 / 库读取 / 联系人规划（vendor 路径由其装配）
+import bz_export  # noqa: E402  vendor 日志静音（quiet_vendor_logs 正身在此）
 
 from bz_sync import atomic_write, fail_hard, info, open_ro, out_line, progress, result, step  # noqa: E402
 
@@ -381,6 +382,7 @@ def main() -> int:
         sys.stderr.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    bz_export.quiet_vendor_logs()  # vendor 库日志不落包目录、不污染 stderr 尾（错误走协议行）
 
     ap = argparse.ArgumentParser(
         description="bz-face prep：单联系人媒体导出 + 派生图片档 + 关联表 + 语音转写（四行协议）",

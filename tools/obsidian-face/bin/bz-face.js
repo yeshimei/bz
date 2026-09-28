@@ -36,24 +36,40 @@
 //     供插件在「导入所选」时只对勾选者起本命令——单人两万条量级秒级完成。
 //     协议 / 退出码同 sync；结果行带 mode:"export"（sync 轮为 mode:"stats"）。
 //
-//   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>]
+//   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>] [--ffmpeg <路径>]
 //     录音说话人分离 + 逐轮转写（issue 509 / ADR-0213、0214；方案 C，经真值校准）：
 //     对 <数据根>/<联系人>/recordings/<录音> 跑 VAD 门控 → CAM++ 密滑窗（1s/0.25s）+
 //     两状态 Viterbi（质心 = <数据根>/voiceprints/<联系人>.npz，降级阶梯 dual → me-only
 //     → blind）→ SenseVoice 逐轮转写带情感。phase 账本断点续跑：sidecar <录音>.turns.json
-//     逐阶段落账（vad / 声纹窗逐块 / 转写逐轮），中断续跑只补缺口。
+//     逐阶段落账（vad / 声纹窗逐块 / 转写逐轮），中断续跑只补缺口；续跑时质心降级口径
+//     变了会整体重算声纹段（两种口径绝不混账）。协作式让行走 <数据根>/.bz-face/
+//     rec-control.json（与 prep 的 control.json 各自独立）——pause 在安全点待命（模型不卸载），
+//     stop 留账本退出（退出码 0）。
 //     **进度权威在 sidecar.progress**（插件轮询渲染；stdout 打印仅供人看，不走四行协议）；
-//     退出码 0 = 跑完、1 = 硬失败（录音 / 联系人目录缺失、引擎加载失败）、2 = 用法错误。
+//     退出码 0 = 跑完 / 协作停止、1 = 硬失败（录音 / 联系人目录缺失、引擎加载失败）、2 = 用法错误。
 //
 //   bz-face refs --data-root <路径> --contact <目录名> [--contact <目录名> …] [--python <命令>]
 //     构建联系人声纹参考质心（rec 的比对基准）：chat.json type=34 的 who 标签 ×
-//     voice/*.wav 分池嵌入取均值，产 <数据根>/voiceprints/<联系人>.npz。缺 peer
-//     （联系人语音样本不足）只存 me = me-only，分离按「非我即对方」降级；两位都缺则跳过
-//     （stdout △ 行）。退出码 0 = 跑完（单人跳过不算失败）、1 = 硬失败、2 = 用法错误。
+//     voice/*.wav 分池嵌入取均值，产 <数据根>/voiceprints/<联系人>.npz（原子写）。
+//     增量构建：meta 存全局输入指纹，输入没变直接跳过（「我」池跨人采样，任一变化全体重建）。
+//     缺 peer（联系人语音样本不足）只存 me = me-only，分离按「非我即对方」降级；两位都缺则
+//     跳过（stdout △ 行）。退出码 0 = 跑完（单人跳过不算失败）、1 = 硬失败、2 = 用法错误。
+//
+//   bz-face status <联系人> --data-root <路径>
+//     联系人产物体检（issue 510；纯 Node 读盘，不起 Python）：chat.json / stats.json /
+//     voice/ + voice.json / image/ + desc/ + image_map.json / recordings/ + sidecar /
+//     质心 npz 各一行——✓ 在且有货、△ 在但空、✗ 缺（附下一步命令）。
+//     （人读纯文本，不走协议。）退出码 0 = 报告出得来、1 = 联系人目录不存在、2 = 用法错误。
+//
+//   bz-face capabilities
+//     机器可读能力声明（issue 510）：一行 [bz-result] {"ok":true,"version":…,"commands":[…]}，
+//     供插件 spawn 前探测包版本与子命令支持面（旧版到点按钮才失败 → 提前人话提示）。
+//     退出码 0；用法错误 2。
 //
 //   bz-face doctor [--data-root <路径>] [--python <命令>]
 //     环境自检：Python 版本 / 解密组与转写组依赖 / ffmpeg / ffprobe /
-//     微信进程与版本 / 数据根可写性。逐行打「✓ 通过 / ✗ 缺失 + 可直接粘贴的
+//     微信进程与版本 / 数据根可写性 / 录音环境（声纹参考 · 补充素材录音 · 模型权重缓存，
+//     issue 510——数据根配置了才查，缺了 warn 不 fail）。逐行打「✓ 通过 / ✗ 缺失 + 可直接粘贴的
 //     修复命令」；任何单项缺失都不抛栈、不中断其余检查。（人读纯文本，不走协议。）
 //
 //   bz-face --version / --help
@@ -62,7 +78,7 @@
 // judgeSyncPreflight / judgePrepPreflight + createSyncRelay / createPrepRelay
 // （lib/sync-core、lib/prep-core）→ runSyncProcess 起子进程逐行转发。
 //
-// 退出码：doctor 0 = 跑完（有缺失项也算——产物是「报告」）；sync / prep 见上；2 = 用法错误。
+// 退出码：doctor / status 0 = 跑完（有缺失项也算——产物是「报告」）；sync / prep 见上；2 = 用法错误。
 // 绝不自动安装：doctor 只打印修复命令，sync / prep 只报中文引导，不执行 pip / winget
 // （README 与 ADR-0195）。
 // ================================================================
@@ -75,6 +91,7 @@ const sync = require('../lib/sync-core');
 const prep = require('../lib/prep-core');
 const exportCore = require('../lib/export-core');
 const rec = require('../lib/rec-core');
+const status = require('../lib/status-core');
 const probes = require('../lib/probes');
 
 const pkg = require('../package.json');
@@ -103,10 +120,11 @@ const USAGE = [
   '      stdout 为四行协议（[bz-step]/[bz-p]/[bz-info]/[bz-result]），供插件编排消费；',
   '      微信未运行 / 版本被封堵 / 解密失败 → 立即失败并给中文引导，不静默降级。',
   '  bz-face export --data-root <路径> --contact <目录名> [--contact <目录名> …]',
-  '                  [--python <命令>] [--src <账号目录>]',
+  '                  [--contacts-file <文件>] [--python <命令>] [--src <账号目录>]',
   '      按需全量导出（不需要微信在跑，吃 sync 的缓存密钥与解密库）：',
   '      对指定联系人生成 chat.json（文本 / [表情·名] / 图片定位 / 语音时长）+ 头像源。',
-  '      --contact 可重复传多个——插件在「导入所选」时只对勾选者起本命令。',
+  '      --contact 可重复传多个——插件在「导入所选」时只对勾选者起本命令；名单长用',
+  '      --contacts-file（一行一个，# 注释，兼容 、/,/; 分隔）绕命令行长度上限。',
   '      幂等可重复跑（chat.json / 头像字节比对，没变不写）。',
   '  bz-face prep <联系人> --data-root <路径> [--python <命令>] [--src <账号目录>]',
   '                [--ffmpeg <路径>] [--derive-edge N] [--derive-quality N]',
@@ -119,31 +137,42 @@ const USAGE = [
   '      <数据根>/.bz-face/control.json：{"action":"pause"} 在安全点待命（进程不退出），',
   '      {"action":"stop"} 留状态退出（结果行带 stopped:true）。转写引擎 / ffmpeg /',
   '      派生档参数全部走 CLI 显式传参（插件侧接线时下发设置值）。',
-  '  bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>]',
+  '  bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>] [--ffmpeg <路径>]',
   '      录音说话人分离 + 逐轮转写（补充素材的录音；不需要微信在跑）：',
   '      VAD 门控 → CAM++ 密滑窗 + 两状态 Viterbi → SenseVoice 逐轮转写带情感。',
-  '      质心 = <数据根>/voiceprints/<联系人>.npz（bz-face refs 产；缺质心按降级阶梯照跑）。',
-  '      sidecar <录音>.turns.json 逐阶段落账、断点续跑只补缺口——进度权威在 sidecar，',
-  '      插件轮询渲染（stdout 仅供人看）。done 后由插件把轮次并进聊天仓。',
+  '      质心 = <数据根>/voiceprints/<联系人>.npz（bz-face refs 产；缺质心按降级阶梯照跑；',
+  '      续跑时降级口径变了会重算声纹段）。sidecar <录音>.turns.json 逐阶段落账、断点续跑',
+  '      只补缺口——进度权威在 sidecar，插件轮询渲染（stdout 仅供人看）。done 后由插件把',
+  '      轮次并进聊天仓。协作式暂停 / 停止走 <数据根>/.bz-face/rec-control.json（与 prep 的',
+  '      control.json 各自独立）：{"action":"pause"} 在安全点待命（模型不卸载），',
+  '      {"action":"stop"} 留账本退出（退出码 0）。',
   '  bz-face refs --data-root <路径> --contact <目录名> [--contact <目录名> …] [--python <命令>]',
   '      构建联系人声纹参考质心（rec 的比对基准）：chat.json who 标签 × voice/*.wav 分池均值，',
-  '      产 <数据根>/voiceprints/<联系人>.npz。缺 peer 只存 me（分离时非我即对方），',
-  '      两位都缺则跳过该联系人（不算硬失败）。',
+  '      产 <数据根>/voiceprints/<联系人>.npz（原子写；增量——输入指纹没变直接跳过）。',
+  '      缺 peer 只存 me（分离时非我即对方），两位都缺则跳过该联系人（不算硬失败）。',
+  '  bz-face status <联系人> --data-root <路径>',
+  '      联系人产物体检（纯 Node 读盘，不起 Python）：chat / stats / voice / image / desc /',
+  '      关联表 / 录音 sidecar / 质心各一行，缺的给下一步命令（人读纯文本）。',
+  '  bz-face capabilities',
+  '      机器可读能力声明：一行 [bz-result] 报包版本与子命令支持面（插件探测用）。',
   '  bz-face doctor [--data-root <路径>] [--python <命令>]',
   '      环境自检：Python / 解密组依赖 / 转写组依赖 / ffmpeg / ffprobe / 微信进程与版本 /',
-  '      数据根可写性。逐行打「通过/缺失 + 可直接粘贴的修复命令」，单项缺失不中断。',
+  '      数据根可写性 / 录音环境（声纹参考 · 录音体量 · 模型权重缓存；数据根配置了才查）。',
+  '      逐行打「通过/缺失 + 可直接粘贴的修复命令」，单项缺失不中断。',
   '  bz-face --version',
   '',
   '选项：',
-  '  --data-root, -d <路径>   数据根路径（sync / export / prep 必填；doctor 不给则显示「未配置」）',
+  '  --data-root, -d <路径>   数据根路径（sync / export / prep / status 必填；doctor 不给则显示「未配置」）',
   '  --python, -p <命令>      Python 命令覆盖（缺省 python；含空格命令请用 python.exe 完整路径）',
   '  --src <账号目录>         sync / export / prep：微信账号目录覆盖（sync 默认当前微信数据目录；',
   '                           export / prep 默认取 .bz-face/key.json 的 source_dir）',
-  '  --contact <目录名>       export：联系人目录名（可重复传多个；来自 sync 产物的数据根目录）',
+  '  --contact <目录名>       export / refs：联系人目录名（可重复传多个；来自 sync 产物的数据根目录）',
+  '  --contacts-file <文件>   export：联系人名单文件（一行一个，# 注释；绕命令行长度上限）',
   '  --min-messages N         sync：少于该条数的联系人不落盘（默认 1 = 全量非空）',
   '  --limit N                sync / prep：调试用限制处理量（sync 限联系人数；prep 限各段条数；',
   '                           默认 0 = 不限）',
-  '  --ffmpeg <路径>          prep：ffmpeg 命令 / 路径（wxgf 解码用；默认 ffmpeg）',
+  '  --ffmpeg <路径>          prep / rec：ffmpeg 命令 / 路径（prep wxgf 解码、rec 音频转 16k wav；',
+  '                           默认 ffmpeg）',
   '  --derive-edge N          prep：派生图片档长边像素（默认 1280，≥64）',
   '  --derive-quality N       prep：派生图片档 JPEG 质量（默认 80，1～100）',
   '  --asr-engine <名>        prep：语音转写引擎（sensevoice | faster-whisper；默认 sensevoice）',
@@ -162,6 +191,10 @@ async function cmdDoctor(opts) {
     ffprobe: () => probes.probePathTool('ffprobe'),
     wechat: () => probes.probeWeixin(),
     dataRoot: () => probes.probeDataRoot(opts.dataRoot),
+    // 录音环境三项（issue 510）：判定层只在数据根配置了才出场；探测本身幂等便宜
+    voiceprints: () => probes.probeVoiceprints(opts.dataRoot),
+    recordings: () => probes.probeRecordings(opts.dataRoot),
+    modelCache: () => probes.probeModelCache(),
   });
 
   // 2. 判定（纯函数；单项缺失不影响其余项）
@@ -387,6 +420,7 @@ async function runRecLike(opts) {
         '--data-root', opts.dataRoot,
         '--contact', opts.contact,
         '--file', opts.file,
+        ...(opts.ffmpeg ? ['--ffmpeg', opts.ffmpeg] : []),
       ]
     : [
         '--data-root', opts.dataRoot,
@@ -406,6 +440,28 @@ async function cmdRec(opts) {
 
 async function cmdRefs(opts) {
   return runRecLike({ ...opts, kind: 'refs' });
+}
+
+/** status：采集 + 报告（纯 Node 读盘，不起 Python）。退出码 0 = 报告出得来，1 = 联系人目录不在。 */
+async function cmdStatus(opts) {
+  const facts = status.collectStatusFacts(opts.dataRoot, opts.contact);
+  const { lines, missing } = status.formatStatusReport(opts.dataRoot, opts.contact, facts);
+  for (const l of lines) console.log(l);
+  return missing < 0 ? 1 : 0;
+}
+
+/** capabilities：一行 [bz-result] 报包版本与子命令支持面（插件探测用；用法错误 2）。 */
+async function cmdCapabilities() {
+  console.log(
+    sync.formatBzLine('result', {
+      ok: true,
+      package: 'bz-face',
+      name: pkg.name,
+      version: pkg.version,
+      commands: ['sync', 'export', 'prep', 'rec', 'refs', 'status', 'doctor', 'capabilities'],
+    }),
+  );
+  return 0;
 }
 
 async function main() {
@@ -452,9 +508,26 @@ async function main() {
       console.log(USAGE);
       return 0;
     }
+    // --contacts-file 展开（issue 510）：文件读不动 = 用法错误；名单并到 --contact 之后，去重保序
+    let contacts = parsed.contacts;
+    if (parsed.contactsFile) {
+      let text;
+      try {
+        text = fs.readFileSync(parsed.contactsFile, 'utf8');
+      } catch (e) {
+        console.error(`bz-face：名单文件读不出：${parsed.contactsFile}（${(e && e.message) || e}）\n\n${USAGE}`);
+        return 2;
+      }
+      const fromFile = exportCore.parseContactsFileText(text);
+      if (!fromFile.length) {
+        console.error(`bz-face：名单文件是空的（一行一个联系人，# 注释行）：${parsed.contactsFile}\n\n${USAGE}`);
+        return 2;
+      }
+      contacts = [...new Set([...contacts, ...fromFile])];
+    }
     return cmdExport({
       dataRoot: parsed.dataRoot,
-      contacts: parsed.contacts,
+      contacts,
       python: parsed.python,
       src: parsed.src,
     });
@@ -495,7 +568,7 @@ async function main() {
       console.log(USAGE);
       return 0;
     }
-    return cmdRec({ file: parsed.file, dataRoot: parsed.dataRoot, contact: parsed.contact, python: parsed.python });
+    return cmdRec({ file: parsed.file, dataRoot: parsed.dataRoot, contact: parsed.contact, python: parsed.python, ffmpeg: parsed.ffmpeg });
   }
   if (first === 'refs') {
     const parsed = rec.parseRefsArgv(argv);
@@ -512,6 +585,40 @@ async function main() {
       return 0;
     }
     return cmdRefs({ dataRoot: parsed.dataRoot, contacts: parsed.contacts, python: parsed.python });
+  }
+  if (first === 'status') {
+    const parsed = status.parseStatusArgv(argv);
+    if (parsed.error) {
+      console.error(`bz-face：${parsed.error}\n\n${USAGE}`);
+      return 2;
+    }
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdStatus({ contact: parsed.contact, dataRoot: parsed.dataRoot });
+  }
+  if (first === 'capabilities') {
+    const rest = argv.filter((a) => a !== 'capabilities' && !String(a).startsWith('-'));
+    const flags = argv.filter((a) => String(a).startsWith('-') && !['--help', '-h', '--version', '-v'].includes(a));
+    if (rest.length || flags.length) {
+      console.error(`bz-face：capabilities 不收参数（只支持 --help / --version）\n\n${USAGE}`);
+      return 2;
+    }
+    const parsed = core.parseDoctorArgv(argv);
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdCapabilities();
   }
   const parsed = core.parseDoctorArgv(argv);
   if (parsed.error) {

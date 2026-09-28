@@ -67,7 +67,9 @@ import {
 import {
   buildRecordingSpec,
   buildVoiceprintSpec,
+  faceRecSupportError,
   isRecordingRunning,
+  probeFaceCapabilities,
   readRecordingSidecar,
   recordingPhasePct,
   recordingSidecarPath,
@@ -1813,7 +1815,15 @@ function onOverlayClick(e: MouseEvent): void {
   const recMerge = t.closest<HTMLElement>('[data-people-supp-rec-merge]');
   if (recMerge && detailId) { void suppMergeRecording(detailId, recMerge.getAttribute('data-people-supp-rec-merge') ?? ''); return; }
   const recStop = t.closest<HTMLElement>('[data-people-supp-rec-stop]');
-  if (recStop) { stopRecordingTask(recStop.getAttribute('data-people-supp-rec-stop') ?? ''); void renderAlbum(); return; }
+  if (recStop) {
+    // 510 修存量缺陷：注册表键是 sidecar 路径，此前把文件名当键传 → 停止按钮其实是 no-op；
+    // 现按 sidecar 路径寻键，并带 dataRoot 走协作式停止（写 rec-control.json，90s 未退兜底杀）
+    const file = recStop.getAttribute('data-people-supp-rec-stop') ?? '';
+    const root = suppDataRoot();
+    if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root });
+    void renderAlbum();
+    return;
+  }
   if (t.closest('[data-people-supp-rec-ref]')) { void suppBuildVoiceprintRef(); return; }
   // —— 上锁封面 ——
   const lock = t.closest<HTMLElement>('[data-people-lock]');
@@ -2853,6 +2863,22 @@ function suppPython(): string {
   return typeof s.pythonPath === 'string' ? s.pythonPath.trim() : '';
 }
 
+/** ffmpegPath 设置键（录音转 16k wav 用，issue 510 对齐 prep；空 = 跟随 PATH 上的 ffmpeg） */
+function suppFfmpeg(): string {
+  const s = (tryGetSettings() ?? {}) as Record<string, unknown>;
+  return typeof s.ffmpegPath === 'string' ? s.ffmpegPath.trim() : '';
+}
+
+/** 录音 / 质心起跑前的版本门：本机 bz-face 探测过且过旧 → 人话引导，不起跑 */
+async function suppFaceGate(): Promise<boolean> {
+  const err = faceRecSupportError(await probeFaceCapabilities());
+  if (err) {
+    notice(err, 'warning');
+    return false;
+  }
+  return true;
+}
+
 /** 开页 / 并仓后刷新聊天仓侧事实（图片统计 + 已并录音集合），刷完重画弹窗 */
 async function refreshSuppStoreInfo(talker: string): Promise<void> {
   if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
@@ -3075,13 +3101,14 @@ async function suppRunRecording(file: string): Promise<void> {
   const talker = detailId;
   const root = suppDataRoot();
   if (!talker || !root || !file || !suppFs()) return;
+  if (!(await suppFaceGate())) return;
   const key = recordingSidecarPath(root, talker, file);
   if (isRecordingRunning(key)) return;
   if (voiceprintRefStatus(root, talker) === 'missing') {
     notice('声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑', 'info');
   }
   startRecordingTask(
-    buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython() }),
+    buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
     key,
     (o) => {
       if (o.stopped) {
@@ -3095,7 +3122,7 @@ async function suppRunRecording(file: string): Promise<void> {
       }
       void suppMergeRecording(talker, file);
     },
-    { talker, file },
+    { talker, file, dataRoot: root },
   );
   startRecPolling();
   void renderAlbum();
@@ -3148,6 +3175,7 @@ async function suppBuildVoiceprintRef(): Promise<void> {
   const root = suppDataRoot();
   if (!talker || !root || refBuilding) return;
   if (isRecordingRunning(`ref:${talker}`)) return;
+  if (!(await suppFaceGate())) return;
   refBuilding = true;
   notice('开始构建声纹参考（本地跑，按语音量几分钟）……', 'info');
   startRecordingTask(
@@ -3160,7 +3188,7 @@ async function suppBuildVoiceprintRef(): Promise<void> {
       else notice(`质心构建失败：${o.error || '该联系人可能没有微信语音样本'}（没有质心也能处理录音，按降级阶梯归属）`, 'warning');
       void renderAlbum();
     },
-    { talker, file: 'voiceprint_refs' },
+    { talker, file: 'voiceprint_refs', dataRoot: root },
   );
   void renderAlbum();
 }

@@ -560,6 +560,7 @@ def main() -> int:
         sys.stderr.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    bz_export.quiet_vendor_logs()  # vendor 库日志不落包目录、不污染 stderr 尾（错误走协议行）
 
     ap = argparse.ArgumentParser(description="bz-face sync：微信 → 统计与按需导出（四行协议）", add_help=True)
     ap.add_argument("--data-root", help="数据根（必填：密钥 / 解密库 / 联系人目录都落这里）")

@@ -25,7 +25,10 @@ KEY_FILE，老用法零变化），bz_sync.py 据此把密钥 / 解密库落到�
 """
 import argparse
 import json
+import logging
+import os
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -37,6 +40,45 @@ EXPORT_DIR = HERE / "export"    # CSV 输出目录
 KEY_FILE = HERE / "key.json"
 CONTACTS_FILE = HERE / "contacts.json"
 
+_VENDOR_LOG_QUIETED = False
+
+
+def quiet_vendor_logs() -> None:
+    """vendor 库日志静音（幂等）。wxManager.log 在模块顶层建 logs/ 目录并挂 FileHandler
+    （INFO 日志落包目录——发布包 / npm link 目录会被运行时日志写脏）与 DEBUG StreamHandler
+    （污染插件消费的 stderr 尾）。bz-face 的错误一律走协议行与自己的 stderr——这里把
+    handler 收掉、刚建的日志文件与残留 logs/ 拆掉、传播关掉。导入失败（3.14 protobuf 链）
+    静默放过：与解密自身同命运，不在此处报错。"""
+    global _VENDOR_LOG_QUIETED
+    if _VENDOR_LOG_QUIETED:
+        return
+    _VENDOR_LOG_QUIETED = True
+    try:
+        import wxManager.log as wx_log_mod
+    except Exception:
+        return
+    logger = getattr(wx_log_mod, "logger", None)
+    stale_files = []
+    if logger is not None:
+        for h in list(getattr(logger, "handlers", [])):
+            base = getattr(h, "baseFilename", "")
+            logger.removeHandler(h)
+            try:
+                h.close()
+            except Exception:
+                pass
+            if base:
+                stale_files.append(base)
+        logger.addHandler(logging.NullHandler())
+        logger.propagate = False
+    for f in stale_files:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+    logs_root = Path(wx_log_mod.__file__).resolve().parents[2] / "logs"
+    shutil.rmtree(logs_root, ignore_errors=True)
+
 
 def extract_key():
     """从微信 4.x 进程内存提取密钥（微信需已登录运行）
@@ -45,6 +87,7 @@ def extract_key():
     读 biz/biz.db，新登录账号还没这个库会直接 FileNotFoundError；前者用
     favorite_fts.db / head_image.db，两者随账号创建即存在。
     """
+    quiet_vendor_logs()
     import multiprocessing
 
     import pymem
@@ -93,6 +136,7 @@ def default_out_root(src: str) -> Path:
 
 def decrypt_db(src: str | None = None, out_root: Path | None = None, key_path=None) -> str:
     """用缓存密钥解密微信数据库，返回解密后 db_storage 目录"""
+    quiet_vendor_logs()
     from wxManager.decrypt_runner import decrypt_wechat_database
 
     ki = keyinfo(key_path)
@@ -118,6 +162,7 @@ def decrypt_db(src: str | None = None, out_root: Path | None = None, key_path=No
 
 
 def _open_db(db_dir):
+    quiet_vendor_logs()
     from wxManager import DatabaseConnection
     db = DatabaseConnection(db_dir, 4).get_interface()
     if db is None:

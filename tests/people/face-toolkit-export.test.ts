@@ -9,7 +9,7 @@
  * 的分道点：不探微信）、转发中继兜底文案带命令名。
  */
 import { describe, it, expect } from 'vitest';
-import { parseExportArgv, judgeExportPreflight } from '../../tools/obsidian-face/lib/export-core.js';
+import { parseExportArgv, parseContactsFileText, judgeExportPreflight } from '../../tools/obsidian-face/lib/export-core.js';
 import { createSyncRelay, SYNC_PHASES } from '../../tools/obsidian-face/lib/sync-core.js';
 import { parseBzLine } from '../../src/core/external-tool';
 
@@ -41,6 +41,23 @@ describe('bz-face export 判定层（issue 485）', () => {
       expect(parseExportArgv(['export', '--data-root']).error).toContain('--data-root');
       expect(parseExportArgv(['export', '--data-root', 'x', '--contact']).error).toContain('--contact');
       expect(parseExportArgv(['export', '--data-root', 'x', '--contact', '甲', '--wat']).error).toContain('未知参数');
+      expect(parseExportArgv(['export', '--data-root', 'x', '--contacts-file']).error).toContain('--contacts-file');
+    });
+
+    it('--contacts-file：记路径不读盘（文件展开在 bin）；有它即可免 --contact（issue 510）', () => {
+      const parsed = parseExportArgv(['export', '--data-root', 'E:\\根', '--contacts-file', 'E:\\名单.txt']);
+      expect(parsed).toMatchObject({ dataRoot: 'E:\\根', contactsFile: 'E:\\名单.txt' });
+      expect(parsed.error).toBeUndefined();
+      expect(parseExportArgv(['export', '--data-root', 'E:\\根', '--contacts-file=E:\\名单.txt']).contactsFile).toBe('E:\\名单.txt');
+    });
+
+    it('名单文件文本解析：一行一个 / 逗号顿号分号同行多人 / # 注释与空行 / BOM（issue 510）', () => {
+      expect(
+        parseContactsFileText('大琳\n老周\r\n陈默、阿四,乙;丙\n\n# 注释行\n  丁  \n'),
+      ).toEqual(['大琳', '老周', '陈默', '阿四', '乙', '丙', '丁']);
+      expect(parseContactsFileText('\uFEFF大琳\r\n')).toEqual(['大琳']);
+      expect(parseContactsFileText('')).toEqual([]);
+      expect(parseContactsFileText('# 只有注释\n\n')).toEqual([]);
     });
   });
 
