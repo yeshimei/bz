@@ -40,10 +40,17 @@ export function bindSwipeTurn(el: HTMLElement, go: (dir: 1 | -1) => void): () =>
   };
 }
 
-/** 往上找第一个「真的还能滚」的祖先（溢出可滚 + 内容超出）：命中了就把滚动让给原生 */
+/**
+ * 往上找第一个「真的还能滚」的祖先（溢出可滚 + 内容超出）：命中了就把滚动让给原生。
+ *
+ * 起跳点 = 事件目标本身，但**不认死它必须是 HTMLElement**：滚轮常压在 `<svg>` 上
+ * （图标、印环、图标化的字符），SVGElement 不是 HTMLElement——早先那一版 `instanceof HTMLElement ? node : null`
+ * 会当场落空，本该让给原生的块（详情正文 / 数据源列表）被误判成「没有可滚块」而翻摊。
+ * 改法：碰到非 HTMLElement 只跳过它、**继续往上走**（svg 的 parentElement 就是那个块）。
+ */
 function scrollHostOf(node: EventTarget | null): HTMLElement | null {
-  const start = node instanceof HTMLElement ? node : null;
-  for (let n = start; n && n !== document.body; n = n.parentElement) {
+  for (let n: Element | null = node instanceof Element ? node : null; n && n !== document.body; n = n.parentElement) {
+    if (!(n instanceof HTMLElement)) continue;
     const oy = getComputedStyle(n).overflowY;
     if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
   }

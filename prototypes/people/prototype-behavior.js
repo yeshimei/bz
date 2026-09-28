@@ -1,4 +1,4 @@
-/* 源指纹 40432353becb4888 · 仓内输入 87 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4de1b4217cc01b48 · 仓内输入 87 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -18285,7 +18285,8 @@ ${lines.join("\n")}`);
     const threads = (_b2 = (_a2 = p.digest) == null ? void 0 : _a2.threads) != null ? _b2 : [];
     if (threads.length) {
       out.push(secTitle("未竟之事"), clipList(
-        "bz-people-md",
+        // 与另两处同形列表（`bz-people-ints` / `bz-people-moms`）保持一致，给一枚专有类名好让调用方锚定
+        "bz-people-md bz-people-thr",
         threads.map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))])),
         8,
         `…另有 ${threads.length - 8} 条`
@@ -18933,8 +18934,8 @@ ${lines.join("\n")}`);
 
   // src/core/gesture.ts
   function scrollHostOf(node) {
-    const start = node instanceof HTMLElement ? node : null;
-    for (let n = start; n && n !== document.body; n = n.parentElement) {
+    for (let n = node instanceof Element ? node : null; n && n !== document.body; n = n.parentElement) {
+      if (!(n instanceof HTMLElement)) continue;
       const oy = getComputedStyle(n).overflowY;
       if ((oy === "auto" || oy === "scroll") && n.scrollHeight > n.clientHeight + 1) return n;
     }

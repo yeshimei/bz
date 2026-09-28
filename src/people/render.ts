@@ -1222,7 +1222,8 @@ export function foldBondBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLEl
   const threads = p.digest?.threads ?? [];
   if (threads.length) {
     out.push(secTitle('未竟之事'), clipList(
-      'bz-people-md',
+      // 与另两处同形列表（`bz-people-ints` / `bz-people-moms`）保持一致，给一枚专有类名好让调用方锚定
+      'bz-people-md bz-people-thr',
       threads.map((t) => el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.text))])),
       8,
       `…另有 ${threads.length - 8} 条`,

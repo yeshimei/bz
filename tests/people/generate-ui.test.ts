@@ -767,7 +767,8 @@ describe('详情三折与册页（455 / 505）', () => {
     click('[data-people-prof-save]');
     await vi.waitFor(async () => expect((await disk()).people[0].profile?.note).toBe('小学同学'));
     expect(document.querySelector('[data-people-sub="prof"]')).toBeTruthy(); // 册页仍开着
-    expect(document.querySelector('[data-people-sub="prof"] [data-people-prof-edit]')).toBeTruthy(); // 回查看态
+    // 落盘可读 ≠ 画完：保存后那一下重画是异步的，得等回查看态再断言（满载下会抢跑成假红）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="prof"] [data-people-prof-edit]')).toBeTruthy());
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     await vi.waitFor(() => expect(document.querySelector('[data-people-sub="prof"]')).toBeNull());
