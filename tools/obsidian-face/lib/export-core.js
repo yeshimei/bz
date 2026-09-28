@@ -20,14 +20,34 @@
 // ---- CLI 参数解析（export 子命令）----
 
 /**
+ * 名单文件文本 → 联系人目录名数组（issue 510：绕 Windows 8191 字符命令行上限）。
+ * 一行一个；兼容 、/,/; 分隔的一行多人；# 注释行与空行忽略；BOM 与首尾空白剥掉。
+ * 纯函数不读盘——文件不存在 / 读不动由调用方（bin）兜成用法错误。
+ * @param {string} text 名单文件原文
+ * @returns {string[]}
+ */
+function parseContactsFileText(text) {
+  return String(text ?? '')
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const bare = line.trim();
+      if (!bare || bare.startsWith('#')) return [];
+      return bare.split(/[、,;，；]/).map((s) => s.trim()).filter(Boolean);
+    });
+}
+
+/**
  * 解析 bz-face export 的 argv。支持：
  *   bz-face export --data-root <路径> --contact <目录名> [--contact <目录名> …]
- *                   [--python <命令>] [--src <账号目录>] [--help] [--version]
+ *                   [--contacts-file <文件>] [--python <命令>] [--src <账号目录>] [--help] [--version]
  * --data-root 与至少一个 --contact 必填（help/version 除外）；--contact 可重复（去重保序
- * 在 Python 侧做，这里保留原样供预检逐个探测目录）。未知参数记入 error，绝不猜。
+ * 在 Python 侧做，这里保留原样供预检逐个探测目录）；--contacts-file 一行一个联系人
+ * （issue 510），展开后并入 contacts 前面——文件读取由 bin 做（本函数保持纯解析）。
+ * 未知参数记入 error，绝不猜。
  * @param {string[]} argv process.argv.slice(2)（容忍开头重复的 export）
- * @returns {{ command:'export'|null, dataRoot?:string, contacts:string[], python?:string,
- *            src?:string, help?:boolean, version?:boolean, error?:string }}
+ * @returns {{ command:'export'|null, dataRoot?:string, contacts:string[], contactsFile?:string,
+ *            python?:string, src?:string, help?:boolean, version?:boolean, error?:string }}
  */
 function parseExportArgv(argv) {
   const out = { command: 'export', contacts: [] };
@@ -65,6 +85,12 @@ function parseExportArgv(argv) {
         out.python = v;
         break;
       }
+      case '--contacts-file': {
+        const v = takeValue();
+        if (v === undefined) return { command: null, error: '--contacts-file 需要一个文件路径参数' };
+        out.contactsFile = v;
+        break;
+      }
       case '--src': {
         const v = takeValue();
         if (v === undefined) return { command: null, error: '--src 需要一个账号目录参数' };
@@ -95,10 +121,10 @@ function parseExportArgv(argv) {
       error: 'export 需要数据根：--data-root <路径>（密钥、解密库与各联系人目录都落在这里）',
     };
   }
-  if (!out.help && !out.version && !out.contacts.length) {
+  if (!out.help && !out.version && !out.contacts.length && !out.contactsFile) {
     return {
       command: null,
-      error: 'export 需要至少一个 --contact <联系人目录名>（可重复传多个）——全量导出请用 bz-face sync 的产物目录名',
+      error: 'export 需要至少一个 --contact <联系人目录名>（可重复传多个；名单长可用 --contacts-file <文件>）——全量导出请用 bz-face sync 的产物目录名',
     };
   }
   return out;
@@ -155,5 +181,6 @@ function judgeExportPreflight(probes, opts) {
 
 module.exports = {
   parseExportArgv,
+  parseContactsFileText,
   judgeExportPreflight,
 };

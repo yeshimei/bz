@@ -1,16 +1,19 @@
 /**
- * 补充素材·录音管线驱动（issue 509 / ADR-0212、0213；0214 起工具收编 bz-face 包）。
+ * 补充素材·录音管线驱动（issue 509 / ADR-0212、0213；0214 起工具收编 bz-face 包，510 起对齐 prep）。
  *
  * 分工（ADR-0214）：分离 / 转写在 `bz-face rec`、质心构建在 `bz-face refs`
- * （@jwbz/obsidian-face v0.4+，python/bz_rec.py / bz_refs.py——方案 C，funasr 全本地零 API
- * 费），本层只负责——spawn 组装（bz-face + pythonPath 设置键下发）、sidecar
- * （`recordings/<名>.turns.json`）解析与状态归并、文件名时间解析（→ mtime 回落）、
+ * （@jwbz/obsidian-face v0.5+，python/bz_rec.py / bz_refs.py——方案 C，funasr 全本地零 API
+ * 费），本层只负责——spawn 组装（bz-face + pythonPath / ffmpegPath 设置键下发）、
+ * capabilities 版本门（起跑前探一次包版本，旧版给人话引导而非跑到一半报「未知命令」）、
+ * sidecar（`recordings/<名>.turns.json`）解析与状态归并、文件名时间解析（→ mtime 回落）、
  * 质心参考存在性判断（`<数据根>/voiceprints/<联系人>.npz`，降级阶梯提示）。进度不走
  * stdout 协议：脚本逐阶段把账本写进 sidecar，UI 轮询 sidecar 渲染（挂画谱任务进度块
  * 同位置，不入引擎队列）；聊天仓合并由插件执行（applyRecordingTurnsToMsgs，
  * datasource 层——插件是聊天仓唯一写入者）。
  *
- * 会话口径：一录音一进程，句柄存模块级注册表（stop 可杀）；Obsidian 重启会杀进程，
+ * 会话口径：一录音一进程，句柄存模块级注册表；「停止」是协作式的——写
+ * `<数据根>/.bz-face/rec-control.json`（独立于 prep 的 control.json，画谱与录音并行不串台），
+ * 脚本在安全点留账本退出（模型不卸载也不丢进度），90 秒未退才兜底杀；Obsidian 重启会杀进程，
  * sidecar phase 停在中途 = 「中断可续跑」，续跑由脚本按账本只补缺口。
  */
 import { runExternalTool, type ExternalToolHandle, type ExternalToolSpec } from '../core/external-tool';
@@ -44,11 +47,14 @@ export interface BuildRecordingSpecOpts {
   file: string;
   /** Python 命令（pythonPath 设置键；非空才传，缺省跟随 bz-face 默认 python） */
   python?: string;
+  /** ffmpeg 命令 / 路径（ffmpegPath 设置键；非空才传，缺省跟随脚本默认 ffmpeg） */
+  ffmpeg?: string;
 }
 
 /** `bz-face rec <录音> --data-root … --contact …`（口径同 prep：路径参数包引号，--python 是命令词不包） */
 export function buildRecordingSpec(opts: BuildRecordingSpecOpts): ExternalToolSpec {
   const python = opts.python?.trim() || undefined;
+  const ffmpeg = opts.ffmpeg?.trim() || undefined;
   return {
     cmd: 'bz-face',
     args: [
@@ -58,6 +64,7 @@ export function buildRecordingSpec(opts: BuildRecordingSpecOpts): ExternalToolSp
       quotePathArg(opts.dataRoot),
       '--contact',
       quotePathArg(opts.talker),
+      ...(ffmpeg ? ['--ffmpeg', quotePathArg(ffmpeg)] : []),
       ...(python ? ['--python', python] : []),
     ],
     shell: true,
@@ -288,7 +295,128 @@ export function hasRecordingTurns(msgs: Array<{ key: string }>, file: string): b
   return msgs.some((m) => m.key.startsWith(prefix));
 }
 
-// ---------------- 进程注册表（一录音一进程；杀 / 重启） ----------------
+// ---------------- 协作式控制文件（rec 专用通道；issue 510 对齐 prep） ----------------
+
+/** 协作式控制文件：`<数据根>/.bz-face/rec-control.json`（独立于 prep 的 control.json——画谱与录音并行不串台） */
+export function recControlFilePath(dataRoot: string): string {
+  const base = String(dataRoot ?? '').replace(/[\\/]+$/, '');
+  return `${base}/.bz-face/rec-control.json`;
+}
+
+/** 测试注入缝（fs 读写；null 还原 = window.require('fs')） */
+let recFsOverride: any = null;
+
+/** 测试注入缝：替换 / 还原控制文件用的 fs */
+export function setRecordingFsForTests(fs2: any): void {
+  recFsOverride = fs2;
+}
+
+function controlFs(): any {
+  if (recFsOverride) return recFsOverride;
+  const w = typeof window === 'undefined' ? null : (window as any);
+  if (!w || !w.require) return null;
+  try {
+    return w.require('fs');
+  } catch {
+    return null;
+  }
+}
+
+/** 写协作控制指令（stop；保留 resume/pause 形参以对齐 prep 契约）。写失败只告警返回 false——控制通道失联不中断任务，兜底杀在 stopRecordingTask 里等着。 */
+export function writeRecControl(dataRoot: string, action: 'pause' | 'resume' | 'stop'): boolean {
+  const fs2 = controlFs();
+  const p = recControlFilePath(dataRoot);
+  if (!fs2 || !dataRoot) return false;
+  try {
+    fs2.mkdirSync(p.slice(0, p.lastIndexOf('/')), { recursive: true });
+    fs2.writeFileSync(p, `${JSON.stringify({ action })}\n`, 'utf8');
+    return true;
+  } catch (e) {
+    console.warn('[people] 写录音控制文件失败:', e);
+    return false;
+  }
+}
+
+/** 清掉控制文件（起跑前防陈旧 stop、终结后防残留 pause）；缺文件 / IO 失败都算清完 */
+export function clearRecControl(dataRoot: string): void {
+  const fs2 = controlFs();
+  if (!fs2 || !dataRoot) return;
+  try {
+    fs2.rmSync(recControlFilePath(dataRoot), { force: true });
+  } catch {
+    /* 尽力而为 */
+  }
+}
+
+// ---------------- capabilities 版本门（issue 510：旧版 bz-face 给人话引导，不跑到一半才炸） ----------------
+
+/** 本机 bz-face 能力声明（capabilities 子命令的 [bz-result] 体） */
+export interface FaceCapabilities {
+  version: string;
+  commands: string[];
+}
+
+/** 会话级缓存：undefined = 未探测；null = 探测过但失败（bz-face 缺失 / 太旧无此命令） */
+let capsCache: FaceCapabilities | null | undefined;
+
+/** 测试注入缝：清 capabilities 缓存 */
+export function resetFaceCapabilitiesForTests(): void {
+  capsCache = undefined;
+}
+
+/**
+ * 探一次本机 bz-face 能力（会话级缓存；rec / refs 起跑前调用）。探测失败（命令缺失 /
+ * 退出非 0 / 没有 [bz-result] 行）返回 null = 能力未知——调用方放行，让真实 spawn 自己
+ * 报错，不双重报错。
+ */
+export async function probeFaceCapabilities(): Promise<FaceCapabilities | null> {
+  if (capsCache !== undefined) return capsCache;
+  let resultBody: Record<string, unknown> | null = null;
+  const handle = runner({ cmd: 'bz-face', args: ['capabilities'], shell: true }, {
+    onStep: () => {},
+    onProgress: () => {},
+    onInfo: () => {},
+    onResult: (data) => {
+      resultBody = data;
+    },
+  });
+  const outcome = await handle.done;
+  if (!outcome.ok || !resultBody || typeof resultBody !== 'object') {
+    capsCache = null;
+    return capsCache;
+  }
+  const body = resultBody as Record<string, unknown>;
+  const version = typeof body.version === 'string' ? body.version : '';
+  const commands = Array.isArray(body.commands) ? body.commands.filter((c): c is string => typeof c === 'string') : [];
+  if (!version || !commands.length) {
+    capsCache = null;
+    return capsCache;
+  }
+  capsCache = { version, commands };
+  return capsCache;
+}
+
+/** 点分版本 → [major, minor]（畸形段按 0；只够版本门比较用，不做完整 semver） */
+function minorVersionOf(v: string): [number, number] {
+  const parts = String(v ?? '').split('.').map((x) => parseInt(x, 10) || 0);
+  return [parts[0] || 0, parts[1] || 0];
+}
+
+/**
+ * rec / refs 的版本门（纯函数）：caps = null（能力未知）→ 放行返回 null；
+ * 版本 < 0.5 或 commands 缺 rec → 中文升级指引；否则 null = 放行。
+ */
+export function faceRecSupportError(caps: FaceCapabilities | null): string | null {
+  if (!caps) return null;
+  const [maj, min] = minorVersionOf(caps.version);
+  const tooOld = maj === 0 && min < 5; // v0.5 = 510 修复收编缺陷的起线；0.10 / 1.x 都不算旧
+  if (tooOld || !caps.commands.includes('rec')) {
+    return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——在终端更新后重试：npm update -g @jwbz/obsidian-face（或重新 npm link）`;
+  }
+  return null;
+}
+
+// ---------------- 进程注册表（一录音一进程；协作停止 / 兜底杀） ----------------
 
 /** 进程壳注入缝（测试打桩；生产 = core/external-tool 的 runExternalTool） */
 export type RecordingRunner = typeof runExternalTool;
@@ -316,26 +444,45 @@ export function runningRecordingCount(): number {
   return running.size;
 }
 
+/** 协作停止的兜底等待（毫秒）：控制文件写了但脚本最迟在下一个安全点（一轮转写 ≈ 半分钟内）就会退；超时仍未退 = 控制通道失联，兜底杀 */
+const COOP_STOP_KILL_MS = 90000;
+
 /**
  * 起一条录音 / 质心构建进程（幂等护栏：同 key 已在跑则不起第二条）。
- * onExit 在进程终结后回调（成功 / 失败 / 停止），注册表条目先摘除。
+ * meta.dataRoot 给了就顺带管理控制文件：起跑前清陈旧指令（残留 stop 会让脚本一启动就退），
+ * 终结后再清一次。onExit 在进程终结后回调（成功 / 失败 / 停止），注册表条目先摘除。
  */
 export function startRecordingTask(
   spec: ExternalToolSpec,
   key: string,
   onExit?: (outcome: { ok: boolean; stopped: boolean; error: string }) => void,
-  meta?: { talker: string; file: string }
+  meta?: { talker: string; file: string; dataRoot?: string }
 ): void {
   if (running.has(key)) return;
+  if (meta?.dataRoot) clearRecControl(meta.dataRoot);
   const handle = runner(spec, { onStep: () => {}, onProgress: () => {}, onInfo: () => {}, onResult: () => {} });
   running.set(key, { handle, talker: meta?.talker ?? '', file: meta?.file ?? '' });
   void handle.done.then((outcome) => {
     running.delete(key);
+    if (meta?.dataRoot) clearRecControl(meta.dataRoot);
     onExit?.({ ok: outcome.ok, stopped: outcome.stopped, error: outcome.error?.message ?? '' });
   });
 }
 
-/** 停掉该键的在跑进程（幂等；不在跑 = no-op） */
-export function stopRecordingTask(key: string): void {
-  running.get(key)?.handle.stop();
+/**
+ * 停掉该键的在跑进程（幂等；不在跑 = no-op）。
+ * opts.dataRoot 给了 → 协作式停止：写 rec-control.json 让脚本在安全点留账本退出
+ * （模型不卸载、进度不丢），90 秒未退才兜底杀；没给（旧口径 / 无数据根）→ 直接杀。
+ */
+export function stopRecordingTask(key: string, opts?: { dataRoot?: string }): void {
+  const entry = running.get(key);
+  if (!entry) return;
+  if (!opts?.dataRoot || !writeRecControl(opts.dataRoot, 'stop')) {
+    entry.handle.stop();
+    return;
+  }
+  const timer = setTimeout(() => {
+    if (running.has(key)) entry.handle.stop();
+  }, COOP_STOP_KILL_MS);
+  void entry.handle.done.then(() => clearTimeout(timer));
 }

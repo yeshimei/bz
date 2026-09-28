@@ -23,6 +23,15 @@ describe('bz-face rec 参数解析', () => {
     expect(parseRecArgv(['--version']).version).toBe(true);
   });
 
+  it('--ffmpeg：非空才透传给 Python（issue 510 对齐 prep；等号写法同认）', () => {
+    expect(
+      parseRecArgv(['rec', 'r.aac', '--data-root', 'E:\\根', '--contact', '大琳', '--ffmpeg', 'C:\\tools\\ffmpeg.exe']),
+    ).toMatchObject({ file: 'r.aac', ffmpeg: 'C:\\tools\\ffmpeg.exe' });
+    expect(parseRecArgv(['rec', 'r.aac', '--data-root=E:\\根', '--contact=大琳', '--ffmpeg=ffmpeg']).ffmpeg).toBe('ffmpeg');
+    expect(parseRecArgv(['rec', 'r.aac', '--data-root', 'E:\\根', '--contact', '大琳']).ffmpeg).toBeUndefined();
+    expect(parseRecArgv(['rec', 'r.aac', '--data-root', 'x', '--contact', 'c', '--ffmpeg']).error).toContain('--ffmpeg');
+  });
+
   it('缺文件名 / 缺 --data-root / 缺 --contact / 多个位置参数 / 未知参数 → 各自报错', () => {
     expect(parseRecArgv(['rec']).error).toContain('录音文件名');
     expect(parseRecArgv(['rec', 'r.m4a']).error).toContain('--data-root');

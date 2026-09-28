@@ -19,6 +19,27 @@ SenseVoice 逐轮情感转写，方案 C 经真值校准；sidecar `<录音>.tur
 收编为 `python/bz_rec.py` / `bz_refs.py`——管线零改动，只参数化路径（依赖同转写组：
 funasr 连带 torch / librosa；质心构建要跑过 `bz-face prep` 留下的 voice/*.wav）。
 
+**v0.5（issue 510）修复收编缺陷 + 录音线对齐 prep + 体检命令**：
+
+- **修复（v0.4 的 rec / refs 实际不可用的两处收编缺陷）**：`bz_rec.py` 的质心目录误成
+  `main()` 局部量（`load_refs` NameError）；`bz_refs.py` holdout 段 `labeled_wavs`
+  调用点没跟上双参签名（TypeError）。收编脚本此后有 **Python 冒烟门**（插件仓
+  `tests/people/face-toolkit-python.test.ts`：py_compile + 真调关键函数）兜住同类缺陷。
+- rec：`--ffmpeg` 显式传参（对齐 prep）；协作式暂停 / 停止走**独立的**
+  `<数据根>/.bz-face/rec-control.json`（与 prep 的 control.json 各自独立，画谱与录音
+  并行不串台）；blind 盲聚段也落 sidecar 进度（中断仍整段重头，但 UI 进度可见）；
+  续跑时降级口径变了（如先 me-only、后来建了 dual 质心）→ 声纹段整体重算，两种口径
+  绝不混账。
+- refs：质心 npz **原子写**；**增量构建**——meta 存全局输入指纹（全部联系人的
+  chat.json 哈希 + voice 清单 + 采样参数 / 模型名），没变逐人跳过，任一变化全体重建
+  （「我」池跨联系人采样）；同一联系人的 chat.json / voice 目录只读一遍。
+- vendored WeChatMsg_Lite 的运行日志静音（原先往包目录 `logs/` 写文件、DEBUG 流污染
+  stderr 尾）；错误一律走协议行与工具自己的 stderr。
+- 新命令：`bz-face status <联系人>`（产物体检，纯 Node 读盘）、`bz-face capabilities`
+  （机器可读能力声明，插件 spawn 前探测包版本）；`export --contacts-file <文件>`
+  （名单文件绕 Windows 命令行长度上限）；doctor 补**录音环境**三项（声纹参考 ·
+  补充素材录音体量 · 本地模型权重缓存——缺了 warn 不 fail）。
+
 ## 为什么不发公开 registry（也永远不会自动发布）
 
 本包的核心能力是**解密微信数据库**：公开分发容易被滥用、踩合规，且与微信版本强绑定
@@ -196,6 +217,9 @@ bz-face doctor --python "C:\Python312\python.exe" # 指定 Python（缺省 PATH 
 | ffmpeg / ffprobe | 本票只查 **PATH**；自定义路径接插件「外部工具」设置组是后续票（ADR-0195 决策 6） |
 | 微信进程与版本 | 进程在跑（`Weixin.exe`，4.x）→ 经 PowerShell 读进程 exe 的文件版本；**≥ 4.0.3.36 → 明确提示官方已封堵内存取密钥、需退回 4.0.3.19**；未在跑 → 提示先打开并登录微信；版本读不出 → 提示手动核对（不判死）。进程不在时读不到版本，安装目录探测留给后续票——做到哪档是哪档，如实展示 |
 | 数据根可写性 | 不给 `--data-root` → 显示「未配置」（中性项，不算失败）；给了 → 实写一个探针文件验证可写后即删 |
+| 声纹参考（510） | 数据根配置了才查：`voiceprints/` 目录与 npz 清单；缺目录 / 空 → **warn 不 fail**（分离按降级阶梯照跑），附 `bz-face refs` 修复命令 |
+| 补充素材录音（510） | 逐联系人扫 `recordings/` 体量；0 个 = 中性常态（还没导入过） |
+| 模型权重缓存（510） | modelscope 缓存目录找 SenseVoiceSmall / CAM++ / FSMN-VAD；缺 → **warn**（首次运行自动下载约 1-2GB，需联网）——**只查不下载** |
 
 输出样例（缺依赖的机器上）：
 
@@ -216,6 +240,22 @@ stdout 全程协议行，Python 侧
 （`bz_sync.py`）直接产出、Node 原样透传只补预检行与兜底结果行。doctor 则是用户自己
 在终端跑的一次性自检，产出是多行判定 + 修复命令，人读优先。
 
+## `bz-face status <联系人>` 与 `bz-face capabilities`（issue 510）
+
+```bash
+bz-face status 大琳 --data-root "E:\Obsidian\微信脸谱数据\export_full"
+bz-face capabilities
+```
+
+- **status** = 联系人产物体检：`stats.json` / `chat.json` / `voice/` + `voice.json` /
+  `image/` + `desc/` + `image_map.json` / `recordings/` + 各录音 sidecar 的 phase /
+  质心 npz，逐行「✓ 在且有货（带计数与更新时间）/ △ 在但空 / ✗ 缺（附下一步命令）」。
+  **纯 Node 读盘，不起 Python**，排障与体检一眼见底。退出码 0 = 报告出得来
+  （产物缺不缺都算）、1 = 联系人目录不存在、2 = 用法错误。
+- **capabilities** = 机器可读能力声明：一行 `[bz-result] {"ok":true,"version":"0.5.0",
+  "commands":[…]}`，供插件在 spawn 前探测本机 bz-face 的版本与子命令支持面
+  （旧版不用等到点按钮才报「未知命令」）。
+
 ## 目录结构
 
 ```
@@ -231,14 +271,19 @@ tools/obsidian-face/
     ├── sync-core.d.ts
     ├── prep-core.js        # prep 判定层（468）：阶段计划 / 参数解析 / 控制文件契约 / 中继与预检（纯函数）
     ├── prep-core.d.ts
+    ├── export-core.js      # export 判定层（485）：参数解析 / 名单文件文本解析 / 预检判定（纯函数）
+    ├── rec-core.js         # rec / refs 判定层（509）：参数解析 / 预检判定（进度权威在 sidecar）
+    ├── status-core.js      # status 判定层（510）：argv / 产物事实采集 / 人读报告（纯 Node）
     └── probes.js           # 真探测与子进程管道：child_process / fs，逐项兜错绝不抛栈
 └── python/
     ├── bz_export.py        # 解密链本体（收编自数据盘 tools/；464 起 keyinfo/decrypt_db 可显式指路径）
     ├── bz_sync.py          # sync 本体：取密钥 → 解密 → 逐联系人统计（stats.json）+ 头像源；--contact 走 export 轮（485）
     ├── bz_prep.py          # prep 本体（468）：媒体导出 + 派生图片档 + 关联表 + 语音转写（四行协议 + 协作式暂停）
+    ├── bz_rec.py           # rec 本体（509 / ADR-0214）：方案 C 分离转写（phase 账本 + rec-control 协作式让行）
+    ├── bz_refs.py          # refs 本体（509 / ADR-0214）：质心构建（原子写 + 增量指纹跳过）
     ├── requirements-decrypt.txt
     ├── requirements-transcribe.txt
-    └── vendor/WeChatMsg_Lite/   # 裁剪版上游库（236MB → 368KB，LICENSE 保留）
+    └── vendor/WeChatMsg_Lite/   # 裁剪版上游库（236MB → 368KB，LICENSE 保留；运行日志已静音）
 ```
 
 设计约定：判定层（`doctor-core.js` / `sync-core.js` / `prep-core.js`）与真探测

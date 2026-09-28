@@ -1,7 +1,7 @@
 {
   "name": "@jwbz/obsidian-face",
-  "version": "0.4.0",
-  "description": "包仔脸谱工具包（bz-face）——微信 4.x 聊天「取密钥 → 解密 → 原始导出 → 转写」外部工具：Node 外壳 + 随包 vendored Python（自写脚本 + 裁剪版 WeChatMsg_Lite）。sync（464）一次取数；prep（468）单联系人媒体导出 + wxgf 解码 + 派生图片档 + 关联表 + 语音转写（幂等可续、协作式暂停）；export（485）按需全量导出；rec / refs（509 / ADR-0214）补充素材录音的说话人分离转写与声纹质心构建（方案 C 断点续跑）；doctor 为 463",
+  "version": "0.5.0",
+  "description": "包仔脸谱工具包（bz-face）——微信 4.x 聊天「取密钥 → 解密 → 原始导出 → 转写」外部工具：Node 外壳 + 随包 vendored Python（自写脚本 + 裁剪版 WeChatMsg_Lite）。sync（464）一次取数；prep（468）单联系人媒体导出 + wxgf 解码 + 派生图片档 + 关联表 + 语音转写（幂等可续、协作式暂停）；export（485）按需全量导出（--contacts-file 名单文件）；rec / refs（509 / ADR-0214）补充素材录音的说话人分离转写与声纹质心构建（方案 C 断点续跑、协作式停止、增量质心）；status（510）产物体检；capabilities（510）能力声明；doctor 为 463 + 510 录音环境",
   "main": "lib/doctor-core.js",
   "bin": {
     "bz-face": "bin/bz-face.js"
@@ -26,7 +26,9 @@
     "wxgf",
     "diarization",
     "voiceprint",
-    "doctor"
+    "doctor",
+    "status",
+    "capabilities"
   ],
   "license": "MIT",
   "publishConfig": {

@@ -9,20 +9,27 @@ import { describe, it, expect, afterEach } from 'vitest';
 import {
   buildRecordingSpec,
   buildVoiceprintSpec,
+  clearRecControl,
+  faceRecSupportError,
   hasRecordingTurns,
   isRecordingRunning,
   parseRecordingFilenameTs,
   parseRecordingSidecar,
+  probeFaceCapabilities,
+  recControlFilePath,
   recordingItemState,
   recordingPhasePct,
   recordingSidecarPath,
   recordingTsOf,
   recordingsDirOf,
+  resetFaceCapabilitiesForTests,
+  setRecordingFsForTests,
   setRecordingRunnerForTests,
   startRecordingTask,
   stopRecordingTask,
   voiceprintRefPath,
   voiceprintRefStatus,
+  writeRecControl,
   type RecordingSidecar,
 } from '../../src/people/recording';
 import type { ExternalToolHandle } from '../../src/core/external-tool';
@@ -192,5 +199,145 @@ describe('质心就绪态与进程注册表', () => {
     startRecordingTask(spec, key);
     expect(isRecordingRunning(key)).toBe(true);
     stopRecordingTask(key);
+  });
+});
+
+describe('协作式控制文件与版本门（issue 510）', () => {
+  afterEach(() => {
+    setRecordingRunnerForTests(null);
+    setRecordingFsForTests(null);
+    resetFaceCapabilitiesForTests();
+  });
+
+  /** fs 桩：记录调用，writeFileSync 内容可查 */
+  function fsStub() {
+    const calls: string[] = [];
+    const files = new Map<string, string>();
+    return {
+      calls,
+      files,
+      f: {
+        mkdirSync: () => {},
+        writeFileSync: (p: string, data: string) => {
+          calls.push(`write:${p}`);
+          files.set(p, data);
+        },
+        rmSync: (p: string) => {
+          calls.push(`rm:${p}`);
+          files.delete(p);
+        },
+        existsSync: (p: string) => files.has(p),
+      },
+    };
+  }
+
+  it('buildRecordingSpec：--ffmpeg 非空才传、路径包引号（口径同 prep）', () => {
+    const withFf = buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大琳', file: 'r.m4a', ffmpeg: 'C:\\tools\\ffmpeg.exe' });
+    const ffArgs = withFf.args ?? [];
+    expect(ffArgs).toContain('--ffmpeg');
+    expect(ffArgs[ffArgs.indexOf('--ffmpeg') + 1]).toBe('"C:\\tools\\ffmpeg.exe"');
+    const noFf = buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大琳', file: 'r.m4a', ffmpeg: '   ' });
+    expect(noFf.args ?? []).not.toContain('--ffmpeg');
+  });
+
+  it('recControlFilePath 固定布局；writeRecControl 写 stop；clearRecControl 摘文件', () => {
+    expect(recControlFilePath('D:\\根')).toBe('D:\\根/.bz-face/rec-control.json');
+    const { calls, files, f } = fsStub();
+    setRecordingFsForTests(f);
+    expect(writeRecControl('D:\\根', 'stop')).toBe(true);
+    const p = recControlFilePath('D:\\根');
+    expect(calls).toContain(`write:${p}`);
+    expect(files.get(p)).toBe('{"action":"stop"}\n');
+    clearRecControl('D:\\根');
+    expect(calls).toContain(`rm:${p}`);
+    // 无 fs（非桌面端）→ 写失败返回 false，不抛
+    setRecordingFsForTests(null);
+    expect(writeRecControl('D:\\根', 'stop')).toBe(false);
+  });
+
+  it('协作停止：写 rec-control.json、不立即杀；终结后自动清控制文件', async () => {
+    let stopped = 0;
+    setRecordingRunnerForTests(() => {
+      let resolve!: (v: any) => void;
+      const done = new Promise<any>((r) => (resolve = r));
+      return {
+        stop: () => {
+          stopped++;
+          resolve({ ok: false, stopped: true, code: null, stderr: '', error: null });
+        },
+        done,
+      } satisfies ExternalToolHandle;
+    });
+    const { calls, f } = fsStub();
+    setRecordingFsForTests(f);
+    const root = 'D:\\根';
+    const key = recordingSidecarPath(root, '大', 'r.m4a');
+    startRecordingTask(buildRecordingSpec({ dataRoot: root, talker: '大', file: 'r.m4a' }), key, undefined, { talker: '大', file: 'r.m4a', dataRoot: root });
+    // 起跑即清陈旧控制文件
+    expect(calls.filter((c) => c.startsWith('rm:'))).toContain(`rm:${recControlFilePath(root)}`);
+    stopRecordingTask(key, { dataRoot: root });
+    expect(calls.filter((c) => c.startsWith('write:')).length).toBe(1); // 写了 stop
+    expect(stopped).toBe(0); // 没有立刻杀——等脚本在安全点自己退
+    // 90s 内脚本退了（done resolve）→ 定时器摘除，不再兜底杀
+    await Promise.resolve();
+    expect(stopped).toBe(0);
+  });
+
+  it('无 dataRoot 的停止保持旧口径：直接杀', () => {
+    let stopped = 0;
+    setRecordingRunnerForTests(() => {
+      let resolve!: (v: any) => void;
+      const done = new Promise<any>((r) => (resolve = r));
+      return {
+        stop: () => {
+          stopped++;
+          resolve({ ok: false, stopped: true, code: null, stderr: '', error: null });
+        },
+        done,
+      } satisfies ExternalToolHandle;
+    });
+    const key = recordingSidecarPath('D:\\根', '大', 'r.m4a');
+    startRecordingTask(buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大', file: 'r.m4a' }), key);
+    stopRecordingTask(key);
+    expect(stopped).toBe(1);
+  });
+
+  it('capabilities 探测：[bz-result] 体解析 + 会话级缓存 + 探测失败返回 null', async () => {
+    let runs = 0;
+    setRecordingRunnerForTests((spec, cb) => {
+      runs += 1;
+      expect(spec.args).toEqual(['capabilities']);
+      void Promise.resolve().then(() => {
+        cb.onResult({ ok: true, version: '0.5.0', commands: ['sync', 'rec', 'refs'] });
+      });
+      let resolve!: (v: any) => void;
+      const done = new Promise<any>((r) => (resolve = r));
+      void Promise.resolve().then(() => resolve({ ok: true, stopped: false, code: 0, stderr: '', error: null }));
+      return { stop: () => {}, done } satisfies ExternalToolHandle;
+    });
+    const caps = await probeFaceCapabilities();
+    expect(caps).toEqual({ version: '0.5.0', commands: ['sync', 'rec', 'refs'] });
+    await probeFaceCapabilities();
+    expect(runs).toBe(1); // 会话级缓存：第二次不再起进程
+
+    // 探测失败（无结果行 / 启动失败）→ null，且缓存住
+    resetFaceCapabilitiesForTests();
+    setRecordingRunnerForTests(() => {
+      let resolve!: (v: any) => void;
+      const done = new Promise<any>((r) => (resolve = r));
+      void Promise.resolve().then(() => resolve({ ok: false, stopped: false, code: null, stderr: '', error: new Error('找不到命令') }));
+      return { stop: () => {}, done } satisfies ExternalToolHandle;
+    });
+    expect(await probeFaceCapabilities()).toBeNull();
+    expect(await probeFaceCapabilities()).toBeNull();
+  });
+
+  it('faceRecSupportError：能力未知放行；< 0.5 或缺 rec 给升级指引；0.5+ 放行', () => {
+    expect(faceRecSupportError(null)).toBeNull();
+    expect(faceRecSupportError({ version: '0.4.0', commands: ['rec'] })).toContain('过旧');
+    expect(faceRecSupportError({ version: '0.5.0', commands: ['sync'] })).toContain('过旧');
+    expect(faceRecSupportError({ version: '0.5.0', commands: ['sync', 'rec', 'refs'] })).toBeNull();
+    expect(faceRecSupportError({ version: '0.10.0', commands: ['rec'] })).toBeNull();
+    expect(faceRecSupportError({ version: '1.2.0', commands: ['rec'] })).toBeNull();
   });
 });

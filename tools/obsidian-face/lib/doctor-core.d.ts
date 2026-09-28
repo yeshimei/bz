@@ -78,6 +78,15 @@ export declare function judgeWechat(res: Record<string, any>): DoctorLine;
 /** 数据根检查行判定（独立可测） */
 export declare function judgeDataRoot(res: Record<string, any>): DoctorLine;
 
+/** 声纹参考检查行（issue 510 录音环境；缺目录 / 空 = warn 不 fail） */
+export declare function judgeVoiceprints(res: Record<string, any>): DoctorLine;
+
+/** 补充素材录音检查行（issue 510；0 个 = 中性常态） */
+export declare function judgeRecordings(res: Record<string, any>): DoctorLine;
+
+/** 本地模型权重缓存检查行（issue 510；缺 = warn，首次运行自动下载） */
+export declare function judgeModelCache(res: Record<string, any>): DoctorLine;
+
 /** CLI argv 解析（薄壳用；放判定层以便单测） */
 export declare function parseDoctorArgv(argv: string[]): DoctorArgv;
 

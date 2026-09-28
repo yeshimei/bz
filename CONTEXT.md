@@ -441,7 +441,7 @@ _Avoid_: 导入数据（与数据源全量导入混淆）、记一笔（旧按�
 **录音轮次 (Recording Turn)**: 录音经说话人分离（ADR-0213）切出的**最小话轮**——带说话人归属（我 / 对方）、起止偏移与转写文本，一条轮次合成聊天仓一条消息（`[录音 N分NN秒·情感] 文本`）。分离与质心构建走 `bz-face rec / refs`（ADR-0214 收编包）；二人录音分离的比对基准是**声纹参考（质心）**——`<数据根>/voiceprints/<联系人>.npz`，由该联系人微信语音按归属构建；降级阶梯：对方质心缺失则「非我即对方」，再缺失才降「说话人 0/1」。
 _Avoid_: 语音段（与微信语音消息混淆）、说话人日志、声纹库（只有两条参考质心，不是库）
 
-**脸谱工具 (Face Toolkit)**: 脸谱外部流程的单包 `@jwbz/obsidian-face`（bin `bz-face`，仓库 `tools/obsidian-face/`）——承担取密钥、解密、原始导出、`chat.json`（含表情命名）、媒体导出（含 `desc/` 派生档）、语音转写、**补充素材录音的说话人分离与逐轮转写**（`bz-face rec`，sidecar 账本断点续跑）与**声纹质心构建**（`bz-face refs`，产 `<数据根>/voiceprints/`，ADR-0214）；**边界到此为止**：不含 AI（图片描述与画像生成在插件侧，服务商凭据不进外部进程）。**不发布公开 registry**（与 bili-downloader 有意不同：本包核心能力是解密微信数据库），重物（Python 依赖与 SenseVoice 权重）由用户自装 + `bz-face doctor` 自检。**只写数据根，永不写 vault、不碰加密库。**
+**脸谱工具 (Face Toolkit)**: 脸谱外部流程的单包 `@jwbz/obsidian-face`（bin `bz-face`，仓库 `tools/obsidian-face/`）——承担取密钥、解密、原始导出、`chat.json`（含表情命名）、媒体导出（含 `desc/` 派生档）、语音转写、**补充素材录音的说话人分离与逐轮转写**（`bz-face rec`，sidecar 账本断点续跑 + 独立 `rec-control.json` 协作式停止）与**声纹质心构建**（`bz-face refs`，产 `<数据根>/voiceprints/`，原子写 + 增量指纹跳过，ADR-0214）；体检与探测走 `bz-face status <联系人>`（产物盘点，纯 Node）与 `bz-face capabilities`（包版本与子命令支持面，插件起跑前探版本门）；**边界到此为止**：不含 AI（图片描述与画像生成在插件侧，服务商凭据不进外部进程）。**不发布公开 registry**（与 bili-downloader 有意不同：本包核心能力是解密微信数据库），重物（Python 依赖与 SenseVoice 权重）由用户自装 + `bz-face doctor` 自检（含录音环境三项：声纹参考 / 录音体量 / 模型权重缓存）。**只写数据根，永不写 vault、不碰加密库。**
 _Avoid_: 微信工具、导出脚本、wechat-face、数据根散装脚本（rec 管线已进包，数据根 tools/ 只剩校准环境）
 
 ### 移动端窗口（ticket 68，跨域）

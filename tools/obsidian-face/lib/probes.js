@@ -188,6 +188,99 @@ function probeContactDir(dirPath, name) {
 }
 
 /**
+ * 探测声纹参考目录（issue 510 doctor 录音环境）：`<数据根>/voiceprints/` 与其中的 npz 清单。
+ * @param {string|undefined} dirPath 数据根路径
+ * @returns {{ configured:boolean, path?:string, exists?:boolean, refs?:string[], error?:string }}
+ */
+function probeVoiceprints(dirPath) {
+  if (!dirPath) return { configured: false };
+  const dir = path.join(dirPath, 'voiceprints');
+  let names;
+  try {
+    names = fs.readdirSync(dir).filter((n) => n.endsWith('.npz')).sort();
+  } catch {
+    return { configured: true, path: dir, exists: false };
+  }
+  return { configured: true, path: dir, exists: true, refs: names };
+}
+
+/**
+ * 探测补充素材录音（issue 510 doctor 录音环境）：逐联系人统计 recordings/ 里的音频文件
+ * （.turns.json sidecar 不算）。联系人很多也只扫一层目录，秒级。
+ * @param {string|undefined} dirPath 数据根路径
+ * @returns {{ configured:boolean, contactsWith:number, totalFiles:number, error?:string }}
+ */
+function probeRecordings(dirPath) {
+  if (!dirPath) return { configured: false };
+  let contactsWith = 0;
+  let totalFiles = 0;
+  const AUDIO_EXTS = new Set(['.wav', '.mp3', '.m4a', '.aac', '.flac', '.ogg', '.amr', '.wma']);
+  let contacts;
+  try {
+    contacts = fs.readdirSync(dirPath, { withFileTypes: true }).filter((d) => d.isDirectory());
+  } catch (e) {
+    return { configured: true, contactsWith: 0, totalFiles: 0, error: (e && e.message) || String(e) };
+  }
+  for (const c of contacts) {
+    try {
+      const files = fs.readdirSync(path.join(dirPath, c.name, 'recordings'));
+      const audio = files.filter((f) => AUDIO_EXTS.has(path.extname(f).toLowerCase()));
+      if (audio.length) {
+        contactsWith += 1;
+        totalFiles += audio.length;
+      }
+    } catch {
+      continue; // 没 recordings/ 的联系人常态
+    }
+  }
+  return { configured: true, contactsWith, totalFiles };
+}
+
+/**
+ * 探测本地模型权重缓存（issue 510 doctor 录音环境）：modelscope 缓存目录里找 funasr 三件
+ * （SenseVoiceSmall / CAM++ / FSMN-VAD）。只查不下载——缺了出 warn（首次运行自动下载，
+ * 约 1-2GB，需联网），绝不替用户下载。
+ * @returns {{ checked:boolean, found:string[], missing:string[] }}
+ */
+function probeModelCache() {
+  const WANT = [
+    { key: 'SenseVoiceSmall', probe: 'sensevoicesmall' },
+    { key: 'CAM++', probe: 'campplus' },
+    { key: 'FSMN-VAD', probe: 'fsmn' },
+  ];
+  const home = process.env.USERPROFILE || process.env.HOME || '';
+  const roots = [path.join(home, '.cache', 'modelscope', 'hub'), path.join(home, '.cache', 'modelscope')];
+  /** 限深文件名收集（不依赖 readdirSync recursive——Node 18 没有该选项） */
+  const walkNames = (dir, depth) => {
+    let names = [];
+    let list = [];
+    try {
+      list = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return names;
+    }
+    for (const e of list) {
+      names.push(e.name);
+      if (e.isDirectory() && depth > 0) names = names.concat(walkNames(path.join(dir, e.name), depth - 1));
+    }
+    return names;
+  };
+  let entries = [];
+  for (const root of roots) {
+    entries = walkNames(root, 4);
+    if (entries.length) break;
+  }
+  const joined = entries.join('\n').toLowerCase();
+  const found = [];
+  const missing = [];
+  for (const w of WANT) {
+    if (joined.includes(w.probe)) found.push(w.key);
+    else missing.push(w.key);
+  }
+  return { checked: true, found, missing };
+}
+
+/**
  * 跑 bz_sync.py / bz_prep.py 长任务（464 sync / 468 prep）：stdout 逐行回调（UTF-8 行缓冲、
  * 跨 chunk 多字节安全），stderr 留尾 2KB 滑窗，终结给 { code, stderr, error? }。
  * **无超时**——分钟级导出不许被掐。
@@ -268,6 +361,9 @@ module.exports = {
   probeWeixin,
   probeDataRoot,
   probeContactDir,
+  probeVoiceprints,
+  probeRecordings,
+  probeModelCache,
   runSyncProcess,
   PROBE_TIMEOUT_MS,
 };
