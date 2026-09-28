@@ -73,9 +73,12 @@ export function formatDay(ts: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 消息量格式化：≥1 万显「1.2 万」（余数 ≥100 才带小数），其余千分位（实测量级 1 ~ 20,773） */
+/** 消息量格式化：≥1 万显「1.2 万」（余数 ≥100 才带小数，正好整万不带零头），其余千分位（实测量级 1 ~ 20,773） */
 export function formatCount(n: number): string {
-  if (n >= 10000) return `${(n / 10000).toFixed(n % 10000 >= 100 ? 1 : 0)} 万`;
+  if (n >= 10000) {
+    const w = (n / 10000).toFixed(n % 10000 >= 100 ? 1 : 0);
+    return `${w.endsWith('.0') ? w.slice(0, -2) : w} 万`;
+  }
   return n.toLocaleString('en-US');
 }
 
@@ -191,26 +194,22 @@ export function iconButton(icon: string, cls: string, attrs: Record<string, stri
   return b;
 }
 
-/** 面板壳：头行（brand + 数据源图标）+ 统计行 + 生成进度块槽位 + body + 数据源弹层容器 + 统计/档案弹层容器 */
+/**
+ * 面板壳（issue 505）：打开面板就是这一册相册——没有标题栏、没有品牌行。
+ * 册子本体（摊开的两页 / 详情跨页 / 册页弹窗）画在 `data-people-spread` 里；
+ * 右下沿两枚小签（找一找 / 数据源）常驻；进度便签与合并横幅各自一个绝对定位槽位。
+ */
 export function panelShell(): HTMLElement {
   return el('div', 'bz-people-panel', [
-    el('div', 'bz-people-head', [
-      el('div', 'bz-people-brand', [
-        el('div', 'bz-people-mark', { 'aria-hidden': 'true' }, el('i', 'bz-ic', { 'data-lucide': 'smile' })),
-        el('div', 'bz-people-brand-text', [
-          el('h1', 'bz-people-title', text('脸谱')),
-          el('div', 'bz-people-sub', text('人物消息脸谱')),
-        ]),
-      ]),
-      el('div', 'bz-people-head-actions', [
-        iconButton('database', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-ds-open': '', 'aria-label': '数据源', title: '数据源' }),
-      ]),
+    el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, [
+      el('div', 'bz-people-spread', { 'data-people-spread': '' }),
     ]),
-    el('div', 'bz-people-stats', { 'data-people-stats': '' }),
-    el('div', 'bz-people-jobs-slot', { 'data-people-jobs-slot': '', hidden: '' }),
-    el('div', 'bz-people-body', { 'data-people-body': '' }),
-    el('div', 'bz-people-ds-layer', { 'data-people-ds-layer': '', hidden: '' }),
-    el('div', 'bz-people-pop-layer', { 'data-people-pop-layer': '', hidden: '' }),
+    el('div', 'bz-people-tabs', [
+      button('bz-people-tab', '找一找', { 'data-people-dialog': 'find' }),
+      button('bz-people-tab', '数据源', { 'data-people-dialog': 'ds' }),
+    ]),
+    el('div', 'bz-people-jobs-slot', { 'data-people-jobs-slot': '' }),
+    el('div', 'bz-people-banner-slot', { 'data-people-banner-slot': '' }),
   ]);
 }
 
@@ -285,7 +284,9 @@ export function jobsStagesDone(stage: string | undefined, status: JobsUiStatus):
 
 /** 状态 → 动作钮（label + data 钩子）；done 无动作 */
 const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null> = {
-  running: { label: '暂停', hook: 'data-people-jobs-pause' },
+  // 运行中不再给「暂停」钮（issue 502 续）：画谱是一次想看完的连续过程，
+  // 摆在眼前的暂停反而诱发误触；要中断就关面板 / 换人跑，任务本身留断点可续。
+  running: null,
   paused: { label: '继续生成', hook: 'data-people-jobs-resume' },
   interrupted: { label: '继续生成', hook: 'data-people-jobs-resume' },
   // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
@@ -412,10 +413,12 @@ export function jobsMainLine(s: JobsBlockState): JobsMainLine {
 }
 
 /**
- * 进度块（面板头统计行下）：细进度条 + 主行（状态 · 锚点 · 细节）+ 状态动作钮。
+ * 进度便签（issue 505：贴到册子左下沿的一张纸，不再顶在面板头上）。
+ * 四块：队列行（一人一任务顺序跑，画的是谁、队里第几位）/ 细进度条 + 百分比 /
+ * 主行（状态 · 锚点 · 引擎细节，一行到底）/ 动作行（错误说明 + 继续 / 删除 / 重试）。
  * 469：preprocess 阶段进度条 = 工具段折算总进度；470：describe 阶段 = 描述批进度。
  */
-export function progressBlock(s: JobsBlockState): HTMLElement {
+export function jobsNote(s: JobsBlockState): HTMLElement {
   const stagePart = prepStagePart(s);
   const descPart = describeStagePart(s);
   const pct = stagePart ? s.prep!.overall : descPart ? s.describe!.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -424,11 +427,23 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
     'data-people-jobs-talker': s.talker,
     role: 'status',
   });
-  block.appendChild(el('div', 'bz-people-jobs-meter', [
-    el('div', 'bz-people-jobs-bar', { 'aria-hidden': 'true' },
-      el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })),
-    el('span', 'bz-people-jobs-pct', text(`${pct}%`)),
-  ]));
+  // 队列行：只有真的在排队（不止一位）才写——「第 2/3 位 · 徐雯静」
+  if (s.queueTotal > 1) {
+    const who = el('div', 'bz-people-jobs-who');
+    who.append(
+      text('第 '),
+      textEl('b', String(Math.min(Math.max(1, s.queueIndex), s.queueTotal))),
+      text('/'),
+      textEl('span', String(s.queueTotal)),
+      text(` 位 · ${s.name || s.talker}`),
+    );
+    block.appendChild(who);
+  }
+  const meter = el('div', 'bz-people-jobs-meter');
+  meter.appendChild(el('div', 'bz-people-jobs-track', { 'aria-hidden': 'true' },
+    el('div', 'bz-people-jobs-fill', { style: `width:${pct}%` })));
+  meter.appendChild(el('span', 'bz-people-jobs-pct', text(`${pct}%`)));
+  block.appendChild(meter);
   // 主行：状态 · 锚点（粗体）+ 引擎细节（同行内次级灰字，不另起第二行）
   const line = jobsMainLine(s);
   const mainEl = el('div', 'bz-people-jobs-main', text(line.head));
@@ -447,108 +462,104 @@ export function progressBlock(s: JobsBlockState): HTMLElement {
   return block;
 }
 
-// ---------------- 画谱总确认弹窗（issue 497：两次确认合一，确认后一路到底不再弹窗） ----------------
+// ---------------- 相册簿（issue 505：打开面板就是一本自粘式相册） ----------------
+
+/** 一页贴几张（2 列 × 3 行）；一摊 = 左右两页 */
+export const AL_PER_PAGE = 6;
+export const PER_SPREAD = 2;
+
+/** 一侧的翻页余量：还剩几页、折算成露在外面的几层纸边 */
+export interface TurnSide {
+  pages: number;
+  flips: number;
+}
+
+export interface TurnLoad {
+  left: TurnSide;
+  right: TurnSide;
+}
+
+export function pageTotal(count: number): number {
+  return Math.max(1, Math.ceil(count / AL_PER_PAGE));
+}
+
+/** 最后一摊的左页序号（永远是偶数） */
+export function lastCur(total: number): number {
+  return total % PER_SPREAD === 0 ? Math.max(0, total - PER_SPREAD) : total - 1;
+}
+
+/** 两侧的翻页余量：cur 左边剩几页、右边剩几页 → 折算成还能翻几次 */
+export function turnLoad(cur: number, total: number): TurnLoad {
+  const lp = cur;
+  const rp = Math.max(0, total - cur - PER_SPREAD);
+  return { left: { pages: lp, flips: Math.ceil(lp / PER_SPREAD) }, right: { pages: rp, flips: Math.ceil(rp / PER_SPREAD) } };
+}
+
+/** 两侧的「叠纸」：还能翻几次就露几层纸边（最多 4 层），纸边本身也能点（与热区同一用法） */
+function stackSide(side: 'l' | 'r', flips: number): HTMLElement {
+  const box = el('div', `bz-people-stack bz-people-stack-${side}`, flips ? { 'data-people-turn': side === 'l' ? 'prev' : 'next' } : undefined);
+  for (let i = 1; i <= Math.min(flips, 4); i++) box.appendChild(el('i', '', { style: `--i:${i}` }));
+  return box;
+}
+
+/** 翻页热区：册子两侧的空白，点一下翻过去（悬停自己亮一下，读屏标签说明还有几页） */
+function turnStrip(dir: 'prev' | 'next', side: TurnSide): HTMLElement | null {
+  if (side.flips <= 0) return null;
+  const b = el('button', `bz-people-turn bz-people-turn-${dir === 'prev' ? 'l' : 'r'}`, {
+    'data-people-turn': dir,
+    'aria-label': dir === 'prev' ? `往前翻一摊（前面还有 ${side.pages} 页）` : `往后翻一摊（后面还有 ${side.pages} 页）`,
+  }) as HTMLButtonElement;
+  b.type = 'button';
+  return b;
+}
 
 /**
- * 画谱总确认弹窗（面板外的 body 级弹层——startGeneration 起引擎前弹**一次**）：
- * 一次报清全部要花钱 / 花时间的事——逐人素材 / 图片 / 语音、图片描述与画像的服务商 / 模型
- * 与约调用数、语音本地转写免费；说明行讲明「确认后中途不再询问」。按钮 **开始生成 / 取消**；
- * 遮罩点击 / Esc 归「取消」（不花钱的那条路）。只报条数 / 调用数，不报金额。
- * onAnswer 只回调一次，摘除弹层由宿主管。
+ * 一摊（册壳 + 两侧叠纸与热区）。掀过去那张纸不在这儿画（见 ui 的翻摊）：
+ * 它是一块挂在页面上的固定纸，免得受册子内部的包含块 / 层叠 / 溢出影响。
  */
-export function generationConfirmModal(info: GenerationConfirmInfo, onAnswer: (answer: 'start' | 'cancel') => void): HTMLElement {
-  const wrap = el('div', 'bz-people-scope bz-people-desc-confirm', { 'data-people-gen-confirm': '' });
-  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-gen-cancel': '' }));
-  const pop = el('div', 'bz-people-pop-panel bz-people-desc-panel', { role: 'dialog', 'aria-label': '开始生成脸谱' });
-  pop.appendChild(el('div', 'bz-people-pop-head', [
-    el('div', 'bz-people-pop-title', text('开始生成脸谱')),
-  ]));
-  const body = el('div', 'bz-people-pop-body');
-  const segs: string[] = [`为 ${info.items.length} 位联系人生成脸谱`];
-  if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
-  if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
-  segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
-  body.appendChild(el('div', 'bz-people-desc-line', text(`${segs.join('；')}。`)));
-  const list = el('ul', 'bz-people-gen-list');
-  for (const it of info.items) {
-    const bits = [`素材 ${it.materials} 条`];
-    if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-    if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
-    list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」· ${bits.join(' · ')}`)));
-  }
-  body.appendChild(list);
-  body.appendChild(el('div', 'bz-people-desc-note', text(
-    '确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。'
-  )));
-  body.appendChild(el('div', 'bz-people-desc-actions', [
-    button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-gen-cancel': '' }),
-    button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
-  ]));
-  pop.appendChild(body);
-  wrap.appendChild(pop);
-  wrap.addEventListener('click', (e) => {
-    const t = e.target as HTMLElement;
-    if (t.closest('[data-people-gen-start]')) onAnswer('start');
-    else if (t.closest('[data-people-gen-cancel]')) onAnswer('cancel');
-  });
+export function albumSpread(inner: HTMLElement[], load: TurnLoad, opts: { boot?: boolean; turn?: 'next' | 'prev' | ''; mod?: string } = {}): HTMLElement {
+  const cls = ['bz-people-spread', opts.boot ? 'bz-people-boot' : '', opts.turn ? `bz-people-turn-${opts.turn}` : '', opts.mod ?? ''].filter(Boolean).join(' ');
+  const wrap = el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' });
+  const spread = el('div', cls, { 'data-people-spread': '' });
+  for (const n of inner) spread.appendChild(n);
+  const left = turnStrip('prev', load.left);
+  if (left) spread.appendChild(left);
+  const right = turnStrip('next', load.right);
+  if (right) spread.appendChild(right);
+  spread.appendChild(stackSide('l', load.left.flips));
+  spread.appendChild(stackSide('r', load.right.flips));
+  wrap.appendChild(spread);
   return wrap;
 }
 
-// ---------------- 列表（折子封面墙） ----------------
-
-/** 统计行文案 */
-export function statsText(people: PersonEntry[]): string {
-  const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
-  const faces = people.filter((p) => p.digest).length;
-  return people.length
-    ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱`
-    : '还没有人物';
+/** 中缝：两页之间那道压出来的沟（折痕用纸色虚线转述） */
+export function albumGutter(): HTMLElement {
+  return el('div', 'bz-people-gutter');
 }
 
-/** 合并横幅：to 已选 = 二次确认；未选 = 点选提示 */
-export function mergeBar(fromName: string, toName: string | null): HTMLElement {
-  return toName
-    ? el('div', 'bz-people-merge-bar', [
-      el('div', 'bz-people-merge-text', text(`确认合并：把「${fromName}」的导入记录与随手记并到「${toName}」，「${fromName}」将被删除；对方的脸谱不带入，合并后建议重画。`)),
-      button('bz-people-btn bz-people-btn-acc', '确认合并', { 'data-people-merge-confirm': '' }),
-      button('bz-people-btn bz-people-btn-ghost', '取消', { 'data-people-merge-cancel': '' }),
-    ])
-    : el('div', 'bz-people-merge-bar', [
-      el('div', 'bz-people-merge-text', text(`合并重复人物：点选一张折子，把「${fromName}」的导入记录与随手记并过去——对方保留，「${fromName}」这本将删除。`)),
-      button('bz-people-btn bz-people-btn-ghost', '取消合并', { 'data-people-merge-cancel': '' }),
-    ]);
+/** 页眉左边那枚小签：常规页写「第几页 / 共几页」，空册与解密中写状态 */
+export function headChip(inner: Node | string): HTMLElement {
+  return el('span', 'bz-people-head-count', typeof inner === 'string' ? text(inner) : inner);
 }
 
-export interface FoldCardOpts {
-  /** 跨导入累计媒体（零素材 null 不出徽章） */
-  media: MediaShape | null;
-  mergeFrom: boolean;
-  mergePick: boolean;
-  /** 生成引擎任务（issue 451）：印章四态的来源；无任务 = 按脸谱水位判已画 / 未画 */
-  job?: FoldCardJob | null;
-  /** 头像文件路径（有则卡面右上出照片章，无则文字印） */
-  avatar?: string;
-}
-
-// ---------------- 折子印章四态（issue 451：未画谱 / 画谱中 / 画谱中断 / 已画谱） ----------------
+// ---------------- 照片角上的印（issue 451 四态 → 相册口径） ----------------
 
 /**
- * 印章四态（互斥）。判定优先级：**任务态压过脸谱水位**——已有脸谱又在中途补画的人显「画谱中」
- * 而不是「已画谱」，否则用户看到的是一张过期的印。
+ * 印态（互斥）：还没洗出来（无印）/ 画谱中（带进度环，点印即「本批做完后暂停」）/
+ * 排队中 / 画谱中断（歇、停）/ 已画（画）/ 旧版（旧）。
+ * 任务态压过脸谱水位：已有脸谱又在中途补画的人显「画谱中」，否则用户看到的是一张过期的印。
  */
-export type FoldSealState = 'todo' | 'running' | 'halted' | 'done';
+export type FoldSealState = 'none' | 'running' | 'halted' | 'queued' | 'drawn' | 'legacy';
 
-/** 印章动作 kind（ui 事件委托按它分发）；每态恰好一个，互不并列 */
-export type FoldSealAction = 'draw' | 'pause' | 'resume' | 'redraw';
-
-export interface FoldSeal {
+export interface AlbumSeal {
   state: FoldSealState;
-  /** 印章可见文字（可含 \n 两行；样式 white-space: pre-line 承接） */
+  /** 印上的字（单字；none 不出印） */
   text: string;
-  /** 悬停说明：讲清当前状态与点击后果 */
   title: string;
-  /** 印章点击动作（印章即入口——不往卡面加新元素，448 的「卡面不放动作」仍守） */
-  action: { kind: FoldSealAction; label: string };
+  /** 画谱中的进度环（0~100；仅 running 有） */
+  pct?: number;
+  /** 印能点的动作：只 running（暂停）可点，其余印只是标记（动作在详情页） */
+  action: 'pause' | null;
 }
 
 /** 卡片上的任务视图（ui 从引擎快照映射；本层只管画） */
@@ -556,196 +567,654 @@ export interface FoldCardJob {
   status: JobsUiStatus;
   batchesDone: number;
   batchesTotal: number;
-  /** 已完成成文阶段数（其人 / 我们 / 编年史，0~3；issue 455 四阶段） */
+  /** 已完成成文阶段数（其人 / 相交 / 纪事，0~3） */
   stagesDone: number;
   /** 失败态可否断点续跑：漂移类失败（消息集已变）接不上，只能重新生成 */
   resumable: boolean;
+  /** 排在队里还没轮到（issue 505：一人一任务顺序跑，等的这位也上印） */
+  queued?: boolean;
   /** 工具段总进度 0~100（469：preprocess 阶段的印章百分比；缺省按批口径算） */
   prepPct?: number;
   /** 图片描述段总进度 0~100（470：describe 阶段的印章百分比；优先于 prepPct） */
   describePct?: number;
 }
 
-/**
- * 印章四态判定与动作（issue 451，纯函数——文案与动作成对，单测锁契约）：
- * 任务 running → 画谱中；paused / interrupted / error → 画谱中断；无活跃任务时按 digest 判已画谱 / 未画谱。
- * 已画谱的「补画」走 auto 模式，没有新消息由 ui 层预筛拦下（通知「没有新消息、无需重画」），不烧 AI。
- */
-export function foldSeal(p: PersonEntry, job: FoldCardJob | null): FoldSeal {
+export function albumSealOf(p: PersonEntry, job: FoldCardJob | null): AlbumSeal {
   const name = p.name || p.id;
+  if (job && job.status !== 'done' && job.queued) {
+    return { state: 'queued', text: '等', title: `「${name}」排在队里，等着画`, action: null };
+  }
   if (job && job.status !== 'done') {
     const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : '尚未切批';
     if (job.status === 'running') {
       const pct = job.describePct ?? job.prepPct ?? jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
       return {
         state: 'running',
-        text: `画谱中\n${pct}%`,
+        text: '画',
+        pct,
         title: `正在生成「${name}」的脸谱（${prog}）——点这里在本批做完后暂停`,
-        action: { kind: 'pause', label: '暂停' },
+        action: 'pause',
       };
     }
     if (job.status === 'error' && !job.resumable) {
-      return {
-        state: 'halted',
-        text: '画谱中断',
-        title: `「${name}」上次生成中断且接不上（消息集已变）——点这里重新生成`,
-        action: { kind: 'redraw', label: '重新生成' },
-      };
+      return { state: 'halted', text: '停', title: `「${name}」上次生成中断且接不上（消息集已变）——去详情页重新生成`, action: null };
     }
     return {
       state: 'halted',
-      text: `画谱中断\n${job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal}` : '待续'}`,
-      title: `「${name}」${job.status === 'error' ? '上次生成失败' : '上次没画完'}（${prog}）——点这里从断点继续，已画完的批次不重画`,
-      action: { kind: 'resume', label: '继续生成' },
+      text: job.status === 'error' ? '停' : '歇',
+      title: `「${name}」${job.status === 'error' ? '上次生成失败' : '上次没画完'}（${prog}）——去详情页从断点继续，已画完的批次不重画`,
+      action: null,
     };
   }
+  // 旧单卷脸谱（只有 portrait）先认出来：它虽有 digest，但「旧版」这枚印要提醒重画一次
+  if (isLegacyFace(p)) return { state: 'legacy', text: '旧', title: `「${name}」的脸谱还是旧版单卷——去详情页重画一次`, action: null };
   if (p.digest) {
     return {
-      state: 'done',
-      text: p.lastProcessedTs ? `画到\n${formatDay(p.lastProcessedTs).slice(2)}` : '已画',
-      title: `「${name}」的脸谱已画到这天——点这里用新导入的消息补画（没有新消息会跳过）`,
-      action: { kind: 'redraw', label: '补画' },
+      state: 'drawn',
+      text: p.lastProcessedTs ? '画' : '绘',
+      title: `「${name}」的脸谱已画到这天——去详情页用新导入的消息补画（没有新消息会跳过）`,
+      action: null,
     };
   }
-  return {
-    state: 'todo',
-    text: '待画',
-    title: `「${name}」还没有脸谱——点这里用已导入的消息画一张`,
-    action: { kind: 'draw', label: '画脸谱' },
-  };
+  return { state: 'none', text: '', title: '', action: null };
 }
 
-/**
- * 印章节点（foldCard 与 ui 原位刷新共用同一份 markup——印章单源）。
- * 用 button 而非 div：印章本身就是动作入口（451），不再往卡面加第二个元素。
- */
-export function foldSealNode(p: PersonEntry, job: FoldCardJob | null): HTMLElement {
-  const seal = foldSeal(p, job);
-  const b = el('button', `bz-people-seal bz-people-seal-${seal.state}`, {
-    'data-people-seal-act': seal.action.kind,
-    'aria-label': `${seal.action.label}：${p.name || p.id}`,
-    title: seal.title,
-  }) as HTMLButtonElement;
-  b.type = 'button';
-  b.textContent = seal.text;
-  return b;
+/** 旧版单卷脸谱：正文还挂在旧字段 portrait 上（双卷之前的落盘） */
+function isLegacyFace(p: PersonEntry): boolean {
+  return !!p.digest && !p.digest.person && !!p.digest.portrait;
 }
 
-/** 头像章（455 评审）：封面卡右上以照片为印，四态走印环（金环 = 已画，虚环 = 待画）——动作语义与 foldSealNode 同一单源 */
-function foldAvaNode(p: PersonEntry, seal: ReturnType<typeof foldSeal>, avatar: string): HTMLElement {
-  const b = el('button', `bz-people-seal bz-people-seal-${seal.state} bz-people-fold-ava`, {
-    'data-people-seal-act': seal.action.kind,
-    'aria-label': `${seal.action.label}：${p.name || p.id}`,
-    title: seal.title,
-  }) as HTMLButtonElement;
-  b.type = 'button';
-  b.appendChild(el('img', '', { src: avatarUri(avatar), alt: p.name }));
-  return b;
+/** 印节点：画谱中那枚是 button（点即暂停），其余是标记块 */
+export function albumSealNode(p: PersonEntry, job: FoldCardJob | null): HTMLElement | null {
+  const seal = albumSealOf(p, job);
+  if (seal.state === 'none') return null;
+  if (seal.state === 'running') {
+    const b = el('button', 'bz-people-seal bz-people-seal-run', {
+      'data-people-seal-act': 'pause',
+      'aria-label': `暂停生成：${p.name || p.id}`,
+      title: seal.title,
+    }) as HTMLButtonElement;
+    b.type = 'button';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'bz-people-seal-ring');
+    svg.setAttribute('viewBox', '0 0 36 36');
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    track.setAttribute('cx', '18');
+    track.setAttribute('cy', '18');
+    track.setAttribute('r', '15.6');
+    track.setAttribute('pathLength', '100');
+    const arc = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    arc.setAttribute('class', 'bz-people-seal-arc');
+    arc.setAttribute('cx', '18');
+    arc.setAttribute('cy', '18');
+    arc.setAttribute('r', '15.6');
+    arc.setAttribute('pathLength', '100');
+    arc.setAttribute('style', `stroke-dasharray:${Math.max(0, Math.min(100, seal.pct ?? 0))} 100`);
+    svg.append(track, arc);
+    b.append(svg, el('span', '', text(seal.text)));
+    return b;
+  }
+  return el('div', `bz-people-seal bz-people-seal-${seal.state}`, { title: seal.title }, text(seal.text));
 }
 
-/**
- * 折子封面卡（issue 447 / 451）：竖排姓名 + 关系标签 + 消息量 + 印章（四态；有头像时印章即照片章）。
- * 水位 = lastProcessedTs（已画到的提炼锚点）；印章四态与动作见 foldSeal。
- * 卡面不放动作（448：合并 / 删除收进详情头图标工具条）——印章本身即入口，不新增元素。
- */
-export function foldCard(p: PersonEntry, opts: FoldCardOpts): HTMLElement {
-  const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-  const from = p.imports.map((r) => r.timeFrom).sort()[0];
-  const to = p.imports.map((r) => r.timeTo).sort().pop();
-  const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : '';
-  const rel = (p.profile?.tags ?? []).filter(Boolean)[0] ?? '';
-  const label = mediaLabel(opts.media);
-  const seal = foldSeal(p, opts.job ?? null);
-  const card = el('div', 'bz-people-fold', [
-    el('div', 'bz-people-fold-inner', [
-      opts.avatar ? foldAvaNode(p, seal, opts.avatar) : foldSealNode(p, opts.job ?? null),
-      el('div', 'bz-people-fold-title vt', { title: p.name }, text(vtName(p.name))),
-      // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
-      el('div', 'bz-people-fold-who', text(rel || (span ? span : '新折'))),
-      el('div', 'bz-people-fold-meta', text([
-        total ? `${formatCount(total)} 条` : '尚无消息',
-        label,
-        seal.state === 'done' && p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs).slice(2)}` : '',
-      ].filter(Boolean).join(' · '))),
+// ---------------- 一张照片 / 一行 / 一页 ----------------
+
+/** 照片数据（ui 侧备好，本层只管画） */
+export interface AlbumPhoto {
+  p: PersonEntry;
+  /** 头像文件路径（空串走首字印） */
+  avatar: string;
+  /** 这一格在页里的序号（--i：显影 / 飞进来的先后） */
+  index: number;
+  /** 新素材条数（>0 贴「新 N」） */
+  fresh: number;
+  /** 30 天内的重要日子（照片角上的提醒贴纸） */
+  due: { what: string; date: string; days: number } | null;
+  /** 引擎任务（印态；无任务按脸谱水位） */
+  job: FoldCardJob | null;
+}
+
+/** 头像：有照片就是照片，没有走「首字印」（印色按名字取色，一页里不至于一片红） */
+export function avatarNode(name: string, avatar: string, sizeCls = ''): HTMLElement {
+  if (avatar) return el('img', sizeCls, { src: avatarUri(avatar), alt: name });
+  const s = el('span', `${sizeCls} bz-people-ava-txt`.trim(), {
+    style: `background:hsl(${avatarHue(name)} 34% 46%)`,
+  }, text(initials(name)));
+  return s;
+}
+
+function avatarHue(name: string): number {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)!) >>> 0;
+  return h % 360;
+}
+
+/** 这一位总共导入了多少条消息 */
+function msgsOf(p: PersonEntry): number {
+  return p.imports.reduce((s, r) => s + r.messageCount, 0);
+}
+
+/** 一张照片（膜下的一格）：照片 + 印 + 角上的贴纸 + 底下那张手写标签 */
+export function albumPhoto(ph: AlbumPhoto): HTMLElement {
+  const { p, avatar, index, fresh, due, job } = ph;
+  const name = p.name || p.id;
+  const seal = albumSealOf(p, job);
+  const todo = seal.state === 'none'; // 还没洗出来：不盖印，照片是空白的
+  const cell = el('div', [
+    'bz-people-cell',
+    todo ? 'bz-people-todo' : '',
+    seal.state === 'queued' ? 'bz-people-wait' : '',
+  ].filter(Boolean).join(' '), {
+    'data-people-pocket': p.id,
+    tabindex: '0',
+    role: 'button',
+    style: `--i:${index}`,
+    'aria-label': `${name} · ${formatCount(msgsOf(p))} 条消息`,
+  });
+  const print = el('div', 'bz-people-print');
+  print.appendChild(el('div', 'bz-people-photo', avatarNode(name, avatar)));
+  if (todo) print.appendChild(el('div', 'bz-people-blank', text('还没洗出来')));
+  const sealNode = albumSealNode(p, job);
+  if (sealNode) print.appendChild(sealNode);
+  if (fresh > 0) print.appendChild(el('div', 'bz-people-fresh', text(`新 ${formatCount(fresh)}`)));
+  if (due) print.appendChild(el('div', 'bz-people-due', { title: `${due.what} · ${due.date}` }, text(`${due.what} ${due.days} 天`)));
+  const meta = job && job.status !== 'done'
+    ? (job.queued ? '排队中'
+      : job.status === 'running' ? `画谱中 ${job.describePct ?? job.prepPct ?? jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%`
+        : job.status === 'error' ? '失败待续' : '已暂停')
+    : `${formatCount(msgsOf(p))} 条`;
+  print.appendChild(el('div', 'bz-people-cap', [
+    el('span', 'bz-people-name', text(vtName(name))),
+    el('span', `bz-people-meta${job && job.status === 'running' ? ' bz-people-meta-run' : ''}`, text(meta)),
+  ]));
+  cell.appendChild(print);
+  return cell;
+}
+
+/** 空位：这一格还没贴上人 */
+export function albumVacant(): HTMLElement {
+  const s = el('span', 'bz-people-vacs');
+  s.append(text('空位'), el('br'), text('等新照片'));
+  return el('div', 'bz-people-cell bz-people-vacant', s);
+}
+
+/** 这一行贴的是「哪几年的人」：起年越早，衬纸越黄一档（翻页时一眼看出时间段） */
+function rowEra(a: AlbumPhoto | null, b: AlbumPhoto | null): number {
+  const from = a?.p.imports.map((r) => r.timeFrom).sort()[0] ?? b?.p.imports.map((r) => r.timeFrom).sort()[0] ?? '';
+  const y = Number(from.slice(0, 4)) || 0;
+  if (!y) return 0;
+  return y >= 2024 ? 0 : y >= 2022 ? 1 : y >= 2020 ? 2 : 3;
+}
+
+/** 这一行两人的共同点（只在真有共同点时落笔，没有就留一条空线） */
+function rowNote(a: AlbumPhoto | null, b: AlbumPhoto | null): string {
+  if (!a || !b) return '';
+  const ta = (a.p.profile?.tags ?? []).filter(Boolean);
+  const tb = (b.p.profile?.tags ?? []).filter(Boolean);
+  for (const t of ta) if (tb.includes(t)) return `都算「${t}」`;
+  const ya = (a.p.imports.map((r) => r.timeFrom).sort()[0] ?? '').slice(0, 4);
+  const yb = (b.p.imports.map((r) => r.timeFrom).sort()[0] ?? '').slice(0, 4);
+  if (ya && ya === yb) return `${ya} 年认识的`;
+  return '';
+}
+
+/** 一行两张：两张照片 + 底下一行手写批注（一行一组，像同一张衬纸上的两个人） */
+export function albumRow(a: AlbumPhoto | null, b: AlbumPhoto | null): HTMLElement {
+  const row = el('div', 'bz-people-row', { 'data-era': String(rowEra(a, b)) });
+  row.appendChild(a ? albumPhoto(a) : albumVacant());
+  row.appendChild(b ? albumPhoto(b) : albumVacant());
+  row.appendChild(el('div', 'bz-people-row-note', text(rowNote(a, b))));
+  return row;
+}
+
+/** 贴相区：一组组照片 + 罩在上面的一整张透明膜（膜比网格四周各宽一圈，才像「隔层」） */
+export function albumSleeve(rows: HTMLElement[]): HTMLElement {
+  return el('div', 'bz-people-boardarea', [
+    el('div', 'bz-people-sleeve', [
+      el('div', 'bz-people-board', rows),
+      el('div', 'bz-people-film'),
     ]),
   ]);
-  if (opts.mergeFrom) card.classList.add('bz-people-fold-merge-src');
-  else if (opts.mergePick) card.classList.add('bz-people-fold-merge-pick');
-  card.setAttribute('data-people-card', p.id);
-  return card;
-}
-
-/** 墙容器（data 钩子供原位刷新） */
-export function foldWall(): HTMLElement {
-  return el('div', 'bz-people-wall', { 'data-people-wall': '' });
-}
-
-/** 空库态：修谱引导（导入走数据源弹窗） */
-export function wallEmpty(): HTMLElement {
-  return el('div', 'bz-people-empty', [
-    el('div', 'bz-people-empty-mark', { 'aria-hidden': 'true' }, el('i', 'bz-ic', { 'data-lucide': 'smile' })),
-    el('div', 'bz-people-empty-title', text('还没有脸谱')),
-    el('div', 'bz-people-empty-hint', text('打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。')),
-    button('bz-people-btn bz-people-btn-acc', '打开数据源', { 'data-people-ds-open': '' }),
-  ]);
-}
-
-// ---------------- 冷读加载占位（issue 483：解锁后首开面板，readAll 逐人解密期不再白屏） ----------------
-
-/** 冷读加载态（ui 层从 readAll 进度回调喂入；total 未知 = 清单尚未读到，不出 N/M） */
-export interface LoadState {
-  done: number;
-  total: number | null;
 }
 
 /**
- * 冷读加载占位：进度行（文案 + N/M 计数）+ 折子墙骨架。
- * 计数带原位更新钩子（data-people-loading / data-people-load-count）：运行中逐人只换数字，
- * 不重建骨架；加载完由调用方整体替换成真实数据（单次 replaceChildren，无二次闪动）。
+ * 一页（页眉 + 贴相区）。第一页报总账（几位 / 多少条 / 几张脸谱），往后每页报这一页的说话跨度——
+ * 「接着往前」「最近一次说话」这些字都省了，越简越不抢版面。
  */
-export function loadBody(state: LoadState): HTMLElement {
-  const count = el('strong', 'bz-people-load-count', { 'data-people-load-count': '' },
-    text(state.total != null ? `${state.done}/${state.total}` : ''));
-  if (state.total == null) count.hidden = true;
-  const wrap = el('div', 'bz-people-loading', { 'data-people-loading': '' }, [
-    el('div', 'bz-people-load-line', [
-      el('span', 'bz-people-load-spin', { 'aria-hidden': 'true' }),
-      el('span', 'bz-people-load-text', text('正在解密联系人数据…')),
-      count,
-    ]),
+export function albumPage(cells: Array<AlbumPhoto | null>, no: number, totalPeople: number, ledger: { faces: number; msgs: number }): HTMLElement {
+  const slots: Array<AlbumPhoto | null> = cells.slice(0, AL_PER_PAGE);
+  while (slots.length < AL_PER_PAGE) slots.push(null);
+  const rows: HTMLElement[] = [];
+  for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1]));
+  const head = el('div', 'bz-people-page-head');
+  head.appendChild(headChip(el('span', 'bz-people-head-count-in', [
+    textEl('b', String(no)),
+    text(' / '),
+    textEl('span', String(pageTotal(totalPeople))),
+  ])));
+  if (no === 1) {
+    head.appendChild(el('span', 'bz-people-head-label', text('最近说过话的')));
+    const l = el('span', 'bz-people-head-ledger');
+    l.append(
+      text('共 '), textEl('b', formatCount(totalPeople)), text(' 位 · '),
+      textEl('b', formatCount(ledger.msgs)), text(' 条 · '),
+      textEl('b', String(ledger.faces)), text(' 张脸谱'),
+    );
+    head.appendChild(el('span', 'bz-people-head-right', l));
+  } else {
+    const names = cells.filter((c): c is AlbumPhoto => !!c).map((c) => c.p.name);
+    const span = names.length ? `${names[names.length - 1]} ~ ${names[0]}` : '';
+    head.appendChild(el('span', 'bz-people-head-right', el('span', 'bz-people-head-note', text(span))));
+  }
+  const page = el('div', 'bz-people-page', head);
+  page.appendChild(albumSleeve(rows));
+  return page;
+}
+
+// ---------------- 上锁封面 / 空册 / 冷读 ----------------
+
+/** 上锁：整册合着，只看得见封皮与搭扣（脸谱存在加密保库里，没解锁就只有这一张封面） */
+export function lockCover(boot = false): HTMLElement {
+  const spread = el('div', `bz-people-spread bz-people-lockwrap${boot ? ' bz-people-boot' : ''}`);
+  const cover = el('div', 'bz-people-cover', [
+    el('div', 'bz-people-cover-band'),
+    el('div', 'bz-people-cover-title', text('脸谱')),
+    el('div', 'bz-people-cover-sub', text('人物消息脸谱')),
+    el('div', 'bz-people-clasp', el('i', 'bz-ic', { 'data-lucide': 'lock', 'aria-hidden': 'true' })),
+    el('div', 'bz-people-cover-hint', text('脸谱数据在加密保库里 —— 解锁后才能查看。聊天原文只在本机提炼，不落盘。')),
   ]);
-  const wall = el('div', 'bz-people-load-wall', { 'aria-hidden': 'true' });
-  for (let i = 0; i < 6; i++) wall.appendChild(el('div', 'bz-people-load-card'));
-  wrap.appendChild(wall);
+  const acts = el('div', 'bz-people-cover-acts', [
+    button('bz-people-btn', '取消', { 'data-people-lock': 'cancel' }),
+    iconButton('unlock', 'bz-people-btn bz-people-btn-acc', { 'data-people-lock': 'unlock' }),
+  ]);
+  acts.lastElementChild!.appendChild(text(' 解锁保险库'));
+  cover.appendChild(acts);
+  spread.appendChild(cover);
+  const wrap = el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, spread);
   return wrap;
 }
 
-// ---------------- 详情（折页册） ----------------
+/** 空册那枚印上的笑脸：三个部件各自描出来（pathLength=100 把每段归一，快慢才一致） */
+function emptyMark(): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'bz-people-empty-ico');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '1.8');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  const add = (tag: string, attrs: Record<string, string>): void => {
+    const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    svg.appendChild(n);
+  };
+  add('circle', { cx: '12', cy: '12', r: '9.4', pathLength: '100' });
+  add('path', { d: 'M8 14.3s1.6 2.2 4 2.2 4-2.2 4-2.2', pathLength: '100' });
+  add('path', { d: 'M9 9.4h.02', pathLength: '100' });
+  add('path', { d: 'M15 9.4h.02', pathLength: '100' });
+  return svg;
+}
 
-/** 折 id（issue 455 三折，评审拍板合并）：p = 卷一《其人》，b = 卷二《相交》，e = 《纪事》（编年 + 按月事件）；统计与档案为详情头弹窗 */
+/** 标题一个字一个字写出来（一个字一层遮罩，从左抹到右） */
+function writeOut(s: string): HTMLElement {
+  return el('div', 'bz-people-empty-title', [...s].map((c, i) => el('span', 'bz-people-w', { style: `--i:${i}` }, text(c))));
+}
+
+/** 空册：左边一页全是空位（相册本身），右边那页夹着一张写好的说明纸 */
+export function albumEmpty(): HTMLElement {
+  const vac: HTMLElement[] = [];
+  for (let i = 0; i < AL_PER_PAGE; i++) vac.push(albumVacant());
+  const rows: HTMLElement[] = [];
+  for (let i = 0; i < vac.length; i += 2) {
+    const r = el('div', 'bz-people-row');
+    r.append(vac[i], vac[i + 1], el('div', 'bz-people-row-note'));
+    rows.push(r);
+  }
+  const left = el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [
+      headChip('空册'),
+      el('span', 'bz-people-head-label', text('相册簿还是空的')),
+      el('span', 'bz-people-head-right', el('span', 'bz-people-head-note', text('空位都留着'))),
+    ]),
+    albumSleeve(rows),
+  ]);
+  const right = el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [headChip('空册'), el('span', 'bz-people-head-label', text('第一张照片等着贴'))]),
+    el('div', 'bz-people-empty', [
+      el('div', 'bz-people-empty-mark', emptyMark()),
+      writeOut('还没贴一张照片'),
+      el('div', 'bz-people-empty-hint', text('打开「数据源」勾选联系人导入，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆，洗成照片贴进来。聊天原文只在本机提炼，不落盘。')),
+      button('bz-people-btn bz-people-btn-acc', '打开数据源', { 'data-people-dialog': 'ds' }),
+    ]),
+  ]);
+  const spread = el('div', 'bz-people-spread', { 'data-people-spread': '' }, [left, albumGutter(), right]);
+  return el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, spread);
+}
+
+/** 冷读（issue 483）：解密进度就写在页眉上，两页各说一句，不再顶一颗浮药丸 */
+export function albumLoad(done: number, total: number | null): HTMLElement {
+  const rows: HTMLElement[] = [];
+  for (let i = 0; i < AL_PER_PAGE; i += 2) {
+    const r = el('div', 'bz-people-row');
+    r.append(
+      el('div', 'bz-people-cell bz-people-wait', el('div', 'bz-people-print')),
+      el('div', 'bz-people-cell bz-people-wait', el('div', 'bz-people-print')),
+      el('div', 'bz-people-row-note'),
+    );
+    rows.push(r);
+  }
+  const count = el('span', 'bz-people-decrypt',
+    el('span', 'bz-people-load-spin', { 'data-people-load-count': '' }, text(total ? `${done}/${total} 位` : `${done} 位`)));
+  const mk = (label: string, right: Node): HTMLElement => el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [headChip('解密中'), el('span', 'bz-people-head-label', text(label)), el('span', 'bz-people-head-right', right)]),
+    albumSleeve(rows),
+  ]);
+  const spread = el('div', 'bz-people-spread bz-people-spread-load', { 'data-people-spread': '' }, [
+    mk('正在解密联系人数据', count),
+    albumGutter(),
+    mk('解密完就摊开', el('span', 'bz-people-head-note', text('先不急着看'))),
+  ]);
+  return el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, spread);
+}
+
+/** 总账文案（第一页页眉的小签；空册时也用它） */
+export function statsText(people: PersonEntry[]): string {
+  const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
+  const faces = people.filter((p) => p.digest).length;
+  return people.length ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱` : '还没有人物';
+}
+
+// ---------------- 详情：对面翻开的那一页 ----------------
+
 export type FoldId = 'p' | 'b' | 'e';
 
-const FOLD_TITLES: Array<[FoldId, string, string]> = [
+/** 三折的页签名与卷名（其人 / 相交 / 纪事，issue 455 拍板） */
+export const FOLD_TITLES: Array<[FoldId, string, string]> = [
   ['p', '其人', '卷一 · 人物画像与代表原话'],
   ['b', '相交', '卷二 · 关系画像'],
   ['e', '纪事', '编年 + 按月交往事件'],
 ];
 
-export interface FoldDetailOpts {
-  fold: FoldId;
+/** 详情页一眼账（相纸右边那几张小纸片）：数据不够的项不贴那一片 */
+export interface DtFacts {
+  /** 谁先开口：我发起的占比 0~100 */
+  mePct: number;
+  /** 最热的一月 [YYYY-MM, 条数] */
+  month: [string, number] | null;
+  images: number;
+  voices: number;
 }
 
-export interface FoldDetailHeadOpts {
-  /** 未生成脸谱 → 出「画脸谱」 */
-  canGenerate: boolean;
-  /**
-   * 生成任务（issue 453）：有未完成任务时，工具条画笔钮改成「继续生成」（刷新图标 + 进度提示），
-   * 点它不再从第 1 批重烧——详情头本来就是把用户引向重烧的入口之一。
-   */
-  job?: FoldCardJob | null;
-  /** 头像文件绝对路径（数据目录 avatar.<ext>；缺省回落首字印章） */
-  avatar?: string;
+export interface DetailOpts {
+  /** 详情翻在哪一侧（点左页的照片 → 详情在右；点右页的 → 详情在左） */
+  side: 'left' | 'right';
+  fold: FoldId;
+  /** 头像文件路径（空串走首字印） */
+  avatar: string;
+  /** 当前折的正文（ui 侧用 fold*Body 备好） */
+  body: HTMLElement[];
+  /** 引擎任务（决定头一个动作是「画脸谱 / 继续生成 / 重新画」） */
+  job: FoldCardJob | null;
+  facts: DtFacts | null;
 }
+
+/** 头上那枚印的文案：待画 / 旧版 / 画到 YYYY-MM-DD */
+function stampText(p: PersonEntry, job: FoldCardJob | null): string {
+  const seal = albumSealOf(p, job);
+  if (seal.state === 'none') return '待画';
+  if (seal.state === 'legacy') return '旧版';
+  if (seal.state === 'queued' || seal.state === 'running' || seal.state === 'halted') return '画谱中';
+  return p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs)}` : '已画';
+}
+
+function detailFacts(p: PersonEntry, facts: DtFacts): HTMLElement | null {
+  const out: HTMLElement[] = [];
+  const me = Math.max(0, Math.min(100, Math.round(facts.mePct)));
+  const duoVal = el('span', 'bz-people-fact-v');
+  duoVal.append(text('我 '), textEl('b', `${me}%`), text(' · TA '), textEl('b', `${100 - me}%`));
+  out.push(el('div', 'bz-people-fact', [
+    el('span', 'bz-people-fact-k', text('谁先开口')),
+    el('span', 'bz-people-fact-bar', el('i', '', { style: `width:${me}%` })),
+    duoVal,
+  ]));
+  if (facts.month) {
+    const v = el('span', 'bz-people-fact-v');
+    v.append(text(`${facts.month[0]} · `), textEl('b', formatCount(facts.month[1])), text(' 条'));
+    out.push(el('div', 'bz-people-fact', [el('span', 'bz-people-fact-k', text('最热的一月')), v]));
+  }
+  if (facts.images || facts.voices) {
+    const v = el('span', 'bz-people-fact-v');
+    v.append(text('图 '), textEl('b', formatCount(facts.images)), text(' · 语 '), textEl('b', formatCount(facts.voices)));
+    out.push(el('div', 'bz-people-fact', [el('span', 'bz-people-fact-k', text('素材水位')), v]));
+  }
+  return out.length ? el('div', 'bz-people-dt-facts', out) : null;
+}
+
+/** 详情页（对面翻开的那一页）：头顶两栏 + 动作小签 + 三折签 + 纸页 */
+export function detailPage(p: PersonEntry, opts: DetailOpts): HTMLElement {
+  const name = p.name || p.id;
+  const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
+  const from = p.imports.map((r) => r.timeFrom).sort()[0] ?? '';
+  const to = p.imports.map((r) => r.timeTo).sort().pop() ?? '';
+  const page = el('div', `bz-people-page bz-people-dpage bz-people-sit-${opts.side === 'left' ? 'l' : 'r'}`, { 'data-people-detail': p.id });
+  const head = el('div', 'bz-people-page-head');
+  head.appendChild(el('span', 'bz-people-head-label', text(`脸谱 · ${name}`)));
+  head.appendChild(el('span', 'bz-people-head-right',
+    button('bz-people-close', '合上这页', { 'data-people-act': 'back' })));
+  page.appendChild(head);
+
+  const body = el('div', 'bz-people-pagebody', { 'data-people-scroll': 'detail' });
+
+  // 头顶两栏：宝丽来那张照片靠左贴着，右边放标签 / 账目 / 一眼账
+  const frame = el('div', 'bz-people-bigframe', [
+    el('div', 'bz-people-tape', { style: '--tr:calc(var(--t2) * -2)' }),
+    el('div', 'bz-people-bigphoto', avatarNode(name, opts.avatar)),
+    el('div', 'bz-people-dt-stamp', text(stampText(p, opts.job))),
+    el('div', 'bz-people-bigname', text(name)),
+  ]);
+  const side = el('div', 'bz-people-dt-side');
+  const tags = (p.profile?.tags ?? []).filter(Boolean);
+  if (tags.length) side.appendChild(el('div', 'bz-people-dt-tags', tags.map((t) => tagStk(t))));
+  const due = dueSoonOf(p);
+  if (due) {
+    const line = el('div', 'bz-people-due-line');
+    line.append(el('i', 'bz-ic', { 'data-lucide': 'gift', 'aria-hidden': 'true' }), el('span', '', text(`${due.what} · ${due.date}（还有 ${due.days} 天）`)));
+    side.appendChild(line);
+  }
+  const meta = el('div', 'bz-people-dt-meta');
+  meta.append(
+    textEl('b', formatCount(total)), text(' 条消息 · '),
+    textEl('span', formatCount(p.imports.length)), text(' 次导入'),
+  );
+  meta.appendChild(el('br'));
+  meta.append(text(p.digest?.generatedAt ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : '还没画过脸谱'));
+  if (from && to) {
+    meta.appendChild(el('br'));
+    meta.append(text(`交往 ${from.slice(0, 10)} ~ ${to.slice(0, 10)}`));
+  }
+  side.appendChild(meta);
+  const facts = opts.facts ? detailFacts(p, opts.facts) : null;
+  if (facts) side.appendChild(facts);
+  body.appendChild(el('div', 'bz-people-dttop', [el('div', 'bz-people-bigph', frame), side]));
+
+  // 动作小签：画谱是主路（第一个），其余是记事 / 数据 / 档案 / 删除 / 合上
+  const gen = genActionOf(p, opts.job);
+  const acts = el('div', 'bz-people-acts', [
+    el('button', 'bz-people-act', { 'data-people-act': 'generate' }, [
+      el('i', 'bz-ic', { 'data-lucide': gen.icon, 'aria-hidden': 'true' }),
+      el('span', '', text(gen.label)),
+      el('span', 'bz-people-act-hint', text(gen.hint)),
+    ]),
+    el('button', 'bz-people-act', { 'data-people-act': 'note' }, [
+      el('i', 'bz-ic', { 'data-lucide': 'pencil', 'aria-hidden': 'true' }), el('span', '', text('记一笔')),
+    ]),
+    el('button', 'bz-people-act', { 'data-people-act': 'stats' }, [
+      el('i', 'bz-ic', { 'data-lucide': 'bar-chart-3', 'aria-hidden': 'true' }), el('span', '', text('互动统计')),
+    ]),
+    el('button', 'bz-people-act', { 'data-people-act': 'prof' }, [
+      el('i', 'bz-ic', { 'data-lucide': 'contact', 'aria-hidden': 'true' }), el('span', '', text('补充背景')),
+    ]),
+    el('button', 'bz-people-act', { 'data-people-act': 'del', 'data-people-del': p.id }, [
+      el('i', 'bz-ic', { 'data-lucide': 'trash-2', 'aria-hidden': 'true' }), el('span', '', text('删除联系人')),
+    ]),
+    el('button', 'bz-people-act', { 'data-people-act': 'back' }, [
+      el('i', 'bz-ic', { 'data-lucide': 'arrow-left', 'aria-hidden': 'true' }), el('span', '', text('合上这页')),
+    ]),
+  ]);
+  for (const b of Array.from(acts.children)) (b as HTMLButtonElement).type = 'button';
+  body.appendChild(acts);
+
+  // 三折签：其人 / 相交 / 纪事
+  const tabs = el('div', 'bz-people-ftabs', FOLD_TITLES.map(([id, label]) =>
+    button(`bz-people-ftab${opts.fold === id ? ' on' : ''}`, label, { 'data-people-fold': id, 'data-people-leaf-head': id })));
+  body.appendChild(tabs);
+  const title = FOLD_TITLES.find(([id]) => id === opts.fold)?.[2] ?? '';
+  body.appendChild(el('div', 'bz-people-fsheet', [
+    el('div', 'bz-people-fsheet-head', el('span', 'bz-people-fsheet-title', text(title))),
+    el('div', 'bz-people-fsheet-body', opts.body),
+  ]));
+  page.appendChild(body);
+  return page;
+}
+
+/** 头一个动作（画脸谱 / 继续生成 / 重新画）：跟着任务态与脸谱水位走 */
+function genActionOf(p: PersonEntry, job: FoldCardJob | null): { label: string; hint: string; icon: string } {
+  const seal = albumSealOf(p, job);
+  if (seal.state === 'running' || seal.state === 'queued' || seal.state === 'halted') {
+    return { label: '继续生成', hint: '不从头重烧', icon: 'refresh-cw' };
+  }
+  if (seal.state === 'drawn' || seal.state === 'legacy') return { label: '补画脸谱', hint: '用新导入的消息', icon: 'paintbrush' };
+  return { label: '画脸谱', hint: '用已导入的消息生成', icon: 'paintbrush' };
+}
+
+/** 这一行两人的共同点用的标签贴纸（档案页与详情页共用一枚） */
+export function tagStk(t: string): HTMLElement {
+  const kinds = new Set(['前同事', '大学同学', '室友', '旅伴', '表妹', '游戏搭子']);
+  const cls = `bz-people-stk${kinds.has(t) ? ' bz-people-stk-red' : ''}`;
+  return el('span', cls, { style: `transform:rotate(${[...t].length % 2 ? 3 : -3}deg)` }, text(t));
+}
+
+/** 30 天内有重要日子就返回那一条（照片角上的提醒贴纸与详情页的那行都用它） */
+export function dueSoonOf(p: PersonEntry, today = new Date()): { what: string; date: string; days: number } | null {
+  const list = p.profile?.importantDates ?? [];
+  let best: { what: string; date: string; days: number } | null = null;
+  const base = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  for (const d of list) {
+    const m = /^(\d{2})-(\d{2})$/.exec(String(d.date ?? ''));
+    if (!m) continue;
+    let when = new Date(base);
+    when.setMonth(Number(m[1]) - 1, Number(m[2]));
+    if (when.getTime() < base) when = new Date(today.getFullYear() + 1, Number(m[1]) - 1, Number(m[2]));
+    const days = Math.round((when.getTime() - base) / 86400000);
+    if (days >= 0 && days <= 30 && (!best || days < best.days)) best = { what: d.what, date: d.date, days };
+  }
+  return best;
+}
+
+// ---------------- 折正文（其人 / 相交 / 纪事） ----------------
+
+/** 折内空态提示：一句话说清「这一折为什么还空着」，动作在详情头的画笔钮上 */
+export function foldHint(msg: string): HTMLElement {
+  return el('div', 'bz-people-empty-hint', text(msg));
+}
+
+function secTitle(t: string): HTMLElement {
+  return el('div', 'bz-people-sec-title', text(t));
+}
+
+/** 其人折正文（卷一《其人》）：markdown + 性格特质 + 代表原话 + 最近在聊什么 + 留下的片刻 */
+export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
+  const out: HTMLElement[] = [mdRoot ?? foldHint('其人画像还没生成——画一次脸谱就会写出来。')];
+  const traits = p.digest?.traits ?? [];
+  if (traits.length) {
+    const box = el('div', 'bz-people-traits', traits.slice(0, 12).map((t) => el('span', 'bz-people-trait', text(t))));
+    if (traits.length > 12) box.appendChild(el('span', 'bz-people-trait-more', text(`…另有 ${traits.length - 12} 条`)));
+    out.push(secTitle('性格特质'), box);
+  }
+  const quotes = p.digest?.quotes ?? [];
+  if (quotes.length) {
+    const box = el('div', 'bz-people-quotes', quotes.slice(0, 8).map((q) => el('div', 'bz-people-quote-card', [
+      el('div', 'bz-people-quote-text', text(`「${q.text}」`)),
+      el('div', 'bz-people-quote-meta', text(`${q.who === '我' ? '我' : p.name} · ${q.ts}`)),
+    ])));
+    out.push(secTitle('代表原话'), box);
+  }
+  const interests = p.digest?.interests ?? [];
+  if (interests.length) {
+    out.push(secTitle('最近在聊什么'), el('div', 'bz-people-md bz-people-ints', interests.slice(0, 10).map((t) =>
+      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.topic))]))));
+  }
+  const moments = p.digest?.moments ?? [];
+  if (moments.length) {
+    const box = el('div', 'bz-people-md bz-people-moms', moments.slice(0, 6).map((t) =>
+      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.summary))])));
+    if (moments.length > 6) box.appendChild(el('div', 'bz-people-it', [el('span', 'bz-people-date'), el('span', 'bz-people-mut', text(`…另有 ${moments.length - 6} 个片刻`))]));
+    out.push(secTitle('留下的片刻'), box);
+  }
+  return out;
+}
+
+/** 相交折正文（卷二《相交》）：markdown + 未竟之事 */
+export function foldBondBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
+  const out: HTMLElement[] = [mdRoot ?? foldHint('关系画像还没生成——画一次脸谱就会写出来。')];
+  const threads = p.digest?.threads ?? [];
+  if (threads.length) {
+    out.push(secTitle('未竟之事'), el('div', 'bz-people-md', threads.slice(0, 8).map((t) =>
+      el('div', 'bz-people-it', [el('span', 'bz-people-date', text(t.ts)), el('span', '', text(t.text))]))));
+  }
+  return out;
+}
+
+/** 纪事折正文：编年时间线在前，按月交往事件（可折）在后，随手记列表收尾 */
+export function foldEventsBody(p: PersonEntry): HTMLElement[] {
+  const out: HTMLElement[] = [];
+  const chron = p.digest?.chronicle ?? '';
+  if (chron) {
+    out.push(el('div', 'bz-people-chron', miniMarkdown(chron)));
+    out.push(el('div', 'bz-people-ev-divider', el('span', '', text('纪事 · 按月'))));
+  }
+  const events = p.digest?.events ?? [];
+  if (events.length) {
+    const by = new Map<string, typeof events>();
+    for (const e of events) {
+      const m = e.ts.slice(0, 7);
+      const arr = by.get(m) ?? [];
+      arr.push(e);
+      by.set(m, arr);
+    }
+    const months = [...by.keys()].sort();
+    const wrap = el('div', 'bz-people-months');
+    months.forEach((m, i) => {
+      const evs = [...(by.get(m) ?? [])].sort((a, b) => (a.kind === 'major' ? 0 : 1) - (b.kind === 'major' ? 0 : 1));
+      const inner = el('div', 'bz-people-mon-in', evs.slice(0, 14).map((e) =>
+        el('div', `bz-people-ev${e.kind === 'major' ? ' bz-people-major' : ''}`, [
+          el('span', 'bz-people-ev-ts', text(e.ts)),
+          el('span', 'bz-people-ev-sum', text(e.summary)),
+        ])));
+      if (evs.length > 14) inner.appendChild(el('div', 'bz-people-ev', el('span', 'bz-people-ev-sum bz-people-mut', text(`…同月另有 ${evs.length - 14} 条`))));
+      const head = el('button', 'bz-people-mon-head', { 'data-people-mon': m }) as HTMLButtonElement;
+      head.type = 'button';
+      head.append(el('span', 'bz-people-mon-plus', text('+')), el('span', 'bz-people-mon-chip', text(m)), el('span', 'bz-people-mon-cnt', text(`${evs.length} 条`)));
+      wrap.appendChild(el('div', `bz-people-mon${i === 0 ? ' on' : ''}`, [head, el('div', 'bz-people-mon-body', inner)]));
+    });
+    out.push(wrap);
+  } else if (!out.length) {
+    out.push(foldHint('交往纪事还没生成——画一次脸谱就会排出来。'));
+  }
+  const manual = p.manualEvents ?? [];
+  if (manual.length) {
+    out.push(secTitle('随手记'), el('div', 'bz-people-notes', manual.map((m) =>
+      el('div', 'bz-people-note-row', [
+        el('span', 'bz-people-note-ts', text(m.ts)),
+        el('span', 'bz-people-note-sum', text(m.summary)),
+        button('bz-people-note-del', '撕掉', { 'data-people-note-del': m.id }),
+      ]))));
+  }
+  return out;
+}
+
+// ---------------- 删除三档（issue 500 / 501 / 502 续） ----------------
 
 /**
  * 删除门禁档（issue 500）：按「手上有没有画成的脸谱」分三档——
@@ -754,6 +1223,8 @@ export interface FoldDetailHeadOpts {
  *   undrawn（未画谱）     = 都没 → 弹确认框二次确认。
  * 「有画像」判据：卷一 / 卷二 / 纪事任一有正文。卷一《其人》是必达产物，重画中断不会留下空卷，
  * 所以「有 digest 正文」等价于「手上有一份看得的脸谱」。
+ * **只看正文、不看 digest 对象本身**：空壳 digest（字段全空，旧单卷空串那类）不算已画——
+ * 不给用户上无谓的密码门。已画谱压过未完成任务：手上那份画像删了不可逆，补画中也要输主密码。
  */
 export type DeleteTier = 'undrawn' | 'unfinished' | 'drawn';
 
@@ -764,200 +1235,16 @@ export function deleteTierOf(p: PersonEntry, job?: { status: string } | null): D
   return job && job.status !== 'done' ? 'unfinished' : 'undrawn';
 }
 
-/** 详情头删除钮的 hover 文案（按档说清代价与门禁） */
-function deleteTitleOf(tier: DeleteTier): string {
-  if (tier === 'drawn') return '删除这个联系人（已有脸谱，需重输主密码）';
-  if (tier === 'unfinished') return '删除这个联系人（脸谱还没画完）';
-  return '删除这个联系人';
-}
-
-/** 详情头（455 评审采纳「居家档案型」）：圆照金环（无则首字印）+ 名 + 档案印签 + 数字下地的一行 meta + 朱色图标工具条 */
-export function foldDetailHead(p: PersonEntry, media: MediaShape | null, opts: FoldDetailHeadOpts): HTMLElement {
-  const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-  const job = opts.job && opts.job.status !== 'done' ? opts.job : null;
-  const tier = deleteTierOf(p, job);
-  const action = job
-    ? iconButton('refresh-cw', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', {
-      'data-people-generate-one': '',
-      'aria-label': job.status === 'running' ? '正在生成' : '继续生成',
-      title: job.status === 'running'
-        ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部`
-        : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`,
-    })
-    : opts.canGenerate
-      ? iconButton('paintbrush', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-generate-one': '', 'aria-label': '画脸谱', title: '画脸谱（用已导入的消息生成）' })
-      : null;
-  // 名旁印签：手动档案的关系标签（无档案不出，绝不拿 AI 编）
-  const tags = (p.profile?.tags ?? []).filter(Boolean).slice(0, 3);
-  // meta 一行：数字下地加重（H1 拍板），语音/图片等明细归「互动统计」弹窗
-  const meta = el('div', 'bz-people-card-meta');
-  if (total) {
-    meta.appendChild(textEl('b', formatCount(total)));
-    meta.appendChild(text(` 条消息 · ${p.imports.length} 次导入`));
-    if (p.digest) meta.appendChild(text(` · 脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}`));
-  } else meta.appendChild(text('尚无导入'));
-  const id = el('div', 'bz-people-dt-id', [
-    el('div', 'bz-people-dt-name', [
-      text(p.name),
-      ...(tags.length ? [el('span', 'bz-people-dt-tags', tags.map((t) => el('span', 'bz-people-dt-tag', [text(t)])))] : []),
-    ]),
-    meta,
-  ]);
-  return el('div', 'bz-people-dt-head', [
-    opts.avatar
-      ? el('img', 'bz-people-dt-avatar', { src: avatarUri(opts.avatar), alt: p.name })
-      : el('div', 'bz-people-dt-seal', { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-    id,
-    el('div', 'bz-people-dt-actions', [
-      ...(action ? [action] : []),
-      // 455 评审：记一笔自纪事折抽出，独立弹窗，入口在互动统计之前
-      iconButton('pencil', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-note-open': '', 'aria-label': '记一笔', title: '记一笔' }),
-      // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
-      iconButton('bar-chart-3', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-stats-open': '', 'aria-label': '互动统计', title: '互动统计' }),
-      iconButton('contact', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-prof-open': '', 'aria-label': '补充背景', title: '补充背景' }),
-      // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
-      iconButton('trash-2', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del', {
-        'data-people-del': p.id,
-        'aria-label': '删除',
-        title: deleteTitleOf(tier),
-      }),
-      iconButton('arrow-left', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-back-btn': '', 'aria-label': '返回列表', title: '返回列表' }),
-    ]),
-  ]);
-}
-
-/** 折页册（issue 455 四折）；折题竖排成窄书脊条，展开折正文占主幅（点书脊切换） */
-export function foldBook(p: PersonEntry, opts: FoldDetailOpts, bodies: Record<FoldId, HTMLElement[]>): HTMLElement {
-  const book = el('div', 'bz-people-book', { 'data-people-book': '' });
-  for (const [id, title] of FOLD_TITLES) {
-    const on = opts.fold === id;
-    // 切换钩子挂整片折页（收起折点书脊也能切）；展开折不带——防吞折内按钮点击
-    const leaf = el('div', `bz-people-leaf${on ? ' bz-people-leaf-on' : ''}`, on
-      ? { 'data-people-leaf': id }
-      : { 'data-people-leaf': id, 'data-people-leaf-head': id });
-    leaf.appendChild(el('div', 'bz-people-leaf-spine', { 'aria-hidden': 'true' }));
-    leaf.appendChild(el('div', 'bz-people-leaf-head', [
-      el('span', 'bz-people-leaf-zh', text(title)),
-    ]));
-    if (on) {
-      const body = el('div', 'bz-people-leaf-body');
-      for (const node of bodies[id] ?? []) body.appendChild(node);
-      leaf.appendChild(body);
-    }
-    book.appendChild(leaf);
-  }
-  return book;
-}
-
-/** 档案是否至少填了一项（决定档案折内容；issue 487 扩十维后同步覆盖） */
+/** 档案是否至少填了一项（决定档案页内容；issue 487 扩十维后同步覆盖） */
 export function profileFilled(prof: PersonProfile | undefined): boolean {
   if (!prof) return false;
   return Boolean(
-    (prof.socials && prof.socials.length) ||
-    (prof.tags && prof.tags.length) ||
-    (prof.interests && prof.interests.length) ||
-    (prof.likes && prof.likes.length) ||
-    (prof.dislikes && prof.dislikes.length) ||
-    (prof.relationships && prof.relationships.length) ||
-    (prof.importantDates && prof.importantDates.length) ||
-    (prof.birthday ?? '').trim() || (prof.metVia ?? '').trim() || (prof.metAt ?? '').trim() ||
-    (prof.hometown ?? '').trim() || (prof.job ?? '').trim() || (prof.note ?? '').trim() ||
-    (prof.personality ?? '').trim() || (prof.habits ?? '').trim() || (prof.recentLife ?? '').trim() ||
-    (prof.nickname ?? '').trim() || (prof.quote ?? '').trim()
+    prof.tags?.length || prof.birthday?.trim() || prof.nickname?.trim() || prof.metVia?.trim()
+    || prof.job?.trim() || prof.personality?.trim() || prof.likes?.length || prof.interests?.length
+    || prof.hometown?.trim() || prof.habits?.trim() || prof.quote?.trim() || prof.dislikes?.length
+    || prof.recentLife?.trim() || prof.note?.trim() || prof.metAt?.trim()
+    || prof.socials?.length || prof.relationships?.length || prof.importantDates?.length,
   );
-}
-
-// ---------------- 详情折内容（纯 markup；数据由调用方备好） ----------------
-
-/** 折内空态提示：一句话 + 可选「打开数据源」动作（448 评审 P2 的入口内联习惯，markup 单源收进本层） */
-export function foldHint(msg: string, action?: string): HTMLElement {
-  const d = el('div', 'bz-people-empty-hint');
-  d.appendChild(text(msg));
-  if (action) {
-    d.appendChild(el('br'));
-    d.appendChild(button('bz-people-btn bz-people-btn-ghost', action, { 'data-people-ds-open': '' }));
-  }
-  return d;
-}
-
-/** 其人折正文（卷一《其人》，issue 455）：markdown + 代表原话；空态引导导入（旧单卷数据由 personOf 兼容读进来） */
-export function foldPersonBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLElement[] {
-  const out: HTMLElement[] = mdRoot
-    ? [mdRoot]
-    : [foldHint('还没有其人画像。从数据源导入一次即可生成。', '打开数据源')];
-  if (p.digest?.quotes?.length) {
-    out.push(el('div', 'bz-people-section-title', text('代表原话')));
-    const quotes = el('div', 'bz-people-quotes');
-    for (const q of p.digest.quotes) {
-      quotes.appendChild(el('div', 'bz-people-quote', [
-        el('div', 'bz-people-quote-text', text(`「${q.text}」`)),
-        el('div', 'bz-people-quote-meta', text(`${q.who === '我' ? '我' : p.name} · ${q.ts}`)),
-      ]));
-    }
-    out.push(quotes);
-  }
-  return out;
-}
-
-/** 相交折正文（卷二《相交》，issue 455）：markdown；空态引导导入 */
-export function foldBondBody(mdRoot: HTMLElement | null): HTMLElement[] {
-  return mdRoot ? [mdRoot] : [foldHint('还没有关系画像。从数据源导入一次即可生成。', '打开数据源')];
-}
-
-/** 纪事折正文（455 评审拍板合并）：编年时间线在前，按月交往事件在后，随手记列表收尾（录入行已抽成详情头「记一笔」弹窗） */
-export function foldEventsBody(p: PersonEntry): HTMLElement[] {
-  const out: HTMLElement[] = [];
-  if (p.digest?.chronicle) {
-    out.push(el('div', 'bz-people-chronicle', [miniMarkdown(p.digest.chronicle)]));
-    out.push(el('div', 'bz-people-ev-divider', [el('span', '', [text('纪事 · 按月')])]));
-  }
-  if (p.digest?.events.length) {
-    // 按月分组（升序）：月内大事件（major）在上、日常在下；月组默认收起，点头部展开
-    const byMonth = new Map<string, FaceEvent[]>();
-    for (const ev of p.digest.events) {
-      const month = ev.ts.slice(0, 7);
-      const list = byMonth.get(month);
-      if (list) list.push(ev);
-      else byMonth.set(month, [ev]);
-    }
-    const months = el('div', 'bz-people-ev-months');
-    for (const [month, evs] of [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-      evs.sort((a, b) => (a.kind === 'major' ? 0 : 1) - (b.kind === 'major' ? 0 : 1));
-      const group = el('div', 'bz-people-ev-mon');
-      group.appendChild(el('button', 'bz-people-ev-mon-head', { 'data-people-ev-mon': '', 'aria-label': `展开 ${month}` }, [
-        el('span', 'bz-people-ev-mon-plus', text('+')),
-        el('span', 'bz-people-ev-mon-name', text(month)),
-        el('span', 'bz-people-ev-mon-cnt', text(`${evs.length} 条`)),
-      ]));
-      const body = el('div', 'bz-people-ev-mon-body');
-      for (const ev of evs) {
-        body.appendChild(el('div', `bz-people-event${ev.kind === 'major' ? ' bz-people-event-major' : ''}`, [
-          el('span', 'bz-people-event-ts', text(ev.ts)),
-          el('span', 'bz-people-event-dot'),
-          el('span', 'bz-people-event-summary', text(ev.summary)),
-        ]));
-      }
-      group.appendChild(body);
-      months.appendChild(group);
-    }
-    out.push(months);
-  } else if (!out.length) {
-    out.push(el('div', 'bz-people-empty-hint', text('还没有交往纪事。导入聊天生成脸谱后会提炼出来。')));
-  }
-  const evs = p.manualEvents ?? [];
-  if (evs.length) {
-    out.push(el('div', 'bz-people-section-title', text('随手记')));
-    const list = el('div', 'bz-people-notes');
-    for (const ev of evs) {
-      list.appendChild(el('div', 'bz-people-note', [
-        el('span', 'bz-people-note-ts', text(ev.ts)),
-        el('span', 'bz-people-note-summary', text(ev.summary)),
-        button('bz-people-btn bz-people-btn-ghost bz-people-note-del', '删', { 'data-people-ev-del': ev.id }),
-      ]));
-    }
-    out.push(list);
-  }
-  return out;
 }
 
 /** 统计弹窗正文（issue 455 自「数据」折迁来）：互动数据卡 + 占位（含导入记录 meta 与旧数据提示） */
@@ -977,7 +1264,7 @@ export function statsPopBody(card: HTMLElement | null, p: PersonEntry): HTMLElem
 
 /** 互动数据卡：头行（区间/来源）+ 月度柱图 + 指标行（调用方传已构建的 chart/rows） */
 export function insightsCard(range: string, file: string, chart: HTMLElement | null, rows: HTMLElement): HTMLElement {
-  const card = el('div', 'bz-people-insights', [
+  const card = el('div', 'bz-people-ins', [
     el('div', 'bz-people-ins-head', [
       el('div', 'bz-people-ins-range', text(range)),
       el('div', 'bz-people-ins-file', text(file)),
@@ -992,22 +1279,19 @@ export function insightsCard(range: string, file: string, chart: HTMLElement | n
 export function monthlyChart(monthly: Array<[string, number]>): HTMLElement | null {
   if (!monthly.length) return null;
   const max = monthly.reduce((a, [, n]) => Math.max(a, n), 0);
-  const wrap = el('div', 'bz-people-chart-wrap');
   const chart = el('div', 'bz-people-chart');
   for (const [month, n] of monthly) {
     const h = max > 0 ? Math.max(Math.round((n / max) * 100), 4) : 0;
     chart.appendChild(el('div', 'bz-people-col', { title: `${month} · ${n} 条` },
       el('div', 'bz-people-col-bar', { style: `height:${h}%` })));
   }
-  wrap.appendChild(chart);
   const labels = el('div', 'bz-people-chart-labels');
   const step = monthly.length <= 8 ? 1 : Math.ceil(monthly.length / 6);
   monthly.forEach(([month], i) => {
     const show = i === 0 || i === monthly.length - 1 || i % step === 0;
     labels.appendChild(el('span', '', text(show ? month.slice(2) : '')));
   });
-  wrap.appendChild(labels);
-  return wrap;
+  return el('div', undefined, [chart, labels]);
 }
 
 /** 指标行（谁主动 / 回复时延 / 活跃时段 / 消息形态）——条形与数值由调用方算好注入 */
@@ -1099,7 +1383,7 @@ export function profileView(prof: PersonProfile | undefined): HTMLElement {
   return el('div', 'bz-people-prof', rows);
 }
 
-function profInput(value: string, placeholder: string, attr: [string, string], cls = 'bz-people-prof-input'): HTMLInputElement {
+function profInput(value: string, placeholder: string, attr: [string, string], cls = 'bz-people-input'): HTMLInputElement {
   const inp = document.createElement('input');
   inp.type = 'text';
   inp.className = cls;
@@ -1110,35 +1394,35 @@ function profInput(value: string, placeholder: string, attr: [string, string], c
 }
 
 export function socialRow(platform: string, handle: string): HTMLElement {
-  return el('div', 'bz-people-prof-social-row', [
-    profInput(platform, '平台（微信 / 微博…）', ['data-people-prof-social-platform', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
-    profInput(handle, '账号', ['data-people-prof-social-handle', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
-    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-social-del': '', 'aria-label': '删除这条社交账号' }),
+  return el('div', 'bz-people-prof-subrow', [
+    profInput(platform, '平台（微信 / 微博…）', ['data-people-prof-social-platform', '']),
+    profInput(handle, '账号', ['data-people-prof-social-handle', '']),
+    button('bz-people-ico bz-people-ico-sm', '×', { 'data-people-prof-social-del': '', 'aria-label': '删除这条社交账号' }),
   ]);
 }
 
 /** 身边人行（issue 487：复用 socials 的行模式与 data 钩子风格）：who + relation */
 export function relationRow(who: string, relation: string): HTMLElement {
-  return el('div', 'bz-people-prof-social-row', [
-    profInput(who, '称呼（如 老妈）', ['data-people-prof-rel-who', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
-    profInput(relation, '关系（如 母亲）', ['data-people-prof-rel-relation', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
-    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-rel-del': '', 'aria-label': '删除这条身边人' }),
+  return el('div', 'bz-people-prof-subrow', [
+    profInput(who, '称呼（如 老妈）', ['data-people-prof-rel-who', '']),
+    profInput(relation, '关系（如 母亲）', ['data-people-prof-rel-relation', '']),
+    button('bz-people-ico bz-people-ico-sm', '×', { 'data-people-prof-rel-del': '', 'aria-label': '删除这条身边人' }),
   ]);
 }
 
 /** 重要日子行（issue 487：复用 socials 的行模式与 data 钩子风格）：date + what */
 export function dateRow(date: string, what: string): HTMLElement {
-  return el('div', 'bz-people-prof-social-row', [
-    profInput(date, '日子（如 05-20 / 每年立冬）', ['data-people-prof-date-date', ''], 'bz-people-prof-input bz-people-prof-social-platform'),
-    profInput(what, '是什么日子', ['data-people-prof-date-what', ''], 'bz-people-prof-input bz-people-prof-social-handle'),
-    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-date-del': '', 'aria-label': '删除这条重要日子' }),
+  return el('div', 'bz-people-prof-subrow', [
+    profInput(date, '日子（如 05-20 / 每年立冬）', ['data-people-prof-date-date', '']),
+    profInput(what, '是什么日子', ['data-people-prof-date-what', '']),
+    button('bz-people-ico bz-people-ico-sm', '×', { 'data-people-prof-date-del': '', 'aria-label': '删除这条重要日子' }),
   ]);
 }
 
 export function tagChip(t: string): HTMLElement {
-  return el('span', 'bz-people-prof-tag', [
+  return el('span', 'bz-people-tag-chip', [
     el('span', 'bz-people-prof-tag-text', text(t)),
-    button('bz-people-btn bz-people-btn-ghost bz-people-prof-x', '×', { 'data-people-prof-tag-del': '', 'aria-label': `删除标签 ${t}` }),
+    button('bz-people-ico bz-people-ico-sm', '×', { 'data-people-prof-tag-del': '', 'aria-label': `删除标签 ${t}` }),
   ]);
 }
 
@@ -1148,25 +1432,22 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
     el('div', 'bz-people-prof-row', [el('span', 'bz-people-prof-label', text(label)), input]);
   /** 数组维度 → 顿号串（编辑态一格格输入，保存时切分） */
   const listText = (arr?: string[]) => (arr ?? []).join('、');
-  const socialList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-social-list': '' });
-  for (const s of prof?.socials ?? []) socialList.appendChild(socialRow(s.platform, s.handle));
-  const relList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-rel-list': '' });
-  for (const r of prof?.relationships ?? []) relList.appendChild(relationRow(r.who, r.relation));
-  const dateList = el('div', 'bz-people-prof-social-list', { 'data-people-prof-date-list': '' });
-  for (const d of prof?.importantDates ?? []) dateList.appendChild(dateRow(d.date, d.what));
-  const tagList = el('div', 'bz-people-prof-tag-list', { 'data-people-prof-tag-list': '' });
-  for (const t of prof?.tags ?? []) tagList.appendChild(tagChip(t));
-  const tagInput = profInput('', '加标签…', ['data-people-prof-tag-input', ''], 'bz-people-prof-input bz-people-prof-tag-input');
+  /** 行组：楷体标签 + 可增行列表（subrow 们）+ 追加钮——加的行由 ui 委托 append 进列表 */
+  const group = (label: string, hook: string, addLabel: string, addHook: string, rows: HTMLElement[]): HTMLElement => {
+    const list = el('div', 'bz-people-prof-sub', { [hook]: '' }, rows);
+    return el('div', 'bz-people-prof-row', [
+      el('span', 'bz-people-prof-label', text(label)),
+      list,
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', addLabel, { [addHook]: '' }),
+    ]);
+  };
+  const socialRows = (prof?.socials ?? []).map((s) => socialRow(s.platform, s.handle));
+  const relRows = (prof?.relationships ?? []).map((r) => relationRow(r.who, r.relation));
+  const dateRows = (prof?.importantDates ?? []).map((d) => dateRow(d.date, d.what));
+  const tagList = el('div', 'bz-people-tag-edit', { 'data-people-prof-tag-list': '' }, (prof?.tags ?? []).map((t) => tagChip(t)));
+  const tagInput = profInput('', '加标签…', ['data-people-prof-tag-input', ''], 'bz-people-input bz-people-tag-input');
   return el('div', 'bz-people-prof bz-people-prof-edit', [
-    el('div', 'bz-people-prof-row', [
-      el('span', 'bz-people-prof-label', text('社交账号')),
-      el('div', 'bz-people-prof-social', [
-        socialList,
-        el('div', 'bz-people-prof-social-tools', [
-          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 社交账号', { 'data-people-prof-add-social': '' }),
-        ]),
-      ]),
-    ]),
+    group('社交账号', 'data-people-prof-social-list', '+ 社交账号', 'data-people-prof-add-social', socialRows),
     grid('生日', profInput(prof?.birthday ?? '', 'YYYY-MM-DD 或 MM-DD', ['data-people-prof-field', 'birthday'])),
     grid('称呼', profInput(prof?.nickname ?? '', 'TA 喜欢被怎么称呼', ['data-people-prof-field', 'nickname'])),
     grid('认识方式', profInput(prof?.metVia ?? '', '怎么认识的', ['data-people-prof-field', 'metVia'])),
@@ -1180,33 +1461,13 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
     grid('反感 / 雷点', profInput(listText(prof?.dislikes), '顿号分隔：反感的事 / 雷点', ['data-people-prof-field', 'dislikes'])),
     grid('作息 / 习惯', profInput(prof?.habits ?? '', '作息 / 生活习惯', ['data-people-prof-field', 'habits'])),
     grid('近况', profInput(prof?.recentLife ?? '', '最近在忙什么 / 状态', ['data-people-prof-field', 'recentLife'])),
-    el('div', 'bz-people-prof-row', [
-      el('span', 'bz-people-prof-label', text('身边人')),
-      el('div', 'bz-people-prof-social', [
-        relList,
-        el('div', 'bz-people-prof-social-tools', [
-          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 身边人', { 'data-people-prof-add-rel': '' }),
-        ]),
-      ]),
-    ]),
-    el('div', 'bz-people-prof-row', [
-      el('span', 'bz-people-prof-label', text('重要日子')),
-      el('div', 'bz-people-prof-social', [
-        dateList,
-        el('div', 'bz-people-prof-social-tools', [
-          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 重要日子', { 'data-people-prof-add-date': '' }),
-        ]),
-      ]),
-    ]),
+    group('身边人', 'data-people-prof-rel-list', '+ 身边人', 'data-people-prof-add-rel', relRows),
+    group('重要日子', 'data-people-prof-date-list', '+ 重要日子', 'data-people-prof-add-date', dateRows),
     el('div', 'bz-people-prof-row', [
       el('span', 'bz-people-prof-label', text('标签')),
-      el('div', 'bz-people-prof-tags-edit', [
-        tagList,
-        el('div', 'bz-people-prof-tag-tools', [
-          tagInput,
-          button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 标签', { 'data-people-prof-tag-add': '' }),
-        ]),
-      ]),
+      tagList,
+      tagInput,
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '+ 标签', { 'data-people-prof-tag-add': '' }),
     ]),
     grid('备注', profInput(prof?.note ?? '', '一句话备注', ['data-people-prof-field', 'note'])),
     el('div', 'bz-people-prof-actions', [
@@ -1232,35 +1493,218 @@ export function profilePopBody(p: PersonEntry, editing: boolean): HTMLElement[] 
   return out;
 }
 
-// ---------------- 统计 / 档案弹窗（issue 455：自折册改独立弹窗，壳沿数据源弹窗形制） ----------------
+// ---------------- 册页弹窗（issue 505：弹窗不再浮层，是册子里翻出来的一页） ----------------
+
+/** 册页弹窗外壳：页眉（标题 + 元信息 + 合上这页）+ 可滚正文 + 页脚 */
+export interface SubPageOpts {
+  /** 靠人的页翻到详情那一侧；单页（数据源 / 画谱确认 / 找一找）摊满整册 */
+  side?: 'left' | 'right';
+  title: string;
+  meta?: string;
+  /** 页眉右上的额外动作（数据源页的「同步 / 停止」） */
+  head?: HTMLElement[];
+  /** 页脚（勾选总账 / 导入按钮那一整块） */
+  foot?: HTMLElement | null;
+  /** 页根钩子名（ui 的 data 委托据此认页） */
+  hook: string;
+}
+
+export function subPage(opts: SubPageOpts, body: HTMLElement[]): HTMLElement {
+  const cls = ['bz-people-page', 'bz-people-dpage', 'bz-people-sub', opts.side ? `bz-people-sit-${opts.side === 'left' ? 'l' : 'r'}` : ''].filter(Boolean).join(' ');
+  const page = el('div', cls, { 'data-people-sub': opts.hook });
+  const head = el('div', 'bz-people-page-head');
+  head.appendChild(el('span', 'bz-people-head-label', text(opts.title)));
+  if (opts.meta) head.appendChild(el('span', 'bz-people-head-note', text(opts.meta)));
+  const right = el('span', 'bz-people-head-right');
+  for (const n of opts.head ?? []) right.appendChild(n);
+  right.appendChild(button('bz-people-close', '合上这页', { 'data-people-close': '' }));
+  head.appendChild(right);
+  page.appendChild(head);
+  page.appendChild(el('div', 'bz-people-pagebody', { 'data-people-scroll': 'pop' }, body));
+  if (opts.foot) page.appendChild(opts.foot);
+  return page;
+}
 
 /**
- * 弹窗壳（互动统计 / 补充背景共用）：遮罩 + 面板（标题 + 关闭钮）+ 可滚动正文。
- * 遮罩与关闭钮都带 `data-people-pop-close`，点击关弹走 ui 委托；rootHook 标识是哪只弹窗开着。
+ * 数据源册页：路径行 + 通知行 + 同步条 + 逐行勾选（含导入水位）+ 图例，
+ * 页脚是勾选总账与「画脸谱 / 导入所选」。
  */
-export function popShell(title: string, rootHook: string, body: HTMLElement[]): HTMLElement {
-  const wrap = el('div', 'bz-people-pop', { [rootHook]: '' });
-  wrap.appendChild(el('div', 'bz-people-pop-dim', { 'data-people-pop-close': '' }));
-  const pop = el('div', 'bz-people-pop-panel', { role: 'dialog', 'aria-label': title });
-  pop.appendChild(el('div', 'bz-people-pop-head', [
-    el('div', 'bz-people-pop-title', text(title)),
-    iconButton('x', 'bz-people-btn bz-people-btn-ghost bz-people-icon-btn', { 'data-people-pop-close': '', 'aria-label': '关闭', title: '关闭' }),
-  ]));
-  const content = el('div', 'bz-people-pop-body');
-  for (const node of body) content.appendChild(node);
-  pop.appendChild(content);
-  wrap.appendChild(pop);
-  return wrap;
+export function dsPage(s: DsModalState): HTMLElement {
+  const body: HTMLElement[] = [];
+  body.push(el('div', 'bz-people-ds-path', text(`${s.dataDir}${s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''}`)));
+  if (s.notice) body.push(el('div', 'bz-people-notice bz-people-ds-notice', { 'data-people-ds-notice': '' }, text(s.notice)));
+  if (s.sync) body.push(dsSyncLineNode(s.sync));
+  if (!s.rows) {
+    body.push(el('div', 'bz-people-empty-hint', text(s.desktopOnly
+      ? '数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。'
+      : '还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
+  } else {
+    const list = el('div', 'bz-people-ds-list', { 'data-people-ds-list': '' });
+    for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+    body.push(list);
+    const legend = el('div', 'bz-people-ds-legend');
+    legend.append(
+      el('span', '', [el('i', 'bz-people-ds-dot-ok'), text('有更新')]),
+      el('span', '', [el('i', 'bz-people-ds-dot-idle'), text('已导无更新')]),
+      el('span', '', [el('i', 'bz-people-ds-dot-none'), text('未导入')]),
+    );
+    if (s.rows.some((r) => (r.newCount ?? 0) > 0)) {
+      legend.appendChild(button('bz-people-ds-pickfresh', '勾有更新的', { 'data-people-ds-pickfresh': '' }));
+    }
+    body.push(legend);
+  }
+  const foot = el('div', 'bz-people-pop-foot');
+  foot.appendChild(el('span', 'bz-people-ds-count', { 'data-people-ds-count': '' }, text(footerLabel(s))));
+  foot.appendChild(el('span', 'bz-people-spacer'));
+  if (s.generateable) foot.appendChild(button('bz-people-btn bz-people-btn-gold', '画脸谱', { 'data-people-ds-generate': '' }));
+  const imp = button('bz-people-btn bz-people-btn-acc', s.importing ? '导入中…' : '导入所选', { 'data-people-ds-import': '' });
+  if (s.importing || s.syncing) imp.setAttribute('disabled', '');
+  foot.appendChild(imp);
+  // 右上角动作位（issue 465）：语义从「重读目录」升级为「同步——从微信重新取数」；
+  // 运行中该位置只出「停止」，绝不与「同步」并列——互斥动作不并列
+  const head: HTMLElement[] = [];
+  head.push(s.syncing
+    ? button('bz-people-btn bz-people-btn-sm', '停止', { 'data-people-ds-sync-stop': '', title: '停止同步——已导出的部分保留，重跑可续传' })
+    : button('bz-people-btn bz-people-btn-sm', '同步', { 'data-people-ds-sync': '', title: '从微信重新解密并导出，需要微信已登录' }));
+  const meta = s.syncing ? '正在同步…' : s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ''}` : '';
+  return subPage({ title: '数据源', meta, head, foot, hook: 'ds' }, body);
+}
+
+/** 画谱开工单（issue 497：两次确认合一，确认后一路到底不再弹窗） */
+export function genPage(info: GenerationConfirmInfo): HTMLElement {
+  const body: HTMLElement[] = [];
+  const segs: string[] = [`为 ${info.items.length} 位联系人生成脸谱`];
+  if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
+  if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
+  segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
+  body.push(el('div', 'bz-people-gen-line', text(`${segs.join('；')}。`)));
+  const list = el('ul', 'bz-people-gen-list');
+  for (const it of info.items) {
+    const bits = [`素材 ${it.materials} 条`];
+    if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+    if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+    list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
+  }
+  body.push(list);
+  body.push(el('div', 'bz-people-pop-note', text('确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。')));
+  const actions = el('div', 'bz-people-prof-actions', [
+    button('bz-people-btn', '取消', { 'data-people-gen-cancel': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
+  ]);
+  body.push(actions);
+  return subPage({ title: '开始生成脸谱', hook: 'gen' }, body);
+}
+
+/** 互动统计册页 */
+export function statsPage(p: PersonEntry, body: HTMLElement[]): HTMLElement {
+  return subPage({ title: '互动统计', meta: p.name, hook: 'stats' }, body);
+}
+
+/** 补充背景册页 */
+export function profPage(p: PersonEntry, body: HTMLElement[], editing: boolean): HTMLElement {
+  return subPage({ title: '补充背景', meta: editing ? `${p.name} · 编辑中` : p.name, hook: 'prof' }, body);
+}
+
+/** 记一笔册页 */
+export function notePage(p: PersonEntry, today: string): HTMLElement {
+  return subPage({ title: '记一笔', meta: p.name, hook: 'note' }, [
+    noteAddRow(today),
+    el('div', 'bz-people-pop-note', text('随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。')),
+  ]);
+}
+
+/**
+ * 删除联系人册页（issue 500 / 501 / 502 续）：两档——
+ * 未画谱 / 画谱未完成：本页二次确认；已画谱：本页先说明，再由宿主管弹主密码门。
+ */
+export function delPage(p: PersonEntry, tier: DeleteTier): HTMLElement {
+  const body: HTMLElement[] = [el('div', 'bz-people-del-who', text(`「${p.name}」`))];
+  body.push(el('div', 'bz-people-del-line', text(tier === 'drawn'
+    ? '这个人已经有画成的脸谱——删除会连同脸谱正文、聊天仓、随手记与头像一起销毁，不可恢复。'
+    : tier === 'unfinished'
+      ? '这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。'
+      : '这个人还没画过脸谱——删掉之后要重新导入才能再画。')));
+  body.push(el('div', 'bz-people-del-note', text(tier === 'drawn'
+    ? '要删除，请重输主密码确认。'
+    : '数据源目录与聊天原文不动，之后可以重新导入。')));
+  const actions = el('div', 'bz-people-del-actions', [
+    button('bz-people-btn', '取消', { 'data-people-del-cancel': '' }),
+    button('bz-people-btn bz-people-btn-acc', '删除', { 'data-people-del-ok': '' }),
+  ]);
+  body.push(actions);
+  return subPage({ title: '删除联系人', hook: 'del', side: undefined }, body);
+}
+
+// ---------------- 找一找（几十位翻页嫌慢，按名字 / 标签把人捞出来） ----------------
+
+export interface FindRow {
+  p: PersonEntry;
+  avatar: string;
+  /** 第几页（1 起）与左 / 右半 */
+  page: number;
+  half: '左' | '右';
+  state: 'todo' | 'drawing' | 'legacy' | 'drawn';
+}
+
+export function findPage(opts: { q: string; total: number; rows: FindRow[]; tags: string[] }): HTMLElement {
+  const q = opts.q.trim();
+  const body: HTMLElement[] = [];
+  const box = el('div', 'bz-people-findbox');
+  box.appendChild(el('i', 'bz-ic', { 'data-lucide': 'search', 'aria-hidden': 'true' }));
+  const inp = document.createElement('input');
+  inp.className = 'bz-people-input';
+  inp.value = q;
+  inp.setAttribute('data-people-find', '');
+  inp.setAttribute('placeholder', '名字或标签，比如「摄影」「表妹」「阿澈」…');
+  box.appendChild(inp);
+  if (q) box.appendChild(iconButton('x', 'bz-people-ico bz-people-ico-sm', { 'data-people-find-clear': '', 'aria-label': '清空' }));
+  body.push(box);
+  if (!q) {
+    body.push(el('div', 'bz-people-empty-hint', text(`共 ${opts.total} 位，输一个字就能把人捞出来，点一下就翻到 TA 那页。`)));
+    if (opts.tags.length) body.push(el('div', 'bz-people-find-tags', opts.tags.map((t) => button('bz-people-stk', t, { 'data-people-find-tag': t }))));
+  } else if (!opts.rows.length) {
+    body.push(el('div', 'bz-people-empty-hint', text(`没找到「${q}」这个人。换个字试试，或者去「数据源」看看是不是还没导进来。`)));
+  } else {
+    body.push(el('div', 'bz-people-find-n', text(`找到 ${opts.rows.length} 位`)));
+    const list = el('div', 'bz-people-ds-list');
+    for (const r of opts.rows) {
+      const name = r.p.name || r.p.id;
+      const tags = (r.p.profile?.tags ?? []).filter(Boolean).join(' · ');
+      const state = r.state === 'todo' ? '待画' : r.state === 'drawing' ? '画谱中' : r.state === 'legacy' ? '旧版' : '已画';
+      const row = el('button', 'bz-people-find-row', { 'data-people-find-open': r.p.id }) as HTMLButtonElement;
+      row.type = 'button';
+      row.append(
+        el('span', 'bz-people-find-ava', avatarNode(name, r.avatar)),
+        el('span', 'bz-people-find-main', [
+          el('span', 'bz-people-find-name', text(name)),
+          el('span', 'bz-people-find-meta', text(tags)),
+        ]),
+        el('span', 'bz-people-find-side', text(`第 ${r.page} 页 ${r.half} · ${state}`)),
+      );
+      list.appendChild(row);
+    }
+    body.push(list);
+  }
+  return subPage({ title: '找一找', meta: q ? `「${q}」` : `共 ${opts.total} 位`, hook: 'find' }, body);
+}
+
+/** 合并横幅：同一个人的多份记录并成一张时，横贴在册子上沿的一条纸 */
+export function mergeBanner(msg: string, calm = false): HTMLElement {
+  const box = el('div', `bz-people-banner${calm ? ' bz-people-banner-calm' : ''}`);
+  box.appendChild(el('i', 'bz-ic', { 'data-lucide': calm ? 'database' : 'layers', 'aria-hidden': 'true' }));
+  box.appendChild(el('span', 'bz-people-banner-tx', text(msg)));
+  box.appendChild(button('bz-people-banner-x', '×', { 'data-people-banner-close': '', 'aria-label': '收起' }));
+  return box;
 }
 
 /** 随手记录入行：日期（默认今天）+ 一句话 */
 export function noteAddRow(today: string): HTMLElement {
   const date = document.createElement('input');
   date.type = 'date';
-  date.className = 'bz-people-prof-input bz-people-note-date';
+  date.className = 'bz-people-input bz-people-note-date';
   date.value = today;
   date.setAttribute('data-people-note-date', '');
-  const txt = profInput('', '一句话记下这一天……', ['data-people-note-text', ''], 'bz-people-prof-input bz-people-note-text');
+  const txt = profInput('', '一句话记下这一天……', ['data-people-note-text', ''], 'bz-people-input bz-people-note-text');
   return el('div', 'bz-people-note-add', [
     date,
     txt,
@@ -1364,8 +1808,6 @@ export function miniMarkdown(md: string): HTMLElement {
   return root;
 }
 
-// ---------------- 数据源弹窗（issue 447 拍板形态） ----------------
-
 export interface DsRowState {
   name: string;
   /** 界面显示名（issue 501：纯名；name 仍是目录键，勾选 / 定位都用它） */
@@ -1381,6 +1823,10 @@ export interface DsRowState {
   processedTs: number | null;
   /** 头像文件路径（有则行首出照片，无则首字圆章） */
   avatar?: string | null;
+  /** 保库记录里已有这个人的聊天仓（水位判定的「已入库」那半） */
+  imported?: boolean;
+  /** 完整聊天这一趟已经导出过、还没入库（导出阶段的中间态） */
+  exported?: boolean;
 }
 
 export interface DsModalState {
@@ -1389,13 +1835,8 @@ export interface DsModalState {
   importing: boolean;
   /** null = 还没扫过；[] = 扫过无联系人 */
   rows: DsRowState[] | null;
-  selectedCount: number;
-  /** 勾选名单快照：弹层重渲染时回显复选框（448 评审 P1：重建层不丢视觉勾选） */
+  /** 勾选名单快照：册页重渲染时回显勾选框（448 评审 P1：重建不丢视觉勾选） */
   selected: string[];
-  /** 精确新素材条数合计（chat.json 回落路径；485） */
-  freshCount: number;
-  /** 「有新」按位计的联系人人数（stats 路径哨兵无法精确到条；485） */
-  freshApprox: number;
   hiddenGroups: number;
   notice: string;
   /** 导入完成有新素材 → 出「画脸谱」 */
@@ -1406,7 +1847,7 @@ export interface DsModalState {
   scannedAt: string;
   /** 同步进行中（issue 465）：右上角只出「停止」、页脚「导入所选 / 画脸谱」置灰 */
   syncing: boolean;
-  /** 同步进度行（弹窗内一条，不占画像生成进度块——ADR-0196 决策 6；null = 无同步动态） */
+  /** 同步进度行（册页内一条，不占画像生成进度便签——ADR-0196 决策 6；null = 无同步动态） */
   sync: DsSyncLine | null;
 }
 
@@ -1427,163 +1868,95 @@ export interface DsSyncLine {
   failures: string[];
 }
 
-/** 水位行文案：未导入 / 已导 N 条 · 画到日期 / · 未画脸谱 */
+/** 导入水位：勾这一位、点导入，会发生什么（水位签的文案与色档） */
+export function dsWaterOf(row: DsRowState): { k: string; label: string } | null {
+  if (row.isGroup) return null;
+  // 完整聊天已经导出来了、还没入库：中间态（停在导出阶段时，导完的那几位就停在这儿）。
+  // 已入库的就算导出账还在，也该走后面的「无新素材」—— 所以这儿先看 imported
+  if (row.exported && !row.imported) return { k: 'exported', label: '已导出 · 待入库' };
+  if (!row.imported) return { k: 'full', label: `全新 · ${formatCount(row.rawCount)} 条` };
+  if (row.newCount > 0) return { k: 'newer', label: row.newApprox ? '增量 · 有新消息' : `增量 · ${formatCount(row.newCount)} 条` };
+  return { k: 'skip', label: '无新素材' };
+}
+
+/** 水位行文案（行尾灰字）：未导入 / 已导 N 条 · 画到日期 / · 未画脸谱 */
 export function dsWatermark(row: DsRowState): string {
-  if (!row.previewCount) return '未导入';
-  const drawn = row.processedTs ? ` · 画到 ${formatDay(row.processedTs).slice(2)}` : ' · 未画脸谱';
-  return `已导 ${formatCount(row.previewCount)} 条${drawn}`;
+  if (!row.imported) return '未导入';
+  const drawn = row.processedTs ? `画到 ${formatDay(row.processedTs).slice(5)}` : '未画脸谱';
+  return `已导 ${formatCount(row.rawCount)} 条 · ${drawn}`;
 }
 
-/** 四态行：有更新（fresh 高亮 + 新 N 条）/ 无更新 / 未导入 / 群聊禁勾 */
+/** 数据源行：勾选框 + 头像 + 名 / 条数 + 右侧水位签与已导账 */
 export function dsRow(row: DsRowState, on: boolean): HTMLElement {
-  const fresh = row.newCount > 0;
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.checked = on;
-  cb.disabled = row.isGroup;
-  cb.setAttribute('data-people-ds-check', row.name);
+  const fresh = row.newCount > 0 && row.imported;
+  const water = dsWaterOf(row);
   const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}`;
+  const box = el('span', 'bz-people-ds-box', { 'data-people-ds-check': row.name, role: 'checkbox', 'aria-checked': on ? 'true' : 'false' },
+    on ? el('i', 'bz-ic', { 'data-lucide': 'check', 'aria-hidden': 'true' }) : text(''));
+  const name = row.displayName + (row.isGroup ? '（群）' : '');
   return el('label', cls, [
-    cb,
-    row.avatar
-      ? el('img', 'bz-people-ds-ava bz-people-ds-ava-img', { src: avatarUri(row.avatar), alt: row.displayName })
-      : el('div', 'bz-people-ds-ava', { style: `background:${avatarColor(row.name)}` }, text(initials(row.displayName))),
-    el('div', 'bz-people-ds-main', [
-      el('div', 'bz-people-ds-name', text(row.displayName + (row.isGroup ? '（群）' : ''))),
-      el('div', 'bz-people-ds-meta', text([
-        `${formatCount(row.rawCount)} 条`,
-        row.media,
-      ].filter(Boolean).join(' · '))),
+    box,
+    row.isGroup ? text('') : el('span', 'bz-people-ds-ava', avatarNode(row.displayName || row.name, row.avatar ?? '')),
+    el('span', 'bz-people-ds-main', [
+      el('span', 'bz-people-ds-name', text(name)),
+      el('span', 'bz-people-ds-meta', text([`${formatCount(row.rawCount)} 条`, row.media].filter(Boolean).join(' · '))),
     ]),
-    el('div', 'bz-people-ds-side', [
-      ...(fresh ? [el('span', 'bz-people-ds-new', text(row.newApprox ? '有新消息' : `新 ${row.newCount} 条`))] : []),
-      el('span', 'bz-people-ds-mark', text(dsWatermark(row))),
+    el('span', 'bz-people-ds-side', [
+      water ? el('span', `bz-people-ds-water bz-people-ds-w-${water.k}`, text(water.label)) : text(''),
+      el('span', 'bz-people-ds-mark', text(row.isGroup ? '未纳入' : dsWatermark(row))),
     ]),
   ]);
 }
 
-/** 数据源弹窗整体（面板内弹层内容；遮罩点击/关闭钮走 ui 委托） */
-export function dsModal(s: DsModalState): HTMLElement {
-  const wrap = el('div', 'bz-people-ds-pop', { 'data-people-ds-pop': '' });
-  wrap.appendChild(el('div', 'bz-people-ds-dim', { 'data-people-ds-dim': '' }));
-  const pop = el('div', 'bz-people-ds-panel', { role: 'dialog', 'aria-label': '数据源' });
-  // 右上角动作位（issue 465：语义从「重读目录」升级为「同步——从微信重新取数」；
-  // 运行中该位置只出「停止」，绝不与「同步」并列——互斥动作不并列）
-  const syncBtn = s.syncing
-    ? button('bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn', '停止', {
-      'data-people-ds-sync-stop': '',
-      'aria-label': '停止同步',
-      title: '停止同步——已导出的部分保留，重跑可续传',
-    })
-    : button('bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn', '同步', {
-      'data-people-ds-sync': '',
-      'aria-label': '同步',
-      title: '从微信重新解密并导出，需要微信已登录',
-    });
-  pop.appendChild(el('div', 'bz-people-ds-head', [
-    el('div', 'bz-people-ds-title', text('数据源')),
-    el('div', 'bz-people-ds-headmeta', text([
-      s.syncing ? '正在同步…' : s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人` : '',
-      s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : '',
-    ].filter(Boolean).join(' · '))),
-    syncBtn,
-  ]));
-  pop.appendChild(el('div', 'bz-people-ds-path', text(s.dataDir || '尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。' + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ''))));
-  // 同步进度行（弹窗内一条：主文案 + 百分比条 + 副文案 + 失败明细 + 下一步动作）
-  if (s.sync) pop.appendChild(dsSyncLineNode(s.sync));
-
-  if (s.desktopOnly) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('数据源扫描仅桌面端支持（需要读取库外文件夹）。')));
-  } else if (s.scanning) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('正在扫描数据根目录…')));
-  } else if (!s.rows) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text('还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
-  } else if (!s.rows.length) {
-    pop.appendChild(el('div', 'bz-people-ds-empty', text(
-      s.hiddenGroups > 0
-        ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。`
-        : '数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。'
-    )));
-  } else {
-    const list = el('div', 'bz-people-ds-list');
-    for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
-    pop.appendChild(list);
-    const hasFresh = s.rows.some((r) => r.newCount > 0);
-    pop.appendChild(el('div', 'bz-people-ds-legend', [
-      el('span', '', [el('i', 'bz-people-dot bz-people-dot-ok'), text('有更新')]),
-      el('span', '', [el('i', 'bz-people-dot bz-people-dot-idle'), text('已导无更新')]),
-      el('span', '', [el('i', 'bz-people-dot bz-people-dot-none'), text('未导入')]),
-      ...(hasFresh ? [button('bz-people-ds-pickfresh', '勾有更新的', { 'data-people-ds-pickfresh': '' })] : []),
-    ]));
-  }
-
-  // 页脚（issue 465：同步进行中「导入所选 / 画脸谱」置灰——数据根与聊天仓的输入都在变）
-  const foot = el('div', 'bz-people-ds-foot', [
-    el('span', 'bz-people-ds-count', { 'data-people-ds-count': '' }, text(footerLabel(s))),
-    ...(s.generateable && !s.importing
-      ? [button('bz-people-btn bz-people-btn-acc', '画脸谱', s.syncing
-        ? { 'data-people-ds-generate': '', disabled: '', title: '同步进行中——完成后可画脸谱' }
-        : { 'data-people-ds-generate': '', title: '关闭弹窗，用预览素材生成脸谱' })]
-      : []),
-    button('bz-people-btn bz-people-btn-acc', s.importing ? '导入中…' : '导入所选', s.syncing
-      ? { 'data-people-ds-import': '', disabled: '', title: '同步进行中——完成后可导入' }
-      : { 'data-people-ds-import': '' }),
-  ]);
-  pop.appendChild(foot);
-  if (s.notice) pop.appendChild(el('div', 'bz-people-ds-notice', { 'data-people-ds-notice': '' }, text(s.notice)));
-  wrap.appendChild(pop);
-  return wrap;
-}
-
-/**
- * 同步进度行（issue 465 / ADR-0196 决策 6：弹窗内一条进度行，不占画像生成的进度块）。
- * 主行带原位更新钩子（data-people-ds-sync-line / -text / -sub / -bar）：运行中逐帧只换
- * 文本与条宽，不重建弹窗。钩子与右上角「同步」按钮（data-people-ds-sync）刻意区分——
- * 按钮钩子归属点击委托，进度行不该命中它。
- */
-export function dsSyncLineNode(line: DsSyncLine): HTMLElement {
-  const mod = line.status === 'running' ? 'run' : line.status === 'error' ? 'err' : line.status === 'stopped' ? 'stop' : 'done';
-  const row = el('div', `bz-people-ds-syncline bz-people-ds-syncline-${mod}`, { 'data-people-ds-sync-line': '' });
-  row.appendChild(el('div', 'bz-people-ds-sync-head', [
-    el('span', 'bz-people-ds-sync-text', { 'data-people-ds-sync-text': '' }, text(line.text + (line.pct != null ? ` ${line.pct}%` : ''))),
-  ]));
-  // 进度条（484）：确定态画宽度条；不可估阶段（pct=null）画不定态脉冲条——「在走」和「走到哪」分开表达
-  if (line.status === 'running') {
-    row.appendChild(el('div', 'bz-people-ds-sync-track', [
-      line.pct != null
-        ? el('div', 'bz-people-ds-sync-bar', { 'data-people-ds-sync-bar': '', style: `width:${Math.max(0, Math.min(100, line.pct))}%` })
-        : el('div', 'bz-people-ds-sync-indet', {}),
-    ]));
-  }
-  // 副文案节点恒渲染（空时 hidden）：运行中原位更新要能找到它——首帧 sub 为空也会来帧
-  const subNode = el('div', 'bz-people-ds-sync-sub', { 'data-people-ds-sync-sub': '' }, text(line.sub));
-  if (!line.sub) subNode.hidden = true;
-  row.appendChild(subNode);
-  // 当前联系人副行（484）：逐人事件滚动显示最近一位（原位更新同款恒渲染 + hidden）
-  const contactNode = el('div', 'bz-people-ds-sync-contact', { 'data-people-ds-sync-contact': '' }, text(line.contact));
-  if (!line.contact) contactNode.hidden = true;
-  if (line.status === 'running') row.appendChild(contactNode);
-  const shown = line.failures.slice(0, 3);
-  for (const f of shown) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(f)));
-  if (line.failures.length > 3) row.appendChild(el('div', 'bz-people-ds-sync-fail', text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
-  if (line.hint) row.appendChild(el('div', 'bz-people-ds-sync-hint', text(line.hint)));
-  return row;
-}
-
+/** 页脚账：勾了几位、会发生什么（全新 / 增量 / 跳过逐项报） */
 function footerLabel(s: DsModalState): string {
-  if (!s.rows) return '';
-  if (!s.selectedCount) return '未勾选联系人';
-  // 485：stats 路径「有新」按位计（freshApprox），chat.json 回落路径按条计（freshCount）
+  const picked = (s.rows ?? []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+  if (!picked.length) return '未勾选联系人';
+  const n = { full: 0, newer: 0, skip: 0, exported: 0 };
+  let msgs = 0;
+  for (const r of picked) {
+    const w = dsWaterOf(r);
+    if (!w) continue;
+    if (w.k === 'full') { n.full++; msgs += r.rawCount; }
+    else if (w.k === 'exported') { n.exported++; msgs += r.rawCount; } // 已导出没入库：这批也照样并进来
+    else if (w.k === 'newer') { n.newer++; msgs += r.newCount; }
+    else if (w.k === 'skip') n.skip++;
+  }
+  if (picked.length && n.skip === picked.length) return '所选暂无新素材（已导过的会被跳过）';
   const bits = [
-    ...(s.freshCount > 0 ? [`新素材 ${s.freshCount} 条`] : []),
-    ...(s.freshApprox > 0 ? [`${s.freshApprox} 位有新消息`] : []),
-  ];
-  return bits.length
-    ? `已选 ${s.selectedCount} 位 · ${bits.join(' · ')}`
-    : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
+    n.full ? `全新 ${n.full} 位` : '',
+    n.newer ? `增量 ${n.newer} 位` : '',
+    n.exported ? `待入库 ${n.exported} 位` : '',
+    n.skip ? `跳过 ${n.skip} 位` : '',
+  ].filter(Boolean);
+  return `已选 ${picked.length} 位 · 将并入 ${formatCount(msgs)} 条${bits.length ? `（${bits.join(' · ')}）` : ''}`;
 }
 
-/** 导入记录 meta（数据折头） */
+/** 同步条：和进度便签同一套小纸条（黄纸 + 一道虚边），出错那档才转红 */
+export function dsSyncLineNode(line: DsSyncLine): HTMLElement {
+  const box = el('div', `bz-people-syncline${line.status === 'error' ? ' bz-people-syncline-err' : ''}`, { 'data-people-ds-sync-line': line.status });
+  const main = line.pct === null ? line.text : `${line.text} ${line.pct}%`;
+  box.appendChild(el('div', 'bz-people-sync-text', { 'data-people-ds-sync-text': '' }, text(main)));
+  if (line.status === 'running') {
+    const track = el('div', 'bz-people-sync-track');
+    track.appendChild(line.pct === null
+      ? el('div', 'bz-people-sync-indet')
+      : el('div', 'bz-people-sync-bar', { style: `width:${line.pct}%` }));
+    box.appendChild(track);
+  }
+  // 联系人行 / 副行常驻（空则藏起来）：running 期间原位更新只换文本，不重建整条
+  const contact = el('div', 'bz-people-sync-contact', { 'data-people-ds-sync-contact': '' }, text(line.contact));
+  if (!line.contact) contact.hidden = true;
+  box.appendChild(contact);
+  for (const f of line.failures) box.appendChild(el('div', 'bz-people-sync-fail', { 'data-people-ds-sync-fail': '' }, text(f)));
+  const sub = el('div', 'bz-people-sync-sub', { 'data-people-ds-sync-sub': '' }, text(line.sub));
+  if (!line.sub) sub.hidden = true;
+  box.appendChild(sub);
+  if (line.hint) box.appendChild(el('div', 'bz-people-sync-sub', text(line.hint)));
+  return box;
+}
+
+/** 导入记录 meta（详情页账目行） */
 export function importMeta(rec: ImportRecord, textMsgs: number): string {
   return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
 }

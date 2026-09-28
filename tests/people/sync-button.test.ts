@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 /**
- * 数据源弹窗「同步」按钮接线测试（issue 465 / ADR-0196 决策 6、10）：
- * 点同步 = 插件调 bz-face sync 跑完整条链，弹窗内一条进度行推进；运行中该位置只出「停止」；
+ * 数据源册页「同步」按钮接线测试（issue 465 / ADR-0196 决策 6、10）：
+ * 点同步 = 插件调 bz-face sync 跑完整条链，册页内一条进度行推进；运行中该位置只出「停止」；
  * 完成（终态）重扫数据根刷新列表并标出更新数、**不自动导入**；错误面（微信未开 / 工具未装 /
- * 数据根未配置）在弹窗内给中文人话；同步进行中「画脸谱」入口（印章 / 详情头 / 页脚）置灰。
+ * 数据根未配置）在册页内给中文人话；同步进行中「画脸谱」入口被同步锁死（ADR-0196 决策 10：
+ * 详情页动作签置灰、数据源页脚同锁——issue 505 相册簿改版后由 applySyncLockdown 按新钩子覆盖）。
  *
  * 进程壳经 setSyncRunnerForTests 注入假件喂预录协议行；引擎经 setJobsModuleForTests 注入
  * 假件（空队列）；数据根用临时真实目录（datasource 读库外文件夹走 window.require('fs')）。
@@ -107,10 +108,31 @@ function click(sel: string): void {
   document.querySelector(sel)!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
-/** 497：startGeneration 起引擎前弹一次总确认——等它出现并点「开始生成」放行 */
+/** 497：startGeneration 起引擎前弹一次总确认——等它出现（505 起是册子里的一页）并点「开始生成」放行 */
 async function confirmGen(): Promise<void> {
-  await vi.waitFor(() => expect(document.querySelector('[data-people-gen-confirm]')).toBeTruthy());
+  await vi.waitFor(() => expect(document.querySelector('[data-people-sub="gen"]')).toBeTruthy());
   click('[data-people-gen-start]');
+}
+
+/** 点照片进详情：册子先放一段「抽照片」的动画（240ms），等对面那页翻开 */
+async function openDetail(id: string): Promise<void> {
+  // 505：册页（数据源 / 找一找 / 开工单…）摊开时册子上画的是那一页，照片不在册上——先把那页合上
+  if (document.querySelector('[data-people-close]')) click('[data-people-close]');
+  await vi.waitFor(() => expect(document.querySelector(`[data-people-pocket="${id}"]`)).toBeTruthy());
+  click(`[data-people-pocket="${id}"]`);
+  await vi.waitFor(() => expect(document.querySelector(`[data-people-detail="${id}"]`)).toBeTruthy());
+}
+
+/**
+ * 走画脸谱入口（详情头「画脸谱」）验同步解锁后一路走到业务分支（ADR-0196 决策 10）：
+ * 同步终态后入口可点，点完等那一下新冒出的通知（业务分支那条），供调用方断言。
+ * 注意：同步运行中该入口是置灰的（点不动、不出通知），验拦截请直接断言 disabled + click 无事发生。
+ */
+async function tapGenerate(id: string): Promise<void> {
+  const before = getNoticeMessages().length;
+  await openDetail(id);
+  click('[data-people-act="generate"]');
+  await vi.waitFor(() => expect(getNoticeMessages().length).toBeGreaterThan(before));
 }
 
 let tool: FakeTool;
@@ -134,13 +156,15 @@ async function boot(seed?: PersonEntry[], cfg: Record<string, unknown> = {}, que
   setSyncRunnerForTests(tool.runner);
 }
 
-/** 开面板 + 开数据源弹窗并等首轮扫描完成（临时数据根里有联系人） */
+/** 开面板 + 开数据源册页并等首轮扫描完成（临时数据根里有联系人） */
 async function bootWithDsOpen(seed?: PersonEntry[], cfg: Record<string, unknown> = {}, queue: JobView[] = []): Promise<void> {
-  await boot(seed, cfg, queue);
+  // 505：册页是「册子里翻出来的一页」——册上得有人才画得出页（空册时数据源页不渲染），
+  // 所以缺种子时默认放一位在册上（数据源扫描读的仍是临时数据根，不看这位）
+  await boot(seed ?? [person()], cfg, queue);
   openPeoplePanel(getApp());
   await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
   openDataSource();
-  await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeTruthy());
+  await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
   if (dataRoot) await vi.waitFor(() => expect(document.querySelector('.bz-people-ds-row')).toBeTruthy());
 }
 
@@ -159,6 +183,8 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  // 终态渲染是 fire-and-forget（ui 的 void renderAlbum）：关面板前先放它落地，收尾干净
+  for (let i = 0; i < 3; i++) await tick(0);
   try { closePeoplePanel(); } catch { /* 幂等 */ }
   setJobsModuleForTests(null);
   setSyncRunnerForTests(null);
@@ -169,8 +195,22 @@ afterEach(async () => {
 
 const person = (): PersonEntry => ({ id: 'wxid_a', name: '陈默', createdAt: new Date().toISOString(), imports: [] });
 
+describe('空册也能翻出数据源页（issue 505 修复：弹窗不被 albumEmpty 顶掉）', () => {
+  it('册上一位都没有时，「打开数据源」照常翻出那页；合上回到空册', async () => {
+    await boot([], {}, []);
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-empty')).toBeTruthy());
+    click('[data-people-dialog="ds"]'); // 空册页上的「打开数据源」
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
+    click('[data-people-close]'); // 「合上这页」——空册页（含它的入口）原样回来
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    expect(document.querySelector('.bz-people-empty')).toBeTruthy();
+  });
+});
+
 describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）', () => {
-  it('点同步起跑：弹窗内出进度行、右上角只出「停止」不与同步并列、页脚导入置灰、印章置灰；参数按设置下发', async () => {
+  it('点同步起跑：册页内出进度行、右上角只出「停止」不与同步并列、页脚导入置灰、画脸谱入口被同步锁死；参数按设置下发', async () => {
     await bootWithDsOpen([person()]);
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
@@ -182,19 +222,27 @@ describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）
     expect(document.querySelector('[data-people-ds-sync-stop]')).toBeTruthy();
     expect(document.querySelector('[data-people-ds-sync-line]')!.querySelector('[data-people-ds-sync-stop]')).toBeNull();
     expect([...document.querySelectorAll('[data-people-ds-sync-stop]')].length).toBe(1);
-    // 页脚「导入所选」置灰；弹窗页脚没有可与同步并列的第二动作
+    // 页脚「导入所选」置灰；册页页脚没有可与同步并列的第二动作
     const importBtn = document.querySelector<HTMLButtonElement>('[data-people-ds-import]');
     expect(importBtn?.disabled).toBe(true);
-    // 画脸谱入口置灰：封面墙印章 + 详情头按钮（ADR-0196 决策 10）
-    const seal = document.querySelector<HTMLButtonElement>('[data-people-seal-act="draw"]');
-    expect(seal).toBeTruthy();
-    expect(seal?.disabled).toBe(true);
-    // 进度行不占画像生成的进度块（面板 jobs 槽保持隐藏）
+    // 进度行不占画像生成的进度块（面板便签槽里没有任务便签）
     const jobsSlot = document.querySelector<HTMLElement>('[data-people-jobs-slot]');
-    expect(jobsSlot?.hidden ?? true).toBe(true);
+    expect(jobsSlot).toBeTruthy();
+    expect(jobsSlot!.querySelector('.bz-people-jobs')).toBeNull();
+    // 画脸谱入口被同步锁死（ADR-0196 决策 10：数据正在变，不画半截素材）：
+    // 同步运行中详情页「画脸谱」动作签置灰，点它无事发生——不开开工单页、不起引擎、不冒通知
+    await openDetail('wxid_a');
+    const genBtn = document.querySelector<HTMLButtonElement>('[data-people-act="generate"]');
+    expect(genBtn).toBeTruthy();
+    expect(genBtn!.disabled).toBe(true);
+    expect(genBtn!.getAttribute('data-people-sync-lock')).toBe('1');
+    genBtn!.click();
+    await tick();
+    expect(document.querySelector('[data-people-sub="gen"]')).toBeNull();
+    expect(engineStarted.length).toBe(0);
   });
 
-  it('进度行逐段推进：阶段标签 + 百分比 + [bz-step] 副文案；原位更新不重建弹窗', async () => {
+  it('进度行逐段推进：阶段标签 + 百分比 + [bz-step] 副文案；原位更新不重建册页', async () => {
     await bootWithDsOpen();
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
@@ -214,7 +262,7 @@ describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）
     tool.progress('key', null);
     await tick();
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).not.toContain('%');
-    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeTruthy();
+    expect(document.querySelector('.bz-people-sync-indet')).toBeTruthy();
   });
 
   it('点停止：真的停下（handle.stop）、进度行给「已停止，可重跑续传」、动作全部恢复', async () => {
@@ -230,43 +278,51 @@ describe('点「同步」：运行中形态与互斥（ADR-0196 决策 6、10）
     expect(document.querySelector('[data-people-ds-sync-line]')!.textContent).toContain('重跑');
     expect(document.querySelector('[data-people-ds-sync-stop]')).toBeNull(); // 停止态恢复「同步」钮
     expect(document.querySelector<HTMLButtonElement>('[data-people-ds-sync]')?.textContent).toContain('同步');
-    const seal = document.querySelector<HTMLButtonElement>('[data-people-seal-act="draw"]');
-    expect(seal?.disabled).toBe(false); // 印章解锁
+    // 画脸谱入口解锁（ADR-0196 决策 10）：同步终态后不再被同步守卫拦，一路走到业务分支
+    await tapGenerate('wxid_a');
+    expect(getNoticeMessages().join('\n')).not.toContain('正在同步微信数据');
+    expect(getNoticeMessages().join('\n')).toContain('还没有可画的消息素材');
     expect(getNoticeMessages().join('\n')).toContain('同步已停止');
   });
 
-  it('运行中弹窗可关可重开：同步照跑，重开即恢复进度行', async () => {
+  it('运行中册页可关可重开：同步照跑，重开即恢复进度行、勾选快照还在', async () => {
     await bootWithDsOpen();
+    click('[data-people-ds-check]'); // 先勾上陈默——合上这页 / 重开要保住这份快照
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
-    click('[data-people-ds-dim]'); // 遮罩点击 = 关闭弹窗（弹窗无独立关闭钮，与现网一致）
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeNull());
+    click('[data-people-close]'); // 「合上这页」= 关册页（505 起弹窗无遮罩，页眉右上就是关闭钮）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
     openDataSource(); // 重开
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
     expect(document.querySelector('[data-people-ds-sync-stop]')).toBeTruthy(); // 进度与停止钮都在
     expect(tool.calls.length).toBe(1); // 没有重跑
+    expect(document.querySelector('[data-people-ds-check]')?.getAttribute('aria-checked')).toBe('true'); // 勾选快照还在
+    expect(document.querySelector('[data-people-ds-count]')?.textContent).toContain('已选 1 位');
     stopSync();
     await tool.settle({ ok: false, stopped: true, code: null });
   });
 });
 
 describe('同步完成：刷新列表、标出更新数、不自动导入', () => {
-  it('完成后重扫数据根：列表刷新并按聊天仓水位标「新 N 条」；保库记录 store 段不动（不自动导入）', async () => {
+  it('完成后重扫数据根：列表刷新并按聊天仓水位标「全新 · N 条」；保库记录 store 段不动（不自动导入）', async () => {
     const seeded = person();
     await bootWithDsOpen([seeded]);
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')).toBeTruthy());
     await tool.runHappy({ contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 2, named: 0, failures: [] });
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('同步完成'));
-    // 列表刷新：联系人行在，且按新素材标出「新 2 条」（数据根 2 条消息、聊天仓为空）
+    // 列表刷新：联系人行在，且按新素材标出「全新 · 2 条」水位签与「未导入」尾注（数据根 2 条消息、聊天仓为空）
     await vi.waitFor(() => expect(document.querySelector('.bz-people-ds-row')).toBeTruthy());
-    expect(document.querySelector('.bz-people-ds-new')?.textContent).toContain('新 2 条');
+    expect(document.querySelector('.bz-people-ds-water')?.textContent).toContain('全新 · 2 条');
+    expect(document.querySelector('.bz-people-ds-mark')?.textContent).toContain('未导入');
     // 不自动导入：保库记录里聊天仓仍是空仓
     const rec = await lastSafe!.readAll().then((m) => m.get('wxid_a'));
     expect(rec?.store?.msgs?.length ?? 0).toBe(0);
-    // 画脸谱入口恢复（印章可点）；完成通知发出
-    expect(document.querySelector<HTMLButtonElement>('[data-people-seal-act="draw"]')?.disabled).toBe(false);
+    // 画脸谱入口恢复（ADR-0196 决策 10）：不再被同步守卫拦，一路走到业务分支；完成通知发出
+    await tapGenerate('wxid_a');
+    expect(getNoticeMessages().join('\n')).not.toContain('正在同步微信数据');
+    expect(getNoticeMessages().join('\n')).toContain('还没有可画的消息素材');
     expect(getNoticeMessages().join('\n')).toContain('同步完成');
   });
 
@@ -285,7 +341,7 @@ describe('同步完成：刷新列表、标出更新数、不自动导入', () =
   });
 });
 
-describe('错误面：弹窗内中文原因与下一步动作，不抛栈', () => {
+describe('错误面：册页内中文原因与下一步动作，不抛栈', () => {
   it('微信未开：工具预检 [bz-result]{ok:false,error} 原文显示在进度行，随后恢复「同步」', async () => {
     await bootWithDsOpen();
     click('[data-people-ds-sync]');
@@ -309,11 +365,11 @@ describe('错误面：弹窗内中文原因与下一步动作，不抛栈', () =
   });
 
   it('数据根未配置：点同步不开进程，进度行给「先在下方配置数据根目录」与设置页指引', async () => {
-    await boot([], { peopleDataDir: '' });
+    await boot([person()], { peopleDataDir: '' });
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
     openDataSource();
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
     const callsBefore = tool.calls.length;
     click('[data-people-ds-sync]');
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-line]')?.textContent).toContain('先在下方配置数据根目录'));
@@ -323,9 +379,9 @@ describe('错误面：弹窗内中文原因与下一步动作，不抛栈', () =
 });
 
 describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成才拦', () => {
-  it('引擎只剩 paused 任务：数据源弹窗照常打开，无「正在生成脸谱」拦截通知', async () => {
-    await bootWithDsOpen([], {}, [fakeJob({ status: 'paused', talker: '梨花花' })]);
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-pop]')).toBeTruthy());
+  it('引擎只剩 paused 任务：数据源册页照常打开，无「正在生成脸谱」拦截通知', async () => {
+    await bootWithDsOpen([person()], {}, [fakeJob({ status: 'paused', talker: '梨花花' })]);
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
     expect(getNoticeMessages().join('\n')).not.toContain('正在生成脸谱');
     // paused 也不拦导入：守卫同口径
     click('[data-people-ds-import]');
@@ -334,12 +390,12 @@ describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成�
   });
 
   it('引擎有 running 任务：仍然拦截并给中文通知', async () => {
-    await boot([], {}, [fakeJob({ status: 'running', talker: '梨花花', batchesDone: 2 })]);
+    await boot([person()], {}, [fakeJob({ status: 'running', talker: '梨花花', batchesDone: 2 })]);
     openPeoplePanel(getApp());
     await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
     openDataSource();
     await tick();
-    expect(document.querySelector('[data-people-ds-pop]')).toBeNull();
+    expect(document.querySelector('[data-people-sub="ds"]')).toBeNull();
     expect(getNoticeMessages().join('\n')).toContain('正在生成脸谱');
   });
 });
@@ -371,8 +427,8 @@ describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当�
     await tick();
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('取密钥');
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('已 ');
-    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeTruthy();
-    expect(document.querySelector('[data-people-ds-sync-bar]')).toBeNull();
+    expect(document.querySelector('.bz-people-sync-indet')).toBeTruthy();
+    expect(document.querySelector('.bz-people-sync-bar')).toBeNull();
     // 解密 → contacts：阶段词切换 + N/M 位置；联系人事件滚动上屏，跳过的不顶掉
     tool.progress('decrypt', null);
     await tick();
@@ -393,8 +449,8 @@ describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当�
     // pct 来了 → 不定态让位确定态条（结构重建，走整渲染）
     tool.progress('contacts', 5);
     await tick();
-    expect(document.querySelector('[data-people-ds-sync-bar]')).toBeTruthy();
-    expect(document.querySelector('.bz-people-ds-sync-indet')).toBeNull();
+    expect(document.querySelector('.bz-people-sync-bar')).toBeTruthy();
+    expect(document.querySelector('.bz-people-sync-indet')).toBeNull();
     stopSync();
     await tool.settle({ ok: false, stopped: true, code: null });
   });
@@ -406,7 +462,7 @@ describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当�
     await tool.runHappy({ contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 2, named: 0, failures: [] });
     await vi.waitFor(() => expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).toContain('同步完成'));
     expect(document.querySelector('[data-people-ds-sync-text]')!.textContent).not.toContain('已 ');
-    expect(document.querySelector('[data-people-ds-sync-contact]')).toBeNull(); // 终态不渲染联系人行
+    expect((document.querySelector('[data-people-ds-sync-contact]') as HTMLElement).hidden).toBe(true); // 终态联系人行收起（节点常驻、空则隐藏）
   });
 });
 

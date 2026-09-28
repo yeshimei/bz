@@ -1,8 +1,10 @@
-/* ==================== 脸谱域样式（src/people/styles.css，issue 435/447 / ADR-0191） ====================
- * 折子语义（issue 447 拍板 G 案）：一人一册——封面墙竖排姓名 + 修复印章；详情五折折页册；
- * 数据源为面板内独立弹层（默认不打开）。markup 单源出自 render.ts，本文件只管折子皮肤。
- * 主题：宣纸 + 朱红 + 鎏金（戏台/印泥意象）+ 亮暗双主题变量组；域内 scope 自持（ADR-0101）。
- * 铁律：滚动条不自造（core 通杀隐藏）；:hover 全量包 @media (hover: hover)（呈报#9 F4）。
+/* ==================== 脸谱域样式（src/people/styles.css，issue 505 相册簿） ====================
+ * 语汇：宣纸底 + 皮革册壳 + 米色台纸页 + 整块透明膜（反光 / 封边 / 翘角）+ 照片 + 朱红小印。
+ * 打开面板就是这册相册：一次摊开左右两页、翻摊是掀一张纸、点照片从膜下抽出来翻到对面那页，
+ * 弹窗也是册子里翻出来的一页；上锁时整册合着，只留封皮与搭扣。
+ * markup 单源出自 render.ts（bz-people-* 前缀），本文件只管册子皮肤；主题走域内 scope 自持（ADR-0101）。
+ * 铁律：滚动条不自造（core 通杀隐藏，ADR-0122）；:hover 全量包 @media (hover: hover)（呈报#9 F4）；
+ * 窄屏走 @container（容器在 .bz-people-panel）。
  */
 
 /* —— 变量（亮色） —— */
@@ -30,6 +32,36 @@
   --paper-fold: #fbf7ec;
   --paper-fold-2: #f3ecdc;
   --seal-ink: #a8433c;
+  /* ---- 相册簿统一口径（免得每处各写一个值，看着不像同一只手摆的）----
+     字号四档：页眉与标题 15 / 正文与表单 13 / 表格与贴纸 12 / 批注与页码 11
+       （再大的是「display 字号」：头像首字、宝丽来上的人名、空态标题、印章，逐处写死不动）
+     圆角三档：纸 2 / 卡 6 / 签 8（签只圆上沿）；胶囊 99px 与正圆 50% 是形状，不在档里
+     阴影三档：贴纸 1 / 卡片 2 / 册子 3
+     角度三档：±1 / ±3 / ±8（静态贴上去的那点斜一律取倍数；keyframes 里的编排角度不在此列）
+     悬停两种：纸类抬 2px、行类右移 3px */
+  --page: #fdfbf4;
+  --mat: #e6dbc0;
+  --pencil: #7d7460;
+  --shadow: rgba(120, 110, 90, 0.16);
+  --acc-bright: #c0392f;
+  --kai: 'STKaiti', 'KaiTi', 'Kaiti SC', 'Noto Serif SC', serif;
+  --song: 'Songti SC', 'SimSun', 'Noto Serif SC', serif;
+  --sans: system-ui, 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  --f-head: 15px;
+  --f-body: 13px;
+  --f-mid: 12px;
+  --f-aux: 11px;
+  --r-paper: 2px;
+  --r-card: 6px;
+  --r-tab: 8px;
+  --sh-1: 0 1px 3px rgba(120, 110, 90, 0.22);
+  --sh-2: 0 5px 14px rgba(120, 110, 90, 0.22);
+  --sh-3: 0 12px 26px rgba(40, 30, 18, 0.34);
+  --t1: 1deg;
+  --t2: 3deg;
+  --t3: 8deg;
+  font-family: var(--sans);
+  color: var(--ink);
 }
 .theme-dark .bz-people-scope {
   --bg: #262320;
@@ -55,13 +87,22 @@
   --paper-fold: #3a352b;
   --paper-fold-2: #332e26;
   --seal-ink: #c0645a;
+  /* 相册簿（暗色）：台纸与册壳压暗、笔迹提亮，膜的亮边照旧 */
+  --page: #2b2823;
+  --mat: #3d372c;
+  --pencil: #a89c84;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --acc-bright: #d4776a;
+  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --sh-2: 0 5px 14px rgba(0, 0, 0, 0.42);
+  --sh-3: 0 12px 26px rgba(0, 0, 0, 0.6);
 }
 
-/* —— 面板：亚麻纹理底板 + 入场动效 —— */
+/* —— 面板：一整块就是这册相册（没有标题栏 / 品牌行，总账挪到第一页页眉的小签里） —— */
 .bz-people-panel {
   position: relative;
-  width: min(920px, 94vw);
-  height: min(660px, 88vh);
+  width: min(1080px, 96vw);
+  height: min(780px, 92vh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -82,627 +123,961 @@
   from { opacity: 0; transform: translateY(10px) scale(0.99); }
   to { opacity: 1; transform: none; }
 }
+/* 便签 / 横幅 / 小签的槽位：面板内绝对定位，不占册子的版面 */
+.bz-people-jobs-slot { position: absolute; inset: 0; pointer-events: none; z-index: 38; }
+.bz-people-jobs-slot > * { pointer-events: auto; }
+.bz-people-banner-slot { position: absolute; inset: 0; pointer-events: none; z-index: 60; }
+.bz-people-banner-slot > * { pointer-events: auto; }
 
-/* —— 头行：印章品牌区 + 操作 —— */
-.bz-people-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 18px 24px 10px;
+/* ============================================================================
+   脸谱 · 相册簿（探索稿） — 全站样式
+   语汇：宣纸底 + 皮革册壳 + 米色台纸页 + 整块透明膜（反光/封边/翘角）+ 照片 + 朱红小印。
+   滚动条界面级隐藏（该滚照样滚）；重画 innerHTML 前按 data-scroll 记住滚动位置，画完放回去。
+   ========================================================================== */
+.bz-people-scope {
+  --page: #fdfbf4;
+  --ink: #4a443a;
+  --ink-strong: #3c362c;
+  --ink-mut: #9a917d;
+  --card: #fffdf8;
+  --card-bd: #e8e2d4;
+  --shadow: rgba(120,110,90,.16);
+  --acc: #a8433c;
+  --acc-deep: #8a342e;
+  --soft: rgba(168,67,60,.07);
+  --paper-fold-2: #f3ecdc;
+  --pencil: #7d7460;
+  --kai: 'STKaiti','KaiTi','Kaiti SC','Noto Serif SC',serif;
+  --song: 'Songti SC','SimSun','Noto Serif SC',serif;
+  --sans: system-ui,'Microsoft YaHei','PingFang SC',sans-serif;
+  /* ---- 全册统一口径（免得每处各写一个值，看着不像同一只手摆的）----
+     字号四档：页眉与标题 15 / 正文与表单 13 / 表格与贴纸 12 / 批注与页码 11
+       （再大的是「display 字号」：头像首字、宝丽来上的人名、空态标题、印章，逐处写死不动）
+     圆角三档：纸 2 / 卡 6 / 签 8（签只圆上沿）；胶囊 99px 与正圆 50% 是形状，不在档里
+     阴影三档：贴纸 1 / 卡片 2 / 册子 3
+     角度三档：±1 / ±3 / ±8（静态贴上去的那点斜一律取倍数；keyframes 里的编排角度不在此列）
+     悬停两种：纸类抬 2px、行类右移 3px */
+  --f-head: 15px; --f-body: 13px; --f-mid: 12px; --f-aux: 11px;
+  --r-paper: 2px; --r-card: 6px; --r-tab: 8px;
+  --sh-1: 0 1px 3px rgba(120,110,90,.22);
+  --sh-2: 0 5px 14px rgba(120,110,90,.22);
+  --sh-3: 0 12px 26px rgba(40,30,18,.34);
+  --t1: 1deg; --t2: 3deg; --t3: 8deg;
+  --acc-bright: #c0392f;   /* 只给印章与「新」贴纸，别的红一律用 --acc / --acc-deep */
+  --mat: #e6dbc0;          /* 台纸（贴相版的底色） */
 }
-.bz-people-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.bz-people-mark {
-  width: 42px;
-  height: 42px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--acc), var(--acc-deep));
-  color: var(--on-acc);
-  box-shadow: 0 3px 10px rgba(138, 52, 46, 0.32);
-}
-.bz-people-mark .bz-ic {
-  width: 24px;
-  height: 24px;
-}
-.bz-people-title {
-  margin: 0;
-  font-size: 19px;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: var(--ink-strong);
-}
-.bz-people-sub {
-  margin-top: 2px;
-  font-size: 11.5px;
-  letter-spacing: 0.5px;
-  color: var(--ink-mut);
-}
-.bz-people-head-actions {
-  display: flex;
-  gap: 8px;
-}
-.bz-people-stats {
-  padding: 0 24px 8px;
-  font-size: 12px;
-  color: var(--ink-mut);
-  letter-spacing: 0.3px;
-}
+/* 膜上反光的位置（跟着指针 / 跟着某张照片走）。登记成百分比，过渡才走得顺 */
 
-/* —— 生成进度块（issue 450：阶段化进度 + 后台化；画脸谱关弹窗回面板看进度） ——
-   455 评审：只在对应联系人的详情页显示；显示时贴住面板顶（抵消详情体 padding） */
-.bz-people-jobs-slot {
-  margin: 0 24px 8px;
-}
-.bz-people-jobs-slot[hidden] {
-  display: none;
-}
-.bz-people-panel.bz-people-jobs-showing .bz-people-jobs-slot {
-  margin: 0 24px 10px;
-}
-.bz-people-panel.bz-people-jobs-showing .bz-people-body {
-  padding-top: 0;
-}
-.bz-people-jobs {
-  display: grid;
-  gap: 5px;
-  margin-top: 20px;
-  padding: 8px 12px;
-  border: 1px solid var(--card-bd);
-  border-left: 3px solid var(--acc);
-  border-radius: 8px;
-  background: var(--card);
-  font-size: 12.5px;
-}
-.bz-people-jobs-meter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.bz-people-jobs-bar {
-  flex: 1;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(168, 67, 60, 0.18);
-  overflow: hidden;
-}
-.bz-people-jobs-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--acc);
-  transition: width 0.3s ease;
-}
-.bz-people-jobs-pct {
-  flex: none;
-  min-width: 34px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  color: var(--ink-mut);
-}
-/* 引擎主文案整句展示：切批 / 抽样说明可能是长句——不截断、允许换行 */
-.bz-people-jobs-main {
-  font-weight: 700;
-  color: var(--ink-strong);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-/* 引擎细节（497 副行 → 现同行内次级字）：跟在主行尾，比主行弱一档但不另起一行 */
-.bz-people-jobs-detail {
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--ink-mut);
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.bz-people-jobs-foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.bz-people-jobs-err {
-  color: var(--danger);
-  overflow-wrap: anywhere;
-}
-@keyframes bzPeopleSpin {
-  to { transform: rotate(360deg); }
-}
 
-/* —— 按钮 —— */
+/* ---------------- 按钮（纸标签式） ---------------- */
 .bz-people-btn {
-  appearance: none;
-  border: 1px solid var(--card-bd);
-  background: var(--card);
-  color: var(--ink);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  font-family: var(--kai); font-size: var(--f-body); letter-spacing: .5px; color: var(--ink-strong);
+  background: #fffdf7; border: 1px solid #d9d1bd; border-radius: var(--r-card); padding: 6px 15px;
+  box-shadow: var(--sh-1); transition: transform .12s, box-shadow .12s, border-color .12s;
 }
-.bz-people-btn-acc {
-  background: var(--acc);
-  border-color: var(--acc);
-  color: var(--on-acc);
-  font-weight: 600;
-}
-.bz-people-btn-ghost {
-  background: transparent;
-}
-.bz-people-btn-sm {
-  padding: 3px 10px;
-  font-size: 12px;
-}
-@media (hover: hover) {
-  .bz-people-btn:hover {
-    border-color: var(--acc);
-    color: var(--acc-deep);
-  }
-  .bz-people-btn-acc:hover {
-    background: var(--acc-deep);
-    border-color: var(--acc-deep);
-    color: var(--on-acc);
-    transform: translateY(-1px);
-  }
-  .bz-people-del:hover,
-  .theme-dark .bz-people-del:hover {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-}
+@media (hover: hover) { .bz-people-btn:hover { transform: translateY(-2px); box-shadow: var(--sh-2); } }
+.bz-people-btn:active { transform: translateY(0) scale(.985); box-shadow: var(--sh-1); }
+.bz-people-btn:focus-visible, .bz-people-close:focus-visible, .bz-people-stk:focus-visible,
+.bz-people-tab:focus-visible, .bz-people-mon-head:focus-visible { outline: 2px solid rgba(168,67,60,.45); outline-offset: 1px; }
+.bz-people-btn-acc { background: var(--acc); border-color: var(--acc-deep); color: #fff8f0;
+  box-shadow: 0 2px 4px rgba(138,52,46,.3); }
+@media (hover: hover) { .bz-people-btn-acc:hover { box-shadow: 0 4px 10px rgba(138,52,46,.34); } }
+.bz-people-btn-gold { background: #f4e8c8; border-color: #ddc78e; color: #6f5719; }
+.bz-people-btn-sm { font-size: var(--f-mid); padding: 4px 11px; }
+.bz-people-btn[disabled] { opacity: .45; pointer-events: none; }
+.bz-people-ico { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
+  border-radius: var(--r-card); color: var(--ink-mut); transition: .12s; flex: none; }
+.bz-people-ico svg { width: 17px; height: 17px; }
+@media (hover: hover) { .bz-people-ico:hover { background: rgba(168,67,60,.08); color: var(--acc); } }
+.bz-people-ico.bz-people-ico-sm { width: 22px; height: 22px; } .bz-people-ico.bz-people-ico-sm svg { width: 14px; height: 14px; }
 
-/* —— 图标按钮（issue 448：lucide 占位在按钮内层 .bz-ic，mountIcons 只换占位不动按钮） —— */
-.bz-people-icon-btn {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.bz-people-icon-btn .bz-ic {
-  width: 16px;
-  height: 16px;
-}
-/* 扫描中：图标转圈（复用生成进度 spin） */
-.bz-people-spin svg {
-  animation: bzPeopleSpin 0.9s linear infinite;
-}
+/* ---------------- 册子下缘立起来的小签（唯一常驻入口：数据源） ---------------- */
+/* 页面整块就是册子，别处不留 UI；这枚签立在册子右下方的边上，不再顶在正中 */
+.bz-people-tabs { position: absolute; right: 54px; bottom: 0; z-index: 25; display: flex; align-items: flex-end; gap: 5px; }
+.bz-people-tab { display: inline-flex;
+  align-items: center; gap: 5px; font-family: var(--kai); font-size: var(--f-aux); letter-spacing: 1.5px; color: #7a6a44;
+  background: linear-gradient(180deg, #f8f0d9, #f3e7c8); border: 1px solid #e0cf9f; border-bottom: none;
+  border-radius: var(--r-tab) var(--r-tab) 0 0; padding: 4px 11px 5px; box-shadow: 0 -2px 6px rgba(60,50,30,.24);
+  transition: color .14s, border-color .14s, transform .14s, background .14s; }
+@media (hover: hover) { .bz-people-tab:hover { color: var(--acc); border-color: rgba(168,67,60,.45); transform: translateY(-2px); } }
+.bz-people-tab:active { transform: translateY(0); }
+.bz-people-tab-on { color: var(--acc-deep); border-color: rgba(168,67,60,.5);
+  background: linear-gradient(180deg, #fdf6e4, #f2e3c2); box-shadow: 0 -3px 9px rgba(60,50,30,.3); }
+.bz-people-tab svg { width: 12px; height: 12px; }
 
-/* —— 内容区 —— */
-.bz-people-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 24px 24px;
-}
+/* ---------------- 生成进度（便签条：贴在册子左下角，只压着页码那一带，不挡页眉也不挡照片） ---------------- */
+.bz-people-jobs { position: absolute; left: 22px; bottom: 10px; z-index: 38; width: min(300px, calc(100% - 44px));
+  transform: rotate(calc(var(--t1) * -.25)); background: #fbf2d9; border: 1px solid #e6d6a8;
+  border-radius: var(--r-card); padding: 10px 14px 10px 18px; box-shadow: 0 3px 10px rgba(60,50,30,.3); }
+/* 便签是靠上沿那截胶带贴住的（横贴，不再斜插在左边） */
+.bz-people-jobs::before { content: ''; position: absolute; left: 50%; top: -7px; width: 46px; height: 14px; margin-left: -23px;
+  background: rgba(176,138,62,.4); border: 1px solid rgba(176,138,62,.5); transform: rotate(calc(var(--t2) * -1)); }
+.bz-people-jobs-meter { display: flex; align-items: center; gap: 10px; }
+.bz-people-jobs-track { flex: 1; height: 4px; border-radius: var(--r-paper); background: rgba(122,95,30,.16); overflow: hidden; }
+.bz-people-jobs-fill { position: relative; overflow: hidden; height: 100%; border-radius: var(--r-paper);
+  background: linear-gradient(90deg, var(--acc), #c4604a); transition: width .45s cubic-bezier(.3,.85,.3,1); }
+/* 走着的进度条上过一道光，一眼看出还在动 */
+.bz-people-jobs-fill::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: bz-people-sheen 1.7s linear infinite; }
+@keyframes bz-people-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.bz-people-jobs-fill.bz-people-indet { width: 34% !important; background: repeating-linear-gradient(90deg, var(--acc) 0 8px, #dfa79a 8px 14px);
+  animation: bz-people-pulse 1.1s ease-in-out infinite alternate; }
+@keyframes bz-people-pulse { from { opacity: .5; } to { opacity: 1; } }
+.bz-people-jobs-pct { font-size: var(--f-aux); color: var(--pencil); font-variant-numeric: tabular-nums; }
+/* 队列那行：真实现是一人一任务顺序跑，便签上写清「画的是谁、队里第几位」 */
+.bz-people-jobs-who { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-bottom: 3px; }
+.bz-people-jobs-who b { color: var(--acc-deep); font-style: normal; }
+.bz-people-jobs-main { margin-top: 5px; font-size: var(--f-mid); color: var(--ink-strong); font-weight: 700; }
+.bz-people-jobs-detail { font-weight: 400; color: var(--ink-mut); font-size: var(--f-aux); }
+.bz-people-jobs-foot { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.bz-people-jobs-err { font-size: var(--f-aux); color: var(--acc-deep); }
+.bz-people-jobs .bz-people-btn { background: #fff9ea; }
 
-/* —— 空态 —— */
-.bz-people-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 48px 12px;
-  text-align: center;
-}
-.bz-people-empty-mark {
-  width: 72px;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 18px;
-  border: 2px dashed var(--frame-bd);
-  color: var(--ink-mut);
-  opacity: 0.7;
-}
-.bz-people-empty-mark .bz-ic {
-  width: 36px;
-  height: 36px;
-}
-.bz-people-empty-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-strong);
-}
-.bz-people-empty-hint {
-  max-width: 440px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: var(--ink-mut);
-}
+/* ---------------- 合并横幅（导入完：素材并进来了，照片这就飞回册页） ----------------
+   贴在册子上沿的一纸条，压在最上面；右边的叉收掉，不动它自己也会走（9 秒） */
+.bz-people-banner { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); z-index: 60;
+  display: flex; align-items: center; gap: 9px; max-width: calc(100% - 40px); padding: 7px 10px 7px 13px;
+  background: #fbf2d9; border: 1px solid #e6d6a8; border-radius: var(--r-card); box-shadow: var(--sh-2);
+  font-size: var(--f-mid); color: var(--ink-strong); animation: bz-people-banner-in .34s cubic-bezier(.2,.85,.3,1) both; }
+.bz-people-banner svg { width: 15px; height: 15px; color: var(--acc); flex: none; }
+.bz-people-banner-tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-people-banner-x { flex: none; width: 20px; height: 20px; border-radius: 50%; color: var(--ink-mut); font-size: var(--f-body); line-height: 1;
+  font-family: var(--sans); }
+@media (hover: hover) { .bz-people-banner-x:hover { background: rgba(168,67,60,.1); color: var(--acc); } }
+/* 空手而归那档：素纸 + 灰印（不是错误，是「这趟没有新东西」），跟并入成功一眼分得开 */
+.bz-people-banner-calm { background: #f4f0e6; border-color: #ddd5c2; }
+.bz-people-banner-calm svg { color: var(--ink-mut); }
+@keyframes bz-people-banner-in { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
-/* ==================== 折子封面墙（issue 447） ==================== */
-.bz-people-wall {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 14px;
-}
-/* 一册封面：竖排姓名 + 修复印章；整体即点卡 */
-.bz-people-fold {
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-@media (hover: hover) {
-  .bz-people-fold:hover {
-    transform: translateY(-2px);
-  }
-  .bz-people-fold:hover .bz-people-fold-inner {
-    border-color: var(--acc);
-    box-shadow: 0 8px 18px var(--card-shadow);
-  }
-}
-.bz-people-fold-inner {
-  position: relative;
-  min-height: 218px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 14px 10px 12px;
+/* ---------------- 主界面：整页就是这册相册（两侧各留一条窄边给「叠纸」与翻页热区） ---------------- */
+.bz-people-page-wrap { flex: 1; min-height: 0; overflow: auto; padding: 8px 46px 10px; display: flex; flex-direction: column; }
+/* 册壳。落点用 var(--tiltbase) 而不是 none：动画填满后也还留着「随视线微转」那点角度
+   皮面加一层极淡的斜纹 + 一圈压边缝线，才不是一块纯渐变 */
+.bz-people-spread { position: relative; flex: 1 1 auto; min-height: 540px; display: flex; align-items: stretch; padding: 6px;
   background:
-    linear-gradient(90deg, var(--paper-fold-2) 0 6px, transparent 6px),
-    linear-gradient(-90deg, var(--paper-fold-2) 0 6px, transparent 6px),
-    var(--paper-fold);
-  border: 1px solid var(--card-bd);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px var(--card-shadow);
-  overflow: hidden;
-}
-/* 折痕：内缘两道细线示意折页 */
-.bz-people-fold-inner::before,
-.bz-people-fold-inner::after {
-  content: '';
-  position: absolute;
-  top: 10px;
-  bottom: 10px;
-  width: 0;
-  border-left: 1px dashed var(--card-bd);
-  opacity: 0.7;
-}
-.bz-people-fold-inner::before { left: 16px; }
-.bz-people-fold-inner::after { right: 16px; }
-/* 修复印章：右上斜盖（画到日期 / 已画 / 待画虚印） */
-.bz-people-seal {
-  position: absolute;
-  top: 10px;
-  right: 8px;
-  z-index: 1;
-  max-width: 72px;
-  padding: 3px 6px;
-  border: 2px solid var(--seal-ink);
-  border-radius: 5px;
-  background: none;
-  color: var(--seal-ink);
-  font: inherit;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: 1px;
-  text-align: center;
-  white-space: pre-line;
-  transform: rotate(6deg);
-  opacity: 0.82;
-  /* issue 451：印章即动作入口（四态都能从卡上继续进行），不再是纯装饰 */
-  cursor: pointer;
-}
-.bz-people-seal-todo {
-  border-style: dashed;
-  color: var(--ink-mut);
-  border-color: var(--ink-mut);
-  opacity: 0.6;
-}
-/* 451 四态皮：未画谱 = 灰虚印 / 画谱中 = 金实印 / 画谱中断 = 朱红破框 / 已画谱 = 朱红实印（基础态） */
-.bz-people-seal-running {
-  border-color: var(--gold);
-  color: var(--gold);
-}
-.bz-people-seal-halted {
-  border-style: dashed;
-  border-color: var(--danger);
-  color: var(--danger);
-}
-@media (hover: hover) {
-  .bz-people-seal:hover {
-    opacity: 1;
-    transform: rotate(6deg) scale(1.06);
-  }
-}
-/* 合并流程里印章让位给「点卡片选目标」——不做出入口 */
-.bz-people-fold-merge-src .bz-people-seal,
-.bz-people-fold-merge-pick .bz-people-seal {
-  pointer-events: none;
-}
-/* 竖排姓名（>7 字由 render 截断；再兜底溢出省略） */
-.bz-people-fold-title {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-height: 128px;
-  overflow: hidden;
-  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  letter-spacing: 0.28em;
-}
-.bz-people-fold-who {
-  font-size: 10.5px;
-  color: var(--ink-mut);
-  letter-spacing: 0.5px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bz-people-fold-meta {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--card-bd);
-  width: 100%;
-  text-align: center;
-  font-size: 10.5px;
-  color: var(--ink-mut);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-/* 合并模式：本册（待并出）虚化，其他册（候选目标）虚线描边示意可点 */
-.bz-people-fold-merge-src {
-  opacity: 0.55;
-}
-.bz-people-fold-merge-src .bz-people-fold-inner {
-  border-style: dashed;
-}
-.bz-people-fold-merge-pick .bz-people-fold-inner {
-  border-style: dashed;
-  border-color: var(--acc);
-}
-@media (hover: hover) {
-  .bz-people-fold-merge-pick:hover .bz-people-fold-inner {
-    background: var(--soft);
-  }
+    repeating-linear-gradient(114deg, rgba(255,238,214,.030) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(24deg, rgba(20,12,6,.055) 0 3px, transparent 3px 9px),
+    radial-gradient(120% 80% at 26% -10%, rgba(255,226,190,.10), transparent 60%),
+    linear-gradient(150deg, #6e5c4a, #584a3c 55%, #4b3d31);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  transform: var(--tiltbase); transition: transform .3s ease-out; }
+/* 册子压出来的那道影子：指针偏到哪边，影子就往另一边让一点（书口的厚度感） */
+.bz-people-spread::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: var(--r-paper);
+  box-shadow: calc(var(--pnx, 0) * -7px) calc(12px + var(--pny, 0) * 6px) 26px rgba(40,30,18,.34);
+  transition: box-shadow .3s ease-out; }
+/* 压边缝线：沿册壳内缘一圈虚线，像皮边缝出来的那道线 */
+.bz-people-spread::after { content: ''; position: absolute; inset: 3px; pointer-events: none; border-radius: var(--r-paper);
+  border: 1px dashed rgba(255,238,214,.16); }
+/* 后面 / 前面还能翻几次：纸边一层层从册壳底下探出来（最多 4 层）
+   第一层与主页面齐长（页在册壳里缩进 6px），往里每层上下各短 2px，只是轻轻递减。
+   pointer-events 开着：纸边本身也能点（跟两侧那条热区一个用法） */
+.bz-people-stack { position: absolute; top: 6px; bottom: 6px; width: 0; z-index: 3; cursor: pointer; }
+.bz-people-stack-l { left: 0; } .bz-people-stack-r { right: 0; }
+.bz-people-stack i { position: absolute; top: calc(var(--i) * 2px); bottom: calc(var(--i) * 2px);
+  width: calc(var(--i) * 5px); background: linear-gradient(180deg, #f4eddc, #ded3b8); border-radius: var(--r-paper);
+  box-shadow: 0 1px 4px rgba(50,42,26,.4); transition: filter .16s, transform .16s; }
+.bz-people-stack-r i { right: calc(var(--i) * -5px); border-right: 1px solid rgba(120,108,84,.34); }
+.bz-people-stack-l i { left: calc(var(--i) * -5px); border-left: 1px solid rgba(120,108,84,.34); }
+.bz-people-stack i:nth-child(1) { z-index: 9; }
+.bz-people-stack i:nth-child(2) { z-index: 8; }
+.bz-people-stack i:nth-child(3) { z-index: 7; }
+@media (hover: hover) { .bz-people-stack:hover i { filter: brightness(1.06); } }
+@media (hover: hover) { .bz-people-stack-l:hover i { transform: translateX(-2px); } }
+@media (hover: hover) { .bz-people-stack-r:hover i { transform: translateX(2px); } }
+/* 两侧空白 = 翻页热区：鼠标停上去亮一下，点一下就翻过去（话都省了） */
+.bz-people-turn { position: absolute; top: 0; bottom: 0; width: 46px; z-index: 20; background: none; border: none; cursor: pointer; }
+.bz-people-turn-l { left: -46px; } .bz-people-turn-r { right: -46px; }
+@media (hover: hover) { .bz-people-turn:hover { background: linear-gradient(180deg, rgba(176,138,62,.05), rgba(176,138,62,.015) 40%, rgba(176,138,62,.05)); } }
+@media (hover: hover) { .bz-people-turn:hover ~ .bz-people-stack i { filter: brightness(1.05); } }
+/* 悬停只把这一侧亮一下（纸边也跟着亮），不再飘一行「还能翻几次」的字 —— 那点信息纸边已经说了 */
+/* 翻一摊：整册往要翻的那侧让一下（真正的动作交给下面那张掀过去的台纸） */
+.bz-people-turn-next { animation: bz-people-flip-next .52s cubic-bezier(.2,.85,.3,1) both; }
+.bz-people-turn-prev { animation: bz-people-flip-prev .52s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-flip-next {
+  from { opacity: .58; transform: perspective(1600px) rotateY(calc(var(--pnx, 0) * 1.5deg + 5deg))
+    translateX(14px) scale(.99); }
+  to { opacity: 1; transform: var(--tiltbase); } }
+@keyframes bz-people-flip-prev {
+  from { opacity: .58; transform: perspective(1600px) rotateY(calc(var(--pnx, 0) * 1.5deg - 5deg))
+    translateX(-14px) scale(.99); }
+  to { opacity: 1; transform: var(--tiltbase); } }
+/* 翻页时掀过去的那一页纸：position:fixed 挂在页面上（由 turnTo 量好位置、放好两面），
+   绕自己的左边（＝中缝）转 180°，双面（preserve-3d + backface-visibility）。
+   固定定位是刻意的：册子内部有 transform / 溢出 / 层叠，纸挂在外面才不会被谁挡住或裁掉。 */
+.bz-people-sheet { position: fixed; z-index: 88; pointer-events: none; transform-origin: 0 50%;
+  transform-style: preserve-3d; }
+.bz-people-sheet-next { animation: bz-people-sheet-next .54s cubic-bezier(.44,.06,.3,1) both; }
+.bz-people-sheet-prev { animation: bz-people-sheet-prev .54s cubic-bezier(.44,.06,.3,1) both; }
+/* 手机上（一页页顺下来，没有中缝）：新那一页从左边翻进来，落在它自己身上，看不出接缝 */
+.bz-people-sheet-in { animation: bz-people-sheet-in .5s cubic-bezier(.3,.72,.3,1) both; }
+@keyframes bz-people-sheet-in {
+  from { transform: perspective(1600px) rotateY(-180deg); box-shadow: 0 6px 14px rgba(40,30,18,.2); }
+  to { transform: perspective(1600px) rotateY(0deg); box-shadow: 0 14px 30px rgba(40,30,18,.36); } }
+.bz-people-sheet-face { position: absolute; inset: 0; overflow: hidden; border-radius: var(--r-paper) var(--r-tab) var(--r-tab) var(--r-paper);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: linear-gradient(90deg, #efe6d2, #f8f3e7 20%, #f2ecdd 78%, #e8dfc9); }
+/* 面上那页本来长在 flex 里，这里让它正好铺满这张纸 */
+.bz-people-sheet-face > .bz-people-page { position: absolute; inset: 0; border-radius: var(--r-paper) var(--r-tab) var(--r-tab) var(--r-paper); }
+.bz-people-sheet-b { transform: rotateY(180deg); box-shadow: var(--sh-3); }
+@keyframes bz-people-sheet-next {
+  from { transform: perspective(1600px) rotateY(0deg); box-shadow: 0 14px 30px rgba(40,30,18,.36); }
+  84% { opacity: 1; }
+  to { transform: perspective(1600px) rotateY(-180deg); opacity: 0; box-shadow: 0 6px 14px rgba(40,30,18,.2); } }
+@keyframes bz-people-sheet-prev {
+  from { transform: perspective(1600px) rotateY(-180deg); opacity: .999; box-shadow: 0 6px 14px rgba(40,30,18,.2); }
+  84% { opacity: 1; }
+  to { transform: perspective(1600px) rotateY(0deg); opacity: 0; box-shadow: 0 14px 30px rgba(40,30,18,.36); } }
+/* 翻开这一册：册壳先躺平落定，对面那页随后跟上 */
+.bz-people-boot { animation: bz-people-boot-in .5s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-boot-in {
+  from { opacity: 0; transform: perspective(1600px) rotateX(16deg) translateY(14px) scale(.972); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: var(--tiltbase); } }
+.bz-people-boot > .bz-people-page { animation: bz-people-leaf-in .46s cubic-bezier(.2,.85,.3,1) both; }
+.bz-people-boot > .bz-people-page:last-child { animation-delay: 70ms; }
+@keyframes bz-people-leaf-in { from { opacity: .2; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+/* 纸边一层层探出来（只在刚翻开 / 刚翻页时放，平时重画不重放） */
+.bz-people-boot .bz-people-stack i, .bz-people-turn-next .bz-people-stack i, .bz-people-turn-prev .bz-people-stack i {
+  animation: bz-people-sliver-in .32s cubic-bezier(.2,.85,.3,1) both; animation-delay: calc(var(--i) * 45ms); }
+@keyframes bz-people-sliver-in { from { opacity: 0; scale: .9 1; } to { opacity: 1; scale: 1 1; } }
+.bz-people-page { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; padding: 6px 14px;
+  background: #f7f2e6;
+  background-image: repeating-linear-gradient(0deg, rgba(168,67,60,.022) 0 26px, transparent 26px 52px);
+  box-shadow: inset 0 0 22px rgba(150,132,100,.22); border-radius: var(--r-paper); }
+.bz-people-spread > .bz-people-page:first-child { border-radius: var(--r-tab) var(--r-paper) var(--r-paper) var(--r-tab); }
+.bz-people-spread > .bz-people-page:last-child { border-radius: var(--r-paper) var(--r-tab) var(--r-tab) var(--r-paper); }
+.bz-people-gutter { position: relative; flex: 0 0 26px; }
+.bz-people-gutter::before { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,.42), rgba(0,0,0,.05) 42%, rgba(0,0,0,.05) 58%, rgba(0,0,0,.42)); }
+.bz-people-gutter::after { content: ''; position: absolute; left: 50%; top: 12px; bottom: 12px; width: 1px; transform: translateX(-50%);
+  background: repeating-linear-gradient(180deg, rgba(255,250,240,.5) 0 5px, transparent 5px 11px); }
+.bz-people-page-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: 3px 2px 6px; border-bottom: 1px dashed #ded3b8; }
+.bz-people-head-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+/* 页码：页眉左边一枚铅笔写的小签（这是第几页、一共几页），翻到哪儿都知道走了多远 */
+.bz-people-head-count { display: inline-flex; align-items: baseline; gap: 2px; padding: 1px 7px;
+  font-size: var(--f-aux); color: #8a7c5c; background: rgba(176,138,62,.12); border: 1px solid rgba(176,138,62,.3);
+  border-radius: var(--r-paper); font-variant-numeric: tabular-nums; }
+.bz-people-head-count b { font-weight: 700; color: var(--acc-deep); }
+.bz-people-head-label { font-family: var(--kai); font-size: var(--f-head); font-weight: 800; letter-spacing: 2px; color: var(--ink-strong); }
+.bz-people-head-label::before { content: '◆'; margin-right: 5px; font-size: 8px; color: var(--acc); }
+.bz-people-head-note { font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
+/* 第一页的总账不再跟标题挤一行，做成页眉右边的一枚小签 */
+.bz-people-head-ledger { font-size: var(--f-aux); color: #7a6a44; background: #f6ecd2; border: 1px solid #e3d2a2;
+  border-radius: var(--r-paper); padding: 2px 9px; box-shadow: var(--sh-1); transform: rotate(calc(var(--t1) * -1)); }
+.bz-people-head-ledger b { font-weight: 700; color: var(--acc-deep); }
+.bz-people-num { font-variant-numeric: tabular-nums; font-size: .92em; letter-spacing: .2px; }
+/* 解密进度写在页眉里（不再顶一颗浮药丸） */
+.bz-people-decrypt { display: inline-flex; align-items: center; gap: 7px; font-size: var(--f-aux); color: var(--pencil); }
+.bz-people-decrypt span:last-child { font-variant-numeric: tabular-nums; color: var(--acc-deep); }
+/* 贴相区：一组两张照片 + 底下一行批注；整块上面罩一张透明塑料膜 */
+.bz-people-boardarea { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.bz-people-sleeve { position: relative; }
+.bz-people-board { position: relative; display: flex; flex-direction: column; gap: 8px; }
+/* 一行两个人的「同一张衬纸」：淡淡一块底 + 底下一行手写批注（有共同点才落笔）。
+   衬纸底色按「这一行是哪几年的人」分极淡的四档（越早越黄），翻页时能看出时间段 */
+.bz-people-row { position: relative; display: grid; grid-template-columns: auto auto; justify-content: start;
+  column-gap: 8px; padding: 5px 7px 19px; border-radius: var(--r-card);
+  background: linear-gradient(180deg, rgba(255,252,244,.5), rgba(238,229,209,.42)); }
+.bz-people-row[data-era="1"] { background: linear-gradient(180deg, rgba(253,248,238,.55), rgba(233,223,199,.46)); }
+.bz-people-row[data-era="2"] { background: linear-gradient(180deg, rgba(250,244,231,.6), rgba(227,216,190,.5)); }
+.bz-people-row[data-era="3"] { background: linear-gradient(180deg, rgba(247,240,223,.65), rgba(221,209,182,.54)); }
+/* 批注是写在衬纸下沿那条线上的：绝对定位、不占栅格 —— 写多长都不会把照片撑宽，超长自己收成省略号 */
+.bz-people-row-note { position: absolute; left: 8px; right: 8px; bottom: 3px; height: 14px; line-height: 14px;
+  font-family: var(--kai); font-size: var(--f-aux); color: #9a7f52; letter-spacing: 1.5px;
+  border-bottom: 1px dashed rgba(154,127,82,.42); padding-left: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 鼠标停在这一行：批注也跟着亮一下（原来只有照片自己抬） */
+@media (hover: hover) { .bz-people-row:has(.bz-people-cell:hover) .bz-people-row-note { color: #7a5f1e; border-bottom-color: rgba(122,95,30,.6); } }
+.bz-people-row:has(.bz-people-cell:focus-visible) .bz-people-row-note { color: #7a5f1e; border-bottom-color: rgba(122,95,30,.6); }
+/* 塑料隔层：膜比照片四周各宽一圈（露出塑料的边），带上塑料的微蓝与一圈亮边，
+   照片隔着膜看过去略微发白 —— 才像「封在隔层里」而不是浮在卡纸上 */
+.bz-people-film { position: absolute; inset: -7px -7px -9px; z-index: 5; pointer-events: none; border-radius: var(--r-paper);
+  background:
+    /* 跟着指针走的那团反光（--fx/--fy 由 mousemove 写在册壳上，不走 DOM 重画） */
+    radial-gradient(38% 34% at var(--fx, 22%) var(--fy, 12%), rgba(255,255,255,.36), rgba(255,255,255,.08) 46%, transparent 72%),
+    linear-gradient(118deg, rgba(255,255,255,.42) 0 6%, rgba(255,255,255,.07) 14%, transparent 25%,
+      rgba(255,255,255,.1) 58%, transparent 67%, rgba(255,255,255,.2) 96%),
+    radial-gradient(120% 90% at 8% 2%, rgba(255,255,255,.24), transparent 56%),
+    /* 薄膜的细褶与静电纹：一道道极淡的斜纹，近看才见 */
+    repeating-linear-gradient(96deg, rgba(255,255,255,.09) 0 1px, transparent 1px 13px),
+    repeating-linear-gradient(74deg, rgba(255,255,255,.05) 0 1px, transparent 1px 29px),
+    repeating-radial-gradient(120% 60% at 84% 88%, rgba(255,255,255,.07) 0 2px, transparent 2px 22px),
+    linear-gradient(0deg, rgba(205,220,232,.16), rgba(205,220,232,.07) 46%, rgba(255,255,255,.05));
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.78),
+    inset 0 1px 0 rgba(255,255,255,.6),
+    inset 0 -3px 8px rgba(255,255,255,.34),
+    0 0 0 1px rgba(142,134,112,.24),
+    0 2px 7px rgba(120,110,92,.2); }
+/* 靠中缝那侧是压死/焊住的边（一道发白的封边），外侧那侧留空是膜口 */
+.bz-people-film::before { content: ''; position: absolute; top: 1px; bottom: 1px; left: -6px; width: 5px;
+  background: linear-gradient(90deg, rgba(255,255,255,.42), rgba(255,255,255,.88), rgba(255,255,255,.3));
+  box-shadow: inset 0 0 0 1px rgba(150,142,120,.14); }
+.bz-people-spread > .bz-people-page:first-child .bz-people-film { box-shadow: inset 0 0 0 1px rgba(255,255,255,.78),
+  inset -3px 0 7px rgba(120,110,92,.14), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -3px 8px rgba(255,255,255,.34),
+  0 0 0 1px rgba(142,134,112,.24), 0 2px 7px rgba(120,110,92,.2); }
+.bz-people-spread > .bz-people-page:last-child .bz-people-film { box-shadow: inset 0 0 0 1px rgba(255,255,255,.78),
+  inset 3px 0 7px rgba(120,110,92,.14), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -3px 8px rgba(255,255,255,.34),
+  0 0 0 1px rgba(142,134,112,.24), 0 2px 7px rgba(120,110,92,.2); }
+.bz-people-spread > .bz-people-page:first-child .bz-people-film::before { left: auto; right: -6px;
+  background: linear-gradient(270deg, rgba(255,255,255,.42), rgba(255,255,255,.88), rgba(255,255,255,.3)); }
+/* 膜外侧下角翘起来的那个尖（左页在左下，右页在右下） */
+.bz-people-film::after { content: ''; position: absolute; right: 5px; bottom: 4px; width: 28px; height: 28px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  background: linear-gradient(315deg, rgba(255,255,255,.94), rgba(255,255,255,.3) 68%, rgba(202,216,226,.6));
+  filter: drop-shadow(-1px -1px 2px rgba(120,110,92,.34)); }
+.bz-people-spread > .bz-people-page:first-child .bz-people-film::after { right: auto; left: 5px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  background: linear-gradient(225deg, rgba(255,255,255,.94), rgba(255,255,255,.3) 68%, rgba(202,216,226,.6)); }
+/* 照片：一张张贴好、留一线缝；抽出来时飞到膜上面。
+   尺寸跟着面板高度走（一页三行 + 三行批注 + 页眉页码，正好落在 660 里不撑出滚动），高度富余时封顶 168 */
+.bz-people-cell { position: relative; width: clamp(118px, calc((100vh - 214px) / 3), 168px); aspect-ratio: 1 / 1;
+  cursor: pointer; background: var(--mat); }
+.bz-people-print { position: absolute; inset: 0; z-index: 2; background: #fff;
+  box-shadow: 0 0 0 1px rgba(110,98,78,.28), var(--sh-1);
+  transition: transform .26s cubic-bezier(.2,.85,.3,1), box-shadow .26s, filter .34s, opacity .34s; }
+.bz-people-photo { position: absolute; inset: 0; overflow: hidden; background: var(--paper-fold-2); }
+.bz-people-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s cubic-bezier(.2,.7,.3,1); }
+.bz-people-photo .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--acc); color: #fff8f0; font-family: var(--kai); font-size: 40px;
+  transition: transform .7s cubic-bezier(.2,.7,.3,1); }
+@media (hover: hover) { .bz-people-cell:hover .bz-people-print, .bz-people-cell:focus-visible .bz-people-print { transform: translateY(-2px) rotate(calc(var(--t1) * -1));
+  box-shadow: 0 0 0 1px rgba(168,67,60,.45), var(--sh-2); } }
+@media (hover: hover) { .bz-people-cell:hover .bz-people-photo img, .bz-people-cell:focus-visible .bz-people-photo img,
+.bz-people-cell:hover .bz-people-photo .bz-people-ava-txt, .bz-people-cell:focus-visible .bz-people-photo .bz-people-ava-txt { transform: scale(1.07); } }
+.bz-people-cell.bz-people-out .bz-people-print { transform: translate(-16px,-28px) rotate(calc(var(--t2) * -1.2)) scale(1.06); z-index: 30;
+  box-shadow: 0 16px 28px rgba(74,64,48,.45); }
+/* 刚画完脸谱的那位：照片从灰里慢慢洗出颜色（宝丽来显影）；翻开册子那一下整页照片也这么洗一遍 */
+.bz-people-cell.bz-people-dev .bz-people-photo img, .bz-people-cell.bz-people-dev .bz-people-photo .bz-people-ava-txt { animation: bz-people-develop 1.7s ease-out both; }
+.bz-people-boot .bz-people-cell:not(.bz-people-todo):not(.bz-people-wait) .bz-people-photo img,
+.bz-people-boot .bz-people-cell:not(.bz-people-todo):not(.bz-people-wait) .bz-people-photo .bz-people-ava-txt {
+  animation: bz-people-develop 1.5s ease-out both; animation-delay: calc(var(--i) * 90ms); }
+@keyframes bz-people-develop {
+  from { filter: grayscale(1) brightness(1.16) contrast(.82) blur(1.6px); opacity: .55; }
+  55% { opacity: 1; }
+  to { filter: none; opacity: 1; } }
+/* 导入完新素材：带「新」的那几张一张张飞回册页（从斜上方落下，压出一点影子） */
+.bz-people-cell.bz-people-drop { animation: bz-people-photo-drop .74s cubic-bezier(.22,.9,.24,1) both; animation-delay: calc(var(--i) * 85ms); }
+@keyframes bz-people-photo-drop {
+  from { opacity: 0; transform: translate(20px,-34px) rotate(10deg) scale(1.14); filter: drop-shadow(0 14px 16px rgba(60,48,30,.34)); }
+  68% { opacity: 1; transform: translate(-1px,3px) rotate(-1.4deg) scale(1.005); filter: drop-shadow(0 3px 5px rgba(60,48,30,.2)); }
+  to { opacity: 1; transform: none; filter: none; } }
+/* 一张抽出来了：剩下的隔着膜淡一点，眼光自然落到抽出来那张上 */
+.bz-people-board { transition: filter .34s, opacity .34s; }
+.bz-people-sleeve:has(.bz-people-cell.bz-people-out) .bz-people-board { filter: saturate(.82) brightness(.95); }
+/* 再进一步：抽走的那张所在的**那一行**（同衬纸的另一张 + 行底批注）也退半步，
+   一行里的关系一眼看得出「被抽走的是这组」 */
+.bz-people-row:has(.bz-people-cell.bz-people-out) .bz-people-row-note { opacity: .3; }
+.bz-people-row:has(.bz-people-cell.bz-people-out) .bz-people-cell:not(.bz-people-out) .bz-people-print { filter: saturate(.45) brightness(.96); opacity: .78; }
+.bz-people-row-note { transition: opacity .3s ease-out, color .24s, border-bottom-color .24s; }
+.bz-people-sleeve:has(.bz-people-cell.bz-people-out) .bz-people-film { box-shadow:
+  inset 0 0 0 1px rgba(255,255,255,.62), inset 0 0 22px rgba(120,110,92,.16),
+  0 0 0 1px rgba(142,134,112,.3), 0 2px 7px rgba(120,110,92,.24); }
+/* 照片角上的小印与「新」贴纸（这两个用最饱和的那个红，别的红都退到 --acc） */
+.bz-people-seal { position: absolute; right: 6px; top: 6px; width: 25px; height: 25px; border: 1.6px solid rgba(255,255,255,.88);
+  border-radius: var(--r-paper); color: #fff8f0; font-family: var(--kai); font-size: var(--f-body); font-weight: 800;
+  display: flex; align-items: center; justify-content: center; transform: rotate(calc(var(--t3) * -1));
+  background: color-mix(in srgb, var(--acc-bright) 86%, transparent); box-shadow: var(--sh-1); }
+.bz-people-fresh { position: absolute; left: 6px; top: 6px; z-index: 3; padding: 2px 7px; border-radius: var(--r-paper);
+  font-size: var(--f-aux); letter-spacing: .5px; background: color-mix(in srgb, var(--acc-bright) 94%, transparent);
+  color: #fff6ee; transform: rotate(calc(var(--t2) * -1)); box-shadow: var(--sh-1); }
+/* 画谱中的那枚印：外圈一道真进度环（stroke-dasharray 跟着 pct 走），整枚慢慢转着 —— 点一下即暂停。
+   转速取 0.9s，跟进度心跳同一个拍子：心跳每 0.9 秒整册重画一次，动画也就是从这一拍的头上重来，
+   不然 1.8 秒转半圈就被打断，会看到环来回跳 */
+.bz-people-seal-run { cursor: pointer; padding: 0; }
+.bz-people-seal-ring { position: absolute; inset: -3px; width: auto; height: auto; transform: rotate(-90deg);
+  animation: bz-people-seal-spin .9s linear infinite; }
+.bz-people-seal-ring circle { fill: none; stroke-width: 2.4; }
+.bz-people-seal-ring circle:not(.bz-people-seal-arc) { stroke: rgba(255,255,255,.42); }
+.bz-people-seal-arc { stroke: #fff; stroke-linecap: round; transition: stroke-dasharray .5s ease-out; }
+@keyframes bz-people-seal-spin { to { transform: rotate(270deg); } }
+/* 歇 / 停 / 等：同一枚印的另外三态 —— 虚边、褪色，一眼看出不是「画着」 */
+.bz-people-seal-hold { border-style: dashed; background: rgba(90,80,62,.72); }
+.bz-people-seal-wait { border-style: dashed; background: rgba(120,110,92,.5); color: rgba(255,248,240,.8); font-size: var(--f-aux); }
+/* 临近的重要日子：照片左下角一枚小签（生日 / 纪念日 · 还剩几天）。
+   名字长了自己收省略号（整句写在 title 里，指上去还看得见） */
+.bz-people-due { position: absolute; left: 6px; bottom: 28px; z-index: 3; max-width: 76%; padding: 2px 7px; border-radius: var(--r-paper);
+  font-size: var(--f-aux); letter-spacing: .5px; color: #6f5719; background: #f6ecd2; border: 1px solid #e3d2a2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  transform: rotate(calc(var(--t1) * -1.4)); box-shadow: var(--sh-1); }
+/* 照片下沿一行手写标注（名字 + 条数），像写在膜上的。
+   名字这一格得能收：min-width:0 + 省略号 —— 遇到「某某（备注很长）」这种长名字，
+   原来会把右边的条数挤出照片；条数（正在画的百分比最长）自己不让位 */
+.bz-people-cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; align-items: baseline; gap: 6px;
+  padding: 22px 9px 7px; background: linear-gradient(180deg, transparent, rgba(38,32,24,.64)); }
+.bz-people-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--kai); font-size: var(--f-head); font-weight: 800; letter-spacing: 1.5px; color: #fff9f0;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.bz-people-meta { flex: none; font-size: var(--f-aux); color: rgba(255,246,235,.82); font-variant-numeric: tabular-nums; }
+/* 正在画的那张：条数位置改写「画谱中 N%」，提亮一点，一眼认出册子里哪张在动 */
+.bz-people-meta-run { color: #ffd9c4; font-weight: 700; }
+.bz-people-blank { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center;
+  font-size: var(--f-aux); letter-spacing: 2px; color: #a59c88; background: rgba(241,236,225,.72); }
+.bz-people-todo .bz-people-print { background: #f1ece1; }
+.bz-people-todo .bz-people-photo img { filter: grayscale(.9) brightness(1.04); opacity: .8; }
+.bz-people-todo .bz-people-cap { background: linear-gradient(180deg, transparent, rgba(120,110,92,.5)); }
+/* 空位：还没贴照片的地方，露出台纸的黏面（跟照片底同一个台纸色，只是多一层斜纹） */
+.bz-people-vacant { cursor: default; background:
+  repeating-linear-gradient(45deg, rgba(190,180,155,.22) 0 7px, rgba(190,180,155,.38) 7px 14px), var(--mat); }
+.bz-people-vacs { position: absolute; inset: 6px; display: flex; align-items: center; justify-content: center; text-align: center;
+  border: 1px dashed rgba(150,140,116,.62); border-radius: var(--r-paper); font-size: var(--f-aux); line-height: 1.9;
+  letter-spacing: 2px; color: #a2987f; }
+.bz-people-spread-load { margin-top: 0; }
+.bz-people-wait { cursor: default; }
+.bz-people-wait .bz-people-print { background: rgba(232,226,210,.9); box-shadow: none; animation: bz-people-wash 1.2s ease-in-out infinite alternate; }
+
+/* ---------------- 上锁：整册合着，只看见封皮与搭扣（数据都在加密保库里） ----------------
+   不是错误页：还是这册子，只是扣着 —— 封皮比内页深一号、中间一条书脊带、右下角一枚搭扣印 */
+.bz-people-lockwrap { padding: 6px; }
+.bz-people-cover { --tiltbase: none; position: relative; flex: 1 1 auto; min-height: 540px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; padding: 40px 24px; border-radius: var(--r-paper);
+  background:
+    repeating-linear-gradient(112deg, rgba(255,238,214,.032) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(22deg, rgba(18,10,5,.07) 0 3px, transparent 3px 9px),
+    radial-gradient(120% 80% at 30% -10%, rgba(255,226,190,.10), transparent 60%),
+    linear-gradient(155deg, #5f4f40, #4b3d31 60%, #3f332a);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 60px rgba(0,0,0,.3), 0 14px 34px rgba(40,30,18,.34); }
+/* 合上那一下：封面躺平落定（跟开册同一支动效）。只在刚锁上时放，不是每次重画都抖一下 */
+.bz-people-cover.bz-people-boot { animation: bz-people-boot-in .5s cubic-bezier(.2,.85,.3,1) both; }
+/* 书脊那道压带：竖着当中一条，比皮面深一点 */
+.bz-people-cover::before { content: ''; position: absolute; left: 50%; top: 14px; bottom: 14px; width: 26px; margin-left: -13px;
+  background: linear-gradient(90deg, rgba(0,0,0,.22), rgba(0,0,0,.06) 40%, rgba(0,0,0,.06) 60%, rgba(0,0,0,.22));
+  border-radius: var(--r-paper); }
+.bz-people-cover-band { position: absolute; left: 26px; right: 26px; top: 26px; height: 3px;
+  background: repeating-linear-gradient(90deg, rgba(214,178,116,.5) 0 9px, transparent 9px 15px); }
+.bz-people-cover-title { position: relative; font-family: var(--kai); font-size: 40px; font-weight: 800; letter-spacing: 12px;
+  color: #ecdcc0; text-shadow: 0 2px 5px rgba(0,0,0,.42); }
+.bz-people-cover-sub { position: relative; font-size: var(--f-aux); letter-spacing: 6px; color: rgba(236,220,192,.6); }
+.bz-people-clasp { position: relative; margin-top: 14px; width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; color: #e8d3ab;
+  background: rgba(0,0,0,.24); border: 1.5px solid rgba(214,178,116,.4); box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
+.bz-people-clasp svg { width: 19px; height: 19px; }
+.bz-people-cover-hint { position: relative; margin-top: 12px; max-width: 380px; text-align: center;
+  font-size: var(--f-mid); line-height: 2; color: rgba(238,226,204,.72); }
+.bz-people-cover-acts { position: relative; display: flex; gap: 10px; margin-top: 16px; }
+.bz-people-cover-acts .bz-people-btn-acc { display: inline-flex; align-items: center; gap: 6px; }
+.bz-people-cover-acts .bz-people-btn-acc svg { width: 15px; height: 15px; }
+
+/* ---------------- 对面翻开的那一页（人详情） ---------------- */
+.bz-people-dpage { z-index: 6; }
+/* 翻开的那一页绕着中缝转进来（左边那页轴在右缘，右边那页轴在左缘） */
+.bz-people-sit-l { animation: bz-people-open-l .42s cubic-bezier(.2,.8,.3,1) both; transform-origin: 100% 50%; }
+.bz-people-sit-r { animation: bz-people-open-r .42s cubic-bezier(.2,.8,.3,1) both; transform-origin: 0 50%; }
+@keyframes bz-people-open-l {
+  from { opacity: .22; transform: perspective(1500px) rotateY(15deg) translateX(18px); }
+  to { opacity: 1; transform: none; } }
+@keyframes bz-people-open-r {
+  from { opacity: .22; transform: perspective(1500px) rotateY(-15deg) translateX(-18px); }
+  to { opacity: 1; transform: none; } }
+/* 换折页（其人 / 相交 / 纪事）：内容轻轻推上来，不跳 */
+.bz-people-fsheet-body.bz-people-in { animation: bz-people-fold-in .3s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-fold-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+/* 键盘走到哪张照片，也给它一圈印 */
+.bz-people-cell:focus-visible { outline: 2px solid rgba(168,67,60,.5); outline-offset: 2px; border-radius: var(--r-paper); }
+.bz-people-close { font-family: var(--kai); font-size: var(--f-aux); letter-spacing: 1px; color: var(--pencil); background: #fffdf7;
+  border: 1px solid #ded3b8; border-radius: var(--r-card); padding: 3px 11px; box-shadow: var(--sh-1); }
+@media (hover: hover) { .bz-people-close:hover { color: var(--acc); border-color: rgba(168,67,60,.45); transform: translateY(-2px); } }
+/* 页里内容多了会滚（其人 / 相交 / 纪事，以及统计 / 补背景这些册页）：上下各一条内影，
+   滚到顶 / 滚到底那条自己收掉 —— 才看得出「下面还有」。
+   影做在两条 sticky 伪元素上（不是容器的背景）：页里那些纸片是不透明的，
+   背景层会被它们盖住，只有压在内容上面的影才看得见。哪条该出由 JS 挂 sc-top / sc-bot 说 */
+.bz-people-pagebody { flex: 1; min-height: 0; overflow: auto; padding: 2px 0 12px; }
+.bz-people-pagebody::before, .bz-people-pagebody::after { content: ''; position: sticky; z-index: 3; display: block; height: 10px;
+  pointer-events: none; opacity: 0; transition: opacity .22s ease-out; }
+.bz-people-pagebody::before { top: 0; margin-bottom: -10px;
+  background: linear-gradient(180deg, rgba(120,104,74,.18), rgba(120,104,74,0)); }
+.bz-people-pagebody::after { bottom: 0; margin-top: -10px;
+  background: linear-gradient(0deg, rgba(120,104,74,.18), rgba(120,104,74,0)); }
+.bz-people-pagebody:not(.sc-top)::before { opacity: 1; }
+.bz-people-pagebody:not(.sc-bot)::after { opacity: 1; }
+/* 头顶两栏：左边贴着宝丽来那张（不居中，让出的右边正好放标签与账目），窄屏再竖过来 */
+.bz-people-dttop { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0 2px; }
+.bz-people-dttop .bz-people-bigph { flex: none; }
+.bz-people-dt-side { flex: 1; min-width: 0; padding-top: 8px; }
+.bz-people-pagebody .bz-people-acts { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 16px; }
+.bz-people-pagebody .bz-people-act { padding: 5px 9px; font-size: var(--f-mid); gap: 6px; }
+.bz-people-pagebody .bz-people-act-hint { display: none; }
+.bz-people-pagebody .bz-people-ftabs { padding-left: 6px; margin-top: 14px; }
+.bz-people-pagebody .bz-people-ftab { font-size: var(--f-body); padding: 6px 13px 5px; letter-spacing: 2px; }
+.bz-people-pagebody .bz-people-fsheet { flex: none; overflow: visible; border-radius: var(--r-tab); padding: 14px 16px 20px; margin: 0; }
+
+/* ---------------- 册子里的其他页：数据源 / 画脸谱确认 单页摊满整册 ---------------- */
+.bz-people-spread-one > .bz-people-page:only-child { border-radius: var(--r-tab) var(--r-tab) var(--r-paper) var(--r-paper); }
+.bz-people-spread-one .bz-people-pagebody { padding: 4px 28px 14px; }
+/* 页脚（数据源那排按钮）压在页底 */
+.bz-people-sub .bz-people-pop-foot { flex: none; flex-wrap: wrap; padding: 10px 2px 2px; border-top: 1px dashed #ded3b8; }
+/* 半页宽（贴着详情页那一侧）时，一行的录入控件允许折行 */
+.bz-people-sub .bz-people-note-add, .bz-people-sub .bz-people-prof-subrow { flex-wrap: wrap; }
+
+/* 详情页沿用的小配件：胶带与贴纸标签 */
+.bz-people-tape { position: absolute; top: -8px; left: 50%; width: 52px; height: 18px; transform: translateX(-50%) rotate(var(--tr,0deg));
+  background: rgba(176,138,62,.4); border: 1px solid rgba(176,138,62,.5); box-shadow: 0 1px 2px rgba(120,110,90,.22); }
+.bz-people-stk { font-size: var(--f-aux); padding: 1.5px 7px; border-radius: var(--r-paper); background: rgba(176,138,62,.14); color: #7a5f1e;
+  border: 1px solid rgba(176,138,62,.36); box-shadow: 0 1px 1px rgba(120,110,90,.14); letter-spacing: .5px; }
+.bz-people-stk.bz-people-stk-red { background: rgba(168,67,60,.1); color: var(--acc); border-color: rgba(168,67,60,.32); }
+.bz-people-stk.bz-people-stk-blue { background: rgba(90,120,140,.12); color: #46627a; border-color: rgba(90,120,140,.34); }
+
+/* ---------------- 空态 / 冷读加载 ---------------- */
+/* 空态那页：说明就是页里的内容（不浮、不压页眉页码），一块纸居中排在册页上 */
+.bz-people-empty { margin: auto; max-width: 380px; padding: 6px 4px 10px; text-align: center; }
+.bz-people-empty-mark { width: 46px; height: 46px; margin: 0 auto 12px; border-radius: var(--r-card); background: var(--acc);
+  color: #fff8f0; display: flex; align-items: center; justify-content: center; transform: rotate(calc(var(--t3) * -.5));
+  box-shadow: 0 3px 8px rgba(138,52,46,.3); }
+.bz-people-empty-mark svg { width: 25px; height: 25px; }
+/* 印上那个笑脸是一笔一笔描出来的（pathLength 归一过，四段各自的 dashoffset 从 100 收到 0） */
+.bz-people-empty-ico { width: 26px; height: 26px; }
+.bz-people-empty-ico > * { stroke-dasharray: 100; stroke-dashoffset: 100; animation: bz-people-draw 1.05s cubic-bezier(.5,.12,.4,1) both; }
+.bz-people-empty-ico > *:nth-child(1) { animation-delay: .06s; }
+.bz-people-empty-ico > *:nth-child(2) { animation-delay: .42s; }
+.bz-people-empty-ico > *:nth-child(3) { animation-delay: .78s; }
+.bz-people-empty-ico > *:nth-child(4) { animation-delay: .9s; }
+@keyframes bz-people-draw { to { stroke-dashoffset: 0; } }
+/* 标题一个字一个字写出来：一个字一层从左抹开的遮罩，笔尖似的一路往后 */
+.bz-people-w { display: inline-block; animation: bz-people-write .34s ease-out both; animation-delay: calc(.6s + var(--i) * .12s); }
+@keyframes bz-people-write {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateY(3px) rotate(-1.5deg); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); transform: none; } }
+.bz-people-empty-hint { animation: bz-people-drop .44s ease-out both; animation-delay: 1.5s; }
+.bz-people-empty .bz-people-btn { animation: bz-people-drop .44s ease-out both; animation-delay: 1.62s; }
+.bz-people-empty-title { font-family: var(--kai); font-size: 19px; font-weight: 800; letter-spacing: 3px; color: var(--ink-strong); }
+.bz-people-empty-hint { font-size: var(--f-mid); color: var(--ink-mut); line-height: 1.9; margin: 10px 0 16px; }
+.bz-people-load-spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(168,67,60,.3);
+  border-top-color: var(--acc); animation: bz-people-spin .8s linear infinite; }
+@keyframes bz-people-spin { to { transform: rotate(360deg); } }
+@keyframes bz-people-wash { from { opacity: .55; } to { opacity: 1; } }
+
+/* ---------------- 详情：脸谱页（占相册簿的对面那页） ---------------- */
+.bz-people-bigph { position: relative; width: 200px; }
+.bz-people-bigframe { position: relative; background: #fff; padding: 10px 10px 34px; border-radius: var(--r-paper);
+  border: 1px solid #efe9da; box-shadow: var(--sh-2); transform: rotate(calc(var(--t1) * -1.6)); }
+.bz-people-bigphoto { width: 180px; height: 172px; border-radius: var(--r-paper); overflow: hidden; background: var(--paper-fold-2);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.04); }
+/* 抽出来的照片飞进这个相框：先空着（.bz-people-hold），落地才亮（.bz-people-arrive） */
+.bz-people-bigphoto.bz-people-hold > * { opacity: 0; }
+.bz-people-bigphoto.bz-people-arrive > * { animation: bz-people-arrive .36s ease-out both; }
+@keyframes bz-people-arrive { from { opacity: 0; filter: brightness(1.3) saturate(.5); } to { opacity: 1; filter: none; } }
+/* 飞行中的那张照片（挂在 body 上，fixed 定位，落点用 --dx/--dy/--sx/--sy 算好） */
+.bz-people-fly { position: fixed; z-index: 90; pointer-events: none; overflow: hidden; border-radius: var(--r-paper);
+  background: #fff; box-shadow: var(--sh-3);
+  animation: bz-people-fly-arc .56s cubic-bezier(.3,.72,.26,1) both; will-change: transform; }
+.bz-people-fly img { width: 100%; height: 100%; object-fit: cover; }
+.bz-people-fly-txt { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--acc); color: #fff8f0; font-family: var(--kai); font-size: 34px; }
+@keyframes bz-people-fly-arc {
+  0% { transform: translate(0, 0) rotate(-3.2deg) scale(1, 1); }
+  55% { transform: translate(calc(var(--dx) * .58), calc(var(--dy) * .58 - 30px)) rotate(2.6deg)
+    scale(calc(1 + (var(--sx) - 1) * .58), calc(1 + (var(--sy) - 1) * .58)); }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(-.8deg) scale(var(--sx), var(--sy)); } }
+.bz-people-bigphoto img { width: 100%; height: 100%; object-fit: cover; }
+.bz-people-bigphoto .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--acc); color: #fff8f0; font-family: var(--kai); font-size: 52px; }
+.bz-people-bigname { position: absolute; bottom: 7px; left: 0; right: 0; text-align: center; font-family: var(--kai);
+  font-size: 18px; font-weight: 800; letter-spacing: 5px; color: var(--ink-strong); }
+.bz-people-dt-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.bz-people-dt-meta { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-top: 10px; line-height: 1.9; }
+.bz-people-dt-meta b { color: var(--acc); font-style: normal; }
+/* 临近的重要日子：详情页右边也提一句（跟照片角上那枚小签同源），带一枚小礼花印 */
+.bz-people-due-line { display: flex; align-items: center; gap: 6px; margin-top: 9px; padding: 5px 10px; border-radius: var(--r-paper);
+  background: #f6ecd2; border: 1px solid #e3d2a2; box-shadow: var(--sh-1);
+  font-size: var(--f-aux); color: #6f5719; transform: rotate(calc(var(--t1) * -.6)); }
+.bz-people-due-line svg { width: 14px; height: 14px; color: #a8802f; flex: none; }
+/* 相纸右边那几张小纸片：这位的一眼账（谁先开口那条双色小尺 / 最热的一月 / 素材水位） */
+.bz-people-dt-facts { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+.bz-people-fact { position: relative; padding: 6px 10px 7px 11px; border-radius: var(--r-paper);
+  background: #fffdf8; border: 1px solid #ece5d5; box-shadow: var(--sh-1); }
+.bz-people-fact::before { content: ''; position: absolute; left: 0; top: 5px; bottom: 5px; width: 3px;
+  background: rgba(168,67,60,.5); border-radius: var(--r-paper); }
+.bz-people-fact:nth-child(even) { transform: rotate(calc(var(--t1) * -.4)); }
+.bz-people-fact:nth-child(odd) { transform: rotate(calc(var(--t1) * .35)); }
+.bz-people-fact-k { display: block; font-family: var(--kai); font-size: var(--f-aux); letter-spacing: 1.5px; color: var(--ink-mut); }
+.bz-people-fact-v { display: block; font-size: var(--f-mid); color: var(--ink-strong); margin-top: 2px; }
+.bz-people-fact-v b { color: var(--acc-deep); font-weight: 700; }
+/* 谁先开口：一条小尺，红的那截是我、黄的那截是对方 */
+.bz-people-fact-bar { display: block; height: 6px; margin: 5px 0 4px; border-radius: var(--r-paper); overflow: hidden;
+  background: #dcbd72; box-shadow: inset 0 0 0 1px rgba(120,110,90,.16); }
+.bz-people-fact-bar i { display: block; height: 100%; background: var(--acc); }
+.bz-people-dt-stamp { position: absolute; right: -8px; top: 16px; width: 44px; height: 44px; border: 2.5px solid var(--acc);
+  color: var(--acc); border-radius: var(--r-card); font-family: var(--kai); font-size: 17px; font-weight: 800; line-height: 1.1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  transform: rotate(calc(var(--t3) * -1));
+  opacity: .85; background: rgba(255,252,246,.6); text-align: center; padding: 2px; }
+.bz-people-dt-stamp em { font-style: normal; font-size: var(--f-aux); font-weight: 400; letter-spacing: 1px; }
+.bz-people-acts { margin: 20px auto 0; width: 214px; display: flex; flex-direction: column; gap: 7px; }
+.bz-people-act { display: flex; align-items: center; gap: 8px; background: #fffdf7; border: 1px solid #e2dac6;
+  border-radius: var(--r-card); padding: 6px 11px; font-size: var(--f-mid); color: var(--ink); box-shadow: 0 1px 3px var(--shadow);
+  font-family: var(--kai); letter-spacing: 1px; }
+.bz-people-act:nth-child(odd) { transform: rotate(calc(var(--t1) * -.5)); }
+.bz-people-act:nth-child(even) { transform: rotate(calc(var(--t1) * .4)); }
+@media (hover: hover) { .bz-people-act:hover { color: var(--acc); border-color: rgba(168,67,60,.45); } }
+.bz-people-act svg { width: 15px; height: 15px; color: var(--ink-mut); }
+@media (hover: hover) { .bz-people-act:hover svg { color: var(--acc); } }
+.bz-people-act .bz-people-act-hint { margin-left: auto; font-size: var(--f-aux); color: var(--ink-mut); font-family: var(--sans); }
+.bz-people-ftabs { flex: none; display: flex; gap: 6px; padding-left: 10px; position: relative; z-index: 2; }
+.bz-people-ftab { font-family: var(--kai); font-size: var(--f-body); letter-spacing: 3px; color: #8a8271; background: #f3ecdc;
+  border: 1px solid var(--card-bd); border-bottom: none; border-radius: var(--r-tab) var(--r-tab) 0 0; padding: 7px 17px 6px;
+  box-shadow: 0 -1px 3px rgba(120,110,90,.06); transform: rotate(calc(var(--t1) * -.5)); }
+.bz-people-ftab:nth-child(2) { transform: rotate(calc(var(--t1) * .3)); }
+.bz-people-ftab.on { background: var(--card); color: var(--acc-deep); font-weight: 800; transform: rotate(0);
+  box-shadow: 0 -3px 7px rgba(120,110,90,.1); }
+.bz-people-fsheet { flex: 1; min-height: 0; overflow: auto; background: var(--card); border: 1px solid var(--card-bd);
+  border-radius: 0 var(--r-tab) var(--r-tab) var(--r-tab); padding: 16px 22px 26px; box-shadow: 0 4px 14px rgba(120,110,90,.07);
+  margin-bottom: 14px; }
+.bz-people-fsheet-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.bz-people-fsheet-title { font-family: var(--kai); font-size: var(--f-body); letter-spacing: 2px; color: var(--ink-mut); }
+
+/* ---------------- 长文（其人 / 相交 / 编年） ----------------
+   正文一律宋体（读长段舒服），标题 / 封签 / 贴纸留楷体，账目数字走 tabular */
+.bz-people-md { max-width: 660px; font-family: var(--song); }
+.bz-people-sec { margin: 0 0 18px; }
+.bz-people-sec-h { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+.bz-people-md-seal { flex: none; width: 22px; height: 22px; border-radius: var(--r-paper); background: var(--acc); color: #fff7ef;
+  font-family: var(--kai); font-size: var(--f-body); font-weight: 800; display: flex; align-items: center; justify-content: center;
+  transform: rotate(calc(var(--t3) * -.5)); box-shadow: 0 1px 3px rgba(138,52,46,.3); }
+.bz-people-sec-h h4 { font-family: var(--kai); font-size: var(--f-head); letter-spacing: 2px; color: var(--ink-strong); margin: 0; }
+.bz-people-rule { flex: 1; height: 3px; background: repeating-linear-gradient(90deg, #ddd4c0 0 7px, transparent 7px 12px); opacity: .8; }
+.bz-people-md h5 { font-family: var(--kai); font-size: var(--f-body); color: var(--acc-deep); letter-spacing: 1px; margin: 12px 0 4px; }
+.bz-people-md p { font-size: var(--f-body); line-height: 1.95; margin: 5px 0; color: var(--ink); }
+.bz-people-md .bz-people-items { display: flex; flex-direction: column; }
+.bz-people-md .bz-people-it { position: relative; display: flex; gap: 8px; align-items: baseline; padding: 5px 0 5px 13px; font-size: var(--f-mid); line-height: 1.85; }
+.bz-people-md .bz-people-it + .bz-people-it { border-top: 1px dashed rgba(216,208,188,.75); }
+.bz-people-md .bz-people-it::before { content: ''; position: absolute; left: 1px; top: 12px; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--acc); opacity: .6; }
+.bz-people-md .bz-people-date { flex: none; font-size: var(--f-aux); color: var(--pencil); font-style: italic; font-variant-numeric: tabular-nums; }
+.bz-people-md strong { color: var(--acc-deep); }
+.bz-people-md .bz-people-quote { margin: 7px 0 7px 12px; padding: 8px 13px; border-left: 3px solid var(--acc);
+  background: var(--soft); border-radius: 0 var(--r-tab) var(--r-tab) 0; font-size: var(--f-mid); line-height: 1.8; color: #5c5344; }
+.bz-people-md .bz-people-quote p { margin: 2px 0; font-size: var(--f-mid); }
+
+/* 代表原话（胶带小纸条） */
+.bz-people-sec-title { font-family: var(--kai); font-size: var(--f-body); letter-spacing: 3px; color: var(--ink-mut); margin: 20px 0 10px;
+  display: flex; align-items: center; gap: 10px; }
+.bz-people-sec-title::after { content: ''; flex: 1; height: 3px;
+  background: repeating-linear-gradient(90deg, #ddd4c0 0 7px, transparent 7px 12px); }
+.bz-people-quotes { display: flex; flex-direction: column; gap: 12px; max-width: 620px; }
+.bz-people-quote-card { position: relative; background: #fffefb; border: 1px solid #ece5d5; border-radius: var(--r-paper);
+  padding: 11px 15px 9px; box-shadow: 0 2px 6px var(--shadow); }
+.bz-people-quote-card:nth-child(odd) { transform: rotate(calc(var(--t1) * -.45)); }
+.bz-people-quote-card:nth-child(even) { transform: rotate(calc(var(--t1) * .4)); }
+.bz-people-quote-card::before { content: ''; position: absolute; left: 50%; top: -6px; width: 44px; height: 12px;
+  transform: translateX(-50%) rotate(calc(var(--t1) * -2)); background: rgba(176,138,62,.34); border: 1px solid rgba(176,138,62,.42); }
+.bz-people-quote-text { font-family: var(--song); font-size: var(--f-body); line-height: 1.85; color: var(--ink-strong); }
+.bz-people-quote-meta { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-top: 4px; text-align: right; }
+/* 性格特质：一枚枚小签（从画像里抄出来的短句，微斜着贴成一堆） */
+.bz-people-traits { display: flex; flex-wrap: wrap; gap: 6px; max-width: 620px; }
+.bz-people-trait { font-size: var(--f-mid); line-height: 1.7; padding: 2px 9px 3px; border-radius: var(--r-paper);
+  background: #f7f0de; border: 1px solid #e6dcc2; color: #6f6047; box-shadow: var(--sh-1); }
+.bz-people-trait:nth-child(3n+1) { transform: rotate(calc(var(--t1) * -.5)); }
+.bz-people-trait:nth-child(3n+2) { transform: rotate(calc(var(--t1) * .45)); }
+.bz-people-trait-more { align-self: center; font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
+/* 兴趣 / 片刻两节比正文收窄一点，读起来像附注；「另有 N 条」这类尾注淡一档 */
+.bz-people-ints, .bz-people-moms { max-width: 620px; }
+.bz-people-mut { color: var(--ink-mut); font-style: italic; font-size: var(--f-aux); }
+
+/* 纪事折：编年 + 按月 + 随手记 */
+.bz-people-chron { max-width: 660px; font-family: var(--song); }
+.bz-people-ev-divider { display: flex; align-items: center; gap: 10px; margin: 20px 0 12px; font-family: var(--kai);
+  font-size: var(--f-mid); letter-spacing: 2px; color: #7a5f1e; }
+.bz-people-ev-divider::before, .bz-people-ev-divider::after { content: ''; flex: 1; height: 9px;
+  background: repeating-linear-gradient(90deg, rgba(176,138,62,.3) 0 12px, rgba(176,138,62,.12) 12px 13px); opacity: .8; }
+.bz-people-months { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
+.bz-people-mon { position: relative; }
+.bz-people-mon-head { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 2px 0; }
+.bz-people-mon-chip { font-family: var(--kai); font-size: var(--f-mid); letter-spacing: 1.5px; color: #7a5f1e; background: #f6ecd2;
+  border: 1px solid #e3d2a2; border-radius: var(--r-paper); padding: 2px 10px; box-shadow: var(--sh-1);
+  transform: rotate(calc(var(--t1) * -1)); }
+.bz-people-mon-plus { font-size: var(--f-body); color: var(--ink-mut); width: 12px; transition: transform .24s cubic-bezier(.2,.85,.3,1); }
+.bz-people-mon-cnt { font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
+/* 摊开 / 收起走高度过渡（0fr → 1fr），不是 display 一刀切 */
+.bz-people-mon-body { display: grid; grid-template-rows: 0fr; padding: 0 0 0 14px;
+  transition: grid-template-rows .3s cubic-bezier(.2,.85,.3,1), padding .3s; }
+.bz-people-mon-in { min-height: 0; overflow: hidden; }
+.bz-people-mon.on .bz-people-mon-body { grid-template-rows: 1fr; padding: 8px 0 4px 14px; }
+.bz-people-mon.on .bz-people-mon-plus { transform: rotate(45deg); }
+.bz-people-ev { position: relative; display: flex; gap: 9px; align-items: baseline; padding: 4px 0 4px 15px; font-size: var(--f-mid); line-height: 1.8; }
+.bz-people-ev::before { content: ''; position: absolute; left: 3px; top: 12px; width: 5px; height: 5px; border-radius: 50%;
+  background: #c9c1ad; }
+.bz-people-ev.bz-people-major::before { background: var(--acc); width: 7px; height: 7px; top: 11px; left: 2px; }
+.bz-people-ev-ts { flex: none; font-size: var(--f-aux); color: var(--pencil); font-style: italic; font-variant-numeric: tabular-nums; }
+.bz-people-ev.bz-people-major .bz-people-ev-sum { color: var(--ink-strong); font-weight: 700; }
+.bz-people-notes { display: flex; flex-direction: column; gap: 9px; max-width: 560px; font-family: var(--song); }
+.bz-people-note-row { position: relative; display: flex; align-items: baseline; gap: 10px; background: #fbf3df;
+  border: 1px solid #eadfc0; border-radius: var(--r-paper); padding: 8px 12px; box-shadow: 0 2px 5px var(--shadow); }
+.bz-people-note-row:nth-child(odd) { transform: rotate(calc(var(--t1) * -.5)); }
+.bz-people-note-row:nth-child(even) { transform: rotate(calc(var(--t1) * .45)); }
+.bz-people-note-ts { flex: none; font-size: var(--f-aux); color: #8a7440; font-style: italic; font-variant-numeric: tabular-nums; }
+.bz-people-note-sum { flex: 1; font-size: var(--f-mid); line-height: 1.75; }
+.bz-people-note-del { font-size: var(--f-aux); color: var(--ink-mut); font-family: var(--sans); }
+@media (hover: hover) { .bz-people-note-del:hover { color: var(--acc); } }
+.bz-people-fold-hint { border: 1px dashed #d8d0bc; border-radius: var(--r-tab); padding: 22px 20px; text-align: center;
+  font-family: var(--song); font-size: var(--f-mid); color: var(--ink-mut); line-height: 1.9; background: rgba(255,253,248,.5); }
+
+/* ---------------- 页内附注与页脚（原弹层的零件，现在挂在册页里） ---------------- */
+.bz-people-pop-note { font-size: var(--f-aux); color: var(--ink-mut); line-height: 1.85; margin-top: 10px; font-family: var(--song); }
+.bz-people-pop-foot { flex: none; display: flex; align-items: center; gap: 9px; padding: 10px 18px 15px;
+  border-top: 1px dashed #e3dbc8; }
+.bz-people-pop-foot .bz-people-spacer { flex: 1; }
+
+/* 数据源：行 = 小相纸 + 勾选框 + 水位贴纸 */
+.bz-people-ds-path { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin: 2px 0 10px;
+  word-break: break-all; line-height: 1.6; }
+.bz-people-ds-list { display: flex; flex-direction: column; gap: 5px; }
+.bz-people-ds-row { display: flex; align-items: center; gap: 11px; padding: 5px 11px; border-radius: var(--r-card);
+  border: 1px solid #ece5d5; background: #fffefb; cursor: pointer;
+  transition: transform .12s, border-color .12s, box-shadow .12s; }
+@media (hover: hover) { .bz-people-ds-row:hover { border-color: rgba(168,67,60,.4); transform: translateX(3px); box-shadow: 0 2px 8px rgba(94,84,66,.16); } }
+.bz-people-ds-box { flex: none; width: 17px; height: 17px; border: 1.5px solid #c9c1ad; border-radius: var(--r-paper);
+  background: #fff; display: flex; align-items: center; justify-content: center; color: #fff; font-size: var(--f-mid); }
+.bz-people-ds-on .bz-people-ds-box { background: var(--acc); border-color: var(--acc-deep); }
+.bz-people-ds-ava { flex: none; width: 38px; height: 38px; border-radius: var(--r-paper); background: #fff; padding: 3px;
+  border: 1px solid #efe9da; box-shadow: 0 1px 3px var(--shadow); }
+.bz-people-ds-ava img { width: 100%; height: 100%; object-fit: cover; }
+.bz-people-ds-ava .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+  background: var(--acc); color: #fff8f0; font-family: var(--kai); font-size: 15px; }
+.bz-people-ds-main { flex: 1; min-width: 0; }
+.bz-people-ds-name { font-size: var(--f-body); font-weight: 700; color: var(--ink-strong); letter-spacing: .5px; }
+.bz-people-ds-meta { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-top: 2px; }
+.bz-people-ds-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.bz-people-ds-mark { font-size: var(--f-aux); color: var(--ink-mut); font-variant-numeric: tabular-nums; }
+.bz-people-ds-fresh { background: rgba(168,67,60,.06); border-color: rgba(168,67,60,.35); }
+/* 导入水位：勾这一位会发生什么，写在行的右边（全新 / 增量 / 补旧 / 无新素材 / 待导出完整聊天） */
+.bz-people-ds-water { font-size: var(--f-aux); padding: 1px 7px; border-radius: var(--r-paper); letter-spacing: .3px;
+  background: #f3ecdc; border: 1px solid #e2d9c1; color: #6f6047; }
+.bz-people-ds-w-full { background: #eef2e4; border-color: #d8dfc6; color: #5b6642; }
+.bz-people-ds-w-newer { background: color-mix(in srgb, var(--acc) 12%, #fff); border-color: rgba(168,67,60,.38); color: var(--acc-deep); }
+.bz-people-ds-w-older { background: #f6ecd2; border-color: #e3d2a2; color: #6f5719; }
+.bz-people-ds-w-skip { color: var(--ink-mut); }
+.bz-people-ds-w-exported { background: #eef0f5; border-color: #d2d7e2; color: #5a6377; }
+.bz-people-ds-w-export { background: rgba(168,67,60,.07); border-color: rgba(168,67,60,.34); color: var(--acc-deep); font-style: italic; }
+.bz-people-ds-off { opacity: .55; cursor: default; }
+.bz-people-ds-legend { display: flex; align-items: center; gap: 14px; margin-top: 11px; font-size: var(--f-aux); color: var(--ink-mut); }
+.bz-people-ds-legend i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+.bz-people-ds-dot-ok { background: var(--acc); } .bz-people-ds-dot-idle { background: #c9c1ad; } .bz-people-ds-dot-none { background: #e3dccb; border: 1px solid #cfc7b2; }
+.bz-people-ds-pickfresh { margin-left: auto; font-size: var(--f-aux); color: var(--acc); font-family: var(--kai); letter-spacing: 1px;
+  border-bottom: 1px dashed rgba(168,67,60,.5); padding-bottom: 1px; }
+.bz-people-ds-count { font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
+.bz-people-notice { font-size: var(--f-aux); color: var(--acc-deep); margin-top: 8px; font-style: italic; }
+/* 数据源同步条：和进度便签同一套小纸条（黄纸 + 一道虚边），出错那档才转红 */
+.bz-people-syncline { position: relative; border: 1px solid #e6d6a8; background: #fbf2d9; border-radius: var(--r-paper);
+  padding: 9px 13px 10px; margin: 0 0 12px; box-shadow: var(--sh-1); transform: rotate(calc(var(--t1) * -.2)); }
+.bz-people-syncline::before { content: ''; position: absolute; left: 12px; top: -5px; width: 40px; height: 11px;
+  background: rgba(176,138,62,.42); border: 1px solid rgba(176,138,62,.5); transform: rotate(calc(var(--t1) * -2)); }
+.bz-people-syncline-err { border-color: rgba(168,67,60,.4); background: rgba(168,67,60,.06); }
+.bz-people-syncline-err::before { background: rgba(168,67,60,.28); border-color: rgba(168,67,60,.4); }
+.bz-people-sync-text { font-size: var(--f-mid); color: var(--ink-strong); font-weight: 700; }
+.bz-people-sync-track { height: 4px; border-radius: var(--r-paper); background: rgba(122,95,30,.16); margin: 6px 0 4px; overflow: hidden; }
+.bz-people-sync-bar { height: 100%; background: linear-gradient(90deg, var(--acc), #c4604a); border-radius: var(--r-paper); }
+.bz-people-sync-indet { height: 100%; width: 36%; border-radius: var(--r-paper);
+  background: repeating-linear-gradient(90deg, var(--acc) 0 8px, #dfa79a 8px 14px); animation: bz-people-pulse 1.1s ease-in-out infinite alternate; }
+.bz-people-sync-sub, .bz-people-sync-contact, .bz-people-sync-fail { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-top: 3px; }
+.bz-people-sync-fail { color: var(--acc-deep); }
+
+/* 开工单（画脸谱确认） */
+.bz-people-gen-line { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
+.bz-people-gen-list { list-style: none; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
+.bz-people-gen-item { font-size: var(--f-mid); color: var(--ink); padding: 6px 12px; background: #fffefb; border: 1px solid #ece5d5;
+  border-radius: var(--r-card); }
+.bz-people-gen-item b { font-family: var(--kai); letter-spacing: 1px; }
+
+/* 互动统计：一张贴在页上的方格纸（数格子看数），柱是手绘的红条 */
+.bz-people-ins { position: relative; margin-top: 10px; border: 1px dashed #d8d0bc; border-radius: var(--r-paper); padding: 16px 16px 14px;
+  background-color: #fffdf8;
+  background-image: linear-gradient(180deg, rgba(120,110,90,.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120,110,90,.09) 1px, transparent 1px);
+  background-size: 22px 22px; box-shadow: var(--sh-1); }
+/* 方格纸也是「贴」上去的：上沿一截胶带 */
+.bz-people-ins::before { content: ''; position: absolute; left: 50%; top: -7px; width: 54px; height: 15px; margin-left: -27px;
+  background: rgba(176,138,62,.4); border: 1px solid rgba(176,138,62,.5); transform: rotate(calc(var(--t1) * -2)); }
+.bz-people-ins-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.bz-people-ins-range { font-family: var(--kai); font-size: var(--f-body); letter-spacing: 1px; color: var(--ink-strong); }
+.bz-people-ins-file { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-left: auto;
+  max-width: 46%; text-align: right; line-height: 1.6; }
+.bz-people-chart { display: flex; align-items: flex-end; gap: 4px; height: 112px; padding: 0 2px;
+  border-bottom: 1px solid rgba(120,110,90,.28); }
+.bz-people-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+/* 柱顶压一道深色，像用红笔一格一格描出来的 */
+.bz-people-col-bar { width: 100%; border-radius: var(--r-paper) var(--r-paper) 0 0; background: linear-gradient(180deg, var(--acc), #cf7a64);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.06), inset 0 1px 0 rgba(255,255,255,.35); }
+.bz-people-chart-labels { display: flex; gap: 4px; margin-top: 5px; padding: 0 2px; }
+.bz-people-chart-labels span { flex: 1; font-size: var(--f-aux); color: var(--pencil); text-align: center; font-variant-numeric: tabular-nums; }
+.bz-people-ins-rows { margin-top: 12px; display: flex; flex-direction: column; }
+.bz-people-ins-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-size: var(--f-mid); }
+.bz-people-ins-row + .bz-people-ins-row { border-top: 1px dashed rgba(216,208,188,.8); }
+.bz-people-ins-label { flex: none; width: 68px; font-family: var(--kai); letter-spacing: 1px; color: var(--ink-mut); }
+.bz-people-ins-val { margin-left: auto; font-size: var(--f-mid); color: var(--ink-strong); font-variant-numeric: tabular-nums; }
+/* 数据不够、这一栏算不出来：明说一句（淡一档的斜体），不是留空让人以为漏了 */
+.bz-people-ins-mute { color: var(--ink-mut); font-style: italic; font-weight: 400; }
+.bz-people-duo { flex: 1; display: flex; height: 10px; border-radius: var(--r-paper); overflow: hidden; background: #f0ead9; }
+.bz-people-duo-me { background: var(--acc); } .bz-people-duo-other { background: #d8b96a; }
+.bz-people-duo-legend { font-size: var(--f-aux); color: var(--ink-mut); }
+.bz-people-strip { flex: 1; display: flex; align-items: flex-end; gap: 2px; height: 30px; }
+.bz-people-strip-bar { flex: 1; background: linear-gradient(180deg, rgba(168,67,60,.85), rgba(168,67,60,.4)); border-radius: 1px 1px 0 0; }
+.bz-people-kinds { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+.bz-people-kind { font-size: var(--f-aux); padding: 2px 8px; border-radius: 99px; background: var(--paper-fold-2); color: #6f6650;
+  border: 1px solid #e3dbc8; }
+
+/* 补充背景（资料卡）：像一张填空的档案纸 —— 楷体标签 + 宋体填写值（值底下压一条点线） */
+.bz-people-prof { display: flex; flex-direction: column; }
+.bz-people-prof-row { display: flex; gap: 12px; padding: 7px 0 5px; font-size: var(--f-body); align-items: baseline; }
+.bz-people-prof-row + .bz-people-prof-row { border-top: 1px dashed rgba(216,208,188,.8); }
+.bz-people-prof-label { flex: none; width: 76px; font-family: var(--kai); letter-spacing: 1px; color: var(--ink-mut); font-size: var(--f-mid); }
+.bz-people-prof-value { flex: 1; font-family: var(--song); line-height: 1.85; padding-bottom: 2px;
+  border-bottom: 1px dotted rgba(150,140,116,.42); }
+.bz-people-prof-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.bz-people-chip { font-size: var(--f-aux); padding: 2px 8px; border-radius: var(--r-paper); background: rgba(168,67,60,.09);
+  border: 1px solid rgba(168,67,60,.3); color: var(--acc); }
+.bz-people-prof-actions { display: flex; gap: 8px; margin-top: 14px; }
+/* 一条档案都没填时：纸上一张便签，请人来补 */
+.bz-people-prof-entry { position: relative; margin-top: 10px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  padding: 17px 14px 14px; border: 1px dashed #d8d0bc; border-radius: var(--r-paper); background: rgba(255,253,248,.6); }
+.bz-people-prof-entry::before { content: ''; position: absolute; left: 50%; top: -7px; width: 46px; height: 14px; margin-left: -23px;
+  background: rgba(176,138,62,.4); border: 1px solid rgba(176,138,62,.5); transform: rotate(calc(var(--t1) * -2)); }
+.bz-people-prof-entry-hint { font-family: var(--song); font-size: var(--f-mid); color: var(--ink-mut); font-style: italic; }
+.bz-people-input { width: 100%; font: inherit; font-size: var(--f-body); color: var(--ink); background: transparent;
+  border: none; border-bottom: 1px dashed #cfc7b2; padding: 4px 2px; outline: none; }
+.bz-people-input:focus { border-bottom-color: var(--acc); }
+.bz-people-input::placeholder { color: #bdb6a2; font-style: italic; }
+.bz-people-prof-edit .bz-people-prof-row { padding: 5px 0; }
+.bz-people-prof-sub { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.bz-people-prof-subrow { display: flex; gap: 7px; align-items: center; }
+.bz-people-prof-subrow .bz-people-input { flex: 1; }
+.bz-people-tag-edit { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1; }
+.bz-people-tag-chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--f-aux); padding: 2px 8px; border-radius: var(--r-paper);
+  background: rgba(168,67,60,.09); border: 1px solid rgba(168,67,60,.3); color: var(--acc); }
+.bz-people-tag-chip button { color: rgba(168,67,60,.7); font-size: var(--f-aux); }
+.bz-people-tag-input { width: 110px; flex: none; }
+
+/* 记一笔 */
+.bz-people-note-add { display: flex; gap: 9px; align-items: center; }
+.bz-people-note-date { width: 130px; flex: none; }
+
+/* 删除确认 */
+.bz-people-del-who { font-family: var(--kai); font-size: var(--f-head); letter-spacing: 2px; color: var(--acc-deep); margin-bottom: 8px; }
+.bz-people-del-line { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
+.bz-people-del-note { font-size: var(--f-aux); color: var(--ink-mut); margin-top: 8px; line-height: 1.8; font-style: italic; }
+.bz-people-del-actions { display: flex; gap: 9px; margin-top: 16px; }
+.bz-people-pw { margin-top: 12px; }
+.bz-people-pw .bz-people-input { font-size: var(--f-body); letter-spacing: 2px; }
+
+/* ---------------- 找一找（36 位翻页嫌慢，按名字 / 标签把人捞出来） ---------------- */
+.bz-people-findbox { display: flex; align-items: center; gap: 9px; padding: 2px 4px 6px;
+  border-bottom: 1px dashed #cfc7b2; margin-bottom: 12px; }
+.bz-people-findbox svg { width: 15px; height: 15px; color: var(--acc); }
+.bz-people-findbox .bz-people-input { border-bottom: none; font-size: var(--f-head); letter-spacing: .5px; }
+.bz-people-find-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; justify-content: center; }
+.bz-people-find-tags .bz-people-stk { cursor: pointer; font-size: var(--f-aux); padding: 3px 10px; transition: transform .14s, background .14s; }
+@media (hover: hover) { .bz-people-find-tags .bz-people-stk:hover { transform: translateY(-2px) rotate(calc(var(--t1) * -1.5)); background: rgba(176,138,62,.24); } }
+.bz-people-find-n { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-bottom: 9px; }
+.bz-people-find-row { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; cursor: pointer;
+  padding: 6px 10px; border-radius: var(--r-card); border: 1px solid #ece5d5; background: #fffefb;
+  transition: transform .16s cubic-bezier(.2,.85,.3,1), border-color .16s, box-shadow .16s; }
+@media (hover: hover) { .bz-people-find-row:hover, .bz-people-find-row:focus-visible { transform: translateX(3px); border-color: rgba(168,67,60,.45);
+  box-shadow: 0 2px 8px rgba(94,84,66,.18); outline: none; } }
+.bz-people-find-ava { flex: none; width: 40px; height: 40px; border-radius: var(--r-paper); overflow: hidden; background: #fff; padding: 3px;
+  border: 1px solid #efe9da; box-shadow: 0 1px 3px var(--shadow); }
+.bz-people-find-ava img, .bz-people-find-ava .bz-people-ava-txt { width: 100%; height: 100%; object-fit: cover; display: flex;
+  align-items: center; justify-content: center; background: var(--acc); color: #fff8f0;
+  font-family: var(--kai); font-size: 16px; }
+.bz-people-find-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bz-people-find-name { font-size: var(--f-body); font-weight: 700; letter-spacing: 1px; color: var(--ink-strong); }
+.bz-people-find-meta { font-size: var(--f-aux); color: var(--pencil); font-style: italic; }
+.bz-people-find-side { flex: none; font-size: var(--f-aux); color: var(--ink-mut); font-variant-numeric: tabular-nums; }
+
+/* ---------------- 剩下的几处「刚发生」的动效 ---------------- */
+/* 空态那张纸是弹出来的 */
+.bz-people-empty { animation: bz-people-pop .36s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-pop { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
+/* 进度便签落下来「贴」住左下角：只在开始 / 续跑那一下放，之后每 900ms 一次的重画不重放 */
+.bz-people-jobs.bz-people-note-in { animation: bz-people-note-up .38s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-note-up { from { opacity: 0; transform: translate(0, -14px) rotate(calc(var(--t1) * 2)); }
+  to { opacity: 1; transform: rotate(calc(var(--t1) * -.25)); } }
+/* 撕下来那张便签：从角上揪起、翻着个儿掉出册子（画完那一下放一次）。
+   便签在左下角，所以是往左下角外头掉。right/bottom 必须显式清成 auto：
+   克隆件只写 left/top，留着 .bz-people-jobs 的 bottom 会被上下一撑拉成一条竖条 */
+.bz-people-tear { position: fixed; left: auto; right: auto; top: auto; bottom: auto; z-index: 70; pointer-events: none;
+  transform-origin: 10% 6%; animation: bz-people-tear-off .68s cubic-bezier(.36,.06,.3,1) both; }
+@keyframes bz-people-tear-off {
+  0% { opacity: 1; transform: none; }
+  16% { transform: rotate(calc(var(--t1) * 2.4)) translate(3px, -2px); }
+  100% { opacity: 0; transform: translate(-36px, 82px) rotate(calc(var(--t3) * -1.6)) scale(.88); } }
+@keyframes bz-people-drop { from { opacity: 0; translate: 0 -9px; } to { opacity: 1; translate: 0 0; } }
+/* 「新 N」贴纸慢慢喘气，别抢眼 */
+.bz-people-fresh { animation: bz-people-fresh-pulse 2.8s ease-in-out infinite; }
+@keyframes bz-people-fresh-pulse {
+  0%, 100% { box-shadow: 0 1px 3px rgba(138,52,46,.45); }
+  50% { box-shadow: 0 1px 3px rgba(138,52,46,.45), 0 0 0 3px rgba(168,67,60,.15); } }
+/* 翻开对页时，抽出来那张也跟着轻轻抬一下 */
+.bz-people-cell.bz-people-out .bz-people-photo img { animation: bz-people-out-zoom .5s cubic-bezier(.2,.85,.3,1) both; }
+@keyframes bz-people-out-zoom { from { scale: 1; } to { scale: 1.04; } }
+
+/* 系统里关了动效就都别动（该在的位置还在）：飞过去的照片、视差、显影全部停手；
+   掀纸这种大位移不做 —— 但换页总得看得出来，就改成整册闪一下 */
+/* html 上挂 .force-motion 就不认这条偏好（评审壳会替两边挂上：这册子的用处就是看动效，
+   系统关了动画的话，光看静态截图是评不出手感的） */
+@media (prefers-reduced-motion: reduce) {
+  .bz-people-scope:not(.force-motion) *, .bz-people-scope:not(.force-motion) *::before, .bz-people-scope:not(.force-motion) *::after {
+    animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .bz-people-scope:not(.force-motion) .bz-people-fly, .bz-people-scope:not(.force-motion) .bz-people-sheet,
+  .bz-people-scope:not(.force-motion) .bz-people-tear { display: none !important; }
+  /* 掀纸是大位移，不做；但换页得看得出来 —— 整册闪一下（只有明暗，没有位移） */
+  .bz-people-scope:not(.force-motion) .bz-people-turn-next, .bz-people-scope:not(.force-motion) .bz-people-turn-prev {
+    animation: bz-people-turn-flash .34s ease-out both !important; }
+  @keyframes bz-people-turn-flash { from { opacity: .7; } to { opacity: 1; } }
+  .bz-people-scope:not(.force-motion) .bz-people-spread { transform: none; }
+  .bz-people-scope:not(.force-motion) .bz-people-w, .bz-people-scope:not(.force-motion) .bz-people-empty-ico > * {
+    clip-path: none; stroke-dashoffset: 0; opacity: 1; }
 }
 
-/* —— 通用 meta / 徽章 / chip —— */
-.bz-people-card-meta {
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-chip {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 11px;
-  background: var(--soft-neutral);
-  color: var(--ink-mut);
-}
-/* 媒体徽章（issue 445）退役于 455 评审：详情头不再出灰底小字，媒体计数归 dt-nums */
-
-/* —— 合并流程（issue 442） —— */
-.bz-people-merge-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin: 0 0 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--acc);
-  border-radius: 10px;
-  background: var(--soft);
-}
-.bz-people-merge-text {
-  flex: 1;
-  min-width: 200px;
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ink);
-}
-
-/* ==================== 详情（折页册） ==================== */
-/* 详情态（448）：品牌标题区让位隐藏，内容区顶到面板最上；body 转纵 flex，
-   详情头 flex:none 吸顶（滚动时也钉在面板顶），折页册拉长吃掉剩余高度 */
-.bz-people-panel-detail .bz-people-head,
-.bz-people-panel-detail .bz-people-stats {
-  display: none;
-}
-.bz-people-panel-detail .bz-people-body {
-  display: flex;
-  flex-direction: column;
-  padding-top: 10px; /* 与详情头 margin-bottom 同值：头部上下间距一致（448） */
-}
-/* 详情头置顶：粘性定位（初始即在顶，内容溢出滚动时钉住不动）；455 评审后压扁——图标右上、去水位印 */
-.bz-people-dt-head {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  flex: none;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  margin: 15px 0 10px;
-  padding: 14px 18px;
-  background: var(--card);
-  border: 1px solid var(--card-bd);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px var(--card-shadow);
-}
-.bz-people-dt-seal {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  border: 2px solid var(--gold);
-  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
-}
-/* 头像（数据目录 avatar.<ext>；无文件回落首字印章）：圆形 + 金环 */
-.bz-people-dt-avatar {
-  width: 56px;
-  height: 56px;
-  flex: none;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--gold);
-}
-.bz-people-dt-id {
-  min-width: 0;
-}
-.bz-people-dt-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 19px;
-  font-weight: 900;
-  color: var(--ink-strong);
-  letter-spacing: 1px;
-  word-break: break-all;
-}
-/* 名旁印签：手动档案的关系标签（无档案不出） */
-.bz-people-dt-tags {
-  display: inline-flex;
-  gap: 6px;
-}
-.bz-people-dt-tag {
-  font-size: 11px;
-  color: var(--acc-deep);
-  border: 1px solid var(--acc);
-  opacity: 0.85;
-  border-radius: 99px;
-  padding: 1px 9px;
-  white-space: nowrap;
-}
-.bz-people-dt-id .bz-people-card-meta {
-  margin-top: 5px;
-  font-size: 11.5px;
-  color: var(--ink-mut);
-}
-.bz-people-dt-id .bz-people-card-meta b {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-/* 图标工具条：右上角（不占整行）；朱色底 */
-.bz-people-dt-actions {
-  align-self: center;
-  display: flex;
-  gap: 4px;
-  margin-left: auto;
-}
-.bz-people-dt-actions .bz-people-icon-btn {
-  color: var(--acc-deep);
-  background: var(--soft);
-}
-@media (hover: hover) {
-  .bz-people-dt-actions .bz-people-icon-btn:hover {
-    background: var(--soft-neutral);
-  }
+/* 窄容器（移动 412）：一册拆成一页一页往下淌 */
+@container (max-width: 560px) {
+  .bz-people-tabs { right: 12px; gap: 4px; }
+  .bz-people-tab { font-size: var(--f-aux); letter-spacing: 1px; padding: 2px 9px 3px; }
+  /* 便签在手机上横过来贴满下沿（窄屏没有「角」那么块空地，当一条下缘提示） */
+  .bz-people-jobs { left: 10px; bottom: 10px; width: calc(100% - 20px); }
+  .bz-people-jobs-main { font-size: var(--f-mid); }
+  /* 手机：不进 flex 撑高，一页一页往下淌，整条自己滚；两侧窄边与叠纸没地方站，收掉 */
+  .bz-people-page-wrap { display: block; padding: 0; }
+  .bz-people-turn, .bz-people-stack { display: none; }
+  /* 手机上不做视差（整条往下淌，转起来字发虚），一页一页往下淌 */
+  .bz-people-spread { transform: none; flex-direction: column; min-height: 0; height: auto; padding: 5px; }
+  .bz-people-gutter { flex: 0 0 18px; }
+  .bz-people-gutter::before { background: linear-gradient(180deg, rgba(0,0,0,.42), rgba(0,0,0,.05) 45%, rgba(0,0,0,.05) 55%, rgba(0,0,0,.42)); }
+  .bz-people-gutter::after { left: 12px; right: 12px; top: 50%; bottom: auto; width: auto; height: 1px; transform: translateY(-50%);
+    background: repeating-linear-gradient(90deg, rgba(255,250,240,.5) 0 5px, transparent 5px 11px); }
+  .bz-people-page { padding: 6px 10px; }
+  /* 一页滚长了也知道自己在哪页：页眉吸在顶上一行（不透明底，照片不会从字缝里透出来） */
+  .bz-people-page-head { position: sticky; top: 0; z-index: 4; background: #f7f2e6; padding: 4px 2px 6px;
+    row-gap: 3px; box-shadow: 0 1px 0 #ded3b8; }
+  /* 窄屏也别把页眉右边的信息吞掉（「36 位联系人 · 2 个群聊未纳入」/ 说话跨度）：让它自己占一行 */
+  .bz-people-head-note { flex: 1 0 100%; order: 3; }
+  .bz-people-head-ledger { font-size: var(--f-aux); }
+  .bz-people-spread > .bz-people-page:first-child { border-radius: var(--r-tab) var(--r-tab) var(--r-paper) var(--r-paper); }
+  .bz-people-spread > .bz-people-page:last-child { border-radius: var(--r-paper) var(--r-paper) var(--r-tab) var(--r-tab); }
+  .bz-people-spread > .bz-people-page:only-child { border-radius: var(--r-tab); }
+  /* 手机：照片跟着页宽走，还是两列、留一线缝，膜跟着放大 */
+  .bz-people-boardarea { flex: none; display: block; }
+  .bz-people-sleeve { width: 100%; }
+  .bz-people-board { gap: 7px; }
+  .bz-people-row { grid-template-columns: 1fr 1fr; column-gap: 7px; padding: 5px 6px 18px; }
+  .bz-people-row-note { left: 7px; right: 7px; letter-spacing: 1px; }
+  .bz-people-cell { width: auto; height: auto; aspect-ratio: 1 / 1; }
+  .bz-people-cap { padding: 16px 7px 6px; }
+  .bz-people-name { font-size: var(--f-body); letter-spacing: 1px; }
+  .bz-people-meta { font-size: var(--f-aux); }
+  .bz-people-blank { font-size: var(--f-aux); letter-spacing: 1.5px; }
+  .bz-people-seal { width: 22px; height: 22px; font-size: var(--f-aux); }
+  .bz-people-spread > .bz-people-page:first-child .bz-people-film::after { left: 6px; }
+  /* 详情：照片与标签账目竖过来（窄屏两栏并排挤），照片仍贴左 */
+  .bz-people-dttop { flex-direction: column; gap: 10px; padding-top: 8px; }
+  .bz-people-dt-side { padding-top: 0; }
+  .bz-people-acts { width: 100%; max-width: 260px; }
+  .bz-people-fsheet { padding: 13px 15px 22px; margin-bottom: 10px; }
+  .bz-people-spread-one .bz-people-pagebody { padding: 4px 14px 12px; }
+  .bz-people-quotes, .bz-people-md, .bz-people-chron { max-width: none; }
+  .bz-people-note-add { flex-wrap: wrap; }
 }
 
-/* —— 折页册：收起折只剩竖排书脊窄条，展开折占主幅（点书脊切换） ——
-   详情态 body 是纵 flex：折页册 flex:1 拉长占满详情头以下的全部高度 */
-.bz-people-book {
-  display: flex;
-  align-items: stretch;
-  flex: 1;
-  min-height: 0;
-}
-.bz-people-leaf {
-  flex: 0 0 44px; /* 收起折：窄书脊条（竖排折题） */
-  min-width: 0;
-  display: flex;
-  flex-direction: row;
-  position: relative;
-  background: var(--paper-fold);
-  border: 1px solid var(--card-bd);
-  border-left: none;
-  cursor: pointer;
-  overflow: hidden;
-  transition: flex 0.22s cubic-bezier(0.3, 0.7, 0.3, 1), background 0.22s ease;
-}
-.bz-people-leaf:first-child {
-  border-left: 1px solid var(--card-bd);
-  border-radius: 10px 0 0 10px;
-}
-.bz-people-leaf:last-child {
-  border-radius: 0 10px 10px 0;
-}
-.bz-people-leaf-on {
-  flex: 1 1 auto;
-  cursor: default;
-  background: var(--card);
-  box-shadow: 0 6px 18px var(--card-shadow);
-  z-index: 1;
-}
-@media (hover: hover) {
-  .bz-people-leaf:not(.bz-people-leaf-on):hover {
-    background: var(--card);
-  }
-}
-/* 折脊：内缘缝线 */
-.bz-people-leaf-spine {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 12px;
-  background: linear-gradient(90deg, var(--paper-fold-2), transparent);
-  pointer-events: none;
-}
-.bz-people-leaf-on .bz-people-leaf-spine {
-  background: linear-gradient(90deg, var(--paper-fold-2), transparent);
-}
-/* 折题竖排书脊（只留标题、顶对齐；展开折同样竖排） */
-.bz-people-leaf-head {
-  flex: none;
-  width: 44px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12px 0 8px;
-}
-.bz-people-leaf-zh {
-  font-family: 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink-2);
-  letter-spacing: 7px;
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  white-space: nowrap;
-}
-.bz-people-leaf-on .bz-people-leaf-zh {
-  color: var(--acc-deep);
-}
-.theme-dark .bz-people-leaf-on .bz-people-leaf-zh {
-  color: var(--acc);
-}
-/* 展开折正文 */
-.bz-people-leaf-body {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 10px 16px 16px 12px;
-  font-size: 13px;
-}
 
 /* —— 画像 / 时间线（mini markdown 卡底；折内不再加卡片盒，直接排） ——
    长文层次（455 评审拍板）：bz-md-* —— 印章小节头 / 条目行（日期签）/ 引文卡 */
@@ -839,1054 +1214,6 @@
 .bz-people-chronicle .bz-md-quote p {
   margin: 2px 0;
 }
-.bz-people-section-title {
-  margin: 16px 0 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  letter-spacing: 0.5px;
-}
-/* 代表原话证据层 */
-.bz-people-quotes {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.bz-people-quote {
-  padding: 8px 12px;
-  background: var(--paper-fold);
-  border: 1px solid var(--card-bd);
-  border-left: 3px solid var(--gold);
-  border-radius: 0 8px 8px 0;
-}
-.bz-people-quote-text {
-  font-size: 12.5px;
-  line-height: 1.6;
-  color: var(--ink);
-}
-.bz-people-quote-meta {
-  margin-top: 4px;
-  font-size: 11.5px;
-  color: var(--ink-mut);
-}
-.bz-people-events {
-  display: flex;
-  flex-direction: column;
-}
-/* 交往事件按月折叠（455 评审）：月头收起，点开正文；月内大事件在上 */
-.bz-people-ev-months {
-  display: flex;
-  flex-direction: column;
-}
-.bz-people-ev-mon {
-  border-bottom: 1px solid var(--card-bd);
-}
-.bz-people-ev-mon:last-child {
-  border-bottom: none;
-}
-.bz-people-ev-mon-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 2px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-}
-.bz-people-ev-mon-plus {
-  color: var(--acc);
-  font-size: 14px;
-  font-weight: 700;
-  transition: transform 0.15s ease;
-}
-.bz-people-ev-mon-on .bz-people-ev-mon-plus {
-  transform: rotate(45deg);
-}
-.bz-people-ev-mon-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--ink-strong);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.5px;
-}
-.bz-people-ev-mon-cnt {
-  font-size: 11px;
-  color: var(--ink-mut);
-}
-.bz-people-ev-mon-body {
-  display: none;
-  padding: 0 2px 8px;
-}
-.bz-people-ev-mon-on .bz-people-ev-mon-body {
-  display: block;
-}
-.bz-people-event {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-.bz-people-event-ts {
-  color: var(--gold);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-event-dot {
-  width: 5px;
-  height: 5px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--frame-bd);
-}
-.bz-people-event-summary {
-  color: var(--ink);
-}
-/* 大事：红点 + 加重字；小事（minor）保持基线样式 */
-.bz-people-event-major .bz-people-event-dot {
-  background: var(--acc);
-  box-shadow: 0 0 0 3px rgba(168, 67, 60, 0.15);
-}
-.bz-people-event-major .bz-people-event-summary {
-  color: var(--ink-strong);
-  font-weight: 600;
-}
-/* 《纪事》（纪事折上半；排版与画像共用 bz-md-* 层次体系） */
-
-/* —— 互动数据（issue 440；447 收进「数据」折） —— */
-.bz-people-insights {
-  margin-top: 4px;
-  padding: 12px 14px;
-  background: var(--paper-fold);
-  border: 1px solid var(--card-bd);
-  border-radius: 12px;
-}
-.bz-people-ins-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.bz-people-ins-range {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-strong);
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-ins-file {
-  font-size: 11.5px;
-  color: var(--ink-mut);
-  word-break: break-all;
-}
-/* 温度曲线：按月消息量柱条（纯 CSS） */
-.bz-people-chart-wrap {
-  margin-top: 10px;
-}
-.bz-people-chart {
-  display: flex;
-  align-items: stretch;
-  gap: 3px;
-  height: 72px;
-}
-.bz-people-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-.bz-people-col-bar {
-  background: linear-gradient(180deg, var(--acc), var(--acc-deep));
-  border-radius: 2px 2px 0 0;
-  opacity: 0.82;
-  transition: opacity 0.15s ease;
-}
-@media (hover: hover) {
-  .bz-people-col-bar:hover {
-    opacity: 1;
-  }
-}
-.bz-people-chart-labels {
-  display: flex;
-  gap: 3px;
-  margin-top: 5px;
-  font-size: 10.5px;
-  color: var(--ink-mut);
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-chart-labels span {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-}
-.bz-people-ins-rows {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.bz-people-ins-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 20px;
-  font-size: 12.5px;
-}
-.bz-people-ins-label {
-  flex: none;
-  width: 60px;
-  color: var(--ink-mut);
-}
-.bz-people-ins-val {
-  flex: none;
-  color: var(--ink);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-/* 谁主动：双段占比条（我 = 朱红，对方 = 苔绿） */
-.bz-people-duo {
-  flex: 1;
-  min-width: 48px;
-  height: 8px;
-  display: flex;
-  overflow: hidden;
-  border-radius: 99px;
-  background: var(--soft-neutral);
-}
-.bz-people-duo-me {
-  background: var(--acc);
-}
-.bz-people-duo-other {
-  background: var(--chip-on);
-}
-/* 活跃时段：24 小时细柱 */
-.bz-people-strip {
-  flex: 1;
-  min-width: 0;
-  height: 30px;
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-}
-.bz-people-strip-bar {
-  flex: 1;
-  min-width: 0;
-  min-height: 1px;
-  border-radius: 1px;
-  background: var(--gold);
-  opacity: 0.55;
-  transition: opacity 0.15s ease;
-}
-@media (hover: hover) {
-  .bz-people-strip-bar:hover {
-    opacity: 1;
-  }
-}
-/* 形态占比：小圆片 */
-.bz-people-kinds {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.bz-people-kind {
-  padding: 1px 8px;
-  border-radius: 99px;
-  font-size: 11px;
-  background: var(--soft-neutral);
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ==================== 数据源弹层（issue 447：面板内独立弹窗，默认关） ==================== */
-.bz-people-ds-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-}
-.bz-people-ds-layer[hidden] {
-  display: none;
-}
-.bz-people-ds-dim {
-  position: absolute;
-  inset: 0;
-  background: rgba(40, 34, 26, 0.42);
-}
-.theme-dark .bz-people-ds-dim {
-  background: rgba(0, 0, 0, 0.5);
-}
-.bz-people-ds-panel {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(600px, calc(100% - 32px));
-  max-height: calc(100% - 40px);
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border: 1px solid var(--frame-bd);
-  border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-  animation: bzPeopleDsIn 0.18s ease-out;
-}
-/* 弹窗居中入显（448：复用 bzPeopleIn 会带 translateY，观感像从右下角滑入——
-   且 to 帧会覆盖 -50% 居中位移；本动画自含居中位移，只做原位淡入） */
-@keyframes bzPeopleDsIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-.bz-people-ds-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px 8px;
-}
-.bz-people-ds-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--ink-strong);
-  letter-spacing: 3px;
-}
-.bz-people-ds-headmeta {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-ds-path {
-  padding: 0 16px 10px;
-  font-size: 11px;
-  color: var(--ink-mut);
-  word-break: break-all;
-  border-bottom: 1px dashed var(--card-bd);
-}
-.bz-people-ds-list {
-  flex: 1;
-  min-height: 120px;
-  overflow-y: auto;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.bz-people-ds-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.bz-people-ds-row input[type='checkbox'] {
-  accent-color: var(--acc);
-  width: 15px;
-  height: 15px;
-  flex: none;
-}
-.bz-people-ds-row input[type='checkbox']:disabled {
-  cursor: not-allowed;
-}
-.bz-people-ds-ava {
-  width: 32px;
-  height: 32px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-}
-.bz-people-ds-on {
-  background: var(--soft);
-}
-/* 四态之一：有更新 = 行高亮 + 新素材胶囊 */
-.bz-people-ds-fresh {
-  background: rgba(90, 143, 109, 0.1);
-  outline: 1px solid rgba(90, 143, 109, 0.35);
-  outline-offset: -1px;
-}
-.theme-dark .bz-people-ds-fresh {
-  background: rgba(109, 163, 127, 0.12);
-}
-/* 四态之一：群聊未纳入 = 禁勾灰置 */
-.bz-people-ds-off {
-  opacity: 0.45;
-}
-.bz-people-ds-main {
-  flex: 1;
-  min-width: 0;
-}
-.bz-people-ds-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bz-people-ds-meta {
-  margin-top: 1px;
-  font-size: 11px;
-  color: var(--ink-mut);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bz-people-ds-side {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-  max-width: 48%;
-}
-.bz-people-ds-mark {
-  font-size: 11px;
-  color: var(--ink-mut);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-ds-new {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: #fff;
-  background: var(--chip-on);
-  white-space: nowrap;
-}
-/* 图例行 + 「勾有更新的」快捷 */
-.bz-people-ds-legend {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 8px 16px;
-  font-size: 10.5px;
-  color: var(--ink-mut);
-}
-.bz-people-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 4px;
-  vertical-align: baseline;
-}
-.bz-people-dot-ok { background: var(--chip-on); }
-.bz-people-dot-idle { background: rgba(74, 125, 158, 0.75); }
-.bz-people-dot-none { background: var(--soft-neutral); }
-.bz-people-ds-pickfresh {
-  appearance: none;
-  border: none;
-  background: none;
-  margin-left: auto;
-  font-size: 11.5px;
-  color: var(--acc-deep);
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 2px 4px;
-}
-.theme-dark .bz-people-ds-pickfresh {
-  color: var(--acc);
-}
-.bz-people-ds-empty {
-  padding: 26px 16px;
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: var(--ink-mut);
-  text-align: center;
-}
-.bz-people-ds-foot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px 12px;
-  border-top: 1px dashed var(--card-bd);
-}
-.bz-people-ds-count {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-ds-foot .bz-people-btn {
-  padding: 5px 14px;
-  font-size: 12.5px;
-}
-.bz-people-ds-notice {
-  padding: 0 16px 12px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--ink-mut);
-  word-break: break-all;
-}
-
-/* 同步按钮与进度行（issue 465：弹窗内一条进度行，不占画像生成的进度块） */
-.bz-people-ds-syncbtn {
-  flex: none;
-  padding: 4px 14px;
-  font-size: 12.5px;
-}
-.bz-people-ds-syncline {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 9px 16px;
-  border-bottom: 1px dashed var(--card-bd);
-  font-size: 12px;
-}
-.bz-people-ds-sync-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.bz-people-ds-sync-text {
-  font-weight: 700;
-  color: var(--ink-strong);
-}
-.bz-people-ds-syncline-run .bz-people-ds-sync-text {
-  color: var(--acc);
-}
-.bz-people-ds-syncline-err .bz-people-ds-sync-text {
-  color: var(--danger);
-}
-.bz-people-ds-syncline-stop .bz-people-ds-sync-text {
-  color: var(--ink-mut);
-}
-.bz-people-ds-sync-track {
-  height: 4px;
-  border-radius: 2px;
-  background: var(--card-bd);
-  overflow: hidden;
-}
-.bz-people-ds-sync-bar {
-  height: 100%;
-  border-radius: 2px;
-  background: var(--acc);
-  transition: width 0.25s ease;
-}
-/* 不定态条（issue 484）：解密等不可估阶段 pct=null——脉冲横条只表达「在走」，不假报百分比 */
-.bz-people-ds-sync-indet {
-  height: 100%;
-  width: 36%;
-  border-radius: 2px;
-  background: var(--acc);
-  opacity: 0.65;
-  animation: bz-people-ds-indet 1.4s ease-in-out infinite;
-}
-@keyframes bz-people-ds-indet {
-  0% {
-    transform: translateX(-110%);
-  }
-  100% {
-    transform: translateX(290%);
-  }
-}
-.bz-people-ds-sync-contact {
-  color: var(--acc);
-  font-size: 11px;
-  line-height: 1.5;
-  word-break: break-all;
-}
-.bz-people-ds-sync-sub {
-  color: var(--ink-mut);
-  line-height: 1.5;
-  word-break: break-all;
-}
-.bz-people-ds-syncline-err .bz-people-ds-sync-sub {
-  color: var(--ink);
-}
-.bz-people-ds-sync-fail {
-  color: var(--danger);
-  font-size: 11px;
-  line-height: 1.5;
-  word-break: break-all;
-}
-.bz-people-ds-sync-hint {
-  color: var(--ink-mut);
-  font-size: 11px;
-  line-height: 1.5;
-  word-break: break-all;
-}
-
-/* ==================== 统计 / 档案弹窗（issue 455：详情头入口，壳沿数据源弹窗形制） ==================== */
-.bz-people-pop-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 40;
-}
-.bz-people-pop-layer[hidden] {
-  display: none;
-}
-.bz-people-pop-dim {
-  position: absolute;
-  inset: 0;
-  background: rgba(40, 34, 26, 0.42);
-}
-.theme-dark .bz-people-pop-dim {
-  background: rgba(0, 0, 0, 0.5);
-}
-/* 宽度小屏自适应抄数据源弹窗先例：min(NNpx, 100% - 32px) */
-.bz-people-pop-panel {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(640px, calc(100% - 32px));
-  max-height: calc(100% - 40px);
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  border: 1px solid var(--frame-bd);
-  border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-  animation: bzPeoplePopIn 0.18s ease-out;
-}
-/* 弹窗原位淡入（居中位移自含——bzPeopleDsIn 的 448 结论：复用入场动效会被 to 帧覆盖 -50% 居中） */
-@keyframes bzPeoplePopIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-.bz-people-pop-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px 8px;
-}
-.bz-people-pop-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--ink-strong);
-  letter-spacing: 3px;
-}
-.bz-people-pop-body {
-  flex: 1;
-  min-height: 120px;
-  overflow-y: auto;
-  padding: 8px 16px 16px;
-  font-size: 13px;
-}
-
-/* —— 人物档案 + 随手记（issue 439；447 收进「档案」折） —— */
-.bz-people-prof {
-  padding: 12px 16px;
-  background: var(--paper-fold);
-  border: 1px solid var(--card-bd);
-  border-radius: 12px;
-  font-size: 13px;
-}
-.bz-people-prof-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 4px 0;
-  min-width: 0;
-}
-.bz-people-prof-label {
-  flex: none;
-  width: 72px;
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-.bz-people-prof-value {
-  min-width: 0;
-  color: var(--ink);
-  line-height: 1.6;
-  word-break: break-word;
-}
-.bz-people-prof-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.bz-people-prof-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-/* 缺啥补啥的入口行；档案空时给虚线框 + 提示，避免凭空一个按钮 */
-.bz-people-prof-entry {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.bz-people-prof-entry-solo {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px dashed var(--card-bd);
-  border-radius: 10px;
-}
-.bz-people-prof-entry-hint {
-  font-size: 12px;
-  color: var(--ink-mut);
-}
-/* 编辑态 */
-.bz-people-prof-edit .bz-people-prof-row {
-  align-items: center;
-}
-.bz-people-prof-edit .bz-people-prof-row > .bz-people-prof-input {
-  flex: 1;
-}
-.bz-people-prof-input {
-  min-width: 0;
-  border: 1px solid var(--fld-bd);
-  background: var(--fld-bg);
-  color: var(--ink-strong);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 13px;
-}
-.bz-people-prof-input::placeholder {
-  color: var(--ink-mut);
-  opacity: 0.7;
-}
-.bz-people-prof-input:focus {
-  outline: none;
-  border-color: var(--acc);
-}
-.bz-people-prof-social {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.bz-people-prof-social-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.bz-people-prof-social-platform {
-  width: 110px;
-  flex: none;
-}
-.bz-people-prof-social-handle {
-  flex: 1;
-}
-.bz-people-prof-tags-edit {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.bz-people-prof-tag-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.bz-people-prof-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 4px 1px 9px;
-  border-radius: 99px;
-  font-size: 12px;
-  background: var(--soft);
-  color: var(--acc-deep);
-}
-.theme-dark .bz-people-prof-tag {
-  color: var(--acc);
-}
-.bz-people-prof-tag-tools {
-  display: flex;
-  gap: 6px;
-}
-.bz-people-prof-tag-input {
-  width: 130px;
-  flex: none;
-}
-.bz-people-prof-x {
-  padding: 0 6px;
-  border: none;
-  background: none;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ink-mut);
-  cursor: pointer;
-}
-/* 随手记 */
-.bz-people-notes {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-}
-.bz-people-note {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-.bz-people-note-ts {
-  flex: none;
-  color: var(--gold);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-note-summary {
-  flex: 1;
-  min-width: 0;
-  color: var(--ink);
-  word-break: break-word;
-}
-.bz-people-note-del {
-  flex: none;
-  padding: 1px 8px;
-  font-size: 11.5px;
-}
-.bz-people-note-add {
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.bz-people-note-date {
-  width: 138px;
-  flex: none;
-  color-scheme: light;
-}
-.theme-dark .bz-people-note-date {
-  color-scheme: dark;
-}
-.bz-people-note-text {
-  flex: 1;
-}
-@media (hover: hover) {
-  .bz-people-prof-x:hover,
-  .theme-dark .bz-people-prof-x:hover {
-    color: var(--danger);
-  }
-}
-
-/* ==================== 窄容器（移动 / 小窗） ==================== */
-@container (max-width: 640px) {
-  /* 折页册在窄容器退化为纵向手风琴：折脊横排，展开折正文在下 */
-  .bz-people-book {
-    flex-direction: column;
-    height: auto;
-  }
-  .bz-people-leaf,
-  .bz-people-leaf:first-child,
-  .bz-people-leaf:last-child {
-    border-left: 1px solid var(--card-bd);
-    border-radius: 0;
-  }
-  .bz-people-leaf:first-child {
-    border-radius: 10px 10px 0 0;
-  }
-  .bz-people-leaf:last-child {
-    border-radius: 0 0 10px 10px;
-  }
-  .bz-people-leaf-spine {
-    display: none;
-  }
-  /* 窄容器退化纵向手风琴：折仍是横排（竖排折题条在左），收起折即窄条行 */
-  .bz-people-leaf,
-  .bz-people-leaf-on {
-    flex: none;
-  }
-  .bz-people-leaf:not(.bz-people-leaf-on) {
-    cursor: pointer;
-  }
-  .bz-people-leaf-head {
-    padding: 8px 0;
-  }
-  .bz-people-leaf-on {
-    display: flex;
-  }
-  .bz-people-leaf-on .bz-people-leaf-body {
-    flex: 1;
-  }
-  .bz-people-leaf-body {
-    padding: 2px 14px 14px;
-  }
-  .bz-people-dt-nums {
-    gap: 14px;
-  }
-}
-@container (max-width: 560px) {
-  .bz-people-wall {
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-    gap: 10px;
-  }
-  .bz-people-fold-title {
-    font-size: 20px;
-  }
-  .bz-people-head {
-    padding: 14px 16px 8px;
-  }
-  .bz-people-stats,
-  .bz-people-ds-path {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-  .bz-people-head .bz-people-ds-path {
-    padding: 0;
-  }
-  .bz-people-body {
-    padding: 4px 16px 16px;
-  }
-  .bz-people-jobs-slot {
-    margin: 0 16px 8px;
-  }
-  .bz-people-insights {
-    padding: 12px;
-  }
-  .bz-people-ins-label {
-    width: 56px;
-  }
-  .bz-people-ins-val {
-    white-space: normal;
-  }
-  .bz-people-prof {
-    padding: 10px 12px;
-  }
-  .bz-people-prof-social-platform {
-    width: 84px;
-  }
-  .bz-people-note-date {
-    width: 126px;
-  }
-  .bz-people-dt-head {
-    padding: 10px 12px;
-    gap: 10px;
-  }
-  .bz-people-dt-actions {
-    gap: 6px;
-  }
-  /* 弹窗行水位换行到下一行 */
-  .bz-people-ds-side {
-    max-width: none;
-  }
-  .bz-people-ds-row {
-    flex-wrap: wrap;
-  }
-}
-
-/* ==================== 朱砂戏台 · 皮肤（455 评审采纳） ====================
- * 晕染纸面 + 金线缝脊 + 展开折朱带；详情头印章落影。 */
-
-/* 书脊缝线：金线虚缀沿收起折内缘 */
-.bz-people-leaf .bz-people-leaf-spine::after {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  background: repeating-linear-gradient(180deg, var(--gold) 0 5px, transparent 5px 11px);
-  opacity: 0.4;
-}
-
-/* 展开折朱带：折首一线朱红渐隐（压在正文顶部） */
-.bz-people-leaf-on .bz-people-leaf-body::before {
-  content: '';
-  display: block;
-  height: 3px;
-  margin: -10px -16px 12px -12px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--acc), rgba(168, 67, 60, 0));
-}
-
-/* 详情头印章落影 */
-.bz-people-dt-seal {
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 1px 4px rgba(138, 52, 46, 0.35);
-}
-
-/* 纪事折分隔题头：编年时间线 ↓ 按月纪事 */
-.bz-people-ev-divider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 18px 0 6px;
-  color: var(--ink-mut);
-  font-size: 11.5px;
-  letter-spacing: 2px;
-}
-.bz-people-ev-divider::before,
-.bz-people-ev-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--card-bd);
-}
-
-/* 头像章（455 评审）：封面卡右上以照片为印——印环四态沿用印章语义（金环已画 / 虚环待画） */
-.bz-people-fold-ava {
-  width: 42px;
-  height: 42px;
-  max-width: none;
-  padding: 0;
-  border-radius: 50%;
-  border-color: var(--gold);
-  overflow: hidden;
-  transform: rotate(0deg);
-  opacity: 1;
-}
-.bz-people-fold-ava img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.bz-people-fold-ava.bz-people-seal-todo {
-  border-style: dashed;
-  border-color: var(--ink-mut);
-  opacity: 0.8;
-}
-/* 数据源行头像照片变体 */
-.bz-people-ds-ava-img {
-  object-fit: cover;
-}
-
-/* 上锁占位（467：脸谱入保库——上锁即面板不可读，只留解锁入口） */
-.bz-people-locked {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 64px 24px;
-  min-height: 240px;
-  color: var(--ink-mut);
-}
-.bz-people-locked-tip {
-  font-size: 13px;
-}
-.bz-people-locked-btn {
-  border: 1px solid var(--ink-line, var(--background-modifier-border));
-  border-radius: 8px;
-  background: transparent;
-  color: var(--ink);
-  padding: 6px 18px;
-  cursor: pointer;
-}
-@media (hover: hover) {
-  .bz-people-locked-btn:hover {
-    border-color: var(--gold);
-    color: var(--gold);
-  }
-}
 
 /* ============ 解锁屏（共享骨架 · 脸谱口径，issue 482） ============
  * 弹层挂 body，够不着 .bz-people-scope 根 —— 与日记锁屏同款教训：--ls-* 按值重声明
@@ -2007,3 +1334,123 @@
 .bz-people-gen-item {
   overflow-wrap: anywhere;
 }
+
+
+/* ==================== 暗色：相册族 ====================
+ * 台纸、册壳、贴纸、册页弹窗在暗主题下压暗；照片纸（宝丽来相纸 / 照片底）留白，
+ * 免得「隔着膜看照片」这件事在暗处失效。
+ */
+.theme-dark .bz-people-spread {
+  background:
+    repeating-linear-gradient(114deg, rgba(255, 238, 214, 0.02) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(24deg, rgba(0, 0, 0, 0.12) 0 3px, transparent 3px 9px),
+    radial-gradient(120% 80% at 26% -10%, rgba(255, 226, 190, 0.05), transparent 60%),
+    linear-gradient(150deg, #3a322a, #2e2823 55%, #262019);
+}
+.theme-dark .bz-people-spread::after { border-color: rgba(255, 238, 214, 0.1); }
+.theme-dark .bz-people-page {
+  background: #2f2b24;
+  background-image: repeating-linear-gradient(0deg, rgba(192, 100, 90, 0.03) 0 26px, transparent 26px 52px);
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.4);
+}
+.theme-dark .bz-people-page-head { border-bottom-color: #453f33; }
+.theme-dark .bz-people-head-count { color: #c9b58a; background: rgba(201, 162, 78, 0.14); border-color: rgba(201, 162, 78, 0.3); }
+.theme-dark .bz-people-head-ledger { color: #d8c08a; background: #3b3423; border-color: #55492c; }
+.theme-dark .bz-people-head-note { color: var(--ink-mut); }
+.theme-dark .bz-people-stack i { background: linear-gradient(180deg, #3b352b, #2c2721); }
+.theme-dark .bz-people-stack-r i, .theme-dark .bz-people-stack-l i { border-color: rgba(210, 200, 176, 0.22); }
+.theme-dark .bz-people-sheet-face { background: linear-gradient(90deg, #38322a, #403930 20%, #3a342b 78%, #322c25); }
+.theme-dark .bz-people-gutter::before {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.14) 42%, rgba(0, 0, 0, 0.14) 58%, rgba(0, 0, 0, 0.6));
+}
+.theme-dark .bz-people-gutter::after { background: repeating-linear-gradient(180deg, rgba(255, 250, 240, 0.2) 0 5px, transparent 5px 11px); }
+.theme-dark .bz-people-film {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -3px 8px rgba(255, 255, 255, 0.07),
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 2px 7px rgba(0, 0, 0, 0.42);
+}
+.theme-dark .bz-people-film::before { background: linear-gradient(90deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1)); }
+.theme-dark .bz-people-film::after { background: linear-gradient(315deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1) 68%, rgba(202, 216, 226, 0.2)); }
+/* 照片纸留白：宝丽来相纸与照片底在暗处也仍是纸 */
+.theme-dark .bz-people-print { background: #ded7c8; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), var(--sh-1); }
+.theme-dark .bz-people-todo .bz-people-print { background: #3a342c; }
+.theme-dark .bz-people-wait .bz-people-print { background: rgba(58, 52, 44, 0.9); }
+.theme-dark .bz-people-photo { background: #2c2721; }
+.theme-dark .bz-people-bigframe { background: #ded7c8; }
+.theme-dark .bz-people-bigphoto { background: #cbc3b2; }
+.theme-dark .bz-people-cap { background: linear-gradient(0deg, rgba(24, 18, 12, 0.24), rgba(24, 18, 12, 0)); }
+.theme-dark .bz-people-seal-hold { background: rgba(60, 54, 46, 0.8); }
+.theme-dark .bz-people-seal-wait { background: rgba(70, 64, 54, 0.6); }
+.theme-dark .bz-people-vacant { background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0 6px, transparent 6px 12px), #322c25; }
+.theme-dark .bz-people-vacs { color: #7d7460; }
+.theme-dark .bz-people-blank { color: #7d7460; }
+.theme-dark .bz-people-fresh, .theme-dark .bz-people-due { background: #3b3423; border-color: #55492c; color: #d8c08a; }
+.theme-dark .bz-people-tab { color: #c9b58a; background: linear-gradient(180deg, #3d3626, #342e21); border-color: #55492c; }
+.theme-dark .bz-people-tab-on { color: #e0c08a; background: linear-gradient(180deg, #4a4129, #3c3422); border-color: rgba(201, 162, 78, 0.5); }
+.theme-dark .bz-people-jobs, .theme-dark .bz-people-syncline { background: #3a3322; border-color: #55492c; }
+.theme-dark .bz-people-syncline-err { background: rgba(192, 100, 90, 0.12); border-color: rgba(192, 100, 90, 0.4); }
+.theme-dark .bz-people-jobs .bz-people-btn { background: #423a28; }
+.theme-dark .bz-people-banner { background: #3a3322; border-color: #55492c; }
+.theme-dark .bz-people-banner-calm { background: #33302a; border-color: #443f36; }
+.theme-dark .bz-people-btn { background: #3a352c; border-color: #524b3e; color: var(--ink-strong); }
+.theme-dark .bz-people-btn-acc { background: var(--acc); border-color: var(--acc-deep); color: #fff8f0; }
+.theme-dark .bz-people-btn-gold { background: #40382a; border-color: #5c4f2e; color: #d8bf85; }
+.theme-dark .bz-people-close { background: #3a352c; }
+.theme-dark .bz-people-act, .theme-dark .bz-people-quote-card, .theme-dark .bz-people-gen-item,
+.theme-dark .bz-people-find-row, .theme-dark .bz-people-ds-ava, .theme-dark .bz-people-find-ava { background: #35312a; border-color: #454036; }
+.theme-dark .bz-people-ftab { background: #332e26; color: #a89c84; }
+.theme-dark .bz-people-ftab.on { background: var(--card); color: var(--acc); }
+.theme-dark .bz-people-fsheet { background: var(--card); border-color: var(--card-bd); }
+.theme-dark .bz-people-ins {
+  background-color: #322e28;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  border-color: #454036;
+}
+.theme-dark .bz-people-ins-row + .bz-people-ins-row { border-top-color: rgba(90, 84, 70, 0.6); }
+.theme-dark .bz-people-duo { background: #3d3729; }
+.theme-dark .bz-people-kind { background: #3a352b; border-color: #4c463a; color: #b6ab92; }
+.theme-dark .bz-people-traits .bz-people-trait, .theme-dark .bz-people-chip, .theme-dark .bz-people-tag-chip,
+.theme-dark .bz-people-stk { background: rgba(192, 100, 90, 0.14); border-color: rgba(192, 100, 90, 0.34); color: #dfa79a; }
+.theme-dark .bz-people-stk, .theme-dark .bz-people-trait { background: rgba(201, 162, 78, 0.16); border-color: rgba(201, 162, 78, 0.34); color: #d8c08a; }
+.theme-dark .bz-people-stk.bz-people-stk-blue { background: rgba(120, 160, 190, 0.14); border-color: rgba(120, 160, 190, 0.34); color: #9dc0d8; }
+.theme-dark .bz-people-stk.bz-people-stk-red { background: rgba(192, 100, 90, 0.16); border-color: rgba(192, 100, 90, 0.38); color: #dfa79a; }
+.theme-dark .bz-people-prof-entry { background: rgba(53, 49, 42, 0.6); border-color: #454036; }
+.theme-dark .bz-people-prof-row + .bz-people-prof-row, .theme-dark .bz-people-note-row + .bz-people-note-row { border-top-color: rgba(90, 84, 70, 0.6); }
+.theme-dark .bz-people-input { border-bottom-color: #4e483c; }
+.theme-dark .bz-people-input::placeholder { color: #6d6656; }
+.theme-dark .bz-people-ds-ava { border-color: #454036; }
+.theme-dark .bz-people-ds-box { background: #2c2823; border-color: #55503f; }
+.theme-dark .bz-people-ds-on .bz-people-ds-box { background: var(--acc); border-color: var(--acc-deep); }
+.theme-dark .bz-people-ds-water { background: #332e26; border-color: #464034; color: #b6ab92; }
+.theme-dark .bz-people-ds-w-full { background: #2f3527; border-color: #444d36; color: #a5b18a; }
+.theme-dark .bz-people-ds-w-older { background: #3b3423; border-color: #55492c; color: #d8c08a; }
+.theme-dark .bz-people-ds-w-exported { background: #2f333c; border-color: #414855; color: #a9b3c4; }
+.theme-dark .bz-people-ds-w-newer, .theme-dark .bz-people-ds-w-export { background: rgba(192, 100, 90, 0.12); border-color: rgba(192, 100, 90, 0.36); color: #dfa79a; }
+.theme-dark .bz-people-ds-fresh { background: rgba(192, 100, 90, 0.08); border-color: rgba(192, 100, 90, 0.35); }
+.theme-dark .bz-people-ds-legend i.bz-people-ds-dot-idle { background: #6a6353; }
+.theme-dark .bz-people-ds-legend i.bz-people-ds-dot-none { background: #3a352c; border-color: #4e483c; }
+.theme-dark .bz-people-mon-head { background: #332e26; border-color: #454036; }
+.theme-dark .bz-people-mon-on .bz-people-mon-head { background: #3d3729; }
+.theme-dark .bz-people-mon-body { background: rgba(0, 0, 0, 0.16); }
+.theme-dark .bz-people-ev + .bz-people-ev, .theme-dark .bz-people-note-row { border-top-color: rgba(90, 84, 70, 0.5); }
+.theme-dark .bz-people-chron-bar, .theme-dark .bz-people-ev-divider { border-color: #4c463a; }
+.theme-dark .bz-people-ev-divider span { background: #2f2b24; color: #a89c84; }
+.theme-dark .bz-people-note-del { color: #a89c84; }
+.theme-dark .bz-people-empty { background: #35312a; border-color: #454036; }
+.theme-dark .bz-people-empty-hint { color: var(--ink-mut); }
+.theme-dark .bz-people-sheet { box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6); }
+.theme-dark .bz-people-cover {
+  background:
+    radial-gradient(120% 80% at 30% -10%, rgba(255, 226, 190, 0.05), transparent 60%),
+    repeating-linear-gradient(114deg, rgba(255, 238, 214, 0.02) 0 2px, transparent 2px 6px),
+    linear-gradient(150deg, #4a3c30, #382e26 55%, #2c241d);
+}
+.theme-dark .bz-people-cover-band { background: linear-gradient(90deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.1)); }
+.theme-dark .bz-people-cover-title, .theme-dark .bz-people-cover-sub { color: #e8d9b8; }
+.theme-dark .bz-people-cover-hint { color: #c9b58a; }
+.theme-dark .bz-people-clasp { background: rgba(0, 0, 0, 0.3); border-color: rgba(214, 178, 116, 0.34); }
+.theme-dark .bz-people-decrypt { color: #c9b58a; }

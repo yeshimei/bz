@@ -37,7 +37,7 @@ import {
   type PrepRunner,
 } from '../../src/people/prep';
 import { applyImageMapToMsgs, applyVoiceToMsgs, type ImageMapItem, type StoreMsg, type VoiceItem } from '../../src/people/datasource';
-import { progressBlock, type JobsBlockState } from '../../src/people/render';
+import { jobsNote, type JobsBlockState } from '../../src/people/render';
 
 /** 假进程壳：记录 spec、转发协议行、手动终结（形状对齐 runExternalTool 返回的 handle） */
 class FakeTool {
@@ -367,7 +367,7 @@ describe('进程会话（暂停待命复用同一进程）', () => {
   });
 });
 
-describe('进度块 prep 渲染契约（469）', () => {
+describe('进度便签 prep 渲染契约（469 / 505）', () => {
   const state = (over: Partial<JobsBlockState>): JobsBlockState => ({
     talker: 'wxid_a',
     name: '陈默',
@@ -382,23 +382,23 @@ describe('进度块 prep 渲染契约（469）', () => {
   });
 
   it('preprocess 运行中：阶段行带 已完成/总数，进度条 = 工具段折算总进度', () => {
-    const b = progressBlock(state({ prep: { stageText: '媒体导出 312/1631', overall: 16, failed: 0 } }));
+    const b = jobsNote(state({ prep: { stageText: '媒体导出 312/1631', overall: 16, failed: 0 } }));
     expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('媒体导出 312/1631');
     expect(b.querySelector('.bz-people-jobs-fill')!.getAttribute('style')).toBe('width:16%');
   });
 
   it('prep 暂停面：`已暂停 · <阶段行>`；失败计账且不在跑时出「重试失败项」', () => {
-    const paused = progressBlock(state({ status: 'paused', prep: { stageText: '语音转写 45/1289', overall: 34, failed: 0 } }));
+    const paused = jobsNote(state({ status: 'paused', prep: { stageText: '语音转写 45/1289', overall: 34, failed: 0 } }));
     expect(paused.querySelector('.bz-people-jobs-main')!.textContent).toBe('已暂停 · 语音转写 45/1289');
     expect(paused.querySelector('[data-people-jobs-prep-retry]')).toBeNull();
-    const failed = progressBlock(state({ status: 'paused', prep: { stageText: null, overall: 100, failed: 2 } }));
+    const failed = jobsNote(state({ status: 'paused', prep: { stageText: null, overall: 100, failed: 2 } }));
     expect(failed.querySelector('[data-people-jobs-prep-retry]')!.textContent).toBe('重试失败项');
-    const running = progressBlock(state({ prep: { stageText: null, overall: 10, failed: 2 } }));
+    const running = jobsNote(state({ prep: { stageText: null, overall: 10, failed: 2 } }));
     expect(running.querySelector('[data-people-jobs-prep-retry]')).toBeNull(); // running 不并列重试
   });
 
   it('无 prep 段的任务渲染与改前一致（回归：455 契约不漂移）', () => {
-    const b = progressBlock(state({ batchesDone: 3, message: '第 4/12 批' }));
+    const b = jobsNote(state({ batchesDone: 3, message: '第 4/12 批' }));
     // 主行现口径「一行到底」：message 与批位锚点同义 → 只留 message 那条
     expect(b.querySelector('.bz-people-jobs-main')!.textContent).toBe('第 4/12 批');
     expect(b.querySelector('[data-people-jobs-prep-retry]')).toBeNull();

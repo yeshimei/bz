@@ -89,6 +89,46 @@ export const moment = momentLib;
 /** Component 桩：encrypt/ui 等传递链构建期需要导出存在（运行期不构造） */
 export class Component {}
 
+// ==================== 库外图片字节（评审引导注入） ====================
+
+/** 图片扩展名 */
+const IMG_EXT = /\.(jpg|jpeg|png|webp|gif)$/i;
+
+/** 绝对路径 → 字节的 memo（null = 查过没有，不重复探） */
+const imageBytesCache = new Map<string, Uint8Array | null>();
+
+/**
+ * 库外图片字节：数据根里的 avatar.jpg 等。真插件从 fs 直读磁盘；壳里没有磁盘，
+ * 由评审引导（auto-seed.js）把真字节的 base64 灌进 window.BZW_PEOPLE.SEED.AVATAR_B64，
+ * 这里解码还原。保库记录的头像附件是**字节**（不是路径），没有它面板只能回落首字印章。
+ * （BZW_PEOPLE 的全局类型声明归 fake-sim.ts——此处只做局部取用，避免重复声明打架）
+ */
+export function fakeImageBytes(path: string): Uint8Array | null {
+	const key = String(path ?? '').replace(/\\/g, '/');
+	if (!IMG_EXT.test(key)) return null;
+	const hit = imageBytesCache.get(key);
+	if (hit !== undefined) return hit;
+	const seed =
+		typeof window !== 'undefined'
+			? (window as unknown as { BZW_PEOPLE?: { SEED?: { AVATAR_B64?: Record<string, string> } } }).BZW_PEOPLE?.SEED
+			: undefined;
+	const b64 = seed?.AVATAR_B64?.[key];
+	if (!b64) {
+		imageBytesCache.set(key, null);
+		return null;
+	}
+	try {
+		const bin = atob(b64);
+		const out = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+		imageBytesCache.set(key, out);
+		return out;
+	} catch {
+		imageBytesCache.set(key, null);
+		return null;
+	}
+}
+
 // ==================== App / vault（localStorage 文件系统 + rename/delete 演示事件） ====================
 
 interface FakeFile {
@@ -108,6 +148,34 @@ export class FakeVault {
 	}
 	private listeners = new Map<string, Array<(...args: unknown[]) => void>>();
 	private idSeq = 0;
+
+	/**
+	 * Obsidian DataAdapter 面子集（migrate.ts 读旧明文三件 / 读旧头像字节用）。
+	 * 后端同 localStorage：exists/read/remove 直落 bz-sim: 键；readBinary 走
+	 * fakeImageBytes（真字节由评审引导注入）。不提供 getResourcePath——壳里图片一律走
+	 * window.BZW_MEDIA_BASE 的服务路由，渲染层不会落到这一支。
+	 */
+	adapter = {
+		exists: async (p: string): Promise<boolean> =>
+			localStorage.getItem(FakeVault.key(p)) != null || fakeImageBytes(p) !== null,
+		read: async (p: string): Promise<string> => {
+			const raw = localStorage.getItem(FakeVault.key(p));
+			if (raw == null) throw new Error(`fake adapter: ${p} 不存在`);
+			return raw;
+		},
+		readBinary: async (p: string): Promise<ArrayBuffer> => {
+			const bytes = fakeImageBytes(p);
+			if (!bytes) throw new Error(`fake adapter: ${p} 无字节`);
+			// 自有 Uint8Array（非共享缓冲）——断言收窄 ArrayBufferLike → ArrayBuffer
+			return bytes.buffer as ArrayBuffer;
+		},
+		write: async (p: string, data: string): Promise<void> => {
+			localStorage.setItem(FakeVault.key(p), data);
+		},
+		remove: async (p: string): Promise<void> => {
+			localStorage.removeItem(FakeVault.key(p));
+		},
+	};
 
 	constructor() {
 		// 跨实例写入：浏览器只向「非写者」文档派发 storage 事件——收到即视为外部 modify

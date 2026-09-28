@@ -6,6 +6,8 @@
  *   - FakeApp 注入 core/app（jsonFileStore 真实现跑在 localStorage 假 vault 上）；
  *   - 种子数据（形态仿真，非真实聊天——隐私口径 ADR-0191）：window.BZW_PEOPLE.SEED 的
  *     people.json / people-preview.json + 「数据目录」构造 chat.json，首启写入 fake vault；
+ *     开面板时经**真迁移**（migrate.ts）落进壳内假保库，明文三件随之删除——数据此后住保库、
+ *     刷新不丢（壳里「重置演示数据」清 bz-sim: 前缀即重来）；
  *   - **假 fs**：window.require('fs') 提供构造数据目录的 readdirSync/existsSync/readFileSync——
  *     数据源弹窗在壳内跑「真扫描 → 真归一化 → 真增量合并」管线（datasource.ts 全真），
  *     四态水位（有更新 / 已导无更新 / 未导入 / 群聊未纳入）可完整评审；
@@ -15,11 +17,12 @@
  * 产物：build-preview.mjs 以本文件为入口、alias obsidian→fake/fake-obsidian，
  * 产出 prototype-behavior.js 挂 window.BZW_people，壳只调 boot + openPanel + 演示钩子。
  */
-import { FakeApp } from './fake/fake-obsidian';
+import { FakeApp, fakeImageBytes } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { collectMediaStats } from '../../src/people/media';
 import { closePeoplePanel, isPeopleOpen, openDataSource, openPeoplePanel } from '../../src/people/ui';
+import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { peopleSettingsSchema } from '../../src/people/settings';
 
 declare global {
@@ -28,6 +31,10 @@ declare global {
 			SEED?: {
 				/** 构造数据目录里的文件（相对数据根） */
 				DS_FILES?: Record<string, string>;
+				/** 数据根（库外绝对路径；评审引导注入） */
+				DATA_DIR?: string;
+				/** 真实头像字节：绝对路径 → base64（评审引导注入；保库记录头像走密文附件字节） */
+				AVATAR_B64?: Record<string, string>;
 			};
 		};
 	}
@@ -36,6 +43,10 @@ declare global {
 /** fake vault 内数据文件路径（localStorage 键 = bz-sim: 前缀 + vault 路径） */
 const PEOPLE_KEY = 'bz-sim:CONFIG/STORAGE/people.json';
 const PREVIEW_KEY = 'bz-sim:CONFIG/STORAGE/people-preview.json';
+
+/** 种子标记（存在 = 已种过）：明文种子首启经真迁移落库后会被删（migrate.ts 清理），
+ *  没有标记就会每次刷新重种一遍——迁移重跑会把壳里删掉的联系人复活、把改过的记录顶回种子态。 */
+const SEED_MARK = 'bz-sim:__people-seeded';
 
 /** 构造数据根（壳内「外部数据目录」；与真插件配置形态一致，只是路径不存在于磁盘） */
 const DS_ROOT = 'D:/演示数据/export_full';
@@ -232,27 +243,190 @@ function buildDsFiles(): Record<string, string> {
 
 // ==================== 假 fs（数据源真管线在壳内可跑） ====================
 
-/** 提供构造目录的 readdirSync / existsSync / readFileSync（datasource.ts 消费面） */
+/** 图片扩展名（假 fs 的字节分支：头像迁移 / 数据源行预览读的是 Uint8Array，不是文本） */
+const IMG_EXT = /\.(jpg|jpeg|png|webp|gif)$/i;
+
+/** 提供构造目录的 readdirSync / existsSync / readFileSync（datasource.ts 消费面）
+ *  文本读原样出字符串；不带编码读图片时给 Uint8Array（迁移/预览的头像字节通道）。 */
 function installFakeFs(files: Record<string, string>): void {
 	if (typeof window === 'undefined') return;
 	const w = window as unknown as { require?: (m: string) => unknown };
+	const norm = (p: string) => p.replace(/\\/g, '/');
 	w.require = (m: string) => {
 		if (m !== 'fs') return undefined;
 		return {
 			readdirSync: (p: string, _opts?: unknown) =>
 				Object.keys(files)
-					.filter((k) => k.startsWith(p.replace(/\\/g, '/') + '/'))
-					.map((k) => k.slice(p.length + 1).split('/')[0])
+					.filter((k) => k.startsWith(norm(p) + '/'))
+					.map((k) => k.slice(norm(p).length + 1).split('/')[0])
 					.filter((v, i, a) => a.indexOf(v) === i)
 					.map((name) => ({ isDirectory: () => true, name })),
-			existsSync: (p: string) => Object.prototype.hasOwnProperty.call(files, p.replace(/\\/g, '/')),
-			readFileSync: (p: string) => {
-				const hit = files[p.replace(/\\/g, '/')];
+			existsSync: (p: string) => {
+				const key = norm(p);
+				if (Object.prototype.hasOwnProperty.call(files, key)) return true;
+				return IMG_EXT.test(key) && fakeImageBytes(key) !== null;
+			},
+			readFileSync: (p: string, enc?: string) => {
+				const key = norm(p);
+				// 字节读（无编码参数）：图片走 fakeImageBytes——头像迁移必须拿到真字节，
+				// DS_FILES 里同名键是空串（清单只登记存在性，不搬运 1.8G 媒体）
+				if (!enc && IMG_EXT.test(key)) {
+					const bytes = fakeImageBytes(key);
+					if (bytes) return bytes;
+				}
+				const hit = files[key];
 				if (hit === undefined) throw new Error(`fake fs: ${p} 不存在`);
 				return hit;
 			},
 		};
 	};
+}
+
+// ==================== 假保险库（保库记录读写器的壳内替身） ====================
+
+/**
+ * 壳内假 SafeManager：清单 / 明文正文 / 附件原始层全落 **localStorage**（键前缀 bz-sim:__safe/；"密文 = 明文"）。
+ *
+ * 为什么必须有：467 / ADR-0194 之后脸谱全部数据（人物卡 + 聊天仓 + 任务 + 头像）都住在
+ * 保险库里，面板入口第一句就是 getPeopleSafeStore() → encrypt.getSafeManager()。壳里没有
+ * 加密层（.safe.enc / 密码学 / 锁屏都不存在），于是**点「打开面板」永远抛错** →
+ * notice「脸谱面板打开失败，请重试」。这是壳的缺件，不是源码的问题。
+ *
+ * 注入通道用 safe-store 既有的测试注入缝（与 jsdom 用例同一条），不碰 src/ 一个字。
+ * 解锁态恒真 → 面板解锁门禁（ensureSafeUnlocked('people')）不走真锁屏——壳里没有主密码。
+ * 于是「存量迁移」照常跑：把壳内假 vault 里的旧明文三件迁成保库记录，面板拿到的就是
+ * 真实数据通路（真 render + 真 ui + 真迁移），review 所见即插件所见。
+ *
+ * 为什么落 localStorage（不是内存 Map）：迁移收尾会**删掉旧明文三件**（migrate.ts 的清理
+ * 步骤，与插件同口径）——内存版一旦刷新就是空册，桌面/移动两个 iframe 也各揣一份互不相见。
+ * 落盘后与插件同语义：刷新不丢、双 iframe 共享同一库（读按需现取；写整清单覆盖——演示面够用），
+ * 壳「重置演示数据」清 bz-sim: 前缀即从头来。
+ */
+function installFakeSafe(): void {
+	type SimAttachment = {
+		path: string;
+		kind: 'image' | 'video';
+		blobRef: string;
+		blobSize: number;
+		fingerprint: string;
+		hasPreview: boolean;
+		previewRef: string;
+		keptShared?: boolean;
+	};
+	type SimNote = {
+		id: string;
+		kind?: string;
+		path: string;
+		title: string;
+		createdAt: string;
+		contentRef: string;
+		attachments: SimAttachment[];
+	};
+	type SimInput = {
+		path: string;
+		title: string;
+		kind?: string;
+		content: string;
+		attachments?: Array<{ path: string; kind?: 'image' | 'video'; data: string; keptShared?: boolean }>;
+	};
+
+	/** 保库落盘命名空间（bz-sim: 前缀 → 「重置演示数据」一并清） */
+	const NS = 'bz-sim:__safe/';
+	/** 清单读：坏数据当空库（壳不因一次手抖的 JSON 崩掉） */
+	const readManifest = (): SimNote[] => {
+		try {
+			const parsed = JSON.parse(localStorage.getItem(`${NS}manifest`) ?? 'null') as SimNote[] | null;
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	};
+	const writeManifest = (notes: SimNote[]): void => localStorage.setItem(`${NS}manifest`, JSON.stringify(notes));
+	/** 递增 id（sim-<n>）：按现存清单推进——双 iframe 交替写也不会撞号 */
+	const nextId = (notes: SimNote[]): string => {
+		let seq = 0;
+		for (const n of notes) {
+			const m = /^sim-(\d+)$/.exec(n.id);
+			if (m) seq = Math.max(seq, Number(m[1]));
+		}
+		return `sim-${seq + 1}`;
+	};
+
+	const safe = {
+		root: 'CONFIG/STORAGE/.ENCRYPT',
+		password: 'sim',
+		unlocked: true,
+		get manifest(): { version: number; notes: SimNote[] } {
+			return { version: 1, notes: readManifest() };
+		},
+		selfHealRolledBack: 0,
+		onUnlockChange: null as ((unlocked: boolean) => void) | null,
+		manifestPath: 'CONFIG/STORAGE/.ENCRYPT/.safe.enc',
+		resolveRef: (ref: string) => `CONFIG/STORAGE/.ENCRYPT/${ref}`,
+		async exists() {
+			return true;
+		},
+		async unlock() {
+			safe.unlocked = true;
+			return true;
+		},
+		lock() {
+			safe.unlocked = false;
+		},
+		async verifyPassword() {
+			return true;
+		},
+		async lockNote(input: SimInput): Promise<SimNote> {
+			const notes = readManifest();
+			const id = nextId(notes);
+			const attachments = (input.attachments ?? []).map((a, i) => {
+				const blobRef = `sim/${id}-${i}`;
+				localStorage.setItem(`${NS}blob/${blobRef}`, a.data); // 字节先落、清单后写：清单可见即附件在
+				return {
+					path: a.path,
+					kind: a.kind ?? 'image',
+					blobRef,
+					blobSize: a.data.length,
+					fingerprint: `sim-fp-${id}-${i}`,
+					hasPreview: false,
+					previewRef: '',
+					keptShared: a.keptShared,
+				} satisfies SimAttachment;
+			});
+			const note: SimNote = {
+				id,
+				kind: input.kind,
+				path: input.path,
+				title: input.title,
+				createdAt: new Date().toISOString(),
+				contentRef: `sim/${id}.enc`,
+				attachments,
+			};
+			localStorage.setItem(`${NS}body/${id}`, input.content);
+			writeManifest([...notes, note]);
+			return note;
+		},
+		async removeNote(id: string): Promise<void> {
+			const notes = readManifest();
+			const hit = notes.find((n) => n.id === id);
+			if (hit) {
+				for (const a of hit.attachments) localStorage.removeItem(`${NS}blob/${a.blobRef}`);
+				writeManifest(notes.filter((n) => n.id !== id));
+			}
+			localStorage.removeItem(`${NS}body/${id}`);
+		},
+		async updateNotePayload(id: string, plain: string): Promise<void> {
+			localStorage.setItem(`${NS}body/${id}`, plain);
+		},
+		async decryptNoteBody(note: { id: string }): Promise<string | null> {
+			return localStorage.getItem(`${NS}body/${note.id}`);
+		},
+		async decryptAttachmentOriginal(a: { blobRef: string }): Promise<string | null> {
+			return localStorage.getItem(`${NS}blob/${a.blobRef}`);
+		},
+	};
+
+	setPeopleSafeStoreForTests(new PeopleSafeStore(safe as never));
 }
 
 // ==================== 演示设置 ====================
@@ -281,12 +455,18 @@ export function bootPeopleSim(): void {
 	booted = true;
 	const app = new FakeApp();
 	setApp(app as never);
-	// 种子：不存在才写（保留演示中的修改；壳「重置演示数据」清 bz-sim: 前缀后可重来）
-	if (localStorage.getItem(PEOPLE_KEY) == null) localStorage.setItem(PEOPLE_KEY, seedPeople());
 	const dsFiles = window.BZW_PEOPLE?.SEED?.DS_FILES ?? buildDsFiles();
-	window.BZW_PEOPLE = { SEED: { DS_FILES: dsFiles } };
-	if (localStorage.getItem(PREVIEW_KEY) == null) localStorage.setItem(PREVIEW_KEY, seedPreview(dsFiles));
+	// 种子：只在首启写（保留演示中的修改；壳「重置演示数据」清 bz-sim: 前缀后可重来）。
+	// 标记 + 逐件判空：明文三件是给真迁移读的原料，迁完就被删；标记挡住「每次刷新重种」。
+	if (localStorage.getItem(SEED_MARK) == null) {
+		if (localStorage.getItem(PEOPLE_KEY) == null) localStorage.setItem(PEOPLE_KEY, seedPeople());
+		if (localStorage.getItem(PREVIEW_KEY) == null) localStorage.setItem(PREVIEW_KEY, seedPreview(dsFiles));
+		localStorage.setItem(SEED_MARK, new Date().toISOString());
+	}
+	// 保留引导注入的其余种子（DATA_DIR / AVATAR_B64）——直接覆写对象会把它们冲掉
+	window.BZW_PEOPLE = { SEED: { ...window.BZW_PEOPLE?.SEED, DS_FILES: dsFiles } };
 	installFakeFs(dsFiles);
+	installFakeSafe();
 	setSettingsProvider(() => demoSettings as never);
 	void peopleSettingsSchema();
 }

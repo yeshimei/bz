@@ -1,4 +1,4 @@
-/* 源指纹 c5b89bd17d9aac52 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3dfc113622bc7807 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -23,32 +23,47 @@ var BZR_people = (() => {
   // src/people/render.ts
   var render_exports = {};
   __export(render_exports, {
+    AL_PER_PAGE: () => AL_PER_PAGE,
+    FOLD_TITLES: () => FOLD_TITLES,
+    PER_SPREAD: () => PER_SPREAD,
+    albumEmpty: () => albumEmpty,
+    albumGutter: () => albumGutter,
+    albumLoad: () => albumLoad,
+    albumPage: () => albumPage,
+    albumPhoto: () => albumPhoto,
+    albumRow: () => albumRow,
+    albumSealNode: () => albumSealNode,
+    albumSealOf: () => albumSealOf,
+    albumSleeve: () => albumSleeve,
+    albumSpread: () => albumSpread,
+    albumVacant: () => albumVacant,
     avatarColor: () => avatarColor,
+    avatarNode: () => avatarNode,
     avatarUri: () => avatarUri,
     button: () => button,
     dateRow: () => dateRow,
+    delPage: () => delPage,
     deleteTierOf: () => deleteTierOf,
-    dsModal: () => dsModal,
+    detailPage: () => detailPage,
+    dsPage: () => dsPage,
     dsRow: () => dsRow,
     dsSyncLineNode: () => dsSyncLineNode,
+    dsWaterOf: () => dsWaterOf,
     dsWatermark: () => dsWatermark,
+    dueSoonOf: () => dueSoonOf,
     duoBar: () => duoBar,
     el: () => el,
+    findPage: () => findPage,
     foldBondBody: () => foldBondBody,
-    foldBook: () => foldBook,
-    foldCard: () => foldCard,
-    foldDetailHead: () => foldDetailHead,
     foldEventsBody: () => foldEventsBody,
     foldHint: () => foldHint,
     foldPersonBody: () => foldPersonBody,
-    foldSeal: () => foldSeal,
-    foldSealNode: () => foldSealNode,
-    foldWall: () => foldWall,
     formatCount: () => formatCount,
     formatDay: () => formatDay,
     formatDuration: () => formatDuration,
     formatReplySec: () => formatReplySec,
-    generationConfirmModal: () => generationConfirmModal,
+    genPage: () => genPage,
+    headChip: () => headChip,
     hourStrip: () => hourStrip,
     iconButton: () => iconButton,
     importMeta: () => importMeta,
@@ -56,36 +71,42 @@ var BZR_people = (() => {
     insRow: () => insRow,
     insightsCard: () => insightsCard,
     jobsMainLine: () => jobsMainLine,
+    jobsNote: () => jobsNote,
     jobsPercent: () => jobsPercent,
     jobsStageLabel: () => jobsStageLabel,
     jobsStagesDone: () => jobsStagesDone,
     kindChips: () => kindChips,
-    loadBody: () => loadBody,
+    lastCur: () => lastCur,
     localResourceUri: () => localResourceUri,
+    lockCover: () => lockCover,
     mdPlain: () => mdPlain,
     mediaLabel: () => mediaLabel,
-    mergeBar: () => mergeBar,
+    mergeBanner: () => mergeBanner,
     miniMarkdown: () => miniMarkdown,
     monthlyChart: () => monthlyChart,
     noteAddRow: () => noteAddRow,
+    notePage: () => notePage,
+    pageTotal: () => pageTotal,
     panelShell: () => panelShell,
-    popShell: () => popShell,
+    profPage: () => profPage,
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
     profilePopBody: () => profilePopBody,
     profileView: () => profileView,
-    progressBlock: () => progressBlock,
     relationRow: () => relationRow,
     replyLatencySec: () => replyLatencySec,
     socialRow: () => socialRow,
     spillOf: () => spillOf,
+    statsPage: () => statsPage,
     statsPopBody: () => statsPopBody,
     statsText: () => statsText,
+    subPage: () => subPage,
     tagChip: () => tagChip,
+    tagStk: () => tagStk,
     text: () => text,
     textEl: () => textEl,
-    vtName: () => vtName,
-    wallEmpty: () => wallEmpty
+    turnLoad: () => turnLoad,
+    vtName: () => vtName
   });
 
   // src/people/types.ts
@@ -145,7 +166,10 @@ var BZR_people = (() => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
   function formatCount(n) {
-    if (n >= 1e4) return `${(n / 1e4).toFixed(n % 1e4 >= 100 ? 1 : 0)} 万`;
+    if (n >= 1e4) {
+      const w = (n / 1e4).toFixed(n % 1e4 >= 100 ? 1 : 0);
+      return `${w.endsWith(".0") ? w.slice(0, -2) : w} 万`;
+    }
     return n.toLocaleString("en-US");
   }
   function formatReplySec(sec) {
@@ -216,23 +240,15 @@ var BZR_people = (() => {
   }
   function panelShell() {
     return el("div", "bz-people-panel", [
-      el("div", "bz-people-head", [
-        el("div", "bz-people-brand", [
-          el("div", "bz-people-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
-          el("div", "bz-people-brand-text", [
-            el("h1", "bz-people-title", text("脸谱")),
-            el("div", "bz-people-sub", text("人物消息脸谱"))
-          ])
-        ]),
-        el("div", "bz-people-head-actions", [
-          iconButton("database", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-ds-open": "", "aria-label": "数据源", title: "数据源" })
-        ])
+      el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" }, [
+        el("div", "bz-people-spread", { "data-people-spread": "" })
       ]),
-      el("div", "bz-people-stats", { "data-people-stats": "" }),
-      el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "", hidden: "" }),
-      el("div", "bz-people-body", { "data-people-body": "" }),
-      el("div", "bz-people-ds-layer", { "data-people-ds-layer": "", hidden: "" }),
-      el("div", "bz-people-pop-layer", { "data-people-pop-layer": "", hidden: "" })
+      el("div", "bz-people-tabs", [
+        button("bz-people-tab", "找一找", { "data-people-dialog": "find" }),
+        button("bz-people-tab", "数据源", { "data-people-dialog": "ds" })
+      ]),
+      el("div", "bz-people-jobs-slot", { "data-people-jobs-slot": "" }),
+      el("div", "bz-people-banner-slot", { "data-people-banner-slot": "" })
     ]);
   }
   function jobsPercent(batchesDone, batchesTotal, stagesDone) {
@@ -247,7 +263,9 @@ var BZR_people = (() => {
     return 0;
   }
   var JOBS_ACTIONS = {
-    running: { label: "暂停", hook: "data-people-jobs-pause" },
+    // 运行中不再给「暂停」钮（issue 502 续）：画谱是一次想看完的连续过程，
+    // 摆在眼前的暂停反而诱发误触；要中断就关面板 / 换人跑，任务本身留断点可续。
+    running: null,
     paused: { label: "继续生成", hook: "data-people-jobs-resume" },
     interrupted: { label: "继续生成", hook: "data-people-jobs-resume" },
     // issue 453：error 也出「继续生成」——451 已放宽 resume 接受 error（从 batchesDone 续跑）。
@@ -334,7 +352,7 @@ var BZR_people = (() => {
     const head = [jobsStatusPrefix(s.status), merged.anchor].filter(Boolean).join(" · ");
     return { head: head || "正在生成", detail: merged.detail };
   }
-  function progressBlock(s) {
+  function jobsNote(s) {
     const stagePart = prepStagePart(s);
     const descPart = describeStagePart(s);
     const pct = stagePart ? s.prep.overall : descPart ? s.describe.overall : jobsPercent(s.batchesDone, s.batchesTotal, s.stagesDone);
@@ -343,15 +361,26 @@ var BZR_people = (() => {
       "data-people-jobs-talker": s.talker,
       role: "status"
     });
-    block.appendChild(el("div", "bz-people-jobs-meter", [
-      el(
-        "div",
-        "bz-people-jobs-bar",
-        { "aria-hidden": "true" },
-        el("div", "bz-people-jobs-fill", { style: `width:${pct}%` })
-      ),
-      el("span", "bz-people-jobs-pct", text(`${pct}%`))
-    ]));
+    if (s.queueTotal > 1) {
+      const who = el("div", "bz-people-jobs-who");
+      who.append(
+        text("第 "),
+        textEl("b", String(Math.min(Math.max(1, s.queueIndex), s.queueTotal))),
+        text("/"),
+        textEl("span", String(s.queueTotal)),
+        text(` 位 · ${s.name || s.talker}`)
+      );
+      block.appendChild(who);
+    }
+    const meter = el("div", "bz-people-jobs-meter");
+    meter.appendChild(el(
+      "div",
+      "bz-people-jobs-track",
+      { "aria-hidden": "true" },
+      el("div", "bz-people-jobs-fill", { style: `width:${pct}%` })
+    ));
+    meter.appendChild(el("span", "bz-people-jobs-pct", text(`${pct}%`)));
+    block.appendChild(meter);
     const line = jobsMainLine(s);
     const mainEl = el("div", "bz-people-jobs-main", text(line.head));
     if (line.detail) mainEl.appendChild(el("span", "bz-people-jobs-detail", text(` · ${line.detail}`)));
@@ -366,350 +395,601 @@ var BZR_people = (() => {
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
   }
-  function generationConfirmModal(info, onAnswer) {
-    const wrap = el("div", "bz-people-scope bz-people-desc-confirm", { "data-people-gen-confirm": "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-gen-cancel": "" }));
-    const pop = el("div", "bz-people-pop-panel bz-people-desc-panel", { role: "dialog", "aria-label": "开始生成脸谱" });
-    pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text("开始生成脸谱"))
-    ]));
-    const body = el("div", "bz-people-pop-body");
-    const segs = [`为 ${info.items.length} 位联系人生成脸谱`];
-    if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
-    if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
-    segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
-    body.appendChild(el("div", "bz-people-desc-line", text(`${segs.join("；")}。`)));
-    const list = el("ul", "bz-people-gen-list");
-    for (const it of info.items) {
-      const bits = [`素材 ${it.materials} 条`];
-      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-      if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
-      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」· ${bits.join(" · ")}`)));
-    }
-    body.appendChild(list);
-    body.appendChild(el("div", "bz-people-desc-note", text(
-      "确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。"
-    )));
-    body.appendChild(el("div", "bz-people-desc-actions", [
-      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-gen-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
-    ]));
-    pop.appendChild(body);
-    wrap.appendChild(pop);
-    wrap.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t.closest("[data-people-gen-start]")) onAnswer("start");
-      else if (t.closest("[data-people-gen-cancel]")) onAnswer("cancel");
+  var AL_PER_PAGE = 6;
+  var PER_SPREAD = 2;
+  function pageTotal(count) {
+    return Math.max(1, Math.ceil(count / AL_PER_PAGE));
+  }
+  function lastCur(total) {
+    return total % PER_SPREAD === 0 ? Math.max(0, total - PER_SPREAD) : total - 1;
+  }
+  function turnLoad(cur, total) {
+    const lp = cur;
+    const rp = Math.max(0, total - cur - PER_SPREAD);
+    return { left: { pages: lp, flips: Math.ceil(lp / PER_SPREAD) }, right: { pages: rp, flips: Math.ceil(rp / PER_SPREAD) } };
+  }
+  function stackSide(side, flips) {
+    const box = el("div", `bz-people-stack bz-people-stack-${side}`, flips ? { "data-people-turn": side === "l" ? "prev" : "next" } : void 0);
+    for (let i = 1; i <= Math.min(flips, 4); i++) box.appendChild(el("i", "", { style: `--i:${i}` }));
+    return box;
+  }
+  function turnStrip(dir, side) {
+    if (side.flips <= 0) return null;
+    const b = el("button", `bz-people-turn bz-people-turn-${dir === "prev" ? "l" : "r"}`, {
+      "data-people-turn": dir,
+      "aria-label": dir === "prev" ? `往前翻一摊（前面还有 ${side.pages} 页）` : `往后翻一摊（后面还有 ${side.pages} 页）`
     });
+    b.type = "button";
+    return b;
+  }
+  function albumSpread(inner, load, opts = {}) {
+    var _a;
+    const cls = ["bz-people-spread", opts.boot ? "bz-people-boot" : "", opts.turn ? `bz-people-turn-${opts.turn}` : "", (_a = opts.mod) != null ? _a : ""].filter(Boolean).join(" ");
+    const wrap = el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" });
+    const spread = el("div", cls, { "data-people-spread": "" });
+    for (const n of inner) spread.appendChild(n);
+    const left = turnStrip("prev", load.left);
+    if (left) spread.appendChild(left);
+    const right = turnStrip("next", load.right);
+    if (right) spread.appendChild(right);
+    spread.appendChild(stackSide("l", load.left.flips));
+    spread.appendChild(stackSide("r", load.right.flips));
+    wrap.appendChild(spread);
     return wrap;
   }
-  function statsText(people) {
-    const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
-    const faces = people.filter((p) => p.digest).length;
-    return people.length ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱` : "还没有人物";
+  function albumGutter() {
+    return el("div", "bz-people-gutter");
   }
-  function mergeBar(fromName, toName) {
-    return toName ? el("div", "bz-people-merge-bar", [
-      el("div", "bz-people-merge-text", text(`确认合并：把「${fromName}」的导入记录与随手记并到「${toName}」，「${fromName}」将被删除；对方的脸谱不带入，合并后建议重画。`)),
-      button("bz-people-btn bz-people-btn-acc", "确认合并", { "data-people-merge-confirm": "" }),
-      button("bz-people-btn bz-people-btn-ghost", "取消", { "data-people-merge-cancel": "" })
-    ]) : el("div", "bz-people-merge-bar", [
-      el("div", "bz-people-merge-text", text(`合并重复人物：点选一张折子，把「${fromName}」的导入记录与随手记并过去——对方保留，「${fromName}」这本将删除。`)),
-      button("bz-people-btn bz-people-btn-ghost", "取消合并", { "data-people-merge-cancel": "" })
-    ]);
+  function headChip(inner) {
+    return el("span", "bz-people-head-count", typeof inner === "string" ? text(inner) : inner);
   }
-  function foldSeal(p, job) {
+  function albumSealOf(p, job) {
     var _a, _b;
     const name = p.name || p.id;
+    if (job && job.status !== "done" && job.queued) {
+      return { state: "queued", text: "等", title: `「${name}」排在队里，等着画`, action: null };
+    }
     if (job && job.status !== "done") {
       const prog = job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal} 批` : "尚未切批";
       if (job.status === "running") {
         const pct = (_b = (_a = job.describePct) != null ? _a : job.prepPct) != null ? _b : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone);
         return {
           state: "running",
-          text: `画谱中
-${pct}%`,
+          text: "画",
+          pct,
           title: `正在生成「${name}」的脸谱（${prog}）——点这里在本批做完后暂停`,
-          action: { kind: "pause", label: "暂停" }
+          action: "pause"
         };
       }
       if (job.status === "error" && !job.resumable) {
-        return {
-          state: "halted",
-          text: "画谱中断",
-          title: `「${name}」上次生成中断且接不上（消息集已变）——点这里重新生成`,
-          action: { kind: "redraw", label: "重新生成" }
-        };
+        return { state: "halted", text: "停", title: `「${name}」上次生成中断且接不上（消息集已变）——去详情页重新生成`, action: null };
       }
       return {
         state: "halted",
-        text: `画谱中断
-${job.batchesTotal ? `${job.batchesDone}/${job.batchesTotal}` : "待续"}`,
-        title: `「${name}」${job.status === "error" ? "上次生成失败" : "上次没画完"}（${prog}）——点这里从断点继续，已画完的批次不重画`,
-        action: { kind: "resume", label: "继续生成" }
+        text: job.status === "error" ? "停" : "歇",
+        title: `「${name}」${job.status === "error" ? "上次生成失败" : "上次没画完"}（${prog}）——去详情页从断点继续，已画完的批次不重画`,
+        action: null
       };
     }
+    if (isLegacyFace(p)) return { state: "legacy", text: "旧", title: `「${name}」的脸谱还是旧版单卷——去详情页重画一次`, action: null };
     if (p.digest) {
       return {
-        state: "done",
-        text: p.lastProcessedTs ? `画到
-${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
-        title: `「${name}」的脸谱已画到这天——点这里用新导入的消息补画（没有新消息会跳过）`,
-        action: { kind: "redraw", label: "补画" }
+        state: "drawn",
+        text: p.lastProcessedTs ? "画" : "绘",
+        title: `「${name}」的脸谱已画到这天——去详情页用新导入的消息补画（没有新消息会跳过）`,
+        action: null
       };
     }
-    return {
-      state: "todo",
-      text: "待画",
-      title: `「${name}」还没有脸谱——点这里用已导入的消息画一张`,
-      action: { kind: "draw", label: "画脸谱" }
-    };
+    return { state: "none", text: "", title: "", action: null };
   }
-  function foldSealNode(p, job) {
-    const seal = foldSeal(p, job);
-    const b = el("button", `bz-people-seal bz-people-seal-${seal.state}`, {
-      "data-people-seal-act": seal.action.kind,
-      "aria-label": `${seal.action.label}：${p.name || p.id}`,
-      title: seal.title
+  function isLegacyFace(p) {
+    return !!p.digest && !p.digest.person && !!p.digest.portrait;
+  }
+  function albumSealNode(p, job) {
+    var _a;
+    const seal = albumSealOf(p, job);
+    if (seal.state === "none") return null;
+    if (seal.state === "running") {
+      const b = el("button", "bz-people-seal bz-people-seal-run", {
+        "data-people-seal-act": "pause",
+        "aria-label": `暂停生成：${p.name || p.id}`,
+        title: seal.title
+      });
+      b.type = "button";
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "bz-people-seal-ring");
+      svg.setAttribute("viewBox", "0 0 36 36");
+      const track = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      track.setAttribute("cx", "18");
+      track.setAttribute("cy", "18");
+      track.setAttribute("r", "15.6");
+      track.setAttribute("pathLength", "100");
+      const arc = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      arc.setAttribute("class", "bz-people-seal-arc");
+      arc.setAttribute("cx", "18");
+      arc.setAttribute("cy", "18");
+      arc.setAttribute("r", "15.6");
+      arc.setAttribute("pathLength", "100");
+      arc.setAttribute("style", `stroke-dasharray:${Math.max(0, Math.min(100, (_a = seal.pct) != null ? _a : 0))} 100`);
+      svg.append(track, arc);
+      b.append(svg, el("span", "", text(seal.text)));
+      return b;
+    }
+    return el("div", `bz-people-seal bz-people-seal-${seal.state}`, { title: seal.title }, text(seal.text));
+  }
+  function avatarNode(name, avatar, sizeCls = "") {
+    if (avatar) return el("img", sizeCls, { src: avatarUri(avatar), alt: name });
+    const s = el("span", `${sizeCls} bz-people-ava-txt`.trim(), {
+      style: `background:hsl(${avatarHue(name)} 34% 46%)`
+    }, text(initials(name)));
+    return s;
+  }
+  function avatarHue(name) {
+    let h = 0;
+    for (const ch of name) h = h * 31 + ch.codePointAt(0) >>> 0;
+    return h % 360;
+  }
+  function msgsOf(p) {
+    return p.imports.reduce((s, r) => s + r.messageCount, 0);
+  }
+  function albumPhoto(ph) {
+    var _a, _b;
+    const { p, avatar, index, fresh, due, job } = ph;
+    const name = p.name || p.id;
+    const seal = albumSealOf(p, job);
+    const todo = seal.state === "none";
+    const cell = el("div", [
+      "bz-people-cell",
+      todo ? "bz-people-todo" : "",
+      seal.state === "queued" ? "bz-people-wait" : ""
+    ].filter(Boolean).join(" "), {
+      "data-people-pocket": p.id,
+      tabindex: "0",
+      role: "button",
+      style: `--i:${index}`,
+      "aria-label": `${name} · ${formatCount(msgsOf(p))} 条消息`
     });
-    b.type = "button";
-    b.textContent = seal.text;
-    return b;
+    const print = el("div", "bz-people-print");
+    print.appendChild(el("div", "bz-people-photo", avatarNode(name, avatar)));
+    if (todo) print.appendChild(el("div", "bz-people-blank", text("还没洗出来")));
+    const sealNode = albumSealNode(p, job);
+    if (sealNode) print.appendChild(sealNode);
+    if (fresh > 0) print.appendChild(el("div", "bz-people-fresh", text(`新 ${formatCount(fresh)}`)));
+    if (due) print.appendChild(el("div", "bz-people-due", { title: `${due.what} · ${due.date}` }, text(`${due.what} ${due.days} 天`)));
+    const meta = job && job.status !== "done" ? job.queued ? "排队中" : job.status === "running" ? `画谱中 ${(_b = (_a = job.describePct) != null ? _a : job.prepPct) != null ? _b : jobsPercent(job.batchesDone, job.batchesTotal, job.stagesDone)}%` : job.status === "error" ? "失败待续" : "已暂停" : `${formatCount(msgsOf(p))} 条`;
+    print.appendChild(el("div", "bz-people-cap", [
+      el("span", "bz-people-name", text(vtName(name))),
+      el("span", `bz-people-meta${job && job.status === "running" ? " bz-people-meta-run" : ""}`, text(meta))
+    ]));
+    cell.appendChild(print);
+    return cell;
   }
-  function foldAvaNode(p, seal, avatar) {
-    const b = el("button", `bz-people-seal bz-people-seal-${seal.state} bz-people-fold-ava`, {
-      "data-people-seal-act": seal.action.kind,
-      "aria-label": `${seal.action.label}：${p.name || p.id}`,
-      title: seal.title
-    });
-    b.type = "button";
-    b.appendChild(el("img", "", { src: avatarUri(avatar), alt: p.name }));
-    return b;
+  function albumVacant() {
+    const s = el("span", "bz-people-vacs");
+    s.append(text("空位"), el("br"), text("等新照片"));
+    return el("div", "bz-people-cell bz-people-vacant", s);
   }
-  function foldCard(p, opts) {
-    var _a, _b, _c, _d, _e;
-    const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-    const from = p.imports.map((r) => r.timeFrom).sort()[0];
-    const to = p.imports.map((r) => r.timeTo).sort().pop();
-    const span = from && to ? `${from.slice(0, 7)} ~ ${to.slice(0, 7)}` : "";
-    const rel = (_c = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean)[0]) != null ? _c : "";
-    const label = mediaLabel(opts.media);
-    const seal = foldSeal(p, (_d = opts.job) != null ? _d : null);
-    const card = el("div", "bz-people-fold", [
-      el("div", "bz-people-fold-inner", [
-        opts.avatar ? foldAvaNode(p, seal, opts.avatar) : foldSealNode(p, (_e = opts.job) != null ? _e : null),
-        el("div", "bz-people-fold-title vt", { title: p.name }, text(vtName(p.name))),
-        // 无关系、无跨度时不再兜底「N 条」——meta 行已有同一数字，卡面重复（448 评审 P2）
-        el("div", "bz-people-fold-who", text(rel || (span ? span : "新折"))),
-        el("div", "bz-people-fold-meta", text([
-          total ? `${formatCount(total)} 条` : "尚无消息",
-          label,
-          seal.state === "done" && p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs).slice(2)}` : ""
-        ].filter(Boolean).join(" · ")))
+  function rowEra(a, b) {
+    var _a, _b;
+    const from = (_b = (_a = a == null ? void 0 : a.p.imports.map((r) => r.timeFrom).sort()[0]) != null ? _a : b == null ? void 0 : b.p.imports.map((r) => r.timeFrom).sort()[0]) != null ? _b : "";
+    const y = Number(from.slice(0, 4)) || 0;
+    if (!y) return 0;
+    return y >= 2024 ? 0 : y >= 2022 ? 1 : y >= 2020 ? 2 : 3;
+  }
+  function rowNote(a, b) {
+    var _a, _b, _c, _d, _e, _f;
+    if (!a || !b) return "";
+    const ta = ((_b = (_a = a.p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean);
+    const tb = ((_d = (_c = b.p.profile) == null ? void 0 : _c.tags) != null ? _d : []).filter(Boolean);
+    for (const t of ta) if (tb.includes(t)) return `都算「${t}」`;
+    const ya = ((_e = a.p.imports.map((r) => r.timeFrom).sort()[0]) != null ? _e : "").slice(0, 4);
+    const yb = ((_f = b.p.imports.map((r) => r.timeFrom).sort()[0]) != null ? _f : "").slice(0, 4);
+    if (ya && ya === yb) return `${ya} 年认识的`;
+    return "";
+  }
+  function albumRow(a, b) {
+    const row = el("div", "bz-people-row", { "data-era": String(rowEra(a, b)) });
+    row.appendChild(a ? albumPhoto(a) : albumVacant());
+    row.appendChild(b ? albumPhoto(b) : albumVacant());
+    row.appendChild(el("div", "bz-people-row-note", text(rowNote(a, b))));
+    return row;
+  }
+  function albumSleeve(rows) {
+    return el("div", "bz-people-boardarea", [
+      el("div", "bz-people-sleeve", [
+        el("div", "bz-people-board", rows),
+        el("div", "bz-people-film")
       ])
     ]);
-    if (opts.mergeFrom) card.classList.add("bz-people-fold-merge-src");
-    else if (opts.mergePick) card.classList.add("bz-people-fold-merge-pick");
-    card.setAttribute("data-people-card", p.id);
-    return card;
   }
-  function foldWall() {
-    return el("div", "bz-people-wall", { "data-people-wall": "" });
+  function albumPage(cells, no, totalPeople, ledger) {
+    const slots = cells.slice(0, AL_PER_PAGE);
+    while (slots.length < AL_PER_PAGE) slots.push(null);
+    const rows = [];
+    for (let i = 0; i < slots.length; i += 2) rows.push(albumRow(slots[i], slots[i + 1]));
+    const head = el("div", "bz-people-page-head");
+    head.appendChild(headChip(el("span", "bz-people-head-count-in", [
+      textEl("b", String(no)),
+      text(" / "),
+      textEl("span", String(pageTotal(totalPeople)))
+    ])));
+    if (no === 1) {
+      head.appendChild(el("span", "bz-people-head-label", text("最近说过话的")));
+      const l = el("span", "bz-people-head-ledger");
+      l.append(
+        text("共 "),
+        textEl("b", formatCount(totalPeople)),
+        text(" 位 · "),
+        textEl("b", formatCount(ledger.msgs)),
+        text(" 条 · "),
+        textEl("b", String(ledger.faces)),
+        text(" 张脸谱")
+      );
+      head.appendChild(el("span", "bz-people-head-right", l));
+    } else {
+      const names = cells.filter((c) => !!c).map((c) => c.p.name);
+      const span = names.length ? `${names[names.length - 1]} ~ ${names[0]}` : "";
+      head.appendChild(el("span", "bz-people-head-right", el("span", "bz-people-head-note", text(span))));
+    }
+    const page = el("div", "bz-people-page", head);
+    page.appendChild(albumSleeve(rows));
+    return page;
   }
-  function wallEmpty() {
-    return el("div", "bz-people-empty", [
-      el("div", "bz-people-empty-mark", { "aria-hidden": "true" }, el("i", "bz-ic", { "data-lucide": "smile" })),
-      el("div", "bz-people-empty-title", text("还没有脸谱")),
-      el("div", "bz-people-empty-hint", text("打开「数据源」勾选联系人导入预览，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆。聊天原文只在本机提炼，不落盘。")),
-      button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-ds-open": "" })
+  function lockCover(boot = false) {
+    const spread = el("div", `bz-people-spread bz-people-lockwrap${boot ? " bz-people-boot" : ""}`);
+    const cover = el("div", "bz-people-cover", [
+      el("div", "bz-people-cover-band"),
+      el("div", "bz-people-cover-title", text("脸谱")),
+      el("div", "bz-people-cover-sub", text("人物消息脸谱")),
+      el("div", "bz-people-clasp", el("i", "bz-ic", { "data-lucide": "lock", "aria-hidden": "true" })),
+      el("div", "bz-people-cover-hint", text("脸谱数据在加密保库里 —— 解锁后才能查看。聊天原文只在本机提炼，不落盘。"))
     ]);
-  }
-  function loadBody(state) {
-    const count = el(
-      "strong",
-      "bz-people-load-count",
-      { "data-people-load-count": "" },
-      text(state.total != null ? `${state.done}/${state.total}` : "")
-    );
-    if (state.total == null) count.hidden = true;
-    const wrap = el("div", "bz-people-loading", { "data-people-loading": "" }, [
-      el("div", "bz-people-load-line", [
-        el("span", "bz-people-load-spin", { "aria-hidden": "true" }),
-        el("span", "bz-people-load-text", text("正在解密联系人数据…")),
-        count
-      ])
+    const acts = el("div", "bz-people-cover-acts", [
+      button("bz-people-btn", "取消", { "data-people-lock": "cancel" }),
+      iconButton("unlock", "bz-people-btn bz-people-btn-acc", { "data-people-lock": "unlock" })
     ]);
-    const wall = el("div", "bz-people-load-wall", { "aria-hidden": "true" });
-    for (let i = 0; i < 6; i++) wall.appendChild(el("div", "bz-people-load-card"));
-    wrap.appendChild(wall);
+    acts.lastElementChild.appendChild(text(" 解锁保险库"));
+    cover.appendChild(acts);
+    spread.appendChild(cover);
+    const wrap = el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" }, spread);
     return wrap;
+  }
+  function emptyMark() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "bz-people-empty-ico");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    const add = (tag, attrs) => {
+      const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+      svg.appendChild(n);
+    };
+    add("circle", { cx: "12", cy: "12", r: "9.4", pathLength: "100" });
+    add("path", { d: "M8 14.3s1.6 2.2 4 2.2 4-2.2 4-2.2", pathLength: "100" });
+    add("path", { d: "M9 9.4h.02", pathLength: "100" });
+    add("path", { d: "M15 9.4h.02", pathLength: "100" });
+    return svg;
+  }
+  function writeOut(s) {
+    return el("div", "bz-people-empty-title", [...s].map((c, i) => el("span", "bz-people-w", { style: `--i:${i}` }, text(c))));
+  }
+  function albumEmpty() {
+    const vac = [];
+    for (let i = 0; i < AL_PER_PAGE; i++) vac.push(albumVacant());
+    const rows = [];
+    for (let i = 0; i < vac.length; i += 2) {
+      const r = el("div", "bz-people-row");
+      r.append(vac[i], vac[i + 1], el("div", "bz-people-row-note"));
+      rows.push(r);
+    }
+    const left = el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [
+        headChip("空册"),
+        el("span", "bz-people-head-label", text("相册簿还是空的")),
+        el("span", "bz-people-head-right", el("span", "bz-people-head-note", text("空位都留着")))
+      ]),
+      albumSleeve(rows)
+    ]);
+    const right = el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [headChip("空册"), el("span", "bz-people-head-label", text("第一张照片等着贴"))]),
+      el("div", "bz-people-empty", [
+        el("div", "bz-people-empty-mark", emptyMark()),
+        writeOut("还没贴一张照片"),
+        el("div", "bz-people-empty-hint", text("打开「数据源」勾选联系人导入，再点「画脸谱」——AI 会为对方修一册脸谱：画像、性格、共同回忆，洗成照片贴进来。聊天原文只在本机提炼，不落盘。")),
+        button("bz-people-btn bz-people-btn-acc", "打开数据源", { "data-people-dialog": "ds" })
+      ])
+    ]);
+    const spread = el("div", "bz-people-spread", { "data-people-spread": "" }, [left, albumGutter(), right]);
+    return el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" }, spread);
+  }
+  function albumLoad(done, total) {
+    const rows = [];
+    for (let i = 0; i < AL_PER_PAGE; i += 2) {
+      const r = el("div", "bz-people-row");
+      r.append(
+        el("div", "bz-people-cell bz-people-wait", el("div", "bz-people-print")),
+        el("div", "bz-people-cell bz-people-wait", el("div", "bz-people-print")),
+        el("div", "bz-people-row-note")
+      );
+      rows.push(r);
+    }
+    const count = el(
+      "span",
+      "bz-people-decrypt",
+      el("span", "bz-people-load-spin", { "data-people-load-count": "" }, text(total ? `${done}/${total} 位` : `${done} 位`))
+    );
+    const mk = (label, right) => el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [headChip("解密中"), el("span", "bz-people-head-label", text(label)), el("span", "bz-people-head-right", right)]),
+      albumSleeve(rows)
+    ]);
+    const spread = el("div", "bz-people-spread bz-people-spread-load", { "data-people-spread": "" }, [
+      mk("正在解密联系人数据", count),
+      albumGutter(),
+      mk("解密完就摊开", el("span", "bz-people-head-note", text("先不急着看")))
+    ]);
+    return el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" }, spread);
+  }
+  function statsText(people) {
+    const total = people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0);
+    const faces = people.filter((p) => p.digest).length;
+    return people.length ? `${people.length} 位人物 · ${formatCount(total)} 条消息 · ${faces} 张脸谱` : "还没有人物";
   }
   var FOLD_TITLES = [
     ["p", "其人", "卷一 · 人物画像与代表原话"],
     ["b", "相交", "卷二 · 关系画像"],
     ["e", "纪事", "编年 + 按月交往事件"]
   ];
+  function stampText(p, job) {
+    const seal = albumSealOf(p, job);
+    if (seal.state === "none") return "待画";
+    if (seal.state === "legacy") return "旧版";
+    if (seal.state === "queued" || seal.state === "running" || seal.state === "halted") return "画谱中";
+    return p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs)}` : "已画";
+  }
+  function detailFacts(p, facts) {
+    const out = [];
+    const me = Math.max(0, Math.min(100, Math.round(facts.mePct)));
+    const duoVal = el("span", "bz-people-fact-v");
+    duoVal.append(text("我 "), textEl("b", `${me}%`), text(" · TA "), textEl("b", `${100 - me}%`));
+    out.push(el("div", "bz-people-fact", [
+      el("span", "bz-people-fact-k", text("谁先开口")),
+      el("span", "bz-people-fact-bar", el("i", "", { style: `width:${me}%` })),
+      duoVal
+    ]));
+    if (facts.month) {
+      const v = el("span", "bz-people-fact-v");
+      v.append(text(`${facts.month[0]} · `), textEl("b", formatCount(facts.month[1])), text(" 条"));
+      out.push(el("div", "bz-people-fact", [el("span", "bz-people-fact-k", text("最热的一月")), v]));
+    }
+    if (facts.images || facts.voices) {
+      const v = el("span", "bz-people-fact-v");
+      v.append(text("图 "), textEl("b", formatCount(facts.images)), text(" · 语 "), textEl("b", formatCount(facts.voices)));
+      out.push(el("div", "bz-people-fact", [el("span", "bz-people-fact-k", text("素材水位")), v]));
+    }
+    return out.length ? el("div", "bz-people-dt-facts", out) : null;
+  }
+  function detailPage(p, opts) {
+    var _a, _b, _c, _d, _e, _f, _g;
+    const name = p.name || p.id;
+    const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
+    const from = (_a = p.imports.map((r) => r.timeFrom).sort()[0]) != null ? _a : "";
+    const to = (_b = p.imports.map((r) => r.timeTo).sort().pop()) != null ? _b : "";
+    const page = el("div", `bz-people-page bz-people-dpage bz-people-sit-${opts.side === "left" ? "l" : "r"}`, { "data-people-detail": p.id });
+    const head = el("div", "bz-people-page-head");
+    head.appendChild(el("span", "bz-people-head-label", text(`脸谱 · ${name}`)));
+    head.appendChild(el(
+      "span",
+      "bz-people-head-right",
+      button("bz-people-close", "合上这页", { "data-people-act": "back" })
+    ));
+    page.appendChild(head);
+    const body = el("div", "bz-people-pagebody", { "data-people-scroll": "detail" });
+    const frame = el("div", "bz-people-bigframe", [
+      el("div", "bz-people-tape", { style: "--tr:calc(var(--t2) * -2)" }),
+      el("div", "bz-people-bigphoto", avatarNode(name, opts.avatar)),
+      el("div", "bz-people-dt-stamp", text(stampText(p, opts.job))),
+      el("div", "bz-people-bigname", text(name))
+    ]);
+    const side = el("div", "bz-people-dt-side");
+    const tags = ((_d = (_c = p.profile) == null ? void 0 : _c.tags) != null ? _d : []).filter(Boolean);
+    if (tags.length) side.appendChild(el("div", "bz-people-dt-tags", tags.map((t) => tagStk(t))));
+    const due = dueSoonOf(p);
+    if (due) {
+      const line = el("div", "bz-people-due-line");
+      line.append(el("i", "bz-ic", { "data-lucide": "gift", "aria-hidden": "true" }), el("span", "", text(`${due.what} · ${due.date}（还有 ${due.days} 天）`)));
+      side.appendChild(line);
+    }
+    const meta = el("div", "bz-people-dt-meta");
+    meta.append(
+      textEl("b", formatCount(total)),
+      text(" 条消息 · "),
+      textEl("span", formatCount(p.imports.length)),
+      text(" 次导入")
+    );
+    meta.appendChild(el("br"));
+    meta.append(text(((_e = p.digest) == null ? void 0 : _e.generatedAt) ? `脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}` : "还没画过脸谱"));
+    if (from && to) {
+      meta.appendChild(el("br"));
+      meta.append(text(`交往 ${from.slice(0, 10)} ~ ${to.slice(0, 10)}`));
+    }
+    side.appendChild(meta);
+    const facts = opts.facts ? detailFacts(p, opts.facts) : null;
+    if (facts) side.appendChild(facts);
+    body.appendChild(el("div", "bz-people-dttop", [el("div", "bz-people-bigph", frame), side]));
+    const gen = genActionOf(p, opts.job);
+    const acts = el("div", "bz-people-acts", [
+      el("button", "bz-people-act", { "data-people-act": "generate" }, [
+        el("i", "bz-ic", { "data-lucide": gen.icon, "aria-hidden": "true" }),
+        el("span", "", text(gen.label)),
+        el("span", "bz-people-act-hint", text(gen.hint))
+      ]),
+      el("button", "bz-people-act", { "data-people-act": "note" }, [
+        el("i", "bz-ic", { "data-lucide": "pencil", "aria-hidden": "true" }),
+        el("span", "", text("记一笔"))
+      ]),
+      el("button", "bz-people-act", { "data-people-act": "stats" }, [
+        el("i", "bz-ic", { "data-lucide": "bar-chart-3", "aria-hidden": "true" }),
+        el("span", "", text("互动统计"))
+      ]),
+      el("button", "bz-people-act", { "data-people-act": "prof" }, [
+        el("i", "bz-ic", { "data-lucide": "contact", "aria-hidden": "true" }),
+        el("span", "", text("补充背景"))
+      ]),
+      el("button", "bz-people-act", { "data-people-act": "del", "data-people-del": p.id }, [
+        el("i", "bz-ic", { "data-lucide": "trash-2", "aria-hidden": "true" }),
+        el("span", "", text("删除联系人"))
+      ]),
+      el("button", "bz-people-act", { "data-people-act": "back" }, [
+        el("i", "bz-ic", { "data-lucide": "arrow-left", "aria-hidden": "true" }),
+        el("span", "", text("合上这页"))
+      ])
+    ]);
+    for (const b of Array.from(acts.children)) b.type = "button";
+    body.appendChild(acts);
+    const tabs = el("div", "bz-people-ftabs", FOLD_TITLES.map(([id, label]) => button(`bz-people-ftab${opts.fold === id ? " on" : ""}`, label, { "data-people-fold": id, "data-people-leaf-head": id })));
+    body.appendChild(tabs);
+    const title = (_g = (_f = FOLD_TITLES.find(([id]) => id === opts.fold)) == null ? void 0 : _f[2]) != null ? _g : "";
+    body.appendChild(el("div", "bz-people-fsheet", [
+      el("div", "bz-people-fsheet-head", el("span", "bz-people-fsheet-title", text(title))),
+      el("div", "bz-people-fsheet-body", opts.body)
+    ]));
+    page.appendChild(body);
+    return page;
+  }
+  function genActionOf(p, job) {
+    const seal = albumSealOf(p, job);
+    if (seal.state === "running" || seal.state === "queued" || seal.state === "halted") {
+      return { label: "继续生成", hint: "不从头重烧", icon: "refresh-cw" };
+    }
+    if (seal.state === "drawn" || seal.state === "legacy") return { label: "补画脸谱", hint: "用新导入的消息", icon: "paintbrush" };
+    return { label: "画脸谱", hint: "用已导入的消息生成", icon: "paintbrush" };
+  }
+  function tagStk(t) {
+    const kinds = /* @__PURE__ */ new Set(["前同事", "大学同学", "室友", "旅伴", "表妹", "游戏搭子"]);
+    const cls = `bz-people-stk${kinds.has(t) ? " bz-people-stk-red" : ""}`;
+    return el("span", cls, { style: `transform:rotate(${[...t].length % 2 ? 3 : -3}deg)` }, text(t));
+  }
+  function dueSoonOf(p, today = /* @__PURE__ */ new Date()) {
+    var _a, _b, _c;
+    const list = (_b = (_a = p.profile) == null ? void 0 : _a.importantDates) != null ? _b : [];
+    let best = null;
+    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    for (const d of list) {
+      const m = /^(\d{2})-(\d{2})$/.exec(String((_c = d.date) != null ? _c : ""));
+      if (!m) continue;
+      let when = new Date(base);
+      when.setMonth(Number(m[1]) - 1, Number(m[2]));
+      if (when.getTime() < base) when = new Date(today.getFullYear() + 1, Number(m[1]) - 1, Number(m[2]));
+      const days = Math.round((when.getTime() - base) / 864e5);
+      if (days >= 0 && days <= 30 && (!best || days < best.days)) best = { what: d.what, date: d.date, days };
+    }
+    return best;
+  }
+  function foldHint(msg) {
+    return el("div", "bz-people-empty-hint", text(msg));
+  }
+  function secTitle(t) {
+    return el("div", "bz-people-sec-title", text(t));
+  }
+  function foldPersonBody(mdRoot, p) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    const out = [mdRoot != null ? mdRoot : foldHint("其人画像还没生成——画一次脸谱就会写出来。")];
+    const traits = (_b = (_a = p.digest) == null ? void 0 : _a.traits) != null ? _b : [];
+    if (traits.length) {
+      const box = el("div", "bz-people-traits", traits.slice(0, 12).map((t) => el("span", "bz-people-trait", text(t))));
+      if (traits.length > 12) box.appendChild(el("span", "bz-people-trait-more", text(`…另有 ${traits.length - 12} 条`)));
+      out.push(secTitle("性格特质"), box);
+    }
+    const quotes = (_d = (_c = p.digest) == null ? void 0 : _c.quotes) != null ? _d : [];
+    if (quotes.length) {
+      const box = el("div", "bz-people-quotes", quotes.slice(0, 8).map((q) => el("div", "bz-people-quote-card", [
+        el("div", "bz-people-quote-text", text(`「${q.text}」`)),
+        el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
+      ])));
+      out.push(secTitle("代表原话"), box);
+    }
+    const interests = (_f = (_e = p.digest) == null ? void 0 : _e.interests) != null ? _f : [];
+    if (interests.length) {
+      out.push(secTitle("最近在聊什么"), el("div", "bz-people-md bz-people-ints", interests.slice(0, 10).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.topic))]))));
+    }
+    const moments = (_h = (_g = p.digest) == null ? void 0 : _g.moments) != null ? _h : [];
+    if (moments.length) {
+      const box = el("div", "bz-people-md bz-people-moms", moments.slice(0, 6).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.summary))])));
+      if (moments.length > 6) box.appendChild(el("div", "bz-people-it", [el("span", "bz-people-date"), el("span", "bz-people-mut", text(`…另有 ${moments.length - 6} 个片刻`))]));
+      out.push(secTitle("留下的片刻"), box);
+    }
+    return out;
+  }
+  function foldBondBody(mdRoot, p) {
+    var _a, _b;
+    const out = [mdRoot != null ? mdRoot : foldHint("关系画像还没生成——画一次脸谱就会写出来。")];
+    const threads = (_b = (_a = p.digest) == null ? void 0 : _a.threads) != null ? _b : [];
+    if (threads.length) {
+      out.push(secTitle("未竟之事"), el("div", "bz-people-md", threads.slice(0, 8).map((t) => el("div", "bz-people-it", [el("span", "bz-people-date", text(t.ts)), el("span", "", text(t.text))]))));
+    }
+    return out;
+  }
+  function foldEventsBody(p) {
+    var _a, _b, _c, _d, _e, _f;
+    const out = [];
+    const chron = (_b = (_a = p.digest) == null ? void 0 : _a.chronicle) != null ? _b : "";
+    if (chron) {
+      out.push(el("div", "bz-people-chron", miniMarkdown(chron)));
+      out.push(el("div", "bz-people-ev-divider", el("span", "", text("纪事 · 按月"))));
+    }
+    const events = (_d = (_c = p.digest) == null ? void 0 : _c.events) != null ? _d : [];
+    if (events.length) {
+      const by = /* @__PURE__ */ new Map();
+      for (const e of events) {
+        const m = e.ts.slice(0, 7);
+        const arr = (_e = by.get(m)) != null ? _e : [];
+        arr.push(e);
+        by.set(m, arr);
+      }
+      const months = [...by.keys()].sort();
+      const wrap = el("div", "bz-people-months");
+      months.forEach((m, i) => {
+        var _a2;
+        const evs = [...(_a2 = by.get(m)) != null ? _a2 : []].sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
+        const inner = el("div", "bz-people-mon-in", evs.slice(0, 14).map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
+          el("span", "bz-people-ev-ts", text(e.ts)),
+          el("span", "bz-people-ev-sum", text(e.summary))
+        ])));
+        if (evs.length > 14) inner.appendChild(el("div", "bz-people-ev", el("span", "bz-people-ev-sum bz-people-mut", text(`…同月另有 ${evs.length - 14} 条`))));
+        const head = el("button", "bz-people-mon-head", { "data-people-mon": m });
+        head.type = "button";
+        head.append(el("span", "bz-people-mon-plus", text("+")), el("span", "bz-people-mon-chip", text(m)), el("span", "bz-people-mon-cnt", text(`${evs.length} 条`)));
+        wrap.appendChild(el("div", `bz-people-mon${i === 0 ? " on" : ""}`, [head, el("div", "bz-people-mon-body", inner)]));
+      });
+      out.push(wrap);
+    } else if (!out.length) {
+      out.push(foldHint("交往纪事还没生成——画一次脸谱就会排出来。"));
+    }
+    const manual = (_f = p.manualEvents) != null ? _f : [];
+    if (manual.length) {
+      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map((m) => el("div", "bz-people-note-row", [
+        el("span", "bz-people-note-ts", text(m.ts)),
+        el("span", "bz-people-note-sum", text(m.summary)),
+        button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id })
+      ]))));
+    }
+    return out;
+  }
   function deleteTierOf(p, job) {
     const d = p.digest;
     if (personOf(d) || bondOf(d) || (d == null ? void 0 : d.chronicle)) return "drawn";
     return job && job.status !== "done" ? "unfinished" : "undrawn";
   }
-  function deleteTitleOf(tier) {
-    if (tier === "drawn") return "删除这个联系人（已有脸谱，需重输主密码）";
-    if (tier === "unfinished") return "删除这个联系人（脸谱还没画完）";
-    return "删除这个联系人";
-  }
-  function foldDetailHead(p, media, opts) {
-    var _a, _b;
-    const total = p.imports.reduce((s, r) => s + r.messageCount, 0);
-    const job = opts.job && opts.job.status !== "done" ? opts.job : null;
-    const tier = deleteTierOf(p, job);
-    const action = job ? iconButton("refresh-cw", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", {
-      "data-people-generate-one": "",
-      "aria-label": job.status === "running" ? "正在生成" : "继续生成",
-      title: job.status === "running" ? `正在生成「${p.name}」的脸谱（${job.batchesDone}/${job.batchesTotal} 批）——进度看面板顶部` : `继续生成（已完成 ${job.batchesDone}/${job.batchesTotal} 批，不会从头重烧）`
-    }) : opts.canGenerate ? iconButton("paintbrush", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-generate-one": "", "aria-label": "画脸谱", title: "画脸谱（用已导入的消息生成）" }) : null;
-    const tags = ((_b = (_a = p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean).slice(0, 3);
-    const meta = el("div", "bz-people-card-meta");
-    if (total) {
-      meta.appendChild(textEl("b", formatCount(total)));
-      meta.appendChild(text(` 条消息 · ${p.imports.length} 次导入`));
-      if (p.digest) meta.appendChild(text(` · 脸谱生成于 ${p.digest.generatedAt.slice(0, 10)}`));
-    } else meta.appendChild(text("尚无导入"));
-    const id = el("div", "bz-people-dt-id", [
-      el("div", "bz-people-dt-name", [
-        text(p.name),
-        ...tags.length ? [el("span", "bz-people-dt-tags", tags.map((t) => el("span", "bz-people-dt-tag", [text(t)])))] : []
-      ]),
-      meta
-    ]);
-    return el("div", "bz-people-dt-head", [
-      opts.avatar ? el("img", "bz-people-dt-avatar", { src: avatarUri(opts.avatar), alt: p.name }) : el("div", "bz-people-dt-seal", { style: `background:${avatarColor(p.name)}` }, text(initials(p.name))),
-      id,
-      el("div", "bz-people-dt-actions", [
-        ...action ? [action] : [],
-        // 455 评审：记一笔自纪事折抽出，独立弹窗，入口在互动统计之前
-        iconButton("pencil", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-note-open": "", "aria-label": "记一笔", title: "记一笔" }),
-        // issue 455：数据统计 / 补充背景两页折改独立弹窗，入口收进详情头工具条（返回钮在前、DOM 序居其左）
-        iconButton("bar-chart-3", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-stats-open": "", "aria-label": "互动统计", title: "互动统计" }),
-        iconButton("contact", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-prof-open": "", "aria-label": "补充背景", title: "补充背景" }),
-        // issue 500：删除（右上角工具条内、返回钮左侧——返回钮是定位锚点，惯例不动它）
-        iconButton("trash-2", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn bz-people-del", {
-          "data-people-del": p.id,
-          "aria-label": "删除",
-          title: deleteTitleOf(tier)
-        }),
-        iconButton("arrow-left", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-back-btn": "", "aria-label": "返回列表", title: "返回列表" })
-      ])
-    ]);
-  }
-  function foldBook(p, opts, bodies) {
-    var _a;
-    const book = el("div", "bz-people-book", { "data-people-book": "" });
-    for (const [id, title] of FOLD_TITLES) {
-      const on = opts.fold === id;
-      const leaf = el("div", `bz-people-leaf${on ? " bz-people-leaf-on" : ""}`, on ? { "data-people-leaf": id } : { "data-people-leaf": id, "data-people-leaf-head": id });
-      leaf.appendChild(el("div", "bz-people-leaf-spine", { "aria-hidden": "true" }));
-      leaf.appendChild(el("div", "bz-people-leaf-head", [
-        el("span", "bz-people-leaf-zh", text(title))
-      ]));
-      if (on) {
-        const body = el("div", "bz-people-leaf-body");
-        for (const node of (_a = bodies[id]) != null ? _a : []) body.appendChild(node);
-        leaf.appendChild(body);
-      }
-      book.appendChild(leaf);
-    }
-    return book;
-  }
   function profileFilled(prof) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     if (!prof) return false;
     return Boolean(
-      prof.socials && prof.socials.length || prof.tags && prof.tags.length || prof.interests && prof.interests.length || prof.likes && prof.likes.length || prof.dislikes && prof.dislikes.length || prof.relationships && prof.relationships.length || prof.importantDates && prof.importantDates.length || ((_a = prof.birthday) != null ? _a : "").trim() || ((_b = prof.metVia) != null ? _b : "").trim() || ((_c = prof.metAt) != null ? _c : "").trim() || ((_d = prof.hometown) != null ? _d : "").trim() || ((_e = prof.job) != null ? _e : "").trim() || ((_f = prof.note) != null ? _f : "").trim() || ((_g = prof.personality) != null ? _g : "").trim() || ((_h = prof.habits) != null ? _h : "").trim() || ((_i = prof.recentLife) != null ? _i : "").trim() || ((_j = prof.nickname) != null ? _j : "").trim() || ((_k = prof.quote) != null ? _k : "").trim()
+      ((_a = prof.tags) == null ? void 0 : _a.length) || ((_b = prof.birthday) == null ? void 0 : _b.trim()) || ((_c = prof.nickname) == null ? void 0 : _c.trim()) || ((_d = prof.metVia) == null ? void 0 : _d.trim()) || ((_e = prof.job) == null ? void 0 : _e.trim()) || ((_f = prof.personality) == null ? void 0 : _f.trim()) || ((_g = prof.likes) == null ? void 0 : _g.length) || ((_h = prof.interests) == null ? void 0 : _h.length) || ((_i = prof.hometown) == null ? void 0 : _i.trim()) || ((_j = prof.habits) == null ? void 0 : _j.trim()) || ((_k = prof.quote) == null ? void 0 : _k.trim()) || ((_l = prof.dislikes) == null ? void 0 : _l.length) || ((_m = prof.recentLife) == null ? void 0 : _m.trim()) || ((_n = prof.note) == null ? void 0 : _n.trim()) || ((_o = prof.metAt) == null ? void 0 : _o.trim()) || ((_p = prof.socials) == null ? void 0 : _p.length) || ((_q = prof.relationships) == null ? void 0 : _q.length) || ((_r = prof.importantDates) == null ? void 0 : _r.length)
     );
-  }
-  function foldHint(msg, action) {
-    const d = el("div", "bz-people-empty-hint");
-    d.appendChild(text(msg));
-    if (action) {
-      d.appendChild(el("br"));
-      d.appendChild(button("bz-people-btn bz-people-btn-ghost", action, { "data-people-ds-open": "" }));
-    }
-    return d;
-  }
-  function foldPersonBody(mdRoot, p) {
-    var _a, _b;
-    const out = mdRoot ? [mdRoot] : [foldHint("还没有其人画像。从数据源导入一次即可生成。", "打开数据源")];
-    if ((_b = (_a = p.digest) == null ? void 0 : _a.quotes) == null ? void 0 : _b.length) {
-      out.push(el("div", "bz-people-section-title", text("代表原话")));
-      const quotes = el("div", "bz-people-quotes");
-      for (const q of p.digest.quotes) {
-        quotes.appendChild(el("div", "bz-people-quote", [
-          el("div", "bz-people-quote-text", text(`「${q.text}」`)),
-          el("div", "bz-people-quote-meta", text(`${q.who === "我" ? "我" : p.name} · ${q.ts}`))
-        ]));
-      }
-      out.push(quotes);
-    }
-    return out;
-  }
-  function foldBondBody(mdRoot) {
-    return mdRoot ? [mdRoot] : [foldHint("还没有关系画像。从数据源导入一次即可生成。", "打开数据源")];
-  }
-  function foldEventsBody(p) {
-    var _a, _b, _c;
-    const out = [];
-    if ((_a = p.digest) == null ? void 0 : _a.chronicle) {
-      out.push(el("div", "bz-people-chronicle", [miniMarkdown(p.digest.chronicle)]));
-      out.push(el("div", "bz-people-ev-divider", [el("span", "", [text("纪事 · 按月")])]));
-    }
-    if ((_b = p.digest) == null ? void 0 : _b.events.length) {
-      const byMonth = /* @__PURE__ */ new Map();
-      for (const ev of p.digest.events) {
-        const month = ev.ts.slice(0, 7);
-        const list = byMonth.get(month);
-        if (list) list.push(ev);
-        else byMonth.set(month, [ev]);
-      }
-      const months = el("div", "bz-people-ev-months");
-      for (const [month, evs2] of [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
-        evs2.sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
-        const group = el("div", "bz-people-ev-mon");
-        group.appendChild(el("button", "bz-people-ev-mon-head", { "data-people-ev-mon": "", "aria-label": `展开 ${month}` }, [
-          el("span", "bz-people-ev-mon-plus", text("+")),
-          el("span", "bz-people-ev-mon-name", text(month)),
-          el("span", "bz-people-ev-mon-cnt", text(`${evs2.length} 条`))
-        ]));
-        const body = el("div", "bz-people-ev-mon-body");
-        for (const ev of evs2) {
-          body.appendChild(el("div", `bz-people-event${ev.kind === "major" ? " bz-people-event-major" : ""}`, [
-            el("span", "bz-people-event-ts", text(ev.ts)),
-            el("span", "bz-people-event-dot"),
-            el("span", "bz-people-event-summary", text(ev.summary))
-          ]));
-        }
-        group.appendChild(body);
-        months.appendChild(group);
-      }
-      out.push(months);
-    } else if (!out.length) {
-      out.push(el("div", "bz-people-empty-hint", text("还没有交往纪事。导入聊天生成脸谱后会提炼出来。")));
-    }
-    const evs = (_c = p.manualEvents) != null ? _c : [];
-    if (evs.length) {
-      out.push(el("div", "bz-people-section-title", text("随手记")));
-      const list = el("div", "bz-people-notes");
-      for (const ev of evs) {
-        list.appendChild(el("div", "bz-people-note", [
-          el("span", "bz-people-note-ts", text(ev.ts)),
-          el("span", "bz-people-note-summary", text(ev.summary)),
-          button("bz-people-btn bz-people-btn-ghost bz-people-note-del", "删", { "data-people-ev-del": ev.id })
-        ]));
-      }
-      out.push(list);
-    }
-    return out;
   }
   function statsPopBody(card, p) {
     const out = [];
@@ -724,7 +1004,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return out;
   }
   function insightsCard(range, file, chart, rows) {
-    const card = el("div", "bz-people-insights", [
+    const card = el("div", "bz-people-ins", [
       el("div", "bz-people-ins-head", [
         el("div", "bz-people-ins-range", text(range)),
         el("div", "bz-people-ins-file", text(file))
@@ -737,7 +1017,6 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
   function monthlyChart(monthly) {
     if (!monthly.length) return null;
     const max = monthly.reduce((a, [, n]) => Math.max(a, n), 0);
-    const wrap = el("div", "bz-people-chart-wrap");
     const chart = el("div", "bz-people-chart");
     for (const [month, n] of monthly) {
       const h = max > 0 ? Math.max(Math.round(n / max * 100), 4) : 0;
@@ -748,15 +1027,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
         el("div", "bz-people-col-bar", { style: `height:${h}%` })
       ));
     }
-    wrap.appendChild(chart);
     const labels = el("div", "bz-people-chart-labels");
     const step = monthly.length <= 8 ? 1 : Math.ceil(monthly.length / 6);
     monthly.forEach(([month], i) => {
       const show = i === 0 || i === monthly.length - 1 || i % step === 0;
       labels.appendChild(el("span", "", text(show ? month.slice(2) : "")));
     });
-    wrap.appendChild(labels);
-    return wrap;
+    return el("div", void 0, [chart, labels]);
   }
   function insRow(label, mid, val) {
     return el("div", "bz-people-ins-row", [
@@ -832,7 +1109,7 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     ]));
     return el("div", "bz-people-prof", rows);
   }
-  function profInput(value, placeholder, attr, cls = "bz-people-prof-input") {
+  function profInput(value, placeholder, attr, cls = "bz-people-input") {
     const inp = document.createElement("input");
     inp.type = "text";
     inp.className = cls;
@@ -842,55 +1119,51 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     return inp;
   }
   function socialRow(platform, handle) {
-    return el("div", "bz-people-prof-social-row", [
-      profInput(platform, "平台（微信 / 微博…）", ["data-people-prof-social-platform", ""], "bz-people-prof-input bz-people-prof-social-platform"),
-      profInput(handle, "账号", ["data-people-prof-social-handle", ""], "bz-people-prof-input bz-people-prof-social-handle"),
-      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-social-del": "", "aria-label": "删除这条社交账号" })
+    return el("div", "bz-people-prof-subrow", [
+      profInput(platform, "平台（微信 / 微博…）", ["data-people-prof-social-platform", ""]),
+      profInput(handle, "账号", ["data-people-prof-social-handle", ""]),
+      button("bz-people-ico bz-people-ico-sm", "×", { "data-people-prof-social-del": "", "aria-label": "删除这条社交账号" })
     ]);
   }
   function relationRow(who, relation) {
-    return el("div", "bz-people-prof-social-row", [
-      profInput(who, "称呼（如 老妈）", ["data-people-prof-rel-who", ""], "bz-people-prof-input bz-people-prof-social-platform"),
-      profInput(relation, "关系（如 母亲）", ["data-people-prof-rel-relation", ""], "bz-people-prof-input bz-people-prof-social-handle"),
-      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-rel-del": "", "aria-label": "删除这条身边人" })
+    return el("div", "bz-people-prof-subrow", [
+      profInput(who, "称呼（如 老妈）", ["data-people-prof-rel-who", ""]),
+      profInput(relation, "关系（如 母亲）", ["data-people-prof-rel-relation", ""]),
+      button("bz-people-ico bz-people-ico-sm", "×", { "data-people-prof-rel-del": "", "aria-label": "删除这条身边人" })
     ]);
   }
   function dateRow(date, what) {
-    return el("div", "bz-people-prof-social-row", [
-      profInput(date, "日子（如 05-20 / 每年立冬）", ["data-people-prof-date-date", ""], "bz-people-prof-input bz-people-prof-social-platform"),
-      profInput(what, "是什么日子", ["data-people-prof-date-what", ""], "bz-people-prof-input bz-people-prof-social-handle"),
-      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-date-del": "", "aria-label": "删除这条重要日子" })
+    return el("div", "bz-people-prof-subrow", [
+      profInput(date, "日子（如 05-20 / 每年立冬）", ["data-people-prof-date-date", ""]),
+      profInput(what, "是什么日子", ["data-people-prof-date-what", ""]),
+      button("bz-people-ico bz-people-ico-sm", "×", { "data-people-prof-date-del": "", "aria-label": "删除这条重要日子" })
     ]);
   }
   function tagChip(t) {
-    return el("span", "bz-people-prof-tag", [
+    return el("span", "bz-people-tag-chip", [
       el("span", "bz-people-prof-tag-text", text(t)),
-      button("bz-people-btn bz-people-btn-ghost bz-people-prof-x", "×", { "data-people-prof-tag-del": "", "aria-label": `删除标签 ${t}` })
+      button("bz-people-ico bz-people-ico-sm", "×", { "data-people-prof-tag-del": "", "aria-label": `删除标签 ${t}` })
     ]);
   }
   function profileEditor(prof) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o;
     const grid = (label, input) => el("div", "bz-people-prof-row", [el("span", "bz-people-prof-label", text(label)), input]);
     const listText = (arr) => (arr != null ? arr : []).join("、");
-    const socialList = el("div", "bz-people-prof-social-list", { "data-people-prof-social-list": "" });
-    for (const s of (_a = prof == null ? void 0 : prof.socials) != null ? _a : []) socialList.appendChild(socialRow(s.platform, s.handle));
-    const relList = el("div", "bz-people-prof-social-list", { "data-people-prof-rel-list": "" });
-    for (const r of (_b = prof == null ? void 0 : prof.relationships) != null ? _b : []) relList.appendChild(relationRow(r.who, r.relation));
-    const dateList = el("div", "bz-people-prof-social-list", { "data-people-prof-date-list": "" });
-    for (const d of (_c = prof == null ? void 0 : prof.importantDates) != null ? _c : []) dateList.appendChild(dateRow(d.date, d.what));
-    const tagList = el("div", "bz-people-prof-tag-list", { "data-people-prof-tag-list": "" });
-    for (const t of (_d = prof == null ? void 0 : prof.tags) != null ? _d : []) tagList.appendChild(tagChip(t));
-    const tagInput = profInput("", "加标签…", ["data-people-prof-tag-input", ""], "bz-people-prof-input bz-people-prof-tag-input");
+    const group = (label, hook, addLabel, addHook, rows) => {
+      const list = el("div", "bz-people-prof-sub", { [hook]: "" }, rows);
+      return el("div", "bz-people-prof-row", [
+        el("span", "bz-people-prof-label", text(label)),
+        list,
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", addLabel, { [addHook]: "" })
+      ]);
+    };
+    const socialRows = ((_a = prof == null ? void 0 : prof.socials) != null ? _a : []).map((s) => socialRow(s.platform, s.handle));
+    const relRows = ((_b = prof == null ? void 0 : prof.relationships) != null ? _b : []).map((r) => relationRow(r.who, r.relation));
+    const dateRows = ((_c = prof == null ? void 0 : prof.importantDates) != null ? _c : []).map((d) => dateRow(d.date, d.what));
+    const tagList = el("div", "bz-people-tag-edit", { "data-people-prof-tag-list": "" }, ((_d = prof == null ? void 0 : prof.tags) != null ? _d : []).map((t) => tagChip(t)));
+    const tagInput = profInput("", "加标签…", ["data-people-prof-tag-input", ""], "bz-people-input bz-people-tag-input");
     return el("div", "bz-people-prof bz-people-prof-edit", [
-      el("div", "bz-people-prof-row", [
-        el("span", "bz-people-prof-label", text("社交账号")),
-        el("div", "bz-people-prof-social", [
-          socialList,
-          el("div", "bz-people-prof-social-tools", [
-            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 社交账号", { "data-people-prof-add-social": "" })
-          ])
-        ])
-      ]),
+      group("社交账号", "data-people-prof-social-list", "+ 社交账号", "data-people-prof-add-social", socialRows),
       grid("生日", profInput((_e = prof == null ? void 0 : prof.birthday) != null ? _e : "", "YYYY-MM-DD 或 MM-DD", ["data-people-prof-field", "birthday"])),
       grid("称呼", profInput((_f = prof == null ? void 0 : prof.nickname) != null ? _f : "", "TA 喜欢被怎么称呼", ["data-people-prof-field", "nickname"])),
       grid("认识方式", profInput((_g = prof == null ? void 0 : prof.metVia) != null ? _g : "", "怎么认识的", ["data-people-prof-field", "metVia"])),
@@ -904,33 +1177,13 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
       grid("反感 / 雷点", profInput(listText(prof == null ? void 0 : prof.dislikes), "顿号分隔：反感的事 / 雷点", ["data-people-prof-field", "dislikes"])),
       grid("作息 / 习惯", profInput((_m = prof == null ? void 0 : prof.habits) != null ? _m : "", "作息 / 生活习惯", ["data-people-prof-field", "habits"])),
       grid("近况", profInput((_n = prof == null ? void 0 : prof.recentLife) != null ? _n : "", "最近在忙什么 / 状态", ["data-people-prof-field", "recentLife"])),
-      el("div", "bz-people-prof-row", [
-        el("span", "bz-people-prof-label", text("身边人")),
-        el("div", "bz-people-prof-social", [
-          relList,
-          el("div", "bz-people-prof-social-tools", [
-            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 身边人", { "data-people-prof-add-rel": "" })
-          ])
-        ])
-      ]),
-      el("div", "bz-people-prof-row", [
-        el("span", "bz-people-prof-label", text("重要日子")),
-        el("div", "bz-people-prof-social", [
-          dateList,
-          el("div", "bz-people-prof-social-tools", [
-            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 重要日子", { "data-people-prof-add-date": "" })
-          ])
-        ])
-      ]),
+      group("身边人", "data-people-prof-rel-list", "+ 身边人", "data-people-prof-add-rel", relRows),
+      group("重要日子", "data-people-prof-date-list", "+ 重要日子", "data-people-prof-add-date", dateRows),
       el("div", "bz-people-prof-row", [
         el("span", "bz-people-prof-label", text("标签")),
-        el("div", "bz-people-prof-tags-edit", [
-          tagList,
-          el("div", "bz-people-prof-tag-tools", [
-            tagInput,
-            button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 标签", { "data-people-prof-tag-add": "" })
-          ])
-        ])
+        tagList,
+        tagInput,
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "+ 标签", { "data-people-prof-tag-add": "" })
       ]),
       grid("备注", profInput((_o = prof == null ? void 0 : prof.note) != null ? _o : "", "一句话备注", ["data-people-prof-field", "note"])),
       el("div", "bz-people-prof-actions", [
@@ -953,27 +1206,161 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     return out;
   }
-  function popShell(title, rootHook, body) {
-    const wrap = el("div", "bz-people-pop", { [rootHook]: "" });
-    wrap.appendChild(el("div", "bz-people-pop-dim", { "data-people-pop-close": "" }));
-    const pop = el("div", "bz-people-pop-panel", { role: "dialog", "aria-label": title });
-    pop.appendChild(el("div", "bz-people-pop-head", [
-      el("div", "bz-people-pop-title", text(title)),
-      iconButton("x", "bz-people-btn bz-people-btn-ghost bz-people-icon-btn", { "data-people-pop-close": "", "aria-label": "关闭", title: "关闭" })
-    ]));
-    const content = el("div", "bz-people-pop-body");
-    for (const node of body) content.appendChild(node);
-    pop.appendChild(content);
-    wrap.appendChild(pop);
-    return wrap;
+  function subPage(opts, body) {
+    var _a;
+    const cls = ["bz-people-page", "bz-people-dpage", "bz-people-sub", opts.side ? `bz-people-sit-${opts.side === "left" ? "l" : "r"}` : ""].filter(Boolean).join(" ");
+    const page = el("div", cls, { "data-people-sub": opts.hook });
+    const head = el("div", "bz-people-page-head");
+    head.appendChild(el("span", "bz-people-head-label", text(opts.title)));
+    if (opts.meta) head.appendChild(el("span", "bz-people-head-note", text(opts.meta)));
+    const right = el("span", "bz-people-head-right");
+    for (const n of (_a = opts.head) != null ? _a : []) right.appendChild(n);
+    right.appendChild(button("bz-people-close", "合上这页", { "data-people-close": "" }));
+    head.appendChild(right);
+    page.appendChild(head);
+    page.appendChild(el("div", "bz-people-pagebody", { "data-people-scroll": "pop" }, body));
+    if (opts.foot) page.appendChild(opts.foot);
+    return page;
+  }
+  function dsPage(s) {
+    const body = [];
+    body.push(el("div", "bz-people-ds-path", text(`${s.dataDir}${s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""}`)));
+    if (s.notice) body.push(el("div", "bz-people-notice bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
+    if (s.sync) body.push(dsSyncLineNode(s.sync));
+    if (!s.rows) {
+      body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
+    } else {
+      const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
+      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+      body.push(list);
+      const legend = el("div", "bz-people-ds-legend");
+      legend.append(
+        el("span", "", [el("i", "bz-people-ds-dot-ok"), text("有更新")]),
+        el("span", "", [el("i", "bz-people-ds-dot-idle"), text("已导无更新")]),
+        el("span", "", [el("i", "bz-people-ds-dot-none"), text("未导入")])
+      );
+      if (s.rows.some((r) => {
+        var _a;
+        return ((_a = r.newCount) != null ? _a : 0) > 0;
+      })) {
+        legend.appendChild(button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" }));
+      }
+      body.push(legend);
+    }
+    const foot = el("div", "bz-people-pop-foot");
+    foot.appendChild(el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))));
+    foot.appendChild(el("span", "bz-people-spacer"));
+    if (s.generateable) foot.appendChild(button("bz-people-btn bz-people-btn-gold", "画脸谱", { "data-people-ds-generate": "" }));
+    const imp = button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", { "data-people-ds-import": "" });
+    if (s.importing || s.syncing) imp.setAttribute("disabled", "");
+    foot.appendChild(imp);
+    const head = [];
+    head.push(s.syncing ? button("bz-people-btn bz-people-btn-sm", "停止", { "data-people-ds-sync-stop": "", title: "停止同步——已导出的部分保留，重跑可续传" }) : button("bz-people-btn bz-people-btn-sm", "同步", { "data-people-ds-sync": "", title: "从微信重新解密并导出，需要微信已登录" }));
+    const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
+    return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
+  }
+  function genPage(info) {
+    const body = [];
+    const segs = [`为 ${info.items.length} 位联系人生成脸谱`];
+    if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
+    if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
+    segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
+    body.push(el("div", "bz-people-gen-line", text(`${segs.join("；")}。`)));
+    const list = el("ul", "bz-people-gen-list");
+    for (const it of info.items) {
+      const bits = [`素材 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
+    }
+    body.push(list);
+    body.push(el("div", "bz-people-pop-note", text("确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。")));
+    const actions = el("div", "bz-people-prof-actions", [
+      button("bz-people-btn", "取消", { "data-people-gen-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
+    ]);
+    body.push(actions);
+    return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
+  }
+  function statsPage(p, body) {
+    return subPage({ title: "互动统计", meta: p.name, hook: "stats" }, body);
+  }
+  function profPage(p, body, editing) {
+    return subPage({ title: "补充背景", meta: editing ? `${p.name} · 编辑中` : p.name, hook: "prof" }, body);
+  }
+  function notePage(p, today) {
+    return subPage({ title: "记一笔", meta: p.name, hook: "note" }, [
+      noteAddRow(today),
+      el("div", "bz-people-pop-note", text("随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。"))
+    ]);
+  }
+  function delPage(p, tier) {
+    const body = [el("div", "bz-people-del-who", text(`「${p.name}」`))];
+    body.push(el("div", "bz-people-del-line", text(tier === "drawn" ? "这个人已经有画成的脸谱——删除会连同脸谱正文、聊天仓、随手记与头像一起销毁，不可恢复。" : tier === "unfinished" ? "这个人的脸谱还没画完——删掉要从头再画，未完成的任务一并停掉。" : "这个人还没画过脸谱——删掉之后要重新导入才能再画。")));
+    body.push(el("div", "bz-people-del-note", text(tier === "drawn" ? "要删除，请重输主密码确认。" : "数据源目录与聊天原文不动，之后可以重新导入。")));
+    const actions = el("div", "bz-people-del-actions", [
+      button("bz-people-btn", "取消", { "data-people-del-cancel": "" }),
+      button("bz-people-btn bz-people-btn-acc", "删除", { "data-people-del-ok": "" })
+    ]);
+    body.push(actions);
+    return subPage({ title: "删除联系人", hook: "del", side: void 0 }, body);
+  }
+  function findPage(opts) {
+    var _a, _b;
+    const q = opts.q.trim();
+    const body = [];
+    const box = el("div", "bz-people-findbox");
+    box.appendChild(el("i", "bz-ic", { "data-lucide": "search", "aria-hidden": "true" }));
+    const inp = document.createElement("input");
+    inp.className = "bz-people-input";
+    inp.value = q;
+    inp.setAttribute("data-people-find", "");
+    inp.setAttribute("placeholder", "名字或标签，比如「摄影」「表妹」「阿澈」…");
+    box.appendChild(inp);
+    if (q) box.appendChild(iconButton("x", "bz-people-ico bz-people-ico-sm", { "data-people-find-clear": "", "aria-label": "清空" }));
+    body.push(box);
+    if (!q) {
+      body.push(el("div", "bz-people-empty-hint", text(`共 ${opts.total} 位，输一个字就能把人捞出来，点一下就翻到 TA 那页。`)));
+      if (opts.tags.length) body.push(el("div", "bz-people-find-tags", opts.tags.map((t) => button("bz-people-stk", t, { "data-people-find-tag": t }))));
+    } else if (!opts.rows.length) {
+      body.push(el("div", "bz-people-empty-hint", text(`没找到「${q}」这个人。换个字试试，或者去「数据源」看看是不是还没导进来。`)));
+    } else {
+      body.push(el("div", "bz-people-find-n", text(`找到 ${opts.rows.length} 位`)));
+      const list = el("div", "bz-people-ds-list");
+      for (const r of opts.rows) {
+        const name = r.p.name || r.p.id;
+        const tags = ((_b = (_a = r.p.profile) == null ? void 0 : _a.tags) != null ? _b : []).filter(Boolean).join(" · ");
+        const state = r.state === "todo" ? "待画" : r.state === "drawing" ? "画谱中" : r.state === "legacy" ? "旧版" : "已画";
+        const row = el("button", "bz-people-find-row", { "data-people-find-open": r.p.id });
+        row.type = "button";
+        row.append(
+          el("span", "bz-people-find-ava", avatarNode(name, r.avatar)),
+          el("span", "bz-people-find-main", [
+            el("span", "bz-people-find-name", text(name)),
+            el("span", "bz-people-find-meta", text(tags))
+          ]),
+          el("span", "bz-people-find-side", text(`第 ${r.page} 页 ${r.half} · ${state}`))
+        );
+        list.appendChild(row);
+      }
+      body.push(list);
+    }
+    return subPage({ title: "找一找", meta: q ? `「${q}」` : `共 ${opts.total} 位`, hook: "find" }, body);
+  }
+  function mergeBanner(msg, calm = false) {
+    const box = el("div", `bz-people-banner${calm ? " bz-people-banner-calm" : ""}`);
+    box.appendChild(el("i", "bz-ic", { "data-lucide": calm ? "database" : "layers", "aria-hidden": "true" }));
+    box.appendChild(el("span", "bz-people-banner-tx", text(msg)));
+    box.appendChild(button("bz-people-banner-x", "×", { "data-people-banner-close": "", "aria-label": "收起" }));
+    return box;
   }
   function noteAddRow(today) {
     const date = document.createElement("input");
     date.type = "date";
-    date.className = "bz-people-prof-input bz-people-note-date";
+    date.className = "bz-people-input bz-people-note-date";
     date.value = today;
     date.setAttribute("data-people-note-date", "");
-    const txt = profInput("", "一句话记下这一天……", ["data-people-note-text", ""], "bz-people-prof-input bz-people-note-text");
+    const txt = profInput("", "一句话记下这一天……", ["data-people-note-text", ""], "bz-people-input bz-people-note-text");
     return el("div", "bz-people-note-add", [
       date,
       txt,
@@ -1096,121 +1483,90 @@ ${formatDay(p.lastProcessedTs).slice(2)}` : "已画",
     }
     return root;
   }
+  function dsWaterOf(row) {
+    if (row.isGroup) return null;
+    if (row.exported && !row.imported) return { k: "exported", label: "已导出 · 待入库" };
+    if (!row.imported) return { k: "full", label: `全新 · ${formatCount(row.rawCount)} 条` };
+    if (row.newCount > 0) return { k: "newer", label: row.newApprox ? "增量 · 有新消息" : `增量 · ${formatCount(row.newCount)} 条` };
+    return { k: "skip", label: "无新素材" };
+  }
   function dsWatermark(row) {
-    if (!row.previewCount) return "未导入";
-    const drawn = row.processedTs ? ` · 画到 ${formatDay(row.processedTs).slice(2)}` : " · 未画脸谱";
-    return `已导 ${formatCount(row.previewCount)} 条${drawn}`;
+    if (!row.imported) return "未导入";
+    const drawn = row.processedTs ? `画到 ${formatDay(row.processedTs).slice(5)}` : "未画脸谱";
+    return `已导 ${formatCount(row.rawCount)} 条 · ${drawn}`;
   }
   function dsRow(row, on) {
-    const fresh = row.newCount > 0;
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = on;
-    cb.disabled = row.isGroup;
-    cb.setAttribute("data-people-ds-check", row.name);
+    var _a;
+    const fresh = row.newCount > 0 && row.imported;
+    const water = dsWaterOf(row);
     const cls = `bz-people-ds-row${on ? " bz-people-ds-on" : ""}${fresh ? " bz-people-ds-fresh" : ""}${row.isGroup ? " bz-people-ds-off" : ""}`;
+    const box = el(
+      "span",
+      "bz-people-ds-box",
+      { "data-people-ds-check": row.name, role: "checkbox", "aria-checked": on ? "true" : "false" },
+      on ? el("i", "bz-ic", { "data-lucide": "check", "aria-hidden": "true" }) : text("")
+    );
+    const name = row.displayName + (row.isGroup ? "（群）" : "");
     return el("label", cls, [
-      cb,
-      row.avatar ? el("img", "bz-people-ds-ava bz-people-ds-ava-img", { src: avatarUri(row.avatar), alt: row.displayName }) : el("div", "bz-people-ds-ava", { style: `background:${avatarColor(row.name)}` }, text(initials(row.displayName))),
-      el("div", "bz-people-ds-main", [
-        el("div", "bz-people-ds-name", text(row.displayName + (row.isGroup ? "（群）" : ""))),
-        el("div", "bz-people-ds-meta", text([
-          `${formatCount(row.rawCount)} 条`,
-          row.media
-        ].filter(Boolean).join(" · ")))
+      box,
+      row.isGroup ? text("") : el("span", "bz-people-ds-ava", avatarNode(row.displayName || row.name, (_a = row.avatar) != null ? _a : "")),
+      el("span", "bz-people-ds-main", [
+        el("span", "bz-people-ds-name", text(name)),
+        el("span", "bz-people-ds-meta", text([`${formatCount(row.rawCount)} 条`, row.media].filter(Boolean).join(" · ")))
       ]),
-      el("div", "bz-people-ds-side", [
-        ...fresh ? [el("span", "bz-people-ds-new", text(row.newApprox ? "有新消息" : `新 ${row.newCount} 条`))] : [],
-        el("span", "bz-people-ds-mark", text(dsWatermark(row)))
+      el("span", "bz-people-ds-side", [
+        water ? el("span", `bz-people-ds-water bz-people-ds-w-${water.k}`, text(water.label)) : text(""),
+        el("span", "bz-people-ds-mark", text(row.isGroup ? "未纳入" : dsWatermark(row)))
       ])
     ]);
   }
-  function dsModal(s) {
-    const wrap = el("div", "bz-people-ds-pop", { "data-people-ds-pop": "" });
-    wrap.appendChild(el("div", "bz-people-ds-dim", { "data-people-ds-dim": "" }));
-    const pop = el("div", "bz-people-ds-panel", { role: "dialog", "aria-label": "数据源" });
-    const syncBtn = s.syncing ? button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "停止", {
-      "data-people-ds-sync-stop": "",
-      "aria-label": "停止同步",
-      title: "停止同步——已导出的部分保留，重跑可续传"
-    }) : button("bz-people-btn bz-people-btn-ghost bz-people-ds-syncbtn", "同步", {
-      "data-people-ds-sync": "",
-      "aria-label": "同步",
-      title: "从微信重新解密并导出，需要微信已登录"
-    });
-    pop.appendChild(el("div", "bz-people-ds-head", [
-      el("div", "bz-people-ds-title", text("数据源")),
-      el("div", "bz-people-ds-headmeta", text([
-        s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人` : "",
-        s.hiddenGroups > 0 ? `${s.hiddenGroups} 个群聊未纳入` : ""
-      ].filter(Boolean).join(" · "))),
-      syncBtn
-    ]));
-    pop.appendChild(el("div", "bz-people-ds-path", text(s.dataDir || "尚未配置数据根目录——到「设置 → 脸谱」粘贴预处理导出目录。" + (s.scannedAt ? ` · 扫描于 ${s.scannedAt}` : ""))));
-    if (s.sync) pop.appendChild(dsSyncLineNode(s.sync));
-    if (s.desktopOnly) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("数据源扫描仅桌面端支持（需要读取库外文件夹）。")));
-    } else if (s.scanning) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("正在扫描数据根目录…")));
-    } else if (!s.rows) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text("还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
-    } else if (!s.rows.length) {
-      pop.appendChild(el("div", "bz-people-ds-empty", text(
-        s.hiddenGroups > 0 ? `没有可导入的单聊（另有 ${s.hiddenGroups} 个群聊未纳入，可在设置开启）。` : "数据根目录里没有找到联系人（各联系人目录下需有 chat.json）。"
-      )));
-    } else {
-      const list = el("div", "bz-people-ds-list");
-      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
-      pop.appendChild(list);
-      const hasFresh = s.rows.some((r) => r.newCount > 0);
-      pop.appendChild(el("div", "bz-people-ds-legend", [
-        el("span", "", [el("i", "bz-people-dot bz-people-dot-ok"), text("有更新")]),
-        el("span", "", [el("i", "bz-people-dot bz-people-dot-idle"), text("已导无更新")]),
-        el("span", "", [el("i", "bz-people-dot bz-people-dot-none"), text("未导入")]),
-        ...hasFresh ? [button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" })] : []
-      ]));
+  function footerLabel(s) {
+    var _a;
+    const picked = ((_a = s.rows) != null ? _a : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+    if (!picked.length) return "未勾选联系人";
+    const n = { full: 0, newer: 0, skip: 0, exported: 0 };
+    let msgs = 0;
+    for (const r of picked) {
+      const w = dsWaterOf(r);
+      if (!w) continue;
+      if (w.k === "full") {
+        n.full++;
+        msgs += r.rawCount;
+      } else if (w.k === "exported") {
+        n.exported++;
+        msgs += r.rawCount;
+      } else if (w.k === "newer") {
+        n.newer++;
+        msgs += r.newCount;
+      } else if (w.k === "skip") n.skip++;
     }
-    const foot = el("div", "bz-people-ds-foot", [
-      el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))),
-      ...s.generateable && !s.importing ? [button("bz-people-btn bz-people-btn-acc", "画脸谱", s.syncing ? { "data-people-ds-generate": "", disabled: "", title: "同步进行中——完成后可画脸谱" } : { "data-people-ds-generate": "", title: "关闭弹窗，用预览素材生成脸谱" })] : [],
-      button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", s.syncing ? { "data-people-ds-import": "", disabled: "", title: "同步进行中——完成后可导入" } : { "data-people-ds-import": "" })
-    ]);
-    pop.appendChild(foot);
-    if (s.notice) pop.appendChild(el("div", "bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
-    wrap.appendChild(pop);
-    return wrap;
+    if (picked.length && n.skip === picked.length) return "所选暂无新素材（已导过的会被跳过）";
+    const bits = [
+      n.full ? `全新 ${n.full} 位` : "",
+      n.newer ? `增量 ${n.newer} 位` : "",
+      n.exported ? `待入库 ${n.exported} 位` : "",
+      n.skip ? `跳过 ${n.skip} 位` : ""
+    ].filter(Boolean);
+    return `已选 ${picked.length} 位 · 将并入 ${formatCount(msgs)} 条${bits.length ? `（${bits.join(" · ")}）` : ""}`;
   }
   function dsSyncLineNode(line) {
-    const mod = line.status === "running" ? "run" : line.status === "error" ? "err" : line.status === "stopped" ? "stop" : "done";
-    const row = el("div", `bz-people-ds-syncline bz-people-ds-syncline-${mod}`, { "data-people-ds-sync-line": "" });
-    row.appendChild(el("div", "bz-people-ds-sync-head", [
-      el("span", "bz-people-ds-sync-text", { "data-people-ds-sync-text": "" }, text(line.text + (line.pct != null ? ` ${line.pct}%` : "")))
-    ]));
+    const box = el("div", `bz-people-syncline${line.status === "error" ? " bz-people-syncline-err" : ""}`, { "data-people-ds-sync-line": line.status });
+    const main = line.pct === null ? line.text : `${line.text} ${line.pct}%`;
+    box.appendChild(el("div", "bz-people-sync-text", { "data-people-ds-sync-text": "" }, text(main)));
     if (line.status === "running") {
-      row.appendChild(el("div", "bz-people-ds-sync-track", [
-        line.pct != null ? el("div", "bz-people-ds-sync-bar", { "data-people-ds-sync-bar": "", style: `width:${Math.max(0, Math.min(100, line.pct))}%` }) : el("div", "bz-people-ds-sync-indet", {})
-      ]));
+      const track = el("div", "bz-people-sync-track");
+      track.appendChild(line.pct === null ? el("div", "bz-people-sync-indet") : el("div", "bz-people-sync-bar", { style: `width:${line.pct}%` }));
+      box.appendChild(track);
     }
-    const subNode = el("div", "bz-people-ds-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
-    if (!line.sub) subNode.hidden = true;
-    row.appendChild(subNode);
-    const contactNode = el("div", "bz-people-ds-sync-contact", { "data-people-ds-sync-contact": "" }, text(line.contact));
-    if (!line.contact) contactNode.hidden = true;
-    if (line.status === "running") row.appendChild(contactNode);
-    const shown = line.failures.slice(0, 3);
-    for (const f of shown) row.appendChild(el("div", "bz-people-ds-sync-fail", text(f)));
-    if (line.failures.length > 3) row.appendChild(el("div", "bz-people-ds-sync-fail", text(`等共 ${line.failures.length} 位失败——重跑同步只补失败项`)));
-    if (line.hint) row.appendChild(el("div", "bz-people-ds-sync-hint", text(line.hint)));
-    return row;
-  }
-  function footerLabel(s) {
-    if (!s.rows) return "";
-    if (!s.selectedCount) return "未勾选联系人";
-    const bits = [
-      ...s.freshCount > 0 ? [`新素材 ${s.freshCount} 条`] : [],
-      ...s.freshApprox > 0 ? [`${s.freshApprox} 位有新消息`] : []
-    ];
-    return bits.length ? `已选 ${s.selectedCount} 位 · ${bits.join(" · ")}` : `已选 ${s.selectedCount} 位 · 所选暂无新素材`;
+    const contact = el("div", "bz-people-sync-contact", { "data-people-ds-sync-contact": "" }, text(line.contact));
+    if (!line.contact) contact.hidden = true;
+    box.appendChild(contact);
+    for (const f of line.failures) box.appendChild(el("div", "bz-people-sync-fail", { "data-people-ds-sync-fail": "" }, text(f)));
+    const sub = el("div", "bz-people-sync-sub", { "data-people-ds-sync-sub": "" }, text(line.sub));
+    if (!line.sub) sub.hidden = true;
+    box.appendChild(sub);
+    if (line.hint) box.appendChild(el("div", "bz-people-sync-sub", text(line.hint)));
+    return box;
   }
   function importMeta(rec, textMsgs) {
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
