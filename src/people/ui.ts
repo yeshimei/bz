@@ -2650,11 +2650,16 @@ async function records(): Promise<Map<string, PeopleSafeRecord>> {
       loadActive = true;
       loadDone = 0;
       loadTotal = null;
+      const failedStat = { failedCount: 0 };
       const map = await peopleSafe!.readAll((done, total) => {
         loadTotal = total;
         loadDone = done;
         paintLoadCount();
-      });
+      }, failedStat);
+      // 单条坏记录不再拖垮全墙（readAll 已跳过），但损坏必须让人知道
+      if (failedStat.failedCount > 0) {
+        notice(`有 ${failedStat.failedCount} 条记录损坏，无法读取`, 'warning');
+      }
       recordCache = map;
       return map;
     } catch (e) {

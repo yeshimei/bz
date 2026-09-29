@@ -257,3 +257,140 @@ describe('自写抑制（issue 492）：头像重建的变更广播不清自己�
     expect(a?.person.name).toBe('阿琳');
   });
 });
+
+describe('写路径健壮性：普通写抑制 / 删除串行 / 重建回滚 / 落盘失败逐缓存 / 坏档跳过', () => {
+  let vault: MockVault;
+  let sm: SafeManager;
+  let safe: PeopleSafeStore;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp({ vault, metadataCache: { trigger: vi.fn() } } as never);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as never);
+    sm = new SafeManager('CONFIG/.ENCRYPT');
+    safe = new PeopleSafeStore(sm);
+  });
+
+  /** 解锁 + 两位联系人（各自一条热缓存记录） */
+  async function seedTwo(): Promise<void> {
+    await sm.unlock(PW);
+    await safe.write('wxid_a', (rec) => {
+      rec.person = card('wxid_a', '阿琳');
+      rec.store.msgs.push(msg(1, '甲的消息'));
+    });
+    await safe.write('wxid_b', (rec) => {
+      rec.person = card('wxid_b', '阿乙');
+      rec.store.msgs.push(msg(2, '乙的消息'));
+    });
+  }
+
+  it('普通写路径不破全库热读：updateNotePayload 的自写广播不清明文缓存（492 补全普通分支）', async () => {
+    await seedTwo();
+    const bBefore = await safe.read('wxid_b');
+    expect(safe.isFullyCached()).toBe(true);
+    // 甲普通写（不带 avatar → updateNotePayload 常规路径，其显式广播 encrypt:changed）
+    await safe.write('wxid_a', (rec) => {
+      rec.store.msgs.push(msg(3, '甲又一条'));
+    });
+    const bAfter = await safe.read('wxid_b');
+    expect(bAfter).toBe(bBefore); // 缓存未被清：同一对象（修复前每次普通写都全库重解）
+    expect(safe.isFullyCached()).toBe(true); // 整库热读未被打破
+    const a = await safe.read('wxid_a');
+    expect(a?.store.msgs).toHaveLength(2); // 写入本身照常落地
+  });
+
+  it('删除与在途写串行：写已排队未执行时删人，删后不落出空骨架（不复活）', async () => {
+    await seedTwo();
+    // 新联系人的首写悬在 mutate 闸口（在途写）；此刻删除 TA——修复前删除不走链，
+    // 抢在首写前跑完（当时还没有记录可删），首写随后把空骨架落出来
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const writeP = safe.write('wxid_new', async () => {
+      await gate;
+    });
+    const removeP = safe.removeContact('wxid_new');
+    release();
+    await expect(writeP).resolves.toBe('created'); // 首写照常提交
+    await removeP; // 删除排在写之后：把刚落的记录删净
+    expect(safe.has('wxid_new')).toBe(false);
+    expect(safe.talkers().sort()).toEqual(['wxid_a', 'wxid_b']);
+    expect(sm.manifest.notes.filter((n) => (n as { kind?: string }).kind === PEOPLE_KIND)).toHaveLength(2);
+  });
+
+  it('头像重建失败（lockNote 抛错）：旧载荷 + 旧头像回锁同路径兜底，记录与头像可恢复', async () => {
+    await sm.unlock(PW);
+    const b64v1 = Buffer.from('avatar-v1-bytes', 'utf8').toString('base64');
+    await safe.write('wxid_a', (rec) => {
+      rec.person = card('wxid_a', '阿琳');
+      rec.store.msgs.push(msg(1, '甲的消息'));
+    }, { avatar: { base64: b64v1, ext: 'jpg' } });
+    // 首次 lockNote（重建）抛错，第二次（回滚兜底）放行真链
+    const origLock = sm.lockNote.bind(sm);
+    let calls = 0;
+    const spy = vi.spyOn(sm, 'lockNote').mockImplementation(((input: Parameters<typeof origLock>[0]) => {
+      calls += 1;
+      if (calls === 1) return Promise.reject(new Error('模拟重建失败（磁盘满）'));
+      return origLock(input);
+    }) as typeof sm.lockNote);
+    const b64v2 = Buffer.from('avatar-v2-bytes', 'utf8').toString('base64');
+    await expect(
+      safe.write('wxid_a', (rec) => {
+        rec.person.name = '阿琳琳';
+      }, { avatar: { base64: b64v2, ext: 'png' } })
+    ).rejects.toThrow('模拟重建失败'); // 上抛原错：调用方必须知道本次写入没成
+    spy.mockRestore();
+    // 记录没丢：盘上回到 mutate 前的旧版本 + 旧头像（缓存已逐出，回读现解）
+    const after = await safe.read('wxid_a');
+    expect(after?.person.name).toBe('阿琳');
+    expect(after?.store.msgs.map((m) => m.text)).toEqual(['甲的消息']);
+    expect(await safe.avatarDataUrl('wxid_a')).toBe(`data:image/jpeg;base64,${b64v1}`);
+    expect(safe.attachmentCount('wxid_a')).toBe(1);
+    expect(sm.manifest.notes.filter((n) => (n as { kind?: string }).kind === PEOPLE_KIND)).toHaveLength(1); // 不堆重复条目
+  });
+
+  it('落盘失败：逐出脏缓存并上抛，回读重新解密盘上旧数据（不再「界面已保存、盘上没存」）', async () => {
+    await seedTwo();
+    const cached = await safe.read('wxid_a'); // 热缓存
+    const spy = vi.spyOn(sm, 'updateNotePayload').mockRejectedValue(new Error('模拟落盘失败'));
+    await expect(
+      safe.write('wxid_a', (rec) => {
+        rec.person.name = '改了但没存上';
+      })
+    ).rejects.toThrow('模拟落盘失败');
+    spy.mockRestore();
+    const after = await safe.read('wxid_a');
+    expect(after).not.toBe(cached); // 脏缓存已逐出 → 全新解密对象（修复前命中被原地改过的旧引用）
+    expect(after?.person.name).toBe('阿琳'); // 盘上仍是旧数据
+    expect(safe.isFullyCached()).toBe(true); // 回读后整库回到热读
+  });
+
+  it('单条坏记录不拖垮 readAll：跳过并经 stats 出参带出失败数；不传出参零漂移', async () => {
+    const good = (name: string) => JSON.stringify({
+      version: 1,
+      person: { id: name, name, createdAt: '2026-01-01T00:00:00.000Z', imports: [] },
+      store: { msgs: [], watermarkSid: 0, stats: { msgCount: 0, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 }, updatedAt: '' },
+      job: null,
+    });
+    const bodies = new Map<string, string | null>([
+      [PEOPLE_NOTE_PATH_PREFIX + '甲', good('甲')],
+      [PEOPLE_NOTE_PATH_PREFIX + '乙坏档', null], // 解密失败（decryptNoteBody null → read 抛错）
+      [PEOPLE_NOTE_PATH_PREFIX + '丙坏档', '{broken-json'], // 解析失败
+    ]);
+    const notes = [...bodies.keys()].map((path, i) => ({ id: `n${i}`, kind: 'people', path, title: path, attachments: [] }));
+    const fake = {
+      unlocked: true,
+      manifest: { notes },
+      decryptNoteBody: async (note: { path: string }) => bodies.get(note.path) ?? null,
+    } as unknown as SafeManager;
+    const store = new PeopleSafeStore(fake);
+    const seen: Array<[number, number]> = [];
+    const stats = { failedCount: 0 };
+    const all = await store.readAll((done, total) => seen.push([done, total]), stats);
+    expect([...all.keys()]).toEqual(['甲']); // 坏档跳过，好档照常返回
+    expect(stats.failedCount).toBe(2);
+    expect(seen).toEqual([[0, 3], [1, 3], [2, 3], [3, 3]]); // 进度回调仍逐人推进（含坏档）
+    // 不传出参的既有调用点零漂移（不抛、返回好档）
+    const plain = await store.readAll();
+    expect(plain.size).toBe(1);
+  });
+});
