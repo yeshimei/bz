@@ -237,6 +237,22 @@ describe('阶段机流转（preprocess 段）', () => {
     expect(job?.contentHash).toBe(refp.contentHash);
   });
 
+  it('有媒体但无欠账（issue 515）：描述 / 转写已升级（text 全非空）→ 不起 prep 全扫，直接进 AI 段', async () => {
+    const msgs = [
+      m(1),
+      m(2, { key: 'v91', type: 34, sid: 91, dur: 14, wav: `${TALKER}/voice/v_91.wav`, text: '[语音 14秒·开心] 构造转写' }),
+      m(3),
+      m(4, { key: 'p92', type: 3, sid: 92, ts: BASE + 4 * 60000, text: '[图片] 构造描述' }),
+    ];
+    await seedStore(msgs, { 文本: 2, 语音: 1, 图片: 1 }); // kindCounts 有媒体，但 text 全非空 = 无待办
+    seedSidecars();
+    await startJobs(app, [target(msgs)], { maxRetries: 0, sleep: async () => {}, ...makeAsks() });
+    await whenIdle();
+    expect(prep.calls.length).toBe(0); // 不为存量起 bz-face prep 全扫
+    const job = jobOf();
+    expect(job?.status).toBe('done');
+  });
+
   it('零媒体联系人自动跳过 prep 全段（决策 9）：不起进程直接进 AI 段', async () => {
     const msgs = [m(1), m(2), m(3)];
     await seedStore(msgs, { 文本: 3 });
