@@ -168,6 +168,8 @@ export interface PersonJob {
   /** 卷二《相交》成品（issue 455） */
   bond?: string;
   chronicle?: string;
+  /** 修订前的旧卷原文（issue 517：增量修订式落盘留档） */
+  revisedFrom?: { person: string; bond: string; chronicle: string };
   /**
    * 人物档案提炼（issue 487）：时间线之后按素材回填的档案建议——ui 落盘时经 fillProfile
    * **只填空白字段**，手填值绝不覆盖。提炼失败或素材不支撑时缺省（不阻断主流程）。
@@ -1593,7 +1595,17 @@ async function runJob(job: PersonJob): Promise<void> {
 
     // 5. 素材合并（digest / incremental 单源）→ 卷一《其人》
     let merged: MergedMaterial = mergeBatches(job.results);
-    if (job.mode === 'incremental') merged = mergeWithOld(merged, existing?.digest);
+    if (job.mode === 'incremental') {
+      merged = mergeWithOld(merged, existing?.digest);
+      // issue 517：修订式留档——旧卷原文随 job 走，落盘时写进 digest.revisedFrom
+      if (existing?.digest && (existing.digest.person || existing.digest.bond || existing.digest.chronicle)) {
+        job.revisedFrom = {
+          person: existing.digest.person ?? '',
+          bond: existing.digest.bond ?? '',
+          chronicle: existing.digest.chronicle ?? '',
+        };
+      }
+    }
     if (gone(job)) return;
     const counts: MaterialCounts = {
       events: merged.events.length,
@@ -1616,7 +1628,7 @@ async function runJob(job: PersonJob): Promise<void> {
 
     let person = '';
     try {
-      person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
+      person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === 'incremental' ? existing?.digest?.person : undefined))).trim();
     } catch (e) {
       await finish({ status: 'error', error: errorMessage(e) });
       return;
@@ -1636,7 +1648,7 @@ async function runJob(job: PersonJob): Promise<void> {
     await finish({ stage: 'bond', message: '《其人》完成，正在生成《相交》…' });
     let bond = '';
     try {
-      bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
+      bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === 'incremental' ? existing?.digest?.bond : undefined))).trim();
     } catch (e) {
       // error 面 message 不上屏（原因由底部错误行承担）——不写第二份
       await finish({ status: 'error', error: errorMessage(e) });
@@ -1659,7 +1671,13 @@ async function runJob(job: PersonJob): Promise<void> {
       try {
         chronicle = (
           await asks.portrait(
-            buildChroniclePrompt(job.name, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote)
+            buildChroniclePrompt(
+              job.name,
+              evenlySample(merged.events, MATERIAL_LIMITS.chronicle),
+              material.mediaNote,
+              material.statsNote,
+              job.mode === 'incremental' ? existing?.digest?.chronicle : undefined
+            )
           )
         ).trim();
       } catch {

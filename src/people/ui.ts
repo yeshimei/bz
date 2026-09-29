@@ -1412,6 +1412,7 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       moments: job.material?.moments, // 449：场景 / 特质随生成落盘
       traits: job.material?.traits,
       chronicle: job.chronicle || undefined,
+      ...(job.revisedFrom ? { revisedFrom: job.revisedFrom } : {}), // issue 517：修订前旧卷留档
       generatedAt: now,
     };
     await store.setDigest(talker, digest);
@@ -1537,9 +1538,19 @@ function answerGenConfirm(answer: 'start' | 'cancel'): void {
  * 便签动作派发（talker 从便签根 data 钩子读）。
  * 502 续：运行中不再出「暂停」钮（画谱是一段想看完的连续过程），故本派发器无 pause 分支。
  */
-function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry'): void {
+function jobsAction(kind: 'resume' | 'dismiss' | 'prep-retry' | 'cancel'): void {
   const api = jobs();
   const talker = overlay?.querySelector<HTMLElement>('[data-people-jobs]')?.getAttribute('data-people-jobs-talker') ?? '';
+  if (kind === 'cancel') {
+    // issue 517：中断 / 暂停 / 报错任务的「取消」——删任务（AI 作废不落盘，prep 断点清），
+    // 详情头失去可续任务后自动回到「补画脸谱」
+    const who = talker || currentJobsItem()?.talker || '';
+    if (!who) return;
+    if (api.removeJob(who)) notice('已取消这次画脸谱——详情页可重新补画', 'delete');
+    renderNote();
+    void renderAlbum();
+    return;
+  }
   if (kind === 'prep-retry') {
     const who = talker || currentJobsItem()?.talker || '';
     if (!who) return;
@@ -1689,6 +1700,7 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-jobs-resume]')) { jobsAction('resume'); return; }
   if (t.closest('[data-people-jobs-prep-retry]')) { jobsAction('prep-retry'); return; }
   if (t.closest('[data-people-jobs-dismiss]')) { jobsAction('dismiss'); return; }
+  if (t.closest('[data-people-jobs-cancel]')) { jobsAction('cancel'); return; }
   // —— 小签 / 弹窗（数据源 / 找一找 / 统计 / 档案 / 记一笔 / 删除 / 开工单） ——
   const dlg = t.closest<HTMLElement>('[data-people-dialog]');
   if (dlg) { void openDialogByHook(dlg.dataset.peopleDialog ?? ''); return; }

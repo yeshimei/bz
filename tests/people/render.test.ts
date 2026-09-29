@@ -1057,3 +1057,38 @@ describe('replyLatencySec 中位数回退', () => {
     expect(replyLatencySec(0, 120)).toBe(0);
   });
 });
+
+describe('进度块「取消」按钮（issue 517）', () => {
+  const base = {
+    talker: '大琳',
+    name: '大琳',
+    message: '',
+    batchesDone: 0,
+    batchesTotal: 0,
+    stagesDone: 0,
+    queueIndex: 1,
+    queueTotal: 1,
+    pct: null as number | null,
+  };
+
+  it('中断 / 暂停 / 可续报错：继续生成后追加取消；running / done 不出取消', () => {
+    for (const status of ['interrupted', 'paused', 'error'] as const) {
+      const block = jobsNote({ ...base, status, resumable: true });
+      const labels = [...block.querySelectorAll('button')].map((b) => b.textContent ?? '');
+      expect(labels).toContain('继续生成');
+      expect(labels).toContain('取消');
+    }
+    for (const status of ['running', 'done'] as const) {
+      const block = jobsNote({ ...base, status });
+      const labels = [...block.querySelectorAll('button')].map((b) => b.textContent ?? '');
+      expect(labels).not.toContain('取消');
+    }
+  });
+
+  it('漂移判废的 error 维持单枚「删除任务」，不出取消', () => {
+    const block = jobsNote({ ...base, status: 'error', resumable: false });
+    const labels = [...block.querySelectorAll('button')].map((b) => b.textContent ?? '');
+    expect(labels).toContain('删除任务');
+    expect(labels).not.toContain('取消');
+  });
+});

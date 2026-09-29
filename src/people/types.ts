@@ -248,6 +248,8 @@ export interface FaceDigest {
   quotes?: QuoteItem[];
   /** 《纪事》（编年史 markdown，从认识到现在；旧数据无此字段） */
   chronicle?: string;
+  /** 修订前的旧卷原文（issue 517：增量修订式落盘留档，防覆盖丢旧版；仅增量修订式产出有） */
+  revisedFrom?: { person: string; bond: string; chronicle: string };
   /** 提炼出的特质标签（口头禅 / 典型说话方式等关键词；旧数据无此字段） */
   traits?: string[];
   /** 场景与细节（与导入提炼的 MomentItem 同构；旧数据无此字段） */

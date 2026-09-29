@@ -215,10 +215,11 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
  * 输入是全部交往事件（含小事），产出按年份分节的成文史——不是事件列表的复述，
  * 而是把碎片串成「这段关系怎么一步步走到今天」。
  */
-export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string, statsNote?: string): string {
+export function buildChroniclePrompt(name: string, events: FaceEvent[], mediaNote?: string, statsNote?: string, existing?: string): string {
   const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join('\n') : '（无）';
   return [
     `我在整理我和「${name}」这些年的交往史，要写成一份《纪事》。下面是从认识到现在、按时间排的交往事件。`,
+    ...(existing ? reviseSection(existing) : []),
     ...(mediaNote ? ['', `素材说明：${mediaNote}`] : []),
     // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
     ...(statsNote ? ['', statsNote] : []),
@@ -335,10 +336,31 @@ function linesOrNone(lines: string[]): string {
  * 产出 7 节：画像速写（须含一组别扭处）/ 性格与思维 / 表达 DNA（称呼归卷二）/ 兴趣爱好（三层）/
  * 价值观与红线（全推断层）/ 习惯 / 情感倾向（语音情感计数直引）。样本警示 sampleWarn 非空时插头部。
  */
-export function buildPersonPrompt(name: string, material: PortraitMaterial, sampleWarn?: string): string {
+/**
+ * 修订模式段（issue 517）：增量提炼不再从素材重建整卷——把此前写下的这一卷原文附进 prompt，
+ * 指示「保旧补新」：原文仍成立的内容一字不弃，只补新增、修冲突、更新「现在」；产出仍是修订后
+ * 的完整全文（不是只给增量），落盘结构不变。existing 空 = 首画 / 重建式，本段不出现。
+ */
+function reviseSection(existing: string): string[] {
+  return [
+    '## ⚠ 修订模式：这一卷你已经写过（原文附后）',
+    '下面附上你此前写下的这一卷全文。这次不是重画——是带着新增素材回来修订它：',
+    '- 原文中仍然成立的内容、事例、引用、语气，一字不弃地保留（允许为衔接做最小润色）；',
+    '- 只做三类改动：把新增素材里的新事 / 新话 / 新模式补写进对应小节；修正与新材料明显冲突的旧结论；更新涉及「现在」的表述；',
+    '- 不得删除、合并或弱化仍然成立的旧内容；素材里没有「消失 / 疏远」的证据，就不要把旧内容写成过去了的；',
+    '- 旧文已写过的素材不因重复出现而展开重写；产出按下方小节结构给**修订后的完整全文**（不是只给增量）。',
+    '',
+    '## 此前写下的这一卷（修订基础）',
+    existing,
+    '',
+  ];
+}
+
+export function buildPersonPrompt(name: string, material: PortraitMaterial, sampleWarn?: string, existing?: string): string {
   const { events, traits, quotes, moments, interests, mediaNote, statsNote, profileNote } = material;
   return [
     `我在给好友「${name}」画一张「脸谱」，这是卷一《其人》，写 TA 这个人本身。下面是我从我们的聊天记录里提炼出来的素材。人和关系分两条轴：TA 是个什么样的人归卷一，我们俩怎么相处归卷二《相交》，卷一只写 TA，不写关系。`,
+    ...(existing ? reviseSection(existing) : []),
     ...(sampleWarn ? [sampleWarn] : []),
     ...(mediaNote ? ['', `素材说明：${mediaNote}`, ''] : []),
     '',
@@ -399,10 +421,11 @@ export function buildPersonPrompt(name: string, material: PortraitMaterial, samp
  * 产出 8 节：关系定性 / 互动结构（不罗列数字）/ 演变阶段 / 我们的语言 / 共同记忆 /
  * 冲突与修复（和解信号单独写）/ 未竟之事（对照 events 判断兑现）/ 经营建议。样本警示同卷一。
  */
-export function buildBondPrompt(name: string, material: PortraitMaterial, sampleWarn?: string): string {
+export function buildBondPrompt(name: string, material: PortraitMaterial, sampleWarn?: string, existing?: string): string {
   const { events, quotes, moments, threads, mediaNote, statsNote, profileNote } = material;
   return [
     `我在给好友「${name}」画一张「脸谱」，这是卷二《相交》，写我和 TA 这段关系。下面是我从我们的聊天记录里提炼出来的素材。TA 本身是个什么样的人归卷一，本卷只写我们俩怎么相处。`,
+    ...(existing ? reviseSection(existing) : []),
     ...(sampleWarn ? [sampleWarn] : []),
     ...(mediaNote ? ['', `素材说明：${mediaNote}`, ''] : []),
     '',
@@ -697,6 +720,8 @@ export interface BuiltFace {
   person: string;
   /** 卷二《相交》（issue 455） */
   bond: string;
+  /** 修订前的旧卷原文（issue 517：增量修订式随返回值落盘留档，防覆盖丢旧版） */
+  revisedFrom?: { person: string; bond: string; chronicle: string };
   events: FaceEvent[];
   quotes: QuoteItem[];
   /** 场景与细节（合并抽样后随返回值落盘，增量重画不丢，issue 449） */
@@ -798,6 +823,9 @@ export interface FaceRunOptions {
   profile?: PersonProfile;
   /** 样本不足警示句覆盖（缺省按消息量自算：< 200 条时注入两卷 prompt；增量调用方可传全量口径） */
   sampleWarn?: string;
+  /** 增量修订模式（issue 517）：此前写下的三卷原文——传入后三段 prompt 转修订式（保旧补新），
+   *  不传 = 重建式（首画）。仅 buildFaceIncremental 消费。 */
+  existingTexts?: { person?: string; bond?: string; chronicle?: string };
   /** 阶段化进度回调 */
   onProgress?: (p: FaceProgress) => void;
   /** 素材采集完成回调（画像开始前；中间计数供成文阶段文案） */
