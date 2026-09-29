@@ -1025,7 +1025,8 @@ function buildPrepSpecFromSettings(job: PersonJob, dataRoot: string) {
 async function runPrepStage(
   job: PersonJob,
   finish: (patch: Partial<PersonJob>) => Promise<void>,
-  store: StoreContact | null
+  store: StoreContact | null,
+  safe: PeopleSafeStore
 ): Promise<'skipped' | 'ok' | 'halted'> {
   const totals = prepMediaTotals(store?.kindCounts, store?.stats);
   if (!totals) return 'skipped'; // 零媒体：不为 0 张图起一次进程（决策 9）
@@ -1036,13 +1037,26 @@ async function runPrepStage(
   if (!pending.images && !pending.voices) return 'skipped';
   const prep = prepOf(job);
   if (prep && prepAllDone(prep)) return 'skipped'; // 断点：prep 已齐段
-  if (!job.prep) job.prep = newPrepProgress(totals);
-
   const dataRoot = dataRootOf();
   if (!dataRoot) {
     await finish({ status: 'error', error: '数据根未配置——媒体导出与语音转写没有可跑的目录', message: '数据根未配置' });
     return 'halted';
   }
+  // 快检（issue 515 续）：盘上旁路表已就位时先试直接靶向升级（读盘毫秒级）——升级后待办清零
+  // 就不起 prep 进程了（3000+ 文件的全扫整个消失）；覆盖不全（转写失败 / 新语音）才落回原路径。
+  const side = readPrepSidecars(dataRoot, job.talker);
+  if (side && (side.voice.length || side.imageMap.length)) {
+    await mergePrepArtifactsIntoStore(safe, job.talker, dataRoot);
+    const fresh = (await safe.read(job.talker))?.store;
+    const after = pendingMediaCounts(fresh?.msgs ?? []);
+    if (!after.images && !after.voices) {
+      job.prep = newPrepProgress(totals); // 段进度齐账（与 prepAllDone 语义一致，后续续跑走断点跳过）
+      job.message = '预处理产物已覆盖全部待办，直接合并升级，无需起预处理进程';
+      return 'skipped';
+    }
+    job.prep = newPrepProgress(totals); // 覆盖不全：回落原路径前初始化段进度
+  }
+  if (!job.prep) job.prep = newPrepProgress(totals);
 
   // 预处理起跑：不另写「预处理：媒体导出、语音转写…」这种只看一帧的句子——进程第一行
   // [bz-p]/{step} 一到，主行进度行（`媒体导出 312/1631`）就接管（步短语与阶段行重复念是噪音）
@@ -1409,7 +1423,7 @@ async function runJob(job: PersonJob): Promise<void> {
 
     // 2. 工具段 prep（469 / ADR-0196 决策 1）：媒体导出→派生档→图片关联→语音转写。
     //    零媒体联系人自动跳过（决策 9）；暂停 = 协作式让行；硬失败整链停；单条失败计账继续。
-    const prepState = await runPrepStage(job, finish, storeBefore);
+    const prepState = await runPrepStage(job, finish, storeBefore, safe);
     if (prepState === 'halted') return; // 暂停 / 硬失败（finish 已落状态）
     if (prepState === 'ok') {
       // prep 产物合并进聊天仓（ADR-0197 决策 4：插件是唯一写入者；幂等靶向升级）

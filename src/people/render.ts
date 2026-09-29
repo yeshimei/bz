@@ -945,7 +945,8 @@ export function albumLoad(done: number, total: number | null): HTMLElement {
     el('div', 'bz-people-empty', [
       el('div', 'bz-people-load-figure', [
         el('span', 'bz-people-load-num', { 'data-people-load-num': '' }, text(String(done))),
-        total ? el('span', 'bz-people-load-total', text(`/ ${total} 位`)) : el('span', 'bz-people-load-total', text('位')),
+        // 分母 span 常驻（清单未读到先只显「位」，paintLoadCount 读到后原位补 `/ N 位`）
+        el('span', 'bz-people-load-total', text(total ? `/ ${total} 位` : '位')),
       ]),
       el('div', 'bz-people-load-bar', { 'aria-hidden': 'true' },
         el('div', 'bz-people-load-fill', { 'data-people-load-fill': '', style: `width:${pct ?? 0}%` })),
