@@ -37,6 +37,7 @@ import {
   type PrepRunner,
 } from '../../src/people/prep';
 import { applyImageMapToMsgs, applyVoiceToMsgs, type ImageMapItem, type StoreMsg, type VoiceItem } from '../../src/people/datasource';
+import { heavyGateDepth, heavyGateHolder, releaseHeavy, resetHeavyGateForTests, tryAcquireHeavy } from '../../src/people/heavy-gate';
 import { jobsNote, type JobsBlockState } from '../../src/people/render';
 
 /** 假进程壳：记录 spec、转发协议行、手动终结（形状对齐 runExternalTool 返回的 handle） */
@@ -93,6 +94,88 @@ beforeEach(() => {
 afterEach(() => {
   setPrepRunnerForTests(null);
   setPrepFsForTests(null);
+  resetHeavyGateForTests();
+});
+
+describe('重进程闸门（ADR-0218 决策 3：会话在手上 = 占闸，含待命）', () => {
+  const noopCbs = (): ExternalToolCallbacks => ({ onStep: () => {}, onProgress: () => {}, onInfo: () => {}, onResult: () => {} });
+  const spec = (): ExternalToolSpec => ({ cmd: 'bz-face', args: ['prep'], shell: true });
+
+  /**
+   * 按调用分槽的假壳：FakeTool 的 `resolve` 是单槽，多会话（换人跑）时会串到别人头上——
+   * 这组用例要精确控制"哪一个会话终结"，故自带。
+   */
+  function multiRunner() {
+    const settles: Array<(o: Partial<ExternalToolOutcome>) => void> = [];
+    const runner: PrepRunner = () => {
+      let resolve!: (o: ExternalToolOutcome) => void;
+      const done = new Promise<ExternalToolOutcome>((r) => (resolve = r));
+      const settle = (o: Partial<ExternalToolOutcome>): void => {
+        resolve({ ok: false, stopped: false, code: 1, stderr: '', error: null, ...o } as ExternalToolOutcome);
+      };
+      settles.push(settle);
+      return { stop: () => settle({ ok: false, stopped: true, code: null }), done };
+    };
+    return { runner, settles };
+  }
+  /** 让终结回调（microtask）跑完 */
+  const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+  it('起会话取得闸门；进程终结即释放（不留待命占位）', async () => {
+    expect(heavyGateHolder()).toBeNull();
+    const s = startPrepSession('大琳', spec(), noopCbs());
+    expect(heavyGateHolder()).toBe('portrait');
+    expect(heavyGateDepth()).toBe(1);
+    await tool.settle({ ok: true, code: 0 });
+    await s.done;
+    expect(heavyGateDepth()).toBe(0); // 进程走了 = 不再占内存
+    expect(heavyGateHolder()).toBeNull();
+  });
+
+  it('复用同一待命会话不重复计数（否则深度只增不减，闸门永不松）', async () => {
+    const s1 = startPrepSession('大琳', spec(), noopCbs());
+    const s1b = startPrepSession('大琳', spec(), noopCbs());
+    expect(s1b).toBe(s1);
+    expect(heavyGateDepth()).toBe(1); // 复用走早返回，没再 acquire
+    await tool.settle({ ok: true, code: 0 });
+    await s1.done;
+    expect(heavyGateDepth()).toBe(0);
+  });
+
+  it('runQueue 先持一份（任务在跑），prep 会话是同身份重入——两条各放各的，谁先退都不误松', async () => {
+    tryAcquireHeavy('portrait'); // 模拟 runQueue 拾起任务时先取得闸门
+    const s = startPrepSession('大琳', spec(), noopCbs());
+    expect(heavyGateDepth()).toBe(2);
+    releaseHeavy('portrait'); // runJob 结束：只松自己那一份
+    expect(heavyGateHolder()).toBe('portrait'); // prep 待命进程仍占着（模型未卸载）
+    expect(heavyGateDepth()).toBe(1);
+    await tool.settle({ ok: true, code: 0 });
+    await s.done;
+    expect(heavyGateHolder()).toBeNull(); // 进程真走了才彻底空闲
+  });
+
+  it('换人跑：新旧会话各持一份，被 stop 的旧会话终结时只放自己那份', async () => {
+    const m = multiRunner();
+    setPrepRunnerForTests(m.runner);
+    startPrepSession('大琳', spec(), noopCbs());
+    startPrepSession('陈默', spec(), noopCbs()); // 换人：大琳被 stop，陈默新起
+    expect(heavyGateDepth()).toBe(2);
+    await tick(); // 大琳的终结回调跑完 → 只放一份
+    expect(heavyGateDepth()).toBe(1);
+    expect(heavyGateHolder()).toBe('portrait'); // 陈默还在
+    m.settles[1]({ ok: true, code: 0 });
+    await tick();
+    expect(heavyGateDepth()).toBe(0);
+  });
+
+  it('runner 同步抛错：闸门不泄漏（否则录音会永久等下去）', () => {
+    setPrepRunnerForTests(() => {
+      throw new Error('起不来');
+    });
+    expect(() => startPrepSession('大琳', spec(), noopCbs())).toThrow('起不来');
+    expect(heavyGateDepth()).toBe(0);
+    expect(heavyGateHolder()).toBeNull();
+  });
 });
 
 describe('纯函数：参数组装（468 prep-core CLI 参数面）', () => {

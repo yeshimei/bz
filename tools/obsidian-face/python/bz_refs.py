@@ -35,6 +35,14 @@ PER_CONTACT_SAMPLE = 60
 PER_SPEAKER_CAP = 300
 EMBED_MODEL = "iic/speech_campplus_sv_zh-cn_16k-common"
 
+# ---- 旁音门限校准（ADR-0216）----
+# 判据口径必须与 bz_rec 一致：**窗级** max(sim_me, sim_peer) 的**轮级均值**。
+# 所以留出样本也按 1s 窗嵌入（不是整句嵌入——整句相似度天然更高，会把门限抬到误杀真原话）。
+WIN = 1.0                  # 校准窗长（与 bz_rec.py 滑窗同口径）
+SIDE_MARGIN = 0.04         # 门限余量：holdout 最小 max-sim 再降一点（宁可漏滤，ADR-0216 Q19）
+HOLDOUT_FILES = 6          # 每人用于校准的留出文件数
+HOLDOUT_WINS = 8           # 每文件最多取几窗
+
 
 def labeled_wavs(root, contact):
     """chat.json type=34 的 who 标签 × voice/*_<sid>.wav 文件 → {path: who}"""
@@ -59,7 +67,7 @@ def input_fingerprint(root, contacts):
     """全局输入指纹：「我」池跨联系人采样，任一联系人输入变了所有人的 me 质心输入都变
     ——指纹按全部联系人算，存进每个 npz 的 meta；任一变化全体重建，全没变逐人跳过。"""
     h = hashlib.sha256()
-    h.update(f"v1|sample={PER_CONTACT_SAMPLE}|cap={PER_SPEAKER_CAP}|model={EMBED_MODEL}".encode())
+    h.update(f"v2|sample={PER_CONTACT_SAMPLE}|cap={PER_SPEAKER_CAP}|model={EMBED_MODEL}|side={WIN}:{SIDE_MARGIN}:{HOLDOUT_FILES}:{HOLDOUT_WINS}".encode())
     for contact in contacts:
         h.update(f"\n#{contact}\n".encode())
         chat = os.path.join(root, contact, "chat.json")
@@ -132,6 +140,35 @@ def embed_paths(model, paths, tag):
     return np.array(vecs)
 
 
+def window_max_sims(model, paths, me_c, peer_c, tag):
+    """留出样本的**窗级** max(sim_me, sim_peer) 集合（旁音门限校准口径，ADR-0216）。
+
+    必须与 bz_rec 的滑窗同粒度：那边是 1s 窗嵌入取相似度、轮级取均值。整句嵌入的相似度
+    普遍更高，拿它定门限会偏高 → 把窄带压缩过的**真原话**判成旁音（独角戏），故按窗来。
+    """
+    out = []
+    for p in paths[:HOLDOUT_FILES]:
+        try:
+            wav = load16k(p)
+        except Exception:
+            continue
+        got = 0
+        off = 0
+        while got < HOLDOUT_WINS and off + int(WIN * 16000) <= len(wav):
+            piece = wav[off: off + int(WIN * 16000)]
+            off += int(WIN * 16000)
+            try:
+                r = model.generate(input=piece)
+                v = r[0]["spk_embedding"].detach().cpu().numpy().reshape(-1)
+            except Exception:
+                continue
+            v = v / (np.linalg.norm(v) + 1e-9)
+            out.append(max(float(v @ me_c), float(v @ peer_c)))
+            got += 1
+    print(f"  [{tag}] 校准窗 {len(out)} 个")
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description="bz-face refs：构建联系人声纹参考质心")
     ap.add_argument("--data-root", required=True, help="数据根")
@@ -185,6 +222,7 @@ def main():
     print(f"「我」参考池：{len(mine_paths)} 条（来自 {len(contacts)} 人）")
 
     for contact in fresh:
+        out_path = os.path.join(OUT, f"{contact}.npz")
         pairs = pairs_by_contact[contact]
         peer = [p for p, w in pairs if w == contact]
         random.shuffle(peer)
@@ -200,9 +238,9 @@ def main():
         if len(peer_vecs):
             peer_c = peer_vecs.mean(axis=0)
             peer_c /= np.linalg.norm(peer_c)
-        hold_mine = [p for p, w in pairs if w == "我"]
-        random.shuffle(hold_mine)
-        hold_mine = embed_paths(model, hold_mine[:10], f"{contact}/校验我")
+        hold_mine_files = [p for p, w in pairs if w == "我"]
+        random.shuffle(hold_mine_files)
+        hold_mine = embed_paths(model, hold_mine_files[:10], f"{contact}/校验我")
         dm = hold_mine @ me_c - (hold_mine @ peer_c if peer_c is not None else 0.0) if len(hold_mine) else np.array([0])
         # me-only（peer 建不出）也落 npz：分离脚本按「非我即对方」降级（issue 509 / ADR-0213）
         meta = {
@@ -218,8 +256,17 @@ def main():
             dp = hold_peer @ peer_c - hold_peer @ me_c if len(hold_peer) else np.array([0])
             meta["holdout_acc"] = float((dm > 0).mean() * 0.5 + (dp > 0).mean() * 0.5)
             meta["holdout_margin_peer"] = float(np.mean(dp))
+            # 旁音门限：留出样本（我 + 对方）窗级 max-sim 的最小值再留余量（宁可漏滤，ADR-0216 Q19）。
+            # 切片与上面「校验余量」那两批**不相交**——同批既定门限又当校验，等于自己判自己。
+            cal = window_max_sims(model, hold_mine_files[10:], me_c, peer_c, f"{contact}/旁音校准我") \
+                + window_max_sims(model, peer[130:], me_c, peer_c, f"{contact}/旁音校准对方")
+            if cal:
+                meta["side_speech_threshold"] = round(max(0.0, float(min(cal)) - SIDE_MARGIN), 4)
+                meta["side_speech_cal_windows"] = len(cal)
             savez_atomic(out_path, me=me_c, peer=peer_c, meta=json.dumps(meta, ensure_ascii=False))
             print(f"✓ {contact}: 校验准确率 {meta['holdout_acc']:.1%}（我余量 {meta['holdout_margin_me']:.3f} / 对方余量 {meta['holdout_margin_peer']:.3f}）")
+            if "side_speech_threshold" in meta:
+                print(f"  旁音门限 {meta['side_speech_threshold']:.3f}（校准窗 {meta['side_speech_cal_windows']}）")
         else:
             savez_atomic(out_path, me=me_c, meta=json.dumps(meta, ensure_ascii=False))
             print(f"△ {contact}: 对方语音样本不足，只建「我」质心（me-only，分离时非我即对方）")

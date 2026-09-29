@@ -28,6 +28,7 @@ import { computeInsights, emptyInsightSignals } from '../../src/people/insights'
 import { storeStatsOf, storeToUnified, type StoreMsg } from '../../src/people/datasource';
 import { PeopleStore } from '../../src/people/data';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import { releaseHeavy, resetHeavyGateForTests, tryAcquireHeavy } from '../../src/people/heavy-gate';
 import { SafeManager } from '../../src/encrypt/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -814,3 +815,28 @@ describe('多人队列（467：任务按人各归各的保库记录）', () => {
   });
 });
 
+
+describe('重进程闸门接入（ADR-0218 决策 6）', () => {
+  afterEach(() => resetHeavyGateForTests());
+
+  it('录音持闸时：任务不拾起（留 paused）；whenIdle() 不提前 resolve；释放后自动跑完', async () => {
+    const msgs = [pm(0), pm(1)];
+    await seedPreview(msgs);
+    const { askExtract, askPortrait } = makeAsks();
+    tryAcquireHeavy('recording'); // 模拟录音正在跑（它全程持闸）
+    await startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 2 }, askExtract, askPortrait });
+    let idle = false;
+    const p = whenIdle().then(() => {
+      idle = true;
+    });
+    await new Promise((r) => setTimeout(r, 60));
+    expect(idle).toBe(false); // 有任务在等闸 = 引擎还没空（不能提前 resolve）
+    expect(snapshot().queue[0].status).toBe('paused'); // 任务没进 running
+    expect(snapshot().queue[0].message).toBe('等待录音处理结束…');
+    releaseHeavy('recording'); // 录音跑完松闸
+    await p;
+    expect(idle).toBe(true);
+    expect(snapshot().queue[0].status).toBe('done'); // 闸门一放就接着跑完
+    expect((askExtract as any).mock.calls.length).toBe(1);
+  });
+});

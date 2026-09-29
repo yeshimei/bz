@@ -23,18 +23,20 @@ const fs = require('fs');
 // ---- CLI 参数解析（rec / refs 子命令）----
 
 /**
- * 解析 bz-face rec 的 argv：
+ * 解析 bz-face rec / check 的 argv（两者参数面相同）：
  *   bz-face rec <录音文件名> --data-root <路径> --contact <目录名> [--python <命令>] [--ffmpeg <路径>] [--help|--version]
  * 录音文件名 / --data-root / --contact 必填；文件名是 recordings/ 下的名字（含扩展名）；
  * --ffmpeg 音频转 16k wav 用（非空才传给 Python，缺省跟随脚本默认 ffmpeg）。
- * @returns {{ command:'rec'|null, file?:string, dataRoot?:string, contact?:string,
+ * @param {string[]} argv
+ * @param {'rec'|'check'} [command] 子命令名（决定首 token 跳过与用法文案；默认 rec）
+ * @returns {{ command:'rec'|'check'|null, file?:string, dataRoot?:string, contact?:string,
  *            python?:string, ffmpeg?:string, help?:boolean, version?:boolean, error?:string }}
  */
-function parseRecArgv(argv) {
-  const out = { command: 'rec' };
+function parseRecArgv(argv, command = 'rec') {
+  const out = { command };
   const args = argv || [];
   let i = 0;
-  if (args[i] === 'rec') i += 1;
+  if (args[i] === command) i += 1;
   const positional = [];
   for (; i < args.length; i++) {
     let arg = String(args[i]);
@@ -92,7 +94,7 @@ function parseRecArgv(argv) {
   }
   if (positional.length > 1) return { command: null, error: '录音文件名只收一个（recordings/ 下的文件名，含扩展名）' };
   if (positional.length === 1) out.file = positional[0];
-  if (!out.file) return { command: null, error: '缺录音文件名——用法：bz-face rec <录音文件名> --data-root <路径> --contact <目录名>' };
+  if (!out.file) return { command: null, error: `缺录音文件名——用法：bz-face ${command} <录音文件名> --data-root <路径> --contact <目录名>` };
   if (!out.dataRoot) return { command: null, error: '--data-root 需要一个路径参数' };
   if (!out.contact) return { command: null, error: '--contact 需要一个联系人目录名参数' };
   return out;
@@ -160,8 +162,86 @@ function parseRefsArgv(argv) {
   return out;
 }
 
-// ---- 预检判定 ----
+/**
+ * 解析 bz-face check 的 argv：
+ *   bz-face check --data-root <路径> --contact <目录名> --src <录音绝对路径> [--src …] [--python <命令>] [--ffmpeg <路径>]
+ * 与 rec 的差别：查的是**还没导入的源文件绝对路径**（可重复），故不收位置参数。
+ * @returns {{ command:'check'|null, srcs:string[], dataRoot?:string, contact?:string,
+ *            python?:string, ffmpeg?:string, help?:boolean, version?:boolean, error?:string }}
+ */
+function parseCheckArgv(argv) {
+  const out = { command: 'check', srcs: [] };
+  const args = argv || [];
+  let i = 0;
+  if (args[i] === 'check') i += 1;
+  for (; i < args.length; i++) {
+    let arg = String(args[i]);
+    let inlineValue;
+    const eq = arg.indexOf('=');
+    if (eq > 2 && arg.startsWith('--')) {
+      inlineValue = arg.slice(eq + 1);
+      arg = arg.slice(0, eq);
+    }
+    const takeValue = () => {
+      if (inlineValue !== undefined) return inlineValue;
+      if (i + 1 < args.length) {
+        i += 1;
+        return String(args[i]);
+      }
+      return undefined;
+    };
+    switch (arg) {
+      case '--data-root':
+      case '-d': {
+        const v = takeValue();
+        if (v === undefined) return { command: null, error: '--data-root 需要一个路径参数', srcs: [] };
+        out.dataRoot = v;
+        break;
+      }
+      case '--python':
+      case '-p': {
+        const v = takeValue();
+        if (v === undefined) return { command: null, error: '--python 需要一个命令参数', srcs: [] };
+        out.python = v;
+        break;
+      }
+      case '--ffmpeg': {
+        const v = takeValue();
+        if (v === undefined) return { command: null, error: '--ffmpeg 需要一个路径参数', srcs: [] };
+        out.ffmpeg = v;
+        break;
+      }
+      case '--contact': {
+        const v = takeValue();
+        if (v === undefined || !v.trim()) return { command: null, error: '--contact 需要一个联系人目录名参数', srcs: [] };
+        out.contact = v;
+        break;
+      }
+      case '--src': {
+        const v = takeValue();
+        if (v === undefined || !v.trim()) return { command: null, error: '--src 需要一个录音路径参数', srcs: [] };
+        out.srcs.push(v);
+        break;
+      }
+      case '--help':
+        out.help = true;
+        return out;
+      case '--version':
+        out.version = true;
+        return out;
+      default:
+        return { command: null, error: `未知参数「${arg}」`, srcs: [] };
+    }
+  }
+  if (!out.dataRoot) return { command: null, error: '--data-root 需要一个路径参数', srcs: [] };
+  if (!out.contact) return { command: null, error: '--contact 需要一个联系人目录名参数', srcs: [] };
+  if (!out.srcs.length) {
+    return { command: null, error: '缺录音路径——用法：bz-face check --data-root <路径> --contact <目录名> --src <录音绝对路径>（可重复）', srcs: [] };
+  }
+  return out;
+}
 
+// ---- 预检判定 ----
 /**
  * rec 预检：数据根存在可写、联系人目录在位、录音文件在位。缺质心不拦（降级阶梯照跑）。
  * @param {{ dataRoot:{configured:boolean,path?:string,exists?:boolean,writable?:boolean},
@@ -214,4 +294,4 @@ function contactDirExists(dataRoot, contact) {
   }
 }
 
-module.exports = { parseRecArgv, parseRefsArgv, judgeRecPreflight, judgeRefsPreflight, recordingExists, contactDirExists };
+module.exports = { parseRecArgv, parseRefsArgv, parseCheckArgv, judgeRecPreflight, judgeRefsPreflight, recordingExists, contactDirExists };

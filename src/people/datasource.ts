@@ -792,7 +792,8 @@ export interface RecordingTurn {
   /** 轮内起止偏移（秒，相对录音开头） */
   start: number;
   end: number;
-  /** 分离归属：「我」/ 联系人名 /「?」（质心降级时为 说话人0/1） */
+  /** 分离归属：「我」/ 联系人名 /「其他」（**旁音**——不属于本对话两人的第三人语音，
+   *  留账不进仓，ADR-0216）/「?」（两质心分不开）；质心降级（me-only / blind）时为 说话人0/1 */
   speaker: string;
   /** SenseVoice 情感标签（中文；缺省文本不带情感段） */
   emotion?: string;
@@ -818,11 +819,94 @@ export function buildRecordingText(t: { durSec: number; emotion?: string; text: 
   return body ? `${head} ${body}` : head;
 }
 
+/** 旁音轮的 speaker 字面值（bz-face rec 产出，ADR-0216）——不属于本对话两人的第三人语音，**留账不进仓** */
+export const SIDE_SPEECH_SPEAKER = '其他';
+
+/** 录音段落：连续同一说话人的轮次合并成一条聊天仓消息（ADR-0220，进仓单位） */
+export interface RecordingSegment {
+  /** 段首轮 start（秒，相对录音开头） */
+  start: number;
+  /** 段末轮 end（秒） */
+  end: number;
+  /** 说话人（段内一致） */
+  speaker: string;
+  /** 段内各轮情感**全一致**才带；不一致省略（不拿众数冒充） */
+  emotion?: string;
+  /** 段内各轮文本按序直连（无分隔符，与单轮同构） */
+  text: string;
+}
+
 /**
- * 录音轮次 → 聊天仓消息（509；ADR-0212/0213：合并动作由插件执行，插件是聊天仓唯一写入者）。
- * 每轮一条 type=9001 消息：key = `rec:<file>:<轮序>`，ts = 录音起点 + 轮内偏移，
- * isSender 按「我」归属（其余一律对方侧），text = `[录音 N分NN秒·情感] 转写`（空转写轮跳过）。
- * 同录音重跑幂等：先按 `rec:<file>:` 前缀清旧再追加（重跑后轮次划分可能变）。
+ * 轮次 → 段落（ADR-0220）：**只按说话人连续性**断段（无时间间隔阈值——用户明示）。
+ * - 旁音轮（`其他`）不进仓，且被识别为不同说话人 → **天然断开**前后同人的段落；
+ * - `?` 不确定轮口径不动（照旧进仓落对方侧），它同样是"另一个人" → 同样断段；
+ * - **空转写轮**（静音 / 转写失败）不输出，且**不断开**（同一说话人，只是没转出文本）。
+ */
+export function segmentRecordingTurns(turns: RecordingTurn[]): RecordingSegment[] {
+  const segs: RecordingSegment[] = [];
+  let cur: RecordingSegment | null = null;
+  for (const t of turns ?? []) {
+    const speaker = String(t?.speaker ?? '').trim();
+    if (!speaker || speaker === SIDE_SPEECH_SPEAKER) {
+      cur = null; // 旁音（或归属缺失）：不进仓，且断开前后段落
+      continue;
+    }
+    const body = String(t?.text ?? '').trim();
+    if (!body) continue; // 空转写轮：不输出也不断段
+    const start = Number.isFinite(t?.start) ? Math.max(0, Number(t.start)) : 0;
+    const end = Number.isFinite(t?.end) ? Math.max(start, Number(t.end)) : start;
+    const emotion = String(t?.emotion ?? '').trim() || undefined;
+    if (cur && cur.speaker === speaker) {
+      cur.end = Math.max(cur.end, end);
+      cur.text += body;
+      if (cur.emotion !== emotion) cur.emotion = undefined; // 有一轮不同 / 缺 → 整段省略情感
+    } else {
+      cur = { start, end, speaker, ...(emotion ? { emotion } : {}), text: body };
+      segs.push(cur);
+    }
+  }
+  return segs;
+}
+
+/**
+ * 逐轮 → 所在段序 + 段首标记（ADR-0220 §7；`turns.md` 与「查看轮次」共用的**段界单源**）。
+ * 判据与 `segmentRecordingTurns` 逐字一致（改一处必须改两处——单测锁住两者同构）：
+ * 旁音轮 / 空转写轮**不属于任何段**（seg = 0）；空转写轮**不断段**（透明穿过去），
+ * 旁音轮与说话人变化都**开新段**。`head = true` 只出现在段首轮上。
+ */
+export function recordingTurnSegments(turns: RecordingTurn[]): Array<{ seg: number; head: boolean }> {
+  const out: Array<{ seg: number; head: boolean }> = [];
+  let curSpeaker = '';
+  let seg = 0;
+  for (const t of turns ?? []) {
+    const speaker = String(t?.speaker ?? '').trim();
+    if (!speaker || speaker === SIDE_SPEECH_SPEAKER) {
+      curSpeaker = ''; // 旁音 / 归属缺失：断段，自己不成段
+      out.push({ seg: 0, head: false });
+      continue;
+    }
+    if (!String(t?.text ?? '').trim()) {
+      out.push({ seg: 0, head: false }); // 空转写轮：不成段、也不断段（curSpeaker 不动）
+      continue;
+    }
+    if (curSpeaker !== speaker) {
+      seg += 1;
+      curSpeaker = speaker;
+      out.push({ seg, head: true });
+    } else {
+      out.push({ seg, head: false });
+    }
+  }
+  return out;
+}
+
+/**
+ * 录音轮次 → 聊天仓消息（509；ADR-0212/0213 合并由插件执行，插件是聊天仓唯一写入者；
+ * **进仓单位 = 录音段落**，ADR-0220）。
+ * 每**段**（连续同一说话人的轮次合并）一条 type=9001 消息：key = `rec:<file>:s<段序>`，
+ * ts = 录音起点 + 段首轮偏移，isSender 按「我」归属（其余一律对方侧），
+ * text = `[录音 N分NN秒·情感] 段文本`（旁音轮与空转写轮不进仓）。
+ * 同录音重跑幂等：先按 `rec:<file>:` 前缀清旧再追加（重跑后分段可能变）。
  * 返回新消息流（ts 升序）、追加 added 条与清掉的 removed 条（kindCounts 取净增量 added − removed）。
  */
 export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsInput): { msgs: StoreMsg[]; added: number; removed: number } {
@@ -833,20 +917,15 @@ export function applyRecordingTurnsToMsgs(msgs: StoreMsg[], rec: RecordingTurnsI
   const out = msgs.filter((m) => !m.key.startsWith(prefix));
   const removed = msgs.length - out.length;
   let added = 0;
-  (rec.turns ?? []).forEach((t, i) => {
-    const body = String(t?.text ?? '').trim();
-    if (!body) return; // 空转写轮（静音 / 转写失败）：不进时间线
-    const speaker = String(t.speaker ?? '').trim();
-    const start = Number.isFinite(t?.start) ? Math.max(0, Number(t.start)) : 0;
-    const end = Number.isFinite(t?.end) ? Math.max(start, Number(t.end)) : start;
-    const durSec = Math.max(1, Math.round(end - start));
+  segmentRecordingTurns(rec.turns ?? []).forEach((seg, i) => {
+    const durSec = Math.max(1, Math.round(seg.end - seg.start)); // 段跨度（末轮 end − 首轮 start）
     out.push({
-      key: `${prefix}${i}`,
-      ts: base + Math.round(start * 1000),
-      isSender: speaker === '我',
+      key: `${prefix}s${i}`,
+      ts: base + Math.round(seg.start * 1000),
+      isSender: seg.speaker === '我',
       type: 9001,
       dur: durSec,
-      text: buildRecordingText({ durSec, emotion: String(t.emotion ?? '').trim() || undefined, text: body }),
+      text: buildRecordingText({ durSec, emotion: seg.emotion, text: seg.text }),
     });
     added++;
   });

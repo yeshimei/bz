@@ -1,4 +1,4 @@
-/* 源指纹 46ca3a14fca2b97d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 31e338a2e41c9fa7 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1363,6 +1363,7 @@ var BZR_people = (() => {
   ];
   var SUPP_REC_LABEL = {
     pending: "待处理",
+    queued: "排队中",
     running: "转写中",
     interrupted: "已中断",
     failed: "失败",
@@ -1454,6 +1455,7 @@ var BZR_people = (() => {
     return out;
   }
   function suppRecBody(s) {
+    var _a, _b;
     const out = [];
     out.push(el("div", "bz-people-pop-note", text("录音原件落数据根 recordings/（vault 外）；本地分离说话人与转写（不联网不花钱），转写轮次按归属并进时间线。")));
     const refLine = el("div", "bz-people-supp-ref");
@@ -1472,21 +1474,150 @@ var BZR_people = (() => {
     out.push(el("div", "bz-people-supp-acts", [
       button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "添加录音…", { "data-people-supp-rec-add": "" })
     ]));
+    if (s.queue.length) out.push(...suppRecQueueBody(s.queue));
+    const dups = (_a = s.dupGroups) != null ? _a : [];
+    if (dups.length) {
+      const warn = el("div", "bz-people-supp-dups");
+      warn.appendChild(el("div", "bz-people-supp-dupshead", text(
+        `库里有 ${dups.length} 组疑似重复（内容一样、名字不同）——没有自动删，你看过再定：`
+      )));
+      for (const g of dups) {
+        warn.appendChild(el("div", "bz-people-supp-duprow", { title: "这些文件字节完全相同" }, text(g.join("  ＝  "))));
+      }
+      out.push(warn);
+    }
     if (!s.rows.length) {
       out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
       return out;
     }
     const list = el("div", "bz-people-supp-list");
-    for (const r of s.rows) list.appendChild(suppRecRow(r));
+    for (const r of s.rows) {
+      list.appendChild(suppRecRow(r, ((_b = s.del) == null ? void 0 : _b.file) === r.file ? s.del : void 0, s.startEdit === r.file, s.turnsView));
+    }
     out.push(list);
     return out;
   }
-  function suppRecRow(r) {
+  function recDelConfirm(r, del) {
+    const box = el("div", "bz-people-supp-delbox");
+    box.appendChild(el("div", "bz-people-del-line", text(
+      r.status === "merged" || r.status === "awaiting-merge" ? `「${r.file}」的转写轮次已进聊天仓——删除会把仓里这些轮次一并清掉（统计同步重算）。` : `「${r.file}」还没进聊天仓——删除只清账本与派生档。`
+    )));
+    if (del.drawn) {
+      box.appendChild(el("div", "bz-people-del-line", text("该联系人已画过脸谱：正文是产物，不会随之改写——要反映这次删除得重新画谱（花钱）。")));
+    }
+    const label = document.createElement("label");
+    label.className = "bz-people-supp-delchk";
+    const ck = document.createElement("input");
+    ck.type = "checkbox";
+    ck.checked = del.alsoFile;
+    ck.setAttribute("data-people-supp-rec-del-file", r.file);
+    label.appendChild(ck);
+    label.appendChild(text(" 同时删除录音原件（不勾就只清账本，行回落「待处理」可重跑）"));
+    box.appendChild(label);
+    box.appendChild(el("div", "bz-people-supp-rowfoot", [
+      button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认删除", { "data-people-supp-rec-del-ok": r.file }),
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-supp-rec-del-cancel": r.file })
+    ]));
+    return box;
+  }
+  function suppRecQueueBody(queue) {
+    const out = [];
+    const list = el("div", "bz-people-supp-qlist");
+    queue.forEach((it, i) => {
+      const row = el("div", `bz-people-supp-qrow${it.startMs === null ? " need-ts" : ""}${it.suspect && !it.keep ? " suspect" : ""}`);
+      row.appendChild(el("span", "bz-people-supp-qname", { title: it.path }, text(it.name)));
+      if (it.dupOf) row.appendChild(el("span", "bz-people-supp-qwarn", { title: `与库里「${it.dupOf}」内容相同` }, text("重复")));
+      if (it.checking) row.appendChild(el("span", "bz-people-supp-qwarn", text("抽检中…")));
+      else if (it.suspect) {
+        row.appendChild(el("span", "bz-people-supp-qwarn bz-people-supp-qwarn-hard", {
+          title: `抽检听不出「我」或该联系人的声音（可能选错了录音）——默认跳过，确认要导就点右钮`
+        }, text(it.keep ? "存疑·已允许" : "听着不像你们俩")));
+        row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", it.keep ? "仍然导入：已允许" : "仍然导入", {
+          "data-people-supp-rec-keep": String(i)
+        }));
+      }
+      if (it.candidates.length > 1) {
+        const sel = document.createElement("select");
+        sel.className = "bz-people-input bz-people-supp-qcand";
+        sel.setAttribute("data-people-supp-rec-cand", String(i));
+        sel.setAttribute("title", "文件名只给了「周X / N点N分」这类相对信息——选一个候选日期");
+        it.candidates.forEach((c) => {
+          const o = document.createElement("option");
+          o.value = String(c);
+          o.textContent = suppLocalTsValue(c).replace("T", " ");
+          if (c === it.startMs) o.selected = true;
+          sel.appendChild(o);
+        });
+        row.appendChild(sel);
+      }
+      const ts = document.createElement("input");
+      ts.type = "datetime-local";
+      ts.className = "bz-people-input bz-people-supp-qts";
+      ts.value = it.startMs === null ? "" : suppLocalTsValue(it.startMs);
+      ts.setAttribute("data-people-supp-rec-ts", String(i));
+      if (it.startMs === null) ts.setAttribute("placeholder", "必填：这条录音的起点");
+      row.appendChild(ts);
+      row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "×", { "data-people-supp-rec-drop": String(i), "aria-label": "移除" }));
+      list.appendChild(row);
+    });
+    out.push(list);
+    const miss = queue.filter((q) => q.startMs === null).length;
+    const suspect = queue.filter((q) => q.suspect && !q.keep).length;
+    out.push(el("div", "bz-people-supp-acts", [
+      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${queue.length - suspect} 条`, { "data-people-supp-rec-import": "" })
+    ]));
+    out.push(el("div", "bz-people-pop-note", text(
+      miss > 0 ? `有 ${miss} 条还没确认起点（标红处）——录音起点决定整条转写的绝对时间，填完再落盘。` : suspect > 0 ? `有 ${suspect} 条抽检听不出你或该联系人的声音（可能选错了录音）——默认不导入；确认没错就点「仍然导入」。` : "起点 = 这条录音开始录的时刻（不是复制进来的时刻）；转写轮次的绝对时间靠它推。之后也能在行上改。"
+    )));
+    return out;
+  }
+  function recTurnsPreview(lines) {
+    const box = el("div", "bz-people-supp-turns");
+    if (!lines.length) {
+      box.appendChild(el("div", "bz-people-pop-note", text("账本里还没有轮次——转写跑完才会有。")));
+      return box;
+    }
+    const sideN = lines.filter((l) => l.side).length;
+    const segN = lines.reduce((m, l) => {
+      var _a;
+      return Math.max(m, (_a = l.segHead) != null ? _a : 0);
+    }, 0);
+    box.appendChild(el("div", "bz-people-supp-turnhead", text(
+      `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ""}`
+    )));
+    const list = el("div", "bz-people-supp-turnlist");
+    for (const l of lines) {
+      const segCls = l.segHead !== void 0 ? " seghead" : l.segCont ? " segcont" : "";
+      const line = el("div", `bz-people-supp-turn${l.side ? " side" : ""}${segCls}`);
+      const who = el("span", "bz-people-supp-turnwho", { title: "第 N 段的段首轮——同一人连续的这几轮并成聊天仓一条" });
+      if (l.segHead !== void 0) who.appendChild(el("span", "bz-people-supp-turnseg", text(`第${l.segHead}段`)));
+      who.appendChild(text(`${l.speaker}${l.emotion ? `·${l.emotion}` : ""}`));
+      line.appendChild(who);
+      line.appendChild(el("span", "bz-people-supp-turnat", text(`${l.at} ${l.range}`)));
+      line.appendChild(el("span", "bz-people-supp-turntext", text(l.text || "（空转写）")));
+      list.appendChild(line);
+    }
+    box.appendChild(list);
+    return box;
+  }
+  function suppRecRow(r, del, startEdit = false, turnsView) {
+    var _a;
     const row = el("div", "bz-people-supp-row", { "data-people-supp-row": r.file });
     const head = el("div", "bz-people-supp-rowhead");
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
     head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
     row.appendChild(head);
+    if (del) {
+      row.appendChild(recDelConfirm(r, del));
+      return row;
+    }
+    if ((turnsView == null ? void 0 : turnsView.file) === r.file) {
+      row.appendChild(recTurnsPreview(turnsView.lines));
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-turns-close": r.file })
+      ]));
+      return row;
+    }
     if (r.status === "running" || r.status === "interrupted" || r.status === "awaiting-merge") {
       const meter = el("div", "bz-people-jobs-meter");
       if (r.pct !== null) {
@@ -1511,18 +1642,44 @@ var BZR_people = (() => {
       row.appendChild(el("div", "bz-people-supp-rowfoot", [stop]));
       return row;
     }
+    if (r.status === "queued") {
+      row.appendChild(el("div", "bz-people-supp-rowmeta", text(`排队中 · 第 ${(_a = r.queuePos) != null ? _a : 1} 位`)));
+      const out = button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "移出队列", { "data-people-supp-rec-dequeue": r.file });
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [out]));
+      return row;
+    }
     const bits = [];
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
     if (r.mode === "blind") bits.push("无质心：盲分");
     if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
+    if (r.sideSpeaks) bits.push(`已滤 ${r.sideSpeaks} 轮旁音`);
     if (bits.length) row.appendChild(el("div", "bz-people-supp-rowmeta", text(bits.join(" · "))));
+    if (startEdit) {
+      const line = el("div", "bz-people-supp-startrow");
+      line.appendChild(el("span", void 0, text("起点")));
+      const inp = document.createElement("input");
+      inp.type = "datetime-local";
+      inp.className = "bz-people-input bz-people-supp-qts";
+      inp.value = r.startMs ? suppLocalTsValue(r.startMs) : "";
+      inp.setAttribute("data-people-supp-rec-start", r.file);
+      line.appendChild(inp);
+      row.appendChild(line);
+    } else if (r.startMs !== void 0) {
+      row.appendChild(el("div", "bz-people-supp-rowmeta", text(`起点 ${suppLocalTsValue(r.startMs).replace("T", " ")}`)));
+    }
     const foot = [];
     if (r.status === "failed" && r.errText) foot.push(el("span", "bz-people-jobs-err", text(r.errText)));
     if (r.status === "pending") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "处理", { "data-people-supp-rec-run": r.file }));
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
+    if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
+    else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
+    if (r.turns !== void 0) {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
+    }
+    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }
@@ -1532,13 +1689,22 @@ var BZR_people = (() => {
     return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
   }
   function recNote(rows) {
+    var _a;
     const block = el("div", "bz-people-jobs", { "data-people-rec-note": "", role: "status" });
-    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${rows.filter((r) => r.status === "running").length} 条在跑`)));
+    const running = rows.filter((r) => r.status === "running").length;
+    const waiting = rows.filter((r) => r.status === "queued").length;
+    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
     for (const r of rows) {
-      if (r.status !== "running" && r.status !== "interrupted") continue;
+      if (r.status !== "running" && r.status !== "queued" && r.status !== "interrupted") continue;
       const line = el("div", "bz-people-jobs-main", text(r.file));
-      if (r.phaseText) line.appendChild(el("span", "bz-people-jobs-detail", text(` · ${r.phaseText}`)));
+      const detail = r.status === "queued" ? `排队中 · 第 ${(_a = r.queuePos) != null ? _a : 1} 位` : r.phaseText;
+      if (detail) line.appendChild(el("span", "bz-people-jobs-detail", text(` · ${detail}`)));
       block.appendChild(line);
+    }
+    if (waiting) {
+      block.appendChild(el("div", "bz-people-jobs-foot", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "清空队列", { "data-people-rec-clear-queue": "" })
+      ]));
     }
     return block;
   }

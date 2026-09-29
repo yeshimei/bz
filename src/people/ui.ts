@@ -53,6 +53,7 @@ import {
   normalizeChatJson,
   normalizeOptionsFromSettings,
   plainNameOf,
+  recordingTurnSegments,
   readAvatarInput,
   readContactAvatarPath,
   readContactBundle,
@@ -62,26 +63,54 @@ import {
   storeToUnified,
   pendingMediaCounts,
   isGroupChat,
+  SIDE_SPEECH_SPEAKER,
   type StoreContact,
   type StoreStats,
 } from './datasource';
 import {
+  buildRecordingCheckSpec,
   buildRecordingSpec,
+  buildRecordingTurnsMd,
   buildVoiceprintSpec,
+  clearRecordingQueue,
+  dequeueRecordingTask,
+  duplicateRecordingGroups,
+  enqueueRecordingTask,
   faceRecSupportError,
+  fileSha256,
   formatRecElapsed,
+  fmtClock,
+  isRecordingFile,
+  isRecordingQueued,
   isRecordingRunning,
+  parseRecordingCheckResult,
+  parseRecordingFilenameTs,
   probeFaceCapabilities,
+  readRecordingMeta,
   readRecordingSidecar,
+  recControlFilePath,
+  recordingArtifactPaths,
+  recordingFailureText,
   recordingPhasePct,
+  recordingQueuePosition,
   recordingSidecarPath,
+  recordingStartCandidates,
+  recordingStartOf,
   recordingStageOf,
+  recordingTmpPrefix,
+  recordingTurnsComplete,
   recordingTsOf,
   recordingsDirOf,
+  queuedRecordingCount,
+  queuedRecordingItems,
+  resolveRecordingTargetName,
   runningRecordingItems,
   startRecordingTask,
   stopRecordingTask,
+  subscribeRecordingQueue,
   voiceprintRefStatus,
+  writeRecordingMeta,
+  writeRecordingTurnsMd,
   type RecordingSidecar,
 } from './recording';
 import { pickSystemFiles } from '../core/path-picker';
@@ -158,6 +187,7 @@ import {
   type JobsUiStatus,
   type SuppImageQueueItem,
   type SuppImageViewState,
+  type SuppRecQueueItem,
   type SuppRecRowState,
   type SuppRecViewState,
   type SuppTab,
@@ -275,10 +305,16 @@ let suppOwnerId: string | null = null;
 let suppImages: SuppImageQueueItem[] = [];
 /** 落盘 / 加录音进行中（按钮防双击） */
 let suppBusy = false;
-/** 质心构建进行中 */
-let refBuilding = false;
-/** 页内改过的录音起点 ts（内存口径：重启回落文件名 / mtime） */
-const suppRecTs = new Map<string, number>();
+/** 录音页签的待落盘暂存（选完文件、确认起点，再落盘；ADR-0217 起点是一等数据） */
+let suppRecQueue: SuppRecQueueItem[] = [];
+/** 删除二次确认开着的那条录音（issue 516 Q13；null = 没开） */
+let recDelPending: string | null = null;
+/** 确认里「同时删除录音原件」勾选态（默认勾选 = 原意：整条消失） */
+let recDelAlsoFile = true;
+/** 正在改起点的那条录音（ADR-0217；null = 没在改） */
+let recStartEditFile: string | null = null;
+/** 「查看轮次」正在看的那条（null = 没在看） */
+let recTurnsFile: string | null = null;
 /** 聊天仓侧事实缓存（弹窗渲染是同步的：开页异步刷，刷完重画） */
 let suppStoreInfo: { imported: number; undescribed: number; mergedRecs: Set<string> } = { imported: 0, undescribed: 0, mergedRecs: new Set() };
 /** 录音页签的进度轮询（只在页签可见时跑） */
@@ -303,7 +339,9 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
     if (suppOwnerId !== detailId) {
       suppOwnerId = detailId;
       suppImages = [];
-      suppRecTs.clear();
+      suppRecQueue = [];
+      recDelPending = null;
+      recStartEditFile = null;
       suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set() };
     }
     void refreshSuppStoreInfo(detailId);
@@ -403,13 +441,30 @@ function buildPanelShell(app?: unknown): void {
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-people-panel') ?? overlay);
   overlay.addEventListener('click', onOverlayClick);
   // 补充素材·图片行的时间改写即落状态（509 评审 P2：落盘才读回会被中途重画打回 mtime）
+  // 录音导入行的起点同理（ADR-0217）——落盘前随时可改，不逐键绑状态只在 selected 时落
   overlay.addEventListener('change', (e) => {
     const inp = e.target instanceof HTMLInputElement ? e.target : null;
-    const idxRaw = inp?.getAttribute('data-people-supp-img-ts');
-    if (!inp || idxRaw === null) return;
-    const it = suppImages[Number(idxRaw)];
-    const v = inp.value ? new Date(inp.value).getTime() : NaN;
-    if (it && Number.isFinite(v)) it.ts = v;
+    if (!inp) return;
+    const idxRaw = inp.getAttribute('data-people-supp-img-ts');
+    if (idxRaw !== null) {
+      const it = suppImages[Number(idxRaw)];
+      const v = inp.value ? new Date(inp.value).getTime() : NaN;
+      if (it && Number.isFinite(v)) it.ts = v;
+      return;
+    }
+    const recIdx = inp.getAttribute('data-people-supp-rec-ts');
+    if (recIdx !== null) {
+      const it = suppRecQueue[Number(recIdx)];
+      const v = inp.value ? new Date(inp.value).getTime() : NaN;
+      if (it) it.startMs = Number.isFinite(v) ? v : null;
+      return;
+    }
+    if (inp.hasAttribute('data-people-supp-rec-del-file')) { recDelAlsoFile = inp.checked; return; }
+    const startFile = inp.getAttribute('data-people-supp-rec-start');
+    if (startFile) {
+      const v = inp.value ? new Date(inp.value).getTime() : NaN;
+      if (Number.isFinite(v)) void suppSetRecordingStart(startFile, v);
+    }
   });
   // 桌面端鼠标滚轮翻摊（issue 507）：与触摸手势同一口径——累积到位翻一幕、一次只翻一幕。
   // 详情正文 / 数据源列表这种真能滚的块里先让原生滚完，滚到边了才轮到翻摊（滚轮挂在 overlay 上：
@@ -1828,6 +1883,8 @@ function onOverlayClick(e: MouseEvent): void {
     suppTab = (suppTabBtn.getAttribute('data-people-supp-tab') as SuppTab | null) ?? 'text';
     startRecPolling();
     void renderAlbum();
+    // 进录音页就交代「有哪些能续跑」（issue 516 Q16g）：中断的不会自己动，别让它们躺着没人管
+    if (suppTab === 'rec') void noticeInterruptedRecordings();
     return;
   }
   if (t.closest('[data-people-supp-img-pick]')) { void suppPickImages(); return; }
@@ -1842,7 +1899,70 @@ function onOverlayClick(e: MouseEvent): void {
   }
   if (t.closest('[data-people-supp-img-import]')) { void suppImportImages(); return; }
   if (t.closest('[data-people-supp-img-desc]')) { void suppDescribe(); return; }
-  if (t.closest('[data-people-supp-rec-add]')) { void suppAddRecordings(); return; }
+  if (t.closest('[data-people-supp-rec-add]')) { void suppPickRecordings(); return; }
+  const recCand = t.closest<HTMLElement>('[data-people-supp-rec-cand]');
+  if (recCand) {
+    const it = suppRecQueue[Number(recCand.getAttribute('data-people-supp-rec-cand'))];
+    const v = Number((recCand as HTMLSelectElement).value);
+    if (it && Number.isFinite(v)) {
+      it.startMs = v;
+      void renderAlbum();
+    }
+    return;
+  }
+  const recDrop = t.closest<HTMLElement>('[data-people-supp-rec-drop]');
+  if (recDrop) {
+    suppRecQueue.splice(Number(recDrop.getAttribute('data-people-supp-rec-drop')), 1);
+    void renderAlbum();
+    return;
+  }
+  const recKeep = t.closest<HTMLElement>('[data-people-supp-rec-keep]');
+  if (recKeep) {
+    const it = suppRecQueue[Number(recKeep.getAttribute('data-people-supp-rec-keep'))];
+    if (it) it.keep = !it.keep;
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-rec-import]')) { void suppImportRecordings(); return; }
+  const recDel = t.closest<HTMLElement>('[data-people-supp-rec-del]');
+  if (recDel) {
+    recDelPending = recDel.getAttribute('data-people-supp-rec-del') ?? null;
+    recDelAlsoFile = true; // 默认勾选（原意 = 整条消失）
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-rec-del-cancel]')) {
+    recDelPending = null;
+    void renderAlbum();
+    return;
+  }
+  const recDelOk = t.closest<HTMLElement>('[data-people-supp-rec-del-ok]');
+  if (recDelOk) {
+    void suppDeleteRecording(recDelOk.getAttribute('data-people-supp-rec-del-ok') ?? '');
+    return;
+  }
+  const recStartBtn = t.closest<HTMLElement>('[data-people-supp-rec-start-edit]');
+  if (recStartBtn) {
+    recStartEditFile = recStartBtn.getAttribute('data-people-supp-rec-start-edit');
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-rec-start-cancel]')) {
+    recStartEditFile = null;
+    void renderAlbum();
+    return;
+  }
+  const recTurns = t.closest<HTMLElement>('[data-people-supp-rec-turns]');
+  if (recTurns) {
+    recTurnsFile = recTurns.getAttribute('data-people-supp-rec-turns');
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-rec-turns-close]')) {
+    recTurnsFile = null;
+    void renderAlbum();
+    return;
+  }
   const recRun = t.closest<HTMLElement>('[data-people-supp-rec-run]');
   if (recRun) { void suppRunRecording(recRun.getAttribute('data-people-supp-rec-run') ?? ''); return; }
   const recMerge = t.closest<HTMLElement>('[data-people-supp-rec-merge]');
@@ -1858,6 +1978,21 @@ function onOverlayClick(e: MouseEvent): void {
     return;
   }
   if (t.closest('[data-people-supp-rec-ref]')) { void suppBuildVoiceprintRef(); return; }
+  const recDeq = t.closest<HTMLElement>('[data-people-supp-rec-dequeue]');
+  if (recDeq) {
+    // 排队行「移出队列」：这条不对了就走（与进度块的「清空队列」语义正交，ADR-0218 决策 7）
+    const file = recDeq.getAttribute('data-people-supp-rec-dequeue') ?? '';
+    const root = suppDataRoot();
+    if (detailId && root && file) dequeueRecordingTask(recordingSidecarPath(root, detailId, file));
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-rec-clear-queue]')) {
+    const n = clearRecordingQueue();
+    notice(n > 0 ? `已清空队列（${n} 条）` : '队列已是空的', 'info');
+    void renderAlbum();
+    return;
+  }
   // —— 上锁封面 ——
   const lock = t.closest<HTMLElement>('[data-people-lock]');
   if (lock) {
@@ -2063,11 +2198,28 @@ function findPageState(): HTMLElement {
   return findPage({ q, total: listCache.length, rows, tags: tagPool });
 }
 
+/**
+ * 把导入队列里**已上屏但还没提交**的起点收回模型（issue 516 回归防护）。
+ * 必须在任何整页重画前调用：否则「用户正在输起点时队列动了一下（抽检进程出队 / 转写推进）」
+ * 会把输入框里的字连同 DOM 一起抹掉——模型还是旧值，字却没了。
+ * 页签没开时 querySelectorAll 为空，零成本。
+ */
+function harvestRecQueueInputs(): void {
+  if (!suppRecQueue.length || !overlay) return;
+  overlay.querySelectorAll<HTMLInputElement>('[data-people-supp-rec-ts]').forEach((inp) => {
+    const it = suppRecQueue[Number(inp.getAttribute('data-people-supp-rec-ts'))];
+    if (!it) return;
+    const v = new Date(inp.value).getTime();
+    it.startMs = inp.value && Number.isFinite(v) ? v : null;
+  });
+}
+
 /** 渲染整册（唯一入口：面板重画全走这儿） */
 async function renderAlbum(): Promise<void> {
   const panel = overlay?.querySelector<HTMLElement>('.bz-people-panel');
   const wrap = overlay?.querySelector<HTMLElement>('[data-people-scroll]');
   if (!panel || !wrap || !store || !overlay) return;
+  harvestRecQueueInputs(); // 重画前先把没提交的起点收回（否则队列一动就吃字）
   const scroll = scrollSnapshot();
   // 上锁不可读（ADR-0194）：解锁态被任何路径翻掉 → 只剩一张合着的封面，不渲染任何联系人数据
   if (!peopleSafe?.unlocked) {
@@ -2990,18 +3142,69 @@ function recRunningPtext(side: RecordingSidecar | null, stage: ReturnType<typeof
   return side?.progress?.text ?? `${suppRecStageLabel(stage)}…`;
 }
 
+/** 删除确认态（issue 516 Q13）：已画过谱要说清「正文不会随之改写」 */
+function recDelState(): SuppRecViewState['del'] {
+  if (!recDelPending) return undefined;
+  const p = listCache.find((x) => x.id === detailId) ?? null;
+  const drawn = p ? deleteTierOf(p, sealJobOf(jobViews().get(p.id))) === 'drawn' : false;
+  return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
+}
+
+/** 「查看轮次」的展示态（面板内读 sidecar，含旁音轮；与 `<名>.turns.md` 同口径） */
+function recTurnsViewState(root: string, talker: string): SuppRecViewState['turnsView'] {
+  if (!recTurnsFile) return undefined;
+  const side = readRecordingSidecar(root, talker, recTurnsFile);
+  const turns = side?.turns ?? [];
+  const base = recordingStartOf(root, talker, recTurnsFile, recMtimeOf(root, talker, recTurnsFile));
+  const p2 = (n: number): string => String(n).padStart(2, '0');
+  // 段界单源（ADR-0220 §7）：与并仓的段切分同一判据，预览里能直接对上「并成几条」
+  const segs = recordingTurnSegments(turns);
+  return {
+    file: recTurnsFile,
+    lines: turns.map((t, i) => {
+      const emo = String(t.emotion ?? '').trim();
+      const date = new Date(base + Math.round((Number(t.start) || 0) * 1000));
+      const sg = segs[i] ?? { seg: 0, head: false };
+      return {
+        idx: i + 1,
+        at: `${p2(date.getHours())}:${p2(date.getMinutes())}:${p2(date.getSeconds())}`,
+        range: `${fmtClock(t.start)}-${fmtClock(t.end)}`,
+        speaker: String(t.speaker ?? '').trim() || '?',
+        ...(emo ? { emotion: emo } : {}),
+        text: String(t.text ?? '').trim(),
+        side: String(t.speaker ?? '').trim() === SIDE_SPEECH_SPEAKER,
+        ...(sg.seg > 0 ? (sg.head ? { segHead: sg.seg } : { segCont: true }) : {}),
+      };
+    }),
+  };
+}
+
+/** 录音原件 mtime（起点回落用；读不到 undefined） */
+function recMtimeOf(root: string, talker: string, file: string): number | undefined {
+  try {
+    return suppFs()?.statSync(`${recordingsDirOf(root, talker)}/${file}`).mtimeMs;
+  } catch {
+    return undefined;
+  }
+}
+
 function suppRecState(talker: string): SuppRecViewState {
   const rows: SuppRecRowState[] = [];
   const root = suppDataRoot();
-  const ref: SuppRecViewState['ref'] = refBuilding ? 'building' : voiceprintRefStatus(root, talker);
+  const del = recDelState();
+  /** 起点（meta 优先，回落旧口径）：行上可见、改起点时预填 */
+  const startOf = (file: string): number => recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
+  const refKey = `ref:${talker}`;
+  const refBusy = isRecordingRunning(refKey) || isRecordingQueued(refKey);
+  const ref: SuppRecViewState['ref'] = refBusy ? 'building' : voiceprintRefStatus(root, talker);
   const fs2 = suppFs();
-  if (!fs2 || !root) return { rows, ref };
+  if (!fs2 || !root) return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}) };
   const dir = recordingsDirOf(root, talker);
   let files: string[] = [];
   try {
     files = fs2
       .readdirSync(dir)
-      .filter((f: string) => !f.endsWith('.turns.json') && !f.endsWith('.tmp'))
+      .filter((f: string) => isRecordingFile(f)) // 派生物后缀单源过滤（recording.ts，ADR-0217）
       .filter((f: string) => {
         try {
           return fs2.statSync(`${dir}/${f}`).isFile();
@@ -3011,7 +3214,7 @@ function suppRecState(talker: string): SuppRecViewState {
       })
       .sort();
   } catch {
-    return { rows, ref }; // 目录还没有 = 还没加过录音
+    return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}) }; // 目录还没有 = 还没加过录音
   }
   const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
   for (const f of files) {
@@ -3019,6 +3222,11 @@ function suppRecState(talker: string): SuppRecViewState {
     const side = readRecordingSidecar(root, talker, f);
     // 并仓只认仓事实（mergedRecs）：sidecar done 但没并上（上锁竞态等）出「待并仓」，可手动补并
     const merged = suppStoreInfo.mergedRecs.has(f);
+    if (isRecordingQueued(key)) {
+      // 排队中（ADR-0218 决策 5）：全局一条串行，排队行只给「移出队列」（排队中不给删除，Q14）
+      rows.push({ file: f, status: 'queued', phaseText: '', pct: null, queuePos: recordingQueuePosition(key) });
+      continue;
+    }
     if (isRecordingRunning(key)) {
       const it = runMap.get(key);
       const stage = recordingStageOf(side, recSidecarFresh(fs2, key, it?.startedAt));
@@ -3044,16 +3252,36 @@ function suppRecState(talker: string): SuppRecViewState {
       continue;
     }
     if (side.phase === 'error') {
-      rows.push({ file: f, status: 'failed', phaseText: '', pct: null, errText: side.error ?? '进程异常退出' });
+      rows.push({ file: f, status: 'failed', phaseText: '', pct: null, errText: recordingFailureText(side) });
       continue;
     }
-    if (side.phase === 'done') {
-      rows.push({ file: f, status: 'awaiting-merge', phaseText: side.turns?.length ? `转写完成 · ${side.turns.length} 轮` : '转写完成', pct: 100, ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
+    if (side.phase === 'done' || recordingTurnsComplete(side)) {
+      // done 无轮次仍出「待并仓」（并仓守卫会挡，行为同旧）；停在 transcribe 但成果已齐 = 兜底
+      // 可并仓（账本收尾标记被插件读句柄拒掉，ADR-0219），行上注明来源。
+      const tail = side.phase === 'done' ? '' : '（账本收尾标记缺失，已按全部轮次）';
+      rows.push({ file: f, status: 'awaiting-merge', phaseText: side.turns?.length ? `转写完成 · ${side.turns.length} 轮${tail}` : '转写完成', pct: 100, ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
       continue;
     }
     rows.push({ file: f, status: 'interrupted', phaseText: side.progress?.text ?? '中断', pct: recordingPhasePct(side), ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
   }
-  return { rows, ref };
+  // 起点补到每行（ADR-0217：可见可改；绝对时间的唯一来源）；旁音计数（ADR-0216：留账不进仓）
+  for (const r of rows) {
+    r.startMs = startOf(r.file);
+    const n = (readRecordingSidecar(root, talker, r.file)?.turns ?? []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
+    if (n) r.sideSpeaks = n;
+  }
+  const turnsView = recTurnsViewState(root, talker);
+  // 疑似重复巡检（Q3：只报不清）；同尺寸才读盘哈希——正常录音时长各异，绝大多数一次不读
+  const dupGroups = duplicateRecordingGroups(recordingsDirOf(root, talker), suppFs());
+  return {
+    rows,
+    ref,
+    queue: suppRecQueue,
+    ...(dupGroups.length ? { dupGroups } : {}),
+    ...(del ? { del } : {}),
+    ...(recStartEditFile ? { startEdit: recStartEditFile } : {}),
+    ...(turnsView ? { turnsView } : {}),
+  };
 }
 
 async function suppPickImages(): Promise<void> {
@@ -3154,29 +3382,273 @@ async function suppDescribe(): Promise<void> {
   void renderAlbum();
 }
 
-async function suppAddRecordings(): Promise<void> {
+/**
+ * 删一条录音（issue 516 Q12/Q13）：六处清干净——原件（勾选时）/ `.turns.json` / 半截 `.tmp` /
+ * `.meta.json` / `.turns.md` / `rec-control` 控制文件 / 仓内 `rec:<文件>:*` 消息（kindCounts 与
+ * stats 同步重算）。不勾原件 = 只清我们这边的副本，行回落「待处理」可重跑（改阈值 / 重建质心后重转）。
+ * **不自动重画脸谱**（正文是产物）：已画过就在确认里说清。
+ */
+async function suppDeleteRecording(file: string): Promise<void> {
   const talker = detailId;
   const root = suppDataRoot();
-  if (!talker || !root || suppBusy) return;
+  const fs2 = suppFs();
+  if (!talker || !root || !file || !fs2) return;
+  // 上锁 → 整条不删（issue 516 Q13 口径：账本 / meta / 仓内轮次必须一起清干净）。
+  // 若只删文件，仓里 `rec:<文件>:` 轮次就成了**清不掉的孤儿**——行按 recordings/ 列，
+  // 文件没了就再没有删除入口，而它还在参与统计与画谱素材。宁可先请用户解锁。
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  if (!peopleSafe?.unlocked) {
+    notice('保险库上锁——删除要连仓里的转写轮次一起清，请先解锁保险库再删', 'warning');
+    return;
+  }
+  const alsoFile = recDelAlsoFile;
+  recDelPending = null;
+  suppBusy = true;
+  const removed: string[] = [];
+  try {
+    // 1~5 磁盘侧
+    const paths = [...recordingArtifactPaths(root, talker, file)];
+    try {
+      const dir = recordingsDirOf(root, talker);
+      const pre = recordingTmpPrefix(file);
+      for (const f of fs2.readdirSync(dir) as string[]) {
+        if (f.startsWith(pre) && f.endsWith('.tmp')) paths.push(`${dir}/${f}`);
+      }
+    } catch {
+      /* 目录不在：没什么可清的 */
+    }
+    paths.push(recControlFilePath(root, talker, file));
+    for (const p of paths) {
+      try {
+        if (fs2.existsSync(p)) {
+          fs2.unlinkSync(p);
+          removed.push(p);
+        }
+      } catch {
+        /* 单项失败不阻断其余（原件被占用等情况在下面统一说） */
+      }
+    }
+    if (alsoFile) {
+      const src = `${recordingsDirOf(root, talker)}/${file}`;
+      try {
+        if (fs2.existsSync(src)) fs2.unlinkSync(src);
+      } catch {
+        notice(`录音原件删不掉（可能被播放器占用）：「${file}」——账本与仓内数据已清`, 'warning');
+      }
+    }
+    // 6 聊天仓（插件是唯一写入者；统计与形态计数同步重算）
+    const prefix = `rec:${file}:`;
+    let gone = 0;
+    await peopleSafe.write(talker, (rec) => {
+      const before = rec.store.msgs.length;
+      rec.store.msgs = rec.store.msgs.filter((m) => !m.key.startsWith(prefix));
+      gone = before - rec.store.msgs.length;
+      if (gone > 0) {
+        const k = rec.store.kindCounts?.录音 ?? 0;
+        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: Math.max(0, k - gone) };
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = new Date().toISOString();
+      }
+    });
+    if (gone > 0) removed.push(`${gone} 条仓内轮次`);
+    notice(`已删除「${file}」${removed.length ? `（清掉 ${removed.length} 项）` : ''}${alsoFile ? '' : '；原件保留，行已回落「待处理」'}`, 'success');
+  } catch (e) {
+    notifyActionError(e, '删除录音');
+  } finally {
+    suppBusy = false;
+    void refreshSuppStoreInfo(talker);
+    void renderAlbum();
+  }
+}
+
+/** 进录音页时的「有 N 条中断可续跑」提示（issue 516 Q16g；只提示，不自动起进程） */
+async function noticeInterruptedRecordings(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root) return;
+  const fs2 = suppFs();
+  if (!fs2) return;
+  try {
+    const dir = recordingsDirOf(root, talker);
+    const names: string[] = [];
+    for (const f of fs2.readdirSync(dir) as string[]) {
+      if (!isRecordingFile(f) || !suppFs().existsSync(`${dir}/${f}`)) continue;
+      const side = readRecordingSidecar(root, talker, f);
+      if (side && !recordingTurnsComplete(side) && side.phase !== 'error') names.push(f);
+    }
+    if (names.length) notice(`有 ${names.length} 条录音中断可续跑：${names.slice(0, 3).join('、')}${names.length > 3 ? ' 等' : ''}——点「续跑」按账本只补缺口`, 'info');
+  } catch {
+    /* 目录不在：没录音 */
+  }
+}
+
+/**
+ * 选录音 → 进导入队列（不立刻落盘）。每条算好 sha256（判重）与起点候选（ADR-0217）：
+ * 文件名能解析出绝对时间 → 直接预填；只有「周X / N点N分」这类相对信息 → 给候选下拉；
+ * 什么都推不出 → 留空必填（**不许静默回落 mtime**）。
+ */
+async function suppPickRecordings(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root) return;
   const files = await pickSystemFiles('选择录音', [
     { name: '录音', ext: ['aac', 'm4a', 'mp3', 'wav', 'amr', 'flac', 'ogg', 'opus'] },
     { name: '全部文件', ext: ['*'] },
   ]);
   if (!files.length) return;
+  const fs2 = suppFs();
+  if (!fs2) {
+    notice('非桌面端读不了本机文件——录音导入只在桌面端可用', 'warning');
+    return;
+  }
+  const dir = recordingsDirOf(root, talker);
+  // 库里已存在的录音 sha256（判重 + 预检提示"这条是重复的"）；只算一次
+  const existing = existingRecordingDigests(dir, fs2);
+  for (const p of files) {
+    if (suppRecQueue.some((x) => x.path === p)) continue;
+    const name = p.slice(p.lastIndexOf('/') + 1);
+    let mtime = Date.now();
+    try {
+      mtime = fs2.statSync(p).mtimeMs;
+    } catch {
+      /* 读不到 mtime 按 now（只影响候选窗口，不影响正确性） */
+    }
+    const sha = fileSha256(p);
+    const cands = recordingStartCandidates(name, mtime);
+    const dupOf = sha ? existing.get(sha) : undefined;
+    suppRecQueue.push({
+      path: p,
+      name,
+      sha256: sha,
+      startMs: cands[0] ?? null,
+      candidates: cands,
+      ...(dupOf ? { dupOf } : {}),
+    });
+  }
+  void renderAlbum();
+  void suppCheckRecordingOwners(talker, root);
+}
+
+/**
+ * 归属抽检（issue 516 Q15）：**一个进程查完所有待导入源文件**（每条起一个进程会白付
+ * 分钟级模型冷加载），走录音队列 = 与画谱的 funasr 段互斥（ADR-0218）。
+ * 存疑的只打标（不硬拦）；用户点「仍然导入」才落盘，否则导入时跳过。
+ * 无质心 / 只有 me / 抽检失败 → verdict=unknown，一律放行（不做判定）。
+ */
+function suppCheckRecordingOwners(talker: string, root: string): void {
+  const srcs = suppRecQueue.filter((q) => !q.dupOf).map((q) => q.path);
+  if (!srcs.length) return;
+  for (const q of suppRecQueue) q.checking = true;
+  let done = false;
+  enqueueRecordingTask({
+    key: `check:${talker}`,
+    talker,
+    file: 'recording_check',
+    spec: () => buildRecordingCheckSpec({ dataRoot: root, talker, srcs, python: suppPython(), ffmpeg: suppFfmpeg() }),
+    onResult: (data) => {
+      done = true;
+      const verdicts = parseRecordingCheckResult(data);
+      let n = 0;
+      for (const q of suppRecQueue) {
+        q.checking = false;
+        if (verdicts.get(q.path) === 'stranger') {
+          q.suspect = true;
+          n++;
+        }
+      }
+      void renderAlbum();
+      if (n) notice(`抽检：${n} 条录音里听不出你或「${talker}」的声音——可能选错了（默认不导入；确认没错就点「仍然导入」）`, 'warning');
+    },
+    onExit: (o) => {
+      if (!done) {
+        for (const q of suppRecQueue) q.checking = false;
+        if (!o.ok && !o.stopped) notice(`归属抽检没跑成（${o.error || '进程异常退出'}）——这批录音不做预检，直接落盘`, 'info');
+        void renderAlbum();
+      }
+    },
+    meta: { talker, file: 'recording_check', dataRoot: root },
+  });
+}
+/** `recordings/` 里已入库录音的 sha256 → 文件名（判重；只读原件、跳过派生物） */
+function existingRecordingDigests(dir: string, fs2: any): Map<string, string> {
+  const out = new Map<string, string>();
+  try {
+    for (const f of fs2.readdirSync(dir) as string[]) {
+      if (!isRecordingFile(f)) continue;
+      const sha = fileSha256(`${dir}/${f}`);
+      if (sha && !out.has(sha)) out.set(sha, f);
+    }
+  } catch {
+    /* 目录还不存在：空表 */
+  }
+  return out;
+}
+
+/** 落盘导入（起点必填；同名同内容跳过、同名不同内容加 ` (2)`；meta 一起落） */
+async function suppImportRecordings(): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || suppBusy || !suppRecQueue.length) return;
+  const fs2 = suppFs();
+  if (!fs2) return; // 非桌面端：没有本机文件可复制
+  harvestRecQueueInputs();
+  const missing = suppRecQueue.filter((q) => q.startMs === null);
+  if (missing.length) {
+    notice(`有 ${missing.length} 条还没确认起点：${missing.map((m) => m.name).join('、')}`, 'warning');
+    void renderAlbum();
+    return;
+  }
   suppBusy = true;
   try {
-    const fs2 = suppFs();
+    if (!fs2.existsSync(root)) {
+      notice('脸谱数据根不存在——先到设置里确认数据源目录', 'warning');
+      return;
+    }
     const dir = recordingsDirOf(root, talker);
     fs2.mkdirSync(dir, { recursive: true });
+    // 库里现有 sha256（本次新落的也进表：同批选两个相同文件只留一份）
+    const seen = existingRecordingDigests(dir, fs2);
+    const usedNames = new Set<string>();
     let n = 0;
-    for (const f of files) {
-      const base = f.slice(f.lastIndexOf('/') + 1);
-      const target = `${dir}/${base}`;
-      if (fs2.existsSync(target)) continue; // 同名不覆盖：重选不会重复落
-      fs2.copyFileSync(f, target);
+    let dup = 0;
+    let renamed = 0;
+    let skippedSuspect = 0;
+    const dupNames: string[] = [];
+    for (const it of suppRecQueue) {
+      if (it.suspect && !it.keep) {
+        skippedSuspect++; // 抽检存疑且没点「仍然导入」：默认不落盘（issue 516 Q15）
+        continue;
+      }
+      if (it.sha256 && seen.has(it.sha256)) {
+        dup++;
+        dupNames.push(it.name);
+        continue; // 同名同内容 / 换了名同内容：都不重复入库
+      }
+      const taken = (nm: string): boolean => usedNames.has(nm) || fs2.existsSync(`${dir}/${nm}`);
+      const target = resolveRecordingTargetName(taken, it.name);
+      if (!target) {
+        notice(`「${it.name}」同名副本太多，跳过`, 'warning');
+        continue;
+      }
+      if (target !== it.name) renamed++;
+      fs2.copyFileSync(it.path, `${dir}/${target}`);
+      usedNames.add(target);
+      writeRecordingMeta(root, talker, target, {
+        startMs: it.startMs!,
+        ...(it.sha256 ? { sha256: it.sha256 } : {}),
+        startSource: it.candidates.includes(it.startMs!) ? (parseRecordingFilenameTs(it.name) !== null ? 'name' : 'candidate') : 'manual',
+      });
+      // 同批去重：新落的也记进去（sha 判重靠内容，同名不同内容不算重复）
+      if (it.sha256) seen.set(it.sha256, target);
       n++;
     }
-    notice(n > 0 ? `已添加 ${n} 条录音，点「处理」开始转写` : '所选录音都已在库里（同名不覆盖）', n > 0 ? 'success' : 'info');
+    suppRecQueue = [];
+    const bits = [`已添加 ${n} 条录音`];
+    if (dup > 0) bits.push(`重复 ${dup} 条未再入库`);
+    if (renamed > 0) bits.push(`同名不同内容 ${renamed} 条已另存`);
+    if (skippedSuspect > 0) bits.push(`${skippedSuspect} 条抽检存疑未导入`);
+    notice(`${bits.join('，')}${n > 0 ? '——点「处理」开始转写' : ''}`, n > 0 ? 'success' : 'info');
+    if (dupNames.length && n === 0) notice(`（重复：${dupNames.join('、')}）`, 'info');
   } catch (e) {
     notifyActionError(e, '添加录音');
   } finally {
@@ -3191,21 +3663,22 @@ async function suppRunRecording(file: string): Promise<void> {
   if (!talker || !root || !file || !suppFs()) return;
   if (!(await suppFaceGate())) return;
   const key = recordingSidecarPath(root, talker, file);
-  if (isRecordingRunning(key)) return;
+  if (isRecordingRunning(key) || isRecordingQueued(key)) return;
   // 起跑预检（issue 511）：账本已完整（done + 有轮次）= 脚本会幂等秒退，此前观感是「起跑就凭空
   // 消失」——改为不起进程、直接交代现状；真要重转 = 删掉该录音的 .turns.json 再来（极低频，不给按钮）
   const pre = readRecordingSidecar(root, talker, file);
-  if (pre?.phase === 'done' && pre.turns?.length) {
-    notice(`「${file}」已转写完成（${pre.turns.length} 轮）——要重新转写先删除它的 .turns.json 账本`, 'info');
+  if (recordingTurnsComplete(pre)) {
+    notice(`「${file}」已转写完成（${pre?.turns?.length ?? 0} 轮）——要重新转写先删除它的 .turns.json 账本`, 'info');
     return;
   }
-  if (voiceprintRefStatus(root, talker) === 'missing') {
-    notice('声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑', 'info');
-  }
-  startRecordingTask(
-    buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
+  enqueueRecordingTask({
     key,
-    (o) => {
+    talker,
+    file,
+    // 质心前置（ADR-0218 决策 5）：**出队那一刻**才判——前面的任务可能刚把质心建好，入队时判会白建
+    prepare: () => prepareVoiceprintFor(talker, root),
+    spec: () => buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
+    onExit: (o) => {
       if (o.stopped) {
         void renderAlbum();
         return;
@@ -3217,14 +3690,45 @@ async function suppRunRecording(file: string): Promise<void> {
       }
       void suppMergeRecording(talker, file);
     },
-    { talker, file, dataRoot: root },
-  );
+    meta: { talker, file, dataRoot: root },
+  });
+  notice('已加入录音队列（全局一条串行跑，进度见左下面板）', 'info');
   startRecPolling();
   void renderAlbum();
 }
 
-/** done sidecar → 聊天仓轮次并仓（插件是聊天仓唯一写入者；kindCounts / stats 同步重算） */
-async function suppMergeRecording(talker: string, file: string): Promise<void> {
+/**
+ * 出队时的质心前置（issue 516 Q7）：缺质心就先串行建好再转写——降级跑完再重建要白付一遍
+ * 声纹 + 转写（76 分钟录音是小时级），而 refs 只有几分钟。建不出来**不拦**（Q8：文本证据先落袋，
+ * 与 ADR-0213「任何降级不阻断导入」一致），只把原因说人话。返回 false = 放弃该条（仅当进程起不来）。
+ */
+async function prepareVoiceprintFor(talker: string, root: string): Promise<boolean> {
+  if (voiceprintRefStatus(root, talker) === 'ready') return true;
+  notice('缺声纹质心——先建质心再转写（本地跑，按语音量几分钟）…', 'info');
+  const handle = startRecordingTask(
+    buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
+    `ref:${talker}`,
+    undefined,
+    { talker, file: 'voiceprint_refs', dataRoot: root },
+  );
+  if (!handle) return true; // 已有质心任务在跑：不打断它，按当前质心状态继续
+  const outcome = await handle.done;
+  if (!outcome.ok) {
+    const detail = outcome.error?.message ?? '';
+    notice(`质心建不出来（${detail || '该联系人还没有微信语音素材'}）——本次按「非我即对方」降级跑；先做数据源导入再回来重建`, 'info');
+  } else if (voiceprintRefStatus(root, talker) === 'missing') {
+    notice('该联系人还没有微信语音素材，质心建不出来——本次按「非我即对方」降级跑；先做数据源导入再回来重建', 'info');
+  }
+  return true;
+}
+
+/**
+ * 转写成果齐（done，或停在 transcribe 但成果已齐的兜底）→ 聊天仓轮次并仓
+ * （插件是聊天仓唯一写入者；kindCounts / stats 同步重算）。
+ * `why = 'restart'` 是改起点后的重排：同一函数幂等（先按 `rec:<文件>:` 前缀清旧再写），
+ * 所以「改起点回写已有消息 ts」不用另写一条通路（issue 516 Q11）。
+ */
+async function suppMergeRecording(talker: string, file: string, why: 'merge' | 'restart' = 'merge'): Promise<void> {
   const root = suppDataRoot();
   if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
   if (!peopleSafe?.unlocked) {
@@ -3232,68 +3736,94 @@ async function suppMergeRecording(talker: string, file: string): Promise<void> {
     return;
   }
   const side = readRecordingSidecar(root, talker, file);
-  if (!side || side.phase !== 'done' || !side.turns?.length) {
+  if (!side || !recordingTurnsComplete(side)) {
     void renderAlbum();
     return;
   }
-  const fs2 = suppFs();
-  let mtime: number | undefined;
-  try {
-    mtime = fs2.statSync(`${recordingsDirOf(root, talker)}/${file}`).mtimeMs;
-  } catch {
-    /* 读不到回落 now */
-  }
-  const base = suppRecTs.get(file) ?? recordingTsOf(file, mtime);
+  const salvaged = side.phase !== 'done'; // 账本收尾标记缺失的兜底并仓（ADR-0219）
+  const base = recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
   let added = 0;
+  let removed = 0;
   try {
     await peopleSafe.write(talker, (rec) => {
       const r = applyRecordingTurnsToMsgs(rec.store.msgs, { file, ts: base, turns: side.turns! });
       rec.store.msgs = r.msgs;
-      added = Math.max(0, r.added - r.removed); // kindCounts 取净增量（重并不翻倍）
-      if (added > 0) {
-        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: (rec.store.kindCounts?.录音 ?? 0) + added };
-        rec.store.stats = storeStatsOf(rec.store.msgs);
-        rec.store.updatedAt = new Date().toISOString();
-      }
+      added = r.added;
+      removed = r.removed;
+      const net = Math.max(0, added - removed); // kindCounts 取净增量（重并不翻倍）
+      if (net > 0) rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 录音: (rec.store.kindCounts?.录音 ?? 0) + net };
+      rec.store.stats = storeStatsOf(rec.store.msgs);
+      rec.store.updatedAt = new Date().toISOString();
     });
-    notice(`「${file}」已并入 ${added} 条转写轮次`, 'success');
+    if (why === 'restart') notice(`「${file}」起点已改——仓里 ${added} 条轮次的绝对时间已重排`, 'success');
+    else if (salvaged) notice(`「${file}」已并入 ${added} 条转写轮次（账本收尾标记缺失，已按全部轮次并入）`, 'success');
+    else notice(`「${file}」已并入 ${added} 条转写轮次`, 'success');
+    // 逐轮时间轴：插件写、幂等覆盖（ADR-0217 Q21）——改起点也重写（绝对时间跟着变）
+    writeRecordingTurnsMd(root, talker, file, buildRecordingTurnsMd(file, base, side));
   } catch (e) {
-    notifyActionError(e, '并仓录音轮次');
+    notifyActionError(e, why === 'restart' ? '重排录音轮次' : '并仓录音轮次');
   }
   await refreshSuppStoreInfo(talker);
   void renderAlbum();
 }
 
-/** 质心构建（voiceprint_refs.py；语音样本不足时脚本自行降级 me-only） */
+/**
+ * 改起点（ADR-0217 决策 3）：写进 `<名>.meta.json`（插件侧一等数据，与脚本账本解耦），
+ * 若这条已并仓则**就地重排**仓内轮次绝对时间（复用并仓的幂等实现，Q11）。
+ * 已生成的脸谱正文不自动改写——那是产物不是索引（Q14 同口径）。
+ */
+async function suppSetRecordingStart(file: string, ms: number): Promise<void> {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!talker || !root || !file) return;
+  if (!writeRecordingMeta(root, talker, file, { ...(readRecordingMeta(root, talker, file) ?? {}), startMs: ms, startSource: 'manual' })) {
+    notice('起点写盘失败——数据根可能不可写', 'warning');
+    return;
+  }
+  recStartEditFile = null;
+  if (suppStoreInfo.mergedRecs.has(file)) {
+    await suppMergeRecording(talker, file, 'restart');
+    return;
+  }
+  notice(`「${file}」起点已改（下次并仓按新起点排绝对时间）`, 'success');
+  void renderAlbum();
+}
+
+/** 质心构建（bz-face refs；语音样本不足时脚本自行降级 me-only）——同走录音队列（全局一条串行） */
 async function suppBuildVoiceprintRef(): Promise<void> {
   const talker = detailId;
   const root = suppDataRoot();
-  if (!talker || !root || refBuilding) return;
-  if (isRecordingRunning(`ref:${talker}`)) return;
+  if (!talker || !root) return;
+  const key = `ref:${talker}`;
+  if (isRecordingRunning(key) || isRecordingQueued(key)) return;
   if (!(await suppFaceGate())) return;
-  refBuilding = true;
-  notice('开始构建声纹参考（本地跑，按语音量几分钟）……', 'info');
-  startRecordingTask(
-    buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
-    `ref:${talker}`,
-    (o) => {
-      refBuilding = false;
-      if (o.stopped) return;
+  enqueueRecordingTask({
+    key,
+    talker,
+    file: 'voiceprint_refs',
+    spec: () => buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
+    onExit: (o) => {
+      if (o.stopped) {
+        void renderAlbum();
+        return;
+      }
       if (o.ok) notice('声纹参考已建好——之后的录音按双人分离归属', 'success');
       else notice(`质心构建失败：${o.error || '该联系人可能没有微信语音样本'}（没有质心也能处理录音，按降级阶梯归属）`, 'warning');
       void renderAlbum();
     },
-    { talker, file: 'voiceprint_refs', dataRoot: root },
-  );
+    meta: { talker, file: 'voiceprint_refs', dataRoot: root },
+  });
+  notice('已加入队列（建质心，全局一条串行跑）', 'info');
   void renderAlbum();
 }
 
-/** 录音页签的进度轮询：只在页签可见且有任务在跑时跑；行内原位更新（不整页重画，输入焦点不丢） */
+/** 录音页签的进度轮询：只在页签可见且有任务在跑 / 排队时跑；行内原位更新（不整页重画，焦点不丢） */
 function startRecPolling(): void {
+  wireRecordingQueue();
   if (recPollTimer !== null) return;
   recPollTimer = window.setInterval(() => {
     if (dialog?.kind !== 'note' || suppTab !== 'rec') return;
-    const active = runningRecordingItems().length > 0;
+    const active = runningRecordingItems().length > 0 || queuedRecordingCount() > 0;
     if (active) tickRecRows();
     // 引擎队列空时进度块由本轮询负责摘挂（有引擎任务时引擎快照自己会画，别抢）
     if (active || !currentJobsItem()) renderNote();
@@ -3305,6 +3835,21 @@ function stopRecPolling(): void {
     window.clearInterval(recPollTimer);
     recPollTimer = null;
   }
+}
+
+/**
+ * 队列一动就重画录音页（issue 516）：出队那一瞬行要从「排队中 · 第 N 位」翻成「转写中」，
+ * 光靠每秒轮询只会原位刷新**已在跑**的行，翻不了态。重画前会 `harvestRecQueueInputs`，
+ * 所以正在输的起点不会被吃掉。只订阅一次。
+ */
+let recQueueWired = false;
+function wireRecordingQueue(): void {
+  if (recQueueWired) return;
+  recQueueWired = true;
+  subscribeRecordingQueue(() => {
+    if (dialog?.kind !== 'note' || suppTab !== 'rec') return;
+    void renderAlbum();
+  });
 }
 
 /** 轮询帧：在跑的录音行原位刷新进度条与文案 */
@@ -3361,6 +3906,11 @@ function recNoteRows(): SuppRecRowState[] {
       stage,
       elapsed: formatRecElapsed(Date.now() - it.startedAt),
     });
+  }
+  // 排队中的条（ADR-0218 决策 5：全局一条串行；进度块交代「N 条等待」，另给「清空队列」）
+  for (const q of queuedRecordingItems()) {
+    if (q.file === 'voiceprint_refs') continue; // 质心构建不占进度块（页签里有状态行）
+    rows.push({ file: q.file, status: 'queued', phaseText: `排队中 · 第 ${q.position} 位`, pct: null, queuePos: q.position });
   }
   return rows;
 }

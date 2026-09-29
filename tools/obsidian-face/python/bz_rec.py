@@ -38,6 +38,7 @@ bz-face rec —— 录音说话人分离 + 逐轮转写（issue 509 / ADR-0213�
 import argparse
 import json
 import os
+import random
 import re
 import shutil
 import subprocess
@@ -55,6 +56,8 @@ MERGE_GAP = 1.5                # 同说话人间隙归并阈值
 FLOOR = 0.05                   # 轮级平均 |llr| 低于此 → '?'
 LLR_CHUNK = 500                # 声纹窗逐块落账粒度（进度 + 断点）
 CONTROL_POLL_SECONDS = 1.0     # 让行待命轮询间隔（bz_prep.py 同款）
+SAVE_TRIES = 40                # 账本原子替换重试次数（覆盖插件轮询的读句柄窗口）
+SAVE_BACKOFF = 0.05            # 首发退避（秒）；逐次增长 + 抖动，总窗口数秒级
 
 EMO_ZH = {
     "NEUTRAL": "平静", "HAPPY": "开心", "ANGRY": "生气", "SAD": "伤心",
@@ -64,6 +67,10 @@ EMO_ZH = {
 
 class StopRec(Exception):
     """控制文件出现 stop 指令：留账本退出（退出码 0，中断续跑语义不变）。"""
+
+
+class LedgerBusy(Exception):
+    """账本替换被插件读句柄占用且重试耗尽（ADR-0219）——给人话诊断，不抛裸 traceback。"""
 
 
 def read_action(control_path):
@@ -112,12 +119,42 @@ def ffmpeg_wav(src, ffmpeg):
 
 
 def save(d, out_json):
-    """原子落账：.tmp → os.replace，中断不会写半截 sidecar。"""
+    """原子落账：.tmp → os.replace，中断不会写半截 sidecar（ADR-0219）。
+
+    Windows 上 replace 要覆盖目标就必须能删它，而 Node（插件轮询）开文件不带
+    FILE_SHARE_DELETE——只要插件正持有读句柄，replace 就**确定性**被拒（WinError 5，
+    实测 21/21 全拒）。故协作式重试：多次 × 短退避抖动，覆盖轮询的毫秒级句柄窗口；
+    tmp 名带 pid 与序号，杜绝并发进程撞同一 tmp。重试耗尽抛 LedgerBusy（人话诊断，
+    经 d["error"] 落到行上），不抛裸 traceback。
+    """
     d.setdefault("progress", {})
-    tmp = out_json + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, out_json)
+    payload = json.dumps(d, ensure_ascii=False, indent=1)
+    last = None
+    for n in range(SAVE_TRIES):
+        tmp = f"{out_json}.{os.getpid()}.{n}.tmp"
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                f.write(payload)
+            os.replace(tmp, out_json)
+            return
+        except PermissionError as e:
+            # 句柄占用：退避后重试（插件每次读只持有微秒级窗口）
+            last = e
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            time.sleep(SAVE_BACKOFF * (1 + n % 4) + random.uniform(0, SAVE_BACKOFF))
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+    raise LedgerBusy(
+        f"账本被其它进程占用，重试 {SAVE_TRIES} 次仍无法替换（{os.path.basename(out_json)}）"
+        f"——插件轮询读取所致；重跑只补缺口，已完成的轮次不会重做"
+    ) from last
 
 
 def split_sensevoice(raw):
@@ -139,19 +176,28 @@ def majority_emotion(emotions):
 
 
 def load_refs(refs_dir, contact):
-    """质心降级阶梯（ADR-0213）：dual → me-only → blind。返回 (me_c, peer_c, mode)。
-    质心目录显式传参（v0.5 修收编缺陷：原版是模块级常量，收编时误成 main() 局部量）。"""
+    """质心降级阶梯（ADR-0213）：dual → me-only → blind。返回 (me_c, peer_c, mode, side_thr)。
+    质心目录显式传参（v0.5 修收编缺陷：原版是模块级常量，收编时误成 main() 局部量）。
+    side_thr = 旁音门限（ADR-0216；bz_refs 建质心时由留出样本窗级 max-sim 最小值留余量算得）。
+    老 npz 没有它 → None = 本次不做旁音过滤（宁可漏滤也不误杀真原话）。"""
     p = os.path.join(refs_dir, f"{contact}.npz")
     if not os.path.exists(p):
-        return None, None, "blind"
+        return None, None, "blind", None
     ref = np.load(p, allow_pickle=True)
     me = ref["me"] if "me" in ref.files else None
     peer = ref["peer"] if "peer" in ref.files else None
+    thr = None
+    if "meta" in ref.files:
+        try:
+            thr = json.loads(str(ref["meta"])).get("side_speech_threshold")
+        except Exception:
+            thr = None
+    thr = float(thr) if isinstance(thr, (int, float)) else None
     if me is None:
-        return None, None, "blind"
+        return None, None, "blind", None
     if peer is None:
-        return me, None, "me-only"
-    return me, peer, "dual"
+        return me, None, "me-only", None
+    return me, peer, "dual", thr
 
 
 def two_means(vecs, iters=20, seed=42):
@@ -191,22 +237,39 @@ def viterbi(llr):
     return list(reversed(states))
 
 
+def classify_turn(mean_abs_llr, mean_max_sim, side_thr):
+    """轮级归属覆写判定（ADR-0216）：返回 '?' / '其他' / None（None = 保持 Viterbi 归属）。
+
+    - `?`：轮级平均 |llr| 低于 FLOOR = 两个质心分不开（口径不动，issue 516 Q24）。
+    - `其他`（旁音）：**整轮**对「我」与联系人的相似度都低——门限来自 refs 用留出样本算的
+      `side_speech_threshold`；me-only / blind / 老质心（无门限）一律不判（Q20）。
+    `?` 先于旁音：口径与 v0.5 完全一致，只把本来会塞进某人嘴里的第三人语音挪出来。
+    """
+    if mean_abs_llr < FLOOR:
+        return "?"
+    if mean_max_sim is not None and side_thr is not None and mean_max_sim < side_thr:
+        return "其他"
+    return None
+
+
 def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
     ck(control_path, "启动")  # stop 已在手就别起引擎——模型冷加载按分钟计，不白付
     from funasr import AutoModel
     import librosa
 
-    me_c, peer_c, mode = load_refs(refs_dir, contact)
+    me_c, peer_c, mode, side_thr = load_refs(refs_dir, contact)
     if d.get("mode") not in (None, mode):
         # 降级口径变了（如先 me-only 跑一半、后来建了 dual 质心）：llr 口径不可混，声纹段重算。
         # phase 拨回 voiceprint 强制轮次重建；turns 保留作 start 对齐回填源（重建分支按
         # start±0.01 复用旧 text/emotion，边界变了自然丢弃重转，绝不张冠李戴）
         print(f"质心模式变更（{d.get('mode')} → {mode}），声纹段重算")
         old_wins = (d.get("llr") or {}).get("wins") or []
-        d["llr"] = {"wins": old_wins, "values": []}
+        d["llr"] = {"wins": old_wins, "values": [], "mx": []}
         d["phase"] = "voiceprint"
         d.pop("diag", None)
     d["mode"] = mode
+    if mode == "dual" and side_thr is None:
+        print("质心 npz 没有旁音门限（老质心）——本次不做旁音过滤（重建质心后生效）")
 
     print("加载模型（vad / camp++ / sensevoice）…")
     vad = AutoModel(model="fsmn-vad", disable_update=True, log_level="error")
@@ -245,8 +308,21 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
 
         # ---- 阶段 2：密滑窗声纹（dual 落 llr；me-only 落原始相似度；blind 只落进度不落嵌入） ----
         vals = d["llr"].setdefault("values", [])
+        # 旁音判据要的是「窗级 max(sim_me, sim_peer)」（ADR-0216），llr 只是两者之差——差分了
+        # 就还原不出 max，故 dual 下并行落一份 mx（一窗一个 float，与 values 等长）。
+        mxs = d["llr"].setdefault("mx", []) if mode == "dual" else []
         raw_vecs = []
         resume_from = len(vals) if mode != "blind" else 0
+        if mode == "dual" and len(mxs) != resume_from:
+            # 老版本账本（v0.6 前没有 mx）：口径补齐只能重算声纹段——turns 作对齐源复用，
+            # 边界不变则 text/emotion 照旧回填，不重跑 ASR
+            print("账本缺旁音校准窗（老账本），声纹段重算一次以补齐同口径 max-sim")
+            vals.clear()
+            mxs.clear()
+            d["llr"]["mx"] = mxs
+            resume_from = 0
+            d["phase"] = "voiceprint"
+            d.pop("diag", None)
         if resume_from < len(wins):
             d["phase"] = "voiceprint"
             if resume_from:
@@ -258,7 +334,10 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
                 v = emb.generate(input=piece)[0]["spk_embedding"].detach().cpu().numpy().reshape(-1)
                 v /= np.linalg.norm(v) + 1e-9
                 if mode == "dual":
-                    vals.append(float(v @ me_c) - float(v @ peer_c))
+                    sm = float(v @ me_c)
+                    sp = float(v @ peer_c)
+                    vals.append(sm - sp)
+                    mxs.append(max(sm, sp))
                 elif mode == "me-only":
                     vals.append(float(v @ me_c))
                 else:
@@ -287,6 +366,7 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
         else:
             spk0, spk1 = ("说话人0", "说话人1") if mode == "blind" else ("我", contact)
             states = viterbi(llr)
+            mx_ok = mode == "dual" and len(mxs) == len(wins)
             turns = []
             for i, (s, e) in enumerate(wins):
                 who = spk0 if states[i] == 0 else spk1
@@ -294,16 +374,30 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
                 if prev and prev["speaker"] == who and s - prev["end"] <= MERGE_GAP:
                     prev["end"] = e
                     prev["llrs"].append(llr[i])
+                    if mx_ok:
+                        prev["mxs"].append(mxs[i])
                 else:
-                    turns.append({"start": s, "end": e, "speaker": who, "llrs": [llr[i]]})
+                    nt = {"start": s, "end": e, "speaker": who, "llrs": [llr[i]]}
+                    if mx_ok:
+                        nt["mxs"] = [mxs[i]]
+                    turns.append(nt)
             old = d.get("turns") or []
             fixed = []
+            side_n = 0
             for t in turns:
                 m = float(np.mean(np.abs(t.pop("llrs"))))
+                mm = float(np.mean(t.pop("mxs"))) if "mxs" in t else None
                 same = len(old) > len(fixed) and abs(old[len(fixed)].get("start", -1) - t["start"]) < 0.01
                 t["mean_abs_llr"] = round(m, 3)
-                if m < FLOOR:
-                    t["speaker"] = "?"
+                over = classify_turn(m, mm, side_thr)
+                if over == "其他":
+                    # 旁音（ADR-0216）：整轮对本对话两人的相似度都低于门限 = 第三人语音
+                    # （电视 / 音乐里的人声）。留账不进仓——插件侧并仓时按 speaker 滤掉。
+                    t["speaker"] = "其他"
+                    t["mean_max_sim"] = round(mm, 3)
+                    side_n += 1
+                elif over:
+                    t["speaker"] = over
                 t["emotion"] = old[len(fixed)].get("emotion", "") if same else ""
                 t["text"] = old[len(fixed)].get("text", "") if same else ""
                 fixed.append(t)
@@ -311,8 +405,12 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
             d["diag"] = {
                 "windows": len(wins),
                 "uncertain_turns": sum(1 for t in fixed if t["speaker"] == "?"),
+                "side_speech_turns": side_n,
+                "side_speech_threshold": side_thr,
                 "avg_abs_llr": round(float(np.mean(np.abs(llr))), 3),
             }
+            if side_n:
+                print(f"旁音过滤：{side_n} 轮判为第三人语音（门限 {side_thr:.3f}，留账不进仓）")
             d["phase"] = "transcribe"
             d["progress"] = {"text": f"转写 0/{len(fixed)}", "done": 0, "total": len(fixed)}
             save(d, out_json)
@@ -352,6 +450,8 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
             return sum(t["end"] - t["start"] for t in turns if t["speaker"] == sp)
 
         names = ["我", contact, "?"] if mode != "blind" else ["说话人0", "说话人1", "?"]
+        if mode == "dual" and contact != "其他":
+            names.append("其他")  # 旁音（ADR-0216）
         d["speakers_sec"] = {k: round(time_total(k), 1) for k in names}
         d["turns_count"] = len(turns)
         d["phase"] = "done"
@@ -403,13 +503,16 @@ def main():
             d = {}
     d.setdefault("file", os.path.basename(src))
     d["contact"] = a.contact
-    d["engine"] = "slide-hmm(CAM++ 1s/0.25s + viterbi k10 C3)"
+    d["engine"] = "slide-hmm(CAM++ 1s/0.25s + viterbi k10 C3 + side-speech)"
     d.pop("error", None)
 
     if not shutil.which(a.ffmpeg or "ffmpeg"):
         d["phase"] = "error"
         d["error"] = f"ffmpeg 不可用：{a.ffmpeg or 'ffmpeg'}（用 --ffmpeg 指向 ffmpeg.exe，或先跑 bz-face doctor）"
-        save(d, out_json)
+        try:
+            save(d, out_json)
+        except LedgerBusy:
+            pass
         print(f"bz-face rec：{d['error']}", file=sys.stderr)
         sys.exit(1)
 
@@ -419,12 +522,28 @@ def main():
         # 协作停止：留账本退出（退出码 0）——phase 停在中途 = 插件侧「中断可续跑」
         p = d.get("progress") or {}
         d["progress"] = {"text": "已停止，重跑只补缺口", "done": p.get("done", 0), "total": p.get("total", 0)}
-        save(d, out_json)
+        try:
+            save(d, out_json)
+        except LedgerBusy:
+            pass
         print("收到停止，已完成账本保留（重跑只补缺口）")
+    except LedgerBusy as e:
+        # 账本占用且重试耗尽：人话诊断落账 + stderr，不打裸 traceback（ADR-0219）
+        d["phase"] = "error"
+        d["error"] = str(e)
+        try:
+            save(d, out_json)
+        except LedgerBusy:
+            pass
+        print(f"bz-face rec：{e}", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
         d["phase"] = "error"
         d["error"] = f"{type(e).__name__}: {e}"
-        save(d, out_json)
+        try:
+            save(d, out_json)
+        except LedgerBusy:
+            pass
         raise
 
 

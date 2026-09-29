@@ -37,6 +37,13 @@ import type { ExternalToolCallbacks } from '../core/external-tool';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { getPeopleSafeStore, type PeopleSafeStore } from './safe-store';
 import {
+  canAcquireHeavy,
+  releaseHeavy,
+  setHeavyPortraitBusy,
+  setHeavyPreemptHandler,
+  waitHeavyGate,
+} from './heavy-gate';
+import {
   abortPrepSession,
   applyPrepProgress,
   buildPrepSpec,
@@ -630,12 +637,39 @@ export function estimateDescribeCallsOf(images: number): number {
  * 批级断点保留、绝不带着明文继续吐 AI；解锁 → kick() 从断点续跑。
  */
 let lockWired = false;
+/** 引擎一次性 wiring（上锁联动 + 重进程闸门抢占回调）；三处入口（startJob / resumeJobs / describe 单段）都调 */
 function wireLock(): void {
   if (lockWired) return;
   lockWired = true;
+  wireHeavyPreempt();
   onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
     if (evt?.unlocked === false) pauseJobs();
     else if (evt?.unlocked === true) kick();
+  });
+}
+
+/** 抢占后等待命进程自己退的宽限（毫秒）；超时兜底硬杀（协作式优先，与停止同口径） */
+const PREP_PREEMPT_KILL_MS = 30000;
+
+let preemptWired = false;
+/**
+ * 注册「录音侧请求抢占待命 prep 进程」的回调（ADR-0218 决策 4）。
+ * 录音要起进程但闸门被 portrait 占着、且那边**只是待命进程**（无任务在 running）时，
+ * heavy-gate 触发本回调：写 prep control `stop` 让进程在安全点留账退出，宽限期内未退则兜底杀。
+ * 由 jobs 侧注册而非 recording 直接调，是为守住 ADR-0002 依赖方向（recording 不 import jobs）。
+ */
+function wireHeavyPreempt(): void {
+  if (preemptWired) return;
+  preemptWired = true;
+  setHeavyPreemptHandler(() => {
+    const s = currentPrepSession();
+    if (!s) return;
+    const dataRoot = dataRootOf();
+    if (dataRoot) void writePrepControl(dataRoot, 'stop');
+    console.log('[people] 为腾出内存已请求结束待命预处理进程（恢复画谱任务时会重新加载模型）');
+    setTimeout(() => {
+      if (currentPrepSession()?.talker === s.talker) abortPrepSession(s.talker); // 兜底
+    }, PREP_PREEMPT_KILL_MS);
   });
 }
 
@@ -959,7 +993,23 @@ async function runQueue(): Promise<void> {
     if (describeOnlyBusy) break; // 补充素材·描述单段在跑（509）：全链等它，不并发
     const job = st.queue.find((j) => j.status === 'paused');
     if (!job) break;
-    await runJob(job);
+    // 重进程闸门（ADR-0218 决策 6）：录音在跑 → 等它释放。这里**不是 break**——有任务在等闸时
+    // whenIdle() 不能提前 resolve（等闸本身就是"还没空"）。等闸期间任务仍是 paused，只是文案
+    // 交代在等什么；放弃条件（暂停 / 上锁 / 任务被删 / 描述段插队）由 keepWaiting 判。
+    const prevMessage = job.message;
+    if (!canAcquireHeavy('portrait')) {
+      job.message = '等待录音处理结束…';
+      emit();
+    }
+    const got = await waitHeavyGate('portrait', () => !!st && runnable() && !describeOnlyBusy && st.queue.includes(job) && job.status === 'paused');
+    if (job.status === 'paused') job.message = prevMessage;
+    if (!got) break;
+    emit();
+    try {
+      await runJob(job);
+    } finally {
+      releaseHeavy('portrait'); // 任务出 running = 松开这一份（prep 待命进程另持一份，见 prep.ts）
+    }
   }
   if (st) st.pauseRequested = false;
 }
@@ -1402,6 +1452,7 @@ async function runJob(job: PersonJob): Promise<void> {
   job.status = 'running';
   job.error = undefined;
   job.updatedAt = nowIso();
+  setHeavyPortraitBusy(true); // 任务在跑 = 真占闸（区别于"只有待命进程"——录音侧据此前置抢占，ADR-0218）
   await persist();
   emit();
   const finish = async (patch: Partial<PersonJob>): Promise<void> => {
@@ -1732,6 +1783,7 @@ async function runJob(job: PersonJob): Promise<void> {
     await finish({ status: 'error', error: errorMessage(e) });
   } finally {
     if (st && st.runningJob === job.talker) st.runningJob = null;
+    setHeavyPortraitBusy(false); // 任务出 running：闸门是否松开由重入计数决定（prep 待命进程可能仍持着）
   }
 }
 

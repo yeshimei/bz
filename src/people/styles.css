@@ -1603,6 +1603,47 @@
 .bz-people-supp-qname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: var(--f-mid); color: var(--ink); }
 .bz-people-supp-qts { flex: 0 0 auto; width: 178px; font-size: var(--f-mid); }
+/* 导入队列：起点候选下拉 + 必填标红（ADR-0217：不许静默回落 mtime） */
+.bz-people-supp-qcand { flex: 0 0 auto; width: 168px; font-size: var(--f-mid); }
+.bz-people-supp-qrow.need-ts { border-color: var(--danger); background: rgba(179, 86, 77, 0.07); }
+.bz-people-supp-qwarn { flex: none; font-size: var(--f-small, 12px); letter-spacing: 1px; padding: 2px 8px;
+  border-radius: 999px; background: rgba(176, 138, 62, 0.2); color: var(--gold); }
+/* 归属抽检存疑（issue 516 Q15）：与「重复」区分开——这条是要用户拍板的 */
+.bz-people-supp-qwarn-hard { background: rgba(179, 86, 77, 0.2); color: var(--danger); }
+.bz-people-supp-qrow.suspect { border-color: var(--danger); background: rgba(179, 86, 77, 0.07); }
+/* 删除二次确认（issue 516 Q13）：行内展开，列明代价 */
+.bz-people-supp-delbox { margin-top: 8px; padding: 8px 9px; border: 1px solid rgba(179, 86, 77, 0.35);
+  border-radius: 8px; background: rgba(179, 86, 77, 0.06); }
+.bz-people-supp-delbox .bz-people-del-line { font-size: var(--f-mid); color: var(--ink-mut); margin-bottom: 5px; }
+.bz-people-supp-delchk { display: flex; gap: 6px; align-items: center; font-size: var(--f-mid); color: var(--ink); }
+.bz-people-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff8f0; }
+/* 起点行（ADR-0217：一等数据，可见可改） */
+.bz-people-supp-startrow { display: flex; gap: 7px; align-items: center; margin-top: 6px;
+  font-size: var(--f-mid); color: var(--ink-mut); }
+/* 逐轮时间轴预览（面板内读 sidecar；旁音轮收灰留档，供复核没误杀） */
+.bz-people-supp-turns { margin-top: 8px; padding: 7px 9px; border: 1px solid rgba(148, 130, 100, 0.25);
+  border-radius: 8px; background: rgba(148, 130, 100, 0.05); }
+.bz-people-supp-turnhead { font-size: var(--f-mid); color: var(--ink-mut); margin-bottom: 5px; }
+.bz-people-supp-turnlist { display: flex; flex-direction: column; gap: 3px; max-height: 260px; overflow: auto; }
+.bz-people-supp-turn { display: grid; grid-template-columns: 92px 118px 1fr; gap: 8px;
+  align-items: baseline; font-size: var(--f-aux); }
+.bz-people-supp-turn.side { opacity: 0.55; }
+/* 段界（ADR-0220 §7）：段首行顶一道细线，段内后续轮缩进一点，一眼看出并仓是怎么并的 */
+.bz-people-supp-turn.seghead { margin-top: 5px; padding-top: 5px; border-top: 1px dashed rgba(148, 130, 100, 0.3); }
+.bz-people-supp-turn.segcont { padding-left: 10px; }
+.bz-people-supp-turn.seghead:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.bz-people-supp-turnseg { flex: none; margin-right: 5px; padding: 0 5px; border-radius: 999px;
+  font-size: var(--f-small, 12px); background: rgba(196, 146, 58, 0.18); color: var(--acc-deep); }
+.bz-people-supp-turnwho { color: var(--acc-deep); }
+/* 疑似重复巡检（Q3：只报不清） */
+.bz-people-supp-dups { margin: 8px 0 2px; padding: 7px 9px; border-radius: 8px;
+  border: 1px solid rgba(176, 138, 62, 0.35); background: rgba(176, 138, 62, 0.08);
+  font-size: var(--f-mid); color: var(--ink-mut); }
+.bz-people-supp-dupshead { margin-bottom: 4px; }
+.bz-people-supp-duprow { color: var(--ink); overflow-wrap: anywhere; }
+.bz-people-supp-turnat { color: var(--ink-mut); font-variant-numeric: tabular-nums; }
+.bz-people-supp-turntext { color: var(--ink); overflow-wrap: anywhere; }
+.theme-dark .bz-people-supp-turns { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
 .bz-people-supp-stat { font-size: var(--f-mid); color: var(--ink-mut); margin: 10px 0 2px; }
 .bz-people-supp-ref { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: var(--f-mid);
   color: var(--ink-mut); margin: 10px 0 0; }
@@ -1614,6 +1655,7 @@
 .bz-people-supp-badge { flex: none; font-size: var(--f-small, 12px); letter-spacing: 1px; padding: 2px 8px;
   border-radius: 999px; background: rgba(148, 130, 100, 0.16); color: var(--ink-mut); }
 .bz-people-supp-badge-running { background: rgba(196, 146, 58, 0.2); color: var(--acc-deep); }
+.bz-people-supp-badge-queued { background: rgba(148, 130, 100, 0.1); color: var(--ink-mut); }
 .bz-people-supp-badge-interrupted { background: rgba(148, 130, 100, 0.16); color: var(--ink-mut); }
 .bz-people-supp-badge-failed { background: rgba(168, 74, 60, 0.16); color: #a84a3c; }
 .bz-people-supp-badge-merged { background: rgba(96, 128, 82, 0.18); color: #5c7a4e; }

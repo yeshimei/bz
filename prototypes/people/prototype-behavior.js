@@ -1,5 +1,5 @@
-/* 源指纹 7341a7dd52b70831 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 b56d3ed4f56e31aa · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -7997,9 +7997,9 @@ var BZW_people = (() => {
     }
     const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
     if (adapter && typeof adapter.list === "function") {
-      const walk = async (dir, depth) => {
+      const walk = async (dir, depth2) => {
         var _a3;
-        if (depth > 40) return;
+        if (depth2 > 40) return;
         let listed = null;
         try {
           listed = await adapter.list(dir);
@@ -8019,7 +8019,7 @@ var BZW_people = (() => {
           if (!p) continue;
           if (isExcludedPath(p)) continue;
           if (!out.has(p)) out.add(p);
-          await walk(p, depth + 1);
+          await walk(p, depth2 + 1);
         }
       };
       try {
@@ -15062,6 +15062,71 @@ ${lines.join("\n")}`);
   init_settings_provider();
   init_data();
 
+  // src/people/heavy-gate.ts
+  var holder = null;
+  var depth = 0;
+  var portraitBusy = false;
+  var preemptHandler = null;
+  var subs = /* @__PURE__ */ new Set();
+  var HEAVY_WAIT_POLL_MS = 300;
+  function notify2() {
+    for (const fn of [...subs]) {
+      try {
+        fn();
+      } catch (e) {
+      }
+    }
+  }
+  function canAcquireHeavy(h) {
+    return holder === null || holder === h;
+  }
+  function tryAcquireHeavy(h) {
+    if (!canAcquireHeavy(h)) return false;
+    if (holder === null) holder = h;
+    depth++;
+    notify2();
+    return true;
+  }
+  function releaseHeavy(h) {
+    if (holder !== h) return;
+    depth = Math.max(0, depth - 1);
+    if (depth === 0) {
+      holder = null;
+      portraitBusy = false;
+    }
+    notify2();
+  }
+  function setHeavyPortraitBusy(busy) {
+    if (portraitBusy === busy) return;
+    portraitBusy = busy;
+    notify2();
+  }
+  function setHeavyPreemptHandler(fn) {
+    preemptHandler = fn;
+  }
+  function heavyGateCanPreempt() {
+    return holder === "portrait" && !portraitBusy;
+  }
+  function preemptHeavyStandby() {
+    if (!heavyGateCanPreempt() || !preemptHandler) return false;
+    try {
+      preemptHandler();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  function defaultSleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+  async function waitHeavyGate(h, keepWaiting, sleep = defaultSleep) {
+    for (; ; ) {
+      if (keepWaiting && !keepWaiting()) return false;
+      if (canAcquireHeavy(h)) return tryAcquireHeavy(h);
+      await sleep(HEAVY_WAIT_POLL_MS);
+    }
+  }
+
   // src/core/external-tool.ts
   var BZ_LINE_PREFIX_RE = /^\[bz-(step|p|info|result)\]/;
   function parseBzLine(line) {
@@ -15957,6 +16022,59 @@ ${lines.join("\n")}`);
     const body = String((_b2 = t.text) != null ? _b2 : "").trim();
     return body ? `${head} ${body}` : head;
   }
+  var SIDE_SPEECH_SPEAKER = "其他";
+  function segmentRecordingTurns(turns) {
+    var _a2, _b2, _c;
+    const segs = [];
+    let cur2 = null;
+    for (const t of turns != null ? turns : []) {
+      const speaker = String((_a2 = t == null ? void 0 : t.speaker) != null ? _a2 : "").trim();
+      if (!speaker || speaker === SIDE_SPEECH_SPEAKER) {
+        cur2 = null;
+        continue;
+      }
+      const body = String((_b2 = t == null ? void 0 : t.text) != null ? _b2 : "").trim();
+      if (!body) continue;
+      const start = Number.isFinite(t == null ? void 0 : t.start) ? Math.max(0, Number(t.start)) : 0;
+      const end = Number.isFinite(t == null ? void 0 : t.end) ? Math.max(start, Number(t.end)) : start;
+      const emotion = String((_c = t == null ? void 0 : t.emotion) != null ? _c : "").trim() || void 0;
+      if (cur2 && cur2.speaker === speaker) {
+        cur2.end = Math.max(cur2.end, end);
+        cur2.text += body;
+        if (cur2.emotion !== emotion) cur2.emotion = void 0;
+      } else {
+        cur2 = { start, end, speaker, ...emotion ? { emotion } : {}, text: body };
+        segs.push(cur2);
+      }
+    }
+    return segs;
+  }
+  function recordingTurnSegments(turns) {
+    var _a2, _b2;
+    const out = [];
+    let curSpeaker = "";
+    let seg = 0;
+    for (const t of turns != null ? turns : []) {
+      const speaker = String((_a2 = t == null ? void 0 : t.speaker) != null ? _a2 : "").trim();
+      if (!speaker || speaker === SIDE_SPEECH_SPEAKER) {
+        curSpeaker = "";
+        out.push({ seg: 0, head: false });
+        continue;
+      }
+      if (!String((_b2 = t == null ? void 0 : t.text) != null ? _b2 : "").trim()) {
+        out.push({ seg: 0, head: false });
+        continue;
+      }
+      if (curSpeaker !== speaker) {
+        seg += 1;
+        curSpeaker = speaker;
+        out.push({ seg, head: true });
+      } else {
+        out.push({ seg, head: false });
+      }
+    }
+    return out;
+  }
   function applyRecordingTurnsToMsgs(msgs, rec) {
     var _a2, _b2;
     const file = String((_a2 = rec == null ? void 0 : rec.file) != null ? _a2 : "").trim();
@@ -15966,21 +16084,15 @@ ${lines.join("\n")}`);
     const out = msgs.filter((m) => !m.key.startsWith(prefix));
     const removed = msgs.length - out.length;
     let added = 0;
-    ((_b2 = rec.turns) != null ? _b2 : []).forEach((t, i) => {
-      var _a3, _b3, _c;
-      const body = String((_a3 = t == null ? void 0 : t.text) != null ? _a3 : "").trim();
-      if (!body) return;
-      const speaker = String((_b3 = t.speaker) != null ? _b3 : "").trim();
-      const start = Number.isFinite(t == null ? void 0 : t.start) ? Math.max(0, Number(t.start)) : 0;
-      const end = Number.isFinite(t == null ? void 0 : t.end) ? Math.max(start, Number(t.end)) : start;
-      const durSec = Math.max(1, Math.round(end - start));
+    segmentRecordingTurns((_b2 = rec.turns) != null ? _b2 : []).forEach((seg, i) => {
+      const durSec = Math.max(1, Math.round(seg.end - seg.start));
       out.push({
-        key: `${prefix}${i}`,
-        ts: base + Math.round(start * 1e3),
-        isSender: speaker === "我",
+        key: `${prefix}s${i}`,
+        ts: base + Math.round(seg.start * 1e3),
+        isSender: seg.speaker === "我",
         type: 9001,
         dur: durSec,
-        text: buildRecordingText({ durSec, emotion: String((_c = t.emotion) != null ? _c : "").trim() || void 0, text: body })
+        text: buildRecordingText({ durSec, emotion: seg.emotion, text: seg.text })
       });
       added++;
     });
@@ -16631,20 +16743,34 @@ ${lines.join("\n")}`);
       session.handle.stop();
     }
     let lastResult = null;
+    tryAcquireHeavy("portrait");
+    let released = false;
+    const releaseOnce = () => {
+      if (released) return;
+      released = true;
+      releaseHeavy("portrait");
+    };
     let settled = false;
-    const handle2 = runner2(spec, {
-      ...cbs,
-      onResult: (data) => {
-        lastResult = data;
-        cbs.onResult(data);
-      }
-    });
+    let handle2;
+    try {
+      handle2 = runner2(spec, {
+        ...cbs,
+        onResult: (data) => {
+          lastResult = data;
+          cbs.onResult(data);
+        }
+      });
+    } catch (e) {
+      releaseOnce();
+      throw e;
+    }
     const wrapped = {
       talker,
       handle: handle2,
       done: handle2.done.then((outcome) => {
         settled = true;
         if (session === wrapped) session = null;
+        releaseOnce();
         return { outcome, result: lastResult };
       }),
       alive: () => !settled
@@ -16831,10 +16957,10 @@ ${lines.join("\n")}`);
       const safe = await getPeopleSafeStore();
       if (!safe.unlocked) return emptyJobsData();
       const all = await safe.readAll();
-      const queue = [...all.values()].map((r) => r.job).filter((j) => !!j).sort(
+      const queue2 = [...all.values()].map((r) => r.job).filter((j) => !!j).sort(
         (a, b) => (a.startedAt || "").localeCompare(b.startedAt || "") || (a.updatedAt || "").localeCompare(b.updatedAt || "")
       );
-      return { version: 1, queue };
+      return { version: 1, queue: queue2 };
     }
     /**
      * 整队列对账写回（引擎是本会话唯一写方）：队列里有的任务按 talker 写进对应记录的 job 段；
@@ -16873,7 +16999,7 @@ ${lines.join("\n")}`);
   }
   var st = null;
   var runPromise = null;
-  var subs = /* @__PURE__ */ new Set();
+  var subs2 = /* @__PURE__ */ new Set();
   var DRIFT_ERROR = "消息集已变化（导入过新数据），请删除任务后重新生成";
   function fingerprintOf2(msgs) {
     let h = 2166136261;
@@ -16931,22 +17057,22 @@ ${lines.join("\n")}`);
     if (!st) return { queue: [], currentIndex: -1, running: false };
     const currentIndex = st.queue.findIndex((j) => j.status === "running");
     const total = st.queue.length;
-    const queue = st.queue.map((j, i) => ({
+    const queue2 = st.queue.map((j, i) => ({
       ...JSON.parse(JSON.stringify(j)),
       batchesTotal: j.chunks.length,
       queueIndex: i + 1,
       queueTotal: total
     }));
-    return { queue, currentIndex, running: currentIndex >= 0 };
+    return { queue: queue2, currentIndex, running: currentIndex >= 0 };
   }
   function subscribe(fn) {
-    subs.add(fn);
+    subs2.add(fn);
     if (st) fn(snapshot());
-    return () => subs.delete(fn);
+    return () => subs2.delete(fn);
   }
   function emit() {
     const snap = snapshot();
-    for (const fn of subs) {
+    for (const fn of subs2) {
       try {
         fn(snap);
       } catch (e) {
@@ -16992,9 +17118,27 @@ ${lines.join("\n")}`);
   function wireLock() {
     if (lockWired) return;
     lockWired = true;
+    wireHeavyPreempt();
     onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
       if ((evt == null ? void 0 : evt.unlocked) === false) pauseJobs();
       else if ((evt == null ? void 0 : evt.unlocked) === true) kick();
+    });
+  }
+  var PREP_PREEMPT_KILL_MS = 3e4;
+  var preemptWired = false;
+  function wireHeavyPreempt() {
+    if (preemptWired) return;
+    preemptWired = true;
+    setHeavyPreemptHandler(() => {
+      const s = currentPrepSession();
+      if (!s) return;
+      const dataRoot = dataRootOf();
+      if (dataRoot) void writePrepControl(dataRoot, "stop");
+      console.log("[people] 为腾出内存已请求结束待命预处理进程（恢复画谱任务时会重新加载模型）");
+      setTimeout(() => {
+        var _a2;
+        if (((_a2 = currentPrepSession()) == null ? void 0 : _a2.talker) === s.talker) abortPrepSession(s.talker);
+      }, PREP_PREEMPT_KILL_MS);
     });
   }
   function runnable() {
@@ -17152,9 +17296,9 @@ ${lines.join("\n")}`);
     if (!safe.unlocked) return;
     const store2 = new JobStore(app);
     const data = await store2.read();
-    const queue = Array.isArray(data == null ? void 0 : data.queue) ? data.queue : [];
+    const queue2 = Array.isArray(data == null ? void 0 : data.queue) ? data.queue : [];
     let dirty = false;
-    for (const j of queue) {
+    for (const j of queue2) {
       if (!j || typeof j !== "object") continue;
       if (!Array.isArray(j.results)) j.results = [];
       if (!Array.isArray(j.chunks)) j.chunks = [];
@@ -17174,7 +17318,7 @@ ${lines.join("\n")}`);
       app,
       store: store2,
       safe,
-      queue,
+      queue: queue2,
       injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
@@ -17183,7 +17327,7 @@ ${lines.join("\n")}`);
     };
     wireLock();
     runPromise = null;
-    if (dirty) await store2.write({ version: 1, queue });
+    if (dirty) await store2.write({ version: 1, queue: queue2 });
     emit();
   }
   function resume(talker) {
@@ -17262,7 +17406,20 @@ ${lines.join("\n")}`);
       if (describeOnlyBusy) break;
       const job = st.queue.find((j) => j.status === "paused");
       if (!job) break;
-      await runJob(job);
+      const prevMessage = job.message;
+      if (!canAcquireHeavy("portrait")) {
+        job.message = "等待录音处理结束…";
+        emit();
+      }
+      const got = await waitHeavyGate("portrait", () => !!st && runnable() && !describeOnlyBusy && st.queue.includes(job) && job.status === "paused");
+      if (job.status === "paused") job.message = prevMessage;
+      if (!got) break;
+      emit();
+      try {
+        await runJob(job);
+      } finally {
+        releaseHeavy("portrait");
+      }
     }
     if (st) st.pauseRequested = false;
   }
@@ -17624,6 +17781,7 @@ ${lines.join("\n")}`);
     job.status = "running";
     job.error = void 0;
     job.updatedAt = nowIso();
+    setHeavyPortraitBusy(true);
     await persist();
     emit();
     const finish = async (patch) => {
@@ -17900,6 +18058,7 @@ ${lines.join("\n")}`);
       await finish({ status: "error", error: errorMessage(e) });
     } finally {
       if (st && st.runningJob === job.talker) st.runningJob = null;
+      setHeavyPortraitBusy(false);
     }
   }
   function asksOf() {
@@ -17914,7 +18073,7 @@ ${lines.join("\n")}`);
   function __resetJobsForTests() {
     st = null;
     runPromise = null;
-    subs.clear();
+    subs2.clear();
     resetPrepForTests();
   }
 
@@ -17933,8 +18092,100 @@ ${lines.join("\n")}`);
     return `${String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "")}/${talker}/recordings`;
   }
   function recordingSidecarPath(dataRoot, talker, file) {
-    const stem = String(file != null ? file : "").replace(/\.[^.]+$/, "");
-    return `${recordingsDirOf(dataRoot, talker)}/${stem}.turns.json`;
+    return `${recordingsDirOf(dataRoot, talker)}/${recordingStem(file)}.turns.json`;
+  }
+  function recordingMetaPath(dataRoot, talker, file) {
+    return `${recordingsDirOf(dataRoot, talker)}/${recordingStem(file)}.meta.json`;
+  }
+  function recordingTurnsMdPath(dataRoot, talker, file) {
+    return `${recordingsDirOf(dataRoot, talker)}/${recordingStem(file)}.turns.md`;
+  }
+  var RECORDING_DERIVED_SUFFIXES = [".turns.json", ".meta.json", ".turns.md", ".tmp"];
+  function isRecordingFile(name) {
+    const f = String(name != null ? name : "");
+    return !!f && !RECORDING_DERIVED_SUFFIXES.some((s) => f.endsWith(s));
+  }
+  function recordingStem(file) {
+    return String(file != null ? file : "").replace(/\.[^.]+$/, "");
+  }
+  function recordingArtifactPaths(dataRoot, talker, file) {
+    const dir = recordingsDirOf(dataRoot, talker);
+    const stem = recordingStem(file);
+    return [`${dir}/${stem}.turns.json`, `${dir}/${stem}.meta.json`, `${dir}/${stem}.turns.md`];
+  }
+  function recordingTmpPrefix(file) {
+    return `${recordingStem(file)}.turns.json.`;
+  }
+  var PHASE_LABEL = {
+    load: "启动模型",
+    vad: "VAD 切窗",
+    voiceprint: "声纹分离",
+    transcribe: "逐轮转写"
+  };
+  function recordingFailureText(side) {
+    var _a2, _b2, _c;
+    const where = side.phase === "error" ? "" : `（崩在${(_a2 = PHASE_LABEL[side.phase]) != null ? _a2 : side.phase}阶段）`;
+    const raw = String((_b2 = side.error) != null ? _b2 : "").trim() || "进程异常退出（没有留下原因）";
+    const p = ((_c = side.progress) == null ? void 0 : _c.text) ? `；最后进度：${side.progress.text}` : "";
+    return `${raw}${where}${p}。账本已留，点「重试」只补缺口`;
+  }
+  function fmtClock(sec) {
+    const s = Math.max(0, Math.round(Number.isFinite(sec) ? sec : 0));
+    const h = Math.floor(s / 3600);
+    const m = Math.floor(s % 3600 / 60);
+    const ss = s % 60;
+    const p2 = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${p2(m)}:${p2(ss)}` : `${p2(m)}:${p2(ss)}`;
+  }
+  function fmtLocalStamp(ms) {
+    const d = new Date(ms);
+    const p2 = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+  }
+  function buildRecordingTurnsMd(file, startMs, side) {
+    var _a2, _b2;
+    const turns = (_a2 = side.turns) != null ? _a2 : [];
+    const sideCount = turns.filter((t) => t.speaker === "其他").length;
+    const segs = recordingTurnSegments(turns);
+    const segCount = segs.reduce((m, s) => Math.max(m, s.seg), 0);
+    const body = turns.map((t, i) => {
+      var _a3, _b3, _c, _d;
+      const sp = String((_a3 = t.speaker) != null ? _a3 : "").trim() || "?";
+      const emo = String((_b3 = t.emotion) != null ? _b3 : "").trim();
+      const text2 = String((_c = t.text) != null ? _c : "").trim();
+      const sg = (_d = segs[i]) != null ? _d : { seg: 0, head: false };
+      const segCell = sg.head ? `**${sg.seg}**` : sg.seg > 0 ? "↳" : sp === "其他" ? "旁音" : "—";
+      return `| ${i + 1} | ${segCell} | ${fmtLocalStamp(startMs + Math.round((Number(t.start) || 0) * 1e3))} | ${fmtClock(t.start)}-${fmtClock(t.end)} | ${sp} | ${emo || "—"} | ${text2 || "（空转写）"} |`;
+    });
+    return [
+      `# ${file} · 转写时间轴`,
+      "",
+      `- 起点：${fmtLocalStamp(startMs)}`,
+      `- 轮次：${turns.length}${sideCount ? `（其中旁音 ${sideCount}）` : ""}`,
+      `- 段落：${segCount} 段（同一人连续说话并为一段，进聊天仓的就是这 ${segCount} 条）`,
+      `- 模式：${(_b2 = side.mode) != null ? _b2 : "—"}`,
+      "",
+      "_由包仔生成（每次并仓 / 改起点重写）。旁音轮不进聊天仓，只在这份档里留底供复核。_",
+      "_「段」列：粗体数字 = 这一段的第一轮；↳ = 与上一行同属一段；旁音 / 空转写轮不属于任何段。_",
+      "",
+      "| # | 段 | 绝对时间 | 起-止 | 说话人 | 情感 | 文本 |",
+      "|---:|---:|---|---|---|---|---|",
+      ...body,
+      ""
+    ].join("\n");
+  }
+  function writeRecordingTurnsMd(dataRoot, talker, file, md) {
+    const fs2 = controlFs();
+    if (!fs2 || !dataRoot || !talker || !file) return false;
+    const p = recordingTurnsMdPath(dataRoot, talker, file);
+    try {
+      fs2.mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+      fs2.writeFileSync(p, md, "utf8");
+      return true;
+    } catch (e) {
+      console.warn("[people] 写录音时间轴失败:", e);
+      return false;
+    }
   }
   function voiceprintRefPath(dataRoot, talker) {
     return `${String(dataRoot != null ? dataRoot : "").replace(/[\\/]+$/, "")}/voiceprints/${talker}.npz`;
@@ -17973,6 +18224,34 @@ ${lines.join("\n")}`);
       ],
       shell: true
     };
+  }
+  function buildRecordingCheckSpec(opts) {
+    var _a2, _b2;
+    const python = ((_a2 = opts.python) == null ? void 0 : _a2.trim()) || void 0;
+    const ffmpeg = ((_b2 = opts.ffmpeg) == null ? void 0 : _b2.trim()) || void 0;
+    return {
+      cmd: "bz-face",
+      args: [
+        "check",
+        "--data-root",
+        quotePathArg(opts.dataRoot),
+        "--contact",
+        quotePathArg(opts.talker),
+        ...opts.srcs.flatMap((s) => ["--src", quotePathArg(s)]),
+        ...ffmpeg ? ["--ffmpeg", quotePathArg(ffmpeg)] : [],
+        ...python ? ["--python", python] : []
+      ],
+      shell: true
+    };
+  }
+  function parseRecordingCheckResult(data) {
+    const out = /* @__PURE__ */ new Map();
+    const v = (data != null ? data : {}).verdicts;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return out;
+    for (const [k, val] of Object.entries(v)) {
+      if (val === "ok" || val === "stranger" || val === "unknown") out.set(k, val);
+    }
+    return out;
   }
   function num(v) {
     return typeof v === "number" && Number.isFinite(v) ? v : void 0;
@@ -18031,6 +18310,19 @@ ${lines.join("\n")}`);
     if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(done)) return null;
     return Math.max(0, Math.min(100, Math.round(done / total * 100)));
   }
+  function recordingTurnsComplete(side) {
+    var _a2;
+    const turns = side == null ? void 0 : side.turns;
+    if (!(turns == null ? void 0 : turns.length)) return false;
+    if (side.phase === "done") return true;
+    if (side.phase !== "transcribe") return false;
+    const { done, total } = (_a2 = side.progress) != null ? _a2 : {};
+    if (Number.isFinite(done) && Number.isFinite(total) && total === turns.length && done === total) return true;
+    return turns.every((t) => {
+      var _a3;
+      return !!String((_a3 = t.text) != null ? _a3 : "").trim();
+    });
+  }
   function recordingStageOf(side, sidecarFresh) {
     if (!sidecarFresh || !side) return "load";
     if (side.phase === "vad" || side.phase === "voiceprint") return side.phase;
@@ -18083,17 +18375,111 @@ ${lines.join("\n")}`);
     if (typeof mtimeMs === "number" && Number.isFinite(mtimeMs) && mtimeMs > 0) return Math.round(mtimeMs);
     return Math.round(nowMs != null ? nowMs : Date.now());
   }
-  function getFs2() {
+  function recordingStartOf(dataRoot, talker, file, mtimeMs) {
+    const meta = readRecordingMeta(dataRoot, talker, file);
+    if (meta == null ? void 0 : meta.startMs) return meta.startMs;
+    return recordingTsOf(file, mtimeMs);
+  }
+  function resolveRecordingTargetName(exists, name) {
+    const dot = name.lastIndexOf(".");
+    const stem = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
+    if (!exists(name)) return name;
+    for (let i = 2; i < 100; i++) {
+      const cand = `${stem} (${i})${ext}`;
+      if (!exists(cand)) return cand;
+    }
+    return null;
+  }
+  function parseRelativeTime(fileName) {
+    const base = String(fileName != null ? fileName : "").replace(/\.[^.]+$/, "");
+    const wd = /(?:周|星期)\s*([一二三四五六日天])/.exec(base);
+    const WEEKDAY = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 日: 0, 天: 0 };
+    const tm = /(\d{1,2})\s*[点时:：]\s*(\d{1,2})?/.exec(base);
+    const hh = tm ? Number(tm[1]) : null;
+    const mm = tm && tm[2] ? Number(tm[2]) : tm ? 0 : null;
+    return {
+      weekday: wd ? WEEKDAY[wd[1]] : null,
+      hh: hh !== null && hh >= 0 && hh <= 23 ? hh : null,
+      mm: mm !== null && mm >= 0 && mm <= 59 ? mm : null
+    };
+  }
+  function recordingStartCandidates(fileName, mtimeMs) {
+    const exact = parseRecordingFilenameTs(fileName);
+    if (exact !== null) return [exact];
+    if (!Number.isFinite(mtimeMs) || mtimeMs <= 0) return [];
+    const { weekday, hh, mm } = parseRelativeTime(fileName);
+    if (hh === null) return [];
+    const out = [];
+    const minute = mm != null ? mm : 0;
+    const cursor = new Date(mtimeMs);
+    cursor.setHours(hh, minute, 0, 0);
+    if (cursor.getTime() > mtimeMs) cursor.setDate(cursor.getDate() - 1);
+    for (let i = 0; i < 30 && out.length < 3; i++) {
+      if (weekday === null || cursor.getDay() === weekday) out.push(cursor.getTime());
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return out;
+  }
+  function nodeCrypto() {
     const w = typeof window === "undefined" ? null : window;
     if (!w || !w.require) return null;
     try {
-      return w.require("fs");
+      return w.require("crypto");
     } catch (e) {
       return null;
     }
   }
+  function fileSha256(path) {
+    const fs2 = controlFs();
+    const c = nodeCrypto();
+    if (!fs2 || !c) return null;
+    try {
+      return c.createHash("sha256").update(fs2.readFileSync(path)).digest("hex");
+    } catch (e) {
+      return null;
+    }
+  }
+  function duplicateRecordingGroups(dir, fs2, sha256 = fileSha256) {
+    if (!fs2) return [];
+    let names = [];
+    try {
+      names = fs2.readdirSync(dir).filter((f) => isRecordingFile(f));
+    } catch (e) {
+      return [];
+    }
+    const bySize = /* @__PURE__ */ new Map();
+    for (const f of names) {
+      let size = -1;
+      try {
+        size = Number(fs2.statSync(`${dir}/${f}`).size);
+      } catch (e) {
+        continue;
+      }
+      if (!Number.isFinite(size) || size <= 0) continue;
+      const arr = bySize.get(size);
+      if (arr) arr.push(f);
+      else bySize.set(size, [f]);
+    }
+    const groups = [];
+    for (const same of bySize.values()) {
+      if (same.length < 2) continue;
+      const bySha = /* @__PURE__ */ new Map();
+      for (const f of same) {
+        const sha = sha256(`${dir}/${f}`);
+        if (!sha) continue;
+        const arr = bySha.get(sha);
+        if (arr) arr.push(f);
+        else bySha.set(sha, [f]);
+      }
+      for (const g of bySha.values()) {
+        if (g.length > 1) groups.push(g.slice().sort());
+      }
+    }
+    return groups.sort((a, b) => a[0].localeCompare(b[0]));
+  }
   function voiceprintRefStatus(dataRoot, talker) {
-    const fs2 = getFs2();
+    const fs2 = controlFs();
     if (!fs2) return "missing";
     try {
       return fs2.existsSync(voiceprintRefPath(dataRoot, talker)) ? "ready" : "missing";
@@ -18101,14 +18487,59 @@ ${lines.join("\n")}`);
       return "missing";
     }
   }
+  var sidecarCache = /* @__PURE__ */ new Map();
   function readRecordingSidecar(dataRoot, talker, file) {
-    const fs2 = getFs2();
+    const fs2 = controlFs();
+    if (!fs2) return null;
+    const p = recordingSidecarPath(dataRoot, talker, file);
+    let sig;
+    try {
+      const st2 = fs2.statSync(p);
+      sig = `${st2.mtimeMs}-${st2.ctimeMs}-${st2.size}`;
+    } catch (e) {
+      sidecarCache.delete(p);
+      return null;
+    }
+    const hit = sidecarCache.get(p);
+    if (hit && hit.sig === sig) return hit.value;
+    let value = null;
+    try {
+      value = parseRecordingSidecar(fs2.readFileSync(p, "utf8"));
+    } catch (e) {
+      value = null;
+    }
+    sidecarCache.set(p, { sig, value });
+    return value;
+  }
+  function readRecordingMeta(dataRoot, talker, file) {
+    const fs2 = controlFs();
     if (!fs2) return null;
     try {
-      if (!fs2.existsSync(recordingSidecarPath(dataRoot, talker, file))) return null;
-      return parseRecordingSidecar(fs2.readFileSync(recordingSidecarPath(dataRoot, talker, file), "utf8"));
+      const d = JSON.parse(fs2.readFileSync(recordingMetaPath(dataRoot, talker, file), "utf8"));
+      if (!d || typeof d !== "object" || Array.isArray(d)) return null;
+      const o = d;
+      const src = o.startSource;
+      return {
+        ...num(o.startMs) !== void 0 ? { startMs: num(o.startMs) } : {},
+        ...str2(o.sha256) ? { sha256: str2(o.sha256) } : {},
+        ...src === "name" || src === "candidate" || src === "manual" ? { startSource: src } : {}
+      };
     } catch (e) {
       return null;
+    }
+  }
+  function writeRecordingMeta(dataRoot, talker, file, meta) {
+    const fs2 = controlFs();
+    if (!fs2 || !dataRoot || !talker || !file) return false;
+    const p = recordingMetaPath(dataRoot, talker, file);
+    try {
+      fs2.mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+      fs2.writeFileSync(p, `${JSON.stringify(meta, null, 1)}
+`, "utf8");
+      return true;
+    } catch (e) {
+      console.warn("[people] 写录音 meta 失败:", e);
+      return false;
     }
   }
   function recControlFilePath(dataRoot, talker, file) {
@@ -18185,9 +18616,9 @@ ${lines.join("\n")}`);
   function faceRecSupportError(caps) {
     if (!caps) return null;
     const [maj, min] = minorVersionOf(caps.version);
-    const tooOld = maj === 0 && min < 5;
-    if (tooOld || !caps.commands.includes("rec")) {
-      return `本机 bz-face（v${caps.version}）过旧：录音分离 / 声纹构建需要 v0.5+——本包不发 registry，请在包目录 tools/obsidian-face 重新 npm link（或 npm install -g <仓库>/tools/obsidian-face）后重试`;
+    const tooOld = maj === 0 && min < 6;
+    if (tooOld || !caps.commands.includes("rec") || !caps.commands.includes("check")) {
+      return `本机 bz-face（v${caps.version}）过旧：v0.6 起才有「账本替换重试（修你遇到的那个 PermissionError 拒绝访问）」+ 旁音过滤 + 归属抽检——本包不发 registry，请在包目录 tools/obsidian-face 重新 npm link（或 npm install -g <仓库>/tools/obsidian-face）后重试`;
     }
     return null;
   }
@@ -18200,15 +18631,19 @@ ${lines.join("\n")}`);
     return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file, startedAt: v.startedAt }));
   }
   var COOP_STOP_KILL_MS = 9e4;
-  function startRecordingTask(spec, key, onExit, meta) {
+  function startRecordingTask(spec, key, onExit, meta, onResult) {
     var _a2, _b2;
-    if (running.has(key)) return;
+    if (running.has(key)) return null;
     if ((meta == null ? void 0 : meta.dataRoot) && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
-    const handle2 = runner3(spec, { onStep: () => {
-    }, onProgress: () => {
-    }, onInfo: () => {
-    }, onResult: () => {
-    } });
+    const handle2 = runner3(spec, {
+      onStep: () => {
+      },
+      onProgress: () => {
+      },
+      onInfo: () => {
+      },
+      onResult: (data) => onResult == null ? void 0 : onResult(data)
+    });
     running.set(key, { handle: handle2, talker: (_a2 = meta == null ? void 0 : meta.talker) != null ? _a2 : "", file: (_b2 = meta == null ? void 0 : meta.file) != null ? _b2 : "", startedAt: Date.now() });
     void handle2.done.then((outcome) => {
       var _a3, _b3;
@@ -18216,6 +18651,7 @@ ${lines.join("\n")}`);
       if ((meta == null ? void 0 : meta.dataRoot) && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
       onExit == null ? void 0 : onExit({ ok: outcome.ok, stopped: outcome.stopped, error: (_b3 = (_a3 = outcome.error) == null ? void 0 : _a3.message) != null ? _b3 : "" });
     });
+    return handle2;
   }
   function stopRecordingTask(key, opts) {
     const entry = running.get(key);
@@ -18229,6 +18665,114 @@ ${lines.join("\n")}`);
       if (running.has(key)) entry.handle.stop();
     }, COOP_STOP_KILL_MS);
     void entry.handle.done.then(() => clearTimeout(timer));
+  }
+  var queue = [];
+  var pumping = false;
+  var queueEpoch = 0;
+  var queueSubs = /* @__PURE__ */ new Set();
+  var queueSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function subscribeRecordingQueue(fn) {
+    queueSubs.add(fn);
+    return () => queueSubs.delete(fn);
+  }
+  function notifyQueue() {
+    for (const fn of [...queueSubs]) {
+      try {
+        fn();
+      } catch (e) {
+      }
+    }
+  }
+  function isRecordingQueued(key) {
+    return queue.some((e) => e.key === key);
+  }
+  function recordingQueuePosition(key) {
+    const i = queue.findIndex((e) => e.key === key);
+    return i < 0 ? 0 : i + 1;
+  }
+  function queuedRecordingItems() {
+    return queue.map((e, i) => ({ key: e.key, talker: e.talker, file: e.file, position: i + 1 }));
+  }
+  function queuedRecordingCount() {
+    return queue.length;
+  }
+  function enqueueRecordingTask(entry) {
+    if (!(entry == null ? void 0 : entry.key)) return;
+    if (running.has(entry.key) || isRecordingQueued(entry.key)) return;
+    queue.push(entry);
+    notifyQueue();
+    void pumpRecordingQueue();
+  }
+  function dequeueRecordingTask(key) {
+    const i = queue.findIndex((e) => e.key === key);
+    if (i < 0) return false;
+    queue.splice(i, 1);
+    notifyQueue();
+    return true;
+  }
+  function clearRecordingQueue() {
+    const n = queue.length;
+    queue.length = 0;
+    notifyQueue();
+    return n;
+  }
+  async function pumpRecordingQueue() {
+    var _a2;
+    if (pumping) return;
+    pumping = true;
+    const epoch = queueEpoch;
+    try {
+      while (queue.length && epoch === queueEpoch) {
+        const entry = queue[0];
+        let preempted = false;
+        const got = await waitHeavyGate(
+          "recording",
+          () => epoch === queueEpoch && queue.includes(entry),
+          async (ms) => {
+            if (!preempted && preemptHeavyStandby()) preempted = true;
+            await queueSleep(ms);
+          }
+        );
+        if (epoch !== queueEpoch) return;
+        if (!got) {
+          dequeueRecordingTask(entry.key);
+          continue;
+        }
+        dequeueRecordingTask(entry.key);
+        let go = true;
+        if (entry.prepare) {
+          try {
+            go = await entry.prepare();
+          } catch (e) {
+            go = false;
+          }
+        }
+        if (epoch !== queueEpoch) {
+          releaseHeavy("recording");
+          return;
+        }
+        if (!go) {
+          releaseHeavy("recording");
+          continue;
+        }
+        const handle2 = startRecordingTask(
+          entry.spec(),
+          entry.key,
+          entry.onExit,
+          (_a2 = entry.meta) != null ? _a2 : { talker: entry.talker, file: entry.file },
+          entry.onResult
+        );
+        if (!handle2) {
+          releaseHeavy("recording");
+          continue;
+        }
+        await handle2.done;
+        releaseHeavy("recording");
+      }
+    } finally {
+      if (epoch === queueEpoch) pumping = false;
+      notifyQueue();
+    }
   }
 
   // src/people/ui.ts
@@ -18348,7 +18892,7 @@ ${lines.join("\n")}`);
     const norm = String(p != null ? p : "").replace(/\\/g, "/");
     return Boolean(norm) && !/^[A-Za-z]:\//.test(norm) && !norm.startsWith("/");
   }
-  function getFs3() {
+  function getFs2() {
     const w = globalThis.window;
     if (!w || !w.require) return null;
     try {
@@ -18378,7 +18922,7 @@ ${lines.join("\n")}`);
         }
         return null;
       }
-      const fs = getFs3();
+      const fs = getFs2();
       if (!fs || !fs.existsSync(p)) return null;
       const buf = fs.readFileSync(p);
       if (!buf || !buf.length) return null;
@@ -19655,6 +20199,7 @@ ${lines.join("\n")}`);
   ];
   var SUPP_REC_LABEL = {
     pending: "待处理",
+    queued: "排队中",
     running: "转写中",
     interrupted: "已中断",
     failed: "失败",
@@ -19746,6 +20291,7 @@ ${lines.join("\n")}`);
     return out;
   }
   function suppRecBody(s) {
+    var _a2, _b2;
     const out = [];
     out.push(el("div", "bz-people-pop-note", text("录音原件落数据根 recordings/（vault 外）；本地分离说话人与转写（不联网不花钱），转写轮次按归属并进时间线。")));
     const refLine = el("div", "bz-people-supp-ref");
@@ -19764,21 +20310,150 @@ ${lines.join("\n")}`);
     out.push(el("div", "bz-people-supp-acts", [
       button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "添加录音…", { "data-people-supp-rec-add": "" })
     ]));
+    if (s.queue.length) out.push(...suppRecQueueBody(s.queue));
+    const dups = (_a2 = s.dupGroups) != null ? _a2 : [];
+    if (dups.length) {
+      const warn = el("div", "bz-people-supp-dups");
+      warn.appendChild(el("div", "bz-people-supp-dupshead", text(
+        `库里有 ${dups.length} 组疑似重复（内容一样、名字不同）——没有自动删，你看过再定：`
+      )));
+      for (const g of dups) {
+        warn.appendChild(el("div", "bz-people-supp-duprow", { title: "这些文件字节完全相同" }, text(g.join("  ＝  "))));
+      }
+      out.push(warn);
+    }
     if (!s.rows.length) {
       out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
       return out;
     }
     const list = el("div", "bz-people-supp-list");
-    for (const r of s.rows) list.appendChild(suppRecRow(r));
+    for (const r of s.rows) {
+      list.appendChild(suppRecRow(r, ((_b2 = s.del) == null ? void 0 : _b2.file) === r.file ? s.del : void 0, s.startEdit === r.file, s.turnsView));
+    }
     out.push(list);
     return out;
   }
-  function suppRecRow(r) {
+  function recDelConfirm(r, del) {
+    const box = el("div", "bz-people-supp-delbox");
+    box.appendChild(el("div", "bz-people-del-line", text(
+      r.status === "merged" || r.status === "awaiting-merge" ? `「${r.file}」的转写轮次已进聊天仓——删除会把仓里这些轮次一并清掉（统计同步重算）。` : `「${r.file}」还没进聊天仓——删除只清账本与派生档。`
+    )));
+    if (del.drawn) {
+      box.appendChild(el("div", "bz-people-del-line", text("该联系人已画过脸谱：正文是产物，不会随之改写——要反映这次删除得重新画谱（花钱）。")));
+    }
+    const label = document.createElement("label");
+    label.className = "bz-people-supp-delchk";
+    const ck = document.createElement("input");
+    ck.type = "checkbox";
+    ck.checked = del.alsoFile;
+    ck.setAttribute("data-people-supp-rec-del-file", r.file);
+    label.appendChild(ck);
+    label.appendChild(text(" 同时删除录音原件（不勾就只清账本，行回落「待处理」可重跑）"));
+    box.appendChild(label);
+    box.appendChild(el("div", "bz-people-supp-rowfoot", [
+      button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认删除", { "data-people-supp-rec-del-ok": r.file }),
+      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-supp-rec-del-cancel": r.file })
+    ]));
+    return box;
+  }
+  function suppRecQueueBody(queue2) {
+    const out = [];
+    const list = el("div", "bz-people-supp-qlist");
+    queue2.forEach((it, i) => {
+      const row = el("div", `bz-people-supp-qrow${it.startMs === null ? " need-ts" : ""}${it.suspect && !it.keep ? " suspect" : ""}`);
+      row.appendChild(el("span", "bz-people-supp-qname", { title: it.path }, text(it.name)));
+      if (it.dupOf) row.appendChild(el("span", "bz-people-supp-qwarn", { title: `与库里「${it.dupOf}」内容相同` }, text("重复")));
+      if (it.checking) row.appendChild(el("span", "bz-people-supp-qwarn", text("抽检中…")));
+      else if (it.suspect) {
+        row.appendChild(el("span", "bz-people-supp-qwarn bz-people-supp-qwarn-hard", {
+          title: `抽检听不出「我」或该联系人的声音（可能选错了录音）——默认跳过，确认要导就点右钮`
+        }, text(it.keep ? "存疑·已允许" : "听着不像你们俩")));
+        row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", it.keep ? "仍然导入：已允许" : "仍然导入", {
+          "data-people-supp-rec-keep": String(i)
+        }));
+      }
+      if (it.candidates.length > 1) {
+        const sel = document.createElement("select");
+        sel.className = "bz-people-input bz-people-supp-qcand";
+        sel.setAttribute("data-people-supp-rec-cand", String(i));
+        sel.setAttribute("title", "文件名只给了「周X / N点N分」这类相对信息——选一个候选日期");
+        it.candidates.forEach((c) => {
+          const o = document.createElement("option");
+          o.value = String(c);
+          o.textContent = suppLocalTsValue(c).replace("T", " ");
+          if (c === it.startMs) o.selected = true;
+          sel.appendChild(o);
+        });
+        row.appendChild(sel);
+      }
+      const ts = document.createElement("input");
+      ts.type = "datetime-local";
+      ts.className = "bz-people-input bz-people-supp-qts";
+      ts.value = it.startMs === null ? "" : suppLocalTsValue(it.startMs);
+      ts.setAttribute("data-people-supp-rec-ts", String(i));
+      if (it.startMs === null) ts.setAttribute("placeholder", "必填：这条录音的起点");
+      row.appendChild(ts);
+      row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "×", { "data-people-supp-rec-drop": String(i), "aria-label": "移除" }));
+      list.appendChild(row);
+    });
+    out.push(list);
+    const miss = queue2.filter((q) => q.startMs === null).length;
+    const suspect = queue2.filter((q) => q.suspect && !q.keep).length;
+    out.push(el("div", "bz-people-supp-acts", [
+      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${queue2.length - suspect} 条`, { "data-people-supp-rec-import": "" })
+    ]));
+    out.push(el("div", "bz-people-pop-note", text(
+      miss > 0 ? `有 ${miss} 条还没确认起点（标红处）——录音起点决定整条转写的绝对时间，填完再落盘。` : suspect > 0 ? `有 ${suspect} 条抽检听不出你或该联系人的声音（可能选错了录音）——默认不导入；确认没错就点「仍然导入」。` : "起点 = 这条录音开始录的时刻（不是复制进来的时刻）；转写轮次的绝对时间靠它推。之后也能在行上改。"
+    )));
+    return out;
+  }
+  function recTurnsPreview(lines) {
+    const box = el("div", "bz-people-supp-turns");
+    if (!lines.length) {
+      box.appendChild(el("div", "bz-people-pop-note", text("账本里还没有轮次——转写跑完才会有。")));
+      return box;
+    }
+    const sideN = lines.filter((l) => l.side).length;
+    const segN = lines.reduce((m, l) => {
+      var _a2;
+      return Math.max(m, (_a2 = l.segHead) != null ? _a2 : 0);
+    }, 0);
+    box.appendChild(el("div", "bz-people-supp-turnhead", text(
+      `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ""}`
+    )));
+    const list = el("div", "bz-people-supp-turnlist");
+    for (const l of lines) {
+      const segCls = l.segHead !== void 0 ? " seghead" : l.segCont ? " segcont" : "";
+      const line = el("div", `bz-people-supp-turn${l.side ? " side" : ""}${segCls}`);
+      const who = el("span", "bz-people-supp-turnwho", { title: "第 N 段的段首轮——同一人连续的这几轮并成聊天仓一条" });
+      if (l.segHead !== void 0) who.appendChild(el("span", "bz-people-supp-turnseg", text(`第${l.segHead}段`)));
+      who.appendChild(text(`${l.speaker}${l.emotion ? `·${l.emotion}` : ""}`));
+      line.appendChild(who);
+      line.appendChild(el("span", "bz-people-supp-turnat", text(`${l.at} ${l.range}`)));
+      line.appendChild(el("span", "bz-people-supp-turntext", text(l.text || "（空转写）")));
+      list.appendChild(line);
+    }
+    box.appendChild(list);
+    return box;
+  }
+  function suppRecRow(r, del, startEdit = false, turnsView) {
+    var _a2;
     const row = el("div", "bz-people-supp-row", { "data-people-supp-row": r.file });
     const head = el("div", "bz-people-supp-rowhead");
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
     head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
     row.appendChild(head);
+    if (del) {
+      row.appendChild(recDelConfirm(r, del));
+      return row;
+    }
+    if ((turnsView == null ? void 0 : turnsView.file) === r.file) {
+      row.appendChild(recTurnsPreview(turnsView.lines));
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-turns-close": r.file })
+      ]));
+      return row;
+    }
     if (r.status === "running" || r.status === "interrupted" || r.status === "awaiting-merge") {
       const meter = el("div", "bz-people-jobs-meter");
       if (r.pct !== null) {
@@ -19803,18 +20478,44 @@ ${lines.join("\n")}`);
       row.appendChild(el("div", "bz-people-supp-rowfoot", [stop]));
       return row;
     }
+    if (r.status === "queued") {
+      row.appendChild(el("div", "bz-people-supp-rowmeta", text(`排队中 · 第 ${(_a2 = r.queuePos) != null ? _a2 : 1} 位`)));
+      const out = button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "移出队列", { "data-people-supp-rec-dequeue": r.file });
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [out]));
+      return row;
+    }
     const bits = [];
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
     if (r.mode === "blind") bits.push("无质心：盲分");
     if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
+    if (r.sideSpeaks) bits.push(`已滤 ${r.sideSpeaks} 轮旁音`);
     if (bits.length) row.appendChild(el("div", "bz-people-supp-rowmeta", text(bits.join(" · "))));
+    if (startEdit) {
+      const line = el("div", "bz-people-supp-startrow");
+      line.appendChild(el("span", void 0, text("起点")));
+      const inp = document.createElement("input");
+      inp.type = "datetime-local";
+      inp.className = "bz-people-input bz-people-supp-qts";
+      inp.value = r.startMs ? suppLocalTsValue(r.startMs) : "";
+      inp.setAttribute("data-people-supp-rec-start", r.file);
+      line.appendChild(inp);
+      row.appendChild(line);
+    } else if (r.startMs !== void 0) {
+      row.appendChild(el("div", "bz-people-supp-rowmeta", text(`起点 ${suppLocalTsValue(r.startMs).replace("T", " ")}`)));
+    }
     const foot = [];
     if (r.status === "failed" && r.errText) foot.push(el("span", "bz-people-jobs-err", text(r.errText)));
     if (r.status === "pending") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "处理", { "data-people-supp-rec-run": r.file }));
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
+    if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
+    else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
+    if (r.turns !== void 0) {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
+    }
+    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }
@@ -19824,13 +20525,22 @@ ${lines.join("\n")}`);
     return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
   }
   function recNote(rows) {
+    var _a2;
     const block = el("div", "bz-people-jobs", { "data-people-rec-note": "", role: "status" });
-    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${rows.filter((r) => r.status === "running").length} 条在跑`)));
+    const running2 = rows.filter((r) => r.status === "running").length;
+    const waiting = rows.filter((r) => r.status === "queued").length;
+    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running2} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
     for (const r of rows) {
-      if (r.status !== "running" && r.status !== "interrupted") continue;
+      if (r.status !== "running" && r.status !== "queued" && r.status !== "interrupted") continue;
       const line = el("div", "bz-people-jobs-main", text(r.file));
-      if (r.phaseText) line.appendChild(el("span", "bz-people-jobs-detail", text(` · ${r.phaseText}`)));
+      const detail = r.status === "queued" ? `排队中 · 第 ${(_a2 = r.queuePos) != null ? _a2 : 1} 位` : r.phaseText;
+      if (detail) line.appendChild(el("span", "bz-people-jobs-detail", text(` · ${detail}`)));
       block.appendChild(line);
+    }
+    if (waiting) {
+      block.appendChild(el("div", "bz-people-jobs-foot", [
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "清空队列", { "data-people-rec-clear-queue": "" })
+      ]));
     }
     return block;
   }
@@ -20213,8 +20923,11 @@ ${lines.join("\n")}`);
   var suppOwnerId = null;
   var suppImages = [];
   var suppBusy = false;
-  var refBuilding = false;
-  var suppRecTs = /* @__PURE__ */ new Map();
+  var suppRecQueue = [];
+  var recDelPending = null;
+  var recDelAlsoFile = true;
+  var recStartEditFile = null;
+  var recTurnsFile = null;
   var suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set() };
   var recPollTimer = null;
   var animBoot = true;
@@ -20231,7 +20944,9 @@ ${lines.join("\n")}`);
       if (suppOwnerId !== detailId) {
         suppOwnerId = detailId;
         suppImages = [];
-        suppRecTs.clear();
+        suppRecQueue = [];
+        recDelPending = null;
+        recStartEditFile = null;
         suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set() };
       }
       void refreshSuppStoreInfo(detailId);
@@ -20309,11 +21024,30 @@ ${lines.join("\n")}`);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("change", (e) => {
       const inp = e.target instanceof HTMLInputElement ? e.target : null;
-      const idxRaw = inp == null ? void 0 : inp.getAttribute("data-people-supp-img-ts");
-      if (!inp || idxRaw === null) return;
-      const it = suppImages[Number(idxRaw)];
-      const v = inp.value ? new Date(inp.value).getTime() : NaN;
-      if (it && Number.isFinite(v)) it.ts = v;
+      if (!inp) return;
+      const idxRaw = inp.getAttribute("data-people-supp-img-ts");
+      if (idxRaw !== null) {
+        const it = suppImages[Number(idxRaw)];
+        const v = inp.value ? new Date(inp.value).getTime() : NaN;
+        if (it && Number.isFinite(v)) it.ts = v;
+        return;
+      }
+      const recIdx = inp.getAttribute("data-people-supp-rec-ts");
+      if (recIdx !== null) {
+        const it = suppRecQueue[Number(recIdx)];
+        const v = inp.value ? new Date(inp.value).getTime() : NaN;
+        if (it) it.startMs = Number.isFinite(v) ? v : null;
+        return;
+      }
+      if (inp.hasAttribute("data-people-supp-rec-del-file")) {
+        recDelAlsoFile = inp.checked;
+        return;
+      }
+      const startFile = inp.getAttribute("data-people-supp-rec-start");
+      if (startFile) {
+        const v = inp.value ? new Date(inp.value).getTime() : NaN;
+        if (Number.isFinite(v)) void suppSetRecordingStart(startFile, v);
+      }
     });
     offWheelTurn = bindWheelTurn(overlay, (dir) => turnTo(dir > 0 ? "next" : "prev"));
     overlay.addEventListener("keydown", (e) => {
@@ -20599,9 +21333,9 @@ ${lines.join("\n")}`);
   }
   function applyJobsLockdown() {
     var _a2, _b2;
-    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
+    const queue2 = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
     if (!jobsBusy()) return;
-    const active = (_b2 = queue.find((j) => j.status === "running")) != null ? _b2 : queue.find((j) => j.status === "paused" || j.status === "interrupted");
+    const active = (_b2 = queue2.find((j) => j.status === "running")) != null ? _b2 : queue2.find((j) => j.status === "paused" || j.status === "interrupted");
     const who = (active == null ? void 0 : active.name) || (active == null ? void 0 : active.talker) || "";
     const running2 = (active == null ? void 0 : active.status) === "running";
     const why = running2 ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
@@ -20609,7 +21343,7 @@ ${lines.join("\n")}`);
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-detail]").forEach((page) => {
       var _a3;
       const id = (_a3 = page.dataset.peopleDetail) != null ? _a3 : "";
-      if (queue.some((j) => j.talker === id)) return;
+      if (queue2.some((j) => j.talker === id)) return;
       const btn = page.querySelector('[data-people-act="generate"]');
       if (!btn) return;
       btn.disabled = true;
@@ -21131,15 +21865,15 @@ ${lines.join("\n")}`);
   }
   function currentJobsItem() {
     var _a2;
-    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
-    if (!queue.length) return null;
+    const queue2 = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
+    if (!queue2.length) return null;
     const rank = { running: 0, paused: 1, interrupted: 1, error: 2, done: 3 };
-    return [...queue].map((job, i) => ({ job, i })).sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
+    return [...queue2].map((job, i) => ({ job, i })).sort((a, b) => rank[a.job.status] - rank[b.job.status] || a.i - b.i)[0].job;
   }
   function toBlockState(job) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h, _i;
-    const queue = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
-    const pos = queue.findIndex((j) => j.talker === job.talker);
+    const queue2 = (_a2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _a2 : [];
+    const pos = queue2.findIndex((j) => j.talker === job.talker);
     return {
       talker: job.talker,
       name: job.name || job.talker,
@@ -21150,7 +21884,7 @@ ${lines.join("\n")}`);
       batchesTotal: (_f = (_e = job.batchesTotal) != null ? _e : (_d = job.chunks) == null ? void 0 : _d.length) != null ? _f : 0,
       stagesDone: jobsStagesDone(job.stage, job.status),
       queueIndex: (_g = job.queueIndex) != null ? _g : pos + 1,
-      queueTotal: (_h = job.queueTotal) != null ? _h : queue.length,
+      queueTotal: (_h = job.queueTotal) != null ? _h : queue2.length,
       errorText: job.error,
       resumable: isResumable(job),
       // 工具段进度（469）：阶段行 / 折算总进度只在 preprocess 阶段上屏（AI 段回落批口径）；
@@ -21320,7 +22054,7 @@ ${lines.join("\n")}`);
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -21590,6 +22324,7 @@ ${lines.join("\n")}`);
       suppTab = (_w = suppTabBtn.getAttribute("data-people-supp-tab")) != null ? _w : "text";
       startRecPolling();
       void renderAlbum();
+      if (suppTab === "rec") void noticeInterruptedRecordings();
       return;
     }
     if (t.closest("[data-people-supp-img-pick]")) {
@@ -21618,22 +22353,88 @@ ${lines.join("\n")}`);
       return;
     }
     if (t.closest("[data-people-supp-rec-add]")) {
-      void suppAddRecordings();
+      void suppPickRecordings();
+      return;
+    }
+    const recCand = t.closest("[data-people-supp-rec-cand]");
+    if (recCand) {
+      const it = suppRecQueue[Number(recCand.getAttribute("data-people-supp-rec-cand"))];
+      const v = Number(recCand.value);
+      if (it && Number.isFinite(v)) {
+        it.startMs = v;
+        void renderAlbum();
+      }
+      return;
+    }
+    const recDrop = t.closest("[data-people-supp-rec-drop]");
+    if (recDrop) {
+      suppRecQueue.splice(Number(recDrop.getAttribute("data-people-supp-rec-drop")), 1);
+      void renderAlbum();
+      return;
+    }
+    const recKeep = t.closest("[data-people-supp-rec-keep]");
+    if (recKeep) {
+      const it = suppRecQueue[Number(recKeep.getAttribute("data-people-supp-rec-keep"))];
+      if (it) it.keep = !it.keep;
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-supp-rec-import]")) {
+      void suppImportRecordings();
+      return;
+    }
+    const recDel = t.closest("[data-people-supp-rec-del]");
+    if (recDel) {
+      recDelPending = (_x = recDel.getAttribute("data-people-supp-rec-del")) != null ? _x : null;
+      recDelAlsoFile = true;
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-supp-rec-del-cancel]")) {
+      recDelPending = null;
+      void renderAlbum();
+      return;
+    }
+    const recDelOk = t.closest("[data-people-supp-rec-del-ok]");
+    if (recDelOk) {
+      void suppDeleteRecording((_y = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _y : "");
+      return;
+    }
+    const recStartBtn = t.closest("[data-people-supp-rec-start-edit]");
+    if (recStartBtn) {
+      recStartEditFile = recStartBtn.getAttribute("data-people-supp-rec-start-edit");
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-supp-rec-start-cancel]")) {
+      recStartEditFile = null;
+      void renderAlbum();
+      return;
+    }
+    const recTurns = t.closest("[data-people-supp-rec-turns]");
+    if (recTurns) {
+      recTurnsFile = recTurns.getAttribute("data-people-supp-rec-turns");
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-supp-rec-turns-close]")) {
+      recTurnsFile = null;
+      void renderAlbum();
       return;
     }
     const recRun = t.closest("[data-people-supp-rec-run]");
     if (recRun) {
-      void suppRunRecording((_x = recRun.getAttribute("data-people-supp-rec-run")) != null ? _x : "");
+      void suppRunRecording((_z = recRun.getAttribute("data-people-supp-rec-run")) != null ? _z : "");
       return;
     }
     const recMerge = t.closest("[data-people-supp-rec-merge]");
     if (recMerge && detailId) {
-      void suppMergeRecording(detailId, (_y = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _y : "");
+      void suppMergeRecording(detailId, (_A = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _A : "");
       return;
     }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      const file = (_z = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _z : "";
+      const file = (_B = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _B : "";
       const root = suppDataRoot();
       if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
       void renderAlbum();
@@ -21641,6 +22442,20 @@ ${lines.join("\n")}`);
     }
     if (t.closest("[data-people-supp-rec-ref]")) {
       void suppBuildVoiceprintRef();
+      return;
+    }
+    const recDeq = t.closest("[data-people-supp-rec-dequeue]");
+    if (recDeq) {
+      const file = (_C = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _C : "";
+      const root = suppDataRoot();
+      if (detailId && root && file) dequeueRecordingTask(recordingSidecarPath(root, detailId, file));
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-rec-clear-queue]")) {
+      const n = clearRecordingQueue();
+      notice(n > 0 ? `已清空队列（${n} 条）` : "队列已是空的", "info");
+      void renderAlbum();
       return;
     }
     const lock = t.closest("[data-people-lock]");
@@ -21829,11 +22644,21 @@ ${lines.join("\n")}`);
     }))].slice(0, 6);
     return findPage({ q, total: listCache.length, rows, tags: tagPool });
   }
+  function harvestRecQueueInputs() {
+    if (!suppRecQueue.length || !overlay) return;
+    overlay.querySelectorAll("[data-people-supp-rec-ts]").forEach((inp) => {
+      const it = suppRecQueue[Number(inp.getAttribute("data-people-supp-rec-ts"))];
+      if (!it) return;
+      const v = new Date(inp.value).getTime();
+      it.startMs = inp.value && Number.isFinite(v) ? v : null;
+    });
+  }
   async function renderAlbum() {
     var _a2;
     const panel = overlay == null ? void 0 : overlay.querySelector(".bz-people-panel");
     const wrap = overlay == null ? void 0 : overlay.querySelector("[data-people-scroll]");
     if (!panel || !wrap || !store || !overlay) return;
+    harvestRecQueueInputs();
     const scroll = scrollSnapshot();
     if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) {
       listCache = [];
@@ -22618,17 +23443,64 @@ ${lines.join("\n")}`);
     if (stage2 === "load") return "启动模型…（首次冷加载约 1-2 分钟）";
     return (_b2 = (_a2 = side == null ? void 0 : side.progress) == null ? void 0 : _a2.text) != null ? _b2 : `${suppRecStageLabel(stage2)}…`;
   }
+  function recDelState() {
+    var _a2;
+    if (!recDelPending) return void 0;
+    const p = (_a2 = listCache.find((x) => x.id === detailId)) != null ? _a2 : null;
+    const drawn = p ? deleteTierOf(p, sealJobOf(jobViews().get(p.id))) === "drawn" : false;
+    return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
+  }
+  function recTurnsViewState(root, talker) {
+    var _a2;
+    if (!recTurnsFile) return void 0;
+    const side = readRecordingSidecar(root, talker, recTurnsFile);
+    const turns = (_a2 = side == null ? void 0 : side.turns) != null ? _a2 : [];
+    const base = recordingStartOf(root, talker, recTurnsFile, recMtimeOf(root, talker, recTurnsFile));
+    const p2 = (n) => String(n).padStart(2, "0");
+    const segs = recordingTurnSegments(turns);
+    return {
+      file: recTurnsFile,
+      lines: turns.map((t, i) => {
+        var _a3, _b2, _c, _d, _e;
+        const emo = String((_a3 = t.emotion) != null ? _a3 : "").trim();
+        const date = new Date(base + Math.round((Number(t.start) || 0) * 1e3));
+        const sg = (_b2 = segs[i]) != null ? _b2 : { seg: 0, head: false };
+        return {
+          idx: i + 1,
+          at: `${p2(date.getHours())}:${p2(date.getMinutes())}:${p2(date.getSeconds())}`,
+          range: `${fmtClock(t.start)}-${fmtClock(t.end)}`,
+          speaker: String((_c = t.speaker) != null ? _c : "").trim() || "?",
+          ...emo ? { emotion: emo } : {},
+          text: String((_d = t.text) != null ? _d : "").trim(),
+          side: String((_e = t.speaker) != null ? _e : "").trim() === SIDE_SPEECH_SPEAKER,
+          ...sg.seg > 0 ? sg.head ? { segHead: sg.seg } : { segCont: true } : {}
+        };
+      })
+    };
+  }
+  function recMtimeOf(root, talker, file) {
+    var _a2;
+    try {
+      return (_a2 = suppFs()) == null ? void 0 : _a2.statSync(`${recordingsDirOf(root, talker)}/${file}`).mtimeMs;
+    } catch (e) {
+      return void 0;
+    }
+  }
   function suppRecState(talker) {
-    var _a2, _b2, _c, _d;
+    var _a2, _b2, _c, _d, _e;
     const rows = [];
     const root = suppDataRoot();
-    const ref = refBuilding ? "building" : voiceprintRefStatus(root, talker);
+    const del = recDelState();
+    const startOf = (file) => recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
+    const refKey = `ref:${talker}`;
+    const refBusy = isRecordingRunning(refKey) || isRecordingQueued(refKey);
+    const ref = refBusy ? "building" : voiceprintRefStatus(root, talker);
     const fs2 = suppFs();
-    if (!fs2 || !root) return { rows, ref };
+    if (!fs2 || !root) return { rows, ref, queue: suppRecQueue, ...del ? { del } : {} };
     const dir = recordingsDirOf(root, talker);
     let files = [];
     try {
-      files = fs2.readdirSync(dir).filter((f) => !f.endsWith(".turns.json") && !f.endsWith(".tmp")).filter((f) => {
+      files = fs2.readdirSync(dir).filter((f) => isRecordingFile(f)).filter((f) => {
         try {
           return fs2.statSync(`${dir}/${f}`).isFile();
         } catch (e) {
@@ -22636,13 +23508,17 @@ ${lines.join("\n")}`);
         }
       }).sort();
     } catch (e) {
-      return { rows, ref };
+      return { rows, ref, queue: suppRecQueue, ...del ? { del } : {} };
     }
     const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
     for (const f of files) {
       const key = recordingSidecarPath(root, talker, f);
       const side = readRecordingSidecar(root, talker, f);
       const merged = suppStoreInfo.mergedRecs.has(f);
+      if (isRecordingQueued(key)) {
+        rows.push({ file: f, status: "queued", phaseText: "", pct: null, queuePos: recordingQueuePosition(key) });
+        continue;
+      }
       if (isRecordingRunning(key)) {
         const it = runMap.get(key);
         const stage2 = recordingStageOf(side, recSidecarFresh(fs2, key, it == null ? void 0 : it.startedAt));
@@ -22668,16 +23544,32 @@ ${lines.join("\n")}`);
         continue;
       }
       if (side.phase === "error") {
-        rows.push({ file: f, status: "failed", phaseText: "", pct: null, errText: (_a2 = side.error) != null ? _a2 : "进程异常退出" });
+        rows.push({ file: f, status: "failed", phaseText: "", pct: null, errText: recordingFailureText(side) });
         continue;
       }
-      if (side.phase === "done") {
-        rows.push({ file: f, status: "awaiting-merge", phaseText: ((_b2 = side.turns) == null ? void 0 : _b2.length) ? `转写完成 · ${side.turns.length} 轮` : "转写完成", pct: 100, ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+      if (side.phase === "done" || recordingTurnsComplete(side)) {
+        const tail = side.phase === "done" ? "" : "（账本收尾标记缺失，已按全部轮次）";
+        rows.push({ file: f, status: "awaiting-merge", phaseText: ((_a2 = side.turns) == null ? void 0 : _a2.length) ? `转写完成 · ${side.turns.length} 轮${tail}` : "转写完成", pct: 100, ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
         continue;
       }
-      rows.push({ file: f, status: "interrupted", phaseText: (_d = (_c = side.progress) == null ? void 0 : _c.text) != null ? _d : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+      rows.push({ file: f, status: "interrupted", phaseText: (_c = (_b2 = side.progress) == null ? void 0 : _b2.text) != null ? _c : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
     }
-    return { rows, ref };
+    for (const r of rows) {
+      r.startMs = startOf(r.file);
+      const n = ((_e = (_d = readRecordingSidecar(root, talker, r.file)) == null ? void 0 : _d.turns) != null ? _e : []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
+      if (n) r.sideSpeaks = n;
+    }
+    const turnsView = recTurnsViewState(root, talker);
+    const dupGroups = duplicateRecordingGroups(recordingsDirOf(root, talker), suppFs());
+    return {
+      rows,
+      ref,
+      queue: suppRecQueue,
+      ...dupGroups.length ? { dupGroups } : {},
+      ...del ? { del } : {},
+      ...recStartEditFile ? { startEdit: recStartEditFile } : {},
+      ...turnsView ? { turnsView } : {}
+    };
   }
   async function suppPickImages() {
     const files = await pickSystemFiles("选择图片", [
@@ -22773,29 +23665,238 @@ ${lines.join("\n")}`);
     await refreshSuppStoreInfo(detailId);
     void renderAlbum();
   }
-  async function suppAddRecordings() {
+  async function suppDeleteRecording(file) {
     const talker = detailId;
     const root = suppDataRoot();
-    if (!talker || !root || suppBusy) return;
+    const fs2 = suppFs();
+    if (!talker || !root || !file || !fs2) return;
+    if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+    if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) {
+      notice("保险库上锁——删除要连仓里的转写轮次一起清，请先解锁保险库再删", "warning");
+      return;
+    }
+    const alsoFile = recDelAlsoFile;
+    recDelPending = null;
+    suppBusy = true;
+    const removed = [];
+    try {
+      const paths = [...recordingArtifactPaths(root, talker, file)];
+      try {
+        const dir = recordingsDirOf(root, talker);
+        const pre = recordingTmpPrefix(file);
+        for (const f of fs2.readdirSync(dir)) {
+          if (f.startsWith(pre) && f.endsWith(".tmp")) paths.push(`${dir}/${f}`);
+        }
+      } catch (e) {
+      }
+      paths.push(recControlFilePath(root, talker, file));
+      for (const p of paths) {
+        try {
+          if (fs2.existsSync(p)) {
+            fs2.unlinkSync(p);
+            removed.push(p);
+          }
+        } catch (e) {
+        }
+      }
+      if (alsoFile) {
+        const src = `${recordingsDirOf(root, talker)}/${file}`;
+        try {
+          if (fs2.existsSync(src)) fs2.unlinkSync(src);
+        } catch (e) {
+          notice(`录音原件删不掉（可能被播放器占用）：「${file}」——账本与仓内数据已清`, "warning");
+        }
+      }
+      const prefix = `rec:${file}:`;
+      let gone2 = 0;
+      await peopleSafe.write(talker, (rec) => {
+        var _a2, _b2, _c;
+        const before = rec.store.msgs.length;
+        rec.store.msgs = rec.store.msgs.filter((m) => !m.key.startsWith(prefix));
+        gone2 = before - rec.store.msgs.length;
+        if (gone2 > 0) {
+          const k = (_b2 = (_a2 = rec.store.kindCounts) == null ? void 0 : _a2.录音) != null ? _b2 : 0;
+          rec.store.kindCounts = { ...(_c = rec.store.kindCounts) != null ? _c : {}, 录音: Math.max(0, k - gone2) };
+          rec.store.stats = storeStatsOf(rec.store.msgs);
+          rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+        }
+      });
+      if (gone2 > 0) removed.push(`${gone2} 条仓内轮次`);
+      notice(`已删除「${file}」${removed.length ? `（清掉 ${removed.length} 项）` : ""}${alsoFile ? "" : "；原件保留，行已回落「待处理」"}`, "success");
+    } catch (e) {
+      notifyActionError(e, "删除录音");
+    } finally {
+      suppBusy = false;
+      void refreshSuppStoreInfo(talker);
+      void renderAlbum();
+    }
+  }
+  async function noticeInterruptedRecordings() {
+    const talker = detailId;
+    const root = suppDataRoot();
+    if (!talker || !root) return;
+    const fs2 = suppFs();
+    if (!fs2) return;
+    try {
+      const dir = recordingsDirOf(root, talker);
+      const names = [];
+      for (const f of fs2.readdirSync(dir)) {
+        if (!isRecordingFile(f) || !suppFs().existsSync(`${dir}/${f}`)) continue;
+        const side = readRecordingSidecar(root, talker, f);
+        if (side && !recordingTurnsComplete(side) && side.phase !== "error") names.push(f);
+      }
+      if (names.length) notice(`有 ${names.length} 条录音中断可续跑：${names.slice(0, 3).join("、")}${names.length > 3 ? " 等" : ""}——点「续跑」按账本只补缺口`, "info");
+    } catch (e) {
+    }
+  }
+  async function suppPickRecordings() {
+    var _a2;
+    const talker = detailId;
+    const root = suppDataRoot();
+    if (!talker || !root) return;
     const files = await pickSystemFiles("选择录音", [
       { name: "录音", ext: ["aac", "m4a", "mp3", "wav", "amr", "flac", "ogg", "opus"] },
       { name: "全部文件", ext: ["*"] }
     ]);
     if (!files.length) return;
+    const fs2 = suppFs();
+    if (!fs2) {
+      notice("非桌面端读不了本机文件——录音导入只在桌面端可用", "warning");
+      return;
+    }
+    const dir = recordingsDirOf(root, talker);
+    const existing = existingRecordingDigests(dir, fs2);
+    for (const p of files) {
+      if (suppRecQueue.some((x) => x.path === p)) continue;
+      const name = p.slice(p.lastIndexOf("/") + 1);
+      let mtime = Date.now();
+      try {
+        mtime = fs2.statSync(p).mtimeMs;
+      } catch (e) {
+      }
+      const sha = fileSha256(p);
+      const cands = recordingStartCandidates(name, mtime);
+      const dupOf = sha ? existing.get(sha) : void 0;
+      suppRecQueue.push({
+        path: p,
+        name,
+        sha256: sha,
+        startMs: (_a2 = cands[0]) != null ? _a2 : null,
+        candidates: cands,
+        ...dupOf ? { dupOf } : {}
+      });
+    }
+    void renderAlbum();
+    void suppCheckRecordingOwners(talker, root);
+  }
+  function suppCheckRecordingOwners(talker, root) {
+    const srcs = suppRecQueue.filter((q) => !q.dupOf).map((q) => q.path);
+    if (!srcs.length) return;
+    for (const q of suppRecQueue) q.checking = true;
+    let done = false;
+    enqueueRecordingTask({
+      key: `check:${talker}`,
+      talker,
+      file: "recording_check",
+      spec: () => buildRecordingCheckSpec({ dataRoot: root, talker, srcs, python: suppPython(), ffmpeg: suppFfmpeg() }),
+      onResult: (data) => {
+        done = true;
+        const verdicts = parseRecordingCheckResult(data);
+        let n = 0;
+        for (const q of suppRecQueue) {
+          q.checking = false;
+          if (verdicts.get(q.path) === "stranger") {
+            q.suspect = true;
+            n++;
+          }
+        }
+        void renderAlbum();
+        if (n) notice(`抽检：${n} 条录音里听不出你或「${talker}」的声音——可能选错了（默认不导入；确认没错就点「仍然导入」）`, "warning");
+      },
+      onExit: (o) => {
+        if (!done) {
+          for (const q of suppRecQueue) q.checking = false;
+          if (!o.ok && !o.stopped) notice(`归属抽检没跑成（${o.error || "进程异常退出"}）——这批录音不做预检，直接落盘`, "info");
+          void renderAlbum();
+        }
+      },
+      meta: { talker, file: "recording_check", dataRoot: root }
+    });
+  }
+  function existingRecordingDigests(dir, fs2) {
+    const out = /* @__PURE__ */ new Map();
+    try {
+      for (const f of fs2.readdirSync(dir)) {
+        if (!isRecordingFile(f)) continue;
+        const sha = fileSha256(`${dir}/${f}`);
+        if (sha && !out.has(sha)) out.set(sha, f);
+      }
+    } catch (e) {
+    }
+    return out;
+  }
+  async function suppImportRecordings() {
+    const talker = detailId;
+    const root = suppDataRoot();
+    if (!talker || !root || suppBusy || !suppRecQueue.length) return;
+    const fs2 = suppFs();
+    if (!fs2) return;
+    harvestRecQueueInputs();
+    const missing = suppRecQueue.filter((q) => q.startMs === null);
+    if (missing.length) {
+      notice(`有 ${missing.length} 条还没确认起点：${missing.map((m) => m.name).join("、")}`, "warning");
+      void renderAlbum();
+      return;
+    }
     suppBusy = true;
     try {
-      const fs2 = suppFs();
+      if (!fs2.existsSync(root)) {
+        notice("脸谱数据根不存在——先到设置里确认数据源目录", "warning");
+        return;
+      }
       const dir = recordingsDirOf(root, talker);
       fs2.mkdirSync(dir, { recursive: true });
+      const seen = existingRecordingDigests(dir, fs2);
+      const usedNames = /* @__PURE__ */ new Set();
       let n = 0;
-      for (const f of files) {
-        const base = f.slice(f.lastIndexOf("/") + 1);
-        const target = `${dir}/${base}`;
-        if (fs2.existsSync(target)) continue;
-        fs2.copyFileSync(f, target);
+      let dup = 0;
+      let renamed = 0;
+      let skippedSuspect = 0;
+      const dupNames = [];
+      for (const it of suppRecQueue) {
+        if (it.suspect && !it.keep) {
+          skippedSuspect++;
+          continue;
+        }
+        if (it.sha256 && seen.has(it.sha256)) {
+          dup++;
+          dupNames.push(it.name);
+          continue;
+        }
+        const taken = (nm) => usedNames.has(nm) || fs2.existsSync(`${dir}/${nm}`);
+        const target = resolveRecordingTargetName(taken, it.name);
+        if (!target) {
+          notice(`「${it.name}」同名副本太多，跳过`, "warning");
+          continue;
+        }
+        if (target !== it.name) renamed++;
+        fs2.copyFileSync(it.path, `${dir}/${target}`);
+        usedNames.add(target);
+        writeRecordingMeta(root, talker, target, {
+          startMs: it.startMs,
+          ...it.sha256 ? { sha256: it.sha256 } : {},
+          startSource: it.candidates.includes(it.startMs) ? parseRecordingFilenameTs(it.name) !== null ? "name" : "candidate" : "manual"
+        });
+        if (it.sha256) seen.set(it.sha256, target);
         n++;
       }
-      notice(n > 0 ? `已添加 ${n} 条录音，点「处理」开始转写` : "所选录音都已在库里（同名不覆盖）", n > 0 ? "success" : "info");
+      suppRecQueue = [];
+      const bits = [`已添加 ${n} 条录音`];
+      if (dup > 0) bits.push(`重复 ${dup} 条未再入库`);
+      if (renamed > 0) bits.push(`同名不同内容 ${renamed} 条已另存`);
+      if (skippedSuspect > 0) bits.push(`${skippedSuspect} 条抽检存疑未导入`);
+      notice(`${bits.join("，")}${n > 0 ? "——点「处理」开始转写" : ""}`, n > 0 ? "success" : "info");
+      if (dupNames.length && n === 0) notice(`（重复：${dupNames.join("、")}）`, "info");
     } catch (e) {
       notifyActionError(e, "添加录音");
     } finally {
@@ -22804,25 +23905,26 @@ ${lines.join("\n")}`);
     }
   }
   async function suppRunRecording(file) {
-    var _a2;
+    var _a2, _b2;
     const talker = detailId;
     const root = suppDataRoot();
     if (!talker || !root || !file || !suppFs()) return;
     if (!await suppFaceGate()) return;
     const key = recordingSidecarPath(root, talker, file);
-    if (isRecordingRunning(key)) return;
+    if (isRecordingRunning(key) || isRecordingQueued(key)) return;
     const pre = readRecordingSidecar(root, talker, file);
-    if ((pre == null ? void 0 : pre.phase) === "done" && ((_a2 = pre.turns) == null ? void 0 : _a2.length)) {
-      notice(`「${file}」已转写完成（${pre.turns.length} 轮）——要重新转写先删除它的 .turns.json 账本`, "info");
+    if (recordingTurnsComplete(pre)) {
+      notice(`「${file}」已转写完成（${(_b2 = (_a2 = pre == null ? void 0 : pre.turns) == null ? void 0 : _a2.length) != null ? _b2 : 0} 轮）——要重新转写先删除它的 .turns.json 账本`, "info");
       return;
     }
-    if (voiceprintRefStatus(root, talker) === "missing") {
-      notice("声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑", "info");
-    }
-    startRecordingTask(
-      buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
+    enqueueRecordingTask({
       key,
-      (o) => {
+      talker,
+      file,
+      // 质心前置（ADR-0218 决策 5）：**出队那一刻**才判——前面的任务可能刚把质心建好，入队时判会白建
+      prepare: () => prepareVoiceprintFor(talker, root),
+      spec: () => buildRecordingSpec({ dataRoot: root, talker, file, python: suppPython(), ffmpeg: suppFfmpeg() }),
+      onExit: (o) => {
         if (o.stopped) {
           void renderAlbum();
           return;
@@ -22834,13 +23936,33 @@ ${lines.join("\n")}`);
         }
         void suppMergeRecording(talker, file);
       },
-      { talker, file, dataRoot: root }
-    );
+      meta: { talker, file, dataRoot: root }
+    });
+    notice("已加入录音队列（全局一条串行跑，进度见左下面板）", "info");
     startRecPolling();
     void renderAlbum();
   }
-  async function suppMergeRecording(talker, file) {
+  async function prepareVoiceprintFor(talker, root) {
     var _a2, _b2;
+    if (voiceprintRefStatus(root, talker) === "ready") return true;
+    notice("缺声纹质心——先建质心再转写（本地跑，按语音量几分钟）…", "info");
+    const handle2 = startRecordingTask(
+      buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
+      `ref:${talker}`,
+      void 0,
+      { talker, file: "voiceprint_refs", dataRoot: root }
+    );
+    if (!handle2) return true;
+    const outcome = await handle2.done;
+    if (!outcome.ok) {
+      const detail = (_b2 = (_a2 = outcome.error) == null ? void 0 : _a2.message) != null ? _b2 : "";
+      notice(`质心建不出来（${detail || "该联系人还没有微信语音素材"}）——本次按「非我即对方」降级跑；先做数据源导入再回来重建`, "info");
+    } else if (voiceprintRefStatus(root, talker) === "missing") {
+      notice("该联系人还没有微信语音素材，质心建不出来——本次按「非我即对方」降级跑；先做数据源导入再回来重建", "info");
+    }
+    return true;
+  }
+  async function suppMergeRecording(talker, file, why = "merge") {
     const root = suppDataRoot();
     if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
     if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) {
@@ -22848,64 +23970,85 @@ ${lines.join("\n")}`);
       return;
     }
     const side = readRecordingSidecar(root, talker, file);
-    if (!side || side.phase !== "done" || !((_a2 = side.turns) == null ? void 0 : _a2.length)) {
+    if (!side || !recordingTurnsComplete(side)) {
       void renderAlbum();
       return;
     }
-    const fs2 = suppFs();
-    let mtime;
-    try {
-      mtime = fs2.statSync(`${recordingsDirOf(root, talker)}/${file}`).mtimeMs;
-    } catch (e) {
-    }
-    const base = (_b2 = suppRecTs.get(file)) != null ? _b2 : recordingTsOf(file, mtime);
+    const salvaged = side.phase !== "done";
+    const base = recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
     let added = 0;
+    let removed = 0;
     try {
       await peopleSafe.write(talker, (rec) => {
-        var _a3, _b3, _c;
+        var _a2, _b2, _c;
         const r = applyRecordingTurnsToMsgs(rec.store.msgs, { file, ts: base, turns: side.turns });
         rec.store.msgs = r.msgs;
-        added = Math.max(0, r.added - r.removed);
-        if (added > 0) {
-          rec.store.kindCounts = { ...(_a3 = rec.store.kindCounts) != null ? _a3 : {}, 录音: ((_c = (_b3 = rec.store.kindCounts) == null ? void 0 : _b3.录音) != null ? _c : 0) + added };
-          rec.store.stats = storeStatsOf(rec.store.msgs);
-          rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
-        }
+        added = r.added;
+        removed = r.removed;
+        const net = Math.max(0, added - removed);
+        if (net > 0) rec.store.kindCounts = { ...(_a2 = rec.store.kindCounts) != null ? _a2 : {}, 录音: ((_c = (_b2 = rec.store.kindCounts) == null ? void 0 : _b2.录音) != null ? _c : 0) + net };
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
       });
-      notice(`「${file}」已并入 ${added} 条转写轮次`, "success");
+      if (why === "restart") notice(`「${file}」起点已改——仓里 ${added} 条轮次的绝对时间已重排`, "success");
+      else if (salvaged) notice(`「${file}」已并入 ${added} 条转写轮次（账本收尾标记缺失，已按全部轮次并入）`, "success");
+      else notice(`「${file}」已并入 ${added} 条转写轮次`, "success");
+      writeRecordingTurnsMd(root, talker, file, buildRecordingTurnsMd(file, base, side));
     } catch (e) {
-      notifyActionError(e, "并仓录音轮次");
+      notifyActionError(e, why === "restart" ? "重排录音轮次" : "并仓录音轮次");
     }
     await refreshSuppStoreInfo(talker);
+    void renderAlbum();
+  }
+  async function suppSetRecordingStart(file, ms) {
+    var _a2;
+    const talker = detailId;
+    const root = suppDataRoot();
+    if (!talker || !root || !file) return;
+    if (!writeRecordingMeta(root, talker, file, { ...(_a2 = readRecordingMeta(root, talker, file)) != null ? _a2 : {}, startMs: ms, startSource: "manual" })) {
+      notice("起点写盘失败——数据根可能不可写", "warning");
+      return;
+    }
+    recStartEditFile = null;
+    if (suppStoreInfo.mergedRecs.has(file)) {
+      await suppMergeRecording(talker, file, "restart");
+      return;
+    }
+    notice(`「${file}」起点已改（下次并仓按新起点排绝对时间）`, "success");
     void renderAlbum();
   }
   async function suppBuildVoiceprintRef() {
     const talker = detailId;
     const root = suppDataRoot();
-    if (!talker || !root || refBuilding) return;
-    if (isRecordingRunning(`ref:${talker}`)) return;
+    if (!talker || !root) return;
+    const key = `ref:${talker}`;
+    if (isRecordingRunning(key) || isRecordingQueued(key)) return;
     if (!await suppFaceGate()) return;
-    refBuilding = true;
-    notice("开始构建声纹参考（本地跑，按语音量几分钟）……", "info");
-    startRecordingTask(
-      buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
-      `ref:${talker}`,
-      (o) => {
-        refBuilding = false;
-        if (o.stopped) return;
+    enqueueRecordingTask({
+      key,
+      talker,
+      file: "voiceprint_refs",
+      spec: () => buildVoiceprintSpec({ dataRoot: root, talker, python: suppPython() }),
+      onExit: (o) => {
+        if (o.stopped) {
+          void renderAlbum();
+          return;
+        }
         if (o.ok) notice("声纹参考已建好——之后的录音按双人分离归属", "success");
         else notice(`质心构建失败：${o.error || "该联系人可能没有微信语音样本"}（没有质心也能处理录音，按降级阶梯归属）`, "warning");
         void renderAlbum();
       },
-      { talker, file: "voiceprint_refs", dataRoot: root }
-    );
+      meta: { talker, file: "voiceprint_refs", dataRoot: root }
+    });
+    notice("已加入队列（建质心，全局一条串行跑）", "info");
     void renderAlbum();
   }
   function startRecPolling() {
+    wireRecordingQueue();
     if (recPollTimer !== null) return;
     recPollTimer = window.setInterval(() => {
       if ((dialog == null ? void 0 : dialog.kind) !== "note" || suppTab !== "rec") return;
-      const active = runningRecordingItems().length > 0;
+      const active = runningRecordingItems().length > 0 || queuedRecordingCount() > 0;
       if (active) tickRecRows();
       if (active || !currentJobsItem()) renderNote();
     }, 1e3);
@@ -22915,6 +24058,15 @@ ${lines.join("\n")}`);
       window.clearInterval(recPollTimer);
       recPollTimer = null;
     }
+  }
+  var recQueueWired = false;
+  function wireRecordingQueue() {
+    if (recQueueWired) return;
+    recQueueWired = true;
+    subscribeRecordingQueue(() => {
+      if ((dialog == null ? void 0 : dialog.kind) !== "note" || suppTab !== "rec") return;
+      void renderAlbum();
+    });
   }
   function tickRecRows() {
     const talker = detailId;
@@ -22967,6 +24119,10 @@ ${lines.join("\n")}`);
         stage: stage2,
         elapsed: formatRecElapsed(Date.now() - it.startedAt)
       });
+    }
+    for (const q of queuedRecordingItems()) {
+      if (q.file === "voiceprint_refs") continue;
+      rows.push({ file: q.file, status: "queued", phaseText: `排队中 · 第 ${q.position} 位`, pct: null, queuePos: q.position });
     }
     return rows;
   }

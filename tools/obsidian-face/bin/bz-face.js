@@ -151,6 +151,11 @@ const USAGE = [
   '      构建联系人声纹参考质心（rec 的比对基准）：chat.json who 标签 × voice/*.wav 分池均值，',
   '      产 <数据根>/voiceprints/<联系人>.npz（原子写；增量——输入指纹没变直接跳过）。',
   '      缺 peer 只存 me（分离时非我即对方），两位都缺则跳过该联系人（不算硬失败）。',
+  '      dual 时另用留出样本的**窗级** max-sim 最小值留余量算出旁音门限，写进 npz meta。',
+  '  bz-face check --data-root <路径> --contact <目录名> --src <录音绝对路径> [--src …] [--python <命令>] [--ffmpeg <路径>]',
+  '      导入前归属抽检（issue 516）：对每个 --src 均匀抽 3 段各 3s 嵌入，与 me / peer 质心比对——',
+  '      都不像则末行 [bz-result] 报 verdicts[<src>]=stranger（插件提示「可能选错了录音」，不硬拦）。',
+  '      质心缺失 / 只有 me / 抽检失败 → verdict=unknown（不做判定，放行）。',
   '  bz-face status <联系人> --data-root <路径>',
   '      联系人产物体检（纯 Node 读盘，不起 Python）：chat / stats / voice / image / desc /',
   '      关联表 / 录音 sidecar / 质心各一行，缺的给下一步命令（人读纯文本）。',
@@ -395,19 +400,19 @@ async function runRecLike(opts) {
     if (line) console.log(line);
   };
   const dataRoot = probes.probeDataRoot(opts.dataRoot);
-  const pre = opts.kind === 'rec'
-    ? rec.judgeRecPreflight(
-        { dataRoot, contact: opts.contact, file: opts.file },
-        {
-          contactDirExists: rec.contactDirExists(opts.dataRoot, opts.contact),
-          recordingExists: rec.recordingExists(opts.dataRoot, opts.contact, opts.file),
-        },
-      )
-    : rec.judgeRefsPreflight(
+  const pre = opts.kind === 'refs'
+    ? rec.judgeRefsPreflight(
         { dataRoot },
         {
           contacts: opts.contacts || [],
           missingContacts: (opts.contacts || []).filter((c) => !rec.contactDirExists(opts.dataRoot, c)),
+        },
+      )
+    : rec.judgeRecPreflight(
+        { dataRoot, contact: opts.contact, file: opts.file },
+        {
+          contactDirExists: rec.contactDirExists(opts.dataRoot, opts.contact),
+          recordingExists: rec.recordingExists(opts.dataRoot, opts.contact, opts.file),
         },
       );
   if (!pre.ok) {
@@ -415,17 +420,18 @@ async function runRecLike(opts) {
     console.error(`bz-face ${opts.kind}：${pre.error}`);
     return 1;
   }
-  const scriptPath = path.join(__dirname, '..', 'python', opts.kind === 'rec' ? 'bz_rec.py' : 'bz_refs.py');
-  const args = opts.kind === 'rec'
+  const scriptName = opts.kind === 'refs' ? 'bz_refs.py' : 'bz_rec.py';
+  const scriptPath = path.join(__dirname, '..', 'python', scriptName);
+  const args = opts.kind === 'refs'
     ? [
+        '--data-root', opts.dataRoot,
+        ...(opts.contacts || []).flatMap((c) => ['--contact', c]),
+      ]
+    : [
         '--data-root', opts.dataRoot,
         '--contact', opts.contact,
         '--file', opts.file,
         ...(opts.ffmpeg ? ['--ffmpeg', opts.ffmpeg] : []),
-      ]
-    : [
-        '--data-root', opts.dataRoot,
-        ...(opts.contacts || []).flatMap((c) => ['--contact', c]),
       ];
   const run = await probes.runSyncProcess({ pythonCmd: opts.python, scriptPath, args, onLine: (line) => emit(line) });
   // 脚本崩溃没交代 → 兜底结果行（进度权威在 sidecar，这行只是让插件进程终结有据可查）
@@ -441,6 +447,39 @@ async function cmdRec(opts) {
 
 async function cmdRefs(opts) {
   return runRecLike({ ...opts, kind: 'refs' });
+}
+
+/** check：导入前的录音归属抽检（issue 516 Q15）——末行 [bz-result] 带 verdicts，插件据此提示。 */
+async function cmdCheck(opts) {
+  const emit = (line) => {
+    if (line) console.log(line);
+  };
+  // 只读：源文件 + <数据根>/voiceprints 质心。数据根 / 联系人目录不在位就没判据。
+  const dataRoot = probes.probeDataRoot(opts.dataRoot);
+  if (!dataRoot.configured || !dataRoot.exists) {
+    const error = `数据根不在位：${opts.dataRoot}——先在设置里确认数据源目录（质心也从这里来）`;
+    emit(sync.formatBzLine('result', { ok: false, error }));
+    console.error(`bz-face check：${error}`);
+    return 1;
+  }
+  if (!rec.contactDirExists(opts.dataRoot, opts.contact)) {
+    const error = `<数据根>/${opts.contact}/ 不在位——先做数据源导入（质心也从这里来）`;
+    emit(sync.formatBzLine('result', { ok: false, error }));
+    console.error(`bz-face check：${error}`);
+    return 1;
+  }
+  const scriptPath = path.join(__dirname, '..', 'python', 'bz_check.py');
+  const args = [
+    '--data-root', opts.dataRoot,
+    '--contact', opts.contact,
+    ...(opts.srcs || []).flatMap((s) => ['--src', s]),
+    ...(opts.ffmpeg ? ['--ffmpeg', opts.ffmpeg] : []),
+  ];
+  const run = await probes.runSyncProcess({ pythonCmd: opts.python, scriptPath, args, onLine: (line) => emit(line) });
+  if (run.code !== 0) {
+    emit(sync.formatBzLine('result', { ok: false, error: `bz-face check 异常退出（退出码 ${run.code ?? '无'}）` }));
+  }
+  return run.code === 0 ? 0 : 1;
 }
 
 /** status：采集 + 报告（纯 Node 读盘，不起 Python）。退出码 0 = 报告出得来，1 = 联系人目录不在。 */
@@ -459,7 +498,7 @@ async function cmdCapabilities() {
       package: 'bz-face',
       name: pkg.name,
       version: pkg.version,
-      commands: ['sync', 'export', 'prep', 'rec', 'refs', 'status', 'doctor', 'capabilities'],
+      commands: ['sync', 'export', 'prep', 'rec', 'refs', 'check', 'status', 'doctor', 'capabilities'],
     }),
   );
   return 0;
@@ -586,6 +625,22 @@ async function main() {
       return 0;
     }
     return cmdRefs({ dataRoot: parsed.dataRoot, contacts: parsed.contacts, python: parsed.python });
+  }
+  if (first === 'check') {
+    const parsed = rec.parseCheckArgv(argv);
+    if (parsed.error) {
+      console.error(`bz-face：${parsed.error}\n\n${USAGE}`);
+      return 2;
+    }
+    if (parsed.version) {
+      console.log(`bz-face v${pkg.version}（@jwbz/obsidian-face）`);
+      return 0;
+    }
+    if (parsed.help) {
+      console.log(USAGE);
+      return 0;
+    }
+    return cmdCheck({ dataRoot: parsed.dataRoot, contact: parsed.contact, srcs: parsed.srcs, python: parsed.python, ffmpeg: parsed.ffmpeg });
   }
   if (first === 'status') {
     const parsed = status.parseStatusArgv(argv);

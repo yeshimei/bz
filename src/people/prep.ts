@@ -23,6 +23,7 @@
  */
 import { runExternalTool, type ExternalToolCallbacks, type ExternalToolHandle, type ExternalToolSpec, type ExternalToolOutcome } from '../core/external-tool';
 import { BZ_FACE_INSTALL_HINT } from './sync';
+import { releaseHeavy, tryAcquireHeavy } from './heavy-gate';
 import type { VoiceItem, ImageMapItem } from './datasource';
 
 // ---------------- 阶段词汇表（与 tools/obsidian-face lib/prep-core PREP_PHASES 同词汇） ----------------
@@ -436,22 +437,38 @@ export function startPrepSession(talker: string, spec: ExternalToolSpec, cbs: Ex
     session.handle.stop(); // 换人跑：上一家的进程不留（至多一个 prep）
   }
   let lastResult: Record<string, unknown> | null = null;
+  // 会话在手上 = 占**重进程闸门**（ADR-0218 决策 3：待命进程也算——模型未卸载，内存仍占着）。
+  // runQueue 拾起任务前已取得闸门，此处是同身份重入（必成功）；releaseOnce 保证只放自己那一份。
+  tryAcquireHeavy('portrait');
+  let released = false;
+  const releaseOnce = (): void => {
+    if (released) return;
+    released = true;
+    releaseHeavy('portrait');
+  };
   // settled 必须每会话私有：模块级标志会让「换人跑后被 stop 的旧会话」把新会话误标为已死，
   // 恢复时复用判定落空 → 同一联系人双起进程（协作式暂停下必然踩到）
   let settled = false;
-  const handle = runner(spec, {
-    ...cbs,
-    onResult: (data) => {
-      lastResult = data;
-      cbs.onResult(data);
-    },
-  });
+  let handle: ExternalToolHandle;
+  try {
+    handle = runner(spec, {
+      ...cbs,
+      onResult: (data) => {
+        lastResult = data;
+        cbs.onResult(data);
+      },
+    });
+  } catch (e) {
+    releaseOnce(); // 进程没起来 = 不占内存（否则闸门泄漏，录音永久等下去）
+    throw e;
+  }
   const wrapped: PrepSession = {
     talker,
     handle,
     done: handle.done.then((outcome) => {
       settled = true;
       if (session === wrapped) session = null; // 终结即让位（复用判定不再误命中）
+      releaseOnce(); // 进程走了 = 不再占内存，松开闸门
       return { outcome, result: lastResult };
     }),
     alive: () => !settled,
