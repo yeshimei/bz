@@ -1,4 +1,4 @@
-/* 源指纹 812448486ac0476b · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 49929e766c3d182c · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -15026,6 +15026,7 @@ ${lines.join("\n")}`);
     emptyJobsData: () => emptyJobsData,
     estimateDescribeCallsOf: () => estimateDescribeCallsOf,
     estimatePortraitCallsOf: () => estimatePortraitCallsOf,
+    estimatePortraitCallsOfCount: () => estimatePortraitCallsOfCount,
     fingerprintOf: () => fingerprintOf2,
     isDescribeOnlyBusy: () => isDescribeOnlyBusy,
     mergePrepArtifactsIntoStore: () => mergePrepArtifactsIntoStore,
@@ -15783,6 +15784,16 @@ ${lines.join("\n")}`);
   }
   function storeToUnified(msgs) {
     return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
+  }
+  function pendingMediaCounts(msgs) {
+    let images = 0;
+    let voices = 0;
+    for (const m of msgs) {
+      if (m.text !== "") continue;
+      if (m.type === 3) images++;
+      else if (m.type === 34) voices++;
+    }
+    return { images, voices };
   }
   function isFailedVoice(v) {
     var _a2, _b2;
@@ -16948,6 +16959,9 @@ ${lines.join("\n")}`);
   function estimatePortraitCallsOf(msgs) {
     const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
     return Math.min(all.length, DEFAULTS.maxBatches) + 3;
+  }
+  function estimatePortraitCallsOfCount(count) {
+    return estimatePortraitCallsOf(Array.from({ length: Math.max(0, count) }, (_, i) => ({ ts: i, isSender: false, text: "x".repeat(24) })));
   }
   function estimateDescribeCallsOf(images) {
     return Math.ceil(images / batchSizeFromSettings());
@@ -18986,20 +19000,32 @@ ${lines.join("\n")}`);
       );
       rows.push(r);
     }
-    const count = el(
-      "span",
-      "bz-people-decrypt",
-      el("span", "bz-people-load-spin", { "data-people-load-count": "" }, text(total ? `${done}/${total} 位` : `${done} 位`))
-    );
-    const mk2 = (label, right) => el("div", "bz-people-page", [
-      el("div", "bz-people-page-head", [headChip("解密中"), el("span", "bz-people-head-label", text(label)), el("span", "bz-people-head-right", right)]),
+    const pct = total && total > 0 ? Math.min(100, Math.round(done / total * 100)) : null;
+    const left = el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [
+        headChip("解密中"),
+        el("span", "bz-people-head-label", text("正在解密联系人数据")),
+        el("span", "bz-people-head-right", el("span", "bz-people-head-note", text("解密完就摊开")))
+      ]),
+      el("div", "bz-people-empty", [
+        el("div", "bz-people-load-figure", [
+          el("span", "bz-people-load-num", { "data-people-load-num": "" }, text(String(done))),
+          total ? el("span", "bz-people-load-total", text(`/ ${total} 位`)) : el("span", "bz-people-load-total", text("位"))
+        ]),
+        el(
+          "div",
+          "bz-people-load-bar",
+          { "aria-hidden": "true" },
+          el("div", "bz-people-load-fill", { "data-people-load-fill": "", style: `width:${pct != null ? pct : 0}%` })
+        ),
+        el("div", "bz-people-empty-hint", text(total ? "保库记录逐位解密中——先不急着看，摊开就好。" : "保库记录逐位解密中——清单还在读，先不急着看。"))
+      ])
+    ]);
+    const right = el("div", "bz-people-page", [
+      el("div", "bz-people-page-head", [headChip("解密中"), el("span", "bz-people-head-label", text("解密完就摊开")), el("span", "bz-people-head-right", el("span", "bz-people-head-note", text("先不急着看")))]),
       albumSleeve(rows)
     ]);
-    const spread = el("div", "bz-people-spread bz-people-spread-load", { "data-people-spread": "" }, [
-      mk2("正在解密联系人数据", count),
-      albumGutter(),
-      mk2("解密完就摊开", el("span", "bz-people-head-note", text("先不急着看")))
-    ]);
+    const spread = el("div", "bz-people-spread bz-people-spread-load", { "data-people-spread": "" }, [left, albumGutter(), right]);
     return el("div", "bz-people-page-wrap", { "data-people-scroll": "wrap" }, spread);
   }
   var FOLD_TITLES = [
@@ -19540,17 +19566,17 @@ ${lines.join("\n")}`);
     const body = [];
     body.push(el("div", "bz-people-gen-line", text(`为 ${info.items.length} 位联系人生成脸谱`)));
     const rows = [];
-    if (info.images > 0) rows.push(["图片描述", `${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-    if (info.voices > 0) rows.push(["语音转写", `${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
+    if (info.images > 0) rows.push(["图片描述", `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
+    if (info.voices > 0) rows.push(["语音转写", `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
     rows.push(["画像生成", `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
     body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
     const list = el("ul", "bz-people-gen-list");
     for (const it of info.items) {
-      const bits = [`素材 ${it.materials} 条`];
-      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-      if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+      const bits = [it.mode === "newer" ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`待描述图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`待转写语音 ${it.voices} 条`);
       if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
-      else if (it.mode === "newer") bits.push("增量 · 只提炼新增");
+      else if (it.mode === "newer") bits.push("增量提炼");
       list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
     }
     body.push(list);
@@ -20740,7 +20766,7 @@ ${lines.join("\n")}`);
     closeDialog();
   }
   async function generateFromDs() {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d;
     if (!overlay || !store || dsImporting || dsScanning) return;
     if (isSyncing()) {
       notice("正在同步微信数据——同步完成后再画脸谱", "info");
@@ -20772,7 +20798,8 @@ ${lines.join("\n")}`);
           skippedCount: 0,
           // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
           fileLabel: `数据源:${name}`,
-          insights: pv == null ? void 0 : pv.insights
+          insights: pv == null ? void 0 : pv.insights,
+          pending: pendingMediaCounts((_d = pv == null ? void 0 : pv.msgs) != null ? _d : [])
         });
       }
     } catch (e) {
@@ -20790,7 +20817,7 @@ ${lines.join("\n")}`);
     await startGeneration(targets);
   }
   async function generateOne(id, opts = {}) {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d;
     const name = id != null ? id : detailId;
     if (!store || !name) return;
     if (isSyncing()) {
@@ -20814,7 +20841,8 @@ ${lines.join("\n")}`);
           kindCounts: (_c = pv == null ? void 0 : pv.kindCounts) != null ? _c : {},
           skippedCount: 0,
           fileLabel: `数据源:${name}`,
-          insights: pv == null ? void 0 : pv.insights
+          insights: pv == null ? void 0 : pv.insights,
+          pending: pendingMediaCounts((_d = pv == null ? void 0 : pv.msgs) != null ? _d : [])
         };
       }
     } catch (e) {
@@ -20931,11 +20959,10 @@ ${lines.join("\n")}`);
   function buildGenerationConfirmInfo(runnable2) {
     const label = describeModelLabelOf();
     const items = runnable2.map((t) => {
-      const pick = (k) => {
-        var _a2;
-        return Number.isFinite((_a2 = t.kindCounts) == null ? void 0 : _a2[k]) ? Number(t.kindCounts[k]) : 0;
-      };
-      return { name: t.name, materials: t.msgs.length, images: pick("图片"), voices: pick("语音"), ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
+      var _a2, _b2;
+      const pending = (_a2 = t.pending) != null ? _a2 : { images: 0, voices: 0 };
+      const materials = t.mode === "newer" ? (_b2 = t.planCount) != null ? _b2 : t.msgs.length : t.msgs.length;
+      return { name: t.name, materials, images: pending.images, voices: pending.voices, ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
     });
     const images = items.reduce((s, it) => s + it.images, 0);
     const voices = items.reduce((s, it) => s + it.voices, 0);
@@ -20947,7 +20974,11 @@ ${lines.join("\n")}`);
       describeCalls: estimateDescribeCallsOf(images),
       batchSize: batchSizeFromSettings(),
       voices,
-      portraitCalls: runnable2.reduce((s, t) => s + estimatePortraitCallsOf(t.msgs), 0)
+      // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
+      portraitCalls: runnable2.reduce((s, t) => {
+        var _a2;
+        return s + (t.mode === "newer" ? estimatePortraitCallsOfCount((_a2 = t.planCount) != null ? _a2 : 0) : estimatePortraitCallsOf(t.msgs));
+      }, 0)
     };
   }
   async function planTargets(targets) {
@@ -20978,7 +21009,7 @@ ${lines.join("\n")}`);
       } else if (plan.olderCount > 0) {
         notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      runnable2.push({ ...t, mode: plan.mode, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
+      runnable2.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
     }
     return { runnable: runnable2, skipped };
   }
@@ -21996,10 +22027,14 @@ ${lines.join("\n")}`);
   var recordsInflight = null;
   function paintLoadCount() {
     if (!loadActive || !overlay) return;
-    const n = overlay.querySelector("[data-people-load-count]");
-    if (!n) return;
-    n.hidden = loadTotal == null;
-    n.textContent = loadTotal != null ? `${loadDone}/${loadTotal} 位` : `${loadDone} 位`;
+    const num2 = overlay.querySelector("[data-people-load-num]");
+    if (!num2) return;
+    num2.textContent = String(loadDone);
+    const totalEl = overlay.querySelector(".bz-people-load-total");
+    if (totalEl) totalEl.textContent = loadTotal != null ? `/ ${loadTotal} 位` : "位";
+    const pct = loadTotal && loadTotal > 0 ? Math.min(100, Math.round(loadDone / loadTotal * 100)) : null;
+    const fill = overlay.querySelector("[data-people-load-fill]");
+    if (fill) fill.style.width = `${pct != null ? pct : 0}%`;
   }
   async function records() {
     if (recordCache) return recordCache;
