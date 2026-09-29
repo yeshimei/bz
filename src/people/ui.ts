@@ -41,7 +41,7 @@ import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
-import { estimateDescribeCallsOf, estimatePortraitCallsOf } from './jobs';
+import { estimateDescribeCallsOf, estimatePortraitCallsOf, estimatePortraitCallsOfCount } from './jobs';
 import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
 import type { ContactStats, FaceDigest, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
@@ -60,6 +60,7 @@ import {
   storeMediaBadge,
   storeStatsOf,
   storeToUnified,
+  pendingMediaCounts,
   isGroupChat,
   type StoreContact,
   type StoreStats,
@@ -1041,6 +1042,7 @@ async function generateFromDs(): Promise<void> {
         skippedCount: 0, // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
         fileLabel: `数据源:${name}`,
         insights: pv?.insights,
+        pending: pendingMediaCounts(pv?.msgs ?? []),
       });
     }
   } catch (e) {
@@ -1087,6 +1089,7 @@ async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise
         skippedCount: 0,
         fileLabel: `数据源:${name}`,
         insights: pv?.insights,
+        pending: pendingMediaCounts(pv?.msgs ?? []),
       };
     }
   } catch (e) {
@@ -1133,6 +1136,10 @@ export interface GenTarget {
   monthly?: Array<[string, number]>;
   /** 提炼模式（issue 513）：planTargets 判定后带出 → 开工单逐人提示；full 缺省不标 */
   mode?: 'full' | 'newer' | 'older';
+  /** 本次计划提炼集条数（issue 514：planTargets 从 plan.msgs 带出——newer = 新增集，其余 = 全量） */
+  planCount?: number;
+  /** 待办媒体（issue 514）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
+  pending?: { images: number; voices: number };
 }
 
 /**
@@ -1300,8 +1307,10 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
 function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInfo {
   const label = describeModelLabelOf();
   const items = runnable.map((t) => {
-    const pick = (k: string): number => (Number.isFinite(t.kindCounts?.[k]) ? Number(t.kindCounts[k]) : 0);
-    return { name: t.name, materials: t.msgs.length, images: pick('图片'), voices: pick('语音'), ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
+    // issue 514 待办口径：图片 / 语音只报没做过的（构造时从仓消息现算）；newer 的素材 = 新增集条数
+    const pending = t.pending ?? { images: 0, voices: 0 };
+    const materials = t.mode === 'newer' ? (t.planCount ?? t.msgs.length) : t.msgs.length;
+    return { name: t.name, materials, images: pending.images, voices: pending.voices, ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
   });
   const images = items.reduce((s, it) => s + it.images, 0);
   const voices = items.reduce((s, it) => s + it.voices, 0);
@@ -1313,7 +1322,8 @@ function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInf
     describeCalls: estimateDescribeCallsOf(images),
     batchSize: batchSizeFromSettings(),
     voices,
-    portraitCalls: runnable.reduce((s, t) => s + estimatePortraitCallsOf(t.msgs), 0),
+    // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
+    portraitCalls: runnable.reduce((s, t) => s + (t.mode === 'newer' ? estimatePortraitCallsOfCount(t.planCount ?? 0) : estimatePortraitCallsOf(t.msgs)), 0),
   };
 }
 
@@ -1352,7 +1362,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
     }
     // issue 455：档案与跨导入月度密度在这里带上（statsNote 组装在引擎内，入参经 JobTarget 传入）
     // issue 513：提炼模式带出 → 开工单逐人提示（older = 补录合并重画）
-    runnable.push({ ...t, mode: plan.mode, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
+    runnable.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
   }
   return { runnable, skipped };
 }
@@ -2359,13 +2369,18 @@ let loadTotal: number | null = null;
 /** 冷读去重：并发 records() 复用同一次 readAll（渲染跟帧 / 引擎订阅撞进同一窗口不再重复解密） */
 let recordsInflight: Promise<Map<string, PeopleSafeRecord>> | null = null;
 
-/** 进度原位刷新（issue 483）：只换计数数字，不重建骨架；面板没开 / 骨架已被真实数据替换则静默 */
+/** 进度原位刷新（issue 483；514 换进度卡钩子）：只换数字与进度条宽度，不重建骨架；
+ *  面板没开 / 骨架已被真实数据替换则静默 */
 function paintLoadCount(): void {
   if (!loadActive || !overlay) return;
-  const n = overlay.querySelector<HTMLElement>('[data-people-load-count]');
-  if (!n) return;
-  n.hidden = loadTotal == null; // 清单未读到：只报已解锁几位，不编分母
-  n.textContent = loadTotal != null ? `${loadDone}/${loadTotal} 位` : `${loadDone} 位`;
+  const num = overlay.querySelector<HTMLElement>('[data-people-load-num]');
+  if (!num) return;
+  num.textContent = String(loadDone);
+  const totalEl = overlay.querySelector<HTMLElement>('.bz-people-load-total');
+  if (totalEl) totalEl.textContent = loadTotal != null ? `/ ${loadTotal} 位` : '位';
+  const pct = loadTotal && loadTotal > 0 ? Math.min(100, Math.round((loadDone / loadTotal) * 100)) : null;
+  const fill = overlay.querySelector<HTMLElement>('[data-people-load-fill]');
+  if (fill) fill.style.width = `${pct ?? 0}%`;
 }
 
 /** 保库记录读取（缓存到「面板关闭」「上锁」失效；读不到按空表兜底，照常出已有卡）。

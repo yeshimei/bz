@@ -922,7 +922,8 @@ export function albumEmpty(): HTMLElement {
   return el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, spread);
 }
 
-/** 冷读（issue 483）：解密进度就写在页眉上，两页各说一句，不再顶一颗浮药丸 */
+/** 冷读（issue 483；514 重排）：左页 = 居中解密进度卡（大数字 + 细进度条），右页 = 照片墙骨架
+ *  （「先不急着看」的洗照片隐喻）。进度由 ui 轮询原位刷新（data-people-load-num / -fill / -total）。 */
 export function albumLoad(done: number, total: number | null): HTMLElement {
   const rows: HTMLElement[] = [];
   for (let i = 0; i < AL_PER_PAGE; i += 2) {
@@ -934,17 +935,28 @@ export function albumLoad(done: number, total: number | null): HTMLElement {
     );
     rows.push(r);
   }
-  const count = el('span', 'bz-people-decrypt',
-    el('span', 'bz-people-load-spin', { 'data-people-load-count': '' }, text(total ? `${done}/${total} 位` : `${done} 位`)));
-  const mk = (label: string, right: Node): HTMLElement => el('div', 'bz-people-page', [
-    el('div', 'bz-people-page-head', [headChip('解密中'), el('span', 'bz-people-head-label', text(label)), el('span', 'bz-people-head-right', right)]),
+  const pct = total && total > 0 ? Math.min(100, Math.round((done / total) * 100)) : null;
+  const left = el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [
+      headChip('解密中'),
+      el('span', 'bz-people-head-label', text('正在解密联系人数据')),
+      el('span', 'bz-people-head-right', el('span', 'bz-people-head-note', text('解密完就摊开'))),
+    ]),
+    el('div', 'bz-people-empty', [
+      el('div', 'bz-people-load-figure', [
+        el('span', 'bz-people-load-num', { 'data-people-load-num': '' }, text(String(done))),
+        total ? el('span', 'bz-people-load-total', text(`/ ${total} 位`)) : el('span', 'bz-people-load-total', text('位')),
+      ]),
+      el('div', 'bz-people-load-bar', { 'aria-hidden': 'true' },
+        el('div', 'bz-people-load-fill', { 'data-people-load-fill': '', style: `width:${pct ?? 0}%` })),
+      el('div', 'bz-people-empty-hint', text(total ? '保库记录逐位解密中——先不急着看，摊开就好。' : '保库记录逐位解密中——清单还在读，先不急着看。')),
+    ]),
+  ]);
+  const right = el('div', 'bz-people-page', [
+    el('div', 'bz-people-page-head', [headChip('解密中'), el('span', 'bz-people-head-label', text('解密完就摊开')), el('span', 'bz-people-head-right', el('span', 'bz-people-head-note', text('先不急着看')))]),
     albumSleeve(rows),
   ]);
-  const spread = el('div', 'bz-people-spread bz-people-spread-load', { 'data-people-spread': '' }, [
-    mk('正在解密联系人数据', count),
-    albumGutter(),
-    mk('解密完就摊开', el('span', 'bz-people-head-note', text('先不急着看'))),
-  ]);
+  const spread = el('div', 'bz-people-spread bz-people-spread-load', { 'data-people-spread': '' }, [left, albumGutter(), right]);
   return el('div', 'bz-people-page-wrap', { 'data-people-scroll': 'wrap' }, spread);
 }
 
@@ -1641,18 +1653,19 @@ export function genPage(info: GenerationConfirmInfo): HTMLElement {
   const body: HTMLElement[] = [];
   body.push(el('div', 'bz-people-gen-line', text(`为 ${info.items.length} 位联系人生成脸谱`)));
   const rows: Array<[string, string]> = [];
-  if (info.images > 0) rows.push(['图片描述', `${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-  if (info.voices > 0) rows.push(['语音转写', `${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
+  if (info.images > 0) rows.push(['图片描述', `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
+  if (info.voices > 0) rows.push(['语音转写', `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
   rows.push(['画像生成', `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
   body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
     el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
   const list = el('ul', 'bz-people-gen-list');
   for (const it of info.items) {
-    const bits = [`素材 ${it.materials} 条`];
-    if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-    if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+    // issue 514：增量只报增量——newer 的素材就是新增集；图片 / 语音是待办数，没有就不列
+    const bits = [it.mode === 'newer' ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
+    if (it.images > 0) bits.push(`待描述图片 ${it.images} 张`);
+    if (it.voices > 0) bits.push(`待转写语音 ${it.voices} 条`);
     if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
-    else if (it.mode === 'newer') bits.push('增量 · 只提炼新增');
+    else if (it.mode === 'newer') bits.push('增量提炼');
     list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
   }
   body.push(list);

@@ -73,11 +73,11 @@ export interface GenerationConfirmInfo {
 export interface GenerationConfirmItem {
   /** 联系人称呼 */
   name: string;
-  /** 素材条数（本次计划提炼口径：full / older = 全量时间线，newer = 锚点后的新增集） */
+  /** 素材条数（full / older = 全量时间线；newer = 锚点后的新增集——增量只报增量，issue 514） */
   materials: number;
-  /** 图片张数（全量口径） */
+  /** 待描述图片张数（未描述才计；0 = 全部描述过，总览行整体省略——issue 514 待办口径） */
   images: number;
-  /** 语音条数（全量口径） */
+  /** 待转写语音条数（未转写才计；0 = 全部转写过，总览行整体省略——issue 514 待办口径） */
   voices: number;
   /** 提炼模式（issue 513）：older = 补录（素材与已有画像合并重画）；缺省 = 首画 / 常规增量 */
   mode?: 'full' | 'newer' | 'older';

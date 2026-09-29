@@ -58,12 +58,12 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
     const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
     expect(rows).toHaveLength(3);
     expect(rows[0]).toContain('图片描述');
-    expect(rows[0]).toContain('1615 张');
+    expect(rows[0]).toContain('待描述 1615 张');
     expect(rows[0]).toContain('已描述过的自动跳过');
     expect(rows[0]).toContain('至多 81 次调用');
     expect(rows[0]).toContain('每批 20 张');
     expect(rows[1]).toContain('语音转写');
-    expect(rows[1]).toContain('1289 条');
+    expect(rows[1]).toContain('待转写 1289 条');
     expect(rows[1]).toContain('本地离线');
     expect(rows[1]).toContain('已转写的自动跳过');
     expect(rows[2]).toContain('画像生成');
@@ -71,9 +71,11 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
     expect(rows[2]).toContain('约 8 次调用');
     const items = [...page.querySelectorAll('.bz-people-gen-item')].map((n) => n.textContent ?? '');
     expect(items[0]).toContain('「陈默」 · 素材 2 条');
-    expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 图片 1615 张 · 语音 1289 条');
-    expect(items[1]).toContain('补录 · 与已有画像合并重画'); // issue 513：older 模式带补录标识
-    expect(items[0]).not.toContain('补录'); // full 缺省不标
+    // issue 514 待办口径：older 全量如实 + 待描述 / 待转写；full 缺省不标
+    expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 待描述图片 1615 张 · 待转写语音 1289 条');
+    expect(items[1]).toContain('补录 · 与已有画像合并重画');
+    expect(items[0]).not.toContain('补录');
+    expect(items[0]).not.toContain('待描述');
     expect(line + items.join('')).not.toMatch(/元|￥|¥|\$/);
     expect(page.querySelector('[data-people-gen-start]')?.textContent).toBe('开始生成');
     expect(page.querySelector('button[data-people-gen-cancel]')?.textContent).toBe('取消');
@@ -84,9 +86,27 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
   it('零图片零语音：总览只报画像一行，逐人行只报素材条数', () => {
     const page = genPage({ ...info, images: 0, voices: 0, describeCalls: 0, items: [{ name: '陈默', materials: 5, images: 0, voices: 0 }] });
     const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
-    expect(rows).toHaveLength(1); // 只剩画像一行
+    expect(rows).toHaveLength(1); // 待办为零：图片 / 语音行整体消失，只剩画像一行
     expect(rows[0]).toContain('画像生成');
+    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).not.toContain('待描述');
+    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).not.toContain('待转写');
     expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).toBe('「陈默」 · 素材 5 条');
+  });
+
+  it('增量只报增量（issue 514）：newer 素材 = 新增集条数，待办为零则明细不列媒体', () => {
+    const page = genPage({
+      ...info,
+      images: 0,
+      voices: 0,
+      describeCalls: 0,
+      portraitCalls: 5,
+      items: [{ name: '大琳', materials: 12, images: 0, voices: 0, mode: 'newer' }],
+    });
+    const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
+    expect(rows).toHaveLength(1);
+    const item = page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent ?? '';
+    expect(item).toBe('「大琳」 · 新增素材 12 条 · 增量提炼');
+    expect(item).not.toContain('20773'); // 全量数字不再出现
   });
 });
 

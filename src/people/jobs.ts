@@ -606,6 +606,14 @@ export function estimatePortraitCallsOf(msgs: UnifiedMessage[]): number {
 }
 
 /**
+ * 按条数版（issue 514）：增量模式手里只有提炼集条数（planCount），没有那批消息本体——
+ * 用 24 字符哑行近似平均行宽切批（真实聊天行宽的中位量级），「约」数宁粗不细。
+ */
+export function estimatePortraitCallsOfCount(count: number): number {
+  return estimatePortraitCallsOf(Array.from({ length: Math.max(0, count) }, (_, i) => ({ ts: i, isSender: false, text: 'x'.repeat(24) })));
+}
+
+/**
  * 单人描述调用估算：ceil(图片数 / 每批张数)。图片数取 kindCounts 全量口径（含已描述的——
  * 总确认在起跑前给「约」数，宁粗不细；引擎 describe 段按聊天仓实际剩余张数精确切批）。
  */
