@@ -19,6 +19,8 @@ import {
   pauseJobs,
   snapshot,
   whenIdle,
+  runDescribeOnly,
+  isDescribeOnlyBusy,
   __resetJobsForTests,
   type JobTarget,
   type PersonJob,
@@ -375,5 +377,62 @@ describe('describe 段编排（470）', () => {
     const rec = await safe.read(TALKER);
     expect(rec!.store.msgs.find((x) => x.key === 'p1')?.text).toBe('[图片] 上次已并仓'); // 已描述的不重写
     expect(rec!.store.msgs.find((x) => x.key === 'p3')?.text).toContain('[图片] 构造描述');
+  });
+
+  it('resumeJobs 只注 askDescribeConfirm 也生效（注入判定与 startJobs 同源）：整包注入不再被丢弃', async () => {
+    const msgs = [m(2, { key: 'p1', type: 3, sid: 101, img: '2026-05/p1.jpg', text: '' })];
+    await seedStore(msgs);
+    await safe.write(TALKER, (rec) => {
+      rec.job = {
+        talker: TALKER,
+        name: '构造对象',
+        mode: 'full',
+        fileLabel: `数据源:${TALKER}`,
+        status: 'running',
+        stage: 'describe',
+        msgCount: 1,
+        contentHash: 'stale',
+        chunks: [],
+        batchesDone: 0,
+        results: [],
+        startedAt: '2026-09-26T00:00:00.000Z',
+        updatedAt: '2026-09-26T00:00:00.000Z',
+      };
+    });
+    // 门答 skip：验证「门被征询」即可，答案落地后没有可提炼文本自然收束，不烧任何真 AI
+    const gateBox = makeGate('skip');
+    await resumeJobs(app, { askDescribeConfirm: gateBox.gate }); // 只注 describe 门
+    expect(jobOf()?.status).toBe('interrupted');
+    expect(resume(TALKER)).toBe(true);
+    await whenIdle();
+    expect(gateBox.gate).toHaveBeenCalledTimes(1); // 修复前：判定漏 askDescribeConfirm → 注入整包当 null 丢弃，门从未被征询
+    expect(jobOf()?.describe?.skipped).toBe(true); // 门答 skip → 跳过（skip ≠ 取消口径不变）
+    expect(jobOf()?.status).toBe('error'); // 没有可提炼文本收束（唯一图片空文本不进时间线）
+  });
+});
+
+describe('补充素材·描述单段（509）：临时任务不落盘', () => {
+  it('describe-only 运行中的 checkpoint 不含临时任务：保库 job 段保持为空', async () => {
+    const msgs = [m(2, { key: 'p1', type: 3, sid: 101, img: '2026-05/p1.jpg', text: '' })];
+    await seedStore(msgs);
+    let release!: () => void;
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    const askDescribe = vi.fn(async () => {
+      await gate; // 卡在视觉调用上：留下跑单段中途的落盘窗口
+      return JSON.stringify({ descs: ['构造描述'] });
+    });
+    // 面板首开先 resumeJobs 注入 AI 依赖（生产顺序）：describe-only 借 st.injected 拿到假视觉 AI
+    await resumeJobs(app, { askDescribe });
+    const r = runDescribeOnly(app, TALKER);
+    await until(() => isDescribeOnlyBusy() && (askDescribe as any).mock.calls.length === 1);
+    // 修复前：确认门前后的裸 persist 把临时任务整条写进保库——崩溃后 resumeJobs 会把它标
+    // interrupted 出「继续生成」，且面板首开注入的确认门自动放行，点继续就烧完整条画像链
+    expect((await safe.read(TALKER))?.job ?? null).toBeNull();
+    release();
+    await expect(r).resolves.toEqual({ ok: true, skipped: false });
+    await until(async () => ((await safe.read(TALKER))?.job ?? null) === null); // 收尾落盘同样不带它
+    expect(isDescribeOnlyBusy()).toBe(false);
   });
 });

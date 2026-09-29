@@ -97,6 +97,10 @@ const PHASE_LABEL: Record<string, string> = {
  * 账本是逐轮落的，所以任何阶段崩都不白跑——文案里明确「点重试只补缺口」。
  */
 export function recordingFailureText(side: RecordingSidecar): string {
+  // done 而没有可并轮次（recordingItemState 判 failed 的那条路）：没崩过，别按「进程异常退出」误报
+  if (side.phase === 'done' && !recordingTurnsComplete(side)) {
+    return '没有转写出有效语音（整段可能都是旁音或静音）。点「重试」可再跑一次';
+  }
   const where = side.phase === 'error' ? '' : `（崩在${PHASE_LABEL[side.phase] ?? side.phase}阶段）`;
   const raw = String(side.error ?? '').trim() || '进程异常退出（没有留下原因）';
   const p = side.progress?.text ? `；最后进度：${side.progress.text}` : '';
@@ -159,14 +163,49 @@ export function buildRecordingTurnsMd(file: string, startMs: number, side: Recor
   ].join('\n');
 }
 
-/** 写 `<名>.turns.md`（插件是唯一写者，幂等覆盖）；失败只告警返回 false */
+/**
+ * 扫清该录音 stem 的陈旧半截 tmp（`<stem>.turns.json.<pid>.<n>.tmp`，ADR-0219）：崩溃遗留的
+ * tmp 没有清扫入口会永久滞留（此前只有「删除该录音」才顺手扫）。挂在并仓 / 改起点（即
+ * writeRecordingTurnsMd 的调用时刻）顺手扫：**只删 mtime 早于 cutoffMs 的**——比它新的可能
+ * 是在写文件，不动。返回删掉的个数；无 fs / 读目录失败静默 0（尽力而为，不反噬主流程）。
+ */
+function sweepRecordingTmpFiles(dir: string, file: string, cutoffMs: number): number {
+  const fs2 = controlFs();
+  if (!fs2 || !dir || !file) return 0;
+  const prefix = recordingTmpPrefix(file);
+  let names: string[] = [];
+  try {
+    names = fs2.readdirSync(dir) as string[];
+  } catch {
+    return 0; // 目录还不存在
+  }
+  let removed = 0;
+  for (const name of names) {
+    if (!name.startsWith(prefix) || !name.endsWith('.tmp')) continue;
+    const p = `${dir}/${name}`;
+    try {
+      const st = fs2.statSync(p);
+      if (Number(st.mtimeMs) >= cutoffMs) continue; // 新于本次处理开始：可能是在写，不动
+      fs2.rmSync(p, { force: true });
+      removed++;
+    } catch {
+      /* 单个失败不中断清扫 */
+    }
+  }
+  return removed;
+}
+
+/** 写 `<名>.turns.md`（插件是唯一写者，幂等覆盖）；失败只告警返回 false。
+ *  写成后顺手扫清该录音的陈旧半截 tmp（本函数的调用时刻 = 并仓 / 改起点，见上）。 */
 export function writeRecordingTurnsMd(dataRoot: string, talker: string, file: string, md: string): boolean {
   const fs2 = controlFs();
   if (!fs2 || !dataRoot || !talker || !file) return false;
   const p = recordingTurnsMdPath(dataRoot, talker, file);
+  const startedAt = Date.now(); // 本次处理的起点：早于它的 tmp 才算陈旧
   try {
     fs2.mkdirSync(p.slice(0, p.lastIndexOf('/')), { recursive: true });
     fs2.writeFileSync(p, md, 'utf8');
+    sweepRecordingTmpFiles(recordingsDirOf(dataRoot, talker), file, startedAt);
     return true;
   } catch (e) {
     console.warn('[people] 写录音时间轴失败:', e);
@@ -366,7 +405,10 @@ export function recordingItemState(sidecar: RecordingSidecar | null, mergedInSto
   if (!sidecar) return 'pending';
   switch (sidecar.phase) {
     case 'done':
-      return 'merged'; // done 而仓里没有：编排层并入动作紧随其后，UI 短暂同义
+      // done 但没有可并的轮次（零有效语音：整段旁音 / 静音）≠ merged——并仓判定
+      // recordingTurnsComplete 要求 turns.length > 0，标 merged 会变成点并仓永无动作的假态，
+      // 按 failed 落行（点「重试」可再跑一次，与 failure 文案同一出口）
+      return recordingTurnsComplete(sidecar) ? 'merged' : 'failed';
     case 'error':
       return 'failed';
     case 'vad':

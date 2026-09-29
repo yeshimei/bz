@@ -113,7 +113,7 @@ afterEach(() => {
 });
 
 describe('画像生成确认门编排（471）', () => {
-  it('确认门数据与「开始」路径：素材条数 / 约调用次数（采集批 + 3）→ 三段跑完 done', async () => {
+  it('确认门数据与「开始」路径：素材条数 / 约调用次数（采集批 + 4）→ 三段跑完 done', async () => {
     const msgs = [m(1), m(2), m(3)];
     await seedStore(msgs);
     const gateBox = makePortraitGate('start');
@@ -129,7 +129,7 @@ describe('画像生成确认门编排（471）', () => {
       model: 'glm-5.3-flash',
       name: '构造对象',
       materials: 3, // 三条文本消息全部进素材（派生文本非空口径）
-      calls: 4, // 采集 1 批 + 其人 + 我们 + 时间线
+      calls: 5, // 采集 1 批 + 其人 + 相交 + 纪事 + 档案提炼（issue 487 计入口径）
     });
     expect(asks.askExtract).toHaveBeenCalledTimes(1);
     // 确认记账：落保库记录 job 段

@@ -74,12 +74,21 @@ class FakePrep {
 /** 内存 fs 假件（旁路表预置 + 控制文件断言） */
 class MemFs implements PrepFs {
   files = new Map<string, string>();
+  /** unlink 痕迹（清控制文件的直接证据断言用） */
+  unlinkLog: string[] = [];
   writeText(path: string, data: string): void { this.files.set(path.replace(/\\/g, '/'), data); }
   readText(path: string): string | null { return this.files.get(path.replace(/\\/g, '/')) ?? null; }
   exists(path: string): boolean { return this.files.has(path.replace(/\\/g, '/')); }
-  unlink(path: string): void { this.files.delete(path.replace(/\\/g, '/')); }
+  unlink(path: string): void {
+    const p = path.replace(/\\/g, '/');
+    this.unlinkLog.push(p);
+    this.files.delete(p);
+  }
+  controlPath(): string {
+    return `${DATA_ROOT.replace(/\\/g, '/')}/.bz-face/control.json`;
+  }
   control(): { action: string } | null {
-    const raw = this.files.get(`${DATA_ROOT.replace(/\\/g, '/')}/.bz-face/control.json`);
+    const raw = this.files.get(this.controlPath());
     return raw ? (JSON.parse(raw) as { action: string }) : null;
   }
 }
@@ -373,5 +382,99 @@ describe('阶段机流转（preprocess 段）', () => {
     await prep.settle({ ok: true, code: 0 });
     await whenIdle();
     expect(jobOf()?.status).toBe('done');
+  });
+
+  it('prep 账本齐段但有媒体欠账（新导入语音）→ 不再短路，重跑 prep 补缺口（修 #3）', async () => {
+    const msgs = [
+      m(1),
+      // 新导入的语音：text 还空着 = 欠账；图片已关联 + 已描述（非欠账）
+      m(2, { key: 'v91', type: 34, sid: 91, dur: 14, wav: `${TALKER}/voice/v_91.wav`, text: '' }),
+      m(4, { key: 'p92', type: 3, sid: 92, ts: BASE + 4 * 60000, img: '2026-05/p1.jpg', text: '[图片] 已描述' }),
+    ];
+    await seedStore(msgs, { 文本: 1, 语音: 1, 图片: 1 });
+    // 不预置旁路表：快检不命中，走真进程（修复前：账本齐段直接 skipped，进程永不起）
+    await safe.write(TALKER, (rec) => {
+      rec.job = {
+        talker: TALKER,
+        name: '构造对象',
+        mode: 'full',
+        fileLabel: `数据源:${TALKER}`,
+        status: 'interrupted',
+        stage: 'preprocess',
+        msgCount: 0,
+        contentHash: 'x',
+        chunks: [],
+        batchesDone: 0,
+        results: [],
+        prep: { phase: null, pct: null, counts: {}, donePhases: ['media', 'derive', 'map', 'transcribe'], failed: 0 },
+        startedAt: '2026-09-26T00:00:00.000Z',
+        updatedAt: '2026-09-26T00:00:00.000Z',
+      };
+    });
+    await resumeJobs(app, makeAsks());
+    expect(resume(TALKER)).toBe(true);
+    await until(() => prep.calls.length === 1); // 修复前恒 0：新语音 text 恒空静默缺料
+    prep.result({ ok: true, stopped: false, failed: 0 });
+    await prep.settle({ ok: true, code: 0 });
+    await whenIdle();
+    expect(jobOf()?.status).toBe('done');
+  });
+
+  it('陈旧 stop 被起跑前写 resume 覆盖；进程收到 stop 自退后控制文件清掉（修 #7）', async () => {
+    const msgs = mediaMsgs();
+    await seedStore(msgs, { 文本: 2, 语音: 1, 图片: 1 });
+    // 陈旧 stop 残留（上次抢占 / 崩溃留下）：修复前起进程后才写 resume，新进程可能先读到 stop 干净退出
+    fs.files.set(fs.controlPath(), '{"action":"stop"}\n');
+    await startJobs(app, [target(msgs)], { maxRetries: 0, sleep: async () => {}, ...makeAsks() });
+    await until(() => prep.calls.length === 1);
+    expect(fs.control()?.action).toBe('resume'); // 起进程前已覆盖（顺序修正）
+    // 工具读到 stop 自己退（result.stopped）：等同暂停——控制文件必须一并清（修复前残留）。
+    // runner 会立刻重拾 paused 任务重跑 prep，paused 窗口太窄不做状态断言，以 unlink 痕迹为直接证据。
+    prep.result({ ok: true, stopped: true });
+    await prep.settle({ ok: true, code: 0 });
+    await until(() => fs.unlinkLog.includes(fs.controlPath())); // stopped 分支清控制文件（修复前只在 ok 收尾清）
+    await until(() => prep.calls.length === 2); // 重拾：清过指令才起得来
+    expect(fs.control()?.action).toBe('resume'); // 重拾起跑前写 resume 已就位（写在起进程前）
+    prep.result({ ok: true, stopped: false, failed: 0 });
+    await prep.settle({ ok: true, code: 0 });
+    await whenIdle();
+    expect(jobOf()?.status).toBe('done');
+  });
+
+  it('旁路表快检不重置断点账本：donePhases / failed 保留，只刷新分母（修 #8）', async () => {
+    const msgs = [
+      m(1),
+      m(2, { key: 'v91', type: 34, sid: 91, dur: 14, wav: `${TALKER}/voice/v_91.wav`, text: '' }),
+    ];
+    await seedStore(msgs, { 文本: 1, 语音: 1 });
+    seedSidecars(); // 旁路表覆盖这条语音：快检命中，无需起进程
+    await safe.write(TALKER, (rec) => {
+      rec.job = {
+        talker: TALKER,
+        name: '构造对象',
+        mode: 'full',
+        fileLabel: `数据源:${TALKER}`,
+        status: 'interrupted',
+        stage: 'preprocess',
+        msgCount: 0,
+        contentHash: 'x',
+        chunks: [],
+        batchesDone: 0,
+        results: [],
+        // 断点账本带失败计账：修复前快检分支 newPrepProgress 把 donePhases / failed 整个清掉
+        prep: { phase: null, pct: null, counts: {}, donePhases: ['media', 'derive', 'map', 'transcribe'], failed: 2 },
+        startedAt: '2026-09-26T00:00:00.000Z',
+        updatedAt: '2026-09-26T00:00:00.000Z',
+      };
+    });
+    await resumeJobs(app, makeAsks());
+    expect(resume(TALKER)).toBe(true);
+    await whenIdle();
+    const job = jobOf();
+    expect(job?.status).toBe('done'); // 快检合并后直接走完后续段
+    expect(prep.calls.length).toBe(0); // 没起进程（快检命中）
+    expect(job?.prep?.donePhases).toEqual(['media', 'derive', 'map', 'transcribe']); // 账本保留
+    expect(job?.prep?.failed).toBe(2); // 「重试失败项」的账不丢
+    expect(job?.prep?.counts.transcribe).toEqual({ done: 0, total: 1 }); // 分母按当前聊天仓口径刷新
   });
 });

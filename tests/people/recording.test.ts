@@ -26,6 +26,7 @@ import {
   recControlFilePath,
   readRecordingMeta,
   readRecordingSidecar,
+  recordingFailureText,
   recordingItemState,
   recordingMetaPath,
   recordingPhasePct,
@@ -209,8 +210,21 @@ describe('进度与状态机', () => {
     expect(recordingItemState({ phase: 'voiceprint' } as RecordingSidecar, false)).toBe('interrupted');
     expect(recordingItemState({ phase: 'transcribe' } as RecordingSidecar, false)).toBe('interrupted');
     expect(recordingItemState({ phase: 'error', error: 'x' } as RecordingSidecar, false)).toBe('failed');
-    expect(recordingItemState({ phase: 'done' } as RecordingSidecar, false)).toBe('merged');
+    // done 带轮次 = merged（编排层并入动作紧随其后，UI 短暂同义）
+    expect(recordingItemState({ phase: 'done', turns: [{ start: 0, end: 1, speaker: '我', text: '嗨' }] } as unknown as RecordingSidecar, false)).toBe('merged');
+    // done 而零轮次（无有效语音）≠ merged：并仓判定要求 turns.length > 0，标 merged 会变成点并仓永无动作的假态
+    expect(recordingItemState({ phase: 'done' } as RecordingSidecar, false)).toBe('failed');
+    expect(recordingItemState({ phase: 'done', turns: [] } as unknown as RecordingSidecar, false)).toBe('failed');
     expect(recordingItemState({ phase: 'done' } as RecordingSidecar, true)).toBe('merged');
+  });
+
+  it('recordingFailureText：零轮次 done（无有效语音）给人话，不冒充「进程异常退出」', () => {
+    const t = recordingFailureText({ phase: 'done', turns: [] } as unknown as RecordingSidecar);
+    expect(t).toContain('没有转写出有效语音');
+    expect(t).not.toContain('进程异常退出');
+    expect(t).toContain('重试');
+    // error 照旧；done 带轮次不走该分支（也轮不到 failure 文案）
+    expect(recordingFailureText({ phase: 'error', error: 'boom' })).toContain('boom');
   });
 
   it('hasRecordingTurns：key 前缀 rec:<file>: 判定（不同 file 不串）', () => {
@@ -631,6 +645,34 @@ describe('录音 meta 与派生物过滤（ADR-0217）', () => {
     setRecordingFsForTests(null);
     expect(readRecordingMeta('D:\\根', '大琳', 'r.aac')).toBeNull();
     expect(writeRecordingMeta('D:\\根', '大琳', 'r.aac', { startMs: 1 })).toBe(false);
+  });
+
+  it('并仓写时间轴时顺手扫清陈旧半截 tmp；新于本次处理开始的不动（修 #10）', () => {
+    const now = Date.now();
+    const dir = 'D:\\根/大琳/recordings';
+    const removed: string[] = [];
+    setRecordingFsForTests({
+      mkdirSync: () => {},
+      writeFileSync: () => {},
+      readdirSync: () => [
+        'r.aac', // 原件
+        'r.turns.json', // 账本
+        'r.turns.json.111.0.tmp', // 崩溃遗留（mtime 早于本次处理）：清
+        'r.turns.json.222.1.tmp', // 新于本次处理开始（可能在写）：不动
+        'other.turns.json.333.0.tmp', // 别的 stem：不在清扫范围
+        'r.meta.json',
+      ],
+      statSync: (p: string) => {
+        const name = p.slice(p.lastIndexOf('/') + 1);
+        if (name === 'r.turns.json.222.1.tmp') return { mtimeMs: now + 60_000 };
+        return { mtimeMs: now - 3_600_000 };
+      },
+      rmSync: (p: string) => {
+        removed.push(p);
+      },
+    });
+    expect(writeRecordingTurnsMd('D:\\根', '大琳', 'r.aac', '# md')).toBe(true);
+    expect(removed).toEqual([`${dir}/r.turns.json.111.0.tmp`]);
   });
 });
 

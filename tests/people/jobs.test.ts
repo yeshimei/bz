@@ -17,6 +17,7 @@ import {
   removeJob,
   whenIdle,
   fingerprintOf,
+  estimatePortraitCallsOf,
   JobStore,
   DRIFT_ERROR,
   __resetJobsForTests,
@@ -231,8 +232,8 @@ describe('startJobs：任务创建与逐批落盘', () => {
     release();
     await whenIdle();
 
-    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 3：其人 / 相交 / 纪事；每批上限不上屏）
-    expect(messages).toContain('消息 4 条 → 2 批 · 共 5 次 AI 调用');
+    // 切批说明在切批后立刻可算（AI 调用预告 = 批数 + 4：其人 / 相交 / 纪事 / 档案提炼（issue 487）；每批上限不上屏）
+    expect(messages).toContain('消息 4 条 → 2 批 · 共 6 次 AI 调用');
     expect(messages.some((m) => /^第 1\/2 批 · \d{4}-\d{2}-\d{2} ~ \d{4}-\d{2}-\d{2} · 2 条$/.test(m))).toBe(true);
     expect(messages.some((m) => /^第 2\/2 批 · /.test(m))).toBe(true);
     // 成文阶段四段（issue 455）：素材 → 《其人》 → 《相交》 → 《纪事》（上屏名与折页名同源）
@@ -544,6 +545,45 @@ describe('暂停与断点续跑', () => {
     expect(await readQueue()).toEqual([]);
     expect(snapshot().queue).toEqual([]);
   });
+
+  it('暂停来源区分：手动暂停后解锁不自动续跑，点「继续生成」才从断点补跑', async () => {
+    const { askExtract } = await setupPaused(); // 手动暂停：2/3 批，引擎已停
+    const callsBefore = (askExtract as any).mock.calls.length as number;
+    sm.lock(); // 手动暂停生效中：上锁不得接管暂停来源
+    await sm.unlock(PW); // 解锁广播：修复前无条件 kick，把用户的暂停意图整个覆盖掉
+    await new Promise((r) => setTimeout(r, 80));
+    expect(snapshot().queue[0].status).toBe('paused');
+    expect((askExtract as any).mock.calls.length).toBe(callsBefore); // 第 3 批没有被自动烧掉
+    expect(resume(TALKER)).toBe(true); // 显式「继续生成」照常受理（顺带解除暂停闸）
+    await whenIdle();
+    expect(snapshot().queue[0].status).toBe('done');
+    expect((askExtract as any).mock.calls.length).toBe(callsBefore + 1); // 只补第 3 批
+  });
+
+  it('暂停来源区分：解锁落在批内（上锁暂停尚未落定）也续跑——批完成后不再停，直跑到完', async () => {
+    const msgs = [pm(0), pm(1), pm(2)]; // maxCount 1 → 3 批
+    await seedPreview(msgs);
+    let calls = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((res) => {
+      release = res;
+    });
+    const askExtract = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2) await gate;
+      return BATCH_JSON;
+    });
+    const { askPortrait } = makeAsks();
+    const started = startJobs(app, [target(msgs)], { chunkOpts: { maxCount: 1 }, askExtract, askPortrait });
+    await until(async () => calls >= 2);
+    sm.lock(); // 上锁：本应批完成即停
+    await sm.unlock(PW); // 解锁抢在批完成之前：解锁续跑应抵掉上锁暂停（修复前旗标被无人消费地悬着，批完成照样停摆）
+    release();
+    await started;
+    await whenIdle();
+    expect(snapshot().queue[0].status).toBe('done');
+    expect((askExtract as any).mock.calls.length).toBe(3); // 第 3 批没有因上锁暂停而停
+  });
 });
 
 describe('resumeJobs：中断标记与重启续跑', () => {
@@ -755,6 +795,14 @@ describe('fingerprintOf 内容哈希指纹（466）', () => {
   });
 });
 
+describe('调用数估算（issue 487 档案提炼计入口径）', () => {
+  it('estimatePortraitCallsOf = 采集批数 + 4（其人 + 相交 + 纪事 + 档案提炼）——确认门「约 M 次」不再系统性少 1', () => {
+    const msgs = storeToUnified([pm(0), pm(1), pm(2), pm(3)]);
+    expect(estimatePortraitCallsOf(msgs)).toBe(5); // 1 批 + 4
+    expect(estimatePortraitCallsOf([])).toBe(4); // 0 批 + 4：固定段按常态计（宁粗不细）
+  });
+});
+
 describe('多人队列（467：任务按人各归各的保库记录）', () => {
   it('多人按序跑完；任务与素材各自落在对应联系人的记录里，明文任务文件不再出现', async () => {
     await seedPreview([pm(0), pm(1)]);
@@ -837,6 +885,29 @@ describe('重进程闸门接入（ADR-0218 决策 6）', () => {
     await p;
     expect(idle).toBe(true);
     expect(snapshot().queue[0].status).toBe('done'); // 闸门一放就接着跑完
+    expect((askExtract as any).mock.calls.length).toBe(1);
+  });
+
+  it('等闸任务被移出队列后，后续任务被拾起（等闸弃等 ≠ 队列没活，不得停摆）', async () => {
+    await seedPreview([pm(0), pm(1)]);
+    await seedPreview([pm(0, '乙的构造消息')], 'wxid_b');
+    const { askExtract, askPortrait } = makeAsks();
+    tryAcquireHeavy('recording'); // 录音持闸：构造对象先卡在等闸
+    await startJobs(
+      app,
+      [
+        target([pm(0), pm(1)]),
+        target([pm(0, '乙的构造消息')], { talker: 'wxid_b', name: '构造乙', fileLabel: '数据源:wxid_b' }),
+      ],
+      { chunkOpts: { maxCount: 2 }, askExtract, askPortrait }
+    );
+    await until(() => snapshot().queue.find((j) => j.talker === TALKER)?.message === '等待录音处理结束…');
+    await removeJob(TALKER); // 等闸中被删：keepWaiting 失败——修复前 break，构造乙从此没人拾起
+    const b = () => snapshot().queue.find((j) => j.talker === 'wxid_b');
+    await until(() => b()?.message === '等待录音处理结束…'); // 修复后：回循环顶把下一位拾起来等闸
+    releaseHeavy('recording');
+    await whenIdle();
+    expect(b()?.status).toBe('done');
     expect((askExtract as any).mock.calls.length).toBe(1);
   });
 });

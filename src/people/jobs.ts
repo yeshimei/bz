@@ -414,7 +414,18 @@ interface EngineState {
   /** 批级重试参数（startJobs 注入；缺省 DEFAULT_MAX_RETRIES + 真实退避） */
   retry: RetryPolicy;
   runningJob: string | null;
+  /**
+   * 暂停闸（手动 / 上锁共用置位）：置位时 runner 不拾起新任务、在跑任务批间收手。
+   * **粘滞**——不随引擎停转自清（清掉它就分不清「这次暂停是谁要的」），只由两类
+   * 显式动作消费：用户点「继续生成」（resume / retryPrepFailures）与解锁续跑（仅限
+   * lockPaused 来源，见下）。
+   */
   pauseRequested: boolean;
+  /**
+   * 本次暂停来自上锁（ADR-0194 决策 5）：解锁事件据此决定是否自动续跑——
+   * 手动暂停在生效时上锁不接管来源，解锁就不得覆盖用户的暂停意图。
+   */
+  lockPaused: boolean;
   /**
    * 工具段暂停闸（469 协作式暂停）：prep 段运行中收到 pauseJobs（用户 / 上锁）时，
    * pauseJobs 写控制文件让进程待命并触发本闸——runJob 从「等 prep 终结」的 await 里
@@ -502,9 +513,16 @@ function prepOf(job: PersonJob): PrepProgress | null {
 
 // ---------------- 进度文案（issue 450 口径冻结） ----------------
 
-/** 切批说明：`消息 20773 条 → 35 批 · 共 38 次 AI 调用`（成文 = 其人 + 相交 + 纪事 3 次；每批条数 / 字数上限不上屏） */
+/**
+ * 成文段固定调用的估算基数：其人 + 相交 + 纪事 + 档案提炼（issue 487）。纪事 / 档案提炼
+ * 在素材全空时才跳过、四类素材任一非空即跑（常态命中）——确认门与切批说明的「约 M 次」
+ * 按常态计，与 runJob 实际调用面同口径，宁可粗一档也不系统性少报。
+ */
+const PORTRAIT_FIXED_CALLS = 4;
+
+/** 切批说明：`消息 20773 条 → 35 批 · 共 39 次 AI 调用`（成文 = 其人 + 相交 + 纪事 + 档案提炼 4 次，见 PORTRAIT_FIXED_CALLS；每批条数 / 字数上限不上屏） */
 function chunkedMessage(msgCount: number, batchCount: number): string {
-  return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + 3} 次 AI 调用`;
+  return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + PORTRAIT_FIXED_CALLS} 次 AI 调用`;
 }
 
 /** 抽样说明：`消息 91234 条 → 均匀抽样 60 批`（原批数 / 时段范围 / 首尾必保等机制说明不上屏） */
@@ -560,17 +578,39 @@ function emit(): void {
   }
 }
 
-/** 整队列原子落盘（写失败只告警不阻断：批内结果仍在内存，下一 checkpoint 会再试） */
+/**
+ * 整队列原子落盘（写失败只告警不阻断：批内结果仍在内存，下一 checkpoint 会再试）。
+ * describe-only 的临时任务（509）**在此单点排除、任何 persist 路径都不进盘**——
+ * checkpoint 只写正式队列：中途崩溃不留假任务在保库，重启 resumeJobs 也就不会把它标
+ * interrupted 出「继续生成」、更不会借面板首开注入的确认门自动放行烧完整条画像链。
+ */
 async function persist(): Promise<void> {
   if (!st) return;
+  const queue =
+    describeOnlyJob && st.queue.includes(describeOnlyJob) ? st.queue.filter((j) => j !== describeOnlyJob) : st.queue;
   try {
-    await st.store.write({ version: 1, queue: st.queue });
+    await st.store.write({ version: 1, queue });
   } catch (e) {
     console.warn('[people] 任务进度落盘失败:', e);
   }
 }
 
 // ---------------- 启动 / 排队 ----------------
+
+/**
+ * AI 依赖注入判定（startJobs / resumeJobs **同源**）：任一项注入了就算。漏记一项会把
+ * 整包注入当 null 丢掉（如 resumeJobs 曾漏 askDescribeConfirm——重启后只注 describe 门时
+ * 描述静默按跳过处理，绝不烧钱的路子没错，但用户授权的活静默没干）。
+ */
+function hasInjection(o: {
+  askExtract?: AskLLM;
+  askPortrait?: AskLLM;
+  askDescribe?: AskDescribe;
+  askDescribeConfirm?: DescribeGate;
+  askPortraitConfirm?: PortraitGate;
+}): boolean {
+  return !!(o.askExtract || o.askPortrait || o.askDescribe || o.askDescribeConfirm || o.askPortraitConfirm);
+}
 
 /**
  * 导入记录元数据（落 ImportRecord 所需）。新建与复用两条路径共用同一口径——
@@ -607,12 +647,12 @@ function reusableJob(
 // ---------------- 画谱总确认估算（issue 497：一次报清全部要花钱 / 花时间的事） ----------------
 
 /**
- * 单人画像调用估算：min(切批数, maxBatches 上限) + 其人 + 我们 + 时间线。
+ * 单人画像调用估算：min(切批数, maxBatches 上限) + 其人 + 相交 + 纪事 + 档案提炼。
  * 与引擎同口径（chunkMessages + DEFAULTS.maxBatches 截断），估算偏保守——上限截断时实际更少。
  */
 export function estimatePortraitCallsOf(msgs: UnifiedMessage[]): number {
   const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
-  return Math.min(all.length, DEFAULTS.maxBatches) + 3;
+  return Math.min(all.length, DEFAULTS.maxBatches) + PORTRAIT_FIXED_CALLS;
 }
 
 /**
@@ -633,8 +673,9 @@ export function estimateDescribeCallsOf(images: number): number {
 
 /**
  * 上锁协作暂停（ADR-0194 决策 5）：订阅共锁保险库的解锁态广播（本会话装一次）——
- * 任意路径上锁（面板「立即上锁」/ 锁屏 / 安全模式）→ pauseJobs()，当前批完成后停，
- * 批级断点保留、绝不带着明文继续吐 AI；解锁 → kick() 从断点续跑。
+ * 任意路径上锁（面板「立即上锁」/ 锁屏 / 安全模式）→ 暂停（标记来源 lockPaused），
+ * 当前批完成后停，批级断点保留、绝不带着明文继续吐 AI；解锁 → 仅当暂停来自上锁时
+ * kick() 从断点续跑（手动暂停在生效时上锁不接管来源，解锁不覆盖用户意图）。
  */
 let lockWired = false;
 /** 引擎一次性 wiring（上锁联动 + 重进程闸门抢占回调）；三处入口（startJob / resumeJobs / describe 单段）都调 */
@@ -643,8 +684,14 @@ function wireLock(): void {
   lockWired = true;
   wireHeavyPreempt();
   onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
-    if (evt?.unlocked === false) pauseJobs();
-    else if (evt?.unlocked === true) kick();
+    if (evt?.unlocked === false) pauseEngine(true);
+    else if (evt?.unlocked === true) {
+      if (st?.lockPaused) {
+        st.lockPaused = false;
+        st.pauseRequested = false; // 解锁续跑 = 消费掉上锁置位的暂停闸
+        kick();
+      }
+    }
   });
 }
 
@@ -704,6 +751,7 @@ export async function startJobs(
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
       pauseRequested: false,
+      lockPaused: false,
       prepGate: null,
     };
   }
@@ -714,16 +762,15 @@ export async function startJobs(
   if (!st.safe.unlocked) {
     return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
   }
-  st.injected =
-    opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm
-      ? {
-          askExtract: opts.askExtract,
-          askPortrait: opts.askPortrait,
-          askDescribe: opts.askDescribe,
-          askDescribeConfirm: opts.askDescribeConfirm,
-          askPortraitConfirm: opts.askPortraitConfirm,
-        }
-      : null;
+  st.injected = hasInjection(opts)
+    ? {
+        askExtract: opts.askExtract,
+        askPortrait: opts.askPortrait,
+        askDescribe: opts.askDescribe,
+        askDescribeConfirm: opts.askDescribeConfirm,
+        askPortraitConfirm: opts.askPortraitConfirm,
+      }
+    : null;
   // 重试策略：只在显式传入时覆盖（不传 = 沿用当前，缺省 DEFAULT_MAX_RETRIES + 真实退避）
   if (opts.maxRetries !== undefined) st.retry.maxRetries = opts.maxRetries;
   if (opts.sleep) st.retry.sleep = opts.sleep;
@@ -881,10 +928,11 @@ export async function resumeJobs(app: unknown, ai: JobResumeOptions = {}): Promi
     store,
     safe,
     queue,
-    injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
+    injected: hasInjection(ai) ? ai : null,
     retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
     runningJob: null,
     pauseRequested: false,
+    lockPaused: false,
     prepGate: null,
   };
   wireLock();
@@ -909,20 +957,25 @@ export function resume(talker: string): boolean {
   job.status = 'paused';
   job.error = undefined;
   job.updatedAt = nowIso();
+  // 用户显式「继续生成」= 解除暂停闸（旗标粘滞，只由用户动作 / 解锁续跑消费——不随引擎停转自清）
+  st.pauseRequested = false;
   void persist().then(emit);
   kick();
   return true;
 }
 
 /**
- * 暂停：当前批完成后停下（成文阶段的画像 / 时间线调用照常收尾），队列不再拾起后续任务。
- * 工具段（preprocess）运行中收到暂停 = 协作式让行（ADR-0196 决策 3）：写数据根
- * `.bz-face/control.json` {action:"pause"} 让进程在本条媒体后待命（不硬杀——模型冷加载
+ * 暂停引擎（手动 / 上锁共用body）：当前批完成后停下（成文阶段的画像 / 时间线调用照常收尾），
+ * 队列不再拾起后续任务。工具段（preprocess）运行中收到暂停 = 协作式让行（ADR-0196 决策 3）：
+ * 写数据根 `.bz-face/control.json` {action:"pause"} 让进程在本条媒体后待命（不硬杀——模型冷加载
  * 按分钟计），并触发 prepGate 唤醒 runJob 先落 paused；恢复时写 resume 复用同一进程。
- * 上锁走本函数（wireLock → pauseJobs）——工具段上锁同样让行而非杀进程。
+ * 来源记账：fromLock = true 时标 lockPaused（解锁续跑的凭据）；手动暂停在生效时上锁
+ * **不接管来源**——否则解锁会覆盖用户先前的手动暂停意图。
  */
-export function pauseJobs(): void {
+function pauseEngine(fromLock: boolean): void {
   if (!st) return;
+  const manualInEffect = st.pauseRequested && !st.lockPaused;
+  if (!manualInEffect) st.lockPaused = fromLock;
   st.pauseRequested = true;
   const engine = st;
   const job = engine.runningJob ? engine.queue.find((j) => j.talker === engine.runningJob) : null;
@@ -931,6 +984,11 @@ export function pauseJobs(): void {
     if (dataRoot) void writePrepControl(dataRoot, 'pause');
     engine.prepGate?.();
   }
+}
+
+/** 用户手动暂停（面板「暂停」）：来源标记为手动——解锁不自动续跑，点「继续生成」才恢复 */
+export function pauseJobs(): void {
+  pauseEngine(false);
 }
 
 /** 删除任务（运行中的也删：AI 调用作废、prep 进程杀掉留状态，不再落盘、不再出 done 事件）；落盘完成后 resolve */
@@ -966,6 +1024,8 @@ export function retryPrepFailures(talker: string): boolean {
   job.status = 'paused';
   job.error = undefined;
   job.updatedAt = nowIso();
+  // 同 resume：用户显式的「重试失败项」也解除暂停闸（旗标只由用户动作 / 解锁续跑消费）
+  st.pauseRequested = false;
   void persist().then(emit);
   kick();
   return true;
@@ -982,7 +1042,8 @@ function kick(): Promise<void> {
   if (!st || runPromise) return runPromise ?? Promise.resolve();
   runPromise = runQueue().finally(() => {
     runPromise = null;
-    if (st) st.pauseRequested = false;
+    // 不自清 pauseRequested：旗标粘滞（暂停来源要留到解锁时刻判读），
+    // 只由用户动作（resume / retryPrepFailures）与解锁续跑消费。
   });
   return runPromise;
 }
@@ -1003,7 +1064,14 @@ async function runQueue(): Promise<void> {
     }
     const got = await waitHeavyGate('portrait', () => !!st && runnable() && !describeOnlyBusy && st.queue.includes(job) && job.status === 'paused');
     if (job.status === 'paused') job.message = prevMessage;
-    if (!got) break;
+    if (!got) {
+      // 等闸弃等（任务被删 / 暂停 / 上锁 / 描述段插队）≠ 队列没活：**不得 break**——
+      // 此时没人会再 kick（startJobs 末尾那次早发完了），break 会让队列里后续 paused
+      // 任务无人拾起（停摆）。回循环顶部，runnable() / describeOnlyBusy / find(paused)
+      // 自然处理后续；emit 把恢复前的文案落一帧快照。
+      emit();
+      continue;
+    }
     emit();
     try {
       await runJob(job);
@@ -1011,7 +1079,6 @@ async function runQueue(): Promise<void> {
       releaseHeavy('portrait'); // 任务出 running = 松开这一份（prep 待命进程另持一份，见 prep.ts）
     }
   }
-  if (st) st.pauseRequested = false;
 }
 
 /** 运行中任务被 removeJob 移除后立即收手（不落盘、不再消耗 AI） */
@@ -1066,8 +1133,24 @@ function buildPrepSpecFromSettings(job: PersonJob, dataRoot: string) {
 }
 
 /**
+ * 快检分支的账本落位：已有断点账本时**只刷新分母**（counts 各段 total 对齐当前聊天仓口径），
+ * 绝不清账——donePhases 清了会让续跑重起 prep 进程白扫全库、failed 清了会弄丢进度块上的
+ * 「重试失败项」按钮。无账本（首跑）按 newPrepProgress 建账（原口径不变）。
+ */
+function rollPrepLedger(job: PersonJob, totals: { media?: number; derive?: number; transcribe?: number; map?: number }): PrepProgress {
+  const prep = prepOf(job);
+  if (!prep) return newPrepProgress(totals);
+  const fresh = newPrepProgress(totals);
+  for (const [phase, c] of Object.entries(fresh.counts)) {
+    prep.counts[phase] = { done: prep.counts[phase]?.done ?? 0, total: c.total };
+  }
+  return prep;
+}
+
+/**
  * 工具段（469 / ADR-0196 决策 1、3、4、7）：跑 `bz-face prep` 四段。
- *   - 零媒体联系人自动跳过全段（决策 9）；donePhases 齐四段 = 已完成，续跑不再起进程。
+ *   - 零媒体联系人自动跳过全段（决策 9）；媒体无欠账（text 全非空）同样跳过（issue 515）；
+ *     账本齐段也跳过——语音欠账例外（账本齐段压过新语音是条 bug，见函数体内注释）。
  *   - 暂停 = 协作式让行：pauseJobs 写控制文件并触发 prepGate，本函数从「等进程终结」的
  *     await 醒来落 paused——进程待命不退出，恢复时复用（模型冷加载不白付）。
  *   - 失败分流（决策 7）：[bz-result]{ok:false} = 密钥 / 解密类硬失败，整链停给中文原因；
@@ -1087,8 +1170,12 @@ async function runPrepStage(
   // 新导入的媒体 text 为空会计进待办，prep 照常起；转写失败条目保持空同样不漏。
   const pending = pendingMediaCounts(store?.msgs ?? []);
   if (!pending.images && !pending.voices) return 'skipped';
+  // 断点：账本齐段照旧跳过——**例外：有语音欠账**。原「齐段即跳过」压过欠账检查是条 bug：
+  // 中途导入新语音时 prep 被跳过，新语音 text 恒空、静默缺料（新图片反而会被 describe 段
+  // 补上，两条媒体线不一致）。图片欠账不在此拦（归 describe 段管，别为它重起进程重扫全库，
+  // issue 515 的口径不回退）；转写幂等（voice.json 即水位），重起进程只补语音缺口。
   const prep = prepOf(job);
-  if (prep && prepAllDone(prep)) return 'skipped'; // 断点：prep 已齐段
+  if (prep && prepAllDone(prep) && !pending.voices) return 'skipped';
   const dataRoot = dataRootOf();
   if (!dataRoot) {
     await finish({ status: 'error', error: '数据根未配置——媒体导出与语音转写没有可跑的目录', message: '数据根未配置' });
@@ -1102,11 +1189,11 @@ async function runPrepStage(
     const fresh = (await safe.read(job.talker))?.store;
     const after = pendingMediaCounts(fresh?.msgs ?? []);
     if (!after.images && !after.voices) {
-      job.prep = newPrepProgress(totals); // 段进度齐账（与 prepAllDone 语义一致，后续续跑走断点跳过）
+      job.prep = rollPrepLedger(job, totals); // 段进度齐账：已有账本只刷分母，不清 donePhases / failed
       job.message = '预处理产物已覆盖全部待办，直接合并升级，无需起预处理进程';
       return 'skipped';
     }
-    job.prep = newPrepProgress(totals); // 覆盖不全：回落原路径前初始化段进度
+    job.prep = rollPrepLedger(job, totals); // 覆盖不全：回落原路径前落账本（同样不清账）
   }
   if (!job.prep) job.prep = newPrepProgress(totals);
 
@@ -1116,10 +1203,15 @@ async function runPrepStage(
   await persist();
   emit();
 
-  // 待命进程复用（暂停后恢复）或起新进程；起跑前写 resume 清掉陈旧 pause 指令
+  // 起跑前写 resume：清掉陈旧 pause / stop 指令——**必须先于起进程**（新进程第一眼读到的
+  // 就该是 resume；先起进程后写与「起跑前写」语义相反，写失败的那一窗里新进程会读到陈旧
+  // stop 干净退出，任务落 paused 且无报错）。写失败留痕便于诊断这类「一启动就没了」。
+  if (!(await writePrepControl(dataRoot, 'resume'))) {
+    console.warn('[people] prep 起跑前写 resume 控制失败：若盘上有陈旧 stop，进程可能一启动就退出');
+  }
+  // 待命进程复用（暂停后恢复）或起新进程
   const existing = currentPrepSession();
   const session = existing && existing.talker === job.talker ? existing : startPrepSession(job.talker, buildPrepSpecFromSettings(job, dataRoot), prepCallbacks(job));
-  await writePrepControl(dataRoot, 'resume');
 
   // 等进程终结，或暂停请求先到（协作式让行：进程待命，runJob 先落 paused）
   let gateFired = false;
@@ -1136,25 +1228,31 @@ async function runPrepStage(
     return 'halted';
   }
 
-  // 终结分流（[bz-result] 是成果权威；stopped 优先——与 core/external-tool 同口径）
+  // 终结分流（[bz-result] 是成果权威；stopped 优先——与 core/external-tool 同口径）。
+  // 进程已终结的各分支**都要清控制文件**（clearPrepControl）：残指令靠「下次起跑后写 resume
+  // 覆盖」兜不住写失败的窗口，残留 stop 会让续跑进程一出生就自己退（任务 paused 循环无报错）。
   const { outcome, result } = settled;
   if (outcome.stopped) {
     // 中断（删除任务 / 换人跑）：杀进程留状态——产物幂等，续跑只补缺口
+    clearPrepControl(dataRoot);
     await finish({ status: 'paused', message: '已完成的部分保留' });
     return 'halted';
   }
   if (result && result.ok === false) {
     // 密钥 / 解密类硬失败（工具预检 [bz-result]{ok:false,error}）：整链停给中文原因
+    clearPrepControl(dataRoot);
     const msg = typeof result.error === 'string' && String(result.error).trim() ? String(result.error).trim() : '预处理失败：工具报错，没有给出原因';
     await finish({ status: 'error', error: msg, message: msg });
     return 'halted';
   }
   if (result && result.stopped === true) {
     // 工具收到 stop 控制指令自己退的（控制文件被外部写 stop）：等同暂停，产物保留
+    clearPrepControl(dataRoot);
     await finish({ status: 'paused', message: '已完成的部分保留' });
     return 'halted';
   }
   if (!outcome.ok || !result || result.ok !== true) {
+    clearPrepControl(dataRoot);
     const classified = classifyPrepFailure(outcome);
     await finish({ status: 'error', error: classified.message, message: classified.message });
     return 'halted';
@@ -1356,6 +1454,9 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
 // ---------------- 补充素材·描述单段入口（issue 509 / ADR-0212） ----------------
 
 let describeOnlyBusy = false;
+/** describe-only 的临时任务本体（runDescribeOnly 持有）：persist 单点排除它（见 persist），
+ *  跑完 / 异常收尾置空——不置空会连累后续正式任务的 checkpoint 漏写。 */
+let describeOnlyJob: PersonJob | null = null;
 
 /** 是否有 describe-only 任务在跑（startJobs 互斥护栏的另一读法，测试用） */
 export function isDescribeOnlyBusy(): boolean {
@@ -1387,6 +1488,7 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
         retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
         runningJob: null,
         pauseRequested: false,
+        lockPaused: false,
         prepGate: null,
       };
     }
@@ -1418,6 +1520,7 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
     };
     st.queue.push(job);
     st.runningJob = talker;
+    describeOnlyJob = job; // 挂单点排除标记：任何 persist 路径都不把临时任务写进保库
     emit();
     const finish = async (patch: Partial<PersonJob>): Promise<void> => {
       Object.assign(job, patch, { updatedAt: nowIso() });
@@ -1437,6 +1540,7 @@ export async function runDescribeOnly(app: unknown, talker: string): Promise<{ o
     } finally {
       st.queue = st.queue.filter((j) => j !== job);
       if (st.runningJob === talker) st.runningJob = null;
+      describeOnlyJob = null; // 摘除排除标记：后续正式任务的 checkpoint 恢复整队列落盘
       await persist();
       emit();
     }
@@ -1560,10 +1664,10 @@ async function runJob(job: PersonJob): Promise<void> {
     }
 
     // 5.5 画像生成确认门（471 / ADR-0196 决策 8 第二次确认，与图片描述确认互相独立——
-    //     跳过了描述这扇门照弹）：素材条数 / 约调用次数（采集批 + 其人 + 我们 + 时间线）在
-    //     切批定案后最准。取消 = 任务整条移除（画像不画，已同步的数据保留）；抛错 = 没拿到
-    //     授权，按取消处理。门未注入 = 放行（生产入口恒注入；引擎直调的测试 / 编程消费不阻）。
-    //     已确认过（重试 / 断点续跑）不再二次弹窗。
+    //     跳过了描述这扇门照弹）：素材条数 / 约调用次数（采集批 + 其人 + 相交 + 纪事 + 档案提炼，
+    //     口径单源 PORTRAIT_FIXED_CALLS）在切批定案后最准。取消 = 任务整条移除（画像不画，
+    //     已同步的数据保留）；抛错 = 没拿到授权，按取消处理。门未注入 = 放行（生产入口恒注入；
+    //     引擎直调的测试 / 编程消费不阻）。已确认过（重试 / 断点续跑）不再二次弹窗。
     if (!job.portraitConfirmed) {
       const gate = st!.injected?.askPortraitConfirm;
       if (gate) {
@@ -1579,7 +1683,7 @@ async function runJob(job: PersonJob): Promise<void> {
             model: label.model,
             name: job.name,
             materials: digestMsgs.length,
-            calls: chunks.length + 3,
+            calls: chunks.length + PORTRAIT_FIXED_CALLS,
           });
         } catch (e) {
           console.warn('[people] 画像生成确认门异常，按取消处理:', e);
