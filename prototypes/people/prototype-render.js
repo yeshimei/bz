@@ -1,4 +1,4 @@
-/* 源指纹 43dfdcdc9f5e402f · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 33ab06d1589ffaa5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -749,7 +749,8 @@ var BZR_people = (() => {
       el("div", "bz-people-empty", [
         el("div", "bz-people-load-figure", [
           el("span", "bz-people-load-num", { "data-people-load-num": "" }, text(String(done))),
-          total ? el("span", "bz-people-load-total", text(`/ ${total} 位`)) : el("span", "bz-people-load-total", text("位"))
+          // 分母 span 常驻（清单未读到先只显「位」，paintLoadCount 读到后原位补 `/ N 位`）
+          el("span", "bz-people-load-total", text(total ? `/ ${total} 位` : "位"))
         ]),
         el(
           "div",

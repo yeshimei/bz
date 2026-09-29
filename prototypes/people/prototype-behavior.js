@@ -1,4 +1,4 @@
-/* 源指纹 ca26151b0be6caeb · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2735beca0faa31b5 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -17294,20 +17294,32 @@ ${lines.join("\n")}`);
       ffmpeg: str3(s.ffmpegPath)
     });
   }
-  async function runPrepStage(job, finish, store2) {
-    var _a2;
+  async function runPrepStage(job, finish, store2, safe) {
+    var _a2, _b2, _c;
     const totals = prepMediaTotals(store2 == null ? void 0 : store2.kindCounts, store2 == null ? void 0 : store2.stats);
     if (!totals) return "skipped";
     const pending = pendingMediaCounts((_a2 = store2 == null ? void 0 : store2.msgs) != null ? _a2 : []);
     if (!pending.images && !pending.voices) return "skipped";
     const prep = prepOf(job);
     if (prep && prepAllDone(prep)) return "skipped";
-    if (!job.prep) job.prep = newPrepProgress(totals);
     const dataRoot = dataRootOf();
     if (!dataRoot) {
       await finish({ status: "error", error: "数据根未配置——媒体导出与语音转写没有可跑的目录", message: "数据根未配置" });
       return "halted";
     }
+    const side = readPrepSidecars(dataRoot, job.talker);
+    if (side && (side.voice.length || side.imageMap.length)) {
+      await mergePrepArtifactsIntoStore(safe, job.talker, dataRoot);
+      const fresh = (_b2 = await safe.read(job.talker)) == null ? void 0 : _b2.store;
+      const after = pendingMediaCounts((_c = fresh == null ? void 0 : fresh.msgs) != null ? _c : []);
+      if (!after.images && !after.voices) {
+        job.prep = newPrepProgress(totals);
+        job.message = "预处理产物已覆盖全部待办，直接合并升级，无需起预处理进程";
+        return "skipped";
+      }
+      job.prep = newPrepProgress(totals);
+    }
+    if (!job.prep) job.prep = newPrepProgress(totals);
     job.stage = "preprocess";
     await persist();
     emit();
@@ -17613,7 +17625,7 @@ ${lines.join("\n")}`);
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
-      const prepState = await runPrepStage(job, finish, storeBefore);
+      const prepState = await runPrepStage(job, finish, storeBefore, safe);
       if (prepState === "halted") return;
       if (prepState === "ok") {
         const merged2 = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
@@ -19018,7 +19030,8 @@ ${lines.join("\n")}`);
       el("div", "bz-people-empty", [
         el("div", "bz-people-load-figure", [
           el("span", "bz-people-load-num", { "data-people-load-num": "" }, text(String(done))),
-          total ? el("span", "bz-people-load-total", text(`/ ${total} 位`)) : el("span", "bz-people-load-total", text("位"))
+          // 分母 span 常驻（清单未读到先只显「位」，paintLoadCount 读到后原位补 `/ N 位`）
+          el("span", "bz-people-load-total", text(total ? `/ ${total} 位` : "位"))
         ]),
         el(
           "div",
