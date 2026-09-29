@@ -40,7 +40,12 @@ import type { ExternalToolHandle } from '../../src/core/external-tool';
 describe('路径组装', () => {
   it('recordingsDirOf / sidecar / 质心 npz 的固定布局（ADR-0212；质心随数据根，0214）', () => {
     expect(recordingsDirOf('E:\\数据根', '大琳')).toBe('E:\\数据根/大琳/recordings');
-    expect(recordingSidecarPath('E:\\数据根', '大琳', '周二.aac')).toBe('E:\\数据根/大琳/recordings/周二.aac.turns.json');
+    // sidecar 剥扩展名（issue 512 对齐 bz_rec.py 的 splitext 口径——磁盘账本是 <名>.turns.json）
+    expect(recordingSidecarPath('E:\\数据根', '大琳', '周二.aac')).toBe('E:\\数据根/大琳/recordings/周二.turns.json');
+    // 带空格 / emoji 的真实导出名、多点文件名只剥最后一段、无扩展名原样保留
+    expect(recordingSidecarPath('E:\\数据根', '大琳', '周六 10点14分✔️.aac')).toBe('E:\\数据根/大琳/recordings/周六 10点14分✔️.turns.json');
+    expect(recordingSidecarPath('E:\\数据根', '大琳', 'a.b.m4a')).toBe('E:\\数据根/大琳/recordings/a.b.turns.json');
+    expect(recordingSidecarPath('E:\\数据根', '大琳', '无扩展名')).toBe('E:\\数据根/大琳/recordings/无扩展名.turns.json');
     expect(voiceprintRefPath('E:\\数据根', '大琳')).toBe('E:\\数据根/voiceprints/大琳.npz');
     // 质心随数据根走（0214 收编 bz-face 包，不再依赖「数据根父目录有 tools」的布局）
     expect(voiceprintRefPath('E:/Obsidian/微信脸谱数据/export_full', '大琳')).toBe('E:/Obsidian/微信脸谱数据/export_full/voiceprints/大琳.npz');
