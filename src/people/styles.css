@@ -892,6 +892,11 @@
 
 /* 开工单（画脸谱确认） */
 .bz-people-gen-line { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
+/* 行式总览（issue 513）：左标签右说明，一项一行替代原先的长句段 */
+.bz-people-gen-rows { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+.bz-people-gen-row { display: flex; gap: 12px; align-items: baseline; font-size: var(--f-mid); line-height: 1.7; }
+.bz-people-gen-k { flex: 0 0 4.5em; color: var(--ink-mut); font-family: var(--kai); letter-spacing: 1px; }
+.bz-people-gen-v { color: var(--ink); overflow-wrap: anywhere; }
 .bz-people-gen-list { list-style: none; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
 .bz-people-gen-item { font-size: var(--f-mid); color: var(--ink); padding: 6px 12px; background: #fffefb; border: 1px solid #ece5d5;
   border-radius: var(--r-card); }

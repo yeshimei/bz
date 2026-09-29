@@ -1635,19 +1635,24 @@ export function dsPage(s: DsModalState): HTMLElement {
   return subPage({ title: '数据源', meta, head, foot, hook: 'ds' }, body);
 }
 
-/** 画谱开工单（issue 497：两次确认合一，确认后一路到底不再弹窗） */
+/** 画谱开工单（issue 497：两次确认合一，确认后一路到底不再弹窗；513：总览改行式清单，
+ *  图片 / 语音两行写明幂等语义——引擎各段产物在即跳过，满额估算只是上限，不是都要重烧） */
 export function genPage(info: GenerationConfirmInfo): HTMLElement {
   const body: HTMLElement[] = [];
-  const segs: string[] = [`为 ${info.items.length} 位联系人生成脸谱`];
-  if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
-  if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
-  segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
-  body.push(el('div', 'bz-people-gen-line', text(`${segs.join('；')}。`)));
+  body.push(el('div', 'bz-people-gen-line', text(`为 ${info.items.length} 位联系人生成脸谱`)));
+  const rows: Array<[string, string]> = [];
+  if (info.images > 0) rows.push(['图片描述', `${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
+  if (info.voices > 0) rows.push(['语音转写', `${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
+  rows.push(['画像生成', `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
+  body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
+    el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
   const list = el('ul', 'bz-people-gen-list');
   for (const it of info.items) {
     const bits = [`素材 ${it.materials} 条`];
     if (it.images > 0) bits.push(`图片 ${it.images} 张`);
     if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+    if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
+    else if (it.mode === 'newer') bits.push('增量 · 只提炼新增');
     list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
   }
   body.push(list);

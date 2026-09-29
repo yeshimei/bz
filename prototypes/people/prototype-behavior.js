@@ -1,4 +1,4 @@
-/* 源指纹 308801f6de1483d2 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 576e38c0b0c911d7 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -19538,16 +19538,19 @@ ${lines.join("\n")}`);
   }
   function genPage(info) {
     const body = [];
-    const segs = [`为 ${info.items.length} 位联系人生成脸谱`];
-    if (info.images > 0) segs.push(`图片 ${info.images} 张用 ${info.provider} / ${info.model} 描述，约 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`);
-    if (info.voices > 0) segs.push(`语音 ${info.voices} 条在本地离线转写，不联网不花钱`);
-    segs.push(`画像由 ${info.provider} / ${info.model} 生成，约 ${info.portraitCalls} 次调用`);
-    body.push(el("div", "bz-people-gen-line", text(`${segs.join("；")}。`)));
+    body.push(el("div", "bz-people-gen-line", text(`为 ${info.items.length} 位联系人生成脸谱`)));
+    const rows = [];
+    if (info.images > 0) rows.push(["图片描述", `${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
+    if (info.voices > 0) rows.push(["语音转写", `${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
+    rows.push(["画像生成", `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
+    body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
     const list = el("ul", "bz-people-gen-list");
     for (const it of info.items) {
       const bits = [`素材 ${it.materials} 条`];
       if (it.images > 0) bits.push(`图片 ${it.images} 张`);
       if (it.voices > 0) bits.push(`语音 ${it.voices} 条`);
+      if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
+      else if (it.mode === "newer") bits.push("增量 · 只提炼新增");
       list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
     }
     body.push(list);
@@ -20100,6 +20103,7 @@ ${lines.join("\n")}`);
   var offWheelTurn = null;
   var stage = "list";
   var detailId = null;
+  var statsKinds = null;
   var detailFold = "p";
   var listCache = [];
   var mergeFromId = null;
@@ -20931,7 +20935,7 @@ ${lines.join("\n")}`);
         var _a2;
         return Number.isFinite((_a2 = t.kindCounts) == null ? void 0 : _a2[k]) ? Number(t.kindCounts[k]) : 0;
       };
-      return { name: t.name, materials: t.msgs.length, images: pick("图片"), voices: pick("语音") };
+      return { name: t.name, materials: t.msgs.length, images: pick("图片"), voices: pick("语音"), ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
     });
     const images = items.reduce((s, it) => s + it.images, 0);
     const voices = items.reduce((s, it) => s + it.voices, 0);
@@ -20974,7 +20978,7 @@ ${lines.join("\n")}`);
       } else if (plan.olderCount > 0) {
         notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      runnable2.push({ ...t, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
+      runnable2.push({ ...t, mode: plan.mode, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
     }
     return { runnable: runnable2, skipped };
   }
@@ -21343,6 +21347,7 @@ ${lines.join("\n")}`);
       }
       if (kind === "stats") {
         openDialog("stats");
+        void refreshStatsKinds();
         return;
       }
       if (kind === "prof") {
@@ -21691,7 +21696,7 @@ ${lines.join("\n")}`);
     if (kind === "ds") return dsPage(dsPageState());
     if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], images: 0, voices: 0, provider: "", model: "", describeCalls: 0, portraitCalls: 0, batchSize: 0 });
     if (kind === "find") return findPageState();
-    if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p), p));
+    if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
     if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
     if (p && kind === "note") return suppPage(p, suppTab, suppImageState(), suppRecState(p.id), todayStr());
     if (p && kind === "del") return delPage(p, (_a2 = dialog == null ? void 0 : dialog.tier) != null ? _a2 : deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
@@ -22161,13 +22166,27 @@ ${lines.join("\n")}`);
       notifyActionError(e, `删除「${p.name}」`);
     }
   }
-  function buildInsightsCard(p) {
+  async function refreshStatsKinds() {
+    var _a2;
+    const talker = detailId;
+    if (!talker) return;
+    if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+    try {
+      const rec = await peopleSafe.read(talker);
+      statsKinds = (_a2 = rec == null ? void 0 : rec.store.kindCounts) != null ? _a2 : null;
+    } catch (e) {
+      statsKinds = null;
+    }
+    if ((dialog == null ? void 0 : dialog.kind) === "stats") void renderAlbum();
+  }
+  function buildInsightsCard(p, liveKinds) {
     var _a2, _b2, _c, _d, _e;
     if (!p.imports.length) return null;
     const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
     const s = latest.stats;
     if (!((_a2 = s == null ? void 0 : s.monthly) == null ? void 0 : _a2.length)) return null;
-    const totalMsg = s.monthly.reduce((a, [, n]) => a + n, 0);
+    const live2 = liveKinds && Object.keys(liveKinds).length ? liveKinds : null;
+    const totalMsg = live2 ? Object.values(live2).reduce((a, n) => a + n, 0) : s.monthly.reduce((a, [, n]) => a + n, 0);
     const rows = document.createElement("div");
     rows.className = "bz-people-ins-rows";
     const byMe = (_b2 = s.initiatedByMe) != null ? _b2 : 0;
@@ -22186,7 +22205,7 @@ ${lines.join("\n")}`);
       return el("div", "bz-people-strip-bar", { style: `height:${h}%`, title: `${i} 点 · ${n} 条` });
     }));
     rows.appendChild(insRow("活跃时段", strip, total ? `峰值 ${hourly.indexOf(max)} 点` : "—"));
-    const kinds = Object.entries((_e = s.kindCounts) != null ? _e : {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    const kinds = Object.entries((_e = live2 != null ? live2 : s.kindCounts) != null ? _e : {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
     if (kinds.length) rows.appendChild(insRow("消息形态", kindChips(kinds), ""));
     return insightsCard(importMeta(latest, totalMsg), latest.file, monthlyChart(s.monthly), rows);
   }

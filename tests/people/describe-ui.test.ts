@@ -38,7 +38,7 @@ const info: GenerationConfirmInfo = {
   model: 'glm-5.3-flash',
   items: [
     { name: '陈默', materials: 2, images: 0, voices: 0 },
-    { name: '大琳', materials: 20773, images: 1615, voices: 1289 },
+    { name: '大琳', materials: 20773, images: 1615, voices: 1289, mode: 'older' },
   ],
   images: 1615,
   describeCalls: 81,
@@ -48,20 +48,32 @@ const info: GenerationConfirmInfo = {
 };
 
 describe('开工单册页（genPage，issue 505：确认是册子里翻出来的一页）', () => {
-  it('一次报清：人数 / 图片与描述调用 / 语音本地转写 / 画像调用 / 逐人明细，不出现金额字样', () => {
+  it('一次报清：行式总览（人数 / 图片幂等口径 / 语音本地转写 / 画像调用）+ 逐人明细含补录标识，不出现金额字样', () => {
     const page = genPage(info);
     expect(page.dataset.peopleSub).toBe('gen');
     expect(page.querySelector('.bz-people-head-label')!.textContent).toBe('开始生成脸谱');
     const line = page.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent ?? '';
     expect(line).toContain('为 2 位联系人生成脸谱');
-    expect(line).toContain('图片 1615 张用 智谱 Plan / glm-5.3-flash 描述');
-    expect(line).toContain('约 81 次调用');
-    expect(line).toContain('每批 20 张');
-    expect(line).toContain('语音 1289 条在本地离线转写，不联网不花钱');
-    expect(line).toContain('画像由 智谱 Plan / glm-5.3-flash 生成，约 8 次调用');
+    // 总览行式（issue 513）：一项一行，图片 / 语音两行写明幂等语义，调用数是「至多」不是「都要」
+    const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toContain('图片描述');
+    expect(rows[0]).toContain('1615 张');
+    expect(rows[0]).toContain('已描述过的自动跳过');
+    expect(rows[0]).toContain('至多 81 次调用');
+    expect(rows[0]).toContain('每批 20 张');
+    expect(rows[1]).toContain('语音转写');
+    expect(rows[1]).toContain('1289 条');
+    expect(rows[1]).toContain('本地离线');
+    expect(rows[1]).toContain('已转写的自动跳过');
+    expect(rows[2]).toContain('画像生成');
+    expect(rows[2]).toContain('智谱 Plan / glm-5.3-flash');
+    expect(rows[2]).toContain('约 8 次调用');
     const items = [...page.querySelectorAll('.bz-people-gen-item')].map((n) => n.textContent ?? '');
     expect(items[0]).toContain('「陈默」 · 素材 2 条');
     expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 图片 1615 张 · 语音 1289 条');
+    expect(items[1]).toContain('补录 · 与已有画像合并重画'); // issue 513：older 模式带补录标识
+    expect(items[0]).not.toContain('补录'); // full 缺省不标
     expect(line + items.join('')).not.toMatch(/元|￥|¥|\$/);
     expect(page.querySelector('[data-people-gen-start]')?.textContent).toBe('开始生成');
     expect(page.querySelector('button[data-people-gen-cancel]')?.textContent).toBe('取消');
@@ -69,11 +81,11 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
     expect(page.querySelector('[data-people-close]')).toBeTruthy(); // 「合上这页」＝取消那条路
   });
 
-  it('零图片零语音：总览只报画像一段，逐人行只报素材条数', () => {
+  it('零图片零语音：总览只报画像一行，逐人行只报素材条数', () => {
     const page = genPage({ ...info, images: 0, voices: 0, describeCalls: 0, items: [{ name: '陈默', materials: 5, images: 0, voices: 0 }] });
-    const line = page.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent ?? '';
-    expect(line).not.toContain('图片');
-    expect(line).not.toContain('语音');
+    const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
+    expect(rows).toHaveLength(1); // 只剩画像一行
+    expect(rows[0]).toContain('画像生成');
     expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).toBe('「陈默」 · 素材 5 条');
   });
 });

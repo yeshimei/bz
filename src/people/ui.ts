@@ -185,6 +185,9 @@ let offSyncWatch: (() => void) | null = null;
 let offWheelTurn: (() => void) | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
+/** 互动统计卡的实时形态计数（issue 513）：打开统计页时异步读保库 store.kindCounts（全量口径，
+ *  含并仓的录音轮次），到货重画；上锁 / 读失败回落 null = 用导入快照 */
+let statsKinds: Record<string, number> | null = null;
 /** 详情当前展开的折（换人回落画像折） */
 let detailFold: FoldId = 'p';
 /** 最近一次 renderList 拉到的人物（合并确认取名用） */
@@ -1128,6 +1131,8 @@ export interface GenTarget {
   profile?: PersonProfile;
   /** 跨导入合并的月度密度（issue 455）：planTargets 从导入记录 stats 现算 → buildStatsNote 月度段 */
   monthly?: Array<[string, number]>;
+  /** 提炼模式（issue 513）：planTargets 判定后带出 → 开工单逐人提示；full 缺省不标 */
+  mode?: 'full' | 'newer' | 'older';
 }
 
 /**
@@ -1296,7 +1301,7 @@ function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInf
   const label = describeModelLabelOf();
   const items = runnable.map((t) => {
     const pick = (k: string): number => (Number.isFinite(t.kindCounts?.[k]) ? Number(t.kindCounts[k]) : 0);
-    return { name: t.name, materials: t.msgs.length, images: pick('图片'), voices: pick('语音') };
+    return { name: t.name, materials: t.msgs.length, images: pick('图片'), voices: pick('语音'), ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
   });
   const images = items.reduce((s, it) => s + it.images, 0);
   const voices = items.reduce((s, it) => s + it.voices, 0);
@@ -1346,7 +1351,8 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
       notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
     }
     // issue 455：档案与跨导入月度密度在这里带上（statsNote 组装在引擎内，入参经 JobTarget 传入）
-    runnable.push({ ...t, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
+    // issue 513：提炼模式带出 → 开工单逐人提示（older = 补录合并重画）
+    runnable.push({ ...t, mode: plan.mode, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
   }
   return { runnable, skipped };
 }
@@ -1716,7 +1722,7 @@ function onOverlayClick(e: MouseEvent): void {
     const kind = act.dataset.peopleAct ?? '';
     if (kind === 'back') { closePerson(); return; }
     if (kind === 'generate') { void generateOne(detailId ?? undefined); return; }
-    if (kind === 'stats') { openDialog('stats'); return; }
+    if (kind === 'stats') { openDialog('stats'); void refreshStatsKinds(); return; } // issue 513：实时形态异步到货重画
     if (kind === 'prof') { profEditId = null; openDialog('prof'); return; }
     if (kind === 'note') { openDialog('note'); return; }
     if (kind === 'del') { void handleDelete(act.dataset.peopleDel ?? detailId ?? ''); return; }
@@ -2002,7 +2008,7 @@ function dialogPage(p: PersonEntry | null): HTMLElement {
   if (kind === 'ds') return dsPage(dsPageState());
   if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], images: 0, voices: 0, provider: '', model: '', describeCalls: 0, portraitCalls: 0, batchSize: 0 });
   if (kind === 'find') return findPageState();
-  if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p), p));
+  if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
   if (p && kind === 'note') return suppPage(p, suppTab, suppImageState(), suppRecState(p.id), todayStr());
   if (p && kind === 'del') return delPage(p, dialog?.tier ?? deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
@@ -2566,17 +2572,37 @@ async function deletePerson(p: PersonEntry): Promise<void> {
 
 // ---------------- 互动数据（issue 440：纯本地统计展示；447 收进「数据」折） ----------------
 
+/** 统计卡实时形态（issue 513）：读保库 store.kindCounts（全量口径，含并仓的录音轮次等）。
+ *  到货后若统计页还开着就重画；上锁 / 读失败回落 null = 用导入快照，不劣化。
+ *  先清后读：换人打开时不能把上一位的形态缓存安到新头上。 */
+async function refreshStatsKinds(): Promise<void> {
+  const talker = detailId;
+  if (!talker) return;
+  statsKinds = null;
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  try {
+    const rec = await peopleSafe.read(talker);
+    statsKinds = rec?.store.kindCounts ?? null;
+  } catch {
+    statsKinds = null;
+  }
+  if (dialog?.kind === 'stats') void renderAlbum();
+}
+
 /**
- * 数据折互动卡：只展示最近一次导入的统计。
+ * 数据折互动卡：形态与总量用**实时全量**（保库 store.kindCounts，含并仓的录音轮次等，issue 513），
+ * 读不到（上锁 / 失败）回落最近一次导入的冻结快照；谁主动 / 回复时延 / 活跃时段 / 月度图保留
+ * 导入快照口径——导入历史语义不变。
  * 判定口径是**有没有明细**（monthly），不是「有没有 stats」——452 的合成记录只带媒体三项
  * （issue 454：给详情头 / 卡面徽章供数），拿它画统计卡会得到一张全 0 的空卡，比占位更糟。
  */
-function buildInsightsCard(p: PersonEntry): HTMLElement | null {
+function buildInsightsCard(p: PersonEntry, liveKinds?: Record<string, number> | null): HTMLElement | null {
   if (!p.imports.length) return null;
   const latest = [...p.imports].sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
   const s = latest.stats;
   if (!s?.monthly?.length) return null;
-  const totalMsg = s.monthly.reduce((a, [, n]) => a + n, 0);
+  const live = liveKinds && Object.keys(liveKinds).length ? liveKinds : null;
+  const totalMsg = live ? Object.values(live).reduce((a, n) => a + n, 0) : s.monthly.reduce((a, [, n]) => a + n, 0);
   const rows = document.createElement('div');
   rows.className = 'bz-people-ins-rows';
   // 谁主动：会话发起占比条 + 数字
@@ -2597,8 +2623,8 @@ function buildInsightsCard(p: PersonEntry): HTMLElement | null {
     return el('div', 'bz-people-strip-bar', { style: `height:${h}%`, title: `${i} 点 · ${n} 条` });
   }));
   rows.appendChild(insRow('活跃时段', strip, total ? `峰值 ${hourly.indexOf(max)} 点` : '—'));
-  // 形态占比
-  const kinds = Object.entries(s.kindCounts ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  // 形态占比（issue 513：优先实时全量——含并仓的录音轮次；快照回落）
+  const kinds = Object.entries(live ?? s.kindCounts ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
   if (kinds.length) rows.appendChild(insRow('消息形态', kindChips(kinds), ''));
   return insightsCard(importMeta(latest, totalMsg), latest.file, monthlyChart(s.monthly), rows);
 }
