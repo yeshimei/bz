@@ -1,4 +1,4 @@
-/* 源指纹 eb2314040e0b150f · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9b1ed3ed90152b49 · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -20940,6 +20940,7 @@ ${lines.join("\n")}`);
   var offUnlockWatch = null;
   var offSyncWatch = null;
   var offWheelTurn = null;
+  var offResizeWatch = null;
   var stage = "list";
   var detailId = null;
   var statsKinds = null;
@@ -21128,6 +21129,12 @@ ${lines.join("\n")}`);
       }
     });
     offSyncWatch = subscribeSync(onSyncState);
+    localImgCache.clear();
+    const onViewportResize = () => {
+      syncStickyHeadH();
+    };
+    window.addEventListener("resize", onViewportResize);
+    offResizeWatch = () => window.removeEventListener("resize", onViewportResize);
   }
   async function runLegacyMigration() {
     if (!(peopleSafe == null ? void 0 : peopleSafe.unlocked)) return;
@@ -21152,6 +21159,8 @@ ${lines.join("\n")}`);
     offSyncWatch = null;
     offWheelTurn == null ? void 0 : offWheelTurn();
     offWheelTurn = null;
+    offResizeWatch == null ? void 0 : offResizeWatch();
+    offResizeWatch = null;
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
     store = null;
@@ -23552,8 +23561,8 @@ ${lines.join("\n")}`);
       undescribed: suppStoreInfo.undescribed,
       describeBusy: running2,
       modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-      // 预览网格：缩略图直接走资源 URI（懒加载，不读字节——几百张也不卡）
-      items: root && talker ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localResourceUri(descImagePath(root, talker, it.img)) })) : [],
+      // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
+      items: root && talker ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) })) : [],
       ...suppImgDelPending ? { imgDel: suppImgDelPending } : {}
     };
   }
@@ -23577,15 +23586,20 @@ ${lines.join("\n")}`);
     const drawn = p ? deleteTierOf(p, sealJobOf(jobViews().get(p.id))) === "drawn" : false;
     return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
   }
-  var myAvatarCache = null;
+  var localImgCache = /* @__PURE__ */ new Map();
+  function localImgOf(absolutePath) {
+    var _a2;
+    const hit = localImgCache.get(absolutePath);
+    if (hit !== void 0) return hit;
+    const url = (_a2 = dataUrlOf(readAvatarInput(absolutePath))) != null ? _a2 : "";
+    localImgCache.set(absolutePath, url);
+    return url;
+  }
   function myAvatarOf() {
-    var _a2, _b2, _c2;
+    var _a2, _b2;
     const p = String((_b2 = (_a2 = tryGetSettings()) == null ? void 0 : _a2.peopleMyAvatar) != null ? _b2 : "").trim();
     if (!p) return "";
-    if ((myAvatarCache == null ? void 0 : myAvatarCache.path) === p) return myAvatarCache.url;
-    const url = /^[A-Za-z]:/.test(p) ? (_c2 = dataUrlOf(readAvatarInput(p))) != null ? _c2 : "" : p;
-    myAvatarCache = { path: p, url };
-    return url;
+    return /^[A-Za-z]:/.test(p) ? localImgOf(p) : p;
   }
   function recTurnsViewState(root, talker, otherAvatar) {
     var _a2;
@@ -23814,7 +23828,7 @@ ${lines.join("\n")}`);
     const view = document.createElement("div");
     view.className = "bz-people-supp-imgview";
     const pic = document.createElement("img");
-    pic.src = localResourceUri(descImagePath(root, talker, img));
+    pic.src = localImgOf(descImagePath(root, talker, img));
     pic.alt = cap;
     view.appendChild(pic);
     if (cap) {
@@ -23840,7 +23854,10 @@ ${lines.join("\n")}`);
       await safe.write(talker, (rec) => {
         var _a3, _b2, _c2;
         const before = rec.store.msgs.length;
-        rec.store.msgs = rec.store.msgs.filter((m) => m.key !== `img:${img}`);
+        rec.store.msgs = rec.store.msgs.filter((m) => {
+          var _a4;
+          return !(m.type === 3 && String((_a4 = m.img) != null ? _a4 : "") === img);
+        });
         removed = before - rec.store.msgs.length;
         if (removed > 0) {
           rec.store.kindCounts = { ...(_a3 = rec.store.kindCounts) != null ? _a3 : {}, 图片: Math.max(0, ((_c2 = (_b2 = rec.store.kindCounts) == null ? void 0 : _b2.图片) != null ? _c2 : 0) - removed) };

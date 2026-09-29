@@ -150,7 +150,6 @@ import {
   jobsStagesDone,
   kindChips,
   lastCur,
-  localResourceUri,
   lockCover,
   mergeBanner,
   miniMarkdown,
@@ -215,6 +214,8 @@ let offUnlockWatch: (() => void) | null = null;
 let offSyncWatch: (() => void) | null = null;
 /** 滚轮翻页解绑（issue 507；桌面端鼠标滚轮翻摊，面板开着才挂） */
 let offWheelTurn: (() => void) | null = null;
+/** 视口尺寸跟帧：窄↔宽翻转时页眉高度变了，折签吸顶基准（--bz-page-head-h）要重量 */
+let offResizeWatch: (() => void) | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 互动统计卡的实时形态计数（issue 513）：打开统计页时异步读保库 store.kindCounts（全量口径，
@@ -513,6 +514,12 @@ function buildPanelShell(app?: unknown): void {
   // 同步状态跟帧（issue 465）：运行中进度行原位推进；终态刷新列表 / 错误面。
   // 同步进程独立于面板：关面板不退订同步本身（模块级单例照跑），只退本面板的渲染订阅。
   offSyncWatch = subscribeSync(onSyncState);
+  // 库外图字节缓存在开面板时清一次（同路径换了图 / 补了文件不用重载插件）
+  localImgCache.clear();
+  // 视口尺寸跟帧：容器宽窄翻转（缩窗 / 转屏）而没重画时，折签吸顶基准跟着页眉重新量
+  const onViewportResize = (): void => { syncStickyHeadH(); };
+  window.addEventListener('resize', onViewportResize);
+  offResizeWatch = (): void => window.removeEventListener('resize', onViewportResize);
 }
 
 /** 存量迁移（467 / ADR-0194；幂等，明文三件 → 保库记录；旧文件清理失败不阻断面板） */
@@ -543,6 +550,8 @@ export function closePeoplePanel(): void {
   offSyncWatch = null;
   offWheelTurn?.();
   offWheelTurn = null;
+  offResizeWatch?.();
+  offResizeWatch = null;
   overlay?.remove();
   overlay = null;
   store = null;
@@ -3203,9 +3212,9 @@ function suppImageState(): SuppImageViewState {
     undescribed: suppStoreInfo.undescribed,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-    // 预览网格：缩略图直接走资源 URI（懒加载，不读字节——几百张也不卡）
+    // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
     items: root && talker
-      ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localResourceUri(descImagePath(root, talker, it.img)) }))
+      ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) }))
       : [],
     ...(suppImgDelPending ? { imgDel: suppImgDelPending } : {}),
   };
@@ -3236,16 +3245,24 @@ function recDelState(): SuppRecViewState['del'] {
   return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
 }
 
+/** 库外图 → data URL（留影缩略图 / 大图与「我」的头像同一口径）：app://local 不解库外文件，
+ *  读字节最稳（456 头像入库 / 467 头像进保库两轮的教训）。按路径缓存，面板每次打开清一次
+ *  （同路径换了图、或先写错路径再补文件，不用重载插件）。 */
+const localImgCache = new Map<string, string>();
+function localImgOf(absolutePath: string): string {
+  const hit = localImgCache.get(absolutePath);
+  if (hit !== undefined) return hit;
+  const url = dataUrlOf(readAvatarInput(absolutePath)) ?? '';
+  localImgCache.set(absolutePath, url);
+  return url;
+}
+
 /** 「我」的头像（设置 peopleMyAvatar）：data URL / 库内相对路径原样交给渲染层（avatarUri 分流），
- *  库外绝对路径读字节转 data URL（与数据源头像同口径）——按值缓存，逐轮重画不重读盘。 */
-let myAvatarCache: { path: string; url: string } | null = null;
+ *  库外绝对路径读字节转 data URL（与数据源头像同口径）——逐轮重画不重读盘。 */
 function myAvatarOf(): string {
   const p = String((tryGetSettings() as { peopleMyAvatar?: string } | null)?.peopleMyAvatar ?? '').trim();
   if (!p) return '';
-  if (myAvatarCache?.path === p) return myAvatarCache.url;
-  const url = /^[A-Za-z]:/.test(p) ? dataUrlOf(readAvatarInput(p)) ?? '' : p;
-  myAvatarCache = { path: p, url };
-  return url;
+  return /^[A-Za-z]:/.test(p) ? localImgOf(p) : p;
 }
 
 /** 「查看轮次」的展示态（面板内读 sidecar，含旁音轮；与 `<名>.turns.md` 同口径） */
@@ -3493,7 +3510,7 @@ function openImgViewer(img: string): void {
   const view = document.createElement('div');
   view.className = 'bz-people-supp-imgview';
   const pic = document.createElement('img');
-  pic.src = localResourceUri(descImagePath(root, talker, img));
+  pic.src = localImgOf(descImagePath(root, talker, img));
   pic.alt = cap;
   view.appendChild(pic);
   if (cap) {
@@ -3522,7 +3539,9 @@ async function suppDeleteImage(img: string): Promise<void> {
     let removed = 0;
     await safe.write(talker, (rec) => {
       const before = rec.store.msgs.length;
-      rec.store.msgs = rec.store.msgs.filter((m) => m.key !== `img:${img}`);
+      // 按 img 认条目：导入进来的图键是 `s<sid>:<ct>` / `h<hash>`（msgKey 口径），补录的才是 `img:`——
+      // 只按键前缀删会把导入的那批静默漏掉（imageItems 就是从 type=3 + img 建的，这里同口径回认）
+      rec.store.msgs = rec.store.msgs.filter((m) => !(m.type === 3 && String(m.img ?? '') === img));
       removed = before - rec.store.msgs.length;
       if (removed > 0) {
         rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 图片: Math.max(0, (rec.store.kindCounts?.图片 ?? 0) - removed) };
