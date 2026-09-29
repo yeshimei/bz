@@ -1,4 +1,4 @@
-/* 源指纹 020b7d61ad58c598 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b5e42973a3351211 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -788,7 +788,7 @@ var BZR_people = (() => {
     if (seal.state === "queued" || seal.state === "running" || seal.state === "halted") return text("画谱中");
     if (!p.lastProcessedTs) return text("已画");
     const [y, mo, day] = formatDay(p.lastProcessedTs).split("-");
-    return [text("画到"), el("em", void 0, text(y)), el("em", void 0, text(`${mo}-${day}`))];
+    return [text("画到 "), el("em", void 0, text(`${y}-`)), el("em", void 0, text(`${mo}-${day}`))];
   }
   function detailFacts(p, facts) {
     const out = [];
@@ -1540,7 +1540,10 @@ var BZR_people = (() => {
       }
       out.push(warn);
     }
-    if (!s.rows.length) return out;
+    if (!s.rows.length) {
+      out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
+      return out;
+    }
     const list = el("div", "bz-people-supp-list");
     for (const r of s.rows) {
       list.appendChild(suppRecRow(r, ((_b = s.del) == null ? void 0 : _b.file) === r.file ? s.del : void 0, s.startEdit === r.file, s.turnsView));

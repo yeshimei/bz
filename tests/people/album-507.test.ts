@@ -239,18 +239,43 @@ describe('「另有 N 条」点一下摊开（item 1）', () => {
   });
 });
 
-describe('换折回到第一行（item 2）', () => {
-  it('往下读远了点另一折：详情正文从头读起（不接着上一折的滚动位置落进正文中间）', async () => {
+describe('换折回到第一行（item 2；复评二改：落在折页起头，不再回到整页顶）', () => {
+  /**
+   * jsdom 没有布局（rect 全 0），落点算法量不出来。这里给一层假布局：
+   * 页身在滚、折页起头在内容 400px 处（rect 顶随滚动上移）、折签高 36——
+   * 期望 = 折页顶贴到折签下沿 = 400 - 36 = 364（而不是整页顶的 0）。
+   */
+  const CONTENT_TOP = 400;
+  const TAB_H = 36;
+  const want = CONTENT_TOP - TAB_H;
+  function stubFoldLayout(): void {
+    const r = (top: number, height = 0): DOMRect => ({
+      top, height, bottom: top + height, left: 0, right: 0, width: 0, x: 0, y: top, toJSON: () => ({}),
+    }) as DOMRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.classList.contains('bz-people-fsheet')) {
+        const scroller = document.querySelector<HTMLElement>('[data-people-scroll="detail"]');
+        return r(CONTENT_TOP - (scroller?.scrollTop ?? 0));
+      }
+      if (this.classList.contains('bz-people-ftabs')) return r(0, TAB_H);
+      return r(0);
+    });
+  }
+
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('往下读远了点另一折：正文落到折页起头（不接着上一折的位置，也不弹回整页顶）', async () => {
     const safe = await boot([entry('wxid_a', { name: '陈默', digest: digest() })]);
     await seedStore(safe, 'wxid_a');
     await openAlbum();
     await openDetail('wxid_a');
+    stubFoldLayout();
     const body = document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!;
     expect(body.classList.contains('sc-top')).toBe(true);
     body.scrollTop = 260; // 往下翻了
     click('[data-people-fold="b"]');
     await vi.waitFor(() => expect(document.querySelector('.bz-people-ftab.on')!.textContent).toBe('相交'));
-    expect(document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!.scrollTop).toBe(0);
+    expect(document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!.scrollTop).toBe(want);
     // 换折那一下正文才放进动画（issue 507：505 之后 `.bz-people-in` 没人挂）
     expect(document.querySelector('.bz-people-fsheet-body')!.classList.contains('bz-people-in')).toBe(true);
   });
@@ -260,10 +285,11 @@ describe('换折回到第一行（item 2）', () => {
     await seedStore(safe, 'wxid_a');
     await openAlbum();
     await openDetail('wxid_a');
+    stubFoldLayout();
     const body = document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!;
     body.scrollTop = 180;
     click('[data-people-fold="p"]'); // 当前就在「其人」这一折
-    expect(document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!.scrollTop).toBe(0);
+    expect(document.querySelector<HTMLElement>('[data-people-scroll="detail"]')!.scrollTop).toBe(want);
   });
 });
 

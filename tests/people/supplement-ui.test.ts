@@ -13,15 +13,16 @@ const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0,
 const emptyRec: SuppRecViewState = { rows: [], ref: 'missing', queue: [] };
 
 describe('suppPage 三页签骨架', () => {
-  it('页签三枚（文本/图片/录音），当前页签挂 on', () => {
+  it('页签三枚（记一笔/留影/原声），当前页签挂 on', () => {
     const page = suppPage(p, 'text', emptyImage, emptyRec, '2026-09-28');
     const tabs = [...page.querySelectorAll<HTMLElement>('[data-people-supp-tab]')];
     expect(tabs.map((t) => t.getAttribute('data-people-supp-tab'))).toEqual(['text', 'image', 'rec']);
+    expect(tabs.map((t) => t.textContent)).toEqual(['记一笔', '留影', '原声']);
     expect(tabs.find((t) => t.classList.contains('on'))?.getAttribute('data-people-supp-tab')).toBe('text');
-    // 文本页签 = 原「记一笔」原样收编：录入行 + 保存按钮都在
+    // 记一笔页签 = 录入行 + 保存按钮都在；还没记过时列位出空态提示
     expect(page.querySelector('[data-people-note-date]')).not.toBeNull();
     expect(page.querySelector('[data-people-note-save]')).not.toBeNull();
-    expect(page.textContent).toContain('随手记与本机脸谱存在一起');
+    expect(page.textContent).toContain('还没记过');
   });
 
   it('图片页签：选图 / 队列行（时间与归属可改）/ 落盘按钮 / 统计与生成描述', () => {
@@ -62,6 +63,71 @@ describe('suppPage 三页签骨架', () => {
     expect(page.querySelector('[data-people-supp-rec-add]')).not.toBeNull();
     expect(page.querySelector('[data-people-supp-rec-ref]')).not.toBeNull();
     expect(page.textContent).toContain('还没有录音');
+  });
+});
+
+describe('记一笔（复评：已记的列在下面，就地撕）', () => {
+  const withNotes: PersonEntry = {
+    ...p,
+    manualEvents: [
+      { id: 'm1', ts: '2026-09-20', summary: '一起吃了火锅', createdAt: '2026-09-20T12:00:00.000Z' },
+      { id: 'm2', ts: '2026-09-26', summary: '说起想换工作', createdAt: '2026-09-26T12:00:00.000Z' },
+    ],
+  };
+
+  it('已有几笔：统计 + 新的在上 + 每条带「撕掉」', () => {
+    const page = suppPage(withNotes, 'text', emptyImage, emptyRec, '2026-09-28');
+    expect(page.textContent).toContain('已记 2 笔');
+    const rows = [...page.querySelectorAll('.bz-people-note-row')];
+    expect(rows.map((r) => r.querySelector('.bz-people-note-ts')?.textContent)).toEqual(['2026-09-26', '2026-09-20']);
+    expect(rows[0].querySelector('.bz-people-note-sum')?.textContent).toBe('说起想换工作');
+    expect(page.querySelector('[data-people-note-del="m2"]')).not.toBeNull();
+  });
+});
+
+describe('留影网格（复评：缩略图 / 描述在下 / 点开看大图 / 删要问一声）', () => {
+  const items = [
+    { img: '2026-09/IMG_1.jpg', text: '[图片] 窗台上那只橘猫', url: '/__real-media/x/IMG_1.jpg' },
+    { img: '2026-09/IMG_2.jpg', text: '', url: '/__real-media/x/IMG_2.jpg' },
+  ];
+  const withItems: SuppImageViewState = { ...emptyImage, imported: 2, undescribed: 1, items };
+
+  it('缩略图懒加载 + 描述压在下面 + 未描述有占位', () => {
+    const page = suppPage(p, 'image', withItems, emptyRec, '2026-09-28');
+    const thumbs = [...page.querySelectorAll<HTMLImageElement>('.bz-people-supp-imgthumb')];
+    expect(thumbs).toHaveLength(2);
+    expect(thumbs[0].getAttribute('loading')).toBe('lazy');
+    expect(thumbs[0].getAttribute('data-people-supp-img-view')).toBe('2026-09/IMG_1.jpg');
+    const caps = [...page.querySelectorAll('.bz-people-supp-imgcap')];
+    expect(caps[0].textContent).toBe('窗台上那只橘猫');
+    expect(caps[1].textContent).toBe('未描述');
+    expect(caps[1].classList.contains('bz-people-supp-imgcap-none')).toBe(true);
+  });
+
+  it('点叉先落确认层（删掉/取消），不直接删', () => {
+    const page = suppPage(p, 'image', { ...withItems, imgDel: '2026-09/IMG_2.jpg' }, emptyRec, '2026-09-28');
+    expect(page.querySelectorAll('.bz-people-supp-imgask')).toHaveLength(1);
+    expect(page.querySelector('.bz-people-supp-imgask')?.textContent).toContain('删掉这张？');
+    expect(page.querySelector('[data-people-supp-img-del-ok="2026-09/IMG_2.jpg"]')).not.toBeNull();
+    expect(page.querySelector('[data-people-supp-img-del-cancel]')).not.toBeNull();
+  });
+});
+
+describe('质心重建（复评：只在已建时问「会覆盖」）', () => {
+  it('已建 + 待确认 → 出确认块（按钮另起一行），不再出「重建质心」', () => {
+    const page = suppPage(p, 'rec', emptyImage, { rows: [], ref: 'ready', queue: [], refConfirm: true }, '2026-09-28');
+    const firm = page.querySelector('.bz-people-supp-reffirm')!;
+    expect(firm.textContent).toContain('重建会覆盖');
+    expect(firm.querySelector('.bz-people-supp-reffirm-acts [data-people-supp-rec-ref-ok]')).not.toBeNull();
+    expect(firm.querySelector('[data-people-supp-rec-ref-cancel]')).not.toBeNull();
+    expect(page.querySelector('[data-people-supp-rec-ref]')).toBeNull();
+  });
+
+  it('没建过就没有「覆盖」可问：refConfirm 置位也不出确认块，按钮写「建质心」', () => {
+    const page = suppPage(p, 'rec', emptyImage, { rows: [], ref: 'missing', queue: [], refConfirm: true }, '2026-09-28');
+    expect(page.querySelector('.bz-people-supp-reffirm')).toBeNull();
+    const again = suppPage(p, 'rec', emptyImage, { rows: [], ref: 'missing', queue: [] }, '2026-09-28');
+    expect(again.querySelector('[data-people-supp-rec-ref]')?.textContent).toContain('建质心');
   });
 });
 
@@ -220,8 +286,8 @@ describe('录音行删除入口与二次确认（issue 516 Q12/Q13/Q14）', () =
 
   it('确认面板：清单文案 + 原件勾选默认勾上 + 其它行不给确认', () => {
     const page = suppPage(p, 'rec', emptyImage, { ...base2, rows: [row({ status: 'merged', turns: 579 })], del: { file: 'r.aac', alsoFile: true, drawn: false } }, '2026-09-28');
-    expect(page.textContent).toContain('已进聊天仓');
-    expect(page.textContent).toContain('统计同步重算');
+    expect(page.textContent).toContain('从聊天仓一并清掉');
+    expect(page.textContent).toContain('同时删除录音原件');
     expect(page.querySelector<HTMLInputElement>('[data-people-supp-rec-del-file="r.aac"]')?.checked).toBe(true);
     expect(page.querySelector('[data-people-supp-rec-del-ok="r.aac"]')).not.toBeNull();
     expect(page.querySelector('[data-people-supp-rec-del-cancel="r.aac"]')).not.toBeNull();
@@ -232,9 +298,11 @@ describe('录音行删除入口与二次确认（issue 516 Q12/Q13/Q14）', () =
   it('未并仓 / 已画谱的文案各自就位', () => {
     const page = suppPage(p, 'rec', emptyImage, { ...base2, rows: [row({})], del: { file: 'r.aac', alsoFile: false, drawn: true } }, '2026-09-28');
     expect(page.textContent).toContain('还没进聊天仓');
-    expect(page.textContent).toContain('不会随之改写');
-    expect(page.textContent).toContain('重新画谱');
+    expect(page.textContent).toContain('脸谱正文不会跟着变');
     expect(page.querySelector<HTMLInputElement>('[data-people-supp-rec-del-file="r.aac"]')?.checked).toBe(false);
+    // 已并仓 + 已画谱：多一句「要反映得重新画谱」（花钱那下得说清）
+    const both = suppPage(p, 'rec', emptyImage, { ...base2, rows: [row({ status: 'merged', turns: 9 })], del: { file: 'r.aac', alsoFile: true, drawn: true } }, '2026-09-28');
+    expect(both.textContent).toContain('重新画谱');
   });
 });
 
@@ -282,20 +350,24 @@ describe('查看轮次预览的段界（ADR-0220 §7：同一人连续的那几�
     expect(head?.textContent).toContain('旁音 1');
   });
 
-  it('段首轮带段标 + 分界线；段内后续轮缩进；旁音轮自己不成段', () => {
-    const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, rows: [row({ status: 'awaiting-merge', turns: 4 })], turnsView: lines() }, '2026-09-28');
+  it('微信式聊天流：两侧各带头像；无段签 / 无分割线；旁音轮收灰留档', () => {
+    const v = lines()!;
+    v.meAvatar = 'data:image/png;base64,xx';
+    v.otherAvatar = '';
+    const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, rows: [row({ status: 'awaiting-merge', turns: 4 })], turnsView: v }, '2026-09-28');
     const rows2 = [...page.querySelectorAll('.bz-people-supp-turn')];
     expect(rows2.map((r) => r.className)).toEqual([
-      'bz-people-supp-turn seghead',
-      'bz-people-supp-turn segcont',
+      'bz-people-supp-turn me',
+      'bz-people-supp-turn me',
       'bz-people-supp-turn side',
-      'bz-people-supp-turn seghead',
+      'bz-people-supp-turn',
     ]);
-    // 段标只出现在段首（「第1段」「第2段」）
-    const segs = [...page.querySelectorAll('.bz-people-supp-turnseg')].map((n) => n.textContent);
-    expect(segs).toEqual(['第1段', '第2段']);
-    // 旁音轮不出段标，且保留原文（复核没误杀）
-    expect(rows2[2].querySelector('.bz-people-supp-turnseg')).toBeNull();
-    expect(rows2[2].textContent).toContain('电视里的人声');
+    // 段签与分割线整体撤了（复评：仿微信），但旁音轮保留原文（复核没误杀）
+    expect(page.querySelector('.bz-people-supp-turnseg')).toBeNull();
+    expect(rows2[2].querySelector('.bz-people-supp-turnbubble')?.textContent).toBe('电视里的人声');
+    // 每轮一枚头像位：「我」用设置里的头像；对方没头像时落首字印
+    expect(rows2.every((r) => r.querySelector('.bz-people-supp-turnava'))).toBe(true);
+    expect(rows2[0].querySelector<HTMLImageElement>('.bz-people-supp-turnava img')?.getAttribute('src')).toBe('data:image/png;base64,xx');
+    expect(rows2[3].querySelector('.bz-people-supp-turnava .bz-people-ava-txt')?.textContent).toBe('大');
   });
 });

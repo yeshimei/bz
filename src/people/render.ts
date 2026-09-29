@@ -1018,7 +1018,8 @@ function stampNode(p: PersonEntry, job: FoldCardJob | null): Node | Node[] {
   if (seal.state === 'queued' || seal.state === 'running' || seal.state === 'halted') return text('画谱中');
   if (!p.lastProcessedTs) return text('已画');
   const [y, mo, day] = formatDay(p.lastProcessedTs).split('-');
-  return [text('画到'), el('em', undefined, text(y)), el('em', undefined, text(`${mo}-${day}`))];
+  // 「2026-」/「03-12」两行摆（em 是 block）：日期在窄印里断在连字符上，读起来还是一串
+  return [text('画到 '), el('em', undefined, text(`${y}-`)), el('em', undefined, text(`${mo}-${day}`))];
 }
 
 function detailFacts(p: PersonEntry, facts: DtFacts): HTMLElement | null {
@@ -2005,7 +2006,10 @@ function suppRecBody(s: SuppRecViewState): HTMLElement[] {
     }
     out.push(warn);
   }
-  if (!s.rows.length) return out;
+  if (!s.rows.length) {
+    out.push(el('div', 'bz-people-empty-hint', text('还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。')));
+    return out;
+  }
   const list = el('div', 'bz-people-supp-list');
   for (const r of s.rows) {
     list.appendChild(suppRecRow(r, s.del?.file === r.file ? s.del : undefined, s.startEdit === r.file, s.turnsView));

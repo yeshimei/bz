@@ -499,7 +499,7 @@ describe('折正文：其人 / 相交 / 纪事', () => {
     expect(body[1].classList.contains('bz-people-ev-divider')).toBe(true);
     const months = [...body[2].querySelectorAll('.bz-people-mon')];
     expect(months).toHaveLength(2);
-    expect(months[0].classList.contains('on')).toBe(true); // 首月默认展开
+    expect(months[0].classList.contains('on')).toBe(false); // 复评：默认全收着（点签才摊开，收放由样式管）
     expect(months[0].querySelector('.bz-people-mon-cnt')!.textContent).toBe('2 条');
     expect(body[2].querySelectorAll('.bz-people-ev')).toHaveLength(3);
     expect(body[3].textContent).toBe('随手记');
