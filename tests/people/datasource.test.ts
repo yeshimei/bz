@@ -27,6 +27,7 @@ import {
   type RawChatMsg,
   type StoreContact,
   type VoiceItem,
+  pendingMediaCounts,
 } from '../../src/people/datasource';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { setApp } from '../../src/core/app';
@@ -702,5 +703,20 @@ describe('stats.json 数据源扫描（issue 485：sync 只产统计，扫描优
     mkdirSync(join(dataRoot, '带BOM'), { recursive: true });
     writeFileSync(join(dataRoot, '带BOM', 'stats.json'), '\uFEFF' + JSON.stringify(statsOf({ msgs: 7 })));
     expect(readStatsJson(dataRoot, '带BOM')?.msgs).toBe(7);
+  });
+});
+
+describe('pendingMediaCounts（issue 514：开工单待办口径）', () => {
+  it('只数没做过的：图片 / 语音 text 空 = 待描述 / 待转写；已升级的非空不数', () => {
+    const msgs = [
+      { key: 'a', ts: 1, isSender: true, type: 3, text: '' },        // 未描述图片
+      { key: 'b', ts: 2, isSender: false, type: 3, text: '海边合照' }, // 已描述
+      { key: 'c', ts: 3, isSender: true, type: 34, text: '' },        // 未转写语音
+      { key: 'd', ts: 4, isSender: false, type: 34, text: '[语音 3秒·开心] 哈喽' }, // 已转写
+      { key: 'e', ts: 5, isSender: true, type: 1, text: '' },         // 空文本消息：不算媒体待办
+      { key: 'f', ts: 6, isSender: false, type: 9001, text: '' },     // 录音轮次空轮：不数
+    ] as any[];
+    expect(pendingMediaCounts(msgs)).toEqual({ images: 1, voices: 1 });
+    expect(pendingMediaCounts([])).toEqual({ images: 0, voices: 0 });
   });
 });

@@ -369,8 +369,12 @@
 .bz-people-head-ledger b { font-weight: 700; color: var(--acc-deep); }
 .bz-people-num { font-variant-numeric: tabular-nums; font-size: .92em; letter-spacing: .2px; }
 /* 解密进度写在页眉里（不再顶一颗浮药丸） */
-.bz-people-decrypt { display: inline-flex; align-items: center; gap: 7px; font-size: var(--f-aux); color: var(--pencil); }
-.bz-people-decrypt span:last-child { font-variant-numeric: tabular-nums; color: var(--acc-deep); }
+/* 解密进度卡（issue 514）：左页居中，大数字 + 细进度条；数字等宽防跳 */
+.bz-people-load-figure { display: flex; align-items: baseline; gap: 8px; justify-content: center; }
+.bz-people-load-num { font-family: var(--kai); font-size: 44px; line-height: 1.1; color: var(--acc-deep); font-variant-numeric: tabular-nums; }
+.bz-people-load-total { font-size: var(--f-body); color: var(--ink-mut); font-variant-numeric: tabular-nums; }
+.bz-people-load-bar { width: min(280px, 72%); height: 6px; margin: 14px auto 0; border-radius: 999px; background: rgba(148, 130, 100, 0.18); overflow: hidden; }
+.bz-people-load-fill { height: 100%; border-radius: 999px; background: var(--acc-deep); transition: width 0.4s ease; }
 /* 贴相区：一组两张照片 + 底下一行批注；整块上面罩一张透明塑料膜 */
 .bz-people-boardarea { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .bz-people-sleeve { position: relative; }
@@ -1424,52 +1428,6 @@
   color: #6b4a3a;
 }
 .bz-lockscreen--people .bz-lockscreen-ack { color: var(--lsp-cover-mut); }
-
-/* ============ 冷读加载占位（issue 483：解锁后首开面板，readAll 逐人解密期不再白屏） ============
- * 进度行（转圈 + 文案 + N/M 计数）+ 折子墙骨架；加载完由 ui 层整体替换成真实数据。
- * 转圈复用 bzPeopleSpin（既有生成进度 spin）；脉冲属加载类循环（同日记灯箱等待占位口径，不入动效台账）。 */
-.bz-people-loading {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 28px 8px;
-}
-.bz-people-load-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--ink-mut);
-  font-size: 13px;
-}
-.bz-people-load-spin {
-  flex: none;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--soft-neutral);
-  border-top-color: var(--acc);
-  animation: bzPeopleSpin 0.9s linear infinite;
-}
-.bz-people-load-count {
-  color: var(--acc);
-  font-variant-numeric: tabular-nums;
-}
-.bz-people-load-wall {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 14px;
-}
-.bz-people-load-card {
-  height: 84px;
-  border-radius: 12px;
-  border: 1px dashed var(--card-bd);
-  background: var(--paper-fold);
-  animation: bzPeoplePulse 1.2s ease-in-out infinite;
-}
-@keyframes bzPeoplePulse {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 1; }
-}
 
 /* ==================== 图片描述确认弹窗（issue 470 / ADR-0196 决策 8：body 级弹层，面板可不开） ==================== */
 .bz-people-desc-confirm {

@@ -606,6 +606,20 @@ export function storeToUnified(msgs: StoreMsg[]): UnifiedMessage[] {
     .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
 }
 
+/** 待办媒体计数（issue 514：开工单只报本次真实工作量）：
+ *  描述 / 转写完成后文字升级进 text，**text 空 = 还没做**（与补充素材页的未描述判定同源）。
+ *  images = 未描述图片（type 3）、voices = 未转写语音（type 34）。 */
+export function pendingMediaCounts(msgs: StoreMsg[]): { images: number; voices: number } {
+  let images = 0;
+  let voices = 0;
+  for (const m of msgs) {
+    if (m.text !== '') continue;
+    if (m.type === 3) images++;
+    else if (m.type === 34) voices++;
+  }
+  return { images, voices };
+}
+
 // ---------------- prep 旁路表 → 聊天仓靶向升级（issue 469 / ADR-0197 决策 4） ----------------
 
 /** 转写失败条目（468：工具把失败也写进 voice.json——text=`<转写失败:…>`、emotion=ERR） */
