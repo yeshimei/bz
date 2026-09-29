@@ -297,6 +297,17 @@ describe('issue 329 录入预填扩展（source/text/images/onCreated）', () =>
     expect(popup.style.display).toBe('none');
   });
 
+  it('ADR-0215 门面契约：note 态 source 的 name 透传（weave 传 书路径#定位子路径 + 书名）', async () => {
+    const { app } = setup329();
+    openTermNote(app, '黑暗森林法则', { source: { kind: 'note', path: '书籍/三体.epub#weave-cfi=epubcfi(/6/4!/4/2/16:0)&chapter=3&eid=w1', name: '三体' } });
+    const popup = document.getElementById('knowledge-term-popup')!;
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    (document.getElementById('lit-term-save') as HTMLElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalled());
+    const arg = noteGen.generateTermNote.mock.calls[0][0] as { source?: unknown };
+    expect(arg.source).toEqual({ kind: 'note', path: '书籍/三体.epub#weave-cfi=epubcfi(/6/4!/4/2/16:0)&chapter=3&eid=w1', name: '三体' });
+  });
+
   it('预填名词命中重名（ADR-0143 继承）：确认写入拒写、onCreated 不触发', async () => {
     const { app } = setup329();
     noteGen.findDuplicateTermNote.mockReturnValueOnce('文献盒/黑洞.md');

@@ -451,6 +451,19 @@ ${failures.join('\n')}`).toEqual([]);
     expect(removedCommands.sort()).toEqual(expectedRemoved.sort());
   });
 
+  it('知识盒对外最小门面（ADR-0215）：onload 挂既有导出、onunload 摘除', async () => {
+    const plugin = await createPlugin(makeMockApp());
+    // 外部插件（fork-weave 阅读器）以 typeof 守卫探测——同步函数引用，非 getter / 非 Promise
+    expect(typeof plugin.knowledge?.openTermNote).toBe('function');
+    expect(typeof plugin.knowledge?.openPassageNote).toBe('function');
+    // 门面函数即 knowledge 域既有导出（签名与 KnowledgeEntryPrefill 契约不变，不发明新入口）
+    const knowledge = await import('../src/knowledge');
+    expect(plugin.knowledge!.openTermNote).toBe(knowledge.openTermNote);
+    expect(plugin.knowledge!.openPassageNote).toBe(knowledge.openPassageNote);
+    await plugin.onunload();
+    expect(plugin.knowledge).toBeNull();
+  });
+
   it('设置持久化（saveData/loadData 往返）', async () => {
     const plugin = await createPlugin(makeMockApp());
 

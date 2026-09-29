@@ -31,13 +31,14 @@ let uiManager: UIManager | null = null;
  *   流程不打断阅读）；取消 / 写入失败不回调。
  */
 export interface KnowledgeEntryPrefill extends EntryPrefill {
-  source?: { kind: 'url'; url: string; title?: string } | { kind: 'note'; path: string };
+  source?: { kind: 'url'; url: string; title?: string } | { kind: 'note'; path: string; name?: string };
 }
 
-/** 契约 source 两态 → 录入面板的 TermSource（url 归一 external；title 透传，已有则面板不重复抓标题） */
-function prefillSource(src: NonNullable<KnowledgeEntryPrefill['source']>) {
+/** 契约 source 两态 → 录入面板的 TermSource（url 归一 external；title/name 透传——name 为展示名，
+ *  外部门面调用方（fork-weave）传「书文件路径#定位子路径」时不透明透传 path、书名走 name） */
+function prefillSource(src: NonNullable<KnowledgeEntryPrefill['source']>): TermSource {
   if (src.kind === 'url') return { kind: 'external' as const, url: src.url, title: src.title ?? null };
-  return { kind: 'note' as const, path: src.path };
+  return { kind: 'note' as const, path: src.path, name: src.name };
 }
 
 /**

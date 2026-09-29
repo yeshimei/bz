@@ -127,6 +127,8 @@ _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列�
 
 **文献目录 (Literature Folder)**: 存放文献笔记的 vault 内目录，设置键 `knowledgeDirectory`，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
 
+**知识盒门面 (Knowledge Facade, ADR-0215)**: 插件实例上对外暴露的最小录入入口 `plugin.knowledge = { openTermNote, openPassageNote }`（onload 挂、onunload 置 null），prefill 即 `KnowledgeEntryPrefill`；唯一消费方为 fork-weave（EPUB 阅读器）。契约：note 态 source 的 path 为**不透明链接串**（可含 `#` 子路径，bz 不校验不解释）、可选 `name` 透传为展示名；`onCreated` 存在时保存后不自动打开笔记。签名与 prefill 字段变更按破坏性变更对待。_Avoid_: window 全局 API、对外命令（门面不走命令系统）、对外 API（泛称时）
+
 **文献类型 (Literature Type)**: 文献笔记 frontmatter `type` 键，`'video'`（视频文献，视频转文献生成）| `'term'`（术语文献，术语生成流程产出）——区分两种生成来源，主面板按此做类型过滤与徽标。_Avoid_: 类型、分类（泛称时）
 
 **领域 (Subject)**: 文献笔记 frontmatter `domain` 键，中文值——来自可配置词表（设置面板维护，逗号分隔，**缺省空 = AI 自由写**）或 AI 直接产出；AI 自动分类、用户在术语预览/笔记编辑时可改；主面板按领域筛选 + 数量标签。_Avoid_: 学科分类（非本义）

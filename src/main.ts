@@ -272,6 +272,12 @@ export default class BzPlugin extends Plugin {
   /** 卸载旗标（C13）：onLayoutReady 回调 / 延迟初始化定时器不随插件卸载摘除，
    *  启动窗口期内禁用插件后布局就绪（或 setTimeout 到点）须短路，防幽灵初始化且无卸载路径 */
   private unloaded = false;
+  /** 知识盒对外最小门面（ADR-0215，fork-weave 阅读器经 app.plugins.getPlugin('bz') 跨插件调用）：
+   *  只挂 openTermNote / openPassageNote 两个既有导出——签名与 KnowledgeEntryPrefill 契约不变，
+   *  不发明新入口。同步函数引用（非 getter / 非 Promise，外部 typeof 探测
+   *  `plugin.knowledge?.openTermNote === 'function'` 语义成立）；懒初始化仍在函数内部
+   *  ensureKnowledge（与命令入口同款），挂载本身零初始化成本。 */
+  knowledge: { openTermNote: typeof openTermNote; openPassageNote: typeof openPassageNote } | null = null;
 
   async onload() {
     const loaded = await this.loadData();
@@ -323,6 +329,11 @@ export default class BzPlugin extends Plugin {
     applyDiarySettingsToRuntime(this.settings);
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
+
+    // 知识盒对外最小门面（ADR-0215）：外部插件（fork-weave 阅读器）经 getPlugin('bz') 取实例后
+    // 调名词/段落录入；不挂 window 全局、不新增命令与设置。同步赋值既有导出的函数引用即可
+    // （knowledge 域懒初始化在两函数内部 ensureKnowledge，与命令入口完全同款）。
+    this.knowledge = { openTermNote, openPassageNote };
 
     // ESC 全局管理器重挂入口（N1）：escManager 是模块 IIFE 单例，禁用→再启用不重新求值，
     // destroy 只软关不清层——onload 每次恢复 ESC 处理（首次调用复位缺省旗标，幂等）
@@ -471,6 +482,8 @@ export default class BzPlugin extends Plugin {
     unloadAutoSummary();
     // 文献盒（ADR-0072 迁出：面板 DOM + 模块单例复位）
     unloadKnowledge();
+    // 对外门面摘除（ADR-0215）：实例属性置空，外部 typeof 守卫随即探测失败
+    this.knowledge = null;
     // 挂载树白板（issues 317/319）：自绘遮罩/大窗直接挂 body，禁用插件时必须摘干净
     destroyMountTree();
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
