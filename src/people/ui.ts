@@ -68,17 +68,20 @@ import {
   buildRecordingSpec,
   buildVoiceprintSpec,
   faceRecSupportError,
+  formatRecElapsed,
   isRecordingRunning,
   probeFaceCapabilities,
   readRecordingSidecar,
   recordingPhasePct,
   recordingSidecarPath,
+  recordingStageOf,
   recordingTsOf,
   recordingsDirOf,
   runningRecordingItems,
   startRecordingTask,
   stopRecordingTask,
   voiceprintRefStatus,
+  type RecordingSidecar,
 } from './recording';
 import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
@@ -124,6 +127,8 @@ import {
   noteAddRow,
   recNote,
   suppPage,
+  suppRecStageLabel,
+  applyRecStageChain,
   pageTotal,
   panelShell,
   profilePopBody,
@@ -2915,6 +2920,23 @@ function suppImageState(): SuppImageViewState {
   };
 }
 
+/** 账本是否本轮起跑后落过笔（fs mtime 判；读不到 / 无起跑时刻 = 旧账，按冷加载期算） */
+function recSidecarFresh(fs2: any, key: string, startedAt: number | undefined): boolean {
+  if (!startedAt) return false;
+  try {
+    return fs2.statSync(key).mtimeMs >= startedAt;
+  } catch {
+    return false;
+  }
+}
+
+/** running 行 / 进度块共用的进度主文案（issue 511；不含耗时——elapsed 有独立显示位）：
+ *  load 段给冷加载预期消除「像卡死」，处理段优先脚本的 progress.text（自带段内 done/total）。 */
+function recRunningPtext(side: RecordingSidecar | null, stage: ReturnType<typeof recordingStageOf>): string {
+  if (stage === 'load') return '启动模型…（首次冷加载约 1-2 分钟）';
+  return side?.progress?.text ?? `${suppRecStageLabel(stage)}…`;
+}
+
 function suppRecState(talker: string): SuppRecViewState {
   const rows: SuppRecRowState[] = [];
   const root = suppDataRoot();
@@ -2938,13 +2960,26 @@ function suppRecState(talker: string): SuppRecViewState {
   } catch {
     return { rows, ref }; // 目录还没有 = 还没加过录音
   }
+  const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
   for (const f of files) {
     const key = recordingSidecarPath(root, talker, f);
     const side = readRecordingSidecar(root, talker, f);
     // 并仓只认仓事实（mergedRecs）：sidecar done 但没并上（上锁竞态等）出「待并仓」，可手动补并
     const merged = suppStoreInfo.mergedRecs.has(f);
     if (isRecordingRunning(key)) {
-      rows.push({ file: f, status: 'running', phaseText: side?.progress?.text ?? '启动模型…', pct: recordingPhasePct(side), ...(side?.mode ? { mode: side.mode } : {}), ...(side?.turns ? { turns: side.turns.length } : {}) });
+      const it = runMap.get(key);
+      const stage = recordingStageOf(side, recSidecarFresh(fs2, key, it?.startedAt));
+      const elapsed = it ? formatRecElapsed(Date.now() - it.startedAt) : undefined;
+      rows.push({
+        file: f,
+        status: 'running',
+        phaseText: recRunningPtext(side, stage),
+        pct: recordingPhasePct(side),
+        stage,
+        ...(elapsed ? { elapsed } : {}),
+        ...(side?.mode ? { mode: side.mode } : {}),
+        ...(side?.turns ? { turns: side.turns.length } : {}),
+      });
       continue;
     }
     if (merged) {
@@ -3104,6 +3139,13 @@ async function suppRunRecording(file: string): Promise<void> {
   if (!(await suppFaceGate())) return;
   const key = recordingSidecarPath(root, talker, file);
   if (isRecordingRunning(key)) return;
+  // 起跑预检（issue 511）：账本已完整（done + 有轮次）= 脚本会幂等秒退，此前观感是「起跑就凭空
+  // 消失」——改为不起进程、直接交代现状；真要重转 = 删掉该录音的 .turns.json 再来（极低频，不给按钮）
+  const pre = readRecordingSidecar(root, talker, file);
+  if (pre?.phase === 'done' && pre.turns?.length) {
+    notice(`「${file}」已转写完成（${pre.turns.length} 轮）——要重新转写先删除它的 .turns.json 账本`, 'info');
+    return;
+  }
   if (voiceprintRefStatus(root, talker) === 'missing') {
     notice('声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑', 'info');
   }
@@ -3217,11 +3259,15 @@ function tickRecRows(): void {
   const talker = detailId;
   const root = suppDataRoot();
   if (!talker || !root) return;
+  const fs2 = suppFs();
+  const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
   overlay?.querySelectorAll<HTMLElement>('[data-people-supp-row]').forEach((rowEl) => {
     const file = rowEl.getAttribute('data-people-supp-row') ?? '';
     const key = recordingSidecarPath(root, talker, file);
-    if (!isRecordingRunning(key)) return;
+    const it = runMap.get(key);
+    if (!isRecordingRunning(key) || !it) return;
     const side = readRecordingSidecar(root, talker, file);
+    const stage = recordingStageOf(side, fs2 ? recSidecarFresh(fs2, key, it.startedAt) : false);
     const pct = recordingPhasePct(side);
     if (pct !== null) {
       const fill = rowEl.querySelector<HTMLElement>('.bz-people-jobs-fill');
@@ -3229,12 +3275,16 @@ function tickRecRows(): void {
       if (fill) fill.style.width = `${pct}%`;
       if (pctEl) pctEl.textContent = `${pct}%`;
     }
-    const txt = side?.progress?.text ?? '';
-    if (txt) {
-      const meta = rowEl.querySelector<HTMLElement>('.bz-people-supp-rowmeta');
-      if (meta) meta.textContent = txt;
-      else rowEl.appendChild(el('div', 'bz-people-supp-rowmeta', text(txt)));
+    // 阶段链高亮（切阶段帧才动 DOM）与主文案 / 耗时（每秒帧定点原位更新，不整行重画）
+    const chain = rowEl.querySelector<HTMLElement>('[data-rec-chain]');
+    if (chain && rowEl.getAttribute('data-rec-stage') !== stage) {
+      rowEl.setAttribute('data-rec-stage', stage);
+      applyRecStageChain(chain, stage);
     }
+    const ptext = rowEl.querySelector<HTMLElement>('[data-rec-ptext]');
+    if (ptext) ptext.textContent = recRunningPtext(side, stage);
+    const elapsedEl = rowEl.querySelector<HTMLElement>('[data-rec-elapsed]');
+    if (elapsedEl) elapsedEl.textContent = `已 ${formatRecElapsed(Date.now() - it.startedAt)}`;
   });
 }
 
@@ -3242,15 +3292,21 @@ function tickRecRows(): void {
 function recNoteRows(): SuppRecRowState[] {
   const root = suppDataRoot();
   if (!root) return [];
+  const fs2 = suppFs();
   const rows: SuppRecRowState[] = [];
   for (const it of runningRecordingItems()) {
     if (it.file === 'voiceprint_refs') continue; // 质心构建不在进度块显（页签里有状态行）
+    const key = recordingSidecarPath(root, it.talker, it.file);
     const side = readRecordingSidecar(root, it.talker, it.file);
+    const stage = recordingStageOf(side, fs2 ? recSidecarFresh(fs2, key, it.startedAt) : false);
     rows.push({
       file: it.file,
       status: 'running',
-      phaseText: side?.progress?.text ?? '启动模型…',
+      // 进度块单行显示：主文案 + 已耗时（块由轮询整画，耗时随帧刷新）
+      phaseText: `${recRunningPtext(side, stage)} · 已 ${formatRecElapsed(Date.now() - it.startedAt)}`,
       pct: recordingPhasePct(side),
+      stage,
+      elapsed: formatRecElapsed(Date.now() - it.startedAt),
     });
   }
   return rows;

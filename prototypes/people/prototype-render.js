@@ -1,4 +1,4 @@
-/* 源指纹 7c6d1657f31206d5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a38dd9dcae47db8d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -38,6 +38,7 @@ var BZR_people = (() => {
     albumSleeve: () => albumSleeve,
     albumSpread: () => albumSpread,
     albumVacant: () => albumVacant,
+    applyRecStageChain: () => applyRecStageChain,
     avatarColor: () => avatarColor,
     avatarNode: () => avatarNode,
     avatarUri: () => avatarUri,
@@ -104,6 +105,7 @@ var BZR_people = (() => {
     statsText: () => statsText,
     subPage: () => subPage,
     suppPage: () => suppPage,
+    suppRecStageLabel: () => suppRecStageLabel,
     tagChip: () => tagChip,
     tagStk: () => tagStk,
     text: () => text,
@@ -1350,6 +1352,33 @@ var BZR_people = (() => {
     "awaiting-merge": "待并仓",
     merged: "已并入"
   };
+  var SUPP_REC_STAGES = [
+    { key: "load", label: "启动模型" },
+    { key: "vad", label: "VAD 切窗" },
+    { key: "voiceprint", label: "声纹分离" },
+    { key: "transcribe", label: "逐轮转写" }
+  ];
+  function suppRecStageLabel(key) {
+    var _a, _b;
+    return (_b = (_a = SUPP_REC_STAGES.find((s) => s.key === key)) == null ? void 0 : _a.label) != null ? _b : key;
+  }
+  function recStageChain(cur) {
+    const chain = el("div", "bz-people-supp-stagechain", { "data-rec-chain": "" });
+    SUPP_REC_STAGES.forEach((s, i) => {
+      if (i) chain.appendChild(el("span", "bz-people-supp-stage-sep", text("→")));
+      chain.appendChild(el("span", "bz-people-supp-stage", { "data-stage-key": s.key }, text(s.label)));
+    });
+    applyRecStageChain(chain, cur);
+    return chain;
+  }
+  function applyRecStageChain(chain, cur) {
+    const curIdx = SUPP_REC_STAGES.findIndex((s) => s.key === cur);
+    chain.querySelectorAll("[data-stage-key]").forEach((sEl) => {
+      const i = SUPP_REC_STAGES.findIndex((s) => s.key === sEl.getAttribute("data-stage-key"));
+      if (i < 0) return;
+      sEl.className = i === curIdx ? "bz-people-supp-stage on" : i < curIdx ? "bz-people-supp-stage done" : "bz-people-supp-stage";
+    });
+  }
   function suppPage(p, tab, image, rec, today) {
     const body = [];
     body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
@@ -1449,6 +1478,22 @@ var BZR_people = (() => {
       }
       row.appendChild(meter);
     }
+    if (r.status === "running" && r.stage) row.appendChild(recStageChain(r.stage));
+    if (r.status === "running") {
+      const meta = el("div", "bz-people-supp-rowmeta");
+      meta.appendChild(el("span", void 0, { "data-rec-ptext": "" }, text(r.phaseText)));
+      if (r.mode === "me-only") meta.appendChild(text(" · 单质心：非我即对方"));
+      if (r.mode === "blind") meta.appendChild(text(" · 无质心：盲分"));
+      if (r.turns !== void 0) meta.appendChild(text(` · ${r.turns} 轮`));
+      if (r.elapsed) {
+        meta.appendChild(text(" · "));
+        meta.appendChild(el("span", void 0, { "data-rec-elapsed": "" }, text(`已 ${r.elapsed}`)));
+      }
+      row.appendChild(meta);
+      const stop = button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file });
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [stop]));
+      return row;
+    }
     const bits = [];
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
@@ -1460,7 +1505,6 @@ var BZR_people = (() => {
     if (r.status === "pending") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "处理", { "data-people-supp-rec-run": r.file }));
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
-    if (r.status === "running") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;

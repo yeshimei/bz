@@ -1710,6 +1710,11 @@ export interface SuppRecRowState {
   /** 状态行文案（如 声纹窗 3000/10984 · 转写 12/579） */
   phaseText: string;
   pct: number | null;
+  /** 当前阶段（running 态；与 recording.recordingStageOf 的 RecordingStage 同构字面量——
+   *  render 纯度守卫不引驱动层，两处联合类型须同步改） */
+  stage?: 'load' | 'vad' | 'voiceprint' | 'transcribe';
+  /** 已耗时人话（running 态：45s / 3m12s） */
+  elapsed?: string;
   /** 质心模式诊断（处理过才有；dual 不显） */
   mode?: string;
   /** 已切轮数（sidecar 有 turns 才有） */
@@ -1731,6 +1736,40 @@ const SUPP_REC_LABEL: Record<SuppRecRowStatus, string> = {
   'awaiting-merge': '待并仓',
   merged: '已并入',
 };
+
+/** 录音处理阶段链（issue 511；展示单源——key 与 recording.RecordingStage 同构） */
+const SUPP_REC_STAGES: Array<{ key: SuppRecRowState['stage'] & string; label: string }> = [
+  { key: 'load', label: '启动模型' },
+  { key: 'vad', label: 'VAD 切窗' },
+  { key: 'voiceprint', label: '声纹分离' },
+  { key: 'transcribe', label: '逐轮转写' },
+];
+
+/** 阶段名（ui 拼 running 文案用：progress.text 缺席时兜底「<阶段名>…」） */
+export function suppRecStageLabel(key: SuppRecRowState['stage'] & string): string {
+  return SUPP_REC_STAGES.find((s) => s.key === key)?.label ?? key;
+}
+
+/** 阶段链行：`启动模型 → VAD 切窗 → 声纹分离 → 逐轮转写`（骨架在此、上色单源 applyRecStageChain） */
+function recStageChain(cur: NonNullable<SuppRecRowState['stage']>): HTMLElement {
+  const chain = el('div', 'bz-people-supp-stagechain', { 'data-rec-chain': '' });
+  SUPP_REC_STAGES.forEach((s, i) => {
+    if (i) chain.appendChild(el('span', 'bz-people-supp-stage-sep', text('→')));
+    chain.appendChild(el('span', 'bz-people-supp-stage', { 'data-stage-key': s.key }, text(s.label)));
+  });
+  applyRecStageChain(chain, cur);
+  return chain;
+}
+
+/** 轮询帧的链高亮原位刷新（ui tick 调；只动 class，不重建 DOM） */
+export function applyRecStageChain(chain: HTMLElement, cur: NonNullable<SuppRecRowState['stage']>): void {
+  const curIdx = SUPP_REC_STAGES.findIndex((s) => s.key === cur);
+  chain.querySelectorAll<HTMLElement>('[data-stage-key]').forEach((sEl) => {
+    const i = SUPP_REC_STAGES.findIndex((s) => s.key === sEl.getAttribute('data-stage-key'));
+    if (i < 0) return;
+    sEl.className = i === curIdx ? 'bz-people-supp-stage on' : i < curIdx ? 'bz-people-supp-stage done' : 'bz-people-supp-stage';
+  });
+}
 
 /** 补充素材页（原「记一笔」扩容；hook 沿用 'note'——ui 的委托面不变） */
 export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState, rec: SuppRecViewState, today: string): HTMLElement {
@@ -1838,6 +1877,23 @@ function suppRecRow(r: SuppRecRowState): HTMLElement {
     }
     row.appendChild(meter);
   }
+  if (r.status === 'running' && r.stage) row.appendChild(recStageChain(r.stage));
+  if (r.status === 'running') {
+    // running 的 meta 自建：ptext / elapsed 包 data 属性，tickRecRows 每秒原位定点更新（不整行重画）
+    const meta = el('div', 'bz-people-supp-rowmeta');
+    meta.appendChild(el('span', undefined, { 'data-rec-ptext': '' }, text(r.phaseText)));
+    if (r.mode === 'me-only') meta.appendChild(text(' · 单质心：非我即对方'));
+    if (r.mode === 'blind') meta.appendChild(text(' · 无质心：盲分'));
+    if (r.turns !== undefined) meta.appendChild(text(` · ${r.turns} 轮`));
+    if (r.elapsed) {
+      meta.appendChild(text(' · '));
+      meta.appendChild(el('span', undefined, { 'data-rec-elapsed': '' }, text(`已 ${r.elapsed}`)));
+    }
+    row.appendChild(meta);
+    const stop = button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '停止', { 'data-people-supp-rec-stop': r.file });
+    row.appendChild(el('div', 'bz-people-supp-rowfoot', [stop]));
+    return row;
+  }
   const bits: string[] = [];
   if (r.phaseText) bits.push(r.phaseText);
   if (r.mode === 'me-only') bits.push('单质心：非我即对方');
@@ -1849,7 +1905,6 @@ function suppRecRow(r: SuppRecRowState): HTMLElement {
   if (r.status === 'pending') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '处理', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'interrupted') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '续跑', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'failed') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '重试', { 'data-people-supp-rec-run': r.file }));
-  if (r.status === 'running') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '停止', { 'data-people-supp-rec-stop': r.file }));
   if (r.status === 'awaiting-merge') foot.push(button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '并仓', { 'data-people-supp-rec-merge': r.file, title: '转写完成但还没进时间线——点这里按轮次并仓' }));
   if (foot.length) row.appendChild(el('div', 'bz-people-supp-rowfoot', foot));
   return row;
