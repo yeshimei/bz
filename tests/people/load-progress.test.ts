@@ -46,7 +46,7 @@ function entry(id: string): PersonEntry {
 const pocket = (id: string): HTMLElement | null => document.querySelector<HTMLElement>(`[data-people-pocket="${id}"]`);
 /** 解密中的那一摊 */
 const loadingSpread = (): HTMLElement | null => document.querySelector<HTMLElement>('.bz-people-spread-load');
-const countEl = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-load-count]');
+const countEl = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-people-load-num]');
 
 /** 面板装配（467 范式）：解锁保库 + 注入共享 PeopleSafeStore；种子两位联系人 */
 async function boot(): Promise<{ safe: PeopleSafeStore; sm: SafeManager }> {
@@ -117,10 +117,11 @@ describe('冷读加载指示（issue 483 / 505）', () => {
 
     // 放行开跑：计数原位推进 0/2 → 1/2（同一计数节点，只换文字不重建那一摊）
     g.releaseOpen();
-    await vi.waitFor(() => expect(countEl()!.textContent).toBe('0/2 位'));
+    await vi.waitFor(() => expect(countEl()!.textContent).toBe('0'));
+    await vi.waitFor(() => expect(document.querySelector<HTMLElement>('.bz-people-load-total')!.textContent).toBe('/ 2 位'));
     expect(loadingSpread()).toBeTruthy();
     g.releaseMid();
-    await vi.waitFor(() => expect(countEl()!.textContent).toBe('1/2 位'));
+    await vi.waitFor(() => expect(countEl()!.textContent).toBe('1'));
 
     // 加载完成：真实册页原地呈现，解密摊（含计数）随替换消失
     g.releaseLast();

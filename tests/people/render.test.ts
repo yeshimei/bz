@@ -413,16 +413,20 @@ describe('上锁封面 / 空册 / 冷读（issue 483 / 505）', () => {
     expect(empty.querySelector('[data-people-dialog="ds"]')!.textContent).toBe('打开数据源');
   });
 
-  it('冷读：页眉写「解密中」+ N/M 位计数（计数带原位刷新的钩子），两页各说一句', () => {
+  it('冷读：页眉写「解密中」，左页进度卡（大数字 + 分母 + 进度条原位刷新钩子），两页各说一句（issue 514）', () => {
     const load = albumLoad(1, 2);
     expect(load.querySelectorAll('.bz-people-spread-load')).toHaveLength(1);
-    const count = load.querySelector<HTMLElement>('[data-people-load-count]')!;
-    expect(count.textContent).toBe('1/2 位');
-    expect(count.classList.contains('bz-people-load-spin')).toBe(true);
+    const num = load.querySelector<HTMLElement>('[data-people-load-num]')!;
+    expect(num.textContent).toBe('1');
+    expect(load.querySelector<HTMLElement>('.bz-people-load-total')!.textContent).toBe('/ 2 位');
+    expect(load.querySelector<HTMLElement>('[data-people-load-fill]')!.getAttribute('style')).toContain('50%');
     expect(load.textContent).toContain('正在解密联系人数据');
     expect(load.textContent).toContain('解密完就摊开');
     expect(load.textContent).not.toContain('陈默'); // 解密期间不露任何联系人名
-    expect(albumLoad(1, null).querySelector('[data-people-load-count]')!.textContent).toBe('1 位');
+    const noTotal = albumLoad(1, null);
+    expect(noTotal.querySelector<HTMLElement>('[data-people-load-num]')!.textContent).toBe('1');
+    // 清单未读到：分母位常驻但只显「位」，paintLoadCount 读到后原位补 `/ N 位`
+    expect(noTotal.querySelector<HTMLElement>('.bz-people-load-total')!.textContent).toBe('位');
   });
 });
 
