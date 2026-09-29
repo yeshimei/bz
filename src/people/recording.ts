@@ -28,9 +28,13 @@ export function recordingsDirOf(dataRoot: string, talker: string): string {
   return `${String(dataRoot ?? '').replace(/[\\/]+$/, '')}/${talker}/recordings`;
 }
 
-/** 录音 sidecar：`<dataRoot>/<talker>/recordings/<file>.turns.json`（脚本逐阶段写账本） */
+/** 录音 sidecar：`<dataRoot>/<talker>/recordings/<file 去扩展名>.turns.json`。
+ *  命名口径对齐 bz_rec.py（os.path.splitext(src)[0] + '.turns.json'，issue 512）——
+ *  此前插件不剥扩展名（`大琳.aac.turns.json` vs 磁盘 `大琳.turns.json`），
+ *  账本永远读不到：状态恒「待处理」、预检恒放行、进度不显、并仓通道整体失灵。 */
 export function recordingSidecarPath(dataRoot: string, talker: string, file: string): string {
-  return `${recordingsDirOf(dataRoot, talker)}/${file}.turns.json`;
+  const stem = String(file ?? '').replace(/\.[^.]+$/, '');
+  return `${recordingsDirOf(dataRoot, talker)}/${stem}.turns.json`;
 }
 
 /** 质心参考：`<dataRoot>/voiceprints/<talker>.npz`（bz-face refs 产，随数据根走） */
