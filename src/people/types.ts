@@ -59,13 +59,13 @@ export interface GenerationConfirmInfo {
   items: GenerationConfirmItem[];
   /** 图片总数（合计；0 = 无图可描述，弹窗省略描述段） */
   images: number;
-  /** 图片描述约调用次数（ceil(图片 / 每批张数)，已描述的不在你普查口径内——报「约」） */
+  /** 图片描述至多调用次数（ceil(图片 / 每批张数)；引擎幂等，已描述的自动跳过——实际 ≤ 此数） */
   describeCalls: number;
   /** 每批张数（与引擎 describe 段同源 batchSizeFromSettings） */
   batchSize: number;
   /** 语音总数（合计；本地离线转写，不花钱） */
   voices: number;
-  /** 画像约调用次数（采集批 + 其人 + 我们 + 时间线，逐人估算合计） */
+  /** 画像至多调用次数（采集批 + 其人 + 我们 + 时间线，逐人估算合计；补录 / 增量模式素材照 msgs 口径计） */
   portraitCalls: number;
 }
 
@@ -73,12 +73,14 @@ export interface GenerationConfirmInfo {
 export interface GenerationConfirmItem {
   /** 联系人称呼 */
   name: string;
-  /** 素材条数（本次计划提炼口径） */
+  /** 素材条数（本次计划提炼口径：full / older = 全量时间线，newer = 锚点后的新增集） */
   materials: number;
   /** 图片张数（全量口径） */
   images: number;
   /** 语音条数（全量口径） */
   voices: number;
+  /** 提炼模式（issue 513）：older = 补录（素材与已有画像合并重画）；缺省 = 首画 / 常规增量 */
+  mode?: 'full' | 'newer' | 'older';
 }
 
 
