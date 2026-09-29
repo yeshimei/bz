@@ -18,14 +18,21 @@ import { readClipbookData } from '../../src/clipbook/data';
 import { flushReadingSession } from '../../src/clipbook/flow';
 import { setClipDir } from './helpers';
 
+/** 相对今天的日期串（`YYYY-MM-DD HH:MM:SS`）：保留期按「早于 N 天」删已处理条目，种子里写死日期会过期 */
+function ago(days: number, hms: string): string {
+  const d = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+  const p = (n: number): string => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${hms}`;
+}
+
 /** 种子：news.json 未读 2 + 已处理 1 + 剪藏目录 1 篇 */
 function seedVault(): MockVault {
   const vault = new MockVault();
   vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
     articles: [
-      { platform: '果壳科学人', title: '果壳文章一', url: 'https://guokr.com/1', author: '果壳', date: '2026-09-01 08:00:00', fetchedAt: '2026-09-01 07:00:00', body: '正文一 的内容段落。' },
-      { platform: 'B站', title: '影视飓风视频', url: 'https://bilibili.com/video/BV1', author: '影视飓风', date: '2026-09-01 09:00:00', body: '视频简介内容' },
-      { platform: '知乎日报', title: '已读知乎', url: 'https://zhihu.com/2', date: '2026-08-30 08:00:00', read: true, state: 'skipped' },
+      { platform: '果壳科学人', title: '果壳文章一', url: 'https://guokr.com/1', author: '果壳', date: ago(0, '08:00:00'), fetchedAt: ago(0, '07:00:00'), body: '正文一 的内容段落。' },
+      { platform: 'B站', title: '影视飓风视频', url: 'https://bilibili.com/video/BV1', author: '影视飓风', date: ago(0, '09:00:00'), body: '视频简介内容' },
+      { platform: '知乎日报', title: '已读知乎', url: 'https://zhihu.com/2', date: ago(1, '08:00:00'), read: true, state: 'skipped' },
     ],
     stats: { totalRead: 1, totalSaved: 0, totalSkipped: 1, byPlatform: {}, byDate: {} },
     bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
