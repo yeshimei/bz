@@ -1660,10 +1660,8 @@ export function genPage(info: GenerationConfirmInfo): HTMLElement {
     el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
   const list = el('ul', 'bz-people-gen-list');
   for (const it of info.items) {
-    // issue 514：增量只报增量——newer 的素材就是新增集；图片 / 语音是待办数，没有就不列
+    // issue 515：明细只留素材与模式——媒体待办在总览行看，逐行不重复
     const bits = [it.mode === 'newer' ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-    if (it.images > 0) bits.push(`待描述图片 ${it.images} 张`);
-    if (it.voices > 0) bits.push(`待转写语音 ${it.voices} 条`);
     if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
     else if (it.mode === 'newer') bits.push('增量提炼');
     list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));

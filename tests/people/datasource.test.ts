@@ -28,6 +28,7 @@ import {
   type StoreContact,
   type VoiceItem,
   pendingMediaCounts,
+  applyVoiceToMsgs,
 } from '../../src/people/datasource';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { setApp } from '../../src/core/app';
@@ -703,6 +704,25 @@ describe('stats.json 数据源扫描（issue 485：sync 只产统计，扫描优
     mkdirSync(join(dataRoot, '带BOM'), { recursive: true });
     writeFileSync(join(dataRoot, '带BOM', 'stats.json'), '\uFEFF' + JSON.stringify(statsOf({ msgs: 7 })));
     expect(readStatsJson(dataRoot, '带BOM')?.msgs).toBe(7);
+  });
+});
+
+describe('applyVoiceToMsgs 的量化匹配（issue 515：wav 内嵌 id ↔ 受损 sid）', () => {
+  it('voice.json 无 sid、仓条目无 wav：靠文件名 id 经 Number() 量化后与保库 sid 相等接上', () => {
+    const exact = '6291687660255047997'; // 文件名里的精确 server_id（16~19 位）
+    const msgs = [
+      // 同值经 JSON.parse 的精度受损版（尾位归零）——chat.json 导入口径，无 wav 字段
+      { key: 's1', ts: 1, isSender: false, type: 34, sid: Number(exact), dur: 13.6, text: '' },
+      { key: 's2', ts: 2, isSender: true, type: 34, sid: 42, dur: 3, text: '' }, // 对不上的：保持空
+    ] as any[];
+    const voice = [
+      { wav: `大琳/voice/20260305_183748_${exact}.wav`, dur: 13.6, text: '就是我刚加上的时候那朋友圈可能没有刷新吧', emotion: 'HAPPY' },
+      { wav: '大琳/voice/20260305_183748_999.wav', dur: 3, text: '对不上的一条', emotion: 'CALM' },
+    ];
+    expect(applyVoiceToMsgs(msgs, voice, { previewVoice: true })).toBe(1);
+    expect(msgs[0].text).toContain('就是我刚加上的时候');
+    expect(msgs[0].text).toContain('[语音 14秒·开心]');
+    expect(msgs[1].text).toBe(''); // 量化值对不上：不动
   });
 });
 

@@ -140,7 +140,7 @@ describe('buildExtractPrompt 六类采集（issue 455）', () => {
     expect(prompt).toContain('2. traits');
     expect(prompt).toContain('3. quotes');
     expect(prompt).toContain('4. moments');
-    expect(prompt).toContain('语音转写');
+    expect(prompt).toContain('微信语音条的转写');
     expect(prompt).toContain('优先收这里的口语原话');
     expect(prompt).toContain('[分享]');
   });
@@ -557,7 +557,7 @@ describe('媒体素材进提示词（issue 445）', () => {
       },
       '老王'
     );
-    expect(withMedia).toContain('语音转写');
+    expect(withMedia).toContain('微信语音条的转写');
     expect(withMedia).toContain('画面描述');
     expect(withMedia).toContain('优先收这里的口语原话');
     expect(withMedia).toContain('不要把标签、时长、情感标记写进去');
@@ -567,7 +567,7 @@ describe('媒体素材进提示词（issue 445）', () => {
       { from: '2024-05-01', to: '2024-05-01', count: 1, lines: ['[2024-05-01 12:00][我] 早'] },
       '老王'
     );
-    expect(plain).not.toContain('语音转写');
+    expect(plain).not.toContain('微信语音条的转写');
     expect(plain).not.toContain('口语原话');
   });
 
