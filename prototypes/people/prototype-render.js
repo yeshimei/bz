@@ -1,4 +1,4 @@
-/* 源指纹 9b615eca3c8b0a71 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 43dfdcdc9f5e402f · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1333,8 +1333,6 @@ var BZR_people = (() => {
     const list = el("ul", "bz-people-gen-list");
     for (const it of info.items) {
       const bits = [it.mode === "newer" ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-      if (it.images > 0) bits.push(`待描述图片 ${it.images} 张`);
-      if (it.voices > 0) bits.push(`待转写语音 ${it.voices} 条`);
       if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
       else if (it.mode === "newer") bits.push("增量提炼");
       list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));

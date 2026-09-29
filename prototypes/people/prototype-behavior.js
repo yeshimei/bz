@@ -1,4 +1,4 @@
-/* 源指纹 49929e766c3d182c · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a37cbb9b9a78e430 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13943,7 +13943,7 @@ var BZW_people = (() => {
     ];
     if ((media == null ? void 0 : media.voice) || (media == null ? void 0 : media.image)) {
       head.push(
-        "本段含媒体消息：`[语音 …]` 开头的行是语音转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[图片]` 开头的行是一张图片的画面描述。"
+        "本段含媒体消息：`[语音 …]` 开头的行是微信语音条的转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[录音 …]` 开头的行是见面 / 通话录音的逐轮转写（同样带时长与情感），也是原话；`[图片]` 开头的行是一张图片的画面描述。"
       );
     }
     return [
@@ -13965,7 +13965,7 @@ var BZW_people = (() => {
       "3. quotes：对方说过的有代表性原话（口头禅 / 典型语气 / 情绪外露的句子 / 冲突时的说法 / 关心人的说法）。",
       '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
       "   优先收能体现说话风格与脾气秉性的句子，最多 8 条。",
-      ...(media == null ? void 0 : media.voice) ? ["   `[语音 …]` 行是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）。"] : [],
+      ...(media == null ? void 0 : media.voice) ? ["   `[语音 …]` 与 `[录音 …]` 行都是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）；正文或纪事引用两类原话时保留行首的 `[语音 …]` / `[录音 …]` 来源标签，微信语音条与见面录音不要混写。"] : [],
       "",
       "4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。",
       "   每条含 ts（YYYY-MM-DD）与 summary（不超过 30 字）。抽象的形容词不要收。",
@@ -15821,6 +15821,11 @@ ${lines.join("\n")}`);
         byWav.set(wav, v);
         const base = wav.includes("/") ? wav.slice(wav.lastIndexOf("/") + 1) : wav;
         if (base) byWav.set(base, v);
+        const m = /_(\d{10,})\.\w+$/.exec(base);
+        if (m) {
+          const q = Number(m[1]);
+          if (Number.isFinite(q) && q !== 0 && !bySid.has(q)) bySid.set(q, v);
+        }
       }
       const sid = typeof v.sid === "number" && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
       if (sid) bySid.set(sid, v);
@@ -19573,8 +19578,6 @@ ${lines.join("\n")}`);
     const list = el("ul", "bz-people-gen-list");
     for (const it of info.items) {
       const bits = [it.mode === "newer" ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-      if (it.images > 0) bits.push(`待描述图片 ${it.images} 张`);
-      if (it.voices > 0) bits.push(`待转写语音 ${it.voices} 条`);
       if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
       else if (it.mode === "newer") bits.push("增量提炼");
       list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
