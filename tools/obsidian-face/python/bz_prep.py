@@ -730,7 +730,8 @@ def main() -> int:
                         text, emotion = f"<转写失败:{e}>", "ERR"
                 else:
                     try:
-                        res = engine.generate(input=str(wav))
+                        # language/use_itn 必带：缺省 auto 会漏内容且无标点（SenseVoice 缺省关 ITN）
+                        res = engine.generate(input=str(wav), language="zh", use_itn=True)
                         raw = res[0]["text"] if res else ""
                         text, emotion = clean_sensevoice(raw)
                     except Exception as e:

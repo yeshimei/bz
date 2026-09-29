@@ -430,7 +430,8 @@ def run_pipeline(src, contact, out_json, d, refs_dir, control_path, ffmpeg):
                 piece = wav[int(s * 16000): int(e * 16000)]
                 if len(piece) > 4000:
                     try:
-                        r = asr.generate(input=piece)
+                        # language/use_itn 必带：缺省 auto 会漏内容且无标点（SenseVoice 缺省关 ITN）
+                        r = asr.generate(input=piece, language="zh", use_itn=True)
                         raw_text = r[0]["text"] if isinstance(r, list) else r["text"]
                         tx, em = split_sensevoice(raw_text)
                         if tx:
