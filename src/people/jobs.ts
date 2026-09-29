@@ -90,6 +90,7 @@ import {
   applyImageMapToMsgs,
   applyVoiceToMsgs,
   normalizeOptionsFromSettings,
+  pendingMediaCounts,
   storeStatsOf,
   storeToUnified,
   type ImageDescItem,
@@ -1028,6 +1029,11 @@ async function runPrepStage(
 ): Promise<'skipped' | 'ok' | 'halted'> {
   const totals = prepMediaTotals(store?.kindCounts, store?.stats);
   if (!totals) return 'skipped'; // 零媒体：不为 0 张图起一次进程（决策 9）
+  // 媒体无欠账（issue 515）：描述 / 转写完成会升级进 text，text 全非空 = 产物已吃干榨净——
+  // 不再为存量起 bz-face prep 全扫（此前每次补画都要过一遍 3000+ 文件，观感即「又开始导出」）。
+  // 新导入的媒体 text 为空会计进待办，prep 照常起；转写失败条目保持空同样不漏。
+  const pending = pendingMediaCounts(store?.msgs ?? []);
+  if (!pending.images && !pending.voices) return 'skipped';
   const prep = prepOf(job);
   if (prep && prepAllDone(prep)) return 'skipped'; // 断点：prep 已齐段
   if (!job.prep) job.prep = newPrepProgress(totals);
