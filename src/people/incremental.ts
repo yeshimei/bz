@@ -94,7 +94,7 @@ export async function buildFaceIncremental(
   old: FaceDigest | undefined,
   opts: FaceRunOptions = {}
 ): Promise<BuiltFace> {
-  const { mediaNote, statsNote, profile, sampleWarn: warnOverride, onProgress, onMaterial } = opts;
+  const { mediaNote, statsNote, profile, sampleWarn: warnOverride, onProgress, onMaterial, existingTexts } = opts;
   const chunks = chunkMessages(msgs);
   if (!chunks.length) throw new Error('没有可提炼的文本消息');
   const batches: BatchExtract[] = [];
@@ -112,17 +112,17 @@ export async function buildFaceIncremental(
   });
   const sampleWarn = warnOverride ?? sampleWarnOf(msgs.length);
   onProgress?.({ stage: 'person', done: 0, total: 1 });
-  const person = (await askPortrait(buildPersonPrompt(name, material, sampleWarn))).trim();
+  const person = (await askPortrait(buildPersonPrompt(name, material, sampleWarn, existingTexts?.person))).trim();
   if (!person) throw new Error('卷一《其人》生成为空');
   onProgress?.({ stage: 'bond', done: 0, total: 1 });
-  const bond = (await askPortrait(buildBondPrompt(name, material, sampleWarn))).trim();
+  const bond = (await askPortrait(buildBondPrompt(name, material, sampleWarn, existingTexts?.bond))).trim();
   if (!bond) throw new Error('卷二《相交》生成为空');
   // 时间线是次要产物：失败不阻断双卷（与 digest.buildFace 同口径）
   let chronicle = '';
   if (merged.events.length) {
     onProgress?.({ stage: 'chronicle', done: 0, total: 1 });
     try {
-      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), mediaNote, statsNote))).trim();
+      chronicle = (await askPortrait(buildChroniclePrompt(name, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), mediaNote, statsNote, existingTexts?.chronicle))).trim();
     } catch {
       chronicle = '';
     }
@@ -131,6 +131,9 @@ export async function buildFaceIncremental(
     person,
     bond,
     chronicle,
+    ...(old && (old.person || old.bond || old.chronicle)
+      ? { revisedFrom: { person: old.person ?? '', bond: old.bond ?? '', chronicle: old.chronicle ?? '' } }
+      : {}),
     events: merged.events,
     quotes: material.quotes,
     moments: material.moments,

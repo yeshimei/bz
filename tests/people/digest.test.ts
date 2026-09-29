@@ -111,6 +111,25 @@ describe('extractJsonLoose / parseBatchExtract', () => {
   });
 });
 
+describe('修订模式 prompt（issue 517：增量提炼保旧补新）', () => {
+  const mat: PortraitMaterial = { events: [], quotes: [], moments: [], traits: [], interests: [], threads: [] };
+
+  it('传入旧卷原文 → 三段 prompt 均含修订模式段与原文；不传则无（重建式）', () => {
+    for (const build of [buildPersonPrompt, buildBondPrompt]) {
+      const revise = build('大琳', mat, undefined, '旧卷正文原文');
+      expect(revise).toContain('修订模式');
+      expect(revise).toContain('一字不弃地保留');
+      expect(revise).toContain('旧卷正文原文');
+      const fresh = build('大琳', mat);
+      expect(fresh).not.toContain('修订模式');
+    }
+    const chron = buildChroniclePrompt('大琳', [], undefined, undefined, '旧纪事原文');
+    expect(chron).toContain('修订模式');
+    expect(chron).toContain('旧纪事原文');
+    expect(buildChroniclePrompt('大琳', [])).not.toContain('修订模式');
+  });
+});
+
 describe('buildExtractPrompt 六类采集（issue 455）', () => {
   it('四类扩六类：interests / threads 的采集引导与字数上限在场；媒体引导保留', () => {
     const prompt = buildExtractPrompt(

@@ -295,10 +295,15 @@ const JOBS_ACTIONS: Record<JobsUiStatus, { label: string; hook: string } | null>
   done: null,
 };
 
-/** 进度块动作：仅「接不上」的 error（漂移判废）才出「删除任务」——续跑必然再判废，删了重来才对 */
-function jobsActionOf(s: JobsBlockState): { label: string; hook: string } | null {
-  if (s.status === 'error' && s.resumable === false) return { label: '删除任务', hook: 'data-people-jobs-dismiss' };
-  return JOBS_ACTIONS[s.status];
+/** 进度块动作列表：主动作（继续生成等）+ issue 517 的「取消」——中断 / 暂停 / 报错（可续）态在
+ *  「继续生成」后追加「取消」（删任务：AI 作废不落盘，详情头随之回到「补画脸谱」）。
+ *  running 保持无动作（502：要中断关面板留断点）；done 无动作（产物已入保库，进度块等收起）；
+ *  仅「接不上」的 error（漂移判废）维持单枚「删除任务」——续跑必然再判废，删了重来才对。 */
+function jobsActionsOf(s: JobsBlockState): Array<{ label: string; hook: string }> {
+  if (s.status === 'error' && s.resumable === false) return [{ label: '删除任务', hook: 'data-people-jobs-dismiss' }];
+  const main = JOBS_ACTIONS[s.status];
+  if (!main) return [];
+  return s.status === 'done' ? [main] : [main, { label: '取消', hook: 'data-people-jobs-cancel' }];
 }
 
 /**
@@ -449,7 +454,6 @@ export function jobsNote(s: JobsBlockState): HTMLElement {
   const mainEl = el('div', 'bz-people-jobs-main', text(line.head));
   if (line.detail) mainEl.appendChild(el('span', 'bz-people-jobs-detail', text(` · ${line.detail}`)));
   block.appendChild(mainEl);
-  const action = jobsActionOf(s);
   const foot: HTMLElement[] = [];
   if (s.status === 'error' && s.errorText) foot.push(el('span', 'bz-people-jobs-err', text(s.errorText)));
   // 469 失败分流：prep 段有计账失败（单条媒体 / 语音）且任务不在跑 → 出「重试失败项」
@@ -457,7 +461,9 @@ export function jobsNote(s: JobsBlockState): HTMLElement {
   if (s.prep && s.prep.failed > 0 && s.status !== 'running' && s.status !== 'done') {
     foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '重试失败项', { 'data-people-jobs-prep-retry': '' }));
   }
-  if (action) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
+  for (const action of jobsActionsOf(s)) {
+    foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', action.label, { [action.hook]: '' }));
+  }
   if (foot.length) block.appendChild(el('div', 'bz-people-jobs-foot', foot));
   return block;
 }
