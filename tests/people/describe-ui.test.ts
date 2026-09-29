@@ -71,11 +71,11 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
     expect(rows[2]).toContain('约 8 次调用');
     const items = [...page.querySelectorAll('.bz-people-gen-item')].map((n) => n.textContent ?? '');
     expect(items[0]).toContain('「陈默」 · 素材 2 条');
-    // issue 514 待办口径：older 全量如实 + 待描述 / 待转写；full 缺省不标
-    expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 待描述图片 1615 张 · 待转写语音 1289 条');
-    expect(items[1]).toContain('补录 · 与已有画像合并重画');
+    // issue 515：明细只留素材与模式——媒体待办在总览行看，逐行不重复
+    expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 补录 · 与已有画像合并重画');
+    expect(items[1]).not.toContain('待描述');
+    expect(items[1]).not.toContain('待转写');
     expect(items[0]).not.toContain('补录');
-    expect(items[0]).not.toContain('待描述');
     expect(line + items.join('')).not.toMatch(/元|￥|¥|\$/);
     expect(page.querySelector('[data-people-gen-start]')?.textContent).toBe('开始生成');
     expect(page.querySelector('button[data-people-gen-cancel]')?.textContent).toBe('取消');

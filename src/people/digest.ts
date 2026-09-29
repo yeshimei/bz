@@ -153,7 +153,8 @@ function renderLine(ts: number, isSender: boolean, text: string): string {
  * 批提炼 prompt：携带本批对话行，采集六类素材，只产出严格 JSON。
  * 采集范围刻意含「原话」与「场景」——它们是画像阶段写出具体模式（而非空话）的唯一证据来源。
  * 批内有媒体消息（issue 445）时补标签说明：语音转写行是亲口说的原话，quotes 优先收（表达 DNA 质量核心）；
- * 图片描述行可作「难忘画面」进 moments。
+ * 图片描述行可作「难忘画面」进 moments。issue 515：`[录音 …]` 行是见面 / 通话录音的原话，
+ * 与 `[语音 …]`（微信语音条）同为口述证据——正文引用时保留来源标签，两类不混写。
  * interests / threads（issue 455）：兴趣信号喂卷一「兴趣爱好」的具体名目，未竟之事喂卷二「未竟之事」。
  */
 export function buildExtractPrompt(chunk: DigestChunk, personName: string): string {
@@ -165,7 +166,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
   ];
   if (media?.voice || media?.image) {
     head.push(
-      '本段含媒体消息：`[语音 …]` 开头的行是语音转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[图片]` 开头的行是一张图片的画面描述。'
+      '本段含媒体消息：`[语音 …]` 开头的行是微信语音条的转写——] 后的文本就是原话内容，标签里可能带时长与情感标记（如 12s·平静）；`[录音 …]` 开头的行是见面 / 通话录音的逐轮转写（同样带时长与情感），也是原话；`[图片]` 开头的行是一张图片的画面描述。'
     );
   }
   return [
@@ -188,7 +189,7 @@ export function buildExtractPrompt(chunk: DigestChunk, personName: string): stri
     '   每条含 ts（YYYY-MM-DD）、who（固定为 "对方" 或 "我"）与 text（原话，可截断但**不要改写**）。',
     '   优先收能体现说话风格与脾气秉性的句子，最多 8 条。',
     ...(media?.voice
-      ? ['   `[语音 …]` 行是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）。']
+      ? ['   `[语音 …]` 与 `[录音 …]` 行都是亲口说的话：quotes 优先收这里的口语原话，text 只写转写文本（不要把标签、时长、情感标记写进去）；正文或纪事引用两类原话时保留行首的 `[语音 …]` / `[录音 …]` 来源标签，微信语音条与见面录音不要混写。']
       : []),
     '',
     '4. moments：具体场景或细节（反复出现的地点 / 物件 / 习惯动作 / 难忘画面）。',

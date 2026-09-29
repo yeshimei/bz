@@ -640,7 +640,8 @@ function storeVoiceText(m: StoreMsg, v: VoiceItem): string {
 
 /**
  * voice.json → 仓内语音条目的 text 靶向升级（469 / ADR-0197：合并进聊天仓的动作由插件执行）。
- * 仓内 type=34 按 wav（全路径 / 尾段文件名双键）→ sid 兜底匹配，text 升级为
+ * 仓内 type=34 按 wav（全路径 / 尾段文件名双键）→ sid 兜底匹配（sid 缺失时用 wav 内嵌 id 经
+ * Number 量化兜底——issue 515，chat.json 导入的语音条只有受损 sid 没有 wav），text 升级为
  * `[语音 N秒·情感] 转写`（同键同值 = 幂等不重计；升级后时间线自然多出该条）。
  * previewVoice 关 = 不动 text（消费开关语义与 normalizeChatJson 一致）；转写失败条目跳过
  * （该条保持原态，重跑 prep 即补齐）。返回升级条数。
@@ -656,6 +657,14 @@ export function applyVoiceToMsgs(msgs: StoreMsg[], voice: VoiceItem[], opts: { p
       byWav.set(wav, v);
       const base = wav.includes('/') ? wav.slice(wav.lastIndexOf('/') + 1) : wav;
       if (base) byWav.set(base, v);
+      // issue 515：voice.json 没有 sid 字段，但 wav 文件名尾段嵌着精确 server_id
+      // （…_6291687660255047997.wav）。保库 sid 是同值经 JSON.parse 的精度受损版（尾位归零）——
+      // 文件名 id 走一遍 Number() 得到同样的量化值，两边就能相等匹配。
+      const m = /_(\d{10,})\.\w+$/.exec(base);
+      if (m) {
+        const q = Number(m[1]);
+        if (Number.isFinite(q) && q !== 0 && !bySid.has(q)) bySid.set(q, v);
+      }
     }
     const sid = typeof v.sid === 'number' && Number.isFinite(v.sid) && v.sid !== 0 ? v.sid : 0;
     if (sid) bySid.set(sid, v);
