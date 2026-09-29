@@ -117,7 +117,7 @@ import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
-import { batchSizeFromSettings, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
+import { batchSizeFromSettings, descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
@@ -150,6 +150,7 @@ import {
   jobsStagesDone,
   kindChips,
   lastCur,
+  localResourceUri,
   lockCover,
   mergeBanner,
   miniMarkdown,
@@ -305,6 +306,8 @@ let suppOwnerId: string | null = null;
 let suppImages: SuppImageQueueItem[] = [];
 /** 落盘 / 加录音进行中（按钮防双击） */
 let suppBusy = false;
+/** 留影页签：点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
+let suppImgDelPending: string | null = null;
 /** 录音页签的待落盘暂存（选完文件、确认起点，再落盘；ADR-0217 起点是一等数据） */
 let suppRecQueue: SuppRecQueueItem[] = [];
 /** 删除二次确认开着的那条录音（issue 516 Q13；null = 没开） */
@@ -315,8 +318,16 @@ let recDelAlsoFile = true;
 let recStartEditFile: string | null = null;
 /** 「查看轮次」正在看的那条（null = 没在看） */
 let recTurnsFile: string | null = null;
+/** 「重建质心」二次确认开着（复评：覆盖式重跑先问一声；确认 / 取消 / 换人即清） */
+let recRefConfirm = false;
 /** 聊天仓侧事实缓存（弹窗渲染是同步的：开页异步刷，刷完重画） */
-let suppStoreInfo: { imported: number; undescribed: number; mergedRecs: Set<string> } = { imported: 0, undescribed: 0, mergedRecs: new Set() };
+let suppStoreInfo: {
+  imported: number;
+  undescribed: number;
+  mergedRecs: Set<string>;
+  /** 已入库的留影（img 相对路径 + 派生描述；新的在前——留影页签的预览网格用） */
+  imageItems: Array<{ img: string; text: string }>;
+} = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
 /** 录音页签的进度轮询（只在页签可见时跑） */
 let recPollTimer: number | null = null;
 
@@ -342,7 +353,10 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       suppRecQueue = [];
       recDelPending = null;
       recStartEditFile = null;
-      suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set() };
+      recRefConfirm = false;
+      suppImgDelPending = null;
+      closeImgViewer();
+      suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
     }
     void refreshSuppStoreInfo(detailId);
     startRecPolling();
@@ -550,6 +564,8 @@ export function closePeoplePanel(): void {
   dialog = null; // 弹窗不随面板存续（505：册页同样随面板关）
   pulled = null;
   cur = 0;
+  suppImgDelPending = null;
+  closeImgViewer();
   closeDsState();
   if (backgrounded) notice('已转后台继续生成，重开面板查看进度', 'info');
 }
@@ -1811,8 +1827,7 @@ function onOverlayClick(e: MouseEvent): void {
     if (!id) return;
     // 同一折再点一下 = 回到这一折的开头（折签贴在上沿，往下读远了就找它回来）
     if (id === detailFold) {
-      const body = overlay?.querySelector<HTMLElement>('[data-people-scroll="detail"]');
-      if (body) body.scrollTop = 0;
+      foldToHead();
       return;
     }
     detailFold = id;
@@ -1875,12 +1890,12 @@ function onOverlayClick(e: MouseEvent): void {
   if (t.closest('[data-people-prof-social-del]')) { t.closest('.bz-people-prof-subrow')?.remove(); return; }
   if (t.closest('[data-people-prof-tag-add]')) { addTagChip(); return; }
   if (t.closest('[data-people-prof-tag-del]')) { t.closest('.bz-people-tag-chip')?.remove(); return; }
-  if (t.closest('[data-people-note-cancel]')) { closeDialog(); return; }
   if (t.closest('[data-people-note-save]')) { void saveManualNote(); return; }
   // —— 补充素材页（issue 509） ——
   const suppTabBtn = t.closest<HTMLElement>('[data-people-supp-tab]');
   if (suppTabBtn) {
     suppTab = (suppTabBtn.getAttribute('data-people-supp-tab') as SuppTab | null) ?? 'text';
+    recRefConfirm = false; // 换页签收起没点完的质心重建确认
     startRecPolling();
     void renderAlbum();
     // 进录音页就交代「有哪些能续跑」（issue 516 Q16g）：中断的不会自己动，别让它们躺着没人管
@@ -1899,6 +1914,19 @@ function onOverlayClick(e: MouseEvent): void {
   }
   if (t.closest('[data-people-supp-img-import]')) { void suppImportImages(); return; }
   if (t.closest('[data-people-supp-img-desc]')) { void suppDescribe(); return; }
+  // 留影格：点图开大图 / 叉开二次确认 / 确认或取消（复评）
+  const imgView = t.closest<HTMLElement>('[data-people-supp-img-view]');
+  if (imgView) { openImgViewer(imgView.getAttribute('data-people-supp-img-view') ?? ''); return; }
+  const imgDel = t.closest<HTMLElement>('[data-people-supp-img-del]');
+  if (imgDel) { suppImgDelPending = imgDel.getAttribute('data-people-supp-img-del'); void renderAlbum(); return; }
+  if (t.closest('[data-people-supp-img-del-cancel]')) { suppImgDelPending = null; void renderAlbum(); return; }
+  const imgDelOk = t.closest<HTMLElement>('[data-people-supp-img-del-ok]');
+  if (imgDelOk) {
+    const img = imgDelOk.getAttribute('data-people-supp-img-del-ok') ?? '';
+    suppImgDelPending = null;
+    void suppDeleteImage(img);
+    return;
+  }
   if (t.closest('[data-people-supp-rec-add]')) { void suppPickRecordings(); return; }
   const recCand = t.closest<HTMLElement>('[data-people-supp-rec-cand]');
   if (recCand) {
@@ -1977,7 +2005,17 @@ function onOverlayClick(e: MouseEvent): void {
     void renderAlbum();
     return;
   }
-  if (t.closest('[data-people-supp-rec-ref]')) { void suppBuildVoiceprintRef(); return; }
+  // 重建才问「覆盖」（复评）：没建过（按钮是「建质心」）没有可覆盖的东西，直接开工
+  if (t.closest('[data-people-supp-rec-ref]')) {
+    const talker = detailId;
+    const root = suppDataRoot();
+    if (!talker || !root || voiceprintRefStatus(root, talker) !== 'ready') { void suppBuildVoiceprintRef(); return; }
+    recRefConfirm = true;
+    void renderAlbum();
+    return;
+  }
+  if (t.closest('[data-people-supp-rec-ref-ok]')) { recRefConfirm = false; void suppBuildVoiceprintRef(); return; }
+  if (t.closest('[data-people-supp-rec-ref-cancel]')) { recRefConfirm = false; void renderAlbum(); return; }
   const recDeq = t.closest<HTMLElement>('[data-people-supp-rec-dequeue]');
   if (recDeq) {
     // 排队行「移出队列」：这条不对了就走（与进度块的「清空队列」语义正交，ADR-0218 决策 7）
@@ -2120,7 +2158,7 @@ async function albumBody(people: PersonEntry[]): Promise<HTMLElement> {
       const pi = Math.min(Math.floor(at / AL_PER_PAGE), total - 1);
       if (pi !== cur && pi !== cur + 1) cur = pi - (pi % PER_SPREAD);
       const clickedLeft = pi === cur;
-      const leaf = dialog ? dialogPage(d) : albumPage(pagePhotos(pages[pi] ?? [], indexOf, avatars), pi + 1, sorted.length, ledger, { drop: animDrop, dev: animDev });
+      const leaf = dialog ? dialogPage(d, avatars) : albumPage(pagePhotos(pages[pi] ?? [], indexOf, avatars), pi + 1, sorted.length, ledger, { drop: animDrop, dev: animDev });
       const det = detailPage(d, detailOpts(d, clickedLeft ? 'right' : 'left', avatars));
       const inner = clickedLeft ? [leaf, albumGutter(), det] : [det, albumGutter(), leaf];
       return albumSpread(inner, { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } });
@@ -2159,15 +2197,15 @@ function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string,
   };
 }
 
-/** 当前该翻开哪一页弹窗（靠人的 / 不靠人的都在里面） */
-function dialogPage(p: PersonEntry | null): HTMLElement {
+/** 当前该翻开哪一页弹窗（靠人的 / 不靠人的都在里面）；avatars = 头像表（逐轮时间轴两侧头像用） */
+function dialogPage(p: PersonEntry | null, avatars?: Map<string, string>): HTMLElement {
   const kind = dialog?.kind;
   if (kind === 'ds') return dsPage(dsPageState());
   if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], images: 0, voices: 0, provider: '', model: '', describeCalls: 0, portraitCalls: 0, batchSize: 0 });
   if (kind === 'find') return findPageState();
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
-  if (p && kind === 'note') return suppPage(p, suppTab, suppImageState(), suppRecState(p.id), todayStr());
+  if (p && kind === 'note') return suppPage(p, suppTab, suppImageState(), suppRecState(p.id, avatars?.get(p.id) ?? ''), todayStr());
   if (p && kind === 'del') return delPage(p, dialog?.tier ?? deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
   return subPage({ title: '', hook: 'none' }, []);
 }
@@ -2246,11 +2284,11 @@ async function renderAlbum(): Promise<void> {
   if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
   overlay.querySelector<HTMLElement>('[data-people-scroll]')?.replaceWith(next);
   restoreScroll(scroll);
-  // 换折（issue 507）：别人都还回原处，只有详情正文从头读起——折签贴在上沿，切完该回到第一行
-  if (foldScrollTop) {
-    const body = overlay.querySelector<HTMLElement>('[data-people-scroll="detail"]');
-    if (body) body.scrollTop = 0;
-  }
+  // 吸附基准先量（窄屏折签吸在页眉下沿；换折落点要用它算）——重画换了页元素，量必须在本轮
+  syncStickyHeadH();
+  // 换折（issue 507；复评二改）：落到**折页**的起头处，不是整页顶——照片/动作区之上不动，
+  // 切完先看见这一折的第一行（折签钉在上沿，正文不许顶到签底下）
+  if (foldScrollTop) foldToHead();
   syncScrollEdges();
   renderNote();
   renderBanner();
@@ -2272,6 +2310,43 @@ function clearAnim(): void {
   foldScrollTop = false;
 }
 
+/** 窄屏页眉吸在顶上，折签要吸在页眉下沿（两条中间露正文就是道缝）：把页眉高度量成 CSS 变量。
+ *  宽屏页眉不吸、滚动区在页身之内，变量没人用（foldToHead 按「页身滚不滚」判基准）。 */
+function syncStickyHeadH(): void {
+  overlay?.querySelectorAll<HTMLElement>('[data-people-detail]').forEach((page) => {
+    const head = page.querySelector<HTMLElement>('.bz-people-page-head');
+    if (head) page.style.setProperty('--bz-page-head-h', `${Math.round(head.offsetHeight)}px`);
+  });
+}
+
+/** 折页起头：把详情正文滚到「折页第一行贴着折签下沿」的位置。
+ *  折签是 sticky（贴在上沿），所以不能只置 0——那样落回来的是整页顶的照片区，
+ *  正文还在屏幕外（复评：从相交切其人，该落在其人这一折的起头）。
+ *  窄屏整条在滚（页身不自己滚）、页眉也吸着：基准再加页眉高度。 */
+function foldToHead(): void {
+  const body = overlay?.querySelector<HTMLElement>('[data-people-scroll="detail"]');
+  const sheet = body?.querySelector<HTMLElement>('.bz-people-fsheet');
+  if (!body || !sheet) return;
+  // 真正在滚的那一层：页身滚不动（窄屏 auto 高）就往上找能滚的（overflow: hidden 的不算）
+  const scrollable = (elm: HTMLElement): boolean => {
+    if (elm.scrollHeight <= elm.clientHeight + 1) return false;
+    const oy = window.getComputedStyle(elm).overflowY;
+    return oy === 'auto' || oy === 'scroll';
+  };
+  let scroller: HTMLElement = body;
+  if (!scrollable(body)) {
+    for (let p = body.parentElement; p; p = p.parentElement) {
+      if (scrollable(p)) { scroller = p; break; }
+    }
+  }
+  const page = body.closest<HTMLElement>('[data-people-detail]');
+  const headH = scroller === body ? 0 : Number.parseFloat(page?.style.getPropertyValue('--bz-page-head-h') || '0') || 0;
+  const tabs = body.querySelector<HTMLElement>('.bz-people-ftabs');
+  const pad = tabs ? tabs.getBoundingClientRect().height : 0;
+  const target = scroller.getBoundingClientRect().top + headH + pad;
+  scroller.scrollTop += sheet.getBoundingClientRect().top - target;
+}
+
 /** 能滚的那块：记下滚动位置，重画后放回去（切折 / 换页不跳回顶端） */
 function scrollSnapshot(): Record<string, number> {
   const out: Record<string, number> = {};
@@ -2288,11 +2363,10 @@ function restoreScroll(m: Record<string, number>): void {
   });
 }
 
-/** 滚到顶了就不该有上面那条内影、滚到底了不该有下面那条（内影是两条 sticky 伪元素） */
+/** 滚到顶了就不该有上面那条内影（底部那条已退役：滚动边缘提示「下面还有」反而像故障，复评点名去掉） */
 function scrollEdges(el: Element): void {
   const box = el as HTMLElement;
   box.classList.toggle('sc-top', box.scrollTop <= 1);
-  box.classList.toggle('sc-bot', box.scrollTop + box.clientHeight >= box.scrollHeight - 1);
 }
 
 function syncScrollEdges(): void {
@@ -2303,6 +2377,9 @@ function syncScrollEdges(): void {
 
 /** 翻一摊：整册往那侧让一下，再让「那一页纸」从中缝掀过去 */
 function turnTo(dir: 'next' | 'prev'): void {
+  // 详情 / 弹窗那一摊是钉住的（albumBody 只渲染它，跟着 cur 翻不动）：滚到边的滚轮**不许**触发翻页——
+  // 否则整册重画会把折内状态（「另有」摊开 / 月份开合）一并抹掉（「滚一下全收起来」的根因，复评）
+  if (pulled || dialog) return;
   const total = pageTotal(listCache.length);
   const to = dir === 'next' ? Math.min(lastCur(total), cur + PER_SPREAD) : Math.max(0, cur - PER_SPREAD);
   if (to === cur) return;
@@ -3027,7 +3104,7 @@ async function saveManualNote(): Promise<void> {
     await ensureEntry(detailId); // 452：占位卡先落一张空卡，再记（mutate 对不存在的 id 会抛）
     await store.addManualEvent(detailId, { id: genId(), ts, summary, createdAt: new Date().toISOString() });
     noteAddId = null;
-    dialog = null;
+    // 记完留在这一页（复评：下面就是已记列表，写一条看一眼；关掉再开反而绕）
     notice('已记一笔', 'success');
   } catch (e) {
     notifyActionError(e, '记随手记');
@@ -3095,11 +3172,13 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   let imported = 0;
   let undescribed = 0;
   const mergedRecs = new Set<string>();
+  const imageItems: Array<{ img: string; text: string }> = [];
   try {
     const rec = await peopleSafe.read(talker);
     for (const m of rec?.store.msgs ?? []) {
       if (m.type === 3 && m.img) {
         imported++;
+        imageItems.push({ img: m.img, text: m.text });
         if (m.text === '') undescribed++;
       }
       if (m.key.startsWith('rec:')) {
@@ -3110,18 +3189,25 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   } catch {
     /* 读不到按零值渲染 */
   }
-  suppStoreInfo = { imported, undescribed, mergedRecs };
+  suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
   if (dialog?.kind === 'note') void renderAlbum();
 }
 
 function suppImageState(): SuppImageViewState {
   const running = jobsApi.isDescribeOnlyBusy();
+  const root = suppDataRoot();
+  const talker = detailId ?? '';
   return {
     queue: suppImages,
     imported: suppStoreInfo.imported,
     undescribed: suppStoreInfo.undescribed,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
+    // 预览网格：缩略图直接走资源 URI（懒加载，不读字节——几百张也不卡）
+    items: root && talker
+      ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localResourceUri(descImagePath(root, talker, it.img)) }))
+      : [],
+    ...(suppImgDelPending ? { imgDel: suppImgDelPending } : {}),
   };
 }
 
@@ -3150,8 +3236,20 @@ function recDelState(): SuppRecViewState['del'] {
   return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
 }
 
+/** 「我」的头像（设置 peopleMyAvatar）：data URL / 库内相对路径原样交给渲染层（avatarUri 分流），
+ *  库外绝对路径读字节转 data URL（与数据源头像同口径）——按值缓存，逐轮重画不重读盘。 */
+let myAvatarCache: { path: string; url: string } | null = null;
+function myAvatarOf(): string {
+  const p = String((tryGetSettings() as { peopleMyAvatar?: string } | null)?.peopleMyAvatar ?? '').trim();
+  if (!p) return '';
+  if (myAvatarCache?.path === p) return myAvatarCache.url;
+  const url = /^[A-Za-z]:/.test(p) ? dataUrlOf(readAvatarInput(p)) ?? '' : p;
+  myAvatarCache = { path: p, url };
+  return url;
+}
+
 /** 「查看轮次」的展示态（面板内读 sidecar，含旁音轮；与 `<名>.turns.md` 同口径） */
-function recTurnsViewState(root: string, talker: string): SuppRecViewState['turnsView'] {
+function recTurnsViewState(root: string, talker: string, otherAvatar: string): SuppRecViewState['turnsView'] {
   if (!recTurnsFile) return undefined;
   const side = readRecordingSidecar(root, talker, recTurnsFile);
   const turns = side?.turns ?? [];
@@ -3161,6 +3259,8 @@ function recTurnsViewState(root: string, talker: string): SuppRecViewState['turn
   const segs = recordingTurnSegments(turns);
   return {
     file: recTurnsFile,
+    meAvatar: myAvatarOf(),
+    otherAvatar,
     lines: turns.map((t, i) => {
       const emo = String(t.emotion ?? '').trim();
       const date = new Date(base + Math.round((Number(t.start) || 0) * 1000));
@@ -3188,7 +3288,7 @@ function recMtimeOf(root: string, talker: string, file: string): number | undefi
   }
 }
 
-function suppRecState(talker: string): SuppRecViewState {
+function suppRecState(talker: string, otherAvatar = ''): SuppRecViewState {
   const rows: SuppRecRowState[] = [];
   const root = suppDataRoot();
   const del = recDelState();
@@ -3198,7 +3298,7 @@ function suppRecState(talker: string): SuppRecViewState {
   const refBusy = isRecordingRunning(refKey) || isRecordingQueued(refKey);
   const ref: SuppRecViewState['ref'] = refBusy ? 'building' : voiceprintRefStatus(root, talker);
   const fs2 = suppFs();
-  if (!fs2 || !root) return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}) };
+  if (!fs2 || !root) return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}), ...(recRefConfirm ? { refConfirm: true } : {}) };
   const dir = recordingsDirOf(root, talker);
   let files: string[] = [];
   try {
@@ -3214,7 +3314,7 @@ function suppRecState(talker: string): SuppRecViewState {
       })
       .sort();
   } catch {
-    return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}) }; // 目录还没有 = 还没加过录音
+    return { rows, ref, queue: suppRecQueue, ...(del ? { del } : {}), ...(recRefConfirm ? { refConfirm: true } : {}) }; // 目录还没有 = 还没加过录音
   }
   const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
   for (const f of files) {
@@ -3270,7 +3370,7 @@ function suppRecState(talker: string): SuppRecViewState {
     const n = (readRecordingSidecar(root, talker, r.file)?.turns ?? []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
     if (n) r.sideSpeaks = n;
   }
-  const turnsView = recTurnsViewState(root, talker);
+  const turnsView = recTurnsViewState(root, talker, otherAvatar);
   // 疑似重复巡检（Q3：只报不清）；同尺寸才读盘哈希——正常录音时长各异，绝大多数一次不读
   const dupGroups = duplicateRecordingGroups(recordingsDirOf(root, talker), suppFs());
   return {
@@ -3281,6 +3381,7 @@ function suppRecState(talker: string): SuppRecViewState {
     ...(del ? { del } : {}),
     ...(recStartEditFile ? { startEdit: recStartEditFile } : {}),
     ...(turnsView ? { turnsView } : {}),
+    ...(recRefConfirm ? { refConfirm: true } : {}),
   };
 }
 
@@ -3370,6 +3471,71 @@ async function suppImportImages(): Promise<void> {
     suppBusy = false;
     void renderAlbum();
   }
+}
+
+/** 点开看大图（复评）：罩层挂在面板 overlay 上——重画只换滚动区，不碰它；点哪儿都收，Esc 也收 */
+let imgViewer: HTMLElement | null = null;
+const IMG_VIEW_ESC_ID = 'people-img-view';
+
+function closeImgViewer(): void {
+  if (!imgViewer) return;
+  imgViewer.remove();
+  imgViewer = null;
+  unregisterPanelEsc(IMG_VIEW_ESC_ID);
+}
+
+function openImgViewer(img: string): void {
+  const talker = detailId;
+  const root = suppDataRoot();
+  if (!overlay || !talker || !root || !img) return;
+  closeImgViewer();
+  const cap = (suppStoreInfo.imageItems.find((x) => x.img === img)?.text ?? '').replace(/^\[图片\]\s*/, '');
+  const view = document.createElement('div');
+  view.className = 'bz-people-supp-imgview';
+  const pic = document.createElement('img');
+  pic.src = localResourceUri(descImagePath(root, talker, img));
+  pic.alt = cap;
+  view.appendChild(pic);
+  if (cap) {
+    const c = document.createElement('div');
+    c.className = 'bz-people-supp-imgview-cap';
+    c.textContent = cap;
+    view.appendChild(c);
+  }
+  view.addEventListener('click', () => closeImgViewer());
+  overlay.appendChild(view);
+  imgViewer = view;
+  registerPanelEsc(IMG_VIEW_ESC_ID, () => imgViewer !== null, () => closeImgViewer());
+}
+
+/**
+ * 删一张已入库的留影（复评：预览网格右上角的叉；点开二次确认才删）——只清仓里这条，
+ * **数据根的原件不动**：盘上删文件不可逆，这份代劳不接；要清盘自己去目录里删（通知里把位置说清）。
+ */
+async function suppDeleteImage(img: string): Promise<void> {
+  const talker = detailId;
+  if (!talker || !img) return;
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  const safe = peopleSafe;
+  if (!safe?.unlocked) return;
+  try {
+    let removed = 0;
+    await safe.write(talker, (rec) => {
+      const before = rec.store.msgs.length;
+      rec.store.msgs = rec.store.msgs.filter((m) => m.key !== `img:${img}`);
+      removed = before - rec.store.msgs.length;
+      if (removed > 0) {
+        rec.store.kindCounts = { ...(rec.store.kindCounts ?? {}), 图片: Math.max(0, (rec.store.kindCounts?.图片 ?? 0) - removed) };
+        rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = new Date().toISOString();
+      }
+    });
+    if (removed > 0) notice(`已删掉「${img.split('/').pop() ?? img}」——原件还在数据根 desc/ 里，没动`, 'delete');
+  } catch (e) {
+    notifyActionError(e, '删除留影');
+  }
+  await refreshSuppStoreInfo(talker);
+  void renderAlbum();
 }
 
 async function suppDescribe(): Promise<void> {

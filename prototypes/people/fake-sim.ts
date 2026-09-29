@@ -35,6 +35,10 @@ declare global {
 				DATA_DIR?: string;
 				/** 真实头像字节：绝对路径 → base64（评审引导注入；保库记录头像走密文附件字节） */
 				AVATAR_B64?: Record<string, string>;
+				/** 构造文件 / 目录的真实 mtime（绝对路径 → ms；评审引导注入，statSync 用） */
+				MTIMES?: Record<string, number>;
+				/** 「我」的头像 data URL（评审引导注入；插件里这个值来自设置 peopleMyAvatar 的图片路径） */
+				MY_AVATAR?: string;
 			};
 		};
 	}
@@ -246,25 +250,56 @@ function buildDsFiles(): Record<string, string> {
 /** 图片扩展名（假 fs 的字节分支：头像迁移 / 数据源行预览读的是 Uint8Array，不是文本） */
 const IMG_EXT = /\.(jpg|jpeg|png|webp|gif)$/i;
 
-/** 提供构造目录的 readdirSync / existsSync / readFileSync（datasource.ts 消费面）
+/** 提供构造目录的 readdirSync / statSync / existsSync / readFileSync（datasource.ts + recording.ts 消费面）。
+ *  两处口径必须与 Node 对齐，否则真录音管线在壳里读不出东西：
+ *  - readdirSync 不给选项 → **字符串数组**（录音枚举按字符串过滤）；给 {withFileTypes:true} → dirent
+ *    对象（datasource 联系人目录扫描要 isDirectory()）。
+ *  - statSync → mtimeMs / size / isFile()：录音行的起点回落、sidecar 变更签名、判重全靠它；
+ *    mtime 由评审引导注入（SEED.MTIMES，真实磁盘 mtime），缺省 0。
  *  文本读原样出字符串；不带编码读图片时给 Uint8Array（迁移/预览的头像字节通道）。 */
-function installFakeFs(files: Record<string, string>): void {
+function installFakeFs(files: Record<string, string>, mtimes: Record<string, number>): void {
 	if (typeof window === 'undefined') return;
 	const w = window as unknown as { require?: (m: string) => unknown };
 	const norm = (p: string) => p.replace(/\\/g, '/');
+	const childrenOf = (key: string): string[] =>
+		Object.keys(files)
+			.filter((k) => k.startsWith(key + '/'))
+			.map((k) => k.slice(key.length + 1).split('/')[0])
+			.filter((v, i, a) => a.indexOf(v) === i);
+	const isDirKey = (key: string): boolean => Object.keys(files).some((k) => k.startsWith(key + '/'));
 	w.require = (m: string) => {
 		if (m !== 'fs') return undefined;
 		return {
-			readdirSync: (p: string, _opts?: unknown) =>
-				Object.keys(files)
-					.filter((k) => k.startsWith(norm(p) + '/'))
-					.map((k) => k.slice(norm(p).length + 1).split('/')[0])
-					.filter((v, i, a) => a.indexOf(v) === i)
-					.map((name) => ({ isDirectory: () => true, name })),
+			readdirSync: (p: string, opts?: { withFileTypes?: boolean }) => {
+				const names = childrenOf(norm(p));
+				if (opts && opts.withFileTypes) {
+					return names.map((name) => ({ name, isDirectory: () => isDirKey(`${norm(p)}/${name}`) }));
+				}
+				return names;
+			},
 			existsSync: (p: string) => {
 				const key = norm(p);
 				if (Object.prototype.hasOwnProperty.call(files, key)) return true;
+				if (isDirKey(key)) return true;
 				return IMG_EXT.test(key) && fakeImageBytes(key) !== null;
+			},
+			statSync: (p: string) => {
+				const key = norm(p);
+				const has = Object.prototype.hasOwnProperty.call(files, key);
+				const dir = !has && isDirKey(key);
+				const bytes = !has && !dir && IMG_EXT.test(key) ? fakeImageBytes(key) : null;
+				if (!has && !dir && !bytes) throw new Error(`fake fs: ${p} 不存在`);
+				const size = bytes ? bytes.length : new TextEncoder().encode(has ? files[key] : '').length;
+				const m = Math.round(mtimes[key] ?? 0);
+				return {
+					mtimeMs: m,
+					ctimeMs: m,
+					size,
+					mtime: new Date(m),
+					ctime: new Date(m),
+					isFile: () => has || !!bytes,
+					isDirectory: () => dir,
+				};
 			},
 			readFileSync: (p: string, enc?: string) => {
 				const key = norm(p);
@@ -277,6 +312,38 @@ function installFakeFs(files: Record<string, string>): void {
 				const hit = files[key];
 				if (hit === undefined) throw new Error(`fake fs: ${p} 不存在`);
 				return hit;
+			},
+			// 壳内删除（评审可试删）：只摘内存清单——刷新即回种子态，不碰真实磁盘
+			unlinkSync: (p: string) => {
+				const key = norm(p);
+				if (!Object.prototype.hasOwnProperty.call(files, key)) throw new Error(`fake fs: ${p} 不存在`);
+				delete files[key];
+			},
+			rmSync: (p: string, opts?: { force?: boolean }) => {
+				const key = norm(p);
+				if (!Object.prototype.hasOwnProperty.call(files, key)) {
+					if (opts?.force) return;
+					throw new Error(`fake fs: ${p} 不存在`);
+				}
+				delete files[key];
+			},
+			// 写只落内存清单：改起点（meta）/ 并仓（turns.md）在壳里照跑，
+			// 刷新即回种子态——评审不污染真实磁盘
+			mkdirSync: (_p: string, _opts?: unknown) => undefined,
+			writeFileSync: (p: string, data: unknown, _enc?: string) => {
+				files[norm(p)] = typeof data === 'string' ? data : '';
+			},
+			copyFileSync: (src: string, dst: string) => {
+				const sk = norm(src);
+				if (Object.prototype.hasOwnProperty.call(files, sk)) {
+					files[norm(dst)] = files[sk];
+					return;
+				}
+				if (IMG_EXT.test(sk) && fakeImageBytes(sk) !== null) {
+					files[norm(dst)] = ''; // 字节件只登记存在性（DS_FILES 同口径）
+					return;
+				}
+				throw new Error(`fake fs: ${src} 不存在`);
 			},
 		};
 	};
@@ -443,6 +510,11 @@ const demoSettings: Record<string, unknown> = {
 	peopleImageDescMode: 'file',
 	peoplePreviewVideo: true,
 	peopleKeepSystem: true,
+	// 「我」的逐轮时间轴头像：壳里直接给 data URL（插件里 = 设置 peopleMyAvatar 的图片路径）
+	peopleMyAvatar:
+		(typeof window !== 'undefined' &&
+			(window as unknown as { BZW_PEOPLE?: { SEED?: { MY_AVATAR?: string } } }).BZW_PEOPLE?.SEED?.MY_AVATAR) ||
+		'',
 };
 
 // ==================== boot ====================
@@ -463,9 +535,9 @@ export function bootPeopleSim(): void {
 		if (localStorage.getItem(PREVIEW_KEY) == null) localStorage.setItem(PREVIEW_KEY, seedPreview(dsFiles));
 		localStorage.setItem(SEED_MARK, new Date().toISOString());
 	}
-	// 保留引导注入的其余种子（DATA_DIR / AVATAR_B64）——直接覆写对象会把它们冲掉
+	// 保留引导注入的其余种子（DATA_DIR / AVATAR_B64 / MTIMES）——直接覆写对象会把它们冲掉
 	window.BZW_PEOPLE = { SEED: { ...window.BZW_PEOPLE?.SEED, DS_FILES: dsFiles } };
-	installFakeFs(dsFiles);
+	installFakeFs(dsFiles, window.BZW_PEOPLE?.SEED?.MTIMES ?? {});
 	installFakeSafe();
 	setSettingsProvider(() => demoSettings as never);
 	void peopleSettingsSchema();

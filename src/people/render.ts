@@ -8,7 +8,7 @@
  * 收起折显竖排引文，点折脊展开。真实数据形态适配：竖排名 >7 字截断（实测最长 37 字）、
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
-import type { FaceEvent, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile } from './types';
+import type { FaceEvent, GenerationConfirmInfo, ImportRecord, ManualEvent, PersonEntry, PersonProfile } from './types';
 import { bondOf, personOf } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
@@ -1010,13 +1010,15 @@ export interface DetailOpts {
   facts: DtFacts | null;
 }
 
-/** 头上那枚印的文案：待画 / 旧版 / 画到 YYYY-MM-DD */
-function stampText(p: PersonEntry, job: FoldCardJob | null): string {
+/** 头上那枚印：待画 / 旧版 / 画谱中 / 画到 + 日期（日期折两行小字，方框里放得下不溢出） */
+function stampNode(p: PersonEntry, job: FoldCardJob | null): Node | Node[] {
   const seal = albumSealOf(p, job);
-  if (seal.state === 'none') return '待画';
-  if (seal.state === 'legacy') return '旧版';
-  if (seal.state === 'queued' || seal.state === 'running' || seal.state === 'halted') return '画谱中';
-  return p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs)}` : '已画';
+  if (seal.state === 'none') return text('待画');
+  if (seal.state === 'legacy') return text('旧版');
+  if (seal.state === 'queued' || seal.state === 'running' || seal.state === 'halted') return text('画谱中');
+  if (!p.lastProcessedTs) return text('已画');
+  const [y, mo, day] = formatDay(p.lastProcessedTs).split('-');
+  return [text('画到'), el('em', undefined, text(y)), el('em', undefined, text(`${mo}-${day}`))];
 }
 
 function detailFacts(p: PersonEntry, facts: DtFacts): HTMLElement | null {
@@ -1061,7 +1063,7 @@ export function detailPage(p: PersonEntry, opts: DetailOpts): HTMLElement {
   const frame = el('div', 'bz-people-bigframe', [
     el('div', 'bz-people-tape', { style: '--tr:calc(var(--t2) * -2)' }),
     el('div', 'bz-people-bigphoto', avatarNode(name, opts.avatar)),
-    el('div', 'bz-people-dt-stamp', text(stampText(p, opts.job))),
+    el('div', 'bz-people-dt-stamp', stampNode(p, opts.job)),
     el('div', 'bz-people-bigname', text(name)),
   ]);
   const side = el('div', 'bz-people-dt-side');
@@ -1174,6 +1176,15 @@ function secTitle(t: string): HTMLElement {
   return el('div', 'bz-people-sec-title', text(t));
 }
 
+/** 一张随手记纸片（纪事折与「记一笔」页签同一张；排序由调用方定） */
+function noteRow(m: ManualEvent): HTMLElement {
+  return el('div', 'bz-people-note-row', [
+    el('span', 'bz-people-note-ts', text(m.ts)),
+    el('span', 'bz-people-note-sum', text(m.summary)),
+    button('bz-people-note-del', '撕掉', { 'data-people-note-del': m.id }),
+  ]);
+}
+
 /**
  * 「另有 N 条」的收口（issue 507）：多出来的先收着（`.bz-people-more-hide`），末尾一枚
  * 「…另有 N 条」，点一下原地摊开（ui 侧把收着的摘出来、按钮自己退场）。
@@ -1270,7 +1281,7 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
     }
     const months = [...by.keys()].sort();
     const wrap = el('div', 'bz-people-months');
-    months.forEach((m, i) => {
+    months.forEach((m) => {
       const evs = [...(by.get(m) ?? [])].sort((a, b) => (a.kind === 'major' ? 0 : 1) - (b.kind === 'major' ? 0 : 1));
       const inner = clipList('bz-people-mon-in', evs.map((e) =>
         el('div', `bz-people-ev${e.kind === 'major' ? ' bz-people-major' : ''}`, [
@@ -1280,7 +1291,8 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
       const head = el('button', 'bz-people-mon-head', { 'data-people-mon': m }) as HTMLButtonElement;
       head.type = 'button';
       head.append(el('span', 'bz-people-mon-plus', text('+')), el('span', 'bz-people-mon-chip', text(m)), el('span', 'bz-people-mon-cnt', text(`${evs.length} 条`)));
-      wrap.appendChild(el('div', `bz-people-mon${i === 0 ? ' on' : ''}`, [head, el('div', 'bz-people-mon-body', inner)]));
+      // 默认全收着（复评：首月不再自动展开）；点开的状态留在 DOM 上，滚动不再触发整页重画（turnTo 钉住详情摊）
+      wrap.appendChild(el('div', 'bz-people-mon', [head, el('div', 'bz-people-mon-body', inner)]));
     });
     out.push(wrap);
   } else if (!out.length) {
@@ -1288,12 +1300,7 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
   }
   const manual = p.manualEvents ?? [];
   if (manual.length) {
-    out.push(secTitle('随手记'), el('div', 'bz-people-notes', manual.map((m) =>
-      el('div', 'bz-people-note-row', [
-        el('span', 'bz-people-note-ts', text(m.ts)),
-        el('span', 'bz-people-note-sum', text(m.summary)),
-        button('bz-people-note-del', '撕掉', { 'data-people-note-del': m.id }),
-      ]))));
+    out.push(secTitle('随手记'), el('div', 'bz-people-notes', manual.map(noteRow)));
   }
   return out;
 }
@@ -1698,9 +1705,9 @@ export function profPage(p: PersonEntry, body: HTMLElement[], editing: boolean):
 export type SuppTab = 'text' | 'image' | 'rec';
 
 const SUPP_TABS: Array<[SuppTab, string, string]> = [
-  ['text', '文本', '随手记一件事'],
-  ['image', '图片', '补画谱素材图'],
-  ['rec', '录音', '通话 / 见面录音'],
+  ['text', '记一笔', '随手记一件事'],
+  ['image', '留影', '补画谱素材图'],
+  ['rec', '原声', '通话 / 见面录音'],
 ];
 
 /** 待落盘的图片（页内暂存，ui 层持有） */
@@ -1723,6 +1730,10 @@ export interface SuppImageViewState {
   /** 描述动作进行中（引擎 describe 段在跑） */
   describeBusy: boolean;
   modelLabel: string;
+  /** 已入库的留影（预览网格；新的在前。url 由 ui 侧按数据根拼好） */
+  items: Array<{ img: string; text: string; url: string }>;
+  /** 点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
+  imgDel?: string;
 }
 
 export type SuppRecRowStatus = 'pending' | 'queued' | 'running' | 'interrupted' | 'failed' | 'awaiting-merge' | 'merged';
@@ -1779,6 +1790,8 @@ export interface SuppRecViewState {
   rows: SuppRecRowState[];
   /** 声纹参考（质心）就绪态 */
   ref: 'ready' | 'missing' | 'building';
+  /** 「重建质心」二次确认开着（复评：覆盖式重跑要先问一声） */
+  refConfirm?: boolean;
   /** 本次待导入的录音（选完文件、还没落盘） */
   queue: SuppRecQueueItem[];
   /** 删除二次确认开着的那一行（issue 516 Q12/Q13；null = 没开） */
@@ -1786,7 +1799,7 @@ export interface SuppRecViewState {
   /** 正在改起点的那一行（ADR-0217：改完回写 meta，已并仓的同步重排绝对时间） */
   startEdit?: string;
   /** 「查看轮次」正在看的那条（读 sidecar 预览，含被滤的旁音轮——复核我们没误杀） */
-  turnsView?: { file: string; lines: SuppRecTurnLine[] };
+  turnsView?: { file: string; lines: SuppRecTurnLine[]; meAvatar: string; otherAvatar: string };
   /** 库里已有的疑似重复组（同内容不同名；issue 516 Q3——只报不清，删不删你说了算） */
   dupGroups?: string[][];
 }
@@ -1860,7 +1873,14 @@ export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState
     button(`bz-people-ftab${tab === id ? ' on' : ''}`, label, { 'data-people-supp-tab': id, title: hint }))));
   if (tab === 'text') {
     body.push(noteAddRow(today));
-    body.push(el('div', 'bz-people-pop-note', text('随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。')));
+    // 已记的几笔就列在下面（复评：就地管理，不用翻到纪事折里找）——新的在上
+    const notes = [...(p.manualEvents ?? [])].sort((a, b) => b.ts.localeCompare(a.ts));
+    body.push(el('div', 'bz-people-supp-stat', text(
+      notes.length ? `已记 ${notes.length} 笔` : '还没记过——上面写一条，就落在这一列。',
+    )));
+    if (notes.length) {
+      body.push(el('div', 'bz-people-notes bz-people-supp-notes', notes.map(noteRow)));
+    }
   } else if (tab === 'image') {
     body.push(...suppImageBody(image));
   } else {
@@ -1871,7 +1891,6 @@ export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState
 
 function suppImageBody(s: SuppImageViewState): HTMLElement[] {
   const out: HTMLElement[] = [];
-  out.push(el('div', 'bz-people-pop-note', text('图片原件复制到数据根联系人目录（vault 外）；描述等派生文本才进加密保库记录，口径与导入一致。')));
   out.push(el('div', 'bz-people-supp-acts', [
     button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '选图片…', { 'data-people-supp-img-pick': '' }),
   ]));
@@ -1911,27 +1930,65 @@ function suppImageBody(s: SuppImageViewState): HTMLElement[] {
         title: '用 AI 面板当前模型给未描述的图片写画面描述，按张计费',
       }),
     ]));
-    out.push(el('div', 'bz-people-pop-note', text('描述完成自动并进时间线（[图片] 描述）；新导入的图片带扩展名可直接读派生档，旧库图片走旁路兜底。')));
+  }
+  // 预览网格（复评）：入库的图看得见、点得开放大、描述在图下面、右上角的叉删得掉（要先问一声）
+  if (s.items.length) {
+    const grid = el('div', 'bz-people-supp-imggrid');
+    for (const it of s.items) {
+      const cap = it.text.replace(/^\[图片\]\s*/, '');
+      const box = el('div', 'bz-people-supp-imgbox');
+      box.appendChild(el('img', 'bz-people-supp-imgthumb', {
+        src: it.url, alt: cap, loading: 'lazy',
+        'data-people-supp-img-view': it.img, title: '点开看大图',
+      }));
+      box.appendChild(button('bz-people-supp-imgdel', '×', {
+        'data-people-supp-img-del': it.img,
+        'aria-label': '删掉这张',
+        title: '从时间线里删掉这张（原件留在数据根，不会动）',
+      }));
+      if (s.imgDel === it.img) {
+        box.appendChild(el('div', 'bz-people-supp-imgask', [
+          el('div', 'bz-people-supp-imgask-tx', text('删掉这张？')),
+          el('div', 'bz-people-supp-imgask-acts', [
+            button('bz-people-supp-imgask-yes', '删掉', { 'data-people-supp-img-del-ok': it.img }),
+            button('bz-people-supp-imgask-no', '取消', { 'data-people-supp-img-del-cancel': '' }),
+          ]),
+        ]));
+      }
+      const cell = el('div', 'bz-people-supp-imgcell', [box]);
+      cell.appendChild(el('div', `bz-people-supp-imgcap${cap ? '' : ' bz-people-supp-imgcap-none'}`,
+        { title: cap || '未描述' }, text(cap || '未描述')));
+      grid.appendChild(cell);
+    }
+    out.push(grid);
   }
   return out;
 }
 
 function suppRecBody(s: SuppRecViewState): HTMLElement[] {
   const out: HTMLElement[] = [];
-  out.push(el('div', 'bz-people-pop-note', text('录音原件落数据根 recordings/（vault 外）；本地分离说话人与转写（不联网不花钱），转写轮次按归属并进时间线。')));
   const refLine = el('div', 'bz-people-supp-ref');
   refLine.append(
     text('声纹参考：'),
     textEl('b', s.ref === 'building' ? '构建中…' : s.ref === 'ready' ? '已建' : '未建'),
-    text(s.ref === 'missing' ? '（没建也照跑——按「非我即对方」降级）' : s.ref === 'ready' ? '（双人分离）' : ''),
   );
-  if (s.ref !== 'building') {
+  if (s.ref !== 'building' && !s.refConfirm) {
     refLine.appendChild(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', s.ref === 'ready' ? '重建质心' : '建质心', {
       'data-people-supp-rec-ref': '',
       title: '从该联系人的微信语音按归属建声纹参考（本地跑，几分钟）',
     }));
   }
   out.push(refLine);
+  // 重建是覆盖式重跑：点一下先要二次确认（复评）——只在**已建**时问（没建过没有可覆盖的）
+  if (s.ref === 'ready' && s.refConfirm) {
+    out.push(el('div', 'bz-people-supp-reffirm', [
+      el('div', 'bz-people-supp-reffirm-tx', text('重建会覆盖现在的声纹质心——确认重建？')),
+      el('div', 'bz-people-supp-reffirm-acts', [
+        button('bz-people-btn bz-people-btn-sm bz-people-btn-danger', '确认重建', { 'data-people-supp-rec-ref-ok': '' }),
+        button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '取消', { 'data-people-supp-rec-ref-cancel': '' }),
+      ]),
+    ]));
+  }
   out.push(el('div', 'bz-people-supp-acts', [
     button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '添加录音…', { 'data-people-supp-rec-add': '' }),
   ]));
@@ -1948,10 +2005,7 @@ function suppRecBody(s: SuppRecViewState): HTMLElement[] {
     }
     out.push(warn);
   }
-  if (!s.rows.length) {
-    out.push(el('div', 'bz-people-empty-hint', text('还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。')));
-    return out;
-  }
+  if (!s.rows.length) return out;
   const list = el('div', 'bz-people-supp-list');
   for (const r of s.rows) {
     list.appendChild(suppRecRow(r, s.del?.file === r.file ? s.del : undefined, s.startEdit === r.file, s.turnsView));
@@ -1961,20 +2015,17 @@ function suppRecBody(s: SuppRecViewState): HTMLElement[] {
 }
 
 /**
- * 删除二次确认（issue 516 Q12/Q13）：在行内展开，列明六处代价——
- * 原件（勾选时）/ `.turns.json` / `.meta.json` / `.turns.md` / `rec-control` / 仓内 `rec:<文件>:*` 消息。
+ * 删除二次确认（issue 516 Q12/Q13）：在行内展开，一句话说清代价（轮次在不在仓、脸谱要不要重画）。
  * 「同时删除录音原件」默认勾选；不勾 = 只清我们这边的副本，行回落「待处理」可重跑（改阈值/重建质心后重转）。
  */
 function recDelConfirm(r: SuppRecRowState, del: NonNullable<SuppRecViewState['del']>): HTMLElement {
   const box = el('div', 'bz-people-supp-delbox');
+  const inLedger = r.status === 'merged' || r.status === 'awaiting-merge';
   box.appendChild(el('div', 'bz-people-del-line', text(
-    r.status === 'merged' || r.status === 'awaiting-merge'
-      ? `「${r.file}」的转写轮次已进聊天仓——删除会把仓里这些轮次一并清掉（统计同步重算）。`
-      : `「${r.file}」还没进聊天仓——删除只清账本与派生档。`,
+    inLedger
+      ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? '；脸谱正文不会跟着变，要反映得重新画谱（花钱）' : ''}。`
+      : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? '；脸谱正文不会跟着变' : ''}。`,
   )));
-  if (del.drawn) {
-    box.appendChild(el('div', 'bz-people-del-line', text('该联系人已画过脸谱：正文是产物，不会随之改写——要反映这次删除得重新画谱（花钱）。')));
-  }
   const label = document.createElement('label');
   label.className = 'bz-people-supp-delchk';
   const ck = document.createElement('input');
@@ -1982,7 +2033,7 @@ function recDelConfirm(r: SuppRecRowState, del: NonNullable<SuppRecViewState['de
   ck.checked = del.alsoFile;
   ck.setAttribute('data-people-supp-rec-del-file', r.file);
   label.appendChild(ck);
-  label.appendChild(text(' 同时删除录音原件（不勾就只清账本，行回落「待处理」可重跑）'));
+  label.appendChild(text(' 同时删除录音原件（不勾只清账本，之后可重跑）'));
   box.appendChild(label);
   box.appendChild(el('div', 'bz-people-supp-rowfoot', [
     button('bz-people-btn bz-people-btn-sm bz-people-btn-danger', '确认删除', { 'data-people-supp-rec-del-ok': r.file }),
@@ -2056,7 +2107,7 @@ function suppRecQueueBody(queue: SuppRecQueueItem[]): HTMLElement[] {
  * 逐轮时间轴预览（面板内读 sidecar 渲染，同 `<名>.turns.md` 口径）：**含旁音轮**，
  * 旁音打标——这份视图的用处之一就是复核我们没误杀（issue 516 Q16b）。
  */
-function recTurnsPreview(lines: SuppRecTurnLine[]): HTMLElement {
+function recTurnsPreview(lines: SuppRecTurnLine[], meAvatar: string, otherAvatar: string): HTMLElement {
   const box = el('div', 'bz-people-supp-turns');
   if (!lines.length) {
     box.appendChild(el('div', 'bz-people-pop-note', text('账本里还没有轮次——转写跑完才会有。')));
@@ -2068,17 +2119,15 @@ function recTurnsPreview(lines: SuppRecTurnLine[]): HTMLElement {
   box.appendChild(el('div', 'bz-people-supp-turnhead', text(
     `逐轮时间轴 · ${lines.length} 轮 · 并成 ${segN} 段${sideN ? ` · 旁音 ${sideN}（不进聊天仓）` : ''}`,
   )));
+  // 微信式聊天流（复评）：头像 + 气泡，无段签 / 无时刻 / 无分割线；旁音收灰留档供复核
   const list = el('div', 'bz-people-supp-turnlist');
   for (const l of lines) {
-    const segCls = l.segHead !== undefined ? ' seghead' : l.segCont ? ' segcont' : '';
-    const line = el('div', `bz-people-supp-turn${l.side ? ' side' : ''}${segCls}`);
-    const who = el('span', 'bz-people-supp-turnwho', { title: '第 N 段的段首轮——同一人连续的这几轮并成聊天仓一条' });
-    // 段标塞进说话人格里（不再占一列，三列网格不被撑坏）
-    if (l.segHead !== undefined) who.appendChild(el('span', 'bz-people-supp-turnseg', text(`第${l.segHead}段`)));
-    who.appendChild(text(`${l.speaker}${l.emotion ? `·${l.emotion}` : ''}`));
-    line.appendChild(who);
-    line.appendChild(el('span', 'bz-people-supp-turnat', text(`${l.at} ${l.range}`)));
-    line.appendChild(el('span', 'bz-people-supp-turntext', text(l.text || '（空转写）')));
+    const me = l.speaker === '我';
+    const line = el('div', `bz-people-supp-turn${l.side ? ' side' : ''}${me ? ' me' : ''}`);
+    const ava = el('div', 'bz-people-supp-turnava');
+    ava.appendChild(avatarNode(l.speaker, me ? meAvatar : l.side ? '' : otherAvatar));
+    line.appendChild(ava);
+    line.appendChild(el('div', 'bz-people-supp-turnbubble', text(l.text || '（空转写）')));
     list.appendChild(line);
   }
   box.appendChild(list);
@@ -2096,7 +2145,7 @@ function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit
     return row;
   }
   if (turnsView?.file === r.file) {
-    row.appendChild(recTurnsPreview(turnsView.lines));
+    row.appendChild(recTurnsPreview(turnsView.lines, turnsView.meAvatar, turnsView.otherAvatar));
     row.appendChild(el('div', 'bz-people-supp-rowfoot', [
       button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '收起', { 'data-people-supp-rec-turns-close': r.file }),
     ]));
@@ -2316,7 +2365,6 @@ export function noteAddRow(today: string): HTMLElement {
     date,
     txt,
     button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '记一笔', { 'data-people-note-save': '' }),
-    button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '收起', { 'data-people-note-cancel': '' }),
   ]);
 }
 

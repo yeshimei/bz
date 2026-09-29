@@ -9,7 +9,7 @@ import type { PersonEntry } from '../../src/people/types';
 
 const p: PersonEntry = { id: 'wxid_a', name: '老王', createdAt: '2026-09-25T00:00:00.000Z', imports: [] };
 
-const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, describeBusy: false, modelLabel: '智谱/glm' };
+const emptyImage: SuppImageViewState = { queue: [], imported: 0, undescribed: 0, describeBusy: false, modelLabel: '智谱/glm', items: [] };
 const emptyRec: SuppRecViewState = { rows: [], ref: 'missing', queue: [] };
 
 describe('suppPage 三页签骨架', () => {
@@ -34,6 +34,7 @@ describe('suppPage 三页签骨架', () => {
       undescribed: 2,
       describeBusy: false,
       modelLabel: '智谱/glm',
+      items: [],
     };
     const page = suppPage(p, 'image', image, emptyRec, '2026-09-28');
     const rows = [...page.querySelectorAll('.bz-people-supp-qrow')];
@@ -263,6 +264,8 @@ describe('查看轮次预览的段界（ADR-0220 §7：同一人连续的那几�
   const row = (over: Partial<SuppRecRowState>): SuppRecRowState => ({ file: 'r.aac', status: 'pending', phaseText: '', pct: null, ...over });
   const lines = (): SuppRecViewState['turnsView'] => ({
     file: 'r.aac',
+    meAvatar: '',
+    otherAvatar: '',
     lines: [
       { idx: 1, at: '10:14:03', range: '00:03-00:07', speaker: '我', emotion: '平静', text: '喂，在吗', side: false, segHead: 1 },
       { idx: 2, at: '10:14:08', range: '00:08-00:12', speaker: '我', text: '听的到吗', side: false, segCont: true },

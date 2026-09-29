@@ -1,4 +1,4 @@
-/* 源指纹 31e338a2e41c9fa7 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 020b7d61ad58c598 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -781,12 +781,14 @@ var BZR_people = (() => {
     ["b", "相交", "卷二 · 关系画像"],
     ["e", "纪事", "编年 + 按月交往事件"]
   ];
-  function stampText(p, job) {
+  function stampNode(p, job) {
     const seal = albumSealOf(p, job);
-    if (seal.state === "none") return "待画";
-    if (seal.state === "legacy") return "旧版";
-    if (seal.state === "queued" || seal.state === "running" || seal.state === "halted") return "画谱中";
-    return p.lastProcessedTs ? `画到 ${formatDay(p.lastProcessedTs)}` : "已画";
+    if (seal.state === "none") return text("待画");
+    if (seal.state === "legacy") return text("旧版");
+    if (seal.state === "queued" || seal.state === "running" || seal.state === "halted") return text("画谱中");
+    if (!p.lastProcessedTs) return text("已画");
+    const [y, mo, day] = formatDay(p.lastProcessedTs).split("-");
+    return [text("画到"), el("em", void 0, text(y)), el("em", void 0, text(`${mo}-${day}`))];
   }
   function detailFacts(p, facts) {
     const out = [];
@@ -829,7 +831,7 @@ var BZR_people = (() => {
     const frame = el("div", "bz-people-bigframe", [
       el("div", "bz-people-tape", { style: "--tr:calc(var(--t2) * -2)" }),
       el("div", "bz-people-bigphoto", avatarNode(name, opts.avatar)),
-      el("div", "bz-people-dt-stamp", text(stampText(p, opts.job))),
+      el("div", "bz-people-dt-stamp", stampNode(p, opts.job)),
       el("div", "bz-people-bigname", text(name))
     ]);
     const side = el("div", "bz-people-dt-side");
@@ -933,6 +935,13 @@ var BZR_people = (() => {
   function secTitle(t) {
     return el("div", "bz-people-sec-title", text(t));
   }
+  function noteRow(m) {
+    return el("div", "bz-people-note-row", [
+      el("span", "bz-people-note-ts", text(m.ts)),
+      el("span", "bz-people-note-sum", text(m.summary)),
+      button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id })
+    ]);
+  }
   function clipList(cls, items, first, moreText) {
     const box = el("div", cls);
     items.forEach((n, i) => {
@@ -1020,7 +1029,7 @@ var BZR_people = (() => {
       }
       const months = [...by.keys()].sort();
       const wrap = el("div", "bz-people-months");
-      months.forEach((m, i) => {
+      months.forEach((m) => {
         var _a2;
         const evs = [...(_a2 = by.get(m)) != null ? _a2 : []].sort((a, b) => (a.kind === "major" ? 0 : 1) - (b.kind === "major" ? 0 : 1));
         const inner = clipList("bz-people-mon-in", evs.map((e) => el("div", `bz-people-ev${e.kind === "major" ? " bz-people-major" : ""}`, [
@@ -1030,7 +1039,7 @@ var BZR_people = (() => {
         const head = el("button", "bz-people-mon-head", { "data-people-mon": m });
         head.type = "button";
         head.append(el("span", "bz-people-mon-plus", text("+")), el("span", "bz-people-mon-chip", text(m)), el("span", "bz-people-mon-cnt", text(`${evs.length} 条`)));
-        wrap.appendChild(el("div", `bz-people-mon${i === 0 ? " on" : ""}`, [head, el("div", "bz-people-mon-body", inner)]));
+        wrap.appendChild(el("div", "bz-people-mon", [head, el("div", "bz-people-mon-body", inner)]));
       });
       out.push(wrap);
     } else if (!out.length) {
@@ -1038,11 +1047,7 @@ var BZR_people = (() => {
     }
     const manual = (_f = p.manualEvents) != null ? _f : [];
     if (manual.length) {
-      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map((m) => el("div", "bz-people-note-row", [
-        el("span", "bz-people-note-ts", text(m.ts)),
-        el("span", "bz-people-note-sum", text(m.summary)),
-        button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id })
-      ]))));
+      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map(noteRow)));
     }
     return out;
   }
@@ -1357,9 +1362,9 @@ var BZR_people = (() => {
     return subPage({ title: "补充背景", meta: editing ? `${p.name} · 编辑中` : p.name, hook: "prof" }, body);
   }
   var SUPP_TABS = [
-    ["text", "文本", "随手记一件事"],
-    ["image", "图片", "补画谱素材图"],
-    ["rec", "录音", "通话 / 见面录音"]
+    ["text", "记一笔", "随手记一件事"],
+    ["image", "留影", "补画谱素材图"],
+    ["rec", "原声", "通话 / 见面录音"]
   ];
   var SUPP_REC_LABEL = {
     pending: "待处理",
@@ -1398,11 +1403,18 @@ var BZR_people = (() => {
     });
   }
   function suppPage(p, tab, image, rec, today) {
+    var _a;
     const body = [];
     body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
     if (tab === "text") {
       body.push(noteAddRow(today));
-      body.push(el("div", "bz-people-pop-note", text("随手记与本机脸谱存在一起；聊天之外的事、你们的约定、当天的心情，都可以记。")));
+      const notes = [...(_a = p.manualEvents) != null ? _a : []].sort((a, b) => b.ts.localeCompare(a.ts));
+      body.push(el("div", "bz-people-supp-stat", text(
+        notes.length ? `已记 ${notes.length} 笔` : "还没记过——上面写一条，就落在这一列。"
+      )));
+      if (notes.length) {
+        body.push(el("div", "bz-people-notes bz-people-supp-notes", notes.map(noteRow)));
+      }
     } else if (tab === "image") {
       body.push(...suppImageBody(image));
     } else {
@@ -1412,7 +1424,6 @@ var BZR_people = (() => {
   }
   function suppImageBody(s) {
     const out = [];
-    out.push(el("div", "bz-people-pop-note", text("图片原件复制到数据根联系人目录（vault 外）；描述等派生文本才进加密保库记录，口径与导入一致。")));
     out.push(el("div", "bz-people-supp-acts", [
       button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "选图片…", { "data-people-supp-img-pick": "" })
     ]));
@@ -1450,27 +1461,70 @@ var BZR_people = (() => {
           title: "用 AI 面板当前模型给未描述的图片写画面描述，按张计费"
         })
       ]));
-      out.push(el("div", "bz-people-pop-note", text("描述完成自动并进时间线（[图片] 描述）；新导入的图片带扩展名可直接读派生档，旧库图片走旁路兜底。")));
+    }
+    if (s.items.length) {
+      const grid = el("div", "bz-people-supp-imggrid");
+      for (const it of s.items) {
+        const cap = it.text.replace(/^\[图片\]\s*/, "");
+        const box = el("div", "bz-people-supp-imgbox");
+        box.appendChild(el("img", "bz-people-supp-imgthumb", {
+          src: it.url,
+          alt: cap,
+          loading: "lazy",
+          "data-people-supp-img-view": it.img,
+          title: "点开看大图"
+        }));
+        box.appendChild(button("bz-people-supp-imgdel", "×", {
+          "data-people-supp-img-del": it.img,
+          "aria-label": "删掉这张",
+          title: "从时间线里删掉这张（原件留在数据根，不会动）"
+        }));
+        if (s.imgDel === it.img) {
+          box.appendChild(el("div", "bz-people-supp-imgask", [
+            el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
+            el("div", "bz-people-supp-imgask-acts", [
+              button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
+              button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
+            ])
+          ]));
+        }
+        const cell = el("div", "bz-people-supp-imgcell", [box]);
+        cell.appendChild(el(
+          "div",
+          `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+          { title: cap || "未描述" },
+          text(cap || "未描述")
+        ));
+        grid.appendChild(cell);
+      }
+      out.push(grid);
     }
     return out;
   }
   function suppRecBody(s) {
     var _a, _b;
     const out = [];
-    out.push(el("div", "bz-people-pop-note", text("录音原件落数据根 recordings/（vault 外）；本地分离说话人与转写（不联网不花钱），转写轮次按归属并进时间线。")));
     const refLine = el("div", "bz-people-supp-ref");
     refLine.append(
       text("声纹参考："),
-      textEl("b", s.ref === "building" ? "构建中…" : s.ref === "ready" ? "已建" : "未建"),
-      text(s.ref === "missing" ? "（没建也照跑——按「非我即对方」降级）" : s.ref === "ready" ? "（双人分离）" : "")
+      textEl("b", s.ref === "building" ? "构建中…" : s.ref === "ready" ? "已建" : "未建")
     );
-    if (s.ref !== "building") {
+    if (s.ref !== "building" && !s.refConfirm) {
       refLine.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", s.ref === "ready" ? "重建质心" : "建质心", {
         "data-people-supp-rec-ref": "",
         title: "从该联系人的微信语音按归属建声纹参考（本地跑，几分钟）"
       }));
     }
     out.push(refLine);
+    if (s.ref === "ready" && s.refConfirm) {
+      out.push(el("div", "bz-people-supp-reffirm", [
+        el("div", "bz-people-supp-reffirm-tx", text("重建会覆盖现在的声纹质心——确认重建？")),
+        el("div", "bz-people-supp-reffirm-acts", [
+          button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认重建", { "data-people-supp-rec-ref-ok": "" }),
+          button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-supp-rec-ref-cancel": "" })
+        ])
+      ]));
+    }
     out.push(el("div", "bz-people-supp-acts", [
       button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "添加录音…", { "data-people-supp-rec-add": "" })
     ]));
@@ -1486,10 +1540,7 @@ var BZR_people = (() => {
       }
       out.push(warn);
     }
-    if (!s.rows.length) {
-      out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
-      return out;
-    }
+    if (!s.rows.length) return out;
     const list = el("div", "bz-people-supp-list");
     for (const r of s.rows) {
       list.appendChild(suppRecRow(r, ((_b = s.del) == null ? void 0 : _b.file) === r.file ? s.del : void 0, s.startEdit === r.file, s.turnsView));
@@ -1499,12 +1550,10 @@ var BZR_people = (() => {
   }
   function recDelConfirm(r, del) {
     const box = el("div", "bz-people-supp-delbox");
+    const inLedger = r.status === "merged" || r.status === "awaiting-merge";
     box.appendChild(el("div", "bz-people-del-line", text(
-      r.status === "merged" || r.status === "awaiting-merge" ? `「${r.file}」的转写轮次已进聊天仓——删除会把仓里这些轮次一并清掉（统计同步重算）。` : `「${r.file}」还没进聊天仓——删除只清账本与派生档。`
+      inLedger ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? "；脸谱正文不会跟着变" : ""}。`
     )));
-    if (del.drawn) {
-      box.appendChild(el("div", "bz-people-del-line", text("该联系人已画过脸谱：正文是产物，不会随之改写——要反映这次删除得重新画谱（花钱）。")));
-    }
     const label = document.createElement("label");
     label.className = "bz-people-supp-delchk";
     const ck = document.createElement("input");
@@ -1512,7 +1561,7 @@ var BZR_people = (() => {
     ck.checked = del.alsoFile;
     ck.setAttribute("data-people-supp-rec-del-file", r.file);
     label.appendChild(ck);
-    label.appendChild(text(" 同时删除录音原件（不勾就只清账本，行回落「待处理」可重跑）"));
+    label.appendChild(text(" 同时删除录音原件（不勾只清账本，之后可重跑）"));
     box.appendChild(label);
     box.appendChild(el("div", "bz-people-supp-rowfoot", [
       button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认删除", { "data-people-supp-rec-del-ok": r.file }),
@@ -1571,7 +1620,7 @@ var BZR_people = (() => {
     )));
     return out;
   }
-  function recTurnsPreview(lines) {
+  function recTurnsPreview(lines, meAvatar, otherAvatar) {
     const box = el("div", "bz-people-supp-turns");
     if (!lines.length) {
       box.appendChild(el("div", "bz-people-pop-note", text("账本里还没有轮次——转写跑完才会有。")));
@@ -1587,14 +1636,12 @@ var BZR_people = (() => {
     )));
     const list = el("div", "bz-people-supp-turnlist");
     for (const l of lines) {
-      const segCls = l.segHead !== void 0 ? " seghead" : l.segCont ? " segcont" : "";
-      const line = el("div", `bz-people-supp-turn${l.side ? " side" : ""}${segCls}`);
-      const who = el("span", "bz-people-supp-turnwho", { title: "第 N 段的段首轮——同一人连续的这几轮并成聊天仓一条" });
-      if (l.segHead !== void 0) who.appendChild(el("span", "bz-people-supp-turnseg", text(`第${l.segHead}段`)));
-      who.appendChild(text(`${l.speaker}${l.emotion ? `·${l.emotion}` : ""}`));
-      line.appendChild(who);
-      line.appendChild(el("span", "bz-people-supp-turnat", text(`${l.at} ${l.range}`)));
-      line.appendChild(el("span", "bz-people-supp-turntext", text(l.text || "（空转写）")));
+      const me = l.speaker === "我";
+      const line = el("div", `bz-people-supp-turn${l.side ? " side" : ""}${me ? " me" : ""}`);
+      const ava = el("div", "bz-people-supp-turnava");
+      ava.appendChild(avatarNode(l.speaker, me ? meAvatar : l.side ? "" : otherAvatar));
+      line.appendChild(ava);
+      line.appendChild(el("div", "bz-people-supp-turnbubble", text(l.text || "（空转写）")));
       list.appendChild(line);
     }
     box.appendChild(list);
@@ -1612,7 +1659,7 @@ var BZR_people = (() => {
       return row;
     }
     if ((turnsView == null ? void 0 : turnsView.file) === r.file) {
-      row.appendChild(recTurnsPreview(turnsView.lines));
+      row.appendChild(recTurnsPreview(turnsView.lines, turnsView.meAvatar, turnsView.otherAvatar));
       row.appendChild(el("div", "bz-people-supp-rowfoot", [
         button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-turns-close": r.file })
       ]));
@@ -1791,8 +1838,7 @@ var BZR_people = (() => {
     return el("div", "bz-people-note-add", [
       date,
       txt,
-      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "记一笔", { "data-people-note-save": "" }),
-      button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-note-cancel": "" })
+      button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "记一笔", { "data-people-note-save": "" })
     ]);
   }
   var MD_SEALS = {

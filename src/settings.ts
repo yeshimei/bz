@@ -529,6 +529,8 @@ export default interface BzSettings {
   peopleKeepSystem: boolean;
   /** 图片描述每批张数（issue 470：画脸谱时 AI 描述一次调用的图片上限，默认 20） */
   peopleDescBatchSize: number;
+  /** 「我」在逐轮时间轴里的头像图片（本机图片路径或库内相对路径）；空 = 名字首字印 */
+  peopleMyAvatar: string;
   // 447 退役：peopleScanOnOpen（开弹窗即扫）/ peopleGenTrigger / peopleGenThreshold（画脸谱一律弹窗内手动）
   // 467 退役：peopleMediaDir（库内明文媒体文件夹）——头像随保库记录进保险库，「文件夹名=人名」的明文目录停止使用
 
@@ -1111,6 +1113,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   peoplePreviewVideo: true,
   peopleKeepSystem: true,
   peopleDescBatchSize: 20,
+  // 「我」在逐轮时间轴里的头像（空 = 首字印）
+  peopleMyAvatar: '',
 
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
   settingsPanelLayout: 'jingwei',

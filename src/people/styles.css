@@ -170,7 +170,11 @@
 
 
 /* ---------------- 按钮（纸标签式） ---------------- */
-.bz-people-btn {
+/* 双类提权：包内 `src/core/reset.css` 的 `button:not(.clickable-icon)`（(0,1,1)）会把裸按钮的
+   color/background-color/box-shadow 一律 unset（宿主 app.css 同形，真机上两处都在）——单类皮肤
+   真机上会被整套剥掉（复评实例：记一笔红底变白、未激活折签米黄变灰）。皮肤类双写类名压回去，
+   壳里取值不变（两岸一致）。新加按钮/可点件时照抄这条：只补被剥的三样，其余仍让原规则管 */
+.bz-people-btn.bz-people-btn {
   font-family: var(--kai); font-size: var(--f-body); letter-spacing: .5px; color: var(--ink-strong);
   background: #fffdf7; border: 1px solid #d9d1bd; border-radius: var(--r-card); padding: 6px 15px;
   box-shadow: var(--sh-1); transition: transform .12s, box-shadow .12s, border-color .12s;
@@ -179,14 +183,15 @@
 .bz-people-btn:active { transform: translateY(0) scale(.985); box-shadow: var(--sh-1); }
 .bz-people-btn:focus-visible, .bz-people-close:focus-visible, .bz-people-stk:focus-visible,
 .bz-people-tab:focus-visible, .bz-people-mon-head:focus-visible { outline: 2px solid rgba(168,67,60,.45); outline-offset: 1px; }
-.bz-people-btn-acc { background: var(--acc); border-color: var(--acc-deep); color: #fff8f0;
+.bz-people-btn-acc.bz-people-btn-acc { background: var(--acc); border-color: var(--acc-deep); color: #fff8f0;
   box-shadow: 0 2px 4px rgba(138,52,46,.3); }
 @media (hover: hover) { .bz-people-btn-acc:hover { box-shadow: 0 4px 10px rgba(138,52,46,.34); } }
-.bz-people-btn-gold { background: #f4e8c8; border-color: #ddc78e; color: #6f5719; }
+.bz-people-btn-gold.bz-people-btn-gold { background: #f4e8c8; border-color: #ddc78e; color: #6f5719; }
 .bz-people-btn-sm { font-size: var(--f-mid); padding: 4px 11px; }
 .bz-people-btn[disabled] { opacity: .45; pointer-events: none; }
 .bz-people-ico { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px;
   border-radius: var(--r-card); color: var(--ink-mut); transition: .12s; flex: none; }
+.bz-people-ico.bz-people-ico { color: var(--ink-mut); } /* 双类提权（同按钮） */
 .bz-people-ico svg { width: 17px; height: 17px; }
 @media (hover: hover) { .bz-people-ico:hover { background: rgba(168,67,60,.08); color: var(--acc); } }
 .bz-people-ico.bz-people-ico-sm { width: 22px; height: 22px; } .bz-people-ico.bz-people-ico-sm svg { width: 14px; height: 14px; }
@@ -199,6 +204,7 @@
   background: linear-gradient(180deg, #f8f0d9, #f3e7c8); border: 1px solid #e0cf9f; border-bottom: none;
   border-radius: var(--r-tab) var(--r-tab) 0 0; padding: 4px 11px 5px; box-shadow: 0 -2px 6px rgba(60,50,30,.24);
   transition: color .14s, border-color .14s, transform .14s, background .14s; }
+.bz-people-tab.bz-people-tab { color: #7a6a44; background: linear-gradient(180deg, #f8f0d9, #f3e7c8); box-shadow: 0 -2px 6px rgba(60,50,30,.24); } /* 双类提权（同按钮） */
 @media (hover: hover) { .bz-people-tab:hover { color: var(--acc); border-color: rgba(168,67,60,.45); transform: translateY(-2px); } }
 .bz-people-tab:active { transform: translateY(0); }
 .bz-people-tab-on { color: var(--acc-deep); border-color: rgba(168,67,60,.5);
@@ -582,20 +588,18 @@
 .bz-people-cell:focus-visible { outline: 2px solid rgba(168,67,60,.5); outline-offset: 2px; border-radius: var(--r-paper); }
 .bz-people-close { font-family: var(--kai); font-size: var(--f-aux); letter-spacing: 1px; color: var(--pencil); background: #fffdf7;
   border: 1px solid #ded3b8; border-radius: var(--r-card); padding: 3px 11px; box-shadow: var(--sh-1); }
+.bz-people-close.bz-people-close { color: var(--pencil); background: #fffdf7; box-shadow: var(--sh-1); } /* 双类提权（同按钮） */
 @media (hover: hover) { .bz-people-close:hover { color: var(--acc); border-color: rgba(168,67,60,.45); transform: translateY(-2px); } }
-/* 页里内容多了会滚（其人 / 相交 / 纪事，以及统计 / 补背景这些册页）：上下各一条内影，
-   滚到顶 / 滚到底那条自己收掉 —— 才看得出「下面还有」。
-   影做在两条 sticky 伪元素上（不是容器的背景）：页里那些纸片是不透明的，
-   背景层会被它们盖住，只有压在内容上面的影才看得见。哪条该出由 JS 挂 sc-top / sc-bot 说 */
+/* 页里内容多了会滚（其人 / 相交 / 纪事，以及统计 / 补背景这些册页）：顶上一条内影提示上面还有，
+   滚到顶那条自己收掉。**底部那条已退役**（复评点名去掉：滚动边缘提示「下面还有」反而像故障）。
+   影做在 sticky 伪元素上（不是容器的背景）：页里那些纸片是不透明的，
+   背景层会被它们盖住，只有压在内容上面的影才看得见。哪条该出由 JS 挂 sc-top 说 */
 .bz-people-pagebody { flex: 1; min-height: 0; overflow: auto; padding: 2px 0 12px; }
-.bz-people-pagebody::before, .bz-people-pagebody::after { content: ''; position: sticky; z-index: 3; display: block; height: 10px;
+.bz-people-pagebody::before { content: ''; position: sticky; z-index: 3; display: block; height: 10px;
   pointer-events: none; opacity: 0; transition: opacity .22s ease-out; }
 .bz-people-pagebody::before { top: 0; margin-bottom: -10px;
   background: linear-gradient(180deg, rgba(120,104,74,.18), rgba(120,104,74,0)); }
-.bz-people-pagebody::after { bottom: 0; margin-top: -10px;
-  background: linear-gradient(0deg, rgba(120,104,74,.18), rgba(120,104,74,0)); }
 .bz-people-pagebody:not(.sc-top)::before { opacity: 1; }
-.bz-people-pagebody:not(.sc-bot)::after { opacity: 1; }
 /* 头顶两栏：左边贴着宝丽来那张（不居中，让出的右边正好放标签与账目），窄屏再竖过来 */
 .bz-people-dttop { display: flex; align-items: flex-start; gap: 14px; padding: 12px 0 2px; }
 .bz-people-dttop .bz-people-bigph { flex: none; }
@@ -629,6 +633,7 @@
   background: rgba(176,138,62,.4); border: 1px solid rgba(176,138,62,.5); box-shadow: 0 1px 2px rgba(120,110,90,.22); }
 .bz-people-stk { font-size: var(--f-aux); padding: 1.5px 7px; border-radius: var(--r-paper); background: rgba(176,138,62,.14); color: #7a5f1e;
   border: 1px solid rgba(176,138,62,.36); box-shadow: 0 1px 1px rgba(120,110,90,.14); letter-spacing: .5px; }
+.bz-people-stk.bz-people-stk { background: rgba(176,138,62,.14); color: #7a5f1e; box-shadow: 0 1px 1px rgba(120,110,90,.14); } /* 双类提权（同按钮：找一找的标签是 button） */
 .bz-people-stk.bz-people-stk-red { background: rgba(168,67,60,.1); color: var(--acc); border-color: rgba(168,67,60,.32); }
 .bz-people-stk.bz-people-stk-blue { background: rgba(90,120,140,.12); color: #46627a; border-color: rgba(90,120,140,.34); }
 
@@ -711,16 +716,18 @@
 .bz-people-fact-bar { display: block; height: 6px; margin: 5px 0 4px; border-radius: var(--r-paper); overflow: hidden;
   background: #dcbd72; box-shadow: inset 0 0 0 1px rgba(120,110,90,.16); }
 .bz-people-fact-bar i { display: block; height: 100%; background: var(--acc); }
-.bz-people-dt-stamp { position: absolute; right: -8px; top: 16px; width: 44px; height: 44px; border: 2.5px solid var(--acc);
-  color: var(--acc); border-radius: var(--r-card); font-family: var(--kai); font-size: 17px; font-weight: 800; line-height: 1.1;
+.bz-people-dt-stamp { position: absolute; right: -8px; top: 16px; min-width: 60px; padding: 6px 8px 5px; border: 2.5px solid var(--acc);
+  color: var(--acc); border-radius: var(--r-card); font-family: var(--kai); font-size: 18px; font-weight: 800; line-height: 1.15;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   transform: rotate(calc(var(--t3) * -1));
-  opacity: .85; background: rgba(255,252,246,.6); text-align: center; padding: 2px; }
-.bz-people-dt-stamp em { font-style: normal; font-size: var(--f-aux); font-weight: 400; letter-spacing: 1px; }
+  opacity: .85; background: rgba(255,252,246,.6); text-align: center; }
+/* 日期折两行、字号放大（复评：原 44px 方框塞整串日期，字小还溢出边框） */
+.bz-people-dt-stamp em { display: block; font-style: normal; font-size: var(--f-mid); font-weight: 400; letter-spacing: .5px; line-height: 1.25; }
 .bz-people-acts { margin: 20px auto 0; width: 214px; display: flex; flex-direction: column; gap: 7px; }
 .bz-people-act { display: flex; align-items: center; gap: 8px; background: #fffdf7; border: 1px solid #e2dac6;
   border-radius: var(--r-card); padding: 6px 11px; font-size: var(--f-mid); color: var(--ink); box-shadow: 0 1px 3px var(--shadow);
   font-family: var(--kai); letter-spacing: 1px; }
+.bz-people-act.bz-people-act { background: #fffdf7; color: var(--ink); box-shadow: 0 1px 3px var(--shadow); } /* 双类提权（同按钮） */
 .bz-people-act:nth-child(odd) { transform: rotate(calc(var(--t1) * -.5)); }
 .bz-people-act:nth-child(even) { transform: rotate(calc(var(--t1) * .4)); }
 @media (hover: hover) { .bz-people-act:hover { color: var(--acc); border-color: rgba(168,67,60,.45); } }
@@ -731,6 +738,9 @@
 .bz-people-ftab { font-family: var(--kai); font-size: var(--f-body); letter-spacing: 3px; color: #8a8271; background: #f3ecdc;
   border: 1px solid var(--card-bd); border-bottom: none; border-radius: var(--r-tab) var(--r-tab) 0 0; padding: 7px 17px 6px;
   box-shadow: 0 -1px 3px rgba(120,110,90,.06); transform: rotate(calc(var(--t1) * -.5)); }
+/* 双类提权（同按钮：宿主 button:not(.clickable-icon) 会夺走裸按钮的底色/字色/阴影；未激活折签真机变灰）——
+   只补这三条，字号/内边距仍让位给带上层作用域的覆写（.bz-people-pagebody .bz-people-ftab 等） */
+.bz-people-ftab.bz-people-ftab { background: #f3ecdc; color: #8a8271; box-shadow: 0 -1px 3px rgba(120,110,90,.06); }
 .bz-people-ftab:nth-child(2) { transform: rotate(calc(var(--t1) * .3)); }
 .bz-people-ftab.on { background: var(--card); color: var(--acc-deep); font-weight: 800; transform: rotate(0);
   box-shadow: 0 -3px 7px rgba(120,110,90,.1); }
@@ -788,10 +798,13 @@
 /* 「另有 N 条」收口（issue 507）：多出来的先藏着（.bz-people-more-hide，ui 侧点一下摘掉），
    末尾那枚是**点得开的小签**——不再是读不动的灰字尾注。六处列表同一套。
    （旧的 `.bz-people-trait-more` / `.bz-people-mut` 两枚灰字尾注已随本次改动退役，代码里不再有人挂。） */
-.bz-people-more-hide { display: none; }
+/* 双类叠加提权：`.bz-people-md .bz-people-it`（(0,2,0)）与 `.bz-people-ev` 这类列表项自带的 display
+   会压过单类 ——「留下的片刻 / 最近在聊什么 / 同月纪事」的另有点了没反应就是它（复评） */
+.bz-people-more-hide.bz-people-more-hide { display: none; }
 /* align-self: flex-start 是给「代表原话」那类纵向 flex 列表用的：不写就会被拉满整行、虚线一路拖到边 */
 .bz-people-more { display: inline-block; align-self: flex-start; margin-top: 6px; padding: 0 1px 1px; font-size: var(--f-aux); font-family: var(--kai);
   font-style: italic; letter-spacing: 1px; color: var(--acc); border-bottom: 1px dashed rgba(168,67,60,.5); cursor: pointer; }
+.bz-people-more.bz-people-more { color: var(--acc); } /* 双类提权（同按钮） */
 @media (hover: hover) { .bz-people-more:hover { color: var(--acc-deep); border-bottom-style: solid; } }
 .bz-people-traits .bz-people-more { align-self: center; margin-top: 0; }
 
@@ -803,7 +816,7 @@
   background: repeating-linear-gradient(90deg, rgba(176,138,62,.3) 0 12px, rgba(176,138,62,.12) 12px 13px); opacity: .8; }
 .bz-people-months { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
 .bz-people-mon { position: relative; }
-.bz-people-mon-head { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 2px 0; }
+.bz-people-mon-head { display: flex; align-items: center; justify-content: flex-start; gap: 9px; width: 100%; text-align: left; padding: 2px 0; }
 .bz-people-mon-chip { font-family: var(--kai); font-size: var(--f-mid); letter-spacing: 1.5px; color: #7a5f1e; background: #f6ecd2;
   border: 1px solid #e3d2a2; border-radius: var(--r-paper); padding: 2px 10px; box-shadow: var(--sh-1);
   transform: rotate(calc(var(--t1) * -1)); }
@@ -829,6 +842,7 @@
 .bz-people-note-ts { flex: none; font-size: var(--f-aux); color: #8a7440; font-style: italic; font-variant-numeric: tabular-nums; }
 .bz-people-note-sum { flex: 1; font-size: var(--f-mid); line-height: 1.75; }
 .bz-people-note-del { font-size: var(--f-aux); color: var(--ink-mut); font-family: var(--sans); }
+.bz-people-note-del.bz-people-note-del { color: var(--ink-mut); } /* 双类提权（同按钮） */
 @media (hover: hover) { .bz-people-note-del:hover { color: var(--acc); } }
 .bz-people-fold-hint { border: 1px dashed #d8d0bc; border-radius: var(--r-tab); padding: 22px 20px; text-align: center;
   font-family: var(--song); font-size: var(--f-mid); color: var(--ink-mut); line-height: 1.9; background: rgba(255,253,248,.5); }
@@ -962,6 +976,20 @@
 .bz-people-prof-entry-hint { font-family: var(--song); font-size: var(--f-mid); color: var(--ink-mut); font-style: italic; }
 .bz-people-input { width: 100%; font: inherit; font-size: var(--f-body); color: var(--ink); background: transparent;
   border: none; border-bottom: 1px dashed #cfc7b2; padding: 4px 2px; outline: none; }
+/* 真机上宿主 app.css 会给裸 input 套白盒（input[type='date'] 一类 (0,1,1) 压过单类）——
+   双类提权把纸面风钉住（透明底 + 下缘虚线），与原型壳两岸一致（复评：真机白盒 vs 原型纸面） */
+input.bz-people-input.bz-people-input {
+  background: transparent; color: var(--ink); font: inherit; font-size: var(--f-body);
+  border: none; border-bottom: 1px dashed #cfc7b2; border-radius: 0; box-shadow: none;
+  padding: 4px 2px; height: auto; min-height: 0; outline: none;
+}
+input.bz-people-input.bz-people-input:focus { border-bottom-color: var(--acc); box-shadow: none; }
+input.bz-people-input.bz-people-input::placeholder { color: #bdb6a2; font-style: italic; }
+/* 宿主要把日期图标绝对定位到左边（input[type='date']…::-webkit-calendar-picker-indicator {position:absolute;left:…}），
+   纸面风里图标该回右端（原生位）——与原型壳一致（复评：真机图标跑到左边） */
+input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
+  position: static; left: auto; right: auto; opacity: 1;
+}
 .bz-people-input:focus { border-bottom-color: var(--acc); }
 .bz-people-input::placeholder { color: #bdb6a2; font-style: italic; }
 .bz-people-prof-edit .bz-people-prof-row { padding: 5px 0; }
@@ -977,6 +1005,8 @@
 /* 记一笔 */
 .bz-people-note-add { display: flex; gap: 9px; align-items: center; }
 .bz-people-note-date { width: 130px; flex: none; }
+/* 记一笔页签里的已记列表（复评：数据放下面，就地管理） */
+.bz-people-supp-notes { margin-top: 10px; }
 
 /* 删除确认 */
 .bz-people-del-who { font-family: var(--kai); font-size: var(--f-head); letter-spacing: 2px; color: var(--acc-deep); margin-bottom: 8px; }
@@ -993,7 +1023,7 @@
 .bz-people-findbox { display: flex; align-items: center; gap: 9px; padding: 2px 4px 6px;
   border-bottom: 1px dashed #cfc7b2; margin-bottom: 12px; }
 .bz-people-findbox svg { width: 15px; height: 15px; color: var(--acc); }
-.bz-people-findbox .bz-people-input { border-bottom: none; font-size: var(--f-head); letter-spacing: .5px; }
+.bz-people-findbox input.bz-people-input { border-bottom: none; font-size: var(--f-head); letter-spacing: .5px; }
 .bz-people-find-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; justify-content: center; }
 .bz-people-find-tags .bz-people-stk { cursor: pointer; font-size: var(--f-aux); padding: 3px 10px; transition: transform .14s, background .14s; }
 @media (hover: hover) { .bz-people-find-tags .bz-people-stk:hover { transform: translateY(-2px) rotate(calc(var(--t1) * -1.5)); background: rgba(176,138,62,.24); } }
@@ -1078,6 +1108,11 @@
   /* 一页滚长了也知道自己在哪页：页眉吸在顶上一行（不透明底，照片不会从字缝里透出来） */
   .bz-people-page-head { position: sticky; top: 0; z-index: 4; background: #f7f2e6; padding: 4px 2px 6px;
     row-gap: 3px; box-shadow: 0 1px 0 #ded3b8; }
+  /* 窄屏整条在滚、页身不自己滚：折签跟着页眉一起吸——吸在**页眉下沿**（复评：页眉吸着而折签滑走，
+     两条之间会露出一条正文，看着像道缝）。页眉高度由 JS 量成 --bz-page-head-h */
+  .bz-people-pagebody { overflow: visible; }
+  .bz-people-pagebody::before { display: none; }
+  .bz-people-pagebody .bz-people-ftabs { top: var(--bz-page-head-h, 0px); }
   /* 窄屏也别把页眉右边的信息吞掉（「36 位联系人 · 2 个群聊未纳入」/ 说话跨度）：让它自己占一行 */
   .bz-people-head-note { flex: 1 0 100%; order: 3; }
   .bz-people-head-ledger { font-size: var(--f-aux); }
@@ -1558,8 +1593,8 @@
 .theme-dark .bz-people-stk.bz-people-stk-red { background: rgba(192, 100, 90, 0.16); border-color: rgba(192, 100, 90, 0.38); color: #dfa79a; }
 .theme-dark .bz-people-prof-entry { background: rgba(53, 49, 42, 0.6); border-color: #454036; }
 .theme-dark .bz-people-prof-row + .bz-people-prof-row, .theme-dark .bz-people-note-row + .bz-people-note-row { border-top-color: rgba(90, 84, 70, 0.6); }
-.theme-dark .bz-people-input { border-bottom-color: #4e483c; }
-.theme-dark .bz-people-input::placeholder { color: #6d6656; }
+.theme-dark .bz-people-input.bz-people-input { border-bottom-color: #4e483c; }
+.theme-dark .bz-people-input.bz-people-input::placeholder { color: #6d6656; }
 .theme-dark .bz-people-ds-ava { border-color: #454036; }
 .theme-dark .bz-people-ds-box { background: #2c2823; border-color: #55503f; }
 .theme-dark .bz-people-ds-on .bz-people-ds-box { background: var(--acc); border-color: var(--acc-deep); }
@@ -1602,7 +1637,8 @@
   border-radius: 8px; padding: 6px 9px; }
 .bz-people-supp-qname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: var(--f-mid); color: var(--ink); }
-.bz-people-supp-qts { flex: 0 0 auto; width: 178px; font-size: var(--f-mid); }
+.bz-people-supp-qts { flex: 0 0 auto; width: 178px; }
+input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 /* 导入队列：起点候选下拉 + 必填标红（ADR-0217：不许静默回落 mtime） */
 .bz-people-supp-qcand { flex: 0 0 auto; width: 168px; font-size: var(--f-mid); }
 .bz-people-supp-qrow.need-ts { border-color: var(--danger); background: rgba(179, 86, 77, 0.07); }
@@ -1616,7 +1652,14 @@
   border-radius: 8px; background: rgba(179, 86, 77, 0.06); }
 .bz-people-supp-delbox .bz-people-del-line { font-size: var(--f-mid); color: var(--ink-mut); margin-bottom: 5px; }
 .bz-people-supp-delchk { display: flex; gap: 6px; align-items: center; font-size: var(--f-mid); color: var(--ink); }
-.bz-people-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff8f0; }
+/* 重建质心的二次确认行（复评：覆盖式重跑先问一声） */
+.bz-people-supp-reffirm { margin: 8px 0 0;
+  padding: 8px 9px; border: 1px solid rgba(179, 86, 77, 0.35); border-radius: 8px; background: rgba(179, 86, 77, 0.06);
+  font-size: var(--f-mid); color: var(--ink); }
+/* 问题一行，两个按钮另起一行（复评：别和文字挤成一行折两截） */
+.bz-people-supp-reffirm-tx { line-height: 1.7; }
+.bz-people-supp-reffirm-acts { display: flex; gap: 8px; margin-top: 7px; }
+.bz-people-btn-danger.bz-people-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff8f0; }
 /* 起点行（ADR-0217：一等数据，可见可改） */
 .bz-people-supp-startrow { display: flex; gap: 7px; align-items: center; margin-top: 6px;
   font-size: var(--f-mid); color: var(--ink-mut); }
@@ -1624,27 +1667,72 @@
 .bz-people-supp-turns { margin-top: 8px; padding: 7px 9px; border: 1px solid rgba(148, 130, 100, 0.25);
   border-radius: 8px; background: rgba(148, 130, 100, 0.05); }
 .bz-people-supp-turnhead { font-size: var(--f-mid); color: var(--ink-mut); margin-bottom: 5px; }
-.bz-people-supp-turnlist { display: flex; flex-direction: column; gap: 3px; max-height: 260px; overflow: auto; }
-.bz-people-supp-turn { display: grid; grid-template-columns: 92px 118px 1fr; gap: 8px;
-  align-items: baseline; font-size: var(--f-aux); }
-.bz-people-supp-turn.side { opacity: 0.55; }
-/* 段界（ADR-0220 §7）：段首行顶一道细线，段内后续轮缩进一点，一眼看出并仓是怎么并的 */
-.bz-people-supp-turn.seghead { margin-top: 5px; padding-top: 5px; border-top: 1px dashed rgba(148, 130, 100, 0.3); }
-.bz-people-supp-turn.segcont { padding-left: 10px; }
-.bz-people-supp-turn.seghead:first-child { margin-top: 0; padding-top: 0; border-top: none; }
-.bz-people-supp-turnseg { flex: none; margin-right: 5px; padding: 0 5px; border-radius: 999px;
-  font-size: var(--f-small, 12px); background: rgba(196, 146, 58, 0.18); color: var(--acc-deep); }
-.bz-people-supp-turnwho { color: var(--acc-deep); }
+.bz-people-supp-turnlist { display: flex; flex-direction: column; gap: 14px; max-height: 320px; overflow: auto; padding: 3px 2px; }
+/* 微信式聊天流（复评「仿照微信」）：头像 + 气泡；段签 / 时刻 / 分割线一律不上屏——对方靠左、我靠右 */
+.bz-people-supp-turn { display: flex; align-items: flex-start; gap: 9px; }
+.bz-people-supp-turn.side { opacity: 0.5; }
+.bz-people-supp-turn.me { flex-direction: row-reverse; }
+.bz-people-supp-turnava { flex: none; width: 34px; height: 34px; border-radius: 6px; overflow: hidden; }
+.bz-people-supp-turnava img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.bz-people-supp-turnava .bz-people-ava-txt { width: 100%; height: 100%; display: flex; align-items: center;
+  justify-content: center; color: #fff8f0; font-family: var(--kai); font-size: var(--f-head); }
+.bz-people-supp-turnbubble { position: relative; max-width: 74%; padding: 6px 11px 7px; border-radius: 5px;
+  font-size: var(--f-mid); line-height: 1.7; color: var(--ink); overflow-wrap: anywhere;
+  background: #fff; box-shadow: 0 0 0 1px rgba(23, 21, 18, 0.05); }
+.bz-people-supp-turnbubble::before { content: ''; position: absolute; top: 12px; left: -5px; width: 0; height: 0;
+  border-style: solid; border-width: 4px 6px 4px 0; border-color: transparent #fff transparent transparent; }
+.bz-people-supp-turn.me .bz-people-supp-turnbubble { background: #95ec69; }
+.bz-people-supp-turn.me .bz-people-supp-turnbubble::before { left: auto; right: -5px;
+  border-width: 4px 0 4px 6px; border-color: transparent transparent transparent #95ec69; }
 /* 疑似重复巡检（Q3：只报不清） */
 .bz-people-supp-dups { margin: 8px 0 2px; padding: 7px 9px; border-radius: 8px;
   border: 1px solid rgba(176, 138, 62, 0.35); background: rgba(176, 138, 62, 0.08);
   font-size: var(--f-mid); color: var(--ink-mut); }
 .bz-people-supp-dupshead { margin-bottom: 4px; }
 .bz-people-supp-duprow { color: var(--ink); overflow-wrap: anywhere; }
-.bz-people-supp-turnat { color: var(--ink-mut); font-variant-numeric: tabular-nums; }
-.bz-people-supp-turntext { color: var(--ink); overflow-wrap: anywhere; }
 .theme-dark .bz-people-supp-turns { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
+.theme-dark .bz-people-supp-turnbubble { background: #2c2c2c; box-shadow: none; }
+.theme-dark .bz-people-supp-turnbubble::before { border-color: transparent #2c2c2c transparent transparent; }
+.theme-dark .bz-people-supp-turn.me .bz-people-supp-turnbubble { background: #3eb575; color: #0f1a12; }
+.theme-dark .bz-people-supp-turn.me .bz-people-supp-turnbubble::before { border-color: transparent transparent transparent #3eb575; }
 .bz-people-supp-stat { font-size: var(--f-mid); color: var(--ink-mut); margin: 10px 0 2px; }
+/* 留影预览网格（复评）：入库的图看得见、点开看大图、描述在图下、右上角的叉删得掉（二次确认） */
+.bz-people-supp-imggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px 8px; margin-top: 12px; align-items: start; }
+.bz-people-supp-imgcell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.bz-people-supp-imgbox { position: relative; aspect-ratio: 1 / 1; border-radius: 8px; overflow: hidden;
+  background: rgba(148, 130, 100, 0.12); border: 1px solid rgba(148, 130, 100, 0.22); }
+.bz-people-supp-imgthumb { width: 100%; height: 100%; display: block; object-fit: cover; cursor: zoom-in; }
+/* 描述放图下面（复评）：两行封顶，全文在 title 里 */
+.bz-people-supp-imgcap { font-size: var(--f-aux); line-height: 1.6; color: var(--ink-mut); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bz-people-supp-imgcap-none { font-style: italic; opacity: .75; }
+/* 叉常显（触屏没有 hover）；宿主的裸 button 基线要按份覆盖：尺寸/内边距/圆角/字号全写死 */
+.bz-people-supp-imgdel.bz-people-supp-imgdel { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px;
+  min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 50%; font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(28, 24, 18, 0.55); color: #fff; }
+@media (hover: hover) { .bz-people-supp-imgdel.bz-people-supp-imgdel:hover { background: rgba(168, 74, 60, 0.92); } }
+/* 二次确认（复评）：罩住这张图，就地问一句 */
+.bz-people-supp-imgask { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 7px; background: rgba(24, 20, 14, 0.62); }
+.bz-people-supp-imgask-tx { font-size: var(--f-mid); color: #fff8ee; }
+.bz-people-supp-imgask-acts { display: flex; gap: 6px; }
+.bz-people-supp-imgask-yes.bz-people-supp-imgask-yes,
+.bz-people-supp-imgask-no.bz-people-supp-imgask-no { height: 22px; min-height: 0; padding: 0 9px; border: 0;
+  border-radius: 4px; font-size: var(--f-aux); cursor: pointer; }
+.bz-people-supp-imgask-yes.bz-people-supp-imgask-yes { background: var(--danger); color: #fff8f0; }
+.bz-people-supp-imgask-no.bz-people-supp-imgask-no { background: rgba(255, 253, 247, 0.92); color: var(--ink); }
+/* 点开看大图（复评）：罩住整个面板，点哪儿都收（Esc 也收——esc-manager 单开一层） */
+.bz-people-supp-imgview { position: absolute; inset: 0; z-index: 95; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px; padding: 28px; cursor: zoom-out;
+  background: rgba(18, 14, 9, 0.74); }
+.bz-people-supp-imgview img { max-width: min(94%, 900px); max-height: 72vh; object-fit: contain;
+  border-radius: 8px; background: #fff; box-shadow: 0 14px 44px rgba(0, 0, 0, 0.52); }
+.bz-people-supp-imgview-cap { max-width: min(94%, 760px); max-height: 18vh; overflow: auto;
+  font-size: var(--f-mid); line-height: 1.8; color: #f4efe4; }
+.theme-dark .bz-people-supp-imgbox { background: rgba(0, 0, 0, 0.2); border-color: rgba(200, 180, 140, 0.22); }
+.theme-dark .bz-people-supp-imgcap { color: #b9b09a; }
 .bz-people-supp-ref { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: var(--f-mid);
   color: var(--ink-mut); margin: 10px 0 0; }
 .bz-people-supp-ref b { color: var(--acc-deep); }

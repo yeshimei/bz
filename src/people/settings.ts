@@ -83,6 +83,13 @@ export function peopleSettingsSchema(opts?: { onClearStore?: () => void | Promis
             desc: '撤回与打招呼等锚点消息保留',
             binding: { key: 'peopleKeepSystem' },
           },
+          {
+            type: 'text',
+            name: '我的头像',
+            desc: '逐轮时间轴里「我」一侧的头像图片路径；留空 = 名字首字',
+            binding: { key: 'peopleMyAvatar' },
+            placeholder: '例如 D:\\图片\\我.png',
+          },
         ],
       },
       {
