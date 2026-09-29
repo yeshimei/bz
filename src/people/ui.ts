@@ -111,8 +111,10 @@ import {
   voiceprintRefStatus,
   writeRecordingMeta,
   writeRecordingTurnsMd,
+  writeRecordingTurnsProofread,
   type RecordingSidecar,
 } from './recording';
+import { proofreadPieces } from '../core/asr-proofread';
 import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
@@ -3908,6 +3910,38 @@ async function prepareVoiceprintFor(talker: string, root: string): Promise<boole
 }
 
 /**
+ * 录音转写 LLM 校对（ADR-0222 / issue 518）：开关关 / 已校过 / 重排（why='restart' 只动 ts）零开销直返。
+ * 逐轮文本送 LLM「只修错不创作」，全成写回账本（顶层 `proofread` 标记 + 轮次 text 就地替换）后
+ * 以校对稿并仓；任一批终败不写回——原文并仓并通知，缺口留给重跑任务（Python 对已有 text 不重转）
+ * 或再点「并仓」补校。
+ */
+async function proofreadRecordingSidecarIfEnabled(
+  root: string,
+  talker: string,
+  file: string,
+  side: RecordingSidecar,
+  why: 'merge' | 'restart'
+): Promise<RecordingSidecar> {
+  if (why === 'restart') return side;
+  if (tryGetSettings()?.asrLlmProofread !== true || side.proofread) return side;
+  const pieces = (side.turns ?? []).filter((t) => t.text.trim() !== '').map((t) => t.text);
+  if (!pieces.length) return side;
+  notice(`「${file}」LLM 校对转写中（${pieces.length} 轮）…`, 'info');
+  const res = await proofreadPieces(pieces, {
+    contextNote: `双人录音聊天的逐轮转写（「我」与「${talker}」交替说话，口语）`,
+  });
+  if (res.failed) {
+    notice(`「${file}」LLM 校对失败——按原文并仓，重跑或再点并仓可补校`, 'warning');
+    return side;
+  }
+  if (!writeRecordingTurnsProofread(root, talker, file, res.texts)) {
+    notice(`「${file}」LLM 校对结果写回失败——按原文并仓`, 'warning');
+    return side;
+  }
+  return readRecordingSidecar(root, talker, file) ?? side;
+}
+
+/**
  * 转写成果齐（done，或停在 transcribe 但成果已齐的兜底）→ 聊天仓轮次并仓
  * （插件是聊天仓唯一写入者；kindCounts / stats 同步重算）。
  * `why = 'restart'` 是改起点后的重排：同一函数幂等（先按 `rec:<文件>:` 前缀清旧再写），
@@ -3920,11 +3954,12 @@ async function suppMergeRecording(talker: string, file: string, why: 'merge' | '
     notice('保险库上锁——解锁后在这条录音上点「并仓」补上', 'warning');
     return;
   }
-  const side = readRecordingSidecar(root, talker, file);
+  let side = readRecordingSidecar(root, talker, file);
   if (!side || !recordingTurnsComplete(side)) {
     void renderAlbum();
     return;
   }
+  side = await proofreadRecordingSidecarIfEnabled(root, talker, file, side, why);
   const salvaged = side.phase !== 'done'; // 账本收尾标记缺失的兜底并仓（ADR-0219）
   const base = recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
   let added = 0;

@@ -1,5 +1,5 @@
-/* 源指纹 daf9908163cbbc56 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
+/* 源指纹 1639ff67346f3875 · 仓内输入 42 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
   var __create = Object.create;
@@ -7573,6 +7573,127 @@ var BZW_knowledge = (() => {
     return out.sort();
   }
 
+  // src/core/asr-proofread.ts
+  function proofreadPrompt(entries, contextNote) {
+    const lines = entries.map((e) => `#${e.n}|${e.text}`).join("\n");
+    const note = contextNote ? `
+背景（仅助理解，不构成改写依据）：${contextNote}
+` : "";
+    return `你在校对语音识别（ASR）的转写输出，文本可能含同音错别字、字母/假名串音与识别噪声。逐条校对，规则：
+1. 只修错，不创作：仅修正依上下文可确证的同音/近音错别字；不得改变原意、不得增删信息、不得调整语序、不得书面化润色。
+2. 无法确证的一律保持原样：听不清或存疑的词（尤其数字与金额）、方言词、口语语气词一律保留。宁留原样，不猜不改。
+3. 引擎串音与孤立噪声（无关外语字母、假名、拟声词）可删；口语缩写若上下文可确证可修正（如 BTSD→PTSD）。
+4. 标点只修明显错误（如一句被误断成两句），不重排、不补省略号。
+5. 条数与顺序不变：不合并、不拆分、不移动内容。${note}
+输出严格 JSON（无解释、无代码围栏）：{"items":[{"n":<条号>,"text":"<校对后文本>"}]}，n 对应下方条号，必须覆盖每一条。
+
+待校对转写：
+${lines}`;
+  }
+  function proofreadBatches(pieces, charBudget = 3500, maxPieces = 16) {
+    var _a;
+    const batches = [];
+    let cur = [];
+    let curLen = 0;
+    for (let i = 0; i < pieces.length; i++) {
+      const p = String((_a = pieces[i]) != null ? _a : "");
+      if (!p.trim()) continue;
+      if (cur.length && (curLen + p.length > charBudget || cur.length >= maxPieces)) {
+        batches.push(cur);
+        cur = [];
+        curLen = 0;
+      }
+      cur.push(i);
+      curLen += p.length;
+    }
+    if (cur.length) batches.push(cur);
+    return batches;
+  }
+  function parseProofreadJson(raw) {
+    const cleaned = String(raw || "").replace(/```(?:json)?/gi, "").trim();
+    const start = cleaned.indexOf("{");
+    if (start < 0) return null;
+    let depth = 0;
+    let end = -1;
+    let inStr = false;
+    let esc2 = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const ch = cleaned[i];
+      if (inStr) {
+        if (esc2) esc2 = false;
+        else if (ch === "\\") esc2 = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === "{") depth++;
+      else if (ch === "}") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end < 0) return null;
+    try {
+      const obj = JSON.parse(cleaned.slice(start, end + 1));
+      const items = obj == null ? void 0 : obj.items;
+      if (!Array.isArray(items)) return null;
+      const out = [];
+      for (const it of items) {
+        const n = it == null ? void 0 : it.n;
+        if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || typeof (it == null ? void 0 : it.text) !== "string") return null;
+        out.push({ n, text: it.text });
+      }
+      return out;
+    } catch (e) {
+      return null;
+    }
+  }
+  var chatCallerOverride = null;
+  var RETRIES_PER_BATCH = 1;
+  async function proofreadPieces(pieces, opts) {
+    var _a;
+    const src = pieces.map((p) => String(p != null ? p : ""));
+    const out = [...src];
+    const batches = proofreadBatches(src);
+    const total = batches.length;
+    if (!total) return { texts: out, failed: false };
+    const ai = chatCallerOverride ? null : createAI();
+    const call = chatCallerOverride ? (prompt) => chatCallerOverride(prompt) : (prompt) => ai.chat(prompt);
+    let failed = false;
+    let done = 0;
+    for (const batch of batches) {
+      const entries = batch.map((orig, pos) => ({ n: pos + 1, text: src[orig] }));
+      const want = batch.length;
+      let corrected = null;
+      for (let attempt = 0; attempt <= RETRIES_PER_BATCH; attempt++) {
+        try {
+          const raw = await call(proofreadPrompt(entries, opts == null ? void 0 : opts.contextNote));
+          const parsed = parseProofreadJson(raw);
+          if (parsed && want > 0 && parsed.length === want && parsed.every((p, i) => p.n === i + 1)) {
+            corrected = parsed;
+            break;
+          }
+        } catch (e) {
+        }
+      }
+      if (corrected) {
+        corrected.forEach((p, pos) => {
+          const orig = batch[pos];
+          out[orig] = p.text.trim() || src[orig];
+        });
+      } else {
+        failed = true;
+      }
+      done++;
+      (_a = opts == null ? void 0 : opts.onProgress) == null ? void 0 : _a.call(opts, done, total);
+    }
+    if (failed) return { texts: [...src], failed: true };
+    return { texts: out, failed: false };
+  }
+
   // src/knowledge/partial-json.ts
   var ESCAPE_CHARS = {
     n: "\n",
@@ -7754,19 +7875,13 @@ ${chunks[0] || ""}`
     const tags = Array.isArray(meta == null ? void 0 : meta.tags) ? meta.tags.map(String).filter(Boolean).slice(0, 6) : [];
     const summary = String((meta == null ? void 0 : meta.summary) || "").trim();
     const domain = String((meta == null ? void 0 : meta.domain) || "").trim();
-    const polished = [];
-    for (const c of chunks) {
-      const p = await ai.chat(
-        `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
-
-【转写文稿】
-${c}`
-        // 输出上限走设置面板（issue 334/ADR-0148）；模型也跟随设置——历史上这里曾想私换
-        // deepseek-chat 避思考，但 options.model 从未被 prompt() 读取，属无效死参数，一并拆除
-      );
-      polished.push(String(p || "").trim());
+    let bodies = chunks;
+    if (s.asrLlmProofread === true && chunks.length) {
+      const r = await proofreadPieces(chunks, { contextNote: "B站视频语音转写文稿（讲解/独白，按原顺序切块）" });
+      if (r.failed) notice("LLM 校对失败——按转写原文生成文献正文", "warning");
+      else bodies = r.texts;
     }
-    const whole = polished.join("");
+    const whole = bodies.join("");
     const videoSection = opts.videoPath ? `![[${String(opts.videoPath).replace(/\\/g, "/")}]]` : null;
     const fm = [
       "---",
@@ -8399,7 +8514,7 @@ ${sample}`
     },
     /**
      * 插件侧 AI 阶段（ADR-0071）：CLI close(0) 后由插件接管——
-     * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + 分块润色 + 落盘）→
+     * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + LLM 校对开关下的正文文本档 + 落盘）→
      * 读毕删临时文件 → 「笔记落盘中」→ 成功终态。
      * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
      * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。

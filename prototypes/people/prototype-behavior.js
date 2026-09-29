@@ -1,5 +1,5 @@
-/* 源指纹 9b1ed3ed90152b49 · 仓内输入 89 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 2b7009cd043b25fb · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -15058,7 +15058,131 @@ ${lines.join("\n")}`);
     subscribe: () => subscribe,
     whenIdle: () => whenIdle
   });
+
+  // src/core/asr-proofread.ts
+  function proofreadPrompt(entries, contextNote) {
+    const lines = entries.map((e) => `#${e.n}|${e.text}`).join("\n");
+    const note = contextNote ? `
+背景（仅助理解，不构成改写依据）：${contextNote}
+` : "";
+    return `你在校对语音识别（ASR）的转写输出，文本可能含同音错别字、字母/假名串音与识别噪声。逐条校对，规则：
+1. 只修错，不创作：仅修正依上下文可确证的同音/近音错别字；不得改变原意、不得增删信息、不得调整语序、不得书面化润色。
+2. 无法确证的一律保持原样：听不清或存疑的词（尤其数字与金额）、方言词、口语语气词一律保留。宁留原样，不猜不改。
+3. 引擎串音与孤立噪声（无关外语字母、假名、拟声词）可删；口语缩写若上下文可确证可修正（如 BTSD→PTSD）。
+4. 标点只修明显错误（如一句被误断成两句），不重排、不补省略号。
+5. 条数与顺序不变：不合并、不拆分、不移动内容。${note}
+输出严格 JSON（无解释、无代码围栏）：{"items":[{"n":<条号>,"text":"<校对后文本>"}]}，n 对应下方条号，必须覆盖每一条。
+
+待校对转写：
+${lines}`;
+  }
+  function proofreadBatches(pieces, charBudget = 3500, maxPieces = 16) {
+    var _a2;
+    const batches = [];
+    let cur2 = [];
+    let curLen = 0;
+    for (let i = 0; i < pieces.length; i++) {
+      const p = String((_a2 = pieces[i]) != null ? _a2 : "");
+      if (!p.trim()) continue;
+      if (cur2.length && (curLen + p.length > charBudget || cur2.length >= maxPieces)) {
+        batches.push(cur2);
+        cur2 = [];
+        curLen = 0;
+      }
+      cur2.push(i);
+      curLen += p.length;
+    }
+    if (cur2.length) batches.push(cur2);
+    return batches;
+  }
+  function parseProofreadJson(raw) {
+    const cleaned = String(raw || "").replace(/```(?:json)?/gi, "").trim();
+    const start = cleaned.indexOf("{");
+    if (start < 0) return null;
+    let depth2 = 0;
+    let end = -1;
+    let inStr = false;
+    let esc2 = false;
+    for (let i = start; i < cleaned.length; i++) {
+      const ch = cleaned[i];
+      if (inStr) {
+        if (esc2) esc2 = false;
+        else if (ch === "\\") esc2 = true;
+        else if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') inStr = true;
+      else if (ch === "{") depth2++;
+      else if (ch === "}") {
+        depth2--;
+        if (depth2 === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end < 0) return null;
+    try {
+      const obj = JSON.parse(cleaned.slice(start, end + 1));
+      const items = obj == null ? void 0 : obj.items;
+      if (!Array.isArray(items)) return null;
+      const out = [];
+      for (const it of items) {
+        const n = it == null ? void 0 : it.n;
+        if (typeof n !== "number" || !Number.isInteger(n) || n < 1 || typeof (it == null ? void 0 : it.text) !== "string") return null;
+        out.push({ n, text: it.text });
+      }
+      return out;
+    } catch (e) {
+      return null;
+    }
+  }
+  var chatCallerOverride = null;
+  var RETRIES_PER_BATCH = 1;
+  async function proofreadPieces(pieces, opts) {
+    var _a2;
+    const src = pieces.map((p) => String(p != null ? p : ""));
+    const out = [...src];
+    const batches = proofreadBatches(src);
+    const total = batches.length;
+    if (!total) return { texts: out, failed: false };
+    const ai = chatCallerOverride ? null : createAI();
+    const call = chatCallerOverride ? (prompt) => chatCallerOverride(prompt) : (prompt) => ai.chat(prompt);
+    let failed = false;
+    let done = 0;
+    for (const batch of batches) {
+      const entries = batch.map((orig, pos) => ({ n: pos + 1, text: src[orig] }));
+      const want = batch.length;
+      let corrected = null;
+      for (let attempt = 0; attempt <= RETRIES_PER_BATCH; attempt++) {
+        try {
+          const raw = await call(proofreadPrompt(entries, opts == null ? void 0 : opts.contextNote));
+          const parsed = parseProofreadJson(raw);
+          if (parsed && want > 0 && parsed.length === want && parsed.every((p, i) => p.n === i + 1)) {
+            corrected = parsed;
+            break;
+          }
+        } catch (e) {
+        }
+      }
+      if (corrected) {
+        corrected.forEach((p, pos) => {
+          const orig = batch[pos];
+          out[orig] = p.text.trim() || src[orig];
+        });
+      } else {
+        failed = true;
+      }
+      done++;
+      (_a2 = opts == null ? void 0 : opts.onProgress) == null ? void 0 : _a2.call(opts, done, total);
+    }
+    if (failed) return { texts: [...src], failed: true };
+    return { texts: out, failed: false };
+  }
+
+  // src/people/jobs.ts
   init_domain_bus();
+  init_notice();
   init_settings_provider();
   init_data();
 
@@ -16709,6 +16833,26 @@ ${lines.join("\n")}`);
       imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
     };
   }
+  function pendingVoiceProofread(items) {
+    return items.filter((v) => {
+      var _a2;
+      return String((_a2 = v.text) != null ? _a2 : "").trim() !== "" && v.proofread !== true;
+    });
+  }
+  function writeVoiceSidecarRaw(dataRoot, contact, items) {
+    const fs = fso();
+    if (!fs || !dataRoot || !contact || !items.length) return false;
+    try {
+      const norm = (s) => s.replace(/\\/g, "/");
+      const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
+      fs.writeText(norm(`${base}/voice.json`), `${JSON.stringify(items, null, 1)}
+`);
+      return true;
+    } catch (e) {
+      console.warn("[people] 语音旁路表写回失败:", e);
+      return false;
+    }
+  }
   function firstLine2(text2, max = 200) {
     const line = String(text2 || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
     return line.length > max ? line.slice(0, max) + "…" : line;
@@ -17483,6 +17627,7 @@ ${lines.join("\n")}`);
     }
     const side = readPrepSidecars(dataRoot, job.talker);
     if (side && (side.voice.length || side.imageMap.length)) {
+      await proofreadVoiceSidecarIfEnabled(job, dataRoot, job.talker);
       await mergePrepArtifactsIntoStore(safe, job.talker, dataRoot);
       const fresh = (_b2 = await safe.read(job.talker)) == null ? void 0 : _b2.store;
       const after = pendingMediaCounts((_c2 = fresh == null ? void 0 : fresh.msgs) != null ? _c2 : []);
@@ -17536,6 +17681,37 @@ ${lines.join("\n")}`);
     if (Number.isFinite(failed) && failed > 0 && job.prep) job.prep.failed = failed;
     clearPrepControl(dataRoot);
     return "ok";
+  }
+  async function proofreadVoiceSidecarIfEnabled(job, dataRoot, talker) {
+    var _a2, _b2, _c2;
+    if (((_a2 = tryGetSettings()) == null ? void 0 : _a2.asrLlmProofread) !== true) return;
+    const items = (_c2 = (_b2 = readPrepSidecars(dataRoot, talker)) == null ? void 0 : _b2.voice) != null ? _c2 : [];
+    const pending = pendingVoiceProofread(items);
+    if (!pending.length) return;
+    const step = (t) => {
+      job.message = t;
+      void persist();
+      emit();
+    };
+    step(`LLM 校对语音条中（${pending.length} 条）…`);
+    const res = await proofreadPieces(pending.map((v) => {
+      var _a3;
+      return String((_a3 = v.text) != null ? _a3 : "");
+    }), {
+      contextNote: "双人聊天语音消息逐条转写（口语，按时间先后排列）",
+      onProgress: (done, total) => step(`LLM 校对语音条 ${done}/${total} 批`)
+    });
+    if (res.failed) {
+      notice(`「${talker}」语音条 LLM 校对失败——按原文并仓，重跑任务可补校`, "warning");
+      return;
+    }
+    pending.forEach((v, k) => {
+      v.text = res.texts[k];
+      v.proofread = true;
+    });
+    if (!writeVoiceSidecarRaw(dataRoot, talker, items)) {
+      notice(`「${talker}」语音条校对结果写回失败——按原文并仓`, "warning");
+    }
   }
   async function mergePrepArtifactsIntoStore(safe, talker, dataRoot, opts) {
     var _a2;
@@ -17803,6 +17979,7 @@ ${lines.join("\n")}`);
       const prepState = await runPrepStage(job, finish, storeBefore, safe);
       if (prepState === "halted") return;
       if (prepState === "ok") {
+        await proofreadVoiceSidecarIfEnabled(job, dataRootOf(), job.talker);
         const merged2 = await mergePrepArtifactsIntoStore(safe, job.talker, dataRootOf());
         if (gone(job)) return;
         if (merged2 && merged2.voice + merged2.images > 0) {
@@ -18300,7 +18477,8 @@ ${lines.join("\n")}`);
       ...str2(o.mode) ? { mode: str2(o.mode) } : {},
       ...speakers && typeof speakers === "object" && !Array.isArray(speakers) ? { speakersSec: Object.fromEntries(Object.entries(speakers).filter(([, v]) => typeof v === "number")) } : {},
       ...o.progress && typeof o.progress === "object" ? { progress: o.progress } : {},
-      ...turnsParsed ? { turns: turnsParsed } : {}
+      ...turnsParsed ? { turns: turnsParsed } : {},
+      ...o.proofread === true ? { proofread: true } : {}
     };
   }
   function recordingPhasePct(s) {
@@ -18510,6 +18688,35 @@ ${lines.join("\n")}`);
     }
     sidecarCache.set(p, { sig, value });
     return value;
+  }
+  function writeRecordingTurnsProofread(dataRoot, talker, file, texts) {
+    const fs2 = controlFs();
+    if (!fs2 || !texts.length) return false;
+    const p = recordingSidecarPath(dataRoot, talker, file);
+    let raw;
+    try {
+      raw = JSON.parse(fs2.readFileSync(p, "utf8"));
+    } catch (e) {
+      return false;
+    }
+    if (!raw || !Array.isArray(raw.turns)) return false;
+    const hit = [];
+    for (let i = 0; i < raw.turns.length; i++) {
+      const t = raw.turns[i];
+      if (t && typeof t === "object" && typeof t.text === "string" && t.text.trim() !== "") hit.push(i);
+    }
+    if (hit.length !== texts.length) return false;
+    hit.forEach((ti, k) => {
+      raw.turns[ti].text = texts[k];
+    });
+    raw.proofread = true;
+    try {
+      fs2.writeFileSync(p, JSON.stringify(raw, null, 1));
+    } catch (e) {
+      return false;
+    }
+    sidecarCache.delete(p);
+    return true;
   }
   function readRecordingMeta(dataRoot, talker, file) {
     const fs2 = controlFs();
@@ -24178,6 +24385,26 @@ ${lines.join("\n")}`);
     }
     return true;
   }
+  async function proofreadRecordingSidecarIfEnabled(root, talker, file, side, why) {
+    var _a2, _b2, _c2;
+    if (why === "restart") return side;
+    if (((_a2 = tryGetSettings()) == null ? void 0 : _a2.asrLlmProofread) !== true || side.proofread) return side;
+    const pieces = ((_b2 = side.turns) != null ? _b2 : []).filter((t) => t.text.trim() !== "").map((t) => t.text);
+    if (!pieces.length) return side;
+    notice(`「${file}」LLM 校对转写中（${pieces.length} 轮）…`, "info");
+    const res = await proofreadPieces(pieces, {
+      contextNote: `双人录音聊天的逐轮转写（「我」与「${talker}」交替说话，口语）`
+    });
+    if (res.failed) {
+      notice(`「${file}」LLM 校对失败——按原文并仓，重跑或再点并仓可补校`, "warning");
+      return side;
+    }
+    if (!writeRecordingTurnsProofread(root, talker, file, res.texts)) {
+      notice(`「${file}」LLM 校对结果写回失败——按原文并仓`, "warning");
+      return side;
+    }
+    return (_c2 = readRecordingSidecar(root, talker, file)) != null ? _c2 : side;
+  }
   async function suppMergeRecording(talker, file, why = "merge") {
     const root = suppDataRoot();
     if (!root || !peopleSafe) peopleSafe = await getPeopleSafeStore();
@@ -24185,11 +24412,12 @@ ${lines.join("\n")}`);
       notice("保险库上锁——解锁后在这条录音上点「并仓」补上", "warning");
       return;
     }
-    const side = readRecordingSidecar(root, talker, file);
+    let side = readRecordingSidecar(root, talker, file);
     if (!side || !recordingTurnsComplete(side)) {
       void renderAlbum();
       return;
     }
+    side = await proofreadRecordingSidecarIfEnabled(root, talker, file, side, why);
     const salvaged = side.phase !== "done";
     const base = recordingStartOf(root, talker, file, recMtimeOf(root, talker, file));
     let added = 0;

@@ -178,7 +178,7 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(rows[2].placeholder).toBe('jev-latest');
   });
 
-  it('语音转写组（issue 444）：转写引擎下拉恒显 + Whisper 档位仅 faster-whisper 时显示', () => {
+  it('语音转写组（issue 444）：转写引擎下拉恒显 + Whisper 档位仅 faster-whisper 时显示 + LLM 校对开关（ADR-0222）', () => {
     const rows = schema.groups[3].rows as Array<{
       name: string;
       type: string;
@@ -187,8 +187,8 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
       options?: Array<{ value: string; label: string }> | ((s: SettingsSnapshot) => Array<{ value: string; label: string }>);
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
-    expect(rows.map((r) => r.name)).toEqual(['转写引擎', 'Whisper 档位']);
-    expect(rows.map((r) => r.type)).toEqual(['select', 'select']);
+    expect(rows.map((r) => r.name)).toEqual(['转写引擎', 'Whisper 档位', 'LLM 校对']);
+    expect(rows.map((r) => r.type)).toEqual(['select', 'select', 'toggle']);
     // 引擎行：键直绑 asrEngine，两档（SenseVoice 缺省在前）
     expect(rows[0].binding).toEqual({ key: 'asrEngine' });
     expect(rows[0].options).toEqual([
@@ -205,6 +205,11 @@ describe('mainSettingsSchema：主设置页区块（issue 422 起 AI 页按模�
     expect(visible({ asrEngine: 'faster-whisper' })).toBe(true);
     expect(visible({ asrEngine: 'sensevoice' })).toBe(false);
     expect(visible({})).toBe(false); // 键缺省 = sensevoice，档位行隐藏
+    // 校对行（ADR-0222/issue 518）：toggle 恒显，绑 asrLlmProofread；出域提示必须落在设置项文案
+    expect(rows[2].binding).toEqual({ key: 'asrLlmProofread' });
+    expect(rows[2].visibleWhen).toBeUndefined();
+    expect(String(rows[2].desc)).toContain('出域');
+    expect(String(rows[2].desc)).toContain('只修错');
   });
 
   it('数据源凭据组（issue 331 拆组）：三行统一单行 secret（ApiZero Key → B站 Cookie → 豆瓣 Cookie）；桌面端 B站行带「从 CLI 导入」', () => {
