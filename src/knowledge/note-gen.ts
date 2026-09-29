@@ -1,7 +1,7 @@
 /**
  * 文献笔记生成（literature 域，ADR-0071：AI 回迁 bz 插件侧）
  * - 视频文献（type: video，frontmatter 九键：title/tags/summary/source/date/author/sourceTitle/type/domain，
- *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
+ *   正文 = 转写原文或 LLM 校对稿（开关口径，ADR-0222——旧「润色转录」已退役）+ 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
  *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
  * - 术语文献（type: term，frontmatter 四键：title/type/domain/date + 可选 source/sourceTitle（术语来源，ADR-0116），
  *   正文=一段百科式简介；term 与 title 同值的历史冗余键已退役，ADR-0169——存量由 backfillNotes 清理）
