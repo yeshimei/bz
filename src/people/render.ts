@@ -1627,9 +1627,14 @@ export function dsPage(s: DsModalState): HTMLElement {
   if (s.notice) body.push(el('div', 'bz-people-notice bz-people-ds-notice', { 'data-people-ds-notice': '' }, text(s.notice)));
   if (s.sync) body.push(dsSyncLineNode(s.sync));
   if (!s.rows) {
+    // 空态按状态分支（B 组审查 P3）：扫描进行中别再说「还没扫描」；未配置数据根要指路设置
     body.push(el('div', 'bz-people-empty-hint', text(s.desktopOnly
       ? '数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。'
-      : '还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
+      : s.scanning
+        ? '正在扫描联系人目录…'
+        : !s.dataDir
+          ? '还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。'
+          : '还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
   } else {
     const list = el('div', 'bz-people-ds-list', { 'data-people-ds-list': '' });
     for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
@@ -2071,6 +2076,7 @@ function suppRecQueueBody(queue: SuppRecQueueItem[]): HTMLElement[] {
       const sel = document.createElement('select');
       sel.className = 'bz-people-input bz-people-supp-qcand';
       sel.setAttribute('data-people-supp-rec-cand', String(i));
+      sel.setAttribute('data-people-supp-rec-path', it.path); // 身份钩子：ui 侧按 path 认条目（下标在队列增删后会串位）
       sel.setAttribute('title', '文件名只给了「周X / N点N分」这类相对信息——选一个候选日期');
       it.candidates.forEach((c) => {
         const o = document.createElement('option');
@@ -2086,6 +2092,7 @@ function suppRecQueueBody(queue: SuppRecQueueItem[]): HTMLElement[] {
     ts.className = 'bz-people-input bz-people-supp-qts';
     ts.value = it.startMs === null ? '' : suppLocalTsValue(it.startMs);
     ts.setAttribute('data-people-supp-rec-ts', String(i));
+    ts.setAttribute('data-people-supp-rec-path', it.path); // 身份钩子：队列重排后 harvest 仍认得这条（B 组审查 P1）
     if (it.startMs === null) ts.setAttribute('placeholder', '必填：这条录音的起点');
     row.appendChild(ts);
     row.appendChild(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '×', { 'data-people-supp-rec-drop': String(i), 'aria-label': '移除' }));
@@ -2226,8 +2233,8 @@ function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit
   return row;
 }
 
-/** ts → datetime-local 输入值（本地时区，分钟精度） */
-function suppLocalTsValue(ts: number): string {
+/** ts → datetime-local 输入值（本地时区，分钟精度；ui 侧起点候选原位同步也用它） */
+export function suppLocalTsValue(ts: number): string {
   const d = new Date(ts);
   const p2 = (n: number): string => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
