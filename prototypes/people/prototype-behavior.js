@@ -1,4 +1,4 @@
-/* 源指纹 2735beca0faa31b5 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7341a7dd52b70831 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13984,10 +13984,11 @@ var BZW_people = (() => {
       '{"events":[{"ts":"YYYY-MM-DD","kind":"major","summary":"..."}],"traits":["..."],"quotes":[{"ts":"YYYY-MM-DD","who":"对方","text":"..."}],"moments":[{"ts":"YYYY-MM-DD","summary":"..."}],"interests":[{"ts":"YYYY-MM-DD","topic":"..."}],"threads":[{"ts":"YYYY-MM-DD","text":"..."}]}'
     ].join("\n");
   }
-  function buildChroniclePrompt(name, events, mediaNote, statsNote) {
+  function buildChroniclePrompt(name, events, mediaNote, statsNote, existing) {
     const eventLines = events.length ? events.map((e) => `- ${e.ts}：${e.summary}`).join("\n") : "（无）";
     return [
       `我在整理我和「${name}」这些年的交往史，要写成一份《纪事》。下面是从认识到现在、按时间排的交往事件。`,
+      ...existing ? reviseSection(existing) : [],
       ...mediaNote ? ["", `素材说明：${mediaNote}`] : [],
       // statsNote 自带「互动画像：」标签，原文成行即可（不再叠加前缀）
       ...statsNote ? ["", statsNote] : [],
@@ -14069,10 +14070,25 @@ var BZW_people = (() => {
   function linesOrNone(lines) {
     return lines.length ? lines.join("\n") : "（无）";
   }
-  function buildPersonPrompt(name, material, sampleWarn) {
+  function reviseSection(existing) {
+    return [
+      "## ⚠ 修订模式：这一卷你已经写过（原文附后）",
+      "下面附上你此前写下的这一卷全文。这次不是重画——是带着新增素材回来修订它：",
+      "- 原文中仍然成立的内容、事例、引用、语气，一字不弃地保留（允许为衔接做最小润色）；",
+      "- 只做三类改动：把新增素材里的新事 / 新话 / 新模式补写进对应小节；修正与新材料明显冲突的旧结论；更新涉及「现在」的表述；",
+      "- 不得删除、合并或弱化仍然成立的旧内容；素材里没有「消失 / 疏远」的证据，就不要把旧内容写成过去了的；",
+      "- 旧文已写过的素材不因重复出现而展开重写；产出按下方小节结构给**修订后的完整全文**（不是只给增量）。",
+      "",
+      "## 此前写下的这一卷（修订基础）",
+      existing,
+      ""
+    ];
+  }
+  function buildPersonPrompt(name, material, sampleWarn, existing) {
     const { events, traits, quotes, moments, interests, mediaNote, statsNote, profileNote } = material;
     return [
       `我在给好友「${name}」画一张「脸谱」，这是卷一《其人》，写 TA 这个人本身。下面是我从我们的聊天记录里提炼出来的素材。人和关系分两条轴：TA 是个什么样的人归卷一，我们俩怎么相处归卷二《相交》，卷一只写 TA，不写关系。`,
+      ...existing ? reviseSection(existing) : [],
       ...sampleWarn ? [sampleWarn] : [],
       ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
       "",
@@ -14126,10 +14142,11 @@ var BZW_people = (() => {
       TONE_RULES
     ].join("\n");
   }
-  function buildBondPrompt(name, material, sampleWarn) {
+  function buildBondPrompt(name, material, sampleWarn, existing) {
     const { events, quotes, moments, threads, mediaNote, statsNote, profileNote } = material;
     return [
       `我在给好友「${name}」画一张「脸谱」，这是卷二《相交》，写我和 TA 这段关系。下面是我从我们的聊天记录里提炼出来的素材。TA 本身是个什么样的人归卷一，本卷只写我们俩怎么相处。`,
+      ...existing ? reviseSection(existing) : [],
       ...sampleWarn ? [sampleWarn] : [],
       ...mediaNote ? ["", `素材说明：${mediaNote}`, ""] : [],
       "",
@@ -17601,7 +17618,7 @@ ${lines.join("\n")}`);
     }
   }
   async function runJob(job) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -17765,7 +17782,16 @@ ${lines.join("\n")}`);
         emit();
       }
       let merged = mergeBatches(job.results);
-      if (job.mode === "incremental") merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
+      if (job.mode === "incremental") {
+        merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
+        if ((existing == null ? void 0 : existing.digest) && (existing.digest.person || existing.digest.bond || existing.digest.chronicle)) {
+          job.revisedFrom = {
+            person: (_n = existing.digest.person) != null ? _n : "",
+            bond: (_o = existing.digest.bond) != null ? _o : "",
+            chronicle: (_p = existing.digest.chronicle) != null ? _p : ""
+          };
+        }
+      }
       if (gone(job)) return;
       const counts = {
         events: merged.events.length,
@@ -17774,9 +17800,9 @@ ${lines.join("\n")}`);
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_n = job.material) == null ? void 0 : _n.mediaNote,
-        statsNote: (_o = job.material) == null ? void 0 : _o.statsNote,
-        profileNote: (_p = job.material) == null ? void 0 : _p.profileNote,
+        mediaNote: (_q = job.material) == null ? void 0 : _q.mediaNote,
+        statsNote: (_r = job.material) == null ? void 0 : _r.statsNote,
+        profileNote: (_s = job.material) == null ? void 0 : _s.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -17786,7 +17812,7 @@ ${lines.join("\n")}`);
       });
       let person = "";
       try {
-        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn))).trim();
+        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_t = existing == null ? void 0 : existing.digest) == null ? void 0 : _t.person : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -17803,7 +17829,7 @@ ${lines.join("\n")}`);
       await finish({ stage: "bond", message: "《其人》完成，正在生成《相交》…" });
       let bond = "";
       try {
-        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn))).trim();
+        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_u = existing == null ? void 0 : existing.digest) == null ? void 0 : _u.bond : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -17822,7 +17848,13 @@ ${lines.join("\n")}`);
       if (merged.events.length) {
         try {
           chronicle = (await asks.portrait(
-            buildChroniclePrompt(job.name, evenlySample(merged.events, MATERIAL_LIMITS.chronicle), material.mediaNote, material.statsNote)
+            buildChroniclePrompt(
+              job.name,
+              evenlySample(merged.events, MATERIAL_LIMITS.chronicle),
+              material.mediaNote,
+              material.statsNote,
+              job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.chronicle : void 0
+            )
           )).trim();
         } catch (e) {
           chronicle = "";
@@ -17861,7 +17893,7 @@ ${lines.join("\n")}`);
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_q = st == null ? void 0 : st.safe) == null ? void 0 : _q.unlocked)) {
+      if (!((_w = st == null ? void 0 : st.safe) == null ? void 0 : _w.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，解锁后继续" });
         return;
       }
@@ -18559,9 +18591,11 @@ ${lines.join("\n")}`);
     error: { label: "继续生成", hook: "data-people-jobs-resume" },
     done: null
   };
-  function jobsActionOf(s) {
-    if (s.status === "error" && s.resumable === false) return { label: "删除任务", hook: "data-people-jobs-dismiss" };
-    return JOBS_ACTIONS[s.status];
+  function jobsActionsOf(s) {
+    if (s.status === "error" && s.resumable === false) return [{ label: "删除任务", hook: "data-people-jobs-dismiss" }];
+    const main = JOBS_ACTIONS[s.status];
+    if (!main) return [];
+    return s.status === "done" ? [main] : [main, { label: "取消", hook: "data-people-jobs-cancel" }];
   }
   function prepStagePart(s) {
     var _a2, _b2;
@@ -18671,13 +18705,14 @@ ${lines.join("\n")}`);
     const mainEl = el("div", "bz-people-jobs-main", text(line.head));
     if (line.detail) mainEl.appendChild(el("span", "bz-people-jobs-detail", text(` · ${line.detail}`)));
     block.appendChild(mainEl);
-    const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
     if (s.prep && s.prep.failed > 0 && s.status !== "running" && s.status !== "done") {
       foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试失败项", { "data-people-jobs-prep-retry": "" }));
     }
-    if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    for (const action of jobsActionsOf(s)) {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    }
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
   }
@@ -21074,6 +21109,8 @@ ${lines.join("\n")}`);
         // 449：场景 / 特质随生成落盘
         traits: (_t = job.material) == null ? void 0 : _t.traits,
         chronicle: job.chronicle || void 0,
+        ...job.revisedFrom ? { revisedFrom: job.revisedFrom } : {},
+        // issue 517：修订前旧卷留档
         generatedAt: now
       };
       await store2.setDigest(talker, digest);
@@ -21166,13 +21203,21 @@ ${lines.join("\n")}`);
     done == null ? void 0 : done(answer);
   }
   function jobsAction(kind) {
-    var _a2, _b2, _c, _d, _e;
+    var _a2, _b2, _c, _d, _e, _f;
     const api = jobs();
     const talker = (_b2 = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a2.getAttribute("data-people-jobs-talker")) != null ? _b2 : "";
-    if (kind === "prep-retry") {
+    if (kind === "cancel") {
       const who = talker || ((_c = currentJobsItem()) == null ? void 0 : _c.talker) || "";
       if (!who) return;
-      if ((_d = api.retryPrepFailures) == null ? void 0 : _d.call(api, who)) notice("重试失败项——已完成的产物与批次不重跑", "info");
+      if (api.removeJob(who)) notice("已取消这次画脸谱——详情页可重新补画", "delete");
+      renderNote();
+      void renderAlbum();
+      return;
+    }
+    if (kind === "prep-retry") {
+      const who = talker || ((_d = currentJobsItem()) == null ? void 0 : _d.talker) || "";
+      if (!who) return;
+      if ((_e = api.retryPrepFailures) == null ? void 0 : _e.call(api, who)) notice("重试失败项——已完成的产物与批次不重跑", "info");
       return;
     }
     if (kind === "resume") {
@@ -21180,7 +21225,7 @@ ${lines.join("\n")}`);
         notice("正在同步微信数据——同步完成后再继续生成", "info");
         return;
       }
-      const who = talker || ((_e = currentJobsItem()) == null ? void 0 : _e.talker) || "";
+      const who = talker || ((_f = currentJobsItem()) == null ? void 0 : _f.talker) || "";
       if (!who) return;
       api.resume(who);
       notice("继续生成——已完成的批次不重画", "info");
@@ -21316,6 +21361,10 @@ ${lines.join("\n")}`);
     }
     if (t.closest("[data-people-jobs-dismiss]")) {
       jobsAction("dismiss");
+      return;
+    }
+    if (t.closest("[data-people-jobs-cancel]")) {
+      jobsAction("cancel");
       return;
     }
     const dlg = t.closest("[data-people-dialog]");

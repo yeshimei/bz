@@ -1,4 +1,4 @@
-/* 源指纹 33ab06d1589ffaa5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 46ca3a14fca2b97d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -278,9 +278,11 @@ var BZR_people = (() => {
     error: { label: "继续生成", hook: "data-people-jobs-resume" },
     done: null
   };
-  function jobsActionOf(s) {
-    if (s.status === "error" && s.resumable === false) return { label: "删除任务", hook: "data-people-jobs-dismiss" };
-    return JOBS_ACTIONS[s.status];
+  function jobsActionsOf(s) {
+    if (s.status === "error" && s.resumable === false) return [{ label: "删除任务", hook: "data-people-jobs-dismiss" }];
+    const main = JOBS_ACTIONS[s.status];
+    if (!main) return [];
+    return s.status === "done" ? [main] : [main, { label: "取消", hook: "data-people-jobs-cancel" }];
   }
   function prepStagePart(s) {
     var _a, _b;
@@ -390,13 +392,14 @@ var BZR_people = (() => {
     const mainEl = el("div", "bz-people-jobs-main", text(line.head));
     if (line.detail) mainEl.appendChild(el("span", "bz-people-jobs-detail", text(` · ${line.detail}`)));
     block.appendChild(mainEl);
-    const action = jobsActionOf(s);
     const foot = [];
     if (s.status === "error" && s.errorText) foot.push(el("span", "bz-people-jobs-err", text(s.errorText)));
     if (s.prep && s.prep.failed > 0 && s.status !== "running" && s.status !== "done") {
       foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试失败项", { "data-people-jobs-prep-retry": "" }));
     }
-    if (action) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    for (const action of jobsActionsOf(s)) {
+      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", action.label, { [action.hook]: "" }));
+    }
     if (foot.length) block.appendChild(el("div", "bz-people-jobs-foot", foot));
     return block;
   }
