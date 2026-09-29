@@ -11189,6 +11189,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-people-supp-rowmeta { font-size: var(--f-mid); color: var(--ink-mut); margin-top: 5px; overflow-wrap: anywhere; }
 .bz-people-supp-rowfoot { display: flex; gap: 8px; align-items: center; margin-top: 7px; flex-wrap: wrap; }
 .bz-people-supp-rowfoot .bz-people-jobs-err { overflow-wrap: anywhere; }
+/* 录音处理阶段链（issue 511）：启动模型 → VAD 切窗 → 声纹分离 → 逐轮转写；当前段高亮、已过段收灰 */
+.bz-people-supp-stagechain { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; margin-top: 6px; font-size: var(--f-aux); }
+.bz-people-supp-stage-sep { color: var(--ink-mut); opacity: 0.55; }
+.bz-people-supp-stage { color: var(--ink-mut); opacity: 0.6; }
+.bz-people-supp-stage.done { opacity: 0.85; }
+.bz-people-supp-stage.done::after { content: ' ✓'; }
+.bz-people-supp-stage.on { color: var(--acc-deep); font-weight: 600; opacity: 1; }
 
 .theme-dark .bz-people-supp-qrow, .theme-dark .bz-people-supp-row { background: rgba(0, 0, 0, 0.14); border-color: rgba(200, 180, 140, 0.2); }
 .theme-dark .bz-people-supp-badge-running { color: #d6b274; }
