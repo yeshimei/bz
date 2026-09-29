@@ -200,6 +200,31 @@ export function recordingItemState(sidecar: RecordingSidecar | null, mergedInSto
   }
 }
 
+// ---------------- 阶段链（issue 511：完整进度与过程信息） ----------------
+
+/** 录音处理阶段：load = 进程在跑但 sidecar 还没本轮第一笔账（模型冷加载，分钟级） */
+export type RecordingStage = 'load' | 'vad' | 'voiceprint' | 'transcribe';
+
+/**
+ * 当前阶段判定（running 行与进度块共用单源）：进程在跑由调用方保证；
+ * sidecarFresh 由 UI 判（账本 mtime ≥ 起跑时刻）——sidecar 缺席 / 上一轮的 done / error
+ * 余账都算 load（本轮还没写到第一笔）；done 在 fresh 下归 transcribe（完成瞬间由
+ * onExit 重画行状态，轮询帧内短暂可见不算撒谎）。
+ */
+export function recordingStageOf(side: RecordingSidecar | null, sidecarFresh: boolean): RecordingStage {
+  if (!sidecarFresh || !side) return 'load';
+  if (side.phase === 'vad' || side.phase === 'voiceprint') return side.phase;
+  if (side.phase === 'transcribe' || side.phase === 'done') return 'transcribe';
+  return 'load';
+}
+
+/** 耗时人话（进度行「已 …」用）：`45s` / `3m12s`；负值按 0 */
+export function formatRecElapsed(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`;
+}
+
 // ---------------- 文件名时间解析（ts = 文件名 → mtime 回落） ----------------
 
 /**
@@ -433,16 +458,16 @@ export function setRecordingRunnerForTests(fn: RecordingRunner | null): void {
   runner = fn ?? runExternalTool;
 }
 
-const running = new Map<string, { handle: ExternalToolHandle; talker: string; file: string }>();
+const running = new Map<string, { handle: ExternalToolHandle; talker: string; file: string; startedAt: number }>();
 
 /** 该录音（按 sidecar 路径键）是否手上有进程在跑 */
 export function isRecordingRunning(sidecarPath: string): boolean {
   return running.has(sidecarPath);
 }
 
-/** 手上在跑的录音任务（进度块位置渲染用：面板重开后也要能列出来） */
-export function runningRecordingItems(): Array<{ path: string; talker: string; file: string }> {
-  return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file }));
+/** 手上在跑的录音任务（进度块位置渲染用：面板重开后也要能列出来；startedAt 供进度行算已耗时） */
+export function runningRecordingItems(): Array<{ path: string; talker: string; file: string; startedAt: number }> {
+  return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file, startedAt: v.startedAt }));
 }
 
 /** 手上在跑的录音任务数（UI 汇总提示用） */
@@ -468,7 +493,7 @@ export function startRecordingTask(
   if (running.has(key)) return;
   if (meta?.dataRoot && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);
   const handle = runner(spec, { onStep: () => {}, onProgress: () => {}, onInfo: () => {}, onResult: () => {} });
-  running.set(key, { handle, talker: meta?.talker ?? '', file: meta?.file ?? '' });
+  running.set(key, { handle, talker: meta?.talker ?? '', file: meta?.file ?? '', startedAt: Date.now() });
   void handle.done.then((outcome) => {
     running.delete(key);
     if (meta?.dataRoot && meta.talker && meta.file) clearRecControl(meta.dataRoot, meta.talker, meta.file);

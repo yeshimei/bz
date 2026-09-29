@@ -1,4 +1,4 @@
-/* 源指纹 66a5277453b380d7 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7758a93da3e12b21 · 仓内输入 88 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -17964,6 +17964,17 @@ ${lines.join("\n")}`);
     if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(done)) return null;
     return Math.max(0, Math.min(100, Math.round(done / total * 100)));
   }
+  function recordingStageOf(side, sidecarFresh) {
+    if (!sidecarFresh || !side) return "load";
+    if (side.phase === "vad" || side.phase === "voiceprint") return side.phase;
+    if (side.phase === "transcribe" || side.phase === "done") return "transcribe";
+    return "load";
+  }
+  function formatRecElapsed(ms) {
+    const s = Math.max(0, Math.floor(ms / 1e3));
+    if (s < 60) return `${s}s`;
+    return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, "0")}s`;
+  }
   function parseRecordingFilenameTs(fileName) {
     const base = String(fileName != null ? fileName : "").replace(/\.[^.]+$/, "");
     const zh = /(20\d{2})年(\d{1,2})月(\d{1,2})日\s*(\d{1,2})[点时](\d{2})分?(?:(\d{2})秒)?/.exec(base);
@@ -18119,7 +18130,7 @@ ${lines.join("\n")}`);
     return running.has(sidecarPath);
   }
   function runningRecordingItems() {
-    return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file }));
+    return [...running.entries()].map(([path, v]) => ({ path, talker: v.talker, file: v.file, startedAt: v.startedAt }));
   }
   var COOP_STOP_KILL_MS = 9e4;
   function startRecordingTask(spec, key, onExit, meta) {
@@ -18131,7 +18142,7 @@ ${lines.join("\n")}`);
     }, onInfo: () => {
     }, onResult: () => {
     } });
-    running.set(key, { handle: handle2, talker: (_a2 = meta == null ? void 0 : meta.talker) != null ? _a2 : "", file: (_b2 = meta == null ? void 0 : meta.file) != null ? _b2 : "" });
+    running.set(key, { handle: handle2, talker: (_a2 = meta == null ? void 0 : meta.talker) != null ? _a2 : "", file: (_b2 = meta == null ? void 0 : meta.file) != null ? _b2 : "", startedAt: Date.now() });
     void handle2.done.then((outcome) => {
       var _a3, _b3;
       running.delete(key);
@@ -19566,6 +19577,33 @@ ${lines.join("\n")}`);
     "awaiting-merge": "待并仓",
     merged: "已并入"
   };
+  var SUPP_REC_STAGES = [
+    { key: "load", label: "启动模型" },
+    { key: "vad", label: "VAD 切窗" },
+    { key: "voiceprint", label: "声纹分离" },
+    { key: "transcribe", label: "逐轮转写" }
+  ];
+  function suppRecStageLabel(key) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = SUPP_REC_STAGES.find((s) => s.key === key)) == null ? void 0 : _a2.label) != null ? _b2 : key;
+  }
+  function recStageChain(cur2) {
+    const chain = el("div", "bz-people-supp-stagechain", { "data-rec-chain": "" });
+    SUPP_REC_STAGES.forEach((s, i) => {
+      if (i) chain.appendChild(el("span", "bz-people-supp-stage-sep", text("→")));
+      chain.appendChild(el("span", "bz-people-supp-stage", { "data-stage-key": s.key }, text(s.label)));
+    });
+    applyRecStageChain(chain, cur2);
+    return chain;
+  }
+  function applyRecStageChain(chain, cur2) {
+    const curIdx = SUPP_REC_STAGES.findIndex((s) => s.key === cur2);
+    chain.querySelectorAll("[data-stage-key]").forEach((sEl) => {
+      const i = SUPP_REC_STAGES.findIndex((s) => s.key === sEl.getAttribute("data-stage-key"));
+      if (i < 0) return;
+      sEl.className = i === curIdx ? "bz-people-supp-stage on" : i < curIdx ? "bz-people-supp-stage done" : "bz-people-supp-stage";
+    });
+  }
   function suppPage(p, tab, image, rec, today) {
     const body = [];
     body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
@@ -19665,6 +19703,22 @@ ${lines.join("\n")}`);
       }
       row.appendChild(meter);
     }
+    if (r.status === "running" && r.stage) row.appendChild(recStageChain(r.stage));
+    if (r.status === "running") {
+      const meta = el("div", "bz-people-supp-rowmeta");
+      meta.appendChild(el("span", void 0, { "data-rec-ptext": "" }, text(r.phaseText)));
+      if (r.mode === "me-only") meta.appendChild(text(" · 单质心：非我即对方"));
+      if (r.mode === "blind") meta.appendChild(text(" · 无质心：盲分"));
+      if (r.turns !== void 0) meta.appendChild(text(` · ${r.turns} 轮`));
+      if (r.elapsed) {
+        meta.appendChild(text(" · "));
+        meta.appendChild(el("span", void 0, { "data-rec-elapsed": "" }, text(`已 ${r.elapsed}`)));
+      }
+      row.appendChild(meta);
+      const stop = button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file });
+      row.appendChild(el("div", "bz-people-supp-rowfoot", [stop]));
+      return row;
+    }
     const bits = [];
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
@@ -19676,7 +19730,6 @@ ${lines.join("\n")}`);
     if (r.status === "pending") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "处理", { "data-people-supp-rec-run": r.file }));
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
-    if (r.status === "running") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "停止", { "data-people-supp-rec-stop": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
@@ -22428,8 +22481,21 @@ ${lines.join("\n")}`);
       modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`
     };
   }
+  function recSidecarFresh(fs2, key, startedAt) {
+    if (!startedAt) return false;
+    try {
+      return fs2.statSync(key).mtimeMs >= startedAt;
+    } catch (e) {
+      return false;
+    }
+  }
+  function recRunningPtext(side, stage2) {
+    var _a2, _b2;
+    if (stage2 === "load") return "启动模型…（首次冷加载约 1-2 分钟）";
+    return (_b2 = (_a2 = side == null ? void 0 : side.progress) == null ? void 0 : _a2.text) != null ? _b2 : `${suppRecStageLabel(stage2)}…`;
+  }
   function suppRecState(talker) {
-    var _a2, _b2, _c, _d, _e, _f;
+    var _a2, _b2, _c, _d;
     const rows = [];
     const root = suppDataRoot();
     const ref = refBuilding ? "building" : voiceprintRefStatus(root, talker);
@@ -22448,12 +22514,25 @@ ${lines.join("\n")}`);
     } catch (e) {
       return { rows, ref };
     }
+    const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
     for (const f of files) {
       const key = recordingSidecarPath(root, talker, f);
       const side = readRecordingSidecar(root, talker, f);
       const merged = suppStoreInfo.mergedRecs.has(f);
       if (isRecordingRunning(key)) {
-        rows.push({ file: f, status: "running", phaseText: (_b2 = (_a2 = side == null ? void 0 : side.progress) == null ? void 0 : _a2.text) != null ? _b2 : "启动模型…", pct: recordingPhasePct(side), ...(side == null ? void 0 : side.mode) ? { mode: side.mode } : {}, ...(side == null ? void 0 : side.turns) ? { turns: side.turns.length } : {} });
+        const it = runMap.get(key);
+        const stage2 = recordingStageOf(side, recSidecarFresh(fs2, key, it == null ? void 0 : it.startedAt));
+        const elapsed = it ? formatRecElapsed(Date.now() - it.startedAt) : void 0;
+        rows.push({
+          file: f,
+          status: "running",
+          phaseText: recRunningPtext(side, stage2),
+          pct: recordingPhasePct(side),
+          stage: stage2,
+          ...elapsed ? { elapsed } : {},
+          ...(side == null ? void 0 : side.mode) ? { mode: side.mode } : {},
+          ...(side == null ? void 0 : side.turns) ? { turns: side.turns.length } : {}
+        });
         continue;
       }
       if (merged) {
@@ -22465,14 +22544,14 @@ ${lines.join("\n")}`);
         continue;
       }
       if (side.phase === "error") {
-        rows.push({ file: f, status: "failed", phaseText: "", pct: null, errText: (_c = side.error) != null ? _c : "进程异常退出" });
+        rows.push({ file: f, status: "failed", phaseText: "", pct: null, errText: (_a2 = side.error) != null ? _a2 : "进程异常退出" });
         continue;
       }
       if (side.phase === "done") {
-        rows.push({ file: f, status: "awaiting-merge", phaseText: ((_d = side.turns) == null ? void 0 : _d.length) ? `转写完成 · ${side.turns.length} 轮` : "转写完成", pct: 100, ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+        rows.push({ file: f, status: "awaiting-merge", phaseText: ((_b2 = side.turns) == null ? void 0 : _b2.length) ? `转写完成 · ${side.turns.length} 轮` : "转写完成", pct: 100, ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
         continue;
       }
-      rows.push({ file: f, status: "interrupted", phaseText: (_f = (_e = side.progress) == null ? void 0 : _e.text) != null ? _f : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
+      rows.push({ file: f, status: "interrupted", phaseText: (_d = (_c = side.progress) == null ? void 0 : _c.text) != null ? _d : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
     }
     return { rows, ref };
   }
@@ -22601,12 +22680,18 @@ ${lines.join("\n")}`);
     }
   }
   async function suppRunRecording(file) {
+    var _a2;
     const talker = detailId;
     const root = suppDataRoot();
     if (!talker || !root || !file || !suppFs()) return;
     if (!await suppFaceGate()) return;
     const key = recordingSidecarPath(root, talker, file);
     if (isRecordingRunning(key)) return;
+    const pre = readRecordingSidecar(root, talker, file);
+    if ((pre == null ? void 0 : pre.phase) === "done" && ((_a2 = pre.turns) == null ? void 0 : _a2.length)) {
+      notice(`「${file}」已转写完成（${pre.turns.length} 轮）——要重新转写先删除它的 .turns.json 账本`, "info");
+      return;
+    }
     if (voiceprintRefStatus(root, talker) === "missing") {
       notice("声纹参考还没建——先按「非我即对方」降级跑；想要双人精确归属，稍后建好质心可以重跑", "info");
     }
@@ -22711,12 +22796,16 @@ ${lines.join("\n")}`);
     const talker = detailId;
     const root = suppDataRoot();
     if (!talker || !root) return;
+    const fs2 = suppFs();
+    const runMap = new Map(runningRecordingItems().map((r) => [r.path, r]));
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-supp-row]").forEach((rowEl) => {
-      var _a2, _b2, _c;
+      var _a2;
       const file = (_a2 = rowEl.getAttribute("data-people-supp-row")) != null ? _a2 : "";
       const key = recordingSidecarPath(root, talker, file);
-      if (!isRecordingRunning(key)) return;
+      const it = runMap.get(key);
+      if (!isRecordingRunning(key) || !it) return;
       const side = readRecordingSidecar(root, talker, file);
+      const stage2 = recordingStageOf(side, fs2 ? recSidecarFresh(fs2, key, it.startedAt) : false);
       const pct = recordingPhasePct(side);
       if (pct !== null) {
         const fill = rowEl.querySelector(".bz-people-jobs-fill");
@@ -22724,27 +22813,35 @@ ${lines.join("\n")}`);
         if (fill) fill.style.width = `${pct}%`;
         if (pctEl) pctEl.textContent = `${pct}%`;
       }
-      const txt = (_c = (_b2 = side == null ? void 0 : side.progress) == null ? void 0 : _b2.text) != null ? _c : "";
-      if (txt) {
-        const meta = rowEl.querySelector(".bz-people-supp-rowmeta");
-        if (meta) meta.textContent = txt;
-        else rowEl.appendChild(el("div", "bz-people-supp-rowmeta", text(txt)));
+      const chain = rowEl.querySelector("[data-rec-chain]");
+      if (chain && rowEl.getAttribute("data-rec-stage") !== stage2) {
+        rowEl.setAttribute("data-rec-stage", stage2);
+        applyRecStageChain(chain, stage2);
       }
+      const ptext = rowEl.querySelector("[data-rec-ptext]");
+      if (ptext) ptext.textContent = recRunningPtext(side, stage2);
+      const elapsedEl = rowEl.querySelector("[data-rec-elapsed]");
+      if (elapsedEl) elapsedEl.textContent = `已 ${formatRecElapsed(Date.now() - it.startedAt)}`;
     });
   }
   function recNoteRows() {
-    var _a2, _b2;
     const root = suppDataRoot();
     if (!root) return [];
+    const fs2 = suppFs();
     const rows = [];
     for (const it of runningRecordingItems()) {
       if (it.file === "voiceprint_refs") continue;
+      const key = recordingSidecarPath(root, it.talker, it.file);
       const side = readRecordingSidecar(root, it.talker, it.file);
+      const stage2 = recordingStageOf(side, fs2 ? recSidecarFresh(fs2, key, it.startedAt) : false);
       rows.push({
         file: it.file,
         status: "running",
-        phaseText: (_b2 = (_a2 = side == null ? void 0 : side.progress) == null ? void 0 : _a2.text) != null ? _b2 : "启动模型…",
-        pct: recordingPhasePct(side)
+        // 进度块单行显示：主文案 + 已耗时（块由轮询整画，耗时随帧刷新）
+        phaseText: `${recRunningPtext(side, stage2)} · 已 ${formatRecElapsed(Date.now() - it.startedAt)}`,
+        pct: recordingPhasePct(side),
+        stage: stage2,
+        elapsed: formatRecElapsed(Date.now() - it.startedAt)
       });
     }
     return rows;

@@ -11,6 +11,7 @@ import {
   buildVoiceprintSpec,
   clearRecControl,
   faceRecSupportError,
+  formatRecElapsed,
   hasRecordingTurns,
   isRecordingRunning,
   parseRecordingFilenameTs,
@@ -20,6 +21,7 @@ import {
   recordingItemState,
   recordingPhasePct,
   recordingSidecarPath,
+  recordingStageOf,
   recordingTsOf,
   recordingsDirOf,
   resetFaceCapabilitiesForTests,
@@ -27,6 +29,7 @@ import {
   setRecordingRunnerForTests,
   startRecordingTask,
   stopRecordingTask,
+  runningRecordingItems,
   voiceprintRefPath,
   voiceprintRefStatus,
   writeRecControl,
@@ -198,6 +201,47 @@ describe('质心就绪态与进程注册表', () => {
     // 终结后可再起（重启续跑）
     startRecordingTask(spec, key);
     expect(isRecordingRunning(key)).toBe(true);
+    stopRecordingTask(key);
+  });
+});
+
+describe('阶段链与耗时（issue 511）', () => {
+  afterEach(() => setRecordingRunnerForTests(null));
+
+  it('recordingStageOf：缺席 / 旧账 = load；fresh 下三段各归其位，done 归 transcribe', () => {
+    expect(recordingStageOf(null, false)).toBe('load');
+    expect(recordingStageOf(null, true)).toBe('load');
+    expect(recordingStageOf({ phase: 'vad' }, true)).toBe('vad');
+    expect(recordingStageOf({ phase: 'voiceprint' }, true)).toBe('voiceprint');
+    expect(recordingStageOf({ phase: 'transcribe' }, true)).toBe('transcribe');
+    // 上一轮的余账（本轮还没落第一笔）= 冷加载期，不能拿旧段冒充本轮进度
+    expect(recordingStageOf({ phase: 'transcribe' }, false)).toBe('load');
+    expect(recordingStageOf({ phase: 'error', error: 'x' }, false)).toBe('load');
+    // done 在 fresh 下归 transcribe：完成瞬间由 onExit 重画行状态，轮询帧内短暂可见不算撒谎
+    expect(recordingStageOf({ phase: 'done', turns: [] }, true)).toBe('transcribe');
+  });
+
+  it('formatRecElapsed：秒 / 分秒两档，负值按 0', () => {
+    expect(formatRecElapsed(0)).toBe('0s');
+    expect(formatRecElapsed(45_000)).toBe('45s');
+    expect(formatRecElapsed(59_900)).toBe('59s');
+    expect(formatRecElapsed(192_000)).toBe('3m12s');
+    expect(formatRecElapsed(-5)).toBe('0s');
+  });
+
+  it('startRecordingTask 记起跑时刻，runningRecordingItems 带出（进度行算已耗时用）', () => {
+    setRecordingRunnerForTests(() => {
+      let resolve!: (v: any) => void;
+      const done = new Promise<any>((r) => (resolve = r));
+      return { stop: () => resolve({ ok: false, stopped: true, code: null, stderr: '', error: null }), done };
+    });
+    const t0 = Date.now() - 1000;
+    const key = recordingSidecarPath('D:\\根', '大', 't.m4a');
+    startRecordingTask(buildRecordingSpec({ dataRoot: 'D:\\根', talker: '大', file: 't.m4a' }), key);
+    const items = runningRecordingItems();
+    expect(items).toHaveLength(1);
+    expect(items[0].startedAt).toBeGreaterThanOrEqual(t0);
+    expect(items[0].startedAt).toBeLessThanOrEqual(Date.now());
     stopRecordingTask(key);
   });
 });
