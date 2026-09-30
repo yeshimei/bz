@@ -31,6 +31,7 @@ import {
 import type { ExternalToolCallbacks, ExternalToolOutcome, ExternalToolSpec } from '../../src/core/external-tool';
 import { BZ_FACE_INSTALL_HINT, setSyncRunnerForTests, stopSync, type SyncRunner } from '../../src/people/sync';
 import { setExportRunnerForTests } from '../../src/people/export';
+import { msgKey } from '../../src/people/datasource';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { SafeManager } from '../../src/encrypt/data';
 import type { PersonEntry } from '../../src/people/types';
@@ -541,13 +542,39 @@ describe('同步进度显示（issue 484）：阶段主文案 / 已耗时 / 当�
   });
 });
 
-describe('导入所选按需导出（issue 485）', () => {
+describe('导入所选按需导出（issue 485；532 补「源有新消息重导出」）', () => {
   /** 数据根换成「只有 stats.json」的联系人目录（485 后 sync 轮产物形态） */
   function seedStatsOnly(name: string, stats: Record<string, unknown>): void {
     mkdirSync(join(dataRoot, name), { recursive: true });
     writeFileSync(join(dataRoot, name, 'stats.json'), JSON.stringify({
       msgs: 2, voices: 0, images: 0, voiceSec: 0, lastCt: T0 + 60, maxSid: 0, group: false, ...stats,
     }));
+  }
+
+  /**
+   * 532 用例专用Boot：先落一位「已导入到 T0+60」的保库记录再开面板。
+   * 记录快照（recordCache）在首轮扫描时定格——写库必须赶在开面板之前，晚了扫描读到的还是空仓。
+   * 预置条目的 key 用 msgKey 现算（与 chat.json 导入派生键同构）——假 key 会在 upsert 合并里
+   * 与重导出的消息撞不上，仓里翻倍。
+   */
+  async function bootImportedToT60(): Promise<void> {
+    await boot([person()]);
+    await lastSafe!.write('陈默', (rec) => {
+      rec.store = {
+        msgs: [
+          { key: msgKey({ ct: T0, type: 1, msg: '早' }), ts: T0 * 1000, isSender: false, type: 1, text: '早' },
+          { key: msgKey({ ct: T0 + 60, type: 1, msg: '吃了没' }), ts: (T0 + 60) * 1000, isSender: false, type: 1, text: '吃了没' },
+        ],
+        watermarkSid: 0,
+        stats: { msgCount: 2, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    openPeoplePanel(getApp());
+    await vi.waitFor(() => expect(isPeopleOpen()).toBe(true));
+    openDataSource();
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-ds-row')).toBeTruthy());
   }
 
   it('缺 chat.json 的勾选者先起 bz-face export --contact，完成后走既有归一合并落保库记录', async () => {
@@ -580,7 +607,7 @@ describe('导入所选按需导出（issue 485）', () => {
     expect(rec?.store?.msgs?.length).toBe(2); // 归一合并落保库记录
   });
 
-  it('存量 chat.json 直接导入：不起 export（免重复导出），也不起 sync', async () => {
+  it('存量 chat.json 直接导入（目录无 stats.json 的兼容形态）：不起 export，也不起 sync', async () => {
     const exportTool = new FakeTool();
     setExportRunnerForTests(exportTool.runner);
     await bootWithDsOpen([person()]);
@@ -594,6 +621,39 @@ describe('导入所选按需导出（issue 485）', () => {
     const rec = await lastSafe!.readAll().then((m) => m.get('陈默')); // 保库记录键 = 数据根目录名
     expect(rec?.store?.msgs?.length).toBe(2);
   });
+
+  it('已导入 + 源有新消息（stats.lastCt 比仓新，issue 532）：行出「有新消息」，导入重导出，新消息进仓', async () => {
+    // 同步轮只更新了 stats.json（源已到 T0+120），chat.json 还停在 T0+60——旧逻辑盲用旧文件，
+    // 微信新消息永远进不了库（「同步完导入还是 0 新增」的病根）
+    writeFileSync(join(dataRoot, '陈默', 'stats.json'), JSON.stringify({
+      msgs: 3, voices: 0, images: 0, voiceSec: 0, lastCt: T0 + 120, maxSid: 0, group: false,
+    }));
+    const exportTool = new FakeTool();
+    setExportRunnerForTests(exportTool.runner);
+    await bootImportedToT60();
+    // 行水位亮「增量 · 有新消息」（旧 maxSid 判据与时间无序、永远命不中——532 换 lastCt 后才亮得起来）
+    await vi.waitFor(() => expect(document.querySelector('.bz-people-ds-water')?.textContent).toContain('有新消息'));
+    click('[data-people-ds-check]');
+    click('[data-people-ds-import]');
+    await vi.waitFor(() => expect(exportTool.calls.length).toBe(1)); // 旧 chat.json 不再免检
+    expect(exportTool.calls[0].args).toContain('--contact');
+    // export 假件落新 chat.json（多出 T0+120 那条），照工具语义走完归一合并
+    writeFileSync(join(dataRoot, '陈默', 'chat.json'), JSON.stringify([
+      { ct: T0, type: 1, msg: '早' },
+      { ct: T0 + 60, type: 1, msg: '吃了没' },
+      { ct: T0 + 120, type: 1, who: '我', msg: '新消息' },
+    ]));
+    exportTool.info({ phase: 'contact', name: '陈默', status: 'ok', msgs: 3, chat: 'updated' });
+    exportTool.result({ ok: true, mode: 'export', contacts: 1, written: 1, unchanged: 0, failed: 0, skipped: 0, msgTotal: 3, named: 0, failures: [] });
+    await exportTool.settle({ ok: true, code: 0 });
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
+    const rec = await lastSafe!.readAll().then((m) => m.get('陈默'));
+    expect(rec?.store?.msgs?.length).toBe(3); // 同步拉到的新消息终于进仓（同键 upsert，不翻倍）
+  });
+
+  // 注：「源没新消息不重导」的快路径在 UI 层被 issue 507 的上游守卫挡住——已导入且无新素材
+  // 的行水位是 skip，勾选框本身就禁用，走不到导入判定。判定语义由 datasource.test.ts 的
+  // statsHasNewerData 纯函数用例钉住（持平 → false）；无 stats.json 的存量快路径由上一条用例钉住。
 
   it('export 轮硬失败（无缓存密钥）：导入中止，进度行给中文原因，保库记录不动', async () => {
     rmSync(join(dataRoot, '陈默', 'chat.json'));

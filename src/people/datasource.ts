@@ -1165,7 +1165,7 @@ export interface DataSourceStats {
   voiceSec: number;
   /** 最新消息时间（秒级 ct；0 = 无） */
   lastCt: number;
-  /** 已见最大 sid（与聊天仓 watermarkSid 对口径——「有无新消息」的增量判定源） */
+  /** 已见最大 sid（532 起不再作「有无新消息」判定源——server_id 与时间无序，判据改走 lastCt） */
   maxSid: number;
   /** 群聊（工具侧判定：去我之外多个发送者） */
   group: boolean;
@@ -1248,6 +1248,30 @@ export function readStatsJson(dataDir: string, name: string): DataSourceStats | 
     group: o.group === true,
     ...(typeof o.syncedAt === 'string' && o.syncedAt ? { syncedAt: o.syncedAt } : {}),
   };
+}
+
+/**
+ * stats.json 是否比聊天仓有更新的源数据（issue 532：「有更新」角标与导入要不要重导
+ * chat.json 的共同判定源）。判据 = lastCt（源里最新一条消息的秒级 ct）对比仓内最后一条
+ * **聊天**消息的 ts。不能用 maxSid 对 watermarkSid：server_id 与时间无序（实测 2026-03
+ * 的消息 sid 大过 2026-09 的全部新消息，且按期分库后各库各有各的大 sid），旧判据永远
+ * 命不中「有更新」，同步完导入也就永远 0 新增。排除 type=9001（录音轮次段——ts 取自
+ * 录音文件起点，可以比任何聊天消息都晚，不排会把新聊天遮住）。stats 没消息（lastCt=0）
+ * 恒 false：源里没有东西，无谓重导。
+ */
+export function statsHasNewerData(stats: DataSourceStats, store: StoreContact | undefined): boolean {
+  if (!(stats.lastCt > 0)) return false;
+  const msgs = store?.msgs;
+  let last = 0;
+  if (msgs) {
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].type !== 9001) {
+        last = msgs[i].ts;
+        break;
+      }
+    }
+  }
+  return stats.lastCt * 1000 > last;
 }
 
 /** 读一个联系人的数据束（chat.json 必读；voice.json / image_desc.json 为兼容兜底——

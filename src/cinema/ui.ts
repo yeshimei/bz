@@ -425,7 +425,7 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
     // 标记已看不直改状态/评分：改走编辑窗预选「已看」，评分影评由用户确认后保存（memo item-1789105594322）
     out.push({ icon: 'check', label: '标记已看', run: () => openForm(sec, it, app, '已看') });
   } else {
-    // 重温只对已看成立（想看/在看没有「再来一遍」语义）；今天入列 frontmatter「重看」
+    // 重温只对已看成立（想看/在看没有「再来一遍」语义）；当前时刻入列 frontmatter「重看」
     out.push({ icon: ICON.repeat, label: '重温 +1', run: () => void markRewatch(it, app) });
     // 重温候补架（内置片单，不动三状态机）：看过想再看的归堆，侧栏「重映厅」直达
     out.push({

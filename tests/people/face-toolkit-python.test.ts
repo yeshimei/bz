@@ -274,4 +274,47 @@ print("SELF-AVATAR-OK")
       expect(stdout).toContain('SELF-AVATAR-OK');
     },
   );
+
+  itPy(
+    'stats.json 幂等比对剥掉 syncedAt（issue 532）：内容没变 = unchanged 不重写，「更新数」不再虚胖成全量',
+    { timeout: 60000 },
+    async () => {
+      // 插件侧同步摘要（更新 N 位 / 未变 M 位）与「同步到底更新了谁」的观感都吃这个语义。
+      const driver = `
+import json, sys, tempfile, time
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+try:
+    import bz_sync
+except Exception as e:
+    print("STATS-SKIP", e)
+    raise SystemExit(0)
+
+with tempfile.TemporaryDirectory() as td:
+    cdir = Path(td) / "某人"
+    cdir.mkdir(parents=True)
+    st = {"msgs": 120, "voices": 9, "images": 15, "voiceSec": 234.5, "lastCt": 1770000000, "maxSid": 777, "group": False}
+    # ① 首写：new，落盘带 syncedAt
+    assert bz_sync.write_stats_json(cdir, st) == "new"
+    first = json.loads((cdir / "stats.json").read_text(encoding="utf-8"))
+    assert first["syncedAt"] and first["msgs"] == 120
+    # ② 内容没变（哪怕时间流逝）→ unchanged，文件原样（保留上一轮 syncedAt）
+    time.sleep(1.1)  # syncedAt 秒级精度：睡过 1 秒才证得出「不是靠时间戳重写」
+    assert bz_sync.write_stats_json(cdir, st) == "unchanged"
+    again = json.loads((cdir / "stats.json").read_text(encoding="utf-8"))
+    assert again == first
+    # ③ 内容变了 → updated，syncedAt 刷新
+    st2 = {**st, "msgs": 121, "lastCt": st["lastCt"] + 30}
+    assert bz_sync.write_stats_json(cdir, st2) == "updated"
+    third = json.loads((cdir / "stats.json").read_text(encoding="utf-8"))
+    assert third["msgs"] == 121 and third["syncedAt"] >= first["syncedAt"]
+    # ④ 旧文件读不动（手工改坏）：按内容变了走重写，不抛
+    (cdir / "stats.json").write_bytes(b"{oops")
+    assert bz_sync.write_stats_json(cdir, st2) == "updated"
+print("STATS-IDEMPOTENT-OK")
+`;
+      const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
+      expect(stdout).toContain('STATS-IDEMPOTENT-OK');
+    },
+  );
 });

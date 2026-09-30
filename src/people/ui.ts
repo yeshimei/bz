@@ -60,6 +60,7 @@ import {
   readContactAvatarPath,
   readContactBundle,
   readStatsJson,
+  statsHasNewerData,
   storeMediaBadge,
   storeStatsOf,
   storeToUnified,
@@ -281,7 +282,7 @@ interface DsContact {
   previewCount: number;
   /** 扫描时发现的新消息条数（原始 keys − 仓内 keys） */
   newCount: number;
-  /** true = newCount 是「有无新」哨兵（stats 路径拿不到键集合，只能按 maxSid 对水位判定；485） */
+  /** true = newCount 是「有无新」哨兵（stats 路径拿不到键集合，按 lastCt 对仓内最后聊天消息判定；485 定哨兵、532 换判据） */
   newApprox: boolean;
   /** 已画到的提炼锚点（PersonEntry.lastProcessedTs） */
   processedTs: number | null;
@@ -1117,8 +1118,9 @@ function applyJobsLockdown(): void {
 /**
  * 扫描数据源：列目录 → 逐人读 stats.json（485 优先；缺文件回落 chat.json 归一化，兼容存量）
  * → 对照聊天仓算新素材 → 落快照（不导入、不自动勾选——447 拍板：默认不选任何联系人）。
- * stats 路径没有键集合，「新 N 条」退化成「有无新」哨兵（maxSid 对聊天仓 watermarkSid），
- * newCount=1 且 newApprox=true；chat.json 回落路径照旧精确计数。
+ * stats 路径没有键集合，「新 N 条」退化成「有无新」哨兵（lastCt 对仓内最后聊天消息，
+ * issue 532——maxSid 与时间无序，旧判据永远命不中），newCount=1 且 newApprox=true；
+ * chat.json 回落路径照旧精确计数。
  */
 async function runScan(force = false): Promise<void> {
   const dataDir = dsDataDir();
@@ -1158,7 +1160,7 @@ async function runScan(force = false): Promise<void> {
           // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
           stats: { msgCount: stats.msgs, voiceCount: stats.voices, voiceTotalSec: Math.round(stats.voiceSec), imageCount: stats.images },
           previewCount: pv?.msgs.length ?? 0,
-          newCount: stats.maxSid > (pv?.watermarkSid ?? 0) ? 1 : 0,
+          newCount: statsHasNewerData(stats, pv) ? 1 : 0,
           newApprox: true,
           processedTs: entry?.lastProcessedTs ?? null,
           avatar: dataUrlOf(readAvatarInput(readContactAvatarPath(dataDir, name))),
@@ -1227,8 +1229,11 @@ function markExported(names: string[], dataDir: string): void {
 
 /**
  * 导入所选（第一段：原始→聊天仓增量）：
- * ① 按需导出（485）：缺 chat.json 的勾选者先起一条 `bz-face export --contact …`
- *    拉全量消息（进度行显示当前联系人）；存量已有 chat.json 的直接用，不强制重导出。
+ * ① 按需导出（485；532 修判定）：缺 chat.json 的勾选者直接导；**已有 chat.json 的在源数据
+ *    比仓里新时也要重导**——sync 轮只更新 stats.json 不碰 chat.json，盲用旧文件会把微信新
+ *    消息永远关在库外（「同步完导入还是 0 新增」的病根）。判定在导入时刻读盘上 stats.json
+ *    现算（statsHasNewerData），不依赖扫描快照。起一条 `bz-face export --contact …` 拉全量
+ *    消息（进度行显示当前联系人）；export 轮只用缓存密钥，不要求微信在跑。
  * ② 归一合并：逐人 readContactBundle → normalizeChatJson → mergeStore upsert（同键覆盖升级）
  *    → 写进该联系人的保库记录（467 / ADR-0194）。完成后弹窗出「画脸谱」（447 拍板：不自动生成）。
  * 画谱路径不重复导出：「画脸谱」只吃保库记录里的聊天仓素材（storeToUnified），不碰数据根。
@@ -1254,8 +1259,17 @@ async function importDsSelected(): Promise<void> {
   const addedOf = new Map<string, number>();
   const readFail: string[] = [];
   try {
-    // ① 按需导出（485）：只对缺 chat.json 的勾选者起工具（一条命令带全部名单，工具侧逐人导出）
-    const missing = chosen.filter((c) => !hasChatJson(dataDir, c.name)).map((c) => c.name);
+    // ① 按需导出（485 + 532）：缺 chat.json 的、以及源数据比仓里新的（旧 chat.json 已过期）
+    //    都进名单，一条命令带全部名单，工具侧逐人导出。仓快照在导出前取一次——导出只写数据
+    //    根不写保库，这份快照对后面的合并照样是「existing」的权威。
+    const storeData = await records();
+    const missing = chosen
+      .filter((c) => {
+        if (!hasChatJson(dataDir, c.name)) return true;
+        const stats = readStatsJson(dataDir, c.name);
+        return !!stats && statsHasNewerData(stats, storeData.get(c.name)?.store);
+      })
+      .map((c) => c.name);
     if (missing.length) {
       updateImportNotice('正在导出所选联系人的完整聊天…');
       const run = startContactsExport({ dataRoot: dataDir, contacts: missing }, (ev) => {
@@ -1290,7 +1304,7 @@ async function importDsSelected(): Promise<void> {
       const bundle = readContactBundle(dataDir, c.name);
       if (!bundle) { readFail.push(c.name); continue; }
       const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-      const existing = (await records()).get(c.name)?.store;
+      const existing = storeData.get(c.name)?.store; // ①里取的导出前快照（records 有缓存，同源）
       const { contact, added } = mergeStore(existing, norm, now);
       // 头像（467）：字节直接进保库记录附件（渲染时解密成内存 data URL，不落明文文件）；
       // 外部头像已删 → 记录侧一并移除。路径字段退役，不再进密文记录。
