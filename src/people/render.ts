@@ -9,6 +9,8 @@
  * 零媒体不出徽章（74% 联系人零语音）、消息量级万格式化（max 20,773）。
  */
 import type { FaceEvent, GenerationConfirmInfo, ImportRecord, ManualEvent, PersonEntry, PersonProfile } from './types';
+// 终态标注取值（ADR-0224/0225）——只取类型，保持渲染层不碰数据层实现
+import type { DescSkip } from './datasource';
 import { bondOf, personOf } from './types';
 
 // ---------------- 自持小件（纯 DOM helper；与旧 ui.ts 同款签名） ----------------
@@ -1701,30 +1703,43 @@ export function dsPage(s: DsModalState): HTMLElement {
   return subPage({ title: '数据源', meta, head, foot, hook: 'ds' }, body);
 }
 
-/** 画谱开工单（issue 497：两次确认合一，确认后一路到底不再弹窗；513：总览改行式清单，
- *  图片 / 语音两行写明幂等语义——引擎各段产物在即跳过，满额估算只是上限，不是都要重烧） */
+/** 画谱开工单（issue 497：两次确认合一，513：改行式清单，523：只报素材、无新素材置灰开始）。
+ *  用户拍板（523 原话）：「简明地告诉用户有几张图片、聊天记录或者录音等，哪些素材要走这个
+ *  补画谱流程即可，其他都不需要告诉」——故不再报 AI 通道 / 调用次数；没有任何新素材时
+ *  只出一句说明，并把「开始生成」置灰。 */
 export function genPage(info: GenerationConfirmInfo): HTMLElement {
   const body: HTMLElement[] = [];
-  body.push(el('div', 'bz-people-gen-line', text(`为 ${info.items.length} 位联系人生成脸谱`)));
+  body.push(el('div', 'bz-people-gen-line', text(info.empty ? '没有新的素材' : `为 ${info.items.length} 位联系人生成脸谱`)));
+  // 总览只列三类素材条数，一项一行；为零的整行不出
   const rows: Array<[string, string]> = [];
-  if (info.images > 0) rows.push(['图片描述', `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-  if (info.voices > 0) rows.push(['语音转写', `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
-  rows.push(['画像生成', `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
-  body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
-    el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
-  const list = el('ul', 'bz-people-gen-list');
-  for (const it of info.items) {
-    // issue 515：明细只留素材与模式——媒体待办在总览行看，逐行不重复
-    const bits = [it.mode === 'newer' ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-    if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
-    else if (it.mode === 'newer') bits.push('增量提炼');
-    list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
+  if (info.materials > 0) rows.push(['聊天记录', `${info.materials} 条`]);
+  if (info.images > 0) rows.push(['图片', `${info.images} 张`]);
+  if (info.voices > 0) rows.push(['录音', `${info.voices} 条`]);
+  if (rows.length) {
+    body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
+      el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
   }
-  body.push(list);
-  body.push(el('div', 'bz-people-pop-note', text('确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。')));
+  if (info.items.length) {
+    const list = el('ul', 'bz-people-gen-list');
+    for (const it of info.items) {
+      const bits = [it.mode === 'newer' ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
+      if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
+      else if (it.mode === 'newer') bits.push('增量提炼');
+      list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
+    }
+    body.push(list);
+  }
+  if (info.empty) {
+    const who = info.skipped?.length ? `「${info.skipped.join('」「')}」` : '这些联系人';
+    body.push(el('div', 'bz-people-pop-note', text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+  }
   const actions = el('div', 'bz-people-prof-actions', [
     button('bz-people-btn', '取消', { 'data-people-gen-cancel': '' }),
-    button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始生成', info.empty
+      ? { 'data-people-gen-start': '', disabled: '' }
+      : { 'data-people-gen-start': '' }),
   ]);
   body.push(actions);
   return subPage({ title: '开始生成脸谱', hook: 'gen' }, body);
@@ -1780,13 +1795,22 @@ export interface SuppImageViewState {
   queue: SuppImageQueueItem[];
   /** 聊天仓已有图片总数（type=3 且 img 有值） */
   imported: number;
-  /** 其中未描述的（img 有值、text 空——不进时间线） */
+  /** 其中未描述的（img 有值、text 空——不进时间线）。**不含三种终态标注的**（那是终态不欠账，ADR-0224/0225） */
   undescribed: number;
+  /** 源图损坏 / 缺失、已标终态跳过的张数（ADR-0225）——如实上屏，别让 304 变成神秘数字 */
+  broken: number;
+  missing: number;
   /** 描述动作进行中（引擎 describe 段在跑） */
   describeBusy: boolean;
   modelLabel: string;
-  /** 已入库的留影（预览网格；新的在前。url 由 ui 侧按数据根拼好） */
-  items: Array<{ img: string; text: string; url: string }>;
+  /** 已入库的留影（预览网格；新的在前。url 由 ui 侧按数据根拼好）。
+   *  分片口径（issue 519）：只装**已渲染的前段**——千张级全量把 data URL 一次拉齐是
+   *  开页冻死的病根，ui 侧按 shown 切片，`hidden` = 尚未渲染的张数（>0 出「还有 N 张」哨兵）。
+   *  `skip` = 该图的终态标注（ADR-0224 敏感 / ADR-0225 源图损坏·缺失）。敏感是启发式判定，
+   *  格子上给「解除」入口（没有撤回入口的错杀不可挽回）；损坏 / 缺失是磁盘事实、无解除入口。 */
+  items: Array<{ img: string; text: string; url: string; skip?: DescSkip; label?: string }>;
+  /** 未渲染的留影张数（0 = 全量已铺完，无哨兵） */
+  hidden: number;
   /** 点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
   imgDel?: string;
 }
@@ -1972,9 +1996,15 @@ function suppImageBody(s: SuppImageViewState): HTMLElement[] {
       button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', `落盘并导入 ${s.queue.length} 张`, { 'data-people-supp-img-import': '' }),
     ]));
   }
+  // 终态标注如实报（ADR-0225）：这两类描述不了，不说清就被当成「又漏了 / 又重扫」的神秘数字
+  const unusable = s.broken + s.missing;
+  const unusableNote = unusable > 0
+    ? ` · ${[s.broken > 0 ? `源图损坏 ${s.broken} 张` : '', s.missing > 0 ? `源图缺失 ${s.missing} 张` : '']
+        .filter(Boolean).join('、')}（无法描述）`
+    : '';
   out.push(el('div', 'bz-people-supp-stat', text(
     s.imported > 0
-      ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : ' · 全部有描述'}`
+      ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : ' · 全部有描述'}${unusableNote}`
       : '还没补过图片。',
   )));
   if (s.imported > 0 && s.undescribed > 0) {
@@ -1989,35 +2019,88 @@ function suppImageBody(s: SuppImageViewState): HTMLElement[] {
   // 预览网格（复评）：入库的图看得见、点得开放大、描述在图下面、右上角的叉删得掉（要先问一声）
   if (s.items.length) {
     const grid = el('div', 'bz-people-supp-imggrid');
-    for (const it of s.items) {
-      const cap = it.text.replace(/^\[图片\]\s*/, '');
-      const box = el('div', 'bz-people-supp-imgbox');
-      box.appendChild(el('img', 'bz-people-supp-imgthumb', {
-        src: it.url, alt: cap, loading: 'lazy',
-        'data-people-supp-img-view': it.img, title: '点开看大图',
-      }));
-      box.appendChild(button('bz-people-supp-imgdel', '×', {
-        'data-people-supp-img-del': it.img,
-        'aria-label': '删掉这张',
-        title: '从时间线里删掉这张（原件留在数据根，不会动）',
-      }));
-      if (s.imgDel === it.img) {
-        box.appendChild(el('div', 'bz-people-supp-imgask', [
-          el('div', 'bz-people-supp-imgask-tx', text('删掉这张？')),
-          el('div', 'bz-people-supp-imgask-acts', [
-            button('bz-people-supp-imgask-yes', '删掉', { 'data-people-supp-img-del-ok': it.img }),
-            button('bz-people-supp-imgask-no', '取消', { 'data-people-supp-img-del-cancel': '' }),
-          ]),
-        ]));
-      }
-      const cell = el('div', 'bz-people-supp-imgcell', [box]);
-      cell.appendChild(el('div', `bz-people-supp-imgcap${cap ? '' : ' bz-people-supp-imgcap-none'}`,
-        { title: cap || '未描述' }, text(cap || '未描述')));
-      grid.appendChild(cell);
-    }
+    for (const it of s.items) grid.appendChild(suppImgCell(s.imgDel, it));
+    if (s.hidden > 0) grid.appendChild(suppImgMore(s.hidden));
     out.push(grid);
   }
   return out;
+}
+
+/** 一格留影（全量渲染与增量追加共用；单源铁律——issue 519 分片后两条路都得长一个样） */
+function suppImgCell(
+  imgDel: string | undefined,
+  it: { img: string; text: string; url: string; skip?: DescSkip; label?: string },
+): HTMLElement {
+  const cap = it.text.replace(/^\[图片\]\s*/, '');
+  const box = el('div', 'bz-people-supp-imgbox');
+  box.appendChild(el('img', 'bz-people-supp-imgthumb', {
+    src: it.url, alt: cap, loading: 'lazy',
+    'data-people-supp-img-view': it.img, title: '点开看大图',
+  }));
+  box.appendChild(button('bz-people-supp-imgdel', '×', {
+    'data-people-supp-img-del': it.img,
+    'aria-label': '删掉这张',
+    title: '从时间线里删掉这张（原件留在数据根，不会动）',
+  }));
+  if (it.skip) box.appendChild(el('div', 'bz-people-supp-imgsens', text(it.label ?? '敏感')));
+  if (imgDel === it.img) {
+    box.appendChild(el('div', 'bz-people-supp-imgask', [
+      el('div', 'bz-people-supp-imgask-tx', text('删掉这张？')),
+      el('div', 'bz-people-supp-imgask-acts', [
+        button('bz-people-supp-imgask-yes', '删掉', { 'data-people-supp-img-del-ok': it.img }),
+        button('bz-people-supp-imgask-no', '取消', { 'data-people-supp-img-del-cancel': '' }),
+      ]),
+    ]));
+  }
+  const cell = el('div', 'bz-people-supp-imgcell', [box]);
+  // 敏感格子的「行」本身是撤回入口（ADR-0224 决策 7）：标注是启发式判定，一定有误伤，
+  // 没有撤回入口的错杀不可挽回。点一下 = 解除标注并重试描述（计费授权由这一次点击承担，
+  // 与「生成描述」按钮同口径——它是个显式动作，不再二次弹确认）。
+  if (it.skip === 'sensitive') {
+    cell.appendChild(button('bz-people-supp-imgcap bz-people-supp-imgcap-sens', '敏感 · 解除', {
+      'data-people-supp-img-unsens': it.img,
+      title: '这张被判为敏感内容、已跳过描述——点一下解除标注并重试',
+    }));
+  } else if (it.skip) {
+    // 源图损坏 / 缺失（ADR-0225）：磁盘事实，不是启发式判定——不给「解除」按钮（那只会把用户
+    // 送进「解除 → 又跳过 → 再标注」的空转）。修好后重新导出媒体，下一轮 prep 自动放回队列。
+    cell.appendChild(el('div', 'bz-people-supp-imgcap bz-people-supp-imgcap-none', {
+      title: `${it.skip === 'broken' ? '源图打不开（文件本身损坏）' : '源图没导出（数据根里只有微信缩略图）'}，无法生成描述——重新导出媒体后会自动重试`,
+    }, text(it.label ?? '无法描述')));
+  } else {
+    cell.appendChild(el('div', `bz-people-supp-imgcap${cap ? '' : ' bz-people-supp-imgcap-none'}`,
+      { title: cap || '未描述' }, text(cap || '未描述')));
+  }
+  return cell;
+}
+
+/** 网格尾部哨兵（hidden > 0 才有）：滚到自动追加一片，点了也追加（IO 怪异时的兜底） */
+function suppImgMore(hidden: number): HTMLElement {
+  return el('button', 'bz-people-supp-imgmore', { 'data-people-supp-img-more': '', type: 'button' },
+    text(`还有 ${hidden} 张 · 继续看`));
+}
+
+/**
+ * 网格增量追加下一片（issue 519；ui 侧滚到哨兵 / 点哨兵时调用）：格子与全量渲染同一份
+ * 构建，只 append 不重建——滚到千张也不回头全量重画。追加后原位换新哨兵（hidden 归 0 即移除），
+ * 返回当前哨兵（没有更多返回 null，ui 拿它重挂 / 摘 IntersectionObserver）。
+ */
+export function appendSuppImageGridPage(
+  grid: HTMLElement,
+  page: Array<{ img: string; text: string; url: string; skip?: DescSkip; label?: string }>,
+  hidden: number,
+  imgDel?: string,
+): HTMLElement | null {
+  for (const it of page) grid.appendChild(suppImgCell(imgDel, it));
+  const fresh = hidden > 0 ? suppImgMore(hidden) : null;
+  const old = grid.querySelector<HTMLElement>('[data-people-supp-img-more]');
+  if (fresh) {
+    if (old) old.replaceWith(fresh);
+    else grid.appendChild(fresh);
+  } else {
+    old?.remove();
+  }
+  return fresh;
 }
 
 function suppRecBody(s: SuppRecViewState): HTMLElement[] {

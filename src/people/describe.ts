@@ -15,7 +15,7 @@
 import { DEFAULT_AI_PROVIDER, getProviderDescriptor, imageDataUrl, imageMimeOfPath } from '../core/ai';
 import { tryGetSettings } from '../core/settings-provider';
 import { extractJsonLoose } from './digest';
-import type { StoreMsg } from './datasource';
+import { SENSITIVE_SKIP, isDescSkipped, type StoreMsg } from './datasource';
 import type { DescribeConfirmInfo } from './types';
 
 // ---------------- 断点账本（PersonJob.describe；仿 PrepProgress 形态，纯元数据无原文） ----------------
@@ -37,6 +37,13 @@ export interface DescribeProgress {
   confirmed?: boolean;
   /** 用户已选「跳过图片描述」（续跑不再问、不再描述；跳过 ≠ 取消——整链继续走到画像生成） */
   skipped?: boolean;
+  /** 被服务商判敏感拒绝并已标注的张数（ADR-0224）。展示口径，权威在聊天仓的 descSkip */
+  sensitive?: number;
+  /**
+   * 「有欠账、零可读」的张数（ADR-0225 决策 3）：本段一张派生档都没读动时的欠账数。
+   * 有值即整段零调用收尾，交 runJob 结束任务并明确告知（不再往下烧画像调用）。
+   */
+  unreadable?: number;
 }
 
 /** 缺省每批张数（spec 用户故事 47：默认 20 张，可配） */
@@ -86,6 +93,24 @@ export function describeStageLine(done: number, total: number): string {
 export function describeOverallPct(done: number, total: number): number {
   if (total <= 0) return 0;
   return Math.min(100, Math.max(0, Math.round((Math.min(done, total) / total) * 100)));
+}
+
+// ---------------- 敏感拒绝识别（ADR-0224） ----------------
+// 标注的取值与 isDescSkipped 在 datasource.ts（紧邻 StoreMsg，欠账口径与它同处）；此处只放
+// 纯字符串判定——它不依赖仓结构，故留在描述段自己的文件里。
+
+/**
+ * 敏感拒绝识别（ADR-0224 决策 1）：服务商**明确说**内容敏感 / 不安全，且不是限流或服务端错。
+ *
+ * 启发式，**宁可漏判也不误判**——漏判只是退回既有「退避重试 → 耗尽报错」路径（用户可重试失败项），
+ * 误判却会把一次网络抖动放大成 20 次逐张慢调用。故要求：①命中敏感关键词 ②不是 429/5xx。
+ * 真实样本（issue 520 用户实测）：
+ * `AI 请求失败: 系统检测到输入或生成内容可能包含不安全或敏感内容…（fallback: Request failed, status 400）`
+ */
+export function isSensitiveRefusal(message: string): boolean {
+  if (!message) return false;
+  if (!/(敏感|不安全|content[\s_-]*polic|sensitive|flagged|moderation)/i.test(message)) return false;
+  return !/(^|[^0-9])(429|500|502|503|504)([^0-9]|$)/.test(message);
 }
 
 // ---------------- 图片集与批切分（聊天仓口径；确定性重导——批级断点的根基） ----------------

@@ -1,5 +1,5 @@
-/* 源指纹 5a7e1943572d1fd7 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
+/* 源指纹 fbb12c324bc3590d · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
   var __create = Object.create;
@@ -7912,23 +7912,24 @@ var BZW_people = (() => {
     function mediaNode(item) {
       const media = document.createElement("div");
       media.className = "bz-lightbox-media";
-      const bareSrc = item.src.split("?")[0].split("#")[0];
+      const src = item.srcOf ? item.srcOf() : item.src;
+      const bareSrc = src.split("?")[0].split("#")[0];
       const type = item.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
       if (type === "video") {
         const v = document.createElement("video");
-        v.src = item.src;
+        v.src = src;
         v.controls = true;
         v.autoplay = true;
         media.appendChild(v);
       } else if (type === "audio") {
         const a = document.createElement("audio");
-        a.src = item.src;
+        a.src = src;
         a.controls = true;
         a.autoplay = true;
         media.appendChild(a);
       } else {
         const img = document.createElement("img");
-        img.src = item.src;
+        img.src = src;
         img.alt = item.title || opts.title || "";
         media.appendChild(img);
       }
@@ -16045,6 +16046,16 @@ ${lines}`;
   }
 
   // src/people/datasource.ts
+  var SENSITIVE_SKIP = "sensitive";
+  var BROKEN_SKIP = "broken";
+  var MISSING_SKIP = "missing";
+  function isDescSkipped(m) {
+    return descSkipOf(m) !== void 0;
+  }
+  function descSkipOf(m) {
+    const v = m == null ? void 0 : m.descSkip;
+    return v === SENSITIVE_SKIP || v === BROKEN_SKIP || v === MISSING_SKIP ? v : void 0;
+  }
   function hash32(s) {
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) {
@@ -16385,8 +16396,9 @@ ${lines}`;
     let voices = 0;
     for (const m of msgs) {
       if (m.text !== "") continue;
-      if (m.type === 3) images++;
-      else if (m.type === 34) voices++;
+      if (m.type === 3) {
+        if (!isDescSkipped(m)) images++;
+      } else if (m.type === 34) voices++;
     }
     return { images, voices };
   }
@@ -16470,14 +16482,57 @@ ${lines}`;
     }
     return n;
   }
+  function applyMediaFailToMsgs(msgs, items) {
+    var _a2, _b2;
+    const bySid = /* @__PURE__ */ new Map();
+    const byFile = /* @__PURE__ */ new Map();
+    const byCt = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const reason = canonReason(it == null ? void 0 : it.reason);
+      if (!reason) continue;
+      const entry = { ...it, reason };
+      const file = String((_a2 = it.file) != null ? _a2 : "").trim();
+      if (file) byFile.set(file, entry);
+      const sid = typeof it.sid === "number" && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
+      if (sid) bySid.set(sid, entry);
+      else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct), entry);
+    }
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 3) continue;
+      const img = String((_b2 = m.img) != null ? _b2 : "").trim();
+      let it;
+      if (m.sid) it = bySid.get(m.sid);
+      if (!it && img) it = byFile.get(img);
+      if (!it && !img) it = byCt.get(Math.round(m.ts / 1e3));
+      if (it == null ? void 0 : it.reason) {
+        if (m.text === "" && !isDescSkipped(m)) {
+          m.descSkip = it.reason;
+          n++;
+        }
+      } else if (m.descSkip === BROKEN_SKIP || m.descSkip === MISSING_SKIP) {
+        delete m.descSkip;
+        n++;
+      }
+    }
+    return n;
+  }
+  function canonReason(v) {
+    const s = String(v != null ? v : "").trim();
+    return s === BROKEN_SKIP ? BROKEN_SKIP : s === MISSING_SKIP ? MISSING_SKIP : null;
+  }
   function applyImageDescToMsgs(msgs, descs) {
     var _a2, _b2, _c2, _d2, _e, _f;
     const byFile = /* @__PURE__ */ new Map();
     const byMonth = /* @__PURE__ */ new Map();
+    const explicitBlank = /* @__PURE__ */ new Set();
     for (const it of descs) {
       if (!it || typeof it !== "object") continue;
-      if (!String((_a2 = it.desc) != null ? _a2 : "").trim()) continue;
-      const file = String((_b2 = it.file) != null ? _b2 : "").trim();
+      const file = String((_a2 = it.file) != null ? _a2 : "").trim();
+      if (!String((_b2 = it.desc) != null ? _b2 : "").trim()) {
+        if (file) explicitBlank.add(file);
+        continue;
+      }
       if (file) byFile.set(file, it);
       const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
       if (!month) continue;
@@ -16492,13 +16547,14 @@ ${lines}`;
     const used = /* @__PURE__ */ new Set();
     let n = 0;
     for (const m of msgs) {
-      if (m.type !== 3 || m.text !== "") continue;
+      if (m.type !== 3 || m.text !== "" || isDescSkipped(m)) continue;
       const img = String((_c2 = m.img) != null ? _c2 : "").trim();
       const ctSec = Math.round(m.ts / 1e3);
       let desc = "";
       const exact = img ? byFile.get(img) : void 0;
       if (exact) {
         desc = String((_d2 = exact.desc) != null ? _d2 : "").trim();
+      } else if (img && explicitBlank.has(img)) {
       } else {
         const list = byMonth.get(monthOf(ctSec));
         if (list == null ? void 0 : list.length) {
@@ -16526,6 +16582,25 @@ ${lines}`;
         m.text = `[图片] ${desc}`;
         n++;
       }
+    }
+    return n;
+  }
+  function applySensitiveSkipsToMsgs(msgs, files) {
+    var _a2;
+    const want = /* @__PURE__ */ new Set();
+    for (const f of files) {
+      const v = String(f != null ? f : "").trim();
+      if (v) want.add(v);
+    }
+    if (!want.size) return 0;
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 3 || m.text !== "") continue;
+      if (isDescSkipped(m)) continue;
+      const img = String((_a2 = m.img) != null ? _a2 : "").trim();
+      if (!img || !want.has(img)) continue;
+      m.descSkip = SENSITIVE_SKIP;
+      n++;
     }
     return n;
   }
@@ -17217,10 +17292,12 @@ ${lines}`;
     const base = `${dataRoot}/${contact}`.replace(/\/+$/, "");
     const voice = readArray(norm(`${base}/voice.json`));
     const imageMap = readArray(norm(`${base}/image_map.json`));
-    if (!voice && !imageMap) return null;
+    const mediaFail = readArray(norm(`${base}/media_fail.json`));
+    if (!voice && !imageMap && !mediaFail) return null;
     return {
       voice: (voice != null ? voice : []).filter((v) => !!v && typeof v === "object"),
-      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object")
+      imageMap: (imageMap != null ? imageMap : []).filter((v) => !!v && typeof v === "object"),
+      mediaFail: mediaFail ? mediaFail.filter((v) => !!v && typeof v === "object") : null
     };
   }
   function pendingVoiceProofread(items) {
@@ -17349,6 +17426,11 @@ ${lines}`;
   function describeOverallPct(done, total) {
     if (total <= 0) return 0;
     return Math.min(100, Math.max(0, Math.round(Math.min(done, total) / total * 100)));
+  }
+  function isSensitiveRefusal(message) {
+    if (!message) return false;
+    if (!/(敏感|不安全|content[\s_-]*polic|sensitive|flagged|moderation)/i.test(message)) return false;
+    return !/(^|[^0-9])(429|500|502|503|504)([^0-9]|$)/.test(message);
   }
   function imageRefsOf(msgs) {
     var _a2;
@@ -17626,12 +17708,12 @@ ${lines}`;
   function hasInjection(o) {
     return !!(o.askExtract || o.askPortrait || o.askDescribe || o.askDescribeConfirm || o.askPortraitConfirm);
   }
-  function importRecordOf(t, digestMsgs) {
+  function importRecordOf(t) {
     var _a2;
     return {
       fileLabel: t.fileLabel,
       skippedCount: (_a2 = t.skippedCount) != null ? _a2 : 0,
-      messageCount: digestMsgs.length,
+      messageCount: t.msgs.length,
       timeFrom: new Date(t.msgs[0].ts).toISOString(),
       timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString()
     };
@@ -17779,7 +17861,7 @@ ${lines}`;
       const now = nowIso();
       const prev = st.queue.find((j) => j.talker === t.talker);
       st.queue = st.queue.filter((j) => j.talker !== t.talker);
-      const importRecord = importRecordOf(t, digestMsgs);
+      const importRecord = importRecordOf(t);
       const noteMaterial = {
         mediaNote: mediaNote || void 0,
         statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || void 0 : void 0,
@@ -18150,21 +18232,24 @@ ${lines}`;
     var _a2;
     if (!safe.unlocked) return null;
     const side = readPrepSidecars(dataRoot, talker);
-    if (!side || !side.voice.length && !side.imageMap.length) return null;
+    if (!side || !side.voice.length && !side.imageMap.length && side.mediaFail === null) return null;
     const previewVoice = (_a2 = opts == null ? void 0 : opts.previewVoice) != null ? _a2 : normalizeOptionsFromSettings().previewVoice;
-    const counts = { voice: 0, images: 0 };
+    const counts = { voice: 0, images: 0, unusable: 0 };
     await safe.write(talker, (rec) => {
       counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
       counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+      if (side.mediaFail !== null) counts.unusable = applyMediaFailToMsgs(rec.store.msgs, side.mediaFail);
       if (counts.voice + counts.images > 0) {
         rec.store.stats = storeStatsOf(rec.store.msgs);
+        rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      } else if (counts.unusable > 0) {
         rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
       }
     });
     return counts;
   }
   async function runDescribeStage(job, finish) {
-    var _a2, _b2, _c2;
+    var _a2, _b2, _c2, _d2, _e;
     const safe = st.safe;
     if (!(safe == null ? void 0 : safe.unlocked)) return "halted";
     const ledger = describeOf(job);
@@ -18174,9 +18259,9 @@ ${lines}`;
     const rec = await safe.read(job.talker);
     if (gone(job)) return "halted";
     const msgs = (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : [];
-    const refs = imageRefsOf(msgs);
-    if (!refs.length) return "skipped";
     const byKey = new Map(msgs.map((m) => [m.key, m]));
+    const refs = imageRefsOf(msgs).filter((r) => !isDescSkipped(byKey.get(r.key)));
+    if (!refs.length) return "skipped";
     const isDone = (ref) => {
       var _a3, _b3;
       return ((_b3 = (_a3 = byKey.get(ref.key)) == null ? void 0 : _a3.text) != null ? _b3 : "") !== "";
@@ -18235,6 +18320,7 @@ ${lines}`;
     job.stage = "describe";
     await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
     const ask = asksOf().describe;
+    let readRefs = 0;
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
       const pending = batch.filter((r) => !isDone(r));
@@ -18257,6 +18343,7 @@ ${lines}`;
         await persist();
         continue;
       }
+      readRefs += images.length;
       led.doneBatches = i;
       job.message = `本批 ${images.length} 张`;
       emit();
@@ -18264,6 +18351,7 @@ ${lines}`;
       const prompt = buildDescribePrompt(images.length, context);
       let descs;
       let attempt = 0;
+      let refused = false;
       for (; ; ) {
         try {
           descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
@@ -18271,6 +18359,10 @@ ${lines}`;
         } catch (e) {
           if (gone(job)) return "halted";
           const err = errorMessage(e);
+          if (isSensitiveRefusal(err)) {
+            refused = true;
+            break;
+          }
           if (isAbortError(e) || attempt >= st.retry.maxRetries) {
             await finish({ status: "error", error: err });
             return "halted";
@@ -18286,13 +18378,37 @@ ${lines}`;
           }
         }
       }
+      const missed = [];
+      if (refused) {
+        const onePrompt = buildDescribePrompt(1, context);
+        descs = [];
+        for (const item of images) {
+          if (gone(job)) return "halted";
+          if (st.pauseRequested) {
+            await finish({ status: "paused", message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+            return "halted";
+          }
+          try {
+            const one = parseDescribeReply(await ask({ text: onePrompt, images: [item.url] }), 1);
+            descs.push((_d2 = one[0]) != null ? _d2 : "");
+          } catch (e) {
+            if (gone(job)) return "halted";
+            if (isSensitiveRefusal(errorMessage(e))) missed.push(item.ref);
+            descs.push("");
+          }
+        }
+        if (missed.length) led.sensitive = ((_e = led.sensitive) != null ? _e : 0) + missed.length;
+        job.message = `本批 ${images.length} 张中 ${missed.length} 张被判敏感，已标注跳过`;
+        emit();
+      }
       const items = images.map((x, j) => {
         var _a3;
         return { file: x.ref.img, ct: Math.round(x.ref.ts / 1e3), desc: (_a3 = descs[j]) != null ? _a3 : "" };
       });
       await safe.write(job.talker, (rec2) => {
+        const k = missed.length ? applySensitiveSkipsToMsgs(rec2.store.msgs, missed.map((r) => r.img)) : 0;
         const n = applyImageDescToMsgs(rec2.store.msgs, items);
-        if (n > 0) {
+        if (n > 0 || k > 0) {
           rec2.store.stats = storeStatsOf(rec2.store.msgs);
           rec2.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
         }
@@ -18301,6 +18417,11 @@ ${lines}`;
       led.doneBatches = i + 1;
       await persist();
       emit();
+    }
+    if (readRefs === 0 && pendingCount > 0) {
+      led.unreadable = pendingCount;
+      await finish({ describe: led, message: `图片描述 0/${batches.length} 批` });
+      return "unreadable";
     }
     return "ok";
   }
@@ -18388,7 +18509,7 @@ ${lines}`;
     }
   }
   async function runJob(job) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     const asks = asksOf();
     st.runningJob = job.talker;
     job.status = "running";
@@ -18425,7 +18546,16 @@ ${lines}`;
       }
       const descState = await runDescribeStage(job, finish);
       if (descState === "halted") return;
-      const contact = (_e = await safe.read(job.talker)) == null ? void 0 : _e.store;
+      if (descState === "unreadable") {
+        const n = (_f = (_e = job.describe) == null ? void 0 : _e.unreadable) != null ? _f : 0;
+        await finish({
+          stage: "done",
+          status: "done",
+          message: `本次没有可提炼的内容：${n} 张图片的源图损坏或缺失，无法生成描述`
+        });
+        return;
+      }
+      const contact = (_g = await safe.read(job.talker)) == null ? void 0 : _g.store;
       if (gone(job)) return;
       const bucketMsgs = contact ? storeToUnified(contact.msgs) : [];
       const fp = fingerprintOf2(bucketMsgs);
@@ -18470,27 +18600,27 @@ ${lines}`;
       if (refresh) {
         job.msgCount = fp.msgCount;
         job.contentHash = fp.contentHash;
-        job.stats = computeStats(bucketMsgs, (_f = contact == null ? void 0 : contact.kindCounts) != null ? _f : {});
+        job.stats = computeStats(bucketMsgs, (_h = contact == null ? void 0 : contact.kindCounts) != null ? _h : {});
         job.material = {
-          ...(_g = job.material) != null ? _g : { traits: [], moments: [] },
+          ...(_i = job.material) != null ? _i : { traits: [], moments: [] },
           mediaNote: buildMediaNote({
-            voiceCount: (_h = job.stats.voiceCount) != null ? _h : 0,
-            voiceTotalSec: (_i = job.stats.voiceTotalSec) != null ? _i : 0,
-            imageCount: (_j = job.stats.imageCount) != null ? _j : 0
+            voiceCount: (_j = job.stats.voiceCount) != null ? _j : 0,
+            voiceTotalSec: (_k = job.stats.voiceTotalSec) != null ? _k : 0,
+            imageCount: (_l = job.stats.imageCount) != null ? _l : 0
           }) || void 0
         };
         if (bucketMsgs.length) {
           job.importRecord = {
             fileLabel: job.fileLabel,
-            skippedCount: (_l = (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _l : 0,
-            messageCount: digestMsgs.length,
+            skippedCount: (_n = (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _n : 0,
+            messageCount: bucketMsgs.length,
             timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
             timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString()
           };
         }
       }
       if (!job.portraitConfirmed) {
-        const gate = (_m = st.injected) == null ? void 0 : _m.askPortraitConfirm;
+        const gate = (_o = st.injected) == null ? void 0 : _o.askPortraitConfirm;
         if (gate) {
           const label = describeModelLabelOf();
           job.stage = "chunked";
@@ -18567,9 +18697,9 @@ ${lines}`;
         merged = mergeWithOld(merged, existing == null ? void 0 : existing.digest);
         if ((existing == null ? void 0 : existing.digest) && (existing.digest.person || existing.digest.bond || existing.digest.chronicle)) {
           job.revisedFrom = {
-            person: (_n = existing.digest.person) != null ? _n : "",
-            bond: (_o = existing.digest.bond) != null ? _o : "",
-            chronicle: (_p = existing.digest.chronicle) != null ? _p : ""
+            person: (_p = existing.digest.person) != null ? _p : "",
+            bond: (_q = existing.digest.bond) != null ? _q : "",
+            chronicle: (_r = existing.digest.chronicle) != null ? _r : ""
           };
         }
       }
@@ -18581,9 +18711,9 @@ ${lines}`;
         traits: merged.traits.length
       };
       const material = toPortraitMaterial(merged, {
-        mediaNote: (_q = job.material) == null ? void 0 : _q.mediaNote,
-        statsNote: (_r = job.material) == null ? void 0 : _r.statsNote,
-        profileNote: (_s = job.material) == null ? void 0 : _s.profileNote,
+        mediaNote: (_s = job.material) == null ? void 0 : _s.mediaNote,
+        statsNote: (_t = job.material) == null ? void 0 : _t.statsNote,
+        profileNote: (_u = job.material) == null ? void 0 : _u.profileNote,
         sampleEvents: job.mode === "incremental"
       });
       const sampleWarn = sampleWarnOf(job.msgCount);
@@ -18593,7 +18723,7 @@ ${lines}`;
       });
       let person = "";
       try {
-        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_t = existing == null ? void 0 : existing.digest) == null ? void 0 : _t.person : void 0))).trim();
+        person = (await asks.portrait(buildPersonPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.person : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18610,7 +18740,7 @@ ${lines}`;
       await finish({ stage: "bond", message: "《其人》完成，正在生成《相交》…" });
       let bond = "";
       try {
-        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_u = existing == null ? void 0 : existing.digest) == null ? void 0 : _u.bond : void 0))).trim();
+        bond = (await asks.portrait(buildBondPrompt(job.name, material, sampleWarn, job.mode === "incremental" ? (_w = existing == null ? void 0 : existing.digest) == null ? void 0 : _w.bond : void 0))).trim();
       } catch (e) {
         await finish({ status: "error", error: errorMessage(e) });
         return;
@@ -18634,7 +18764,7 @@ ${lines}`;
               evenlySample(merged.events, MATERIAL_LIMITS.chronicle),
               material.mediaNote,
               material.statsNote,
-              job.mode === "incremental" ? (_v = existing == null ? void 0 : existing.digest) == null ? void 0 : _v.chronicle : void 0
+              job.mode === "incremental" ? (_x = existing == null ? void 0 : existing.digest) == null ? void 0 : _x.chronicle : void 0
             )
           )).trim();
         } catch (e) {
@@ -18674,7 +18804,7 @@ ${lines}`;
       });
     } catch (e) {
       if (gone(job)) return;
-      if (!((_w = st == null ? void 0 : st.safe) == null ? void 0 : _w.unlocked)) {
+      if (!((_y = st == null ? void 0 : st.safe) == null ? void 0 : _y.unlocked)) {
         await finish({ status: "paused", message: "保险库已上锁，解锁后继续" });
         return;
       }
@@ -20882,25 +21012,35 @@ ${lines}`;
     return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
   }
   function genPage(info) {
+    var _a2;
     const body = [];
-    body.push(el("div", "bz-people-gen-line", text(`为 ${info.items.length} 位联系人生成脸谱`)));
+    body.push(el("div", "bz-people-gen-line", text(info.empty ? "没有新的素材" : `为 ${info.items.length} 位联系人生成脸谱`)));
     const rows = [];
-    if (info.images > 0) rows.push(["图片描述", `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-    if (info.voices > 0) rows.push(["语音转写", `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
-    rows.push(["画像生成", `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
-    body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
-    const list = el("ul", "bz-people-gen-list");
-    for (const it of info.items) {
-      const bits = [it.mode === "newer" ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-      if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
-      else if (it.mode === "newer") bits.push("增量提炼");
-      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
+    if (info.materials > 0) rows.push(["聊天记录", `${info.materials} 条`]);
+    if (info.images > 0) rows.push(["图片", `${info.images} 张`]);
+    if (info.voices > 0) rows.push(["录音", `${info.voices} 条`]);
+    if (rows.length) {
+      body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
     }
-    body.push(list);
-    body.push(el("div", "bz-people-pop-note", text("确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。")));
+    if (info.items.length) {
+      const list = el("ul", "bz-people-gen-list");
+      for (const it of info.items) {
+        const bits = [it.mode === "newer" ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
+        if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+        if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
+        if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
+        else if (it.mode === "newer") bits.push("增量提炼");
+        list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
+      }
+      body.push(list);
+    }
+    if (info.empty) {
+      const who = ((_a2 = info.skipped) == null ? void 0 : _a2.length) ? `「${info.skipped.join("」「")}」` : "这些联系人";
+      body.push(el("div", "bz-people-pop-note", text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+    }
     const actions = el("div", "bz-people-prof-actions", [
       button("bz-people-btn", "取消", { "data-people-gen-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
+      button("bz-people-btn bz-people-btn-acc", "开始生成", info.empty ? { "data-people-gen-start": "", disabled: "" } : { "data-people-gen-start": "" })
     ]);
     body.push(actions);
     return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
@@ -21009,8 +21149,10 @@ ${lines}`;
         button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", `落盘并导入 ${s.queue.length} 张`, { "data-people-supp-img-import": "" })
       ]));
     }
+    const unusable = s.broken + s.missing;
+    const unusableNote = unusable > 0 ? ` · ${[s.broken > 0 ? `源图损坏 ${s.broken} 张` : "", s.missing > 0 ? `源图缺失 ${s.missing} 张` : ""].filter(Boolean).join("、")}（无法描述）` : "";
     out.push(el("div", "bz-people-supp-stat", text(
-      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}` : "还没补过图片。"
+      s.imported > 0 ? `已入库图片 ${s.imported} 张${s.undescribed > 0 ? ` · 未描述 ${s.undescribed} 张` : " · 全部有描述"}${unusableNote}` : "还没补过图片。"
     )));
     if (s.imported > 0 && s.undescribed > 0) {
       out.push(el("div", "bz-people-supp-acts", [
@@ -21023,42 +21165,77 @@ ${lines}`;
     }
     if (s.items.length) {
       const grid = el("div", "bz-people-supp-imggrid");
-      for (const it of s.items) {
-        const cap = it.text.replace(/^\[图片\]\s*/, "");
-        const box = el("div", "bz-people-supp-imgbox");
-        box.appendChild(el("img", "bz-people-supp-imgthumb", {
-          src: it.url,
-          alt: cap,
-          loading: "lazy",
-          "data-people-supp-img-view": it.img,
-          title: "点开看大图"
-        }));
-        box.appendChild(button("bz-people-supp-imgdel", "×", {
-          "data-people-supp-img-del": it.img,
-          "aria-label": "删掉这张",
-          title: "从时间线里删掉这张（原件留在数据根，不会动）"
-        }));
-        if (s.imgDel === it.img) {
-          box.appendChild(el("div", "bz-people-supp-imgask", [
-            el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
-            el("div", "bz-people-supp-imgask-acts", [
-              button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
-              button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
-            ])
-          ]));
-        }
-        const cell = el("div", "bz-people-supp-imgcell", [box]);
-        cell.appendChild(el(
-          "div",
-          `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
-          { title: cap || "未描述" },
-          text(cap || "未描述")
-        ));
-        grid.appendChild(cell);
-      }
+      for (const it of s.items) grid.appendChild(suppImgCell(s.imgDel, it));
+      if (s.hidden > 0) grid.appendChild(suppImgMore(s.hidden));
       out.push(grid);
     }
     return out;
+  }
+  function suppImgCell(imgDel, it) {
+    var _a2, _b2;
+    const cap = it.text.replace(/^\[图片\]\s*/, "");
+    const box = el("div", "bz-people-supp-imgbox");
+    box.appendChild(el("img", "bz-people-supp-imgthumb", {
+      src: it.url,
+      alt: cap,
+      loading: "lazy",
+      "data-people-supp-img-view": it.img,
+      title: "点开看大图"
+    }));
+    box.appendChild(button("bz-people-supp-imgdel", "×", {
+      "data-people-supp-img-del": it.img,
+      "aria-label": "删掉这张",
+      title: "从时间线里删掉这张（原件留在数据根，不会动）"
+    }));
+    if (it.skip) box.appendChild(el("div", "bz-people-supp-imgsens", text((_a2 = it.label) != null ? _a2 : "敏感")));
+    if (imgDel === it.img) {
+      box.appendChild(el("div", "bz-people-supp-imgask", [
+        el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
+        el("div", "bz-people-supp-imgask-acts", [
+          button("bz-people-supp-imgask-yes", "删掉", { "data-people-supp-img-del-ok": it.img }),
+          button("bz-people-supp-imgask-no", "取消", { "data-people-supp-img-del-cancel": "" })
+        ])
+      ]));
+    }
+    const cell = el("div", "bz-people-supp-imgcell", [box]);
+    if (it.skip === "sensitive") {
+      cell.appendChild(button("bz-people-supp-imgcap bz-people-supp-imgcap-sens", "敏感 · 解除", {
+        "data-people-supp-img-unsens": it.img,
+        title: "这张被判为敏感内容、已跳过描述——点一下解除标注并重试"
+      }));
+    } else if (it.skip) {
+      cell.appendChild(el("div", "bz-people-supp-imgcap bz-people-supp-imgcap-none", {
+        title: `${it.skip === "broken" ? "源图打不开（文件本身损坏）" : "源图没导出（数据根里只有微信缩略图）"}，无法生成描述——重新导出媒体后会自动重试`
+      }, text((_b2 = it.label) != null ? _b2 : "无法描述")));
+    } else {
+      cell.appendChild(el(
+        "div",
+        `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+        { title: cap || "未描述" },
+        text(cap || "未描述")
+      ));
+    }
+    return cell;
+  }
+  function suppImgMore(hidden) {
+    return el(
+      "button",
+      "bz-people-supp-imgmore",
+      { "data-people-supp-img-more": "", type: "button" },
+      text(`还有 ${hidden} 张 · 继续看`)
+    );
+  }
+  function appendSuppImageGridPage(grid, page, hidden, imgDel) {
+    for (const it of page) grid.appendChild(suppImgCell(imgDel, it));
+    const fresh = hidden > 0 ? suppImgMore(hidden) : null;
+    const old = grid.querySelector("[data-people-supp-img-more]");
+    if (fresh) {
+      if (old) old.replaceWith(fresh);
+      else grid.appendChild(fresh);
+    } else {
+      old == null ? void 0 : old.remove();
+    }
+    return fresh;
   }
   function suppRecBody(s) {
     var _a2, _b2;
@@ -21302,9 +21479,9 @@ ${lines}`;
   function recNote(rows) {
     var _a2;
     const block = el("div", "bz-people-jobs", { "data-people-rec-note": "", role: "status" });
-    const running2 = rows.filter((r) => r.status === "running").length;
+    const running3 = rows.filter((r) => r.status === "running").length;
     const waiting = rows.filter((r) => r.status === "queued").length;
-    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running2} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
+    block.appendChild(el("div", "bz-people-jobs-who", text(`录音处理 · ${running3} 条在跑${waiting ? ` · ${waiting} 条等待` : ""}`)));
     for (const r of rows) {
       if (r.status !== "running" && r.status !== "queued" && r.status !== "interrupted") continue;
       const line = el("div", "bz-people-jobs-main", text(r.file));
@@ -21609,6 +21786,101 @@ ${lines}`;
     return `${rec.timeFrom.slice(0, 7)} ~ ${rec.timeTo.slice(0, 7)} · 共 ${formatCount(textMsgs)} 条文本（形态占比含图片/语音等全部消息形态）`;
   }
 
+  // src/people/thumbs.ts
+  var THUMB_EDGE = 240;
+  var THUMB_DIR = "thumbs";
+  var THUMB_QUALITY = 0.72;
+  function descThumbPath(dataRoot, talker, img) {
+    const src = String(img).trim().replace(/\\/g, "/");
+    const dot = src.lastIndexOf(".");
+    const stem = dot > 0 ? src.slice(0, dot) : src;
+    const base = `${dataRoot}/${talker}/desc/${THUMB_DIR}/${stem}.webp`.replace(/\\/g, "/");
+    return base.replace(/\/+/g, "/");
+  }
+  var compressOverride = null;
+  async function compressThumb(bytes, mime) {
+    if (compressOverride) return compressOverride(bytes, mime);
+    if (typeof createImageBitmap === "undefined" || typeof document === "undefined") return null;
+    try {
+      const bmp = await createImageBitmap(new Blob([bytes], { type: mime }));
+      const scale = Math.min(1, THUMB_EDGE / Math.max(bmp.width, bmp.height));
+      const w = Math.max(1, Math.round(bmp.width * scale));
+      const h = Math.max(1, Math.round(bmp.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bmp.close();
+        return null;
+      }
+      ctx.drawImage(bmp, 0, 0, w, h);
+      bmp.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", THUMB_QUALITY));
+      if (!blob) return null;
+      return new Uint8Array(await blob.arrayBuffer());
+    } catch (e) {
+      return null;
+    }
+  }
+  async function ensureThumbFile(fs, srcAbs, dstAbs) {
+    try {
+      if (fs.existsSync(dstAbs)) return true;
+      if (!fs.existsSync(srcAbs)) return false;
+      const mime = imageMimeOfPath(srcAbs);
+      if (!mime) return false;
+      const bytes = fs.readFileSync(srcAbs);
+      if (!bytes || !bytes.length) return false;
+      const out = await compressThumb(bytes, mime);
+      if (!out || !out.length) return false;
+      fs.mkdirSync(dstAbs.slice(0, dstAbs.lastIndexOf("/")), { recursive: true });
+      fs.writeFileSync(dstAbs, out);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  var pendingJobs = /* @__PURE__ */ new Map();
+  var inFlight = /* @__PURE__ */ new Set();
+  var settledPaths = /* @__PURE__ */ new Set();
+  var running2 = false;
+  var queueFs = null;
+  function resetThumbQueueForPanel() {
+    settledPaths.clear();
+  }
+  function cancelThumbQueue() {
+    pendingJobs.clear();
+  }
+  function thumbHandled(dstAbs) {
+    return pendingJobs.has(dstAbs) || inFlight.has(dstAbs) || settledPaths.has(dstAbs);
+  }
+  function queueThumbBuild(fs, srcAbs, dstAbs, onDone) {
+    if (thumbHandled(dstAbs)) return;
+    queueFs = fs;
+    pendingJobs.set(dstAbs, { src: srcAbs, dst: dstAbs, onDone });
+    void runThumbQueue();
+  }
+  async function runThumbQueue() {
+    var _a2;
+    if (running2) return;
+    running2 = true;
+    try {
+      for (; ; ) {
+        const job = pendingJobs.values().next().value;
+        if (!job) break;
+        pendingJobs.delete(job.dst);
+        inFlight.add(job.dst);
+        const ok = queueFs ? await ensureThumbFile(queueFs, job.src, job.dst) : false;
+        inFlight.delete(job.dst);
+        settledPaths.add(job.dst);
+        (_a2 = job.onDone) == null ? void 0 : _a2.call(job, ok);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } finally {
+      running2 = false;
+    }
+  }
+
   // src/people/ui.ts
   init_ui();
 
@@ -21706,13 +21978,21 @@ ${lines}`;
   var suppImages = [];
   var suppBusy = false;
   var suppImgDelPending = null;
+  var SUPP_IMG_PAGE = 120;
+  var suppImgShown = SUPP_IMG_PAGE;
+  var suppImgMoreIO = null;
   var suppRecQueue = [];
   var recDelPending = null;
   var recDelAlsoFile = true;
   var recStartEditFile = null;
   var recTurnsFile = null;
   var recRefConfirm = false;
-  var suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+  var SKIP_LABEL = {
+    [SENSITIVE_SKIP]: "敏感",
+    [BROKEN_SKIP]: "源图损坏",
+    [MISSING_SKIP]: "源图缺失"
+  };
+  var suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
   var recPollTimer = null;
   var animBoot = true;
   var animTurn = "";
@@ -21734,9 +22014,10 @@ ${lines}`;
         recStartEditFile = null;
         recRefConfirm = false;
         suppImgDelPending = null;
+        suppImgShown = SUPP_IMG_PAGE;
         noteDelPending = null;
         closeImgViewer();
-        suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+        suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
       }
       void refreshSuppStoreInfo(detailId);
       startRecPolling();
@@ -21955,6 +22236,8 @@ ${lines}`;
     });
     offSyncWatch = subscribeSync(onSyncState);
     localImgCache.clear();
+    suppImgShown = SUPP_IMG_PAGE;
+    resetThumbQueueForPanel();
     const onViewportResize = () => {
       syncStickyHeadH();
     };
@@ -22017,6 +22300,8 @@ ${lines}`;
     pulled = null;
     cur = 0;
     suppImgDelPending = null;
+    disarmSuppImgMore();
+    cancelThumbQueue();
     closeImgViewer();
     closeDsState();
     if (findDebounce !== null) {
@@ -22255,9 +22540,9 @@ ${lines}`;
     if (!jobsBusy()) return;
     const active = (_b2 = queue2.find((j) => j.status === "running")) != null ? _b2 : queue2.find((j) => j.status === "paused" || j.status === "interrupted");
     const who = (active == null ? void 0 : active.name) || (active == null ? void 0 : active.talker) || "";
-    const running2 = (active == null ? void 0 : active.status) === "running";
-    const why = running2 ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
-    const short = running2 ? `等「${who}」画完` : "先接上没画完的那位";
+    const running3 = (active == null ? void 0 : active.status) === "running";
+    const why = running3 ? `正在给「${who}」画谱——一位一位来，等它画完再画这位` : `「${who}」那一趟还没收工——先接着画它（或删掉它的任务），再画这位`;
+    const short = running3 ? `等「${who}」画完` : "先接上没画完的那位";
     overlay == null ? void 0 : overlay.querySelectorAll("[data-people-detail]").forEach((page) => {
       var _a3;
       const id = (_a3 = page.dataset.peopleDetail) != null ? _a3 : "";
@@ -22582,7 +22867,7 @@ ${lines}`;
     var _a2;
     const { runnable: runnable2, skipped } = await planTargets(targets);
     if (!runnable2.length) {
-      if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, "info");
+      await askGenerationConfirm(buildGenerationConfirmInfo([], skipped));
       return;
     }
     const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable2));
@@ -22612,30 +22897,28 @@ ${lines}`;
     if (parts.length) notice(parts.join("，"), "success");
     renderNote();
   }
-  function buildGenerationConfirmInfo(runnable2) {
-    const label = describeModelLabelOf();
+  function buildGenerationConfirmInfo(runnable2, skipped = []) {
     const items = runnable2.map((t) => {
       var _a2, _b2;
       const pending = (_a2 = t.pending) != null ? _a2 : { images: 0, voices: 0 };
       const materials = t.mode === "newer" ? (_b2 = t.planCount) != null ? _b2 : t.msgs.length : t.msgs.length;
       return { name: t.name, materials, images: pending.images, voices: pending.voices, ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
     });
-    const images = items.reduce((s, it) => s + it.images, 0);
-    const voices = items.reduce((s, it) => s + it.voices, 0);
     return {
-      provider: label.provider,
-      model: label.model,
       items,
-      images,
-      describeCalls: estimateDescribeCallsOf(images),
-      batchSize: batchSizeFromSettings(),
-      voices,
-      // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
-      portraitCalls: runnable2.reduce((s, t) => {
-        var _a2;
-        return s + (t.mode === "newer" ? estimatePortraitCallsOfCount((_a2 = t.planCount) != null ? _a2 : 0) : estimatePortraitCallsOf(t.msgs));
-      }, 0)
+      materials: items.reduce((s, it) => s + it.materials, 0),
+      images: items.reduce((s, it) => s + it.images, 0),
+      voices: items.reduce((s, it) => s + it.voices, 0),
+      empty: items.length === 0,
+      ...skipped.length ? { skipped } : {}
     };
+  }
+  function onlyWatermarkMsgs(plan, existing, pending) {
+    var _a2, _b2;
+    const anchor = existing == null ? void 0 : existing.lastProcessedTs;
+    if (plan.mode !== "newer" || !anchor || !plan.msgs.length) return false;
+    if (((_a2 = pending == null ? void 0 : pending.images) != null ? _a2 : 0) + ((_b2 = pending == null ? void 0 : pending.voices) != null ? _b2 : 0) > 0) return false;
+    return plan.msgs.every((m) => m.ts <= anchor);
   }
   async function planTargets(targets) {
     var _a2;
@@ -22646,7 +22929,7 @@ ${lines}`;
     for (const t of targets) {
       const existing = people.find((p) => p.id === t.talker);
       const plan = planIncremental(t.msgs, existing);
-      if (plan.mode === "skip") {
+      if (plan.mode === "skip" || onlyWatermarkMsgs(plan, existing, t.pending)) {
         if (existing) {
           let imports = existing.imports;
           if (imports.length && !imports.some((r) => r.stats)) {
@@ -22670,12 +22953,18 @@ ${lines}`;
     return { runnable: runnable2, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
       const person = job.person;
       if (!person) {
+        if ((_c2 = job.describe) == null ? void 0 : _c2.unreadable) {
+          notice(`「${name}」${(_d2 = job.message) != null ? _d2 : "本次没有可提炼的内容"}`, "warning");
+          jobs().removeJob(talker);
+          if (overlay) void renderAlbum();
+          return;
+        }
         notice(`「${name}」生成完成但其人画像为空`, "warning");
         return;
       }
@@ -22684,9 +22973,14 @@ ${lines}`;
       const now = (/* @__PURE__ */ new Date()).toISOString();
       const msgs = target == null ? void 0 : target.msgs;
       const rec = {
-        file: (_f = (_e = (_d2 = target == null ? void 0 : target.fileLabel) != null ? _d2 : (_c2 = job.importRecord) == null ? void 0 : _c2.fileLabel) != null ? _e : job.fileLabel) != null ? _f : `数据源:${talker}`,
+        file: (_h = (_g = (_f = target == null ? void 0 : target.fileLabel) != null ? _f : (_e = job.importRecord) == null ? void 0 : _e.fileLabel) != null ? _g : job.fileLabel) != null ? _h : `数据源:${talker}`,
         importedAt: now,
-        messageCount: target ? (_h = (_g = job.importRecord) == null ? void 0 : _g.messageCount) != null ? _h : msgs.length : (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : 0,
+        // messageCount 是「这一份导出的可消费消息条数」——与 timeFrom / timeTo 同口径（同取 msgs），
+        // 也与导入路径（ui 层 importMsgs：msgs.length）一致。它有两个消费者：界面的「消息总数」，
+        // 以及 incremental.planIncremental 里「同一导出再导」的整份指纹（条数 + 跨度）。
+        // 旧写法优先取 job.importRecord.messageCount（= 本次提炼子集条数，如新增 1 条就是 1），
+        // 指纹因此永不命中 → 每次再导都判成 newer → 开工单反复报「新增素材 N 条」（issue 523）。
+        messageCount: msgs ? msgs.length : (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : 0,
         skippedCount: (_m = (_l = target == null ? void 0 : target.skippedCount) != null ? _l : (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _m : 0,
         timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_o = (_n = job.importRecord) == null ? void 0 : _n.timeFrom) != null ? _o : now,
         timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeTo) != null ? _q : now,
@@ -22721,6 +23015,10 @@ ${lines}`;
         await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
+      const sens = (_y = (_x = job.describe) == null ? void 0 : _x.sensitive) != null ? _y : 0;
+      if (sens > 0) {
+        notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, "warning");
+      }
       jobs().removeJob(talker);
       if (overlay) {
         animDev = talker;
@@ -22797,12 +23095,13 @@ ${lines}`;
   }
   function answerGenConfirm(answer) {
     const done = pendingGenAnswer;
+    const final = answer === "start" && (pendingGenInfo == null ? void 0 : pendingGenInfo.empty) ? "cancel" : answer;
     pendingGenAnswer = null;
     pendingGenInfo = null;
     genConfirmOpen = false;
     dialog = null;
     void renderAlbum();
-    done == null ? void 0 : done(answer);
+    done == null ? void 0 : done(final);
   }
   function jobsAction(kind) {
     var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
@@ -22935,7 +23234,7 @@ ${lines}`;
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -23240,6 +23539,10 @@ ${lines}`;
       if (suppTab === "rec") void noticeInterruptedRecordings();
       return;
     }
+    if (t.closest("[data-people-supp-img-more]")) {
+      armSuppImgMore(growSuppImgGrid());
+      return;
+    }
     if (t.closest("[data-people-supp-img-pick]")) {
       void suppPickImages();
       return;
@@ -23265,9 +23568,14 @@ ${lines}`;
       void suppDescribe();
       return;
     }
+    const imgUnsens = t.closest("[data-people-supp-img-unsens]");
+    if (imgUnsens) {
+      void suppUnmarkSensitive((_y = imgUnsens.getAttribute("data-people-supp-img-unsens")) != null ? _y : "");
+      return;
+    }
     const imgView = t.closest("[data-people-supp-img-view]");
     if (imgView) {
-      openImgViewer((_y = imgView.getAttribute("data-people-supp-img-view")) != null ? _y : "");
+      openImgViewer((_z = imgView.getAttribute("data-people-supp-img-view")) != null ? _z : "");
       return;
     }
     const imgDel = t.closest("[data-people-supp-img-del]");
@@ -23283,7 +23591,7 @@ ${lines}`;
     }
     const imgDelOk = t.closest("[data-people-supp-img-del-ok]");
     if (imgDelOk) {
-      const img = (_z = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _z : "";
+      const img = (_A = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _A : "";
       suppImgDelPending = null;
       void suppDeleteImage(img);
       return;
@@ -23312,7 +23620,7 @@ ${lines}`;
     }
     const recDel = t.closest("[data-people-supp-rec-del]");
     if (recDel) {
-      recDelPending = (_A = recDel.getAttribute("data-people-supp-rec-del")) != null ? _A : null;
+      recDelPending = (_B = recDel.getAttribute("data-people-supp-rec-del")) != null ? _B : null;
       recDelAlsoFile = true;
       void renderAlbum();
       return;
@@ -23324,7 +23632,7 @@ ${lines}`;
     }
     const recDelOk = t.closest("[data-people-supp-rec-del-ok]");
     if (recDelOk) {
-      void suppDeleteRecording((_B = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _B : "");
+      void suppDeleteRecording((_C = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _C : "");
       return;
     }
     const recStartBtn = t.closest("[data-people-supp-rec-start-edit]");
@@ -23351,17 +23659,17 @@ ${lines}`;
     }
     const recRun = t.closest("[data-people-supp-rec-run]");
     if (recRun) {
-      void suppRunRecording((_C = recRun.getAttribute("data-people-supp-rec-run")) != null ? _C : "");
+      void suppRunRecording((_D = recRun.getAttribute("data-people-supp-rec-run")) != null ? _D : "");
       return;
     }
     const recMerge = t.closest("[data-people-supp-rec-merge]");
     if (recMerge && detailId) {
-      void suppMergeRecording(detailId, (_D = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _D : "");
+      void suppMergeRecording(detailId, (_E = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _E : "");
       return;
     }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      const file = (_E = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _E : "";
+      const file = (_F = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _F : "";
       const root = suppDataRoot();
       if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
       void renderAlbum();
@@ -23390,7 +23698,7 @@ ${lines}`;
     }
     const recDeq = t.closest("[data-people-supp-rec-dequeue]");
     if (recDeq) {
-      const file = (_F = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _F : "";
+      const file = (_G = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _G : "";
       const root = suppDataRoot();
       if (detailId && root && file) dequeueRecordingTask(recordingSidecarPath(root, detailId, file));
       void renderAlbum();
@@ -23548,7 +23856,7 @@ ${lines}`;
     var _a2, _b2;
     const kind = dialog == null ? void 0 : dialog.kind;
     if (kind === "ds") return dsPage(dsPageState());
-    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], images: 0, voices: 0, provider: "", model: "", describeCalls: 0, portraitCalls: 0, batchSize: 0 });
+    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], materials: 0, images: 0, voices: 0, empty: true });
     if (kind === "find") return findPageState(avatars);
     if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
     if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);
@@ -23632,6 +23940,7 @@ ${lines}`;
     renderBanner();
     applySyncLockdown();
     applyJobsLockdown();
+    armSuppImgMore(overlay.querySelector("[data-people-supp-img-more]"));
     mountIcons(overlay);
     clearAnim();
   }
@@ -24417,6 +24726,8 @@ ${lines}`;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
     let imported = 0;
     let undescribed = 0;
+    let broken = 0;
+    let missing = 0;
     const mergedRecs = /* @__PURE__ */ new Set();
     const imageItems = [];
     try {
@@ -24424,8 +24735,11 @@ ${lines}`;
       for (const m of (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : []) {
         if (m.type === 3 && m.img) {
           imported++;
-          imageItems.push({ img: m.img, text: m.text });
-          if (m.text === "") undescribed++;
+          const skip = descSkipOf(m);
+          if (skip === BROKEN_SKIP) broken++;
+          else if (skip === MISSING_SKIP) missing++;
+          imageItems.push(skip ? { img: m.img, text: m.text, skip, label: SKIP_LABEL[skip] } : { img: m.img, text: m.text });
+          if (m.text === "" && !skip) undescribed++;
         }
         if (m.key.startsWith("rec:")) {
           const end = m.key.lastIndexOf(":");
@@ -24435,23 +24749,78 @@ ${lines}`;
     } catch (e) {
     }
     if (!overlay || suppOwnerId !== talker) return;
-    suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
+    suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
     if ((dialog == null ? void 0 : dialog.kind) === "note") void renderAlbum();
   }
   function suppImageState() {
-    const running2 = isDescribeOnlyBusy();
+    const running3 = isDescribeOnlyBusy();
     const root = suppDataRoot();
     const talker = detailId != null ? detailId : "";
+    const active = suppTab === "image" && Boolean(root && talker);
+    const total = active ? suppStoreInfo.imageItems.length : 0;
+    const shown = Math.min(suppImgShown, total);
     return {
       queue: suppImages,
       imported: suppStoreInfo.imported,
       undescribed: suppStoreInfo.undescribed,
-      describeBusy: running2,
+      broken: suppStoreInfo.broken,
+      missing: suppStoreInfo.missing,
+      describeBusy: running3,
       modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-      // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
-      items: root && talker ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) })) : [],
+      items: active ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) })) : [],
+      hidden: Math.max(0, total - shown),
       ...suppImgDelPending ? { imgDel: suppImgDelPending } : {}
     };
+  }
+  function suppGridImgOf(root, talker, img) {
+    const thumbAbs = descThumbPath(root, talker, img);
+    const fs2 = suppFs();
+    if (!fs2) return "";
+    if (fs2.existsSync(thumbAbs)) {
+      const thumbUrl = localImgOf(thumbAbs);
+      if (thumbUrl) return thumbUrl;
+    }
+    if (!thumbHandled(thumbAbs)) {
+      queueThumbBuild(fs2, descImagePath(root, talker, img), thumbAbs, (ok) => {
+        if (ok) swapGridThumb(talker, img, thumbAbs);
+      });
+    }
+    return localImgOf(descImagePath(root, talker, img));
+  }
+  function swapGridThumb(talker, img, thumbAbs) {
+    const url = localImgOf(thumbAbs);
+    if (!url || !overlay || detailId !== talker) return;
+    overlay.querySelectorAll("[data-people-supp-img-view]").forEach((im) => {
+      if (im.getAttribute("data-people-supp-img-view") === img && im.src !== url) im.src = url;
+    });
+  }
+  function disarmSuppImgMore() {
+    suppImgMoreIO == null ? void 0 : suppImgMoreIO.disconnect();
+    suppImgMoreIO = null;
+  }
+  function growSuppImgGrid() {
+    const talker = detailId;
+    const root = suppDataRoot();
+    const grid = overlay == null ? void 0 : overlay.querySelector(".bz-people-supp-imggrid");
+    if (!talker || !root || !grid || (dialog == null ? void 0 : dialog.kind) !== "note" || suppOwnerId !== detailId) return null;
+    const total = suppStoreInfo.imageItems.length;
+    const from = Math.min(suppImgShown, total);
+    const to = Math.min(suppImgShown + SUPP_IMG_PAGE, total);
+    if (from >= to) return grid.querySelector("[data-people-supp-img-more]");
+    const page = suppStoreInfo.imageItems.slice(from, to).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }));
+    suppImgShown = to;
+    const more = appendSuppImageGridPage(grid, page, Math.max(0, total - to), suppImgDelPending != null ? suppImgDelPending : void 0);
+    return more;
+  }
+  function armSuppImgMore(sentinel) {
+    disarmSuppImgMore();
+    if (!sentinel || typeof IntersectionObserver === "undefined") return;
+    suppImgMoreIO = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      disarmSuppImgMore();
+      armSuppImgMore(growSuppImgGrid());
+    }, { rootMargin: "600px 0px" });
+    suppImgMoreIO.observe(sentinel);
   }
   function recSidecarFresh(fs2, key, startedAt) {
     if (!startedAt) return false;
@@ -24669,7 +25038,12 @@ ${lines}`;
           seq++;
         }
         fs2.copyFileSync(it.path, target);
-        imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
+        const rel = `${month}/${stamp}_${p2(seq)}${ext}`;
+        const thumbAbs = descThumbPath(root, talker, rel);
+        queueThumbBuild(fs2, target, thumbAbs, (ok) => {
+          if (ok) swapGridThumb(talker, rel, thumbAbs);
+        });
+        imported.push({ file: rel, ts: it.ts, isSender: !it.peer });
       }
       let n = 0;
       await peopleSafe.write(talker, (rec) => {
@@ -24711,8 +25085,10 @@ ${lines}`;
     if (index < 0) return;
     const { close } = openLightbox({
       title: "留影",
+      // srcOf 惰性（issue 519）：翻到哪张才读哪张的原图——千张组一次性把 data URL 拉齐是同一笔卡账
       items: suppStoreInfo.imageItems.map((it) => ({
-        src: localImgOf(descImagePath(root, talker, it.img)),
+        src: "",
+        srcOf: () => localImgOf(descImagePath(root, talker, it.img)),
         caption: it.text.replace(/^\[图片\]\s*/, "")
       })),
       index
@@ -24756,6 +25132,44 @@ ${lines}`;
     else if (r.ok && r.skipped) notice("没有需要描述的图片（零图片或已全部描述）", "info");
     else if (r.ok) notice("图片描述完成，已并进时间线", "success");
     await refreshSuppStoreInfo(detailId);
+    void renderAlbum();
+  }
+  async function suppUnmarkSensitive(img) {
+    const talker = detailId;
+    if (!talker || !img || isDescribeOnlyBusy()) return;
+    if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+    const safe = peopleSafe;
+    if (!(safe == null ? void 0 : safe.unlocked)) {
+      notice("保险库上锁——先解锁再解除敏感标注", "warning");
+      return;
+    }
+    let cleared = 0;
+    try {
+      await safe.write(talker, (rec) => {
+        var _a2;
+        for (const m of rec.store.msgs) {
+          if (m.type === 3 && String((_a2 = m.img) != null ? _a2 : "") === img && isDescSkipped(m)) {
+            delete m.descSkip;
+            cleared++;
+          }
+        }
+        if (cleared > 0) rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      });
+    } catch (e) {
+      notifyActionError(e, "解除敏感标注");
+      return;
+    }
+    await refreshSuppStoreInfo(talker);
+    void renderAlbum();
+    if (!cleared) {
+      notice("这张已经没有敏感标注了", "info");
+      return;
+    }
+    const r = await runDescribeOnly(getApp(), talker);
+    if (!r.ok && r.reason) notice(`重试描述没有跑：${r.reason}`, "warning");
+    else if (r.ok && r.skipped) notice("没有需要描述的图片", "info");
+    else if (r.ok) notice("已解除敏感标注，重新描述完成", "success");
+    await refreshSuppStoreInfo(talker);
     void renderAlbum();
   }
   async function suppDeleteRecording(file) {

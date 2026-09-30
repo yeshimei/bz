@@ -24,7 +24,7 @@
 import { runExternalTool, type ExternalToolCallbacks, type ExternalToolHandle, type ExternalToolSpec, type ExternalToolOutcome } from '../core/external-tool';
 import { BZ_FACE_INSTALL_HINT } from './sync';
 import { releaseHeavy, tryAcquireHeavy } from './heavy-gate';
-import type { VoiceItem, ImageMapItem } from './datasource';
+import type { VoiceItem, ImageMapItem, MediaFailItem } from './datasource';
 
 // ---------------- 阶段词汇表（与 tools/obsidian-face lib/prep-core PREP_PHASES 同词汇） ----------------
 
@@ -330,12 +330,15 @@ export function clearPrepControl(dataRoot: string): void {
 }
 
 /**
- * 读该联系人的 prep 旁路表（voice.json 转写 + image_map.json 图片关联；ADR-0197 决策 4：
- * 合并进聊天仓的动作由插件执行——读数据根、写保库记录）。
- * 两表都缺 / 读不动返回 null（无产物可合并；重跑 prep 再补）。路径统一归一成正斜杠
+ * 读该联系人的 prep 旁路表（voice.json 转写 + image_map.json 图片关联 + media_fail.json
+ * 不可消费清单；ADR-0197 决策 4：合并进聊天仓的动作由插件执行——读数据根、写保库记录）。
+ * 三表都缺 / 读不动返回 null（无产物可合并；重跑 prep 再补）。路径统一归一成正斜杠
  * （win32 fs 两种分隔符都收；测试假件按字面匹配同款字符串）。
+ *
+ * `mediaFail` 的 null 与 [] 语义有别（ADR-0225）：**null = 无权威**（表缺失 / 读不动 / --limit
+ * 调试轮没写）→ 插件不动已有标注；**[] = 权威的「全部可消费」**→ 清掉旧的 broken/missing 标注。
  */
-export function readPrepSidecars(dataRoot: string, contact: string): { voice: VoiceItem[]; imageMap: ImageMapItem[] } | null {
+export function readPrepSidecars(dataRoot: string, contact: string): { voice: VoiceItem[]; imageMap: ImageMapItem[]; mediaFail: MediaFailItem[] | null } | null {
   const fs = fso();
   if (!fs || !dataRoot || !contact) return null;
   const readArray = (p: string): unknown[] | null => {
@@ -352,10 +355,14 @@ export function readPrepSidecars(dataRoot: string, contact: string): { voice: Vo
   const base = `${dataRoot}/${contact}`.replace(/\/+$/, '');
   const voice = readArray(norm(`${base}/voice.json`));
   const imageMap = readArray(norm(`${base}/image_map.json`));
-  if (!voice && !imageMap) return null;
+  const mediaFail = readArray(norm(`${base}/media_fail.json`));
+  if (!voice && !imageMap && !mediaFail) return null;
   return {
     voice: (voice ?? []).filter((v): v is VoiceItem => !!v && typeof v === 'object'),
     imageMap: (imageMap ?? []).filter((v): v is ImageMapItem => !!v && typeof v === 'object'),
+    mediaFail: mediaFail
+      ? mediaFail.filter((v): v is MediaFailItem => !!v && typeof v === 'object')
+      : null,
   };
 }
 

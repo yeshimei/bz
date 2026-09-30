@@ -1,4 +1,4 @@
-/* 源指纹 fe8f162b5d98db7c · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7d74581b8e3005d9 · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -7066,41 +7066,6 @@ ${c.trim()}
     const m = src.match(/^(\s*---\r?\n[\s\S]*?\r?\n---[ \t]*\r?\n?)([\s\S]*)$/);
     if (!m) return applyBodyTransforms(src, marks, imageSwaps).body;
     return m[1] + applyBodyTransforms(m[2], marks, imageSwaps).body;
-  }
-  function lineAround(src, start, end) {
-    const ls = src.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
-    let le = src.indexOf("\n", end);
-    if (le === -1) le = src.length;
-    return src.slice(ls, le).trim();
-  }
-  function findMarkdownSnippet(body, text) {
-    const src = String(body || "");
-    const t = String(text || "").trim();
-    if (!src || !t) return null;
-    const direct = src.indexOf(t);
-    if (direct !== -1) return lineAround(src, direct, direct + t.length);
-    let normStr = "";
-    const normIdx = [];
-    let prevSpace = true;
-    for (let i = 0; i < src.length; i++) {
-      const ch = src[i];
-      if (/\s/.test(ch)) {
-        if (prevSpace) continue;
-        normStr += " ";
-        normIdx.push(i);
-        prevSpace = true;
-      } else {
-        normStr += ch;
-        normIdx.push(i);
-        prevSpace = false;
-      }
-    }
-    const q3 = t.replace(/\s+/g, " ").trim();
-    const n = normStr.indexOf(q3);
-    if (n === -1) return null;
-    const start = normIdx[n];
-    const end = normIdx[Math.min(n + q3.length - 1, normIdx.length - 1)] + 1;
-    return lineAround(src, start, end);
   }
   async function readArticleTracking(articleKey) {
     const data = await readClipbookData();
@@ -29920,23 +29885,25 @@ ${bodyText.substring(0, 6e3)}`;
       close: hideSelBar
     });
   }
-  function placeSelBar(rect) {
+  function placeSelBar(rect, preferBelow = false) {
     const bar = selBarEl;
     const w = bar.offsetWidth || 240;
     const h = bar.offsetHeight || 36;
     const vw = window.innerWidth || document.documentElement.clientWidth || 0;
     const vh = window.innerHeight || document.documentElement.clientHeight || 0;
     let left = rect.left;
-    let top = rect.top - h - 8;
-    if (top < 8) top = (rect.bottom || rect.top) + 8;
+    let top;
+    if (preferBelow) {
+      top = (rect.bottom || rect.top) + 8;
+      if (vh && top + h > vh - 8) top = rect.top - h - 8;
+    } else {
+      top = rect.top - h - 8;
+      if (top < 8) top = (rect.bottom || rect.top) + 8;
+    }
     if (vw) left = Math.min(Math.max(left, 8), Math.max(8, vw - w - 8));
     if (vh) top = Math.min(Math.max(top, 8), Math.max(8, vh - h - 8));
     bar.style.left = `${left}px`;
     bar.style.top = `${top}px`;
-  }
-  function currentSourceBody(a) {
-    if (a.origin === "clip") return a.notePath ? clipBodyCache.get(a.notePath) || "" : "";
-    return a.body || "";
   }
   function readTextSelection() {
     const sel = typeof window.getSelection === "function" ? window.getSelection() : null;
@@ -29954,17 +29921,15 @@ ${bodyText.substring(0, 6e3)}`;
   function showTextSelBar(info) {
     const a = M3.cur;
     if (!a) return;
-    const body = currentSourceBody(a);
-    selSnap = { articleId: a.id, text: info.text, body };
+    selSnap = { articleId: a.id, text: info.text };
     imgSnap = null;
     const bar = ensureSelBar();
     bar.innerHTML = `
-    <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="copy" title="复制选中内容的 Markdown 源语法">复制 Markdown</button>
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="term" title="存为知识盒名词，并在此处留下锚定双链">存为名词</button>
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="passage" title="存为知识盒段落，并在此处留下锚定双链">存为段落</button>`;
     bar.style.display = "flex";
     topifyZ(bar);
-    placeSelBar(info.rect);
+    placeSelBar(info.rect, isMobileEnv());
     armSelBarEsc();
     motionSelbarIn(bar);
   }
@@ -30024,11 +29989,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function runSelBarAct(act) {
     selBarHoldUntil = Date.now() + 600;
-    if (act === "copy") {
-      hideSelBar();
-      await actCopyMarkdown();
-      return;
-    }
     if (act === "term" || act === "passage") {
       hideSelBar();
       await actSaveEntry(act);
@@ -30043,12 +30003,6 @@ ${bodyText.substring(0, 6e3)}`;
       hideSelBar();
       await actImageNote();
     }
-  }
-  async function actCopyMarkdown() {
-    const snap = selSnap;
-    if (!snap) return;
-    const snippet = snap.body ? findMarkdownSnippet(snap.body, snap.text) : null;
-    await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
     return M3.cur && M3.cur.id === articleId ? M3.cur : null;
