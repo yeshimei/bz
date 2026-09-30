@@ -119,7 +119,7 @@ tags: [美剧]
     const tfile = vault.getMarkdownFiles()[0];
     const handItem: CinemaItem = {
       file: tfile, name: '缓存未就绪', typeTag: '电影', group: '电影', watchDate: null, rating: null,
-      status: 2, rewatches: [], lists: [], poster: null, review: null, genre: null, director: null, actors: null,
+      status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
       region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     };
     M.items.push(handItem);
@@ -135,7 +135,7 @@ tags: [美剧]
     const tfile = vault.getMarkdownFiles()[0];
     M.items.push({
       file: tfile, name: '无效', typeTag: '电影', group: '电影', watchDate: null, rating: null,
-      status: 2, rewatches: [], lists: [], poster: null, review: null, genre: null, director: null, actors: null,
+      status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null, genre: null, director: null, actors: null,
       region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });
     rebuildItems(app);
@@ -193,7 +193,7 @@ describe('cinema 排序与筛选', () => {
     const mk = (name: string, ctime: number, mtime: number): CinemaItem => ({
       file: { path: `我的/影视/《${name}》.md`, stat: { ctime, mtime } } as any,
       name, typeTag: '电影', group: '电影',
-      watchDate: null, rating: null, status: 2, rewatches: [], lists: [], poster: null, review: null,
+      watchDate: null, rating: null, status: 2, rewatches: [], lists: [], shelvedOnly: false, poster: null, review: null,
       genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
       doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });
@@ -229,6 +229,33 @@ describe('cinema 工具函数', () => {
     expect(getStarString(1.4)).toBe('☆☆☆☆☆');
     expect(getStarString(0)).toBe('');
     expect(getStarString(-1)).toBe('');
+  });
+
+  it('片单收纳条目只在片单视图出现：无片单筛选整体排除；片单筛选命中显示', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《普通想看》.md', '---
+tags: [电影]
+评分: -1
+---');
+    vault.files.set('我的/影视/《收纳片》.md', '---
+tags: [电影]
+评分: -1
+片单收纳: true
+片单:
+- 豆列合集
+---');
+    const app = makeApp(vault);
+    M.folderPath = '我的/影视';
+    rebuildItems(app);
+    // 正常视图（无筛选/类型/状态/搜索共用同一条链）排除收纳条目
+    expect(getDisplayItems().map((i) => i.name)).toEqual(['普通想看']);
+    M.searchKeyword = '收纳';
+    expect(getDisplayItems()).toHaveLength(0); // 搜索也排除（去片单里找）
+    M.searchKeyword = '';
+    // 片单筛选命中 → 收纳条目出现
+    M.listFilter = '豆列合集';
+    expect(getDisplayItems().map((i) => i.name)).toEqual(['收纳片']);
+    M.listFilter = null;
   });
 
   it('组映射', () => {

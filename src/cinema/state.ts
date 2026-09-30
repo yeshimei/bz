@@ -34,6 +34,11 @@ export interface CinemaItem {
   /** 自建片单（frontmatter「片单」数组；建档/编辑不写，归入/移出时落盘）。
    *  含内置片单「重映厅」（constants REWATCH_SHELF）。侧栏片单区 / 片单筛选 / 归入弹层消费 */
   lists: string[];
+  /** 片单收纳（frontmatter「片单收纳」= true）：豆瓣片单一键导入的新片专属——只在其
+   *  片单里呈现，不混入正常影视视图（全部/类型/状态/搜索都排除，片单筛选命中时显示）。
+   *  状态离开「想看」（标记在看/已看，persistItem 汇合）即摘除——用户开始正式管理就回归
+   *  正常视图。在库旧档归片单不打此标，一切照旧 */
+  shelvedOnly: boolean;
   poster: string | null;
   review: string | null;
   genre: string | null;

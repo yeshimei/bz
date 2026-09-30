@@ -164,13 +164,40 @@ async function toggleListMembership(it: CinemaItem, list: string, app: App): Pro
   }
 }
 
-/** 归入片单弹层（cn-modal--listpick）：现有片单逐行点选（就地切换勾选不关层）+ 底部新建行。
- *  落盘走 toggleListMembership（每行一次写盘）；勾选态刷新走 ovl 局部 class 翻转，不整刷。
+/** 片单改名（归入弹层行尾铅笔钮，2026-09-30 拍板补改名途径）：全库扫含旧名的笔记
+ *  批量重写「片单」数组（130 部也只是一串本地写盘），内存同步后整刷——侧栏片单组
+ *  计数与新名即时生效。校验：新名非空/无非法字符/不与其他片单重名。 */
+async function renameList(oldName: string, newName: string, app: App): Promise<void> {
+  const targets = M.items.filter((x) => x.lists.includes(oldName) && x.file);
+  try {
+    for (const x of targets) {
+      await app.fileManager.processFrontMatter(x.file!, (fm: Record<string, unknown>) => {
+        const cur = normalizeLists(fm['片单']);
+        const at = cur.indexOf(oldName);
+        if (at >= 0) {
+          cur[at] = newName;
+          fm['片单'] = cur;
+        }
+      });
+      x.lists = x.lists.map((l) => (l === oldName ? newName : l));
+    }
+    notice(`片单已改名：「${oldName}」→「${newName}」${targets.length ? `（${targets.length} 部成员同步更新）` : ''}`, 'success');
+    renderAll(app);
+  } catch (e) {
+    notifySaveError(e);
+    console.error(e);
+    renderAll(app);
+  }
+}
+
+/** 归入片单弹层（cn-modal--listpick）：现有片单逐行点选（就地切换勾选不关层）+ 底部新建行
+ *  + 行尾铅笔改名（行内编辑态：label 换输入框，Enter 提交 / Esc 还原；编辑中行点击不触发勾选）。
+ *  落盘走 toggleListMembership / renameList；勾选态刷新走 ovl 局部 class 翻转，不整刷。
  *  行内计数 = 库内成员数（与侧栏「卡片数」口径不同：这里是笔记粒度，弹层语境更直观） */
 function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
   const countOf = (name: string): number => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
   const rowHtml = (name: string): string =>
-    `<button type="button" class="lp-item${it.lists.includes(name) ? ' is-on' : ''}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span></button>`;
+    `<button type="button" class="lp-item${it.lists.includes(name) ? ' is-on' : ''}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan('check')}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
   const bodyHtml = (): string => allLists(M.items).map(rowHtml).join('') || '<div class="lp-empty">还没有片单——下面建第一个</div>';
   const url = posterUrl(it, app);
   const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
@@ -180,8 +207,45 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
     <div class="lp-new"><input class="j-lp-new" placeholder="新片单名，回车新建并归入"><button type="button" class="lp-add j-lp-add">${iconSpan(ICON.listPlus)}新建</button></div>
   </div>`);
   mountIcons(el);
-  el.querySelector('[data-lp-body]')?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest('[data-lp]') as HTMLElement | null;
+  const bodyEl = el.querySelector<HTMLElement>('[data-lp-body]');
+  bodyEl?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    // 改名态中的行：点击不触发勾选（正在编辑）
+    if (target.closest('.j-lp-edit')) return;
+    // 行尾铅笔 → 行内改名编辑态（label 换输入框，Enter 提交 / Esc 还原）
+    const ren = target.closest('[data-lp-rename]') as HTMLElement | null;
+    if (ren) {
+      const oldName = ren.dataset.lpRename as string;
+      const row = ren.closest('.lp-item') as HTMLElement;
+      const label = row.querySelector<HTMLElement>('.lp-label');
+      if (!label || label.querySelector('.j-lp-edit')) return;
+      label.innerHTML = `<input class="j-lp-edit" value="${esc(oldName)}">`;
+      const input = label.querySelector<HTMLInputElement>('.j-lp-edit');
+      input?.focus();
+      input?.select();
+      let done = false;
+      const finish = (): void => {
+        if (done) return;
+        done = true;
+        if (bodyEl) bodyEl.innerHTML = bodyHtml();
+        mountIcons(el); // 重建后的勾选图标重新物化（iconSpan 是 data-lucide 占位）
+      };
+      const commit = (): void => {
+        const newName = (input?.value ?? '').trim();
+        if (!newName || newName === oldName) { finish(); return; }
+        if (hasIllegalNameChar(newName)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
+        if (allLists(M.items).includes(newName)) { notice(`片单「${newName}」已存在`, 'warning'); return; }
+        finish();
+        void renameList(oldName, newName, app);
+      };
+      input?.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+        else if (ev.key === 'Escape') finish();
+      });
+      input?.addEventListener('blur', commit);
+      return;
+    }
+    const btn = target.closest('[data-lp]') as HTMLElement | null;
     if (!btn) return;
     void toggleListMembership(it, btn.dataset.lp as string, app);
     // 弹层勾选态就地翻转（renderAll 重建的是面板与卡片，弹层挂在 ovHost 上不随整刷换血；
@@ -307,28 +371,33 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
         // 在库条目照常尝试加入（不跳过）：建档层重名保护让它们保持现状（false）
         if (await quickAddWant(app, e.name, '电影', { silent: true, sid: e.sid })) createdNames.push(e.name);
       }
-      // 归入片单（拍板：导入的片单要在侧栏可见）——对新建档条目批量写「片单」键，
-      // 已在库保持不动的条目不归入（按「在库的按照在库的」口径不动它）
+      // 归入片单（拍板：导入的片单要在侧栏可见）+ 打「片单收纳」标志（拍板：一键导入
+      // 的新片只在片单里显示，不混入正常影视视图）——都只作用于新建档条目；
+      // 已在库保持不动的条目两者都不做（按「在库的按照在库的」口径不动它）
       const validList = listName && !hasIllegalNameChar(listName) ? listName : '';
-      if (validList && createdNames.length) {
+      if (createdNames.length) {
         refreshDataAndView(app);
         for (const name of createdNames) {
           const it = M.items.find((x) => x.name === name);
           if (!it?.file) continue;
           await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
-            const cur = normalizeLists(fm['片单']);
-            if (!cur.includes(validList)) {
-              cur.push(validList);
-              fm['片单'] = cur;
+            fm['片单收纳'] = true;
+            if (validList) {
+              const cur = normalizeLists(fm['片单']);
+              if (!cur.includes(validList)) {
+                cur.push(validList);
+                fm['片单'] = cur;
+              }
             }
           });
-          it.lists = [...new Set([...it.lists, validList])]; // 内存同步（侧栏片单计数即时可见）
+          it.shelvedOnly = true;
+          if (validList) it.lists = [...new Set([...it.lists, validList])]; // 内存同步（侧栏片单计数即时可见）
         }
       }
       refreshDataAndView(app);
       renderAll(app);
       close();
-      const listTail = validList && createdNames.length ? `，归入片单「${validList}」` : '';
+      const listTail = validList && createdNames.length ? `，归入片单「${validList}」（仅在片单中显示）` : createdNames.length ? '（仅在片单中显示，可右键「归入片单…」补归）' : '';
       notice(createdNames.length
         ? `已从豆瓣片单导入 ${createdNames.length} 部到想看${pending.length > createdNames.length ? `（${pending.length - createdNames.length} 部已在库保持不动）` : ''}${listTail}，海报与信息后台补齐`
         : '片单里的片都已在库，没有新增', createdNames.length ? 'success' : 'warning');
@@ -429,6 +498,13 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     fm['观影日期'] = item.watchDate || localNow();
     if (item.review) fm['影评'] = item.review;
     else delete fm['影评'];
+    // 状态离开「想看」（在看/已看）→ 摘「片单收纳」：用户开始正式管理这条片，
+    // 它回归正常影视视图（2026-09-30 拍板）；仍是想看（含想看态编辑）保持收纳
+    if (item.status === STATUS_WANT) {
+      if (item.shelvedOnly && fm['片单收纳'] !== true) fm['片单收纳'] = true;
+    } else if (fm['片单收纳'] !== undefined) {
+      delete fm['片单收纳'];
+    }
     if (edit) {
       const tags = normalizeTags(fm['tags']);
       const at = tags.indexOf(edit.prevTag);
@@ -437,6 +513,8 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
       fm['tags'] = tags;
     }
   });
+  // 内存标志与盘上同步（紧跟的 renderAll 走内存态：转在看/已看后要立刻在正常视图出现）
+  item.shelvedOnly = item.status === STATUS_WANT && item.shelvedOnly;
 }
 
 /** 打开添加弹窗（命令 bz-cinema-add 直达；未开主面板则先建） */
@@ -1828,7 +1906,7 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
   }
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice(DUP_NAME_HINT_FULL, 'warning');
