@@ -42,7 +42,6 @@ import { mergeManualEvents, planIncremental } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
-import { estimateDescribeCallsOf, estimatePortraitCallsOf, estimatePortraitCallsOfCount } from './jobs';
 import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
 import type { ContactStats, FaceDigest, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
@@ -126,7 +125,7 @@ import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
-import { batchSizeFromSettings, descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
+import { descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
@@ -1476,7 +1475,9 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
 export async function startGeneration(targets: GenTarget[]): Promise<void> {
   const { runnable, skipped } = await planTargets(targets);
   if (!runnable.length) {
-    if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, 'info');
+    // issue 523：没有新素材也翻开工单——把「没有新素材」说清楚，「开始生成」置灰（用户拍板）。
+    // 旧行为是直接弹一条通知返回，用户看不到为什么点了没反应、按钮也照旧可点。
+    await askGenerationConfirm(buildGenerationConfirmInfo([], skipped));
     return;
   }
   const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable));
@@ -1508,27 +1509,24 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   renderNote();
 }
 
-/** 总确认 → 引擎起跑的入参（497）：逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数 */
-function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInfo {
-  const label = describeModelLabelOf();
+/**
+ * 总确认 → 引擎起跑的入参（497；523 精简）：只报三类素材条数与逐人明细。
+ * runnable 为空 = 全部联系人都没有新素材 → `empty` 为真，开工单只出说明、开始生成置灰。
+ */
+function buildGenerationConfirmInfo(runnable: GenTarget[], skipped: string[] = []): GenerationConfirmInfo {
   const items = runnable.map((t) => {
     // issue 514 待办口径：图片 / 语音只报没做过的（构造时从仓消息现算）；newer 的素材 = 新增集条数
     const pending = t.pending ?? { images: 0, voices: 0 };
     const materials = t.mode === 'newer' ? (t.planCount ?? t.msgs.length) : t.msgs.length;
     return { name: t.name, materials, images: pending.images, voices: pending.voices, ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
   });
-  const images = items.reduce((s, it) => s + it.images, 0);
-  const voices = items.reduce((s, it) => s + it.voices, 0);
   return {
-    provider: label.provider,
-    model: label.model,
     items,
-    images,
-    describeCalls: estimateDescribeCallsOf(images),
-    batchSize: batchSizeFromSettings(),
-    voices,
-    // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
-    portraitCalls: runnable.reduce((s, t) => s + (t.mode === 'newer' ? estimatePortraitCallsOfCount(t.planCount ?? 0) : estimatePortraitCallsOf(t.msgs)), 0),
+    materials: items.reduce((s, it) => s + it.materials, 0),
+    images: items.reduce((s, it) => s + it.images, 0),
+    voices: items.reduce((s, it) => s + it.voices, 0),
+    empty: items.length === 0,
+    ...(skipped.length ? { skipped } : {}),
   };
 }
 
@@ -1604,9 +1602,12 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     const rec: ImportRecord = {
       file: target?.fileLabel ?? job.importRecord?.fileLabel ?? job.fileLabel ?? `数据源:${talker}`,
       importedAt: now,
-      messageCount: target
-        ? (job.importRecord?.messageCount ?? msgs!.length)
-        : (job.importRecord?.messageCount ?? 0),
+      // messageCount 是「这一份导出的可消费消息条数」——与 timeFrom / timeTo 同口径（同取 msgs），
+      // 也与导入路径（ui 层 importMsgs：msgs.length）一致。它有两个消费者：界面的「消息总数」，
+      // 以及 incremental.planIncremental 里「同一导出再导」的整份指纹（条数 + 跨度）。
+      // 旧写法优先取 job.importRecord.messageCount（= 本次提炼子集条数，如新增 1 条就是 1），
+      // 指纹因此永不命中 → 每次再导都判成 newer → 开工单反复报「新增素材 N 条」（issue 523）。
+      messageCount: msgs ? msgs.length : (job.importRecord?.messageCount ?? 0),
       skippedCount: target?.skippedCount ?? job.importRecord?.skippedCount ?? 0,
       timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : job.importRecord?.timeFrom ?? now,
       timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : job.importRecord?.timeTo ?? now,
@@ -1734,8 +1735,9 @@ let pendingGenInfo: GenerationConfirmInfo | null = null;
 let pendingGenAnswer: ((a: 'start' | 'cancel') => void) | null = null;
 
 /**
- * 画谱总确认（startGeneration 起引擎前唯一一次询问）：翻开开工单那一页，
- * 逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数一次报清。解析值：开始生成 / 取消。
+ * 画谱总确认（startGeneration 起引擎前唯一一次询问）：翻开开工单那一页，报清本次要走流程的
+ * 聊天记录 / 图片 / 录音条数与逐人明细（issue 523 精简：不再报 AI 通道与调用次数）。
+ * 解析值：开始生成 / 取消。无新素材的那一页「开始生成」是置灰的——真被点到也按取消结（不空转）。
  */
 function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'cancel'> {
   if (genConfirmOpen) return Promise.resolve('cancel'); // 已有页开着：不叠页，按未授权处理
@@ -1748,12 +1750,15 @@ function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'c
 
 function answerGenConfirm(answer: 'start' | 'cancel'): void {
   const done = pendingGenAnswer;
+  // 无新素材的开工单没有可跑的东西：置灰钮在真实浏览器点不动，这里兜一道——
+  // 真收到 start（合成点击 / 测试派发）也按取消结，绝不返回一个空转的「开始」
+  const final: 'start' | 'cancel' = answer === 'start' && pendingGenInfo?.empty ? 'cancel' : answer;
   pendingGenAnswer = null;
   pendingGenInfo = null;
   genConfirmOpen = false;
   dialog = null;
   void renderAlbum();
-  done?.(answer);
+  done?.(final);
 }
 
 /**
@@ -2387,7 +2392,7 @@ function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string,
 function dialogPage(p: PersonEntry | null, avatars?: Map<string, string>): HTMLElement {
   const kind = dialog?.kind;
   if (kind === 'ds') return dsPage(dsPageState());
-  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], images: 0, voices: 0, provider: '', model: '', describeCalls: 0, portraitCalls: 0, batchSize: 0 });
+  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], materials: 0, images: 0, voices: 0, empty: true });
   if (kind === 'find') return findPageState(avatars);
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);

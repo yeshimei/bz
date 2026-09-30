@@ -738,8 +738,9 @@ describe('增量模式与 skip 跳过', () => {
 
     const job = (await readQueue())[0];
     expect(job.mode).toBe('incremental'); // 有锚点 + 有新消息
-    // 同秒容差：锚点同秒的 msgs[1] 也算新素材 → 提炼集 = msgs[1..3] 共 3 条
-    expect(job.importRecord?.messageCount).toBe(3);
+    // 导入记录的条数是「这份导出的可消费消息条数」（全量 4 条），不是本次提炼子集（同秒容差下 3 条）——
+    // 它同时是 planIncremental 判「同一导出再导」的整份指纹的一半，记子集条数会让指纹永不命中（issue 523）
+    expect(job.importRecord?.messageCount).toBe(4);
     expect(job.batchesDone).toBe(2);
     expect(job.events).toEqual([
       { ts: '2024-04-01', summary: '旧事件' },

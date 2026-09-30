@@ -1,4 +1,4 @@
-/* 源指纹 57074ddf373c167c · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 86639bd330a18967 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -17514,12 +17514,12 @@ ${lines}`;
   function hasInjection(o) {
     return !!(o.askExtract || o.askPortrait || o.askDescribe || o.askDescribeConfirm || o.askPortraitConfirm);
   }
-  function importRecordOf(t, digestMsgs) {
+  function importRecordOf(t) {
     var _a2;
     return {
       fileLabel: t.fileLabel,
       skippedCount: (_a2 = t.skippedCount) != null ? _a2 : 0,
-      messageCount: digestMsgs.length,
+      messageCount: t.msgs.length,
       timeFrom: new Date(t.msgs[0].ts).toISOString(),
       timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString()
     };
@@ -17667,7 +17667,7 @@ ${lines}`;
       const now = nowIso();
       const prev = st.queue.find((j) => j.talker === t.talker);
       st.queue = st.queue.filter((j) => j.talker !== t.talker);
-      const importRecord = importRecordOf(t, digestMsgs);
+      const importRecord = importRecordOf(t);
       const noteMaterial = {
         mediaNote: mediaNote || void 0,
         statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || void 0 : void 0,
@@ -18419,7 +18419,7 @@ ${lines}`;
           job.importRecord = {
             fileLabel: job.fileLabel,
             skippedCount: (_n = (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _n : 0,
-            messageCount: digestMsgs.length,
+            messageCount: bucketMsgs.length,
             timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
             timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString()
           };
@@ -20818,25 +20818,35 @@ ${lines}`;
     return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
   }
   function genPage(info) {
+    var _a2;
     const body = [];
-    body.push(el("div", "bz-people-gen-line", text(`为 ${info.items.length} 位联系人生成脸谱`)));
+    body.push(el("div", "bz-people-gen-line", text(info.empty ? "没有新的素材" : `为 ${info.items.length} 位联系人生成脸谱`)));
     const rows = [];
-    if (info.images > 0) rows.push(["图片描述", `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-    if (info.voices > 0) rows.push(["语音转写", `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
-    rows.push(["画像生成", `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
-    body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
-    const list = el("ul", "bz-people-gen-list");
-    for (const it of info.items) {
-      const bits = [it.mode === "newer" ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-      if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
-      else if (it.mode === "newer") bits.push("增量提炼");
-      list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
+    if (info.materials > 0) rows.push(["聊天记录", `${info.materials} 条`]);
+    if (info.images > 0) rows.push(["图片", `${info.images} 张`]);
+    if (info.voices > 0) rows.push(["录音", `${info.voices} 条`]);
+    if (rows.length) {
+      body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
     }
-    body.push(list);
-    body.push(el("div", "bz-people-pop-note", text("确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。")));
+    if (info.items.length) {
+      const list = el("ul", "bz-people-gen-list");
+      for (const it of info.items) {
+        const bits = [it.mode === "newer" ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
+        if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+        if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
+        if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
+        else if (it.mode === "newer") bits.push("增量提炼");
+        list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
+      }
+      body.push(list);
+    }
+    if (info.empty) {
+      const who = ((_a2 = info.skipped) == null ? void 0 : _a2.length) ? `「${info.skipped.join("」「")}」` : "这些联系人";
+      body.push(el("div", "bz-people-pop-note", text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+    }
     const actions = el("div", "bz-people-prof-actions", [
       button("bz-people-btn", "取消", { "data-people-gen-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
+      button("bz-people-btn bz-people-btn-acc", "开始生成", info.empty ? { "data-people-gen-start": "", disabled: "" } : { "data-people-gen-start": "" })
     ]);
     body.push(actions);
     return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
@@ -22646,7 +22656,7 @@ ${lines}`;
     var _a2;
     const { runnable: runnable2, skipped } = await planTargets(targets);
     if (!runnable2.length) {
-      if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, "info");
+      await askGenerationConfirm(buildGenerationConfirmInfo([], skipped));
       return;
     }
     const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable2));
@@ -22676,29 +22686,20 @@ ${lines}`;
     if (parts.length) notice(parts.join("，"), "success");
     renderNote();
   }
-  function buildGenerationConfirmInfo(runnable2) {
-    const label = describeModelLabelOf();
+  function buildGenerationConfirmInfo(runnable2, skipped = []) {
     const items = runnable2.map((t) => {
       var _a2, _b2;
       const pending = (_a2 = t.pending) != null ? _a2 : { images: 0, voices: 0 };
       const materials = t.mode === "newer" ? (_b2 = t.planCount) != null ? _b2 : t.msgs.length : t.msgs.length;
       return { name: t.name, materials, images: pending.images, voices: pending.voices, ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
     });
-    const images = items.reduce((s, it) => s + it.images, 0);
-    const voices = items.reduce((s, it) => s + it.voices, 0);
     return {
-      provider: label.provider,
-      model: label.model,
       items,
-      images,
-      describeCalls: estimateDescribeCallsOf(images),
-      batchSize: batchSizeFromSettings(),
-      voices,
-      // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
-      portraitCalls: runnable2.reduce((s, t) => {
-        var _a2;
-        return s + (t.mode === "newer" ? estimatePortraitCallsOfCount((_a2 = t.planCount) != null ? _a2 : 0) : estimatePortraitCallsOf(t.msgs));
-      }, 0)
+      materials: items.reduce((s, it) => s + it.materials, 0),
+      images: items.reduce((s, it) => s + it.images, 0),
+      voices: items.reduce((s, it) => s + it.voices, 0),
+      empty: items.length === 0,
+      ...skipped.length ? { skipped } : {}
     };
   }
   async function planTargets(targets) {
@@ -22734,7 +22735,7 @@ ${lines}`;
     return { runnable: runnable2, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
@@ -22756,10 +22757,15 @@ ${lines}`;
       const rec = {
         file: (_h = (_g = (_f = target == null ? void 0 : target.fileLabel) != null ? _f : (_e = job.importRecord) == null ? void 0 : _e.fileLabel) != null ? _g : job.fileLabel) != null ? _h : `数据源:${talker}`,
         importedAt: now,
-        messageCount: target ? (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : msgs.length : (_l = (_k = job.importRecord) == null ? void 0 : _k.messageCount) != null ? _l : 0,
-        skippedCount: (_o = (_n = target == null ? void 0 : target.skippedCount) != null ? _n : (_m = job.importRecord) == null ? void 0 : _m.skippedCount) != null ? _o : 0,
-        timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeFrom) != null ? _q : now,
-        timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_s = (_r = job.importRecord) == null ? void 0 : _r.timeTo) != null ? _s : now,
+        // messageCount 是「这一份导出的可消费消息条数」——与 timeFrom / timeTo 同口径（同取 msgs），
+        // 也与导入路径（ui 层 importMsgs：msgs.length）一致。它有两个消费者：界面的「消息总数」，
+        // 以及 incremental.planIncremental 里「同一导出再导」的整份指纹（条数 + 跨度）。
+        // 旧写法优先取 job.importRecord.messageCount（= 本次提炼子集条数，如新增 1 条就是 1），
+        // 指纹因此永不命中 → 每次再导都判成 newer → 开工单反复报「新增素材 N 条」（issue 523）。
+        messageCount: msgs ? msgs.length : (_j = (_i = job.importRecord) == null ? void 0 : _i.messageCount) != null ? _j : 0,
+        skippedCount: (_m = (_l = target == null ? void 0 : target.skippedCount) != null ? _l : (_k = job.importRecord) == null ? void 0 : _k.skippedCount) != null ? _m : 0,
+        timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : (_o = (_n = job.importRecord) == null ? void 0 : _n.timeFrom) != null ? _o : now,
+        timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : (_q = (_p = job.importRecord) == null ? void 0 : _p.timeTo) != null ? _q : now,
         stats: target ? computeStats(msgs, target.kindCounts) : job.stats
       };
       const entry = existing ? { ...existing, name } : { id: talker, name, createdAt: now, imports: [] };
@@ -22774,24 +22780,24 @@ ${lines}`;
         // 卷一《其人》
         bond: job.bond || void 0,
         // 卷二《相交》（旧引擎无此产物）
-        events: mergeManualEvents((_t = job.events) != null ? _t : [], existing == null ? void 0 : existing.manualEvents),
+        events: mergeManualEvents((_r = job.events) != null ? _r : [], existing == null ? void 0 : existing.manualEvents),
         // 439：手动随手记并入事件素材
         quotes: job.quotes,
-        moments: (_u = job.material) == null ? void 0 : _u.moments,
+        moments: (_s = job.material) == null ? void 0 : _s.moments,
         // 449：场景 / 特质随生成落盘
-        traits: (_v = job.material) == null ? void 0 : _v.traits,
+        traits: (_t = job.material) == null ? void 0 : _t.traits,
         chronicle: job.chronicle || void 0,
         ...job.revisedFrom ? { revisedFrom: job.revisedFrom } : {},
         // issue 517：修订前旧卷留档
         generatedAt: now
       };
       await store2.setDigest(talker, digest);
-      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_x = (_w = job.importRecord) == null ? void 0 : _w.timeTo) != null ? _x : "");
+      const lastTs = msgs ? msgs[msgs.length - 1].ts : Date.parse((_v = (_u = job.importRecord) == null ? void 0 : _u.timeTo) != null ? _v : "");
       if (Number.isFinite(lastTs)) {
-        await store2.setLastProcessedTs(talker, Math.max((_y = existing == null ? void 0 : existing.lastProcessedTs) != null ? _y : 0, lastTs));
+        await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
-      const sens = (_A = (_z = job.describe) == null ? void 0 : _z.sensitive) != null ? _A : 0;
+      const sens = (_y = (_x = job.describe) == null ? void 0 : _x.sensitive) != null ? _y : 0;
       if (sens > 0) {
         notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, "warning");
       }
@@ -22871,12 +22877,13 @@ ${lines}`;
   }
   function answerGenConfirm(answer) {
     const done = pendingGenAnswer;
+    const final = answer === "start" && (pendingGenInfo == null ? void 0 : pendingGenInfo.empty) ? "cancel" : answer;
     pendingGenAnswer = null;
     pendingGenInfo = null;
     genConfirmOpen = false;
     dialog = null;
     void renderAlbum();
-    done == null ? void 0 : done(answer);
+    done == null ? void 0 : done(final);
   }
   function jobsAction(kind) {
     var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
@@ -23631,7 +23638,7 @@ ${lines}`;
     var _a2, _b2;
     const kind = dialog == null ? void 0 : dialog.kind;
     if (kind === "ds") return dsPage(dsPageState());
-    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], images: 0, voices: 0, provider: "", model: "", describeCalls: 0, portraitCalls: 0, batchSize: 0 });
+    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], materials: 0, images: 0, voices: 0, empty: true });
     if (kind === "find") return findPageState(avatars);
     if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
     if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);

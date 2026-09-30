@@ -623,12 +623,16 @@ function hasInjection(o: {
 /**
  * 导入记录元数据（落 ImportRecord 所需）。新建与复用两条路径共用同一口径——
  * 否则「续跑」任务写回的导入记录会缺条数 / 跨度。
+ * 条数取**本次导出的可消费消息条数**（与 timeFrom / timeTo 同源 `t.msgs`，也与导入路径
+ * 的 `msgs.length` 一致）：ImportRecord.messageCount 既用来显示「消息总数」，又是
+ * incremental.planIncremental 判「同一导出再导」的整份指纹的一半——记成本次提炼子集条数
+ * （增量只跑 1 条就记 1）会让指纹永不命中，每次再导都判成 newer 白烧一遍（issue 523）。
  */
-function importRecordOf(t: JobTarget, digestMsgs: UnifiedMessage[]): NonNullable<PersonJob['importRecord']> {
+function importRecordOf(t: JobTarget): NonNullable<PersonJob['importRecord']> {
   return {
     fileLabel: t.fileLabel,
     skippedCount: t.skippedCount ?? 0,
-    messageCount: digestMsgs.length,
+    messageCount: t.msgs.length,
     timeFrom: new Date(t.msgs[0].ts).toISOString(),
     timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString(),
   };
@@ -847,7 +851,7 @@ export async function startJobs(
     const now = nowIso();
     const prev = st.queue.find((j) => j.talker === t.talker);
     st.queue = st.queue.filter((j) => j.talker !== t.talker);
-    const importRecord = importRecordOf(t, digestMsgs);
+    const importRecord = importRecordOf(t);
     const noteMaterial = {
       mediaNote: mediaNote || undefined,
       statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || undefined : undefined,
@@ -1785,10 +1789,13 @@ async function runJob(job: PersonJob): Promise<void> {
           }) || undefined,
       };
       if (bucketMsgs.length) {
+        // 条数 / 跨度同取 bucketMsgs（聊天仓全量）：这是「这份素材」的条数口径，
+        // 与 startJobs 的 importRecordOf（t.msgs）同义——写本次提炼子集条数会让
+        // planIncremental 的整份指纹永不命中（issue 523）
         job.importRecord = {
           fileLabel: job.fileLabel,
           skippedCount: job.importRecord?.skippedCount ?? 0,
-          messageCount: digestMsgs.length,
+          messageCount: bucketMsgs.length,
           timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
           timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString(),
         };

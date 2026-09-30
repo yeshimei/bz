@@ -1703,30 +1703,43 @@ export function dsPage(s: DsModalState): HTMLElement {
   return subPage({ title: '数据源', meta, head, foot, hook: 'ds' }, body);
 }
 
-/** 画谱开工单（issue 497：两次确认合一，确认后一路到底不再弹窗；513：总览改行式清单，
- *  图片 / 语音两行写明幂等语义——引擎各段产物在即跳过，满额估算只是上限，不是都要重烧） */
+/** 画谱开工单（issue 497：两次确认合一，513：改行式清单，523：只报素材、无新素材置灰开始）。
+ *  用户拍板（523 原话）：「简明地告诉用户有几张图片、聊天记录或者录音等，哪些素材要走这个
+ *  补画谱流程即可，其他都不需要告诉」——故不再报 AI 通道 / 调用次数；没有任何新素材时
+ *  只出一句说明，并把「开始生成」置灰。 */
 export function genPage(info: GenerationConfirmInfo): HTMLElement {
   const body: HTMLElement[] = [];
-  body.push(el('div', 'bz-people-gen-line', text(`为 ${info.items.length} 位联系人生成脸谱`)));
+  body.push(el('div', 'bz-people-gen-line', text(info.empty ? '没有新的素材' : `为 ${info.items.length} 位联系人生成脸谱`)));
+  // 总览只列三类素材条数，一项一行；为零的整行不出
   const rows: Array<[string, string]> = [];
-  if (info.images > 0) rows.push(['图片描述', `待描述 ${info.images} 张 · 已描述过的自动跳过 · 至多 ${info.describeCalls} 次调用（每批 ${info.batchSize} 张）`]);
-  if (info.voices > 0) rows.push(['语音转写', `待转写 ${info.voices} 条 · 本地离线不花钱，已转写的自动跳过`]);
-  rows.push(['画像生成', `${info.provider} / ${info.model} · 约 ${info.portraitCalls} 次调用`]);
-  body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
-    el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
-  const list = el('ul', 'bz-people-gen-list');
-  for (const it of info.items) {
-    // issue 515：明细只留素材与模式——媒体待办在总览行看，逐行不重复
-    const bits = [it.mode === 'newer' ? `新增素材 ${it.materials} 条` : `素材 ${it.materials} 条`];
-    if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
-    else if (it.mode === 'newer') bits.push('增量提炼');
-    list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
+  if (info.materials > 0) rows.push(['聊天记录', `${info.materials} 条`]);
+  if (info.images > 0) rows.push(['图片', `${info.images} 张`]);
+  if (info.voices > 0) rows.push(['录音', `${info.voices} 条`]);
+  if (rows.length) {
+    body.push(el('div', 'bz-people-gen-rows', rows.map(([k, v]) =>
+      el('div', 'bz-people-gen-row', [el('span', 'bz-people-gen-k', text(k)), el('span', 'bz-people-gen-v', text(v))]))));
   }
-  body.push(list);
-  body.push(el('div', 'bz-people-pop-note', text('确认后自动完成全部步骤——媒体预处理、图片描述、语音转写、素材采集与画像，中途不再询问；每批原子落盘、可随时暂停。')));
+  if (info.items.length) {
+    const list = el('ul', 'bz-people-gen-list');
+    for (const it of info.items) {
+      const bits = [it.mode === 'newer' ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
+      if (it.images > 0) bits.push(`图片 ${it.images} 张`);
+      if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
+      if (it.mode === 'older') bits.push('补录 · 与已有画像合并重画');
+      else if (it.mode === 'newer') bits.push('增量提炼');
+      list.appendChild(el('li', 'bz-people-gen-item', text(`「${it.name}」 · ${bits.join(' · ')}`)));
+    }
+    body.push(list);
+  }
+  if (info.empty) {
+    const who = info.skipped?.length ? `「${info.skipped.join('」「')}」` : '这些联系人';
+    body.push(el('div', 'bz-people-pop-note', text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+  }
   const actions = el('div', 'bz-people-prof-actions', [
     button('bz-people-btn', '取消', { 'data-people-gen-cancel': '' }),
-    button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
+    button('bz-people-btn bz-people-btn-acc', '开始生成', info.empty
+      ? { 'data-people-gen-start': '', disabled: '' }
+      : { 'data-people-gen-start': '' }),
   ]);
   body.push(actions);
   return subPage({ title: '开始生成脸谱', hook: 'gen' }, body);
