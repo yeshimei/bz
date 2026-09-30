@@ -21,9 +21,9 @@ import {
   type JobsApi,
 } from '../../src/people/ui';
 import { albumSealOf, genPage, jobsNote, jobsStageLabel, type JobsBlockState } from '../../src/people/render';
-import type { GenerationConfirmInfo, PersonEntry } from '../../src/people/types';
+import type { GenerationConfirmInfo, ImportRecord, PersonEntry } from '../../src/people/types';
 import type { JobView, JobsSnapshot } from '../../src/people/jobs';
-import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
+import { getPeopleSafeStore, PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
 import { SafeManager } from '../../src/encrypt/data';
 
 const T0 = Date.UTC(2024, 4, 1, 12, 0, 0);
@@ -34,79 +34,80 @@ function click(sel: string): void {
 }
 
 const info: GenerationConfirmInfo = {
-  provider: '智谱 Plan',
-  model: 'glm-5.3-flash',
   items: [
     { name: '陈默', materials: 2, images: 0, voices: 0 },
     { name: '大琳', materials: 20773, images: 1615, voices: 1289, mode: 'older' },
   ],
+  materials: 20775,
   images: 1615,
-  describeCalls: 81,
-  batchSize: 20,
   voices: 1289,
-  portraitCalls: 8,
+  empty: false,
 };
 
-describe('开工单册页（genPage，issue 505：确认是册子里翻出来的一页）', () => {
-  it('一次报清：行式总览（人数 / 图片幂等口径 / 语音本地转写 / 画像调用）+ 逐人明细含补录标识，不出现金额字样', () => {
+describe('开工单册页（genPage，issue 505：确认是册子里翻出来的一页；523：只报素材）', () => {
+  it('只报素材：三类条数（聊天记录 / 图片 / 录音）+ 逐人明细（含补录标识），不出现 AI 通道与调用次数', () => {
     const page = genPage(info);
     expect(page.dataset.peopleSub).toBe('gen');
     expect(page.querySelector('.bz-people-head-label')!.textContent).toBe('开始生成脸谱');
     const line = page.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent ?? '';
     expect(line).toContain('为 2 位联系人生成脸谱');
-    // 总览行式（issue 513）：一项一行，图片 / 语音两行写明幂等语义，调用数是「至多」不是「都要」
+    // 总览行式：一项一类素材，为零的整行不出
     const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
     expect(rows).toHaveLength(3);
-    expect(rows[0]).toContain('图片描述');
-    expect(rows[0]).toContain('待描述 1615 张');
-    expect(rows[0]).toContain('已描述过的自动跳过');
-    expect(rows[0]).toContain('至多 81 次调用');
-    expect(rows[0]).toContain('每批 20 张');
-    expect(rows[1]).toContain('语音转写');
-    expect(rows[1]).toContain('待转写 1289 条');
-    expect(rows[1]).toContain('本地离线');
-    expect(rows[1]).toContain('已转写的自动跳过');
-    expect(rows[2]).toContain('画像生成');
-    expect(rows[2]).toContain('智谱 Plan / glm-5.3-flash');
-    expect(rows[2]).toContain('约 8 次调用');
+    expect(rows[0]).toContain('聊天记录');
+    expect(rows[0]).toContain('20775 条');
+    expect(rows[1]).toContain('图片');
+    expect(rows[1]).toContain('1615 张');
+    expect(rows[2]).toContain('录音');
+    expect(rows[2]).toContain('1289 条');
     const items = [...page.querySelectorAll('.bz-people-gen-item')].map((n) => n.textContent ?? '');
-    expect(items[0]).toContain('「陈默」 · 素材 2 条');
-    // issue 515：明细只留素材与模式——媒体待办在总览行看，逐行不重复
-    expect(items[1]).toContain('「大琳」 · 素材 20773 条 · 补录 · 与已有画像合并重画');
-    expect(items[1]).not.toContain('待描述');
-    expect(items[1]).not.toContain('待转写');
+    expect(items[0]).toContain('「陈默」 · 聊天记录 2 条');
+    expect(items[1]).toContain('「大琳」 · 聊天记录 20773 条 · 图片 1615 张 · 录音 1289 条 · 补录 · 与已有画像合并重画');
     expect(items[0]).not.toContain('补录');
-    expect(line + items.join('')).not.toMatch(/元|￥|¥|\$/);
+    // 523 用户拍板：调用什么 AI、调用多少次都不告诉用户；也不报金额
+    const allText = [line, ...rows, ...items, page.querySelector('.bz-people-pop-note')?.textContent ?? ''].join('');
+    expect(allText).not.toContain('调用');
+    expect(allText).not.toContain('模型');
+    expect(allText).not.toMatch(/元|￥|¥|\$/);
+    // 有素材就不出置灰说明；按钮照样可点
+    expect(page.querySelector('.bz-people-pop-note')).toBeNull();
     expect(page.querySelector('[data-people-gen-start]')?.textContent).toBe('开始生成');
+    expect(page.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(false);
     expect(page.querySelector('button[data-people-gen-cancel]')?.textContent).toBe('取消');
-    expect(page.querySelector<HTMLElement>('.bz-people-pop-note')!.textContent).toContain('中途不再询问');
     expect(page.querySelector('[data-people-close]')).toBeTruthy(); // 「合上这页」＝取消那条路
   });
 
-  it('零图片零语音：总览只报画像一行，逐人行只报素材条数', () => {
-    const page = genPage({ ...info, images: 0, voices: 0, describeCalls: 0, items: [{ name: '陈默', materials: 5, images: 0, voices: 0 }] });
+  it('零图片零录音：总览只剩聊天记录一行，逐人行也只剩聊天记录', () => {
+    const page = genPage({ ...info, images: 0, voices: 0, items: [{ name: '陈默', materials: 5, images: 0, voices: 0 }], materials: 5 });
     const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
-    expect(rows).toHaveLength(1); // 待办为零：图片 / 语音行整体消失，只剩画像一行
-    expect(rows[0]).toContain('画像生成');
-    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).not.toContain('待描述');
-    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).not.toContain('待转写');
-    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).toBe('「陈默」 · 素材 5 条');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toContain('聊天记录');
+    expect(page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent).toBe('「陈默」 · 聊天记录 5 条');
   });
 
-  it('增量只报增量（issue 514）：newer 素材 = 新增集条数，待办为零则明细不列媒体', () => {
+  it('增量只报增量（issue 514）：newer 素材 = 新增集条数，逐人行标「新增聊天记录」', () => {
     const page = genPage({
       ...info,
       images: 0,
       voices: 0,
-      describeCalls: 0,
-      portraitCalls: 5,
+      materials: 12,
       items: [{ name: '大琳', materials: 12, images: 0, voices: 0, mode: 'newer' }],
     });
     const rows = [...page.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
     expect(rows).toHaveLength(1);
     const item = page.querySelector<HTMLElement>('.bz-people-gen-item')!.textContent ?? '';
-    expect(item).toBe('「大琳」 · 新增素材 12 条 · 增量提炼');
+    expect(item).toBe('「大琳」 · 新增聊天记录 12 条 · 增量提炼');
     expect(item).not.toContain('20773'); // 全量数字不再出现
+  });
+
+  it('没有新素材（issue 523）：只出一句说明并点名联系人，不出素材行与明细，开始生成置灰', () => {
+    const page = genPage({ items: [], materials: 0, images: 0, voices: 0, empty: true, skipped: ['丘羽'] });
+    expect(page.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toBe('没有新的素材');
+    expect(page.querySelector('.bz-people-gen-row')).toBeNull();
+    expect(page.querySelector('.bz-people-gen-item')).toBeNull();
+    expect(page.querySelector<HTMLElement>('.bz-people-pop-note')!.textContent).toBe('「丘羽」没有新消息，也没有待描述 / 待转写的素材，无需重新生成。');
+    expect(page.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(true);
+    expect(page.querySelector('button[data-people-gen-cancel]')?.textContent).toBe('取消');
   });
 });
 
@@ -223,6 +224,37 @@ describe('总确认接线（startGeneration → 翻开工单 → 引擎自动放
     click('button[data-people-gen-cancel]');
     await again;
     expect(calls.length).toBe(0);
+  });
+
+  it('没有新素材（指纹命中 = 同一导出再导）：照样翻开工单，说明 + 开始生成置灰，不起引擎', async () => {
+    const { engine, calls } = fakeEngine();
+    setJobsModuleForTests(engine);
+    // 同一份导出已提炼过：导入记录（条数 + 跨度）与目标 msgs 完全对齐 → planIncremental 判 skip
+    const talker = 'wxid_a';
+    const record: ImportRecord = {
+      file: '数据源:陈默',
+      importedAt: '2026-09-02T00:00:00.000Z',
+      messageCount: 2,
+      skippedCount: 0,
+      timeFrom: new Date(T0).toISOString(),
+      timeTo: new Date(T0 + 60_000).toISOString(),
+    };
+    const p: PersonEntry = { id: talker, name: '陈默', createdAt: '2026-09-01T00:00:00.000Z', imports: [record], lastProcessedTs: T0 + 60_000 };
+    await (await getPeopleSafeStore()).write(talker, (rec) => { rec.person = p; });
+
+    const gen = startGeneration([genTarget()]);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toBe('没有新的素材');
+    expect(document.querySelector<HTMLElement>('.bz-people-pop-note')!.textContent).toContain('「陈默」');
+    expect(document.querySelector('.bz-people-gen-row')).toBeNull();
+    const startBtn = document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!;
+    expect(startBtn.textContent).toBe('开始生成');
+    expect(startBtn.hasAttribute('disabled')).toBe(true);
+    // 置灰钮在真浏览器点不动；这里派发一枚合成点击，证明兜底也按取消结（不起引擎）
+    startBtn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await gen;
+    expect(calls.length).toBe(0);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeNull());
   });
 });
 
