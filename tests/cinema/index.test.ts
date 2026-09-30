@@ -125,7 +125,7 @@ describe('cinema quickAddWant 事件补发（movie:created want）', () => {
 
     expect(seen).toHaveLength(1);
     expect(seen[0]).toMatchObject({ kind: 'created', name: '新片', status: 'want', rating: null });
-    expect((vault.files as any).get('我的/影视/《新片》.md')).toContain('评分: -1');
+    expect((vault.files as any).get('我的/影视/《新片》.md')).toContain('状态: 想看');
     // 进度零通知（ADR-0113）：反馈只在卡片 loading，未配置 CLI 时队列静默禁用
     expect(document.querySelector('.bz-notice--progress')).toBeNull();
     off();

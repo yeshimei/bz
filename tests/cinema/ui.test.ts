@@ -361,7 +361,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     offMovie();
   });
 
-  it('新增「想看」条目 → 落盘评分 -1（不再写 0 的在看）；重建解析仍想看', async () => {
+  it('新增「想看」条目 → 落盘状态键想看（评分编码退役）；重建解析仍想看', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -371,7 +371,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     (form.querySelector('.j-name') as HTMLInputElement).value = '想看新片';
     clickEl(form.querySelector('.j-save'));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《想看新片》.md')).toBe(true));
-    expect(vault.files.get('我的/影视/《想看新片》.md')).toContain('评分: -1');
+    expect(vault.files.get('我的/影视/《想看新片》.md')).toContain('状态: 想看');
     expect(M.items.find((i) => i.name === '想看新片')!.status).toBe(0); // STATUS_WANT
     rebuildItems(app);
     expect(M.items.find((i) => i.name === '想看新片')!.status).toBe(0); // 重解析仍是想看

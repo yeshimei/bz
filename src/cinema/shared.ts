@@ -245,32 +245,34 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   const hot = (it.hotComment ?? '').trim();
   const hotFold = hot.length > HOT_FOLD_MIN; // 长评收起，行为层 data-dm-fold 接线展开/收起
   const rewatched = it.rewatches.length > 0; // 重温实据：徽标 + 时间线 + 动作按钮同条件出
-  const onShelf = it.lists.includes(REWATCH_SHELF);
-  // 重温微时间线：首看 → 重温逐条（升序；无首看日期的旧档只画重温节点）
+  // 观影足迹时间线（2026-09-30 拍板：状态日期从日期徽标挪进时间线）：
+  // 想看 → 在看 → 首看 → 重温逐条升序；无重温时首看行标「已看」，有重温改标「首看」；
+  // 重温记录带时刻（同日多刷可辨），行内显示到分钟，旧 date-only 档照旧
   const firstDate = (it.watchDate || '').slice(0, 10);
-  const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
-  // 状态日期（想看日期/在看日期，已看=观影日期）拼进日期徽标：各状态记各的到达日。
-  // 已看状态的观影日期就是已看日（状态流转即刷新），放心贴「已看」标签；
-  // 非已看旧档（想看/在看却无状态日期键）的观影日期语义不明，裸日期照旧不贴标签
   const wantD = (it.wantDate || '').slice(0, 10);
   const watchingD = (it.watchingDate || '').slice(0, 10);
-  const dateBits: string[] = [];
-  if (wantD) dateBits.push(`想看 ${wantD}`);
-  if (watchingD) dateBits.push(`在看 ${watchingD}`);
-  if (statusNum(it.status) === STATUS_WATCHED) { if (firstDate) dateBits.push(`已看 ${firstDate}`); }
-  else if (!dateBits.length && firstDate) dateBits.push(firstDate);
-  const timeline = rewatched
-    ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ''}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join('')}</div>`
+  const nodes: { d: string; tag: string; first?: boolean }[] = [];
+  if (wantD) nodes.push({ d: wantD, tag: '想看' });
+  if (watchingD) nodes.push({ d: watchingD, tag: '在看' });
+  if (firstDate) nodes.push({ d: firstDate, tag: rewatched ? '首看' : '已看', first: true });
+  for (const r of [...it.rewatches].sort()) nodes.push({ d: r.slice(0, 16), tag: '' });
+  nodes.sort((a, b) => a.d.localeCompare(b.d));
+  const timeline = nodes.length
+    ? `<div class="dm-tl">${nodes.map((n) => `<div class="dm-tl-row${n.first ? ' is-first' : ''}"><i></i><span class="d">${esc(n.d)}</span>${n.tag ? `<span class="tag">${esc(n.tag)}</span>` : ''}</div>`).join('')}</div>`
     : '';
+  // 所有片单徽章（重映厅恒排最前；金实底与原重映厅 chip 同款），列在评分前
+  const listChips = [...it.lists]
+    .sort((a, b) => (a === REWATCH_SHELF ? -1 : b === REWATCH_SHELF ? 1 : 0))
+    .map((l) => `<span class="dm-chip dm-chip--shelf">${esc(l)}</span>`)
+    .join('');
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
           ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''; })()}
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ''}
-          ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ''}
-          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
-          ${dateBits.length ? `<span class="dm-date">${esc(dateBits.join(' · '))}</span>` : ''}</div>
+          ${listChips}
+          ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}

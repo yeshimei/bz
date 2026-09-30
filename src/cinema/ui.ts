@@ -115,23 +115,33 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   }
 }
 
-/** 重温 +1：今天追加进 frontmatter「重看」（日期数组；建档/编辑不写此键，旧笔记无键照旧）。
+/** 重温 +1：现在（日期+时刻）追加进 frontmatter「重看」（2026-09-30 拍板升级为时刻粒度，
+ *  同日多刷各成一条可辨；旧 date-only 档照旧）。若影片在「重映厅」，重温即自动移出
+ *  （候补架语义：重温了就该出来）——同一笔 processFrontMatter 里同步改「片单」键。
  *  内存先行——processFrontMatter 落盘后 metadataCache 就绪是异步的，紧跟的 renderAll
- *  要拿到新值（markStatus 同模式）；写盘失败回滚内存快照。同日多次重温各自成条（一刷一条）。 */
+ *  要拿到新值（markStatus 同模式）；写盘失败回滚内存快照（重温数组 + 片单一起回）。 */
 async function markRewatch(it: CinemaItem, app: App): Promise<void> {
   if (!it.file) return;
-  const today = localNow().slice(0, 10);
-  const prev = it.rewatches;
-  it.rewatches = [...prev, today];
+  const now = localNow();
+  const prev = { rewatches: it.rewatches, lists: it.lists };
+  it.rewatches = [...prev.rewatches, now];
+  const wasOnShelf = it.lists.includes(REWATCH_SHELF);
+  if (wasOnShelf) it.lists = it.lists.filter((l) => l !== REWATCH_SHELF);
   try {
     await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
-      fm['重看'] = normalizeRewatches(fm['重看']).concat(today);
+      fm['重看'] = normalizeRewatches(fm['重看']).concat(now);
+      if (wasOnShelf) {
+        const rest = normalizeLists(fm['片单']).filter((l) => l !== REWATCH_SHELF);
+        if (rest.length) fm['片单'] = rest;
+        else delete fm['片单'];
+      }
     });
-    notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${today}）`, 'success');
+    notice(`「${it.name}」记下第 ${rewatchCount(it)} 刷（${now.slice(0, 16)}）${wasOnShelf ? `，已移出「${REWATCH_SHELF}」` : ''}`, 'success');
     markCardFlash(itemKey(it));
     renderAll(app);
   } catch (e) {
-    it.rewatches = prev;
+    it.rewatches = prev.rewatches;
+    it.lists = prev.lists;
     notifySaveError(e);
     console.error(e);
     renderAll(app);

@@ -80,11 +80,11 @@ describe('cinema quickAddWant', () => {
     rebuildItems(M.appRef as any);
   });
 
-  it('加入想看：建笔记（评分 -1）；重复名提示不建', async () => {
+  it('加入想看：建笔记（状态想看，评分编码退役）；重复名提示不建', async () => {
     const app = M.appRef as any;
     await quickAddWant(app, '新片', '电影');
     const created = (app.vault as any).files.get('我的/影视/《新片》.md');
-    expect(created).toContain('评分: -1');
+    expect(created).toContain('状态: 想看');
     expect(created).toContain('- 电影');
     // 重复
     const before = (app.vault as any).files.size;
@@ -96,7 +96,7 @@ describe('cinema quickAddWant', () => {
     const app = M.appRef as any;
     const sizeBefore = (app.vault as any).files.size;
     await quickAddWant(app, '静默片', '电影', { silent: true });
-    expect((app.vault as any).files.get('我的/影视/《静默片》.md')).toContain('评分: -1');
+    expect((app.vault as any).files.get('我的/影视/《静默片》.md')).toContain('状态: 想看');
     expect((app.vault as any).files.size).toBe(sizeBefore + 1);
     // silent 下在库重复同样静默跳过（不 notice 不抛，由调用方汇总统计）
     await quickAddWant(app, '静默片', '电影', { silent: true });
