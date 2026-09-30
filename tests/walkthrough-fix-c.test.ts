@@ -272,6 +272,6 @@ describe('批 C-20：diary 矮窗兜底（ADR-0115 回忆墙升格日记本）',
     const desk = rule(css, '.bz-diary-desk');
     expect(desk, '缺 .bz-diary-desk 规则').not.toBeNull();
     expect(desk![1]).toContain('max-height: calc(100vh - 48px)');
-    expect(desk![1]).toContain('min-height: min(640px, calc(100vh - 48px))');
+    expect(desk![1]).toContain('min-height: min(560px, calc(100vh - 48px))');
   });
 });
