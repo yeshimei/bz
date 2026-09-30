@@ -233,19 +233,15 @@ describe('cinema 工具函数', () => {
 
   it('片单收纳条目只在片单视图出现：无片单筛选整体排除；片单筛选命中显示', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/《普通想看》.md', '---
-tags: [电影]
-评分: -1
----');
-    vault.files.set('我的/影视/《收纳片》.md', '---
-tags: [电影]
-评分: -1
-片单收纳: true
-片单:
-- 豆列合集
----');
+    vault.files.set('我的/影视/《普通想看》.md', '---\ntags: [电影]\n评分: -1\n---');
+    vault.files.set('我的/影视/《收纳片》.md', '---\ntags: [电影]\n评分: -1\n片单收纳: true\n片单:\n- 豆列合集\n---');
     const app = makeApp(vault);
     M.folderPath = '我的/影视';
+    // 前序用例可能残留筛选态（本文件无全局 reset），显式清场再断「正常视图」
+    M.typeFilter = null;
+    M.statusFilter = null;
+    M.listFilter = null;
+    M.searchKeyword = '';
     rebuildItems(app);
     // 正常视图（无筛选/类型/状态/搜索共用同一条链）排除收纳条目
     expect(getDisplayItems().map((i) => i.name)).toEqual(['普通想看']);
