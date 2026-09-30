@@ -16,7 +16,7 @@ export function normalizeTags(raw: unknown): string[] {
   return [];
 }
 
-/** frontmatter `重看` → string[]（重温日期列表；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
+/** frontmatter `重看` → string[]（重温时刻列表，新档日期+时刻、旧档 date-only；兼容数组 / 单字符串 / 缺失，口径同 normalizeTags）。
  *  建档/编辑不写此键——只有「重温 +1」与未来的删除入口落盘，旧笔记无键照旧 */
 export function normalizeRewatches(raw: unknown): string[] {
   return normalizeTags(raw).filter(Boolean);
