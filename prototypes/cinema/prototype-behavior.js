@@ -1,4 +1,4 @@
-/* 源指纹 d398b16442e7bdfc · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7abdec1d1a4cbcee · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6308,6 +6308,7 @@ var BZW_cinema = (() => {
       status,
       rewatches: normalizeRewatches(fm["重看"]),
       lists: normalizeLists(fm["片单"]),
+      shelvedOnly: fm["片单收纳"] === true,
       poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
       review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
       genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
@@ -6395,6 +6396,7 @@ var BZW_cinema = (() => {
     if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
     if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === "想看" ? STATUS_WANT : M.statusFilter === "在看" ? STATUS_WATCHING : STATUS_WATCHED));
     if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter));
+    else list = list.filter((it) => !it.shelvedOnly);
     if (M.searchKeyword) {
       const kw = M.searchKeyword.toLowerCase();
       list = list.filter((it) => {
@@ -12174,10 +12176,32 @@ tags:
       renderAll(app);
     }
   }
+  async function renameList(oldName, newName, app) {
+    const targets = M.items.filter((x) => x.lists.includes(oldName) && x.file);
+    try {
+      for (const x of targets) {
+        await app.fileManager.processFrontMatter(x.file, (fm) => {
+          const cur = normalizeLists(fm["片单"]);
+          const at2 = cur.indexOf(oldName);
+          if (at2 >= 0) {
+            cur[at2] = newName;
+            fm["片单"] = cur;
+          }
+        });
+        x.lists = x.lists.map((l) => l === oldName ? newName : l);
+      }
+      notice(`片单已改名：「${oldName}」→「${newName}」${targets.length ? `（${targets.length} 部成员同步更新）` : ""}`, "success");
+      renderAll(app);
+    } catch (e) {
+      notifySaveError(e);
+      console.error(e);
+      renderAll(app);
+    }
+  }
   function openListPick(sec, it, app) {
-    var _a, _b, _c;
+    var _a, _b;
     const countOf = (name) => M.items.reduce((n, x) => n + (x.lists.includes(name) ? 1 : 0), 0);
-    const rowHtml = (name) => `<button type="button" class="lp-item${it.lists.includes(name) ? " is-on" : ""}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan("check")}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span></button>`;
+    const rowHtml = (name) => `<button type="button" class="lp-item${it.lists.includes(name) ? " is-on" : ""}" data-lp="${esc(name)}"><span class="lp-check">${iconSpan("check")}</span><span class="lp-label">${esc(name)}</span><span class="lp-n">${countOf(name)}</span><span class="lp-rename" data-lp-rename="${esc(name)}" title="改名片单">${iconSpan(ICON.edit)}</span></button>`;
     const bodyHtml = () => allLists(M.items).map(rowHtml).join("") || '<div class="lp-empty">还没有片单——下面建第一个</div>';
     const url = posterUrl(it, app);
     const { el, close } = ovl(sec, `<div class="cn-modal cn-modal--listpick">
@@ -12187,8 +12211,55 @@ tags:
     <div class="lp-new"><input class="j-lp-new" placeholder="新片单名，回车新建并归入"><button type="button" class="lp-add j-lp-add">${iconSpan(ICON.listPlus)}新建</button></div>
   </div>`);
     mountIcons(el);
-    (_a = el.querySelector("[data-lp-body]")) == null ? void 0 : _a.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-lp]");
+    const bodyEl = el.querySelector("[data-lp-body]");
+    bodyEl == null ? void 0 : bodyEl.addEventListener("click", (e) => {
+      const target = e.target;
+      if (target.closest(".j-lp-edit")) return;
+      const ren = target.closest("[data-lp-rename]");
+      if (ren) {
+        const oldName = ren.dataset.lpRename;
+        const row = ren.closest(".lp-item");
+        const label = row.querySelector(".lp-label");
+        if (!label || label.querySelector(".j-lp-edit")) return;
+        label.innerHTML = `<input class="j-lp-edit" value="${esc(oldName)}">`;
+        const input = label.querySelector(".j-lp-edit");
+        input == null ? void 0 : input.focus();
+        input == null ? void 0 : input.select();
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          if (bodyEl) bodyEl.innerHTML = bodyHtml();
+          mountIcons(el);
+        };
+        const commit = () => {
+          var _a2;
+          const newName = ((_a2 = input == null ? void 0 : input.value) != null ? _a2 : "").trim();
+          if (!newName || newName === oldName) {
+            finish();
+            return;
+          }
+          if (hasIllegalNameChar(newName)) {
+            notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
+            return;
+          }
+          if (allLists(M.items).includes(newName)) {
+            notice(`片单「${newName}」已存在`, "warning");
+            return;
+          }
+          finish();
+          void renameList(oldName, newName, app);
+        };
+        input == null ? void 0 : input.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter") {
+            ev.preventDefault();
+            commit();
+          } else if (ev.key === "Escape") finish();
+        });
+        input == null ? void 0 : input.addEventListener("blur", commit);
+        return;
+      }
+      const btn = target.closest("[data-lp]");
       if (!btn) return;
       void toggleListMembership(it, btn.dataset.lp, app);
       btn.classList.toggle("is-on");
@@ -12205,8 +12276,8 @@ tags:
       void toggleListMembership(it, name, app);
       close();
     };
-    (_b = el.querySelector(".j-lp-add")) == null ? void 0 : _b.addEventListener("click", submitNew);
-    (_c = el.querySelector(".j-lp-new")) == null ? void 0 : _c.addEventListener("keydown", (e) => {
+    (_a = el.querySelector(".j-lp-add")) == null ? void 0 : _a.addEventListener("click", submitNew);
+    (_b = el.querySelector(".j-lp-new")) == null ? void 0 : _b.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         submitNew();
@@ -12303,25 +12374,29 @@ tags:
           if (await quickAddWant(app, e.name, "电影", { silent: true, sid: e.sid })) createdNames.push(e.name);
         }
         const validList = listName && !hasIllegalNameChar(listName) ? listName : "";
-        if (validList && createdNames.length) {
+        if (createdNames.length) {
           refreshDataAndView(app);
           for (const name of createdNames) {
             const it = M.items.find((x) => x.name === name);
             if (!(it == null ? void 0 : it.file)) continue;
             await app.fileManager.processFrontMatter(it.file, (fm) => {
-              const cur = normalizeLists(fm["片单"]);
-              if (!cur.includes(validList)) {
-                cur.push(validList);
-                fm["片单"] = cur;
+              fm["片单收纳"] = true;
+              if (validList) {
+                const cur = normalizeLists(fm["片单"]);
+                if (!cur.includes(validList)) {
+                  cur.push(validList);
+                  fm["片单"] = cur;
+                }
               }
             });
-            it.lists = [.../* @__PURE__ */ new Set([...it.lists, validList])];
+            it.shelvedOnly = true;
+            if (validList) it.lists = [.../* @__PURE__ */ new Set([...it.lists, validList])];
           }
         }
         refreshDataAndView(app);
         renderAll(app);
         close();
-        const listTail = validList && createdNames.length ? `，归入片单「${validList}」` : "";
+        const listTail = validList && createdNames.length ? `，归入片单「${validList}」（仅在片单中显示）` : createdNames.length ? "（仅在片单中显示，可右键「归入片单…」补归）" : "";
         notice(createdNames.length ? `已从豆瓣片单导入 ${createdNames.length} 部到想看${pending2.length > createdNames.length ? `（${pending2.length - createdNames.length} 部已在库保持不动）` : ""}${listTail}，海报与信息后台补齐` : "片单里的片都已在库，没有新增", createdNames.length ? "success" : "warning");
       })();
     });
@@ -12408,6 +12483,11 @@ tags:
       fm["观影日期"] = item.watchDate || localNow();
       if (item.review) fm["影评"] = item.review;
       else delete fm["影评"];
+      if (item.status === STATUS_WANT) {
+        if (item.shelvedOnly && fm["片单收纳"] !== true) fm["片单收纳"] = true;
+      } else if (fm["片单收纳"] !== void 0) {
+        delete fm["片单收纳"];
+      }
       if (edit) {
         const tags = normalizeTags(fm["tags"]);
         const at2 = tags.indexOf(edit.prevTag);
@@ -12416,6 +12496,7 @@ tags:
         fm["tags"] = tags;
       }
     });
+    item.shelvedOnly = item.status === STATUS_WANT && item.shelvedOnly;
   }
   function openAddModalDirect(app) {
     var _a;
@@ -13512,7 +13593,7 @@ tags:
     }
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         notice(DUP_NAME_HINT_FULL, "warning");

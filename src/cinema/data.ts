@@ -87,6 +87,7 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
     status,
     rewatches: normalizeRewatches(fm['重看']),
     lists: normalizeLists(fm['片单']),
+    shelvedOnly: fm['片单收纳'] === true,
     poster: fm['海报']?.toString() ?? null,
     review: fm['影评']?.toString() ?? null,
     genre: fm['类型']?.toString() ?? null,
@@ -193,6 +194,9 @@ export function getDisplayItems(): CinemaItem[] {
   if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
   if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
   if (M.listFilter) list = list.filter((it) => it.lists.includes(M.listFilter as string));
+  // 片单收纳条目只在片单视图出现（2026-09-30 拍板：一键导入不混入正常影视视图）——
+  // 无片单筛选时（全部/类型/状态/搜索）整体排除
+  else list = list.filter((it) => !it.shelvedOnly);
   if (M.searchKeyword) {
     const kw = M.searchKeyword.toLowerCase();
     list = list.filter((it) => {

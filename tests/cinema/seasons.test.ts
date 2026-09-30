@@ -25,6 +25,7 @@ function item(name: string, opts: Partial<CinemaItem> = {}): CinemaItem {
     ...opts,
     rewatches: opts.rewatches ?? [],
     lists: opts.lists ?? [],
+    shelvedOnly: opts.shelvedOnly ?? false,
   };
 }
 
