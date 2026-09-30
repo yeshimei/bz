@@ -390,30 +390,38 @@ describe('查看轮次预览的段界（ADR-0220 §7：同一人连续的那几�
 
   it('录音头报「几轮 · 并成几段 · 旁音几条」——段数就是进聊天仓的条数', () => {
     const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, rows: [row({ status: 'awaiting-merge', turns: 4 })], turnsView: lines() }, '2026-09-28');
-    const head = page.querySelector('.bz-people-supp-turnhead');
+    const head = page.querySelector('.bz-people-chat-head');
     expect(head?.textContent).toContain('4 轮');
     expect(head?.textContent).toContain('并成 2 段');
     expect(head?.textContent).toContain('旁音 1');
   });
 
-  it('微信式聊天流：两侧各带头像；无段签 / 无分割线；旁音轮收灰留档', () => {
+  it('微信式聊天流（issue 529 起与详情页「查看聊天」共用 chatStream）：两侧各带头像；无段签 / 无分割线；旁音轮收灰留档', () => {
     const v = lines()!;
     v.meAvatar = 'data:image/png;base64,xx';
     v.otherAvatar = '';
     const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, rows: [row({ status: 'awaiting-merge', turns: 4 })], turnsView: v }, '2026-09-28');
-    const rows2 = [...page.querySelectorAll('.bz-people-supp-turn')];
+    const rows2 = [...page.querySelectorAll('.bz-people-chat-row')];
     expect(rows2.map((r) => r.className)).toEqual([
-      'bz-people-supp-turn me',
-      'bz-people-supp-turn me',
-      'bz-people-supp-turn side',
-      'bz-people-supp-turn',
+      'bz-people-chat-row me',
+      'bz-people-chat-row me',
+      'bz-people-chat-row side named',
+      'bz-people-chat-row',
     ]);
     // 段签与分割线整体撤了（复评：仿微信），但旁音轮保留原文（复核没误杀）
     expect(page.querySelector('.bz-people-supp-turnseg')).toBeNull();
-    expect(rows2[2].querySelector('.bz-people-supp-turnbubble')?.textContent).toBe('电视里的人声');
+    expect(rows2[2].querySelector('.bz-people-chat-bub')?.textContent).toBe('电视里的人声');
+    // 旁音轮不是联系人本人的声音：气泡上面写清是谁（不然一条灰气泡说不清来路）
+    expect(rows2[2].querySelector('.bz-people-chat-who')?.textContent).toBe('其他');
+    expect(rows2[3].querySelector('.bz-people-chat-who')).toBeNull();
     // 每轮一枚头像位：「我」用设置里的头像；对方没头像时落首字印
-    expect(rows2.every((r) => r.querySelector('.bz-people-supp-turnava'))).toBe(true);
-    expect(rows2[0].querySelector<HTMLImageElement>('.bz-people-supp-turnava img')?.getAttribute('src')).toBe('data:image/png;base64,xx');
-    expect(rows2[3].querySelector('.bz-people-supp-turnava .bz-people-ava-txt')?.textContent).toBe('大');
+    expect(rows2.every((r) => r.querySelector('.bz-people-chat-ava'))).toBe(true);
+    expect(rows2[0].querySelector<HTMLImageElement>('.bz-people-chat-ava img')?.getAttribute('src')).toBe('data:image/png;base64,xx');
+    expect(rows2[3].querySelector('.bz-people-chat-ava .bz-people-ava-txt')?.textContent).toBe('大');
+  });
+
+  it('轮次空态：账本里还没轮次时给一句说明（不出空列表）', () => {
+    const page = suppPage(p, 'rec', emptyImage, { ...emptyRec, rows: [row({ status: 'pending' })], turnsView: { file: 'r.aac', meAvatar: '', otherAvatar: '', lines: [] } }, '2026-09-28');
+    expect(page.querySelector('.bz-people-chat-list')?.textContent).toContain('账本里还没有轮次');
   });
 });

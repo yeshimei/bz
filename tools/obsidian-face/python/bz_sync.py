@@ -27,6 +27,7 @@ emoticon_writeback.py（表情命名）——三者并入 export 轮的 chat.jso
   <数据根>/<联系人>/stats.json    sync 轮统计 {msgs,voices,images,voiceSec,lastCt,maxSid,group,syncedAt}
   <数据根>/<联系人>/chat.json     export 轮消息流 [{ct,type,who,msg,sid,dur?,img?}]，type 为 4.x 原始码
   <数据根>/<联系人>/avatar.<ext>  头像源（微信头像库 head_image 原样字节；无头像不落文件）
+  <数据根>/.bz-face/me/avatar.<ext>  本人头像（issue 529；插件设置「我的头像」的默认值）
   <数据根>/.bz-face/key.json      密钥缓存（sync 轮每轮从微信进程新取；export 轮只读缓存）
   <数据根>/.bz-face/decrypted/    解密库（增量：已解密的库由上游缓存自动跳过）
 
@@ -552,6 +553,35 @@ def write_avatar(cdir: Path, db_dir: Path, wxid: str) -> str:
     return "new" if old_av is None else "updated"
 
 
+def write_self_avatar(data_root: Path, db_dir: Path, my_wxid: str) -> str:
+    """**本人**（账号自己）头像落位（issue 529，两轮共用）：
+    `<数据根>/.bz-face/me/avatar.<ext>` —— 插件设置里「我的头像」的默认值就是这张
+    （微信头像库里账号自己那条记录；`head_image` 表按 wxid 查，与联系人头像同一张表）。
+
+    放 `.bz-face/me/`（工具自己的基础设施目录）：不进联系人扫描，不会被当成一位联系人。
+    字节比对幂等；换过格式（png ↔ jpg）时清掉旧扩展名那张——插件按扩展名探测序取第一张。
+    返回状态词（none / new / updated / unchanged / skipped）。"""
+    if not my_wxid:
+        return "skipped"
+    buf = avatar_buffer(db_dir, my_wxid)
+    if not buf:
+        return "none"
+    d = data_root / ".bz-face" / "me"
+    d.mkdir(parents=True, exist_ok=True)
+    target = d / f"avatar.{avatar_ext(buf)}"
+    old = target.read_bytes() if target.exists() else None
+    if old == buf:
+        return "unchanged"
+    for other in d.glob("avatar.*"):
+        if other != target:
+            try:
+                other.unlink()
+            except OSError:
+                pass
+    atomic_write(target, buf)
+    return "new" if old is None else "updated"
+
+
 # ---------------- 主流程 ----------------
 
 def main() -> int:
@@ -605,6 +635,10 @@ def sync_round(args, data_root: Path, key_path: Path) -> int:
 
     # 2. 解密（增量）
     db_dir = decrypt_all(key_path, data_root, args.src)
+
+    # 2.5 本人头像（issue 529）：插件设置里「我的头像」的默认值——头像库账号自己那条
+    self_avatar = write_self_avatar(data_root, db_dir, my_wxid)
+    info(phase="self", avatar=self_avatar)
 
     # 3. 逐联系人统计（SQL 聚合，无人读消息正文）+ 头像源
     step("统计联系人：逐人聚合消息 / 语音 / 图片 / 语音时长 / 最新消息（chat.json 改为按需导出）")
@@ -671,6 +705,7 @@ def sync_round(args, data_root: Path, key_path: Path) -> int:
         "named": 0,  # 表情命名要读正文，归 export 轮口径；sync 轮恒 0
         "failures": failures,
         "dataRoot": str(data_root),
+        "selfAvatar": self_avatar,
     })
     tail = f"同步完成：联系人 {exported}，写入 {written}，未变 {unchanged}，跳过 {skipped}，失败 {failed}；消息 {msg_total} 条（统计口径，chat.json 按需导出）"
     if failed:
@@ -698,6 +733,8 @@ def export_round(args, data_root: Path, key_path: Path) -> int:
         my_wxid = str(json.loads(key_path.read_text(encoding="utf-8")).get("wxid") or "")
     except Exception:
         my_wxid = ""  # wxid 读不出只影响「我」的归属判定兜底，不挡导出
+    # 本人头像照旧跟着走（issue 529）：导入轮也可能先于 sync 轮跑到，幂等写一遍无成本
+    self_avatar = write_self_avatar(data_root, db_dir, my_wxid)
     info(phase="contacts", total=len(wanted))
 
     name_map = {t["wxid"]: t["name"] for t in by_name.values()}
@@ -765,6 +802,7 @@ def export_round(args, data_root: Path, key_path: Path) -> int:
         "named": named_total,
         "failures": failures,
         "dataRoot": str(data_root),
+        "selfAvatar": self_avatar,
     })
     tail = f"导出完成：联系人 {exported}，写入 {written}，未变 {unchanged}，跳过 {skipped}，失败 {failed}；消息 {msg_total} 条"
     if failed:
