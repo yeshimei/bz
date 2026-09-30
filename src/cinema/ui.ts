@@ -202,9 +202,11 @@ function openListPick(sec: HTMLElement, it: CinemaItem, app: App): void {
   });
 }
 
-/** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → 抓取解析出条目 →
- *  弹层列出抓到的全部条目由用户二次确认 → 确认后按「想看」静默批量建档
- *  （quickAddWant silent，最后统一刷新），海报与豆瓣信息走补抓队列。
+/** 一键导入豆瓣片单（侧栏「导入片单」）：贴 wish 收藏页 / 豆列链接 → **流式**抓取
+ *  （结果区随页增量出现，不等全部抓完——豆列几十部要翻好几页，过程肉眼可见）→
+ *  清单由用户二次确认 → 确认后按「想看」静默批量建档（quickAddWant silent 携带
+ *  sid，补抓队列直取 queryDoubanBySid——与表单解析 sid 直取同口径），并可归入
+ *  同名自建片单（片单名从豆列页 title 提取，可改，留空不归入）。
  *  **在库条目不过滤**（2026-09-30 拍板）：照常进清单参与导入，建档层的重名保护
  *  自然让它们保持现状，toast 汇总区分「新导入 / 已在库未动」。Cookie 走设置键
  *  cinemaDoubanCookie（queue 单源装配），弹层不收敏感值。 */
@@ -213,20 +215,34 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
     <div class="dimp-head"><span class="lp-kicker">一键导入</span><span class="dimp-name">豆瓣片单</span></div>
     <div class="dimp-stage" data-dimp-input>
       <input class="j-dimp-url" placeholder="片单链接：豆瓣 wish 收藏页或豆列 doulist">
-      <div class="dimp-hint">抓到后列出清单确认入库；按「想看」批量建档，已在库的保持不动，海报与豆瓣信息随后台队列补齐。个人收藏页需先在设置里填豆瓣 Cookie。</div>
+      <div class="dimp-hint">抓到后列出清单确认入库；按「想看」批量建档并归入同名片单，已在库的保持不动，海报与豆瓣信息随后台队列补齐（约 15 秒一部，防豆瓣限流）。个人收藏页需先在设置里填豆瓣 Cookie。</div>
       <button type="button" class="lp-add j-dimp-fetch">抓取片单</button>
     </div>
     <div class="dimp-stage" data-dimp-result hidden>
       <div class="dimp-stat j-dimp-stat"></div>
       <div class="dimp-list j-dimp-list"></div>
+      <div class="dimp-newlist"><label>归入片单</label><input class="j-dimp-listname" placeholder="片单名（留空不归入）"></div>
       <div class="dimp-acts"><button type="button" class="lp-add j-dimp-run">导入</button><button type="button" class="dm-btn j-dimp-back">返回重填</button></div>
     </div>
   </div>`);
   mountIcons(el);
   const inputStage = el.querySelector<HTMLElement>('[data-dimp-input]');
   const resultStage = el.querySelector<HTMLElement>('[data-dimp-result]');
-  let pending: { name: string }[] = [];
+  const listEl = resultStage?.querySelector<HTMLElement>('.j-dimp-list');
+  const statEl = resultStage?.querySelector<HTMLElement>('.j-dimp-stat');
+  const runBtn = resultStage?.querySelector<HTMLButtonElement>('.j-dimp-run');
+  let pending: { sid: string; name: string }[] = [];
+  let inLibCount = 0;
+  let fetching = false;
   const inLibrary = (name: string): boolean => M.items.some((it) => it.name === name);
+  const rowHtml = (e: { name: string }): string =>
+    `<div class="dimp-row${inLibrary(e.name) ? ' is-inlib' : ''}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? '已在库' : '新片'}</span></div>`;
+  const refreshStat = (done: boolean): void => {
+    if (!statEl) return;
+    statEl.textContent = done
+      ? `抓到 ${pending.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库，将保持不动）` : ''}，确认入库？`
+      : `抓取中… 已 ${pending.length} 部`;
+  };
   const fetchBtn = el.querySelector<HTMLButtonElement>('.j-dimp-fetch');
   fetchBtn?.addEventListener('click', () => {
     const url = (el.querySelector<HTMLInputElement>('.j-dimp-url')?.value ?? '').trim();
@@ -234,13 +250,31 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
       notice('先贴一个豆瓣片单链接（movie.douban.com 下）', 'warning');
       return;
     }
-    fetchBtn.disabled = true;
-    fetchBtn.textContent = '抓取中…';
-    void fetchDoubanListForImport(app, url).then(({ entries, firstPageEmpty }) => {
-      fetchBtn.disabled = false;
-      fetchBtn.textContent = '抓取片单';
-      if (!inputStage || !resultStage) return;
+    if (!inputStage || !resultStage || !listEl || !statEl || !runBtn) return;
+    // 流式：立即切结果区，逐页增量出现（fetchDoubanList 的 onPage 回调驱动）
+    pending = [];
+    inLibCount = 0;
+    fetching = true;
+    listEl.innerHTML = '';
+    refreshStat(false);
+    const listNameInput = resultStage.querySelector<HTMLInputElement>('.j-dimp-listname');
+    if (listNameInput) listNameInput.value = '';
+    inputStage.hidden = true;
+    resultStage.hidden = false;
+    runBtn.disabled = true;
+    runBtn.textContent = '抓取中…';
+    void fetchDoubanListForImport(app, url, (batch, total) => {
+      pending = pending.concat(batch);
+      inLibCount = pending.filter((e) => inLibrary(e.name)).length;
+      if (listEl) listEl.insertAdjacentHTML('beforeend', batch.map(rowHtml).join(''));
+      refreshStat(false);
+      void total;
+    }).then(({ entries, firstPageEmpty, listTitle }) => {
+      fetching = false;
+      if (listNameInput && listTitle) listNameInput.value = listTitle;
       if (!entries.length) {
+        inputStage.hidden = false;
+        resultStage.hidden = true;
         notice(/doulist/.test(url)
           ? '豆列一条都没抓到：可能被豆瓣风控拦截或链接已失效，稍后再试'
           : firstPageEmpty
@@ -248,48 +282,56 @@ function openDoubanImport(sec: HTMLElement, app: App): void {
             : '这个链接没解析出条目，确认是豆瓣 wish 页或豆列链接', 'warning');
         return;
       }
-      // 二次确认清单（2026-09-30 拍板）：全部条目列出、不过滤在库；用户确认才入库
+      // 完成态以返回值为准做全量兜底渲染（onPage 只是过程增量，注入/异常路径都可能缺页）
       pending = entries;
-      const inLibCount = entries.filter((e) => inLibrary(e.name)).length;
-      const stat = resultStage.querySelector<HTMLElement>('.j-dimp-stat');
-      if (stat) stat.textContent = `抓到 ${entries.length} 部${inLibCount ? `（其中 ${inLibCount} 部已在库，将保持不动）` : ''}，确认入库？`;
-      const list = resultStage.querySelector<HTMLElement>('.j-dimp-list');
-      if (list) {
-        list.innerHTML = entries.map((e) =>
-          `<div class="dimp-row${inLibrary(e.name) ? ' is-inlib' : ''}"><span class="lp-label">${esc(e.name)}</span><span class="dimp-tag">${inLibrary(e.name) ? '已在库' : '新片'}</span></div>`,
-        ).join('');
-      }
-      const runBtn = resultStage.querySelector<HTMLButtonElement>('.j-dimp-run');
-      if (runBtn) {
-        runBtn.textContent = `导入 ${entries.length} 部`;
-        runBtn.disabled = false;
-      }
-      inputStage.hidden = true;
-      resultStage.hidden = false;
+      inLibCount = entries.filter((e) => inLibrary(e.name)).length;
+      if (listEl) listEl.innerHTML = entries.map(rowHtml).join('');
+      refreshStat(true);
+      runBtn.textContent = `导入 ${pending.length} 部`;
+      runBtn.disabled = false;
     });
   });
   el.querySelector('.j-dimp-back')?.addEventListener('click', () => {
+    if (fetching) return; // 抓取中不回退（流式写入进行时切视图会错乱）；抓完随便回
     if (resultStage) resultStage.hidden = true;
     if (inputStage) inputStage.hidden = false;
   });
   el.querySelector('.j-dimp-run')?.addEventListener('click', () => {
-    const runBtn = el.querySelector<HTMLButtonElement>('.j-dimp-run');
-    if (runBtn) {
-      runBtn.disabled = true;
-      runBtn.textContent = '导入中…';
-    }
+    if (fetching || !runBtn) return;
+    runBtn.disabled = true;
+    runBtn.textContent = '导入中…';
+    const listName = (resultStage?.querySelector<HTMLInputElement>('.j-dimp-listname')?.value ?? '').trim();
     void (async () => {
-      let ok = 0;
+      const createdNames: string[] = [];
       for (const e of pending) {
         // 在库条目照常尝试加入（不跳过）：建档层重名保护让它们保持现状（false）
-        if (await quickAddWant(app, e.name, '电影', { silent: true })) ok++;
+        if (await quickAddWant(app, e.name, '电影', { silent: true, sid: e.sid })) createdNames.push(e.name);
+      }
+      // 归入片单（拍板：导入的片单要在侧栏可见）——对新建档条目批量写「片单」键，
+      // 已在库保持不动的条目不归入（按「在库的按照在库的」口径不动它）
+      const validList = listName && !hasIllegalNameChar(listName) ? listName : '';
+      if (validList && createdNames.length) {
+        refreshDataAndView(app);
+        for (const name of createdNames) {
+          const it = M.items.find((x) => x.name === name);
+          if (!it?.file) continue;
+          await app.fileManager.processFrontMatter(it.file, (fm: Record<string, unknown>) => {
+            const cur = normalizeLists(fm['片单']);
+            if (!cur.includes(validList)) {
+              cur.push(validList);
+              fm['片单'] = cur;
+            }
+          });
+          it.lists = [...new Set([...it.lists, validList])]; // 内存同步（侧栏片单计数即时可见）
+        }
       }
       refreshDataAndView(app);
       renderAll(app);
       close();
-      notice(ok
-        ? `已从豆瓣片单导入 ${ok} 部到想看${pending.length > ok ? `（${pending.length - ok} 部已在库保持不动）` : ''}，海报与信息后台补齐`
-        : '片单里的片都已在库，没有新增', ok ? 'success' : 'warning');
+      const listTail = validList && createdNames.length ? `，归入片单「${validList}」` : '';
+      notice(createdNames.length
+        ? `已从豆瓣片单导入 ${createdNames.length} 部到想看${pending.length > createdNames.length ? `（${pending.length - createdNames.length} 部已在库保持不动）` : ''}${listTail}，海报与信息后台补齐`
+        : '片单里的片都已在库，没有新增', createdNames.length ? 'success' : 'warning');
     })();
   });
 }

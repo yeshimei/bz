@@ -549,7 +549,9 @@ export async function downloadPosterToVault(
  * 写回经 vault.process：字段一律「缺失才填」并基于回调内 fresh 内容复核（C8），
  * 抓取期间用户手改不会被覆盖。
  */
-export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDeps): Promise<DoubanFetchOutcome> {
+export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDeps, sid?: string): Promise<DoubanFetchOutcome> {
+  // sid（豆瓣片单导入携带）：直取 queryDoubanBySid 跳过名称三路检索——与表单解析的
+  // sid 直取同口径（issue 498），少一次检索请求也少一路误配风险
   const name = extractMovieName(file.name);
   let content: string;
   try {
@@ -562,10 +564,11 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
 
-  // 1. 查询（suggest 检索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
-  const q = await queryDoubanByName(name, deps);
+  // 1. 查询（suggest 检索 + 字段；与表单「解析」共用查询链，单源不裂；有 sid 直取）
+  const q = sid ? await queryDoubanBySid(sid, name, deps) : await queryDoubanByName(name, deps);
   if (!q.ok) return { ok: false, reason: q.reason };
-  const { detailUrl, posterUrl, sid, apizero: az, celebrities: cel } = q.data;
+  // 参数 sid 仅用于查询前分流（直取 vs 按名检索）；命中后的链接/字段同源，不解构冗余键
+  const { detailUrl, posterUrl, apizero: az, celebrities: cel } = q.data;
 
   // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
   //  保存目录/下载失败语义都在 downloadPosterToVault 里（与表单保存同一份实现）
@@ -621,14 +624,34 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
 export interface DoubanListEntry { sid: string; name: string }
 
 /**
+ * 片名清洗：豆瓣列表页片名常是「中文名 Foreign Name」形态，导入建档只留中文名
+ * （2026-09-30 拍板）。按空格切 token 后从尾部剥「不含 CJK 的连续 token 段」：
+ *   - 整名没有任何 CJK → 原样（纯外文名不动）
+ *   - 尾段是纯数字（「银翼杀手 2049」「终结者 2018」）视作中文名一部分，不剥
+ *   - 剥之前必须存在含 CJK 的 token
+ * 「奥本海默 Oppenheimer」→「奥本海默」、「谍影重重 The Bourne Identity」→
+ * 「谍影重重」；原名在前（「E.T. 外星人」）、中文名自带拉丁（「头文字D」）不动。
+ */
+export function stripForeignName(name: string): string {
+  const trimmed = name.replace(/\s+/g, ' ').trim();
+  const tokens = trimmed.split(' ').filter(Boolean);
+  if (tokens.length < 2) return trimmed;
+  const hasCJK = (t: string): boolean => /[\u3400-\u9fff\uf900-\ufaff\u3000-\u303f\uff00-\uffef]/.test(t);
+  if (!tokens.some(hasCJK)) return trimmed;
+  let end = tokens.length;
+  while (end > 1 && !hasCJK(tokens[end - 1]) && !/^[\d.．、-]+$/.test(tokens[end - 1])) end--;
+  return end === tokens.length ? trimmed : tokens.slice(0, end).join(' ');
+}
+
+/**
  * 片单页 HTML → 条目列表（纯函数，测试可直接喂 HTML）。
  * 兼容豆瓣两类真实形态（doulist 豆列的条目链接**不带** title 属性，片名只在
  * 链接文本里——2026-09-30 真机 doulist 导入抓到 0 条的根因）：
  *   - wish/collect 主页收藏页：`<a href="…/subject/N/" title="片名">…</a>`
  *   - doulist 豆列：          `<a href="…/subject/N/">片名</a>`
- * title 属性优先、缺失回落链接文本（实体反转义 + 空白折叠）；同一片在页面里
- * 出现多次（海报链接 + 文字链接）按 sid 去重保序。空结果 = 抓不到（风控/需
- * 登录/链接不对，由调用方分流提示）。
+ * title 属性优先、缺失回落链接文本；片名过 stripForeignName 只留中文名。
+ * 同一片在页面里出现多次（海报链接 + 文字链接）按 sid 去重保序。空结果 = 抓不到
+ * （风控/需登录/链接不对，由调用方分流提示）。
  */
 export function parseDoubanListHtml(html: string): DoubanListEntry[] {
   const out: DoubanListEntry[] = [];
@@ -638,7 +661,7 @@ export function parseDoubanListHtml(html: string): DoubanListEntry[] {
   const re = /movie\.douban\.com\/subject\/(\d+)\/"[^>]*?(?:\stitle="([^"]*)")?[^>]*>([^<]{0,200})</g;
   for (let m = re.exec(html); m; m = re.exec(html)) {
     const sid = m[1];
-    const name = unescape((m[2] ?? m[3] ?? '').replace(/\s+/g, ' ').trim());
+    const name = stripForeignName(unescape((m[2] ?? m[3] ?? '')));
     if (!name || seen.has(sid)) continue;
     seen.add(sid);
     out.push({ sid, name });
@@ -646,22 +669,40 @@ export function parseDoubanListHtml(html: string): DoubanListEntry[] {
   return out;
 }
 
+/**
+ * 片单名提取（首页 `<title>`）：doulist 的 title 即豆列名；wish 页是「XXX 的想看」
+ * 形态——都可直接当导入片单的默认名（弹层里可改）。取不到回落空串（调用方给默认值）。
+ */
+export function extractListTitle(html: string): string {
+  const raw = /<title>([^<]*)<\/title>/i.exec(html)?.[1] ?? '';
+  return raw
+    .replace(/&amp;/g, '&')
+    .replace(/\s*[-–—]\s*豆瓣\s*$/, '')
+    .replace(/\s*\(豆瓣\)\s*$/i, '')
+    .trim();
+}
+
 /** 翻页上限（防死循环/防风控激怒）：240 部 ≈ 豆瓣 wish 页 16 页，远超正常片单规模 */
 const DOUBAN_LIST_MAX_PAGES = 16;
 
+/** 流式抓取的逐页回调：batch = 本页新解析条目（已清洗/去重），totalSoFar = 累计 */
+export type DoubanListPageCb = (batch: DoubanListEntry[], totalSoFar: number) => void;
+
 /**
- * 抓取整个豆瓣片单（翻页聚合）：wish / doulist 等 subject 列表页按 `start=` 递进。
+ * 抓取整个豆瓣片单（翻页聚合，**流式**——onPage 每页回调一次，调用方可增量渲染，
+ * 不必等全部抓完）：wish / doulist 等 subject 列表页按 `start=` 递进。
  * 停页条件不假设每页条数（wish 25/页、doulist 20/页不等）：**本页解析为空即停**
  * （到底/需登录/风控拦截页都表现为空），**本页无新 sid 也停**（翻过界豆瓣回落
  * 末页内容，继续翻只会原地打转）。cookie 可选（个人页登录态；公开豆列不填）。
- * 返回条目与「是否疑似被拦」（首页为空但请求本身成功 → 让调用方提示查 cookie）。
+ * 返回条目全集、片单名（首页 title 提取）与「是否疑似被拦」。
  */
-export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: string): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean }> {
+export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: string, onPage?: DoubanListPageCb): Promise<{ entries: DoubanListEntry[]; firstPageEmpty: boolean; listTitle: string }> {
   const sep = base.includes('?') ? '&' : '?';
   const headers = cookie?.trim() ? { Cookie: cookie.trim() } : undefined;
   const all: DoubanListEntry[] = [];
   const seen = new Set<string>();
   let firstPageEmpty = false;
+  let listTitle = '';
   for (let start = 0; start < DOUBAN_LIST_MAX_PAGES * 25; start += 25) {
     let html: string | null = null;
     try {
@@ -670,16 +711,20 @@ export async function fetchDoubanList(base: string, httpGet: HttpGet, cookie?: s
       break; // 网络失败：交已抓到的部分（可能是翻页中途断），抓不到就空
     }
     const page = html ? parseDoubanListHtml(html) : [];
-    if (start === 0 && page.length === 0) firstPageEmpty = true;
+    if (start === 0) {
+      listTitle = html ? extractListTitle(html) : '';
+      if (page.length === 0) firstPageEmpty = true;
+    }
     if (page.length === 0) break;
-    let fresh = 0;
+    const fresh: DoubanListEntry[] = [];
     for (const e of page) {
       if (seen.has(e.sid)) continue;
       seen.add(e.sid);
       all.push(e);
-      fresh++;
+      fresh.push(e);
     }
-    if (fresh === 0) break; // 翻过界：豆瓣回落末页内容，无新条目即到底
+    if (fresh.length && onPage) onPage(fresh, all.length);
+    if (fresh.length === 0) break; // 翻过界：豆瓣回落末页内容，无新条目即到底
   }
-  return { entries: all, firstPageEmpty };
+  return { entries: all, firstPageEmpty, listTitle };
 }

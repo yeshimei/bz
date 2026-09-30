@@ -1,6 +1,35 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { parseDoubanListHtml, fetchDoubanList } from '../../src/cinema/douban-fetcher';
+import { parseDoubanListHtml, fetchDoubanList, stripForeignName, extractListTitle } from '../../src/cinema/douban-fetcher';
+
+describe('片名清洗（stripForeignName）', () => {
+  it('剥拉丁尾段留中文名；数字尾段/原名在前/中文名自带拉丁/纯外文名不动', () => {
+    const cases: [string, string][] = [
+      ['奥本海默 Oppenheimer', '奥本海默'],
+      ['谍影重重 The Bourne Identity', '谍影重重'],
+      ['银翼杀手 2049', '银翼杀手 2049'],
+      ['终结者 2018', '终结者 2018'],
+      ['E.T. 外星人', 'E.T. 外星人'],
+      ['Coco 寻梦环游记', 'Coco 寻梦环游记'],
+      ['头文字D', '头文字D'],
+      ['一一', '一一'],
+      ['Amélie', 'Amélie'],
+      ['A & B', 'A & B'],
+    ];
+    for (const [raw, want] of cases) expect(stripForeignName(raw)).toBe(want);
+  });
+
+  it('解析时即清洗：抓到的条目名就是中文名（确认清单所见即所得）', () => {
+    const html = `<a href="https://movie.douban.com/subject/1889245/" title="星际穿越 Interstellar">x</a>`;
+    expect(parseDoubanListHtml(html)).toEqual([{ sid: '1889245', name: '星际穿越' }]);
+  });
+
+  it('片单名提取（extractListTitle）：剥豆瓣尾巴，实体反转义', () => {
+    expect(extractListTitle('<title>影史百大 (豆瓣)</title>')).toBe('影史百大');
+    expect(extractListTitle('<title>豆列 A&amp;B - 豆瓣</title>')).toBe('豆列 A&B');
+    expect(extractListTitle('<html>无标题</html>')).toBe('');
+  });
+});
 
 describe('豆瓣片单解析（parseDoubanListHtml）', () => {
   it('提取 subject 链接与 title，按 sid 去重保序（页面里同一片常出现海报+文字两条链接）', () => {

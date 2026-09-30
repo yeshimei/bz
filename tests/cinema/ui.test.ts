@@ -2954,6 +2954,7 @@ describe('一键导入豆瓣片单', () => {
         { sid: '1', name: '奥德赛' },
       ],
       firstPageEmpty: false,
+      listTitle: '测试豆列',
     }));
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -2962,10 +2963,14 @@ describe('一键导入豆瓣片单', () => {
     (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
     clickEl(modal.querySelector('.j-dimp-fetch'));
     await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
+    // 流式抓取：结果区立即出现（「抓取中…」），等完成态 stat 才算抓完
+    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓取中');
     // 在库不过滤（2026-09-30 拍板）：全量进确认清单，在库仅标记、导入时由重名保护保持现状
-    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 3 部（其中 1 部已在库，将保持不动），确认入库？');
+    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 3 部（其中 1 部已在库，将保持不动），确认入库？'));
     expect(modal.querySelectorAll('.dimp-row')).toHaveLength(3);
     expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
+    // 片单名从豆列 title 提取并回填输入（用户可改，留空不归入）
+    expect((modal.querySelector('.j-dimp-listname') as HTMLInputElement).value).toBe('测试豆列');
     // run 段（点击 → 静默批量建档 → 汇总 toast）的建档语义由 recommend.test 的
     // quickAddWant 单测覆盖（silent 路径同函数同分支）；此处断 UI 管线终点：全量导入钮就绪。
     const runBtn = modal.querySelector('.j-dimp-run') as HTMLButtonElement;
@@ -2979,6 +2984,7 @@ describe('一键导入豆瓣片单', () => {
     configureDoubanListFetch(() => Promise.resolve({
       entries: [{ sid: '1', name: '奥德赛' }],
       firstPageEmpty: false,
+      listTitle: '测试豆列',
     }));
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -2987,7 +2993,7 @@ describe('一键导入豆瓣片单', () => {
     (modal.querySelector('.j-dimp-url') as HTMLInputElement).value = 'https://movie.douban.com/people/x/wish';
     clickEl(modal.querySelector('.j-dimp-fetch'));
     await vi.waitFor(() => expect((modal.querySelector('[data-dimp-result]') as HTMLElement).hidden).toBe(false));
-    expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 1 部（其中 1 部已在库，将保持不动），确认入库？');
+    await vi.waitFor(() => expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('抓到 1 部（其中 1 部已在库，将保持不动），确认入库？'));
     expect(modal.querySelectorAll('.dimp-row.is-inlib')).toHaveLength(1);
     expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(false);
     closeOverlay();
