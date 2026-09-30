@@ -3047,3 +3047,44 @@ describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
     expect(root.style.height).toBe('');
   });
 });
+
+/** 重温 +1（2026-09-30：时刻粒度 + 重映厅自动移出） */
+describe('重温 +1：时刻粒度 + 重映厅自动移出', () => {
+  beforeEach(() => { resetObsidianMocks(); resetCinemaState(); document.body.innerHTML = ''; });
+  afterEach(() => { closeOverlay(); });
+
+  /** 备好一部挂在重映厅的已看片（星际穿越 fixture：评分 9.6 已看、无「重看」键） */
+  async function seedOnShelf() {
+    const { app, vault } = seedVault();
+    const file = vault.getAbstractFileByPath('我的/影视/《星际穿越》.md') as TFile;
+    await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => { fm['片单'] = ['重映厅']; });
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    return { app, vault, item: M.items.find((i) => i.name === '星际穿越')!, root };
+  }
+
+  it('「重看」记日期+时刻；重映厅自动移出（唯一片单 → 删键）', async () => {
+    const { vault, item, root } = await seedOnShelf();
+    expect(item.lists).toEqual(['重映厅']); // 前置就位
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-rewatch'));
+    await vi.waitFor(() => expect(hasNotice(/记下第 2 刷/)).toBe(true)); // rewatchCount 口径 = 首看 + 重温数
+    const fm = vault.files.get('我的/影视/《星际穿越》.md') as string;
+    expect(fm).not.toContain('片单');
+    expect(fm).toMatch(/重看: \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/); // 时刻粒度（mock 序列化为流式数组）
+    expect(item.lists).toEqual([]);
+    expect(item.rewatches).toHaveLength(1);
+  });
+
+  it('落盘失败 → 重温数组与片单一起回滚（面板与磁盘一致）', async () => {
+    const { app, item, root } = await seedOnShelf();
+    const spy = vi.spyOn(app.fileManager, 'processFrontMatter').mockRejectedValue(new Error('磁盘占用'));
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-rewatch'));
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(item.rewatches).toHaveLength(0);
+    expect(item.lists).toEqual(['重映厅']);
+  });
+});
