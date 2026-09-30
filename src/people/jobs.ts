@@ -648,6 +648,21 @@ function reusableJob(
   return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
 }
 
+/**
+ * refresh 重切批的断点对齐（D 组拍板）：任务自身合并升级素材后整体重切，旧已完成批
+ * 能不能复用按**批元数据**对齐——新切批次从第一批起逐条与旧已完成批比对首末日期
+ * （from / to，切批确定性口径），匹配的保留断点；从第一个不匹配批起全部作废。
+ * 返回可保留的批数（= 截后的 batchesDone，results 由调用方按同长度截断）。
+ * 抽样封顶（evenlySample）后样本位可能整体位移——按前缀对齐只保住「确实没变」的头部，
+ * 不猜后面，宁多烧不漏炼。
+ */
+export function alignRefreshedBatches(oldDone: ChunkMeta[], fresh: ChunkMeta[]): number {
+  const n = Math.min(oldDone.length, fresh.length);
+  let keep = 0;
+  while (keep < n && fresh[keep].from === oldDone[keep].from && fresh[keep].to === oldDone[keep].to) keep++;
+  return keep;
+}
+
 // ---------------- 画谱总确认估算（issue 497：一次报清全部要花钱 / 花时间的事） ----------------
 
 /**
@@ -1668,7 +1683,20 @@ async function runJob(job: PersonJob): Promise<void> {
       await finish({ status: 'error', error: DRIFT_ERROR, message: DRIFT_ERROR });
       return;
     }
+    // refresh 重切批的断点对齐（D 组拍板）：素材升级后整体重切，不能盲留 batchesDone——
+    // 新边界从第一批起与旧已完成批按首末日期对齐，对不上的从第一个不匹配批起清断点
+    // （results 一并截断，batchesDone = results.length 不变量保持），后面的批重跑。
+    // 不对齐的旧做法会从新布局的第 batchesDone 批续跑：头部增量素材漏提炼、重叠段重复烧钱。
+    const oldDoneChunks = job.chunks.slice(0, job.batchesDone);
     job.chunks = metas;
+    if (refresh && job.batchesDone > 0) {
+      const keep = alignRefreshedBatches(oldDoneChunks, metas);
+      if (keep < job.batchesDone) {
+        job.results = job.results.slice(0, keep);
+        job.batchesDone = keep;
+        job.message = `素材升级重切为 ${metas.length} 批——前 ${keep} 批边界没变接着用，其余重跑`;
+      }
+    }
     if (refresh) {
       // 指纹刷新（469）：prep 合并升级 / 首跑即见新素材——把落盘值对齐当前聊天仓，
       // 之后批级断点续跑的校验以升级后的素材为准
