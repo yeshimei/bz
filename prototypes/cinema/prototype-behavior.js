@@ -1,4 +1,4 @@
-/* 源指纹 7abdec1d1a4cbcee · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c18ae6c5fd146a86 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -39,9 +39,9 @@ var BZW_cinema = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -6274,7 +6274,7 @@ var BZW_cinema = (() => {
     return count.has(REWATCH_SHELF) ? [REWATCH_SHELF, ...rest] : rest;
   }
   function parseMovieFile(file, app) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A;
     const cache = app.metadataCache.getFileCache(file);
     if (!cache || !cache.frontmatter) return null;
     const fm = cache.frontmatter;
@@ -6306,24 +6306,27 @@ var BZW_cinema = (() => {
       watchDate,
       rating,
       status,
+      // 状态日期（想看日期/在看日期；已看沿用观影日期）：旧笔记无键 = null，不参与显示
+      wantDate: (_d = (_c = fm["想看日期"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      watchingDate: (_f = (_e = fm["在看日期"]) == null ? void 0 : _e.toString()) != null ? _f : null,
       rewatches: normalizeRewatches(fm["重看"]),
       lists: normalizeLists(fm["片单"]),
       shelvedOnly: fm["片单收纳"] === true,
-      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
-      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      poster: (_h = (_g = fm["海报"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      review: (_j = (_i = fm["影评"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      genre: (_l = (_k = fm["类型"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      director: (_n = (_m = fm["导演"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      actors: (_p = (_o = fm["主演"]) == null ? void 0 : _o.toString()) != null ? _p : null,
+      region: (_r = (_q = fm["制片国家/地区"]) == null ? void 0 : _q.toString()) != null ? _r : null,
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
+      doubanUrl: /^https?:\/\//.test(String((_s = fm["豆瓣链接"]) != null ? _s : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_u = (_t = fm["简介"]) == null ? void 0 : _t.toString()) != null ? _u : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
+      duration: (_w = (_v = fm["片长"]) == null ? void 0 : _v.toString()) != null ? _w : null,
+      seasonText: (_y = (_x = fm["季集"]) == null ? void 0 : _x.toString()) != null ? _y : null,
+      hotComment: (_A = (_z = fm["热门短评"]) == null ? void 0 : _z.toString()) != null ? _A : null
     };
   }
   function findPosterRenameTargets(app, oldPath) {
@@ -8128,6 +8131,7 @@ var BZW_cinema = (() => {
 tags:
 - ${tag}
 观影日期: "${now}"
+想看日期: "${now.slice(0, 10)}"
 评分: -1
 海报: 
 ---
@@ -11726,6 +11730,14 @@ tags:
     const onShelf = it.lists.includes(REWATCH_SHELF);
     const firstDate = (it.watchDate || "").slice(0, 10);
     const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
+    const wantD = (it.wantDate || "").slice(0, 10);
+    const watchingD = (it.watchingDate || "").slice(0, 10);
+    const dateBits = [];
+    if (wantD) dateBits.push(`想看 ${wantD}`);
+    if (watchingD) dateBits.push(`在看 ${watchingD}`);
+    if (statusNum(it.status) === STATUS_WATCHED) {
+      if (firstDate) dateBits.push(`已看 ${firstDate}`);
+    } else if (!dateBits.length && firstDate) dateBits.push(firstDate);
     const timeline = rewatched ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ""}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join("")}</div>` : "";
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
@@ -11738,7 +11750,7 @@ tags:
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
           ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ""}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
-          ${it.watchDate ? `<span class="dm-date">${esc(firstDate)}</span>` : ""}</div>
+          ${dateBits.length ? `<span class="dm-date">${esc(dateBits.join(" · "))}</span>` : ""}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
@@ -12110,10 +12122,11 @@ tags:
   async function markStatus(item, target, app) {
     const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
     const prevRating = item.rating && item.rating > 0 ? item.rating : null;
-    const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate };
+    const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate };
     item.status = target === "已看" ? STATUS_WATCHED : STATUS_WATCHING;
     if (target === "在看") {
       item.rating = 0;
+      item.watchingDate = localNow().slice(0, 10);
     } else if (!prevRating) {
       item.rating = DEFAULT_RATING;
     }
@@ -12433,10 +12446,13 @@ tags:
         await app.vault.createFolder(folder);
       }
       const filePath = `${folder}/《${item.name}》.md`;
+      const stDates = `${item.wantDate ? `
+想看日期: "${item.wantDate}"` : ""}${item.watchingDate ? `
+在看日期: "${item.watchingDate}"` : ""}`;
       let content = `---
 tags:
 - ${item.typeTag}
-观影日期: "${item.watchDate || localNow()}"
+观影日期: "${item.watchDate || localNow()}"${stDates}
 评分: ${(_a = item.rating) != null ? _a : 0}
 海报: 
 ---
@@ -12481,6 +12497,8 @@ tags:
       var _a2;
       fm["评分"] = (_a2 = item.rating) != null ? _a2 : 0;
       fm["观影日期"] = item.watchDate || localNow();
+      if (item.wantDate) fm["想看日期"] = item.wantDate;
+      if (item.watchingDate) fm["在看日期"] = item.watchingDate;
       if (item.review) fm["影评"] = item.review;
       else delete fm["影评"];
       if (item.status === STATUS_WANT) {
@@ -13593,7 +13611,8 @@ tags:
     }
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+    const today = localNow().slice(0, 10);
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         notice(DUP_NAME_HINT_FULL, "warning");
@@ -13623,7 +13642,7 @@ tags:
     var _a, _b, _c;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review, file: item.file, filePath: (_c = (_b = item.file) == null ? void 0 : _b.path) != null ? _c : null };
+    const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, wantDate: item.wantDate, watchingDate: item.watchingDate, review: item.review, file: item.file, filePath: (_c = (_b = item.file) == null ? void 0 : _b.path) != null ? _c : null };
     if (p.name !== item.name) {
       if (hasIllegalNameChar(p.name)) {
         notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
@@ -13641,6 +13660,10 @@ tags:
     item.rating = p.rating;
     item.watchDate = p.date;
     item.review = p.review;
+    if (st !== prev.status) {
+      if (st === STATUS_WANT) item.wantDate = localNow().slice(0, 10);
+      else if (st === STATUS_WATCHING) item.watchingDate = localNow().slice(0, 10);
+    }
     try {
       await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });
       const fromSt = prev.status === STATUS_WANT ? "want" : prev.status === STATUS_WATCHING ? "watching" : "watched";
