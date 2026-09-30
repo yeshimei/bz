@@ -186,7 +186,8 @@
 .bz-cinema--midnight .dm-chip{font-size:10.5px;padding:2px 9px;border-radius:99px;color:#fff;letter-spacing:.06em}
 .bz-cinema--midnight .dm-stars{font-size:var(--bz-font-meta);color:var(--star);letter-spacing:1px}
 .bz-cinema--midnight .dm-rating{font-size:var(--bz-font-label);font-weight:700;color:var(--ink)}
-.bz-cinema--midnight .dm-date{font-size:var(--bz-font-caption);color:var(--ink-3)}
+/* 状态日期徽标（想看/在看/已看三段 · 连接）：段多时可整体换行、段内也准拆（日期带空格可断） */
+.bz-cinema--midnight .dm-date{font-size:var(--bz-font-caption);color:var(--ink-3);max-width:100%}
 .bz-cinema--midnight .dm-review{font-size:12.5px;color:var(--ink-2);line-height:1.85;margin-top:10px;text-align:justify}
 /* 重温记录详情件：徽标行「N 刷」描边 chip（透明底金字，别压过类型/状态实心 chip）+
    重温微时间线（竖线节点：首看金点带标签、重温灰点逐条）+「重映厅」金实底 chip（系统片单语义） */

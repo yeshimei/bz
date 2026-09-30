@@ -90,10 +90,11 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', app: Ap
   const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
   const prevRating = item.rating && item.rating > 0 ? item.rating : null;
   // G7：先记快照，落盘失败回滚内存（saveEdit 同法）——否则面板显示与磁盘相反
-  const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate };
+  const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate, watchingDate: item.watchingDate };
   item.status = target === '已看' ? STATUS_WATCHED : STATUS_WATCHING;
   if (target === '在看') {
     item.rating = 0;
+    item.watchingDate = localNow().slice(0, 10); // 状态日期（在看日期记到达日）；已看沿用观影日期不另设键
   } else if (!prevRating) {
     item.rating = DEFAULT_RATING;
   }
@@ -453,7 +454,9 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     // 影评在建档后与编辑路径同通道（processFrontMatter，Obsidian YAML 序列化兜底）写入。
     // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）
     // → 展示英文星期；评分/(tags 列表项) 是纯数字/固定枚举，无需引号。
-    let content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
+    // 状态日期随建档落键（有才写，向后兼容旧档）：想看档带想看日期、在看档带在看日期
+    const stDates = `${item.wantDate ? `\n想看日期: "${item.wantDate}"` : ''}${item.watchingDate ? `\n在看日期: "${item.watchingDate}"` : ''}`;
+    let content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"${stDates}\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
     // 海报已落库（issue 397：保存时下载进库）→ 正文 embed 与抓取路径同款插入，
     // 免得「建档即齐」的笔记比队列抓过的少一张图（insertPosterEmbed 单源）
     if (posterRel) content = insertPosterEmbed(content, posterRel);
@@ -496,6 +499,9 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, unknown>) => {
     fm['评分'] = item.rating ?? 0;
     fm['观影日期'] = item.watchDate || localNow();
+    // 状态日期只增不删（历史足迹）：进过想看/在看就一直留着，状态再流转也不抹（引号口径同观影日期）
+    if (item.wantDate) fm['想看日期'] = item.wantDate;
+    if (item.watchingDate) fm['在看日期'] = item.watchingDate;
     if (item.review) fm['影评'] = item.review;
     else delete fm['影评'];
     // 状态离开「想看」（在看/已看）→ 摘「片单收纳」：用户开始正式管理这条片，
@@ -1906,7 +1912,8 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
   }
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
+  const today = localNow().slice(0, 10);
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, wantDate: st === STATUS_WANT ? today : null, watchingDate: st === STATUS_WATCHING ? today : null, rewatches: [], lists: [], shelvedOnly: false, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice(DUP_NAME_HINT_FULL, 'warning');
@@ -1943,7 +1950,7 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   // G7 快照回滚 + P3-11（深审批A）：filePath 单独记字符串——真机 renameFile 原地更新同一
   // TFile 引用，比较对象路径（item.file === prev.file）永远相等，半失败检测必须走路径快照
-  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review, file: item.file, filePath: item.file?.path ?? null };
+  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, wantDate: item.wantDate, watchingDate: item.watchingDate, review: item.review, file: item.file, filePath: item.file?.path ?? null };
   if (p.name !== item.name) {
     if (hasIllegalNameChar(p.name)) {
       notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error');
@@ -1956,6 +1963,11 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, form: FormHa
   }
   item.name = p.name; item.typeTag = p.tag; item.group = group;
   item.status = st; item.rating = p.rating; item.watchDate = p.date; item.review = p.review;
+  // 状态日期（想看日期/在看日期）：状态真变了才盖今天的章，原地编辑沿用原有（观影日期判据同款口径）
+  if (st !== prev.status) {
+    if (st === STATUS_WANT) item.wantDate = localNow().slice(0, 10);
+    else if (st === STATUS_WATCHING) item.watchingDate = localNow().slice(0, 10);
+  }
   try {
     await persistItem(item, app, { prevName: prev.name, prevTag: prev.typeTag });
     // 域事件补发（与快速标记 markStatus 同口径）：状态流转 + 评分变化 → 小橘行为流；

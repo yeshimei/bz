@@ -249,6 +249,16 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   // 重温微时间线：首看 → 重温逐条（升序；无首看日期的旧档只画重温节点）
   const firstDate = (it.watchDate || '').slice(0, 10);
   const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
+  // 状态日期（想看日期/在看日期，已看=观影日期）拼进日期徽标：各状态记各的到达日。
+  // 已看状态的观影日期就是已看日（状态流转即刷新），放心贴「已看」标签；
+  // 非已看旧档（想看/在看却无状态日期键）的观影日期语义不明，裸日期照旧不贴标签
+  const wantD = (it.wantDate || '').slice(0, 10);
+  const watchingD = (it.watchingDate || '').slice(0, 10);
+  const dateBits: string[] = [];
+  if (wantD) dateBits.push(`想看 ${wantD}`);
+  if (watchingD) dateBits.push(`在看 ${watchingD}`);
+  if (statusNum(it.status) === STATUS_WATCHED) { if (firstDate) dateBits.push(`已看 ${firstDate}`); }
+  else if (!dateBits.length && firstDate) dateBits.push(firstDate);
   const timeline = rewatched
     ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ''}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join('')}</div>`
     : '';
@@ -260,7 +270,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
           ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ''}
           ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ''}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
-          ${it.watchDate ? `<span class="dm-date">${esc(firstDate)}</span>` : ''}</div>
+          ${dateBits.length ? `<span class="dm-date">${esc(dateBits.join(' · '))}</span>` : ''}</div>
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}
         ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}

@@ -28,6 +28,11 @@ export interface CinemaItem {
   watchDate: string | null;
   rating: number | null;
   status: number;
+  /** 进入「想看」的日期（frontmatter「想看日期」，YYYY-MM-DD；想看建档 / 状态切回想看时记）。
+   *  与观影日期（=已看日期）分工：三状态各记各的到达日，旧笔记无键 = null 不显示 */
+  wantDate: string | null;
+  /** 进入「在看」的日期（frontmatter「在看日期」，YYYY-MM-DD；标记在看 / 编辑切在看时记） */
+  watchingDate: string | null;
   /** 重温日期列表（frontmatter「重看」数组，每项一次重温；建档/编辑不写此键，旧笔记无键 = 空数组照旧）。
    *  「N 刷」口径唯一落点 rewatchCount（constants），卡片角标 / 详情徽标 / 重温通知共用 */
   rewatches: string[];

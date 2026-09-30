@@ -23,6 +23,8 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
     rewatches: p.rewatches ?? [],
     lists: p.lists ?? [],
     shelvedOnly: p.shelvedOnly ?? false,
+    wantDate: p.wantDate ?? null,
+    watchingDate: p.watchingDate ?? null,
     poster: p.poster ?? null, review: p.review ?? null, genre: p.genre ?? null,
     director: p.director ?? null, actors: p.actors ?? null, region: p.region ?? null,
     year: p.year ?? null, releaseDate: p.releaseDate ?? null, doubanRating: p.doubanRating ?? null,
