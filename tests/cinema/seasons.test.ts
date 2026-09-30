@@ -13,7 +13,7 @@ import {
   mergeSeasonCards, cardFace, cardGroup, seasonsByRelease, cmpByRelease,
   type SeriesCard, type SeasonSlot,
 } from '../../src/cinema/seasons';
-import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesCountsText, seriesDetailModalHtml } from '../../src/cinema/shared';
+import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesCountsText, seriesDetailModalHtml, detailModalHtml } from '../../src/cinema/shared';
 import type { CinemaItem } from '../../src/cinema/state';
 
 /** 造条目（字段默认值不参与本组断言） */
@@ -373,5 +373,36 @@ describe('cinema 上映日期升序（合并卡行序单源）', () => {
     expect(cmpByRelease(yearOnly('2013'), full('2013-01-08'))).toBeLessThan(0); // 同年无月日排该年最前
     expect(cmpByRelease(item('c'), full('1999-01-01'))).toBeGreaterThan(0); // 无日期排最后
     expect(cmpByRelease(item('c'), item('d'))).toBe(0);
+  });
+});
+
+/** 详情弹窗足迹时间线（2026-09-30 拍板：状态日期纳入时间线；纯字符串渲染，node 环境可断言） */
+describe('详情弹窗足迹时间线（detailModalHtml）', () => {
+  const rowsOf = (html: string): string[] =>
+    [...html.matchAll(/dm-tl-row[^>]*"><i><\/i><span class="d">([^<]+)<\/span>(?:<span class="tag">([^<]+)<\/span>)?/g)]
+      .map((m) => `${m[1]}|${m[2] ?? ''}`);
+
+  it('状态日期纳入时间线：想看 → 在看 → 已看（无重温）升序；全片单徽章重映厅排最前且在星标前', () => {
+    const html = detailModalHtml(item('示例子', {
+      wantDate: '2026-09-01', watchingDate: '2026-09-14', watchDate: '2026-09-16', rating: 8.5,
+      rewatches: [], lists: ['诺兰补完计划', '重映厅'],
+    }), null);
+    expect(rowsOf(html)).toEqual(['2026-09-01|想看', '2026-09-14|在看', '2026-09-16|已看']);
+    const chips = [...html.matchAll(/dm-chip--shelf">([^<]+)</g)].map((m) => m[1]);
+    expect(chips).toEqual(['重映厅', '诺兰补完计划']);
+    expect(html.indexOf('dm-chip--shelf')).toBeLessThan(html.indexOf('dm-stars'));
+  });
+
+  it('有重温：首看改标「首看」；重温升序在后且带时刻（旧 date-only 档原样）', () => {
+    const html = detailModalHtml(item('示例子二', {
+      wantDate: '2026-09-01', watchDate: '2026-09-16 20:00:00',
+      rewatches: ['2026-09-24 07:30:15', '2026-09-20'], lists: [],
+    }), null);
+    expect(rowsOf(html)).toEqual(['2026-09-01|想看', '2026-09-16|首看', '2026-09-20|', '2026-09-24 07:30|']);
+  });
+
+  it('无任何足迹（无状态日期、无观影日期、无重温）不出时间线', () => {
+    const html = detailModalHtml(item('空白档', { watchDate: null, rewatches: [] }), null);
+    expect(html).not.toContain('dm-tl');
   });
 });

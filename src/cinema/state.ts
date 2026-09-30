@@ -33,7 +33,7 @@ export interface CinemaItem {
   wantDate: string | null;
   /** 进入「在看」的日期（frontmatter「在看日期」，YYYY-MM-DD；标记在看 / 编辑切在看时记） */
   watchingDate: string | null;
-  /** 重温日期列表（frontmatter「重看」数组，每项一次重温；建档/编辑不写此键，旧笔记无键 = 空数组照旧）。
+  /** 重温时刻列表（frontmatter「重看」数组，每项一次重温；2026-09-30 起记日期+时刻，旧档 date-only 照旧；建档/编辑不写此键）。
    *  「N 刷」口径唯一落点 rewatchCount（constants），卡片角标 / 详情徽标 / 重温通知共用 */
   rewatches: string[];
   /** 自建片单（frontmatter「片单」数组；建档/编辑不写，归入/移出时落盘）。
