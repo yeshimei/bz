@@ -1,4 +1,4 @@
-/* 源指纹 766bc1951bb30c2a · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c2be05eac76afc5a · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -16775,6 +16775,20 @@ ${lines}`;
       ...typeof o.syncedAt === "string" && o.syncedAt ? { syncedAt: o.syncedAt } : {}
     };
   }
+  function statsHasNewerData(stats, store2) {
+    if (!(stats.lastCt > 0)) return false;
+    const msgs = store2 == null ? void 0 : store2.msgs;
+    let last = 0;
+    if (msgs) {
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].type !== 9001) {
+          last = msgs[i].ts;
+          break;
+        }
+      }
+    }
+    return stats.lastCt * 1e3 > last;
+  }
   function readContactBundle(dataDir, name) {
     var _a2, _b2;
     const fs = getFs();
@@ -22872,7 +22886,7 @@ ${lines}`;
     });
   }
   async function runScan(force = false) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
     const dataDir = dsDataDir();
     if (!overlay || !store || !dataDir || dsScanning || dsImporting || jobsRunning() || isSyncing()) return;
     if (!isDesktop()) {
@@ -22910,9 +22924,9 @@ ${lines}`;
             // 原始口径聚合（不随预览开关变）——扫描行徽章是预览，不是时间线权威
             stats: { msgCount: stats.msgs, voiceCount: stats.voices, voiceTotalSec: Math.round(stats.voiceSec), imageCount: stats.images },
             previewCount: (_c2 = pv2 == null ? void 0 : pv2.msgs.length) != null ? _c2 : 0,
-            newCount: stats.maxSid > ((_d2 = pv2 == null ? void 0 : pv2.watermarkSid) != null ? _d2 : 0) ? 1 : 0,
+            newCount: statsHasNewerData(stats, pv2) ? 1 : 0,
             newApprox: true,
-            processedTs: (_e = entry2 == null ? void 0 : entry2.lastProcessedTs) != null ? _e : null,
+            processedTs: (_d2 = entry2 == null ? void 0 : entry2.lastProcessedTs) != null ? _d2 : null,
             avatar: dataUrlOf(readAvatarInput(readContactAvatarPath(dataDir, name)))
           });
           continue;
@@ -22925,8 +22939,8 @@ ${lines}`;
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const pv = (_f = storeData.get(name)) == null ? void 0 : _f.store;
-        const keys = new Set(((_g = pv == null ? void 0 : pv.msgs) != null ? _g : []).map((m) => m.key));
+        const pv = (_e = storeData.get(name)) == null ? void 0 : _e.store;
+        const keys = new Set(((_f = pv == null ? void 0 : pv.msgs) != null ? _f : []).map((m) => m.key));
         const entry = people.find((p) => p.id === name);
         contacts.push({
           name,
@@ -22934,10 +22948,10 @@ ${lines}`;
           rawCount: bundle.raws.length,
           isGroup: group,
           stats: norm.stats,
-          previewCount: (_h = pv == null ? void 0 : pv.msgs.length) != null ? _h : 0,
+          previewCount: (_g = pv == null ? void 0 : pv.msgs.length) != null ? _g : 0,
           newCount: norm.msgs.reduce((s, m) => s + (keys.has(m.key) ? 0 : 1), 0),
           newApprox: false,
-          processedTs: (_i = entry == null ? void 0 : entry.lastProcessedTs) != null ? _i : null,
+          processedTs: (_h = entry == null ? void 0 : entry.lastProcessedTs) != null ? _h : null,
           // 头像预览（467）：直接读数据根字节解成内存 data URL（不再复制进库内明文目录）
           avatar: dataUrlOf(readAvatarInput(bundle.avatar))
         });
@@ -22992,7 +23006,13 @@ ${lines}`;
     const addedOf = /* @__PURE__ */ new Map();
     const readFail = [];
     try {
-      const missing = chosen.filter((c) => !hasChatJson(dataDir, c.name)).map((c) => c.name);
+      const storeData = await records();
+      const missing = chosen.filter((c) => {
+        var _a3;
+        if (!hasChatJson(dataDir, c.name)) return true;
+        const stats = readStatsJson(dataDir, c.name);
+        return !!stats && statsHasNewerData(stats, (_a3 = storeData.get(c.name)) == null ? void 0 : _a3.store);
+      }).map((c) => c.name);
       if (missing.length) {
         updateImportNotice("正在导出所选联系人的完整聊天…");
         const run = startContactsExport({ dataRoot: dataDir, contacts: missing }, (ev) => {
@@ -23028,7 +23048,7 @@ ${lines}`;
           continue;
         }
         const norm = normalizeChatJson(bundle.raws, opts, { voice: bundle.voice, imageDesc: bundle.imageDesc });
-        const existing = (_a2 = (await records()).get(c.name)) == null ? void 0 : _a2.store;
+        const existing = (_a2 = storeData.get(c.name)) == null ? void 0 : _a2.store;
         const { contact, added } = mergeStore(existing, norm, now);
         const avatar = readAvatarInput(bundle.avatar);
         delete contact.avatar;

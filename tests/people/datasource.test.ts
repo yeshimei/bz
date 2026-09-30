@@ -20,12 +20,15 @@ import {
   plainNameOf,
   readContactAvatarPath,
   readStatsJson,
+  statsHasNewerData,
   storeStatsOf,
   storeToUnified,
+  type DataSourceStats,
   type ImageDescItem,
   type NormalizeOptions,
   type RawChatMsg,
   type StoreContact,
+  type StoreMsg,
   type VoiceItem,
   pendingMediaCounts,
   applySensitiveSkipsToMsgs,
@@ -711,6 +714,53 @@ describe('stats.json 数据源扫描（issue 485：sync 只产统计，扫描优
     mkdirSync(join(dataRoot, '带BOM'), { recursive: true });
     writeFileSync(join(dataRoot, '带BOM', 'stats.json'), '\uFEFF' + JSON.stringify(statsOf({ msgs: 7 })));
     expect(readStatsJson(dataRoot, '带BOM')?.msgs).toBe(7);
+  });
+});
+
+describe('statsHasNewerData（issue 532：lastCt 对仓内最后聊天消息；maxSid 退役）', () => {
+  const stats = (over: Partial<DataSourceStats> = {}): DataSourceStats => ({
+    msgs: 3, voices: 0, images: 0, voiceSec: 0, lastCt: BASE + 60, maxSid: 0, group: false, ...over,
+  });
+  const storeOf = (msgs: StoreMsg[]): StoreContact => ({
+    msgs,
+    watermarkSid: 0,
+    stats: { msgCount: msgs.length, voiceCount: 0, voiceTotalSec: 0, imageCount: 0 },
+    updatedAt: '2026-10-01T00:00:00.000Z',
+  });
+  const chatMsg = (ts: number): StoreMsg => ({ key: `k${ts}`, ts, isSender: false, type: 1, text: 'x' });
+
+  it('源里最新消息比仓内最后一条聊天消息晚 → 有新数据（导入要重导 chat.json）', () => {
+    const store = storeOf([chatMsg(BASE * 1000), chatMsg((BASE + 30) * 1000)]);
+    expect(statsHasNewerData(stats({ lastCt: BASE + 60 }), store)).toBe(true);
+  });
+
+  it('与仓内最后一条持平 → 无新（同步没拉到新东西就不重导，485 快路径保留）', () => {
+    const store = storeOf([chatMsg(BASE * 1000), chatMsg((BASE + 60) * 1000)]);
+    expect(statsHasNewerData(stats({ lastCt: BASE + 60 }), store)).toBe(false);
+  });
+
+  it('仓里比源里还新（录音段 ts 更晚不算——9001 排除，不遮新聊天）', () => {
+    const withRec = storeOf([
+      chatMsg(BASE * 1000),
+      { key: 'rec:x:s0', ts: (BASE + 3600) * 1000, isSender: true, type: 9001, dur: 30, text: '[录音 30秒] 记一笔' },
+    ]);
+    expect(statsHasNewerData(stats({ lastCt: BASE + 60 }), withRec)).toBe(true);
+    // 真聊天消息确实更新时才判无新
+    const chatNewer = storeOf([chatMsg((BASE + 120) * 1000)]);
+    expect(statsHasNewerData(stats({ lastCt: BASE + 60 }), chatNewer)).toBe(false);
+  });
+
+  it('maxSid 再大也不参与判定（server_id 与时间无序——旧判据退役的病根）', () => {
+    const store = storeOf([chatMsg(BASE * 1000)]);
+    // 2026-03 的旧消息 sid 可以大过 2026-09 全部新消息（实测），lastCt 不新就是无新
+    expect(statsHasNewerData(stats({ lastCt: BASE + 60, maxSid: 9223372036854775807 }), store)).toBe(true);
+    expect(statsHasNewerData(stats({ lastCt: BASE, maxSid: 9223372036854775807 }), storeOf([chatMsg(BASE * 1000)]))).toBe(false);
+  });
+
+  it('边界：源没消息（lastCt=0）恒无新；仓空 / 未导入按有新走', () => {
+    expect(statsHasNewerData(stats({ lastCt: 0 }), undefined)).toBe(false);
+    expect(statsHasNewerData(stats(), undefined)).toBe(true);
+    expect(statsHasNewerData(stats(), storeOf([]))).toBe(true);
   });
 });
 

@@ -35,7 +35,8 @@ img 字段格式与插件侧既有约定一致（src/people/datasource.ts RawCha
 月取消息本地时间；文件名是 packed_info_data 里的 32hex（解码前不知道扩展名，468 媒体导出
 解码后按同 hex 补全）。
 
-幂等：stats.json / chat.json / 头像按字节比对，内容没变不写（不破坏已正确的产物）；解密走
+幂等：stats.json / chat.json / 头像按内容比对，没变不写（不破坏已正确的产物；stats.json 的
+syncedAt 不参与比对——issue 532，否则每轮时间戳都变，「更新数」虚胖成全量）；解密走
 上游缓存。微信未运行 / 取密钥失败 / 解密失败 = 硬失败：立即退出码 1 + 中文原因，绝不静默
 降级读旧目录；单联系人导出失败计入 failed 继续，末尾 [bz-result] 报失败数（此时退出码仍
 0——命令本身跑完了，失败数看结果行）。
@@ -530,14 +531,32 @@ def contact_stats(db_dir: Path, tables: list, my_wxid: str) -> dict:
 
 
 def write_stats_json(cdir: Path, st: dict) -> str:
-    """stats.json 原子写 + 字节比对幂等。返回 new / updated / unchanged（同 chat.json 口径）。"""
-    payload = json.dumps(st, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    """stats.json 原子写 + 内容比对幂等。返回 new / updated / unchanged（同 chat.json 口径）。
+
+    比对剥掉 syncedAt（issue 532）：syncedAt 每轮必变，带着比等于每轮全部重写——
+    「更新 N 位」虚胖成全量，用户看不出这轮同步到底更新了谁。内容没变不重写
+    （保留上一轮 syncedAt = 最后一次真实变化的落盘时刻，排查语义反而更准）。"""
     target = cdir / "stats.json"
-    old = target.read_bytes() if target.exists() else None
-    if old == payload:
+    old_raw = target.read_bytes() if target.exists() else None
+    body = json.dumps(st, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+    old_body = None
+    if old_raw is not None:
+        try:
+            old = json.loads(old_raw.decode("utf-8"))
+            old.pop("syncedAt", None)
+            old_body = json.dumps(old, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+        except Exception:
+            old_body = None  # 旧文件读不动（手工改坏等）：按内容变了走重写
+    if old_body == body:
         return "unchanged"
+    payload = json.dumps(
+        {**st, "syncedAt": time.strftime("%Y-%m-%dT%H:%M:%S")},
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
     atomic_write(target, payload)
-    return "new" if old is None else "updated"
+    return "new" if old_raw is None else "updated"
 
 
 def write_avatar(cdir: Path, db_dir: Path, wxid: str) -> str:
@@ -669,8 +688,8 @@ def sync_round(args, data_root: Path, key_path: Path) -> int:
             cdir = data_root / t["name"]
             cdir.mkdir(parents=True, exist_ok=True)
 
-            # stats.json：字节比对幂等——没变不写（不破坏已正确的产物）
-            stats_status = write_stats_json(cdir, {**st, "syncedAt": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            # stats.json：内容比对幂等（syncedAt 不计）——没变不写（不破坏已正确的产物）
+            stats_status = write_stats_json(cdir, st)
             if stats_status != "unchanged":
                 written += 1
             else:
