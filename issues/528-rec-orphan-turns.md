@@ -37,7 +37,7 @@
 
 ## 方案
 
-见 `docs/adr/adr-0227-recording-orphan-turns-and-row-set.md`。要点：
+见 `docs/adr/adr-0228-recording-orphan-turns-and-row-set.md`。要点：
 
 1. **行集合 = 磁盘文件 ∪ 仓内已并入文件名**（`suppStoreInfo.mergedRecs`），差值即孤儿行。
 2. 孤儿行照出：徽章「**源已失**」、行上注明「原件已不在磁盘 · 仓内 N 条转写轮次仍在统计与素材」，

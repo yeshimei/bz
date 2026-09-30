@@ -1,4 +1,4 @@
-/* 源指纹 7aff1f196cb79e20 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4b56e166e2aafb03 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -21433,6 +21433,12 @@ ${lines}`;
       }
       out.push(warn);
     }
+    const orphanN = s.rows.filter((r) => r.orphan).length;
+    if (orphanN) {
+      out.push(el("div", "bz-people-supp-orphans", text(
+        `有 ${orphanN} 条录音的原件已不在磁盘，但聊天仓里的转写轮次还在（仍计入统计、也进画谱素材）——在下面标「源已失」的行点「删除」即可清掉。`
+      )));
+    }
     if (!s.rows.length) {
       out.push(el("div", "bz-people-empty-hint", text("还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。")));
       return out;
@@ -21445,20 +21451,23 @@ ${lines}`;
     return out;
   }
   function recDelConfirm(r, del) {
+    var _a2;
     const box = el("div", "bz-people-supp-delbox");
     const inLedger = r.status === "merged" || r.status === "awaiting-merge";
     box.appendChild(el("div", "bz-people-del-line", text(
-      inLedger ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? "；脸谱正文不会跟着变" : ""}。`
+      r.orphan ? `这条录音的原件已不在磁盘——删除会清掉聊天仓里那 ${(_a2 = r.turns) != null ? _a2 : 0} 条转写轮次，统计与画谱素材跟着减${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : inLedger ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? "；脸谱正文不会跟着变，要反映得重新画谱（花钱）" : ""}。` : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? "；脸谱正文不会跟着变" : ""}。`
     )));
-    const label = document.createElement("label");
-    label.className = "bz-people-supp-delchk";
-    const ck = document.createElement("input");
-    ck.type = "checkbox";
-    ck.checked = del.alsoFile;
-    ck.setAttribute("data-people-supp-rec-del-file", r.file);
-    label.appendChild(ck);
-    label.appendChild(text(" 同时删除录音原件（不勾只清账本，之后可重跑）"));
-    box.appendChild(label);
+    if (!r.orphan) {
+      const label = document.createElement("label");
+      label.className = "bz-people-supp-delchk";
+      const ck = document.createElement("input");
+      ck.type = "checkbox";
+      ck.checked = del.alsoFile;
+      ck.setAttribute("data-people-supp-rec-del-file", r.file);
+      label.appendChild(ck);
+      label.appendChild(text(" 同时删除录音原件（不勾只清账本，之后可重跑）"));
+      box.appendChild(label);
+    }
     box.appendChild(el("div", "bz-people-supp-rowfoot", [
       button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "确认删除", { "data-people-supp-rec-del-ok": r.file }),
       button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "取消", { "data-people-supp-rec-del-cancel": r.file })
@@ -21542,11 +21551,15 @@ ${lines}`;
     });
   }
   function suppRecRow(r, del, startEdit = false, turnsView) {
-    var _a2;
-    const row = el("div", "bz-people-supp-row", { "data-people-supp-row": r.file });
+    var _a2, _b2;
+    const row = el("div", `bz-people-supp-row${r.orphan ? " orphan" : ""}`, { "data-people-supp-row": r.file });
     const head = el("div", "bz-people-supp-rowhead");
     head.appendChild(el("span", "bz-people-supp-qname", { title: r.file }, text(r.file)));
-    head.appendChild(el("span", `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
+    head.appendChild(el(
+      "span",
+      `bz-people-supp-badge bz-people-supp-badge-${r.orphan ? "orphan" : r.status}`,
+      text(r.orphan ? "源已失" : SUPP_REC_LABEL[r.status])
+    ));
     row.appendChild(head);
     if (del) {
       row.appendChild(recDelConfirm(r, del));
@@ -21593,10 +21606,11 @@ ${lines}`;
     if (r.phaseText) bits.push(r.phaseText);
     if (r.mode === "me-only") bits.push("单质心：非我即对方");
     if (r.mode === "blind") bits.push("无质心：盲分");
-    if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
+    if (r.orphan) bits.push(`原件已不在磁盘 · 仓内 ${(_b2 = r.turns) != null ? _b2 : 0} 条转写轮次仍在统计与素材`);
+    else if (r.turns !== void 0) bits.push(`${r.turns} 轮`);
     if (r.sideSpeaks) bits.push(`已滤 ${r.sideSpeaks} 轮旁音`);
     if (bits.length) row.appendChild(el("div", "bz-people-supp-rowmeta", text(bits.join(" · "))));
-    if (startEdit) {
+    if (startEdit && !r.orphan) {
       const line = el("div", "bz-people-supp-startrow");
       line.appendChild(el("span", void 0, text("起点")));
       const inp = document.createElement("input");
@@ -21606,7 +21620,7 @@ ${lines}`;
       inp.setAttribute("data-people-supp-rec-start", r.file);
       line.appendChild(inp);
       row.appendChild(line);
-    } else if (r.startMs !== void 0) {
+    } else if (!r.orphan && r.startMs !== void 0) {
       row.appendChild(el("div", "bz-people-supp-rowmeta", text(`起点 ${suppLocalTsValue(r.startMs).replace("T", " ")}`)));
     }
     const foot = [];
@@ -21615,12 +21629,14 @@ ${lines}`;
     if (r.status === "interrupted") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "续跑", { "data-people-supp-rec-run": r.file }));
     if (r.status === "failed") foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "重试", { "data-people-supp-rec-run": r.file }));
     if (r.status === "awaiting-merge") foot.push(button("bz-people-btn bz-people-btn-acc bz-people-btn-sm", "并仓", { "data-people-supp-rec-merge": r.file, title: "转写完成但还没进时间线——点这里按轮次并仓" }));
-    if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
-    else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
-    if (r.turns !== void 0) {
-      foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
+    if (!r.orphan) {
+      if (startEdit) foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "收起", { "data-people-supp-rec-start-cancel": r.file }));
+      else foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "改起点", { "data-people-supp-rec-start-edit": r.file, title: "录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）" }));
+      if (r.turns !== void 0) {
+        foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "查看轮次", { "data-people-supp-rec-turns": r.file, title: "逐轮时间轴（含被滤的旁音轮）——复核我们没误杀" }));
+      }
     }
-    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
+    foot.push(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "删除", { "data-people-supp-rec-del": r.file, title: r.orphan ? "清掉这条录音在聊天仓里的转写轮次（原件早已不在磁盘）" : "删掉这条录音（二次确认里可勾选是否连原件一起删）" }));
     if (foot.length) row.appendChild(el("div", "bz-people-supp-rowfoot", foot));
     return row;
   }
@@ -22235,7 +22251,7 @@ ${lines}`;
     [BROKEN_SKIP]: "源图损坏",
     [MISSING_SKIP]: "源图缺失"
   };
-  var suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+  var suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), mergedRecCounts: /* @__PURE__ */ new Map(), imageItems: [] };
   var recPollTimer = null;
   var CHAT_PAGE = 50;
   var chatAll = [];
@@ -22267,7 +22283,7 @@ ${lines}`;
         suppImgShown = SUPP_IMG_PAGE;
         noteDelPending = null;
         closeImgViewer();
-        suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
+        suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: /* @__PURE__ */ new Set(), mergedRecCounts: /* @__PURE__ */ new Map(), imageItems: [] };
       }
       void refreshSuppStoreInfo(detailId);
       startRecPolling();
@@ -25098,13 +25114,14 @@ ${lines}`;
     return true;
   }
   async function refreshSuppStoreInfo(talker) {
-    var _a2;
+    var _a2, _b2;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
     let imported = 0;
     let undescribed = 0;
     let broken = 0;
     let missing = 0;
     const mergedRecs = /* @__PURE__ */ new Set();
+    const mergedRecCounts = /* @__PURE__ */ new Map();
     const imageItems = [];
     try {
       const rec = await peopleSafe.read(talker);
@@ -25119,13 +25136,17 @@ ${lines}`;
         }
         if (m.key.startsWith("rec:")) {
           const end = m.key.lastIndexOf(":");
-          if (end > 4) mergedRecs.add(m.key.slice(4, end));
+          if (end > 4) {
+            const f = m.key.slice(4, end);
+            mergedRecs.add(f);
+            mergedRecCounts.set(f, ((_b2 = mergedRecCounts.get(f)) != null ? _b2 : 0) + 1);
+          }
         }
       }
     } catch (e) {
     }
     if (!overlay || suppOwnerId !== talker) return;
-    suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
+    suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, mergedRecCounts, imageItems: imageItems.reverse() };
     if ((dialog == null ? void 0 : dialog.kind) === "note") void renderAlbum();
   }
   function suppImageState() {
@@ -25261,7 +25282,7 @@ ${lines}`;
     }
   }
   function suppRecState(talker, otherAvatar = "") {
-    var _a2, _b2, _c2, _d2, _e;
+    var _a2, _b2, _c2, _d2, _e, _f;
     const rows = [];
     const root = suppDataRoot();
     const del = recDelState();
@@ -25328,9 +25349,21 @@ ${lines}`;
       }
       rows.push({ file: f, status: "interrupted", phaseText: (_c2 = (_b2 = side.progress) == null ? void 0 : _b2.text) != null ? _c2 : "中断", pct: recordingPhasePct(side), ...side.mode ? { mode: side.mode } : {}, ...side.turns ? { turns: side.turns.length } : {} });
     }
+    const onDisk = new Set(files);
+    for (const f of [...suppStoreInfo.mergedRecs].filter((x) => !onDisk.has(x)).sort()) {
+      rows.push({
+        file: f,
+        status: "merged",
+        phaseText: "",
+        pct: null,
+        orphan: true,
+        turns: (_d2 = suppStoreInfo.mergedRecCounts.get(f)) != null ? _d2 : 0
+      });
+    }
     for (const r of rows) {
+      if (r.orphan) continue;
       r.startMs = startOf(r.file);
-      const n = ((_e = (_d2 = readRecordingSidecar(root, talker, r.file)) == null ? void 0 : _d2.turns) != null ? _e : []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
+      const n = ((_f = (_e = readRecordingSidecar(root, talker, r.file)) == null ? void 0 : _e.turns) != null ? _f : []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
       if (n) r.sideSpeaks = n;
     }
     const turnsView = recTurnsViewState(root, talker, otherAvatar);
