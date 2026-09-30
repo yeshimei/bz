@@ -1,4 +1,4 @@
-/* 源指纹 4353073e9c84765b · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 aa4557cfcd2167b3 · 仓内输入 66 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/category-table.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4129,11 +4129,32 @@ var BZW_belongings = (() => {
 
   // src/core/settings-provider.ts
   var _provider = null;
+  var _saver = null;
   function setSettingsProvider(fn) {
     _provider = fn;
   }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
+  }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
   }
 
   // src/core/z-order.ts
@@ -4756,6 +4777,18 @@ var BZW_belongings = (() => {
     el.addEventListener("touchcancel", endFromTouch);
     el.addEventListener("click", onClick, true);
   }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
 
   // src/core/flow-dialog.ts
   var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
@@ -5174,6 +5207,157 @@ var BZW_belongings = (() => {
     if (focusEnabled) (_a = firstFocusable(popup)) == null ? void 0 : _a.focus();
     liveModals.add(close);
     return { mask, popup, close };
+  }
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    let persistTimer = null;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
+      }
+    }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
+      if (persist == null ? void 0 : persist.save) {
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, wantW, wantH);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
   }
 
   // src/core/item-actions.ts
@@ -8406,6 +8590,8 @@ var BZW_belongings = (() => {
     renderFn: null
   };
   var dropDocClick = null;
+  var PANEL = { MIN_W: 640, MIN_H: 460, MAX_W: 1280, MAX_H: 900 };
+  var panelResizeDetach = null;
   var motionIntent = "flip";
   function resetBelongingsState() {
     M2.overlay = null;
@@ -8500,6 +8686,18 @@ var BZW_belongings = (() => {
     motionPanelIn(overlay);
     ensureBelongingsEsc();
     trapPanelFocus((_a = overlay.querySelector(".bz-bel-panel")) != null ? _a : overlay);
+    if (!isMobileEnv()) {
+      const panelEl = overlay.querySelector(".bz-bel-panel");
+      if (panelEl) {
+        panelResizeDetach = uiResizable(panelEl, {
+          minW: PANEL.MIN_W,
+          minH: PANEL.MIN_H,
+          maxW: PANEL.MAX_W,
+          maxH: PANEL.MAX_H,
+          persist: panelSizePersist("belongingsPanelWidth", "belongingsPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+        });
+      }
+    }
     const moveDropActive = (wrap, delta) => {
       const items = [...wrap.querySelectorAll(".bz-bel-dropopt")];
       if (!items.length) return;
@@ -8699,6 +8897,8 @@ var BZW_belongings = (() => {
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
+    panelResizeDetach == null ? void 0 : panelResizeDetach.detach();
+    panelResizeDetach = null;
     if (M2.overlay) {
       const ov = M2.overlay;
       M2.overlay = null;

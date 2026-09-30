@@ -35,9 +35,15 @@
   --gold:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
 }
 .bz-cinema--midnight {
-   width:900px;height:620px;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
+   width:900px;height:620px;max-width:calc(100vw - 32px);max-height:92vh;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
   box-shadow:0 14px 44px #0004,0 2px 8px #0002;border:1px solid var(--line);
 }
+/* 视口钳制（ADR-0084 拖拽缩放配套）：900×620 只是默认态，小视口下不越屏——
+   拖拽后的内联宽高仍由 uiResizable 逐帧钳视口 92%，此处兜 CSS 默认态；
+   移动 .mob 满屏壳（styles.css「午夜场 · 移动端」节）不重置 max 会反被钳小，此处清掉。
+   （选择器特意带空格：mobile-3fix-guard 守卫按无空格字面量取满屏声明块，
+   此条必须排在其后且不得被该字面量命中） */
+.bz-cinema--midnight.mob {max-width:none;max-height:none}
 .bz-cinema--midnight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:5}
 .bz-cinema--midnight .d-body{flex:1;display:flex;min-height:0}
 .bz-cinema--midnight .d-rail{width:176px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 0 var(--bz-space-md);background:var(--panel);position:relative}

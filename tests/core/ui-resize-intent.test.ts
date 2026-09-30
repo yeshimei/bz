@@ -11,6 +11,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { uiResizable, uiVSplitter } from '../../src/core/ui';
 import { panelSizePersist, setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
+// provider 签名是 () => BzSettings——测试桩须 cast 成真实设置类型（Record<string, never> 过不了 tsc）
+import type BzSettings from '../../src/settings';
 
 /** jsdom 无几何布局：mock rect 动态读 style（拖拽改 style 后即反映），口径同 ui.test.ts */
 function makeBox(w = 720, h = 580): { el: HTMLElement } {
@@ -190,29 +192,29 @@ describe('uiVSplitter 意图宽 × 渲染宽分离（半屏挤压修复）', () 
 
 describe('panelSizePersist 工厂（core/settings-provider）', () => {
   beforeEach(() => {
-    setSettingsProvider(() => ({ diaryPanelWidth: 0, diaryPanelHeight: 0 }) as unknown as Record<string, never>);
+    setSettingsProvider(() => ({ diaryPanelWidth: 0, diaryPanelHeight: 0 }) as unknown as BzSettings);
     setSettingsSaver(vi.fn().mockResolvedValue(undefined));
   });
 
   afterEach(() => {
     // 还原为空提供者（等价未注入语义：tryGetSettings 空对象）
-    setSettingsProvider(() => ({}) as unknown as Record<string, never>);
+    setSettingsProvider(() => ({}) as unknown as BzSettings);
     setSettingsSaver(() => Promise.resolve());
   });
 
   it('load：键值齐备返回 {w,h}；低于 min 回 null（走 CSS 默认）', () => {
     const persist = panelSizePersist('diaryPanelWidth', 'diaryPanelHeight', 720, 520);
     expect(persist.load!()).toBeNull(); // 0 = 未拖过
-    setSettingsProvider(() => ({ diaryPanelWidth: 900, diaryPanelHeight: 600 }) as unknown as Record<string, never>);
+    setSettingsProvider(() => ({ diaryPanelWidth: 900, diaryPanelHeight: 600 }) as unknown as BzSettings);
     expect(persist.load!()).toEqual({ w: 900, h: 600 });
-    setSettingsProvider(() => ({ diaryPanelWidth: 100, diaryPanelHeight: 600 }) as unknown as Record<string, never>);
+    setSettingsProvider(() => ({ diaryPanelWidth: 100, diaryPanelHeight: 600 }) as unknown as BzSettings);
     expect(persist.load!()).toBeNull(); // 宽低于 min
   });
 
   it('save：写回设置对象并触发落盘', async () => {
     const store = { diaryPanelWidth: 0, diaryPanelHeight: 0 };
     const saver = vi.fn().mockResolvedValue(undefined);
-    setSettingsProvider(() => store as unknown as Record<string, never>);
+    setSettingsProvider(() => store as unknown as BzSettings);
     setSettingsSaver(saver);
     const persist = panelSizePersist('diaryPanelWidth', 'diaryPanelHeight', 720, 520);
     persist.save!(980, 640);

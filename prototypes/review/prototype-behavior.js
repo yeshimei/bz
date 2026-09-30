@@ -1,4 +1,4 @@
-/* 源指纹 0dac1b1679f53d7f · 仓内输入 276 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 55c65d22b2da2267 · 仓内输入 276 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -4327,6 +4327,23 @@ var BZW_review = (() => {
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
+  }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
   }
   var _provider, _saver;
   var init_settings_provider = __esm({
@@ -8725,19 +8742,31 @@ var BZW_review = (() => {
       const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
       return Math.floor(Math.min(isW ? maxW : maxH, view));
     };
-    const persist = opts.persist;
     let persistTimer = null;
-    let lastW = 0;
-    let lastH = 0;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
     if (persist == null ? void 0 : persist.load) {
       const saved = persist.load();
       if (saved && saved.w > 0 && saved.h > 0) {
-        lastW = Math.min(Math.max(saved.w, minW), cap(true));
-        lastH = Math.min(Math.max(saved.h, minH), cap(false));
-        el.style.width = lastW + "px";
-        el.style.height = lastH + "px";
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
       }
     }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
     const regionAt = (e) => {
       const rect = el.getBoundingClientRect();
       return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
@@ -8759,21 +8788,16 @@ var BZW_review = (() => {
       e.preventDefault();
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-      let w = dir === "e" || dir === "se" ? startW + dx : startW;
-      let h = dir === "s" || dir === "se" ? startH + dy : startH;
-      w = Math.min(Math.max(w, minW), cap(true));
-      h = Math.min(Math.max(h, minH), cap(false));
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      if (opts.onChange) opts.onChange(w, h);
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
       if (persist == null ? void 0 : persist.save) {
-        lastW = w;
-        lastH = h;
         if (persistTimer !== null) clearTimeout(persistTimer);
         persistTimer = setTimeout(() => {
           var _a3;
           persistTimer = null;
-          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w, h);
+          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, wantW, wantH);
         }, 300);
       }
     };
@@ -8788,8 +8812,11 @@ var BZW_review = (() => {
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      startW = el.getBoundingClientRect().width;
-      startH = el.getBoundingClientRect().height;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
@@ -8814,7 +8841,7 @@ var BZW_review = (() => {
       if (persistTimer === null) return;
       clearTimeout(persistTimer);
       persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
     };
     return {
       flush,
@@ -8825,6 +8852,7 @@ var BZW_review = (() => {
         el.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
         document.body.style.userSelect = "";
         setCursor(null);
       }
@@ -8859,7 +8887,8 @@ var BZW_review = (() => {
     let startX = 0;
     let startW = 0;
     let persistTimer = null;
-    let lastW = 0;
+    let wantW = 0;
+    let lastRender = 0;
     let restored = false;
     const availW = () => {
       const parent = left.parentElement;
@@ -8876,7 +8905,6 @@ var BZW_review = (() => {
     };
     const debSave = (w) => {
       if (!(persist == null ? void 0 : persist.save)) return;
-      lastW = w;
       if (persistTimer !== null) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         var _a3;
@@ -8890,9 +8918,10 @@ var BZW_review = (() => {
       const saved = persist.load();
       restored = true;
       if (saved != null && saved > 0) {
-        const w = clampW(saved);
+        wantW = Math.max(saved, minLeft);
+        const w = clampW(wantW);
         applyW(w);
-        lastW = w;
+        lastRender = w;
       }
     };
     const onDragMove = (e) => {
@@ -8903,12 +8932,14 @@ var BZW_review = (() => {
       }
       if (!dragging) return;
       e.preventDefault();
-      const w = clampW(startW + (e.clientX - startX));
-      if (w === lastW) return;
+      const raw = startW + (e.clientX - startX);
+      const w = clampW(raw);
+      if (w === lastRender) return;
+      wantW = Math.max(raw, minLeft);
+      lastRender = w;
       applyW(w);
-      lastW = w;
       if (opts.onChange) opts.onChange(w);
-      debSave(w);
+      debSave(wantW);
     };
     const onMouseDown = (e) => {
       if (e.button !== 0) return;
@@ -8938,7 +8969,7 @@ var BZW_review = (() => {
       if (persistTimer === null) return;
       clearTimeout(persistTimer);
       persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
+      if ((persist == null ? void 0 : persist.save) && wantW > 0) persist.save(wantW);
     };
     return {
       el,
@@ -14216,7 +14247,7 @@ ${n.content.slice(0, 2e3)}
     el.focus({ preventScroll: true });
     return { close };
   }
-  var isPlayable2, UIManager;
+  var isPlayable2, PANEL, UIManager;
   var init_ui2 = __esm({
     "src/review/ui.ts"() {
       init_z_order();
@@ -14225,6 +14256,7 @@ ${n.content.slice(0, 2e3)}
       init_flow_dialog();
       init_esc_manager();
       init_settings_provider();
+      init_mobile();
       init_ui();
       init_fsrs();
       init_render();
@@ -14233,6 +14265,7 @@ ${n.content.slice(0, 2e3)}
       init_sprint();
       init_settings_schema();
       isPlayable2 = isPlayable;
+      PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       UIManager = class {
         constructor(app, dataManager3) {
           /** R 展示口径权重源（item 12：与调度排期同读拟合权重；ensureReview 注入 reviewApp.currentW，缺省回退默认） */
@@ -14249,6 +14282,8 @@ ${n.content.slice(0, 2e3)}
           this.escHandle = null;
           /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
           this.motionBootPending = false;
+          /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：壳常驻 DOM，showMain 幂等挂 / hideMain 摘；null = 未挂 */
+          this.panelResizeDetach = null;
           this.app = app;
           this.dataManager = dataManager3;
           this.createMainUI();
@@ -14293,13 +14328,25 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          if (!isMobileEnv() && !this.panelResizeDetach) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL.MIN_W,
+              minH: PANEL.MIN_H,
+              maxW: PANEL.MAX_W,
+              maxH: PANEL.MAX_H,
+              persist: panelSizePersist("reviewPanelWidth", "reviewPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+            });
+          }
           this.motionBootPending = true;
           trapPanelFocus(this.popup);
           await this.showQueue();
         }
         hideMain() {
+          var _a2;
           if (this.sprint) return;
           motionTeardown();
+          (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+          this.panelResizeDetach = null;
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -27872,7 +27919,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ]
     };
   }
-  var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager2;
+  var IMAGE_ENTRY_MAX, PANEL2, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager2;
   var init_ui3 = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
@@ -27880,6 +27927,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_str();
       init_mobile();
       init_settings_provider();
+      init_resize();
       init_knowledge_boxes();
       init_link_now();
       init_item_actions();
@@ -27902,6 +27950,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_range_bar();
       init_motion3();
       IMAGE_ENTRY_MAX = 9;
+      PANEL2 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
@@ -28059,6 +28108,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.refreshTimer = null;
           this.pendingRefreshPaths = /* @__PURE__ */ new Set();
           this.pendingDeletePaths = /* @__PURE__ */ new Set();
+          /** 主窗拖拽缩放句柄（ADR-0084 桌面限定；showMain 挂 / hideMain·destroy 摘，域内三窗只挂主窗） */
+          this.panelResizeDetach = null;
           this._previewNote = null;
           /** 独立弹层宿主（issue 329 文献预览直达）：主面板不在场时预览弹层的全屏定位底座——
            *  纸墨变量随 .kb 作用域生效，topifyZ 发号；用完由 closeSheet 撤除，不常驻空壳节点 */
@@ -28176,6 +28227,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          if (!isMobileEnv() && !this.panelResizeDetach) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL2.MIN_W,
+              minH: PANEL2.MIN_H,
+              maxW: PANEL2.MAX_W,
+              maxH: PANEL2.MAX_H,
+              persist: panelSizePersist("knowledgePanelWidth", "knowledgePanelHeight", PANEL2.MIN_W, PANEL2.MIN_H)
+            });
+          }
           this.motionCue = "boot";
           motionMainIn(this.popup);
           window.__bzKbReplay = () => {
@@ -28191,6 +28251,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         hideMain() {
           if (this.popup && motionClosing(this.popup)) return;
+          if (this.panelResizeDetach) {
+            this.panelResizeDetach.detach();
+            this.panelResizeDetach = null;
+          }
           const popup = this.popup;
           const mask = this.mask;
           motionMainOut(popup, () => {
@@ -31072,6 +31136,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a2;
           this.abortTermGenerate();
           motionTeardown3();
+          if (this.panelResizeDetach) {
+            this.panelResizeDetach.detach();
+            this.panelResizeDetach = null;
+          }
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -42617,6 +42685,18 @@ ${it.text}`).join("\n"));
     motionPanelIn2(overlay4);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay4.querySelector(".bz-bel-panel")) != null ? _a2 : overlay4);
+    if (!isMobileEnv()) {
+      const panelEl = overlay4.querySelector(".bz-bel-panel");
+      if (panelEl) {
+        panelResizeDetach2 = uiResizable(panelEl, {
+          minW: PANEL3.MIN_W,
+          minH: PANEL3.MIN_H,
+          maxW: PANEL3.MAX_W,
+          maxH: PANEL3.MAX_H,
+          persist: panelSizePersist("belongingsPanelWidth", "belongingsPanelHeight", PANEL3.MIN_W, PANEL3.MIN_H)
+        });
+      }
+    }
     const moveDropActive = (wrap, delta) => {
       const items = [...wrap.querySelectorAll(".bz-bel-dropopt")];
       if (!items.length) return;
@@ -42816,6 +42896,8 @@ ${it.text}`).join("\n"));
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
+    panelResizeDetach2 == null ? void 0 : panelResizeDetach2.detach();
+    panelResizeDetach2 = null;
     if (M9.overlay) {
       const ov = M9.overlay;
       M9.overlay = null;
@@ -43423,7 +43505,7 @@ ${it.text}`).join("\n"));
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M9, dropDocClick, motionIntent, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M9, dropDocClick, PANEL3, panelResizeDetach2, motionIntent, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui7 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -43460,6 +43542,8 @@ ${it.text}`).join("\n"));
         renderFn: null
       };
       dropDocClick = null;
+      PANEL3 = { MIN_W: 640, MIN_H: 460, MAX_W: 1280, MAX_H: 900 };
+      panelResizeDetach2 = null;
       motionIntent = "flip";
       DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
       autoRefreshOff = null;
@@ -50492,7 +50576,7 @@ ${c.trim()}
   function closePanel2() {
     pauseReadingSession();
     void flushReadingSession();
-    panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
+    panelResizeDetach3 == null ? void 0 : panelResizeDetach3.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
     M10.open = false;
@@ -50527,9 +50611,9 @@ ${c.trim()}
     selSnap = null;
     imgSnap = null;
     searchDebounced2.cancel();
-    if (panelResizeDetach2) {
-      panelResizeDetach2.detach();
-      panelResizeDetach2 = null;
+    if (panelResizeDetach3) {
+      panelResizeDetach3.detach();
+      panelResizeDetach3 = null;
     }
     if (panelSplit) {
       panelSplit.detach();
@@ -50760,12 +50844,12 @@ ${c.trim()}
     });
     const frameEl = overlayEl2.querySelector(".bz-clip-frame");
     if (!isMobileEnv()) {
-      panelResizeDetach2 = uiResizable(frameEl, {
+      panelResizeDetach3 = uiResizable(frameEl, {
         minW: PANEL_MIN_W,
         minH: PANEL_MIN_H,
         maxW: PANEL_MAX_W,
         maxH: PANEL_MAX_H,
-        persist: { load: savedPanelSize, save: rememberPanelSize }
+        persist: panelSizePersist("clipbookPanelWidth", "clipbookPanelHeight", PANEL_MIN_W, PANEL_MIN_H)
       });
       const midEl = overlayEl2.querySelector(".bz-clip-mid");
       const readEl = overlayEl2.querySelector(".bz-clip-read");
@@ -51575,20 +51659,6 @@ ${c.trim()}
       if (M10.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
-  function savedPanelSize() {
-    const s = tryGetSettings();
-    const w = Number(s == null ? void 0 : s.clipbookPanelWidth) || 0;
-    const h = Number(s == null ? void 0 : s.clipbookPanelHeight) || 0;
-    if (w < PANEL_MIN_W || h < PANEL_MIN_H) return null;
-    return { w, h };
-  }
-  function rememberPanelSize(w, h) {
-    const s = tryGetSettings();
-    if (!s) return;
-    s.clipbookPanelWidth = w;
-    s.clipbookPanelHeight = h;
-    void saveSettings();
-  }
   function savedSplitWidth() {
     var _a2;
     const v = Number((_a2 = tryGetSettings()) == null ? void 0 : _a2.clipbookMidWidth) || 0;
@@ -52309,7 +52379,7 @@ ${c.trim()}
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach3, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui8 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -52383,7 +52453,7 @@ ${c.trim()}
         renderRail();
         renderMood = "mute";
       }, SEARCH_DEBOUNCE_MS3);
-      panelResizeDetach2 = null;
+      panelResizeDetach3 = null;
       panelSplit = null;
       SPLIT_MIN_MID = 220;
       SPLIT_MIN_READ = 320;
@@ -53715,6 +53785,18 @@ ${c.trim()}
     mountIcons(overlay4);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay4.querySelector(".bz-fav-panel")) != null ? _b2 : overlay4);
+    if (!isMobileEnv()) {
+      const panelEl = overlay4.querySelector(".bz-fav-panel");
+      if (panelEl) {
+        panelResizeDetach4 = uiResizable(panelEl, {
+          minW: PANEL4.MIN_W,
+          minH: PANEL4.MIN_H,
+          maxW: PANEL4.MAX_W,
+          maxH: PANEL4.MAX_H,
+          persist: panelSizePersist("favoritesPanelWidth", "favoritesPanelHeight", PANEL4.MIN_W, PANEL4.MIN_H)
+        });
+      }
+    }
     motionPanelIn4(overlay4);
     window.__bzFavReplay = () => {
       if (M13.overlay !== overlay4) return;
@@ -53807,6 +53889,8 @@ ${c.trim()}
         s.favoritesLastFilter = M13.archived ? "@archived" : M13.tag || "";
         void saveSettings();
       }
+      panelResizeDetach4 == null ? void 0 : panelResizeDetach4.detach();
+      panelResizeDetach4 = null;
       M13.overlay = null;
       M13.renderFn = null;
       M13.stage = "idle";
@@ -54514,7 +54598,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M13, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M13, PANEL4, panelResizeDetach4, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui9 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -54547,6 +54631,8 @@ GitHub 仓库：${ghInfo.title}
         renderFn: null,
         stage: "idle"
       };
+      PANEL4 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
+      panelResizeDetach4 = null;
       _dm = null;
       _ai = null;
       _app2 = null;
@@ -56755,7 +56841,7 @@ GitHub 仓库：${ghInfo.title}
   function openSecondBrainSettings(_app3) {
     openSettingsModal({ title: "第二大脑设置", maxWidth: 520, schema: secondBrainSettingsSchema() });
   }
-  var SecondBrainPanel;
+  var PANEL5, SecondBrainPanel;
   var init_panel = __esm({
     "src/secondbrain/panel.ts"() {
       init_notice();
@@ -56764,6 +56850,7 @@ GitHub 仓库：${ghInfo.title}
       init_flow_dialog();
       init_esc_manager();
       init_utils();
+      init_mobile();
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
@@ -56774,6 +56861,7 @@ GitHub 仓库：${ghInfo.title}
       init_render13();
       init_motion9();
       init_render13();
+      PANEL5 = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       SecondBrainPanel = class {
         constructor(app, store2, opts) {
           this.mask = null;
@@ -56791,6 +56879,8 @@ GitHub 仓库：${ghInfo.title}
           this.motionOpened = false;
           /** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得把新显示位收回 none（首页同款教训） */
           this.motionSeq = 0;
+          /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
+          this.panelResizeDetach = null;
           this.app = app;
           this.store = store2;
           this.opts = opts;
@@ -56801,6 +56891,15 @@ GitHub 仓库：${ghInfo.title}
         }
         async open() {
           this.createUI();
+          if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL5.MIN_W,
+              minH: PANEL5.MIN_H,
+              maxW: PANEL5.MAX_W,
+              maxH: PANEL5.MAX_H,
+              persist: panelSizePersist("secondbrainPanelWidth", "secondbrainPanelHeight", PANEL5.MIN_W, PANEL5.MIN_H)
+            });
+          }
           this.attachEscapeListener();
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
@@ -56815,7 +56914,10 @@ GitHub 仓库：${ghInfo.title}
           await this.render();
         }
         close() {
+          var _a2;
           this.removeEscapeListener();
+          (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+          this.panelResizeDetach = null;
           const seq = this.motionSeq;
           motionPanelOut5(this.popup, () => {
             if (seq !== this.motionSeq) return;
@@ -56838,11 +56940,13 @@ GitHub 仓库：${ghInfo.title}
           this.escHandle = null;
         }
         destroy() {
-          var _a2, _b2;
+          var _a2, _b2, _c;
           this.removeEscapeListener();
+          (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+          this.panelResizeDetach = null;
           motionTeardown9();
-          (_a2 = this.mask) == null ? void 0 : _a2.remove();
-          (_b2 = this.popup) == null ? void 0 : _b2.remove();
+          (_b2 = this.mask) == null ? void 0 : _b2.remove();
+          (_c = this.popup) == null ? void 0 : _c.remove();
           this.mask = null;
           this.popup = null;
         }
@@ -60282,7 +60386,7 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
+  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL6, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
   var init_ui11 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -60295,6 +60399,7 @@ GitHub 仓库：${ghInfo.title}
       init_item_actions();
       init_utils();
       init_ui();
+      init_mobile();
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
@@ -60354,6 +60459,7 @@ GitHub 仓库：${ghInfo.title}
       };
       lastVisitedAsset = "note";
       activeUnlock = null;
+      PANEL6 = { MIN_W: 560, MIN_H: 420, MAX_W: 1e3, MAX_H: 820 };
       _UIManager = class _UIManager {
         constructor(dataManager3, config, pwDataManager) {
           /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
@@ -60390,6 +60496,8 @@ GitHub 仓库：${ghInfo.title}
           this.sessionTimer = null;
           /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
           this.idleLockTimer = null;
+          /** 桌面拖动缩放句柄（ADR-0084/0094）：show 挂、hide 摘，与面板显隐成对（幂等防重复挂） */
+          this.panelResizeDetach = null;
           /** 信封迁移进度通知句柄（迁移是解锁后一次性任务，句柄用完即清） */
           this._migNotify = null;
           /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
@@ -60677,6 +60785,15 @@ GitHub 仓库：${ghInfo.title}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL6.MIN_W,
+              minH: PANEL6.MIN_H,
+              maxW: PANEL6.MAX_W,
+              maxH: PANEL6.MAX_H,
+              persist: panelSizePersist("encryptPanelWidth", "encryptPanelHeight", PANEL6.MIN_W, PANEL6.MIN_H)
+            });
+          }
           motionArmBoot();
           motionPanelIn7(this.popup);
           trapPanelFocus(this.popup);
@@ -60685,9 +60802,12 @@ GitHub 仓库：${ghInfo.title}
           this.startSessionTimers();
         }
         hide(suppressAutoLockNotice = false) {
+          var _a2;
           this.closePreview();
           this.closeAllDialogs();
           if (this.popup && this.popup.style.display === "flex") motionPanelCollapse(this.popup);
+          (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+          this.panelResizeDetach = null;
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -64866,6 +64986,35 @@ GitHub 仓库：${ghInfo.title}
         // 设置面板（ADR-0080）：移动端默认全屏（默认开）；布局默认经纬；主题默认晨昏（跟随亮暗）
         settingsPanelLayout: "jingwei",
         settingsPanelSkin: "chenhun",
+        // 主面板桌面尺寸记忆（ADR-0084 全域推广；0 = 未拖过，打开走各域 CSS 默认尺寸）
+        diaryPanelWidth: 0,
+        diaryPanelHeight: 0,
+        belongingsPanelWidth: 0,
+        belongingsPanelHeight: 0,
+        peoplePanelWidth: 0,
+        peoplePanelHeight: 0,
+        favoritesPanelWidth: 0,
+        favoritesPanelHeight: 0,
+        reviewPanelWidth: 0,
+        reviewPanelHeight: 0,
+        secondbrainPanelWidth: 0,
+        secondbrainPanelHeight: 0,
+        encryptPanelWidth: 0,
+        encryptPanelHeight: 0,
+        passwordVaultPanelWidth: 0,
+        passwordVaultPanelHeight: 0,
+        bookshelfPanelWidth: 0,
+        bookshelfPanelHeight: 0,
+        cinemaPanelWidth: 0,
+        cinemaPanelHeight: 0,
+        gameshelfPanelWidth: 0,
+        gameshelfPanelHeight: 0,
+        knowledgePanelWidth: 0,
+        knowledgePanelHeight: 0,
+        homePanelWidth: 0,
+        homePanelHeight: 0,
+        settingsPanelWidth: 0,
+        settingsPanelHeight: 0,
         // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
         smartcatEnabled: true,
         smartcatEmbeddingModel: "",
@@ -64958,7 +65107,7 @@ GitHub 仓库：${ghInfo.title}
     }
     return n;
   }
-  var SEARCH_DEBOUNCE_MS4, spMatch, DOC_ENTRY_NAMES, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var SEARCH_DEBOUNCE_MS4, PANEL7, spMatch, DOC_ENTRY_NAMES, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui13 = __esm({
     "src/settings-panel/ui.ts"() {
       init_fake_obsidian();
@@ -64977,6 +65126,7 @@ GitHub 仓库：${ghInfo.title}
       init_render3();
       init_motion2();
       SEARCH_DEBOUNCE_MS4 = 180;
+      PANEL7 = { MIN_W: 760, MIN_H: 520, MAX_W: 1280, MAX_H: 900 };
       spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       DOC_ENTRY_NAMES = ["文档", "使用手册", "更新日志", "手册", "日志", "changelog"];
       schemaLoaders = {
@@ -65149,6 +65299,29 @@ GitHub 仓库：${ghInfo.title}
           this.searchQuery = "";
           /** 徽标预载在途 Promise（ARCH-2 单飞：并发 open 收敛为一轮，磁盘 IO 域不双倍重跑） */
           this.preloadInFlight = null;
+          /** 主面板拖拽缩放句柄（ADR-0084 桌面限定；open/build 挂、hide/cleanup 摘，幂等防叠挂） */
+          this.panelResizeDetach = null;
+        }
+        /**
+         * 挂桌面拖拽缩放（open 软重开与 build 首建两路都走）。幂等：句柄非空（面板显示中）
+         * 直接跳过——hide 型常驻面板 hide 必摘，走到这里句柄恒空，判空只为防御性兜底；
+         * 移动端不挂（全屏推入版式撑满视口，.bz-sp-mobile 几何 !important 不参与缩放）
+         */
+        mountPanelResize() {
+          if (isMobileEnv() || this.panelResizeDetach || !this.popup) return;
+          this.panelResizeDetach = uiResizable(this.popup, {
+            minW: PANEL7.MIN_W,
+            minH: PANEL7.MIN_H,
+            maxW: PANEL7.MAX_W,
+            maxH: PANEL7.MAX_H,
+            persist: panelSizePersist("settingsPanelWidth", "settingsPanelHeight", PANEL7.MIN_W, PANEL7.MIN_H)
+          });
+        }
+        /** 摘拖拽缩放（hide 软关与 cleanup 销毁共用；persist 未落盘的防抖尾值由 detach 立即补存） */
+        unmountPanelResize() {
+          if (!this.panelResizeDetach) return;
+          this.panelResizeDetach.detach();
+          this.panelResizeDetach = null;
         }
         /**
          * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -65172,6 +65345,7 @@ GitHub 仓库：${ghInfo.title}
               if (pane) void this.renderDomain(pane, deep);
             }
             this.recomputeBadgesFromCache();
+            this.mountPanelResize();
             motionPanelIn(this.popup, this.mask);
             motionEnsureDust(this.popup);
             void this.preloadAllBadges();
@@ -65184,8 +65358,11 @@ GitHub 仓库：${ghInfo.title}
           const { mask, popup } = createOverlay({
             maskId: "bz-settings-panel-mask",
             popupId: "bz-settings-panel-popup",
-            maxWidth: 1080,
-            // 与 .bz-sp-desk 定稿宽 min(1080px, 94vw) 同源
+            // 内联几何与 .bz-sp-desk 对齐（该类几何 !important 已剥，内联参数会反压 CSS）：
+            // 默认宽与定稿同源 min(1080px, 94vw)；maxWidth 上限放宽到 PANEL.MAX_W——留 1080
+            // 会把拖大后的内联宽钳死在 1080，缩放形同虚设
+            width: "min(1080px, 94vw)",
+            maxWidth: PANEL7.MAX_W,
             onMaskClick: () => this.hide()
           });
           this.mask = mask;
@@ -65205,6 +65382,7 @@ GitHub 仓库：${ghInfo.title}
           this.armPanelEsc();
           (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
           trapFocus(popup);
+          this.mountPanelResize();
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
@@ -65845,6 +66023,7 @@ GitHub 仓库：${ghInfo.title}
         }
         hide() {
           if (this.popup) closeAllSelectMenus(this.popup);
+          this.unmountPanelResize();
           motionSleep();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
@@ -65861,6 +66040,7 @@ GitHub 仓库：${ghInfo.title}
         cleanup() {
           unregisterPanelEsc("bz-settings-panel");
           motionTeardown2();
+          this.unmountPanelResize();
           this.flushPendingTextCommit();
           if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) {

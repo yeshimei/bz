@@ -1424,3 +1424,52 @@ describe('保险箱状态栏（补丁：锁状态提示）', () => {
     expect(el.innerHTML).not.toBe(lockedHtml);
   });
 });
+
+describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  let vault: MockVault;
+  let dm: SafeManager;
+  let ui: UIManager;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+    dm = new SafeManager('CONFIG/.ENCRYPT');
+    ui = new UIManager(dm, CONFIG);
+  });
+
+  afterEach(() => {
+    ui.hide(); // 缩放句柄随 hide 摘（detach 内含 flush；未 show 过时为安全空转）
+    ['bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup'].forEach((id) => {
+      document.getElementById(id)?.remove();
+    });
+    document.body.innerHTML = '';
+  });
+
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', () => {
+    setSettingsProvider(() => ({ ...CONFIG, encryptPanelWidth: 900, encryptPanelHeight: 640 }) as any);
+    ui.show();
+    const popup = document.getElementById('bz-encrypt-popup') as HTMLElement;
+    expect(popup.style.width).toBe('900px');
+    expect(popup.style.height).toBe('640px');
+  });
+
+  it('hide 摘句柄后改记忆值再 show 套新值（常驻 DOM 面板 detach 生效的间接验证，同 knowledge）', () => {
+    setSettingsProvider(() => ({ ...CONFIG, encryptPanelWidth: 900, encryptPanelHeight: 640 }) as any);
+    ui.show();
+    const popup = document.getElementById('bz-encrypt-popup') as HTMLElement;
+    expect(popup.style.width).toBe('900px');
+    ui.hide();
+    setSettingsProvider(() => ({ ...CONFIG, encryptPanelWidth: 820, encryptPanelHeight: 560 }) as any);
+    ui.show();
+    expect(popup.style.width).toBe('820px');
+    expect(popup.style.height).toBe('560px');
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
+    ui.show();
+    const popup = document.getElementById('bz-encrypt-popup') as HTMLElement;
+    expect(popup.style.width).toBe('');
+    expect(popup.style.height).toBe('');
+  });
+});

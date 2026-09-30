@@ -9,7 +9,7 @@
    壳骨架接组件库（ADR-0094）：遮罩挂 .bz-panel-overlay（fixed 铺满+遮罩色），
    面板挂 .bz-panel-frame（底色/圆角/描边/阴影/纵向 flex）；域内只留 id 几何
    （居中定位/宽高/动画）。配色走 --bz-* token。 */
-#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 900px; max-height: 84vh; animation: slideUp var(--bz-dur-slow) ease-out; }
+#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; /* max 上限只保视口安全（ADR-0084：拖拽上限走 uiResizable 逐帧钳制，CSS 固定 900px 会压住拖大意图；92vh 对齐其视口 92% cap 口径），width:94% 保留作默认态 */ max-width: calc(100vw - 32px); max-height: 92vh; animation: slideUp var(--bz-dur-slow) ease-out; }
 @media (max-width: 768px) {
   /* 移动端全屏（issue 254 迭代）：钉满视口，不受内容高度收缩（原 max-height:100% 短内容时缩成悬浮卡） */
   #review-popup { animation: none !important; top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }

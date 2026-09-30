@@ -129,3 +129,43 @@ describe('issue 422：换 Embedding 模型 → 打开面板自动全量重建', 
     panel.destroy();
   });
 });
+
+describe('主面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+  });
+
+  it('有记忆值时打开即套用内联宽高；close 摘句柄后新记忆生效', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    setSettingsProvider(
+      () => ({ ...DEFAULT_SETTINGS, secondbrainPanelWidth: 900, secondbrainPanelHeight: 640 }) as BzSettings,
+    );
+    const panel = new SecondBrainPanel(app, makeStore(), { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    const popup = document.querySelector('.bz-sb-panel') as HTMLElement;
+    expect(popup.style.width).toBe('900px');
+    expect(popup.style.height).toBe('640px');
+    // close 摘句柄后改记忆值，再开套新值（close detach 生效的间接验证）
+    panel.close();
+    setSettingsProvider(
+      () => ({ ...DEFAULT_SETTINGS, secondbrainPanelWidth: 920, secondbrainPanelHeight: 660 }) as BzSettings,
+    );
+    await panel.open();
+    expect(popup.style.width).toBe('920px');
+    expect(popup.style.height).toBe('660px');
+    panel.destroy();
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', async () => {
+    const app = makeEnv();
+    const panel = new SecondBrainPanel(app, makeStore(), { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    const popup = document.querySelector('.bz-sb-panel') as HTMLElement;
+    expect(popup.style.width).toBe('');
+    expect(popup.style.height).toBe('');
+    panel.destroy();
+  });
+});

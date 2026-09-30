@@ -388,6 +388,39 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
+  it('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）：有记忆值时打开即套用内联宽高，软关重开重挂套新值', () => {
+    // 记忆值取在 jsdom 视口（1024×768）92% 渲染钳制线以内——断言的是「意图值直出内联」，
+    // 视口钳制是 core uiResizable 自己的语义（tests/core 已锁），此处不掺
+    panelState.settingsPanelWidth = 900;
+    panelState.settingsPanelHeight = 640;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup') as HTMLElement;
+    expect(popup.classList.contains('bz-sp-desk')).toBe(true);
+    expect(popup.style.width).toBe('900px');
+    expect(popup.style.height).toBe('640px');
+    // 软关摘句柄 → 软重开（open 复用分支）重挂并套用最新记忆值（hide/open 生命周期对称）
+    ui.hide();
+    expect(popup.style.display).toBe('none');
+    panelState.settingsPanelWidth = 920;
+    panelState.settingsPanelHeight = 660;
+    ui.open();
+    expect(popup.style.width).toBe('920px');
+    expect(popup.style.height).toBe('660px');
+    ui.cleanup();
+  });
+
+  it('面板拖拽缩放：无记忆值 → 不写 px 内联（默认宽走 build 对齐后的壳参数，高走 CSS）', () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup') as HTMLElement;
+    // .bz-sp-desk 几何 !important 剥离后，默认宽由 build 的 createOverlay width 参数接管（同源定稿值），
+    // 高无内联参数走 CSS——两处都不该出现记忆 px 值
+    expect(popup.style.width).toBe('min(1080px, 94vw)');
+    expect(popup.style.height).toBe('');
+    ui.cleanup();
+  });
+
   it('桌面端：点击域导航切换 → 内嵌渲染该域真实 schema', async () => {
     const ui = new SettingsPanelUI();
     ui.open();

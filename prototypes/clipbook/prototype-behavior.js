@@ -1,4 +1,4 @@
-/* 源指纹 cad9a04c1e3a273c · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fe8f162b5d98db7c · 仓内输入 123 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -332,6 +332,23 @@ var BZW_clipbook = (() => {
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
+  }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
   }
   var _provider, _saver;
   var init_settings_provider = __esm({
@@ -8212,31 +8229,6 @@ ${c.trim()}
     }
   });
 
-  // src/core/knowledge-boxes.ts
-  function normalizeBoxDir(raw, fallback) {
-    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
-    return s || fallback;
-  }
-  function getKnowledgeBoxes(s) {
-    var _a;
-    const st = (_a = s != null ? s : tryGetSettings()) != null ? _a : {};
-    return {
-      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
-      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
-      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
-    };
-  }
-  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
-  var init_knowledge_boxes = __esm({
-    "src/core/knowledge-boxes.ts"() {
-      init_utils();
-      init_settings_provider();
-      DEFAULT_LIT_DIR = "文献盒";
-      DEFAULT_CARDBOX_DIR = "卡片盒";
-      DEFAULT_TOPIC_DIR = "主题盒";
-    }
-  });
-
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
     if (!dur) dur = 500;
@@ -8362,6 +8354,187 @@ ${c.trim()}
       init_notice();
       init_z_order();
       liveOverlays = /* @__PURE__ */ new Set();
+    }
+  });
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    let persistTimer = null;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
+      }
+    }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
+      if (persist == null ? void 0 : persist.save) {
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, wantW, wantH);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
+  var init_resize = __esm({
+    "src/core/ui/resize.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/knowledge-boxes.ts
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
+  }
+  function getKnowledgeBoxes(s) {
+    var _a;
+    const st = (_a = s != null ? s : tryGetSettings()) != null ? _a : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
+  var init_knowledge_boxes = __esm({
+    "src/core/knowledge-boxes.ts"() {
+      init_utils();
+      init_settings_provider();
+      DEFAULT_LIT_DIR = "文献盒";
+      DEFAULT_CARDBOX_DIR = "卡片盒";
+      DEFAULT_TOPIC_DIR = "主题盒";
     }
   });
 
@@ -15292,7 +15465,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
-  var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
+  var IMAGE_ENTRY_MAX, PANEL, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
   var init_ui = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
@@ -15300,6 +15473,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_str();
       init_mobile();
       init_settings_provider();
+      init_resize();
       init_knowledge_boxes();
       init_link_now();
       init_item_actions();
@@ -15322,6 +15496,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_range_bar();
       init_motion();
       IMAGE_ENTRY_MAX = 9;
+      PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
       REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
       STATUS_META = {
         pending: { label: "待处理", cls: "bz-kb-pending" },
@@ -15479,6 +15654,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.refreshTimer = null;
           this.pendingRefreshPaths = /* @__PURE__ */ new Set();
           this.pendingDeletePaths = /* @__PURE__ */ new Set();
+          /** 主窗拖拽缩放句柄（ADR-0084 桌面限定；showMain 挂 / hideMain·destroy 摘，域内三窗只挂主窗） */
+          this.panelResizeDetach = null;
           this._previewNote = null;
           /** 独立弹层宿主（issue 329 文献预览直达）：主面板不在场时预览弹层的全屏定位底座——
            *  纸墨变量随 .kb 作用域生效，topifyZ 发号；用完由 closeSheet 撤除，不常驻空壳节点 */
@@ -15596,6 +15773,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          if (!isMobileEnv() && !this.panelResizeDetach) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL.MIN_W,
+              minH: PANEL.MIN_H,
+              maxW: PANEL.MAX_W,
+              maxH: PANEL.MAX_H,
+              persist: panelSizePersist("knowledgePanelWidth", "knowledgePanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+            });
+          }
           this.motionCue = "boot";
           motionMainIn(this.popup);
           window.__bzKbReplay = () => {
@@ -15611,6 +15797,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         hideMain() {
           if (this.popup && motionClosing(this.popup)) return;
+          if (this.panelResizeDetach) {
+            this.panelResizeDetach.detach();
+            this.panelResizeDetach = null;
+          }
           const popup = this.popup;
           const mask = this.mask;
           motionMainOut(popup, () => {
@@ -18492,6 +18682,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a;
           this.abortTermGenerate();
           motionTeardown();
+          if (this.panelResizeDetach) {
+            this.panelResizeDetach.detach();
+            this.panelResizeDetach = null;
+          }
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -19974,151 +20168,6 @@ ${body}`;
     }
   });
 
-  // src/core/ui/resize.ts
-  function hitRegion(rect, x, y, edge) {
-    const onE = x >= rect.width - edge;
-    const onS = y >= rect.height - edge;
-    const onW = x <= edge;
-    const onN = y <= edge;
-    if (onE && onS) return "se";
-    if (onE && !onW) return "e";
-    if (onS && !onN) return "s";
-    return null;
-  }
-  function uiResizable(el, opts = {}) {
-    var _a, _b, _c, _d, _e;
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { flush: () => {
-      }, detach: () => {
-      } };
-    }
-    const edge = (_a = opts.edge) != null ? _a : 8;
-    const minW = (_b = opts.minW) != null ? _b : 320;
-    const minH = (_c = opts.minH) != null ? _c : 240;
-    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
-    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
-    let dir = null;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startW = 0;
-    let startH = 0;
-    const cap = (isW) => {
-      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
-      return Math.floor(Math.min(isW ? maxW : maxH, view));
-    };
-    const persist = opts.persist;
-    let persistTimer = null;
-    let lastW = 0;
-    let lastH = 0;
-    if (persist == null ? void 0 : persist.load) {
-      const saved = persist.load();
-      if (saved && saved.w > 0 && saved.h > 0) {
-        lastW = Math.min(Math.max(saved.w, minW), cap(true));
-        lastH = Math.min(Math.max(saved.h, minH), cap(false));
-        el.style.width = lastW + "px";
-        el.style.height = lastH + "px";
-      }
-    }
-    const regionAt = (e) => {
-      const rect = el.getBoundingClientRect();
-      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
-    };
-    const setCursor = (d) => {
-      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
-    };
-    const onHover = (e) => {
-      if (dragging) return;
-      setCursor(regionAt(e));
-    };
-    const onDragMove = (e) => {
-      if (!el.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      e.preventDefault();
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let w = dir === "e" || dir === "se" ? startW + dx : startW;
-      let h = dir === "s" || dir === "se" ? startH + dy : startH;
-      w = Math.min(Math.max(w, minW), cap(true));
-      h = Math.min(Math.max(h, minH), cap(false));
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      if (opts.onChange) opts.onChange(w, h);
-      if (persist == null ? void 0 : persist.save) {
-        lastW = w;
-        lastH = h;
-        if (persistTimer !== null) clearTimeout(persistTimer);
-        persistTimer = setTimeout(() => {
-          var _a2;
-          persistTimer = null;
-          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, w, h);
-        }, 300);
-      }
-    };
-    const onMouseLeave = () => {
-      if (!dragging) setCursor(null);
-    };
-    const onMouseDown = (e) => {
-      const d = regionAt(e);
-      if (!d) return;
-      e.preventDefault();
-      dir = d;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = el.getBoundingClientRect().width;
-      startH = el.getBoundingClientRect().height;
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!el.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      dragging = false;
-      dir = null;
-      document.body.style.userSelect = "";
-      setCursor(null);
-      swallowNextClick();
-    };
-    el.addEventListener("mousemove", onHover);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
-    };
-    return {
-      flush,
-      detach: () => {
-        flush();
-        el.removeEventListener("mousemove", onHover);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        setCursor(null);
-      }
-    };
-  }
-  var init_resize = __esm({
-    "src/core/ui/resize.ts"() {
-      init_dom();
-    }
-  });
-
   // src/core/ui/splitter.ts
   function uiVSplitter(opts) {
     var _a, _b;
@@ -20142,7 +20191,8 @@ ${body}`;
     let startX = 0;
     let startW = 0;
     let persistTimer = null;
-    let lastW = 0;
+    let wantW = 0;
+    let lastRender = 0;
     let restored = false;
     const availW = () => {
       const parent = left.parentElement;
@@ -20159,7 +20209,6 @@ ${body}`;
     };
     const debSave = (w) => {
       if (!(persist == null ? void 0 : persist.save)) return;
-      lastW = w;
       if (persistTimer !== null) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         var _a2;
@@ -20173,9 +20222,10 @@ ${body}`;
       const saved = persist.load();
       restored = true;
       if (saved != null && saved > 0) {
-        const w = clampW(saved);
+        wantW = Math.max(saved, minLeft);
+        const w = clampW(wantW);
         applyW(w);
-        lastW = w;
+        lastRender = w;
       }
     };
     const onDragMove = (e) => {
@@ -20186,12 +20236,14 @@ ${body}`;
       }
       if (!dragging) return;
       e.preventDefault();
-      const w = clampW(startW + (e.clientX - startX));
-      if (w === lastW) return;
+      const raw = startW + (e.clientX - startX);
+      const w = clampW(raw);
+      if (w === lastRender) return;
+      wantW = Math.max(raw, minLeft);
+      lastRender = w;
       applyW(w);
-      lastW = w;
       if (opts.onChange) opts.onChange(w);
-      debSave(w);
+      debSave(wantW);
     };
     const onMouseDown = (e) => {
       if (e.button !== 0) return;
@@ -20221,7 +20273,7 @@ ${body}`;
       if (persistTimer === null) return;
       clearTimeout(persistTimer);
       persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
+      if ((persist == null ? void 0 : persist.save) && wantW > 0) persist.save(wantW);
     };
     return {
       el,
@@ -28825,7 +28877,7 @@ ${bodyText.substring(0, 6e3)}`;
         minH: PANEL_MIN_H,
         maxW: PANEL_MAX_W,
         maxH: PANEL_MAX_H,
-        persist: { load: savedPanelSize, save: rememberPanelSize }
+        persist: panelSizePersist("clipbookPanelWidth", "clipbookPanelHeight", PANEL_MIN_W, PANEL_MIN_H)
       });
       const midEl = overlayEl2.querySelector(".bz-clip-mid");
       const readEl = overlayEl2.querySelector(".bz-clip-read");
@@ -29634,20 +29686,6 @@ ${bodyText.substring(0, 6e3)}`;
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
       if (M3.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
-  }
-  function savedPanelSize() {
-    const s = tryGetSettings();
-    const w = Number(s == null ? void 0 : s.clipbookPanelWidth) || 0;
-    const h = Number(s == null ? void 0 : s.clipbookPanelHeight) || 0;
-    if (w < PANEL_MIN_W || h < PANEL_MIN_H) return null;
-    return { w, h };
-  }
-  function rememberPanelSize(w, h) {
-    const s = tryGetSettings();
-    if (!s) return;
-    s.clipbookPanelWidth = w;
-    s.clipbookPanelHeight = h;
-    void saveSettings();
   }
   function savedSplitWidth() {
     var _a;

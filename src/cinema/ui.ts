@@ -22,8 +22,8 @@ import { isMobileEnv } from '../core/mobile';
 import { fitRotatedBox } from '../core/landscape';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { tryGetSettings } from '../core/settings-provider';
-import { mountIcons, openLightbox, uiSuggest } from '../core/ui';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { mountIcons, openLightbox, uiSuggest, uiResizable } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { iconSpan } from '../core/ui/str';
 import { openExternalUrl } from '../core/utils';
@@ -2085,6 +2085,11 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
 
 // ---------- 壳选择 / 创建 / 渲染总入口 ----------
 
+/** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
+/** 桌面拖动缩放句柄（ADR-0084/0094）：createOverlay 挂 / closeOverlay 摘（面板开关重建型） */
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -2100,6 +2105,16 @@ export function createOverlay(app: App): void {
   if (!root) return;
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(root);
+  // 桌面拖动缩放（ADR-0084）：只挂桌面午夜场壳（mobile 壳恒真全屏不挂，root 取自 desk 分支）；
+  // 面板开关重建型，随 createOverlay 挂、closeOverlay 摘；persist 记忆键
+  // cinemaPanelWidth/Height（ADR-0094，core 工厂读写）
+  if (!mobile && !panelResizeDetach && root) {
+    panelResizeDetach = uiResizable(root, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      persist: panelSizePersist('cinemaPanelWidth', 'cinemaPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    });
+  }
   // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeOverlay();
@@ -2445,6 +2460,9 @@ export function closeOverlay(): void {
   // 堆积。这里遍历句柄补 unregister（close 幂等：句柄集先删后 remove，遍历副本安全）
   for (const close of [...liveOvlCloses]) close();
   closeItemMenu(); // 浮层（跟手菜单/抽屉）挂 body，不随面板移除 → 关面板时一并收掉
+  // 桌面缩放随面板销毁摘除（与 createOverlay 成对；detach 内含 flush，防抖尾值不丢）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

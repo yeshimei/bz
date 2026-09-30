@@ -1,4 +1,4 @@
-/* 源指纹 911212597da3f6e4 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9f478d4367217cdd · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/motion.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -4491,6 +4491,23 @@ var BZW_diary = (() => {
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
+  }
   var _provider, _saver;
   var init_settings_provider = __esm({
     "src/core/settings-provider.ts"() {
@@ -5425,6 +5442,18 @@ var BZW_diary = (() => {
     el.addEventListener("touchcancel", endFromTouch);
     el.addEventListener("click", onClick, true);
   }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
   function pruneDetachedOverlays() {
     for (const entry of liveOverlays) {
       if (!entry.mask.isConnected && !entry.popup.isConnected) liveOverlays.delete(entry);
@@ -6193,6 +6222,155 @@ var BZW_diary = (() => {
   });
 
   // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    let persistTimer = null;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
+      }
+    }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
+      if (persist == null ? void 0 : persist.save) {
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, wantW, wantH);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
   var init_resize = __esm({
     "src/core/ui/resize.ts"() {
       init_dom();
@@ -11393,7 +11571,7 @@ var BZW_diary = (() => {
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
+  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, PANEL, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
   var init_ui2 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -11406,6 +11584,7 @@ var BZW_diary = (() => {
       init_item_actions();
       init_utils();
       init_ui();
+      init_mobile();
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
@@ -11465,6 +11644,7 @@ var BZW_diary = (() => {
       };
       lastVisitedAsset = "note";
       activeUnlock = null;
+      PANEL = { MIN_W: 560, MIN_H: 420, MAX_W: 1e3, MAX_H: 820 };
       _UIManager = class _UIManager {
         constructor(dataManager, config, pwDataManager) {
           /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
@@ -11501,6 +11681,8 @@ var BZW_diary = (() => {
           this.sessionTimer = null;
           /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
           this.idleLockTimer = null;
+          /** 桌面拖动缩放句柄（ADR-0084/0094）：show 挂、hide 摘，与面板显隐成对（幂等防重复挂） */
+          this.panelResizeDetach = null;
           /** 信封迁移进度通知句柄（迁移是解锁后一次性任务，句柄用完即清） */
           this._migNotify = null;
           /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
@@ -11788,6 +11970,15 @@ var BZW_diary = (() => {
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+            this.panelResizeDetach = uiResizable(this.popup, {
+              minW: PANEL.MIN_W,
+              minH: PANEL.MIN_H,
+              maxW: PANEL.MAX_W,
+              maxH: PANEL.MAX_H,
+              persist: panelSizePersist("encryptPanelWidth", "encryptPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+            });
+          }
           motionArmBoot();
           motionPanelIn(this.popup);
           trapPanelFocus(this.popup);
@@ -11796,9 +11987,12 @@ var BZW_diary = (() => {
           this.startSessionTimers();
         }
         hide(suppressAutoLockNotice = false) {
+          var _a;
           this.closePreview();
           this.closeAllDialogs();
           if (this.popup && this.popup.style.display === "flex") motionPanelCollapse(this.popup);
+          (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
+          this.panelResizeDetach = null;
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -14041,6 +14235,7 @@ ${entry.content.trim()}`;
   init_dom();
   init_mobile();
   init_ui();
+  init_settings_provider();
   init_item_actions();
   init_utils();
   init_domain_bus();
@@ -16795,6 +16990,7 @@ ${String(review).trim()}`;
   var SCROLL_FIX_DELAY_MS = 480;
   var MODIFY_REFRESH_DEBOUNCE_MS = 400;
   var MEMORY_EXCERPT_MAX_CHARS = 64;
+  var PANEL2 = { MIN_W: 720, MIN_H: 560, MAX_W: 1280, MAX_H: 960 };
   function memoryExcerpt(text) {
     const flat = (text || "").replace(/\s+/g, " ").trim();
     if (!flat) return "（无正文）";
@@ -16905,6 +17101,8 @@ ${String(review).trim()}`;
       this._hideMotion = false;
       /** 动效层：是否开过面板（重开走短档入场） */
       this._shownOnce = false;
+      /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：常驻 DOM 双实例，show 挂 / hide 摘；null = 未挂 */
+      this.panelResizeDetach = null;
     }
     static getInstance() {
       if (!_DiaryAppController.instance) {
@@ -18838,6 +19036,15 @@ ${String(review).trim()}`;
       this._hideMotion = false;
       this.root.style.display = "flex";
       topifyZ(this.root);
+      if (!isMobileEnv() && !this.panelResizeDetach && this.desk) {
+        this.panelResizeDetach = uiResizable(this.desk.el, {
+          minW: PANEL2.MIN_W,
+          minH: PANEL2.MIN_H,
+          maxW: PANEL2.MAX_W,
+          maxH: PANEL2.MAX_H,
+          persist: panelSizePersist("diaryPanelWidth", "diaryPanelHeight", PANEL2.MIN_W, PANEL2.MIN_H)
+        });
+      }
       motionPanelIn2(this.root, reopen);
       this.subscribeVaultModify();
       this.subscribeUnlockEvents();
@@ -18848,6 +19055,7 @@ ${String(review).trim()}`;
       void this.loadAndRender().then(() => this.applyRestore());
     }
     hide() {
+      var _a;
       if (!this.root) return;
       if (this._hideMotion) return;
       this._hideMotion = true;
@@ -18861,6 +19069,8 @@ ${String(review).trim()}`;
       this.unsubscribeUnlockEvents();
       this.unsubscribeWriteEvents();
       this.unsubscribeRefSync();
+      (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
+      this.panelResizeDetach = null;
       motionPanelOut(this.root, () => {
         this._hideMotion = false;
         if (!this.root) return;
@@ -19262,7 +19472,7 @@ ${String(review).trim()}`;
     }
     // ---------- 卸载 ----------
     cleanup() {
-      var _a;
+      var _a, _b;
       this.closeDateFilter();
       closeItemMenu();
       motionTeardown2();
@@ -19272,6 +19482,8 @@ ${String(review).trim()}`;
       this.unsubscribeUnlockEvents();
       this.unsubscribeWriteEvents();
       this.unsubscribeRefSync();
+      (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
+      this.panelResizeDetach = null;
       document.removeEventListener("keydown", this._onLbKeydown);
       if (this._mql && this._onMqChange) {
         this._mql.removeEventListener("change", this._onMqChange);
@@ -19282,7 +19494,7 @@ ${String(review).trim()}`;
         clearTimeout(this._scrollFixTimer);
         this._scrollFixTimer = null;
       }
-      (_a = this.escUnregister) == null ? void 0 : _a.unregister();
+      (_b = this.escUnregister) == null ? void 0 : _b.unregister();
       this.escUnregister = null;
       this._ctxBound = { desk: false, mob: false };
       this._wallEntries = [];

@@ -18,11 +18,12 @@
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiResizable } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
+import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -58,6 +59,9 @@ import {
 
 export { computeStats, buildSourceTree, fmtCompact } from './render';
 export type { SecondBrainStats, SourceDistItem, RecentNote, SourceTreeNode } from './render';
+
+/** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
 
 // ==================== 主面板弹窗 ====================
 
@@ -107,6 +111,8 @@ export class SecondBrainPanel {
   private motionOpened = false;
   /** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得把新显示位收回 none（首页同款教训） */
   private motionSeq = 0;
+  /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
   constructor(app: App, store: VectorStore, opts: PanelOptions) {
     this.app = app;
@@ -121,6 +127,15 @@ export class SecondBrainPanel {
 
   async open(): Promise<void> {
     this.createUI();
+    // 桌面拖动缩放（ADR-0084）：常驻 DOM 面板，open 幂等挂（重入不重复挂）、close 摘；
+    // persist 记忆键 secondbrainPanelWidth/Height（ADR-0094，core 工厂读写）
+    if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+      this.panelResizeDetach = uiResizable(this.popup, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('secondbrainPanelWidth', 'secondbrainPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     // [l2-sb] ESC 层级与 open/close 成对：open 注册、close 注销（幂等），反复开关不累积
     this.attachEscapeListener();
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
@@ -141,6 +156,9 @@ export class SecondBrainPanel {
 
   close(): void {
     this.removeEscapeListener(); // [l2-sb] 面板关闭即注销 ESC 层级（与 open 成对）
+    // 桌面缩放随面板隐藏摘除（与 open 成对；detach 内含 flush，防抖尾值不丢）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     // 动效层：先演退场再收 display（常驻节点退场钉死由 motionPanelOut 收口时 cancel——
     // 无 WAAPI 宿主同步收口，display:none 绝不晚到）；退场期间被重开由 motionSeq 守卫
     const seq = this.motionSeq;
@@ -168,6 +186,8 @@ export class SecondBrainPanel {
 
   destroy(): void {
     this.removeEscapeListener();
+    this.panelResizeDetach?.detach(); // 缩放监听随宿主销毁一并清（面板未 close 直接销毁的兜底）
+    this.panelResizeDetach = null;
     motionTeardown(); // 动效层：循环/延时总清场（防永动孤儿）
     this.mask?.remove();
     this.popup?.remove();

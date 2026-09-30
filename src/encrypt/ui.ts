@@ -27,8 +27,9 @@ import {
   type ItemActionsOptions,
 } from '../core/item-actions';
 import {  debounce, escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
-import { uiEmpty, uiProgress, mountIcons } from '../core/ui';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { uiEmpty, uiProgress, mountIcons, uiResizable } from '../core/ui';
+import { isMobileEnv } from '../core/mobile';
+import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -501,6 +502,9 @@ export function encryptSettingsSchema(): SettingsSchema {
   };
 }
 
+/** 主面板桌面缩放边界（ADR-0084）：拖拽下限 / 硬上限，视口 92% 由 uiResizable 逐帧钳 */
+const PANEL = { MIN_W: 560, MIN_H: 420, MAX_W: 1000, MAX_H: 820 };
+
 export class UIManager {
   dataManager: SafeManager;
   config: EncryptUIConfig;
@@ -546,6 +550,8 @@ export class UIManager {
   private sessionTimer: ReturnType<typeof setInterval> | null = null;
   /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
   private idleLockTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 桌面拖动缩放句柄（ADR-0084/0094）：show 挂、hide 摘，与面板显隐成对（幂等防重复挂） */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
   constructor(dataManager: SafeManager, config: EncryptUIConfig, pwDataManager?: PasswordVaultDataManager) {
     this.dataManager = dataManager;
@@ -875,6 +881,15 @@ export class UIManager {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
+    // 桌面拖动缩放（ADR-0084）：常驻 DOM 工作台，show 幂等挂（重入不重复挂）、hide 摘；
+    // persist 记忆键 encryptPanelWidth/Height（ADR-0094，core 工厂读写）
+    if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+      this.panelResizeDetach = uiResizable(this.popup, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('encryptPanelWidth', 'encryptPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     // 动效层：遮罩淡入 + 标题揭出；boot 意图置位（首个可见渲染消费即熄，刷新静默）
     motionArmBoot();
     motionPanelIn(this.popup!);
@@ -892,6 +907,9 @@ export class UIManager {
     this.closeAllDialogs();
     // 动效层：面板同步收 display 前让 body 替身覆层演退场（同步收语义不变，无 fill 残留）
     if (this.popup && this.popup.style.display === 'flex') motionPanelCollapse(this.popup);
+    // 桌面缩放随面板隐藏摘除（与 show 成对；detach 内含 flush，防抖尾值不丢）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this.stopSessionTimers();

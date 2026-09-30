@@ -12,6 +12,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { applyDirectories, emojiToTagMap } from '../../src/diary/config';
 import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -1675,5 +1676,29 @@ describe('引用同步（issue 339）', () => {
     expect((c as any).entries.some((x: any) => x.filePath === '随笔/挪走.md')).toBe(false);
     expect((c as any).entries.some((x: any) => x.filePath === moved)).toBe(false);
     setDiaryDataMap(null);
+  });
+});
+
+// ==================== 面板拖拽缩放 + 尺寸记忆（ADR-0084/0094） ====================
+
+describe('面板拖拽缩放 + 尺寸记忆（常驻 DOM 双实例，只挂桌面 desk）', () => {
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', async () => {
+    setSettingsProvider(() => ({ diaryPanelWidth: 900, diaryPanelHeight: 640 }) as never);
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-desk') as HTMLElement;
+    expect(desk.style.width).toBe('900px');
+    expect(desk.style.height).toBe('640px');
+    // 移动实例不挂：无内联尺寸（移动端走 CSS 真全屏）
+    const mob = document.querySelector('.bz-diary-mob') as HTMLElement;
+    expect(mob.style.width).toBe('');
+    expect(mob.style.height).toBe('');
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认 980px/82vh，persist 语义）', async () => {
+    setSettingsProvider(() => ({}) as never);
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-desk') as HTMLElement;
+    expect(desk.style.width).toBe('');
+    expect(desk.style.height).toBe('');
   });
 });

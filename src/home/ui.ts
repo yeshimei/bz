@@ -25,10 +25,11 @@ import type { IconName } from 'obsidian';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice } from '../core/notice';
-import { mountIcons, uiEmpty, uiBtn } from '../core/ui';
+import { mountIcons, uiEmpty, uiBtn, uiResizable } from '../core/ui';
 import { topifyZ } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
-import { tryGetSettings } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { H } from './state';
 import { DOMAIN_MAP } from './domains';
 import {
@@ -118,6 +119,37 @@ function restoreScroll(overlay: HTMLElement): void {
 
 /* ---------- 生命周期 ---------- */
 
+/** 主面板拖拽缩放口径（ADR-0084）：下限挡住三栏 grid 塌缩，上限留视口余量；
+ *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
+const PANEL = { MIN_W: 640, MIN_H: 420, MAX_W: 1200, MAX_H: 820 };
+
+/** 面板当前 resize 句柄（显示期间非空，隐藏/卸载摘除清空） */
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+
+/**
+ * 挂桌面拖拽缩放（ADR-0084/0094，createOverlay 首建与 showOverlay 复用显两路都走）。
+ * 三态复用同一 DOM 可能重复走到：挂前判句柄非空**直接跳过**（旧句柄的监听还活着，
+ * 先 detach 再挂反而白拆一遍还丢掉未落盘的防抖尾值）；移动端不挂（CSS 撑满视口）。
+ * 不变式：句柄非空 ⟺ 面板显示中（closeOverlay/unloadHome 双路摘除保证）
+ */
+function mountPanelResize(overlay: HTMLElement): void {
+  if (isMobileEnv() || panelResizeDetach) return;
+  const panel = overlay.querySelector<HTMLElement>('.bz-home-panel');
+  if (!panel) return;
+  panelResizeDetach = uiResizable(panel, {
+    minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+    maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+    persist: panelSizePersist('homePanelWidth', 'homePanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+  });
+}
+
+/** 摘拖拽缩放（closeOverlay 隐藏与 unloadHome 卸载共用；persist 未落盘尾值由 detach 补存） */
+export function unmountPanelResize(): void {
+  if (!panelResizeDetach) return;
+  panelResizeDetach.detach();
+  panelResizeDetach = null;
+}
+
 export function createOverlay(app: any): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay bz-home-overlay';
@@ -137,6 +169,7 @@ export function createOverlay(app: any): void {
   };
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlay);
+  mountPanelResize(overlay); // 桌面拖拽缩放 + 尺寸记忆（ADR-0084/0094）
   void refreshRiverAndRender();
 }
 
@@ -208,6 +241,7 @@ export function closeOverlay(): void {
   if (!H.currentOverlay || !H.overlayVisible) return;
   const overlay = H.currentOverlay;
   saveScroll(overlay);
+  unmountPanelResize(); // 隐藏即摘缩放句柄（常驻 DOM 面板，重开 showOverlay 再挂）
   H.overlayVisible = false;
   // 动效层：先演退场再收 display（重开竞态由 motionPanelOut 的 done 判 H.overlayVisible 兜住）
   motionPanelOut(overlay, () => {
@@ -224,6 +258,7 @@ export function showOverlay(): void {
   H.overlayVisible = true;
   restoreScroll(overlay);
   motionPanelIn(overlay, true);
+  mountPanelResize(overlay); // 复用显重挂（closeOverlay 隐藏时已摘，此处句柄恒空，幂等由 mount 自守）
   void refreshRiverAndRender();
 }
 

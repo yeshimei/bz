@@ -1,4 +1,4 @@
-/* 源指纹 21b47375dc05a882 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 29ebc57e9df0053c · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
@@ -412,6 +412,23 @@ var BZW_encrypt = (() => {
   }
   function tryGetSettings() {
     return _provider ? _provider() : {};
+  }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
   }
   var _provider, _saver;
   var init_settings_provider = __esm({
@@ -5687,6 +5704,18 @@ var BZW_encrypt = (() => {
     el.addEventListener("touchcancel", endFromTouch);
     el.addEventListener("click", onClick, true);
   }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
   var liveOverlays = /* @__PURE__ */ new Set();
   function pruneDetachedOverlays() {
     for (const entry of liveOverlays) {
@@ -6427,6 +6456,157 @@ var BZW_encrypt = (() => {
 
   // src/core/ui/modal.ts
   init_z_order();
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a, _b, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a = opts.edge) != null ? _a : 8;
+    const minW = (_b = opts.minW) != null ? _b : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    let persistTimer = null;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
+      }
+    }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
+      if (persist == null ? void 0 : persist.save) {
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a2;
+          persistTimer = null;
+          (_a2 = persist.save) == null ? void 0 : _a2.call(persist, wantW, wantH);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
 
   // src/encrypt/ui.ts
   init_settings_provider();
@@ -10784,6 +10964,7 @@ var BZW_encrypt = (() => {
       ]
     };
   }
+  var PANEL = { MIN_W: 560, MIN_H: 420, MAX_W: 1e3, MAX_H: 820 };
   var _UIManager = class _UIManager {
     constructor(dataManager, config, pwDataManager) {
       /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
@@ -10820,6 +11001,8 @@ var BZW_encrypt = (() => {
       this.sessionTimer = null;
       /** 安全模式无交互自动上锁计时器（15 分钟；面板内交互重置） */
       this.idleLockTimer = null;
+      /** 桌面拖动缩放句柄（ADR-0084/0094）：show 挂、hide 摘，与面板显隐成对（幂等防重复挂） */
+      this.panelResizeDetach = null;
       /** 信封迁移进度通知句柄（迁移是解锁后一次性任务，句柄用完即清） */
       this._migNotify = null;
       /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
@@ -11107,6 +11290,15 @@ var BZW_encrypt = (() => {
       topifyZ(this.mask, this.popup);
       this.mask.style.display = "block";
       this.popup.style.display = "flex";
+      if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+        this.panelResizeDetach = uiResizable(this.popup, {
+          minW: PANEL.MIN_W,
+          minH: PANEL.MIN_H,
+          maxW: PANEL.MAX_W,
+          maxH: PANEL.MAX_H,
+          persist: panelSizePersist("encryptPanelWidth", "encryptPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+        });
+      }
       motionArmBoot();
       motionPanelIn(this.popup);
       trapPanelFocus(this.popup);
@@ -11115,9 +11307,12 @@ var BZW_encrypt = (() => {
       this.startSessionTimers();
     }
     hide(suppressAutoLockNotice = false) {
+      var _a;
       this.closePreview();
       this.closeAllDialogs();
       if (this.popup && this.popup.style.display === "flex") motionPanelCollapse(this.popup);
+      (_a = this.panelResizeDetach) == null ? void 0 : _a.detach();
+      this.panelResizeDetach = null;
       if (this.mask) this.mask.style.display = "none";
       if (this.popup) this.popup.style.display = "none";
       this.stopSessionTimers();

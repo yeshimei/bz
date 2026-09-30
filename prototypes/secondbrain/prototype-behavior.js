@@ -1,4 +1,4 @@
-/* 源指纹 acff96659c5f37a4 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e0fa8ce8a31b1073 · 仓内输入 98 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/abort.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/binary.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/parallel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/rerank-jev.ts","src/secondbrain/rerank.ts","src/secondbrain/store-file.ts","src/secondbrain/text-search.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/vector-math.ts","src/secondbrain/vector-store.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -212,8 +212,28 @@ var BZW_secondbrain = (() => {
   function setSettingsSaver(fn) {
     _saver = fn;
   }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
+  }
+  function panelSizePersist(keyW, keyH, minW, minH) {
+    return {
+      load: () => {
+        const s = tryGetSettings();
+        const w = Number(s[keyW]) || 0;
+        const h = Number(s[keyH]) || 0;
+        if (w < minW || h < minH) return null;
+        return { w, h };
+      },
+      save: (w, h) => {
+        const rec = tryGetSettings();
+        rec[keyW] = w;
+        rec[keyH] = h;
+        void saveSettings().catch((e) => console.error("[bz] 面板尺寸保存失败", e));
+      }
+    };
   }
   var _provider, _saver;
   var init_settings_provider = __esm({
@@ -1300,6 +1320,9 @@ var BZW_secondbrain = (() => {
   });
 
   // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
   var init_mobile = __esm({
     "src/core/mobile.ts"() {
       init_fake_obsidian();
@@ -1358,6 +1381,18 @@ var BZW_secondbrain = (() => {
   });
 
   // src/core/dom.ts
+  function swallowNextClick() {
+    const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
   function pruneDetachedOverlays() {
     for (const entry of liveOverlays) {
       if (!entry.mask.isConnected && !entry.popup.isConnected) liveOverlays.delete(entry);
@@ -1413,6 +1448,155 @@ var BZW_secondbrain = (() => {
   });
 
   // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a2, _b2, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a2 = opts.edge) != null ? _a2 : 8;
+    const minW = (_b2 = opts.minW) != null ? _b2 : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    let persistTimer = null;
+    let wantW = 0;
+    let wantH = 0;
+    const renderSize = () => {
+      if (wantW <= 0 || wantH <= 0) return;
+      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+    };
+    const persist = opts.persist;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        wantW = Math.min(Math.max(saved.w, minW), maxW);
+        wantH = Math.min(Math.max(saved.h, minH), maxH);
+        renderSize();
+      }
+    }
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      if (!dragging) renderSize();
+    };
+    window.addEventListener("resize", onWinResize);
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (dir === "e" || dir === "se") wantW = Math.min(Math.max(startW + dx, minW), maxW);
+      if (dir === "s" || dir === "se") wantH = Math.min(Math.max(startH + dy, minH), maxH);
+      renderSize();
+      if (opts.onChange) opts.onChange(wantW, wantH);
+      if (persist == null ? void 0 : persist.save) {
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a3;
+          persistTimer = null;
+          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, wantW, wantH);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startW = rect.width;
+      startH = rect.height;
+      if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+      if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onWinResize);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
   var init_resize = __esm({
     "src/core/ui/resize.ts"() {
       init_dom();
@@ -6413,6 +6597,7 @@ var BZW_secondbrain = (() => {
   init_flow_dialog();
   init_esc_manager();
   init_utils();
+  init_mobile();
   init_settings_provider();
   init_settings_modal();
   init_settings_common();
@@ -7759,6 +7944,7 @@ var BZW_secondbrain = (() => {
   }
 
   // src/secondbrain/panel.ts
+  var PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
   function confirmFullRebuild() {
     return openFlowDialog({
       title: "重新索引",
@@ -7791,6 +7977,8 @@ var BZW_secondbrain = (() => {
       this.motionOpened = false;
       /** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得把新显示位收回 none（首页同款教训） */
       this.motionSeq = 0;
+      /** 桌面拖动缩放句柄（ADR-0084/0094）：open 挂、close 摘，与面板显隐成对 */
+      this.panelResizeDetach = null;
       this.app = app;
       this.store = store2;
       this.opts = opts;
@@ -7801,6 +7989,15 @@ var BZW_secondbrain = (() => {
     }
     async open() {
       this.createUI();
+      if (!isMobileEnv() && !this.panelResizeDetach && this.popup) {
+        this.panelResizeDetach = uiResizable(this.popup, {
+          minW: PANEL.MIN_W,
+          minH: PANEL.MIN_H,
+          maxW: PANEL.MAX_W,
+          maxH: PANEL.MAX_H,
+          persist: panelSizePersist("secondbrainPanelWidth", "secondbrainPanelHeight", PANEL.MIN_W, PANEL.MIN_H)
+        });
+      }
       this.attachEscapeListener();
       topifyZ(this.mask, this.popup);
       this.mask.style.display = "block";
@@ -7815,7 +8012,10 @@ var BZW_secondbrain = (() => {
       await this.render();
     }
     close() {
+      var _a2;
       this.removeEscapeListener();
+      (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+      this.panelResizeDetach = null;
       const seq = this.motionSeq;
       motionPanelOut(this.popup, () => {
         if (seq !== this.motionSeq) return;
@@ -7838,11 +8038,13 @@ var BZW_secondbrain = (() => {
       this.escHandle = null;
     }
     destroy() {
-      var _a2, _b2;
+      var _a2, _b2, _c;
       this.removeEscapeListener();
+      (_a2 = this.panelResizeDetach) == null ? void 0 : _a2.detach();
+      this.panelResizeDetach = null;
       motionTeardown();
-      (_a2 = this.mask) == null ? void 0 : _a2.remove();
-      (_b2 = this.popup) == null ? void 0 : _b2.remove();
+      (_b2 = this.mask) == null ? void 0 : _b2.remove();
+      (_c = this.popup) == null ? void 0 : _c.remove();
       this.mask = null;
       this.popup = null;
     }

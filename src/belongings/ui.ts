@@ -31,9 +31,9 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { confirmDiscard } from '../core/flow-dialog';
-import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
+import { mountIcons, uiModal, uiSuggest, uiIconSpan, uiResizable } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -92,6 +92,10 @@ const M: BelState = {
 
 /** 自绘下拉的 document 外点收起监听（openPanel 挂，closePanel 摘） */
 let dropDocClick: ((e: MouseEvent) => void) | null = null;
+
+/** 桌面面板拖拽缩放限界（ADR-0084）+ 缩放句柄（开关重建型面板：openPanelInner 挂，closePanel 摘） */
+const PANEL = { MIN_W: 640, MIN_H: 460, MAX_W: 1280, MAX_H: 900 };
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
 /** 动效意图（动效层消费，renderAll 单点复位）：boot=开册编排 / flip=重排 FLIP（默认）/
  *  silent=静默（外部 modify 自动刷新、主题切换等非用户触发的全量重渲不重播任何编排） */
@@ -320,6 +324,18 @@ async function openPanelInner(): Promise<void> {
   // 纯接线一行：core trapPanelFocus 单源，焦点落面板容器不落输入框防软键盘）
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-bel-panel') ?? overlay);
 
+  // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：面板开关重建型，open 挂 / closePanel 摘
+  if (!isMobileEnv()) {
+    const panelEl = overlay.querySelector<HTMLElement>('.bz-bel-panel');
+    if (panelEl) {
+      panelResizeDetach = uiResizable(panelEl, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('belongingsPanelWidth', 'belongingsPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
+  }
+
   // ---- 年份/移动排序下拉（自绘海报菜单，原生 select 弹层退役；与桌面 seg 双向同步） ----
   // 触发器开合 + 选项点选 + 外点收起，一处 document 委托；closePanel 时摘除。
   // 呈报#12-B5 键盘路径：触发器关态 ↓/↑ 开下拉并定位当前项；开态 ↑↓ 移高亮（is-active，
@@ -525,6 +541,9 @@ export function closePanel(): void {
     bodyThemeObserver = null;
   }
   if (dropDocClick) { document.removeEventListener('click', dropDocClick); dropDocClick = null; }
+  // 拖拽缩放随面板关闭摘除（防抖尾值 detach 内自动 flush，尺寸不丢；先于 overlay 拆除）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   if (M.overlay) {
     const ov = M.overlay;
     M.overlay = null;
