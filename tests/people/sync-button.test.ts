@@ -401,15 +401,16 @@ describe('暂停任务不锁数据源（issue 486）：只有真在跑的生成�
 });
 
 describe('导入后同会话画谱（issue 492 徐雯静实案回归）', () => {
-  it('导入所选后重开数据源页点「画脸谱」：引擎拿到非空 msgs，同会话不再读导入前的空仓', async () => {
+  it('导入所选后从详情页「画脸谱」：引擎拿到非空 msgs，同会话不再读导入前的空仓', async () => {
     await bootWithDsOpen([person()]);
     click('[data-people-ds-check]'); // 勾上陈默（jsdom 合成 click 触发勾选激活）
     click('[data-people-ds-import]');
     // issue 507：导入完成即合上数据源这一页（新照片飞回册页），不再赖在页上
     await vi.waitFor(() => expect(document.querySelector('[data-people-sub="ds"]')).toBeNull());
-    openDataSource(); // 再打开
-    await vi.waitFor(() => expect(document.querySelector('[data-people-ds-generate]')).toBeTruthy());
-    click('[data-people-ds-generate]');
+    // D 组拍板：数据源页脚不再有「画脸谱」钮——画谱从详情页动作列逐人发起
+    //（飞回册上的这位是导入落库的「陈默」占位卡；画谱读保库记录，492 修的正是同会话快照不脱钩）
+    await openDetail('陈默');
+    click('[data-people-act="generate"]');
     await confirmGen(); // 497：总确认放行后才起引擎
     await vi.waitFor(() => expect(engineStarted.length).toBe(1));
     const targets = engineStarted[0][1];

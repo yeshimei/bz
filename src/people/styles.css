@@ -846,6 +846,13 @@
 .bz-people-note-del { font-size: var(--f-aux); color: var(--ink-mut); font-family: var(--sans); }
 .bz-people-note-del.bz-people-note-del { color: var(--ink-mut); } /* 双类提权（同按钮） */
 @media (hover: hover) { .bz-people-note-del:hover { color: var(--acc); } }
+/* 撕掉确认（D 组）：按钮就地换成一句问话 + 确认 / 取消（suppImgask 行内范式的纸片版） */
+.bz-people-note-ask { flex: none; display: flex; align-items: center; gap: 7px; font-size: var(--f-aux); color: var(--acc-deep, var(--ink)); }
+.bz-people-note-del-ok.bz-people-note-del-ok,
+.bz-people-note-del-no.bz-people-note-del-no { height: 20px; min-height: 0; padding: 0 8px; border: 0; border-radius: 4px;
+  font-size: var(--f-aux); cursor: pointer; }
+.bz-people-note-del-ok.bz-people-note-del-ok { background: var(--danger); color: #fff8f0; }
+.bz-people-note-del-no.bz-people-note-del-no { background: rgba(255, 253, 247, 0.92); color: var(--ink); }
 .bz-people-fold-hint { border: 1px dashed #d8d0bc; border-radius: var(--r-tab); padding: 22px 20px; text-align: center;
   font-family: var(--song); font-size: var(--f-mid); color: var(--ink-mut); line-height: 1.9; background: rgba(255,253,248,.5); }
 
@@ -996,6 +1003,12 @@ input.bz-people-input.bz-people-input::-webkit-calendar-picker-indicator {
 .bz-people-input:focus { border-bottom-color: var(--acc); }
 .bz-people-input::placeholder { color: #bdb6a2; font-style: italic; }
 .bz-people-prof-edit .bz-people-prof-row { padding: 5px 0; }
+/* 档案脏守卫确认条（D 组）：页顶一条横幅问「放弃？」，放弃 / 继续编辑就地按钮 */
+.bz-people-prof-leaveask { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; margin: 0 0 10px; border: 1px solid rgba(168, 67, 60, 0.4); border-radius: var(--r-card);
+  background: rgba(168, 67, 60, 0.08); }
+.bz-people-prof-leaveask-tx { font-size: var(--f-mid); color: var(--acc-deep); font-family: var(--song); }
+.bz-people-prof-leaveask-acts { display: flex; gap: 7px; margin-left: auto; }
 .bz-people-prof-sub { display: flex; flex-direction: column; gap: 5px; flex: 1; }
 .bz-people-prof-subrow { display: flex; gap: 7px; align-items: center; }
 .bz-people-prof-subrow .bz-people-input { flex: 1; }
@@ -1731,14 +1744,7 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
   border-radius: 4px; font-size: var(--f-aux); cursor: pointer; }
 .bz-people-supp-imgask-yes.bz-people-supp-imgask-yes { background: var(--danger); color: #fff8f0; }
 .bz-people-supp-imgask-no.bz-people-supp-imgask-no { background: rgba(255, 253, 247, 0.92); color: var(--ink); }
-/* 点开看大图（复评）：罩住整个面板，点哪儿都收（Esc 也收——esc-manager 单开一层） */
-.bz-people-supp-imgview { position: absolute; inset: 0; z-index: 95; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 12px; padding: 28px; cursor: zoom-out;
-  background: rgba(18, 14, 9, 0.74); }
-.bz-people-supp-imgview img { max-width: min(94%, 900px); max-height: 72vh; object-fit: contain;
-  border-radius: 8px; background: #fff; box-shadow: 0 14px 44px rgba(0, 0, 0, 0.52); }
-.bz-people-supp-imgview-cap { max-width: min(94%, 760px); max-height: 18vh; overflow: auto;
-  font-size: var(--f-mid); line-height: 1.8; color: #f4efe4; }
+/* 大图查看已改走 core 灯箱（.bz-lightbox，components.css）——域内自绘罩层退役 */
 .theme-dark .bz-people-supp-imgbox { background: rgba(0, 0, 0, 0.2); border-color: rgba(200, 180, 140, 0.22); }
 .theme-dark .bz-people-supp-imgcap { color: #b9b09a; }
 .bz-people-supp-ref { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: var(--f-mid);

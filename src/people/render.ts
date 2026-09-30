@@ -1177,13 +1177,23 @@ function secTitle(t: string): HTMLElement {
   return el('div', 'bz-people-sec-title', text(t));
 }
 
-/** 一张随手记纸片（纪事折与「记一笔」页签同一张；排序由调用方定） */
-function noteRow(m: ManualEvent): HTMLElement {
-  return el('div', 'bz-people-note-row', [
+/** 一张随手记纸片（纪事折与「记一笔」页签同一张；排序由调用方定）。
+ *  `pendingDel`（D 组拍板）：点了「撕掉」等确认的那条——按钮就地换成「撕掉这张？」确认 / 取消。 */
+function noteRow(m: ManualEvent, pendingDel = false): HTMLElement {
+  const row = el('div', 'bz-people-note-row', [
     el('span', 'bz-people-note-ts', text(m.ts)),
     el('span', 'bz-people-note-sum', text(m.summary)),
-    button('bz-people-note-del', '撕掉', { 'data-people-note-del': m.id }),
   ]);
+  if (pendingDel) {
+    row.appendChild(el('span', 'bz-people-note-ask', [
+      textEl('span', '撕掉这张？'),
+      button('bz-people-note-del-ok', '撕掉', { 'data-people-note-del-ok': m.id }),
+      button('bz-people-note-del-no', '取消', { 'data-people-note-del-cancel': m.id }),
+    ]));
+  } else {
+    row.appendChild(button('bz-people-note-del', '撕掉', { 'data-people-note-del': m.id }));
+  }
+  return row;
 }
 
 /**
@@ -1263,8 +1273,8 @@ export function foldBondBody(mdRoot: HTMLElement | null, p: PersonEntry): HTMLEl
   return out;
 }
 
-/** 纪事折正文：编年时间线在前，按月交往事件（可折）在后，随手记列表收尾 */
-export function foldEventsBody(p: PersonEntry): HTMLElement[] {
+/** 纪事折正文：编年时间线在前，按月交往事件（可折）在后，随手记列表收尾；noteDelPending 供撕掉确认回显 */
+export function foldEventsBody(p: PersonEntry, noteDelPending: string | null = null): HTMLElement[] {
   const out: HTMLElement[] = [];
   const chron = p.digest?.chronicle ?? '';
   if (chron) {
@@ -1301,7 +1311,7 @@ export function foldEventsBody(p: PersonEntry): HTMLElement[] {
   }
   const manual = p.manualEvents ?? [];
   if (manual.length) {
-    out.push(secTitle('随手记'), el('div', 'bz-people-notes', manual.map(noteRow)));
+    out.push(secTitle('随手记'), el('div', 'bz-people-notes', manual.map((m) => noteRow(m, noteDelPending === m.id))));
   }
   return out;
 }
@@ -1570,9 +1580,11 @@ export function profileEditor(prof: PersonProfile | undefined): HTMLElement {
   ]);
 }
 
-/** 补充背景弹窗正文（issue 455 自「档案」折迁来）：编辑态/有档显卡，全空给入口行；AI 补充按钮三态常驻 */
-export function profilePopBody(p: PersonEntry, editing: boolean): HTMLElement[] {
+/** 补充背景弹窗正文（issue 455 自「档案」折迁来）：编辑态/有档显卡，全空给入口行；AI 补充按钮三态常驻。
+ *  leaveConfirm（D 组脏守卫）：确认开着撞上整页重画时把这枚条画出来（常态由 ui 就地插入）。 */
+export function profilePopBody(p: PersonEntry, editing: boolean, leaveConfirm = false): HTMLElement[] {
   const out: HTMLElement[] = [];
+  if (editing && leaveConfirm) out.push(profLeaveAsk());
   const hasProf = profileFilled(p.profile);
   if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
   if (!hasProf && !editing) {
@@ -1619,7 +1631,7 @@ export function subPage(opts: SubPageOpts, body: HTMLElement[]): HTMLElement {
 
 /**
  * 数据源册页：路径行 + 通知行 + 同步条 + 逐行勾选（含导入水位）+ 图例，
- * 页脚是勾选总账与「画脸谱 / 导入所选」。
+ * 页脚是勾选总账与「导入所选」（D 组拍板：页脚「画脸谱」退役——画谱从详情页动作列 / 印章逐人发起）。
  */
 export function dsPage(s: DsModalState): HTMLElement {
   const body: HTMLElement[] = [];
@@ -1636,24 +1648,38 @@ export function dsPage(s: DsModalState): HTMLElement {
           ? '还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。'
           : '还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。')));
   } else {
-    const list = el('div', 'bz-people-ds-list', { 'data-people-ds-list': '' });
-    for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
-    body.push(list);
-    const legend = el('div', 'bz-people-ds-legend');
-    legend.append(
-      el('span', '', [el('i', 'bz-people-ds-dot-ok'), text('有更新')]),
-      el('span', '', [el('i', 'bz-people-ds-dot-idle'), text('已导无更新')]),
-      el('span', '', [el('i', 'bz-people-ds-dot-none'), text('未导入')]),
-    );
-    if (s.rows.some((r) => (r.newCount ?? 0) > 0)) {
-      legend.appendChild(button('bz-people-ds-pickfresh', '勾有更新的', { 'data-people-ds-pickfresh': '' }));
+    // 过滤框（D 组拍板）：复用找一找的 findbox 结构与样式口径；只裁显示不动勾选
+    const fbox = el('div', 'bz-people-findbox');
+    fbox.appendChild(el('i', 'bz-ic', { 'data-lucide': 'search', 'aria-hidden': 'true' }));
+    const finp = document.createElement('input');
+    finp.className = 'bz-people-input';
+    finp.value = s.filter;
+    finp.setAttribute('data-people-ds-filter', '');
+    finp.setAttribute('placeholder', '按名字过滤联系人…');
+    fbox.appendChild(finp);
+    if (s.filter.trim()) fbox.appendChild(iconButton('x', 'bz-people-ico bz-people-ico-sm', { 'data-people-ds-filter-clear': '', 'aria-label': '清空过滤' }));
+    body.push(fbox);
+    if (!s.rows.length) {
+      body.push(el('div', 'bz-people-empty-hint', text(`没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`)));
+    } else {
+      const list = el('div', 'bz-people-ds-list', { 'data-people-ds-list': '' });
+      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+      body.push(list);
+      const legend = el('div', 'bz-people-ds-legend');
+      legend.append(
+        el('span', '', [el('i', 'bz-people-ds-dot-ok'), text('有更新')]),
+        el('span', '', [el('i', 'bz-people-ds-dot-idle'), text('已导无更新')]),
+        el('span', '', [el('i', 'bz-people-ds-dot-none'), text('未导入')]),
+      );
+      if (s.rows.some((r) => (r.newCount ?? 0) > 0)) {
+        legend.appendChild(button('bz-people-ds-pickfresh', '勾有更新的', { 'data-people-ds-pickfresh': '' }));
+      }
+      body.push(legend);
     }
-    body.push(legend);
   }
   const foot = el('div', 'bz-people-pop-foot');
   foot.appendChild(el('span', 'bz-people-ds-count', { 'data-people-ds-count': '' }, text(footerLabel(s))));
   foot.appendChild(el('span', 'bz-people-spacer'));
-  if (s.generateable) foot.appendChild(button('bz-people-btn bz-people-btn-gold', '画脸谱', { 'data-people-ds-generate': '' }));
   const imp = button('bz-people-btn bz-people-btn-acc', s.importing ? '导入中…' : '导入所选', { 'data-people-ds-import': '' });
   if (s.importing || s.syncing) imp.setAttribute('disabled', '');
   foot.appendChild(imp);
@@ -1663,7 +1689,15 @@ export function dsPage(s: DsModalState): HTMLElement {
   head.push(s.syncing
     ? button('bz-people-btn bz-people-btn-sm', '停止', { 'data-people-ds-sync-stop': '', title: '停止同步——已导出的部分保留，重跑可续传' })
     : button('bz-people-btn bz-people-btn-sm', '同步', { 'data-people-ds-sync': '', title: '从微信重新解密并导出，需要微信已登录' }));
-  const meta = s.syncing ? '正在同步…' : s.scanning ? '正在扫描…' : s.rows ? `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ''}` : '';
+  const meta = s.syncing
+    ? '正在同步…'
+    : s.scanning
+      ? '正在扫描…'
+      : s.rows
+        ? (s.filter.trim()
+          ? `${s.rows.length} / 共 ${s.totalRows} 位` // 过滤中（D 组）：N / 总 M 位
+          : `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ''}`)
+        : '';
   return subPage({ title: '数据源', meta, head, foot, hook: 'ds' }, body);
 }
 
@@ -1704,6 +1738,21 @@ export function statsPage(p: PersonEntry, body: HTMLElement[]): HTMLElement {
 /** 补充背景册页 */
 export function profPage(p: PersonEntry, body: HTMLElement[], editing: boolean): HTMLElement {
   return subPage({ title: '补充背景', meta: editing ? `${p.name} · 编辑中` : p.name, hook: 'prof' }, body);
+}
+
+/**
+ * 档案脏守卫确认条（D 组拍板）：「改动还没保存——放弃？」+ 放弃 / 继续编辑。
+ * 多数时候由 ui 就地插入（不整页重画，编辑卡的未保存值得以保留）；整页重画若撞上
+ * 确认开着（profLeaveConfirm），profilePopBody 也会把这枚条画出来，两路同一份 markup。
+ */
+export function profLeaveAsk(): HTMLElement {
+  return el('div', 'bz-people-prof-leaveask', [
+    el('span', 'bz-people-prof-leaveask-tx', text('改动还没保存——放弃？')),
+    el('span', 'bz-people-prof-leaveask-acts', [
+      button('bz-people-btn bz-people-btn-sm bz-people-btn-danger', '放弃', { 'data-people-prof-leave-ok': '' }),
+      button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '继续编辑', { 'data-people-prof-leave-cancel': '' }),
+    ]),
+  ]);
 }
 
 // ---------------- 补充素材册页（issue 509 / ADR-0212：文本 / 图片 / 录音三页签） ----------------
@@ -1872,8 +1921,8 @@ export function applyRecStageChain(chain: HTMLElement, cur: NonNullable<SuppRecR
   });
 }
 
-/** 补充素材页（原「记一笔」扩容；hook 沿用 'note'——ui 的委托面不变） */
-export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState, rec: SuppRecViewState, today: string): HTMLElement {
+/** 补充素材页（原「记一笔」扩容；hook 沿用 'note'——ui 的委托面不变）；noteDelPending 供撕掉确认回显 */
+export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState, rec: SuppRecViewState, today: string, noteDelPending: string | null = null): HTMLElement {
   const body: HTMLElement[] = [];
   body.push(el('div', 'bz-people-ftabs bz-people-supp-tabs', SUPP_TABS.map(([id, label, hint]) =>
     button(`bz-people-ftab${tab === id ? ' on' : ''}`, label, { 'data-people-supp-tab': id, title: hint }))));
@@ -1885,7 +1934,7 @@ export function suppPage(p: PersonEntry, tab: SuppTab, image: SuppImageViewState
       notes.length ? `已记 ${notes.length} 笔` : '还没记过——上面写一条，就落在这一列。',
     )));
     if (notes.length) {
-      body.push(el('div', 'bz-people-notes bz-people-supp-notes', notes.map(noteRow)));
+      body.push(el('div', 'bz-people-notes bz-people-supp-notes', notes.map((m) => noteRow(m, noteDelPending === m.id))));
     }
   } else if (tab === 'image') {
     body.push(...suppImageBody(image));
@@ -2505,13 +2554,17 @@ export interface DsModalState {
   selected: string[];
   hiddenGroups: number;
   notice: string;
-  /** 导入完成有新素材 → 出「画脸谱」 */
-  generateable: boolean;
   /** 非桌面端（无 window.require） */
   desktopOnly: boolean;
+  /** 数据源页过滤字（D 组；空 = 未过滤） */
+  filter: string;
+  /** 全量联系人总数（过滤中页眉「N / 共 M 位」的 M） */
+  totalRows: number;
+  /** 未过滤的全量行（页脚勾选总账的口径——被滤掉的行勾着也照常计入，不因看不见而丢账） */
+  allRows?: DsRowState[];
   /** 本次扫描完成时刻（HH:MM 展示；'' = 未扫） */
   scannedAt: string;
-  /** 同步进行中（issue 465）：右上角只出「停止」、页脚「导入所选 / 画脸谱」置灰 */
+  /** 同步进行中（issue 465）：右上角只出「停止」、页脚「导入所选」置灰 */
   syncing: boolean;
   /** 同步进度行（册页内一条，不占画像生成进度便签——ADR-0196 决策 6；null = 无同步动态） */
   sync: DsSyncLine | null;
@@ -2558,7 +2611,8 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   const water = dsWaterOf(row);
   // 三档不可勾：群聊（未纳入）、「已导入且无新素材」（issue 507：再导一遍等于白导）
   const cls = `bz-people-ds-row${on ? ' bz-people-ds-on' : ''}${fresh ? ' bz-people-ds-fresh' : ''}${row.isGroup ? ' bz-people-ds-off' : ''}${water?.k === 'skip' ? ' bz-people-ds-skip' : ''}`;
-  const box = el('span', 'bz-people-ds-box', { 'data-people-ds-check': row.name, role: 'checkbox', 'aria-checked': on ? 'true' : 'false' },
+  // tabindex（D 组键盘可达）：勾选框可聚焦，Space 切勾选由 ui 的 keydown 委托接（与点击同账）
+  const box = el('span', 'bz-people-ds-box', { 'data-people-ds-check': row.name, role: 'checkbox', tabindex: '0', 'aria-checked': on ? 'true' : 'false' },
     on ? el('i', 'bz-ic', { 'data-lucide': 'check', 'aria-hidden': 'true' }) : text(''));
   const name = row.displayName + (row.isGroup ? '（群）' : '');
   return el('label', cls, [
@@ -2575,9 +2629,10 @@ export function dsRow(row: DsRowState, on: boolean): HTMLElement {
   ]);
 }
 
-/** 页脚账：勾了几位、会发生什么（全新 / 增量 / 跳过逐项报） */
+/** 页脚账：勾了几位、会发生什么（全新 / 增量 / 跳过逐项报）。
+ *  口径取 allRows（未过滤全量；D 组过滤只裁列表显示，勾着但被滤掉的行照常入账）。 */
 function footerLabel(s: DsModalState): string {
-  const picked = (s.rows ?? []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+  const picked = (s.allRows ?? s.rows ?? []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
   if (!picked.length) return '未勾选联系人';
   const n = { full: 0, newer: 0, skip: 0, exported: 0 };
   let msgs = 0;

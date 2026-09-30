@@ -737,9 +737,10 @@ describe('数据源册页（dsPage）', () => {
     selected: [],
     hiddenGroups: 0,
     notice: '',
-    generateable: false,
     desktopOnly: false,
     scannedAt: '10:32',
+    filter: '',
+    totalRows: 0,
     syncing: false,
     sync: null,
     ...over,
@@ -770,14 +771,13 @@ describe('数据源册页（dsPage）', () => {
     expect(syncing.querySelector('[data-people-ds-sync-line]')).toBeTruthy();
   });
 
-  it('页脚：勾选总账 + 导入所选；导入完成才出「画脸谱」；同步 / 导入中导入钮置灰', () => {
+  it('页脚：勾选总账 + 导入所选；「画脸谱」已退役（D 组拍板：画谱从详情页逐人发起）；同步 / 导入中导入钮置灰', () => {
     const idle = dsPage(state({ rows: [dsRowBase] }));
     expect(idle.querySelector('[data-people-ds-import]')!.textContent).toBe('导入所选');
-    expect(idle.querySelector('[data-people-ds-generate]')).toBeNull();
     expect(idle.querySelector('[data-people-ds-import]')!.hasAttribute('disabled')).toBe(false);
-
-    const gen = dsPage(state({ rows: [dsRowBase], selected: ['林晚'], generateable: true }));
-    expect(gen.querySelector('[data-people-ds-generate]')!.textContent).toBe('画脸谱');
+    // 页脚不再有「画脸谱」（D 组拍板）：任何状态下都不出
+    expect(dsPage(state({ rows: [dsRowBase], selected: ['林晚'] })).querySelector('[data-people-ds-generate]')).toBeNull();
+    expect(dsPage(state({ rows: [dsRowBase] })).textContent).not.toContain('画脸谱');
 
     expect(dsPage(state({ rows: [dsRowBase], importing: true })).querySelector('[data-people-ds-import]')!.hasAttribute('disabled')).toBe(true);
     expect(dsPage(state({ rows: [dsRowBase], syncing: true })).querySelector('[data-people-ds-import]')!.hasAttribute('disabled')).toBe(true);
@@ -855,7 +855,7 @@ describe('数据源行（dsRow 四态 + 水位）', () => {
 describe('页脚账与导入水位（dsPage 页脚 / dsWaterOf）', () => {
   const state = (over: Partial<Parameters<typeof dsPage>[0]> = {}): Parameters<typeof dsPage>[0] => ({
     dataDir: 'D:/数据', scanning: false, importing: false, rows: [dsRowBase], selected: [],
-    hiddenGroups: 0, notice: '', generateable: false, desktopOnly: false, scannedAt: '', syncing: false, sync: null, ...over,
+    hiddenGroups: 0, notice: '', desktopOnly: false, scannedAt: '', syncing: false, sync: null, filter: '', totalRows: 0, ...over,
   });
   const countOf = (over: Partial<Parameters<typeof dsPage>[0]>): string =>
     dsPage(state(over)).querySelector('[data-people-ds-count]')!.textContent!;
