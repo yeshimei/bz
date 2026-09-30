@@ -140,6 +140,7 @@ import {
   albumSealOf,
   albumSpread,
   avatarNode,
+  chatPage,
   dateRow,
   deleteTierOf,
   delPage,
@@ -184,6 +185,8 @@ import {
   tagChip,
   turnLoad,
   type AlbumPhoto,
+  type ChatLine,
+  type ChatViewState,
   type DsModalState,
   type DsRowState,
   type DsSyncLine,
@@ -203,6 +206,8 @@ import {
 } from './render';
 
 import { appendSuppImageGridPage, el, profLeaveAsk, text, textEl } from './render';
+import { chatLinesOf, chatSepOf, isGroupChatLines, type ChatLineData } from './chat';
+import { clearMyAvatarCache, localImgOf, resolveMyAvatar } from './me-avatar';
 import { cancelThumbQueue, descThumbPath, queueThumbBuild, resetThumbQueueForPanel, thumbHandled } from './thumbs';
 import { mountIcons, openLightbox, uiResizable } from '../core/ui';
 import { bindWheelTurn } from '../core/gesture';
@@ -312,8 +317,8 @@ let exportRun: ContactsExportHandle | null = null;
 
 // ---------------- 册子状态（issue 505：打开面板就是一本相册，弹窗也是册子里的一页） ----------------
 
-/** 册页弹窗：ds / gen / find 不靠人（单页摊满整册）；stats / prof / note / del 靠人（翻在详情那侧） */
-type DialogKind = 'ds' | 'gen' | 'find' | 'stats' | 'prof' | 'note' | 'del';
+/** 册页弹窗：ds / gen / find 不靠人（单页摊满整册）；stats / prof / note / chat / del 靠人（翻在详情那侧） */
+type DialogKind = 'ds' | 'gen' | 'find' | 'stats' | 'prof' | 'note' | 'chat' | 'del';
 
 /** 当前摊的左页序号（0 基，恒偶数）：翻摊改它，重画按它摆左右两页 */
 let cur = 0;
@@ -371,6 +376,22 @@ let suppStoreInfo: {
 } = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
 /** 录音页签的进度轮询（只在页签可见时跑） */
 let recPollTimer: number | null = null;
+
+// —— 聊天页状态（issue 529；hook 走 dialog.kind = 'chat'） ——
+/** 一页上屏多少条（进页落在最新一条，往上长一页；两万条不整页铺） */
+const CHAT_PAGE = 50;
+/** 聊天仓时间线全量展示行（进页现读；换人 / 上锁 / 关面板即清） */
+let chatAll: ChatLineData[] = [];
+/** 已上屏的条数（从最新那头往回数） */
+let chatShown = CHAT_PAGE;
+/** 正在读保库记录（首屏） */
+let chatLoading = false;
+/** 加载更早时重画前记下的「离底距离」（重画后按同一距离还原——内容往上长，不是往下长） */
+let chatAnchorBottom: number | null = null;
+/** 这一次重画完要滚到底（进页 / 点「回到最新」） */
+let chatScrollBottom = false;
+/** 「更早的消息」哨兵的观察（进视口自动放一页；非聊天页即摘） */
+let chatMoreIO: IntersectionObserver | null = null;
 
 // —— 一次性动效标志：只在「刚发生」那一次重画里放，重画后立刻清掉（同页后续重画不重放） ——
 let animBoot = true;      // 册子首次摊开（照片显影、纸边探出来）
@@ -660,6 +681,7 @@ function buildPanelShell(app?: unknown): void {
     if (evt?.unlocked === false) {
       peopleSafe?.clearPlainCaches();
       recordCache = null;
+      clearChatState(); // 聊天页的行也是解密后的聊天原文（issue 529）
       void renderAlbum(); // renderBody 检查解锁态，渲染锁定占位
     } else if (evt?.unlocked === true) {
       void renderAlbum();
@@ -669,7 +691,7 @@ function buildPanelShell(app?: unknown): void {
   // 同步进程独立于面板：关面板不退订同步本身（模块级单例照跑），只退本面板的渲染订阅。
   offSyncWatch = subscribeSync(onSyncState);
   // 库外图字节缓存在开面板时清一次（同路径换了图 / 补了文件不用重载插件）
-  localImgCache.clear();
+  clearMyAvatarCache();
   // 分片与缩略档跟面板走（issue 519）：shown 回首屏量；坏档办结记录清了给重试机会
   suppImgShown = SUPP_IMG_PAGE;
   resetThumbQueueForPanel();
@@ -729,6 +751,7 @@ export function closePeoplePanel(): void {
   stage = 'list';
   listCache = [];
   recordCache = null; // 452 缓存语义沿用：保库记录快照随面板关闭失效（下次打开重读）
+  clearChatState(); // 聊天页读出来的行同样随面板关失效（issue 529）
   loadActive = false; // 483：冷读指示态不随面板存续（进行中的 readAll 照常完成，落盘缓存供热读）
   loadDone = 0;
   loadTotal = null;
@@ -1991,6 +2014,9 @@ function onOverlayClick(e: MouseEvent): void {
   if (dlg) { void openDialogByHook(dlg.dataset.peopleDialog ?? ''); return; }
   if (t.closest('[data-people-close]')) { guardProfLeave(closeDialog); return; }
   if (t.closest('[data-people-banner-close]')) { banner = null; renderBanner(); return; }
+  // —— 聊天页（issue 529）：往上放更早的一页 / 回到最新 ——
+  if (t.closest('[data-people-chat-more]')) { growChat(); return; }
+  if (t.closest('[data-people-chat-bottom]')) { chatScrollBottom = true; chatAnchorBottom = null; void renderAlbum(); return; }
   // —— 数据源册页 ——
   if (t.closest('[data-people-ds-sync]')) { handleSyncClick(); return; }
   if (t.closest('[data-people-ds-sync-stop]')) { stopSync(); return; }
@@ -2034,6 +2060,7 @@ function onOverlayClick(e: MouseEvent): void {
     // 补充背景再点一下（编辑中重开）：脏着先确认（D 组拍板三路之一）
     if (kind === 'prof') { guardProfLeave(() => { clearProfEditState(); openDialog('prof'); }); return; }
     if (kind === 'note') { openDialog('note'); return; }
+    if (kind === 'chat') { openChat(); return; } // issue 529：聊天仓里的消息终于有地方看
     if (kind === 'del') { void handleDelete(act.dataset.peopleDel ?? detailId ?? ''); return; }
   }
   // —— 折页切换 / 「另有 N 条」摊开 / 月组开合 / 撕掉随手记 ——
@@ -2441,6 +2468,7 @@ function dialogPage(p: PersonEntry | null, avatars?: Map<string, string>): HTMLE
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);
   if (p && kind === 'note') return suppPage(p, suppTab, suppImageState(), suppRecState(p.id, avatars?.get(p.id) ?? ''), todayStr(), noteDelPending);
+  if (p && kind === 'chat') return chatPage(chatPageState(p, avatars));
   if (p && kind === 'del') return delPage(p, dialog?.tier ?? deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
   return subPage({ title: '', hook: 'none' }, []);
 }
@@ -2475,6 +2503,132 @@ function findPageState(avatars?: Map<string, string>): HTMLElement {
   return findPage({ q, total: listCache.length, rows, tags: tagPool });
 }
 
+// ---------------- 聊天页（issue 529：详情页动作签「查看聊天」） ----------------
+
+/** 开聊天页：按人现读聊天仓（保库记录解密缓存命中时是一次 microtask），渲染落最新一条 */
+function openChat(): void {
+  const id = detailId;
+  if (!id) return;
+  chatAll = [];
+  chatLoading = true;
+  chatShown = CHAT_PAGE;
+  chatScrollBottom = true;
+  chatAnchorBottom = null;
+  openDialog('chat');
+  void loadChatRows(id);
+}
+
+/** 读聊天仓 → 展示行（换页 / 换人 / 关面板期间回来的结果一律丢掉） */
+async function loadChatRows(id: string): Promise<void> {
+  let rows: ChatLineData[] = [];
+  try {
+    const recs = await records();
+    rows = chatLinesOf(recs.get(id)?.store.msgs);
+  } catch (e) {
+    console.warn('[people] 读取聊天记录失败:', e);
+  }
+  if (dialog?.kind !== 'chat' || detailId !== id) return;
+  chatAll = rows;
+  chatLoading = false;
+  chatScrollBottom = true;
+  void renderAlbum();
+}
+
+/**
+ * 聊天页展示态：**末 `chatShown` 条**（往上长的分页）+ 时间分隔条 + 群聊才出的发送者名。
+ * 头像：我方 = 设置 / 微信里的本人头像，对方 = 保库记录里那张（没有就首字印）。
+ */
+function chatPageState(p: PersonEntry, avatars?: Map<string, string>): ChatViewState {
+  const name = p.name || p.id;
+  const shown = chatAll.slice(Math.max(0, chatAll.length - chatShown));
+  const group = isGroupChatLines(chatAll);
+  const now = Date.now();
+  const meAvatar = myAvatarOf();
+  const otherAvatar = avatars?.get(p.id) ?? '';
+  let prevTs: number | null = null;
+  const lines: ChatLine[] = shown.map((l) => {
+    const sep = chatSepOf(l.ts, prevTs, now);
+    prevTs = l.ts;
+    return {
+      ...(l.key ? { key: l.key } : {}),
+      me: l.me,
+      avatar: l.me ? meAvatar : otherAvatar,
+      who: l.me ? '我' : l.who || name,
+      ...(group && !l.me && l.who ? { name: l.who } : {}),
+      ...(l.tag ? { tag: l.tag } : {}),
+      text: l.text,
+      ...(sep ? { sep } : {}),
+    };
+  });
+  return {
+    name,
+    lines,
+    total: chatAll.length,
+    hasMore: chatAll.length > shown.length,
+    loading: chatLoading,
+  };
+}
+
+/** 往上再放一页（哨兵进视口自动 / 点哨兵兜底）：重画前记离底距离，回来还按它落 */
+function growChat(): void {
+  if (dialog?.kind !== 'chat' || chatLoading) return;
+  if (chatShown >= chatAll.length) return;
+  chatAnchorBottom = chatBottomGap();
+  chatShown = Math.min(chatAll.length, chatShown + CHAT_PAGE);
+  void renderAlbum();
+}
+
+/** 聊天页那块滚动当前离底多少像素（加载更早的锚点） */
+function chatBottomGap(): number | null {
+  const box = overlay?.querySelector<HTMLElement>('[data-people-sub="chat"] [data-people-scroll]');
+  if (!box) return null;
+  return Math.max(0, box.scrollHeight - box.clientHeight - box.scrollTop);
+}
+
+/** 聊天页滚动落点（重画后调）：进页 / 回到最新 → 贴底；加载更早 → 保持离底距离 */
+function restoreChatScroll(): void {
+  if (dialog?.kind !== 'chat') return;
+  const box = overlay?.querySelector<HTMLElement>('[data-people-sub="chat"] [data-people-scroll]');
+  if (!box) return;
+  if (chatScrollBottom) {
+    box.scrollTop = box.scrollHeight;
+    chatScrollBottom = false;
+    chatAnchorBottom = null;
+    return;
+  }
+  if (chatAnchorBottom !== null) {
+    box.scrollTop = Math.max(0, box.scrollHeight - box.clientHeight - chatAnchorBottom);
+    chatAnchorBottom = null;
+  }
+}
+
+function disarmChatMore(): void {
+  chatMoreIO?.disconnect();
+  chatMoreIO = null;
+}
+
+/** 重挂哨兵观察（rootMargin 提前量：滚到离顶一屏就放上一页，不露等待；IO 缺席点哨兵兜底） */
+function armChatMore(sentinel: HTMLElement | null): void {
+  disarmChatMore();
+  if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+  chatMoreIO = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    disarmChatMore();
+    growChat();
+  }, { rootMargin: '600px 0px' });
+  chatMoreIO.observe(sentinel);
+}
+
+/** 聊天页状态整个丢掉（上锁 / 关面板：解密过的聊天文本不跟着留在内存里） */
+function clearChatState(): void {
+  chatAll = [];
+  chatShown = CHAT_PAGE;
+  chatLoading = false;
+  chatAnchorBottom = null;
+  chatScrollBottom = false;
+  disarmChatMore();
+}
+
 /**
  * 把导入队列里**已上屏但还没提交**的起点收回模型（issue 516 回归防护）。
  * 必须在任何整页重画前调用：否则「用户正在输起点时队列动了一下（抽检进程出队 / 转写推进）」
@@ -2504,6 +2658,7 @@ async function renderAlbum(): Promise<void> {
   if (!peopleSafe?.unlocked) {
     listCache = [];
     recordCache = null;
+    clearChatState(); // 上锁即丢（聊天页的行 = 解密后的聊天原文）
     panel.classList.add('bz-people-locked');
     wrap.replaceWith(lockCover(animBoot));
     renderNote();
@@ -2525,6 +2680,7 @@ async function renderAlbum(): Promise<void> {
   if (!overlay || !peopleSafe?.unlocked) return; // await 期间面板被关 / 保险库被上锁：本次渲染作废
   overlay.querySelector<HTMLElement>('[data-people-scroll]')?.replaceWith(next);
   restoreScroll(scroll);
+  restoreChatScroll(); // 聊天页：进页 / 回到最新贴底，加载更早保持离底距离（覆盖上面的通用还原）
   // 吸附基准先量（窄屏折签吸在页眉下沿；换折落点要用它算）——重画换了页元素，量必须在本轮
   syncStickyHeadH();
   // 换折（issue 507；复评二改）：落到**折页**的起头处，不是整页顶——照片/动作区之上不动，
@@ -2537,6 +2693,8 @@ async function renderAlbum(): Promise<void> {
   applyJobsLockdown();
   // 留影网格哨兵（issue 519）：渲染后重挂观察——非素材页 query 不到 = 仅摘，幂等
   armSuppImgMore(overlay.querySelector<HTMLElement>('[data-people-supp-img-more]'));
+  // 聊天页「更早的消息」哨兵（issue 529）：同上——非聊天页 query 不到 = 仅摘
+  armChatMore(overlay.querySelector<HTMLElement>('[data-people-chat-more]'));
   mountIcons(overlay); // lucide 占位 → SVG
   clearAnim();
 }
@@ -3626,24 +3784,14 @@ function recDelState(): SuppRecViewState['del'] {
   return { file: recDelPending, alsoFile: recDelAlsoFile, drawn };
 }
 
-/** 库外图 → data URL（留影缩略图 / 大图与「我」的头像同一口径）：app://local 不解库外文件，
- *  读字节最稳（456 头像入库 / 467 头像进保库两轮的教训）。按路径缓存，面板每次打开清一次
- *  （同路径换了图、或先写错路径再补文件，不用重载插件）。 */
-const localImgCache = new Map<string, string>();
-function localImgOf(absolutePath: string): string {
-  const hit = localImgCache.get(absolutePath);
-  if (hit !== undefined) return hit;
-  const url = dataUrlOf(readAvatarInput(absolutePath)) ?? '';
-  localImgCache.set(absolutePath, url);
-  return url;
-}
-
-/** 「我」的头像（设置 peopleMyAvatar）：data URL / 库内相对路径原样交给渲染层（avatarUri 分流），
- *  库外绝对路径读字节转 data URL（与数据源头像同口径）——逐轮重画不重读盘。 */
+/**
+ * 「我」的头像（issue 529 起解析单源在 me-avatar.ts）：自定义图（设置 peopleMyAvatar，
+ * 库内相对路径 / 库外绝对路径读字节转 data URL）→ 微信数据里扒出来的本人头像 → 空（首字印）。
+ * 面板每次打开清一次字节缓存（同路径换了图不用重载插件）。
+ */
 function myAvatarOf(): string {
-  const p = String((tryGetSettings() as { peopleMyAvatar?: string } | null)?.peopleMyAvatar ?? '').trim();
-  if (!p) return '';
-  return /^[A-Za-z]:/.test(p) ? localImgOf(p) : p;
+  const s = tryGetSettings() as { peopleMyAvatar?: string } | null;
+  return resolveMyAvatar(s?.peopleMyAvatar, dsDataDir());
 }
 
 /** 「查看轮次」的展示态（面板内读 sidecar，含旁音轮；与 `<名>.turns.md` 同口径） */

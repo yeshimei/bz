@@ -532,7 +532,7 @@ export default interface BzSettings {
   peopleKeepSystem: boolean;
   /** 图片描述每批张数（issue 470：画脸谱时 AI 描述一次调用的图片上限，默认 20） */
   peopleDescBatchSize: number;
-  /** 「我」在逐轮时间轴里的头像图片（本机图片路径或库内相对路径）；空 = 名字首字印 */
+  /** 「我」在聊天里的头像（本机图片绝对路径 / 库内相对路径）；空 = 回落微信数据里扒出来的本人头像，再没有才落首字印 */
   peopleMyAvatar: string;
   // 447 退役：peopleScanOnOpen（开弹窗即扫）/ peopleGenTrigger / peopleGenThreshold（画脸谱一律弹窗内手动）
   // 467 退役：peopleMediaDir（库内明文媒体文件夹）——头像随保库记录进保险库，「文件夹名=人名」的明文目录停止使用

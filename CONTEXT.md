@@ -462,6 +462,10 @@ _Avoid_: 轮次（那是分离的最小话轮）、录音条数（统计口径 =
 **重进程闸门 (Heavy Gate)**: 脸谱内**跨通道的单资源闸**（`src/people/heavy-gate.ts`，ADR-0218）——同一时刻至多一个持有者：`portrait`（画谱任务，**整条任务**持闸含 AI 段）或 `recording`（录音处理 / 质心构建 / 归属抽检全程）。**占闸判定含待命进程**：画谱任务暂停但 prep 进程待命（模型未卸载）仍算占用；此时起录音会先协作式终结该进程（提示恢复画谱要冷加载模型）。录音侧等闸 = 内存队列（`排队中 · 第 N 位`，不持久化，续跑依据永远是 sidecar）；画谱侧等闸 = 任务留 `paused` + 「等待录音处理结束」，闸门释放即 `kick()`。FIFO，无优先级。**同身份可重入（计数）**：画谱侧 `runJob` 与 prep 会话各持一份，谁先退出都不误松。_Avoid_: 锁（重入计数语义更像信号量）、互斥锁、任务队列（那是引擎的持久化队列，闸门只是资源许可）
 _Avoid_: 锁、互斥锁（笼统）、任务队列（那是画谱引擎自己的持久化队列）
 
+**会话流 (Chat Stream)**: 脸谱里「把聊天摆成微信那样」的**唯一组件**（issue 529 / ADR-0227）——规则在 `src/people/chat.ts`（什么算一条消息：只取 `text !== ''` 的时间线条目、标签怎么剥、什么时候插时间分隔条），markup 在 `render.ts` 的 `chatStream`（头像 + 气泡、我方靠右绿气泡带尖角、群聊才写发送者名）。两个上屏面共用：详情页动作签「**查看聊天**」（册页 `dialog.kind = 'chat'`，读该人聊天仓全量，`CHAT_PAGE = 50` 一页往上长、顶上「更早的消息」既是按钮也是哨兵）与补充素材页签的「**查看轮次**」（录音逐轮预览，旁音轮收灰留档）。_Avoid_: 时间轴（那是画谱素材口径）、气泡组件（笼统）、聊天记录页（指页面时说「查看聊天」）
+
+**本人头像 (Self Avatar)**: 聊天里「我」那一侧的头像（issue 529）；三级取值在 `src/people/me-avatar.ts` 单源——设置键 `peopleMyAvatar`（上传的图存 vault 的 `CONFIG/FACES/我/avatar.<ext>`，键值 = 库内相对路径）→ **微信数据里扒出来的本人头像**（工具 sync / export 轮把账号自己的 `head_image` 那条导出到 `<数据根>/.bz-face/me/avatar.<ext>`，放 `.bz-face` 下 = 不会被数据源当成一位联系人）→ 空（渲染层落首字印）。_Avoid_: 「我的头像」键当唯一来源（空值不等于首字印，是回落微信那张）、往联系人目录塞本人头像（会被扫描成一位联系人）
+
 **旁音 (Side Speech)**: 录音里不属于本对话两人的第三人语音（电视 / 视频里的人声等）——轮级判定：该轮全部窗口对「我 / 对方」两质心的最大相似度均值低于门限（门限由 refs 建质心时的 holdout 分布落进 npz meta，ADR-0216）。**留账不进仓**，录音行显示「已滤 N 轮」且可经「查看轮次」复核。_Avoid_: 环境音（还含非语音噪声，那部分已在 VAD 层拦掉）、杂音、噪声轮、其他说话人
 
 **录音起点 (Recording Start)**: 录音的绝对起始时刻（毫秒）——轮次绝对时间的**唯一基准**；**导入时确认的一等数据**（文件名解析 → 候选确认；解析不出必填，不再静默回落 mtime），落 `recordings/<名>.meta.json`；改动即回写已并仓轮次的 ts 与 `turns.md`，**不重跑管线**（ADR-0217）。_Avoid_: 录音时间、时间戳（泛称）
@@ -590,7 +594,7 @@ _Avoid_: 逐域复制设置块
 
 **思考档位 (Thinking Control, issue 411/ADR-0179；前身 issue 330/ADR-0146)**: 思考控制**按 provider 单源**——档位表写在注册表条目 `descriptor.thinking`（`core/ai.ts`：value/label/请求体片段），设置面板选项与请求注入同源消费；值按 provider 分开存 `aiThinkingOverrides`。三家档位**各不相同**（各家官方文档 2026-09-23 核对）：deepseek `thinking:{type:enabled|disabled}` 开关 + `reasoning_effort: low|high|max`（无「中」，服务端 medium→high）→ 跟随默认/关闭/低/高/最高；智谱 Plan（glm-5.3 系**强制思考**）只有 `reasoning_effort: low|high|max` → 跟随默认/低/高/最高（**不摆无效的关闭档**）；ollama 走兼容层 `reasoning_effort`（`none` = 关，省略 = 有能力则开）→ 跟随默认/关闭/低/中/高。`thinkingBodyFor(providerId, level)`：auto / 空 / 档位不在该家表内 / 无注册表身份 → 一律不注入（不给端点发不认识的参数）。`SelectRow.options` 支持函数形式（+ `refreshKey`）：切服务商换表时整只下拉重建，显示值不在选项内回落首项（与请求侧同口径）。显式 modelOptions 思考键优先（`knowledge/mount-suggest` 的 low 档是 ADR-0140 实测决策，不被面板改写）。**旧口径已退役**：`AI_THINKING_STYLE` / `thinkingOptionsFor` 静态风格映射 + 全局单值 `aiThinking`（对 deepseek 发 `enable_thinking` 曾静默无效——那是 Qwen/自建端词表）。_Avoid_: 全局固定五档（档位词表是 provider 属性）、`enable_thinking` 当 DeepSeek 开关（官方认 `thinking.type`）、思考行自绘 custom 行（标准 select 行 + 函数型 options 即可）
 
-**插槽行 (Custom Row)**: 声明式设置页中非常规内容（皮肤网格、chips 区、异步状态区）的唯一出口——render 回调行；是声明体系的逃生口，不是第二体系。
+**插槽行 (Custom Row)**: 声明式设置页中非常规内容（皮肤网格、chips 区、异步状态区、上传行）的唯一出口——render 回调行；是声明体系的逃生口，不是第二体系。**可声明 `name`**（issue 529 / ADR-0227）：设置面板早就按 `row.name` 渲出 info 区并把行名纳入行搜索（`schemaRowCache`），此前只是类型没跟上；核心渲染器（原生设置页）仍只渲染插槽。
 _Avoid_: 自定义 build 分支（build 入口已退役）
 
 **流程框声明 (Flow Dialog Declaration)**: 「文案 + 动作」型流程确认弹窗的声明形态（ticket 131，ADR-0064）——一处声明、core 统一渲染，与设置 schema（表单型声明）同源不同型；core/confirm 退役并入，全部存量确认调用点改写；确认框 DOM 契约保持。

@@ -33,7 +33,7 @@ const SYNC_PHASES = [
   { id: 'key', label: '取密钥', detail: '从微信进程内存提取（微信需已登录运行；未运行立即失败，绝不静默降级）' },
   { id: 'decrypt', label: '解密数据库', detail: '增量解密到数据根 .bz-face/decrypted（已解密的库自动跳过）' },
   { id: 'contacts', label: '统计联系人', detail: '逐人 SQL 聚合统计（消息 / 语音 / 图片 / 语音时长 / 最新消息）写 stats.json——不读消息正文；chat.json 由 bz-face export 按需导出' },
-  { id: 'avatar', label: '头像源', detail: '从微信头像库抽头像落到各联系人目录（随上一步逐人进行）' },
+  { id: 'avatar', label: '头像源', detail: '从微信头像库抽头像落到各联系人目录（随上一步逐人进行）；本人头像同时落到 .bz-face/me/（插件设置「我的头像」的默认值，issue 529）' },
 ];
 
 /** 阶段计划副本（防调用方改到词汇表本体） */
