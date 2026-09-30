@@ -14,6 +14,8 @@ import { allocZ } from '../z-order';
 /** 多图模式的一张（单图模式即长度 1 的特例） */
 export interface BzLightboxItem {
   src: string;              // 媒体地址（img / video / audio）
+  /** 惰性取 src（翻到这张才算，给了优先于 src）——大组多图别在打开时把全组字节拉进内存 */
+  srcOf?: () => string;
   type?: 'image' | 'video' | 'audio';
   title?: string;           // 头部说明（逐张可变）
   caption?: string;         // 底部说明（逐张可变）
@@ -91,23 +93,24 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   function mediaNode(item: BzLightboxItem): HTMLElement {
     const media = document.createElement('div');
     media.className = 'bz-lightbox-media';
-    const bareSrc = item.src.split('?')[0].split('#')[0];
+    const src = item.srcOf ? item.srcOf() : item.src; // 惰性：翻到这张才算（show 每页重建走这里）
+    const bareSrc = src.split('?')[0].split('#')[0];
     const type = item.type || (bareSrc.endsWith('.mp4') || bareSrc.endsWith('.webm') ? 'video' : 'image');
     if (type === 'video') {
       const v = document.createElement('video');
-      v.src = item.src;
+      v.src = src;
       v.controls = true;
       v.autoplay = true;
       media.appendChild(v);
     } else if (type === 'audio') {
       const a = document.createElement('audio');
-      a.src = item.src;
+      a.src = src;
       a.controls = true;
       a.autoplay = true;
       media.appendChild(a);
     } else {
       const img = document.createElement('img');
-      img.src = item.src;
+      img.src = src;
       img.alt = item.title || opts.title || '';
       media.appendChild(img);
     }
