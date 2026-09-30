@@ -5,7 +5,8 @@
  * 完全测不到——本文件补上 Python 层最便宜的兜底：
  *   1. py_compile 全部自写脚本（语法门）；
  *   2. 真调收编脚本的关键纯函数（临时目录，不碰真实数据根）：load_refs 缺质心三态、
- *      labeled_wavs 双参签名与空库、read_action 控制文件语义。
+ *      labeled_wavs 双参签名与空库、read_action 控制文件语义、TargetIndex 产物存在判定语义
+ *      （扩展名优先级 / 类别隔离 / 缺目录 / note_written，ADR-0223 修订）。
  * python / numpy 缺席的开发机自动跳过（本门守的是「收编缺陷」，不是环境检测）。
  */
 import { describe, it, expect } from 'vitest';
@@ -173,58 +174,51 @@ print("PY-SIDE-OK")
   );
 
   itPy(
-    '媒体增量索引三态（ADR-0223 档 B）：首次全扫 / 未变月份读缓存不重扫 / 目录变动后只重扫那一个月',
+    '产物存在判定 TargetIndex（ADR-0223 修订）：扩展名按 IMAGE_EXTS 优先级、类别目录不串、缺目录不抛、写盘后即时可见',
     { timeout: 60000 },
     async () => {
-      // 「没重扫」的证明用污染探针：手改索引里的清单，若第二轮仍按缓存走，假条目会出现在 jobs 里；
-      // 被重扫覆盖则假条目消失。这比数 stat 次数更能证明「真的没扫」。
+      // 增量索引撤回后，这个存在判定是媒体段唯一的「跳不跳」依据，必须在真 Python 上钉住语义：
+      // ① 扩展名优先级（jpg 压 bin——listdir 顺序随机，取首个命中的非法实现会报 bin，语义不等价）；
+      // ② 类别目录隔离；③ 缺目录/缺名不抛；④ note_written（同轮写盘后立刻要判得到，否则会被写两次）。
       const driver = `
-import json, os, shutil, sys, tempfile, time
+import shutil, sys, tempfile
 from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 try:
     import bz_prep
 except Exception as e:
-    print("IMG-INDEX-SKIP", e)
+    print("TGT-SKIP", e)
     raise SystemExit(0)
 
-root = tempfile.mkdtemp(prefix="bzidx-")
-attach = Path(root) / "attach"
-for rel in ["2026-08/Img/aaaa.dat", "2026-08/Video/bbbb.mp4",
-            "2026-08/File/cccc.pdf", "2026-09/Img/dddd.dat"]:
-    p = attach / rel
+root = Path(tempfile.mkdtemp(prefix="bztgt-"))
+cdir = root / "某人"
+for rel in ["image/2025-08/aaaa.jpg", "image/2025-08/aaaa.bin",
+            "image/2025-08/bbbb.bin", "thumb/2025-08/aaaa.jpg",
+            "video/2025-08/vvvv.mp4"]:
+    p = cdir / rel
     p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "wb") as f:
-        f.write(b"x" * 16)
-idx = Path(root) / ".bz-face" / "media-index" / "某人.json"
+    p.write_bytes(b"x")
 
-j1 = bz_prep.build_media_jobs(attach, idx)
-assert len(j1) == 4, j1
-assert sorted(k for _, k, _ in j1) == ["file", "image", "image", "video"], j1
-
-with open(idx, encoding="utf-8") as f:
-    data = json.load(f)
-data["months"]["2026-08"]["files"] = [["Img/fake.dat", "image"]]
-with open(idx, "w", encoding="utf-8") as f:
-    json.dump(data, f, ensure_ascii=False)
-
-j2 = [str(p).replace(chr(92), "/") for p, _, _ in bz_prep.build_media_jobs(attach, idx)]
-assert any("fake.dat" in x for x in j2), j2   # 假条目还在 = 这一月没重扫（缓存命中）
-assert len(j2) == 2, j2
-
-sub = attach / "2026-08" / "Img" / "新目录"
-sub.mkdir(parents=True, exist_ok=True)
-time.sleep(0.02)
-os.utime(attach / "2026-08" / "Img", None)
-
-j3 = [str(p).replace(chr(92), "/") for p, _, _ in bz_prep.build_media_jobs(attach, idx)]
-assert not any("fake.dat" in x for x in j3), j3   # 污染被真实重扫覆盖
-assert len(j3) == 4, j3
+t = bz_prep.TargetIndex(cdir)
+hit, cand = t.hit("image", "2025-08", "aaaa")
+assert cand == "jpg", cand
+assert hit == cdir / "image" / "2025-08" / "aaaa.jpg", hit
+assert t.hit("image", "2025-08", "bbbb")[1] == "bin"
+assert t.hit("thumb", "2025-08", "aaaa")[1] == "jpg"
+assert t.hit("thumb", "2025-08", "bbbb") == (None, None)
+assert t.hit("image", "2099-01", "zzzz") == (None, None)
+assert t.hit("video", "2099-01", "nope") == (None, None)
+assert bz_prep.TargetIndex(cdir).has("video", "2025-08", "vvvv.mp4") is True
+assert bz_prep.TargetIndex(cdir).has("video", "2025-08", "wwww.mp4") is False
+t2 = bz_prep.TargetIndex(cdir)
+assert t2.has("video", "2025-08", "wwww.mp4") is False
+t2.note_written("video", "2025-08", "wwww.mp4")
+assert t2.has("video", "2025-08", "wwww.mp4") is True
 shutil.rmtree(root, ignore_errors=True)
-print("IMG-INDEX-OK")
+print("TGT-OK")
 `;
       const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
-      expect(stdout).toContain('IMG-INDEX-OK');
+      expect(stdout).toContain('TGT-OK');
     },
   );
 });

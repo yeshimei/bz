@@ -341,22 +341,36 @@ describe('bz-face prep 判定层（issue 468）', () => {
       expect(src).not.toMatch(/os\.system\([^)]*winget/i);
     });
 
-    it('媒体导出「存在判定先行」（ADR-0223 档 A）：先探产物再读源字节，已导出的不白读不白解', () => {
+    it('媒体导出「存在判定先行」（ADR-0223 档 A）：先判产物再读源字节，已导出的不白读不白解', () => {
       const imgFn = src.slice(src.indexOf('def do_image'), src.indexOf('def do_video'));
-      expect(imgFn).toContain('image_target_hit(');
-      // 命中判断必须排在 read_bytes 之前——反了就是每轮把 936MB 图重读重解一遍
-      expect(imgFn.indexOf('image_target_hit(')).toBeLessThan(imgFn.indexOf('p.read_bytes()'));
+      expect(imgFn).toContain('tgt.hit(');
+      // 命中判断必须排在 read_bytes 之前——反了就是每轮把全部源图重读一遍**再 AES 轮试解密一遍**
+      // （大琳实测：旧版每轮 131s 全花在这上面，且产物全都已存在、一个字节都不用写）
+      expect(imgFn.indexOf('tgt.hit(')).toBeLessThan(imgFn.indexOf('p.read_bytes()'));
       const vidFn = src.slice(src.indexOf('def do_video'), src.indexOf('def do_file'));
-      expect(vidFn.indexOf('target.exists()')).toBeGreaterThanOrEqual(0);
-      expect(vidFn.indexOf('target.exists()')).toBeLessThan(vidFn.indexOf('p.read_bytes()'));
+      expect(vidFn).toContain('tgt.has(');
+      expect(vidFn.indexOf('tgt.has(')).toBeLessThan(vidFn.indexOf('p.read_bytes()'));
     });
 
-    it('媒体导出走增量索引（ADR-0223 档 B）：段 1 不再直接全量 rglob attach 目录', () => {
-      expect(src).toContain('def build_media_jobs');
-      expect(src).toContain('MEDIA_INDEX_VERSION');
-      expect(src).toContain('media-index');
-      expect(src).toContain('build_media_jobs(attach_dir');
-      expect(src).not.toMatch(/attach_dir\s*\/\s*month\)\s*\.rglob/); // 旧的全量 rglob 已退役
+    it('存在判定走「目标目录 listdir 名字集合」，禁回退逐条 stat（ADR-0223 修订）', () => {
+      // 第一版原语是「逐条按 IMAGE_EXTS 试 8 次 stat」——在 Windows 上比旧版「读整个源文件」还慢
+      // （3228 条 × 8 扩展名 ≈ 2.6 万次 stat ≈850ms vs 旧版读全部源字节 681ms），故必须走集合查。
+      const cls = src.slice(src.indexOf('class TargetIndex'), src.indexOf('def looks_like_mp4'));
+      expect(cls).toContain('os.listdir(');
+      expect(cls).toContain('in names');
+      expect(cls).not.toContain('.exists()'); // 逐条 stat 回退即红
+      // 扩展名优先级必须按 IMAGE_EXTS 顺序扫：listdir 顺序随机，取第一个命中的扩展名会把 bin
+      // 报在 jpg 前（命中数一样但语义不等价——bin 命中要触发 wxgf 补解码）
+      expect(cls).toContain('for cand in IMAGE_EXTS');
+    });
+
+    it('增量索引（ADR-0223 档 B）已撤回：段 1 恢复全量扫描，脚本内不留索引残留', () => {
+      // 实测全量扫描 3228 个文件只要 ≈256ms；而建索引冷启动 ≈372ms（比它要取代的扫描**还慢**）、
+      // 热态只省 ≈200ms——不值得多一个磁盘缓存与一套指纹/版本失效语义。
+      expect(src).not.toContain('build_media_jobs');
+      expect(src).not.toContain('MEDIA_INDEX');
+      expect(src).not.toContain('media-index');
+      expect(src).toMatch(/attach_dir \/ month\)\.rglob/); // 全量扫描留在原地（这是唯一事实源）
     });
   });
 });
