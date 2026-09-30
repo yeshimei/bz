@@ -1,4 +1,4 @@
-/* 源指纹 e1fe4d8c55b029d5 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 95b25b87eaf76770 · 仓内输入 79 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/landscape.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/settings-provider.ts","src/core/sha256.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -7040,6 +7040,7 @@ var BZW_cinema = (() => {
   // src/core/ui/lightbox.ts
   var current = null;
   var currentEscHandle = null;
+  var offNavKeys = null;
   function lockBodyScroll(lock) {
     const body = document.body;
     if (lock) {
@@ -7050,8 +7051,16 @@ var BZW_cinema = (() => {
       delete body.dataset.bzLightboxScroll;
     }
   }
+  function detachNavKeys() {
+    offNavKeys == null ? void 0 : offNavKeys();
+    offNavKeys = null;
+  }
   function openLightbox(opts) {
+    var _a, _b, _c;
     closeLightbox();
+    const items = ((_a = opts.items) == null ? void 0 : _a.length) ? opts.items : [{ src: (_b = opts.src) != null ? _b : "", type: opts.type, title: opts.title, caption: opts.caption }];
+    const multi = items.length > 1;
+    let idx = Math.max(0, Math.min((_c = opts.index) != null ? _c : 0, items.length - 1));
     const mask = document.createElement("div");
     mask.className = "bz-lightbox";
     mask.style.zIndex = String(allocZ());
@@ -7059,7 +7068,6 @@ var BZW_cinema = (() => {
     head.className = "bz-lightbox-head";
     const title = document.createElement("span");
     title.className = "bz-lightbox-title";
-    title.textContent = opts.title || "";
     const closeBtn = document.createElement("button");
     closeBtn.type = "button";
     closeBtn.className = "bz-lightbox-close";
@@ -7067,40 +7075,73 @@ var BZW_cinema = (() => {
     closeBtn.appendChild(uiIcon("x"));
     head.appendChild(title);
     head.appendChild(closeBtn);
-    const media = document.createElement("div");
-    media.className = "bz-lightbox-media";
-    const bareSrc = opts.src.split("?")[0].split("#")[0];
-    const type = opts.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
-    if (type === "video") {
-      const v = document.createElement("video");
-      v.src = opts.src;
-      v.controls = true;
-      v.autoplay = true;
-      media.appendChild(v);
-    } else if (type === "audio") {
-      const a = document.createElement("audio");
-      a.src = opts.src;
-      a.controls = true;
-      a.autoplay = true;
-      media.appendChild(a);
-    } else {
-      const img = document.createElement("img");
-      img.src = opts.src;
-      img.alt = opts.title || "";
-      media.appendChild(img);
+    const mediaBox = document.createElement("div");
+    function mediaNode(item) {
+      const media = document.createElement("div");
+      media.className = "bz-lightbox-media";
+      const bareSrc = item.src.split("?")[0].split("#")[0];
+      const type = item.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
+      if (type === "video") {
+        const v = document.createElement("video");
+        v.src = item.src;
+        v.controls = true;
+        v.autoplay = true;
+        media.appendChild(v);
+      } else if (type === "audio") {
+        const a = document.createElement("audio");
+        a.src = item.src;
+        a.controls = true;
+        a.autoplay = true;
+        media.appendChild(a);
+      } else {
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.title || opts.title || "";
+        media.appendChild(img);
+      }
+      return media;
     }
     const foot = document.createElement("div");
     foot.className = "bz-lightbox-foot";
-    foot.textContent = opts.caption || "";
+    function show(i) {
+      var _a2, _b2, _c2;
+      idx = Math.max(0, Math.min(i, items.length - 1));
+      const it = items[idx];
+      mediaBox.replaceChildren(mediaNode(it));
+      title.textContent = (_b2 = (_a2 = it.title) != null ? _a2 : opts.title) != null ? _b2 : "";
+      foot.textContent = (_c2 = it.caption) != null ? _c2 : "";
+      if (prevBtn) prevBtn.disabled = idx <= 0;
+      if (nextBtn) nextBtn.disabled = idx >= items.length - 1;
+    }
+    let prevBtn = null;
+    let nextBtn = null;
+    if (multi) {
+      prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "bz-lightbox-nav bz-lightbox-prev";
+      prevBtn.setAttribute("aria-label", "上一张");
+      prevBtn.appendChild(uiIcon("chevron-left"));
+      nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "bz-lightbox-nav bz-lightbox-next";
+      nextBtn.setAttribute("aria-label", "下一张");
+      nextBtn.appendChild(uiIcon("chevron-right"));
+      prevBtn.addEventListener("click", () => show(idx - 1));
+      nextBtn.addEventListener("click", () => show(idx + 1));
+      mask.appendChild(prevBtn);
+      mask.appendChild(nextBtn);
+    }
     mask.appendChild(head);
-    mask.appendChild(media);
+    mask.appendChild(mediaBox);
     mask.appendChild(foot);
     document.body.appendChild(mask);
     lockBodyScroll(true);
+    show(idx);
     let escHandle = null;
     function close() {
       if (current !== mask) return;
       mask.remove();
+      detachNavKeys();
       escHandle == null ? void 0 : escHandle.unregister();
       if (currentEscHandle === escHandle) currentEscHandle = null;
       current = null;
@@ -7112,9 +7153,25 @@ var BZW_cinema = (() => {
     });
     currentEscHandle = escHandle;
     mask.addEventListener("click", (e) => {
-      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
+      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav")) close();
     });
     closeBtn.addEventListener("click", close);
+    if (multi) {
+      const onKey = (e) => {
+        if (e.isComposing) return;
+        const t = e.target;
+        if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          show(idx - 1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          show(idx + 1);
+        }
+      };
+      document.addEventListener("keydown", onKey);
+      offNavKeys = () => document.removeEventListener("keydown", onKey);
+    }
     current = mask;
     return { close };
   }
@@ -7122,6 +7179,7 @@ var BZW_cinema = (() => {
     if (current) {
       current.remove();
       current = null;
+      detachNavKeys();
       currentEscHandle == null ? void 0 : currentEscHandle.unregister();
       currentEscHandle = null;
       lockBodyScroll(false);

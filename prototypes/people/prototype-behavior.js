@@ -1,4 +1,4 @@
-/* 源指纹 29964c9bf3303e79 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 187255687db44c25 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -4702,6 +4702,190 @@ var BZW_people = (() => {
     }
   });
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml2(str3) {
+    return str3.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
+    }
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text2) {
+    try {
+      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text2) {
+    try {
+      await copySensitiveText(text2);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text2;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
@@ -4759,6 +4943,108 @@ var BZW_people = (() => {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       PANEL_FOCUS_CLASS = "bz-panel-focushost";
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a2;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function cancelActiveFlowDialog() {
+    if (activeSettle) activeSettle(void 0);
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
     }
   });
 
@@ -4915,18 +5201,18 @@ var BZW_people = (() => {
     });
     return run;
   }
-  function assertPlainObject(filePath, current) {
-    if (current && typeof current === "object" && !Array.isArray(current)) return current;
-    const got = Array.isArray(current) ? "array" : current === null ? "null" : typeof current;
+  function assertPlainObject(filePath, current2) {
+    if (current2 && typeof current2 === "object" && !Array.isArray(current2)) return current2;
+    const got = Array.isArray(current2) ? "array" : current2 === null ? "null" : typeof current2;
     throw new Error("storage: 段级合并写要求对象形态 JSON（" + filePath + " 读到 " + got + "），请先归一文件形态");
   }
   function updateFileSections(filePath, writer, opts = {}) {
     return enqueueFileTask(filePath, async () => {
       var _a2;
       const store2 = jsonFileStore(filePath, { ...opts, defaultValue: (_a2 = opts.defaultValue) != null ? _a2 : {} });
-      const current = assertPlainObject(filePath, await store2.read());
-      const set = await writer(current) || {};
-      const next = { ...current, ...set };
+      const current2 = assertPlainObject(filePath, await store2.read());
+      const set = await writer(current2) || {};
+      const next = { ...current2, ...set };
       await store2.write(next);
       return next;
     });
@@ -5811,10 +6097,10 @@ var BZW_people = (() => {
           let total = 1;
           for (const n of this.manifest.notes) total += 2 + n.attachments.length;
           let done = 0;
-          const emit2 = (current, fresh) => {
+          const emit2 = (current2, fresh) => {
             done += 1;
             if (fresh.length) items.push(...fresh);
-            onProgress == null ? void 0 : onProgress({ done, total, current, found: fresh });
+            onProgress == null ? void 0 : onProgress({ done, total, current: current2, found: fresh });
           };
           for (const n of this.manifest.notes) {
             let bodyExists = false;
@@ -6084,8 +6370,8 @@ var BZW_people = (() => {
               try {
                 const f = getApp().vault.getAbstractFileByPath(input.path);
                 if (f && f.isFolder !== true) {
-                  const current = await getApp().vault.read(f);
-                  stale = current.replace(/\r\n/g, "\n") !== input.content.replace(/\r\n/g, "\n");
+                  const current2 = await getApp().vault.read(f);
+                  stale = current2.replace(/\r\n/g, "\n") !== input.content.replace(/\r\n/g, "\n");
                 }
               } catch (e) {
               }
@@ -6616,292 +6902,6 @@ var BZW_people = (() => {
           return CryptoService.decrypt(cipher, await this.blobKey(a.blobRef));
         }
       };
-    }
-  });
-
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function relTime(s, now = Date.now()) {
-    if (!s) return "";
-    const d = new Date(s.replace(" ", "T"));
-    if (isNaN(d.getTime())) return s;
-    const diff = now - d.getTime();
-    const m = 6e4, h = 36e5, day = 864e5;
-    if (diff < m) return "刚刚";
-    if (diff < h) return Math.floor(diff / m) + " 分钟前";
-    if (diff < day) return Math.floor(diff / h) + " 小时前";
-    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-  }
-  function emptyHtmlStr(icon, title, desc) {
-    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str3) {
-    return str3.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    if (target.isSame(nowMoment.startOf("day"), "day")) {
-      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function debounce(fn, ms) {
-    let t;
-    const wrapped = (...args) => {
-      if (t !== void 0) clearTimeout(t);
-      t = setTimeout(() => {
-        t = void 0;
-        fn(...args);
-      }, ms);
-    };
-    wrapped.cancel = () => {
-      if (t !== void 0) {
-        clearTimeout(t);
-        t = void 0;
-      }
-    };
-    return wrapped;
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text2) {
-    try {
-      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  async function copySensitiveWithFallback(text2) {
-    try {
-      await copySensitiveText(text2);
-      return true;
-    } catch (e) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text2;
-        ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      init_notice();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a2;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function cancelActiveFlowDialog() {
-    if (activeSettle) activeSettle(void 0);
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
     }
   });
 
@@ -7845,11 +7845,159 @@ var BZW_people = (() => {
   });
 
   // src/core/ui/lightbox.ts
+  function lockBodyScroll(lock) {
+    const body = document.body;
+    if (lock) {
+      body.dataset.bzLightboxScroll = body.style.overflow || "";
+      body.style.overflow = "hidden";
+    } else if (body.dataset.bzLightboxScroll !== void 0) {
+      body.style.overflow = body.dataset.bzLightboxScroll === "" ? "" : body.dataset.bzLightboxScroll;
+      delete body.dataset.bzLightboxScroll;
+    }
+  }
+  function detachNavKeys() {
+    offNavKeys == null ? void 0 : offNavKeys();
+    offNavKeys = null;
+  }
+  function openLightbox(opts) {
+    var _a2, _b2, _c2;
+    closeLightbox();
+    const items = ((_a2 = opts.items) == null ? void 0 : _a2.length) ? opts.items : [{ src: (_b2 = opts.src) != null ? _b2 : "", type: opts.type, title: opts.title, caption: opts.caption }];
+    const multi = items.length > 1;
+    let idx = Math.max(0, Math.min((_c2 = opts.index) != null ? _c2 : 0, items.length - 1));
+    const mask = document.createElement("div");
+    mask.className = "bz-lightbox";
+    mask.style.zIndex = String(allocZ());
+    const head = document.createElement("div");
+    head.className = "bz-lightbox-head";
+    const title = document.createElement("span");
+    title.className = "bz-lightbox-title";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "bz-lightbox-close";
+    closeBtn.setAttribute("aria-label", "关闭");
+    closeBtn.appendChild(uiIcon("x"));
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+    const mediaBox = document.createElement("div");
+    function mediaNode(item) {
+      const media = document.createElement("div");
+      media.className = "bz-lightbox-media";
+      const bareSrc = item.src.split("?")[0].split("#")[0];
+      const type = item.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
+      if (type === "video") {
+        const v = document.createElement("video");
+        v.src = item.src;
+        v.controls = true;
+        v.autoplay = true;
+        media.appendChild(v);
+      } else if (type === "audio") {
+        const a = document.createElement("audio");
+        a.src = item.src;
+        a.controls = true;
+        a.autoplay = true;
+        media.appendChild(a);
+      } else {
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.title || opts.title || "";
+        media.appendChild(img);
+      }
+      return media;
+    }
+    const foot = document.createElement("div");
+    foot.className = "bz-lightbox-foot";
+    function show(i) {
+      var _a3, _b3, _c3;
+      idx = Math.max(0, Math.min(i, items.length - 1));
+      const it = items[idx];
+      mediaBox.replaceChildren(mediaNode(it));
+      title.textContent = (_b3 = (_a3 = it.title) != null ? _a3 : opts.title) != null ? _b3 : "";
+      foot.textContent = (_c3 = it.caption) != null ? _c3 : "";
+      if (prevBtn) prevBtn.disabled = idx <= 0;
+      if (nextBtn) nextBtn.disabled = idx >= items.length - 1;
+    }
+    let prevBtn = null;
+    let nextBtn = null;
+    if (multi) {
+      prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = "bz-lightbox-nav bz-lightbox-prev";
+      prevBtn.setAttribute("aria-label", "上一张");
+      prevBtn.appendChild(uiIcon("chevron-left"));
+      nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = "bz-lightbox-nav bz-lightbox-next";
+      nextBtn.setAttribute("aria-label", "下一张");
+      nextBtn.appendChild(uiIcon("chevron-right"));
+      prevBtn.addEventListener("click", () => show(idx - 1));
+      nextBtn.addEventListener("click", () => show(idx + 1));
+      mask.appendChild(prevBtn);
+      mask.appendChild(nextBtn);
+    }
+    mask.appendChild(head);
+    mask.appendChild(mediaBox);
+    mask.appendChild(foot);
+    document.body.appendChild(mask);
+    lockBodyScroll(true);
+    show(idx);
+    let escHandle = null;
+    function close() {
+      if (current !== mask) return;
+      mask.remove();
+      detachNavKeys();
+      escHandle == null ? void 0 : escHandle.unregister();
+      if (currentEscHandle === escHandle) currentEscHandle = null;
+      current = null;
+      lockBodyScroll(false);
+    }
+    escHandle = escManager.register("bz-lightbox", {
+      isVisible: () => mask.isConnected,
+      close
+    });
+    currentEscHandle = escHandle;
+    mask.addEventListener("click", (e) => {
+      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot, .bz-lightbox-nav")) close();
+    });
+    closeBtn.addEventListener("click", close);
+    if (multi) {
+      const onKey = (e) => {
+        if (e.isComposing) return;
+        const t = e.target;
+        if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          show(idx - 1);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          show(idx + 1);
+        }
+      };
+      document.addEventListener("keydown", onKey);
+      offNavKeys = () => document.removeEventListener("keydown", onKey);
+    }
+    current = mask;
+    return { close };
+  }
+  function closeLightbox() {
+    if (current) {
+      current.remove();
+      current = null;
+      detachNavKeys();
+      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
+      currentEscHandle = null;
+      lockBodyScroll(false);
+    }
+  }
+  var current, currentEscHandle, offNavKeys;
   var init_lightbox = __esm({
     "src/core/ui/lightbox.ts"() {
       init_icon();
       init_esc_manager();
       init_z_order();
+      current = null;
+      currentEscHandle = null;
+      offNavKeys = null;
     }
   });
 
@@ -8083,7 +8231,7 @@ var BZW_people = (() => {
       const v = opts.value;
       return Array.isArray(v) ? [...v] : v ? [v] : [];
     };
-    let current = readValue();
+    let current2 = readValue();
     const setting = new Setting(opts.parent).setName(opts.name);
     if (opts.desc) setting.setDesc(opts.desc);
     setting.settingEl.classList.add("bz-path-picker-setting-row");
@@ -8094,14 +8242,14 @@ var BZW_people = (() => {
         const res = opts.onChange(list);
         if (res && typeof res.then === "function") {
           return Promise.resolve(res).then((final) => {
-            current = Array.isArray(final) ? final : list;
+            current2 = Array.isArray(final) ? final : list;
             renderAll();
           }).catch((e) => {
             notifySaveError(e, opts.name);
             renderAll();
           });
         }
-        current = Array.isArray(res) ? res : list;
+        current2 = Array.isArray(res) ? res : list;
         renderAll();
       } catch (e) {
         notifySaveError(e, opts.name);
@@ -8112,13 +8260,13 @@ var BZW_people = (() => {
       title: opts.pickerTitle || opts.name,
       desc: opts.pickerDesc,
       mode: opts.mode,
-      selected: current,
+      selected: current2,
       okText: opts.okText,
       onConfirm: (list) => {
         void apply(list);
       }
     });
-    const render = () => renderPathChips(chipsWrap, current, (next) => {
+    const render = () => renderPathChips(chipsWrap, current2, (next) => {
       void apply(next);
     }, "", openPicker);
     let btn = null;
@@ -8130,9 +8278,9 @@ var BZW_people = (() => {
     const control = setting.settingEl.querySelector(".setting-item-control");
     if (control) control.appendChild(chipsWrap);
     const syncBtn = () => {
-      setting.settingEl.dataset.filled = current.length > 0 ? "1" : "0";
+      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
       if (!btn || !control) return;
-      if (current.length === 0) {
+      if (current2.length === 0) {
         if (!btn.isConnected) control.appendChild(btn);
       } else if (btn.isConnected) {
         btn.remove();
@@ -8143,7 +8291,7 @@ var BZW_people = (() => {
       render();
     };
     const refresh = () => {
-      current = readValue();
+      current2 = readValue();
       renderAll();
     };
     renderAll();
@@ -9003,9 +9151,9 @@ var BZW_people = (() => {
           this.onCommit = onCommit;
           this.warnedInitial = null;
         }
-        fire(current) {
+        fire(current2) {
           if (!this.onCommit) return;
-          if (current !== this.initial) {
+          if (current2 !== this.initial) {
             if (this.warnedInitial !== this.initial) {
               this.warnedInitial = this.initial;
               this.onCommit();
@@ -10810,15 +10958,15 @@ var BZW_people = (() => {
       return null;
     }
   }
-  function truncateName(current, maxLen = 20) {
-    let name = current.split("/").pop() || current;
+  function truncateName(current2, maxLen = 20) {
+    let name = current2.split("/").pop() || current2;
     if (name.length > maxLen) name = name.slice(0, maxLen) + "…";
     return name;
   }
-  function updateProgress(h, done, total, current) {
+  function updateProgress(h, done, total, current2) {
     if (!h) return;
     const base = `已处理 ${done}/${total}`;
-    h.setMessage(`${base} · 当前：${truncateName(current)}`);
+    h.setMessage(`${base} · 当前：${truncateName(current2)}`);
     const pct = total > 0 ? Math.max(0, Math.min(100, Math.round(done / total * 100))) : 0;
     h.setProgress(pct);
   }
@@ -13462,6 +13610,7 @@ var BZW_people = (() => {
 
   // src/people/ui.ts
   init_notice();
+  init_flow_dialog();
   init_z_order();
   init_esc_manager();
   init_focus_trap();
@@ -15085,6 +15234,7 @@ ${lines.join("\n")}`);
     DRIFT_ERROR: () => DRIFT_ERROR,
     JobStore: () => JobStore,
     __resetJobsForTests: () => __resetJobsForTests,
+    alignRefreshedBatches: () => alignRefreshedBatches,
     emptyJobsData: () => emptyJobsData,
     estimateDescribeCallsOf: () => estimateDescribeCallsOf,
     estimatePortraitCallsOf: () => estimatePortraitCallsOf,
@@ -17299,6 +17449,12 @@ ${lines}`;
     const po = { ...DEFAULTS, ...prev.chunkOpts };
     return po.maxChars === opts.maxChars && po.maxCount === opts.maxCount && po.maxBatches === opts.maxBatches;
   }
+  function alignRefreshedBatches(oldDone, fresh) {
+    const n = Math.min(oldDone.length, fresh.length);
+    let keep = 0;
+    while (keep < n && fresh[keep].from === oldDone[keep].from && fresh[keep].to === oldDone[keep].to) keep++;
+    return keep;
+  }
   function estimatePortraitCallsOf(msgs) {
     const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
     return Math.min(all.length, DEFAULTS.maxBatches) + PORTRAIT_FIXED_CALLS;
@@ -18107,7 +18263,16 @@ ${lines}`;
         await finish({ status: "error", error: DRIFT_ERROR, message: DRIFT_ERROR });
         return;
       }
+      const oldDoneChunks = job.chunks.slice(0, job.batchesDone);
       job.chunks = metas;
+      if (refresh && job.batchesDone > 0) {
+        const keep = alignRefreshedBatches(oldDoneChunks, metas);
+        if (keep < job.batchesDone) {
+          job.results = job.results.slice(0, keep);
+          job.batchesDone = keep;
+          job.message = `素材升级重切为 ${metas.length} 批——前 ${keep} 批边界没变接着用，其余重跑`;
+        }
+      }
       if (refresh) {
         job.msgCount = fp.msgCount;
         job.contentHash = fp.contentHash;
@@ -20119,12 +20284,21 @@ ${lines}`;
   function secTitle(t) {
     return el("div", "bz-people-sec-title", text(t));
   }
-  function noteRow(m) {
-    return el("div", "bz-people-note-row", [
+  function noteRow(m, pendingDel = false) {
+    const row = el("div", "bz-people-note-row", [
       el("span", "bz-people-note-ts", text(m.ts)),
-      el("span", "bz-people-note-sum", text(m.summary)),
-      button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id })
+      el("span", "bz-people-note-sum", text(m.summary))
     ]);
+    if (pendingDel) {
+      row.appendChild(el("span", "bz-people-note-ask", [
+        textEl("span", "撕掉这张？"),
+        button("bz-people-note-del-ok", "撕掉", { "data-people-note-del-ok": m.id }),
+        button("bz-people-note-del-no", "取消", { "data-people-note-del-cancel": m.id })
+      ]));
+    } else {
+      row.appendChild(button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id }));
+    }
+    return row;
   }
   function clipList(cls, items, first, moreText) {
     const box = el("div", cls);
@@ -20194,7 +20368,7 @@ ${lines}`;
     }
     return out;
   }
-  function foldEventsBody(p) {
+  function foldEventsBody(p, noteDelPending2 = null) {
     var _a2, _b2, _c2, _d2, _e, _f;
     const out = [];
     const chron = (_b2 = (_a2 = p.digest) == null ? void 0 : _a2.chronicle) != null ? _b2 : "";
@@ -20231,7 +20405,7 @@ ${lines}`;
     }
     const manual = (_f = p.manualEvents) != null ? _f : [];
     if (manual.length) {
-      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map(noteRow)));
+      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map((m) => noteRow(m, noteDelPending2 === m.id))));
     }
     return out;
   }
@@ -20433,8 +20607,9 @@ ${lines}`;
       ])
     ]);
   }
-  function profilePopBody(p, editing) {
+  function profilePopBody(p, editing, leaveConfirm = false) {
     const out = [];
+    if (editing && leaveConfirm) out.push(profLeaveAsk());
     const hasProf = profileFilled(p.profile);
     if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
     if (!hasProf && !editing) {
@@ -20470,33 +20645,46 @@ ${lines}`;
     if (!s.rows) {
       body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : s.scanning ? "正在扫描联系人目录…" : !s.dataDir ? "还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else {
-      const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
-      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
-      body.push(list);
-      const legend = el("div", "bz-people-ds-legend");
-      legend.append(
-        el("span", "", [el("i", "bz-people-ds-dot-ok"), text("有更新")]),
-        el("span", "", [el("i", "bz-people-ds-dot-idle"), text("已导无更新")]),
-        el("span", "", [el("i", "bz-people-ds-dot-none"), text("未导入")])
-      );
-      if (s.rows.some((r) => {
-        var _a2;
-        return ((_a2 = r.newCount) != null ? _a2 : 0) > 0;
-      })) {
-        legend.appendChild(button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" }));
+      const fbox = el("div", "bz-people-findbox");
+      fbox.appendChild(el("i", "bz-ic", { "data-lucide": "search", "aria-hidden": "true" }));
+      const finp = document.createElement("input");
+      finp.className = "bz-people-input";
+      finp.value = s.filter;
+      finp.setAttribute("data-people-ds-filter", "");
+      finp.setAttribute("placeholder", "按名字过滤联系人…");
+      fbox.appendChild(finp);
+      if (s.filter.trim()) fbox.appendChild(iconButton("x", "bz-people-ico bz-people-ico-sm", { "data-people-ds-filter-clear": "", "aria-label": "清空过滤" }));
+      body.push(fbox);
+      if (!s.rows.length) {
+        body.push(el("div", "bz-people-empty-hint", text(`没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`)));
+      } else {
+        const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
+        for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+        body.push(list);
+        const legend = el("div", "bz-people-ds-legend");
+        legend.append(
+          el("span", "", [el("i", "bz-people-ds-dot-ok"), text("有更新")]),
+          el("span", "", [el("i", "bz-people-ds-dot-idle"), text("已导无更新")]),
+          el("span", "", [el("i", "bz-people-ds-dot-none"), text("未导入")])
+        );
+        if (s.rows.some((r) => {
+          var _a2;
+          return ((_a2 = r.newCount) != null ? _a2 : 0) > 0;
+        })) {
+          legend.appendChild(button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" }));
+        }
+        body.push(legend);
       }
-      body.push(legend);
     }
     const foot = el("div", "bz-people-pop-foot");
     foot.appendChild(el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))));
     foot.appendChild(el("span", "bz-people-spacer"));
-    if (s.generateable) foot.appendChild(button("bz-people-btn bz-people-btn-gold", "画脸谱", { "data-people-ds-generate": "" }));
     const imp = button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", { "data-people-ds-import": "" });
     if (s.importing || s.syncing) imp.setAttribute("disabled", "");
     foot.appendChild(imp);
     const head = [];
     head.push(s.syncing ? button("bz-people-btn bz-people-btn-sm", "停止", { "data-people-ds-sync-stop": "", title: "停止同步——已导出的部分保留，重跑可续传" }) : button("bz-people-btn bz-people-btn-sm", "同步", { "data-people-ds-sync": "", title: "从微信重新解密并导出，需要微信已登录" }));
-    const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
+    const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? s.filter.trim() ? `${s.rows.length} / 共 ${s.totalRows} 位` : `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
     return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
   }
   function genPage(info) {
@@ -20528,6 +20716,15 @@ ${lines}`;
   }
   function profPage(p, body, editing) {
     return subPage({ title: "补充背景", meta: editing ? `${p.name} · 编辑中` : p.name, hook: "prof" }, body);
+  }
+  function profLeaveAsk() {
+    return el("div", "bz-people-prof-leaveask", [
+      el("span", "bz-people-prof-leaveask-tx", text("改动还没保存——放弃？")),
+      el("span", "bz-people-prof-leaveask-acts", [
+        button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "放弃", { "data-people-prof-leave-ok": "" }),
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "继续编辑", { "data-people-prof-leave-cancel": "" })
+      ])
+    ]);
   }
   var SUPP_TABS = [
     ["text", "记一笔", "随手记一件事"],
@@ -20570,7 +20767,7 @@ ${lines}`;
       sEl.className = i === curIdx ? "bz-people-supp-stage on" : i < curIdx ? "bz-people-supp-stage done" : "bz-people-supp-stage";
     });
   }
-  function suppPage(p, tab, image, rec, today) {
+  function suppPage(p, tab, image, rec, today, noteDelPending2 = null) {
     var _a2;
     const body = [];
     body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
@@ -20581,7 +20778,7 @@ ${lines}`;
         notes.length ? `已记 ${notes.length} 笔` : "还没记过——上面写一条，就落在这一列。"
       )));
       if (notes.length) {
-        body.push(el("div", "bz-people-notes bz-people-supp-notes", notes.map(noteRow)));
+        body.push(el("div", "bz-people-notes bz-people-supp-notes", notes.map((m) => noteRow(m, noteDelPending2 === m.id))));
       }
     } else if (tab === "image") {
       body.push(...suppImageBody(image));
@@ -21149,7 +21346,7 @@ ${lines}`;
     const box = el(
       "span",
       "bz-people-ds-box",
-      { "data-people-ds-check": row.name, role: "checkbox", "aria-checked": on ? "true" : "false" },
+      { "data-people-ds-check": row.name, role: "checkbox", tabindex: "0", "aria-checked": on ? "true" : "false" },
       on ? el("i", "bz-ic", { "data-lucide": "check", "aria-hidden": "true" }) : text("")
     );
     const name = row.displayName + (row.isGroup ? "（群）" : "");
@@ -21167,8 +21364,8 @@ ${lines}`;
     ]);
   }
   function footerLabel(s) {
-    var _a2;
-    const picked = ((_a2 = s.rows) != null ? _a2 : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+    var _a2, _b2;
+    const picked = ((_b2 = (_a2 = s.allRows) != null ? _a2 : s.rows) != null ? _b2 : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
     if (!picked.length) return "未勾选联系人";
     const n = { full: 0, newer: 0, skip: 0, exported: 0 };
     let msgs = 0;
@@ -21300,6 +21497,9 @@ ${lines}`;
   var dsExported = /* @__PURE__ */ new Set();
   var findQuery = "";
   var findDebounce = null;
+  var dsFilter = "";
+  var dsFilterDebounce = null;
+  var noteDelPending = null;
   var exportRun = null;
   var cur = 0;
   var pulled = null;
@@ -21337,6 +21537,7 @@ ${lines}`;
         recStartEditFile = null;
         recRefConfirm = false;
         suppImgDelPending = null;
+        noteDelPending = null;
         closeImgViewer();
         suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: /* @__PURE__ */ new Set(), imageItems: [] };
       }
@@ -21413,8 +21614,13 @@ ${lines}`;
     document.body.appendChild(overlay);
     topifyZ(overlay);
     registerPanelEsc(ESC_ID, isPeopleOpen, () => {
-      if (dialog) closeDialog();
-      else closePeoplePanel();
+      if (dialog) {
+        if (dialog.kind === "prof") {
+          guardProfLeave(closeDialog);
+          return;
+        }
+        closeDialog();
+      } else closePeoplePanel();
     });
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
@@ -21462,27 +21668,71 @@ ${lines}`;
     });
     offWheelTurn = bindWheelTurn(overlay, (dir) => turnTo(dir > 0 ? "next" : "prev"));
     overlay.addEventListener("keydown", (e) => {
-      var _a3, _b2;
+      var _a3, _b2, _c2, _d2;
+      const inField = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement;
       const input = e.target instanceof HTMLInputElement ? e.target : null;
-      if (e.key !== "Enter" || !input) return;
-      if (!input.hasAttribute("data-people-prof-tag-input") && !input.hasAttribute("data-people-note-text") && !input.hasAttribute("data-people-del-pw")) return;
-      e.preventDefault();
-      if (input.hasAttribute("data-people-prof-tag-input")) addTagChip();
-      else if (input.hasAttribute("data-people-del-pw")) {
-        const p = (_a3 = listCache.find((x) => x.id === detailId)) != null ? _a3 : null;
-        const btn = (_b2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-ok]")) != null ? _b2 : null;
-        if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
-      } else void saveManualNote();
+      if (e.key === "Enter" && input) {
+        if (!input.hasAttribute("data-people-prof-tag-input") && !input.hasAttribute("data-people-note-text") && !input.hasAttribute("data-people-del-pw")) return;
+        e.preventDefault();
+        if (input.hasAttribute("data-people-prof-tag-input")) addTagChip();
+        else if (input.hasAttribute("data-people-del-pw")) {
+          const p = (_a3 = listCache.find((x) => x.id === detailId)) != null ? _a3 : null;
+          const btn = (_b2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-ok]")) != null ? _b2 : null;
+          if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
+        } else void saveManualNote();
+        return;
+      }
+      if (inField) return;
+      const focus = e.target instanceof HTMLElement ? e.target : null;
+      const pocket = focus == null ? void 0 : focus.closest("[data-people-pocket]");
+      if (pocket && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        const id = (_c2 = pocket.dataset.peoplePocket) != null ? _c2 : "";
+        if (id) pullPhoto(id);
+        return;
+      }
+      const chk = focus == null ? void 0 : focus.closest("[data-people-ds-check]");
+      if (chk && e.key === " ") {
+        e.preventDefault();
+        const name = (_d2 = chk.dataset.peopleDsCheck) != null ? _d2 : "";
+        const row = chk.closest(".bz-people-ds-row");
+        const inert = (row == null ? void 0 : row.classList.contains("bz-people-ds-off")) || (row == null ? void 0 : row.classList.contains("bz-people-ds-skip"));
+        if (name && !inert) {
+          if (dsSelected.has(name)) dsSelected.delete(name);
+          else dsSelected.add(name);
+          syncDsChecks();
+        }
+        return;
+      }
+      if (!dialog && !pulled && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+        e.preventDefault();
+        turnTo(e.key === "ArrowLeft" ? "prev" : "next");
+      }
     });
     overlay.addEventListener("input", (e) => {
       const inp = e.target instanceof HTMLInputElement ? e.target : null;
-      if (!inp || !inp.hasAttribute("data-people-find")) return;
-      findQuery = inp.value;
-      if (findDebounce !== null) clearTimeout(findDebounce);
-      findDebounce = setTimeout(() => {
-        findDebounce = null;
-        void renderAlbum().then(() => focusFind());
-      }, 150);
+      if (!inp) return;
+      if (inp.closest(".bz-people-prof-edit")) {
+        markProfDirty();
+        return;
+      }
+      if (inp.hasAttribute("data-people-find")) {
+        findQuery = inp.value;
+        if (findDebounce !== null) clearTimeout(findDebounce);
+        findDebounce = setTimeout(() => {
+          findDebounce = null;
+          void renderAlbum().then(() => focusFind());
+        }, 150);
+        return;
+      }
+      if (inp.hasAttribute("data-people-ds-filter")) {
+        dsFilter = inp.value;
+        if (dsFilterDebounce !== null) clearTimeout(dsFilterDebounce);
+        dsFilterDebounce = setTimeout(() => {
+          dsFilterDebounce = null;
+          void renderAlbum().then(() => focusDsFilter());
+        }, 150);
+      }
     });
     offUnlockWatch = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
       if (!overlay) return;
@@ -21519,6 +21769,7 @@ ${lines}`;
   function closePeoplePanel() {
     if (genConfirmOpen) answerGenConfirm("cancel");
     const backgrounded = jobsRunning();
+    const recBackgrounded = runningRecordingItems().length > 0;
     unregisterPanelEsc(ESC_ID);
     offUnlockWatch == null ? void 0 : offUnlockWatch();
     offUnlockWatch = null;
@@ -21548,15 +21799,25 @@ ${lines}`;
     loadTotal = null;
     mergeFromId = null;
     mergeToId = null;
-    profEditId = null;
+    clearProfEditState();
     noteAddId = null;
+    noteDelPending = null;
     dialog = null;
     pulled = null;
     cur = 0;
     suppImgDelPending = null;
     closeImgViewer();
     closeDsState();
+    if (findDebounce !== null) {
+      clearTimeout(findDebounce);
+      findDebounce = null;
+    }
+    if (dsFilterDebounce !== null) {
+      clearTimeout(dsFilterDebounce);
+      dsFilterDebounce = null;
+    }
     if (backgrounded) notice("已转后台继续生成，重开面板查看进度", "info");
+    if (recBackgrounded) notice("录音转写转后台继续，重开面板查看进度", "info");
   }
   function closeDsState() {
     dsContacts = null;
@@ -21568,6 +21829,7 @@ ${lines}`;
     dsGenerateable = false;
     dsLastImported = [];
     dsScannedAt = "";
+    dsFilter = "";
   }
   var pendingDs = false;
   function openDataSource() {
@@ -21605,15 +21867,11 @@ ${lines}`;
     openDialog("ds");
     if (dsContacts === null) void runScan();
   }
-  function closeDs() {
-    if (!dsOpen()) return;
-    dsGenerateable = false;
-    closeDialog();
-  }
   function dsOpen() {
     return (dialog == null ? void 0 : dialog.kind) === "ds";
   }
-  function dsRowStates() {
+  function dsRowStates(query = dsFilter) {
+    const q = query.trim();
     const rows = (dsContacts != null ? dsContacts : []).map((c) => {
       var _a2, _b2;
       const badge = storeMediaBadge(c.stats);
@@ -21639,7 +21897,8 @@ ${lines}`;
       const k = (_a2 = dsWaterOf(r)) == null ? void 0 : _a2.k;
       return k === "newer" ? 0 : k === "skip" ? 2 : 1;
     };
-    return rows.sort((a, b) => rank(a) - rank(b) || b.newCount - a.newCount || a.name.localeCompare(b.name, "zh"));
+    const sorted = rows.sort((a, b) => rank(a) - rank(b) || b.newCount - a.newCount || a.name.localeCompare(b.name, "zh"));
+    return q ? sorted.filter((r) => r.displayName.includes(q)) : sorted;
   }
   function dsPageState() {
     const sel = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name));
@@ -21651,12 +21910,19 @@ ${lines}`;
       selected: sel.map((c) => c.name),
       hiddenGroups: dsHiddenGroups,
       notice: dsNotice,
-      generateable: dsGenerateable,
       desktopOnly: !isDesktop(),
       scannedAt: dsScannedAt,
       syncing: isSyncing(),
-      sync: dsSyncLine()
+      sync: dsSyncLine(),
+      // 过滤（D 组）：框里现挂的字 + 全量总人数（页眉「N / 共 M 位」的 M）+ 全量行（页脚账不丢勾选）
+      filter: dsFilter,
+      totalRows: (dsContacts != null ? dsContacts : []).length,
+      allRows: dsContacts === null ? void 0 : dsRowStates("")
     };
+  }
+  function focusDsFilter() {
+    var _a2;
+    (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-ds-filter]")) == null ? void 0 : _a2.focus();
   }
   var syncTickTimer = null;
   function stopSyncTick() {
@@ -21759,7 +22025,7 @@ ${lines}`;
   }
   function applySyncLockdown() {
     const lock = isSyncing();
-    overlay == null ? void 0 : overlay.querySelectorAll('[data-people-act="generate"], [data-people-ds-generate], [data-people-seal-act]').forEach((b) => {
+    overlay == null ? void 0 : overlay.querySelectorAll('[data-people-act="generate"], [data-people-seal-act]').forEach((b) => {
       if (lock) {
         b.disabled = true;
         b.setAttribute("data-people-sync-lock", "1");
@@ -21942,8 +22208,9 @@ ${lines}`;
         }
         updateImportNotice("正在导入聊天仓…");
       }
-      for (const c of chosen) {
+      for (const [i, c] of chosen.entries()) {
         if (!overlay) return;
+        updateImportNotice(`正在并入「${c.displayName}」（${i + 1}/${chosen.length}）…`);
         const bundle = readContactBundle(dataDir, c.name);
         if (!bundle) {
           readFail.push(c.name);
@@ -21975,7 +22242,7 @@ ${lines}`;
     recordCache = null;
     const fresh = [...addedOf.values()].reduce((s, n) => s + n, 0);
     const summary = `已导入（新增 ${fresh} 条）${readFail.length ? ` · ${readFail.length} 位读文件失败` : ""}`;
-    dsNotice = fresh > 0 && !readFail.length ? `${summary}。点「画脸谱」调用 AI 生成。` : summary;
+    dsNotice = fresh > 0 && !readFail.length ? `${summary}。到对应联系人的详情页点「画脸谱」生成。` : summary;
     dsGenerateable = fresh > 0 && !readFail.length;
     dsLastImported = chosen.map((c) => c.name);
     for (const c of chosen) dsSelected.delete(c.name);
@@ -21993,57 +22260,6 @@ ${lines}`;
     }
     showBanner(`${summary}——新照片飞回册页了`, true);
     closeDialog();
-  }
-  async function generateFromDs() {
-    var _a2, _b2, _c2, _d2;
-    if (!overlay || !store || dsImporting || dsScanning) return;
-    if (isSyncing()) {
-      notice("正在同步微信数据——同步完成后再画脸谱", "info");
-      return;
-    }
-    if (jobsBusy()) {
-      notice("已有生成在进行——等它完成或暂停后再画", "info");
-      return;
-    }
-    const picked = (dsContacts != null ? dsContacts : []).filter((c) => dsSelected.has(c.name)).map((c) => c.name);
-    const known = new Set((dsContacts != null ? dsContacts : []).map((c) => c.name));
-    const names = picked.length ? picked : dsLastImported.filter((n) => known.has(n));
-    if (!names.length) {
-      notice("还没有勾选联系人", "warning");
-      return;
-    }
-    const targets = [];
-    try {
-      const storeData = await records();
-      for (const name of names) {
-        const pv = (_a2 = storeData.get(name)) == null ? void 0 : _a2.store;
-        const unified = storeToUnified((_b2 = pv == null ? void 0 : pv.msgs) != null ? _b2 : []);
-        if (!unified.length) continue;
-        targets.push({
-          talker: name,
-          name,
-          msgs: unified,
-          kindCounts: (_c2 = pv == null ? void 0 : pv.kindCounts) != null ? _c2 : {},
-          skippedCount: 0,
-          // 仓内时间线全是有效文本；原始过滤数已计入 chat.json 口径，不在导入记录重复报
-          fileLabel: `数据源:${name}`,
-          insights: pv == null ? void 0 : pv.insights,
-          pending: pendingMediaCounts((_d2 = pv == null ? void 0 : pv.msgs) != null ? _d2 : [])
-        });
-      }
-    } catch (e) {
-      console.warn("[people] 读取聊天仓失败:", e);
-      dsNotice = "生成失败：读不到聊天仓。";
-      renderAlbum();
-      return;
-    }
-    if (!targets.length) {
-      dsNotice = "所选还没有预览数据，先「导入所选」。";
-      renderAlbum();
-      return;
-    }
-    closeDs();
-    await startGeneration(targets);
   }
   async function generateOne(id, opts = {}) {
     var _a2, _b2, _c2, _d2;
@@ -22378,21 +22594,34 @@ ${lines}`;
     done == null ? void 0 : done(answer);
   }
   function jobsAction(kind) {
-    var _a2, _b2, _c2, _d2, _e, _f;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h;
     const api = jobs();
     const talker = (_b2 = (_a2 = overlay == null ? void 0 : overlay.querySelector("[data-people-jobs]")) == null ? void 0 : _a2.getAttribute("data-people-jobs-talker")) != null ? _b2 : "";
     if (kind === "cancel") {
       const who = talker || ((_c2 = currentJobsItem()) == null ? void 0 : _c2.talker) || "";
       if (!who) return;
-      if (api.removeJob(who)) notice("已取消这次画脸谱——详情页可重新补画", "delete");
-      renderNote();
-      void renderAlbum();
+      const job = ((_d2 = jobsCache == null ? void 0 : jobsCache.queue) != null ? _d2 : []).find((j) => j.talker === who);
+      const doneBatches = (_e = job == null ? void 0 : job.batchesDone) != null ? _e : 0;
+      const label = (job == null ? void 0 : job.name) || who;
+      void openFlowDialog({
+        title: "取消这次画脸谱",
+        message: `「${label}」已完成的批次断点将一并丢弃${doneBatches > 0 ? `（已完成 ${doneBatches} 批）` : ""}，之后要画得从头再来。`,
+        actions: [
+          { label: "继续画", value: "cancel" },
+          { label: "取消任务", value: "ok", danger: true }
+        ]
+      }).then((v) => {
+        if (v !== "ok") return;
+        if (api.removeJob(who)) notice("已取消这次画脸谱——详情页可重新补画", "delete");
+        renderNote();
+        void renderAlbum();
+      });
       return;
     }
     if (kind === "prep-retry") {
-      const who = talker || ((_d2 = currentJobsItem()) == null ? void 0 : _d2.talker) || "";
+      const who = talker || ((_f = currentJobsItem()) == null ? void 0 : _f.talker) || "";
       if (!who) return;
-      if ((_e = api.retryPrepFailures) == null ? void 0 : _e.call(api, who)) notice("重试失败项——已完成的产物与批次不重跑", "info");
+      if ((_g = api.retryPrepFailures) == null ? void 0 : _g.call(api, who)) notice("重试失败项——已完成的产物与批次不重跑", "info");
       return;
     }
     if (kind === "resume") {
@@ -22400,7 +22629,7 @@ ${lines}`;
         notice("正在同步微信数据——同步完成后再继续生成", "info");
         return;
       }
-      const who = talker || ((_f = currentJobsItem()) == null ? void 0 : _f.talker) || "";
+      const who = talker || ((_h = currentJobsItem()) == null ? void 0 : _h.talker) || "";
       if (!who) return;
       api.resume(who);
       notice("继续生成——已完成的批次不重画", "info");
@@ -22495,7 +22724,7 @@ ${lines}`;
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -22548,7 +22777,7 @@ ${lines}`;
       return;
     }
     if (t.closest("[data-people-close]")) {
-      closeDialog();
+      guardProfLeave(closeDialog);
       return;
     }
     if (t.closest("[data-people-banner-close]")) {
@@ -22568,12 +22797,13 @@ ${lines}`;
       pickFresh();
       return;
     }
-    if (t.closest("[data-people-ds-import]")) {
-      void importDsSelected();
+    if (t.closest("[data-people-ds-filter-clear]")) {
+      dsFilter = "";
+      void renderAlbum().then(() => focusDsFilter());
       return;
     }
-    if (t.closest("[data-people-ds-generate]")) {
-      void generateFromDs();
+    if (t.closest("[data-people-ds-import]")) {
+      void importDsSelected();
       return;
     }
     const dsRow2 = t.closest(".bz-people-ds-row");
@@ -22625,8 +22855,10 @@ ${lines}`;
         return;
       }
       if (kind === "prof") {
-        profEditId = null;
-        openDialog("prof");
+        guardProfLeave(() => {
+          clearProfEditState();
+          openDialog("prof");
+        });
         return;
       }
       if (kind === "note") {
@@ -22646,12 +22878,15 @@ ${lines}`;
         foldToHead();
         return;
       }
-      detailFold = id;
-      animFold = true;
-      foldScrollTop = true;
-      profEditId = null;
-      noteAddId = null;
-      void renderAlbum();
+      guardProfLeave(() => {
+        detailFold = id;
+        animFold = true;
+        foldScrollTop = true;
+        clearProfEditState();
+        noteAddId = null;
+        noteDelPending = null;
+        void renderAlbum();
+      });
       return;
     }
     const more = t.closest("[data-people-more]");
@@ -22668,7 +22903,20 @@ ${lines}`;
     }
     const noteDel = t.closest("[data-people-note-del]");
     if (noteDel) {
-      void removeManualNote((_n = noteDel.dataset.peopleNoteDel) != null ? _n : "");
+      noteDelPending = (_n = noteDel.dataset.peopleNoteDel) != null ? _n : null;
+      void renderAlbum();
+      return;
+    }
+    if (t.closest("[data-people-note-del-cancel]")) {
+      noteDelPending = null;
+      void renderAlbum();
+      return;
+    }
+    const noteDelOk = t.closest("[data-people-note-del-ok]");
+    if (noteDelOk) {
+      const id = (_o = noteDelOk.dataset.peopleNoteDelOk) != null ? _o : "";
+      noteDelPending = null;
+      void removeManualNote(id);
       return;
     }
     if (t.closest("[data-people-merge-cancel]")) {
@@ -22687,7 +22935,7 @@ ${lines}`;
     }
     if (t.closest("[data-people-del-ok]")) {
       const btn = t.closest("[data-people-del-ok]");
-      const p = (_o = listCache.find((x) => x.id === detailId)) != null ? _o : null;
+      const p = (_p = listCache.find((x) => x.id === detailId)) != null ? _p : null;
       if (!p) return;
       if (openedTier === "drawn") void confirmDeleteFromPage(p, btn);
       else void deletePerson(p);
@@ -22703,11 +22951,21 @@ ${lines}`;
     }
     if (t.closest("[data-people-prof-new]") || t.closest("[data-people-prof-edit]")) {
       profEditId = detailId;
+      profDirty = false;
+      profLeaveConfirm = false;
       requestProfRender();
       return;
     }
+    if (t.closest("[data-people-prof-leave-ok]")) {
+      discardProfEdit();
+      return;
+    }
+    if (t.closest("[data-people-prof-leave-cancel]")) {
+      keepProfEdit();
+      return;
+    }
     if (t.closest("[data-people-prof-cancel]")) {
-      profEditId = null;
+      clearProfEditState();
       requestProfRender();
       return;
     }
@@ -22720,27 +22978,33 @@ ${lines}`;
       return;
     }
     if (t.closest("[data-people-prof-add-social]")) {
-      (_p = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _p.appendChild(socialRow("", ""));
+      markProfDirty();
+      (_q = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-social-list]")) == null ? void 0 : _q.appendChild(socialRow("", ""));
       return;
     }
     if (t.closest("[data-people-prof-add-rel]")) {
-      (_q = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-rel-list]")) == null ? void 0 : _q.appendChild(relationRow("", ""));
+      markProfDirty();
+      (_r = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-rel-list]")) == null ? void 0 : _r.appendChild(relationRow("", ""));
       return;
     }
     if (t.closest("[data-people-prof-add-date]")) {
-      (_r = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-date-list]")) == null ? void 0 : _r.appendChild(dateRow("", ""));
+      markProfDirty();
+      (_s = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-date-list]")) == null ? void 0 : _s.appendChild(dateRow("", ""));
       return;
     }
     if (t.closest("[data-people-prof-rel-del]")) {
-      (_s = t.closest(".bz-people-prof-subrow")) == null ? void 0 : _s.remove();
-      return;
-    }
-    if (t.closest("[data-people-prof-date-del]")) {
+      markProfDirty();
       (_t = t.closest(".bz-people-prof-subrow")) == null ? void 0 : _t.remove();
       return;
     }
-    if (t.closest("[data-people-prof-social-del]")) {
+    if (t.closest("[data-people-prof-date-del]")) {
+      markProfDirty();
       (_u = t.closest(".bz-people-prof-subrow")) == null ? void 0 : _u.remove();
+      return;
+    }
+    if (t.closest("[data-people-prof-social-del]")) {
+      markProfDirty();
+      (_v = t.closest(".bz-people-prof-subrow")) == null ? void 0 : _v.remove();
       return;
     }
     if (t.closest("[data-people-prof-tag-add]")) {
@@ -22748,7 +23012,8 @@ ${lines}`;
       return;
     }
     if (t.closest("[data-people-prof-tag-del]")) {
-      (_v = t.closest(".bz-people-tag-chip")) == null ? void 0 : _v.remove();
+      markProfDirty();
+      (_w = t.closest(".bz-people-tag-chip")) == null ? void 0 : _w.remove();
       return;
     }
     if (t.closest("[data-people-note-save]")) {
@@ -22757,7 +23022,7 @@ ${lines}`;
     }
     const suppTabBtn = t.closest("[data-people-supp-tab]");
     if (suppTabBtn) {
-      suppTab = (_w = suppTabBtn.getAttribute("data-people-supp-tab")) != null ? _w : "text";
+      suppTab = (_x = suppTabBtn.getAttribute("data-people-supp-tab")) != null ? _x : "text";
       recRefConfirm = false;
       startRecPolling();
       void renderAlbum();
@@ -22791,7 +23056,7 @@ ${lines}`;
     }
     const imgView = t.closest("[data-people-supp-img-view]");
     if (imgView) {
-      openImgViewer((_x = imgView.getAttribute("data-people-supp-img-view")) != null ? _x : "");
+      openImgViewer((_y = imgView.getAttribute("data-people-supp-img-view")) != null ? _y : "");
       return;
     }
     const imgDel = t.closest("[data-people-supp-img-del]");
@@ -22807,7 +23072,7 @@ ${lines}`;
     }
     const imgDelOk = t.closest("[data-people-supp-img-del-ok]");
     if (imgDelOk) {
-      const img = (_y = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _y : "";
+      const img = (_z = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _z : "";
       suppImgDelPending = null;
       void suppDeleteImage(img);
       return;
@@ -22836,7 +23101,7 @@ ${lines}`;
     }
     const recDel = t.closest("[data-people-supp-rec-del]");
     if (recDel) {
-      recDelPending = (_z = recDel.getAttribute("data-people-supp-rec-del")) != null ? _z : null;
+      recDelPending = (_A = recDel.getAttribute("data-people-supp-rec-del")) != null ? _A : null;
       recDelAlsoFile = true;
       void renderAlbum();
       return;
@@ -22848,7 +23113,7 @@ ${lines}`;
     }
     const recDelOk = t.closest("[data-people-supp-rec-del-ok]");
     if (recDelOk) {
-      void suppDeleteRecording((_A = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _A : "");
+      void suppDeleteRecording((_B = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _B : "");
       return;
     }
     const recStartBtn = t.closest("[data-people-supp-rec-start-edit]");
@@ -22875,17 +23140,17 @@ ${lines}`;
     }
     const recRun = t.closest("[data-people-supp-rec-run]");
     if (recRun) {
-      void suppRunRecording((_B = recRun.getAttribute("data-people-supp-rec-run")) != null ? _B : "");
+      void suppRunRecording((_C = recRun.getAttribute("data-people-supp-rec-run")) != null ? _C : "");
       return;
     }
     const recMerge = t.closest("[data-people-supp-rec-merge]");
     if (recMerge && detailId) {
-      void suppMergeRecording(detailId, (_C = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _C : "");
+      void suppMergeRecording(detailId, (_D = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _D : "");
       return;
     }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      const file = (_D = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _D : "";
+      const file = (_E = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _E : "";
       const root = suppDataRoot();
       if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
       void renderAlbum();
@@ -22914,7 +23179,7 @@ ${lines}`;
     }
     const recDeq = t.closest("[data-people-supp-rec-dequeue]");
     if (recDeq) {
-      const file = (_E = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _E : "";
+      const file = (_F = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _F : "";
       const root = suppDataRoot();
       if (detailId && root && file) dequeueRecordingTask(recordingSidecarPath(root, detailId, file));
       void renderAlbum();
@@ -22946,10 +23211,6 @@ ${lines}`;
     }
     if (kind === "find") {
       openDialog("find");
-      return;
-    }
-    if (kind === "gen") {
-      void generateFromDs();
       return;
     }
   }
@@ -23030,7 +23291,7 @@ ${lines}`;
     const total = pages.length;
     const ledger = { faces: people.filter((p) => p.digest).length, msgs: people.reduce((s, p) => s + p.imports.reduce((x, r) => x + r.messageCount, 0), 0) };
     if (dialog && !pulled && dialog.kind !== "stats" && dialog.kind !== "prof" && dialog.kind !== "note" && dialog.kind !== "del") {
-      return albumSpread([dialogPage(null)], { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } }, { mod: "bz-people-spread-one" });
+      return albumSpread([dialogPage(null, avatars)], { left: { pages: 0, flips: 0 }, right: { pages: 0, flips: 0 } }, { mod: "bz-people-spread-one" });
     }
     if (pulled) {
       const at = sorted.findIndex((p) => p.id === pulled);
@@ -23067,7 +23328,7 @@ ${lines}`;
       foldIn: animFold,
       // 刚换折 → 正文放进动画（issue 507：505 之后这一支的类名没人挂了）
       avatar: (_a2 = avatars.get(p.id)) != null ? _a2 : "",
-      body: detailFold === "p" ? foldPersonBody(md, p) : detailFold === "b" ? foldBondBody(bondMd, p) : foldEventsBody(p),
+      body: detailFold === "p" ? foldPersonBody(md, p) : detailFold === "b" ? foldBondBody(bondMd, p) : foldEventsBody(p, noteDelPending),
       job: sealJobOf(jobViews().get(p.id)),
       facts: detailFactsOf(p)
     };
@@ -23077,15 +23338,15 @@ ${lines}`;
     const kind = dialog == null ? void 0 : dialog.kind;
     if (kind === "ds") return dsPage(dsPageState());
     if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], images: 0, voices: 0, provider: "", model: "", describeCalls: 0, portraitCalls: 0, batchSize: 0 });
-    if (kind === "find") return findPageState();
+    if (kind === "find") return findPageState(avatars);
     if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
-    if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id), profEditId === p.id);
-    if (p && kind === "note") return suppPage(p, suppTab, suppImageState(), suppRecState(p.id, (_a2 = avatars == null ? void 0 : avatars.get(p.id)) != null ? _a2 : ""), todayStr());
+    if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);
+    if (p && kind === "note") return suppPage(p, suppTab, suppImageState(), suppRecState(p.id, (_a2 = avatars == null ? void 0 : avatars.get(p.id)) != null ? _a2 : ""), todayStr(), noteDelPending);
     if (p && kind === "del") return delPage(p, (_b2 = dialog == null ? void 0 : dialog.tier) != null ? _b2 : deleteTierOf(p, sealJobOf(jobViews().get(p.id))));
     return subPage({ title: "", hook: "none" }, []);
   }
-  function findPageState() {
-    var _a2, _b2;
+  function findPageState(avatars) {
+    var _a2, _b2, _c2;
     const q = findQuery.trim();
     const { sorted } = pagination(listCache);
     const rows = [];
@@ -23100,7 +23361,7 @@ ${lines}`;
         const pi = Math.floor(at / AL_PER_PAGE);
         rows.push({
           p,
-          avatar: "",
+          avatar: (_c2 = avatars == null ? void 0 : avatars.get(p.id)) != null ? _c2 : "",
           page: pi + 1,
           half: pi % PER_SPREAD === 0 ? "左" : "右",
           state: seal.state === "none" ? "todo" : seal.state === "drawn" || seal.state === "legacy" ? "drawn" : "drawing"
@@ -23684,12 +23945,48 @@ ${lines}`;
   }
   var profEditId = null;
   var noteAddId = null;
+  var profDirty = false;
+  var profLeaveConfirm = false;
+  var profPendingLeave = null;
+  function markProfDirty() {
+    if (profEditId !== null) profDirty = true;
+  }
+  function guardProfLeave(perform) {
+    if ((dialog == null ? void 0 : dialog.kind) !== "prof" || profEditId === null || !profDirty) {
+      perform();
+      return;
+    }
+    profPendingLeave = perform;
+    if (!profLeaveConfirm) {
+      profLeaveConfirm = true;
+      const page = overlay == null ? void 0 : overlay.querySelector('[data-people-sub="prof"] .bz-people-pagebody');
+      if (page && !page.querySelector("[data-people-prof-leave-ok]")) page.prepend(profLeaveAsk());
+    }
+  }
+  function discardProfEdit() {
+    const go = profPendingLeave;
+    clearProfEditState();
+    go == null ? void 0 : go();
+  }
+  function keepProfEdit() {
+    var _a2;
+    profLeaveConfirm = false;
+    profPendingLeave = null;
+    (_a2 = overlay == null ? void 0 : overlay.querySelector(".bz-people-prof-leaveask")) == null ? void 0 : _a2.remove();
+  }
+  function clearProfEditState() {
+    profEditId = null;
+    profDirty = false;
+    profLeaveConfirm = false;
+    profPendingLeave = null;
+  }
   function addTagChip() {
     var _a2;
     const input = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-tag-input]");
     const list = overlay == null ? void 0 : overlay.querySelector("[data-people-prof-tag-list]");
     const v = ((_a2 = input == null ? void 0 : input.value) != null ? _a2 : "").trim();
     if (!input || !list || !v) return;
+    markProfDirty();
     const dupes = new Set(
       Array.from(list.querySelectorAll(".bz-people-prof-tag-text")).map((n) => {
         var _a3;
@@ -23834,7 +24131,7 @@ ${lines}`;
     const empty = !socials.length && !tags.length && !interests.length && !likes.length && !dislikes.length && !relationships.length && !importantDates.length && !Object.keys(profile).length;
     try {
       await store.updateProfile(detailId, empty ? void 0 : profile);
-      profEditId = null;
+      clearProfEditState();
       notice(empty ? "档案已清空" : "档案已保存", "success");
       if (partial > 0) notice(`${partial} 行没填完整，已跳过`, "warning");
     } catch (e) {
@@ -24189,37 +24486,27 @@ ${lines}`;
       void renderAlbum();
     }
   }
-  var imgViewer = null;
-  var IMG_VIEW_ESC_ID = "people-img-view";
+  var imgLightboxClose = null;
   function closeImgViewer() {
-    if (!imgViewer) return;
-    imgViewer.remove();
-    imgViewer = null;
-    unregisterPanelEsc(IMG_VIEW_ESC_ID);
+    imgLightboxClose == null ? void 0 : imgLightboxClose();
+    imgLightboxClose = null;
   }
   function openImgViewer(img) {
-    var _a2, _b2;
     const talker = detailId;
     const root = suppDataRoot();
     if (!overlay || !talker || !root || !img) return;
     closeImgViewer();
-    const cap = ((_b2 = (_a2 = suppStoreInfo.imageItems.find((x) => x.img === img)) == null ? void 0 : _a2.text) != null ? _b2 : "").replace(/^\[图片\]\s*/, "");
-    const view = document.createElement("div");
-    view.className = "bz-people-supp-imgview";
-    const pic = document.createElement("img");
-    pic.src = localImgOf(descImagePath(root, talker, img));
-    pic.alt = cap;
-    view.appendChild(pic);
-    if (cap) {
-      const c = document.createElement("div");
-      c.className = "bz-people-supp-imgview-cap";
-      c.textContent = cap;
-      view.appendChild(c);
-    }
-    view.addEventListener("click", () => closeImgViewer());
-    overlay.appendChild(view);
-    imgViewer = view;
-    registerPanelEsc(IMG_VIEW_ESC_ID, () => imgViewer !== null, () => closeImgViewer());
+    const index = suppStoreInfo.imageItems.findIndex((x) => x.img === img);
+    if (index < 0) return;
+    const { close } = openLightbox({
+      title: "留影",
+      items: suppStoreInfo.imageItems.map((it) => ({
+        src: localImgOf(descImagePath(root, talker, it.img)),
+        caption: it.text.replace(/^\[图片\]\s*/, "")
+      })),
+      index
+    });
+    imgLightboxClose = close;
   }
   async function suppDeleteImage(img) {
     var _a2;

@@ -1,4 +1,4 @@
-/* 源指纹 5beeeecf494edaf6 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0f60af5a324750c8 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -90,6 +90,7 @@ var BZR_people = (() => {
     noteAddRow: () => noteAddRow,
     pageTotal: () => pageTotal,
     panelShell: () => panelShell,
+    profLeaveAsk: () => profLeaveAsk,
     profPage: () => profPage,
     profileEditor: () => profileEditor,
     profileFilled: () => profileFilled,
@@ -936,12 +937,21 @@ var BZR_people = (() => {
   function secTitle(t) {
     return el("div", "bz-people-sec-title", text(t));
   }
-  function noteRow(m) {
-    return el("div", "bz-people-note-row", [
+  function noteRow(m, pendingDel = false) {
+    const row = el("div", "bz-people-note-row", [
       el("span", "bz-people-note-ts", text(m.ts)),
-      el("span", "bz-people-note-sum", text(m.summary)),
-      button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id })
+      el("span", "bz-people-note-sum", text(m.summary))
     ]);
+    if (pendingDel) {
+      row.appendChild(el("span", "bz-people-note-ask", [
+        textEl("span", "撕掉这张？"),
+        button("bz-people-note-del-ok", "撕掉", { "data-people-note-del-ok": m.id }),
+        button("bz-people-note-del-no", "取消", { "data-people-note-del-cancel": m.id })
+      ]));
+    } else {
+      row.appendChild(button("bz-people-note-del", "撕掉", { "data-people-note-del": m.id }));
+    }
+    return row;
   }
   function clipList(cls, items, first, moreText) {
     const box = el("div", cls);
@@ -1011,7 +1021,7 @@ var BZR_people = (() => {
     }
     return out;
   }
-  function foldEventsBody(p) {
+  function foldEventsBody(p, noteDelPending = null) {
     var _a, _b, _c, _d, _e, _f;
     const out = [];
     const chron = (_b = (_a = p.digest) == null ? void 0 : _a.chronicle) != null ? _b : "";
@@ -1048,7 +1058,7 @@ var BZR_people = (() => {
     }
     const manual = (_f = p.manualEvents) != null ? _f : [];
     if (manual.length) {
-      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map(noteRow)));
+      out.push(secTitle("随手记"), el("div", "bz-people-notes", manual.map((m) => noteRow(m, noteDelPending === m.id))));
     }
     return out;
   }
@@ -1266,8 +1276,9 @@ var BZR_people = (() => {
       ])
     ]);
   }
-  function profilePopBody(p, editing) {
+  function profilePopBody(p, editing, leaveConfirm = false) {
     const out = [];
+    if (editing && leaveConfirm) out.push(profLeaveAsk());
     const hasProf = profileFilled(p.profile);
     if (hasProf || editing) out.push(editing ? profileEditor(p.profile) : profileView(p.profile));
     if (!hasProf && !editing) {
@@ -1303,33 +1314,46 @@ var BZR_people = (() => {
     if (!s.rows) {
       body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : s.scanning ? "正在扫描联系人目录…" : !s.dataDir ? "还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else {
-      const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
-      for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
-      body.push(list);
-      const legend = el("div", "bz-people-ds-legend");
-      legend.append(
-        el("span", "", [el("i", "bz-people-ds-dot-ok"), text("有更新")]),
-        el("span", "", [el("i", "bz-people-ds-dot-idle"), text("已导无更新")]),
-        el("span", "", [el("i", "bz-people-ds-dot-none"), text("未导入")])
-      );
-      if (s.rows.some((r) => {
-        var _a;
-        return ((_a = r.newCount) != null ? _a : 0) > 0;
-      })) {
-        legend.appendChild(button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" }));
+      const fbox = el("div", "bz-people-findbox");
+      fbox.appendChild(el("i", "bz-ic", { "data-lucide": "search", "aria-hidden": "true" }));
+      const finp = document.createElement("input");
+      finp.className = "bz-people-input";
+      finp.value = s.filter;
+      finp.setAttribute("data-people-ds-filter", "");
+      finp.setAttribute("placeholder", "按名字过滤联系人…");
+      fbox.appendChild(finp);
+      if (s.filter.trim()) fbox.appendChild(iconButton("x", "bz-people-ico bz-people-ico-sm", { "data-people-ds-filter-clear": "", "aria-label": "清空过滤" }));
+      body.push(fbox);
+      if (!s.rows.length) {
+        body.push(el("div", "bz-people-empty-hint", text(`没匹配「${s.filter.trim()}」的联系人——清掉过滤字再看全名单。`)));
+      } else {
+        const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
+        for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
+        body.push(list);
+        const legend = el("div", "bz-people-ds-legend");
+        legend.append(
+          el("span", "", [el("i", "bz-people-ds-dot-ok"), text("有更新")]),
+          el("span", "", [el("i", "bz-people-ds-dot-idle"), text("已导无更新")]),
+          el("span", "", [el("i", "bz-people-ds-dot-none"), text("未导入")])
+        );
+        if (s.rows.some((r) => {
+          var _a;
+          return ((_a = r.newCount) != null ? _a : 0) > 0;
+        })) {
+          legend.appendChild(button("bz-people-ds-pickfresh", "勾有更新的", { "data-people-ds-pickfresh": "" }));
+        }
+        body.push(legend);
       }
-      body.push(legend);
     }
     const foot = el("div", "bz-people-pop-foot");
     foot.appendChild(el("span", "bz-people-ds-count", { "data-people-ds-count": "" }, text(footerLabel(s))));
     foot.appendChild(el("span", "bz-people-spacer"));
-    if (s.generateable) foot.appendChild(button("bz-people-btn bz-people-btn-gold", "画脸谱", { "data-people-ds-generate": "" }));
     const imp = button("bz-people-btn bz-people-btn-acc", s.importing ? "导入中…" : "导入所选", { "data-people-ds-import": "" });
     if (s.importing || s.syncing) imp.setAttribute("disabled", "");
     foot.appendChild(imp);
     const head = [];
     head.push(s.syncing ? button("bz-people-btn bz-people-btn-sm", "停止", { "data-people-ds-sync-stop": "", title: "停止同步——已导出的部分保留，重跑可续传" }) : button("bz-people-btn bz-people-btn-sm", "同步", { "data-people-ds-sync": "", title: "从微信重新解密并导出，需要微信已登录" }));
-    const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
+    const meta = s.syncing ? "正在同步…" : s.scanning ? "正在扫描…" : s.rows ? s.filter.trim() ? `${s.rows.length} / 共 ${s.totalRows} 位` : `${s.rows.length} 位联系人${s.hiddenGroups ? ` · ${s.hiddenGroups} 个群聊未纳入` : ""}` : "";
     return subPage({ title: "数据源", meta, head, foot, hook: "ds" }, body);
   }
   function genPage(info) {
@@ -1361,6 +1385,15 @@ var BZR_people = (() => {
   }
   function profPage(p, body, editing) {
     return subPage({ title: "补充背景", meta: editing ? `${p.name} · 编辑中` : p.name, hook: "prof" }, body);
+  }
+  function profLeaveAsk() {
+    return el("div", "bz-people-prof-leaveask", [
+      el("span", "bz-people-prof-leaveask-tx", text("改动还没保存——放弃？")),
+      el("span", "bz-people-prof-leaveask-acts", [
+        button("bz-people-btn bz-people-btn-sm bz-people-btn-danger", "放弃", { "data-people-prof-leave-ok": "" }),
+        button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "继续编辑", { "data-people-prof-leave-cancel": "" })
+      ])
+    ]);
   }
   var SUPP_TABS = [
     ["text", "记一笔", "随手记一件事"],
@@ -1403,7 +1436,7 @@ var BZR_people = (() => {
       sEl.className = i === curIdx ? "bz-people-supp-stage on" : i < curIdx ? "bz-people-supp-stage done" : "bz-people-supp-stage";
     });
   }
-  function suppPage(p, tab, image, rec, today) {
+  function suppPage(p, tab, image, rec, today, noteDelPending = null) {
     var _a;
     const body = [];
     body.push(el("div", "bz-people-ftabs bz-people-supp-tabs", SUPP_TABS.map(([id, label, hint]) => button(`bz-people-ftab${tab === id ? " on" : ""}`, label, { "data-people-supp-tab": id, title: hint }))));
@@ -1414,7 +1447,7 @@ var BZR_people = (() => {
         notes.length ? `已记 ${notes.length} 笔` : "还没记过——上面写一条，就落在这一列。"
       )));
       if (notes.length) {
-        body.push(el("div", "bz-people-notes bz-people-supp-notes", notes.map(noteRow)));
+        body.push(el("div", "bz-people-notes bz-people-supp-notes", notes.map((m) => noteRow(m, noteDelPending === m.id))));
       }
     } else if (tab === "image") {
       body.push(...suppImageBody(image));
@@ -1982,7 +2015,7 @@ var BZR_people = (() => {
     const box = el(
       "span",
       "bz-people-ds-box",
-      { "data-people-ds-check": row.name, role: "checkbox", "aria-checked": on ? "true" : "false" },
+      { "data-people-ds-check": row.name, role: "checkbox", tabindex: "0", "aria-checked": on ? "true" : "false" },
       on ? el("i", "bz-ic", { "data-lucide": "check", "aria-hidden": "true" }) : text("")
     );
     const name = row.displayName + (row.isGroup ? "（群）" : "");
@@ -2000,8 +2033,8 @@ var BZR_people = (() => {
     ]);
   }
   function footerLabel(s) {
-    var _a;
-    const picked = ((_a = s.rows) != null ? _a : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
+    var _a, _b;
+    const picked = ((_b = (_a = s.allRows) != null ? _a : s.rows) != null ? _b : []).filter((r) => s.selected.includes(r.name) && !r.isGroup);
     if (!picked.length) return "未勾选联系人";
     const n = { full: 0, newer: 0, skip: 0, exported: 0 };
     let msgs = 0;
