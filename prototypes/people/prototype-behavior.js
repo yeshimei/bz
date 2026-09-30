@@ -1,4 +1,4 @@
-/* 源指纹 025bd1c0309983dd · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 94bd920e7e1ce29f · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -21116,15 +21116,12 @@ ${lines}`;
       ]));
       return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
     }
-    let n = 0;
-    const row = (solid, zero, name, value, tail = "") => {
+    const row = (zero, name, value, tail = "", scope = false) => {
       if (zero) return null;
-      n++;
-      return el("div", `bz-people-gen-row${solid ? " bz-people-gen-row-a" : ""}`, [
-        el("span", "bz-people-gen-no", text(String(n))),
+      return el("div", "bz-people-gen-row", [
         el("span", "bz-people-gen-k", text(name)),
         el("span", "bz-people-gen-v", text(value)),
-        ...tail ? [el("span", "bz-people-gen-tail", text(`· ${tail}`))] : []
+        ...tail ? [el("span", `bz-people-gen-tail${scope ? " bz-people-gen-tail-s" : ""}`, text(`· ${tail}`))] : []
       ]);
     };
     const group = (title, rows) => {
@@ -21135,46 +21132,42 @@ ${lines}`;
     };
     group("本趟要处理的素材", [
       row(
-        true,
         !info.voices && !info.voiceProofread,
         "微信语音条",
         `${num2(info.voices)} 条待转写`,
         info.voiceProofread ? `${num2(info.voiceProofread)} 条待 LLM 校对` : ""
       ),
       row(
-        true,
         !info.images && !info.imagesDescribed,
         "图片",
         `${num2(info.images)} 张待描述`,
         info.imagesDescribed ? `${num2(info.imagesDescribed)} 张已描述` : ""
       ),
       row(
-        true,
         !info.materials && !info.materialsTotal,
         "聊天记录",
         `${num2(info.materials)} 条`,
-        info.materialsTotal ? `仓内共 ${num2(info.materialsTotal)} 条` : ""
+        info.materialsTotal ? `仓内共 ${num2(info.materialsTotal)} 条` : "",
+        true
       ),
       row(
-        true,
         !info.recs && !info.recProofread,
         "录音",
         `${num2(info.recs)} 条`,
         info.recProofread ? `${num2(info.recProofread)} 条待校对` : ""
       ),
-      row(true, !info.mediaFail, "源图损坏/缺失", `${num2(info.mediaFail)} 张`)
+      row(!info.mediaFail, "源图损坏/缺失", `${num2(info.mediaFail)} 张`)
     ]);
     group("中间工序", [
-      row(false, false, "并仓", ""),
-      row(false, !info.batches, "采集提炼", `${num2(info.batches)} 批`)
+      row(false, "并仓", ""),
+      row(!info.batches, "采集提炼", `${num2(info.batches)} 批`)
     ]);
     group("重画", [
-      row(false, false, "三卷", "《其人》《相交》《纪事》"),
-      row(false, false, "补充背景", "十维档案回填")
+      row(false, "三卷", "《其人》《相交》《纪事》"),
+      row(false, "补充背景", "十维档案回填")
     ]);
-    group("落盘", [row(false, false, "账", "")]);
+    group("落盘", [row(false, "账", "")]);
     body.push(el("div", "bz-people-gen-actions", [
-      el("span", "bz-people-gen-no", text(String(n + 1))),
       button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
     ]));
     return subPage({ title: "开始生成脸谱", hook: "gen" }, body);

@@ -49,13 +49,13 @@ const info: GenerationConfirmInfo = {
   empty: false,
 };
 
-/** 一行的四格：序号 | 名称 | 本次工作量 | · 对账数 */
+/** 一行的三格：名称 | 本次工作量 | · 另一笔数（530 拍板去掉序号） */
 function rowCells(r: Element): string {
   return [...r.querySelectorAll('span')].map((s) => s.textContent ?? '').join('|');
 }
 
 describe('开工单册页（genPage，issue 505：确认是册子里翻出来的一页；530：按示意图重排成账单）', () => {
-  it('四组一条流水线、一行一项：序号 + 名称 + 本次工作量 + · 对账数（530 的核心修复）', () => {
+  it('四组一条流水线、一行一项：名称 + 本次工作量 + · 另一笔数（530 的核心修复）', () => {
     const page = genPage(info);
     expect(page.dataset.peopleSub).toBe('gen');
     expect(page.querySelector('.bz-people-head-label')!.textContent).toBe('开始生成脸谱');
@@ -65,23 +65,27 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
     expect(groups).toEqual(['本趟要处理的素材', '中间工序', '重画', '落盘']);
     const rows = [...page.querySelectorAll('.bz-people-gen-row')];
     expect(rows.map(rowCells)).toEqual([
-      '1|微信语音条|0 条待转写|· 1,289 条待 LLM 校对',
-      '2|图片|2 张待描述|· 1,564 张已描述',
-      '3|聊天记录|1 条|· 仓内共 20,773 条',
-      '4|源图损坏/缺失|21 张',
-      '5|并仓|',
-      '6|采集提炼|1 批',
-      '7|三卷|《其人》《相交》《纪事》',
-      '8|补充背景|十维档案回填',
-      '9|账|',
+      '微信语音条|0 条待转写|· 1,289 条待 LLM 校对',
+      '图片|2 张待描述|· 1,564 张已描述',
+      '聊天记录|1 条|· 仓内共 20,773 条',
+      '源图损坏/缺失|21 张',
+      '并仓|',
+      '采集提炼|1 批',
+      '三卷|《其人》《相交》《纪事》',
+      '补充背景|十维档案回填',
+      '账|',
     ]);
-    // 素材组序号实心红章，工序 / 重画 / 落盘空圈
-    expect(rows[0].classList.contains('bz-people-gen-row-a')).toBe(true);
-    expect(rows[4].classList.contains('bz-people-gen-row-a')).toBe(false);
+    // 530 拍板：去掉编号——整页没有序号圆章，按钮那行也不占号位
+    expect(page.querySelector('.bz-people-gen-no')).toBeNull();
+    // 名称归左格、工作量归中格（灰名 / 深数的分工交给 styles.css）
+    expect(rows[0].querySelector('.bz-people-gen-k')!.textContent).toBe('微信语音条');
+    expect(rows[0].querySelector('.bz-people-gen-v')!.textContent).toBe('0 条待转写');
+    // 尾部两档色：另一笔数朱红（语音的待校对 / 图片的已描述），仓的口径提示压回灰
+    expect(rows[0].querySelector('.bz-people-gen-tail')!.classList.contains('bz-people-gen-tail-s')).toBe(false);
+    expect(rows[1].querySelector('.bz-people-gen-tail')!.classList.contains('bz-people-gen-tail-s')).toBe(false);
+    expect(rows[2].querySelector('.bz-people-gen-tail')!.classList.contains('bz-people-gen-tail-s')).toBe(true);
     // 录音待转写 / 待校对都是 0 → 整行不出（用户拍板：不为「0」占一行）
     expect(rows.some((r) => rowCells(r).includes('录音'))).toBe(false);
-    // 按钮那行也占一个序号位（接着往下数）
-    expect(page.querySelector('.bz-people-gen-actions .bz-people-gen-no')!.textContent).toBe('10');
     // 523 / 530 用户拍板：调用什么 AI、调用多少次都不告诉用户；也不报金额
     const allText = page.textContent ?? '';
     expect(allText).not.toContain('调用');
@@ -101,30 +105,30 @@ describe('开工单册页（genPage，issue 505：确认是册子里翻出来的
       voices: 120, voiceProofread: 40, recs: 5, recProofread: 2, mediaFail: 0, batches: 6,
     });
     expect([...page.querySelectorAll('.bz-people-gen-row')].map(rowCells)).toEqual([
-      '1|微信语音条|120 条待转写|· 40 条待 LLM 校对',
-      '2|图片|8 张待描述',
-      '3|聊天记录|0 条|· 仓内共 1,204 条',
-      '4|录音|5 条|· 2 条待校对',
-      '5|并仓|',
-      '6|采集提炼|6 批',
-      '7|三卷|《其人》《相交》《纪事》',
-      '8|补充背景|十维档案回填',
-      '9|账|',
+      '微信语音条|120 条待转写|· 40 条待 LLM 校对',
+      '图片|8 张待描述',
+      '聊天记录|0 条|· 仓内共 1,204 条',
+      '录音|5 条|· 2 条待校对',
+      '并仓|',
+      '采集提炼|6 批',
+      '三卷|《其人》《相交》《纪事》',
+      '补充背景|十维档案回填',
+      '账|',
     ]);
   });
 
-  it('其余素材全为 0 时只剩聊天记录一行，工序 / 重画 / 落盘照旧（一路往下排号）', () => {
+  it('其余素材全为 0 时只剩聊天记录一行，工序 / 重画 / 落盘照旧', () => {
     const page = genPage({
       ...info, materials: 5, materialsTotal: 5, images: 0, imagesDescribed: 0,
       voices: 0, voiceProofread: 0, mediaFail: 0, batches: 1,
     });
     expect([...page.querySelectorAll('.bz-people-gen-row')].map(rowCells)).toEqual([
-      '1|聊天记录|5 条|· 仓内共 5 条',
-      '2|并仓|',
-      '3|采集提炼|1 批',
-      '4|三卷|《其人》《相交》《纪事》',
-      '5|补充背景|十维档案回填',
-      '6|账|',
+      '聊天记录|5 条|· 仓内共 5 条',
+      '并仓|',
+      '采集提炼|1 批',
+      '三卷|《其人》《相交》《纪事》',
+      '补充背景|十维档案回填',
+      '账|',
     ]);
   });
 

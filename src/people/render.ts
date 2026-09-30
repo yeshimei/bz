@@ -1712,9 +1712,11 @@ export function dsPage(s: DsModalState): HTMLElement {
  * 530：报账补全——一张「这一趟会动什么」的账单）。
  *
  * 版式按用户拍板的示意图（530）：四组一条流水线，一组之内一行一项；
- * 每行 = 序号圆章 + 名称 + 本次工作量（+ 右侧「· 对账数」）。
- * 素材组（本趟真会动的四类 + 只记账的源图损缺失）序号实心，工序一类的序号空圈。
- * 用户拍板：**全为 0 的整行不出**；不要灰字小字、不要额外说明；按钮只留一枚「开始生成」
+ * 每行 = 名称（灰）+ 本次工作量（深）+ 右侧「· 另一笔数」。
+ * 尾部朱红 = 这条素材线自己的另一笔数（待 LLM 校对 / 已描述）；
+ * 尾部灰 = 仓的口径提示（仓内共 N 条），「有些灰、有些红」是示意图里的定法。
+ * 用户拍板：**没有序号圆章**（别自作聪明铺行号）；**全为 0 的整行不出**；
+ * 不要灰字小字、不要额外说明；按钮只留一枚「开始生成」
  * （反悔走右上「合上这页」，与取消是同一条路）。
  */
 export function genPage(info: GenerationConfirmInfo): HTMLElement {
@@ -1730,16 +1732,17 @@ export function genPage(info: GenerationConfirmInfo): HTMLElement {
     return subPage({ title: '开始生成脸谱', hook: 'gen' }, body);
   }
 
-  let n = 0;
-  /** 一行；`zero` = 这一行上的数全为 0（那就不出——用户拍板不为「0」占一行） */
-  const row = (solid: boolean, zero: boolean, name: string, value: string, tail = ''): HTMLElement | null => {
+  /** 一行；`zero` = 这一行上的数全为 0（那就不出——用户拍板不为「0」占一行）。
+   *  `tail` = 尾部另一笔数，`scope` = 那笔数只是仓的口径提示（灰），否则朱红。
+   *  行里没有序号：用户拍板「去掉编号」。 */
+  const row = (zero: boolean, name: string, value: string, tail = '', scope = false): HTMLElement | null => {
     if (zero) return null;
-    n++;
-    return el('div', `bz-people-gen-row${solid ? ' bz-people-gen-row-a' : ''}`, [
-      el('span', 'bz-people-gen-no', text(String(n))),
+    return el('div', 'bz-people-gen-row', [
       el('span', 'bz-people-gen-k', text(name)),
       el('span', 'bz-people-gen-v', text(value)),
-      ...(tail ? [el('span', 'bz-people-gen-tail', text(`· ${tail}`))] : []),
+      ...(tail
+        ? [el('span', `bz-people-gen-tail${scope ? ' bz-people-gen-tail-s' : ''}`, text(`· ${tail}`))]
+        : []),
     ]);
   };
   const group = (title: string, rows: Array<HTMLElement | null>): void => {
@@ -1750,28 +1753,27 @@ export function genPage(info: GenerationConfirmInfo): HTMLElement {
   };
 
   group('本趟要处理的素材', [
-    row(true, !info.voices && !info.voiceProofread, '微信语音条',
+    row(!info.voices && !info.voiceProofread, '微信语音条',
       `${num(info.voices)} 条待转写`, info.voiceProofread ? `${num(info.voiceProofread)} 条待 LLM 校对` : ''),
-    row(true, !info.images && !info.imagesDescribed, '图片',
+    row(!info.images && !info.imagesDescribed, '图片',
       `${num(info.images)} 张待描述`, info.imagesDescribed ? `${num(info.imagesDescribed)} 张已描述` : ''),
-    row(true, !info.materials && !info.materialsTotal, '聊天记录',
-      `${num(info.materials)} 条`, info.materialsTotal ? `仓内共 ${num(info.materialsTotal)} 条` : ''),
-    row(true, !info.recs && !info.recProofread, '录音',
+    row(!info.materials && !info.materialsTotal, '聊天记录',
+      `${num(info.materials)} 条`, info.materialsTotal ? `仓内共 ${num(info.materialsTotal)} 条` : '', true),
+    row(!info.recs && !info.recProofread, '录音',
       `${num(info.recs)} 条`, info.recProofread ? `${num(info.recProofread)} 条待校对` : ''),
-    row(true, !info.mediaFail, '源图损坏/缺失', `${num(info.mediaFail)} 张`),
+    row(!info.mediaFail, '源图损坏/缺失', `${num(info.mediaFail)} 张`),
   ]);
   group('中间工序', [
-    row(false, false, '并仓', ''),
-    row(false, !info.batches, '采集提炼', `${num(info.batches)} 批`),
+    row(false, '并仓', ''),
+    row(!info.batches, '采集提炼', `${num(info.batches)} 批`),
   ]);
   group('重画', [
-    row(false, false, '三卷', '《其人》《相交》《纪事》'),
-    row(false, false, '补充背景', '十维档案回填'),
+    row(false, '三卷', '《其人》《相交》《纪事》'),
+    row(false, '补充背景', '十维档案回填'),
   ]);
-  group('落盘', [row(false, false, '账', '')]);
+  group('落盘', [row(false, '账', '')]);
 
   body.push(el('div', 'bz-people-gen-actions', [
-    el('span', 'bz-people-gen-no', text(String(n + 1))),
     button('bz-people-btn bz-people-btn-acc', '开始生成', { 'data-people-gen-start': '' }),
   ]));
   return subPage({ title: '开始生成脸谱', hook: 'gen' }, body);
