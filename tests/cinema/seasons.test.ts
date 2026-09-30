@@ -23,6 +23,8 @@ function item(name: string, opts: Partial<CinemaItem> = {}): CinemaItem {
     poster: null, review: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
     doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     ...opts,
+    rewatches: opts.rewatches ?? [],
+    lists: opts.lists ?? [],
   };
 }
 

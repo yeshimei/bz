@@ -23,6 +23,8 @@ function item(p: Partial<CinemaItem> & { name: string }): CinemaItem {
     watchDate: p.watchDate ?? null,
     rating: p.rating ?? null,
     status: p.status ?? STATUS_WATCHED,
+    rewatches: p.rewatches ?? [],
+    lists: p.lists ?? [],
     poster: p.poster ?? null,
     review: p.review ?? null,
     genre: p.genre ?? null,

@@ -10,6 +10,16 @@ export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
 
+/** 刷数口径（唯一真理）：首看占 1 刷 + 重温次数。卡片「N刷」角标 / 详情「N 刷」徽标 /
+ *  重温通知共用——禁各处再拼第二套算法。放 constants（shared.ts 纯层白名单内可值导入） */
+export function rewatchCount(it: { rewatches: string[] }): number {
+  return 1 + it.rewatches.length;
+}
+
+/** 内置片单：重温候补架（「想重温」语义归堆，不动三状态机——就是一枚预置片单）。
+ *  恒排片单枚举首位、侧栏固定显示、详情弹窗出专属 chip；不可在片单弹层里删除 */
+export const REWATCH_SHELF = '重映厅';
+
 /**
  * 默认评分（编辑窗预填默认分；10 分制中点 5）。
  * 评分编码口径（≠上方状态枚举）：-1=想看 / 0=在看 / >0（或无评分）=已看，

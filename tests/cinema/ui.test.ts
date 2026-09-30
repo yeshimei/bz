@@ -1387,7 +1387,8 @@ tags: [电影]
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).toBeTruthy();
     // 动作集 = **第二季** 的（在看 → 无「标记在看」，有「标记已看」）
-    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '找同类', '在豆瓣打开', '编辑', '删除']);
+    // 归入片单为全状态通用动作（在看 → 无「标记在看」，有「标记已看」）
+    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '归入片单…', '找同类', '在豆瓣打开', '编辑', '删除']);
     // 菜单是独立浮层：弹窗留着（ESC / 点外部关掉菜单后还能接着操作别的季）
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
     clickEl(menuBtn(menu, '编辑'));
@@ -1407,7 +1408,8 @@ tags: [电影]
     spRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     // 已看 + 有评分：无「标记在看 / 标记已看」
-    expect(menuLabels(menu)).toEqual(['打开详情', '找同类', '在豆瓣打开', '编辑', '删除']);
+    // 已看：重温 +1 / 放入重映厅 / 归入片单…（无「标记在看 / 标记已看」）
+    expect(menuLabels(menu)).toEqual(['打开详情', '重温 +1', '放入重映厅', '归入片单…', '找同类', '在豆瓣打开', '编辑', '删除']);
     clickEl(menuBtn(menu, '编辑'));
     expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记：重聚特辑');
   });

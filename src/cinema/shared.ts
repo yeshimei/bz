@@ -17,7 +17,7 @@
 import { esc, iconSpan } from '../core/ui/str';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED,
-  GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString,
+  GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString, rewatchCount, REWATCH_SHELF,
 } from './constants';
 import type { CinemaItem } from './state';
 import type { CardEntry, SeasonSlot, SeriesCard } from './seasons';
@@ -40,6 +40,9 @@ export const ICON = {
   eye: 'eye',
   play: 'play',
   globe: 'globe',
+  repeat: 'rotate-ccw',
+  shelf: 'bookmark',
+  listPlus: 'list-plus',
 } as const;
 
 // ---------- 格式化/口径 ----------
@@ -184,7 +187,7 @@ export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = fals
   // Enter/Space 开详情由 ui.ts 委托层承接（对齐 review 域不可达卡整改范式）
   const label = `${e.kind === 'series' ? e.name : it.name}，${statusText(st)}`;
   return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}" tabindex="0" role="button" aria-label="${esc(label)}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
-    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}${e.kind === 'series' ? seasonDotsHtml(e.seasons) : ''}</div>
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}${it.rewatches.length ? `<span class="badge badge--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ''}${e.kind === 'series' ? seasonDotsHtml(e.seasons) : ''}</div>
     <div class="pname">${p.name}</div>
     <div class="pmeta">${p.meta}</div>
     <div class="pstars">${p.stars}</div></div>`;
@@ -203,13 +206,21 @@ export interface CinemaView {
   view: CinemaViewKind;
   typeFilter: string | null;
   statusFilter: string | null;
+  /** 片单筛选（null=全部；与类型/状态叠加） */
+  listFilter: string | null;
   sortMode: string;
   searchKeyword: string;
 }
 
 /** 任一筛选激活（空态文案口径） */
 export function viewFiltered(view: CinemaView): boolean {
-  return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
+  return !!(view.typeFilter || view.statusFilter || view.listFilter || view.searchKeyword);
+}
+
+/** 卡片条目是否在片单里：合并卡 = 任一季/特别篇成员命中（片单是片级语义，不认「正脸季」） */
+export function cardInList(e: CardEntry, list: string): boolean {
+  const members = e.kind === 'series' ? [...e.seasons.map((s) => s.item), ...e.specials] : [e.item];
+  return members.some((m) => m.lists.includes(list));
 }
 
 // ---------- 共享弹窗（ADR-0103 §3：三风格共用，scoped 午夜场锚样式零复制） ----------
@@ -232,19 +243,30 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
   ] as [string, string][]).filter(([, v]) => v !== '');
   const hot = (it.hotComment ?? '').trim();
   const hotFold = hot.length > HOT_FOLD_MIN; // 长评收起，行为层 data-dm-fold 接线展开/收起
+  const rewatched = it.rewatches.length > 0; // 重温实据：徽标 + 时间线 + 动作按钮同条件出
+  const onShelf = it.lists.includes(REWATCH_SHELF);
+  // 重温微时间线：首看 → 重温逐条（升序；无首看日期的旧档只画重温节点）
+  const firstDate = (it.watchDate || '').slice(0, 10);
+  const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
+  const timeline = rewatched
+    ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ''}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join('')}</div>`
+    : '';
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
           ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''; })()}
+          ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ''}
+          ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ''}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ''}
-          ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || '').slice(0, 10))}</span>` : ''}</div>
-        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>
+          ${it.watchDate ? `<span class="dm-date">${esc(firstDate)}</span>` : ''}</div>
+        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}
+        ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ''}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? ' is-fold' : ''}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ''}` : ''}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ''}
-    <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+    <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ''}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
 }
 
@@ -293,6 +315,7 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
     const r = it.rating;
     return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
       <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ''}</div>
+      ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ''}
       <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? '' : ' none'}">${r && r > 0 ? Number(r).toFixed(1) : '—'}</span></div>`;
   };

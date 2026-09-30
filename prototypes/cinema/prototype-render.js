@@ -1,4 +1,4 @@
-/* 源指纹 765a33c14df96d79 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 17dc37a8e000570b · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -30,6 +30,7 @@ var BZR_cinema = (() => {
     aiRecMeta: () => aiRecMeta,
     aiRecName: () => aiRecName,
     cardHtml: () => cardHtml,
+    cardInList: () => cardInList,
     cardStatus: () => cardStatus,
     chipsHtml: () => chipsHtml,
     detailModalHtml: () => detailModalHtml,
@@ -86,6 +87,10 @@ var BZR_cinema = (() => {
   var STATUS_WANT = 0;
   var STATUS_WATCHING = 1;
   var STATUS_WATCHED = 2;
+  function rewatchCount(it) {
+    return 1 + it.rewatches.length;
+  }
+  var REWATCH_SHELF = "重映厅";
   var ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
   var ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
   var ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
@@ -156,7 +161,10 @@ var BZR_cinema = (() => {
     grid: "layout-grid",
     eye: "eye",
     play: "play",
-    globe: "globe"
+    globe: "globe",
+    repeat: "rotate-ccw",
+    shelf: "bookmark",
+    listPlus: "list-plus"
   };
   function typeColor(group) {
     var _a;
@@ -239,7 +247,7 @@ var BZR_cinema = (() => {
     const p = facePiecesHtml(it, posterUrl, e.kind === "series" ? { name: e.name, rating: e.rating } : {});
     const label = `${e.kind === "series" ? e.name : it.name}，${statusText(st)}`;
     return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}" tabindex="0" role="button" aria-label="${esc(label)}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
-    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${it.rewatches.length ? `<span class="badge badge--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
     <div class="pname">${p.name}</div>
     <div class="pmeta">${p.meta}</div>
     <div class="pstars">${p.stars}</div></div>`;
@@ -248,7 +256,11 @@ var BZR_cinema = (() => {
     return cardHtml({ kind: "single", item: it }, posterUrl, fetching);
   }
   function viewFiltered(view) {
-    return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
+    return !!(view.typeFilter || view.statusFilter || view.listFilter || view.searchKeyword);
+  }
+  function cardInList(e, list) {
+    const members = e.kind === "series" ? [...e.seasons.map((s) => s.item), ...e.specials] : [e.item];
+    return members.some((m) => m.lists.includes(list));
   }
   var HOT_FOLD_MIN = 120;
   function detailModalHtml(it, posterUrl) {
@@ -267,6 +279,11 @@ var BZR_cinema = (() => {
     ].filter(([, v]) => v !== "");
     const hot = ((_i = it.hotComment) != null ? _i : "").trim();
     const hotFold = hot.length > HOT_FOLD_MIN;
+    const rewatched = it.rewatches.length > 0;
+    const onShelf = it.lists.includes(REWATCH_SHELF);
+    const firstDate = (it.watchDate || "").slice(0, 10);
+    const rewDates = [...it.rewatches].map((d) => d.slice(0, 10)).sort();
+    const timeline = rewatched ? `<div class="dm-tl">${firstDate ? `<div class="dm-tl-row is-first"><i></i><span class="d">${esc(firstDate)}</span><span class="tag">首看</span></div>` : ""}${rewDates.map((d) => `<div class="dm-tl-row"><i></i><span class="d">${esc(d)}</span></div>`).join("")}</div>` : "";
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -275,14 +292,17 @@ var BZR_cinema = (() => {
       const st = statusNum(it.status);
       return st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : "";
     })()}
+          ${rewatched ? `<span class="dm-chip dm-chip--re">${rewatchCount(it)} 刷</span>` : ""}
+          ${onShelf ? `<span class="dm-chip dm-chip--shelf">重映厅</span>` : ""}
           ${it.rating && it.rating > 0 ? `<span class="dm-stars">${getStarString(it.rating)}</span><span class="dm-rating">${Number(it.rating).toFixed(1)}</span>` : ""}
-          ${it.watchDate ? `<span class="dm-date">${esc((it.watchDate || "").slice(0, 10))}</span>` : ""}</div>
-        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
+          ${it.watchDate ? `<span class="dm-date">${esc(firstDate)}</span>` : ""}</div>
+        ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}
+        ${timeline}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
-    <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+    <div class="dm-actions">${statusNum(it.status) === STATUS_WATCHED ? `<button class="dm-btn j-rewatch">${iconSpan(ICON.repeat)}重温 +1</button>` : ""}<button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
   function seriesCountsText(card) {
@@ -315,6 +335,7 @@ var BZR_cinema = (() => {
       const r = it.rating;
       return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
       <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
+      ${it.rewatches.length ? `<span class="s-chip s-chip--re" role="img" aria-label="共看过 ${rewatchCount(it)} 刷">${rewatchCount(it)}刷</span>` : ""}
       <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
     };
@@ -495,6 +516,7 @@ var BZR_cinema = (() => {
           <div class="j-groups"></div>
           <div class="rail-label" style="padding-top:14px">状 态</div>
           <div class="j-status"></div>
+          <div class="j-lists"></div>
         </div>
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
@@ -521,7 +543,7 @@ var BZR_cinema = (() => {
   </section>`;
   }
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
-  function railHtml(cards, view) {
+  function railHtml(cards, view, lists = []) {
     const listOn = view.view === "list";
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
@@ -530,7 +552,7 @@ var BZR_cinema = (() => {
       g[grp] = (g[grp] || 0) + 1;
       c[statusText(cardStatus(e))]++;
     });
-    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", cards.length);
+    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter && !view.listFilter, 'data-g="全部"', "var(--gold)", "全部", cards.length);
     for (const name of GROUP_ORDER) {
       groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
     }
@@ -538,7 +560,15 @@ var BZR_cinema = (() => {
     for (const s of ["想看", "在看", "已看"]) {
       status += railRow(listOn && view.statusFilter === s, `data-s="${s}"`, ST_COLOR[s], s, c[s]);
     }
-    return { groups, status };
+    let listsHtml = "";
+    if (lists.length) {
+      listsHtml = '<div class="rail-label" style="padding-top:14px">片 单</div>';
+      for (const name of lists) {
+        const n = cards.filter((e) => cardInList(e, name)).length;
+        listsHtml += railRow(listOn && view.listFilter === name, `data-l="${esc(name)}"`, "var(--gold)", name, n);
+      }
+    }
+    return { groups, status, lists: listsHtml };
   }
   function chipsHtml(view) {
     const listOn = view.view === "list";
@@ -574,11 +604,13 @@ var BZR_cinema = (() => {
     <div class="seg j-sort">${[["date", "最近观看"], ["created", "加入先后"], ["rating", "按评分"]].map(([k, l]) => `<button data-k="${k}" class="${view.sortMode === k ? "is-on" : ""}">${l}</button>`).join("")}</div></div>`;
   }
   function renderMidnightDesk(root, inp) {
-    const rail = railHtml(inp.allCards, inp.view);
+    const rail = railHtml(inp.allCards, inp.view, inp.lists);
     const groupsEl = root.querySelector(".j-groups");
     const statusEl = root.querySelector(".j-status");
+    const listsEl = root.querySelector(".j-lists");
     if (groupsEl) groupsEl.innerHTML = rail.groups;
     if (statusEl) statusEl.innerHTML = rail.status;
+    if (listsEl) listsEl.innerHTML = rail.lists;
     const view = root.querySelector(".j-view");
     if (!view) return;
     const v = inp.view;
