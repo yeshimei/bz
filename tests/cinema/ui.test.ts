@@ -3056,7 +3056,7 @@ describe('重温 +1：时刻粒度 + 重映厅自动移出', () => {
   /** 备好一部挂在重映厅的已看片（星际穿越 fixture：评分 9.6 已看、无「重看」键） */
   async function seedOnShelf() {
     const { app, vault } = seedVault();
-    const file = vault.getAbstractFileByPath('我的/影视/《星际穿越》.md') as TFile;
+    const file = vault.getAbstractFileByPath('我的/影视/《星际穿越》.md');
     await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => { fm['片单'] = ['重映厅']; });
     rebuildItems(app);
     createOverlay(app);
