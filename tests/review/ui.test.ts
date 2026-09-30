@@ -546,3 +546,50 @@ describe('settings schema 驻留（设置面板消费契约）', () => {
     expect(names).toContain('复习节奏');
   });
 });
+
+describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setApp(null as any);
+    setSettingsProvider(() => ({}) as any);
+  });
+  afterEach(() => {
+    closeSettingsModal();
+    closeItemMenu();
+    vi.restoreAllMocks();
+  });
+
+  it('有记忆值时 showMain 即套用内联宽高；重复 showMain 不叠挂，hideMain 摘后新记忆生效', async () => {
+    setSettingsProvider(() => ({ reviewPanelWidth: 900, reviewPanelHeight: 640 }) as any);
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const popup = document.getElementById('review-popup') as HTMLElement;
+    expect(popup.style.width).toBe('900px');
+    expect(popup.style.height).toBe('640px');
+    // 常驻 DOM 面板：未 hide 直接再 showMain（幂等路径）不得叠挂监听——重挂会双倍落盘
+    await ui.showMain();
+    expect(popup.style.width).toBe('900px');
+    // hide 摘句柄后改记忆值，再开套新值（hideMain detach 生效的间接验证）
+    ui.hideMain();
+    expect(popup.style.display).toBe('none');
+    setSettingsProvider(() => ({ reviewPanelWidth: 920, reviewPanelHeight: 660 }) as any);
+    await ui.showMain();
+    expect(popup.style.width).toBe('920px');
+    expect(popup.style.height).toBe('660px');
+    ui.destroy();
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const { ui } = await makeUI(vault);
+    await ui.showMain();
+    const popup = document.getElementById('review-popup') as HTMLElement;
+    expect(popup.style.width).toBe('');
+    expect(popup.style.height).toBe('');
+    ui.destroy();
+  });
+});

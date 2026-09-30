@@ -33,7 +33,8 @@ import { Component, MarkdownRenderer, type App, type EventRef, type IconName } f
 import { escManager } from '../core/esc-manager';
 import { topifyZ, longPress } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
-import { uiIcon, uiSearch, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { uiIcon, uiSearch, uiEmpty, uiBtn, uiBtnRow, uiResizable } from '../core/ui';
+import { panelSizePersist } from '../core/settings-provider';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { debounce, escapeHtml, hash31, localDayKey, pad2, stripMdExt } from '../core/utils';
 import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
@@ -109,6 +110,9 @@ const MODIFY_REFRESH_DEBOUNCE_MS = 400;
 
 /** issue 352：时光条文字卡摘要长度上限（字符）——CSS 行截断管显示，此处只防超长正文整段进 DOM */
 const MEMORY_EXCERPT_MAX_CHARS = 64;
+
+/** 桌面面板拖拽缩放限界（ADR-0084，只作用于桌面实例 .bz-diary-desk；移动实例真全屏不挂） */
+const PANEL = { MIN_W: 720, MIN_H: 560, MAX_W: 1280, MAX_H: 960 };
 
 /**
  * 时光条文字卡摘要（issue 352，纯函数，可单测）：
@@ -284,6 +288,8 @@ export class DiaryAppController {
   private _hideMotion = false;
   /** 动效层：是否开过面板（重开走短档入场） */
   private _shownOnce = false;
+  /** 桌面拖拽缩放句柄（ADR-0084/ADR-0094）：常驻 DOM 双实例，show 挂 / hide 摘；null = 未挂 */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
@@ -2506,6 +2512,15 @@ export class DiaryAppController {
     this._hideMotion = false; // 快速关开：退场演出中断即复位（display 已被拉回，不抢 done）
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：只挂桌面实例 .bz-diary-desk
+    // （移动实例真全屏；常驻 DOM，show 幂等挂 / hide 摘，判空防重入）
+    if (!isMobileEnv() && !this.panelResizeDetach && this.desk) {
+      this.panelResizeDetach = uiResizable(this.desk.el, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('diaryPanelWidth', 'diaryPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     motionPanelIn(this.root!, reopen); // 动效层：遮罩退光淡入（卡体自带 CSS slide-up；内容编排归 renderWall）
     this.subscribeVaultModify();
     this.subscribeUnlockEvents(); // 增强 #9：上锁实时归位
@@ -2534,6 +2549,9 @@ export class DiaryAppController {
     this.unsubscribeUnlockEvents();
     this.unsubscribeWriteEvents();
     this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
+    // 桌面拖拽缩放随面板隐藏摘除（防抖尾值 detach 内自动 flush，尺寸不丢）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     // 动效层：先演「合上本子」（卡体落回桌面 + 遮罩退光）再收 display；
     // 无 WAAPI 宿主同步收口（测试/老内核 display:none 不晚到）
     motionPanelOut(this.root, () => {
@@ -2999,6 +3017,9 @@ export class DiaryAppController {
     this.unsubscribeUnlockEvents(); // 增强 #9：摘解锁状态订阅
     this.unsubscribeWriteEvents(); // 写链路域事件：摘防抖回刷订阅
     this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
+    // 卸载收口：拖拽缩放句柄一并摘（root 随后移除，句柄不留悬空监听）
+    this.panelResizeDetach?.detach();
+    this.panelResizeDetach = null;
     document.removeEventListener('keydown', this._onLbKeydown); // 增强 #1：摘方向键连看
     if (this._mql && this._onMqChange) {
       this._mql.removeEventListener('change', this._onMqChange); // issue 217 F3：摘断点切换

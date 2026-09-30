@@ -67,6 +67,23 @@ describe('openLightbox 多图模式（items + index）', () => {
     expect((document.querySelector('.bz-lightbox-media img') as HTMLImageElement).src).toContain('a.png');
   });
 
+  it('srcOf 惰性取图（issue 519）：翻到哪张才取哪张，大组不在打开时全量拉字节', () => {
+    const calls: number[] = [];
+    const lazyItems = [
+      { src: '', srcOf: () => { calls.push(0); return 'lazy-a.png'; } },
+      { src: '', srcOf: () => { calls.push(1); return 'lazy-b.png'; } },
+      { src: 'static-c.png' }, // 混用：静态 src 照旧
+    ];
+    openLightbox({ items: lazyItems, index: 0 });
+    expect(calls).toEqual([0]); // 开页只取首张
+    expect((document.querySelector('.bz-lightbox-media img') as HTMLImageElement).src).toContain('lazy-a.png');
+    document.querySelector<HTMLButtonElement>('.bz-lightbox-next')!.click();
+    expect(calls).toEqual([0, 1]); // 翻页才取第二张，且不重复取第一张
+    expect((document.querySelector('.bz-lightbox-media img') as HTMLImageElement).src).toContain('lazy-b.png');
+    document.querySelector<HTMLButtonElement>('.bz-lightbox-next')!.click();
+    expect((document.querySelector('.bz-lightbox-media img') as HTMLImageElement).src).toContain('static-c.png');
+  });
+
   it('点箭头不触发「点背景关闭」；点背景照旧关闭；Esc 照旧关闭', () => {
     openLightbox({ items, index: 0 });
     document.querySelector<HTMLButtonElement>('.bz-lightbox-next')!.click();

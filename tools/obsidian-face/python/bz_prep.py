@@ -43,6 +43,10 @@ bz-face prep 本体（issue 468）：单联系人重活——媒体导出 → �
   <数据根>/<联系人>/file/<月>/…        附件直拷
   <数据根>/<联系人>/desc/<月>/*.jpg    派生图片档（长边 / 质量可配）
   <数据根>/<联系人>/image_map.json     图片↔消息关联 [{file,ct,sid?}]（file 相对联系人目录）
+  <数据根>/<联系人>/media_fail.json    不可消费清单 [{file,reason,ct,sid?}]（issue 521；
+                                       reason=missing 源图没导出 / broken 源图打不开）：这两类图
+                                       永远派生不出档、永远描述不了，插件据此标终态不再当欠账。
+                                       --limit 调试轮不写（半轮会把「没轮到」误判成终态缺失）
   <数据根>/<联系人>/voice.json         转写结果表 [{wav,sid,dur,text,emotion}]（wav 相对数据根）
 
 进度走四行协议（与 src/core/external-tool.ts 同口径；phase 与 lib/prep-core.js PREP_PHASES 同源）：
@@ -61,6 +65,7 @@ import argparse
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -89,6 +94,10 @@ SV_TAG_RE = re.compile(r"<\|/?([a-zA-Z]+)\|>")  # SenseVoice 输出清洗（voic
 SV_EMOTIONS = ("HAPPY", "ANGRY", "SAD", "FEARFUL", "DISGUSTED", "SURPRISED", "NEUTRAL")
 MP4_HEADS = (b"ftyp", b"moov", b"mdat", b"free", b"wide")
 DERIVE_EXTS = (".jpg", ".jpeg", ".png", ".gif")  # 派生档源 = 解码后的原图（不含 .bin / 缩略图）
+# 图片产物可能的扩展名（decode_dat → vendor get_image_type 的全集；.bin = wxgf 明文头，
+# 交 try_wxgf 就地转码）。用于「存在判定先行」的廉价探测：命中即跳过，不读源字节解密（ADR-0223）。
+# 顺序按实际出现频率排（jpg 最常见），最坏 8 次 stat 仍远低于读一次 400KB 并发起 AES 轮试。
+IMAGE_EXTS = ("jpg", "png", "gif", "webp", "bmp", "tiff", "ico", "bin")
 
 
 class StopRun(Exception):
@@ -249,6 +258,57 @@ def decode_dat(data: bytes, my_wxid: str):
     return ext, bytes(b ^ code for b in data)
 
 
+# ---------------- 产物存在判定（ADR-0223 档 A）：目标目录名字集合 ----------------
+# 病根：do_image / do_video 先 read_bytes() + decode_dat()（AES 多密钥轮试）**然后**才判
+# target.exists()——已导出的文件每轮都被完整读盘 + 解密一遍再丢掉。产物的扩展名只有解密后才知道，
+# 判不出来就只能先读整个源文件，所以要把「判」做在「读」前面。
+#
+# 判定原语换过一次（2026-09-30 真实数据实测，见 ADR-0223 修订）：第一版是「逐条按 IMAGE_EXTS 试
+# 8 次 stat」，跑真实数据才发现它在 Windows 上比旧版「读整个文件」还慢——单次 stat ≈30µs，
+# 3228 条 × 8 扩展名 = 2.6 万次调用 ≈850ms（旧版读全部源字节 681ms）。改成「每个目标目录
+# listdir 一次建成文件名集合，之后按 IMAGE_EXTS 顺序做集合查」：同样 3228 条只要 ≈15ms（58×）。
+# 两种口径**逐条等价**（6 个联系人 5556 条 0 差异，含 jpg/bin 优先级：bin 在 IMAGE_EXTS 末位，
+# 有 jpg 时必须报 jpg）。目录数远少于文件数（大琳 3228 条只涉 16 个目录组合），一次 listdir 摊薄几百条查询。
+
+
+class TargetIndex:
+    """产物目录的惰性名字集合：按 (类别, 月) 只 listdir 一次，之后全是内存集合查。
+
+    查不到的目录记空集合（不重复敲盘，与「判不存在」等价）。
+    `note_written` 在写盘后把新产物登记进集合——同一轮内不会对同一张产物重复判「不存在」。
+    """
+
+    def __init__(self, contact_dir: Path):
+        self._cdir = contact_dir
+        self._cache: dict = {}
+
+    def _names(self, sub: str, month: str) -> set:
+        key = (sub, month)
+        got = self._cache.get(key)
+        if got is None:
+            try:
+                got = set(os.listdir(self._cdir / sub / month))
+            except OSError:
+                got = set()  # 目录还不存在（首次运行）/ 不可读——与旧实现「判不存在」等价
+            self._cache[key] = got
+        return got
+
+    def hit(self, sub: str, month: str, stem0: str):
+        """按 IMAGE_EXTS 顺序（bin 在末位）探测产物：命中返回 (路径, 扩展名)，否则 (None, None)。"""
+        names = self._names(sub, month)
+        for cand in IMAGE_EXTS:
+            if f"{stem0}.{cand}" in names:
+                return self._cdir / sub / month / f"{stem0}.{cand}", cand
+        return None, None
+
+    def has(self, sub: str, month: str, filename: str) -> bool:
+        """精确名判定（视频：目标名与扩展名无关，一次集合查即可）。"""
+        return filename in self._names(sub, month)
+
+    def note_written(self, sub: str, month: str, filename: str) -> None:
+        self._names(sub, month).add(filename)
+
+
 def looks_like_mp4(data: bytes) -> bool:
     return len(data) > 8 and data[4:8] in MP4_HEADS
 
@@ -347,6 +407,18 @@ def derive_image(src: Path, target: Path, edge: int, quality: int) -> None:
                 resample = Image.LANCZOS
             im = im.resize((max(1, round(w * ratio)), max(1, round(h * ratio))), resample)
         im.save(target, "JPEG", quality=quality)
+
+
+def _unusable_entry(file: str, reason: str, m: dict) -> dict:
+    """media_fail.json 的一条（issue 521）：`file` + `reason`(missing|broken) + ct/sid。
+
+    ct / sid 与 image_map.json 同口径——插件按 sid 优先、ct 兜底匹配回聊天仓消息，
+    `missing` 的 file 可能无扩展名（chat 原始引用形态），只有 ct/sid 能稳定对上人。
+    """
+    entry = {"file": file, "reason": reason, "ct": int(m.get("ct") or 0)}
+    if m.get("sid"):
+        entry["sid"] = int(m["sid"])
+    return entry
 
 
 # ---------------- 语音转写（voice_transcribe_all 收编 + faster-whisper 备选） ----------------
@@ -478,7 +550,10 @@ def main() -> int:
         progress("media", 0)
         voices = [m for m in flow if m.get("type") == 34 and m.get("sid")]
         attach_dir = attach / hashlib.md5(hit["wxid"].encode("utf-8")).hexdigest()
-        file_jobs = []  # (路径, 类别, 月)——attach 目录名 md5(wxid)（export_all build_hash2name 同款）
+        # 目录名 = md5(wxid)（export_all build_hash2name 同款）。导出队列仍每轮全量扫一遍 attach：
+        # 实测扫 3228 个文件只要 ≈256ms，而「按月指纹读缓存」的增量索引冷启动（建索引 ≈372ms）
+        # 比它要取代的扫描**还慢**、热态只省 ≈200ms——不值得多一个磁盘缓存（ADR-0223 修订，决策 2 撤回）。
+        file_jobs = []  # (路径, 类别, 月)
         if attach_dir.exists():
             months = sorted(d.name for d in attach_dir.iterdir()
                             if d.is_dir() and len(d.name) == 7 and d.name[4] == "-")
@@ -504,6 +579,7 @@ def main() -> int:
             progress("media", round(done_items * 100 / total_items) if total_items else 100)
 
         tmp = ensure_dir(bz_dir / ".prep_tmp")
+        tgt = TargetIndex(cdir)  # 产物存在判定（ADR-0223 档 A）：按 (类别, 月) 惰性 listdir 成名字集合
 
         def try_wxgf(bin_target: Path) -> None:
             """.bin → 同名 .jpg/.gif（.bin 保留）；历史遗留的未解码 .bin 也在这里补上。"""
@@ -524,38 +600,59 @@ def main() -> int:
                 fails.add("wxgf", f"wxgf 解码失败：{bin_target.name}")
 
         def do_image(p: Path, month: str, sub: str):
-            """图片 / 缩略图一条 → (status, err)。status: done | skip | fail（wxgf 成败另计）。"""
+            """图片 / 缩略图一条 → (status, err)。status: done | skip | fail（wxgf 成败另计）。
+
+            存在判定先行（ADR-0223 档 A）：产物扩展名只有解密后才知道，故按 IMAGE_EXTS 顺序在
+            **目标目录名字集合**里查——命中即跳过，**不读源字节、不做 AES 轮试**。这是「已导出文件
+            每轮被完整读盘 + 解密一遍再丢掉」的修复点。
+            """
+            stem0 = p.stem.split("_")[0]
+            hit, cand = tgt.hit(sub, month, stem0)
+            if hit is not None:
+                if cand == "bin":
+                    try_wxgf(hit)  # 历史遗留：.bin 在、解码产物缺 → 补解码
+                return "skip", None
             data = p.read_bytes()
             r = decode_dat(data, my_wxid)
             if not r:
                 return "fail", f".dat 解码失败：{p.parent.name}/{p.name}"
             ext, plain = r
-            target = ensure_dir(cdir / sub / month) / f"{p.stem.split('_')[0]}.{ext}"
+            out_dir = ensure_dir(cdir / sub / month)
+            target = out_dir / f"{stem0}.{ext}"
+            # 探测集合外的扩展名（若 vendor 日后新增）走这里兜底：仍先判存在再写，语义与旧实现一致
             if target.exists():
                 if ext == "bin":
-                    try_wxgf(target)  # 历史遗留：.bin 在、解码产物缺 → 补解码
+                    try_wxgf(target)
                 return "skip", None
             atomic_write(target, plain)
+            tgt.note_written(sub, month, target.name)
             if ext == "bin":
                 try_wxgf(target)
             return "done", None
 
         def do_video(p: Path, month: str):
-            data = p.read_bytes()
-            target = ensure_dir(cdir / "video" / month) / (p.stem + ".mp4")
-            if target.exists():
+            """视频一条 → (status, err)。存在判定先行（ADR-0223 档 A）：目标名与扩展名无关，
+            一次集合查即可，不必为已导出的视频把源文件整个读进内存再丢。"""
+            fname = p.stem + ".mp4"
+            if tgt.has("video", month, fname):
                 return "skip", None
+            data = p.read_bytes()
+            out = ensure_dir(cdir / "video" / month) / fname
             if looks_like_mp4(data):
-                atomic_write(target, data)
+                atomic_write(out, data)
+                tgt.note_written("video", month, fname)
                 return "done", None
             r = decode_dat(data, my_wxid)
             if not r:
                 return "fail", f"视频解码失败：{p.parent.name}/{p.name}"
             _, plain = r
-            atomic_write(target, plain)
+            atomic_write(out, plain)
+            tgt.note_written("video", month, fname)
             return "done", None
 
         def do_file(p: Path, month: str):
+            # 附件一条 stat 即可——它从来就是「判定在前」（不在档 A 的修复范围），且目标名与 ext 无关，
+            # 不值得为它多养一路集合（附件条数远少于图片，一次 stat ≈30µs 摊不出量）。语义保持原样。
             target = ensure_dir(cdir / "file" / month) / p.name
             if target.exists():
                 return "skip", None
@@ -630,7 +727,10 @@ def main() -> int:
         info(phase="media", counts=media)
 
         # ================= 段 2：派生图片档（derive）=================
+        # 打不开的源图（微信备份里就坏 / 数据流截断）记进 derive_failed：段 3 会把它们归成
+        # media_fail.json 的 broken 项——插件据此标注终态，别每轮再当欠账重扫（issue 521）。
         progress("derive", 0)
+        derive_failed = set()
         img_root = cdir / "image"
         sources = sorted(q for q in img_root.rglob("*")
                          if q.is_file() and q.suffix.lower() in DERIVE_EXTS) if img_root.exists() else []
@@ -647,6 +747,7 @@ def main() -> int:
                 derive["done"] += 1
             except Exception as e:
                 derive["fail"] += 1
+                derive_failed.add(f"{q.parent.name}/{q.name}")
                 fails.add("derive", f"{q.parent.name}/{q.name}: {e}")
         progress("derive", 100)
         info(phase="derive", **derive)
@@ -663,6 +764,10 @@ def main() -> int:
                     disk.setdefault(q.stem, f"{q.parent.name}/{q.name}")
         seen = set()
         refs = 0
+        # 不可消费清单（issue 521）：missing = 消息引用了图、磁盘上没有可消费的解码产物；
+        # broken = 有产物但段 2 打不开。两者都是终态，插件按本表标注 descSkip，不再当欠账。
+        unusable = []
+        missing_seen = set()
         flow_total = len(flow)
         last_pct = -1
         for idx, m in enumerate(flow):
@@ -675,20 +780,38 @@ def main() -> int:
             if m.get("type") != 3:
                 continue
             refs += 1
-            hexs = (m.get("img") or "").split("/")[-1]
+            raw_img = str(m.get("img") or "").strip()
+            if not raw_img:
+                continue  # 引用都没有（未关联的图片消息）——不是「不可消费」，是还没关联上
+            hexs = raw_img.split("/")[-1]
             rel = disk.get(hexs)
-            if not rel or rel in seen:
-                continue  # 无磁盘文件 / 同图被多条消息引用只记一次
+            if not rel:
+                # 缺失：源图没导出 / .bin 没解出来。按消息去重（同图被多条消息引用只记一次）
+                if raw_img not in missing_seen:
+                    missing_seen.add(raw_img)
+                    unusable.append(_unusable_entry(raw_img, "missing", m))
+                continue
+            if rel in seen:
+                continue  # 同图被多条消息引用只记一次
             entry = {"file": rel, "ct": int(m.get("ct") or 0)}
             if m.get("sid"):
                 entry["sid"] = int(m["sid"])
             entries.append(entry)
             seen.add(rel)
+            if rel in derive_failed:
+                unusable.append(_unusable_entry(rel, "broken", m))
         entries.sort(key=lambda e: e["ct"])
         atomic_write(cdir / "image_map.json",
                      json.dumps(entries, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        unusable.sort(key=lambda e: e["ct"])
+        # --limit（调试半轮）不写该表：半轮结果会把「没轮到」误判成终态缺失（issue 521 决策 1）。
+        # 表缺失 = 无权威——插件据此不碰已有标注；空表 = 权威的「全部可消费」。
+        if not args.limit:
+            atomic_write(cdir / "media_fail.json",
+                         json.dumps(unusable, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
         progress("map", 100)
-        info(phase="map", refs=refs, mapped=len(entries), file="image_map.json")
+        info(phase="map", refs=refs, mapped=len(entries),
+             unusable=len(unusable), file="image_map.json")
 
         # ================= 段 4：语音转写（transcribe）=================
         progress("transcribe", 0)

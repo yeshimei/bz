@@ -76,6 +76,19 @@ export interface ImageMapItem {
   sid?: number;
 }
 
+/**
+ * media_fail.json 条目（issue 521 / ADR-0225）：prep 段 3 产出的**不可消费清单**。
+ * `missing` = 消息引用了图片但磁盘上没有可消费的解码产物（源图没导出 / `.bin` 没解出来，
+ * 此时 file 是 chat 原始引用形态、可能无扩展名）；`broken` = 有产物但段 2 打不开。
+ * ct / sid 与 image_map 同口径，插件按 sid 优先、ct 兜底匹配回仓内消息。
+ */
+export interface MediaFailItem {
+  file?: string;
+  reason?: string;
+  ct?: number;
+  sid?: number;
+}
+
 /** image_desc.json 条目（图片描述表；file 与 chat.json 的 img 字段同格式 `<月>/<文件名>`，ct 秒级。兼容兜底：正常情况 chat.json 的 img 已回写并按本表精确关联） */
 export interface ImageDescItem {
   file?: string;
@@ -121,6 +134,36 @@ export interface StoreMsg {
   img?: string;
   /** 派生消费文本（`[图片] 描述` / `[语音 N秒·情感] 转写` / `[表情·名]`…）；**'' = 不进时间线** */
   text: string;
+  /**
+   * 图片「终态跳过」标注——三种取值，共同语义：**永不重跑、不算欠账**（不排除则每轮补画都重扫
+   * 全库，ADR-0223 决策 6），text 留空不进时间线。
+   *   - `'sensitive'`：描述服务商判敏感拒绝（ADR-0224），启发式判定 → 详情页可解除并重试；
+   *   - `'broken'` / `'missing'`：源图打不开 / 源图没导出（ADR-0225），**磁盘事实** →
+   *     不给解除入口，撤销由 `media_fail.json` 的权威性承担（重导后表里没有即自动清）。
+   * 空 = 未标注。**工具侧永不直接写此字段**——只能经由旁路表，插件是唯一写者（ADR-0197）。
+   */
+  descSkip?: DescSkip;
+}
+
+/** 终态跳过的三种取值 */
+export type DescSkip = 'sensitive' | 'broken' | 'missing';
+
+/** 敏感标注的取值（ADR-0224） */
+export const SENSITIVE_SKIP = 'sensitive';
+/** 源图打不开（派生出不了档，ADR-0225） */
+export const BROKEN_SKIP = 'broken';
+/** 源图没导出（磁盘上只有微信缩略图，ADR-0225） */
+export const MISSING_SKIP = 'missing';
+
+/** 该图是否已是终态跳过（三种取值都算：不算欠账、不切批、不再调用；等价已完成，差别只在 text 留空） */
+export function isDescSkipped(m: { descSkip?: string } | undefined | null): boolean {
+  return descSkipOf(m) !== undefined;
+}
+
+/** 终态取值归一（未知取值当「未标注」——工具将来加新值时旧插件按普通欠账处理，不会误判） */
+export function descSkipOf(m: { descSkip?: string } | undefined | null): DescSkip | undefined {
+  const v = m?.descSkip;
+  return v === SENSITIVE_SKIP || v === BROKEN_SKIP || v === MISSING_SKIP ? v : undefined;
 }
 
 /** 聊天仓统计（落盘口径；只统计时间线（text 非空）条目，媒体数 = 合成后文本按 445 parseMediaTag 的素材计数） */
@@ -610,14 +653,16 @@ export function storeToUnified(msgs: StoreMsg[]): UnifiedMessage[] {
 
 /** 待办媒体计数（issue 514：开工单只报本次真实工作量）：
  *  描述 / 转写完成后文字升级进 text，**text 空 = 还没做**（与补充素材页的未描述判定同源）。
- *  images = 未描述图片（type 3）、voices = 未转写语音（type 34）。 */
+ *  images = 未描述图片（type 3）、voices = 未转写语音（type 34）。
+ *  **敏感标注的图不算欠账**（ADR-0224）：标注即终态，再计就是每次补画都重扫全库（ADR-0223 决策 6）。 */
 export function pendingMediaCounts(msgs: StoreMsg[]): { images: number; voices: number } {
   let images = 0;
   let voices = 0;
   for (const m of msgs) {
     if (m.text !== '') continue;
-    if (m.type === 3) images++;
-    else if (m.type === 34) voices++;
+    if (m.type === 3) {
+      if (!isDescSkipped(m)) images++;
+    } else if (m.type === 34) voices++;
   }
   return { images, voices };
 }
@@ -724,6 +769,63 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
 }
 
 /**
+ * media_fail.json → 仓内图片条目的**终态标注**（issue 521 / ADR-0225）：把「源图损坏 / 源图缺失」
+ * 标成 `descSkip='broken'|'missing'`，从此不算欠账、不进描述段——不标就是每轮补画都全库重扫，
+ * 卡在「点开始生成 → 全部跳过」永不收敛（与 ADR-0224 敏感标注同一个落点）。
+ *
+ * 四条口径：
+ *   - 匹配源与 applyImageMapToMsgs 同款：sid 优先 → img 精确 → ct 秒级兜底（**只补缺**）；
+ *   - **只标 text 为空的**：已有描述的图绝不抹（那是已完成态）；
+ *   - 已标敏感的图不碰（AI 判定优先，撤销只走详情页显式动作，ADR-0224）；
+ *   - **表即权威（自愈）**：本轮表里没有、却还标着 broken/missing 的图**清掉标注**——用户重导
+ *     媒体 / 源图修好后，下一轮 prep 自动把它放回可描述队列；空表 = 权威的「全部可消费」。
+ *     表**缺失**时调用方压根不调本函数（无权威不动标注，见 readPrepSidecars）。
+ *
+ * 返回本次标注变动条数（新标 + 清除）。
+ */
+export function applyMediaFailToMsgs(msgs: StoreMsg[], items: MediaFailItem[]): number {
+  const bySid = new Map<number, MediaFailItem>();
+  const byFile = new Map<string, MediaFailItem>();
+  const byCt = new Map<number, MediaFailItem>();
+  for (const it of items) {
+    const reason = canonReason(it?.reason);
+    if (!reason) continue; // 未知 reason 一律忽略（工具将来加新取值时，旧插件不误标）
+    const entry: MediaFailItem = { ...it, reason };
+    const file = String(it.file ?? '').trim();
+    if (file) byFile.set(file, entry);
+    const sid = typeof it.sid === 'number' && Number.isFinite(it.sid) && it.sid !== 0 ? it.sid : 0;
+    if (sid) bySid.set(sid, entry);
+    else if (Number.isFinite(it.ct)) byCt.set(Math.round(it.ct as number), entry);
+  }
+  let n = 0;
+  for (const m of msgs) {
+    if (m.type !== 3) continue;
+    const img = String(m.img ?? '').trim();
+    let it: MediaFailItem | undefined;
+    if (m.sid) it = bySid.get(m.sid);
+    if (!it && img) it = byFile.get(img);
+    if (!it && !img) it = byCt.get(Math.round(m.ts / 1000)); // 无 img 的老场景按秒级 ct 兜底（同 applyImageMapToMsgs）
+    if (it?.reason) {
+      // 已有描述的、已标敏感的都不碰（前者是已完成态，后者是 AI 判定优先，ADR-0224）
+      if (m.text === '' && !isDescSkipped(m)) {
+        m.descSkip = it.reason as DescSkip;
+        n++;
+      }
+    } else if (m.descSkip === BROKEN_SKIP || m.descSkip === MISSING_SKIP) {
+      delete m.descSkip; // 表即权威：本轮已能消费 → 撤回终态，回到可描述队列（自愈）
+      n++;
+    }
+  }
+  return n;
+}
+
+/** reason 归一化（只认 broken / missing，其它一律 null） */
+function canonReason(v: unknown): DescSkip | null {
+  const s = String(v ?? '').trim();
+  return s === BROKEN_SKIP ? BROKEN_SKIP : s === MISSING_SKIP ? MISSING_SKIP : null;
+}
+
+/**
  * 图片描述 → 仓内图片条目的派生 text 靶向升级（470 / ADR-0197 决策 4：描述是插件侧 AI 产物，
  * 合并进聊天仓的动作由插件执行）。按 img 精确匹配（`月/文件名`，与 image_desc.file 同格式），
  * img 没对上的条目走同月 ct 最近邻（±12h、只补缺）兜底——与 normalizeChatJson 的
@@ -734,10 +836,17 @@ export function applyImageMapToMsgs(msgs: StoreMsg[], map: ImageMapItem[]): numb
 export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): number {
   const byFile = new Map<string, ImageDescItem>();
   const byMonth = new Map<string, ImageDescItem[]>();
+  // items 里**明示了 file 但没有描述**的图（ADR-0224）：它们的「空」是「本轮确实没拿到」，
+  // 不是「调用方没提这张」——不能被下面的最近邻兜底借走邻居的描述，否则一张失败 / 被拒的图
+  // 会顶着别人的描述进时间线。最近邻只服务「旁路表只给 ct 不给 file」的老场景。
+  const explicitBlank = new Set<string>();
   for (const it of descs) {
     if (!it || typeof it !== 'object') continue;
-    if (!String(it.desc ?? '').trim()) continue;
     const file = String(it.file ?? '').trim();
+    if (!String(it.desc ?? '').trim()) {
+      if (file) explicitBlank.add(file);
+      continue;
+    }
     if (file) byFile.set(file, it);
     const month = file.includes('/') ? file.slice(0, file.indexOf('/')) : monthOf(Number(it.ct));
     if (!month) continue;
@@ -749,13 +858,17 @@ export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): 
   const used = new Set<string>(); // 最近邻消费防串：一张描述只配一条消息
   let n = 0;
   for (const m of msgs) {
-    if (m.type !== 3 || m.text !== '') continue;
+    // 已标注敏感的图跳过：标注是终态，不该被后来的旁路表兜底（readContactBundle 的 extras 通道）
+    // 悄悄覆盖成有描述——撤销只走详情页的显式动作（ADR-0224）
+    if (m.type !== 3 || m.text !== '' || isDescSkipped(m)) continue;
     const img = String(m.img ?? '').trim();
     const ctSec = Math.round(m.ts / 1000);
     let desc = '';
     const exact = img ? byFile.get(img) : undefined;
     if (exact) {
       desc = String(exact.desc ?? '').trim();
+    } else if (img && explicitBlank.has(img)) {
+      // 明示无描述：留空待补，不借邻居（ADR-0224）
     } else {
       const list = byMonth.get(monthOf(ctSec));
       if (list?.length) {
@@ -780,6 +893,33 @@ export function applyImageDescToMsgs(msgs: StoreMsg[], descs: ImageDescItem[]): 
       m.text = `[图片] ${desc}`;
       n++;
     }
+  }
+  return n;
+}
+
+/**
+ * 敏感标注写入（ADR-0224 决策 3）：把被判敏感拒绝的图片消息标上 `descSkip = 'sensitive'`，
+ * 返回标注条数。三条口径：
+ *   - 按 `img` **精确匹配**（不用 applyImageDescToMsgs 的最近邻兜底）——标注是不可重跑的终态，
+ *     宁可少标也不能标错人；
+ *   - 已有描述（text 非空）的一律不碰，绝不把一条已经画好的时间线抹成空；
+ *   - 已标注过的跳过（幂等，重复标注不重复计数）。
+ */
+export function applySensitiveSkipsToMsgs(msgs: StoreMsg[], files: string[]): number {
+  const want = new Set<string>();
+  for (const f of files) {
+    const v = String(f ?? '').trim();
+    if (v) want.add(v);
+  }
+  if (!want.size) return 0;
+  let n = 0;
+  for (const m of msgs) {
+    if (m.type !== 3 || m.text !== '') continue;
+    if (isDescSkipped(m)) continue;
+    const img = String(m.img ?? '').trim();
+    if (!img || !want.has(img)) continue;
+    m.descSkip = SENSITIVE_SKIP;
+    n++;
   }
   return n;
 }

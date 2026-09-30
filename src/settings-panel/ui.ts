@@ -16,14 +16,14 @@ import { setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { openFlowDialog } from '../core/flow-dialog';
 import type { SettingsSchema } from '../core/settings-schema';
 import { DOMAIN_ICONS } from '../core/domain-icons';
 import { renderPanelSchema, closeAllSelectMenus, refreshGroupCounts } from './renderer';
 import { notice, notifyActionError, notifySaveError } from '../core/notice';
 import { getApp } from '../core/app';
-import { uiIconBtn, uiBtn, uiEmpty, mountIcons } from '../core/ui';
+import { uiIconBtn, uiBtn, uiEmpty, mountIcons, uiResizable } from '../core/ui';
 import { firstFocusable, trapFocus } from '../core/ui/focus-trap';
 import { debounce } from '../core/utils';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
@@ -37,6 +37,10 @@ import { openChangelogModal } from './changelog';
 /** 搜索输入防抖窗口（E-5）：纯 UI 重绘无数据丢失面，每键全量重建导航/列表 + 图标物化 + 全行
  *  重扫收敛为一停顿一次（core debounce 先例口径 180ms）。 */
 const SEARCH_DEBOUNCE_MS = 180;
+
+/** 主面板拖拽缩放口径（ADR-0084）：下限挡住左导航 + 右内容双栏塌缩，上限留视口余量；
+ *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
+const PANEL = { MIN_W: 760, MIN_H: 520, MAX_W: 1280, MAX_H: 900 };
 
 /** 搜索命中归一（UI-7）：query 与被检串同转小写再 includes——英文缩写词（api/rss/deepseek）
  *  小写输入也可命中；中文无感。 */
@@ -344,6 +348,29 @@ export class SettingsPanelUI {
   private searchQuery = '';
   /** 徽标预载在途 Promise（ARCH-2 单飞：并发 open 收敛为一轮，磁盘 IO 域不双倍重跑） */
   private preloadInFlight: Promise<void> | null = null;
+  /** 主面板拖拽缩放句柄（ADR-0084 桌面限定；open/build 挂、hide/cleanup 摘，幂等防叠挂） */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
+
+  /**
+   * 挂桌面拖拽缩放（open 软重开与 build 首建两路都走）。幂等：句柄非空（面板显示中）
+   * 直接跳过——hide 型常驻面板 hide 必摘，走到这里句柄恒空，判空只为防御性兜底；
+   * 移动端不挂（全屏推入版式撑满视口，.bz-sp-mobile 几何 !important 不参与缩放）
+   */
+  private mountPanelResize(): void {
+    if (isMobileEnv() || this.panelResizeDetach || !this.popup) return;
+    this.panelResizeDetach = uiResizable(this.popup, {
+      minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+      maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+      persist: panelSizePersist('settingsPanelWidth', 'settingsPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+    });
+  }
+
+  /** 摘拖拽缩放（hide 软关与 cleanup 销毁共用；persist 未落盘的防抖尾值由 detach 立即补存） */
+  private unmountPanelResize(): void {
+    if (!this.panelResizeDetach) return;
+    this.panelResizeDetach.detach();
+    this.panelResizeDetach = null;
+  }
 
   /**
    * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -374,6 +401,7 @@ export class SettingsPanelUI {
       // 会话内其他域徽标可能已过期（preload 只在首次 build 跑）——重开即重算（H9）。
       // 先从会话缓存同步重算（单飞在途时新轮被收敛，缓存重算保住新鲜度），再起新轮预载
       this.recomputeBadgesFromCache();
+      this.mountPanelResize(); // 桌面拖拽缩放重挂（hide 软关时已摘，ADR-0084/0094）
       // 动效挂点：软重开 = 重新通电（尘光/萤标随 open 链唤醒，见 motion.ts 睡眠/唤醒）
       spm.motionPanelIn(this.popup, this.mask);
       spm.motionEnsureDust(this.popup);
@@ -387,7 +415,11 @@ export class SettingsPanelUI {
     const { mask, popup } = createOverlay({
       maskId: 'bz-settings-panel-mask',
       popupId: 'bz-settings-panel-popup',
-      maxWidth: 1080, // 与 .bz-sp-desk 定稿宽 min(1080px, 94vw) 同源
+      // 内联几何与 .bz-sp-desk 对齐（该类几何 !important 已剥，内联参数会反压 CSS）：
+      // 默认宽与定稿同源 min(1080px, 94vw)；maxWidth 上限放宽到 PANEL.MAX_W——留 1080
+      // 会把拖大后的内联宽钳死在 1080，缩放形同虚设
+      width: 'min(1080px, 94vw)',
+      maxWidth: PANEL.MAX_W,
       onMaskClick: () => this.hide(),
     });
     this.mask = mask;
@@ -417,6 +449,7 @@ export class SettingsPanelUI {
     // 呈报#13 F3+H3：补 Tab 圈闭（入焦保持 E-3 的首个可交互元素口径，不夺焦；纯接线一行）——
     // build 每开重建 popup，监听随元素弃置，无需存句柄
     trapFocus(popup);
+    this.mountPanelResize(); // 桌面拖拽缩放 + 尺寸记忆（ADR-0084/0094；移动端 mount 内自跳过）
   }
 
   /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
@@ -1152,6 +1185,7 @@ export class SettingsPanelUI {
   hide(): void {
     // UI-1 纵深：软关前强制收起自绘下拉——菜单 DOM 与组卡提层样式不留残，重开面板不「复活」
     if (this.popup) closeAllSelectMenus(this.popup);
+    this.unmountPanelResize(); // 软关即摘缩放句柄（常驻面板，重开 open/build 补挂；ADR-0084）
     // 动效挂点：软关入睡（编排定时器清空 + 双系统停泵；唤醒在 open→motionPanelIn 链）
     spm.motionSleep();
     if (this.mask) this.mask.style.display = 'none';
@@ -1175,6 +1209,7 @@ export class SettingsPanelUI {
     unregisterPanelEsc('bz-settings-panel'); // C-5：幂等注销样板
     // 动效挂点：全清（泵/监听/注入件状态全收，幂等）——先于 DOM 摘除，句柄不残留
     spm.motionTeardown();
+    this.unmountPanelResize(); // 缩放句柄随销毁摘除（popup 将移除，句柄不得跨实例残留）
     this.flushPendingTextCommit(); // F-2：卸载清理路径 flush 防抖窗口文本
     if (this.popup) closeAllSelectMenus(this.popup); // UI-1 纵深：非常规关闭路径菜单不留残
     if (this.mask) {

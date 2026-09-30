@@ -8332,8 +8332,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 /* ==================== 划选工具框（issue 329 / ADR-0144） ====================
-   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区三动作（复制 Markdown /
-   存为名词 / 存为段落）、图片单击两动作（保存图片 / 存为图版）。
+   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区两动作（存为名词 /
+   存为段落，复制 Markdown 已移除）、图片单击两动作（保存图片 / 存为图版）。
+   移动端文字框下方优先（系统选择菜单恒在选区上方，2026-09-30）。
    变量选择器并挂浮框根 .bz-clip-selbar——浮框挂 body（域内后代选择器不可达），
    同右键菜单先例把 --clip-* 定义在随身单类上；字号/间距/圆角消费 core --bz-* token。
    自绘浮框不造滚动条（动作行内排布，无滚动区域，铁律 4 不涉及）。 */
@@ -11283,6 +11284,23 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 .bz-people-supp-imgcap { font-size: var(--f-aux); line-height: 1.6; color: var(--ink-mut); overflow-wrap: anywhere;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .bz-people-supp-imgcap-none { font-style: italic; opacity: .75; }
+/* 敏感标注（ADR-0224）：角标标出「这张被跳过」，方格下方整行作撤回入口（点了即解除标注并重跑描述）。
+   宿主裸 button 基线必须按份覆盖：display/width/border/background 全写死，别指望继承。 */
+.bz-people-supp-imgsens { position: absolute; left: 3px; bottom: 3px; padding: 1px 6px; border-radius: 999px;
+  font-size: var(--f-small, 12px); line-height: 1.5; letter-spacing: 1px;
+  background: rgba(168, 74, 60, 0.9); color: #fff; }
+.bz-people-supp-imgcap-sens.bz-people-supp-imgcap-sens { display: block; width: 100%; box-sizing: border-box;
+  padding: 3px 6px; font-size: var(--f-aux); line-height: 1.6; font-style: normal; text-align: center;
+  color: var(--acc-deep); background: transparent; border: 1px dashed rgba(168, 74, 60, 0.5);
+  border-radius: 8px; cursor: pointer; }
+@media (hover: hover) { .bz-people-supp-imgcap-sens.bz-people-supp-imgcap-sens:hover {
+  color: #fff; background: rgba(168, 74, 60, 0.85); border-color: rgba(168, 74, 60, 0.85); } }
+.theme-dark .bz-people-supp-imgcap-sens.bz-people-supp-imgcap-sens { color: #e0a79c; border-color: rgba(200, 120, 100, 0.5); }
+/* 分片哨兵（issue 519）：横贯整行的「还有 N 张」，滚到自动追加、点了也追加 */
+.bz-people-supp-imgmore.bz-people-supp-imgmore { grid-column: 1 / -1; margin-top: 4px; padding: 8px 0;
+  border: 1px dashed rgba(148, 130, 100, 0.45); border-radius: 8px; background: transparent;
+  font-size: var(--f-aux); color: var(--ink-mut); cursor: pointer; }
+@media (hover: hover) { .bz-people-supp-imgmore.bz-people-supp-imgmore:hover { color: var(--ink-body); border-color: rgba(148, 130, 100, 0.8); } }
 /* 叉常显（触屏没有 hover）；宿主的裸 button 基线要按份覆盖：尺寸/内边距/圆角/字号全写死 */
 .bz-people-supp-imgdel.bz-people-supp-imgdel { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px;
   min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 50%; font-size: 13px; line-height: 1;
@@ -11346,7 +11364,7 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
    壳骨架接组件库（ADR-0094）：遮罩挂 .bz-panel-overlay（fixed 铺满+遮罩色），
    面板挂 .bz-panel-frame（底色/圆角/描边/阴影/纵向 flex）；域内只留 id 几何
    （居中定位/宽高/动画）。配色走 --bz-* token。 */
-#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; max-width: 900px; max-height: 84vh; animation: slideUp var(--bz-dur-slow) ease-out; }
+#review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 94%; /* max 上限只保视口安全（ADR-0084：拖拽上限走 uiResizable 逐帧钳制，CSS 固定 900px 会压住拖大意图；92vh 对齐其视口 92% cap 口径），width:94% 保留作默认态 */ max-width: calc(100vw - 32px); max-height: 92vh; animation: slideUp var(--bz-dur-slow) ease-out; }
 @media (max-width: 768px) {
   /* 移动端全屏（issue 254 迭代）：钉满视口，不受内容高度收缩（原 max-height:100% 短内容时缩成悬浮卡） */
   #review-popup { animation: none !important; top: 0; left: 0; transform: none; width: 100%; max-width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
@@ -12442,7 +12460,9 @@ canvas { display: block; }
 .bz-encrypt-dialog-btn--primary {
   background: var(--bz-brand); color: var(--bz-on-brand); font-weight: 500;
 }
-#bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
+/* max-width/max-height 只作视口钳制（ADR-0084 桌面拖动缩放）：固定 700px 上限会压住拖拽意图，
+   放开到视口径——width:90% 保留作默认态，拖拽后的内联宽高覆盖之 */
+#bz-encrypt-popup { width: 90%; max-width: calc(100vw - 32px); max-height: 92vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
 /* 旧列表 id 选择器已死清退（现行列表容器 .bz-vault-listcol，encrypt 域深审批 D）；
    滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277，[id^="bz-"] 通杀），
@@ -15181,16 +15201,23 @@ canvas { display: block; }
 /* 滚动条隐藏由 core 界面级单源规则接管（ADR-0122 / issue 277），
    原面板作用域（.bz-sp-desk / .bz-sp-mobile）域内声明已删 */
 
-/* ═══════════ 桌面壳（几何 !important 压 createOverlay 内联尺寸） ═══════════ */
+/* ═══════════ 桌面壳（几何口径：默认尺寸走本段 CSS，拖拽/记忆尺寸走 uiResizable 内联） ═══════════ */
 .bz-sp-desk {
   /* 定位不声明——popup 居中由 core .bz-overlay-mask/`.bz-overlay-popup` 体系负责，
      域内改 position 会打断 fixed/translate 居中链（曾致面板位移出屏只剩遮罩） */
   display: flex;
   flex-direction: column !important;
-  width: min(1080px, 94vw) !important;
-  max-width: 1080px !important;
-  height: min(780px, 88vh) !important;
-  max-height: 88vh !important;
+  /* 几何四条不挂 !important（ADR-0084 拖拽缩放）：内联宽高（记忆恢复/拖拽写入）须能
+     生效；默认尺寸的「防 createOverlay 内联反压」改由 build() 传参对齐接管（width 同源、
+     maxWidth=PANEL.MAX_W），见 ui.ts */
+  width: min(1080px, 94vw);
+  /* 运行时宽度上限 = createOverlay 内联 maxWidth（uiResizable 硬上限同源）；
+     本条留作内联参数缺位时的视口护栏 */
+  max-width: 1080px;
+  height: min(780px, 88vh);
+  /* 原 88vh 放宽：1080p 视口下 88vh ≈ 850px 会把 MAX_H=900 的拖大钳死在半途；
+     口径对齐 core uiResizable 的 92% 视口逐帧钳制（memo 域 92vh 先例） */
+  max-height: 92vh;
   padding: 0 !important;
   overflow: hidden !important;
   border: 1px solid var(--sp-line);
@@ -17191,9 +17218,15 @@ canvas { display: block; }
   --gold:#e0aa4b;--ink:#ece5d3;--ink-2:#a89f8a;--ink-3:#7a7261;--line:#2e2a20;--panel:#161410;--chip:#221f17;--star:#e0aa4b;
 }
 .bz-cinema--midnight {
-   width:900px;height:620px;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
+   width:900px;height:620px;max-width:calc(100vw - 32px);max-height:92vh;flex:none;background:var(--panel);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;position:relative;
   box-shadow:0 14px 44px #0004,0 2px 8px #0002;border:1px solid var(--line);
 }
+/* 视口钳制（ADR-0084 拖拽缩放配套）：900×620 只是默认态，小视口下不越屏——
+   拖拽后的内联宽高仍由 uiResizable 逐帧钳视口 92%，此处兜 CSS 默认态；
+   移动 .mob 满屏壳（styles.css「午夜场 · 移动端」节）不重置 max 会反被钳小，此处清掉。
+   （选择器特意带空格：mobile-3fix-guard 守卫按无空格字面量取满屏声明块，
+   此条必须排在其后且不得被该字面量命中） */
+.bz-cinema--midnight.mob {max-width:none;max-height:none}
 .bz-cinema--midnight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:5}
 .bz-cinema--midnight .d-body{flex:1;display:flex;min-height:0}
 .bz-cinema--midnight .d-rail{width:176px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 0 var(--bz-space-md);background:var(--panel);position:relative}

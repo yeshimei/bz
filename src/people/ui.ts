@@ -38,11 +38,10 @@ import {
   profileExtractMaterial,
 } from './digest';
 import { createAI } from '../core/ai';
-import { mergeManualEvents, planIncremental } from './incremental';
+import { mergeManualEvents, planIncremental, type IncrementalPlan } from './incremental';
 import { emptyMediaStats, formatMediaCount, type MediaStats } from './media';
 import { computeStats, formatReplySec } from './stats';
 import * as jobsApi from './jobs';
-import { estimateDescribeCallsOf, estimatePortraitCallsOf, estimatePortraitCallsOfCount } from './jobs';
 import type { JobResumeOptions, JobStartOptions, JobTarget, JobView, JobsSnapshot as EngineSnapshot } from './jobs';
 import type { ContactStats, FaceDigest, GenerationConfirmInfo, ImportRecord, PersonEntry, PersonProfile, UnifiedMessage } from './types';
 import { bondOf, personOf } from './types';
@@ -63,6 +62,12 @@ import {
   storeStatsOf,
   storeToUnified,
   pendingMediaCounts,
+  isDescSkipped,
+  descSkipOf,
+  SENSITIVE_SKIP,
+  BROKEN_SKIP,
+  MISSING_SKIP,
+  type DescSkip,
   isGroupChat,
   SIDE_SPEECH_SPEAKER,
   type StoreContact,
@@ -120,7 +125,7 @@ import { pickSystemFiles } from '../core/path-picker';
 import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
-import { batchSizeFromSettings, descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
+import { descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
 import { prepOverallPct, prepStageLine } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
@@ -197,10 +202,12 @@ import {
   type SuppTab,
 } from './render';
 
-import { el, profLeaveAsk, text, textEl } from './render';
-import { mountIcons, openLightbox } from '../core/ui';
+import { appendSuppImageGridPage, el, profLeaveAsk, text, textEl } from './render';
+import { cancelThumbQueue, descThumbPath, queueThumbBuild, resetThumbQueueForPanel, thumbHandled } from './thumbs';
+import { mountIcons, openLightbox, uiResizable } from '../core/ui';
 import { bindWheelTurn } from '../core/gesture';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, panelSizePersist } from '../core/settings-provider';
+import { isMobileEnv } from '../core/mobile';
 
 const ESC_ID = 'people-panel';
 
@@ -220,6 +227,10 @@ let offSyncWatch: (() => void) | null = null;
 let offWheelTurn: (() => void) | null = null;
 /** 视口尺寸跟帧：窄↔宽翻转时页眉高度变了，折签吸顶基准（--bz-page-head-h）要重量 */
 let offResizeWatch: (() => void) | null = null;
+/** 桌面面板拖拽缩放限界（ADR-0084）+ 缩放句柄（开关型面板：buildPanelShell 挂，closePeoplePanel 摘；
+ *  与 offResizeWatch 职责不同——后者是视口跟帧，本句柄是拖拽改尺寸） */
+const PANEL = { MIN_W: 760, MIN_H: 540, MAX_W: 1440, MAX_H: 960 };
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 let stage: Stage = 'list';
 let detailId: string | null = null;
 /** 互动统计卡的实时形态计数（issue 513）：打开统计页时异步读保库 store.kindCounts（全量口径，
@@ -321,6 +332,13 @@ let suppImages: SuppImageQueueItem[] = [];
 let suppBusy = false;
 /** 留影页签：点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
 let suppImgDelPending: string | null = null;
+/** 留影网格分片页张量（issue 519）：首屏 120 张，滚到哨兵再追加一片——千张级全量把
+ *  data URL 一次拉齐是开页冻死的病根（514 之前 python 预处理线直落 1616 张的教训）。 */
+const SUPP_IMG_PAGE = 120;
+/** 已展开的留影张数（开面板重置；删图重画不重置——保住用户已滚出来的量） */
+let suppImgShown = SUPP_IMG_PAGE;
+/** 哨兵的滚动观察（每次渲染 / 追加重挂；面板与弹窗关闭摘除） */
+let suppImgMoreIO: IntersectionObserver | null = null;
 /** 录音页签的待落盘暂存（选完文件、确认起点，再落盘；ADR-0217 起点是一等数据） */
 let suppRecQueue: SuppRecQueueItem[] = [];
 /** 删除二次确认开着的那条录音（issue 516 Q13；null = 没开） */
@@ -333,14 +351,24 @@ let recStartEditFile: string | null = null;
 let recTurnsFile: string | null = null;
 /** 「重建质心」二次确认开着（复评：覆盖式重跑先问一声；确认 / 取消 / 换人即清） */
 let recRefConfirm = false;
+/** 终态标注的界面文案（单源：图片格子角标、汇总行、通知共读；取值见 DescSkip） */
+const SKIP_LABEL: Record<DescSkip, string> = {
+  [SENSITIVE_SKIP]: '敏感',
+  [BROKEN_SKIP]: '源图损坏',
+  [MISSING_SKIP]: '源图缺失',
+};
+
 /** 聊天仓侧事实缓存（弹窗渲染是同步的：开页异步刷，刷完重画） */
 let suppStoreInfo: {
   imported: number;
   undescribed: number;
+  /** 源图损坏 / 缺失、已标终态跳过的张数（ADR-0225；页面汇总行如实报，别让它们变成神秘数字） */
+  broken: number;
+  missing: number;
   mergedRecs: Set<string>;
-  /** 已入库的留影（img 相对路径 + 派生描述；新的在前——留影页签的预览网格用） */
-  imageItems: Array<{ img: string; text: string }>;
-} = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
+  /** 已入库的留影（img 相对路径 + 派生描述 + 终态标注；新的在前——留影页签的预览网格用） */
+  imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }>;
+} = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
 /** 录音页签的进度轮询（只在页签可见时跑） */
 let recPollTimer: number | null = null;
 
@@ -371,9 +399,10 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       recStartEditFile = null;
       recRefConfirm = false;
       suppImgDelPending = null;
+      suppImgShown = SUPP_IMG_PAGE; // 分片跟着人走（issue 519）：别把上一人滚出来的量带给下一人
       noteDelPending = null; // 撕掉确认跟着人走（D 组）：换人不把确认带到别人的纸条上
       closeImgViewer();
-      suppStoreInfo = { imported: 0, undescribed: 0, mergedRecs: new Set(), imageItems: [] };
+      suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
     }
     void refreshSuppStoreInfo(detailId);
     startRecPolling();
@@ -479,6 +508,17 @@ function buildPanelShell(app?: unknown): void {
   overlay.appendChild(panelShell());
   document.body.appendChild(overlay);
   topifyZ(overlay);
+  // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：面板开关型（关即拆 DOM），开壳挂 / 关面板摘
+  if (!isMobileEnv()) {
+    const panelEl = overlay.querySelector<HTMLElement>('.bz-people-panel');
+    if (panelEl) {
+      panelResizeDetach = uiResizable(panelEl, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('peoplePanelWidth', 'peoplePanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
+  }
   // ESC 分层（448 评审；455 弹窗再加一层）：统计/档案弹窗最上先关，其次数据源弹窗（保扫描快照与勾选），再层层关面板
   registerPanelEsc(ESC_ID, isPeopleOpen, () => {
     if (dialog) {
@@ -630,6 +670,9 @@ function buildPanelShell(app?: unknown): void {
   offSyncWatch = subscribeSync(onSyncState);
   // 库外图字节缓存在开面板时清一次（同路径换了图 / 补了文件不用重载插件）
   localImgCache.clear();
+  // 分片与缩略档跟面板走（issue 519）：shown 回首屏量；坏档办结记录清了给重试机会
+  suppImgShown = SUPP_IMG_PAGE;
+  resetThumbQueueForPanel();
   // 视口尺寸跟帧：容器宽窄翻转（缩窗 / 转屏）而没重画时，折签吸顶基准跟着页眉重新量
   const onViewportResize = (): void => { syncStickyHeadH(); };
   window.addEventListener('resize', onViewportResize);
@@ -671,6 +714,9 @@ export function closePeoplePanel(): void {
   offWheelTurn = null;
   offResizeWatch?.();
   offResizeWatch = null;
+  // 拖拽缩放随面板关闭摘除（防抖尾值 detach 内自动 flush，尺寸不丢；先于 overlay 拆除）
+  panelResizeDetach?.detach();
+  panelResizeDetach = null;
   overlay?.remove();
   overlay = null;
   store = null;
@@ -695,6 +741,8 @@ export function closePeoplePanel(): void {
   pulled = null;
   cur = 0;
   suppImgDelPending = null;
+  disarmSuppImgMore();
+  cancelThumbQueue(); // 缩略档补齐跟着面板停（重开入新活自然接着补）
   closeImgViewer();
   closeDsState();
   if (findDebounce !== null) { clearTimeout(findDebounce); findDebounce = null; } // 关面板不欠一次重画
@@ -1292,6 +1340,12 @@ function resumeExisting(name: string): boolean {
 
 // ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
 
+/** 待办媒体（issue 514 口径）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
+export interface PendingMedia {
+  images: number;
+  voices: number;
+}
+
 /** 生成目标（引擎 JobTarget 同形；msgs 必须是全量时间线消息——引擎断点续跑要重读校验指纹） */
 export interface GenTarget {
   talker: string;
@@ -1314,7 +1368,7 @@ export interface GenTarget {
   /** 本次计划提炼集条数（issue 514：planTargets 从 plan.msgs 带出——newer = 新增集，其余 = 全量） */
   planCount?: number;
   /** 待办媒体（issue 514）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
-  pending?: { images: number; voices: number };
+  pending?: PendingMedia;
 }
 
 /**
@@ -1446,7 +1500,9 @@ function handleJobsSnapshot(s: EngineSnapshot): void {
 export async function startGeneration(targets: GenTarget[]): Promise<void> {
   const { runnable, skipped } = await planTargets(targets);
   if (!runnable.length) {
-    if (skipped.length) notice(`${skipped.length} 位没有新消息、无需重画`, 'info');
+    // issue 523：没有新素材也翻开工单——把「没有新素材」说清楚，「开始生成」置灰（用户拍板）。
+    // 旧行为是直接弹一条通知返回，用户看不到为什么点了没反应、按钮也照旧可点。
+    await askGenerationConfirm(buildGenerationConfirmInfo([], skipped));
     return;
   }
   const answer = await askGenerationConfirm(buildGenerationConfirmInfo(runnable));
@@ -1478,28 +1534,44 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
   renderNote();
 }
 
-/** 总确认 → 引擎起跑的入参（497）：逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数 */
-function buildGenerationConfirmInfo(runnable: GenTarget[]): GenerationConfirmInfo {
-  const label = describeModelLabelOf();
+/**
+ * 总确认 → 引擎起跑的入参（497；523 精简）：只报三类素材条数与逐人明细。
+ * runnable 为空 = 全部联系人都没有新素材 → `empty` 为真，开工单只出说明、开始生成置灰。
+ */
+function buildGenerationConfirmInfo(runnable: GenTarget[], skipped: string[] = []): GenerationConfirmInfo {
   const items = runnable.map((t) => {
     // issue 514 待办口径：图片 / 语音只报没做过的（构造时从仓消息现算）；newer 的素材 = 新增集条数
     const pending = t.pending ?? { images: 0, voices: 0 };
     const materials = t.mode === 'newer' ? (t.planCount ?? t.msgs.length) : t.msgs.length;
     return { name: t.name, materials, images: pending.images, voices: pending.voices, ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
   });
-  const images = items.reduce((s, it) => s + it.images, 0);
-  const voices = items.reduce((s, it) => s + it.voices, 0);
   return {
-    provider: label.provider,
-    model: label.model,
     items,
-    images,
-    describeCalls: estimateDescribeCallsOf(images),
-    batchSize: batchSizeFromSettings(),
-    voices,
-    // 增量模式提炼集是新增集：按条数近似估算；full / older 仍按全量时间线（issue 514）
-    portraitCalls: runnable.reduce((s, t) => s + (t.mode === 'newer' ? estimatePortraitCallsOfCount(t.planCount ?? 0) : estimatePortraitCallsOf(t.msgs)), 0),
+    materials: items.reduce((s, it) => s + it.materials, 0),
+    images: items.reduce((s, it) => s + it.images, 0),
+    voices: items.reduce((s, it) => s + it.voices, 0),
+    empty: items.length === 0,
+    ...(skipped.length ? { skipped } : {}),
   };
+}
+
+/**
+ * 「这批候选其实一条新的都没有」判定（issue 523，ADR-0226 的同批补偿）：
+ * `planIncremental` 的同秒容差认「ts ≥ 锚点」的候选（评审 P2-1b，秒级导出不丢同秒消息），
+ * 但候选若**全都停在锚点那一秒之内**，它们就是上次已经处理过的那一批——锚点本来就是
+ * 「上次处理到的末条」，落在锚点里的消息不可能还没处理过。指纹之所以对不上，是因为 523 之前
+ * 的版本把导入记录条数记成了「本次提炼子集条数」（增量只跑 1 条就记 1，ADR-0226），
+ * 不是真有新素材。这层把它判成「没有新素材」：不再白烧一遍采集批 + 双卷（ADR-0225 决策 3 同一精神）。
+ * 只要候选里有**任何一条严格晚于锚点**（真新消息），照常进引擎。
+ */
+function onlyWatermarkMsgs(plan: IncrementalPlan, existing: PersonEntry | undefined, pending?: PendingMedia): boolean {
+  const anchor = existing?.lastProcessedTs;
+  if (plan.mode !== 'newer' || !anchor || !plan.msgs.length) return false;
+  // 有待办媒体（未描述图片 / 未转写语音）就不判「无新素材」：这些素材在仓里 text 还是空的，
+  // 所以不进文本时间线、也就进不了上面这份候选——但它们是真素材。旧版记错条数时这些人本来
+  // 会照跑一趟、顺手把图描述掉；这层闸只该拦「真的什么都没有」的人，不该比改前拦得更宽。
+  if ((pending?.images ?? 0) + (pending?.voices ?? 0) > 0) return false;
+  return plan.msgs.every((m) => m.ts <= anchor);
 }
 
 /**
@@ -1514,7 +1586,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
   for (const t of targets) {
     const existing = people.find((p) => p.id === t.talker);
     const plan = planIncremental(t.msgs, existing);
-    if (plan.mode === 'skip') {
+    if (plan.mode === 'skip' || onlyWatermarkMsgs(plan, existing, t.pending)) {
       // skip 只可能发生在已有导入的人物上；顺带应用改名，并给 440 之前的旧数据补一份
       // 互动统计到最近一条导入记录（没有记录则不动）
       if (existing) {
@@ -1554,7 +1626,19 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
   try {
     // issue 455 双卷：卷一《其人》为必达产物（旧落盘 portrait 已由引擎 resumeJobs 读入时映射成 person）
     const person = job.person;
-    if (!person) { notice(`「${name}」生成完成但其人画像为空`, 'warning'); return; }
+    if (!person) {
+      // 「done 且无产物」只有一个来源：描述段报「有欠账、零可读」后提前收尾（ADR-0225 决策 3）。
+      // 只说清楚 + 把任务清出队列（不清 = 进度块挂着一条永远不动的 done），不写导入记录 / 不动
+      // 锚点：本次确实什么都没提炼，下次补画照旧从同一水位续。
+      if (job.describe?.unreadable) {
+        notice(`「${name}」${job.message ?? '本次没有可提炼的内容'}`, 'warning');
+        jobs().removeJob(talker);
+        if (overlay) void renderAlbum();
+        return;
+      }
+      notice(`「${name}」生成完成但其人画像为空`, 'warning');
+      return;
+    }
     const store = new PeopleStore(getApp());
     const existing = (await store.list()).find((p) => p.id === talker);
     const now = new Date().toISOString();
@@ -1562,9 +1646,12 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
     const rec: ImportRecord = {
       file: target?.fileLabel ?? job.importRecord?.fileLabel ?? job.fileLabel ?? `数据源:${talker}`,
       importedAt: now,
-      messageCount: target
-        ? (job.importRecord?.messageCount ?? msgs!.length)
-        : (job.importRecord?.messageCount ?? 0),
+      // messageCount 是「这一份导出的可消费消息条数」——与 timeFrom / timeTo 同口径（同取 msgs），
+      // 也与导入路径（ui 层 importMsgs：msgs.length）一致。它有两个消费者：界面的「消息总数」，
+      // 以及 incremental.planIncremental 里「同一导出再导」的整份指纹（条数 + 跨度）。
+      // 旧写法优先取 job.importRecord.messageCount（= 本次提炼子集条数，如新增 1 条就是 1），
+      // 指纹因此永不命中 → 每次再导都判成 newer → 开工单反复报「新增素材 N 条」（issue 523）。
+      messageCount: msgs ? msgs.length : (job.importRecord?.messageCount ?? 0),
       skippedCount: target?.skippedCount ?? job.importRecord?.skippedCount ?? 0,
       timeFrom: msgs ? new Date(msgs[0].ts).toISOString() : job.importRecord?.timeFrom ?? now,
       timeTo: msgs ? new Date(msgs[msgs.length - 1].ts).toISOString() : job.importRecord?.timeTo ?? now,
@@ -1598,6 +1685,11 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, lastTs));
     }
     notice(`「${name}」的脸谱已生成`, 'success');
+    // 敏感标注是终态、不会重跑（ADR-0224）：不说一句用户会以为图漏了；说了还得告诉他去哪儿撤
+    const sens = job.describe?.sensitive ?? 0;
+    if (sens > 0) {
+      notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, 'warning');
+    }
     jobs().removeJob(talker); // 产物已入保库记录：done 任务清出队列，进度块自然收起
     if (overlay) {
       animDev = talker; // 刚画完那位：照片从灰里洗出颜色（issue 507：505 之后这枚标志没人置位）
@@ -1687,8 +1779,9 @@ let pendingGenInfo: GenerationConfirmInfo | null = null;
 let pendingGenAnswer: ((a: 'start' | 'cancel') => void) | null = null;
 
 /**
- * 画谱总确认（startGeneration 起引擎前唯一一次询问）：翻开开工单那一页，
- * 逐人素材 / 图片 / 语音 + 两段 AI 通道与约调用数一次报清。解析值：开始生成 / 取消。
+ * 画谱总确认（startGeneration 起引擎前唯一一次询问）：翻开开工单那一页，报清本次要走流程的
+ * 聊天记录 / 图片 / 录音条数与逐人明细（issue 523 精简：不再报 AI 通道与调用次数）。
+ * 解析值：开始生成 / 取消。无新素材的那一页「开始生成」是置灰的——真被点到也按取消结（不空转）。
  */
 function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'cancel'> {
   if (genConfirmOpen) return Promise.resolve('cancel'); // 已有页开着：不叠页，按未授权处理
@@ -1701,12 +1794,15 @@ function askGenerationConfirm(info: GenerationConfirmInfo): Promise<'start' | 'c
 
 function answerGenConfirm(answer: 'start' | 'cancel'): void {
   const done = pendingGenAnswer;
+  // 无新素材的开工单没有可跑的东西：置灰钮在真实浏览器点不动，这里兜一道——
+  // 真收到 start（合成点击 / 测试派发）也按取消结，绝不返回一个空转的「开始」
+  const final: 'start' | 'cancel' = answer === 'start' && pendingGenInfo?.empty ? 'cancel' : answer;
   pendingGenAnswer = null;
   pendingGenInfo = null;
   genConfirmOpen = false;
   dialog = null;
   void renderAlbum();
-  done?.(answer);
+  done?.(final);
 }
 
 /**
@@ -2040,6 +2136,8 @@ function onOverlayClick(e: MouseEvent): void {
     if (suppTab === 'rec') void noticeInterruptedRecordings();
     return;
   }
+  // 网格哨兵（issue 519）：滚到自动追加（IO），点了也追加——兜底 IO 怪异的环境
+  if (t.closest('[data-people-supp-img-more]')) { armSuppImgMore(growSuppImgGrid()); return; }
   if (t.closest('[data-people-supp-img-pick]')) { void suppPickImages(); return; }
   const imgDrop = t.closest<HTMLElement>('[data-people-supp-img-drop]');
   if (imgDrop) { suppImages.splice(Number(imgDrop.getAttribute('data-people-supp-img-drop')), 1); void renderAlbum(); return; }
@@ -2052,6 +2150,12 @@ function onOverlayClick(e: MouseEvent): void {
   }
   if (t.closest('[data-people-supp-img-import]')) { void suppImportImages(); return; }
   if (t.closest('[data-people-supp-img-desc]')) { void suppDescribe(); return; }
+  // 敏感格子的撤回入口（ADR-0224）：一键 = 解除标注 + 重跑描述，点击本身即计费授权
+  const imgUnsens = t.closest<HTMLElement>('[data-people-supp-img-unsens]');
+  if (imgUnsens) {
+    void suppUnmarkSensitive(imgUnsens.getAttribute('data-people-supp-img-unsens') ?? '');
+    return;
+  }
   // 留影格：点图开大图 / 叉开二次确认 / 确认或取消（复评）
   const imgView = t.closest<HTMLElement>('[data-people-supp-img-view]');
   if (imgView) { openImgViewer(imgView.getAttribute('data-people-supp-img-view') ?? ''); return; }
@@ -2332,7 +2436,7 @@ function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string,
 function dialogPage(p: PersonEntry | null, avatars?: Map<string, string>): HTMLElement {
   const kind = dialog?.kind;
   if (kind === 'ds') return dsPage(dsPageState());
-  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], images: 0, voices: 0, provider: '', model: '', describeCalls: 0, portraitCalls: 0, batchSize: 0 });
+  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], materials: 0, images: 0, voices: 0, empty: true });
   if (kind === 'find') return findPageState(avatars);
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);
@@ -2431,6 +2535,8 @@ async function renderAlbum(): Promise<void> {
   renderBanner();
   applySyncLockdown();
   applyJobsLockdown();
+  // 留影网格哨兵（issue 519）：渲染后重挂观察——非素材页 query 不到 = 仅摘，幂等
+  armSuppImgMore(overlay.querySelector<HTMLElement>('[data-people-supp-img-more]'));
   mountIcons(overlay); // lucide 占位 → SVG
   clearAnim();
 }
@@ -3368,15 +3474,24 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
   let imported = 0;
   let undescribed = 0;
+  let broken = 0;
+  let missing = 0;
   const mergedRecs = new Set<string>();
-  const imageItems: Array<{ img: string; text: string }> = [];
+  const imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }> = [];
   try {
     const rec = await peopleSafe.read(talker);
     for (const m of rec?.store.msgs ?? []) {
       if (m.type === 3 && m.img) {
         imported++;
-        imageItems.push({ img: m.img, text: m.text });
-        if (m.text === '') undescribed++;
+        // 敏感标注的图不算未描述（ADR-0224）：标注是终态，计进欠账会与「生成描述」按钮的
+        // 可用性、开工单待办口径对不上
+        // 敏感标注的图不算未描述（ADR-0224）：标注是终态，计进欠账会与「生成描述」按钮的
+        // 可用性、开工单待办口径对不上。源图损坏 / 缺失（ADR-0225）同理，且单独计数上屏。
+        const skip = descSkipOf(m);
+        if (skip === BROKEN_SKIP) broken++;
+        else if (skip === MISSING_SKIP) missing++;
+        imageItems.push(skip ? { img: m.img, text: m.text, skip, label: SKIP_LABEL[skip] } : { img: m.img, text: m.text });
+        if (m.text === '' && !skip) undescribed++;
       }
       if (m.key.startsWith('rec:')) {
         const end = m.key.lastIndexOf(':');
@@ -3387,7 +3502,7 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
     /* 读不到按零值渲染 */
   }
   if (!overlay || suppOwnerId !== talker) return; // await 期间换人 / 关面板：旧仓账不顶替新页（B 组审查 P3）
-  suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
+  suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
   if (dialog?.kind === 'note') void renderAlbum();
 }
 
@@ -3395,18 +3510,95 @@ function suppImageState(): SuppImageViewState {
   const running = jobsApi.isDescribeOnlyBusy();
   const root = suppDataRoot();
   const talker = detailId ?? '';
+  // 预览网格（issue 519 分片）：只切已展开的前段换 data URL——缩略档命中读小图，
+  // 缺档回退原图并后台补齐；全量一次拉齐是开页冻死的病根，不再犯。
+  // 只在留影页签才算（note 弹窗每个页签每轮重画都会路过这里）：录音页千张全展开时
+  // 不该白跑一遍千次 existsSync。
+  const active = suppTab === 'image' && Boolean(root && talker);
+  const total = active ? suppStoreInfo.imageItems.length : 0;
+  const shown = Math.min(suppImgShown, total);
   return {
     queue: suppImages,
     imported: suppStoreInfo.imported,
     undescribed: suppStoreInfo.undescribed,
+    broken: suppStoreInfo.broken,
+    missing: suppStoreInfo.missing,
     describeBusy: running,
     modelLabel: `${describeModelLabelOf().provider}/${describeModelLabelOf().model}`,
-    // 预览网格：缩略图读库外 desc 档字节换 data URL（懒加载照旧；按路径缓存，重画不重读）
-    items: root && talker
-      ? suppStoreInfo.imageItems.map((it) => ({ ...it, url: localImgOf(descImagePath(root, talker, it.img)) }))
+    items: active
+      ? suppStoreInfo.imageItems.slice(0, shown).map((it) => ({ ...it, url: suppGridImgOf(root!, talker!, it.img) }))
       : [],
+    hidden: Math.max(0, total - shown),
     ...(suppImgDelPending ? { imgDel: suppImgDelPending } : {}),
   };
+}
+
+/** 网格取图（issue 519）：优先 240px 缩略档；缺档回退原图 data URL 并入队后台补齐，
+ *  补上后原位换图（不整页重画）。thumb 缺档时**不过** localImgOf——空串会被按路径缓存住，
+ *  档补齐后原位换图 / 重画取小图全都命中空串，管线整个白做。坏档（存在但读不出）
+ *  同样回退原图，由 settled 记账不再空转。 */
+function suppGridImgOf(root: string, talker: string, img: string): string {
+  const thumbAbs = descThumbPath(root, talker, img);
+  const fs2 = suppFs();
+  if (!fs2) return ''; // 非桌面：补充素材整页不可用，别碰缓存
+  if (fs2.existsSync(thumbAbs)) {
+    const thumbUrl = localImgOf(thumbAbs);
+    if (thumbUrl) return thumbUrl;
+  }
+  if (!thumbHandled(thumbAbs)) {
+    queueThumbBuild(fs2, descImagePath(root, talker, img), thumbAbs, (ok) => {
+      if (ok) swapGridThumb(talker, img, thumbAbs);
+    });
+  }
+  return localImgOf(descImagePath(root, talker, img));
+}
+
+/** 缩略档补齐后原位换图：这张格子在弹窗里还挂着原图回退的话悄悄换成小图。
+ *  人对不上就不换（关面板→重开的窄窗里在跑任务的回调还活着；跨人同名相对路径
+ *  会把旧人的缩略塞进新人的格——下次重画自愈的便宜不占，直接不动手）。 */
+function swapGridThumb(talker: string, img: string, thumbAbs: string): void {
+  const url = localImgOf(thumbAbs);
+  if (!url || !overlay || detailId !== talker) return;
+  overlay.querySelectorAll<HTMLImageElement>('[data-people-supp-img-view]').forEach((im) => {
+    if (im.getAttribute('data-people-supp-img-view') === img && im.src !== url) im.src = url;
+  });
+}
+
+/** 摘掉哨兵观察（幂等） */
+function disarmSuppImgMore(): void {
+  suppImgMoreIO?.disconnect();
+  suppImgMoreIO = null;
+}
+
+/** 留影网格追加下一片（哨兵进视口自动 / 点哨兵兜底）；返回当前哨兵（没有更多 = null） */
+function growSuppImgGrid(): HTMLElement | null {
+  const talker = detailId;
+  const root = suppDataRoot();
+  const grid = overlay?.querySelector<HTMLElement>('.bz-people-supp-imggrid');
+  // 同源守卫：非 note 弹窗 / 换人清仓后的 await 窗口里，旧哨兵的 IO 不替新页追加
+  if (!talker || !root || !grid || dialog?.kind !== 'note' || suppOwnerId !== detailId) return null;
+  const total = suppStoreInfo.imageItems.length;
+  const from = Math.min(suppImgShown, total);
+  const to = Math.min(suppImgShown + SUPP_IMG_PAGE, total);
+  if (from >= to) return grid.querySelector<HTMLElement>('[data-people-supp-img-more]');
+  const page = suppStoreInfo.imageItems.slice(from, to).map((it) => ({ ...it, url: suppGridImgOf(root, talker, it.img) }));
+  suppImgShown = to;
+  // 只 append 不走 renderAlbum：全量重建千格是同一笔卡账的第二处（增量路就是为绕开它）
+  const more = appendSuppImageGridPage(grid, page, Math.max(0, total - to), suppImgDelPending ?? undefined);
+  return more;
+}
+
+/** 重挂哨兵观察（rootMargin 提前量：滚到离底一屏就开始拼下一片，不露等待；
+ *  IO 缺席的环境不挂——哨兵点击兜底还在） */
+function armSuppImgMore(sentinel: HTMLElement | null): void {
+  disarmSuppImgMore();
+  if (!sentinel || typeof IntersectionObserver === 'undefined') return;
+  suppImgMoreIO = new IntersectionObserver((entries) => {
+    if (!entries.some((e) => e.isIntersecting)) return;
+    disarmSuppImgMore();
+    armSuppImgMore(growSuppImgGrid());
+  }, { rootMargin: '600px 0px' });
+  suppImgMoreIO.observe(sentinel);
 }
 
 /** 账本是否本轮起跑后落过笔（fs mtime 判；读不到 / 无起跑时刻 = 旧账，按冷加载期算） */
@@ -3650,7 +3842,13 @@ async function suppImportImages(): Promise<void> {
         seq++;
       }
       fs2.copyFileSync(it.path, target);
-      imported.push({ file: `${month}/${stamp}_${p2(seq)}${ext}`, ts: it.ts, isSender: !it.peer });
+      // 缩略档随后台队列出（issue 519）：不挡导入主流程；补上后网格原位换小图
+      const rel = `${month}/${stamp}_${p2(seq)}${ext}`;
+      const thumbAbs = descThumbPath(root, talker, rel);
+      queueThumbBuild(fs2, target, thumbAbs, (ok) => {
+        if (ok) swapGridThumb(talker, rel, thumbAbs);
+      });
+      imported.push({ file: rel, ts: it.ts, isSender: !it.peer });
     }
     // 并仓：type=3 消息（text 空 = 不进时间线，描述并仓后自然出现）+ 形态计数 + 统计重算
     let n = 0;
@@ -3701,8 +3899,10 @@ function openImgViewer(img: string): void {
   if (index < 0) return;
   const { close } = openLightbox({
     title: '留影',
+    // srcOf 惰性（issue 519）：翻到哪张才读哪张的原图——千张组一次性把 data URL 拉齐是同一笔卡账
     items: suppStoreInfo.imageItems.map((it) => ({
-      src: localImgOf(descImagePath(root, talker, it.img)),
+      src: '',
+      srcOf: () => localImgOf(descImagePath(root, talker, it.img)),
       caption: it.text.replace(/^\[图片\]\s*/, ''),
     })),
     index,
@@ -3749,6 +3949,50 @@ async function suppDescribe(): Promise<void> {
   else if (r.ok && r.skipped) notice('没有需要描述的图片（零图片或已全部描述）', 'info');
   else if (r.ok) notice('图片描述完成，已并进时间线', 'success');
   await refreshSuppStoreInfo(detailId);
+  void renderAlbum();
+}
+
+/**
+ * 解除敏感标注并重试描述（ADR-0224 决策 7）：标注是启发式判定，一定有误伤，必须有撤回入口——
+ * 没有撤回入口的错杀不可挽回。清掉该图消息上的 descSkip 后直接走「只跑描述段」入口：这一次
+ * 点击即计费授权（与 suppDescribe 同口径，不再二次弹确认）；若它确实敏感，下一轮会被重新标注
+ * （幂等自愈，不会反复烧钱也不会漏）。
+ */
+async function suppUnmarkSensitive(img: string): Promise<void> {
+  const talker = detailId;
+  if (!talker || !img || jobsApi.isDescribeOnlyBusy()) return;
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  const safe = peopleSafe;
+  if (!safe?.unlocked) {
+    notice('保险库上锁——先解锁再解除敏感标注', 'warning');
+    return;
+  }
+  let cleared = 0;
+  try {
+    await safe.write(talker, (rec) => {
+      for (const m of rec.store.msgs) {
+        if (m.type === 3 && String(m.img ?? '') === img && isDescSkipped(m)) {
+          delete m.descSkip;
+          cleared++;
+        }
+      }
+      if (cleared > 0) rec.store.updatedAt = new Date().toISOString();
+    });
+  } catch (e) {
+    notifyActionError(e, '解除敏感标注');
+    return;
+  }
+  await refreshSuppStoreInfo(talker);
+  void renderAlbum();
+  if (!cleared) {
+    notice('这张已经没有敏感标注了', 'info');
+    return;
+  }
+  const r = await jobsApi.runDescribeOnly(getApp(), talker);
+  if (!r.ok && r.reason) notice(`重试描述没有跑：${r.reason}`, 'warning');
+  else if (r.ok && r.skipped) notice('没有需要描述的图片', 'info');
+  else if (r.ok) notice('已解除敏感标注，重新描述完成', 'success');
+  await refreshSuppStoreInfo(talker);
   void renderAlbum();
 }
 

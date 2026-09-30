@@ -38,7 +38,7 @@ import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-ma
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings, panelSizePersist } from '../core/settings-provider';
 import { isRemoteSkinReady } from '../core/skin-pack';
 import { uiModal, uiIcon, uiChoice, uiSelect, uiSegmented, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
@@ -445,29 +445,13 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   }
 
   // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）。
-  // 尺寸记忆（ADR-0094）：persist.load 挂载时恢复（resize 工厂钳到与拖拽同口径），
-  // save 防抖 300ms 落盘 + detach 补存尾值——settings 键 memoPanelWidth/Height 语义不变
+  // 尺寸记忆（ADR-0094）：persist 收敛 core 工厂（load 挂载恢复/save 防抖落盘 +
+  // detach 补存尾值）——settings 键 memoPanelWidth/Height 语义不变
   if (!isMobileEnv()) {
     panelResizeDetach = uiResizable(panelEl, {
       minW: PANEL.MIN_W, minH: PANEL.MIN_H,
       maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
-      persist: {
-        load: () => {
-          const s = tryGetSettings();
-          const w = Number(s?.memoPanelWidth) || 0;
-          const h = Number(s?.memoPanelHeight) || 0;
-          // 无记忆/越界旧值回 null → 面板走 CSS 默认尺寸（720×580）
-          if (w < PANEL.MIN_W || h < PANEL.MIN_H) return null;
-          return { w, h };
-        },
-        save: (w, h) => {
-          const s = tryGetSettings();
-          s.memoPanelWidth = w;
-          s.memoPanelHeight = h;
-          // 设置写盘 quiet 兜底（memo2-func #13 / 旧-13，同排序口径）
-          void saveSettings().catch((e) => console.error('[memo] 面板尺寸保存失败', e));
-        },
-      },
+      persist: panelSizePersist('memoPanelWidth', 'memoPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
     });
   }
 

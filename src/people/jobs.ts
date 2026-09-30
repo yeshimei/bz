@@ -98,8 +98,11 @@ import { computeStats } from './stats';
 import { PeopleStore } from './data';
 import {
   applyImageDescToMsgs,
+  applyMediaFailToMsgs,
   applyImageMapToMsgs,
+  applySensitiveSkipsToMsgs,
   applyVoiceToMsgs,
+  isDescSkipped,
   normalizeOptionsFromSettings,
   pendingMediaCounts,
   storeStatsOf,
@@ -116,6 +119,7 @@ import {
   describeStageLine,
   descDataUrlOf,
   imageRefsOf,
+  isSensitiveRefusal,
   newDescribeProgress,
   parseDescribeReply,
   describeModelLabelOf,
@@ -619,12 +623,16 @@ function hasInjection(o: {
 /**
  * 导入记录元数据（落 ImportRecord 所需）。新建与复用两条路径共用同一口径——
  * 否则「续跑」任务写回的导入记录会缺条数 / 跨度。
+ * 条数取**本次导出的可消费消息条数**（与 timeFrom / timeTo 同源 `t.msgs`，也与导入路径
+ * 的 `msgs.length` 一致）：ImportRecord.messageCount 既用来显示「消息总数」，又是
+ * incremental.planIncremental 判「同一导出再导」的整份指纹的一半——记成本次提炼子集条数
+ * （增量只跑 1 条就记 1）会让指纹永不命中，每次再导都判成 newer 白烧一遍（issue 523）。
  */
-function importRecordOf(t: JobTarget, digestMsgs: UnifiedMessage[]): NonNullable<PersonJob['importRecord']> {
+function importRecordOf(t: JobTarget): NonNullable<PersonJob['importRecord']> {
   return {
     fileLabel: t.fileLabel,
     skippedCount: t.skippedCount ?? 0,
-    messageCount: digestMsgs.length,
+    messageCount: t.msgs.length,
     timeFrom: new Date(t.msgs[0].ts).toISOString(),
     timeTo: new Date(t.msgs[t.msgs.length - 1].ts).toISOString(),
   };
@@ -843,7 +851,7 @@ export async function startJobs(
     const now = nowIso();
     const prev = st.queue.find((j) => j.talker === t.talker);
     st.queue = st.queue.filter((j) => j.talker !== t.talker);
-    const importRecord = importRecordOf(t, digestMsgs);
+    const importRecord = importRecordOf(t);
     const noteMaterial = {
       mediaNote: mediaNote || undefined,
       statsNote: t.insights ? buildStatsNote(t.insights, t.monthly) || undefined : undefined,
@@ -1321,18 +1329,23 @@ export async function mergePrepArtifactsIntoStore(
   talker: string,
   dataRoot: string,
   opts?: { previewVoice?: boolean }
-): Promise<{ voice: number; images: number } | null> {
+): Promise<{ voice: number; images: number; unusable: number } | null> {
   if (!safe.unlocked) return null;
   const side = readPrepSidecars(dataRoot, talker);
-  if (!side || (!side.voice.length && !side.imageMap.length)) return null;
+  // mediaFail 为 null = 无权威（表缺失 / --limit 调试轮），此时不并该类（不动已有标注）
+  if (!side || (!side.voice.length && !side.imageMap.length && side.mediaFail === null)) return null;
   const previewVoice = opts?.previewVoice ?? normalizeOptionsFromSettings().previewVoice;
-  const counts = { voice: 0, images: 0 };
+  const counts = { voice: 0, images: 0, unusable: 0 };
   await safe.write(talker, (rec) => {
+    // 次序：先并关联表（img 换成产物名），再按产物名标终态——否则 broken 项对不上 img（ADR-0225）
     counts.voice = applyVoiceToMsgs(rec.store.msgs, side.voice, { previewVoice });
     counts.images = applyImageMapToMsgs(rec.store.msgs, side.imageMap);
+    if (side.mediaFail !== null) counts.unusable = applyMediaFailToMsgs(rec.store.msgs, side.mediaFail);
     if (counts.voice + counts.images > 0) {
       rec.store.stats = storeStatsOf(rec.store.msgs); // 时间线变多 → 统计重算（口径单源 storeStatsOf）
       rec.store.updatedAt = new Date().toISOString();
+    } else if (counts.unusable > 0) {
+      rec.store.updatedAt = new Date().toISOString(); // 标注变了也要让面板重读（统计不受影响）
     }
   });
   return counts;
@@ -1352,7 +1365,7 @@ export async function mergePrepArtifactsIntoStore(
  *   - 暂停 = 批间自然断点（批完成后停）；批级 checkpoint 逐批落保库记录（job.describe 账本）。
  * 返回 'skipped' | 'ok' | 'halted'（halted = runJob 立即返回，finish 已落状态）。
  */
-async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted'> {
+async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJob>) => Promise<void>): Promise<'skipped' | 'ok' | 'halted' | 'unreadable'> {
   const safe = st!.safe;
   if (!safe?.unlocked) return 'halted'; // 上锁竞态：runQueue 下一轮自会停，任务保持原态
   const ledger = describeOf(job);
@@ -1363,9 +1376,11 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
   const rec = await safe.read(job.talker);
   if (gone(job)) return 'halted';
   const msgs = rec?.store.msgs ?? [];
-  const refs = imageRefsOf(msgs);
-  if (!refs.length) return 'skipped'; // 零图片：不为 0 张图弹一次确认（决策 9）
   const byKey = new Map(msgs.map((m) => [m.key, m]));
+  // 敏感标注即终态（ADR-0224）：已标注的图不进 refs——不计数、不切批、不再调用；也因此
+  // 「有欠账」不会永久成立（ADR-0223 决策 6 的落点：否则每轮补画都重扫全库）
+  const refs = imageRefsOf(msgs).filter((r) => !isDescSkipped(byKey.get(r.key)));
+  if (!refs.length) return 'skipped'; // 零图片：不为 0 张图弹一次确认（决策 9）
   const isDone = (ref: DescribeImageRef): boolean => (byKey.get(ref.key)?.text ?? '') !== '';
   const batchSize = ledger?.batchSize ?? batchSizeFromSettings();
   const batches = describeBatches(refs, batchSize);
@@ -1426,6 +1441,10 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
   job.stage = 'describe';
   await finish({ describe: led, message: describeStageLine(led.doneBatches, batches.length) });
   const ask = asksOf().describe;
+  // 「有欠账、零可读」探测（issue 521 / ADR-0225 决策 3）：整个图片集一张派生档都读不动时，
+  // 本段零调用走完——过去这就静默当「全批完成」，欠账口径（待描述 N 张）与批完成口径互相
+  // 矛盾、永不收敛。现在把它认出来，交 runJob 收尾并说清楚。
+  let readRefs = 0;
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
     const pending = batch.filter((r) => !isDone(r));
@@ -1445,10 +1464,11 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
       if (url) images.push({ ref, url });
     }
     if (!images.length) {
-      led.doneBatches = i + 1; // 批内派生档全读不动：不烧调用，计完成跳过
+      led.doneBatches = i + 1; // 批内派生档全读不动：不烧调用，计完成跳过（成因见下面的收尾判定）
       await persist();
       continue;
     }
+    readRefs += images.length;
     led.doneBatches = i; // 进行中口径（当前批未完，断点落在本批开头）
     job.message = `本批 ${images.length} 张`; // 批号与主行锚点（`图片描述 3/82 批`）同义，这里只补本批张数
     emit();
@@ -1457,6 +1477,7 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     const prompt = buildDescribePrompt(images.length, context);
     let descs: string[];
     let attempt = 0;
+    let refused = false; // 整批被判敏感拒绝（ADR-0224）
     for (;;) {
       try {
         descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
@@ -1464,6 +1485,8 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
       } catch (e) {
         if (gone(job)) return 'halted';
         const err = errorMessage(e);
+        // 敏感拒绝：这一批必再被拒，重试纯属白付——直接转逐张（ADR-0224 决策 2）
+        if (isSensitiveRefusal(err)) { refused = true; break; }
         if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
           // error 面不带 message：原因与「继续生成」由进度块的错误行 / 按钮承担（说了两遍是噪音）
           await finish({ status: 'error', error: err });
@@ -1480,11 +1503,41 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
         }
       }
     }
+    // 敏感降级（ADR-0224 决策 2、3）：整批被拒 → 该批逐张重来。一张毒图不该废掉整批 20 张，
+    // 更不该废掉整条链——成功的照常并仓，被拒的标注 descSkip 跳过，两者都继续往下走。
+    const missed: DescribeImageRef[] = [];
+    if (refused) {
+      const onePrompt = buildDescribePrompt(1, context);
+      descs = [];
+      for (const item of images) {
+        if (gone(job)) return 'halted';
+        if (st!.pauseRequested) {
+          await finish({ status: 'paused', message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+          return 'halted';
+        }
+        try {
+          const one = parseDescribeReply(await ask({ text: onePrompt, images: [item.url] }), 1);
+          descs.push(one[0] ?? '');
+        } catch (e) {
+          if (gone(job)) return 'halted';
+          // 只有「明确被判敏感」才标注；其它错误（网络抖动等）只让这一张留空待重试，
+          // 绝不把它误标成不可重跑的终态（ADR-0224 决策 1：宁可漏判也不误判）
+          if (isSensitiveRefusal(errorMessage(e))) missed.push(item.ref);
+          descs.push('');
+        }
+      }
+      if (missed.length) led.sensitive = (led.sensitive ?? 0) + missed.length;
+      job.message = `本批 ${images.length} 张中 ${missed.length} 张被判敏感，已标注跳过`;
+      emit();
+    }
     // 本批合并进聊天仓（ADR-0197：插件是唯一写入者；走 safe.write 串行链，批级 checkpoint）
     const items: ImageDescItem[] = images.map((x, j) => ({ file: x.ref.img, ct: Math.round(x.ref.ts / 1000), desc: descs[j] ?? '' }));
     await safe.write(job.talker, (rec2) => {
+      // 次序要紧：**先标注、后并描述**。标注先行，applyImageDescToMsgs 才会把被拒的图整条跳过
+      // （否则它的近邻描述会被「最近邻兜底」借给它——一张毒图反而拿到别人的描述）
+      const k = missed.length ? applySensitiveSkipsToMsgs(rec2.store.msgs, missed.map((r) => r.img)) : 0;
       const n = applyImageDescToMsgs(rec2.store.msgs, items);
-      if (n > 0) {
+      if (n > 0 || k > 0) {
         rec2.store.stats = storeStatsOf(rec2.store.msgs); // 描述进时间线 → 统计重算（图片数变化）
         rec2.store.updatedAt = new Date().toISOString();
       }
@@ -1494,6 +1547,16 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     await persist();
     emit();
   }
+  // 「有欠账、零可读」→ 交 runJob 收尾（ADR-0225 决策 3）。判据收窄的理由：终态标注落地后，
+  // 死欠账已不算欠账，这里只剩两种成因——本轮刚导入、派生还没跑起来，或数据根 / 磁盘临时掉线。
+  // 两种都该停下手说清楚，而不是继续烧 4 次成文调用（用户实测：1 条新增素材白烧 5 次）。
+  if (readRefs === 0 && pendingCount > 0) {
+    led.unreadable = pendingCount;
+    await finish({ describe: led, message: `图片描述 0/${batches.length} 批` });
+    return 'unreadable';
+  }
+  // 敏感标注是终态、不会重跑（ADR-0224）。这里不通知——通知归 UI 层（引擎不碰 DOM，
+  // 任务完成时的统一通知在 ui.persistJobDone，读 job.describe.sensitive 拼出去）。
   return 'ok';
 }
 
@@ -1642,6 +1705,19 @@ async function runJob(job: PersonJob): Promise<void> {
     //     描述逐批合并进聊天仓派生 text。零图片 / 已跳过 / 已描述完的自动跳过且不弹确认。
     const descState = await runDescribeStage(job, finish);
     if (descState === 'halted') return; // 确认 / 暂停 / 批失败（finish 已落状态）
+    if (descState === 'unreadable') {
+      // 有欠账、零可读（ADR-0225 决策 3，用户拍板）：本趟没有可提炼的内容——收尾说清楚，
+      // 不再往下烧采集批 + 其人 / 相交 / 纪事 / 档案提炼（实测 1 条新增素材白烧 5 次）。
+      // 收尾为 done 但**不挂 person**：ui.persistJobDone 对「done 且无产物」只提示不留痕
+      // （不写导入记录 / 不动锚点，下次补画照旧从同一水位续）。
+      const n = job.describe?.unreadable ?? 0;
+      await finish({
+        stage: 'done',
+        status: 'done',
+        message: `本次没有可提炼的内容：${n} 张图片的源图损坏或缺失，无法生成描述`,
+      });
+      return;
+    }
 
     // 3. 重读聊天仓 + 指纹判定（prep 合并与 describe 合并把转写 / 关联 / 描述升级进 text——
     //    指纹在合并后算）。判废只认「外部漂移且烧过批」（上面已拦）；此处的指纹变化只能来自
@@ -1713,10 +1789,13 @@ async function runJob(job: PersonJob): Promise<void> {
           }) || undefined,
       };
       if (bucketMsgs.length) {
+        // 条数 / 跨度同取 bucketMsgs（聊天仓全量）：这是「这份素材」的条数口径，
+        // 与 startJobs 的 importRecordOf（t.msgs）同义——写本次提炼子集条数会让
+        // planIncremental 的整份指纹永不命中（issue 523）
         job.importRecord = {
           fileLabel: job.fileLabel,
           skippedCount: job.importRecord?.skippedCount ?? 0,
-          messageCount: digestMsgs.length,
+          messageCount: bucketMsgs.length,
           timeFrom: new Date(bucketMsgs[0].ts).toISOString(),
           timeTo: new Date(bucketMsgs[bucketMsgs.length - 1].ts).toISOString(),
         };

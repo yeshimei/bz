@@ -2170,3 +2170,27 @@ describe('标签自定义（issue 363）', () => {
     expect(hueOf('GitHub')).toBe(215); // 内置原名映射保留（旧数据视觉不变）
   });
 });
+
+// ==================== 面板拖拽缩放 + 尺寸记忆（ADR-0084/0094） ====================
+
+describe('面板拖拽缩放 + 尺寸记忆', () => {
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', async () => {
+    const ctx = await setup();
+    ctx.state.favoritesPanelWidth = 900;
+    ctx.state.favoritesPanelHeight = 640;
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    const frame = document.querySelector('.bz-fav-panel') as HTMLElement;
+    expect(frame.style.width).toBe('900px');
+    expect(frame.style.height).toBe('640px');
+    closePanel();
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', async () => {
+    const ctx = await setup();
+    openPanel(getApp(), ctx.dm, ctx.ai);
+    const frame = document.querySelector('.bz-fav-panel') as HTMLElement;
+    expect(frame.style.width).toBe('');
+    expect(frame.style.height).toBe('');
+    closePanel();
+  });
+});

@@ -883,8 +883,7 @@ tags: [电影]
     closeYearbookOverlay();
   });
 
-  // ======================= 移动端（mob 壳） =======================
-
+  // ======================= 移动端（mob 壳） ================
   it('移动端：mob 壳渲染（m-head 添加/AI/分析/关闭 + chips 10 + m-grid）', () => {
     setSettingsProvider(() => ({  } as any));
     const { app } = seedMobile();
@@ -2990,5 +2989,52 @@ describe('一键导入豆瓣片单', () => {
     expect(modal.querySelector('.j-dimp-stat')?.textContent).toContain('待导入 0');
     expect((modal.querySelector('.j-dimp-run') as HTMLButtonElement).disabled).toBe(true);
     closeOverlay();
+  });
+});
+describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    // 先走 closeOverlay 单口摘缩放句柄（面板开关重建型，句柄在模块级——unloadCinema
+    // 直 remove 不经 closeOverlay，同模块上下文内残留会挡住下一用例的幂等重挂）
+    closeOverlay();
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+    delete (window as any).matchMedia; // 悬浮能力 stub 清理（同上方 describe 口径）
+  });
+
+  it('有记忆值时打开即套用内联宽高（挂载 load 恢复口径，同 clipbook）', () => {
+    setSettingsProvider(() => ({ cinemaPanelWidth: 900, cinemaPanelHeight: 600 }) as any);
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.style.width).toBe('900px');
+    expect(root.style.height).toBe('600px');
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
+    setSettingsProvider(() => ({}) as any);
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.style.width).toBe('');
+    expect(root.style.height).toBe('');
+  });
+
+  it('移动壳真全屏不挂缩放（isMobileEnv 守卫）：记忆值不落内联', () => {
+    setSettingsProvider(() => ({ cinemaPanelWidth: 900, cinemaPanelHeight: 600 }) as any);
+    const { app } = seedMobile();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.classList.contains('mob')).toBe(true);
+    expect(root.style.width).toBe('');
+    expect(root.style.height).toBe('');
   });
 });

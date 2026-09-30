@@ -31,10 +31,10 @@ import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { getApp } from '../core/app';
 import { openExternalUrl } from '../core/utils';
-import { mountIcons, uiModal } from '../core/ui';
+import { mountIcons, uiModal, uiResizable } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
 import { emitDomainEvent } from '../core/domain-bus';
-import { tryGetSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 import type { SettingsSchema } from '../core/settings-schema';
 import { getTags, getTagById, newTagId, resetTagsState, setTags, getStoragePath, normalizeUrl, isUrlLike } from './config';
@@ -95,6 +95,11 @@ const M: FavState = {
   renderFn: null,
   stage: 'idle',
 };
+
+/** 桌面面板拖拽缩放限界（ADR-0084）+ 缩放句柄（开关重建型面板：openPanel 挂，closePanel 摘；
+ *  只挂桌面形态 .bz-fav-panel——移动端 .bz-fav-mob 真全屏不挂） */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
+let panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
 export function resetFavoritesState(): void {
   M.overlay = null;
@@ -242,6 +247,18 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   // 焦点落面板容器本体（非输入框，移动端不弹软键盘），Tab 不再跑到面板背后
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-fav-panel') ?? overlay);
 
+  // 桌面拖动缩放（ADR-0084）+ 尺寸记忆（ADR-0094）：面板开关重建型，open 挂 / closePanel 摘
+  if (!isMobileEnv()) {
+    const panelEl = overlay.querySelector<HTMLElement>('.bz-fav-panel');
+    if (panelEl) {
+      panelResizeDetach = uiResizable(panelEl, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('favoritesPanelWidth', 'favoritesPanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
+  }
+
   // 动效层：亚麻板支上台面（磁贴/卡片手感绑定在下方容器声明之后）
   motionPanelIn(overlay);
   // 评审便利：#replay 重播首屏编排（motion.ts hashchange 消费；面板已关则不重放）
@@ -340,6 +357,9 @@ export function closePanel(): void {
     }
     // 状态先清（toggle 语义/ESC 判活同步可见），DOM 交给收板动画摘除——
     // 无动画宿主（测试）motionPanelOut 同步收口，行为与今日逐字一致
+    // 拖拽缩放随面板关闭摘除（防抖尾值 detach 内自动 flush，尺寸不丢）
+    panelResizeDetach?.detach();
+    panelResizeDetach = null;
     M.overlay = null;
     M.renderFn = null;
     M.stage = 'idle';

@@ -10,11 +10,22 @@
  *   mousemove/mousedown 上，不注入任何常驻覆盖层，内容交互不受影响。
  * 尺寸钳制：下限 minW×minH；上限逐帧取 min(硬上限 maxW×maxH,
  *   视口 92%)——任何屏幕不越出遮罩可视区，大屏也不会拉出无边面板。
- * 尺寸记忆：可选 persist（ADR-0094）——挂载时 load() 有值即恢复
- *   （钳到与拖拽同口径的 min/max + 视口 92%）；onChange 防抖 300ms 调
- *   save() 落盘（仿 memo 域 rememberPanelSize trailing 防抖），句柄另有
- *   flush()（立即落盘待存尾值，无待存 no-op；域内「关面板即落盘」用），
- *   detach 时未落盘的尾值也立即 flush 防丢。不传 persist 行为不变（向后兼容）。
+ * 尺寸记忆：可选 persist（ADR-0094）——挂载时 load() 有值即恢复；
+ *   onChange 防抖 300ms 调 save() 落盘（仿 memo 域 rememberPanelSize trailing
+ *   防抖），句柄另有 flush()（立即落盘待存尾值，无待存 no-op；域内「关面板
+ *   即落盘」用），detach 时未落盘的尾值也立即 flush 防丢。不传 persist 行为
+ *   不变（向后兼容）。
+ * 意图尺寸 × 渲染尺寸分离（半屏挤压修复）——旧口径把「视口钳制后的渲染值」
+ *   直接内联冻结 + 落盘，Obsidian 半屏下打开/拖拽会把挤压尺寸永久写进
+ *   settings，恢复全屏后回不去。现拆两层：
+ *   wantW/H（意图值）只钳 min/硬上限、不掺视口——persist 存取全走它；
+ *     半屏下拖大，记下的是「用户想要的尺寸」而非被挤压的渲染值。
+ *   renderSize()（渲染值）= clamp(意图值, min, 视口 92%) 写内联，挂载恢复
+ *     与拖拽中都是意图值在当前视口下的投影。
+ *   window resize 跟帧：视口变化即按意图值重新钳制渲染（拖拽中跳过；
+ *     宿主离场自摘监听自愈，口径同拖拽监听）——半屏挤压→全屏自动复原。
+ *   兼容：旧档存的本就是渲染值，读回当意图值只会更大，硬上限 + 视口 cap
+ *     双兜底不越屏；已落盘的挤压小值无法找回，拖一次即重新记忆。
  * 拖拽收尾吞终端 click（issue 222）：mousedown 在面板热区、mouseup 落遮罩时 click
  *   派发公共祖先遮罩 → 「点遮罩关闭」误触发；经 core/dom swallowNextClick 统一防线，
  *   memo/剪藏本/保险库等「缩放热区 × 点遮罩关闭」组合全量受益。
@@ -51,7 +62,7 @@ export interface BzResizableOpts {
   /** 硬上限宽高（默认不设 = 仅视口 92% 约束） */
   maxW?: number;
   maxH?: number;
-  /** 拖拽结束回调（尺寸已钳制；调方持久化用） */
+  /** 拖拽结束回调（意图尺寸，未按视口钳制；调方持久化用） */
   onChange?: (w: number, h: number) => void;
   /** 尺寸记忆（可选；不传行为不变） */
   persist?: BzResizablePersist;
@@ -88,20 +99,40 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
     return Math.floor(Math.min(isW ? maxW : maxH, view));
   };
 
-  // 尺寸记忆（可选）：挂载即恢复（钳制口径与拖拽一致，防旧值/手改超大值打开即超屏）
-  const persist = opts.persist;
   let persistTimer: ReturnType<typeof setTimeout> | null = null;
-  let lastW = 0;
-  let lastH = 0;
+  let wantW = 0;
+  let wantH = 0;
+
+  /** 渲染值 = 意图值在当前视口下的投影（clamp(意图, min, 视口 92%)）写内联；
+   *  无意图值（未拖过/无记忆）不动，面板走 CSS 默认 + CSS 视口钳制自动跟帧 */
+  const renderSize = (): void => {
+    if (wantW <= 0 || wantH <= 0) return;
+    el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + 'px';
+    el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + 'px';
+  };
+
+  // 尺寸记忆（可选）：挂载即恢复——记忆值是意图尺寸，只钳 min/硬上限（防旧值/
+  // 手改超大值打开即越界），视口挤压留给 renderSize 逐帧钳
+  const persist = opts.persist;
   if (persist?.load) {
     const saved = persist.load();
     if (saved && saved.w > 0 && saved.h > 0) {
-      lastW = Math.min(Math.max(saved.w, minW), cap(true));
-      lastH = Math.min(Math.max(saved.h, minH), cap(false));
-      el.style.width = lastW + 'px';
-      el.style.height = lastH + 'px';
+      wantW = Math.min(Math.max(saved.w, minW), maxW);
+      wantH = Math.min(Math.max(saved.h, minH), maxH);
+      renderSize();
     }
   }
+
+  /** 视口跟帧：半屏↔全屏切换时按意图值重新钳制渲染（挤压不落盘，全屏即复原）。
+   *  宿主离场自摘 window 监听自愈（口径同拖拽监听，防忘 detach 滞留） */
+  const onWinResize = () => {
+    if (!el.isConnected) {
+      window.removeEventListener('resize', onWinResize);
+      return;
+    }
+    if (!dragging) renderSize();
+  };
+  window.addEventListener('resize', onWinResize);
 
   /** 指针相对 el 的命中方向；非热区返回 null */
   const regionAt = (e: MouseEvent): string | null => {
@@ -132,21 +163,19 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
     e.preventDefault();
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    let w = dir === 'e' || dir === 'se' ? startW + dx : startW;
-    let h = dir === 's' || dir === 'se' ? startH + dy : startH;
-    w = Math.min(Math.max(w, minW), cap(true));
-    h = Math.min(Math.max(h, minH), cap(false));
-    el.style.width = w + 'px';
-    el.style.height = h + 'px';
-    if (opts.onChange) opts.onChange(w, h);
-    // 尺寸记忆：trailing 防抖 300ms 落盘一次（拖一次 = 几十次回调，不逐帧写）
+    // 意图值只钳 min/硬上限，逐轴更新（未拖的轴保持既有意图不被拉低）——
+    // 半屏下拖大也记下完整意图，不掺视口挤压
+    if (dir === 'e' || dir === 'se') wantW = Math.min(Math.max(startW + dx, minW), maxW);
+    if (dir === 's' || dir === 'se') wantH = Math.min(Math.max(startH + dy, minH), maxH);
+    renderSize();
+    if (opts.onChange) opts.onChange(wantW, wantH);
+    // 尺寸记忆：trailing 防抖 300ms 落盘一次（拖一次 = 几十次回调，不逐帧写）；
+    // 落盘口径 = 意图值（半屏挤压不污染存档）
     if (persist?.save) {
-      lastW = w;
-      lastH = h;
       if (persistTimer !== null) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         persistTimer = null;
-        persist.save?.(w, h);
+        persist.save?.(wantW, wantH);
       }, 300);
     }
   };
@@ -163,8 +192,13 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
     dragging = true;
     startX = e.clientX;
     startY = e.clientY;
-    startW = el.getBoundingClientRect().width;
-    startH = el.getBoundingClientRect().height;
+    const rect = el.getBoundingClientRect();
+    startW = rect.width;
+    startH = rect.height;
+    // 首次拖拽把 CSS 默认渲染尺寸固化为意图基线（renderSize 需两轴意图齐备才写内联，
+    // 否则只拖一轴时另一轴无值）。clamp 防默认尺寸越出 min/max 口径
+    if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
+    if (wantH <= 0) wantH = Math.min(Math.max(startH, minH), maxH);
     // 拖拽期间禁选中（鼠标可能在列表文本上按下）
     document.body.style.userSelect = 'none';
   };
@@ -197,7 +231,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
     if (persistTimer === null) return;
     clearTimeout(persistTimer);
     persistTimer = null;
-    if (persist?.save && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+    if (persist?.save && wantW > 0 && wantH > 0) persist.save(wantW, wantH);
   };
 
   return {
@@ -210,6 +244,7 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
       el.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('mousemove', onDragMove);
       document.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('resize', onWinResize);
       document.body.style.userSelect = '';
       setCursor(null);
     },

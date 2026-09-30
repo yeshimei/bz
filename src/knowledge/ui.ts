@@ -23,7 +23,8 @@ import { imageDataUrl, imageExtOfMime, imageMimeOfPath } from '../core/ai';
 import { localNow } from '../core/ui/str';
 import type { SettingsSchema } from '../core/settings-schema';
 import { isMobileEnv } from '../core/mobile';
-import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings, panelSizePersist } from '../core/settings-provider';
+import { uiResizable } from '../core/ui/resize';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -69,6 +70,10 @@ function litKindLabel(type: string): string {
 }
 /** 图版单次录入的图片张数上限（issue 313）：一次 AI 请求的图片数封顶，避免大图组拖垮上行与费用 */
 const IMAGE_ENTRY_MAX = 9;
+
+/** 主窗拖拽缩放口径（ADR-0084）：下限挡住三部列表塌缩，上限留三部竖排部签的呼吸余量；
+ *  视口 92% 逐帧钳制在 core uiResizable 内，此处只给硬边界 */
+const PANEL = { MIN_W: 640, MIN_H: 440, MAX_W: 1280, MAX_H: 880 };
 
 /** 「被引 N」徽标 tooltip（卡片部与文献部共用一份文案：同一个数就该说同一句话） */
 function refBadgeTitle(n: number): string {
@@ -565,6 +570,8 @@ export class UIManager {
   private refreshTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingRefreshPaths = new Set<string>();
   private pendingDeletePaths = new Set<string>();
+  /** 主窗拖拽缩放句柄（ADR-0084 桌面限定；showMain 挂 / hideMain·destroy 摘，域内三窗只挂主窗） */
+  private panelResizeDetach: { flush: () => void; detach: () => void } | null = null;
 
   constructor(app: App) {
     this.app = app;
@@ -675,6 +682,16 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    // 桌面拖动缩放（ADR-0084；移动端真全屏由 CSS 撑满视口，不挂）。**只挂主窗**
+    // this.popup（#knowledge-popup）——.bz-kb-window 类被录入界面复用，绝不能误挂；
+    // 幂等：已挂不重复（主窗 DOM 常驻，show/hide 反复走这里）
+    if (!isMobileEnv() && !this.panelResizeDetach) {
+      this.panelResizeDetach = uiResizable(this.popup, {
+        minW: PANEL.MIN_W, minH: PANEL.MIN_H,
+        maxW: PANEL.MAX_W, maxH: PANEL.MAX_H,
+        persist: panelSizePersist('knowledgePanelWidth', 'knowledgePanelHeight', PANEL.MIN_W, PANEL.MIN_H),
+      });
+    }
     // 动效层：落纸壳入场；boot 标志置位，首个渲染（refreshCurrent → renderXxx）消费即熄
     this.motionCue = 'boot';
     motionMainIn(this.popup);
@@ -694,6 +711,12 @@ export class UIManager {
   hideMain(): void {
     // 动效层：退场中忽略重复关闭（ESC 连按 / 遮罩连点），收纸演完才交还 display
     if (this.popup && motionClosing(this.popup)) return;
+    // 摘拖拽缩放（ADR-0084）：常驻 DOM 面板 hide 即摘，重开 showMain 再挂；
+    // persist 未落盘的防抖尾值由 detach 立即补存
+    if (this.panelResizeDetach) {
+      this.panelResizeDetach.detach();
+      this.panelResizeDetach = null;
+    }
     const popup = this.popup;
     const mask = this.mask;
     motionMainOut(popup, () => {
@@ -3660,6 +3683,7 @@ export class UIManager {
   destroy(): void {
     this.abortTermGenerate(); // 在途生成流随面板销毁中止
     motionTeardown(); // 动效层：撤全部在途退场簿记 / 编排定时器 / 循环注入件
+    if (this.panelResizeDetach) { this.panelResizeDetach.detach(); this.panelResizeDetach = null; } // 缩放句柄随销毁摘除
     this.clearRunTimer();
     this.runState.clear();
     if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }

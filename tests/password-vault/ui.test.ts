@@ -388,3 +388,54 @@ describe('PasswordVaultUIManager', () => {
     await new Promise((r) => setTimeout(r, 20));
   });
 });
+
+describe('面板拖拽缩放 + 尺寸记忆（ADR-0084/0094）', () => {
+  let vault: MockVault;
+  let sm: SafeManager;
+  let dm: PasswordVaultDataManager;
+  let ui: PasswordVaultUIManager;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vault = new MockVault();
+    setApp({ vault, metadataCache: { trigger: vi.fn() } } as any);
+    setSettingsProvider(() => ({ passwordCharset: '', passwordLength: '16', securityMode: false }) as any);
+    sm = new SafeManager('CONFIG/.ENCRYPT');
+    dm = new PasswordVaultDataManager(sm);
+    ui = new PasswordVaultUIManager(dm, { charset: '', length: '16', securityMode: false });
+  });
+
+  afterEach(() => {
+    ui.cleanup(); // 缩放句柄随 cleanup 摘（面板未 hide 直接卸载的兜底路径）
+    sm.lock();
+  });
+
+  it('有记忆值时打开即套用内联宽高（只挂桌面工作台卡，同 clipbook）', () => {
+    setSettingsProvider(() => ({ passwordCharset: '', passwordLength: '16', securityMode: false, passwordVaultPanelWidth: 900, passwordVaultPanelHeight: 640 }) as any);
+    ui.show();
+    const desk = document.querySelector('.bz-password-vault-desk') as HTMLElement;
+    expect(desk.style.width).toBe('900px');
+    expect(desk.style.height).toBe('640px');
+  });
+
+  it('hide 摘句柄后改记忆值再 show 套新值（常驻 DOM 面板 detach 生效的间接验证）', () => {
+    setSettingsProvider(() => ({ passwordCharset: '', passwordLength: '16', securityMode: false, passwordVaultPanelWidth: 900, passwordVaultPanelHeight: 640 }) as any);
+    ui.show();
+    const desk = document.querySelector('.bz-password-vault-desk') as HTMLElement;
+    expect(desk.style.width).toBe('900px');
+    ui.hide();
+    setSettingsProvider(() => ({ passwordCharset: '', passwordLength: '16', securityMode: false, passwordVaultPanelWidth: 900, passwordVaultPanelHeight: 620 }) as any);
+    ui.show();
+    expect(desk.style.width).toBe('900px');
+    expect(desk.style.height).toBe('620px');
+  });
+
+  it('0 = 未拖过 → 不写内联尺寸（走 CSS 默认，persist 语义）', () => {
+    ui.show();
+    const desk = document.querySelector('.bz-password-vault-desk') as HTMLElement;
+    expect(desk.style.width).toBe('');
+    expect(desk.style.height).toBe('');
+  });
+});

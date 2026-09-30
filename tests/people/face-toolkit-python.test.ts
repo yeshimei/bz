@@ -5,7 +5,8 @@
  * 完全测不到——本文件补上 Python 层最便宜的兜底：
  *   1. py_compile 全部自写脚本（语法门）；
  *   2. 真调收编脚本的关键纯函数（临时目录，不碰真实数据根）：load_refs 缺质心三态、
- *      labeled_wavs 双参签名与空库、read_action 控制文件语义。
+ *      labeled_wavs 双参签名与空库、read_action 控制文件语义、TargetIndex 产物存在判定语义
+ *      （扩展名优先级 / 类别隔离 / 缺目录 / note_written，ADR-0223 修订）。
  * python / numpy 缺席的开发机自动跳过（本门守的是「收编缺陷」，不是环境检测）。
  */
 import { describe, it, expect } from 'vitest';
@@ -169,6 +170,55 @@ print("PY-SIDE-OK")
 `;
       const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
       expect(stdout).toContain('PY-SIDE-OK');
+    },
+  );
+
+  itPy(
+    '产物存在判定 TargetIndex（ADR-0223 修订）：扩展名按 IMAGE_EXTS 优先级、类别目录不串、缺目录不抛、写盘后即时可见',
+    { timeout: 60000 },
+    async () => {
+      // 增量索引撤回后，这个存在判定是媒体段唯一的「跳不跳」依据，必须在真 Python 上钉住语义：
+      // ① 扩展名优先级（jpg 压 bin——listdir 顺序随机，取首个命中的非法实现会报 bin，语义不等价）；
+      // ② 类别目录隔离；③ 缺目录/缺名不抛；④ note_written（同轮写盘后立刻要判得到，否则会被写两次）。
+      const driver = `
+import shutil, sys, tempfile
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+try:
+    import bz_prep
+except Exception as e:
+    print("TGT-SKIP", e)
+    raise SystemExit(0)
+
+root = Path(tempfile.mkdtemp(prefix="bztgt-"))
+cdir = root / "某人"
+for rel in ["image/2025-08/aaaa.jpg", "image/2025-08/aaaa.bin",
+            "image/2025-08/bbbb.bin", "thumb/2025-08/aaaa.jpg",
+            "video/2025-08/vvvv.mp4"]:
+    p = cdir / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(b"x")
+
+t = bz_prep.TargetIndex(cdir)
+hit, cand = t.hit("image", "2025-08", "aaaa")
+assert cand == "jpg", cand
+assert hit == cdir / "image" / "2025-08" / "aaaa.jpg", hit
+assert t.hit("image", "2025-08", "bbbb")[1] == "bin"
+assert t.hit("thumb", "2025-08", "aaaa")[1] == "jpg"
+assert t.hit("thumb", "2025-08", "bbbb") == (None, None)
+assert t.hit("image", "2099-01", "zzzz") == (None, None)
+assert t.hit("video", "2099-01", "nope") == (None, None)
+assert bz_prep.TargetIndex(cdir).has("video", "2025-08", "vvvv.mp4") is True
+assert bz_prep.TargetIndex(cdir).has("video", "2025-08", "wwww.mp4") is False
+t2 = bz_prep.TargetIndex(cdir)
+assert t2.has("video", "2025-08", "wwww.mp4") is False
+t2.note_written("video", "2025-08", "wwww.mp4")
+assert t2.has("video", "2025-08", "wwww.mp4") is True
+shutil.rmtree(root, ignore_errors=True)
+print("TGT-OK")
+`;
+      const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
+      expect(stdout).toContain('TGT-OK');
     },
   );
 });

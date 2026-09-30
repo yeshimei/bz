@@ -316,7 +316,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     expect(p.name).toBe('陈默');
     expect(p.imports).toHaveLength(1);
     expect(p.imports[0].file).toBe('数据源:陈默');
-    expect(p.imports[0].messageCount).toBe(3); // 引擎 importRecord 口径（实际进提炼条数）
+    expect(p.imports[0].messageCount).toBe(3); // 条数 = 这份导出的全量消息数（issue 523：不再是本次提炼子集条数）
     expect(p.imports[0].skippedCount).toBe(1);
     expect(p.imports[0].stats!.kindCounts).toEqual({ 文本: 3 });
     expect(d.events[0].summary).toBe('聊了早饭');
@@ -348,7 +348,7 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     expect(engine.calls.remove).toHaveLength(1);
   });
 
-  it('skip 预筛：同一导出再导（指纹命中）不进引擎，改名照常应用、不落新记录', async () => {
+  it('skip 预筛：同一导出再导（指纹命中）不进引擎，改名照常应用、不落新记录；开工单出「没有新素材」且开始生成置灰', async () => {
     const from = new Date(T0).toISOString();
     const to = new Date(T0 + 120_000).toISOString();
     const existing: PersonEntry = {
@@ -362,12 +362,18 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     const engine = new FakeEngine();
     inject(engine);
     await openAlbum();
-    await startGeneration([target({ name: '陈默' })]); // 同一条数 + 同跨度 → 指纹命中
+    const gen = startGeneration([target({ name: '陈默' })]); // 同一条数 + 同跨度 → 指纹命中
+    // issue 523：没有新素材也翻开工单（旧行为只弹一条通知，用户看不到为什么点了没反应）
+    await vi.waitFor(() => expect(document.querySelector('[data-people-sub="gen"]')).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toBe('没有新的素材');
+    expect(document.querySelector<HTMLElement>('.bz-people-pop-note')!.textContent).toContain('「陈默」');
+    expect(document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(true);
+    click('[data-people-gen-cancel]'); // 置灰钮点不动，只能「取消」合上这页
+    await gen;
     expect(engine.calls.start).toHaveLength(0); // 全员 skip → 引擎根本不启动
     const p = (await disk()).people[0];
     expect(p.name).toBe('陈默'); // skip 也应用改名（441 语义保留）
     expect(p.imports).toHaveLength(1);
-    expect(getNoticeMessages().some((m) => m.includes('没有新消息、无需重画'))).toBe(true);
   });
 });
 
