@@ -1321,6 +1321,12 @@ function resumeExisting(name: string): boolean {
 
 // ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
 
+/** 待办媒体（issue 514 口径）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
+export interface PendingMedia {
+  images: number;
+  voices: number;
+}
+
 /** 生成目标（引擎 JobTarget 同形；msgs 必须是全量时间线消息——引擎断点续跑要重读校验指纹） */
 export interface GenTarget {
   talker: string;
@@ -1343,7 +1349,7 @@ export interface GenTarget {
   /** 本次计划提炼集条数（issue 514：planTargets 从 plan.msgs 带出——newer = 新增集，其余 = 全量） */
   planCount?: number;
   /** 待办媒体（issue 514）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
-  pending?: { images: number; voices: number };
+  pending?: PendingMedia;
 }
 
 /**
@@ -1539,9 +1545,13 @@ function buildGenerationConfirmInfo(runnable: GenTarget[], skipped: string[] = [
  * 不是真有新素材。这层把它判成「没有新素材」：不再白烧一遍采集批 + 双卷（ADR-0225 决策 3 同一精神）。
  * 只要候选里有**任何一条严格晚于锚点**（真新消息），照常进引擎。
  */
-function onlyWatermarkMsgs(plan: IncrementalPlan, existing: PersonEntry | undefined): boolean {
+function onlyWatermarkMsgs(plan: IncrementalPlan, existing: PersonEntry | undefined, pending?: PendingMedia): boolean {
   const anchor = existing?.lastProcessedTs;
   if (plan.mode !== 'newer' || !anchor || !plan.msgs.length) return false;
+  // 有待办媒体（未描述图片 / 未转写语音）就不判「无新素材」：这些素材在仓里 text 还是空的，
+  // 所以不进文本时间线、也就进不了上面这份候选——但它们是真素材。旧版记错条数时这些人本来
+  // 会照跑一趟、顺手把图描述掉；这层闸只该拦「真的什么都没有」的人，不该比改前拦得更宽。
+  if ((pending?.images ?? 0) + (pending?.voices ?? 0) > 0) return false;
   return plan.msgs.every((m) => m.ts <= anchor);
 }
 
@@ -1557,7 +1567,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
   for (const t of targets) {
     const existing = people.find((p) => p.id === t.talker);
     const plan = planIncremental(t.msgs, existing);
-    if (plan.mode === 'skip' || onlyWatermarkMsgs(plan, existing)) {
+    if (plan.mode === 'skip' || onlyWatermarkMsgs(plan, existing, t.pending)) {
       // skip 只可能发生在已有导入的人物上；顺带应用改名，并给 440 之前的旧数据补一份
       // 互动统计到最近一条导入记录（没有记录则不动）
       if (existing) {

@@ -1,4 +1,4 @@
-/* 源指纹 b27507561ac8563a · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 43be8fe57aa48640 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -22702,9 +22702,11 @@ ${lines}`;
       ...skipped.length ? { skipped } : {}
     };
   }
-  function onlyWatermarkMsgs(plan, existing) {
+  function onlyWatermarkMsgs(plan, existing, pending) {
+    var _a2, _b2;
     const anchor = existing == null ? void 0 : existing.lastProcessedTs;
     if (plan.mode !== "newer" || !anchor || !plan.msgs.length) return false;
+    if (((_a2 = pending == null ? void 0 : pending.images) != null ? _a2 : 0) + ((_b2 = pending == null ? void 0 : pending.voices) != null ? _b2 : 0) > 0) return false;
     return plan.msgs.every((m) => m.ts <= anchor);
   }
   async function planTargets(targets) {
@@ -22716,7 +22718,7 @@ ${lines}`;
     for (const t of targets) {
       const existing = people.find((p) => p.id === t.talker);
       const plan = planIncremental(t.msgs, existing);
-      if (plan.mode === "skip" || onlyWatermarkMsgs(plan, existing)) {
+      if (plan.mode === "skip" || onlyWatermarkMsgs(plan, existing, t.pending)) {
         if (existing) {
           let imports = existing.imports;
           if (imports.length && !imports.some((r) => r.stats)) {

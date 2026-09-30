@@ -305,6 +305,38 @@ describe('总确认接线（startGeneration → 翻开工单 → 引擎自动放
     await gen;
     expect(calls.length).toBe(1);
   });
+
+  it('旧记录条数口径 + 有未描述图片：不判「没有新素材」，照常起引擎（描述欠账不能被这层闸连带关掉）', async () => {
+    const { engine, calls } = fakeEngine();
+    setJobsModuleForTests(engine);
+    // 同上一条的旧记录（候选全停在锚点内），但仓里压着 3 张没描述的图——那些图 text 还空着，
+    // 不进文本时间线、也就进不了候选。旧版记错条数时这些人本来会照跑一趟顺手把图描述掉，
+    // 这层闸只该拦「真的什么都没有」的人。照片欠账另有留影页「生成描述」入口，但不是把
+    // 画脸谱这条路堵死的理由。
+    const talker = 'wxid_a';
+    const stale: ImportRecord = {
+      file: '数据源:陈默',
+      importedAt: '2026-09-02T00:00:00.000Z',
+      messageCount: 1,
+      skippedCount: 0,
+      timeFrom: new Date(T0).toISOString(),
+      timeTo: new Date(T0 + 60_000).toISOString(),
+    };
+    const p: PersonEntry = { id: talker, name: '陈默', createdAt: '2026-09-01T00:00:00.000Z', imports: [stale], lastProcessedTs: T0 + 60_000 };
+    await (await getPeopleSafeStore()).write(talker, (rec) => { rec.person = p; });
+
+    const t = genTarget();
+    const gen = startGeneration([{ ...t, pending: { images: 3, voices: 0 } }]);
+    await vi.waitFor(() => expect(document.querySelector(GEN_PAGE)).toBeTruthy());
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toContain('为 1 位联系人生成脸谱');
+    // 开工单照旧只说素材：图片 3 张如实报出（聊天记录走 514 的增量口径）
+    const rows = [...document.querySelectorAll('.bz-people-gen-row')].map((n) => n.textContent ?? '');
+    expect(rows.some((r) => r.includes('图片') && r.includes('3 张'))).toBe(true);
+    expect(document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(false);
+    click('[data-people-gen-start]');
+    await gen;
+    expect(calls.length).toBe(1);
+  });
 });
 
 describe('进度便签与印的 describe 段呈现', () => {
