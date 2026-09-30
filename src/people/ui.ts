@@ -371,9 +371,11 @@ let suppStoreInfo: {
   broken: number;
   missing: number;
   mergedRecs: Set<string>;
+  /** 每个已并入的录音文件在仓里占多少条轮次（issue 528；孤儿行要如实报「仓里还剩几条」） */
+  mergedRecCounts: Map<string, number>;
   /** 已入库的留影（img 相对路径 + 派生描述 + 终态标注；新的在前——留影页签的预览网格用） */
   imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }>;
-} = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
+} = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), mergedRecCounts: new Map(), imageItems: [] };
 /** 录音页签的进度轮询（只在页签可见时跑） */
 let recPollTimer: number | null = null;
 
@@ -425,7 +427,7 @@ function openDialog(kind: DialogKind, tier?: DeleteTier): void {
       suppImgShown = SUPP_IMG_PAGE; // 分片跟着人走（issue 519）：别把上一人滚出来的量带给下一人
       noteDelPending = null; // 撕掉确认跟着人走（D 组）：换人不把确认带到别人的纸条上
       closeImgViewer();
-      suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), imageItems: [] };
+      suppStoreInfo = { imported: 0, undescribed: 0, broken: 0, missing: 0, mergedRecs: new Set(), mergedRecCounts: new Map(), imageItems: [] };
     }
     void refreshSuppStoreInfo(detailId);
     startRecPolling();
@@ -3651,6 +3653,7 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   let broken = 0;
   let missing = 0;
   const mergedRecs = new Set<string>();
+  const mergedRecCounts = new Map<string, number>();
   const imageItems: Array<{ img: string; text: string; skip?: DescSkip; label?: string }> = [];
   try {
     const rec = await peopleSafe.read(talker);
@@ -3669,14 +3672,18 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
       }
       if (m.key.startsWith('rec:')) {
         const end = m.key.lastIndexOf(':');
-        if (end > 4) mergedRecs.add(m.key.slice(4, end));
+        if (end > 4) {
+          const f = m.key.slice(4, end);
+          mergedRecs.add(f);
+          mergedRecCounts.set(f, (mergedRecCounts.get(f) ?? 0) + 1);
+        }
       }
     }
   } catch {
     /* 读不到按零值渲染 */
   }
   if (!overlay || suppOwnerId !== talker) return; // await 期间换人 / 关面板：旧仓账不顶替新页（B 组审查 P3）
-  suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, imageItems: imageItems.reverse() };
+  suppStoreInfo = { imported, undescribed, broken, missing, mergedRecs, mergedRecCounts, imageItems: imageItems.reverse() };
   if (dialog?.kind === 'note') void renderAlbum();
 }
 
@@ -3926,8 +3933,25 @@ function suppRecState(talker: string, otherAvatar = ''): SuppRecViewState {
     }
     rows.push({ file: f, status: 'interrupted', phaseText: side.progress?.text ?? '中断', pct: recordingPhasePct(side), ...(side.mode ? { mode: side.mode } : {}), ...(side.turns ? { turns: side.turns.length } : {}) });
   }
+  // 孤儿行（issue 528）：行集合 = 磁盘文件 ∪ 仓内已并入文件名。原件被外部删掉（没走删除入口、
+  // 或走的是「只删文件不清仓」的旧版本）后，仓里 `rec:<文件名>:*` 轮次就成了清不掉的孤儿——
+  // 只按 recordings/ 列行的话，行随文件一起消失、删除入口也没了，而 storeStatsOf 还在数它们：
+  // 统计永远退不掉、还一直进画谱素材（大琳删了 .aac，录音统计仍报 410 条）。
+  // 补出这些行的唯一目的 = 把删除入口还回来（suppDeleteRecording 逐项判存在，磁盘项全跳过、仓内照清）。
+  const onDisk = new Set(files);
+  for (const f of [...suppStoreInfo.mergedRecs].filter((x) => !onDisk.has(x)).sort()) {
+    rows.push({
+      file: f,
+      status: 'merged',
+      phaseText: '',
+      pct: null,
+      orphan: true,
+      turns: suppStoreInfo.mergedRecCounts.get(f) ?? 0,
+    });
+  }
   // 起点补到每行（ADR-0217：可见可改；绝对时间的唯一来源）；旁音计数（ADR-0216：留账不进仓）
   for (const r of rows) {
+    if (r.orphan) continue; // 原件与 sidecar 都不在：起点 / 旁音无从谈起（issue 528）
     r.startMs = startOf(r.file);
     const n = (readRecordingSidecar(root, talker, r.file)?.turns ?? []).filter((t) => t.speaker === SIDE_SPEECH_SPEAKER).length;
     if (n) r.sideSpeaks = n;

@@ -1821,6 +1821,13 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 .bz-people-supp-badge-interrupted { background: rgba(148, 130, 100, 0.16); color: var(--ink-mut); }
 .bz-people-supp-badge-failed { background: rgba(168, 74, 60, 0.16); color: #a84a3c; }
 .bz-people-supp-badge-merged { background: rgba(96, 128, 82, 0.18); color: #5c7a4e; }
+/* 孤儿行（issue 528）：原件已不在磁盘，只剩仓里的转写轮次——徽章走「失败」同色系（这是要清掉的欠账） */
+.bz-people-supp-badge-orphan { background: rgba(168, 74, 60, 0.16); color: #a84a3c; }
+.bz-people-supp-row.orphan { border-style: dashed; }
+/* 孤儿提示块：说清「为什么统计退不掉、去哪清」 */
+.bz-people-supp-orphans { margin: 8px 0 2px; padding: 7px 9px; border-radius: 8px;
+  border: 1px solid rgba(168, 74, 60, 0.32); background: rgba(168, 74, 60, 0.07);
+  font-size: var(--f-mid); color: var(--ink-mut); }
 .bz-people-supp-row .bz-people-jobs-meter { margin: 8px 0 2px; }
 .bz-people-supp-rowmeta { font-size: var(--f-mid); color: var(--ink-mut); margin-top: 5px; overflow-wrap: anywhere; }
 .bz-people-supp-rowfoot { display: flex; gap: 8px; align-items: center; margin-top: 7px; flex-wrap: wrap; }
@@ -1837,6 +1844,7 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 .theme-dark .bz-people-supp-badge-running { color: #d6b274; }
 .theme-dark .bz-people-supp-badge-failed { color: #cf8a7e; }
 .theme-dark .bz-people-supp-badge-merged { color: #9cb88a; }
+.theme-dark .bz-people-supp-badge-orphan { color: #cf8a7e; }
 .theme-dark .bz-people-supp-ref b { color: #d6b274; }
 .bz-people-supp-badge-awaiting-merge { background: rgba(196, 146, 58, 0.28); color: var(--acc-deep); }
 .theme-dark .bz-people-supp-badge-awaiting-merge { color: #d6b274; }

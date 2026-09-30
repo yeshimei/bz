@@ -1,5 +1,5 @@
-/* 源指纹 26f431ed7a009a74 · 仓内输入 276 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/safe-store.ts","src/people/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 4244f08263e4535b · 仓内输入 285 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/catalog-suggest.ts","src/belongings/category.ts","src/belongings/data.ts","src/belongings/layouts/poster/render.ts","src/belongings/motion.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/category-table.ts","src/core/changelog.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/douban-name-index.ts","src/core/download-manifest.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/landscape.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/manual.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/remote-asset.ts","src/core/remote-base.ts","src/core/rss-catalog.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/sha256.ts","src/core/skin-pack.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/settings.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/people/chat.ts","src/people/datasource.ts","src/people/insights.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/parse.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/types.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/motion.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/vector-math.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/changelog.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/manual-viewer.ts","src/settings-panel/motion.ts","src/settings-panel/online-resources.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/motion.ts","src/smartcat/types.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -4751,11 +4751,11 @@ var BZW_review = (() => {
   function buildUserContent(input) {
     var _a2;
     if (typeof input === "string") return input;
-    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
+    const text2 = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
     const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
-    if (!images.length) return text;
+    if (!images.length) return text2;
     return [
-      { type: "text", text },
+      { type: "text", text: text2 },
       ...images.map((url) => ({ type: "image_url", image_url: { url } }))
     ];
   }
@@ -5060,17 +5060,17 @@ var BZW_review = (() => {
   });
 
   // src/core/z-order.ts
-  function registerAlwaysOnTop(el) {
-    alwaysOnTop.add(el);
+  function registerAlwaysOnTop(el2) {
+    alwaysOnTop.add(el2);
     syncAlwaysOnTop();
   }
   function syncAlwaysOnTop() {
-    for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
+    for (const el2 of alwaysOnTop) {
+      if (!el2.isConnected) {
+        alwaysOnTop.delete(el2);
         continue;
       }
-      el.style.zIndex = String(zCounter);
+      el2.style.zIndex = String(zCounter);
     }
   }
   function allocZBlock(n) {
@@ -5084,11 +5084,11 @@ var BZW_review = (() => {
     return allocZBlock(1);
   }
   function topifyZ(...els) {
-    const live2 = els.filter((el) => !!el);
+    const live2 = els.filter((el2) => !!el2);
     if (live2.length === 0) return;
     const base = allocZBlock(live2.length);
-    live2.forEach((el, i) => {
-      el.style.zIndex = String(base + i);
+    live2.forEach((el2, i) => {
+      el2.style.zIndex = String(base + i);
     });
   }
   var zCounter, alwaysOnTop;
@@ -5177,8 +5177,8 @@ var BZW_review = (() => {
     const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
     if (cls) container.classList.add(cls);
   }
-  function calcDuration(text, base) {
-    const len = text.length;
+  function calcDuration(text2, base) {
+    const len = text2.length;
     if (len <= SHORT_THRESHOLD) return base;
     const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
     return Math.min(base + extra, 15e3);
@@ -5247,7 +5247,7 @@ var BZW_review = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
-  function armTimer(n, kind, explicitDuration, text) {
+  function armTimer(n, kind, explicitDuration, text2) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
       n.timer = null;
@@ -5261,7 +5261,7 @@ var BZW_review = (() => {
       }
     } else {
       const base = defaultDuration(kind);
-      const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+      const dur = explicitDuration !== void 0 ? explicitDuration : text2 ? calcDuration(text2, base) : base;
       if (dur <= 0) {
         n.persistent = true;
       } else if (explicitDuration === void 0 && durationGear().persistent) {
@@ -5324,8 +5324,8 @@ var BZW_review = (() => {
   function makeHandle(n) {
     return {
       el: n.el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
+      setMessage(text2) {
+        n.msgEl.textContent = text2;
       },
       setType(t) {
         applyTypeToEl(n, t);
@@ -5346,7 +5346,7 @@ var BZW_review = (() => {
       setAction(actions) {
         const list = Array.isArray(actions) ? actions : [actions];
         const existing = new Set(
-          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el) => el.textContent || "")
+          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
         );
         for (const a of list) {
           if (existing.has(a.label)) continue;
@@ -5390,10 +5390,10 @@ var BZW_review = (() => {
       recent[key] = { at: now, n: null };
     }
     evictOldest();
-    const el = document.createElement("div");
-    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const el2 = document.createElement("div");
+    el2.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el2.setAttribute("role", "status");
+    el2.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
     const icon = document.createElement("div");
     icon.className = "bz-notice-icon";
     if (isProgress) {
@@ -5401,7 +5401,7 @@ var BZW_review = (() => {
     } else {
       icon.textContent = ICONS[type];
     }
-    el.appendChild(icon);
+    el2.appendChild(icon);
     const body = document.createElement("div");
     body.className = "bz-notice-body";
     if (opts && opts.title) {
@@ -5414,14 +5414,14 @@ var BZW_review = (() => {
     msgEl.className = "bz-notice-msg";
     msgEl.textContent = msg;
     body.appendChild(msgEl);
-    el.appendChild(body);
+    el2.appendChild(body);
     let progressEl = null;
     if (isProgress) {
       progressEl = document.createElement("div");
       progressEl.className = "bz-notice-progress";
-      el.appendChild(progressEl);
+      el2.appendChild(progressEl);
     }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
+    const n = { el: el2, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
     const actions = [];
     if (opts && opts.action) actions.push(opts.action);
     if (opts && opts.actions) {
@@ -5430,9 +5430,9 @@ var BZW_review = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
+    el2.addEventListener("click", () => hideNow(n));
     container.style.zIndex = String(allocZ());
-    container.appendChild(el);
+    container.appendChild(el2);
     live.push(n);
     if (opts && opts.dedupeKey) {
       const r = recent[opts.dedupeKey];
@@ -5562,13 +5562,13 @@ var BZW_review = (() => {
     return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
   }
   async function fetchPageTitle(url) {
-    const text = await httpGetText(url, {
+    const text2 = await httpGetText(url, {
       timeoutMs: 8e3,
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
       fetchImpl: requestUrlAsFetch()
     });
-    if (!text) return null;
-    const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if (!text2) return null;
+    const m = text2.match(/<title[^>]*>([^<]*)<\/title>/i);
     return m && m[1] ? m[1].trim() : null;
   }
   function bytesEqual(a, b) {
@@ -5635,21 +5635,21 @@ var BZW_review = (() => {
       }
     }, CLIPBOARD_CLEAR_DELAY_MS);
   }
-  function copySensitiveText(text) {
+  function copySensitiveText(text2) {
     try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+      return navigator.clipboard.writeText(text2).then(() => armClipboardClear());
     } catch (e) {
       return Promise.reject(e);
     }
   }
-  async function copySensitiveWithFallback(text) {
+  async function copySensitiveWithFallback(text2) {
     try {
-      await copySensitiveText(text);
+      await copySensitiveText(text2);
       return true;
     } catch (e) {
       try {
         const ta = document.createElement("textarea");
-        ta.value = text;
+        ta.value = text2;
         ta.style.cssText = "position:fixed;opacity:0";
         document.body.appendChild(ta);
         ta.select();
@@ -5853,12 +5853,12 @@ var BZW_review = (() => {
       const d = opts.defaultValue;
       return typeof d === "function" ? d() : d === void 0 ? [] : d;
     };
-    async function ensureDir2(app) {
+    async function ensureDir3(app) {
       const d = filePath.substring(0, filePath.lastIndexOf("/"));
       if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
     }
     async function createIfMissing(app, content) {
-      await ensureDir2(app);
+      await ensureDir3(app);
       try {
         await app.vault.create(filePath, content);
         return true;
@@ -6562,8 +6562,8 @@ var BZW_review = (() => {
   });
 
   // src/core/ui/focus-trap.ts
-  function isHidden(el) {
-    let cur = el;
+  function isHidden(el2) {
+    let cur = el2;
     while (cur && cur !== document.body) {
       if (cur.classList.contains("bz-setting-hidden")) return true;
       if (cur.style.display === "none") return true;
@@ -6572,10 +6572,10 @@ var BZW_review = (() => {
     return false;
   }
   function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el2) => {
+      if (isHidden(el2)) return false;
       if (isMobileEnv()) {
-        const tag = el.tagName;
+        const tag = el2.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA") return false;
       }
       return true;
@@ -6586,7 +6586,7 @@ var BZW_review = (() => {
     const onKeydown = (e) => {
       if (e.key !== "Tab") return;
       const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+        (el2) => !isHidden(el2) && !el2.hasAttribute("disabled")
       );
       if (!items.length) return;
       const first = items[0];
@@ -6903,14 +6903,14 @@ var BZW_review = (() => {
     return i;
   }
   function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el) => {
-      const name = el.getAttribute("data-lucide") || "";
+    root.querySelectorAll("[data-lucide]").forEach((el2) => {
+      const name = el2.getAttribute("data-lucide") || "";
       if (!name) return;
       try {
         const fresh = uiIconSpan(name);
-        const cls = el.className;
+        const cls = el2.className;
         if (cls && cls !== "bz-ic") fresh.className = cls;
-        el.replaceWith(fresh);
+        el2.replaceWith(fresh);
       } catch (e) {
       }
     });
@@ -7076,19 +7076,19 @@ var BZW_review = (() => {
         img.onerror = () => img.remove();
         item.appendChild(img);
       }
-      const text = document.createElement("div");
-      text.className = "bz-setlist-text";
+      const text2 = document.createElement("div");
+      text2.className = "bz-setlist-text";
       const name = document.createElement("div");
       name.className = "bz-setlist-name";
       name.textContent = it.label;
-      text.appendChild(name);
+      text2.appendChild(name);
       if (it.sub) {
         const sub = document.createElement("div");
         sub.className = "bz-setlist-sub";
         sub.textContent = it.sub;
-        text.appendChild(sub);
+        text2.appendChild(sub);
       }
-      item.appendChild(text);
+      item.appendChild(text2);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "bz-setlist-remove bz-touch-target--xl";
@@ -7155,23 +7155,23 @@ var BZW_review = (() => {
 
   // src/core/ui/slider.ts
   function uiRange(opts) {
-    const el = document.createElement("input");
-    el.type = "range";
-    el.className = "bz-range" + (opts.className ? " " + opts.className : "");
-    if (opts.min !== void 0) el.min = String(opts.min);
-    if (opts.max !== void 0) el.max = String(opts.max);
-    if (opts.step !== void 0) el.step = String(opts.step);
-    if (opts.value !== void 0) el.value = String(opts.value);
-    if (opts.disabled) el.disabled = true;
-    if (opts.onInput) el.addEventListener("input", () => {
+    const el2 = document.createElement("input");
+    el2.type = "range";
+    el2.className = "bz-range" + (opts.className ? " " + opts.className : "");
+    if (opts.min !== void 0) el2.min = String(opts.min);
+    if (opts.max !== void 0) el2.max = String(opts.max);
+    if (opts.step !== void 0) el2.step = String(opts.step);
+    if (opts.value !== void 0) el2.value = String(opts.value);
+    if (opts.disabled) el2.disabled = true;
+    if (opts.onInput) el2.addEventListener("input", () => {
       var _a2;
-      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
+      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el2.value));
     });
-    if (opts.onChange) el.addEventListener("change", () => {
+    if (opts.onChange) el2.addEventListener("change", () => {
       var _a2;
-      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
+      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el2.value));
     });
-    return el;
+    return el2;
   }
   var init_slider = __esm({
     "src/core/ui/slider.ts"() {
@@ -7180,25 +7180,25 @@ var BZW_review = (() => {
 
   // src/core/ui/empty.ts
   function uiEmpty(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-empty";
+    const el2 = document.createElement("div");
+    el2.className = "bz-empty";
     if (opts.icon) {
       const ic2 = uiIcon(opts.icon);
       ic2.classList.add("bz-empty-ic");
-      el.appendChild(ic2);
+      el2.appendChild(ic2);
     }
     const t = document.createElement("div");
     t.className = "bz-empty-title";
     t.textContent = opts.title;
-    el.appendChild(t);
+    el2.appendChild(t);
     if (opts.desc) {
       const d = document.createElement("div");
       d.className = "bz-empty-desc";
       d.textContent = opts.desc;
-      el.appendChild(d);
+      el2.appendChild(d);
     }
-    if (opts.actions) el.appendChild(opts.actions);
-    return el;
+    if (opts.actions) el2.appendChild(opts.actions);
+    return el2;
   }
   var init_empty = __esm({
     "src/core/ui/empty.ts"() {
@@ -7208,10 +7208,10 @@ var BZW_review = (() => {
 
   // src/core/ui/segmented.ts
   function uiSegmented(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    el.setAttribute("aria-label", opts.label || "");
+    const el2 = document.createElement("div");
+    el2.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
+    el2.setAttribute("role", "radiogroup");
+    el2.setAttribute("aria-label", opts.label || "");
     const btns = /* @__PURE__ */ new Map();
     opts.options.forEach((o) => {
       const b = document.createElement("button");
@@ -7238,7 +7238,7 @@ var BZW_review = (() => {
         (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
       });
       btns.set(o.value, b);
-      el.appendChild(b);
+      el2.appendChild(b);
     });
     let cur = opts.value;
     function current2() {
@@ -7252,7 +7252,7 @@ var BZW_review = (() => {
         b.setAttribute("aria-checked", String(on));
       });
     }
-    return { el, setValue };
+    return { el: el2, setValue };
   }
   var init_segmented = __esm({
     "src/core/ui/segmented.ts"() {
@@ -7261,10 +7261,10 @@ var BZW_review = (() => {
 
   // src/core/ui/choice.ts
   function uiChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    el.setAttribute("aria-label", opts.label || "");
+    const el2 = document.createElement("div");
+    el2.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
+    el2.setAttribute("role", "radiogroup");
+    el2.setAttribute("aria-label", opts.label || "");
     const btns = /* @__PURE__ */ new Map();
     let cur = opts.value;
     const seg = document.createElement("span");
@@ -7273,11 +7273,11 @@ var BZW_review = (() => {
     let segTries = 0;
     const syncSeg = (animate) => {
       if (!opts.float) return;
-      const on = el.querySelector(".bz-choice-btn.is-on");
+      const on = el2.querySelector(".bz-choice-btn.is-on");
       if (!on) return;
-      const tb = el.getBoundingClientRect();
+      const tb = el2.getBoundingClientRect();
       const bb = on.getBoundingClientRect();
-      if (!el.isConnected || !tb.width || !bb.width) {
+      if (!el2.isConnected || !tb.width || !bb.width) {
         if (segTries++ > 120) return;
         cancelAnimationFrame(segRAF);
         segRAF = requestAnimationFrame(() => syncSeg(false));
@@ -7293,7 +7293,7 @@ var BZW_review = (() => {
       }
     };
     const onWinResize = () => {
-      if (!el.isConnected) {
+      if (!el2.isConnected) {
         window.removeEventListener("resize", onWinResize);
         return;
       }
@@ -7333,9 +7333,9 @@ var BZW_review = (() => {
         (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
       });
       btns.set(o.value, b);
-      el.appendChild(b);
+      el2.appendChild(b);
     });
-    if (opts.float) el.appendChild(seg);
+    if (opts.float) el2.appendChild(seg);
     function setValue(v) {
       cur = v;
       btns.forEach((b, k) => {
@@ -7350,7 +7350,7 @@ var BZW_review = (() => {
       cancelAnimationFrame(segRAF);
       window.removeEventListener("resize", onWinResize);
     };
-    return { el, setValue, detach };
+    return { el: el2, setValue, detach };
   }
   var init_choice = __esm({
     "src/core/ui/choice.ts"() {
@@ -7359,10 +7359,10 @@ var BZW_review = (() => {
 
   // src/core/ui/cardpick.ts
   function uiCardChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    if (opts.label) el.setAttribute("aria-label", opts.label);
+    const el2 = document.createElement("div");
+    el2.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
+    el2.setAttribute("role", "radiogroup");
+    if (opts.label) el2.setAttribute("aria-label", opts.label);
     const btns = /* @__PURE__ */ new Map();
     let cur = opts.value;
     const sync = (v) => {
@@ -7394,9 +7394,9 @@ var BZW_review = (() => {
         opts.onChange(o.value);
       });
       btns.set(o.value, card);
-      el.appendChild(card);
+      el2.appendChild(card);
     });
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("keydown", (e) => {
       var _a2;
       if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
       const list = opts.options.map((o) => o.value);
@@ -7405,7 +7405,7 @@ var BZW_review = (() => {
       (_a2 = btns.get(list[next])) == null ? void 0 : _a2.focus();
       e.preventDefault();
     });
-    return { el, setValue: sync };
+    return { el: el2, setValue: sync };
   }
   var init_cardpick = __esm({
     "src/core/ui/cardpick.ts"() {
@@ -7414,37 +7414,37 @@ var BZW_review = (() => {
 
   // src/core/ui/switch.ts
   function uiSwitch(opts) {
-    const el = document.createElement("span");
-    el.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
-    el.setAttribute("role", "switch");
-    el.setAttribute("aria-checked", String(!!opts.checked));
-    el.setAttribute("aria-disabled", String(!!opts.disabled));
-    el.tabIndex = opts.disabled ? -1 : 0;
+    const el2 = document.createElement("span");
+    el2.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
+    el2.setAttribute("role", "switch");
+    el2.setAttribute("aria-checked", String(!!opts.checked));
+    el2.setAttribute("aria-disabled", String(!!opts.disabled));
+    el2.tabIndex = opts.disabled ? -1 : 0;
     const setChecked = (v) => {
-      el.classList.toggle("on", v);
-      el.setAttribute("aria-checked", String(v));
+      el2.classList.toggle("on", v);
+      el2.setAttribute("aria-checked", String(v));
     };
     const setDisabled = (v) => {
-      el.classList.toggle("is-disabled", v);
-      el.setAttribute("aria-disabled", String(v));
-      el.tabIndex = v ? -1 : 0;
+      el2.classList.toggle("is-disabled", v);
+      el2.setAttribute("aria-disabled", String(v));
+      el2.tabIndex = v ? -1 : 0;
     };
-    const enabled2 = () => !el.classList.contains("is-disabled");
+    const enabled2 = () => !el2.classList.contains("is-disabled");
     const toggle = () => {
       var _a2;
       if (!enabled2()) return;
-      const next = !el.classList.contains("on");
+      const next = !el2.classList.contains("on");
       setChecked(next);
       (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
     };
-    el.addEventListener("click", toggle);
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("click", toggle);
+    el2.addEventListener("keydown", (e) => {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         toggle();
       }
     });
-    return { el, setChecked, setDisabled };
+    return { el: el2, setChecked, setDisabled };
   }
   var init_switch = __esm({
     "src/core/ui/switch.ts"() {
@@ -7453,15 +7453,15 @@ var BZW_review = (() => {
 
   // src/core/ui/select.ts
   function uiSelect(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-select" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "listbox");
-    el.setAttribute("aria-expanded", "false");
-    el.tabIndex = 0;
+    const el2 = document.createElement("div");
+    el2.className = "bz-select" + (opts.className ? " " + opts.className : "");
+    el2.setAttribute("role", "listbox");
+    el2.setAttribute("aria-expanded", "false");
+    el2.tabIndex = 0;
     const val = document.createElement("span");
     val.className = "bz-select-val";
-    el.appendChild(val);
-    el.appendChild(uiIcon("chevron-down", "bz-select-car"));
+    el2.appendChild(val);
+    el2.appendChild(uiIcon("chevron-down", "bz-select-car"));
     let current2 = opts.value;
     let menu = null;
     let escHandle8 = null;
@@ -7483,15 +7483,15 @@ var BZW_review = (() => {
         escHandle8.unregister();
         escHandle8 = null;
       }
-      el.classList.remove("open");
-      el.setAttribute("aria-expanded", "false");
+      el2.classList.remove("open");
+      el2.setAttribute("aria-expanded", "false");
       if (notify2) (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, false);
     };
     const open = () => {
       var _a2;
       close(false);
-      el.classList.add("open");
-      el.setAttribute("aria-expanded", "true");
+      el2.classList.add("open");
+      el2.setAttribute("aria-expanded", "true");
       (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, true);
       const m = document.createElement("div");
       m.className = "bz-select-menu";
@@ -7516,7 +7516,7 @@ var BZW_review = (() => {
         });
         m.appendChild(b);
       });
-      el.appendChild(m);
+      el2.appendChild(m);
       for (let round = 0; round < 3; round++) {
         let delta = 0;
         m.querySelectorAll(".bz-select-item > span").forEach((sp) => {
@@ -7571,16 +7571,16 @@ var BZW_review = (() => {
         item.setAttribute("aria-selected", String(on));
       });
     };
-    el.addEventListener("click", () => {
+    el2.addEventListener("click", () => {
       if (menu) close();
       else open();
     });
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         if (menu) {
           const on = menu == null ? void 0 : menu.querySelector(".bz-select-item.is-on");
-          if (on && on !== el) {
+          if (on && on !== el2) {
             const v = opts.options[Number(on.dataset.index)];
             if (v) {
               setValue(v.value);
@@ -7599,11 +7599,11 @@ var BZW_review = (() => {
       }
     });
     const onDocClick = (e) => {
-      if (menu && !el.contains(e.target)) close();
+      if (menu && !el2.contains(e.target)) close();
     };
     document.addEventListener("click", onDocClick);
     return {
-      el,
+      el: el2,
       setValue,
       detach: () => {
         document.removeEventListener("click", onDocClick);
@@ -7620,15 +7620,15 @@ var BZW_review = (() => {
 
   // src/core/ui/search.ts
   function uiSearch(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-search";
-    el.appendChild(uiIcon("search"));
+    const el2 = document.createElement("div");
+    el2.className = "bz-search";
+    el2.appendChild(uiIcon("search"));
     const input = uiInput({
       placeholder: opts.placeholder,
       value: opts.value,
       onInput: opts.onInput
     });
-    el.appendChild(input);
+    el2.appendChild(input);
     let clearBtn = null;
     if (opts.clearable !== false) {
       clearBtn = document.createElement("button");
@@ -7646,7 +7646,7 @@ var BZW_review = (() => {
       input.addEventListener("input", () => {
         if (clearBtn) clearBtn.hidden = !input.value.trim();
       });
-      el.appendChild(clearBtn);
+      el2.appendChild(clearBtn);
     }
     const syncClear = () => {
       if (clearBtn) clearBtn.hidden = !input.value.trim();
@@ -7655,7 +7655,7 @@ var BZW_review = (() => {
       input.value = v;
       syncClear();
     };
-    return { el, input, setValue, syncClear };
+    return { el: el2, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -7666,20 +7666,20 @@ var BZW_review = (() => {
 
   // src/core/ui/mainhead.ts
   function uiMainHead(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-main-head";
+    const el2 = document.createElement("div");
+    el2.className = "bz-main-head";
     const title = document.createElement("span");
     title.className = "bz-main-title";
     title.textContent = opts.title;
-    el.appendChild(title);
+    el2.appendChild(title);
     const count = document.createElement("span");
     count.className = "bz-main-count";
-    el.appendChild(count);
+    el2.appendChild(count);
     const sp = document.createElement("span");
     sp.className = "bz-main-spacer";
-    el.appendChild(sp);
+    el2.appendChild(sp);
     if (opts.action) {
-      el.appendChild(uiBtn({
+      el2.appendChild(uiBtn({
         label: opts.action.label,
         icon: opts.action.icon,
         tone: "primary",
@@ -7698,7 +7698,7 @@ var BZW_review = (() => {
     };
     setCount(opts.count);
     return {
-      el,
+      el: el2,
       setTitle: (t) => {
         title.textContent = t;
       },
@@ -7768,11 +7768,11 @@ var BZW_review = (() => {
     return b;
   }
   function uiRail(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-rail";
+    const el2 = document.createElement("div");
+    el2.className = "bz-rail";
     const scroll = document.createElement("div");
     scroll.className = "bz-rail-scroll";
-    el.appendChild(scroll);
+    el2.appendChild(scroll);
     const rows = /* @__PURE__ */ new Map();
     const setActive = (id) => {
       var _a2;
@@ -7822,10 +7822,10 @@ var BZW_review = (() => {
       const foot = document.createElement("div");
       foot.className = "bz-rail-foot";
       foot.appendChild(opts.foot);
-      el.appendChild(foot);
+      el2.appendChild(foot);
     }
     setActive(opts.activeId);
-    return { el, setActive };
+    return { el: el2, setActive };
   }
   var init_rail = __esm({
     "src/core/ui/rail.ts"() {
@@ -7836,8 +7836,8 @@ var BZW_review = (() => {
 
   // src/core/ui/mobstrip.ts
   function uiMobStrip(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-mobstrip";
+    const el2 = document.createElement("div");
+    el2.className = "bz-mobstrip";
     const chips = /* @__PURE__ */ new Map();
     const setValue = (id) => {
       chips.forEach((chip2) => chip2.classList.toggle("is-on", chip2.dataset.id === id));
@@ -7860,10 +7860,10 @@ var BZW_review = (() => {
         (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, it.id);
       });
       chips.set(it.id, chip2);
-      el.appendChild(chip2);
+      el2.appendChild(chip2);
     });
     setValue(opts.value);
-    return { el, setValue };
+    return { el: el2, setValue };
   }
   var init_mobstrip = __esm({
     "src/core/ui/mobstrip.ts"() {
@@ -7872,38 +7872,38 @@ var BZW_review = (() => {
 
   // src/core/ui/stat.ts
   function uiStat(opts) {
-    const el = document.createElement("div");
+    const el2 = document.createElement("div");
     const cls = ["bz-stat"];
     if (opts.tone) cls.push(`bz-stat--${opts.tone}`);
     if (opts.click) cls.push("bz-stat--click");
-    el.className = cls.join(" ");
+    el2.className = cls.join(" ");
     const label = document.createElement("span");
     label.className = "bz-stat-label";
     if (opts.icon) label.appendChild(uiIcon(opts.icon));
     label.appendChild(document.createTextNode(opts.label));
-    el.appendChild(label);
+    el2.appendChild(label);
     const num2 = document.createElement("span");
     num2.className = "bz-stat-num";
     num2.textContent = String(opts.num);
-    el.appendChild(num2);
+    el2.appendChild(num2);
     if (opts.hint) {
       const hint = document.createElement("span");
       hint.className = "bz-stat-hint";
       hint.textContent = opts.hint;
-      el.appendChild(hint);
+      el2.appendChild(hint);
     }
     if (opts.onClick) {
-      el.setAttribute("role", "button");
-      el.tabIndex = 0;
-      el.addEventListener("click", opts.onClick);
-      el.addEventListener("keydown", (e) => {
+      el2.setAttribute("role", "button");
+      el2.tabIndex = 0;
+      el2.addEventListener("click", opts.onClick);
+      el2.addEventListener("keydown", (e) => {
         var _a2;
         if (e.key !== "Enter" && e.key !== " ") return;
         e.preventDefault();
         (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
       });
     }
-    return el;
+    return el2;
   }
   var init_stat = __esm({
     "src/core/ui/stat.ts"() {
@@ -7913,19 +7913,19 @@ var BZW_review = (() => {
 
   // src/core/ui/progress.ts
   function uiProgress(opts = {}) {
-    const el = document.createElement("div");
+    const el2 = document.createElement("div");
     const cls = ["bz-progress"];
     if (opts.thin) cls.push("bz-progress--thin");
     if (opts.tone) cls.push(`bz-progress--${opts.tone}`);
-    el.className = cls.join(" ");
+    el2.className = cls.join(" ");
     const fill = document.createElement("i");
-    el.appendChild(fill);
+    el2.appendChild(fill);
     const setValue = (n) => {
       const v = Math.min(100, Math.max(0, Number(n) || 0));
       fill.style.width = v + "%";
     };
     if (opts.value !== void 0) setValue(opts.value);
-    return { el, setValue };
+    return { el: el2, setValue };
   }
   var init_progress = __esm({
     "src/core/ui/progress.ts"() {
@@ -8043,16 +8043,16 @@ var BZW_review = (() => {
   });
 
   // src/core/ui/help-tip.ts
-  function bodyNodes(text) {
+  function bodyNodes(text2) {
     const out = [];
-    for (const raw of String(text != null ? text : "").split("\n")) {
+    for (const raw of String(text2 != null ? text2 : "").split("\n")) {
       const line = raw.trim();
       if (!line) continue;
       const isItem = line.startsWith("- ");
-      const el = document.createElement("div");
-      el.className = isItem ? "bz-help-li" : "bz-help-p";
-      el.textContent = isItem ? line.slice(2).trim() : line;
-      out.push(el);
+      const el2 = document.createElement("div");
+      el2.className = isItem ? "bz-help-li" : "bz-help-p";
+      el2.textContent = isItem ? line.slice(2).trim() : line;
+      out.push(el2);
     }
     return out;
   }
@@ -8582,7 +8582,7 @@ var BZW_review = (() => {
   });
 
   // src/core/dom.ts
-  function longPress(el, cb, dur, filter) {
+  function longPress(el2, cb, dur, filter) {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
@@ -8634,14 +8634,14 @@ var BZW_review = (() => {
         e.stopImmediatePropagation();
       }
     }
-    el.addEventListener("mousedown", start);
-    el.addEventListener("mouseup", endFromMouse);
-    el.addEventListener("mouseleave", endFromMouse);
-    el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchend", endFromTouch);
-    el.addEventListener("touchmove", move, { passive: true });
-    el.addEventListener("touchcancel", endFromTouch);
-    el.addEventListener("click", onClick, true);
+    el2.addEventListener("mousedown", start);
+    el2.addEventListener("mouseup", endFromMouse);
+    el2.addEventListener("mouseleave", endFromMouse);
+    el2.addEventListener("touchstart", start, { passive: true });
+    el2.addEventListener("touchend", endFromTouch);
+    el2.addEventListener("touchmove", move, { passive: true });
+    el2.addEventListener("touchcancel", endFromTouch);
+    el2.addEventListener("click", onClick, true);
   }
   function swallowNextClick() {
     const swallow = (e) => {
@@ -8720,7 +8720,7 @@ var BZW_review = (() => {
     if (onS && !onN) return "s";
     return null;
   }
-  function uiResizable(el, opts = {}) {
+  function uiResizable(el2, opts = {}) {
     var _a2, _b2, _c, _d, _e;
     const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     if (isCoarse) {
@@ -8748,8 +8748,8 @@ var BZW_review = (() => {
     let wantH = 0;
     const renderSize = () => {
       if (wantW <= 0 || wantH <= 0) return;
-      el.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
-      el.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
+      el2.style.width = Math.min(Math.max(wantW, minW), cap(true)) + "px";
+      el2.style.height = Math.min(Math.max(wantH, minH), cap(false)) + "px";
     };
     const persist = opts.persist;
     if (persist == null ? void 0 : persist.load) {
@@ -8761,7 +8761,7 @@ var BZW_review = (() => {
       }
     }
     const onWinResize = () => {
-      if (!el.isConnected) {
+      if (!el2.isConnected) {
         window.removeEventListener("resize", onWinResize);
         return;
       }
@@ -8769,18 +8769,18 @@ var BZW_review = (() => {
     };
     window.addEventListener("resize", onWinResize);
     const regionAt = (e) => {
-      const rect = el.getBoundingClientRect();
+      const rect = el2.getBoundingClientRect();
       return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
     };
     const setCursor = (d) => {
-      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+      el2.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
     };
     const onHover = (e) => {
       if (dragging) return;
       setCursor(regionAt(e));
     };
     const onDragMove = (e) => {
-      if (!el.isConnected) {
+      if (!el2.isConnected) {
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         return;
@@ -8813,7 +8813,7 @@ var BZW_review = (() => {
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      const rect = el.getBoundingClientRect();
+      const rect = el2.getBoundingClientRect();
       startW = rect.width;
       startH = rect.height;
       if (wantW <= 0) wantW = Math.min(Math.max(startW, minW), maxW);
@@ -8821,7 +8821,7 @@ var BZW_review = (() => {
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
-      if (!el.isConnected) {
+      if (!el2.isConnected) {
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         return;
@@ -8833,9 +8833,9 @@ var BZW_review = (() => {
       setCursor(null);
       swallowNextClick();
     };
-    el.addEventListener("mousemove", onHover);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mousedown", onMouseDown);
+    el2.addEventListener("mousemove", onHover);
+    el2.addEventListener("mouseleave", onMouseLeave);
+    el2.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mousemove", onDragMove);
     document.addEventListener("mouseup", onMouseUp);
     const flush = () => {
@@ -8848,9 +8848,9 @@ var BZW_review = (() => {
       flush,
       detach: () => {
         flush();
-        el.removeEventListener("mousemove", onHover);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousedown", onMouseDown);
+        el2.removeEventListener("mousemove", onHover);
+        el2.removeEventListener("mouseleave", onMouseLeave);
+        el2.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mousemove", onDragMove);
         document.removeEventListener("mouseup", onMouseUp);
         window.removeEventListener("resize", onWinResize);
@@ -8872,14 +8872,14 @@ var BZW_review = (() => {
     const minLeft = (_a2 = opts.minLeft) != null ? _a2 : 220;
     const minRight = (_b2 = opts.minRight) != null ? _b2 : 320;
     const persist = opts.persist;
-    const el = document.createElement("div");
-    el.className = "bz-vsplit";
-    el.setAttribute("role", "separator");
-    el.setAttribute("aria-orientation", "vertical");
-    el.title = "拖动调整两侧宽度";
+    const el2 = document.createElement("div");
+    el2.className = "bz-vsplit";
+    el2.setAttribute("role", "separator");
+    el2.setAttribute("aria-orientation", "vertical");
+    el2.title = "拖动调整两侧宽度";
     const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     if (isCoarse) {
-      return { el, restore: () => {
+      return { el: el2, restore: () => {
       }, flush: () => {
       }, detach: () => {
       } };
@@ -8894,7 +8894,7 @@ var BZW_review = (() => {
     const availW = () => {
       const parent = left.parentElement;
       if (!parent) return 0;
-      return parent.clientWidth - el.offsetWidth;
+      return parent.clientWidth - el2.offsetWidth;
     };
     const clampW = (w) => {
       const avail = availW();
@@ -8914,7 +8914,7 @@ var BZW_review = (() => {
       }, 300);
     };
     const restore = () => {
-      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
+      if (restored || !(persist == null ? void 0 : persist.load) || !el2.isConnected) return;
       if (availW() <= 0) return;
       const saved = persist.load();
       restored = true;
@@ -8934,13 +8934,13 @@ var BZW_review = (() => {
       if (!dragging) return;
       e.preventDefault();
       const raw = startW + (e.clientX - startX);
+      wantW = Math.max(raw, minLeft);
+      debSave(wantW);
       const w = clampW(raw);
       if (w === lastRender) return;
-      wantW = Math.max(raw, minLeft);
       lastRender = w;
       applyW(w);
       if (opts.onChange) opts.onChange(w);
-      debSave(wantW);
     };
     const onMouseDown = (e) => {
       if (e.button !== 0) return;
@@ -8948,7 +8948,7 @@ var BZW_review = (() => {
       dragging = true;
       startX = e.clientX;
       startW = left.getBoundingClientRect().width;
-      el.classList.add("is-drag");
+      el2.classList.add("is-drag");
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
@@ -8959,12 +8959,12 @@ var BZW_review = (() => {
       }
       if (!dragging) return;
       dragging = false;
-      el.classList.remove("is-drag");
+      el2.classList.remove("is-drag");
       document.body.style.userSelect = "";
       swallowNextClick();
     };
     document.addEventListener("mousemove", onDragMove);
-    el.addEventListener("mousedown", onMouseDown);
+    el2.addEventListener("mousedown", onMouseDown);
     document.addEventListener("mouseup", onMouseUp);
     const flush = () => {
       if (persistTimer === null) return;
@@ -8973,16 +8973,16 @@ var BZW_review = (() => {
       if ((persist == null ? void 0 : persist.save) && wantW > 0) persist.save(wantW);
     };
     return {
-      el,
+      el: el2,
       restore,
       flush,
       detach: () => {
         flush();
         document.removeEventListener("mousemove", onDragMove);
-        el.removeEventListener("mousedown", onMouseDown);
+        el2.removeEventListener("mousedown", onMouseDown);
         document.removeEventListener("mouseup", onMouseUp);
         document.body.style.userSelect = "";
-        el.classList.remove("is-drag");
+        el2.classList.remove("is-drag");
       }
     };
   }
@@ -9190,8 +9190,8 @@ ${difficultyHint}
 ${truncated}`;
         }
         /** 提取 JSON（源码 L129-138 逐字） */
-        extractJSON(text) {
-          const code = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+        extractJSON(text2) {
+          const code = text2.match(/```(?:json)?\s*([\s\S]*?)```/);
           if (code) {
             try {
               return JSON.parse(code[1].trim());
@@ -9199,14 +9199,14 @@ ${truncated}`;
             }
           }
           try {
-            return JSON.parse(text.trim());
+            return JSON.parse(text2.trim());
           } catch (e) {
           }
-          const first = text.indexOf("{");
-          const last = text.lastIndexOf("}");
+          const first = text2.indexOf("{");
+          const last = text2.lastIndexOf("}");
           if (first !== -1 && last !== -1 && last > first) {
             try {
-              return JSON.parse(text.substring(first, last + 1));
+              return JSON.parse(text2.substring(first, last + 1));
             } catch (e) {
             }
           }
@@ -9312,10 +9312,10 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function waapi(el, frames, opts) {
-    if (!el || typeof el.animate !== "function") return null;
+  function waapi(el2, frames, opts) {
+    if (!el2 || typeof el2.animate !== "function") return null;
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -9343,15 +9343,15 @@ ${n.content.slice(0, 2e3)}
   function motionTeardown() {
     cancelPending();
   }
-  function ensureRelative(el) {
-    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  function ensureRelative(el2) {
+    if (getComputedStyle(el2).position === "static") el2.style.position = "relative";
   }
-  function seal(host, text, big = false) {
+  function seal(host, text2, big = false) {
     ensureRelative(host);
     const s = document.createElement("span");
     s.className = "bz-rv-seal" + (big ? " bz-rv-seal--big" : "");
     s.setAttribute("aria-hidden", "true");
-    s.textContent = text;
+    s.textContent = text2;
     host.appendChild(s);
     waapi(
       s,
@@ -9366,11 +9366,11 @@ ${n.content.slice(0, 2e3)}
       after(360, () => s.remove());
     });
   }
-  function ringBurst(el) {
-    const parent = el.offsetParent instanceof HTMLElement ? el.offsetParent : el.parentElement;
+  function ringBurst(el2) {
+    const parent = el2.offsetParent instanceof HTMLElement ? el2.offsetParent : el2.parentElement;
     if (!parent) return;
     const pr = parent.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
+    const r = el2.getBoundingClientRect();
     const ring = document.createElement("i");
     ring.className = "bz-rv-ring";
     ring.setAttribute("aria-hidden", "true");
@@ -9434,8 +9434,8 @@ ${n.content.slice(0, 2e3)}
       }
     });
   }
-  function countUpNode(el, dur) {
-    const node = el.childNodes[0];
+  function countUpNode(el2, dur) {
+    const node = el2.childNodes[0];
     if (!node || node.nodeType !== Node.TEXT_NODE) return;
     const raw = node.textContent || "";
     const m = raw.match(/\d[\d,]*/);
@@ -9446,9 +9446,9 @@ ${n.content.slice(0, 2e3)}
       node.textContent = raw.replace(m[0], String(Math.round(target * v)));
     });
   }
-  function popCnt(el) {
+  function popCnt(el2) {
     waapi(
-      el,
+      el2,
       [
         { transform: "scale(.4)", opacity: 0 },
         { transform: "scale(1.18)", opacity: 1, offset: 0.7 },
@@ -9567,9 +9567,9 @@ ${n.content.slice(0, 2e3)}
       );
       const prog = host.querySelector(".bz-sprint-progress");
       if (prog) after(120, () => popCnt(prog));
-      host.querySelectorAll(".bz-sprint-opt").forEach((el, i) => {
+      host.querySelectorAll(".bz-sprint-opt").forEach((el2, i) => {
         after(150 + i * STAG, () => waapi(
-          el,
+          el2,
           [{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }],
           { duration: M.base, easing: E.out, fill: "backwards" }
         ));
@@ -9796,17 +9796,17 @@ ${n.content.slice(0, 2e3)}
       });
     });
   }
-  function motionRatingBar(el) {
+  function motionRatingBar(el2) {
     if (reduced()) return;
     waapi(
-      el,
+      el2,
       [
         { opacity: 0, transform: "translateX(-50%) translateY(60px)" },
         { opacity: 1, transform: "translateX(-50%) translateY(0)" }
       ],
       { duration: 420, easing: "cubic-bezier(.22,.9,.32,1.15)", fill: "backwards" }
     );
-    el.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
+    el2.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
       after(150 + i * STAG, () => popCnt(b));
     });
   }
@@ -9840,9 +9840,9 @@ ${n.content.slice(0, 2e3)}
       ],
       { duration: 380, easing: E.out, fill: "backwards" }
     );
-    popup.querySelectorAll(".quiz-option-btn").forEach((el, i) => {
+    popup.querySelectorAll(".quiz-option-btn").forEach((el2, i) => {
       after(120 + i * STAG, () => waapi(
-        el,
+        el2,
         [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
         { duration: M.base, easing: E.out, fill: "backwards" }
       ));
@@ -9893,17 +9893,17 @@ ${n.content.slice(0, 2e3)}
   function quizPopupEl() {
     return document.getElementById("quiz-popup");
   }
-  function cleanOptionText(text) {
-    if (!text) return "";
-    const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
+  function cleanOptionText(text2) {
+    if (!text2) return "";
+    const match = text2.match(/^([A-D])\s*[.、:：)）]\s*/);
     if (match) {
-      return text.substring(match[0].length).trim();
+      return text2.substring(match[0].length).trim();
     }
-    const matchParen = text.match(/^\(([A-D])\)\s*/);
+    const matchParen = text2.match(/^\(([A-D])\)\s*/);
     if (matchParen) {
-      return text.substring(matchParen[0].length).trim();
+      return text2.substring(matchParen[0].length).trim();
     }
-    return text.trim();
+    return text2.trim();
   }
   var CORRECT_JUMP_DELAY_MS, _QuizMasterUI, QuizMasterUI, quizUI;
   var init_session = __esm({
@@ -10083,7 +10083,7 @@ ${n.content.slice(0, 2e3)}
           const selectedIndices = /* @__PURE__ */ new Set();
           const answeredRef = { value: false };
           const optionElements = this._buildOptionButtons(q3, answeredRef, selectedIndices, optionsContainer);
-          optionElements.forEach((el) => optionsContainer.appendChild(el));
+          optionElements.forEach((el2) => optionsContainer.appendChild(el2));
           if (this._pendingSubmitBtn) {
             optionsContainer.appendChild(this._pendingSubmitBtn);
             this._pendingSubmitBtn = null;
@@ -11147,10 +11147,10 @@ ${n.content.slice(0, 2e3)}
           (_c = this.opts.host.querySelector('[data-action="note"]')) == null ? void 0 : _c.addEventListener("click", () => {
             void this.finishNote();
           });
-          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el) => {
-            const activate = () => this.answer(Number(el.dataset.i));
-            el.addEventListener("click", activate);
-            el.addEventListener("keydown", (e) => {
+          this.opts.host.querySelectorAll(".bz-sprint-opt").forEach((el2) => {
+            const activate = () => this.answer(Number(el2.dataset.i));
+            el2.addEventListener("click", activate);
+            el2.addEventListener("keydown", (e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 activate();
@@ -11952,23 +11952,23 @@ ${n.content.slice(0, 2e3)}
     };
   }
   function canvas(host, key) {
-    const el = host.querySelector(`canvas[data-cv="${key}"]`);
-    if (!el) return null;
-    const ctx = typeof el.getContext === "function" ? el.getContext("2d") : null;
+    const el2 = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el2) return null;
+    const ctx = typeof el2.getContext === "function" ? el2.getContext("2d") : null;
     if (!ctx) return null;
     const cv = {
-      el,
+      el: el2,
       ctx,
       w: 0,
       h: 0,
       fit() {
         const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
-        const w = Math.max(1, el.offsetWidth), h = Math.max(1, el.offsetHeight);
+        const w = Math.max(1, el2.offsetWidth), h = Math.max(1, el2.offsetHeight);
         if (w === cv.w && h === cv.h) return false;
         cv.w = w;
         cv.h = h;
-        el.width = Math.round(w * dpr);
-        el.height = Math.round(h * dpr);
+        el2.width = Math.round(w * dpr);
+        el2.height = Math.round(h * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         return true;
       },
@@ -11978,14 +11978,14 @@ ${n.content.slice(0, 2e3)}
     };
     return cv;
   }
-  function sampleText(text, fontPx, weight = 800, gap = 5) {
+  function sampleText(text2, fontPx, weight = 800, gap = 5) {
     const c = document.createElement("canvas");
     const pad = Math.round(fontPx * 0.3);
     const ctx = c.getContext("2d");
     if (!ctx) return [];
     const font = `${weight} ${fontPx}px "Segoe UI", system-ui, -apple-system, sans-serif`;
     ctx.font = font;
-    const w = Math.ceil(ctx.measureText(text).width) + pad * 2;
+    const w = Math.ceil(ctx.measureText(text2).width) + pad * 2;
     const h = Math.ceil(fontPx * 1.42);
     c.width = w;
     c.height = h;
@@ -11994,7 +11994,7 @@ ${n.content.slice(0, 2e3)}
     c2.font = font;
     c2.fillStyle = "#fff";
     c2.textBaseline = "middle";
-    c2.fillText(text, pad, h / 2);
+    c2.fillText(text2, pad, h / 2);
     const data = c2.getImageData(0, 0, w, h).data;
     const pts = [];
     for (let y = 0; y < h; y += gap) {
@@ -12027,26 +12027,26 @@ ${n.content.slice(0, 2e3)}
     }
   }
   function tip(root, html, cx = 0, cy = 0) {
-    let el = tipNode.get(root);
-    if (!el) {
+    let el2 = tipNode.get(root);
+    if (!el2) {
       if (typeof document === "undefined") return;
-      el = document.createElement("span");
-      el.className = "ra-tip";
-      el.setAttribute("aria-hidden", "true");
-      root.appendChild(el);
-      tipNode.set(root, el);
+      el2 = document.createElement("span");
+      el2.className = "ra-tip";
+      el2.setAttribute("aria-hidden", "true");
+      root.appendChild(el2);
+      tipNode.set(root, el2);
     }
     if (!html) {
-      if (el.style.opacity !== "0") el.style.opacity = "0";
+      if (el2.style.opacity !== "0") el2.style.opacity = "0";
       return;
     }
-    if (el.dataset.h !== html) {
-      el.dataset.h = html;
-      el.innerHTML = html;
+    if (el2.dataset.h !== html) {
+      el2.dataset.h = html;
+      el2.innerHTML = html;
     }
-    el.style.left = `${cx.toFixed(1)}px`;
-    el.style.top = `${cy.toFixed(1)}px`;
-    el.style.opacity = "1";
+    el2.style.left = `${cx.toFixed(1)}px`;
+    el2.style.top = `${cy.toFixed(1)}px`;
+    el2.style.opacity = "1";
   }
   var clamp01, lerp, at, easeOut, easeInOut, easeBack, spring, stagger, rollTo, cssVar, luma, rgba, qsa, localAt, tipNode, toward;
   var init_kits = __esm({
@@ -12093,10 +12093,10 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/review/analysis/motions.ts
-  function S(el, v) {
+  function S(el2, v) {
     var _a2;
-    if (!el || lastStyle.get(el) === v) return;
-    const prev = (_a2 = el.getAttribute("style")) != null ? _a2 : "";
+    if (!el2 || lastStyle.get(el2) === v) return;
+    const prev = (_a2 = el2.getAttribute("style")) != null ? _a2 : "";
     if (prev) {
       const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
       if (vars) {
@@ -12104,21 +12104,21 @@ ${n.content.slice(0, 2e3)}
         if (keep.length) v = `${keep.join(";")};${v}`;
       }
     }
-    lastStyle.set(el, v);
-    el.setAttribute("style", v);
+    lastStyle.set(el2, v);
+    el2.setAttribute("style", v);
   }
-  function T(el, v) {
-    if (!el || lastText.get(el) === v) return;
-    lastText.set(el, v);
-    el.textContent = v;
+  function T(el2, v) {
+    if (!el2 || lastText.get(el2) === v) return;
+    lastText.set(el2, v);
+    el2.textContent = v;
   }
   function buildPerfs(root, data, host = root) {
     const out = /* @__PURE__ */ new Map();
     const scn = (id) => root.querySelector(`[data-id="${id}"]`);
     if (!scn("open")) return out;
-    const vOf = (el, name, fallback = 0) => {
+    const vOf = (el2, name, fallback = 0) => {
       var _a2;
-      const v = parseFloat(String((_a2 = el == null ? void 0 : el.style.getPropertyValue(name)) != null ? _a2 : ""));
+      const v = parseFloat(String((_a2 = el2 == null ? void 0 : el2.style.getPropertyValue(name)) != null ? _a2 : ""));
       return Number.isFinite(v) ? v : fallback;
     };
     {
@@ -12137,8 +12137,8 @@ ${n.content.slice(0, 2e3)}
             const N = 60;
             const fontPx = Math.max(120, Math.min(h * 0.5, w * 0.3));
             const roll2 = rng(20260922);
-            const resample = (text, fp) => {
-              const raw = sampleText(text, fp, 800, Math.max(3, Math.round(fp / 9)));
+            const resample = (text2, fp) => {
+              const raw = sampleText(text2, fp, 800, Math.max(3, Math.round(fp / 9)));
               if (!raw.length) return [];
               return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
             };
@@ -12374,10 +12374,10 @@ ${n.content.slice(0, 2e3)}
               }
             }
           }
-          dots.forEach((el, i) => {
+          dots.forEach((el2, i) => {
             const p = at(t, 0.5, 1.4 + i * 0.028);
             const on = i === hotI && t > 2;
-            S(el, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+            S(el2, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
           });
           if (oncliff) {
             const p = at(t, 0.6, 2.2);
@@ -12468,25 +12468,25 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("debts");
       const debts = qsa(s, ".ra-debt");
-      const rots = debts.map((el) => vOf(el, "--rot", 0));
-      const swings = debts.map((el) => vOf(el, "--sw", 0));
+      const rots = debts.map((el2) => vOf(el2, "--rot", 0));
+      const swings = debts.map((el2) => vOf(el2, "--sw", 0));
       const total = s.querySelector(".ra-debt-total");
       let hotDebt = -1;
       out.set("debts", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-debt");
-          hotDebt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-debt");
+          hotDebt = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          debts.forEach((el, i) => {
+          debts.forEach((el2, i) => {
             const p = at(t, 0.5, 0.2 + i * 0.09);
             const on = i === hotDebt && t > 1.2;
             const swing = Math.sin(t * 1.15 + i * 1.9 + swings[i] * 6.28) * (1.6 + swings[i]);
-            S(el, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
+            S(el2, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
           });
           if (total) {
             const p = at(t, 0.6, 1.2);
@@ -12498,27 +12498,27 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("steppath");
       const steps = qsa(s, ".ra-step");
-      const bars = steps.map((el) => el.querySelector('[data-r="stepbar"]'));
-      const nums = steps.map((el) => el.querySelector('[data-r="stepn"]'));
+      const bars = steps.map((el2) => el2.querySelector('[data-r="stepbar"]'));
+      const nums = steps.map((el2) => el2.querySelector('[data-r="stepn"]'));
       const fly = s.querySelector('[data-r="fly"]');
-      const phs = steps.map((el) => vOf(el.querySelector('[data-r="stepbar"]'), "--ph", 0));
+      const phs = steps.map((el2) => vOf(el2.querySelector('[data-r="stepbar"]'), "--ph", 0));
       const row = s.querySelector('[data-r="steps"]');
       let hotStep = -1;
       out.set("steppath", {
         dur: 3,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-step");
-          hotStep = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-step");
+          hotStep = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          steps.forEach((el, i) => {
+          steps.forEach((el2, i) => {
             const p = stagger(t, i, 0.12, 0.8);
             const on = i === hotStep && t > 1.6;
             S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
-            S(el, `opacity:${(at(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el2, `opacity:${(at(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
             T(nums[i], String(Math.round((data.stageDist[i] || 0) * easeOut(p))));
           });
           if (fly && row) {
@@ -12540,27 +12540,27 @@ ${n.content.slice(0, 2e3)}
       const blocks = qsa(s, ".ra-crystal");
       const cvs = blocks.map((_, i) => canvas(s, `crystal${i}`));
       const ns = data.sBuckets.map((b) => b.n);
-      const weights = blocks.map((el) => vOf(el, "--w", 0));
+      const weights = blocks.map((el2) => vOf(el2, "--w", 0));
       const crow = s.querySelector('[data-r="crow"]');
-      const numsEls = blocks.map((el) => el.querySelector('[data-r="cn"]'));
+      const numsEls = blocks.map((el2) => el2.querySelector('[data-r="cn"]'));
       let hotC = -1;
       out.set("crystal", {
         dur: 3.2,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-crystal");
-          hotC = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-crystal");
+          hotC = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t, pal, px, py }) {
           if (crow && t > 1.8) {
             S(crow, `transform:perspective(1100px) rotateX(${(-py * 2.6).toFixed(2)}deg) rotateY(${(px * 3).toFixed(2)}deg)`);
           }
-          blocks.forEach((el, i) => {
+          blocks.forEach((el2, i) => {
             const p = at(t, 0.7, i * 0.16);
             const on = i === hotC && t > 1.6;
-            S(el, `opacity:${(at(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
             T(numsEls[i], String(Math.round(ns[i] * easeOut(p))));
             const cv = cvs[i];
             if (!cv) return;
@@ -12604,8 +12604,8 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("strata");
       const strata = qsa(s, ".ra-stratum");
-      const phs = strata.map((el) => vOf(el, "--ph", 0));
-      const nsEls = strata.map((el) => el.querySelector('[data-r="stn"]'));
+      const phs = strata.map((el2) => vOf(el2, "--ph", 0));
+      const nsEls = strata.map((el2) => el2.querySelector('[data-r="stn"]'));
       const ns = data.dBuckets.map((b) => b.n);
       const bed = s.querySelector('[data-r="bed"]');
       let hotSt = -1;
@@ -12613,16 +12613,16 @@ ${n.content.slice(0, 2e3)}
         dur: 2.6,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-stratum");
-          hotSt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-stratum");
+          hotSt = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          strata.forEach((el, i) => {
+          strata.forEach((el2, i) => {
             const p = stagger(t, i, 0.16, 0.7);
             const on = i === hotSt && t > 1.2;
-            S(el, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
+            S(el2, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
             T(nsEls[i], String(Math.round(ns[i] * easeOut(p))));
           });
           if (bed) S(bed, `transform:perspective(1100px) rotateY(${0 .toFixed(2)}deg)`);
@@ -12632,29 +12632,29 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("dailies");
       const woods = qsa(s, ".ra-wood");
-      const bars = woods.map((el) => el.querySelector('[data-r="woodbar"]'));
-      const flames = woods.map((el) => el.querySelector('[data-r="flame"]'));
-      const phs = woods.map((el) => vOf(el, "--ph", 0));
+      const bars = woods.map((el2) => el2.querySelector('[data-r="woodbar"]'));
+      const flames = woods.map((el2) => el2.querySelector('[data-r="flame"]'));
+      const phs = woods.map((el2) => vOf(el2, "--ph", 0));
       const wTotal = s.querySelector('[data-r="woodTotal"]');
       let hotW = -1;
       out.set("dailies", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-wood");
-          hotW = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-wood");
+          hotW = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          woods.forEach((el, i) => {
+          woods.forEach((el2, i) => {
             const p = stagger(t, i, 0.09, 0.6);
             const on = i === hotW && t > 1.4;
             S(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center`);
             const alive = phs[i] > 0 && p > 0.9 ? 1 : 0;
             const breath = 0.45 + 0.55 * Math.sin(t * 2.3 + i * 1.4);
             S(flames[i], `opacity:${(alive * (0.35 + 0.65 * breath) * (on ? 1.4 : 1)).toFixed(3)};transform:translateX(-50%) scale(${(on ? 1.5 : 0.8 + 0.3 * breath).toFixed(3)})`);
-            S(el, `opacity:${(at(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
           });
           if (wTotal) {
             const p = easeOut(at(t, 1.4, 0.6));
@@ -12671,11 +12671,11 @@ ${n.content.slice(0, 2e3)}
       out.set("vigil", {
         dur: 3.4,
         update({ t, pal, px, py }) {
-          beads.forEach((el, i) => {
+          beads.forEach((el2, i) => {
             const p = at(t, 0.3, 0.4 + i * 0.075);
             const lit = p > 0 ? 1 : 0;
             const pulse = i === beads.length - 1 && p >= 1 ? 0.4 + 0.6 * Math.abs(Math.sin(t * 1.8)) : 1;
-            S(el, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack(p)).toFixed(3)})`);
+            S(el2, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack(p)).toFixed(3)})`);
           });
           if (streakN) {
             const p = easeOut(at(t, 1.6, 0.8));
@@ -12804,26 +12804,26 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("bedrock");
       const rows = qsa(s, ".ra-bed");
-      const bars = rows.map((el) => el.querySelector('[data-r="bedbar"]'));
-      const shines = rows.map((el) => el.querySelector('[data-r="shine"]'));
-      const phs = rows.map((el) => vOf(el, "--ph", 0));
+      const bars = rows.map((el2) => el2.querySelector('[data-r="bedbar"]'));
+      const shines = rows.map((el2) => el2.querySelector('[data-r="shine"]'));
+      const phs = rows.map((el2) => vOf(el2, "--ph", 0));
       let hotB = -1;
       out.set("bedrock", {
         dur: 3,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-bed");
-          hotB = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-bed");
+          hotB = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          rows.forEach((el, i) => {
+          rows.forEach((el2, i) => {
             const p = stagger(t, i, 0.14, 0.9);
             const on = i === hotB && t > 1.5;
             S(bars[i], `width:${phs[i].toFixed(2)}%;transform:scaleX(${easeOut(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.18)" : "none"}`);
             S(shines[i], `opacity:${(p >= 1 ? 0.4 + 0.5 * Math.max(0, Math.sin(t * 1.1 + i * 0.9)) : 0).toFixed(3)};transform:translateX(${((t * 22 + i * 60) % 160 - 30).toFixed(1)}px)`);
-            S(el, `opacity:${(at(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
           });
         }
       });
@@ -12831,23 +12831,23 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("portide");
       const bars = qsa(s, ".ra-tidebar");
-      const columns = bars.map((el) => el.querySelector('[data-r="tidebar"]'));
-      const numsEls = bars.map((el) => el.querySelector('[data-r="tidebarN"]'));
-      const flies = bars.map((el) => el.querySelector('[data-r="tidefly"]'));
-      const phs = bars.map((el) => vOf(el, "--ph", 0));
+      const columns = bars.map((el2) => el2.querySelector('[data-r="tidebar"]'));
+      const numsEls = bars.map((el2) => el2.querySelector('[data-r="tidebarN"]'));
+      const flies = bars.map((el2) => el2.querySelector('[data-r="tidefly"]'));
+      const phs = bars.map((el2) => vOf(el2, "--ph", 0));
       const counts = data.next8.map((d) => d.count);
       let hotT = -1;
       out.set("portide", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-tidebar");
-          hotT = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-tidebar");
+          hotT = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          bars.forEach((el, i) => {
+          bars.forEach((el2, i) => {
             const p = stagger(t, i, 0.11, 0.7);
             const on = i === hotT && t > 1.4;
             S(columns[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:${on ? "brightness(1.2)" : "none"}`);
@@ -12855,7 +12855,7 @@ ${n.content.slice(0, 2e3)}
             const alive = (counts[i] || 0) > 0 && p >= 1 ? 1 : 0;
             const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.7 + i * 1.1));
             S(flies[i], `opacity:${(alive * blink * (on ? 1 : 0.8)).toFixed(3)};transform:translate(-50%,${(-4 - 3 * Math.sin(t * 2 + i)).toFixed(1)}px) scale(${(on ? 1.5 : 1).toFixed(2)})`);
-            S(el, `opacity:${(at(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
           });
         }
       });
@@ -12863,25 +12863,25 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("quarters");
       const quarters = qsa(s, ".ra-quarter");
-      const lamps = quarters.map((el) => el.querySelector('[data-r="qlamp"]'));
-      const numsEls = quarters.map((el) => el.querySelector('[data-r="qn"]'));
-      const phs = quarters.map((el) => vOf(el, "--ph", 0));
+      const lamps = quarters.map((el2) => el2.querySelector('[data-r="qlamp"]'));
+      const numsEls = quarters.map((el2) => el2.querySelector('[data-r="qn"]'));
+      const phs = quarters.map((el2) => vOf(el2, "--ph", 0));
       const counts = [data.overdueN, data.todayN, data.futureN, data.doneColN];
       let hotQ = -1;
       out.set("quarters", {
         dur: 2.8,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-quarter");
-          hotQ = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-quarter");
+          hotQ = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t }) {
-          quarters.forEach((el, i) => {
+          quarters.forEach((el2, i) => {
             const p = stagger(t, i, 0.16, 0.8);
             const on = i === hotQ && t > 1.5;
-            S(el, `opacity:${(at(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
             S(lamps[i], `transform:scaleY(${easeOut(p).toFixed(4)});transform-origin:bottom center;filter:brightness(${(on ? 1.4 : 0.8 + 0.45 * Math.abs(Math.sin(t * 1.4 + i * 1.6))).toFixed(3)})`);
             T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
           });
@@ -12891,9 +12891,9 @@ ${n.content.slice(0, 2e3)}
     {
       const s = scn("marks");
       const marks = qsa(s, ".ra-mark");
-      const cuts = marks.map((el) => el.querySelector('[data-r="cut"]'));
-      const numsEls = marks.map((el) => el.querySelector('[data-r="markn"]'));
-      const phs = marks.map((el) => vOf(el, "--ph", 0));
+      const cuts = marks.map((el2) => el2.querySelector('[data-r="cut"]'));
+      const numsEls = marks.map((el2) => el2.querySelector('[data-r="markn"]'));
+      const phs = marks.map((el2) => vOf(el2, "--ph", 0));
       const mrow = s.querySelector('[data-r="mrow"]');
       const counts = RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0);
       let hotM = -1;
@@ -12901,21 +12901,21 @@ ${n.content.slice(0, 2e3)}
         dur: 2.8,
         move(p) {
           var _a2;
-          const el = under(p, ".ra-mark");
-          hotM = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
-          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          const el2 = under(p, ".ra-mark");
+          hotM = el2 ? Number((_a2 = el2.dataset.i) != null ? _a2 : -1) : -1;
+          if (el2 == null ? void 0 : el2.dataset.tip) tip(host, el2.dataset.tip, p.cx, p.cy);
           else tip(host, "");
         },
         update({ t, px, py }) {
           if (mrow && t > 1.6) {
             S(mrow, `transform:perspective(1100px) rotateY(${(px * 2.4).toFixed(2)}deg) rotateX(${(-py * 1.8).toFixed(2)}deg)`);
           }
-          marks.forEach((el, i) => {
+          marks.forEach((el2, i) => {
             const p = stagger(t, i, 0.14, 0.55);
             const on = i === hotM && t > 1.4;
             S(cuts[i], `transform:scaleX(${easeBack(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.3)" : "none"}`);
             const sheen2 = p >= 1 ? Math.max(0, Math.sin(t * 0.9 + i * 1.3)) : 0;
-            S(el, `opacity:${(at(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
+            S(el2, `opacity:${(at(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
             T(numsEls[i], String(Math.round((counts[i] || 0) * easeOut(p))));
           });
         }
@@ -12993,7 +12993,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/core/gesture.ts
-  function bindSwipeTurn(el, go) {
+  function bindSwipeTurn(el2, go) {
     const TH = 46;
     let x0 = 0, y0 = 0, on = false, fired = false;
     const start = (e) => {
@@ -13018,15 +13018,15 @@ ${n.content.slice(0, 2e3)}
     const end = () => {
       on = false;
     };
-    el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchmove", move, { passive: false });
-    el.addEventListener("touchend", end, { passive: true });
-    el.addEventListener("touchcancel", end, { passive: true });
+    el2.addEventListener("touchstart", start, { passive: true });
+    el2.addEventListener("touchmove", move, { passive: false });
+    el2.addEventListener("touchend", end, { passive: true });
+    el2.addEventListener("touchcancel", end, { passive: true });
     return () => {
-      el.removeEventListener("touchstart", start);
-      el.removeEventListener("touchmove", move);
-      el.removeEventListener("touchend", end);
-      el.removeEventListener("touchcancel", end);
+      el2.removeEventListener("touchstart", start);
+      el2.removeEventListener("touchmove", move);
+      el2.removeEventListener("touchend", end);
+      el2.removeEventListener("touchcancel", end);
     };
   }
   var init_gesture = __esm({
@@ -13500,11 +13500,11 @@ ${n.content.slice(0, 2e3)}
     } catch (e) {
     }
   }
-  function registerSheetCompanion(el) {
-    sheetCompanions.add(el);
+  function registerSheetCompanion(el2) {
+    sheetCompanions.add(el2);
   }
-  function unregisterSheetCompanion(el) {
-    sheetCompanions.delete(el);
+  function unregisterSheetCompanion(el2) {
+    sheetCompanions.delete(el2);
   }
   function inSheetCompanion(target) {
     for (const c of sheetCompanions) {
@@ -13974,8 +13974,8 @@ ${n.content.slice(0, 2e3)}
     body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
     mountIcons(body);
     motionStats(body);
-    const openTimeline = (el) => {
-      const idx = Number(el.dataset.idx);
+    const openTimeline = (el2) => {
+      const idx = Number(el2.dataset.idx);
       const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
         var _a2, _b2, _c, _d;
         const la = ((_b2 = (_a2 = a.reviewHistory) == null ? void 0 : _a2[a.reviewHistory.length - 1]) == null ? void 0 : _b2.timestamp) || "";
@@ -13984,12 +13984,12 @@ ${n.content.slice(0, 2e3)}
       })[idx];
       if (target) void showTimeline(app, dm, target);
     };
-    body.querySelectorAll(".top-row[data-idx]").forEach((el) => {
-      el.addEventListener("click", () => openTimeline(el));
-      el.addEventListener("keydown", (e) => {
+    body.querySelectorAll(".top-row[data-idx]").forEach((el2) => {
+      el2.addEventListener("click", () => openTimeline(el2));
+      el2.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          openTimeline(el);
+          openTimeline(el2);
         }
       });
     });
@@ -14188,33 +14188,33 @@ ${n.content.slice(0, 2e3)}
     reviewSettingsSchema: () => reviewSettingsSchema
   });
   function captureFocusKey(scope) {
-    const el = document.activeElement;
-    if (!(el instanceof HTMLElement) || !scope.contains(el)) return null;
+    const el2 = document.activeElement;
+    if (!(el2 instanceof HTMLElement) || !scope.contains(el2)) return null;
     for (const attr of ["data-id", "data-act"]) {
-      const v = el.getAttribute(attr);
+      const v = el2.getAttribute(attr);
       if (v != null) return `${attr}=${v}`;
     }
     return null;
   }
   function restoreFocusKey(scope, key) {
     const eq = key.indexOf("=");
-    const el = scope.querySelector(`[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`);
-    el == null ? void 0 : el.focus({ preventScroll: true });
+    const el2 = scope.querySelector(`[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`);
+    el2 == null ? void 0 : el2.focus({ preventScroll: true });
   }
   function mountFloatingRatingBar(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-review-bar";
-    el.style.zIndex = String(allocZ());
-    el.innerHTML = reviewBarHtml(opts);
-    el.tabIndex = -1;
+    const el2 = document.createElement("div");
+    el2.className = "bz-review-bar";
+    el2.style.zIndex = String(allocZ());
+    el2.innerHTML = reviewBarHtml(opts);
+    el2.tabIndex = -1;
     let closed = false;
     const close = () => {
       if (closed) return;
       closed = true;
       document.removeEventListener("keydown", onDigitKey);
-      el.remove();
+      el2.remove();
     };
-    el.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
+    el2.querySelectorAll(".bz-review-bar-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const r = btn.dataset.rating;
         if (r === "skip") opts.onSkip();
@@ -14228,7 +14228,7 @@ ${n.content.slice(0, 2e3)}
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       const i = ["1", "2", "3", "4"].indexOf(e.key);
       if (i < 0) return;
-      const btn = el.querySelectorAll(".bz-review-bar-btn")[i];
+      const btn = el2.querySelectorAll(".bz-review-bar-btn")[i];
       if (btn) {
         e.preventDefault();
         btn.click();
@@ -14236,16 +14236,16 @@ ${n.content.slice(0, 2e3)}
     };
     document.addEventListener("keydown", onDigitKey);
     const prevFocus2 = document.activeElement;
-    el.addEventListener("keydown", (e) => {
+    el2.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
       e.stopPropagation();
       if (prevFocus2 && typeof prevFocus2.focus === "function" && prevFocus2 !== document.body) prevFocus2.focus();
-      else el.blur();
+      else el2.blur();
     });
-    document.body.appendChild(el);
-    motionRatingBar(el);
-    el.focus({ preventScroll: true });
+    document.body.appendChild(el2);
+    motionRatingBar(el2);
+    el2.focus({ preventScroll: true });
     return { close };
   }
   var isPlayable2, PANEL, UIManager;
@@ -15344,18 +15344,18 @@ ${n.content.slice(0, 2e3)}
             for (const p of this._styledPaths) paths.add(p);
           }
           const els = /* @__PURE__ */ new Map();
-          for (const el of Array.from(document.querySelectorAll("div[data-path]"))) {
-            const p = el.getAttribute("data-path");
-            if (p && !els.has(p)) els.set(p, el);
+          for (const el2 of Array.from(document.querySelectorAll("div[data-path]"))) {
+            const p = el2.getAttribute("data-path");
+            if (p && !els.has(p)) els.set(p, el2);
           }
           const fsrs = new FSRS(this.currentW());
           for (const path of paths) {
-            const el = els.get(path);
-            if (!el) {
+            const el2 = els.get(path);
+            if (!el2) {
               this._styledPaths.delete(path);
               continue;
             }
-            const target = el.querySelector("div.tree-item-inner");
+            const target = el2.querySelector("div.tree-item-inner");
             if (!target) continue;
             const badge = target.querySelector(".review-stage-badge");
             if (badge) badge.remove();
@@ -15434,9 +15434,9 @@ ${n.content.slice(0, 2e3)}
         revertReviewStyles() {
           var _a2, _b2;
           const els = /* @__PURE__ */ new Map();
-          for (const el of Array.from(document.querySelectorAll("div[data-path]"))) {
-            const p = el.getAttribute("data-path");
-            if (p && !els.has(p)) els.set(p, el);
+          for (const el2 of Array.from(document.querySelectorAll("div[data-path]"))) {
+            const p = el2.getAttribute("data-path");
+            if (p && !els.has(p)) els.set(p, el2);
           }
           for (const path of this._styledPaths) {
             const target = (_a2 = els.get(path)) == null ? void 0 : _a2.querySelector("div.tree-item-inner");
@@ -15966,9 +15966,9 @@ ${n.content.slice(0, 2e3)}
       focusTimer = null;
     }
     if (focusRestore) {
-      const el = focusRestore;
+      const el2 = focusRestore;
       focusRestore = null;
-      if (el.isConnected) el.focus();
+      if (el2.isConnected) el2.focus();
     }
   }
   function openPathPicker(opts) {
@@ -16189,6 +16189,38 @@ ${n.content.slice(0, 2e3)}
       if (mask.isConnected) search.focus();
     }, 30);
   }
+  function requireNode(moduleName) {
+    var _a2;
+    try {
+      const w = window;
+      return w.require ? (_a2 = w.require(moduleName)) != null ? _a2 : null : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function normalizeSystemPath(p) {
+    const s = String(p != null ? p : "").trim().replace(/\\/g, "/");
+    return s.length > 1 ? s.replace(/\/+$/, "") : s;
+  }
+  async function pickSystemFiles(title, filters) {
+    var _a2, _b2, _c, _d;
+    const remote = (_c = (_b2 = requireNode("@electron/remote")) != null ? _b2 : (_a2 = requireNode("electron")) == null ? void 0 : _a2.remote) != null ? _c : null;
+    const dialog = remote == null ? void 0 : remote.dialog;
+    if (!(dialog == null ? void 0 : dialog.showOpenDialog)) return [];
+    try {
+      const res = await dialog.showOpenDialog({
+        title,
+        properties: ["openFile", "multiSelections", "dontAddToRecent"],
+        // Electron 认 extensions 字段（PickFilesFilter.ext 是域侧叫法，这里做一次映射）
+        filters: filters.map((f) => ({ name: f.name, extensions: f.ext }))
+      });
+      if (res == null ? void 0 : res.canceled) return [];
+      return ((_d = res == null ? void 0 : res.filePaths) != null ? _d : []).map((p) => normalizeSystemPath(p)).filter(Boolean);
+    } catch (e) {
+      notifyActionError(e, "选择文件");
+      return [];
+    }
+  }
   var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer, focusRestore;
   var init_path_picker = __esm({
     "src/core/path-picker.ts"() {
@@ -16332,40 +16364,40 @@ ${n.content.slice(0, 2e3)}
     if (/JSON|解析|answers|畸形|回复为空/.test(msg)) return "响应异常";
     return "请求失败";
   }
-  function clearResetTimer(el) {
-    const prev = resetTimers.get(el);
+  function clearResetTimer(el2) {
+    const prev = resetTimers.get(el2);
     if (prev !== void 0) {
       clearTimeout(prev);
-      resetTimers.delete(el);
+      resetTimers.delete(el2);
     }
   }
-  function setRowBtnState(el, state3, label, failText) {
-    if (!el) return;
-    el.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
-    el.disabled = state3 === "busy";
+  function setRowBtnState(el2, state3, label, failText) {
+    if (!el2) return;
+    el2.classList.remove("bz-rowbtn--busy", "bz-rowbtn--ok", "bz-rowbtn--fail");
+    el2.disabled = state3 === "busy";
     if (state3 === "busy") {
-      el.classList.add("bz-rowbtn--busy");
-      clearResetTimer(el);
+      el2.classList.add("bz-rowbtn--busy");
+      clearResetTimer(el2);
     } else if (state3 === "ok") {
-      el.classList.add("bz-rowbtn--ok");
-      el.textContent = ROW_BTN_OK_TEXT;
+      el2.classList.add("bz-rowbtn--ok");
+      el2.textContent = ROW_BTN_OK_TEXT;
     } else if (state3 === "fail") {
-      el.classList.add("bz-rowbtn--fail");
-      el.textContent = (failText || "失败").slice(0, 6);
+      el2.classList.add("bz-rowbtn--fail");
+      el2.textContent = (failText || "失败").slice(0, 6);
     } else {
-      el.textContent = label;
+      el2.textContent = label;
     }
   }
-  function armRowBtnReset(el, label) {
-    if (!el) return;
-    const prev = resetTimers.get(el);
+  function armRowBtnReset(el2, label) {
+    if (!el2) return;
+    const prev = resetTimers.get(el2);
     if (prev !== void 0) clearTimeout(prev);
     const t = setTimeout(() => {
-      resetTimers.delete(el);
-      setRowBtnState(el, "idle", label);
-      el.disabled = false;
+      resetTimers.delete(el2);
+      setRowBtnState(el2, "idle", label);
+      el2.disabled = false;
     }, ROW_BTN_RESET_MS);
-    resetTimers.set(el, t);
+    resetTimers.set(el2, t);
   }
   var ROW_BTN_RESET_MS, ROW_BTN_OK_TEXT, resetTimers;
   var init_settings_btn_state = __esm({
@@ -16398,8 +16430,8 @@ ${n.content.slice(0, 2e3)}
     container.appendChild(group);
     return body;
   }
-  function isItemHidden(el) {
-    let cur = el;
+  function isItemHidden(el2) {
+    let cur = el2;
     while (cur && cur !== document.body) {
       if (cur.classList.contains("bz-setting-hidden")) return true;
       if (cur.style.display === "none") return true;
@@ -16412,8 +16444,8 @@ ${n.content.slice(0, 2e3)}
       const body = g.querySelector(".bz-settings-group-body");
       const countEl = g.querySelector(".bz-settings-group-count");
       if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el2) => {
+        const h = el2;
         return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
       }).length;
       countEl.textContent = `${n} 项`;
@@ -16421,10 +16453,10 @@ ${n.content.slice(0, 2e3)}
     });
   }
   function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    container.querySelectorAll(".setting-item").forEach((el2) => {
+      if (el2.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el2.querySelector(".setting-item-control");
+      el2.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
     });
   }
   function closeSettingsModal() {
@@ -16460,7 +16492,7 @@ ${n.content.slice(0, 2e3)}
     content.className = "bz-settings-content";
     renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
     const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
+      (el2) => !el2.classList.contains("bz-setting-action-row") && !isItemHidden(el2)
     );
     if (!hasVisibleItem) {
       content.innerHTML = "";
@@ -16483,10 +16515,10 @@ ${n.content.slice(0, 2e3)}
     popup.style.display = "flex";
     popup.setAttribute("role", "dialog");
     popup.setAttribute("aria-modal", "true");
-    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el) => {
-      if (isItemHidden(el)) return false;
+    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el2) => {
+      if (isItemHidden(el2)) return false;
       if (isMobileEnv()) {
-        const tag = el.tagName;
+        const tag = el2.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA") return false;
       }
       return true;
@@ -16577,7 +16609,7 @@ ${n.content.slice(0, 2e3)}
     if (max !== void 0) out = Math.min(max, out);
     return out;
   }
-  function wireSecretEye(setting, el) {
+  function wireSecretEye(setting, el2) {
     let revealed = false;
     setting.addExtraButton((b) => {
       b.setIcon("eye").setTooltip("显示 / 隐藏");
@@ -16585,7 +16617,7 @@ ${n.content.slice(0, 2e3)}
       b.extraSettingsEl.setAttribute("aria-pressed", "false");
       b.onClick(() => {
         revealed = !revealed;
-        el.type = revealed ? "text" : "password";
+        el2.type = revealed ? "text" : "password";
         b.setIcon(revealed ? "eye-off" : "eye");
         b.extraSettingsEl.setAttribute("aria-pressed", String(revealed));
         b.extraSettingsEl.setAttribute("aria-label", revealed ? "隐藏密钥" : "显示密钥");
@@ -16782,16 +16814,16 @@ ${n.content.slice(0, 2e3)}
             b.setButtonText(a.text).onClick(() => {
               void (async () => {
                 var _a4;
-                const el = b.buttonEl;
+                const el2 = b.buttonEl;
                 try {
-                  if (a.stateful) setRowBtnState(el, "busy", a.text);
+                  if (a.stateful) setRowBtnState(el2, "busy", a.text);
                   await a.onClick(last, ctx);
-                  if (a.stateful) setRowBtnState(el, "ok", a.text);
+                  if (a.stateful) setRowBtnState(el2, "ok", a.text);
                 } catch (e) {
-                  if (a.stateful) setRowBtnState(el, "fail", a.text, shortFailReason(e));
+                  if (a.stateful) setRowBtnState(el2, "fail", a.text, shortFailReason(e));
                   else throw e;
                 } finally {
-                  if (a.stateful) armRowBtnReset(el, a.text);
+                  if (a.stateful) armRowBtnReset(el2, a.text);
                 }
                 if (currentText && currentText.setValue) {
                   dirty2 = false;
@@ -17213,8 +17245,8 @@ ${n.content.slice(0, 2e3)}
   function pageHeadHtml(name, desc, tag, withReset) {
     return `<div class="bz-sp-page-head"><div><div class="bz-sp-page-title">${esc(name)}</div><div class="bz-sp-page-desc">${esc(desc)}</div></div><div class="bz-sp-page-acts">` + (withReset ? `<button type="button" class="bz-sp-page-reset">重置本域</button>` : "") + `<span class="bz-sp-page-tag">${esc(tag)}</span></div></div>`;
   }
-  function loadingHtml(text = "加载设置…") {
-    return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text)}</span></div>`;
+  function loadingHtml(text2 = "加载设置…") {
+    return `<div class="bz-sp-loading"><span class="bz-spinner"></span><span>${esc(text2)}</span></div>`;
   }
   var init_shared = __esm({
     "src/settings-panel/shared.ts"() {
@@ -17274,20 +17306,20 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function waapi2(el, frames, opts) {
-    if (!el || reduced3() || typeof el.animate !== "function") {
+  function waapi2(el2, frames, opts) {
+    if (!el2 || reduced3() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -17368,9 +17400,9 @@ ${n.content.slice(0, 2e3)}
     if (reduced3()) return;
     const head = pane.querySelector(".bz-sp-page-head");
     if (head) {
-      [...head.children].forEach((el, i) => {
+      [...head.children].forEach((el2, i) => {
         waapi2(
-          el,
+          el2,
           [{ opacity: 0, transform: "translateY(-5px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
           { duration: M2.base, delay: i * 40, easing: E2.out, fill: "backwards" }
         );
@@ -17408,10 +17440,10 @@ ${n.content.slice(0, 2e3)}
   function motionMobList(list) {
     if (!list || !list.isConnected || reduced3()) return;
     const items = [...list.querySelectorAll(".bz-sp-mob-item")];
-    items.forEach((el, i) => {
+    items.forEach((el2, i) => {
       if (i >= 12) return;
       waapi2(
-        el,
+        el2,
         [{ opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }],
         { duration: M2.base, delay: Math.min(i, 11) * STAG2, easing: E2.out, fill: "backwards" }
       );
@@ -17423,18 +17455,18 @@ ${n.content.slice(0, 2e3)}
     if (!side) return;
     let st = cursorStates.get(nav);
     if (!st) {
-      const el = document.createElement("span");
-      el.className = "bz-spm-cursor";
-      el.setAttribute("aria-hidden", "true");
+      const el2 = document.createElement("span");
+      el2.className = "bz-spm-cursor";
+      el2.setAttribute("aria-hidden", "true");
       try {
-        side.prepend(el);
+        side.prepend(el2);
       } catch (e) {
         return;
       }
       st = {
         side,
         nav,
-        el,
+        el: el2,
         x: 0,
         y: 0,
         vx: 0,
@@ -17755,15 +17787,15 @@ ${n.content.slice(0, 2e3)}
     popup.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
       if (reduced3()) return;
-      const el = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
-      if (!el || !popup.contains(el)) return;
-      pressed.set(el, Date.now());
-      waapi2(el, [{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      const el2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      if (!el2 || !popup.contains(el2)) return;
+      pressed.set(el2, Date.now());
+      waapi2(el2, [{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: 110, easing: E2.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
-      const el = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
-      const target = el && pressed.has(el) ? el : null;
+      const el2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, PRESS_SEL);
+      const target = el2 && pressed.has(el2) ? el2 : null;
       if (!target) return;
       pressed.delete(target);
       waapi2(target, [{ transform: "scale(.955)" }, { transform: "scale(1.02)", offset: 0.6 }, { transform: "none" }], { duration: M2.move + 40, easing: E2.out });
@@ -18055,15 +18087,15 @@ ${n.content.slice(0, 2e3)}
       desc: row.desc,
       note: row.note
     });
-    const el = holder.firstElementChild;
+    const el2 = holder.firstElementChild;
     const helpText = row.help;
     if (helpText) {
-      const nameEl = el.querySelector(".bz-sp-set-name");
+      const nameEl = el2.querySelector(".bz-sp-set-name");
       if (nameEl) attachHelpTip(nameEl, { text: helpText, skinClassName: "bz-sp-skin" });
     }
-    const ctx = makeCtx(el, refresh2);
-    ctx.rowEl = el;
-    const ctrlEl = isCustom ? el : el.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
+    const ctx = makeCtx(el2, refresh2);
+    ctx.rowEl = el2;
+    const ctrlEl = isCustom ? el2 : el2.querySelector(isCardsRow ? ".bz-sp-set-cards" : ".bz-sp-set-ctrl");
     switch (row.type) {
       case "toggle": {
         const acc = bindValue(row.binding);
@@ -18511,7 +18543,7 @@ ${n.content.slice(0, 2e3)}
       case "custom": {
         const slot = document.createElement("div");
         slot.className = "bz-sp-custom-slot bz-sp-custom-slot--full";
-        el.appendChild(slot);
+        el2.appendChild(slot);
         try {
           row.render(slot, ctx);
         } catch (e) {
@@ -18529,7 +18561,7 @@ ${n.content.slice(0, 2e3)}
       default:
         break;
     }
-    return el;
+    return el2;
   }
   function renderGroup(container, group, refresh2, regRefresh) {
     const cardHolder = document.createElement("div");
@@ -18550,8 +18582,8 @@ ${n.content.slice(0, 2e3)}
       if (!groupHidden) {
         group.rows.forEach((r, i) => {
           if (r.type === "button") return;
-          const el = rowEls[i];
-          if (el && el.style.display !== "none") n++;
+          const el2 = rowEls[i];
+          if (el2 && el2.style.display !== "none") n++;
         });
       }
       count.textContent = `${n} 项`;
@@ -18564,24 +18596,24 @@ ${n.content.slice(0, 2e3)}
   function renderPanelSchema(container, schema) {
     const visibleConditions = /* @__PURE__ */ new WeakMap();
     const valueRefreshes = [];
-    const applyCond = (el, cond) => {
+    const applyCond = (el2, cond) => {
       let visible = true;
       try {
         visible = cond(snapshot());
       } catch (e) {
       }
-      el.style.display = visible ? "" : "none";
+      el2.style.display = visible ? "" : "none";
     };
     const refresh2 = () => {
-      container.querySelectorAll("[data-sp-row]").forEach((el) => {
-        const cond = visibleConditions.get(el);
+      container.querySelectorAll("[data-sp-row]").forEach((el2) => {
+        const cond = visibleConditions.get(el2);
         if (!cond) return;
-        applyCond(el, cond);
+        applyCond(el2, cond);
       });
-      container.querySelectorAll("[data-sp-group]").forEach((el) => {
-        const cond = visibleConditions.get(el);
+      container.querySelectorAll("[data-sp-group]").forEach((el2) => {
+        const cond = visibleConditions.get(el2);
         if (!cond) return;
-        applyCond(el, cond);
+        applyCond(el2, cond);
       });
       container.querySelectorAll(".bz-sp-group").forEach((card) => {
         var _a2;
@@ -18717,14 +18749,14 @@ ${n.content.slice(0, 2e3)}
       throw: false
     });
     const status = Number((_b2 = resp == null ? void 0 : resp.status) != null ? _b2 : 0);
-    const text = String((_c = resp == null ? void 0 : resp.text) != null ? _c : "");
+    const text2 = String((_c = resp == null ? void 0 : resp.text) != null ? _c : "");
     if (status < 200 || status >= 300) {
-      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      const brief = text2.length > 300 ? `${text2.slice(0, 300)}…` : text2;
       throw new Error(`${desc.label} 模型列表请求失败（${status}）：${brief || "无响应正文"}`);
     }
     let data;
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(text2);
     } catch (e) {
       throw new Error(`${desc.label} 模型列表响应不是合法 JSON（HTTP ${status}）`);
     }
@@ -18745,11 +18777,11 @@ ${n.content.slice(0, 2e3)}
   function buildJevBody(state3, questions, model) {
     return { model, state: state3, questions };
   }
-  function parseJevResponse(text, status) {
+  function parseJevResponse(text2, status) {
     var _a2;
     let data;
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(text2);
     } catch (e) {
       throw new Error(`Jev 响应不是合法 JSON（HTTP ${status}）`);
     }
@@ -18804,12 +18836,12 @@ ${n.content.slice(0, 2e3)}
     });
     if (signal == null ? void 0 : signal.aborted) throw abortError2();
     const status = Number((_a2 = resp == null ? void 0 : resp.status) != null ? _a2 : 0);
-    const text = String((_b2 = resp == null ? void 0 : resp.text) != null ? _b2 : "");
+    const text2 = String((_b2 = resp == null ? void 0 : resp.text) != null ? _b2 : "");
     if (status < 200 || status >= 300) {
-      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      const brief = text2.length > 300 ? `${text2.slice(0, 300)}…` : text2;
       throw new Error(`Jev API ${status}: ${brief || "无响应正文"}`);
     }
-    return parseJevResponse(text, status);
+    return parseJevResponse(text2, status);
   }
   async function testJevConnectivity(opts = {}) {
     var _a2;
@@ -19789,8 +19821,8 @@ ${n.content.slice(0, 2e3)}
     const u = (url || "").trim();
     return /^https?:\/\//i.test(u) ? u : "https://" + u;
   }
-  function isUrlLike(text) {
-    const t = (text || "").trim();
+  function isUrlLike(text2) {
+    const t = (text2 || "").trim();
     return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
   }
   var CONFIG, DEFAULT_TAGS, currentTags, tagIdSeq;
@@ -20886,14 +20918,14 @@ ${countsToText(s.missing)}
     const base = String(path != null ? path : "").replace(/\\/g, "/").split("/").pop() || "";
     return stripMdExt(base) || String(path != null ? path : "");
   }
-  function isUrlLikeSourceText(text) {
-    const s = String(text != null ? text : "").trim();
+  function isUrlLikeSourceText(text2) {
+    const s = String(text2 != null ? text2 : "").trim();
     if (!s || /\s/.test(s)) return false;
     if (/^https?:\/\/\S+$/i.test(s)) return true;
     return URL_LIKE_RE.test(s);
   }
-  function cleanUrlText(text) {
-    return String(text != null ? text : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
+  function cleanUrlText(text2) {
+    return String(text2 != null ? text2 : "").trim().replace(/[，。！？；、,;.!?…'"’”\])}>】」』]+$/, "");
   }
   function normalizeSourceUrl(input) {
     const s = cleanUrlText(input);
@@ -21318,8 +21350,8 @@ ${countsToText(s.missing)}
     const db = normSlashes(b).split("/").length;
     return da - db || a.localeCompare(b);
   }
-  function stripFrontmatter(text) {
-    const src = String(text != null ? text : "");
+  function stripFrontmatter(text2) {
+    const src = String(text2 != null ? text2 : "");
     const m = src.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
     return (m ? src.slice(m[0].length) : src).replace(/^\r?\n+/, "");
   }
@@ -21535,29 +21567,29 @@ ${countsToText(s.missing)}
   function relocateAnchor(body, anchor) {
     var _a2;
     const src = String(body != null ? body : "");
-    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
-    if (!text) return null;
-    const exact = src.indexOf(text);
+    const text2 = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "");
+    if (!text2) return null;
+    const exact = src.indexOf(text2);
     if (exact >= 0) return exact;
     const flat = flattenWs(src);
-    const needle = flattenWs(text).text;
+    const needle = flattenWs(text2).text;
     if (!needle) return null;
     const at3 = flat.text.indexOf(needle);
     return at3 < 0 ? null : flat.map[at3];
   }
   function flattenWs(s) {
     const map = [];
-    let text = "";
+    let text2 = "";
     for (let i = 0; i < s.length; i++) {
       if (/\s/.test(s[i])) continue;
       map.push(i);
-      text += s[i];
+      text2 += s[i];
     }
-    return { text, map };
+    return { text: text2, map };
   }
   function joinSnippet(chunk) {
-    const text = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
-    return text.trim() ? text : null;
+    const text2 = chunk.join("\n").replace(/^\s*\n+/, "").replace(/\s+$/, "");
+    return text2.trim() ? text2 : null;
   }
   function splitBlocks(lines) {
     const out = [];
@@ -21626,15 +21658,15 @@ ${countsToText(s.missing)}
     const start = numOr((_d = (_c = (_b2 = (_a2 = cache == null ? void 0 : cache.blocks) == null ? void 0 : _a2[id]) == null ? void 0 : _b2.position) == null ? void 0 : _c.start) == null ? void 0 : _d.line, -1);
     if (start >= 0) {
       const end = numOr((_h = (_g = (_f = (_e = cache == null ? void 0 : cache.blocks) == null ? void 0 : _e[id]) == null ? void 0 : _f.position) == null ? void 0 : _g.end) == null ? void 0 : _h.line, start);
-      const text = lines.slice(start, end + 1).join("\n").replace(re, " ");
-      return joinSnippet([text]);
+      const text2 = lines.slice(start, end + 1).join("\n").replace(re, " ");
+      return joinSnippet([text2]);
     }
     const blocks = splitBlocks(lines);
     for (let i = 0; i < blocks.length; i++) {
-      const text = blocks[i].text;
-      if (!re.test(text)) continue;
-      if (!text.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
-      return joinSnippet([text.replace(re, " ").trim()]);
+      const text2 = blocks[i].text;
+      if (!re.test(text2)) continue;
+      if (!text2.replace(re, " ").trim() && i > 0) return joinSnippet([blocks[i - 1].text]);
+      return joinSnippet([text2.replace(re, " ").trim()]);
     }
     return null;
   }
@@ -21666,9 +21698,9 @@ ${countsToText(s.missing)}
     const mm = v.match(/\[\[([^\]]+)\]\]/);
     return mm ? mm[1].trim() : v.trim();
   }
-  function fmList(text, key) {
+  function fmList(text2, key) {
     var _a2;
-    const lines = String(text != null ? text : "").split(/\r?\n/);
+    const lines = String(text2 != null ? text2 : "").split(/\r?\n/);
     if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
     const head = new RegExp(`^${key}\\s*:`);
     const out = [];
@@ -21695,9 +21727,9 @@ ${countsToText(s.missing)}
     if (!scan.bodies.has(key)) scan.bodies.set(key, await bodyOf(path, scan.ctx));
     return scan.bodies.get(key);
   }
-  function itemFromLink(text, source2, ctx, sourcePath) {
+  function itemFromLink(text2, source2, ctx, sourcePath) {
     var _a2;
-    const { target, alias, subpath } = splitLinkText(text);
+    const { target, alias, subpath } = splitLinkText(text2);
     if (!target) return null;
     const path = resolveLinkPath(target, ctx, sourcePath);
     return {
@@ -21715,18 +21747,18 @@ ${countsToText(s.missing)}
     const key = pathKey(path);
     const cached = scan.items.get(key);
     if (cached) return cached;
-    const text = await readText(path, scan.ctx);
-    scan.bodies.set(key, stripFrontmatter(text));
+    const text2 = await readText(path, scan.ctx);
+    scan.bodies.set(key, stripFrontmatter(text2));
     const items = [];
-    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text)), scan.ctx, path);
+    const links = await resolveMountLinks(parseMountLinks(stripFrontmatter(text2)), scan.ctx, path);
     for (const l of links) {
       items.push({ source: "link", kind: l.kind, target: l.target, path: l.path, subpath: l.subpath, alias: l.alias, anchor: l.anchor, missing: l.missing });
     }
-    for (const t of fmList(text, "related")) {
+    for (const t of fmList(text2, "related")) {
       const it = itemFromLink(t, "related", scan.ctx, path);
       if (it) items.push(it);
     }
-    for (const t of fmList(text, "mounted")) {
+    for (const t of fmList(text2, "mounted")) {
       const it = itemFromLink(t, "manual", scan.ctx, path);
       if (it) items.push(it);
     }
@@ -22129,8 +22161,8 @@ ${lines}`;
     const t = String(s != null ? s : "").replace(/[\\/:*?"<>|#^[\]]/g, "_").replace(/\s+/g, " ").trim().slice(0, 50);
     return t || "文献笔记";
   }
-  function chunkTranscript(text, maxLen = 4e3) {
-    const src = String(text || "").trim();
+  function chunkTranscript(text2, maxLen = 4e3) {
+    const src = String(text2 || "").trim();
     if (!src) return [];
     const segs = src.split(/(?<=[。！？!?；;])/).map((s) => s.trim()).filter(Boolean);
     const chunks = [];
@@ -22312,19 +22344,19 @@ ${chunks[0] || ""}`
     const body = [fm.join("\n"), summary].filter(Boolean).join("\n\n");
     return writeUniqueNote(String(s.knowledgeDirectory || "文献盒"), sanitizeMdTitle(term), body);
   }
-  function passagePrompt(text, list) {
+  function passagePrompt(text2, list) {
     return `你是文献整理助手。把下方这段文字整理成一篇文献笔记。只输出 JSON，不要任何解释：
 {${domainInstruction(list)},"title":"15-30字的中文完整陈述句，概括这段文字在讲什么；不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢），禁止冒号、破折号、句中句号问号，需要连接时用逗号","summary":"整理后的正文（保留原文的全部事实与要点，删去口水话、重复表述，可分自然段）"}
 硬约束：正文只能来自原文，不得添加原文没有的事实、数字或结论，不得写成读后感。所有字段一律使用简体中文。
 
 【原文】
-${text}`;
+${text2}`;
   }
-  async function generatePassageDraft(text, hooks) {
+  async function generatePassageDraft(text2, hooks) {
     const ai = createAI();
     const s = tryGetSettings();
     const list = parseDomainList(s.knowledgeDomainList);
-    const t = String(text || "").trim();
+    const t = String(text2 || "").trim();
     if (!t) throw new Error("段落为空");
     const raw = await ai.json(passagePrompt(t, list), draftAiOptions(hooks));
     const meta = parseAiJson(raw);
@@ -22836,8 +22868,8 @@ ${sample}`
             this._child = child;
             const errChunks = [];
             const onData = (d) => {
-              const text = String(d);
-              for (const line of text.split(/\r?\n/)) {
+              const text2 = String(d);
+              for (const line of text2.split(/\r?\n/)) {
                 let m = line.match(STEP_RE);
                 if (m) {
                   const stepText = m[1].trim();
@@ -23951,9 +23983,9 @@ ${sample}`
     const q3 = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim();
     return q3 ? hash8(normLite(q3)) : "";
   }
-  function nextIsBoundary(text, i) {
-    if (i >= text.length) return true;
-    return /\s/.test(text[i]);
+  function nextIsBoundary(text2, i) {
+    if (i >= text2.length) return true;
+    return /\s/.test(text2[i]);
   }
   function wikiDisplay(inner) {
     const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : inner;
@@ -23962,54 +23994,54 @@ ${sample}`
     return noHead || afterAlias || inner;
   }
   function stripUnclosedWiki(raw) {
-    let text = String(raw != null ? raw : "");
+    let text2 = String(raw != null ? raw : "");
     for (let guard = 0; guard < 8; guard++) {
-      const open = text.lastIndexOf("[[");
+      const open = text2.lastIndexOf("[[");
       if (open < 0) break;
-      if (text.indexOf("]]", open) > open) break;
-      const inner = text.slice(open + 2);
+      if (text2.indexOf("]]", open) > open) break;
+      const inner = text2.slice(open + 2);
       const afterAlias = inner.includes("|") ? inner.slice(inner.lastIndexOf("|") + 1) : "";
-      text = text.slice(0, open) + afterAlias;
+      text2 = text2.slice(0, open) + afterAlias;
     }
-    return text;
+    return text2;
   }
   function cleanAnchorText(raw) {
     return stripUnclosedWiki(raw).replace(/!\[\[[^\[\]]*\]\]/g, " ").replace(/\[\[([^\[\]]+)\]\]/g, (_m, inner) => wikiDisplay(inner)).replace(/`+/g, "").replace(/\*\*|__/g, "").replace(/\s+/g, " ").trim();
   }
-  function pushAnchor(out, text, from, to) {
+  function pushAnchor(out, text2, from, to) {
     let s = from;
     let e = to;
-    while (s < e && /\s/.test(text[s])) s++;
-    while (e > s && /\s/.test(text[e - 1])) e--;
-    const lead = text.slice(s, e).match(LEADING_MARK_RE);
+    while (s < e && /\s/.test(text2[s])) s++;
+    while (e > s && /\s/.test(text2[e - 1])) e--;
+    const lead = text2.slice(s, e).match(LEADING_MARK_RE);
     if (lead) s += lead[0].length;
     if (s >= e) return;
-    const cleaned = cleanAnchorText(text.slice(s, e));
+    const cleaned = cleanAnchorText(text2.slice(s, e));
     if (!cleaned) return;
     if ([...cleaned].length < SUGGEST_MIN_ANCHOR_CHARS) return;
     if (!HAS_MEANING_RE.test(cleaned)) return;
     out.push({ from: s, to: e, text: cleaned });
   }
   function splitAnchors(body) {
-    const text = String(body != null ? body : "");
+    const text2 = String(body != null ? body : "");
     const out = [];
     let start = 0;
-    for (let i = 0; i <= text.length; i++) {
-      const ch = i === text.length ? "" : text[i];
-      let boundary = i === text.length;
+    for (let i = 0; i <= text2.length; i++) {
+      const ch = i === text2.length ? "" : text2[i];
+      let boundary = i === text2.length;
       if (!boundary) {
         if (ch === "\n" || ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…") boundary = true;
-        else if (ch === "!") boundary = text[i - 1] !== "[" && text[i + 1] !== "[";
-        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text, i + 1);
+        else if (ch === "!") boundary = text2[i - 1] !== "[" && text2[i + 1] !== "[";
+        else if (ch === "." || ch === "?" || ch === ";") boundary = nextIsBoundary(text2, i + 1);
       }
       if (!boundary) continue;
-      pushAnchor(out, text, start, i);
+      pushAnchor(out, text2, start, i);
       start = i + 1;
     }
     return out;
   }
-  function normalizeAnchorText(text) {
-    return String(text != null ? text : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
+  function normalizeAnchorText(text2) {
+    return String(text2 != null ? text2 : "").replace(/\s+/g, " ").replace(/^[\s"'“”‘’《》〈〉「」『』]+/, "").replace(/[\s"'“”‘’《》〈〉「」『』]+$/, "").trim().toLowerCase();
   }
   function normalizeTargetPath(path) {
     return String(path != null ? path : "").replace(/\\/g, "/").replace(/^\.\//, "").replace(/\.md$/i, "").trim().toLowerCase();
@@ -24159,21 +24191,21 @@ ${sample}`
     return stripMdExt(base);
   }
   function collectExistingTargets(body) {
-    const text = String(body != null ? body : "");
+    const text2 = String(body != null ? body : "");
     const out = [];
     WIKILINK_RE.lastIndex = 0;
     let m;
-    while ((m = WIKILINK_RE.exec(text)) !== null) {
+    while ((m = WIKILINK_RE.exec(text2)) !== null) {
       const target = m[1].split("|")[0].trim();
       if (target) out.push(target);
     }
     return out;
   }
-  function flattenForMatch(text) {
+  function flattenForMatch(text2) {
     const flat = [];
     const map = [];
     let i = 0;
-    const src = String(text != null ? text : "");
+    const src = String(text2 != null ? text2 : "");
     while (i < src.length) {
       const ch = src[i];
       if (/\s/.test(ch)) {
@@ -24195,8 +24227,8 @@ ${sample}`
     return { flat: flat.join(""), map };
   }
   function keywordsOf(s) {
-    const text = String(s != null ? s : "");
-    const words = [...text.matchAll(/[\p{L}\p{N}]+/gu)].map((m) => m[0].toLowerCase());
+    const text2 = String(s != null ? s : "");
+    const words = [...text2.matchAll(/[\p{L}\p{N}]+/gu)].map((m) => m[0].toLowerCase());
     const out = [];
     for (const w of words) {
       if (/[\p{Script=Han}]/u.test(w)) {
@@ -24206,8 +24238,8 @@ ${sample}`
     }
     return out.slice(0, 24);
   }
-  function locateInText(text, needle, from = 0) {
-    const src = String(text != null ? text : "");
+  function locateInText(text2, needle, from = 0) {
+    const src = String(text2 != null ? text2 : "");
     const want = String(needle != null ? needle : "").trim();
     if (!src || !want) return null;
     const start = Math.max(0, Math.min(Number(from) || 0, src.length));
@@ -24246,8 +24278,8 @@ ${sample}`
     if (!best) return null;
     return { at: best.at, len: best.len, level: 3 };
   }
-  function expandBlock(text, at3, len) {
-    const src = String(text != null ? text : "");
+  function expandBlock(text2, at3, len) {
+    const src = String(text2 != null ? text2 : "");
     let s = Math.max(0, Math.min(Number(at3) || 0, src.length));
     let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
     const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
@@ -24265,9 +24297,9 @@ ${sample}`
     for (const line of String(content != null ? content : "").split(/\r?\n/)) {
       const m = /^(#{1,6})[ \t]+(.*)$/.exec(line);
       if (!m) continue;
-      const text = m[2].trim();
-      if (!text) continue;
-      if (text === want || normLite(text) === wantKey) return text;
+      const text2 = m[2].trim();
+      if (!text2) continue;
+      if (text2 === want || normLite(text2) === wantKey) return text2;
     }
     return null;
   }
@@ -24297,21 +24329,21 @@ ${sample}`
   }
   function sliceUnitText(content, s) {
     var _a2, _b2;
-    const text = stripFrontmatter2(content).trim();
-    if (!text) return "";
+    const text2 = stripFrontmatter2(content).trim();
+    if (!text2) return "";
     const unit = (s == null ? void 0 : s.unit) === "heading" || (s == null ? void 0 : s.unit) === "paragraph" ? s.unit : "whole";
     if (unit === "heading") {
-      const real = findHeadingText(text, String((_a2 = s == null ? void 0 : s.heading) != null ? _a2 : ""));
-      if (!real) return text;
-      return sliceHeadingSection(text, real);
+      const real = findHeadingText(text2, String((_a2 = s == null ? void 0 : s.heading) != null ? _a2 : ""));
+      if (!real) return text2;
+      return sliceHeadingSection(text2, real);
     }
     if (unit === "paragraph") {
-      const hit = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim() ? locateInText(text, String(s.quote)) : null;
-      if (!hit) return text;
-      const block = expandBlock(text, hit.at, hit.len);
-      return text.slice(block.at, block.at + block.len).trim();
+      const hit = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim() ? locateInText(text2, String(s.quote)) : null;
+      if (!hit) return text2;
+      const block = expandBlock(text2, hit.at, hit.len);
+      return text2.slice(block.at, block.at + block.len).trim();
     }
-    return text;
+    return text2;
   }
   async function suggestionUnitMarkdown(app, s) {
     var _a2;
@@ -24336,17 +24368,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
         var _a2, _b2, _c;
         const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, path);
         if (!file) return { blockId: "", ok: false };
-        const text = String((_c = await app.vault.read(file)) != null ? _c : "");
-        const hit = locateInText(text, quote);
+        const text2 = String((_c = await app.vault.read(file)) != null ? _c : "");
+        const hit = locateInText(text2, quote);
         if (!hit) return { blockId: "", ok: false };
-        const block = expandBlock(text, hit.at, hit.len);
-        const blockText = text.slice(block.at, block.at + block.len);
+        const block = expandBlock(text2, hit.at, hit.len);
+        const blockText = text2.slice(block.at, block.at + block.len);
         const existing = /\^([A-Za-z0-9-]+)\s*$/.exec(blockText);
         if (existing && existing[1].startsWith(BLOCK_ID_PREFIX)) return { blockId: existing[1], ok: true };
         const blockId = blockIdFor(path, blockText.replace(/\^([A-Za-z0-9-]+)\s*$/, "").trim());
         const trimmed = blockText.replace(/\s+$/, "");
-        const next = text.slice(0, block.at) + `${trimmed} ^${blockId}` + text.slice(block.at + block.len);
-        if (next !== text) await app.vault.modify(file, next);
+        const next = text2.slice(0, block.at) + `${trimmed} ^${blockId}` + text2.slice(block.at + block.len);
+        if (next !== text2) await app.vault.modify(file, next);
         return { blockId, ok: true };
       });
     } catch (e) {
@@ -24372,15 +24404,15 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function replaceAnchorWithAlias(body, anchor, target, subpath) {
     var _a2;
     const src = String(body != null ? body : "");
-    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
+    const text2 = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
     const core = idPath(target).replace(/\.md$/i, "");
-    if (!src || !text || !core) return null;
+    if (!src || !text2 || !core) return null;
     if (src.includes(`[[${core}`)) return src;
-    const hit = locateInText(src, text);
+    const hit = locateInText(src, text2);
     if (!hit) return null;
     if (hit.level === 3) return null;
     if (/\[\[|\]\]/.test(src.slice(hit.at, hit.at + hit.len))) return null;
-    const link = subpath ? `[[${core}#${subpath}|${text}]]` : `[[${core}|${text}]]`;
+    const link = subpath ? `[[${core}#${subpath}|${text2}]]` : `[[${core}|${text2}]]`;
     return src.slice(0, hit.at) + link + src.slice(hit.at + hit.len);
   }
   function buildQueryPrompt(anchors) {
@@ -24413,8 +24445,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       p++;
       out.push(`（${p}）${line}`);
     }
-    const text = out.join("\n");
-    return text.length > SUGGEST_LOCATE_TEXT_CAP ? text.slice(0, SUGGEST_LOCATE_TEXT_CAP) + "\n…（后文略）" : text;
+    const text2 = out.join("\n");
+    return text2.length > SUGGEST_LOCATE_TEXT_CAP ? text2.slice(0, SUGGEST_LOCATE_TEXT_CAP) + "\n…（后文略）" : text2;
   }
   function buildLocatePrompt(items) {
     const lines = [LOCATE_PROMPT_PREFIX, ""];
@@ -24455,13 +24487,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return null;
   }
   function takeArray(raw) {
-    const text = String(raw != null ? raw : "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
-    if (!text) return null;
+    const text2 = String(raw != null ? raw : "").replace(/```(?:json)?\s*/gi, "").replace(/```/g, "").trim();
+    if (!text2) return null;
     let value = null;
     try {
-      value = JSON.parse(text);
+      value = JSON.parse(text2);
     } catch (e) {
-      const m = text.match(/\[[\s\S]*\]/);
+      const m = text2.match(/\[[\s\S]*\]/);
       if (m) {
         try {
           value = JSON.parse(m[0]);
@@ -24644,8 +24676,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const prev = p.stage === "recall" ? STAGE_PERCENT.query : p.stage === "locate" ? STAGE_PERCENT.adopt : base;
     return Math.round(prev + (base - prev) * Math.min(1, Math.max(0, done / total)));
   }
-  function aiPrompt(text) {
-    return createAI().prompt(text, void 0, {
+  function aiPrompt(text2) {
+    return createAI().prompt(text2, void 0, {
       modelOptions: { reasoning_effort: SUGGEST_REASONING_EFFORT }
     });
   }
@@ -25001,10 +25033,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return false;
     }
   }
-  function waapi3(el, frames, opts) {
-    if (!el || reduced4() || typeof el.animate !== "function") return null;
+  function waapi3(el2, frames, opts) {
+    if (!el2 || reduced4() || typeof el2.animate !== "function") return null;
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -25020,36 +25052,36 @@ ${String(blockText != null ? blockText : "").trim()}`);
     timers3.forEach(clearTimeout);
     timers3.clear();
   }
-  function motionClosing(el) {
-    return !!el && el.dataset.bzMotionClosing === "1";
+  function motionClosing(el2) {
+    return !!el2 && el2.dataset.bzMotionClosing === "1";
   }
-  function abortOut(el) {
-    const run = outRuns.get(el);
+  function abortOut(el2) {
+    const run = outRuns.get(el2);
     if (!run) return;
-    outRuns.delete(el);
+    outRuns.delete(el2);
     run.abort();
   }
-  function sweepExit(el, id) {
+  function sweepExit(el2, id) {
     try {
-      if (typeof el.getAnimations !== "function") return;
-      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+      if (typeof el2.getAnimations !== "function") return;
+      for (const a of el2.getAnimations()) if (a.id === id) a.cancel();
     } catch (e) {
     }
   }
-  function runOut(el, id, frames, opts, done) {
+  function runOut(el2, id, frames, opts, done) {
     var _a2;
-    if (!el) {
+    if (!el2) {
       done();
       return;
     }
-    if (motionClosing(el)) return;
-    el.dataset.bzMotionClosing = "1";
+    if (motionClosing(el2)) return;
+    el2.dataset.bzMotionClosing = "1";
     let finished = false;
     let anim = null;
     const run = {
       abort: () => {
         run.aborted = true;
-        delete el.dataset.bzMotionClosing;
+        delete el2.dataset.bzMotionClosing;
         try {
           anim == null ? void 0 : anim.cancel();
         } catch (e) {
@@ -25057,19 +25089,19 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       aborted: false
     };
-    outRuns.set(el, run);
+    outRuns.set(el2, run);
     const finish = () => {
       if (finished || run.aborted) return;
       finished = true;
-      outRuns.delete(el);
-      delete el.dataset.bzMotionClosing;
+      outRuns.delete(el2);
+      delete el2.dataset.bzMotionClosing;
       try {
         anim == null ? void 0 : anim.cancel();
       } catch (e) {
       }
       done();
     };
-    anim = waapi3(el, frames, { ...opts, fill: "forwards", id });
+    anim = waapi3(el2, frames, { ...opts, fill: "forwards", id });
     if (!anim) {
       finish();
       return;
@@ -25295,10 +25327,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!ovl || reduced4()) return;
     const body = ovl.querySelector("#bz-kb-preview-body");
     if (body) {
-      [...body.children].forEach((el, i) => {
+      [...body.children].forEach((el2, i) => {
         if (i >= 12) return;
         waapi3(
-          el,
+          el2,
           [
             { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -25514,10 +25546,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     for (const pen of penPool) pen.remove();
     penPool.clear();
   }
-  function motionMetaSetValue(el) {
-    if (!el || reduced4()) return;
+  function motionMetaSetValue(el2) {
+    if (!el2 || reduced4()) return;
     waapi3(
-      el,
+      el2,
       [
         { opacity: 0.25, transform: "translateY(3px)", filter: "blur(3px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -25525,10 +25557,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
       { duration: M4.fast + 80, easing: E3.out, fill: "backwards" }
     );
   }
-  function motionContentArrive(el) {
-    if (!el || reduced4()) return;
+  function motionContentArrive(el2) {
+    if (!el2 || reduced4()) return;
     waapi3(
-      el,
+      el2,
       [{ filter: "blur(1.5px)" }, { filter: "blur(0px)" }],
       { duration: M4.fast + 60, easing: E3.out, fill: "backwards" }
     );
@@ -25701,8 +25733,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function motionTeardown3() {
     cancelPending3();
-    for (const [el, run] of [...outRuns.entries()]) {
-      outRuns.delete(el);
+    for (const [el2, run] of [...outRuns.entries()]) {
+      outRuns.delete(el2);
       run.abort();
     }
     motionPenOff();
@@ -25855,11 +25887,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const wiki = `[[${String(link != null ? link : "").trim().replace(/\.md$/i, "")}]]`;
     if (wiki === "[[]]") return src;
     if (alreadyLinked(src, link)) return src;
-    const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
-    if (text) {
-      const at3 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
-      if (at3 !== null && at3 >= 0) return src.slice(0, at3 + text.length) + wiki + src.slice(at3 + text.length);
-      const compact = text.replace(/\s+/g, "");
+    const text2 = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
+    if (text2) {
+      const at3 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text: text2 });
+      if (at3 !== null && at3 >= 0) return src.slice(0, at3 + text2.length) + wiki + src.slice(at3 + text2.length);
+      const compact = text2.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
       for (const len of [10, 6, 4, 2]) {
         const head = compact.slice(0, len);
@@ -25890,7 +25922,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function defaultDeps(over) {
     var _a2, _b2, _c, _d;
     return {
-      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el) => ({ w: el.offsetWidth || 0, h: el.offsetHeight || 0 }),
+      measure: (_a2 = over == null ? void 0 : over.measure) != null ? _a2 : (el2) => ({ w: el2.offsetWidth || 0, h: el2.offsetHeight || 0 }),
       notice: (_b2 = over == null ? void 0 : over.notice) != null ? _b2 : (msg, type) => notice(msg, type != null ? type : "info"),
       openNote: (_c = over == null ? void 0 : over.openNote) != null ? _c : (path) => {
         var _a3, _b3, _c2;
@@ -25899,22 +25931,22 @@ ${String(blockText != null ? blockText : "").trim()}`);
         } catch (e) {
         }
       },
-      writeClipboard: (_d = over == null ? void 0 : over.writeClipboard) != null ? _d : (text) => writeClipboard(text)
+      writeClipboard: (_d = over == null ? void 0 : over.writeClipboard) != null ? _d : (text2) => writeClipboard(text2)
     };
   }
-  async function writeClipboard(text) {
+  async function writeClipboard(text2) {
     var _a2, _b2;
     try {
       const nav = typeof navigator !== "undefined" ? navigator : null;
       if ((_a2 = nav == null ? void 0 : nav.clipboard) == null ? void 0 : _a2.writeText) {
-        await nav.clipboard.writeText(text);
+        await nav.clipboard.writeText(text2);
         return;
       }
     } catch (e) {
     }
     try {
       const ta = document.createElement("textarea");
-      ta.value = text;
+      ta.value = text2;
       ta.style.position = "fixed";
       ta.style.opacity = "0";
       document.body.appendChild(ta);
@@ -26146,24 +26178,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
     });
     st.win.addEventListener("mouseover", (e) => {
       var _a2, _b2, _c;
-      const el = e.target;
-      const dot = (_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge]");
+      const el2 = e.target;
+      const dot = (_a2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _a2.call(el2, "[data-mt-edge]");
       if (dot) {
         setHover(st, dot.getAttribute("data-mt-edge") || "", true);
         return;
       }
-      const edgeEl = (_b2 = el == null ? void 0 : el.closest) == null ? void 0 : _b2.call(el, ".bz-kb-mt-edge");
+      const edgeEl = (_b2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _b2.call(el2, ".bz-kb-mt-edge");
       if (edgeEl) {
         setHover(st, edgeEl.getAttribute("data-mt-key") || "", true);
         return;
       }
-      const nodeEl = (_c = el == null ? void 0 : el.closest) == null ? void 0 : _c.call(el, ".bz-kb-mt-node");
+      const nodeEl = (_c = el2 == null ? void 0 : el2.closest) == null ? void 0 : _c.call(el2, ".bz-kb-mt-node");
       if (nodeEl) setHover(st, edgeKeyTo(st, nodeEl.getAttribute("data-mt-id") || ""), true);
     });
     st.win.addEventListener("mouseout", (e) => {
       var _a2;
-      const el = e.target;
-      if ((_a2 = el == null ? void 0 : el.closest) == null ? void 0 : _a2.call(el, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
+      const el2 = e.target;
+      if ((_a2 = el2 == null ? void 0 : el2.closest) == null ? void 0 : _a2.call(el2, "[data-mt-edge], .bz-kb-mt-edge, .bz-kb-mt-node")) setHover(st, "", false);
     });
   }
   function num(v) {
@@ -26352,8 +26384,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (st.progressTimer) st.progressTimer.textContent = "0s";
     stopTimer(st);
     st.timerId = setInterval(() => {
-      const el = st.progressTimer;
-      if (el) el.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
+      const el2 = st.progressTimer;
+      if (el2) el2.textContent = `${Math.round((Date.now() - st.startedAt) / 1e3)}s`;
     }, 500);
   }
   function setProgress(st, p) {
@@ -26370,7 +26402,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.timerId = null;
   }
   function clearCanvas(st) {
-    for (const el of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    for (const el2 of Array.from(st.worldEl.querySelectorAll(".bz-kb-mt-node"))) el2.remove();
     st.svg.innerHTML = "";
     st.cards.clear();
     st.sizes.clear();
@@ -26425,13 +26457,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     dirEl.setAttribute("data-mt-dir", st.direction);
     const statusEl2 = st.win.querySelector("#bz-kb-mt-status");
     const culled = st.sizes.size ? countCulled(st) : 0;
-    let text;
+    let text2;
     let extra = "";
-    if (st.loading) text = mountStatusText("generating", st.cards.size === 0);
-    else if (st.run) text = mountStatusText(st.run.status);
-    else text = "本卡建议未跑（自动建议已关闭）";
+    if (st.loading) text2 = mountStatusText("generating", st.cards.size === 0);
+    else if (st.run) text2 = mountStatusText(st.run.status);
+    else text2 = "本卡建议未跑（自动建议已关闭）";
     if (!st.loading && culled > 0) extra = `<span class="bz-kb-mt-kind">· 图大，已按 ${LAYOUT_PARAMS.MAX_NODES} 张封顶</span>`;
-    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml2(text)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
+    statusEl2.innerHTML = `<span class="bz-kb-mt-status-t">${escapeHtml2(text2)}</span>${extra}${!st.loading && ((_c = st.run) == null ? void 0 : _c.status) === "no-index" ? '<button class="bz-kb-mt-btn is-mini" data-mt-act="build-index" title="打开第二大脑重建索引（绝不自动建）">去建索引</button>' : ""}`;
     const hint = st.win.querySelector("#bz-kb-mt-hint");
     hint.textContent = isMobileEnv() ? "点卡片血缘高亮 · 长按卡片出菜单 · 双指缩放 · 单指拖拽平移" : "点卡片血缘高亮（再点取消）· 右键菜单 · 拖拽平移 · 滚轮缩放 · 点标题折/展";
   }
@@ -26455,7 +26487,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   async function renderCanvas(st, motionFresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
-    for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
+    for (const el2 of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el2.remove();
     st.svg.innerHTML = "";
     st.cards.clear();
     st.sizes.clear();
@@ -26470,17 +26502,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const rootId = st.tree.root;
     const jobs = [];
     for (const node of nodes) {
-      const el = buildCard(st, node, rootId);
-      worldEl.appendChild(el);
-      st.cards.set(node.id, el);
-      jobs.push(fillBody(st, node, el));
+      const el2 = buildCard(st, node, rootId);
+      worldEl.appendChild(el2);
+      st.cards.set(node.id, el2);
+      jobs.push(fillBody(st, node, el2));
     }
     worldEl.appendChild(st.svg);
     await Promise.all(jobs);
     for (const node of nodes) {
-      const el = st.cards.get(node.id);
-      if (!el) continue;
-      const raw = st.deps.measure(el, node.kind);
+      const el2 = st.cards.get(node.id);
+      if (!el2) continue;
+      const raw = st.deps.measure(el2, node.kind);
       const w = (raw == null ? void 0 : raw.w) && raw.w > 0 ? raw.w : widthOf(st, node);
       const h = (raw == null ? void 0 : raw.h) && raw.h > 0 ? raw.h : (_b2 = HEIGHT_BY_KIND[node.kind]) != null ? _b2 : HEIGHT_BY_KIND.card;
       st.sizes.set(node.id, { w, h });
@@ -26499,14 +26531,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.pos = layout.pos;
     st.world = { w: layout.world.w, h: layout.world.h };
     for (const n of laid) {
-      const el = st.cards.get(n.id);
+      const el2 = st.cards.get(n.id);
       const p = layout.pos[n.id];
       if (!p) {
-        el.style.display = "none";
+        el2.style.display = "none";
         continue;
       }
-      el.style.left = `${p.x}px`;
-      el.style.top = `${p.y}px`;
+      el2.style.left = `${p.x}px`;
+      el2.style.top = `${p.y}px`;
     }
     const dockGroups = /* @__PURE__ */ new Map();
     for (const n of nodes) {
@@ -26519,8 +26551,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const parentEl = st.cards.get(parentId);
       if (!parentPos || !parentEl || parentEl.style.display === "none") {
         for (const n of group) {
-          const el = st.cards.get(n.id);
-          if (el) el.style.display = "none";
+          const el2 = st.cards.get(n.id);
+          if (el2) el2.style.display = "none";
         }
         continue;
       }
@@ -26529,12 +26561,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
       let top = parentPos.y + ph + DOCK_GAP;
       let right = parentPos.x + pw;
       for (const n of group) {
-        const el = st.cards.get(n.id);
+        const el2 = st.cards.get(n.id);
         const size = st.sizes.get(n.id);
-        if (!el) continue;
-        el.style.left = `${parentPos.x}px`;
-        el.style.top = `${top}px`;
-        el.style.width = `${pw}px`;
+        if (!el2) continue;
+        el2.style.left = `${parentPos.x}px`;
+        el2.style.top = `${top}px`;
+        el2.style.width = `${pw}px`;
         if (size) size.w = pw;
         top += ((_h = size == null ? void 0 : size.h) != null ? _h : HEIGHT_BY_KIND.note) + DOCK_GAP;
         if (top > st.world.h) st.world.h = top;
@@ -26563,7 +26595,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function buildCard(st, node, rootId) {
     var _a2, _b2, _c;
-    const el = document.createElement("div");
+    const el2 = document.createElement("div");
     const ghost = st.ghosts.has(node.id);
     const stale = !!node.missing || ghost && !ghostTargetExists(st, node);
     const classes = ["bz-kb-mt-node", `is-${node.kind}`];
@@ -26573,11 +26605,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (ghost) classes.push("is-ghost");
     if (node.id === rootId) classes.push("is-root");
     if (st.folded.has(node.id)) classes.push("is-folded");
-    el.className = classes.join(" ");
-    el.setAttribute("data-mt-id", node.id);
-    el.setAttribute("data-mt-kind", node.kind);
-    el.setAttribute("data-mt-source", node.source);
-    el.style.width = `${widthOf(st, node)}px`;
+    el2.className = classes.join(" ");
+    el2.setAttribute("data-mt-id", node.id);
+    el2.setAttribute("data-mt-kind", node.kind);
+    el2.setAttribute("data-mt-source", node.source);
+    el2.style.width = `${widthOf(st, node)}px`;
     const head = document.createElement("div");
     head.className = "bz-kb-mt-head";
     const ttl = document.createElement("span");
@@ -26598,25 +26630,25 @@ ${String(blockText != null ? blockText : "").trim()}`);
         head.appendChild(why);
       }
     }
-    el.appendChild(head);
+    el2.appendChild(head);
     const body = document.createElement("div");
     body.className = "bz-kb-mt-body";
-    el.appendChild(body);
+    el2.appendChild(body);
     ttl.addEventListener("click", (e) => {
       e.stopPropagation();
       if (st.folded.has(node.id)) st.folded.delete(node.id);
       else st.folded.add(node.id);
       const folded = st.folded.has(node.id);
-      el.classList.toggle("is-folded", folded);
-      const body2 = el.querySelector(".bz-kb-mt-body");
-      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el);
+      el2.classList.toggle("is-folded", folded);
+      const body2 = el2.querySelector(".bz-kb-mt-body");
+      if (!folded && body2 && !body2.querySelector("*")) void fillBody(st, node, el2);
     });
-    return el;
+    return el2;
   }
-  function chip(text, kind) {
+  function chip(text2, kind) {
     const s = document.createElement("span");
     s.className = `bz-kb-mt-chip ${kind}`;
-    s.textContent = text;
+    s.textContent = text2;
     return s;
   }
   async function fillBody(st, node, cardEl) {
@@ -26830,29 +26862,29 @@ ${String(blockText != null ? blockText : "").trim()}`);
       /* NodeFilter.SHOW_TEXT */
     );
     const parts = [];
-    let text = "";
+    let text2 = "";
     let cur = walker.nextNode();
     while (cur) {
       const data = (_a2 = cur.data) != null ? _a2 : "";
       if (data) {
-        parts.push({ node: cur, start: text.length });
-        text += data;
+        parts.push({ node: cur, start: text2.length });
+        text2 += data;
       }
       cur = walker.nextNode();
     }
-    return { text, parts };
+    return { text: text2, parts };
   }
-  function locateInText2(text, needles, from) {
-    if (!text) return null;
-    const start = Math.min(Math.max(0, from), text.length);
+  function locateInText2(text2, needles, from) {
+    if (!text2) return null;
+    const start = Math.min(Math.max(0, from), text2.length);
     for (const needle of needles) {
       if (!needle) continue;
-      const seg = text.slice(start);
+      const seg = text2.slice(start);
       if (seg) {
         const rel = relocateAnchor(seg, { from: 0, to: needle.length, text: needle });
         if (rel !== null && rel >= 0) return { at: start + rel, len: needle.length };
       }
-      const abs = relocateAnchor(text, { from: 0, to: needle.length, text: needle });
+      const abs = relocateAnchor(text2, { from: 0, to: needle.length, text: needle });
       if (abs !== null && abs >= 0) return { at: abs, len: needle.length };
     }
     return null;
@@ -26864,8 +26896,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (n.attached) continue;
       const p = st.pos[n.id];
       const s = st.sizes.get(n.id);
-      const el = st.cards.get(n.id);
-      if (!p || !s || !el || el.style.display === "none") continue;
+      const el2 = st.cards.get(n.id);
+      if (!p || !s || !el2 || el2.style.display === "none") continue;
       boxes.push({ id: n.id, x: p.x, y: p.y, w: s.w, h: s.h });
     }
     const boxIds = new Set(boxes.map((b) => b.id));
@@ -26896,8 +26928,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       const key = (_a3 = keys.get(id)) != null ? _a3 : `e${i}`;
       const bearerId = st.direction === "downstream" ? r.from : r.to;
       const otherId = st.direction === "downstream" ? r.to : r.from;
-      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el) => {
-        if (el.getAttribute("data-mt-to") === otherId) el.setAttribute("data-mt-edge", key);
+      (_b2 = st.cards.get(bearerId)) == null ? void 0 : _b2.querySelectorAll("[data-mt-to]").forEach((el2) => {
+        if (el2.getAttribute("data-mt-to") === otherId) el2.setAttribute("data-mt-edge", key);
       });
       const colorKind = (_c = kindById.get(st.direction === "downstream" ? r.to : r.from)) != null ? _c : "para";
       const color = mountKindColor(colorKind);
@@ -26934,13 +26966,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const sel = st.selected;
     const dockSelected = !!sel && !!((_a2 = st.cards.get(sel)) == null ? void 0 : _a2.classList.contains("is-dock"));
     const set = sel && !dockSelected ? lineageOf((_b2 = st.tree.edges) != null ? _b2 : [], sel) : null;
-    for (const [id, el] of st.cards) {
-      el.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
-      if (!set || el.classList.contains("is-dock")) continue;
-      if (id === sel) el.classList.add("is-sel");
-      else if (set.anc.has(id)) el.classList.add("is-anc");
-      else if (set.desc.has(id)) el.classList.add("is-desc");
-      else el.classList.add("is-dim");
+    for (const [id, el2] of st.cards) {
+      el2.classList.remove("is-sel", "is-anc", "is-desc", "is-dim");
+      if (!set || el2.classList.contains("is-dock")) continue;
+      if (id === sel) el2.classList.add("is-sel");
+      else if (set.anc.has(id)) el2.classList.add("is-anc");
+      else if (set.desc.has(id)) el2.classList.add("is-desc");
+      else el2.classList.add("is-dim");
     }
     for (const e of st.edges) {
       const path = st.svg.querySelector(`.bz-kb-mt-edge[data-mt-key="${cssEscape(e.key)}"]`);
@@ -26957,7 +26989,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function setHover(st, key, on) {
     var _a2;
     if (!key) {
-      st.win.querySelectorAll(".is-hot").forEach((el) => el.classList.remove("is-hot"));
+      st.win.querySelectorAll(".is-hot").forEach((el2) => el2.classList.remove("is-hot"));
       return;
     }
     const edge = st.edges.find((e) => e.key === key);
@@ -26969,9 +27001,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ...Array.from(st.win.querySelectorAll(`[data-mt-edge="${cssEscape(key)}"]`)),
       (_a2 = st.cards.get(otherId)) != null ? _a2 : null
     ];
-    for (const el of list) {
-      if (!el) continue;
-      el.classList.toggle("is-hot", on);
+    for (const el2 of list) {
+      if (!el2) continue;
+      el2.classList.toggle("is-hot", on);
     }
   }
   function cssEscape(s) {
@@ -27106,8 +27138,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return;
     }
     if (act === "copy") {
-      const text = mountLinkText(node);
-      void st.deps.writeClipboard(text).then(() => st.deps.notice(`已复制：${text}`, "success")).catch(() => st.deps.notice("复制失败：剪贴板不可用", "error"));
+      const text2 = mountLinkText(node);
+      void st.deps.writeClipboard(text2).then(() => st.deps.notice(`已复制：${text2}`, "success")).catch(() => st.deps.notice("复制失败：剪贴板不可用", "error"));
       return;
     }
     if (act === "root") {
@@ -27155,11 +27187,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
         const file = (_b3 = (_a3 = app == null ? void 0 : app.vault) == null ? void 0 : _a3.getAbstractFileByPath) == null ? void 0 : _b3.call(_a3, rootPath);
         if (!file) return;
         found = true;
-        const text = await app.vault.read(file);
-        const aliasNext = replaceAnchorWithAlias(text, ghost.anchor, ghost.target, suggestionSubpath(shape));
+        const text2 = await app.vault.read(file);
+        const aliasNext = replaceAnchorWithAlias(text2, ghost.anchor, ghost.target, suggestionSubpath(shape));
         if (aliasNext !== null) written = `[[${linkInner}|${anchorText}]]`;
-        const next = aliasNext != null ? aliasNext : insertLinkAtAnchor(text, ghost.anchor, linkInner);
-        if (next !== text) {
+        const next = aliasNext != null ? aliasNext : insertLinkAtAnchor(text2, ghost.anchor, linkInner);
+        if (next !== text2) {
           await app.vault.modify(file, next);
           changed = true;
         }
@@ -27279,18 +27311,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/knowledge/video-meta.ts
-  function isBiliUrl(text) {
-    const m = text.match(/^https?:\/\/([^/?#]+)/i);
+  function isBiliUrl(text2) {
+    const m = text2.match(/^https?:\/\/([^/?#]+)/i);
     return !!m && BILI_HOST_RE.test(m[1].toLowerCase().replace(/^www\./i, ""));
   }
   function parseBvid(input) {
     const m = String(input != null ? input : "").match(BVID_RE);
     return m ? m[0] : null;
   }
-  function parseJsonText(text) {
-    if (!text) return null;
+  function parseJsonText(text2) {
+    if (!text2) return null;
     try {
-      return JSON.parse(text);
+      return JSON.parse(text2);
     } catch (e) {
       return null;
     }
@@ -27405,21 +27437,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return { bvid, meta: null };
   }
   async function fetchVideoMeta(input) {
-    const text = String(input != null ? input : "").trim();
-    if (!text) return null;
-    const bvid = parseBvid(text);
+    const text2 = String(input != null ? input : "").trim();
+    if (!text2) return null;
+    const bvid = parseBvid(text2);
     if (bvid) {
       const viaApi = await fetchFromViewApi(bvid);
       if (viaApi) return { ...viaApi, bvid: viaApi.bvid || bvid };
-      if (!isBiliUrl(text)) return null;
-      const page2 = await fetchFromPage(text);
+      if (!isBiliUrl(text2)) return null;
+      const page2 = await fetchFromPage(text2);
       if (!page2) return null;
       if (!page2.meta && !page2.bvid) return null;
       const known = page2.bvid || bvid;
       return { ...page2.meta || {}, bvid: page2.meta && page2.meta.bvid || known };
     }
-    if (!isUrlLikeSourceText(text)) return null;
-    const url = /^https?:\/\//i.test(text) ? text : `https://${text}`;
+    if (!isUrlLikeSourceText(text2)) return null;
+    const url = /^https?:\/\//i.test(text2) ? text2 : `https://${text2}`;
     if (!isBiliUrl(url)) return null;
     const page = await fetchFromPage(url);
     if (!page) return null;
@@ -27431,8 +27463,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return page.bvid && !page.meta.bvid ? { ...page.meta, bvid: page.bvid } : page.meta;
   }
   function needsBvidRepair(url) {
-    const text = String(url != null ? url : "").trim();
-    return !!text && isBiliUrl(text) && !parseBvid(text);
+    const text2 = String(url != null ? url : "").trim();
+    return !!text2 && isBiliUrl(text2) && !parseBvid(text2);
   }
   async function isCookieLoggedIn(cookie) {
     const c = String(cookie != null ? cookie : "").trim();
@@ -27662,9 +27694,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const base = String(path || "").replace(/\\/g, "/").split("/").pop() || "";
     return stripMdExt(base) || String(path || "");
   }
-  function parseRelatedNames(text) {
+  function parseRelatedNames(text2) {
     var _a2;
-    const lines = String(text != null ? text : "").split(/\r?\n/);
+    const lines = String(text2 != null ? text2 : "").split(/\r?\n/);
     if (((_a2 = lines[0]) == null ? void 0 : _a2.trim()) !== "---") return [];
     const out = [];
     let inRelated = false;
@@ -27748,9 +27780,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const d2 = new Date(s);
     return d2.valueOf();
   }
-  function stripFrontmatter3(text) {
-    const m = text.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-    return text.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
+  function stripFrontmatter3(text2) {
+    const m = text2.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    return text2.slice(m ? m[0].length : 0).replace(/^\r?\n+/, "");
   }
   function knowledgeSettingsSchema(opts) {
     let reloadWarned = false;
@@ -28862,8 +28894,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (title) title.textContent = inHistory ? "历 史" : "影 像";
           if (top) top.textContent = inHistory ? "VIDEO · ARCHIVE" : "VIDEO · TO LITERATURE";
           const show = (sel, v) => {
-            const el = q(p, sel);
-            if (el) el.style.display = v ? "" : "none";
+            const el2 = q(p, sel);
+            if (el2) el2.style.display = v ? "" : "none";
           };
           show("#lit-btn-video-add", !inHistory);
           show("#lit-btn-video-run", !inHistory && !mobile);
@@ -28989,14 +29021,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this._syncRunButton(active2);
         }
         _syncStatusCounts(tasks) {
-          const el = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
-          if (!el) return;
+          const el2 = this.videoPopup ? q(this.videoPopup, "#lit-video-counts") : null;
+          if (!el2) return;
           const count = (s) => tasks.filter((t) => t.status === s).length;
           const parts = [];
           if (count("pending")) parts.push(`${count("pending")} 待处理`);
           if (count("processing")) parts.push(`${count("processing")} 处理中`);
           if (count("failed")) parts.push(`${count("failed")} 失败`);
-          el.textContent = parts.join(" · ");
+          el2.textContent = parts.join(" · ");
         }
         /** 单钮态机：空闲 play / 运行中 square（终止靠 title hover 区分），移动端整钮隐藏 */
         _syncRunButton(tasks) {
@@ -29560,12 +29592,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this._paintRange(which);
         }
         /** 解析态提示行（解析中/失败原因；null = 隐藏） */
-        _setResolveState(text, kind = "error") {
-          const el = this.addPopup ? q(this.addPopup, "#lit-add-rstate") : null;
-          if (!el) return;
-          el.style.display = text ? "" : "none";
-          el.textContent = text || "";
-          el.classList.toggle("is-error", !!text && kind === "error");
+        _setResolveState(text2, kind = "error") {
+          const el2 = this.addPopup ? q(this.addPopup, "#lit-add-rstate") : null;
+          if (!el2) return;
+          el2.style.display = text2 ? "" : "none";
+          el2.textContent = text2 || "";
+          el2.classList.toggle("is-error", !!text2 && kind === "error");
         }
         /** 分P 切换（ADR-0133）：量程与范围重置为全选，档位按该 P 的 cid 静默重查（未登录/失败 → 清档回落固定列表） */
         async _switchAddPage(p) {
@@ -30061,8 +30093,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 原「大段文字让用户确认后再生成」的差异取消，showEntry 里的自动生成改挂 term + passage 两态。
          * opts（issue 329）：text/images/onCreated 预填。
          */
-        showPassageEntry(text, src, opts) {
-          this.showEntry("passage", text, src, opts);
+        showPassageEntry(text2, src, opts) {
+          this.showEntry("passage", text2, src, opts);
         }
         /**
          * 打开「图版」录入（可放多张图，AI 读图成文，issue 312/313）；来源行与名词/段落同构（ADR-0116）。
@@ -30080,7 +30112,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * opts（issue 329）：images 在全新态就位后预填进内存（等价粘贴路径）；onCreated 挂到确认写入——
          * 有回调时写入成功**不自动打开笔记**（ADR-0144 工具框流程：不打断阅读），路径交调用方处置。
          */
-        showEntry(mode, text, src, opts) {
+        showEntry(mode, text2, src, opts) {
           var _a2, _b2;
           if (!this.termPopup || !this.termMask) return;
           this.entryMode = mode;
@@ -30099,7 +30131,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (titleEl) titleEl.textContent = mode === "passage" ? "段落" : mode === "image" ? "图版" : "名词";
           const input = q(this.termPopup, "#lit-term-input");
           const area = q(this.termPopup, "#lit-passage-input");
-          const value = (text != null ? text : "").trim();
+          const value = (text2 != null ? text2 : "").trim();
           if (input) input.value = mode === "term" ? value : "";
           if (area) area.value = mode === "passage" ? value : "";
           this.termSrcReset(q(this.termPopup, "#lit-term-src"));
@@ -30391,51 +30423,51 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 正文区渲染：占位灰字 / 已流入正文共用同一个容器（textContent 单源）。
          * 值没变就不动 DOM——每帧都写会让流式期间的排版反复重排。
          */
-        setTermContent(text, pending) {
-          const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
-          if (!el) return;
-          if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
-          const wasPending = el.classList.contains("bz-lit-term-pending");
-          el.classList.toggle("bz-lit-term-pending", pending);
-          el.textContent = text;
-          if (wasPending && !pending && text) motionContentArrive(el);
+        setTermContent(text2, pending) {
+          const el2 = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
+          if (!el2) return;
+          if (el2.textContent === text2 && el2.classList.contains("bz-lit-term-pending") === pending) return;
+          const wasPending = el2.classList.contains("bz-lit-term-pending");
+          el2.classList.toggle("bz-lit-term-pending", pending);
+          el2.textContent = text2;
+          if (wasPending && !pending && text2) motionContentArrive(el2);
         }
         /**
          * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
          * 在值到达之前统一挂这一句灰字，与正文区的「正在生成…」同语气。
          */
-        setTermMetaPending(sel, text = "分析中…") {
-          const el = this.termPopup ? q(this.termPopup, sel) : null;
-          if (!el) return;
-          el.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text}`;
-          el.classList.add("bz-lit-meta-pending");
+        setTermMetaPending(sel, text2 = "分析中…") {
+          const el2 = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el2) return;
+          el2.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text2}`;
+          el2.classList.add("bz-lit-meta-pending");
         }
         /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
-        setTermMetaValue(sel, text) {
-          const el = this.termPopup ? q(this.termPopup, sel) : null;
-          if (!el) return;
-          const wasPending = el.classList.contains("bz-lit-meta-pending");
-          el.textContent = text;
-          el.classList.remove("bz-lit-meta-pending");
-          if (wasPending) motionMetaSetValue(el);
+        setTermMetaValue(sel, text2) {
+          const el2 = this.termPopup ? q(this.termPopup, sel) : null;
+          if (!el2) return;
+          const wasPending = el2.classList.contains("bz-lit-meta-pending");
+          el2.textContent = text2;
+          el2.classList.remove("bz-lit-meta-pending");
+          if (wasPending) motionMetaSetValue(el2);
         }
         /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
         /**
          * 进入编辑态：展示态 span **就地**换成同字号输入框（不跳布局），回车 / 失焦提交、ESC 放弃。
          * 领域行额外挂联想候选（见 domainCandidates）。已在编辑态（里面有 input）时不再套一层。
          */
-        beginMetaEdit(el, field) {
+        beginMetaEdit(el2, field) {
           var _a2;
-          if (!this.termPopup || el.querySelector("input")) return;
-          const cur = ((_a2 = el.textContent) != null ? _a2 : "").trim();
-          el.classList.remove("is-editable");
-          el.textContent = "";
+          if (!this.termPopup || el2.querySelector("input")) return;
+          const cur = ((_a2 = el2.textContent) != null ? _a2 : "").trim();
+          el2.classList.remove("is-editable");
+          el2.textContent = "";
           const input = document.createElement("input");
           input.type = "text";
           input.className = "bz-lit-term-meta-edit";
           input.value = cur === "—" ? "" : cur;
           input.placeholder = field === "term" ? "术语" : field === "title" ? "标题" : "领域";
-          el.appendChild(input);
+          el2.appendChild(input);
           let done = false;
           const finish = (commit) => {
             var _a3, _b2;
@@ -30445,8 +30477,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             (_b2 = this.termDomainSuggest) == null ? void 0 : _b2.close();
             this.termDomainSuggest = null;
             const raw = input.value.trim();
-            el.textContent = "";
-            el.classList.add("is-editable");
+            el2.textContent = "";
+            el2.classList.add("is-editable");
             if (commit) this.commitMetaEdit(field, raw);
             else this.paintMetaField(field);
           };
@@ -30500,8 +30532,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           var _a2, _b2, _c, _d, _e;
           if (!this.termPopup) return;
           const sel = field === "term" ? "#lit-term-meta-term" : field === "title" ? "#lit-entry-meta-title" : "#lit-term-meta-domain";
-          const text = field === "term" ? ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : String((_e = field === "title" ? (_c = this.termPreview) == null ? void 0 : _c.title : (_d = this.termPreview) == null ? void 0 : _d.domain) != null ? _e : "").trim();
-          this.setTermMetaValue(sel, text || "—");
+          const text2 = field === "term" ? ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : String((_e = field === "title" ? (_c = this.termPreview) == null ? void 0 : _c.title : (_d = this.termPreview) == null ? void 0 : _d.domain) != null ? _e : "").trim();
+          this.setTermMetaValue(sel, text2 || "—");
         }
         /**
          * 领域候选（用户拍板口径）：**已用过的领域 ∪ 设置里的词表**，去重后按使用频次降序，
@@ -30533,8 +30565,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 面板必须让「正在跑」这件事看得见（而不是一行静止的灰字）。
          */
         entryRelRefresh() {
-          const el = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
-          if (!el) return;
+          const el2 = this.termPopup ? q(this.termPopup, "#lit-term-meta-rel") : null;
+          if (!el2) return;
           const st = this.entryRelState;
           const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
           if (row) {
@@ -30542,47 +30574,47 @@ ${String(blockText != null ? blockText : "").trim()}`);
             row.style.display = st === "idle" ? "none" : "";
             if (wasHidden && st !== "idle") motionRelRowIn(row);
           }
-          el.className = "bz-lit-term-meta-v";
+          el2.className = "bz-lit-term-meta-v";
           if (st === "loading") {
-            el.classList.add("bz-lit-rel-idle");
-            el.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
+            el2.classList.add("bz-lit-rel-idle");
+            el2.innerHTML = '<span class="bz-lit-rel-bar" aria-hidden="true"></span>分析中…';
             return;
           }
           if (st === "done") {
-            el.classList.add("bz-lit-rel-ok");
+            el2.classList.add("bz-lit-rel-ok");
             const items = this.entryPreviewItems;
             if (!items.length) {
-              el.textContent = this.entryRelText || "已建立关联";
+              el2.textContent = this.entryRelText || "已建立关联";
               return;
             }
-            el.innerHTML = items.map(
+            el2.innerHTML = items.map(
               (it, i) => `<span class="bz-lit-rel-chip"><span>${esc3(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
             ).join("");
-            motionRelChips(el);
+            motionRelChips(el2);
             return;
           }
           if (st === "empty") {
-            el.classList.add("bz-lit-rel-idle");
-            el.textContent = "暂无关联";
+            el2.classList.add("bz-lit-rel-idle");
+            el2.textContent = "暂无关联";
             return;
           }
           if (st === "queued") {
-            el.classList.add("bz-lit-rel-idle");
-            el.textContent = "检索服务不可用，延后至桌面端处理";
+            el2.classList.add("bz-lit-rel-idle");
+            el2.textContent = "检索服务不可用，延后至桌面端处理";
             return;
           }
           if (st === "failed") {
-            el.classList.add("bz-lit-rel-err");
-            el.textContent = "关联失败";
+            el2.classList.add("bz-lit-rel-err");
+            el2.textContent = "关联失败";
             return;
           }
           if (st === "off") {
-            el.classList.add("bz-lit-rel-idle");
-            el.textContent = "自动双链未开启";
+            el2.classList.add("bz-lit-rel-idle");
+            el2.textContent = "自动双链未开启";
             return;
           }
-          el.classList.add("bz-lit-rel-idle");
-          el.textContent = "—";
+          el2.classList.add("bz-lit-rel-idle");
+          el2.textContent = "—";
         }
         /**
          * 点掉一条关联候选（建议 5）：本轮不写它——`entryPreviewPicks`（写入用）与
@@ -30767,8 +30799,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (this.termSaving) return;
           const passage = mode === "passage";
-          const text = passage ? ((_b2 = (_a2 = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
-          if (!text) {
+          const text2 = passage ? ((_b2 = (_a2 = q(this.termPopup, "#lit-passage-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim() : ((_d = (_c = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _c.value) != null ? _d : "").trim();
+          if (!text2) {
             notice(passage ? "请粘贴要整理的段落" : "请输入名词", "error");
             return;
           }
@@ -30780,10 +30812,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.beginTermPreview();
           try {
             const hooks = { signal: ac.signal, onProgress: (f) => this.applyDraftFields(f) };
-            const draft = passage ? await generatePassageDraft(text, hooks) : await generateTermDraft(text, hooks);
+            const draft = passage ? await generatePassageDraft(text2, hooks) : await generateTermDraft(text2, hooks);
             if (this.termGenAbort !== ac) return;
             this.finishTermPreview(draft);
-            this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text);
+            this.runEntryRelPreview(draft.summary, this.entryHeadTitle() || text2);
           } catch (e) {
             if (this.termGenAbort !== ac) return;
             this.handleTermGenFailure(e);
@@ -31054,8 +31086,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!this.termPopup) return false;
           if (this.termBusy || this.termPreview || this.termDraftBroken) return true;
           if (this.entryMode === "image") return this.entryImages.length > 0;
-          const el = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
-          return !!(el && el.value.trim());
+          const el2 = this.entryMode === "passage" ? q(this.termPopup, "#lit-passage-input") : q(this.termPopup, "#lit-term-input");
+          return !!(el2 && el2.value.trim());
         }
         /** 录入面板关闭请求（issue 326）：脏 → 风格化二次确认（ADR-0125 统一壳 + 知识盒域皮）；干净态直关。
          *  遮罩点击与 ESC 都走这里；确认写入成功路径直接调 hideTermEntry（不自带确认）。 */
@@ -31085,10 +31117,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
             notice("文献笔记不存在：" + path, "error");
           }
         }
-        async copyText(text) {
+        async copyText(text2) {
           try {
-            await navigator.clipboard.writeText(text);
-            notice("已复制：" + text, "success");
+            await navigator.clipboard.writeText(text2);
+            notice("已复制：" + text2, "success");
           } catch (e) {
             notice("复制失败", "error");
           }
@@ -31137,8 +31169,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.termPreview = null;
           this.entryImages = [];
           this.entryOnCreated = null;
-          for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
-            if (el && el.parentNode) el.parentNode.removeChild(el);
+          for (const el2 of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.termMask, this.termPopup, this.previewHostEl]) {
+            if (el2 && el2.parentNode) el2.parentNode.removeChild(el2);
           }
           this.previewHostEl = null;
           this.mask = null;
@@ -31488,18 +31520,18 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function openPassageNote(app, opts) {
     var _a2, _b2, _c;
     ensureKnowledge(app);
-    let text;
+    let text2;
     let src;
     const explicit = String((_a2 = opts == null ? void 0 : opts.text) != null ? _a2 : "").trim();
-    if (explicit) text = explicit;
+    if (explicit) text2 = explicit;
     if (opts == null ? void 0 : opts.source) src = prefillSource(opts.source);
     const view = app.workspace.getActiveViewOfType(MarkdownView);
-    if (!text) text = ((_c = (_b2 = view == null ? void 0 : view.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
+    if (!text2) text2 = ((_c = (_b2 = view == null ? void 0 : view.editor) == null ? void 0 : _b2.getSelection()) == null ? void 0 : _c.trim()) || void 0;
     if (!src) {
       const file = view == null ? void 0 : view.file;
       if (file && file.extension === "md") src = { kind: "note", path: file.path };
     }
-    uiManager == null ? void 0 : uiManager.showPassageEntry(text, src, opts);
+    uiManager == null ? void 0 : uiManager.showPassageEntry(text2, src, opts);
   }
   function openImageNote(app, opts) {
     ensureKnowledge(app);
@@ -33396,8 +33428,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         renderReport(report, false);
         if (!isPanelVisible()) {
           const counts = severityCounts(report);
-          const text = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn + counts.info ? `体检完成：${counts.warn + counts.info} 处建议处理` : "体检完成：未发现问题";
-          notify(text, { action: { label: "查看", onClick: () => hostApp && openDataCheckup(hostApp) } });
+          const text2 = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn + counts.info ? `体检完成：${counts.warn + counts.info} 处建议处理` : "体检完成：未发现问题";
+          notify(text2, { action: { label: "查看", onClick: () => hostApp && openDataCheckup(hostApp) } });
         }
       } else renderBody();
     } catch (e) {
@@ -33731,14 +33763,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/core/sha256.ts
-  function toBytes(text) {
-    return new TextEncoder().encode(text);
+  function toBytes(text2) {
+    return new TextEncoder().encode(text2);
   }
-  function normalizeEol(text) {
-    return String(text != null ? text : "").replace(/\r\n?/g, "\n");
+  function normalizeEol(text2) {
+    return String(text2 != null ? text2 : "").replace(/\r\n?/g, "\n");
   }
-  function sha256Hex(text) {
-    const bytes = toBytes(String(text != null ? text : ""));
+  function sha256Hex(text2) {
+    const bytes = toBytes(String(text2 != null ? text2 : ""));
     const dataLen = bytes.length;
     const padded = new Uint8Array((dataLen + 8 >> 6) + 1 << 6);
     padded.set(bytes);
@@ -33786,8 +33818,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, "0")).join("");
   }
-  function textSha256(text) {
-    return sha256Hex(normalizeEol(text));
+  function textSha256(text2) {
+    return sha256Hex(normalizeEol(text2));
   }
   var K;
   var init_sha256 = __esm({
@@ -33907,21 +33939,21 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     for (const url of remotesFor(fileName)) {
       try {
         const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (!validate(text)) {
+        const text2 = String(res.text || "");
+        if (!validate(text2)) {
           lastErr = `${url} 返回内容不是${label}${unit}`;
           continue;
         }
-        return text;
+        return text2;
       } catch (e) {
         lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
       }
     }
     throw new Error(`${label}下载失败：${lastErr}`);
   }
-  async function writeAssetText(app, fileName, text) {
+  async function writeAssetText(app, fileName, text2) {
     await ensureDir(app, fileName);
-    await app.vault.adapter.write(downloadsVaultPath(app, fileName), text);
+    await app.vault.adapter.write(downloadsVaultPath(app, fileName), text2);
     emitDomainEvent(DOWNLOADS_CHANGED_EVENT, { fileName });
   }
   async function ensureAssetWithHash(app, fileName, expected, label) {
@@ -33932,13 +33964,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     for (const url of remotesFor(fileName)) {
       try {
         const res = await requestUrl({ url, method: "GET", throw: true });
-        const text = String(res.text || "");
-        if (want && textSha256(text) !== want) {
+        const text2 = String(res.text || "");
+        if (want && textSha256(text2) !== want) {
           lastErr = `${url} 内容 sha256 不匹配（可能被篡改或版本错位）`;
           continue;
         }
-        await writeAssetText(app, fileName, text);
-        return text;
+        await writeAssetText(app, fileName, text2);
+        return text2;
       } catch (e) {
         lastErr = `${url} → ${(e == null ? void 0 : e.message) || String(e)}`;
       }
@@ -33953,8 +33985,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   async function downloadAsset(app, fileName, validate, label) {
-    const text = await fetchAssetText(fileName, validate, label, "页");
-    await writeAssetText(app, fileName, text);
+    const text2 = await fetchAssetText(fileName, validate, label, "页");
+    await writeAssetText(app, fileName, text2);
   }
   async function readAsset(app, fileName) {
     try {
@@ -33965,13 +33997,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   async function ensureAssetReady(app, fileName, validate, label) {
-    let text = await readAsset(app, fileName);
-    if (!text) {
+    let text2 = await readAsset(app, fileName);
+    if (!text2) {
       await downloadAsset(app, fileName, validate, label);
-      text = await readAsset(app, fileName);
+      text2 = await readAsset(app, fileName);
     }
-    if (!text) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
-    return text;
+    if (!text2) throw new Error(`${label}下载后读取失败：插件目录写入异常`);
+    return text2;
   }
   async function refreshAsset(app, fileName, validate, label, expectedSha256) {
     try {
@@ -33980,11 +34012,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const local2 = await readAsset(app, fileName);
         if (local2 !== null && textSha256(local2) === want) return null;
       }
-      const text = await fetchAssetText(fileName, validate, label, "页");
+      const text2 = await fetchAssetText(fileName, validate, label, "页");
       const local = await readAsset(app, fileName);
-      if (local !== null && textSha256(text) === textSha256(local)) return null;
-      await writeAssetText(app, fileName, text);
-      return text;
+      if (local !== null && textSha256(text2) === textSha256(local)) return null;
+      await writeAssetText(app, fileName, text2);
+      return text2;
     } catch (e) {
       return null;
     }
@@ -34020,11 +34052,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sha256: e.sha256.toLowerCase()
     };
   }
-  function parseDownloadManifest(text) {
-    if (!text) return null;
+  function parseDownloadManifest(text2) {
+    if (!text2) return null;
     let raw;
     try {
-      raw = JSON.parse(text);
+      raw = JSON.parse(text2);
     } catch (e) {
       return null;
     }
@@ -34073,14 +34105,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function refreshManifest(app) {
     const previous = await cachedManifest(app);
-    const text = await fetchAssetText(
+    const text2 = await fetchAssetText(
       MANIFEST_FILE,
       (t) => parseDownloadManifest(t) !== null,
       "下载清单",
       ""
     );
-    const manifest = parseDownloadManifest(text);
-    await writeAssetText(app, MANIFEST_FILE, text);
+    const manifest = parseDownloadManifest(text2);
+    await writeAssetText(app, MANIFEST_FILE, text2);
     return { manifest, previous };
   }
   async function docStatus(app, entry) {
@@ -34142,18 +34174,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       existing.textContent = css;
       return;
     }
-    const el = document.createElement("style");
-    el.id = STYLE_ID;
-    el.textContent = css;
-    document.head.appendChild(el);
+    const el2 = document.createElement("style");
+    el2.id = STYLE_ID;
+    el2.textContent = css;
+    document.head.appendChild(el2);
   }
   async function readPluginVersion(app) {
     var _a2, _b2;
     try {
       const adapter = (_a2 = app.vault) == null ? void 0 : _a2.adapter;
       if (!(adapter == null ? void 0 : adapter.read)) return "";
-      const text = await adapter.read(assetVaultPath(app, "manifest.json"));
-      return String(((_b2 = JSON.parse(text || "{}")) == null ? void 0 : _b2.version) || "");
+      const text2 = await adapter.read(assetVaultPath(app, "manifest.json"));
+      return String(((_b2 = JSON.parse(text2 || "{}")) == null ? void 0 : _b2.version) || "");
     } catch (e) {
       return "";
     }
@@ -34172,10 +34204,10 @@ ${it.text}`).join("\n"));
   async function readVerified(app, entries) {
     const out = [];
     for (const e of entries) {
-      const text = await readAsset(app, e.file);
-      if (text === null) continue;
-      if (textSha256(text) !== e.sha256) continue;
-      out.push({ entry: e, text });
+      const text2 = await readAsset(app, e.file);
+      if (text2 === null) continue;
+      if (textSha256(text2) !== e.sha256) continue;
+      out.push({ entry: e, text: text2 });
     }
     return out;
   }
@@ -34229,9 +34261,9 @@ ${it.text}`).join("\n"));
     for (const arr of ready.values()) for (const r of arr) byFile.set(r.entry.file, r);
     await mapLimit(todo, 4, async (e) => {
       try {
-        const text = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
-        if (text !== null) {
-          byFile.set(e.file, { entry: e, text });
+        const text2 = await ensureAssetWithHash(app, e.file, e.sha256, `皮肤「${e.name}」`);
+        if (text2 !== null) {
+          byFile.set(e.file, { entry: e, text: text2 });
           await removeLegacyFile(app, e.file);
         }
         result.downloaded++;
@@ -34290,10 +34322,10 @@ ${it.text}`).join("\n"));
     return { version: o.version, groups };
   }
   async function readLocalValidated(app) {
-    const text = await readAsset(app, CATEGORY_TABLE_FILE);
-    if (text === null) return null;
+    const text2 = await readAsset(app, CATEGORY_TABLE_FILE);
+    if (text2 === null) return null;
     try {
-      return validateCategoryTable(JSON.parse(text));
+      return validateCategoryTable(JSON.parse(text2));
     } catch (e) {
       return null;
     }
@@ -34518,10 +34550,10 @@ ${it.text}`).join("\n"));
     return { version: o.version, updatedAt: o.updatedAt, meta: { sources }, categories: o.categories, feeds };
   }
   async function readLocalValidated2(app) {
-    const text = await readAsset(app, RSS_CATALOG_FILE);
-    if (text === null) return null;
+    const text2 = await readAsset(app, RSS_CATALOG_FILE);
+    if (text2 === null) return null;
     try {
-      return validateRssCatalog(JSON.parse(text));
+      return validateRssCatalog(JSON.parse(text2));
     } catch (e) {
       return null;
     }
@@ -34552,11 +34584,11 @@ ${it.text}`).join("\n"));
     if (!entry) {
       throw new Error("RSS 源库尚未登记到下载清单（可能网络不通，或插件版本过旧）");
     }
-    const text = await ensureAssetWithHash(app, entry.file, entry.sha256, "RSS 源库");
-    if (text === null) throw new Error("RSS 源库数据拉取失败");
+    const text2 = await ensureAssetWithHash(app, entry.file, entry.sha256, "RSS 源库");
+    if (text2 === null) throw new Error("RSS 源库数据拉取失败");
     let parsed;
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(text2);
     } catch (e) {
       throw new Error("RSS 源库数据解析失败：" + ((e == null ? void 0 : e.message) || String(e)));
     }
@@ -34657,10 +34689,10 @@ ${it.text}`).join("\n"));
     };
   }
   async function readLocalValidated3(app) {
-    const text = await readAsset(app, DOUBAN_NAME_INDEX_FILE);
-    if (text === null) return null;
+    const text2 = await readAsset(app, DOUBAN_NAME_INDEX_FILE);
+    if (text2 === null) return null;
     try {
-      return validateDoubanNameIndex(JSON.parse(text));
+      return validateDoubanNameIndex(JSON.parse(text2));
     } catch (e) {
       return null;
     }
@@ -34940,19 +34972,19 @@ ${it.text}`).join("\n"));
       const domRows = card.querySelectorAll(".bz-sp-group-body > .bz-sp-set-row");
       meta.rows.forEach((row, i) => {
         var _a2;
-        const el = domRows[i];
-        if (!el) return;
+        const el2 = domRows[i];
+        if (!el2) return;
         const btnRow = row;
-        if (row === meta.retryRow && el.dataset.spHitHidden !== "1") el.style.display = meta.retryVisible ? "" : "none";
-        const desc = el.querySelector(".bz-sp-set-desc");
+        if (row === meta.retryRow && el2.dataset.spHitHidden !== "1") el2.style.display = meta.retryVisible ? "" : "none";
+        const desc = el2.querySelector(".bz-sp-set-desc");
         if (desc) {
-          const text = (_a2 = btnRow.desc) != null ? _a2 : "";
-          if (desc.textContent !== text) {
-            desc.textContent = text;
-            if (desc.dataset.spOrig !== void 0) desc.dataset.spOrig = text;
+          const text2 = (_a2 = btnRow.desc) != null ? _a2 : "";
+          if (desc.textContent !== text2) {
+            desc.textContent = text2;
+            if (desc.dataset.spOrig !== void 0) desc.dataset.spOrig = text2;
           }
         }
-        const btn = el.querySelector(".bz-sp-btn");
+        const btn = el2.querySelector(".bz-sp-btn");
         if (btn && !btn.classList.contains("bz-rowbtn--busy")) {
           setRowBtnState(btn, "idle", btnRow.buttonText);
           btn.disabled = btnRow.disabled === true;
@@ -35365,17 +35397,17 @@ ${it.text}`).join("\n"));
     function applyShift(c) {
       for (let i = 0; i < c.total; i++) {
         if (i === c.from) continue;
-        const el = c.rows[i];
-        if (!el) continue;
+        const el2 = c.rows[i];
+        if (!el2) continue;
         let shift = 0;
         if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
         else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
         if (shift) {
-          el.style.transform = `translateY(${shift * c.step}px)`;
-          el.classList.add(SHIFT_CLS);
+          el2.style.transform = `translateY(${shift * c.step}px)`;
+          el2.classList.add(SHIFT_CLS);
         } else {
-          el.style.transform = "";
-          el.classList.remove(SHIFT_CLS);
+          el2.style.transform = "";
+          el2.classList.remove(SHIFT_CLS);
         }
       }
     }
@@ -35390,9 +35422,9 @@ ${it.text}`).join("\n"));
       window.removeEventListener("touchmove", onTouchMove);
       c.el.classList.remove(DRAG_CLS);
       c.el.style.transform = "";
-      for (const el of c.rows) {
-        el.style.transform = "";
-        el.classList.remove(SHIFT_CLS);
+      for (const el2 of c.rows) {
+        el2.style.transform = "";
+        el2.classList.remove(SHIFT_CLS);
       }
     }
     function onMove(e) {
@@ -35430,13 +35462,13 @@ ${it.text}`).join("\n"));
       persist();
       render2(id || void 0);
     }
-    function attachDrag(el, listEl2, rows) {
+    function attachDrag(el2, listEl2, rows) {
       const total = rows.length;
-      el.addEventListener("pointerdown", (e) => {
+      el2.addEventListener("pointerdown", (e) => {
         var _a2, _b2;
         if (e.button) return;
         if (e.target.closest("[data-ent-remove]")) return;
-        const from = rows.indexOf(el);
+        const from = rows.indexOf(el2);
         if (from < 0 || total < 2) return;
         let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
         if (rows.length >= 2) {
@@ -35444,7 +35476,7 @@ ${it.text}`).join("\n"));
           if (d > 0) step = d;
         }
         const c = {
-          el,
+          el: el2,
           listEl: listEl2,
           rows,
           startY: e.clientY,
@@ -35485,7 +35517,7 @@ ${it.text}`).join("\n"));
       if (!listEl2) return;
       const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
       const movable = rows.slice(0, visible.length);
-      for (const el of movable) attachDrag(el, listEl2, movable);
+      for (const el2 of movable) attachDrag(el2, listEl2, movable);
       if (refocusId) {
         const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
         target == null ? void 0 : target.focus();
@@ -35929,9 +35961,9 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function pillKeyOf(el, keys) {
+  function pillKeyOf(el2, keys) {
     for (const k of keys) {
-      const v = el.dataset[k];
+      const v = el2.dataset[k];
       if (v) return v;
     }
     return "";
@@ -35943,9 +35975,9 @@ ${it.text}`).join("\n"));
     if (hoverable) {
       box.addEventListener("mouseover", (e) => {
         var _a2;
-        const el = (_a2 = e.target) == null ? void 0 : _a2.closest(t.item);
-        if (!el || !box.contains(el)) return;
-        const k = pillKeyOf(el, t.keys);
+        const el2 = (_a2 = e.target) == null ? void 0 : _a2.closest(t.item);
+        if (!el2 || !box.contains(el2)) return;
+        const k = pillKeyOf(el2, t.keys);
         if (!k || box.dataset.pillHover === k) return;
         box.dataset.pillHover = k;
         resync(true);
@@ -35972,8 +36004,8 @@ ${it.text}`).join("\n"));
     }
     const items = [...box.querySelectorAll(t.item)];
     const hoverKey = (_b2 = box.dataset.pillHover) != null ? _b2 : "";
-    const hovered = hoverKey ? items.find((el) => pillKeyOf(el, t.keys) === hoverKey) : void 0;
-    const target = hovered != null ? hovered : items.find((el) => el.classList.contains(onClass));
+    const hovered = hoverKey ? items.find((el2) => pillKeyOf(el2, t.keys) === hoverKey) : void 0;
+    const target = hovered != null ? hovered : items.find((el2) => el2.classList.contains(onClass));
     if (!target) {
       pill.classList.remove("is-visible");
       return;
@@ -36014,10 +36046,10 @@ ${it.text}`).join("\n"));
   });
 
   // src/core/ui/flip.ts
-  function safeAnimate(el, frames, opts) {
-    if (typeof el.animate !== "function") return null;
+  function safeAnimate(el2, frames, opts) {
+    if (typeof el2.animate !== "function") return null;
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       console.error("[flip] 动画不可用，跳过：", e);
       return null;
@@ -36088,26 +36120,26 @@ ${it.text}`).join("\n"));
       const stagger2 = (_d = opts.enter.stagger) != null ? _d : 26;
       const from = (_e = opts.enter.from) != null ? _e : "bottom";
       let idx = 0;
-      nodes.forEach((el) => {
-        const k = el.dataset[opts.key];
+      nodes.forEach((el2) => {
+        const k = el2.dataset[opts.key];
         if (!k || (before == null ? void 0 : before.has(k))) return;
         if (idx >= n) {
-          el.style.opacity = "";
+          el2.style.opacity = "";
           return;
         }
         const delay = idx * stagger2;
         idx++;
         const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
-        const ea = safeAnimate(el, [
+        const ea = safeAnimate(el2, [
           { opacity: 0, transform: fromCss, filter: "blur(3px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ], { duration: 300, delay, easing: EASE_OUT, fill: "both" });
         if (!ea) {
-          el.style.opacity = "";
+          el2.style.opacity = "";
           return;
         }
         ea.onfinish = () => {
-          el.style.opacity = "";
+          el2.style.opacity = "";
         };
       });
     }
@@ -36201,8 +36233,8 @@ ${it.text}`).join("\n"));
   function mobAddSceneChipHtml() {
     return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
   }
-  function hitTextHtml(text, kw) {
-    const t = text != null ? text : "";
+  function hitTextHtml(text2, kw) {
+    const t = text2 != null ? text2 : "";
     const needle = kw.trim().toLowerCase();
     if (!t || !needle) return escapeHtml(t);
     const lower = t.toLowerCase();
@@ -36884,28 +36916,28 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function waapi4(el, frames, opts) {
-    if (!el || reduced5() || typeof el.animate !== "function") {
+  function waapi4(el2, frames, opts) {
+    if (!el2 || reduced5() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
   }
-  function waapiLoop(el, frames, opts) {
-    if (!el || reduced5() || typeof el.animate !== "function") return null;
+  function waapiLoop(el2, frames, opts) {
+    if (!el2 || reduced5() || typeof el2.animate !== "function") return null;
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -37067,26 +37099,26 @@ ${it.text}`).join("\n"));
     const c = [0, 1, 2].map((i) => Math.round(a[i] + (target[i] - a[i]) * t));
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
   }
-  function varRgb(el, name) {
+  function varRgb(el2, name) {
     try {
-      const v = el ? getComputedStyle(el).getPropertyValue(name).trim() : "";
+      const v = el2 ? getComputedStyle(el2).getPropertyValue(name).trim() : "";
       return v ? parseRgb(v) : null;
     } catch (e) {
       return null;
     }
   }
-  function timeBoxOf(el) {
+  function timeBoxOf(el2) {
     var _a2;
-    return (_a2 = el == null ? void 0 : el.closest(".pomodoro-time-box")) != null ? _a2 : el;
+    return (_a2 = el2 == null ? void 0 : el2.closest(".pomodoro-time-box")) != null ? _a2 : el2;
   }
-  function timeVisualOf(el) {
-    if (!el) return el;
-    const box = el.closest(".pomodoro-time-box");
+  function timeVisualOf(el2) {
+    if (!el2) return el2;
+    const box = el2.closest(".pomodoro-time-box");
     if (box && box.classList.contains("reel-on")) {
       const reel = box.querySelector(".pomodoro-time-reel");
       if (reel) return reel;
     }
-    return el;
+    return el2;
   }
   function ensureFlowGrad(svg) {
     if (!svg) return null;
@@ -37405,10 +37437,10 @@ ${it.text}`).join("\n"));
       ],
       { duration: 480, easing: E4.out, delay: 50, fill: "backwards" }
     ));
-    const reveal = (el, delay, dy = 5) => {
-      if (!el) return;
+    const reveal = (el2, delay, dy = 5) => {
+      if (!el2) return;
       trackFx(waapi4(
-        el,
+        el2,
         [
           { opacity: 0, transform: `translateY(${dy}px)`, filter: "blur(4px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37574,10 +37606,10 @@ ${it.text}`).join("\n"));
     }
   }
   function revealTime(timeEl) {
-    const el = timeBoxOf(timeEl);
-    if (!el) return;
+    const el2 = timeBoxOf(timeEl);
+    if (!el2) return;
     trackFx(waapi4(
-      el,
+      el2,
       [
         { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37696,8 +37728,8 @@ ${it.text}`).join("\n"));
     revealTime(byId("pomodoro-time"));
   }
   function motionTimeTick(timeEl, remain, running2) {
-    const el = timeBoxOf(timeEl);
-    if (!el) {
+    const el2 = timeBoxOf(timeEl);
+    if (!el2) {
       lastRemain = -1;
       return;
     }
@@ -37707,20 +37739,20 @@ ${it.text}`).join("\n"));
     }
     const delta = lastRemain - remain;
     if (Math.abs(delta) > 2) {
-      revealTime(el);
+      revealTime(el2);
     } else if (running2 && delta === 1 && remain > 0 && remain % 60 === 0) {
       trackFx(waapi4(
-        el,
+        el2,
         [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
         { duration: M7.fast + 120, easing: E4.out }
       ));
     }
     lastRemain = remain;
   }
-  function motionPhaseLabelSwap(el) {
-    if (!el) return;
+  function motionPhaseLabelSwap(el2) {
+    if (!el2) return;
     trackFx(waapi4(
-      el,
+      el2,
       [
         { opacity: 0, transform: "translateY(4px)", filter: "blur(3px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -37728,14 +37760,14 @@ ${it.text}`).join("\n"));
       { duration: M7.base, easing: E4.out }
     ));
   }
-  function motionTaskLine(el, has) {
-    if (!el) {
+  function motionTaskLine(el2, has) {
+    if (!el2) {
       taskShown = false;
       return;
     }
     if (has && !taskShown) {
       trackFx(waapi4(
-        el,
+        el2,
         [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
         { duration: M7.base, easing: E4.out }
       ));
@@ -37781,19 +37813,19 @@ ${it.text}`).join("\n"));
     if (!box || performance.now() < bootUntil) return;
     riseBars(box);
   }
-  function motionTodayBlip(el, text) {
-    if (!el) {
+  function motionTodayBlip(el2, text2) {
+    if (!el2) {
       todayText = "";
       return;
     }
-    if (todayText && text && text !== todayText) {
+    if (todayText && text2 && text2 !== todayText) {
       trackFx(waapi4(
-        el,
+        el2,
         [{ opacity: 0.35, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
         { duration: M7.base, easing: E4.out }
       ));
     }
-    todayText = text;
+    todayText = text2;
   }
   function motionBindButtons(root) {
     if (reduced5()) return;
@@ -37833,10 +37865,10 @@ ${it.text}`).join("\n"));
       btn.addEventListener("pointerleave", up);
     });
   }
-  function motionStatusbarPop(el, sig, first) {
-    if (!el || first || reduced5()) return;
+  function motionStatusbarPop(el2, sig, first) {
+    if (!el2 || first || reduced5()) return;
     trackFx(waapi4(
-      el,
+      el2,
       [{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }],
       { duration: M7.fast + 80, easing: E4.out }
     ));
@@ -38230,9 +38262,9 @@ ${it.text}`).join("\n"));
       layer.innerHTML = col + col + '<span class="pomodoro-rdot">:</span>' + col + col;
       timeReels = Array.from(layer.querySelectorAll(".pomodoro-rinn"));
     }
-    const text = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
-    timeReels.forEach((el, i) => {
-      el.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text[i])}))`;
+    const text2 = `${pad2(Math.floor(remain / 60))}${pad2(remain % 60)}`;
+    timeReels.forEach((el2, i) => {
+      el2.style.transform = `translateY(calc(var(--pomodoro-reel-cell) * -${Number(text2[i])}))`;
     });
   }
   function tickBeep(remain, running2) {
@@ -38728,9 +38760,9 @@ ${it.text}`).join("\n"));
   function closePomodoro(immediate = false) {
     if (armedBtn !== null) disarmConfirm();
     if (maskEl) {
-      const el = maskEl;
+      const el2 = maskEl;
       maskEl = null;
-      motionPanelClose(el, () => el.remove(), immediate);
+      motionPanelClose(el2, () => el2.remove(), immediate);
     }
     if (escHandle2) {
       escHandle2.unregister();
@@ -38927,13 +38959,13 @@ ${it.text}`).join("\n"));
     return Number.isFinite(n) && n > 0 ? n : 30;
   }
   async function readClipUrl() {
-    let text = "";
+    let text2 = "";
     try {
-      text = await navigator.clipboard.readText();
+      text2 = await navigator.clipboard.readText();
     } catch (e) {
       return null;
     }
-    const trimmed = text.trim();
+    const trimmed = text2.trim();
     if (!trimmed) return null;
     const { url, display } = extractUrlAndDisplay(trimmed);
     if (!url) return null;
@@ -39040,16 +39072,16 @@ ${it.text}`).join("\n"));
   function skinClass() {
     return `bz-memo-skin-${normalizeMemoSkin(tryGetSettings().memoSkin)}`;
   }
-  function enterLayer(el, delay, dy) {
-    if (!el) return;
-    el.style.opacity = "0";
-    el.style.transform = `translateY(${dy}px)`;
+  function enterLayer(el2, delay, dy) {
+    if (!el2) return;
+    el2.style.opacity = "0";
+    el2.style.transform = `translateY(${dy}px)`;
     window.setTimeout(() => {
-      el.style.transition = "opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)";
-      el.style.opacity = "";
-      el.style.transform = "";
+      el2.style.transition = "opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)";
+      el2.style.opacity = "";
+      el2.style.transform = "";
       window.setTimeout(() => {
-        el.style.transition = "";
+        el2.style.transition = "";
       }, 340);
     }, delay);
   }
@@ -39151,9 +39183,9 @@ ${it.text}`).join("\n"));
       ...MemoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) }))
     ];
   }
-  function attachSceneActions(el, scene) {
+  function attachSceneActions(el2, scene) {
     if (scene === "全部" || scene === "今日" || scene === "重要") return;
-    attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
+    attachItemActions(el2, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
     const nav = M6.overlay.querySelector("[data-memo-nav]");
@@ -39161,8 +39193,8 @@ ${it.text}`).join("\n"));
     const counts = sceneCounts();
     nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M6.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
-    nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
-      attachSceneActions(el, el.dataset.memoScene);
+    nav.querySelectorAll("[data-memo-scene]").forEach((el2) => {
+      attachSceneActions(el2, el2.dataset.memoScene);
     });
   }
   function renderMobScenes() {
@@ -39173,8 +39205,8 @@ ${it.text}`).join("\n"));
     wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M6.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap.scrollLeft = keepLeft;
     mountIcons(wrap);
-    wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
-      attachSceneActions(el, el.dataset.memoScene);
+    wrap.querySelectorAll("[data-memo-scene]").forEach((el2) => {
+      attachSceneActions(el2, el2.dataset.memoScene);
     });
   }
   function metaDueOf(it) {
@@ -39262,18 +39294,18 @@ ${it.text}`).join("\n"));
       spin: flipSpin
     });
     doneJustOpened = false;
-    content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
-      el.addEventListener("click", (e) => {
+    content.querySelectorAll("[data-memo-openitem]").forEach((el2) => {
+      el2.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M6.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M6.items.find((i) => i.id === el2.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
-    content.querySelectorAll("[data-memo-pos]").forEach((el) => {
-      el.addEventListener("click", (e) => {
+    content.querySelectorAll("[data-memo-pos]").forEach((el2) => {
+      el2.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M6.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M6.items.find((i) => i.id === el2.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
@@ -39295,18 +39327,18 @@ ${it.text}`).join("\n"));
     head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
     if (it.completed) head.classList.add("bz-memo-done");
     head.insertAdjacentHTML("afterbegin", checkHtml(it));
-    const text = document.createElement("div");
-    text.className = "bz-memo-body-text";
+    const text2 = document.createElement("div");
+    text2.className = "bz-memo-body-text";
     const title = document.createElement("div");
     title.textContent = it.title;
     if (it.completed) title.classList.add("done");
-    text.appendChild(title);
+    text2.appendChild(title);
     const meta = document.createElement("div");
     meta.className = "bz-memo-meta";
     meta.innerHTML = metaTags(it);
     mountIcons(meta);
-    text.appendChild(meta);
-    head.appendChild(text);
+    text2.appendChild(meta);
+    head.appendChild(text2);
     (_a2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
       e.stopPropagation();
       closeItemMenu();
@@ -39359,9 +39391,9 @@ ${it.text}`).join("\n"));
   function syncPendingCheck(id, pending) {
     document.querySelectorAll(
       `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`
-    ).forEach((el) => {
-      el.classList.toggle("bz-memo-pending", pending);
-      const ring = el.querySelector(":scope > .bz-memo-ring");
+    ).forEach((el2) => {
+      el2.classList.toggle("bz-memo-pending", pending);
+      const ring = el2.querySelector(":scope > .bz-memo-ring");
       if (pending && !ring) {
         const NS = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(NS, "svg");
@@ -39373,7 +39405,7 @@ ${it.text}`).join("\n"));
         c.setAttribute("cy", "10");
         c.setAttribute("r", "8.5");
         svg.appendChild(c);
-        el.appendChild(svg);
+        el2.appendChild(svg);
       } else if (!pending && ring) {
         ring.remove();
       }
@@ -41015,20 +41047,20 @@ ${it.text}`).join("\n"));
       return false;
     }
   }
-  function waapi5(el, frames, opts) {
-    if (!el || reduced6() || typeof el.animate !== "function") {
+  function waapi5(el2, frames, opts) {
+    if (!el2 || reduced6() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -41058,10 +41090,10 @@ ${it.text}`).join("\n"));
     cancelPending5();
     flipBook = null;
   }
-  function stageable(el) {
-    if (!el) return false;
+  function stageable(el2) {
+    if (!el2) return false;
     try {
-      const r = el.getBoundingClientRect();
+      const r = el2.getBoundingClientRect();
       if (r.width <= 2 || r.height <= 2) return false;
       const vh = typeof window !== "undefined" && window.innerHeight || 900;
       return r.top < vh + 120 && r.bottom > -120;
@@ -41147,9 +41179,9 @@ ${it.text}`).join("\n"));
     }
     if (book) flipRepaint(panel2, book);
   }
-  function rollText(el, dur) {
+  function rollText(el2, dur) {
     var _a2;
-    const finalText = (_a2 = el.textContent) != null ? _a2 : "";
+    const finalText = (_a2 = el2.textContent) != null ? _a2 : "";
     const m = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/.exec(finalText);
     if (!m) return;
     const prefix = m[1], target = parseFloat(m[2].replace(/,/g, "")), suffix = m[3];
@@ -41157,9 +41189,9 @@ ${it.text}`).join("\n"));
     const decimals = (m[2].split(".")[1] || "").length;
     const fmt2 = (v) => (target * v).toLocaleString("zh-CN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     if (reduced6() || typeof requestAnimationFrame !== "function") return;
-    el.textContent = prefix + fmt2(0) + suffix;
+    el2.textContent = prefix + fmt2(0) + suffix;
     tween2(dur, (v) => {
-      el.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
+      el2.textContent = v >= 1 ? finalText : prefix + fmt2(v) + suffix;
     });
   }
   function bootReveal(panel2) {
@@ -41418,10 +41450,10 @@ ${it.text}`).join("\n"));
     );
   }
   function relay(els, base, step = STAG5) {
-    els.forEach((el, i) => {
-      if (!stageable(el)) return;
+    els.forEach((el2, i) => {
+      if (!stageable(el2)) return;
       waapi5(
-        el,
+        el2,
         [
           { opacity: 0, transform: "translateY(7px)" },
           { opacity: 1, transform: "none" }
@@ -42133,10 +42165,10 @@ ${it.text}`).join("\n"));
     const raw = await ai.json(prompt, { signal });
     let obj;
     try {
-      let text = String(raw || "").trim();
-      const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (fence) text = fence[1].trim();
-      obj = JSON.parse(text);
+      let text2 = String(raw || "").trim();
+      const fence = text2.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (fence) text2 = fence[1].trim();
+      obj = JSON.parse(text2);
     } catch (e) {
       throw new Error("LLM 回落返回的归类结果无法解析（不是合法 JSON）");
     }
@@ -42298,12 +42330,12 @@ ${it.text}`).join("\n"));
   }
   function parseCategorySuggestion(raw) {
     var _a2, _b2;
-    let text = String(raw || "").trim();
-    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) text = fence[1].trim();
+    let text2 = String(raw || "").trim();
+    const fence = text2.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) text2 = fence[1].trim();
     let obj;
     try {
-      obj = JSON.parse(text);
+      obj = JSON.parse(text2);
     } catch (e) {
       return null;
     }
@@ -43561,8 +43593,8 @@ ${it.text}`).join("\n"));
     const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
     return t || null;
   }
-  function normalizeRssFeedUrl(text) {
-    const t = String(text || "").trim();
+  function normalizeRssFeedUrl(text2) {
+    const t = String(text2 || "").trim();
     return /^https?:\/\/\S+$/i.test(t) ? t : null;
   }
   function parseBilibiliUpInfo(raw) {
@@ -43720,8 +43752,8 @@ ${it.text}`).join("\n"));
     }
     await writeNewsData(next);
   }
-  function parseUidFromText(text) {
-    const t = String(text || "").trim();
+  function parseUidFromText(text2) {
+    const t = String(text2 || "").trim();
     if (!t) return null;
     const pure = t.match(/^\d+$/);
     if (pure) return pure[0];
@@ -43729,16 +43761,16 @@ ${it.text}`).join("\n"));
     if (space) return space[1];
     return null;
   }
-  function parseBvidFromText(text) {
-    const t = String(text || "").trim();
+  function parseBvidFromText(text2) {
+    const t = String(text2 || "").trim();
     const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
     return m ? m[1] : null;
   }
-  async function resolveUidFromInputDetailed(text) {
+  async function resolveUidFromInputDetailed(text2) {
     var _a2;
-    const local = parseUidFromText(text);
+    const local = parseUidFromText(text2);
     if (local) return { uid: local, networkFailed: false };
-    const bvid = parseBvidFromText(text);
+    const bvid = parseBvidFromText(text2);
     if (!bvid) return { uid: null, networkFailed: false };
     const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
       timeoutMs: 1e4,
@@ -45336,8 +45368,8 @@ ${bodyText.substring(0, 6e3)}`;
       </div>`;
     }).join("");
   }
-  function mobNoHitHtml(text) {
-    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
+  function mobNoHitHtml(text2) {
+    return `<div class="bz-clip-mob-no-hit">${esc(text2)}</div>`;
   }
   function mobDetailHtml(a, opts) {
     return `
@@ -45533,20 +45565,20 @@ ${bodyText.substring(0, 6e3)}`;
   function canAnimate() {
     return !reduced7() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
   }
-  function waapi6(el, frames, opts) {
-    if (!el || reduced7() || typeof el.animate !== "function") {
+  function waapi6(el2, frames, opts) {
+    if (!el2 || reduced7() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -45581,23 +45613,23 @@ ${bodyText.substring(0, 6e3)}`;
     }
     panelAnim = null;
   }
-  function sweep2(el, from, to, opts = {}) {
-    if (!el || !canAnimate()) return;
+  function sweep2(el2, from, to, opts = {}) {
+    if (!el2 || !canAnimate()) return;
     const { delay = 0, dur = M11.base, easing = E6.out, origin } = opts;
-    if (origin) el.style.transformOrigin = origin;
-    el.style.willChange = "transform,opacity,filter";
+    if (origin) el2.style.transformOrigin = origin;
+    el2.style.willChange = "transform,opacity,filter";
     let a = null;
     try {
-      a = el.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
+      a = el2.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
     } catch (e) {
       a = null;
     }
     if (!a) {
-      cleanSweep(el, from, to, !!origin);
+      cleanSweep(el2, from, to, !!origin);
       return;
     }
     const done = () => {
-      cleanSweep(el, from, to, !!origin);
+      cleanSweep(el2, from, to, !!origin);
       try {
         a.cancel();
       } catch (e) {
@@ -45605,7 +45637,7 @@ ${bodyText.substring(0, 6e3)}`;
     };
     a.finished.then(done).catch(done);
   }
-  function cleanSweep(el, from, to, hadOrigin) {
+  function cleanSweep(el2, from, to, hadOrigin) {
     const keys = /* @__PURE__ */ new Set([...Object.keys(from), ...Object.keys(to)]);
     if (hadOrigin) keys.add("transformOrigin");
     keys.add("willChange");
@@ -45613,14 +45645,14 @@ ${bodyText.substring(0, 6e3)}`;
       if (k === "offset" || k === "easing" || k === "composite") continue;
       const css = CSS_PROP[k] || k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
       try {
-        el.style.removeProperty(css);
+        el2.style.removeProperty(css);
       } catch (e) {
       }
     }
   }
-  function cancelAnimsBy(el, ids) {
-    if (typeof el.getAnimations !== "function") return;
-    for (const a of el.getAnimations()) {
+  function cancelAnimsBy(el2, ids) {
+    if (typeof el2.getAnimations !== "function") return;
+    for (const a of el2.getAnimations()) {
       if (ids.includes(a.id)) {
         try {
           a.cancel();
@@ -46144,10 +46176,10 @@ ${bodyText.substring(0, 6e3)}`;
     sweep2(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M11.base - 40 });
     sweep2(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M11.base - 40 });
   }
-  function motionLoadingPulse(el) {
-    if (!el || reduced7() || typeof el.animate !== "function") return;
+  function motionLoadingPulse(el2) {
+    if (!el2 || reduced7() || typeof el2.animate !== "function") return;
     try {
-      el.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
+      el2.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
     } catch (e) {
     }
   }
@@ -46724,8 +46756,8 @@ ${bodyText.substring(0, 6e3)}`;
     <span data-r="lg"><i style="background:var(--clip-accent,#c2410c)"></i>晚班 18-24</span>
   </div>`;
   }
-  function vertChars(text) {
-    return [...text].map((c) => `<span>${esc(c)}</span>`).join("");
+  function vertChars(text2) {
+    return [...text2].map((c) => `<span>${esc(c)}</span>`).join("");
   }
   function pressHtml(d) {
     const busiest = d.busiest ? `<div class="bz-rp-busiest" data-r="brow"><span>最投入的一天</span><i class="bz-rp-lead" data-r="blead"></i><b data-r="bday">${esc(dayCn2(d.busiest.date))}</b><span class="bz-rp-dim" data-r="bmin">${esc(formatMinutes(d.busiest.minutes))}</span></div>` : "";
@@ -46985,10 +47017,10 @@ ${bodyText.substring(0, 6e3)}`;
       return s / 4294967296;
     };
   }
-  function S2(el, v) {
+  function S2(el2, v) {
     var _a2;
-    if (!el || lastStyle2.get(el) === v) return;
-    const he = el;
+    if (!el2 || lastStyle2.get(el2) === v) return;
+    const he = el2;
     const prev = (_a2 = he.getAttribute("style")) != null ? _a2 : "";
     if (prev) {
       const incoming = new Set(v.split(";").map((d) => d.split(":")[0].trim()).filter(Boolean));
@@ -47001,10 +47033,10 @@ ${bodyText.substring(0, 6e3)}`;
     he.setAttribute("style", v);
     lastStyle2.set(he, v);
   }
-  function T2(el, v) {
-    if (!el || lastText2.get(el) === v) return;
-    el.textContent = v;
-    lastText2.set(el, v);
+  function T2(el2, v) {
+    if (!el2 || lastText2.get(el2) === v) return;
+    el2.textContent = v;
+    lastText2.set(el2, v);
   }
   function fit2(cv) {
     const ctx = cv.getContext("2d");
@@ -47034,14 +47066,14 @@ ${bodyText.substring(0, 6e3)}`;
     const f = (1 - dist / R) * force;
     return { dx: dx / dist * f, dy: dy / dist * f };
   }
-  function dolly(el, t, from, dur = 1.1, delay = 0) {
-    if (!el) return;
+  function dolly(el2, t, from, dur = 1.1, delay = 0) {
+    if (!el2) return;
     const rest = 1 - easeOut2(at2(t, dur, delay));
-    S2(el, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
+    S2(el2, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
   }
-  function drawTip(ctx, x, y, text, pal) {
+  function drawTip(ctx, x, y, text2, pal) {
     ctx.font = `12px ${HEI}`;
-    const wText = ctx.measureText(text).width;
+    const wText = ctx.measureText(text2).width;
     const w = wText + 18, h = 24;
     const left = Math.max(6, Math.min(x - w / 2, (ctx.canvas.clientWidth || 9999) - w - 6));
     const top = y - h - 12;
@@ -47053,7 +47085,7 @@ ${bodyText.substring(0, 6e3)}`;
     ctx.fillStyle = pal.ink;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(text, left + 9, top + h / 2 + 0.5);
+    ctx.fillText(text2, left + 9, top + h / 2 + 0.5);
   }
   function humanish(min) {
     const h = Math.floor(min / 60), r = Math.round(min % 60);
@@ -47177,8 +47209,8 @@ ${bodyText.substring(0, 6e3)}`;
       return i === 0 ? 0 : (_a2 = sideBeat[i - 1]) != null ? _a2 : 0;
     };
     const rollDur = (i) => {
-      const el = nums[i];
-      const n = Math.round(Number((el == null ? void 0 : el.dataset.n) || 0));
+      const el2 = nums[i];
+      const n = Math.round(Number((el2 == null ? void 0 : el2.dataset.n) || 0));
       return 0.9 + Math.min(6, String(n).length) * 0.12;
     };
     const dur = 4.4 + Math.min(1.2, String(Math.round(d.totalMinutes)).length * 0.18);
@@ -47193,10 +47225,10 @@ ${bodyText.substring(0, 6e3)}`;
           const dir = i === 0 ? `translateY(${((1 - p) * -22).toFixed(1)}px)` : `translateX(${((1 - p) * 30).toFixed(1)}px)`;
           S2(c, `opacity:${clamp013(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
         });
-        nums.forEach((el, i) => {
-          const n = Number(el.dataset.n || 0);
+        nums.forEach((el2, i) => {
+          const n = Number(el2.dataset.n || 0);
           const p = easeOutExpo(at2(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
-          T2(el, el.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
+          T2(el2, el2.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
         });
         S2(line, `transform:scaleX(${easeInOut2(at2(t, 1, 0.3)).toFixed(4)})`);
         if (brow) {
@@ -47958,10 +47990,10 @@ ${bodyText.substring(0, 6e3)}`;
           if (ringv) T2(ringv, `${Math.round(rate * clamp013(p))}%`);
         }
         cells.forEach((c, i) => {
-          const el = q2(c, '[data-r="num"]');
-          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const el2 = q2(c, '[data-r="num"]');
+          const n = Number((el2 == null ? void 0 : el2.dataset.n) || 0);
           const p = easeOutExpo(at2(t, 1.1, 0.7 + i * 0.22));
-          T2(el, comma(roll(n, p)));
+          T2(el2, comma(roll(n, p)));
           const depth = 0.6 + i * 0.4;
           S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
         });
@@ -48056,10 +48088,10 @@ ${bodyText.substring(0, 6e3)}`;
         }
         cells.forEach((c, i) => {
           var _a2, _b2;
-          const el = (_a2 = nums[i]) != null ? _a2 : null;
-          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const el2 = (_a2 = nums[i]) != null ? _a2 : null;
+          const n = Number((el2 == null ? void 0 : el2.dataset.n) || 0);
           const p = easeOutExpo(at2(t, 1.3, 0.4 + i * 0.28));
-          T2(el, comma(roll(n, p)));
+          T2(el2, comma(roll(n, p)));
           const depth = (_b2 = depths[i]) != null ? _b2 : 1;
           const dip = i === 1 ? 12 : 0;
           S2(c, `opacity:${clamp013(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
@@ -48859,8 +48891,8 @@ ${bodyText.substring(0, 6e3)}`;
 `);
     md = md.replace(/<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>/gi, "**$1**");
     md = md.replace(/<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/gi, "*$1*");
-    md = md.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
-      const cleanText = text.replace(/<[^>]+>/g, "").trim();
+    md = md.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text2) => {
+      const cleanText = text2.replace(/<[^>]+>/g, "").trim();
       return cleanText ? `[${cleanText}](${url})` : "";
     });
     md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n");
@@ -49065,14 +49097,14 @@ ${c.trim()}
     const headers = cookie ? { Cookie: cookie } : void 0;
     for (let page = 0; page < 50; page++) {
       const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
-      const text = await httpGet(url, headers);
-      if (!text) {
+      const text2 = await httpGet(url, headers);
+      if (!text2) {
         if (page === 0) requestFailed = true;
         break;
       }
       let data;
       try {
-        data = JSON.parse(text);
+        data = JSON.parse(text2);
       } catch (e) {
         if (page === 0) requestFailed = true;
         break;
@@ -49138,11 +49170,11 @@ ${c.trim()}
   }
   async function fetchZhihu(httpGet) {
     const articles = [];
-    const text = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
-    if (!text) throw new Error("知乎日报列表请求失败");
+    const text2 = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
+    if (!text2) throw new Error("知乎日报列表请求失败");
     let data;
     try {
-      data = JSON.parse(text);
+      data = JSON.parse(text2);
     } catch (e) {
       throw new Error("知乎日报列表解析失败");
     }
@@ -49172,11 +49204,11 @@ ${c.trim()}
     var _a2, _b2, _c;
     const articles = [];
     const cutoff = now - WINDOW_MS;
-    const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
-    if (!text) throw new Error("果壳科学人列表请求失败");
+    const text2 = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
+    if (!text2) throw new Error("果壳科学人列表请求失败");
     let list;
     try {
-      list = Object.values(JSON.parse(text));
+      list = Object.values(JSON.parse(text2));
     } catch (e) {
       throw new Error("果壳科学人列表解析失败");
     }
@@ -49543,9 +49575,9 @@ ${c.trim()}
       }
     ];
   }
-  function setRowDesc(ctx, text) {
-    const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
-    if (el) el.textContent = text;
+  function setRowDesc(ctx, text2) {
+    const el2 = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
+    if (el2) el2.textContent = text2;
   }
   function notifyWriteFailed(what) {
     notifySaveError(new Error("news.json 不可读或已损坏"), what);
@@ -50929,8 +50961,8 @@ ${c.trim()}
   }
   function renderHeadIssue() {
     if (!overlayEl2) return;
-    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
-      el.textContent = `第 ${M10.articles.length} 期`;
+    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el2) => {
+      el2.textContent = `第 ${M10.articles.length} 期`;
     });
   }
   function currentSrc() {
@@ -51292,17 +51324,17 @@ ${c.trim()}
     out.push({ icon: "trash-2", label: "删除", kind: "danger", title: "从收件流删除", onClick: () => deleteNewsItem(a) });
     return out;
   }
-  async function hydrateArticleMarkdown(el, md, sourcePath, alive) {
+  async function hydrateArticleMarkdown(el2, md, sourcePath, alive) {
     var _a2;
     try {
       const comp = new Component();
-      await MarkdownRenderer.render(getApp(), md, el, sourcePath, comp);
+      await MarkdownRenderer.render(getApp(), md, el2, sourcePath, comp);
       comp.unload();
     } catch (e) {
     }
     if (!alive()) return;
-    if (!el.querySelector("*") || !((_a2 = el.textContent) == null ? void 0 : _a2.trim())) el.textContent = md;
-    bindImgFallback(el);
+    if (!el2.querySelector("*") || !((_a2 = el2.textContent) == null ? void 0 : _a2.trim())) el2.textContent = md;
+    bindImgFallback(el2);
   }
   function transformBodyForRead(a, body) {
     var _a2, _b2;
@@ -51602,9 +51634,9 @@ ${c.trim()}
     getApp().workspace.openLinkText(a.notePath, "", false, { active: true });
     closePanel2();
   }
-  async function copyText(text, okMsg) {
+  async function copyText(text2, okMsg) {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(text2);
       notice(okMsg, "success");
     } catch (e) {
       notifyActionError(e, "复制");
@@ -51889,15 +51921,15 @@ ${c.trim()}
   function readTextSelection() {
     const sel = typeof window.getSelection === "function" ? window.getSelection() : null;
     if (!sel || sel.isCollapsed || sel.rangeCount === 0) return null;
-    const text = String(sel.toString() || "").trim();
-    if (!text) return null;
+    const text2 = String(sel.toString() || "").trim();
+    if (!text2) return null;
     const range = sel.getRangeAt(0);
     const node = range.commonAncestorContainer;
-    const el = node && node.nodeType === 3 ? node.parentElement : node;
-    const container = el && typeof el.closest === "function" ? el.closest("[data-clip-md],[data-clip-mob-md]") : null;
+    const el2 = node && node.nodeType === 3 ? node.parentElement : node;
+    const container = el2 && typeof el2.closest === "function" ? el2.closest("[data-clip-md],[data-clip-mob-md]") : null;
     if (!container) return null;
     const r = typeof range.getBoundingClientRect === "function" ? range.getBoundingClientRect() : null;
-    return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
+    return { text: text2, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
     const a = M10.cur;
@@ -53000,20 +53032,20 @@ ${c.trim()}
       return false;
     }
   }
-  function waapi7(el, frames, opts) {
-    if (!el || reduced8() || typeof el.animate !== "function") {
+  function waapi7(el2, frames, opts) {
+    if (!el2 || reduced8() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -53037,9 +53069,9 @@ ${c.trim()}
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
-  function cancelAnimsBy2(el, ids) {
-    if (typeof el.getAnimations !== "function") return;
-    for (const a of el.getAnimations()) {
+  function cancelAnimsBy2(el2, ids) {
+    if (typeof el2.getAnimations !== "function") return;
+    for (const a of el2.getAnimations()) {
       if (ids.includes(a.id)) {
         try {
           a.cancel();
@@ -53436,9 +53468,9 @@ ${c.trim()}
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
-    rows.forEach((el, i) => {
+    rows.forEach((el2, i) => {
       waapi7(
-        el,
+        el2,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -53447,10 +53479,10 @@ ${c.trim()}
       );
     });
   }
-  function motionSwitchPop(el) {
+  function motionSwitchPop(el2) {
     if (reduced8()) return;
     waapi7(
-      el,
+      el2,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
       { duration: M12.base - 40, easing: E7.out }
     );
@@ -53495,9 +53527,9 @@ ${c.trim()}
   }
   function motionTagMgrRows(wrap) {
     if (reduced8()) return;
-    [...wrap.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
+    [...wrap.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el2, i) => {
       waapi7(
-        el,
+        el2,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
         { duration: M12.base, delay: Math.min(i, 10) * STAG7, easing: E7.out, fill: "both" }
       );
@@ -53531,7 +53563,7 @@ ${c.trim()}
     }
     aiAnims.clear();
     try {
-      document.querySelectorAll(".bz-favm-sheen").forEach((el) => el.remove());
+      document.querySelectorAll(".bz-favm-sheen").forEach((el2) => el2.remove());
     } catch (e) {
     }
   }
@@ -54125,10 +54157,10 @@ ${c.trim()}
     const urlInp = popup.querySelector("#fz-url");
     titleInp.addEventListener("paste", (e) => {
       var _a3, _b3;
-      const text = ((_b3 = (_a3 = e.clipboardData || window.clipboardData) == null ? void 0 : _a3.getData("text")) == null ? void 0 : _b3.trim()) || "";
-      if (!isUrlLike(text)) return;
+      const text2 = ((_b3 = (_a3 = e.clipboardData || window.clipboardData) == null ? void 0 : _a3.getData("text")) == null ? void 0 : _b3.trim()) || "";
+      if (!isUrlLike(text2)) return;
       e.preventDefault();
-      if (!urlInp.value.trim()) urlInp.value = normalizeUrl(text);
+      if (!urlInp.value.trim()) urlInp.value = normalizeUrl(text2);
       setTimeout(() => titleInp.focus(), 0);
     });
     const pick = popup.querySelector("#fz-tags");
@@ -54195,15 +54227,15 @@ ${c.trim()}
           ghInfo = null;
         }
       }
-      const text = aiPrompt2(title, url, desc, ghInfo);
+      const text2 = aiPrompt2(title, url, desc, ghInfo);
       if (!ai.ai) throw new Error("AI 服务不可用");
-      const raw = await ai.ai.chat(text);
+      const raw = await ai.ai.chat(text2);
       const data = parseAiJson2(raw);
       if (!data) throw new Error("AI 返回格式错误");
       const res = normalizeAiOrganizeResult(data);
       const setVal = (id, v) => {
-        const el = popup.querySelector(id);
-        if (el && !el.value.trim() && v) el.value = String(v);
+        const el2 = popup.querySelector(id);
+        if (el2 && !el2.value.trim() && v) el2.value = String(v);
       };
       if (ghInfo == null ? void 0 : ghInfo.fetched) setVal("#fz-title", ghInfo.title);
       setVal("#fz-title", res.title);
@@ -55161,10 +55193,10 @@ GitHub 仓库：${ghInfo.title}
     try {
       if (hasFn(adapter, "exists") && !await adapter.exists(path)) return null;
       if (!hasFn(adapter, "read")) return null;
-      const text = await adapter.read(path);
-      if (typeof text !== "string") return null;
+      const text2 = await adapter.read(path);
+      if (typeof text2 !== "string") return null;
       try {
-        return JSON.parse(text);
+        return JSON.parse(text2);
       } catch (e) {
         return null;
       }
@@ -55453,8 +55485,8 @@ GitHub 仓库：${ghInfo.title}
     let jsonMerged = false;
     for (const name of conflictJson) {
       try {
-        const text = await adapter.read(name);
-        const conflict = normalizeStore(JSON.parse(text));
+        const text2 = await adapter.read(name);
+        const conflict = normalizeStore(JSON.parse(text2));
         conflictMetas.push(conflict.meta || null);
         merged = mergeStoreWithConflict(merged, conflict);
         jsonMerged = true;
@@ -55481,7 +55513,7 @@ GitHub 仓库：${ghInfo.title}
     const adapter = (_a2 = a == null ? void 0 : a.vault) == null ? void 0 : _a2.adapter;
     if (!adapter) return emptyStore();
     const storePath = getSecondBrainStorePath();
-    let text = null;
+    let text2 = null;
     let exists = false;
     try {
       if (hasFn(adapter, "exists")) exists = await adapter.exists(storePath);
@@ -55493,28 +55525,28 @@ GitHub 仓库：${ghInfo.title}
       const migrated = await migrateLegacy(a);
       if (migrated) {
         try {
-          text = await adapter.read(storePath);
+          text2 = await adapter.read(storePath);
         } catch (e) {
-          text = null;
+          text2 = null;
         }
       }
-      if (typeof text !== "string") return emptyStore();
+      if (typeof text2 !== "string") return emptyStore();
       try {
-        return normalizeStore(JSON.parse(text));
+        return normalizeStore(JSON.parse(text2));
       } catch (e) {
         return emptyStore();
       }
     }
     try {
-      text = await adapter.read(storePath);
+      text2 = await adapter.read(storePath);
     } catch (e) {
       return emptyStore();
     }
-    if (typeof text !== "string") return emptyStore();
+    if (typeof text2 !== "string") return emptyStore();
     try {
-      return normalizeStore(JSON.parse(text));
+      return normalizeStore(JSON.parse(text2));
     } catch (e) {
-      const backupPath = await backupOriginal(a, storePath, text);
+      const backupPath = await backupOriginal(a, storePath, text2);
       if (backupPath) {
         try {
           if (hasFn(adapter, "remove")) await adapter.remove(storePath);
@@ -55684,7 +55716,7 @@ GitHub 仓库：${ghInfo.title}
     const roots = /* @__PURE__ */ new Map();
     const childOf = /* @__PURE__ */ new Map();
     const nodeOf = /* @__PURE__ */ new Map();
-    const ensureDir2 = (dir) => {
+    const ensureDir3 = (dir) => {
       let node = nodeOf.get(dir);
       if (node) return node;
       const segs = dir.split("/").filter(Boolean);
@@ -55699,7 +55731,7 @@ GitHub 仓库：${ghInfo.title}
       if (segs.length === 1) {
         roots.set(dir, node);
       } else {
-        const parent = ensureDir2(segs.slice(0, -1).join("/"));
+        const parent = ensureDir3(segs.slice(0, -1).join("/"));
         const siblings = childOf.get(parent.path) || [];
         siblings.push(node);
         childOf.set(parent.path, siblings);
@@ -55709,7 +55741,7 @@ GitHub 仓库：${ghInfo.title}
     for (const [path, entry] of Object.entries(meta.notes)) {
       const idx = path.lastIndexOf("/");
       const dir = idx === -1 ? "（根目录）" : path.slice(0, idx);
-      let cursor = ensureDir2(dir);
+      let cursor = ensureDir3(dir);
       while (cursor) {
         cursor.notes++;
         cursor.chunks += entry.chunks.length;
@@ -55829,9 +55861,9 @@ GitHub 仓库：${ghInfo.title}
       (r) => `<div class="bz-sb-recent-row" data-path="${escapeHtml3(r.path)}"><span class="bz-sb-dot" style="background:${r.color}"></span><span class="bz-sb-recent-name">${escapeHtml3(r.name)}</span><span class="bz-sb-recent-time">${r.chunks} 段 · ${escapeHtml3(r.when)}</span></div>`
     ).join("");
   }
-  function panelSummaryHtml(text, when) {
-    if (!text) return "";
-    return `<div class="bz-sb-ai-txt">${escapeHtml3(text)}</div>` + (when ? `<div class="bz-sb-ai-when">${escapeHtml3(when)}</div>` : "");
+  function panelSummaryHtml(text2, when) {
+    if (!text2) return "";
+    return `<div class="bz-sb-ai-txt">${escapeHtml3(text2)}</div>` + (when ? `<div class="bz-sb-ai-when">${escapeHtml3(when)}</div>` : "");
   }
   function panelLogHtml(parts) {
     return parts.map((p) => `<span class="bz-sb-log-item${p.warn ? " bz-sb-log-item--warn" : ""}">${escapeHtml3(p.text)}</span>`).join('<span class="bz-sb-log-sep">·</span>');
@@ -55901,28 +55933,28 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function baseTransformOf(el) {
+  function baseTransformOf(el2) {
     try {
-      const t = getComputedStyle(el).transform;
+      const t = getComputedStyle(el2).transform;
       return t && t !== "none" ? t : "";
     } catch (e) {
       return "";
     }
   }
-  function waapi8(el, frames, opts) {
-    if (!el || reduced9() || typeof el.animate !== "function") {
+  function waapi8(el2, frames, opts) {
+    if (!el2 || reduced9() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -55938,14 +55970,14 @@ GitHub 仓库：${ghInfo.title}
     timers8.forEach(clearTimeout);
     timers8.clear();
   }
-  function cancelExit(el, id) {
+  function cancelExit(el2, id) {
     try {
-      if (typeof el.getAnimations !== "function") return;
-      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+      if (typeof el2.getAnimations !== "function") return;
+      for (const a of el2.getAnimations()) if (a.id === id) a.cancel();
     } catch (e) {
     }
   }
-  function playExit(el, id, frames, dur, done) {
+  function playExit(el2, id, frames, dur, done) {
     let finished = false;
     const finish = () => {
       if (finished) return;
@@ -55956,7 +55988,7 @@ GitHub 仓库：${ghInfo.title}
       }
       done();
     };
-    const a = waapi8(el, frames, { duration: dur, easing: E8.out, fill: "forwards", id });
+    const a = waapi8(el2, frames, { duration: dur, easing: E8.out, fill: "forwards", id });
     if (!a) {
       finish();
       return;
@@ -55964,10 +55996,10 @@ GitHub 仓库：${ghInfo.title}
     a.finished.then(finish).catch(finish);
     after8(dur + 160, finish);
   }
-  function synapseLoop(el) {
-    stopLoop(el);
-    if (reduced9() || typeof el.animate !== "function") return;
-    const a = el.animate(
+  function synapseLoop(el2) {
+    stopLoop(el2);
+    if (reduced9() || typeof el2.animate !== "function") return;
+    const a = el2.animate(
       [
         { transform: "scale(1)", filter: "drop-shadow(0 0 0px rgba(163,61,42,0))" },
         { transform: "scale(1.055)", filter: "drop-shadow(0 0 7px rgba(163,61,42,.45))" },
@@ -55975,18 +56007,18 @@ GitHub 仓库：${ghInfo.title}
       ],
       { duration: 2400, iterations: Infinity, easing: "ease-in-out" }
     );
-    loops2.set(el, () => {
+    loops2.set(el2, () => {
       try {
         a.cancel();
       } catch (e) {
       }
     });
   }
-  function stopLoop(el) {
-    const stop = loops2.get(el);
+  function stopLoop(el2) {
+    const stop = loops2.get(el2);
     if (stop) {
       stop();
-      loops2.delete(el);
+      loops2.delete(el2);
     }
   }
   function stopAllLoops() {
@@ -55997,10 +56029,10 @@ GitHub 仓库：${ghInfo.title}
     cancelPending7();
     stopAllLoops();
   }
-  function ensureRelative2(el) {
-    if (!el) return;
+  function ensureRelative2(el2) {
+    if (!el2) return;
     try {
-      if (getComputedStyle(el).position === "static") el.style.position = "relative";
+      if (getComputedStyle(el2).position === "static") el2.style.position = "relative";
     } catch (e) {
     }
   }
@@ -56265,9 +56297,9 @@ GitHub 仓库：${ghInfo.title}
     const foot = content.querySelector(".bz-sb-foot");
     if (foot) after8(700, () => {
       if (!foot.isConnected) return;
-      [...foot.children].forEach((el, i) => {
+      [...foot.children].forEach((el2, i) => {
         waapi8(
-          el,
+          el2,
           [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
           { duration: M14.base, easing: E8.out, fill: "backwards", delay: i * 40 }
         );
@@ -56294,12 +56326,12 @@ GitHub 仓库：${ghInfo.title}
     if (icon) synapseLoop(icon);
     const seq = [".bz-sb-onboard-title", ".bz-sb-onboard-desc", ".bz-sb-init-btn"];
     seq.forEach((sel, i) => {
-      const el = onboard.querySelector(sel);
-      if (!el) return;
+      const el2 = onboard.querySelector(sel);
+      if (!el2) return;
       after8(80 + i * 90, () => {
-        if (!el.isConnected) return;
+        if (!el2.isConnected) return;
         waapi8(
-          el,
+          el2,
           [
             { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -56521,15 +56553,15 @@ GitHub 仓库：${ghInfo.title}
         else notice("文件不存在或已被移动", "info");
       };
       body == null ? void 0 : body.addEventListener("click", (e) => {
-        const el = e.target.closest("[data-path]");
-        if (el == null ? void 0 : el.dataset.path) jump(el.dataset.path);
+        const el2 = e.target.closest("[data-path]");
+        if (el2 == null ? void 0 : el2.dataset.path) jump(el2.dataset.path);
       });
       body == null ? void 0 : body.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" && e.key !== " ") return;
-        const el = e.target.closest("[data-path]");
-        if (el == null ? void 0 : el.dataset.path) {
+        const el2 = e.target.closest("[data-path]");
+        if (el2 == null ? void 0 : el2.dataset.path) {
           e.preventDefault();
-          jump(el.dataset.path);
+          jump(el2.dataset.path);
         }
       });
       escHandle5 = escManager.register("bz-sb-weekly-modal", {
@@ -58588,8 +58620,8 @@ GitHub 仓库：${ghInfo.title}
             const serialized = serializeDiaryEntryFile({ date, time }, tags, body);
             const existing = app.vault.getAbstractFileByPath(targetPath);
             if (existing && existing.isFolder !== true) {
-              const text = await app.vault.read(existing);
-              if (text.replace(/\n$/, "") === serialized.replace(/\n$/, "")) return;
+              const text2 = await app.vault.read(existing);
+              if (text2.replace(/\n$/, "") === serialized.replace(/\n$/, "")) return;
               let seq = 2;
               let alt = diaryEntryPath(dir, date, time, seq);
               while (app.vault.getAbstractFileByPath(alt)) {
@@ -59327,9 +59359,9 @@ GitHub 仓库：${ghInfo.title}
 
   // src/core/ui/lock-screen.ts
   function uiLockScreen(opts) {
-    const el = document.createElement("div");
-    el.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
-    el.dataset.ls = opts.inline ? "box" : "mask";
+    const el2 = document.createElement("div");
+    el2.className = `bz-lockscreen bz-lockscreen--${opts.kind}` + (opts.inline ? " bz-lockscreen--inline" : " bz-lockscreen--mask");
+    el2.dataset.ls = opts.inline ? "box" : "mask";
     const box = document.createElement("div");
     box.className = "bz-lockscreen-box";
     box.dataset.ls = "box";
@@ -59443,8 +59475,8 @@ GitHub 仓库：${ghInfo.title}
     hint.textContent = opts.hint || "";
     hint.style.display = opts.hint ? "" : "none";
     box.appendChild(hint);
-    if (!opts.inline) el.style.display = "flex";
-    el.appendChild(box);
+    if (!opts.inline) el2.style.display = "flex";
+    el2.appendChild(box);
     const focus = () => {
       try {
         input.focus({ preventScroll: true });
@@ -59453,7 +59485,7 @@ GitHub 仓库：${ghInfo.title}
       }
     };
     return {
-      el,
+      el: el2,
       input,
       input2,
       ackBox,
@@ -59488,7 +59520,7 @@ GitHub 仓库：${ghInfo.title}
       },
       focus,
       close: () => {
-        el.remove();
+        el2.remove();
       }
     };
   }
@@ -59535,20 +59567,20 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function motionWaapi(el, frames, opts) {
-    if (!el || motionReduced() || typeof el.animate !== "function") {
+  function motionWaapi(el2, frames, opts) {
+    if (!el2 || motionReduced() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && last) for (const k of Object.keys(last)) {
+      if (el2 && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
         try {
-          el.style[k] = String(last[k]);
+          el2.style[k] = String(last[k]);
         } catch (e) {
         }
       }
       return null;
     }
     try {
-      return el.animate(frames, opts);
+      return el2.animate(frames, opts);
     } catch (e) {
       return null;
     }
@@ -59608,8 +59640,8 @@ GitHub 仓库：${ghInfo.title}
     if (anim) anim.finished.then(gone).catch(gone);
     motionShellAfter(dur + 150, gone);
   }
-  function motionVisible(el) {
-    return !!el && el.offsetWidth > 0 && el.offsetHeight > 0;
+  function motionVisible(el2) {
+    return !!el2 && el2.offsetWidth > 0 && el2.offsetHeight > 0;
   }
   function motionArmBoot() {
     intent = "boot";
@@ -59620,14 +59652,14 @@ GitHub 仓库：${ghInfo.title}
   function motionArmSearch() {
     if (!intent) intent = "search";
   }
-  function rise(el, delay, dur = M15.base, from = {}) {
+  function rise(el2, delay, dur = M15.base, from = {}) {
     var _a2, _b2, _c;
     const y = (_a2 = from.y) != null ? _a2 : 8;
     const blur = (_b2 = from.blur) != null ? _b2 : 4;
     const scale = (_c = from.scale) != null ? _c : 1;
     motionAfter(delay, () => {
       motionWaapi(
-        el,
+        el2,
         [
           { opacity: 0, transform: `translateY(${y}px)${scale !== 1 ? ` scale(${scale})` : ""}`, filter: `blur(${blur}px)` },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -59660,22 +59692,22 @@ GitHub 仓库：${ghInfo.title}
           ],
           { duration: 380, easing: E9.out, fill: "backwards" }
         ));
-        items.forEach((el, i) => rise(el, 90 + i * 45, M15.base, { y: 6 }));
-        side.forEach((el, i) => {
-          if (el) rise(el, 240 + i * 60, M15.base, { y: 6 });
+        items.forEach((el2, i) => rise(el2, 90 + i * 45, M15.base, { y: 6 }));
+        side.forEach((el2, i) => {
+          if (el2) rise(el2, 240 + i * 60, M15.base, { y: 6 });
         });
         const title = desk.querySelector("[data-vault-title]");
         if (title) rise(title, 60, M15.base, { y: 5 });
         motionBootSweep(popup);
       }
-      if (phase === "boot") rows.forEach((el, i) => {
-        if (i < 14) rise(el, 300 + i * STAG9, M15.base, { y: 7 });
+      if (phase === "boot") rows.forEach((el2, i) => {
+        if (i < 14) rise(el2, 300 + i * STAG9, M15.base, { y: 7 });
       });
-      else if (phase === "switch") rows.forEach((el, i) => {
-        if (i < 12) rise(el, i * 20, M15.fast + 60, { y: 6, blur: 3 });
+      else if (phase === "switch") rows.forEach((el2, i) => {
+        if (i < 12) rise(el2, i * 20, M15.fast + 60, { y: 6, blur: 3 });
       });
-      else if (phase === "search") rows.forEach((el, i) => {
-        if (i < 10) rise(el, i * 14, M15.fast + 40, { y: 4, blur: 2 });
+      else if (phase === "search") rows.forEach((el2, i) => {
+        if (i < 10) rise(el2, i * 14, M15.fast + 40, { y: 4, blur: 2 });
       });
       if (detail) {
         if (phase === "boot" || phase === "switch") revealDetail(detail, phase === "boot" ? 220 : 40);
@@ -59685,14 +59717,14 @@ GitHub 仓库：${ghInfo.title}
     }
     if (motionVisible(mob) && mob) {
       const rows = [...mob.querySelectorAll("[data-mob-body] > .bz-vault-row")];
-      if (phase === "boot") rows.forEach((el, i) => {
-        if (i < 12) rise(el, 260 + i * STAG9, M15.base, { y: 7 });
+      if (phase === "boot") rows.forEach((el2, i) => {
+        if (i < 12) rise(el2, 260 + i * STAG9, M15.base, { y: 7 });
       });
-      else if (phase === "switch") rows.forEach((el, i) => {
-        if (i < 10) rise(el, i * 20, M15.fast + 60, { y: 6, blur: 3 });
+      else if (phase === "switch") rows.forEach((el2, i) => {
+        if (i < 10) rise(el2, i * 20, M15.fast + 60, { y: 6, blur: 3 });
       });
-      else if (phase === "search") rows.forEach((el, i) => {
-        if (i < 8) rise(el, i * 14, M15.fast + 40, { y: 4, blur: 2 });
+      else if (phase === "search") rows.forEach((el2, i) => {
+        if (i < 8) rise(el2, i * 14, M15.fast + 40, { y: 4, blur: 2 });
       });
     }
   }
@@ -59849,11 +59881,11 @@ GitHub 仓库：${ghInfo.title}
     );
     const lines = ['[data-ls="title"]', '[data-ls="sub"]', '[data-ls="row"]'];
     lines.forEach((sel, i) => {
-      const el = lsEl.querySelector(sel);
-      if (el) {
+      const el2 = lsEl.querySelector(sel);
+      if (el2) {
         motionShellAfter(120 + i * 70, () => {
           motionWaapi(
-            el,
+            el2,
             [
               { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -59864,10 +59896,10 @@ GitHub 仓库：${ghInfo.title}
       }
     });
     const stats = [...lsEl.querySelectorAll('[data-ls="stats"] .bz-lockscreen-stat')];
-    stats.forEach((el, i) => {
+    stats.forEach((el2, i) => {
       motionShellAfter(200 + i * 60, () => {
         motionWaapi(
-          el,
+          el2,
           [
             { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
@@ -59938,10 +59970,10 @@ GitHub 仓库：${ghInfo.title}
     );
     motionBootSweep(popup);
   }
-  function motionRevealBody(el) {
-    if (!el || motionReduced() || !motionVisible(el)) return;
+  function motionRevealBody(el2) {
+    if (!el2 || motionReduced() || !motionVisible(el2)) return;
     motionWaapi(
-      el,
+      el2,
       [
         { opacity: 0.3, filter: "blur(7px) brightness(1.35)" },
         { opacity: 1, filter: "blur(0px) brightness(1)" }
@@ -60005,8 +60037,8 @@ GitHub 仓库：${ghInfo.title}
       { duration: M15.base, easing: E9.out, fill: "backwards" }
     );
     const secs = [...body.querySelectorAll(".bz-encrypt-health-section, .bz-encrypt-health-item, .bz-encrypt-health-hint")];
-    secs.forEach((el, i) => {
-      if (i < 12) rise(el, 90 + i * 35, M15.base, { y: 4, blur: 2 });
+    secs.forEach((el2, i) => {
+      if (i < 12) rise(el2, 90 + i * 35, M15.base, { y: 4, blur: 2 });
     });
   }
   function motionFindRowIn(row) {
@@ -60020,9 +60052,9 @@ GitHub 仓库：${ghInfo.title}
       { duration: M15.fast + 40, easing: E9.out, fill: "backwards" }
     );
   }
-  function motionStatusbarSpin(el) {
-    if (!el || motionReduced()) return;
-    const ic2 = el.querySelector(".bz-vault-ic");
+  function motionStatusbarSpin(el2) {
+    if (!el2 || motionReduced()) return;
+    const ic2 = el2.querySelector(".bz-vault-ic");
     if (!ic2) return;
     motionWaapi(
       ic2,
@@ -60622,11 +60654,11 @@ GitHub 仓库：${ghInfo.title}
             motionArmSwitch();
             this.renderAll();
           };
-          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
-            el.addEventListener("click", () => setAsset(el.getAttribute("data-asset") || "overview"));
+          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el2) => {
+            el2.addEventListener("click", () => setAsset(el2.getAttribute("data-asset") || "overview"));
           });
-          this.mob.seg.querySelectorAll(".sg").forEach((el) => {
-            el.addEventListener("click", () => setAsset(el.getAttribute("data-masset") || "overview"));
+          this.mob.seg.querySelectorAll(".sg").forEach((el2) => {
+            el2.addEventListener("click", () => setAsset(el2.getAttribute("data-masset") || "overview"));
           });
           (_a2 = this.popup.querySelector('[data-act="lock"]')) == null ? void 0 : _a2.addEventListener("click", () => this.lockNow());
           (_b2 = this.popup.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
@@ -60809,18 +60841,18 @@ GitHub 仓库：${ghInfo.title}
         /** 左栏「立即上锁」旁的已解锁时长（mm:ss，超 1 小时 h:mm:ss） */
         updateUnlockDuration() {
           var _a2;
-          const el = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-unlock-dur]");
-          if (!el) return;
+          const el2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelector("[data-unlock-dur]");
+          if (!el2) return;
           if (!this.dataManager.unlocked || this.unlockedAt === null) {
-            el.textContent = "";
+            el2.textContent = "";
             return;
           }
           const s = Math.max(0, Math.floor((Date.now() - this.unlockedAt) / 1e3));
           const mm = String(Math.floor(s / 60) % 60).padStart(2, "0");
           const ss = String(s % 60).padStart(2, "0");
           const h = Math.floor(s / 3600);
-          el.textContent = h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
-          el.title = "已解锁时长";
+          el2.textContent = h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+          el2.title = "已解锁时长";
         }
         bumpIdleLock() {
           this.clearIdleLock();
@@ -61555,21 +61587,21 @@ GitHub 仓库：${ghInfo.title}
         renderNav() {
           const c = this.counts();
           const setCnt = (a, v) => {
-            const el = this.popup.querySelector(`[data-cnt="${a}"]`);
-            if (el) el.textContent = String(v);
+            const el2 = this.popup.querySelector(`[data-cnt="${a}"]`);
+            if (el2) el2.textContent = String(v);
           };
           setCnt("overview", c.note + c.diary);
           setCnt("note", c.note);
           setCnt("diary", c.diary);
-          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
-            const on = el.getAttribute("data-asset") === this.asset;
-            el.classList.toggle("on", on);
-            el.setAttribute("aria-current", on ? "true" : "false");
+          this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el2) => {
+            const on = el2.getAttribute("data-asset") === this.asset;
+            el2.classList.toggle("on", on);
+            el2.setAttribute("aria-current", on ? "true" : "false");
           });
-          this.mob.seg.querySelectorAll(".sg").forEach((el) => {
-            const on = el.getAttribute("data-masset") === this.asset;
-            el.classList.toggle("on", on);
-            el.setAttribute("aria-current", on ? "true" : "false");
+          this.mob.seg.querySelectorAll(".sg").forEach((el2) => {
+            const on = el2.getAttribute("data-masset") === this.asset;
+            el2.classList.toggle("on", on);
+            el2.setAttribute("aria-current", on ? "true" : "false");
           });
           const ht = this.popup.querySelector("[data-health-t]");
           const hd = this.popup.querySelector("[data-health-d]");
@@ -61663,21 +61695,21 @@ GitHub 仓库：${ghInfo.title}
           var _a2, _b2;
           mountIcons(area);
           area.querySelectorAll(".card[data-nav]").forEach(
-            (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-nav")))
+            (el2) => el2.addEventListener("click", () => this.setAssetFromNav(el2.getAttribute("data-nav")))
           );
           (_a2 = area.querySelector('[data-hero="lock-note"]')) == null ? void 0 : _a2.addEventListener("click", () => {
             var _a3;
             return (_a3 = this.onLockCurrentNote) == null ? void 0 : _a3.call(this);
           });
           area.querySelectorAll('[data-hero="health"]').forEach(
-            (el) => el.addEventListener("click", () => void this.openHealthDialog())
+            (el2) => el2.addEventListener("click", () => void this.openHealthDialog())
           );
           (_b2 = area.querySelector('[data-hero="recent-all"]')) == null ? void 0 : _b2.addEventListener("click", () => this.setAssetFromNav("note"));
           area.querySelectorAll(".bz-vault-minirow[data-recent]").forEach(
-            (el) => el.addEventListener("click", () => {
-              const rid = el.getAttribute("data-recent-id");
+            (el2) => el2.addEventListener("click", () => {
+              const rid = el2.getAttribute("data-recent-id");
               if (rid) this._selNoteId = rid;
-              this.setAssetFromNav(el.getAttribute("data-recent"));
+              this.setAssetFromNav(el2.getAttribute("data-recent"));
             })
           );
         }
@@ -61732,17 +61764,17 @@ GitHub 仓库：${ghInfo.title}
           for (const n of notes) {
             const row = document.createElement("div");
             row.innerHTML = noteRowHTML(n, kind, n.id === selId);
-            const el = row.firstElementChild;
-            el.addEventListener("click", () => {
+            const el2 = row.firstElementChild;
+            el2.addEventListener("click", () => {
               this._selNoteId = n.id;
               this.renderDesktop();
             });
-            el.addEventListener("dblclick", () => {
+            el2.addEventListener("dblclick", () => {
               if (this.previewMask) registerSheetCompanion(this.previewMask);
               void this.openPreview(n);
             });
-            this.attachNoteDrawer(el, n, kind);
-            listBody.appendChild(el);
+            this.attachNoteDrawer(el2, n, kind);
+            listBody.appendChild(el2);
           }
           mountIcons(listBody);
           if (keepHead) listBody.scrollTop = prevScroll;
@@ -61823,9 +61855,9 @@ GitHub 仓库：${ghInfo.title}
           return { actions, opts: { sheetHead: this.buildSheetHead(note, isDiary) } };
         }
         /** 笔记行/详情统一右键抽屉（预览/还原/删除） */
-        attachNoteDrawer(el, note, kind) {
+        attachNoteDrawer(el2, note, kind) {
           const { actions, opts } = this.noteDrawerActions(note, kind);
-          attachItemActions(el, actions, opts);
+          attachItemActions(el2, actions, opts);
         }
         buildSheetHead(note, isDiary = false) {
           const head = document.createElement("div");
@@ -61862,10 +61894,10 @@ GitHub 仓库：${ghInfo.title}
           var _a2;
           if (activeUnlock && ((_a2 = activeUnlock.el) == null ? void 0 : _a2.isConnected)) activeUnlock.cancel();
           this.activeChangePw = null;
-          document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
-          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => {
-            if (el.classList.contains("bz-lockscreen--password-vault") || el.classList.contains("bz-lockscreen--diary")) return;
-            el.remove();
+          document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el2) => el2.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el2) => {
+            if (el2.classList.contains("bz-lockscreen--password-vault") || el2.classList.contains("bz-lockscreen--diary")) return;
+            el2.remove();
           });
           this.hideHealthDialog();
           cancelActiveFlowDialog();
@@ -61895,10 +61927,10 @@ GitHub 仓库：${ghInfo.title}
           this.asset = a;
           lastVisitedAsset = a;
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach(
-            (el) => el.classList.toggle("on", el.getAttribute("data-asset") === a)
+            (el2) => el2.classList.toggle("on", el2.getAttribute("data-asset") === a)
           );
           this.mob.seg.querySelectorAll(".sg").forEach(
-            (el) => el.classList.toggle("on", el.getAttribute("data-masset") === a)
+            (el2) => el2.classList.toggle("on", el2.getAttribute("data-masset") === a)
           );
           motionArmSwitch();
           this.renderAll();
@@ -62006,13 +62038,13 @@ GitHub 仓库：${ghInfo.title}
           for (const n of filtered2) {
             const row = document.createElement("div");
             row.innerHTML = noteRowHTML(n, kind, false);
-            const el = row.firstElementChild;
-            el.addEventListener("click", () => {
+            const el2 = row.firstElementChild;
+            el2.addEventListener("click", () => {
               this._selNoteId = n.id;
               this.openNoteMobPage(n, kind);
             });
-            this.attachNoteDrawer(el, n, kind);
-            body.appendChild(el);
+            this.attachNoteDrawer(el2, n, kind);
+            body.appendChild(el2);
           }
         }
         /** 移动端二级页骨架：顶栏（返回 + 标题 + ⋮）+ 内容体；back/menu 绑定由调用方接 */
@@ -62322,9 +62354,9 @@ GitHub 仓库：${ghInfo.title}
               err.textContent = "正文解密失败";
               bodyEl3 = err;
             } else {
-              const { text, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
+              const { text: text2, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
               inlined = inl;
-              const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text, note.path);
+              const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text2, note.path);
               mdEl.className = "bz-encrypt-preview-md";
               if (rendered) {
                 let html = mdEl.innerHTML;
@@ -62380,13 +62412,13 @@ GitHub 仓库：${ghInfo.title}
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
          * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
-        async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+        async renderWithTimeout(app, text2, path, timeoutMs = 3e3) {
           this.unloadPreviewComponent();
-          const el = document.createElement("div");
+          const el2 = document.createElement("div");
           const component = new Component();
           this._previewComponent = component;
           let finished = false;
-          const render2 = MarkdownRenderer.render(app, text, el, path, component).then(
+          const render2 = MarkdownRenderer.render(app, text2, el2, path, component).then(
             () => {
               finished = true;
             },
@@ -62396,7 +62428,7 @@ GitHub 仓库：${ghInfo.title}
           );
           await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
           if (!finished) return { ok: false, el: document.createElement("div"), component };
-          return { ok: true, el, component };
+          return { ok: true, el: el2, component };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -62529,8 +62561,8 @@ GitHub 仓库：${ghInfo.title}
          * 状态栏挂载（main.ts onload 调用）：初始为锁定态；订阅解锁态变化刷新，
          * 点击打开统一保险库面板（openEncrypt 有解锁引导）。
          */
-        attachStatusBar(el) {
-          this.statusBarEl = el;
+        attachStatusBar(el2) {
+          this.statusBarEl = el2;
           this.dataManager.onUnlockChange = (unlocked) => {
             var _a2, _b2;
             if (this.statusBarEl) {
@@ -62679,8 +62711,8 @@ GitHub 仓库：${ghInfo.title}
           this.uiManager.captureForUnload();
           const ids = ["bz-encrypt-mask", "bz-encrypt-popup", "bz-encrypt-preview-mask", "bz-encrypt-preview-popup", "bz-encrypt-health-mask", "bz-encrypt-health-popup"];
           for (const id of ids) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
+            const el2 = document.getElementById(id);
+            if (el2) el2.remove();
           }
           this.uiManager.closeAllDialogs();
           this.uiManager.detachGlobalListeners();
@@ -62750,6 +62782,274 @@ GitHub 仓库：${ghInfo.title}
     "src/password-vault/settings.ts"() {
       init_settings_common();
       init_settings_provider();
+    }
+  });
+
+  // src/people/chat.ts
+  var CHAT_SEP_GAP_MS;
+  var init_chat = __esm({
+    "src/people/chat.ts"() {
+      CHAT_SEP_GAP_MS = 5 * 60 * 1e3;
+    }
+  });
+
+  // src/people/types.ts
+  var init_types = __esm({
+    "src/people/types.ts"() {
+    }
+  });
+
+  // src/people/render.ts
+  function el(tag, cls, arg, ...rest) {
+    const flat = (ns) => ns.flatMap((n) => Array.isArray(n) ? n : [n]);
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (arg === void 0) {
+      for (const c of flat(rest)) node.appendChild(c);
+    } else if (Array.isArray(arg)) {
+      for (const c of flat([...arg, ...rest])) node.appendChild(c);
+    } else if (arg instanceof Node) {
+      node.appendChild(arg);
+      for (const c of flat(rest)) node.appendChild(c);
+    } else {
+      for (const [k, v] of Object.entries(arg)) node.setAttribute(k, v);
+      for (const c of flat(rest)) node.appendChild(c);
+    }
+    return node;
+  }
+  function text(s) {
+    return document.createTextNode(s);
+  }
+  function button(cls, label, attrs) {
+    const b = el("button", cls, attrs);
+    b.type = "button";
+    b.textContent = label;
+    return b;
+  }
+  function localResourceUri(path) {
+    var _a2, _b2;
+    const norm = path.replace(/\\/g, "/");
+    const escape = (s) => s.replace(/#/g, "%23").replace(/\?/g, "%3F");
+    if (typeof window !== "undefined") {
+      const base = window.BZW_MEDIA_BASE;
+      if (base) return base + escape(encodeURI(norm));
+      const w = window;
+      const adapter = (_b2 = (_a2 = w.app) == null ? void 0 : _a2.vault) == null ? void 0 : _b2.adapter;
+      const res = adapter == null ? void 0 : adapter.getResourcePath;
+      if (adapter && res && !/^[A-Za-z]:/.test(norm) && !/^(https?:)?\/\//.test(norm) && !norm.startsWith("/")) {
+        try {
+          return res.call(adapter, norm);
+        } catch (e) {
+        }
+      }
+    }
+    if (/^(https?:)?\/\//.test(norm) || norm.startsWith("/")) return norm;
+    const rel = norm.replace(/^[A-Za-z]:/, "").replace(/^\/+/, "");
+    return `app://local/${escape(encodeURI(rel))}`;
+  }
+  function avatarUri(a) {
+    return a.startsWith("data:") ? a : localResourceUri(a);
+  }
+  function myAvatarSourceText(s) {
+    if (s.source === "custom") return "当前：自定义图片（存在 vault 的 CONFIG/FACES/我 里）";
+    if (s.source === "wechat") return "当前：微信数据里扒出来的本人头像";
+    return s.noDataRoot ? "当前：还没设置——先配好数据根再同步，或者直接传一张" : "当前：还没设置——跑一次同步就能拿到微信里的本人头像，也可以直接传一张";
+  }
+  function myAvatarRow(s) {
+    const box = el("div", "bz-people-setava", { "data-people-setava": "" });
+    box.appendChild(s.url ? el("img", "bz-people-setava-img", { src: avatarUri(s.url), alt: "我的头像" }) : el("span", "bz-people-setava-txt", text("我")));
+    const col = el("div", "bz-people-setava-col");
+    col.appendChild(el("div", "bz-people-setava-hint", text(myAvatarSourceText(s))));
+    col.appendChild(el("div", "bz-people-setava-acts", [
+      // 组件库按钮（设置面板的控件基线；面板是本行唯一消费面——ADR-0153 起原生设置页只留跳转）
+      button("bz-btn bz-btn--primary bz-btn--sm", "上传图片…", { "data-people-setava-pick": "" }),
+      button("bz-btn bz-btn--ghost bz-btn--sm", "恢复默认", { "data-people-setava-reset": "" })
+    ]));
+    box.appendChild(col);
+    return box;
+  }
+  var init_render14 = __esm({
+    "src/people/render.ts"() {
+      init_chat();
+      init_types();
+    }
+  });
+
+  // src/people/media.ts
+  var init_media = __esm({
+    "src/people/media.ts"() {
+    }
+  });
+
+  // src/people/parse.ts
+  var init_parse = __esm({
+    "src/people/parse.ts"() {
+    }
+  });
+
+  // src/people/stats.ts
+  var SESSION_GAP_MS;
+  var init_stats4 = __esm({
+    "src/people/stats.ts"() {
+      init_media();
+      SESSION_GAP_MS = 30 * 60 * 1e3;
+    }
+  });
+
+  // src/people/insights.ts
+  var SESSION_GAP_MS2, SILENCE_GAP_MS;
+  var init_insights = __esm({
+    "src/people/insights.ts"() {
+      init_stats4();
+      SESSION_GAP_MS2 = 30 * 60 * 1e3;
+      SILENCE_GAP_MS = 14 * 24 * 3600 * 1e3;
+    }
+  });
+
+  // src/people/datasource.ts
+  function getFs2() {
+    const w = window;
+    if (!w || !w.require) return null;
+    try {
+      return w.require("fs");
+    } catch (e) {
+      return null;
+    }
+  }
+  function readAvatarInput(absolutePath) {
+    var _a2;
+    const fs = getFs2();
+    const p = String(absolutePath != null ? absolutePath : "").trim();
+    if (!fs || !p) return null;
+    let srcExt = "";
+    try {
+      if (!fs.existsSync(p)) return null;
+      srcExt = String((_a2 = p.split(".").pop()) != null ? _a2 : "").toLowerCase();
+    } catch (e) {
+      return null;
+    }
+    if (!AVA_EXTS.includes(srcExt)) return null;
+    try {
+      const buf = fs.readFileSync(p);
+      if (!buf || !buf.length) return null;
+      return { base64: bytesToBase64Of(buf), ext: srcExt };
+    } catch (e) {
+      return null;
+    }
+  }
+  function bytesToBase64Of(bytes) {
+    const CHUNK = 32768;
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+  var IMG_DESC_NEAREST_SEC, AVA_EXTS;
+  var init_datasource = __esm({
+    "src/people/datasource.ts"() {
+      init_settings_provider();
+      init_media();
+      init_parse();
+      init_insights();
+      IMG_DESC_NEAREST_SEC = 12 * 3600;
+      AVA_EXTS = ["jpg", "jpeg", "png", "webp", "gif"];
+    }
+  });
+
+  // src/people/me-avatar.ts
+  function getFs3() {
+    const w = typeof window === "undefined" ? null : window;
+    if (!w || !w.require) return null;
+    try {
+      return w.require("fs");
+    } catch (e) {
+      return null;
+    }
+  }
+  function clearMyAvatarCache() {
+    localImgCache.clear();
+  }
+  function avatarDataUrl(a) {
+    return a ? `data:image/${a.ext};base64,${a.base64}` : "";
+  }
+  function localImgOf(absolutePath) {
+    const hit = localImgCache.get(absolutePath);
+    if (hit !== void 0) return hit;
+    const url = avatarDataUrl(readAvatarInput(absolutePath));
+    localImgCache.set(absolutePath, url);
+    return url;
+  }
+  function wechatSelfAvatarPath(dataRoot) {
+    const fs = getFs3();
+    const root = String(dataRoot != null ? dataRoot : "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
+    if (!fs || !root) return null;
+    for (const ext of AVA_EXTS2) {
+      const p = `${root}/${SELF_AVATAR_REL}.${ext}`;
+      try {
+        if (fs.existsSync(p)) return p;
+      } catch (e) {
+      }
+    }
+    return null;
+  }
+  function myAvatarSource(setting, dataRoot) {
+    if (String(setting != null ? setting : "").trim()) return "custom";
+    return wechatSelfAvatarPath(dataRoot) ? "wechat" : "none";
+  }
+  function resolveMyAvatar(setting, dataRoot) {
+    const p = String(setting != null ? setting : "").trim();
+    if (p) return /^[A-Za-z]:/.test(p) || p.startsWith("\\\\") ? localImgOf(p) : p;
+    const wechat = wechatSelfAvatarPath(dataRoot);
+    return wechat ? localImgOf(wechat) : "";
+  }
+  async function ensureDir2(adapter, relDir) {
+    if (!adapter.mkdir) return;
+    let cur = "";
+    for (const part of relDir.split("/")) {
+      cur = cur ? `${cur}/${part}` : part;
+      try {
+        await adapter.mkdir(cur);
+      } catch (e) {
+      }
+    }
+  }
+  function bytesOf(base64) {
+    const bin = atob(base64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function importMyAvatarFromFile(absPath) {
+    var _a2, _b2;
+    const src = readAvatarInput(absPath);
+    if (!src) return null;
+    const vault = (_a2 = getApp()) == null ? void 0 : _a2.vault;
+    const adapter = vault == null ? void 0 : vault.adapter;
+    if (!(adapter == null ? void 0 : adapter.writeBinary)) return null;
+    await ensureDir2(adapter, MY_AVATAR_DIR);
+    const rel = `${MY_AVATAR_DIR}/avatar.${src.ext}`;
+    for (const ext of AVA_EXTS2) {
+      if (ext === src.ext) continue;
+      const stale = `${MY_AVATAR_DIR}/avatar.${ext}`;
+      try {
+        if (adapter.exists ? await adapter.exists(stale) : true) await ((_b2 = adapter.remove) == null ? void 0 : _b2.call(adapter, stale));
+      } catch (e) {
+      }
+    }
+    const bytes = bytesOf(src.base64);
+    await adapter.writeBinary(rel, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    return rel;
+  }
+  var AVA_EXTS2, MY_AVATAR_DIR, SELF_AVATAR_REL, localImgCache;
+  var init_me_avatar = __esm({
+    "src/people/me-avatar.ts"() {
+      init_app();
+      init_datasource();
+      AVA_EXTS2 = ["jpg", "jpeg", "png", "webp", "gif"];
+      MY_AVATAR_DIR = "CONFIG/FACES/我";
+      SELF_AVATAR_REL = ".bz-face/me/avatar";
+      localImgCache = /* @__PURE__ */ new Map();
     }
   });
 
@@ -62831,11 +63131,13 @@ GitHub 仓库：${ghInfo.title}
               binding: { key: "peopleKeepSystem" }
             },
             {
-              type: "text",
+              // issue 529：原来是「文本路径行」（要用户自己填一个库外绝对路径）——改成上传行：
+              // 预览 + 上传图片 / 恢复默认。默认值 = 微信数据里扒出来的本人头像
+              //（工具 sync 轮导出到 <数据根>/.bz-face/me/avatar.<ext>）
+              type: "custom",
               name: "我的头像",
-              desc: "逐轮时间轴里「我」一侧的头像图片路径；留空 = 名字首字",
-              binding: { key: "peopleMyAvatar" },
-              placeholder: "例如 D:\\图片\\我.png"
+              desc: "聊天里「我」那一侧的头像；默认用微信数据里导出的本人头像",
+              render: (body) => renderMyAvatarRow(body)
             }
           ]
         },
@@ -62879,9 +63181,77 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
+  function avatarCtx() {
+    const s = tryGetSettings();
+    return {
+      setting: typeof s.peopleMyAvatar === "string" ? s.peopleMyAvatar.trim() : "",
+      root: typeof s.peopleDataDir === "string" ? s.peopleDataDir.trim() : ""
+    };
+  }
+  function renderMyAvatarRow(body) {
+    const draw = () => {
+      const { setting, root } = avatarCtx();
+      body.replaceChildren(myAvatarRow({
+        url: resolveMyAvatar(setting, root),
+        source: myAvatarSource(setting, root),
+        noDataRoot: !root
+      }));
+      mountIcons(body);
+    };
+    draw();
+    body.addEventListener("click", (ev) => {
+      const t = ev.target;
+      if (t.closest("[data-people-setava-pick]")) {
+        void pickMyAvatar(draw);
+        return;
+      }
+      if (t.closest("[data-people-setava-reset]")) {
+        void resetMyAvatar(draw);
+        return;
+      }
+    });
+  }
+  async function pickMyAvatar(draw) {
+    const files = await pickSystemFiles("选择头像图片", [
+      { name: "图片", ext: ["jpg", "jpeg", "png", "webp", "gif"] },
+      { name: "全部文件", ext: ["*"] }
+    ]);
+    if (!files.length) return;
+    try {
+      const rel = await importMyAvatarFromFile(files[0]);
+      if (!rel) {
+        notice("这张图读不动或没写进 vault——换一张图片再试", "warning");
+        return;
+      }
+      tryGetSettings().peopleMyAvatar = rel;
+      await saveSettings();
+      clearMyAvatarCache();
+      draw();
+      notice("头像已换成这张图", "success");
+    } catch (e) {
+      notifyActionError(e, "设置头像");
+    }
+  }
+  async function resetMyAvatar(draw) {
+    try {
+      tryGetSettings().peopleMyAvatar = "";
+      await saveSettings();
+      clearMyAvatarCache();
+      draw();
+      notice("头像已恢复默认", "restore");
+    } catch (e) {
+      notifyActionError(e, "恢复默认头像");
+    }
+  }
   var init_settings8 = __esm({
     "src/people/settings.ts"() {
       init_flow_dialog();
+      init_notice();
+      init_path_picker();
+      init_settings_provider();
+      init_icons();
+      init_render14();
+      init_me_avatar();
     }
   });
 
@@ -62923,15 +63293,15 @@ GitHub 仓库：${ghInfo.title}
   }
   function mountEncryptStatusBar(container) {
     if (statusBarEl) return;
-    const el = document.createElement("span");
-    el.className = "bz-encrypt-statusbar";
-    el.title = "保险库：点击打开";
-    el.innerHTML = statusbarHtml(false);
-    mountIcons(el);
-    el.addEventListener("click", () => openEncrypt(getApp()));
-    container.appendChild(el);
-    statusBarEl = el;
-    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el)).catch(() => {
+    const el2 = document.createElement("span");
+    el2.className = "bz-encrypt-statusbar";
+    el2.title = "保险库：点击打开";
+    el2.innerHTML = statusbarHtml(false);
+    mountIcons(el2);
+    el2.addEventListener("click", () => openEncrypt(getApp()));
+    container.appendChild(el2);
+    statusBarEl = el2;
+    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el2)).catch(() => {
     });
   }
   function unmountEncryptStatusBar() {
@@ -63364,7 +63734,7 @@ GitHub 仓库：${ghInfo.title}
 
   // src/smartcat/types.ts
   var ALL_APPEARANCES;
-  var init_types = __esm({
+  var init_types2 = __esm({
     "src/smartcat/types.ts"() {
       ALL_APPEARANCES = [
         "orange",
@@ -63437,7 +63807,7 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_config5 = __esm({
     "src/smartcat/config.ts"() {
-      init_types();
+      init_types2();
     }
   });
 
@@ -63759,14 +64129,14 @@ GitHub 仓库：${ghInfo.title}
       return false;
     }
   }
-  function waapi9(el, frames, opts) {
-    if (!el || reduced10() || typeof el.animate !== "function") {
+  function waapi9(el2, frames, opts) {
+    if (!el2 || reduced10() || typeof el2.animate !== "function") {
       const last = frames[frames.length - 1];
-      if (el && reduced10() && last) {
+      if (el2 && reduced10() && last) {
         for (const k of Object.keys(last)) {
           if (k === "offset") continue;
           try {
-            el.style[k] = String(last[k]);
+            el2.style[k] = String(last[k]);
           } catch (e) {
           }
         }
@@ -63774,7 +64144,7 @@ GitHub 仓库：${ghInfo.title}
       return null;
     }
     try {
-      return el.animate(frames, {
+      return el2.animate(frames, {
         duration: opts.duration,
         delay: opts.delay,
         easing: opts.easing,
@@ -63807,9 +64177,9 @@ GitHub 仓库：${ghInfo.title}
     }
     orchestra.clear();
   }
-  function cancelById(el, id) {
-    if (!el || typeof el.getAnimations !== "function") return;
-    for (const a of el.getAnimations()) {
+  function cancelById(el2, id) {
+    if (!el2 || typeof el2.getAnimations !== "function") return;
+    for (const a of el2.getAnimations()) {
       if (a.id === id) {
         try {
           a.cancel();
@@ -63933,8 +64303,8 @@ GitHub 仓库：${ghInfo.title}
   function unmountCatContainer() {
     const ids = [CAT_CONTAINER_ID, "settings-panel", "chat-panel", "panel-mask"];
     for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el && el.parentNode) el.parentNode.removeChild(el);
+      const el2 = document.getElementById(id);
+      if (el2 && el2.parentNode) el2.parentNode.removeChild(el2);
     }
   }
   function applyAppearance(container, appearance) {
@@ -64208,7 +64578,7 @@ GitHub 仓库：${ghInfo.title}
       init_config5();
       init_motion11();
       init_skin_pack();
-      init_types();
+      init_types2();
       CAT_CONTAINER_ID = "smart-companion-cat";
       SKINS = [...ALL_APPEARANCES];
       BUILTIN_APPEARANCE = "orange";
@@ -64261,8 +64631,8 @@ GitHub 仓库：${ghInfo.title}
   function manualVaultPath(app) {
     return downloadsVaultPath(app, MANUAL_FILENAME);
   }
-  function looksLikeManual(text) {
-    const t = String(text || "");
+  function looksLikeManual(text2) {
+    const t = String(text2 || "");
     return /<!DOCTYPE/i.test(t) || /<html/i.test(t) || t.includes("包仔");
   }
   function hasManual(app) {
@@ -64374,8 +64744,8 @@ GitHub 仓库：${ghInfo.title}
   function changelogVaultPath(app) {
     return downloadsVaultPath(app, CHANGELOG_FILENAME);
   }
-  function looksLikeChangelog(text) {
-    const t = String(text || "");
+  function looksLikeChangelog(text2) {
+    const t = String(text2 || "");
     return (/<!DOCTYPE/i.test(t) || /<html/i.test(t)) && t.includes("const DATA =");
   }
   function ensureChangelogReady(app) {
@@ -65711,28 +66081,28 @@ GitHub 仓库：${ghInfo.title}
          */
         markHitText(row, q3) {
           const needle = q3.trim().toLowerCase();
-          row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el) => {
+          row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el2) => {
             var _a2, _b2;
-            if (el.dataset.spOrig === void 0) el.dataset.spOrig = (_a2 = el.textContent) != null ? _a2 : "";
-            const text = (_b2 = el.dataset.spOrig) != null ? _b2 : "";
-            el.textContent = "";
+            if (el2.dataset.spOrig === void 0) el2.dataset.spOrig = (_a2 = el2.textContent) != null ? _a2 : "";
+            const text2 = (_b2 = el2.dataset.spOrig) != null ? _b2 : "";
+            el2.textContent = "";
             if (!needle) {
-              el.textContent = text;
+              el2.textContent = text2;
               return;
             }
-            const lower = text.toLowerCase();
+            const lower = text2.toLowerCase();
             let cursor = 0;
             for (; ; ) {
               const at3 = lower.indexOf(needle, cursor);
               if (at3 < 0) break;
-              if (at3 > cursor) el.append(document.createTextNode(text.slice(cursor, at3)));
+              if (at3 > cursor) el2.append(document.createTextNode(text2.slice(cursor, at3)));
               const mark = document.createElement("mark");
               mark.className = "bz-sp-mark";
-              mark.textContent = text.slice(at3, at3 + needle.length);
-              el.append(mark);
+              mark.textContent = text2.slice(at3, at3 + needle.length);
+              el2.append(mark);
               cursor = at3 + needle.length;
             }
-            if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
+            if (cursor < text2.length) el2.append(document.createTextNode(text2.slice(cursor)));
           });
         }
         /**
@@ -65960,9 +66330,9 @@ GitHub 仓库：${ghInfo.title}
         /** 滚动定位到指定行并高亮（行名匹配 .bz-sp-set-name；找不到静默跳过）。 */
         focusRowIn(body, rowName) {
           const target = [...body.querySelectorAll(".bz-sp-set-row")].find(
-            (el) => {
+            (el2) => {
               var _a2;
-              return ((_a2 = el.querySelector(".bz-sp-set-name")) == null ? void 0 : _a2.textContent) === rowName;
+              return ((_a2 = el2.querySelector(".bz-sp-set-name")) == null ? void 0 : _a2.textContent) === rowName;
             }
           );
           if (!target) return;
@@ -66213,20 +66583,20 @@ GitHub 仓库：${ghInfo.title}
         }
         /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
         captureFocusKey() {
-          const el = document.activeElement;
-          if (!(el instanceof HTMLElement) || !this.content.contains(el)) return null;
+          const el2 = document.activeElement;
+          if (!(el2 instanceof HTMLElement) || !this.content.contains(el2)) return null;
           for (const attr of ["data-scope", "data-batch", "data-rm-folder", "data-act", "data-role"]) {
-            const v = el.getAttribute(attr);
+            const v = el2.getAttribute(attr);
             if (v != null) return `${attr}=${v}`;
           }
           return null;
         }
         restoreFocus(key) {
           const eq = key.indexOf("=");
-          const el = this.content.querySelector(
+          const el2 = this.content.querySelector(
             `[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`
           );
-          el == null ? void 0 : el.focus();
+          el2 == null ? void 0 : el2.focus();
         }
         /** 范围内现有题数（一次读题库文件内存账，null = 读取失败不挡开面板）。
          *  E5：按 scope+folders+notePath 键缓存，仅范围变化重算——题库读盘不再跟随每次档位点击。 */

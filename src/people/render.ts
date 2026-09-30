@@ -1999,6 +1999,14 @@ export interface SuppRecRowState {
   /** 起点毫秒（一等数据，ADR-0217；行上显示/可改） */
   startMs?: number;
   errText?: string;
+  /**
+   * 源文件已不在磁盘（issue 528）：只剩仓里 `rec:<文件名>:*` 轮次。
+   * 行集合必须是「磁盘文件 ∪ 仓内已并入文件名」——只按磁盘列行的话，文件被外部删掉后
+   * 行随文件一起消失，**删除入口也没了**，而 storeStatsOf 还在数仓里那些轮次：
+   * 统计永远退不掉、还一直进画谱素材（大琳删了 .aac，录音仍报 410 条）。
+   * 渲染口径：徽章「源已失」；不给改起点 / 查看轮次（原件与 sidecar 都不在了）；删除照给。
+   */
+  orphan?: boolean;
 }
 
 /**
@@ -2303,6 +2311,13 @@ function suppRecBody(s: SuppRecViewState): HTMLElement[] {
     }
     out.push(warn);
   }
+  // 孤儿行提示（issue 528）：原件不在了、仓里的轮次还在——不说清就是「统计怎么删都不退」
+  const orphanN = s.rows.filter((r) => r.orphan).length;
+  if (orphanN) {
+    out.push(el('div', 'bz-people-supp-orphans', text(
+      `有 ${orphanN} 条录音的原件已不在磁盘，但聊天仓里的转写轮次还在（仍计入统计、也进画谱素材）——在下面标「源已失」的行点「删除」即可清掉。`,
+    )));
+  }
   if (!s.rows.length) {
     out.push(el('div', 'bz-people-empty-hint', text('还没有录音。AAC / M4A / MP3 都行——时间默认取文件名或文件属性，说话人分离与转写交给本地管线。')));
     return out;
@@ -2323,19 +2338,24 @@ function recDelConfirm(r: SuppRecRowState, del: NonNullable<SuppRecViewState['de
   const box = el('div', 'bz-people-supp-delbox');
   const inLedger = r.status === 'merged' || r.status === 'awaiting-merge';
   box.appendChild(el('div', 'bz-people-del-line', text(
-    inLedger
-      ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? '；脸谱正文不会跟着变，要反映得重新画谱（花钱）' : ''}。`
-      : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? '；脸谱正文不会跟着变' : ''}。`,
+    r.orphan
+      ? `这条录音的原件已不在磁盘——删除会清掉聊天仓里那 ${r.turns ?? 0} 条转写轮次，统计与画谱素材跟着减${del.drawn ? '；脸谱正文不会跟着变，要反映得重新画谱（花钱）' : ''}。`
+      : inLedger
+        ? `删除会把这条录音的转写轮次从聊天仓一并清掉${del.drawn ? '；脸谱正文不会跟着变，要反映得重新画谱（花钱）' : ''}。`
+        : `这条还没进聊天仓——删除只清账本与派生档${del.drawn ? '；脸谱正文不会跟着变' : ''}。`,
   )));
-  const label = document.createElement('label');
-  label.className = 'bz-people-supp-delchk';
-  const ck = document.createElement('input');
-  ck.type = 'checkbox';
-  ck.checked = del.alsoFile;
-  ck.setAttribute('data-people-supp-rec-del-file', r.file);
-  label.appendChild(ck);
-  label.appendChild(text(' 同时删除录音原件（不勾只清账本，之后可重跑）'));
-  box.appendChild(label);
+  // 原件勾选框：孤儿行的原件早就没了（勾了只是空动作也说不清），不给这个勾
+  if (!r.orphan) {
+    const label = document.createElement('label');
+    label.className = 'bz-people-supp-delchk';
+    const ck = document.createElement('input');
+    ck.type = 'checkbox';
+    ck.checked = del.alsoFile;
+    ck.setAttribute('data-people-supp-rec-del-file', r.file);
+    label.appendChild(ck);
+    label.appendChild(text(' 同时删除录音原件（不勾只清账本，之后可重跑）'));
+    box.appendChild(label);
+  }
   box.appendChild(el('div', 'bz-people-supp-rowfoot', [
     button('bz-people-btn bz-people-btn-sm bz-people-btn-danger', '确认删除', { 'data-people-supp-rec-del-ok': r.file }),
     button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '取消', { 'data-people-supp-rec-del-cancel': r.file }),
@@ -2434,10 +2454,15 @@ function recTurnsPreview(lines: SuppRecTurnLine[], meAvatar: string, otherAvatar
 }
 
 function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit = false, turnsView?: SuppRecViewState['turnsView']): HTMLElement {
-  const row = el('div', 'bz-people-supp-row', { 'data-people-supp-row': r.file });
+  const row = el('div', `bz-people-supp-row${r.orphan ? ' orphan' : ''}`, { 'data-people-supp-row': r.file });
   const head = el('div', 'bz-people-supp-rowhead');
   head.appendChild(el('span', 'bz-people-supp-qname', { title: r.file }, text(r.file)));
-  head.appendChild(el('span', `bz-people-supp-badge bz-people-supp-badge-${r.status}`, text(SUPP_REC_LABEL[r.status])));
+  // 孤儿行徽章「源已失」：状态仍是已并入（仓里有轮次），但原件和 sidecar 都没了
+  head.appendChild(el(
+    'span',
+    `bz-people-supp-badge bz-people-supp-badge-${r.orphan ? 'orphan' : r.status}`,
+    text(r.orphan ? '源已失' : SUPP_REC_LABEL[r.status]),
+  ));
   row.appendChild(head);
   if (del) {
     row.appendChild(recDelConfirm(r, del));
@@ -2487,11 +2512,12 @@ function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit
   if (r.phaseText) bits.push(r.phaseText);
   if (r.mode === 'me-only') bits.push('单质心：非我即对方');
   if (r.mode === 'blind') bits.push('无质心：盲分');
-  if (r.turns !== undefined) bits.push(`${r.turns} 轮`);
+  if (r.orphan) bits.push(`原件已不在磁盘 · 仓内 ${r.turns ?? 0} 条转写轮次仍在统计与素材`);
+  else if (r.turns !== undefined) bits.push(`${r.turns} 轮`);
   if (r.sideSpeaks) bits.push(`已滤 ${r.sideSpeaks} 轮旁音`);
   if (bits.length) row.appendChild(el('div', 'bz-people-supp-rowmeta', text(bits.join(' · '))));
-  // 起点（ADR-0217：一等数据，行上可见可改）——绝对时间的唯一来源
-  if (startEdit) {
+  // 起点（ADR-0217：一等数据，行上可见可改）——绝对时间的唯一来源。孤儿行没元数据可改。
+  if (startEdit && !r.orphan) {
     const line = el('div', 'bz-people-supp-startrow');
     line.appendChild(el('span', undefined, text('起点')));
     const inp = document.createElement('input');
@@ -2501,7 +2527,7 @@ function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit
     inp.setAttribute('data-people-supp-rec-start', r.file);
     line.appendChild(inp);
     row.appendChild(line);
-  } else if (r.startMs !== undefined) {
+  } else if (!r.orphan && r.startMs !== undefined) {
     row.appendChild(el('div', 'bz-people-supp-rowmeta', text(`起点 ${suppLocalTsValue(r.startMs).replace('T', ' ')}`)));
   }
   const foot: HTMLElement[] = [];
@@ -2510,13 +2536,16 @@ function suppRecRow(r: SuppRecRowState, del?: SuppRecViewState['del'], startEdit
   if (r.status === 'interrupted') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '续跑', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'failed') foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '重试', { 'data-people-supp-rec-run': r.file }));
   if (r.status === 'awaiting-merge') foot.push(button('bz-people-btn bz-people-btn-acc bz-people-btn-sm', '并仓', { 'data-people-supp-rec-merge': r.file, title: '转写完成但还没进时间线——点这里按轮次并仓' }));
-  if (startEdit) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '收起', { 'data-people-supp-rec-start-cancel': r.file }));
-  else foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '改起点', { 'data-people-supp-rec-start-edit': r.file, title: '录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）' }));
-  if (r.turns !== undefined) {
-    foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '查看轮次', { 'data-people-supp-rec-turns': r.file, title: '逐轮时间轴（含被滤的旁音轮）——复核我们没误杀' }));
+  // 孤儿行（issue 528）：原件与 sidecar 都不在，改起点 / 查看轮次无从谈起——只留「删除」，那正是清掉它的唯一入口
+  if (!r.orphan) {
+    if (startEdit) foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '收起', { 'data-people-supp-rec-start-cancel': r.file }));
+    else foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '改起点', { 'data-people-supp-rec-start-edit': r.file, title: '录音开始录的时刻——改完绝对时间跟着重排（已并仓的同步回写）' }));
+    if (r.turns !== undefined) {
+      foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '查看轮次', { 'data-people-supp-rec-turns': r.file, title: '逐轮时间轴（含被滤的旁音轮）——复核我们没误杀' }));
+    }
   }
   // 删除入口：处理中 / 排队中不给（issue 516 Q14）——先「停止」/「移出队列」再删
-  foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '删除', { 'data-people-supp-rec-del': r.file, title: '删掉这条录音（二次确认里可勾选是否连原件一起删）' }));
+  foot.push(button('bz-people-btn bz-people-btn-ghost bz-people-btn-sm', '删除', { 'data-people-supp-rec-del': r.file, title: r.orphan ? '清掉这条录音在聊天仓里的转写轮次（原件早已不在磁盘）' : '删掉这条录音（二次确认里可勾选是否连原件一起删）' }));
   if (foot.length) row.appendChild(el('div', 'bz-people-supp-rowfoot', foot));
   return row;
 }
