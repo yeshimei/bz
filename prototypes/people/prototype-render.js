@@ -1,4 +1,4 @@
-/* 源指纹 aefac8fc954570bb · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d02b23c93d83c259 · 仓内输入 3 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/chat.ts","src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1392,35 +1392,76 @@ var BZR_people = (() => {
   function genPage(info) {
     var _a;
     const body = [];
-    body.push(el("div", "bz-people-gen-line", text(info.empty ? "没有新的素材" : `为 ${info.items.length} 位联系人生成脸谱`)));
-    const rows = [];
-    if (info.materials > 0) rows.push(["聊天记录", `${info.materials} 条`]);
-    if (info.images > 0) rows.push(["图片", `${info.images} 张`]);
-    if (info.voices > 0) rows.push(["录音", `${info.voices} 条`]);
-    if (rows.length) {
-      body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
-    }
-    if (info.items.length) {
-      const list = el("ul", "bz-people-gen-list");
-      for (const it of info.items) {
-        const bits = [it.mode === "newer" ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
-        if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-        if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
-        if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
-        else if (it.mode === "newer") bits.push("增量提炼");
-        list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
-      }
-      body.push(list);
-    }
+    const num = (v) => v.toLocaleString("en-US");
     if (info.empty) {
       const who = ((_a = info.skipped) == null ? void 0 : _a.length) ? `「${info.skipped.join("」「")}」` : "这些联系人";
-      body.push(el("div", "bz-people-pop-note", text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+      body.push(el("div", "bz-people-gen-none", text(`${who}没有新消息，也没有待描述 / 待转写 / 待校对的素材，无需重新生成。`)));
+      body.push(el("div", "bz-people-gen-actions", [
+        button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "", disabled: "" })
+      ]));
+      return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
     }
-    const actions = el("div", "bz-people-prof-actions", [
-      button("bz-people-btn", "取消", { "data-people-gen-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始生成", info.empty ? { "data-people-gen-start": "", disabled: "" } : { "data-people-gen-start": "" })
+    let n = 0;
+    const row = (solid, zero, name, value, tail = "") => {
+      if (zero) return null;
+      n++;
+      return el("div", `bz-people-gen-row${solid ? " bz-people-gen-row-a" : ""}`, [
+        el("span", "bz-people-gen-no", text(String(n))),
+        el("span", "bz-people-gen-k", text(name)),
+        el("span", "bz-people-gen-v", text(value)),
+        ...tail ? [el("span", "bz-people-gen-tail", text(`· ${tail}`))] : []
+      ]);
+    };
+    const group = (title, rows) => {
+      const out = rows.filter((r) => r !== null);
+      if (!out.length) return;
+      body.push(el("div", "bz-people-gen-group", text(title)));
+      body.push(el("div", "bz-people-gen-rows", out));
+    };
+    group("本趟要处理的素材", [
+      row(
+        true,
+        !info.voices && !info.voiceProofread,
+        "微信语音条",
+        `${num(info.voices)} 条待转写`,
+        info.voiceProofread ? `${num(info.voiceProofread)} 条待 LLM 校对` : ""
+      ),
+      row(
+        true,
+        !info.images && !info.imagesDescribed,
+        "图片",
+        `${num(info.images)} 张待描述`,
+        info.imagesDescribed ? `${num(info.imagesDescribed)} 张已描述` : ""
+      ),
+      row(
+        true,
+        !info.materials && !info.materialsTotal,
+        "聊天记录",
+        `${num(info.materials)} 条`,
+        info.materialsTotal ? `仓内共 ${num(info.materialsTotal)} 条` : ""
+      ),
+      row(
+        true,
+        !info.recs && !info.recProofread,
+        "录音",
+        `${num(info.recs)} 条`,
+        info.recProofread ? `${num(info.recProofread)} 条待校对` : ""
+      ),
+      row(true, !info.mediaFail, "源图损坏/缺失", `${num(info.mediaFail)} 张`)
     ]);
-    body.push(actions);
+    group("中间工序", [
+      row(false, false, "并仓", ""),
+      row(false, !info.batches, "采集提炼", `${num(info.batches)} 批`)
+    ]);
+    group("重画", [
+      row(false, false, "三卷", "《其人》《相交》《纪事》"),
+      row(false, false, "补充背景", "十维档案回填")
+    ]);
+    group("落盘", [row(false, false, "账", "")]);
+    body.push(el("div", "bz-people-gen-actions", [
+      el("span", "bz-people-gen-no", text(String(n + 1))),
+      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
+    ]));
     return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
   }
   function statsPage(p, body) {

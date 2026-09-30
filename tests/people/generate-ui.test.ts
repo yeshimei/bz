@@ -365,10 +365,9 @@ describe('startGeneration → 引擎 → done 落盘', () => {
     const gen = startGeneration([target({ name: '陈默' })]); // 同一条数 + 同跨度 → 指纹命中
     // issue 523：没有新素材也翻开工单（旧行为只弹一条通知，用户看不到为什么点了没反应）
     await vi.waitFor(() => expect(document.querySelector('[data-people-sub="gen"]')).toBeTruthy());
-    expect(document.querySelector<HTMLElement>('.bz-people-gen-line')!.textContent).toBe('没有新的素材');
-    expect(document.querySelector<HTMLElement>('.bz-people-pop-note')!.textContent).toContain('「陈默」');
+    expect(document.querySelector<HTMLElement>('.bz-people-gen-none')!.textContent).toContain('「陈默」没有新消息');
     expect(document.querySelector<HTMLButtonElement>('[data-people-gen-start]')!.hasAttribute('disabled')).toBe(true);
-    click('[data-people-gen-cancel]'); // 置灰钮点不动，只能「取消」合上这页
+    click('[data-people-close]'); // 置灰钮点不动，只能「合上这页」结算（530 起页上没有「取消」钮）
     await gen;
     expect(engine.calls.start).toHaveLength(0); // 全员 skip → 引擎根本不启动
     const p = (await disk()).people[0];

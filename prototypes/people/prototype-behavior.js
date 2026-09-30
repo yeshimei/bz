@@ -1,4 +1,4 @@
-/* 源指纹 1ba24ba40c910876 · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 025bd1c0309983dd · 仓内输入 93 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/chat.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/me-avatar.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -42,9 +42,9 @@ var BZW_people = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -16391,16 +16391,28 @@ ${lines}`;
   function storeToUnified(msgs) {
     return msgs.filter((m) => m.text !== "").map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
   }
-  function pendingMediaCounts(msgs) {
+  function mediaLedgerCounts(msgs) {
     let images = 0;
+    let described = 0;
     let voices = 0;
+    let mediaFail = 0;
     for (const m of msgs) {
-      if (m.text !== "") continue;
       if (m.type === 3) {
-        if (!isDescSkipped(m)) images++;
-      } else if (m.type === 34) voices++;
+        const skip = descSkipOf(m);
+        if (skip === BROKEN_SKIP || skip === MISSING_SKIP) mediaFail++;
+        else if (!skip) {
+          if (m.text !== "") described++;
+          else images++;
+        }
+        continue;
+      }
+      if (m.type === 34 && m.text === "") voices++;
     }
-    return { images, voices };
+    return { images, described, voices, mediaFail, total: msgs.length };
+  }
+  function pendingMediaCounts(msgs) {
+    const l = mediaLedgerCounts(msgs);
+    return { images: l.images, voices: l.voices };
   }
   function isFailedVoice(v) {
     var _a2, _b2;
@@ -21095,35 +21107,76 @@ ${lines}`;
   function genPage(info) {
     var _a2;
     const body = [];
-    body.push(el("div", "bz-people-gen-line", text(info.empty ? "没有新的素材" : `为 ${info.items.length} 位联系人生成脸谱`)));
-    const rows = [];
-    if (info.materials > 0) rows.push(["聊天记录", `${info.materials} 条`]);
-    if (info.images > 0) rows.push(["图片", `${info.images} 张`]);
-    if (info.voices > 0) rows.push(["录音", `${info.voices} 条`]);
-    if (rows.length) {
-      body.push(el("div", "bz-people-gen-rows", rows.map(([k, v]) => el("div", "bz-people-gen-row", [el("span", "bz-people-gen-k", text(k)), el("span", "bz-people-gen-v", text(v))]))));
-    }
-    if (info.items.length) {
-      const list = el("ul", "bz-people-gen-list");
-      for (const it of info.items) {
-        const bits = [it.mode === "newer" ? `新增聊天记录 ${it.materials} 条` : `聊天记录 ${it.materials} 条`];
-        if (it.images > 0) bits.push(`图片 ${it.images} 张`);
-        if (it.voices > 0) bits.push(`录音 ${it.voices} 条`);
-        if (it.mode === "older") bits.push("补录 · 与已有画像合并重画");
-        else if (it.mode === "newer") bits.push("增量提炼");
-        list.appendChild(el("li", "bz-people-gen-item", text(`「${it.name}」 · ${bits.join(" · ")}`)));
-      }
-      body.push(list);
-    }
+    const num2 = (v) => v.toLocaleString("en-US");
     if (info.empty) {
       const who = ((_a2 = info.skipped) == null ? void 0 : _a2.length) ? `「${info.skipped.join("」「")}」` : "这些联系人";
-      body.push(el("div", "bz-people-pop-note", text(`${who}没有新消息，也没有待描述 / 待转写的素材，无需重新生成。`)));
+      body.push(el("div", "bz-people-gen-none", text(`${who}没有新消息，也没有待描述 / 待转写 / 待校对的素材，无需重新生成。`)));
+      body.push(el("div", "bz-people-gen-actions", [
+        button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "", disabled: "" })
+      ]));
+      return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
     }
-    const actions = el("div", "bz-people-prof-actions", [
-      button("bz-people-btn", "取消", { "data-people-gen-cancel": "" }),
-      button("bz-people-btn bz-people-btn-acc", "开始生成", info.empty ? { "data-people-gen-start": "", disabled: "" } : { "data-people-gen-start": "" })
+    let n = 0;
+    const row = (solid, zero, name, value, tail = "") => {
+      if (zero) return null;
+      n++;
+      return el("div", `bz-people-gen-row${solid ? " bz-people-gen-row-a" : ""}`, [
+        el("span", "bz-people-gen-no", text(String(n))),
+        el("span", "bz-people-gen-k", text(name)),
+        el("span", "bz-people-gen-v", text(value)),
+        ...tail ? [el("span", "bz-people-gen-tail", text(`· ${tail}`))] : []
+      ]);
+    };
+    const group = (title, rows) => {
+      const out = rows.filter((r) => r !== null);
+      if (!out.length) return;
+      body.push(el("div", "bz-people-gen-group", text(title)));
+      body.push(el("div", "bz-people-gen-rows", out));
+    };
+    group("本趟要处理的素材", [
+      row(
+        true,
+        !info.voices && !info.voiceProofread,
+        "微信语音条",
+        `${num2(info.voices)} 条待转写`,
+        info.voiceProofread ? `${num2(info.voiceProofread)} 条待 LLM 校对` : ""
+      ),
+      row(
+        true,
+        !info.images && !info.imagesDescribed,
+        "图片",
+        `${num2(info.images)} 张待描述`,
+        info.imagesDescribed ? `${num2(info.imagesDescribed)} 张已描述` : ""
+      ),
+      row(
+        true,
+        !info.materials && !info.materialsTotal,
+        "聊天记录",
+        `${num2(info.materials)} 条`,
+        info.materialsTotal ? `仓内共 ${num2(info.materialsTotal)} 条` : ""
+      ),
+      row(
+        true,
+        !info.recs && !info.recProofread,
+        "录音",
+        `${num2(info.recs)} 条`,
+        info.recProofread ? `${num2(info.recProofread)} 条待校对` : ""
+      ),
+      row(true, !info.mediaFail, "源图损坏/缺失", `${num2(info.mediaFail)} 张`)
     ]);
-    body.push(actions);
+    group("中间工序", [
+      row(false, false, "并仓", ""),
+      row(false, !info.batches, "采集提炼", `${num2(info.batches)} 批`)
+    ]);
+    group("重画", [
+      row(false, false, "三卷", "《其人》《相交》《纪事》"),
+      row(false, false, "补充背景", "十维档案回填")
+    ]);
+    group("落盘", [row(false, false, "账", "")]);
+    body.push(el("div", "bz-people-gen-actions", [
+      el("span", "bz-people-gen-no", text(String(n + 1))),
+      button("bz-people-btn bz-people-btn-acc", "开始生成", { "data-people-gen-start": "" })
+    ]));
     return subPage({ title: "开始生成脸谱", hook: "gen" }, body);
   }
   function statsPage(p, body) {
@@ -23052,7 +23105,7 @@ ${lines}`;
           skippedCount: 0,
           fileLabel: `数据源:${name}`,
           insights: pv == null ? void 0 : pv.insights,
-          pending: pendingMediaCounts((_d2 = pv == null ? void 0 : pv.msgs) != null ? _d2 : [])
+          pending: mediaLedgerCounts((_d2 = pv == null ? void 0 : pv.msgs) != null ? _d2 : [])
         };
       }
     } catch (e) {
@@ -23166,19 +23219,84 @@ ${lines}`;
     if (parts.length) notice(parts.join("，"), "success");
     renderNote();
   }
+  function voiceProofreadCountOf(talker) {
+    const root = suppDataRoot();
+    if (!root) return 0;
+    try {
+      const side = readPrepSidecars(root, talker);
+      return side ? pendingVoiceProofread(side.voice).length : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  function recordingPendingOf(talker) {
+    var _a2, _b2;
+    const zero = { recs: 0, recProofread: 0 };
+    const root = suppDataRoot();
+    const fs2 = suppFs();
+    if (!root || !fs2) return zero;
+    let files;
+    try {
+      const dir = recordingsDirOf(root, talker);
+      files = fs2.readdirSync(dir).filter((f) => isRecordingFile(f));
+    } catch (e) {
+      return zero;
+    }
+    const proofreadOn = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.asrLlmProofread) === true;
+    let recs = 0;
+    let recProofread = 0;
+    for (const f of files) {
+      const side = readRecordingSidecar(root, talker, f);
+      if (!recordingTurnsComplete(side)) {
+        recs++;
+        continue;
+      }
+      if (proofreadOn && side && side.proofread !== true && ((_b2 = side.turns) != null ? _b2 : []).some((t) => {
+        var _a3;
+        return String((_a3 = t.text) != null ? _a3 : "").trim() !== "";
+      })) recProofread++;
+    }
+    return { recs, recProofread };
+  }
   function buildGenerationConfirmInfo(runnable2, skipped = []) {
-    const items = runnable2.map((t) => {
-      var _a2, _b2;
-      const pending = (_a2 = t.pending) != null ? _a2 : { images: 0, voices: 0 };
-      const materials = t.mode === "newer" ? (_b2 = t.planCount) != null ? _b2 : t.msgs.length : t.msgs.length;
-      return { name: t.name, materials, images: pending.images, voices: pending.voices, ...t.mode && t.mode !== "full" ? { mode: t.mode } : {} };
-    });
+    var _a2, _b2, _c2, _d2;
+    const proofreadOn = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.asrLlmProofread) === true;
+    let materials = 0;
+    let materialsTotal = 0;
+    let images = 0;
+    let imagesDescribed = 0;
+    let voices = 0;
+    let voiceProofread = 0;
+    let recs = 0;
+    let recProofread = 0;
+    let mediaFail = 0;
+    let batches = 0;
+    for (const t of runnable2) {
+      const led = (_b2 = t.pending) != null ? _b2 : { images: 0, described: 0, voices: 0, mediaFail: 0, total: 0 };
+      materials += t.mode === "newer" ? (_c2 = t.planCount) != null ? _c2 : t.msgs.length : t.msgs.length;
+      materialsTotal += led.total;
+      images += led.images;
+      imagesDescribed += led.described;
+      voices += led.voices;
+      mediaFail += led.mediaFail;
+      if (proofreadOn) voiceProofread += voiceProofreadCountOf(t.talker);
+      const rc = recordingPendingOf(t.talker);
+      recs += rc.recs;
+      recProofread += rc.recProofread;
+      batches += chunkMessages((_d2 = t.planMsgs) != null ? _d2 : t.msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER }).length;
+    }
     return {
-      items,
-      materials: items.reduce((s, it) => s + it.materials, 0),
-      images: items.reduce((s, it) => s + it.images, 0),
-      voices: items.reduce((s, it) => s + it.voices, 0),
-      empty: items.length === 0,
+      materials,
+      materialsTotal,
+      images,
+      imagesDescribed,
+      voices,
+      voiceProofread,
+      recs,
+      recProofread,
+      mediaFail,
+      batches,
+      empty: runnable2.length === 0,
       ...skipped.length ? { skipped } : {}
     };
   }
@@ -23217,7 +23335,7 @@ ${lines}`;
       } else if (plan.olderCount > 0) {
         notice(`「${t.name}」另有 ${plan.olderCount} 条消息早于上次提炼点，本次不重复提炼`);
       }
-      runnable2.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
+      runnable2.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, planMsgs: plan.msgs, profile: existing == null ? void 0 : existing.profile, monthly: mergedMonthlyOf((_a2 = existing == null ? void 0 : existing.imports) != null ? _a2 : []) });
     }
     return { runnable: runnable2, skipped };
   }
@@ -23733,10 +23851,6 @@ ${lines}`;
       else void deletePerson(p);
       return;
     }
-    if (t.closest("[data-people-gen-cancel]")) {
-      answerGenConfirm("cancel");
-      return;
-    }
     if (t.closest("[data-people-gen-start]")) {
       answerGenConfirm("start");
       return;
@@ -24138,7 +24252,19 @@ ${lines}`;
     var _a2, _b2;
     const kind = dialog == null ? void 0 : dialog.kind;
     if (kind === "ds") return dsPage(dsPageState());
-    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : { items: [], materials: 0, images: 0, voices: 0, empty: true });
+    if (kind === "gen") return genPage(pendingGenInfo != null ? pendingGenInfo : {
+      materials: 0,
+      materialsTotal: 0,
+      images: 0,
+      imagesDescribed: 0,
+      voices: 0,
+      voiceProofread: 0,
+      recs: 0,
+      recProofread: 0,
+      mediaFail: 0,
+      batches: 0,
+      empty: true
+    });
     if (kind === "find") return findPageState(avatars);
     if (p && kind === "stats") return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
     if (p && kind === "prof") return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);

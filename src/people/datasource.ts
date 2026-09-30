@@ -651,20 +651,43 @@ export function storeToUnified(msgs: StoreMsg[]): UnifiedMessage[] {
     .map((m) => ({ ts: m.ts, isSender: m.isSender, text: m.text }));
 }
 
+/**
+ * 素材台账（issue 530：开工单要当一张「这一趟会动什么」的账单，不是孤立的三个数字）。
+ * 口径逐项：
+ * - `images` / `voices` = 待描述 / 待转写（与 {@link pendingMediaCounts} 完全同源，见那里的注释）；
+ * - `described` = 已描述图（type 3 且 text 非空——描述已并入正文，不再进欠账）；
+ * - `mediaFail` = 源图损坏 / 缺失（标了 broken / missing 终态的图：只记账、不再重试，ADR-0224 / 0225）；
+ * - `total` = 仓内消息总条数（含还没描述 / 转写的媒体，给「仓内共 N 条」用）。
+ * 敏感标注（sensitive）单独一档：既不算欠账、也不算损缺失（标注即终态）。
+ */
+export function mediaLedgerCounts(msgs: StoreMsg[]): { images: number; described: number; voices: number; mediaFail: number; total: number } {
+  let images = 0;
+  let described = 0;
+  let voices = 0;
+  let mediaFail = 0;
+  for (const m of msgs) {
+    if (m.type === 3) {
+      const skip = descSkipOf(m);
+      if (skip === BROKEN_SKIP || skip === MISSING_SKIP) mediaFail++;
+      else if (!skip) {
+        if (m.text !== '') described++;
+        else images++;
+      }
+      continue;
+    }
+    if (m.type === 34 && m.text === '') voices++;
+  }
+  return { images, described, voices, mediaFail, total: msgs.length };
+}
+
 /** 待办媒体计数（issue 514：开工单只报本次真实工作量）：
  *  描述 / 转写完成后文字升级进 text，**text 空 = 还没做**（与补充素材页的未描述判定同源）。
  *  images = 未描述图片（type 3）、voices = 未转写语音（type 34）。
- *  **敏感标注的图不算欠账**（ADR-0224）：标注即终态，再计就是每次补画都重扫全库（ADR-0223 决策 6）。 */
+ *  **敏感标注的图不算欠账**（ADR-0224）：标注即终态，再计就是每次补画都重扫全库（ADR-0223 决策 6）。
+ *  实现在 {@link mediaLedgerCounts}（单源：台账与待办不能各算各的）。 */
 export function pendingMediaCounts(msgs: StoreMsg[]): { images: number; voices: number } {
-  let images = 0;
-  let voices = 0;
-  for (const m of msgs) {
-    if (m.text !== '') continue;
-    if (m.type === 3) {
-      if (!isDescSkipped(m)) images++;
-    } else if (m.type === 34) voices++;
-  }
-  return { images, voices };
+  const l = mediaLedgerCounts(msgs);
+  return { images: l.images, voices: l.voices };
 }
 
 // ---------------- prep 旁路表 → 聊天仓靶向升级（issue 469 / ADR-0197 决策 4） ----------------

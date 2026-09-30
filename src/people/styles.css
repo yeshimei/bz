@@ -918,17 +918,24 @@
 .bz-people-sync-sub, .bz-people-sync-contact, .bz-people-sync-fail { font-size: var(--f-aux); color: var(--pencil); font-style: italic; margin-top: 3px; }
 .bz-people-sync-fail { color: var(--acc-deep); }
 
-/* 开工单（画脸谱确认） */
-.bz-people-gen-line { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
-/* 行式总览（issue 513）：左标签右说明，一项一行替代原先的长句段 */
-.bz-people-gen-rows { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
-.bz-people-gen-row { display: flex; gap: 12px; align-items: baseline; font-size: var(--f-mid); line-height: 1.7; }
-.bz-people-gen-k { flex: 0 0 4.5em; color: var(--ink-mut); font-family: var(--kai); letter-spacing: 1px; }
-.bz-people-gen-v { color: var(--ink); overflow-wrap: anywhere; }
-.bz-people-gen-list { list-style: none; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow: auto; }
-.bz-people-gen-item { font-size: var(--f-mid); color: var(--ink); padding: 6px 12px; background: #fffefb; border: 1px solid #ece5d5;
-  border-radius: var(--r-card); }
-.bz-people-gen-item b { font-family: var(--kai); letter-spacing: 1px; }
+/* 开工单（画脸谱确认；issue 530 按用户拍板的示意图重排：
+   四组一条流水线，一组之内一行一项，行 = 序号圆章 + 名称 + 本次工作量 + 右侧「· 对账数」） */
+.bz-people-gen-group { font-family: var(--kai); font-size: var(--f-aux); letter-spacing: 2px; color: var(--ink-mut); margin: 16px 0 2px; }
+.bz-people-gen-rows { display: flex; flex-direction: column; }
+.bz-people-gen-row { display: flex; align-items: baseline; gap: 10px; padding: 5px 0; font-size: var(--f-mid); line-height: 1.6; }
+.bz-people-gen-no { flex: 0 0 22px; align-self: center; width: 22px; height: 22px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center; font-family: var(--kai); font-size: 11px;
+  color: var(--acc); background: #fffdf7; border: 1px solid rgba(168,67,60,.42); }
+/* 素材组（本趟真会动的那几类）序号实心红章；工序 / 重画 / 落盘空圈 */
+.bz-people-gen-row-a .bz-people-gen-no { color: #fff8f2; background: var(--acc); border-color: var(--acc-deep); }
+.bz-people-gen-k { flex: 0 0 7.4em; color: var(--ink-strong); font-family: var(--kai); letter-spacing: 1px; }
+.bz-people-gen-v { flex: 0 0 9em; color: var(--ink); overflow-wrap: anywhere; }
+.bz-people-gen-tail { flex: 1 1 auto; min-width: 0; color: var(--ink); overflow-wrap: anywhere; }
+/* 没有新素材那一页：只一句话 */
+.bz-people-gen-none { font-family: var(--song); font-size: var(--f-body); line-height: 1.9; color: var(--ink); }
+/* 页脚动作（虚线分隔；序号位与上面各行同一列） */
+.bz-people-gen-actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px;
+  border-top: 1px dashed #ddd3c0; }
 
 /* 互动统计：一张贴在页上的方格纸（数格子看数），柱是手绘的红条 */
 .bz-people-ins { position: relative; margin-top: 10px; border: 1px dashed #d8d0bc; border-radius: var(--r-paper); padding: 16px 16px 14px;

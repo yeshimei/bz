@@ -29,9 +29,11 @@ import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { ensureSafeUnlocked, getSafeManager } from '../encrypt';
 import { PeopleStore } from './data';
 import {
+  DEFAULTS,
   PROFILE_LIST_FIELDS,
   PROFILE_TEXT_FIELDS,
   buildProfileExtractPrompt,
+  chunkMessages,
   fillProfile,
   knownProfileText,
   parseProfileReply,
@@ -61,7 +63,7 @@ import {
   storeMediaBadge,
   storeStatsOf,
   storeToUnified,
-  pendingMediaCounts,
+  mediaLedgerCounts,
   isDescSkipped,
   descSkipOf,
   SENSITIVE_SKIP,
@@ -86,6 +88,7 @@ import {
   fileSha256,
   formatRecElapsed,
   fmtClock,
+  hasRecordingTurns,
   isRecordingFile,
   isRecordingQueued,
   isRecordingRunning,
@@ -126,7 +129,7 @@ import { startContactsExport, type ContactsExportHandle } from './export';
 import { getPeopleSafeStore, type PeopleSafeRecord, type PeopleSafeStore } from './safe-store';
 import { migrateLegacyPeopleData } from './migrate';
 import { descImagePath, describeModelLabelOf, describeOverallPct, describeStageLine } from './describe';
-import { prepOverallPct, prepStageLine } from './prep';
+import { pendingVoiceProofread, prepOverallPct, prepStageLine, readPrepSidecars } from './prep';
 import { describeSyncStats, formatSyncElapsed, isSyncing, startSync, stopSync, subscribeSync, syncPhaseLabel, syncState, type PeopleSyncState } from './sync';
 import {
   AL_PER_PAGE,
@@ -1339,7 +1342,7 @@ async function generateOne(id?: string, opts: { force?: boolean } = {}): Promise
         skippedCount: 0,
         fileLabel: `数据源:${name}`,
         insights: pv?.insights,
-        pending: pendingMediaCounts(pv?.msgs ?? []),
+        pending: mediaLedgerCounts(pv?.msgs ?? []),
       };
     }
   } catch (e) {
@@ -1367,11 +1370,9 @@ function resumeExisting(name: string): boolean {
 
 // ---------------- 生成引擎接线（issue 450：引擎化 + 后台化 + 断点续跑） ----------------
 
-/** 待办媒体（issue 514 口径）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
-export interface PendingMedia {
-  images: number;
-  voices: number;
-}
+/** 素材台账（issue 530 开工单的账单口径）：待描述 / 已描述 / 待转写 / 损缺失 / 仓内总条数。
+ *  单源在 `datasource.mediaLedgerCounts`——待办计数与台账不能各算各的。 */
+export type PendingMedia = ReturnType<typeof mediaLedgerCounts>;
 
 /** 生成目标（引擎 JobTarget 同形；msgs 必须是全量时间线消息——引擎断点续跑要重读校验指纹） */
 export interface GenTarget {
@@ -1394,6 +1395,8 @@ export interface GenTarget {
   mode?: 'full' | 'newer' | 'older';
   /** 本次计划提炼集条数（issue 514：planTargets 从 plan.msgs 带出——newer = 新增集，其余 = 全量） */
   planCount?: number;
+  /** 本次计划提炼集本体（issue 530：开工单用它实算采集批数——planCount 只有条数，chunkMessages 要正文） */
+  planMsgs?: UnifiedMessage[];
   /** 待办媒体（issue 514）：未描述图片 / 未转写语音——开工单只报本次真实工作量 */
   pending?: PendingMedia;
 }
@@ -1562,22 +1565,103 @@ export async function startGeneration(targets: GenTarget[]): Promise<void> {
 }
 
 /**
- * 总确认 → 引擎起跑的入参（497；523 精简）：只报三类素材条数与逐人明细。
+ * 待 LLM 校对的微信语音条数（issue 530）：读该联系人的 prep 旁路表 `voice.json`，
+ * 取「已有转写文本、还没打校对标记」的条数——与引擎同源（`prep.ts` 的 `pendingVoiceProofread`）。
+ * 这正是 530 前从界面上完全隐身的那个集合：转写一完成就把 `text` 填上，于是它既不算
+ * 「待转写」（只认 `text === ''`）也不在别处露面。单文件同步读，毫秒级。
+ * 没有数据根 / 表缺失 / 读不动 → 0（不猜）。
+ */
+function voiceProofreadCountOf(talker: string): number {
+  const root = suppDataRoot();
+  if (!root) return 0;
+  try {
+    const side = readPrepSidecars(root, talker);
+    return side ? pendingVoiceProofread(side.voice).length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * 录音线（509 原件线）的欠账（issue 530）：`待转写` = 还没产出可并仓的轮次；
+ * `待校对` = 已转写齐、LLM 校对未跑（单条只打一个 proofread 标记）。
+ * 这条线在「补充素材」页单独跑，**不在这趟画谱流程里**——开工单只如实报它的工作量，
+ * 报成 0 时整行不出。非桌面端 / 数据根没配 / 目录不存在 → 全 0。
+ */
+function recordingPendingOf(talker: string): { recs: number; recProofread: number } {
+  const zero = { recs: 0, recProofread: 0 };
+  const root = suppDataRoot();
+  const fs2 = suppFs();
+  if (!root || !fs2) return zero;
+  let files: string[];
+  try {
+    const dir = recordingsDirOf(root, talker);
+    files = fs2.readdirSync(dir).filter((f: string) => isRecordingFile(f)); // 派生物单源过滤（ADR-0217）
+  } catch {
+    return zero; // 目录还没有 = 这条线还没开始
+  }
+  const proofreadOn = tryGetSettings()?.asrLlmProofread === true;
+  let recs = 0;
+  let recProofread = 0;
+  for (const f of files) {
+    const side = readRecordingSidecar(root, talker, f);
+    if (!recordingTurnsComplete(side)) { recs++; continue; } // 还没转写齐（含未处理 / 中断 / 失败）
+    if (proofreadOn && side && side.proofread !== true
+      && (side.turns ?? []).some((t) => String(t.text ?? '').trim() !== '')) recProofread++;
+  }
+  return { recs, recProofread };
+}
+
+/**
+ * 总确认 → 引擎起跑的入参（497；523 精简；530 报账补全）：一张「这一趟会动什么」的账单。
+ * 各项口径：
+ * - 素材台账（待描述 / 已描述 / 待转写 / 源图损缺失 / 仓内共 N 条）从仓消息现算，
+ *   单源在 `datasource.mediaLedgerCounts`——与引擎的待办判定不能各算各的；
+ * - 语音条「待校对」读 prep 旁路表（`pendingVoiceProofread`，530 前完全没报的那一类）；
+ * - 录音线（509）读 `recordings/` + sidecar（那条线在「补充素材」页单独跑，这里只报欠账）；
+ * - 采集批数用引擎同一把尺（`chunkMessages`）实算，免得跟真正跑出来的批数两本账。
  * runnable 为空 = 全部联系人都没有新素材 → `empty` 为真，开工单只出说明、开始生成置灰。
  */
 function buildGenerationConfirmInfo(runnable: GenTarget[], skipped: string[] = []): GenerationConfirmInfo {
-  const items = runnable.map((t) => {
-    // issue 514 待办口径：图片 / 语音只报没做过的（构造时从仓消息现算）；newer 的素材 = 新增集条数
-    const pending = t.pending ?? { images: 0, voices: 0 };
-    const materials = t.mode === 'newer' ? (t.planCount ?? t.msgs.length) : t.msgs.length;
-    return { name: t.name, materials, images: pending.images, voices: pending.voices, ...(t.mode && t.mode !== 'full' ? { mode: t.mode } : {}) };
-  });
+  const proofreadOn = tryGetSettings()?.asrLlmProofread === true;
+  let materials = 0;
+  let materialsTotal = 0;
+  let images = 0;
+  let imagesDescribed = 0;
+  let voices = 0;
+  let voiceProofread = 0;
+  let recs = 0;
+  let recProofread = 0;
+  let mediaFail = 0;
+  let batches = 0;
+  for (const t of runnable) {
+    const led = t.pending ?? { images: 0, described: 0, voices: 0, mediaFail: 0, total: 0 };
+    // issue 514 增量口径：newer 只报新增集，其余报全量时间线
+    materials += t.mode === 'newer' ? (t.planCount ?? t.msgs.length) : t.msgs.length;
+    materialsTotal += led.total;
+    images += led.images;
+    imagesDescribed += led.described;
+    voices += led.voices;
+    mediaFail += led.mediaFail;
+    if (proofreadOn) voiceProofread += voiceProofreadCountOf(t.talker);
+    const rc = recordingPendingOf(t.talker);
+    recs += rc.recs;
+    recProofread += rc.recProofread;
+    // maxBatches 放开：上限是引擎的调度事，不是报账事（报的数就该是实打实会跑的段数）
+    batches += chunkMessages(t.planMsgs ?? t.msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER }).length;
+  }
   return {
-    items,
-    materials: items.reduce((s, it) => s + it.materials, 0),
-    images: items.reduce((s, it) => s + it.images, 0),
-    voices: items.reduce((s, it) => s + it.voices, 0),
-    empty: items.length === 0,
+    materials,
+    materialsTotal,
+    images,
+    imagesDescribed,
+    voices,
+    voiceProofread,
+    recs,
+    recProofread,
+    mediaFail,
+    batches,
+    empty: runnable.length === 0,
     ...(skipped.length ? { skipped } : {}),
   };
 }
@@ -1636,7 +1720,7 @@ async function planTargets(targets: GenTarget[]): Promise<{ runnable: GenTarget[
     }
     // issue 455：档案与跨导入月度密度在这里带上（statsNote 组装在引擎内，入参经 JobTarget 传入）
     // issue 513：提炼模式带出 → 开工单逐人提示（older = 补录合并重画）
-    runnable.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
+    runnable.push({ ...t, mode: plan.mode, planCount: plan.msgs.length, planMsgs: plan.msgs, profile: existing?.profile, monthly: mergedMonthlyOf(existing?.imports ?? []) });
   }
   return { runnable, skipped };
 }
@@ -2135,7 +2219,6 @@ function onOverlayClick(e: MouseEvent): void {
     return;
   }
   // —— 开工单 ——
-  if (t.closest('[data-people-gen-cancel]')) { answerGenConfirm('cancel'); return; }
   if (t.closest('[data-people-gen-start]')) { answerGenConfirm('start'); return; }
   // —— 档案与随手记（编辑态行内增删） ——
   if (t.closest('[data-people-prof-new]') || t.closest('[data-people-prof-edit]')) { profEditId = detailId; profDirty = false; profLeaveConfirm = false; requestProfRender(); return; }
@@ -2472,7 +2555,10 @@ function detailOpts(p: PersonEntry, side: 'left' | 'right', avatars: Map<string,
 function dialogPage(p: PersonEntry | null, avatars?: Map<string, string>): HTMLElement {
   const kind = dialog?.kind;
   if (kind === 'ds') return dsPage(dsPageState());
-  if (kind === 'gen') return genPage(pendingGenInfo ?? { items: [], materials: 0, images: 0, voices: 0, empty: true });
+  if (kind === 'gen') return genPage(pendingGenInfo ?? {
+    materials: 0, materialsTotal: 0, images: 0, imagesDescribed: 0,
+    voices: 0, voiceProofread: 0, recs: 0, recProofread: 0, mediaFail: 0, batches: 0, empty: true,
+  });
   if (kind === 'find') return findPageState(avatars);
   if (p && kind === 'stats') return statsPage(p, statsPopBody(buildInsightsCard(p, statsKinds), p));
   if (p && kind === 'prof') return profPage(p, profilePopBody(p, profEditId === p.id, profLeaveConfirm), profEditId === p.id);
