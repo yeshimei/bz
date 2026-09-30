@@ -171,4 +171,60 @@ print("PY-SIDE-OK")
       expect(stdout).toContain('PY-SIDE-OK');
     },
   );
+
+  itPy(
+    '媒体增量索引三态（ADR-0223 档 B）：首次全扫 / 未变月份读缓存不重扫 / 目录变动后只重扫那一个月',
+    { timeout: 60000 },
+    async () => {
+      // 「没重扫」的证明用污染探针：手改索引里的清单，若第二轮仍按缓存走，假条目会出现在 jobs 里；
+      // 被重扫覆盖则假条目消失。这比数 stat 次数更能证明「真的没扫」。
+      const driver = `
+import json, os, shutil, sys, tempfile, time
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+try:
+    import bz_prep
+except Exception as e:
+    print("IMG-INDEX-SKIP", e)
+    raise SystemExit(0)
+
+root = tempfile.mkdtemp(prefix="bzidx-")
+attach = Path(root) / "attach"
+for rel in ["2026-08/Img/aaaa.dat", "2026-08/Video/bbbb.mp4",
+            "2026-08/File/cccc.pdf", "2026-09/Img/dddd.dat"]:
+    p = attach / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "wb") as f:
+        f.write(b"x" * 16)
+idx = Path(root) / ".bz-face" / "media-index" / "某人.json"
+
+j1 = bz_prep.build_media_jobs(attach, idx)
+assert len(j1) == 4, j1
+assert sorted(k for _, k, _ in j1) == ["file", "image", "image", "video"], j1
+
+with open(idx, encoding="utf-8") as f:
+    data = json.load(f)
+data["months"]["2026-08"]["files"] = [["Img/fake.dat", "image"]]
+with open(idx, "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False)
+
+j2 = [str(p).replace(chr(92), "/") for p, _, _ in bz_prep.build_media_jobs(attach, idx)]
+assert any("fake.dat" in x for x in j2), j2   # 假条目还在 = 这一月没重扫（缓存命中）
+assert len(j2) == 2, j2
+
+sub = attach / "2026-08" / "Img" / "新目录"
+sub.mkdir(parents=True, exist_ok=True)
+time.sleep(0.02)
+os.utime(attach / "2026-08" / "Img", None)
+
+j3 = [str(p).replace(chr(92), "/") for p, _, _ in bz_prep.build_media_jobs(attach, idx)]
+assert not any("fake.dat" in x for x in j3), j3   # 污染被真实重扫覆盖
+assert len(j3) == 4, j3
+shutil.rmtree(root, ignore_errors=True)
+print("IMG-INDEX-OK")
+`;
+      const { stdout } = await execFileAsync('python', ['-X', 'utf8', '-c', driver, PY_DIR], { timeout: 60000 });
+      expect(stdout).toContain('IMG-INDEX-OK');
+    },
+  );
 });

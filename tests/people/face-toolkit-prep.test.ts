@@ -340,5 +340,23 @@ describe('bz-face prep 判定层（issue 468）', () => {
       expect(src).not.toMatch(/subprocess\.(run|call|check_output|check_call|Popen)\([^)]*winget/);
       expect(src).not.toMatch(/os\.system\([^)]*winget/i);
     });
+
+    it('媒体导出「存在判定先行」（ADR-0223 档 A）：先探产物再读源字节，已导出的不白读不白解', () => {
+      const imgFn = src.slice(src.indexOf('def do_image'), src.indexOf('def do_video'));
+      expect(imgFn).toContain('image_target_hit(');
+      // 命中判断必须排在 read_bytes 之前——反了就是每轮把 936MB 图重读重解一遍
+      expect(imgFn.indexOf('image_target_hit(')).toBeLessThan(imgFn.indexOf('p.read_bytes()'));
+      const vidFn = src.slice(src.indexOf('def do_video'), src.indexOf('def do_file'));
+      expect(vidFn.indexOf('target.exists()')).toBeGreaterThanOrEqual(0);
+      expect(vidFn.indexOf('target.exists()')).toBeLessThan(vidFn.indexOf('p.read_bytes()'));
+    });
+
+    it('媒体导出走增量索引（ADR-0223 档 B）：段 1 不再直接全量 rglob attach 目录', () => {
+      expect(src).toContain('def build_media_jobs');
+      expect(src).toContain('MEDIA_INDEX_VERSION');
+      expect(src).toContain('media-index');
+      expect(src).toContain('build_media_jobs(attach_dir');
+      expect(src).not.toMatch(/attach_dir\s*\/\s*month\)\s*\.rglob/); // 旧的全量 rglob 已退役
+    });
   });
 });

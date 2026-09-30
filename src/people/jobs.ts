@@ -99,7 +99,9 @@ import { PeopleStore } from './data';
 import {
   applyImageDescToMsgs,
   applyImageMapToMsgs,
+  applySensitiveSkipsToMsgs,
   applyVoiceToMsgs,
+  isDescSkipped,
   normalizeOptionsFromSettings,
   pendingMediaCounts,
   storeStatsOf,
@@ -116,6 +118,7 @@ import {
   describeStageLine,
   descDataUrlOf,
   imageRefsOf,
+  isSensitiveRefusal,
   newDescribeProgress,
   parseDescribeReply,
   describeModelLabelOf,
@@ -1363,9 +1366,11 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
   const rec = await safe.read(job.talker);
   if (gone(job)) return 'halted';
   const msgs = rec?.store.msgs ?? [];
-  const refs = imageRefsOf(msgs);
-  if (!refs.length) return 'skipped'; // 零图片：不为 0 张图弹一次确认（决策 9）
   const byKey = new Map(msgs.map((m) => [m.key, m]));
+  // 敏感标注即终态（ADR-0224）：已标注的图不进 refs——不计数、不切批、不再调用；也因此
+  // 「有欠账」不会永久成立（ADR-0223 决策 6 的落点：否则每轮补画都重扫全库）
+  const refs = imageRefsOf(msgs).filter((r) => !isDescSkipped(byKey.get(r.key)));
+  if (!refs.length) return 'skipped'; // 零图片：不为 0 张图弹一次确认（决策 9）
   const isDone = (ref: DescribeImageRef): boolean => (byKey.get(ref.key)?.text ?? '') !== '';
   const batchSize = ledger?.batchSize ?? batchSizeFromSettings();
   const batches = describeBatches(refs, batchSize);
@@ -1457,6 +1462,7 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     const prompt = buildDescribePrompt(images.length, context);
     let descs: string[];
     let attempt = 0;
+    let refused = false; // 整批被判敏感拒绝（ADR-0224）
     for (;;) {
       try {
         descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
@@ -1464,6 +1470,8 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
       } catch (e) {
         if (gone(job)) return 'halted';
         const err = errorMessage(e);
+        // 敏感拒绝：这一批必再被拒，重试纯属白付——直接转逐张（ADR-0224 决策 2）
+        if (isSensitiveRefusal(err)) { refused = true; break; }
         if (isAbortError(e) || attempt >= st!.retry.maxRetries) {
           // error 面不带 message：原因与「继续生成」由进度块的错误行 / 按钮承担（说了两遍是噪音）
           await finish({ status: 'error', error: err });
@@ -1480,11 +1488,41 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
         }
       }
     }
+    // 敏感降级（ADR-0224 决策 2、3）：整批被拒 → 该批逐张重来。一张毒图不该废掉整批 20 张，
+    // 更不该废掉整条链——成功的照常并仓，被拒的标注 descSkip 跳过，两者都继续往下走。
+    const missed: DescribeImageRef[] = [];
+    if (refused) {
+      const onePrompt = buildDescribePrompt(1, context);
+      descs = [];
+      for (const item of images) {
+        if (gone(job)) return 'halted';
+        if (st!.pauseRequested) {
+          await finish({ status: 'paused', message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+          return 'halted';
+        }
+        try {
+          const one = parseDescribeReply(await ask({ text: onePrompt, images: [item.url] }), 1);
+          descs.push(one[0] ?? '');
+        } catch (e) {
+          if (gone(job)) return 'halted';
+          // 只有「明确被判敏感」才标注；其它错误（网络抖动等）只让这一张留空待重试，
+          // 绝不把它误标成不可重跑的终态（ADR-0224 决策 1：宁可漏判也不误判）
+          if (isSensitiveRefusal(errorMessage(e))) missed.push(item.ref);
+          descs.push('');
+        }
+      }
+      if (missed.length) led.sensitive = (led.sensitive ?? 0) + missed.length;
+      job.message = `本批 ${images.length} 张中 ${missed.length} 张被判敏感，已标注跳过`;
+      emit();
+    }
     // 本批合并进聊天仓（ADR-0197：插件是唯一写入者；走 safe.write 串行链，批级 checkpoint）
     const items: ImageDescItem[] = images.map((x, j) => ({ file: x.ref.img, ct: Math.round(x.ref.ts / 1000), desc: descs[j] ?? '' }));
     await safe.write(job.talker, (rec2) => {
+      // 次序要紧：**先标注、后并描述**。标注先行，applyImageDescToMsgs 才会把被拒的图整条跳过
+      // （否则它的近邻描述会被「最近邻兜底」借给它——一张毒图反而拿到别人的描述）
+      const k = missed.length ? applySensitiveSkipsToMsgs(rec2.store.msgs, missed.map((r) => r.img)) : 0;
       const n = applyImageDescToMsgs(rec2.store.msgs, items);
-      if (n > 0) {
+      if (n > 0 || k > 0) {
         rec2.store.stats = storeStatsOf(rec2.store.msgs); // 描述进时间线 → 统计重算（图片数变化）
         rec2.store.updatedAt = new Date().toISOString();
       }
@@ -1494,6 +1532,8 @@ async function runDescribeStage(job: PersonJob, finish: (patch: Partial<PersonJo
     await persist();
     emit();
   }
+  // 敏感标注是终态、不会重跑（ADR-0224）。这里不通知——通知归 UI 层（引擎不碰 DOM，
+  // 任务完成时的统一通知在 ui.persistJobDone，读 job.describe.sensitive 拼出去）。
   return 'ok';
 }
 

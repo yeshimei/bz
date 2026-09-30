@@ -1,4 +1,4 @@
-/* 源指纹 a298564eeb620392 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b246794e87b5d0e6 · 仓内输入 91 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/thumbs.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -15852,6 +15852,10 @@ ${lines}`;
   }
 
   // src/people/datasource.ts
+  var SENSITIVE_SKIP = "sensitive";
+  function isDescSkipped(m) {
+    return (m == null ? void 0 : m.descSkip) === SENSITIVE_SKIP;
+  }
   function hash32(s) {
     let h = 2166136261;
     for (let i = 0; i < s.length; i++) {
@@ -16192,8 +16196,9 @@ ${lines}`;
     let voices = 0;
     for (const m of msgs) {
       if (m.text !== "") continue;
-      if (m.type === 3) images++;
-      else if (m.type === 34) voices++;
+      if (m.type === 3) {
+        if (!isDescSkipped(m)) images++;
+      } else if (m.type === 34) voices++;
     }
     return { images, voices };
   }
@@ -16281,10 +16286,14 @@ ${lines}`;
     var _a2, _b2, _c2, _d2, _e, _f;
     const byFile = /* @__PURE__ */ new Map();
     const byMonth = /* @__PURE__ */ new Map();
+    const explicitBlank = /* @__PURE__ */ new Set();
     for (const it of descs) {
       if (!it || typeof it !== "object") continue;
-      if (!String((_a2 = it.desc) != null ? _a2 : "").trim()) continue;
-      const file = String((_b2 = it.file) != null ? _b2 : "").trim();
+      const file = String((_a2 = it.file) != null ? _a2 : "").trim();
+      if (!String((_b2 = it.desc) != null ? _b2 : "").trim()) {
+        if (file) explicitBlank.add(file);
+        continue;
+      }
       if (file) byFile.set(file, it);
       const month = file.includes("/") ? file.slice(0, file.indexOf("/")) : monthOf(Number(it.ct));
       if (!month) continue;
@@ -16299,13 +16308,14 @@ ${lines}`;
     const used = /* @__PURE__ */ new Set();
     let n = 0;
     for (const m of msgs) {
-      if (m.type !== 3 || m.text !== "") continue;
+      if (m.type !== 3 || m.text !== "" || isDescSkipped(m)) continue;
       const img = String((_c2 = m.img) != null ? _c2 : "").trim();
       const ctSec = Math.round(m.ts / 1e3);
       let desc = "";
       const exact = img ? byFile.get(img) : void 0;
       if (exact) {
         desc = String((_d2 = exact.desc) != null ? _d2 : "").trim();
+      } else if (img && explicitBlank.has(img)) {
       } else {
         const list = byMonth.get(monthOf(ctSec));
         if (list == null ? void 0 : list.length) {
@@ -16333,6 +16343,25 @@ ${lines}`;
         m.text = `[图片] ${desc}`;
         n++;
       }
+    }
+    return n;
+  }
+  function applySensitiveSkipsToMsgs(msgs, files) {
+    var _a2;
+    const want = /* @__PURE__ */ new Set();
+    for (const f of files) {
+      const v = String(f != null ? f : "").trim();
+      if (v) want.add(v);
+    }
+    if (!want.size) return 0;
+    let n = 0;
+    for (const m of msgs) {
+      if (m.type !== 3 || m.text !== "") continue;
+      if (isDescSkipped(m)) continue;
+      const img = String((_a2 = m.img) != null ? _a2 : "").trim();
+      if (!img || !want.has(img)) continue;
+      m.descSkip = SENSITIVE_SKIP;
+      n++;
     }
     return n;
   }
@@ -17157,6 +17186,11 @@ ${lines}`;
     if (total <= 0) return 0;
     return Math.min(100, Math.max(0, Math.round(Math.min(done, total) / total * 100)));
   }
+  function isSensitiveRefusal(message) {
+    if (!message) return false;
+    if (!/(敏感|不安全|content[\s_-]*polic|sensitive|flagged|moderation)/i.test(message)) return false;
+    return !/(^|[^0-9])(429|500|502|503|504)([^0-9]|$)/.test(message);
+  }
   function imageRefsOf(msgs) {
     var _a2;
     const out = [];
@@ -17971,7 +18005,7 @@ ${lines}`;
     return counts;
   }
   async function runDescribeStage(job, finish) {
-    var _a2, _b2, _c2;
+    var _a2, _b2, _c2, _d2, _e;
     const safe = st.safe;
     if (!(safe == null ? void 0 : safe.unlocked)) return "halted";
     const ledger = describeOf(job);
@@ -17981,9 +18015,9 @@ ${lines}`;
     const rec = await safe.read(job.talker);
     if (gone(job)) return "halted";
     const msgs = (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : [];
-    const refs = imageRefsOf(msgs);
-    if (!refs.length) return "skipped";
     const byKey = new Map(msgs.map((m) => [m.key, m]));
+    const refs = imageRefsOf(msgs).filter((r) => !isDescSkipped(byKey.get(r.key)));
+    if (!refs.length) return "skipped";
     const isDone = (ref) => {
       var _a3, _b3;
       return ((_b3 = (_a3 = byKey.get(ref.key)) == null ? void 0 : _a3.text) != null ? _b3 : "") !== "";
@@ -18071,6 +18105,7 @@ ${lines}`;
       const prompt = buildDescribePrompt(images.length, context);
       let descs;
       let attempt = 0;
+      let refused = false;
       for (; ; ) {
         try {
           descs = parseDescribeReply(await ask({ text: prompt, images: images.map((x) => x.url) }), images.length);
@@ -18078,6 +18113,10 @@ ${lines}`;
         } catch (e) {
           if (gone(job)) return "halted";
           const err = errorMessage(e);
+          if (isSensitiveRefusal(err)) {
+            refused = true;
+            break;
+          }
           if (isAbortError(e) || attempt >= st.retry.maxRetries) {
             await finish({ status: "error", error: err });
             return "halted";
@@ -18093,13 +18132,37 @@ ${lines}`;
           }
         }
       }
+      const missed = [];
+      if (refused) {
+        const onePrompt = buildDescribePrompt(1, context);
+        descs = [];
+        for (const item of images) {
+          if (gone(job)) return "halted";
+          if (st.pauseRequested) {
+            await finish({ status: "paused", message: `已暂停 · ${describeStageLine(i, batches.length)}` });
+            return "halted";
+          }
+          try {
+            const one = parseDescribeReply(await ask({ text: onePrompt, images: [item.url] }), 1);
+            descs.push((_d2 = one[0]) != null ? _d2 : "");
+          } catch (e) {
+            if (gone(job)) return "halted";
+            if (isSensitiveRefusal(errorMessage(e))) missed.push(item.ref);
+            descs.push("");
+          }
+        }
+        if (missed.length) led.sensitive = ((_e = led.sensitive) != null ? _e : 0) + missed.length;
+        job.message = `本批 ${images.length} 张中 ${missed.length} 张被判敏感，已标注跳过`;
+        emit();
+      }
       const items = images.map((x, j) => {
         var _a3;
         return { file: x.ref.img, ct: Math.round(x.ref.ts / 1e3), desc: (_a3 = descs[j]) != null ? _a3 : "" };
       });
       await safe.write(job.talker, (rec2) => {
+        const k = missed.length ? applySensitiveSkipsToMsgs(rec2.store.msgs, missed.map((r) => r.img)) : 0;
         const n = applyImageDescToMsgs(rec2.store.msgs, items);
-        if (n > 0) {
+        if (n > 0 || k > 0) {
           rec2.store.stats = storeStatsOf(rec2.store.msgs);
           rec2.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
         }
@@ -20851,6 +20914,7 @@ ${lines}`;
       "aria-label": "删掉这张",
       title: "从时间线里删掉这张（原件留在数据根，不会动）"
     }));
+    if (it.sensitive) box.appendChild(el("div", "bz-people-supp-imgsens", text("敏感")));
     if (imgDel === it.img) {
       box.appendChild(el("div", "bz-people-supp-imgask", [
         el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
@@ -20861,12 +20925,19 @@ ${lines}`;
       ]));
     }
     const cell = el("div", "bz-people-supp-imgcell", [box]);
-    cell.appendChild(el(
-      "div",
-      `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
-      { title: cap || "未描述" },
-      text(cap || "未描述")
-    ));
+    if (it.sensitive) {
+      cell.appendChild(button("bz-people-supp-imgcap bz-people-supp-imgcap-sens", "敏感 · 解除", {
+        "data-people-supp-img-unsens": it.img,
+        title: "这张被判为敏感内容、已跳过描述——点一下解除标注并重试"
+      }));
+    } else {
+      cell.appendChild(el(
+        "div",
+        `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+        { title: cap || "未描述" },
+        text(cap || "未描述")
+      ));
+    }
     return cell;
   }
   function suppImgMore(hidden) {
@@ -22585,7 +22656,7 @@ ${lines}`;
     return { runnable: runnable2, skipped };
   }
   async function persistJobDone(job, target) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     const talker = (_a2 = target == null ? void 0 : target.talker) != null ? _a2 : job.talker;
     const name = (_b2 = target == null ? void 0 : target.name) != null ? _b2 : job.name;
     try {
@@ -22636,6 +22707,10 @@ ${lines}`;
         await store2.setLastProcessedTs(talker, Math.max((_w = existing == null ? void 0 : existing.lastProcessedTs) != null ? _w : 0, lastTs));
       }
       notice(`「${name}」的脸谱已生成`, "success");
+      const sens = (_y = (_x = job.describe) == null ? void 0 : _x.sensitive) != null ? _y : 0;
+      if (sens > 0) {
+        notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, "warning");
+      }
       jobs().removeJob(talker);
       if (overlay) {
         animDev = talker;
@@ -22850,7 +22925,7 @@ ${lines}`;
     else if (kind === "redraw") await generateOne(id, { force: true });
   }
   function onOverlayClick(e) {
-    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F;
+    var _a2, _b2, _c2, _d2, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _A, _B, _C, _D, _E, _F, _G;
     const t = e.target;
     if (e.target === overlay) {
       closePeoplePanel();
@@ -23184,9 +23259,14 @@ ${lines}`;
       void suppDescribe();
       return;
     }
+    const imgUnsens = t.closest("[data-people-supp-img-unsens]");
+    if (imgUnsens) {
+      void suppUnmarkSensitive((_y = imgUnsens.getAttribute("data-people-supp-img-unsens")) != null ? _y : "");
+      return;
+    }
     const imgView = t.closest("[data-people-supp-img-view]");
     if (imgView) {
-      openImgViewer((_y = imgView.getAttribute("data-people-supp-img-view")) != null ? _y : "");
+      openImgViewer((_z = imgView.getAttribute("data-people-supp-img-view")) != null ? _z : "");
       return;
     }
     const imgDel = t.closest("[data-people-supp-img-del]");
@@ -23202,7 +23282,7 @@ ${lines}`;
     }
     const imgDelOk = t.closest("[data-people-supp-img-del-ok]");
     if (imgDelOk) {
-      const img = (_z = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _z : "";
+      const img = (_A = imgDelOk.getAttribute("data-people-supp-img-del-ok")) != null ? _A : "";
       suppImgDelPending = null;
       void suppDeleteImage(img);
       return;
@@ -23231,7 +23311,7 @@ ${lines}`;
     }
     const recDel = t.closest("[data-people-supp-rec-del]");
     if (recDel) {
-      recDelPending = (_A = recDel.getAttribute("data-people-supp-rec-del")) != null ? _A : null;
+      recDelPending = (_B = recDel.getAttribute("data-people-supp-rec-del")) != null ? _B : null;
       recDelAlsoFile = true;
       void renderAlbum();
       return;
@@ -23243,7 +23323,7 @@ ${lines}`;
     }
     const recDelOk = t.closest("[data-people-supp-rec-del-ok]");
     if (recDelOk) {
-      void suppDeleteRecording((_B = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _B : "");
+      void suppDeleteRecording((_C = recDelOk.getAttribute("data-people-supp-rec-del-ok")) != null ? _C : "");
       return;
     }
     const recStartBtn = t.closest("[data-people-supp-rec-start-edit]");
@@ -23270,17 +23350,17 @@ ${lines}`;
     }
     const recRun = t.closest("[data-people-supp-rec-run]");
     if (recRun) {
-      void suppRunRecording((_C = recRun.getAttribute("data-people-supp-rec-run")) != null ? _C : "");
+      void suppRunRecording((_D = recRun.getAttribute("data-people-supp-rec-run")) != null ? _D : "");
       return;
     }
     const recMerge = t.closest("[data-people-supp-rec-merge]");
     if (recMerge && detailId) {
-      void suppMergeRecording(detailId, (_D = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _D : "");
+      void suppMergeRecording(detailId, (_E = recMerge.getAttribute("data-people-supp-rec-merge")) != null ? _E : "");
       return;
     }
     const recStop = t.closest("[data-people-supp-rec-stop]");
     if (recStop) {
-      const file = (_E = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _E : "";
+      const file = (_F = recStop.getAttribute("data-people-supp-rec-stop")) != null ? _F : "";
       const root = suppDataRoot();
       if (detailId && root && file) stopRecordingTask(recordingSidecarPath(root, detailId, file), { dataRoot: root, talker: detailId, file });
       void renderAlbum();
@@ -23309,7 +23389,7 @@ ${lines}`;
     }
     const recDeq = t.closest("[data-people-supp-rec-dequeue]");
     if (recDeq) {
-      const file = (_F = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _F : "";
+      const file = (_G = recDeq.getAttribute("data-people-supp-rec-dequeue")) != null ? _G : "";
       const root = suppDataRoot();
       if (detailId && root && file) dequeueRecordingTask(recordingSidecarPath(root, detailId, file));
       void renderAlbum();
@@ -24344,8 +24424,9 @@ ${lines}`;
       for (const m of (_a2 = rec == null ? void 0 : rec.store.msgs) != null ? _a2 : []) {
         if (m.type === 3 && m.img) {
           imported++;
-          imageItems.push({ img: m.img, text: m.text });
-          if (m.text === "") undescribed++;
+          const sensitive = isDescSkipped(m);
+          imageItems.push(sensitive ? { img: m.img, text: m.text, sensitive: true } : { img: m.img, text: m.text });
+          if (m.text === "" && !sensitive) undescribed++;
         }
         if (m.key.startsWith("rec:")) {
           const end = m.key.lastIndexOf(":");
@@ -24736,6 +24817,44 @@ ${lines}`;
     else if (r.ok && r.skipped) notice("没有需要描述的图片（零图片或已全部描述）", "info");
     else if (r.ok) notice("图片描述完成，已并进时间线", "success");
     await refreshSuppStoreInfo(detailId);
+    void renderAlbum();
+  }
+  async function suppUnmarkSensitive(img) {
+    const talker = detailId;
+    if (!talker || !img || isDescribeOnlyBusy()) return;
+    if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+    const safe = peopleSafe;
+    if (!(safe == null ? void 0 : safe.unlocked)) {
+      notice("保险库上锁——先解锁再解除敏感标注", "warning");
+      return;
+    }
+    let cleared = 0;
+    try {
+      await safe.write(talker, (rec) => {
+        var _a2;
+        for (const m of rec.store.msgs) {
+          if (m.type === 3 && String((_a2 = m.img) != null ? _a2 : "") === img && isDescSkipped(m)) {
+            delete m.descSkip;
+            cleared++;
+          }
+        }
+        if (cleared > 0) rec.store.updatedAt = (/* @__PURE__ */ new Date()).toISOString();
+      });
+    } catch (e) {
+      notifyActionError(e, "解除敏感标注");
+      return;
+    }
+    await refreshSuppStoreInfo(talker);
+    void renderAlbum();
+    if (!cleared) {
+      notice("这张已经没有敏感标注了", "info");
+      return;
+    }
+    const r = await runDescribeOnly(getApp(), talker);
+    if (!r.ok && r.reason) notice(`重试描述没有跑：${r.reason}`, "warning");
+    else if (r.ok && r.skipped) notice("没有需要描述的图片", "info");
+    else if (r.ok) notice("已解除敏感标注，重新描述完成", "success");
+    await refreshSuppStoreInfo(talker);
     void renderAlbum();
   }
   async function suppDeleteRecording(file) {

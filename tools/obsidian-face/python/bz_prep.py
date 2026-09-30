@@ -61,6 +61,7 @@ import argparse
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import sqlite3
@@ -89,6 +90,10 @@ SV_TAG_RE = re.compile(r"<\|/?([a-zA-Z]+)\|>")  # SenseVoice 输出清洗（voic
 SV_EMOTIONS = ("HAPPY", "ANGRY", "SAD", "FEARFUL", "DISGUSTED", "SURPRISED", "NEUTRAL")
 MP4_HEADS = (b"ftyp", b"moov", b"mdat", b"free", b"wide")
 DERIVE_EXTS = (".jpg", ".jpeg", ".png", ".gif")  # 派生档源 = 解码后的原图（不含 .bin / 缩略图）
+# 图片产物可能的扩展名（decode_dat → vendor get_image_type 的全集；.bin = wxgf 明文头，
+# 交 try_wxgf 就地转码）。用于「存在判定先行」的廉价探测：命中即跳过，不读源字节解密（ADR-0223）。
+# 顺序按实际出现频率排（jpg 最常见），最坏 8 次 stat 仍远低于读一次 400KB 并发起 AES 轮试。
+IMAGE_EXTS = ("jpg", "png", "gif", "webp", "bmp", "tiff", "ico", "bin")
 
 
 class StopRun(Exception):
@@ -247,6 +252,114 @@ def decode_dat(data: bytes, my_wxid: str):
         return None
     ext = {1: "jpg", 3: "png", 5: "gif"}.get(ft, "jpg")
     return ext, bytes(b ^ code for b in data)
+
+
+# ---------------- 媒体索引（ADR-0223）：attach 目录的增量清单 ----------------
+# 病根：段 1 每轮对整个 attach 目录 rglob 一遍（1631 图 + 视频 + 文件）。索引把「遍历」降为
+# 「读缓存 + 几个月目录的 stat」：未变的月份直接用上次的清单，变了的月份只重扫那一个。
+# 索引只决定「要不要重扫」，不决定「扫到之后怎么判」——产物存在判定独立成立（do_image 的探测），
+# 所以索引丢了 / 失效了最多退回全量重扫，不会漏文件。
+
+MEDIA_INDEX_VERSION = 1
+MEDIA_INDEX_DIR = "media-index"  # <数据根>/.bz-face/media-index/<联系人>.json（与 rec-control 同惯例）
+
+
+def _month_fingerprint(month_dir: Path) -> str:
+    """月目录指纹 = 该目录及其下所有子目录的 (相对路径, mtime_ns) 序列哈希。
+
+    只走目录、不列文件——目录数远少于文件数。比只看月目录自身的 mtime 稳：新文件通常落在
+    <月>/Img/ 这类子目录里，翻动的只是子目录的 mtime，月目录本身不动。
+    取不到就当失效（返回空串，永不等值 → 下轮重扫），正确性优先。
+    """
+    parts = []
+    try:
+        for root, dirs, _files in os.walk(month_dir):
+            dirs.sort()
+            rel = os.path.relpath(root, month_dir)
+            parts.append(f"{rel}@{os.stat(root).st_mtime_ns}")
+    except OSError:
+        return ""
+    return hashlib.md5("|".join(parts).encode("utf-8")).hexdigest()
+
+
+def _scan_month(month_dir: Path):
+    """扫一个月目录 → [[相对路径, 类别], ...]。类别判定与索引化之前逐字一致（不趁机改口径）。"""
+    out = []
+    for p in sorted(month_dir.rglob("*")):
+        if not p.is_file():
+            continue
+        kind = ("thumb" if "_t" in p.stem
+                else "image" if (p.suffix == ".dat" and "Img" in str(p.parent))
+                else "video" if (p.suffix == ".mp4" or "Video" in str(p.parent))
+                else "file" if "File" in str(p.parent)
+                else "image" if p.suffix == ".dat"
+                else "file")
+        out.append([str(p.relative_to(month_dir)).replace("\\", "/"), kind])
+    return out
+
+
+def load_media_index(index_path: Path) -> dict:
+    """坏表 / 版本不符一律当空索引（退回全量重扫），绝不因索引本身炸掉 prep。"""
+    try:
+        data = json.loads(index_path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and data.get("v") == MEDIA_INDEX_VERSION and isinstance(data.get("months"), dict):
+            return data
+    except Exception:
+        pass
+    return {"v": MEDIA_INDEX_VERSION, "months": {}}
+
+
+def save_media_index(index_path: Path, idx: dict) -> None:
+    """索引落盘失败只影响下次性能（退回全量重扫），不影响本轮正确性——静默。"""
+    try:
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(index_path, json.dumps(idx, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    except Exception:
+        pass
+
+
+def build_media_jobs(attach_dir: Path, index_path: Path):
+    """增量导出队列 [(源路径, 类别, 月)]：索引命中的月份读缓存，其余只重扫那一个月。
+
+    指纹在扫描前后各算一次——不一致说明扫描窗口内目录在变：本轮结果照用（已扫到的不丢），
+    但不落缓存（存空指纹 → 下轮必重扫）。宁可多扫一轮，不漏一个文件。
+    """
+    idx = load_media_index(index_path)
+    months_out = {}
+    jobs = []
+    names = sorted(d.name for d in attach_dir.iterdir()
+                   if d.is_dir() and len(d.name) == 7 and d.name[4] == "-")
+    for name in names:
+        md = attach_dir / name
+        fp_before = _month_fingerprint(md)
+        prev = idx["months"].get(name)
+        if fp_before and prev and prev.get("fp") == fp_before and isinstance(prev.get("files"), list):
+            files = prev["files"]  # 命中：这一月不碰盘（除指纹那几个目录的 stat）
+        else:
+            files = _scan_month(md)
+        fp_after = _month_fingerprint(md)
+        months_out[name] = ({"fp": fp_after, "files": files} if fp_after and fp_before == fp_after
+                            else {"fp": "", "files": []})
+        for rel, kind in files:
+            jobs.append((md / rel, kind, name))
+    save_media_index(index_path, {"v": MEDIA_INDEX_VERSION, "months": months_out})
+    return jobs
+
+
+def image_target_hit(out_dir: Path, stem0: str):
+    """产物存在探测（ADR-0223 档 A）：按 IMAGE_EXTS 逐个试，命中返回 (路径, 扩展名)，否则 (None, None)。
+
+    存在的意义：产物扩展名只有解密后才知道，探不出来就得把源文件读进内存跑一遍 AES 轮试才发现
+    「哦，已经导出过了」——1631 张图 × 400KB 的重复读盘与解密是 prep 慢的主因。最坏 8 次 stat
+    换掉一次 400KB 读盘 + 多密钥解密，这笔账很划算。
+    """
+    if not out_dir.exists():
+        return None, None
+    for cand in IMAGE_EXTS:
+        hit = out_dir / f"{stem0}.{cand}"
+        if hit.exists():
+            return hit, cand
+    return None, None
 
 
 def looks_like_mp4(data: bytes) -> bool:
@@ -478,21 +591,11 @@ def main() -> int:
         progress("media", 0)
         voices = [m for m in flow if m.get("type") == 34 and m.get("sid")]
         attach_dir = attach / hashlib.md5(hit["wxid"].encode("utf-8")).hexdigest()
-        file_jobs = []  # (路径, 类别, 月)——attach 目录名 md5(wxid)（export_all build_hash2name 同款）
+        # 导出队列走增量索引（ADR-0223）：未变的月份读缓存、变了的月份只重扫那一个月——
+        # 不再每轮对整个 attach 目录 rglob 一遍。目录名 = md5(wxid)（export_all build_hash2name 同款）。
+        file_jobs = []
         if attach_dir.exists():
-            months = sorted(d.name for d in attach_dir.iterdir()
-                            if d.is_dir() and len(d.name) == 7 and d.name[4] == "-")
-            for month in months:
-                for p in sorted((attach_dir / month).rglob("*")):
-                    if not p.is_file():
-                        continue
-                    kind = ("thumb" if "_t" in p.stem
-                            else "image" if (p.suffix == ".dat" and "Img" in str(p.parent))
-                            else "video" if (p.suffix == ".mp4" or "Video" in str(p.parent))
-                            else "file" if "File" in str(p.parent)
-                            else "image" if p.suffix == ".dat"
-                            else "file")
-                    file_jobs.append((p, kind, month))
+            file_jobs = build_media_jobs(attach_dir, bz_dir / MEDIA_INDEX_DIR / f"{name}.json")
         voices = limit_cut(voices)
         file_jobs = limit_cut(file_jobs)
         total_items = len(voices) + len(file_jobs)
@@ -524,16 +627,29 @@ def main() -> int:
                 fails.add("wxgf", f"wxgf 解码失败：{bin_target.name}")
 
         def do_image(p: Path, month: str, sub: str):
-            """图片 / 缩略图一条 → (status, err)。status: done | skip | fail（wxgf 成败另计）。"""
+            """图片 / 缩略图一条 → (status, err)。status: done | skip | fail（wxgf 成败另计）。
+
+            存在判定先行（ADR-0223）：产物扩展名只有解密后才知道，故按 IMAGE_EXTS 逐个探测——
+            命中即跳过，**不读源字节、不做 AES 轮试**。这是「已导出文件每轮被白读一遍」的修复点：
+            1631 张图 × 400KB 的重复读盘与解密是 prep 慢的主因。
+            """
+            out_dir = cdir / sub / month
+            stem0 = p.stem.split("_")[0]
+            hit, cand = image_target_hit(out_dir, stem0)
+            if hit is not None:
+                if cand == "bin":
+                    try_wxgf(hit)  # 历史遗留：.bin 在、解码产物缺 → 补解码
+                return "skip", None
             data = p.read_bytes()
             r = decode_dat(data, my_wxid)
             if not r:
                 return "fail", f".dat 解码失败：{p.parent.name}/{p.name}"
             ext, plain = r
-            target = ensure_dir(cdir / sub / month) / f"{p.stem.split('_')[0]}.{ext}"
+            target = ensure_dir(out_dir) / f"{stem0}.{ext}"
+            # 探测集合外的扩展名（若 vendor 日后新增）走这里兜底：仍先判存在再写，语义与旧实现一致
             if target.exists():
                 if ext == "bin":
-                    try_wxgf(target)  # 历史遗留：.bin 在、解码产物缺 → 补解码
+                    try_wxgf(target)
                 return "skip", None
             atomic_write(target, plain)
             if ext == "bin":
@@ -541,18 +657,22 @@ def main() -> int:
             return "done", None
 
         def do_video(p: Path, month: str):
-            data = p.read_bytes()
-            target = ensure_dir(cdir / "video" / month) / (p.stem + ".mp4")
+            """视频一条 → (status, err)。存在判定先行（ADR-0223）：目标名与扩展名无关，一次 exists 即可，
+            不必为已导出的视频把源文件整个读进内存。"""
+            out_dir = cdir / "video" / month
+            target = out_dir / (p.stem + ".mp4")
             if target.exists():
                 return "skip", None
+            data = p.read_bytes()
+            out = ensure_dir(out_dir) / target.name
             if looks_like_mp4(data):
-                atomic_write(target, data)
+                atomic_write(out, data)
                 return "done", None
             r = decode_dat(data, my_wxid)
             if not r:
                 return "fail", f"视频解码失败：{p.parent.name}/{p.name}"
             _, plain = r
-            atomic_write(target, plain)
+            atomic_write(out, plain)
             return "done", None
 
         def do_file(p: Path, month: str):

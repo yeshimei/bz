@@ -1,4 +1,4 @@
-/* 源指纹 d2c8385b86d9a6e5 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f15122f17fec714c · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -1520,6 +1520,7 @@ var BZR_people = (() => {
       "aria-label": "删掉这张",
       title: "从时间线里删掉这张（原件留在数据根，不会动）"
     }));
+    if (it.sensitive) box.appendChild(el("div", "bz-people-supp-imgsens", text("敏感")));
     if (imgDel === it.img) {
       box.appendChild(el("div", "bz-people-supp-imgask", [
         el("div", "bz-people-supp-imgask-tx", text("删掉这张？")),
@@ -1530,12 +1531,19 @@ var BZR_people = (() => {
       ]));
     }
     const cell = el("div", "bz-people-supp-imgcell", [box]);
-    cell.appendChild(el(
-      "div",
-      `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
-      { title: cap || "未描述" },
-      text(cap || "未描述")
-    ));
+    if (it.sensitive) {
+      cell.appendChild(button("bz-people-supp-imgcap bz-people-supp-imgcap-sens", "敏感 · 解除", {
+        "data-people-supp-img-unsens": it.img,
+        title: "这张被判为敏感内容、已跳过描述——点一下解除标注并重试"
+      }));
+    } else {
+      cell.appendChild(el(
+        "div",
+        `bz-people-supp-imgcap${cap ? "" : " bz-people-supp-imgcap-none"}`,
+        { title: cap || "未描述" },
+        text(cap || "未描述")
+      ));
+    }
     return cell;
   }
   function suppImgMore(hidden) {

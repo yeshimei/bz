@@ -63,6 +63,7 @@ import {
   storeStatsOf,
   storeToUnified,
   pendingMediaCounts,
+  isDescSkipped,
   isGroupChat,
   SIDE_SPEECH_SPEAKER,
   type StoreContact,
@@ -1612,6 +1613,11 @@ async function persistJobDone(job: JobView, target?: GenTarget): Promise<void> {
       await store.setLastProcessedTs(talker, Math.max(existing?.lastProcessedTs ?? 0, lastTs));
     }
     notice(`「${name}」的脸谱已生成`, 'success');
+    // 敏感标注是终态、不会重跑（ADR-0224）：不说一句用户会以为图漏了；说了还得告诉他去哪儿撤
+    const sens = job.describe?.sensitive ?? 0;
+    if (sens > 0) {
+      notice(`其中 ${sens} 张图片被判敏感已跳过描述——图片页签里可以解除标注并重试`, 'warning');
+    }
     jobs().removeJob(talker); // 产物已入保库记录：done 任务清出队列，进度块自然收起
     if (overlay) {
       animDev = talker; // 刚画完那位：照片从灰里洗出颜色（issue 507：505 之后这枚标志没人置位）
@@ -2068,6 +2074,12 @@ function onOverlayClick(e: MouseEvent): void {
   }
   if (t.closest('[data-people-supp-img-import]')) { void suppImportImages(); return; }
   if (t.closest('[data-people-supp-img-desc]')) { void suppDescribe(); return; }
+  // 敏感格子的撤回入口（ADR-0224）：一键 = 解除标注 + 重跑描述，点击本身即计费授权
+  const imgUnsens = t.closest<HTMLElement>('[data-people-supp-img-unsens]');
+  if (imgUnsens) {
+    void suppUnmarkSensitive(imgUnsens.getAttribute('data-people-supp-img-unsens') ?? '');
+    return;
+  }
   // 留影格：点图开大图 / 叉开二次确认 / 确认或取消（复评）
   const imgView = t.closest<HTMLElement>('[data-people-supp-img-view]');
   if (imgView) { openImgViewer(imgView.getAttribute('data-people-supp-img-view') ?? ''); return; }
@@ -3387,14 +3399,17 @@ async function refreshSuppStoreInfo(talker: string): Promise<void> {
   let imported = 0;
   let undescribed = 0;
   const mergedRecs = new Set<string>();
-  const imageItems: Array<{ img: string; text: string }> = [];
+  const imageItems: Array<{ img: string; text: string; sensitive?: boolean }> = [];
   try {
     const rec = await peopleSafe.read(talker);
     for (const m of rec?.store.msgs ?? []) {
       if (m.type === 3 && m.img) {
         imported++;
-        imageItems.push({ img: m.img, text: m.text });
-        if (m.text === '') undescribed++;
+        // 敏感标注的图不算未描述（ADR-0224）：标注是终态，计进欠账会与「生成描述」按钮的
+        // 可用性、开工单待办口径对不上
+        const sensitive = isDescSkipped(m);
+        imageItems.push(sensitive ? { img: m.img, text: m.text, sensitive: true } : { img: m.img, text: m.text });
+        if (m.text === '' && !sensitive) undescribed++;
       }
       if (m.key.startsWith('rec:')) {
         const end = m.key.lastIndexOf(':');
@@ -3850,6 +3865,50 @@ async function suppDescribe(): Promise<void> {
   else if (r.ok && r.skipped) notice('没有需要描述的图片（零图片或已全部描述）', 'info');
   else if (r.ok) notice('图片描述完成，已并进时间线', 'success');
   await refreshSuppStoreInfo(detailId);
+  void renderAlbum();
+}
+
+/**
+ * 解除敏感标注并重试描述（ADR-0224 决策 7）：标注是启发式判定，一定有误伤，必须有撤回入口——
+ * 没有撤回入口的错杀不可挽回。清掉该图消息上的 descSkip 后直接走「只跑描述段」入口：这一次
+ * 点击即计费授权（与 suppDescribe 同口径，不再二次弹确认）；若它确实敏感，下一轮会被重新标注
+ * （幂等自愈，不会反复烧钱也不会漏）。
+ */
+async function suppUnmarkSensitive(img: string): Promise<void> {
+  const talker = detailId;
+  if (!talker || !img || jobsApi.isDescribeOnlyBusy()) return;
+  if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+  const safe = peopleSafe;
+  if (!safe?.unlocked) {
+    notice('保险库上锁——先解锁再解除敏感标注', 'warning');
+    return;
+  }
+  let cleared = 0;
+  try {
+    await safe.write(talker, (rec) => {
+      for (const m of rec.store.msgs) {
+        if (m.type === 3 && String(m.img ?? '') === img && isDescSkipped(m)) {
+          delete m.descSkip;
+          cleared++;
+        }
+      }
+      if (cleared > 0) rec.store.updatedAt = new Date().toISOString();
+    });
+  } catch (e) {
+    notifyActionError(e, '解除敏感标注');
+    return;
+  }
+  await refreshSuppStoreInfo(talker);
+  void renderAlbum();
+  if (!cleared) {
+    notice('这张已经没有敏感标注了', 'info');
+    return;
+  }
+  const r = await jobsApi.runDescribeOnly(getApp(), talker);
+  if (!r.ok && r.reason) notice(`重试描述没有跑：${r.reason}`, 'warning');
+  else if (r.ok && r.skipped) notice('没有需要描述的图片', 'info');
+  else if (r.ok) notice('已解除敏感标注，重新描述完成', 'success');
+  await refreshSuppStoreInfo(talker);
   void renderAlbum();
 }
 

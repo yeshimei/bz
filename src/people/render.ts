@@ -1780,15 +1780,17 @@ export interface SuppImageViewState {
   queue: SuppImageQueueItem[];
   /** 聊天仓已有图片总数（type=3 且 img 有值） */
   imported: number;
-  /** 其中未描述的（img 有值、text 空——不进时间线） */
+  /** 其中未描述的（img 有值、text 空——不进时间线）。**不含敏感标注的**（那是终态不欠账，ADR-0224） */
   undescribed: number;
   /** 描述动作进行中（引擎 describe 段在跑） */
   describeBusy: boolean;
   modelLabel: string;
   /** 已入库的留影（预览网格；新的在前。url 由 ui 侧按数据根拼好）。
    *  分片口径（issue 519）：只装**已渲染的前段**——千张级全量把 data URL 一次拉齐是
-   *  开页冻死的病根，ui 侧按 shown 切片，`hidden` = 尚未渲染的张数（>0 出「还有 N 张」哨兵）。 */
-  items: Array<{ img: string; text: string; url: string }>;
+   *  开页冻死的病根，ui 侧按 shown 切片，`hidden` = 尚未渲染的张数（>0 出「还有 N 张」哨兵）。
+   *  `sensitive` = 该图被判敏感已标注（ADR-0224）：格子上给「解除」入口——标注是启发式判定，
+   *  没有撤回入口的错杀不可挽回。 */
+  items: Array<{ img: string; text: string; url: string; sensitive?: boolean }>;
   /** 未渲染的留影张数（0 = 全量已铺完，无哨兵） */
   hidden: number;
   /** 点了叉、等二次确认的那张（img 相对路径；复评点名要问一声） */
@@ -2001,7 +2003,10 @@ function suppImageBody(s: SuppImageViewState): HTMLElement[] {
 }
 
 /** 一格留影（全量渲染与增量追加共用；单源铁律——issue 519 分片后两条路都得长一个样） */
-function suppImgCell(imgDel: string | undefined, it: { img: string; text: string; url: string }): HTMLElement {
+function suppImgCell(
+  imgDel: string | undefined,
+  it: { img: string; text: string; url: string; sensitive?: boolean },
+): HTMLElement {
   const cap = it.text.replace(/^\[图片\]\s*/, '');
   const box = el('div', 'bz-people-supp-imgbox');
   box.appendChild(el('img', 'bz-people-supp-imgthumb', {
@@ -2013,6 +2018,7 @@ function suppImgCell(imgDel: string | undefined, it: { img: string; text: string
     'aria-label': '删掉这张',
     title: '从时间线里删掉这张（原件留在数据根，不会动）',
   }));
+  if (it.sensitive) box.appendChild(el('div', 'bz-people-supp-imgsens', text('敏感')));
   if (imgDel === it.img) {
     box.appendChild(el('div', 'bz-people-supp-imgask', [
       el('div', 'bz-people-supp-imgask-tx', text('删掉这张？')),
@@ -2023,8 +2029,18 @@ function suppImgCell(imgDel: string | undefined, it: { img: string; text: string
     ]));
   }
   const cell = el('div', 'bz-people-supp-imgcell', [box]);
-  cell.appendChild(el('div', `bz-people-supp-imgcap${cap ? '' : ' bz-people-supp-imgcap-none'}`,
-    { title: cap || '未描述' }, text(cap || '未描述')));
+  // 敏感格子的「行」本身是撤回入口（ADR-0224 决策 7）：标注是启发式判定，一定有误伤，
+  // 没有撤回入口的错杀不可挽回。点一下 = 解除标注并重试描述（计费授权由这一次点击承担，
+  // 与「生成描述」按钮同口径——它是个显式动作，不再二次弹确认）。
+  if (it.sensitive) {
+    cell.appendChild(button('bz-people-supp-imgcap bz-people-supp-imgcap-sens', '敏感 · 解除', {
+      'data-people-supp-img-unsens': it.img,
+      title: '这张被判为敏感内容、已跳过描述——点一下解除标注并重试',
+    }));
+  } else {
+    cell.appendChild(el('div', `bz-people-supp-imgcap${cap ? '' : ' bz-people-supp-imgcap-none'}`,
+      { title: cap || '未描述' }, text(cap || '未描述')));
+  }
   return cell;
 }
 
@@ -2041,7 +2057,7 @@ function suppImgMore(hidden: number): HTMLElement {
  */
 export function appendSuppImageGridPage(
   grid: HTMLElement,
-  page: Array<{ img: string; text: string; url: string }>,
+  page: Array<{ img: string; text: string; url: string; sensitive?: boolean }>,
   hidden: number,
   imgDel?: string,
 ): HTMLElement | null {

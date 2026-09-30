@@ -23,6 +23,7 @@ import {
   imageRefsOf,
   newDescribeProgress,
   parseDescribeReply,
+  isSensitiveRefusal,
   DESCRIBE_CONTEXT_DEFAULTS,
   DESCRIBE_DEFAULT_BATCH_SIZE,
 } from '../../src/people/describe';
@@ -197,6 +198,32 @@ describe('applyImageDescToMsgs 合并（幂等 / 只补缺 / 最近邻兜底）'
     expect(applyImageDescToMsgs(msgs, [])).toBe(0);
     expect(msgs[0].text).toBe('');
   });
+
+  it('明示了 file 但描述为空 → 留空待补，不借邻居的描述（ADR-0224）', () => {
+    const base = Date.UTC(2024, 4, 1, 0, 0, 0);
+    const msgs: StoreMsg[] = [
+      { key: 'p1', ts: base, isSender: true, type: 3, img: '2026-05/a.jpg', text: '' },
+      { key: 'p2', ts: base + 60_000, isSender: false, type: 3, img: '2026-05/b.jpg', text: '' }, // 本轮没拿到描述
+    ];
+    const descs: ImageDescItem[] = [
+      { file: '2026-05/a.jpg', ct: Math.round(base / 1000), desc: '甲的描述' },
+      { file: '2026-05/b.jpg', ct: Math.round((base + 60_000) / 1000), desc: '' }, // 明示空 = 确实没拿到
+    ];
+    expect(applyImageDescToMsgs(msgs, descs)).toBe(1);
+    expect(msgs[0].text).toBe('[图片] 甲的描述');
+    // 修复前：b 会走同月最近邻兜底借走甲的描述——一张失败的图顶着别人的描述进时间线
+    expect(msgs[1].text).toBe('');
+  });
+
+  it('已标注敏感的图整条跳过：不会被后来的旁路表兜底覆盖成有描述（ADR-0224）', () => {
+    const msgs: StoreMsg[] = [
+      { key: 'p1', ts: T0, isSender: true, type: 3, img: '2026-05/a.jpg', text: '', descSkip: 'sensitive' },
+    ];
+    const descs: ImageDescItem[] = [{ file: '2026-05/a.jpg', ct: Math.round(T0 / 1000), desc: '不该写进去' }];
+    expect(applyImageDescToMsgs(msgs, descs)).toBe(0);
+    expect(msgs[0].text).toBe('');
+    expect(msgs[0].descSkip).toBe('sensitive');
+  });
 });
 
 describe('断点账本与文案', () => {
@@ -233,5 +260,48 @@ describe('断点账本与文案', () => {
 describe('派生档路径', () => {
   it('descImagePath：`<数据根>/<联系人>/desc/<月>/<名>.jpg`，反斜杠归一', () => {
     expect(descImagePath('D:\\根', 'wxid_a', '2026-05\\p1.jpg')).toBe('D:/根/wxid_a/desc/2026-05/p1.jpg');
+  });
+});
+
+describe('敏感拒绝识别（ADR-0224 决策 1：宁可漏判也不误判）', () => {
+  it('用户实测的真实样本 → 认（中文服务商 + fallback status 400）', () => {
+    expect(
+      isSensitiveRefusal(
+        'AI 请求失败: 系统检测到输入或生成内容可能包含不安全或敏感内容，请您避免输入易产生敏感内容的提示语，感谢您的配合。（fallback: Request failed, status 400）'
+      )
+    ).toBe(true);
+  });
+
+  it('英文服务商措辞同样认（content policy / sensitive / moderation / flagged）', () => {
+    for (const msg of [
+      'API 400: Your request was rejected as a result of our content policy',
+      'API 400: input flagged as sensitive by the moderation endpoint',
+      'Request failed, status 400 (sensitive content detected)',
+    ]) {
+      expect(isSensitiveRefusal(msg)).toBe(true);
+    }
+  });
+
+  it('限流与服务端错一律不认（重试有救，绝不放大成逐张慢调用）', () => {
+    for (const msg of [
+      'AI 请求失败: 触发敏感词检测（fallback: Request failed, status 429）',
+      'API 500: 内容敏感校验服务暂时不可用',
+      'API 503: sensitive filter unavailable',
+    ]) {
+      expect(isSensitiveRefusal(msg)).toBe(false);
+    }
+  });
+
+  it('非敏感类错误不认：网络 / 超时 / 4xx 参数错 / 空消息', () => {
+    for (const msg of [
+      'Request failed, status 400', // 400 但没提敏感——退回既有重试路径
+      'fetch failed: ECONNREFUSED',
+      'AI 请求超时（60s）',
+      'API 401: invalid api key',
+      'API 400: model not found',
+      '',
+    ]) {
+      expect(isSensitiveRefusal(msg)).toBe(false);
+    }
   });
 });

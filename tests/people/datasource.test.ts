@@ -28,6 +28,8 @@ import {
   type StoreContact,
   type VoiceItem,
   pendingMediaCounts,
+  applySensitiveSkipsToMsgs,
+  isDescSkipped,
   applyVoiceToMsgs,
 } from '../../src/people/datasource';
 import { PeopleSafeStore, setPeopleSafeStoreForTests } from '../../src/people/safe-store';
@@ -738,5 +740,43 @@ describe('pendingMediaCounts（issue 514：开工单待办口径）', () => {
     ] as any[];
     expect(pendingMediaCounts(msgs)).toEqual({ images: 1, voices: 1 });
     expect(pendingMediaCounts([])).toEqual({ images: 0, voices: 0 });
+  });
+
+  it('敏感标注的图不算欠账（ADR-0224 + ADR-0223 决策 6）：不排除则每轮补画都重扫全库', () => {
+    const msgs = [
+      { key: 'a', ts: 1, isSender: true, type: 3, text: '', img: '2026-05/a.jpg' },                   // 未描述 → 数
+      { key: 'b', ts: 2, isSender: false, type: 3, text: '', img: '2026-05/b.jpg', descSkip: 'sensitive' }, // 已标注 → 不数
+      { key: 'c', ts: 3, isSender: true, type: 3, text: '海边合照', img: '2026-05/c.jpg', descSkip: 'sensitive' }, // 有描述 → 不数
+    ] as any[];
+    expect(pendingMediaCounts(msgs)).toEqual({ images: 1, voices: 0 });
+  });
+});
+
+describe('敏感标注写入（ADR-0224 决策 3）', () => {
+  const mk = (over: Record<string, unknown>): any => ({ key: 'k', ts: 1, isSender: true, type: 3, text: '', ...over });
+
+  it('按 img 精确标注；已有描述的不碰；已标注的幂等不重复计数', () => {
+    const msgs = [
+      mk({ key: 'a', img: '2026-05/a.jpg' }),
+      mk({ key: 'b', img: '2026-05/b.jpg', text: '[图片] 已经画好了' }), // 有描述：绝不抹成空
+      mk({ key: 'c', img: '2026-05/c.jpg', descSkip: 'sensitive' }),     // 已标注：幂等
+      mk({ key: 'd', img: '2026-05/d.jpg' }),
+    ];
+    const n = applySensitiveSkipsToMsgs(msgs, ['2026-05/a.jpg', '2026-05/b.jpg', '2026-05/c.jpg']);
+    expect(n).toBe(1); // 只有 a 是「首次标注」
+    expect(msgs[0].descSkip).toBe('sensitive');
+    expect(msgs[1].descSkip).toBeUndefined();
+    expect(msgs[1].text).toBe('[图片] 已经画好了');
+    expect(msgs[3].descSkip).toBeUndefined(); // 不在名单里：不动
+    expect(isDescSkipped(msgs[0])).toBe(true);
+    expect(isDescSkipped(msgs[3])).toBe(false);
+  });
+
+  it('空名单 / 非图片消息 / img 不匹配一律不动（宁可少标也不标错人）', () => {
+    const msgs = [mk({ key: 'a', img: '2026-05/a.jpg' }), mk({ key: 'b', type: 34, text: '' })];
+    expect(applySensitiveSkipsToMsgs(msgs, [])).toBe(0);
+    expect(applySensitiveSkipsToMsgs(msgs, [''])).toBe(0);
+    expect(applySensitiveSkipsToMsgs(msgs, ['2026-05/zzz.jpg'])).toBe(0);
+    expect(msgs.every((m) => m.descSkip === undefined)).toBe(true);
   });
 });

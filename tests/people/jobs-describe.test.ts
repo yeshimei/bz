@@ -409,6 +409,90 @@ describe('describe 段编排（470）', () => {
     expect(jobOf()?.describe?.skipped).toBe(true); // 门答 skip → 跳过（skip ≠ 取消口径不变）
     expect(jobOf()?.status).toBe('error'); // 没有可提炼文本收束（唯一图片空文本不进时间线）
   });
+
+  it('敏感降级（ADR-0224）：整批被判敏感 → 该批逐张重来，被拒的标 descSkip，其余照常落仓', async () => {
+    const msgs = imageMsgs(); // 3 张图（p1 / p2 / p3）
+    await seedStore(msgs);
+    const gateBox = makeGate('start');
+    const sizes: number[] = []; // 每次调用的图片张数——降级的直接证据
+    let singleIdx = 0; // 逐张轮次（images 是 data URL，认不出是哪张图，按顺序认：第 2 张 = p2）
+    const ask = vi.fn(async (input: { text: string; images: string[] }) => {
+      sizes.push(input.images.length);
+      // 整批（>1 张）一律被服务商判敏感；逐张时只有第 2 张（p2）是那颗毒瘤
+      if (input.images.length > 1) {
+        throw new Error('API 请求失败: 系统检测到输入或生成内容可能包含不安全或敏感内容（fallback: Request failed, status 400）');
+      }
+      singleIdx += 1;
+      if (singleIdx === 2) {
+        throw new Error('AI 请求失败: 输入可能包含敏感内容（fallback: Request failed, status 400）');
+      }
+      return JSON.stringify({ descs: input.images.map(() => '构造描述') });
+    });
+    await startJobs(app, [target(msgs)], {
+      maxRetries: 2, // 敏感拒绝不该耗掉重试次数
+      sleep: async () => {},
+      ...makeAsks(),
+      askDescribe: ask,
+      askDescribeConfirm: gateBox.gate,
+    });
+    await whenIdle();
+    // 调用序列 = 1 次整批（3 张）+ 3 次逐张。整批若走了退避重试，这里会是 [3, 3, 3, …]
+    expect(sizes).toEqual([3, 1, 1, 1]);
+    const rec = await safe.read(TALKER);
+    const byKey = new Map(rec!.store.msgs.map((x) => [x.key, x]));
+    expect(byKey.get('p1')!.text).toBe('[图片] 构造描述');
+    expect(byKey.get('p3')!.text).toBe('[图片] 构造描述');
+    expect(byKey.get('p2')!.text).toBe(''); // 被拒：空文本不进时间线
+    expect(byKey.get('p2')!.descSkip).toBe('sensitive'); // 且已标注
+    // 一批毒图没有废掉整条链
+    expect(jobOf()?.status).toBe('done');
+    expect(jobOf()?.describe).toMatchObject({ doneBatches: 1, sensitive: 1 });
+    expect(rec!.store.stats.imageCount).toBe(2); // 只有两张进了时间线
+  });
+
+  it('标注即终态：已标注的图不计数、不切批、不再调用（补画零浪费）', async () => {
+    const msgs = imageMsgs();
+    msgs[3].descSkip = 'sensitive'; // p2 已标注
+    await seedStore(msgs);
+    const gateBox = makeGate('start');
+    const askBox = makeAskDescribe();
+    await startJobs(app, [target(msgs)], {
+      maxRetries: 0,
+      sleep: async () => {},
+      ...makeAsks(),
+      askDescribe: askBox.ask,
+      askDescribeConfirm: gateBox.gate,
+    });
+    await whenIdle();
+    // 确认门报的是 2 张（p1 / p3），不是 3 张——标注的图根本没进 refs
+    expect(gateBox.seen[0]).toMatchObject({ totalImages: 2 });
+    const rec = await safe.read(TALKER);
+    const p2 = rec!.store.msgs.find((x) => x.key === 'p2')!;
+    expect(p2.descSkip).toBe('sensitive'); // 没被并仓动作抹掉（applyImageDescToMsgs 也跳过它）
+    expect(p2.text).toBe('');
+    expect(jobOf()?.describe?.sensitive).toBeUndefined(); // 本轮没有新标注
+  });
+
+  it('非敏感失败仍走原重试路径（不误伤）：5xx 不会触发逐张降级', async () => {
+    const msgs = imageMsgs();
+    await seedStore(msgs);
+    const gateBox = makeGate('start');
+    const sizes: number[] = [];
+    const ask = vi.fn(async (input: { text: string; images: string[] }) => {
+      sizes.push(input.images.length);
+      throw new Error('AI 请求失败: 服务暂时不可用（fallback: Request failed, status 503）');
+    });
+    await startJobs(app, [target(msgs)], {
+      maxRetries: 1,
+      sleep: async () => {},
+      ...makeAsks(),
+      askDescribe: ask,
+      askDescribeConfirm: gateBox.gate,
+    });
+    await whenIdle();
+    expect(sizes).toEqual([3, 3]); // 整批退避重试一次后耗尽——从未降到逐张
+    expect(jobOf()?.status).toBe('error');
+  });
 });
 
 describe('补充素材·描述单段（509）：临时任务不落盘', () => {
