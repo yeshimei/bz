@@ -8332,8 +8332,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 
 /* ==================== 划选工具框（issue 329 / ADR-0144） ====================
-   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区三动作（复制 Markdown /
-   存为名词 / 存为段落）、图片单击两动作（保存图片 / 存为图版）。
+   桌面/移动同套浮框（挂 body，脱离面板滚动与重建）：文字选区两动作（存为名词 /
+   存为段落，复制 Markdown 已移除）、图片单击两动作（保存图片 / 存为图版）。
+   移动端文字框下方优先（系统选择菜单恒在选区上方，2026-09-30）。
    变量选择器并挂浮框根 .bz-clip-selbar——浮框挂 body（域内后代选择器不可达），
    同右键菜单先例把 --clip-* 定义在随身单类上；字号/间距/圆角消费 core --bz-* token。
    自绘浮框不造滚动条（动作行内排布，无滚动区域，铁律 4 不涉及）。 */
@@ -11283,6 +11284,11 @@ input.bz-people-supp-qts.bz-people-supp-qts { font-size: var(--f-mid); }
 .bz-people-supp-imgcap { font-size: var(--f-aux); line-height: 1.6; color: var(--ink-mut); overflow-wrap: anywhere;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .bz-people-supp-imgcap-none { font-style: italic; opacity: .75; }
+/* 分片哨兵（issue 519）：横贯整行的「还有 N 张」，滚到自动追加、点了也追加 */
+.bz-people-supp-imgmore.bz-people-supp-imgmore { grid-column: 1 / -1; margin-top: 4px; padding: 8px 0;
+  border: 1px dashed rgba(148, 130, 100, 0.45); border-radius: 8px; background: transparent;
+  font-size: var(--f-aux); color: var(--ink-mut); cursor: pointer; }
+@media (hover: hover) { .bz-people-supp-imgmore.bz-people-supp-imgmore:hover { color: var(--ink-body); border-color: rgba(148, 130, 100, 0.8); } }
 /* 叉常显（触屏没有 hover）；宿主的裸 button 基线要按份覆盖：尺寸/内边距/圆角/字号全写死 */
 .bz-people-supp-imgdel.bz-people-supp-imgdel { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px;
   min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 50%; font-size: 13px; line-height: 1;
