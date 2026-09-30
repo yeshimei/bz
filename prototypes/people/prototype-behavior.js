@@ -1,4 +1,4 @@
-/* 源指纹 2b7009cd043b25fb · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 29964c9bf3303e79 · 仓内输入 90 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/people/fake-sim.ts","prototypes/people/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/ai.ts","src/core/app.ts","src/core/asr-proofread.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/external-tool.ts","src/core/flow-dialog.ts","src/core/gesture.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-btn-state.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/help-tip.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/people/data.ts","src/people/datasource.ts","src/people/describe.ts","src/people/digest.ts","src/people/export.ts","src/people/heavy-gate.ts","src/people/incremental.ts","src/people/insights.ts","src/people/jobs.ts","src/people/media.ts","src/people/migrate.ts","src/people/parse.ts","src/people/prep.ts","src/people/recording.ts","src/people/render.ts","src/people/safe-store.ts","src/people/settings.ts","src/people/stats.ts","src/people/sync.ts","src/people/types.ts","src/people/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/people/fake-sim.ts → window.BZW_people（行为单源预览包，issue 245/ADR-0106） */
 var BZW_people = (() => {
@@ -13613,16 +13613,25 @@ var BZW_people = (() => {
      * 读全部联系人记录（面板墙一次拉全量）。
      * onProgress（issue 483）：逐人解密进度回调——开跑即报 (0, total)，每人完成报 (i+1, total)；
      * 缓存命中时同步快速走完（面板热读路径不因此出加载态）。可选参数，既有调用点零漂移。
+     * 单条坏记录不拖垮整体：某 talker 解密/解析失败只跳过不进结果（此前整库抛错 → UI 兜底
+     * 成空表，一人坏全墙空）；失败人数经可选 stats 出参带出（stats.failedCount），调用方据此提示。
      */
-    async readAll(onProgress) {
+    async readAll(onProgress, stats) {
       const out = /* @__PURE__ */ new Map();
       const all = this.talkers();
       onProgress == null ? void 0 : onProgress(0, all.length);
+      let failed = 0;
       for (let i = 0; i < all.length; i++) {
-        const rec = await this.read(all[i]);
+        let rec = null;
+        try {
+          rec = await this.read(all[i]);
+        } catch (e) {
+          failed += 1;
+        }
         if (rec) out.set(all[i], rec);
         onProgress == null ? void 0 : onProgress(i + 1, all.length);
       }
+      if (stats) stats.failedCount = failed;
       return out;
     }
     /**
@@ -13678,6 +13687,7 @@ var BZW_people = (() => {
         const nowIso2 = (/* @__PURE__ */ new Date()).toISOString();
         rec = { version: 1, person: emptyPersonEntry(talker, talker, nowIso2), store: emptyStoreContact(nowIso2), job: null };
       }
+      const previousJson = existing && (opts == null ? void 0 : opts.avatar) !== void 0 ? JSON.stringify(rec) : null;
       await mutate(rec);
       let avatar = opts == null ? void 0 : opts.avatar;
       let avatarChanged = false;
@@ -13699,10 +13709,27 @@ var BZW_people = (() => {
         return "created";
       }
       if (avatarChanged) {
+        let oldAvatar = null;
+        if (oldAtt) {
+          const b64 = await this.safe.decryptAttachmentOriginal(oldAtt);
+          if (b64) oldAvatar = { base64: b64, ext: (oldAtt.path.split(".").pop() || "jpg").toLowerCase() };
+        }
         this.suppressClear++;
+        let removed = false;
         try {
           await this.safe.removeNote(existing.id);
+          removed = true;
           await this.lockNoteFresh(talker, rec, avatar != null ? avatar : null);
+        } catch (e) {
+          if (removed && previousJson !== null) {
+            try {
+              await this.lockNoteFresh(talker, JSON.parse(previousJson), oldAvatar);
+            } catch (e2) {
+            }
+          }
+          this.cache.delete(talker);
+          this.avatarUrls.delete(talker);
+          throw e;
         } finally {
           this.suppressClear--;
         }
@@ -13710,7 +13737,16 @@ var BZW_people = (() => {
         return "updated";
       }
       const json = JSON.stringify(rec);
-      await this.safe.updateNotePayload(existing.id, json);
+      this.suppressClear++;
+      try {
+        await this.safe.updateNotePayload(existing.id, json);
+      } catch (e) {
+        this.cache.delete(talker);
+        this.avatarUrls.delete(talker);
+        throw e;
+      } finally {
+        this.suppressClear--;
+      }
       this.cache.set(talker, rec);
       if (avatar === null) this.avatarUrls.delete(talker);
       return "updated";
@@ -13735,8 +13771,17 @@ var BZW_people = (() => {
       await this.safe.lockNote(input);
       this.avatarUrls.delete(talker);
     }
-    /** 删除一位联系人的整条保库记录（连同头像镜像；二次确认由 UI 层管） */
+    /** 删除一位联系人的整条保库记录（连同头像镜像；二次确认由 UI 层管）。
+     *  经同一 per-talker 串行链排队：删除若与在途写并发，写会在删除之后落盘——
+     *  已删联系人以空骨架「复活」；串行后「删」与「写」严格有序，删定即删净。 */
     async removeContact(talker) {
+      var _a2;
+      const prev = (_a2 = this.chains.get(talker)) != null ? _a2 : Promise.resolve();
+      const run = prev.catch(() => void 0).then(() => this.removeSerial(talker));
+      this.chains.set(talker, run);
+      return run;
+    }
+    async removeSerial(talker) {
       this.requireUnlocked();
       const note = this.noteOf(talker);
       if (note) await this.safe.removeNote(note.id);
@@ -16421,7 +16466,8 @@ ${lines}`;
     return "";
   }
   function quotePathArg(v) {
-    return process.platform === "win32" ? `"${v}"` : v;
+    if (process.platform === "win32") return `"${v}"`;
+    return `'${v.replace(/'/g, "'\\''")}'`;
   }
   function buildSyncSpec(opts) {
     var _a2, _b2;
@@ -17182,8 +17228,9 @@ ${lines}`;
     if (!p.counts || typeof p.counts !== "object") p.counts = {};
     return p;
   }
+  var PORTRAIT_FIXED_CALLS = 4;
   function chunkedMessage(msgCount, batchCount) {
-    return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + 3} 次 AI 调用`;
+    return `消息 ${msgCount} 条 → ${batchCount} 批 · 共 ${batchCount + PORTRAIT_FIXED_CALLS} 次 AI 调用`;
   }
   function sampledMessage(msgCount, kept) {
     return `消息 ${msgCount} 条 → 均匀抽样 ${kept} 批`;
@@ -17225,11 +17272,15 @@ ${lines}`;
   }
   async function persist() {
     if (!st) return;
+    const queue2 = describeOnlyJob && st.queue.includes(describeOnlyJob) ? st.queue.filter((j) => j !== describeOnlyJob) : st.queue;
     try {
-      await st.store.write({ version: 1, queue: st.queue });
+      await st.store.write({ version: 1, queue: queue2 });
     } catch (e) {
       console.warn("[people] 任务进度落盘失败:", e);
     }
+  }
+  function hasInjection(o) {
+    return !!(o.askExtract || o.askPortrait || o.askDescribe || o.askDescribeConfirm || o.askPortraitConfirm);
   }
   function importRecordOf(t, digestMsgs) {
     var _a2;
@@ -17250,7 +17301,7 @@ ${lines}`;
   }
   function estimatePortraitCallsOf(msgs) {
     const all = chunkMessages(msgs, { ...DEFAULTS, maxBatches: Number.MAX_SAFE_INTEGER });
-    return Math.min(all.length, DEFAULTS.maxBatches) + 3;
+    return Math.min(all.length, DEFAULTS.maxBatches) + PORTRAIT_FIXED_CALLS;
   }
   function estimatePortraitCallsOfCount(count) {
     return estimatePortraitCallsOf(Array.from({ length: Math.max(0, count) }, (_, i) => ({ ts: i, isSender: false, text: "x".repeat(24) })));
@@ -17264,8 +17315,14 @@ ${lines}`;
     lockWired = true;
     wireHeavyPreempt();
     onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
-      if ((evt == null ? void 0 : evt.unlocked) === false) pauseJobs();
-      else if ((evt == null ? void 0 : evt.unlocked) === true) kick();
+      if ((evt == null ? void 0 : evt.unlocked) === false) pauseEngine(true);
+      else if ((evt == null ? void 0 : evt.unlocked) === true) {
+        if (st == null ? void 0 : st.lockPaused) {
+          st.lockPaused = false;
+          st.pauseRequested = false;
+          kick();
+        }
+      }
     });
   }
   var PREP_PREEMPT_KILL_MS = 3e4;
@@ -17304,6 +17361,7 @@ ${lines}`;
         retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
         runningJob: null,
         pauseRequested: false,
+        lockPaused: false,
         prepGate: null
       };
     }
@@ -17314,7 +17372,7 @@ ${lines}`;
     if (!st.safe.unlocked) {
       return { queued: [], skipped: targets.map((t) => t.name || t.talker), resumed: [] };
     }
-    st.injected = opts.askExtract || opts.askPortrait || opts.askDescribe || opts.askDescribeConfirm || opts.askPortraitConfirm ? {
+    st.injected = hasInjection(opts) ? {
       askExtract: opts.askExtract,
       askPortrait: opts.askPortrait,
       askDescribe: opts.askDescribe,
@@ -17463,10 +17521,11 @@ ${lines}`;
       store: store2,
       safe,
       queue: queue2,
-      injected: ai.askExtract || ai.askPortrait || ai.askDescribe || ai.askPortraitConfirm ? ai : null,
+      injected: hasInjection(ai) ? ai : null,
       retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
       runningJob: null,
       pauseRequested: false,
+      lockPaused: false,
       prepGate: null
     };
     wireLock();
@@ -17485,13 +17544,16 @@ ${lines}`;
     job.status = "paused";
     job.error = void 0;
     job.updatedAt = nowIso();
+    st.pauseRequested = false;
     void persist().then(emit);
     kick();
     return true;
   }
-  function pauseJobs() {
+  function pauseEngine(fromLock) {
     var _a2;
     if (!st) return;
+    const manualInEffect = st.pauseRequested && !st.lockPaused;
+    if (!manualInEffect) st.lockPaused = fromLock;
     st.pauseRequested = true;
     const engine = st;
     const job = engine.runningJob ? engine.queue.find((j) => j.talker === engine.runningJob) : null;
@@ -17500,6 +17562,9 @@ ${lines}`;
       if (dataRoot) void writePrepControl(dataRoot, "pause");
       (_a2 = engine.prepGate) == null ? void 0 : _a2.call(engine);
     }
+  }
+  function pauseJobs() {
+    pauseEngine(false);
   }
   async function removeJob(talker) {
     var _a2;
@@ -17529,6 +17594,7 @@ ${lines}`;
     job.status = "paused";
     job.error = void 0;
     job.updatedAt = nowIso();
+    st.pauseRequested = false;
     void persist().then(emit);
     kick();
     return true;
@@ -17540,7 +17606,6 @@ ${lines}`;
     if (!st || runPromise) return runPromise != null ? runPromise : Promise.resolve();
     runPromise = runQueue().finally(() => {
       runPromise = null;
-      if (st) st.pauseRequested = false;
     });
     return runPromise;
   }
@@ -17557,7 +17622,10 @@ ${lines}`;
       }
       const got = await waitHeavyGate("portrait", () => !!st && runnable() && !describeOnlyBusy && st.queue.includes(job) && job.status === "paused");
       if (job.status === "paused") job.message = prevMessage;
-      if (!got) break;
+      if (!got) {
+        emit();
+        continue;
+      }
       emit();
       try {
         await runJob(job);
@@ -17565,7 +17633,6 @@ ${lines}`;
         releaseHeavy("portrait");
       }
     }
-    if (st) st.pauseRequested = false;
   }
   function gone(job) {
     return !st || st.queue.indexOf(job) < 0;
@@ -17612,6 +17679,16 @@ ${lines}`;
       ffmpeg: str3(s.ffmpegPath)
     });
   }
+  function rollPrepLedger(job, totals) {
+    var _a2, _b2;
+    const prep = prepOf(job);
+    if (!prep) return newPrepProgress(totals);
+    const fresh = newPrepProgress(totals);
+    for (const [phase, c] of Object.entries(fresh.counts)) {
+      prep.counts[phase] = { done: (_b2 = (_a2 = prep.counts[phase]) == null ? void 0 : _a2.done) != null ? _b2 : 0, total: c.total };
+    }
+    return prep;
+  }
   async function runPrepStage(job, finish, store2, safe) {
     var _a2, _b2, _c2;
     const totals = prepMediaTotals(store2 == null ? void 0 : store2.kindCounts, store2 == null ? void 0 : store2.stats);
@@ -17619,7 +17696,7 @@ ${lines}`;
     const pending = pendingMediaCounts((_a2 = store2 == null ? void 0 : store2.msgs) != null ? _a2 : []);
     if (!pending.images && !pending.voices) return "skipped";
     const prep = prepOf(job);
-    if (prep && prepAllDone(prep)) return "skipped";
+    if (prep && prepAllDone(prep) && !pending.voices) return "skipped";
     const dataRoot = dataRootOf();
     if (!dataRoot) {
       await finish({ status: "error", error: "数据根未配置——媒体导出与语音转写没有可跑的目录", message: "数据根未配置" });
@@ -17632,19 +17709,21 @@ ${lines}`;
       const fresh = (_b2 = await safe.read(job.talker)) == null ? void 0 : _b2.store;
       const after = pendingMediaCounts((_c2 = fresh == null ? void 0 : fresh.msgs) != null ? _c2 : []);
       if (!after.images && !after.voices) {
-        job.prep = newPrepProgress(totals);
+        job.prep = rollPrepLedger(job, totals);
         job.message = "预处理产物已覆盖全部待办，直接合并升级，无需起预处理进程";
         return "skipped";
       }
-      job.prep = newPrepProgress(totals);
+      job.prep = rollPrepLedger(job, totals);
     }
     if (!job.prep) job.prep = newPrepProgress(totals);
     job.stage = "preprocess";
     await persist();
     emit();
+    if (!await writePrepControl(dataRoot, "resume")) {
+      console.warn("[people] prep 起跑前写 resume 控制失败：若盘上有陈旧 stop，进程可能一启动就退出");
+    }
     const existing = currentPrepSession();
     const session2 = existing && existing.talker === job.talker ? existing : startPrepSession(job.talker, buildPrepSpecFromSettings(job, dataRoot), prepCallbacks(job));
-    await writePrepControl(dataRoot, "resume");
     let gateFired = false;
     const gate = new Promise((r) => {
       st.prepGate = () => {
@@ -17660,19 +17739,23 @@ ${lines}`;
     }
     const { outcome, result } = settled;
     if (outcome.stopped) {
+      clearPrepControl(dataRoot);
       await finish({ status: "paused", message: "已完成的部分保留" });
       return "halted";
     }
     if (result && result.ok === false) {
+      clearPrepControl(dataRoot);
       const msg = typeof result.error === "string" && String(result.error).trim() ? String(result.error).trim() : "预处理失败：工具报错，没有给出原因";
       await finish({ status: "error", error: msg, message: msg });
       return "halted";
     }
     if (result && result.stopped === true) {
+      clearPrepControl(dataRoot);
       await finish({ status: "paused", message: "已完成的部分保留" });
       return "halted";
     }
     if (!outcome.ok || !result || result.ok !== true) {
+      clearPrepControl(dataRoot);
       const classified = classifyPrepFailure(outcome);
       await finish({ status: "error", error: classified.message, message: classified.message });
       return "halted";
@@ -17872,6 +17955,7 @@ ${lines}`;
     return "ok";
   }
   var describeOnlyBusy = false;
+  var describeOnlyJob = null;
   function isDescribeOnlyBusy() {
     return describeOnlyBusy;
   }
@@ -17894,6 +17978,7 @@ ${lines}`;
           retry: { maxRetries: DEFAULT_MAX_RETRIES, sleep: realSleep },
           runningJob: null,
           pauseRequested: false,
+          lockPaused: false,
           prepGate: null
         };
       }
@@ -17924,6 +18009,7 @@ ${lines}`;
       };
       st.queue.push(job);
       st.runningJob = talker;
+      describeOnlyJob = job;
       emit();
       const finish = async (patch) => {
         Object.assign(job, patch, { updatedAt: nowIso() });
@@ -17942,6 +18028,7 @@ ${lines}`;
       } finally {
         st.queue = st.queue.filter((j) => j !== job);
         if (st.runningJob === talker) st.runningJob = null;
+        describeOnlyJob = null;
         await persist();
         emit();
       }
@@ -18058,7 +18145,7 @@ ${lines}`;
               model: label.model,
               name: job.name,
               materials: digestMsgs.length,
-              calls: chunks.length + 3
+              calls: chunks.length + PORTRAIT_FIXED_CALLS
             });
           } catch (e) {
             console.warn("[people] 画像生成确认门异常，按取消处理:", e);
@@ -18301,6 +18388,9 @@ ${lines}`;
   };
   function recordingFailureText(side) {
     var _a2, _b2, _c2;
+    if (side.phase === "done" && !recordingTurnsComplete(side)) {
+      return "没有转写出有效语音（整段可能都是旁音或静音）。点「重试」可再跑一次";
+    }
     const where = side.phase === "error" ? "" : `（崩在${(_a2 = PHASE_LABEL[side.phase]) != null ? _a2 : side.phase}阶段）`;
     const raw = String((_b2 = side.error) != null ? _b2 : "").trim() || "进程异常退出（没有留下原因）";
     const p = ((_c2 = side.progress) == null ? void 0 : _c2.text) ? `；最后进度：${side.progress.text}` : "";
@@ -18351,13 +18441,39 @@ ${lines}`;
       ""
     ].join("\n");
   }
+  function sweepRecordingTmpFiles(dir, file, cutoffMs) {
+    const fs2 = controlFs();
+    if (!fs2 || !dir || !file) return 0;
+    const prefix = recordingTmpPrefix(file);
+    let names = [];
+    try {
+      names = fs2.readdirSync(dir);
+    } catch (e) {
+      return 0;
+    }
+    let removed = 0;
+    for (const name of names) {
+      if (!name.startsWith(prefix) || !name.endsWith(".tmp")) continue;
+      const p = `${dir}/${name}`;
+      try {
+        const st2 = fs2.statSync(p);
+        if (Number(st2.mtimeMs) >= cutoffMs) continue;
+        fs2.rmSync(p, { force: true });
+        removed++;
+      } catch (e) {
+      }
+    }
+    return removed;
+  }
   function writeRecordingTurnsMd(dataRoot, talker, file, md) {
     const fs2 = controlFs();
     if (!fs2 || !dataRoot || !talker || !file) return false;
     const p = recordingTurnsMdPath(dataRoot, talker, file);
+    const startedAt = Date.now();
     try {
       fs2.mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
       fs2.writeFileSync(p, md, "utf8");
+      sweepRecordingTmpFiles(recordingsDirOf(dataRoot, talker), file, startedAt);
       return true;
     } catch (e) {
       console.warn("[people] 写录音时间轴失败:", e);
@@ -19084,14 +19200,19 @@ ${lines}`;
       jobs: storageFile("people-jobs.json", base)
     };
   }
+  var LEGACY_READ_FAILED = Symbol("people-migrate-legacy-read-failed");
   async function readLegacyJson(adapter, path) {
     try {
       if (!await adapter.exists(path)) return null;
+    } catch (e) {
+      return LEGACY_READ_FAILED;
+    }
+    try {
       const raw = await adapter.read(path);
       if (!raw || !raw.trim()) return null;
       return JSON.parse(raw);
     } catch (e) {
-      return null;
+      return LEGACY_READ_FAILED;
     }
   }
   var AVA_EXTS2 = ["jpg", "jpeg", "png", "webp", "gif"];
@@ -19143,13 +19264,15 @@ ${lines}`;
     return readAvatarInput2(app, contact == null ? void 0 : contact.avatar);
   }
   async function migrateLegacyPeopleData(app, safe) {
-    var _a2;
     if (!safe.unlocked) throw new Error("保险库未解锁，迁移不能执行");
     const adapter = app.vault.adapter;
     const paths = legacyPaths();
     const people = await readLegacyJson(adapter, paths.people);
     const preview = await readLegacyJson(adapter, paths.preview);
     const jobs2 = await readLegacyJson(adapter, paths.jobs);
+    if (people === LEGACY_READ_FAILED || preview === LEGACY_READ_FAILED || jobs2 === LEGACY_READ_FAILED) {
+      return { migrated: 0, skipped: 0, cleaned: [], keptBack: [paths.people, paths.preview, paths.jobs] };
+    }
     const cards = Array.isArray(people == null ? void 0 : people.people) ? people.people : [];
     const contacts = preview && preview.version === 2 && preview.contacts && typeof preview.contacts === "object" ? preview.contacts : {};
     const legacyJobs = Array.isArray(jobs2 == null ? void 0 : jobs2.queue) ? jobs2.queue : [];
@@ -19159,6 +19282,7 @@ ${lines}`;
     for (const j of legacyJobs) if (j == null ? void 0 : j.talker) talkers.add(String(j.talker));
     let migrated = 0;
     let skipped = 0;
+    const avatarReadOk = /* @__PURE__ */ new Map();
     for (const talker of talkers) {
       if (safe.has(talker)) {
         skipped += 1;
@@ -19167,12 +19291,13 @@ ${lines}`;
       const card = cards.find((c) => String(c.id) === talker);
       const contact = contacts[talker];
       const jobList = legacyJobs.filter((j) => {
-        var _a3;
-        return String((_a3 = j == null ? void 0 : j.talker) != null ? _a3 : "") === talker;
+        var _a2;
+        return String((_a2 = j == null ? void 0 : j.talker) != null ? _a2 : "") === talker;
       });
       const job = jobList.length ? jobList[jobList.length - 1] : null;
       const nowIso2 = (/* @__PURE__ */ new Date()).toISOString();
       const avatar = await resolveLegacyAvatar(app, contact != null ? contact : {});
+      avatarReadOk.set(talker, avatar !== null);
       await safe.write(
         talker,
         (rec) => {
@@ -19197,7 +19322,7 @@ ${lines}`;
           verifyFail.push(talker);
           continue;
         }
-        const expectedAvatar = Boolean((_a2 = contacts[talker]) == null ? void 0 : _a2.avatar);
+        const expectedAvatar = avatarReadOk.get(talker) === true;
         if (expectedAvatar && safe.attachmentCount(talker) === 0) verifyFail.push(talker);
       } catch (e) {
         verifyFail.push(talker);
@@ -20343,7 +20468,7 @@ ${lines}`;
     if (s.notice) body.push(el("div", "bz-people-notice bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
     if (s.sync) body.push(dsSyncLineNode(s.sync));
     if (!s.rows) {
-      body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
+      body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : s.scanning ? "正在扫描联系人目录…" : !s.dataDir ? "还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else {
       const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
       for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
@@ -20635,6 +20760,7 @@ ${lines}`;
         const sel = document.createElement("select");
         sel.className = "bz-people-input bz-people-supp-qcand";
         sel.setAttribute("data-people-supp-rec-cand", String(i));
+        sel.setAttribute("data-people-supp-rec-path", it.path);
         sel.setAttribute("title", "文件名只给了「周X / N点N分」这类相对信息——选一个候选日期");
         it.candidates.forEach((c) => {
           const o = document.createElement("option");
@@ -20650,6 +20776,7 @@ ${lines}`;
       ts.className = "bz-people-input bz-people-supp-qts";
       ts.value = it.startMs === null ? "" : suppLocalTsValue(it.startMs);
       ts.setAttribute("data-people-supp-rec-ts", String(i));
+      ts.setAttribute("data-people-supp-rec-path", it.path);
       if (it.startMs === null) ts.setAttribute("placeholder", "必填：这条录音的起点");
       row.appendChild(ts);
       row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "×", { "data-people-supp-rec-drop": String(i), "aria-label": "移除" }));
@@ -21172,6 +21299,7 @@ ${lines}`;
   var dsImported = false;
   var dsExported = /* @__PURE__ */ new Set();
   var findQuery = "";
+  var findDebounce = null;
   var exportRun = null;
   var cur = 0;
   var pulled = null;
@@ -21198,6 +21326,7 @@ ${lines}`;
   var animNote = false;
   var foldScrollTop = false;
   function openDialog(kind, tier) {
+    if (genConfirmOpen) answerGenConfirm("cancel");
     dialog = { kind, tier };
     if (kind === "note" && detailId) {
       if (suppOwnerId !== detailId) {
@@ -21252,12 +21381,17 @@ ${lines}`;
         if (!safe.unlocked) {
           const ok = await unlockGate();
           if (!ok) {
+            pendingDs = false;
             notice("脸谱数据在保险库里——解锁后才能查看", "info");
             return;
           }
         }
         peopleSafe = safe;
         buildPanelShell(app);
+        if (pendingDs) {
+          pendingDs = false;
+          void openDsIfIdle();
+        }
         await runLegacyMigration();
         void renderAlbum();
         await restoreJobsView();
@@ -21285,8 +21419,22 @@ ${lines}`;
     trapPanelFocus((_a2 = overlay.querySelector(".bz-people-panel")) != null ? _a2 : overlay);
     overlay.addEventListener("click", onOverlayClick);
     overlay.addEventListener("change", (e) => {
-      const inp = e.target instanceof HTMLInputElement ? e.target : null;
-      if (!inp) return;
+      var _a3;
+      const tgt = e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement ? e.target : null;
+      if (!tgt) return;
+      const cand = tgt.getAttribute("data-people-supp-rec-cand");
+      if (cand !== null) {
+        const path = tgt.getAttribute("data-people-supp-rec-path");
+        const it = path !== null ? suppRecQueue.find((q) => q.path === path) : suppRecQueue[Number(cand)];
+        const v = Number(tgt.value);
+        if (it && Number.isFinite(v)) {
+          it.startMs = v;
+          const ts = (_a3 = tgt.closest(".bz-people-supp-qrow")) == null ? void 0 : _a3.querySelector("[data-people-supp-rec-ts]");
+          if (ts) ts.value = suppLocalTsValue(v);
+        }
+        return;
+      }
+      const inp = tgt;
       const idxRaw = inp.getAttribute("data-people-supp-img-ts");
       if (idxRaw !== null) {
         const it = suppImages[Number(idxRaw)];
@@ -21296,7 +21444,8 @@ ${lines}`;
       }
       const recIdx = inp.getAttribute("data-people-supp-rec-ts");
       if (recIdx !== null) {
-        const it = suppRecQueue[Number(recIdx)];
+        const recPath = inp.getAttribute("data-people-supp-rec-path");
+        const it = recPath !== null ? suppRecQueue.find((q) => q.path === recPath) : suppRecQueue[Number(recIdx)];
         const v = inp.value ? new Date(inp.value).getTime() : NaN;
         if (it) it.startMs = Number.isFinite(v) ? v : null;
         return;
@@ -21324,6 +21473,16 @@ ${lines}`;
         const btn = (_b2 = overlay == null ? void 0 : overlay.querySelector("[data-people-del-ok]")) != null ? _b2 : null;
         if (p && btn && !btn.disabled) void confirmDeleteFromPage(p, btn);
       } else void saveManualNote();
+    });
+    overlay.addEventListener("input", (e) => {
+      const inp = e.target instanceof HTMLInputElement ? e.target : null;
+      if (!inp || !inp.hasAttribute("data-people-find")) return;
+      findQuery = inp.value;
+      if (findDebounce !== null) clearTimeout(findDebounce);
+      findDebounce = setTimeout(() => {
+        findDebounce = null;
+        void renderAlbum().then(() => focusFind());
+      }, 150);
     });
     offUnlockWatch = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
       if (!overlay) return;
@@ -21358,6 +21517,7 @@ ${lines}`;
     }
   }
   function closePeoplePanel() {
+    if (genConfirmOpen) answerGenConfirm("cancel");
     const backgrounded = jobsRunning();
     unregisterPanelEsc(ESC_ID);
     offUnlockWatch == null ? void 0 : offUnlockWatch();
@@ -21371,6 +21531,10 @@ ${lines}`;
     overlay == null ? void 0 : overlay.remove();
     overlay = null;
     store = null;
+    if (findDebounce !== null) {
+      clearTimeout(findDebounce);
+      findDebounce = null;
+    }
     stopRecPolling();
     exportRun == null ? void 0 : exportRun.stop();
     exportRun = null;
@@ -21405,8 +21569,13 @@ ${lines}`;
     dsLastImported = [];
     dsScannedAt = "";
   }
+  var pendingDs = false;
   function openDataSource() {
-    if (!overlay) openPeoplePanel();
+    if (!overlay) {
+      pendingDs = true;
+      openPeoplePanel();
+      return;
+    }
     void openDsIfIdle();
   }
   async function openDsIfIdle() {
@@ -22647,18 +22816,9 @@ ${lines}`;
       void suppPickRecordings();
       return;
     }
-    const recCand = t.closest("[data-people-supp-rec-cand]");
-    if (recCand) {
-      const it = suppRecQueue[Number(recCand.getAttribute("data-people-supp-rec-cand"))];
-      const v = Number(recCand.value);
-      if (it && Number.isFinite(v)) {
-        it.startMs = v;
-        void renderAlbum();
-      }
-      return;
-    }
     const recDrop = t.closest("[data-people-supp-rec-drop]");
     if (recDrop) {
+      harvestRecQueueInputs();
       suppRecQueue.splice(Number(recDrop.getAttribute("data-people-supp-rec-drop")), 1);
       void renderAlbum();
       return;
@@ -22937,11 +23097,12 @@ ${lines}`;
         const at = sorted.indexOf(p);
         const job = sealJobOf(jobViews().get(p.id));
         const seal = albumSealOf(p, job);
+        const pi = Math.floor(at / AL_PER_PAGE);
         rows.push({
           p,
           avatar: "",
-          page: Math.floor(at / AL_PER_PAGE) + 1,
-          half: at % PER_SPREAD === 0 ? "左" : "右",
+          page: pi + 1,
+          half: pi % PER_SPREAD === 0 ? "左" : "右",
           state: seal.state === "none" ? "todo" : seal.state === "drawn" || seal.state === "legacy" ? "drawn" : "drawing"
         });
       }
@@ -22955,7 +23116,8 @@ ${lines}`;
   function harvestRecQueueInputs() {
     if (!suppRecQueue.length || !overlay) return;
     overlay.querySelectorAll("[data-people-supp-rec-ts]").forEach((inp) => {
-      const it = suppRecQueue[Number(inp.getAttribute("data-people-supp-rec-ts"))];
+      const path = inp.getAttribute("data-people-supp-rec-path");
+      const it = path !== null ? suppRecQueue.find((q) => q.path === path) : suppRecQueue[Number(inp.getAttribute("data-people-supp-rec-ts"))];
       if (!it) return;
       const v = new Date(inp.value).getTime();
       it.startMs = inp.value && Number.isFinite(v) ? v : null;
@@ -23133,6 +23295,7 @@ ${lines}`;
     flyPending = { src: (_a2 = img == null ? void 0 : img.getAttribute("src")) != null ? _a2 : "", txt: (_b2 = txt == null ? void 0 : txt.textContent) != null ? _b2 : "" };
     cell == null ? void 0 : cell.classList.add("bz-people-out");
     window.setTimeout(() => {
+      if (!overlay) return;
       pulled = id;
       detailId = id;
       detailFold = "p";
@@ -23279,11 +23442,15 @@ ${lines}`;
         loadActive = true;
         loadDone = 0;
         loadTotal = null;
+        const failedStat = { failedCount: 0 };
         const map = await peopleSafe.readAll((done, total) => {
           loadTotal = total;
           loadDone = done;
           paintLoadCount();
-        });
+        }, failedStat);
+        if (failedStat.failedCount > 0) {
+          notice(`有 ${failedStat.failedCount} 条记录损坏，无法读取`, "warning");
+        }
         recordCache = map;
         return map;
       } catch (e) {
@@ -23432,17 +23599,19 @@ ${lines}`;
     }
   }
   async function refreshStatsKinds() {
-    var _a2;
+    var _a2, _b2;
     const talker = detailId;
     if (!talker) return;
     statsKinds = null;
     if (!peopleSafe) peopleSafe = await getPeopleSafeStore();
+    let kinds = null;
     try {
-      const rec = await peopleSafe.read(talker);
-      statsKinds = (_a2 = rec == null ? void 0 : rec.store.kindCounts) != null ? _a2 : null;
+      kinds = (_b2 = (_a2 = await peopleSafe.read(talker)) == null ? void 0 : _a2.store.kindCounts) != null ? _b2 : null;
     } catch (e) {
-      statsKinds = null;
+      kinds = null;
     }
+    if (detailId !== talker) return;
+    statsKinds = kinds;
     if ((dialog == null ? void 0 : dialog.kind) === "stats") void renderAlbum();
   }
   function buildInsightsCard(p, liveKinds) {
@@ -23542,6 +23711,7 @@ ${lines}`;
       notice("还没有脸谱素材——先导入并画脸谱，AI 才有据可依", "warning");
       return;
     }
+    const talker = detailId;
     if (profEditId !== detailId) {
       profEditId = detailId;
       await renderAlbum();
@@ -23551,6 +23721,7 @@ ${lines}`;
     try {
       const prompt = buildProfileExtractPrompt(p.name, profileExtractMaterial(dg), knownProfileText(p.profile));
       const data = parseProfileReply(await createAI().json(prompt));
+      if (detailId !== talker || !overlay) return;
       let filled = 0;
       for (const f of PROFILE_TEXT_FIELDS) {
         const v = String((_a2 = data[f]) != null ? _a2 : "").trim();
@@ -23755,6 +23926,7 @@ ${lines}`;
       }
     } catch (e) {
     }
+    if (!overlay || suppOwnerId !== talker) return;
     suppStoreInfo = { imported, undescribed, mergedRecs, imageItems: imageItems.reverse() };
     if ((dialog == null ? void 0 : dialog.kind) === "note") void renderAlbum();
   }
@@ -24592,7 +24764,7 @@ ${lines}`;
             {
               type: "text",
               name: "数据根目录",
-              desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 面板不显示数据源入口",
+              desc: "预处理导出的联系人数据目录，粘贴完整路径；空 = 数据源页提示先配置",
               binding: { key: "peopleDataDir" },
               placeholder: "例如 D:\\微信备份\\export_full"
             },

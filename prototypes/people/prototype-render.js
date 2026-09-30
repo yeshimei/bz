@@ -1,4 +1,4 @@
-/* 源指纹 b5e42973a3351211 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5beeeecf494edaf6 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/people/render.ts","src/people/types.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/people/render.ts → window.BZR_people（评审壳预览包，ADR-0104） */
 var BZR_people = (() => {
@@ -104,6 +104,7 @@ var BZR_people = (() => {
     statsPopBody: () => statsPopBody,
     statsText: () => statsText,
     subPage: () => subPage,
+    suppLocalTsValue: () => suppLocalTsValue,
     suppPage: () => suppPage,
     suppRecStageLabel: () => suppRecStageLabel,
     tagChip: () => tagChip,
@@ -1300,7 +1301,7 @@ var BZR_people = (() => {
     if (s.notice) body.push(el("div", "bz-people-notice bz-people-ds-notice", { "data-people-ds-notice": "" }, text(s.notice)));
     if (s.sync) body.push(dsSyncLineNode(s.sync));
     if (!s.rows) {
-      body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
+      body.push(el("div", "bz-people-empty-hint", text(s.desktopOnly ? "数据源导入仅桌面端支持（要读库外文件夹）——手机 / 平板上仍可查看已画好的脸谱。" : s.scanning ? "正在扫描联系人目录…" : !s.dataDir ? "还没扫描。到「设置 → 脸谱 → 数据源」粘贴数据根目录路径，再点右上「同步」。" : "还没扫描。点右上「同步」从微信取数，或等同步完成后自动刷新。")));
     } else {
       const list = el("div", "bz-people-ds-list", { "data-people-ds-list": "" });
       for (const r of s.rows) list.appendChild(dsRow(r, s.selected.includes(r.name)));
@@ -1592,6 +1593,7 @@ var BZR_people = (() => {
         const sel = document.createElement("select");
         sel.className = "bz-people-input bz-people-supp-qcand";
         sel.setAttribute("data-people-supp-rec-cand", String(i));
+        sel.setAttribute("data-people-supp-rec-path", it.path);
         sel.setAttribute("title", "文件名只给了「周X / N点N分」这类相对信息——选一个候选日期");
         it.candidates.forEach((c) => {
           const o = document.createElement("option");
@@ -1607,6 +1609,7 @@ var BZR_people = (() => {
       ts.className = "bz-people-input bz-people-supp-qts";
       ts.value = it.startMs === null ? "" : suppLocalTsValue(it.startMs);
       ts.setAttribute("data-people-supp-rec-ts", String(i));
+      ts.setAttribute("data-people-supp-rec-path", it.path);
       if (it.startMs === null) ts.setAttribute("placeholder", "必填：这条录音的起点");
       row.appendChild(ts);
       row.appendChild(button("bz-people-btn bz-people-btn-ghost bz-people-btn-sm", "×", { "data-people-supp-rec-drop": String(i), "aria-label": "移除" }));
